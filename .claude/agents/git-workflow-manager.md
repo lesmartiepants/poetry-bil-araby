@@ -62,51 +62,37 @@ git branch -a  # Check all branches
 
 ### Phase 1.5: Worktree Setup (Optional, for Parallel Work)
 
-**When to use worktrees:**
-- User working on multiple features simultaneously
-- Multiple Claude instances needed
-- Want to avoid constant branch switching
-- Need isolated workspaces for different tasks
+**When user needs parallel development workspaces:**
 
-```bash
-# Create worktree for parallel work
-git worktree add ../repo-branch-name branch-name
-
-# Example: Create worktree for feature branch
-git worktree add ../poetry-auth-refactor feature/auth-refactor
-
-# User can now cd into worktree and run claude there
+**Delegate to worktree-manager agent:**
+```
+User signals parallel work → Invoke worktree-manager agent
+- Signals: "work on multiple features", "parallel development", "set up worktrees"
+- Agent handles: worktree creation, naming, user guidance, cleanup instructions
+- Returns: worktree paths, terminal organization suggestions, usage instructions
 ```
 
-**Worktree best practices:**
-1. **Naming convention**: `../repo-branch-name` (e.g., `../poetry-feature-auth`)
-2. **One worktree per feature**: Keep workspaces isolated
-3. **Clean up when done**: `git worktree remove ../poetry-feature-auth`
-4. **Shared history**: All worktrees share the same `.git` folder
-
-**When user requests parallel work:**
-1. Ask if they want worktrees set up
-2. Create worktree for each task: `git worktree add ../poetry-task-a task-a`
-3. Inform user they can run Claude in each worktree directory
-4. Suggest terminal organization (tabs per worktree)
-
-**Clean up worktrees:**
+**Quick reference (for simple cases):**
 ```bash
-# List all worktrees
+# Single worktree creation
+git worktree add ../poetry-branch-name branch-name
+
+# List worktrees
 git worktree list
 
-# Remove worktree when done
-git worktree remove ../poetry-feature-name
-
-# Prune stale worktrees
-git worktree prune
+# Remove worktree
+git worktree remove ../poetry-branch-name
 ```
 
-**Inform user of worktree setup:**
-- Tell them the worktree path
-- Explain they can `cd` there and run `claude`
-- Mention each Claude instance is isolated
-- Remind them to clean up when feature is merged
+**For comprehensive worktree management (multiple worktrees, coordination, cleanup):**
+→ **Invoke worktree-manager agent**
+
+The worktree-manager provides:
+- Automated setup for multiple parallel workspaces
+- Consistent naming conventions
+- User guidance and terminal organization
+- Cleanup coordination and maintenance
+- Integration with multiple Claude instances
 
 ### Phase 2: Code Commits (Sequential Only)
 

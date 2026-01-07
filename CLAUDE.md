@@ -181,9 +181,30 @@ This ensures fast feedback in CI while allowing more relaxed timeouts locally.
 
 **Use git worktrees to run multiple Claude instances on different tasks simultaneously.**
 
-### Quick Start
+### Using the worktree-manager Agent
+
+**For complex worktree setups** (multiple worktrees, proper naming, guidance), use the dedicated agent:
+
+```
+"Set up worktrees for feature X, bugfix Y, and docs Z"
+"I need parallel workspaces for authentication and testing"
+"Create worktrees for issues #123, #124, #125"
+```
+
+The **worktree-manager** agent handles:
+- Creating multiple worktrees with consistent naming
+- Guiding you through terminal organization
+- Providing cleanup instructions
+- Coordinating with other agents
+
+Located at: `.claude/agents/worktree-manager.md`
+
+### Quick Start (Manual)
 ```bash
-# Create worktrees for parallel work
+# Create single worktree manually
+git worktree add ../poetry-feature-a feature/feature-a
+
+# Or create multiple worktrees
 git worktree add ../poetry-feature-a feature/feature-a
 git worktree add ../poetry-bugfix-b bugfix/issue-123
 git worktree add ../poetry-testing feature/test-updates

@@ -27,3 +27,6 @@ dist-ssr
 .env
 .env.local
 coverage/
+ci-artifacts/
+playwright-results/
+ui-ux-screenshots/

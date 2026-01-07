@@ -451,6 +451,7 @@ export default function DiwanApp() {
           <h1 className="app-branding-rtl flex items-end gap-6">
             <span className="font-brand-ar text-4xl font-bold mb-2 opacity-80">بالعربي</span>
             <span className="font-brand-en text-6xl lowercase tracking-tighter">poetry</span>
+            <span className="font-brand-en text-xs px-2 py-0.5 rounded border border-indigo-500/30 bg-indigo-500/10 uppercase tracking-wider mb-4 ml-3 opacity-60">beta</span>
           </h1>
         </div>
       </header>

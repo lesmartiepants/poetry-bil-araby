@@ -50,17 +50,19 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # Placeholder for when tests are added
       - name: Run unit tests
-        run: npm test --if-present
+        run: npm run test:run
+
+      - name: Generate coverage report
+        run: npm run test:coverage
         continue-on-error: true
 
-      # Upload coverage if tests exist
       - name: Upload coverage reports
         if: always()
         uses: codecov/codecov-action@v4
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage/lcov.info
           fail_ci_if_error: false
         continue-on-error: true
 

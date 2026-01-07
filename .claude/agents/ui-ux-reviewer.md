@@ -54,10 +54,53 @@ You are a professional UX developer and design expert specializing in web applic
 - Verify that the Arabic aesthetic is preserved on all devices
 - Test with actual device emulation when possible
 
+## Prerequisites: Playwright Browser Setup
+
+**CRITICAL**: Before running any Playwright tests, ensure browsers are installed:
+
+```bash
+# Check if browsers are installed
+npx playwright --version
+
+# Install required browsers (Chromium, WebKit, Firefox)
+npx playwright install chromium webkit firefox
+
+# Or install all browsers
+npx playwright install
+```
+
+**Troubleshooting Browser Installation:**
+
+1. **SSL Certificate Issues** (`UNABLE_TO_GET_ISSUER_CERT_LOCALLY`):
+   - Common on corporate networks or with VPN
+   - **Temporary workaround** (use with caution):
+     ```bash
+     NODE_TLS_REJECT_UNAUTHORIZED=0 npx playwright install chromium webkit
+     ```
+   - **Better solution**: Let CI handle tests (browsers install cleanly there)
+
+2. **Verify Installation**:
+   ```bash
+   ls ~/Library/Caches/ms-playwright/
+   # Should show chromium-*, webkit-*, firefox-* directories
+   ```
+
+3. **Check Required Version**:
+   ```bash
+   # Project uses Playwright 1.57.0 which needs chromium-1200
+   cat package.json | grep playwright
+   ```
+
+**For Agents**: If local browser installation fails, push changes and rely on CI tests. CI has no SSL issues and all 126 UI/UX tests (across 6 device configs) will run automatically.
+
 ## Testing Workflow
 
 1. **Run Playwright UI/UX Tests**
    ```bash
+   # First, ensure dev server is running
+   npm run dev  # In separate terminal or background
+
+   # Then run tests
    npm run test:e2e:ui
    ```
 

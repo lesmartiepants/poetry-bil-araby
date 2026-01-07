@@ -8,6 +8,8 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: './src/test/setup.js',
     css: true,
+    include: ['src/**/*.test.{js,jsx,ts,tsx}'],
+    exclude: ['node_modules/', 'dist/', 'e2e/'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'lcov'],
@@ -17,6 +19,7 @@ export default defineConfig({
         '*.config.js',
         'dist/',
         '.github/',
+        'e2e/',
       ],
     },
   },

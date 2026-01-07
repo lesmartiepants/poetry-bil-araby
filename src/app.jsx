@@ -15,19 +15,21 @@ const DESIGN = {
   // Main Poem Display
   mainFontSize: 'text-base md:text-xl',
   mainEnglishFontSize: 'text-sm md:text-base',
-  mainLineHeight: 'leading-[2.4]', 
-  mainMetaPadding: 'pt-8 pb-1', 
+  mainLineHeight: 'leading-[2.4]',
+  mainMetaPadding: 'pt-8 pb-1',
   mainTagSize: 'text-[9px]',
   mainTitleSize: 'text-2xl md:text-4xl',
   mainSubtitleSize: 'text-[11px]',
-  mainMarginBottom: 'mb-8', 
+  mainMarginBottom: 'mb-8',
   paneWidth: 'w-full md:w-96',
   panePadding: 'p-8',
   paneSpacing: 'space-y-8',
   paneVerseSize: 'text-lg',
   glass: 'backdrop-blur-2xl',
   radius: 'rounded-2xl',
-  anim: 'transition-all duration-700 ease-in-out',
+  anim: 'transition-all duration-300 ease-in-out',
+  buttonHover: 'hover:scale-105 hover:shadow-lg transition-all duration-300',
+  touchTarget: 'min-w-[44px] min-h-[44px]',
 };
 
 const THEME = {
@@ -447,10 +449,10 @@ export default function DiwanApp() {
 
       <header style={{ opacity: headerOpacity }} className="fixed top-8 left-0 right-0 z-40 pointer-events-none transition-opacity duration-300 flex flex-row items-center justify-center gap-8 px-6">
         <div className={`flex flex-row-reverse items-center gap-4 ${theme.brand} tracking-wide header-luminescence`}>
-          <PenTool size={36} className="opacity-95" strokeWidth={1.5} />
+          <PenTool size={42} className="opacity-95" strokeWidth={1.5} />
           <h1 className="app-branding-rtl flex items-end gap-6">
-            <span className="font-brand-ar text-4xl font-bold mb-2 opacity-80">بالعربي</span>
-            <span className="font-brand-en text-6xl lowercase tracking-tighter">poetry</span>
+            <span className="font-brand-ar text-5xl font-bold mb-2 opacity-80">بالعربي</span>
+            <span className="font-brand-en text-7xl lowercase tracking-tighter">poetry</span>
             <span className="font-brand-en text-xs px-2 py-0.5 rounded border border-indigo-500/30 bg-indigo-500/10 uppercase tracking-wider mb-4 ml-3 opacity-60">beta</span>
           </h1>
         </div>
@@ -493,12 +495,12 @@ export default function DiwanApp() {
                    </div>
                 </div>
 
-                <div className={`relative w-full group py-0 ${DESIGN.mainMarginBottom}`}>
-                  <div className="px-4 md:px-20 py-2 text-center">
+                <div className={`relative w-full group py-8 ${DESIGN.mainMarginBottom}`}>
+                  <div className="px-4 md:px-20 py-6 text-center">
                     <div className="flex flex-col gap-5 md:gap-7">
                       {versePairs.map((pair, idx) => (
                         <div key={`${current?.id}-${idx}`} className="flex flex-col gap-0.5">
-                          <p dir="rtl" className={`font-amiri ${DESIGN.mainFontSize} ${DESIGN.mainLineHeight} arabic-shadow`}>{pair.ar}</p>
+                          <p dir="rtl" className={`font-amiri ${DESIGN.mainFontSize} leading-[2.2]  arabic-shadow`}>{pair.ar}</p>
                           {pair.en && <p dir="ltr" className={`font-brand-en italic ${DESIGN.mainEnglishFontSize} opacity-40 ${DESIGN.anim}`}>{pair.en}</p>}
                         </div>
                       ))}

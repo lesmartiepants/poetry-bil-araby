@@ -6,7 +6,14 @@ export default {
     "./*.{js,jsx}"
   ],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        'amiri': ['Amiri', 'serif'],
+        'playfair': ['Playfair Display', 'serif'],
+        'brand-en': ['Forum', 'serif'],
+        'brand-ar': ['Reem Kufi', 'sans-serif'],
+      }
+    },
   },
   plugins: [],
 }

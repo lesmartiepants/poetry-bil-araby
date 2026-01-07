@@ -13,13 +13,13 @@ const FEATURES = {
 
 const DESIGN = {
   // Main Poem Display
-  mainFontSize: 'text-base md:text-xl',
-  mainEnglishFontSize: 'text-sm md:text-base',
+  mainFontSize: 'text-lg md:text-xl',
+  mainEnglishFontSize: 'text-base md:text-lg',
   mainLineHeight: 'leading-[2.4]',
   mainMetaPadding: 'pt-8 pb-1',
-  mainTagSize: 'text-[9px]',
+  mainTagSize: 'text-[11px]',
   mainTitleSize: 'text-2xl md:text-4xl',
-  mainSubtitleSize: 'text-[11px]',
+  mainSubtitleSize: 'text-xs',
   mainMarginBottom: 'mb-8',
   paneWidth: 'w-full md:w-96',
   panePadding: 'p-8',
@@ -63,9 +63,9 @@ const THEME = {
     brandBg: 'bg-indigo-500/5',
     brandBorder: 'border-indigo-500/10',
     btnPrimary: 'bg-gradient-to-br from-indigo-600 to-purple-700 text-white shadow-indigo-200',
-    titleColor: 'text-[#8B7355]', // Antique Gold
-    poetColor: 'text-[#8B7355]', // Unified Gold
-    controlIcon: 'text-indigo-900/80 hover:text-black' 
+    titleColor: 'text-[#6B5644]', // Darker gold for contrast (6.2:1)
+    poetColor: 'text-[#6B5644]', // Darker gold for contrast (6.2:1)
+    controlIcon: 'text-indigo-950/90 hover:text-black'
   }
 };
 
@@ -398,17 +398,12 @@ export default function DiwanApp() {
   return (
     <div className={`h-screen w-full flex flex-col overflow-hidden ${DESIGN.anim} font-sans ${theme.bg} ${theme.text} selection:bg-indigo-500`}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Forum&family=Reem+Kufi:wght@400;700&display=swap');
-        .font-amiri { font-family: 'Amiri', serif; }
-        .font-serif { font-family: 'Playfair Display', serif; }
-        .font-brand-en { font-family: 'Forum', serif; }
-        .font-brand-ar { font-family: 'Reem Kufi', sans-serif; }
         .arabic-shadow { text-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(79, 70, 229, 0.2); border-radius: 10px; }
         .bg-radial-gradient { background: radial-gradient(circle, var(--tw-gradient-from) 0%, var(--tw-gradient-via) 50%, var(--tw-gradient-to) 100%); }
         .app-branding-rtl { direction: rtl; }
-        
+
         .header-luminescence {
           text-shadow: 0 0 30px rgba(99, 102, 241, 0.6);
         }
@@ -447,13 +442,13 @@ export default function DiwanApp() {
 
       <DebugPanel logs={logs} onClear={() => setLogs([])} darkMode={darkMode} />
 
-      <header style={{ opacity: headerOpacity }} className="fixed top-8 left-0 right-0 z-40 pointer-events-none transition-opacity duration-300 flex flex-row items-center justify-center gap-8 px-6">
-        <div className={`flex flex-row-reverse items-center gap-4 ${theme.brand} tracking-wide header-luminescence`}>
-          <PenTool size={42} className="opacity-95" strokeWidth={1.5} />
-          <h1 className="app-branding-rtl flex items-end gap-6">
-            <span className="font-brand-ar text-5xl font-bold mb-2 opacity-80">بالعربي</span>
-            <span className="font-brand-en text-7xl lowercase tracking-tighter">poetry</span>
-            <span className="font-brand-en text-xs px-2 py-0.5 rounded border border-indigo-500/30 bg-indigo-500/10 uppercase tracking-wider mb-4 ml-3 opacity-60">beta</span>
+      <header style={{ opacity: headerOpacity }} className="fixed top-4 md:top-8 left-0 right-0 z-40 pointer-events-none transition-opacity duration-300 flex flex-row items-center justify-center gap-4 md:gap-8 px-4 md:px-6">
+        <div className={`flex flex-row-reverse items-center gap-2 md:gap-4 ${theme.brand} tracking-wide header-luminescence`}>
+          <PenTool className="w-8 h-8 md:w-[42px] md:h-[42px] opacity-95" strokeWidth={1.5} />
+          <h1 className="app-branding-rtl flex items-end gap-3 md:gap-6">
+            <span className="font-brand-ar text-3xl md:text-5xl font-bold mb-1 md:mb-2 opacity-80">بالعربي</span>
+            <span className="font-brand-en text-5xl md:text-7xl lowercase tracking-tighter">poetry</span>
+            <span className="font-brand-en text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 rounded border border-indigo-500/30 bg-indigo-500/10 uppercase tracking-wider mb-2 md:mb-4 ml-2 md:ml-3 opacity-60">beta</span>
           </h1>
         </div>
       </header>
@@ -552,9 +547,9 @@ export default function DiwanApp() {
 
           <footer className="flex-none py-3 px-4 flex flex-col items-center z-20 relative bg-gradient-to-t from-black/5 to-transparent">
             <CategoryPill selected={selectedCategory} onSelect={setSelectedCategory} darkMode={darkMode} />
-            <div className={`flex items-center gap-2 md:gap-4 px-3 md:px-5 py-2 rounded-full shadow-2xl border ${DESIGN.glass} ${theme.border} ${theme.shadow} ${DESIGN.anim} max-w-[calc(100vw-2rem)] w-fit`}>
-              
-              <button onClick={handleFetch} disabled={isFetching} className={`p-1.5 transition-all hover:scale-110 relative group ${theme.controlIcon}`}>
+            <div className={`flex items-center gap-1 sm:gap-2 md:gap-4 px-2 sm:px-3 md:px-5 py-2 rounded-full shadow-2xl border ${DESIGN.glass} ${theme.border} ${theme.shadow} ${DESIGN.anim} max-w-[calc(100vw-2rem)] w-fit`}>
+
+              <button onClick={handleFetch} disabled={isFetching} aria-label="Discover new poem" className={`${DESIGN.touchTarget} p-2 transition-all hover:scale-110 relative group ${theme.controlIcon}`}>
                 {isFetching ? <Loader2 className="animate-spin" size={18} /> : <Sparkles size={18} className="stroke-[1.5]" />}
                 <span className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-indigo-900 text-white font-brand-en text-[9px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Discover</span>
               </button>
@@ -562,24 +557,24 @@ export default function DiwanApp() {
               <div className="w-px h-5 bg-stone-500/20 mx-0.5 md:mx-1 flex-shrink-0" />
 
               <div className="flex items-center">
-                <button onClick={() => setCurrentIndex(prev => (prev - 1 + filtered.length) % filtered.length)} disabled={filtered.length <= 1} className={`p-1.5 disabled:opacity-10 transition-colors ${theme.controlIcon}`}><ChevronLeft size={20} /></button>
-                <button onClick={() => setCurrentIndex(prev => (prev + 1) % filtered.length)} disabled={filtered.length <= 1} className={`p-1.5 disabled:opacity-10 transition-colors ${theme.controlIcon}`}><ChevronRight size={20} /></button>
+                <button onClick={() => setCurrentIndex(prev => (prev - 1 + filtered.length) % filtered.length)} disabled={filtered.length <= 1} aria-label="Previous poem" className={`${DESIGN.touchTarget} p-2 disabled:opacity-10 transition-colors ${theme.controlIcon}`}><ChevronLeft size={20} /></button>
+                <button onClick={() => setCurrentIndex(prev => (prev + 1) % filtered.length)} disabled={filtered.length <= 1} aria-label="Next poem" className={`${DESIGN.touchTarget} p-2 disabled:opacity-10 transition-colors ${theme.controlIcon}`}><ChevronRight size={20} /></button>
               </div>
-              
+
               <div className="w-px h-5 bg-stone-500/20 mx-0.5 md:mx-1 flex-shrink-0" />
-              
-              <button onClick={togglePlay} disabled={isGeneratingAudio} className={`w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center shadow-xl transition-all duration-300 hover:scale-110 active:scale-95 group relative ${theme.btnPrimary}`}>
+
+              <button onClick={togglePlay} disabled={isGeneratingAudio} aria-label={isPlaying ? "Pause recitation" : "Play recitation"} className={`${DESIGN.touchTarget} rounded-full flex-shrink-0 flex items-center justify-center shadow-xl transition-all duration-300 hover:scale-110 active:scale-95 group relative ${theme.btnPrimary}`}>
                  <div className="absolute inset-0 rounded-full border border-white/20 scale-110 opacity-0 group-hover:opacity-100 transition-all duration-300" />
                 {isGeneratingAudio ? <Loader2 className="animate-spin" size={18} /> : isPlaying ? <Pause fill="currentColor" size={18} /> : <Play fill="currentColor" className="ml-0.5" size={18} />}
               </button>
-              
+
               <div className="w-px h-5 bg-stone-500/20 mx-0.5 md:mx-1 flex-shrink-0" />
 
               <div className="flex items-center">
-                <button onClick={() => { const text = `${current?.poet} - ${current?.title}\n${current?.poetArabic} - ${current?.titleArabic}\n\n${current?.arabic}\n\n${current?.english}`; const el = document.createElement('textarea'); el.value = text; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); setCopySuccess(true); setTimeout(() => setCopySuccess(false), 2000); }} className={`p-1.5 transition-all duration-300 ${copySuccess ? 'text-green-500' : theme.controlIcon}`}>
+                <button onClick={() => { const text = `${current?.poet} - ${current?.title}\n${current?.poetArabic} - ${current?.titleArabic}\n\n${current?.arabic}\n\n${current?.english}`; const el = document.createElement('textarea'); el.value = text; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); setCopySuccess(true); setTimeout(() => setCopySuccess(false), 2000); }} aria-label="Copy poem text" className={`${DESIGN.touchTarget} p-2 transition-all duration-300 ${copySuccess ? 'text-green-500' : theme.controlIcon}`}>
                   {copySuccess ? <Check size={18} /> : <Copy size={18} />}
                 </button>
-                <button onClick={() => setDarkMode(!darkMode)} className={`p-1.5 transition-colors ${theme.controlIcon}`}>{darkMode ? <Sun size={18} /> : <Moon size={18} />}</button>
+                <button onClick={() => setDarkMode(!darkMode)} aria-label={`Switch to ${darkMode ? 'light' : 'dark'} mode`} className={`${DESIGN.touchTarget} p-2 transition-colors ${theme.controlIcon}`}>{darkMode ? <Sun size={18} /> : <Moon size={18} />}</button>
               </div>
             </div>
           </footer>

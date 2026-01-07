@@ -8,9 +8,11 @@ A beautiful React application for exploring Arabic poetry with AI-powered insigh
 - 🎙️ AI-powered audio recitation with emotional context
 - 🤖 Deep analysis and interpretation using AI
 - 🌙 Dark/Light mode toggle
-- 🎨 Beautiful Arabic typography and design
+- 🎨 Beautiful Arabic typography and design (Amiri font)
 - 🔍 Filter by poet and category
 - 📋 Copy poems to clipboard
+- ✅ Comprehensive test coverage (113 unit + 180 E2E tests)
+- 🚀 Optimized CI/CD pipeline (3-minute builds)
 
 ## Setup
 
@@ -25,10 +27,9 @@ A beautiful React application for exploring Arabic poetry with AI-powered insigh
 npm install
 ```
 
-2. Add your Gemini API key:
-   - Open `app.jsx`
-   - Find line 79: `const apiKey = "";`
-   - Add your API key: `const apiKey = "your-api-key-here";`
+2. Configure environment variables:
+   - Copy `.env.example` to `.env`
+   - Add your Gemini API key: `VITE_GEMINI_API_KEY=your-api-key-here`
 
 3. Start the development server:
 ```bash
@@ -74,17 +75,24 @@ npm run dev
 
 ```
 poetry-bil-araby/
-├── app.jsx                  # Main application component
-├── main.jsx                 # React entry point
-├── index.html               # HTML template
-├── index.css                # Global styles (Tailwind)
-├── package.json             # Dependencies
-├── vite.config.js           # Vite configuration
-├── vercel.json              # Vercel deployment config
-├── .github/workflows/       # CI/CD pipelines
-│   ├── ci.yml              # Continuous Integration
-│   └── deploy.yml          # Production deployment
-└── CI_CD_STRATEGY.md       # Detailed CI/CD evolution guide
+├── src/                     # Source code
+│   ├── app.jsx             # Main application component
+│   ├── main.jsx            # React entry point
+│   ├── index.css           # Global styles (Tailwind)
+│   └── test/               # Unit tests (113 tests)
+├── e2e/                     # End-to-end tests (Playwright)
+│   ├── app.spec.js         # Core functionality tests
+│   └── ui-ux.spec.js       # UI/UX quality tests
+├── .github/                 # GitHub configuration
+│   ├── workflows/ci.yml    # CI/CD pipeline (optimized)
+│   ├── TESTING_STRATEGY.md # Comprehensive testing guide
+│   └── CI_CD_GUIDE.md      # CI/CD operational reference
+├── docs/                    # Documentation
+│   └── CI_PERFORMANCE_OPTIMIZATION.md
+├── package.json             # Dependencies and scripts
+├── vitest.config.js         # Unit test configuration
+├── playwright.config.js     # E2E test configuration
+└── vercel.json             # Vercel deployment config
 ```
 
 ## Deployment
@@ -123,21 +131,43 @@ poetry-bil-araby/
 - ✅ Zero configuration
 - ✅ Automatic HTTPS
 
+## Testing
+
+### Run Tests
+
+```bash
+# Unit tests (113 tests)
+npm test                    # Watch mode
+npm run test:run            # Single run
+npm run test:coverage       # With coverage
+
+# E2E tests (180+ test executions across devices)
+npm run test:e2e            # All E2E tests
+npm run test:e2e:ui         # UI/UX tests only
+npm run test:e2e:headed     # With browser visible
+npm run test:e2e:debug      # Debug mode
+npm run test:e2e:report     # View HTML report
+npm run test:e2e:full       # Full device matrix (local)
+```
+
+### Test Coverage
+
+- **Unit Tests:** 113 tests covering components, utilities, and integration
+- **E2E Tests:** 32 scenarios × 6 devices = 180+ test executions
+  - Desktop: Chrome, Firefox, Safari
+  - Mobile: Pixel 5, iPhone 12
+  - Tablet: iPad Pro
+- **CI/CD:** Optimized pipeline runs in ~3 minutes
+- **Documentation:** See `.github/TESTING_STRATEGY.md` for details
+
+## Documentation
+
+- `.github/TESTING_STRATEGY.md` - Comprehensive testing strategy
+- `.github/CI_CD_GUIDE.md` - CI/CD pipeline reference
+- `docs/CI_PERFORMANCE_OPTIMIZATION.md` - Performance optimization journey
+- `e2e/README.md` - E2E testing guide
+
 ## TODO
-
-### Next Steps
-- [ ] Add tests: Install Vitest and create first component tests
-- [ ] Set up coverage: Connect Codecov for coverage tracking
-- [ ] Add visual regression: Install Playwright when UI stabilizes
-
-### Testing & Quality
-- [ ] Add unit and component tests with Vitest
-- [ ] Set up code coverage tracking with Codecov
-- [ ] Implement visual regression testing with Playwright
-- [ ] Create E2E test suite
-- [ ] Add Lighthouse CI for performance monitoring
-- [ ] Set up bundle size tracking
-- [ ] Enable Dependabot for security scanning
 
 ### Features
 - [ ] Add poem favorites and bookmarks
@@ -148,14 +178,9 @@ poetry-bil-araby/
 - [ ] Add keyboard shortcuts
 - [ ] Implement pagination for large datasets
 
-### Documentation
-- [ ] Add JSDoc comments to functions
-- [ ] Create CONTRIBUTING.md
-- [ ] Document component architecture
-- [ ] Add API integration documentation
-
 ### Developer Experience
 - [ ] Configure ESLint and Prettier
 - [ ] Set up pre-commit hooks
 - [ ] Consider TypeScript migration
-- [ ] Create development environment setup script
+- [ ] Add JSDoc comments to functions
+- [ ] Create CONTRIBUTING.md

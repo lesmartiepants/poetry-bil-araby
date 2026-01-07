@@ -26,7 +26,12 @@ dist-ssr
 # Environment variables
 .env
 .env.local
+
+# Test artifacts and reports
 coverage/
 ci-artifacts/
 playwright-results/
+playwright-report/
+test-results/
 ui-ux-screenshots/
+ui-ux-report/

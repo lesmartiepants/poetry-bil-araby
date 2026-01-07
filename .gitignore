@@ -32,6 +32,9 @@ coverage/
 ci-artifacts/
 playwright-results/
 playwright-report/
+playwright-report-full/
 test-results/
 ui-ux-screenshots/
 ui-ux-report/
+*.playwright-cache/
+.playwright/

@@ -92,7 +92,8 @@ test.describe('UI/UX - Visual Design', () => {
 
 test.describe('UI/UX - Interaction Design', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    // Skip splash screen in E2E tests for faster execution and reliable testing
+    await page.goto('/?skipSplash=true');
     await page.waitForLoadState('domcontentloaded');
   });
 
@@ -152,7 +153,8 @@ test.describe('UI/UX - Interaction Design', () => {
 
 test.describe('UI/UX - Content Readability', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    // Skip splash screen in E2E tests for faster execution and reliable testing
+    await page.goto('/?skipSplash=true');
     await page.waitForLoadState('domcontentloaded');
   });
 
@@ -199,7 +201,8 @@ test.describe('UI/UX - Content Readability', () => {
 
 test.describe('UI/UX - Accessibility', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    // Skip splash screen in E2E tests for faster execution and reliable testing
+    await page.goto('/?skipSplash=true');
     await page.waitForLoadState('domcontentloaded');
   });
 
@@ -242,7 +245,8 @@ test.describe('UI/UX - Accessibility', () => {
 
 test.describe('UI/UX - Visual Consistency', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    // Skip splash screen in E2E tests for faster execution and reliable testing
+    await page.goto('/?skipSplash=true');
     await page.waitForLoadState('domcontentloaded');
   });
 
@@ -266,7 +270,7 @@ test.describe('UI/UX - Visual Consistency', () => {
 
   test('should maintain visual hierarchy', async ({ page }) => {
     // Header should be larger than body text
-    const headerSize = await page.locator('text=poetry').evaluate(el =>
+    const headerSize = await page.locator('header').locator('text=poetry').first().evaluate(el =>
       parseFloat(getComputedStyle(el).fontSize)
     );
     const bodySize = await page.locator('[dir="rtl"]').first().evaluate(el =>

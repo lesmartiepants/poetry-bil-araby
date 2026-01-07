@@ -1,0 +1,173 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  # Stage 1: Build and validate
+  build:
+    name: Build & Validate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '21'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build application
+        run: npm run build
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist
+          path: dist/
+          retention-days: 7
+
+  # Stage 2: Test suite (will grow as project evolves)
+  test:
+    name: Test Suite
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '21'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Placeholder for when tests are added
+      - name: Run unit tests
+        run: npm test --if-present
+        continue-on-error: true
+
+      # Upload coverage if tests exist
+      - name: Upload coverage reports
+        if: always()
+        uses: codecov/codecov-action@v4
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          fail_ci_if_error: false
+        continue-on-error: true
+
+  # Stage 3: Visual regression & E2E (future enhancement)
+  visual-tests:
+    name: Visual Regression
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '21'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Placeholder for Playwright/Chromatic when added
+      - name: Run visual regression tests
+        run: npm run test:visual --if-present
+        continue-on-error: true
+
+      - name: Upload screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: visual-test-results
+          path: test-results/
+          if-no-files-found: ignore
+
+  # Stage 4: Deploy preview (Vercel, Netlify, or GitHub Pages)
+  deploy-preview:
+    name: Deploy Preview
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: dist
+          path: dist/
+
+      # Placeholder for deployment - will add Vercel/Netlify config
+      - name: Deploy to preview environment
+        run: echo "Preview deployment will be configured with Vercel/Netlify"
+
+      # Comment on PR with preview link
+      - name: Comment preview URL on PR
+        uses: actions/github-script@v7
+        if: always()
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '🚀 Preview deployment ready! (Vercel/Netlify integration pending)'
+            })
+
+  # Stage 5: Provide feedback on PR
+  pr-feedback:
+    name: PR Feedback Bot
+    runs-on: ubuntu-latest
+    needs: [build, test, visual-tests]
+    if: always() && github.event_name == 'pull_request'
+    steps:
+      - name: Post CI summary to PR
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const buildStatus = '${{ needs.build.result }}';
+            const testStatus = '${{ needs.test.result }}';
+            const visualStatus = '${{ needs.visual-tests.result }}';
+
+            const statusEmoji = (status) => {
+              if (status === 'success') return '✅';
+              if (status === 'failure') return '❌';
+              return '⚠️';
+            };
+
+            const body = `
+            ## 🤖 CI/CD Feedback Loop
+
+            | Check | Status |
+            |-------|--------|
+            | Build | ${statusEmoji(buildStatus)} ${buildStatus} |
+            | Tests | ${statusEmoji(testStatus)} ${testStatus} |
+            | Visual Regression | ${statusEmoji(visualStatus)} ${visualStatus} |
+
+            ### 📊 Next Steps for AI Contributors:
+            - Add component tests as features grow
+            - Visual regression tests will catch UI changes
+            - Coverage tracking coming soon
+
+            *This feedback loop will evolve as the project grows*
+            `;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            })

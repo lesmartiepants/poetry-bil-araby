@@ -95,9 +95,22 @@ API interactions follow this pattern:
 - Uses Playwright
 - Two suites:
   - `app.spec.js` - Core functionality tests
-  - `ui-ux.spec.js` - Design quality and accessibility
+  - `ui-ux.spec.js` - Design quality and accessibility (23 tests across 6 devices = 126 total)
 - CI runs Chrome only for speed
 - Locally runs full device matrix (6 browsers/devices)
+
+**Playwright Browser Setup:**
+```bash
+# REQUIRED before running E2E tests locally:
+npx playwright install chromium webkit firefox
+
+# If SSL certificate errors occur:
+# Option 1: Temporary workaround (use with caution)
+NODE_TLS_REJECT_UNAUTHORIZED=0 npx playwright install chromium webkit
+
+# Option 2: Push to CI and let tests run there (recommended)
+# CI has no SSL issues and caches browsers automatically
+```
 
 **Performance Optimizations:**
 - `vitest.config.js` - Aggressive timeouts, fail-fast in CI

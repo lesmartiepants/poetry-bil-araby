@@ -15,7 +15,8 @@
     "test:e2e:ui": "playwright test e2e/ui-ux.spec.js",
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:debug": "playwright test --debug",
-    "test:e2e:report": "playwright show-report"
+    "test:e2e:report": "playwright show-report",
+    "test:e2e:full": "playwright test --config=playwright.config.full.js"
   },
   "dependencies": {
     "lucide-react": "^0.460.0",

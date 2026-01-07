@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Play, Pause, BookOpen, RefreshCw, Volume2, ChevronDown, Quote, Globe, Moon, Sun, Loader2, ChevronRight, ChevronLeft, Search, X, Copy, LayoutGrid, Check, Bug, Trash2, Sparkles, PenTool } from 'lucide-react';
+import { Play, Pause, BookOpen, RefreshCw, Volume2, ChevronDown, Quote, Globe, Moon, Sun, Loader2, ChevronRight, ChevronLeft, Search, X, Copy, LayoutGrid, Check, Bug, Trash2, Sparkles, PenTool, Library, Compass, Rabbit } from 'lucide-react';
 
 /* =============================================================================
   1. FEATURE FLAGS & DESIGN SYSTEM
@@ -170,26 +170,30 @@ const CategoryPill = ({ selected, onSelect, darkMode }) => {
   const theme = darkMode ? THEME.dark : THEME.light;
 
   return (
-    <div className="relative mb-2 flex justify-center" ref={dropdownRef}>
-      <div className={`flex flex-col ${DESIGN.radius} ${DESIGN.anim} shadow-xl overflow-hidden border ${DESIGN.glass} ${theme.pill}`}>
-        <div className={`${DESIGN.anim} ease-in-out overflow-hidden ${isOpen ? 'max-h-[500px] opacity-100 mb-1 border-b border-indigo-500/10' : 'max-h-0 opacity-0'}`}>
-          <div className="p-1 flex flex-col gap-0.5">
-            {CATEGORIES.map(cat => (
-              <button key={cat.id} onClick={() => { onSelect(cat.id); setIsOpen(false); }} className={`w-full px-5 py-2.5 flex flex-col items-center rounded-xl transition-all hover:bg-indigo-500/10 group ${selected === cat.id ? 'hidden' : ''}`}>
-                <span className={`font-brand-ar text-base ${theme.titleColor} transition-colors opacity-90`}>{cat.labelAr}</span>
-                <span className="font-brand-en text-[8px] uppercase tracking-wider opacity-40">{cat.label}</span>
-              </button>
-            ))}
-          </div>
+    <div className="relative flex flex-col items-center gap-1 min-w-[56px]" ref={dropdownRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105"
+        aria-label="Select poet category"
+      >
+        <Library size={21} className="text-[#C5A059]" />
+      </button>
+      <span className="font-brand-en text-[8.5px] tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">Poets</span>
+
+      {isOpen && (
+        <div className="absolute bottom-full right-[-20px] mb-3 min-w-[220px] bg-[rgba(20,18,16,0.98)] backdrop-blur-[48px] border border-[rgba(197,160,89,0.15)] rounded-3xl p-3 shadow-[0_-10px_40px_rgba(0,0,0,0.7)] z-50">
+          {CATEGORIES.map(cat => (
+            <button
+              key={cat.id}
+              onClick={() => { onSelect(cat.id); setIsOpen(false); }}
+              className={`w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex flex-col items-center border-b border-[rgba(197,160,89,0.08)] last:border-b-0 hover:bg-[rgba(197,160,89,0.08)] ${selected === cat.id ? 'bg-[rgba(197,160,89,0.12)]' : ''}`}
+            >
+              <div className="font-amiri text-lg text-[#C5A059] mb-[3px] font-medium">{cat.labelAr}</div>
+              <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">{cat.label}</div>
+            </button>
+          ))}
         </div>
-        <button onClick={() => setIsOpen(!isOpen)} className={`flex items-center justify-center gap-3 px-4 py-2 transition-colors hover:bg-teal-500/5`}>
-          <div className="flex flex-col items-center leading-none">
-            <span className={`font-brand-ar text-lg ${theme.titleColor}`}>{currentCat.labelAr}</span>
-            <span className="font-brand-en text-[8px] opacity-40 uppercase tracking-widest">{currentCat.label}</span>
-          </div>
-          <ChevronDown size={12} className={`${DESIGN.anim} ${isOpen ? 'rotate-180' : ''} text-stone-500`} />
-        </button>
-      </div>
+      )}
     </div>
   );
 };
@@ -408,19 +412,15 @@ export default function DiwanApp() {
           text-shadow: 0 0 30px rgba(99, 102, 241, 0.6);
         }
 
-        .arch-frame {
+        .minimal-frame {
           position: relative;
-          width: clamp(100%, 95vw, 100%);
-          height: clamp(100px, 24vw, 280px);
-          margin: 0 auto;
-          padding: clamp(12px, 3vw, 32px) clamp(16px, 4vw, 48px);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          aspect-ratio: 1.8 / 1;
+          width: 100%;
+          max-width: 550px;
+          margin: 0 auto 16px;
+          padding: 20px 40px;
         }
 
-        .arch-frame svg {
+        .minimal-frame svg {
           position: absolute;
           top: 0;
           left: 0;
@@ -430,15 +430,38 @@ export default function DiwanApp() {
           height: 100%;
         }
 
-        .arch-line {
+        .frame-line {
           fill: none;
           stroke: #C5A059;
-          stroke-width: clamp(0.8, 0.2vw, 2);
-          opacity: 0.25;
-          stroke-linecap: round;
-          stroke-linejoin: round;
+          stroke-width: 2;
+          opacity: 0.28;
+          stroke-linecap: square;
+        }
+
+        @keyframes bounce {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-3px); }
+        }
+
+        .rabbit-bounce {
+          animation: bounce 2s ease-in-out infinite;
+        }
+
+        .scroll-progress {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 3px;
+          background: linear-gradient(to right, #6366f1, #9333ea);
+          transform: scaleX(0.36);
+          transform-origin: left;
+          z-index: 100;
+          opacity: 0.85;
         }
       `}</style>
+
+      <div className="scroll-progress" />
 
       <DebugPanel logs={logs} onClear={() => setLogs([])} darkMode={darkMode} />
 
@@ -463,12 +486,22 @@ export default function DiwanApp() {
               <div className="w-full max-w-4xl flex flex-col items-center">
                 
                 <div className={`text-center ${DESIGN.mainMetaPadding} animate-in slide-in-from-bottom-8 duration-1000 z-20 w-full`}>
-                   <div className="arch-frame mb-1">
-                      <svg viewBox="0 0 800 200" preserveAspectRatio="xMidYMid meet" className="w-full h-auto">
-                        <path className="arch-line" d="M50,180 L50,80 C50,20 750,20 750,80 L750,180" />
-                        <path className="arch-line opacity-20" d="M80,180 L80,100 C80,40 720,40 720,100 L720,180" />
+                   <div className="minimal-frame mb-1">
+                      <svg viewBox="0 0 550 100" preserveAspectRatio="xMidYMid meet">
+                        <line className="frame-line" x1="20" y1="20" x2="70" y2="20" />
+                        <line className="frame-line" x1="20" y1="20" x2="20" y2="70" />
+                        <line className="frame-line" x1="530" y1="20" x2="480" y2="20" />
+                        <line className="frame-line" x1="530" y1="20" x2="530" y2="70" />
+                        <line className="frame-line" x1="20" y1="80" x2="70" y2="80" />
+                        <line className="frame-line" x1="20" y1="80" x2="20" y2="30" />
+                        <line className="frame-line" x1="530" y1="80" x2="480" y2="80" />
+                        <line className="frame-line" x1="530" y1="80" x2="530" y2="30" />
+                        <circle className="frame-line" cx="32" cy="32" r="2.5" fill="#C5A059" opacity="0.35" />
+                        <circle className="frame-line" cx="518" cy="32" r="2.5" fill="#C5A059" opacity="0.35" />
+                        <circle className="frame-line" cx="32" cy="68" r="2.5" fill="#C5A059" opacity="0.35" />
+                        <circle className="frame-line" cx="518" cy="68" r="2.5" fill="#C5A059" opacity="0.35" />
                       </svg>
-                      
+
                       <div className="relative z-10 flex flex-col items-center justify-center w-full">
                          <div className={`flex flex-wrap items-center justify-center gap-1 sm:gap-2 md:gap-4 font-amiri text-sm sm:text-lg md:${DESIGN.mainTitleSize}`}>
                            <span className={`${theme.poetColor} opacity-90`}>{current?.poetArabic}</span>
@@ -546,36 +579,35 @@ export default function DiwanApp() {
           </main>
 
           <footer className="flex-none py-3 px-4 flex flex-col items-center z-20 relative bg-gradient-to-t from-black/5 to-transparent">
-            <CategoryPill selected={selectedCategory} onSelect={setSelectedCategory} darkMode={darkMode} />
-            <div className={`flex items-center gap-1 sm:gap-2 md:gap-4 px-2 sm:px-3 md:px-5 py-2 rounded-full shadow-2xl border ${DESIGN.glass} ${theme.border} ${theme.shadow} ${DESIGN.anim} max-w-[calc(100vw-2rem)] w-fit`}>
+            <div className={`flex items-center gap-2 px-5 py-3 rounded-full shadow-2xl border ${DESIGN.glass} ${theme.border} ${theme.shadow} ${DESIGN.anim} max-w-[calc(100vw-2rem)] w-fit`}>
 
-              <button onClick={handleFetch} disabled={isFetching} aria-label="Discover new poem" className={`${DESIGN.touchTarget} p-2 transition-all hover:scale-110 relative group ${theme.controlIcon}`}>
-                {isFetching ? <Loader2 className="animate-spin" size={18} /> : <Sparkles size={18} className="stroke-[1.5]" />}
-                <span className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-indigo-900 text-white font-brand-en text-[9px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Discover</span>
-              </button>
-
-              <div className="w-px h-5 bg-stone-500/20 mx-0.5 md:mx-1 flex-shrink-0" />
-
-              <div className="flex items-center">
-                <button onClick={() => setCurrentIndex(prev => (prev - 1 + filtered.length) % filtered.length)} disabled={filtered.length <= 1} aria-label="Previous poem" className={`${DESIGN.touchTarget} p-2 disabled:opacity-10 transition-colors ${theme.controlIcon}`}><ChevronLeft size={20} /></button>
-                <button onClick={() => setCurrentIndex(prev => (prev + 1) % filtered.length)} disabled={filtered.length <= 1} aria-label="Next poem" className={`${DESIGN.touchTarget} p-2 disabled:opacity-10 transition-colors ${theme.controlIcon}`}><ChevronRight size={20} /></button>
-              </div>
-
-              <div className="w-px h-5 bg-stone-500/20 mx-0.5 md:mx-1 flex-shrink-0" />
-
-              <button onClick={togglePlay} disabled={isGeneratingAudio} aria-label={isPlaying ? "Pause recitation" : "Play recitation"} className={`${DESIGN.touchTarget} rounded-full flex-shrink-0 flex items-center justify-center shadow-xl transition-all duration-300 hover:scale-110 active:scale-95 group relative ${theme.btnPrimary}`}>
-                 <div className="absolute inset-0 rounded-full border border-white/20 scale-110 opacity-0 group-hover:opacity-100 transition-all duration-300" />
-                {isGeneratingAudio ? <Loader2 className="animate-spin" size={18} /> : isPlaying ? <Pause fill="currentColor" size={18} /> : <Play fill="currentColor" className="ml-0.5" size={18} />}
-              </button>
-
-              <div className="w-px h-5 bg-stone-500/20 mx-0.5 md:mx-1 flex-shrink-0" />
-
-              <div className="flex items-center">
-                <button onClick={() => { const text = `${current?.poet} - ${current?.title}\n${current?.poetArabic} - ${current?.titleArabic}\n\n${current?.arabic}\n\n${current?.english}`; const el = document.createElement('textarea'); el.value = text; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); setCopySuccess(true); setTimeout(() => setCopySuccess(false), 2000); }} aria-label="Copy poem text" className={`${DESIGN.touchTarget} p-2 transition-all duration-300 ${copySuccess ? 'text-green-500' : theme.controlIcon}`}>
-                  {copySuccess ? <Check size={18} /> : <Copy size={18} />}
+              <div className="flex flex-col items-center gap-1 min-w-[56px]">
+                <button onClick={togglePlay} disabled={isGeneratingAudio} aria-label={isPlaying ? "Pause recitation" : "Play recitation"} className={`min-w-[46px] min-h-[46px] p-[11px] rounded-full flex-shrink-0 flex items-center justify-center shadow-xl transition-all duration-300 hover:scale-110 active:scale-95 group relative ${theme.btnPrimary}`}>
+                  <div className="absolute inset-0 rounded-full border border-white/20 scale-110 opacity-0 group-hover:opacity-100 transition-all duration-300" />
+                  {isGeneratingAudio ? <Loader2 className="animate-spin" size={21} /> : isPlaying ? <Pause fill="currentColor" size={21} /> : <Volume2 size={21} />}
                 </button>
-                <button onClick={() => setDarkMode(!darkMode)} aria-label={`Switch to ${darkMode ? 'light' : 'dark'} mode`} className={`${DESIGN.touchTarget} p-2 transition-colors ${theme.controlIcon}`}>{darkMode ? <Sun size={18} /> : <Moon size={18} />}</button>
+                <span className="font-brand-en text-[8.5px] tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">Listen</span>
               </div>
+
+              <div className="flex flex-col items-center gap-1 min-w-[56px]">
+                <button onClick={handleAnalyze} disabled={isInterpreting || interpretation} aria-label="Dive into poem meaning" className={`min-w-[46px] min-h-[46px] p-[11px] rounded-full flex-shrink-0 flex items-center justify-center shadow-xl transition-all duration-300 hover:scale-110 active:scale-95 group relative ${theme.btnPrimary} disabled:opacity-50`}>
+                  <div className="absolute inset-0 rounded-full border border-white/20 scale-110 opacity-0 group-hover:opacity-100 transition-all duration-300" />
+                  {isInterpreting ? <Loader2 className="animate-spin" size={21} /> : <Compass size={21} />}
+                </button>
+                <span className="font-brand-en text-[8.5px] tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">Dive In</span>
+              </div>
+
+              <div className="flex flex-col items-center gap-1 min-w-[56px]">
+                <button onClick={handleFetch} disabled={isFetching} aria-label="Discover new poem" className={`min-w-[46px] min-h-[46px] p-[11px] rounded-full flex-shrink-0 flex items-center justify-center shadow-xl transition-all duration-300 hover:scale-110 active:scale-95 group relative ${theme.btnPrimary}`}>
+                  <div className="absolute inset-0 rounded-full border border-white/20 scale-110 opacity-0 group-hover:opacity-100 transition-all duration-300" />
+                  {isFetching ? <Loader2 className="animate-spin" size={21} /> : <Rabbit size={21} className="rabbit-bounce" />}
+                </button>
+                <span className="font-brand-en text-[8.5px] tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">Discover</span>
+              </div>
+
+              <div className="w-px h-10 bg-stone-500/20 mx-2 flex-shrink-0" />
+
+              <CategoryPill selected={selectedCategory} onSelect={setSelectedCategory} darkMode={darkMode} />
             </div>
           </footer>
         </div>

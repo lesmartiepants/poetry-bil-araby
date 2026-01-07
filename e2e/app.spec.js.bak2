@@ -60,7 +60,7 @@ test.describe('Poetry Bil-Araby - Core Functionality', () => {
 
     // Toggle theme
     await themeButton.click();
-    await page.waitForTimeout(100);
+    await page.waitForTimeout(300);
 
     // Verify background has changed
     const newBg = await body.evaluate(el => getComputedStyle(el).backgroundColor);
@@ -93,7 +93,7 @@ test.describe('Poetry Bil-Araby - Core Functionality', () => {
     if (isMobile) {
       // Scroll down to reveal insight button on mobile
       await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight));
-      await page.waitForTimeout(100);
+      await page.waitForTimeout(500);
     }
 
     // Find and click the insight button (Sparkles icon in the insight section)
@@ -121,7 +121,7 @@ test.describe('Poetry Bil-Araby - Core Functionality', () => {
     await copyButton.click();
 
     // Should show success indicator (Check icon)
-    await page.waitForTimeout(100);
+    await page.waitForTimeout(300);
   });
 });
 
@@ -160,10 +160,10 @@ test.describe('Poetry Bil-Araby - Debug Panel', () => {
 
     // Click to expand
     await debugHeader.click();
-    await page.waitForTimeout(100);
+    await page.waitForTimeout(300);
 
     // Click to collapse
     await debugHeader.click();
-    await page.waitForTimeout(100);
+    await page.waitForTimeout(300);
   });
 });

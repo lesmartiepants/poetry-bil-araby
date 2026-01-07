@@ -8,7 +8,7 @@ import { test, expect } from '@playwright/test';
 test.describe('UI/UX - Visual Design', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('domcontentloaded');
+    await page.waitForLoadState('networkidle');
   });
 
   test('should have proper responsive layout on desktop', async ({ page, viewport }) => {
@@ -92,7 +92,7 @@ test.describe('UI/UX - Visual Design', () => {
 test.describe('UI/UX - Interaction Design', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('domcontentloaded');
+    await page.waitForLoadState('networkidle');
   });
 
   test('buttons should have hover states', async ({ page }) => {
@@ -151,7 +151,7 @@ test.describe('UI/UX - Interaction Design', () => {
 test.describe('UI/UX - Content Readability', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('domcontentloaded');
+    await page.waitForLoadState('networkidle');
   });
 
   test('poem text should have adequate spacing', async ({ page }) => {
@@ -198,7 +198,7 @@ test.describe('UI/UX - Content Readability', () => {
 test.describe('UI/UX - Accessibility', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('domcontentloaded');
+    await page.waitForLoadState('networkidle');
   });
 
   test('should have proper viewport meta tag', async ({ page }) => {
@@ -241,7 +241,7 @@ test.describe('UI/UX - Accessibility', () => {
 test.describe('UI/UX - Visual Consistency', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
-    await page.waitForLoadState('domcontentloaded');
+    await page.waitForLoadState('networkidle');
   });
 
   test('should use consistent color scheme', async ({ page }) => {

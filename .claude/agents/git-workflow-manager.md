@@ -60,6 +60,54 @@ git branch -a  # Check all branches
 - Extension of existing work → Use parent branch
 - NEVER stay on main
 
+### Phase 1.5: Worktree Setup (Optional, for Parallel Work)
+
+**When to use worktrees:**
+- User working on multiple features simultaneously
+- Multiple Claude instances needed
+- Want to avoid constant branch switching
+- Need isolated workspaces for different tasks
+
+```bash
+# Create worktree for parallel work
+git worktree add ../repo-branch-name branch-name
+
+# Example: Create worktree for feature branch
+git worktree add ../poetry-auth-refactor feature/auth-refactor
+
+# User can now cd into worktree and run claude there
+```
+
+**Worktree best practices:**
+1. **Naming convention**: `../repo-branch-name` (e.g., `../poetry-feature-auth`)
+2. **One worktree per feature**: Keep workspaces isolated
+3. **Clean up when done**: `git worktree remove ../poetry-feature-auth`
+4. **Shared history**: All worktrees share the same `.git` folder
+
+**When user requests parallel work:**
+1. Ask if they want worktrees set up
+2. Create worktree for each task: `git worktree add ../poetry-task-a task-a`
+3. Inform user they can run Claude in each worktree directory
+4. Suggest terminal organization (tabs per worktree)
+
+**Clean up worktrees:**
+```bash
+# List all worktrees
+git worktree list
+
+# Remove worktree when done
+git worktree remove ../poetry-feature-name
+
+# Prune stale worktrees
+git worktree prune
+```
+
+**Inform user of worktree setup:**
+- Tell them the worktree path
+- Explain they can `cd` there and run `claude`
+- Mention each Claude instance is isolated
+- Remind them to clean up when feature is merged
+
 ### Phase 2: Code Commits (Sequential Only)
 
 **For each logical change:**
@@ -262,6 +310,12 @@ git add file1.js && git commit -m "feat: add feature" && git push
    ├─ Decide: reuse or create
    └─ Ensure on feature branch
 
+1.5. Worktree Setup (Optional) 🌳
+   ├─ User needs parallel work?
+   ├─ Create worktrees for each task
+   ├─ Inform user of worktree paths
+   └─ Suggest terminal organization
+
 2. Code Commits (Sequential)
    ├─ Stage → Commit → Push
    ├─ Wait for completion
@@ -279,7 +333,7 @@ git add file1.js && git commit -m "feat: add feature" && git push
    ├─ Create comprehensive PR
    └─ Return URL
 
-KEY: Protection → Branch → Code → Docs → PR
+KEY: Protection → Branch → [Worktree] → Code → Docs → PR
 ```
 
 ## Examples

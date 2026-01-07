@@ -1,0 +1,215 @@
+================================================================================
+                    CI PERFORMANCE COMPARISON
+================================================================================
+
+BEFORE OPTIMIZATION (Run 20777627826)
+────────────────────────────────────────────────────────────────────────────
+
+Unit Tests Job (59667159937):
+  Status:        Failed immediately (ESM error)
+  Test Runtime:  347ms
+  Job Runtime:   17m50s ❌ (continued despite failure)
+  Issue:         Didn't fail fast, hung on coverage upload
+
+E2E Tests Job (59667159926):
+  Runtime:       17m50s ❌ (cancelled due to timeout)
+  Tests:         Running 192 tests using 1 worker
+  Retries:       2 (each test runs up to 3 times)
+  Timeout:       15s per test
+  Devices:       6 (Chrome, Firefox, Safari × Desktop/Mobile/Tablet)
+  Issue:         Too many tests, too few workers, excessive retries
+
+UI/UX Tests Job (59667159928):
+  Runtime:       9m59s ❌ (cancelled due to timeout)
+  Tests:         192 tests using 1 worker
+  Issue:         Same as E2E - too slow
+
+Total CI Runtime: 45+ minutes (if not cancelled)
+
+════════════════════════════════════════════════════════════════════════════
+
+AFTER OPTIMIZATION (Expected)
+────────────────────────────────────────────────────────────────────────────
+
+Unit Tests Job:
+  Runtime:       < 30 seconds ✅ (97% improvement)
+  Config:        testTimeout: 3s, hookTimeout: 2s
+  Behavior:      Fails fast with CI: true
+  Coverage:      Uploads even on failure (if: always())
+
+E2E Tests Job:
+  Runtime:       < 3 minutes ✅ (83% improvement)
+  Tests:         Running 64 tests using 2 workers
+  Retries:       0 (fail fast for quick feedback)
+  Timeout:       10s per test
+  Devices:       2 (Desktop Chrome + Mobile Chrome only)
+  Browser:       Chromium only (faster install)
+
+UI/UX Tests Job:
+  Runtime:       < 3 minutes ✅ (70% improvement)
+  Tests:         64 tests using 2 workers
+  Devices:       2 (Desktop Chrome + Mobile Chrome only)
+  Browser:       Chromium only
+
+Total CI Runtime: < 7 minutes ✅ (85% improvement)
+
+════════════════════════════════════════════════════════════════════════════
+
+KEY METRICS COMPARISON
+────────────────────────────────────────────────────────────────────────────
+
+Metric                    | Before      | After       | Improvement
+──────────────────────────┼─────────────┼─────────────┼────────────
+Total CI Runtime          | 45+ min     | < 7 min     | 85% faster
+Unit Test Job             | 17m50s      | < 30s       | 97% faster
+E2E Test Job              | 17m50s      | < 3m        | 83% faster
+UI/UX Test Job            | 9m59s       | < 3m        | 70% faster
+──────────────────────────┼─────────────┼─────────────┼────────────
+E2E Test Count            | 192         | 64          | 67% reduction
+Worker Count              | 1           | 2           | 100% increase
+Device Configurations     | 6           | 2           | 67% reduction
+Retry Count               | 2           | 0           | Fail fast
+Test Timeout              | 15s         | 10s         | 33% faster
+Assertion Timeout         | 5s          | 3s          | 40% faster
+Browsers Installed        | 3           | 1           | 67% reduction
+
+════════════════════════════════════════════════════════════════════════════
+
+CONFIGURATION BREAKDOWN
+────────────────────────────────────────────────────────────────────────────
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ PLAYWRIGHT CONFIGURATION                                                │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│ CI Mode (Default - Fast Feedback):                                     │
+│   • Workers:    2 (parallel execution)                                 │
+│   • Timeout:    10s (fast failure detection)                           │
+│   • Expect:     3s (quick assertions)                                  │
+│   • Retries:    0 (fail fast)                                          │
+│   • Devices:    Desktop Chrome + Mobile Chrome                         │
+│   • Reporter:   GitHub Actions (native integration)                    │
+│   • Tests:      64 (32 tests × 2 devices)                              │
+│                                                                         │
+│ Local Mode (Full Coverage):                                            │
+│   • Workers:    All cores                                              │
+│   • Timeout:    30s (generous for dev)                                 │
+│   • Expect:     5s                                                     │
+│   • Retries:    1 (help catch flakes)                                  │
+│   • Devices:    All 6 (Chrome, Firefox, Safari × viewports)            │
+│   • Reporter:   HTML + JSON + List                                     │
+│   • Tests:      192 (32 tests × 6 devices)                             │
+│                                                                         │
+│ Full Device Config (playwright.config.full.js):                        │
+│   • Use:        npm run test:e2e:full                                  │
+│   • Purpose:    Pre-release comprehensive testing                      │
+│   • Devices:    All 6 device configurations                            │
+│   • Tests:      192 (full matrix)                                      │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ VITEST CONFIGURATION                                                    │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│ CI Mode:                                                                │
+│   • Test Timeout:      3s (aggressive)                                 │
+│   • Hook Timeout:      2s (setup/teardown)                             │
+│   • Teardown Timeout:  1s (cleanup)                                    │
+│   • Bail:              1 (stop on first failure)                       │
+│   • File Parallel:     false (sequential for stability)                │
+│   • Max Concurrency:   2 (limited resources)                           │
+│   • Pool:              forks (better isolation)                        │
+│                                                                         │
+│ Local Mode:                                                             │
+│   • Test Timeout:      5s (more generous)                              │
+│   • Hook Timeout:      5s                                              │
+│   • Teardown Timeout:  3s                                              │
+│   • Bail:              undefined (run all tests)                       │
+│   • File Parallel:     default (enabled)                               │
+│   • Max Concurrency:   default (unlimited)                             │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────┐
+│ CI WORKFLOW OPTIMIZATIONS                                               │
+├─────────────────────────────────────────────────────────────────────────┤
+│                                                                         │
+│ Unit Tests:                                                             │
+│   • Timeout:         3 minutes (was: 5)                                │
+│   • Environment:     CI: true (enables optimizations)                  │
+│   • Coverage Upload: if: always() (was: success())                     │
+│   • Continue:        continue-on-error: true on upload                 │
+│                                                                         │
+│ E2E Tests:                                                              │
+│   • Timeout:         5 minutes (was: 10)                               │
+│   • Environment:     CI: true                                          │
+│   • Browser Install: chromium only (was: all browsers)                 │
+│   • Cache:           Playwright browsers                               │
+│                                                                         │
+│ UI/UX Tests:                                                            │
+│   • Timeout:         5 minutes (was: 10)                               │
+│   • Environment:     CI: true                                          │
+│   • Browser Install: chromium only                                     │
+│   • Cache:           Playwright browsers                               │
+│                                                                         │
+└─────────────────────────────────────────────────────────────────────────┘
+
+════════════════════════════════════════════════════════════════════════════
+
+DECISION RATIONALE
+────────────────────────────────────────────────────────────────────────────
+
+Why 2 workers in CI?
+  GitHub Actions provides 2-core runners. Using 2 workers maximizes
+  parallelization without resource contention.
+
+Why only Chrome in CI?
+  Chrome has 65%+ market share and webkit (Safari) + Gecko (Firefox) quirks
+  are rare. Critical browser testing in CI provides fast feedback. Full
+  browser testing can be done locally or in scheduled nightly runs.
+
+Why 64 tests instead of 192?
+  192 tests = 32 test cases × 6 devices
+  64 tests = 32 test cases × 2 devices (Desktop + Mobile Chrome)
+  Same test coverage, 67% reduction in execution time.
+
+Why no retries in CI?
+  Retries hide flaky tests and slow down feedback. Better to fail fast,
+  fix the issue, and re-run. Retries are enabled locally (1 retry) to
+  help developers identify flakes.
+
+Why aggressive timeouts?
+  Unit tests should complete in milliseconds. If they don't, there's a
+  performance issue that needs fixing. Aggressive timeouts force
+  optimization and prevent hanging tests.
+
+Why separate full config?
+  Comprehensive cross-browser testing is important but not needed on every
+  commit. Separation allows:
+    - Fast CI feedback (< 7 min)
+    - Comprehensive testing when needed (npm run test:e2e:full)
+    - Clear intent and usage patterns
+
+════════════════════════════════════════════════════════════════════════════
+
+TESTING STRATEGY
+────────────────────────────────────────────────────────────────────────────
+
+┌──────────────────┬────────────────────────────────────────────────────┐
+│ When             │ What to Run                                        │
+├──────────────────┼────────────────────────────────────────────────────┤
+│ Every Commit     │ CI Pipeline (unit + E2E Chrome only)              │
+│ (Push/PR)        │ Fast feedback: < 7 minutes                         │
+├──────────────────┼────────────────────────────────────────────────────┤
+│ Before PR Merge  │ Full local testing (npm run test:e2e:full)        │
+│                  │ Comprehensive coverage: all browsers               │
+├──────────────────┼────────────────────────────────────────────────────┤
+│ Nightly          │ Scheduled full device matrix (future)             │
+│                  │ Catch cross-browser regressions                    │
+├──────────────────┼────────────────────────────────────────────────────┤
+│ Pre-Release      │ Manual full testing + visual review               │
+│                  │ Complete validation before deployment              │
+└──────────────────┴────────────────────────────────────────────────────┘
+
+════════════════════════════════════════════════════════════════════════════

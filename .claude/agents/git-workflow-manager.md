@@ -60,6 +60,40 @@ git branch -a  # Check all branches
 - Extension of existing work → Use parent branch
 - NEVER stay on main
 
+### Phase 1.5: Worktree Setup (Optional, for Parallel Work)
+
+**When user needs parallel development workspaces:**
+
+**Delegate to worktree-manager agent:**
+```
+User signals parallel work → Invoke worktree-manager agent
+- Signals: "work on multiple features", "parallel development", "set up worktrees"
+- Agent handles: worktree creation, naming, user guidance, cleanup instructions
+- Returns: worktree paths, terminal organization suggestions, usage instructions
+```
+
+**Quick reference (for simple cases):**
+```bash
+# Single worktree creation
+git worktree add ../poetry-branch-name branch-name
+
+# List worktrees
+git worktree list
+
+# Remove worktree
+git worktree remove ../poetry-branch-name
+```
+
+**For comprehensive worktree management (multiple worktrees, coordination, cleanup):**
+→ **Invoke worktree-manager agent**
+
+The worktree-manager provides:
+- Automated setup for multiple parallel workspaces
+- Consistent naming conventions
+- User guidance and terminal organization
+- Cleanup coordination and maintenance
+- Integration with multiple Claude instances
+
 ### Phase 2: Code Commits (Sequential Only)
 
 **For each logical change:**
@@ -262,6 +296,12 @@ git add file1.js && git commit -m "feat: add feature" && git push
    ├─ Decide: reuse or create
    └─ Ensure on feature branch
 
+1.5. Worktree Setup (Optional) 🌳
+   ├─ User needs parallel work?
+   ├─ Create worktrees for each task
+   ├─ Inform user of worktree paths
+   └─ Suggest terminal organization
+
 2. Code Commits (Sequential)
    ├─ Stage → Commit → Push
    ├─ Wait for completion
@@ -279,7 +319,7 @@ git add file1.js && git commit -m "feat: add feature" && git push
    ├─ Create comprehensive PR
    └─ Return URL
 
-KEY: Protection → Branch → Code → Docs → PR
+KEY: Protection → Branch → [Worktree] → Code → Docs → PR
 ```
 
 ## Examples

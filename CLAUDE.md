@@ -176,3 +176,110 @@ This ensures fast feedback in CI while allowing more relaxed timeouts locally.
 5. **Playwright Browser Matrix**: Local development runs 6 browser configs. CI runs only 2 (Desktop Chrome + Mobile Chrome). Use `npm run test:e2e:full` locally to run the comprehensive suite.
 
 6. **Theme State**: Theme is stored in component state only (not localStorage). Refreshing the page resets to dark mode. This is intentional for simplicity.
+
+## Git Worktrees for Parallel Work
+
+**Use git worktrees to run multiple Claude instances on different tasks simultaneously.**
+
+### Quick Start
+```bash
+# Create worktrees for parallel work
+git worktree add ../poetry-feature-a feature/feature-a
+git worktree add ../poetry-bugfix-b bugfix/issue-123
+git worktree add ../poetry-testing feature/test-updates
+
+# Open each in separate terminal tabs
+cd ../poetry-feature-a && claude
+cd ../poetry-bugfix-b && claude
+cd ../poetry-testing && claude
+```
+
+### Benefits
+- **Parallel Development**: Multiple features simultaneously without branch switching
+- **Agent Isolation**: Each Claude instance has its own working directory
+- **No Conflicts**: Independent file changes per worktree
+- **Faster Context Switching**: No stashing or committing to switch tasks
+
+### Best Practices
+1. **Consistent Naming**: Use `../repo-branch-name` pattern for worktree directories
+2. **One Terminal Per Worktree**: Keep organized with terminal tabs
+3. **Clean Up When Done**: `git worktree remove ../poetry-feature-a`
+4. **Shared Git History**: All worktrees share the same `.git` folder
+
+### Example Workflow
+```bash
+# Main repo: Work on documentation
+cd ~/poetry-bil-araby
+claude  # Working on docs
+
+# Worktree 1: Refactor authentication (separate terminal)
+git worktree add ../poetry-auth feature/auth-refactor
+cd ../poetry-auth
+claude  # Working on auth
+
+# Worktree 2: Fix test failures (separate terminal)
+git worktree add ../poetry-tests bugfix/test-fixes
+cd ../poetry-tests
+claude  # Fixing tests
+
+# All three Claude instances work independently!
+```
+
+### Clean Up
+```bash
+# When feature is merged
+git worktree remove ../poetry-auth
+git branch -d feature/auth-refactor  # If merged
+```
+
+### iTerm2 Notifications (Mac)
+Set up notifications in iTerm2 Preferences → Profiles → Terminal → Notifications to alert when Claude needs attention across multiple worktrees.
+
+## Git Workflow & Issue Tracking
+
+### Branch Protection - NEVER COMMIT TO MAIN
+
+**IMPORTANT: All work must be on feature branches. The git-workflow-manager agent enforces this.**
+
+**Branch Naming:**
+- `feature/descriptive-name` - New features
+- `bugfix/issue-description` - Bug fixes
+- `hotfix/critical-fix` - Urgent fixes
+- `docs/what-is-documented` - Documentation only
+- `chore/what-changed` - Maintenance
+
+### Conventional Commits (REQUIRED)
+
+```
+<type>(<scope>): <description>
+
+[optional body]
+
+[REQUIRED for fixes: Fixes #123]
+[OPTIONAL: Related to #456]
+```
+
+**Types:** `feat`, `fix`, `docs`, `test`, `refactor`, `perf`, `chore`, `ci`
+
+### GitHub Issue Tracking
+
+**Always create issues for:** bugs, test failures, technical debt, coverage gaps
+
+**Before committing a fix:**
+1. Check if issue exists: `gh issue list`
+2. If NO issue: Call `github-issue-manager` agent to create one
+3. Include in commit: `Fixes #123`
+
+**Issue Priorities:**
+- P0: Critical (blocks all development)
+- P1: High (blocks features)
+- P2: Medium (non-blocking)
+- P3: Low (nice-to-have)
+
+### GitHub CLI Commands
+```bash
+gh issue create --title "Title" --body "Description"
+gh issue list --label "test-failure" --state open
+gh pr create --title "Title" --body "Description"
+gh run list --limit 5
+```

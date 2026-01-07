@@ -393,7 +393,14 @@ export default function DiwanApp() {
   const [walkthroughStep, setWalkthroughStep] = useState(0);
 
   const theme = darkMode ? THEME.dark : THEME.light;
-  
+
+  // Sync theme to HTML element class for E2E tests
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.documentElement.className = darkMode ? 'dark' : 'light';
+    }
+  }, [darkMode]);
+
   const filtered = useMemo(() => {
     const searchStr = selectedCategory.toLowerCase();
     return selectedCategory === "All" 

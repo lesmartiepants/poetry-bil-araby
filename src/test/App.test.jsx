@@ -20,9 +20,10 @@ describe('DiwanApp', () => {
       // Use getAllByText since splash screen also contains these texts
       const poetryElements = screen.getAllByText('poetry')
       const arabicElements = screen.getAllByText('بالعربي')
+      const betaElements = screen.getAllByText('beta')
       expect(poetryElements.length).toBeGreaterThan(0)
       expect(arabicElements.length).toBeGreaterThan(0)
-      expect(screen.getByText('beta')).toBeInTheDocument()
+      expect(betaElements.length).toBeGreaterThan(0)
     })
 
     it('renders the default poem on initial load', () => {
@@ -130,7 +131,7 @@ describe('DiwanApp', () => {
     it('closes dropdown after selecting a category', async () => {
       render(<DiwanApp />)
       // Just verify the component renders
-      expect(screen.getByText('poetry')).toBeInTheDocument()
+      expect(screen.getAllByText('poetry').length).toBeGreaterThan(0)
     })
   })
 
@@ -221,7 +222,7 @@ describe('DiwanApp', () => {
     it('changes play button to pause when audio is playing', async () => {
       render(<DiwanApp />)
       // Audio functionality exists
-      expect(screen.getByText('poetry')).toBeInTheDocument()
+      expect(screen.getAllByText('poetry').length).toBeGreaterThan(0)
     })
   })
 
@@ -265,13 +266,13 @@ describe('DiwanApp', () => {
     it('renders analysis button in desktop view', () => {
       render(<DiwanApp />)
       // Component renders successfully
-      expect(screen.getByText('poetry')).toBeInTheDocument()
+      expect(screen.getAllByText('poetry').length).toBeGreaterThan(0)
     })
 
     it('shows loading state when analyzing poem', async () => {
       render(<DiwanApp />)
       // Component has analysis features
-      expect(screen.getByText('poetry')).toBeInTheDocument()
+      expect(screen.getAllByText('poetry').length).toBeGreaterThan(0)
     })
   })
 
@@ -286,13 +287,13 @@ describe('DiwanApp', () => {
     it('expands and collapses debug panel on click', async () => {
       render(<DiwanApp />)
       // Component renders successfully
-      expect(screen.getByText('poetry')).toBeInTheDocument()
+      expect(screen.getAllByText('poetry').length).toBeGreaterThan(0)
     })
 
     it('clears logs when clear button is clicked', async () => {
       render(<DiwanApp />)
       // Component has log clearing functionality
-      expect(screen.getByText('poetry')).toBeInTheDocument()
+      expect(screen.getAllByText('poetry').length).toBeGreaterThan(0)
     })
   })
 
@@ -300,7 +301,7 @@ describe('DiwanApp', () => {
     it('hides insight panel on mobile', () => {
       render(<DiwanApp />)
       // Component supports responsive layout
-      expect(screen.getByText('poetry')).toBeInTheDocument()
+      expect(screen.getAllByText('poetry').length).toBeGreaterThan(0)
     })
 
     it('shows insight panel on desktop', () => {
@@ -339,7 +340,7 @@ describe('DiwanApp', () => {
       render(<DiwanApp />)
 
       // Should render even with default poem
-      expect(screen.getByText('poetry')).toBeInTheDocument()
+      expect(screen.getAllByText('poetry').length).toBeGreaterThan(0)
     })
   })
 
@@ -349,7 +350,7 @@ describe('DiwanApp', () => {
 
       // Should render without errors on rerender
       rerender(<DiwanApp />)
-      expect(screen.getByText('poetry')).toBeInTheDocument()
+      expect(screen.getAllByText('poetry').length).toBeGreaterThan(0)
     })
 
     it('cleans up audio resources on unmount', () => {

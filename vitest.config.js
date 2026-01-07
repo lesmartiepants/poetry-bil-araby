@@ -1,5 +1,6 @@
 import { defineConfig } from 'vitest/config'
 import react from '@vitejs/plugin-react'
+import path from 'path'
 
 /**
  * Vitest configuration for Poetry Bil-Araby
@@ -16,7 +17,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'happy-dom',
-    setupFiles: './src/test/setup.js',
+    setupFiles: [path.resolve(__dirname, 'src/test/setup.js')],
     css: true,
     include: ['src/**/*.test.{js,jsx,ts,tsx}'],
     exclude: ['node_modules/', 'dist/', 'e2e/'],
@@ -34,11 +35,7 @@ export default defineConfig({
 
     // Use forks pool for better performance
     pool: 'forks',
-    poolOptions: {
-      forks: {
-        singleFork: false,
-      },
-    },
+    singleFork: false,
 
     // Optimize CI performance
     ...(process.env.CI && {

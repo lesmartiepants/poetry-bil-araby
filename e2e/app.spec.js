@@ -116,8 +116,8 @@ test.describe('Poetry Bil-Araby - Core Functionality', () => {
     // Grant clipboard permissions
     await context.grantPermissions(['clipboard-read', 'clipboard-write']);
 
-    // Click copy button (wait for it to be enabled)
-    const copyButton = page.locator('button').filter({
+    // Click copy button (scope to footer to avoid debug panel buttons)
+    const copyButton = page.locator('footer button').filter({
       has: page.locator('svg')
     }).nth(4);
 
@@ -132,23 +132,21 @@ test.describe('Poetry Bil-Araby - Core Functionality', () => {
 
 test.describe('Poetry Bil-Araby - Audio Player', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    // Skip splash screen in E2E tests for faster execution and reliable testing
+    await page.goto('/?skipSplash=true');
+    await page.waitForLoadState('domcontentloaded');
+    await page.locator('[dir="rtl"]').first().waitFor({ state: 'visible', timeout: 5000 });
   });
 
   test('should have audio play button', async ({ page }) => {
-    // Verify play button is present
-    const playButton = page.locator('button').filter({
-      has: page.locator('svg')
-    }).filter({ hasText: '' }).nth(2);
+    // Verify play button is present (large rounded button in footer)
+    const playButton = page.locator('footer button.rounded-full').first();
 
     await expect(playButton).toBeVisible();
   });
 
   test('audio button should be interactive', async ({ page }) => {
-    const playButton = page.locator('.rounded-full').filter({
-      has: page.locator('svg')
-    }).first();
+    const playButton = page.locator('footer button.rounded-full').first();
 
     await expect(playButton).toBeEnabled();
   });

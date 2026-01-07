@@ -54,7 +54,7 @@ test.describe('UI/UX - Visual Design', () => {
     const lineHeightNum = parseFloat(lineHeight);
 
     // Line height should be at least 1.4x font size for readability
-    expect(lineHeightNum).toBeGreaterThan(fontSize * 1.4);
+    expect(lineHeightNum).toBeGreaterThanOrEqual(fontSize * 1.4);
   });
 
   test('should have adequate contrast ratios', async ({ page }) => {

@@ -3,14 +3,66 @@ name: CI Pipeline
 on:
   push:
     branches: [main]
+    # Smart path-based triggering: skip CI for documentation-only changes
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.github/**.md'
+      - 'LICENSE'
+      - '.gitignore'
   pull_request:
     branches: [main]
+    # Smart path-based triggering: skip CI for documentation-only changes
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.github/**.md'
+      - 'LICENSE'
+      - '.gitignore'
 
 jobs:
+  # Stage 0: Detect what changed to optimize CI execution
+  detect-changes:
+    name: Detect Changed Files
+    runs-on: ubuntu-latest
+    outputs:
+      code-changed: ${{ steps.filter.outputs.code }}
+      tests-changed: ${{ steps.filter.outputs.tests }}
+      config-changed: ${{ steps.filter.outputs.config }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            code:
+              - 'src/**'
+              - 'index.html'
+            tests:
+              - 'src/test/**'
+              - 'e2e/**'
+              - '**/*.test.{js,jsx,ts,tsx}'
+              - 'vitest.config.js'
+              - 'playwright.config.js'
+              - 'playwright.config.full.js'
+            config:
+              - 'package*.json'
+              - 'vite.config.js'
+              - 'tailwind.config.js'
+              - 'postcss.config.js'
+              - '.github/workflows/**'
+
   # Stage 1: Build and validate
   build:
     name: Build & Validate
     runs-on: ubuntu-latest
+    needs: detect-changes
+    # Always run build on code, config, or test changes
+    if: |
+      needs.detect-changes.outputs.code-changed == 'true' ||
+      needs.detect-changes.outputs.tests-changed == 'true' ||
+      needs.detect-changes.outputs.config-changed == 'true'
     steps:
       - uses: actions/checkout@v4
 
@@ -37,7 +89,12 @@ jobs:
   test:
     name: Unit Tests
     runs-on: ubuntu-latest
-    needs: build
+    needs: [detect-changes, build]
+    # Only run unit tests if code or tests changed
+    if: |
+      needs.detect-changes.outputs.code-changed == 'true' ||
+      needs.detect-changes.outputs.tests-changed == 'true' ||
+      needs.detect-changes.outputs.config-changed == 'true'
     timeout-minutes: 3
     steps:
       - uses: actions/checkout@v4
@@ -69,7 +126,12 @@ jobs:
   e2e-tests:
     name: E2E Tests (Chrome Desktop + Mobile)
     runs-on: ubuntu-latest
-    needs: build
+    needs: [detect-changes, build]
+    # Only run E2E tests if code, E2E tests, or relevant config changed
+    if: |
+      needs.detect-changes.outputs.code-changed == 'true' ||
+      needs.detect-changes.outputs.tests-changed == 'true' ||
+      needs.detect-changes.outputs.config-changed == 'true'
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
@@ -126,7 +188,12 @@ jobs:
   ui-ux-tests:
     name: UI/UX Design Tests
     runs-on: ubuntu-latest
-    needs: build
+    needs: [detect-changes, build]
+    # Only run UI/UX tests if code or relevant tests changed
+    if: |
+      needs.detect-changes.outputs.code-changed == 'true' ||
+      needs.detect-changes.outputs.tests-changed == 'true' ||
+      needs.detect-changes.outputs.config-changed == 'true'
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
@@ -183,8 +250,12 @@ jobs:
   deploy-preview:
     name: Deploy Preview
     runs-on: ubuntu-latest
-    needs: build
-    if: github.event_name == 'pull_request'
+    needs: [detect-changes, build]
+    # Only deploy preview if code or config changed (not just test changes)
+    if: |
+      github.event_name == 'pull_request' &&
+      (needs.detect-changes.outputs.code-changed == 'true' ||
+       needs.detect-changes.outputs.config-changed == 'true')
     steps:
       - uses: actions/checkout@v4
 
@@ -215,7 +286,7 @@ jobs:
   pr-feedback:
     name: PR Feedback Bot
     runs-on: ubuntu-latest
-    needs: [build, test, e2e-tests, ui-ux-tests]
+    needs: [detect-changes, build, test, e2e-tests, ui-ux-tests]
     if: always() && github.event_name == 'pull_request'
     steps:
       - name: Post CI summary to PR
@@ -226,6 +297,9 @@ jobs:
             const testStatus = '${{ needs.test.result }}';
             const e2eStatus = '${{ needs.e2e-tests.result }}';
             const uiUxStatus = '${{ needs.ui-ux-tests.result }}';
+            const codeChanged = '${{ needs.detect-changes.outputs.code-changed }}' === 'true';
+            const testsChanged = '${{ needs.detect-changes.outputs.tests-changed }}' === 'true';
+            const configChanged = '${{ needs.detect-changes.outputs.config-changed }}' === 'true';
 
             const statusEmoji = (status) => {
               if (status === 'success') return '✅';
@@ -234,8 +308,20 @@ jobs:
               return '⚠️';
             };
 
+            // Smart skip messages
+            const skipReason = !codeChanged && !testsChanged && !configChanged
+              ? 'Documentation-only changes detected - tests skipped'
+              : '';
+
             const body = `
             ## 🤖 CI/CD Feedback Loop - Poetry Bil-Araby
+
+            ${skipReason ? `### ℹ️ ${skipReason}\n\n` : ''}
+
+            ### 📦 Changed File Categories:
+            - Code Files: ${codeChanged ? '✅ Yes' : '❌ No'}
+            - Test Files: ${testsChanged ? '✅ Yes' : '❌ No'}
+            - Config Files: ${configChanged ? '✅ Yes' : '❌ No'}
 
             | Check | Status | Description |
             |-------|--------|-------------|

@@ -10,9 +10,10 @@ export default defineConfig({
     css: true,
     include: ['src/**/*.test.{js,jsx,ts,tsx}'],
     exclude: ['node_modules/', 'dist/', 'e2e/'],
-    testTimeout: 10000, // 10 second timeout per test
-    hookTimeout: 10000, // 10 second timeout for hooks
-    teardownTimeout: 5000,
+    testTimeout: 5000, // Reduced from 10s to 5s for CI performance
+    hookTimeout: 5000, // Reduced from 10s to 5s for CI performance
+    teardownTimeout: 3000, // Reduced from 5s to 3s
+    bail: process.env.CI ? 1 : undefined, // Stop on first failure in CI
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'lcov'],

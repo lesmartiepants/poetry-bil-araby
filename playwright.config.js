@@ -13,11 +13,11 @@ export default defineConfig({
   // Fail build on CI if tests were accidentally left as test.only
   forbidOnly: !!process.env.CI,
 
-  // Retry on CI only
-  retries: process.env.CI ? 2 : 0,
+  // Retry on CI only - reduced from 2 to 1 for faster feedback
+  retries: process.env.CI ? 1 : 0,
 
-  // Limit workers on CI
-  workers: process.env.CI ? 1 : undefined,
+  // Optimize workers on CI - increased from 1 to 2 for parallelization
+  workers: process.env.CI ? 2 : undefined,
 
   // Reporter configuration
   reporter: [

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Play, Pause, BookOpen, RefreshCw, Volume2, ChevronDown, Quote, Globe, Moon, Sun, Loader2, ChevronRight, ChevronLeft, Search, X, Copy, LayoutGrid, Check, Bug, Trash2, Sparkles, PenTool } from 'lucide-react';
+import { Play, Pause, BookOpen, RefreshCw, Volume2, ChevronDown, Quote, Globe, Moon, Sun, Loader2, ChevronRight, ChevronLeft, Search, X, Copy, LayoutGrid, Check, Bug, Trash2, Sparkles, PenTool, Zap, MousePointer } from 'lucide-react';
 
 /* =============================================================================
   1. FEATURE FLAGS & DESIGN SYSTEM
@@ -194,6 +194,166 @@ const CategoryPill = ({ selected, onSelect, darkMode }) => {
   );
 };
 
+const SplashScreen = ({ onGetStarted, darkMode }) => {
+  const theme = darkMode ? THEME.dark : THEME.light;
+
+  return (
+    <div className={`fixed inset-0 z-50 flex items-center justify-center ${theme.bg} ${DESIGN.anim}`}>
+      {/* Background pattern */}
+      <div className={`absolute inset-0 pointer-events-none opacity-[0.04] ${darkMode ? 'invert' : ''}`}
+           style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M40 0l40 40-40 40L0 40z' fill='none' stroke='%234f46e5' stroke-width='1.5'/%3E%3Ccircle cx='40' cy='40' r='18' fill='none' stroke='%234f46e5' stroke-width='1.5'/%3E%3C/svg%3E")`, backgroundSize: '60px 60px' }} />
+
+      {/* Content */}
+      <div className="relative z-10 flex flex-col items-center justify-center gap-8 md:gap-12 px-6 max-w-2xl mx-auto text-center animate-in fade-in slide-in-from-bottom-8 duration-1000">
+        {/* Logo */}
+        <div className="flex flex-col items-center gap-4">
+          <PenTool size={64} className={`${theme.brand} opacity-90 header-luminescence`} strokeWidth={1.5} />
+          <div className={`flex flex-col md:flex-row-reverse items-center gap-4 ${theme.brand} tracking-wide header-luminescence`}>
+            <span className="font-brand-ar text-4xl md:text-6xl font-bold opacity-80">بالعربي</span>
+            <span className="font-brand-en text-5xl md:text-8xl lowercase tracking-tighter">poetry</span>
+          </div>
+          <span className={`font-brand-en text-xs px-3 py-1 rounded border ${theme.brandBorder} ${theme.brandBg} uppercase tracking-wider opacity-60`}>beta</span>
+        </div>
+
+        {/* Description */}
+        <div className={`space-y-4 ${theme.text}`}>
+          <p className="font-brand-ar text-xl md:text-2xl leading-relaxed opacity-90">
+            اكتشف جمال الشعر العربي الكلاسيكي والحديث
+          </p>
+          <p className="font-brand-en text-sm md:text-base opacity-60 leading-relaxed">
+            Discover the beauty of classical and modern Arabic poetry with translations, insights, and audio
+          </p>
+        </div>
+
+        {/* Get Started Button */}
+        <button
+          onClick={onGetStarted}
+          className={`group flex items-center gap-3 px-8 py-4 ${theme.btnPrimary} ${DESIGN.radius} ${DESIGN.buttonHover} ${DESIGN.touchTarget} shadow-xl font-brand-en text-lg font-semibold tracking-wide`}
+        >
+          <span>Get Started</span>
+          <Zap size={20} className="group-hover:rotate-12 transition-transform" />
+        </button>
+
+        {/* Features Preview */}
+        <div className={`grid grid-cols-1 md:grid-cols-3 gap-4 mt-8 w-full ${theme.text}`}>
+          <div className="flex flex-col items-center gap-2 p-4">
+            <BookOpen size={24} className={theme.accent} />
+            <span className="font-brand-en text-sm opacity-70">Curated Collection</span>
+          </div>
+          <div className="flex flex-col items-center gap-2 p-4">
+            <Volume2 size={24} className={theme.accent} />
+            <span className="font-brand-en text-sm opacity-70">AI-Powered Audio</span>
+          </div>
+          <div className="flex flex-col items-center gap-2 p-4">
+            <Sparkles size={24} className={theme.accent} />
+            <span className="font-brand-en text-sm opacity-70">Deep Insights</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const WalkthroughGuide = ({ onClose, darkMode, currentStep, onStepChange }) => {
+  const theme = darkMode ? THEME.dark : THEME.light;
+
+  const steps = [
+    {
+      title: "Welcome to Poetry Bil-Araby",
+      titleAr: "مرحباً بك في Poetry Bil-Araby",
+      description: "Experience Arabic poetry with translations and AI-powered insights",
+      descriptionAr: "استمتع بالشعر العربي مع الترجمات والرؤى المدعومة بالذكاء الاصطناعي",
+      icon: BookOpen
+    },
+    {
+      title: "Navigate Through Poems",
+      titleAr: "تصفح القصائد",
+      description: "Use arrow buttons or swipe to explore our curated collection",
+      descriptionAr: "استخدم أزرار الأسهم أو اسحب لاستكشاف مجموعتنا المنتقاة",
+      icon: ChevronRight
+    },
+    {
+      title: "Listen to Poetry",
+      titleAr: "استمع للشعر",
+      description: "Play AI-generated audio to hear the poems come to life",
+      descriptionAr: "شغّل الصوت المولد بالذكاء الاصطناعي لتسمع القصائد بشكل حي",
+      icon: Volume2
+    },
+    {
+      title: "Get Deep Insights",
+      titleAr: "احصل على رؤى عميقة",
+      description: "Click 'Seek Insight' for detailed translations and analysis",
+      descriptionAr: "انقر على 'اطلب الرؤية' للحصول على ترجمات وتحليلات مفصلة",
+      icon: Sparkles
+    }
+  ];
+
+  const step = steps[currentStep];
+  const Icon = step.icon;
+
+  return (
+    <div className={`fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm ${DESIGN.anim}`}>
+      <div className={`relative max-w-lg mx-6 ${theme.glass} ${DESIGN.glass} ${theme.border} border ${DESIGN.radius} p-8 md:p-12 shadow-2xl animate-in fade-in slide-in-from-bottom-4 duration-500`}>
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className={`absolute top-4 right-4 p-2 ${theme.controlIcon} ${DESIGN.buttonHover} rounded-full`}
+        >
+          <X size={20} />
+        </button>
+
+        {/* Content */}
+        <div className="flex flex-col items-center gap-6 text-center">
+          <div className={`p-4 ${theme.brandBg} rounded-full`}>
+            <Icon size={40} className={theme.brand} />
+          </div>
+
+          <div className={`space-y-3 ${theme.text}`}>
+            <h3 className="font-brand-ar text-2xl md:text-3xl font-bold">{step.titleAr}</h3>
+            <p className="font-brand-en text-sm opacity-70">{step.title}</p>
+          </div>
+
+          <div className={`space-y-2 ${theme.text}`}>
+            <p className="font-brand-ar text-lg leading-relaxed">{step.descriptionAr}</p>
+            <p className="font-brand-en text-sm opacity-60">{step.description}</p>
+          </div>
+
+          {/* Step indicators */}
+          <div className="flex items-center gap-2 mt-4">
+            {steps.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => onStepChange(idx)}
+                className={`w-2 h-2 rounded-full ${DESIGN.anim} ${
+                  idx === currentStep ? theme.brand + ' w-8' : 'bg-stone-500/30'
+                }`}
+              />
+            ))}
+          </div>
+
+          {/* Navigation */}
+          <div className="flex items-center gap-4 mt-6 w-full">
+            {currentStep > 0 && (
+              <button
+                onClick={() => onStepChange(currentStep - 1)}
+                className={`flex-1 px-6 py-3 border ${theme.border} ${DESIGN.radius} ${DESIGN.buttonHover} font-brand-en`}
+              >
+                Previous
+              </button>
+            )}
+            <button
+              onClick={currentStep < steps.length - 1 ? () => onStepChange(currentStep + 1) : onClose}
+              className={`flex-1 px-6 py-3 ${theme.btnPrimary} ${DESIGN.radius} ${DESIGN.buttonHover} font-brand-en font-semibold`}
+            >
+              {currentStep < steps.length - 1 ? 'Next' : 'Start Exploring'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 /* =============================================================================
   3. MAIN APPLICATION
   =============================================================================
@@ -221,6 +381,9 @@ export default function DiwanApp() {
   const [isInterpreting, setIsInterpreting] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
   const [logs, setLogs] = useState([]);
+  const [showSplash, setShowSplash] = useState(true);
+  const [showWalkthrough, setShowWalkthrough] = useState(false);
+  const [walkthroughStep, setWalkthroughStep] = useState(0);
 
   const theme = darkMode ? THEME.dark : THEME.light;
   
@@ -395,6 +558,16 @@ export default function DiwanApp() {
     setAudioUrl(null);
   }, [current?.id]);
 
+  const handleGetStarted = () => {
+    setShowSplash(false);
+    setShowWalkthrough(true);
+  };
+
+  const handleCloseWalkthrough = () => {
+    setShowWalkthrough(false);
+    setWalkthroughStep(0);
+  };
+
   return (
     <div className={`h-screen w-full flex flex-col overflow-hidden ${DESIGN.anim} font-sans ${theme.bg} ${theme.text} selection:bg-indigo-500`}>
       <style>{`
@@ -446,6 +619,16 @@ export default function DiwanApp() {
       `}</style>
 
       <DebugPanel logs={logs} onClear={() => setLogs([])} darkMode={darkMode} />
+
+      {showSplash && <SplashScreen onGetStarted={handleGetStarted} darkMode={darkMode} />}
+      {showWalkthrough && (
+        <WalkthroughGuide
+          onClose={handleCloseWalkthrough}
+          darkMode={darkMode}
+          currentStep={walkthroughStep}
+          onStepChange={setWalkthroughStep}
+        />
+      )}
 
       <header style={{ opacity: headerOpacity }} className="fixed top-8 left-0 right-0 z-40 pointer-events-none transition-opacity duration-300 flex flex-row items-center justify-center gap-8 px-6">
         <div className={`flex flex-row-reverse items-center gap-4 ${theme.brand} tracking-wide header-luminescence`}>

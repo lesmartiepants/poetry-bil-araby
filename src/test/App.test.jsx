@@ -17,8 +17,11 @@ describe('DiwanApp', () => {
 
     it('displays the app branding', () => {
       render(<DiwanApp />)
-      expect(screen.getByText('poetry')).toBeInTheDocument()
-      expect(screen.getByText('بالعربي')).toBeInTheDocument()
+      // Use getAllByText since splash screen also contains these texts
+      const poetryElements = screen.getAllByText('poetry')
+      const arabicElements = screen.getAllByText('بالعربي')
+      expect(poetryElements.length).toBeGreaterThan(0)
+      expect(arabicElements.length).toBeGreaterThan(0)
       expect(screen.getByText('beta')).toBeInTheDocument()
     })
 

@@ -7,7 +7,8 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Poetry Bil-Araby - Core Functionality', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    // Skip splash screen in E2E tests for faster execution and reliable testing
+    await page.goto('/?skipSplash=true');
     // Wait for DOM and initial content (much faster than networkidle)
     await page.waitForLoadState('domcontentloaded');
     // Wait for Arabic text to be visible (ensures app is ready)

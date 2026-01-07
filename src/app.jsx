@@ -381,7 +381,14 @@ export default function DiwanApp() {
   const [isInterpreting, setIsInterpreting] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
   const [logs, setLogs] = useState([]);
-  const [showSplash, setShowSplash] = useState(true);
+  const [showSplash, setShowSplash] = useState(() => {
+    // Skip splash screen in tests by checking URL parameter
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      return !params.has('skipSplash');
+    }
+    return true;
+  });
   const [showWalkthrough, setShowWalkthrough] = useState(false);
   const [walkthroughStep, setWalkthroughStep] = useState(0);
 

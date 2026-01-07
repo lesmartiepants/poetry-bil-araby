@@ -7,7 +7,8 @@ import { test, expect } from '@playwright/test';
 
 test.describe('UI/UX - Visual Design', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
+    // Skip splash screen in E2E tests for faster execution and reliable testing
+    await page.goto('/?skipSplash=true');
     await page.waitForLoadState('domcontentloaded');
   });
 

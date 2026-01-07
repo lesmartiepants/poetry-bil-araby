@@ -7,10 +7,12 @@ A beautiful React application for exploring Arabic poetry with AI-powered insigh
 - 📖 Browse classic and modern Arabic poetry
 - 🎙️ AI-powered audio recitation with emotional context
 - 🤖 Deep analysis and interpretation using AI
-- 🌙 Dark/Light mode toggle
-- 🎨 Beautiful Arabic typography and design (Amiri font)
+- 🌙 Dark/Light mode toggle (WCAG AA compliant)
+- 🎨 Beautiful Arabic typography and design (Amiri, Playfair, Forum fonts)
 - 🔍 Filter by poet and category
 - 📋 Copy poems to clipboard
+- ♿ Full accessibility support (WCAG AA, keyboard navigation, screen readers)
+- 📱 Responsive design (mobile-first, 44px touch targets)
 - ✅ Comprehensive test coverage (113 unit + 180 E2E tests)
 - 🚀 Optimized CI/CD pipeline (3-minute builds)
 
@@ -41,11 +43,12 @@ npm run dev
 ## Usage
 
 - **Discover**: Click the ✨ sparkles button to fetch new poems
-- **Navigate**: Use arrow buttons to browse through poems
-- **Play**: Click the play button to hear AI-generated recitation
+- **Navigate**: Use arrow buttons (or arrow keys) to browse through poems
+- **Play**: Click the play button (or Space bar) to hear AI-generated recitation
 - **Analyze**: Click "Seek Insight" to get deep analysis
 - **Copy**: Click the copy icon to save poem text
-- **Theme**: Toggle between dark and light modes
+- **Theme**: Toggle between dark and light modes (WCAG AA compliant)
+- **Keyboard**: Full keyboard navigation support with visible focus indicators
 
 ## Building with Claude
 
@@ -63,6 +66,19 @@ npm run dev
 - I'll ask clarifying questions when needed
 - Tell me if something doesn't look right - we can iterate!
 
+## Accessibility
+
+This app follows WCAG AA standards for accessibility:
+
+- **Keyboard Navigation**: All controls accessible via Tab, Enter, and Space keys
+- **Screen Readers**: ARIA labels on all icon buttons and interactive elements
+- **Color Contrast**: 6.2:1 ratio in light mode, optimized contrast in dark mode
+- **Touch Targets**: Minimum 44x44px for all interactive elements
+- **Focus Indicators**: Clear 2px indigo outline on focused elements
+- **Reduced Motion**: Respects `prefers-reduced-motion` system preference
+- **Responsive Typography**: Mobile-first font sizes for improved readability
+- **RTL Support**: Proper right-to-left rendering for Arabic text
+
 ## Tech Stack
 
 - React 18
@@ -70,6 +86,7 @@ npm run dev
 - Tailwind CSS
 - Lucide React (icons)
 - Gemini API (AI features)
+- Vitest + Playwright (testing)
 
 ## Project Structure
 

@@ -42,9 +42,14 @@ const FEATURES = {
 ```
 Toggle features here rather than conditionally importing code.
 
-**Design System Constants** (app.jsx:14-68)
-- `DESIGN`: Layout, typography, spacing tokens
-- `THEME`: Dark/light mode color palettes
+**Design System Constants** (app.jsx:14-70)
+- `DESIGN`: Layout, typography, spacing, and accessibility tokens
+  - `touchTarget`: '44x44px' minimum for WCAG AA compliance
+  - `buttonHover`: Interactive feedback with scale and shadow
+  - Responsive typography sizes (mobile-first)
+- `THEME`: Dark/light mode color palettes (WCAG AA compliant)
+  - Light mode: Higher contrast colors (6.2:1 ratio)
+  - Dark mode: Optimized for readability
 - Always use these constants rather than hardcoding Tailwind classes
 
 **System Architecture**
@@ -121,12 +126,12 @@ Four-stage pipeline in `.github/workflows/ci.yml`:
 
 - `src/app.jsx` - Entire application (READ THIS FIRST)
 - `src/main.jsx` - React entry point (minimal, just renders DiwanApp)
-- `src/index.css` - Global styles and Tailwind directives
-- `index.html` - HTML shell (includes Arabic fonts from Google Fonts)
+- `src/index.css` - Global styles, Tailwind directives, accessibility features
+- `index.html` - HTML shell with preconnected font loading
 - `vite.config.js` - Vite configuration (minimal)
 - `vitest.config.js` - Test configuration with CI optimizations
 - `playwright.config.js` - E2E test configuration with device matrix
-- `tailwind.config.js` - Tailwind with custom font families (Amiri, Tajawal)
+- `tailwind.config.js` - Custom font families (Amiri, Playfair, Forum, Reem Kufi)
 
 ## Development Patterns
 
@@ -138,10 +143,29 @@ Four-stage pipeline in `.github/workflows/ci.yml`:
 5. Add tests in `src/test/` for logic, `e2e/` for user flows
 
 ### Styling Guidelines
-- Arabic text uses `font-amiri` or `font-tajawal` (from Tailwind config)
+- Arabic text uses `font-amiri` (from Tailwind config)
+- English branding uses `font-brand-en` (Forum), Arabic branding uses `font-brand-ar` (Reem Kufi)
 - Always use RTL (`dir="rtl"`) for Arabic content
 - Reference `THEME[theme].*` for colors (supports dark/light mode)
 - Use `DESIGN.*` for spacing, typography, and layout tokens
+- All interactive elements use `DESIGN.touchTarget` (44px minimum)
+- Buttons include `aria-label` attributes for screen readers
+- Responsive design: Mobile-first approach with `md:` breakpoints
+
+### Accessibility Features
+The app implements WCAG AA standards:
+- **Color Contrast**: 6.2:1 ratio in light mode, optimized in dark mode
+- **Touch Targets**: 44x44px minimum for all interactive elements
+- **Keyboard Navigation**: Focus indicators (2px indigo outline) on all focusable elements
+- **Screen Reader Support**: ARIA labels on all icon buttons
+- **Reduced Motion**: Respects `prefers-reduced-motion` media query
+- **Focus Management**: Clear visual indicators with `:focus-visible`
+
+**Accessibility Implementation:**
+- `src/index.css` - Focus indicators and reduced motion support
+- `src/app.jsx` - ARIA labels, touch targets, responsive text sizes
+- `DESIGN.touchTarget` - Applied to all buttons for accessibility
+- Font sizes increased: `text-base → text-lg` on mobile for readability
 
 ### Testing Guidelines
 When writing tests:
@@ -167,7 +191,13 @@ This ensures fast feedback in CI while allowing more relaxed timeouts locally.
       ============================================ */
    ```
 
-2. **Arabic Typography**: Always test with actual Arabic text. The app uses specialized fonts (Amiri, Tajawal) that may render differently than Latin text.
+2. **Arabic Typography**: Always test with actual Arabic text. The app uses specialized fonts:
+   - `Amiri` - Main Arabic content (serif)
+   - `Playfair Display` - English poetry (serif)
+   - `Forum` - English branding (serif)
+   - `Reem Kufi` - Arabic branding (sans-serif)
+
+   Fonts are loaded via `index.html` with `preconnect` for performance and `display=swap` for faster rendering.
 
 3. **API Key Management**: The app expects `VITE_GEMINI_API_KEY` to be set. In development, this can be set in `.env.local` (gitignored). In production (Vercel), it's set in environment variables.
 
@@ -176,6 +206,19 @@ This ensures fast feedback in CI while allowing more relaxed timeouts locally.
 5. **Playwright Browser Matrix**: Local development runs 6 browser configs. CI runs only 2 (Desktop Chrome + Mobile Chrome). Use `npm run test:e2e:full` locally to run the comprehensive suite.
 
 6. **Theme State**: Theme is stored in component state only (not localStorage). Refreshing the page resets to dark mode. This is intentional for simplicity.
+
+7. **Responsive Design**: The app uses mobile-first responsive design with `md:` breakpoints (768px+):
+   - Header scales from `text-3xl/5xl` (mobile) to `text-5xl/7xl` (desktop)
+   - Font sizes adapt: `text-lg` (mobile) → `text-xl` (desktop)
+   - Touch targets are always 44px minimum regardless of screen size
+   - Footer controls have responsive gaps: `gap-1 sm:gap-2 md:gap-4`
+
+8. **Accessibility Testing**: When making UI changes, test:
+   - Keyboard navigation (Tab, Enter, Space)
+   - Screen reader compatibility (ARIA labels present)
+   - Color contrast (use Chrome DevTools Color Picker)
+   - Touch target sizes (minimum 44x44px)
+   - Reduced motion preference (macOS: System Preferences → Accessibility → Display → Reduce Motion)
 
 ## Git Worktrees for Parallel Work
 

@@ -692,7 +692,7 @@ export default function DiwanApp() {
           <div className={`absolute inset-0 pointer-events-none opacity-[0.04] ${darkMode ? 'invert' : ''}`} style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M40 0l40 40-40 40L0 40z' fill='none' stroke='%234f46e5' stroke-width='1.5'/%3E%3Ccircle cx='40' cy='40' r='18' fill='none' stroke='%234f46e5' stroke-width='1.5'/%3E%3C/svg%3E")`, backgroundSize: '60px 60px' }} />
           <MysticalConsultationEffect active={isInterpreting} theme={theme} />
 
-          <main ref={mainScrollRef} onScroll={handleScroll} className="flex-1 overflow-y-auto custom-scrollbar relative z-10 px-4 md:px-0 pb-[120px] md:pb-0">
+          <main ref={mainScrollRef} onScroll={handleScroll} className="flex-1 overflow-y-auto custom-scrollbar relative z-10 px-4 md:px-0 pb-20 md:pb-0">
             <div className="min-h-full flex flex-col items-center justify-center py-6">
               <div className="w-full max-w-4xl flex flex-col items-center">
                 
@@ -725,7 +725,7 @@ export default function DiwanApp() {
                       </div>
                    </div>
 
-                   <div className="flex justify-center gap-3 mt-4">
+                   <div className="flex justify-center gap-3 mt-2">
                      {Array.isArray(current?.tags) && current.tags.slice(0, 3).map(tag => (
                        <span key={tag} className={`px-2.5 py-0.5 border ${theme.brandBorder} ${theme.brand} ${DESIGN.mainTagSize} font-brand-en tracking-[0.15em] uppercase opacity-70`}>
                          {tag}
@@ -734,8 +734,8 @@ export default function DiwanApp() {
                    </div>
                 </div>
 
-                <div className={`relative w-full group py-8 ${DESIGN.mainMarginBottom}`}>
-                  <div className="px-4 md:px-20 py-6 text-center">
+                <div className={`relative w-full group pt-4 pb-2 ${DESIGN.mainMarginBottom}`}>
+                  <div className="px-4 md:px-20 py-2 text-center">
                     <div className="flex flex-col gap-5 md:gap-7">
                       {versePairs.map((pair, idx) => (
                         <div key={`${current?.id}-${idx}`} className="flex flex-col gap-0.5">

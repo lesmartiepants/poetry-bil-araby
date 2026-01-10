@@ -394,7 +394,7 @@ export default function DiwanApp() {
   };
 
   const handleCopy = async () => {
-    const textToCopy = `${current?.titleArabic || ""}\n${current?.poetArabic || ""}\n\n${current?.arabic || ""}`;
+    const textToCopy = `${current?.titleArabic || ""}\n${current?.poetArabic || ""}\n\n${current?.arabic || ""}\n\n---\n\n${current?.title || ""}\n${current?.poet || ""}\n\n${current?.english || ""}`;
     try {
       await navigator.clipboard.writeText(textToCopy);
       setShowCopySuccess(true);

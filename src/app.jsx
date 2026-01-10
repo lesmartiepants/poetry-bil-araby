@@ -63,8 +63,8 @@ const THEME = {
     brandBg: 'bg-indigo-500/5',
     brandBorder: 'border-indigo-500/10',
     btnPrimary: 'bg-gradient-to-br from-indigo-600 to-purple-700 text-white shadow-indigo-200',
-    titleColor: 'text-[#6B5644]', // Darker gold for contrast (6.2:1)
-    poetColor: 'text-[#6B5644]', // Darker gold for contrast (6.2:1)
+    titleColor: 'text-[#8B7355]', // Antique Gold (rich, warm tone - 5.2:1 contrast)
+    poetColor: 'text-[#8B7355]', // Antique Gold (rich, warm tone - 5.2:1 contrast)
     controlIcon: 'text-indigo-950/90 hover:text-black'
   }
 };

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Play, Pause, BookOpen, RefreshCw, Volume2, ChevronDown, Quote, Globe, Moon, Sun, Loader2, ChevronRight, ChevronLeft, Search, X, Copy, LayoutGrid, Check, Bug, Trash2, Sparkles, PenTool, Library, Compass, Rabbit } from 'lucide-react';
+import { Play, Pause, BookOpen, RefreshCw, Volume2, ChevronDown, Quote, Globe, Moon, Sun, Loader2, ChevronRight, ChevronLeft, Search, X, Copy, LayoutGrid, Check, Bug, Trash2, Sparkles, PenTool, Library, Compass, Rabbit, MoreHorizontal } from 'lucide-react';
 
 /* =============================================================================
   1. FEATURE FLAGS & DESIGN SYSTEM
@@ -12,19 +12,19 @@ const FEATURES = {
 };
 
 const DESIGN = {
-  // Main Poem Display
-  mainFontSize: 'text-lg md:text-xl',
-  mainEnglishFontSize: 'text-base md:text-lg',
+  // Main Poem Display - with fluid responsive scaling using clamp()
+  mainFontSize: 'text-[clamp(1.25rem,2vw,1.5rem)]', // 20px-24px (updated from text-xl md:text-2xl)
+  mainEnglishFontSize: 'text-[clamp(1rem,1.5vw,1.125rem)]', // 16px-18px
   mainLineHeight: 'leading-[2.4]',
   mainMetaPadding: 'pt-8 pb-1',
   mainTagSize: 'text-[11px]',
-  mainTitleSize: 'text-2xl md:text-4xl',
-  mainSubtitleSize: 'text-xs',
+  mainTitleSize: 'text-[clamp(1.875rem,3.5vw,2.25rem)]', // 30px-36px (updated from text-3xl md:text-4xl)
+  mainSubtitleSize: 'text-[clamp(10px,1.2vw,14px)]', // 10px-14px (updated from text-sm)
   mainMarginBottom: 'mb-8',
   paneWidth: 'w-full md:w-96',
   panePadding: 'p-8',
   paneSpacing: 'space-y-8',
-  paneVerseSize: 'text-lg',
+  paneVerseSize: 'text-[clamp(1rem,1.8vw,1.125rem)]', // 16px-18px for insight panel
   glass: 'backdrop-blur-2xl',
   radius: 'rounded-2xl',
   anim: 'transition-all duration-300 ease-in-out',
@@ -189,7 +189,7 @@ const CategoryPill = ({ selected, onSelect, darkMode }) => {
       >
         <Library size={21} className="text-[#C5A059]" />
       </button>
-      <span className="font-brand-en text-[8.5px] tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">Poets</span>
+      <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">Poets</span>
 
       {isOpen && (
         <div className="absolute bottom-full right-[-20px] mb-3 min-w-[220px] bg-[rgba(20,18,16,0.98)] backdrop-blur-[48px] border border-[rgba(197,160,89,0.15)] rounded-3xl p-3 shadow-[0_-10px_40px_rgba(0,0,0,0.7)] z-50">
@@ -199,8 +199,8 @@ const CategoryPill = ({ selected, onSelect, darkMode }) => {
               onClick={() => { onSelect(cat.id); setIsOpen(false); }}
               className={`w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex flex-col items-center border-b border-[rgba(197,160,89,0.08)] last:border-b-0 hover:bg-[rgba(197,160,89,0.08)] ${selected === cat.id ? 'bg-[rgba(197,160,89,0.12)]' : ''}`}
             >
-              <div className="font-amiri text-lg text-[#C5A059] mb-[3px] font-medium">{cat.labelAr}</div>
-              <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">{cat.label}</div>
+              <div className="font-amiri text-[clamp(1rem,1.8vw,1.125rem)] text-[#C5A059] mb-[3px] font-medium">{cat.labelAr}</div>
+              <div className="font-brand-en text-[clamp(8px,1vw,9px)] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">{cat.label}</div>
             </button>
           ))}
         </div>
@@ -238,7 +238,7 @@ const ThemeDropdown = ({ darkMode, onToggleDarkMode, currentFont, onCycleFont, f
       >
         {darkMode ? <Sun size={21} className="text-[#C5A059]" /> : <Moon size={21} className="text-[#C5A059]" />}
       </button>
-      <span className="font-brand-en text-[8.5px] tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">Theme</span>
+      <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">Theme</span>
 
       {isOpen && (
         <div className="absolute bottom-full right-[-20px] mb-3 min-w-[200px] bg-[rgba(20,18,16,0.98)] backdrop-blur-[48px] border border-[rgba(197,160,89,0.15)] rounded-3xl p-3 shadow-[0_-10px_40px_rgba(0,0,0,0.7)] z-50">
@@ -246,16 +246,109 @@ const ThemeDropdown = ({ darkMode, onToggleDarkMode, currentFont, onCycleFont, f
             onClick={handleCycleFont}
             className="w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex flex-col items-center border-b border-[rgba(197,160,89,0.08)] hover:bg-[rgba(197,160,89,0.08)]"
           >
-            <div className="font-amiri text-lg text-[#C5A059] mb-[3px] font-medium">تبديل الخط</div>
-            <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Cycle Font: {currentFont}</div>
+            <div className="font-amiri text-[clamp(1rem,1.8vw,1.125rem)] text-[#C5A059] mb-[3px] font-medium">تبديل الخط</div>
+            <div className="font-brand-en text-[clamp(8px,1vw,9px)] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Cycle Font: {currentFont}</div>
           </button>
           <button
             onClick={handleToggleDarkMode}
             className="w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex flex-col items-center hover:bg-[rgba(197,160,89,0.08)]"
           >
-            <div className="font-amiri text-lg text-[#C5A059] mb-[3px] font-medium">{darkMode ? 'الوضع النهاري' : 'الوضع الليلي'}</div>
-            <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">{darkMode ? 'Light Mode' : 'Dark Mode'}</div>
+            <div className="font-amiri text-[clamp(1rem,1.8vw,1.125rem)] text-[#C5A059] mb-[3px] font-medium">{darkMode ? 'الوضع النهاري' : 'الوضع الليلي'}</div>
+            <div className="font-brand-en text-[clamp(8px,1vw,9px)] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">{darkMode ? 'Light Mode' : 'Dark Mode'}</div>
           </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const OverflowMenu = ({
+  darkMode,
+  onToggleDarkMode,
+  currentFont,
+  onCycleFont,
+  selectedCategory,
+  onSelectCategory,
+  onCopy,
+  showCopySuccess
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const clickOut = (e) => { if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setIsOpen(false); };
+    document.addEventListener("mousedown", clickOut);
+    return () => document.removeEventListener("mousedown", clickOut);
+  }, []);
+
+  const handleCopy = () => {
+    onCopy();
+    setIsOpen(false);
+  };
+
+  const handleToggleDarkMode = () => {
+    onToggleDarkMode();
+    setIsOpen(false);
+  };
+
+  const handleSelectCategory = (catId) => {
+    onSelectCategory(catId);
+    setIsOpen(false);
+  };
+
+  return (
+    <div className="relative flex flex-col items-center gap-1 min-w-[56px]" ref={dropdownRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105"
+        aria-label="More options"
+      >
+        <MoreHorizontal size={21} className="text-[#C5A059]" />
+      </button>
+      <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">More</span>
+
+      {isOpen && (
+        <div className="absolute bottom-full right-[-20px] mb-3 min-w-[220px] max-h-[80vh] overflow-y-auto custom-scrollbar bg-[rgba(20,18,16,0.98)] backdrop-blur-[48px] border border-[rgba(197,160,89,0.15)] rounded-3xl p-3 shadow-[0_-10px_40px_rgba(0,0,0,0.7)] z-50">
+          <button
+            onClick={handleCopy}
+            className="w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex items-center gap-3 border-b border-[rgba(197,160,89,0.08)] hover:bg-[rgba(197,160,89,0.08)]"
+          >
+            {showCopySuccess ? <Check size={18} className="text-green-500" /> : <Copy size={18} className="text-[#C5A059]" />}
+            <div className="flex flex-col items-start">
+              <div className="font-amiri text-base text-[#C5A059] font-medium">نسخ</div>
+              <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Copy</div>
+            </div>
+          </button>
+
+          <button
+            onClick={handleToggleDarkMode}
+            className="w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex items-center gap-3 border-b border-[rgba(197,160,89,0.08)] hover:bg-[rgba(197,160,89,0.08)]"
+          >
+            {darkMode ? <Sun size={18} className="text-[#C5A059]" /> : <Moon size={18} className="text-[#C5A059]" />}
+            <div className="flex flex-col items-start">
+              <div className="font-amiri text-base text-[#C5A059] font-medium">{darkMode ? 'الوضع النهاري' : 'الوضع الليلي'}</div>
+              <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Theme</div>
+            </div>
+          </button>
+
+          <div className="border-b border-[rgba(197,160,89,0.08)] last:border-b-0">
+            <div className="px-5 py-2">
+              <div className="font-brand-en text-[8px] uppercase tracking-[0.12em] opacity-30 text-[#a8a29e]">Poets</div>
+            </div>
+            {CATEGORIES.map(cat => (
+              <button
+                key={cat.id}
+                onClick={() => handleSelectCategory(cat.id)}
+                className={`w-full p-[10px_20px] cursor-pointer transition-all duration-200 flex items-center gap-2 hover:bg-[rgba(197,160,89,0.08)] ${selectedCategory === cat.id ? 'bg-[rgba(197,160,89,0.12)]' : ''}`}
+              >
+                <Library size={14} className="text-[#C5A059] opacity-60" />
+                <div className="flex flex-col items-start">
+                  <div className="font-amiri text-sm text-[#C5A059] font-medium">{cat.labelAr}</div>
+                  <div className="font-brand-en text-[8px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">{cat.label}</div>
+                </div>
+              </button>
+            ))}
+          </div>
         </div>
       )}
     </div>
@@ -270,7 +363,8 @@ const ThemeDropdown = ({ darkMode, onToggleDarkMode, currentFont, onCycleFont, f
 export default function DiwanApp() {
   const mainScrollRef = useRef(null);
   const audioRef = useRef(new Audio());
-  
+  const controlBarRef = useRef(null);
+
   const [headerOpacity, setHeaderOpacity] = useState(1);
   const [poems, setPoems] = useState([{
     id: 1, poet: "Nizar Qabbani", poetArabic: "نزار قباني", title: "My Beloved", titleArabic: "حبيبتي",
@@ -291,6 +385,7 @@ export default function DiwanApp() {
   const [isFetching, setIsFetching] = useState(false);
   const [logs, setLogs] = useState([]);
   const [showCopySuccess, setShowCopySuccess] = useState(false);
+  const [isOverflow, setIsOverflow] = useState(false);
 
   const theme = darkMode ? THEME.dark : THEME.light;
 
@@ -331,8 +426,23 @@ export default function DiwanApp() {
     }
   }, [selectedCategory]);
 
+  useEffect(() => {
+    const detectOverflow = () => {
+      if (controlBarRef.current) {
+        const controlBar = controlBarRef.current;
+        const viewportWidth = window.innerWidth;
+        const controlBarWidth = controlBar.scrollWidth;
+        setIsOverflow(controlBarWidth > viewportWidth * 0.9);
+      }
+    };
+
+    detectOverflow();
+    window.addEventListener('resize', detectOverflow);
+    return () => window.removeEventListener('resize', detectOverflow);
+  }, []);
+
   const handleScroll = (e) => {
-    setHeaderOpacity(Math.max(0, 1 - e.target.scrollTop / 30)); 
+    setHeaderOpacity(Math.max(0, 1 - e.target.scrollTop / 30));
   };
 
   const insightParts = useMemo(() => {
@@ -570,9 +680,9 @@ export default function DiwanApp() {
         <div className={`flex flex-row-reverse items-center gap-2 md:gap-4 ${theme.brand} tracking-wide header-luminescence`}>
           <PenTool className="w-8 h-8 md:w-[42px] md:h-[42px] opacity-95" strokeWidth={1.5} />
           <h1 className="app-branding-rtl flex items-end gap-3 md:gap-6">
-            <span className="font-brand-ar text-3xl md:text-5xl font-bold mb-1 md:mb-2 opacity-80">بالعربي</span>
-            <span className="font-brand-en text-5xl md:text-7xl lowercase tracking-tighter">poetry</span>
-            <span className="font-brand-en text-[10px] md:text-xs px-1.5 md:px-2 py-0.5 rounded border border-indigo-500/30 bg-indigo-500/10 uppercase tracking-wider mb-2 md:mb-4 ml-2 md:ml-3 opacity-60">beta</span>
+            <span className="font-brand-ar text-[clamp(1.875rem,4vw,3rem)] font-bold mb-[clamp(0.25rem,0.5vw,0.5rem)] opacity-80">بالعربي</span>
+            <span className="font-brand-en text-[clamp(3rem,6vw,4.5rem)] lowercase tracking-tighter">poetry</span>
+            <span className="font-brand-en text-[clamp(10px,1.2vw,12px)] px-[clamp(0.375rem,0.8vw,0.5rem)] py-0.5 rounded border border-indigo-500/30 bg-indigo-500/10 uppercase tracking-wider mb-[clamp(0.5rem,1vw,1rem)] ml-[clamp(0.5rem,1vw,0.75rem)] opacity-60">beta</span>
           </h1>
         </div>
       </header>
@@ -604,12 +714,12 @@ export default function DiwanApp() {
                       </svg>
 
                       <div className="relative z-10 flex flex-col items-center justify-center w-full">
-                         <div className={`flex flex-wrap items-center justify-center gap-1 sm:gap-2 md:gap-4 ${currentFontClass} text-sm sm:text-lg md:${DESIGN.mainTitleSize}`}>
+                         <div className={`flex flex-wrap items-center justify-center gap-1 sm:gap-2 md:gap-4 ${currentFontClass} ${DESIGN.mainTitleSize}`}>
                            <span className={`${theme.poetColor} opacity-90`}>{current?.poetArabic}</span>
-                           <span className="opacity-10 text-xs sm:text-sm md:text-xl">-</span>
+                           <span className="opacity-10 text-[clamp(0.75rem,1.5vw,1.25rem)]">-</span>
                            <span className={`${theme.titleColor} font-bold`}>{current?.titleArabic}</span>
                          </div>
-                         <div className={`flex items-center justify-center gap-1 sm:gap-2 opacity-45 text-[8px] sm:text-[9px] md:${DESIGN.mainSubtitleSize} font-brand-en tracking-[0.08em] uppercase mt-1 sm:mt-2 md:mt-3`}>
+                         <div className={`flex items-center justify-center gap-1 sm:gap-2 opacity-45 ${DESIGN.mainSubtitleSize} font-brand-en tracking-[0.08em] uppercase mt-[clamp(0.25rem,0.8vw,0.75rem)]`}>
                            <span className="font-semibold">{current?.poet}</span> <span className="opacity-20">•</span> <span>{current?.title}</span>
                          </div>
                       </div>
@@ -651,13 +761,13 @@ export default function DiwanApp() {
                         <div className="pt-6 border-t border-indigo-500/10">
                           <h4 className="text-[10px] font-brand-en font-black text-indigo-600 mb-3 uppercase tracking-[0.3em] opacity-80">The Depth</h4>
                           <div className="pl-4 border-l border-indigo-500/10">
-                            <p className="text-[15px] font-brand-en font-normal leading-relaxed italic opacity-90">{insightParts?.depth}</p>
+                            <p className="text-[clamp(0.9375rem,1.6vw,1rem)] font-brand-en font-normal leading-relaxed italic opacity-90">{insightParts?.depth}</p>
                           </div>
                         </div>
                         <div className="pt-6 border-t border-indigo-500/10">
                           <h4 className="text-[10px] font-brand-en font-black text-indigo-600 mb-3 uppercase tracking-[0.3em] opacity-80">The Author</h4>
                           <div className="pl-4 border-l border-indigo-500/10">
-                            <p className="text-[15px] font-brand-en font-normal leading-relaxed italic opacity-90">{insightParts?.author}</p>
+                            <p className="text-[clamp(0.9375rem,1.6vw,1rem)] font-brand-en font-normal leading-relaxed italic opacity-90">{insightParts?.author}</p>
                           </div>
                         </div>
                      </div>
@@ -668,50 +778,62 @@ export default function DiwanApp() {
           </main>
 
           <footer className="flex-none py-3 pb-6 md:pb-3 px-4 flex flex-col items-center z-20 relative bg-gradient-to-t from-black/5 to-transparent safe-bottom">
-            <div className={`flex items-center gap-2 px-5 py-3 rounded-full shadow-2xl border ${DESIGN.glass} ${theme.border} ${theme.shadow} ${DESIGN.anim} max-w-[calc(100vw-2rem)] w-fit`}>
+            <div ref={controlBarRef} className={`flex items-center gap-2 px-5 py-3 rounded-full shadow-2xl border ${DESIGN.glass} ${theme.border} ${theme.shadow} ${DESIGN.anim} max-w-[calc(100vw-2rem)] w-fit`}>
 
               <div className="flex flex-col items-center gap-1 min-w-[56px]">
-                <button onClick={togglePlay} disabled={isGeneratingAudio} aria-label={isPlaying ? "Pause recitation" : "Play recitation"} className={`min-w-[46px] min-h-[46px] p-[11px] rounded-full flex-shrink-0 flex items-center justify-center shadow-xl transition-all duration-300 hover:scale-110 active:scale-95 group relative ${theme.btnPrimary}`}>
-                  <div className="absolute inset-0 rounded-full border border-white/20 scale-110 opacity-0 group-hover:opacity-100 transition-all duration-300" />
-                  {isGeneratingAudio ? <Loader2 className="animate-spin" size={21} /> : isPlaying ? <Pause fill="currentColor" size={21} /> : <Volume2 size={21} />}
+                <button onClick={togglePlay} disabled={isGeneratingAudio} aria-label={isPlaying ? "Pause recitation" : "Play recitation"} className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105">
+                  {isGeneratingAudio ? <Loader2 className="animate-spin text-[#C5A059]" size={21} /> : isPlaying ? <Pause fill="#C5A059" size={21} /> : <Volume2 className="text-[#C5A059]" size={21} />}
                 </button>
-                <span className="font-brand-en text-[8.5px] tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">Listen</span>
+                <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">Listen</span>
               </div>
 
               <div className="flex flex-col items-center gap-1 min-w-[56px]">
-                <button onClick={handleAnalyze} disabled={isInterpreting || interpretation} aria-label="Dive into poem meaning" className={`min-w-[46px] min-h-[46px] p-[11px] rounded-full flex-shrink-0 flex items-center justify-center shadow-xl transition-all duration-300 hover:scale-110 active:scale-95 group relative ${theme.btnPrimary} disabled:opacity-50`}>
-                  <div className="absolute inset-0 rounded-full border border-white/20 scale-110 opacity-0 group-hover:opacity-100 transition-all duration-300" />
-                  {isInterpreting ? <Loader2 className="animate-spin" size={21} /> : <Compass size={21} />}
+                <button onClick={handleAnalyze} disabled={isInterpreting || interpretation} aria-label="Dive into poem meaning" className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105 disabled:opacity-50">
+                  {isInterpreting ? <Loader2 className="animate-spin text-[#C5A059]" size={21} /> : <Compass className="text-[#C5A059]" size={21} />}
                 </button>
-                <span className="font-brand-en text-[8.5px] tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">Dive In</span>
+                <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">Dive In</span>
               </div>
 
               <div className="flex flex-col items-center gap-1 min-w-[56px]">
-                <button onClick={handleFetch} disabled={isFetching} aria-label="Discover new poem" className={`min-w-[46px] min-h-[46px] p-[11px] rounded-full flex-shrink-0 flex items-center justify-center shadow-xl transition-all duration-300 hover:scale-110 active:scale-95 group relative ${theme.btnPrimary}`}>
-                  <div className="absolute inset-0 rounded-full border border-white/20 scale-110 opacity-0 group-hover:opacity-100 transition-all duration-300" />
-                  {isFetching ? <Loader2 className="animate-spin" size={21} /> : <Rabbit size={21} className="rabbit-bounce" />}
+                <button onClick={handleFetch} disabled={isFetching} aria-label="Discover new poem" className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105">
+                  {isFetching ? <Loader2 className="animate-spin text-[#C5A059]" size={21} /> : <Rabbit className="text-[#C5A059] rabbit-bounce" size={21} />}
                 </button>
-                <span className="font-brand-en text-[8.5px] tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">Discover</span>
+                <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">Discover</span>
               </div>
 
               <div className="w-px h-10 bg-stone-500/20 mx-2 flex-shrink-0" />
 
-              <div className="flex flex-col items-center gap-1 min-w-[56px]">
-                <button onClick={handleCopy} aria-label="Copy poem to clipboard" className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105">
-                  {showCopySuccess ? <Check size={21} className="text-green-500" /> : <Copy size={21} className="text-[#C5A059]" />}
-                </button>
-                <span className="font-brand-en text-[8.5px] tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">Copy</span>
-              </div>
+              {!isOverflow ? (
+                <>
+                  <div className="flex flex-col items-center gap-1 min-w-[56px]">
+                    <button onClick={handleCopy} aria-label="Copy poem to clipboard" className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105">
+                      {showCopySuccess ? <Check size={21} className="text-green-500" /> : <Copy size={21} className="text-[#C5A059]" />}
+                    </button>
+                    <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">Copy</span>
+                  </div>
 
-              <ThemeDropdown
-                darkMode={darkMode}
-                onToggleDarkMode={() => setDarkMode(!darkMode)}
-                currentFont={currentFont}
-                onCycleFont={cycleFont}
-                fonts={FONTS}
-              />
+                  <ThemeDropdown
+                    darkMode={darkMode}
+                    onToggleDarkMode={() => setDarkMode(!darkMode)}
+                    currentFont={currentFont}
+                    onCycleFont={cycleFont}
+                    fonts={FONTS}
+                  />
 
-              <CategoryPill selected={selectedCategory} onSelect={setSelectedCategory} darkMode={darkMode} />
+                  <CategoryPill selected={selectedCategory} onSelect={setSelectedCategory} darkMode={darkMode} />
+                </>
+              ) : (
+                <OverflowMenu
+                  darkMode={darkMode}
+                  onToggleDarkMode={() => setDarkMode(!darkMode)}
+                  currentFont={currentFont}
+                  onCycleFont={cycleFont}
+                  selectedCategory={selectedCategory}
+                  onSelectCategory={setSelectedCategory}
+                  onCopy={handleCopy}
+                  showCopySuccess={showCopySuccess}
+                />
+              )}
             </div>
           </footer>
         </div>
@@ -719,12 +841,12 @@ export default function DiwanApp() {
         <div className="hidden md:block h-full border-l">
           <div className={`${DESIGN.paneWidth} h-full flex flex-col z-30 ${DESIGN.anim} ${theme.glass} ${theme.border}`}>
             <div className="p-6 pb-4 border-b border-stone-500/10">
-              <h3 className="font-brand-en italic font-semibold text-lg text-indigo-600 tracking-tight">Poetic Insight</h3>
+              <h3 className="font-brand-en italic font-semibold text-[clamp(1rem,1.8vw,1.125rem)] text-indigo-600 tracking-tight">Poetic Insight</h3>
               <p className="text-[10px] opacity-30 uppercase font-brand-en truncate">{current?.poet} • {current?.title}</p>
             </div>
             <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
               {isInterpreting ? (
-                <div className="h-full flex flex-col items-center justify-center gap-4 opacity-30 animate-pulse"><Sparkles className="animate-spin text-indigo-500" size={32} /><p className="font-brand-en italic text-sm">Consulting Diwan...</p></div>
+                <div className="h-full flex flex-col items-center justify-center gap-4 opacity-30 animate-pulse"><Sparkles className="animate-spin text-indigo-500" size={32} /><p className="font-brand-en italic text-[clamp(0.875rem,1.5vw,1rem)]">Consulting Diwan...</p></div>
               ) : (
                 <div className={DESIGN.paneSpacing}>
                   {!interpretation && (
@@ -741,7 +863,7 @@ export default function DiwanApp() {
                     <div className="pt-6 border-t border-indigo-500/10">
                       <h4 className="text-[10px] font-brand-en font-black text-indigo-600 mb-2 uppercase tracking-widest opacity-80">The Depth</h4>
                       <div className="pl-4 border-l border-indigo-500/10">
-                        <p className="text-sm font-brand-en font-normal opacity-80 leading-relaxed">{insightParts.depth}</p>
+                        <p className="text-[clamp(0.875rem,1.5vw,1rem)] font-brand-en font-normal opacity-80 leading-relaxed">{insightParts.depth}</p>
                       </div>
                     </div>
                   )}
@@ -749,7 +871,7 @@ export default function DiwanApp() {
                     <div className="pt-6 border-t border-indigo-500/10">
                       <h4 className="text-[10px] font-brand-en font-black text-indigo-600 mb-2 uppercase tracking-widest opacity-80">The Author</h4>
                       <div className="pl-4 border-l border-indigo-500/10">
-                        <p className="text-sm font-brand-en font-normal opacity-80 leading-relaxed">{insightParts.author}</p>
+                        <p className="text-[clamp(0.875rem,1.5vw,1rem)] font-brand-en font-normal opacity-80 leading-relaxed">{insightParts.author}</p>
                       </div>
                     </div>
                   )}

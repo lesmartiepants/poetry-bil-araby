@@ -26,6 +26,11 @@ npm run test:e2e:headed  # Run with visible browser
 npm run test:e2e:debug   # Debug mode with Playwright inspector
 npm run test:e2e:report  # Open last test report
 npm run test:e2e:full    # Run full browser matrix (all devices)
+
+# Visual Review (Mockup Screenshot Capture)
+npx playwright test visual-review.spec.js          # Capture all mockup screenshots
+npx playwright test visual-review-single.spec.js   # Capture single mockup for review
+node scripts/capture-all-mockups.js                # Alternative: Node script for batch capture
 ```
 
 ## Architecture
@@ -41,6 +46,13 @@ const FEATURES = {
 };
 ```
 Toggle features here rather than conditionally importing code.
+
+**Route Handling**
+The app supports basic client-side routing:
+- `/` - Main poetry application (default)
+- `/mockups` - Splash mockup gallery viewer (44 design variations)
+- Route detection via `window.location.pathname`
+- No external router library - simple conditional rendering
 
 **Onboarding Flow**
 The app includes a splash screen and walkthrough guide for first-time users:
@@ -142,10 +154,24 @@ Four-stage pipeline in `.github/workflows/ci.yml`:
 
 ## Key Files
 
+### Core Application
 - `src/app.jsx` - Entire application (READ THIS FIRST)
 - `src/main.jsx` - React entry point (minimal, just renders DiwanApp)
 - `src/index.css` - Global styles and Tailwind directives
 - `index.html` - HTML shell (includes Arabic fonts from Google Fonts)
+
+### Splash Mockup System
+- `src/splash-mockups.jsx` - Original 3 mockup variations
+- `src/splash-arabian-variations.jsx` - Arabian/Islamic design themes (5 variations)
+- `src/splash-final-variations.jsx` - Refined designs with app colors (3 variations)
+- `src/splash-wildcard-variations.jsx` - Experimental designs (5 variations)
+- `src/splash-round6-variations.jsx` - Creative freedom designs (6 variations)
+- `mockups/` - 44 PNG screenshots of all splash variations
+- `mockups/INDEX.md` - Complete catalog of all mockup designs
+- `scripts/capture-all-mockups.js` - Automated screenshot generation for all mockups
+- Navigate to `/mockups` route in browser to view mockup gallery
+
+### Configuration
 - `vite.config.js` - Vite configuration (minimal)
 - `vitest.config.js` - Test configuration with CI optimizations
 - `playwright.config.js` - E2E test configuration with device matrix
@@ -159,6 +185,17 @@ Four-stage pipeline in `.github/workflows/ci.yml`:
 3. Use `DESIGN` and `THEME` constants for styling
 4. For Gemini API features, update `SYSTEM_PROMPT` if needed
 5. Add tests in `src/test/` for logic, `e2e/` for user flows
+
+### Splash Mockup Workflow
+When creating new splash screen designs:
+1. Create component in `src/splash-*.jsx` (follow existing naming pattern)
+2. Import component in `src/app.jsx` (top of file)
+3. Add component to mockup gallery route handler (search for "/mockups")
+4. Add capture script in `scripts/capture-*.js` if batch capturing
+5. Run visual review tests to generate screenshots: `npx playwright test visual-review.spec.js`
+6. Screenshots saved to `mockups/` directory
+7. Update `mockups/INDEX.md` with new designs
+8. Review designs in browser: `npm run dev` then navigate to `http://localhost:5173/mockups`
 
 ### Styling Guidelines
 - Arabic text uses `font-amiri` or `font-tajawal` (from Tailwind config)

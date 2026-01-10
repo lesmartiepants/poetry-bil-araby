@@ -31,9 +31,9 @@ npm run test:e2e:full    # Run full browser matrix (all devices)
 ## Architecture
 
 ### Single-File Component Design
-The entire application lives in `src/app.jsx` (~1500+ lines). This is intentional for simplicity but creates specific patterns you must understand:
+The entire application lives in `src/app.jsx` (~1700+ lines). This is intentional for simplicity but creates specific patterns you must understand:
 
-**Feature Flags** (app.jsx:9-12)
+**Feature Flags** (app.jsx:14-17)
 ```javascript
 const FEATURES = {
   grounding: false,  // Gemini API grounding
@@ -42,7 +42,14 @@ const FEATURES = {
 ```
 Toggle features here rather than conditionally importing code.
 
-**Design System Constants** (app.jsx:14-68)
+**Onboarding Flow**
+The app includes a splash screen and walkthrough guide for first-time users:
+- `SplashScreen` (app.jsx:202-298) - Initial landing screen with mystical design
+- `WalkthroughGuide` (app.jsx:300-496) - 4-step interactive tutorial
+- Skip in tests: Add `?skipSplash=true` URL parameter
+- Skip in development: Refresh page to bypass splash after first view
+
+**Design System Constants** (app.jsx:19-75)
 - `DESIGN`: Layout, typography, spacing tokens
 - `THEME`: Dark/light mode color palettes
 - Always use these constants rather than hardcoding Tailwind classes
@@ -66,7 +73,10 @@ All state lives at the top level in `DiwanApp`:
 - `currentIndex` - Currently displayed poem
 - `isPlaying` - Audio playback state
 - `paneVisible` - Side panel visibility
-- `theme` - Dark/light mode toggle
+- `darkMode` - Dark/light mode toggle
+- `showSplash` - Controls splash screen visibility (checks `?skipSplash=true` URL param)
+- `showWalkthrough` - Controls walkthrough guide visibility
+- `walkthroughStep` - Tracks current step in 4-step tutorial (0-3)
 
 No external state management library. Use React hooks (useState, useEffect, useRef, useMemo).
 
@@ -161,8 +171,10 @@ When writing tests:
 - Unit tests: Fast, focused on logic and component behavior
 - E2E tests: User-centric flows, verify visual output
 - Use `test.describe()` blocks for grouping
-- `beforeEach` should call `page.goto('/')` and wait for `domcontentloaded`
+- `beforeEach` should call `page.goto('/?skipSplash=true')` to bypass onboarding
+- CRITICAL: Always use `?skipSplash=true` in E2E tests to prevent splash screen from blocking interactions
 - Avoid waiting for `networkidle` (slow) - wait for specific elements instead
+- Scope selectors to specific sections (e.g., `page.locator('footer button')`) to avoid conflicts with debug panel
 
 ### Modifying CI Behavior
 Both `vitest.config.js` and `playwright.config.js` detect `process.env.CI`:
@@ -188,7 +200,11 @@ This ensures fast feedback in CI while allowing more relaxed timeouts locally.
 
 5. **Playwright Browser Matrix**: Local development runs 6 browser configs. CI runs only 2 (Desktop Chrome + Mobile Chrome). Use `npm run test:e2e:full` locally to run the comprehensive suite.
 
-6. **Theme State**: Theme is stored in component state only (not localStorage). Refreshing the page resets to dark mode. This is intentional for simplicity.
+6. **Theme State**: Theme is stored in component state only (not localStorage). Refreshing the page resets to dark mode. This is intentional for simplicity. Theme is synced to `document.documentElement.className` for E2E test verification.
+
+7. **Splash Screen in Tests**: The splash screen displays on first load and blocks all interactions. Always use `?skipSplash=true` URL parameter in E2E tests to bypass it. This is already configured in all E2E test files.
+
+8. **Debug Panel Button Conflicts**: When `FEATURES.debug = true`, debug panel buttons render at the top of the page. Use scoped selectors (e.g., `page.locator('footer button')` or specific classes like `.rounded-full`) to avoid counting debug buttons in test selectors.
 
 ## Git Worktrees for Parallel Work
 

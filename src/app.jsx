@@ -421,6 +421,7 @@ export default function DiwanApp() {
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(79, 70, 229, 0.2); border-radius: 10px; }
         .bg-radial-gradient { background: radial-gradient(circle, var(--tw-gradient-from) 0%, var(--tw-gradient-via) 50%, var(--tw-gradient-to) 100%); }
         .app-branding-rtl { direction: rtl; }
+        .safe-bottom { padding-bottom: max(1.5rem, env(safe-area-inset-bottom)); }
 
         .header-luminescence {
           text-shadow: 0 0 30px rgba(99, 102, 241, 0.6);
@@ -495,7 +496,7 @@ export default function DiwanApp() {
           <div className={`absolute inset-0 pointer-events-none opacity-[0.04] ${darkMode ? 'invert' : ''}`} style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M40 0l40 40-40 40L0 40z' fill='none' stroke='%234f46e5' stroke-width='1.5'/%3E%3Ccircle cx='40' cy='40' r='18' fill='none' stroke='%234f46e5' stroke-width='1.5'/%3E%3C/svg%3E")`, backgroundSize: '60px 60px' }} />
           <MysticalConsultationEffect active={isInterpreting} theme={theme} />
 
-          <main ref={mainScrollRef} onScroll={handleScroll} className="flex-1 overflow-y-auto custom-scrollbar relative z-10 px-4 md:px-0">
+          <main ref={mainScrollRef} onScroll={handleScroll} className="flex-1 overflow-y-auto custom-scrollbar relative z-10 px-4 md:px-0 pb-[120px] md:pb-0">
             <div className="min-h-full flex flex-col items-center justify-center py-6">
               <div className="w-full max-w-4xl flex flex-col items-center">
                 
@@ -580,7 +581,7 @@ export default function DiwanApp() {
             </div>
           </main>
 
-          <footer className="flex-none py-3 px-4 flex flex-col items-center z-20 relative bg-gradient-to-t from-black/5 to-transparent">
+          <footer className="flex-none py-3 pb-6 md:pb-3 px-4 flex flex-col items-center z-20 relative bg-gradient-to-t from-black/5 to-transparent safe-bottom">
             <div className={`flex items-center gap-2 px-5 py-3 rounded-full shadow-2xl border ${DESIGN.glass} ${theme.border} ${theme.shadow} ${DESIGN.anim} max-w-[calc(100vw-2rem)] w-fit`}>
 
               <div className="flex flex-col items-center gap-1 min-w-[56px]">
@@ -622,8 +623,6 @@ export default function DiwanApp() {
                 </button>
                 <span className="font-brand-en text-[8.5px] tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">Theme</span>
               </div>
-
-              <div className="w-px h-10 bg-stone-500/20 mx-2 flex-shrink-0" />
 
               <CategoryPill selected={selectedCategory} onSelect={setSelectedCategory} darkMode={darkMode} />
             </div>

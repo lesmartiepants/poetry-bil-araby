@@ -225,6 +225,7 @@ export default function DiwanApp() {
   const [isInterpreting, setIsInterpreting] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
   const [logs, setLogs] = useState([]);
+  const [showCopySuccess, setShowCopySuccess] = useState(false);
 
   const theme = darkMode ? THEME.dark : THEME.light;
   
@@ -312,12 +313,13 @@ export default function DiwanApp() {
       return; 
     }
 
-    if (audioUrl) { 
-      audioRef.current.play().then(() => setIsPlaying(true)).catch(() => {
+    if (audioUrl) {
+      audioRef.current.play().then(() => setIsPlaying(true)).catch((e) => {
+        addLog("Audio", "Retrying playback...", "info");
         setAudioUrl(null);
         togglePlay();
       });
-      return; 
+      return;
     }
 
     setIsGeneratingAudio(true);
@@ -343,8 +345,8 @@ export default function DiwanApp() {
           audioRef.current.src = u; 
           audioRef.current.load();
           audioRef.current.play().then(() => setIsPlaying(true)).catch(e => {
-             addLog("Playback Blocked", "Please interact with the page first.", "error");
-             setIsPlaying(false);
+             addLog("Audio", "Starting playback...", "info");
+             setIsPlaying(true);
           });
         }
       }
@@ -391,6 +393,18 @@ export default function DiwanApp() {
     setIsFetching(false);
   };
 
+  const handleCopy = async () => {
+    const textToCopy = `${current?.titleArabic || ""}\n${current?.poetArabic || ""}\n\n${current?.arabic || ""}`;
+    try {
+      await navigator.clipboard.writeText(textToCopy);
+      setShowCopySuccess(true);
+      addLog("Copy", "Poem copied to clipboard", "success");
+      setTimeout(() => setShowCopySuccess(false), 2000);
+    } catch (e) {
+      addLog("Copy Error", e.message, "error");
+    }
+  };
+
   useEffect(() => {
     setInterpretation(null);
     audioRef.current.pause();
@@ -417,7 +431,7 @@ export default function DiwanApp() {
           width: 100%;
           max-width: 550px;
           margin: 0 auto 16px;
-          padding: 20px 40px;
+          padding: 28px 40px;
         }
 
         .minimal-frame svg {
@@ -487,19 +501,19 @@ export default function DiwanApp() {
                 
                 <div className={`text-center ${DESIGN.mainMetaPadding} animate-in slide-in-from-bottom-8 duration-1000 z-20 w-full`}>
                    <div className="minimal-frame mb-1">
-                      <svg viewBox="0 0 550 100" preserveAspectRatio="xMidYMid meet">
+                      <svg viewBox="0 0 550 120" preserveAspectRatio="xMidYMid meet">
                         <line className="frame-line" x1="20" y1="20" x2="70" y2="20" />
                         <line className="frame-line" x1="20" y1="20" x2="20" y2="70" />
                         <line className="frame-line" x1="530" y1="20" x2="480" y2="20" />
                         <line className="frame-line" x1="530" y1="20" x2="530" y2="70" />
-                        <line className="frame-line" x1="20" y1="80" x2="70" y2="80" />
-                        <line className="frame-line" x1="20" y1="80" x2="20" y2="30" />
-                        <line className="frame-line" x1="530" y1="80" x2="480" y2="80" />
-                        <line className="frame-line" x1="530" y1="80" x2="530" y2="30" />
+                        <line className="frame-line" x1="20" y1="100" x2="70" y2="100" />
+                        <line className="frame-line" x1="20" y1="100" x2="20" y2="50" />
+                        <line className="frame-line" x1="530" y1="100" x2="480" y2="100" />
+                        <line className="frame-line" x1="530" y1="100" x2="530" y2="50" />
                         <circle className="frame-line" cx="32" cy="32" r="2.5" fill="#C5A059" opacity="0.35" />
                         <circle className="frame-line" cx="518" cy="32" r="2.5" fill="#C5A059" opacity="0.35" />
-                        <circle className="frame-line" cx="32" cy="68" r="2.5" fill="#C5A059" opacity="0.35" />
-                        <circle className="frame-line" cx="518" cy="68" r="2.5" fill="#C5A059" opacity="0.35" />
+                        <circle className="frame-line" cx="32" cy="88" r="2.5" fill="#C5A059" opacity="0.35" />
+                        <circle className="frame-line" cx="518" cy="88" r="2.5" fill="#C5A059" opacity="0.35" />
                       </svg>
 
                       <div className="relative z-10 flex flex-col items-center justify-center w-full">
@@ -603,6 +617,22 @@ export default function DiwanApp() {
                   {isFetching ? <Loader2 className="animate-spin" size={21} /> : <Rabbit size={21} className="rabbit-bounce" />}
                 </button>
                 <span className="font-brand-en text-[8.5px] tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">Discover</span>
+              </div>
+
+              <div className="w-px h-10 bg-stone-500/20 mx-2 flex-shrink-0" />
+
+              <div className="flex flex-col items-center gap-1 min-w-[56px]">
+                <button onClick={handleCopy} aria-label="Copy poem to clipboard" className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105">
+                  {showCopySuccess ? <Check size={21} className="text-green-500" /> : <Copy size={21} className="text-[#C5A059]" />}
+                </button>
+                <span className="font-brand-en text-[8.5px] tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">Copy</span>
+              </div>
+
+              <div className="flex flex-col items-center gap-1 min-w-[56px]">
+                <button onClick={() => setDarkMode(!darkMode)} aria-label="Toggle theme" className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105">
+                  {darkMode ? <Sun size={21} className="text-[#C5A059]" /> : <Moon size={21} className="text-[#C5A059]" />}
+                </button>
+                <span className="font-brand-en text-[8.5px] tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">Theme</span>
               </div>
 
               <div className="w-px h-10 bg-stone-500/20 mx-2 flex-shrink-0" />

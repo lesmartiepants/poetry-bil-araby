@@ -4,6 +4,7 @@ A beautiful React application for exploring Arabic poetry with AI-powered insigh
 
 ## Features
 
+- 🌟 Mystical splash screen and interactive walkthrough guide
 - 📖 Browse classic and modern Arabic poetry
 - 🎙️ AI-powered audio recitation with emotional context
 - 🤖 Deep analysis and interpretation using AI
@@ -40,12 +41,15 @@ npm run dev
 
 ## Usage
 
+- **First Visit**: Experience the mystical splash screen and optional 4-step walkthrough guide
 - **Discover**: Click the ✨ sparkles button to fetch new poems
 - **Navigate**: Use arrow buttons to browse through poems
 - **Play**: Click the play button to hear AI-generated recitation
 - **Analyze**: Click "Seek Insight" to get deep analysis
 - **Copy**: Click the copy icon to save poem text
 - **Theme**: Toggle between dark and light modes
+
+**For Testing**: Add `?skipSplash=true` to the URL to bypass the splash screen (e.g., `http://localhost:5173/?skipSplash=true`)
 
 ## Building with Claude
 
@@ -162,10 +166,13 @@ npm run test:e2e:full       # Full device matrix (local)
 
 ## Documentation
 
+- `CLAUDE.md` - Primary context file for Claude Code (READ THIS FIRST)
 - `.github/TESTING_STRATEGY.md` - Comprehensive testing strategy
 - `.github/CI_CD_GUIDE.md` - CI/CD pipeline reference
 - `docs/CI_PERFORMANCE_OPTIMIZATION.md` - Performance optimization journey
 - `e2e/README.md` - E2E testing guide
+- `SPLASH-WALKTHROUGH-REDESIGN.md` - Onboarding flow design documentation
+- `INVESTIGATION-FINDINGS.md` - CI test failure root cause analysis
 
 ## TODO
 

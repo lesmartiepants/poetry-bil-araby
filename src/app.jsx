@@ -574,19 +574,7 @@ export default function DiwanApp() {
                           </div>
                         </div>
                      </div>
-                   ) : (
-                     <div className="flex flex-col items-center gap-4 py-8">
-                       <button 
-                        onClick={handleAnalyze} 
-                        className={`group relative w-16 h-16 flex items-center justify-center rounded-full border ${theme.brandBorder} ${theme.brand} transition-all duration-1000 hover:scale-110 shadow-2xl overflow-hidden bg-indigo-500/5`}
-                       >
-                         <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-indigo-500/10 to-transparent animate-[spin_8s_linear_infinite]" />
-                         <RefreshCw className="animate-[spin_20s_linear_infinite] opacity-30 text-indigo-400" size={40} />
-                         <Sparkles className="absolute group-hover:scale-125 transition-transform duration-500" size={24} />
-                       </button>
-                       <span className="text-[9px] font-brand-en tracking-[0.4em] uppercase opacity-40">Reveal Insight</span>
-                     </div>
-                   )}
+                   ) : null}
                 </div>
               </div>
             </div>

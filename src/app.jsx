@@ -78,6 +78,17 @@ const CATEGORIES = [
   { id: "Ibn Arabi", label: "Ibn Arabi", labelAr: "ابن عربي" }
 ];
 
+const FONTS = [
+  { id: "Amiri", label: "Amiri", labelAr: "أميري", family: "font-amiri" },
+  { id: "Alexandria", label: "Alexandria", labelAr: "الإسكندرية", family: "font-alexandria" },
+  { id: "El Messiri", label: "El Messiri", labelAr: "المسيري", family: "font-messiri" },
+  { id: "Lalezar", label: "Lalezar", labelAr: "لاله‌زار", family: "font-lalezar" },
+  { id: "Rakkas", label: "Rakkas", labelAr: "رقاص", family: "font-rakkas" },
+  { id: "Fustat", label: "Fustat", labelAr: "فسطاط", family: "font-fustat" },
+  { id: "Kufam", label: "Kufam", labelAr: "كوفام", family: "font-kufam" },
+  { id: "Katibeh", label: "Katibeh", labelAr: "كاتبة", family: "font-katibeh" }
+];
+
 const apiKey = import.meta.env.VITE_GEMINI_API_KEY || ""; 
 
 const SYSTEM_PROMPT = `
@@ -198,6 +209,59 @@ const CategoryPill = ({ selected, onSelect, darkMode }) => {
   );
 };
 
+const ThemeDropdown = ({ darkMode, onToggleDarkMode, currentFont, onCycleFont, fonts }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const clickOut = (e) => { if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setIsOpen(false); };
+    document.addEventListener("mousedown", clickOut);
+    return () => document.removeEventListener("mousedown", clickOut);
+  }, []);
+
+  const handleCycleFont = () => {
+    onCycleFont();
+    setIsOpen(false);
+  };
+
+  const handleToggleDarkMode = () => {
+    onToggleDarkMode();
+    setIsOpen(false);
+  };
+
+  return (
+    <div className="relative flex flex-col items-center gap-1 min-w-[56px]" ref={dropdownRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105"
+        aria-label="Theme options"
+      >
+        {darkMode ? <Sun size={21} className="text-[#C5A059]" /> : <Moon size={21} className="text-[#C5A059]" />}
+      </button>
+      <span className="font-brand-en text-[8.5px] tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">Theme</span>
+
+      {isOpen && (
+        <div className="absolute bottom-full right-[-20px] mb-3 min-w-[200px] bg-[rgba(20,18,16,0.98)] backdrop-blur-[48px] border border-[rgba(197,160,89,0.15)] rounded-3xl p-3 shadow-[0_-10px_40px_rgba(0,0,0,0.7)] z-50">
+          <button
+            onClick={handleCycleFont}
+            className="w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex flex-col items-center border-b border-[rgba(197,160,89,0.08)] hover:bg-[rgba(197,160,89,0.08)]"
+          >
+            <div className="font-amiri text-lg text-[#C5A059] mb-[3px] font-medium">تبديل الخط</div>
+            <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Cycle Font: {currentFont}</div>
+          </button>
+          <button
+            onClick={handleToggleDarkMode}
+            className="w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex flex-col items-center hover:bg-[rgba(197,160,89,0.08)]"
+          >
+            <div className="font-amiri text-lg text-[#C5A059] mb-[3px] font-medium">{darkMode ? 'الوضع النهاري' : 'الوضع الليلي'}</div>
+            <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">{darkMode ? 'Light Mode' : 'Dark Mode'}</div>
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
 /* =============================================================================
   3. MAIN APPLICATION
   =============================================================================
@@ -217,6 +281,7 @@ export default function DiwanApp() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [darkMode, setDarkMode] = useState(true);
+  const [currentFont, setCurrentFont] = useState("Amiri");
   const [copySuccess, setCopySuccess] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
@@ -228,7 +293,19 @@ export default function DiwanApp() {
   const [showCopySuccess, setShowCopySuccess] = useState(false);
 
   const theme = darkMode ? THEME.dark : THEME.light;
-  
+
+  const currentFontClass = useMemo(() => {
+    const font = FONTS.find(f => f.id === currentFont);
+    return font ? font.family : FONTS[0].family;
+  }, [currentFont]);
+
+  const cycleFont = () => {
+    const currentIdx = FONTS.findIndex(f => f.id === currentFont);
+    const nextIdx = (currentIdx + 1) % FONTS.length;
+    setCurrentFont(FONTS[nextIdx].id);
+    addLog("Font", `Switched to ${FONTS[nextIdx].label}`, "info");
+  };
+
   const filtered = useMemo(() => {
     const searchStr = selectedCategory.toLowerCase();
     return selectedCategory === "All" 
@@ -423,6 +500,15 @@ export default function DiwanApp() {
         .app-branding-rtl { direction: rtl; }
         .safe-bottom { padding-bottom: max(1.5rem, env(safe-area-inset-bottom)); }
 
+        .font-amiri { font-family: 'Amiri', serif; }
+        .font-alexandria { font-family: 'Alexandria', sans-serif; }
+        .font-messiri { font-family: 'El Messiri', sans-serif; }
+        .font-lalezar { font-family: 'Lalezar', cursive; }
+        .font-rakkas { font-family: 'Rakkas', cursive; }
+        .font-fustat { font-family: 'Fustat', serif; }
+        .font-kufam { font-family: 'Kufam', sans-serif; }
+        .font-katibeh { font-family: 'Katibeh', cursive; }
+
         .header-luminescence {
           text-shadow: 0 0 30px rgba(99, 102, 241, 0.6);
         }
@@ -518,7 +604,7 @@ export default function DiwanApp() {
                       </svg>
 
                       <div className="relative z-10 flex flex-col items-center justify-center w-full">
-                         <div className={`flex flex-wrap items-center justify-center gap-1 sm:gap-2 md:gap-4 font-amiri text-sm sm:text-lg md:${DESIGN.mainTitleSize}`}>
+                         <div className={`flex flex-wrap items-center justify-center gap-1 sm:gap-2 md:gap-4 ${currentFontClass} text-sm sm:text-lg md:${DESIGN.mainTitleSize}`}>
                            <span className={`${theme.poetColor} opacity-90`}>{current?.poetArabic}</span>
                            <span className="opacity-10 text-xs sm:text-sm md:text-xl">-</span>
                            <span className={`${theme.titleColor} font-bold`}>{current?.titleArabic}</span>
@@ -543,7 +629,7 @@ export default function DiwanApp() {
                     <div className="flex flex-col gap-5 md:gap-7">
                       {versePairs.map((pair, idx) => (
                         <div key={`${current?.id}-${idx}`} className="flex flex-col gap-0.5">
-                          <p dir="rtl" className={`font-amiri ${DESIGN.mainFontSize} leading-[2.2]  arabic-shadow`}>{pair.ar}</p>
+                          <p dir="rtl" className={`${currentFontClass} ${DESIGN.mainFontSize} leading-[2.2]  arabic-shadow`}>{pair.ar}</p>
                           {pair.en && <p dir="ltr" className={`font-brand-en italic ${DESIGN.mainEnglishFontSize} opacity-40 ${DESIGN.anim}`}>{pair.en}</p>}
                         </div>
                       ))}
@@ -617,12 +703,13 @@ export default function DiwanApp() {
                 <span className="font-brand-en text-[8.5px] tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">Copy</span>
               </div>
 
-              <div className="flex flex-col items-center gap-1 min-w-[56px]">
-                <button onClick={() => setDarkMode(!darkMode)} aria-label="Toggle theme" className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105">
-                  {darkMode ? <Sun size={21} className="text-[#C5A059]" /> : <Moon size={21} className="text-[#C5A059]" />}
-                </button>
-                <span className="font-brand-en text-[8.5px] tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">Theme</span>
-              </div>
+              <ThemeDropdown
+                darkMode={darkMode}
+                onToggleDarkMode={() => setDarkMode(!darkMode)}
+                currentFont={currentFont}
+                onCycleFont={cycleFont}
+                fonts={FONTS}
+              />
 
               <CategoryPill selected={selectedCategory} onSelect={setSelectedCategory} darkMode={darkMode} />
             </div>

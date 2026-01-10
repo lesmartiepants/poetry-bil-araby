@@ -725,7 +725,7 @@ export default function DiwanApp() {
                       </div>
                    </div>
 
-                   <div className="flex justify-center gap-3 mt-2">
+                   <div className="flex justify-center gap-3 mt-1">
                      {Array.isArray(current?.tags) && current.tags.slice(0, 3).map(tag => (
                        <span key={tag} className={`px-2.5 py-0.5 border ${theme.brandBorder} ${theme.brand} ${DESIGN.mainTagSize} font-brand-en tracking-[0.15em] uppercase opacity-70`}>
                          {tag}
@@ -734,7 +734,7 @@ export default function DiwanApp() {
                    </div>
                 </div>
 
-                <div className={`relative w-full group pt-4 pb-2 ${DESIGN.mainMarginBottom}`}>
+                <div className={`relative w-full group pt-8 pb-2 ${DESIGN.mainMarginBottom}`}>
                   <div className="px-4 md:px-20 py-2 text-center">
                     <div className="flex flex-col gap-5 md:gap-7">
                       {versePairs.map((pair, idx) => (
@@ -777,8 +777,8 @@ export default function DiwanApp() {
             </div>
           </main>
 
-          <footer className="flex-none py-3 pb-6 md:pb-3 px-4 flex flex-col items-center z-20 relative bg-gradient-to-t from-black/5 to-transparent safe-bottom">
-            <div ref={controlBarRef} className={`flex items-center gap-2 px-5 py-3 rounded-full shadow-2xl border ${DESIGN.glass} ${theme.border} ${theme.shadow} ${DESIGN.anim} max-w-[calc(100vw-2rem)] w-fit`}>
+          <footer className="flex-none py-2 pb-3 md:pb-2 px-4 flex flex-col items-center z-20 relative bg-gradient-to-t from-black/5 to-transparent safe-bottom">
+            <div ref={controlBarRef} className={`flex items-center gap-2 px-5 py-2 rounded-full shadow-2xl border ${DESIGN.glass} ${theme.border} ${theme.shadow} ${DESIGN.anim} max-w-[calc(100vw-2rem)] w-fit`}>
 
               <div className="flex flex-col items-center gap-1 min-w-[56px]">
                 <button onClick={togglePlay} disabled={isGeneratingAudio} aria-label={isPlaying ? "Pause recitation" : "Play recitation"} className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105">

@@ -692,7 +692,7 @@ export default function DiwanApp() {
           <div className={`absolute inset-0 pointer-events-none opacity-[0.04] ${darkMode ? 'invert' : ''}`} style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M40 0l40 40-40 40L0 40z' fill='none' stroke='%234f46e5' stroke-width='1.5'/%3E%3Ccircle cx='40' cy='40' r='18' fill='none' stroke='%234f46e5' stroke-width='1.5'/%3E%3C/svg%3E")`, backgroundSize: '60px 60px' }} />
           <MysticalConsultationEffect active={isInterpreting} theme={theme} />
 
-          <main ref={mainScrollRef} onScroll={handleScroll} className="flex-1 overflow-y-auto custom-scrollbar relative z-10 px-4 md:px-0 pb-20 md:pb-0">
+          <main ref={mainScrollRef} onScroll={handleScroll} className="flex-1 overflow-y-auto custom-scrollbar relative z-10 px-4 md:px-0">
             <div className="min-h-full flex flex-col items-center justify-center py-6">
               <div className="w-full max-w-4xl flex flex-col items-center">
                 
@@ -747,7 +747,7 @@ export default function DiwanApp() {
                   </div>
                 </div>
 
-                <div className="w-full max-w-2xl px-6 md:px-0 mb-32 md:hidden">
+                <div className="w-full max-w-2xl px-6 md:px-0 mb-4 md:hidden">
                    {isInterpreting ? (
                      <div className="flex flex-col items-center py-8 gap-4">
                        <div className="relative">

@@ -38,3 +38,6 @@ ui-ux-screenshots/
 ui-ux-report/
 *.playwright-cache/
 .playwright/
+
+# Design exploration artifacts (binary screenshots)
+screenshots/

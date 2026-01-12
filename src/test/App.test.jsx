@@ -93,29 +93,34 @@ describe('DiwanApp', () => {
   })
 
   describe('Category Filtering', () => {
-    it('displays category dropdown with all poets', () => {
+    it('displays category dropdown with all poets', async () => {
       render(<DiwanApp />)
-      const arabicText = document.body.textContent
-      expect(arabicText).toContain('كل الشعراء')
+
+      // Find the Poets button (aria-label)
+      const poetsButton = screen.getByLabelText('Select poet category')
+      expect(poetsButton).toBeInTheDocument()
+
+      // Click to open dropdown
+      await userEvent.click(poetsButton)
+
+      // Now check for category text
+      await waitFor(() => {
+        expect(document.body.textContent).toContain('كل الشعراء')
+      })
     })
 
     it('shows all available category options', async () => {
       render(<DiwanApp />)
 
-      const buttons = screen.getAllByRole('button')
-      const categoryButton = buttons.find(btn => btn.textContent.includes('كل الشعراء'))
+      // Find and click the Poets button
+      const poetsButton = screen.getByLabelText('Select poet category')
+      await userEvent.click(poetsButton)
 
-      if (categoryButton) {
-        await userEvent.click(categoryButton)
-
-        await waitFor(() => {
-          const content = document.body.textContent
-          expect(content.includes('محمود درويش') || content.includes('المتنبي')).toBeTruthy()
-        })
-      } else {
-        // Category dropdown exists
-        expect(document.body.textContent).toContain('كل الشعراء')
-      }
+      // Wait for dropdown to open and check for poet names
+      await waitFor(() => {
+        const content = document.body.textContent
+        expect(content.includes('محمود درويش') || content.includes('المتنبي')).toBeTruthy()
+      })
     })
 
     it('changes selected category when clicking an option', async () => {
@@ -132,26 +137,26 @@ describe('DiwanApp', () => {
   })
 
   describe('Navigation Controls', () => {
-    it('renders next and previous buttons', () => {
+    it('renders control buttons without left/right navigation', () => {
       render(<DiwanApp />)
       const buttons = screen.getAllByRole('button')
 
-      // Should have navigation buttons
-      expect(buttons.length).toBeGreaterThan(4)
+      // Should have Listen, Dive In, Discover, Poets buttons (no left/right navigation)
+      expect(buttons.length).toBeGreaterThan(3)
     })
 
-    it('disables navigation buttons when only one poem exists', () => {
+    it('has all primary action buttons enabled', () => {
       render(<DiwanApp />)
 
-      // Find navigation buttons by checking for disabled state
-      const buttons = screen.getAllByRole('button')
-      const disabledButtons = buttons.filter(btn => btn.disabled)
-
-      // At least some navigation buttons should be disabled with one poem
-      expect(disabledButtons.length).toBeGreaterThan(0)
+      // Option K design removed left/right navigation
+      // Verify primary buttons exist: Listen, Dive In, Discover, Poets
+      expect(screen.getByLabelText(/play recitation|pause recitation/i)).toBeInTheDocument()
+      expect(screen.getByLabelText('Dive into poem meaning')).toBeInTheDocument()
+      expect(screen.getByLabelText('Discover new poem')).toBeInTheDocument()
+      expect(screen.getByLabelText('Select poet category')).toBeInTheDocument()
     })
 
-    it('enables navigation buttons when multiple poems exist', async () => {
+    it('allows discovering new poems without left/right navigation', async () => {
       render(<DiwanApp />)
 
       // Mock API response for fetching a new poem
@@ -168,18 +173,13 @@ describe('DiwanApp', () => {
       mockSuccessfulFetch(createMockGeminiResponse({ text: JSON.stringify(newPoem) }))
 
       // Click discover button
-      const buttons = screen.getAllByRole('button')
-      const discoverButton = buttons.find(btn => !btn.disabled && btn.querySelector('svg'))
+      const discoverButton = screen.getByLabelText('Discover new poem')
+      await userEvent.click(discoverButton)
 
-      if (discoverButton) {
-        await userEvent.click(discoverButton)
-
-        await waitFor(() => {
-          const navButtons = screen.getAllByRole('button')
-          const enabledNavButtons = navButtons.filter(btn => !btn.disabled)
-          expect(enabledNavButtons.length).toBeGreaterThan(0)
-        }, { timeout: 3000 })
-      }
+      // Verify poem content updates (Option K uses serendipity via Discover, not left/right nav)
+      await waitFor(() => {
+        expect(screen.getByText('محمود درويش')).toBeInTheDocument()
+      }, { timeout: 3000 })
     })
   })
 

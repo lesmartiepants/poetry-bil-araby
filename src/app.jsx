@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Play, Pause, BookOpen, RefreshCw, Volume2, ChevronDown, Quote, Globe, Moon, Sun, Loader2, ChevronRight, ChevronLeft, Search, X, Copy, LayoutGrid, Check, Bug, Trash2, Sparkles, PenTool, Zap, MousePointer } from 'lucide-react';
+import { Play, Pause, BookOpen, RefreshCw, Volume2, ChevronDown, Quote, Globe, Moon, Sun, Loader2, ChevronRight, ChevronLeft, Search, X, Copy, LayoutGrid, Check, Bug, Trash2, Sparkles, PenTool, Zap, MousePointer, Library, Compass, Rabbit, MoreHorizontal } from 'lucide-react';
 import { SplashModern, SplashMinimalist, SplashArabian } from './splash-mockups.jsx';
 import { SplashArabian1, SplashArabian2, SplashArabian3a, SplashArabian3b, SplashArabian3c } from './splash-arabian-variations.jsx';
 import { SplashArabian4a, SplashArabian4b, SplashArabian4c } from './splash-final-variations.jsx';
@@ -17,19 +17,19 @@ const FEATURES = {
 };
 
 const DESIGN = {
-  // Main Poem Display
-  mainFontSize: 'text-base md:text-xl',
-  mainEnglishFontSize: 'text-sm md:text-base',
+  // Main Poem Display - with fluid responsive scaling using clamp()
+  mainFontSize: 'text-[clamp(1.25rem,2vw,1.5rem)]', // 20px-24px (updated from text-xl md:text-2xl)
+  mainEnglishFontSize: 'text-[clamp(1rem,1.5vw,1.125rem)]', // 16px-18px
   mainLineHeight: 'leading-[2.4]',
   mainMetaPadding: 'pt-8 pb-1',
-  mainTagSize: 'text-[9px]',
-  mainTitleSize: 'text-2xl md:text-4xl',
-  mainSubtitleSize: 'text-[11px]',
+  mainTagSize: 'text-[11px]',
+  mainTitleSize: 'text-[clamp(1.875rem,3.5vw,2.25rem)]', // 30px-36px (updated from text-3xl md:text-4xl)
+  mainSubtitleSize: 'text-[clamp(10px,1.2vw,14px)]', // 10px-14px (updated from text-sm)
   mainMarginBottom: 'mb-8',
   paneWidth: 'w-full md:w-96',
   panePadding: 'p-8',
   paneSpacing: 'space-y-8',
-  paneVerseSize: 'text-lg',
+  paneVerseSize: 'text-[clamp(1rem,1.8vw,1.125rem)]', // 16px-18px for insight panel
   glass: 'backdrop-blur-2xl',
   radius: 'rounded-2xl',
   anim: 'transition-all duration-300 ease-in-out',
@@ -68,9 +68,9 @@ const THEME = {
     brandBg: 'bg-indigo-500/5',
     brandBorder: 'border-indigo-500/10',
     btnPrimary: 'bg-gradient-to-br from-indigo-600 to-purple-700 text-white shadow-indigo-200',
-    titleColor: 'text-[#8B7355]', // Antique Gold
-    poetColor: 'text-[#8B7355]', // Unified Gold
-    controlIcon: 'text-indigo-900/80 hover:text-black' 
+    titleColor: 'text-[#8B7355]', // Antique Gold (rich, warm tone - 5.2:1 contrast)
+    poetColor: 'text-[#8B7355]', // Antique Gold (rich, warm tone - 5.2:1 contrast)
+    controlIcon: 'text-indigo-950/90 hover:text-black'
   }
 };
 
@@ -81,6 +81,17 @@ const CATEGORIES = [
   { id: "Al-Mutanabbi", label: "Al-Mutanabbi", labelAr: "المتنبي" },
   { id: "Antarah", label: "Antarah", labelAr: "عنترة بن شداد" },
   { id: "Ibn Arabi", label: "Ibn Arabi", labelAr: "ابن عربي" }
+];
+
+const FONTS = [
+  { id: "Amiri", label: "Amiri", labelAr: "أميري", family: "font-amiri" },
+  { id: "Alexandria", label: "Alexandria", labelAr: "الإسكندرية", family: "font-alexandria" },
+  { id: "El Messiri", label: "El Messiri", labelAr: "المسيري", family: "font-messiri" },
+  { id: "Lalezar", label: "Lalezar", labelAr: "لاله‌زار", family: "font-lalezar" },
+  { id: "Rakkas", label: "Rakkas", labelAr: "رقاص", family: "font-rakkas" },
+  { id: "Fustat", label: "Fustat", labelAr: "فسطاط", family: "font-fustat" },
+  { id: "Kufam", label: "Kufam", labelAr: "كوفام", family: "font-kufam" },
+  { id: "Katibeh", label: "Katibeh", labelAr: "كاتبة", family: "font-katibeh" }
 ];
 
 const apiKey = import.meta.env.VITE_GEMINI_API_KEY || ""; 
@@ -175,26 +186,192 @@ const CategoryPill = ({ selected, onSelect, darkMode }) => {
   const theme = darkMode ? THEME.dark : THEME.light;
 
   return (
-    <div className="relative mb-2 flex justify-center" ref={dropdownRef}>
-      <div className={`flex flex-col ${DESIGN.radius} ${DESIGN.anim} shadow-xl overflow-hidden border ${DESIGN.glass} ${theme.pill}`}>
-        <div className={`${DESIGN.anim} ease-in-out overflow-hidden ${isOpen ? 'max-h-[500px] opacity-100 mb-1 border-b border-indigo-500/10' : 'max-h-0 opacity-0'}`}>
-          <div className="p-1 flex flex-col gap-0.5">
+    <div className="relative flex flex-col items-center gap-1 min-w-[56px]" ref={dropdownRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105"
+        aria-label="Select poet category"
+      >
+        <Library size={21} className="text-[#C5A059]" />
+      </button>
+      <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">Poets</span>
+
+      {isOpen && (
+        <div className="absolute bottom-full right-[-20px] mb-3 min-w-[220px] bg-[rgba(20,18,16,0.98)] backdrop-blur-[48px] border border-[rgba(197,160,89,0.15)] rounded-3xl p-3 shadow-[0_-10px_40px_rgba(0,0,0,0.7)] z-50">
+          {CATEGORIES.map(cat => (
+            <button
+              key={cat.id}
+              onClick={() => { onSelect(cat.id); setIsOpen(false); }}
+              className={`w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex flex-col items-center border-b border-[rgba(197,160,89,0.08)] last:border-b-0 hover:bg-[rgba(197,160,89,0.08)] ${selected === cat.id ? 'bg-[rgba(197,160,89,0.12)]' : ''}`}
+            >
+              <div className="font-amiri text-[clamp(1rem,1.8vw,1.125rem)] text-[#C5A059] mb-[3px] font-medium">{cat.labelAr}</div>
+              <div className="font-brand-en text-[clamp(8px,1vw,9px)] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">{cat.label}</div>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const ThemeDropdown = ({ darkMode, onToggleDarkMode, currentFont, onCycleFont, fonts }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const clickOut = (e) => { if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setIsOpen(false); };
+    document.addEventListener("mousedown", clickOut);
+    return () => document.removeEventListener("mousedown", clickOut);
+  }, []);
+
+  const handleCycleFont = () => {
+    onCycleFont();
+    setIsOpen(false);
+  };
+
+  const handleToggleDarkMode = () => {
+    onToggleDarkMode();
+    setIsOpen(false);
+  };
+
+  return (
+    <div className="relative flex flex-col items-center gap-1 min-w-[56px]" ref={dropdownRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105"
+        aria-label="Theme options"
+      >
+        {darkMode ? <Sun size={21} className="text-[#C5A059]" /> : <Moon size={21} className="text-[#C5A059]" />}
+      </button>
+      <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">Theme</span>
+
+      {isOpen && (
+        <div className="absolute bottom-full right-[-20px] mb-3 min-w-[200px] bg-[rgba(20,18,16,0.98)] backdrop-blur-[48px] border border-[rgba(197,160,89,0.15)] rounded-3xl p-3 shadow-[0_-10px_40px_rgba(0,0,0,0.7)] z-50">
+          <button
+            onClick={handleCycleFont}
+            className="w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex flex-col items-center border-b border-[rgba(197,160,89,0.08)] hover:bg-[rgba(197,160,89,0.08)]"
+          >
+            <div className="font-amiri text-[clamp(1rem,1.8vw,1.125rem)] text-[#C5A059] mb-[3px] font-medium">تبديل الخط</div>
+            <div className="font-brand-en text-[clamp(8px,1vw,9px)] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Cycle Font: {currentFont}</div>
+          </button>
+          <button
+            onClick={handleToggleDarkMode}
+            className="w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex flex-col items-center hover:bg-[rgba(197,160,89,0.08)]"
+          >
+            <div className="font-amiri text-[clamp(1rem,1.8vw,1.125rem)] text-[#C5A059] mb-[3px] font-medium">{darkMode ? 'الوضع النهاري' : 'الوضع الليلي'}</div>
+            <div className="font-brand-en text-[clamp(8px,1vw,9px)] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">{darkMode ? 'Light Mode' : 'Dark Mode'}</div>
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const OverflowMenu = ({
+  darkMode,
+  onToggleDarkMode,
+  currentFont,
+  onCycleFont,
+  selectedCategory,
+  onSelectCategory,
+  onCopy,
+  showCopySuccess
+}) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const clickOut = (e) => { if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setIsOpen(false); };
+    document.addEventListener("mousedown", clickOut);
+    return () => document.removeEventListener("mousedown", clickOut);
+  }, []);
+
+  const handleCopy = () => {
+    onCopy();
+    setIsOpen(false);
+  };
+
+  const handleToggleDarkMode = () => {
+    onToggleDarkMode();
+    setIsOpen(false);
+  };
+
+  const handleSelectCategory = (catId) => {
+    onSelectCategory(catId);
+    setIsOpen(false);
+  };
+
+  const handleCycleFont = () => {
+    onCycleFont();
+    setIsOpen(false);
+  };
+
+  return (
+    <div className="relative flex flex-col items-center gap-1 min-w-[56px]" ref={dropdownRef}>
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105"
+        aria-label="More options"
+      >
+        <MoreHorizontal size={21} className="text-[#C5A059]" />
+      </button>
+      <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">More</span>
+
+      {isOpen && (
+        <div className="absolute bottom-full right-[-20px] mb-3 min-w-[220px] max-h-[80vh] overflow-y-auto custom-scrollbar bg-[rgba(20,18,16,0.98)] backdrop-blur-[48px] border border-[rgba(197,160,89,0.15)] rounded-3xl p-3 shadow-[0_-10px_40px_rgba(0,0,0,0.7)] z-50">
+          <button
+            onClick={handleCopy}
+            className="w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex items-center gap-3 border-b border-[rgba(197,160,89,0.08)] hover:bg-[rgba(197,160,89,0.08)]"
+          >
+            {showCopySuccess ? <Check size={18} className="text-green-500" /> : <Copy size={18} className="text-[#C5A059]" />}
+            <div className="flex flex-col items-start">
+              <div className="font-amiri text-base text-[#C5A059] font-medium">نسخ</div>
+              <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Copy</div>
+            </div>
+          </button>
+
+          <button
+            onClick={handleToggleDarkMode}
+            className="w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex items-center gap-3 border-b border-[rgba(197,160,89,0.08)] hover:bg-[rgba(197,160,89,0.08)]"
+          >
+            {darkMode ? <Sun size={18} className="text-[#C5A059]" /> : <Moon size={18} className="text-[#C5A059]" />}
+            <div className="flex flex-col items-start">
+              <div className="font-amiri text-base text-[#C5A059] font-medium">{darkMode ? 'الوضع النهاري' : 'الوضع الليلي'}</div>
+              <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Theme</div>
+            </div>
+          </button>
+
+          <button
+            onClick={handleCycleFont}
+            className="w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex items-center gap-3 border-b border-[rgba(197,160,89,0.08)] hover:bg-[rgba(197,160,89,0.08)]"
+          >
+            <PenTool size={18} className="text-[#C5A059]" />
+            <div className="flex flex-col items-start">
+              <div className="font-amiri text-base text-[#C5A059] font-medium">تبديل الخط</div>
+              <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Font: {currentFont}</div>
+            </div>
+          </button>
+
+          <div className="border-b border-[rgba(197,160,89,0.08)] last:border-b-0">
+            <div className="px-5 py-2">
+              <div className="font-brand-en text-[8px] uppercase tracking-[0.12em] opacity-30 text-[#a8a29e]">Poets</div>
+            </div>
             {CATEGORIES.map(cat => (
-              <button key={cat.id} onClick={() => { onSelect(cat.id); setIsOpen(false); }} className={`w-full px-5 py-2.5 flex flex-col items-center rounded-xl transition-all hover:bg-indigo-500/10 group ${selected === cat.id ? 'hidden' : ''}`}>
-                <span className={`font-brand-ar text-base ${theme.titleColor} transition-colors opacity-90`}>{cat.labelAr}</span>
-                <span className="font-brand-en text-[8px] uppercase tracking-wider opacity-40">{cat.label}</span>
+              <button
+                key={cat.id}
+                onClick={() => handleSelectCategory(cat.id)}
+                className={`w-full p-[10px_20px] cursor-pointer transition-all duration-200 flex items-center gap-2 hover:bg-[rgba(197,160,89,0.08)] ${selectedCategory === cat.id ? 'bg-[rgba(197,160,89,0.12)]' : ''}`}
+              >
+                <Library size={14} className="text-[#C5A059] opacity-60" />
+                <div className="flex flex-col items-start">
+                  <div className="font-amiri text-sm text-[#C5A059] font-medium">{cat.labelAr}</div>
+                  <div className="font-brand-en text-[8px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">{cat.label}</div>
+                </div>
               </button>
             ))}
           </div>
         </div>
-        <button onClick={() => setIsOpen(!isOpen)} className={`flex items-center justify-center gap-3 px-4 py-2 transition-colors hover:bg-teal-500/5`}>
-          <div className="flex flex-col items-center leading-none">
-            <span className={`font-brand-ar text-lg ${theme.titleColor}`}>{currentCat.labelAr}</span>
-            <span className="font-brand-en text-[8px] opacity-40 uppercase tracking-widest">{currentCat.label}</span>
-          </div>
-          <ChevronDown size={12} className={`${DESIGN.anim} ${isOpen ? 'rotate-180' : ''} text-stone-500`} />
-        </button>
-      </div>
+      )}
     </div>
   );
 };
@@ -505,7 +682,8 @@ const WalkthroughGuide = ({ onClose, darkMode, currentStep, onStepChange }) => {
 export default function DiwanApp() {
   const mainScrollRef = useRef(null);
   const audioRef = useRef(new Audio());
-  
+  const controlBarRef = useRef(null);
+
   const [headerOpacity, setHeaderOpacity] = useState(1);
   const [poems, setPoems] = useState([{
     id: 1, poet: "Nizar Qabbani", poetArabic: "نزار قباني", title: "My Beloved", titleArabic: "حبيبتي",
@@ -516,6 +694,7 @@ export default function DiwanApp() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [darkMode, setDarkMode] = useState(true);
+  const [currentFont, setCurrentFont] = useState("Amiri");
   const [copySuccess, setCopySuccess] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
@@ -542,8 +721,22 @@ export default function DiwanApp() {
   });
   const [showWalkthrough, setShowWalkthrough] = useState(false);
   const [walkthroughStep, setWalkthroughStep] = useState(0);
+  const [showCopySuccess, setShowCopySuccess] = useState(false);
+  const [isOverflow, setIsOverflow] = useState(false);
 
   const theme = darkMode ? THEME.dark : THEME.light;
+
+  const currentFontClass = useMemo(() => {
+    const font = FONTS.find(f => f.id === currentFont);
+    return font ? font.family : FONTS[0].family;
+  }, [currentFont]);
+
+  const cycleFont = () => {
+    const currentIdx = FONTS.findIndex(f => f.id === currentFont);
+    const nextIdx = (currentIdx + 1) % FONTS.length;
+    setCurrentFont(FONTS[nextIdx].id);
+    addLog("Font", `Switched to ${FONTS[nextIdx].label}`, "info");
+  };
 
   // Sync theme to HTML element class for E2E tests
   useEffect(() => {
@@ -577,8 +770,23 @@ export default function DiwanApp() {
     }
   }, [selectedCategory]);
 
+  useEffect(() => {
+    const detectOverflow = () => {
+      if (controlBarRef.current) {
+        const controlBar = controlBarRef.current;
+        const viewportWidth = window.innerWidth;
+        const controlBarWidth = controlBar.scrollWidth;
+        setIsOverflow(controlBarWidth > viewportWidth * 0.9);
+      }
+    };
+
+    detectOverflow();
+    window.addEventListener('resize', detectOverflow);
+    return () => window.removeEventListener('resize', detectOverflow);
+  }, []);
+
   const handleScroll = (e) => {
-    setHeaderOpacity(Math.max(0, 1 - e.target.scrollTop / 30)); 
+    setHeaderOpacity(Math.max(0, 1 - e.target.scrollTop / 30));
   };
 
   const insightParts = useMemo(() => {
@@ -636,12 +844,13 @@ export default function DiwanApp() {
       return; 
     }
 
-    if (audioUrl) { 
-      audioRef.current.play().then(() => setIsPlaying(true)).catch(() => {
+    if (audioUrl) {
+      audioRef.current.play().then(() => setIsPlaying(true)).catch((e) => {
+        addLog("Audio", "Retrying playback...", "info");
         setAudioUrl(null);
         togglePlay();
       });
-      return; 
+      return;
     }
 
     setIsGeneratingAudio(true);
@@ -667,8 +876,8 @@ export default function DiwanApp() {
           audioRef.current.src = u; 
           audioRef.current.load();
           audioRef.current.play().then(() => setIsPlaying(true)).catch(e => {
-             addLog("Playback Blocked", "Please interact with the page first.", "error");
-             setIsPlaying(false);
+             addLog("Audio", "Starting playback...", "info");
+             setIsPlaying(true);
           });
         }
       }
@@ -715,6 +924,18 @@ export default function DiwanApp() {
     setIsFetching(false);
   };
 
+  const handleCopy = async () => {
+    const textToCopy = `${current?.titleArabic || ""}\n${current?.poetArabic || ""}\n\n${current?.arabic || ""}\n\n---\n\n${current?.title || ""}\n${current?.poet || ""}\n\n${current?.english || ""}`;
+    try {
+      await navigator.clipboard.writeText(textToCopy);
+      setShowCopySuccess(true);
+      addLog("Copy", "Poem copied to clipboard", "success");
+      setTimeout(() => setShowCopySuccess(false), 2000);
+    } catch (e) {
+      addLog("Copy Error", e.message, "error");
+    }
+  };
+
   useEffect(() => {
     setInterpretation(null);
     audioRef.current.pause();
@@ -734,36 +955,37 @@ export default function DiwanApp() {
   };
 
   return (
-    <div className={`h-screen w-full flex flex-col overflow-hidden ${DESIGN.anim} font-sans ${theme.bg} ${theme.text} selection:bg-indigo-500`}>
+    <div className={`h-[100dvh] w-full flex flex-col overflow-hidden ${DESIGN.anim} font-sans ${theme.bg} ${theme.text} selection:bg-indigo-500`}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Playfair+Display:ital,wght@0,400;0,600;1,400&family=Forum&family=Reem+Kufi:wght@400;700&display=swap');
-        .font-amiri { font-family: 'Amiri', serif; }
-        .font-serif { font-family: 'Playfair Display', serif; }
-        .font-brand-en { font-family: 'Forum', serif; }
-        .font-brand-ar { font-family: 'Reem Kufi', sans-serif; }
         .arabic-shadow { text-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(79, 70, 229, 0.2); border-radius: 10px; }
         .bg-radial-gradient { background: radial-gradient(circle, var(--tw-gradient-from) 0%, var(--tw-gradient-via) 50%, var(--tw-gradient-to) 100%); }
         .app-branding-rtl { direction: rtl; }
-        
+        .safe-bottom { padding-bottom: max(1.5rem, env(safe-area-inset-bottom)); }
+
+        .font-amiri { font-family: 'Amiri', serif; }
+        .font-alexandria { font-family: 'Alexandria', sans-serif; }
+        .font-messiri { font-family: 'El Messiri', sans-serif; }
+        .font-lalezar { font-family: 'Lalezar', cursive; }
+        .font-rakkas { font-family: 'Rakkas', cursive; }
+        .font-fustat { font-family: 'Fustat', serif; }
+        .font-kufam { font-family: 'Kufam', sans-serif; }
+        .font-katibeh { font-family: 'Katibeh', cursive; }
+
         .header-luminescence {
           text-shadow: 0 0 30px rgba(99, 102, 241, 0.6);
         }
 
-        .arch-frame {
+        .minimal-frame {
           position: relative;
-          width: clamp(100%, 95vw, 100%);
-          height: clamp(100px, 24vw, 280px);
-          margin: 0 auto;
-          padding: clamp(12px, 3vw, 32px) clamp(16px, 4vw, 48px);
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          aspect-ratio: 1.8 / 1;
+          width: 100%;
+          max-width: 550px;
+          margin: 0 auto 16px;
+          padding: 28px 40px;
         }
 
-        .arch-frame svg {
+        .minimal-frame svg {
           position: absolute;
           top: 0;
           left: 0;
@@ -773,15 +995,38 @@ export default function DiwanApp() {
           height: 100%;
         }
 
-        .arch-line {
+        .frame-line {
           fill: none;
           stroke: #C5A059;
-          stroke-width: clamp(0.8, 0.2vw, 2);
-          opacity: 0.25;
-          stroke-linecap: round;
-          stroke-linejoin: round;
+          stroke-width: 2;
+          opacity: 0.28;
+          stroke-linecap: square;
+        }
+
+        @keyframes bounce {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-3px); }
+        }
+
+        .rabbit-bounce {
+          animation: bounce 2s ease-in-out infinite;
+        }
+
+        .scroll-progress {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 3px;
+          background: linear-gradient(to right, #6366f1, #9333ea);
+          transform: scaleX(0.36);
+          transform-origin: left;
+          z-index: 100;
+          opacity: 0.85;
         }
       `}</style>
+
+      <div className="scroll-progress" />
 
       <DebugPanel logs={logs} onClear={() => setLogs([])} darkMode={darkMode} />
 
@@ -845,13 +1090,13 @@ export default function DiwanApp() {
         />
       )}
 
-      <header style={{ opacity: headerOpacity }} className="fixed top-8 left-0 right-0 z-40 pointer-events-none transition-opacity duration-300 flex flex-row items-center justify-center gap-8 px-6">
-        <div className={`flex flex-row-reverse items-center gap-4 ${theme.brand} tracking-wide header-luminescence`}>
-          <PenTool size={42} className="opacity-95" strokeWidth={1.5} />
-          <h1 className="app-branding-rtl flex items-end gap-6">
-            <span className="font-brand-ar text-5xl font-bold mb-2 opacity-80">بالعربي</span>
-            <span className="font-brand-en text-7xl lowercase tracking-tighter">poetry</span>
-            <span className="font-brand-en text-xs px-2 py-0.5 rounded border border-indigo-500/30 bg-indigo-500/10 uppercase tracking-wider mb-4 ml-3 opacity-60">beta</span>
+      <header style={{ opacity: headerOpacity }} className="fixed top-4 md:top-8 left-0 right-0 z-40 pointer-events-none transition-opacity duration-300 flex flex-row items-center justify-center gap-4 md:gap-8 px-4 md:px-6">
+        <div className={`flex flex-row-reverse items-center gap-2 md:gap-4 ${theme.brand} tracking-wide header-luminescence`}>
+          <PenTool className="w-8 h-8 md:w-[42px] md:h-[42px] opacity-95" strokeWidth={1.5} />
+          <h1 className="app-branding-rtl flex items-end gap-3 md:gap-6">
+            <span className="font-brand-ar text-[clamp(1.875rem,4vw,3rem)] font-bold mb-[clamp(0.25rem,0.5vw,0.5rem)] opacity-80">بالعربي</span>
+            <span className="font-brand-en text-[clamp(3rem,6vw,4.5rem)] lowercase tracking-tighter">poetry</span>
+            <span className="font-brand-en text-[clamp(10px,1.2vw,12px)] px-[clamp(0.375rem,0.8vw,0.5rem)] py-0.5 rounded border border-indigo-500/30 bg-indigo-500/10 uppercase tracking-wider mb-[clamp(0.5rem,1vw,1rem)] ml-[clamp(0.5rem,1vw,0.75rem)] opacity-60">beta</span>
           </h1>
         </div>
       </header>
@@ -861,30 +1106,40 @@ export default function DiwanApp() {
           <div className={`absolute inset-0 pointer-events-none opacity-[0.04] ${darkMode ? 'invert' : ''}`} style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M40 0l40 40-40 40L0 40z' fill='none' stroke='%234f46e5' stroke-width='1.5'/%3E%3Ccircle cx='40' cy='40' r='18' fill='none' stroke='%234f46e5' stroke-width='1.5'/%3E%3C/svg%3E")`, backgroundSize: '60px 60px' }} />
           <MysticalConsultationEffect active={isInterpreting} theme={theme} />
 
-          <main ref={mainScrollRef} onScroll={handleScroll} className="flex-1 overflow-y-auto custom-scrollbar relative z-10 px-4 md:px-0">
+          <main ref={mainScrollRef} onScroll={handleScroll} className="flex-1 overflow-y-auto custom-scrollbar relative z-10 px-4 md:px-0 pb-28">
             <div className="min-h-full flex flex-col items-center justify-center py-6">
               <div className="w-full max-w-4xl flex flex-col items-center">
                 
                 <div className={`text-center ${DESIGN.mainMetaPadding} animate-in slide-in-from-bottom-8 duration-1000 z-20 w-full`}>
-                   <div className="arch-frame mb-1">
-                      <svg viewBox="0 0 800 200" preserveAspectRatio="xMidYMid meet" className="w-full h-auto">
-                        <path className="arch-line" d="M50,180 L50,80 C50,20 750,20 750,80 L750,180" />
-                        <path className="arch-line opacity-20" d="M80,180 L80,100 C80,40 720,40 720,100 L720,180" />
+                   <div className="minimal-frame mb-1">
+                      <svg viewBox="0 0 550 120" preserveAspectRatio="xMidYMid meet">
+                        <line className="frame-line" x1="20" y1="20" x2="70" y2="20" />
+                        <line className="frame-line" x1="20" y1="20" x2="20" y2="70" />
+                        <line className="frame-line" x1="530" y1="20" x2="480" y2="20" />
+                        <line className="frame-line" x1="530" y1="20" x2="530" y2="70" />
+                        <line className="frame-line" x1="20" y1="100" x2="70" y2="100" />
+                        <line className="frame-line" x1="20" y1="100" x2="20" y2="50" />
+                        <line className="frame-line" x1="530" y1="100" x2="480" y2="100" />
+                        <line className="frame-line" x1="530" y1="100" x2="530" y2="50" />
+                        <circle className="frame-line" cx="32" cy="32" r="2.5" fill="#C5A059" opacity="0.35" />
+                        <circle className="frame-line" cx="518" cy="32" r="2.5" fill="#C5A059" opacity="0.35" />
+                        <circle className="frame-line" cx="32" cy="88" r="2.5" fill="#C5A059" opacity="0.35" />
+                        <circle className="frame-line" cx="518" cy="88" r="2.5" fill="#C5A059" opacity="0.35" />
                       </svg>
-                      
+
                       <div className="relative z-10 flex flex-col items-center justify-center w-full">
-                         <div className={`flex flex-wrap items-center justify-center gap-1 sm:gap-2 md:gap-4 font-amiri text-sm sm:text-lg md:${DESIGN.mainTitleSize}`}>
+                         <div className={`flex flex-wrap items-center justify-center gap-1 sm:gap-2 md:gap-4 ${currentFontClass} ${DESIGN.mainTitleSize}`}>
                            <span className={`${theme.poetColor} opacity-90`}>{current?.poetArabic}</span>
-                           <span className="opacity-10 text-xs sm:text-sm md:text-xl">-</span>
+                           <span className="opacity-10 text-[clamp(0.75rem,1.5vw,1.25rem)]">-</span>
                            <span className={`${theme.titleColor} font-bold`}>{current?.titleArabic}</span>
                          </div>
-                         <div className={`flex items-center justify-center gap-1 sm:gap-2 opacity-45 text-[8px] sm:text-[9px] md:${DESIGN.mainSubtitleSize} font-brand-en tracking-[0.08em] uppercase mt-1 sm:mt-2 md:mt-3`}>
+                         <div className={`flex items-center justify-center gap-1 sm:gap-2 opacity-45 ${DESIGN.mainSubtitleSize} font-brand-en tracking-[0.08em] uppercase mt-[clamp(0.25rem,0.8vw,0.75rem)]`}>
                            <span className="font-semibold">{current?.poet}</span> <span className="opacity-20">•</span> <span>{current?.title}</span>
                          </div>
                       </div>
                    </div>
 
-                   <div className="flex justify-center gap-3 mt-4">
+                   <div className="flex justify-center gap-3 mt-1">
                      {Array.isArray(current?.tags) && current.tags.slice(0, 3).map(tag => (
                        <span key={tag} className={`px-2.5 py-0.5 border ${theme.brandBorder} ${theme.brand} ${DESIGN.mainTagSize} font-brand-en tracking-[0.15em] uppercase opacity-70`}>
                          {tag}
@@ -893,12 +1148,12 @@ export default function DiwanApp() {
                    </div>
                 </div>
 
-                <div className={`relative w-full group py-8 ${DESIGN.mainMarginBottom}`}>
-                  <div className="px-4 md:px-20 py-6 text-center">
+                <div className={`relative w-full group pt-8 pb-2 ${DESIGN.mainMarginBottom}`}>
+                  <div className="px-4 md:px-20 py-2 text-center">
                     <div className="flex flex-col gap-5 md:gap-7">
                       {versePairs.map((pair, idx) => (
                         <div key={`${current?.id}-${idx}`} className="flex flex-col gap-0.5">
-                          <p dir="rtl" className={`font-amiri ${DESIGN.mainFontSize} leading-[2.2]  arabic-shadow`}>{pair.ar}</p>
+                          <p dir="rtl" className={`${currentFontClass} ${DESIGN.mainFontSize} leading-[2.2]  arabic-shadow`}>{pair.ar}</p>
                           {pair.en && <p dir="ltr" className={`font-brand-en italic ${DESIGN.mainEnglishFontSize} opacity-40 ${DESIGN.anim}`}>{pair.en}</p>}
                         </div>
                       ))}
@@ -906,7 +1161,7 @@ export default function DiwanApp() {
                   </div>
                 </div>
 
-                <div className="w-full max-w-2xl px-6 md:px-0 mb-32 md:hidden">
+                <div className="w-full max-w-2xl px-6 md:px-0 mb-4 md:hidden">
                    {isInterpreting ? (
                      <div className="flex flex-col items-center py-8 gap-4">
                        <div className="relative">
@@ -920,65 +1175,79 @@ export default function DiwanApp() {
                         <div className="pt-6 border-t border-indigo-500/10">
                           <h4 className="text-[10px] font-brand-en font-black text-indigo-600 mb-3 uppercase tracking-[0.3em] opacity-80">The Depth</h4>
                           <div className="pl-4 border-l border-indigo-500/10">
-                            <p className="text-[15px] font-brand-en font-normal leading-relaxed italic opacity-90">{insightParts?.depth}</p>
+                            <p className="text-[clamp(0.9375rem,1.6vw,1rem)] font-brand-en font-normal leading-relaxed italic opacity-90">{insightParts?.depth}</p>
                           </div>
                         </div>
                         <div className="pt-6 border-t border-indigo-500/10">
                           <h4 className="text-[10px] font-brand-en font-black text-indigo-600 mb-3 uppercase tracking-[0.3em] opacity-80">The Author</h4>
                           <div className="pl-4 border-l border-indigo-500/10">
-                            <p className="text-[15px] font-brand-en font-normal leading-relaxed italic opacity-90">{insightParts?.author}</p>
+                            <p className="text-[clamp(0.9375rem,1.6vw,1rem)] font-brand-en font-normal leading-relaxed italic opacity-90">{insightParts?.author}</p>
                           </div>
                         </div>
                      </div>
-                   ) : (
-                     <div className="flex flex-col items-center gap-4 py-8">
-                       <button 
-                        onClick={handleAnalyze} 
-                        className={`group relative w-16 h-16 flex items-center justify-center rounded-full border ${theme.brandBorder} ${theme.brand} transition-all duration-1000 hover:scale-110 shadow-2xl overflow-hidden bg-indigo-500/5`}
-                       >
-                         <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-indigo-500/10 to-transparent animate-[spin_8s_linear_infinite]" />
-                         <RefreshCw className="animate-[spin_20s_linear_infinite] opacity-30 text-indigo-400" size={40} />
-                         <Sparkles className="absolute group-hover:scale-125 transition-transform duration-500" size={24} />
-                       </button>
-                       <span className="text-[9px] font-brand-en tracking-[0.4em] uppercase opacity-40">Reveal Insight</span>
-                     </div>
-                   )}
+                   ) : null}
                 </div>
               </div>
             </div>
           </main>
 
-          <footer className="flex-none py-3 px-4 flex flex-col items-center z-20 relative bg-gradient-to-t from-black/5 to-transparent">
-            <CategoryPill selected={selectedCategory} onSelect={setSelectedCategory} darkMode={darkMode} />
-            <div className={`flex items-center gap-2 md:gap-4 px-3 md:px-5 py-2 rounded-full shadow-2xl border ${DESIGN.glass} ${theme.border} ${theme.shadow} ${DESIGN.anim} max-w-[calc(100vw-2rem)] w-fit`}>
-              
-              <button onClick={handleFetch} disabled={isFetching} className={`p-1.5 transition-all hover:scale-110 relative group ${theme.controlIcon}`}>
-                {isFetching ? <Loader2 className="animate-spin" size={18} /> : <Sparkles size={18} className="stroke-[1.5]" />}
-                <span className="absolute -top-10 left-1/2 -translate-x-1/2 px-2 py-1 bg-indigo-900 text-white font-brand-en text-[9px] rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Discover</span>
-              </button>
+          <footer className="fixed bottom-0 left-0 right-0 py-2 pb-3 md:pb-2 px-4 flex flex-col items-center z-50 bg-gradient-to-t from-black/5 to-transparent safe-bottom">
+            <div ref={controlBarRef} className={`flex items-center gap-2 px-5 py-2 rounded-full shadow-2xl border ${DESIGN.glass} ${theme.border} ${theme.shadow} ${DESIGN.anim} max-w-[calc(100vw-2rem)] w-fit`}>
 
-              <div className="w-px h-5 bg-stone-500/20 mx-0.5 md:mx-1 flex-shrink-0" />
-
-              <div className="flex items-center">
-                <button onClick={() => setCurrentIndex(prev => (prev - 1 + filtered.length) % filtered.length)} disabled={filtered.length <= 1} className={`p-1.5 disabled:opacity-10 transition-colors ${theme.controlIcon}`}><ChevronLeft size={20} /></button>
-                <button onClick={() => setCurrentIndex(prev => (prev + 1) % filtered.length)} disabled={filtered.length <= 1} className={`p-1.5 disabled:opacity-10 transition-colors ${theme.controlIcon}`}><ChevronRight size={20} /></button>
-              </div>
-              
-              <div className="w-px h-5 bg-stone-500/20 mx-0.5 md:mx-1 flex-shrink-0" />
-              
-              <button onClick={togglePlay} disabled={isGeneratingAudio} className={`w-10 h-10 rounded-full flex-shrink-0 flex items-center justify-center shadow-xl transition-all duration-300 hover:scale-110 active:scale-95 group relative ${theme.btnPrimary}`}>
-                 <div className="absolute inset-0 rounded-full border border-white/20 scale-110 opacity-0 group-hover:opacity-100 transition-all duration-300" />
-                {isGeneratingAudio ? <Loader2 className="animate-spin" size={18} /> : isPlaying ? <Pause fill="currentColor" size={18} /> : <Play fill="currentColor" className="ml-0.5" size={18} />}
-              </button>
-              
-              <div className="w-px h-5 bg-stone-500/20 mx-0.5 md:mx-1 flex-shrink-0" />
-
-              <div className="flex items-center">
-                <button onClick={() => { const text = `${current?.poet} - ${current?.title}\n${current?.poetArabic} - ${current?.titleArabic}\n\n${current?.arabic}\n\n${current?.english}`; const el = document.createElement('textarea'); el.value = text; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); setCopySuccess(true); setTimeout(() => setCopySuccess(false), 2000); }} className={`p-1.5 transition-all duration-300 ${copySuccess ? 'text-green-500' : theme.controlIcon}`}>
-                  {copySuccess ? <Check size={18} /> : <Copy size={18} />}
+              <div className="flex flex-col items-center gap-1 min-w-[56px]">
+                <button onClick={togglePlay} disabled={isGeneratingAudio} aria-label={isPlaying ? "Pause recitation" : "Play recitation"} className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105">
+                  {isGeneratingAudio ? <Loader2 className="animate-spin text-[#C5A059]" size={21} /> : isPlaying ? <Pause fill="#C5A059" size={21} /> : <Volume2 className="text-[#C5A059]" size={21} />}
                 </button>
-                <button onClick={() => setDarkMode(!darkMode)} className={`p-1.5 transition-colors ${theme.controlIcon}`}>{darkMode ? <Sun size={18} /> : <Moon size={18} />}</button>
+                <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">Listen</span>
               </div>
+
+              <div className="flex flex-col items-center gap-1 min-w-[56px]">
+                <button onClick={handleAnalyze} disabled={isInterpreting || interpretation} aria-label="Dive into poem meaning" className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105 disabled:opacity-50">
+                  {isInterpreting ? <Loader2 className="animate-spin text-[#C5A059]" size={21} /> : <Compass className="text-[#C5A059]" size={21} />}
+                </button>
+                <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">Dive In</span>
+              </div>
+
+              <div className="flex flex-col items-center gap-1 min-w-[56px]">
+                <button onClick={handleFetch} disabled={isFetching} aria-label="Discover new poem" className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105">
+                  {isFetching ? <Loader2 className="animate-spin text-[#C5A059]" size={21} /> : <Rabbit className="text-[#C5A059] rabbit-bounce" size={21} />}
+                </button>
+                <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">Discover</span>
+              </div>
+
+              <div className="w-px h-10 bg-stone-500/20 mx-2 flex-shrink-0" />
+
+              {!isOverflow ? (
+                <>
+                  <div className="flex flex-col items-center gap-1 min-w-[56px]">
+                    <button onClick={handleCopy} aria-label="Copy poem to clipboard" className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105">
+                      {showCopySuccess ? <Check size={21} className="text-green-500" /> : <Copy size={21} className="text-[#C5A059]" />}
+                    </button>
+                    <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">Copy</span>
+                  </div>
+
+                  <ThemeDropdown
+                    darkMode={darkMode}
+                    onToggleDarkMode={() => setDarkMode(!darkMode)}
+                    currentFont={currentFont}
+                    onCycleFont={cycleFont}
+                    fonts={FONTS}
+                  />
+
+                  <CategoryPill selected={selectedCategory} onSelect={setSelectedCategory} darkMode={darkMode} />
+                </>
+              ) : (
+                <OverflowMenu
+                  darkMode={darkMode}
+                  onToggleDarkMode={() => setDarkMode(!darkMode)}
+                  currentFont={currentFont}
+                  onCycleFont={cycleFont}
+                  selectedCategory={selectedCategory}
+                  onSelectCategory={setSelectedCategory}
+                  onCopy={handleCopy}
+                  showCopySuccess={showCopySuccess}
+                />
+              )}
             </div>
           </footer>
         </div>
@@ -986,12 +1255,12 @@ export default function DiwanApp() {
         <div className="hidden md:block h-full border-l">
           <div className={`${DESIGN.paneWidth} h-full flex flex-col z-30 ${DESIGN.anim} ${theme.glass} ${theme.border}`}>
             <div className="p-6 pb-4 border-b border-stone-500/10">
-              <h3 className="font-brand-en italic font-semibold text-lg text-indigo-600 tracking-tight">Poetic Insight</h3>
+              <h3 className="font-brand-en italic font-semibold text-[clamp(1rem,1.8vw,1.125rem)] text-indigo-600 tracking-tight">Poetic Insight</h3>
               <p className="text-[10px] opacity-30 uppercase font-brand-en truncate">{current?.poet} • {current?.title}</p>
             </div>
             <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
               {isInterpreting ? (
-                <div className="h-full flex flex-col items-center justify-center gap-4 opacity-30 animate-pulse"><Sparkles className="animate-spin text-indigo-500" size={32} /><p className="font-brand-en italic text-sm">Consulting Diwan...</p></div>
+                <div className="h-full flex flex-col items-center justify-center gap-4 opacity-30 animate-pulse"><Sparkles className="animate-spin text-indigo-500" size={32} /><p className="font-brand-en italic text-[clamp(0.875rem,1.5vw,1rem)]">Consulting Diwan...</p></div>
               ) : (
                 <div className={DESIGN.paneSpacing}>
                   {!interpretation && (
@@ -1008,7 +1277,7 @@ export default function DiwanApp() {
                     <div className="pt-6 border-t border-indigo-500/10">
                       <h4 className="text-[10px] font-brand-en font-black text-indigo-600 mb-2 uppercase tracking-widest opacity-80">The Depth</h4>
                       <div className="pl-4 border-l border-indigo-500/10">
-                        <p className="text-sm font-brand-en font-normal opacity-80 leading-relaxed">{insightParts.depth}</p>
+                        <p className="text-[clamp(0.875rem,1.5vw,1rem)] font-brand-en font-normal opacity-80 leading-relaxed">{insightParts.depth}</p>
                       </div>
                     </div>
                   )}
@@ -1016,7 +1285,7 @@ export default function DiwanApp() {
                     <div className="pt-6 border-t border-indigo-500/10">
                       <h4 className="text-[10px] font-brand-en font-black text-indigo-600 mb-2 uppercase tracking-widest opacity-80">The Author</h4>
                       <div className="pl-4 border-l border-indigo-500/10">
-                        <p className="text-sm font-brand-en font-normal opacity-80 leading-relaxed">{insightParts.author}</p>
+                        <p className="text-[clamp(0.875rem,1.5vw,1rem)] font-brand-en font-normal opacity-80 leading-relaxed">{insightParts.author}</p>
                       </div>
                     </div>
                   )}

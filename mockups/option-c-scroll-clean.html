@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Option C: Scroll Design - Clean Controls</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Forum&family=Reem+Kufi:wght@400;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: #0c0c0e;
+      color: #e7e5e4;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .header {
+      position: fixed;
+      top: 16px;
+      left: 0;
+      right: 0;
+      z-index: 40;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      padding: 0 16px;
+      pointer-events: none;
+    }
+
+    .beta-badge {
+      position: absolute;
+      top: 0;
+      left: 16px;
+      font-family: 'Forum', serif;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 4px 8px;
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      background: rgba(99, 102, 241, 0.1);
+      border-radius: 4px;
+      color: #818cf8;
+      opacity: 0.6;
+      pointer-events: all;
+    }
+
+    .theme-toggle {
+      position: absolute;
+      top: 0;
+      right: 16px;
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: #d6d3d1;
+      pointer-events: all;
+    }
+
+    .branding {
+      display: flex;
+      flex-direction: row-reverse;
+      align-items: center;
+      gap: 16px;
+      color: #818cf8;
+      text-shadow: 0 0 30px rgba(99, 102, 241, 0.6);
+    }
+
+    .branding-icon {
+      width: 42px;
+      height: 42px;
+      opacity: 0.95;
+    }
+
+    .branding-text {
+      display: flex;
+      align-items: flex-end;
+      gap: 24px;
+      direction: rtl;
+    }
+
+    .brand-ar {
+      font-family: 'Reem Kufi', sans-serif;
+      font-size: 48px;
+      font-weight: bold;
+      margin-bottom: 8px;
+      opacity: 0.8;
+    }
+
+    .brand-en {
+      font-family: 'Forum', serif;
+      font-size: 72px;
+      text-transform: lowercase;
+      letter-spacing: -0.05em;
+    }
+
+    main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .content-wrapper {
+      width: 100%;
+      max-width: 896px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* OPEN SCROLL DESIGN */
+    .poem-header {
+      text-align: center;
+      padding-top: 32px;
+      padding-bottom: 8px;
+      width: 100%;
+      margin-bottom: 32px;
+    }
+
+    .scroll-frame {
+      position: relative;
+      width: 100%;
+      max-width: 700px;
+      margin: 0 auto 16px;
+      padding: 32px 60px;
+      background: linear-gradient(to bottom,
+        rgba(250, 245, 235, 0.03) 0%,
+        rgba(250, 245, 235, 0.05) 50%,
+        rgba(250, 245, 235, 0.03) 100%
+      );
+      border-radius: 8px;
+    }
+
+    /* Scroll bindings (rods on left and right) */
+    .scroll-frame::before,
+    .scroll-frame::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 12px;
+      background: linear-gradient(to right,
+        rgba(139, 115, 85, 0.4),
+        rgba(101, 67, 33, 0.5),
+        rgba(139, 115, 85, 0.4)
+      );
+      border-radius: 20px;
+      box-shadow:
+        inset 0 2px 4px rgba(0,0,0,0.3),
+        inset 0 -2px 4px rgba(255,255,255,0.05);
+    }
+
+    .scroll-frame::before {
+      left: 8px;
+    }
+
+    .scroll-frame::after {
+      right: 8px;
+    }
+
+    /* Decorative caps on scroll rods */
+    .scroll-cap-left,
+    .scroll-cap-right {
+      position: absolute;
+      width: 16px;
+      height: 16px;
+      background: radial-gradient(circle, rgba(197, 160, 89, 0.6), rgba(139, 115, 85, 0.5));
+      border-radius: 50%;
+      border: 1px solid rgba(197, 160, 89, 0.3);
+    }
+
+    .scroll-cap-left {
+      left: 6px;
+    }
+
+    .scroll-cap-right {
+      right: 6px;
+    }
+
+    .scroll-cap-top {
+      top: -4px;
+    }
+
+    .scroll-cap-bottom {
+      bottom: -4px;
+    }
+
+    .scroll-content {
+      position: relative;
+      z-index: 5;
+    }
+
+    /* Arabic title (RTL) at top */
+    .title-arabic {
+      font-family: 'Amiri', serif;
+      font-size: 32px;
+      font-weight: bold;
+      color: #C5A059;
+      direction: rtl;
+      margin-bottom: 4px;
+      line-height: 1.4;
+    }
+
+    .poet-arabic {
+      font-family: 'Amiri', serif;
+      font-size: 24px;
+      color: #C5A059;
+      direction: rtl;
+      opacity: 0.85;
+      margin-bottom: 16px;
+    }
+
+    /* English subtitle (LTR) underneath */
+    .title-english {
+      font-family: 'Forum', serif;
+      font-size: 13px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      direction: ltr;
+      opacity: 0.45;
+      margin-bottom: 4px;
+    }
+
+    .poet-english {
+      font-family: 'Forum', serif;
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      direction: ltr;
+      opacity: 0.4;
+    }
+
+    .tags {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 20px;
+    }
+
+    .tag {
+      padding: 4px 10px;
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      color: #818cf8;
+      font-size: 11px;
+      font-family: 'Forum', serif;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      opacity: 0.7;
+    }
+
+    /* POEM CONTENT */
+    .poem-body {
+      width: 100%;
+      padding: 32px 80px;
+      text-align: center;
+      margin-bottom: 64px;
+    }
+
+    .verse-pair {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      margin-bottom: 28px;
+    }
+
+    .verse-arabic {
+      font-family: 'Amiri', serif;
+      font-size: 24px;
+      line-height: 2.2;
+      direction: rtl;
+      text-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .verse-english {
+      font-family: 'Forum', serif;
+      font-style: italic;
+      font-size: 18px;
+      opacity: 0.4;
+      direction: ltr;
+    }
+
+    /* CLEAN CONTROL BAR (Option A style) */
+    footer {
+      flex: none;
+      padding: 12px 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(to top, rgba(0,0,0,0.05), transparent);
+      position: relative;
+      z-index: 20;
+    }
+
+    .control-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 20px;
+      border-radius: 9999px;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.6);
+      border: 1px solid rgba(41, 37, 36, 1);
+      backdrop-filter: blur(48px);
+      background: rgba(28, 25, 23, 0.6);
+      transition: all 300ms;
+      max-width: calc(100vw - 32px);
+      width: fit-content;
+    }
+
+    .control-btn {
+      min-width: 44px;
+      min-height: 44px;
+      padding: 8px;
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #d6d3d1;
+      transition: all 300ms;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    .control-btn:hover {
+      transform: scale(1.1);
+      color: white;
+    }
+
+    .control-btn.primary {
+      background: linear-gradient(to bottom right, #6366f1, #9333ea);
+      border-radius: 9999px;
+      box-shadow: 0 4px 14px rgba(99, 102, 241, 0.4);
+    }
+
+    .divider {
+      width: 1px;
+      height: 20px;
+      background: rgba(120, 113, 108, 0.2);
+      flex-shrink: 0;
+      margin: 0 4px;
+    }
+
+    .tooltip {
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      margin-bottom: 8px;
+      padding: 4px 8px;
+      background: #312e81;
+      color: white;
+      font-family: 'Forum', serif;
+      font-size: 9px;
+      border-radius: 4px;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 200ms;
+    }
+
+    .control-btn:hover .tooltip {
+      opacity: 1;
+    }
+
+    /* Scroll progress bar - NOW VISIBLE */
+    .scroll-progress {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: linear-gradient(to right, #6366f1, #9333ea);
+      transform: scaleX(0.35);
+      transform-origin: left;
+      z-index: 100;
+      opacity: 0.8;
+    }
+  </style>
+</head>
+<body>
+  <div class="scroll-progress"></div>
+
+  <div class="header">
+    <div class="beta-badge">beta</div>
+    <div class="theme-toggle">
+      <i data-lucide="moon" width="20" height="20"></i>
+    </div>
+    <div class="branding">
+      <i data-lucide="pen-tool" class="branding-icon" stroke-width="1.5"></i>
+      <div class="branding-text">
+        <span class="brand-ar">بالعربي</span>
+        <span class="brand-en">poetry</span>
+      </div>
+    </div>
+  </div>
+
+  <main>
+    <div class="content-wrapper">
+      <div class="poem-header">
+        <div class="scroll-frame">
+          <!-- Scroll rod caps -->
+          <div class="scroll-cap-left scroll-cap-top"></div>
+          <div class="scroll-cap-left scroll-cap-bottom"></div>
+          <div class="scroll-cap-right scroll-cap-top"></div>
+          <div class="scroll-cap-right scroll-cap-bottom"></div>
+
+          <div class="scroll-content">
+            <!-- Arabic (RTL) at top -->
+            <div class="title-arabic">حبيبتي</div>
+            <div class="poet-arabic">نزار قباني</div>
+
+            <!-- English (LTR) underneath -->
+            <div class="title-english">My Beloved</div>
+            <div class="poet-english">Nizar Qabbani</div>
+          </div>
+        </div>
+
+        <div class="tags">
+          <span class="tag">Romantic</span>
+          <span class="tag">Modern</span>
+          <span class="tag">Ghazal</span>
+        </div>
+      </div>
+
+      <div class="poem-body">
+        <div class="verse-pair">
+          <p class="verse-arabic">حُبُّكِ يا عَمِيقَةَ العَيْنَيْنِ</p>
+          <p class="verse-english">Your love, O woman of deep eyes,</p>
+        </div>
+
+        <div class="verse-pair">
+          <p class="verse-arabic">تَطَرُّفٌ .. تَصَوُّفٌ .. عِبَادَة</p>
+          <p class="verse-english">Is radicalism… is Sufism… is worship.</p>
+        </div>
+
+        <div class="verse-pair">
+          <p class="verse-arabic">حُبُّكِ مِثْلَ المَوْتِ وَالوِلَادَة</p>
+          <p class="verse-english">Your love is like Death and like Birth—</p>
+        </div>
+
+        <div class="verse-pair">
+          <p class="verse-arabic">صَعْبٌ بِأَنْ يُعَادَ مَرَّتَيْنِ</p>
+          <p class="verse-english">It is difficult for it to be repeated twice.</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer>
+    <div class="control-bar">
+      <!-- Discover -->
+      <button class="control-btn">
+        <i data-lucide="book-open" width="20" height="20"></i>
+        <span class="tooltip">Discover</span>
+      </button>
+
+      <div class="divider"></div>
+
+      <!-- Play (primary) -->
+      <button class="control-btn primary">
+        <i data-lucide="play" width="20" height="20" fill="currentColor" style="margin-left: 2px;"></i>
+      </button>
+
+      <div class="divider"></div>
+
+      <!-- Dive In (Insight) -->
+      <button class="control-btn">
+        <i data-lucide="lightbulb" width="20" height="20"></i>
+        <span class="tooltip">Dive In</span>
+      </button>
+
+      <div class="divider"></div>
+
+      <!-- More options -->
+      <button class="control-btn">
+        <i data-lucide="copy" width="18" height="18"></i>
+        <span class="tooltip">Copy</span>
+      </button>
+
+      <button class="control-btn">
+        <i data-lucide="bug" width="18" height="18"></i>
+        <span class="tooltip">Debug</span>
+      </button>
+    </div>
+  </footer>
+
+  <script>
+    lucide.createIcons();
+  </script>
+</body>
+</html>

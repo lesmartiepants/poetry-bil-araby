@@ -296,6 +296,11 @@ const OverflowMenu = ({
     setIsOpen(false);
   };
 
+  const handleCycleFont = () => {
+    onCycleFont();
+    setIsOpen(false);
+  };
+
   return (
     <div className="relative flex flex-col items-center gap-1 min-w-[56px]" ref={dropdownRef}>
       <button
@@ -328,6 +333,17 @@ const OverflowMenu = ({
             <div className="flex flex-col items-start">
               <div className="font-amiri text-base text-[#C5A059] font-medium">{darkMode ? 'الوضع النهاري' : 'الوضع الليلي'}</div>
               <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Theme</div>
+            </div>
+          </button>
+
+          <button
+            onClick={handleCycleFont}
+            className="w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex items-center gap-3 border-b border-[rgba(197,160,89,0.08)] hover:bg-[rgba(197,160,89,0.08)]"
+          >
+            <PenTool size={18} className="text-[#C5A059]" />
+            <div className="flex flex-col items-start">
+              <div className="font-amiri text-base text-[#C5A059] font-medium">تبديل الخط</div>
+              <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Font: {currentFont}</div>
             </div>
           </button>
 

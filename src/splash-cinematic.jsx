@@ -159,8 +159,8 @@ export const SplashCinematic = ({ onGetStarted, darkMode, onToggleTheme }) => {
 
       {/* Main content - Center-weighted, dramatic */}
       <div
-        className="relative max-w-xl mx-6 text-center space-y-8 md:space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-1000"
-        style={{ animationDelay: '200ms' }}
+        className="relative max-w-xl mx-6 text-center space-y-8 md:space-y-10"
+        style={{ animation: 'fadeIn 1s ease-out forwards' }}
       >
         {/* Logo with PenTool icon */}
         <div className="flex flex-col items-center gap-4">
@@ -216,11 +216,13 @@ export const SplashCinematic = ({ onGetStarted, darkMode, onToggleTheme }) => {
         {/* Call to action - Minimal, cinematic */}
         <button
           onClick={onGetStarted}
-          className={`group relative px-10 py-4 border-2 ${buttonBorder} ${textColor} ${buttonHoverBg} transition-all duration-500 min-w-[44px] min-h-[44px]`}
+          className={`group relative px-10 py-3 border-2 ${buttonBorder} ${textColor} ${buttonHoverBg} transition-all duration-500`}
           style={{
             fontSize: 'clamp(0.75rem, 2vw, 0.875rem)',
-            animation: 'fadeIn 0.8s ease-in forwards 0.6s',
-            opacity: 0
+            animation: 'fadeIn 1s ease-out 0.3s forwards',
+            opacity: 0,
+            minHeight: '44px',
+            minWidth: '44px'
           }}
         >
           <span className="font-brand-en uppercase tracking-[0.3em]">Enter the Collection</span>
@@ -240,7 +242,7 @@ export const SplashCinematic = ({ onGetStarted, darkMode, onToggleTheme }) => {
       </div>
 
       {/* Fade-in animation keyframes */}
-      <style jsx>{`
+      <style>{`
         @keyframes fadeIn {
           from {
             opacity: 0;

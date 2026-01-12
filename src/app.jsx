@@ -518,9 +518,9 @@ export default function DiwanApp() {
 
     if (audioUrl) {
       audioRef.current.play().then(() => setIsPlaying(true)).catch((e) => {
-        addLog("Audio", "Retrying playback...", "info");
+        addLog("Audio", "Playback failed - click play again", "info");
         setAudioUrl(null);
-        togglePlay();
+        setIsPlaying(false);
       });
       return;
     }
@@ -548,8 +548,8 @@ export default function DiwanApp() {
           audioRef.current.src = u; 
           audioRef.current.load();
           audioRef.current.play().then(() => setIsPlaying(true)).catch(e => {
-             addLog("Audio", "Starting playback...", "info");
-             setIsPlaying(true);
+             addLog("Audio", "Playback failed - click play again", "info");
+             setIsPlaying(false);
           });
         }
       }

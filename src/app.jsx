@@ -5,6 +5,7 @@ import { SplashArabian1, SplashArabian2, SplashArabian3a, SplashArabian3b, Splas
 import { SplashArabian4a, SplashArabian4b, SplashArabian4c } from './splash-final-variations.jsx';
 import { SplashWildcard5a, SplashWildcard5b, SplashWildcard5c, SplashDirection5d, SplashDirection5e } from './splash-wildcard-variations.jsx';
 import { Splash6a, Splash6b, Splash6c, Splash6d, Splash6e, Splash6f } from './splash-round6-variations.jsx';
+import { SplashCinematic } from './splash-cinematic.jsx';
 
 /* =============================================================================
   1. FEATURE FLAGS & DESIGN SYSTEM
@@ -1078,7 +1079,7 @@ export default function DiwanApp() {
           case '6f':
             return <Splash6f {...splashProps} />;
           default:
-            return <SplashScreen onGetStarted={handleGetStarted} darkMode={darkMode} />;
+            return <SplashCinematic {...splashProps} />;
         }
       })()}
       {showWalkthrough && (

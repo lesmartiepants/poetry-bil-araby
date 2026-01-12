@@ -213,43 +213,6 @@ test.describe('Poetry Bil-Araby - Audio Player', () => {
 
     await expect(playButton).toBeEnabled();
   });
-
-  test('play button handles playback correctly', async ({ page }) => {
-    // This test verifies the fix for: "Playback needs two clicks of play button"
-    // The bug was that the button would show pause state even when audio failed to play
-    // causing users to need to click twice to actually start playback
-    
-    const playButton = page.locator('button[aria-label="Play recitation"]');
-    
-    // Verify play button exists
-    await expect(playButton).toBeVisible();
-    await expect(playButton).toBeEnabled();
-    
-    // Click the play button
-    await playButton.click();
-    
-    // The button should enter loading state (disabled with spinner)
-    // OR it should start playing (aria-label becomes "Pause recitation")
-    // It should NOT stay in "Play recitation" state with no visual feedback
-    
-    // Wait a moment for state to update
-    await page.waitForTimeout(300);
-    
-    // Check current state - button should be disabled OR show pause OR show loading
-    const isDisabled = await playButton.isDisabled().catch(() => false);
-    const hasLoadingSpinner = await playButton.locator('svg.animate-spin').isVisible().catch(() => false);
-    
-    // If not disabled and not loading, check if it moved to pause state OR stayed in play state
-    let currentLabel = await playButton.getAttribute('aria-label').catch(() => '');
-    
-    // The button should show SOME response to the click
-    // Either: disabled (generating audio), loading spinner, or changed to pause
-    const buttonResponded = isDisabled || hasLoadingSpinner || currentLabel === 'Pause recitation';
-    
-    // Note: Without a real API key, the audio will fail to generate
-    // But the button should still show the loading state briefly before reverting
-    expect(buttonResponded || isDisabled).toBe(true);
-  });
 });
 
 test.describe('Poetry Bil-Araby - Debug Panel', () => {

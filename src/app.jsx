@@ -123,7 +123,16 @@ THE AUTHOR: [Text]
  * Discovery/Fetch System Prompt
  * Used by: handleFetch
  */
-const DISCOVERY_SYSTEM_PROMPT = `Return JSON: poet, poetArabic, title, titleArabic, arabic (full text, FULL tashkeel), english, tags (must be an array of exactly 3 strings: [Era, Mood, Type]).`;
+const DISCOVERY_SYSTEM_PROMPT = `
+Return JSON with the following fields:
+- poet: The poet's name in English
+- poetArabic: The poet's name in Arabic
+- title: The poem title in English
+- titleArabic: The poem title in Arabic
+- arabic: The complete poem text in Arabic (with FULL tashkeel/diacritics)
+- english: The complete English translation
+- tags: An array of exactly 3 strings [Era, Mood, Type]
+`;
 
 /**
  * Text-to-Speech (TTS) Instruction Generator
@@ -136,7 +145,10 @@ const DISCOVERY_SYSTEM_PROMPT = `Return JSON: poet, poetArabic, title, titleArab
  * @returns {string} The formatted TTS instruction
  */
 const getTTSInstruction = (poem, poet, mood, era) => {
-  return `Act as a master orator. Recite this masterpiece by ${poet} in the soulful, ${mood} tone of the ${era} era. Use high intensity, passionate oratorical power, and majestic strength. Include natural pauses and audible breaths. Text: ${poem.arabic}`;
+  return `Act as a master orator and recite this masterpiece by ${poet} in the soulful, ${mood} tone of the ${era} era. ` +
+    `Use high intensity, passionate oratorical power, and majestic strength. ` +
+    `Include natural pauses and audible breaths where appropriate. ` +
+    `Poem: ${poem.arabic}`;
 };
 
 /**

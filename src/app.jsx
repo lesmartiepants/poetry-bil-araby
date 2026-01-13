@@ -92,10 +92,19 @@ const FONTS = [
   { id: "Katibeh", label: "Katibeh", labelAr: "كاتبة", family: "font-katibeh" }
 ];
 
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY || ""; 
+const apiKey = import.meta.env.VITE_GEMINI_API_KEY || "";
 
-const SYSTEM_PROMPT = `
-You are an expert scholar and master poet of both Arabic and English literature. 
+/* =============================================================================
+  2. API PROMPTS & CONFIGURATION
+  =============================================================================
+*/
+
+/**
+ * Insights/Analysis System Prompt
+ * Used by: handleAnalyze, prefetchInsights
+ */
+const INSIGHTS_SYSTEM_PROMPT = `
+You are an expert scholar and master poet of both Arabic and English literature.
 
 TASK: POETIC INSIGHT
 Provide exactly three sections labeled:
@@ -110,8 +119,57 @@ THE DEPTH: [Text]
 THE AUTHOR: [Text]
 `;
 
+/**
+ * Discovery/Fetch System Prompt
+ * Used by: handleFetch
+ */
+const DISCOVERY_SYSTEM_PROMPT = `
+Return JSON with the following fields:
+- poet: The poet's name in English
+- poetArabic: The poet's name in Arabic
+- title: The poem title in English
+- titleArabic: The poem title in Arabic
+- arabic: The complete poem text in Arabic (with FULL tashkeel/diacritics)
+- english: The complete English translation
+- tags: An array of exactly 3 strings [Era, Mood, Type]
+`;
+
+/**
+ * Text-to-Speech (TTS) Instruction Generator
+ * Used by: togglePlay, prefetchAudio
+ *
+ * @param {Object} poem - The poem object containing arabic text and metadata
+ * @param {string} poet - The poet's name
+ * @param {string} mood - The mood tag (e.g., "Romantic", "Mystical")
+ * @param {string} era - The era tag (e.g., "Modern", "Classical")
+ * @returns {string} The formatted TTS instruction
+ */
+const getTTSInstruction = (poem, poet, mood, era) => {
+  return `Act as a master orator and recite this masterpiece by ${poet} in the soulful, ${mood} tone of the ${era} era. ` +
+    `Use high intensity, passionate oratorical power, and majestic strength. ` +
+    `Include natural pauses and audible breaths where appropriate. ` +
+    `Poem: ${poem.arabic}`;
+};
+
+/**
+ * API Model Endpoints
+ */
+const API_MODELS = {
+  insights: 'gemini-2.5-flash-preview-09-2025',
+  tts: 'gemini-2.5-flash-preview-tts',
+  discovery: 'gemini-2.5-flash-preview-09-2025'
+};
+
+/**
+ * TTS Voice Configuration
+ */
+const TTS_CONFIG = {
+  voiceName: 'Fenrir',
+  responseModalities: ['AUDIO']
+};
+
 /* =============================================================================
-  2. CACHE CONFIGURATION & INDEXEDDB WRAPPER
+  3. CACHE CONFIGURATION & INDEXEDDB WRAPPER
   =============================================================================
 */
 
@@ -310,7 +368,7 @@ const cacheOperations = {
 };
 
 /* =============================================================================
-  3. PREFETCH MANAGER
+  4. PREFETCH MANAGER
   =============================================================================
 */
 
@@ -352,25 +410,38 @@ const prefetchManager = {
       const mood = poem?.tags?.[1] || "Poetic";
       const era = poem?.tags?.[0] || "Classical";
       const poet = poem?.poet || "the Master Poet";
-      const ttsInstruction = `Act as a master orator. Recite this masterpiece by ${poet} in the soulful, ${mood} tone of the ${era} era. Use high intensity, passionate oratorical power, and majestic strength. Include natural pauses and audible breaths. Text: ${poem.arabic}`;
+      const ttsInstruction = getTTSInstruction(poem, poet, mood, era);
 
       const apiKey = import.meta.env.VITE_GEMINI_API_KEY || "";
       if (!apiKey) return;
 
-      const requestSize = new Blob([JSON.stringify({ contents: [{ parts: [{ text: ttsInstruction }] }] })]).size;
+      const requestSize = new Blob([
+        JSON.stringify({ contents: [{ parts: [{ text: ttsInstruction }] }] })
+      ]).size;
       const estimatedTokens = Math.ceil(ttsInstruction.length / 4);
-      if (addLog) addLog("Prefetch Audio", `→ Background audio generation (poem ${poemId}) | ${(requestSize / 1024).toFixed(1)}KB | ${estimatedTokens} tokens`, "info");
+
+      if (addLog) {
+        addLog(
+          "Prefetch Audio",
+          `→ Background audio generation (poem ${poemId}) | ${(requestSize / 1024).toFixed(1)}KB | ${estimatedTokens} tokens`,
+          "info"
+        );
+      }
 
       const apiStart = performance.now();
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${API_MODELS.tts}:generateContent?key=${apiKey}`;
       const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contents: [{ parts: [{ text: ttsInstruction }] }],
           generationConfig: {
-            responseModalities: ["AUDIO"],
-            speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: "Fenrir" } } }
+            responseModalities: TTS_CONFIG.responseModalities,
+            speechConfig: {
+              voiceConfig: {
+                prebuiltVoiceConfig: { voiceName: TTS_CONFIG.voiceName }
+              }
+            }
           }
         })
       });
@@ -466,35 +537,30 @@ const prefetchManager = {
       const apiKey = import.meta.env.VITE_GEMINI_API_KEY || "";
       if (!apiKey) return;
 
-      const SYSTEM_PROMPT = `
-You are an expert scholar and master poet of both Arabic and English literature.
-
-TASK: POETIC INSIGHT
-Provide exactly three sections labeled:
-1. POEM: Provide a faithful, line-by-line English translation matching the Arabic lines exactly. Ensure poetic weight and grammatical elegance.
-2. THE DEPTH: Exactly 3 sentences explaining meaning.
-3. THE AUTHOR: Exactly 2 sentences on the poet.
-
-Strictly adhere to this format:
-POEM:
-[Translation]
-THE DEPTH: [Text]
-THE AUTHOR: [Text]
-`;
-
       const promptText = `Deep Analysis of: ${poem.arabic}`;
-      const requestSize = new Blob([JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })]).size;
-      const estimatedInputTokens = Math.ceil((promptText.length + SYSTEM_PROMPT.length) / 4);
-      if (addLog) addLog("Prefetch Insights", `→ Background insights generation (poem ${poemId}) | ${(requestSize / 1024).toFixed(1)}KB | ${estimatedInputTokens} tokens`, "info");
+      const requestSize = new Blob([
+        JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
+      ]).size;
+      const estimatedInputTokens = Math.ceil(
+        (promptText.length + INSIGHTS_SYSTEM_PROMPT.length) / 4
+      );
+
+      if (addLog) {
+        addLog(
+          "Prefetch Insights",
+          `→ Background insights generation (poem ${poemId}) | ${(requestSize / 1024).toFixed(1)}KB | ${estimatedInputTokens} tokens`,
+          "info"
+        );
+      }
 
       const apiStart = performance.now();
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${API_MODELS.insights}:generateContent?key=${apiKey}`;
       const res = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           contents: [{ parts: [{ text: promptText }] }],
-          systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] }
+          systemInstruction: { parts: [{ text: INSIGHTS_SYSTEM_PROMPT }] }
         })
       });
 
@@ -542,7 +608,7 @@ THE AUTHOR: [Text]
 };
 
 /* =============================================================================
-  4. UTILITY COMPONENTS
+  5. UTILITY COMPONENTS
   =============================================================================
 */
 
@@ -806,7 +872,7 @@ const OverflowMenu = ({
 };
 
 /* =============================================================================
-  3. MAIN APPLICATION
+  6. MAIN APPLICATION
   =============================================================================
 */
 
@@ -1069,19 +1135,40 @@ export default function DiwanApp() {
     const mood = current?.tags?.[1] || "Poetic";
     const era = current?.tags?.[0] || "Classical";
     const poet = current?.poet || "the Master Poet";
-    const ttsInstruction = `Act as a master orator. Recite this masterpiece by ${poet} in the soulful, ${mood} tone of the ${era} era. Use high intensity, passionate oratorical power, and majestic strength. Include natural pauses and audible breaths. Text: ${current?.arabic}`;
+    const ttsInstruction = getTTSInstruction(current, poet, mood, era);
 
     // Calculate request metrics
-    const requestSize = new Blob([JSON.stringify({ contents: [{ parts: [{ text: ttsInstruction }] }] })]).size;
-    const estimatedTokens = Math.ceil(ttsInstruction.length / 4); // Rough estimate: 1 token ≈ 4 chars
+    const requestSize = new Blob([
+      JSON.stringify({ contents: [{ parts: [{ text: ttsInstruction }] }] })
+    ]).size;
+    const estimatedTokens = Math.ceil(ttsInstruction.length / 4);
     const instructionChars = ttsInstruction.length;
     const arabicTextChars = current?.arabic?.length || 0;
-    addLog("Audio API", `→ Starting generation | Request: ${(requestSize / 1024).toFixed(1)}KB | ${instructionChars} chars (${arabicTextChars} Arabic) | Est. ${estimatedTokens} tokens`, "info");
+
+    addLog(
+      "Audio API",
+      `→ Starting generation | Request: ${(requestSize / 1024).toFixed(1)}KB | ${instructionChars} chars (${arabicTextChars} Arabic) | Est. ${estimatedTokens} tokens`,
+      "info"
+    );
 
     try {
       const apiStart = performance.now();
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
-      const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contents: [{ parts: [{ text: ttsInstruction }] }], generationConfig: { responseModalities: ["AUDIO"], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: "Fenrir" } } } } }) });
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${API_MODELS.tts}:generateContent?key=${apiKey}`;
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: ttsInstruction }] }],
+          generationConfig: {
+            responseModalities: TTS_CONFIG.responseModalities,
+            speechConfig: {
+              voiceConfig: {
+                prebuiltVoiceConfig: { voiceName: TTS_CONFIG.voiceName }
+              }
+            }
+          }
+        })
+      });
 
       if (!res.ok) {
         const errorText = await res.text();
@@ -1242,25 +1329,34 @@ export default function DiwanApp() {
       // Use streaming if feature flag is enabled
       if (FEATURES.streaming) {
         const promptText = `Deep Analysis of: ${current?.arabic}`;
-        const requestSize = new Blob([JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })]).size;
-        const estimatedInputTokens = Math.ceil((promptText.length + SYSTEM_PROMPT.length) / 4);
+        const requestSize = new Blob([
+          JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
+        ]).size;
+        const estimatedInputTokens = Math.ceil(
+          (promptText.length + INSIGHTS_SYSTEM_PROMPT.length) / 4
+        );
         const promptChars = promptText.length;
         const arabicTextChars = current?.arabic?.length || 0;
-        const systemPromptChars = SYSTEM_PROMPT.length;
-        addLog("Insights API", `→ Starting streaming | Request: ${(requestSize / 1024).toFixed(1)}KB | ${promptChars} chars (${arabicTextChars} Arabic + ${systemPromptChars} system) | Est. ${estimatedInputTokens} tokens`, "info");
+        const systemPromptChars = INSIGHTS_SYSTEM_PROMPT.length;
+
+        addLog(
+          "Insights API",
+          `→ Starting streaming | Request: ${(requestSize / 1024).toFixed(1)}KB | ${promptChars} chars (${arabicTextChars} Arabic + ${systemPromptChars} system) | Est. ${estimatedInputTokens} tokens`,
+          "info"
+        );
 
         setInterpretation(""); // Clear previous interpretation
         const apiStart = performance.now();
         let firstChunkTime = null;
         let chunkCount = 0;
 
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:streamGenerateContent?alt=sse&key=${apiKey}`;
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${API_MODELS.insights}:streamGenerateContent?alt=sse&key=${apiKey}`;
         const res = await fetch(url, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             contents: [{ parts: [{ text: promptText }] }],
-            systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] }
+            systemInstruction: { parts: [{ text: INSIGHTS_SYSTEM_PROMPT }] }
           })
         });
 
@@ -1321,13 +1417,13 @@ export default function DiwanApp() {
       } else {
         // Non-streaming fallback (original implementation)
         addLog("Insights", "Analyzing poem...", "info");
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${API_MODELS.insights}:generateContent?key=${apiKey}`;
         const res = await fetch(url, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             contents: [{ parts: [{ text: `Deep Analysis of: ${current?.arabic}` }] }],
-            systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] }
+            systemInstruction: { parts: [{ text: INSIGHTS_SYSTEM_PROMPT }] }
           })
         });
         const data = await res.json();
@@ -1374,26 +1470,55 @@ export default function DiwanApp() {
 
     setIsFetching(true);
 
-    const prompt = selectedCategory === "All" ? "Find a masterpiece Arabic poem. COMPLETE text." : `Find a famous poem by ${selectedCategory}. COMPLETE text.`;
-    const systemPrompt = `Return JSON: poet, poetArabic, title, titleArabic, arabic (full text, FULL tashkeel), english, tags (Era, Mood, Type).`;
-    const requestBody = JSON.stringify({ contents: [{ parts: [{ text: `${prompt} JSON only.` }] }], systemInstruction: { parts: [{ text: systemPrompt }] }, generationConfig: { responseMimeType: "application/json" } });
-    const requestSize = new Blob([requestBody]).size;
-    const estimatedInputTokens = Math.ceil((prompt.length + systemPrompt.length) / 4);
-    const promptChars = prompt.length;
-    const systemPromptChars = systemPrompt.length;
+    const prompt = selectedCategory === "All"
+      ? "Find a masterpiece Arabic poem. COMPLETE text."
+      : `Find a famous poem by ${selectedCategory}. COMPLETE text.`;
 
-    addLog("Discovery API", `→ Searching ${selectedCategory} | Request: ${(requestSize / 1024).toFixed(1)}KB | ${promptChars + systemPromptChars} chars (${promptChars} prompt + ${systemPromptChars} system) | Est. ${estimatedInputTokens} tokens`, "info");
+    const requestBody = JSON.stringify({
+      contents: [{ parts: [{ text: `${prompt} JSON only.` }] }],
+      systemInstruction: { parts: [{ text: DISCOVERY_SYSTEM_PROMPT }] },
+      generationConfig: { responseMimeType: "application/json" }
+    });
+
+    const requestSize = new Blob([requestBody]).size;
+    const estimatedInputTokens = Math.ceil(
+      (prompt.length + DISCOVERY_SYSTEM_PROMPT.length) / 4
+    );
+    const promptChars = prompt.length;
+    const systemPromptChars = DISCOVERY_SYSTEM_PROMPT.length;
+
+    addLog(
+      "Discovery API",
+      `→ Searching ${selectedCategory} | Request: ${(requestSize / 1024).toFixed(1)}KB | ${promptChars + systemPromptChars} chars (${promptChars} prompt + ${systemPromptChars} system) | Est. ${estimatedInputTokens} tokens`,
+      "info"
+    );
 
     try {
       const apiStart = performance.now();
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
-      const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: requestBody });
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${API_MODELS.discovery}:generateContent?key=${apiKey}`;
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: requestBody
+      });
       const data = await res.json();
       const apiTime = performance.now() - apiStart;
 
       const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
       const cleanJson = (rawText || "").replace(/```json|```/g, "").trim();
-      const newPoem = { ...JSON.parse(cleanJson), id: Date.now() };
+      const parsedPoem = JSON.parse(cleanJson);
+
+      // Normalize tags: convert object to array if needed
+      if (parsedPoem.tags && typeof parsedPoem.tags === 'object' && !Array.isArray(parsedPoem.tags)) {
+        addLog("Discovery Tags", `Converting tags from object to array | Original: ${JSON.stringify(parsedPoem.tags)}`, "info");
+        parsedPoem.tags = [
+          parsedPoem.tags.Era || parsedPoem.tags.era || "Unknown",
+          parsedPoem.tags.Mood || parsedPoem.tags.mood || "Unknown",
+          parsedPoem.tags.Type || parsedPoem.tags.type || "Unknown"
+        ];
+      }
+
+      const newPoem = { ...parsedPoem, id: Date.now() };
 
       const responseSize = new Blob([cleanJson]).size;
       const estimatedOutputTokens = Math.ceil(cleanJson.length / 4);
@@ -1401,6 +1526,13 @@ export default function DiwanApp() {
       const jsonChars = cleanJson.length;
       const arabicPoemChars = newPoem?.arabic?.length || 0;
       const englishPoemChars = newPoem?.english?.length || 0;
+
+      // Log tags for debugging
+      const tagsType = Array.isArray(newPoem?.tags) ? 'array' : typeof newPoem?.tags;
+      const tagsContent = Array.isArray(newPoem?.tags)
+        ? `[${newPoem.tags.join(", ")}]`
+        : JSON.stringify(newPoem?.tags);
+      addLog("Discovery Tags", `Type: ${tagsType} | Count: ${Array.isArray(newPoem?.tags) ? newPoem.tags.length : 'N/A'} | Content: ${tagsContent}`, "info");
 
       addLog("Discovery API", `✓ Poem found | API: ${(apiTime / 1000).toFixed(2)}s | Response: ${(responseSize / 1024).toFixed(1)}KB | ${jsonChars} chars`, "success");
       addLog("Discovery Metrics", `${estimatedOutputTokens} tokens | ${tokensPerSecond} tok/s | Arabic: ${arabicPoemChars} chars | English: ${englishPoemChars} chars | Poet: ${newPoem.poet}`, "success");
@@ -1449,7 +1581,12 @@ export default function DiwanApp() {
     pollingIntervals.current.forEach(interval => clearInterval(interval));
     pollingIntervals.current = [];
 
-    addLog("Navigation", `Switched to poem: ${current?.poet} - ${current?.title} | ID: ${current?.id}`, "info");
+    // Log current poem tags for debugging
+    const tagsType = Array.isArray(current?.tags) ? 'array' : typeof current?.tags;
+    const tagsContent = Array.isArray(current?.tags)
+      ? `[${current.tags.join(", ")}]`
+      : JSON.stringify(current?.tags);
+    addLog("Navigation", `Switched to poem: ${current?.poet} - ${current?.title} | ID: ${current?.id} | Tags: ${tagsType} - ${tagsContent}`, "info");
   }, [current?.id]);
 
   // Prefetch triggers - run background prefetching when poem changes

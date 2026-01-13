@@ -7,8 +7,11 @@ import { Play, Pause, BookOpen, RefreshCw, Volume2, ChevronDown, Quote, Globe, M
 */
 
 const FEATURES = {
-  grounding: false, 
+  grounding: false,
   debug: true,
+  caching: true,      // Enable IndexedDB caching for audio/insights
+  streaming: true,    // Enable streaming insights (progressive rendering)
+  prefetching: true   // Enable aggressive prefetching of audio/insights
 };
 
 const DESIGN = {
@@ -108,7 +111,206 @@ THE AUTHOR: [Text]
 `;
 
 /* =============================================================================
-  2. UTILITY COMPONENTS
+  2. CACHE CONFIGURATION & INDEXEDDB WRAPPER
+  =============================================================================
+*/
+
+const CACHE_CONFIG = {
+  dbName: 'poetry-cache-v1',
+  version: 1,
+  stores: {
+    audio: 'audio-cache',
+    insights: 'insights-cache',
+    poems: 'poems-cache'
+  },
+  expiry: {
+    audio: 7 * 24 * 60 * 60 * 1000,      // 7 days
+    insights: 30 * 24 * 60 * 60 * 1000,  // 30 days
+    poems: null                           // Never expire
+  },
+  maxSize: 500 * 1024 * 1024 // 500MB
+};
+
+/**
+ * Initialize IndexedDB cache database
+ * Creates object stores for audio, insights, and poems if they don't exist
+ */
+const initCache = () => {
+  return new Promise((resolve, reject) => {
+    if (!FEATURES.caching) {
+      resolve(null);
+      return;
+    }
+
+    const request = indexedDB.open(CACHE_CONFIG.dbName, CACHE_CONFIG.version);
+
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => resolve(request.result);
+
+    request.onupgradeneeded = (event) => {
+      const db = event.target.result;
+
+      // Create object stores if they don't exist
+      if (!db.objectStoreNames.contains(CACHE_CONFIG.stores.audio)) {
+        db.createObjectStore(CACHE_CONFIG.stores.audio, { keyPath: 'poemId' });
+      }
+      if (!db.objectStoreNames.contains(CACHE_CONFIG.stores.insights)) {
+        db.createObjectStore(CACHE_CONFIG.stores.insights, { keyPath: 'poemId' });
+      }
+      if (!db.objectStoreNames.contains(CACHE_CONFIG.stores.poems)) {
+        db.createObjectStore(CACHE_CONFIG.stores.poems, { keyPath: 'poemId' });
+      }
+    };
+  });
+};
+
+/**
+ * Cache operations for IndexedDB
+ * Provides get, set, delete, and clear operations with expiry checking
+ */
+const cacheOperations = {
+  /**
+   * Get an item from cache with expiry check
+   * @param {string} storeName - Name of the object store
+   * @param {string|number} poemId - ID of the poem
+   * @returns {Promise<Object|null>} Cached data or null if expired/missing
+   */
+  async get(storeName, poemId) {
+    if (!FEATURES.caching) return null;
+
+    try {
+      const db = await initCache();
+      if (!db) return null;
+
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction([storeName], 'readonly');
+        const store = transaction.objectStore(storeName);
+        const request = store.get(poemId);
+
+        request.onsuccess = () => {
+          const result = request.result;
+          if (!result) {
+            resolve(null);
+            return;
+          }
+
+          // Check expiry
+          const expiryTime = storeName === CACHE_CONFIG.stores.audio
+            ? CACHE_CONFIG.expiry.audio
+            : storeName === CACHE_CONFIG.stores.insights
+            ? CACHE_CONFIG.expiry.insights
+            : CACHE_CONFIG.expiry.poems;
+
+          if (expiryTime && result.timestamp) {
+            const age = Date.now() - result.timestamp;
+            if (age > expiryTime) {
+              // Expired - delete and return null
+              cacheOperations.delete(storeName, poemId);
+              resolve(null);
+              return;
+            }
+          }
+
+          resolve(result);
+        };
+
+        request.onerror = () => reject(request.error);
+      });
+    } catch (error) {
+      console.error('Cache get error:', error);
+      return null;
+    }
+  },
+
+  /**
+   * Set an item in cache with timestamp
+   * @param {string} storeName - Name of the object store
+   * @param {string|number} poemId - ID of the poem
+   * @param {Object} data - Data to cache (will be wrapped with poemId and timestamp)
+   * @returns {Promise<boolean>} Success status
+   */
+  async set(storeName, poemId, data) {
+    if (!FEATURES.caching) return false;
+
+    try {
+      const db = await initCache();
+      if (!db) return false;
+
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction([storeName], 'readwrite');
+        const store = transaction.objectStore(storeName);
+        const record = {
+          poemId,
+          timestamp: Date.now(),
+          ...data
+        };
+        const request = store.put(record);
+
+        request.onsuccess = () => resolve(true);
+        request.onerror = () => reject(request.error);
+      });
+    } catch (error) {
+      console.error('Cache set error:', error);
+      return false;
+    }
+  },
+
+  /**
+   * Delete an item from cache
+   * @param {string} storeName - Name of the object store
+   * @param {string|number} poemId - ID of the poem
+   * @returns {Promise<boolean>} Success status
+   */
+  async delete(storeName, poemId) {
+    if (!FEATURES.caching) return false;
+
+    try {
+      const db = await initCache();
+      if (!db) return false;
+
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction([storeName], 'readwrite');
+        const store = transaction.objectStore(storeName);
+        const request = store.delete(poemId);
+
+        request.onsuccess = () => resolve(true);
+        request.onerror = () => reject(request.error);
+      });
+    } catch (error) {
+      console.error('Cache delete error:', error);
+      return false;
+    }
+  },
+
+  /**
+   * Clear all items from a store
+   * @param {string} storeName - Name of the object store
+   * @returns {Promise<boolean>} Success status
+   */
+  async clear(storeName) {
+    if (!FEATURES.caching) return false;
+
+    try {
+      const db = await initCache();
+      if (!db) return false;
+
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction([storeName], 'readwrite');
+        const store = transaction.objectStore(storeName);
+        const request = store.clear();
+
+        request.onsuccess = () => resolve(true);
+        request.onerror = () => reject(request.error);
+      });
+    } catch (error) {
+      console.error('Cache clear error:', error);
+      return false;
+    }
+  }
+};
+
+/* =============================================================================
+  3. UTILITY COMPONENTS
   =============================================================================
 */
 
@@ -402,6 +604,7 @@ export default function DiwanApp() {
   const [logs, setLogs] = useState([]);
   const [showCopySuccess, setShowCopySuccess] = useState(false);
   const [isOverflow, setIsOverflow] = useState(false);
+  const [cacheStats, setCacheStats] = useState({ audioHits: 0, audioMisses: 0, insightsHits: 0, insightsMisses: 0 });
 
   const theme = darkMode ? THEME.dark : THEME.light;
 
@@ -510,10 +713,10 @@ export default function DiwanApp() {
   }, []);
 
   const togglePlay = async () => {
-    if (isPlaying) { 
-      audioRef.current.pause(); 
-      setIsPlaying(false); 
-      return; 
+    if (isPlaying) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+      return;
     }
 
     if (audioUrl) {
@@ -523,6 +726,28 @@ export default function DiwanApp() {
         togglePlay();
       });
       return;
+    }
+
+    // CHECK CACHE FIRST
+    if (FEATURES.caching && current?.id) {
+      const cached = await cacheOperations.get(CACHE_CONFIG.stores.audio, current.id);
+      if (cached?.blob) {
+        addLog("Audio Cache", "Playing from cache (instant)", "success");
+        setCacheStats(prev => ({ ...prev, audioHits: prev.audioHits + 1 }));
+
+        const u = URL.createObjectURL(cached.blob);
+        setAudioUrl(u);
+        audioRef.current.src = u;
+        audioRef.current.load();
+        audioRef.current.play().then(() => setIsPlaying(true)).catch(e => {
+          addLog("Audio", "Starting cached playback...", "info");
+          setIsPlaying(true);
+        });
+        return;
+      } else {
+        addLog("Audio Cache", "Cache miss - generating audio", "info");
+        setCacheStats(prev => ({ ...prev, audioMisses: prev.audioMisses + 1 }));
+      }
     }
 
     setIsGeneratingAudio(true);
@@ -536,7 +761,7 @@ export default function DiwanApp() {
       const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
       const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contents: [{ parts: [{ text: ttsInstruction }] }], generationConfig: { responseModalities: ["AUDIO"], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: "Fenrir" } } } } }) });
       const data = await res.json();
-      
+
       if (!data.candidates || data.candidates.length === 0) throw new Error("Recitation failed.");
 
       const b64 = data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
@@ -544,18 +769,31 @@ export default function DiwanApp() {
         const blob = pcm16ToWav(b64);
         if (blob) {
           const u = URL.createObjectURL(blob);
-          setAudioUrl(u); 
-          audioRef.current.src = u; 
+          setAudioUrl(u);
+          audioRef.current.src = u;
           audioRef.current.load();
           audioRef.current.play().then(() => setIsPlaying(true)).catch(e => {
              addLog("Audio", "Starting playback...", "info");
              setIsPlaying(true);
           });
+
+          // CACHE THE AUDIO BLOB
+          if (FEATURES.caching && current?.id) {
+            await cacheOperations.set(CACHE_CONFIG.stores.audio, current.id, {
+              blob,
+              metadata: {
+                poet: current.poet,
+                title: current.title,
+                size: blob.size
+              }
+            });
+            addLog("Audio Cache", "Audio cached for future playback", "success");
+          }
         }
       }
-    } catch (e) { 
-      addLog("Audio System Error", e.message, "error"); 
-      setIsPlaying(false); 
+    } catch (e) {
+      addLog("Audio System Error", e.message, "error");
+      setIsPlaying(false);
     } finally {
       setIsGeneratingAudio(false);
     }
@@ -563,14 +801,120 @@ export default function DiwanApp() {
 
   const handleAnalyze = async () => {
     if (interpretation || isInterpreting) return;
+
+    // CHECK CACHE FIRST
+    if (FEATURES.caching && current?.id) {
+      const cached = await cacheOperations.get(CACHE_CONFIG.stores.insights, current.id);
+      if (cached?.interpretation) {
+        addLog("Insights Cache", "Loaded from cache (instant)", "success");
+        setCacheStats(prev => ({ ...prev, insightsHits: prev.insightsHits + 1 }));
+        setInterpretation(cached.interpretation);
+        return;
+      } else {
+        addLog("Insights Cache", "Cache miss - generating insights", "info");
+        setCacheStats(prev => ({ ...prev, insightsMisses: prev.insightsMisses + 1 }));
+      }
+    }
+
     setIsInterpreting(true);
+    let insightText = "";
+
     try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
-      const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contents: [{ parts: [{ text: `Deep Analysis of: ${current?.arabic}` }] }], systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] } }) });
-      const data = await res.json();
-      setInterpretation(data.candidates?.[0]?.content?.parts?.[0]?.text);
-    } catch (e) { addLog("Analysis Error", e.message, "error"); }
-    setIsInterpreting(false);
+      // Use streaming if feature flag is enabled
+      if (FEATURES.streaming) {
+        addLog("Insights", "Streaming analysis...", "info");
+        setInterpretation(""); // Clear previous interpretation
+
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:streamGenerateContent?alt=sse&key=${apiKey}`;
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: `Deep Analysis of: ${current?.arabic}` }] }],
+            systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] }
+          })
+        });
+
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let accumulatedText = "";
+        let buffer = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          // Decode chunk and add to buffer
+          buffer += decoder.decode(value, { stream: true });
+
+          // Process complete lines from buffer
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || ""; // Keep incomplete line in buffer
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const jsonStr = line.slice(6).trim();
+              if (jsonStr === '[DONE]') continue;
+
+              try {
+                const data = JSON.parse(jsonStr);
+                const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+                if (text) {
+                  accumulatedText += text;
+                  setInterpretation(accumulatedText); // Real-time UI update
+                }
+              } catch (parseError) {
+                // Skip malformed JSON chunks
+                console.debug("Skipping malformed chunk:", jsonStr);
+              }
+            }
+          }
+        }
+
+        insightText = accumulatedText;
+        addLog("Insights", "Analysis complete", "success");
+      } else {
+        // Non-streaming fallback (original implementation)
+        addLog("Insights", "Analyzing poem...", "info");
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: `Deep Analysis of: ${current?.arabic}` }] }],
+            systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] }
+          })
+        });
+        const data = await res.json();
+        insightText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        setInterpretation(insightText);
+        addLog("Insights", "Analysis complete", "success");
+      }
+
+      // CACHE THE INSIGHTS
+      if (FEATURES.caching && current?.id && insightText) {
+        await cacheOperations.set(CACHE_CONFIG.stores.insights, current.id, {
+          interpretation: insightText,
+          metadata: {
+            poet: current.poet,
+            title: current.title
+          }
+        });
+        addLog("Insights Cache", "Insights cached for future use", "success");
+      }
+    } catch (e) {
+      addLog("Analysis Error", e.message, "error");
+      // Show partial results if streaming was interrupted
+      if (FEATURES.streaming && insightText) {
+        addLog("Insights", "Showing partial results", "warning");
+      }
+    } finally {
+      setIsInterpreting(false);
+    }
   };
 
   const handleFetch = async () => {

@@ -310,7 +310,187 @@ const cacheOperations = {
 };
 
 /* =============================================================================
-  3. UTILITY COMPONENTS
+  3. PREFETCH MANAGER
+  =============================================================================
+*/
+
+/**
+ * Prefetch Manager - Aggressive prefetching for audio and insights
+ * Runs in background to pre-generate content before user requests it
+ *
+ * Strategy:
+ * - Priority 1: Current poem audio + insights (immediately on poem change)
+ * - Priority 2: Adjacent poems audio (3s delay)
+ * - Priority 3: Discover poems (5s delay)
+ */
+const prefetchManager = {
+  /**
+   * Prefetch audio for a poem (generate and cache in background)
+   */
+  prefetchAudio: async (poemId, poem, addLog) => {
+    if (!FEATURES.prefetching || !FEATURES.caching) return;
+    if (!poemId || !poem?.arabic) return;
+
+    try {
+      // Check cache first - don't prefetch if already cached
+      const cached = await cacheOperations.get(CACHE_CONFIG.stores.audio, poemId);
+      if (cached?.blob) {
+        if (addLog) addLog("Prefetch", `Audio already cached for poem ${poemId}`, "info");
+        return;
+      }
+
+      if (addLog) addLog("Prefetch", `Generating audio for poem ${poemId}...`, "info");
+
+      // Generate audio using same logic as togglePlay
+      const mood = poem?.tags?.[1] || "Poetic";
+      const era = poem?.tags?.[0] || "Classical";
+      const poet = poem?.poet || "the Master Poet";
+      const ttsInstruction = `Act as a master orator. Recite this masterpiece by ${poet} in the soulful, ${mood} tone of the ${era} era. Use high intensity, passionate oratorical power, and majestic strength. Include natural pauses and audible breaths. Text: ${poem.arabic}`;
+
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY || "";
+      if (!apiKey) return;
+
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: ttsInstruction }] }],
+          generationConfig: {
+            responseModalities: ["AUDIO"],
+            speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: "Fenrir" } } }
+          }
+        })
+      });
+
+      const data = await res.json();
+      if (!data.candidates || data.candidates.length === 0) {
+        if (addLog) addLog("Prefetch", `Audio generation failed for poem ${poemId}`, "error");
+        return;
+      }
+
+      const b64 = data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+      if (b64) {
+        // Convert PCM to WAV (inline to avoid dependency)
+        const pcm16ToWav = (base64, rate = 24000) => {
+          try {
+            const cleanedBase64 = base64.replace(/\s/g, '');
+            const bin = atob(cleanedBase64);
+            const buf = new ArrayBuffer(bin.length);
+            const view = new DataView(buf);
+            for (let i = 0; i < bin.length; i++) view.setUint8(i, bin.charCodeAt(i));
+            const samples = new Int16Array(buf);
+            const wavBuf = new ArrayBuffer(44 + samples.length * 2);
+            const wavView = new DataView(wavBuf);
+            const s = (o, str) => { for (let i = 0; i < str.length; i++) wavView.setUint8(o + i, str.charCodeAt(i)); };
+            s(0, 'RIFF'); wavView.setUint32(4, 36 + samples.length * 2, true); s(8, 'WAVE'); s(12, 'fmt ');
+            wavView.setUint32(16, 16, true); wavView.setUint16(20, 1, true); wavView.setUint16(22, 1, true);
+            wavView.setUint32(24, rate, true); wavView.setUint32(28, rate * 2, true); wavView.setUint16(32, 2, true);
+            wavView.setUint16(34, 16, true); s(36, 'data'); wavView.setUint32(40, samples.length * 2, true);
+            new Int16Array(wavBuf, 44).set(samples);
+            return new Blob([wavBuf], { type: 'audio/wav' });
+          } catch (e) {
+            return null;
+          }
+        };
+
+        const blob = pcm16ToWav(b64);
+        if (blob) {
+          // Cache the blob
+          await cacheOperations.set(CACHE_CONFIG.stores.audio, poemId, {
+            blob,
+            metadata: { poet: poem.poet, title: poem.title, size: blob.size }
+          });
+          if (addLog) addLog("Prefetch", `Audio cached for poem ${poemId} (${(blob.size / 1024).toFixed(1)}KB)`, "success");
+        }
+      }
+    } catch (error) {
+      // Silently handle errors - don't disrupt user experience
+      if (addLog) addLog("Prefetch", `Audio prefetch error for poem ${poemId}: ${error.message}`, "error");
+    }
+  },
+
+  /**
+   * Prefetch insights for a poem (generate and cache in background)
+   */
+  prefetchInsights: async (poemId, poem, addLog) => {
+    if (!FEATURES.prefetching || !FEATURES.caching) return;
+    if (!poemId || !poem?.arabic) return;
+
+    try {
+      // Check cache first - don't prefetch if already cached
+      const cached = await cacheOperations.get(CACHE_CONFIG.stores.insights, poemId);
+      if (cached?.interpretation) {
+        if (addLog) addLog("Prefetch", `Insights already cached for poem ${poemId}`, "info");
+        return;
+      }
+
+      if (addLog) addLog("Prefetch", `Generating insights for poem ${poemId}...`, "info");
+
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY || "";
+      if (!apiKey) return;
+
+      const SYSTEM_PROMPT = `
+You are an expert scholar and master poet of both Arabic and English literature.
+
+TASK: POETIC INSIGHT
+Provide exactly three sections labeled:
+1. POEM: Provide a faithful, line-by-line English translation matching the Arabic lines exactly. Ensure poetic weight and grammatical elegance.
+2. THE DEPTH: Exactly 3 sentences explaining meaning.
+3. THE AUTHOR: Exactly 2 sentences on the poet.
+
+Strictly adhere to this format:
+POEM:
+[Translation]
+THE DEPTH: [Text]
+THE AUTHOR: [Text]
+`;
+
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: `Deep Analysis of: ${poem.arabic}` }] }],
+          systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] }
+        })
+      });
+
+      const data = await res.json();
+      const interpretation = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+      if (interpretation) {
+        // Cache the insights
+        await cacheOperations.set(CACHE_CONFIG.stores.insights, poemId, {
+          interpretation,
+          metadata: { poet: poem.poet, title: poem.title }
+        });
+        if (addLog) addLog("Prefetch", `Insights cached for poem ${poemId}`, "success");
+      }
+    } catch (error) {
+      // Silently handle errors - don't disrupt user experience
+      if (addLog) addLog("Prefetch", `Insights prefetch error for poem ${poemId}: ${error.message}`, "error");
+    }
+  },
+
+  /**
+   * Prefetch poems from discover (pre-fetch poems from category)
+   */
+  prefetchDiscover: async (category, count = 2, addLog) => {
+    if (!FEATURES.prefetching || !FEATURES.caching) return;
+    if (!category || category === "All") return;
+
+    try {
+      if (addLog) addLog("Prefetch", `Pre-fetching ${count} poems from ${category}...`, "info");
+      // Placeholder - would fetch poems from discover API and cache
+    } catch (error) {
+      if (addLog) addLog("Prefetch", `Discover prefetch error: ${error.message}`, "error");
+    }
+  }
+};
+
+/* =============================================================================
+  4. UTILITY COMPONENTS
   =============================================================================
 */
 
@@ -605,6 +785,7 @@ export default function DiwanApp() {
   const [showCopySuccess, setShowCopySuccess] = useState(false);
   const [isOverflow, setIsOverflow] = useState(false);
   const [cacheStats, setCacheStats] = useState({ audioHits: 0, audioMisses: 0, insightsHits: 0, insightsMisses: 0 });
+  const [isPrefetching, setIsPrefetching] = useState(false);
 
   const theme = darkMode ? THEME.dark : THEME.light;
 
@@ -959,6 +1140,48 @@ export default function DiwanApp() {
     if (audioUrl) URL.revokeObjectURL(audioUrl);
     setAudioUrl(null);
   }, [current?.id]);
+
+  // Prefetch triggers - run background prefetching when poem changes
+  useEffect(() => {
+    if (!FEATURES.prefetching || !current?.id) return;
+
+    // Priority 1: Prefetch current poem audio immediately
+    prefetchManager.prefetchAudio(current.id, current, addLog);
+
+    // Priority 1: Prefetch current poem insights after 1s delay
+    const prefetchCurrentInsights = setTimeout(() => {
+      prefetchManager.prefetchInsights(current.id, current, addLog);
+    }, 1000);
+
+    // Priority 2: Prefetch adjacent poems audio after 3s delay
+    const prefetchAdjacent = setTimeout(() => {
+      if (filtered.length > 1) {
+        const nextIndex = (currentIndex + 1) % filtered.length;
+        const prevIndex = (currentIndex - 1 + filtered.length) % filtered.length;
+
+        if (filtered[nextIndex]) {
+          prefetchManager.prefetchAudio(filtered[nextIndex].id, filtered[nextIndex], addLog);
+        }
+        if (filtered[prevIndex] && prevIndex !== nextIndex) {
+          prefetchManager.prefetchAudio(filtered[prevIndex].id, filtered[prevIndex], addLog);
+        }
+      }
+    }, 3000);
+
+    // Priority 3: Prefetch discover poems after 5s delay
+    const prefetchDiscoverTimeout = setTimeout(() => {
+      if (selectedCategory !== "All") {
+        prefetchManager.prefetchDiscover(selectedCategory, 2, addLog);
+      }
+    }, 5000);
+
+    // Cleanup timeouts on unmount or when dependencies change
+    return () => {
+      clearTimeout(prefetchCurrentInsights);
+      clearTimeout(prefetchAdjacent);
+      clearTimeout(prefetchDiscoverTimeout);
+    };
+  }, [current?.id, currentIndex, filtered, selectedCategory]);
 
   return (
     <div className={`h-[100dvh] w-full flex flex-col overflow-hidden ${DESIGN.anim} font-sans ${theme.bg} ${theme.text} selection:bg-indigo-500`}>

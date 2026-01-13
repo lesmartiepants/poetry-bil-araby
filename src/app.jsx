@@ -11,7 +11,7 @@ const FEATURES = {
   debug: true,
   caching: true,      // Enable IndexedDB caching for audio/insights
   streaming: true,    // Enable streaming insights (progressive rendering)
-  prefetching: true   // Enable aggressive prefetching of audio/insights
+  prefetching: true   // Enable smart prefetching (rate-limited to avoid API issues)
 };
 
 const DESIGN = {
@@ -1142,46 +1142,39 @@ export default function DiwanApp() {
   }, [current?.id]);
 
   // Prefetch triggers - run background prefetching when poem changes
+  // Rate-limited to avoid hitting API limits
   useEffect(() => {
     if (!FEATURES.prefetching || !current?.id) return;
 
-    // Priority 1: Prefetch current poem audio immediately
-    prefetchManager.prefetchAudio(current.id, current, addLog);
+    // Priority 1: Prefetch current poem audio after 2s (only if user stays)
+    const prefetchCurrentAudio = setTimeout(() => {
+      prefetchManager.prefetchAudio(current.id, current, addLog);
+    }, 2000);
 
-    // Priority 1: Prefetch current poem insights after 1s delay
+    // Priority 1: Prefetch current poem insights after 5s (only if user stays)
     const prefetchCurrentInsights = setTimeout(() => {
       prefetchManager.prefetchInsights(current.id, current, addLog);
-    }, 1000);
+    }, 5000);
 
-    // Priority 2: Prefetch adjacent poems audio after 3s delay
-    const prefetchAdjacent = setTimeout(() => {
+    // Priority 2: Prefetch ONLY next poem audio after 10s (if user lingers)
+    const prefetchNext = setTimeout(() => {
       if (filtered.length > 1) {
         const nextIndex = (currentIndex + 1) % filtered.length;
-        const prevIndex = (currentIndex - 1 + filtered.length) % filtered.length;
-
         if (filtered[nextIndex]) {
-          prefetchManager.prefetchAudio(filtered[nextIndex].id, filtered[nextIndex], addLog);
-        }
-        if (filtered[prevIndex] && prevIndex !== nextIndex) {
-          prefetchManager.prefetchAudio(filtered[prevIndex].id, filtered[prevIndex], addLog);
+          setTimeout(() => {
+            prefetchManager.prefetchAudio(filtered[nextIndex].id, filtered[nextIndex], addLog);
+          }, 500); // Stagger by 500ms to avoid burst
         }
       }
-    }, 3000);
-
-    // Priority 3: Prefetch discover poems after 5s delay
-    const prefetchDiscoverTimeout = setTimeout(() => {
-      if (selectedCategory !== "All") {
-        prefetchManager.prefetchDiscover(selectedCategory, 2, addLog);
-      }
-    }, 5000);
+    }, 10000);
 
     // Cleanup timeouts on unmount or when dependencies change
     return () => {
+      clearTimeout(prefetchCurrentAudio);
       clearTimeout(prefetchCurrentInsights);
-      clearTimeout(prefetchAdjacent);
-      clearTimeout(prefetchDiscoverTimeout);
+      clearTimeout(prefetchNext);
     };
-  }, [current?.id, currentIndex, filtered, selectedCategory]);
+  }, [current?.id, currentIndex, filtered]);
 
   return (
     <div className={`h-[100dvh] w-full flex flex-col overflow-hidden ${DESIGN.anim} font-sans ${theme.bg} ${theme.text} selection:bg-indigo-500`}>

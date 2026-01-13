@@ -30,13 +30,44 @@ You are an award-winning UX Designer who identifies problematic components and g
 
 ```bash
 npm run dev
-npx playwright test --headed --project="Desktop Chrome"
+# Wait for dev server to be ready at http://localhost:5173
 
-# Capture key views:
-# - Landing page
-# - Poem display
-# - Side panel open
-# - Mobile view
+# Use Playwright to capture screenshots with proper component visibility
+```
+
+**CRITICAL: Screenshot Capture Requirements**
+
+When capturing screenshots of a specific component:
+
+1. **Navigate to the correct page** where the component is visible
+2. **Scroll component into view** using `locator.scrollIntoViewIfNeeded()`
+3. **Trigger interactive states** (hover, open dropdowns, etc.) before capturing
+4. **Use viewport padding** to ensure component isn't cut off at edges
+5. **Capture multiple states**: closed, open, hover, focused
+
+Example Playwright code:
+```javascript
+// BAD - Component might be off-screen or cut off
+await page.goto('http://localhost:5173');
+await page.screenshot({ path: 'current-state.png' });
+
+// GOOD - Ensure component is visible and capture relevant states
+await page.goto('http://localhost:5173');
+
+// Wait for component to be visible
+const component = page.locator('[aria-label="Theme options"]'); // or appropriate selector
+await component.scrollIntoViewIfNeeded();
+await page.waitForTimeout(500); // Let animations settle
+
+// Capture closed state
+await page.screenshot({ path: 'current-state/1-component-closed.png' });
+
+// Trigger interactive state (e.g., click to open dropdown)
+await component.click();
+await page.waitForTimeout(300); // Let dropdown animation complete
+
+// Capture open state
+await page.screenshot({ path: 'current-state/2-component-open.png' });
 ```
 
 **Quick visual analysis:**
@@ -119,81 +150,262 @@ async function generateMockups(options) {
 
 ### Phase 3: Present Visual Options to User
 
-**Output Format:**
+**CRITICAL: Always create a single-page VISUAL-COMPARISON.html file**
 
-```markdown
-## Component: [Component Name] - LOOKS BAD
+This file MUST contain:
+1. **Current State Section** - Screenshots showing the component (with component visible!)
+2. **Identified Issues** - Bulleted list of problems
+3. **Option 1, 2, 3 Sections** - Each with:
+   - Screenshot mockup embedded inline
+   - Design rationale
+   - "Open Preview" button linking to interactive HTML
+4. **Comparison Table** - Feature comparison across options
+5. **Recommendations** - Which option is best for what use case
+6. **Embedded Interactive Previews** - All 3 options in iframes at bottom of page
 
-**Current State:**
-[Screenshot: current-state.png]
+**HTML Template Structure:**
 
-**Problem:**
-- Generic AI button pattern
-- Excessive border radius
-- Doesn't match mystical aesthetic
+```html
+<!DOCTYPE html>
+<html>
+<head>
+  <title>[Component Name] - Design Review</title>
+  <style>
+    body {
+      background: #0c0c0e;
+      color: #e7e5e4;
+      font-family: system-ui;
+      padding: 40px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+    h1 { color: #C5A059; font-size: 2.5rem; margin-bottom: 0.5rem; }
+    h2 { color: #C5A059; font-size: 1.75rem; margin-top: 3rem; border-bottom: 1px solid #292524; padding-bottom: 0.5rem; }
+    h3 { color: #a8dadc; font-size: 1.25rem; margin-top: 2rem; }
 
----
+    .current-state {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin: 30px 0;
+    }
+    .current-state img {
+      width: 100%;
+      border: 1px solid #292524;
+      border-radius: 8px;
+    }
 
-## Option 1: Improved (Same Direction, Done Right)
-**Preview:** [Screenshot: option-1.png] or `open previews/option-1.html`
+    .issues {
+      background: #1c1917;
+      border-left: 4px solid #ef4444;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 4px;
+    }
+    .issues h3 { color: #fca5a5; margin-top: 0; }
+    .issues li { margin: 8px 0; }
 
-**Design Choice:**
-- Keep button concept, remove AI patterns
-- Cleaner hover effect
-- Use DESIGN/THEME constants
+    .option {
+      background: #1c1917;
+      border: 1px solid #292524;
+      border-radius: 12px;
+      padding: 30px;
+      margin: 30px 0;
+    }
+    .option-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .option h2 { margin: 0; border: none; }
+    .open-preview-btn {
+      background: #C5A059;
+      color: #0c0c0e;
+      padding: 12px 24px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .open-preview-btn:hover { background: #d4af6a; transform: scale(1.05); }
 
-**Code:**
-```jsx
-<button className={`border-2 ${THEME[theme].accent.gold}
-                    bg-transparent rounded-full px-6 py-2
-                    hover:bg-amber-200 hover:text-slate-900
-                    transition-all duration-200`}>
-  Next Poem
-</button>
+    .option-content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      margin-top: 20px;
+    }
+    .option-content img {
+      width: 100%;
+      border: 1px solid #292524;
+      border-radius: 8px;
+    }
+    .design-rationale h3 { color: #86efac; }
+    .design-rationale h4 { color: #C5A059; margin-top: 20px; }
+    .design-rationale li { margin: 8px 0; }
+
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 30px 0;
+      background: #1c1917;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .comparison-table th {
+      background: #292524;
+      padding: 15px;
+      text-align: left;
+      color: #C5A059;
+    }
+    .comparison-table td {
+      padding: 12px 15px;
+      border-bottom: 1px solid #292524;
+    }
+    .comparison-table tr:last-child td { border-bottom: none; }
+
+    .recommendations {
+      background: #1c1917;
+      border-left: 4px solid #86efac;
+      padding: 20px;
+      margin: 30px 0;
+      border-radius: 4px;
+    }
+
+    .previews-section {
+      margin-top: 60px;
+    }
+    .preview-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-top: 20px;
+    }
+    .preview-container {
+      border: 1px solid #292524;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #1c1917;
+    }
+    .preview-container h3 {
+      margin: 0;
+      padding: 15px;
+      background: #292524;
+      font-size: 1rem;
+    }
+    .preview-container iframe {
+      width: 100%;
+      height: 600px;
+      border: none;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <h1>[Component Name] - Design Review</h1>
+  <p style="font-size: 1.125rem; color: #a8a29e;">Three visual alternatives to fix UI/UX issues</p>
+
+  <h2>Current State</h2>
+  <div class="current-state">
+    <div>
+      <h3>Button Closed</h3>
+      <img src="current-state/1-component-closed.png" alt="Current closed state">
+    </div>
+    <div>
+      <h3>Dropdown Open</h3>
+      <img src="current-state/2-component-open.png" alt="Current open state">
+    </div>
+  </div>
+
+  <div class="issues">
+    <h3>Identified Issues:</h3>
+    <ul>
+      <li>Issue 1</li>
+      <li>Issue 2</li>
+      <li>Issue 3</li>
+    </ul>
+  </div>
+
+  <!-- Option 1 -->
+  <div class="option">
+    <div class="option-header">
+      <h2>Option 1: Improved Current Design</h2>
+      <a href="previews/option-1-improved.html" class="open-preview-btn" target="_blank">Open Preview →</a>
+    </div>
+    <div class="option-content">
+      <img src="mockups/option-1-improved-component.png" alt="Option 1 mockup">
+      <div class="design-rationale">
+        <h3>Design Choice:</h3>
+        <p>Same direction, properly executed. Fixes all accessibility issues while maintaining familiar interaction pattern.</p>
+
+        <h4>Key Changes:</h4>
+        <ul>
+          <li>Change 1</li>
+          <li>Change 2</li>
+          <li>Change 3</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Repeat for Option 2 and Option 3 -->
+
+  <h2>Comparison Table</h2>
+  <table class="comparison-table">
+    <thead>
+      <tr>
+        <th>Feature</th>
+        <th>Current</th>
+        <th>Option 1</th>
+        <th>Option 2</th>
+        <th>Option 3</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>WCAG Compliant</td><td>❌</td><td>✅</td><td>✅</td><td>✅</td></tr>
+      <!-- More rows -->
+    </tbody>
+  </table>
+
+  <div class="recommendations">
+    <h3>Recommendations</h3>
+    <p><strong>Best Overall:</strong> Option 1 - Reason...</p>
+    <p><strong>Best for Mobile:</strong> Option 3 - Reason...</p>
+  </div>
+
+  <div class="previews-section">
+    <h2>Interactive Previews</h2>
+    <p style="color: #a8a29e;">Hover and interact with each option below:</p>
+    <div class="preview-grid">
+      <div class="preview-container">
+        <h3>Option 1: Improved</h3>
+        <iframe src="previews/option-1-improved.html"></iframe>
+      </div>
+      <div class="preview-container">
+        <h3>Option 2: Compact</h3>
+        <iframe src="previews/option-2-compact.html"></iframe>
+      </div>
+      <div class="preview-container">
+        <h3>Option 3: Minimal</h3>
+        <iframe src="previews/option-3-minimal.html"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <hr style="border-color: #292524; margin: 60px 0 30px;">
+  <h2>Next Steps</h2>
+  <p style="font-size: 1.125rem;">Which direction? Reply with: <strong>"Option 1"</strong>, <strong>"Option 2"</strong>, or <strong>"Option 3"</strong></p>
+</body>
+</html>
 ```
 
----
-
-## Option 2: Different Direction - Glass Morphism
-**Preview:** [Screenshot: option-2.png] or `open previews/option-2.html`
-
-**Design Choice:**
-- Completely different: glass effect instead of solid
-- Semi-transparent background with blur
-- Soft, ethereal, poetic approach
-
-**Code:**
-```jsx
-<button className={`bg-amber-200/20 backdrop-blur-sm
-                    ${THEME[theme].accent.gold} rounded-full px-6 py-2
-                    hover:bg-amber-200/30 transition-all duration-200`}>
-  Next Poem
-</button>
-```
-
----
-
-## Option 3: Different Direction - Pure Text
-**Preview:** [Screenshot: option-3.png] or `open previews/option-3.html`
-
-**Design Choice:**
-- Radically different: no button container at all
-- Pure text interaction with underline
-- Ultra-minimal, sophisticated approach
-
-**Code:**
-```jsx
-<button className={`${THEME[theme].accent.gold} px-6 py-2
-                    hover:text-amber-300 transition-colors duration-200`}>
-  Next Poem →
-</button>
-```
-
----
-
-**Which direction?**
-Reply: "Option 1", "Option 2", "Option 3", or "Show me different options"
-```
+**This structure ensures:**
+- Everything on one page for easy consumption
+- Screenshots show the actual component (not cut off!)
+- Interactive previews embedded at bottom
+- Clear visual hierarchy
+- Consistent structure for any component
 
 ## Example Scenarios
 
@@ -412,3 +624,69 @@ When presenting options, categorize design direction:
 - **Pure Text** - Ultra-minimal, typography-focused
 
 You show options, user picks direction. Generate mockups immediately for visual decision-making.
+
+---
+
+## CRITICAL OUTPUT REQUIREMENTS (Must Follow Every Time)
+
+**Every design review MUST produce these exact files:**
+
+```
+design-review-output/
+├── VISUAL-COMPARISON.html          ← Single-page comparison (REQUIRED)
+├── DESIGN-REVIEW.md                ← Markdown summary
+├── current-state/
+│   ├── 1-component-closed.png      ← Component in default state
+│   ├── 2-component-open.png        ← Component in interactive state
+│   └── 3-component-hover.png       ← (optional) Hover state
+├── mockups/
+│   ├── option-1-[name]-component.png
+│   ├── option-2-[name]-component.png
+│   └── option-3-[name]-component.png
+└── previews/
+    ├── option-1-[name].html        ← Interactive preview
+    ├── option-2-[name].html
+    └── option-3-[name].html
+```
+
+**VISUAL-COMPARISON.html Structure (MANDATORY):**
+
+1. **Title & Subtitle** - Component name + "Three visual alternatives to fix UI/UX issues"
+2. **Current State Section** - Grid of 2 screenshots (closed/open states)
+3. **Identified Issues Box** - Red-bordered box with bulleted issues
+4. **Option 1 Section** - Mockup image (left) + rationale (right) + "Open Preview" button
+5. **Option 2 Section** - Same structure
+6. **Option 3 Section** - Same structure
+7. **Comparison Table** - Feature comparison across all options
+8. **Recommendations Box** - Green-bordered box with "Best Overall", "Best for X" recommendations
+9. **Interactive Previews Section** - 3-column grid with iframes showing all previews
+10. **Next Steps** - "Which direction? Reply with..."
+
+**Screenshot Capture Checklist:**
+
+- [ ] Dev server is running (npm run dev)
+- [ ] Navigate to correct URL
+- [ ] Locate component using specific selector
+- [ ] Call `scrollIntoViewIfNeeded()` on component
+- [ ] Wait 500ms for animations to settle
+- [ ] Capture closed state screenshot
+- [ ] Trigger interactive state (click, hover, etc.)
+- [ ] Wait 300ms for interaction animation
+- [ ] Capture open/interactive state screenshot
+- [ ] Verify component is visible in both screenshots (not cut off!)
+
+**If screenshots show the component cut off or missing:**
+- You did NOT follow the capture checklist correctly
+- Go back and fix the screenshot capture code
+- DO NOT proceed until component is visible
+
+**Consistency Rules:**
+
+1. **Always 3 options** - Never more, never less
+2. **Always same structure** - Current State → Issues → Options 1-3 → Comparison → Recommendations → Previews
+3. **Always embedded previews** - Use iframes at bottom of comparison page
+4. **Always "Open Preview" buttons** - Link to separate HTML files for full-screen viewing
+5. **Always comparison table** - Show feature trade-offs clearly
+6. **Always recommendations** - State which option is best for what scenario
+
+**This ensures every design review has identical structure and quality, regardless of component being reviewed.**

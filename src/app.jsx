@@ -1375,7 +1375,7 @@ export default function DiwanApp() {
     setIsFetching(true);
 
     const prompt = selectedCategory === "All" ? "Find a masterpiece Arabic poem. COMPLETE text." : `Find a famous poem by ${selectedCategory}. COMPLETE text.`;
-    const systemPrompt = `Return JSON: poet, poetArabic, title, titleArabic, arabic (full text, FULL tashkeel), english, tags (Era, Mood, Type).`;
+    const systemPrompt = `Return JSON: poet, poetArabic, title, titleArabic, arabic (full text, FULL tashkeel), english, tags (must be an array of exactly 3 strings: [Era, Mood, Type]).`;
     const requestBody = JSON.stringify({ contents: [{ parts: [{ text: `${prompt} JSON only.` }] }], systemInstruction: { parts: [{ text: systemPrompt }] }, generationConfig: { responseMimeType: "application/json" } });
     const requestSize = new Blob([requestBody]).size;
     const estimatedInputTokens = Math.ceil((prompt.length + systemPrompt.length) / 4);
@@ -1393,7 +1393,19 @@ export default function DiwanApp() {
 
       const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
       const cleanJson = (rawText || "").replace(/```json|```/g, "").trim();
-      const newPoem = { ...JSON.parse(cleanJson), id: Date.now() };
+      const parsedPoem = JSON.parse(cleanJson);
+
+      // Normalize tags: convert object to array if needed
+      if (parsedPoem.tags && typeof parsedPoem.tags === 'object' && !Array.isArray(parsedPoem.tags)) {
+        addLog("Discovery Tags", `Converting tags from object to array | Original: ${JSON.stringify(parsedPoem.tags)}`, "info");
+        parsedPoem.tags = [
+          parsedPoem.tags.Era || parsedPoem.tags.era || "Unknown",
+          parsedPoem.tags.Mood || parsedPoem.tags.mood || "Unknown",
+          parsedPoem.tags.Type || parsedPoem.tags.type || "Unknown"
+        ];
+      }
+
+      const newPoem = { ...parsedPoem, id: Date.now() };
 
       const responseSize = new Blob([cleanJson]).size;
       const estimatedOutputTokens = Math.ceil(cleanJson.length / 4);
@@ -1401,6 +1413,13 @@ export default function DiwanApp() {
       const jsonChars = cleanJson.length;
       const arabicPoemChars = newPoem?.arabic?.length || 0;
       const englishPoemChars = newPoem?.english?.length || 0;
+
+      // Log tags for debugging
+      const tagsType = Array.isArray(newPoem?.tags) ? 'array' : typeof newPoem?.tags;
+      const tagsContent = Array.isArray(newPoem?.tags)
+        ? `[${newPoem.tags.join(", ")}]`
+        : JSON.stringify(newPoem?.tags);
+      addLog("Discovery Tags", `Type: ${tagsType} | Count: ${Array.isArray(newPoem?.tags) ? newPoem.tags.length : 'N/A'} | Content: ${tagsContent}`, "info");
 
       addLog("Discovery API", `✓ Poem found | API: ${(apiTime / 1000).toFixed(2)}s | Response: ${(responseSize / 1024).toFixed(1)}KB | ${jsonChars} chars`, "success");
       addLog("Discovery Metrics", `${estimatedOutputTokens} tokens | ${tokensPerSecond} tok/s | Arabic: ${arabicPoemChars} chars | English: ${englishPoemChars} chars | Poet: ${newPoem.poet}`, "success");
@@ -1449,7 +1468,12 @@ export default function DiwanApp() {
     pollingIntervals.current.forEach(interval => clearInterval(interval));
     pollingIntervals.current = [];
 
-    addLog("Navigation", `Switched to poem: ${current?.poet} - ${current?.title} | ID: ${current?.id}`, "info");
+    // Log current poem tags for debugging
+    const tagsType = Array.isArray(current?.tags) ? 'array' : typeof current?.tags;
+    const tagsContent = Array.isArray(current?.tags)
+      ? `[${current.tags.join(", ")}]`
+      : JSON.stringify(current?.tags);
+    addLog("Navigation", `Switched to poem: ${current?.poet} - ${current?.title} | ID: ${current?.id} | Tags: ${tagsType} - ${tagsContent}`, "info");
   }, [current?.id]);
 
   // Prefetch triggers - run background prefetching when poem changes

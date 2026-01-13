@@ -7,8 +7,11 @@ import { Play, Pause, BookOpen, RefreshCw, Volume2, ChevronDown, Quote, Globe, M
 */
 
 const FEATURES = {
-  grounding: false, 
+  grounding: false,
   debug: true,
+  caching: true,      // Enable IndexedDB caching for audio/insights
+  streaming: true,    // Enable streaming insights (progressive rendering)
+  prefetching: true   // Enable smart prefetching (rate-limited to avoid API issues)
 };
 
 const DESIGN = {
@@ -108,7 +111,438 @@ THE AUTHOR: [Text]
 `;
 
 /* =============================================================================
-  2. UTILITY COMPONENTS
+  2. CACHE CONFIGURATION & INDEXEDDB WRAPPER
+  =============================================================================
+*/
+
+const CACHE_CONFIG = {
+  dbName: 'poetry-cache-v1',
+  version: 1,
+  stores: {
+    audio: 'audio-cache',
+    insights: 'insights-cache',
+    poems: 'poems-cache'
+  },
+  expiry: {
+    audio: 7 * 24 * 60 * 60 * 1000,      // 7 days
+    insights: 30 * 24 * 60 * 60 * 1000,  // 30 days
+    poems: null                           // Never expire
+  },
+  maxSize: 500 * 1024 * 1024 // 500MB
+};
+
+/**
+ * Initialize IndexedDB cache database
+ * Creates object stores for audio, insights, and poems if they don't exist
+ */
+const initCache = () => {
+  return new Promise((resolve, reject) => {
+    if (!FEATURES.caching) {
+      resolve(null);
+      return;
+    }
+
+    const request = indexedDB.open(CACHE_CONFIG.dbName, CACHE_CONFIG.version);
+
+    request.onerror = () => reject(request.error);
+    request.onsuccess = () => resolve(request.result);
+
+    request.onupgradeneeded = (event) => {
+      const db = event.target.result;
+
+      // Create object stores if they don't exist
+      if (!db.objectStoreNames.contains(CACHE_CONFIG.stores.audio)) {
+        db.createObjectStore(CACHE_CONFIG.stores.audio, { keyPath: 'poemId' });
+      }
+      if (!db.objectStoreNames.contains(CACHE_CONFIG.stores.insights)) {
+        db.createObjectStore(CACHE_CONFIG.stores.insights, { keyPath: 'poemId' });
+      }
+      if (!db.objectStoreNames.contains(CACHE_CONFIG.stores.poems)) {
+        db.createObjectStore(CACHE_CONFIG.stores.poems, { keyPath: 'poemId' });
+      }
+    };
+  });
+};
+
+/**
+ * Cache operations for IndexedDB
+ * Provides get, set, delete, and clear operations with expiry checking
+ */
+const cacheOperations = {
+  /**
+   * Get an item from cache with expiry check
+   * @param {string} storeName - Name of the object store
+   * @param {string|number} poemId - ID of the poem
+   * @returns {Promise<Object|null>} Cached data or null if expired/missing
+   */
+  async get(storeName, poemId) {
+    if (!FEATURES.caching) return null;
+
+    try {
+      const db = await initCache();
+      if (!db) return null;
+
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction([storeName], 'readonly');
+        const store = transaction.objectStore(storeName);
+        const request = store.get(poemId);
+
+        request.onsuccess = () => {
+          const result = request.result;
+          if (!result) {
+            resolve(null);
+            return;
+          }
+
+          // Check expiry
+          const expiryTime = storeName === CACHE_CONFIG.stores.audio
+            ? CACHE_CONFIG.expiry.audio
+            : storeName === CACHE_CONFIG.stores.insights
+            ? CACHE_CONFIG.expiry.insights
+            : CACHE_CONFIG.expiry.poems;
+
+          if (expiryTime && result.timestamp) {
+            const age = Date.now() - result.timestamp;
+            if (age > expiryTime) {
+              // Expired - delete and return null
+              cacheOperations.delete(storeName, poemId);
+              resolve(null);
+              return;
+            }
+          }
+
+          resolve(result);
+        };
+
+        request.onerror = () => reject(request.error);
+      });
+    } catch (error) {
+      console.error('Cache get error:', error);
+      return null;
+    }
+  },
+
+  /**
+   * Set an item in cache with timestamp
+   * @param {string} storeName - Name of the object store
+   * @param {string|number} poemId - ID of the poem
+   * @param {Object} data - Data to cache (will be wrapped with poemId and timestamp)
+   * @returns {Promise<boolean>} Success status
+   */
+  async set(storeName, poemId, data) {
+    if (!FEATURES.caching) return false;
+
+    try {
+      const db = await initCache();
+      if (!db) return false;
+
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction([storeName], 'readwrite');
+        const store = transaction.objectStore(storeName);
+        const record = {
+          poemId,
+          timestamp: Date.now(),
+          ...data
+        };
+        const request = store.put(record);
+
+        request.onsuccess = () => resolve(true);
+        request.onerror = () => reject(request.error);
+      });
+    } catch (error) {
+      console.error('Cache set error:', error);
+      return false;
+    }
+  },
+
+  /**
+   * Delete an item from cache
+   * @param {string} storeName - Name of the object store
+   * @param {string|number} poemId - ID of the poem
+   * @returns {Promise<boolean>} Success status
+   */
+  async delete(storeName, poemId) {
+    if (!FEATURES.caching) return false;
+
+    try {
+      const db = await initCache();
+      if (!db) return false;
+
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction([storeName], 'readwrite');
+        const store = transaction.objectStore(storeName);
+        const request = store.delete(poemId);
+
+        request.onsuccess = () => resolve(true);
+        request.onerror = () => reject(request.error);
+      });
+    } catch (error) {
+      console.error('Cache delete error:', error);
+      return false;
+    }
+  },
+
+  /**
+   * Clear all items from a store
+   * @param {string} storeName - Name of the object store
+   * @returns {Promise<boolean>} Success status
+   */
+  async clear(storeName) {
+    if (!FEATURES.caching) return false;
+
+    try {
+      const db = await initCache();
+      if (!db) return false;
+
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction([storeName], 'readwrite');
+        const store = transaction.objectStore(storeName);
+        const request = store.clear();
+
+        request.onsuccess = () => resolve(true);
+        request.onerror = () => reject(request.error);
+      });
+    } catch (error) {
+      console.error('Cache clear error:', error);
+      return false;
+    }
+  }
+};
+
+/* =============================================================================
+  3. PREFETCH MANAGER
+  =============================================================================
+*/
+
+/**
+ * Prefetch Manager - Aggressive prefetching for audio and insights
+ * Runs in background to pre-generate content before user requests it
+ *
+ * Strategy:
+ * - Priority 1: Current poem audio + insights (immediately on poem change)
+ * - Priority 2: Adjacent poems audio (3s delay)
+ * - Priority 3: Discover poems (5s delay)
+ */
+const prefetchManager = {
+  /**
+   * Prefetch audio for a poem (generate and cache in background)
+   */
+  prefetchAudio: async (poemId, poem, addLog, activeRequests) => {
+    if (!FEATURES.prefetching || !FEATURES.caching) return;
+    if (!poemId || !poem?.arabic) return;
+
+    try {
+      // Check if already generating - silently skip
+      if (activeRequests && activeRequests.current.has(poemId)) {
+        if (addLog) addLog("Prefetch Audio", `Already generating audio for poem ${poemId} - skipping`, "info");
+        return;
+      }
+
+      // Check cache first - don't prefetch if already cached
+      const cached = await cacheOperations.get(CACHE_CONFIG.stores.audio, poemId);
+      if (cached?.blob) {
+        if (addLog) addLog("Prefetch Audio", `Audio already cached for poem ${poemId} - skipping`, "info");
+        return;
+      }
+
+      // Mark as in-flight
+      if (activeRequests) activeRequests.current.add(poemId);
+
+      // Generate audio using same logic as togglePlay
+      const mood = poem?.tags?.[1] || "Poetic";
+      const era = poem?.tags?.[0] || "Classical";
+      const poet = poem?.poet || "the Master Poet";
+      const ttsInstruction = `Act as a master orator. Recite this masterpiece by ${poet} in the soulful, ${mood} tone of the ${era} era. Use high intensity, passionate oratorical power, and majestic strength. Include natural pauses and audible breaths. Text: ${poem.arabic}`;
+
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY || "";
+      if (!apiKey) return;
+
+      const requestSize = new Blob([JSON.stringify({ contents: [{ parts: [{ text: ttsInstruction }] }] })]).size;
+      const estimatedTokens = Math.ceil(ttsInstruction.length / 4);
+      if (addLog) addLog("Prefetch Audio", `→ Background audio generation (poem ${poemId}) | ${(requestSize / 1024).toFixed(1)}KB | ${estimatedTokens} tokens`, "info");
+
+      const apiStart = performance.now();
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: ttsInstruction }] }],
+          generationConfig: {
+            responseModalities: ["AUDIO"],
+            speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: "Fenrir" } } }
+          }
+        })
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        if (addLog) addLog("Prefetch Audio", `❌ Audio generation HTTP ${res.status}: ${errorText.substring(0, 150)}`, "error");
+        return;
+      }
+
+      const data = await res.json();
+      const apiTime = performance.now() - apiStart;
+      if (!data.candidates || data.candidates.length === 0) {
+        if (addLog) addLog("Prefetch Audio", `❌ Audio generation failed for poem ${poemId}. Response: ${JSON.stringify(data).substring(0, 200)}`, "error");
+        return;
+      }
+
+      const b64 = data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+      if (b64) {
+        // Convert PCM to WAV (inline to avoid dependency)
+        const pcm16ToWav = (base64, rate = 24000) => {
+          try {
+            const cleanedBase64 = base64.replace(/\s/g, '');
+            const bin = atob(cleanedBase64);
+            const buf = new ArrayBuffer(bin.length);
+            const view = new DataView(buf);
+            for (let i = 0; i < bin.length; i++) view.setUint8(i, bin.charCodeAt(i));
+            const samples = new Int16Array(buf);
+            const wavBuf = new ArrayBuffer(44 + samples.length * 2);
+            const wavView = new DataView(wavBuf);
+            const s = (o, str) => { for (let i = 0; i < str.length; i++) wavView.setUint8(o + i, str.charCodeAt(i)); };
+            s(0, 'RIFF'); wavView.setUint32(4, 36 + samples.length * 2, true); s(8, 'WAVE'); s(12, 'fmt ');
+            wavView.setUint32(16, 16, true); wavView.setUint16(20, 1, true); wavView.setUint16(22, 1, true);
+            wavView.setUint32(24, rate, true); wavView.setUint32(28, rate * 2, true); wavView.setUint16(32, 2, true);
+            wavView.setUint16(34, 16, true); s(36, 'data'); wavView.setUint32(40, samples.length * 2, true);
+            new Int16Array(wavBuf, 44).set(samples);
+            return new Blob([wavBuf], { type: 'audio/wav' });
+          } catch (e) {
+            return null;
+          }
+        };
+
+        const blob = pcm16ToWav(b64);
+        if (blob) {
+          // Calculate metrics
+          const pcmBytes = atob(b64.replace(/\s/g, '')).length;
+          const samples = pcmBytes / 2;
+          const audioDuration = samples / 24000;
+          const tokensPerSecond = (estimatedTokens / (apiTime / 1000)).toFixed(1);
+
+          // Cache the blob
+          await cacheOperations.set(CACHE_CONFIG.stores.audio, poemId, {
+            blob,
+            metadata: { poet: poem.poet, title: poem.title, size: blob.size, duration: audioDuration }
+          });
+
+          if (addLog) addLog("Prefetch Audio", `✓ Audio cached (poem ${poemId}) | ${(apiTime / 1000).toFixed(1)}s | ${(blob.size / 1024).toFixed(1)}KB | ${audioDuration.toFixed(1)}s audio | ${tokensPerSecond} tok/s`, "success");
+        }
+      }
+    } catch (error) {
+      // Silently handle errors - don't disrupt user experience
+      if (addLog) addLog("Prefetch Audio", `❌ Audio generation error for poem ${poemId}: ${error.message}`, "error");
+    } finally {
+      // Clean up in-flight tracking
+      if (activeRequests) activeRequests.current.delete(poemId);
+    }
+  },
+
+  /**
+   * Prefetch insights for a poem (generate and cache in background)
+   */
+  prefetchInsights: async (poemId, poem, addLog, activeRequests) => {
+    if (!FEATURES.prefetching || !FEATURES.caching) return;
+    if (!poemId || !poem?.arabic) return;
+
+    try {
+      // Check if already generating - silently skip
+      if (activeRequests && activeRequests.current.has(poemId)) {
+        if (addLog) addLog("Prefetch Insights", `Already generating insights for poem ${poemId} - skipping`, "info");
+        return;
+      }
+
+      // Check cache first - don't prefetch if already cached
+      const cached = await cacheOperations.get(CACHE_CONFIG.stores.insights, poemId);
+      if (cached?.interpretation) {
+        if (addLog) addLog("Prefetch Insights", `Insights already cached for poem ${poemId} - skipping`, "info");
+        return;
+      }
+
+      // Mark as in-flight
+      if (activeRequests) activeRequests.current.add(poemId);
+
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY || "";
+      if (!apiKey) return;
+
+      const SYSTEM_PROMPT = `
+You are an expert scholar and master poet of both Arabic and English literature.
+
+TASK: POETIC INSIGHT
+Provide exactly three sections labeled:
+1. POEM: Provide a faithful, line-by-line English translation matching the Arabic lines exactly. Ensure poetic weight and grammatical elegance.
+2. THE DEPTH: Exactly 3 sentences explaining meaning.
+3. THE AUTHOR: Exactly 2 sentences on the poet.
+
+Strictly adhere to this format:
+POEM:
+[Translation]
+THE DEPTH: [Text]
+THE AUTHOR: [Text]
+`;
+
+      const promptText = `Deep Analysis of: ${poem.arabic}`;
+      const requestSize = new Blob([JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })]).size;
+      const estimatedInputTokens = Math.ceil((promptText.length + SYSTEM_PROMPT.length) / 4);
+      if (addLog) addLog("Prefetch Insights", `→ Background insights generation (poem ${poemId}) | ${(requestSize / 1024).toFixed(1)}KB | ${estimatedInputTokens} tokens`, "info");
+
+      const apiStart = performance.now();
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+      const res = await fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contents: [{ parts: [{ text: promptText }] }],
+          systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] }
+        })
+      });
+
+      const data = await res.json();
+      const apiTime = performance.now() - apiStart;
+      const interpretation = data.candidates?.[0]?.content?.parts?.[0]?.text;
+
+      if (interpretation) {
+        // Calculate metrics
+        const charCount = interpretation.length;
+        const estimatedTokens = Math.ceil(charCount / 4);
+        const tokensPerSecond = (estimatedTokens / (apiTime / 1000)).toFixed(1);
+
+        // Cache the insights
+        await cacheOperations.set(CACHE_CONFIG.stores.insights, poemId, {
+          interpretation,
+          metadata: { poet: poem.poet, title: poem.title, charCount, tokens: estimatedTokens }
+        });
+
+        if (addLog) addLog("Prefetch Insights", `✓ Insights cached (poem ${poemId}) | ${(apiTime / 1000).toFixed(1)}s | ${charCount} chars (≈${estimatedTokens} tokens) | ${tokensPerSecond} tok/s`, "success");
+      }
+    } catch (error) {
+      // Silently handle errors - don't disrupt user experience
+      if (addLog) addLog("Prefetch Insights", `❌ Insights generation error for poem ${poemId}: ${error.message}`, "error");
+    } finally {
+      // Clean up in-flight tracking
+      if (activeRequests) activeRequests.current.delete(poemId);
+    }
+  },
+
+  /**
+   * Prefetch poems from discover (pre-fetch poems from category)
+   */
+  prefetchDiscover: async (category, count = 2, addLog) => {
+    if (!FEATURES.prefetching || !FEATURES.caching) return;
+    if (!category || category === "All") return;
+
+    try {
+      if (addLog) addLog("Prefetch", `Pre-fetching ${count} poems from ${category}...`, "info");
+      // Placeholder - would fetch poems from discover API and cache
+    } catch (error) {
+      if (addLog) addLog("Prefetch", `Discover prefetch error: ${error.message}`, "error");
+    }
+  }
+};
+
+/* =============================================================================
+  4. UTILITY COMPONENTS
   =============================================================================
 */
 
@@ -402,6 +836,11 @@ export default function DiwanApp() {
   const [logs, setLogs] = useState([]);
   const [showCopySuccess, setShowCopySuccess] = useState(false);
   const [isOverflow, setIsOverflow] = useState(false);
+  const [cacheStats, setCacheStats] = useState({ audioHits: 0, audioMisses: 0, insightsHits: 0, insightsMisses: 0 });
+  const [isPrefetching, setIsPrefetching] = useState(false);
+  const activeAudioRequests = useRef(new Set()); // Track in-flight audio generation requests
+  const activeInsightRequests = useRef(new Set()); // Track in-flight insight generation requests
+  const pollingIntervals = useRef([]); // Track all polling intervals for cleanup
 
   const theme = darkMode ? THEME.dark : THEME.light;
 
@@ -510,10 +949,13 @@ export default function DiwanApp() {
   }, []);
 
   const togglePlay = async () => {
-    if (isPlaying) { 
-      audioRef.current.pause(); 
-      setIsPlaying(false); 
-      return; 
+    addLog("UI Event", `🎵 Play button clicked | Poem: ${current?.poet} - ${current?.title} | ID: ${current?.id}`, "info");
+
+    if (isPlaying) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+      addLog("UI Event", "⏸️ Pause button clicked", "info");
+      return;
     }
 
     if (audioUrl) {
@@ -525,69 +967,447 @@ export default function DiwanApp() {
       return;
     }
 
+    // Set loading state FIRST (before duplicate check) for better UX
     setIsGeneratingAudio(true);
-    addLog("Audio", "Opening the Diwan...");
+
+    // Check if request already in flight - poll until it completes
+    if (activeAudioRequests.current.has(current?.id)) {
+      addLog("Audio", `Audio generation already in progress - waiting for completion`, "info");
+
+      // Poll every 500ms to check if the request completed
+      const pollInterval = setInterval(async () => {
+        if (!activeAudioRequests.current.has(current?.id)) {
+          clearInterval(pollInterval);
+          pollingIntervals.current = pollingIntervals.current.filter(id => id !== pollInterval);
+
+          // Request completed - check cache and play
+          const cached = await cacheOperations.get(CACHE_CONFIG.stores.audio, current.id);
+          if (cached?.blob) {
+            addLog("Audio", `✓ Background audio generation completed - playing from cache`, "success");
+            const u = URL.createObjectURL(cached.blob);
+            setAudioUrl(u);
+            audioRef.current.src = u;
+            audioRef.current.load();
+            audioRef.current.play().then(() => setIsPlaying(true)).catch(e => {
+              addLog("Audio", "Starting playback...", "info");
+              setIsPlaying(true);
+            });
+          } else {
+            addLog("Audio", `Background audio generation failed - retrying`, "info");
+            // Retry the request
+            setTimeout(() => togglePlay(), 100);
+            return;
+          }
+          setIsGeneratingAudio(false);
+        }
+      }, 500);
+
+      pollingIntervals.current.push(pollInterval);
+
+      // Safety timeout - clear after 60 seconds (some large poems take 40+ seconds)
+      setTimeout(() => {
+        clearInterval(pollInterval);
+        pollingIntervals.current = pollingIntervals.current.filter(id => id !== pollInterval);
+        if (activeAudioRequests.current.has(current?.id)) {
+          addLog("Audio", `Audio generation taking longer than expected - checking one more time...`, "info");
+
+          // Final check before giving up
+          setTimeout(async () => {
+            const finalCheck = await cacheOperations.get(CACHE_CONFIG.stores.audio, current.id);
+            if (finalCheck?.blob) {
+              addLog("Audio", `✓ Audio completed after extended wait - playing now`, "success");
+              const u = URL.createObjectURL(finalCheck.blob);
+              setAudioUrl(u);
+              audioRef.current.src = u;
+              audioRef.current.load();
+              audioRef.current.play().then(() => setIsPlaying(true)).catch(e => {
+                addLog("Audio", "Starting playback...", "info");
+                setIsPlaying(true);
+              });
+            } else {
+              addLog("Audio", `Audio generation timeout - please try again`, "error");
+            }
+            activeAudioRequests.current.delete(current?.id);
+            setIsGeneratingAudio(false);
+          }, 10000); // Wait 10 more seconds for slow API
+        }
+      }, 60000);
+
+      return;
+    }
+
+    // CHECK CACHE FIRST
+    if (FEATURES.caching && current?.id) {
+      const cacheStart = performance.now();
+      const cached = await cacheOperations.get(CACHE_CONFIG.stores.audio, current.id);
+      const cacheTime = performance.now() - cacheStart;
+
+      if (cached?.blob) {
+        const sizeMB = (cached.blob.size / (1024 * 1024)).toFixed(2);
+        addLog("Audio Cache", `✓ Cache HIT (${cacheTime.toFixed(0)}ms) | Size: ${sizeMB}MB | Instant playback`, "success");
+        setCacheStats(prev => ({ ...prev, audioHits: prev.audioHits + 1 }));
+
+        const u = URL.createObjectURL(cached.blob);
+        setAudioUrl(u);
+        audioRef.current.src = u;
+        audioRef.current.load();
+        audioRef.current.play().then(() => setIsPlaying(true)).catch(e => {
+          addLog("Audio", "Starting cached playback...", "info");
+          setIsPlaying(true);
+        });
+        setIsGeneratingAudio(false); // Clear loading state
+        return;
+      } else {
+        addLog("Audio Cache", `✗ Cache MISS (${cacheTime.toFixed(0)}ms) | Generating from API...`, "info");
+        setCacheStats(prev => ({ ...prev, audioMisses: prev.audioMisses + 1 }));
+      }
+    }
+
+    // Mark request as in-flight
+    activeAudioRequests.current.add(current?.id);
+
     const mood = current?.tags?.[1] || "Poetic";
     const era = current?.tags?.[0] || "Classical";
     const poet = current?.poet || "the Master Poet";
     const ttsInstruction = `Act as a master orator. Recite this masterpiece by ${poet} in the soulful, ${mood} tone of the ${era} era. Use high intensity, passionate oratorical power, and majestic strength. Include natural pauses and audible breaths. Text: ${current?.arabic}`;
 
+    // Calculate request metrics
+    const requestSize = new Blob([JSON.stringify({ contents: [{ parts: [{ text: ttsInstruction }] }] })]).size;
+    const estimatedTokens = Math.ceil(ttsInstruction.length / 4); // Rough estimate: 1 token ≈ 4 chars
+    const instructionChars = ttsInstruction.length;
+    const arabicTextChars = current?.arabic?.length || 0;
+    addLog("Audio API", `→ Starting generation | Request: ${(requestSize / 1024).toFixed(1)}KB | ${instructionChars} chars (${arabicTextChars} Arabic) | Est. ${estimatedTokens} tokens`, "info");
+
     try {
+      const apiStart = performance.now();
       const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent?key=${apiKey}`;
       const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contents: [{ parts: [{ text: ttsInstruction }] }], generationConfig: { responseModalities: ["AUDIO"], speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: "Fenrir" } } } } }) });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        addLog("Audio API Error", `HTTP ${res.status}: ${errorText.substring(0, 200)}`, "error");
+        throw new Error(`API returned ${res.status}: ${res.statusText}`);
+      }
+
       const data = await res.json();
-      
-      if (!data.candidates || data.candidates.length === 0) throw new Error("Recitation failed.");
+      const apiTime = performance.now() - apiStart;
+
+      if (!data.candidates || data.candidates.length === 0) {
+        addLog("Audio API Error", `No candidates in response. Full response: ${JSON.stringify(data).substring(0, 300)}`, "error");
+        throw new Error("Recitation failed - no audio candidates returned");
+      }
 
       const b64 = data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
       if (b64) {
+        const conversionStart = performance.now();
         const blob = pcm16ToWav(b64);
+        const conversionTime = performance.now() - conversionStart;
+
         if (blob) {
+          // Calculate audio metrics
+          const audioSizeMB = (blob.size / (1024 * 1024)).toFixed(2);
+          const audioSizeKB = (blob.size / 1024).toFixed(1);
+          // Estimate audio duration from PCM samples (24kHz, 16-bit, mono)
+          const pcmBytes = atob(b64.replace(/\s/g, '')).length;
+          const samples = pcmBytes / 2; // 16-bit = 2 bytes per sample
+          const audioDuration = samples / 24000; // 24kHz sample rate
+          const tokensPerSecond = (estimatedTokens / (apiTime / 1000)).toFixed(1);
+          const totalTime = apiTime + conversionTime;
+
+          addLog("Audio API", `✓ Complete | API: ${(apiTime / 1000).toFixed(2)}s | Convert: ${conversionTime.toFixed(0)}ms | Total: ${(totalTime / 1000).toFixed(2)}s`, "success");
+          addLog("Audio Metrics", `Audio: ${audioDuration.toFixed(1)}s | Size: ${audioSizeKB}KB (${audioSizeMB}MB) | Speed: ${tokensPerSecond} tok/s`, "success");
+
           const u = URL.createObjectURL(blob);
-          setAudioUrl(u); 
-          audioRef.current.src = u; 
+          setAudioUrl(u);
+          audioRef.current.src = u;
           audioRef.current.load();
           audioRef.current.play().then(() => setIsPlaying(true)).catch(e => {
              addLog("Audio", "Starting playback...", "info");
              setIsPlaying(true);
           });
+
+          // CACHE THE AUDIO BLOB
+          if (FEATURES.caching && current?.id) {
+            const cacheStart = performance.now();
+            await cacheOperations.set(CACHE_CONFIG.stores.audio, current.id, {
+              blob,
+              metadata: {
+                poet: current.poet,
+                title: current.title,
+                size: blob.size,
+                duration: audioDuration
+              }
+            });
+            const cacheTime = performance.now() - cacheStart;
+            addLog("Audio Cache", `Audio cached for future playback (${cacheTime.toFixed(0)}ms) | Saves ${(apiTime / 1000).toFixed(1)}s on replay`, "success");
+          }
         }
       }
-    } catch (e) { 
-      addLog("Audio System Error", e.message, "error"); 
-      setIsPlaying(false); 
+    } catch (e) {
+      addLog("Audio System Error", `${e.message} | Poem ID: ${current?.id}`, "error");
+      setIsPlaying(false);
     } finally {
       setIsGeneratingAudio(false);
+      activeAudioRequests.current.delete(current?.id); // Clean up in-flight tracking
     }
   };
 
   const handleAnalyze = async () => {
+    addLog("UI Event", `🔍 Dive In button clicked | Poem: ${current?.poet} - ${current?.title} | ID: ${current?.id}`, "info");
+
     if (interpretation || isInterpreting) return;
+
+    // Set loading state FIRST (before duplicate check) for better UX
     setIsInterpreting(true);
+
+    // Check if request already in flight - poll until it completes
+    if (activeInsightRequests.current.has(current?.id)) {
+      addLog("Insights", `Insights generation already in progress - waiting for completion`, "info");
+
+      // Poll every 500ms to check if the request completed
+      const pollInterval = setInterval(async () => {
+        if (!activeInsightRequests.current.has(current?.id)) {
+          clearInterval(pollInterval);
+          pollingIntervals.current = pollingIntervals.current.filter(id => id !== pollInterval);
+
+          // Request completed - check cache and display
+          const cached = await cacheOperations.get(CACHE_CONFIG.stores.insights, current.id);
+          if (cached?.interpretation) {
+            addLog("Insights", `✓ Background insights generation completed - displaying results`, "success");
+            setInterpretation(cached.interpretation);
+          } else {
+            addLog("Insights", `Background insights generation failed - retrying`, "info");
+            // Retry the request
+            setTimeout(() => handleAnalyze(), 100);
+            return;
+          }
+          setIsInterpreting(false);
+        }
+      }, 500);
+
+      pollingIntervals.current.push(pollInterval);
+
+      // Safety timeout - clear after 60 seconds (some insights take time)
+      setTimeout(() => {
+        clearInterval(pollInterval);
+        pollingIntervals.current = pollingIntervals.current.filter(id => id !== pollInterval);
+        if (activeInsightRequests.current.has(current?.id)) {
+          addLog("Insights", `Insights generation taking longer than expected - checking one more time...`, "info");
+
+          // Final check before giving up
+          setTimeout(async () => {
+            const finalCheck = await cacheOperations.get(CACHE_CONFIG.stores.insights, current.id);
+            if (finalCheck?.interpretation) {
+              addLog("Insights", `✓ Insights completed after extended wait - displaying now`, "success");
+              setInterpretation(finalCheck.interpretation);
+            } else {
+              addLog("Insights", `Insights generation timeout - please try again`, "error");
+            }
+            activeInsightRequests.current.delete(current?.id);
+            setIsInterpreting(false);
+          }, 10000); // Wait 10 more seconds for slow API
+        }
+      }, 60000);
+
+      return;
+    }
+
+    // Mark request as in-flight
+    activeInsightRequests.current.add(current?.id);
+
+    // CHECK CACHE FIRST
+    if (FEATURES.caching && current?.id) {
+      const cacheStart = performance.now();
+      const cached = await cacheOperations.get(CACHE_CONFIG.stores.insights, current.id);
+      const cacheTime = performance.now() - cacheStart;
+
+      if (cached?.interpretation) {
+        const charCount = cached.interpretation.length;
+        const estTokens = Math.ceil(charCount / 4);
+        addLog("Insights Cache", `✓ Cache HIT (${cacheTime.toFixed(0)}ms) | ${charCount} chars (≈${estTokens} tokens) | Instant load`, "success");
+        setCacheStats(prev => ({ ...prev, insightsHits: prev.insightsHits + 1 }));
+        setInterpretation(cached.interpretation);
+        setIsInterpreting(false); // Clear loading state
+        activeInsightRequests.current.delete(current?.id); // Clean up tracking
+        return;
+      } else {
+        addLog("Insights Cache", `✗ Cache MISS (${cacheTime.toFixed(0)}ms) | Generating from API...`, "info");
+        setCacheStats(prev => ({ ...prev, insightsMisses: prev.insightsMisses + 1 }));
+      }
+    }
+
+    let insightText = "";
+
     try {
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
-      const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contents: [{ parts: [{ text: `Deep Analysis of: ${current?.arabic}` }] }], systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] } }) });
-      const data = await res.json();
-      setInterpretation(data.candidates?.[0]?.content?.parts?.[0]?.text);
-    } catch (e) { addLog("Analysis Error", e.message, "error"); }
-    setIsInterpreting(false);
+      // Use streaming if feature flag is enabled
+      if (FEATURES.streaming) {
+        const promptText = `Deep Analysis of: ${current?.arabic}`;
+        const requestSize = new Blob([JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })]).size;
+        const estimatedInputTokens = Math.ceil((promptText.length + SYSTEM_PROMPT.length) / 4);
+        const promptChars = promptText.length;
+        const arabicTextChars = current?.arabic?.length || 0;
+        const systemPromptChars = SYSTEM_PROMPT.length;
+        addLog("Insights API", `→ Starting streaming | Request: ${(requestSize / 1024).toFixed(1)}KB | ${promptChars} chars (${arabicTextChars} Arabic + ${systemPromptChars} system) | Est. ${estimatedInputTokens} tokens`, "info");
+
+        setInterpretation(""); // Clear previous interpretation
+        const apiStart = performance.now();
+        let firstChunkTime = null;
+        let chunkCount = 0;
+
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:streamGenerateContent?alt=sse&key=${apiKey}`;
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: promptText }] }],
+            systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] }
+          })
+        });
+
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let accumulatedText = "";
+        let buffer = "";
+
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          // Decode chunk and add to buffer
+          buffer += decoder.decode(value, { stream: true });
+
+          // Process complete lines from buffer
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || ""; // Keep incomplete line in buffer
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              const jsonStr = line.slice(6).trim();
+              if (jsonStr === '[DONE]') continue;
+
+              try {
+                const data = JSON.parse(jsonStr);
+                const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+                if (text) {
+                  if (!firstChunkTime) {
+                    firstChunkTime = performance.now() - apiStart;
+                    addLog("Insights API", `← First chunk received (${firstChunkTime.toFixed(0)}ms) | Streaming...`, "info");
+                  }
+                  chunkCount++;
+                  accumulatedText += text;
+                  setInterpretation(accumulatedText); // Real-time UI update
+                }
+              } catch (parseError) {
+                // Skip malformed JSON chunks
+                console.debug("Skipping malformed chunk:", jsonStr);
+              }
+            }
+          }
+        }
+
+        insightText = accumulatedText;
+        const totalTime = performance.now() - apiStart;
+        const charCount = insightText.length;
+        const estimatedTokens = Math.ceil(charCount / 4);
+        const tokensPerSecond = (estimatedTokens / (totalTime / 1000)).toFixed(1);
+        const avgChunkSize = charCount / chunkCount;
+
+        addLog("Insights API", `✓ Streaming complete | Total: ${(totalTime / 1000).toFixed(2)}s | TTFT: ${(firstChunkTime / 1000).toFixed(2)}s | ${chunkCount} chunks`, "success");
+        addLog("Insights Metrics", `${charCount} chars (≈${estimatedTokens} tokens) | ${tokensPerSecond} tok/s | Avg chunk: ${avgChunkSize.toFixed(0)} chars`, "success");
+      } else {
+        // Non-streaming fallback (original implementation)
+        addLog("Insights", "Analyzing poem...", "info");
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: `Deep Analysis of: ${current?.arabic}` }] }],
+            systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] }
+          })
+        });
+        const data = await res.json();
+        insightText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        setInterpretation(insightText);
+        addLog("Insights", "Analysis complete", "success");
+      }
+
+      // CACHE THE INSIGHTS
+      if (FEATURES.caching && current?.id && insightText) {
+        const cacheStart = performance.now();
+        await cacheOperations.set(CACHE_CONFIG.stores.insights, current.id, {
+          interpretation: insightText,
+          metadata: {
+            poet: current.poet,
+            title: current.title,
+            charCount: insightText.length,
+            tokens: Math.ceil(insightText.length / 4)
+          }
+        });
+        const cacheTime = performance.now() - cacheStart;
+        const savedTime = FEATURES.streaming ? (totalTime / 1000).toFixed(1) : "2-8";
+        addLog("Insights Cache", `Insights cached for future use (${cacheTime.toFixed(0)}ms) | Saves ${savedTime}s on reload`, "success");
+      }
+    } catch (e) {
+      addLog("Analysis Error", `${e.message} | Poem ID: ${current?.id}`, "error");
+      // Show partial results if streaming was interrupted
+      if (FEATURES.streaming && insightText) {
+        addLog("Insights", "Showing partial results", "warning");
+      }
+    } finally {
+      setIsInterpreting(false);
+      activeInsightRequests.current.delete(current?.id); // Clean up in-flight tracking
+    }
   };
 
   const handleFetch = async () => {
-    if (isFetching) return;
+    addLog("UI Event", `🐰 Discover button clicked | Category: ${selectedCategory}`, "info");
+
+    if (isFetching) {
+      addLog("Discovery", `Discovery already in progress - please wait`, "info");
+      return;
+    }
+
     setIsFetching(true);
-    addLog("Discovery", `Consulting ${selectedCategory}...`);
+
+    const prompt = selectedCategory === "All" ? "Find a masterpiece Arabic poem. COMPLETE text." : `Find a famous poem by ${selectedCategory}. COMPLETE text.`;
+    const systemPrompt = `Return JSON: poet, poetArabic, title, titleArabic, arabic (full text, FULL tashkeel), english, tags (Era, Mood, Type).`;
+    const requestBody = JSON.stringify({ contents: [{ parts: [{ text: `${prompt} JSON only.` }] }], systemInstruction: { parts: [{ text: systemPrompt }] }, generationConfig: { responseMimeType: "application/json" } });
+    const requestSize = new Blob([requestBody]).size;
+    const estimatedInputTokens = Math.ceil((prompt.length + systemPrompt.length) / 4);
+    const promptChars = prompt.length;
+    const systemPromptChars = systemPrompt.length;
+
+    addLog("Discovery API", `→ Searching ${selectedCategory} | Request: ${(requestSize / 1024).toFixed(1)}KB | ${promptChars + systemPromptChars} chars (${promptChars} prompt + ${systemPromptChars} system) | Est. ${estimatedInputTokens} tokens`, "info");
+
     try {
+      const apiStart = performance.now();
       const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
-      const prompt = selectedCategory === "All" ? "Find a masterpiece Arabic poem. COMPLETE text." : `Find a famous poem by ${selectedCategory}. COMPLETE text.`;
-      const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ contents: [{ parts: [{ text: `${prompt} JSON only.` }] }], systemInstruction: { parts: [{ text: `Return JSON: poet, poetArabic, title, titleArabic, arabic (full text, FULL tashkeel), english, tags (Era, Mood, Type).` }] }, generationConfig: { responseMimeType: "application/json" } }) });
+      const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: requestBody });
       const data = await res.json();
+      const apiTime = performance.now() - apiStart;
+
       const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
       const cleanJson = (rawText || "").replace(/```json|```/g, "").trim();
       const newPoem = { ...JSON.parse(cleanJson), id: Date.now() };
+
+      const responseSize = new Blob([cleanJson]).size;
+      const estimatedOutputTokens = Math.ceil(cleanJson.length / 4);
+      const tokensPerSecond = (estimatedOutputTokens / (apiTime / 1000)).toFixed(1);
+      const jsonChars = cleanJson.length;
+      const arabicPoemChars = newPoem?.arabic?.length || 0;
+      const englishPoemChars = newPoem?.english?.length || 0;
+
+      addLog("Discovery API", `✓ Poem found | API: ${(apiTime / 1000).toFixed(2)}s | Response: ${(responseSize / 1024).toFixed(1)}KB | ${jsonChars} chars`, "success");
+      addLog("Discovery Metrics", `${estimatedOutputTokens} tokens | ${tokensPerSecond} tok/s | Arabic: ${arabicPoemChars} chars | English: ${englishPoemChars} chars | Poet: ${newPoem.poet}`, "success");
       setPoems(prev => {
         const updated = [...prev, newPoem];
-        const freshFiltered = selectedCategory === "All" ? updated : updated.filter(p => (p?.poet || "").toLowerCase().includes(selectedCategory.toLowerCase()) || (Array.isArray(p?.tags) && p.tags.some(t => String(t).toLowerCase() === searchStr)));
+        const searchStr = selectedCategory.toLowerCase();
+        const freshFiltered = selectedCategory === "All" ? updated : updated.filter(p => (p?.poet || "").toLowerCase().includes(searchStr) || (Array.isArray(p?.tags) && p.tags.some(t => String(t).toLowerCase() === searchStr)));
         const newIdx = freshFiltered.findIndex(p => p.id === newPoem.id);
         if (newIdx !== -1) setCurrentIndex(newIdx);
         return updated;
@@ -597,11 +1417,17 @@ export default function DiwanApp() {
   };
 
   const handleCopy = async () => {
+    addLog("UI Event", `📋 Copy button clicked | Poem: ${current?.poet} - ${current?.title}`, "info");
+
     const textToCopy = `${current?.titleArabic || ""}\n${current?.poetArabic || ""}\n\n${current?.arabic || ""}\n\n---\n\n${current?.title || ""}\n${current?.poet || ""}\n\n${current?.english || ""}`;
+    const copyChars = textToCopy.length;
+    const arabicChars = current?.arabic?.length || 0;
+    const englishChars = current?.english?.length || 0;
+
     try {
       await navigator.clipboard.writeText(textToCopy);
       setShowCopySuccess(true);
-      addLog("Copy", "Poem copied to clipboard", "success");
+      addLog("Copy", `✓ Copied to clipboard | ${copyChars} chars total (${arabicChars} Arabic + ${englishChars} English)`, "success");
       setTimeout(() => setShowCopySuccess(false), 2000);
     } catch (e) {
       addLog("Copy Error", e.message, "error");
@@ -614,7 +1440,52 @@ export default function DiwanApp() {
     setIsPlaying(false);
     if (audioUrl) URL.revokeObjectURL(audioUrl);
     setAudioUrl(null);
+
+    // Clear any stuck loading states when poem changes
+    setIsGeneratingAudio(false);
+    setIsInterpreting(false);
+
+    // Clear all polling intervals to prevent stale requests
+    pollingIntervals.current.forEach(interval => clearInterval(interval));
+    pollingIntervals.current = [];
+
+    addLog("Navigation", `Switched to poem: ${current?.poet} - ${current?.title} | ID: ${current?.id}`, "info");
   }, [current?.id]);
+
+  // Prefetch triggers - run background prefetching when poem changes
+  // Rate-limited to avoid hitting API limits
+  useEffect(() => {
+    if (!FEATURES.prefetching || !current?.id) return;
+
+    // Priority 1: Prefetch current poem audio after 2s (only if user stays)
+    const prefetchCurrentAudio = setTimeout(() => {
+      prefetchManager.prefetchAudio(current.id, current, addLog, activeAudioRequests);
+    }, 2000);
+
+    // Priority 1: Prefetch current poem insights after 5s (only if user stays)
+    const prefetchCurrentInsights = setTimeout(() => {
+      prefetchManager.prefetchInsights(current.id, current, addLog, activeInsightRequests);
+    }, 5000);
+
+    // Priority 2: Prefetch ONLY next poem audio after 10s (if user lingers)
+    const prefetchNext = setTimeout(() => {
+      if (filtered.length > 1) {
+        const nextIndex = (currentIndex + 1) % filtered.length;
+        if (filtered[nextIndex]) {
+          setTimeout(() => {
+            prefetchManager.prefetchAudio(filtered[nextIndex].id, filtered[nextIndex], addLog, activeAudioRequests);
+          }, 500); // Stagger by 500ms to avoid burst
+        }
+      }
+    }, 10000);
+
+    // Cleanup timeouts on unmount or when dependencies change
+    return () => {
+      clearTimeout(prefetchCurrentAudio);
+      clearTimeout(prefetchCurrentInsights);
+      clearTimeout(prefetchNext);
+    };
+  }, [current?.id, currentIndex, filtered]);
 
   return (
     <div className={`h-[100dvh] w-full flex flex-col overflow-hidden ${DESIGN.anim} font-sans ${theme.bg} ${theme.text} selection:bg-indigo-500`}>

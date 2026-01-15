@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Play, Pause, BookOpen, RefreshCw, Volume2, ChevronDown, Quote, Globe, Moon, Sun, Loader2, ChevronRight, ChevronLeft, Search, X, Copy, LayoutGrid, Check, Bug, Trash2, Sparkles, PenTool, Library, Compass, Rabbit, MoreHorizontal } from 'lucide-react';
+import { Play, Pause, RefreshCw, Volume2, ChevronDown, Moon, Sun, Loader2, X, Copy, Check, Bug, Trash2, Sparkles, PenTool, Library, Compass, Rabbit, MoreHorizontal } from 'lucide-react';
 
 /* =============================================================================
   1. FEATURE FLAGS & DESIGN SYSTEM

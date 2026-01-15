@@ -136,19 +136,18 @@ describe('DiwanApp', () => {
     })
   })
 
-  describe('Navigation Controls', () => {
-    it('renders control buttons without left/right navigation', () => {
+  describe('Poem Discovery', () => {
+    it('renders all primary control buttons', () => {
       render(<DiwanApp />)
       const buttons = screen.getAllByRole('button')
 
-      // Should have Listen, Dive In, Discover, Poets buttons (no left/right navigation)
+      // Should have Listen, Dive In, Discover, Poets buttons
       expect(buttons.length).toBeGreaterThan(3)
     })
 
     it('has all primary action buttons enabled', () => {
       render(<DiwanApp />)
 
-      // Option K design removed left/right navigation
       // Verify primary buttons exist: Listen, Dive In, Discover, Poets
       expect(screen.getByLabelText(/play recitation|pause recitation/i)).toBeInTheDocument()
       expect(screen.getByLabelText('Dive into poem meaning')).toBeInTheDocument()
@@ -156,29 +155,83 @@ describe('DiwanApp', () => {
       expect(screen.getByLabelText('Select poet category')).toBeInTheDocument()
     })
 
-    it('allows discovering new poems without left/right navigation', async () => {
-      render(<DiwanApp />)
-
-      // Mock API response for fetching a new poem
+    it('discovers new poems via database mode', async () => {
+      // Mock database API response
       const newPoem = {
+        id: 999,
         poet: "Mahmoud Darwish",
         poetArabic: "محمود درويش",
         title: "Identity Card",
         titleArabic: "بطاقة هوية",
         arabic: "سَجِّلْ أَنَا عَرَبِيّ",
         english: "Record! I am an Arab",
-        tags: ["Modern", "Political", "Free Verse"]
+        tags: ["Modern", "Political", "Free Verse"],
+        isFromDatabase: true
       }
 
-      mockSuccessfulFetch(createMockGeminiResponse({ text: JSON.stringify(newPoem) }))
+      // Mock fetch to return JSON directly (database mode)
+      global.fetch = vi.fn().mockResolvedValueOnce({
+        ok: true,
+        json: async () => newPoem,
+      })
+
+      render(<DiwanApp />)
 
       // Click discover button
       const discoverButton = screen.getByLabelText('Discover new poem')
       await userEvent.click(discoverButton)
 
-      // Verify poem content updates (Option K uses serendipity via Discover, not left/right nav)
+      // Verify poem content updates
       await waitFor(() => {
         expect(screen.getByText('محمود درويش')).toBeInTheDocument()
+      }, { timeout: 3000 })
+
+      // Verify the correct endpoint was called
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/poems/random')
+      )
+    })
+
+    it('discovers new poems via Gemini AI mode when database toggle is off', async () => {
+      // Mock Gemini API response
+      const newPoem = {
+        id: 888,
+        poet: "Al-Mutanabbi",
+        poetArabic: "المتنبي",
+        title: "On Ambition",
+        titleArabic: "في الطموح",
+        arabic: "عَلى قَدرِ أَهلِ العَزمِ تَأتي العَزائِمُ",
+        english: "Aspirations come according to those who have them",
+        tags: ["Classical", "Wisdom", "Free Verse"]
+      }
+
+      // Mock Gemini API response format
+      global.fetch = vi.fn().mockResolvedValueOnce({
+        ok: true,
+        json: async () => createMockGeminiResponse({ text: JSON.stringify(newPoem) }),
+      })
+
+      render(<DiwanApp />)
+
+      // Find and toggle database mode off (switch to AI Mode)
+      const databaseToggle = screen.getByLabelText('Switch to AI Mode')
+      await userEvent.click(databaseToggle)
+
+      // Verify toggle switched
+      await waitFor(() => {
+        expect(screen.getByLabelText('Switch to Database Mode')).toBeInTheDocument()
+      })
+
+      // Click discover button
+      const discoverButton = screen.getByLabelText('Discover new poem')
+      await userEvent.click(discoverButton)
+
+      // Verify Gemini API was called
+      await waitFor(() => {
+        expect(global.fetch).toHaveBeenCalledWith(
+          expect.stringContaining('generativelanguage.googleapis.com'),
+          expect.any(Object)
+        )
       }, { timeout: 3000 })
     })
   })

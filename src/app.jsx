@@ -1758,6 +1758,32 @@ export default function DiwanApp() {
     };
   }, [current?.id, currentIndex, filtered]);
 
+  // Keep-alive ping to prevent Render free tier from sleeping (15 min idle timeout)
+  // Pings every 10 minutes to keep backend awake
+  useEffect(() => {
+    if (!useDatabase || !apiUrl) return; // Only ping if database mode is enabled
+
+    const keepAlivePing = setInterval(() => {
+      fetch(`${apiUrl}/api/health`)
+        .then(() => {
+          if (FEATURES.debug) {
+            addLog("Keep-Alive", "Backend pinged successfully", "info");
+          }
+        })
+        .catch((err) => {
+          // Silently fail - don't disrupt user experience
+          if (FEATURES.debug) {
+            addLog("Keep-Alive", `Ping failed: ${err.message}`, "error");
+          }
+        });
+    }, 10 * 60 * 1000); // 10 minutes
+
+    // Initial ping on mount
+    fetch(`${apiUrl}/api/health`).catch(() => {});
+
+    return () => clearInterval(keepAlivePing);
+  }, [useDatabase, apiUrl]);
+
   return (
     <div className={`h-[100dvh] w-full flex flex-col overflow-hidden ${DESIGN.anim} font-sans ${theme.bg} ${theme.text} selection:bg-indigo-500`}>
       <style>{`

@@ -10,13 +10,23 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 
 // PostgreSQL connection pool
-const pool = new Pool({
-  user: process.env.PGUSER || process.env.USER,
-  host: process.env.PGHOST || 'localhost',
-  database: process.env.PGDATABASE || 'qafiyah',
-  password: process.env.PGPASSWORD || '',
-  port: process.env.PGPORT || 5432,
-});
+// Supports both DATABASE_URL (Supabase/Render) and individual env vars (local dev)
+const pool = new Pool(
+  process.env.DATABASE_URL
+    ? {
+        connectionString: process.env.DATABASE_URL,
+        ssl: {
+          rejectUnauthorized: false // Required for Supabase/Render
+        }
+      }
+    : {
+        user: process.env.PGUSER || process.env.USER,
+        host: process.env.PGHOST || 'localhost',
+        database: process.env.PGDATABASE || 'qafiyah',
+        password: process.env.PGPASSWORD || '',
+        port: process.env.PGPORT || 5432,
+      }
+);
 
 // Test database connection
 pool.query('SELECT NOW()', (err, res) => {

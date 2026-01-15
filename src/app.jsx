@@ -6,6 +6,16 @@ import { SplashArabian4a, SplashArabian4b, SplashArabian4c } from './splash-fina
 import { SplashWildcard5a, SplashWildcard5b, SplashWildcard5c, SplashDirection5d, SplashDirection5e } from './splash-wildcard-variations.jsx';
 import { Splash6a, Splash6b, Splash6c, Splash6d, Splash6e, Splash6f } from './splash-round6-variations.jsx';
 import { SplashCinematic } from './splash-cinematic.jsx';
+import { SplashParticles, ParticleWalkthrough } from './splash-options/splash-particles.jsx';
+import { SplashConstellation, ConstellationWalkthrough } from './splash-options/splash-constellation.jsx';
+import { SplashMandala, MandalaWalkthroughGuide } from './splash-options/splash-mandala.jsx';
+import { SplashGeometric, WalkthroughGeometric } from './splash-options/splash-geometric.jsx';
+import { SplashZen, WalkthroughZen } from './splash-options/splash-zen.jsx';
+import { SplashAurora, AuroraWalkthrough } from './splash-options/splash-aurora.jsx';
+import { SplashInk, WalkthroughGuideInk } from './splash-options/splash-ink.jsx';
+import { SplashManuscript, WalkthroughManuscript } from './splash-options/splash-manuscript.jsx';
+import { SplashLight, LightShadowWalkthrough } from './splash-options/splash-light.jsx';
+import { SplashKinetic } from './splash-kinetic.jsx';
 
 /* =============================================================================
   1. FEATURE FLAGS & DESIGN SYSTEM
@@ -676,6 +686,27 @@ const WalkthroughGuide = ({ onClose, darkMode, currentStep, onStepChange }) => {
 };
 
 /* =============================================================================
+  WALKTHROUGH ROUTING
+  Maps splash mockup types to their themed walkthrough components
+  =============================================================================
+*/
+
+const getWalkthroughComponent = (mockupType) => {
+  const walkthroughMap = {
+    'particles': ParticleWalkthrough,
+    'constellation': ConstellationWalkthrough,
+    'mandala': MandalaWalkthroughGuide,
+    'geometric': WalkthroughGeometric,
+    'zen': WalkthroughZen,
+    'aurora': AuroraWalkthrough,
+    'ink': WalkthroughGuideInk,
+    'manuscript': WalkthroughManuscript,
+    'light': LightShadowWalkthrough,
+  };
+  return walkthroughMap[mockupType] || WalkthroughGuide; // Generic fallback
+};
+
+/* =============================================================================
   3. MAIN APPLICATION
   =============================================================================
 */
@@ -720,7 +751,14 @@ export default function DiwanApp() {
     }
     return 'default';
   });
-  const [showWalkthrough, setShowWalkthrough] = useState(false);
+  const [showWalkthrough, setShowWalkthrough] = useState(() => {
+    // Check if walkthrough should be shown from URL parameter
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('showWalkthrough') === 'true';
+    }
+    return false;
+  });
   const [walkthroughStep, setWalkthroughStep] = useState(0);
   const [showCopySuccess, setShowCopySuccess] = useState(false);
   const [isOverflow, setIsOverflow] = useState(false);
@@ -1078,18 +1116,41 @@ export default function DiwanApp() {
             return <Splash6e {...splashProps} />;
           case '6f':
             return <Splash6f {...splashProps} />;
+          case 'particles':
+            return <SplashParticles {...splashProps} />;
+          case 'constellation':
+            return <SplashConstellation {...splashProps} />;
+          case 'kinetic':
+            return <SplashKinetic {...splashProps} />;
+          case 'mandala':
+            return <SplashMandala {...splashProps} />;
+          case 'geometric':
+            return <SplashGeometric {...splashProps} />;
+          case 'zen':
+            return <SplashZen {...splashProps} />;
+          case 'aurora':
+            return <SplashAurora {...splashProps} />;
+          case 'ink':
+            return <SplashInk {...splashProps} />;
+          case 'manuscript':
+            return <SplashManuscript {...splashProps} />;
+          case 'light':
+            return <SplashLight {...splashProps} />;
           default:
             return <SplashCinematic {...splashProps} />;
         }
       })()}
-      {showWalkthrough && (
-        <WalkthroughGuide
-          onClose={handleCloseWalkthrough}
-          darkMode={darkMode}
-          currentStep={walkthroughStep}
-          onStepChange={setWalkthroughStep}
-        />
-      )}
+      {showWalkthrough && (() => {
+        const WalkthroughComponent = getWalkthroughComponent(mockupType);
+        return (
+          <WalkthroughComponent
+            onClose={handleCloseWalkthrough}
+            darkMode={darkMode}
+            currentStep={walkthroughStep}
+            onStepChange={setWalkthroughStep}
+          />
+        );
+      })()}
 
       <header style={{ opacity: headerOpacity }} className="fixed top-4 md:top-8 left-0 right-0 z-40 pointer-events-none transition-opacity duration-300 flex flex-row items-center justify-center gap-4 md:gap-8 px-4 md:px-6">
         <div className={`flex flex-row-reverse items-center gap-2 md:gap-4 ${theme.brand} tracking-wide header-luminescence`}>

@@ -94,6 +94,7 @@ const FONTS = [
 ];
 
 const apiKey = import.meta.env.VITE_GEMINI_API_KEY || "";
+const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
 /* =============================================================================
   2. API PROMPTS & CONFIGURATION
@@ -763,6 +764,43 @@ const ThemeDropdown = ({ darkMode, onToggleDarkMode, currentFont, onCycleFont, f
   );
 };
 
+const ErrorBanner = ({ error, onDismiss, onRetry, theme }) => {
+  if (!error) return null;
+
+  return (
+    <div className={`fixed top-20 left-1/2 -translate-x-1/2 z-50 max-w-lg w-[calc(100%-2rem)] ${DESIGN.anim}`}>
+      <div className={`${DESIGN.glass} ${theme.glass} ${theme.border} border ${DESIGN.radius} p-4 shadow-2xl`}>
+        <div className="flex items-start gap-3">
+          <div className="flex-shrink-0 mt-0.5">
+            <X size={20} className="text-red-500" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className={`${theme.text} text-sm font-medium mb-2`}>Database Connection Error</p>
+            <p className={`${theme.text} text-xs opacity-70 mb-3`}>{error}</p>
+            <div className="flex gap-2">
+              {onRetry && (
+                <button
+                  onClick={onRetry}
+                  className={`${DESIGN.btnPrimary} ${theme.btnPrimary} px-3 py-1.5 ${DESIGN.radius} text-xs font-medium ${DESIGN.buttonHover}`}
+                >
+                  <RefreshCw size={14} className="inline mr-1" />
+                  Retry
+                </button>
+              )}
+              <button
+                onClick={onDismiss}
+                className={`${theme.pill} border px-3 py-1.5 ${DESIGN.radius} text-xs font-medium ${theme.text} ${DESIGN.buttonHover}`}
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const DatabaseToggle = ({ useDatabase, onToggle }) => {
   return (
     <div className="flex flex-col items-center gap-1 min-w-[56px]">
@@ -941,6 +979,7 @@ export default function DiwanApp() {
   const [isOverflow, setIsOverflow] = useState(false);
   const [cacheStats, setCacheStats] = useState({ audioHits: 0, audioMisses: 0, insightsHits: 0, insightsMisses: 0 });
   const [isPrefetching, setIsPrefetching] = useState(false);
+  const [backendError, setBackendError] = useState(null);
   const activeAudioRequests = useRef(new Set()); // Track in-flight audio generation requests
   const activeInsightRequests = useRef(new Set()); // Track in-flight insight generation requests
   const pollingIntervals = useRef([]); // Track all polling intervals for cleanup
@@ -1515,37 +1554,52 @@ export default function DiwanApp() {
         addLog("Discovery DB", `→ Querying database | Category: ${selectedCategory}`, "info");
 
         const poetParam = selectedCategory !== "All" ? `?poet=${encodeURIComponent(selectedCategory)}` : '';
-        const url = `http://localhost:3001/api/poems/random${poetParam}`;
-        const res = await fetch(url);
+        const url = `${apiUrl}/api/poems/random${poetParam}`;
 
-        if (!res.ok) {
-          throw new Error(`Database API error: ${res.status} ${res.statusText}`);
+        try {
+          const res = await fetch(url);
+
+          if (!res.ok) {
+            throw new Error(`Database API returned ${res.status} ${res.statusText}`);
+          }
+
+          // Clear any previous backend errors on success
+          setBackendError(null);
+
+          const newPoem = await res.json();
+          const apiTime = performance.now() - apiStart;
+
+          // Process database poems: replace * with newlines
+          if (newPoem.arabic) {
+            newPoem.arabic = newPoem.arabic.replace(/\*/g, '\n');
+          }
+
+          // Mark as database poem
+          newPoem.isFromDatabase = true;
+
+          const arabicPoemChars = newPoem?.arabic?.length || 0;
+
+          addLog("Discovery DB", `✓ Poem found | API: ${(apiTime / 1000).toFixed(2)}s | DB ID: ${newPoem.id} | Arabic: ${arabicPoemChars} chars`, "success");
+          addLog("Discovery DB", `Poet: ${newPoem.poet} | Title: ${newPoem.title}`, "success");
+
+          setPoems(prev => {
+            const updated = [...prev, newPoem];
+            const searchStr = selectedCategory.toLowerCase();
+            const freshFiltered = selectedCategory === "All" ? updated : updated.filter(p => (p?.poet || "").toLowerCase().includes(searchStr) || (Array.isArray(p?.tags) && p.tags.some(t => String(t).toLowerCase() === searchStr)));
+            const newIdx = freshFiltered.findIndex(p => p.id === newPoem.id);
+            if (newIdx !== -1) setCurrentIndex(newIdx);
+            return updated;
+          });
+        } catch (dbError) {
+          // Handle database-specific errors
+          const errorMessage = dbError.message.includes('Failed to fetch')
+            ? 'Backend server is not running. Please start it with: npm run dev:server'
+            : dbError.message;
+
+          setBackendError(errorMessage);
+          addLog("Discovery DB Error", errorMessage, "error");
+          throw dbError; // Re-throw to be caught by outer catch
         }
-
-        const newPoem = await res.json();
-        const apiTime = performance.now() - apiStart;
-
-        // Process database poems: replace * with newlines
-        if (newPoem.arabic) {
-          newPoem.arabic = newPoem.arabic.replace(/\*/g, '\n');
-        }
-
-        // Mark as database poem
-        newPoem.isFromDatabase = true;
-
-        const arabicPoemChars = newPoem?.arabic?.length || 0;
-
-        addLog("Discovery DB", `✓ Poem found | API: ${(apiTime / 1000).toFixed(2)}s | DB ID: ${newPoem.id} | Arabic: ${arabicPoemChars} chars`, "success");
-        addLog("Discovery DB", `Poet: ${newPoem.poet} | Title: ${newPoem.title}`, "success");
-
-        setPoems(prev => {
-          const updated = [...prev, newPoem];
-          const searchStr = selectedCategory.toLowerCase();
-          const freshFiltered = selectedCategory === "All" ? updated : updated.filter(p => (p?.poet || "").toLowerCase().includes(searchStr) || (Array.isArray(p?.tags) && p.tags.some(t => String(t).toLowerCase() === searchStr)));
-          const newIdx = freshFiltered.findIndex(p => p.id === newPoem.id);
-          if (newIdx !== -1) setCurrentIndex(newIdx);
-          return updated;
-        });
 
       } else {
         // GEMINI AI MODE: Original implementation
@@ -1779,6 +1833,13 @@ export default function DiwanApp() {
       <div className="scroll-progress" />
 
       <DebugPanel logs={logs} onClear={() => setLogs([])} darkMode={darkMode} />
+
+      <ErrorBanner
+        error={backendError}
+        onDismiss={() => setBackendError(null)}
+        onRetry={handleFetch}
+        theme={theme}
+      />
 
       <header style={{ opacity: headerOpacity }} className="fixed top-4 md:top-8 left-0 right-0 z-40 pointer-events-none transition-opacity duration-300 flex flex-row items-center justify-center gap-4 md:gap-8 px-4 md:px-6">
         <div className={`flex flex-row-reverse items-center gap-2 md:gap-4 ${theme.brand} tracking-wide header-luminescence`}>

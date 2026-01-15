@@ -184,3 +184,15 @@ npm run test:e2e:full       # Full device matrix (local)
 - [ ] Consider TypeScript migration
 - [ ] Add JSDoc comments to functions
 - [ ] Create CONTRIBUTING.md
+
+# References or useful to come back to 
+1. AraPoemBERT: A Pretrained Language Model for Arabic Poetry Analysis
+paper: https://arxiv.org/html/2403.12392v1#S6 
+model: https://huggingface.co/faisalq/bert-base-arapoembert
+poem dataset: https://doi.org/10.7910/DVN/PJPWOY
+code: https://github.com/FaisalQarah/araPoemBERT.
+
+2. Qafiyah: Open-source Arabic poetry DB and website.
+app/website: https://qafiyah.com/
+code:  https://github.com/alwalxed/qafiyah
+poem database: https://github.com/alwalxed/qafiyah/tree/main/.db_dumps/0002_10_06_2025

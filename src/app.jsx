@@ -78,6 +78,7 @@ const CATEGORIES = [
   { id: "Nizar Qabbani", label: "Nizar Qabbani", labelAr: "نزار قباني" },
   { id: "Mahmoud Darwish", label: "Mahmoud Darwish", labelAr: "محمود درويش" },
   { id: "Al-Mutanabbi", label: "Al-Mutanabbi", labelAr: "المتنبي" },
+  { id: "Abu Firas al-Hamdani", label: "Abu Firas al-Hamdani", labelAr: "أبو فراس الحمداني" },
   { id: "Antarah", label: "Antarah", labelAr: "عنترة بن شداد" },
   { id: "Ibn Arabi", label: "Ibn Arabi", labelAr: "ابن عربي" }
 ];
@@ -956,12 +957,20 @@ export default function DiwanApp() {
   const controlBarRef = useRef(null);
 
   const [headerOpacity, setHeaderOpacity] = useState(1);
-  const [poems, setPoems] = useState([{
-    id: 1, poet: "Nizar Qabbani", poetArabic: "نزار قباني", title: "My Beloved", titleArabic: "حبيبتي",
-    arabic: "حُبُّكِ يا عَمِيقَةَ العَيْنَيْنِ\nتَطَرُّفٌ .. تَصَوُّفٌ .. عِبَادَة\nحُبُّكِ مِثْلَ المَوْتِ وَالوِلَادَة\nصَعْبٌ بِأَنْ يُعَادَ مَرَّتَيْنِ",
-    english: "Your love, O woman of deep eyes,\nIs radicalism… is Sufism… is worship.\nYour love is like Death and like Birth—\nIt is difficult for it to be repeated twice.",
-    tags: ["Modern", "Romantic", "Ghazal"]
-  }]);
+  const [poems, setPoems] = useState([
+    {
+      id: 1, poet: "Nizar Qabbani", poetArabic: "نزار قباني", title: "My Beloved", titleArabic: "حبيبتي",
+      arabic: "حُبُّكِ يا عَمِيقَةَ العَيْنَيْنِ\nتَطَرُّفٌ .. تَصَوُّفٌ .. عِبَادَة\nحُبُّكِ مِثْلَ المَوْتِ وَالوِلَادَة\nصَعْبٌ بِأَنْ يُعَادَ مَرَّتَيْنِ",
+      english: "Your love, O woman of deep eyes,\nIs radicalism… is Sufism… is worship.\nYour love is like Death and like Birth—\nIt is difficult for it to be repeated twice.",
+      tags: ["Modern", "Romantic", "Ghazal"]
+    },
+    {
+      id: 2, poet: "Abu Firas al-Hamdani", poetArabic: "أبو فراس الحمداني", title: "I See You Are Resistant to Tears", titleArabic: "أَرَاكَ عَصِيَّ الدَّمْعِ",
+      arabic: "أَرَاكَ عَصِيَّ الدَّمْعِ شِيمَتُكَ الصَّبْرُ\nأَمَا لِلْهَوَى نَهْيٌ عَلَيْكَ وَلَا أَمْرُ\nبَلَى أَنَا مُشْتَاقٌ وَعِنْدِي لَوْعَةٌ\nوَلَكِنَّ مِثْلِي لَا يُذَاعُ لَهُ سِرُّ\nإِذَا اللَّيْلُ أَضْوَانِي بَسَطْتُ يَدَ الْهَوَى\nوَأَذْلَلْتُ دَمْعًا مِنْ خَلَائِقِهِ الْكِبْرُ\nتَكَادُ تُضِيءُ النَّارُ بَيْنَ جَوَانِحِي\nإِذَا هِيَ أَذْكَتْهَا الصَّبَابَةُ وَالْفِكْرُ",
+      english: "I see you are resistant to tears, patience is your nature\nDoes passion have neither prohibition nor command over you?\nIndeed, I am longing and within me is a burning\nBut one like me does not have his secrets spread\nWhen night surrounds me, I extend the hand of passion\nAnd I humble a tear whose nature is pride\nThe fire nearly illuminates between my ribs\nWhen longing and thought kindle it",
+      tags: ["Classical", "Romantic", "Captivity"]
+    }
+  ]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [darkMode, setDarkMode] = useState(true);

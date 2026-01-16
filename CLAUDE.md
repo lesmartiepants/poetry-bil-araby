@@ -130,6 +130,159 @@ Four-stage pipeline in `.github/workflows/ci.yml`:
 - Caches Playwright browsers for speed
 - Uploads test reports and screenshots as artifacts
 
+  ## Security: API Keys & Sensitive Tokens
+
+  **CRITICAL: Never expose API keys, tokens, or credentials in chat or terminal output.**
+
+  ### The Golden Rule
+  > **Claude MUST NEVER display, echo, or log the actual values of API keys, tokens, passwords, or any sensitive credentials.**
+
+  ### Required Pattern for All Sensitive Data
+
+  #### 1. Always Ask for the Environment Variable Name
+  ❌ BAD: "What's your Supabase API key?"
+  ✅ GOOD: "What's the name of your environment variable? (e.g., SUPABASE_SERVICE_ROLE_KEY)"
+
+  #### 2. Verify Existence Without Exposing Value
+  ```bash
+  # Check if key exists in .env file
+  grep -q "^SUPABASE_SERVICE_ROLE_KEY=" .env && echo "✓ Found" || echo "✗ Not found"
+
+  # Verify it's not empty (without showing value)
+  [ -n "$(grep "^SUPABASE_SERVICE_ROLE_KEY=" .env | cut -d'=' -f2-)" ] && echo "✓ Has value" || echo "✗ Empty"
+
+  3. Use Variables in Commands (Never Inline Values)
+
+  # ✅ CORRECT: Use environment variable
+  source .env && supabase link --project-ref $PROJECT_REF
+
+  # ❌ WRONG: Never do this
+  supabase link --project-ref abcd1234xyz  # Exposes the ref!
+
+  # ✅ CORRECT: For API requests
+  curl -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" https://api.example.com
+
+  # ❌ WRONG: Never inline the token
+  curl -H "Authorization: Bearer eyJhbGc..." https://api.example.com
+
+  User Setup Instructions
+
+  When a user needs to set up API keys, guide them through this process:
+
+  # 1. Create .env file if it doesn't exist
+  cat > .env << 'EOF'
+  # Supabase Configuration
+  SUPABASE_PROJECT_REF=your-project-ref-here
+  SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-here
+  SUPABASE_ANON_KEY=your-anon-key-here
+  SUPABASE_PERSONAL_ACCESS_TOKEN=your-personal-access-token-here
+
+  # Gemini API
+  VITE_GEMINI_API_KEY=your-gemini-api-key-here
+
+  # Add other keys as needed
+  EOF
+
+  # 2. Ensure .env is gitignored (verify)
+  grep -q "^\.env$" .gitignore && echo "✓ .env is gitignored" || echo ".env" >> .gitignore
+
+  # 3. Set proper permissions
+  chmod 600 .env
+
+  Validating Setup (Without Exposure)
+
+  # Check all required keys are present
+  required_keys=("SUPABASE_PROJECT_REF" "SUPABASE_SERVICE_ROLE_KEY" "VITE_GEMINI_API_KEY")
+  for key in "${required_keys[@]}"; do
+      if grep -q "^${key}=" .env && [ -n "$(grep "^${key}=" .env | cut -d'=' -f2-)" ]; then
+          echo "✓ $key is configured"
+      else
+          echo "✗ $key is missing or empty"
+      fi
+  done
+
+  If a Token Gets Exposed
+
+  If you or Claude accidentally exposes a token in chat or terminal:
+
+  1. Immediately rotate/regenerate the token in the service's dashboard:
+    - Supabase: Project Settings → API → Generate new key
+    - Gemini: Google AI Studio → Get API Key → Regenerate
+    - GitHub: Settings → Developer settings → Personal access tokens → Regenerate
+  2. Update .env with new token:
+  # Edit .env securely (opens in default editor)
+  nano .env  # or vim, code, etc.
+  3. Verify the old token is revoked:
+  # Test that old token no longer works (use new one)
+  source .env && curl -H "Authorization: Bearer $YOUR_TOKEN_NAME" <endpoint>
+  4. For Git history exposure:
+    - If committed: Rotate immediately, rewrite history with git filter-branch or BFG Repo Cleaner
+    - If pushed to remote: Treat as compromised permanently, rotate ALL tokens
+
+  Common Scenarios
+
+  Scenario 1: Supabase CLI Authentication
+
+  # ✅ CORRECT
+  source .env && echo $SUPABASE_PERSONAL_ACCESS_TOKEN | supabase login
+
+  # ❌ WRONG - exposes token in terminal history
+  supabase login --token sbp_abc123xyz...
+
+  Scenario 2: Testing API Endpoints
+
+  # ✅ CORRECT - token stays hidden
+  source .env && curl -H "Authorization: Bearer $SUPABASE_SERVICE_ROLE_KEY" \
+    "https://your-project.supabase.co/rest/v1/poems" | jq '.[] | .title'
+
+  # ❌ WRONG - token visible in output and history
+  curl -H "Authorization: Bearer eyJhbGciOiJIUzI1..." https://...
+
+  Scenario 3: Debugging Environment Variables
+
+  # ✅ CORRECT - confirm variables are loaded without showing values
+  source .env && env | grep -E "SUPABASE|GEMINI" | cut -d'=' -f1
+
+  # ❌ WRONG - prints all values
+  env | grep SUPABASE
+
+  Claude's Responsibilities
+
+  As Claude, when working with sensitive data:
+
+  1. Always ask for variable names, never ask for actual values
+  2. Use bash commands that reference variables, never echo/print their values
+  3. Verify setup using existence checks, not value checks
+  4. If you need to use a token in a command, use $VARIABLE_NAME pattern
+  5. Educate the user if they try to paste a token directly in chat
+  6. Never read .env file contents directly - only use bash to check existence and retrieve values without displaying them
+
+  Example Claude Behavior
+
+  User: "I need to set up Supabase CLI"
+
+  Claude: "I'll help you set up Supabase CLI authentication. First, what's the name of
+  your environment variable for the Supabase personal access token?
+
+  It's typically called SUPABASE_PERSONAL_ACCESS_TOKEN and should be in your .env file.
+
+  If you don't have it yet:
+  1. Go to https://supabase.com/dashboard/account/tokens
+  2. Generate a new personal access token
+  3. Add it to your .env file as SUPABASE_PERSONAL_ACCESS_TOKEN=<token>
+
+  Once it's in .env, I can help you authenticate without exposing the token."
+
+  Testing in CI/CD
+
+  In GitHub Actions, use repository secrets (never commit tokens):
+
+  env:
+    VITE_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+    SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+  Secrets are automatically masked in logs, but still follow the principle of minimal exposure.
+
 ## Key Files
 
 - `src/app.jsx` - Entire application (READ THIS FIRST)

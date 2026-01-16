@@ -1,5 +1,21 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Play, Pause, BookOpen, RefreshCw, Volume2, ChevronDown, Quote, Globe, Moon, Sun, Loader2, ChevronRight, ChevronLeft, Search, X, Copy, LayoutGrid, Check, Bug, Trash2, Sparkles, PenTool, Library, Compass, Rabbit, MoreHorizontal } from 'lucide-react';
+import { Play, Pause, BookOpen, RefreshCw, Volume2, ChevronDown, Quote, Globe, Moon, Sun, Loader2, ChevronRight, ChevronLeft, Search, X, Copy, LayoutGrid, Check, Bug, Trash2, Sparkles, PenTool, Zap, MousePointer, Library, Compass, Rabbit, MoreHorizontal } from 'lucide-react';
+import { SplashModern, SplashMinimalist, SplashArabian } from './splash-mockups.jsx';
+import { SplashArabian1, SplashArabian2, SplashArabian3a, SplashArabian3b, SplashArabian3c } from './splash-arabian-variations.jsx';
+import { SplashArabian4a, SplashArabian4b, SplashArabian4c } from './splash-final-variations.jsx';
+import { SplashWildcard5a, SplashWildcard5b, SplashWildcard5c, SplashDirection5d, SplashDirection5e } from './splash-wildcard-variations.jsx';
+import { Splash6a, Splash6b, Splash6c, Splash6d, Splash6e, Splash6f } from './splash-round6-variations.jsx';
+import { SplashCinematic } from './splash-cinematic.jsx';
+import { SplashParticles, ParticleWalkthrough } from './splash-options/splash-particles.jsx';
+import { SplashConstellation, ConstellationWalkthrough } from './splash-options/splash-constellation.jsx';
+import { SplashMandala, MandalaWalkthroughGuide } from './splash-options/splash-mandala.jsx';
+import { SplashGeometric, WalkthroughGeometric } from './splash-options/splash-geometric.jsx';
+import { SplashZen, WalkthroughZen } from './splash-options/splash-zen.jsx';
+import { SplashAurora, AuroraWalkthrough } from './splash-options/splash-aurora.jsx';
+import { SplashInk, WalkthroughGuideInk } from './splash-options/splash-ink.jsx';
+import { SplashManuscript, WalkthroughManuscript } from './splash-options/splash-manuscript.jsx';
+import { SplashLight, LightShadowWalkthrough } from './splash-options/splash-light.jsx';
+import { SplashKinetic } from './splash-kinetic.jsx';
 
 /* =============================================================================
   1. FEATURE FLAGS & DESIGN SYSTEM
@@ -871,6 +887,325 @@ const OverflowMenu = ({
   );
 };
 
+const SplashScreen = ({ onGetStarted, darkMode }) => {
+  const theme = darkMode ? THEME.dark : THEME.light;
+
+  return (
+    <div className={`fixed inset-0 z-50 flex items-center justify-center ${theme.bg} ${DESIGN.anim}`}>
+      {/* Mystical background - Islamic geometric pattern */}
+      <div className={`absolute inset-0 pointer-events-none opacity-[0.03] ${darkMode ? 'invert' : ''}`}
+           style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M50 10 L60 30 L80 30 L65 43 L70 63 L50 50 L30 63 L35 43 L20 30 L40 30 Z' fill='none' stroke='%23C5A059' stroke-width='0.5'/%3E%3Ccircle cx='50' cy='50' r='35' fill='none' stroke='%23C5A059' stroke-width='0.5' stroke-dasharray='2,3'/%3E%3Cpath d='M50 15 Q65 50 50 85 Q35 50 50 15' fill='none' stroke='%23C5A059' stroke-width='0.5'/%3E%3C/svg%3E")`, backgroundSize: '100px 100px' }} />
+
+      {/* Luminous glow effect */}
+      <div className={`absolute inset-0 pointer-events-none bg-gradient-radial from-indigo-500/5 via-transparent to-transparent`} />
+
+      {/* Content */}
+      <div className="relative z-10 flex flex-col items-center justify-center gap-8 md:gap-12 px-6 max-w-3xl mx-auto text-center animate-in fade-in slide-in-from-bottom-8 duration-1000">
+        {/* Logo with mystical aura */}
+        <div className="flex flex-col items-center gap-6 relative">
+          {/* Arabesque corner decorations */}
+          <div className="absolute -top-8 -left-16 opacity-15">
+            <svg width="60" height="60" viewBox="0 0 60 60" className={theme.brand}>
+              <path d="M10 10 Q10 5 15 5 L25 5 Q30 5 30 10 L30 20 Q30 25 25 25 L15 25 Q10 25 10 20 Z" fill="none" stroke="currentColor" strokeWidth="1" />
+              <circle cx="20" cy="15" r="3" fill="currentColor" opacity="0.3" />
+            </svg>
+          </div>
+          <div className="absolute -top-8 -right-16 opacity-15 scale-x-[-1]">
+            <svg width="60" height="60" viewBox="0 0 60 60" className={theme.brand}>
+              <path d="M10 10 Q10 5 15 5 L25 5 Q30 5 30 10 L30 20 Q30 25 25 25 L15 25 Q10 25 10 20 Z" fill="none" stroke="currentColor" strokeWidth="1" />
+              <circle cx="20" cy="15" r="3" fill="currentColor" opacity="0.3" />
+            </svg>
+          </div>
+
+          {/* PenTool icon */}
+          <div className="relative">
+            <PenTool size={64} className={`${theme.brand} opacity-90`} strokeWidth={1.5} />
+          </div>
+
+          <div className={`flex flex-col items-center gap-3 ${theme.brand} tracking-wide header-luminescence`}>
+            <span className="font-brand-en text-6xl md:text-8xl lowercase tracking-tighter font-semibold">poetry</span>
+            <span className="font-amiri text-2xl md:text-3xl opacity-70">بالعربي</span>
+          </div>
+          <span className={`font-brand-en text-xs px-3 py-1 rounded border ${theme.brandBorder} ${theme.brandBg} uppercase tracking-wider opacity-60`}>beta</span>
+        </div>
+
+        {/* Description - English primary */}
+        <div className={`space-y-3 ${theme.text}`}>
+          <p className="font-brand-en text-xl md:text-2xl leading-relaxed italic opacity-90">
+            Journey through time into the realm of timeless poetry
+          </p>
+          <p className="font-amiri text-base md:text-lg leading-[2] opacity-50">
+            رحلة عبر الزمن إلى عالم الشعر الخالد
+          </p>
+        </div>
+
+        {/* Get Started Button - English primary */}
+        <button
+          onClick={onGetStarted}
+          className={`group relative overflow-hidden px-10 py-4 ${theme.btnPrimary} ${DESIGN.radius} ${DESIGN.touchTarget} shadow-2xl font-brand-en text-xl font-semibold tracking-wide`}
+        >
+          <span className="relative z-10">Begin Journey</span>
+          <span className="relative z-10 font-amiri text-sm mr-2 opacity-70">ابدأ الرحلة</span>
+          <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/20 to-purple-500/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+        </button>
+
+        {/* Features Preview - English primary */}
+        <div className={`grid grid-cols-1 md:grid-cols-3 gap-6 mt-8 w-full ${theme.text}`}>
+          <div className="flex flex-col items-center gap-3 p-4">
+            {/* Scroll icon */}
+            <svg width="32" height="32" viewBox="0 0 32 32" className={theme.accent}>
+              <rect x="8" y="6" width="16" height="20" rx="2" fill="none" stroke="currentColor" strokeWidth="1.5" />
+              <path d="M12 10 L20 10 M12 14 L20 14 M12 18 L18 18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+            <p className="font-brand-en text-base font-medium leading-relaxed text-center">Discover poetry by the greats</p>
+            <span className="font-amiri text-xs opacity-40">اكتشف شعر العظماء</span>
+          </div>
+          <div className="flex flex-col items-center gap-3 p-4">
+            {/* Sound wave icon */}
+            <svg width="32" height="32" viewBox="0 0 32 32" className={theme.accent}>
+              <path d="M6 16 L6 16 M10 12 L10 20 M14 8 L14 24 M18 12 L18 20 M22 8 L22 24 M26 12 L26 20" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+            </svg>
+            <p className="font-brand-en text-base font-medium leading-relaxed text-center">The poem is recited to you</p>
+            <span className="font-amiri text-xs opacity-40">القصيدة تُتلى عليك</span>
+          </div>
+          <div className="flex flex-col items-center gap-3 p-4">
+            {/* Lantern/light icon */}
+            <svg width="32" height="32" viewBox="0 0 32 32" className={theme.accent}>
+              <path d="M16 4 L19 8 L13 8 Z" fill="currentColor" opacity="0.5" />
+              <path d="M13 8 L19 8 L20 24 L12 24 Z" fill="none" stroke="currentColor" strokeWidth="1.5" />
+              <ellipse cx="16" cy="16" rx="3" ry="4" fill="currentColor" opacity="0.3" />
+              <path d="M12 24 L14 28 L18 28 L20 24" fill="none" stroke="currentColor" strokeWidth="1.5" />
+            </svg>
+            <p className="font-brand-en text-base font-medium leading-relaxed text-center">Learn about the depth and meanings</p>
+            <span className="font-amiri text-xs opacity-40">تعلّم عن العمق والمعاني</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const WalkthroughGuide = ({ onClose, darkMode, currentStep, onStepChange }) => {
+  const theme = darkMode ? THEME.dark : THEME.light;
+
+  const steps = [
+    {
+      title: "Welcome to Poetry Bil-Araby",
+      titleAr: "مرحباً بك",
+      description: "Experience timeless Arabic poetry that expands the mind and touches the soul",
+      descriptionAr: "شعر عربي خالد"
+    },
+    {
+      title: "Navigate Through Poems",
+      titleAr: "تصفح القصائد",
+      description: "Journey through centuries of poetic mastery with a simple gesture",
+      descriptionAr: "رحلة عبر قرون"
+    },
+    {
+      title: "Listen to Poetry",
+      titleAr: "استمع للشعر",
+      description: "Hear the verses come alive as they were meant to be recited",
+      descriptionAr: "استمع للأبيات"
+    },
+    {
+      title: "Discover Hidden Meanings",
+      titleAr: "اكتشف المعاني",
+      description: "Unlock the depth and wisdom woven into each verse",
+      descriptionAr: "عمق وحكمة"
+    }
+  ];
+
+  const step = steps[currentStep];
+
+  // Islamic geometric pattern - octagon with 8 segments (2 per step)
+  const segmentsLit = (currentStep + 1) * 2;
+
+  return (
+    <div className={`fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md ${DESIGN.anim}`}>
+      {/* Mystical background particles */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        <div className={`absolute inset-0 bg-radial-gradient ${theme.glow} animate-pulse scale-150 opacity-30`} />
+        {[...Array(20)].map((_, i) => (
+          <div key={i} className="absolute bg-indigo-300 rounded-full animate-pulse" style={{
+              width: Math.random() * 2 + 1 + 'px', height: Math.random() * 2 + 1 + 'px',
+              top: Math.random() * 100 + '%', left: Math.random() * 100 + '%',
+              opacity: Math.random() * 0.4 + 0.1, animationDuration: Math.random() * 3 + 2 + 's'
+          }} />
+        ))}
+      </div>
+
+      <div className={`relative max-w-2xl mx-6 ${theme.glass} ${DESIGN.glass} ${theme.border} border-2 ${DESIGN.radius} p-10 md:p-16 shadow-2xl animate-in fade-in slide-in-from-bottom-8 duration-700 overflow-hidden`}>
+        {/* Arabesque corner flourishes - more ornate */}
+        <div className="absolute top-0 left-0 w-20 h-20 pointer-events-none opacity-20">
+          <svg viewBox="0 0 80 80" className={theme.brand}>
+            <path d="M5 5 Q5 0 10 0 L30 0 Q35 0 35 5 L35 25 Q35 30 30 30 L10 30 Q5 30 5 25 Z" fill="none" stroke="currentColor" strokeWidth="1.5" />
+            <circle cx="20" cy="15" r="4" fill="currentColor" opacity="0.3" />
+            <path d="M10 15 Q15 10 20 15 Q25 20 30 15" fill="none" stroke="currentColor" strokeWidth="1" />
+          </svg>
+        </div>
+        <div className="absolute top-0 right-0 w-20 h-20 pointer-events-none opacity-20 scale-x-[-1]">
+          <svg viewBox="0 0 80 80" className={theme.brand}>
+            <path d="M5 5 Q5 0 10 0 L30 0 Q35 0 35 5 L35 25 Q35 30 30 30 L10 30 Q5 30 5 25 Z" fill="none" stroke="currentColor" strokeWidth="1.5" />
+            <circle cx="20" cy="15" r="4" fill="currentColor" opacity="0.3" />
+            <path d="M10 15 Q15 10 20 15 Q25 20 30 15" fill="none" stroke="currentColor" strokeWidth="1" />
+          </svg>
+        </div>
+        <div className="absolute bottom-0 left-0 w-20 h-20 pointer-events-none opacity-20 scale-y-[-1]">
+          <svg viewBox="0 0 80 80" className={theme.brand}>
+            <path d="M5 5 Q5 0 10 0 L30 0 Q35 0 35 5 L35 25 Q35 30 30 30 L10 30 Q5 30 5 25 Z" fill="none" stroke="currentColor" strokeWidth="1.5" />
+            <circle cx="20" cy="15" r="4" fill="currentColor" opacity="0.3" />
+            <path d="M10 15 Q15 10 20 15 Q25 20 30 15" fill="none" stroke="currentColor" strokeWidth="1" />
+          </svg>
+        </div>
+        <div className="absolute bottom-0 right-0 w-20 h-20 pointer-events-none opacity-20 scale-[-1]">
+          <svg viewBox="0 0 80 80" className={theme.brand}>
+            <path d="M5 5 Q5 0 10 0 L30 0 Q35 0 35 5 L35 25 Q35 30 30 30 L10 30 Q5 30 5 25 Z" fill="none" stroke="currentColor" strokeWidth="1.5" />
+            <circle cx="20" cy="15" r="4" fill="currentColor" opacity="0.3" />
+            <path d="M10 15 Q15 10 20 15 Q25 20 30 15" fill="none" stroke="currentColor" strokeWidth="1" />
+          </svg>
+        </div>
+
+        {/* Mystical glow behind icon */}
+        <div className="absolute inset-0 bg-gradient-radial from-indigo-500/10 via-transparent to-transparent pointer-events-none" />
+
+        {/* Close button */}
+        <button
+          onClick={onClose}
+          className={`absolute top-4 right-4 p-2 ${theme.controlIcon} ${DESIGN.buttonHover} rounded-full z-10`}
+        >
+          <X size={20} />
+        </button>
+
+        {/* Content */}
+        <div className="flex flex-col items-center gap-8 text-center relative z-10">
+          {/* PenTool icon with glow */}
+          <div className={`relative p-6 ${theme.brandBg} rounded-full border border-indigo-500/20 shadow-lg`}>
+            <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/20 to-purple-500/20 rounded-full animate-pulse" style={{ animationDuration: '3s' }} />
+            <div className="relative z-10">
+              <PenTool size={48} className={theme.brand} strokeWidth={1.5} />
+            </div>
+          </div>
+
+          {/* English primary, Arabic complementary */}
+          <div className={`space-y-3 ${theme.text}`}>
+            <h3 className="font-brand-en text-3xl md:text-4xl font-semibold leading-tight">{step.title}</h3>
+            <p className="font-amiri text-base opacity-50">{step.titleAr}</p>
+          </div>
+
+          <div className={`space-y-2 ${theme.text} max-w-md`}>
+            <p className="font-brand-en text-lg md:text-xl leading-relaxed opacity-90">{step.description}</p>
+            <p className="font-amiri text-sm opacity-40 leading-[1.8]">{step.descriptionAr}</p>
+          </div>
+
+          {/* Islamic geometric pattern step indicator */}
+          <div className="relative mt-6">
+            <svg width="120" height="120" viewBox="0 0 120 120" className="transform rotate-[22.5deg]">
+              {/* Octagon - 8 segments */}
+              {[...Array(8)].map((_, i) => {
+                const angle = (i * 45) * Math.PI / 180;
+                const nextAngle = ((i + 1) * 45) * Math.PI / 180;
+                const r = 50;
+                const cx = 60;
+                const cy = 60;
+
+                const x1 = cx + r * Math.cos(angle);
+                const y1 = cy + r * Math.sin(angle);
+                const x2 = cx + r * Math.cos(nextAngle);
+                const y2 = cy + r * Math.sin(nextAngle);
+
+                const isLit = i < segmentsLit;
+
+                return (
+                  <g key={i}>
+                    <path
+                      d={`M ${cx} ${cy} L ${x1} ${y1} L ${x2} ${y2} Z`}
+                      fill={isLit ? 'currentColor' : 'none'}
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                      className={`${DESIGN.anim} ${isLit ? theme.brand + ' opacity-60' : 'opacity-10'}`}
+                      style={{ transitionDuration: '800ms' }}
+                    />
+                    {isLit && (
+                      <circle
+                        cx={(x1 + x2) / 2}
+                        cy={(y1 + y2) / 2}
+                        r="3"
+                        fill="currentColor"
+                        className={`${theme.brand} opacity-80 animate-pulse`}
+                      />
+                    )}
+                  </g>
+                );
+              })}
+              {/* Center circle */}
+              <circle cx="60" cy="60" r="15" fill="none" stroke="currentColor" strokeWidth="1.5" className={`${theme.brand} opacity-20`} />
+              <circle cx="60" cy="60" r="8" fill="currentColor" className={`${theme.brand} opacity-30`} />
+            </svg>
+
+            {/* Step dots below pattern */}
+            <div className="flex items-center justify-center gap-2 mt-4">
+              {steps.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => onStepChange(idx)}
+                  className={`w-2 h-2 rounded-full ${DESIGN.anim} transition-all duration-500 ${
+                    idx === currentStep
+                      ? `${theme.brand} w-3 h-3`
+                      : idx < currentStep
+                      ? 'bg-indigo-500/50'
+                      : 'bg-stone-500/20'
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Navigation - English primary */}
+          <div className="flex items-center gap-4 mt-6 w-full">
+            {currentStep > 0 && (
+              <button
+                onClick={() => onStepChange(currentStep - 1)}
+                className={`flex-1 px-6 py-3 border-2 ${theme.border} ${DESIGN.radius} ${DESIGN.buttonHover} font-brand-en text-base font-medium hover:bg-indigo-500/5`}
+              >
+                Previous
+                <span className="font-amiri text-xs ml-2 opacity-50">السابق</span>
+              </button>
+            )}
+            <button
+              onClick={currentStep < steps.length - 1 ? () => onStepChange(currentStep + 1) : onClose}
+              className={`flex-1 px-6 py-3 ${theme.btnPrimary} ${DESIGN.radius} ${DESIGN.buttonHover} font-brand-en text-base font-semibold shadow-xl`}
+            >
+              {currentStep < steps.length - 1 ? 'Next' : 'Start Exploring'}
+              <span className="font-amiri text-xs mr-2 opacity-70">{currentStep < steps.length - 1 ? 'التالي' : 'ابدأ'}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* =============================================================================
+  WALKTHROUGH ROUTING
+  Maps splash mockup types to their themed walkthrough components
+  =============================================================================
+*/
+
+const getWalkthroughComponent = (mockupType) => {
+  const walkthroughMap = {
+    'particles': ParticleWalkthrough,
+    'constellation': ConstellationWalkthrough,
+    'mandala': MandalaWalkthroughGuide,
+    'geometric': WalkthroughGeometric,
+    'zen': WalkthroughZen,
+    'aurora': AuroraWalkthrough,
+    'ink': WalkthroughGuideInk,
+    'manuscript': WalkthroughManuscript,
+    'light': LightShadowWalkthrough,
+  };
+  return walkthroughMap[mockupType] || WalkthroughGuide; // Generic fallback
+};
+
 /* =============================================================================
   6. MAIN APPLICATION
   =============================================================================
@@ -900,6 +1235,31 @@ export default function DiwanApp() {
   const [isInterpreting, setIsInterpreting] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
   const [logs, setLogs] = useState([]);
+  const [showSplash, setShowSplash] = useState(() => {
+    // Skip splash screen in tests by checking URL parameter
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      return !params.has('skipSplash');
+    }
+    return true;
+  });
+  const [mockupType, setMockupType] = useState(() => {
+    // Check which mockup to show from URL parameter
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('mockup') || 'default';
+    }
+    return 'default';
+  });
+  const [showWalkthrough, setShowWalkthrough] = useState(() => {
+    // Check if walkthrough should be shown from URL parameter
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      return params.get('showWalkthrough') === 'true';
+    }
+    return false;
+  });
+  const [walkthroughStep, setWalkthroughStep] = useState(0);
   const [showCopySuccess, setShowCopySuccess] = useState(false);
   const [isOverflow, setIsOverflow] = useState(false);
   const [cacheStats, setCacheStats] = useState({ audioHits: 0, audioMisses: 0, insightsHits: 0, insightsMisses: 0 });
@@ -921,6 +1281,13 @@ export default function DiwanApp() {
     setCurrentFont(FONTS[nextIdx].id);
     addLog("Font", `Switched to ${FONTS[nextIdx].label}`, "info");
   };
+
+  // Sync theme to HTML element class for E2E tests
+  useEffect(() => {
+    if (typeof document !== 'undefined') {
+      document.documentElement.className = darkMode ? 'dark' : 'light';
+    }
+  }, [darkMode]);
 
   const filtered = useMemo(() => {
     const searchStr = selectedCategory.toLowerCase();
@@ -1589,6 +1956,17 @@ export default function DiwanApp() {
     addLog("Navigation", `Switched to poem: ${current?.poet} - ${current?.title} | ID: ${current?.id} | Tags: ${tagsType} - ${tagsContent}`, "info");
   }, [current?.id]);
 
+  // Splash/Walkthrough handlers
+  const handleGetStarted = () => {
+    setShowSplash(false);
+    setShowWalkthrough(true);
+  };
+
+  const handleCloseWalkthrough = () => {
+    setShowWalkthrough(false);
+    setWalkthroughStep(0);
+  };
+
   // Prefetch triggers - run background prefetching when poem changes
   // Rate-limited to avoid hitting API limits
   useEffect(() => {
@@ -1699,6 +2077,89 @@ export default function DiwanApp() {
       <div className="scroll-progress" />
 
       <DebugPanel logs={logs} onClear={() => setLogs([])} darkMode={darkMode} />
+
+      {showSplash && (() => {
+        const splashProps = { onGetStarted: handleGetStarted, darkMode, theme, onToggleTheme: () => setDarkMode(!darkMode) };
+        switch (mockupType) {
+          case 'modern':
+            return <SplashModern {...splashProps} />;
+          case 'minimalist':
+            return <SplashMinimalist {...splashProps} />;
+          case 'arabian':
+            return <SplashArabian {...splashProps} />;
+          case '1':
+            return <SplashArabian1 {...splashProps} />;
+          case '2':
+            return <SplashArabian2 {...splashProps} />;
+          case '3a':
+            return <SplashArabian3a {...splashProps} />;
+          case '3b':
+            return <SplashArabian3b {...splashProps} />;
+          case '3c':
+            return <SplashArabian3c {...splashProps} />;
+          case '4a':
+            return <SplashArabian4a {...splashProps} />;
+          case '4b':
+            return <SplashArabian4b {...splashProps} />;
+          case '4c':
+            return <SplashArabian4c {...splashProps} />;
+          case '5a':
+            return <SplashWildcard5a {...splashProps} />;
+          case '5b':
+            return <SplashWildcard5b {...splashProps} />;
+          case '5c':
+            return <SplashWildcard5c {...splashProps} />;
+          case '5d':
+            return <SplashDirection5d {...splashProps} />;
+          case '5e':
+            return <SplashDirection5e {...splashProps} />;
+          case '6a':
+            return <Splash6a {...splashProps} />;
+          case '6b':
+            return <Splash6b {...splashProps} />;
+          case '6c':
+            return <Splash6c {...splashProps} />;
+          case '6d':
+            return <Splash6d {...splashProps} />;
+          case '6e':
+            return <Splash6e {...splashProps} />;
+          case '6f':
+            return <Splash6f {...splashProps} />;
+          case 'particles':
+            return <SplashParticles {...splashProps} />;
+          case 'constellation':
+            return <SplashConstellation {...splashProps} />;
+          case 'kinetic':
+            return <SplashKinetic {...splashProps} />;
+          case 'mandala':
+            return <SplashMandala {...splashProps} />;
+          case 'geometric':
+            return <SplashGeometric {...splashProps} />;
+          case 'zen':
+            return <SplashZen {...splashProps} />;
+          case 'aurora':
+            return <SplashAurora {...splashProps} />;
+          case 'ink':
+            return <SplashInk {...splashProps} />;
+          case 'manuscript':
+            return <SplashManuscript {...splashProps} />;
+          case 'light':
+            return <SplashLight {...splashProps} />;
+          default:
+            return <SplashCinematic {...splashProps} />;
+        }
+      })()}
+      {showWalkthrough && (() => {
+        const WalkthroughComponent = getWalkthroughComponent(mockupType);
+        return (
+          <WalkthroughComponent
+            onClose={handleCloseWalkthrough}
+            darkMode={darkMode}
+            currentStep={walkthroughStep}
+            onStepChange={setWalkthroughStep}
+          />
+        );
+      })()}
 
       <header style={{ opacity: headerOpacity }} className="fixed top-4 md:top-8 left-0 right-0 z-40 pointer-events-none transition-opacity duration-300 flex flex-row items-center justify-center gap-4 md:gap-8 px-4 md:px-6">
         <div className={`flex flex-row-reverse items-center gap-2 md:gap-4 ${theme.brand} tracking-wide header-luminescence`}>

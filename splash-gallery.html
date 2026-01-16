@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Splash Options Gallery - Poetry Bil Araby</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      color: #e0e0e0;
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, #C5A059 0%, #ffd89b 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      text-align: center;
+      font-size: 1rem;
+      margin-bottom: 3rem;
+      opacity: 0.7;
+    }
+
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 24px;
+      margin-bottom: 2rem;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(197, 160, 89, 0.2);
+      border-radius: 16px;
+      padding: 24px;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(197, 160, 89, 0.5);
+      box-shadow: 0 8px 32px rgba(197, 160, 89, 0.2);
+    }
+
+    .card-number {
+      display: inline-block;
+      width: 32px;
+      height: 32px;
+      line-height: 32px;
+      text-align: center;
+      background: linear-gradient(135deg, #C5A059 0%, #ffd89b 100%);
+      color: #1a1a2e;
+      font-weight: bold;
+      border-radius: 8px;
+      margin-bottom: 12px;
+    }
+
+    .card-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: #C5A059;
+    }
+
+    .card-description {
+      font-size: 0.9rem;
+      opacity: 0.8;
+      line-height: 1.6;
+      margin-bottom: 16px;
+    }
+
+    .card-links {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .card-link {
+      display: inline-block;
+      padding: 10px 20px;
+      background: rgba(197, 160, 89, 0.1);
+      border: 1px solid rgba(197, 160, 89, 0.3);
+      border-radius: 8px;
+      color: #C5A059;
+      text-decoration: none;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      flex: 1;
+      text-align: center;
+      min-width: 120px;
+    }
+
+    .card-link:hover {
+      background: rgba(197, 160, 89, 0.2);
+      border-color: rgba(197, 160, 89, 0.5);
+    }
+
+    .card-link-primary {
+      background: rgba(99, 102, 241, 0.15);
+      border-color: rgba(99, 102, 241, 0.4);
+      color: #a5b4fc;
+    }
+
+    .card-link-primary:hover {
+      background: rgba(99, 102, 241, 0.25);
+      border-color: rgba(99, 102, 241, 0.6);
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 3rem;
+      padding-top: 2rem;
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      opacity: 0.6;
+      font-size: 0.875rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Splash Screen Options</h1>
+    <p class="subtitle">View splash screens or jump straight to the themed walkthrough guides</p>
+
+    <div class="gallery">
+      <div class="card">
+        <div class="card-number">1</div>
+        <h2 class="card-title">Particle Field</h2>
+        <p class="card-description">Interactive particle system with fluid motion and organic movement patterns. Particles respond to mouse/touch with physics-based animations.</p>
+        <div class="card-links">
+          <a href="http://localhost:5173/?mockup=particles" class="card-link" target="_blank">View Splash →</a>
+          <a href="http://localhost:5173/?mockup=particles&showWalkthrough=true&skipSplash=true" class="card-link card-link-primary" target="_blank">View Walkthrough →</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-number">2</div>
+        <h2 class="card-title">Constellation Poetry</h2>
+        <p class="card-description">Animated star constellation that forms poetic patterns. Stars connect and pulse with ethereal glow effects.</p>
+        <div class="card-links">
+          <a href="http://localhost:5173/?mockup=constellation" class="card-link" target="_blank">View Splash →</a>
+          <a href="http://localhost:5173/?mockup=constellation&showWalkthrough=true&skipSplash=true" class="card-link card-link-primary" target="_blank">View Walkthrough →</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-number">3</div>
+        <h2 class="card-title">Breathing Mandala</h2>
+        <p class="card-description">Sacred geometric mandala that breathes with calming animations. Rotating layers create meditative depth and symmetry.</p>
+        <div class="card-links">
+          <a href="http://localhost:5173/?mockup=mandala" class="card-link" target="_blank">View Splash →</a>
+          <a href="http://localhost:5173/?mockup=mandala&showWalkthrough=true&skipSplash=true" class="card-link card-link-primary" target="_blank">View Walkthrough →</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-number">4</div>
+        <h2 class="card-title">Geometric Patterns</h2>
+        <p class="card-description">Islamic geometric patterns with tessellated 8-pointed stars. Mathematical precision meets artistic beauty with morphing animations.</p>
+        <div class="card-links">
+          <a href="http://localhost:5173/?mockup=geometric" class="card-link" target="_blank">View Splash →</a>
+          <a href="http://localhost:5173/?mockup=geometric&showWalkthrough=true&skipSplash=true" class="card-link card-link-primary" target="_blank">View Walkthrough →</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-number">5</div>
+        <h2 class="card-title">Zen Minimalism</h2>
+        <p class="card-description">Ultra-minimal zen design with pure backgrounds. Single abstract calligraphic stroke with breathing animation and golden ratio curves.</p>
+        <div class="card-links">
+          <a href="http://localhost:5173/?mockup=zen" class="card-link" target="_blank">View Splash →</a>
+          <a href="http://localhost:5173/?mockup=zen&showWalkthrough=true&skipSplash=true" class="card-link card-link-primary" target="_blank">View Walkthrough →</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-number">6</div>
+        <h2 class="card-title">Aurora Light</h2>
+        <p class="card-description">Flowing aurora borealis gradients with organic light movements. Soft color transitions create ethereal atmosphere.</p>
+        <div class="card-links">
+          <a href="http://localhost:5173/?mockup=aurora" class="card-link" target="_blank">View Splash →</a>
+          <a href="http://localhost:5173/?mockup=aurora&showWalkthrough=true&skipSplash=true" class="card-link card-link-primary" target="_blank">View Walkthrough →</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-number">7</div>
+        <h2 class="card-title">Ink Calligraphy</h2>
+        <p class="card-description">Traditional ink brush calligraphy with stroke animation. Watch as elegant Arabic letterforms draw themselves with artistic flourish.</p>
+        <div class="card-links">
+          <a href="http://localhost:5173/?mockup=ink" class="card-link" target="_blank">View Splash →</a>
+          <a href="http://localhost:5173/?mockup=ink&showWalkthrough=true&skipSplash=true" class="card-link card-link-primary" target="_blank">View Walkthrough →</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-number">8</div>
+        <h2 class="card-title">Ancient Manuscript</h2>
+        <p class="card-description">Aged manuscript aesthetic with parchment textures. Ornate borders and classical typography evoke historic poetry collections.</p>
+        <div class="card-links">
+          <a href="http://localhost:5173/?mockup=manuscript" class="card-link" target="_blank">View Splash →</a>
+          <a href="http://localhost:5173/?mockup=manuscript&showWalkthrough=true&skipSplash=true" class="card-link card-link-primary" target="_blank">View Walkthrough →</a>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-number">9</div>
+        <h2 class="card-title">Light & Shadow</h2>
+        <p class="card-description">Dynamic interplay of light and shadow with depth. Layered shadows create dramatic three-dimensional effects.</p>
+        <div class="card-links">
+          <a href="http://localhost:5173/?mockup=light" class="card-link" target="_blank">View Splash →</a>
+          <a href="http://localhost:5173/?mockup=light&showWalkthrough=true&skipSplash=true" class="card-link card-link-primary" target="_blank">View Walkthrough →</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <p>Poetry Bil Araby - Splash Screen Gallery</p>
+      <p><strong>View Splash:</strong> See the animated splash screen with theme toggle</p>
+      <p><strong>View Walkthrough:</strong> Experience the 3-step onboarding guide with themed animations</p>
+    </div>
+  </div>
+</body>
+</html>

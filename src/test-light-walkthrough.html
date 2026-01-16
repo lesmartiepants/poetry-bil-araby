@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Light & Shadow Walkthrough Preview</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap');
+
+    body {
+      font-family: 'Inter', sans-serif;
+      margin: 0;
+      padding: 0;
+      background: #0a0a0a;
+      color: #e7e5e4;
+    }
+
+    .font-amiri {
+      font-family: 'Amiri', serif;
+    }
+
+    .font-brand-en {
+      font-family: 'Inter', sans-serif;
+    }
+
+    @keyframes lightSweep {
+      0% { transform: translateX(-100%); }
+      50% { transform: translateX(100%); }
+      100% { transform: translateX(100%); }
+    }
+
+    @keyframes floatParticle {
+      0%, 100% {
+        transform: translateY(0) translateX(0);
+        opacity: 0;
+      }
+      10% { opacity: 0.6; }
+      50% {
+        transform: translateY(-30px) translateX(10px);
+        opacity: 0.8;
+      }
+      90% { opacity: 0.6; }
+    }
+
+    .light-sweep {
+      animation: lightSweep 2s ease-in-out infinite;
+    }
+
+    .float-particle {
+      animation: floatParticle 5s ease-in-out infinite;
+    }
+  </style>
+</head>
+<body>
+  <div class="min-h-screen flex items-center justify-center p-6">
+    <div class="max-w-4xl w-full">
+      <!-- Header -->
+      <div class="text-center mb-12">
+        <h1 class="text-5xl font-bold mb-4 bg-gradient-to-r from-amber-200 to-amber-400 bg-clip-text text-transparent">
+          Light & Shadow Walkthrough
+        </h1>
+        <p class="text-stone-400 text-lg">
+          Dramatic, dimensional, cinematic experience
+        </p>
+      </div>
+
+      <!-- Preview Cards -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+        <!-- Splash Screen Preview -->
+        <div class="bg-stone-900/50 backdrop-blur-xl border border-stone-800 rounded-2xl p-8">
+          <h2 class="text-2xl font-bold mb-4 text-amber-200">Enhanced Splash</h2>
+          <div class="space-y-4">
+            <div class="border-l-4 border-amber-500 pl-4">
+              <p class="text-xl font-amiri mb-2">بين النور والظل تتجلى الحكمة</p>
+              <p class="text-stone-400 italic">Between light and shadow, wisdom reveals itself</p>
+            </div>
+            <p class="text-sm leading-relaxed text-stone-300">
+              Poetry lives in the tension between illumination and obscurity. Like sunlight through a mashrabiya screen, meaning reveals itself layer by layer...
+            </p>
+            <div class="flex items-center gap-2 text-xs text-stone-500 uppercase tracking-wider">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"></path>
+              </svg>
+              Where depth emerges from darkness
+            </div>
+          </div>
+        </div>
+
+        <!-- Walkthrough Preview -->
+        <div class="bg-stone-900/50 backdrop-blur-xl border border-stone-800 rounded-2xl p-8">
+          <h2 class="text-2xl font-bold mb-4 text-amber-200">4-Step Walkthrough</h2>
+          <div class="space-y-3">
+            <div class="flex items-start gap-3 p-3 bg-stone-800/50 rounded-lg">
+              <div class="w-8 h-8 flex-shrink-0 bg-amber-500/20 rounded flex items-center justify-center">
+                <span class="text-amber-300 font-bold">1</span>
+              </div>
+              <div>
+                <p class="font-semibold text-sm">The Hidden Depths</p>
+                <p class="text-xs text-stone-400 mt-1">Poetry is excavated, not just read</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-3 p-3 bg-stone-800/30 rounded-lg">
+              <div class="w-8 h-8 flex-shrink-0 bg-stone-700 rounded flex items-center justify-center">
+                <span class="text-stone-400 font-bold">2</span>
+              </div>
+              <div>
+                <p class="font-semibold text-sm text-stone-300">Navigate Between Worlds</p>
+                <p class="text-xs text-stone-500 mt-1">Move through time like light through space</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-3 p-3 bg-stone-800/30 rounded-lg">
+              <div class="w-8 h-8 flex-shrink-0 bg-stone-700 rounded flex items-center justify-center">
+                <span class="text-stone-400 font-bold">3</span>
+              </div>
+              <div>
+                <p class="font-semibold text-sm text-stone-300">Hear the Ancient Voice</p>
+                <p class="text-xs text-stone-500 mt-1">Channel oral tradition through recitation</p>
+              </div>
+            </div>
+            <div class="flex items-start gap-3 p-3 bg-stone-800/30 rounded-lg">
+              <div class="w-8 h-8 flex-shrink-0 bg-stone-700 rounded flex items-center justify-center">
+                <span class="text-stone-400 font-bold">4</span>
+              </div>
+              <div>
+                <p class="font-semibold text-sm text-stone-300">Illumination Through Contrast</p>
+                <p class="text-xs text-stone-500 mt-1">Understanding from light/dark interplay</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Key Features -->
+      <div class="bg-gradient-to-br from-stone-900 to-stone-950 border border-amber-500/20 rounded-2xl p-8 mb-12">
+        <h2 class="text-3xl font-bold mb-6 text-amber-200">Key Features</h2>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div class="space-y-2">
+            <div class="w-12 h-12 bg-amber-500/10 rounded-lg flex items-center justify-center mb-3">
+              <svg class="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path>
+              </svg>
+            </div>
+            <h3 class="font-bold text-lg">3D Parallax</h3>
+            <p class="text-sm text-stone-400">Multiple layers move at different speeds creating depth</p>
+          </div>
+          <div class="space-y-2">
+            <div class="w-12 h-12 bg-amber-500/10 rounded-lg flex items-center justify-center mb-3">
+              <svg class="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+              </svg>
+            </div>
+            <h3 class="font-bold text-lg">Dramatic Lighting</h3>
+            <p class="text-sm text-stone-400">Animated light rays and floating particles</p>
+          </div>
+          <div class="space-y-2">
+            <div class="w-12 h-12 bg-amber-500/10 rounded-lg flex items-center justify-center mb-3">
+              <svg class="w-6 h-6 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"></path>
+              </svg>
+            </div>
+            <h3 class="font-bold text-lg">Professorial Copy</h3>
+            <p class="text-sm text-stone-400">Literary scholar's voice about excavating meaning</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Technical Details -->
+      <div class="bg-stone-900/30 border border-stone-800 rounded-2xl p-8">
+        <h2 class="text-2xl font-bold mb-6 text-amber-200">Technical Implementation</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <h3 class="font-semibold mb-3 text-stone-300">Visual Effects</h3>
+            <ul class="space-y-2 text-sm text-stone-400">
+              <li class="flex items-start gap-2">
+                <span class="text-amber-500 mt-1">▹</span>
+                <span>Mashrabiya SVG patterns with light masking</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-amber-500 mt-1">▹</span>
+                <span>Glass morphism with backdrop-blur-2xl</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-amber-500 mt-1">▹</span>
+                <span>Corner flourishes (4 arabesque decorations)</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-amber-500 mt-1">▹</span>
+                <span>15 floating light particles with randomized animation</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-amber-500 mt-1">▹</span>
+                <span>Light beam step indicators with gradient glow</span>
+              </li>
+            </ul>
+          </div>
+          <div>
+            <h3 class="font-semibold mb-3 text-stone-300">Interactions</h3>
+            <ul class="space-y-2 text-sm text-stone-400">
+              <li class="flex items-start gap-2">
+                <span class="text-amber-500 mt-1">▹</span>
+                <span>Mouse-driven parallax (5 independent layers)</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-amber-500 mt-1">▹</span>
+                <span>Step-specific animated icons (4 unique designs)</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-amber-500 mt-1">▹</span>
+                <span>Light rays tied to walkthrough progress</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-amber-500 mt-1">▹</span>
+                <span>Smooth transitions (500ms duration)</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <span class="text-amber-500 mt-1">▹</span>
+                <span>Light sweep animation on button hover</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="mt-6 p-4 bg-stone-950/50 rounded-lg border border-stone-800">
+          <h4 class="font-mono text-xs text-amber-400 mb-2">EXPORTS:</h4>
+          <code class="text-xs text-stone-300 block">
+            export const SplashLight = ({ onGetStarted, darkMode, onToggleTheme })<br>
+            export const WalkthroughLight = ({ onClose, darkMode, currentStep, onStepChange })
+          </code>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="text-center mt-12 text-stone-500 text-sm">
+        <p>Built for Poetry Bil-Araby</p>
+        <p class="mt-2">Location: <code class="text-amber-400/60">src/splash-options/splash-light.jsx</code></p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

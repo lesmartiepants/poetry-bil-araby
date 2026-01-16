@@ -37,6 +37,7 @@
     "happy-dom": "^20.0.11",
     "jsdom": "^27.4.0",
     "postcss": "^8.4.49",
+    "supabase": "^2.72.7",
     "tailwindcss": "^3.4.17",
     "vite": "^6.0.3",
     "vitest": "^4.0.16"

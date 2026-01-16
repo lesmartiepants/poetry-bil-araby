@@ -41,3 +41,6 @@ ui-ux-report/
 
 # Design exploration artifacts (binary screenshots)
 screenshots/
+# Large database files - manage separately
+supabase/migrations/*.sql
+poetry-database/*.dump

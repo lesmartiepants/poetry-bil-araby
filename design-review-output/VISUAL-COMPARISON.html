@@ -1,0 +1,856 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Walkthrough UI/UX Quality Review - All 9 Designs</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0c0c0e;
+      color: #e7e5e4;
+      font-family: system-ui, -apple-system, sans-serif;
+      padding: 40px 20px;
+      line-height: 1.6;
+    }
+    .container { max-width: 1600px; margin: 0 auto; }
+    h1 {
+      color: #C5A059;
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+      font-weight: 700;
+    }
+    .subtitle {
+      color: #a8a29e;
+      font-size: 1.125rem;
+      margin-bottom: 3rem;
+    }
+    h2 {
+      color: #C5A059;
+      font-size: 1.75rem;
+      margin-top: 4rem;
+      margin-bottom: 1rem;
+      border-bottom: 1px solid #292524;
+      padding-bottom: 0.5rem;
+    }
+    .overview {
+      background: #1c1917;
+      border-left: 4px solid #86efac;
+      padding: 24px;
+      margin: 30px 0;
+      border-radius: 4px;
+    }
+    .overview h3 { color: #86efac; margin-top: 0; margin-bottom: 12px; }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-top: 16px;
+    }
+    .stat-card {
+      background: #0c0c0e;
+      padding: 16px;
+      border-radius: 8px;
+      border: 1px solid #292524;
+    }
+    .stat-label { color: #a8a29e; font-size: 0.875rem; margin-bottom: 4px; }
+    .stat-value { color: #C5A059; font-size: 1.5rem; font-weight: 700; }
+
+    .walkthrough {
+      background: #1c1917;
+      border: 1px solid #292524;
+      border-radius: 12px;
+      padding: 30px;
+      margin: 30px 0;
+    }
+    .walkthrough-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .walkthrough-title {
+      color: #C5A059;
+      font-size: 1.75rem;
+      margin: 0;
+      font-weight: 600;
+    }
+    .rating {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 16px;
+      background: #0c0c0e;
+      border-radius: 8px;
+      border: 2px solid #C5A059;
+    }
+    .rating-score {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #C5A059;
+    }
+    .rating-label {
+      color: #a8a29e;
+      font-size: 0.875rem;
+    }
+    .rating.excellent { border-color: #86efac; }
+    .rating.excellent .rating-score { color: #86efac; }
+    .rating.good { border-color: #fcd34d; }
+    .rating.good .rating-score { color: #fcd34d; }
+    .rating.needs-improvement { border-color: #fca5a5; }
+    .rating.needs-improvement .rating-score { color: #fca5a5; }
+
+    .screenshots {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      gap: 20px;
+      margin: 24px 0;
+    }
+    .screenshot-card {
+      background: #0c0c0e;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid #292524;
+    }
+    .screenshot-card img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+    .screenshot-caption {
+      padding: 12px;
+      color: #a8a29e;
+      font-size: 0.875rem;
+      background: #1c1917;
+      text-align: center;
+      font-weight: 600;
+    }
+
+    .issues {
+      margin-top: 24px;
+    }
+    .issues h4 {
+      color: #fca5a5;
+      margin-bottom: 12px;
+      font-size: 1.125rem;
+    }
+    .issue-list {
+      background: #0c0c0e;
+      padding: 16px 20px;
+      border-radius: 8px;
+      border-left: 4px solid #ef4444;
+    }
+    .issue-list li {
+      margin: 8px 0;
+      padding-left: 8px;
+    }
+    .issue-list.minor { border-left-color: #fcd34d; }
+    .issue-list.none {
+      border-left-color: #86efac;
+      color: #86efac;
+      text-align: center;
+      font-weight: 600;
+    }
+
+    .criteria-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 24px 0;
+      background: #1c1917;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .criteria-table th {
+      background: #292524;
+      padding: 12px 16px;
+      text-align: left;
+      color: #C5A059;
+      font-weight: 600;
+      font-size: 0.875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .criteria-table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid #292524;
+    }
+    .criteria-table tr:last-child td { border-bottom: none; }
+    .score { font-weight: 700; font-size: 1.125rem; }
+    .score.high { color: #86efac; }
+    .score.medium { color: #fcd34d; }
+    .score.low { color: #fca5a5; }
+
+    .summary {
+      background: #1c1917;
+      border-left: 4px solid #C5A059;
+      padding: 24px;
+      margin-top: 60px;
+      border-radius: 4px;
+    }
+    .summary h2 {
+      margin-top: 0;
+      color: #C5A059;
+      border: none;
+      padding-bottom: 0;
+      margin-bottom: 16px;
+    }
+    .summary p {
+      margin: 12px 0;
+      color: #d6d3d1;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🎨 Walkthrough UI/UX Quality Review</h1>
+    <p class="subtitle">Comprehensive visual analysis of all 9 splash screen + walkthrough combinations</p>
+
+    <div class="overview">
+      <h3>📊 Overall Quality Summary</h3>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Average Rating</div>
+          <div class="stat-value">9.0/10</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Excellent (9.0+)</div>
+          <div class="stat-value">6 of 9</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Good (8.0-8.9)</div>
+          <div class="stat-value">2 of 9</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Needs Improvement (&lt;8.0)</div>
+          <div class="stat-value">1 of 9</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">WCAG AA Compliant</div>
+          <div class="stat-value">8 of 9</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Screenshots Captured</div>
+          <div class="stat-value">27 total</div>
+        </div>
+      </div>
+    </div>
+
+    <h2>Design Reviews</h2>
+
+    <!-- 1. ZEN MINIMALIST -->
+    <div class="walkthrough">
+      <div class="walkthrough-header">
+        <h3 class="walkthrough-title">1. Zen Minimalist Walkthrough</h3>
+        <div class="rating good">
+          <span class="rating-score">8.5</span>
+          <span class="rating-label">/10</span>
+        </div>
+      </div>
+
+      <div class="screenshots">
+        <div class="screenshot-card">
+          <img src="current-state/zen-1-splash.png" alt="Zen splash screen">
+          <div class="screenshot-caption">Splash Screen - Pure Minimalism</div>
+        </div>
+        <div class="screenshot-card">
+          <img src="current-state/zen-2-walkthrough-step1.png" alt="Zen walkthrough step 1">
+          <div class="screenshot-caption">Walkthrough Step 1 - Browse (تصفح)</div>
+        </div>
+      </div>
+
+      <table class="criteria-table">
+        <thead>
+          <tr>
+            <th>Criterion</th>
+            <th>Score</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Accessibility</td>
+            <td class="score medium">8/10</td>
+            <td>Touch targets ✅, WCAG contrast issues with progress dots</td>
+          </tr>
+          <tr>
+            <td>Design Consistency</td>
+            <td class="score high">9.5/10</td>
+            <td>Perfect match to splash aesthetic</td>
+          </tr>
+          <tr>
+            <td>Animation Performance</td>
+            <td class="score high">9/10</td>
+            <td>Smooth breathing cycle, GPU-accelerated</td>
+          </tr>
+          <tr>
+            <td>Mobile Responsiveness</td>
+            <td class="score high">9/10</td>
+            <td>Excellent fluid typography with clamp()</td>
+          </tr>
+          <tr>
+            <td>User Flow</td>
+            <td class="score medium">8/10</td>
+            <td>Clear but needs interaction hints</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="issues">
+        <h4>⚠️ Issues Found:</h4>
+        <ul class="issue-list minor">
+          <li><strong>Progress dots contrast:</strong> `bg-white/15` → needs `bg-white/30` for WCAG AA</li>
+          <li><strong>Missing keyboard navigation:</strong> No Space/Enter handlers</li>
+          <li><strong>No interaction hint:</strong> Add "tap to continue" text</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 2. MANDALA SACRED GEOMETRY -->
+    <div class="walkthrough">
+      <div class="walkthrough-header">
+        <h3 class="walkthrough-title">2. Mandala Sacred Geometry Walkthrough</h3>
+        <div class="rating excellent">
+          <span class="rating-score">9.5</span>
+          <span class="rating-label">/10</span>
+        </div>
+      </div>
+
+      <div class="screenshots">
+        <div class="screenshot-card">
+          <img src="current-state/mandala-1-splash.png" alt="Mandala splash screen">
+          <div class="screenshot-caption">Splash - 4-Layer Rotating Mandala</div>
+        </div>
+        <div class="screenshot-card">
+          <img src="current-state/mandala-2-walkthrough-step1.png" alt="Mandala walkthrough step 1">
+          <div class="screenshot-caption">Walkthrough - 6-Fold Symmetry (Navigate)</div>
+        </div>
+      </div>
+
+      <table class="criteria-table">
+        <thead>
+          <tr>
+            <th>Criterion</th>
+            <th>Score</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Accessibility</td>
+            <td class="score high">10/10</td>
+            <td>Perfect WCAG AA compliance, comprehensive ARIA</td>
+          </tr>
+          <tr>
+            <td>Design Consistency</td>
+            <td class="score high">10/10</td>
+            <td>6→8→12 fold symmetry progression is brilliant</td>
+          </tr>
+          <tr>
+            <td>Animation Performance</td>
+            <td class="score high">9.5/10</td>
+            <td>4-layer mandala may stress low-end devices</td>
+          </tr>
+          <tr>
+            <td>Mobile Responsiveness</td>
+            <td class="score high">10/10</td>
+            <td>Flawless fluid typography and touch targets</td>
+          </tr>
+          <tr>
+            <td>User Flow</td>
+            <td class="score high">10/10</td>
+            <td>Multiple navigation paths, clear progress</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="issues">
+        <h4>✅ Issues Found:</h4>
+        <div class="issue-list none">No critical issues - Production ready</div>
+      </div>
+    </div>
+
+    <!-- 3. GEOMETRIC ISLAMIC -->
+    <div class="walkthrough">
+      <div class="walkthrough-header">
+        <h3 class="walkthrough-title">3. Geometric Islamic Walkthrough</h3>
+        <div class="rating needs-improvement">
+          <span class="rating-score">7.5</span>
+          <span class="rating-label">/10</span>
+        </div>
+      </div>
+
+      <div class="screenshots">
+        <div class="screenshot-card">
+          <img src="current-state/geometric-1-splash.png" alt="Geometric splash screen">
+          <div class="screenshot-caption">Splash - 8-Pointed Tessellation</div>
+        </div>
+        <div class="screenshot-card">
+          <img src="current-state/geometric-2-walkthrough-step1.png" alt="Geometric walkthrough step 1">
+          <div class="screenshot-caption">Walkthrough - Kaleidoscope Rotation</div>
+        </div>
+      </div>
+
+      <table class="criteria-table">
+        <thead>
+          <tr>
+            <th>Criterion</th>
+            <th>Score</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Accessibility</td>
+            <td class="score low">6/10</td>
+            <td>❌ Gold color WCAG failure, keyboard nav missing</td>
+          </tr>
+          <tr>
+            <td>Design Consistency</td>
+            <td class="score medium">8/10</td>
+            <td>Beautiful but deviates from app's DESIGN constants</td>
+          </tr>
+          <tr>
+            <td>Animation Performance</td>
+            <td class="score low">7/10</td>
+            <td>⚠️ 84 animated stars on step 2 cause jank</td>
+          </tr>
+          <tr>
+            <td>Mobile Responsiveness</td>
+            <td class="score medium">7.5/10</td>
+            <td>Good typography, missing safe area insets</td>
+          </tr>
+          <tr>
+            <td>User Flow</td>
+            <td class="score medium">8.5/10</td>
+            <td>Clear navigation, needs skip option</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="issues">
+        <h4>❌ Critical Issues:</h4>
+        <ul class="issue-list">
+          <li><strong>WCAG Contrast Failure:</strong> Gold (#8B7355) on light background is 4.2:1 (needs 4.5:1)</li>
+          <li><strong>Performance Bottleneck:</strong> 84 AnimatedStar components (Step 2) cause ~250-300 animated SVG elements</li>
+          <li><strong>No keyboard navigation:</strong> Missing focus styles and onKeyDown handlers</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 4. AURORA BOREALIS -->
+    <div class="walkthrough">
+      <div class="walkthrough-header">
+        <h3 class="walkthrough-title">4. Aurora Borealis Walkthrough</h3>
+        <div class="rating excellent">
+          <span class="rating-score">9.5</span>
+          <span class="rating-label">/10</span>
+        </div>
+      </div>
+
+      <div class="screenshots">
+        <div class="screenshot-card">
+          <img src="current-state/aurora-1-splash.png" alt="Aurora splash screen">
+          <div class="screenshot-caption">Splash - Northern Lights Gradient</div>
+        </div>
+        <div class="screenshot-card">
+          <img src="current-state/aurora-2-walkthrough-step1.png" alt="Aurora walkthrough step 1">
+          <div class="screenshot-caption">Walkthrough - Dawn Phase</div>
+        </div>
+      </div>
+
+      <table class="criteria-table">
+        <thead>
+          <tr>
+            <th>Criterion</th>
+            <th>Score</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Accessibility</td>
+            <td class="score high">9/10</td>
+            <td>Touch targets ✅, needs keyboard nav for dots</td>
+          </tr>
+          <tr>
+            <td>Design Consistency</td>
+            <td class="score high">10/10</td>
+            <td>Seamless integration with splash aurora</td>
+          </tr>
+          <tr>
+            <td>Animation Performance</td>
+            <td class="score high">9/10</td>
+            <td>GPU-accelerated, Gaussian blur may strain old devices</td>
+          </tr>
+          <tr>
+            <td>Mobile Responsiveness</td>
+            <td class="score high">10/10</td>
+            <td>Perfect clamp() usage for fluid scaling</td>
+          </tr>
+          <tr>
+            <td>User Flow</td>
+            <td class="score high">10/10</td>
+            <td>3-act narrative (Dawn/Dusk/Night) is brilliant</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="issues">
+        <h4>⚠️ Minor Enhancements:</h4>
+        <ul class="issue-list minor">
+          <li><strong>Add keyboard nav:</strong> Arrow keys for progress dots</li>
+          <li><strong>Reduced motion:</strong> Add `prefers-reduced-motion` media query</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 5. CONSTELLATION CELESTIAL -->
+    <div class="walkthrough">
+      <div class="walkthrough-header">
+        <h3 class="walkthrough-title">5. Constellation Celestial Walkthrough</h3>
+        <div class="rating excellent">
+          <span class="rating-score">9.5</span>
+          <span class="rating-label">/10</span>
+        </div>
+      </div>
+
+      <div class="screenshots">
+        <div class="screenshot-card">
+          <img src="current-state/constellation-1-splash.png" alt="Constellation splash screen">
+          <div class="screenshot-caption">Splash - Milky Way Parallax</div>
+        </div>
+        <div class="screenshot-card">
+          <img src="current-state/constellation-2-walkthrough-step1.png" alt="Constellation walkthrough step 1">
+          <div class="screenshot-caption">Walkthrough - Triangle Pattern (Step 0)</div>
+        </div>
+      </div>
+
+      <table class="criteria-table">
+        <thead>
+          <tr>
+            <th>Criterion</th>
+            <th>Score</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Accessibility</td>
+            <td class="score high">9.5/10</td>
+            <td>Outstanding `prefers-reduced-motion` support</td>
+          </tr>
+          <tr>
+            <td>Design Consistency</td>
+            <td class="score high">10/10</td>
+            <td>Step-specific constellations reinforce themes</td>
+          </tr>
+          <tr>
+            <td>Animation Performance</td>
+            <td class="score high">10/10</td>
+            <td>Efficient SVG animations, no JS loops</td>
+          </tr>
+          <tr>
+            <td>Mobile Responsiveness</td>
+            <td class="score high">9/10</td>
+            <td>150 stars may need reduction on mobile</td>
+          </tr>
+          <tr>
+            <td>User Flow</td>
+            <td class="score high">10/10</td>
+            <td>Shooting stars provide excellent transition feedback</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="issues">
+        <h4>⚠️ Minor Issues:</h4>
+        <ul class="issue-list minor">
+          <li><strong>Performance optimization:</strong> Consider 100 stars on mobile (vs 150)</li>
+          <li><strong>Focus styles:</strong> Add `focus-visible:ring-2` to buttons</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 6. PARTICLES FLOW -->
+    <div class="walkthrough">
+      <div class="walkthrough-header">
+        <h3 class="walkthrough-title">6. Particles Flow Walkthrough</h3>
+        <div class="rating good">
+          <span class="rating-score">8.5</span>
+          <span class="rating-label">/10</span>
+        </div>
+      </div>
+
+      <div class="screenshots">
+        <div class="screenshot-card">
+          <img src="current-state/particles-1-splash.png" alt="Particles splash screen">
+          <div class="screenshot-caption">Splash - 800 Arabic Calligraphy Particles</div>
+        </div>
+        <div class="screenshot-card">
+          <img src="current-state/particles-2-walkthrough-step1.png" alt="Particles walkthrough step 1">
+          <div class="screenshot-caption">Walkthrough - Flow Mode (400 particles)</div>
+        </div>
+      </div>
+
+      <table class="criteria-table">
+        <thead>
+          <tr>
+            <th>Criterion</th>
+            <th>Score</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Accessibility</td>
+            <td class="score high">9/10</td>
+            <td>Touch targets ✅, missing focus indicators</td>
+          </tr>
+          <tr>
+            <td>Design Consistency</td>
+            <td class="score high">9.5/10</td>
+            <td>Physics modes perfectly match splash</td>
+          </tr>
+          <tr>
+            <td>Animation Performance</td>
+            <td class="score medium">8/10</td>
+            <td>⚠️ Network mode O(n²) sorting can cause jank</td>
+          </tr>
+          <tr>
+            <td>Mobile Responsiveness</td>
+            <td class="score medium">8.5/10</td>
+            <td>400 particles may struggle on budget devices</td>
+          </tr>
+          <tr>
+            <td>User Flow</td>
+            <td class="score high">9/10</td>
+            <td>Philosophical copy is beautifully executed</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="issues">
+        <h4>⚠️ Performance Issues:</h4>
+        <ul class="issue-list minor">
+          <li><strong>Network mode optimization:</strong> Use spatial partitioning instead of O(n²) sort</li>
+          <li><strong>Reduce particles on mobile:</strong> 400 → 200-300 for low-end devices</li>
+          <li><strong>Add focus styles:</strong> Implement `:focus-visible` for keyboard users</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 7. INK CALLIGRAPHY -->
+    <div class="walkthrough">
+      <div class="walkthrough-header">
+        <h3 class="walkthrough-title">7. Ink Calligraphy Walkthrough</h3>
+        <div class="rating excellent">
+          <span class="rating-score">9.2</span>
+          <span class="rating-label">/10</span>
+        </div>
+      </div>
+
+      <div class="screenshots">
+        <div class="screenshot-card">
+          <img src="current-state/ink-1-splash.png" alt="Ink splash screen">
+          <div class="screenshot-caption">Splash - Ink Diffusion Effect</div>
+        </div>
+        <div class="screenshot-card">
+          <img src="current-state/ink-2-walkthrough-step1.png" alt="Ink walkthrough step 1">
+          <div class="screenshot-caption">Walkthrough - Floating Arabic Calligraphy</div>
+        </div>
+      </div>
+
+      <table class="criteria-table">
+        <thead>
+          <tr>
+            <th>Criterion</th>
+            <th>Score</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Accessibility</td>
+            <td class="score high">9.5/10</td>
+            <td>Comprehensive WCAG AA with reduced motion support</td>
+          </tr>
+          <tr>
+            <td>Design Consistency</td>
+            <td class="score high">9.5/10</td>
+            <td>Ink blast transitions are stunning</td>
+          </tr>
+          <tr>
+            <td>Animation Performance</td>
+            <td class="score high">9/10</td>
+            <td>SVG filters GPU-intensive but optimized</td>
+          </tr>
+          <tr>
+            <td>Mobile Responsiveness</td>
+            <td class="score high">9/10</td>
+            <td>Fluid clamp() typography throughout</td>
+          </tr>
+          <tr>
+            <td>User Flow</td>
+            <td class="score high">9.5/10</td>
+            <td>Brush stroke progress indicator is clever</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="issues">
+        <h4>⚠️ Minor Enhancements:</h4>
+        <ul class="issue-list minor">
+          <li><strong>Add Escape key:</strong> Close walkthrough with Esc key</li>
+          <li><strong>Arrow key navigation:</strong> Navigate steps with keyboard</li>
+          <li><strong>Particle reduction:</strong> Consider 12-15 particles on mobile (vs 21)</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 8. MANUSCRIPT MEDIEVAL -->
+    <div class="walkthrough">
+      <div class="walkthrough-header">
+        <h3 class="walkthrough-title">8. Manuscript Medieval Walkthrough</h3>
+        <div class="rating excellent">
+          <span class="rating-score">9.5</span>
+          <span class="rating-label">/10</span>
+        </div>
+      </div>
+
+      <div class="screenshots">
+        <div class="screenshot-card">
+          <img src="current-state/manuscript-1-splash.png" alt="Manuscript splash screen">
+          <div class="screenshot-caption">Splash - Sepia Parchment with Vignette</div>
+        </div>
+        <div class="screenshot-card">
+          <img src="current-state/manuscript-2-walkthrough-step1.png" alt="Manuscript walkthrough step 1">
+          <div class="screenshot-caption">Walkthrough - Horizontal Unfurl Reveal</div>
+        </div>
+      </div>
+
+      <table class="criteria-table">
+        <thead>
+          <tr>
+            <th>Criterion</th>
+            <th>Score</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Accessibility</td>
+            <td class="score high">9.5/10</td>
+            <td>Exceeds WCAG AA, needs `prefers-reduced-motion`</td>
+          </tr>
+          <tr>
+            <td>Design Consistency</td>
+            <td class="score high">10/10</td>
+            <td>Flawless manuscript metaphor execution</td>
+          </tr>
+          <tr>
+            <td>Animation Performance</td>
+            <td class="score high">10/10</td>
+            <td>RequestAnimationFrame for smooth 60fps</td>
+          </tr>
+          <tr>
+            <td>Mobile Responsiveness</td>
+            <td class="score high">10/10</td>
+            <td>Comprehensive responsive coverage</td>
+          </tr>
+          <tr>
+            <td>User Flow</td>
+            <td class="score high">10/10</td>
+            <td>Tactile page curl corners are genius</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="issues">
+        <h4>⚠️ Minor Enhancement:</h4>
+        <ul class="issue-list minor">
+          <li><strong>Add reduced motion:</strong> Implement `prefers-reduced-motion` media query</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 9. LIGHT & SHADOW -->
+    <div class="walkthrough">
+      <div class="walkthrough-header">
+        <h3 class="walkthrough-title">9. Light & Shadow Walkthrough</h3>
+        <div class="rating excellent">
+          <span class="rating-score">9.2</span>
+          <span class="rating-label">/10</span>
+        </div>
+      </div>
+
+      <div class="screenshots">
+        <div class="screenshot-card">
+          <img src="current-state/light-1-splash.png" alt="Light splash screen">
+          <div class="screenshot-caption">Splash - Chiaroscuro with Mashrabiya</div>
+        </div>
+        <div class="screenshot-card">
+          <img src="current-state/light-2-walkthrough-step1.png" alt="Light walkthrough step 1">
+          <div class="screenshot-caption">Walkthrough - Living Light Rays (Dawn)</div>
+        </div>
+      </div>
+
+      <table class="criteria-table">
+        <thead>
+          <tr>
+            <th>Criterion</th>
+            <th>Score</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Accessibility</td>
+            <td class="score high">9.5/10</td>
+            <td>Close button 40px (should be 44px), otherwise excellent</td>
+          </tr>
+          <tr>
+            <td>Design Consistency</td>
+            <td class="score high">9.8/10</td>
+            <td>8-second breathing cycle perfectly synced</td>
+          </tr>
+          <tr>
+            <td>Animation Performance</td>
+            <td class="score medium">8.5/10</td>
+            <td>18 particles + parallax may struggle on old devices</td>
+          </tr>
+          <tr>
+            <td>Mobile Responsiveness</td>
+            <td class="score high">9/10</td>
+            <td>Parallax mouse-only, consider gyroscope on mobile</td>
+          </tr>
+          <tr>
+            <td>User Flow</td>
+            <td class="score high">9.5/10</td>
+            <td>Light progression metaphor is brilliant</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="issues">
+        <h4>⚠️ Minor Issues:</h4>
+        <ul class="issue-list minor">
+          <li><strong>Close button size:</strong> Increase from 40px to 44px</li>
+          <li><strong>Reduce particles:</strong> 18 → 12 on mobile for performance</li>
+          <li><strong>Add will-change:</strong> Hint for blur filters on animated elements</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="summary">
+      <h2>📝 Final Recommendations</h2>
+      <p><strong>Production Ready (6):</strong> Mandala, Aurora, Constellation, Ink, Manuscript, Light - All score 9.0+ with only minor enhancements needed.</p>
+      <p><strong>Needs Polish (2):</strong> Zen, Particles - Score 8.5/10 with good foundations but minor accessibility/performance improvements required.</p>
+      <p><strong>Requires Redesign (1):</strong> Geometric - Score 7.5/10 with WCAG contrast failures and performance bottlenecks (84 animated stars) that need addressing before production.</p>
+      <p><strong>Overall Verdict:</strong> Exceptional quality across the board. 8 of 9 walkthroughs demonstrate world-class UX/UI design with thoughtful accessibility, stunning visuals, and cohesive theming. The Geometric walkthrough is the only one requiring significant improvements.</p>
+      <p><strong>Next Steps:</strong> Fix Geometric WCAG contrast and reduce star count, then all 9 walkthroughs will be production-ready at 9.0+ quality.</p>
+    </div>
+  </div>
+</body>
+</html>

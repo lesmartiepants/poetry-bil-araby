@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Option 2: Ancient Codex with Book Spine</title>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cinzel:wght@600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Amiri', serif;
+      background: #0f0d0a;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      overflow: hidden;
+      perspective: 1500px;
+    }
+
+    /* Open book container with 3D effect */
+    .book-container {
+      position: relative;
+      width: 100%;
+      max-width: 1000px;
+      aspect-ratio: 16/9;
+      transform-style: preserve-3d;
+      animation: bookOpen 1.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+
+    @keyframes bookOpen {
+      0% {
+        transform: rotateY(-25deg) scale(0.9);
+        opacity: 0;
+      }
+      100% {
+        transform: rotateY(0deg) scale(1);
+        opacity: 1;
+      }
+    }
+
+    /* Left page */
+    .page-left {
+      position: absolute;
+      left: 0;
+      top: 0;
+      width: 48%;
+      height: 100%;
+      background: linear-gradient(to right, #1a1410 0%, #2d2419 20%, #3d3428 100%);
+      border: 2px solid #5a4a35;
+      border-right: none;
+      box-shadow:
+        inset -15px 0 30px rgba(0, 0, 0, 0.5),
+        -10px 10px 40px rgba(0, 0, 0, 0.6);
+      padding: 50px 40px 50px 60px;
+      transform-origin: right center;
+      transform: rotateY(-2deg);
+    }
+
+    /* Right page */
+    .page-right {
+      position: absolute;
+      right: 0;
+      top: 0;
+      width: 48%;
+      height: 100%;
+      background: linear-gradient(to left, #1a1410 0%, #2d2419 20%, #3d3428 100%);
+      border: 2px solid #5a4a35;
+      border-left: none;
+      box-shadow:
+        inset 15px 0 30px rgba(0, 0, 0, 0.5),
+        10px 10px 40px rgba(0, 0, 0, 0.6);
+      padding: 50px 60px 50px 40px;
+      transform-origin: left center;
+      transform: rotateY(2deg);
+    }
+
+    /* Book spine in center */
+    .book-spine {
+      position: absolute;
+      left: 48%;
+      top: 0;
+      width: 4%;
+      height: 100%;
+      background: linear-gradient(to bottom,
+        #1a1410 0%,
+        #2d2419 10%,
+        #3d3428 50%,
+        #2d2419 90%,
+        #1a1410 100%);
+      box-shadow:
+        inset 0 0 20px rgba(0, 0, 0, 0.8),
+        0 0 30px rgba(0, 0, 0, 0.8);
+      z-index: 10;
+      border-top: 2px solid #5a4a35;
+      border-bottom: 2px solid #5a4a35;
+    }
+
+    /* Leather binding texture on spine */
+    .spine-bands {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+    }
+
+    .spine-band {
+      position: absolute;
+      width: 100%;
+      height: 8px;
+      background: #4a3f2f;
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6);
+    }
+
+    .spine-band:nth-child(1) { top: 15%; }
+    .spine-band:nth-child(2) { top: 35%; }
+    .spine-band:nth-child(3) { top: 55%; }
+    .spine-band:nth-child(4) { top: 75%; }
+
+    /* Page content styling */
+    .page-content {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      text-align: center;
+      position: relative;
+    }
+
+    /* Illuminated drop cap */
+    .drop-cap {
+      font-family: 'Cinzel', serif;
+      font-size: 120px;
+      font-weight: 600;
+      background: linear-gradient(135deg, #d4a574 0%, #f5d89e 50%, #d4a574 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 0.8;
+      margin-bottom: 20px;
+      filter: drop-shadow(0 4px 8px rgba(212, 165, 116, 0.4));
+      animation: shimmer 4s ease-in-out infinite;
+    }
+
+    @keyframes shimmer {
+      0%, 100% { filter: drop-shadow(0 4px 8px rgba(212, 165, 116, 0.4)) brightness(1); }
+      50% { filter: drop-shadow(0 6px 12px rgba(212, 165, 116, 0.6)) brightness(1.2); }
+    }
+
+    .title-arabic {
+      font-size: 72px;
+      font-weight: bold;
+      color: #c9b896;
+      letter-spacing: 0.08em;
+      margin-bottom: 16px;
+      text-shadow: 0 2px 8px rgba(201, 184, 150, 0.3);
+    }
+
+    .title-english {
+      font-family: 'Cinzel', serif;
+      font-size: 42px;
+      font-weight: 600;
+      color: #8b7355;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 30px;
+    }
+
+    /* Manuscript line decorations */
+    .manuscript-line {
+      width: 80%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #d4a574, transparent);
+      margin: 20px auto;
+      position: relative;
+    }
+
+    .manuscript-line::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 8px;
+      height: 8px;
+      background: #d4a574;
+      border-radius: 50%;
+    }
+
+    .description {
+      font-size: 20px;
+      color: #c9b896;
+      line-height: 1.6;
+      max-width: 90%;
+      margin: 0 auto 12px;
+      opacity: 0.9;
+    }
+
+    .description-sub {
+      font-family: 'Cinzel', serif;
+      font-size: 14px;
+      color: #8b7355;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      opacity: 0.7;
+    }
+
+    /* Aged page edges */
+    .page-edge {
+      position: absolute;
+      pointer-events: none;
+    }
+
+    .page-edge.top {
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 30px;
+      background: linear-gradient(to bottom, rgba(26, 20, 16, 0.6), transparent);
+    }
+
+    .page-edge.bottom {
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 30px;
+      background: linear-gradient(to top, rgba(26, 20, 16, 0.6), transparent);
+    }
+
+    /* Page numbers (folio) */
+    .folio {
+      position: absolute;
+      bottom: 20px;
+      font-family: 'Cinzel', serif;
+      font-size: 14px;
+      color: #8b7355;
+      opacity: 0.5;
+    }
+
+    .page-left .folio { left: 60px; }
+    .page-right .folio { right: 60px; }
+
+    /* Enter button on right page */
+    .enter-button {
+      margin-top: 30px;
+      padding: 14px 42px;
+      background: transparent;
+      border: 2px solid #d4a574;
+      color: #d4a574;
+      font-family: 'Cinzel', serif;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.4s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .enter-button::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, #d4a574, #f5d89e);
+      transform: translateX(-100%);
+      transition: transform 0.4s ease;
+    }
+
+    .enter-button:hover {
+      color: #1a1410;
+      box-shadow: 0 0 20px rgba(212, 165, 116, 0.5);
+    }
+
+    .enter-button:hover::before {
+      transform: translateX(0);
+    }
+
+    .enter-button span {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Paper texture overlay */
+    .paper-texture {
+      position: absolute;
+      inset: 0;
+      background-image:
+        repeating-linear-gradient(0deg, transparent, transparent 1px, rgba(201, 184, 150, 0.03) 1px, rgba(201, 184, 150, 0.03) 2px);
+      pointer-events: none;
+      opacity: 0.6;
+    }
+
+    /* Corner wear effects */
+    .corner-wear {
+      position: absolute;
+      width: 40px;
+      height: 40px;
+      background: radial-gradient(circle at top left, transparent 60%, rgba(26, 20, 16, 0.4) 100%);
+      pointer-events: none;
+    }
+
+    .page-left .corner-wear.top-left { top: 0; left: 0; }
+    .page-left .corner-wear.bottom-left { bottom: 0; left: 0; transform: rotate(-90deg); }
+    .page-right .corner-wear.top-right { top: 0; right: 0; transform: rotate(90deg); }
+    .page-right .corner-wear.bottom-right { bottom: 0; right: 0; transform: rotate(180deg); }
+  </style>
+</head>
+<body>
+  <div class="book-container">
+    <!-- Left page -->
+    <div class="page-left">
+      <div class="paper-texture"></div>
+      <div class="page-edge top"></div>
+      <div class="page-edge bottom"></div>
+      <div class="corner-wear top-left"></div>
+      <div class="corner-wear bottom-left"></div>
+
+      <div class="page-content">
+        <div class="drop-cap">P</div>
+        <p class="description">حكمة الأجداد<br/>محفوظة في المخطوطات</p>
+        <div class="manuscript-line"></div>
+        <p class="description-sub">Ancient Wisdom<br/>in Timeless Manuscripts</p>
+      </div>
+
+      <div class="folio">I</div>
+    </div>
+
+    <!-- Book spine -->
+    <div class="book-spine">
+      <div class="spine-bands">
+        <div class="spine-band"></div>
+        <div class="spine-band"></div>
+        <div class="spine-band"></div>
+        <div class="spine-band"></div>
+      </div>
+    </div>
+
+    <!-- Right page -->
+    <div class="page-right">
+      <div class="paper-texture"></div>
+      <div class="page-edge top"></div>
+      <div class="page-edge bottom"></div>
+      <div class="corner-wear top-right"></div>
+      <div class="corner-wear bottom-right"></div>
+
+      <div class="page-content">
+        <h1 class="title-arabic">بالعربي</h1>
+        <h2 class="title-english">Poetry</h2>
+        <div class="manuscript-line"></div>
+        <p class="description">كل قصيدة كنز من التراث</p>
+        <p class="description-sub">Every poem a treasure</p>
+        <button class="enter-button">
+          <span>ENTER</span>
+        </button>
+      </div>
+
+      <div class="folio">II</div>
+    </div>
+  </div>
+</body>
+</html>

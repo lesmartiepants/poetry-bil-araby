@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Option 3: Live Calligraphy Writing (UPDATED)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body {
+      background: #1c1917;
+      color: #fafaf9;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      overflow: hidden;
+      height: 100vh;
+      position: relative;
+    }
+
+    /* Canvas for live calligraphy writing */
+    .calligraphy-canvas {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      gap: 2rem;
+    }
+
+    .live-writing {
+      position: relative;
+      width: 100%;
+      max-width: 900px;
+      height: auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2rem;
+    }
+
+    /* SVG Calligraphy Container */
+    .arabic-calligraphy {
+      width: 100%;
+      max-width: 800px;
+      height: auto;
+      opacity: 0;
+      animation: verseAppear 1s ease-out 0.5s forwards;
+    }
+
+    @keyframes verseAppear {
+      to {
+        opacity: 1;
+      }
+    }
+
+    /* Translation reveal */
+    .translation {
+      font-family: Georgia, serif;
+      font-size: clamp(1.25rem, 3vw, 2rem);
+      font-style: italic;
+      font-weight: 300;
+      text-align: center;
+      color: rgba(250, 250, 249, 0.6);
+      opacity: 0;
+      animation: fadeIn 1s ease-out 3.8s forwards;
+    }
+
+    @keyframes fadeIn {
+      to {
+        opacity: 1;
+      }
+    }
+
+    /* Content overlay */
+    .content {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    .brand-lockup {
+      position: absolute;
+      top: 3rem;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      flex-direction: row-reverse;
+      align-items: baseline;
+      gap: 0.75rem;
+      opacity: 0;
+      animation: fadeIn 0.8s ease-out 0.3s forwards;
+    }
+
+    .brand-ar {
+      font-family: 'Amiri', serif;
+      font-size: clamp(1.5rem, 4vw, 2rem);
+      font-weight: 700;
+      color: #fbbf24;
+    }
+
+    .brand-en {
+      font-size: clamp(1.75rem, 4.5vw, 2.5rem);
+      font-weight: 200;
+      letter-spacing: -0.02em;
+      text-transform: lowercase;
+      color: #fafaf9;
+    }
+
+    .cta-container {
+      position: absolute;
+      bottom: 4rem;
+      left: 50%;
+      transform: translateX(-50%);
+      opacity: 0;
+      animation: fadeInUp 1s ease-out 4.5s forwards;
+    }
+
+    @keyframes fadeInUp {
+      from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
+      }
+    }
+
+    .cta-button {
+      position: relative;
+      padding: 1rem 2.5rem;
+      background: transparent;
+      border: 1px solid rgba(251, 191, 36, 0.4);
+      color: #fafaf9;
+      font-size: 0.875rem;
+      cursor: pointer;
+      overflow: hidden;
+      transition: all 0.4s ease;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      backdrop-filter: blur(10px);
+    }
+
+    .cta-button:hover {
+      border-color: #fbbf24;
+      background: rgba(251, 191, 36, 0.1);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(251, 191, 36, 0.3);
+    }
+
+    .cta-button::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      background: radial-gradient(circle, rgba(251, 191, 36, 0.3) 0%, transparent 70%);
+      transform: translate(-50%, -50%);
+      transition: width 0.6s, height 0.6s;
+      border-radius: 50%;
+    }
+
+    .cta-button:hover::before {
+      width: 300px;
+      height: 300px;
+    }
+
+    .cta-ar {
+      display: block;
+      font-family: 'Amiri', serif;
+      font-size: 0.875rem;
+      opacity: 0.7;
+      margin-top: 0.5rem;
+      letter-spacing: 0.05em;
+    }
+
+    /* Subtle ink wash background */
+    .ink-wash {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 30% 40%, rgba(251, 191, 36, 0.05) 0%, transparent 50%),
+        radial-gradient(ellipse at 70% 60%, rgba(251, 191, 36, 0.03) 0%, transparent 50%);
+      pointer-events: none;
+      opacity: 0;
+      animation: washReveal 3s ease-out 1s forwards;
+    }
+
+    @keyframes washReveal {
+      to {
+        opacity: 1;
+      }
+    }
+
+    /* Floating brush particles */
+    .brush-particle {
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      background: radial-gradient(circle, rgba(251, 191, 36, 0.4) 0%, transparent 70%);
+      border-radius: 50%;
+      opacity: 0;
+      animation: particleDrift 6s ease-in-out infinite;
+    }
+
+    @keyframes particleDrift {
+      0%, 100% {
+        opacity: 0;
+        transform: translateY(0) translateX(0);
+      }
+      10% {
+        opacity: 0.6;
+      }
+      50% {
+        opacity: 0.8;
+        transform: translateY(-80px) translateX(30px);
+      }
+      90% {
+        opacity: 0.4;
+      }
+    }
+
+    .brush-particle:nth-child(1) { top: 60%; left: 20%; animation-delay: 0s; }
+    .brush-particle:nth-child(2) { top: 70%; right: 25%; animation-delay: 1.5s; }
+    .brush-particle:nth-child(3) { top: 55%; left: 70%; animation-delay: 3s; }
+    .brush-particle:nth-child(4) { top: 65%; right: 40%; animation-delay: 4.5s; }
+  </style>
+</head>
+<body>
+  <!-- Ink wash background -->
+  <div class="ink-wash"></div>
+
+  <!-- Floating brush particles -->
+  <div class="brush-particle"></div>
+  <div class="brush-particle"></div>
+  <div class="brush-particle"></div>
+  <div class="brush-particle"></div>
+
+  <!-- Main Content -->
+  <div class="content">
+    <!-- Brand Lockup (top) -->
+    <div class="brand-lockup">
+      <div class="brand-ar">بالعربي</div>
+      <div class="brand-en">poetry</div>
+    </div>
+
+    <!-- Live Calligraphy Canvas -->
+    <div class="calligraphy-canvas">
+      <div class="live-writing">
+        <!-- Arabic verse with animated gradient reveal (RTL) -->
+        <svg viewBox="0 0 900 250" class="arabic-calligraphy" preserveAspectRatio="xMidYMid meet">
+          <defs>
+            <!-- Animated gradient mask for RTL reveal -->
+            <linearGradient id="revealGradient" x1="100%" y1="0%" x2="0%" y2="0%">
+              <!-- Leading edge (opaque) -->
+              <stop offset="0%" stop-color="white" stop-opacity="1">
+                <animate attributeName="offset"
+                         from="-0.3" to="1.0"
+                         dur="3s"
+                         begin="0s"
+                         fill="freeze"/>
+              </stop>
+              <!-- Trailing edge (transparent) -->
+              <stop offset="20%" stop-color="white" stop-opacity="0">
+                <animate attributeName="offset"
+                         from="0" to="1.3"
+                         dur="3s"
+                         begin="0s"
+                         fill="freeze"/>
+              </stop>
+            </linearGradient>
+
+            <!-- Glow gradient (follows reveal wave) -->
+            <linearGradient id="glowGradient" x1="100%" y1="0%" x2="0%" y2="0%">
+              <stop offset="0%" stop-color="#fbbf24" stop-opacity="0"/>
+              <stop offset="10%" stop-color="#fbbf24" stop-opacity="0.8">
+                <animate attributeName="offset"
+                         from="0.1" to="1.1"
+                         dur="3s"
+                         begin="0s"
+                         fill="freeze"/>
+              </stop>
+              <stop offset="30%" stop-color="#fbbf24" stop-opacity="0">
+                <animate attributeName="offset"
+                         from="0.3" to="1.3"
+                         dur="3s"
+                         begin="0s"
+                         fill="freeze"/>
+              </stop>
+            </linearGradient>
+
+            <!-- Glow filter -->
+            <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+              <feGaussianBlur stdDeviation="15" result="blur"/>
+              <feMerge>
+                <feMergeNode in="blur"/>
+                <feMergeNode in="SourceGraphic"/>
+              </feMerge>
+            </filter>
+          </defs>
+
+          <!-- Glow layer (behind, gold) -->
+          <text x="50%" y="50%"
+                text-anchor="middle"
+                dominant-baseline="central"
+                font-family="Amiri, serif"
+                font-size="140"
+                font-weight="700"
+                direction="rtl"
+                fill="url(#glowGradient)"
+                filter="url(#glow)">الشعر</text>
+
+          <!-- Main text layer (white reveal) -->
+          <text x="50%" y="50%"
+                text-anchor="middle"
+                dominant-baseline="central"
+                font-family="Amiri, serif"
+                font-size="140"
+                font-weight="700"
+                direction="rtl"
+                fill="url(#revealGradient)">الشعر</text>
+        </svg>
+
+        <!-- Translation -->
+        <div class="translation">
+          Poetry — The art of the soul
+        </div>
+      </div>
+    </div>
+
+    <!-- Call to Action (bottom) -->
+    <div class="cta-container">
+      <button class="cta-button" onclick="alert('Entering the tradition...')">
+        <span>Witness the Tradition</span>
+        <span class="cta-ar">شاهد التقليد</span>
+      </button>
+    </div>
+  </div>
+</body>
+</html>

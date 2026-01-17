@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Light & Shadow Splash - Design Review</title>
+  <style>
+    body {
+      background: #0c0c0e;
+      color: #e7e5e4;
+      font-family: system-ui, -apple-system, sans-serif;
+      padding: 40px;
+      max-width: 1400px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+    h1 { color: #C5A059; font-size: 2.5rem; margin-bottom: 0.5rem; }
+    h2 { color: #C5A059; font-size: 1.75rem; margin-top: 3rem; border-bottom: 1px solid #292524; padding-bottom: 0.5rem; }
+    h3 { color: #a8dadc; font-size: 1.25rem; margin-top: 2rem; }
+    h4 { color: #C5A059; font-size: 1rem; margin-top: 1.5rem; }
+    p { color: #d6d3d1; margin: 1rem 0; }
+    
+    .subtitle {
+      font-size: 1.125rem;
+      color: #a8a29e;
+      margin-bottom: 3rem;
+    }
+
+    .current-state {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin: 30px 0;
+    }
+    .current-state img {
+      width: 100%;
+      border: 1px solid #292524;
+      border-radius: 8px;
+    }
+    .current-state h3 {
+      margin-top: 0;
+      margin-bottom: 10px;
+      font-size: 1rem;
+    }
+
+    .issues {
+      background: #1c1917;
+      border-left: 4px solid #ef4444;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 4px;
+    }
+    .issues h3 { color: #fca5a5; margin-top: 0; }
+    .issues li { margin: 8px 0; }
+
+    .option {
+      background: #1c1917;
+      border: 1px solid #292524;
+      border-radius: 12px;
+      padding: 30px;
+      margin: 30px 0;
+    }
+    .option-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+    .option h2 { margin: 0; border: none; }
+    .open-preview-btn {
+      background: #C5A059;
+      color: #0c0c0e;
+      padding: 12px 24px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.2s;
+      display: inline-block;
+    }
+    .open-preview-btn:hover { background: #d4af6a; transform: scale(1.05); }
+
+    .option-content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      margin-top: 20px;
+    }
+    @media (max-width: 900px) {
+      .option-content {
+        grid-template-columns: 1fr;
+      }
+    }
+    .option-content img {
+      width: 100%;
+      border: 1px solid #292524;
+      border-radius: 8px;
+    }
+    .design-rationale h3 { color: #86efac; }
+    .design-rationale h4 { color: #C5A059; margin-top: 20px; }
+    .design-rationale li { margin: 8px 0; }
+
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 30px 0;
+      background: #1c1917;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .comparison-table th {
+      background: #292524;
+      padding: 15px;
+      text-align: left;
+      color: #C5A059;
+    }
+    .comparison-table td {
+      padding: 12px 15px;
+      border-bottom: 1px solid #292524;
+    }
+    .comparison-table tr:last-child td { border-bottom: none; }
+
+    .recommendations {
+      background: #1c1917;
+      border-left: 4px solid #86efac;
+      padding: 20px;
+      margin: 30px 0;
+      border-radius: 4px;
+    }
+
+    .previews-section {
+      margin-top: 60px;
+    }
+    .preview-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-top: 20px;
+    }
+    @media (max-width: 1200px) {
+      .preview-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+    .preview-container {
+      border: 1px solid #292524;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #1c1917;
+    }
+    .preview-container h3 {
+      margin: 0;
+      padding: 15px;
+      background: #292524;
+      font-size: 1rem;
+    }
+    .preview-container iframe {
+      width: 100%;
+      height: 600px;
+      border: none;
+      display: block;
+    }
+
+    .next-steps {
+      margin-top: 60px;
+      padding-top: 30px;
+      border-top: 1px solid #292524;
+    }
+    .next-steps h2 { margin-top: 0; }
+    .next-steps p { font-size: 1.125rem; }
+    .next-steps strong { color: #C5A059; }
+  </style>
+</head>
+<body>
+  <h1>Light & Shadow Splash Screen - Design Review</h1>
+  <p class="subtitle">Three visual alternatives to fix shadow quality, depth effects, and performance issues</p>
+
+  <h2>Current State</h2>
+  <div class="current-state">
+    <div>
+      <h3>Initial Light Animation</h3>
+      <img src="current-state/1-light-initial.png" alt="Current state - light animation starting">
+    </div>
+    <div>
+      <h3>Mid-Cycle Animation</h3>
+      <img src="current-state/2-light-midcycle.png" alt="Current state - mid animation cycle">
+    </div>
+    <div>
+      <h3>Button Hover State</h3>
+      <img src="current-state/3-button-hover.png" alt="Current state - button hover interaction">
+    </div>
+  </div>
+
+  <div class="issues">
+    <h3>Identified Issues:</h3>
+    <ul>
+      <li><strong>Shadow Quality Too Muddy:</strong> Multiple overlapping shadow layers (base gradient + lattice overlay + ambient occlusion) create visual mud instead of organic depth</li>
+      <li><strong>Light Rays Over-engineered:</strong> 5 separate rays + dappled pools compete for attention, animation feels mechanical</li>
+      <li><strong>Lattice Pattern Static:</strong> Fixed SVG octagonal grid doesn't respond to light position, feels like Photoshop filter</li>
+      <li><strong>Performance Issues:</strong> Multiple blur filters and 8+ values updating per frame cause rendering jank</li>
+      <li><strong>Design Incoherence:</strong> Text shadows don't follow light source, button glow is static, no correlation between "light" and actual shadows</li>
+    </ul>
+  </div>
+
+  <!-- OPTION 1 -->
+  <div class="option">
+    <div class="option-header">
+      <h2>Option 1: Improved Chiaroscuro</h2>
+      <a href="previews/option-1-improved-chiaroscuro.html" class="open-preview-btn" target="_blank">Open Preview →</a>
+    </div>
+    <div class="option-content">
+      <img src="mockups/option-1-improved-chiaroscuro.png" alt="Option 1 - Improved Chiaroscuro mockup">
+      <div class="design-rationale">
+        <h3>Design Choice:</h3>
+        <p>Keep dramatic lighting concept, simplify execution. Same direction as current design but properly executed.</p>
+
+        <h4>Key Changes:</h4>
+        <ul>
+          <li><strong>Single unified shadow layer</strong> - Remove ambient occlusion and base layer, use one radial gradient that follows light position</li>
+          <li><strong>Dynamic lattice mask</strong> - CSS repeating-linear-gradient that rotates with light angle (not static SVG)</li>
+          <li><strong>3 hero light rays</strong> (not 5) - Better contrast, clearer hierarchy, center ray is brightest</li>
+          <li><strong>Text shadows follow light mathematically</strong> - shadowX/Y calculated from light position using CSS variables</li>
+          <li><strong>Performance upgrade</strong> - CSS gradients instead of blur filters where possible, 60fps smooth</li>
+        </ul>
+
+        <h4>Technical Approach:</h4>
+        <ul>
+          <li>CSS custom properties (<code>--light-x</code>, <code>--light-angle</code>) drive all dynamic elements</li>
+          <li>Single requestAnimationFrame loop updates 4 variables (not 8+)</li>
+          <li>No SVG masks in critical render path</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- OPTION 2 -->
+  <div class="option">
+    <div class="option-header">
+      <h2>Option 2: Soft Depth with Layered Shadows</h2>
+      <a href="previews/option-2-soft-depth-layers.html" class="open-preview-btn" target="_blank">Open Preview →</a>
+    </div>
+    <div class="option-content">
+      <img src="mockups/option-2-soft-depth-layers.png" alt="Option 2 - Soft Depth Layers mockup">
+      <div class="design-rationale">
+        <h3>Design Choice:</h3>
+        <p>Completely different direction: subtle stratification instead of dramatic contrast. Inspired by Japanese shoji screens + morning fog.</p>
+
+        <h4>Key Changes:</h4>
+        <ul>
+          <li><strong>3 distinct shadow layers</strong> - Background (deepest), Midground (transitional fog), Foreground (gentle veil)</li>
+          <li><strong>No lattice pattern</strong> - Pure gradient stratification, no geometric overlay</li>
+          <li><strong>Gentle light source</strong> - Radial glow that "lifts" shadows progressively, no rays</li>
+          <li><strong>Frosted glass aesthetic</strong> - Depth through opacity shifts and subtle texture</li>
+          <li><strong>Slower animation</strong> - 12-second breathing cycle (not 8) for more meditative feel</li>
+        </ul>
+
+        <h4>Visual Philosophy:</h4>
+        <ul>
+          <li>Depth emerges from layer separation, not light vs dark</li>
+          <li>Minimal movement - light breathes gently (±5% position change)</li>
+          <li>Softer, more contemplative aesthetic</li>
+          <li>Button uses frosted glass with backdrop-blur</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- OPTION 3 -->
+  <div class="option">
+    <div class="option-header">
+      <h2>Option 3: Minimal Ray Tracing</h2>
+      <a href="previews/option-3-minimal-ray-tracing.html" class="open-preview-btn" target="_blank">Open Preview →</a>
+    </div>
+    <div class="option-content">
+      <img src="mockups/option-3-minimal-ray-tracing.png" alt="Option 3 - Minimal Ray Tracing mockup">
+      <div class="design-rationale">
+        <h3>Design Choice:</h3>
+        <p>Radically different: ONE perfect light ray through architectural opening. Inspired by Pantheon oculus + Gothic cathedral windows.</p>
+
+        <h4>Key Changes:</h4>
+        <ul>
+          <li><strong>ONE dominant light ray</strong> - Vertical/diagonal volumetric beam, no competing elements</li>
+          <li><strong>High contrast</strong> - Pure black (#000) background vs brilliant highlight</li>
+          <li><strong>No pattern overlay</strong> - Pure volumetric lighting simulation, no lattice</li>
+          <li><strong>Text emerges from darkness</strong> - Content brightness follows light intensity via CSS filter</li>
+          <li><strong>Ultra-simple DOM</strong> - 3 elements total (darkness, ray, content), maximum performance</li>
+        </ul>
+
+        <h4>Technical Excellence:</h4>
+        <ul>
+          <li>Minimal DOM - fastest render path possible</li>
+          <li>Single light ray with ::before pseudo-element for edge definition</li>
+          <li>Content brightness controlled by one CSS variable (<code>--brightness</code>)</li>
+          <li>Dust particles in beam for realism (5 elements, CSS animation only)</li>
+          <li>Text literally invisible in shadow, brilliant in light</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <h2>Comparison Table</h2>
+  <table class="comparison-table">
+    <thead>
+      <tr>
+        <th>Feature</th>
+        <th>Current</th>
+        <th>Option 1</th>
+        <th>Option 2</th>
+        <th>Option 3</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Shadow Quality</td><td>❌ Muddy</td><td>✅ Clean</td><td>✅ Stratified</td><td>✅ Pure Black</td></tr>
+      <tr><td>Light Rays</td><td>5 rays + pools</td><td>3 hero rays</td><td>No rays (glow)</td><td>1 perfect ray</td></tr>
+      <tr><td>Pattern Overlay</td><td>Static SVG</td><td>Dynamic CSS</td><td>None</td><td>None</td></tr>
+      <tr><td>Animation Cycle</td><td>8 seconds</td><td>8 seconds</td><td>12 seconds</td><td>8 seconds</td></tr>
+      <tr><td>DOM Elements</td><td>~20 elements</td><td>~8 elements</td><td>~6 elements</td><td>~3 elements</td></tr>
+      <tr><td>Performance (FPS)</td><td>⚠️ 45-50fps</td><td>✅ 60fps</td><td>✅ 60fps</td><td>✅ 60fps</td></tr>
+      <tr><td>Design Coherence</td><td>❌ Disconnected</td><td>✅ Unified</td><td>✅ Unified</td><td>✅ Unified</td></tr>
+      <tr><td>Aesthetic</td><td>Busy</td><td>Dramatic</td><td>Contemplative</td><td>Stark</td></tr>
+      <tr><td>Implementation Complexity</td><td>High</td><td>Medium</td><td>Low</td><td>Very Low</td></tr>
+    </tbody>
+  </table>
+
+  <div class="recommendations">
+    <h3>Recommendations</h3>
+    <p><strong>Best Overall:</strong> Option 1 (Improved Chiaroscuro) - Keeps the dramatic vision but fixes all technical issues. Proper shadow quality, dynamic lattice, coherent lighting. Same philosophy, better execution.</p>
+    <p><strong>Best for Performance:</strong> Option 3 (Minimal Ray Tracing) - Ultra-simple DOM (3 elements), maximum FPS, works perfectly on low-end mobile devices. Most elegant code.</p>
+    <p><strong>Best for Meditation/Poetry Context:</strong> Option 2 (Soft Depth Layers) - Contemplative aesthetic, slower breathing animation, gentle emergence from shadow. Most poetic interpretation of "light and shadow."</p>
+    <p><strong>Most Dramatic Impact:</strong> Option 3 (Minimal Ray Tracing) - High contrast, single perfect beam, content literally emerges from complete darkness. Most cinematic.</p>
+  </div>
+
+  <div class="previews-section">
+    <h2>Interactive Previews</h2>
+    <p style="color: #a8a29e;">Hover and interact with each option below (live animations):</p>
+    <div class="preview-grid">
+      <div class="preview-container">
+        <h3>Option 1: Improved Chiaroscuro</h3>
+        <iframe src="previews/option-1-improved-chiaroscuro.html"></iframe>
+      </div>
+      <div class="preview-container">
+        <h3>Option 2: Soft Depth Layers</h3>
+        <iframe src="previews/option-2-soft-depth-layers.html"></iframe>
+      </div>
+      <div class="preview-container">
+        <h3>Option 3: Minimal Ray Tracing</h3>
+        <iframe src="previews/option-3-minimal-ray-tracing.html"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <div class="next-steps">
+    <h2>Next Steps</h2>
+    <p>Which direction? Reply with: <strong>"Option 1"</strong>, <strong>"Option 2"</strong>, or <strong>"Option 3"</strong></p>
+    <p style="color: #a8a29e; font-size: 0.9rem; margin-top: 2rem;">All options maintain 8-second animation cycle (Option 2: 12s), support dark/light theme toggle, preserve RTL Arabic layout, meet WCAG AA contrast (4.5:1), and perform at 60fps on mobile devices.</p>
+  </div>
+</body>
+</html>

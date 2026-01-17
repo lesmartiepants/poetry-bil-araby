@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Option 3: Minimal Constellation - Sparse & Poetic</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #09090b;
+      color: #ffffff;
+      overflow: hidden;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .particle-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .content {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      max-width: 700px;
+      padding: 40px;
+    }
+
+    /* Original brand title - EXACT specs from splash-particles.jsx */
+    .logo-container {
+      display: flex;
+      flex-direction: row-reverse;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 64px;
+      letter-spacing: 0.02em;
+    }
+
+    .logo {
+      display: flex;
+      align-items: flex-end; /* baseline alignment */
+      gap: 24px;
+    }
+
+    .logo-ar {
+      font-family: 'Amiri', serif;
+      font-size: 72px; /* text-6xl md:text-7xl equivalent */
+      font-weight: 700; /* font-bold */
+      color: #ffffff;
+      margin-bottom: 8px; /* mb-2 offset for baseline */
+    }
+
+    .logo-en {
+      font-size: 84px; /* text-7xl md:text-8xl equivalent */
+      font-weight: 300; /* font-light */
+      color: #ffffff;
+      letter-spacing: -0.05em; /* tracking-tighter */
+      text-transform: lowercase;
+    }
+
+    /* Minimal subtitle */
+    .subtitle {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.6em;
+      color: #525252;
+      margin-bottom: 96px;
+      font-weight: 400;
+    }
+
+    /* Pure text link - no button chrome */
+    .cta-link {
+      display: inline-block;
+      font-size: 15px;
+      text-transform: lowercase;
+      letter-spacing: 0.2em;
+      font-weight: 300;
+      color: #a1a1a1;
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.4s ease;
+      position: relative;
+      padding: 8px 0;
+    }
+
+    .cta-link::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      width: 0;
+      height: 1px;
+      background: #fafafa;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      transform: translateX(-50%);
+    }
+
+    .cta-link:hover {
+      color: #fafafa;
+    }
+
+    .cta-link:hover::after {
+      width: 100%;
+    }
+
+    /* Subtle hint */
+    .hint {
+      margin-top: 80px;
+      font-size: 9px;
+      letter-spacing: 0.4em;
+      color: #3f3f46;
+      text-transform: uppercase;
+      font-weight: 400;
+    }
+
+    /* Minimalist theme toggle */
+    .theme-toggle {
+      position: fixed;
+      top: 40px;
+      right: 40px;
+      width: 40px;
+      height: 40px;
+      border: none;
+      background: transparent;
+      color: #525252;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+    }
+
+    .theme-toggle:hover {
+      color: #fafafa;
+    }
+
+    /* Connection lines for constellation effect */
+    .connection-line {
+      position: absolute;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+      pointer-events: none;
+      animation: connectionPulse 3s ease-in-out infinite;
+    }
+
+    @keyframes connectionPulse {
+      0%, 100% { opacity: 0.2; }
+      50% { opacity: 0.5; }
+    }
+
+    @keyframes starTwinkle {
+      0%, 100% { opacity: 0.4; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.5); }
+    }
+  </style>
+</head>
+<body>
+  <!-- Particle canvas -->
+  <canvas id="particleCanvas" class="particle-canvas"></canvas>
+
+  <!-- Theme toggle -->
+  <button class="theme-toggle" aria-label="Toggle theme">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </button>
+
+  <!-- Content -->
+  <div class="content">
+    <div class="logo-container">
+      <h1 class="logo">
+        <span class="logo-ar">بالعربي</span>
+        <span class="logo-en">poetry</span>
+      </h1>
+    </div>
+
+    <div class="subtitle">
+      Verses Connecting Across Time and Space
+    </div>
+
+    <a href="#" class="cta-link">
+      enter →
+    </a>
+
+    <div class="hint">
+      Move your cursor to disturb the field
+    </div>
+  </div>
+
+  <script>
+    // Minimal constellation system - fewer, larger particles
+    const canvas = document.getElementById('particleCanvas');
+    const ctx = canvas.getContext('2d');
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const particles = [];
+    const particleCount = 150; // Much fewer particles
+    const mouse = { x: canvas.width / 2, y: canvas.height / 2 };
+
+    // Generate sparse constellation pattern
+    for (let i = 0; i < particleCount; i++) {
+      const curve = Math.floor(Math.random() * 3);
+      const curves = [
+        { x: 0.65, y: 0.5, radius: 0.10 },
+        { x: 0.5, y: 0.5, radius: 0.08 },
+        { x: 0.35, y: 0.5, radius: 0.12 }
+      ];
+
+      const c = curves[curve];
+      const angle = Math.random() * Math.PI * 2;
+      const distance = Math.random() * c.radius;
+
+      particles.push({
+        x: (c.x + Math.cos(angle) * distance) * canvas.width,
+        y: (c.y + Math.sin(angle) * distance) * canvas.height,
+        originX: (c.x + Math.cos(angle) * distance) * canvas.width,
+        originY: (c.y + Math.sin(angle) * distance) * canvas.height,
+        vx: 0,
+        vy: 0,
+        radius: Math.random() * 1.2 + 0.8, // Larger particles
+        opacity: Math.random() * 0.3 + 0.5,
+        twinklePhase: Math.random() * Math.PI * 2,
+        twinkleSpeed: Math.random() * 0.5 + 0.5
+      });
+    }
+
+    // Mouse tracking
+    window.addEventListener('mousemove', (e) => {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+    });
+
+    let time = 0;
+
+    // Animation loop - minimal and elegant
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      time += 0.005;
+
+      // Draw connection lines first (behind particles)
+      particles.forEach((p, i) => {
+        const nearby = particles
+          .slice(i + 1)
+          .filter(p2 => {
+            const dx = p2.x - p.x;
+            const dy = p2.y - p.y;
+            const dist = Math.sqrt(dx * dx + dy * dy);
+            return dist < 180;
+          })
+          .slice(0, 2); // Only connect to 2 nearest
+
+        nearby.forEach(p2 => {
+          const dx = p2.x - p.x;
+          const dy = p2.y - p.y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          const opacity = (1 - dist / 180) * 0.15;
+
+          ctx.beginPath();
+          ctx.strokeStyle = `rgba(255, 255, 255, ${opacity})`;
+          ctx.lineWidth = 0.5;
+          ctx.moveTo(p.x, p.y);
+          ctx.lineTo(p2.x, p2.y);
+          ctx.stroke();
+        });
+      });
+
+      // Draw particles
+      particles.forEach((p, i) => {
+        // Mouse interaction - gentle pull
+        const dx = mouse.x - p.x;
+        const dy = mouse.y - p.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        const minDistance = 200;
+
+        if (distance < minDistance) {
+          const force = (minDistance - distance) / minDistance * 0.3;
+          p.vx += (dx / distance) * force;
+          p.vy += (dy / distance) * force;
+        }
+
+        // Return to origin
+        p.vx += (p.originX - p.x) * 0.0005;
+        p.vy += (p.originY - p.y) * 0.0005;
+
+        // Apply velocity
+        p.vx *= 0.97;
+        p.vy *= 0.97;
+        p.x += p.vx;
+        p.y += p.vy;
+
+        // Subtle twinkling
+        const twinkle = Math.sin(time * p.twinkleSpeed + p.twinklePhase) * 0.2 + 0.8;
+
+        // Draw star-like particle
+        ctx.beginPath();
+        const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius * 2.5);
+        gradient.addColorStop(0, `rgba(250, 250, 250, ${p.opacity * twinkle})`);
+        gradient.addColorStop(0.4, `rgba(250, 250, 250, ${p.opacity * twinkle * 0.4})`);
+        gradient.addColorStop(1, 'rgba(250, 250, 250, 0)');
+        ctx.fillStyle = gradient;
+        ctx.arc(p.x, p.y, p.radius * 2.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Core bright point
+        ctx.beginPath();
+        ctx.fillStyle = `rgba(255, 255, 255, ${p.opacity * twinkle})`;
+        ctx.arc(p.x, p.y, p.radius * 0.3, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      requestAnimationFrame(animate);
+    }
+
+    animate();
+
+    // Resize handler
+    window.addEventListener('resize', () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    });
+  </script>
+</body>
+</html>

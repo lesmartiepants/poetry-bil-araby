@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Option 3: Sacred Grid - Geometric Splash</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cinzel:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Cinzel', serif;
+      background: #0a0a0c;
+      color: #e7e5e4;
+      min-height: 100vh;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Sacred geometry grid - precise mathematical layout */
+    .sacred-grid {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.18;
+    }
+
+    .sacred-grid svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Golden ratio spiral overlay */
+    .golden-spiral {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 1200px;
+      height: 1200px;
+      opacity: 0.12;
+      pointer-events: none;
+    }
+
+    /* Vignette */
+    .vignette {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at center, transparent 25%, rgba(10, 10, 12, 0.75) 88%);
+      pointer-events: none;
+    }
+
+    /* Content container - centered in golden ratio */
+    .content {
+      position: relative;
+      z-index: 10;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    /* Logo - precise geometric star */
+    .logo-star {
+      width: 160px;
+      height: 160px;
+      margin-bottom: 2.75rem;
+      filter: drop-shadow(0 0 35px rgba(197, 160, 89, 0.45));
+    }
+
+    /* Brand typography */
+    .brand {
+      display: flex;
+      align-items: center;
+      justify-center;
+      gap: 1.5rem;
+      margin-bottom: 2.25rem;
+      flex-wrap: wrap;
+    }
+
+    .brand-en {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(3.25rem, 9.5vw, 5.75rem);
+      font-weight: 400;
+      color: #6366F1;
+      letter-spacing: -0.02em;
+      text-shadow: 0 0 28px rgba(99, 102, 241, 0.38);
+    }
+
+    .brand-ar {
+      font-family: 'Amiri', serif;
+      font-size: clamp(2.75rem, 7.5vw, 4.75rem);
+      font-weight: 700;
+      color: #C5A059;
+      text-shadow: 0 0 28px rgba(197, 160, 89, 0.38);
+    }
+
+    /* Headline */
+    .headline {
+      font-size: clamp(1.625rem, 4.75vw, 2.875rem);
+      font-weight: 300;
+      line-height: 1.32;
+      margin-bottom: 1.375rem;
+      max-width: 750px;
+    }
+
+    .headline .gold {
+      color: #C5A059;
+      font-weight: 600;
+    }
+
+    .headline .indigo {
+      color: #6366F1;
+      font-weight: 600;
+    }
+
+    .headline-ar {
+      font-family: 'Amiri', serif;
+      font-size: clamp(1.375rem, 3.75vw, 2.125rem);
+      color: #a8a29e;
+      margin-bottom: 2.75rem;
+    }
+
+    /* Body copy */
+    .body-copy {
+      max-width: 620px;
+      font-size: clamp(0.9375rem, 2.375vw, 1.1875rem);
+      line-height: 1.72;
+      color: #d6d3d1;
+      margin-bottom: 2.75rem;
+    }
+
+    /* CTA Button - Sacred hexagon */
+    .cta-button {
+      position: relative;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .cta-button:hover {
+      transform: scale(1.08) rotate(2deg);
+    }
+
+    .cta-button:hover .hex-stroke {
+      stroke-width: 3;
+      opacity: 0.9;
+    }
+
+    .cta-content {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+
+    .cta-text-en {
+      font-family: 'Cinzel', serif;
+      font-size: 0.75rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: #e7e5e4;
+      font-weight: 600;
+      display: block;
+    }
+
+    .cta-text-ar {
+      font-family: 'Amiri', serif;
+      font-size: 0.875rem;
+      color: #C5A059;
+      margin-top: 0.375rem;
+      display: block;
+    }
+
+    /* Metadata */
+    .metadata {
+      margin-top: 2rem;
+      font-size: 0.625rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: #57534e;
+    }
+
+    /* Theme toggle */
+    .theme-toggle {
+      position: fixed;
+      top: 1.5rem;
+      right: 1.5rem;
+      width: 48px;
+      height: 48px;
+      background: transparent;
+      border: 2px solid rgba(197, 160, 89, 0.3);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      z-index: 100;
+    }
+
+    .theme-toggle:hover {
+      background: rgba(197, 160, 89, 0.1);
+      border-color: rgba(197, 160, 89, 0.5);
+    }
+
+    /* Light mode */
+    body.light {
+      background: #FDFCF8;
+      color: #1c1917;
+    }
+
+    body.light .brand-en {
+      color: #4F46E5;
+      text-shadow: 0 0 22px rgba(79, 70, 229, 0.28);
+    }
+
+    body.light .brand-ar {
+      color: #8B7355;
+      text-shadow: 0 0 22px rgba(139, 115, 85, 0.28);
+    }
+
+    body.light .headline .gold {
+      color: #8B7355;
+    }
+
+    body.light .headline .indigo {
+      color: #4F46E5;
+    }
+
+    body.light .vignette {
+      background: radial-gradient(ellipse at center, transparent 25%, rgba(253, 252, 248, 0.75) 88%);
+    }
+  </style>
+</head>
+<body>
+  <!-- Sacred geometry grid background -->
+  <div class="sacred-grid">
+    <svg viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+      <!-- Vertical golden ratio lines -->
+      <line x1="594" y1="0" x2="594" y2="1080" stroke="#C5A059" stroke-width="1" opacity="0.6" stroke-dasharray="10,5"/>
+      <line x1="960" y1="0" x2="960" y2="1080" stroke="#6366F1" stroke-width="2" opacity="0.7"/>
+      <line x1="1326" y1="0" x2="1326" y2="1080" stroke="#C5A059" stroke-width="1" opacity="0.6" stroke-dasharray="10,5"/>
+
+      <!-- Horizontal golden ratio lines -->
+      <line x1="0" y1="334" x2="1920" y2="334" stroke="#C5A059" stroke-width="1" opacity="0.6" stroke-dasharray="10,5"/>
+      <line x1="0" y1="540" x2="1920" y2="540" stroke="#6366F1" stroke-width="2" opacity="0.7"/>
+      <line x1="0" y1="746" x2="1920" y2="746" stroke="#C5A059" stroke-width="1" opacity="0.6" stroke-dasharray="10,5"/>
+
+      <!-- Diagonal lines forming X -->
+      <line x1="0" y1="0" x2="1920" y2="1080" stroke="#C5A059" stroke-width="1" opacity="0.4" stroke-dasharray="15,10"/>
+      <line x1="1920" y1="0" x2="0" y2="1080" stroke="#6366F1" stroke-width="1" opacity="0.4" stroke-dasharray="15,10"/>
+
+      <!-- Grid of intersecting circles -->
+      <circle cx="594" cy="334" r="80" fill="none" stroke="#C5A059" stroke-width="1.5" opacity="0.5"/>
+      <circle cx="1326" cy="334" r="80" fill="none" stroke="#6366F1" stroke-width="1.5" opacity="0.5"/>
+      <circle cx="594" cy="746" r="80" fill="none" stroke="#6366F1" stroke-width="1.5" opacity="0.5"/>
+      <circle cx="1326" cy="746" r="80" fill="none" stroke="#C5A059" stroke-width="1.5" opacity="0.5"/>
+
+      <!-- Central intersection circles -->
+      <circle cx="960" cy="540" r="200" fill="none" stroke="#C5A059" stroke-width="2" opacity="0.6"/>
+      <circle cx="960" cy="540" r="140" fill="none" stroke="#6366F1" stroke-width="2" opacity="0.6"/>
+      <circle cx="960" cy="540" r="80" fill="none" stroke="#C5A059" stroke-width="2" opacity="0.7"/>
+
+      <!-- Corner ornaments - small 8-pointed stars -->
+      <g transform="translate(100, 100)">
+        <path d="M0,-30 L5,-10 L25,-10 L10,5 L15,25 L0,10 L-15,25 L-10,5 L-25,-10 L-5,-10 Z"
+              fill="none" stroke="#C5A059" stroke-width="1.5" opacity="0.5"/>
+      </g>
+      <g transform="translate(1820, 100)">
+        <path d="M0,-30 L5,-10 L25,-10 L10,5 L15,25 L0,10 L-15,25 L-10,5 L-25,-10 L-5,-10 Z"
+              fill="none" stroke="#6366F1" stroke-width="1.5" opacity="0.5"/>
+      </g>
+      <g transform="translate(100, 980)">
+        <path d="M0,-30 L5,-10 L25,-10 L10,5 L15,25 L0,10 L-15,25 L-10,5 L-25,-10 L-5,-10 Z"
+              fill="none" stroke="#6366F1" stroke-width="1.5" opacity="0.5"/>
+      </g>
+      <g transform="translate(1820, 980)">
+        <path d="M0,-30 L5,-10 L25,-10 L10,5 L15,25 L0,10 L-15,25 L-10,5 L-25,-10 L-5,-10 Z"
+              fill="none" stroke="#C5A059" stroke-width="1.5" opacity="0.5"/>
+      </g>
+    </svg>
+  </div>
+
+  <!-- Golden spiral overlay -->
+  <div class="golden-spiral">
+    <svg viewBox="0 0 1200 1200" xmlns="http://www.w3.org/2000/svg">
+      <!-- Fibonacci spiral approximation -->
+      <path d="M600,600 Q800,600 800,400 T600,200 T400,400 T600,600"
+            fill="none" stroke="#C5A059" stroke-width="2" opacity="0.8"/>
+      <path d="M600,600 Q550,600 550,650 T600,700 T650,650 T600,600"
+            fill="none" stroke="#6366F1" stroke-width="1.5" opacity="0.7"/>
+    </svg>
+  </div>
+
+  <!-- Vignette overlay -->
+  <div class="vignette"></div>
+
+  <!-- Theme toggle -->
+  <button class="theme-toggle" onclick="document.body.classList.toggle('light')" aria-label="Toggle theme">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="12" r="5"/>
+      <line x1="12" y1="1" x2="12" y2="3"/>
+      <line x1="12" y1="21" x2="12" y2="23"/>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+      <line x1="1" y1="12" x2="3" y2="12"/>
+      <line x1="21" y1="12" x2="23" y2="12"/>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+    </svg>
+  </button>
+
+  <!-- Main content -->
+  <div class="content">
+    <!-- Logo star - crisp and mathematical -->
+    <svg class="logo-star" viewBox="0 0 120 120">
+      <defs>
+        <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#C5A059" stop-opacity="1"/>
+          <stop offset="100%" stop-color="#6366F1" stop-opacity="0.85"/>
+        </linearGradient>
+      </defs>
+      <!-- Precise 8-pointed star -->
+      <path d="M60,12 L70,48 L106,48 L77,68 L87,104 L60,84 L33,104 L43,68 L14,48 L50,48 Z"
+            fill="none" stroke="url(#logoGrad)" stroke-width="3"/>
+      <!-- Inner geometric shapes -->
+      <path d="M60,30 L75,45 L75,75 L60,90 L45,75 L45,45 Z"
+            fill="none" stroke="#6366F1" stroke-width="2" opacity="0.6"/>
+      <circle cx="60" cy="60" r="18" fill="none" stroke="#C5A059" stroke-width="2.5" opacity="0.7"/>
+      <circle cx="60" cy="60" r="8" fill="#C5A059" opacity="0.8"/>
+    </svg>
+
+    <!-- Brand -->
+    <div class="brand">
+      <span class="brand-en">poetry</span>
+      <span class="brand-ar">بالعربي</span>
+    </div>
+
+    <!-- Headline -->
+    <h1 class="headline">
+      Where <span class="gold">Mathematics</span> Meets <span class="indigo">Meaning</span>
+    </h1>
+    <p class="headline-ar">حيث تلتقي الرياضيات بالمعنى</p>
+
+    <!-- Body copy -->
+    <p class="body-copy">
+      Poetry is architecture in time. Each <em>bahr</em> meter repeats with crystalline precision, verses tessellate like mosaic tiles, and meaning unfolds through perfect symmetry.
+    </p>
+
+    <!-- CTA Button - Perfect hexagon -->
+    <button class="cta-button">
+      <svg width="220" height="90" viewBox="0 0 220 90" xmlns="http://www.w3.org/2000/svg">
+        <!-- Regular hexagon using precise geometry -->
+        <path class="hex-stroke"
+              d="M55,10 L165,10 L195,45 L165,80 L55,80 L25,45 Z"
+              fill="rgba(197, 160, 89, 0.08)"
+              stroke="#C5A059"
+              stroke-width="2.5"
+              opacity="0.7"
+              style="transition: all 0.3s ease;"/>
+        <!-- Inner geometric accent -->
+        <path d="M70,25 L150,25 L170,45 L150,65 L70,65 L50,45 Z"
+              fill="none"
+              stroke="#6366F1"
+              stroke-width="1"
+              opacity="0.4"/>
+      </svg>
+      <div class="cta-content">
+        <span class="cta-text-en">Enter the Form</span>
+        <span class="cta-text-ar">ادخل الشكل</span>
+      </div>
+    </button>
+
+    <!-- Metadata -->
+    <div class="metadata">Formal Perfection · Classical Forms</div>
+  </div>
+</body>
+</html>

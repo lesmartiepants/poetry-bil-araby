@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Geometric Splash - Design Review</title>
+  <style>
+    body {
+      background: #0c0c0e;
+      color: #e7e5e4;
+      font-family: system-ui, -apple-system, sans-serif;
+      padding: 40px;
+      max-width: 1400px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+    h1 { color: #C5A059; font-size: 2.5rem; margin-bottom: 0.5rem; }
+    h2 { color: #C5A059; font-size: 1.75rem; margin-top: 3rem; border-bottom: 1px solid #292524; padding-bottom: 0.5rem; }
+    h3 { color: #a8dadc; font-size: 1.25rem; margin-top: 2rem; }
+
+    .subtitle {
+      font-size: 1.125rem;
+      color: #a8a29e;
+      margin-bottom: 3rem;
+    }
+
+    .current-state {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin: 30px 0;
+    }
+    .current-state img {
+      width: 100%;
+      border: 1px solid #292524;
+      border-radius: 8px;
+    }
+    .current-state h3 {
+      margin-top: 0;
+      margin-bottom: 12px;
+    }
+
+    .issues {
+      background: #1c1917;
+      border-left: 4px solid #ef4444;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 4px;
+    }
+    .issues h3 { color: #fca5a5; margin-top: 0; }
+    .issues li { margin: 8px 0; }
+
+    .option {
+      background: #1c1917;
+      border: 1px solid #292524;
+      border-radius: 12px;
+      padding: 30px;
+      margin: 30px 0;
+    }
+    .option-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .option h2 { margin: 0; border: none; }
+    .open-preview-btn {
+      background: #C5A059;
+      color: #0c0c0e;
+      padding: 12px 24px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.2s;
+      display: inline-block;
+    }
+    .open-preview-btn:hover { background: #d4af6a; transform: scale(1.05); }
+
+    .option-content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      margin-top: 20px;
+    }
+    .option-content img {
+      width: 100%;
+      border: 1px solid #292524;
+      border-radius: 8px;
+    }
+    .design-rationale h3 { color: #86efac; }
+    .design-rationale h4 { color: #C5A059; margin-top: 20px; font-size: 1rem; }
+    .design-rationale li { margin: 8px 0; }
+    .design-rationale p { margin: 12px 0; color: #d6d3d1; }
+
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 30px 0;
+      background: #1c1917;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .comparison-table th {
+      background: #292524;
+      padding: 15px;
+      text-align: left;
+      color: #C5A059;
+      font-weight: 600;
+    }
+    .comparison-table td {
+      padding: 12px 15px;
+      border-bottom: 1px solid #292524;
+    }
+    .comparison-table tr:last-child td { border-bottom: none; }
+    .comparison-table .feature-name {
+      font-weight: 500;
+      color: #e7e5e4;
+    }
+
+    .recommendations {
+      background: #1c1917;
+      border-left: 4px solid #86efac;
+      padding: 20px;
+      margin: 30px 0;
+      border-radius: 4px;
+    }
+    .recommendations h3 {
+      color: #86efac;
+      margin-top: 0;
+    }
+    .recommendations p {
+      margin: 12px 0;
+    }
+    .recommendations strong {
+      color: #C5A059;
+    }
+
+    .previews-section {
+      margin-top: 60px;
+    }
+    .preview-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-top: 20px;
+    }
+    .preview-container {
+      border: 1px solid #292524;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #1c1917;
+    }
+    .preview-container h3 {
+      margin: 0;
+      padding: 15px;
+      background: #292524;
+      font-size: 1rem;
+    }
+    .preview-container iframe {
+      width: 100%;
+      height: 600px;
+      border: none;
+      display: block;
+    }
+
+    .next-steps {
+      margin-top: 60px;
+      padding-top: 30px;
+      border-top: 1px solid #292524;
+    }
+    .next-steps h2 {
+      border: none;
+      margin-top: 0;
+    }
+    .next-steps p {
+      font-size: 1.125rem;
+      color: #d6d3d1;
+    }
+    .next-steps strong {
+      color: #86efac;
+      font-size: 1.25rem;
+    }
+
+    @media (max-width: 1024px) {
+      .option-content,
+      .preview-grid {
+        grid-template-columns: 1fr;
+      }
+      .current-state {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>Geometric Splash Screen - Design Review</h1>
+  <p class="subtitle">Three visual alternatives to fix Islamic geometry, mathematical precision, and tessellation quality</p>
+
+  <h2>Current State</h2>
+  <div class="current-state">
+    <div>
+      <h3>Dark Mode</h3>
+      <img src="current-state/1-geometric-dark.png" alt="Current geometric splash - dark mode">
+    </div>
+    <div>
+      <h3>Light Mode</h3>
+      <img src="current-state/2-geometric-light.png" alt="Current geometric splash - light mode">
+    </div>
+  </div>
+
+  <div class="issues">
+    <h3>Identified Issues:</h3>
+    <ul>
+      <li><strong>Low Visual Impact:</strong> Background 8-pointed stars are too faint (opacity 0.15) - barely visible, don't showcase geometric beauty</li>
+      <li><strong>Overcomplicated Animations:</strong> Multiple layered animations (rotate, pulse, morph, breathe) create visual noise rather than mathematical clarity</li>
+      <li><strong>Poor Contrast:</strong> Gold (#C5A059) and indigo (#4F46E5) colors blend together in dark mode, reducing crispness of geometric forms</li>
+      <li><strong>Lack of Focal Hierarchy:</strong> Central logo star (120px) is too small and competes with background patterns instead of commanding attention</li>
+      <li><strong>Generic Button:</strong> Octagonal clip-path button doesn't feel as precise as true Islamic geometric construction</li>
+      <li><strong>Tessellation Quality:</strong> The grid pattern is overly dense (6x6 grid) and individual stars lack mathematical precision in their paths</li>
+    </ul>
+  </div>
+
+  <!-- Option 1 -->
+  <div class="option">
+    <div class="option-header">
+      <h2>Option 1: Bold Tessellation</h2>
+      <a href="previews/option-1-bold-tessellation.html" class="open-preview-btn" target="_blank">Open Preview →</a>
+    </div>
+    <div class="option-content">
+      <img src="mockups/option-1-bold-tessellation-dark.png" alt="Option 1: Bold Tessellation">
+      <div class="design-rationale">
+        <h3>Design Choice:</h3>
+        <p>Maximize visibility and impact of Islamic geometric patterns. The tessellation is now <strong>bold and prominent</strong> rather than subtle background noise.</p>
+
+        <h4>Key Changes:</h4>
+        <ul>
+          <li><strong>High-contrast tessellation:</strong> Stars increased to 0.5 opacity with 2px stroke width - clearly visible without overwhelming</li>
+          <li><strong>Alternating color pattern:</strong> Gold and indigo stars in checkerboard arrangement creates visual rhythm and separation</li>
+          <li><strong>Larger logo star (180px):</strong> Now commands attention with prominent glow effect (40px drop-shadow)</li>
+          <li><strong>Sparser grid (6x4):</strong> Gives each star breathing room, showcasing mathematical precision of individual forms</li>
+          <li><strong>Simple rotation animation:</strong> Single 30s rotation on logo only - no competing motion</li>
+          <li><strong>Precise octagonal button:</strong> True SVG geometric path instead of CSS clip-path for crispness</li>
+        </ul>
+
+        <h4>Islamic Geometry Principles:</h4>
+        <ul>
+          <li>8-pointed stars (Khatim/Rub el Hizb) clearly recognizable</li>
+          <li>Tessellation follows traditional Islamic tiling patterns</li>
+          <li>High contrast honors illuminated manuscript tradition</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Option 2 -->
+  <div class="option">
+    <div class="option-header">
+      <h2>Option 2: Mandala Focus</h2>
+      <a href="previews/option-2-mandala-focus.html" class="open-preview-btn" target="_blank">Open Preview →</a>
+    </div>
+    <div class="option-content">
+      <img src="mockups/option-2-mandala-focus-dark.png" alt="Option 2: Mandala Focus">
+      <div class="design-rationale">
+        <h3>Design Choice:</h3>
+        <p>Single <strong>large mandala centerpiece</strong> (800px) creates meditative focal point. Eliminates visual clutter for pure geometric contemplation.</p>
+
+        <h4>Key Changes:</h4>
+        <ul>
+          <li><strong>Minimal background:</strong> Solid color only - no competing patterns</li>
+          <li><strong>Single mandala:</strong> 800px rotating mandala with 12 radial arms, concentric circles, and 8 outer stars</li>
+          <li><strong>Layered complexity:</strong> 4 layers (outer ring, circles, stars, central 12-pointed star) reveal depth gradually</li>
+          <li><strong>0.25 opacity:</strong> Subtle presence that doesn't overpower content</li>
+          <li><strong>60s rotation:</strong> Extremely slow rotation creates hypnotic, meditative effect</li>
+          <li><strong>True octagonal button:</strong> Mathematical perfection with SVG paths</li>
+        </ul>
+
+        <h4>Islamic Geometry Principles:</h4>
+        <ul>
+          <li>Mandala structure echoes mosque dome geometry</li>
+          <li>12-fold symmetry (dodecagonal) common in Islamic architecture</li>
+          <li>Layered circles represent cosmic order and divine unity</li>
+          <li>Minimalism honors sacred space and contemplative tradition</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Option 3 -->
+  <div class="option">
+    <div class="option-header">
+      <h2>Option 3: Sacred Grid</h2>
+      <a href="previews/option-3-sacred-grid.html" class="open-preview-btn" target="_blank">Open Preview →</a>
+    </div>
+    <div class="option-content">
+      <img src="mockups/option-3-sacred-grid-dark.png" alt="Option 3: Sacred Grid">
+      <div class="design-rationale">
+        <h3>Design Choice:</h3>
+        <p>Expose the <strong>mathematical framework</strong> behind Islamic art - show the golden ratio grid, construction lines, and sacred geometry principles.</p>
+
+        <h4>Key Changes:</h4>
+        <ul>
+          <li><strong>Golden ratio grid:</strong> Vertical and horizontal lines at phi proportions (0.618) divide the canvas</li>
+          <li><strong>Diagonal construction lines:</strong> X-pattern reveals geometric construction method</li>
+          <li><strong>Intersecting circles:</strong> Grid points marked with circles showing compass-based Islamic design</li>
+          <li><strong>Central focus rings:</strong> Three concentric circles (200px, 140px, 80px) at golden ratio center</li>
+          <li><strong>Corner ornaments:</strong> Small 8-pointed stars at four corners frame the composition</li>
+          <li><strong>Fibonacci spiral:</strong> Subtle overlay hints at natural mathematical perfection</li>
+          <li><strong>Hexagonal button:</strong> Perfect 6-sided geometry for variety</li>
+        </ul>
+
+        <h4>Islamic Geometry Principles:</h4>
+        <ul>
+          <li>Reveals the <em>methodology</em> of Islamic geometric art</li>
+          <li>Shows how artists used compass and straightedge to create patterns</li>
+          <li>Golden ratio proportions mirror the mathematical sophistication of Islamic scholars</li>
+          <li>Educational aspect - viewers see the "architecture" beneath the beauty</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <h2>Comparison Table</h2>
+  <table class="comparison-table">
+    <thead>
+      <tr>
+        <th>Feature</th>
+        <th>Current</th>
+        <th>Option 1: Bold</th>
+        <th>Option 2: Mandala</th>
+        <th>Option 3: Sacred Grid</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="feature-name">Background Pattern Visibility</td>
+        <td>⚠️ Too faint (0.15)</td>
+        <td>✅ Bold (0.5)</td>
+        <td>✅ Balanced (0.25)</td>
+        <td>✅ Structural (0.18)</td>
+      </tr>
+      <tr>
+        <td class="feature-name">Logo Size</td>
+        <td>⚠️ Small (120px)</td>
+        <td>✅ Large (180px)</td>
+        <td>✅ Medium (140px)</td>
+        <td>✅ Large (160px)</td>
+      </tr>
+      <tr>
+        <td class="feature-name">Animation Complexity</td>
+        <td>❌ Overcomplicated (5+ layers)</td>
+        <td>✅ Simple (1 rotation)</td>
+        <td>✅ Meditative (1 slow rotation)</td>
+        <td>✅ None (static precision)</td>
+      </tr>
+      <tr>
+        <td class="feature-name">Color Contrast</td>
+        <td>⚠️ Colors blend</td>
+        <td>✅ Alternating pattern</td>
+        <td>✅ Layered gradients</td>
+        <td>✅ Clear separation</td>
+      </tr>
+      <tr>
+        <td class="feature-name">Geometric Precision</td>
+        <td>⚠️ Approximate paths</td>
+        <td>✅ Crisp SVG paths</td>
+        <td>✅ Mathematical mandala</td>
+        <td>✅✅ Golden ratio grid</td>
+      </tr>
+      <tr>
+        <td class="feature-name">Button Shape</td>
+        <td>⚠️ CSS clip-path</td>
+        <td>✅ SVG octagon</td>
+        <td>✅ SVG octagon</td>
+        <td>✅ SVG hexagon</td>
+      </tr>
+      <tr>
+        <td class="feature-name">Tessellation Quality</td>
+        <td>⚠️ Dense, cluttered</td>
+        <td>✅ Sparse, clear</td>
+        <td>✅ Single mandala</td>
+        <td>✅ Framework visible</td>
+      </tr>
+      <tr>
+        <td class="feature-name">Educational Value</td>
+        <td>Low</td>
+        <td>Medium</td>
+        <td>High (mandala structure)</td>
+        <td>✅✅ Very High (shows construction)</td>
+      </tr>
+      <tr>
+        <td class="feature-name">Mobile Performance</td>
+        <td>⚠️ Heavy animations</td>
+        <td>✅ Lightweight</td>
+        <td>✅ Single element</td>
+        <td>✅✅ Static (fastest)</td>
+      </tr>
+      <tr>
+        <td class="feature-name">Cultural Authenticity</td>
+        <td>Medium</td>
+        <td>✅ High (tiling tradition)</td>
+        <td>✅✅ Very High (mandala/mosque)</td>
+        <td>✅✅ Very High (construction method)</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="recommendations">
+    <h3>Recommendations</h3>
+    <p><strong>Best Overall:</strong> Option 1 (Bold Tessellation) - Fixes all major issues while maintaining the original tessellation concept. The increased visibility and contrast make the geometric patterns shine without overwhelming the content.</p>
+
+    <p><strong>Best for Contemplation:</strong> Option 2 (Mandala Focus) - The single large mandala creates a meditative, focused experience. Ideal if you want to evoke the feeling of standing beneath a mosque dome.</p>
+
+    <p><strong>Best for Education:</strong> Option 3 (Sacred Grid) - Shows the mathematical sophistication behind Islamic art. Perfect if you want to emphasize the "Mathematics Meets Meaning" tagline by revealing the geometric construction process.</p>
+
+    <p><strong>Most Performant:</strong> Option 3 (Sacred Grid) - No animations means fastest load time and best mobile performance.</p>
+
+    <p><strong>Most Authentic to Islamic Art:</strong> Option 2 (Mandala Focus) - The layered circular mandala structure closely mirrors actual Islamic architectural patterns found in mosques and manuscripts.</p>
+  </div>
+
+  <div class="previews-section">
+    <h2>Interactive Previews</h2>
+    <p style="color: #a8a29e;">Hover and interact with each option below (click theme toggle to test light/dark modes):</p>
+    <div class="preview-grid">
+      <div class="preview-container">
+        <h3>Option 1: Bold Tessellation</h3>
+        <iframe src="previews/option-1-bold-tessellation.html"></iframe>
+      </div>
+      <div class="preview-container">
+        <h3>Option 2: Mandala Focus</h3>
+        <iframe src="previews/option-2-mandala-focus.html"></iframe>
+      </div>
+      <div class="preview-container">
+        <h3>Option 3: Sacred Grid</h3>
+        <iframe src="previews/option-3-sacred-grid.html"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <div class="next-steps">
+    <h2>Next Steps</h2>
+    <p>Which direction? Reply with: <strong>"Option 1"</strong>, <strong>"Option 2"</strong>, or <strong>"Option 3"</strong></p>
+    <p style="margin-top: 24px; color: #78716c; font-size: 0.9375rem;">
+      All options maintain the same content structure and accessibility standards while dramatically improving the visual impact and mathematical precision of the geometric patterns.
+    </p>
+  </div>
+</body>
+</html>

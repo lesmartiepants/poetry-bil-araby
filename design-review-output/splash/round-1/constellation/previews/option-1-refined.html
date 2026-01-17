@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Option 1: Refined Constellation - Sharper Stars</title>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: linear-gradient(135deg, #0a0a1a 0%, #0f0f2a 50%, #1a1a3a 100%);
+      color: #e7e8f0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Milky Way subtle overlay */
+    .milky-way {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 40%, rgba(139, 92, 246, 0.12) 0%, transparent 50%);
+      opacity: 0.6;
+      pointer-events: none;
+    }
+
+    /* Constellation canvas */
+    .constellation-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Sharper, more precise stars */
+    .star {
+      position: absolute;
+      width: 3px;
+      height: 3px;
+      background: #c7d2fe;
+      border-radius: 50%;
+      box-shadow:
+        0 0 8px rgba(199, 210, 254, 0.8),
+        0 0 15px rgba(199, 210, 254, 0.4);
+      animation: twinkle 3s ease-in-out infinite;
+    }
+
+    .star.bright {
+      width: 4px;
+      height: 4px;
+      background: #e0e7ff;
+      box-shadow:
+        0 0 12px rgba(224, 231, 255, 0.9),
+        0 0 20px rgba(224, 231, 255, 0.5),
+        0 0 30px rgba(139, 92, 246, 0.3);
+    }
+
+    /* Constellation lines - sharp and geometric */
+    .constellation-line {
+      position: absolute;
+      height: 1px;
+      background: linear-gradient(90deg,
+        transparent,
+        rgba(165, 180, 252, 0.4) 20%,
+        rgba(165, 180, 252, 0.4) 80%,
+        transparent
+      );
+      transform-origin: left center;
+      animation: lineAppear 1.5s ease-out forwards;
+      opacity: 0;
+    }
+
+    @keyframes lineAppear {
+      from { opacity: 0; transform: scaleX(0); }
+      to { opacity: 1; transform: scaleX(1); }
+    }
+
+    @keyframes twinkle {
+      0%, 100% {
+        opacity: 0.6;
+        transform: scale(1);
+        box-shadow:
+          0 0 8px rgba(199, 210, 254, 0.6),
+          0 0 15px rgba(199, 210, 254, 0.3);
+      }
+      25% {
+        opacity: 1;
+        transform: scale(1.2);
+        box-shadow:
+          0 0 12px rgba(224, 231, 255, 0.9),
+          0 0 25px rgba(224, 231, 255, 0.5),
+          0 0 35px rgba(139, 92, 246, 0.4);
+      }
+      50% {
+        opacity: 0.7;
+        transform: scale(1.05);
+        box-shadow:
+          0 0 10px rgba(199, 210, 254, 0.7),
+          0 0 20px rgba(199, 210, 254, 0.4);
+      }
+      75% {
+        opacity: 0.95;
+        transform: scale(1.15);
+        box-shadow:
+          0 0 12px rgba(224, 231, 255, 0.85),
+          0 0 23px rgba(224, 231, 255, 0.45),
+          0 0 32px rgba(139, 92, 246, 0.35);
+      }
+    }
+
+    /* Main content */
+    .content {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      max-width: 700px;
+      padding: 2rem;
+      animation: fadeInUp 1.2s ease-out 0.5s backwards;
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Icon - more pronounced */
+    .icon {
+      width: 56px;
+      height: 56px;
+      margin: 0 auto 2rem;
+      color: #c084fc;
+      filter: drop-shadow(0 0 12px rgba(192, 132, 252, 0.5));
+    }
+
+    /* Logo - EXACT particles brand specification */
+    .logo {
+      display: flex;
+      flex-direction: row-reverse;
+      align-items: flex-end; /* Align to bottom baseline */
+      justify-content: center;
+      gap: 24px;
+      margin-bottom: 2.5rem;
+    }
+
+    .logo-ar {
+      font-family: 'Amiri', serif;
+      font-size: 72px;
+      font-weight: 700;
+      color: #ffffff;
+      letter-spacing: 0.02em;
+      margin-bottom: 8px; /* Slight offset for baseline alignment */
+    }
+
+    .logo-en {
+      font-size: 84px;
+      font-weight: 200;
+      color: #ffffff;
+      text-transform: lowercase;
+      letter-spacing: -0.03em;
+    }
+
+    /* Tagline - improved contrast and hierarchy */
+    .tagline {
+      margin-bottom: 2rem;
+    }
+
+    .tagline-en {
+      font-size: clamp(1.875rem, 5vw, 2.875rem);
+      font-weight: 300;
+      color: #ffffff;
+      margin-bottom: 0.75rem;
+      letter-spacing: 0.02em;
+      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+    }
+
+    .tagline-ar {
+      font-family: 'Amiri', serif;
+      font-size: clamp(1.5rem, 4vw, 2.25rem);
+      color: #c7d2fe;
+      opacity: 0.75;
+    }
+
+    /* Description - improved readability and weight */
+    .description {
+      font-size: clamp(1rem, 2.5vw, 1.125rem);
+      line-height: 1.9;
+      color: #d1d5db;
+      max-width: 600px;
+      margin: 0 auto 3rem;
+      opacity: 0.85;
+      font-weight: 400;
+    }
+
+    /* CTA - pure text link (copied from constellation option-2) */
+    .cta {
+      margin-top: 3rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 1rem;
+      font-size: 0.9375rem;
+      color: #e7e8f0;
+      text-decoration: none;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid rgba(167, 139, 250, 0.3);
+      transition: all 0.4s ease;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .cta:hover {
+      color: #c7d2fe;
+      border-bottom-color: rgba(199, 210, 254, 0.6);
+      gap: 1.5rem;
+    }
+
+    .cta-arrow {
+      display: inline-block;
+      transition: transform 0.4s ease;
+    }
+
+    .cta:hover .cta-arrow {
+      transform: translateX(6px);
+    }
+
+    .cta-ar {
+      font-family: 'Amiri', serif;
+      font-size: 0.875rem;
+      opacity: 0.6;
+      letter-spacing: 0.05em;
+      margin-left: 0.5rem;
+    }
+
+    /* Hint text */
+    .hint {
+      margin-top: 2rem;
+      font-size: 0.625rem;
+      text-transform: uppercase;
+      letter-spacing: 0.3em;
+      color: #a5b4fc;
+      opacity: 0.4;
+    }
+
+    /* Theme toggle - integrated into constellation */
+    .theme-toggle {
+      position: fixed;
+      top: 2rem;
+      right: 2rem;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: rgba(139, 92, 246, 0.15);
+      border: 1px solid rgba(165, 180, 252, 0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #a5b4fc;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(8px);
+    }
+
+    .theme-toggle:hover {
+      background: rgba(139, 92, 246, 0.25);
+      border-color: rgba(196, 181, 253, 0.5);
+    }
+  </style>
+</head>
+<body>
+  <!-- Milky Way overlay -->
+  <div class="milky-way"></div>
+
+  <!-- Constellation canvas -->
+  <div class="constellation-canvas" id="constellationCanvas"></div>
+
+  <!-- Theme toggle -->
+  <button class="theme-toggle" aria-label="Toggle theme">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="12" r="5"/>
+      <line x1="12" y1="1" x2="12" y2="3"/>
+      <line x1="12" y1="21" x2="12" y2="23"/>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+      <line x1="1" y1="12" x2="3" y2="12"/>
+      <line x1="21" y1="12" x2="23" y2="12"/>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+    </svg>
+  </button>
+
+  <!-- Main content -->
+  <div class="content">
+    <!-- Icon -->
+    <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+      <path d="M12 19l7-7 3 3-7 7-3-3z"/>
+      <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/>
+      <path d="M2 2l7.586 7.586"/>
+      <circle cx="11" cy="11" r="2"/>
+    </svg>
+
+    <!-- Logo -->
+    <div class="logo">
+      <h1 class="logo-ar">بالعربي</h1>
+      <h1 class="logo-en">poetry</h1>
+    </div>
+
+    <!-- Tagline -->
+    <div class="tagline">
+      <h2 class="tagline-en">Written in the Stars</h2>
+      <p class="tagline-ar">مكتوبة في النجوم</p>
+    </div>
+
+    <!-- Description -->
+    <p class="description">
+      In the firmament of Arabic literature, poets shine as eternal stars. Their verses form constellations of meaning—timeless patterns traced across the night sky of human experience.
+    </p>
+
+    <!-- CTA - text link from constellation-2 -->
+    <a href="#" class="cta">
+      <span>Begin Journey</span>
+      <span class="cta-ar">ابدأ الرحلة</span>
+      <span class="cta-arrow">→</span>
+    </a>
+
+    <!-- Hint -->
+    <p class="hint">Tap stars to reveal constellation names</p>
+  </div>
+
+  <script>
+    // Generate sharper, more precise constellation
+    const canvas = document.getElementById('constellationCanvas');
+
+    // Define 5 constellation groups
+    const constellations = [
+      { x: 15, y: 25, stars: 5, spread: 12 },
+      { x: 45, y: 15, stars: 6, spread: 15 },
+      { x: 75, y: 30, stars: 5, spread: 13 },
+      { x: 30, y: 65, stars: 4, spread: 10 },
+      { x: 65, y: 70, stars: 5, spread: 14 }
+    ];
+
+    constellations.forEach((constellation, idx) => {
+      const stars = [];
+
+      // Create stars in constellation
+      for (let i = 0; i < constellation.stars; i++) {
+        const star = document.createElement('div');
+        star.className = i === 0 ? 'star bright' : 'star';
+
+        const angle = (i / constellation.stars) * Math.PI * 2;
+        const radius = constellation.spread * (0.5 + Math.random() * 0.5);
+        const x = constellation.x + Math.cos(angle) * radius;
+        const y = constellation.y + Math.sin(angle) * radius;
+
+        star.style.left = `${x}%`;
+        star.style.top = `${y}%`;
+        star.style.animationDelay = `${Math.random() * 2}s`;
+
+        canvas.appendChild(star);
+        stars.push({ x, y, element: star });
+      }
+
+      // Connect stars with lines
+      for (let i = 0; i < stars.length - 1; i++) {
+        const line = document.createElement('div');
+        line.className = 'constellation-line';
+
+        const dx = stars[i + 1].x - stars[i].x;
+        const dy = stars[i + 1].y - stars[i].y;
+        const length = Math.sqrt(dx * dx + dy * dy);
+        const angle = Math.atan2(dy, dx) * (180 / Math.PI);
+
+        line.style.width = `${length}%`;
+        line.style.left = `${stars[i].x}%`;
+        line.style.top = `${stars[i].y}%`;
+        line.style.transform = `rotate(${angle}deg)`;
+        line.style.animationDelay = `${0.5 + i * 0.1}s`;
+
+        canvas.appendChild(line);
+      }
+    });
+
+    // Add random background stars
+    for (let i = 0; i < 80; i++) {
+      const star = document.createElement('div');
+      star.className = 'star';
+      star.style.left = `${Math.random() * 100}%`;
+      star.style.top = `${Math.random() * 100}%`;
+      star.style.width = '2px';
+      star.style.height = '2px';
+      star.style.opacity = Math.random() * 0.5 + 0.2;
+      star.style.animationDelay = `${Math.random() * 3}s`;
+      canvas.appendChild(star);
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Andalusian Islamic Geometric Architecture - Final Design</title>
+  <style>
+    body {
+      background: #0c0c0e;
+      color: #e7e5e4;
+      font-family: system-ui, -apple-system, sans-serif;
+      padding: 40px;
+      max-width: 1400px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    h1 {
+      color: #C5A059;
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    h2 {
+      color: #C5A059;
+      font-size: 1.75rem;
+      margin-top: 3rem;
+      border-bottom: 1px solid #292524;
+      padding-bottom: 0.5rem;
+    }
+
+    h3 {
+      color: #86efac;
+      font-size: 1.25rem;
+      margin-top: 2rem;
+    }
+
+    h4 {
+      color: #C5A059;
+      margin-top: 20px;
+      font-size: 1.1rem;
+    }
+
+    p {
+      font-size: 1.125rem;
+      color: #a8a29e;
+      margin-bottom: 1rem;
+    }
+
+    .subtitle {
+      font-size: 1.25rem;
+      color: #a8a29e;
+      margin-bottom: 3rem;
+    }
+
+    .design-philosophy {
+      background: #1c1917;
+      border-left: 4px solid #C5A059;
+      padding: 30px;
+      margin: 40px 0;
+      border-radius: 4px;
+    }
+
+    .design-philosophy h3 {
+      color: #C5A059;
+      margin-top: 0;
+    }
+
+    .design-philosophy p {
+      font-size: 1.125rem;
+      line-height: 1.8;
+      margin: 16px 0;
+    }
+
+    .design-philosophy ul {
+      margin: 20px 0;
+      padding-left: 24px;
+    }
+
+    .design-philosophy li {
+      margin: 12px 0;
+      color: #d4d4d8;
+      line-height: 1.8;
+    }
+
+    .design-philosophy strong {
+      color: #C5A059;
+      font-weight: 600;
+    }
+
+    .mockup-showcase {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 40px;
+      margin: 40px 0;
+    }
+
+    .mockup-item {
+      background: #1c1917;
+      border: 1px solid #292524;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .mockup-item h3 {
+      margin: 0;
+      padding: 20px;
+      background: #292524;
+      color: #C5A059;
+      font-size: 1.25rem;
+    }
+
+    .mockup-item img {
+      width: 100%;
+      display: block;
+      border-bottom: 1px solid #292524;
+    }
+
+    .mockup-caption {
+      padding: 20px;
+      color: #a8a29e;
+      line-height: 1.8;
+    }
+
+    .technical-specs {
+      background: #1c1917;
+      border: 1px solid #292524;
+      border-radius: 12px;
+      padding: 30px;
+      margin: 40px 0;
+    }
+
+    .technical-specs h3 {
+      color: #86efac;
+      margin-top: 0;
+    }
+
+    .technical-specs h4 {
+      color: #C5A059;
+      margin-top: 24px;
+      font-size: 1.1rem;
+    }
+
+    .technical-specs ul {
+      margin: 16px 0;
+      padding-left: 24px;
+    }
+
+    .technical-specs li {
+      margin: 10px 0;
+      color: #d4d4d8;
+      line-height: 1.7;
+    }
+
+    .technical-specs code {
+      background: #292524;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-family: 'Monaco', 'Menlo', monospace;
+      font-size: 0.9em;
+      color: #fbbf24;
+    }
+
+    .open-preview-btn {
+      background: #C5A059;
+      color: #0c0c0e;
+      padding: 16px 32px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      display: inline-block;
+      transition: all 0.2s;
+      margin-top: 30px;
+      font-size: 1.125rem;
+    }
+
+    .open-preview-btn:hover {
+      background: #d4af6a;
+      transform: scale(1.05);
+    }
+
+    .implementation-notes {
+      background: #1c1917;
+      border-left: 4px solid #86efac;
+      padding: 30px;
+      margin: 40px 0;
+      border-radius: 4px;
+    }
+
+    .implementation-notes h3 {
+      color: #86efac;
+      margin-top: 0;
+    }
+
+    .implementation-notes ul {
+      margin: 16px 0;
+      padding-left: 24px;
+    }
+
+    .implementation-notes li {
+      margin: 10px 0;
+      color: #d4d4d8;
+      line-height: 1.8;
+    }
+
+    .interactive-preview {
+      margin: 60px 0;
+      border: 1px solid #292524;
+      border-radius: 12px;
+      overflow: hidden;
+      background: #1c1917;
+    }
+
+    .interactive-preview h2 {
+      margin: 0;
+      padding: 24px;
+      background: #292524;
+      border: none;
+    }
+
+    .interactive-preview iframe {
+      width: 100%;
+      height: 800px;
+      border: none;
+      display: block;
+    }
+
+    .next-steps {
+      margin-top: 60px;
+      padding-top: 40px;
+      border-top: 1px solid #292524;
+      text-align: center;
+    }
+
+    .next-steps h2 {
+      border: none;
+      margin-bottom: 20px;
+    }
+
+    .next-steps p {
+      font-size: 1.25rem;
+      margin: 20px 0;
+    }
+
+    .next-steps strong {
+      color: #C5A059;
+      font-size: 1.5rem;
+    }
+  </style>
+</head>
+<body>
+  <h1>Andalusian Islamic Geometric Architecture</h1>
+  <p class="subtitle">Mathematical precision meets poetic tradition - The final splash screen design</p>
+
+  <div class="design-philosophy">
+    <h3>Design Philosophy: Andalusian Architectural Heritage</h3>
+    <p>
+      This splash screen embodies the mathematical sophistication and artistic elegance of
+      Andalusian Islamic architecture, particularly the geometric patterns found in the Alhambra
+      palace of Granada. The design uses authentic <strong>Khatam</strong> (8-pointed star interlacing)
+      and <strong>Girih tiles</strong> to create a layered, breathing composition that celebrates both
+      mathematical precision and poetic expression.
+    </p>
+
+    <h4>Core Principles:</h4>
+    <ul>
+      <li><strong>Mathematical Authenticity:</strong> Uses √2 ratios, octagon grids, and golden ratio proportions found in historical Islamic geometric art</li>
+      <li><strong>Three-Layer Composition:</strong> Background (large Khatam tiles), mid-layer (Girih pentagon/decagon), foreground (fine interlacing details)</li>
+      <li><strong>Architectural Depth:</strong> Vignette gradient simulates the atmospheric perspective of walking through a Moorish courtyard</li>
+      <li><strong>Brand Continuity:</strong> Preserves the "particles" brand logo style (بالعربي + poetry) with exact typographic treatment</li>
+      <li><strong>Constellation Button Style:</strong> Adopts the elegant underline CTA from Constellation Option 2 with bilingual text</li>
+      <li><strong>Thematic Copy:</strong> "Geometry of the Qasida" / "هندسة القصيدة" connects mathematical patterns to poetic meter</li>
+    </ul>
+
+    <h4>Historical Reference:</h4>
+    <ul>
+      <li><strong>Khatam Pattern:</strong> 8-pointed star with interlacing straps, core motif of Andalusian geometric art (12th-14th century)</li>
+      <li><strong>Girih Tiles:</strong> Pentagon and decagon compositions used in Persian and Moorish architecture</li>
+      <li><strong>Octagonal Geometry:</strong> Symbolizes the Islamic concept of paradise (8 gates) and infinite patterns from finite rules</li>
+    </ul>
+  </div>
+
+  <h2>Visual Mockups</h2>
+
+  <div class="mockup-showcase">
+    <!-- Dark Mode -->
+    <div class="mockup-item">
+      <h3>Dark Mode - Primary Experience</h3>
+      <img src="mockups/andalusian-dark.png" alt="Andalusian dark mode">
+      <div class="mockup-caption">
+        <strong>Deep architectural atmosphere:</strong> Black background (#0a0604) with golden
+        geometric patterns (#C5A059) creates a mystical, contemplative mood. Three-layer pattern
+        system rotates and breathes subtly, simulating the play of light through carved screens
+        in Moorish architecture.
+      </div>
+    </div>
+
+    <!-- Light Mode -->
+    <div class="mockup-item">
+      <h3>Light Mode - Illuminated Courtyard</h3>
+      <img src="mockups/andalusian-light.png" alt="Andalusian light mode">
+      <div class="mockup-caption">
+        <strong>Sunlit stone elegance:</strong> Cream background (#FDFCF8) with brown geometric
+        patterns (#78350f) evokes the warm limestone of Alhambra walls. Reduced pattern opacity
+        maintains readability while preserving architectural richness.
+      </div>
+    </div>
+
+    <!-- Hover State -->
+    <div class="mockup-item">
+      <h3>Interactive State - CTA Hover</h3>
+      <img src="mockups/andalusian-hover.png" alt="Andalusian hover state">
+      <div class="mockup-caption">
+        <strong>Elegant interaction:</strong> CTA button transforms on hover with color shift
+        to golden (#C5A059) and increased underline opacity. Arrow slides right with smooth
+        cubic-bezier easing, creating a refined, inviting gesture.
+      </div>
+    </div>
+  </div>
+
+  <div class="technical-specs">
+    <h3>Technical Implementation</h3>
+
+    <h4>SVG Pattern Layers:</h4>
+    <ul>
+      <li><code>.pattern-bg</code> - Large Khatam tiles (8-pointed stars), 800×800px, rotates clockwise (180s), opacity 0.08</li>
+      <li><code>.pattern-mid</code> - Girih bowtie and decagon tiles, 600×600px, rotates counter-clockwise (240s), opacity 0.12</li>
+      <li><code>.pattern-fg</code> - Fine interlacing curves, 400×400px, breathes (scale 1.0-1.03, 8s), opacity 0.15</li>
+    </ul>
+
+    <h4>Typography:</h4>
+    <ul>
+      <li><strong>Logo Arabic:</strong> Amiri 700, clamp(3.5rem, 9vw, 6rem), color #C5A059</li>
+      <li><strong>Logo English:</strong> Cinzel 400, clamp(4rem, 10vw, 7rem), color #e7e5e4</li>
+      <li><strong>Tagline:</strong> Cinzel 500, uppercase, 0.25em letter-spacing</li>
+      <li><strong>Arabic Tagline:</strong> Amiri 400, 1.625rem, 1.8 line-height</li>
+      <li><strong>Description:</strong> Cormorant Garamond 300, italic, rgba(231, 229, 228, 0.5)</li>
+    </ul>
+
+    <h4>CTA Button (Constellation Style):</h4>
+    <ul>
+      <li>Border-bottom only (1px solid rgba(197, 160, 89, 0.4))</li>
+      <li>Uppercase Cinzel font, 0.15em letter-spacing</li>
+      <li>Bilingual text: "Enter the Alhambra" + "ادخل الحمراء"</li>
+      <li>Right arrow (→) with translateX(8px) on hover</li>
+      <li>Gap expands from 1rem to 1.75rem on hover</li>
+      <li>Smooth cubic-bezier(0.16, 1, 0.3, 1) transitions</li>
+    </ul>
+
+    <h4>Geometric Accent Line:</h4>
+    <ul>
+      <li>200px horizontal gradient line above logo</li>
+      <li>Octagonal nodes at ends (8-sided polygon via clip-path)</li>
+      <li>Pulsing animation (opacity 0.7-1.0, 4s)</li>
+      <li>Golden glow effect (box-shadow with rgba(197, 160, 89, 0.6))</li>
+    </ul>
+
+    <h4>Animations:</h4>
+    <ul>
+      <li><code>rotateClockwiseSlow</code> - Background layer, 180s linear infinite</li>
+      <li><code>rotateCounterSlow</code> - Mid layer, 240s linear infinite</li>
+      <li><code>breathePattern</code> - Foreground layer, opacity + scale, 8s ease-in-out</li>
+      <li><code>fadeInUp</code> - Content entrance, 1.8s cubic-bezier with 0.5s delay</li>
+      <li><code>accentPulse</code> - Geometric line, 4s ease-in-out infinite</li>
+    </ul>
+  </div>
+
+  <div class="implementation-notes">
+    <h3>Implementation Notes</h3>
+    <ul>
+      <li><strong>Theme Toggle:</strong> JavaScript updates SVG pattern colors dynamically (golden for dark, brown for light)</li>
+      <li><strong>Responsive Design:</strong> All typography uses clamp() for fluid scaling from mobile (320px) to desktop (1920px)</li>
+      <li><strong>Performance:</strong> SVG patterns use CSS animations (GPU-accelerated), no JavaScript animation loops</li>
+      <li><strong>Accessibility:</strong> High contrast maintained in both themes (WCAG AA compliant), semantic HTML structure</li>
+      <li><strong>Cross-Browser:</strong> Uses modern CSS (clip-path, backdrop-filter) with graceful degradation for older browsers</li>
+      <li><strong>Mathematical Precision:</strong> Octagon coordinates calculated using √2 ≈ 1.414 for authentic geometric ratios</li>
+    </ul>
+  </div>
+
+  <a href="previews/option-1-refined.html" target="_blank" class="open-preview-btn">
+    Open Full Interactive Preview →
+  </a>
+
+  <div class="interactive-preview">
+    <h2>Live Interactive Preview</h2>
+    <iframe src="previews/option-1-refined.html"></iframe>
+  </div>
+
+  <div class="next-steps">
+    <h2>Ready for Implementation</h2>
+    <p>This Andalusian Islamic geometric architecture design is <strong>complete and ready for integration</strong>.</p>
+    <p>
+      The design successfully combines mathematical authenticity, architectural elegance,
+      brand continuity, and thematic coherence. All patterns use historically accurate
+      Khatam and Girih tile constructions with proper geometric ratios.
+    </p>
+    <hr style="border-color: #292524; margin: 40px 0;">
+    <p style="font-size: 1rem; color: #78716c;">
+      Designed as an Andalusian architect with mathematical precision and creative freedom.<br>
+      الهندسة المقدسة للقصيدة العربية
+    </p>
+  </div>
+</body>
+</html>

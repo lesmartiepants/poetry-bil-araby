@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Particle Field Splash - Design Review</title>
+  <meta charset="UTF-8">
+  <style>
+    body {
+      background: #0c0c0e;
+      color: #e7e5e4;
+      font-family: system-ui, -apple-system, sans-serif;
+      padding: 40px;
+      max-width: 1400px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+    h1 {
+      color: #C5A059;
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+      font-weight: 700;
+    }
+    h2 {
+      color: #C5A059;
+      font-size: 1.75rem;
+      margin-top: 3rem;
+      border-bottom: 1px solid #292524;
+      padding-bottom: 0.5rem;
+    }
+    h3 {
+      color: #a8dadc;
+      font-size: 1.25rem;
+      margin-top: 2rem;
+    }
+    h4 {
+      color: #C5A059;
+      font-size: 1rem;
+      margin-top: 1.5rem;
+      font-weight: 600;
+    }
+    p {
+      color: #a8a29e;
+      font-size: 1.125rem;
+      margin: 1rem 0;
+    }
+
+    .current-state {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+      margin: 30px 0;
+    }
+    .current-state img {
+      width: 100%;
+      border: 1px solid #292524;
+      border-radius: 8px;
+    }
+
+    .issues {
+      background: #1c1917;
+      border-left: 4px solid #ef4444;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 4px;
+    }
+    .issues h3 {
+      color: #fca5a5;
+      margin-top: 0;
+    }
+    .issues li {
+      margin: 8px 0;
+      color: #e7e5e4;
+    }
+
+    .option {
+      background: #1c1917;
+      border: 1px solid #292524;
+      border-radius: 12px;
+      padding: 30px;
+      margin: 30px 0;
+    }
+    .option-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .option h2 {
+      margin: 0;
+      border: none;
+    }
+    .open-preview-btn {
+      background: #C5A059;
+      color: #0c0c0e;
+      padding: 12px 24px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.2s;
+      font-size: 0.95rem;
+    }
+    .open-preview-btn:hover {
+      background: #d4af6a;
+      transform: scale(1.05);
+    }
+
+    .option-content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      margin-top: 20px;
+    }
+    .option-content img {
+      width: 100%;
+      border: 1px solid #292524;
+      border-radius: 8px;
+    }
+    .design-rationale h3 {
+      color: #86efac;
+    }
+    .design-rationale li {
+      margin: 8px 0;
+      color: #d6d3d1;
+    }
+
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 30px 0;
+      background: #1c1917;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .comparison-table th {
+      background: #292524;
+      padding: 15px;
+      text-align: left;
+      color: #C5A059;
+      font-weight: 600;
+    }
+    .comparison-table td {
+      padding: 12px 15px;
+      border-bottom: 1px solid #292524;
+      color: #d6d3d1;
+    }
+    .comparison-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .recommendations {
+      background: #1c1917;
+      border-left: 4px solid #86efac;
+      padding: 20px;
+      margin: 30px 0;
+      border-radius: 4px;
+    }
+    .recommendations h3 {
+      color: #86efac;
+      margin-top: 0;
+    }
+    .recommendations p {
+      color: #d6d3d1;
+    }
+
+    .previews-section {
+      margin-top: 60px;
+    }
+    .preview-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-top: 20px;
+    }
+    .preview-container {
+      border: 1px solid #292524;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #1c1917;
+    }
+    .preview-container h3 {
+      margin: 0;
+      padding: 15px;
+      background: #292524;
+      font-size: 1rem;
+      color: #C5A059;
+    }
+    .preview-container iframe {
+      width: 100%;
+      height: 600px;
+      border: none;
+      display: block;
+    }
+
+    .next-steps {
+      margin-top: 60px;
+      padding-top: 30px;
+      border-top: 1px solid #292524;
+    }
+    .next-steps h2 {
+      border: none;
+      margin-top: 0;
+    }
+    .next-steps p {
+      font-size: 1.25rem;
+    }
+    .next-steps strong {
+      color: #C5A059;
+    }
+  </style>
+</head>
+<body>
+  <h1>Particle Field Splash - Design Review</h1>
+  <p style="font-size: 1.125rem; color: #a8a29e;">Three visual alternatives to improve typography, hierarchy, and aesthetic appeal</p>
+
+  <h2>Current State</h2>
+  <div class="current-state">
+    <div>
+      <h3>Original Particle Field Design</h3>
+      <img src="current-state/1-particles-splash-full.png" alt="Current particle field splash screen">
+    </div>
+  </div>
+
+  <div class="issues">
+    <h3>Identified Issues:</h3>
+    <ul>
+      <li><strong>Typography lacks hierarchy:</strong> The logo sizes are very close (text-6xl/7xl vs text-7xl/8xl), making the Arabic and English text compete rather than complement</li>
+      <li><strong>Low contrast subtitle:</strong> The subtitle uses stone-400/600 which disappears against the black background with white particles</li>
+      <li><strong>Generic button design:</strong> The border-only button lacks visual weight and doesn't feel premium or inviting</li>
+      <li><strong>Particle density issues:</strong> 800 particles create visual noise that competes with the typography rather than enhancing it</li>
+      <li><strong>Monochromatic palette:</strong> Pure black/white lacks the mystical, poetic quality expected for Arabic poetry</li>
+      <li><strong>Weak interaction hint:</strong> The text-stone-600/400 hint at the bottom is nearly invisible</li>
+    </ul>
+  </div>
+
+  <!-- Option 1 -->
+  <div class="option">
+    <div class="option-header">
+      <h2>Option 1: Refined Particles</h2>
+      <a href="previews/option-1-refined-particles.html" class="open-preview-btn" target="_blank">Open Preview →</a>
+    </div>
+    <div class="option-content">
+      <img src="mockups/option-1-refined-particles.png" alt="Option 1 mockup">
+      <div class="design-rationale">
+        <h3>Design Choice:</h3>
+        <p>Same particle direction, properly executed. Fixes typography hierarchy and improves visual polish while maintaining the minimalist black/white aesthetic.</p>
+
+        <h4>Key Changes:</h4>
+        <ul>
+          <li><strong>Enhanced typography hierarchy:</strong> Arabic at 72px, English at 84px with better weight contrast (700 vs 200)</li>
+          <li><strong>Improved subtitle contrast:</strong> Increased to #a8a8a8 with font-weight: 500 for legibility</li>
+          <li><strong>Premium button design:</strong> Larger padding (18px/56px), sweeping fill animation on hover, subtle shadow</li>
+          <li><strong>Optimized particles:</strong> Reduced to 600 particles with radial gradient glow for depth</li>
+          <li><strong>Better interaction feedback:</strong> Stronger mouse repulsion (120px radius), smoother damping (0.95)</li>
+          <li><strong>Improved hint visibility:</strong> Color increased to #666666 with font-weight: 500</li>
+        </ul>
+
+        <h4>Why This Works:</h4>
+        <ul>
+          <li>Maintains the original minimalist vision</li>
+          <li>Fixes all accessibility and hierarchy issues</li>
+          <li>More polished and professional execution</li>
+          <li>Better particle physics and visual feedback</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Option 2 -->
+  <div class="option">
+    <div class="option-header">
+      <h2>Option 2: Gold Mystical</h2>
+      <a href="previews/option-2-gold-mystical.html" class="open-preview-btn" target="_blank">Open Preview →</a>
+    </div>
+    <div class="option-content">
+      <img src="mockups/option-2-gold-mystical.png" alt="Option 2 mockup">
+      <div class="design-rationale">
+        <h3>Design Choice:</h3>
+        <p>Completely different approach: luxury Arabic heritage aesthetic with gold gradient typography and mystical indigo accents. Evokes ancient manuscripts and calligraphy traditions.</p>
+
+        <h4>Key Changes:</h4>
+        <ul>
+          <li><strong>Gradient background:</strong> Deep purple-black gradient (0a0a0f → 1a1520) with animated radial overlays</li>
+          <li><strong>Gold gradient logo:</strong> Arabic text uses gold gradient (d4af6a → c5a059 → b39048) with drop shadow glow</li>
+          <li><strong>Colored particles:</strong> Mix of gold (c5a059) and indigo (8a6eda) particles with twinkling animation</li>
+          <li><strong>Luxurious button:</strong> Gold border with glass morphism, glowing backdrop, hover expands glow effect</li>
+          <li><strong>Enhanced depth:</strong> Particles have floating motion and organic twinkle for mystical atmosphere</li>
+          <li><strong>Elegant theme toggle:</strong> Gold-tinted with blur and rotation animation on hover</li>
+        </ul>
+
+        <h4>Why This Works:</h4>
+        <ul>
+          <li>Evokes rich Arabic literary heritage</li>
+          <li>Gold/indigo palette feels premium and mystical</li>
+          <li>More emotionally engaging and memorable</li>
+          <li>Better brand differentiation from generic black/white designs</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Option 3 -->
+  <div class="option">
+    <div class="option-header">
+      <h2>Option 3: Minimal Constellation</h2>
+      <a href="previews/option-3-minimal-constellation.html" class="open-preview-btn" target="_blank">Open Preview →</a>
+    </div>
+    <div class="option-content">
+      <img src="mockups/option-3-minimal-constellation.png" alt="Option 3 mockup">
+      <div class="design-rationale">
+        <h3>Design Choice:</h3>
+        <p>Radically different: ultra-minimal constellation design with sparse particles connected by lines. Pure text link instead of button. Focus on space and poetry.</p>
+
+        <h4>Key Changes:</h4>
+        <ul>
+          <li><strong>Sparse particles:</strong> Only 150 particles (down from 800) - larger and more intentional placement</li>
+          <li><strong>Constellation lines:</strong> Particles connected to 2 nearest neighbors with pulsing opacity</li>
+          <li><strong>Refined typography:</strong> Reduced sizes (64px/72px) with lighter weights, more breathing room</li>
+          <li><strong>Pure text link:</strong> No button chrome - just text with animated underline on hover</li>
+          <li><strong>Star-like particles:</strong> Bright core + glow halo with subtle twinkling animation</li>
+          <li><strong>Gentle interaction:</strong> Mouse attracts particles (pull not push) for poetic "drawing connections" metaphor</li>
+        </ul>
+
+        <h4>Why This Works:</h4>
+        <ul>
+          <li>Less is more - reduces visual noise significantly</li>
+          <li>Constellation metaphor aligns with "connecting verses" theme</li>
+          <li>Most sophisticated and refined aesthetic</li>
+          <li>Better performance (fewer particles to animate)</li>
+          <li>Space between elements creates poetry and elegance</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <h2>Comparison Table</h2>
+  <table class="comparison-table">
+    <thead>
+      <tr>
+        <th>Feature</th>
+        <th>Current</th>
+        <th>Option 1: Refined</th>
+        <th>Option 2: Gold Mystical</th>
+        <th>Option 3: Constellation</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Typography Hierarchy</strong></td>
+        <td>⚠️ Weak (similar sizes)</td>
+        <td>✅ Clear hierarchy</td>
+        <td>✅ Strong with gold accent</td>
+        <td>✅ Refined and balanced</td>
+      </tr>
+      <tr>
+        <td><strong>Subtitle Contrast</strong></td>
+        <td>❌ Too low (stone-400/600)</td>
+        <td>✅ Good (#a8a8a8)</td>
+        <td>✅ Excellent (gold gradient)</td>
+        <td>✅ Subtle but legible</td>
+      </tr>
+      <tr>
+        <td><strong>Button Design</strong></td>
+        <td>⚠️ Generic border-only</td>
+        <td>✅ Premium with animation</td>
+        <td>✅ Luxurious glass effect</td>
+        <td>✅ Pure text link (minimal)</td>
+      </tr>
+      <tr>
+        <td><strong>Particle Count</strong></td>
+        <td>800 (too dense)</td>
+        <td>600 (optimized)</td>
+        <td>500 (with color)</td>
+        <td>150 (minimal)</td>
+      </tr>
+      <tr>
+        <td><strong>Color Palette</strong></td>
+        <td>Black/White only</td>
+        <td>Black/White refined</td>
+        <td>Gold/Indigo/Purple</td>
+        <td>Pure B&W with focus</td>
+      </tr>
+      <tr>
+        <td><strong>Brand Emotion</strong></td>
+        <td>Neutral/Generic</td>
+        <td>Professional/Modern</td>
+        <td>Luxurious/Mystical</td>
+        <td>Sophisticated/Poetic</td>
+      </tr>
+      <tr>
+        <td><strong>Performance</strong></td>
+        <td>Good (800 particles)</td>
+        <td>Better (600 particles)</td>
+        <td>Good (500 + effects)</td>
+        <td>Excellent (150 particles)</td>
+      </tr>
+      <tr>
+        <td><strong>Interaction Quality</strong></td>
+        <td>Basic repulsion</td>
+        <td>Enhanced repulsion</td>
+        <td>Organic floating</td>
+        <td>Gentle attraction</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="recommendations">
+    <h3>Recommendations</h3>
+    <p><strong>Best Overall:</strong> Option 2 (Gold Mystical) - Most emotionally engaging and culturally appropriate for Arabic poetry. The gold gradient and mystical palette immediately communicate quality and heritage.</p>
+
+    <p><strong>Best for Minimalists:</strong> Option 3 (Minimal Constellation) - Most sophisticated design language. Perfect if you want ultra-clean aesthetic with poetic space.</p>
+
+    <p><strong>Safest Evolution:</strong> Option 1 (Refined Particles) - If you want to keep the current direction but fix all issues. Professional and polished without major redesign.</p>
+
+    <p><strong>Best for Brand Differentiation:</strong> Option 2 (Gold Mystical) - Stands out from generic black/white designs. Creates stronger emotional connection and brand memory.</p>
+
+    <p><strong>Best Performance:</strong> Option 3 (Minimal Constellation) - Fewest particles (150 vs 800), most efficient animation, best for mobile devices.</p>
+  </div>
+
+  <div class="previews-section">
+    <h2>Interactive Previews</h2>
+    <p style="color: #a8a29e;">Hover and interact with each option below:</p>
+    <div class="preview-grid">
+      <div class="preview-container">
+        <h3>Option 1: Refined</h3>
+        <iframe src="previews/option-1-refined-particles.html"></iframe>
+      </div>
+      <div class="preview-container">
+        <h3>Option 2: Gold Mystical</h3>
+        <iframe src="previews/option-2-gold-mystical.html"></iframe>
+      </div>
+      <div class="preview-container">
+        <h3>Option 3: Constellation</h3>
+        <iframe src="previews/option-3-minimal-constellation.html"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <div class="next-steps">
+    <h2>Next Steps</h2>
+    <p>Which direction would you like to pursue? Reply with:</p>
+    <ul style="font-size: 1.125rem; margin-left: 2rem; color: #d6d3d1;">
+      <li><strong>"Option 1"</strong> - Refined Particles (improved current design)</li>
+      <li><strong>"Option 2"</strong> - Gold Mystical (luxury Arabic heritage)</li>
+      <li><strong>"Option 3"</strong> - Minimal Constellation (ultra-refined sparse design)</li>
+    </ul>
+  </div>
+</body>
+</html>

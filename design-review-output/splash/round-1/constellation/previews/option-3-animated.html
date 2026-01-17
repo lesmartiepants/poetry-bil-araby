@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Option 3: Animated Cosmos - Dynamic Constellation Drawing</title>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Space+Grotesk:wght@300;400;600&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: radial-gradient(ellipse at center, #1a1a2e 0%, #0f0f1e 50%, #050510 100%);
+      color: #e7e8f0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Animated aurora borealis effect */
+    .aurora {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 50% at 50% -20%, rgba(99, 102, 241, 0.15), transparent 50%),
+        radial-gradient(ellipse 60% 50% at 50% -10%, rgba(139, 92, 246, 0.1), transparent 50%);
+      animation: auroraShift 15s ease-in-out infinite;
+      opacity: 0.5;
+    }
+
+    @keyframes auroraShift {
+      0%, 100% { transform: translateY(0) scale(1); opacity: 0.4; }
+      50% { transform: translateY(-30px) scale(1.05); opacity: 0.6; }
+    }
+
+    /* Canvas for constellation drawing */
+    .constellation-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0.8;
+    }
+
+    /* Main content */
+    .content {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      max-width: 750px;
+      padding: 2rem;
+      animation: fadeIn 1.8s ease-out 1s backwards;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    /* Animated icon with glow pulse */
+    .icon-wrapper {
+      margin: 0 auto 2.5rem;
+      width: 64px;
+      height: 64px;
+      position: relative;
+    }
+
+    .icon {
+      width: 100%;
+      height: 100%;
+      color: #c4b5fd;
+      animation: iconPulse 3s ease-in-out infinite;
+    }
+
+    @keyframes iconPulse {
+      0%, 100% {
+        filter: drop-shadow(0 0 8px rgba(196, 181, 253, 0.4));
+        transform: scale(1);
+      }
+      50% {
+        filter: drop-shadow(0 0 20px rgba(196, 181, 253, 0.7));
+        transform: scale(1.05);
+      }
+    }
+
+    /* Orbital rings around icon */
+    .icon-orbit {
+      position: absolute;
+      inset: -12px;
+      border: 1px solid rgba(165, 180, 252, 0.2);
+      border-radius: 50%;
+      animation: orbitRotate 20s linear infinite;
+    }
+
+    .icon-orbit.orbit-2 {
+      inset: -24px;
+      animation: orbitRotate 30s linear infinite reverse;
+      opacity: 0.5;
+    }
+
+    @keyframes orbitRotate {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    /* Logo - EXACT particles brand specification */
+    .logo {
+      display: flex;
+      flex-direction: row-reverse;
+      align-items: flex-end; /* Align to bottom baseline */
+      justify-content: center;
+      gap: 24px;
+      margin-bottom: 2rem;
+    }
+
+    .logo-ar {
+      font-family: 'Amiri', serif;
+      font-size: 72px;
+      font-weight: 700;
+      color: #ffffff;
+      letter-spacing: 0.02em;
+      margin-bottom: 8px; /* Slight offset for baseline alignment */
+    }
+
+    .logo-en {
+      font-size: 84px;
+      font-weight: 200;
+      color: #ffffff;
+      text-transform: lowercase;
+      letter-spacing: -0.03em;
+    }
+
+    /* Tagline with stagger animation - improved typography */
+    .tagline {
+      margin-bottom: 2.5rem;
+    }
+
+    .tagline-en {
+      font-size: clamp(1.875rem, 5vw, 2.875rem);
+      font-weight: 300;
+      color: #ffffff;
+      margin-bottom: 1rem;
+      letter-spacing: 0.02em;
+      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.4);
+    }
+
+    .tagline-en .word {
+      display: inline-block;
+      animation: wordAppear 0.6s ease-out backwards;
+    }
+
+    .tagline-en .word:nth-child(1) { animation-delay: 1.5s; }
+    .tagline-en .word:nth-child(2) { animation-delay: 1.7s; }
+    .tagline-en .word:nth-child(3) { animation-delay: 1.9s; }
+    .tagline-en .word:nth-child(4) { animation-delay: 2.1s; }
+
+    @keyframes wordAppear {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .tagline-ar {
+      font-family: 'Amiri', serif;
+      font-size: clamp(1.5rem, 4vw, 2.25rem);
+      color: #c7d2fe;
+      opacity: 0.75;
+    }
+
+    /* Description - improved readability */
+    .description {
+      font-size: clamp(1rem, 2.5vw, 1.125rem);
+      line-height: 1.9;
+      color: #d1d5db;
+      max-width: 600px;
+      margin: 0 auto 3rem;
+      opacity: 0.85;
+      font-weight: 400;
+    }
+
+    /* CTA with shimmer effect */
+    .cta-button {
+      position: relative;
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 1.125rem 3.5rem;
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(139, 92, 246, 0.2) 100%);
+      border: 2px solid transparent;
+      background-clip: padding-box;
+      border-radius: 6px;
+      color: #f3f4f6;
+      text-decoration: none;
+      font-size: 0.875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.25em;
+      cursor: pointer;
+      overflow: hidden;
+      transition: all 0.4s ease;
+    }
+
+    .cta-button::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 6px;
+      padding: 2px;
+      background: linear-gradient(135deg, #818cf8, #a78bfa, #c4b5fd);
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      animation: borderShimmer 3s linear infinite;
+    }
+
+    @keyframes borderShimmer {
+      0% { background-position: 0% 50%; }
+      100% { background-position: 200% 50%; }
+    }
+
+    .cta-button::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+      transform: translate(-50%, -50%) translateX(-100%);
+      transition: transform 0.6s ease;
+    }
+
+    .cta-button:hover::after {
+      transform: translate(-50%, -50%) translateX(100%);
+    }
+
+    .cta-button:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 32px rgba(139, 92, 246, 0.4);
+    }
+
+    .cta-ar {
+      font-family: 'Amiri', serif;
+      font-size: 0.875rem;
+      opacity: 0.7;
+      letter-spacing: 0.05em;
+    }
+
+    /* Hint removed per user feedback */
+
+    /* Theme toggle with animation */
+    .theme-toggle {
+      position: fixed;
+      top: 2rem;
+      right: 2rem;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: rgba(139, 92, 246, 0.12);
+      border: 1px solid rgba(165, 180, 252, 0.25);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #a5b4fc;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(10px);
+    }
+
+    .theme-toggle:hover {
+      background: rgba(139, 92, 246, 0.25);
+      border-color: rgba(196, 181, 253, 0.5);
+      transform: rotate(90deg);
+    }
+  </style>
+</head>
+<body>
+  <!-- Aurora background -->
+  <div class="aurora"></div>
+
+  <!-- Constellation canvas (will be animated with SVG) -->
+  <svg class="constellation-canvas" viewBox="0 0 100 100" preserveAspectRatio="xMidYMid slice">
+    <defs>
+      <filter id="glow">
+        <feGaussianBlur stdDeviation="1.5" result="coloredBlur"/>
+        <feMerge>
+          <feMergeNode in="coloredBlur"/>
+          <feMergeNode in="SourceGraphic"/>
+        </feMerge>
+      </filter>
+
+      <radialGradient id="starGradient">
+        <stop offset="0%" style="stop-color: #e0e7ff; stop-opacity: 1"/>
+        <stop offset="100%" style="stop-color: #818cf8; stop-opacity: 0.5"/>
+      </radialGradient>
+    </defs>
+
+    <!-- Constellation pattern that draws itself -->
+    <g id="constellation" stroke="#a5b4fc" stroke-width="0.15" fill="none" opacity="0.6">
+      <!-- Lines animate with stroke-dasharray -->
+      <line x1="20" y1="30" x2="28" y2="25" stroke-dasharray="10" stroke-dashoffset="10">
+        <animate attributeName="stroke-dashoffset" from="10" to="0" dur="1s" begin="0.5s" fill="freeze"/>
+      </line>
+      <line x1="28" y1="25" x2="35" y2="28" stroke-dasharray="10" stroke-dashoffset="10">
+        <animate attributeName="stroke-dashoffset" from="10" to="0" dur="1s" begin="0.7s" fill="freeze"/>
+      </line>
+      <line x1="35" y1="28" x2="30" y2="35" stroke-dasharray="10" stroke-dashoffset="10">
+        <animate attributeName="stroke-dashoffset" from="10" to="0" dur="1s" begin="0.9s" fill="freeze"/>
+      </line>
+      <line x1="30" y1="35" x2="22" y2="38" stroke-dasharray="10" stroke-dashoffset="10">
+        <animate attributeName="stroke-dashoffset" from="10" to="0" dur="1s" begin="1.1s" fill="freeze"/>
+      </line>
+
+      <line x1="50" y1="18" x2="58" y2="20" stroke-dasharray="10" stroke-dashoffset="10">
+        <animate attributeName="stroke-dashoffset" from="10" to="0" dur="1s" begin="0.6s" fill="freeze"/>
+      </line>
+      <line x1="58" y1="20" x2="55" y2="28" stroke-dasharray="10" stroke-dashoffset="10">
+        <animate attributeName="stroke-dashoffset" from="10" to="0" dur="1s" begin="0.8s" fill="freeze"/>
+      </line>
+      <line x1="55" y1="28" x2="48" y2="27" stroke-dasharray="10" stroke-dashoffset="10">
+        <animate attributeName="stroke-dashoffset" from="10" to="0" dur="1s" begin="1s" fill="freeze"/>
+      </line>
+
+      <line x1="75" y1="35" x2="82" y2="32" stroke-dasharray="10" stroke-dashoffset="10">
+        <animate attributeName="stroke-dashoffset" from="10" to="0" dur="1s" begin="0.7s" fill="freeze"/>
+      </line>
+      <line x1="82" y1="32" x2="80" y2="40" stroke-dasharray="10" stroke-dashoffset="10">
+        <animate attributeName="stroke-dashoffset" from="10" to="0" dur="1s" begin="0.9s" fill="freeze"/>
+      </line>
+      <line x1="80" y1="40" x2="73" y2="42" stroke-dasharray="10" stroke-dashoffset="10">
+        <animate attributeName="stroke-dashoffset" from="10" to="0" dur="1s" begin="1.1s" fill="freeze"/>
+      </line>
+
+      <line x1="35" y1="65" x2="42" y2="60" stroke-dasharray="10" stroke-dashoffset="10">
+        <animate attributeName="stroke-dashoffset" from="10" to="0" dur="1s" begin="0.8s" fill="freeze"/>
+      </line>
+      <line x1="42" y1="60" x2="40" y2="70" stroke-dasharray="10" stroke-dashoffset="10">
+        <animate attributeName="stroke-dashoffset" from="10" to="0" dur="1s" begin="1s" fill="freeze"/>
+      </line>
+
+      <line x1="65" y1="72" x2="72" y2="68" stroke-dasharray="10" stroke-dashoffset="10">
+        <animate attributeName="stroke-dashoffset" from="10" to="0" dur="1s" begin="0.9s" fill="freeze"/>
+      </line>
+      <line x1="72" y1="68" x2="70" y2="78" stroke-dasharray="10" stroke-dashoffset="10">
+        <animate attributeName="stroke-dashoffset" from="10" to="0" dur="1s" begin="1.1s" fill="freeze"/>
+      </line>
+    </g>
+
+    <!-- Stars appear with scale animation -->
+    <g id="stars" fill="url(#starGradient)" filter="url(#glow)">
+      <circle cx="20" cy="30" r="0.8" opacity="0">
+        <animate attributeName="opacity" from="0" to="1" dur="0.5s" begin="0.5s" fill="freeze"/>
+        <animate attributeName="r" from="0" to="0.8" dur="0.5s" begin="0.5s" fill="freeze"/>
+      </circle>
+      <circle cx="28" cy="25" r="0.7" opacity="0">
+        <animate attributeName="opacity" from="0" to="1" dur="0.5s" begin="0.7s" fill="freeze"/>
+        <animate attributeName="r" from="0" to="0.7" dur="0.5s" begin="0.7s" fill="freeze"/>
+      </circle>
+      <circle cx="35" cy="28" r="0.6" opacity="0">
+        <animate attributeName="opacity" from="0" to="1" dur="0.5s" begin="0.9s" fill="freeze"/>
+        <animate attributeName="r" from="0" to="0.6" dur="0.5s" begin="0.9s" fill="freeze"/>
+      </circle>
+      <circle cx="30" cy="35" r="0.7" opacity="0">
+        <animate attributeName="opacity" from="0" to="1" dur="0.5s" begin="1.1s" fill="freeze"/>
+        <animate attributeName="r" from="0" to="0.7" dur="0.5s" begin="1.1s" fill="freeze"/>
+      </circle>
+      <circle cx="22" cy="38" r="0.5" opacity="0">
+        <animate attributeName="opacity" from="0" to="1" dur="0.5s" begin="1.3s" fill="freeze"/>
+        <animate attributeName="r" from="0" to="0.5" dur="0.5s" begin="1.3s" fill="freeze"/>
+      </circle>
+
+      <circle cx="50" cy="18" r="0.9" opacity="0">
+        <animate attributeName="opacity" from="0" to="1" dur="0.5s" begin="0.6s" fill="freeze"/>
+        <animate attributeName="r" from="0" to="0.9" dur="0.5s" begin="0.6s" fill="freeze"/>
+      </circle>
+      <circle cx="58" cy="20" r="0.7" opacity="0">
+        <animate attributeName="opacity" from="0" to="1" dur="0.5s" begin="0.8s" fill="freeze"/>
+        <animate attributeName="r" from="0" to="0.7" dur="0.5s" begin="0.8s" fill="freeze"/>
+      </circle>
+      <circle cx="55" cy="28" r="0.6" opacity="0">
+        <animate attributeName="opacity" from="0" to="1" dur="0.5s" begin="1s" fill="freeze"/>
+        <animate attributeName="r" from="0" to="0.6" dur="0.5s" begin="1s" fill="freeze"/>
+      </circle>
+      <circle cx="48" cy="27" r="0.65" opacity="0">
+        <animate attributeName="opacity" from="0" to="1" dur="0.5s" begin="1.2s" fill="freeze"/>
+        <animate attributeName="r" from="0" to="0.65" dur="0.5s" begin="1.2s" fill="freeze"/>
+      </circle>
+
+      <circle cx="75" cy="35" r="0.8" opacity="0">
+        <animate attributeName="opacity" from="0" to="1" dur="0.5s" begin="0.7s" fill="freeze"/>
+        <animate attributeName="r" from="0" to="0.8" dur="0.5s" begin="0.7s" fill="freeze"/>
+      </circle>
+      <circle cx="82" cy="32" r="0.7" opacity="0">
+        <animate attributeName="opacity" from="0" to="1" dur="0.5s" begin="0.9s" fill="freeze"/>
+        <animate attributeName="r" from="0" to="0.7" dur="0.5s" begin="0.9s" fill="freeze"/>
+      </circle>
+      <circle cx="80" cy="40" r="0.6" opacity="0">
+        <animate attributeName="opacity" from="0" to="1" dur="0.5s" begin="1.1s" fill="freeze"/>
+        <animate attributeName="r" from="0" to="0.6" dur="0.5s" begin="1.1s" fill="freeze"/>
+      </circle>
+      <circle cx="73" cy="42" r="0.65" opacity="0">
+        <animate attributeName="opacity" from="0" to="1" dur="0.5s" begin="1.3s" fill="freeze"/>
+        <animate attributeName="r" from="0" to="0.65" dur="0.5s" begin="1.3s" fill="freeze"/>
+      </circle>
+
+      <circle cx="35" cy="65" r="0.75" opacity="0">
+        <animate attributeName="opacity" from="0" to="1" dur="0.5s" begin="0.8s" fill="freeze"/>
+        <animate attributeName="r" from="0" to="0.75" dur="0.5s" begin="0.8s" fill="freeze"/>
+      </circle>
+      <circle cx="42" cy="60" r="0.7" opacity="0">
+        <animate attributeName="opacity" from="0" to="1" dur="0.5s" begin="1s" fill="freeze"/>
+        <animate attributeName="r" from="0" to="0.7" dur="0.5s" begin="1s" fill="freeze"/>
+      </circle>
+      <circle cx="40" cy="70" r="0.6" opacity="0">
+        <animate attributeName="opacity" from="0" to="1" dur="0.5s" begin="1.2s" fill="freeze"/>
+        <animate attributeName="r" from="0" to="0.6" dur="0.5s" begin="1.2s" fill="freeze"/>
+      </circle>
+
+      <circle cx="65" cy="72" r="0.75" opacity="0">
+        <animate attributeName="opacity" from="0" to="1" dur="0.5s" begin="0.9s" fill="freeze"/>
+        <animate attributeName="r" from="0" to="0.75" dur="0.5s" begin="0.9s" fill="freeze"/>
+      </circle>
+      <circle cx="72" cy="68" r="0.65" opacity="0">
+        <animate attributeName="opacity" from="0" to="1" dur="0.5s" begin="1.1s" fill="freeze"/>
+        <animate attributeName="r" from="0" to="0.65" dur="0.5s" begin="1.1s" fill="freeze"/>
+      </circle>
+      <circle cx="70" cy="78" r="0.6" opacity="0">
+        <animate attributeName="opacity" from="0" to="1" dur="0.5s" begin="1.3s" fill="freeze"/>
+        <animate attributeName="r" from="0" to="0.6" dur="0.5s" begin="1.3s" fill="freeze"/>
+      </circle>
+    </g>
+
+    <!-- Background twinkle stars -->
+    <g id="background-stars" fill="#9ca3af" opacity="0.3">
+      <circle cx="10" cy="15" r="0.3"><animate attributeName="opacity" values="0.2;0.6;0.2" dur="3s" repeatCount="indefinite"/></circle>
+      <circle cx="45" cy="8" r="0.25"><animate attributeName="opacity" values="0.3;0.7;0.3" dur="4s" repeatCount="indefinite"/></circle>
+      <circle cx="88" cy="12" r="0.3"><animate attributeName="opacity" values="0.2;0.5;0.2" dur="3.5s" repeatCount="indefinite"/></circle>
+      <circle cx="15" cy="55" r="0.28"><animate attributeName="opacity" values="0.25;0.65;0.25" dur="3.8s" repeatCount="indefinite"/></circle>
+      <circle cx="85" cy="60" r="0.3"><animate attributeName="opacity" values="0.2;0.6;0.2" dur="4.2s" repeatCount="indefinite"/></circle>
+      <circle cx="25" cy="85" r="0.27"><animate attributeName="opacity" values="0.3;0.7;0.3" dur="3.3s" repeatCount="indefinite"/></circle>
+      <circle cx="60" cy="90" r="0.25"><animate attributeName="opacity" values="0.25;0.55;0.25" dur="3.7s" repeatCount="indefinite"/></circle>
+      <circle cx="92" cy="88" r="0.3"><animate attributeName="opacity" values="0.2;0.6;0.2" dur="4s" repeatCount="indefinite"/></circle>
+    </g>
+  </svg>
+
+  <!-- Theme toggle -->
+  <button class="theme-toggle" aria-label="Toggle theme">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="12" r="5"/>
+      <line x1="12" y1="1" x2="12" y2="3"/>
+      <line x1="12" y1="21" x2="12" y2="23"/>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+      <line x1="1" y1="12" x2="3" y2="12"/>
+      <line x1="21" y1="12" x2="23" y2="12"/>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+    </svg>
+  </button>
+
+  <!-- Main content -->
+  <div class="content">
+    <!-- Animated icon with orbits -->
+    <div class="icon-wrapper">
+      <div class="icon-orbit"></div>
+      <div class="icon-orbit orbit-2"></div>
+      <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+        <path d="M12 19l7-7 3 3-7 7-3-3z"/>
+        <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/>
+        <path d="M2 2l7.586 7.586"/>
+        <circle cx="11" cy="11" r="2"/>
+      </svg>
+    </div>
+
+    <!-- Logo -->
+    <div class="logo">
+      <h1 class="logo-ar">بالعربي</h1>
+      <h1 class="logo-en">poetry</h1>
+    </div>
+
+    <!-- Tagline with word animation -->
+    <div class="tagline">
+      <h2 class="tagline-en">
+        <span class="word">Written</span>
+        <span class="word">in</span>
+        <span class="word">the</span>
+        <span class="word">Stars</span>
+      </h2>
+      <p class="tagline-ar">مكتوبة في النجوم</p>
+    </div>
+
+    <!-- Description -->
+    <p class="description">
+      In the firmament of Arabic literature, poets shine as eternal stars. Their verses form constellations of meaning across the night sky of human experience.
+    </p>
+
+    <!-- CTA with shimmer -->
+    <button class="cta-button">
+      <span>Begin Journey</span>
+      <span class="cta-ar">ابدأ الرحلة</span>
+    </button>
+  </div>
+</body>
+</html>

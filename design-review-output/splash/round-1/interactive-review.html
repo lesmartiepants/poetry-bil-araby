@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Design Review v3 - Comparison Matrix</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+      background: #0a0a0f;
+      color: #e0e0e0;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Fixed Header */
+    .fixed-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: rgba(10, 10, 15, 0.95);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(197, 160, 89, 0.2);
+      z-index: 1000;
+      padding: 1rem 2rem;
+    }
+
+    .header-content {
+      max-width: 1800px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .title-section h1 {
+      font-size: 1.5rem;
+      background: linear-gradient(135deg, #C5A059, #ffd89b);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-weight: 800;
+      margin-bottom: 0.25rem;
+    }
+
+    .title-section .subtitle {
+      font-size: 0.8rem;
+      opacity: 0.6;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    .quick-stats {
+      display: flex;
+      gap: 1rem;
+      padding: 0.5rem 1rem;
+      background: rgba(99, 102, 241, 0.1);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      border-radius: 8px;
+      font-size: 0.85rem;
+    }
+
+    .quick-stat {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .quick-stat-value {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: #a5b4fc;
+    }
+
+    .quick-stat-label {
+      font-size: 0.65rem;
+      opacity: 0.7;
+      text-transform: uppercase;
+    }
+
+    .export-btn-header {
+      padding: 0.75rem 1.5rem;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-weight: 700;
+      font-size: 0.875rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 16px rgba(99, 102, 241, 0.4);
+    }
+
+    .export-btn-header:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(99, 102, 241, 0.5);
+    }
+
+    .back-link {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #C5A059;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.875rem;
+      transition: all 0.2s ease;
+    }
+
+    .back-link:hover {
+      color: #ffd89b;
+      transform: translateX(-4px);
+    }
+
+    /* Main Content */
+    .main-content {
+      margin-top: 140px;
+      padding: 2rem;
+      max-width: 1800px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* Filter Bar */
+    .filter-bar {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(197, 160, 89, 0.2);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .filter-title {
+      color: #C5A059;
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+    }
+
+    .filter-controls {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .filter-group label {
+      font-size: 0.75rem;
+      opacity: 0.7;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .filter-select {
+      padding: 0.5rem;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(197, 160, 89, 0.3);
+      border-radius: 6px;
+      color: #e0e0e0;
+      font-size: 0.875rem;
+      cursor: pointer;
+    }
+
+    .filter-select:focus {
+      outline: none;
+      border-color: rgba(197, 160, 89, 0.6);
+    }
+
+    .filter-tags {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-top: 1rem;
+    }
+
+    .filter-tag {
+      padding: 0.4rem 0.8rem;
+      background: rgba(99, 102, 241, 0.2);
+      border: 1px solid rgba(99, 102, 241, 0.4);
+      border-radius: 6px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .filter-tag:hover {
+      background: rgba(99, 102, 241, 0.3);
+      transform: scale(1.05);
+    }
+
+    .filter-tag.active {
+      background: #6366f1;
+      color: white;
+    }
+
+    /* Comparison Table */
+    .comparison-table-wrapper {
+      overflow-x: auto;
+      background: rgba(255, 255, 255, 0.02);
+      border: 1px solid rgba(197, 160, 89, 0.2);
+      border-radius: 12px;
+      padding: 1rem;
+    }
+
+    .comparison-table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      min-width: 1400px;
+    }
+
+    .comparison-table thead {
+      position: sticky;
+      top: 0;
+      background: rgba(10, 10, 15, 0.98);
+      z-index: 10;
+    }
+
+    .comparison-table th {
+      padding: 1rem;
+      text-align: left;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #C5A059;
+      border-bottom: 2px solid rgba(197, 160, 89, 0.3);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .comparison-table td {
+      padding: 1rem;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      font-size: 0.85rem;
+      vertical-align: top;
+    }
+
+    .comparison-table tbody tr {
+      transition: all 0.3s ease;
+    }
+
+    .comparison-table tbody tr:hover {
+      background: rgba(197, 160, 89, 0.05);
+    }
+
+    .comparison-table tbody tr.selected {
+      background: rgba(134, 239, 172, 0.08);
+      border-left: 4px solid #86efac;
+    }
+
+    /* Preview Column */
+    .preview-cell {
+      width: 200px;
+    }
+
+    .preview-thumbnail {
+      width: 180px;
+      height: 120px;
+      border: 1px solid rgba(197, 160, 89, 0.3);
+      border-radius: 6px;
+      background: #000;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .preview-thumbnail:hover {
+      transform: scale(1.05);
+      border-color: #C5A059;
+      box-shadow: 0 4px 16px rgba(197, 160, 89, 0.3);
+    }
+
+    .preview-thumbnail iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      pointer-events: none;
+      transform: scale(0.5);
+      transform-origin: top left;
+      width: 200%;
+      height: 200%;
+    }
+
+    .preview-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+    }
+
+    .preview-thumbnail:hover .preview-overlay {
+      opacity: 1;
+    }
+
+    .preview-overlay span {
+      color: white;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    /* Design Attributes */
+    .design-attributes {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .attribute-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.75rem;
+    }
+
+    .attribute-icon {
+      width: 16px;
+      height: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+    }
+
+    .attribute-label {
+      opacity: 0.6;
+      min-width: 80px;
+    }
+
+    .attribute-value {
+      color: #a5b4fc;
+      font-weight: 600;
+    }
+
+    /* Tags */
+    .design-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      max-width: 250px;
+    }
+
+    .tag {
+      padding: 0.25rem 0.6rem;
+      background: rgba(197, 160, 89, 0.15);
+      border: 1px solid rgba(197, 160, 89, 0.3);
+      border-radius: 4px;
+      font-size: 0.7rem;
+      white-space: nowrap;
+      color: #C5A059;
+    }
+
+    .tag.theme {
+      background: rgba(99, 102, 241, 0.15);
+      border-color: rgba(99, 102, 241, 0.3);
+      color: #a5b4fc;
+    }
+
+    .tag.feature {
+      background: rgba(134, 239, 172, 0.15);
+      border-color: rgba(134, 239, 172, 0.3);
+      color: #86efac;
+    }
+
+    /* Metrics Badges */
+    .metrics-cell {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .metric-badge {
+      padding: 0.3rem 0.6rem;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-align: center;
+      border: 1px solid;
+    }
+
+    .metric-badge.low {
+      background: rgba(134, 239, 172, 0.15);
+      border-color: #86efac;
+      color: #86efac;
+    }
+
+    .metric-badge.medium {
+      background: rgba(251, 191, 36, 0.15);
+      border-color: #fbbf24;
+      color: #fbbf24;
+    }
+
+    .metric-badge.high {
+      background: rgba(248, 113, 113, 0.15);
+      border-color: #f87171;
+      color: #f87171;
+    }
+
+    /* Action Buttons */
+    .action-cell {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      min-width: 120px;
+    }
+
+    .select-checkbox {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem;
+      background: rgba(134, 239, 172, 0.1);
+      border: 2px solid rgba(134, 239, 172, 0.3);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-size: 0.85rem;
+    }
+
+    .select-checkbox:hover {
+      background: rgba(134, 239, 172, 0.2);
+      transform: scale(1.05);
+    }
+
+    .select-checkbox.selected {
+      background: #86efac;
+      color: #0a0a0f;
+      border-color: transparent;
+    }
+
+    .select-checkbox input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      cursor: pointer;
+    }
+
+    .view-btn {
+      padding: 0.5rem;
+      background: rgba(99, 102, 241, 0.2);
+      border: 1px solid rgba(99, 102, 241, 0.4);
+      border-radius: 6px;
+      color: #a5b4fc;
+      text-decoration: none;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-align: center;
+      transition: all 0.3s ease;
+      display: block;
+    }
+
+    .view-btn:hover {
+      background: rgba(99, 102, 241, 0.3);
+      transform: translateY(-2px);
+    }
+
+    /* Feedback Modal */
+    .feedback-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .feedback-modal.active {
+      display: flex;
+    }
+
+    .feedback-modal-content {
+      background: #0f0c29;
+      border: 2px solid rgba(197, 160, 89, 0.3);
+      border-radius: 12px;
+      padding: 2rem;
+      max-width: 600px;
+      width: 100%;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+
+    .feedback-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .feedback-modal-title {
+      font-size: 1.25rem;
+      color: #C5A059;
+      font-weight: 700;
+    }
+
+    .close-modal-btn {
+      padding: 0.5rem 1rem;
+      background: rgba(239, 68, 68, 0.2);
+      border: 1px solid rgba(239, 68, 68, 0.4);
+      border-radius: 6px;
+      color: #fca5a5;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 0.875rem;
+      transition: all 0.3s ease;
+    }
+
+    .close-modal-btn:hover {
+      background: rgba(239, 68, 68, 0.3);
+    }
+
+    .feedback-textarea-modal {
+      width: 100%;
+      min-height: 150px;
+      padding: 1rem;
+      background: rgba(0, 0, 0, 0.3);
+      border: 2px solid rgba(197, 160, 89, 0.3);
+      border-radius: 8px;
+      color: #e0e0e0;
+      font-family: inherit;
+      font-size: 0.875rem;
+      resize: vertical;
+    }
+
+    .feedback-textarea-modal:focus {
+      outline: none;
+      border-color: rgba(197, 160, 89, 0.6);
+    }
+
+    .save-feedback-btn {
+      margin-top: 1rem;
+      padding: 0.75rem 1.5rem;
+      background: linear-gradient(135deg, #86efac, #6ee7b7);
+      color: #0a0a0f;
+      border: none;
+      border-radius: 8px;
+      font-weight: 700;
+      cursor: pointer;
+      width: 100%;
+      transition: all 0.3s ease;
+    }
+
+    .save-feedback-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(134, 239, 172, 0.4);
+    }
+
+    /* Preview Modal */
+    .preview-modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.95);
+      z-index: 2000;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .preview-modal.active {
+      display: flex;
+    }
+
+    .preview-modal-content {
+      width: 90%;
+      max-width: 1400px;
+      height: 90vh;
+      background: #000;
+      border: 2px solid rgba(197, 160, 89, 0.5);
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .preview-modal-header {
+      background: rgba(10, 10, 15, 0.95);
+      padding: 1rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(197, 160, 89, 0.3);
+    }
+
+    .preview-modal-title {
+      color: #C5A059;
+      font-weight: 700;
+    }
+
+    .preview-modal-iframe {
+      flex: 1;
+      width: 100%;
+      border: none;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .fixed-header {
+        padding: 1rem;
+      }
+
+      .header-content {
+        flex-direction: column;
+      }
+
+      .main-content {
+        margin-top: 200px;
+        padding: 1rem;
+      }
+
+      .filter-controls {
+        grid-template-columns: 1fr;
+      }
+
+      .comparison-table {
+        min-width: 1200px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Fixed Header -->
+  <div class="fixed-header">
+    <div class="header-content">
+      <a href="MASTER-COMPARISON.html" class="back-link">
+        ← Back to Overview
+      </a>
+      <div class="title-section">
+        <h1>Design Review v3 - Comparison Matrix</h1>
+        <p class="subtitle">Side-by-side comparison with advanced filtering</p>
+      </div>
+
+      <div class="header-actions">
+        <div class="quick-stats">
+          <div class="quick-stat">
+            <span class="quick-stat-value" id="stat-selected">0</span>
+            <span class="quick-stat-label">Selected</span>
+          </div>
+          <div class="quick-stat">
+            <span class="quick-stat-value" id="stat-feedback">0</span>
+            <span class="quick-stat-label">Feedback</span>
+          </div>
+          <div class="quick-stat">
+            <span class="quick-stat-value" id="stat-total">27</span>
+            <span class="quick-stat-label">Total Options</span>
+          </div>
+        </div>
+
+        <button class="export-btn-header" onclick="exportData()">Export Data</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+      <div class="filter-title">Filter & Sort</div>
+
+      <div class="filter-controls">
+        <div class="filter-group">
+          <label>Mockup Type</label>
+          <select class="filter-select" id="filter-mockup" onchange="applyFilters()">
+            <option value="all">All Mockups</option>
+            <option value="particles">Particle Field</option>
+            <option value="constellation">Constellation</option>
+            <option value="mandala">Mandala</option>
+            <option value="geometric">Geometric</option>
+            <option value="zen">Zen</option>
+            <option value="aurora">Aurora</option>
+            <option value="ink">Ink</option>
+            <option value="manuscript">Manuscript</option>
+            <option value="light">Light & Shadow</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>Complexity</label>
+          <select class="filter-select" id="filter-complexity" onchange="applyFilters()">
+            <option value="all">All Levels</option>
+            <option value="Very Low">Very Low</option>
+            <option value="Low">Low</option>
+            <option value="Medium">Medium</option>
+            <option value="High">High</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>Performance</label>
+          <select class="filter-select" id="filter-speed" onchange="applyFilters()">
+            <option value="all">All Speeds</option>
+            <option value="Very Fast">Very Fast</option>
+            <option value="Fast">Fast</option>
+            <option value="Medium">Medium</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>Sort By</label>
+          <select class="filter-select" id="sort-by" onchange="applyFilters()">
+            <option value="default">Default Order</option>
+            <option value="complexity-asc">Complexity (Low → High)</option>
+            <option value="complexity-desc">Complexity (High → Low)</option>
+            <option value="speed-desc">Performance (Fast → Slow)</option>
+            <option value="selected">Selected First</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="filter-tags">
+        <div class="filter-tag" onclick="toggleThemeFilter('minimal')">Minimal</div>
+        <div class="filter-tag" onclick="toggleThemeFilter('cultural')">Cultural</div>
+        <div class="filter-tag" onclick="toggleThemeFilter('mystical')">Mystical</div>
+        <div class="filter-tag" onclick="toggleThemeFilter('animated')">Animated</div>
+        <div class="filter-tag" onclick="toggleThemeFilter('geometric')">Geometric</div>
+        <div class="filter-tag" onclick="toggleThemeFilter('calligraphy')">Calligraphy</div>
+      </div>
+    </div>
+
+    <!-- Comparison Table -->
+    <div class="comparison-table-wrapper">
+      <table class="comparison-table">
+        <thead>
+          <tr>
+            <th>Preview</th>
+            <th>Design Name</th>
+            <th>Key Attributes</th>
+            <th>Design Elements</th>
+            <th>Metrics</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="comparison-tbody">
+          <!-- Table rows will be dynamically generated -->
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Feedback Modal -->
+  <div class="feedback-modal" id="feedback-modal">
+    <div class="feedback-modal-content">
+      <div class="feedback-modal-header">
+        <h3 class="feedback-modal-title" id="feedback-modal-title">Add Feedback</h3>
+        <button class="close-modal-btn" onclick="closeFeedbackModal()">Close</button>
+      </div>
+      <textarea class="feedback-textarea-modal" id="feedback-textarea" placeholder="Share your thoughts about this design option..."></textarea>
+      <button class="save-feedback-btn" onclick="saveFeedback()">Save Feedback</button>
+    </div>
+  </div>
+
+  <!-- Preview Modal -->
+  <div class="preview-modal" id="preview-modal">
+    <div class="preview-modal-content">
+      <div class="preview-modal-header">
+        <h3 class="preview-modal-title" id="preview-modal-title">Full Preview</h3>
+        <button class="close-modal-btn" onclick="closePreviewModal()">Close</button>
+      </div>
+      <iframe class="preview-modal-iframe" id="preview-modal-iframe"></iframe>
+    </div>
+  </div>
+
+  <script>
+    // Data structure for all design options
+    const designOptions = [
+      // Particles
+      { mockup: 'particles', option: 1, name: 'Refined Particles', folder: 'particles', file: 'option-1-refined-particles.html', description: 'Improved hierarchy with larger title and reduced particle density', complexity: 'Low', codeSize: 'Small', speed: 'Fast', themes: ['minimal'], attributes: { particles: '50', palette: 'Blue-gray', animation: 'Slow drift', hierarchy: 'Strong' } },
+      { mockup: 'particles', option: 2, name: 'Gold Mystical', folder: 'particles', file: 'option-2-gold-mystical.html', description: 'Rich gold palette with Arabic poetry heritage aesthetic', complexity: 'Low', codeSize: 'Small', speed: 'Fast', themes: ['mystical', 'cultural'], attributes: { particles: '75', palette: 'Gold/Amber', animation: 'Gentle glow', hierarchy: 'Premium' } },
+      { mockup: 'particles', option: 3, name: 'Minimal Constellation', folder: 'particles', file: 'option-3-minimal-constellation.html', description: 'Sparse, intentional design with connected particle patterns', complexity: 'Very Low', codeSize: 'Tiny', speed: 'Very Fast', themes: ['minimal'], attributes: { particles: '25', palette: 'White/Gray', animation: 'Connected lines', hierarchy: 'Clean' } },
+
+      // Constellation
+      { mockup: 'constellation', option: 1, name: 'Refined Constellation', folder: 'constellation', file: 'option-1-refined.html', description: 'Warmer palette with purposeful star connections', complexity: 'Medium', codeSize: 'Medium', speed: 'Fast', themes: ['mystical'], attributes: { stars: '40', connections: 'Meaningful', palette: 'Warm gold', animation: 'Subtle twinkle' } },
+      { mockup: 'constellation', option: 2, name: 'Minimal Stars', folder: 'constellation', file: 'option-2-minimal.html', description: 'Sparse star field with elegant restraint', complexity: 'Low', codeSize: 'Small', speed: 'Very Fast', themes: ['minimal'], attributes: { stars: '20', connections: 'None', palette: 'Cool white', animation: 'Static glow' } },
+      { mockup: 'constellation', option: 3, name: 'Animated Cosmos', folder: 'constellation', file: 'option-3-animated.html', description: 'Dynamic star movement with flowing connections', complexity: 'High', codeSize: 'Large', speed: 'Medium', themes: ['animated'], attributes: { stars: '60', connections: 'Dynamic', palette: 'Multi-color', animation: 'Flowing motion' } },
+
+      // Mandala
+      { mockup: 'mandala', option: 1, name: 'Islamic Mandala', folder: 'mandala', file: 'option-1-refined.html', description: 'Islamic geometric patterns with natural breathing rhythm', complexity: 'Medium', codeSize: 'Medium', speed: 'Fast', themes: ['cultural', 'geometric'], attributes: { pattern: '8-pointed star', breathing: '4s cycle', palette: 'Indigo/Gold', complexity: '12 layers' } },
+      { mockup: 'mandala', option: 2, name: 'Minimalist Mandala', folder: 'mandala', file: 'option-2-minimalist.html', description: 'Simple mandala with focus on breathing meditation', complexity: 'Low', codeSize: 'Small', speed: 'Very Fast', themes: ['minimal'], attributes: { pattern: 'Simple circle', breathing: '3s cycle', palette: 'Monochrome', complexity: '4 layers' } },
+      { mockup: 'mandala', option: 3, name: 'Flower of Life', folder: 'mandala', file: 'option-3-flower-of-life.html', description: 'Sacred geometry with flower of life pattern', complexity: 'High', codeSize: 'Large', speed: 'Medium', themes: ['geometric', 'mystical'], attributes: { pattern: 'Flower of Life', breathing: '5s cycle', palette: 'Rainbow', complexity: '19 circles' } },
+
+      // Geometric
+      { mockup: 'geometric', option: 1, name: 'Bold Tessellation', folder: 'geometric', file: 'option-1-bold-tessellation.html', description: 'Striking Islamic patterns with confident presence', complexity: 'High', codeSize: 'Large', speed: 'Medium', themes: ['geometric', 'cultural'], attributes: { pattern: 'Tessellation', style: 'Bold', colors: '5 colors', animation: 'Rotating tiles' } },
+      { mockup: 'geometric', option: 2, name: 'Mandala Focus', folder: 'geometric', file: 'option-2-mandala-focus.html', description: 'Central mandala with radiating geometric patterns', complexity: 'Medium', codeSize: 'Medium', speed: 'Fast', themes: ['geometric'], attributes: { pattern: 'Central mandala', style: 'Radial', colors: '3 colors', animation: 'Pulse from center' } },
+      { mockup: 'geometric', option: 3, name: 'Sacred Grid', folder: 'geometric', file: 'option-3-sacred-grid.html', description: 'Mathematical precision with sacred geometry principles', complexity: 'Medium', codeSize: 'Medium', speed: 'Fast', themes: ['geometric', 'minimal'], attributes: { pattern: 'Grid system', style: 'Precise', colors: '2 colors', animation: 'Subtle grid shift' } },
+
+      // Zen
+      { mockup: 'zen', option: 1, name: 'Zen Refined', folder: 'zen', file: 'option-1-refined.html', description: 'Pure minimalism with expressive calligraphy', complexity: 'Very Low', codeSize: 'Tiny', speed: 'Very Fast', themes: ['minimal', 'calligraphy'], attributes: { style: 'Minimalist', elements: 'Text only', palette: 'Black/White', animation: 'None' } },
+      { mockup: 'zen', option: 2, name: 'Haiku Style', folder: 'zen', file: 'option-2-haiku.html', description: 'Poetic minimalism with haiku-inspired spacing', complexity: 'Very Low', codeSize: 'Tiny', speed: 'Very Fast', themes: ['minimal'], attributes: { style: 'Haiku spacing', elements: 'Text + space', palette: 'Gray/White', animation: 'None' } },
+      { mockup: 'zen', option: 3, name: 'Zen Breathing', folder: 'zen', file: 'option-3-breathing.html', description: 'Living minimalism with subtle breathing animation', complexity: 'Low', codeSize: 'Small', speed: 'Fast', themes: ['minimal', 'animated'], attributes: { style: 'Living minimal', elements: 'Text + breath', palette: 'Soft gray', animation: 'Breathing 4s' } },
+
+      // Aurora
+      { mockup: 'aurora', option: 1, name: 'Aurora Refined', folder: 'aurora', file: 'option-1-refined.html', description: 'Warmer palette with enhanced aurora drama', complexity: 'High', codeSize: 'Large', speed: 'Medium', themes: ['animated', 'mystical'], attributes: { waves: '3 layers', palette: 'Warm spectrum', blur: '20px', animation: 'Flowing 8s' } },
+      { mockup: 'aurora', option: 2, name: 'Cinematic Aurora', folder: 'aurora', file: 'option-2-cinematic.html', description: 'Bold, cinematic aurora with premium feel', complexity: 'High', codeSize: 'Large', speed: 'Medium', themes: ['animated'], attributes: { waves: '5 layers', palette: 'Vibrant', blur: '30px', animation: 'Dramatic 10s' } },
+      { mockup: 'aurora', option: 3, name: 'Minimal Aurora', folder: 'aurora', file: 'option-3-minimal.html', description: 'Subtle, restrained aurora with elegant simplicity', complexity: 'Medium', codeSize: 'Medium', speed: 'Fast', themes: ['minimal'], attributes: { waves: '2 layers', palette: 'Muted', blur: '15px', animation: 'Gentle 6s' } },
+
+      // Ink
+      { mockup: 'ink', option: 1, name: 'Authentic Calligraphy', folder: 'ink', file: 'option-1-authentic-calligraphy.html', description: 'True Arabic calligraphy with traditional ink aesthetics', complexity: 'Medium', codeSize: 'Medium', speed: 'Fast', themes: ['calligraphy', 'cultural'], attributes: { style: 'Arabic script', ink: 'Traditional black', texture: 'Paper grain', animation: 'Ink spread' } },
+      { mockup: 'ink', option: 2, name: 'Minimal Stroke', folder: 'ink', file: 'option-2-minimal-stroke.html', description: 'Single expressive stroke with zen simplicity', complexity: 'Low', codeSize: 'Small', speed: 'Very Fast', themes: ['minimal', 'calligraphy'], attributes: { style: 'Single stroke', ink: 'Black', texture: 'Clean', animation: 'None' } },
+      { mockup: 'ink', option: 3, name: 'Live Calligraphy', folder: 'ink', file: 'option-3-live-calligraphy.html', description: 'Animated brush stroke revealing calligraphy in real-time', complexity: 'High', codeSize: 'Large', speed: 'Medium', themes: ['animated', 'calligraphy'], attributes: { style: 'Animated stroke', ink: 'Dynamic', texture: 'Brush texture', animation: 'Drawing 5s' } },
+
+      // Manuscript
+      { mockup: 'manuscript', option: 1, name: 'Ornate Islamic', folder: 'manuscript', file: 'option-1-ornate-islamic.html', description: 'Rich Islamic illumination with gold leaf details', complexity: 'High', codeSize: 'Large', speed: 'Fast', themes: ['cultural', 'mystical'], attributes: { border: 'Islamic ornament', texture: 'Aged parchment', gold: 'Gold leaf accents', decoration: 'Illuminated' } },
+      { mockup: 'manuscript', option: 2, name: 'Codex Spine', folder: 'manuscript', file: 'option-2-codex-spine.html', description: 'Book spine perspective with leather-bound aesthetics', complexity: 'Medium', codeSize: 'Medium', speed: 'Fast', themes: ['cultural'], attributes: { border: 'Book spine', texture: 'Leather', gold: 'Title lettering', decoration: 'Embossed' } },
+      { mockup: 'manuscript', option: 3, name: 'Scroll & Seal', folder: 'manuscript', file: 'option-3-scroll-seal.html', description: 'Unfurling scroll with wax seal authenticity', complexity: 'High', codeSize: 'Large', speed: 'Medium', themes: ['cultural', 'animated'], attributes: { border: 'Scroll edges', texture: 'Papyrus', gold: 'Wax seal', decoration: 'Unfurling' } },
+
+      // Light
+      { mockup: 'light', option: 1, name: 'Improved Chiaroscuro', folder: 'light', file: 'option-1-improved-chiaroscuro.html', description: 'Dramatic light-dark contrast with Renaissance influence', complexity: 'Medium', codeSize: 'Medium', speed: 'Fast', themes: ['mystical'], attributes: { rays: '5 beams', contrast: 'High', shadows: 'Deep', animation: 'Ray sweep' } },
+      { mockup: 'light', option: 2, name: 'Soft Depth Layers', folder: 'light', file: 'option-2-soft-depth-layers.html', description: 'Subtle layering with gentle light diffusion', complexity: 'Low', codeSize: 'Small', speed: 'Very Fast', themes: ['minimal'], attributes: { rays: '3 beams', contrast: 'Soft', shadows: 'Gentle', animation: 'Fade in/out' } },
+      { mockup: 'light', option: 3, name: 'Minimal Ray Tracing', folder: 'light', file: 'option-3-minimal-ray-tracing.html', description: 'Clean light rays with minimalist approach', complexity: 'Low', codeSize: 'Small', speed: 'Fast', themes: ['minimal'], attributes: { rays: '1 beam', contrast: 'Focused', shadows: 'Minimal', animation: 'Static glow' } }
+    ];
+
+    // State
+    let selections = {};
+    let feedbackData = {};
+    let currentFeedbackKey = null;
+    let activeThemeFilters = [];
+
+    // Initialize table
+    function initializeTable() {
+      const tbody = document.getElementById('comparison-tbody');
+      tbody.innerHTML = '';
+
+      designOptions.forEach(option => {
+        const row = createTableRow(option);
+        tbody.appendChild(row);
+      });
+
+      updateStats();
+    }
+
+    function createTableRow(option) {
+      const row = document.createElement('tr');
+      row.dataset.mockup = option.mockup;
+      row.dataset.key = `${option.mockup}-${option.option}`;
+      row.dataset.complexity = option.complexity;
+      row.dataset.speed = option.speed;
+      row.dataset.themes = JSON.stringify(option.themes);
+
+      const previewPath = `${option.folder}/previews/${option.file}`;
+
+      row.innerHTML = `
+        <td class="preview-cell">
+          <div class="preview-thumbnail" onclick="openPreview('${previewPath}', '${option.name}')">
+            <iframe src="${previewPath}"></iframe>
+            <div class="preview-overlay">
+              <span>Click to Expand</span>
+            </div>
+          </div>
+        </td>
+        <td>
+          <strong style="color: #C5A059; font-size: 0.95rem;">${option.name}</strong>
+          <div style="font-size: 0.75rem; opacity: 0.7; margin-top: 0.25rem;">
+            ${option.mockup.charAt(0).toUpperCase() + option.mockup.slice(1)} - Option ${option.option}
+          </div>
+          <div style="font-size: 0.8rem; margin-top: 0.5rem; line-height: 1.4;">
+            ${option.description}
+          </div>
+        </td>
+        <td>
+          <div class="design-attributes">
+            ${Object.entries(option.attributes).map(([key, value]) => `
+              <div class="attribute-item">
+                <span class="attribute-icon">•</span>
+                <span class="attribute-label">${key}:</span>
+                <span class="attribute-value">${value}</span>
+              </div>
+            `).join('')}
+          </div>
+        </td>
+        <td>
+          <div class="design-tags">
+            ${option.themes.map(theme => `
+              <span class="tag theme">${theme}</span>
+            `).join('')}
+            <span class="tag">${option.complexity}</span>
+            <span class="tag feature">${option.speed}</span>
+          </div>
+        </td>
+        <td>
+          <div class="metrics-cell">
+            <div class="metric-badge ${getMetricClass(option.complexity)}">
+              ${option.complexity}
+            </div>
+            <div class="metric-badge ${getMetricClass(option.codeSize)}">
+              ${option.codeSize}
+            </div>
+            <div class="metric-badge ${getMetricClass(option.speed)}">
+              ${option.speed}
+            </div>
+          </div>
+        </td>
+        <td>
+          <div class="action-cell">
+            <label class="select-checkbox" data-key="${option.mockup}-${option.option}">
+              <input type="checkbox" onchange="toggleSelection('${option.mockup}', ${option.option}, this)">
+              <span>Select</span>
+            </label>
+            <button class="view-btn" onclick="openFeedbackModal('${option.mockup}', ${option.option}, '${option.name}')">
+              Add Feedback
+            </button>
+            <a href="${previewPath}" class="view-btn" target="_blank">Open Full</a>
+          </div>
+        </td>
+      `;
+
+      return row;
+    }
+
+    function getMetricClass(value) {
+      const lowValues = ['Very Low', 'Low', 'Tiny', 'Small', 'Very Fast', 'Fast'];
+      const highValues = ['High', 'Large', 'Slow'];
+
+      if (lowValues.includes(value)) return 'low';
+      if (highValues.includes(value)) return 'high';
+      return 'medium';
+    }
+
+    // Selection
+    function toggleSelection(mockup, option, checkbox) {
+      const key = `${mockup}-${option}`;
+      const row = document.querySelector(`tr[data-key="${key}"]`);
+      const label = checkbox.parentElement;
+
+      if (checkbox.checked) {
+        selections[key] = true;
+        row.classList.add('selected');
+        label.classList.add('selected');
+        label.querySelector('span').textContent = 'Selected ✓';
+      } else {
+        delete selections[key];
+        row.classList.remove('selected');
+        label.classList.remove('selected');
+        label.querySelector('span').textContent = 'Select';
+      }
+
+      updateStats();
+    }
+
+    // Feedback Modal
+    function openFeedbackModal(mockup, option, name) {
+      const key = `${mockup}-${option}`;
+      currentFeedbackKey = key;
+
+      document.getElementById('feedback-modal-title').textContent = `Feedback: ${name}`;
+      document.getElementById('feedback-textarea').value = feedbackData[key] || '';
+      document.getElementById('feedback-modal').classList.add('active');
+    }
+
+    function closeFeedbackModal() {
+      document.getElementById('feedback-modal').classList.remove('active');
+      currentFeedbackKey = null;
+    }
+
+    function saveFeedback() {
+      const text = document.getElementById('feedback-textarea').value.trim();
+      if (text && currentFeedbackKey) {
+        feedbackData[currentFeedbackKey] = text;
+        updateStats();
+        closeFeedbackModal();
+      }
+    }
+
+    // Preview Modal
+    function openPreview(path, name) {
+      document.getElementById('preview-modal-title').textContent = name;
+      document.getElementById('preview-modal-iframe').src = path;
+      document.getElementById('preview-modal').classList.add('active');
+    }
+
+    function closePreviewModal() {
+      document.getElementById('preview-modal').classList.remove('active');
+      document.getElementById('preview-modal-iframe').src = '';
+    }
+
+    // Filters
+    function applyFilters() {
+      const mockupFilter = document.getElementById('filter-mockup').value;
+      const complexityFilter = document.getElementById('filter-complexity').value;
+      const speedFilter = document.getElementById('filter-speed').value;
+      const sortBy = document.getElementById('sort-by').value;
+
+      let rows = Array.from(document.querySelectorAll('#comparison-tbody tr'));
+
+      // Apply filters
+      rows.forEach(row => {
+        let visible = true;
+
+        if (mockupFilter !== 'all' && row.dataset.mockup !== mockupFilter) {
+          visible = false;
+        }
+
+        if (complexityFilter !== 'all' && row.dataset.complexity !== complexityFilter) {
+          visible = false;
+        }
+
+        if (speedFilter !== 'all' && row.dataset.speed !== speedFilter) {
+          visible = false;
+        }
+
+        // Theme filter
+        if (activeThemeFilters.length > 0) {
+          const rowThemes = JSON.parse(row.dataset.themes);
+          const hasMatchingTheme = activeThemeFilters.some(theme => rowThemes.includes(theme));
+          if (!hasMatchingTheme) {
+            visible = false;
+          }
+        }
+
+        row.style.display = visible ? '' : 'none';
+      });
+
+      // Apply sorting
+      rows = rows.filter(row => row.style.display !== 'none');
+
+      if (sortBy !== 'default') {
+        rows.sort((a, b) => {
+          if (sortBy === 'complexity-asc') {
+            return getComplexityValue(a.dataset.complexity) - getComplexityValue(b.dataset.complexity);
+          } else if (sortBy === 'complexity-desc') {
+            return getComplexityValue(b.dataset.complexity) - getComplexityValue(a.dataset.complexity);
+          } else if (sortBy === 'speed-desc') {
+            return getSpeedValue(b.dataset.speed) - getSpeedValue(a.dataset.speed);
+          } else if (sortBy === 'selected') {
+            const aSelected = selections[a.dataset.key] ? 1 : 0;
+            const bSelected = selections[b.dataset.key] ? 1 : 0;
+            return bSelected - aSelected;
+          }
+          return 0;
+        });
+
+        const tbody = document.getElementById('comparison-tbody');
+        rows.forEach(row => tbody.appendChild(row));
+      }
+    }
+
+    function toggleThemeFilter(theme) {
+      const index = activeThemeFilters.indexOf(theme);
+      const tagElements = document.querySelectorAll('.filter-tag');
+
+      tagElements.forEach(tag => {
+        if (tag.textContent === theme) {
+          if (index === -1) {
+            activeThemeFilters.push(theme);
+            tag.classList.add('active');
+          } else {
+            activeThemeFilters.splice(index, 1);
+            tag.classList.remove('active');
+          }
+        }
+      });
+
+      applyFilters();
+    }
+
+    function getComplexityValue(complexity) {
+      const map = { 'Very Low': 1, 'Low': 2, 'Medium': 3, 'High': 4 };
+      return map[complexity] || 0;
+    }
+
+    function getSpeedValue(speed) {
+      const map = { 'Very Fast': 4, 'Fast': 3, 'Medium': 2, 'Slow': 1 };
+      return map[speed] || 0;
+    }
+
+    // Stats
+    function updateStats() {
+      document.getElementById('stat-selected').textContent = Object.keys(selections).length;
+      document.getElementById('stat-feedback').textContent = Object.keys(feedbackData).length;
+    }
+
+    // Export
+    function exportData() {
+      const exportObj = {
+        timestamp: new Date().toISOString(),
+        summary: {
+          totalOptions: designOptions.length,
+          selectedCount: Object.keys(selections).length,
+          feedbackCount: Object.keys(feedbackData).length
+        },
+        selections: Object.keys(selections).map(key => {
+          const option = designOptions.find(opt => `${opt.mockup}-${opt.option}` === key);
+          return {
+            key,
+            mockup: option.mockup,
+            name: option.name,
+            description: option.description,
+            attributes: option.attributes,
+            feedback: feedbackData[key] || ''
+          };
+        }),
+        allFeedback: feedbackData
+      };
+
+      const json = JSON.stringify(exportObj, null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `design-review-v3-${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      alert(`Exported successfully!\n\n${Object.keys(selections).length} selections\n${Object.keys(feedbackData).length} feedback notes`);
+    }
+
+    // Close modals on Escape
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        closeFeedbackModal();
+        closePreviewModal();
+      }
+    });
+
+    // Initialize
+    initializeTable();
+  </script>
+</body>
+</html>

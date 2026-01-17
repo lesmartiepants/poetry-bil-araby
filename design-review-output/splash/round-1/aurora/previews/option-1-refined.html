@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Option 1: Refined Aurora - Focused Gradients</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Crimson+Text:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Crimson Text', serif;
+      background: #0a0a0f;
+      color: white;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* OPTION 1: REFINED AURORA - Two focused gradients with clear hierarchy */
+    .aurora-background {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    /* Primary gradient: Indigo-to-Purple diagonal sweep (top-left to bottom-right) */
+    .aurora-primary {
+      position: absolute;
+      width: 140%;
+      height: 140%;
+      top: -20%;
+      left: -20%;
+      background: radial-gradient(
+        ellipse at 35% 30%,
+        rgba(99, 102, 241, 0.5) 0%,
+        rgba(139, 92, 246, 0.35) 30%,
+        rgba(168, 85, 247, 0.2) 50%,
+        transparent 75%
+      );
+      filter: blur(60px);
+      animation: aurora-drift-primary 28s ease-in-out infinite;
+    }
+
+    /* Secondary gradient: Teal accent (bottom-right) */
+    .aurora-secondary {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      bottom: -10%;
+      right: -10%;
+      background: radial-gradient(
+        ellipse at 75% 75%,
+        rgba(20, 184, 166, 0.4) 0%,
+        rgba(94, 234, 212, 0.25) 40%,
+        transparent 70%
+      );
+      filter: blur(70px);
+      animation: aurora-drift-secondary 32s ease-in-out infinite;
+    }
+
+    /* Vignette for content focus - much stronger */
+    .vignette {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(
+        ellipse at center,
+        transparent 30%,
+        rgba(10, 10, 15, 0.6) 65%,
+        rgba(10, 10, 15, 0.85) 100%
+      );
+      pointer-events: none;
+    }
+
+    /* Content container with backdrop blur for separation */
+    .content {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      max-width: 700px;
+      padding: 0 2rem;
+      background: rgba(10, 10, 15, 0.4);
+      backdrop-filter: blur(20px);
+      border-radius: 32px;
+      padding: 4rem 3rem;
+      border: 1px solid rgba(139, 92, 246, 0.2);
+    }
+
+    .logo {
+      margin-bottom: 2rem;
+      filter: drop-shadow(0 0 25px rgba(139, 92, 246, 0.6));
+    }
+
+    .logo svg {
+      width: 48px;
+      height: 48px;
+      stroke: rgba(139, 92, 246, 0.9);
+      stroke-width: 1.5;
+      fill: none;
+    }
+
+    .brand {
+      display: flex;
+      flex-direction: row-reverse;
+      align-items: baseline;
+      justify-content: center;
+      gap: 1.5rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .brand-ar {
+      font-family: 'Amiri', serif;
+      font-size: 3.5rem;
+      font-weight: 700;
+      text-shadow: 0 0 40px rgba(139, 92, 246, 0.5);
+    }
+
+    .brand-en {
+      font-size: 4rem;
+      font-weight: 300;
+      letter-spacing: -0.02em;
+      text-shadow: 0 0 40px rgba(99, 102, 241, 0.5);
+    }
+
+    .headline {
+      font-size: 3rem;
+      font-style: italic;
+      font-weight: 300;
+      line-height: 1.2;
+      margin-bottom: 1.5rem;
+      /* Darker text overlay for contrast */
+      color: rgba(255, 255, 255, 0.95);
+      text-shadow:
+        0 2px 4px rgba(0, 0, 0, 0.4),
+        0 0 30px rgba(139, 92, 246, 0.3);
+    }
+
+    .headline-ar {
+      font-family: 'Amiri', serif;
+      font-size: 2rem;
+      margin-bottom: 2rem;
+      color: rgba(255, 255, 255, 0.85);
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .body-copy {
+      max-width: 550px;
+      margin: 0 auto 3rem;
+      font-size: 1.125rem;
+      line-height: 1.7;
+      color: rgba(255, 255, 255, 0.75);
+      /* Dark overlay for readability */
+      background: rgba(0, 0, 0, 0.2);
+      padding: 1.5rem;
+      border-radius: 16px;
+      backdrop-filter: blur(10px);
+    }
+
+    /* Hero CTA Button - Aurora-inspired with glow */
+    .cta-button {
+      position: relative;
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 1.25rem 3rem;
+      background: linear-gradient(135deg,
+        rgba(99, 102, 241, 0.25),
+        rgba(139, 92, 246, 0.25)
+      );
+      border: 2px solid rgba(139, 92, 246, 0.5);
+      border-radius: 9999px;
+      color: white;
+      font-size: 0.95rem;
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.4s ease;
+      box-shadow:
+        0 0 30px rgba(139, 92, 246, 0.4),
+        0 4px 20px rgba(0, 0, 0, 0.3);
+      backdrop-filter: blur(15px);
+    }
+
+    .cta-button:hover {
+      transform: translateY(-2px) scale(1.02);
+      background: linear-gradient(135deg,
+        rgba(99, 102, 241, 0.35),
+        rgba(139, 92, 246, 0.35)
+      );
+      border-color: rgba(139, 92, 246, 0.7);
+      box-shadow:
+        0 0 50px rgba(139, 92, 246, 0.6),
+        0 8px 30px rgba(0, 0, 0, 0.4);
+    }
+
+    .cta-ar {
+      font-family: 'Amiri', serif;
+      font-size: 0.875rem;
+      opacity: 0.85;
+      letter-spacing: normal;
+      text-transform: none;
+      font-weight: 400;
+    }
+
+    .metadata {
+      margin-top: 2rem;
+      font-size: 0.65rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      opacity: 0.4;
+    }
+
+    /* Theme toggle */
+    .theme-toggle {
+      position: fixed;
+      top: 2rem;
+      right: 2rem;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: rgba(99, 102, 241, 0.15);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      backdrop-filter: blur(10px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      z-index: 100;
+    }
+
+    .theme-toggle:hover {
+      background: rgba(99, 102, 241, 0.25);
+      border-color: rgba(99, 102, 241, 0.5);
+    }
+
+    .theme-toggle svg {
+      width: 18px;
+      height: 18px;
+      stroke: white;
+      stroke-width: 2;
+      fill: none;
+    }
+
+    /* Light mode overrides */
+    body.light-mode {
+      background: #f8f9fc;
+      color: #1c1917;
+    }
+
+    body.light-mode .aurora-primary {
+      background: radial-gradient(
+        ellipse at 35% 30%,
+        rgba(99, 102, 241, 0.3) 0%,
+        rgba(139, 92, 246, 0.2) 30%,
+        rgba(168, 85, 247, 0.12) 50%,
+        transparent 75%
+      );
+    }
+
+    body.light-mode .aurora-secondary {
+      background: radial-gradient(
+        ellipse at 75% 75%,
+        rgba(20, 184, 166, 0.25) 0%,
+        rgba(94, 234, 212, 0.15) 40%,
+        transparent 70%
+      );
+    }
+
+    body.light-mode .vignette {
+      background: radial-gradient(
+        ellipse at center,
+        transparent 30%,
+        rgba(248, 249, 252, 0.7) 65%,
+        rgba(248, 249, 252, 0.9) 100%
+      );
+    }
+
+    body.light-mode .content {
+      background: rgba(255, 255, 255, 0.6);
+      border-color: rgba(139, 92, 246, 0.15);
+    }
+
+    body.light-mode .brand,
+    body.light-mode .headline {
+      color: #1c1917;
+    }
+
+    body.light-mode .headline-ar,
+    body.light-mode .body-copy {
+      color: #57534e;
+    }
+
+    body.light-mode .body-copy {
+      background: rgba(255, 255, 255, 0.4);
+    }
+
+    body.light-mode .cta-button {
+      color: #1c1917;
+      border-color: rgba(139, 92, 246, 0.4);
+      box-shadow:
+        0 0 25px rgba(139, 92, 246, 0.3),
+        0 4px 20px rgba(0, 0, 0, 0.1);
+    }
+
+    body.light-mode .theme-toggle svg {
+      stroke: #1c1917;
+    }
+
+    @keyframes aurora-drift-primary {
+      0%, 100% {
+        transform: translate(0, 0) scale(1) rotate(0deg);
+      }
+      33% {
+        transform: translate(5%, -8%) scale(1.08) rotate(2deg);
+      }
+      66% {
+        transform: translate(-7%, 6%) scale(0.95) rotate(-2deg);
+      }
+    }
+
+    @keyframes aurora-drift-secondary {
+      0%, 100% {
+        transform: translate(0, 0) scale(1) rotate(0deg);
+      }
+      50% {
+        transform: translate(-6%, 8%) scale(1.1) rotate(-3deg);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="aurora-background">
+    <div class="aurora-primary"></div>
+    <div class="aurora-secondary"></div>
+  </div>
+
+  <div class="vignette"></div>
+
+  <button class="theme-toggle" onclick="document.body.classList.toggle('light-mode')">
+    <svg viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="5"/>
+      <line x1="12" y1="1" x2="12" y2="3"/>
+      <line x1="12" y1="21" x2="12" y2="23"/>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+      <line x1="1" y1="12" x2="3" y2="12"/>
+      <line x1="21" y1="12" x2="23" y2="12"/>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+    </svg>
+  </button>
+
+  <div class="content">
+    <div class="logo">
+      <svg viewBox="0 0 24 24">
+        <path d="M12 19l7-7 3 3-7 7-3-3z"/>
+        <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/>
+        <path d="M2 2l7.586 7.586"/>
+        <circle cx="11" cy="11" r="2"/>
+      </svg>
+    </div>
+
+    <div class="brand">
+      <span class="brand-ar">بالعربي</span>
+      <span class="brand-en">poetry</span>
+    </div>
+
+    <h2 class="headline">Where Verses Illuminate the Soul</h2>
+    <p class="headline-ar">حيث تضيء الأبيات الروح</p>
+
+    <p class="body-copy">
+      Great verses possess an ethereal luminescence—illuminating darkness with beauty, wisdom radiating through cascading words.
+    </p>
+
+    <button class="cta-button">
+      <span>Enter the Flow</span>
+      <span class="cta-ar">ادخل التدفق</span>
+    </button>
+
+    <div class="metadata">An Ethereal Experience</div>
+  </div>
+
+  <script>
+    // Subtle parallax effect on mouse move
+    document.addEventListener('mousemove', (e) => {
+      const primary = document.querySelector('.aurora-primary');
+      const secondary = document.querySelector('.aurora-secondary');
+      const x = e.clientX / window.innerWidth;
+      const y = e.clientY / window.innerHeight;
+
+      primary.style.transform = `translate(${x * 15 - 7.5}px, ${y * 15 - 7.5}px)`;
+      secondary.style.transform = `translate(${x * -10 + 5}px, ${y * -10 + 5}px)`;
+    });
+  </script>
+</body>
+</html>

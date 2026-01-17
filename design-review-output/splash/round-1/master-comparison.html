@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🎨 Master Design Review - All Splash Screens</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+      background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+      color: #e0e0e0;
+      min-height: 100vh;
+      padding: 40px 20px;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 3rem;
+      padding-bottom: 2rem;
+      border-bottom: 2px solid rgba(197, 160, 89, 0.3);
+    }
+
+    h1 {
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      margin-bottom: 1rem;
+      background: linear-gradient(135deg, #C5A059 0%, #ffd89b 50%, #C5A059 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .subtitle {
+      font-size: 1.1rem;
+      opacity: 0.8;
+      max-width: 700px;
+      margin: 0 auto 1.5rem;
+      line-height: 1.6;
+    }
+
+    .stats {
+      display: flex;
+      gap: 2rem;
+      justify-content: center;
+      margin-top: 1.5rem;
+      flex-wrap: wrap;
+    }
+
+    .stat {
+      background: rgba(99, 102, 241, 0.1);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      padding: 1rem 2rem;
+      border-radius: 12px;
+      backdrop-filter: blur(10px);
+    }
+
+    .stat-number {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #a5b4fc;
+      display: block;
+    }
+
+    .stat-label {
+      font-size: 0.875rem;
+      opacity: 0.7;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .gallery {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+      gap: 28px;
+      margin-bottom: 3rem;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.03);
+      backdrop-filter: blur(20px);
+      border: 2px solid rgba(197, 160, 89, 0.15);
+      border-radius: 20px;
+      padding: 28px;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: linear-gradient(90deg, #C5A059, #ffd89b, #C5A059);
+      transform: scaleX(0);
+      transition: transform 0.4s ease;
+    }
+
+    .card:hover {
+      transform: translateY(-6px);
+      border-color: rgba(197, 160, 89, 0.5);
+      box-shadow: 0 20px 60px rgba(197, 160, 89, 0.25);
+    }
+
+    .card:hover::before {
+      transform: scaleX(1);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .card-number {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 48px;
+      height: 48px;
+      background: linear-gradient(135deg, #C5A059 0%, #ffd89b 100%);
+      color: #0f0c29;
+      font-weight: 800;
+      font-size: 1.5rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(197, 160, 89, 0.3);
+    }
+
+    .card-title {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: #C5A059;
+      line-height: 1.2;
+    }
+
+    .card-description {
+      font-size: 0.95rem;
+      opacity: 0.75;
+      line-height: 1.7;
+      margin-bottom: 20px;
+      min-height: 3.4em;
+    }
+
+    .design-options {
+      display: grid;
+      gap: 10px;
+      margin-bottom: 20px;
+      padding: 16px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      padding: 8px 12px;
+      background: rgba(99, 102, 241, 0.08);
+      border-radius: 8px;
+      border: 1px solid rgba(99, 102, 241, 0.2);
+    }
+
+    .option-label {
+      font-weight: 600;
+      color: #a5b4fc;
+      min-width: 80px;
+    }
+
+    .option-desc {
+      opacity: 0.7;
+      font-size: 0.8rem;
+    }
+
+    .card-links {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .card-link {
+      flex: 1;
+      min-width: 140px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 14px 20px;
+      background: rgba(197, 160, 89, 0.1);
+      border: 2px solid rgba(197, 160, 89, 0.3);
+      border-radius: 12px;
+      color: #C5A059;
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      text-align: center;
+    }
+
+    .card-link:hover {
+      background: rgba(197, 160, 89, 0.25);
+      border-color: rgba(197, 160, 89, 0.6);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 16px rgba(197, 160, 89, 0.2);
+    }
+
+    .card-link-primary {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      border-color: transparent;
+      color: white;
+      font-weight: 700;
+    }
+
+    .card-link-primary:hover {
+      background: linear-gradient(135deg, #7c3aed, #a855f7);
+      box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4);
+    }
+
+    .status-badge {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .status-complete {
+      background: rgba(34, 197, 94, 0.2);
+      color: #86efac;
+      border: 1px solid rgba(34, 197, 94, 0.4);
+    }
+
+    .status-processing {
+      background: rgba(251, 191, 36, 0.2);
+      color: #fde68a;
+      border: 1px solid rgba(251, 191, 36, 0.4);
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+
+    .footer {
+      text-align: center;
+      margin-top: 4rem;
+      padding-top: 2rem;
+      border-top: 2px solid rgba(255, 255, 255, 0.1);
+      opacity: 0.6;
+      font-size: 0.875rem;
+    }
+
+    .legend {
+      display: flex;
+      gap: 2rem;
+      justify-content: center;
+      margin-top: 1.5rem;
+      padding: 1.5rem;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 12px;
+      flex-wrap: wrap;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.875rem;
+    }
+
+    .legend-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 6px;
+    }
+
+    @media (max-width: 768px) {
+      .gallery {
+        grid-template-columns: 1fr;
+      }
+
+      .stats {
+        gap: 1rem;
+      }
+
+      .card-links {
+        flex-direction: column;
+      }
+
+      .card-link {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🎨 Master Design Review</h1>
+      <p class="subtitle">All 9 splash screens reviewed by AI design expert. Each mockup has 3 alternative designs to choose from.</p>
+
+      <div style="text-align: center; margin: 1.5rem 0;">
+        <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-bottom: 1rem;">
+          <a href="./streamlined-review.html" style="display: inline-block; padding: 1rem 2rem; background: linear-gradient(135deg, #C5A059, #ffd89b); color: #0f0c29; text-decoration: none; border-radius: 12px; font-weight: 700; font-size: 1.1rem; transition: all 0.3s ease; box-shadow: 0 4px 16px rgba(197, 160, 89, 0.4);">
+            🎯 Launch Review Mode
+          </a>
+          <a href="./interactive-review.html" style="display: inline-block; padding: 1rem 2rem; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; text-decoration: none; border-radius: 12px; font-weight: 700; font-size: 1.1rem; transition: all 0.3s ease; box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3);">
+            📊 View All Options
+          </a>
+        </div>
+        <p style="margin-top: 0.75rem; font-size: 0.875rem; opacity: 0.7;">Step through each theme with easy navigation or view all 27 options in comparison matrix</p>
+      </div>
+
+      <div class="stats">
+        <div class="stat">
+          <span class="stat-number">9</span>
+          <span class="stat-label">Mockups</span>
+        </div>
+        <div class="stat">
+          <span class="stat-number">27</span>
+          <span class="stat-label">Design Options</span>
+        </div>
+        <div class="stat">
+          <span class="stat-number">36</span>
+          <span class="stat-label">Interactive Previews</span>
+        </div>
+      </div>
+
+      <div class="legend">
+        <div class="legend-item">
+          <div class="legend-icon" style="background: rgba(197, 160, 89, 0.3); border: 2px solid rgba(197, 160, 89, 0.5);"></div>
+          <span>View Comparison (side-by-side)</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-icon" style="background: linear-gradient(135deg, #6366f1, #8b5cf6);"></div>
+          <span>Original Mockup (live)</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="gallery">
+      <!-- 1. Particle Field -->
+      <div class="card">
+        <span class="status-badge status-complete">✓ Complete</span>
+        <div class="card-header">
+          <div class="card-number">1</div>
+          <h2 class="card-title">Particle Field</h2>
+        </div>
+        <p class="card-description">Interactive particle system with fluid motion and organic movement patterns.</p>
+
+        <div class="design-options">
+          <div class="option">
+            <span class="option-label">Option 1:</span>
+            <span class="option-desc">Refined Particles (improved hierarchy)</span>
+          </div>
+          <div class="option">
+            <span class="option-label">Option 2:</span>
+            <span class="option-desc">Gold Mystical (heritage aesthetic) ⭐ Recommended</span>
+          </div>
+          <div class="option">
+            <span class="option-label">Option 3:</span>
+            <span class="option-desc">Minimal Constellation (sparse design)</span>
+          </div>
+        </div>
+
+        <div class="card-links">
+          <a href="./particles/visual-comparison.html" class="card-link" target="_blank">
+            📊 View Comparison →
+          </a>
+          <a href="http://localhost:5174/?mockup=particles" class="card-link card-link-primary" target="_blank">
+            ✨ Original Live →
+          </a>
+        </div>
+      </div>
+
+      <!-- 2. Constellation Poetry -->
+      <div class="card">
+        <span class="status-badge status-processing">⏳ Processing</span>
+        <div class="card-header">
+          <div class="card-number">2</div>
+          <h2 class="card-title">Constellation Poetry</h2>
+        </div>
+        <p class="card-description">Animated star constellation that forms poetic patterns with ethereal glow effects.</p>
+
+        <div class="design-options">
+          <div class="option">
+            <span class="option-label">Option 1:</span>
+            <span class="option-desc">Analyzing...</span>
+          </div>
+          <div class="option">
+            <span class="option-label">Option 2:</span>
+            <span class="option-desc">Analyzing...</span>
+          </div>
+          <div class="option">
+            <span class="option-label">Option 3:</span>
+            <span class="option-desc">Analyzing...</span>
+          </div>
+        </div>
+
+        <div class="card-links">
+          <a href="./constellation/visual-comparison.html" class="card-link" target="_blank">
+            📊 View Comparison →
+          </a>
+          <a href="http://localhost:5174/?mockup=constellation" class="card-link card-link-primary" target="_blank">
+            ✨ Original Live →
+          </a>
+        </div>
+      </div>
+
+      <!-- 3. Breathing Mandala -->
+      <div class="card">
+        <span class="status-badge status-processing">⏳ Processing</span>
+        <div class="card-header">
+          <div class="card-number">3</div>
+          <h2 class="card-title">Breathing Mandala</h2>
+        </div>
+        <p class="card-description">Sacred geometric mandala that breathes with calming animations and meditative depth.</p>
+
+        <div class="design-options">
+          <div class="option">
+            <span class="option-label">Option 1:</span>
+            <span class="option-desc">Analyzing...</span>
+          </div>
+          <div class="option">
+            <span class="option-label">Option 2:</span>
+            <span class="option-desc">Analyzing...</span>
+          </div>
+          <div class="option">
+            <span class="option-label">Option 3:</span>
+            <span class="option-desc">Analyzing...</span>
+          </div>
+        </div>
+
+        <div class="card-links">
+          <a href="./mandala/visual-comparison.html" class="card-link" target="_blank">
+            📊 View Comparison →
+          </a>
+          <a href="http://localhost:5174/?mockup=mandala" class="card-link card-link-primary" target="_blank">
+            ✨ Original Live →
+          </a>
+        </div>
+      </div>
+
+      <!-- 4. Geometric Patterns -->
+      <div class="card">
+        <span class="status-badge status-processing">⏳ Processing</span>
+        <div class="card-header">
+          <div class="card-number">4</div>
+          <h2 class="card-title">Geometric Patterns</h2>
+        </div>
+        <p class="card-description">Islamic geometric patterns with tessellated 8-pointed stars and mathematical precision.</p>
+
+        <div class="design-options">
+          <div class="option">
+            <span class="option-label">Option 1:</span>
+            <span class="option-desc">Analyzing...</span>
+          </div>
+          <div class="option">
+            <span class="option-label">Option 2:</span>
+            <span class="option-desc">Analyzing...</span>
+          </div>
+          <div class="option">
+            <span class="option-label">Option 3:</span>
+            <span class="option-desc">Analyzing...</span>
+          </div>
+        </div>
+
+        <div class="card-links">
+          <a href="./geometric/visual-comparison.html" class="card-link" target="_blank">
+            📊 View Comparison →
+          </a>
+          <a href="http://localhost:5174/?mockup=geometric" class="card-link card-link-primary" target="_blank">
+            ✨ Original Live →
+          </a>
+        </div>
+      </div>
+
+      <!-- 5. Zen Minimalism -->
+      <div class="card">
+        <span class="status-badge status-processing">⏳ Processing</span>
+        <div class="card-header">
+          <div class="card-number">5</div>
+          <h2 class="card-title">Zen Minimalism</h2>
+        </div>
+        <p class="card-description">Ultra-minimal zen design with pure backgrounds and single calligraphic stroke.</p>
+
+        <div class="design-options">
+          <div class="option">
+            <span class="option-label">Option 1:</span>
+            <span class="option-desc">Analyzing...</span>
+          </div>
+          <div class="option">
+            <span class="option-label">Option 2:</span>
+            <span class="option-desc">Analyzing...</span>
+          </div>
+          <div class="option">
+            <span class="option-label">Option 3:</span>
+            <span class="option-desc">Analyzing...</span>
+          </div>
+        </div>
+
+        <div class="card-links">
+          <a href="./zen/visual-comparison.html" class="card-link" target="_blank">
+            📊 View Comparison →
+          </a>
+          <a href="http://localhost:5174/?mockup=zen" class="card-link card-link-primary" target="_blank">
+            ✨ Original Live →
+          </a>
+        </div>
+      </div>
+
+      <!-- 6. Aurora Light -->
+      <div class="card">
+        <span class="status-badge status-processing">⏳ Processing</span>
+        <div class="card-header">
+          <div class="card-number">6</div>
+          <h2 class="card-title">Aurora Light</h2>
+        </div>
+        <p class="card-description">Flowing aurora borealis gradients with organic light movements and ethereal atmosphere.</p>
+
+        <div class="design-options">
+          <div class="option">
+            <span class="option-label">Option 1:</span>
+            <span class="option-desc">Analyzing...</span>
+          </div>
+          <div class="option">
+            <span class="option-label">Option 2:</span>
+            <span class="option-desc">Analyzing...</span>
+          </div>
+          <div class="option">
+            <span class="option-label">Option 3:</span>
+            <span class="option-desc">Analyzing...</span>
+          </div>
+        </div>
+
+        <div class="card-links">
+          <a href="./aurora/visual-comparison.html" class="card-link" target="_blank">
+            📊 View Comparison →
+          </a>
+          <a href="http://localhost:5174/?mockup=aurora" class="card-link card-link-primary" target="_blank">
+            ✨ Original Live →
+          </a>
+        </div>
+      </div>
+
+      <!-- 7. Ink Calligraphy -->
+      <div class="card">
+        <span class="status-badge status-processing">⏳ Processing</span>
+        <div class="card-header">
+          <div class="card-number">7</div>
+          <h2 class="card-title">Ink Calligraphy</h2>
+        </div>
+        <p class="card-description">Traditional ink brush calligraphy with stroke animation and elegant Arabic letterforms.</p>
+
+        <div class="design-options">
+          <div class="option">
+            <span class="option-label">Option 1:</span>
+            <span class="option-desc">Analyzing...</span>
+          </div>
+          <div class="option">
+            <span class="option-label">Option 2:</span>
+            <span class="option-desc">Analyzing...</span>
+          </div>
+          <div class="option">
+            <span class="option-label">Option 3:</span>
+            <span class="option-desc">Analyzing...</span>
+          </div>
+        </div>
+
+        <div class="card-links">
+          <a href="./ink/visual-comparison.html" class="card-link" target="_blank">
+            📊 View Comparison →
+          </a>
+          <a href="http://localhost:5174/?mockup=ink" class="card-link card-link-primary" target="_blank">
+            ✨ Original Live →
+          </a>
+        </div>
+      </div>
+
+      <!-- 8. Ancient Manuscript -->
+      <div class="card">
+        <span class="status-badge status-processing">⏳ Processing</span>
+        <div class="card-header">
+          <div class="card-number">8</div>
+          <h2 class="card-title">Ancient Manuscript</h2>
+        </div>
+        <p class="card-description">Aged manuscript aesthetic with parchment textures and ornate classical borders.</p>
+
+        <div class="design-options">
+          <div class="option">
+            <span class="option-label">Option 1:</span>
+            <span class="option-desc">Analyzing...</span>
+          </div>
+          <div class="option">
+            <span class="option-label">Option 2:</span>
+            <span class="option-desc">Analyzing...</span>
+          </div>
+          <div class="option">
+            <span class="option-label">Option 3:</span>
+            <span class="option-desc">Analyzing...</span>
+          </div>
+        </div>
+
+        <div class="card-links">
+          <a href="./manuscript/visual-comparison.html" class="card-link" target="_blank">
+            📊 View Comparison →
+          </a>
+          <a href="http://localhost:5174/?mockup=manuscript" class="card-link card-link-primary" target="_blank">
+            ✨ Original Live →
+          </a>
+        </div>
+      </div>
+
+      <!-- 9. Light & Shadow -->
+      <div class="card">
+        <span class="status-badge status-processing">⏳ Processing</span>
+        <div class="card-header">
+          <div class="card-number">9</div>
+          <h2 class="card-title">Light & Shadow</h2>
+        </div>
+        <p class="card-description">Dynamic interplay of light and shadow with depth and three-dimensional effects.</p>
+
+        <div class="design-options">
+          <div class="option">
+            <span class="option-label">Option 1:</span>
+            <span class="option-desc">Analyzing...</span>
+          </div>
+          <div class="option">
+            <span class="option-label">Option 2:</span>
+            <span class="option-desc">Analyzing...</span>
+          </div>
+          <div class="option">
+            <span class="option-label">Option 3:</span>
+            <span class="option-desc">Analyzing...</span>
+          </div>
+        </div>
+
+        <div class="card-links">
+          <a href="./light/visual-comparison.html" class="card-link" target="_blank">
+            📊 View Comparison →
+          </a>
+          <a href="http://localhost:5174/?mockup=light" class="card-link card-link-primary" target="_blank">
+            ✨ Original Live →
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <p><strong>Poetry Bil Araby</strong> • Master Design Review</p>
+      <p style="margin-top: 0.5rem;">Each mockup has been analyzed by an AI design expert and 3 visual alternatives have been generated.</p>
+    </div>
+  </div>
+</body>
+</html>

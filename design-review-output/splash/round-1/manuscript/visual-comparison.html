@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ancient Manuscript Splash - Design Review</title>
+  <style>
+    body {
+      background: #0c0c0e;
+      color: #e7e5e4;
+      font-family: system-ui, -apple-system, sans-serif;
+      padding: 40px;
+      max-width: 1400px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    h1 {
+      color: #C5A059;
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    h2 {
+      color: #C5A059;
+      font-size: 1.75rem;
+      margin-top: 3rem;
+      border-bottom: 1px solid #292524;
+      padding-bottom: 0.5rem;
+    }
+
+    h3 {
+      color: #a8dadc;
+      font-size: 1.25rem;
+      margin-top: 2rem;
+    }
+
+    .subtitle {
+      font-size: 1.125rem;
+      color: #a8a29e;
+      margin-bottom: 3rem;
+    }
+
+    .current-state {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin: 30px 0;
+    }
+
+    .current-state > div {
+      text-align: center;
+    }
+
+    .current-state h3 {
+      margin-top: 0;
+      margin-bottom: 1rem;
+    }
+
+    .current-state img {
+      width: 100%;
+      border: 1px solid #292524;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    }
+
+    .issues {
+      background: #1c1917;
+      border-left: 4px solid #ef4444;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 4px;
+    }
+
+    .issues h3 {
+      color: #fca5a5;
+      margin-top: 0;
+    }
+
+    .issues li {
+      margin: 8px 0;
+    }
+
+    .option {
+      background: #1c1917;
+      border: 1px solid #292524;
+      border-radius: 12px;
+      padding: 30px;
+      margin: 30px 0;
+    }
+
+    .option-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+
+    .option h2 {
+      margin: 0;
+      border: none;
+    }
+
+    .open-preview-btn {
+      background: #C5A059;
+      color: #0c0c0e;
+      padding: 12px 24px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.2s;
+      display: inline-block;
+    }
+
+    .open-preview-btn:hover {
+      background: #d4af6a;
+      transform: scale(1.05);
+    }
+
+    .option-content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      margin-top: 20px;
+    }
+
+    .option-content img {
+      width: 100%;
+      border: 1px solid #292524;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    }
+
+    .design-rationale h3 {
+      color: #86efac;
+      margin-top: 0;
+    }
+
+    .design-rationale h4 {
+      color: #C5A059;
+      margin-top: 20px;
+      font-size: 1.1rem;
+    }
+
+    .design-rationale li {
+      margin: 8px 0;
+    }
+
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 30px 0;
+      background: #1c1917;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .comparison-table th {
+      background: #292524;
+      padding: 15px;
+      text-align: left;
+      color: #C5A059;
+      font-weight: 600;
+    }
+
+    .comparison-table td {
+      padding: 12px 15px;
+      border-bottom: 1px solid #292524;
+    }
+
+    .comparison-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .recommendations {
+      background: #1c1917;
+      border-left: 4px solid #86efac;
+      padding: 20px;
+      margin: 30px 0;
+      border-radius: 4px;
+    }
+
+    .recommendations h3 {
+      color: #86efac;
+      margin-top: 0;
+    }
+
+    .recommendations p {
+      margin: 12px 0;
+    }
+
+    .previews-section {
+      margin-top: 60px;
+    }
+
+    .preview-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .preview-container {
+      border: 1px solid #292524;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #1c1917;
+    }
+
+    .preview-container h3 {
+      margin: 0;
+      padding: 15px;
+      background: #292524;
+      font-size: 1rem;
+    }
+
+    .preview-container iframe {
+      width: 100%;
+      height: 600px;
+      border: none;
+      display: block;
+      background: #000;
+    }
+
+    hr {
+      border: none;
+      border-top: 1px solid #292524;
+      margin: 60px 0 30px;
+    }
+
+    .next-steps {
+      text-align: center;
+      font-size: 1.25rem;
+      margin-top: 30px;
+    }
+
+    .next-steps strong {
+      color: #C5A059;
+    }
+
+    @media (max-width: 1024px) {
+      .option-content,
+      .preview-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .current-state {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>Ancient Manuscript Splash Screen - Design Review</h1>
+  <p class="subtitle">Three visual alternatives to fix UI/UX issues</p>
+
+  <h2>Current State</h2>
+  <div class="current-state">
+    <div>
+      <h3>Initial State (Folded)</h3>
+      <img src="current-state/1-manuscript-initial.png" alt="Current manuscript initial state">
+    </div>
+    <div>
+      <h3>Unfurled State (Complete)</h3>
+      <img src="current-state/2-manuscript-unfurled.png" alt="Current manuscript unfurled state">
+    </div>
+  </div>
+
+  <div class="issues">
+    <h3>Identified Issues:</h3>
+    <ul>
+      <li><strong>Minimal ornamentation</strong> - Corner brackets are too simple for an "ancient manuscript" aesthetic; lacks classical embellishments</li>
+      <li><strong>Generic texture approach</strong> - SVG noise filters don't capture authentic paper grain, aging spots, or ink bleeding found in real manuscripts</li>
+      <li><strong>Limited authenticity</strong> - Missing classic manuscript elements like illuminated letters, gold leaf detailing, or marginalia decorations</li>
+      <li><strong>Digital unfurl animation</strong> - The reveal mechanic feels computational rather than organic like how real parchment unfurls</li>
+      <li><strong>Typography lacks classical gravitas</strong> - Missing the weight and authority of medieval scribe typography with proper letter spacing</li>
+      <li><strong>Modern border design</strong> - Simple rectangular frame doesn't evoke ornate manuscript marginalia or Islamic geometric borders</li>
+    </ul>
+  </div>
+
+  <!-- Option 1 -->
+  <div class="option">
+    <div class="option-header">
+      <h2>Option 1: Ornate Islamic Manuscript</h2>
+      <a href="previews/option-1-ornate-islamic.html" class="open-preview-btn" target="_blank">Open Preview →</a>
+    </div>
+    <div class="option-content">
+      <img src="mockups/option-1-ornate-islamic-component.png" alt="Option 1: Ornate Islamic Manuscript">
+      <div class="design-rationale">
+        <h3>Design Choice:</h3>
+        <p>Enhanced current direction with authentic Islamic manuscript ornamentation. Fixes authenticity issues while maintaining the flat manuscript concept. Adds museum-quality decorative elements inspired by classical Arabic calligraphy texts.</p>
+
+        <h4>Key Changes:</h4>
+        <ul>
+          <li><strong>Islamic geometric corner ornaments</strong> - Intricate SVG patterns with circles, crosses, and flourishes in all four corners</li>
+          <li><strong>Gold leaf illuminated title</strong> - Animated shimmer effect on Arabic title with gradient that mimics real gold leaf aging</li>
+          <li><strong>Ornate divider with diamond center</strong> - Classical manuscript section divider with central jewel motif</li>
+          <li><strong>Double border frame</strong> - Inner and outer border with accent color matching historical manuscript marginalia</li>
+          <li><strong>Paper grain texture</strong> - Realistic crosshatch pattern overlay simulating woven papyrus fibers</li>
+          <li><strong>Enhanced vignette</strong> - Deeper edge darkening creating aged manuscript preservation effect</li>
+          <li><strong>Button hover with gold fill</strong> - Enter button transitions from outlined to gold-filled on hover</li>
+        </ul>
+
+        <h4>Technical Details:</h4>
+        <ul>
+          <li>Gold shimmer animation cycles every 3 seconds using brightness filter</li>
+          <li>Border ornaments use hand-crafted SVG paths for authentic look</li>
+          <li>Sepia color palette preserved from original with enhanced accents</li>
+          <li>Maintains unfurl animation concept from original design</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Option 2 -->
+  <div class="option">
+    <div class="option-header">
+      <h2>Option 2: Ancient Codex with Book Spine</h2>
+      <a href="previews/option-2-codex-spine.html" class="open-preview-btn" target="_blank">Open Preview →</a>
+    </div>
+    <div class="option-content">
+      <img src="mockups/option-2-codex-spine-component.png" alt="Option 2: Ancient Codex with Book Spine">
+      <div class="design-rationale">
+        <h3>Design Choice:</h3>
+        <p>Completely different direction - open book/codex format with realistic binding and 3D page depth. Transforms flat manuscript into immersive ancient tome experience. Each "page" shows different content creating storytelling flow.</p>
+
+        <h4>Key Changes:</h4>
+        <ul>
+          <li><strong>Split-page layout</strong> - Left and right pages with visible book spine in center, mimicking real codex opening</li>
+          <li><strong>3D perspective transforms</strong> - Pages rotated 2° inward with realistic shadows creating depth and dimensionality</li>
+          <li><strong>Leather-bound spine</strong> - Central spine with raised bands (ribbing) and aged leather texture gradients</li>
+          <li><strong>Illuminated drop cap "P"</strong> - Large decorative capital letter in gold with medieval manuscript styling on left page</li>
+          <li><strong>Page number folios</strong> - Roman numerals (I, II) at bottom of each page for authentic codex feel</li>
+          <li><strong>Corner wear effects</strong> - Radial gradients at corners showing realistic page aging and handling marks</li>
+          <li><strong>Gradient shadows on page edges</strong> - Deep inset shadows where pages meet spine, light external shadows for depth</li>
+          <li><strong>Book opening animation</strong> - 1.5s animation with rotateY perspective creating cinematic reveal</li>
+          <li><strong>Cinzel classical serif font</strong> - Period-appropriate typography for gravitas and scholarly weight</li>
+        </ul>
+
+        <h4>Technical Details:</h4>
+        <ul>
+          <li>Pages use transform-origin for realistic 3D rotation</li>
+          <li>Spine bands created with positioned divs and inset shadows</li>
+          <li>Paper texture overlay with fine horizontal lines</li>
+          <li>Left page contains wisdom text, right page contains title and CTA</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Option 3 -->
+  <div class="option">
+    <div class="option-header">
+      <h2>Option 3: Ancient Scroll with Wax Seal</h2>
+      <a href="previews/option-3-scroll-seal.html" class="open-preview-btn" target="_blank">Open Preview →</a>
+    </div>
+    <div class="option-content">
+      <img src="mockups/option-3-scroll-seal-component.png" alt="Option 3: Ancient Scroll with Wax Seal">
+      <div class="design-rationale">
+        <h3>Design Choice:</h3>
+        <p>Radical departure - vertical scroll format with wooden rods and authentic wax seal. Most tactile and historical approach. Evokes ancient Dead Sea Scrolls and royal proclamations with unrolling parchment reveal.</p>
+
+        <h4>Key Changes:</h4>
+        <ul>
+          <li><strong>Papyrus color palette</strong> - Light aged parchment (#e8dcc4) contrasts with dark backgrounds; authentic beige/tan tones</li>
+          <li><strong>Wooden scroll rods top/bottom</strong> - Dark wood gradient with grain texture and rounded caps at ends</li>
+          <li><strong>Realistic wax seal</strong> - Red wax with embossed star pattern, drop shadow, and melted drip detail positioned at top right</li>
+          <li><strong>Seal press animation</strong> - 1.5s delayed animation where seal drops and presses onto scroll with scale bounce</li>
+          <li><strong>Aging stains and marks</strong> - Radial gradient spots scattered across parchment simulating water damage and age</li>
+          <li><strong>Torn parchment edges</strong> - Irregular gradient pattern at top and bottom edges showing wear</li>
+          <li><strong>Scroll unroll animation</strong> - Vertical scaleY animation creating authentic unrolling motion from top</li>
+          <li><strong>Calligraphic divider ornament</strong> - Hand-drawn SVG flourish with curved lines and dots in manuscript ink style</li>
+          <li><strong>EB Garamond classical font</strong> - Elegant serif with high readability for proclamation aesthetic</li>
+          <li><strong>Wood rod caps with metallic centers</strong> - Decorative end pieces with bronze/brass center dots</li>
+          <li><strong>Edge shadows</strong> - Left and right gradients creating rolled parchment depth illusion</li>
+        </ul>
+
+        <h4>Technical Details:</h4>
+        <ul>
+          <li>Scroll rods positioned absolutely with negative margin to extend beyond container</li>
+          <li>Wax seal uses radial gradient with multiple color stops for 3D effect</li>
+          <li>Papyrus texture uses bidirectional crosshatch pattern</li>
+          <li>Sequential fade-in animations for all text elements with staggered delays</li>
+          <li>Button labeled "UNROLL" instead of "ENTER" for thematic consistency</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <h2>Comparison Table</h2>
+  <table class="comparison-table">
+    <thead>
+      <tr>
+        <th>Feature</th>
+        <th>Current</th>
+        <th>Option 1: Ornate</th>
+        <th>Option 2: Codex</th>
+        <th>Option 3: Scroll</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Authentic Ornamentation</strong></td>
+        <td>❌ Minimal</td>
+        <td>✅ Islamic geometric patterns</td>
+        <td>✅ Medieval drop caps</td>
+        <td>✅ Wax seal & wooden rods</td>
+      </tr>
+      <tr>
+        <td><strong>Realistic Texture</strong></td>
+        <td>⚠️ SVG noise only</td>
+        <td>✅ Paper grain crosshatch</td>
+        <td>✅ Leather & paper overlay</td>
+        <td>✅ Papyrus with stains</td>
+      </tr>
+      <tr>
+        <td><strong>3D Depth Effect</strong></td>
+        <td>⚠️ Flat with shadow</td>
+        <td>⚠️ Vignette depth</td>
+        <td>✅ Perspective transforms</td>
+        <td>✅ Edge shadows & curl</td>
+      </tr>
+      <tr>
+        <td><strong>Illuminated Elements</strong></td>
+        <td>❌ None</td>
+        <td>✅ Gold leaf shimmer</td>
+        <td>✅ Drop cap "P"</td>
+        <td>✅ Red wax seal</td>
+      </tr>
+      <tr>
+        <td><strong>Classical Typography</strong></td>
+        <td>⚠️ Basic serif</td>
+        <td>✅ Enhanced Amiri</td>
+        <td>✅ Cinzel + Amiri</td>
+        <td>✅ EB Garamond + Amiri</td>
+      </tr>
+      <tr>
+        <td><strong>Animation Style</strong></td>
+        <td>Horizontal unfurl</td>
+        <td>Fade in + shimmer</td>
+        <td>Book opening 3D</td>
+        <td>Vertical unroll + seal press</td>
+      </tr>
+      <tr>
+        <td><strong>Historical Accuracy</strong></td>
+        <td>⚠️ Generic</td>
+        <td>✅ Islamic manuscript</td>
+        <td>✅ Medieval codex</td>
+        <td>✅ Ancient scroll</td>
+      </tr>
+      <tr>
+        <td><strong>Color Palette</strong></td>
+        <td>Dark sepia</td>
+        <td>Dark sepia + gold</td>
+        <td>Very dark + gold</td>
+        <td>Light papyrus + red seal</td>
+      </tr>
+      <tr>
+        <td><strong>Marginalia Details</strong></td>
+        <td>❌ None</td>
+        <td>✅ Corner ornaments</td>
+        <td>✅ Folio numbers</td>
+        <td>✅ Torn edges</td>
+      </tr>
+      <tr>
+        <td><strong>Implementation Complexity</strong></td>
+        <td>Medium (SVG filters)</td>
+        <td>Medium (SVG patterns)</td>
+        <td>High (3D transforms)</td>
+        <td>Medium (animations)</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="recommendations">
+    <h3>Recommendations</h3>
+    <p><strong>Best Overall:</strong> Option 2 (Ancient Codex) - Provides the most immersive and authentic manuscript experience with 3D depth, realistic binding, and scholarly presentation. The split-page layout with book spine is immediately recognizable as a historical artifact.</p>
+
+    <p><strong>Best for Current Direction:</strong> Option 1 (Ornate Islamic) - Enhances the existing flat manuscript design with proper Islamic ornamentation and gold leaf details without requiring major structural changes. Easiest migration path.</p>
+
+    <p><strong>Most Unique:</strong> Option 3 (Scroll with Wax Seal) - The vertical scroll format is distinctive and memorable. The wax seal animation adds dramatic flair. Best for creating a "royal proclamation" or "sacred text" feeling.</p>
+
+    <p><strong>Best for Mobile:</strong> Option 1 (Ornate Islamic) - The flat single-surface design scales most gracefully to mobile viewports without losing 3D perspective effects that can break on small screens.</p>
+
+    <p><strong>Most Authentic Historical Feel:</strong> Option 2 (Ancient Codex) - The bound book format with spine, page numbers, and drop caps most accurately represents how Arabic poetry was historically preserved in diwans and scholarly collections.</p>
+  </div>
+
+  <div class="previews-section">
+    <h2>Interactive Previews</h2>
+    <p style="color: #a8a29e;">Hover and interact with each option below:</p>
+    <div class="preview-grid">
+      <div class="preview-container">
+        <h3>Option 1: Ornate Islamic</h3>
+        <iframe src="previews/option-1-ornate-islamic.html"></iframe>
+      </div>
+      <div class="preview-container">
+        <h3>Option 2: Ancient Codex</h3>
+        <iframe src="previews/option-2-codex-spine.html"></iframe>
+      </div>
+      <div class="preview-container">
+        <h3>Option 3: Scroll with Seal</h3>
+        <iframe src="previews/option-3-scroll-seal.html"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <hr>
+  <div class="next-steps">
+    <h2>Next Steps</h2>
+    <p>Which direction? Reply with: <strong>"Option 1"</strong>, <strong>"Option 2"</strong>, or <strong>"Option 3"</strong></p>
+  </div>
+</body>
+</html>

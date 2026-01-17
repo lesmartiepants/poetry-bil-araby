@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zen Splash Screen - Design Review</title>
+  <style>
+    body {
+      background: #0c0c0e;
+      color: #e7e5e4;
+      font-family: system-ui, -apple-system, sans-serif;
+      padding: 40px;
+      max-width: 1400px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+    h1 {
+      color: #C5A059;
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+    }
+    h2 {
+      color: #C5A059;
+      font-size: 1.75rem;
+      margin-top: 3rem;
+      border-bottom: 1px solid #292524;
+      padding-bottom: 0.5rem;
+    }
+    h3 {
+      color: #a8dadc;
+      font-size: 1.25rem;
+      margin-top: 2rem;
+    }
+
+    .current-state {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin: 30px 0;
+    }
+    .current-state img {
+      width: 100%;
+      border: 1px solid #292524;
+      border-radius: 8px;
+    }
+    .current-state h3 {
+      margin-top: 0;
+      margin-bottom: 10px;
+      font-size: 1rem;
+      color: #a8a29e;
+    }
+
+    .issues {
+      background: #1c1917;
+      border-left: 4px solid #ef4444;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 4px;
+    }
+    .issues h3 {
+      color: #fca5a5;
+      margin-top: 0;
+    }
+    .issues li {
+      margin: 8px 0;
+    }
+
+    .option {
+      background: #1c1917;
+      border: 1px solid #292524;
+      border-radius: 12px;
+      padding: 30px;
+      margin: 30px 0;
+    }
+    .option-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .option h2 {
+      margin: 0;
+      border: none;
+    }
+    .open-preview-btn {
+      background: #C5A059;
+      color: #0c0c0e;
+      padding: 12px 24px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.2s;
+      display: inline-block;
+    }
+    .open-preview-btn:hover {
+      background: #d4af6a;
+      transform: scale(1.05);
+    }
+
+    .option-content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      margin-top: 20px;
+    }
+    .option-content img {
+      width: 100%;
+      border: 1px solid #292524;
+      border-radius: 8px;
+    }
+    .design-rationale h3 {
+      color: #86efac;
+    }
+    .design-rationale h4 {
+      color: #C5A059;
+      margin-top: 20px;
+    }
+    .design-rationale li {
+      margin: 8px 0;
+    }
+
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 30px 0;
+      background: #1c1917;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .comparison-table th {
+      background: #292524;
+      padding: 15px;
+      text-align: left;
+      color: #C5A059;
+    }
+    .comparison-table td {
+      padding: 12px 15px;
+      border-bottom: 1px solid #292524;
+    }
+    .comparison-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .recommendations {
+      background: #1c1917;
+      border-left: 4px solid #86efac;
+      padding: 20px;
+      margin: 30px 0;
+      border-radius: 4px;
+    }
+    .recommendations h3 {
+      color: #86efac;
+      margin-top: 0;
+    }
+
+    .previews-section {
+      margin-top: 60px;
+    }
+    .preview-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-top: 20px;
+    }
+    .preview-container {
+      border: 1px solid #292524;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #1c1917;
+    }
+    .preview-container h3 {
+      margin: 0;
+      padding: 15px;
+      background: #292524;
+      font-size: 1rem;
+    }
+    .preview-container iframe {
+      width: 100%;
+      height: 600px;
+      border: none;
+      display: block;
+    }
+
+    @media (max-width: 1024px) {
+      .option-content {
+        grid-template-columns: 1fr;
+      }
+      .preview-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <h1>Zen Splash Screen - Design Review</h1>
+  <p style="font-size: 1.125rem; color: #a8a29e;">Three visual alternatives to fix UI/UX issues with minimalist zen aesthetics</p>
+
+  <h2>Current State</h2>
+  <div class="current-state">
+    <div>
+      <h3>Dark Mode</h3>
+      <img src="current-state/2-zen-dark-animated.png" alt="Current Zen splash dark mode">
+    </div>
+    <div>
+      <h3>Light Mode</h3>
+      <img src="current-state/3-zen-light-initial.png" alt="Current Zen splash light mode">
+    </div>
+  </div>
+
+  <div class="issues">
+    <h3>Identified Issues:</h3>
+    <ul>
+      <li><strong>Illegible calligraphic strokes</strong> - Hand-drawn SVG letterforms look sketchy and amateurish, not zen-like</li>
+      <li><strong>Too much visual complexity</strong> - Multiple animated elements (Poetry + Arabic + subtitle) create visual noise instead of breathing space</li>
+      <li><strong>Subtitle barely readable</strong> - "explore the poetic minds of the greats" is too detailed/busy for zen aesthetic</li>
+      <li><strong>Animation timing too long</strong> - 5+ seconds of sequential drawing feels slow, not meditative</li>
+      <li><strong>Drop shadow contradicts minimalism</strong> - Glowing effects don't match pure black/white zen philosophy</li>
+      <li><strong>No clear focal point</strong> - Three competing text elements dilute the zen "single point of focus" principle</li>
+    </ul>
+  </div>
+
+  <!-- Option 1 -->
+  <div class="option">
+    <div class="option-header">
+      <h2>Option 1: Refined Zen Typography</h2>
+      <a href="previews/option-1-refined.html" class="open-preview-btn" target="_blank">Open Preview →</a>
+    </div>
+    <div class="option-content">
+      <img src="mockups/option-1-refined-dark.png" alt="Option 1 mockup - Refined Zen Typography">
+      <div class="design-rationale">
+        <h3>Design Choice:</h3>
+        <p>Keeps the same dual-language approach but uses <strong>legible, elegant typefaces</strong> instead of hand-drawn SVG strokes. Cormorant Garamond (italic) for English poetry and Amiri for Arabic creates a scholarly, refined aesthetic.</p>
+
+        <h4>Key Changes:</h4>
+        <ul>
+          <li><strong>Real fonts over SVG drawings</strong> - Cormorant Garamond (italic, 5rem) for "Poetry" looks elegant and professional</li>
+          <li><strong>Simplified animation</strong> - Single fade-in (1.5s) + breathing animation (4s loop) replaces complex sequential stroke drawing</li>
+          <li><strong>Removed drop shadow</strong> - Pure solid colors (rgba 0.98 opacity) match zen minimalism</li>
+          <li><strong>Cleaner subtitle</strong> - "enter the diwan" (0.75rem, 0.4em letter-spacing) is concise and whisper-quiet</li>
+          <li><strong>Better hierarchy</strong> - English larger (5rem) than Arabic (3.5rem), creates clear visual flow</li>
+        </ul>
+
+        <h4>Why This Works:</h4>
+        <ul>
+          <li>Maintains current design intent (elegant calligraphy) but executes it properly</li>
+          <li>Typography is 100% readable, no ambiguity</li>
+          <li>Faster initial load (no complex SVG parsing)</li>
+          <li>Breathing animation feels meditative, not busy</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Option 2 -->
+  <div class="option">
+    <div class="option-header">
+      <h2>Option 2: Haiku Minimalism</h2>
+      <a href="previews/option-2-haiku.html" class="open-preview-btn" target="_blank">Open Preview →</a>
+    </div>
+    <div class="option-content">
+      <img src="mockups/option-2-haiku-dark.png" alt="Option 2 mockup - Haiku Minimalism">
+      <div class="design-rationale">
+        <h3>Design Choice:</h3>
+        <p>Radically minimal approach inspired by Japanese zen gardens and haiku poetry. <strong>Single horizontal brush stroke</strong> at top (200px x 3px) represents the essence of zen calligraphy without trying to draw letterforms.</p>
+
+        <h4>Key Changes:</h4>
+        <ul>
+          <li><strong>Single zen stroke element</strong> - Horizontal line (200px, 3px height) draws in 1.2s then breathes (4s loop)</li>
+          <li><strong>Ultra-light typography</strong> - Noto Serif 200 weight for "Poetry" (1.5rem), creates whisper-quiet presence</li>
+          <li><strong>Maximum negative space</strong> - 80% of screen is empty (true wabi-sabi aesthetic)</li>
+          <li><strong>Subtle theme toggle</strong> - Transparent button with 1px border, nearly invisible until hover</li>
+          <li><strong>Light mode uses warm off-white</strong> - #fafaf9 instead of pure white for softer, paper-like quality</li>
+          <li><strong>Hint text ultra-minimal</strong> - "touch to begin" in 0.625rem, appears after 2.5s</li>
+        </ul>
+
+        <h4>Why This Works:</h4>
+        <ul>
+          <li>True zen philosophy: "Less is more" taken to extreme</li>
+          <li>Single stroke = single moment of meditation before entering app</li>
+          <li>No visual noise, pure breathing space</li>
+          <li>Fastest animation (total 2.5s to full display)</li>
+          <li>Most mobile-friendly (minimal elements to render)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Option 3 -->
+  <div class="option">
+    <div class="option-header">
+      <h2>Option 3: Breathing Typography</h2>
+      <a href="previews/option-3-breathing.html" class="open-preview-btn" target="_blank">Open Preview →</a>
+    </div>
+    <div class="option-content">
+      <img src="mockups/option-3-breathing-dark.png" alt="Option 3 mockup - Breathing Typography">
+      <div class="design-rationale">
+        <h3>Design Choice:</h3>
+        <p>Pure typographic zen using <strong>scale-based breathing animation</strong> as the core design element. Inter ultra-light (100 weight) creates ghost-like presence. The breathing IS the design.</p>
+
+        <h4>Key Changes:</h4>
+        <ul>
+          <li><strong>Lowercase "poetry" instead of title case</strong> - More humble, whisper-quiet aesthetic</li>
+          <li><strong>Dramatic scale breathing</strong> - Text scales from 0.85 → 1.0 (3s) then breathes 1.0 ↔ 1.08 (4s loop)</li>
+          <li><strong>Inter 100 weight</strong> - Ultra-thin letterforms nearly disappear, require focus to read</li>
+          <li><strong>Staggered fade-in</strong> - English appears first, Arabic 0.5s later (creates rhythm)</li>
+          <li><strong>Single dot indicator</strong> - 4px circle at bottom pulses (2s loop) after 5s, hints at interaction</li>
+          <li><strong>Nearly invisible theme toggle</strong> - 0.3 opacity, rotates 180° on hover (playful micro-interaction)</li>
+          <li><strong>Pure black (#0a0a0a) instead of #000</strong> - Slightly warmer, less harsh</li>
+        </ul>
+
+        <h4>Why This Works:</h4>
+        <ul>
+          <li>Animation becomes the focal point (not decorative, it IS the design)</li>
+          <li>Lowercase feels more intimate, less corporate</li>
+          <li>Breathing scale mimics human breath rhythm (calming UX)</li>
+          <li>Dot indicator is subtle "next step" hint without text</li>
+          <li>Most sophisticated animation of all three options</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <h2>Comparison Table</h2>
+  <table class="comparison-table">
+    <thead>
+      <tr>
+        <th>Feature</th>
+        <th>Current</th>
+        <th>Option 1</th>
+        <th>Option 2</th>
+        <th>Option 3</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Legibility</td>
+        <td>❌ Poor (hand-drawn strokes)</td>
+        <td>✅ Excellent (real fonts)</td>
+        <td>✅ Excellent (real fonts)</td>
+        <td>✅ Good (ultra-light)</td>
+      </tr>
+      <tr>
+        <td>Zen Minimalism</td>
+        <td>❌ No (too busy)</td>
+        <td>⚠️ Moderate (3 elements)</td>
+        <td>✅ Extreme (single stroke)</td>
+        <td>✅ High (breathing focus)</td>
+      </tr>
+      <tr>
+        <td>Animation Duration</td>
+        <td>❌ 5+ seconds (too slow)</td>
+        <td>✅ 2.5 seconds</td>
+        <td>✅ 2.5 seconds</td>
+        <td>⚠️ 5 seconds (but intentional)</td>
+      </tr>
+      <tr>
+        <td>Visual Complexity</td>
+        <td>❌ High (3 animated groups)</td>
+        <td>⚠️ Medium (3 text elements)</td>
+        <td>✅ Minimal (1 stroke + 3 text)</td>
+        <td>✅ Minimal (2 text + dot)</td>
+      </tr>
+      <tr>
+        <td>Mobile Performance</td>
+        <td>❌ Heavy (complex SVG paths)</td>
+        <td>✅ Fast (CSS text)</td>
+        <td>✅ Fastest (minimal DOM)</td>
+        <td>✅ Fast (CSS text)</td>
+      </tr>
+      <tr>
+        <td>Accessibility</td>
+        <td>❌ Poor (SVG text unreadable)</td>
+        <td>✅ Excellent (semantic text)</td>
+        <td>✅ Excellent (semantic text)</td>
+        <td>⚠️ Good (very light weight)</td>
+      </tr>
+      <tr>
+        <td>Elegance / Sophistication</td>
+        <td>⚠️ Tries too hard</td>
+        <td>✅ Refined, scholarly</td>
+        <td>✅ Zen garden aesthetic</td>
+        <td>✅ Modern minimalism</td>
+      </tr>
+      <tr>
+        <td>First Impression</td>
+        <td>❌ "AI-generated sketch"</td>
+        <td>✅ "Elegant poetry app"</td>
+        <td>✅ "Zen meditation space"</td>
+        <td>✅ "Breathing, alive"</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="recommendations">
+    <h3>Recommendations</h3>
+    <p><strong>Best Overall:</strong> <strong>Option 1 (Refined Zen Typography)</strong> - Fixes all legibility issues while maintaining the elegant calligraphic intent. Uses real fonts (Cormorant Garamond italic + Amiri) for professional polish. Breathing animation is meditative without being slow. This is the safest upgrade that keeps current design direction but executes it properly.</p>
+
+    <p><strong>Most Zen / True Minimalism:</strong> <strong>Option 2 (Haiku Minimalism)</strong> - If you want radical simplicity and wabi-sabi aesthetic, this is it. Single horizontal stroke + whisper-quiet typography. 80% negative space. Fastest to load and most mobile-friendly. Best for users who want a "zen moment" before entering the app.</p>
+
+    <p><strong>Most Sophisticated / Modern:</strong> <strong>Option 3 (Breathing Typography)</strong> - If you want cutting-edge minimalism with breathing as the core design element. Lowercase typography feels more intimate. Scale-based animation mimics human breath. Most "alive" feeling of all three. Best for modern, design-forward audience.</p>
+
+    <p><strong>My Recommendation:</strong> Go with <strong>Option 1</strong> for the main app, but keep Option 2 as an alternative "zen mode" splash that users can enable in settings. Option 1 is polished and fixes all current issues. Option 2 is perfect for users who want extreme minimalism.</p>
+  </div>
+
+  <div class="previews-section">
+    <h2>Interactive Previews</h2>
+    <p style="color: #a8a29e;">Click and interact with each option below. Toggle between dark/light modes:</p>
+    <div class="preview-grid">
+      <div class="preview-container">
+        <h3>Option 1: Refined Zen</h3>
+        <iframe src="previews/option-1-refined.html"></iframe>
+      </div>
+      <div class="preview-container">
+        <h3>Option 2: Haiku Minimalism</h3>
+        <iframe src="previews/option-2-haiku.html"></iframe>
+      </div>
+      <div class="preview-container">
+        <h3>Option 3: Breathing Typography</h3>
+        <iframe src="previews/option-3-breathing.html"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <hr style="border-color: #292524; margin: 60px 0 30px;">
+  <h2>Next Steps</h2>
+  <p style="font-size: 1.125rem;">Which direction do you prefer? Reply with: <strong>"Option 1"</strong>, <strong>"Option 2"</strong>, or <strong>"Option 3"</strong></p>
+  <p style="color: #a8a29e; margin-top: 1rem;">Or mix-and-match: "Option 1 but with the breathing animation from Option 3" or "Option 2 but with larger text"</p>
+</body>
+</html>

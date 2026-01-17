@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Option 2: Gold Mystical - Luxury Arabic Heritage Design</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: linear-gradient(135deg, #0a0a0f 0%, #1a1520 100%);
+      color: #ffffff;
+      overflow: hidden;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+    }
+
+    /* Animated gradient background */
+    body::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle at 30% 50%, rgba(197, 160, 89, 0.08) 0%, transparent 50%),
+                  radial-gradient(circle at 70% 50%, rgba(138, 110, 218, 0.06) 0%, transparent 50%);
+      animation: gradientShift 20s ease-in-out infinite;
+    }
+
+    @keyframes gradientShift {
+      0%, 100% { opacity: 0.6; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.1); }
+    }
+
+    .particle-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      opacity: 0.7;
+    }
+
+    .content {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      max-width: 900px;
+      padding: 40px;
+    }
+
+    /* Original brand title with gold accent - EXACT specs from splash-particles.jsx */
+    .logo-container {
+      display: flex;
+      flex-direction: row-reverse;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 64px;
+      letter-spacing: 0.02em;
+    }
+
+    .logo {
+      display: flex;
+      align-items: flex-end; /* baseline alignment */
+      gap: 24px;
+    }
+
+    .logo-ar {
+      font-family: 'Amiri', serif;
+      font-size: 72px; /* text-6xl md:text-7xl equivalent */
+      font-weight: 700; /* font-bold */
+      color: #ffffff; /* Keep original white, not gold */
+      margin-bottom: 8px; /* mb-2 offset for baseline */
+    }
+
+    .logo-en {
+      font-size: 84px; /* text-7xl md:text-8xl equivalent */
+      font-weight: 300; /* font-light */
+      color: #ffffff; /* Keep original white, not gold */
+      letter-spacing: -0.05em; /* tracking-tighter */
+      text-transform: lowercase;
+    }
+
+    /* Mystical subtitle with indigo accent */
+    .subtitle {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.5em;
+      background: linear-gradient(90deg, #8a6eda 0%, #c5a059 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 72px;
+      font-weight: 600;
+    }
+
+    /* Luxurious gold button with glow */
+    .cta-button {
+      display: inline-block;
+      padding: 20px 64px;
+      border: 2px solid #c5a059;
+      background: linear-gradient(135deg, rgba(197, 160, 89, 0.15) 0%, rgba(197, 160, 89, 0.05) 100%);
+      color: #c5a059;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.4em;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+      overflow: hidden;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 0 30px rgba(197, 160, 89, 0.2),
+              inset 0 0 20px rgba(197, 160, 89, 0.1);
+    }
+
+    .cta-button::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(197, 160, 89, 0.3) 0%, transparent 70%);
+      transform: translate(-50%, -50%) scale(0);
+      transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .cta-button:hover::before {
+      transform: translate(-50%, -50%) scale(1);
+    }
+
+    .cta-button:hover {
+      background: linear-gradient(135deg, rgba(197, 160, 89, 0.3) 0%, rgba(197, 160, 89, 0.15) 100%);
+      box-shadow: 0 0 50px rgba(197, 160, 89, 0.5),
+                  inset 0 0 30px rgba(197, 160, 89, 0.2);
+      transform: translateY(-4px);
+    }
+
+    /* Mystical hint */
+    .hint {
+      margin-top: 56px;
+      font-size: 10px;
+      letter-spacing: 0.4em;
+      color: #6b5d7d;
+      text-transform: uppercase;
+      font-weight: 500;
+      opacity: 0.8;
+    }
+
+    /* Elegant theme toggle */
+    .theme-toggle {
+      position: fixed;
+      top: 32px;
+      right: 32px;
+      width: 52px;
+      height: 52px;
+      border: 1px solid rgba(197, 160, 89, 0.3);
+      border-radius: 50%;
+      background: rgba(197, 160, 89, 0.05);
+      color: #c5a059;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.4s ease;
+      backdrop-filter: blur(10px);
+    }
+
+    .theme-toggle:hover {
+      background: rgba(197, 160, 89, 0.15);
+      border-color: rgba(197, 160, 89, 0.6);
+      box-shadow: 0 0 30px rgba(197, 160, 89, 0.3);
+      transform: rotate(180deg);
+    }
+
+    /* Gold particles */
+    .particle {
+      position: absolute;
+      border-radius: 50%;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <!-- Particle canvas -->
+  <canvas id="particleCanvas" class="particle-canvas"></canvas>
+
+  <!-- Theme toggle -->
+  <button class="theme-toggle" aria-label="Toggle theme">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </button>
+
+  <!-- Content -->
+  <div class="content">
+    <div class="logo-container">
+      <h1 class="logo">
+        <span class="logo-ar">بالعربي</span>
+        <span class="logo-en">poetry</span>
+      </h1>
+    </div>
+
+    <div class="subtitle">
+      Verses Connecting Across Time and Space
+    </div>
+
+    <button class="cta-button">
+      Enter
+    </button>
+
+    <div class="hint">
+      Move your cursor to disturb the field
+    </div>
+  </div>
+
+  <script>
+    // Gold mystical particle system
+    const canvas = document.getElementById('particleCanvas');
+    const ctx = canvas.getContext('2d');
+
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    const particles = [];
+    const particleCount = 500;
+    const mouse = { x: canvas.width / 2, y: canvas.height / 2 };
+
+    // Color palette - gold and indigo
+    const colors = [
+      'rgba(197, 160, 89, ',
+      'rgba(212, 175, 106, ',
+      'rgba(138, 110, 218, ',
+    ];
+
+    // Generate particles
+    for (let i = 0; i < particleCount; i++) {
+      const curve = Math.floor(Math.random() * 3);
+      const curves = [
+        { x: 0.7, y: 0.5, radius: 0.15 },
+        { x: 0.5, y: 0.5, radius: 0.12 },
+        { x: 0.3, y: 0.5, radius: 0.16 }
+      ];
+
+      const c = curves[curve];
+      const angle = Math.random() * Math.PI * 2;
+      const distance = Math.random() * c.radius;
+
+      particles.push({
+        x: (c.x + Math.cos(angle) * distance) * canvas.width,
+        y: (c.y + Math.sin(angle) * distance) * canvas.height,
+        originX: (c.x + Math.cos(angle) * distance) * canvas.width,
+        originY: (c.y + Math.sin(angle) * distance) * canvas.height,
+        vx: 0,
+        vy: 0,
+        radius: Math.random() * 2 + 0.5,
+        opacity: Math.random() * 0.5 + 0.3,
+        color: colors[Math.floor(Math.random() * colors.length)],
+        twinkleSpeed: Math.random() * 0.02 + 0.01
+      });
+    }
+
+    // Mouse tracking
+    window.addEventListener('mousemove', (e) => {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+    });
+
+    let time = 0;
+
+    // Animation loop
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      time += 0.01;
+
+      particles.forEach((p, i) => {
+        // Mouse repulsion
+        const dx = mouse.x - p.x;
+        const dy = mouse.y - p.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        const minDistance = 150;
+
+        if (distance < minDistance) {
+          const force = (minDistance - distance) / minDistance;
+          p.vx -= (dx / distance) * force * 1.2;
+          p.vy -= (dy / distance) * force * 1.2;
+        }
+
+        // Return to origin with organic movement
+        p.vx += (p.originX - p.x) * 0.0008;
+        p.vy += (p.originY - p.y) * 0.0008;
+
+        // Gentle floating motion
+        p.vx += Math.sin(time + i * 0.1) * 0.05;
+        p.vy += Math.cos(time + i * 0.1) * 0.05;
+
+        // Apply velocity
+        p.vx *= 0.96;
+        p.vy *= 0.96;
+        p.x += p.vx;
+        p.y += p.vy;
+
+        // Twinkling effect
+        const twinkle = Math.sin(time * p.twinkleSpeed * 100) * 0.3 + 0.7;
+
+        // Draw particle with enhanced glow
+        ctx.beginPath();
+        const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius * 3);
+        gradient.addColorStop(0, p.color + (p.opacity * twinkle) + ')');
+        gradient.addColorStop(0.5, p.color + (p.opacity * twinkle * 0.3) + ')');
+        gradient.addColorStop(1, p.color + '0)');
+        ctx.fillStyle = gradient;
+        ctx.arc(p.x, p.y, p.radius * 3, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      requestAnimationFrame(animate);
+    }
+
+    animate();
+
+    // Resize handler
+    window.addEventListener('resize', () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    });
+  </script>
+</body>
+</html>

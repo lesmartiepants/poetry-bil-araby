@@ -1,0 +1,1302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Design Review - Streamlined</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --apple-gray-100: #1d1d1f;
+      --apple-gray-200: #2c2c2e;
+      --apple-gray-300: #3a3a3c;
+      --apple-gray-400: #48484a;
+      --apple-gray-500: #636366;
+      --apple-gray-600: #8e8e93;
+      --apple-gray-700: #aeaeb2;
+      --apple-gray-800: #c7c7cc;
+      --apple-gray-900: #f5f5f7;
+      --apple-blue: #0071e3;
+      --apple-green: #30d158;
+      --apple-orange: #ff9f0a;
+      --gold: #c5a059;
+      --gold-light: #d4af6a;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', sans-serif;
+      background: #000000;
+      color: var(--apple-gray-900);
+      height: 100vh;
+      overflow: hidden;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    /* Loading State */
+    .loading-screen {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #000000;
+      z-index: 9999;
+      opacity: 1;
+      transition: opacity 0.6s ease-in-out;
+    }
+
+    .loading-screen.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .loading-spinner {
+      width: 60px;
+      height: 60px;
+      border: 3px solid var(--apple-gray-400);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .loading-text {
+      position: absolute;
+      margin-top: 100px;
+      font-size: 13px;
+      color: var(--apple-gray-600);
+      letter-spacing: 0.02em;
+    }
+
+    /* Preview Container */
+    .preview-container {
+      height: calc(100vh - 88px);
+      display: flex;
+      gap: 1px;
+      background: #000;
+      position: relative;
+    }
+
+    .preview-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      background: var(--apple-gray-100);
+      position: relative;
+      transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .preview-panel.hidden {
+      flex: 0;
+      opacity: 0;
+      overflow: hidden;
+    }
+
+    .preview-label {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      padding: 8px 16px;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(30px) saturate(180%);
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.9);
+      z-index: 10;
+      transition: all 0.3s ease;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .preview-iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: #000;
+    }
+
+    .fallback-container {
+      display: none;
+      width: 100%;
+      height: 100%;
+      position: relative;
+      background: #000;
+    }
+
+    .fallback-container.active {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .fallback-img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+    }
+
+    .fallback-badge {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      padding: 8px 16px;
+      background: var(--apple-orange);
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: 700;
+      color: #000;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+
+    /* Info Overlay */
+    .info-overlay {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      right: 20px;
+      padding: 24px 28px;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(40px) saturate(180%);
+      border-radius: 20px;
+      z-index: 10;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      pointer-events: none;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .preview-container:hover .info-overlay {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .info-theme-name {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      color: var(--apple-gray-900);
+      letter-spacing: -0.02em;
+    }
+
+    .info-description {
+      font-size: 14px;
+      color: var(--apple-gray-700);
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+
+    .info-option-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--gold);
+      padding: 6px 12px;
+      background: rgba(197, 160, 89, 0.15);
+      border-radius: 8px;
+      display: inline-block;
+      margin-top: 4px;
+    }
+
+    /* Control Bar */
+    .control-bar {
+      height: 88px;
+      background: rgba(29, 29, 31, 0.98);
+      backdrop-filter: blur(40px) saturate(180%);
+      border-top: 0.5px solid rgba(255, 255, 255, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      padding: 0 32px;
+    }
+
+    .control-group {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .control-divider {
+      width: 1px;
+      height: 32px;
+      background: rgba(255, 255, 255, 0.08);
+      margin: 0 12px;
+    }
+
+    /* Buttons with Apple refinement */
+    .btn {
+      height: 36px;
+      padding: 0 18px;
+      background: rgba(255, 255, 255, 0.08);
+      border: none;
+      border-radius: 10px;
+      color: var(--apple-gray-900);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      white-space: nowrap;
+      letter-spacing: -0.01em;
+    }
+
+    .btn:hover:not(:disabled) {
+      background: rgba(255, 255, 255, 0.15);
+      transform: translateY(-1px);
+    }
+
+    .btn:active:not(:disabled) {
+      transform: scale(0.97);
+      transition: all 0.1s;
+    }
+
+    .btn:disabled {
+      opacity: 0.25;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background: var(--apple-blue);
+      color: white;
+      box-shadow: 0 2px 8px rgba(0, 113, 227, 0.3);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+      background: #0077ed;
+      box-shadow: 0 4px 12px rgba(0, 113, 227, 0.4);
+    }
+
+    .btn-option {
+      min-width: 90px;
+      position: relative;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .btn-option.active {
+      background: white;
+      color: #000;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 16px rgba(255, 255, 255, 0.3);
+    }
+
+    .btn-option.kept::after {
+      content: '✓';
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      width: 22px;
+      height: 22px;
+      background: var(--apple-green);
+      border-radius: 50%;
+      font-size: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 700;
+      border: 3px solid var(--apple-gray-100);
+      box-shadow: 0 2px 8px rgba(48, 209, 88, 0.4);
+    }
+
+    .btn-toggle {
+      background: transparent;
+      border: 1.5px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-toggle.active {
+      border-color: var(--apple-blue);
+      color: var(--apple-blue);
+      background: rgba(0, 113, 227, 0.1);
+    }
+
+    .status-text {
+      font-size: 13px;
+      color: var(--apple-gray-600);
+      font-weight: 500;
+      letter-spacing: -0.01em;
+    }
+
+    .btn-export {
+      background: rgba(197, 160, 89, 0.15);
+      border: 1.5px solid var(--gold);
+      color: var(--gold);
+    }
+
+    .btn-export:hover {
+      background: rgba(197, 160, 89, 0.25);
+      border-color: var(--gold-light);
+      color: var(--gold-light);
+    }
+
+    /* Action Menu */
+    .action-menu {
+      position: fixed;
+      bottom: 118px;
+      right: 32px;
+      background: rgba(29, 29, 31, 0.98);
+      backdrop-filter: blur(40px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      opacity: 0;
+      transform: translateY(20px) scale(0.95);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      pointer-events: none;
+      z-index: 100;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+    }
+
+    .action-menu.visible {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      pointer-events: all;
+    }
+
+    .action-btn {
+      height: 36px;
+      padding: 0 14px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid transparent;
+      border-radius: 10px;
+      color: var(--apple-gray-900);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+      letter-spacing: -0.01em;
+    }
+
+    .action-btn:hover {
+      background: rgba(255, 255, 255, 0.15);
+      transform: translateX(-2px);
+    }
+
+    .action-btn.kept {
+      background: var(--apple-green);
+      border-color: transparent;
+      color: white;
+      box-shadow: 0 2px 8px rgba(48, 209, 88, 0.3);
+    }
+
+    .action-btn.has-note {
+      background: rgba(255, 159, 10, 0.25);
+      border: 1px solid rgba(255, 159, 10, 0.4);
+      color: var(--apple-orange);
+    }
+
+    .action-divider {
+      height: 1px;
+      background: rgba(255, 255, 255, 0.1);
+      margin: 4px 0;
+    }
+
+    /* Note Modal */
+    .note-modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(20px);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+    }
+
+    .note-modal.active {
+      display: flex;
+      animation: fadeIn 0.3s ease-in-out;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    .note-modal-content {
+      max-width: 540px;
+      width: 100%;
+      background: var(--apple-gray-100);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 20px;
+      padding: 32px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+      animation: slideUp 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .note-modal-title {
+      font-size: 22px;
+      font-weight: 700;
+      margin-bottom: 20px;
+      color: var(--apple-gray-900);
+      letter-spacing: -0.02em;
+    }
+
+    .note-textarea {
+      width: 100%;
+      min-height: 140px;
+      padding: 14px 16px;
+      background: rgba(0, 0, 0, 0.3);
+      border: 1.5px solid rgba(255, 255, 255, 0.15);
+      border-radius: 12px;
+      color: var(--apple-gray-900);
+      font-family: inherit;
+      font-size: 14px;
+      resize: vertical;
+      margin-bottom: 20px;
+      transition: all 0.25s ease;
+    }
+
+    .note-textarea:focus {
+      outline: none;
+      border-color: var(--apple-blue);
+      background: rgba(0, 0, 0, 0.4);
+    }
+
+    .note-modal-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+    }
+
+    .btn-note-save {
+      height: 40px;
+      padding: 0 24px;
+      background: var(--apple-blue);
+      border: none;
+      border-radius: 12px;
+      color: white;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      box-shadow: 0 2px 8px rgba(0, 113, 227, 0.3);
+    }
+
+    .btn-note-save:hover {
+      background: #0077ed;
+      box-shadow: 0 4px 12px rgba(0, 113, 227, 0.4);
+      transform: translateY(-1px);
+    }
+
+    .btn-note-cancel {
+      height: 40px;
+      padding: 0 24px;
+      background: rgba(255, 255, 255, 0.08);
+      border: none;
+      border-radius: 12px;
+      color: var(--apple-gray-900);
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+
+    .btn-note-cancel:hover {
+      background: rgba(255, 255, 255, 0.15);
+    }
+
+    /* Back Link */
+    .back-link {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      padding: 10px 20px;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(30px) saturate(180%);
+      border-radius: 20px;
+      color: rgba(255, 255, 255, 0.9);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      z-index: 20;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      letter-spacing: -0.01em;
+    }
+
+    .back-link:hover {
+      background: rgba(0, 0, 0, 0.85);
+      color: white;
+      transform: translateX(-4px);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    }
+
+    /* Keyboard Hints */
+    .keyboard-hints {
+      position: fixed;
+      top: 50%;
+      left: 12px;
+      transform: translateY(-50%);
+      padding: 16px 12px;
+      background: rgba(0, 0, 0, 0.85);
+      backdrop-filter: blur(40px) saturate(180%);
+      border-radius: 16px;
+      font-size: 11px;
+      color: var(--apple-gray-700);
+      z-index: 20;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      min-width: 52px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    }
+
+    .keyboard-hint {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      text-align: center;
+    }
+
+    .keyboard-hint-keys {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      align-items: center;
+    }
+
+    .keyboard-hint kbd {
+      padding: 6px 8px;
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 6px;
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.8);
+      min-width: 32px;
+      text-align: center;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+
+    .keyboard-hint span {
+      font-size: 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      opacity: 0.7;
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .preview-panel:first-child {
+        display: none;
+      }
+
+      .control-bar {
+        flex-wrap: wrap;
+        height: auto;
+        padding: 20px;
+      }
+
+      .control-divider {
+        display: none;
+      }
+
+      .keyboard-hints {
+        display: none;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .control-bar {
+        gap: 10px;
+      }
+
+      .btn {
+        font-size: 12px;
+        padding: 0 14px;
+        height: 32px;
+      }
+
+      .btn-option {
+        min-width: 70px;
+      }
+
+      .status-text {
+        font-size: 11px;
+      }
+
+      .action-menu {
+        bottom: 16px;
+        right: 16px;
+      }
+
+      .info-overlay {
+        padding: 18px 20px;
+      }
+
+      .info-theme-name {
+        font-size: 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Loading Screen -->
+  <div class="loading-screen" id="loading-screen">
+    <div class="loading-spinner"></div>
+    <div class="loading-text">Loading designs...</div>
+  </div>
+
+  <!-- Back Link -->
+  <a href="MASTER-COMPARISON.html" class="back-link">← Overview</a>
+
+  <!-- Keyboard Hints -->
+  <div class="keyboard-hints">
+    <div class="keyboard-hint">
+      <div class="keyboard-hint-keys">
+        <kbd>←</kbd><kbd>→</kbd>
+      </div>
+      <span>Navigate</span>
+    </div>
+    <div class="keyboard-hint">
+      <div class="keyboard-hint-keys">
+        <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd>
+      </div>
+      <span>Options</span>
+    </div>
+    <div class="keyboard-hint">
+      <div class="keyboard-hint-keys">
+        <kbd>K</kbd>
+      </div>
+      <span>Keep</span>
+    </div>
+    <div class="keyboard-hint">
+      <div class="keyboard-hint-keys">
+        <kbd>N</kbd>
+      </div>
+      <span>Note</span>
+    </div>
+  </div>
+
+  <!-- Preview Container -->
+  <div class="preview-container">
+    <!-- Original Panel -->
+    <div class="preview-panel" id="original-panel">
+      <div class="preview-label">Original</div>
+      <iframe class="preview-iframe" id="original-iframe"></iframe>
+      <div class="fallback-container" id="original-fallback">
+        <img class="fallback-img" id="fallback-img" alt="Original design">
+        <div class="fallback-badge">Dev server offline</div>
+      </div>
+    </div>
+
+    <!-- Selected Option Panel -->
+    <div class="preview-panel">
+      <div class="preview-label" id="option-label">Option 1</div>
+      <iframe class="preview-iframe" id="option-iframe"></iframe>
+    </div>
+
+    <!-- Info Overlay -->
+    <div class="info-overlay">
+      <div class="info-theme-name" id="info-theme-name">Loading...</div>
+      <div class="info-description" id="info-description">Please wait...</div>
+      <div class="info-option-name" id="info-option-name">Option 1</div>
+    </div>
+  </div>
+
+  <!-- Control Bar -->
+  <div class="control-bar">
+    <button class="btn" id="prev-theme" onclick="navigateTheme(-1)">← Prev</button>
+
+    <div class="control-divider"></div>
+
+    <div class="control-group" id="option-buttons-container">
+      <!-- Option buttons dynamically populated -->
+    </div>
+
+    <div class="control-divider"></div>
+
+    <button class="btn btn-toggle active" id="compare-btn" onclick="toggleOriginal()">Compare</button>
+
+    <div class="control-divider"></div>
+
+    <button class="btn" id="next-theme" onclick="navigateTheme(1)">Next →</button>
+
+    <div style="flex: 1"></div>
+
+    <span class="status-text" id="status-text">Loading...</span>
+
+    <div class="control-divider"></div>
+
+    <button class="btn btn-export" onclick="exportData()">Export</button>
+  </div>
+
+  <!-- Action Menu -->
+  <div class="action-menu" id="action-menu">
+    <button class="action-btn" id="keep-btn" onclick="toggleKeep()">Keep This</button>
+    <button class="action-btn" id="note-btn" onclick="openNoteModal()"><span>✎</span><span>Add Note</span></button>
+    <div class="action-divider"></div>
+    <button class="action-btn" id="original-note-btn" onclick="openOriginalNoteModal()"><span>✎</span><span>Original</span></button>
+  </div>
+
+  <!-- Note Modal -->
+  <div class="note-modal" id="note-modal">
+    <div class="note-modal-content">
+      <h3 class="note-modal-title" id="note-modal-title">Add Note</h3>
+      <textarea class="note-textarea" id="note-textarea" placeholder="Your thoughts about this option..."></textarea>
+      <div class="note-modal-actions">
+        <button class="btn-note-cancel" onclick="closeNoteModal()">Cancel</button>
+        <button class="btn-note-save" onclick="saveNote()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Dynamic theme discovery
+    const THEME_DIRECTORIES = [
+      'particles', 'constellation', 'mandala', 'geometric',
+      'zen', 'aurora', 'ink', 'manuscript', 'light'
+    ];
+
+    const THEME_METADATA = {
+      'particles': {
+        name: 'Particle Field',
+        description: 'Interactive particle system with fluid motion',
+        originalUrl: 'http://localhost:5174/?mockup=particles'
+      },
+      'constellation': {
+        name: 'Constellation Poetry',
+        description: 'Star patterns forming poetic connections',
+        originalUrl: 'http://localhost:5174/?mockup=constellation'
+      },
+      'mandala': {
+        name: 'Breathing Mandala',
+        description: 'Sacred geometry with meditative breathing',
+        originalUrl: 'http://localhost:5174/?mockup=mandala'
+      },
+      'geometric': {
+        name: 'Geometric Patterns',
+        description: 'Islamic tessellation and sacred mathematics',
+        originalUrl: 'http://localhost:5174/?mockup=geometric'
+      },
+      'zen': {
+        name: 'Zen Minimalism',
+        description: 'Pure simplicity and calligraphic elegance',
+        originalUrl: 'http://localhost:5174/?mockup=zen'
+      },
+      'aurora': {
+        name: 'Aurora Light',
+        description: 'Flowing gradients and ethereal atmosphere',
+        originalUrl: 'http://localhost:5174/?mockup=aurora'
+      },
+      'ink': {
+        name: 'Ink Calligraphy',
+        description: 'Traditional ink brush and Arabic letterforms',
+        originalUrl: 'http://localhost:5174/?mockup=ink'
+      },
+      'manuscript': {
+        name: 'Ancient Manuscript',
+        description: 'Aged parchment with classical ornaments',
+        originalUrl: 'http://localhost:5174/?mockup=manuscript'
+      },
+      'light': {
+        name: 'Light & Shadow',
+        description: 'Dramatic interplay of light and depth',
+        originalUrl: 'http://localhost:5174/?mockup=light'
+      }
+    };
+
+    let themes = [];
+
+    // Dynamic theme loading
+    async function discoverThemes() {
+      const discoveredThemes = [];
+
+      for (const themeId of THEME_DIRECTORIES) {
+        try {
+          // Try to detect available options by probing for files
+          const options = await discoverOptions(themeId);
+
+          if (options.length > 0) {
+            const metadata = THEME_METADATA[themeId] || {
+              name: themeId.charAt(0).toUpperCase() + themeId.slice(1),
+              description: 'Design exploration',
+              originalUrl: `http://localhost:5174/?mockup=${themeId}`
+            };
+
+            // Find fallback image
+            const fallbackImg = await findFallbackImage(themeId);
+
+            discoveredThemes.push({
+              id: themeId,
+              name: metadata.name,
+              description: metadata.description,
+              originalUrl: metadata.originalUrl,
+              fallbackImg: fallbackImg,
+              options: options
+            });
+          }
+        } catch (error) {
+          console.warn(`Failed to discover theme ${themeId}:`, error);
+        }
+      }
+
+      return discoveredThemes;
+    }
+
+    async function discoverOptions(themeId) {
+      const options = [];
+      const optionNumbers = [1, 2, 3];
+
+      for (const num of optionNumbers) {
+        // Try common naming patterns
+        const possiblePaths = [
+          `./${themeId}/previews/option-${num}-refined.html`,
+          `./${themeId}/previews/option-${num}-minimal.html`,
+          `./${themeId}/previews/option-${num}-animated.html`,
+          `./${themeId}/previews/option-${num}.html`
+        ];
+
+        for (const path of possiblePaths) {
+          if (await fileExists(path)) {
+            const optionName = extractOptionName(path);
+            options.push({
+              number: num,
+              name: optionName,
+              url: path,
+              description: `Option ${num}: ${optionName}`
+            });
+            break;
+          }
+        }
+      }
+
+      return options;
+    }
+
+    async function findFallbackImage(themeId) {
+      const possiblePaths = [
+        `./${themeId}/current-state/1-${themeId}-initial.png`,
+        `./${themeId}/current-state/1-${themeId}-splash-full.png`,
+        `./current-state/1-${themeId}-splash-full.png`
+      ];
+
+      for (const path of possiblePaths) {
+        if (await fileExists(path)) {
+          return path;
+        }
+      }
+
+      return './mockups/placeholder.png';
+    }
+
+    function extractOptionName(path) {
+      const match = path.match(/option-\d+-([^.]+)\.html/);
+      if (match) {
+        return match[1].split('-').map(word =>
+          word.charAt(0).toUpperCase() + word.slice(1)
+        ).join(' ');
+      }
+      return 'Design Option';
+    }
+
+    async function fileExists(path) {
+      try {
+        const response = await fetch(path, { method: 'HEAD' });
+        return response.ok;
+      } catch {
+        return false;
+      }
+    }
+
+    // State
+    const state = {
+      currentThemeIndex: 0,
+      currentOptionIndex: 0,
+      showOriginal: true,
+      keptOptions: {},
+      notes: {},
+      currentNoteKey: null
+    };
+
+    // Initialize
+    async function init() {
+      themes = await discoverThemes();
+
+      if (themes.length === 0) {
+        alert('No themes discovered. Please check directory structure.');
+        return;
+      }
+
+      loadState();
+      loadTheme();
+      updateUI();
+      showActionMenu();
+
+      // Hide loading screen
+      document.getElementById('loading-screen').classList.add('hidden');
+    }
+
+    function loadState() {
+      const saved = localStorage.getItem('design-review-state');
+      if (saved) {
+        try {
+          const parsed = JSON.parse(saved);
+          state.keptOptions = parsed.keptOptions || {};
+          state.notes = parsed.notes || {};
+        } catch (e) {
+          console.error('Failed to load state:', e);
+        }
+      }
+    }
+
+    function saveState() {
+      localStorage.setItem('design-review-state', JSON.stringify({
+        keptOptions: state.keptOptions,
+        notes: state.notes
+      }));
+    }
+
+    function loadTheme() {
+      const theme = themes[state.currentThemeIndex];
+
+      if (!theme || !theme.options || theme.options.length === 0) {
+        console.error('Theme has no options:', theme);
+        return;
+      }
+
+      const option = theme.options[state.currentOptionIndex];
+
+      // Update info
+      document.getElementById('info-theme-name').textContent = theme.name;
+      document.getElementById('info-description').textContent = theme.description;
+      document.getElementById('info-option-name').textContent = option.description;
+
+      // Load iframes
+      loadOriginal(theme);
+      document.getElementById('option-iframe').src = option.url;
+      document.getElementById('option-label').textContent = option.name;
+
+      // Render option buttons dynamically
+      renderOptionButtons(theme);
+
+      // Update button states
+      updateButtonStates();
+      showActionMenu();
+    }
+
+    function renderOptionButtons(theme) {
+      const container = document.getElementById('option-buttons-container');
+      container.innerHTML = '';
+
+      theme.options.forEach((option, index) => {
+        const btn = document.createElement('button');
+        btn.className = 'btn btn-option';
+        btn.textContent = `Option ${option.number}`;
+        btn.onclick = () => selectOption(option.number);
+
+        if (index === state.currentOptionIndex) {
+          btn.classList.add('active');
+        }
+
+        const optionKey = `${theme.id}-${option.number}`;
+        if (state.keptOptions[optionKey]) {
+          btn.classList.add('kept');
+        }
+
+        container.appendChild(btn);
+      });
+    }
+
+    function loadOriginal(theme) {
+      const iframe = document.getElementById('original-iframe');
+      const fallbackContainer = document.getElementById('original-fallback');
+      const fallbackImg = document.getElementById('fallback-img');
+
+      iframe.style.display = 'block';
+      fallbackContainer.classList.remove('active');
+      iframe.src = theme.originalUrl;
+
+      const timeout = setTimeout(() => {
+        iframe.style.display = 'none';
+        fallbackContainer.classList.add('active');
+        fallbackImg.src = theme.fallbackImg;
+      }, 2000);
+
+      iframe.onload = () => clearTimeout(timeout);
+      iframe.onerror = () => {
+        clearTimeout(timeout);
+        iframe.style.display = 'none';
+        fallbackContainer.classList.add('active');
+        fallbackImg.src = theme.fallbackImg;
+      };
+    }
+
+    function navigateTheme(direction) {
+      state.currentThemeIndex += direction;
+      state.currentThemeIndex = Math.max(0, Math.min(themes.length - 1, state.currentThemeIndex));
+      state.currentOptionIndex = 0;
+      loadTheme();
+      updateUI();
+    }
+
+    function selectOption(optionNumber) {
+      const theme = themes[state.currentThemeIndex];
+      const optionIndex = theme.options.findIndex(opt => opt.number === optionNumber);
+
+      if (optionIndex !== -1) {
+        state.currentOptionIndex = optionIndex;
+        loadTheme();
+      }
+    }
+
+    function toggleOriginal() {
+      state.showOriginal = !state.showOriginal;
+      const originalPanel = document.getElementById('original-panel');
+      const compareBtn = document.getElementById('compare-btn');
+
+      if (state.showOriginal) {
+        originalPanel.classList.remove('hidden');
+        compareBtn.classList.add('active');
+      } else {
+        originalPanel.classList.add('hidden');
+        compareBtn.classList.remove('active');
+      }
+    }
+
+    function getCurrentKey() {
+      const theme = themes[state.currentThemeIndex];
+      const option = theme.options[state.currentOptionIndex];
+      return `${theme.id}-${option.number}`;
+    }
+
+    function toggleKeep() {
+      const key = getCurrentKey();
+      if (state.keptOptions[key]) {
+        delete state.keptOptions[key];
+      } else {
+        state.keptOptions[key] = true;
+      }
+      saveState();
+      updateButtonStates();
+      updateUI();
+    }
+
+    function openNoteModal() {
+      const theme = themes[state.currentThemeIndex];
+      const option = theme.options[state.currentOptionIndex];
+      const key = getCurrentKey();
+
+      state.currentNoteKey = key;
+      document.getElementById('note-modal-title').textContent = `Note: ${theme.name} - ${option.name}`;
+      document.getElementById('note-textarea').value = state.notes[key] || '';
+      document.getElementById('note-modal').classList.add('active');
+      document.getElementById('note-textarea').focus();
+    }
+
+    function openOriginalNoteModal() {
+      const theme = themes[state.currentThemeIndex];
+      const key = `${theme.id}-original`;
+
+      state.currentNoteKey = key;
+      document.getElementById('note-modal-title').textContent = `Note: ${theme.name} - Original`;
+      document.getElementById('note-textarea').value = state.notes[key] || '';
+      document.getElementById('note-modal').classList.add('active');
+      document.getElementById('note-textarea').focus();
+    }
+
+    function closeNoteModal() {
+      document.getElementById('note-modal').classList.remove('active');
+      state.currentNoteKey = null;
+    }
+
+    function saveNote() {
+      const text = document.getElementById('note-textarea').value.trim();
+      if (text && state.currentNoteKey) {
+        state.notes[state.currentNoteKey] = text;
+      } else if (state.currentNoteKey) {
+        delete state.notes[state.currentNoteKey];
+      }
+      saveState();
+      updateButtonStates();
+      closeNoteModal();
+    }
+
+    function showActionMenu() {
+      const menu = document.getElementById('action-menu');
+      setTimeout(() => {
+        menu.classList.add('visible');
+      }, 200);
+    }
+
+    function updateButtonStates() {
+      const key = getCurrentKey();
+      const theme = themes[state.currentThemeIndex];
+      const originalKey = `${theme.id}-original`;
+
+      // Update option buttons
+      document.querySelectorAll('.btn-option').forEach((btn, index) => {
+        const option = theme.options[index];
+        const optionKey = `${theme.id}-${option.number}`;
+
+        btn.classList.toggle('active', index === state.currentOptionIndex);
+        btn.classList.toggle('kept', !!state.keptOptions[optionKey]);
+      });
+
+      // Update keep button
+      const keepBtn = document.getElementById('keep-btn');
+      if (state.keptOptions[key]) {
+        keepBtn.classList.add('kept');
+        keepBtn.textContent = '✓ Kept';
+      } else {
+        keepBtn.classList.remove('kept');
+        keepBtn.textContent = 'Keep This';
+      }
+
+      // Update note button
+      const noteBtn = document.getElementById('note-btn');
+      if (state.notes[key]) {
+        noteBtn.classList.add('has-note');
+        noteBtn.innerHTML = '<span>✎</span><span>Edit Note</span>';
+      } else {
+        noteBtn.classList.remove('has-note');
+        noteBtn.innerHTML = '<span>✎</span><span>Add Note</span>';
+      }
+
+      // Update original note button
+      const originalNoteBtn = document.getElementById('original-note-btn');
+      if (state.notes[originalKey]) {
+        originalNoteBtn.classList.add('has-note');
+        originalNoteBtn.innerHTML = '<span>✎</span><span>Original Note</span>';
+      } else {
+        originalNoteBtn.classList.remove('has-note');
+        originalNoteBtn.innerHTML = '<span>✎</span><span>Original</span>';
+      }
+    }
+
+    function updateUI() {
+      const keptCount = Object.keys(state.keptOptions).length;
+      document.getElementById('status-text').textContent =
+        `Theme ${state.currentThemeIndex + 1}/${themes.length} • ${keptCount} kept`;
+
+      document.getElementById('prev-theme').disabled = state.currentThemeIndex === 0;
+      document.getElementById('next-theme').disabled = state.currentThemeIndex === themes.length - 1;
+    }
+
+    function exportData() {
+      const optionNotes = [];
+      const originalNotes = [];
+
+      Object.keys(state.notes).forEach(key => {
+        if (key.endsWith('-original')) {
+          const themeId = key.replace('-original', '');
+          const theme = themes.find(t => t.id === themeId);
+          if (theme) {
+            originalNotes.push({
+              key,
+              theme: theme.name,
+              type: 'Original Design',
+              note: state.notes[key]
+            });
+          }
+        } else {
+          optionNotes.push({ key, note: state.notes[key] });
+        }
+      });
+
+      const exportObj = {
+        timestamp: new Date().toISOString(),
+        summary: {
+          totalThemes: themes.length,
+          totalOptions: themes.reduce((sum, theme) => sum + theme.options.length, 0),
+          keptCount: Object.keys(state.keptOptions).length,
+          optionNotesCount: optionNotes.length,
+          originalNotesCount: originalNotes.length,
+          totalNotesCount: Object.keys(state.notes).length
+        },
+        keptSelections: Object.keys(state.keptOptions).map(key => {
+          const [themeId, optionNum] = key.split('-');
+          const theme = themes.find(t => t.id === themeId);
+          const option = theme.options.find(opt => opt.number === parseInt(optionNum));
+          return {
+            key,
+            theme: theme.name,
+            option: option.name,
+            description: option.description,
+            note: state.notes[key] || ''
+          };
+        }),
+        originalNotes: originalNotes,
+        allNotes: state.notes
+      };
+
+      const json = JSON.stringify(exportObj, null, 2);
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `design-review-${Date.now()}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      const totalNotes = Object.keys(state.notes).length;
+      const noteBreakdown = originalNotes.length > 0
+        ? `${totalNotes} notes (${optionNotes.length} options, ${originalNotes.length} originals)`
+        : `${totalNotes} notes`;
+
+      alert(`Exported!\n${Object.keys(state.keptOptions).length} kept • ${noteBreakdown}`);
+    }
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      if (e.target.tagName === 'TEXTAREA') return;
+
+      if (e.key === 'ArrowLeft') navigateTheme(-1);
+      else if (e.key === 'ArrowRight') navigateTheme(1);
+      else if (e.key === '1') selectOption(1);
+      else if (e.key === '2') selectOption(2);
+      else if (e.key === '3') selectOption(3);
+      else if (e.key === 'k') toggleKeep();
+      else if (e.key === 'n') openNoteModal();
+      else if (e.key === 'Escape') closeNoteModal();
+    });
+
+    // Close modal on overlay click
+    document.getElementById('note-modal').addEventListener('click', (e) => {
+      if (e.target.id === 'note-modal') closeNoteModal();
+    });
+
+    // Initialize
+    init();
+  </script>
+</body>
+</html>

@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Andalusian Geometric Architecture - Islamic Mathematical Patterns</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Cinzel:wght@400;500;600;700&family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Cormorant Garamond', serif;
+      background: #0a0604;
+      color: #e7e5e4;
+      overflow: hidden;
+      height: 100vh;
+      position: relative;
+    }
+
+    body.light {
+      background: #FDFCF8;
+      color: #1c1917;
+    }
+
+    /* ==========================================
+       ANDALUSIAN GEOMETRIC PATTERN LAYERS
+       Mathematical precision: √2 ratios, octagon grids
+       ========================================== */
+
+    .pattern-container {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+    }
+
+    /* Background Layer: Large Khatam Pattern (8-pointed star interlacing) */
+    .pattern-bg {
+      position: absolute;
+      inset: -20%;
+      opacity: 0.08;
+      animation: rotateClockwiseSlow 180s linear infinite;
+    }
+
+    body.light .pattern-bg {
+      opacity: 0.05;
+    }
+
+    /* Mid Layer: Medium density Girih tiles */
+    .pattern-mid {
+      position: absolute;
+      inset: -10%;
+      opacity: 0.12;
+      animation: rotateCounterSlow 240s linear infinite;
+    }
+
+    body.light .pattern-mid {
+      opacity: 0.08;
+    }
+
+    /* Foreground Layer: Fine detailed interlacing */
+    .pattern-fg {
+      position: absolute;
+      inset: 0;
+      opacity: 0.15;
+      animation: breathePattern 8s ease-in-out infinite;
+    }
+
+    body.light .pattern-fg {
+      opacity: 0.1;
+    }
+
+    /* Architectural vignette - simulates depth */
+    .architectural-vignette {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(
+        ellipse 80% 70% at 50% 50%,
+        transparent 0%,
+        rgba(10, 6, 4, 0.3) 50%,
+        rgba(10, 6, 4, 0.7) 100%
+      );
+      pointer-events: none;
+    }
+
+    body.light .architectural-vignette {
+      background: radial-gradient(
+        ellipse 80% 70% at 50% 50%,
+        transparent 0%,
+        rgba(253, 252, 248, 0.3) 50%,
+        rgba(253, 252, 248, 0.7) 100%
+      );
+    }
+
+    /* ==========================================
+       CONTENT STRUCTURE
+       ========================================== */
+
+    .container {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+    }
+
+    .content {
+      text-align: center;
+      max-width: 800px;
+      padding: 0 2rem;
+      animation: fadeInUp 1.8s cubic-bezier(0.16, 1, 0.3, 1) 0.5s backwards;
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(50px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ==========================================
+       GEOMETRIC ACCENT LINE (Octagon motif)
+       ========================================== */
+
+    .geometric-accent {
+      width: 200px;
+      height: 2px;
+      margin: 0 auto 4rem;
+      position: relative;
+      background: linear-gradient(90deg,
+        transparent,
+        rgba(197, 160, 89, 0.6) 30%,
+        rgba(197, 160, 89, 0.6) 70%,
+        transparent
+      );
+      animation: accentPulse 4s ease-in-out infinite;
+    }
+
+    body.light .geometric-accent {
+      background: linear-gradient(90deg,
+        transparent,
+        rgba(120, 53, 15, 0.5) 30%,
+        rgba(120, 53, 15, 0.5) 70%,
+        transparent
+      );
+    }
+
+    /* Octagonal nodes at ends */
+    .geometric-accent::before,
+    .geometric-accent::after {
+      content: '';
+      position: absolute;
+      width: 8px;
+      height: 8px;
+      background: #C5A059;
+      clip-path: polygon(30% 0%, 70% 0%, 100% 30%, 100% 70%, 70% 100%, 30% 100%, 0% 70%, 0% 30%);
+      top: 50%;
+      transform: translateY(-50%);
+      box-shadow: 0 0 16px rgba(197, 160, 89, 0.6);
+    }
+
+    body.light .geometric-accent::before,
+    body.light .geometric-accent::after {
+      background: #78350f;
+      box-shadow: 0 0 16px rgba(120, 53, 15, 0.5);
+    }
+
+    .geometric-accent::before { left: 0; }
+    .geometric-accent::after { right: 0; }
+
+    @keyframes accentPulse {
+      0%, 100% { opacity: 0.7; }
+      50% { opacity: 1; }
+    }
+
+    /* ==========================================
+       LOGO - PARTICLES BRAND STYLE (RESTORED)
+       ========================================== */
+
+    .logo {
+      margin-bottom: 4rem;
+    }
+
+    .logo-wrapper {
+      display: flex;
+      flex-direction: row-reverse;
+      align-items: baseline;
+      justify-content: center;
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .logo-ar {
+      font-family: 'Amiri', serif;
+      font-size: clamp(3.5rem, 9vw, 6rem);
+      font-weight: 700;
+      color: #C5A059;
+      letter-spacing: 0.02em;
+      text-shadow: 0 0 40px rgba(197, 160, 89, 0.3);
+    }
+
+    body.light .logo-ar {
+      color: #78350f;
+      text-shadow: 0 0 40px rgba(120, 53, 15, 0.2);
+    }
+
+    .logo-en {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(4rem, 10vw, 7rem);
+      font-weight: 400;
+      color: #e7e5e4;
+      text-transform: lowercase;
+      letter-spacing: 0.05em;
+    }
+
+    body.light .logo-en {
+      color: #1c1917;
+    }
+
+    /* ==========================================
+       TAGLINE - ANDALUSIAN ARCHITECTURAL THEME
+       ========================================== */
+
+    .tagline {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(0.9rem, 2.2vw, 1.25rem);
+      font-weight: 500;
+      color: rgba(197, 160, 89, 0.9);
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      margin-bottom: 1.25rem;
+    }
+
+    body.light .tagline {
+      color: rgba(120, 53, 15, 0.85);
+    }
+
+    .tagline-ar {
+      font-family: 'Amiri', serif;
+      font-size: clamp(1.125rem, 2.8vw, 1.625rem);
+      color: rgba(231, 229, 228, 0.7);
+      font-weight: 400;
+      letter-spacing: 0.05em;
+      line-height: 1.8;
+    }
+
+    body.light .tagline-ar {
+      color: rgba(28, 25, 23, 0.7);
+    }
+
+    .tagline-desc {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: clamp(0.875rem, 2vw, 1.125rem);
+      font-weight: 300;
+      font-style: italic;
+      color: rgba(231, 229, 228, 0.5);
+      line-height: 1.8;
+      margin-top: 2rem;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    body.light .tagline-desc {
+      color: rgba(28, 25, 23, 0.5);
+    }
+
+    /* ==========================================
+       CTA BUTTON - CONSTELLATION OPTION 2 STYLE
+       ========================================== */
+
+    .cta {
+      margin-top: 4rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 1rem;
+      font-family: 'Cinzel', serif;
+      font-size: 0.875rem;
+      color: #e7e5e4;
+      text-decoration: none;
+      padding: 0.875rem 0;
+      border: none;
+      background: transparent;
+      border-bottom: 1px solid rgba(197, 160, 89, 0.4);
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      cursor: pointer;
+    }
+
+    body.light .cta {
+      color: #1c1917;
+      border-bottom-color: rgba(120, 53, 15, 0.4);
+    }
+
+    .cta:hover {
+      color: #C5A059;
+      border-bottom-color: rgba(197, 160, 89, 0.8);
+      gap: 1.75rem;
+    }
+
+    body.light .cta:hover {
+      color: #78350f;
+      border-bottom-color: rgba(120, 53, 15, 0.8);
+    }
+
+    .cta-arrow {
+      display: inline-block;
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      font-size: 1.125rem;
+    }
+
+    .cta:hover .cta-arrow {
+      transform: translateX(8px);
+    }
+
+    .cta-ar {
+      font-family: 'Amiri', serif;
+      font-size: 0.8125rem;
+      opacity: 0.6;
+      letter-spacing: 0.08em;
+      margin-left: 0.5rem;
+    }
+
+    /* ==========================================
+       THEME TOGGLE
+       ========================================== */
+
+    .theme-toggle {
+      position: fixed;
+      top: 2rem;
+      right: 2rem;
+      z-index: 50;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: 2px solid rgba(197, 160, 89, 0.3);
+      background: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(16px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    body.light .theme-toggle {
+      border-color: rgba(120, 53, 15, 0.3);
+      background: rgba(255, 255, 255, 0.4);
+    }
+
+    .theme-toggle:hover {
+      transform: scale(1.1) rotate(90deg);
+      border-color: rgba(197, 160, 89, 0.6);
+    }
+
+    body.light .theme-toggle:hover {
+      border-color: rgba(120, 53, 15, 0.6);
+    }
+
+    /* ==========================================
+       ANIMATIONS
+       ========================================== */
+
+    @keyframes rotateClockwiseSlow {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+
+    @keyframes rotateCounterSlow {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(-360deg); }
+    }
+
+    @keyframes breathePattern {
+      0%, 100% {
+        opacity: 0.15;
+        transform: scale(1);
+      }
+      50% {
+        opacity: 0.22;
+        transform: scale(1.03);
+      }
+    }
+
+    body.light @keyframes breathePattern {
+      0%, 100% {
+        opacity: 0.1;
+      }
+      50% {
+        opacity: 0.15;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Andalusian Geometric Pattern Layers -->
+  <div class="pattern-container">
+    <!-- Background Layer: Large Khatam (8-pointed star interlacing) -->
+    <svg class="pattern-bg" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <!-- 8-pointed star tile - core Andalusian motif -->
+        <g id="khatam-tile">
+          <!-- Central octagon -->
+          <path d="M 100,70.7 L 129.3,100 L 129.3,129.3 L 100,158.6 L 70.7,129.3 L 70.7,100 Z"
+                fill="none" stroke="currentColor" stroke-width="2" opacity="0.8"/>
+
+          <!-- 8 radiating straps -->
+          <line x1="100" y1="70.7" x2="100" y2="0" stroke="currentColor" stroke-width="2.5" opacity="0.7"/>
+          <line x1="129.3" y1="100" x2="170" y2="70.7" stroke="currentColor" stroke-width="2.5" opacity="0.7"/>
+          <line x1="129.3" y1="129.3" x2="170" y2="170" stroke="currentColor" stroke-width="2.5" opacity="0.7"/>
+          <line x1="100" y1="158.6" x2="100" y2="200" stroke="currentColor" stroke-width="2.5" opacity="0.7"/>
+          <line x1="70.7" y1="129.3" x2="30" y2="170" stroke="currentColor" stroke-width="2.5" opacity="0.7"/>
+          <line x1="70.7" y1="100" x2="30" y2="70.7" stroke="currentColor" stroke-width="2.5" opacity="0.7"/>
+
+          <!-- Interlacing crosses -->
+          <path d="M 85,100 L 115,100 M 100,85 L 100,115" stroke="currentColor" stroke-width="3" opacity="0.9"/>
+        </g>
+      </defs>
+
+      <!-- Grid of Khatam tiles -->
+      <g color="#C5A059">
+        <use href="#khatam-tile" x="0" y="0"/>
+        <use href="#khatam-tile" x="200" y="0"/>
+        <use href="#khatam-tile" x="400" y="0"/>
+        <use href="#khatam-tile" x="600" y="0"/>
+        <use href="#khatam-tile" x="0" y="200"/>
+        <use href="#khatam-tile" x="200" y="200"/>
+        <use href="#khatam-tile" x="400" y="200"/>
+        <use href="#khatam-tile" x="600" y="200"/>
+        <use href="#khatam-tile" x="0" y="400"/>
+        <use href="#khatam-tile" x="200" y="400"/>
+        <use href="#khatam-tile" x="400" y="400"/>
+        <use href="#khatam-tile" x="600" y="400"/>
+        <use href="#khatam-tile" x="0" y="600"/>
+        <use href="#khatam-tile" x="200" y="600"/>
+        <use href="#khatam-tile" x="400" y="600"/>
+        <use href="#khatam-tile" x="600" y="600"/>
+      </g>
+    </svg>
+
+    <!-- Mid Layer: Girih tiles (pentagon/decagon composition) -->
+    <svg class="pattern-mid" viewBox="0 0 600 600" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <!-- Girih bowtie tile -->
+        <g id="girih-bowtie">
+          <path d="M 50,0 L 100,25 L 100,75 L 50,100 L 0,75 L 0,25 Z"
+                fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.7"/>
+          <line x1="0" y1="25" x2="100" y2="75" stroke="currentColor" stroke-width="1" opacity="0.6"/>
+          <line x1="0" y1="75" x2="100" y2="25" stroke="currentColor" stroke-width="1" opacity="0.6"/>
+        </g>
+
+        <!-- Girih decagon -->
+        <g id="girih-decagon">
+          <circle cx="50" cy="50" r="40" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.65"/>
+          <circle cx="50" cy="50" r="25" fill="none" stroke="currentColor" stroke-width="1" opacity="0.5"/>
+        </g>
+      </defs>
+
+      <g color="#C5A059">
+        <!-- Scattered Girih composition -->
+        <use href="#girih-bowtie" x="50" y="50"/>
+        <use href="#girih-decagon" x="200" y="100"/>
+        <use href="#girih-bowtie" x="350" y="150"/>
+        <use href="#girih-decagon" x="100" y="250"/>
+        <use href="#girih-bowtie" x="250" y="300"/>
+        <use href="#girih-decagon" x="400" y="350"/>
+        <use href="#girih-bowtie" x="150" y="450"/>
+        <use href="#girih-decagon" x="300" y="500"/>
+      </g>
+    </svg>
+
+    <!-- Foreground Layer: Fine interlacing details -->
+    <svg class="pattern-fg" viewBox="0 0 400 400" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <!-- Fine interlace pattern -->
+        <g id="interlace-detail">
+          <path d="M 0,20 Q 20,0 40,20 T 80,20" fill="none" stroke="currentColor" stroke-width="1" opacity="0.6"/>
+          <path d="M 0,60 Q 20,40 40,60 T 80,60" fill="none" stroke="currentColor" stroke-width="1" opacity="0.6"/>
+        </g>
+      </defs>
+
+      <g color="#C5A059">
+        <use href="#interlace-detail" x="50" y="80"/>
+        <use href="#interlace-detail" x="150" y="120"/>
+        <use href="#interlace-detail" x="250" y="160"/>
+        <use href="#interlace-detail" x="100" y="220"/>
+        <use href="#interlace-detail" x="200" y="280"/>
+      </g>
+    </svg>
+
+    <!-- Architectural vignette for depth -->
+    <div class="architectural-vignette"></div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="container">
+    <div class="content">
+      <!-- Geometric accent line -->
+      <div class="geometric-accent"></div>
+
+      <!-- Logo - Particles brand style restored -->
+      <div class="logo">
+        <div class="logo-wrapper">
+          <h1 class="logo-ar">بالعربي</h1>
+          <h1 class="logo-en">poetry</h1>
+        </div>
+
+        <p class="tagline">Geometry of the Qasida</p>
+        <p class="tagline-ar">هندسة القصيدة</p>
+
+        <p class="tagline-desc">
+          Where Andalusian mathematical precision meets<br>
+          the rhythmic architecture of classical Arabic verse
+        </p>
+      </div>
+
+      <!-- CTA - Constellation Option 2 style -->
+      <button class="cta" onclick="alert('Entering the geometric garden...')">
+        <span>Enter the Alhambra</span>
+        <span class="cta-ar">ادخل الحمراء</span>
+        <span class="cta-arrow">→</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Theme toggle -->
+  <button class="theme-toggle" onclick="document.body.classList.toggle('light')">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+  </button>
+
+  <script>
+    // Update pattern colors based on theme
+    function updatePatternColors() {
+      const isLight = document.body.classList.contains('light');
+      const patterns = document.querySelectorAll('.pattern-bg g, .pattern-mid g, .pattern-fg g');
+      const color = isLight ? '#78350f' : '#C5A059';
+
+      patterns.forEach(pattern => {
+        pattern.setAttribute('color', color);
+      });
+    }
+
+    document.querySelector('.theme-toggle').addEventListener('click', () => {
+      setTimeout(updatePatternColors, 50);
+    });
+
+    updatePatternColors();
+  </script>
+</body>
+</html>

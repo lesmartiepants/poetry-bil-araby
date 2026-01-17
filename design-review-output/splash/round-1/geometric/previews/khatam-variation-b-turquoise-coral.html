@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Khatam Variation B: Turquoise & Coral - Moorish Geometric Splash</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cinzel:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Cinzel', serif;
+      background: #0c0e14;
+      color: #e7e5e4;
+      min-height: 100vh;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Andalusian Khatam Pattern - Moorish Color Palette */
+    .khatam-pattern {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.16;
+    }
+
+    .khatam-pattern svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* Vignette */
+    .vignette {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at center, transparent 20%, rgba(12, 14, 20, 0.8) 90%);
+      pointer-events: none;
+    }
+
+    /* Content container */
+    .content {
+      position: relative;
+      z-index: 10;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    /* Logo - Authentic octagon with interlacing */
+    .logo-khatam {
+      width: 160px;
+      height: 160px;
+      margin-bottom: 2.75rem;
+      filter: drop-shadow(0 0 35px rgba(45, 212, 191, 0.45));
+    }
+
+    /* Brand typography - Moorish colors */
+    .brand {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1.5rem;
+      margin-bottom: 2.25rem;
+      flex-wrap: wrap;
+    }
+
+    .brand-en {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(3.25rem, 9.5vw, 5.75rem);
+      font-weight: 400;
+      color: #2DD4BF;
+      letter-spacing: -0.02em;
+      text-shadow: 0 0 28px rgba(45, 212, 191, 0.38);
+    }
+
+    .brand-ar {
+      font-family: 'Amiri', serif;
+      font-size: clamp(2.75rem, 7.5vw, 4.75rem);
+      font-weight: 700;
+      color: #FB7185;
+      text-shadow: 0 0 28px rgba(251, 113, 133, 0.38);
+    }
+
+    /* Headline */
+    .headline {
+      font-size: clamp(1.125rem, 3.5vw, 1.625rem);
+      font-weight: 300;
+      line-height: 1.32;
+      margin-bottom: 1.375rem;
+      max-width: 750px;
+      color: #d6d3d1;
+    }
+
+    .headline .turquoise {
+      color: #2DD4BF;
+      font-weight: 600;
+    }
+
+    .headline .coral {
+      color: #FB7185;
+      font-weight: 600;
+    }
+
+    .headline-ar {
+      font-family: 'Amiri', serif;
+      font-size: clamp(1.25rem, 3.25vw, 1.875rem);
+      color: #a8a29e;
+      margin-bottom: 2.75rem;
+    }
+
+    /* Body copy - EXACT particles title */
+    .particles-title {
+      max-width: 620px;
+      font-size: clamp(1rem, 2.5vw, 1.25rem);
+      line-height: 1.72;
+      color: #d6d3d1;
+      margin-bottom: 2.75rem;
+      font-weight: 300;
+    }
+
+    /* CTA Button - Octagonal khatam */
+    .cta-button {
+      position: relative;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .cta-button:hover {
+      transform: scale(1.08);
+    }
+
+    .cta-button:hover .octagon-stroke {
+      stroke-width: 3.5;
+      opacity: 0.95;
+    }
+
+    .cta-content {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      pointer-events: none;
+    }
+
+    .cta-text-en {
+      font-family: 'Cinzel', serif;
+      font-size: 0.75rem;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: #e7e5e4;
+      font-weight: 600;
+      display: block;
+    }
+
+    .cta-text-ar {
+      font-family: 'Amiri', serif;
+      font-size: 0.875rem;
+      color: #FB7185;
+      margin-top: 0.375rem;
+      display: block;
+    }
+
+    /* Metadata */
+    .metadata {
+      margin-top: 2rem;
+      font-size: 0.625rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: #57534e;
+    }
+
+    /* Theme toggle */
+    .theme-toggle {
+      position: fixed;
+      top: 1.5rem;
+      right: 1.5rem;
+      width: 48px;
+      height: 48px;
+      background: transparent;
+      border: 2px solid rgba(45, 212, 191, 0.3);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      z-index: 100;
+    }
+
+    .theme-toggle:hover {
+      background: rgba(45, 212, 191, 0.1);
+      border-color: rgba(45, 212, 191, 0.5);
+    }
+
+    /* Light mode */
+    body.light {
+      background: #F8FAFC;
+      color: #1c1917;
+    }
+
+    body.light .brand-en {
+      color: #14B8A6;
+      text-shadow: 0 0 22px rgba(20, 184, 166, 0.28);
+    }
+
+    body.light .brand-ar {
+      color: #F43F5E;
+      text-shadow: 0 0 22px rgba(244, 63, 94, 0.28);
+    }
+
+    body.light .headline .turquoise {
+      color: #14B8A6;
+    }
+
+    body.light .headline .coral {
+      color: #F43F5E;
+    }
+
+    body.light .vignette {
+      background: radial-gradient(ellipse at center, transparent 20%, rgba(248, 250, 252, 0.8) 90%);
+    }
+  </style>
+</head>
+<body>
+  <!-- Andalusian Khatam Pattern - Moorish turquoise & coral palette -->
+  <div class="khatam-pattern">
+    <svg viewBox="0 0 1920 1080" preserveAspectRatio="xMidYMid slice">
+      <defs>
+        <!-- Gradient for interlacing depth effect - Moorish colors -->
+        <linearGradient id="strapGrad1" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#2DD4BF" stop-opacity="0.4"/>
+          <stop offset="50%" stop-color="#2DD4BF" stop-opacity="0.8"/>
+          <stop offset="100%" stop-color="#2DD4BF" stop-opacity="0.4"/>
+        </linearGradient>
+        <linearGradient id="strapGrad2" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#FB7185" stop-opacity="0.4"/>
+          <stop offset="50%" stop-color="#FB7185" stop-opacity="0.8"/>
+          <stop offset="100%" stop-color="#FB7185" stop-opacity="0.4"/>
+        </linearGradient>
+      </defs>
+
+      <!-- Horizontal interlacing straps -->
+      <g opacity="0.7">
+        <rect x="0" y="90" width="1920" height="20" fill="url(#strapGrad1)"/>
+        <rect x="0" y="170" width="1920" height="20" fill="url(#strapGrad2)"/>
+        <rect x="0" y="250" width="1920" height="20" fill="url(#strapGrad1)"/>
+        <rect x="0" y="330" width="1920" height="20" fill="url(#strapGrad2)"/>
+        <rect x="0" y="410" width="1920" height="20" fill="url(#strapGrad1)"/>
+        <rect x="0" y="490" width="1920" height="20" fill="url(#strapGrad2)"/>
+        <rect x="0" y="570" width="1920" height="20" fill="url(#strapGrad1)"/>
+        <rect x="0" y="650" width="1920" height="20" fill="url(#strapGrad2)"/>
+        <rect x="0" y="730" width="1920" height="20" fill="url(#strapGrad1)"/>
+        <rect x="0" y="810" width="1920" height="20" fill="url(#strapGrad2)"/>
+        <rect x="0" y="890" width="1920" height="20" fill="url(#strapGrad1)"/>
+        <rect x="0" y="970" width="1920" height="20" fill="url(#strapGrad2)"/>
+      </g>
+
+      <!-- Vertical interlacing straps -->
+      <g opacity="0.7">
+        <rect x="120" y="0" width="20" height="1080" fill="url(#strapGrad2)"/>
+        <rect x="240" y="0" width="20" height="1080" fill="url(#strapGrad1)"/>
+        <rect x="360" y="0" width="20" height="1080" fill="url(#strapGrad2)"/>
+        <rect x="480" y="0" width="20" height="1080" fill="url(#strapGrad1)"/>
+        <rect x="600" y="0" width="20" height="1080" fill="url(#strapGrad2)"/>
+        <rect x="720" y="0" width="20" height="1080" fill="url(#strapGrad1)"/>
+        <rect x="840" y="0" width="20" height="1080" fill="url(#strapGrad2)"/>
+        <rect x="960" y="0" width="20" height="1080" fill="url(#strapGrad1)"/>
+        <rect x="1080" y="0" width="20" height="1080" fill="url(#strapGrad2)"/>
+        <rect x="1200" y="0" width="20" height="1080" fill="url(#strapGrad1)"/>
+        <rect x="1320" y="0" width="20" height="1080" fill="url(#strapGrad2)"/>
+        <rect x="1440" y="0" width="20" height="1080" fill="url(#strapGrad1)"/>
+        <rect x="1560" y="0" width="20" height="1080" fill="url(#strapGrad2)"/>
+        <rect x="1680" y="0" width="20" height="1080" fill="url(#strapGrad1)"/>
+        <rect x="1800" y="0" width="20" height="1080" fill="url(#strapGrad2)"/>
+      </g>
+
+      <!-- Central octagonal rosette -->
+      <g transform="translate(960, 540)">
+        <path d="M 0,-80 L 56.57,-56.57 L 80,0 L 56.57,56.57 L 0,80 L -56.57,56.57 L -80,0 L -56.57,-56.57 Z"
+              fill="none" stroke="#2DD4BF" stroke-width="3" opacity="0.9"/>
+        <path d="M 0,-60 L 42.43,-42.43 L 60,0 L 42.43,42.43 L 0,60 L -42.43,42.43 L -60,0 L -42.43,-42.43 Z"
+              fill="none" stroke="#FB7185" stroke-width="2" opacity="0.8"/>
+        <path d="M 0,-40 L 10,-15 L 40,-15 L 15,-10 L 15,15 L 10,40 L -15,40 L -15,10 L -40,15 L -40,-15 L -10,-15 L -15,-40 Z"
+              fill="rgba(45, 212, 191, 0.15)" stroke="#2DD4BF" stroke-width="1.5" opacity="0.7"/>
+      </g>
+
+      <!-- Corner octagonal rosettes -->
+      <g transform="translate(240, 180)">
+        <path d="M 0,-50 L 35.36,-35.36 L 50,0 L 35.36,35.36 L 0,50 L -35.36,35.36 L -50,0 L -35.36,-35.36 Z"
+              fill="none" stroke="#FB7185" stroke-width="2" opacity="0.7"/>
+        <circle cx="0" cy="0" r="20" fill="none" stroke="#2DD4BF" stroke-width="1.5" opacity="0.6"/>
+      </g>
+
+      <g transform="translate(1680, 180)">
+        <path d="M 0,-50 L 35.36,-35.36 L 50,0 L 35.36,35.36 L 0,50 L -35.36,35.36 L -50,0 L -35.36,-35.36 Z"
+              fill="none" stroke="#2DD4BF" stroke-width="2" opacity="0.7"/>
+        <circle cx="0" cy="0" r="20" fill="none" stroke="#FB7185" stroke-width="1.5" opacity="0.6"/>
+      </g>
+
+      <g transform="translate(240, 900)">
+        <path d="M 0,-50 L 35.36,-35.36 L 50,0 L 35.36,35.36 L 0,50 L -35.36,35.36 L -50,0 L -35.36,-35.36 Z"
+              fill="none" stroke="#2DD4BF" stroke-width="2" opacity="0.7"/>
+        <circle cx="0" cy="0" r="20" fill="none" stroke="#FB7185" stroke-width="1.5" opacity="0.6"/>
+      </g>
+
+      <g transform="translate(1680, 900)">
+        <path d="M 0,-50 L 35.36,-35.36 L 50,0 L 35.36,35.36 L 0,50 L -35.36,35.36 L -50,0 L -35.36,-35.36 Z"
+              fill="none" stroke="#FB7185" stroke-width="2" opacity="0.7"/>
+        <circle cx="0" cy="0" r="20" fill="none" stroke="#2DD4BF" stroke-width="1.5" opacity="0.6"/>
+      </g>
+
+      <!-- Diagonal interlacing straps -->
+      <line x1="0" y1="0" x2="400" y2="400" stroke="#2DD4BF" stroke-width="2" opacity="0.3" stroke-dasharray="20,10"/>
+      <line x1="400" y1="0" x2="800" y2="400" stroke="#FB7185" stroke-width="2" opacity="0.3" stroke-dasharray="20,10"/>
+      <line x1="800" y1="0" x2="1200" y2="400" stroke="#2DD4BF" stroke-width="2" opacity="0.3" stroke-dasharray="20,10"/>
+      <line x1="1200" y1="0" x2="1600" y2="400" stroke="#FB7185" stroke-width="2" opacity="0.3" stroke-dasharray="20,10"/>
+      <line x1="1600" y1="0" x2="1920" y2="320" stroke="#2DD4BF" stroke-width="2" opacity="0.3" stroke-dasharray="20,10"/>
+    </svg>
+  </div>
+
+  <!-- Vignette overlay -->
+  <div class="vignette"></div>
+
+  <!-- Theme toggle -->
+  <button class="theme-toggle" onclick="document.body.classList.toggle('light')" aria-label="Toggle theme">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="12" r="5"/>
+      <line x1="12" y1="1" x2="12" y2="3"/>
+      <line x1="12" y1="21" x2="12" y2="23"/>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+      <line x1="1" y1="12" x2="3" y2="12"/>
+      <line x1="21" y1="12" x2="23" y2="12"/>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+    </svg>
+  </button>
+
+  <!-- Main content -->
+  <div class="content">
+    <!-- Logo - Moorish octagonal khatam -->
+    <svg class="logo-khatam" viewBox="0 0 160 160">
+      <defs>
+        <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#2DD4BF" stop-opacity="1"/>
+          <stop offset="100%" stop-color="#FB7185" stop-opacity="0.85"/>
+        </linearGradient>
+      </defs>
+      <path d="M 80,20 L 120,40 L 140,80 L 120,120 L 80,140 L 40,120 L 20,80 L 40,40 Z"
+            fill="none" stroke="url(#logoGrad)" stroke-width="4"/>
+      <path d="M 80,40 L 106,52 L 120,80 L 106,108 L 80,120 L 54,108 L 40,80 L 54,52 Z"
+            fill="none" stroke="#FB7185" stroke-width="3" opacity="0.7"/>
+      <path d="M 80,60 L 88,70 L 100,70 L 90,80 L 90,90 L 88,100 L 70,100 L 70,88 L 60,90 L 60,70 L 70,70 L 72,60 Z"
+            fill="rgba(45, 212, 191, 0.2)" stroke="#2DD4BF" stroke-width="2" opacity="0.8"/>
+      <circle cx="80" cy="80" r="12" fill="#2DD4BF" opacity="0.7"/>
+    </svg>
+
+    <!-- Brand -->
+    <div class="brand">
+      <span class="brand-en">poetry</span>
+      <span class="brand-ar">بالعربي</span>
+    </div>
+
+    <!-- Headline -->
+    <h1 class="headline">
+      Explore <span class="turquoise">classical Arabic poetry</span> brought to life through <span class="coral">modern AI</span>
+    </h1>
+    <p class="headline-ar">اكتشف الشعر العربي الكلاسيكي</p>
+
+    <!-- Particles title - EXACT as original -->
+    <p class="particles-title">
+      Verses Connecting Across Time and Space
+    </p>
+
+    <!-- CTA Button - Octagonal khatam -->
+    <button class="cta-button">
+      <svg width="240" height="100" viewBox="0 0 240 100" xmlns="http://www.w3.org/2000/svg">
+        <path class="octagon-stroke"
+              d="M 60,10 L 180,10 L 220,35 L 220,65 L 180,90 L 60,90 L 20,65 L 20,35 Z"
+              fill="rgba(45, 212, 191, 0.08)"
+              stroke="#2DD4BF"
+              stroke-width="3"
+              opacity="0.75"
+              style="transition: all 0.3s ease;"/>
+        <path d="M 75,25 L 165,25 L 195,45 L 195,55 L 165,75 L 75,75 L 45,55 L 45,45 Z"
+              fill="none"
+              stroke="#FB7185"
+              stroke-width="1.5"
+              opacity="0.5"/>
+      </svg>
+      <div class="cta-content">
+        <span class="cta-text-en">Begin Experience</span>
+        <span class="cta-text-ar">ابدأ التجربة</span>
+      </div>
+    </button>
+
+    <!-- Metadata -->
+    <div class="metadata">Moorish Palette · Khatam Interlacing · Octagon Grid</div>
+  </div>
+</body>
+</html>

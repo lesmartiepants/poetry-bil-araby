@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ink Calligraphy Splash Screen - Design Review</title>
+  <style>
+    body {
+      background: #0c0c0e;
+      color: #e7e5e4;
+      font-family: system-ui, -apple-system, sans-serif;
+      padding: 40px;
+      max-width: 1400px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+    h1 { color: #C5A059; font-size: 2.5rem; margin-bottom: 0.5rem; }
+    h2 { color: #C5A059; font-size: 1.75rem; margin-top: 3rem; border-bottom: 1px solid #292524; padding-bottom: 0.5rem; }
+    h3 { color: #a8dadc; font-size: 1.25rem; margin-top: 2rem; }
+    h4 { color: #C5A059; font-size: 1rem; margin-top: 1.5rem; }
+
+    .subtitle {
+      font-size: 1.125rem;
+      color: #a8a29e;
+      margin-bottom: 3rem;
+    }
+
+    .current-state {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 20px;
+      margin: 30px 0;
+    }
+    .current-state img {
+      width: 100%;
+      border: 1px solid #292524;
+      border-radius: 8px;
+    }
+    .current-state-item h3 {
+      margin-top: 0.5rem;
+      margin-bottom: 0.5rem;
+      font-size: 1rem;
+      color: #C5A059;
+    }
+
+    .issues {
+      background: #1c1917;
+      border-left: 4px solid #ef4444;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 4px;
+    }
+    .issues h3 { color: #fca5a5; margin-top: 0; }
+    .issues li { margin: 8px 0; }
+
+    .option {
+      background: #1c1917;
+      border: 1px solid #292524;
+      border-radius: 12px;
+      padding: 30px;
+      margin: 30px 0;
+    }
+    .option-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .option h2 { margin: 0; border: none; }
+    .open-preview-btn {
+      background: #C5A059;
+      color: #0c0c0e;
+      padding: 12px 24px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.2s;
+      display: inline-block;
+    }
+    .open-preview-btn:hover { background: #d4af6a; transform: scale(1.05); }
+
+    .option-content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      margin-top: 20px;
+    }
+    @media (max-width: 1024px) {
+      .option-content {
+        grid-template-columns: 1fr;
+      }
+    }
+    .option-content img {
+      width: 100%;
+      border: 1px solid #292524;
+      border-radius: 8px;
+    }
+    .design-rationale h3 { color: #86efac; margin-top: 0; }
+    .design-rationale h4 { color: #C5A059; margin-top: 20px; }
+    .design-rationale li { margin: 8px 0; }
+    .design-rationale p { margin: 12px 0; color: #d6d3d1; }
+
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 30px 0;
+      background: #1c1917;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .comparison-table th {
+      background: #292524;
+      padding: 15px;
+      text-align: left;
+      color: #C5A059;
+      font-weight: 600;
+    }
+    .comparison-table td {
+      padding: 12px 15px;
+      border-bottom: 1px solid #292524;
+    }
+    .comparison-table tr:last-child td { border-bottom: none; }
+
+    .recommendations {
+      background: #1c1917;
+      border-left: 4px solid #86efac;
+      padding: 20px;
+      margin: 30px 0;
+      border-radius: 4px;
+    }
+    .recommendations h3 { color: #86efac; margin-top: 0; }
+    .recommendations p { margin: 12px 0; }
+    .recommendations strong { color: #C5A059; }
+
+    .previews-section {
+      margin-top: 60px;
+    }
+    .preview-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+    .preview-container {
+      border: 1px solid #292524;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #1c1917;
+    }
+    .preview-container h3 {
+      margin: 0;
+      padding: 15px;
+      background: #292524;
+      font-size: 1rem;
+      color: #C5A059;
+    }
+    .preview-container iframe {
+      width: 100%;
+      height: 600px;
+      border: none;
+      display: block;
+      background: white;
+    }
+
+    hr {
+      border: none;
+      border-top: 1px solid #292524;
+      margin: 60px 0 30px;
+    }
+
+    .next-steps {
+      margin-top: 2rem;
+    }
+    .next-steps p {
+      font-size: 1.125rem;
+      margin: 1rem 0;
+    }
+    .next-steps strong {
+      color: #C5A059;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <h1>Ink Calligraphy Splash Screen - Design Review</h1>
+  <p class="subtitle">Updated design with proper Arabic rendering, RTL animation, and continuous letter-by-letter reveal</p>
+
+  <h2>Current State</h2>
+  <div class="current-state">
+    <div class="current-state-item">
+      <img src="current-state/1-ink-initial.png" alt="Ink initial state">
+      <h3>Initial - Ink Begins</h3>
+    </div>
+    <div class="current-state-item">
+      <img src="current-state/2-ink-spreading.png" alt="Ink spreading">
+      <h3>Mid-Animation - Spreading</h3>
+    </div>
+    <div class="current-state-item">
+      <img src="current-state/3-ink-settled.png" alt="Ink settled with content">
+      <h3>Final - Content Revealed</h3>
+    </div>
+    <div class="current-state-item">
+      <img src="current-state/4-button-hover.png" alt="Button hover state">
+      <h3>Interaction - Button Hover</h3>
+    </div>
+  </div>
+
+  <div class="issues">
+    <h3>Previous Issues (FIXED in Updated Design):</h3>
+    <ul>
+      <li><strong>Arabic Rendering Broken:</strong> Letters were split into separate &lt;span&gt; elements, destroying Arabic ligatures and contextual forms</li>
+      <li><strong>Wrong Animation Direction:</strong> Letter-by-letter reveal went left-to-right, but Arabic reads right-to-left</li>
+      <li><strong>Choppy Animation:</strong> Discrete letter pop-ins with separate ink trails felt disjointed, not continuous</li>
+    </ul>
+  </div>
+
+  <div class="recommendations" style="border-left-color: #86efac; margin-top: 2rem;">
+    <h3>User Feedback:</h3>
+    <p style="font-style: italic; color: #d6d3d1;">"I like this one but the arabic is not rendered properly. I do like how you highlighted the arabic word one letter at a time. Make sure this happens right to left and feels continuous not chopped."</p>
+  </div>
+
+  <!-- Updated Design -->
+  <div class="option">
+    <div class="option-header">
+      <h2>Updated Design: Live Calligraphy Writing (Fixed)</h2>
+      <a href="previews/option-3-live-calligraphy.html" class="open-preview-btn" target="_blank">Open Preview →</a>
+    </div>
+    <div class="option-content">
+      <img src="mockups/option-3-live-calligraphy.png" alt="Updated: Live Calligraphy Writing">
+      <div class="design-rationale">
+        <h3>Design Choice:</h3>
+        <p>Watch the word <strong>"الشعر"</strong> (al-shi'r = "poetry") being revealed <strong>continuously from right to left</strong> with a smooth gradient animation. A golden glow follows the reveal wave, creating the illusion of ink flowing across the page.</p>
+
+        <h4>Key Fixes (Based on User Feedback):</h4>
+        <ul>
+          <li><strong>✅ Proper Arabic Rendering:</strong> SVG <code>&lt;text direction="rtl"&gt;</code> preserves correct Arabic ligatures and contextual letter forms (not split into spans)</li>
+          <li><strong>✅ Right-to-Left Animation:</strong> Animated <code>linearGradient</code> flows from right (100%) to left (0%), matching Arabic reading direction</li>
+          <li><strong>✅ Continuous Flow:</strong> Smooth gradient reveal (3s duration) with no choppy discrete steps—feels like ink spreading naturally</li>
+          <li><strong>✅ Golden Glow Effect:</strong> Second text layer with gold gradient follows the reveal wave, highlighting letters as they appear</li>
+          <li><strong>✅ No JavaScript Needed:</strong> Pure SVG/CSS animation for better performance and reliability</li>
+        </ul>
+
+        <h4>Technical Implementation:</h4>
+        <ul>
+          <li><strong>SVG Text Element:</strong> <code>&lt;text direction="rtl"&gt;الشعر&lt;/text&gt;</code> renders Arabic properly as a single string</li>
+          <li><strong>Animated Gradients:</strong> Two <code>&lt;linearGradient&gt;</code> definitions with <code>&lt;animate&gt;</code> elements moving gradient stops over 3 seconds</li>
+          <li><strong>Two Text Layers:</strong> Glow layer (gold, blurred) behind reveal layer (white, sharp) for depth</li>
+          <li><strong>SVG Filter:</strong> <code>feGaussianBlur</code> creates soft glow around active portion</li>
+          <li><strong>Timing Sequence:</strong> SVG reveal (0.5s → 3.5s), translation (3.8s), CTA button (4.5s)</li>
+          <li><strong>Responsive:</strong> SVG <code>viewBox</code> and <code>clamp()</code> sizing ensure legibility on all screen sizes</li>
+        </ul>
+
+        <h4>Why This Approach Works:</h4>
+        <ul>
+          <li>Arabic ligatures maintained (ر + ع + ش + ل + ا rendered as connected calligraphy)</li>
+          <li>Gradient animation creates smooth continuous reveal (not choppy individual letters)</li>
+          <li>RTL gradient direction (x1="100%", x2="0%") honors Arabic reading flow</li>
+          <li>Gold glow follows the reveal elegantly, mimicking ink being applied by a brush</li>
+          <li>Pure declarative animation (no JavaScript state management)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <h2>Before/After Comparison</h2>
+  <table class="comparison-table">
+    <thead>
+      <tr>
+        <th>Feature</th>
+        <th>Before (Original)</th>
+        <th>After (Updated Design)</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Arabic Rendering</td>
+        <td>❌ Broken (letters split into spans)</td>
+        <td>✅ Proper (SVG text with ligatures)</td>
+      </tr>
+      <tr>
+        <td>Animation Direction</td>
+        <td>❌ Left-to-right (wrong)</td>
+        <td>✅ Right-to-left (correct RTL)</td>
+      </tr>
+      <tr>
+        <td>Animation Flow</td>
+        <td>❌ Choppy (discrete letter pop-ins)</td>
+        <td>✅ Continuous (smooth gradient reveal)</td>
+      </tr>
+      <tr>
+        <td>Letter Highlighting</td>
+        <td>⚠️ Individual glows (disjointed)</td>
+        <td>✅ Flowing glow wave (seamless)</td>
+      </tr>
+      <tr>
+        <td>Performance</td>
+        <td>⚠️ JavaScript-driven</td>
+        <td>✅ Pure SVG/CSS animation</td>
+      </tr>
+      <tr>
+        <td>Shows Real Arabic Letters</td>
+        <td>✅ Yes (الشعر)</td>
+        <td>✅ Yes (الشعر, properly rendered)</td>
+      </tr>
+      <tr>
+        <td>Animation Duration</td>
+        <td>~1.4s (too fast)</td>
+        <td>~3s (smooth, readable)</td>
+      </tr>
+      <tr>
+        <td>Visual Impact</td>
+        <td>🟡 Good concept, broken execution</td>
+        <td>✅ Elegant, continuous reveal</td>
+      </tr>
+      <tr>
+        <td>Mobile Friendly</td>
+        <td>✅ Responsive</td>
+        <td>✅ Responsive (SVG viewBox)</td>
+      </tr>
+      <tr>
+        <td>Cultural Respect</td>
+        <td>✅ Showcases Arabic letterforms</td>
+        <td>✅ Honors RTL direction + ligatures</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="recommendations">
+    <h3>Implementation Summary</h3>
+
+    <p><strong>✅ All Issues Fixed:</strong> The updated design addresses all three critical problems identified in user feedback:</p>
+    <ul style="margin-left: 2rem; color: #d6d3d1;">
+      <li>Arabic now renders properly with correct ligatures and contextual forms</li>
+      <li>Animation flows right-to-left, matching Arabic reading direction</li>
+      <li>Smooth continuous gradient reveal eliminates choppy letter pop-ins</li>
+    </ul>
+
+    <p style="margin-top: 2rem;"><strong>Technical Advantages:</strong></p>
+    <ul style="margin-left: 2rem; color: #d6d3d1;">
+      <li><strong>Better Performance:</strong> Pure SVG/CSS animation (no JavaScript state management)</li>
+      <li><strong>More Maintainable:</strong> Declarative animation with clear timing controls</li>
+      <li><strong>Culturally Respectful:</strong> Honors Arabic script conventions (RTL, ligatures)</li>
+      <li><strong>Educational:</strong> Large-scale letterforms showcase the beauty of Arabic calligraphy</li>
+    </ul>
+
+    <p style="margin-top: 2rem;"><strong>Ready for Implementation:</strong> This design can be directly integrated into the application.</p>
+  </div>
+
+  <div class="previews-section">
+    <h2>Interactive Preview</h2>
+    <p style="color: #a8a29e;">View the updated design in full-screen or interact directly below:</p>
+    <div class="preview-grid">
+      <div class="preview-container" style="grid-column: 1 / -1; max-width: 1200px; margin: 0 auto;">
+        <h3>Updated Design: Live Calligraphy Writing (Fixed)</h3>
+        <iframe src="previews/option-3-live-calligraphy.html" style="height: 700px;"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <hr>
+
+  <div class="next-steps">
+    <h2>Next Steps</h2>
+    <p><strong>Design updated based on your feedback!</strong></p>
+    <p style="margin-top: 1rem;">The updated design is ready for implementation. Key improvements:</p>
+    <ul style="margin-left: 2rem; color: #d6d3d1; margin-top: 1rem;">
+      <li>Arabic renders properly (SVG text preserves ligatures)</li>
+      <li>Animation flows right-to-left (correct Arabic direction)</li>
+      <li>Smooth continuous reveal (no choppy letter pop-ins)</li>
+      <li>Pure SVG/CSS animation (better performance)</li>
+    </ul>
+    <p style="font-size: 0.95rem; color: #a8a29e; margin-top: 2rem;">
+      <strong>Preview:</strong> Open <code>previews/option-3-live-calligraphy.html</code> in your browser to see the updated animation<br>
+      <strong>Implementation:</strong> Can be integrated into <code>src/splash-options/splash-ink.jsx</code>
+    </p>
+  </div>
+</body>
+</html>

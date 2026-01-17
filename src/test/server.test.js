@@ -251,7 +251,7 @@ describe('Backend API Server', () => {
 
       expect(pool.query).toHaveBeenCalledWith(
         expect.any(String),
-        ['نزار قباني', '5', '10']
+        ['نزار قباني', 5, 10]
       );
     });
 
@@ -453,7 +453,7 @@ describe('Backend API Server', () => {
 
       expect(pool.query).toHaveBeenCalledWith(
         expect.any(String),
-        ['%test%', '5']
+        ['%test%', 5]
       );
     });
 

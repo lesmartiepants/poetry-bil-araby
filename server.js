@@ -2,6 +2,8 @@ import express from 'express';
 import pg from 'pg';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+import { resolve } from 'path';
 
 dotenv.config();
 
@@ -124,6 +126,10 @@ app.get('/api/poems/by-poet/:poet', async (req, res) => {
     const { poet } = req.params;
     const { limit = 10, offset = 0 } = req.query;
 
+    // Convert query params to integers for type safety
+    const limitNum = parseInt(limit, 10);
+    const offsetNum = parseInt(offset, 10);
+
     const query = `
       SELECT
         p.id,
@@ -139,7 +145,7 @@ app.get('/api/poems/by-poet/:poet', async (req, res) => {
       LIMIT $2 OFFSET $3
     `;
 
-    const result = await pool.query(query, [poet, limit, offset]);
+    const result = await pool.query(query, [poet, limitNum, offsetNum]);
 
     const poems = result.rows.map(poem => ({
       id: poem.id,
@@ -189,6 +195,9 @@ app.get('/api/poems/search', async (req, res) => {
       return res.status(400).json({ error: 'Search query required' });
     }
 
+    // Convert query param to integer for type safety
+    const limitNum = parseInt(limit, 10);
+
     const query = `
       SELECT
         p.id,
@@ -203,7 +212,7 @@ app.get('/api/poems/search', async (req, res) => {
       LIMIT $2
     `;
 
-    const result = await pool.query(query, [`%${q}%`, limit]);
+    const result = await pool.query(query, [`%${q}%`, limitNum]);
 
     const poems = result.rows.map(poem => ({
       id: poem.id,
@@ -227,7 +236,10 @@ app.get('/api/poems/search', async (req, res) => {
 export { app, pool };
 
 // Only start server if this file is run directly (not imported)
-if (import.meta.url === `file://${process.argv[1]}`) {
+// Use fileURLToPath for cross-platform compatibility (Windows/Unix)
+const currentFile = fileURLToPath(import.meta.url);
+const mainFile = resolve(process.argv[1]);
+if (currentFile === mainFile) {
   app.listen(PORT, () => {
     console.log(`🚀 Poetry API server running on http://localhost:${PORT}`);
     console.log(`   Health check: http://localhost:${PORT}/api/health`);

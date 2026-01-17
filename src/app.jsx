@@ -27,7 +27,8 @@ const FEATURES = {
   debug: true,
   caching: true,      // Enable IndexedDB caching for audio/insights
   streaming: true,    // Enable streaming insights (progressive rendering)
-  prefetching: true   // Enable smart prefetching (rate-limited to avoid API issues)
+  prefetching: true,  // Enable smart prefetching (rate-limited to avoid API issues)
+  database: true      // Enable database poem source (requires backend server running)
 };
 
 const DESIGN = {
@@ -109,6 +110,7 @@ const FONTS = [
 ];
 
 const apiKey = import.meta.env.VITE_GEMINI_API_KEY || "";
+const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
 /* =============================================================================
   2. API PROMPTS & CONFIGURATION
@@ -778,6 +780,60 @@ const ThemeDropdown = ({ darkMode, onToggleDarkMode, currentFont, onCycleFont, f
   );
 };
 
+const ErrorBanner = ({ error, onDismiss, onRetry, theme }) => {
+  if (!error) return null;
+
+  return (
+    <div className={`fixed top-20 left-1/2 -translate-x-1/2 z-50 max-w-lg w-[calc(100%-2rem)] ${DESIGN.anim}`}>
+      <div className={`${DESIGN.glass} ${theme.glass} ${theme.border} border ${DESIGN.radius} p-4 shadow-2xl`}>
+        <div className="flex items-start gap-3">
+          <div className="flex-shrink-0 mt-0.5">
+            <X size={20} className="text-red-500" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className={`${theme.text} text-sm font-medium mb-2`}>Database Connection Error</p>
+            <p className={`${theme.text} text-xs opacity-70 mb-3`}>{error}</p>
+            <div className="flex gap-2">
+              {onRetry && (
+                <button
+                  onClick={onRetry}
+                  className={`${DESIGN.btnPrimary} ${theme.btnPrimary} px-3 py-1.5 ${DESIGN.radius} text-xs font-medium ${DESIGN.buttonHover}`}
+                >
+                  <RefreshCw size={14} className="inline mr-1" />
+                  Retry
+                </button>
+              )}
+              <button
+                onClick={onDismiss}
+                className={`${theme.pill} border px-3 py-1.5 ${DESIGN.radius} text-xs font-medium ${theme.text} ${DESIGN.buttonHover}`}
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const DatabaseToggle = ({ useDatabase, onToggle }) => {
+  return (
+    <div className="flex flex-col items-center gap-1 min-w-[56px]">
+      <button
+        onClick={onToggle}
+        className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105"
+        aria-label={useDatabase ? "Switch to AI Mode" : "Switch to Database Mode"}
+      >
+        {useDatabase ? <Library size={21} className="text-[#C5A059]" /> : <Sparkles size={21} className="text-[#C5A059]" />}
+      </button>
+      <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">
+        {useDatabase ? 'Local' : 'Web'}
+      </span>
+    </div>
+  );
+};
+
 const OverflowMenu = ({
   darkMode,
   onToggleDarkMode,
@@ -786,7 +842,9 @@ const OverflowMenu = ({
   selectedCategory,
   onSelectCategory,
   onCopy,
-  showCopySuccess
+  showCopySuccess,
+  useDatabase,
+  onToggleDatabase
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -817,6 +875,11 @@ const OverflowMenu = ({
     setIsOpen(false);
   };
 
+  const handleToggleDatabase = () => {
+    onToggleDatabase();
+    setIsOpen(false);
+  };
+
   return (
     <div className="relative flex flex-col items-center gap-1 min-w-[56px]" ref={dropdownRef}>
       <button
@@ -838,6 +901,17 @@ const OverflowMenu = ({
             <div className="flex flex-col items-start">
               <div className="font-amiri text-base text-[#C5A059] font-medium">نسخ</div>
               <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Copy</div>
+            </div>
+          </button>
+
+          <button
+            onClick={handleToggleDatabase}
+            className="w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex items-center gap-3 border-b border-[rgba(197,160,89,0.08)] hover:bg-[rgba(197,160,89,0.08)]"
+          >
+            {useDatabase ? <Library size={18} className="text-[#C5A059]" /> : <Sparkles size={18} className="text-[#C5A059]" />}
+            <div className="flex flex-col items-start">
+              <div className="font-amiri text-base text-[#C5A059] font-medium">{useDatabase ? 'قاعدة البيانات' : 'الذكاء الاصطناعي'}</div>
+              <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">{useDatabase ? 'Local Database' : 'AI Generated'}</div>
             </div>
           </button>
 
@@ -1227,6 +1301,7 @@ export default function DiwanApp() {
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [darkMode, setDarkMode] = useState(true);
   const [currentFont, setCurrentFont] = useState("Amiri");
+  const [useDatabase, setUseDatabase] = useState(FEATURES.database);
   const [copySuccess, setCopySuccess] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
@@ -1264,6 +1339,7 @@ export default function DiwanApp() {
   const [isOverflow, setIsOverflow] = useState(false);
   const [cacheStats, setCacheStats] = useState({ audioHits: 0, audioMisses: 0, insightsHits: 0, insightsMisses: 0 });
   const [isPrefetching, setIsPrefetching] = useState(false);
+  const [backendError, setBackendError] = useState(null);
   const activeAudioRequests = useRef(new Set()); // Track in-flight audio generation requests
   const activeInsightRequests = useRef(new Set()); // Track in-flight insight generation requests
   const pollingIntervals = useRef([]); // Track all polling intervals for cleanup
@@ -1828,7 +1904,7 @@ export default function DiwanApp() {
   };
 
   const handleFetch = async () => {
-    addLog("UI Event", `🐰 Discover button clicked | Category: ${selectedCategory}`, "info");
+    addLog("UI Event", `🐰 Discover button clicked | Category: ${selectedCategory} | Source: ${useDatabase ? 'Database' : 'Gemini AI'}`, "info");
 
     if (isFetching) {
       addLog("Discovery", `Discovery already in progress - please wait`, "info");
@@ -1837,81 +1913,139 @@ export default function DiwanApp() {
 
     setIsFetching(true);
 
-    const prompt = selectedCategory === "All"
-      ? "Find a masterpiece Arabic poem. COMPLETE text."
-      : `Find a famous poem by ${selectedCategory}. COMPLETE text.`;
-
-    const requestBody = JSON.stringify({
-      contents: [{ parts: [{ text: `${prompt} JSON only.` }] }],
-      systemInstruction: { parts: [{ text: DISCOVERY_SYSTEM_PROMPT }] },
-      generationConfig: { responseMimeType: "application/json" }
-    });
-
-    const requestSize = new Blob([requestBody]).size;
-    const estimatedInputTokens = Math.ceil(
-      (prompt.length + DISCOVERY_SYSTEM_PROMPT.length) / 4
-    );
-    const promptChars = prompt.length;
-    const systemPromptChars = DISCOVERY_SYSTEM_PROMPT.length;
-
-    addLog(
-      "Discovery API",
-      `→ Searching ${selectedCategory} | Request: ${(requestSize / 1024).toFixed(1)}KB | ${promptChars + systemPromptChars} chars (${promptChars} prompt + ${systemPromptChars} system) | Est. ${estimatedInputTokens} tokens`,
-      "info"
-    );
-
     try {
       const apiStart = performance.now();
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${API_MODELS.discovery}:generateContent?key=${apiKey}`;
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: requestBody
-      });
-      const data = await res.json();
-      const apiTime = performance.now() - apiStart;
 
-      const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-      const cleanJson = (rawText || "").replace(/```json|```/g, "").trim();
-      const parsedPoem = JSON.parse(cleanJson);
+      // DATABASE MODE: Fetch from local PostgreSQL API
+      if (useDatabase) {
+        addLog("Discovery DB", `→ Querying database | Category: ${selectedCategory}`, "info");
 
-      // Normalize tags: convert object to array if needed
-      if (parsedPoem.tags && typeof parsedPoem.tags === 'object' && !Array.isArray(parsedPoem.tags)) {
-        addLog("Discovery Tags", `Converting tags from object to array | Original: ${JSON.stringify(parsedPoem.tags)}`, "info");
-        parsedPoem.tags = [
-          parsedPoem.tags.Era || parsedPoem.tags.era || "Unknown",
-          parsedPoem.tags.Mood || parsedPoem.tags.mood || "Unknown",
-          parsedPoem.tags.Type || parsedPoem.tags.type || "Unknown"
-        ];
+        const poetParam = selectedCategory !== "All" ? `?poet=${encodeURIComponent(selectedCategory)}` : '';
+        const url = `${apiUrl}/api/poems/random${poetParam}`;
+
+        try {
+          const res = await fetch(url);
+
+          if (!res.ok) {
+            throw new Error(`Database API returned ${res.status} ${res.statusText}`);
+          }
+
+          // Clear any previous backend errors on success
+          setBackendError(null);
+
+          const newPoem = await res.json();
+          const apiTime = performance.now() - apiStart;
+
+          // Process database poems: replace * with newlines
+          if (newPoem.arabic) {
+            newPoem.arabic = newPoem.arabic.replace(/\*/g, '\n');
+          }
+
+          // Mark as database poem
+          newPoem.isFromDatabase = true;
+
+          const arabicPoemChars = newPoem?.arabic?.length || 0;
+
+          addLog("Discovery DB", `✓ Poem found | API: ${(apiTime / 1000).toFixed(2)}s | DB ID: ${newPoem.id} | Arabic: ${arabicPoemChars} chars`, "success");
+          addLog("Discovery DB", `Poet: ${newPoem.poet} | Title: ${newPoem.title}`, "success");
+
+          setPoems(prev => {
+            const updated = [...prev, newPoem];
+            const searchStr = selectedCategory.toLowerCase();
+            const freshFiltered = selectedCategory === "All" ? updated : updated.filter(p => (p?.poet || "").toLowerCase().includes(searchStr) || (Array.isArray(p?.tags) && p.tags.some(t => String(t).toLowerCase() === searchStr)));
+            const newIdx = freshFiltered.findIndex(p => p.id === newPoem.id);
+            if (newIdx !== -1) setCurrentIndex(newIdx);
+            return updated;
+          });
+        } catch (dbError) {
+          // Handle database-specific errors
+          const errorMessage = dbError.message.includes('Failed to fetch')
+            ? 'Backend server is not running. Please start it with: npm run dev:server'
+            : dbError.message;
+
+          setBackendError(errorMessage);
+          addLog("Discovery DB Error", errorMessage, "error");
+          throw dbError; // Re-throw to be caught by outer catch
+        }
+
+      } else {
+        // GEMINI AI MODE: Original implementation
+        const prompt = selectedCategory === "All"
+          ? "Find a masterpiece Arabic poem. COMPLETE text."
+          : `Find a famous poem by ${selectedCategory}. COMPLETE text.`;
+
+        const requestBody = JSON.stringify({
+          contents: [{ parts: [{ text: `${prompt} JSON only.` }] }],
+          systemInstruction: { parts: [{ text: DISCOVERY_SYSTEM_PROMPT }] },
+          generationConfig: { responseMimeType: "application/json" }
+        });
+
+        const requestSize = new Blob([requestBody]).size;
+        const estimatedInputTokens = Math.ceil(
+          (prompt.length + DISCOVERY_SYSTEM_PROMPT.length) / 4
+        );
+        const promptChars = prompt.length;
+        const systemPromptChars = DISCOVERY_SYSTEM_PROMPT.length;
+
+        addLog(
+          "Discovery API",
+          `→ Searching ${selectedCategory} | Request: ${(requestSize / 1024).toFixed(1)}KB | ${promptChars + systemPromptChars} chars (${promptChars} prompt + ${systemPromptChars} system) | Est. ${estimatedInputTokens} tokens`,
+          "info"
+        );
+
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${API_MODELS.discovery}:generateContent?key=${apiKey}`;
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: requestBody
+        });
+        const data = await res.json();
+        const apiTime = performance.now() - apiStart;
+
+        const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        const cleanJson = (rawText || "").replace(/```json|```/g, "").trim();
+        const parsedPoem = JSON.parse(cleanJson);
+
+        // Normalize tags: convert object to array if needed
+        if (parsedPoem.tags && typeof parsedPoem.tags === 'object' && !Array.isArray(parsedPoem.tags)) {
+          addLog("Discovery Tags", `Converting tags from object to array | Original: ${JSON.stringify(parsedPoem.tags)}`, "info");
+          parsedPoem.tags = [
+            parsedPoem.tags.Era || parsedPoem.tags.era || "Unknown",
+            parsedPoem.tags.Mood || parsedPoem.tags.mood || "Unknown",
+            parsedPoem.tags.Type || parsedPoem.tags.type || "Unknown"
+          ];
+        }
+
+        const newPoem = { ...parsedPoem, id: Date.now() };
+
+        const responseSize = new Blob([cleanJson]).size;
+        const estimatedOutputTokens = Math.ceil(cleanJson.length / 4);
+        const tokensPerSecond = (estimatedOutputTokens / (apiTime / 1000)).toFixed(1);
+        const jsonChars = cleanJson.length;
+        const arabicPoemChars = newPoem?.arabic?.length || 0;
+        const englishPoemChars = newPoem?.english?.length || 0;
+
+        // Log tags for debugging
+        const tagsType = Array.isArray(newPoem?.tags) ? 'array' : typeof newPoem?.tags;
+        const tagsContent = Array.isArray(newPoem?.tags)
+          ? `[${newPoem.tags.join(", ")}]`
+          : JSON.stringify(newPoem?.tags);
+        addLog("Discovery Tags", `Type: ${tagsType} | Count: ${Array.isArray(newPoem?.tags) ? newPoem.tags.length : 'N/A'} | Content: ${tagsContent}`, "info");
+
+        addLog("Discovery API", `✓ Poem found | API: ${(apiTime / 1000).toFixed(2)}s | Response: ${(responseSize / 1024).toFixed(1)}KB | ${jsonChars} chars`, "success");
+        addLog("Discovery Metrics", `${estimatedOutputTokens} tokens | ${tokensPerSecond} tok/s | Arabic: ${arabicPoemChars} chars | English: ${englishPoemChars} chars | Poet: ${newPoem.poet}`, "success");
+        setPoems(prev => {
+          const updated = [...prev, newPoem];
+          const searchStr = selectedCategory.toLowerCase();
+          const freshFiltered = selectedCategory === "All" ? updated : updated.filter(p => (p?.poet || "").toLowerCase().includes(searchStr) || (Array.isArray(p?.tags) && p.tags.some(t => String(t).toLowerCase() === searchStr)));
+          const newIdx = freshFiltered.findIndex(p => p.id === newPoem.id);
+          if (newIdx !== -1) setCurrentIndex(newIdx);
+          return updated;
+        });
       }
-
-      const newPoem = { ...parsedPoem, id: Date.now() };
-
-      const responseSize = new Blob([cleanJson]).size;
-      const estimatedOutputTokens = Math.ceil(cleanJson.length / 4);
-      const tokensPerSecond = (estimatedOutputTokens / (apiTime / 1000)).toFixed(1);
-      const jsonChars = cleanJson.length;
-      const arabicPoemChars = newPoem?.arabic?.length || 0;
-      const englishPoemChars = newPoem?.english?.length || 0;
-
-      // Log tags for debugging
-      const tagsType = Array.isArray(newPoem?.tags) ? 'array' : typeof newPoem?.tags;
-      const tagsContent = Array.isArray(newPoem?.tags)
-        ? `[${newPoem.tags.join(", ")}]`
-        : JSON.stringify(newPoem?.tags);
-      addLog("Discovery Tags", `Type: ${tagsType} | Count: ${Array.isArray(newPoem?.tags) ? newPoem.tags.length : 'N/A'} | Content: ${tagsContent}`, "info");
-
-      addLog("Discovery API", `✓ Poem found | API: ${(apiTime / 1000).toFixed(2)}s | Response: ${(responseSize / 1024).toFixed(1)}KB | ${jsonChars} chars`, "success");
-      addLog("Discovery Metrics", `${estimatedOutputTokens} tokens | ${tokensPerSecond} tok/s | Arabic: ${arabicPoemChars} chars | English: ${englishPoemChars} chars | Poet: ${newPoem.poet}`, "success");
-      setPoems(prev => {
-        const updated = [...prev, newPoem];
-        const searchStr = selectedCategory.toLowerCase();
-        const freshFiltered = selectedCategory === "All" ? updated : updated.filter(p => (p?.poet || "").toLowerCase().includes(searchStr) || (Array.isArray(p?.tags) && p.tags.some(t => String(t).toLowerCase() === searchStr)));
-        const newIdx = freshFiltered.findIndex(p => p.id === newPoem.id);
-        if (newIdx !== -1) setCurrentIndex(newIdx);
-        return updated;
-      });
-    } catch (e) { addLog("Discovery Error", e.message, "error"); }
+    } catch (e) {
+      addLog("Discovery Error", `${e.message} | Source: ${useDatabase ? 'Database' : 'Gemini'}`, "error");
+    }
     setIsFetching(false);
   };
 
@@ -2001,6 +2135,32 @@ export default function DiwanApp() {
       clearTimeout(prefetchNext);
     };
   }, [current?.id, currentIndex, filtered]);
+
+  // Keep-alive ping to prevent Render free tier from sleeping (15 min idle timeout)
+  // Pings every 10 minutes to keep backend awake
+  useEffect(() => {
+    if (!useDatabase || !apiUrl) return; // Only ping if database mode is enabled
+
+    const keepAlivePing = setInterval(() => {
+      fetch(`${apiUrl}/api/health`)
+        .then(() => {
+          if (FEATURES.debug) {
+            addLog("Keep-Alive", "Backend pinged successfully", "info");
+          }
+        })
+        .catch((err) => {
+          // Silently fail - don't disrupt user experience
+          if (FEATURES.debug) {
+            addLog("Keep-Alive", `Ping failed: ${err.message}`, "error");
+          }
+        });
+    }, 10 * 60 * 1000); // 10 minutes
+
+    // Initial ping on mount
+    fetch(`${apiUrl}/api/health`).catch(() => {});
+
+    return () => clearInterval(keepAlivePing);
+  }, [useDatabase, apiUrl]);
 
   return (
     <div className={`h-[100dvh] w-full flex flex-col overflow-hidden ${DESIGN.anim} font-sans ${theme.bg} ${theme.text} selection:bg-indigo-500`}>
@@ -2161,6 +2321,13 @@ export default function DiwanApp() {
         );
       })()}
 
+      <ErrorBanner
+        error={backendError}
+        onDismiss={() => setBackendError(null)}
+        onRetry={handleFetch}
+        theme={theme}
+      />
+
       <header style={{ opacity: headerOpacity }} className="fixed top-4 md:top-8 left-0 right-0 z-40 pointer-events-none transition-opacity duration-300 flex flex-row items-center justify-center gap-4 md:gap-8 px-4 md:px-6">
         <div className={`flex flex-row-reverse items-center gap-2 md:gap-4 ${theme.brand} tracking-wide header-luminescence`}>
           <PenTool className="w-8 h-8 md:w-[42px] md:h-[42px] opacity-95" strokeWidth={1.5} />
@@ -2297,6 +2464,11 @@ export default function DiwanApp() {
                     <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">Copy</span>
                   </div>
 
+                  <DatabaseToggle
+                    useDatabase={useDatabase}
+                    onToggle={() => setUseDatabase(!useDatabase)}
+                  />
+
                   <ThemeDropdown
                     darkMode={darkMode}
                     onToggleDarkMode={() => setDarkMode(!darkMode)}
@@ -2317,6 +2489,8 @@ export default function DiwanApp() {
                   onSelectCategory={setSelectedCategory}
                   onCopy={handleCopy}
                   showCopySuccess={showCopySuccess}
+                  useDatabase={useDatabase}
+                  onToggleDatabase={() => setUseDatabase(!useDatabase)}
                 />
               )}
             </div>

@@ -1,0 +1,50 @@
+{
+  "component": "splash",
+  "themes": [
+    {
+      "id": "particles",
+      "name": "Particle Field",
+      "description": "Floating particle effects with starfield aesthetic"
+    },
+    {
+      "id": "constellation",
+      "name": "Constellation Poetry",
+      "description": "Connected stars forming meaningful patterns"
+    },
+    {
+      "id": "mandala",
+      "name": "Breathing Mandala",
+      "description": "Islamic geometric patterns with breathing animation"
+    },
+    {
+      "id": "geometric",
+      "name": "Geometric Patterns",
+      "description": "Islamic tessellation and sacred geometry"
+    },
+    {
+      "id": "zen",
+      "name": "Zen Minimalism",
+      "description": "Pure minimalism with calligraphic focus"
+    },
+    {
+      "id": "aurora",
+      "name": "Aurora Light",
+      "description": "Northern lights with flowing gradients"
+    },
+    {
+      "id": "ink",
+      "name": "Ink Calligraphy",
+      "description": "Brush stroke animations and calligraphic art"
+    },
+    {
+      "id": "manuscript",
+      "name": "Ancient Manuscript",
+      "description": "Unrolling scrolls and illuminated manuscripts"
+    },
+    {
+      "id": "light",
+      "name": "Light & Shadow",
+      "description": "Chiaroscuro effects and dramatic lighting"
+    }
+  ]
+}

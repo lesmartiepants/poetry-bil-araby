@@ -223,16 +223,22 @@ app.get('/api/poems/search', async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`🚀 Poetry API server running on http://localhost:${PORT}`);
-  console.log(`   Health check: http://localhost:${PORT}/api/health`);
-  console.log(`   Random poem: http://localhost:${PORT}/api/poems/random`);
-});
+// Export app for testing
+export { app, pool };
 
-// Graceful shutdown
-process.on('SIGTERM', () => {
-  console.log('SIGTERM signal received: closing HTTP server');
-  pool.end(() => {
-    console.log('Database pool closed');
+// Only start server if this file is run directly (not imported)
+if (import.meta.url === `file://${process.argv[1]}`) {
+  app.listen(PORT, () => {
+    console.log(`🚀 Poetry API server running on http://localhost:${PORT}`);
+    console.log(`   Health check: http://localhost:${PORT}/api/health`);
+    console.log(`   Random poem: http://localhost:${PORT}/api/poems/random`);
   });
-});
+
+  // Graceful shutdown
+  process.on('SIGTERM', () => {
+    console.log('SIGTERM signal received: closing HTTP server');
+    pool.end(() => {
+      console.log('Database pool closed');
+    });
+  });
+}

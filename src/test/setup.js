@@ -36,7 +36,36 @@ global.atob = vi.fn((str) => {
 })
 
 // Mock fetch for API calls
-global.fetch = vi.fn()
+global.fetch = vi.fn(() =>
+  Promise.resolve({
+    ok: true,
+    status: 200,
+    json: () => Promise.resolve({}),
+    text: () => Promise.resolve(''),
+    headers: new Map(),
+    statusText: 'OK',
+  })
+)
 
 // Mock document.execCommand for copy functionality
 document.execCommand = vi.fn(() => true)
+
+// Mock IndexedDB for caching functionality
+global.indexedDB = {
+  open: vi.fn(() => ({
+    onsuccess: null,
+    onerror: null,
+    onupgradeneeded: null,
+    result: {
+      transaction: vi.fn(() => ({
+        objectStore: vi.fn(() => ({
+          get: vi.fn(() => ({ onsuccess: null, onerror: null, result: null })),
+          put: vi.fn(() => ({ onsuccess: null, onerror: null })),
+          delete: vi.fn(() => ({ onsuccess: null, onerror: null })),
+        })),
+      })),
+      close: vi.fn(),
+    },
+  })),
+  deleteDatabase: vi.fn(),
+}

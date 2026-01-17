@@ -186,10 +186,10 @@ jobs:
 
       - name: Setup PostgreSQL schema (for database tests)
         run: |
-          # Create basic schema for testing (if needed)
-          # This is a placeholder - actual schema setup will be added when database tests are implemented
-          echo "PostgreSQL service running on localhost:5432"
-          PGPASSWORD=postgres psql -h localhost -U postgres -d qafiyah_test -c "SELECT version();"
+          # Load database schema from migrations
+          echo "Loading database schema from supabase/migrations..."
+          PGPASSWORD=postgres psql -h localhost -U postgres -d qafiyah_test -f supabase/migrations/20260114000000_import_poetry.sql
+          echo "Database schema loaded successfully"
         continue-on-error: true
 
       - name: Start backend API server (background)

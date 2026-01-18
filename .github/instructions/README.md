@@ -9,10 +9,10 @@ This directory contains custom instructions for GitHub Copilot to provide better
 **`.github/copilot-instructions.md`** - Main instructions file that applies to all code in the repository.
 
 Contains:
-- Project overview and architecture
-- Development commands and workflow
+- Project overview and architecture (dual-mode: Database + AI)
+- Development commands and workflow (frontend + backend)
 - Code style and conventions
-- Testing strategy
+- Testing strategy (136 unit + 193 E2E tests)
 - CI/CD pipeline details
 - Git workflow and commit conventions
 
@@ -28,8 +28,9 @@ Located in `.github/instructions/`, these files apply to specific file types:
 - State management patterns
 
 **`unit-tests.instructions.md`**
-- Applies to: `src/test/**/*.test.jsx`
+- Applies to: `src/test/**/*.test.jsx`, `src/test/**/*.test.js`
 - Vitest + React Testing Library patterns
+- Supertest for backend API tests
 - Test structure and organization
 - Query preferences (getByRole, getByText, etc.)
 - Mocking and async testing
@@ -40,6 +41,15 @@ Located in `.github/instructions/`, these files apply to specific file types:
 - Element selectors and user interactions
 - Device testing (desktop, mobile, tablet)
 - UI/UX and accessibility testing
+- Database integration testing
+
+**`backend-server.instructions.md`**
+- Applies to: `server.js`, `**/*.server.js`
+- Express.js REST API patterns
+- PostgreSQL database connection
+- Error handling and security
+- Performance optimization
+- Deployment considerations
 
 **`config-files.instructions.md`**
 - Applies to: `*.config.js`, `*.config.json`

@@ -1,12 +1,13 @@
 ---
-applyTo: "src/test/**/*.test.jsx"
+applyTo: "src/test/**/*.test.jsx,src/test/**/*.test.js"
 ---
 
 # Unit Test Instructions
 
 ## Testing Framework
 
-- **Vitest** + **React Testing Library** + **happy-dom**
+- **Vitest** + **React Testing Library** + **happy-dom** (frontend tests)
+- **Supertest** (backend API tests)
 - Run with: `npm test` (watch), `npm run test:run` (CI)
 - Coverage: `npm run test:coverage`
 
@@ -139,6 +140,25 @@ test('should fetch poem insights', async () => {
   );
   
   // Test implementation
+});
+```
+
+### Testing Backend API (server.test.js)
+```javascript
+import request from 'supertest';
+import app from '../server.js';
+
+test('GET /api/health should return 200', async () => {
+  const res = await request(app).get('/api/health');
+  expect(res.status).toBe(200);
+  expect(res.body.status).toBe('ok');
+});
+
+test('GET /api/poems/random should return a poem', async () => {
+  const res = await request(app).get('/api/poems/random');
+  expect(res.status).toBe(200);
+  expect(res.body).toHaveProperty('title');
+  expect(res.body).toHaveProperty('poet');
 });
 ```
 

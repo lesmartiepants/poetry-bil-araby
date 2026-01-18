@@ -7,8 +7,9 @@ applyTo: "e2e/**/*.spec.js"
 ## Testing Framework
 
 - **Playwright** for E2E testing
-- Two test suites:
+- Three test suites:
   - `app.spec.js` - Core functionality tests
+  - `database-integration.spec.js` - Database mode integration tests
   - `ui-ux.spec.js` - Design quality and accessibility (23 tests × 6 devices = 138 executions)
 
 ## Running Tests
@@ -285,3 +286,46 @@ await page.screenshot({ path: 'debug.png' });
 - Screenshots/videos captured on failure
 - Check `playwright.config.js` for CI-specific settings
 - `process.env.CI` detected automatically
+- **PostgreSQL service** runs in CI for database integration tests
+
+## Database Integration Tests
+
+### Testing Database Mode
+```javascript
+test('should fetch poems from database', async ({ page }) => {
+  await page.goto('/');
+  
+  // Switch to database mode
+  await page.getByRole('button', { name: /database/i }).click();
+  
+  // Wait for poem to load
+  await expect(page.getByText(/العنوان/)).toBeVisible({ timeout: 5000 });
+  
+  // Verify poem data structure
+  const poemTitle = await page.locator('.poem-title').textContent();
+  expect(poemTitle).toBeTruthy();
+});
+```
+
+### Testing API Endpoints
+```javascript
+test('should filter by poet in database mode', async ({ page }) => {
+  await page.goto('/');
+  
+  // Switch to database mode
+  await page.getByRole('button', { name: /database/i }).click();
+  
+  // Select poet filter
+  const poetSelect = page.getByRole('combobox', { name: /poet/i });
+  await poetSelect.selectOption('نزار قباني');
+  
+  // Wait for filtered poem
+  await expect(page.getByText('نزار قباني')).toBeVisible();
+});
+```
+
+### Environment Setup
+- CI runs PostgreSQL service in Docker container
+- Database seeded with test data before tests
+- Frontend connects to `http://localhost:3001` API
+- Backend connects to `postgres://postgres:postgres@localhost:5432/test_db`

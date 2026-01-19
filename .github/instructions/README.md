@@ -1,70 +1,47 @@
 # GitHub Copilot Instructions
 
-This directory contains custom instructions for GitHub Copilot to provide better context-aware suggestions when working with this repository.
+Custom instructions for context-aware code suggestions in this repository.
 
-## Files
+## Repository-Wide
 
-### Repository-Wide Instructions
+**`.github/copilot-instructions.md`** (77 lines) - Applies to all files
+- Dual-mode architecture (Database + AI)
+- Development commands (frontend + backend)
+- Code conventions (DESIGN/THEME constants, Arabic typography)
+- Testing strategy, CI/CD, common issues
 
-**`.github/copilot-instructions.md`** - Main instructions file that applies to all code in the repository.
+## Path-Specific
 
-Contains:
-- Project overview and architecture (dual-mode: Database + AI)
-- Development commands and workflow (frontend + backend)
-- Code style and conventions
-- Testing strategy (136 unit + 193 E2E tests)
-- CI/CD pipeline details
-- Git workflow and commit conventions
+**`react-components.instructions.md`** → `src/**/*.jsx` (33 lines)
+- Functional components, hooks, DESIGN/THEME usage, Arabic fonts
 
-### Path-Specific Instructions
+**`unit-tests.instructions.md`** → `src/test/**/*.test.jsx,src/test/**/*.test.js` (54 lines)
+- Vitest + RTL patterns, Supertest for backend, query preferences, timeouts
 
-Located in `.github/instructions/`, these files apply to specific file types:
+**`e2e-tests.instructions.md`** → `e2e/**/*.spec.js` (72 lines)
+- Playwright patterns, selectors, device matrix, database integration, debugging
 
-**`react-components.instructions.md`**
-- Applies to: `src/**/*.jsx`
-- React patterns and hooks usage
-- Styling requirements (DESIGN and THEME constants)
-- Arabic content styling
-- State management patterns
+**`backend-server.instructions.md`** → `server.js,**/*.server.js` (71 lines)
+- Express API, PostgreSQL, security (SQL injection), performance, testing
 
-**`unit-tests.instructions.md`**
-- Applies to: `src/test/**/*.test.jsx`, `src/test/**/*.test.js`
-- Vitest + React Testing Library patterns
-- Supertest for backend API tests
-- Test structure and organization
-- Query preferences (getByRole, getByText, etc.)
-- Mocking and async testing
+**`config-files.instructions.md`** → `*.config.js,*.config.json` (38 lines)
+- Vite/Vitest/Playwright configs, CI detection, env vars, timeouts
 
-**`e2e-tests.instructions.md`**
-- Applies to: `e2e/**/*.spec.js`
-- Playwright testing patterns
-- Element selectors and user interactions
-- Device testing (desktop, mobile, tablet)
-- UI/UX and accessibility testing
-- Database integration testing
+**`documentation.instructions.md`** → `**/*.md` (70 lines, code-review only)
+- Markdown standards, code examples, README structure, tone
 
-**`backend-server.instructions.md`**
-- Applies to: `server.js`, `**/*.server.js`
-- Express.js REST API patterns
-- PostgreSQL database connection
-- Error handling and security
-- Performance optimization
-- Deployment considerations
+## How It Works
 
-**`config-files.instructions.md`**
-- Applies to: `*.config.js`, `*.config.json`
-- Configuration best practices
-- CI/CD detection patterns
-- Performance considerations
-- Environment variable handling
+Copilot reads repository-wide + path-specific instructions based on file type:
 
-**`documentation.instructions.md`**
-- Applies to: `**/*.md`
-- Excluded from: Copilot coding agent (code-review only)
-- Markdown style guide
-- Documentation structure
-- Code examples in docs
-- Tone and style guidelines
+- Editing `src/app.jsx` → repo-wide + react-components
+- Editing `src/test/App.test.jsx` → repo-wide + unit-tests
+- Editing `e2e/app.spec.js` → repo-wide + e2e-tests
+- Editing `server.js` → repo-wide + backend-server
+- Editing `vite.config.js` → repo-wide + config-files
+- Editing `README.md` → repo-wide + documentation (code-review only)
+
+**Total:** 415 lines (74% reduction from 1,592 lines)
 
 ## How It Works
 

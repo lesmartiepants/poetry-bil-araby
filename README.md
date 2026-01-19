@@ -6,6 +6,9 @@ A beautiful React application for exploring Arabic poetry with AI-powered insigh
 
 - 📖 Browse classic and modern Arabic poetry
 - 🗄️ **NEW:** Database mode with 84K+ restored Arabic poems
+- 🔐 **NEW:** User authentication with Google/Apple SSO (Supabase)
+- ❤️ **NEW:** Save favorite poems to your personal collection
+- ⚙️ **NEW:** Persistent user settings (theme, font preferences)
 - 🎙️ AI-powered audio recitation with emotional context
 - 🤖 Deep analysis and interpretation using AI
 - 🔄 Toggle between Database mode (local PostgreSQL) and AI mode (Gemini API)
@@ -23,6 +26,7 @@ A beautiful React application for exploring Arabic poetry with AI-powered insigh
 - Node.js (v18 or higher)
 - **For AI Mode:** A Gemini API key from [Google AI Studio](https://aistudio.google.com/app/apikey)
 - **For Database Mode:** PostgreSQL 15+ (optional, but recommended for full functionality)
+- **For Authentication (Optional):** A Supabase account and project ([supabase.com](https://supabase.com))
 
 ### Installation
 
@@ -53,6 +57,30 @@ npm install
      # Frontend Configuration (.env.local)
      VITE_API_URL=http://localhost:3001  # Default: http://localhost:3001
      ```
+
+   **For Authentication (Optional - Supabase):**
+   - Create a Supabase project at [supabase.com](https://supabase.com)
+   - Go to Project Settings → API
+   - Add to `.env.local`:
+     ```bash
+     VITE_SUPABASE_URL=your-project-url
+     VITE_SUPABASE_ANON_KEY=your-anon-key
+     ```
+   - Run database migrations:
+     ```bash
+     # Install Supabase CLI (if not already installed)
+     npm install -g supabase
+     
+     # Link to your project
+     supabase link --project-ref your-project-ref
+     
+     # Push migrations
+     supabase db push
+     ```
+   - Configure OAuth providers in Supabase Dashboard:
+     - Go to Authentication → Providers
+     - Enable Google and/or Apple
+     - Add OAuth credentials from respective platforms
 
 3. Start the development server:
 
@@ -93,6 +121,15 @@ npm install
 - **Filter**: Select specific poets from the category dropdown
 - **Theme**: Toggle between dark and light modes
 
+### Authentication Features (Optional)
+When Supabase is configured, the app provides:
+- **Sign In**: Click the "Sign In" button to authenticate with Google or Apple
+- **Save Poems**: Click the heart ❤️ button to save poems to your personal collection
+- **Persistent Settings**: Your theme and font preferences are automatically saved
+- **User Profile**: Access your account menu to view settings and sign out
+
+**Note**: Authentication features only appear when Supabase environment variables are configured. The app works fully without authentication.
+
 ### Database Mode Benefits
 - Access to 84,329 restored Arabic poems
 - Instant fetching (no API latency)
@@ -124,12 +161,18 @@ npm install
 - Tailwind CSS
 - Lucide React (icons)
 - Gemini API (AI features)
+- Supabase (authentication & user data - optional)
 
 ### Backend (Database Mode)
 - Express.js 5 (API server)
 - PostgreSQL 15+ (poem database)
 - node-postgres (pg) client
 - CORS middleware
+
+### Authentication & User Data (Optional)
+- Supabase Auth (Google & Apple OAuth)
+- Supabase Database (user settings, saved poems, discussions)
+- Row Level Security (RLS) policies for data protection
 
 ## Project Structure
 

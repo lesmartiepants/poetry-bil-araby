@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Option R: Library Catalog - Intro + Main Mockup</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Inter:wght@400;600&family=Libre+Baskerville:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Inter", system-ui, sans-serif;
+      background: #f1eee7;
+      color: #2e2a24;
+    }
+    .canvas {
+      max-width: 1680px;
+      margin: 24px auto;
+      padding: 24px;
+    }
+    .meta {
+      display: flex;
+      gap: 14px;
+      align-items: baseline;
+      margin-bottom: 18px;
+      color: #7a7268;
+    }
+    .meta .label {
+      font-size: 11px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+    }
+    .meta .title {
+      font-size: 24px;
+      font-weight: 700;
+      color: #2e2a24;
+    }
+    .screens {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 24px;
+    }
+    .screen {
+      border-radius: 28px;
+      min-height: 820px;
+      padding: 32px;
+      background: #f8f6f0;
+      border: 1px solid rgba(46, 42, 36, 0.12);
+      position: relative;
+      box-shadow: 0 18px 40px rgba(46, 42, 36, 0.12);
+      overflow: hidden;
+    }
+    .screen-label {
+      position: absolute;
+      top: 16px;
+      right: 24px;
+      font-size: 10px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: rgba(46, 42, 36, 0.5);
+    }
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+    }
+    .nav .brand {
+      font-family: "Libre Baskerville", serif;
+      font-weight: 700;
+      font-size: 18px;
+    }
+    .shelf {
+      display: flex;
+      gap: 8px;
+      margin-top: 30px;
+    }
+    .book {
+      width: 22px;
+      height: 90px;
+      border-radius: 6px;
+      background: linear-gradient(180deg, #c9a26b, #8c5e3c);
+      border: 1px solid rgba(46, 42, 36, 0.2);
+    }
+    .hero {
+      margin-top: 40px;
+      display: grid;
+      gap: 16px;
+    }
+    .hero h1 {
+      font-family: "Libre Baskerville", serif;
+      font-size: 40px;
+      line-height: 1.1;
+    }
+    .hero p {
+      font-size: 14px;
+      color: #6b645c;
+      max-width: 360px;
+    }
+    .catalog {
+      margin-top: 24px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      font-size: 12px;
+      color: #6b645c;
+    }
+    .catalog span {
+      border: 1px solid rgba(46, 42, 36, 0.12);
+      padding: 8px 10px;
+      border-radius: 10px;
+      background: #fffdf8;
+    }
+    .main-layout {
+      display: grid;
+      grid-template-columns: 170px 1fr;
+      gap: 24px;
+      margin-top: 40px;
+    }
+    .index {
+      display: grid;
+      gap: 12px;
+      font-size: 12px;
+      color: #6b645c;
+    }
+    .reader {
+      background: #fffdf8;
+      border-radius: 20px;
+      padding: 24px;
+      border: 1px solid rgba(46, 42, 36, 0.12);
+    }
+    .reader .arabic {
+      font-family: "Amiri", serif;
+      font-size: 22px;
+      line-height: 2;
+    }
+    .reader .english {
+      font-size: 13px;
+      color: #6b645c;
+      margin-top: 14px;
+    }
+    .controls {
+      margin-top: 18px;
+      display: flex;
+      gap: 12px;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      color: #6b645c;
+    }
+  </style>
+</head>
+<body>
+  <div class="canvas">
+    <div class="meta">
+      <div class="label">Option R</div>
+      <div class="title">Library Catalog</div>
+      <div class="label">Intro + Main</div>
+    </div>
+    <div class="screens">
+      <section class="screen intro">
+        <div class="screen-label">Intro</div>
+        <div class="nav">
+          <span class="brand">Qafiyah Library</span>
+          <span>Catalog</span>
+          <span>Poets</span>
+          <span>Collections</span>
+        </div>
+        <div class="shelf">
+          <div class="book"></div>
+          <div class="book"></div>
+          <div class="book"></div>
+          <div class="book"></div>
+        </div>
+        <div class="hero">
+          <h1>An annotated library of Arabic verse.</h1>
+          <p>Browse by poet, era, or city. Save marginalia, share lines.</p>
+        </div>
+        <div class="catalog">
+          <span>Classical Era</span>
+          <span>Modernism</span>
+          <span>Andalusia</span>
+          <span>Romantic</span>
+        </div>
+      </section>
+      <section class="screen main">
+        <div class="screen-label">Main</div>
+        <div class="nav">
+          <span class="brand">Catalog • Al-Busiri</span>
+          <span>Reading Mode</span>
+        </div>
+        <div class="main-layout">
+          <div class="index">
+            <span>Chapter 01</span>
+            <span>Chapter 02</span>
+            <span>Chapter 03</span>
+            <span>Notes</span>
+            <span>Audio</span>
+          </div>
+          <div class="reader">
+            <div class="arabic">مَوْلاَيَ صَلِّ وَسَلِّمْ دَائِمًا أَبَدًا</div>
+            <div class="arabic">عَلَى حَبِيبِكَ خَيْرِ الْخَلْقِ كُلِّهِمِ</div>
+            <div class="english">O my Lord, send your blessings and peace forever upon your beloved.</div>
+            <div class="controls">
+              <span>Prev</span>
+              <span>Play</span>
+              <span>Save</span>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</body>
+</html>

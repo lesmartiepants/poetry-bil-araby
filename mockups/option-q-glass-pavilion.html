@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Option Q: Glass Pavilion - Intro + Main Mockup</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Inter", system-ui, sans-serif;
+      background: linear-gradient(135deg, #0b1120 0%, #1e1b4b 50%, #0f172a 100%);
+      color: #e2e8f0;
+    }
+    .canvas {
+      max-width: 1680px;
+      margin: 24px auto;
+      padding: 24px;
+    }
+    .meta {
+      display: flex;
+      gap: 14px;
+      align-items: baseline;
+      margin-bottom: 18px;
+      color: #94a3b8;
+    }
+    .meta .label {
+      font-size: 11px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+    }
+    .meta .title {
+      font-size: 24px;
+      font-weight: 700;
+      color: #f8fafc;
+    }
+    .screens {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 24px;
+    }
+    .screen {
+      border-radius: 30px;
+      min-height: 820px;
+      padding: 32px;
+      background: rgba(15, 23, 42, 0.55);
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      box-shadow: 0 30px 60px rgba(15, 23, 42, 0.6);
+      position: relative;
+      overflow: hidden;
+      backdrop-filter: blur(18px);
+    }
+    .screen::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 20% 20%, rgba(99, 102, 241, 0.35), transparent 45%),
+                  radial-gradient(circle at 80% 0%, rgba(56, 189, 248, 0.35), transparent 45%);
+      opacity: 0.7;
+      pointer-events: none;
+    }
+    .screen-label {
+      position: absolute;
+      top: 16px;
+      right: 24px;
+      font-size: 10px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: rgba(226, 232, 240, 0.7);
+    }
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      position: relative;
+      z-index: 2;
+    }
+    .nav .brand {
+      font-weight: 700;
+      letter-spacing: 0.2em;
+    }
+    .glass-card {
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      padding: 20px;
+      backdrop-filter: blur(16px);
+    }
+    .intro-hero {
+      margin-top: 80px;
+      display: grid;
+      gap: 16px;
+      position: relative;
+      z-index: 2;
+    }
+    .intro-hero h1 {
+      font-size: 40px;
+      max-width: 380px;
+    }
+    .intro-hero p {
+      font-size: 15px;
+      color: rgba(226, 232, 240, 0.7);
+      max-width: 360px;
+    }
+    .cta {
+      padding: 10px 18px;
+      border-radius: 999px;
+      border: 1px solid rgba(148, 163, 184, 0.4);
+      background: rgba(15, 23, 42, 0.6);
+      color: #f8fafc;
+      width: fit-content;
+      font-size: 13px;
+    }
+    .panel-grid {
+      margin-top: 26px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .panel-grid .glass-card h3 {
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+    .panel-grid .glass-card p {
+      font-size: 12px;
+      color: rgba(226, 232, 240, 0.7);
+    }
+    .main-wrap {
+      margin-top: 90px;
+      display: grid;
+      gap: 16px;
+      position: relative;
+      z-index: 2;
+    }
+    .poem {
+      font-family: "Amiri", serif;
+      font-size: 22px;
+      line-height: 2;
+    }
+    .poem .english {
+      font-family: "Inter", sans-serif;
+      font-size: 13px;
+      margin-top: 10px;
+      color: rgba(226, 232, 240, 0.7);
+    }
+    .floating-controls {
+      display: flex;
+      gap: 12px;
+      justify-content: space-between;
+      margin-top: 18px;
+    }
+    .floating-controls span {
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(148, 163, 184, 0.25);
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="canvas">
+    <div class="meta">
+      <div class="label">Option Q</div>
+      <div class="title">Glass Pavilion</div>
+      <div class="label">Intro + Main</div>
+    </div>
+    <div class="screens">
+      <section class="screen intro">
+        <div class="screen-label">Intro</div>
+        <div class="nav">
+          <span class="brand">QAFIYAH</span>
+          <span>Discover</span>
+          <span>Listen</span>
+          <span class="cta">Begin</span>
+        </div>
+        <div class="intro-hero">
+          <h1>Glass calm, luminous words.</h1>
+          <p>Layered panels for poems, insights, and audio without crowding the page.</p>
+          <div class="panel-grid">
+            <div class="glass-card">
+              <h3>Daily Verse</h3>
+              <p>One poem, full context.</p>
+            </div>
+            <div class="glass-card">
+              <h3>Audio Studio</h3>
+              <p>Intimate recitations.</p>
+            </div>
+            <div class="glass-card">
+              <h3>Poet Trails</h3>
+              <p>Follow an era or city.</p>
+            </div>
+            <div class="glass-card">
+              <h3>Insight Cards</h3>
+              <p>Explain a line instantly.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+      <section class="screen main">
+        <div class="screen-label">Main</div>
+        <div class="nav">
+          <span class="brand">Now: Mahmoud Darwish</span>
+          <span class="cta">Play Audio</span>
+        </div>
+        <div class="main-wrap glass-card">
+          <div class="poem">وَكُلُّ الطُّرُقَاتِ تَؤَدِّي إِلَيْكِ</div>
+          <div class="poem">وَصَوْتُكِ بَحْرٌ عَلَى عَتَبَاتِ الرِّيحِ</div>
+          <div class="english">Every road leads to you, and your voice is a sea on the wind's threshold.</div>
+          <div class="floating-controls">
+            <span>Prev</span>
+            <span>Next</span>
+            <span>Insight</span>
+            <span>Save</span>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</body>
+</html>

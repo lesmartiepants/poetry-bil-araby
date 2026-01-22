@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Option S: Rhythm Wave - Intro + Main Mockup</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Inter", system-ui, sans-serif;
+      background: #0c0a1f;
+      color: #f5f3ff;
+    }
+    .canvas {
+      max-width: 1680px;
+      margin: 24px auto;
+      padding: 24px;
+    }
+    .meta {
+      display: flex;
+      gap: 14px;
+      align-items: baseline;
+      margin-bottom: 18px;
+      color: #a5b4fc;
+    }
+    .meta .label {
+      font-size: 11px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+    }
+    .meta .title {
+      font-size: 24px;
+      font-weight: 700;
+      color: #f5f3ff;
+    }
+    .screens {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 24px;
+    }
+    .screen {
+      border-radius: 30px;
+      min-height: 820px;
+      padding: 32px;
+      background: radial-gradient(circle at 10% 20%, rgba(124, 58, 237, 0.3), transparent 50%),
+                  radial-gradient(circle at 90% 10%, rgba(59, 130, 246, 0.35), transparent 50%),
+                  #111135;
+      border: 1px solid rgba(167, 139, 250, 0.3);
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 20px 45px rgba(9, 9, 28, 0.55);
+    }
+    .screen::after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 120px;
+      height: 90px;
+      background: linear-gradient(90deg, transparent 0%, rgba(167, 139, 250, 0.4) 50%, transparent 100%);
+      opacity: 0.5;
+    }
+    .screen-label {
+      position: absolute;
+      top: 16px;
+      right: 24px;
+      font-size: 10px;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: rgba(221, 214, 254, 0.7);
+    }
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      position: relative;
+      z-index: 2;
+    }
+    .nav .brand {
+      font-weight: 700;
+      letter-spacing: 0.2em;
+    }
+    .wave {
+      margin-top: 90px;
+      height: 120px;
+      background: linear-gradient(90deg, rgba(196, 181, 253, 0.2), rgba(59, 130, 246, 0.4), rgba(196, 181, 253, 0.2));
+      border-radius: 999px;
+      position: relative;
+      overflow: hidden;
+    }
+    .wave::before {
+      content: "";
+      position: absolute;
+      inset: 20px;
+      border-radius: 999px;
+      border: 1px dashed rgba(196, 181, 253, 0.6);
+    }
+    .hero {
+      margin-top: 40px;
+      display: grid;
+      gap: 16px;
+      position: relative;
+      z-index: 2;
+    }
+    .hero h1 {
+      font-size: 38px;
+      line-height: 1.1;
+    }
+    .hero p {
+      font-size: 14px;
+      color: rgba(221, 214, 254, 0.7);
+      max-width: 360px;
+    }
+    .player {
+      margin-top: 80px;
+      background: rgba(30, 27, 75, 0.7);
+      padding: 22px;
+      border-radius: 22px;
+      border: 1px solid rgba(167, 139, 250, 0.3);
+      position: relative;
+      z-index: 2;
+    }
+    .player .arabic {
+      font-family: "Amiri", serif;
+      font-size: 22px;
+      line-height: 2;
+    }
+    .player .english {
+      font-size: 13px;
+      color: rgba(221, 214, 254, 0.7);
+      margin-top: 10px;
+    }
+    .controls {
+      display: flex;
+      gap: 10px;
+      margin-top: 14px;
+    }
+    .control-pill {
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(99, 102, 241, 0.35);
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="canvas">
+    <div class="meta">
+      <div class="label">Option S</div>
+      <div class="title">Rhythm Wave</div>
+      <div class="label">Intro + Main</div>
+    </div>
+    <div class="screens">
+      <section class="screen intro">
+        <div class="screen-label">Intro</div>
+        <div class="nav">
+          <span class="brand">QAFIYAH</span>
+          <span>Listen</span>
+          <span>Discover</span>
+          <span>Mixes</span>
+        </div>
+        <div class="wave"></div>
+        <div class="hero">
+          <h1>Feel the rhythm of every line.</h1>
+          <p>Audio-first flow with waveform cues and gentle tempo controls.</p>
+        </div>
+      </section>
+      <section class="screen main">
+        <div class="screen-label">Main</div>
+        <div class="nav">
+          <span class="brand">Now Playing • Fairuz</span>
+          <span>Live Recital</span>
+        </div>
+        <div class="player">
+          <div class="arabic">وَيَا لَيْلُ طَوِّلْ لَنَا السَّهَرَا</div>
+          <div class="arabic">فَإِنَّ الهَوَى لَا يُحِبُّ الصَّبَاحَا</div>
+          <div class="english">O night, lengthen our wakefulness, for love does not love the morning.</div>
+          <div class="controls">
+            <span class="control-pill">Prev</span>
+            <span class="control-pill">Play</span>
+            <span class="control-pill">Tempo</span>
+            <span class="control-pill">Save</span>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,12 +1,43 @@
 # Authentication UI Screenshots Guide
 
-This document provides a comprehensive visual guide to all authentication-related UI elements and screens in the Poetry Bil-Araby application.
+This document provides a comprehensive visual guide to all authentication-related UI elements and screens in the Poetry Bil-Araby app.
 
 ## Table of Contents
 1. [Desktop Views](#desktop-views)
 2. [Mobile Views](#mobile-views)
 3. [Authentication Flows](#authentication-flows)
 4. [User-Specific Controls](#user-specific-controls)
+5. [Updated UI (Latest Changes)](#updated-ui-latest-changes)
+
+---
+
+## Updated UI (Latest Changes)
+
+### Desktop - New Button Layout
+**Features:**
+- "Learn" button (formerly "Dive In")
+- Heart/Save button positioned after Discover
+- Tighter spacing (52px min-width instead of 56px)
+- All buttons fit comfortably in viewport
+
+**Button Order:**
+1. Listen
+2. Learn (formerly "Dive In")
+3. Discover
+4. Save ❤️ (heart button - NEW POSITION)
+5. _divider_
+6. Copy
+7. Local/Web toggle
+8. Theme
+9. Poets
+10. Sign In / Account
+
+### Mobile - Heart Functionality
+Mobile views now show:
+- Heart button in main view when Supabase is configured
+- Tooltip "Sign in to save poems" when not authenticated
+- Auth modal with Google and Apple OAuth options
+- Responsive layout with tighter button spacing
 
 ---
 
@@ -117,6 +148,35 @@ This document provides a comprehensive visual guide to all authentication-relate
 
 **Additional Controls Not Shown in Screenshot:**
 The Save and Sign In buttons also appear in this overflow menu when scrolled (menu is scrollable with `max-h-[80vh]`).
+
+---
+
+### 6. Mobile - Authentication Modal (NEW)
+
+![Mobile Auth Modal](/tmp/mobile-auth-with-heart.png)
+
+**Key Features:**
+- Shows auth modal on mobile viewport
+- Google and Apple OAuth buttons
+- Arabic welcome message: "مرحباً"
+- Terms and privacy policy notice
+- Responsive modal design
+
+**Trigger:** Clicking Sign In button on mobile
+
+---
+
+### 7. Mobile - Heart Button Tooltip (NEW)
+
+![Mobile Heart Tooltip](/tmp/mobile-heart-tooltip.png)
+
+**Key Features:**
+- Heart button visible in mobile control bar
+- Tooltip appears when not authenticated
+- Message: "Sign in to save poems"
+- Demonstrates save functionality on mobile
+
+**Trigger:** Clicking heart button when not signed in
 
 ---
 

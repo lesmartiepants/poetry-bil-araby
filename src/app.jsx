@@ -1099,7 +1099,7 @@ const SavePoemButton = ({ poem, isSaved, onSave, onUnsave, disabled }) => {
   };
 
   return (
-    <div className="relative flex flex-col items-center gap-1 min-w-[56px]">
+    <div className="relative flex flex-col items-center gap-1 min-w-[52px]">
       <button
         onClick={handleClick}
         className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105"
@@ -2239,47 +2239,47 @@ export default function DiwanApp() {
           <footer className="fixed bottom-0 left-0 right-0 py-2 pb-3 md:pb-2 px-4 flex flex-col items-center z-50 bg-gradient-to-t from-black/5 to-transparent safe-bottom">
             <div ref={controlBarRef} className={`flex items-center gap-2 px-5 py-2 rounded-full shadow-2xl border ${DESIGN.glass} ${theme.border} ${theme.shadow} ${DESIGN.anim} max-w-[calc(100vw-2rem)] w-fit`}>
 
-              <div className="flex flex-col items-center gap-1 min-w-[56px]">
+              <div className="flex flex-col items-center gap-1 min-w-[52px]">
                 <button onClick={togglePlay} disabled={isGeneratingAudio} aria-label={isPlaying ? "Pause recitation" : "Play recitation"} className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105">
                   {isGeneratingAudio ? <Loader2 className="animate-spin text-[#C5A059]" size={21} /> : isPlaying ? <Pause fill="#C5A059" size={21} /> : <Volume2 className="text-[#C5A059]" size={21} />}
                 </button>
                 <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">Listen</span>
               </div>
 
-              <div className="flex flex-col items-center gap-1 min-w-[56px]">
-                <button onClick={handleAnalyze} disabled={isInterpreting || interpretation} aria-label="Dive into poem meaning" className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105 disabled:opacity-50">
+              <div className="flex flex-col items-center gap-1 min-w-[52px]">
+                <button onClick={handleAnalyze} disabled={isInterpreting || interpretation} aria-label="Learn about poem meaning" className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105 disabled:opacity-50">
                   {isInterpreting ? <Loader2 className="animate-spin text-[#C5A059]" size={21} /> : <Compass className="text-[#C5A059]" size={21} />}
                 </button>
-                <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">Dive In</span>
+                <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">Learn</span>
               </div>
 
-              <div className="flex flex-col items-center gap-1 min-w-[56px]">
+              <div className="flex flex-col items-center gap-1 min-w-[52px]">
                 <button onClick={handleFetch} disabled={isFetching} aria-label="Discover new poem" className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105">
                   {isFetching ? <Loader2 className="animate-spin text-[#C5A059]" size={21} /> : <Rabbit className="text-[#C5A059] rabbit-bounce" size={21} />}
                 </button>
                 <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">Discover</span>
               </div>
 
-              <div className="w-px h-10 bg-stone-500/20 mx-2 flex-shrink-0" />
+              {isSupabaseConfigured && (
+                <SavePoemButton
+                  poem={current}
+                  isSaved={isPoemSaved(current)}
+                  onSave={handleSavePoem}
+                  onUnsave={handleUnsavePoem}
+                  disabled={!user}
+                />
+              )}
+
+              <div className="w-px h-10 bg-stone-500/20 mx-1 flex-shrink-0" />
 
               {!isOverflow ? (
                 <>
-                  <div className="flex flex-col items-center gap-1 min-w-[56px]">
+                  <div className="flex flex-col items-center gap-1 min-w-[52px]">
                     <button onClick={handleCopy} aria-label="Copy poem to clipboard" className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105">
                       {showCopySuccess ? <Check size={21} className="text-green-500" /> : <Copy size={21} className="text-[#C5A059]" />}
                     </button>
                     <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">Copy</span>
                   </div>
-
-                  {isSupabaseConfigured && (
-                    <SavePoemButton
-                      poem={current}
-                      isSaved={isPoemSaved(current)}
-                      onSave={handleSavePoem}
-                      onUnsave={handleUnsavePoem}
-                      disabled={!user}
-                    />
-                  )}
 
                   <DatabaseToggle
                     useDatabase={useDatabase}

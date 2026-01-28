@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Option 2: Material Design 3 (Google) - Vertical Controls</title>
+  <title>Option 9: Scandinavian Minimal</title>
   <style>
     * {
       margin: 0;
@@ -12,9 +12,9 @@
     }
     
     body {
-      font-family: 'Roboto', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-      background: #0c0c0e;
-      color: #e7e5e4;
+      font-family: 'Söhne', 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: #fafaf9;
+      color: #1c1917;
       overflow: hidden;
       height: 100vh;
     }
@@ -25,27 +25,22 @@
       position: relative;
     }
     
-    /* Material Design 3 Vertical Control Bar - Left Side */
+    /* Scandinavian Minimal - Right Side */
     .vertical-controls {
       position: fixed;
-      left: 24px;
+      right: 40px;
       top: 50%;
       transform: translateY(-50%);
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 16px;
       z-index: 1000;
     }
     
     .control-group {
-      background: rgba(208, 188, 255, 0.08);
-      backdrop-filter: blur(20px);
-      border-radius: 28px;
-      padding: 4px;
       display: flex;
       flex-direction: column;
-      gap: 4px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      gap: 8px;
     }
     
     .control-btn {
@@ -54,98 +49,81 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: transparent;
-      border: none;
-      border-radius: 24px;
+      background: white;
+      border: 1.5px solid #e7e5e4;
+      border-radius: 50%;
       cursor: pointer;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      color: #d0bcff;
+      transition: all 0.2s ease;
+      color: #292524;
       position: relative;
-      overflow: hidden;
-    }
-    
-    /* Material ripple effect */
-    .control-btn::before {
-      content: '';
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      background: radial-gradient(circle, rgba(208, 188, 255, 0.3) 0%, transparent 70%);
-      opacity: 0;
-      transition: opacity 0.3s;
-    }
-    
-    .control-btn:hover::before {
-      opacity: 1;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
     }
     
     .control-btn:hover {
-      background: rgba(208, 188, 255, 0.12);
+      border-color: #292524;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+      transform: translateY(-2px);
     }
     
     .control-btn.active {
-      background: rgba(208, 188, 255, 0.2);
-      color: #fff;
+      background: #292524;
+      border-color: #292524;
+      color: white;
     }
     
     .control-btn svg {
       width: 24px;
       height: 24px;
-      stroke-width: 2;
-      z-index: 1;
+      stroke-width: 1.8;
     }
     
-    /* Badge for save count */
+    /* Minimalist badge */
     .badge {
       position: absolute;
-      top: 8px;
-      right: 8px;
-      background: #d0bcff;
-      color: #1c1b1f;
+      top: -4px;
+      right: -4px;
+      background: #292524;
+      color: white;
       width: 20px;
       height: 20px;
       border-radius: 10px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 11px;
-      font-weight: 700;
-      z-index: 2;
+      font-size: 10px;
+      font-weight: 600;
+      border: 2px solid #fafaf9;
     }
     
-    /* Zoom indicator */
-    .zoom-indicator {
+    /* Divider line */
+    .control-divider {
+      width: 32px;
+      height: 1px;
+      background: #e7e5e4;
+      align-self: center;
+      margin: 4px 0;
+    }
+    
+    /* Tooltip */
+    .tooltip {
       position: absolute;
-      bottom: 100%;
-      left: 50%;
-      transform: translateX(-50%);
-      margin-bottom: 8px;
-      background: rgba(208, 188, 255, 0.9);
-      color: #1c1b1f;
+      right: calc(100% + 12px);
+      top: 50%;
+      transform: translateY(-50%);
+      background: #292524;
+      color: white;
       padding: 6px 12px;
-      border-radius: 16px;
-      font-size: 13px;
-      font-weight: 600;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 500;
+      white-space: nowrap;
       opacity: 0;
       pointer-events: none;
       transition: opacity 0.2s;
-      white-space: nowrap;
     }
     
-    .zoom-indicator.show {
+    .control-btn:hover .tooltip {
       opacity: 1;
-    }
-    
-    /* Label text */
-    .control-label {
-      font-size: 11px;
-      font-weight: 600;
-      letter-spacing: 0.5px;
-      text-transform: uppercase;
-      color: #d0bcff;
-      text-align: center;
-      padding: 4px 8px;
-      opacity: 0.7;
     }
     
     /* Sample content */
@@ -154,7 +132,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 0 80px 0 120px;
+      padding: 0 140px 0 80px;
     }
     
     .poem-container {
@@ -164,33 +142,34 @@
     
     .poem-title {
       font-size: clamp(2rem, 4vw, 3rem);
-      font-weight: 700;
-      color: #C5A059;
-      margin-bottom: 1rem;
+      font-weight: 400;
+      color: #292524;
+      margin-bottom: 1.5rem;
       font-family: 'Amiri', serif;
     }
     
     .poem-text {
       font-size: clamp(1.25rem, 2vw, 1.5rem);
       line-height: 2.4;
-      color: #e7e5e4;
+      color: #57534e;
       font-family: 'Amiri', serif;
       transition: font-size 0.3s ease;
     }
     
     .design-label {
       position: fixed;
-      top: 24px;
-      right: 24px;
-      background: rgba(208, 188, 255, 0.15);
-      border: 1px solid rgba(208, 188, 255, 0.3);
+      top: 40px;
+      left: 40px;
+      background: white;
+      border: 1.5px solid #e7e5e4;
       padding: 10px 20px;
-      border-radius: 20px;
-      font-size: 11px;
+      border-radius: 24px;
+      font-size: 10px;
       font-weight: 600;
-      letter-spacing: 1px;
+      letter-spacing: 1.2px;
       text-transform: uppercase;
-      color: #d0bcff;
+      color: #292524;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
     }
     
     /* Zoom levels */
@@ -200,42 +179,58 @@
   </style>
 </head>
 <body>
-  <div class="design-label">Option 2: Material Design 3</div>
+  <div class="design-label">Option 9: Scandinavian</div>
   
   <div class="container">
-    <!-- Vertical Control Bar (Left Side) -->
+    <div class="content">
+      <div class="poem-container">
+        <h1 class="poem-title" dir="rtl">قصيدة عن الحب</h1>
+        <p class="poem-text zoom-2" id="poemText" dir="rtl">
+          يا من هواه أعزه وأذلني<br>
+          كيف السبيل إلى وصالك دلني<br><br>
+          والله لو عاقبتني ما ضرني<br>
+          حبي لك الدنيا وما حولي ملني
+        </p>
+      </div>
+    </div>
+    
+    <!-- Scandinavian Minimal Controls (Right Side) -->
     <div class="vertical-controls">
-      <!-- Save Group -->
+      <!-- Save -->
       <div class="control-group">
-        <div class="control-label">Collect</div>
-        <button class="control-btn active heart" id="saveBtn" aria-label="Save to collection">
-          <span class="badge">3</span>
+        <button class="control-btn active" id="saveBtn" aria-label="Save to collection">
+          <span class="badge">5</span>
+          <span class="tooltip">Saved</span>
           <svg fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
           </svg>
         </button>
       </div>
       
-      <!-- Zoom Group -->
+      <div class="control-divider"></div>
+      
+      <!-- Zoom Controls -->
       <div class="control-group">
-        <div class="control-label">Size</div>
         <button class="control-btn" id="zoomIn" aria-label="Increase text size">
-          <span class="zoom-indicator" id="zoomIndicator">100%</span>
+          <span class="tooltip">Larger</span>
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path d="M12 5v14M5 12h14"></path>
+            <text x="6" y="18" font-size="16" font-weight="600" fill="currentColor">A+</text>
           </svg>
         </button>
         <button class="control-btn" id="zoomOut" aria-label="Decrease text size">
+          <span class="tooltip">Smaller</span>
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path d="M5 12h14"></path>
+            <text x="7" y="18" font-size="13" font-weight="600" fill="currentColor">A-</text>
           </svg>
         </button>
       </div>
       
-      <!-- Transliteration Group -->
+      <div class="control-divider"></div>
+      
+      <!-- Transliteration -->
       <div class="control-group">
-        <div class="control-label">Text</div>
         <button class="control-btn" id="translitBtn" aria-label="Toggle transliteration">
+          <span class="tooltip">Transliterate</span>
           <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
             <path d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 0 1 6.412 9m0 0a17.91 17.91 0 0 1-3.412-4.5m0 0h7.5"></path>
             <path d="m15 20 6-6m0 0-6-6m6 6H9"></path>
@@ -243,22 +238,12 @@
         </button>
       </div>
     </div>
-    
-    <div class="content">
-      <div class="poem-container">
-        <h1 class="poem-title" dir="rtl">قصيدة عن الحب</h1>
-        <p class="poem-text zoom-2" id="poemText" dir="rtl">
-          يا من هواه أعزه وأذلني<br>
-          كيف السبيل إلى وصالك دلني
-        </p>
-      </div>
-    </div>
   </div>
   
   <script>
     // Interactive functionality
     let zoomLevel = 2;
-    let saveCount = 3;
+    let saveCount = 5;
     let isSaved = true;
     let translitEnabled = false;
     
@@ -267,23 +252,18 @@
     const zoomIn = document.getElementById('zoomIn');
     const zoomOut = document.getElementById('zoomOut');
     const translitBtn = document.getElementById('translitBtn');
-    const zoomIndicator = document.getElementById('zoomIndicator');
     const badge = document.querySelector('.badge');
-    
-    function updateZoomIndicator() {
-      const percentage = zoomLevel === 1 ? '80%' : zoomLevel === 2 ? '100%' : '120%';
-      zoomIndicator.textContent = percentage;
-      zoomIndicator.classList.add('show');
-      setTimeout(() => zoomIndicator.classList.remove('show'), 1000);
-    }
+    const saveTooltip = saveBtn.querySelector('.tooltip');
     
     saveBtn.addEventListener('click', () => {
       isSaved = !isSaved;
       saveBtn.classList.toggle('active');
       if (isSaved) {
         saveCount++;
+        saveTooltip.textContent = 'Saved';
       } else {
         saveCount--;
+        saveTooltip.textContent = 'Save';
       }
       badge.textContent = saveCount;
     });
@@ -292,7 +272,6 @@
       if (zoomLevel < 3) {
         zoomLevel++;
         poemText.className = `poem-text zoom-${zoomLevel}`;
-        updateZoomIndicator();
       }
     });
     
@@ -300,7 +279,6 @@
       if (zoomLevel > 1) {
         zoomLevel--;
         poemText.className = `poem-text zoom-${zoomLevel}`;
-        updateZoomIndicator();
       }
     });
     
@@ -308,12 +286,9 @@
       translitEnabled = !translitEnabled;
       translitBtn.classList.toggle('active');
       if (translitEnabled) {
-        const lines = poemText.innerHTML.split('<br>');
-        poemText.innerHTML = lines.map(line => 
-          `${line}<br><span style="opacity: 0.5; font-size: 0.85em; font-style: italic; font-family: Roboto; margin-bottom: 0.5em; display: block;">yā man hawāhu a'azzahu wa-adhallanī</span>`
-        ).join('<br>');
+        poemText.innerHTML = `يا من هواه أعزه وأذلني<br><span style="opacity: 0.4; font-size: 0.8em; font-style: italic; font-family: Inter;">yā man hawāhu a'azzahu wa-adhallanī</span><br>كيف السبيل إلى وصالك دلني<br><span style="opacity: 0.4; font-size: 0.8em; font-style: italic; font-family: Inter;">kayfa as-sabīlu ilā wiṣālika dallanī</span><br><br>والله لو عاقبتني ما ضرني<br><span style="opacity: 0.4; font-size: 0.8em; font-style: italic; font-family: Inter;">wallāhi law 'āqabtanī mā ḍarranī</span><br>حبي لك الدنيا وما حولي ملني<br><span style="opacity: 0.4; font-size: 0.8em; font-style: italic; font-family: Inter;">ḥubbī laka ad-dunyā wa mā ḥawlī mallanī</span>`;
       } else {
-        poemText.innerHTML = `يا من هواه أعزه وأذلني<br>كيف السبيل إلى وصالك دلني`;
+        poemText.innerHTML = `يا من هواه أعزه وأذلني<br>كيف السبيل إلى وصالك دلني<br><br>والله لو عاقبتني ما ضرني<br>حبي لك الدنيا وما حولي ملني`;
       }
     });
   </script>

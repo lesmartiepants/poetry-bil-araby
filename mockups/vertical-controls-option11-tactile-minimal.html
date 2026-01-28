@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1920, height=1080">
+    <title>Option 11 - Tactile Minimal</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f0f2f5;
+            color: #1a1a1a;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            width: 1920px;
+            height: 1080px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            background: linear-gradient(to bottom right, #f0f2f5 0%, #e8eaed 100%);
+        }
+
+        .poem-container {
+            text-align: center;
+            max-width: 900px;
+            padding: 70px 60px;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .poem-title {
+            font-family: 'Amiri', serif;
+            font-size: 44px;
+            margin-bottom: 52px;
+            color: #1a1a1a;
+            font-weight: 500;
+            letter-spacing: -0.3px;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .poem-text {
+            font-family: 'Amiri', serif;
+            font-size: 32px;
+            line-height: 2.5;
+            color: #2a2a2a;
+            margin-bottom: 36px;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .poem-text.zoom-medium {
+            font-size: 40px;
+            line-height: 2.6;
+        }
+
+        .poem-text.zoom-large {
+            font-size: 48px;
+            line-height: 2.7;
+        }
+
+        .poem-title.zoom-medium {
+            font-size: 52px;
+        }
+
+        .poem-title.zoom-large {
+            font-size: 60px;
+        }
+
+        .poet-name {
+            font-family: 'Amiri', serif;
+            font-size: 24px;
+            color: #6a6a6a;
+            margin-top: 52px;
+            font-style: italic;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .transliteration {
+            font-family: -apple-system, sans-serif;
+            font-size: 18px;
+            color: #8a8a8a;
+            font-style: italic;
+            margin-top: 0;
+            opacity: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .transliteration.active {
+            opacity: 1;
+            max-height: 500px;
+            margin-top: 26px;
+        }
+
+        /* Ultra-Clean Tactile Control Bar */
+        .control-bar {
+            position: fixed;
+            right: 52px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: linear-gradient(145deg, #f0f2f5, #e8eaed);
+            border-radius: 24px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            box-shadow: 
+                10px 10px 20px rgba(174, 184, 198, 0.5),
+                -10px -10px 20px rgba(255, 255, 255, 0.8);
+            transition: all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .control-bar:hover {
+            box-shadow: 
+                14px 14px 28px rgba(174, 184, 198, 0.6),
+                -14px -14px 28px rgba(255, 255, 255, 0.9);
+            transform: translateY(-50%) scale(1.02);
+        }
+
+        .control-btn {
+            width: 56px;
+            height: 56px;
+            border: none;
+            background: linear-gradient(145deg, #f0f2f5, #e8eaed);
+            border-radius: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            color: #4a4a4a;
+            transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+            position: relative;
+            box-shadow: 
+                6px 6px 12px rgba(174, 184, 198, 0.4),
+                -6px -6px 12px rgba(255, 255, 255, 0.7);
+        }
+
+        .control-btn:hover {
+            transform: scale(1.08);
+            box-shadow: 
+                8px 8px 16px rgba(174, 184, 198, 0.5),
+                -8px -8px 16px rgba(255, 255, 255, 0.8);
+            color: #2a2a2a;
+        }
+
+        .control-btn:active {
+            transform: scale(0.96);
+            box-shadow: 
+                inset 4px 4px 8px rgba(174, 184, 198, 0.5),
+                inset -4px -4px 8px rgba(255, 255, 255, 0.7);
+        }
+
+        .control-btn.active {
+            background: linear-gradient(145deg, #e8eaed, #e0e2e5);
+            box-shadow: 
+                inset 6px 6px 12px rgba(174, 184, 198, 0.6),
+                inset -6px -6px 12px rgba(255, 255, 255, 0.8);
+            color: #5b5bd6;
+        }
+
+        .icon {
+            transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+            font-weight: 400;
+        }
+
+        .control-btn:hover .icon {
+            transform: scale(1.12);
+        }
+
+        /* Minimal Divider */
+        .divider {
+            height: 1px;
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                rgba(174, 184, 198, 0.25) 50%, 
+                transparent 100%);
+            margin: 6px 10px;
+        }
+
+        /* Clean Tooltip */
+        .tooltip {
+            position: absolute;
+            right: 72px;
+            background: #2a2a2a;
+            color: #ffffff;
+            padding: 8px 16px;
+            border-radius: 10px;
+            font-size: 13px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+            font-weight: 400;
+            box-shadow: 
+                6px 6px 12px rgba(0, 0, 0, 0.15),
+                -2px -2px 6px rgba(255, 255, 255, 0.1);
+        }
+
+        .tooltip::after {
+            content: '';
+            position: absolute;
+            left: 100%;
+            top: 50%;
+            transform: translateY(-50%);
+            border: 5px solid transparent;
+            border-left-color: #2a2a2a;
+        }
+
+        .control-btn:hover .tooltip {
+            opacity: 1;
+            right: 80px;
+        }
+
+        /* Tactile press animation */
+        @keyframes tactile-press {
+            0% { transform: scale(1); }
+            50% { 
+                transform: scale(0.94);
+                box-shadow: 
+                    inset 5px 5px 10px rgba(174, 184, 198, 0.6),
+                    inset -5px -5px 10px rgba(255, 255, 255, 0.8);
+            }
+            100% { transform: scale(1); }
+        }
+
+        .control-btn.pressing {
+            animation: tactile-press 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        /* Soft active pulse */
+        @keyframes soft-tactile-pulse {
+            0%, 100% {
+                box-shadow: 
+                    inset 6px 6px 12px rgba(174, 184, 198, 0.6),
+                    inset -6px -6px 12px rgba(255, 255, 255, 0.8);
+            }
+            50% {
+                box-shadow: 
+                    inset 7px 7px 14px rgba(174, 184, 198, 0.65),
+                    inset -7px -7px 14px rgba(255, 255, 255, 0.85);
+            }
+        }
+
+        .control-btn.active {
+            animation: soft-tactile-pulse 2s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="poem-container">
+            <h1 class="poem-title" id="poemTitle">قصيدة الحب</h1>
+            
+            <div class="poem-text" id="poemText">
+                أحبك في زمن الخوف والقهر<br>
+                أحبك في زمن الحرب والضجر<br>
+                وأحبك حين يموت الكلام<br>
+                ويبقى الصدى في فضاء السهر
+            </div>
+
+            <div class="transliteration" id="transliteration">
+                uḥibbuki fī zaman al-khawf wa-l-qahr<br>
+                uḥibbuki fī zaman al-ḥarb wa-l-ḍajar<br>
+                wa-uḥibbuki ḥīna yamūt al-kalām<br>
+                wa-yabqā al-ṣadā fī faḍāʾ al-sahar
+            </div>
+
+            <p class="poet-name">— نزار قباني</p>
+        </div>
+
+        <div class="control-bar">
+            <button class="control-btn" id="saveBtn" onclick="toggleSave()">
+                <span class="icon" id="saveIcon">♡</span>
+                <span class="tooltip">حفظ القصيدة</span>
+            </button>
+
+            <div class="divider"></div>
+
+            <button class="control-btn" id="zoomBtn" onclick="cycleZoom()">
+                <span class="icon">A+</span>
+                <span class="tooltip">تكبير النص</span>
+            </button>
+
+            <div class="divider"></div>
+
+            <button class="control-btn" id="translitBtn" onclick="toggleTranslit()">
+                <span class="icon">ع/A</span>
+                <span class="tooltip">النقحرة اللاتينية</span>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let saved = false;
+        let zoomLevel = 0;
+        let translitActive = false;
+
+        function addTactileFeedback(btn) {
+            btn.classList.add('pressing');
+            setTimeout(() => btn.classList.remove('pressing'), 300);
+        }
+
+        function toggleSave() {
+            saved = !saved;
+            const btn = document.getElementById('saveBtn');
+            const icon = document.getElementById('saveIcon');
+            
+            addTactileFeedback(btn);
+            
+            if (saved) {
+                icon.textContent = '♥';
+                btn.classList.add('active');
+            } else {
+                icon.textContent = '♡';
+                btn.classList.remove('active');
+            }
+        }
+
+        function cycleZoom() {
+            const btn = document.getElementById('zoomBtn');
+            const poemText = document.getElementById('poemText');
+            const poemTitle = document.getElementById('poemTitle');
+            
+            addTactileFeedback(btn);
+            
+            zoomLevel = (zoomLevel + 1) % 3;
+            
+            poemText.classList.remove('zoom-medium', 'zoom-large');
+            poemTitle.classList.remove('zoom-medium', 'zoom-large');
+            
+            if (zoomLevel === 1) {
+                poemText.classList.add('zoom-medium');
+                poemTitle.classList.add('zoom-medium');
+                btn.classList.add('active');
+            } else if (zoomLevel === 2) {
+                poemText.classList.add('zoom-large');
+                poemTitle.classList.add('zoom-large');
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        }
+
+        function toggleTranslit() {
+            translitActive = !translitActive;
+            const btn = document.getElementById('translitBtn');
+            const translit = document.getElementById('transliteration');
+            
+            addTactileFeedback(btn);
+            
+            if (translitActive) {
+                translit.classList.add('active');
+                btn.classList.add('active');
+            } else {
+                translit.classList.remove('active');
+                btn.classList.remove('active');
+            }
+        }
+    </script>
+</body>
+</html>

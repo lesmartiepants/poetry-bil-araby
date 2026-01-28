@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=1920, height=1080">
+    <title>Option 4B - Brutalist Enhanced</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            background: #0a0a0a;
+            color: #00ff41;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .container {
+            width: 1920px;
+            height: 1080px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            background: 
+                repeating-linear-gradient(
+                    0deg,
+                    rgba(0, 255, 65, 0.03) 0px,
+                    transparent 1px,
+                    transparent 2px,
+                    rgba(0, 255, 65, 0.03) 3px
+                ),
+                radial-gradient(circle at center, #0f0f0f 0%, #0a0a0a 100%);
+            animation: scan-lines 8s linear infinite;
+        }
+
+        @keyframes scan-lines {
+            0% { background-position: 0 0, center; }
+            100% { background-position: 0 100vh, center; }
+        }
+
+        .poem-container {
+            text-align: center;
+            max-width: 900px;
+            padding: 60px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .poem-container::before {
+            content: '> LOADING POETRY...';
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            font-size: 12px;
+            color: #00ff41;
+            opacity: 0.4;
+            font-family: 'Courier New', monospace;
+            letter-spacing: 1px;
+        }
+
+        .poem-title {
+            font-family: 'Amiri', serif;
+            font-size: 46px;
+            margin-bottom: 40px;
+            color: #00ff41;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 
+                0 0 10px rgba(0, 255, 65, 0.5),
+                0 0 20px rgba(0, 255, 65, 0.3);
+            transition: all 0.3s ease;
+            border-bottom: 3px solid #00ff41;
+            padding-bottom: 20px;
+        }
+
+        .poem-text {
+            font-family: 'Amiri', serif;
+            font-size: 32px;
+            line-height: 2.3;
+            color: #00dd35;
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+            text-shadow: 0 0 5px rgba(0, 255, 65, 0.3);
+        }
+
+        .poem-text.zoom-medium {
+            font-size: 40px;
+            line-height: 2.4;
+        }
+
+        .poem-text.zoom-large {
+            font-size: 48px;
+            line-height: 2.5;
+        }
+
+        .poem-title.zoom-medium {
+            font-size: 54px;
+        }
+
+        .poem-title.zoom-large {
+            font-size: 62px;
+        }
+
+        .poet-name {
+            font-family: 'Amiri', serif;
+            font-size: 24px;
+            color: #00aa2a;
+            margin-top: 40px;
+            font-style: italic;
+            transition: all 0.3s ease;
+            opacity: 0.8;
+        }
+
+        .transliteration {
+            font-family: 'Courier New', monospace;
+            font-size: 18px;
+            color: #00cc33;
+            font-style: normal;
+            margin-top: 0;
+            opacity: 0;
+            max-height: 0;
+            overflow: hidden;
+            transition: all 0.4s ease;
+            letter-spacing: 1px;
+        }
+
+        .transliteration.active {
+            opacity: 0.9;
+            max-height: 500px;
+            margin-top: 20px;
+        }
+
+        /* Enhanced Brutalist Control Bar */
+        .control-bar {
+            position: fixed;
+            right: 40px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: #0d0d0d;
+            border: 3px solid #00ff41;
+            border-radius: 0;
+            padding: 16px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            box-shadow: 
+                0 0 20px rgba(0, 255, 65, 0.3),
+                inset 0 0 20px rgba(0, 255, 65, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .control-bar::before {
+            content: 'CTRL';
+            position: absolute;
+            top: -12px;
+            left: 8px;
+            background: #0a0a0a;
+            padding: 0 8px;
+            font-size: 10px;
+            color: #00ff41;
+            letter-spacing: 2px;
+            font-weight: bold;
+        }
+
+        .control-bar:hover {
+            border-color: #00ff88;
+            box-shadow: 
+                0 0 30px rgba(0, 255, 65, 0.5),
+                inset 0 0 30px rgba(0, 255, 65, 0.15);
+        }
+
+        .control-btn {
+            width: 60px;
+            height: 60px;
+            border: 2px solid #00dd35;
+            background: #0f0f0f;
+            border-radius: 0;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: #00ff41;
+            transition: all 0.2s ease;
+            position: relative;
+            font-family: 'Courier New', monospace;
+            font-weight: bold;
+            text-shadow: 0 0 5px rgba(0, 255, 65, 0.5);
+        }
+
+        .control-btn::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(0, 255, 65, 0.1) 0%, transparent 100%);
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .control-btn:hover {
+            background: #1a1a1a;
+            border-color: #00ff88;
+            transform: scale(1.05);
+            box-shadow: 
+                0 0 15px rgba(0, 255, 65, 0.4),
+                inset 0 0 15px rgba(0, 255, 65, 0.2);
+        }
+
+        .control-btn:hover::after {
+            opacity: 1;
+        }
+
+        .control-btn:active {
+            transform: scale(0.95);
+            box-shadow: 
+                0 0 10px rgba(0, 255, 65, 0.6),
+                inset 0 0 10px rgba(0, 255, 65, 0.3);
+        }
+
+        .control-btn.active {
+            background: rgba(0, 255, 65, 0.15);
+            border-color: #00ff88;
+            box-shadow: 
+                0 0 20px rgba(0, 255, 65, 0.6),
+                inset 0 0 10px rgba(0, 255, 65, 0.3);
+            animation: pulse-border 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse-border {
+            0%, 100% {
+                border-color: #00ff88;
+                box-shadow: 
+                    0 0 20px rgba(0, 255, 65, 0.6),
+                    inset 0 0 10px rgba(0, 255, 65, 0.3);
+            }
+            50% {
+                border-color: #00dd66;
+                box-shadow: 
+                    0 0 30px rgba(0, 255, 65, 0.8),
+                    inset 0 0 15px rgba(0, 255, 65, 0.4);
+            }
+        }
+
+        /* Refined Divider */
+        .divider {
+            height: 2px;
+            background: linear-gradient(90deg, 
+                transparent 0%, 
+                #00ff41 50%, 
+                transparent 100%);
+            margin: 8px 0;
+            box-shadow: 0 0 5px rgba(0, 255, 65, 0.5);
+        }
+
+        /* Terminal-style Tooltip */
+        .tooltip {
+            position: absolute;
+            right: 80px;
+            background: #0d0d0d;
+            color: #00ff41;
+            padding: 8px 16px;
+            border: 2px solid #00ff41;
+            border-radius: 0;
+            font-size: 13px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+            font-family: 'Courier New', monospace;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 0 10px rgba(0, 255, 65, 0.4);
+        }
+
+        .tooltip::before {
+            content: '> ';
+            color: #00ff88;
+        }
+
+        .control-btn:hover .tooltip {
+            opacity: 1;
+            right: 88px;
+        }
+
+        /* Glitch effect on hover */
+        @keyframes glitch {
+            0%, 100% { transform: translate(0); }
+            25% { transform: translate(-2px, 2px); }
+            50% { transform: translate(2px, -2px); }
+            75% { transform: translate(-2px, -2px); }
+        }
+
+        .control-btn:active {
+            animation: glitch 0.3s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="poem-container">
+            <h1 class="poem-title" id="poemTitle">قصيدة الحب</h1>
+            
+            <div class="poem-text" id="poemText">
+                أحبك في زمن الخوف والقهر<br>
+                أحبك في زمن الحرب والضجر<br>
+                وأحبك حين يموت الكلام<br>
+                ويبقى الصدى في فضاء السهر
+            </div>
+
+            <div class="transliteration" id="transliteration">
+                > uhibbuki fi zaman al-khawf wa-l-qahr<br>
+                > uhibbuki fi zaman al-harb wa-l-dajar<br>
+                > wa-uhibbuki hina yamut al-kalam<br>
+                > wa-yabqa al-sada fi fada' al-sahar
+            </div>
+
+            <p class="poet-name">— نزار قباني</p>
+        </div>
+
+        <div class="control-bar">
+            <button class="control-btn" id="saveBtn" onclick="toggleSave()">
+                <span class="icon" id="saveIcon">♡</span>
+                <span class="tooltip">SAVE</span>
+            </button>
+
+            <div class="divider"></div>
+
+            <button class="control-btn" id="zoomBtn" onclick="cycleZoom()">
+                <span class="icon">A+</span>
+                <span class="tooltip">ZOOM</span>
+            </button>
+
+            <div class="divider"></div>
+
+            <button class="control-btn" id="translitBtn" onclick="toggleTranslit()">
+                <span class="icon">ع/A</span>
+                <span class="tooltip">LATIN</span>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        let saved = false;
+        let zoomLevel = 0;
+        let translitActive = false;
+
+        function toggleSave() {
+            saved = !saved;
+            const btn = document.getElementById('saveBtn');
+            const icon = document.getElementById('saveIcon');
+            
+            if (saved) {
+                icon.textContent = '♥';
+                btn.classList.add('active');
+            } else {
+                icon.textContent = '♡';
+                btn.classList.remove('active');
+            }
+        }
+
+        function cycleZoom() {
+            const btn = document.getElementById('zoomBtn');
+            const poemText = document.getElementById('poemText');
+            const poemTitle = document.getElementById('poemTitle');
+            
+            zoomLevel = (zoomLevel + 1) % 3;
+            
+            poemText.classList.remove('zoom-medium', 'zoom-large');
+            poemTitle.classList.remove('zoom-medium', 'zoom-large');
+            
+            if (zoomLevel === 1) {
+                poemText.classList.add('zoom-medium');
+                poemTitle.classList.add('zoom-medium');
+                btn.classList.add('active');
+            } else if (zoomLevel === 2) {
+                poemText.classList.add('zoom-large');
+                poemTitle.classList.add('zoom-large');
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        }
+
+        function toggleTranslit() {
+            translitActive = !translitActive;
+            const btn = document.getElementById('translitBtn');
+            const translit = document.getElementById('transliteration');
+            
+            if (translitActive) {
+                translit.classList.add('active');
+                btn.classList.add('active');
+            } else {
+                translit.classList.remove('active');
+                btn.classList.remove('active');
+            }
+        }
+    </script>
+</body>
+</html>

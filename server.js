@@ -263,12 +263,17 @@ if (currentFile === mainFile) {
           : `http://localhost:${PORT}/api/health`;
         
         fetch(url)
-          .then(res => res.json())
+          .then(res => {
+            if (!res.ok) {
+              throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+            }
+            return res.json();
+          })
           .then(data => {
             console.log(`✓ Keep-alive ping successful - ${data.totalPoems} poems in database`);
           })
           .catch(err => {
-            console.error('⚠ Keep-alive ping failed:', err.message);
+            console.error(`⚠ Keep-alive ping failed (${url}):`, err.message);
           });
       }, 10 * 60 * 1000); // 10 minutes
     }, 30 * 1000); // Wait 30 seconds before first ping

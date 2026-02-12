@@ -77,9 +77,11 @@ See `.github/instructions/` for path-specific guidance on React, tests, configs,
 **Mockups & Visual Changes:**
 - Always include mockup screenshots/previews directly in PR descriptions
 - For mockup-related PRs, embed all preview images inline (not just links)
-- Use proper image markdown with descriptive alt text
+- Use GitHub raw URLs for images: `https://raw.githubusercontent.com/{owner}/{repo}/{branch}/path/to/image.png`
+- Use proper image markdown with descriptive alt text: `![Alt text](url)`
 - Include both overview and detail shots when relevant
 - Make visual changes immediately visible without requiring users to open separate files
+- Post images in PR comments for immediate visibility (relative paths don't work in PR descriptions)
 
 **PR Descriptions:**
 - Start with a clear summary of what changed

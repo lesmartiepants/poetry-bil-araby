@@ -247,17 +247,20 @@ if (currentFile === mainFile) {
   });
 
   // Keep-alive mechanism to prevent Render free tier from sleeping (15 min idle timeout)
-  // Self-ping every 9 minutes to keep the server active
-  let keepAliveInterval = null;
+  // Self-ping with randomized interval (9-13 min) to prevent synchronized load
   let keepAliveTimeout = null;
   
   if (process.env.NODE_ENV === 'production') {
     // Wait 30 seconds after startup before starting keep-alive pings
     keepAliveTimeout = setTimeout(() => {
-      console.log('🔄 Starting keep-alive self-ping (every 9 minutes)');
+      // Randomize interval between 9-13 minutes to prevent synchronized pings
+      const getRandomInterval = () => {
+        const min = 9 * 60 * 1000;  // 9 minutes
+        const max = 13 * 60 * 1000; // 13 minutes
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+      };
       
-      keepAliveInterval = setInterval(() => {
-        // Ping own health endpoint to prevent idle timeout
+      const pingHealth = () => {
         const url = process.env.RENDER_EXTERNAL_URL 
           ? `${process.env.RENDER_EXTERNAL_URL}/api/health`
           : `http://localhost:${PORT}/api/health`;
@@ -271,11 +274,29 @@ if (currentFile === mainFile) {
           })
           .then(data => {
             console.log(`✓ Keep-alive ping successful - ${data.totalPoems} poems in database`);
+            
+            // Schedule next ping with new random interval
+            keepAliveTimeout = setTimeout(() => {
+              pingHealth();
+            }, getRandomInterval());
           })
           .catch(err => {
             console.error(`⚠ Keep-alive ping failed (${url}):`, err.message);
+            
+            // Retry with new random interval even on failure
+            keepAliveTimeout = setTimeout(() => {
+              pingHealth();
+            }, getRandomInterval());
           });
-      }, 9 * 60 * 1000); // 9 minutes
+      };
+      
+      const initialInterval = getRandomInterval();
+      console.log(`🔄 Starting keep-alive self-ping (every 9-13 minutes, initial: ${Math.round(initialInterval / 60000)} min)`);
+      
+      // Start first ping after random interval
+      keepAliveTimeout = setTimeout(() => {
+        pingHealth();
+      }, initialInterval);
     }, 30 * 1000); // Wait 30 seconds before first ping
   }
 
@@ -283,14 +304,10 @@ if (currentFile === mainFile) {
   process.on('SIGTERM', () => {
     console.log('SIGTERM signal received: closing HTTP server');
     
-    // Clear keep-alive timeout and interval
+    // Clear keep-alive timeout (no interval needed since we use chained timeouts)
     if (keepAliveTimeout) {
       clearTimeout(keepAliveTimeout);
       console.log('Keep-alive timeout cleared');
-    }
-    if (keepAliveInterval) {
-      clearInterval(keepAliveInterval);
-      console.log('Keep-alive interval cleared');
     }
     
     // Close server first, then database pool

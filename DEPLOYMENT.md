@@ -188,11 +188,12 @@ pg_restore --clean --no-owner --no-acl \
 The backend now keeps itself alive automatically:
 1. Check Render logs for:
    ```
-   🔄 Starting keep-alive self-ping (every 9 minutes)
+   🔄 Starting keep-alive self-ping (every 9-13 minutes, initial: 11 min)
    ✓ Keep-alive ping successful - 84329 poems in database
    ```
 2. This runs automatically in production mode (no user action needed)
 3. Works 24/7 even when no users are active
+4. Interval randomized between 9-13 minutes to prevent synchronized load
 
 **Frontend Backup Ping (Secondary)**
 
@@ -221,7 +222,7 @@ The backend now keeps itself alive automatically:
 │  - Express API (server.js)                  │
 │  - /api/poems/random                        │
 │  - /api/health                              │
-│  - Self-ping every 9 min (primary)         │
+│  - Self-ping every 9-13 min (randomized)  │
 │  - Never sleeps (kept awake 24/7)          │
 └─────────────┬───────────────────────────────┘
               │ DATABASE_URL

@@ -72,6 +72,20 @@ npm run test:e2e     # E2E tests
 
 See `.github/instructions/` for path-specific guidance on React, tests, configs, and backend.
 
+## Pull Request Best Practices
+
+**Mockups & Visual Changes:**
+- Always include mockup screenshots/previews directly in PR descriptions
+- For mockup-related PRs, embed all preview images inline (not just links)
+- Use proper image markdown with descriptive alt text
+- Include both overview and detail shots when relevant
+- Make visual changes immediately visible without requiring users to open separate files
+
+**PR Descriptions:**
+- Start with a clear summary of what changed
+- Include visual previews for any UI/mockup work
+- Link to related documentation files for additional details
+
 ## AI Agents
 
 **GitHub Copilot:** Context-aware suggestions, repository patterns

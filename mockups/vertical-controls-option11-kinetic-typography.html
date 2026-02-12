@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Option 11: Kinetic Typography - Vertical Controls</title>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cairo:wght@300;600;800&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: 'Cairo', sans-serif;
+      background: #fafafa;
+      color: #111;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    
+    .container {
+      display: flex;
+      gap: 80px;
+      max-width: 1400px;
+      width: 100%;
+      padding: 0 60px;
+    }
+    
+    /* Vertical control bar - RIGHT side with kinetic text */
+    .controls {
+      display: flex;
+      flex-direction: column;
+      gap: 48px;
+      min-width: 200px;
+    }
+    
+    .control-item {
+      position: relative;
+      cursor: pointer;
+      overflow: hidden;
+    }
+    
+    .control-text {
+      font-size: 48px;
+      font-weight: 800;
+      line-height: 1;
+      transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      display: inline-block;
+      position: relative;
+    }
+    
+    .control-item:hover .control-text {
+      transform: translateX(-10px);
+    }
+    
+    /* Individual control styles with color coding */
+    .ctrl-save .control-text {
+      color: #ef4444;
+      text-shadow: 3px 3px 0 rgba(239, 68, 68, 0.1);
+    }
+    
+    .ctrl-save:hover .control-text {
+      color: #dc2626;
+    }
+    
+    .ctrl-save.active .control-text {
+      color: #10b981;
+      animation: pulse 0.5s ease;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+    
+    .ctrl-zoom-in .control-text {
+      color: #3b82f6;
+      text-shadow: 3px 3px 0 rgba(59, 130, 246, 0.1);
+    }
+    
+    .ctrl-zoom-in:hover .control-text {
+      color: #2563eb;
+    }
+    
+    .ctrl-zoom-out .control-text {
+      color: #8b5cf6;
+      text-shadow: 3px 3px 0 rgba(139, 92, 246, 0.1);
+    }
+    
+    .ctrl-zoom-out:hover .control-text {
+      color: #7c3aed;
+    }
+    
+    .ctrl-translit .control-text {
+      color: #f59e0b;
+      text-shadow: 3px 3px 0 rgba(245, 158, 11, 0.1);
+    }
+    
+    .ctrl-translit:hover .control-text {
+      color: #d97706;
+    }
+    
+    .ctrl-translit.active .control-text {
+      color: #06b6d4;
+    }
+    
+    .control-subtitle {
+      font-size: 14px;
+      font-weight: 300;
+      color: #6b7280;
+      margin-top: 8px;
+      opacity: 0;
+      transform: translateY(-10px);
+      transition: all 0.3s ease;
+    }
+    
+    .control-item:hover .control-subtitle {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    
+    .counter-badge {
+      display: inline-block;
+      background: #ef4444;
+      color: #fff;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      text-align: center;
+      line-height: 32px;
+      font-size: 14px;
+      font-weight: 700;
+      margin-right: 12px;
+      animation: bounce 0.5s ease;
+    }
+    
+    @keyframes bounce {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.2); }
+    }
+    
+    .zoom-indicator {
+      font-size: 72px;
+      font-weight: 800;
+      color: #d1d5db;
+      margin-top: 20px;
+      font-variant-numeric: tabular-nums;
+    }
+    
+    /* Content area */
+    .content {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .poem {
+      font-family: 'Amiri', serif;
+      font-size: var(--poem-size, 48px);
+      line-height: 1.9;
+      text-align: center;
+      max-width: 700px;
+      transition: font-size 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    
+    .poem-title {
+      font-size: 1.4em;
+      margin-bottom: 48px;
+      font-weight: 700;
+      color: #111;
+    }
+    
+    .verse {
+      margin-bottom: 28px;
+      position: relative;
+    }
+    
+    .verse::before {
+      content: '';
+      position: absolute;
+      right: -40px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 4px;
+      height: 60%;
+      background: linear-gradient(to bottom, #ef4444, #3b82f6);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    
+    .verse:hover::before {
+      opacity: 1;
+    }
+    
+    .transliteration {
+      font-family: 'Cairo', sans-serif;
+      font-size: 0.4em;
+      color: #9ca3af;
+      margin-top: 12px;
+      display: none;
+      font-weight: 300;
+      font-style: italic;
+    }
+    
+    .transliteration.active {
+      display: block;
+      animation: slideDown 0.3s ease;
+    }
+    
+    @keyframes slideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    /* Title badge */
+    .title-badge {
+      position: absolute;
+      top: 40px;
+      right: 40px;
+      font-size: 12px;
+      font-weight: 300;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      color: #9ca3af;
+    }
+  </style>
+</head>
+<body>
+  <div class="title-badge">11 / Kinetic Typography</div>
+  
+  <div class="container">
+    <div class="content">
+      <div class="poem">
+        <div class="poem-title">قصيدة عن الحب</div>
+        <div class="verse">
+          يا من هواه أعزه وأذلني
+          <div class="transliteration">yā man hawāhu aʿazzahu wa-adhallani</div>
+        </div>
+        <div class="verse">
+          كيف السبيل إلى وصالك دلني
+          <div class="transliteration">kayfa s-sabīlu ilā wiṣālika dallani</div>
+        </div>
+      </div>
+    </div>
+    
+    <div class="controls">
+      <div class="control-item ctrl-save" onclick="toggleSave()">
+        <div class="control-text">
+          <span id="counterSpan"></span>
+          <span id="saveTextMain">حفظ</span>
+        </div>
+        <div class="control-subtitle">Save to collection</div>
+      </div>
+      
+      <div class="control-item ctrl-zoom-in" onclick="zoomIn()">
+        <div class="control-text">كبّر</div>
+        <div class="control-subtitle">Increase text size</div>
+      </div>
+      
+      <div class="control-item ctrl-zoom-out" onclick="zoomOut()">
+        <div class="control-text">صغّر</div>
+        <div class="control-subtitle">Decrease text size</div>
+      </div>
+      
+      <div class="zoom-indicator" id="zoomLevel">100</div>
+      
+      <div class="control-item ctrl-translit" onclick="toggleTranslit()">
+        <div class="control-text" id="translitTextMain">نطق</div>
+        <div class="control-subtitle">Toggle transliteration</div>
+      </div>
+    </div>
+  </div>
+  
+  <script>
+    let saved = false;
+    let saveCount = 0;
+    let zoomLevel = 100;
+    let translitActive = false;
+    
+    function toggleSave() {
+      saved = !saved;
+      const ctrl = document.querySelector('.ctrl-save');
+      const counterSpan = document.getElementById('counterSpan');
+      const saveText = document.getElementById('saveTextMain');
+      
+      if (saved) {
+        saveCount++;
+        ctrl.classList.add('active');
+        counterSpan.innerHTML = `<span class="counter-badge">${saveCount}</span>`;
+        saveText.textContent = 'محفوظ';
+      } else {
+        ctrl.classList.remove('active');
+        saveText.textContent = 'حفظ';
+      }
+    }
+    
+    function zoomIn() {
+      if (zoomLevel < 120) {
+        zoomLevel += 20;
+        updateZoom();
+      }
+    }
+    
+    function zoomOut() {
+      if (zoomLevel > 80) {
+        zoomLevel -= 20;
+        updateZoom();
+      }
+    }
+    
+    function updateZoom() {
+      const sizes = {
+        80: '38px',
+        100: '48px',
+        120: '58px'
+      };
+      document.documentElement.style.setProperty('--poem-size', sizes[zoomLevel]);
+      document.getElementById('zoomLevel').textContent = zoomLevel;
+    }
+    
+    function toggleTranslit() {
+      translitActive = !translitActive;
+      const translits = document.querySelectorAll('.transliteration');
+      const ctrl = document.querySelector('.ctrl-translit');
+      const text = document.getElementById('translitTextMain');
+      
+      translits.forEach(t => {
+        if (translitActive) {
+          t.classList.add('active');
+        } else {
+          t.classList.remove('active');
+        }
+      });
+      
+      if (translitActive) {
+        ctrl.classList.add('active');
+        text.textContent = 'إخفاء';
+      } else {
+        ctrl.classList.remove('active');
+        text.textContent = 'نطق';
+      }
+    }
+  </script>
+</body>
+</html>

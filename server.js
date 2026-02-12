@@ -240,17 +240,55 @@ export { app, pool };
 const currentFile = fileURLToPath(import.meta.url);
 const mainFile = resolve(process.argv[1]);
 if (currentFile === mainFile) {
-  app.listen(PORT, () => {
+  const server = app.listen(PORT, () => {
     console.log(`🚀 Poetry API server running on http://localhost:${PORT}`);
     console.log(`   Health check: http://localhost:${PORT}/api/health`);
     console.log(`   Random poem: http://localhost:${PORT}/api/poems/random`);
   });
 
+  // Keep-alive mechanism to prevent Render free tier from sleeping (15 min idle timeout)
+  // Self-ping every 10 minutes to keep the server active
+  let keepAliveInterval = null;
+  
+  if (process.env.NODE_ENV === 'production') {
+    // Wait 30 seconds after startup before starting keep-alive pings
+    setTimeout(() => {
+      console.log('🔄 Starting keep-alive self-ping (every 10 minutes)');
+      
+      keepAliveInterval = setInterval(() => {
+        // Ping own health endpoint to prevent idle timeout
+        const url = process.env.RENDER_EXTERNAL_URL 
+          ? `${process.env.RENDER_EXTERNAL_URL}/api/health`
+          : `http://localhost:${PORT}/api/health`;
+        
+        fetch(url)
+          .then(res => res.json())
+          .then(data => {
+            console.log(`✓ Keep-alive ping successful - ${data.totalPoems} poems in database`);
+          })
+          .catch(err => {
+            console.error('⚠ Keep-alive ping failed:', err.message);
+          });
+      }, 10 * 60 * 1000); // 10 minutes
+    }, 30 * 1000); // Wait 30 seconds before first ping
+  }
+
   // Graceful shutdown
   process.on('SIGTERM', () => {
     console.log('SIGTERM signal received: closing HTTP server');
-    pool.end(() => {
-      console.log('Database pool closed');
+    
+    // Clear keep-alive interval
+    if (keepAliveInterval) {
+      clearInterval(keepAliveInterval);
+      console.log('Keep-alive interval cleared');
+    }
+    
+    // Close server and database
+    server.close(() => {
+      console.log('HTTP server closed');
+      pool.end(() => {
+        console.log('Database pool closed');
+      });
     });
   });
 }

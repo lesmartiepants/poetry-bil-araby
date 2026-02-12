@@ -183,12 +183,25 @@ pg_restore --clean --no-owner --no-acl \
 
 ### 4.3 Verify Keep-Alive Ping
 
+**Backend Self-Ping (Primary)**
+
+The backend now keeps itself alive automatically:
+1. Check Render logs for:
+   ```
+   🔄 Starting keep-alive self-ping (every 10 minutes)
+   ✓ Keep-alive ping successful - 84329 poems in database
+   ```
+2. This runs automatically in production mode (no user action needed)
+3. Works 24/7 even when no users are active
+
+**Frontend Backup Ping (Secondary)**
+
 1. Open browser DevTools → **Console**
 2. You should see (if debug mode is on):
    ```
    [System Logs] Keep-Alive: Backend pinged successfully
    ```
-3. This will repeat every 10 minutes to prevent Render from sleeping
+3. This provides additional keep-alive when users have the app open
 
 ---
 
@@ -199,7 +212,7 @@ pg_restore --clean --no-owner --no-acl \
 │  Vercel (Frontend)                          │
 │  - React app                                │
 │  - VITE_API_URL = Render URL                │
-│  - Keep-alive ping every 10 min            │
+│  - Keep-alive ping every 10 min (backup)   │
 └─────────────┬───────────────────────────────┘
               │ HTTPS
               ▼
@@ -208,7 +221,8 @@ pg_restore --clean --no-owner --no-acl \
 │  - Express API (server.js)                  │
 │  - /api/poems/random                        │
 │  - /api/health                              │
-│  - Sleeps after 15 min idle (kept awake)   │
+│  - Self-ping every 10 min (primary)        │
+│  - Never sleeps (kept awake 24/7)          │
 └─────────────┬───────────────────────────────┘
               │ DATABASE_URL
               ▼
@@ -251,9 +265,12 @@ pg_restore --clean --no-owner --no-acl \
 **Symptom**: Cold starts still happening frequently
 
 **Solutions**:
-1. Check browser console for keep-alive logs
-2. Verify `VITE_API_URL` is set in Vercel
-3. Ensure `useDatabase` mode is enabled
+1. Check Render logs for `🔄 Starting keep-alive self-ping` message
+2. Verify `NODE_ENV=production` is set in Render environment
+3. Check Render logs for periodic `✓ Keep-alive ping successful` messages
+4. If backend is still sleeping, check Render service status and logs
+
+**Note**: The backend now uses self-ping (server pings itself) which works 24/7. The frontend ping is now a backup mechanism.
 
 ### Vercel Not Connecting to Backend
 

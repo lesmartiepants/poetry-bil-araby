@@ -213,6 +213,58 @@ jobs:
         env:
           CI: true
           VITE_API_URL: http://localhost:3001
+        continue-on-error: true
+        id: e2e-tests-run
+
+      # Agent Browser: Capture failure state for AI debugging
+      - name: Install agent-browser for failure analysis
+        if: always() && steps.e2e-tests-run.outcome == 'failure'
+        run: npx agent-browser install --with-deps
+
+      - name: Start dev server for agent-browser debugging
+        if: always() && steps.e2e-tests-run.outcome == 'failure'
+        run: |
+          npm run dev &
+          sleep 5
+          echo "Dev server started for agent-browser analysis"
+        continue-on-error: true
+
+      - name: Capture browser state with agent-browser
+        if: always() && steps.e2e-tests-run.outcome == 'failure'
+        run: |
+          chmod +x .github/scripts/agent-browser-debug.sh
+          .github/scripts/agent-browser-debug.sh "http://localhost:5173" "./agent-browser-debug"
+        continue-on-error: true
+
+      - name: Analyze test failures with agent-browser
+        if: always() && steps.e2e-tests-run.outcome == 'failure'
+        run: |
+          chmod +x .github/scripts/agent-browser-analyze.sh
+          .github/scripts/agent-browser-analyze.sh "./test-results" "./agent-browser-analysis"
+        continue-on-error: true
+
+      - name: Upload agent-browser debug artifacts
+        if: always() && steps.e2e-tests-run.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-browser-debug-e2e
+          path: agent-browser-debug/
+          retention-days: 14
+          if-no-files-found: ignore
+
+      - name: Upload agent-browser analysis
+        if: always() && steps.e2e-tests-run.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-browser-analysis-e2e
+          path: agent-browser-analysis/
+          retention-days: 14
+          if-no-files-found: ignore
+
+      # Fail the job if E2E tests failed
+      - name: Check E2E test results
+        if: steps.e2e-tests-run.outcome == 'failure'
+        run: exit 1
 
       - name: Upload Playwright report
         if: always()
@@ -275,6 +327,58 @@ jobs:
         run: npm run test:e2e:ui
         env:
           CI: true
+        continue-on-error: true
+        id: ui-ux-tests-run
+
+      # Agent Browser: Capture UI/UX failure state for AI debugging
+      - name: Install agent-browser for UI/UX analysis
+        if: always() && steps.ui-ux-tests-run.outcome == 'failure'
+        run: npx agent-browser install --with-deps
+
+      - name: Start dev server for agent-browser UI/UX debugging
+        if: always() && steps.ui-ux-tests-run.outcome == 'failure'
+        run: |
+          npm run dev &
+          sleep 5
+          echo "Dev server started for agent-browser UI/UX analysis"
+        continue-on-error: true
+
+      - name: Capture UI state with agent-browser
+        if: always() && steps.ui-ux-tests-run.outcome == 'failure'
+        run: |
+          chmod +x .github/scripts/agent-browser-debug.sh
+          .github/scripts/agent-browser-debug.sh "http://localhost:5173" "./agent-browser-debug-ui"
+        continue-on-error: true
+
+      - name: Analyze UI/UX failures with agent-browser
+        if: always() && steps.ui-ux-tests-run.outcome == 'failure'
+        run: |
+          chmod +x .github/scripts/agent-browser-analyze.sh
+          .github/scripts/agent-browser-analyze.sh "./test-results" "./agent-browser-analysis-ui"
+        continue-on-error: true
+
+      - name: Upload agent-browser UI debug artifacts
+        if: always() && steps.ui-ux-tests-run.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-browser-debug-ui-ux
+          path: agent-browser-debug-ui/
+          retention-days: 14
+          if-no-files-found: ignore
+
+      - name: Upload agent-browser UI analysis
+        if: always() && steps.ui-ux-tests-run.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: agent-browser-analysis-ui-ux
+          path: agent-browser-analysis-ui/
+          retention-days: 14
+          if-no-files-found: ignore
+
+      # Fail the job if UI/UX tests failed
+      - name: Check UI/UX test results
+        if: steps.ui-ux-tests-run.outcome == 'failure'
+        run: exit 1
 
       - name: Upload UI/UX test report
         if: always()
@@ -404,6 +508,21 @@ jobs:
             - **UI/UX Screenshots:** Check "ui-ux-screenshots" artifact
             - **Test Results:** Check "playwright-results" artifact
             - **Coverage Report:** Check CodeCov integration
+            ${e2eStatus === 'failure' ? '\n#### 🤖 Agent Browser Debug Artifacts (E2E Failures):\n- **agent-browser-debug-e2e**: Accessibility snapshots, console logs, screenshots\n- **agent-browser-analysis-e2e**: AI-friendly failure analysis and debugging guide\n- 📘 See `AI-DEBUGGING-GUIDE.md` in artifacts for step-by-step debugging instructions\n' : ''}${uiUxStatus === 'failure' ? '\n#### 🤖 Agent Browser Debug Artifacts (UI/UX Failures):\n- **agent-browser-debug-ui-ux**: UI state snapshots, console logs, screenshots\n- **agent-browser-analysis-ui-ux**: Visual regression analysis and debugging guide\n- 📘 See `AI-DEBUGGING-GUIDE.md` in artifacts for step-by-step debugging instructions\n' : ''}
+            ### 💡 Using Agent Browser for Debugging:
+
+            When tests fail, agent-browser automatically captures:
+            1. **Accessibility Snapshot** - Interactive element tree with refs (@e1, @e2, etc.)
+            2. **Full Page Screenshot** - Visual state when failure occurred
+            3. **Console Logs** - All browser console output (log, warn, error)
+            4. **JavaScript Errors** - Stack traces and error messages
+            5. **Page Metadata** - URL, title, viewport dimensions
+
+            **AI Agents (Copilot/Claude):** Download the agent-browser artifacts above to:
+            - Understand exactly what the UI looked like when tests failed
+            - See JavaScript errors and console warnings
+            - Get element refs for reproducing issues locally
+            - Follow AI-DEBUGGING-GUIDE.md for structured debugging approach
 
             *Automated testing ensures Poetry Bil-Araby maintains high quality across all devices and browsers*
             `;

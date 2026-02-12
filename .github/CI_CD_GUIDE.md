@@ -6,6 +6,8 @@ The Poetry Bil-Araby CI/CD pipeline runs automatically on:
 - Every push to `main` branch
 - Every pull request targeting `main` branch
 
+**New in CI:** Agent Browser integration for AI-powered debugging of test failures
+
 ## Pipeline Stages
 
 ### Stage 1: Build & Validate
@@ -367,6 +369,135 @@ The UI/UX Reviewer monitors:
 - GitHub Actions: `https://github.com/[owner]/poetry-bil-araby/actions`
 - CodeCov: Integration pending
 
+## Agent Browser Integration (NEW)
+
+### What is Agent Browser?
+
+Agent Browser is a headless browser automation CLI tool designed specifically for AI agents. When tests fail in CI, it automatically captures the browser state to help AI agents (GitHub Copilot, Claude) debug issues without needing to reproduce locally.
+
+### When Does It Run?
+
+Agent Browser runs **only when tests fail**:
+- After E2E test failures → Creates `agent-browser-debug-e2e` artifacts
+- After UI/UX test failures → Creates `agent-browser-debug-ui-ux` artifacts
+
+### What Does It Capture?
+
+1. **Accessibility Snapshot** - Interactive element tree with refs (@e1, @e2, etc.)
+2. **Full Page Screenshot** - Visual state at the moment of failure
+3. **Console Logs** - All browser console output (log, warn, error, info)
+4. **JavaScript Errors** - Stack traces and error messages
+5. **Page Metadata** - URL, title, viewport dimensions
+
+### Available Artifacts (On Failure Only)
+
+#### agent-browser-debug-e2e or agent-browser-debug-ui-ux
+```
+├── AI-DEBUGGING-GUIDE.md          # Step-by-step debugging instructions ⭐
+├── accessibility-snapshot.txt      # Human-readable element tree
+├── accessibility-snapshot.json     # Machine-readable snapshot
+├── page-screenshot.png            # Full page screenshot
+├── console-logs.txt               # Browser console output
+├── js-errors.txt                  # JavaScript errors
+├── page-title.txt                 # Page title
+└── page-url.txt                   # Current URL
+```
+
+#### agent-browser-analysis-e2e or agent-browser-analysis-ui-ux
+```
+├── FAILURE-SUMMARY.md             # Overview of all failures
+└── {test-name}-failure.png        # Screenshots from failed tests
+```
+
+### How to Use Agent Browser Artifacts
+
+**For AI Agents (Copilot, Claude):**
+
+1. **Download the artifacts** from the failed workflow run
+2. **Start with AI-DEBUGGING-GUIDE.md** - Contains complete debugging workflow
+3. **Check js-errors.txt** - Most test failures are JavaScript errors
+4. **Review accessibility-snapshot.txt** - Understand page structure and available elements
+5. **View page-screenshot.png** - Visual verification of the issue
+6. **Follow the debugging patterns** in AI-DEBUGGING-GUIDE.md
+
+**Common Debugging Patterns:**
+
+- **"Element not found"** → Check accessibility-snapshot.txt for available elements
+- **JavaScript errors** → Check js-errors.txt for stack traces
+- **Timeouts** → Check console-logs.txt for slow operations
+- **Visual issues** → Compare page-screenshot.png with expected design
+
+### Helper Scripts
+
+Three scripts in `.github/scripts/` power the agent-browser integration:
+
+1. **agent-browser-debug.sh** - Captures full browser state
+2. **agent-browser-snapshot.sh** - Quick snapshot capture
+3. **agent-browser-analyze.sh** - Analyzes test failures
+
+### Using Agent Browser Locally
+
+You can use agent-browser locally to reproduce CI failures:
+
+```bash
+# Install browser
+npx agent-browser install --with-deps
+
+# Start your app
+npm run dev
+
+# Open agent-browser
+npx agent-browser open http://localhost:5173
+
+# Get accessibility snapshot
+npx agent-browser snapshot -i -c
+
+# Take screenshot
+npx agent-browser screenshot debug.png --full
+
+# Check console and errors
+npx agent-browser console
+npx agent-browser errors
+
+# Close browser
+npx agent-browser close
+```
+
+### Workflow Integration
+
+The CI workflow includes agent-browser steps after test runs:
+
+```yaml
+# Run tests
+- name: Run Playwright E2E tests
+  run: npm run test:e2e
+  continue-on-error: true
+  id: e2e-tests-run
+
+# Capture browser state on failure
+- name: Install agent-browser for failure analysis
+  if: always() && steps.e2e-tests-run.outcome == 'failure'
+  run: npx agent-browser install --with-deps
+
+- name: Capture browser state with agent-browser
+  if: always() && steps.e2e-tests-run.outcome == 'failure'
+  run: .github/scripts/agent-browser-debug.sh "http://localhost:5173" "./agent-browser-debug"
+```
+
+### Benefits for Agentic Development
+
+1. **No Local Reproduction Needed** - Debug from CI artifacts alone
+2. **AI-Friendly Format** - Accessibility snapshots with element refs
+3. **Complete Context** - See exactly what the browser saw
+4. **Fast Debugging** - Skip "works on my machine" issues
+5. **Structured Workflow** - AI-DEBUGGING-GUIDE.md provides step-by-step process
+
+### Documentation
+
+For complete agent-browser documentation, see:
+- **Quick Start**: `.github/instructions/agent-browser.instructions.md`
+- **Official Docs**: https://github.com/vercel-labs/agent-browser
+
 ## Support
 
 ### Resources
@@ -383,6 +514,6 @@ The UI/UX Reviewer monitors:
 
 ---
 
-**Last Updated:** 2026-01-07
-**Pipeline Version:** 1.0.0
+**Last Updated:** 2026-02-12
+**Pipeline Version:** 2.0.0 (Agent Browser Integration)
 **Maintained By:** Test Orchestrator Agent

@@ -236,6 +236,7 @@ npm run test:e2e:full       # Full device matrix (local)
 
 - `.github/TESTING_STRATEGY.md` - Comprehensive testing strategy
 - `.github/CI_CD_GUIDE.md` - CI/CD pipeline reference
+- `.github/COPILOT_WORKFLOW_GUIDE.md` - GitHub Copilot workflow and usage guide
 - `.github/copilot-instructions.md` - GitHub Copilot custom instructions
 - `.github/instructions/` - Path-specific Copilot instructions
 - `CLAUDE.md` - Comprehensive guide for Claude AI

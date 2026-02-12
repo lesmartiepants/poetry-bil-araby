@@ -247,14 +247,14 @@ if (currentFile === mainFile) {
   });
 
   // Keep-alive mechanism to prevent Render free tier from sleeping (15 min idle timeout)
-  // Self-ping every 10 minutes to keep the server active
+  // Self-ping every 9 minutes to keep the server active
   let keepAliveInterval = null;
   let keepAliveTimeout = null;
   
   if (process.env.NODE_ENV === 'production') {
     // Wait 30 seconds after startup before starting keep-alive pings
     keepAliveTimeout = setTimeout(() => {
-      console.log('🔄 Starting keep-alive self-ping (every 10 minutes)');
+      console.log('🔄 Starting keep-alive self-ping (every 9 minutes)');
       
       keepAliveInterval = setInterval(() => {
         // Ping own health endpoint to prevent idle timeout
@@ -275,7 +275,7 @@ if (currentFile === mainFile) {
           .catch(err => {
             console.error(`⚠ Keep-alive ping failed (${url}):`, err.message);
           });
-      }, 10 * 60 * 1000); // 10 minutes
+      }, 9 * 60 * 1000); // 9 minutes
     }, 30 * 1000); // Wait 30 seconds before first ping
   }
 

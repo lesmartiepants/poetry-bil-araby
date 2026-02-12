@@ -51,7 +51,7 @@ await pool.query(`SELECT * FROM poems WHERE poet = '${poet}'`);
 
 **Performance:**
 - Use `pg.Pool` for connection pooling (reuse connections)
-- Backend self-pings every 10min in production to prevent Render cold starts (15 min timeout)
+- Backend self-pings every 9min in production to prevent Render cold starts (15 min timeout)
 - Frontend provides backup keep-alive pings when users are active
 - Add indexes on frequently queried columns (poet, tags)
 

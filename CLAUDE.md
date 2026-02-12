@@ -66,7 +66,7 @@ The app supports two poem sources:
   - `GET /api/poems/search` - Search poems by text
 - PostgreSQL connection via `pg` library
 - Supports DATABASE_URL (production) or individual env vars (local)
-- Keep-alive self-ping every 10 min to prevent Render cold starts (production only)
+- Keep-alive self-ping every 9 min to prevent Render cold starts (production only)
 
 **Environment Variables:**
 ```javascript
@@ -135,7 +135,7 @@ PORT              // API server port (defaults to 3001)
    - Start frontend: `npm run dev`
    - Or use `npm run dev:all` to run both concurrently
 
-8. **Backend Keep-Alive**: Backend uses self-ping mechanism (pings itself every 10 minutes in production) to prevent Render free tier cold starts (15 min timeout). Frontend also provides backup pings when users have the app open.
+8. **Backend Keep-Alive**: Backend uses self-ping mechanism (pings itself every 9 minutes in production) to prevent Render free tier cold starts (15 min timeout). Frontend also provides backup pings when users have the app open.
 
 ## Git Workflow
 

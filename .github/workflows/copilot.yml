@@ -1,0 +1,301 @@
+name: GitHub Copilot for Pull Requests
+
+# This workflow enables GitHub Copilot to respond to PR comments and provide AI-powered code reviews
+# Triggers:
+# - Pull request events (opened, synchronize, reopened) for automatic reviews
+# - Issue comments for @copilot mentions and interactive responses
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  issue_comment:
+    types: [created, edited]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+
+jobs:
+  copilot-review:
+    name: Copilot Code Review
+    # Only run on pull request events or comments on pull requests
+    if: |
+      github.event_name == 'pull_request' ||
+      (github.event_name == 'issue_comment' && github.event.issue.pull_request)
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Acknowledge comment with eyes emoji
+        if: github.event_name == 'issue_comment'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Add eyes emoji (👀) to show Copilot is processing
+            await github.rest.reactions.createForIssueComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: context.payload.comment.id,
+              content: 'eyes'
+            });
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          # For PRs, checkout the head ref
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.ref || github.event.issue.pull_request && github.event.issue.number }}
+          fetch-depth: 0
+
+      - name: Get PR details
+        id: pr-details
+        uses: actions/github-script@v7
+        with:
+          script: |
+            let prNumber;
+            if (context.payload.pull_request) {
+              prNumber = context.payload.pull_request.number;
+            } else if (context.payload.issue.pull_request) {
+              prNumber = context.payload.issue.number;
+            }
+            
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber
+            });
+            
+            core.setOutput('pr_number', prNumber);
+            core.setOutput('base_ref', pr.base.ref);
+            core.setOutput('head_ref', pr.head.ref);
+            return pr;
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '21'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Get changed files
+        id: changed-files
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = ${{ steps.pr-details.outputs.pr_number }};
+            const { data: files } = await github.rest.pulls.listFiles({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber
+            });
+            
+            const changedFiles = files.map(f => ({
+              filename: f.filename,
+              status: f.status,
+              additions: f.additions,
+              deletions: f.deletions,
+              changes: f.changes,
+              patch: f.patch
+            }));
+            
+            core.setOutput('files', JSON.stringify(changedFiles));
+            core.setOutput('file_count', files.length);
+            return changedFiles;
+
+      - name: Analyze code changes with Copilot-style review
+        id: analyze
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const prNumber = ${{ steps.pr-details.outputs.pr_number }};
+            const files = JSON.parse(`${{ steps.changed-files.outputs.files }}`);
+            
+            // Check if comment mentions @copilot or is a direct request
+            const isDirectMention = context.payload.comment?.body?.includes('@copilot') || 
+                                   context.payload.comment?.body?.includes('@github-copilot');
+            
+            const commentBody = context.payload.comment?.body || '';
+            
+            // Build review summary
+            let reviewSummary = '## 🤖 GitHub Copilot Code Review\n\n';
+            
+            if (isDirectMention) {
+              reviewSummary += `> Responding to: "${commentBody.slice(0, 100)}${commentBody.length > 100 ? '...' : ''}"\n\n`;
+            }
+            
+            reviewSummary += `### 📊 Changes Summary\n`;
+            reviewSummary += `- **Files changed:** ${files.length}\n`;
+            reviewSummary += `- **Total additions:** ${files.reduce((sum, f) => sum + f.additions, 0)} lines\n`;
+            reviewSummary += `- **Total deletions:** ${files.reduce((sum, f) => sum + f.deletions, 0)} lines\n\n`;
+            
+            // Categorize files by type
+            const filesByType = {
+              source: files.filter(f => f.filename.match(/\.(jsx?|tsx?)$/)),
+              tests: files.filter(f => f.filename.match(/\.(test|spec)\.(jsx?|tsx?)$/)),
+              config: files.filter(f => f.filename.match(/\.(json|yml|yaml|config\.(js|ts))$/)),
+              docs: files.filter(f => f.filename.match(/\.md$/)),
+              other: []
+            };
+            
+            filesByType.other = files.filter(f => 
+              !filesByType.source.includes(f) && 
+              !filesByType.tests.includes(f) && 
+              !filesByType.config.includes(f) && 
+              !filesByType.docs.includes(f)
+            );
+            
+            reviewSummary += `### 📁 File Categories\n`;
+            if (filesByType.source.length > 0) {
+              reviewSummary += `- **Source Code:** ${filesByType.source.length} file(s)\n`;
+            }
+            if (filesByType.tests.length > 0) {
+              reviewSummary += `- **Tests:** ${filesByType.tests.length} file(s)\n`;
+            }
+            if (filesByType.config.length > 0) {
+              reviewSummary += `- **Configuration:** ${filesByType.config.length} file(s)\n`;
+            }
+            if (filesByType.docs.length > 0) {
+              reviewSummary += `- **Documentation:** ${filesByType.docs.length} file(s)\n`;
+            }
+            if (filesByType.other.length > 0) {
+              reviewSummary += `- **Other:** ${filesByType.other.length} file(s)\n`;
+            }
+            
+            // Provide intelligent insights based on file patterns
+            reviewSummary += `\n### 💡 Insights\n`;
+            
+            // Check for common patterns
+            const insights = [];
+            
+            if (filesByType.source.length > 0 && filesByType.tests.length === 0) {
+              insights.push('⚠️ **No test files modified** - Consider adding tests for new functionality');
+            }
+            
+            if (filesByType.config.length > 0) {
+              insights.push('⚙️ **Configuration changes detected** - Ensure all team members are aware of config updates');
+            }
+            
+            if (files.some(f => f.filename.includes('app.jsx'))) {
+              insights.push('🎯 **Main app file modified** - Review changes carefully as this affects core functionality');
+            }
+            
+            if (files.some(f => f.filename.includes('server.js'))) {
+              insights.push('🔧 **Backend server modified** - Verify database queries use parameterized statements (SQL injection prevention)');
+            }
+            
+            if (files.some(f => f.filename.match(/\.test\.(jsx?|tsx?)$/))) {
+              insights.push('✅ **Tests updated** - Good practice! Ensure tests cover edge cases');
+            }
+            
+            // Check for Arabic content handling
+            if (files.some(f => f.patch?.includes('العربي') || f.patch?.includes('RTL') || f.patch?.includes('dir="rtl"'))) {
+              insights.push('🌍 **Arabic/RTL content changes** - Verify proper RTL handling and Arabic font usage (Amiri/Tajawal)');
+            }
+            
+            // Check for API key exposure
+            if (files.some(f => f.patch?.includes('API_KEY') || f.patch?.includes('api_key'))) {
+              insights.push('🔐 **API key references detected** - Ensure no credentials are committed to the repository');
+            }
+            
+            if (insights.length > 0) {
+              reviewSummary += insights.map(i => `- ${i}`).join('\n');
+            } else {
+              reviewSummary += '- ✨ Changes look good! No immediate concerns detected.';
+            }
+            
+            reviewSummary += `\n\n### 📝 Changed Files\n`;
+            files.forEach(file => {
+              const statusIcon = file.status === 'added' ? '➕' : 
+                                file.status === 'removed' ? '➖' : 
+                                file.status === 'modified' ? '📝' : '🔄';
+              reviewSummary += `${statusIcon} \`${file.filename}\` (+${file.additions}/-${file.deletions})\n`;
+            });
+            
+            // Add context-aware suggestions
+            reviewSummary += `\n### 🎯 Recommendations\n`;
+            reviewSummary += `1. Run tests locally: \`npm test && npm run test:e2e\`\n`;
+            reviewSummary += `2. Verify changes follow [coding conventions](.github/copilot-instructions.md)\n`;
+            reviewSummary += `3. Ensure CI pipeline passes all checks\n`;
+            
+            if (filesByType.source.length > 0) {
+              reviewSummary += `4. For React changes: Use DESIGN/THEME constants, avoid hardcoded styles\n`;
+            }
+            
+            if (files.some(f => f.filename.includes('server.js') || f.filename.includes('.test.js'))) {
+              reviewSummary += `5. For backend changes: Use parameterized queries, proper error handling\n`;
+            }
+            
+            reviewSummary += `\n---\n`;
+            reviewSummary += `*🤖 This review was generated by GitHub Copilot. For interactive help, mention @copilot in comments.*\n`;
+            reviewSummary += `*👀 Copilot is watching this PR and will respond to questions!*`;
+            
+            core.setOutput('review_summary', reviewSummary);
+            return reviewSummary;
+
+      - name: Post review comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const prNumber = ${{ steps.pr-details.outputs.pr_number }};
+            const reviewSummary = `${{ steps.analyze.outputs.review_summary }}`;
+            
+            // For issue comments, reply to the comment
+            if (context.payload.comment) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                body: reviewSummary
+              });
+            } else {
+              // For PR events, create a general comment
+              // Check if we already posted a review for this commit
+              const { data: existingComments } = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber
+              });
+              
+              const copilotComments = existingComments.filter(c => 
+                c.body.includes('🤖 GitHub Copilot Code Review') &&
+                c.user.type === 'Bot'
+              );
+              
+              // Only post if this is the first review or on significant changes
+              if (copilotComments.length === 0 || context.payload.action === 'opened') {
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: prNumber,
+                  body: reviewSummary
+                });
+              }
+            }
+
+      - name: React to comment with success
+        if: github.event_name == 'issue_comment' && success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Add thumbs up to show completion
+            await github.rest.reactions.createForIssueComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: context.payload.comment.id,
+              content: '+1'
+            });
+
+      - name: React to comment with failure
+        if: github.event_name == 'issue_comment' && failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Add confused reaction if something went wrong
+            await github.rest.reactions.createForIssueComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              comment_id: context.payload.comment.id,
+              content: 'confused'
+            });

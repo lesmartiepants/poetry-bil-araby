@@ -249,10 +249,11 @@ if (currentFile === mainFile) {
   // Keep-alive mechanism to prevent Render free tier from sleeping (15 min idle timeout)
   // Self-ping every 10 minutes to keep the server active
   let keepAliveInterval = null;
+  let keepAliveTimeout = null;
   
   if (process.env.NODE_ENV === 'production') {
     // Wait 30 seconds after startup before starting keep-alive pings
-    setTimeout(() => {
+    keepAliveTimeout = setTimeout(() => {
       console.log('🔄 Starting keep-alive self-ping (every 10 minutes)');
       
       keepAliveInterval = setInterval(() => {
@@ -277,17 +278,22 @@ if (currentFile === mainFile) {
   process.on('SIGTERM', () => {
     console.log('SIGTERM signal received: closing HTTP server');
     
-    // Clear keep-alive interval
+    // Clear keep-alive timeout and interval
+    if (keepAliveTimeout) {
+      clearTimeout(keepAliveTimeout);
+      console.log('Keep-alive timeout cleared');
+    }
     if (keepAliveInterval) {
       clearInterval(keepAliveInterval);
       console.log('Keep-alive interval cleared');
     }
     
-    // Close server and database
+    // Close server first, then database pool
     server.close(() => {
       console.log('HTTP server closed');
       pool.end(() => {
         console.log('Database pool closed');
+        process.exit(0);
       });
     });
   });

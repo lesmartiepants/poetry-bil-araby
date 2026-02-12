@@ -8,12 +8,15 @@ Full-stack Arabic poetry app: React frontend (app.jsx ~2800 lines) + Express API
 **Frontend:** Single-file React in `src/app.jsx` with DESIGN/THEME constants
 **Backend:** Express server (`server.js`) with 5 REST endpoints
 **Tests:** 136 unit (Vitest) + 193 E2E (Playwright)
+**CI/CD:** Integrated with agent-browser for AI-powered debugging
 
 ### Key Files
 - `src/app.jsx` - Main app, feature flags (lines 9-15), DESIGN/THEME constants
 - `server.js` - Express API, PostgreSQL connection
 - `src/test/` - Unit tests (Vitest + Supertest)
 - `e2e/` - Playwright tests (app, database, ui-ux)
+- `.github/workflows/ci.yml` - CI pipeline with agent-browser integration
+- `.github/scripts/` - Agent-browser helper scripts for debugging
 
 ## Development
 
@@ -71,6 +74,23 @@ npm run test:e2e     # E2E tests
 ## Documentation
 
 See `.github/instructions/` for path-specific guidance on React, tests, configs, and backend.
+
+## Debugging Test Failures in CI
+
+**Agent Browser Integration:** When tests fail in CI, agent-browser automatically captures:
+- Accessibility snapshots with element refs (@e1, @e2, etc.)
+- Full page screenshots
+- Console logs and JavaScript errors
+- Page metadata
+
+**How to debug:**
+1. Download `agent-browser-debug-*` artifact from failed workflow
+2. Read `AI-DEBUGGING-GUIDE.md` for step-by-step instructions
+3. Check `js-errors.txt` for JavaScript errors
+4. Review `accessibility-snapshot.txt` for page structure
+5. View `page-screenshot.png` for visual state
+
+**Documentation:** `.github/instructions/agent-browser.instructions.md`
 
 ## AI Agents
 

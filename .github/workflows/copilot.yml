@@ -42,8 +42,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
-          # For PRs, checkout the head ref
-          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.ref || github.event.issue.pull_request && github.event.issue.number }}
+          # For PRs, checkout the head ref; for issue comments, checkout default branch first (will get PR details later)
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.ref || '' }}
           fetch-depth: 0
 
       - name: Get PR details
@@ -67,7 +67,14 @@ jobs:
             core.setOutput('pr_number', prNumber);
             core.setOutput('base_ref', pr.base.ref);
             core.setOutput('head_ref', pr.head.ref);
+            core.setOutput('head_sha', pr.head.sha);
             return pr;
+
+      - name: Checkout PR branch (for comment events)
+        if: github.event_name == 'issue_comment'
+        run: |
+          git fetch origin ${{ steps.pr-details.outputs.head_ref }}
+          git checkout ${{ steps.pr-details.outputs.head_ref }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4

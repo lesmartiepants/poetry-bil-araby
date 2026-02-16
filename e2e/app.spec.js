@@ -34,6 +34,20 @@ test.describe('Poetry Bil-Araby - Core Functionality', () => {
     await expect(page.locator('text=نزار قباني').first()).toBeVisible();
   });
 
+  test('should open design review route and save feedback entry', async ({ page }) => {
+    await page.goto('/design-review');
+    await page.waitForLoadState('domcontentloaded');
+
+    await expect(page.getByRole('heading', { name: 'Design Review Workspace' })).toBeVisible();
+
+    const summaryInput = page.getByLabel('Feedback summary');
+    await summaryInput.fill('Increase contrast on title lockup');
+
+    await page.getByRole('button', { name: 'Add feedback entry' }).click();
+
+    await expect(page.locator('text=Increase contrast on title lockup')).toBeVisible();
+  });
+
   test('should navigate between poems using controls', async ({ page }) => {
     // Get initial poem title
     const initialTitle = await page.locator('.font-amiri').first().textContent();

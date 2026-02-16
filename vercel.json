@@ -2,6 +2,24 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "framework": "vite",
+  "rewrites": [
+    {
+      "source": "/design-review",
+      "destination": "/"
+    },
+    {
+      "source": "/design-review/",
+      "destination": "/"
+    },
+    {
+      "source": "/mockups",
+      "destination": "/"
+    },
+    {
+      "source": "/mockups/",
+      "destination": "/"
+    }
+  ],
   "git": {
     "deploymentEnabled": {
       "main": true

@@ -36,7 +36,11 @@ global.atob = vi.fn((str) => {
 })
 
 // Mock fetch for API calls
-global.fetch = vi.fn()
+global.fetch = vi.fn(async () => ({
+  ok: true,
+  json: async () => ({}),
+  text: async () => '',
+}))
 
 // Mock document.execCommand for copy functionality
 document.execCommand = vi.fn(() => true)

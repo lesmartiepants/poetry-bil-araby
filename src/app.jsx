@@ -6,15 +6,6 @@ import { SplashArabian4a, SplashArabian4b, SplashArabian4c } from './splash-fina
 import { SplashWildcard5a, SplashWildcard5b, SplashWildcard5c, SplashDirection5d, SplashDirection5e } from './splash-wildcard-variations.jsx';
 import { Splash6a, Splash6b, Splash6c, Splash6d, Splash6e, Splash6f } from './splash-round6-variations.jsx';
 import { SplashCinematic } from './splash-cinematic.jsx';
-import { SplashParticles, ParticleWalkthrough } from './splash-options/splash-particles.jsx';
-import { SplashConstellation, ConstellationWalkthrough } from './splash-options/splash-constellation.jsx';
-import { SplashMandala, MandalaWalkthroughGuide } from './splash-options/splash-mandala.jsx';
-import { SplashGeometric, WalkthroughGeometric } from './splash-options/splash-geometric.jsx';
-import { SplashZen, WalkthroughZen } from './splash-options/splash-zen.jsx';
-import { SplashAurora, AuroraWalkthrough } from './splash-options/splash-aurora.jsx';
-import { SplashInk, WalkthroughGuideInk } from './splash-options/splash-ink.jsx';
-import { SplashManuscript, WalkthroughManuscript } from './splash-options/splash-manuscript.jsx';
-import { SplashLight, LightShadowWalkthrough } from './splash-options/splash-light.jsx';
 import { SplashKinetic } from './splash-kinetic.jsx';
 
 /* =============================================================================
@@ -1266,18 +1257,533 @@ const WalkthroughGuide = ({ onClose, darkMode, currentStep, onStepChange }) => {
 */
 
 const getWalkthroughComponent = (mockupType) => {
-  const walkthroughMap = {
-    'particles': ParticleWalkthrough,
-    'constellation': ConstellationWalkthrough,
-    'mandala': MandalaWalkthroughGuide,
-    'geometric': WalkthroughGeometric,
-    'zen': WalkthroughZen,
-    'aurora': AuroraWalkthrough,
-    'ink': WalkthroughGuideInk,
-    'manuscript': WalkthroughManuscript,
-    'light': LightShadowWalkthrough,
-  };
+  const walkthroughMap = {};
   return walkthroughMap[mockupType] || WalkthroughGuide; // Generic fallback
+};
+
+/* =============================================================================
+  DESIGN REVIEW ROUTE
+  Allows reviewing splash designs and capturing feedback from any device
+  =============================================================================
+*/
+
+const DESIGN_REVIEW_ROUTES = new Set(['/design-review', '/mockups']);
+const DESIGN_REVIEW_STORAGE_KEY = 'diwan.designReview.entries.v1';
+const DESIGN_REVIEW_META_STORAGE_KEY = 'diwan.designReview.meta.v1';
+const DEFAULT_GITHUB_REPO = import.meta.env.VITE_GITHUB_REPO || '';
+
+const DESIGN_REVIEW_VARIANTS = [
+  { id: 'default', label: 'Cinematic (Default)' },
+  { id: 'modern', label: 'Modern' },
+  { id: 'minimalist', label: 'Minimalist' },
+  { id: 'arabian', label: 'Arabian Warm' },
+  { id: '1', label: 'Arabian Refined (1)' },
+  { id: '2', label: 'Arabian Maximalist (2)' },
+  { id: '3a', label: 'Arabian Teal (3a)' },
+  { id: '3b', label: 'Arabian Deep Blue (3b)' },
+  { id: '3c', label: 'Arabian Burgundy (3c)' },
+  { id: '4a', label: 'Arabian Indigo (4a)' },
+  { id: '4b', label: 'Islamic Geometric (4b)' },
+  { id: '4c', label: 'Manuscript Parchment (4c)' },
+  { id: '5a', label: 'Brutalist Swiss (5a)' },
+  { id: '5b', label: 'Aurora Gradient (5b)' },
+  { id: '5c', label: 'Terminal Developer (5c)' },
+  { id: '5d', label: 'Editorial Magazine (5d)' },
+  { id: '5e', label: 'Cinematic Film (5e)' },
+  { id: '6a', label: 'Brutalist Colors (6a)' },
+  { id: '6b', label: 'Neo Brutalist Pastels (6b)' },
+  { id: '6c', label: 'Editorial Colored (6c)' },
+  { id: '6d', label: 'Magazine Spread (6d)' },
+  { id: '6e', label: 'Cinematic Colored (6e)' },
+  { id: '6f', label: 'Art House Gradients (6f)' },
+  { id: 'kinetic', label: 'Kinetic' }
+];
+
+const DESIGN_REVIEW_VARIANT_LABELS = DESIGN_REVIEW_VARIANTS.reduce((acc, item) => {
+  acc[item.id] = item.label;
+  return acc;
+}, {});
+
+const normalizePathname = (pathname = '/') => {
+  const normalized = pathname.replace(/\/+$/, '');
+  return normalized || '/';
+};
+
+const decodeSharedFeedback = (encodedValue) => {
+  if (!encodedValue) return null;
+  try {
+    const decoded = atob(encodedValue);
+    return JSON.parse(decodeURIComponent(decoded));
+  } catch (error) {
+    return null;
+  }
+};
+
+const encodeSharedFeedback = (payload) => {
+  try {
+    return btoa(encodeURIComponent(JSON.stringify(payload)));
+  } catch (error) {
+    return '';
+  }
+};
+
+const buildFeedbackMarkdown = (payload) => {
+  const lines = [
+    '# Design Review Feedback',
+    '',
+    `Generated: ${payload.exportedAt || new Date().toISOString()}`
+  ];
+
+  if (payload.reviewer) {
+    lines.push(`Reviewer: ${payload.reviewer}`);
+  }
+
+  lines.push('');
+
+  if (!Array.isArray(payload.entries) || payload.entries.length === 0) {
+    lines.push('_No feedback entries captured yet._');
+    return lines.join('\n');
+  }
+
+  lines.push('## Feedback Entries');
+
+  payload.entries.forEach((entry, index) => {
+    const label = DESIGN_REVIEW_VARIANT_LABELS[entry.mockupId] || entry.mockupId || 'default';
+
+    lines.push('');
+    lines.push(`### ${index + 1}. ${entry.summary || 'Untitled feedback'}`);
+    lines.push(`- Design: ${label} (${entry.mockupId || 'default'})`);
+    lines.push(`- Priority: ${entry.priority || 'medium'}`);
+    if (entry.device) lines.push(`- Device: ${entry.device}`);
+    if (entry.createdAt) lines.push(`- Logged: ${entry.createdAt}`);
+    if (entry.details) {
+      lines.push('');
+      lines.push(entry.details);
+    }
+  });
+
+  return lines.join('\n');
+};
+
+const DesignReviewPage = () => {
+  const [selectedMockup, setSelectedMockup] = useState('default');
+  const [showWalkthroughPreview, setShowWalkthroughPreview] = useState(false);
+  const [reviewer, setReviewer] = useState('');
+  const [deviceName, setDeviceName] = useState('');
+  const [githubRepo, setGithubRepo] = useState(DEFAULT_GITHUB_REPO);
+  const [summary, setSummary] = useState('');
+  const [details, setDetails] = useState('');
+  const [priority, setPriority] = useState('medium');
+  const [entries, setEntries] = useState([]);
+  const [statusMessage, setStatusMessage] = useState('');
+  const [loadedFromSharedUrl, setLoadedFromSharedUrl] = useState(false);
+  const [copyState, setCopyState] = useState({ markdown: false, share: false });
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const params = new URLSearchParams(window.location.search);
+    const sharedPayload = decodeSharedFeedback(params.get('feedback'));
+
+    if (sharedPayload && Array.isArray(sharedPayload.entries)) {
+      setEntries(sharedPayload.entries);
+      setReviewer(sharedPayload.reviewer || '');
+      if (sharedPayload.githubRepo) setGithubRepo(sharedPayload.githubRepo);
+      setLoadedFromSharedUrl(true);
+      return;
+    }
+
+    const storedEntriesRaw = window.localStorage.getItem(DESIGN_REVIEW_STORAGE_KEY);
+    const storedMetaRaw = window.localStorage.getItem(DESIGN_REVIEW_META_STORAGE_KEY);
+
+    if (storedEntriesRaw) {
+      try {
+        const parsedEntries = JSON.parse(storedEntriesRaw);
+        if (Array.isArray(parsedEntries)) setEntries(parsedEntries);
+      } catch (error) {
+        // Ignore malformed local data and continue with empty state.
+      }
+    }
+
+    if (storedMetaRaw) {
+      try {
+        const parsedMeta = JSON.parse(storedMetaRaw);
+        if (parsedMeta?.reviewer) setReviewer(parsedMeta.reviewer);
+        if (parsedMeta?.githubRepo) setGithubRepo(parsedMeta.githubRepo);
+      } catch (error) {
+        // Ignore malformed local metadata and continue with defaults.
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(DESIGN_REVIEW_STORAGE_KEY, JSON.stringify(entries));
+  }, [entries]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem(
+      DESIGN_REVIEW_META_STORAGE_KEY,
+      JSON.stringify({ reviewer: reviewer.trim(), githubRepo: githubRepo.trim() })
+    );
+  }, [reviewer, githubRepo]);
+
+  const previewUrl = useMemo(() => {
+    const params = new URLSearchParams({ mockup: selectedMockup });
+    if (showWalkthroughPreview) params.set('showWalkthrough', 'true');
+    return `/?${params.toString()}`;
+  }, [selectedMockup, showWalkthroughPreview]);
+  const previewFrameUrl = import.meta.env.MODE === 'test' ? 'about:blank' : previewUrl;
+
+  const buildPayload = () => ({
+    exportedAt: new Date().toISOString(),
+    reviewer: reviewer.trim(),
+    githubRepo: githubRepo.trim(),
+    entries
+  });
+
+  const issueUrl = useMemo(() => {
+    const repo = githubRepo.trim();
+    if (!repo) return '';
+
+    const payload = buildPayload();
+    const title = 'Design review feedback';
+    const body = buildFeedbackMarkdown(payload);
+
+    return `https://github.com/${repo}/issues/new?title=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}&labels=${encodeURIComponent('design-review')}`;
+  }, [githubRepo, entries, reviewer]);
+
+  const writeToClipboard = async (value) => {
+    if (typeof navigator === 'undefined' || !navigator.clipboard?.writeText) {
+      setStatusMessage('Clipboard is unavailable on this browser/device.');
+      return false;
+    }
+
+    try {
+      await navigator.clipboard.writeText(value);
+      return true;
+    } catch (error) {
+      setStatusMessage('Could not copy to clipboard. Please copy manually.');
+      return false;
+    }
+  };
+
+  const handleAddEntry = () => {
+    const trimmedSummary = summary.trim();
+    if (!trimmedSummary) {
+      setStatusMessage('Add a short feedback summary before saving.');
+      return;
+    }
+
+    const now = new Date();
+    const entry = {
+      id: `${now.getTime()}-${Math.random().toString(36).slice(2, 8)}`,
+      mockupId: selectedMockup,
+      summary: trimmedSummary,
+      details: details.trim(),
+      priority,
+      device: deviceName.trim(),
+      createdAt: now.toISOString()
+    };
+
+    setEntries((prev) => [entry, ...prev]);
+    setSummary('');
+    setDetails('');
+    setStatusMessage('Feedback entry saved locally.');
+  };
+
+  const handleDeleteEntry = (entryId) => {
+    setEntries((prev) => prev.filter((entry) => entry.id !== entryId));
+    setStatusMessage('Feedback entry removed.');
+  };
+
+  const handleCopyMarkdown = async () => {
+    const payload = buildPayload();
+    const markdown = buildFeedbackMarkdown(payload);
+    const copied = await writeToClipboard(markdown);
+    if (!copied) return;
+
+    setCopyState({ markdown: true, share: false });
+    setStatusMessage('Markdown copied. Paste it into Cursor/Copilot or GitHub.');
+    setTimeout(() => setCopyState((prev) => ({ ...prev, markdown: false })), 1800);
+  };
+
+  const handleCopyShareUrl = async () => {
+    if (typeof window === 'undefined') return;
+
+    const payload = buildPayload();
+    const encoded = encodeSharedFeedback(payload);
+    if (!encoded) {
+      setStatusMessage('Could not generate a shareable URL.');
+      return;
+    }
+
+    const shareUrl = `${window.location.origin}/design-review?feedback=${encodeURIComponent(encoded)}`;
+    const copied = await writeToClipboard(shareUrl);
+    if (!copied) return;
+
+    setCopyState({ markdown: false, share: true });
+    setStatusMessage('Share URL copied. Open that link on any device.');
+    setTimeout(() => setCopyState((prev) => ({ ...prev, share: false })), 1800);
+  };
+
+  const handleDownloadJson = () => {
+    if (typeof document === 'undefined') return;
+
+    const payload = buildPayload();
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const objectUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+
+    link.href = objectUrl;
+    link.download = `design-feedback-${new Date().toISOString().slice(0, 10)}.json`;
+    link.click();
+
+    URL.revokeObjectURL(objectUrl);
+    setStatusMessage('JSON export downloaded.');
+  };
+
+  return (
+    <div className="min-h-screen bg-[#09090b] text-stone-100">
+      <div className="mx-auto w-full max-w-7xl p-4 md:p-8">
+        <header className="mb-6 rounded-2xl border border-stone-700/70 bg-stone-900/70 p-5 md:p-7">
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <p className="mb-2 inline-flex items-center gap-2 rounded-full border border-indigo-500/30 bg-indigo-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-indigo-300">
+                <LayoutGrid size={14} />
+                Design review
+              </p>
+              <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Design Review Workspace</h1>
+              <p className="mt-2 max-w-3xl text-sm text-stone-300 md:text-base">
+                Review splash designs directly on this deployed site, capture structured feedback, and share it with Cursor/Copilot via markdown, JSON, or a shareable URL.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <a
+                href="/"
+                className="rounded-lg border border-stone-600 px-3 py-2 text-sm font-medium transition hover:border-indigo-400 hover:text-indigo-300"
+              >
+                Back to app
+              </a>
+              <a
+                href={previewUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-lg bg-indigo-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-indigo-500"
+              >
+                Open preview tab
+              </a>
+            </div>
+          </div>
+        </header>
+
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1fr_420px]">
+          <section className="rounded-2xl border border-stone-700/70 bg-stone-900/60 p-4 md:p-5">
+            <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-end">
+              <label className="flex-1 text-sm">
+                <span className="mb-1 block font-medium text-stone-200">Design variation</span>
+                <select
+                  value={selectedMockup}
+                  onChange={(event) => setSelectedMockup(event.target.value)}
+                  className="w-full rounded-lg border border-stone-600 bg-stone-950 px-3 py-2 text-sm outline-none transition focus:border-indigo-400"
+                >
+                  {DESIGN_REVIEW_VARIANTS.map((variant) => (
+                    <option key={variant.id} value={variant.id}>
+                      {variant.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="inline-flex items-center gap-2 rounded-lg border border-stone-600 bg-stone-950 px-3 py-2 text-sm">
+                <input
+                  type="checkbox"
+                  checked={showWalkthroughPreview}
+                  onChange={(event) => setShowWalkthroughPreview(event.target.checked)}
+                  className="h-4 w-4"
+                />
+                Start at walkthrough
+              </label>
+            </div>
+
+            <div className="h-[68vh] overflow-hidden rounded-xl border border-stone-700">
+              <iframe
+                title="Design preview"
+                src={previewFrameUrl}
+                className="h-full w-full bg-black"
+              />
+            </div>
+          </section>
+
+          <aside className="rounded-2xl border border-stone-700/70 bg-stone-900/60 p-4 md:p-5">
+            <h2 className="text-lg font-semibold">Capture feedback</h2>
+            <p className="mt-1 text-xs text-stone-400">
+              Save notes from this device, then share/export for implementation.
+            </p>
+            {loadedFromSharedUrl && (
+              <p className="mt-2 rounded-md border border-indigo-500/30 bg-indigo-500/10 px-3 py-2 text-xs text-indigo-200">
+                Loaded feedback from a shared URL.
+              </p>
+            )}
+
+            <div className="mt-4 space-y-3">
+              <label className="block text-sm">
+                <span className="mb-1 block text-stone-300">Reviewer name</span>
+                <input
+                  value={reviewer}
+                  onChange={(event) => setReviewer(event.target.value)}
+                  placeholder="Your name"
+                  className="w-full rounded-lg border border-stone-600 bg-stone-950 px-3 py-2 text-sm outline-none transition focus:border-indigo-400"
+                />
+              </label>
+
+              <label className="block text-sm">
+                <span className="mb-1 block text-stone-300">GitHub repo (owner/repo)</span>
+                <input
+                  value={githubRepo}
+                  onChange={(event) => setGithubRepo(event.target.value)}
+                  placeholder="example-org/example-repo"
+                  className="w-full rounded-lg border border-stone-600 bg-stone-950 px-3 py-2 text-sm outline-none transition focus:border-indigo-400"
+                />
+              </label>
+
+              <label className="block text-sm">
+                <span className="mb-1 block text-stone-300">Feedback summary</span>
+                <input
+                  value={summary}
+                  onChange={(event) => setSummary(event.target.value)}
+                  placeholder="e.g. Improve contrast in top heading"
+                  aria-label="Feedback summary"
+                  data-testid="feedback-summary-input"
+                  className="w-full rounded-lg border border-stone-600 bg-stone-950 px-3 py-2 text-sm outline-none transition focus:border-indigo-400"
+                />
+              </label>
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <label className="block text-sm">
+                  <span className="mb-1 block text-stone-300">Priority</span>
+                  <select
+                    value={priority}
+                    onChange={(event) => setPriority(event.target.value)}
+                    className="w-full rounded-lg border border-stone-600 bg-stone-950 px-3 py-2 text-sm outline-none transition focus:border-indigo-400"
+                  >
+                    <option value="high">High</option>
+                    <option value="medium">Medium</option>
+                    <option value="low">Low</option>
+                  </select>
+                </label>
+                <label className="block text-sm">
+                  <span className="mb-1 block text-stone-300">Device</span>
+                  <input
+                    value={deviceName}
+                    onChange={(event) => setDeviceName(event.target.value)}
+                    placeholder="iPhone 15, Pixel 8, Desktop"
+                    className="w-full rounded-lg border border-stone-600 bg-stone-950 px-3 py-2 text-sm outline-none transition focus:border-indigo-400"
+                  />
+                </label>
+              </div>
+
+              <label className="block text-sm">
+                <span className="mb-1 block text-stone-300">Details</span>
+                <textarea
+                  value={details}
+                  onChange={(event) => setDetails(event.target.value)}
+                  rows={4}
+                  placeholder="Describe the issue or suggested change..."
+                  className="w-full rounded-lg border border-stone-600 bg-stone-950 px-3 py-2 text-sm outline-none transition focus:border-indigo-400"
+                />
+              </label>
+
+              <button
+                onClick={handleAddEntry}
+                className="w-full rounded-lg bg-emerald-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-emerald-500"
+              >
+                Add feedback entry
+              </button>
+            </div>
+
+            <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2">
+              <button
+                onClick={handleCopyMarkdown}
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-stone-600 px-3 py-2 text-sm font-medium transition hover:border-indigo-400 hover:text-indigo-300"
+              >
+                {copyState.markdown ? <Check size={16} /> : <Copy size={16} />}
+                Copy markdown
+              </button>
+
+              <button
+                onClick={handleCopyShareUrl}
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-stone-600 px-3 py-2 text-sm font-medium transition hover:border-indigo-400 hover:text-indigo-300"
+              >
+                {copyState.share ? <Check size={16} /> : <Globe size={16} />}
+                Copy share URL
+              </button>
+
+              <button
+                onClick={handleDownloadJson}
+                className="rounded-lg border border-stone-600 px-3 py-2 text-sm font-medium transition hover:border-indigo-400 hover:text-indigo-300"
+              >
+                Download JSON
+              </button>
+
+              {issueUrl ? (
+                <a
+                  href={issueUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="rounded-lg bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white transition hover:bg-indigo-500"
+                >
+                  Open GitHub issue
+                </a>
+              ) : (
+                <div className="rounded-lg border border-dashed border-stone-600 px-3 py-2 text-center text-xs text-stone-400">
+                  Add a GitHub repo to enable issue creation
+                </div>
+              )}
+            </div>
+
+            {statusMessage && (
+              <p className="mt-3 text-xs text-stone-300">{statusMessage}</p>
+            )}
+
+            <div className="mt-4">
+              <h3 className="text-sm font-semibold text-stone-200">Saved feedback ({entries.length})</h3>
+              <div data-testid="feedback-list" className="mt-2 max-h-72 space-y-2 overflow-y-auto pr-1">
+                {entries.length === 0 ? (
+                  <p className="rounded-md border border-dashed border-stone-700 px-3 py-3 text-xs text-stone-400">
+                    No feedback saved yet.
+                  </p>
+                ) : (
+                  entries.map((entry) => (
+                    <article key={entry.id} className="rounded-lg border border-stone-700 bg-stone-950/70 p-3">
+                      <div className="mb-2 flex items-start justify-between gap-2">
+                        <div>
+                          <p className="text-sm font-medium">{entry.summary}</p>
+                          <p className="text-xs text-stone-400">
+                            {DESIGN_REVIEW_VARIANT_LABELS[entry.mockupId] || entry.mockupId} • {entry.priority}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => handleDeleteEntry(entry.id)}
+                          aria-label={`Delete feedback entry ${entry.summary}`}
+                          className="rounded-md p-1 text-stone-400 transition hover:bg-stone-800 hover:text-rose-300"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                      {entry.device && <p className="mb-1 text-xs text-stone-400">Device: {entry.device}</p>}
+                      {entry.details && <p className="text-xs leading-relaxed text-stone-300">{entry.details}</p>}
+                    </article>
+                  ))
+                )}
+              </div>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 /* =============================================================================
@@ -1286,6 +1792,11 @@ const getWalkthroughComponent = (mockupType) => {
 */
 
 export default function DiwanApp() {
+  const routePath = typeof window !== 'undefined' ? normalizePathname(window.location.pathname) : '/';
+  if (DESIGN_REVIEW_ROUTES.has(routePath)) {
+    return <DesignReviewPage />;
+  }
+
   const mainScrollRef = useRef(null);
   const audioRef = useRef(new Audio());
   const controlBarRef = useRef(null);
@@ -2285,26 +2796,8 @@ export default function DiwanApp() {
             return <Splash6e {...splashProps} />;
           case '6f':
             return <Splash6f {...splashProps} />;
-          case 'particles':
-            return <SplashParticles {...splashProps} />;
-          case 'constellation':
-            return <SplashConstellation {...splashProps} />;
           case 'kinetic':
             return <SplashKinetic {...splashProps} />;
-          case 'mandala':
-            return <SplashMandala {...splashProps} />;
-          case 'geometric':
-            return <SplashGeometric {...splashProps} />;
-          case 'zen':
-            return <SplashZen {...splashProps} />;
-          case 'aurora':
-            return <SplashAurora {...splashProps} />;
-          case 'ink':
-            return <SplashInk {...splashProps} />;
-          case 'manuscript':
-            return <SplashManuscript {...splashProps} />;
-          case 'light':
-            return <SplashLight {...splashProps} />;
           default:
             return <SplashCinematic {...splashProps} />;
         }

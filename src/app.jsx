@@ -1267,7 +1267,7 @@ const getWalkthroughComponent = (mockupType) => {
   =============================================================================
 */
 
-const DESIGN_REVIEW_ROUTES = new Set(['/design-review', '/mockups']);
+const DESIGN_REVIEW_ROUTES = new Set(['/design-review']);
 const DESIGN_REVIEW_STORAGE_KEY = 'diwan.designReview.entries.v1';
 const DESIGN_REVIEW_META_STORAGE_KEY = 'diwan.designReview.meta.v1';
 const DEFAULT_GITHUB_REPO = import.meta.env.VITE_GITHUB_REPO || '';
@@ -1305,6 +1305,29 @@ const DESIGN_REVIEW_VARIANT_LABELS = DESIGN_REVIEW_VARIANTS.reduce((acc, item) =
   acc[item.id] = item.label;
   return acc;
 }, {});
+
+const DESIGN_REVIEW_REFERENCE_LINKS = [
+  {
+    id: 'round1-streamlined',
+    label: 'PR11 Round 1 - Streamlined Review',
+    href: '/design-review-output/splash/round-1/streamlined-review.html'
+  },
+  {
+    id: 'round1-interactive',
+    label: 'PR11 Round 1 - Interactive Review',
+    href: '/design-review-output/splash/round-1/interactive-review.html'
+  },
+  {
+    id: 'round1-master',
+    label: 'PR11 Round 1 - Master Comparison',
+    href: '/design-review-output/splash/round-1/master-comparison.html'
+  },
+  {
+    id: 'mockup-index',
+    label: 'PR11 Mockup Index',
+    href: '/mockups/INDEX.md'
+  }
+];
 
 const normalizePathname = (pathname = '/') => {
   const normalized = pathname.replace(/\/+$/, '');
@@ -1657,6 +1680,26 @@ const DesignReviewPage = () => {
             </div>
           </div>
         </header>
+
+        <section className="mb-6 rounded-2xl border border-stone-700/70 bg-stone-900/50 p-4 md:p-5">
+          <h2 className="text-sm font-semibold uppercase tracking-[0.18em] text-indigo-300">PR11 Asset Access</h2>
+          <p className="mt-2 text-xs text-stone-300 md:text-sm">
+            These links open the exact design-review HTML and mockup assets from PR #11 so you can review them from this deployed URL.
+          </p>
+          <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-2">
+            {DESIGN_REVIEW_REFERENCE_LINKS.map((linkItem) => (
+              <a
+                key={linkItem.id}
+                href={linkItem.href}
+                target="_blank"
+                rel="noreferrer"
+                className="rounded-lg border border-stone-600 px-3 py-2 text-xs font-medium text-stone-200 transition hover:border-indigo-400 hover:text-indigo-300 md:text-sm"
+              >
+                {linkItem.label}
+              </a>
+            ))}
+          </div>
+        </section>
 
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-[1fr_420px]">
           <section className="rounded-2xl border border-stone-700/70 bg-stone-900/60 p-4 md:p-5">

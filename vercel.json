@@ -10,14 +10,6 @@
     {
       "source": "/design-review/",
       "destination": "/"
-    },
-    {
-      "source": "/mockups",
-      "destination": "/"
-    },
-    {
-      "source": "/mockups/",
-      "destination": "/"
     }
   ],
   "git": {

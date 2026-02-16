@@ -150,7 +150,7 @@ test.describe('Visual Review - Splash & Walkthrough', () => {
     await page.waitForTimeout(1000);
 
     // Should now see main app
-    await page.locator('text=poetry').waitFor({ timeout: 10000 });
+    await page.locator('header').getByText('poetry').first().waitFor({ timeout: 10000 });
 
     // Capture main app
     await page.screenshot({

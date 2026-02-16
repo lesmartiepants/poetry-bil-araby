@@ -68,7 +68,7 @@ test('capture complete splash and walkthrough flow', async ({ page }) => {
   await page.locator('button:has-text("Start Exploring")').click();
   await page.waitForTimeout(1500);
 
-  await page.locator('text=poetry').waitFor({ timeout: 10000 });
+  await page.locator('header').getByText('poetry').first().waitFor({ timeout: 10000 });
   await page.screenshot({
     path: 'visual-main-app.png',
     fullPage: true

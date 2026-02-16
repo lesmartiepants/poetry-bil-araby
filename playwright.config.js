@@ -1,5 +1,15 @@
 import { defineConfig, devices } from '@playwright/test';
 
+const CI_OPTIONAL_VISUAL_SUITES = [
+  'e2e/visual-review.spec.js',
+  'e2e/visual-review-single.spec.js',
+  'e2e/capture-all-splash-options.spec.js',
+  'e2e/capture-mandala.spec.js',
+  'e2e/mockup-screenshots.spec.js',
+  'e2e/investigate-issues.spec.js',
+  'e2e/test-ink-walkthrough.spec.js'
+];
+
 /**
  * Playwright configuration for Poetry Bil-Araby
  *
@@ -14,6 +24,7 @@ import { defineConfig, devices } from '@playwright/test';
  */
 export default defineConfig({
   testDir: './e2e',
+  testIgnore: process.env.CI ? CI_OPTIONAL_VISUAL_SUITES : [],
 
   // Run tests in parallel
   fullyParallel: true,

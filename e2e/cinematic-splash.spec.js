@@ -16,8 +16,8 @@ test.describe('Cinematic Splash Screen (5e)', () => {
     await expect(page.locator('text="Enter the Collection"')).toBeVisible();
 
     // Check for logo
-    await expect(page.locator('text="poetry"')).toBeVisible();
-    await expect(page.locator('text="بالعربي"')).toBeVisible();
+    await expect(page.locator('header').getByText('poetry').first()).toBeVisible();
+    await expect(page.locator('header').getByText('بالعربي').first()).toBeVisible();
   });
 
   test('theme toggle works on splash', async ({ page }) => {
@@ -82,8 +82,8 @@ test.describe('Cinematic Splash Screen (5e)', () => {
     await expect(page.locator('text="Enter the Collection"')).toBeVisible();
 
     // Button should be touch-accessible (44x44px minimum)
-    const button = page.locator('text="Enter the Collection"');
+    const button = page.getByRole('button', { name: /enter the collection/i });
     const box = await button.boundingBox();
-    expect(box.height).toBeGreaterThanOrEqual(44);
+    expect(box?.height || 0).toBeGreaterThanOrEqual(44);
   });
 });

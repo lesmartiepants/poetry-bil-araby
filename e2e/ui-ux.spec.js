@@ -85,7 +85,7 @@ test.describe('UI/UX - Visual Design', () => {
     await expect(header).toBeVisible();
 
     // Verify header has proper styling
-    const headerText = page.locator('text=poetry');
+    const headerText = page.locator('header').getByText('poetry').first();
     const fontSize = await headerText.evaluate(el => getComputedStyle(el).fontSize);
     const fontSizeNum = parseFloat(fontSize);
 

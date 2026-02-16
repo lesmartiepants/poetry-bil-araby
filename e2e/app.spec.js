@@ -20,8 +20,8 @@ test.describe('Poetry Bil-Araby - Core Functionality', () => {
     await expect(page).toHaveTitle(/Poetry Bil-Araby/);
 
     // Verify header is present
-    await expect(page.locator('text=بالعربي')).toBeVisible();
-    await expect(page.locator('text=poetry')).toBeVisible();
+    await expect(page.locator('header').getByText('بالعربي').first()).toBeVisible();
+    await expect(page.locator('header').getByText('poetry').first()).toBeVisible();
 
     // Verify beta badge is present
     await expect(page.locator('text=beta')).toBeVisible();
@@ -192,12 +192,11 @@ test.describe('Poetry Bil-Araby - Core Functionality', () => {
     // Grant clipboard permissions
     await context.grantPermissions(['clipboard-read', 'clipboard-write']);
 
-    // Click copy button (scope to footer to avoid debug panel buttons)
-    const copyButton = page.locator('footer button').filter({
-      has: page.locator('svg')
-    }).nth(4);
+    // Click copy button via stable aria-label selector
+    const copyButton = page.locator('footer button[aria-label=\"Copy poem to clipboard\"]').first();
 
     // Wait for button to be enabled before clicking
+    await expect(copyButton).toBeVisible({ timeout: 5000 });
     await expect(copyButton).toBeEnabled({ timeout: 5000 });
     await copyButton.click();
 

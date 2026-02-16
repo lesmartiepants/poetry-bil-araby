@@ -1271,6 +1271,8 @@ const DESIGN_REVIEW_ROUTES = new Set(['/design-review', '/mockups']);
 const DESIGN_REVIEW_STORAGE_KEY = 'diwan.designReview.entries.v1';
 const DESIGN_REVIEW_META_STORAGE_KEY = 'diwan.designReview.meta.v1';
 const DEFAULT_GITHUB_REPO = import.meta.env.VITE_GITHUB_REPO || '';
+const DEFAULT_REVIEW_COMPONENT = 'splash';
+const DEFAULT_REVIEW_ROUND = 1;
 
 const DESIGN_REVIEW_VARIANTS = [
   { id: 'default', label: 'Cinematic (Default)' },
@@ -1331,7 +1333,9 @@ const buildFeedbackMarkdown = (payload) => {
   const lines = [
     '# Design Review Feedback',
     '',
-    `Generated: ${payload.exportedAt || new Date().toISOString()}`
+    `Generated: ${payload.exportedAt || new Date().toISOString()}`,
+    `Component: ${payload.component || DEFAULT_REVIEW_COMPONENT}`,
+    `Round: ${payload.round || DEFAULT_REVIEW_ROUND}`
   ];
 
   if (payload.reviewer) {
@@ -1365,10 +1369,58 @@ const buildFeedbackMarkdown = (payload) => {
   return lines.join('\n');
 };
 
+const buildDesignReviewJson = (payload) => {
+  const entryCounters = {};
+  const allNotes = {};
+
+  const selections = (payload.entries || []).map((entry) => {
+    const themeId = entry.mockupId || 'default';
+    entryCounters[themeId] = (entryCounters[themeId] || 0) + 1;
+
+    const key = `${themeId}-${entryCounters[themeId]}`;
+    const label = DESIGN_REVIEW_VARIANT_LABELS[themeId] || themeId;
+    const noteSegments = [];
+
+    if (entry.details) noteSegments.push(entry.details.trim());
+    if (entry.priority) noteSegments.push(`Priority: ${entry.priority}`);
+    if (entry.device) noteSegments.push(`Device: ${entry.device}`);
+    if (entry.createdAt) noteSegments.push(`Logged: ${entry.createdAt}`);
+
+    const note = noteSegments.join('\n');
+    allNotes[key] = note;
+
+    return {
+      key,
+      theme: label,
+      option: entry.summary || 'Untitled feedback',
+      description: entry.summary || '',
+      note
+    };
+  });
+
+  const uniqueThemes = new Set(selections.map((selection) => selection.key.split('-')[0]));
+
+  return {
+    timestamp: new Date().toISOString(),
+    component: payload.component || DEFAULT_REVIEW_COMPONENT,
+    round: payload.round || DEFAULT_REVIEW_ROUND,
+    reviewer: payload.reviewer || '',
+    summary: {
+      totalThemes: uniqueThemes.size,
+      keptCount: selections.length,
+      notesCount: Object.keys(allNotes).filter((key) => allNotes[key]).length
+    },
+    selections,
+    allNotes
+  };
+};
+
 const DesignReviewPage = () => {
   const [selectedMockup, setSelectedMockup] = useState('default');
   const [showWalkthroughPreview, setShowWalkthroughPreview] = useState(false);
   const [reviewer, setReviewer] = useState('');
+  const [componentName, setComponentName] = useState(DEFAULT_REVIEW_COMPONENT);
+  const [roundNumber, setRoundNumber] = useState(DEFAULT_REVIEW_ROUND);
   const [deviceName, setDeviceName] = useState('');
   const [githubRepo, setGithubRepo] = useState(DEFAULT_GITHUB_REPO);
   const [summary, setSummary] = useState('');
@@ -1377,7 +1429,7 @@ const DesignReviewPage = () => {
   const [entries, setEntries] = useState([]);
   const [statusMessage, setStatusMessage] = useState('');
   const [loadedFromSharedUrl, setLoadedFromSharedUrl] = useState(false);
-  const [copyState, setCopyState] = useState({ markdown: false, share: false });
+  const [copyState, setCopyState] = useState({ markdown: false, share: false, json: false });
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -1389,6 +1441,10 @@ const DesignReviewPage = () => {
       setEntries(sharedPayload.entries);
       setReviewer(sharedPayload.reviewer || '');
       if (sharedPayload.githubRepo) setGithubRepo(sharedPayload.githubRepo);
+      if (sharedPayload.component) setComponentName(sharedPayload.component);
+      if (typeof sharedPayload.round === 'number' && sharedPayload.round > 0) {
+        setRoundNumber(sharedPayload.round);
+      }
       setLoadedFromSharedUrl(true);
       return;
     }
@@ -1410,6 +1466,10 @@ const DesignReviewPage = () => {
         const parsedMeta = JSON.parse(storedMetaRaw);
         if (parsedMeta?.reviewer) setReviewer(parsedMeta.reviewer);
         if (parsedMeta?.githubRepo) setGithubRepo(parsedMeta.githubRepo);
+        if (parsedMeta?.componentName) setComponentName(parsedMeta.componentName);
+        if (typeof parsedMeta?.roundNumber === 'number' && parsedMeta.roundNumber > 0) {
+          setRoundNumber(parsedMeta.roundNumber);
+        }
       } catch (error) {
         // Ignore malformed local metadata and continue with defaults.
       }
@@ -1425,9 +1485,14 @@ const DesignReviewPage = () => {
     if (typeof window === 'undefined') return;
     window.localStorage.setItem(
       DESIGN_REVIEW_META_STORAGE_KEY,
-      JSON.stringify({ reviewer: reviewer.trim(), githubRepo: githubRepo.trim() })
+      JSON.stringify({
+        reviewer: reviewer.trim(),
+        githubRepo: githubRepo.trim(),
+        componentName: componentName.trim() || DEFAULT_REVIEW_COMPONENT,
+        roundNumber: roundNumber > 0 ? roundNumber : DEFAULT_REVIEW_ROUND
+      })
     );
-  }, [reviewer, githubRepo]);
+  }, [reviewer, githubRepo, componentName, roundNumber]);
 
   const previewUrl = useMemo(() => {
     const params = new URLSearchParams({ mockup: selectedMockup });
@@ -1440,6 +1505,8 @@ const DesignReviewPage = () => {
     exportedAt: new Date().toISOString(),
     reviewer: reviewer.trim(),
     githubRepo: githubRepo.trim(),
+    component: componentName.trim() || DEFAULT_REVIEW_COMPONENT,
+    round: roundNumber > 0 ? roundNumber : DEFAULT_REVIEW_ROUND,
     entries
   });
 
@@ -1452,7 +1519,7 @@ const DesignReviewPage = () => {
     const body = buildFeedbackMarkdown(payload);
 
     return `https://github.com/${repo}/issues/new?title=${encodeURIComponent(title)}&body=${encodeURIComponent(body)}&labels=${encodeURIComponent('design-review')}`;
-  }, [githubRepo, entries, reviewer]);
+  }, [githubRepo, entries, reviewer, componentName, roundNumber]);
 
   const writeToClipboard = async (value) => {
     if (typeof navigator === 'undefined' || !navigator.clipboard?.writeText) {
@@ -1504,7 +1571,7 @@ const DesignReviewPage = () => {
     const copied = await writeToClipboard(markdown);
     if (!copied) return;
 
-    setCopyState({ markdown: true, share: false });
+    setCopyState({ markdown: true, share: false, json: false });
     setStatusMessage('Markdown copied. Paste it into Cursor/Copilot or GitHub.');
     setTimeout(() => setCopyState((prev) => ({ ...prev, markdown: false })), 1800);
   };
@@ -1523,25 +1590,35 @@ const DesignReviewPage = () => {
     const copied = await writeToClipboard(shareUrl);
     if (!copied) return;
 
-    setCopyState({ markdown: false, share: true });
+    setCopyState({ markdown: false, share: true, json: false });
     setStatusMessage('Share URL copied. Open that link on any device.');
     setTimeout(() => setCopyState((prev) => ({ ...prev, share: false })), 1800);
+  };
+
+  const handleCopyWorkflowJson = async () => {
+    const workflowExport = buildDesignReviewJson(buildPayload());
+    const copied = await writeToClipboard(JSON.stringify(workflowExport, null, 2));
+    if (!copied) return;
+
+    setCopyState({ markdown: false, share: false, json: true });
+    setStatusMessage('Workflow JSON copied. Save it as design-review.json for the next round script.');
+    setTimeout(() => setCopyState((prev) => ({ ...prev, json: false })), 1800);
   };
 
   const handleDownloadJson = () => {
     if (typeof document === 'undefined') return;
 
-    const payload = buildPayload();
+    const payload = buildDesignReviewJson(buildPayload());
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
     const objectUrl = URL.createObjectURL(blob);
     const link = document.createElement('a');
 
     link.href = objectUrl;
-    link.download = `design-feedback-${new Date().toISOString().slice(0, 10)}.json`;
+    link.download = `design-review-round-${payload.round}.json`;
     link.click();
 
     URL.revokeObjectURL(objectUrl);
-    setStatusMessage('JSON export downloaded.');
+    setStatusMessage(`Downloaded design-review.json for ${payload.component}/round-${payload.round}.`);
   };
 
   return (
@@ -1557,6 +1634,9 @@ const DesignReviewPage = () => {
               <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Design Review Workspace</h1>
               <p className="mt-2 max-w-3xl text-sm text-stone-300 md:text-base">
                 Review splash designs directly on this deployed site, capture structured feedback, and share it with Cursor/Copilot via markdown, JSON, or a shareable URL.
+              </p>
+              <p className="mt-2 text-xs text-stone-400">
+                Workflow target: <span className="font-mono">design-review-output/{componentName || DEFAULT_REVIEW_COMPONENT}/round-{roundNumber || DEFAULT_REVIEW_ROUND}/design-review.json</span>
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -1637,6 +1717,28 @@ const DesignReviewPage = () => {
                   className="w-full rounded-lg border border-stone-600 bg-stone-950 px-3 py-2 text-sm outline-none transition focus:border-indigo-400"
                 />
               </label>
+
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <label className="block text-sm">
+                  <span className="mb-1 block text-stone-300">Component</span>
+                  <input
+                    value={componentName}
+                    onChange={(event) => setComponentName(event.target.value.toLowerCase().replace(/\s+/g, '-'))}
+                    placeholder="splash"
+                    className="w-full rounded-lg border border-stone-600 bg-stone-950 px-3 py-2 text-sm outline-none transition focus:border-indigo-400"
+                  />
+                </label>
+                <label className="block text-sm">
+                  <span className="mb-1 block text-stone-300">Round</span>
+                  <input
+                    type="number"
+                    min={1}
+                    value={roundNumber}
+                    onChange={(event) => setRoundNumber(Math.max(1, Number(event.target.value) || 1))}
+                    className="w-full rounded-lg border border-stone-600 bg-stone-950 px-3 py-2 text-sm outline-none transition focus:border-indigo-400"
+                  />
+                </label>
+              </div>
 
               <label className="block text-sm">
                 <span className="mb-1 block text-stone-300">GitHub repo (owner/repo)</span>
@@ -1721,27 +1823,42 @@ const DesignReviewPage = () => {
               </button>
 
               <button
+                onClick={handleCopyWorkflowJson}
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-stone-600 px-3 py-2 text-sm font-medium transition hover:border-indigo-400 hover:text-indigo-300"
+              >
+                {copyState.json ? <Check size={16} /> : <Copy size={16} />}
+                Copy workflow JSON
+              </button>
+
+              <button
                 onClick={handleDownloadJson}
                 className="rounded-lg border border-stone-600 px-3 py-2 text-sm font-medium transition hover:border-indigo-400 hover:text-indigo-300"
               >
-                Download JSON
+                Download design-review.json
               </button>
-
-              {issueUrl ? (
-                <a
-                  href={issueUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="rounded-lg bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white transition hover:bg-indigo-500"
-                >
-                  Open GitHub issue
-                </a>
-              ) : (
-                <div className="rounded-lg border border-dashed border-stone-600 px-3 py-2 text-center text-xs text-stone-400">
-                  Add a GitHub repo to enable issue creation
-                </div>
-              )}
             </div>
+
+            {issueUrl ? (
+              <a
+                href={issueUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-2 block rounded-lg bg-indigo-600 px-3 py-2 text-center text-sm font-semibold text-white transition hover:bg-indigo-500"
+              >
+                Open GitHub issue
+              </a>
+            ) : (
+              <div className="mt-2 rounded-lg border border-dashed border-stone-600 px-3 py-2 text-center text-xs text-stone-400">
+                Add a GitHub repo to enable issue creation
+              </div>
+            )}
+
+            <p className="mt-3 text-[11px] leading-relaxed text-stone-400">
+              Next round command:{' '}
+              <span className="font-mono">
+                node design-review-output/scripts/start-new-round.js {componentName || DEFAULT_REVIEW_COMPONENT} {(roundNumber || DEFAULT_REVIEW_ROUND) + 1}
+              </span>
+            </p>
 
             {statusMessage && (
               <p className="mt-3 text-xs text-stone-300">{statusMessage}</p>

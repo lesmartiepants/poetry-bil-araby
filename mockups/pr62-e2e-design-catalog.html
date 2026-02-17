@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PR62 E2E Design Catalog (20 Options)</title>
+  <style>
+    :root {
+      --bg: #08090d;
+      --surface: #12141c;
+      --surface-2: #1a1e2a;
+      --text: #e7e9f3;
+      --text-dim: #a7acc2;
+      --gold: #d6b06a;
+      --violet: #8a72ff;
+      --mint: #9be2d0;
+      --line: #2a3042;
+      --ok: #9be2d0;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: radial-gradient(circle at 20% -10%, #16172a 0%, var(--bg) 35%);
+      color: var(--text);
+    }
+
+    .wrap {
+      width: min(1320px, 92vw);
+      margin: 0 auto;
+      padding: 28px 0 60px;
+    }
+
+    h1 { margin: 0; font-size: clamp(24px, 3vw, 36px); }
+    h2 { margin: 28px 0 14px; font-size: 20px; color: var(--gold); }
+    p { color: var(--text-dim); line-height: 1.5; }
+
+    .top {
+      display: grid;
+      grid-template-columns: 1.3fr 1fr;
+      gap: 14px;
+      margin-top: 18px;
+    }
+
+    .panel {
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), transparent 45%), var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 16px;
+    }
+
+    .chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .chip {
+      border: 1px solid var(--line);
+      color: var(--text-dim);
+      background: var(--surface-2);
+      border-radius: 999px;
+      font-size: 12px;
+      padding: 6px 10px;
+      letter-spacing: 0.02em;
+    }
+
+    .chip.gold { border-color: #65543b; color: #e9c988; }
+    .chip.violet { border-color: #493f8b; color: #b5abff; }
+    .chip.ok { border-color: #3f6d62; color: var(--ok); }
+
+    pre {
+      margin: 0;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 12px;
+      color: #c7cce2;
+      background: #0d1018;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 12px;
+      overflow: auto;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 12px;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      min-height: 300px;
+    }
+
+    .title {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: baseline;
+    }
+
+    .title strong { font-size: 15px; }
+    .id {
+      color: var(--violet);
+      font-weight: 700;
+      font-size: 12px;
+      letter-spacing: 0.05em;
+    }
+
+    .vibe {
+      color: var(--mint);
+      font-size: 12px;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .line {
+      font-size: 12px;
+      color: var(--text-dim);
+      line-height: 1.4;
+      border-top: 1px dashed #2a3042;
+      padding-top: 8px;
+    }
+
+    .line b {
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .tag-row {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-top: auto;
+    }
+
+    .tag {
+      background: #0f1320;
+      border: 1px solid #2f3550;
+      color: #c7cff5;
+      border-radius: 6px;
+      font-size: 11px;
+      padding: 4px 7px;
+    }
+
+    .legend {
+      margin-top: 8px;
+      font-size: 12px;
+      color: var(--text-dim);
+    }
+
+    @media (max-width: 900px) {
+      .top { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <h1>PR #62 End-to-End Design Catalog (20 Cohesive Options)</h1>
+    <p>
+      Synthesized from PR #62 explorations + local A-K branch concepts.
+      Includes splash, walkthrough, main reader, navigation, vertical controls, save/auth, text size, transliteration, and mode/poet utilities.
+    </p>
+
+    <div class="top">
+      <div class="panel">
+        <h2 style="margin-top:0">Top Recommended Launch Paths</h2>
+        <div class="chips">
+          <span class="chip gold">A1 Gold Orbit Story</span>
+          <span class="chip violet">B10 Signature Blend</span>
+          <span class="chip">A8 Deco Discovery</span>
+          <span class="chip ok">Best Base Stack: particles-opt2 + mainapp-u + controls-opt3</span>
+        </div>
+        <p class="legend">
+          Guidance: Use Notion rail for dark mode defaults, Scandinavian/Neumorphic as light skin variants.
+        </p>
+      </div>
+      <div class="panel">
+<pre>[Splash]
+   |
+   v
+[Walkthrough x4]
+   |
+   v
+[Main Reader]
+  + Bottom Nav
+  + Vertical Rail
+  + Save/Auth
+  + A+/A-/Translit
+  + Local/Web + Poet Filter</pre>
+      </div>
+    </div>
+
+    <h2>Set A · 10 broad premium options</h2>
+    <div id="setA" class="grid"></div>
+
+    <h2>Set B · 10 options biased to your favorite motifs</h2>
+    <div id="setB" class="grid"></div>
+  </div>
+
+  <script>
+    const setA = [
+      {
+        id: "A1",
+        name: "Gold Orbit Story",
+        vibe: "Premium / Poetic / Production-ready",
+        splash: "Gold particle halo + subtle constellation links",
+        walkthrough: "Orbit-based 4-step onboarding",
+        main: "Scroll Story web split + mobile stack",
+        controls: "Notion rail: Heart, A+, A-, Transliteration, Reset",
+        auth: "Save tooltip -> OAuth modal/sheet",
+        tags: ["Particles", "Notion Rail", "Dark/Light"]
+      },
+      {
+        id: "A2",
+        name: "Paper & Photon",
+        vibe: "Cinematic / Tactile",
+        splash: "Real paper unroll + spotlight dust",
+        walkthrough: "Page-turn cards with grain texture",
+        main: "Lit reading column on textured background",
+        controls: "Scandi light + Notion dark",
+        auth: "Bookmark this scroll prompt",
+        tags: ["Scroll Reveal", "Dust", "Scandi"]
+      },
+      {
+        id: "A3",
+        name: "Ink Mono Archive",
+        vibe: "Editorial / Focused",
+        splash: "RTL ink stroke reveal",
+        walkthrough: "Typewriter micro-motion steps",
+        main: "Monochrome Arabic-first reader",
+        controls: "Minimal monochrome rail",
+        auth: "Inline save lock + modal",
+        tags: ["Ink", "Minimal", "Performance"]
+      },
+      {
+        id: "A4",
+        name: "Desert Editorial Air",
+        vibe: "Warm / Lyrical",
+        splash: "Sunrise gradient with light dust",
+        walkthrough: "Postcard onboarding cards",
+        main: "Airy warm reader with high readability",
+        controls: "Scandi light, Notion dark",
+        auth: "Travel-journal save metaphor",
+        tags: ["Desert", "Calm", "Readable"]
+      },
+      {
+        id: "A5",
+        name: "Constellation Atlas",
+        vibe: "Innovative / Exploratory",
+        splash: "Sparse constellation map",
+        walkthrough: "Atlas modules: era, mood, poet, insight",
+        main: "Bento web + card-stack mobile",
+        controls: "Notion compact rail",
+        auth: "Collection save gating",
+        tags: ["Particles", "Bento", "Atlas"]
+      },
+      {
+        id: "A6",
+        name: "Nordic Quiet Reader",
+        vibe: "Minimalist / Calm",
+        splash: "Near-static typography with tiny glow cues",
+        walkthrough: "Whitespace-led bilingual steps",
+        main: "Centered quiet reading plane",
+        controls: "Scandinavian circular rail",
+        auth: "Minimal trust-first modal",
+        tags: ["Scandinavian", "Minimal", "Light Mode"]
+      },
+      {
+        id: "A7",
+        name: "Ink Ritual",
+        vibe: "Mystical / Intimate",
+        splash: "Breathing ink ritual animation",
+        walkthrough: "Ink droplet progress",
+        main: "Dark ritual canvas + gentle controls",
+        controls: "Minimal glass rail",
+        auth: "Single-action OAuth prompt",
+        tags: ["Ink", "Ritual", "Dark"]
+      },
+      {
+        id: "A8",
+        name: "Deco Discovery",
+        vibe: "Luxury / Brand-forward",
+        splash: "Art Deco frame reveal",
+        walkthrough: "Framed cards and gilded dividers",
+        main: "Elegant stage with center poem focus",
+        controls: "Notion rail to reduce clutter",
+        auth: "Deco-styled high-contrast sheet",
+        tags: ["Deco", "Heavy Frame", "Brand"]
+      },
+      {
+        id: "A9",
+        name: "Scroll of Dawn",
+        vibe: "Classic / Story-first",
+        splash: "Steel rod + realistic top-down unroll",
+        walkthrough: "Chapter ribbon transitions",
+        main: "Narrative chapter timeline reader",
+        controls: "Notion dark, Scandi light",
+        auth: "Save chapter progress flow",
+        tags: ["Scroll", "Story", "Chapter"]
+      },
+      {
+        id: "A10",
+        name: "Dual-Mode Harmony",
+        vibe: "Systemic / Adaptive",
+        splash: "Theme-aware (gold-dark, minimal-light)",
+        walkthrough: "Same IA, different skin",
+        main: "Shared layout skeleton per theme",
+        controls: "Notion dark + Neumorphic light",
+        auth: "Unified save/login pattern",
+        tags: ["Adaptive", "Neumorphic", "Scalable"]
+      }
+    ];
+
+    const setB = [
+      {
+        id: "B1",
+        name: "Zen Particles + Steel Scroll",
+        vibe: "Zen / Physical",
+        splash: "Low-density zen particles",
+        walkthrough: "Steel scroll unroll from top",
+        main: "Calm dark story reader",
+        controls: "Notion rail + Scandi light skin",
+        auth: "Save-first sign-in",
+        tags: ["Particles", "Scroll", "Notion"]
+      },
+      {
+        id: "B2",
+        name: "Spotlight Ether",
+        vibe: "Cinematic / Magical",
+        splash: "Single spotlight + floating ether dust",
+        walkthrough: "Dust forms chapter labels",
+        main: "Spotlight-guided reading lane",
+        controls: "Notion rail with focus labels",
+        auth: "Contextual save prompt",
+        tags: ["Spotlight", "Dust", "Notion"]
+      },
+      {
+        id: "B3",
+        name: "Heavy Scroll, Soft Controls",
+        vibe: "Tactile / Contrasted",
+        splash: "Heavy paper realism + metal accents",
+        walkthrough: "Swipeable scroll panels",
+        main: "Paper-on-dark poetry canvas",
+        controls: "Neumorphic default + Notion fallback",
+        auth: "Bottom-sheet signup",
+        tags: ["Scroll", "Neumorphic", "Mobile"]
+      },
+      {
+        id: "B4",
+        name: "Particle Cathedral",
+        vibe: "Grand / Atmospheric",
+        splash: "Dense particle dome (adaptive density)",
+        walkthrough: "Constellation to chapter transitions",
+        main: "Large immersive stage",
+        controls: "Notion compact with badges",
+        auth: "Collection save gate",
+        tags: ["Particles", "Immersive", "Notion"]
+      },
+      {
+        id: "B5",
+        name: "Dust Beam Minimal",
+        vibe: "Minimal / Ethereal",
+        splash: "Narrow light beam + dust in shadows",
+        walkthrough: "Monochrome cards with gold accents",
+        main: "Typography-forward minimal reader",
+        controls: "Scandi default + Notion power mode",
+        auth: "Minimal sign-in CTA",
+        tags: ["Spotlight", "Scandi", "Minimal"]
+      },
+      {
+        id: "B6",
+        name: "Metallic Manuscript",
+        vibe: "Historic / Premium",
+        splash: "Metal rod + parchment unroll",
+        walkthrough: "Artifact cards: poet/era/theme/save",
+        main: "Manuscript cues with modern spacing",
+        controls: "Notion dark / Neumorph light",
+        auth: "Archive-your-lines prompt",
+        tags: ["Scroll", "Neumorphic", "Auth"]
+      },
+      {
+        id: "B7",
+        name: "Orbital Scroll Story",
+        vibe: "Narrative / Innovative",
+        splash: "Orbit ring transforms into spindle",
+        walkthrough: "Chapter-by-chapter onboarding",
+        main: "Scroll Story + orbit markers",
+        controls: "Notion + chapter quick-jump",
+        auth: "Save chapter unlock flow",
+        tags: ["Particles", "Scroll", "Story"]
+      },
+      {
+        id: "B8",
+        name: "Ritual Spotlight Hybrid",
+        vibe: "Expressive / Balanced",
+        splash: "Calligraphy stroke under moving spotlight",
+        walkthrough: "Ritualized 4-step reveal",
+        main: "Immersive mode + compact mode",
+        controls: "Notion immersive, Scandi compact",
+        auth: "Mode-aware sign-in surfaces",
+        tags: ["Spotlight", "Notion", "Scandi"]
+      },
+      {
+        id: "B9",
+        name: "Kinetic Scroll Atlas",
+        vibe: "Exploratory / Dynamic",
+        splash: "Particles map into poet nodes",
+        walkthrough: "Nodes unroll into guidance cards",
+        main: "Atlas + reader merge",
+        controls: "Notion dense action rail",
+        auth: "Save collections + history",
+        tags: ["Particles", "Scroll", "Atlas"]
+      },
+      {
+        id: "B10",
+        name: "Signature Blend",
+        vibe: "Wow / Most Complete",
+        splash: "Gold particles + spotlight dust",
+        walkthrough: "Bilingual chapter cards with micro-motion",
+        main: "Scroll Story + Celestial depth cues",
+        controls: "Notion dark + Scandi/Neumorph light skins",
+        auth: "Tooltip -> sheet -> OAuth, web/mobile parity",
+        tags: ["Particles", "Scroll", "Spotlight", "Notion", "Neumorph/Scandi"]
+      }
+    ];
+
+    function renderCard(item) {
+      return `
+        <article class="card">
+          <div class="title">
+            <strong>${item.name}</strong>
+            <span class="id">${item.id}</span>
+          </div>
+          <div class="vibe">${item.vibe}</div>
+          <div class="line"><b>Splash:</b> ${item.splash}</div>
+          <div class="line"><b>Walkthrough:</b> ${item.walkthrough}</div>
+          <div class="line"><b>Main:</b> ${item.main}</div>
+          <div class="line"><b>Controls:</b> ${item.controls}</div>
+          <div class="line"><b>Auth:</b> ${item.auth}</div>
+          <div class="tag-row">${item.tags.map((t) => `<span class="tag">${t}</span>`).join("")}</div>
+        </article>
+      `;
+    }
+
+    document.getElementById("setA").innerHTML = setA.map(renderCard).join("");
+    document.getElementById("setB").innerHTML = setB.map(renderCard).join("");
+  </script>
+</body>
+</html>

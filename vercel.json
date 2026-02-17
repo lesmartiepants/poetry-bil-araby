@@ -2,11 +2,12 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "framework": "vite",
-  "cleanUrls": true,
-  "trailingSlash": false,
   "github": {
     "enabled": true,
     "autoAlias": true,
     "autoJobCancelation": true
-  }
+  },
+  "rewrites": [
+    { "source": "/((?!design-review/).+)", "destination": "/index.html" }
+  ]
 }

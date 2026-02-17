@@ -905,6 +905,7 @@
     }
 
     function onFeatureChange() {
+      state.featureIdx = parseInt(document.getElementById('featureSelect').value) || 0;
       const feature = getFeature();
       const available = getAvailableComponents(feature);
 

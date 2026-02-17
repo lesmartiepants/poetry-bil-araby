@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E2E #8: Glass Pavilion — Transparency + Depth</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0f0f14;--glass:rgba(255,255,255,.05);--glass-border:rgba(255,255,255,.1);--glass-hover:rgba(255,255,255,.08);--text:#f0f0f5;--text-dim:rgba(240,240,245,.45);--aurora1:rgba(120,200,255,.12);--aurora2:rgba(180,130,255,.1);--aurora3:rgba(100,255,200,.08);--font-ar:'Amiri',serif;--font-ui:'Inter',system-ui,sans-serif;--radius:20px}
+html{font-family:var(--font-ui);background:var(--bg);color:var(--text);scroll-behavior:smooth;overflow-x:hidden}
+canvas#aurora{position:fixed;inset:0;z-index:0;pointer-events:none}
+
+.screen{position:relative;width:100%;min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;overflow:hidden}
+.label{position:absolute;top:24px;left:24px;font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:rgba(180,130,255,.5)}
+
+/* SPLASH */
+.sp{position:relative;z-index:2;text-align:center;padding:40px}
+.sp-logo{display:flex;flex-direction:row-reverse;align-items:flex-end;justify-content:center;gap:16px;margin-bottom:48px}
+.sp-ar{font-family:var(--font-ar);font-size:clamp(3rem,8vw,4.5rem);font-weight:700}
+.sp-en{font-size:clamp(2.5rem,7vw,5rem);font-weight:200;letter-spacing:-.03em;text-transform:lowercase}
+.sp-sub{font-size:11px;letter-spacing:.4em;text-transform:uppercase;color:var(--text-dim);margin-bottom:52px}
+.sp-enter{display:inline-block;padding:16px 44px;background:var(--glass);border:1px solid var(--glass-border);backdrop-filter:blur(20px);color:var(--text);font-size:12px;letter-spacing:.25em;text-transform:uppercase;text-decoration:none;border-radius:999px;transition:all .4s}
+.sp-enter:hover{background:var(--glass-hover);border-color:rgba(180,130,255,.3);box-shadow:0 0 30px rgba(180,130,255,.15)}
+
+/* WALKTHROUGH - Frosted cards */
+#walk{background:transparent}
+.wk{position:relative;z-index:2;max-width:440px;width:90%;padding:48px 0}
+.frost-card{background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius);padding:28px;margin-bottom:14px;backdrop-filter:blur(16px);transition:all .3s}
+.frost-card:hover{background:var(--glass-hover);transform:translateY(-2px);box-shadow:0 12px 32px rgba(0,0,0,.3)}
+.fc-num{font-size:10px;letter-spacing:.2em;color:rgba(180,130,255,.6);margin-bottom:12px;text-transform:uppercase}
+.frost-card h3{font-size:16px;font-weight:500;margin-bottom:6px}
+.frost-card p{font-size:12px;color:var(--text-dim);line-height:1.7}
+.wk-cta{display:block;margin:20px auto 0;padding:14px 40px;background:rgba(180,130,255,.15);border:1px solid rgba(180,130,255,.3);backdrop-filter:blur(12px);color:var(--text);border-radius:999px;font-size:12px;letter-spacing:.2em;text-transform:uppercase;cursor:pointer;transition:all .3s}
+.wk-cta:hover{background:rgba(180,130,255,.25)}
+
+/* MAIN - Glass reading */
+#main{background:transparent;padding:0;align-items:stretch}
+.m-wrap{position:relative;z-index:2;max-width:780px;margin:0 auto;padding:32px 24px;min-height:100vh}
+.m-nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:28px}
+.m-brand{display:flex;align-items:center;gap:10px;font-weight:500;font-size:14px;letter-spacing:.08em}
+.m-brand .gem{width:20px;height:20px;border-radius:6px;background:linear-gradient(135deg,rgba(120,200,255,.4),rgba(180,130,255,.4));box-shadow:0 0 10px rgba(180,130,255,.3)}
+.m-links{display:flex;gap:10px}
+.m-links span{font-size:12px;color:var(--text-dim);padding:6px 14px;border-radius:999px;cursor:pointer;transition:all .2s;border:1px solid transparent}
+.m-links span:hover{border-color:var(--glass-border);background:var(--glass)}
+.poem-glass{background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius);padding:44px 32px;text-align:center;backdrop-filter:blur(20px);margin-bottom:16px;box-shadow:0 8px 32px rgba(0,0,0,.2)}
+.pm{font-size:11px;text-transform:uppercase;letter-spacing:.2em;color:rgba(180,130,255,.6);margin-bottom:24px}
+.par{font-family:var(--font-ar);font-size:clamp(1.4rem,3.5vw,2rem);line-height:2.2;direction:rtl;margin-bottom:18px}
+.pen{font-size:13px;color:var(--text-dim);line-height:1.8;font-style:italic}
+.pact{display:flex;gap:8px;justify-content:center;margin-top:22px;flex-wrap:wrap}
+.pact button{padding:8px 16px;border-radius:999px;background:var(--glass);border:1px solid var(--glass-border);backdrop-filter:blur(8px);color:var(--text-dim);font-size:11px;cursor:pointer;font-family:var(--font-ui);transition:all .2s}
+.pact button:hover{border-color:rgba(180,130,255,.3);color:var(--text)}
+.ai-glass{background:linear-gradient(135deg,var(--aurora1),var(--aurora2));border:1px solid var(--glass-border);border-radius:var(--radius);padding:18px 22px;backdrop-filter:blur(16px);display:flex;gap:14px}
+.ai-glass .ico{font-size:16px;margin-top:2px}
+.ai-glass p{font-size:12px;color:var(--text-dim);line-height:1.7}
+
+/* NEUMORPHIC-GLASS CONTROLS (hybrid) */
+.vc{position:fixed;right:16px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:10px;z-index:100}
+.vc button{width:44px;height:44px;display:flex;align-items:center;justify-content:center;background:var(--glass);border:1px solid var(--glass-border);border-radius:14px;cursor:pointer;color:var(--text-dim);font-size:15px;transition:all .25s;backdrop-filter:blur(12px)}
+.vc button:hover{background:var(--glass-hover);color:var(--text);transform:scale(1.08)}
+.vc button.on{background:rgba(180,130,255,.15);border-color:rgba(180,130,255,.3);color:rgba(180,130,255,.9);box-shadow:0 0 12px rgba(180,130,255,.15)}
+
+/* SETTINGS */
+#settings{background:transparent;padding:80px 24px}
+.st{position:relative;z-index:2;max-width:440px;margin:0 auto;background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius);padding:32px;backdrop-filter:blur(20px)}
+.st-title{font-size:20px;font-weight:500;margin-bottom:24px;text-align:center}
+.st-row{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.st-row label{font-size:13px}
+.st-row label small{display:block;font-size:11px;color:var(--text-dim);margin-top:3px}
+.tgl{width:44px;height:24px;border-radius:12px;background:rgba(255,255,255,.08);position:relative;cursor:pointer;transition:background .2s;border:1px solid var(--glass-border)}
+.tgl.on{background:rgba(180,130,255,.35);border-color:rgba(180,130,255,.4)}
+.tgl::after{content:'';position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.3)}
+.tgl.on::after{transform:translateX(20px)}
+.sl{display:flex;align-items:center;gap:8px}
+.sl span{font-size:11px;color:var(--text-dim)}
+input[type=range]{-webkit-appearance:none;width:100px;height:3px;border-radius:2px;background:rgba(255,255,255,.1);outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:rgba(180,130,255,.8);cursor:pointer;box-shadow:0 0 8px rgba(180,130,255,.4)}
+.sv{display:block;width:100%;margin-top:24px;padding:14px;background:rgba(180,130,255,.15);border:1px solid rgba(180,130,255,.3);color:var(--text);border-radius:var(--radius);font-size:13px;font-weight:500;cursor:pointer;backdrop-filter:blur(8px)}
+
+/* AUTH */
+#auth{background:transparent}
+.auth-glass{position:relative;z-index:2;width:90%;max-width:380px;background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius);padding:40px 28px;text-align:center;backdrop-filter:blur(24px);box-shadow:0 20px 50px rgba(0,0,0,.3)}
+.auth-title{font-family:var(--font-ar);font-size:32px;margin-bottom:8px}
+.auth-sub{font-size:13px;color:var(--text-dim);margin-bottom:28px}
+.oa{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:13px;border-radius:14px;border:1px solid var(--glass-border);background:var(--glass);color:var(--text);font-size:14px;cursor:pointer;margin-bottom:10px;transition:all .2s;font-family:var(--font-ui);backdrop-filter:blur(8px)}
+.oa:hover{background:var(--glass-hover);border-color:rgba(180,130,255,.2)}
+.oa svg{width:18px;height:18px}
+.at{font-size:10px;color:var(--text-dim);margin-top:18px}
+
+.nav-bar{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:200;background:var(--glass);backdrop-filter:blur(16px);padding:8px 14px;border-radius:999px;border:1px solid var(--glass-border)}
+.nav-bar a{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);text-decoration:none;padding:5px 10px;border-radius:999px;transition:all .2s}
+.nav-bar a:hover{color:var(--text);background:var(--glass-hover)}
+
+@media(max-width:640px){.sp-logo{flex-direction:column;align-items:center;gap:4px}.sp-ar{font-size:2.5rem}.sp-en{font-size:3rem}.vc{right:8px}.vc button{width:38px;height:38px;font-size:13px;border-radius:12px}.poem-glass{padding:28px 18px}.m-wrap{padding:20px 14px}}
+</style>
+</head>
+<body>
+<canvas id="aurora"></canvas>
+<nav class="nav-bar"><a href="#splash">Splash</a><a href="#walk">Intro</a><a href="#main">Read</a><a href="#settings">Settings</a><a href="#auth">Auth</a></nav>
+
+<section class="screen" id="splash"><span class="label">Splash</span><div class="sp"><div class="sp-logo"><span class="sp-ar">قافية</span><span class="sp-en">qafiyah</span></div><div class="sp-sub">Arabic Poetry, Pair by Pair</div><a href="#walk" class="sp-enter">Enter</a></div></section>
+
+<section class="screen" id="walk"><span class="label">Walkthrough</span><div class="wk">
+  <div class="frost-card"><div class="fc-num">Step 01</div><h3>Discover Poetry</h3><p>84,000+ Arabic poems spanning 12 centuries, each with English translation.</p></div>
+  <div class="frost-card"><div class="fc-num">Step 02</div><h3>Listen & Learn</h3><p>AI audio recitation with transliteration for pronunciation mastery.</p></div>
+  <div class="frost-card"><div class="fc-num">Step 03</div><h3>Your Collection</h3><p>Save favorites, customize display, sync everywhere.</p></div>
+  <button class="wk-cta" onclick="document.getElementById('main').scrollIntoView({behavior:'smooth'})">Begin</button>
+</div></section>
+
+<section class="screen" id="main" style="align-items:stretch"><div class="m-wrap"><span class="label">Main App</span>
+  <div class="m-nav"><div class="m-brand"><div class="gem"></div>Qafiyah</div><div class="m-links"><span>Explore</span><span>Saved</span><span>Settings</span></div></div>
+  <div class="poem-glass"><div class="pm">Al-Khansa &bull; Elegy</div><div class="par">يا عَينِ جودي بِدَمعٍ مِنكِ تَهتانِ<br>وَلا تَمَلّي مِنَ البُكاءِ وَالأَحزانِ</div><div class="pen">O eye, be generous with your weeping tears,<br>and never tire of crying and of grief.</div><div class="pact"><button>&#9654; Listen</button><button>&#9825; Save</button><button>&#8634; Next</button><button>Aa Size</button><button>ع Trans</button></div></div>
+  <div class="ai-glass"><span class="ico">&#10024;</span><p>Al-Khansa is the most celebrated female poet of the pre-Islamic era. Her elegies for her brother Sakhr are among the most powerful expressions of grief in world literature.</p></div>
+</div></section>
+
+<div class="vc"><button>&#8635;</button><button class="on">&#9654;</button><button>&#9825;</button><button>Aa</button><button>ع</button><button>&#9790;</button><button>&#8599;</button></div>
+
+<section class="screen" id="settings"><span class="label">Settings</span><div class="st"><div class="st-title">Settings</div>
+  <div class="st-row"><label>Text Size<small>Arabic display</small></label><div class="sl"><span>A</span><input type="range" min="14" max="32" value="22"><span style="font-size:16px">A</span></div></div>
+  <div class="st-row"><label>Transliteration<small>Latin pronunciation</small></label><div class="tgl on"></div></div>
+  <div class="st-row"><label>Dark Mode<small>Appearance</small></label><div class="tgl on"></div></div>
+  <div class="st-row"><label>Auto Audio<small>Play on load</small></label><div class="tgl"></div></div>
+  <div class="st-row"><label>AI Insights<small>Analysis</small></label><div class="tgl on"></div></div>
+  <button class="sv">Save</button>
+</div></section>
+
+<section class="screen" id="auth"><span class="label">Auth</span><div class="auth-glass"><div class="auth-title">مرحباً</div><div class="auth-sub">Sign in to save and sync</div>
+  <button class="oa"><svg viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>Continue with Google</button>
+  <button class="oa"><svg viewBox="0 0 24 24" fill="#fff"><path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.52-3.23 0-1.44.64-2.2.52-3.06-.4C3.79 16.17 4.36 9.04 8.92 8.78c1.27.06 2.15.72 2.89.76.98-.2 1.92-.76 2.97-.69 1.26.1 2.21.59 2.83 1.5-2.59 1.54-1.97 4.93.36 5.87-.47 1.24-.73 1.79-1.37 2.89-.97 1.69-2.34 3.38-4.02 3.42-.74.02-1.23-.38-2.03-.4-.83.02-1.35.42-2.13.42-1.73-.04-3.05-1.84-4.03-3.52-2.75-4.72-3.05-10.27-1.35-13.17 1.2-2.04 3.09-3.23 5.1-3.28 1.1-.02 2.17.74 2.86.74.69 0 1.98-.92 3.34-.78.57.02 2.16.23 3.18 1.72-2.58 1.61-2.16 5.57.47 6.63z"/></svg>Continue with Apple</button>
+  <div class="at">By signing in you agree to our Terms and Privacy Policy</div>
+</div></section>
+
+<script>
+// Aurora background
+const c=document.getElementById('aurora'),ctx=c.getContext('2d');let W,H,t=0;
+function resize(){W=c.width=innerWidth;H=c.height=innerHeight}resize();addEventListener('resize',resize);
+function drawAurora(){ctx.clearRect(0,0,W,H);t+=.002;
+const colors=[{r:120,g:200,b:255,a:.04},{r:180,g:130,b:255,a:.035},{r:100,g:255,b:200,a:.025}];
+colors.forEach((col,i)=>{const cx=W*(.3+i*.2)+Math.sin(t+i*2)*W*.1;const cy=H*(.3+i*.15)+Math.cos(t*1.3+i)*H*.1;const g=ctx.createRadialGradient(cx,cy,0,cx,cy,H*.4);g.addColorStop(0,`rgba(${col.r},${col.g},${col.b},${col.a})`);g.addColorStop(1,'transparent');ctx.fillStyle=g;ctx.fillRect(0,0,W,H)})}
+(function loop(){drawAurora();requestAnimationFrame(loop)})();
+document.querySelectorAll('.tgl').forEach(t=>t.addEventListener('click',()=>t.classList.toggle('on')));
+</script>
+</body>
+</html>

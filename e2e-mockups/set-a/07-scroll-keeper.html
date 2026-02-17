@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E2E #7: Scroll Keeper — Physical + Narrative</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--parchment:#e8dcc4;--paper:#d4c4a8;--wood:#3d3428;--wood-light:#5a4a35;--ink:#1a1512;--ink-dim:rgba(26,21,18,.45);--gold:#8b6f47;--accent:#6b5c3e;--font-ar:'Amiri',serif;--font-serif:'EB Garamond',serif;--font-ui:'Inter',system-ui,sans-serif;--radius:8px}
+html{font-family:var(--font-ui);background:#0a0806;color:var(--ink);scroll-behavior:smooth;overflow-x:hidden}
+
+.screen{position:relative;width:100%;min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;overflow:hidden}
+.label{position:absolute;top:24px;left:24px;font-size:10px;letter-spacing:.25em;text-transform:uppercase;color:var(--gold);opacity:.4}
+
+/* SPLASH - Scroll unroll */
+#splash{background:radial-gradient(circle at center,#1a1512,#0a0806)}
+.scroll-wrap{position:relative;z-index:2;width:90%;max-width:600px}
+.scroll-container{background:linear-gradient(135deg,var(--parchment),var(--paper),#c9b896);border-radius:var(--radius);box-shadow:0 30px 80px rgba(0,0,0,.7),inset 0 0 80px rgba(139,115,85,.15);padding:48px 40px;animation:unroll 1.5s cubic-bezier(.4,0,.2,1) forwards;transform-origin:top center;position:relative}
+@keyframes unroll{0%{transform:scaleY(.05);opacity:0}40%{opacity:1}60%{transform:scaleY(1.02)}100%{transform:scaleY(1);opacity:1}}
+.scroll-rod{position:absolute;left:-8px;right:-8px;height:20px;background:linear-gradient(180deg,var(--wood-light),var(--wood),#2d2419);border-radius:10px;box-shadow:0 3px 10px rgba(0,0,0,.5),inset 0 1px 3px rgba(212,165,116,.15)}
+.scroll-rod.top{top:-10px}
+.scroll-rod.bottom{bottom:-10px}
+.scroll-rod::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent,transparent 2px,rgba(26,21,18,.08) 2px,rgba(26,21,18,.08) 4px);border-radius:inherit}
+.rod-cap{position:absolute;top:50%;transform:translateY(-50%);width:28px;height:28px;background:radial-gradient(circle,var(--wood-light),var(--wood));border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,.5)}
+.rod-cap.l{left:-14px}
+.rod-cap.r{right:-14px}
+.rod-cap::before{content:'';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:10px;height:10px;background:var(--gold);border-radius:50%;box-shadow:inset 0 1px 2px rgba(0,0,0,.3)}
+.papyrus{position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent,transparent 3px,rgba(139,115,85,.04) 3px,rgba(139,115,85,.04) 6px),repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(139,115,85,.04) 3px,rgba(139,115,85,.04) 6px);border-radius:inherit;pointer-events:none;opacity:.5}
+.scroll-content{position:relative;text-align:center}
+.sc-logo{display:flex;flex-direction:row-reverse;align-items:flex-end;justify-content:center;gap:14px;margin-bottom:32px}
+.sc-ar{font-family:var(--font-ar);font-size:clamp(2.5rem,7vw,3.5rem);font-weight:700;color:var(--ink)}
+.sc-en{font-family:var(--font-serif);font-size:clamp(2rem,5.5vw,3rem);font-weight:400;color:var(--ink);letter-spacing:.04em;text-transform:lowercase}
+.sc-sub{font-family:var(--font-serif);font-size:14px;color:var(--ink-dim);margin-bottom:36px;font-style:italic}
+.sc-enter{display:inline-block;padding:14px 36px;background:var(--ink);color:var(--parchment);font-family:var(--font-serif);font-size:14px;letter-spacing:.12em;text-decoration:none;border-radius:999px;transition:all .3s}
+.sc-enter:hover{background:var(--wood);transform:translateY(-2px)}
+
+/* WALKTHROUGH - Paper timeline */
+#walk{background:var(--parchment)}
+.wk{position:relative;z-index:2;max-width:400px;width:90%;padding:48px 0}
+.wk-timeline{position:relative;padding-left:28px;border-left:2px solid rgba(26,21,18,.12)}
+.wk-node{position:relative;margin-bottom:36px}
+.wk-node::before{content:'';position:absolute;left:-33px;top:6px;width:10px;height:10px;border-radius:50%;border:2px solid var(--ink);background:var(--parchment)}
+.wk-node.active::before{background:var(--ink)}
+.wk-node h3{font-family:var(--font-serif);font-size:18px;font-weight:500;margin-bottom:6px}
+.wk-node p{font-size:13px;color:var(--ink-dim);line-height:1.7}
+.wk-cta{display:block;margin:20px auto 0;padding:14px 36px;background:var(--ink);color:var(--parchment);border:none;border-radius:999px;font-family:var(--font-serif);font-size:14px;cursor:pointer;letter-spacing:.08em}
+
+/* MAIN - Scroll story reading */
+#main{background:var(--parchment);padding:0;align-items:stretch}
+.m-lay{position:relative;z-index:2;max-width:680px;margin:0 auto;padding:40px 24px;min-height:100vh}
+.m-nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:36px}
+.m-brand{font-family:var(--font-serif);font-size:18px;letter-spacing:.06em}
+.m-links{display:flex;gap:18px;font-size:12px;color:var(--ink-dim)}
+.m-links span{cursor:pointer;transition:color .2s}
+.m-links span:hover{color:var(--ink)}
+.poem-scroll{background:rgba(255,255,255,.4);border:1px solid rgba(26,21,18,.08);border-radius:var(--radius);padding:40px 32px;position:relative;box-shadow:0 4px 20px rgba(26,21,18,.06)}
+.poem-scroll::before{content:'';position:absolute;left:28px;top:0;bottom:0;width:1px;background:rgba(26,21,18,.06)}
+.pm{font-family:var(--font-ui);font-size:10px;text-transform:uppercase;letter-spacing:.2em;color:var(--gold);margin-bottom:24px}
+.par{font-family:var(--font-ar);font-size:clamp(1.4rem,3.5vw,2rem);line-height:2.3;direction:rtl;margin-bottom:20px}
+.pen{font-family:var(--font-serif);font-size:15px;color:var(--ink-dim);line-height:1.9;font-style:italic}
+.pact{display:flex;gap:14px;margin-top:24px;font-family:var(--font-serif);font-size:13px;color:var(--ink-dim)}
+.pact span{cursor:pointer;transition:color .2s;border-bottom:1px solid transparent;padding-bottom:2px}
+.pact span:hover{color:var(--ink);border-color:var(--ink)}
+.insight{margin-top:24px;padding:18px 22px;background:rgba(139,111,71,.06);border-left:3px solid var(--gold);border-radius:0 var(--radius) var(--radius) 0}
+.insight p{font-family:var(--font-serif);font-size:14px;color:var(--ink-dim);line-height:1.7}
+
+/* SCANDINAVIAN CONTROLS */
+.vc{position:fixed;right:28px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:12px;z-index:100}
+.vc button{width:48px;height:48px;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,.8);border:1.5px solid rgba(26,21,18,.1);border-radius:50%;cursor:pointer;color:var(--ink);font-size:16px;transition:all .2s;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.vc button:hover{border-color:var(--ink);transform:translateY(-2px);box-shadow:0 3px 10px rgba(0,0,0,.1)}
+.vc button.on{background:var(--ink);color:var(--parchment);border-color:var(--ink)}
+
+/* SETTINGS */
+#settings{background:var(--parchment);padding:80px 24px}
+.st{position:relative;z-index:2;max-width:420px;margin:0 auto}
+.st-title{font-family:var(--font-serif);font-size:22px;margin-bottom:28px;text-align:center}
+.st-row{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid rgba(26,21,18,.06)}
+.st-row label{font-size:13px}
+.st-row label small{display:block;font-size:11px;color:var(--ink-dim);margin-top:3px}
+.tgl{width:44px;height:24px;border-radius:12px;background:rgba(26,21,18,.1);position:relative;cursor:pointer;transition:background .2s}
+.tgl.on{background:var(--ink)}
+.tgl::after{content:'';position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .2s}
+.tgl.on::after{transform:translateX(20px)}
+.sl{display:flex;align-items:center;gap:8px}
+.sl span{font-size:11px;color:var(--ink-dim)}
+input[type=range]{-webkit-appearance:none;width:100px;height:3px;border-radius:2px;background:rgba(26,21,18,.1);outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--ink);cursor:pointer}
+.sv{display:block;width:100%;margin-top:24px;padding:14px;background:var(--ink);color:var(--parchment);border:none;border-radius:var(--radius);font-family:var(--font-serif);font-size:14px;cursor:pointer;letter-spacing:.08em}
+
+/* AUTH */
+#auth{background:#0a0806}
+.auth-parchment{position:relative;z-index:2;width:90%;max-width:380px;background:linear-gradient(135deg,var(--parchment),var(--paper));border-radius:12px;padding:40px 28px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.5)}
+.auth-title{font-family:var(--font-ar);font-size:32px;color:var(--ink);margin-bottom:8px}
+.auth-sub{font-family:var(--font-serif);font-size:14px;color:var(--ink-dim);margin-bottom:28px}
+.oa{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:13px;border-radius:var(--radius);border:1px solid rgba(26,21,18,.12);background:rgba(255,255,255,.4);color:var(--ink);font-size:14px;cursor:pointer;margin-bottom:10px;transition:all .2s;font-family:var(--font-ui)}
+.oa:hover{background:rgba(255,255,255,.7)}
+.oa svg{width:18px;height:18px}
+.at{font-family:var(--font-serif);font-size:10px;color:var(--ink-dim);margin-top:18px}
+
+.nav-bar{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:200;background:rgba(232,220,196,.9);backdrop-filter:blur(8px);padding:8px 14px;border-radius:999px;border:1px solid rgba(26,21,18,.08)}
+.nav-bar a{font-family:var(--font-serif);font-size:10px;letter-spacing:.1em;color:var(--ink-dim);text-decoration:none;padding:5px 10px;border-radius:999px;transition:all .2s}
+.nav-bar a:hover{color:var(--ink);background:rgba(26,21,18,.05)}
+
+@media(max-width:640px){.sc-logo{flex-direction:column;align-items:center;gap:4px}.scroll-container{padding:32px 24px}.vc{right:10px}.vc button{width:40px;height:40px;font-size:14px}}
+</style>
+</head>
+<body>
+<nav class="nav-bar"><a href="#splash">Splash</a><a href="#walk">Intro</a><a href="#main">Read</a><a href="#settings">Settings</a><a href="#auth">Auth</a></nav>
+
+<section class="screen" id="splash"><span class="label" style="color:var(--parchment);opacity:.3">Splash</span><div class="scroll-wrap"><div class="scroll-container"><div class="scroll-rod top"><div class="rod-cap l"></div><div class="rod-cap r"></div></div><div class="scroll-rod bottom"><div class="rod-cap l"></div><div class="rod-cap r"></div></div><div class="papyrus"></div><div class="scroll-content"><div class="sc-logo"><span class="sc-ar">قافية</span><span class="sc-en">qafiyah</span></div><div class="sc-sub">Arabic Poetry, Pair by Pair</div><a href="#walk" class="sc-enter">Unroll the Scroll</a></div></div></div></section>
+
+<section class="screen" id="walk"><span class="label">Walkthrough</span><div class="wk"><div class="wk-timeline">
+  <div class="wk-node active"><h3>Discover Poetry</h3><p>Explore 84,000+ Arabic poems spanning centuries, each with English translation.</p></div>
+  <div class="wk-node"><h3>Listen & Recite</h3><p>AI-powered audio with transliteration to follow the melody of Arabic verse.</p></div>
+  <div class="wk-node"><h3>Build Your Archive</h3><p>Save favorites, adjust reading settings, sync across your devices.</p></div>
+</div><button class="wk-cta" onclick="document.getElementById('main').scrollIntoView({behavior:'smooth'})">Begin Reading</button></div></section>
+
+<section class="screen" id="main" style="align-items:stretch"><div class="m-lay"><span class="label">Main App</span>
+  <div class="m-nav"><div class="m-brand">Qafiyah</div><div class="m-links"><span>Explore</span><span>Saved</span><span>Settings</span></div></div>
+  <div class="poem-scroll"><div class="pm">Tarafa ibn al-'Abd &bull; Mu'allaqa</div><div class="par">لِخَولَةَ أَطلالٌ بِبُرقَةِ ثَهمَدِ<br>تَلوحُ كَباقي الوَشمِ في ظاهِرِ اليَدِ</div><div class="pen">Khawla has traces at the stony ground of Thahmad,<br>appearing like the remnants of a tattoo on the back of a hand.</div><div class="pact"><span>&#9654; Listen</span><span>&#9825; Save</span><span>&#8634; Next</span><span>Aa Size</span></div></div>
+  <div class="insight"><p>Tarafa, the youngest of the Mu'allaqa poets, opens with one of Arabic poetry's most beautiful similes — comparing faded ruins to a tattoo on the hand, blending permanence and impermanence.</p></div>
+</div></section>
+
+<div class="vc"><button>&#8635;</button><button class="on">&#9654;</button><button>&#9825;</button><button>Aa</button><button>ع</button><button>&#9788;</button></div>
+
+<section class="screen" id="settings"><span class="label">Settings</span><div class="st"><div class="st-title">Preferences</div>
+  <div class="st-row"><label>Text Size<small>Arabic display</small></label><div class="sl"><span>A</span><input type="range" min="14" max="32" value="22"><span style="font-size:16px">A</span></div></div>
+  <div class="st-row"><label>Transliteration<small>Latin pronunciation</small></label><div class="tgl on"></div></div>
+  <div class="st-row"><label>Dark Mode<small>Theme</small></label><div class="tgl"></div></div>
+  <div class="st-row"><label>Auto Audio<small>Play on load</small></label><div class="tgl"></div></div>
+  <div class="st-row"><label>AI Insights<small>Analysis</small></label><div class="tgl on"></div></div>
+  <button class="sv">Save</button>
+</div></section>
+
+<section class="screen" id="auth"><span class="label" style="color:var(--parchment);opacity:.3">Auth</span><div class="auth-parchment"><div class="auth-title">مرحباً</div><div class="auth-sub">Sign in to preserve your collection</div>
+  <button class="oa"><svg viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>Continue with Google</button>
+  <button class="oa"><svg viewBox="0 0 24 24" fill="#1a1512"><path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.52-3.23 0-1.44.64-2.2.52-3.06-.4C3.79 16.17 4.36 9.04 8.92 8.78c1.27.06 2.15.72 2.89.76.98-.2 1.92-.76 2.97-.69 1.26.1 2.21.59 2.83 1.5-2.59 1.54-1.97 4.93.36 5.87-.47 1.24-.73 1.79-1.37 2.89-.97 1.69-2.34 3.38-4.02 3.42-.74.02-1.23-.38-2.03-.4-.83.02-1.35.42-2.13.42-1.73-.04-3.05-1.84-4.03-3.52-2.75-4.72-3.05-10.27-1.35-13.17 1.2-2.04 3.09-3.23 5.1-3.28 1.1-.02 2.17.74 2.86.74.69 0 1.98-.92 3.34-.78.57.02 2.16.23 3.18 1.72-2.58 1.61-2.16 5.57.47 6.63z"/></svg>Continue with Apple</button>
+  <div class="at">By signing in you agree to our Terms and Privacy Policy</div>
+</div></section>
+
+<script>
+document.querySelectorAll('.tgl').forEach(t=>t.addEventListener('click',()=>t.classList.toggle('on')));
+</script>
+</body>
+</html>

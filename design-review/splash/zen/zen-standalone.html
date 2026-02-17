@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Zen Splash - Current Design</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #000;
+      color: #fff;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    body.light {
+      background: #fff;
+      color: #000;
+    }
+
+    .container {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.7s ease;
+    }
+
+    .container.fade-out {
+      opacity: 0;
+    }
+
+    .theme-toggle {
+      position: fixed;
+      top: 2rem;
+      right: 2rem;
+      z-index: 50;
+      padding: 0.75rem;
+      border-radius: 9999px;
+      backdrop-filter: blur(24px);
+      background: rgba(255, 255, 255, 0.05);
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .theme-toggle:hover {
+      transform: scale(1.1);
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    body.light .theme-toggle {
+      background: rgba(0, 0, 0, 0.05);
+    }
+
+    body.light .theme-toggle:hover {
+      background: rgba(0, 0, 0, 0.1);
+    }
+
+    .theme-icon {
+      width: 20px;
+      height: 20px;
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    body.light .theme-icon {
+      color: rgba(0, 0, 0, 0.6);
+    }
+
+    svg.calligraphy {
+      filter: drop-shadow(0 0 40px rgba(255,255,255,0.15));
+      animation: breathing 4s ease-in-out infinite;
+    }
+
+    body.light svg.calligraphy {
+      filter: drop-shadow(0 0 40px rgba(0,0,0,0.08));
+    }
+
+    @keyframes breathing {
+      0%, 100% {
+        transform: scale(1);
+        opacity: 0.95;
+      }
+      50% {
+        transform: scale(1.03);
+        opacity: 1;
+      }
+    }
+
+    /* Staggered stroke drawing animation */
+    .letter-p {
+      stroke-dasharray: 300;
+      stroke-dashoffset: 300;
+      animation: drawStroke 1.2s ease-out 0s forwards;
+    }
+
+    .letter-o1 {
+      stroke-dasharray: 150;
+      stroke-dashoffset: 150;
+      animation: drawStroke 0.8s ease-out 0.3s forwards;
+    }
+
+    .letter-e {
+      stroke-dasharray: 100;
+      stroke-dashoffset: 100;
+      animation: drawStroke 0.7s ease-out 0.5s forwards;
+    }
+
+    .letter-t {
+      stroke-dasharray: 120;
+      stroke-dashoffset: 120;
+      animation: drawStroke 0.8s ease-out 0.7s forwards;
+    }
+
+    .letter-r {
+      stroke-dasharray: 100;
+      stroke-dashoffset: 100;
+      animation: drawStroke 0.7s ease-out 0.9s forwards;
+    }
+
+    .letter-y {
+      stroke-dasharray: 150;
+      stroke-dashoffset: 150;
+      animation: drawStroke 0.9s ease-out 1.1s forwards;
+    }
+
+    .letter-baa {
+      stroke-dasharray: 200;
+      stroke-dashoffset: 200;
+      animation: drawStroke 1s ease-out 1.5s forwards;
+    }
+
+    .letter-alif {
+      stroke-dasharray: 80;
+      stroke-dashoffset: 80;
+      animation: drawStroke 0.6s ease-out 1.7s forwards;
+    }
+
+    .letter-lam {
+      stroke-dasharray: 120;
+      stroke-dashoffset: 120;
+      animation: drawStroke 0.8s ease-out 1.9s forwards;
+    }
+
+    .letter-ain {
+      stroke-dasharray: 100;
+      stroke-dashoffset: 100;
+      animation: drawStroke 0.7s ease-out 2.1s forwards;
+    }
+
+    .letter-raa {
+      stroke-dasharray: 80;
+      stroke-dashoffset: 80;
+      animation: drawStroke 0.6s ease-out 2.3s forwards;
+    }
+
+    .letter-baa2 {
+      stroke-dasharray: 220;
+      stroke-dashoffset: 220;
+      animation: drawStroke 1s ease-out 2.5s forwards;
+    }
+
+    .letter-yaa {
+      stroke-dasharray: 100;
+      stroke-dashoffset: 100;
+      animation: drawStroke 0.7s ease-out 2.7s forwards;
+    }
+
+    .subtitle-explore {
+      stroke-dasharray: 400;
+      stroke-dashoffset: 400;
+      animation: drawStroke 1.2s ease-out 3.2s forwards;
+    }
+
+    .subtitle-middle {
+      stroke-dasharray: 600;
+      stroke-dashoffset: 600;
+      animation: drawStroke 1.5s ease-out 3.5s forwards;
+    }
+
+    .subtitle-end {
+      stroke-dasharray: 400;
+      stroke-dashoffset: 400;
+      animation: drawStroke 1.2s ease-out 3.8s forwards;
+    }
+
+    @keyframes drawStroke {
+      to {
+        stroke-dashoffset: 0;
+      }
+    }
+
+    .hint-text {
+      position: absolute;
+      bottom: -6rem;
+      left: 50%;
+      transform: translateX(-50%);
+      text-align: center;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+      pointer-events: none;
+      color: rgba(255, 255, 255, 0.4);
+      font-size: 0.75rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      font-weight: 300;
+    }
+
+    body.light .hint-text {
+      color: rgba(0, 0, 0, 0.4);
+    }
+
+    .container:hover .hint-text {
+      opacity: 1;
+    }
+
+    @media (max-width: 640px) {
+      svg.calligraphy {
+        width: 90vw;
+        height: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+    <svg class="theme-icon sun-icon" style="display: none;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+    <svg class="theme-icon moon-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+    </svg>
+  </button>
+
+  <div class="container" onclick="fadeOut()">
+    <div style="position: relative; display: flex; flex-direction: column; align-items: center; gap: 2rem;">
+      <svg
+        width="600"
+        height="320"
+        viewBox="0 0 600 320"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+        class="calligraphy"
+      >
+        <!-- Line 1: "Poetry" -->
+        <g class="word-poetry">
+          <path d="M 80 100 Q 80 60, 110 60 Q 140 60, 140 85 Q 140 110, 110 110 L 80 110 M 80 60 L 80 140" stroke="rgba(255,255,255,0.95)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none" class="letter-p" />
+          <path d="M 160 100 Q 160 80, 175 80 Q 190 80, 190 100 Q 190 120, 175 120 Q 160 120, 160 100 Z" stroke="rgba(255,255,255,0.95)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none" class="letter-o1" />
+          <path d="M 210 110 Q 210 80, 235 80 Q 255 80, 255 100 L 210 100" stroke="rgba(255,255,255,0.95)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none" class="letter-e" />
+          <path d="M 275 75 L 275 115 Q 275 125, 290 125 M 265 85 L 285 85" stroke="rgba(255,255,255,0.95)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none" class="letter-t" />
+          <path d="M 310 120 L 310 85 Q 310 80, 325 80 Q 335 80, 340 85" stroke="rgba(255,255,255,0.95)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none" class="letter-r" />
+          <path d="M 360 85 L 375 120 L 390 85 M 375 120 Q 375 145, 365 150" stroke="rgba(255,255,255,0.95)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" fill="none" class="letter-y" />
+        </g>
+
+        <!-- Line 2: "بالعربي" -->
+        <g class="word-arabic">
+          <path d="M 480 170 Q 460 165, 450 170 Q 445 175, 450 180 Q 455 185, 465 183 Q 475 181, 480 178 M 465 188 Q 465 189, 465 190" stroke="rgba(255,255,255,0.95)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none" class="letter-baa" />
+          <path d="M 430 160 L 430 190" stroke="rgba(255,255,255,0.95)" stroke-width="3" stroke-linecap="round" fill="none" class="letter-alif" />
+          <path d="M 400 155 Q 405 162, 408 175 Q 410 188, 415 190" stroke="rgba(255,255,255,0.95)" stroke-width="3" stroke-linecap="round" fill="none" class="letter-lam" />
+          <path d="M 380 175 Q 375 170, 370 175 Q 365 180, 367 185 Q 369 188, 374 188" stroke="rgba(255,255,255,0.95)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none" class="letter-ain" />
+          <path d="M 350 178 Q 345 180, 342 185 Q 340 188, 342 190" stroke="rgba(255,255,255,0.95)" stroke-width="3" stroke-linecap="round" fill="none" class="letter-raa" />
+          <path d="M 330 175 Q 315 173, 310 178 Q 305 183, 310 188 Q 315 193, 325 191 Q 332 189, 336 186 M 318 198 Q 318 199, 318 200" stroke="rgba(255,255,255,0.95)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" fill="none" class="letter-baa2" />
+          <path d="M 295 185 Q 290 188, 285 188 Q 280 188, 278 185 M 282 195 Q 282 196, 282 197 M 288 195 Q 288 196, 288 197" stroke="rgba(255,255,255,0.95)" stroke-width="3" stroke-linecap="round" fill="none" class="letter-yaa" />
+        </g>
+
+        <!-- Line 3: Subtitle -->
+        <g class="word-subtitle" opacity="0.75">
+          <path d="M 120 260 L 145 260 M 120 255 L 120 265 M 150 265 Q 150 255, 158 255 Q 165 255, 165 265 M 170 255 L 170 265 M 170 255 L 180 265 M 180 255 L 180 265 M 185 255 Q 185 265, 195 265 Q 200 265, 205 260" stroke="rgba(255,255,255,0.8)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none" class="subtitle-explore" />
+          <path d="M 215 260 L 218 260 M 223 255 L 223 265 M 223 255 Q 230 255, 230 265 M 240 265 Q 240 255, 248 255 Q 255 255, 255 265 M 265 255 L 265 265 Q 265 265, 273 265 M 283 265 Q 283 255, 291 255 Q 298 255, 298 265 M 308 260 L 308 265 M 308 255 L 318 265 M 318 255 L 318 265 M 328 265 Q 328 255, 336 255 Q 343 255, 343 265 M 353 255 L 353 265 Q 353 265, 361 265 M 371 255 L 371 265 Q 371 265, 377 260" stroke="rgba(255,255,255,0.8)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none" class="subtitle-middle" />
+          <path d="M 395 265 Q 395 255, 403 255 Q 410 255, 410 265 M 418 255 L 418 265 M 418 260 L 425 260 M 435 260 L 438 260 M 443 255 L 443 265 M 443 255 Q 450 255, 450 265 M 460 265 L 460 255 L 470 265 M 470 255 L 470 265 M 478 265 L 478 255 L 490 255 M 478 260 L 486 260" stroke="rgba(255,255,255,0.8)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none" class="subtitle-end" />
+        </g>
+      </svg>
+
+      <div class="hint-text">
+        enter the diwan
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function toggleTheme(e) {
+      if (e) e.stopPropagation();
+      document.body.classList.toggle('light');
+      const sunIcon = document.querySelector('.sun-icon');
+      const moonIcon = document.querySelector('.moon-icon');
+
+      if (document.body.classList.contains('light')) {
+        sunIcon.style.display = 'block';
+        moonIcon.style.display = 'none';
+
+        // Update SVG stroke colors for light mode
+        document.querySelectorAll('.word-poetry path').forEach(el => {
+          el.setAttribute('stroke', 'rgba(0,0,0,0.95)');
+        });
+        document.querySelectorAll('.word-arabic path').forEach(el => {
+          el.setAttribute('stroke', 'rgba(0,0,0,0.95)');
+        });
+        document.querySelectorAll('.word-subtitle path').forEach(el => {
+          el.setAttribute('stroke', 'rgba(0,0,0,0.8)');
+        });
+      } else {
+        sunIcon.style.display = 'none';
+        moonIcon.style.display = 'block';
+
+        // Update SVG stroke colors for dark mode
+        document.querySelectorAll('.word-poetry path').forEach(el => {
+          el.setAttribute('stroke', 'rgba(255,255,255,0.95)');
+        });
+        document.querySelectorAll('.word-arabic path').forEach(el => {
+          el.setAttribute('stroke', 'rgba(255,255,255,0.95)');
+        });
+        document.querySelectorAll('.word-subtitle path').forEach(el => {
+          el.setAttribute('stroke', 'rgba(255,255,255,0.8)');
+        });
+      }
+    }
+
+    function fadeOut() {
+      document.querySelector('.container').classList.add('fade-out');
+      setTimeout(() => {
+        alert('This would transition to the walkthrough guide');
+      }, 700);
+    }
+  </script>
+</body>
+</html>

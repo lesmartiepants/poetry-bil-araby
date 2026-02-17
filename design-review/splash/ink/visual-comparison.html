@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ink Calligraphy - Category Comparison</title>
+  <base href="/design-review-output/splash/round-1/ink/">
+  <style>
+    :root {
+      --bg: #07080b;
+      --panel: rgba(22, 24, 30, 0.9);
+      --panel-border: rgba(197, 160, 89, 0.22);
+      --text: #eceff3;
+      --muted: #a8afb9;
+      --gold: #c5a059;
+      --gold-soft: #d7c089;
+      --warning: #f0b56b;
+      --line: rgba(255, 255, 255, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background:
+        radial-gradient(circle at top right, rgba(197, 160, 89, 0.08), transparent 42%),
+        radial-gradient(circle at 20% 80%, rgba(84, 98, 140, 0.12), transparent 46%),
+        var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif;
+      min-height: 100vh;
+      line-height: 1.45;
+      padding: 26px 20px 50px;
+    }
+
+    .page {
+      max-width: 1440px;
+      margin: 0 auto;
+      display: grid;
+      gap: 24px;
+    }
+
+    .header {
+      border: 1px solid var(--panel-border);
+      border-radius: 20px;
+      background: var(--panel);
+      padding: 22px 24px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .header-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .header h1 {
+      font-size: clamp(1.65rem, 2.3vw, 2.2rem);
+      color: var(--gold-soft);
+      letter-spacing: -0.02em;
+    }
+
+    .header p {
+      color: var(--muted);
+      font-size: 0.98rem;
+      max-width: 900px;
+    }
+
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .meta-chip {
+      border-radius: 999px;
+      border: 1px solid rgba(197, 160, 89, 0.28);
+      background: rgba(197, 160, 89, 0.13);
+      color: var(--gold-soft);
+      font-size: 0.78rem;
+      font-weight: 700;
+      padding: 5px 11px;
+      letter-spacing: 0.01em;
+    }
+
+    .meta-chip.warning {
+      border-color: rgba(240, 181, 107, 0.35);
+      background: rgba(240, 181, 107, 0.14);
+      color: #f5cf99;
+    }
+
+    .link-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .link-btn {
+      border-radius: 10px;
+      border: 1px solid rgba(197, 160, 89, 0.35);
+      background: rgba(197, 160, 89, 0.15);
+      color: var(--gold-soft);
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 0.84rem;
+      padding: 10px 14px;
+      transition: 150ms ease;
+    }
+
+    .link-btn:hover {
+      transform: translateY(-1px);
+      background: rgba(197, 160, 89, 0.22);
+    }
+
+    .panel {
+      border: 1px solid var(--panel-border);
+      border-radius: 20px;
+      background: var(--panel);
+      padding: 20px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .panel h2 {
+      font-size: 1.16rem;
+      color: var(--gold-soft);
+      letter-spacing: -0.01em;
+    }
+
+    .panel p {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .artifact-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 14px;
+    }
+
+    .artifact-card {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      background: rgba(6, 7, 10, 0.6);
+      overflow: hidden;
+      display: grid;
+      gap: 8px;
+      padding-bottom: 10px;
+    }
+
+    .artifact-media {
+      height: 170px;
+      background: #090b10;
+      border-bottom: 1px solid var(--line);
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+    }
+
+    .artifact-media img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .artifact-media.missing {
+      background: repeating-linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.04),
+        rgba(255, 255, 255, 0.04) 10px,
+        rgba(255, 255, 255, 0.01) 10px,
+        rgba(255, 255, 255, 0.01) 20px
+      );
+    }
+
+    .placeholder-text {
+      font-size: 0.82rem;
+      color: #b9c0ca;
+      text-align: center;
+      padding: 0 12px;
+    }
+
+    .artifact-card h3 {
+      font-size: 0.92rem;
+      color: var(--text);
+      padding: 0 12px;
+    }
+
+    .artifact-card p {
+      font-size: 0.8rem;
+      color: var(--muted);
+      padding: 0 12px;
+    }
+
+    .option-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .option-card {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow: hidden;
+      display: grid;
+      grid-template-columns: 240px minmax(0, 1fr);
+      background: rgba(6, 7, 10, 0.6);
+    }
+
+    .option-shot {
+      background: #090b10;
+      border-right: 1px solid var(--line);
+      min-height: 170px;
+      display: grid;
+      place-items: center;
+      overflow: hidden;
+    }
+
+    .option-shot img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .option-shot.missing {
+      background: repeating-linear-gradient(
+        135deg,
+        rgba(255, 255, 255, 0.04),
+        rgba(255, 255, 255, 0.04) 10px,
+        rgba(255, 255, 255, 0.01) 10px,
+        rgba(255, 255, 255, 0.01) 20px
+      );
+    }
+
+    .option-copy {
+      padding: 12px 14px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .option-heading {
+      color: var(--gold-soft);
+      font-weight: 800;
+      font-size: 0.93rem;
+    }
+
+    .option-copy p {
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    .inline-link {
+      color: var(--gold-soft);
+      font-size: 0.84rem;
+      font-weight: 700;
+      text-decoration: none;
+      width: fit-content;
+      border-bottom: 1px dashed rgba(197, 160, 89, 0.5);
+      padding-bottom: 2px;
+    }
+
+    .split-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 14px;
+    }
+
+    .preview-card {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow: hidden;
+      background: rgba(6, 7, 10, 0.6);
+      display: grid;
+      grid-template-rows: auto 420px;
+    }
+
+    .preview-card header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      border-bottom: 1px solid var(--line);
+      padding: 10px 12px;
+    }
+
+    .preview-card h3 {
+      font-size: 0.88rem;
+      color: var(--text);
+    }
+
+    .preview-card a {
+      color: var(--gold-soft);
+      font-size: 0.78rem;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .preview-card iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      display: block;
+      background: #000;
+    }
+
+    .full-stack {
+      display: grid;
+      gap: 14px;
+    }
+
+    .full-preview {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      overflow: hidden;
+      background: rgba(6, 7, 10, 0.6);
+    }
+
+    .full-preview header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      border-bottom: 1px solid var(--line);
+      padding: 10px 12px;
+    }
+
+    .full-preview h3 {
+      font-size: 0.9rem;
+      color: var(--text);
+    }
+
+    .full-preview a {
+      color: var(--gold-soft);
+      font-size: 0.8rem;
+      text-decoration: none;
+      font-weight: 700;
+    }
+
+    .full-preview iframe {
+      width: 100%;
+      height: 78vh;
+      border: none;
+      display: block;
+      background: #000;
+    }
+
+    @media (max-width: 940px) {
+      .option-card {
+        grid-template-columns: 1fr;
+      }
+
+      .option-shot {
+        border-right: none;
+        border-bottom: 1px solid var(--line);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <section class="header">
+      <div class="header-row">
+        <h1>Ink Calligraphy - category comparison</h1>
+      </div>
+      <p>Traditional ink brush and Arabic letterforms</p>
+      <div class="chip-row">
+        <div class="meta-chip">Category 7 of 9</div>
+        <div class="meta-chip">1 option(s) in this round</div>
+        <div class="meta-chip">Round 1</div>
+        <div class="meta-chip warning">Missing option slots in this round: 1, 2</div>
+      </div>
+      <div class="link-row">
+        <a class="link-btn" href="/design-review/splash">Back to master comparison</a>
+        <a class="link-btn" href="/design-review/splash/streamlined?category=ink">Review this category in streamlined mode</a>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Original design + interaction references</h2>
+      <p>Placeholders appear automatically when artifacts for this round are not yet captured.</p>
+      <div class="artifact-grid">
+        
+      <article class="artifact-card">
+        <div class="artifact-media">
+          <img src="current-state/1-ink-splash-full.png" alt="Original design screenshot" loading="lazy" data-missing="Placeholder: original screenshot missing" onerror="handleMissingMedia(this)">
+        </div>
+        <h3>Original design screenshot</h3>
+        <p>Baseline layout screenshot from the application.</p>
+      </article>
+  
+        
+      <article class="artifact-card">
+        <div class="artifact-media">
+          <img src="current-state/2-ink-animation.png" alt="Key animation state" loading="lazy" data-missing="Placeholder: animation screenshot missing" onerror="handleMissingMedia(this)">
+        </div>
+        <h3>Key animation state</h3>
+        <p>Reference screenshot of the primary animation moment.</p>
+      </article>
+  
+        
+      <article class="artifact-card">
+        <div class="artifact-media">
+          <img src="current-state/3-ink-button-hover.png" alt="Button hover/click state" loading="lazy" data-missing="Placeholder: button interaction screenshot missing" onerror="handleMissingMedia(this)">
+        </div>
+        <h3>Button hover/click state</h3>
+        <p>Reference screenshot for CTA interaction behavior.</p>
+      </article>
+  
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Option screenshots + concise implementation notes</h2>
+      <div class="option-list">
+        
+      <article class="option-card">
+        <div class="option-shot">
+          <img src="mockups/option-3-live-calligraphy.png" alt="Live Calligraphy mockup" loading="lazy" data-missing="Placeholder: Live Calligraphy screenshot" onerror="handleMissingMedia(this)">
+        </div>
+        <div class="option-copy">
+          <div class="option-heading">Option 3: Live Calligraphy</div>
+          <p><strong>What changed:</strong> Animated brush stroke revealing calligraphy in real-time</p>
+          <p><strong>Technical optimization:</strong> Staggered timeline sequencing to smooth motion and avoid repaint spikes.</p>
+          <a href="previews/option-3-live-calligraphy.html" class="inline-link" target="_blank" rel="noopener noreferrer">Open interactive preview</a>
+        </div>
+      </article>
+  
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Side-by-side interactive previews</h2>
+      <p>Quickly compare options in parallel before opening full-screen previews.</p>
+      <div class="split-grid">
+        
+      <article class="preview-card">
+        <header>
+          <h3>Option 3: Live Calligraphy</h3>
+          <a href="previews/option-3-live-calligraphy.html" target="_blank" rel="noopener noreferrer">Open tab</a>
+        </header>
+        <iframe src="previews/option-3-live-calligraphy.html" title="Live Calligraphy side-by-side preview" loading="lazy"></iframe>
+      </article>
+  
+      </div>
+    </section>
+
+    <section class="panel">
+      <h2>Full-screen preview stack</h2>
+      <p>Use this section for immersive review when checking full viewport behavior.</p>
+      <div class="full-stack">
+        
+      <article class="full-preview">
+        <header>
+          <h3>Option 3: Live Calligraphy</h3>
+          <a href="previews/option-3-live-calligraphy.html" target="_blank" rel="noopener noreferrer">Open full screen</a>
+        </header>
+        <iframe src="previews/option-3-live-calligraphy.html" title="Live Calligraphy full preview" loading="lazy"></iframe>
+      </article>
+  
+      </div>
+    </section>
+  </div>
+
+  <script>
+    function handleMissingMedia(image) {
+      const container = image.parentElement;
+      if (!container) return;
+      const text = image.getAttribute('data-missing') || 'Placeholder: artifact missing';
+      container.classList.add('missing');
+      container.innerHTML = '<div class="placeholder-text">' + text + '</div>';
+    }
+  </script>
+</body>
+</html>

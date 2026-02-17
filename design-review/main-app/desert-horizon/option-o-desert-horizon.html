@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Option O: Desert Horizon - Intro + Main Mockup</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Inter", system-ui, sans-serif;
+      background: #f4d2a7;
+      color: #3a1d12;
+    }
+    .canvas {
+      max-width: 1680px;
+      margin: 24px auto;
+      padding: 24px;
+    }
+    .meta {
+      display: flex;
+      gap: 14px;
+      align-items: baseline;
+      margin-bottom: 18px;
+      color: #7c4a2e;
+    }
+    .meta .label {
+      font-size: 11px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+    }
+    .meta .title {
+      font-size: 24px;
+      font-weight: 700;
+      color: #3a1d12;
+    }
+    .screens {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 24px;
+    }
+    .screen {
+      border-radius: 30px;
+      min-height: 820px;
+      padding: 32px;
+      background: linear-gradient(180deg, #f6d7a8 0%, #f0b476 55%, #db8a58 100%);
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(58, 29, 18, 0.15);
+      box-shadow: 0 20px 45px rgba(58, 29, 18, 0.2);
+    }
+    .screen::after {
+      content: "";
+      position: absolute;
+      left: -10%;
+      bottom: -30%;
+      width: 120%;
+      height: 60%;
+      background: radial-gradient(circle at 50% 0%, rgba(255, 255, 255, 0.3), rgba(219, 138, 88, 0.2));
+      border-radius: 50%;
+      opacity: 0.6;
+    }
+    .screen-label {
+      position: absolute;
+      top: 16px;
+      right: 24px;
+      font-size: 10px;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: rgba(58, 29, 18, 0.6);
+    }
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 13px;
+      z-index: 2;
+      position: relative;
+    }
+    .nav .brand {
+      font-weight: 700;
+      letter-spacing: 0.18em;
+    }
+    .pill {
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.35);
+      border: 1px solid rgba(58, 29, 18, 0.2);
+      font-size: 12px;
+    }
+    .hero {
+      margin-top: 90px;
+      display: grid;
+      gap: 16px;
+      z-index: 2;
+      position: relative;
+    }
+    .hero h1 {
+      font-size: 42px;
+      line-height: 1.1;
+      max-width: 380px;
+    }
+    .hero p {
+      font-size: 15px;
+      max-width: 360px;
+      color: rgba(58, 29, 18, 0.7);
+    }
+    .stamps {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+    .stamp {
+      padding: 6px 10px;
+      border: 1px dashed rgba(58, 29, 18, 0.4);
+      border-radius: 12px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+    .main-card {
+      margin: 90px auto 0;
+      background: rgba(255, 255, 255, 0.45);
+      border-radius: 24px;
+      padding: 26px;
+      max-width: 420px;
+      position: relative;
+      z-index: 2;
+      border: 1px solid rgba(58, 29, 18, 0.2);
+    }
+    .main-card .arabic {
+      font-family: "Amiri", serif;
+      font-size: 22px;
+      line-height: 2;
+      color: #3a1d12;
+    }
+    .main-card .english {
+      font-size: 13px;
+      margin-top: 12px;
+      color: rgba(58, 29, 18, 0.7);
+    }
+    .controls {
+      margin-top: 26px;
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="canvas">
+    <div class="meta">
+      <div class="label">Option O</div>
+      <div class="title">Desert Horizon</div>
+      <div class="label">Intro + Main</div>
+    </div>
+    <div class="screens">
+      <section class="screen intro">
+        <div class="screen-label">Intro</div>
+        <div class="nav">
+          <span class="brand">QAFIYAH</span>
+          <span>Discover</span>
+          <span>Listen</span>
+          <span class="pill">Open Poem</span>
+        </div>
+        <div class="hero">
+          <h1>Where verses rise like the dawn.</h1>
+          <p>Warm, lyrical, and expansive. A horizon of Arabic poetry.</p>
+          <div class="stamps">
+            <span class="stamp">Daily sunrise</span>
+            <span class="stamp">Audio stories</span>
+            <span class="stamp">Atlas view</span>
+          </div>
+        </div>
+      </section>
+      <section class="screen main">
+        <div class="screen-label">Main</div>
+        <div class="nav">
+          <span class="brand">Today • Layla</span>
+          <span class="pill">Play</span>
+        </div>
+        <div class="main-card">
+          <div class="arabic">وَجْهُكِ شَمْسٌ عَلَى الرِّمَالِ</div>
+          <div class="arabic">تَسْتَدِيرُ فِي عَيْنَيَّ بِلُطْفٍ</div>
+          <div class="english">Your face is a sun upon the sands, turning gently in my eyes.</div>
+          <div class="controls">
+            <span class="pill">Prev</span>
+            <span class="pill">Next</span>
+            <span class="pill">Save</span>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</body>
+</html>

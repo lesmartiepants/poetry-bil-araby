@@ -1273,6 +1273,7 @@ const DESIGN_REVIEW_META_STORAGE_KEY = 'diwan.designReview.meta.v1';
 const DEFAULT_GITHUB_REPO = import.meta.env.VITE_GITHUB_REPO || '';
 const DEFAULT_REVIEW_COMPONENT = 'splash';
 const DEFAULT_REVIEW_ROUND = 1;
+const STREAMLINED_REVIEW_URL = '/design-review/splash/streamlined';
 
 const DESIGN_REVIEW_VARIANTS = [
   { id: 'default', label: 'Cinematic (Default)' },
@@ -1957,9 +1958,20 @@ export default function DiwanApp() {
     return <DesignReviewPage />;
   }
 
+  const showLandingReviewFab = routePath === '/';
   const mainScrollRef = useRef(null);
   const audioRef = useRef(new Audio());
   const controlBarRef = useRef(null);
+  const reviewFabRef = useRef(null);
+  const reviewFabDragRef = useRef({
+    active: false,
+    pointerId: null,
+    moved: false,
+    startX: 0,
+    startY: 0,
+    originX: 16,
+    originY: 16
+  });
 
   const [headerOpacity, setHeaderOpacity] = useState(1);
   const [poems, setPoems] = useState([{
@@ -2011,11 +2023,78 @@ export default function DiwanApp() {
   const [cacheStats, setCacheStats] = useState({ audioHits: 0, audioMisses: 0, insightsHits: 0, insightsMisses: 0 });
   const [isPrefetching, setIsPrefetching] = useState(false);
   const [backendError, setBackendError] = useState(null);
+  const [reviewFabPosition, setReviewFabPosition] = useState({ x: 16, y: 16 });
+  const [reviewFabDragged, setReviewFabDragged] = useState(false);
   const activeAudioRequests = useRef(new Set()); // Track in-flight audio generation requests
   const activeInsightRequests = useRef(new Set()); // Track in-flight insight generation requests
   const pollingIntervals = useRef([]); // Track all polling intervals for cleanup
 
   const theme = darkMode ? THEME.dark : THEME.light;
+
+  const clampReviewFabPosition = (x, y) => {
+    if (typeof window === 'undefined') return { x, y };
+    const buttonWidth = reviewFabRef.current?.offsetWidth || 170;
+    const buttonHeight = reviewFabRef.current?.offsetHeight || 40;
+    const padding = 12;
+    const maxX = Math.max(padding, window.innerWidth - buttonWidth - padding);
+    const maxY = Math.max(padding, window.innerHeight - buttonHeight - padding);
+    return {
+      x: Math.min(maxX, Math.max(padding, x)),
+      y: Math.min(maxY, Math.max(padding, y))
+    };
+  };
+
+  const handleReviewFabPointerDown = (event) => {
+    if (!showLandingReviewFab) return;
+    if (typeof event.button === 'number' && event.button !== 0) return;
+
+    const drag = reviewFabDragRef.current;
+    drag.active = true;
+    drag.pointerId = event.pointerId;
+    drag.moved = false;
+    drag.startX = event.clientX;
+    drag.startY = event.clientY;
+    drag.originX = reviewFabPosition.x;
+    drag.originY = reviewFabPosition.y;
+    setReviewFabDragged(false);
+    event.currentTarget?.setPointerCapture?.(event.pointerId);
+  };
+
+  const handleReviewFabPointerMove = (event) => {
+    const drag = reviewFabDragRef.current;
+    if (!drag.active || drag.pointerId !== event.pointerId) return;
+
+    const dx = event.clientX - drag.startX;
+    const dy = event.clientY - drag.startY;
+    if (!drag.moved && Math.hypot(dx, dy) >= 4) {
+      drag.moved = true;
+      setReviewFabDragged(true);
+    }
+
+    if (!drag.moved) return;
+    const next = clampReviewFabPosition(drag.originX + dx, drag.originY + dy);
+    setReviewFabPosition(next);
+  };
+
+  const handleReviewFabPointerRelease = (event) => {
+    const drag = reviewFabDragRef.current;
+    if (!drag.active) return;
+    if (drag.pointerId === event.pointerId) {
+      event.currentTarget?.releasePointerCapture?.(event.pointerId);
+    }
+    const moved = drag.moved;
+    drag.active = false;
+    drag.pointerId = null;
+    drag.moved = false;
+    setReviewFabDragged(moved);
+  };
+
+  const handleReviewFabClick = (event) => {
+    if (reviewFabDragged) {
+      event.preventDefault();
+      setReviewFabDragged(false);
+    }
+  };
 
   const currentFontClass = useMemo(() => {
     const font = FONTS.find(f => f.id === currentFont);
@@ -2035,6 +2114,18 @@ export default function DiwanApp() {
       document.documentElement.className = darkMode ? 'dark' : 'light';
     }
   }, [darkMode]);
+
+  useEffect(() => {
+    if (!showLandingReviewFab || typeof window === 'undefined') return undefined;
+
+    const handleResize = () => {
+      setReviewFabPosition((previous) => clampReviewFabPosition(previous.x, previous.y));
+    };
+
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [showLandingReviewFab]);
 
   const filtered = useMemo(() => {
     const searchStr = selectedCategory.toLowerCase();
@@ -2908,6 +2999,24 @@ export default function DiwanApp() {
       <div className="scroll-progress" />
 
       <DebugPanel logs={logs} onClear={() => setLogs([])} darkMode={darkMode} />
+
+      {showLandingReviewFab && (
+        <a
+          ref={reviewFabRef}
+          href={STREAMLINED_REVIEW_URL}
+          onClick={handleReviewFabClick}
+          onPointerDown={handleReviewFabPointerDown}
+          onPointerMove={handleReviewFabPointerMove}
+          onPointerUp={handleReviewFabPointerRelease}
+          onPointerCancel={handleReviewFabPointerRelease}
+          className="fixed z-[120] select-none rounded-full border border-[#C5A059]/45 bg-black/70 px-3 py-2 text-[11px] font-semibold uppercase tracking-[0.08em] text-[#f6ddb0] backdrop-blur-md shadow-[0_8px_24px_rgba(0,0,0,0.45)] touch-none"
+          style={{ left: `${reviewFabPosition.x}px`, top: `${reviewFabPosition.y}px` }}
+          title="Drag to move. Tap to open streamlined review."
+          aria-label="Open streamlined design review"
+        >
+          Streamlined review
+        </a>
+      )}
 
       {showSplash && (() => {
         const splashProps = { onGetStarted: handleGetStarted, darkMode, theme, onToggleTheme: () => setDarkMode(!darkMode) };

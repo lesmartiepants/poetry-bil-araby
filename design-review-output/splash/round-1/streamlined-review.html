@@ -90,7 +90,7 @@
     }
 
     body.dock-collapsed .preview-container {
-      padding-bottom: 12px;
+      padding-bottom: 76px;
     }
 
     .preview-panel {
@@ -523,6 +523,89 @@
       border-color: rgba(0, 113, 227, 0.45);
     }
 
+    .collapsed-controls {
+      position: fixed;
+      left: 50%;
+      bottom: 12px;
+      transform: translateX(-50%);
+      display: none;
+      align-items: center;
+      gap: 8px;
+      max-width: min(620px, calc(100vw - 120px));
+      padding: 8px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      background: rgba(0, 0, 0, 0.72);
+      backdrop-filter: blur(24px) saturate(180%);
+      box-shadow: 0 6px 22px rgba(0, 0, 0, 0.45);
+      z-index: 126;
+    }
+
+    body.dock-collapsed .collapsed-controls {
+      display: flex;
+    }
+
+    .collapsed-option-row {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      overflow-x: auto;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255, 255, 255, 0.24) transparent;
+      max-width: min(52vw, 380px);
+      padding: 2px;
+    }
+
+    .collapsed-option-row::-webkit-scrollbar {
+      height: 4px;
+    }
+
+    .collapsed-option-row::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.24);
+      border-radius: 999px;
+    }
+
+    .btn-mini-nav {
+      height: 30px;
+      min-width: 72px;
+      padding: 0 12px;
+      font-size: 11px;
+      font-weight: 700;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.09);
+    }
+
+    .btn-option-mini {
+      position: relative;
+      width: 30px;
+      min-width: 30px;
+      height: 30px;
+      padding: 0;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.1);
+      color: var(--apple-gray-800);
+    }
+
+    .btn-option-mini.active {
+      background: #fff;
+      color: #000;
+      box-shadow: 0 3px 12px rgba(255, 255, 255, 0.3);
+    }
+
+    .btn-option-mini.kept::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--apple-green);
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.5);
+    }
+
     /* Note Modal */
     .note-modal {
       display: none;
@@ -812,6 +895,22 @@
         right: 12px;
         bottom: 10px;
       }
+
+      .collapsed-controls {
+        max-width: calc(100vw - 92px);
+        bottom: 10px;
+        left: 50%;
+      }
+
+      .btn-mini-nav {
+        min-width: 56px;
+        font-size: 10px;
+        padding: 0 10px;
+      }
+
+      .collapsed-option-row {
+        max-width: min(58vw, 240px);
+      }
     }
   </style>
 </head>
@@ -889,6 +988,14 @@
   <button class="dock-toggle-fab" id="dock-toggle-btn" onclick="toggleDock()">
     Hide controls
   </button>
+
+  <div class="collapsed-controls" id="collapsed-controls">
+    <button class="btn btn-mini-nav" id="collapsed-prev-theme" onclick="navigateTheme(-1)">Previous</button>
+    <div class="collapsed-option-row" id="collapsed-option-buttons-container">
+      <!-- Compact option buttons dynamically populated -->
+    </div>
+    <button class="btn btn-mini-nav" id="collapsed-next-theme" onclick="navigateTheme(1)">Next</button>
+  </div>
 
   <div class="bottom-dock" id="bottom-dock">
     <!-- Control Bar -->
@@ -1424,6 +1531,7 @@
       document.getElementById('option-label').textContent = option.name;
 
       renderOptionButtons(theme);
+      renderCollapsedOptionButtons(theme);
       updateButtonStates();
       updateUI();
     }
@@ -1437,6 +1545,34 @@
         button.className = 'btn btn-option';
         button.textContent = `Option ${option.number}`;
         button.title = option.name;
+        button.dataset.optionNumber = String(option.number);
+        button.onclick = () => selectOption(option.number);
+
+        if (index === state.currentOptionIndex) {
+          button.classList.add('active');
+        }
+
+        const optionKey = `${theme.id}-${option.number}`;
+        if (state.keptOptions[optionKey]) {
+          button.classList.add('kept');
+        }
+
+        container.appendChild(button);
+      });
+    }
+
+    function renderCollapsedOptionButtons(theme) {
+      const container = document.getElementById('collapsed-option-buttons-container');
+      if (!container) return;
+
+      container.innerHTML = '';
+
+      theme.options.forEach((option, index) => {
+        const button = document.createElement('button');
+        button.className = 'btn btn-option-mini';
+        button.textContent = String(option.number);
+        button.title = option.name;
+        button.dataset.optionNumber = String(option.number);
         button.onclick = () => selectOption(option.number);
 
         if (index === state.currentOptionIndex) {
@@ -1585,11 +1721,14 @@
       const theme = getCurrentTheme();
       const originalKey = `${theme.id}-original`;
 
-      document.querySelectorAll('.btn-option').forEach((button, index) => {
-        const option = theme.options[index];
-        const optionKey = `${theme.id}-${option.number}`;
+      document.querySelectorAll('.btn-option, .btn-option-mini').forEach((button) => {
+        const optionNumber = Number(button.dataset.optionNumber);
+        if (!Number.isFinite(optionNumber)) return;
+        const optionKey = `${theme.id}-${optionNumber}`;
+        const selectedOption = getCurrentOption();
+        if (!selectedOption) return;
 
-        button.classList.toggle('active', index === state.currentOptionIndex);
+        button.classList.toggle('active', selectedOption.number === optionNumber);
         button.classList.toggle('kept', !!state.keptOptions[optionKey]);
       });
 
@@ -1633,6 +1772,10 @@
 
       document.getElementById('prev-theme').disabled = state.currentThemeIndex === 0;
       document.getElementById('next-theme').disabled = state.currentThemeIndex === themes.length - 1;
+      const collapsedPrev = document.getElementById('collapsed-prev-theme');
+      const collapsedNext = document.getElementById('collapsed-next-theme');
+      if (collapsedPrev) collapsedPrev.disabled = state.currentThemeIndex === 0;
+      if (collapsedNext) collapsedNext.disabled = state.currentThemeIndex === themes.length - 1;
       updateSyncText();
     }
 

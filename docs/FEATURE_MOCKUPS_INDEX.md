@@ -22,31 +22,31 @@ All feature mockups for save, login/auth, heart, and transliteration — consoli
 
 Right-aligned, icons-only, glass morphism at 3-8% opacity. Maximum restraint.
 
-![Option 1 — Minimalist](https://github.com/user-attachments/assets/3d2b706c-fcaa-4449-a2c8-b1637df54fbe)
+![Option 1 — Minimalist](../mockups/screenshot-option1-minimalist.png)
 
 ## Option 3 — Notion / Linear
 
 Right-aligned, compact 40px, A+/A- zoom, dark tooltips, 1px gaps. Functional minimalism.
 
-![Option 3 — Notion/Linear](https://github.com/user-attachments/assets/b53d5bf5-8b1c-4ee5-a328-8d33a9e0cd63)
+![Option 3 — Notion/Linear](../mockups/screenshot-option3-notion.png)
 
 ## Option 4 — Brutalist Terminal (Wild Card)
 
 Full-height left sidebar. Retro CRT aesthetic, monochrome green, scan lines, live clock.
 
-![Option 4 — Brutalist Terminal](https://github.com/user-attachments/assets/a5bd30db-a5b5-45fa-8493-8f109c524614)
+![Option 4 — Brutalist Terminal](../mockups/screenshot-option4-wildcard.png)
 
 ## Option 6 — Neumorphic (Soft UI)
 
 Left sidebar on light background. Soft shadows, tactile raised/inset states, grouped sections.
 
-![Option 6 — Neumorphic](https://github.com/user-attachments/assets/75d5c60c-0861-40c8-aecc-7b0e9511e068)
+![Option 6 — Neumorphic](../mockups/screenshot-option6-neumorphic.png)
 
 ## Option 9 — Scandinavian Minimal
 
 Right-aligned circular buttons on light. Minimal shadows, Nordic simplicity.
 
-![Option 9 — Scandinavian Minimal](https://github.com/user-attachments/assets/23fe41bd-044b-4c66-9819-9cae47d1ebb2)
+![Option 9 — Scandinavian Minimal](../mockups/screenshot-option9-scandinavian.png)
 
 ---
 
@@ -58,31 +58,31 @@ Full Supabase authentication with Google + Apple OAuth, user settings persistenc
 
 Control bar with Sign In button and grayed-out Save heart.
 
-![Desktop — Not Signed In](https://github.com/user-attachments/assets/a85dd901-7ba5-4f28-be6b-bb4c6bf387da)
+![Desktop — Not Signed In](../mockups/auth-desktop-not-signed-in.png)
 
 ## Authentication Modal
 
 Google and Apple OAuth with Arabic welcome message ("مرحباً").
 
-![Authentication Modal](https://github.com/user-attachments/assets/a8b5a2ac-727c-47d0-b282-24d1e5a142b0)
+![Authentication Modal](../mockups/auth-modal.png)
 
 ## Save Button Tooltip (Unauthenticated)
 
 "Sign in to save poems" tooltip appears when clicking heart without being logged in.
 
-![Save Button Tooltip](https://github.com/user-attachments/assets/f2c8e1cd-8ffb-40b5-a2ed-84c1582575a1)
+![Save Button Tooltip](../mockups/auth-save-tooltip.png)
 
 ## Mobile — Compact Control Bar
 
 Responsive layout with overflow menu for additional controls.
 
-![Mobile — Compact Control Bar](https://github.com/user-attachments/assets/3e19083c-c0fb-4e60-bd00-bbfb6157344e)
+![Mobile — Compact Control Bar](../mockups/auth-mobile-compact.png)
 
 ## Mobile — Overflow Menu
 
 Full menu with bilingual labels (Arabic + English).
 
-![Mobile — Overflow Menu](https://github.com/user-attachments/assets/8725f3e8-5ee0-46c4-9c6d-9f6afd11ed23)
+![Mobile — Overflow Menu](../mockups/auth-mobile-overflow.png)
 
 ---
 

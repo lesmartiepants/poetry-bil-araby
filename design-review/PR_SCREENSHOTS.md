@@ -1,8 +1,6 @@
 # Design Screenshots Gallery
 
-Screenshots grouped by feature/component/design round for PR review.
-
-> Open the HTML preview files in a browser for interactive versions with animations.
+All screenshots captured with Playwright: desktop (1440x900) and iOS iPhone 14 (390x844).
 
 ---
 
@@ -10,191 +8,258 @@ Screenshots grouped by feature/component/design round for PR review.
 
 ### 1. Particle Field
 
-**Current State**
+**Option 1: Refined Particles** -- desktop
 
-![Particles Full](splash/particles/current-state/1-particles-splash-full.png)
+![particles-opt1-refined desktop](screenshots/desktop/particles-opt1-refined.png)
 
-![Particles Splash](splash/particles/current-state/particles-1-splash.png)
+**Option 1: Refined Particles** -- mobile
 
-![Particles Walkthrough](splash/particles/current-state/particles-2-walkthrough-step1.png)
+![particles-opt1-refined mobile](screenshots/mobile/particles-opt1-refined.png)
 
-**Options:** Refined Particles, Gold Mystical, Minimal Constellation
-- Interactive previews: `splash/particles/previews/`
+**Option 2: Gold Mystical** -- desktop
+
+![particles-opt2-gold desktop](screenshots/desktop/particles-opt2-gold.png)
+
+**Option 2: Gold Mystical** -- mobile
+
+![particles-opt2-gold mobile](screenshots/mobile/particles-opt2-gold.png)
+
+**Option 3: Minimal Constellation** -- desktop
+
+![particles-opt3-constellation desktop](screenshots/desktop/particles-opt3-constellation.png)
+
+**Option 3: Minimal Constellation** -- mobile
+
+![particles-opt3-constellation mobile](screenshots/mobile/particles-opt3-constellation.png)
 
 ---
 
 ### 5. Zen Minimalism
 
-**Current State**
+**Option 1: Zen Refined** -- desktop
 
-![Zen Dark Initial](splash/zen/current-state/1-zen-dark-initial.png)
+![zen-opt1-refined desktop](screenshots/desktop/zen-opt1-refined.png)
 
-![Zen Dark Animated](splash/zen/current-state/2-zen-dark-animated.png)
+**Option 1: Zen Refined** -- mobile
 
-![Zen Light Initial](splash/zen/current-state/3-zen-light-initial.png)
+![zen-opt1-refined mobile](screenshots/mobile/zen-opt1-refined.png)
 
-![Zen Light Breathing](splash/zen/current-state/4-zen-light-breathing.png)
+**Option 2: Haiku Style** -- desktop
 
-**Option 1: Zen Refined**
+![zen-opt2-haiku desktop](screenshots/desktop/zen-opt2-haiku.png)
 
-![Zen Refined Dark](splash/zen/mockups/option-1-refined-dark.png)
+**Option 2: Haiku Style** -- mobile
 
-![Zen Refined Light](splash/zen/mockups/option-1-refined-light.png)
-
-![Zen Refined Dark Animated](splash/zen/mockups/option-1-refined-dark-animated.png)
-
-**Option 2: Haiku Style**
-
-![Haiku Dark](splash/zen/mockups/option-2-haiku-dark.png)
-
-![Haiku Light](splash/zen/mockups/option-2-haiku-light.png)
-
-![Haiku Dark Animated](splash/zen/mockups/option-2-haiku-dark-animated.png)
-
-**Option 3: Breathing**
-
-![Breathing Dark](splash/zen/mockups/option-3-breathing-dark.png)
-
-![Breathing Light](splash/zen/mockups/option-3-breathing-light.png)
-
-![Breathing Dark Animated](splash/zen/mockups/option-3-breathing-dark-animated.png)
+![zen-opt2-haiku mobile](screenshots/mobile/zen-opt2-haiku.png)
 
 ---
 
 ### 7. Ink Calligraphy
 
-**Current State**
+**Option 3: Live Calligraphy** -- desktop
 
-![Ink Initial](splash/ink/current-state/1-ink-initial.png)
+![ink-opt3-calligraphy desktop](screenshots/desktop/ink-opt3-calligraphy.png)
 
-![Ink Spreading](splash/ink/current-state/2-ink-spreading.png)
+**Option 3: Live Calligraphy** -- mobile
 
-![Ink Settled](splash/ink/current-state/3-ink-settled.png)
-
-![Ink Button Hover](splash/ink/current-state/4-button-hover.png)
-
-**Option 3: Live Calligraphy**
-
-![Live Calligraphy](splash/ink/mockups/option-3-live-calligraphy.png)
+![ink-opt3-calligraphy mobile](screenshots/mobile/ink-opt3-calligraphy.png)
 
 ---
 
 ### 8. Ancient Manuscript
 
-**Current State**
+**Option 1: Ornate Islamic** -- desktop
 
-![Manuscript Initial](splash/manuscript/current-state/1-manuscript-initial.png)
+![manuscript-opt1-ornate desktop](screenshots/desktop/manuscript-opt1-ornate.png)
 
-![Manuscript Unfurled](splash/manuscript/current-state/2-manuscript-unfurled.png)
+**Option 1: Ornate Islamic** -- mobile
 
-**Option 1: Ornate Islamic**
+![manuscript-opt1-ornate mobile](screenshots/mobile/manuscript-opt1-ornate.png)
 
-![Ornate Islamic](splash/manuscript/mockups/option-1-ornate-islamic-component.png)
+**Option 2: Codex Spine** -- desktop
 
-**Option 2: Codex Spine**
+![manuscript-opt2-codex desktop](screenshots/desktop/manuscript-opt2-codex.png)
 
-![Codex Spine](splash/manuscript/mockups/option-2-codex-spine-component.png)
+**Option 2: Codex Spine** -- mobile
 
-**Option 3: Scroll & Seal**
+![manuscript-opt2-codex mobile](screenshots/mobile/manuscript-opt2-codex.png)
 
-![Scroll Seal](splash/manuscript/mockups/option-3-scroll-seal-component.png)
+**Option 3: Scroll & Seal** -- desktop
+
+![manuscript-opt3-scroll desktop](screenshots/desktop/manuscript-opt3-scroll.png)
+
+**Option 3: Scroll & Seal** -- mobile
+
+![manuscript-opt3-scroll mobile](screenshots/mobile/manuscript-opt3-scroll.png)
 
 ---
 
 ### 9. Light & Shadow
 
-**Current State**
+**Option 1: Improved Chiaroscuro** -- desktop
 
-![Light Initial](splash/light/current-state/1-light-initial.png)
+![light-opt1-chiaroscuro desktop](screenshots/desktop/light-opt1-chiaroscuro.png)
 
-![Light Midcycle](splash/light/current-state/2-light-midcycle.png)
+**Option 1: Improved Chiaroscuro** -- mobile
 
-![Light Button Hover](splash/light/current-state/3-button-hover.png)
+![light-opt1-chiaroscuro mobile](screenshots/mobile/light-opt1-chiaroscuro.png)
 
-**Option 1: Chiaroscuro**
+**Option 3: Minimal Ray Tracing** -- desktop
 
-![Chiaroscuro](splash/light/mockups/option-1-improved-chiaroscuro.png)
+![light-opt3-raytracing desktop](screenshots/desktop/light-opt3-raytracing.png)
 
-**Option 2: Soft Depth**
+**Option 3: Minimal Ray Tracing** -- mobile
 
-![Soft Depth](splash/light/mockups/option-2-soft-depth-layers.png)
-
-**Option 3: Ray Tracing**
-
-![Ray Tracing](splash/light/mockups/option-3-minimal-ray-tracing.png)
+![light-opt3-raytracing mobile](screenshots/mobile/light-opt3-raytracing.png)
 
 ---
 
 ## Main App Desktop Views (PR #51)
 
-**L: Celestial Lens** - Cosmic orbits, lens-style focus
+### L: Celestial Lens
 
-![Celestial Lens](main-app/celestial-lens/option-l-celestial-lens.png)
+**Desktop**
 
-**M: Calligraphic Minimal** - Parchment, ink strokes
+![mainapp-l-celestial desktop](screenshots/desktop/mainapp-l-celestial.png)
 
-![Calligraphic Minimal](main-app/calligraphic-minimal/option-m-calligraphic-minimal.png)
+**Mobile**
 
-**N: Bento Atlas** - Modular bento grid
+![mainapp-l-celestial mobile](screenshots/mobile/mainapp-l-celestial.png)
 
-![Bento Atlas](main-app/bento-atlas/option-n-bento-atlas.png)
+### M: Calligraphic Minimal
 
-**O: Desert Horizon** - Warm sunrise gradients
+**Desktop**
 
-![Desert Horizon](main-app/desert-horizon/option-o-desert-horizon.png)
+![mainapp-m-calligraphic desktop](screenshots/desktop/mainapp-m-calligraphic.png)
 
-**P: Ink Mono** - Monochrome editorial
+**Mobile**
 
-![Ink Mono](main-app/ink-mono/option-p-ink-mono.png)
+![mainapp-m-calligraphic mobile](screenshots/mobile/mainapp-m-calligraphic.png)
 
-**T: Mosaic Tiles** - Geometric tile navigation
+### N: Bento Atlas
 
-![Mosaic Tiles](main-app/mosaic-tiles/option-t-mosaic-tiles.png)
+**Desktop**
 
-**U: Scroll Story** - Chapter timeline with sticky nav
+![mainapp-n-bento desktop](screenshots/desktop/mainapp-n-bento.png)
 
-![Scroll Story](main-app/scroll-story/option-u-scroll-story.png)
+**Mobile**
+
+![mainapp-n-bento mobile](screenshots/mobile/mainapp-n-bento.png)
+
+### O: Desert Horizon
+
+**Desktop**
+
+![mainapp-o-desert desktop](screenshots/desktop/mainapp-o-desert.png)
+
+**Mobile**
+
+![mainapp-o-desert mobile](screenshots/mobile/mainapp-o-desert.png)
+
+### P: Ink Mono
+
+**Desktop**
+
+![mainapp-p-inkmono desktop](screenshots/desktop/mainapp-p-inkmono.png)
+
+**Mobile**
+
+![mainapp-p-inkmono mobile](screenshots/mobile/mainapp-p-inkmono.png)
+
+### T: Mosaic Tiles
+
+**Desktop**
+
+![mainapp-t-mosaic desktop](screenshots/desktop/mainapp-t-mosaic.png)
+
+**Mobile**
+
+![mainapp-t-mosaic mobile](screenshots/mobile/mainapp-t-mosaic.png)
+
+### U: Scroll Story
+
+**Desktop**
+
+![mainapp-u-scroll desktop](screenshots/desktop/mainapp-u-scroll.png)
+
+**Mobile**
+
+![mainapp-u-scroll mobile](screenshots/mobile/mainapp-u-scroll.png)
 
 ---
 
 ## Vertical Control Bar (PR #50)
 
-**Option 1: Minimalist** - Jony Ive, glass morphism, right-aligned
+### Option 1: Minimalist (Jony Ive)
 
-![Minimalist](controls/minimalist/screenshot-option1-minimalist.png)
+**Desktop**
 
-**Option 3: Notion/Linear** - Clean functional, compact
+![controls-opt1-minimalist desktop](screenshots/desktop/controls-opt1-minimalist.png)
 
-![Notion](controls/notion/screenshot-option3-notion.png)
+**Mobile**
 
-**Option 4: Brutalist Terminal** - Retro CRT, monochrome green
+![controls-opt1-minimalist mobile](screenshots/mobile/controls-opt1-minimalist.png)
 
-![Brutalist](controls/brutalist/screenshot-option4-wildcard.png)
+### Option 3: Notion/Linear
 
-**Option 6: Neumorphic** - Soft UI, tactile states
+**Desktop**
 
-![Neumorphic](controls/neumorphic/screenshot-option6-neumorphic.png)
+![controls-opt3-notion desktop](screenshots/desktop/controls-opt3-notion.png)
 
-**Option 9: Scandinavian** - Nordic minimal, circular buttons
+**Mobile**
 
-![Scandinavian](controls/scandinavian/screenshot-option9-scandinavian.png)
+![controls-opt3-notion mobile](screenshots/mobile/controls-opt3-notion.png)
+
+### Option 4: Brutalist Terminal
+
+**Desktop**
+
+![controls-opt4-brutalist desktop](screenshots/desktop/controls-opt4-brutalist.png)
+
+**Mobile**
+
+![controls-opt4-brutalist mobile](screenshots/mobile/controls-opt4-brutalist.png)
+
+### Option 6: Neumorphic (Soft UI)
+
+**Desktop**
+
+![controls-opt6-neumorphic desktop](screenshots/desktop/controls-opt6-neumorphic.png)
+
+**Mobile**
+
+![controls-opt6-neumorphic mobile](screenshots/mobile/controls-opt6-neumorphic.png)
+
+### Option 9: Scandinavian Minimal
+
+**Desktop**
+
+![controls-opt9-scandinavian desktop](screenshots/desktop/controls-opt9-scandinavian.png)
+
+**Mobile**
+
+![controls-opt9-scandinavian mobile](screenshots/mobile/controls-opt9-scandinavian.png)
 
 ---
 
-## Review Page
+## Auth UI (PR #49 / #61)
 
-**Particle Field - Splash with feedback panel**
+### Desktop -- Not Signed In
 
-![Review Landing](screenshots/review-landing.png)
+![auth-desktop-notsignedin desktop](screenshots/desktop/auth-desktop-notsignedin.png)
 
-**Zen Minimalism - Splash with Zen feedback**
+### Auth Modal
 
-![Review Zen](screenshots/review-zen-splash.png)
+![auth-modal desktop](screenshots/desktop/auth-modal.png)
 
-**Celestial Lens - Main App Desktop**
+### Save Tooltip (Unauthenticated)
 
-![Review Celestial](screenshots/review-celestial-mainapp.png)
+![auth-save-tooltip desktop](screenshots/desktop/auth-save-tooltip.png)
 
-**Vertical Controls - Minimalist option**
+### Mobile -- Compact Control Bar
 
-![Review Controls](screenshots/review-controls.png)
+![auth-mobile-compact mobile](screenshots/mobile/auth-mobile-compact.png)
+
+### Mobile -- Overflow Menu
+
+![auth-mobile-overflow mobile](screenshots/mobile/auth-mobile-overflow.png)

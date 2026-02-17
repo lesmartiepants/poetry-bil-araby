@@ -1,7 +1,6 @@
 {
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
-  "framework": "vite",
   "cleanUrls": false,
   "trailingSlash": false,
   "github": {
@@ -10,6 +9,7 @@
     "autoJobCancelation": true
   },
   "rewrites": [
-    { "source": "/((?!design-review/).+)", "destination": "/index.html" }
+    { "source": "/design-review/(.*)", "destination": "/design-review/$1" },
+    { "source": "/((?!design-review).*)", "destination": "/index.html" }
   ]
 }

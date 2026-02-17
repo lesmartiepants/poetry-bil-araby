@@ -131,6 +131,10 @@
       height: 100%;
       border: none;
       background: #000;
+      overflow: auto;
+      touch-action: pan-y pinch-zoom;
+      overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
     }
 
     .fallback-container {
@@ -989,7 +993,7 @@
     <!-- Original Panel -->
     <div class="preview-panel" id="original-panel">
       <div class="preview-label">Original</div>
-      <iframe class="preview-iframe" id="original-iframe"></iframe>
+      <iframe class="preview-iframe" id="original-iframe" scrolling="yes"></iframe>
       <div class="fallback-container" id="original-fallback">
         <div class="fallback-content">
           <div class="fallback-title">Original preview unavailable</div>
@@ -1006,7 +1010,7 @@
     <!-- Selected Option Panel -->
     <div class="preview-panel">
       <div class="preview-label" id="option-label">Option 1</div>
-      <iframe class="preview-iframe" id="option-iframe"></iframe>
+      <iframe class="preview-iframe" id="option-iframe" scrolling="yes"></iframe>
     </div>
 
     <!-- Info Overlay -->
@@ -1542,6 +1546,99 @@
       saveState();
     }
 
+    function getIframeScrollTarget(iframe) {
+      if (!iframe || !iframe.contentWindow || !iframe.contentWindow.document) return null;
+
+      try {
+        const doc = iframe.contentWindow.document;
+        const main = doc.querySelector('main');
+        if (main && main.scrollHeight > main.clientHeight + 1) return main;
+
+        const scrollingElement = doc.scrollingElement || doc.documentElement || doc.body;
+        if (scrollingElement && scrollingElement.scrollHeight > scrollingElement.clientHeight + 1) {
+          return scrollingElement;
+        }
+      } catch (error) {
+        return null;
+      }
+
+      return null;
+    }
+
+    function setupIframeScrollAssist() {
+      const iframeIds = ['original-iframe', 'option-iframe'];
+      iframeIds.forEach((iframeId) => {
+        const iframe = document.getElementById(iframeId);
+        if (!iframe || iframe.dataset.scrollAssistBound === '1') return;
+        iframe.dataset.scrollAssistBound = '1';
+
+        iframe.addEventListener(
+          'wheel',
+          (event) => {
+            const target = getIframeScrollTarget(iframe);
+            if (!target) return;
+
+            const previousTop = target.scrollTop;
+            target.scrollTop += event.deltaY;
+            if (target.scrollTop !== previousTop) {
+              event.preventDefault();
+            }
+          },
+          { passive: false }
+        );
+
+        let lastTouchY = null;
+
+        iframe.addEventListener(
+          'touchstart',
+          (event) => {
+            if (event.touches.length !== 1) return;
+            lastTouchY = event.touches[0].clientY;
+          },
+          { passive: true }
+        );
+
+        iframe.addEventListener(
+          'touchmove',
+          (event) => {
+            if (event.touches.length !== 1 || lastTouchY === null) return;
+
+            const target = getIframeScrollTarget(iframe);
+            if (!target) return;
+
+            const currentY = event.touches[0].clientY;
+            const deltaY = lastTouchY - currentY;
+            lastTouchY = currentY;
+
+            if (Math.abs(deltaY) < 0.5) return;
+
+            const previousTop = target.scrollTop;
+            target.scrollTop += deltaY;
+            if (target.scrollTop !== previousTop) {
+              event.preventDefault();
+            }
+          },
+          { passive: false }
+        );
+
+        iframe.addEventListener(
+          'touchend',
+          () => {
+            lastTouchY = null;
+          },
+          { passive: true }
+        );
+
+        iframe.addEventListener(
+          'touchcancel',
+          () => {
+            lastTouchY = null;
+          },
+          { passive: true }
+        );
+      });
+    }
+
     function loadTheme() {
       const theme = getCurrentTheme();
       if (!theme || !theme.options || theme.options.length === 0) {
@@ -1905,6 +2002,7 @@
         return;
       }
 
+      setupIframeScrollAssist();
       loadState();
       const params = new URLSearchParams(window.location.search);
       const requestedCategory = params.get('category');

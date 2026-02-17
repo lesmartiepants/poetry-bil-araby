@@ -10,7 +10,8 @@ on:
       - 'scripts/copy-review-assets.js'
       - 'src/app.jsx'
       - 'vercel.json'
-      - '.github/workflows/design-review-preview-links.yml'
+  issue_comment:
+    types: [created, edited]
   workflow_dispatch:
     inputs:
       pr_number:
@@ -27,7 +28,12 @@ jobs:
   comment-design-review-links:
     name: Comment Design Review Links
     runs-on: ubuntu-latest
-    if: github.event_name != 'pull_request' || github.event.pull_request.state == 'open'
+    if: |
+      (github.event_name == 'pull_request' && github.event.pull_request.state == 'open') ||
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'issue_comment' &&
+       github.event.issue.pull_request != null &&
+       github.event.comment.user.login == 'vercel')
     concurrency:
       group: design-review-preview-links-pr-${{ github.event.pull_request.number || github.event.inputs.pr_number || github.run_id }}
       cancel-in-progress: true
@@ -47,14 +53,54 @@ jobs:
             const repo = context.repo.repo;
             const marker = '<!-- design-review-preview-links -->';
             const waitMs = 20000;
-            const maxAttempts = 30; // 10 minutes max wait
+            const maxAttempts = 12; // 4 minutes max wait
 
             async function resolvePullRequestMeta() {
               if (context.eventName === 'pull_request') {
                 const pullRequest = context.payload.pull_request;
                 return {
                   issueNumber: context.issue.number,
-                  headSha: pullRequest.head.sha
+                  headSha: pullRequest.head.sha,
+                  preferredPreviewUrl: null,
+                  preferredSourceCommentUrl: null,
+                  preferredUpdatedAtIso: null
+                };
+              }
+
+              if (context.eventName === 'issue_comment') {
+                if (!context.payload.issue?.pull_request) {
+                  core.info('Issue comment is not on a pull request; skipping.');
+                  return null;
+                }
+
+                if (context.payload.comment?.user?.login !== 'vercel') {
+                  core.info(`Issue comment author is "${context.payload.comment?.user?.login || 'unknown'}"; skipping.`);
+                  return null;
+                }
+
+                const issueNumber = context.issue.number;
+                const pr = await github.rest.pulls.get({
+                  owner,
+                  repo,
+                  pull_number: issueNumber
+                });
+
+                if (pr.data.state !== 'open') {
+                  core.info(`PR #${issueNumber} is ${pr.data.state}; skipping comment update.`);
+                  return null;
+                }
+
+                const commentBody = context.payload.comment?.body || '';
+                const preferredPreviewUrl = sanitizeBaseUrl(extractPreviewUrl(commentBody));
+                const parsedUpdated = parseVercelUpdatedUtc(commentBody);
+                const fallbackUpdated = context.payload.comment?.updated_at || context.payload.comment?.created_at || null;
+
+                return {
+                  issueNumber,
+                  headSha: pr.data.head.sha,
+                  preferredPreviewUrl,
+                  preferredSourceCommentUrl: context.payload.comment?.html_url || null,
+                  preferredUpdatedAtIso: parsedUpdated ? parsedUpdated.toISOString() : fallbackUpdated
                 };
               }
 
@@ -78,7 +124,10 @@ jobs:
 
               return {
                 issueNumber,
-                headSha: pr.data.head.sha
+                headSha: pr.data.head.sha,
+                preferredPreviewUrl: null,
+                preferredSourceCommentUrl: null,
+                preferredUpdatedAtIso: null
               };
             }
 
@@ -234,6 +283,30 @@ jobs:
               });
             }
 
+            async function isDesignReviewRelevant(issueNumber) {
+              const files = await github.paginate(github.rest.pulls.listFiles, {
+                owner,
+                repo,
+                pull_number: issueNumber,
+                per_page: 100
+              });
+
+              const relevant = files.some((file) =>
+                /^design-review-output\//.test(file.filename) ||
+                /^mockups\//.test(file.filename) ||
+                /^scripts\/generate-splash-round1-pages\.mjs$/.test(file.filename) ||
+                /^scripts\/copy-review-assets\.js$/.test(file.filename) ||
+                /^src\/app\.jsx$/.test(file.filename) ||
+                /^vercel\.json$/.test(file.filename)
+              );
+
+              if (!relevant) {
+                core.info(`PR #${issueNumber} has no design-review/mockup related file changes; skipping.`);
+              }
+
+              return relevant;
+            }
+
             function selectBestPreviewComment(comments, commitDateIso, strictAfterCommit) {
               const commitDate = new Date(commitDateIso);
               const commitThreshold = new Date(commitDate.getTime() - 2 * 60 * 1000); // allow slight clock drift
@@ -354,13 +427,28 @@ jobs:
 
             const prMeta = await resolvePullRequestMeta();
             if (!prMeta) return;
+            if (!(await isDesignReviewRelevant(prMeta.issueNumber))) return;
 
             const commitDateIso = await getCommitDateIso(prMeta.headSha);
             const strictAfterCommit = context.eventName === 'pull_request';
-            const previewInfo = await waitForPreviewUrl(prMeta.issueNumber, commitDateIso, strictAfterCommit);
+            let previewInfo = null;
+
+            if (prMeta.preferredPreviewUrl) {
+              previewInfo = {
+                previewUrl: prMeta.preferredPreviewUrl,
+                sourceCommentUrl: prMeta.preferredSourceCommentUrl,
+                sourceUpdatedAtIso: prMeta.preferredUpdatedAtIso
+              };
+            } else {
+              previewInfo = await waitForPreviewUrl(prMeta.issueNumber, commitDateIso, strictAfterCommit);
+            }
             const components = loadComponentEntries();
 
             if (!previewInfo?.previewUrl) {
+              if (strictAfterCommit) {
+                core.info('No post-commit Vercel update detected yet; skipping comment update for this run.');
+                return;
+              }
               core.setFailed('Could not detect a Vercel preview URL to build design review links.');
               return;
             }

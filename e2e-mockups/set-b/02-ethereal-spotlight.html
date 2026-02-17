@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E2E B2: Ethereal Spotlight — Chiaroscuro + Magic Dust Particles</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cinzel:wght@300;400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#080808;--text:#e7e5e4;--text-dim:rgba(231,229,228,.35);--gold:#fbbf24;--gold-dim:rgba(251,191,36,.15);--warm:rgba(255,235,180,.08);--font-ar:'Amiri',serif;--font-display:'Cinzel',serif;--font-ui:'Inter',system-ui,sans-serif}
+html{font-family:var(--font-ui);background:var(--bg);color:var(--text);scroll-behavior:smooth;overflow-x:hidden}
+canvas#spotlight{position:fixed;inset:0;z-index:0;pointer-events:none}
+
+.screen{position:relative;width:100%;min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;overflow:hidden}
+.label{position:absolute;top:24px;left:24px;font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--gold);opacity:.3}
+
+/* SPLASH - Dramatic light + dust */
+#splash{background:var(--bg)}
+.sp{position:relative;z-index:2;text-align:center;padding:40px}
+.sp-logo{display:flex;flex-direction:row-reverse;align-items:flex-end;justify-content:center;gap:16px;margin-bottom:48px}
+.sp-ar{font-family:var(--font-ar);font-size:clamp(3rem,8vw,4.5rem);font-weight:700;color:var(--gold);text-shadow:0 0 40px rgba(251,191,36,.3),5px -3px 20px rgba(255,235,180,.2)}
+.sp-en{font-family:var(--font-display);font-size:clamp(2rem,6vw,3.5rem);font-weight:300;letter-spacing:.1em;text-transform:uppercase}
+.sp-sub{font-size:11px;letter-spacing:.4em;text-transform:uppercase;color:var(--text-dim);margin-bottom:52px}
+.sp-enter{display:inline-block;padding:16px 44px;border:1px solid rgba(251,191,36,.2);color:var(--gold);font-family:var(--font-display);font-size:13px;letter-spacing:.2em;text-decoration:none;transition:all .5s;background:transparent}
+.sp-enter:hover{background:rgba(251,191,36,.08);box-shadow:0 0 40px rgba(251,191,36,.1);border-color:rgba(251,191,36,.4)}
+
+/* WALKTHROUGH - Light-guided */
+#walk{background:var(--bg)}
+.wk{position:relative;z-index:2;max-width:420px;width:90%;padding:48px 0}
+.wk-step{margin-bottom:32px;padding:24px;position:relative;border-left:1px solid rgba(251,191,36,.1)}
+.wk-step::before{content:'';position:absolute;left:-5px;top:24px;width:9px;height:9px;border-radius:50%;background:var(--gold);box-shadow:0 0 12px rgba(251,191,36,.4)}
+.wk-step h3{font-family:var(--font-display);font-size:16px;font-weight:300;letter-spacing:.06em;margin-bottom:6px}
+.wk-step p{font-size:12px;color:var(--text-dim);line-height:1.7}
+.wk-cta{display:block;margin:16px 0 0;padding:14px 36px;background:transparent;border:1px solid rgba(251,191,36,.2);color:var(--gold);border-radius:0;font-family:var(--font-display);font-size:12px;letter-spacing:.2em;cursor:pointer;transition:all .3s}
+.wk-cta:hover{background:rgba(251,191,36,.06)}
+
+/* MAIN */
+#main{background:var(--bg);padding:0;align-items:stretch}
+.m-wrap{position:relative;z-index:2;max-width:720px;margin:0 auto;padding:40px 24px;min-height:100vh}
+.m-nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:32px}
+.m-brand{font-family:var(--font-display);font-size:14px;letter-spacing:.15em;font-weight:300}
+.m-links{display:flex;gap:16px;font-size:12px;color:var(--text-dim)}
+.m-links span{cursor:pointer;transition:color .2s}
+.m-links span:hover{color:var(--gold)}
+.poem{padding:40px 0;border-top:1px solid rgba(255,255,255,.04);text-align:center}
+.pm{font-size:10px;text-transform:uppercase;letter-spacing:.2em;color:rgba(251,191,36,.4);margin-bottom:28px}
+.par{font-family:var(--font-ar);font-size:clamp(1.5rem,4vw,2.2rem);line-height:2.3;direction:rtl;margin-bottom:20px}
+.pen{font-size:14px;color:var(--text-dim);line-height:1.9;font-style:italic;max-width:480px;margin:0 auto}
+.pact{display:flex;gap:14px;justify-content:center;margin-top:24px;flex-wrap:wrap}
+.pact button{padding:8px 18px;border:1px solid rgba(255,255,255,.06);background:transparent;color:var(--text-dim);font-size:11px;cursor:pointer;transition:all .2s;font-family:var(--font-ui)}
+.pact button:hover{border-color:rgba(251,191,36,.2);color:var(--gold)}
+.ai{margin-top:24px;padding:20px 24px;border-left:1px solid rgba(251,191,36,.15);background:rgba(251,191,36,.02)}
+.ai p{font-size:13px;color:var(--text-dim);line-height:1.7}
+
+/* NOTION CONTROLS */
+.vc{position:fixed;right:14px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:1px;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:10px;overflow:hidden;z-index:100;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+.vc button{width:38px;height:38px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;cursor:pointer;color:rgba(255,255,255,.3);transition:all .15s;font-size:14px}
+.vc button:hover{background:rgba(255,255,255,.05);color:rgba(255,255,255,.7)}
+.vc button.on{background:rgba(251,191,36,.08);color:var(--gold)}
+.vc .div{height:1px;background:rgba(255,255,255,.04)}
+
+/* SETTINGS */
+#settings{background:var(--bg);padding:80px 24px}
+.st{position:relative;z-index:2;max-width:420px;margin:0 auto}
+.st-title{font-family:var(--font-display);font-size:18px;font-weight:300;letter-spacing:.15em;margin-bottom:28px;text-align:center}
+.st-row{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.st-row label{font-size:13px;color:var(--text-dim)}
+.st-row label small{display:block;font-size:10px;opacity:.5;margin-top:3px}
+.tgl{width:44px;height:24px;border-radius:12px;background:rgba(255,255,255,.06);position:relative;cursor:pointer;transition:background .2s}
+.tgl.on{background:rgba(251,191,36,.4)}
+.tgl::after{content:'';position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .2s}
+.tgl.on::after{transform:translateX(20px)}
+.sl{display:flex;align-items:center;gap:8px}
+.sl span{font-size:11px;color:var(--text-dim)}
+input[type=range]{-webkit-appearance:none;width:100px;height:2px;background:rgba(255,255,255,.08);outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:var(--gold);cursor:pointer;box-shadow:0 0 6px rgba(251,191,36,.3)}
+.sv{display:block;width:100%;margin-top:24px;padding:14px;background:transparent;border:1px solid rgba(251,191,36,.2);color:var(--gold);font-family:var(--font-display);font-size:13px;letter-spacing:.12em;cursor:pointer;transition:all .3s}
+.sv:hover{background:rgba(251,191,36,.06)}
+
+/* AUTH */
+#auth{background:var(--bg)}
+.auth-box{position:relative;z-index:2;width:90%;max-width:370px;background:rgba(20,20,20,.9);border:1px solid rgba(255,255,255,.06);border-radius:16px;padding:40px 28px;text-align:center;box-shadow:0 30px 60px rgba(0,0,0,.5)}
+.auth-title{font-family:var(--font-ar);font-size:32px;color:var(--gold);margin-bottom:8px}
+.auth-sub{font-size:13px;color:var(--text-dim);margin-bottom:28px}
+.oa{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:13px;border:1px solid rgba(255,255,255,.06);background:transparent;color:var(--text);font-size:14px;cursor:pointer;margin-bottom:10px;transition:all .2s;font-family:var(--font-ui)}
+.oa:hover{border-color:rgba(251,191,36,.15);background:rgba(251,191,36,.03)}
+.oa svg{width:18px;height:18px}
+.at{font-size:10px;color:rgba(255,255,255,.2);margin-top:18px}
+
+.nav-bar{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:200;background:rgba(8,8,8,.9);backdrop-filter:blur(8px);padding:8px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.04)}
+.nav-bar a{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);text-decoration:none;padding:5px 10px;border-radius:999px;transition:all .2s}
+.nav-bar a:hover{color:var(--gold)}
+
+@media(max-width:640px){.sp-logo{flex-direction:column;align-items:center;gap:4px}.sp-ar{font-size:2.5rem}.sp-en{font-size:1.8rem}.vc{right:6px}.vc button{width:34px;height:34px;font-size:12px}}
+</style>
+</head>
+<body>
+<canvas id="spotlight"></canvas>
+<nav class="nav-bar"><a href="#splash">Splash</a><a href="#walk">Intro</a><a href="#main">Read</a><a href="#settings">Settings</a><a href="#auth">Auth</a></nav>
+
+<section class="screen" id="splash"><span class="label">Splash</span><div class="sp"><div class="sp-logo"><span class="sp-ar">قافية</span><span class="sp-en">Qafiyah</span></div><div class="sp-sub">Arabic Poetry, Pair by Pair</div><a href="#walk" class="sp-enter">Enter the Light</a></div></section>
+
+<section class="screen" id="walk"><span class="label">Walkthrough</span><div class="wk">
+  <div class="wk-step"><h3>DISCOVER</h3><p>84,000+ Arabic poems from the golden age to modern masters, each with English translation.</p></div>
+  <div class="wk-step"><h3>LISTEN</h3><p>AI-powered native recitation. Toggle transliteration to follow the melody of verse.</p></div>
+  <div class="wk-step"><h3>COLLECT</h3><p>Save favorites, customize your reading view, sync across devices.</p></div>
+  <button class="wk-cta" onclick="document.getElementById('main').scrollIntoView({behavior:'smooth'})">BEGIN</button>
+</div></section>
+
+<section class="screen" id="main" style="align-items:stretch"><div class="m-wrap"><span class="label">Main App</span>
+  <div class="m-nav"><div class="m-brand">QAFIYAH</div><div class="m-links"><span>Explore</span><span>Saved</span><span>Settings</span></div></div>
+  <div class="poem"><div class="pm">Nizar Qabbani &bull; Modern</div><div class="par">حبيبتي ضوء قمرٍ جديد<br>وعندما تمشي تمشي الورود</div><div class="pen">My beloved is the light of a new moon,<br>and when she walks, flowers walk with her.</div><div class="pact"><button>&#9654; Listen</button><button>&#9825; Save</button><button>&#8634; Next</button><button>Aa Size</button><button>ع Trans</button></div></div>
+  <div class="ai"><p>&#10024; Nizar Qabbani revolutionized Arabic love poetry by making it direct, sensual, and accessible. His imagery of moonlight and flowers draws from both classical Arabic tradition and Romantic Western poetry.</p></div>
+</div></section>
+
+<div class="vc"><button>&#8635;</button><div class="div"></div><button class="on">&#9654;</button><div class="div"></div><button>&#9825;</button><div class="div"></div><button>Aa</button><div class="div"></div><button>ع</button><div class="div"></div><button>&#9790;</button><div class="div"></div><button>&#8599;</button></div>
+
+<section class="screen" id="settings"><span class="label">Settings</span><div class="st"><div class="st-title">PREFERENCES</div>
+  <div class="st-row"><label>Text Size<small>Arabic display</small></label><div class="sl"><span>A</span><input type="range" min="14" max="32" value="22"><span style="font-size:16px">A</span></div></div>
+  <div class="st-row"><label>Transliteration<small>Latin pronunciation</small></label><div class="tgl on"></div></div>
+  <div class="st-row"><label>Dark Mode<small>Appearance</small></label><div class="tgl on"></div></div>
+  <div class="st-row"><label>Auto Audio<small>Play on load</small></label><div class="tgl"></div></div>
+  <div class="st-row"><label>AI Insights<small>Analysis</small></label><div class="tgl on"></div></div>
+  <button class="sv">SAVE</button>
+</div></section>
+
+<section class="screen" id="auth"><span class="label">Auth</span><div class="auth-box"><div class="auth-title">مرحباً</div><div class="auth-sub">Sign in to save and sync</div>
+  <button class="oa"><svg viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>Continue with Google</button>
+  <button class="oa"><svg viewBox="0 0 24 24" fill="#fff"><path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.52-3.23 0-1.44.64-2.2.52-3.06-.4C3.79 16.17 4.36 9.04 8.92 8.78c1.27.06 2.15.72 2.89.76.98-.2 1.92-.76 2.97-.69 1.26.1 2.21.59 2.83 1.5-2.59 1.54-1.97 4.93.36 5.87-.47 1.24-.73 1.79-1.37 2.89-.97 1.69-2.34 3.38-4.02 3.42-.74.02-1.23-.38-2.03-.4-.83.02-1.35.42-2.13.42-1.73-.04-3.05-1.84-4.03-3.52-2.75-4.72-3.05-10.27-1.35-13.17 1.2-2.04 3.09-3.23 5.1-3.28 1.1-.02 2.17.74 2.86.74.69 0 1.98-.92 3.34-.78.57.02 2.16.23 3.18 1.72-2.58 1.61-2.16 5.57.47 6.63z"/></svg>Continue with Apple</button>
+  <div class="at">Terms and Privacy Policy</div>
+</div></section>
+
+<script>
+// Spotlight + magic dust particles
+const c=document.getElementById('spotlight'),ctx=c.getContext('2d');let W,H,t=0,mx=0,my=0;
+function resize(){W=c.width=innerWidth;H=c.height=innerHeight;mx=W*.35;my=H*.25}resize();addEventListener('resize',resize);
+addEventListener('mousemove',e=>{mx+=(e.clientX-mx)*.02;my+=(e.clientY-my)*.02});
+let dust=[];for(let i=0;i<120;i++)dust.push({x:Math.random()*3e3,y:Math.random()*2e4,r:Math.random()*1.2+.2,vx:(Math.random()-.5)*.08,vy:(Math.random()-.5)*.06-.02,a:Math.random()*.15+.02,bright:Math.random()>.6});
+function draw(){ctx.clearRect(0,0,W,H);t+=.002;
+// Spotlight cone
+const lx=W*.35+Math.sin(t)*W*.04,ly=H*.2+Math.cos(t*.7)*H*.02;
+for(let i=0;i<4;i++){const angle=-.4+i*.2+Math.sin(t+i)*.08;const len=H*1.3;ctx.save();ctx.translate(lx,ly);ctx.rotate(angle);const g=ctx.createLinearGradient(0,0,0,len);g.addColorStop(0,'rgba(255,235,180,.06)');g.addColorStop(.4,'rgba(255,220,150,.02)');g.addColorStop(1,'transparent');ctx.fillStyle=g;ctx.beginPath();ctx.moveTo(-35,0);ctx.lineTo(-55,len);ctx.lineTo(55,len);ctx.lineTo(35,0);ctx.closePath();ctx.fill();ctx.restore()}
+// Dust particles - magic/ether effect
+dust.forEach(d=>{d.x+=d.vx;d.y+=d.vy;if(d.y<-10){d.y=H+10;d.x=Math.random()*W}if(d.x<0||d.x>W)d.vx*=-1;
+const dx=d.x-lx,dy=d.y-ly,dist=Math.sqrt(dx*dx+dy*dy);const inLight=dist<H*.5;const alpha=inLight?d.a*2:d.a;
+ctx.beginPath();ctx.arc(d.x%W,d.y%H,d.r,0,Math.PI*2);ctx.fillStyle=d.bright?`rgba(255,235,180,${alpha})`:`rgba(200,180,140,${alpha*.5})`;ctx.fill();
+if(d.bright&&inLight){ctx.beginPath();ctx.arc(d.x%W,d.y%H,d.r*3,0,Math.PI*2);ctx.fillStyle=`rgba(255,235,180,${alpha*.15})`;ctx.fill()}})}
+(function loop(){draw();requestAnimationFrame(loop)})();
+document.querySelectorAll('.tgl').forEach(t=>t.addEventListener('click',()=>t.classList.toggle('on')));
+</script>
+</body>
+</html>

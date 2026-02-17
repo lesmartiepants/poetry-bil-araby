@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Auth Mockup — Mobile Compact</title>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Tajawal', -apple-system, sans-serif; background: #0c0c0e; color: #e7e5e4; width: 375px; height: 812px; display: flex; flex-direction: column; overflow: hidden; margin: 0 auto; }
+    .poem-area { flex: 1; display: flex; align-items: center; justify-content: center; padding: 24px; text-align: center; }
+    .poem-content { width: 100%; }
+    .poem-title { font-family: 'Amiri', serif; font-size: 12px; color: #a8a29e; margin-bottom: 8px; }
+    .poem-text { font-family: 'Amiri', serif; font-size: 22px; line-height: 2.2; direction: rtl; color: #fafaf9; }
+    .poem-poet { font-size: 12px; color: #78716c; margin-top: 12px; }
+    .control-bar { display: flex; align-items: center; justify-content: center; gap: 2px; padding: 10px 8px; background: #1a1a1c; border-top: 1px solid #292524; flex-wrap: nowrap; }
+    .btn { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 8px; min-width: 44px; background: transparent; border: none; color: #a8a29e; font-size: 9px; font-family: 'Tajawal', sans-serif; cursor: pointer; border-radius: 6px; }
+    .btn svg { width: 18px; height: 18px; stroke: currentColor; fill: none; stroke-width: 1.5; }
+    .btn-heart svg { stroke: #f87171; }
+    .divider { width: 1px; height: 24px; background: #292524; margin: 0 2px; }
+    .btn-more { color: #a78bfa; }
+    .btn-more svg { stroke: #a78bfa; }
+  </style>
+</head>
+<body>
+  <div class="poem-area">
+    <div class="poem-content">
+      <div class="poem-title">من معلقة امرئ القيس</div>
+      <div class="poem-text">
+        قفا نبكِ من ذكرى حبيبٍ ومنزلِ<br>
+        بسقطِ اللوى بينَ الدخولِ فحوملِ<br>
+        فتوضحَ فالمقراةِ لم يعفُ رسمها<br>
+        لما نسجتها من جنوبٍ وشمألِ
+      </div>
+      <div class="poem-poet">— امرؤ القيس</div>
+    </div>
+  </div>
+  <div class="control-bar">
+    <div class="btn"><svg viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg><span>Listen</span></div>
+    <div class="btn"><svg viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg><span>Learn</span></div>
+    <div class="btn"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></svg><span>Discover</span></div>
+    <div class="btn btn-heart"><svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg><span>Save</span></div>
+    <div class="divider"></div>
+    <div class="btn"><svg viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg><span>Copy</span></div>
+    <div class="btn btn-more"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><circle cx="12" cy="5" r="1"/><circle cx="12" cy="19" r="1"/></svg><span>More</span></div>
+  </div>
+</body>
+</html>

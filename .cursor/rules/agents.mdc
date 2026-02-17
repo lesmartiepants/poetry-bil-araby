@@ -62,3 +62,11 @@ All agent definitions with full instructions live in:
 - `.claude/agents/ui-ux-reviewer.md`
 
 Read the relevant agent file(s) before executing tasks that fall within their domain.
+
+## Maintenance (MANDATORY)
+
+When creating a new agent or modifying an existing one in `.claude/agents/`:
+
+1. **This file** (`.cursor/rules/agents.mdc`) -- update the Agent Registry table, coordination flow, patterns, and file list
+2. **`CLAUDE.md`** (Agent System section) -- update the agent list and any affected guidance
+3. **Coordination flow** -- if the new/changed agent introduces or alters inter-agent relationships, update the ASCII diagram and Key Coordination Patterns above

@@ -537,8 +537,8 @@
       display: none;
       align-items: center;
       gap: 8px;
-      max-width: min(620px, calc(100vw - 120px));
-      padding: 8px 10px;
+      max-width: min(680px, calc(100vw - 96px));
+      padding: 8px 12px;
       border-radius: 999px;
       border: 1px solid rgba(255, 255, 255, 0.14);
       background: rgba(0, 0, 0, 0.72);
@@ -558,7 +558,7 @@
       overflow-x: auto;
       scrollbar-width: thin;
       scrollbar-color: rgba(255, 255, 255, 0.24) transparent;
-      max-width: min(52vw, 380px);
+      max-width: min(54vw, 420px);
       padding: 2px;
     }
 
@@ -910,7 +910,7 @@
       }
 
       .collapsed-controls {
-        max-width: calc(100vw - 92px);
+        max-width: calc(100vw - 72px);
         bottom: 10px;
         left: 50%;
       }
@@ -926,7 +926,7 @@
       }
 
       .collapsed-option-row {
-        max-width: min(58vw, 240px);
+        max-width: min(60vw, 280px);
       }
     }
   </style>
@@ -1012,7 +1012,7 @@
       <!-- Compact option buttons dynamically populated -->
     </div>
     <button class="btn btn-mini-nav" id="collapsed-next-theme" onclick="navigateTheme(1)">Next</button>
-    <button class="btn btn-mini-nav btn-mini-toggle" id="collapsed-show-controls" onclick="toggleDock(false)">Show controls</button>
+    <button class="btn btn-mini-nav btn-mini-toggle" id="collapsed-show-controls" onclick="toggleDock(false)">Controls</button>
   </div>
 
   <div class="bottom-dock" id="bottom-dock">
@@ -1517,7 +1517,7 @@
       dock.classList.toggle('collapsed', state.dockCollapsed);
       document.body.classList.toggle('dock-collapsed', state.dockCollapsed);
       toggleButton.classList.toggle('collapsed', state.dockCollapsed);
-      toggleButton.textContent = state.dockCollapsed ? 'Show controls' : 'Hide controls';
+      toggleButton.textContent = state.dockCollapsed ? 'Controls' : 'Hide controls';
     }
 
     function toggleDock(forceValue) {

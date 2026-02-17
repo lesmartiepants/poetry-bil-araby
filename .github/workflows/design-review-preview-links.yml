@@ -1,0 +1,232 @@
+name: Design Review Preview Links
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - 'design-review-output/**'
+      - 'mockups/**'
+      - 'scripts/generate-splash-round1-pages.mjs'
+      - 'scripts/copy-review-assets.js'
+      - 'src/app.jsx'
+      - 'vercel.json'
+      - '.github/workflows/design-review-preview-links.yml'
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  comment-design-review-links:
+    name: Comment Design Review Links
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.state == 'open'
+    concurrency:
+      group: design-review-preview-links-pr-${{ github.event.pull_request.number }}
+      cancel-in-progress: true
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Post/update PR comment with review links
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const issueNumber = context.issue.number;
+            const pullRequest = context.payload.pull_request;
+            const headSha = pullRequest.head.sha;
+            const marker = '<!-- design-review-preview-links -->';
+            const waitMs = 20000;
+            const maxAttempts = 30; // 10 minutes max wait
+
+            function toHttpsUrl(candidate) {
+              if (!candidate) return null;
+              const clean = candidate.trim();
+              if (clean.startsWith('http://') || clean.startsWith('https://')) return clean;
+              if (clean.includes('.vercel.app')) return `https://${clean.replace(/^\/+/, '')}`;
+              return null;
+            }
+
+            function decodeVcPayload(commentBody) {
+              const vcMatch = commentBody.match(/\[vc\]:\s*#[^:]*:([A-Za-z0-9+/_=-]+)/);
+              if (!vcMatch) return null;
+
+              try {
+                const normalized = vcMatch[1]
+                  .replace(/-/g, '+')
+                  .replace(/_/g, '/')
+                  .padEnd(Math.ceil(vcMatch[1].length / 4) * 4, '=');
+                const decoded = Buffer.from(normalized, 'base64').toString('utf8');
+                const payload = JSON.parse(decoded);
+                const firstProject = payload?.projects?.[0];
+                return toHttpsUrl(firstProject?.previewUrl || firstProject?.liveFeedback?.link || null);
+              } catch (error) {
+                return null;
+              }
+            }
+
+            function extractPreviewUrl(commentBody) {
+              const explicitPreview = commentBody.match(/\[Preview\]\((https:\/\/[^\s)]+)\)/i);
+              if (explicitPreview) return toHttpsUrl(explicitPreview[1]);
+
+              const vcPayloadUrl = decodeVcPayload(commentBody);
+              if (vcPayloadUrl) return vcPayloadUrl;
+
+              const domainMatches = commentBody.match(/https:\/\/[a-z0-9.-]+\.vercel\.app[^\s)]*/ig) || [];
+              const filtered = domainMatches.find((item) => !item.includes('open-feedback'));
+              if (filtered) return toHttpsUrl(filtered);
+
+              const bareDomain = commentBody.match(/([a-z0-9-]+\.vercel\.app)/i);
+              if (bareDomain) return toHttpsUrl(bareDomain[1]);
+
+              return null;
+            }
+
+            function sanitizeBaseUrl(url) {
+              return url ? url.replace(/\/+$/, '') : url;
+            }
+
+            async function sleep(ms) {
+              await new Promise((resolve) => setTimeout(resolve, ms));
+            }
+
+            function loadThemeIdsFromManifest() {
+              const manifestPath = path.join(process.cwd(), 'design-review-output', 'splash', 'round-1', 'review-manifest.json');
+              try {
+                const raw = fs.readFileSync(manifestPath, 'utf8');
+                const parsed = JSON.parse(raw);
+                return (parsed.themes || []).map((theme) => theme.id).filter(Boolean);
+              } catch {
+                return ['particles', 'constellation', 'mandala', 'geometric', 'zen', 'aurora', 'ink', 'manuscript', 'light'];
+              }
+            }
+
+            async function getCommitDateIso() {
+              const commit = await github.rest.repos.getCommit({
+                owner,
+                repo,
+                ref: headSha
+              });
+              return commit.data?.commit?.committer?.date || commit.data?.commit?.author?.date || new Date().toISOString();
+            }
+
+            async function getIssueComments() {
+              return github.paginate(github.rest.issues.listComments, {
+                owner,
+                repo,
+                issue_number: issueNumber,
+                per_page: 100
+              });
+            }
+
+            function selectBestPreviewComment(comments, commitDateIso) {
+              const commitDate = new Date(commitDateIso);
+              const commitThreshold = new Date(commitDate.getTime() - 2 * 60 * 1000); // allow slight clock drift
+
+              const candidates = comments
+                .filter((comment) => /vercel\.app|^\[vc\]:/im.test(comment.body || ''))
+                .map((comment) => ({
+                  comment,
+                  previewUrl: extractPreviewUrl(comment.body || '')
+                }))
+                .filter((entry) => !!entry.previewUrl)
+                .sort((a, b) => new Date(b.comment.created_at) - new Date(a.comment.created_at));
+
+              const matchingCommitWindow = candidates.find(
+                (entry) => new Date(entry.comment.created_at) >= commitThreshold
+              );
+
+              return matchingCommitWindow || candidates[0] || null;
+            }
+
+            async function waitForPreviewUrl(commitDateIso) {
+              for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+                const comments = await getIssueComments();
+                const selected = selectBestPreviewComment(comments, commitDateIso);
+                if (selected?.previewUrl) {
+                  return sanitizeBaseUrl(selected.previewUrl);
+                }
+
+                if (attempt < maxAttempts) {
+                  core.info(`Vercel preview URL not found yet (attempt ${attempt}/${maxAttempts}); retrying in ${waitMs / 1000}s.`);
+                  await sleep(waitMs);
+                }
+              }
+              return null;
+            }
+
+            function buildCommentBody(baseUrl, themeIds) {
+              const baseRoutes = [
+                ['Design Review Home', '/design-review'],
+                ['Splash Master Comparison', '/design-review/splash'],
+                ['Splash Streamlined Review', '/design-review/splash/streamlined'],
+                ['Splash Matrix Review', '/design-review/splash/matrix']
+              ];
+
+              const categoryRoutes = themeIds.map((themeId) => [
+                `Category: ${themeId}`,
+                `/design-review/splash/category/${themeId}`
+              ]);
+
+              const routeRows = [...baseRoutes, ...categoryRoutes]
+                .map(([label, route]) => `| ${label} | [Open](${baseUrl}${route}) |`)
+                .join('\n');
+
+              return `${marker}
+### Design Review Links for \`${headSha.slice(0, 7)}\`
+
+Preview deployment: [${baseUrl}](${baseUrl})
+
+| Page | Link |
+|---|---|
+${routeRows}
+
+_Auto-posted for design review/mockup related commits._`;
+            }
+
+            async function upsertBotComment(body) {
+              const comments = await getIssueComments();
+              const existing = comments.find(
+                (comment) =>
+                  comment.user?.login === 'github-actions[bot]' &&
+                  (comment.body || '').includes(marker)
+              );
+
+              if (existing) {
+                await github.rest.issues.updateComment({
+                  owner,
+                  repo,
+                  comment_id: existing.id,
+                  body
+                });
+                core.info(`Updated existing design review links comment: ${existing.id}`);
+                return;
+              }
+
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: issueNumber,
+                body
+              });
+              core.info('Created new design review links comment.');
+            }
+
+            const commitDateIso = await getCommitDateIso();
+            const previewBaseUrl = await waitForPreviewUrl(commitDateIso);
+            const themeIds = loadThemeIdsFromManifest();
+
+            if (!previewBaseUrl) {
+              core.setFailed('Could not detect a Vercel preview URL to build design review links.');
+              return;
+            }
+
+            const commentBody = buildCommentBody(previewBaseUrl, themeIds);
+            await upsertBotComment(commentBody);

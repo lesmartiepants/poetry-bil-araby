@@ -1308,19 +1308,19 @@ const DESIGN_REVIEW_VARIANT_LABELS = DESIGN_REVIEW_VARIANTS.reduce((acc, item) =
 
 const DESIGN_REVIEW_REFERENCE_LINKS = [
   {
-    id: 'round1-streamlined',
-    label: 'PR11 Round 1 - Streamlined Review',
-    href: '/design-review-output/splash/round-1/streamlined-review.html'
+    id: 'splash-streamlined',
+    label: 'Splash - Streamlined Review',
+    href: '/design-review/splash/streamlined'
   },
   {
-    id: 'round1-interactive',
-    label: 'PR11 Round 1 - Interactive Review',
-    href: '/design-review-output/splash/round-1/interactive-review.html'
+    id: 'splash-interactive',
+    label: 'Splash - Matrix Review',
+    href: '/design-review/splash/matrix'
   },
   {
-    id: 'round1-master',
-    label: 'PR11 Round 1 - Master Comparison',
-    href: '/design-review-output/splash/round-1/master-comparison.html'
+    id: 'splash-master',
+    label: 'Splash - Master Comparison',
+    href: '/design-review/splash'
   },
   {
     id: 'mockup-index',

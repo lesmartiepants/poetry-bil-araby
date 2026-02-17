@@ -3,675 +3,430 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🎨 Master Design Review - All Splash Screens</title>
+  <title>Splash design review - master comparison</title>
   <style>
+    :root {
+      --bg: #07080b;
+      --panel: rgba(23, 25, 30, 0.9);
+      --panel-border: rgba(197, 160, 89, 0.22);
+      --text: #edf0f4;
+      --muted: #a9b0ba;
+      --gold: #c5a059;
+      --gold-soft: #d7c089;
+      --line: rgba(255, 255, 255, 0.08);
+    }
+
     * {
+      box-sizing: border-box;
       margin: 0;
       padding: 0;
-      box-sizing: border-box;
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
-      background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
-      color: #e0e0e0;
+      background:
+        radial-gradient(circle at 12% 12%, rgba(197, 160, 89, 0.12), transparent 36%),
+        radial-gradient(circle at 80% 20%, rgba(88, 97, 122, 0.14), transparent 38%),
+        var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif;
       min-height: 100vh;
-      padding: 40px 20px;
+      line-height: 1.45;
+      padding: 26px 20px 50px;
     }
 
-    .container {
-      max-width: 1400px;
+    .page {
+      max-width: 1440px;
       margin: 0 auto;
+      display: grid;
+      gap: 22px;
     }
 
-    .header {
-      text-align: center;
-      margin-bottom: 3rem;
-      padding-bottom: 2rem;
-      border-bottom: 2px solid rgba(197, 160, 89, 0.3);
+    .hero {
+      border: 1px solid var(--panel-border);
+      border-radius: 20px;
+      background: var(--panel);
+      padding: 22px 24px;
+      display: grid;
+      gap: 14px;
     }
 
-    h1 {
-      font-size: clamp(2rem, 5vw, 3.5rem);
-      margin-bottom: 1rem;
-      background: linear-gradient(135deg, #C5A059 0%, #ffd89b 50%, #C5A059 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-      font-weight: 800;
+    .hero h1 {
+      color: var(--gold-soft);
+      font-size: clamp(1.8rem, 2.6vw, 2.45rem);
       letter-spacing: -0.02em;
     }
 
-    .subtitle {
-      font-size: 1.1rem;
-      opacity: 0.8;
-      max-width: 700px;
-      margin: 0 auto 1.5rem;
-      line-height: 1.6;
+    .hero p {
+      color: var(--muted);
+      font-size: 0.98rem;
+      max-width: 920px;
     }
 
-    .stats {
+    .meta {
       display: flex;
-      gap: 2rem;
-      justify-content: center;
-      margin-top: 1.5rem;
       flex-wrap: wrap;
+      gap: 10px;
     }
 
-    .stat {
-      background: rgba(99, 102, 241, 0.1);
-      border: 1px solid rgba(99, 102, 241, 0.3);
-      padding: 1rem 2rem;
-      border-radius: 12px;
-      backdrop-filter: blur(10px);
-    }
-
-    .stat-number {
-      font-size: 2rem;
+    .meta span {
+      border-radius: 999px;
+      border: 1px solid rgba(197, 160, 89, 0.28);
+      background: rgba(197, 160, 89, 0.13);
+      color: var(--gold-soft);
+      font-size: 0.8rem;
       font-weight: 700;
-      color: #a5b4fc;
-      display: block;
+      padding: 5px 11px;
+      letter-spacing: 0.01em;
     }
 
-    .stat-label {
-      font-size: 0.875rem;
-      opacity: 0.7;
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
+    .top-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
     }
 
-    .gallery {
+    .top-actions a {
+      border-radius: 10px;
+      text-decoration: none;
+      font-weight: 700;
+      font-size: 0.85rem;
+      padding: 10px 14px;
+      transition: 150ms ease;
+    }
+
+    .top-actions .primary {
+      border: 1px solid rgba(197, 160, 89, 0.38);
+      background: rgba(197, 160, 89, 0.17);
+      color: var(--gold-soft);
+    }
+
+    .top-actions .secondary {
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+    }
+
+    .top-actions a:hover {
+      transform: translateY(-1px);
+    }
+
+    .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
-      gap: 28px;
-      margin-bottom: 3rem;
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+      gap: 14px;
     }
 
     .card {
-      background: rgba(255, 255, 255, 0.03);
-      backdrop-filter: blur(20px);
-      border: 2px solid rgba(197, 160, 89, 0.15);
-      border-radius: 20px;
-      padding: 28px;
-      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-      cursor: pointer;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 4px;
-      background: linear-gradient(90deg, #C5A059, #ffd89b, #C5A059);
-      transform: scaleX(0);
-      transition: transform 0.4s ease;
-    }
-
-    .card:hover {
-      transform: translateY(-6px);
-      border-color: rgba(197, 160, 89, 0.5);
-      box-shadow: 0 20px 60px rgba(197, 160, 89, 0.25);
-    }
-
-    .card:hover::before {
-      transform: scaleX(1);
-    }
-
-    .card-header {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      margin-bottom: 16px;
-    }
-
-    .card-number {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 48px;
-      height: 48px;
-      background: linear-gradient(135deg, #C5A059 0%, #ffd89b 100%);
-      color: #0f0c29;
-      font-weight: 800;
-      font-size: 1.5rem;
-      border-radius: 12px;
-      box-shadow: 0 4px 12px rgba(197, 160, 89, 0.3);
-    }
-
-    .card-title {
-      font-size: 1.75rem;
-      font-weight: 700;
-      color: #C5A059;
-      line-height: 1.2;
-    }
-
-    .card-description {
-      font-size: 0.95rem;
-      opacity: 0.75;
-      line-height: 1.7;
-      margin-bottom: 20px;
-      min-height: 3.4em;
-    }
-
-    .design-options {
-      display: grid;
-      gap: 10px;
-      margin-bottom: 20px;
+      border: 1px solid var(--panel-border);
+      border-radius: 16px;
+      background: var(--panel);
       padding: 16px;
-      background: rgba(0, 0, 0, 0.2);
-      border-radius: 12px;
-      border: 1px solid rgba(255, 255, 255, 0.05);
-    }
-
-    .option {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 0.85rem;
-      padding: 8px 12px;
-      background: rgba(99, 102, 241, 0.08);
-      border-radius: 8px;
-      border: 1px solid rgba(99, 102, 241, 0.2);
-    }
-
-    .option-label {
-      font-weight: 600;
-      color: #a5b4fc;
-      min-width: 80px;
-    }
-
-    .option-desc {
-      opacity: 0.7;
-      font-size: 0.8rem;
-    }
-
-    .card-links {
-      display: flex;
+      display: grid;
       gap: 12px;
-      flex-wrap: wrap;
     }
 
-    .card-link {
-      flex: 1;
-      min-width: 140px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
+    .card header {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 10px;
+      align-items: start;
+    }
+
+    .card-index {
+      width: 34px;
+      height: 34px;
+      border-radius: 10px;
+      background: rgba(197, 160, 89, 0.18);
+      border: 1px solid rgba(197, 160, 89, 0.35);
+      color: var(--gold-soft);
+      font-weight: 800;
+      display: grid;
+      place-items: center;
+      font-size: 0.85rem;
+    }
+
+    .card h2 {
+      color: var(--text);
+      font-size: 1.02rem;
+      letter-spacing: -0.01em;
+      margin-bottom: 4px;
+    }
+
+    .card p {
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    .card-meta {
+      display: flex;
+      flex-wrap: wrap;
       gap: 8px;
-      padding: 14px 20px;
+      color: var(--muted);
+      font-size: 0.78rem;
+    }
+
+    .card-meta span {
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 999px;
+      padding: 3px 9px;
+    }
+
+    .missing-note {
+      border-radius: 10px;
+      border: 1px solid rgba(240, 181, 107, 0.35);
+      background: rgba(240, 181, 107, 0.13);
+      color: #f5cf99;
+      padding: 8px 10px;
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+
+    .chip {
+      border: 1px solid rgba(197, 160, 89, 0.25);
+      border-radius: 999px;
+      padding: 4px 9px;
+      color: var(--gold-soft);
+      font-size: 0.76rem;
       background: rgba(197, 160, 89, 0.1);
-      border: 2px solid rgba(197, 160, 89, 0.3);
-      border-radius: 12px;
-      color: #C5A059;
-      text-decoration: none;
-      font-size: 0.9rem;
-      font-weight: 600;
-      transition: all 0.3s ease;
-      text-align: center;
     }
 
-    .card-link:hover {
-      background: rgba(197, 160, 89, 0.25);
-      border-color: rgba(197, 160, 89, 0.6);
-      transform: translateY(-2px);
-      box-shadow: 0 8px 16px rgba(197, 160, 89, 0.2);
-    }
-
-    .card-link-primary {
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      border-color: transparent;
-      color: white;
-      font-weight: 700;
-    }
-
-    .card-link-primary:hover {
-      background: linear-gradient(135deg, #7c3aed, #a855f7);
-      box-shadow: 0 8px 24px rgba(99, 102, 241, 0.4);
-    }
-
-    .status-badge {
-      position: absolute;
-      top: 16px;
-      right: 16px;
-      padding: 6px 12px;
-      border-radius: 8px;
-      font-size: 0.75rem;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-
-    .status-complete {
-      background: rgba(34, 197, 94, 0.2);
-      color: #86efac;
-      border: 1px solid rgba(34, 197, 94, 0.4);
-    }
-
-    .status-processing {
-      background: rgba(251, 191, 36, 0.2);
-      color: #fde68a;
-      border: 1px solid rgba(251, 191, 36, 0.4);
-      animation: pulse 2s ease-in-out infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0.6; }
-    }
-
-    .footer {
-      text-align: center;
-      margin-top: 4rem;
-      padding-top: 2rem;
-      border-top: 2px solid rgba(255, 255, 255, 0.1);
-      opacity: 0.6;
-      font-size: 0.875rem;
-    }
-
-    .legend {
+    .actions {
       display: flex;
-      gap: 2rem;
-      justify-content: center;
-      margin-top: 1.5rem;
-      padding: 1.5rem;
-      background: rgba(0, 0, 0, 0.2);
-      border-radius: 12px;
       flex-wrap: wrap;
-    }
-
-    .legend-item {
-      display: flex;
-      align-items: center;
       gap: 8px;
-      font-size: 0.875rem;
     }
 
-    .legend-icon {
-      width: 24px;
-      height: 24px;
-      border-radius: 6px;
+    .action-btn {
+      flex: 1;
+      min-width: 180px;
+      border-radius: 10px;
+      border: 1px solid rgba(197, 160, 89, 0.35);
+      background: rgba(197, 160, 89, 0.15);
+      color: var(--gold-soft);
+      text-decoration: none;
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 9px 12px;
+      text-align: center;
+      transition: 150ms ease;
     }
 
-    @media (max-width: 768px) {
-      .gallery {
-        grid-template-columns: 1fr;
-      }
+    .action-btn.secondary {
+      border-color: rgba(255, 255, 255, 0.18);
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+    }
 
-      .stats {
-        gap: 1rem;
-      }
-
-      .card-links {
-        flex-direction: column;
-      }
-
-      .card-link {
-        width: 100%;
-      }
+    .action-btn:hover {
+      transform: translateY(-1px);
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
-      <h1>🎨 Master Design Review</h1>
-      <p class="subtitle">All 9 splash screens reviewed by AI design expert. Each mockup has 3 alternative designs to choose from.</p>
-
-      <div style="text-align: center; margin: 1.5rem 0;">
-        <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-bottom: 1rem;">
-          <a href="./streamlined-review.html" style="display: inline-block; padding: 1rem 2rem; background: linear-gradient(135deg, #C5A059, #ffd89b); color: #0f0c29; text-decoration: none; border-radius: 12px; font-weight: 700; font-size: 1.1rem; transition: all 0.3s ease; box-shadow: 0 4px 16px rgba(197, 160, 89, 0.4);">
-            🎯 Launch Review Mode
-          </a>
-          <a href="./interactive-review.html" style="display: inline-block; padding: 1rem 2rem; background: linear-gradient(135deg, #6366f1, #8b5cf6); color: white; text-decoration: none; border-radius: 12px; font-weight: 700; font-size: 1.1rem; transition: all 0.3s ease; box-shadow: 0 4px 16px rgba(99, 102, 241, 0.3);">
-            📊 View All Options
-          </a>
-        </div>
-        <p style="margin-top: 0.75rem; font-size: 0.875rem; opacity: 0.7;">Step through each theme with easy navigation or view all 27 options in comparison matrix</p>
+  <div class="page">
+    <section class="hero">
+      <h1>Splash design review - master comparison</h1>
+      <p>Base URLs stay stable for reviews while round artifacts remain tracked in the repository. Open a category comparison or jump straight into streamlined review for that category.</p>
+      <div class="meta">
+        <span>9 categories</span>
+        <span>20 options available in round 1</span>
+        <span>8 missing option slot(s)</span>
       </div>
-
-      <div class="stats">
-        <div class="stat">
-          <span class="stat-number">9</span>
-          <span class="stat-label">Mockups</span>
-        </div>
-        <div class="stat">
-          <span class="stat-number">27</span>
-          <span class="stat-label">Design Options</span>
-        </div>
-        <div class="stat">
-          <span class="stat-number">36</span>
-          <span class="stat-label">Interactive Previews</span>
-        </div>
+      <div class="top-actions">
+        <a class="primary" href="/design-review/splash/streamlined" target="_blank" rel="noopener noreferrer">Open streamlined review</a>
+        <a class="secondary" href="/design-review/splash/matrix" target="_blank" rel="noopener noreferrer">Open matrix review</a>
       </div>
+    </section>
 
-      <div class="legend">
-        <div class="legend-item">
-          <div class="legend-icon" style="background: rgba(197, 160, 89, 0.3); border: 2px solid rgba(197, 160, 89, 0.5);"></div>
-          <span>View Comparison (side-by-side)</span>
-        </div>
-        <div class="legend-item">
-          <div class="legend-icon" style="background: linear-gradient(135deg, #6366f1, #8b5cf6);"></div>
-          <span>Original Mockup (live)</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="gallery">
-      <!-- 1. Particle Field -->
-      <div class="card">
-        <span class="status-badge status-complete">✓ Complete</span>
-        <div class="card-header">
-          <div class="card-number">1</div>
-          <h2 class="card-title">Particle Field</h2>
-        </div>
-        <p class="card-description">Interactive particle system with fluid motion and organic movement patterns.</p>
-
-        <div class="design-options">
-          <div class="option">
-            <span class="option-label">Option 1:</span>
-            <span class="option-desc">Refined Particles (improved hierarchy)</span>
+    <section class="grid">
+      
+      <article class="card">
+        <header>
+          <div class="card-index">1</div>
+          <div>
+            <h2>Particle Field</h2>
+            <p>Interactive particle system with fluid motion</p>
           </div>
-          <div class="option">
-            <span class="option-label">Option 2:</span>
-            <span class="option-desc">Gold Mystical (heritage aesthetic) ⭐ Recommended</span>
-          </div>
-          <div class="option">
-            <span class="option-label">Option 3:</span>
-            <span class="option-desc">Minimal Constellation (sparse design)</span>
-          </div>
+        </header>
+        <div class="card-meta">
+          <span>3 option(s) available</span>
+          <span>Round 1</span>
         </div>
-
-        <div class="card-links">
-          <a href="./particles/visual-comparison.html" class="card-link" target="_blank">
-            📊 View Comparison →
-          </a>
-          <a href="/?skipSplash=true&mockup=particles" class="card-link card-link-primary" target="_blank">
-            ✨ Original Live →
-          </a>
+        
+        <div class="chip-row"><span class="chip">Option 1: Refined Particles</span><span class="chip">Option 2: Gold Mystical</span><span class="chip">Option 3: Minimal Constellation</span></div>
+        <div class="actions">
+          <a class="action-btn" href="/design-review/splash/category/particles" target="_blank" rel="noopener noreferrer">Open category comparison</a>
+          <a class="action-btn secondary" href="/design-review/splash/streamlined?category=particles" target="_blank" rel="noopener noreferrer">Review this category</a>
         </div>
-      </div>
+      </article>
 
-      <!-- 2. Constellation Poetry -->
-      <div class="card">
-        <span class="status-badge status-processing">⏳ Processing</span>
-        <div class="card-header">
-          <div class="card-number">2</div>
-          <h2 class="card-title">Constellation Poetry</h2>
-        </div>
-        <p class="card-description">Animated star constellation that forms poetic patterns with ethereal glow effects.</p>
-
-        <div class="design-options">
-          <div class="option">
-            <span class="option-label">Option 1:</span>
-            <span class="option-desc">Analyzing...</span>
+      <article class="card">
+        <header>
+          <div class="card-index">2</div>
+          <div>
+            <h2>Constellation Poetry</h2>
+            <p>Star patterns forming poetic connections</p>
           </div>
-          <div class="option">
-            <span class="option-label">Option 2:</span>
-            <span class="option-desc">Analyzing...</span>
-          </div>
-          <div class="option">
-            <span class="option-label">Option 3:</span>
-            <span class="option-desc">Analyzing...</span>
-          </div>
+        </header>
+        <div class="card-meta">
+          <span>3 option(s) available</span>
+          <span>Round 1</span>
         </div>
-
-        <div class="card-links">
-          <a href="./constellation/visual-comparison.html" class="card-link" target="_blank">
-            📊 View Comparison →
-          </a>
-          <a href="/?skipSplash=true&mockup=constellation" class="card-link card-link-primary" target="_blank">
-            ✨ Original Live →
-          </a>
+        
+        <div class="chip-row"><span class="chip">Option 1: Refined Constellation</span><span class="chip">Option 2: Minimal Stars</span><span class="chip">Option 3: Animated Cosmos</span></div>
+        <div class="actions">
+          <a class="action-btn" href="/design-review/splash/category/constellation" target="_blank" rel="noopener noreferrer">Open category comparison</a>
+          <a class="action-btn secondary" href="/design-review/splash/streamlined?category=constellation" target="_blank" rel="noopener noreferrer">Review this category</a>
         </div>
-      </div>
+      </article>
 
-      <!-- 3. Breathing Mandala -->
-      <div class="card">
-        <span class="status-badge status-processing">⏳ Processing</span>
-        <div class="card-header">
-          <div class="card-number">3</div>
-          <h2 class="card-title">Breathing Mandala</h2>
-        </div>
-        <p class="card-description">Sacred geometric mandala that breathes with calming animations and meditative depth.</p>
-
-        <div class="design-options">
-          <div class="option">
-            <span class="option-label">Option 1:</span>
-            <span class="option-desc">Analyzing...</span>
+      <article class="card">
+        <header>
+          <div class="card-index">3</div>
+          <div>
+            <h2>Breathing Mandala</h2>
+            <p>Sacred geometry with meditative breathing</p>
           </div>
-          <div class="option">
-            <span class="option-label">Option 2:</span>
-            <span class="option-desc">Analyzing...</span>
-          </div>
-          <div class="option">
-            <span class="option-label">Option 3:</span>
-            <span class="option-desc">Analyzing...</span>
-          </div>
+        </header>
+        <div class="card-meta">
+          <span>1 option(s) available</span>
+          <span>Round 1</span>
         </div>
-
-        <div class="card-links">
-          <a href="./mandala/visual-comparison.html" class="card-link" target="_blank">
-            📊 View Comparison →
-          </a>
-          <a href="/?skipSplash=true&mockup=mandala" class="card-link card-link-primary" target="_blank">
-            ✨ Original Live →
-          </a>
+        <div class="missing-note">Missing option slots in this round: 2, 3</div>
+        <div class="chip-row"><span class="chip">Option 1: Islamic Mandala</span></div>
+        <div class="actions">
+          <a class="action-btn" href="/design-review/splash/category/mandala" target="_blank" rel="noopener noreferrer">Open category comparison</a>
+          <a class="action-btn secondary" href="/design-review/splash/streamlined?category=mandala" target="_blank" rel="noopener noreferrer">Review this category</a>
         </div>
-      </div>
+      </article>
 
-      <!-- 4. Geometric Patterns -->
-      <div class="card">
-        <span class="status-badge status-processing">⏳ Processing</span>
-        <div class="card-header">
-          <div class="card-number">4</div>
-          <h2 class="card-title">Geometric Patterns</h2>
-        </div>
-        <p class="card-description">Islamic geometric patterns with tessellated 8-pointed stars and mathematical precision.</p>
-
-        <div class="design-options">
-          <div class="option">
-            <span class="option-label">Option 1:</span>
-            <span class="option-desc">Analyzing...</span>
+      <article class="card">
+        <header>
+          <div class="card-index">4</div>
+          <div>
+            <h2>Geometric Patterns</h2>
+            <p>Islamic tessellation and sacred mathematics</p>
           </div>
-          <div class="option">
-            <span class="option-label">Option 2:</span>
-            <span class="option-desc">Analyzing...</span>
-          </div>
-          <div class="option">
-            <span class="option-label">Option 3:</span>
-            <span class="option-desc">Analyzing...</span>
-          </div>
+        </header>
+        <div class="card-meta">
+          <span>4 option(s) available</span>
+          <span>Round 1</span>
         </div>
-
-        <div class="card-links">
-          <a href="./geometric/visual-comparison.html" class="card-link" target="_blank">
-            📊 View Comparison →
-          </a>
-          <a href="/?skipSplash=true&mockup=geometric" class="card-link card-link-primary" target="_blank">
-            ✨ Original Live →
-          </a>
+        
+        <div class="chip-row"><span class="chip">Option 1: Khatam Variation A</span><span class="chip">Option 2: Khatam Variation B</span><span class="chip">Option 3: Sacred Grid</span><span class="chip">Option 4: Khatam Variation C</span></div>
+        <div class="actions">
+          <a class="action-btn" href="/design-review/splash/category/geometric" target="_blank" rel="noopener noreferrer">Open category comparison</a>
+          <a class="action-btn secondary" href="/design-review/splash/streamlined?category=geometric" target="_blank" rel="noopener noreferrer">Review this category</a>
         </div>
-      </div>
+      </article>
 
-      <!-- 5. Zen Minimalism -->
-      <div class="card">
-        <span class="status-badge status-processing">⏳ Processing</span>
-        <div class="card-header">
-          <div class="card-number">5</div>
-          <h2 class="card-title">Zen Minimalism</h2>
-        </div>
-        <p class="card-description">Ultra-minimal zen design with pure backgrounds and single calligraphic stroke.</p>
-
-        <div class="design-options">
-          <div class="option">
-            <span class="option-label">Option 1:</span>
-            <span class="option-desc">Analyzing...</span>
+      <article class="card">
+        <header>
+          <div class="card-index">5</div>
+          <div>
+            <h2>Zen Minimalism</h2>
+            <p>Pure simplicity and calligraphic elegance</p>
           </div>
-          <div class="option">
-            <span class="option-label">Option 2:</span>
-            <span class="option-desc">Analyzing...</span>
-          </div>
-          <div class="option">
-            <span class="option-label">Option 3:</span>
-            <span class="option-desc">Analyzing...</span>
-          </div>
+        </header>
+        <div class="card-meta">
+          <span>2 option(s) available</span>
+          <span>Round 1</span>
         </div>
-
-        <div class="card-links">
-          <a href="./zen/visual-comparison.html" class="card-link" target="_blank">
-            📊 View Comparison →
-          </a>
-          <a href="/?skipSplash=true&mockup=zen" class="card-link card-link-primary" target="_blank">
-            ✨ Original Live →
-          </a>
+        <div class="missing-note">Missing option slots in this round: 3</div>
+        <div class="chip-row"><span class="chip">Option 1: Zen Refined</span><span class="chip">Option 2: Haiku Style</span></div>
+        <div class="actions">
+          <a class="action-btn" href="/design-review/splash/category/zen" target="_blank" rel="noopener noreferrer">Open category comparison</a>
+          <a class="action-btn secondary" href="/design-review/splash/streamlined?category=zen" target="_blank" rel="noopener noreferrer">Review this category</a>
         </div>
-      </div>
+      </article>
 
-      <!-- 6. Aurora Light -->
-      <div class="card">
-        <span class="status-badge status-processing">⏳ Processing</span>
-        <div class="card-header">
-          <div class="card-number">6</div>
-          <h2 class="card-title">Aurora Light</h2>
-        </div>
-        <p class="card-description">Flowing aurora borealis gradients with organic light movements and ethereal atmosphere.</p>
-
-        <div class="design-options">
-          <div class="option">
-            <span class="option-label">Option 1:</span>
-            <span class="option-desc">Analyzing...</span>
+      <article class="card">
+        <header>
+          <div class="card-index">6</div>
+          <div>
+            <h2>Aurora Light</h2>
+            <p>Flowing gradients and ethereal atmosphere</p>
           </div>
-          <div class="option">
-            <span class="option-label">Option 2:</span>
-            <span class="option-desc">Analyzing...</span>
-          </div>
-          <div class="option">
-            <span class="option-label">Option 3:</span>
-            <span class="option-desc">Analyzing...</span>
-          </div>
+        </header>
+        <div class="card-meta">
+          <span>1 option(s) available</span>
+          <span>Round 1</span>
         </div>
-
-        <div class="card-links">
-          <a href="./aurora/visual-comparison.html" class="card-link" target="_blank">
-            📊 View Comparison →
-          </a>
-          <a href="/?skipSplash=true&mockup=aurora" class="card-link card-link-primary" target="_blank">
-            ✨ Original Live →
-          </a>
+        <div class="missing-note">Missing option slots in this round: 2, 3</div>
+        <div class="chip-row"><span class="chip">Option 1: Aurora Refined</span></div>
+        <div class="actions">
+          <a class="action-btn" href="/design-review/splash/category/aurora" target="_blank" rel="noopener noreferrer">Open category comparison</a>
+          <a class="action-btn secondary" href="/design-review/splash/streamlined?category=aurora" target="_blank" rel="noopener noreferrer">Review this category</a>
         </div>
-      </div>
+      </article>
 
-      <!-- 7. Ink Calligraphy -->
-      <div class="card">
-        <span class="status-badge status-processing">⏳ Processing</span>
-        <div class="card-header">
-          <div class="card-number">7</div>
-          <h2 class="card-title">Ink Calligraphy</h2>
-        </div>
-        <p class="card-description">Traditional ink brush calligraphy with stroke animation and elegant Arabic letterforms.</p>
-
-        <div class="design-options">
-          <div class="option">
-            <span class="option-label">Option 1:</span>
-            <span class="option-desc">Analyzing...</span>
+      <article class="card">
+        <header>
+          <div class="card-index">7</div>
+          <div>
+            <h2>Ink Calligraphy</h2>
+            <p>Traditional ink brush and Arabic letterforms</p>
           </div>
-          <div class="option">
-            <span class="option-label">Option 2:</span>
-            <span class="option-desc">Analyzing...</span>
-          </div>
-          <div class="option">
-            <span class="option-label">Option 3:</span>
-            <span class="option-desc">Analyzing...</span>
-          </div>
+        </header>
+        <div class="card-meta">
+          <span>1 option(s) available</span>
+          <span>Round 1</span>
         </div>
-
-        <div class="card-links">
-          <a href="./ink/visual-comparison.html" class="card-link" target="_blank">
-            📊 View Comparison →
-          </a>
-          <a href="/?skipSplash=true&mockup=ink" class="card-link card-link-primary" target="_blank">
-            ✨ Original Live →
-          </a>
+        <div class="missing-note">Missing option slots in this round: 1, 2</div>
+        <div class="chip-row"><span class="chip">Option 3: Live Calligraphy</span></div>
+        <div class="actions">
+          <a class="action-btn" href="/design-review/splash/category/ink" target="_blank" rel="noopener noreferrer">Open category comparison</a>
+          <a class="action-btn secondary" href="/design-review/splash/streamlined?category=ink" target="_blank" rel="noopener noreferrer">Review this category</a>
         </div>
-      </div>
+      </article>
 
-      <!-- 8. Ancient Manuscript -->
-      <div class="card">
-        <span class="status-badge status-processing">⏳ Processing</span>
-        <div class="card-header">
-          <div class="card-number">8</div>
-          <h2 class="card-title">Ancient Manuscript</h2>
-        </div>
-        <p class="card-description">Aged manuscript aesthetic with parchment textures and ornate classical borders.</p>
-
-        <div class="design-options">
-          <div class="option">
-            <span class="option-label">Option 1:</span>
-            <span class="option-desc">Analyzing...</span>
+      <article class="card">
+        <header>
+          <div class="card-index">8</div>
+          <div>
+            <h2>Ancient Manuscript</h2>
+            <p>Aged parchment with classical ornaments</p>
           </div>
-          <div class="option">
-            <span class="option-label">Option 2:</span>
-            <span class="option-desc">Analyzing...</span>
-          </div>
-          <div class="option">
-            <span class="option-label">Option 3:</span>
-            <span class="option-desc">Analyzing...</span>
-          </div>
+        </header>
+        <div class="card-meta">
+          <span>3 option(s) available</span>
+          <span>Round 1</span>
         </div>
-
-        <div class="card-links">
-          <a href="./manuscript/visual-comparison.html" class="card-link" target="_blank">
-            📊 View Comparison →
-          </a>
-          <a href="/?skipSplash=true&mockup=manuscript" class="card-link card-link-primary" target="_blank">
-            ✨ Original Live →
-          </a>
+        
+        <div class="chip-row"><span class="chip">Option 1: Ornate Islamic</span><span class="chip">Option 2: Codex Spine</span><span class="chip">Option 3: Scroll and Seal</span></div>
+        <div class="actions">
+          <a class="action-btn" href="/design-review/splash/category/manuscript" target="_blank" rel="noopener noreferrer">Open category comparison</a>
+          <a class="action-btn secondary" href="/design-review/splash/streamlined?category=manuscript" target="_blank" rel="noopener noreferrer">Review this category</a>
         </div>
-      </div>
+      </article>
 
-      <!-- 9. Light & Shadow -->
-      <div class="card">
-        <span class="status-badge status-processing">⏳ Processing</span>
-        <div class="card-header">
-          <div class="card-number">9</div>
-          <h2 class="card-title">Light & Shadow</h2>
-        </div>
-        <p class="card-description">Dynamic interplay of light and shadow with depth and three-dimensional effects.</p>
-
-        <div class="design-options">
-          <div class="option">
-            <span class="option-label">Option 1:</span>
-            <span class="option-desc">Analyzing...</span>
+      <article class="card">
+        <header>
+          <div class="card-index">9</div>
+          <div>
+            <h2>Light and Shadow</h2>
+            <p>Dramatic interplay of light and depth</p>
           </div>
-          <div class="option">
-            <span class="option-label">Option 2:</span>
-            <span class="option-desc">Analyzing...</span>
-          </div>
-          <div class="option">
-            <span class="option-label">Option 3:</span>
-            <span class="option-desc">Analyzing...</span>
-          </div>
+        </header>
+        <div class="card-meta">
+          <span>2 option(s) available</span>
+          <span>Round 1</span>
         </div>
-
-        <div class="card-links">
-          <a href="./light/visual-comparison.html" class="card-link" target="_blank">
-            📊 View Comparison →
-          </a>
-          <a href="/?skipSplash=true&mockup=light" class="card-link card-link-primary" target="_blank">
-            ✨ Original Live →
-          </a>
+        <div class="missing-note">Missing option slots in this round: 2</div>
+        <div class="chip-row"><span class="chip">Option 1: Improved Chiaroscuro</span><span class="chip">Option 3: Minimal Ray Tracing</span></div>
+        <div class="actions">
+          <a class="action-btn" href="/design-review/splash/category/light" target="_blank" rel="noopener noreferrer">Open category comparison</a>
+          <a class="action-btn secondary" href="/design-review/splash/streamlined?category=light" target="_blank" rel="noopener noreferrer">Review this category</a>
         </div>
-      </div>
-    </div>
-
-    <div class="footer">
-      <p><strong>Poetry Bil Araby</strong> • Master Design Review</p>
-      <p style="margin-top: 0.5rem;">Each mockup has been analyzed by an AI design expert and 3 visual alternatives have been generated.</p>
-    </div>
+      </article>
+    </section>
   </div>
 </body>
 </html>

@@ -4,6 +4,46 @@
   "framework": "vite",
   "rewrites": [
     {
+      "source": "/design-review/:component/category/:category",
+      "destination": "/design-review-output/:component/round-1/:category/visual-comparison.html"
+    },
+    {
+      "source": "/design-review/:component/category/:category/",
+      "destination": "/design-review-output/:component/round-1/:category/visual-comparison.html"
+    },
+    {
+      "source": "/design-review/:component/streamlined",
+      "destination": "/design-review-output/:component/round-1/streamlined-review.html"
+    },
+    {
+      "source": "/design-review/:component/streamlined/",
+      "destination": "/design-review-output/:component/round-1/streamlined-review.html"
+    },
+    {
+      "source": "/design-review/:component/matrix",
+      "destination": "/design-review-output/:component/round-1/interactive-review.html"
+    },
+    {
+      "source": "/design-review/:component/matrix/",
+      "destination": "/design-review-output/:component/round-1/interactive-review.html"
+    },
+    {
+      "source": "/design-review/:component/master",
+      "destination": "/design-review-output/:component/round-1/master-comparison.html"
+    },
+    {
+      "source": "/design-review/:component/master/",
+      "destination": "/design-review-output/:component/round-1/master-comparison.html"
+    },
+    {
+      "source": "/design-review/:component",
+      "destination": "/design-review-output/:component/round-1/master-comparison.html"
+    },
+    {
+      "source": "/design-review/:component/",
+      "destination": "/design-review-output/:component/round-1/master-comparison.html"
+    },
+    {
       "source": "/design-review",
       "destination": "/"
     },

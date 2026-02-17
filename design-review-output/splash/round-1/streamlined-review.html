@@ -394,6 +394,17 @@
       letter-spacing: -0.01em;
     }
 
+    .category-text {
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.01em;
+      color: #d7c089;
+      background: rgba(197, 160, 89, 0.14);
+      border: 1px solid rgba(197, 160, 89, 0.35);
+      border-radius: 999px;
+      padding: 4px 10px;
+    }
+
     .sync-text {
       font-size: 12px;
       font-weight: 600;
@@ -770,6 +781,11 @@
         padding: 4px 8px;
       }
 
+      .category-text {
+        font-size: 11px;
+        padding: 4px 8px;
+      }
+
       .action-menu {
         padding: 8px 16px 14px;
       }
@@ -806,7 +822,7 @@
   </div>
 
   <!-- Back Link -->
-  <a href="master-comparison.html" class="back-link">← Overview</a>
+  <a href="/design-review/splash" class="back-link">← Overview</a>
 
   <!-- Keyboard Hints -->
   <div class="keyboard-hints">
@@ -893,6 +909,7 @@
       <button class="btn" id="next-theme" onclick="navigateTheme(1)">Next →</button>
 
       <div class="status-cluster">
+        <span class="category-text" id="category-text">Category: Loading...</span>
         <span class="status-text" id="status-text">Loading...</span>
         <span class="sync-text" id="sync-text">Local save active</span>
         <button class="btn btn-export" onclick="exportData()">Export</button>
@@ -1608,6 +1625,7 @@
       const theme = getCurrentTheme();
       const missing = Array.isArray(theme.missingOptionSlots) ? theme.missingOptionSlots : [];
       const missingSuffix = missing.length ? ` • missing slots ${missing.join(',')}` : '';
+      document.getElementById('category-text').textContent = `Category: ${theme.name}`;
 
       document.getElementById('status-text').textContent =
         `Theme ${state.currentThemeIndex + 1}/${themes.length} • ${theme.options.length} options • ${keptCount} kept${missingSuffix}`;
@@ -1706,11 +1724,29 @@
       themes = await discoverThemes();
 
       if (themes.length === 0) {
-        alert('No themes discovered. Please check round-1 preview files.');
+        alert('No themes discovered. Please check review preview files.');
         return;
       }
 
       loadState();
+      const params = new URLSearchParams(window.location.search);
+      const requestedCategory = params.get('category');
+      const requestedOption = Number(params.get('option'));
+
+      if (requestedCategory) {
+        const requestedIndex = themes.findIndex((theme) => theme.id === requestedCategory);
+        if (requestedIndex !== -1) {
+          state.currentThemeIndex = requestedIndex;
+        }
+      }
+
+      if (Number.isInteger(requestedOption) && requestedOption > 0) {
+        const requestedTheme = themes[state.currentThemeIndex];
+        const optionIndex = requestedTheme.options.findIndex((option) => option.number === requestedOption);
+        if (optionIndex !== -1) {
+          state.currentOptionIndex = optionIndex;
+        }
+      }
 
       if (state.currentThemeIndex >= themes.length) {
         state.currentThemeIndex = 0;

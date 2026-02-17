@@ -537,7 +537,7 @@
       display: none;
       align-items: center;
       gap: 8px;
-      max-width: min(680px, calc(100vw - 96px));
+      max-width: min(760px, calc(100vw - 40px));
       padding: 8px 12px;
       border-radius: 999px;
       border: 1px solid rgba(255, 255, 255, 0.14);
@@ -558,7 +558,7 @@
       overflow-x: auto;
       scrollbar-width: thin;
       scrollbar-color: rgba(255, 255, 255, 0.24) transparent;
-      max-width: min(54vw, 420px);
+      max-width: min(58vw, 500px);
       padding: 2px;
     }
 
@@ -579,6 +579,14 @@
       font-weight: 700;
       border-radius: 999px;
       background: rgba(255, 255, 255, 0.09);
+    }
+
+    .btn-mini-arrow {
+      min-width: 40px;
+      width: 40px;
+      padding: 0;
+      font-size: 14px;
+      line-height: 1;
     }
 
     .btn-mini-toggle {
@@ -910,7 +918,7 @@
       }
 
       .collapsed-controls {
-        max-width: calc(100vw - 72px);
+        max-width: calc(100vw - 28px);
         bottom: 10px;
         left: 50%;
       }
@@ -921,12 +929,19 @@
         padding: 0 10px;
       }
 
+      .btn-mini-arrow {
+        min-width: 34px;
+        width: 34px;
+        font-size: 13px;
+        padding: 0;
+      }
+
       .btn-mini-toggle {
         min-width: 80px;
       }
 
       .collapsed-option-row {
-        max-width: min(60vw, 280px);
+        max-width: min(64vw, 360px);
       }
     }
   </style>
@@ -1007,11 +1022,11 @@
   </button>
 
   <div class="collapsed-controls" id="collapsed-controls">
-    <button class="btn btn-mini-nav" id="collapsed-prev-theme" onclick="navigateTheme(-1)">Previous</button>
+    <button class="btn btn-mini-nav btn-mini-arrow" id="collapsed-prev-theme" onclick="navigateTheme(-1)" aria-label="Previous category" title="Previous">←</button>
     <div class="collapsed-option-row" id="collapsed-option-buttons-container">
       <!-- Compact option buttons dynamically populated -->
     </div>
-    <button class="btn btn-mini-nav" id="collapsed-next-theme" onclick="navigateTheme(1)">Next</button>
+    <button class="btn btn-mini-nav btn-mini-arrow" id="collapsed-next-theme" onclick="navigateTheme(1)" aria-label="Next category" title="Next">→</button>
     <button class="btn btn-mini-nav btn-mini-toggle" id="collapsed-show-controls" onclick="toggleDock(false)">Controls</button>
   </div>
 

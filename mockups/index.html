@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mockups Index</title>
+  <style>
+    :root {
+      --bg: #0a0b11;
+      --panel: #141724;
+      --line: #2a3045;
+      --text: #e7eaf8;
+      --muted: #a2aac9;
+      --accent: #8e79ff;
+      --accent-2: #d5b06a;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      color: var(--text);
+      background: radial-gradient(circle at 20% -10%, #181b2c 0%, var(--bg) 38%);
+    }
+
+    .wrap {
+      width: min(1000px, 92vw);
+      margin: 0 auto;
+      padding: 28px 0 60px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: clamp(28px, 4vw, 42px);
+      letter-spacing: -0.02em;
+    }
+
+    p { color: var(--muted); margin-top: 0; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .card {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 14px;
+    }
+
+    h2 {
+      margin: 0 0 10px;
+      font-size: 16px;
+      color: var(--accent-2);
+      letter-spacing: 0.01em;
+    }
+
+    ul { margin: 0; padding-left: 18px; }
+    li { margin: 8px 0; color: var(--muted); }
+
+    a {
+      color: var(--text);
+      text-decoration: none;
+      border-bottom: 1px dashed #4a4f69;
+      transition: color 0.15s ease, border-color 0.15s ease;
+    }
+
+    a:hover {
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .footer {
+      margin-top: 20px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <h1>Mockups Index</h1>
+    <p>Entry point for all design mockups in this folder.</p>
+
+    <section class="grid">
+      <article class="card">
+        <h2>Core Mockup Options (A-K)</h2>
+        <ul>
+          <li><a href="./option-a-refined-serendipity.html">Option A · Refined Serendipity</a></li>
+          <li><a href="./option-b-elegant-discovery.html">Option B · Elegant Discovery</a></li>
+          <li><a href="./option-c-scroll-clean.html">Option C · Scroll Clean</a></li>
+          <li><a href="./option-d-scroll-exciting.html">Option D · Scroll Exciting</a></li>
+          <li><a href="./option-e-scroll-hybrid.html">Option E · Scroll Hybrid</a></li>
+          <li><a href="./option-f-deco-frame-dropdown.html">Option F · Deco Frame + Dropdown</a></li>
+          <li><a href="./option-g-scroll-refined-e-controls.html">Option G · Scroll Refined E Controls</a></li>
+          <li><a href="./option-h-minimal-deco.html">Option H · Minimal Deco</a></li>
+          <li><a href="./option-i-heavy-frame-inline-category.html">Option I · Heavy Frame Inline Category</a></li>
+          <li><a href="./option-j-heavy-frame-icon-only-category.html">Option J · Heavy Frame Icon Category</a></li>
+          <li><a href="./option-k-heavy-frame-book-category.html">Option K · Heavy Frame Book Category</a></li>
+        </ul>
+      </article>
+
+      <article class="card">
+        <h2>PR #62 End-to-End Deliverables</h2>
+        <ul>
+          <li><a href="./pr62-e2e-design-catalog.html">PR62 E2E Design Catalog (20 options)</a></li>
+          <li><a href="./pr62-e2e-design-recommendations.md">PR62 E2E Design Recommendations (Markdown)</a></li>
+        </ul>
+      </article>
+    </section>
+
+    <p class="footer">
+      Tip: open this file directly in browser as <code>mockups/index.html</code>.
+    </p>
+  </main>
+</body>
+</html>

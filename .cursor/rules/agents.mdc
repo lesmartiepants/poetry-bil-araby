@@ -1,0 +1,64 @@
+---
+description: Specialized agent definitions for orchestrated development workflows. Always reference these agents when planning complex tasks.
+alwaysApply: true
+---
+
+# Available Agents (`.claude/agents/`)
+
+This project defines 9 specialized agents that coordinate development workflows. Reference them by name and understand their roles when planning or executing tasks.
+
+## Agent Registry
+
+| Agent | Purpose | Invocation Triggers |
+|-------|---------|---------------------|
+| **test-orchestrator** | Coordinates all testing agents, validates CI/CD, synthesizes results | "run all tests", major refactoring, pre-release validation |
+| **test-suite-maintainer** | Creates/updates/refactors tests after code changes | After features, bug fixes, refactoring; test failures |
+| **test-coverage-reviewer** | Analyzes coverage gaps, prioritizes by risk | Coverage drops, pre-merge audits, new features |
+| **ci-test-guardian** | Monitors CI/CD for failures, coordinates fixes | CI failures, coverage threshold violations, flaky tests |
+| **git-workflow-manager** | Manages branches, commits, PRs; enforces conventions | Ready to commit, starting new work, feature complete |
+| **worktree-manager** | Sets up parallel dev workspaces via git worktrees | Parallel features, multiple Claude instances |
+| **github-issue-manager** | Creates/tracks/links GitHub issues across lifecycle | Bug discovered, test failure, tech debt, feature request |
+| **docs-sync-reviewer** | Syncs documentation with code changes post-commit | After code commits, documentation drift detected |
+| **ui-ux-reviewer** | Identifies ugly components, generates 2-3 visual alternatives | UI changes, design review, visual quality issues |
+
+## Agent Coordination Flow
+
+```
+                    test-orchestrator
+                   /        |        \
+    test-suite-  test-coverage-  ci-test-
+    maintainer    reviewer        guardian
+         \            |            /
+          \           |           /
+           github-issue-manager
+                      |
+            git-workflow-manager
+               /            \
+     worktree-manager    docs-sync-reviewer
+
+     ui-ux-reviewer (standalone, user-invoked)
+```
+
+## Key Coordination Patterns
+
+- **After code changes**: test-suite-maintainer -> test-coverage-reviewer -> ci-test-guardian
+- **After commits**: git-workflow-manager -> docs-sync-reviewer
+- **CI failures**: ci-test-guardian -> test-suite-maintainer -> github-issue-manager
+- **Pre-release**: test-orchestrator coordinates all agents
+- **Design review**: ui-ux-reviewer generates visual alternatives independently
+
+## Agent Definition Files
+
+All agent definitions with full instructions live in:
+
+- `.claude/agents/test-orchestrator.md`
+- `.claude/agents/test-suite-maintainer.md`
+- `.claude/agents/test-coverage-reviewer.md`
+- `.claude/agents/ci-test-guardian.md`
+- `.claude/agents/git-workflow-manager.md`
+- `.claude/agents/worktree-manager.md`
+- `.claude/agents/github-issue-manager.md`
+- `.claude/agents/docs-sync-reviewer.md`
+- `.claude/agents/ui-ux-reviewer.md`
+
+Read the relevant agent file(s) before executing tasks that fall within their domain.

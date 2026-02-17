@@ -79,11 +79,17 @@
 
     /* Preview Container */
     .preview-container {
-      height: calc(100vh - 88px);
+      height: 100vh;
       display: flex;
       gap: 1px;
       background: #000;
       position: relative;
+      padding-bottom: 156px;
+      transition: padding-bottom 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    body.dock-collapsed .preview-container {
+      padding-bottom: 12px;
     }
 
     .preview-panel {
@@ -140,24 +146,46 @@
       justify-content: center;
     }
 
-    .fallback-img {
-      max-width: 100%;
-      max-height: 100%;
-      object-fit: contain;
+    .fallback-content {
+      max-width: 440px;
+      margin: 0 24px;
+      padding: 28px;
+      border-radius: 16px;
+      background: rgba(18, 18, 20, 0.92);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
     }
 
-    .fallback-badge {
-      position: absolute;
-      top: 20px;
-      right: 20px;
-      padding: 8px 16px;
-      background: var(--apple-orange);
-      border-radius: 20px;
-      font-size: 10px;
+    .fallback-title {
+      color: var(--apple-gray-900);
+      font-size: 16px;
       font-weight: 700;
-      color: #000;
-      letter-spacing: 0.03em;
-      text-transform: uppercase;
+      letter-spacing: -0.01em;
+    }
+
+    .fallback-description {
+      color: var(--apple-gray-700);
+      font-size: 13px;
+      line-height: 1.5;
+    }
+
+    .fallback-link {
+      align-self: center;
+      text-decoration: none;
+      color: var(--apple-blue);
+      border: 1px solid rgba(0, 113, 227, 0.35);
+      background: rgba(0, 113, 227, 0.14);
+      border-radius: 999px;
+      padding: 8px 14px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .fallback-link:hover {
+      background: rgba(0, 113, 227, 0.22);
     }
 
     /* Info Overlay */
@@ -209,23 +237,54 @@
       margin-top: 4px;
     }
 
-    /* Control Bar */
-    .control-bar {
-      height: 88px;
+    /* Bottom Dock */
+    .bottom-dock {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
       background: rgba(29, 29, 31, 0.98);
       backdrop-filter: blur(40px) saturate(180%);
       border-top: 0.5px solid rgba(255, 255, 255, 0.1);
+      z-index: 120;
+      transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.35s ease;
+    }
+
+    .bottom-dock.collapsed {
+      transform: translateY(calc(100% + 8px));
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* Control Bar */
+    .control-bar {
+      min-height: 74px;
       display: flex;
       align-items: center;
-      justify-content: center;
+      justify-content: space-between;
       gap: 16px;
-      padding: 0 32px;
+      padding: 12px 20px 10px;
+      border-bottom: 0.5px solid rgba(255, 255, 255, 0.08);
     }
 
     .control-group {
       display: flex;
       align-items: center;
       gap: 10px;
+      overflow-x: auto;
+      max-width: min(56vw, 640px);
+      padding-bottom: 2px;
+      scrollbar-width: thin;
+      scrollbar-color: rgba(255, 255, 255, 0.24) transparent;
+    }
+
+    .control-group::-webkit-scrollbar {
+      height: 4px;
+    }
+
+    .control-group::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.22);
+      border-radius: 999px;
     }
 
     .control-divider {
@@ -233,6 +292,14 @@
       height: 32px;
       background: rgba(255, 255, 255, 0.08);
       margin: 0 12px;
+    }
+
+    .status-cluster {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
     }
 
     /* Buttons with Apple refinement */
@@ -327,6 +394,29 @@
       letter-spacing: -0.01em;
     }
 
+    .sync-text {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+      color: #86efac;
+      background: rgba(134, 239, 172, 0.12);
+      border: 1px solid rgba(134, 239, 172, 0.28);
+      border-radius: 999px;
+      padding: 4px 10px;
+    }
+
+    .sync-text.pending {
+      color: #fde68a;
+      background: rgba(251, 191, 36, 0.12);
+      border-color: rgba(251, 191, 36, 0.28);
+    }
+
+    .sync-text.offline {
+      color: #fca5a5;
+      background: rgba(248, 113, 113, 0.12);
+      border-color: rgba(248, 113, 113, 0.28);
+    }
+
     .btn-export {
       background: rgba(197, 160, 89, 0.15);
       border: 1.5px solid var(--gold);
@@ -339,35 +429,18 @@
       color: var(--gold-light);
     }
 
-    /* Action Menu */
+    /* Bottom action row */
     .action-menu {
-      position: fixed;
-      bottom: 118px;
-      right: 32px;
-      background: rgba(29, 29, 31, 0.98);
-      backdrop-filter: blur(40px) saturate(180%);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 16px;
-      padding: 12px;
+      padding: 10px 20px 16px;
       display: flex;
-      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      flex-wrap: wrap;
       gap: 8px;
-      opacity: 0;
-      transform: translateY(20px) scale(0.95);
-      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-      pointer-events: none;
-      z-index: 100;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
-    }
-
-    .action-menu.visible {
-      opacity: 1;
-      transform: translateY(0) scale(1);
-      pointer-events: all;
     }
 
     .action-btn {
-      height: 36px;
+      height: 38px;
       padding: 0 14px;
       background: rgba(255, 255, 255, 0.08);
       border: 1px solid transparent;
@@ -386,7 +459,7 @@
 
     .action-btn:hover {
       background: rgba(255, 255, 255, 0.15);
-      transform: translateX(-2px);
+      transform: translateY(-1px);
     }
 
     .action-btn.kept {
@@ -403,9 +476,39 @@
     }
 
     .action-divider {
-      height: 1px;
-      background: rgba(255, 255, 255, 0.1);
-      margin: 4px 0;
+      width: 1px;
+      align-self: stretch;
+      background: rgba(255, 255, 255, 0.15);
+      margin: 0 2px;
+    }
+
+    .dock-toggle-fab {
+      position: fixed;
+      right: 16px;
+      bottom: 14px;
+      z-index: 130;
+      min-height: 42px;
+      padding: 0 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      color: var(--apple-gray-900);
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(24px) saturate(180%);
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.25s ease;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.5);
+    }
+
+    .dock-toggle-fab:hover {
+      transform: translateY(-1px);
+      background: rgba(0, 0, 0, 0.82);
+    }
+
+    .dock-toggle-fab.collapsed {
+      background: rgba(0, 113, 227, 0.25);
+      border-color: rgba(0, 113, 227, 0.45);
     }
 
     /* Note Modal */
@@ -622,12 +725,20 @@
 
       .control-bar {
         flex-wrap: wrap;
-        height: auto;
-        padding: 20px;
+        padding: 14px 16px 10px;
       }
 
       .control-divider {
         display: none;
+      }
+
+      .control-group {
+        max-width: 100%;
+      }
+
+      .status-cluster {
+        width: 100%;
+        justify-content: flex-start;
       }
 
       .keyboard-hints {
@@ -654,9 +765,22 @@
         font-size: 11px;
       }
 
+      .sync-text {
+        font-size: 11px;
+        padding: 4px 8px;
+      }
+
       .action-menu {
-        bottom: 16px;
-        right: 16px;
+        padding: 8px 16px 14px;
+      }
+
+      .action-btn {
+        flex: 1 1 calc(50% - 8px);
+        justify-content: center;
+      }
+
+      .action-divider {
+        display: none;
       }
 
       .info-overlay {
@@ -665,6 +789,11 @@
 
       .info-theme-name {
         font-size: 18px;
+      }
+
+      .dock-toggle-fab {
+        right: 12px;
+        bottom: 10px;
       }
     }
   </style>
@@ -677,7 +806,7 @@
   </div>
 
   <!-- Back Link -->
-  <a href="MASTER-COMPARISON.html" class="back-link">← Overview</a>
+  <a href="master-comparison.html" class="back-link">← Overview</a>
 
   <!-- Keyboard Hints -->
   <div class="keyboard-hints">
@@ -689,7 +818,7 @@
     </div>
     <div class="keyboard-hint">
       <div class="keyboard-hint-keys">
-        <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd>
+        <kbd>1</kbd><kbd>...</kbd><kbd>9</kbd>
       </div>
       <span>Options</span>
     </div>
@@ -714,8 +843,15 @@
       <div class="preview-label">Original</div>
       <iframe class="preview-iframe" id="original-iframe"></iframe>
       <div class="fallback-container" id="original-fallback">
-        <img class="fallback-img" id="fallback-img" alt="Original design">
-        <div class="fallback-badge">Dev server offline</div>
+        <div class="fallback-content">
+          <div class="fallback-title">Original preview unavailable</div>
+          <p class="fallback-description">
+            The original design could not be loaded in the embedded frame. You can still open it in a new tab.
+          </p>
+          <a class="fallback-link" id="fallback-open-link" href="/" target="_blank" rel="noopener noreferrer">
+            Open original
+          </a>
+        </div>
       </div>
     </div>
 
@@ -733,39 +869,43 @@
     </div>
   </div>
 
-  <!-- Control Bar -->
-  <div class="control-bar">
-    <button class="btn" id="prev-theme" onclick="navigateTheme(-1)">← Prev</button>
+  <button class="dock-toggle-fab" id="dock-toggle-btn" onclick="toggleDock()">
+    Hide controls
+  </button>
 
-    <div class="control-divider"></div>
+  <div class="bottom-dock" id="bottom-dock">
+    <!-- Control Bar -->
+    <div class="control-bar">
+      <button class="btn" id="prev-theme" onclick="navigateTheme(-1)">← Prev</button>
 
-    <div class="control-group" id="option-buttons-container">
-      <!-- Option buttons dynamically populated -->
+      <div class="control-divider"></div>
+
+      <div class="control-group" id="option-buttons-container">
+        <!-- Option buttons dynamically populated -->
+      </div>
+
+      <div class="control-divider"></div>
+
+      <button class="btn btn-toggle active" id="compare-btn" onclick="toggleOriginal()">Compare</button>
+
+      <div class="control-divider"></div>
+
+      <button class="btn" id="next-theme" onclick="navigateTheme(1)">Next →</button>
+
+      <div class="status-cluster">
+        <span class="status-text" id="status-text">Loading...</span>
+        <span class="sync-text" id="sync-text">Local save active</span>
+        <button class="btn btn-export" onclick="exportData()">Export</button>
+      </div>
     </div>
 
-    <div class="control-divider"></div>
-
-    <button class="btn btn-toggle active" id="compare-btn" onclick="toggleOriginal()">Compare</button>
-
-    <div class="control-divider"></div>
-
-    <button class="btn" id="next-theme" onclick="navigateTheme(1)">Next →</button>
-
-    <div style="flex: 1"></div>
-
-    <span class="status-text" id="status-text">Loading...</span>
-
-    <div class="control-divider"></div>
-
-    <button class="btn btn-export" onclick="exportData()">Export</button>
-  </div>
-
-  <!-- Action Menu -->
-  <div class="action-menu" id="action-menu">
-    <button class="action-btn" id="keep-btn" onclick="toggleKeep()">Keep This</button>
-    <button class="action-btn" id="note-btn" onclick="openNoteModal()"><span>✎</span><span>Add Note</span></button>
-    <div class="action-divider"></div>
-    <button class="action-btn" id="original-note-btn" onclick="openOriginalNoteModal()"><span>✎</span><span>Original</span></button>
+    <!-- Action Row -->
+    <div class="action-menu" id="action-menu">
+      <button class="action-btn" id="keep-btn" onclick="toggleKeep()">Keep This</button>
+      <button class="action-btn" id="note-btn" onclick="openNoteModal()"><span>✎</span><span>Add Note</span></button>
+      <div class="action-divider"></div>
+      <button class="action-btn" id="original-note-btn" onclick="openOriginalNoteModal()"><span>✎</span><span>Original</span></button>
+    </div>
   </div>
 
   <!-- Note Modal -->
@@ -781,90 +921,222 @@
   </div>
 
   <script>
-    // Dynamic theme discovery
+    const REVIEW_MANIFEST_PATH = './review-manifest.json';
+    const STORAGE_KEY = 'design-review-state-v2';
+    const LEGACY_STORAGE_KEY = 'design-review-state';
+    const API_ENDPOINT_STORAGE_KEY = 'design-review-api-endpoint';
+    const DEFAULT_API_ENDPOINT = '/api/design-review-feedback';
+    const REVIEW_COMPONENT = 'splash';
+    const REVIEW_ROUND = 1;
+
     const THEME_DIRECTORIES = [
       'particles', 'constellation', 'mandala', 'geometric',
       'zen', 'aurora', 'ink', 'manuscript', 'light'
     ];
 
     const THEME_METADATA = {
-      'particles': {
+      particles: {
         name: 'Particle Field',
         description: 'Interactive particle system with fluid motion',
-        originalUrl: 'http://localhost:5174/?mockup=particles'
+        originalPath: '/?skipSplash=true&mockup=particles'
       },
-      'constellation': {
+      constellation: {
         name: 'Constellation Poetry',
         description: 'Star patterns forming poetic connections',
-        originalUrl: 'http://localhost:5174/?mockup=constellation'
+        originalPath: '/?skipSplash=true&mockup=constellation'
       },
-      'mandala': {
+      mandala: {
         name: 'Breathing Mandala',
         description: 'Sacred geometry with meditative breathing',
-        originalUrl: 'http://localhost:5174/?mockup=mandala'
+        originalPath: '/?skipSplash=true&mockup=mandala'
       },
-      'geometric': {
+      geometric: {
         name: 'Geometric Patterns',
         description: 'Islamic tessellation and sacred mathematics',
-        originalUrl: 'http://localhost:5174/?mockup=geometric'
+        originalPath: '/?skipSplash=true&mockup=geometric'
       },
-      'zen': {
+      zen: {
         name: 'Zen Minimalism',
         description: 'Pure simplicity and calligraphic elegance',
-        originalUrl: 'http://localhost:5174/?mockup=zen'
+        originalPath: '/?skipSplash=true&mockup=zen'
       },
-      'aurora': {
+      aurora: {
         name: 'Aurora Light',
         description: 'Flowing gradients and ethereal atmosphere',
-        originalUrl: 'http://localhost:5174/?mockup=aurora'
+        originalPath: '/?skipSplash=true&mockup=aurora'
       },
-      'ink': {
+      ink: {
         name: 'Ink Calligraphy',
         description: 'Traditional ink brush and Arabic letterforms',
-        originalUrl: 'http://localhost:5174/?mockup=ink'
+        originalPath: '/?skipSplash=true&mockup=ink'
       },
-      'manuscript': {
+      manuscript: {
         name: 'Ancient Manuscript',
         description: 'Aged parchment with classical ornaments',
-        originalUrl: 'http://localhost:5174/?mockup=manuscript'
+        originalPath: '/?skipSplash=true&mockup=manuscript'
       },
-      'light': {
-        name: 'Light & Shadow',
+      light: {
+        name: 'Light and Shadow',
         description: 'Dramatic interplay of light and depth',
-        originalUrl: 'http://localhost:5174/?mockup=light'
+        originalPath: '/?skipSplash=true&mockup=light'
       }
+    };
+
+    const FALLBACK_OPTION_PATHS = {
+      particles: [
+        'option-1-refined-particles.html',
+        'option-2-gold-mystical.html',
+        'option-3-minimal-constellation.html'
+      ],
+      constellation: ['option-1-refined.html', 'option-2-minimal.html', 'option-3-animated.html'],
+      mandala: ['option-1-refined.html'],
+      geometric: [
+        'khatam-variation-a-gold-indigo.html',
+        'khatam-variation-b-turquoise-coral.html',
+        'option-3-sacred-grid.html',
+        'khatam-variation-c-emerald-amber.html'
+      ],
+      zen: ['option-1-refined.html', 'option-2-haiku.html'],
+      aurora: ['option-1-refined.html'],
+      ink: ['option-3-live-calligraphy.html'],
+      manuscript: ['option-1-ornate-islamic.html', 'option-2-codex-spine.html', 'option-3-scroll-seal.html'],
+      light: ['option-1-improved-chiaroscuro.html', 'option-3-minimal-ray-tracing.html']
     };
 
     let themes = [];
 
-    // Dynamic theme loading
+    const state = {
+      currentThemeIndex: 0,
+      currentOptionIndex: 0,
+      showOriginal: true,
+      keptOptions: {},
+      notes: {},
+      currentNoteKey: null,
+      dockCollapsed: false,
+      pendingSyncEvents: [],
+      sessionId: '',
+      apiEndpoint: '',
+      isSyncing: false,
+      lastSyncedAt: null,
+      lastSyncError: ''
+    };
+
+    function titleCase(value) {
+      return value
+        .split('-')
+        .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+        .join(' ');
+    }
+
+    function createSessionId() {
+      return `review-${Date.now()}-${Math.random().toString(16).slice(2, 10)}`;
+    }
+
+    function createEventId() {
+      return `evt-${Date.now()}-${Math.random().toString(16).slice(2, 10)}`;
+    }
+
+    function resolveOriginalUrl(themeId, originalPath) {
+      if (originalPath && /^https?:\/\//.test(originalPath)) return originalPath;
+      if (originalPath && originalPath.startsWith('/')) return originalPath;
+      if (originalPath) return `/${originalPath.replace(/^\.?\//, '')}`;
+      return `/?skipSplash=true&mockup=${themeId}`;
+    }
+
+    function resolveApiEndpoint() {
+      const params = new URLSearchParams(window.location.search);
+      const queryValue = params.get('api') || params.get('apiEndpoint');
+
+      if (queryValue !== null) {
+        const value = queryValue.trim();
+        if (!value || value === 'off' || value === 'none') {
+          localStorage.removeItem(API_ENDPOINT_STORAGE_KEY);
+          return '';
+        }
+
+        localStorage.setItem(API_ENDPOINT_STORAGE_KEY, value);
+        return value;
+      }
+
+      return localStorage.getItem(API_ENDPOINT_STORAGE_KEY) || DEFAULT_API_ENDPOINT;
+    }
+
+    function normalizeOption(themeId, option, index) {
+      const number = Number(option.number) || index + 1;
+      const file = option.file || option.path || option.url || '';
+      const name = option.name || extractOptionName(file);
+      const url = /^https?:\/\//.test(file) || file.startsWith('/') || file.startsWith('./')
+        ? file
+        : `./${themeId}/previews/${file}`;
+
+      return {
+        number,
+        name,
+        url,
+        description: option.description || `Option ${number}: ${name}`
+      };
+    }
+
+    async function loadThemesFromManifest() {
+      try {
+        const response = await fetch(REVIEW_MANIFEST_PATH, { cache: 'no-store' });
+        if (!response.ok) throw new Error(`Manifest request failed: ${response.status}`);
+
+        const manifest = await response.json();
+        if (!Array.isArray(manifest.themes)) return [];
+
+        return manifest.themes
+          .map((theme) => {
+            const metadata = THEME_METADATA[theme.id] || {};
+            const options = (theme.options || [])
+              .map((option, index) => normalizeOption(theme.id, option, index))
+              .filter((option) => !!option.url)
+              .sort((a, b) => a.number - b.number);
+
+            return {
+              id: theme.id,
+              name: theme.name || metadata.name || titleCase(theme.id),
+              description: theme.description || metadata.description || 'Design exploration',
+              originalUrl: resolveOriginalUrl(theme.id, theme.originalPath || metadata.originalPath),
+              options,
+              missingOptionSlots: Array.isArray(theme.missingOptionSlots) ? theme.missingOptionSlots : []
+            };
+          })
+          .filter((theme) => theme.options.length > 0);
+      } catch (error) {
+        console.warn('review-manifest unavailable, using fallback discovery:', error);
+        return [];
+      }
+    }
+
     async function discoverThemes() {
+      const manifestThemes = await loadThemesFromManifest();
+      if (manifestThemes.length > 0) return manifestThemes;
+      return discoverThemesFallback();
+    }
+
+    async function discoverThemesFallback() {
       const discoveredThemes = [];
 
       for (const themeId of THEME_DIRECTORIES) {
         try {
-          // Try to detect available options by probing for files
           const options = await discoverOptions(themeId);
+          if (options.length === 0) continue;
 
-          if (options.length > 0) {
-            const metadata = THEME_METADATA[themeId] || {
-              name: themeId.charAt(0).toUpperCase() + themeId.slice(1),
-              description: 'Design exploration',
-              originalUrl: `http://localhost:5174/?mockup=${themeId}`
-            };
+          const metadata = THEME_METADATA[themeId] || {
+            name: titleCase(themeId),
+            description: 'Design exploration',
+            originalPath: `/?skipSplash=true&mockup=${themeId}`
+          };
 
-            // Find fallback image
-            const fallbackImg = await findFallbackImage(themeId);
-
-            discoveredThemes.push({
-              id: themeId,
-              name: metadata.name,
-              description: metadata.description,
-              originalUrl: metadata.originalUrl,
-              fallbackImg: fallbackImg,
-              options: options
-            });
-          }
+          discoveredThemes.push({
+            id: themeId,
+            name: metadata.name,
+            description: metadata.description,
+            originalUrl: resolveOriginalUrl(themeId, metadata.originalPath),
+            options,
+            missingOptionSlots: []
+          });
         } catch (error) {
           console.warn(`Failed to discover theme ${themeId}:`, error);
         }
@@ -875,143 +1147,267 @@
 
     async function discoverOptions(themeId) {
       const options = [];
-      const optionNumbers = [1, 2, 3];
+      const candidateFiles = FALLBACK_OPTION_PATHS[themeId] || [];
 
-      for (const num of optionNumbers) {
-        // Try common naming patterns
-        const possiblePaths = [
-          `./${themeId}/previews/option-${num}-refined.html`,
-          `./${themeId}/previews/option-${num}-minimal.html`,
-          `./${themeId}/previews/option-${num}-animated.html`,
-          `./${themeId}/previews/option-${num}.html`
-        ];
-
-        for (const path of possiblePaths) {
-          if (await fileExists(path)) {
-            const optionName = extractOptionName(path);
-            options.push({
-              number: num,
-              name: optionName,
-              url: path,
-              description: `Option ${num}: ${optionName}`
-            });
-            break;
-          }
+      for (const fileName of candidateFiles) {
+        const path = `./${themeId}/previews/${fileName}`;
+        if (await fileExists(path)) {
+          options.push(buildOptionFromFile(fileName, path, options.length));
         }
       }
 
+      options.sort((a, b) => a.number - b.number);
       return options;
     }
 
-    async function findFallbackImage(themeId) {
-      const possiblePaths = [
-        `./${themeId}/current-state/1-${themeId}-initial.png`,
-        `./${themeId}/current-state/1-${themeId}-splash-full.png`,
-        `./current-state/1-${themeId}-splash-full.png`
-      ];
-
-      for (const path of possiblePaths) {
-        if (await fileExists(path)) {
-          return path;
-        }
+    function buildOptionFromFile(fileName, path, index) {
+      const match = fileName.match(/^option-(\d+)-([^.]+)\.html$/);
+      if (match) {
+        const number = Number(match[1]);
+        const name = titleCase(match[2]);
+        return {
+          number,
+          name,
+          url: path,
+          description: `Option ${number}: ${name}`
+        };
       }
 
-      return './mockups/placeholder.png';
+      const fallbackNumber = index + 1;
+      const fallbackName = titleCase(fileName.replace(/\.html$/, ''));
+      return {
+        number: fallbackNumber,
+        name: fallbackName,
+        url: path,
+        description: `Option ${fallbackNumber}: ${fallbackName}`
+      };
     }
 
     function extractOptionName(path) {
-      const match = path.match(/option-\d+-([^.]+)\.html/);
-      if (match) {
-        return match[1].split('-').map(word =>
-          word.charAt(0).toUpperCase() + word.slice(1)
-        ).join(' ');
-      }
-      return 'Design Option';
+      const fileName = path.split('/').pop() || '';
+      return titleCase(fileName.replace(/^option-\d+-/, '').replace(/\.html$/, '')) || 'Design Option';
     }
 
     async function fileExists(path) {
       try {
-        const response = await fetch(path, { method: 'HEAD' });
+        const response = await fetch(path, { cache: 'no-store' });
         return response.ok;
       } catch {
         return false;
       }
     }
 
-    // State
-    const state = {
-      currentThemeIndex: 0,
-      currentOptionIndex: 0,
-      showOriginal: true,
-      keptOptions: {},
-      notes: {},
-      currentNoteKey: null
-    };
-
-    // Initialize
-    async function init() {
-      themes = await discoverThemes();
-
-      if (themes.length === 0) {
-        alert('No themes discovered. Please check directory structure.');
-        return;
-      }
-
-      loadState();
-      loadTheme();
-      updateUI();
-      showActionMenu();
-
-      // Hide loading screen
-      document.getElementById('loading-screen').classList.add('hidden');
-    }
-
     function loadState() {
-      const saved = localStorage.getItem('design-review-state');
+      const saved = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_STORAGE_KEY);
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
           state.keptOptions = parsed.keptOptions || {};
           state.notes = parsed.notes || {};
-        } catch (e) {
-          console.error('Failed to load state:', e);
+          state.pendingSyncEvents = Array.isArray(parsed.pendingSyncEvents) ? parsed.pendingSyncEvents : [];
+          state.sessionId = parsed.sessionId || createSessionId();
+          state.lastSyncedAt = parsed.lastSyncedAt || null;
+          state.dockCollapsed = !!parsed.dockCollapsed;
+        } catch (error) {
+          console.error('Failed to load saved review state:', error);
         }
+      } else {
+        state.sessionId = createSessionId();
       }
+
+      state.apiEndpoint = resolveApiEndpoint();
+      applyDockState();
+      updateSyncText();
     }
 
     function saveState() {
-      localStorage.setItem('design-review-state', JSON.stringify({
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
         keptOptions: state.keptOptions,
-        notes: state.notes
+        notes: state.notes,
+        pendingSyncEvents: state.pendingSyncEvents,
+        sessionId: state.sessionId,
+        lastSyncedAt: state.lastSyncedAt,
+        dockCollapsed: state.dockCollapsed
       }));
     }
 
-    function loadTheme() {
-      const theme = themes[state.currentThemeIndex];
+    function getCurrentTheme() {
+      return themes[state.currentThemeIndex];
+    }
 
+    function getCurrentOption() {
+      const theme = getCurrentTheme();
+      if (!theme || !theme.options[state.currentOptionIndex]) return null;
+      return theme.options[state.currentOptionIndex];
+    }
+
+    function getCurrentKey() {
+      const theme = getCurrentTheme();
+      const option = getCurrentOption();
+      return `${theme.id}-${option.number}`;
+    }
+
+    function getCurrentContext() {
+      const theme = getCurrentTheme();
+      const option = getCurrentOption();
+      return {
+        themeId: theme ? theme.id : null,
+        themeName: theme ? theme.name : null,
+        optionNumber: option ? option.number : null,
+        optionName: option ? option.name : null
+      };
+    }
+
+    function buildSnapshot() {
+      return {
+        totalThemes: themes.length,
+        totalOptions: themes.reduce((sum, theme) => sum + theme.options.length, 0),
+        keptCount: Object.keys(state.keptOptions).length,
+        notesCount: Object.keys(state.notes).length,
+        context: getCurrentContext(),
+        keptOptions: state.keptOptions,
+        notes: state.notes
+      };
+    }
+
+    function queueSyncEvent(eventType, payload = {}) {
+      state.pendingSyncEvents.push({
+        id: createEventId(),
+        eventType,
+        timestamp: new Date().toISOString(),
+        component: REVIEW_COMPONENT,
+        round: REVIEW_ROUND,
+        sessionId: state.sessionId,
+        context: getCurrentContext(),
+        payload,
+        snapshot: buildSnapshot()
+      });
+
+      if (state.pendingSyncEvents.length > 250) {
+        state.pendingSyncEvents = state.pendingSyncEvents.slice(-250);
+      }
+
+      saveState();
+      updateSyncText();
+      flushPendingEvents();
+    }
+
+    async function flushPendingEvents() {
+      if (state.isSyncing || !state.apiEndpoint || state.pendingSyncEvents.length === 0) {
+        updateSyncText();
+        return;
+      }
+
+      state.isSyncing = true;
+      updateSyncText();
+
+      while (state.pendingSyncEvents.length > 0) {
+        const nextEvent = state.pendingSyncEvents[0];
+
+        try {
+          const response = await fetch(state.apiEndpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(nextEvent),
+            keepalive: true
+          });
+
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+          }
+
+          state.pendingSyncEvents.shift();
+          state.lastSyncedAt = new Date().toISOString();
+          state.lastSyncError = '';
+          saveState();
+        } catch (error) {
+          state.lastSyncError = error.message;
+          state.isSyncing = false;
+          saveState();
+          updateSyncText();
+          console.warn('Failed syncing review event; retained locally:', error);
+          return;
+        }
+      }
+
+      state.isSyncing = false;
+      saveState();
+      updateSyncText();
+    }
+
+    function updateSyncText() {
+      const syncText = document.getElementById('sync-text');
+      if (!syncText) return;
+
+      syncText.classList.remove('pending', 'offline');
+
+      if (!state.apiEndpoint) {
+        syncText.textContent = 'Local save only';
+        syncText.classList.add('offline');
+        return;
+      }
+
+      if (state.isSyncing) {
+        syncText.textContent = `Syncing ${state.pendingSyncEvents.length}...`;
+        return;
+      }
+
+      if (state.pendingSyncEvents.length > 0) {
+        syncText.textContent = `Saved locally • ${state.pendingSyncEvents.length} pending`;
+        syncText.classList.add(state.lastSyncError ? 'offline' : 'pending');
+        return;
+      }
+
+      if (state.lastSyncedAt) {
+        syncText.textContent = 'Synced to API';
+      } else {
+        syncText.textContent = 'Local save active';
+        syncText.classList.add('pending');
+      }
+    }
+
+    function applyDockState() {
+      const dock = document.getElementById('bottom-dock');
+      const toggleButton = document.getElementById('dock-toggle-btn');
+      if (!dock || !toggleButton) return;
+
+      dock.classList.toggle('collapsed', state.dockCollapsed);
+      document.body.classList.toggle('dock-collapsed', state.dockCollapsed);
+      toggleButton.classList.toggle('collapsed', state.dockCollapsed);
+      toggleButton.textContent = state.dockCollapsed ? 'Show controls' : 'Hide controls';
+    }
+
+    function toggleDock(forceValue) {
+      const collapsed = typeof forceValue === 'boolean' ? forceValue : !state.dockCollapsed;
+      state.dockCollapsed = collapsed;
+      applyDockState();
+      saveState();
+    }
+
+    function loadTheme() {
+      const theme = getCurrentTheme();
       if (!theme || !theme.options || theme.options.length === 0) {
         console.error('Theme has no options:', theme);
         return;
       }
 
-      const option = theme.options[state.currentOptionIndex];
+      if (state.currentOptionIndex >= theme.options.length) {
+        state.currentOptionIndex = 0;
+      }
 
-      // Update info
+      const option = getCurrentOption();
+
       document.getElementById('info-theme-name').textContent = theme.name;
       document.getElementById('info-description').textContent = theme.description;
       document.getElementById('info-option-name').textContent = option.description;
 
-      // Load iframes
       loadOriginal(theme);
       document.getElementById('option-iframe').src = option.url;
       document.getElementById('option-label').textContent = option.name;
 
-      // Render option buttons dynamically
       renderOptionButtons(theme);
-
-      // Update button states
       updateButtonStates();
-      showActionMenu();
+      updateUI();
     }
 
     function renderOptionButtons(theme) {
@@ -1019,45 +1415,54 @@
       container.innerHTML = '';
 
       theme.options.forEach((option, index) => {
-        const btn = document.createElement('button');
-        btn.className = 'btn btn-option';
-        btn.textContent = `Option ${option.number}`;
-        btn.onclick = () => selectOption(option.number);
+        const button = document.createElement('button');
+        button.className = 'btn btn-option';
+        button.textContent = `Option ${option.number}`;
+        button.title = option.name;
+        button.onclick = () => selectOption(option.number);
 
         if (index === state.currentOptionIndex) {
-          btn.classList.add('active');
+          button.classList.add('active');
         }
 
         const optionKey = `${theme.id}-${option.number}`;
         if (state.keptOptions[optionKey]) {
-          btn.classList.add('kept');
+          button.classList.add('kept');
         }
 
-        container.appendChild(btn);
+        container.appendChild(button);
       });
     }
 
     function loadOriginal(theme) {
       const iframe = document.getElementById('original-iframe');
       const fallbackContainer = document.getElementById('original-fallback');
-      const fallbackImg = document.getElementById('fallback-img');
+      const fallbackLink = document.getElementById('fallback-open-link');
 
       iframe.style.display = 'block';
       fallbackContainer.classList.remove('active');
+      fallbackLink.href = theme.originalUrl;
+
+      const loadToken = `${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
+      iframe.dataset.loadToken = loadToken;
       iframe.src = theme.originalUrl;
 
       const timeout = setTimeout(() => {
+        if (iframe.dataset.loadToken !== loadToken) return;
         iframe.style.display = 'none';
         fallbackContainer.classList.add('active');
-        fallbackImg.src = theme.fallbackImg;
-      }, 2000);
+      }, 3000);
 
-      iframe.onload = () => clearTimeout(timeout);
+      iframe.onload = () => {
+        if (iframe.dataset.loadToken !== loadToken) return;
+        clearTimeout(timeout);
+      };
+
       iframe.onerror = () => {
+        if (iframe.dataset.loadToken !== loadToken) return;
         clearTimeout(timeout);
         iframe.style.display = 'none';
         fallbackContainer.classList.add('active');
-        fallbackImg.src = theme.fallbackImg;
       };
     }
 
@@ -1066,37 +1471,32 @@
       state.currentThemeIndex = Math.max(0, Math.min(themes.length - 1, state.currentThemeIndex));
       state.currentOptionIndex = 0;
       loadTheme();
-      updateUI();
+      saveState();
     }
 
     function selectOption(optionNumber) {
-      const theme = themes[state.currentThemeIndex];
-      const optionIndex = theme.options.findIndex(opt => opt.number === optionNumber);
+      const theme = getCurrentTheme();
+      const optionIndex = theme.options.findIndex((option) => option.number === optionNumber);
 
       if (optionIndex !== -1) {
         state.currentOptionIndex = optionIndex;
         loadTheme();
+        saveState();
       }
     }
 
     function toggleOriginal() {
       state.showOriginal = !state.showOriginal;
       const originalPanel = document.getElementById('original-panel');
-      const compareBtn = document.getElementById('compare-btn');
+      const compareButton = document.getElementById('compare-btn');
 
       if (state.showOriginal) {
         originalPanel.classList.remove('hidden');
-        compareBtn.classList.add('active');
+        compareButton.classList.add('active');
       } else {
         originalPanel.classList.add('hidden');
-        compareBtn.classList.remove('active');
+        compareButton.classList.remove('active');
       }
-    }
-
-    function getCurrentKey() {
-      const theme = themes[state.currentThemeIndex];
-      const option = theme.options[state.currentOptionIndex];
-      return `${theme.id}-${option.number}`;
     }
 
     function toggleKeep() {
@@ -1106,14 +1506,16 @@
       } else {
         state.keptOptions[key] = true;
       }
+
       saveState();
       updateButtonStates();
       updateUI();
+      queueSyncEvent('keep_toggled', { key, kept: !!state.keptOptions[key] });
     }
 
     function openNoteModal() {
-      const theme = themes[state.currentThemeIndex];
-      const option = theme.options[state.currentOptionIndex];
+      const theme = getCurrentTheme();
+      const option = getCurrentOption();
       const key = getCurrentKey();
 
       state.currentNoteKey = key;
@@ -1124,7 +1526,7 @@
     }
 
     function openOriginalNoteModal() {
-      const theme = themes[state.currentThemeIndex];
+      const theme = getCurrentTheme();
       const key = `${theme.id}-original`;
 
       state.currentNoteKey = key;
@@ -1140,86 +1542,89 @@
     }
 
     function saveNote() {
-      const text = document.getElementById('note-textarea').value.trim();
-      if (text && state.currentNoteKey) {
-        state.notes[state.currentNoteKey] = text;
-      } else if (state.currentNoteKey) {
-        delete state.notes[state.currentNoteKey];
+      const noteValue = document.getElementById('note-textarea').value.trim();
+      const noteKey = state.currentNoteKey;
+      if (!noteKey) return;
+
+      if (noteValue) {
+        state.notes[noteKey] = noteValue;
+      } else {
+        delete state.notes[noteKey];
       }
+
       saveState();
       updateButtonStates();
       closeNoteModal();
-    }
-
-    function showActionMenu() {
-      const menu = document.getElementById('action-menu');
-      setTimeout(() => {
-        menu.classList.add('visible');
-      }, 200);
+      queueSyncEvent('note_saved', {
+        key: noteKey,
+        hasNote: !!noteValue,
+        note: noteValue
+      });
     }
 
     function updateButtonStates() {
       const key = getCurrentKey();
-      const theme = themes[state.currentThemeIndex];
+      const theme = getCurrentTheme();
       const originalKey = `${theme.id}-original`;
 
-      // Update option buttons
-      document.querySelectorAll('.btn-option').forEach((btn, index) => {
+      document.querySelectorAll('.btn-option').forEach((button, index) => {
         const option = theme.options[index];
         const optionKey = `${theme.id}-${option.number}`;
 
-        btn.classList.toggle('active', index === state.currentOptionIndex);
-        btn.classList.toggle('kept', !!state.keptOptions[optionKey]);
+        button.classList.toggle('active', index === state.currentOptionIndex);
+        button.classList.toggle('kept', !!state.keptOptions[optionKey]);
       });
 
-      // Update keep button
-      const keepBtn = document.getElementById('keep-btn');
+      const keepButton = document.getElementById('keep-btn');
       if (state.keptOptions[key]) {
-        keepBtn.classList.add('kept');
-        keepBtn.textContent = '✓ Kept';
+        keepButton.classList.add('kept');
+        keepButton.textContent = '✓ Kept';
       } else {
-        keepBtn.classList.remove('kept');
-        keepBtn.textContent = 'Keep This';
+        keepButton.classList.remove('kept');
+        keepButton.textContent = 'Keep This';
       }
 
-      // Update note button
-      const noteBtn = document.getElementById('note-btn');
+      const noteButton = document.getElementById('note-btn');
       if (state.notes[key]) {
-        noteBtn.classList.add('has-note');
-        noteBtn.innerHTML = '<span>✎</span><span>Edit Note</span>';
+        noteButton.classList.add('has-note');
+        noteButton.innerHTML = '<span>✎</span><span>Edit Note</span>';
       } else {
-        noteBtn.classList.remove('has-note');
-        noteBtn.innerHTML = '<span>✎</span><span>Add Note</span>';
+        noteButton.classList.remove('has-note');
+        noteButton.innerHTML = '<span>✎</span><span>Add Note</span>';
       }
 
-      // Update original note button
-      const originalNoteBtn = document.getElementById('original-note-btn');
+      const originalNoteButton = document.getElementById('original-note-btn');
       if (state.notes[originalKey]) {
-        originalNoteBtn.classList.add('has-note');
-        originalNoteBtn.innerHTML = '<span>✎</span><span>Original Note</span>';
+        originalNoteButton.classList.add('has-note');
+        originalNoteButton.innerHTML = '<span>✎</span><span>Original Note</span>';
       } else {
-        originalNoteBtn.classList.remove('has-note');
-        originalNoteBtn.innerHTML = '<span>✎</span><span>Original</span>';
+        originalNoteButton.classList.remove('has-note');
+        originalNoteButton.innerHTML = '<span>✎</span><span>Original</span>';
       }
     }
 
     function updateUI() {
       const keptCount = Object.keys(state.keptOptions).length;
+      const theme = getCurrentTheme();
+      const missing = Array.isArray(theme.missingOptionSlots) ? theme.missingOptionSlots : [];
+      const missingSuffix = missing.length ? ` • missing slots ${missing.join(',')}` : '';
+
       document.getElementById('status-text').textContent =
-        `Theme ${state.currentThemeIndex + 1}/${themes.length} • ${keptCount} kept`;
+        `Theme ${state.currentThemeIndex + 1}/${themes.length} • ${theme.options.length} options • ${keptCount} kept${missingSuffix}`;
 
       document.getElementById('prev-theme').disabled = state.currentThemeIndex === 0;
       document.getElementById('next-theme').disabled = state.currentThemeIndex === themes.length - 1;
+      updateSyncText();
     }
 
     function exportData() {
       const optionNotes = [];
       const originalNotes = [];
 
-      Object.keys(state.notes).forEach(key => {
+      Object.keys(state.notes).forEach((key) => {
         if (key.endsWith('-original')) {
           const themeId = key.replace('-original', '');
-          const theme = themes.find(t => t.id === themeId);
+          const theme = themes.find((item) => item.id === themeId);
           if (theme) {
             originalNotes.push({
               key,
@@ -1228,74 +1633,124 @@
               note: state.notes[key]
             });
           }
-        } else {
-          optionNotes.push({ key, note: state.notes[key] });
+          return;
         }
+
+        optionNotes.push({ key, note: state.notes[key] });
       });
 
-      const exportObj = {
+      const keptSelections = Object.keys(state.keptOptions).map((key) => {
+        const separatorIndex = key.lastIndexOf('-');
+        const themeId = key.slice(0, separatorIndex);
+        const optionNumber = Number(key.slice(separatorIndex + 1));
+        const theme = themes.find((item) => item.id === themeId);
+        const option = theme ? theme.options.find((item) => item.number === optionNumber) : null;
+
+        return {
+          key,
+          theme: theme ? theme.name : themeId,
+          option: option ? option.name : `Option ${optionNumber}`,
+          description: option ? option.description : '',
+          note: state.notes[key] || ''
+        };
+      });
+
+      const exportObject = {
         timestamp: new Date().toISOString(),
+        component: REVIEW_COMPONENT,
+        round: REVIEW_ROUND,
+        apiEndpoint: state.apiEndpoint || null,
         summary: {
           totalThemes: themes.length,
           totalOptions: themes.reduce((sum, theme) => sum + theme.options.length, 0),
-          keptCount: Object.keys(state.keptOptions).length,
+          keptCount: keptSelections.length,
           optionNotesCount: optionNotes.length,
           originalNotesCount: originalNotes.length,
-          totalNotesCount: Object.keys(state.notes).length
+          totalNotesCount: Object.keys(state.notes).length,
+          pendingApiEvents: state.pendingSyncEvents.length
         },
-        keptSelections: Object.keys(state.keptOptions).map(key => {
-          const [themeId, optionNum] = key.split('-');
-          const theme = themes.find(t => t.id === themeId);
-          const option = theme.options.find(opt => opt.number === parseInt(optionNum));
-          return {
-            key,
-            theme: theme.name,
-            option: option.name,
-            description: option.description,
-            note: state.notes[key] || ''
-          };
-        }),
-        originalNotes: originalNotes,
+        themes: themes.map((theme) => ({
+          id: theme.id,
+          name: theme.name,
+          options: theme.options.map((option) => ({
+            number: option.number,
+            name: option.name,
+            url: option.url
+          })),
+          missingOptionSlots: theme.missingOptionSlots || []
+        })),
+        keptSelections,
+        originalNotes,
         allNotes: state.notes
       };
 
-      const json = JSON.stringify(exportObj, null, 2);
+      const json = JSON.stringify(exportObject, null, 2);
       const blob = new Blob([json], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `design-review-${Date.now()}.json`;
-      a.click();
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = `design-review-${Date.now()}.json`;
+      anchor.click();
       URL.revokeObjectURL(url);
 
-      const totalNotes = Object.keys(state.notes).length;
-      const noteBreakdown = originalNotes.length > 0
-        ? `${totalNotes} notes (${optionNotes.length} options, ${originalNotes.length} originals)`
-        : `${totalNotes} notes`;
+      queueSyncEvent('exported_review', {
+        keptCount: keptSelections.length,
+        totalNotesCount: Object.keys(state.notes).length
+      });
 
-      alert(`Exported!\n${Object.keys(state.keptOptions).length} kept • ${noteBreakdown}`);
+      const totalNotes = Object.keys(state.notes).length;
+      alert(`Exported!\n${keptSelections.length} kept • ${totalNotes} notes`);
     }
 
-    // Keyboard shortcuts
-    document.addEventListener('keydown', (e) => {
-      if (e.target.tagName === 'TEXTAREA') return;
+    async function init() {
+      themes = await discoverThemes();
 
-      if (e.key === 'ArrowLeft') navigateTheme(-1);
-      else if (e.key === 'ArrowRight') navigateTheme(1);
-      else if (e.key === '1') selectOption(1);
-      else if (e.key === '2') selectOption(2);
-      else if (e.key === '3') selectOption(3);
-      else if (e.key === 'k') toggleKeep();
-      else if (e.key === 'n') openNoteModal();
-      else if (e.key === 'Escape') closeNoteModal();
+      if (themes.length === 0) {
+        alert('No themes discovered. Please check round-1 preview files.');
+        return;
+      }
+
+      loadState();
+
+      if (state.currentThemeIndex >= themes.length) {
+        state.currentThemeIndex = 0;
+      }
+
+      const initialTheme = themes[state.currentThemeIndex];
+      if (!initialTheme.options[state.currentOptionIndex]) {
+        state.currentOptionIndex = 0;
+      }
+
+      loadTheme();
+      applyDockState();
+      updateUI();
+      flushPendingEvents();
+      queueSyncEvent('session_started', {
+        totalThemes: themes.length,
+        totalOptions: themes.reduce((sum, theme) => sum + theme.options.length, 0)
+      });
+
+      document.getElementById('loading-screen').classList.add('hidden');
+    }
+
+    document.addEventListener('keydown', (event) => {
+      if (event.target.tagName === 'TEXTAREA') return;
+
+      const key = event.key.toLowerCase();
+
+      if (event.key === 'ArrowLeft') navigateTheme(-1);
+      else if (event.key === 'ArrowRight') navigateTheme(1);
+      else if (/^[1-9]$/.test(event.key)) selectOption(Number(event.key));
+      else if (key === 'k') toggleKeep();
+      else if (key === 'n') openNoteModal();
+      else if (key === 'c') toggleDock();
+      else if (event.key === 'Escape') closeNoteModal();
     });
 
-    // Close modal on overlay click
-    document.getElementById('note-modal').addEventListener('click', (e) => {
-      if (e.target.id === 'note-modal') closeNoteModal();
+    document.getElementById('note-modal').addEventListener('click', (event) => {
+      if (event.target.id === 'note-modal') closeNoteModal();
     });
 
-    // Initialize
     init();
   </script>
 </body>

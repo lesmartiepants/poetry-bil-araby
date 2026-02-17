@@ -1,187 +1,160 @@
 # Feature Mockups Index
 
-> Consolidated reference for all feature mockups across branches and PRs.
-> Last updated: Feb 17, 2026
+All feature mockups for save, login/auth, heart, and transliteration — consolidated from 3 open PRs.
 
 ---
 
-## Quick Summary
+## Where Everything Lives
 
-All your feature mockups exist — they're spread across **3 open PRs** on separate branches (none merged to `main` yet):
-
-| Feature | Branch | PR | Status |
+| Feature | PR | Branch | Status |
 |---|---|---|---|
-| Save / Heart / Transliteration | `copilot/explore-ui-controls-implementation` | [#50](../../pull/50) | OPEN |
-| Login / Auth / SSO / Save | `copilot/setup-user-authentication-sso` | [#49](../../pull/49) | OPEN |
-| Intro / Main App Layouts | `cursor/intro-main-app-mockups-6919` | [#51](../../pull/51) | OPEN |
+| Heart / Save / Transliteration / Zoom | [#50](https://github.com/lesmartiepants/poetry-bil-araby/pull/50) | `copilot/explore-ui-controls-implementation` | OPEN |
+| Login / Auth SSO / Save / Heart | [#49](https://github.com/lesmartiepants/poetry-bil-araby/pull/49) | `copilot/setup-user-authentication-sso` | OPEN |
+| Intro + Main App Layouts (L-U) | [#51](https://github.com/lesmartiepants/poetry-bil-araby/pull/51) | `cursor/intro-main-app-mockups-6919` | OPEN |
 
 ---
 
-## Architecture: Where Things Live
+# 1. Heart / Save / Transliteration Controls (PR #50)
 
-```
-main (merged)
-├── mockups/option-a through option-k    ← 11 base layout mockups (splash/main)
-└── e2e/mockup-screenshots.spec.js       ← Playwright screenshot generator
+5 vertical control bar mockups — each includes heart/save with counter, text zoom (3 levels), and transliteration toggle.
 
-PR #50 branch: copilot/explore-ui-controls-implementation
-├── mockups/vertical-controls-option1-minimalist.html
-├── mockups/vertical-controls-option3-notion.html
-├── mockups/vertical-controls-option4-wildcard.html
-├── mockups/vertical-controls-option6-neumorphic.html
-├── mockups/vertical-controls-option9-scandinavian.html
-├── mockups/screenshot-option{1,3,4,6,9}.png
-└── mockups/VERTICAL_CONTROLS_DESIGN_GUIDE.md
-    └── Features: ❤️ Heart/Save, 🔍 Text Zoom, 🔤 Transliteration
+## Option 1 — Minimalist (Jony Ive)
 
-PR #49 branch: copilot/setup-user-authentication-sso
-├── src/hooks/useAuth.js                  ← Auth hook (Google/Apple OAuth)
-├── src/supabaseClient.js                 ← Supabase client config
-├── src/app.jsx                           ← UI: AuthModal, AuthButton, SavePoemButton
-├── src/test/auth.test.jsx                ← Unit tests
-├── supabase/migrations/...               ← DB schema (user_settings, saved_poems, etc.)
-├── docs/AUTH_UI_SCREENSHOTS.md           ← Visual guide with all UI states
-├── docs/AUTHENTICATION_SETUP.md          ← Setup instructions
-├── docs/DATABASE_ERD.md                  ← Entity relationship diagram
-└── AUTH_IMPLEMENTATION_SUMMARY.md        ← Full implementation overview
+Right-aligned, icons-only, glass morphism at 3-8% opacity. Maximum restraint.
 
-PR #51 branch: cursor/intro-main-app-mockups-6919
-├── mockups/option-l-celestial-lens.html + .png
-├── mockups/option-m-calligraphic-minimal.html + .png
-├── mockups/option-n-bento-atlas.html + .png
-├── mockups/option-o-desert-horizon.html + .png
-├── mockups/option-p-ink-mono.html + .png
-├── mockups/option-q-glass-pavilion.html + .png
-├── mockups/option-r-library-catalog.html + .png
-├── mockups/option-s-rhythm-wave.html + .png
-├── mockups/option-t-mosaic-tiles.html + .png
-├── mockups/option-u-scroll-story.html + .png
-└── INTRO_MAIN_MOCKUPS.md                 ← Gallery index
-```
+![Option 1 — Minimalist](https://github.com/user-attachments/assets/3d2b706c-fcaa-4449-a2c8-b1637df54fbe)
+
+## Option 3 — Notion / Linear
+
+Right-aligned, compact 40px, A+/A- zoom, dark tooltips, 1px gaps. Functional minimalism.
+
+![Option 3 — Notion/Linear](https://github.com/user-attachments/assets/b53d5bf5-8b1c-4ee5-a328-8d33a9e0cd63)
+
+## Option 4 — Brutalist Terminal (Wild Card)
+
+Full-height left sidebar. Retro CRT aesthetic, monochrome green, scan lines, live clock.
+
+![Option 4 — Brutalist Terminal](https://github.com/user-attachments/assets/a5bd30db-a5b5-45fa-8493-8f109c524614)
+
+## Option 6 — Neumorphic (Soft UI)
+
+Left sidebar on light background. Soft shadows, tactile raised/inset states, grouped sections.
+
+![Option 6 — Neumorphic](https://github.com/user-attachments/assets/75d5c60c-0861-40c8-aecc-7b0e9511e068)
+
+## Option 9 — Scandinavian Minimal
+
+Right-aligned circular buttons on light. Minimal shadows, Nordic simplicity.
+
+![Option 9 — Scandinavian Minimal](https://github.com/user-attachments/assets/23fe41bd-044b-4c66-9819-9cae47d1ebb2)
 
 ---
 
-## 1. Save / Heart Feature
+# 2. Login / Auth / SSO (PR #49)
 
-### Where: PR #50 + PR #49
+Full Supabase authentication with Google + Apple OAuth, user settings persistence, and saved poems.
 
-**Mockups (PR #50 — vertical control bar explorations):**
-Each mockup includes a heart/save button with counter badge and active state animations.
+## Desktop — Not Signed In
 
-| Option | Style | File |
-|---|---|---|
-| Option 1 | Minimalist (Jony Ive) — icons-only, glass morphism, right-aligned | `vertical-controls-option1-minimalist.html` |
-| Option 3 | Notion/Linear — compact 40px, right-aligned, functional | `vertical-controls-option3-notion.html` |
-| Option 4 | Brutalist Terminal — full-height left sidebar, CRT retro | `vertical-controls-option4-wildcard.html` |
-| Option 6 | Neumorphic (Soft UI) — left sidebar, tactile raised/inset | `vertical-controls-option6-neumorphic.html` |
-| Option 9 | Scandinavian Minimal — circular buttons, Nordic clean | `vertical-controls-option9-scandinavian.html` |
+Control bar with Sign In button and grayed-out Save heart.
 
-**Implementation (PR #49 — full Supabase integration):**
-- `SavePoemButton` component in `src/app.jsx`
-- Heart icon fills when saved, tooltip for unauthenticated users
-- `useSavedPoems()` hook for CRUD operations
-- `saved_poems` DB table with RLS policies
-- Desktop: heart positioned after Discover button in control bar
-- Mobile: heart in main view with overflow menu
+![Desktop — Not Signed In](https://github.com/user-attachments/assets/a85dd901-7ba5-4f28-be6b-bb4c6bf387da)
 
----
+## Authentication Modal
 
-## 2. Login / Authentication Feature
+Google and Apple OAuth with Arabic welcome message ("مرحباً").
 
-### Where: PR #49
+![Authentication Modal](https://github.com/user-attachments/assets/a8b5a2ac-727c-47d0-b282-24d1e5a142b0)
 
-**Branch:** `copilot/setup-user-authentication-sso`
+## Save Button Tooltip (Unauthenticated)
 
-**UI Components:**
-- **AuthModal** — Google + Apple OAuth buttons, Arabic welcome ("مرحباً"), themed
-- **AuthButton** — Desktop: user avatar + dropdown; Mobile: compact in overflow menu
-- **Sign In flow** — Click "Sign In" → modal → OAuth redirect → session
+"Sign in to save poems" tooltip appears when clicking heart without being logged in.
 
-**Screenshots (embedded in PR #49 body and `docs/AUTH_UI_SCREENSHOTS.md`):**
+![Save Button Tooltip](https://github.com/user-attachments/assets/f2c8e1cd-8ffb-40b5-a2ed-84c1582575a1)
 
-| Screen | Description |
-|---|---|
-| Desktop - Not Signed In | Control bar with Sign In button and grayed-out Save |
-| Authentication Modal | Google + Apple OAuth options with Arabic welcome |
-| Save Button Tooltip | "Sign in to save poems" tooltip on heart click |
-| Mobile - Compact Control Bar | Responsive layout with overflow menu |
-| Mobile - Overflow Menu | Full menu with bilingual labels (Arabic + English) |
-| Mobile - Auth Modal | OAuth on mobile with "مرحباً" welcome |
-| Mobile - Heart Tooltip | Heart with "Sign in to save poems" on mobile |
+## Mobile — Compact Control Bar
 
-**Implementation files:**
-- `src/hooks/useAuth.js` — `useAuth()`, `useUserSettings()`, `useSavedPoems()`
-- `src/supabaseClient.js` — Supabase client with env var validation
-- `supabase/migrations/20260119000000_auth_and_user_features.sql` — Schema
+Responsive layout with overflow menu for additional controls.
 
-**Database schema (from `docs/DATABASE_ERD.md`):**
-```
-auth_users ──┬── user_settings (theme, font, voice, transliteration)
-             ├── saved_poems (poem text, poet, title, category)
-             ├── discussions (comments, likes_count)
-             └── discussion_likes
-```
+![Mobile — Compact Control Bar](https://github.com/user-attachments/assets/3e19083c-c0fb-4e60-bd00-bbfb6157344e)
+
+## Mobile — Overflow Menu
+
+Full menu with bilingual labels (Arabic + English).
+
+![Mobile — Overflow Menu](https://github.com/user-attachments/assets/8725f3e8-5ee0-46c4-9c6d-9f6afd11ed23)
 
 ---
 
-## 3. Heart Feature
+# 3. Intro + Main App Mockups (PR #51)
 
-The heart feature spans both PR #49 and PR #50:
+10 distinct layout directions, each pairing a landing intro with a main reading screen.
 
-- **PR #50** covers the **visual design exploration** — 5 different control bar styles each including a heart/save button with counter badges, active state animations, and hover effects.
-- **PR #49** covers the **full implementation** — `SavePoemButton` React component, Supabase backend, RLS policies, and the actual save/unsave toggle logic.
+## Option L — Celestial Lens
 
-**Key behavior:**
-- Heart outline when not saved, filled when saved
-- Counter badge showing total saves
-- Tooltip "Sign in to save poems" when unauthenticated
-- Smooth animation on toggle
+Cosmic orbits, lens-style poem focus, floating controls.
+
+![Option L — Celestial Lens](https://raw.githubusercontent.com/lesmartiepants/poetry-bil-araby/cursor/intro-main-app-mockups-6919/mockups/option-l-celestial-lens.png)
+
+## Option M — Calligraphic Minimal
+
+Parchment, ink strokes, large calligraphy + quiet controls.
+
+![Option M — Calligraphic Minimal](https://raw.githubusercontent.com/lesmartiepants/poetry-bil-araby/cursor/intro-main-app-mockups-6919/mockups/option-m-calligraphic-minimal.png)
+
+## Option N — Bento Atlas
+
+Bento grid intro, modular cards, atlas side-pane reading.
+
+![Option N — Bento Atlas](https://raw.githubusercontent.com/lesmartiepants/poetry-bil-araby/cursor/intro-main-app-mockups-6919/mockups/option-n-bento-atlas.png)
+
+## Option O — Desert Horizon
+
+Warm sunrise gradients, stamps, airy poem card.
+
+![Option O — Desert Horizon](https://raw.githubusercontent.com/lesmartiepants/poetry-bil-araby/cursor/intro-main-app-mockups-6919/mockups/option-o-desert-horizon.png)
+
+## Option P — Ink Mono
+
+Monochrome editorial, dot grid, typewriter-style controls.
+
+![Option P — Ink Mono](https://raw.githubusercontent.com/lesmartiepants/poetry-bil-araby/cursor/intro-main-app-mockups-6919/mockups/option-p-ink-mono.png)
+
+## Option Q — Glass Pavilion
+
+Frosted panels, layered glass cards, calm hierarchy.
+
+![Option Q — Glass Pavilion](https://raw.githubusercontent.com/lesmartiepants/poetry-bil-araby/cursor/intro-main-app-mockups-6919/mockups/option-q-glass-pavilion.png)
+
+## Option R — Library Catalog
+
+Bookshelf nav, catalog index, archival reader pane.
+
+![Option R — Library Catalog](https://raw.githubusercontent.com/lesmartiepants/poetry-bil-araby/cursor/intro-main-app-mockups-6919/mockups/option-r-library-catalog.png)
+
+## Option S — Rhythm Wave
+
+Audio-first waveform, rhythm controls, player focus.
+
+![Option S — Rhythm Wave](https://raw.githubusercontent.com/lesmartiepants/poetry-bil-araby/cursor/intro-main-app-mockups-6919/mockups/option-s-rhythm-wave.png)
+
+## Option T — Mosaic Tiles
+
+Geometric tile navigation, pattern framing for poems.
+
+![Option T — Mosaic Tiles](https://raw.githubusercontent.com/lesmartiepants/poetry-bil-araby/cursor/intro-main-app-mockups-6919/mockups/option-t-mosaic-tiles.png)
+
+## Option U — Scroll Story
+
+Chapter timeline, story arcs, sticky navigation controls.
+
+![Option U — Scroll Story](https://raw.githubusercontent.com/lesmartiepants/poetry-bil-araby/cursor/intro-main-app-mockups-6919/mockups/option-u-scroll-story.png)
 
 ---
 
-## 4. Transliteration Feature
+# 4. Base Layout Mockups (on `main` — already merged)
 
-### Where: PR #50
-
-**Branch:** `copilot/explore-ui-controls-implementation`
-
-All 5 vertical control bar mockups include a transliteration toggle:
-- Toggles romanized Arabic pronunciation below each Arabic line
-- On/off toggle with visual indicator
-- Grouped with zoom and heart controls
-
-**Design guide:** `mockups/VERTICAL_CONTROLS_DESIGN_GUIDE.md` on the PR #50 branch
-
-**Note:** PR #49 also has a `transliteration_enabled` boolean in the `user_settings` database table, ready to persist user preference.
-
----
-
-## 5. Intro / Main App Layout Mockups
-
-### Where: PR #51
-
-**Branch:** `cursor/intro-main-app-mockups-6919`
-
-10 new full-app layout explorations (Options L through U):
-
-| Option | Name | Description |
-|---|---|---|
-| L | Celestial Lens | Space/cosmic theme |
-| M | Calligraphic Minimal | Calligraphy-focused clean layout |
-| N | Bento Atlas | Bento box grid layout |
-| O | Desert Horizon | Desert landscape aesthetic |
-| P | Ink Mono | Monochrome ink wash style |
-| Q | Glass Pavilion | Glass morphism architecture |
-| R | Library Catalog | Card catalog / library metaphor |
-| S | Rhythm Wave | Audio/rhythm visualization |
-| T | Mosaic Tiles | Islamic geometric tile patterns |
-| U | Scroll Story | Scroll-based narrative experience |
-
----
-
-## 6. Base Layout Mockups (on `main`)
-
-These 11 mockups are already merged and live in `mockups/`:
+11 splash/main layout explorations. These are in the repo at `mockups/`.
 
 | Option | File | Focus |
 |---|---|---|
@@ -195,39 +168,63 @@ These 11 mockups are already merged and live in `mockups/`:
 | H | `option-h-minimal-deco.html` | Minimal decorative |
 | I | `option-i-heavy-frame-inline-category.html` | Heavy frame + inline category |
 | J | `option-j-heavy-frame-icon-only-category.html` | Heavy frame + icon-only category |
-| K | `option-k-heavy-frame-book-category.html` | Heavy frame + book category (**chosen design**) |
+| K | `option-k-heavy-frame-book-category.html` | Heavy frame + book category (chosen design) |
 
 ---
 
-## How to View Mockups Locally
+# 5. Implementation Details (PR #49)
 
-```bash
-# Base mockups (already on main)
-open mockups/option-k-heavy-frame-book-category.html
+## Auth Flow
 
-# Vertical control bar mockups (PR #50)
-git fetch origin copilot/explore-ui-controls-implementation
-git checkout copilot/explore-ui-controls-implementation -- mockups/vertical-controls-*.html
-open mockups/vertical-controls-option1-minimalist.html
+```
+User taps "Sign In"
+       |
+       v
+  AuthModal opens
+  (Google / Apple OAuth)
+       |
+       v
+  Supabase handles redirect
+       |
+       v
+  Session restored --> useAuth() hook
+       |
+       v
+  Heart/Save enabled, settings synced
+```
 
-# Auth UI screenshots (PR #49)
-git fetch origin copilot/setup-user-authentication-sso
-git show origin/copilot/setup-user-authentication-sso:docs/AUTH_UI_SCREENSHOTS.md
+## Database Schema
 
-# Intro/main mockups (PR #51)
-git fetch origin cursor/intro-main-app-mockups-6919
-git checkout origin/cursor/intro-main-app-mockups-6919 -- mockups/option-l-*.html mockups/option-m-*.html
-open mockups/option-l-celestial-lens.html
+```
+auth_users
+  |-- user_settings  (theme, font, voice, transliteration_enabled)
+  |-- saved_poems    (poem_id, poem_text, poet, title, category)
+  |-- discussions    (comment, parent_id, likes_count)  [future]
+  |-- discussion_likes  [future]
+```
+
+## Key Files (on PR #49 branch)
+
+- `src/hooks/useAuth.js` — `useAuth()`, `useUserSettings()`, `useSavedPoems()`
+- `src/supabaseClient.js` — client with env var validation + graceful degradation
+- `src/app.jsx` — AuthModal, AuthButton, SavePoemButton components
+- `supabase/migrations/20260119000000_auth_and_user_features.sql`
+- `docs/AUTHENTICATION_SETUP.md` — full setup guide
+- `docs/AUTH_UI_SCREENSHOTS.md` — visual guide with all UI states
+- `docs/DATABASE_ERD.md` — Mermaid ERD
+
+## Button Layout (Desktop Control Bar)
+
+```
+[ Listen ] [ Learn ] [ Discover ] [ Save ❤️ ] | [ Copy ] [ Local/Web ] [ Theme ] [ Poets ] [ Sign In ]
 ```
 
 ---
 
-## Related GitHub Resources
+# Links
 
-| Resource | Link |
-|---|---|
-| PR #49 — Auth/SSO/Login/Save | https://github.com/lesmartiepants/poetry-bil-araby/pull/49 |
-| PR #50 — Heart/Save/Zoom/Transliteration Controls | https://github.com/lesmartiepants/poetry-bil-araby/pull/50 |
-| PR #51 — Intro/Main Mockups (L-U) | https://github.com/lesmartiepants/poetry-bil-araby/pull/51 |
-| PR #53 — Mockup Preview Gallery | https://github.com/lesmartiepants/poetry-bil-araby/pull/53 |
-| PR #59 — Design Review Page (MERGED) | https://github.com/lesmartiepants/poetry-bil-araby/pull/59 |
+- [PR #49 — Auth/SSO/Login/Save](https://github.com/lesmartiepants/poetry-bil-araby/pull/49)
+- [PR #50 — Heart/Save/Zoom/Transliteration Controls](https://github.com/lesmartiepants/poetry-bil-araby/pull/50)
+- [PR #51 — Intro/Main Mockups (L-U)](https://github.com/lesmartiepants/poetry-bil-araby/pull/51)
+- [PR #53 — Mockup Preview Gallery](https://github.com/lesmartiepants/poetry-bil-araby/pull/53)
+- [PR #59 — Design Review Page (MERGED)](https://github.com/lesmartiepants/poetry-bil-araby/pull/59)

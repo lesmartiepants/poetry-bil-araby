@@ -2079,6 +2079,34 @@ export default function DiwanApp() {
           </div>
         </div>
       </div>
+
+      {/* Floating Design Review Button */}
+      <a
+        href="/design-review"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed top-4 left-4 z-[200] flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-wider border backdrop-blur-md shadow-lg transition-all duration-200 hover:scale-105 cursor-move select-none"
+        style={{
+          background: 'rgba(212,168,75,0.12)',
+          borderColor: 'rgba(212,168,75,0.3)',
+          color: '#d4a84b',
+        }}
+        draggable="false"
+        onMouseDown={(e) => {
+          const el = e.currentTarget;
+          const startX = e.clientX - el.offsetLeft;
+          const startY = e.clientY - el.offsetTop;
+          const onMove = (ev) => { el.style.left = `${ev.clientX - startX}px`; el.style.top = `${ev.clientY - startY}px`; el.style.right = 'auto'; el.style.bottom = 'auto'; };
+          const onUp = () => { document.removeEventListener('mousemove', onMove); document.removeEventListener('mouseup', onUp); };
+          document.addEventListener('mousemove', onMove);
+          document.addEventListener('mouseup', onUp);
+          e.preventDefault();
+        }}
+        title="Open Design Review"
+      >
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+        Review
+      </a>
     </div>
   );
 }

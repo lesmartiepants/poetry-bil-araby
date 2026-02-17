@@ -187,7 +187,7 @@ jobs:
 
             // --- Build comment body ---
             function buildComment(baseUrl, headSha, designs) {
-              const reviewUrl = `${baseUrl}/design-review/review.html`;
+              const reviewUrl = `${baseUrl}/design-review/`;
               const lines = [
                 marker,
                 `## Design Review Links \`${headSha.slice(0, 7)}\``,
@@ -268,4 +268,4 @@ jobs:
             const designs = scanDesigns();
             const body = buildComment(previewUrl, prMeta.headSha, designs);
             await upsertComment(prMeta.issueNumber, body);
-            core.info(`Posted design review links for ${previewUrl}/design-review/review.html`);
+            core.info(`Posted design review links for ${previewUrl}/design-review/`);

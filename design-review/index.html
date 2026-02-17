@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Design Review - Poetry Bil-Araby</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --bg:#09090b;--surface:#141416;--surface-2:#1c1c1f;--surface-3:#27272a;
+      --border:#2e2e32;--border-light:#3f3f46;--text:#fafafa;--text-2:#a1a1aa;--text-3:#71717a;
+      --accent:#d4a84b;--accent-dim:rgba(212,168,75,.12);
+      --green:#22c55e;--green-dim:rgba(34,197,94,.12);
+      --red:#ef4444;--red-dim:rgba(239,68,68,.12);
+      --blue:#3b82f6;--blue-dim:rgba(59,130,246,.12);
+      --purple:#a855f7;--purple-dim:rgba(168,85,247,.12);
+      --r:10px;--r-sm:6px;
+    }
+    body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden;-webkit-font-smoothing:antialiased}
+    button{font-family:inherit;cursor:pointer}
+    select{font-family:inherit}
+
+    .app{display:grid;grid-template-rows:auto 1fr;height:100vh}
+
+    /* ── Toolbar ── */
+    .toolbar{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;z-index:100}
+    .tb-group{display:flex;align-items:center;gap:6px}
+    .tb-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);white-space:nowrap}
+    .tb-select{appearance:none;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:7px 28px 7px 10px;border-radius:var(--r-sm);font-size:12px;font-weight:500;outline:none;min-width:140px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath d='M2.5 4L5 6.5 7.5 4' stroke='%2371717a' fill='none' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;transition:border-color .15s}
+    .tb-select:hover,.tb-select:focus{border-color:var(--accent)}
+    .tb-select option{background:var(--surface-2);color:var(--text)}
+    .tb-sep{width:1px;height:24px;background:var(--border);flex-shrink:0}
+    .tb-spacer{flex:1}
+
+    /* Nav buttons */
+    .nav-btn{display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface-2);color:var(--text-2);font-size:12px;font-weight:500;transition:all .15s;white-space:nowrap}
+    .nav-btn:hover:not(:disabled){background:var(--surface-3);color:var(--text);border-color:var(--border-light)}
+    .nav-btn:disabled{opacity:.3;cursor:default}
+    .nav-btn svg{width:14px;height:14px}
+    .nav-counter{font-size:12px;color:var(--text-3);font-variant-numeric:tabular-nums;min-width:50px;text-align:center}
+
+    /* Submit */
+    .submit-btn{padding:6px 16px;border-radius:var(--r-sm);border:1px solid var(--accent);background:var(--accent-dim);color:var(--accent);font-size:12px;font-weight:600;transition:all .15s}
+    .submit-btn:hover{background:var(--accent);color:var(--bg)}
+
+    /* ── Main area ── */
+    .main{display:flex;overflow:hidden}
+
+    /* Preview */
+    .preview{flex:1;display:flex;flex-direction:column;min-width:0}
+    .preview-header{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:var(--surface);border-bottom:1px solid var(--border);min-height:40px}
+    .preview-title{font-size:12px;font-weight:600;color:var(--text-2)}
+    .preview-sub{font-size:11px;color:var(--text-3)}
+    .preview-iframe{width:100%;height:100%;border:none;background:#000}
+    .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:12px;padding:40px;text-align:center}
+    .empty-state h2{font-size:16px;font-weight:600}
+    .empty-state p{font-size:13px;color:var(--text-2);max-width:340px;line-height:1.5}
+    .icon-btn{width:28px;height:28px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface-2);color:var(--text-3);display:inline-flex;align-items:center;justify-content:center;font-size:13px;transition:all .12s}
+    .icon-btn:hover{background:var(--surface-3);color:var(--text);border-color:var(--border-light)}
+
+    /* ── Side panel ── */
+    .side{width:330px;min-width:330px;background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;transition:width .25s,min-width .25s,opacity .25s}
+    .side.collapsed{width:0;min-width:0;opacity:0;overflow:hidden;border:none}
+    .side-section{padding:14px 16px;border-bottom:1px solid var(--border)}
+    .side-section:last-child{border-bottom:none}
+    .ss-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);margin-bottom:10px}
+
+    /* Info rows */
+    .info-row{display:flex;justify-content:space-between;padding:4px 0;font-size:12px}
+    .info-k{color:var(--text-3)}.info-v{color:var(--text);font-weight:500}
+
+    /* Verdict buttons */
+    .verdict-group{display:flex;gap:6px;margin-bottom:10px}
+    .verdict-btn{flex:1;padding:8px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface-2);font-size:12px;font-weight:600;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:4px}
+    .verdict-btn:hover{border-color:var(--border-light)}
+    .verdict-btn.active-keep{background:var(--green-dim);border-color:var(--green);color:var(--green)}
+    .verdict-btn.active-discard{background:var(--red-dim);border-color:var(--red);color:var(--red)}
+    .verdict-btn.active-skip{background:var(--blue-dim);border-color:var(--blue);color:var(--blue)}
+    .verdict-btn .v-icon{font-size:14px}
+
+    /* Comment box */
+    .comment-box{width:100%;min-height:72px;padding:8px 10px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface-2);color:var(--text);font-size:12px;line-height:1.5;resize:vertical;outline:none;font-family:inherit;transition:border-color .15s}
+    .comment-box:focus{border-color:var(--accent)}
+    .comment-box::placeholder{color:var(--text-3)}
+
+    /* Progress bar */
+    .progress-wrap{margin-top:4px}
+    .progress-bar{height:4px;border-radius:2px;background:var(--surface-3);overflow:hidden;margin-top:6px}
+    .progress-fill{height:100%;border-radius:2px;background:var(--accent);transition:width .3s}
+    .progress-text{font-size:11px;color:var(--text-3);display:flex;justify-content:space-between}
+
+    /* Note cards (previous feedback) */
+    .note-card{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px;margin-bottom:6px;font-size:12px;color:var(--text-2);line-height:1.6;white-space:pre-wrap}
+    .note-card.highlighted{border-color:var(--accent)}
+    .note-label{font-size:10px;font-weight:600;color:var(--accent);margin-bottom:4px}
+    .note-round{font-size:10px;color:var(--text-3);float:right}
+
+    /* Keyboard hints */
+    .kbd{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 4px;border-radius:3px;background:var(--surface-3);border:1px solid var(--border);font-size:9px;font-weight:600;color:var(--text-3);font-family:inherit}
+
+    /* Responsive */
+    @media(max-width:768px){
+      .side{display:none}
+      .tb-sep{display:none}
+      .tb-select{min-width:100px;font-size:11px}
+      .toolbar{padding:8px 10px;gap:6px}
+    }
+    ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+  </style>
+</head>
+<body>
+<div class="app">
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <div class="tb-group">
+      <span class="tb-label">Component</span>
+      <select class="tb-select" id="compSelect" onchange="onCompChange()"></select>
+    </div>
+    <div class="tb-sep"></div>
+    <div class="tb-group">
+      <span class="tb-label">Category</span>
+      <select class="tb-select" id="catSelect" onchange="onCatChange()"></select>
+    </div>
+    <div class="tb-sep"></div>
+    <div class="tb-group">
+      <button class="nav-btn" id="prevBtn" onclick="goPrev()" title="Previous (Left arrow)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 3L5 8l5 5"/></svg>Prev</button>
+      <span class="nav-counter" id="navCounter">--</span>
+      <button class="nav-btn" id="nextBtn" onclick="goNext()" title="Next (Right arrow)">Next<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 3l5 5-5 5"/></svg></button>
+    </div>
+    <div class="tb-spacer"></div>
+    <button class="submit-btn" onclick="submitReview()" title="Export review feedback">Submit Review</button>
+    <button class="icon-btn" onclick="toggleSide()" title="Toggle panel (I)">&#9776;</button>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="preview" id="previewPane">
+      <div class="preview-header">
+        <div>
+          <div class="preview-title" id="pTitle">Select a design</div>
+          <div class="preview-sub" id="pSub"></div>
+        </div>
+        <div style="display:flex;gap:4px">
+          <button class="icon-btn" onclick="openTab()" title="Open in new tab">&#8599;</button>
+        </div>
+      </div>
+      <div id="previewContent" style="flex:1;position:relative">
+        <div class="empty-state" id="emptyState">
+          <div style="font-size:32px">&#9998;</div>
+          <h2>Poetry Bil-Araby Design Review</h2>
+          <p>Select a component and category to start reviewing designs. Use arrow keys or Prev/Next to cycle through options.</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:4px">
+            <span style="font-size:10px;color:var(--text-3)"><span class="kbd">&larr;</span><span class="kbd">&rarr;</span> Prev/Next &nbsp; <span class="kbd">K</span> Keep &nbsp; <span class="kbd">D</span> Discard &nbsp; <span class="kbd">S</span> Skip &nbsp; <span class="kbd">I</span> Panel</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Side panel -->
+    <div class="side" id="sidePanel">
+      <div class="side-section">
+        <div class="ss-title">Current Design</div>
+        <div id="infoBlock">
+          <div class="info-row"><span class="info-k">Component</span><span class="info-v" id="infoComp">--</span></div>
+          <div class="info-row"><span class="info-k">Category</span><span class="info-v" id="infoCat">--</span></div>
+          <div class="info-row"><span class="info-k">Option</span><span class="info-v" id="infoOpt">--</span></div>
+          <div class="info-row"><span class="info-k">Source</span><span class="info-v" id="infoSrc">--</span></div>
+        </div>
+      </div>
+
+      <div class="side-section">
+        <div class="ss-title">Your Review</div>
+        <div class="verdict-group" id="verdictGroup">
+          <button class="verdict-btn" data-v="keep" onclick="setVerdict('keep')"><span class="v-icon">&#10003;</span> Keep</button>
+          <button class="verdict-btn" data-v="discard" onclick="setVerdict('discard')"><span class="v-icon">&#10007;</span> Discard</button>
+          <button class="verdict-btn" data-v="skip" onclick="setVerdict('skip')"><span class="v-icon">&#8594;</span> Skip</button>
+        </div>
+        <textarea class="comment-box" id="commentBox" placeholder="Add a comment about this design..." oninput="saveComment()"></textarea>
+      </div>
+
+      <div class="side-section" id="prevFeedbackSection">
+        <div class="ss-title">Previous Feedback (Round 1)</div>
+        <div id="prevFeedback"><span style="font-size:12px;color:var(--text-3)">No previous feedback.</span></div>
+      </div>
+
+      <div class="side-section">
+        <div class="ss-title">Review Progress</div>
+        <div class="progress-wrap">
+          <div class="progress-text"><span id="progLabel">0 of 0 reviewed</span><span id="progPct">0%</span></div>
+          <div class="progress-bar"><div class="progress-fill" id="progFill" style="width:0%"></div></div>
+        </div>
+        <div style="margin-top:8px;display:flex;gap:6px;font-size:11px">
+          <span style="color:var(--green)">&#10003; <span id="keepCount">0</span> keep</span>
+          <span style="color:var(--red)">&#10007; <span id="discardCount">0</span> discard</span>
+          <span style="color:var(--blue)">&#8594; <span id="skipCount">0</span> skip</span>
+        </div>
+      </div>
+
+      <div class="side-section">
+        <div class="ss-title">Keyboard Shortcuts</div>
+        <div style="display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--text-3)">
+          <div><span class="kbd">&larr;</span> <span class="kbd">&rarr;</span> Prev / Next design</div>
+          <div><span class="kbd">K</span> Keep &nbsp; <span class="kbd">D</span> Discard &nbsp; <span class="kbd">S</span> Skip</div>
+          <div><span class="kbd">I</span> Toggle panel &nbsp; <span class="kbd">F</span> Fullscreen</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// CATALOG — component-first hierarchy
+// ═══════════════════════════════════════════════════════════════
+const CATALOG = [
+  {
+    component: 'Splash Screen',
+    id: 'splash',
+    categories: [
+      { id: 'particles', name: 'Particle Field', source: 'PR #11', description: 'Interactive particle system with fluid motion',
+        options: [
+          { id: 'particles-opt1', name: 'Refined Particles', file: 'splash/particles/previews/option-1-refined-particles.html', desc: 'Improved hierarchy with larger title and reduced particle density' },
+          { id: 'particles-opt2', name: 'Gold Mystical', file: 'splash/particles/previews/option-2-gold-mystical.html', desc: 'Rich gold palette with Arabic poetry heritage aesthetic' },
+          { id: 'particles-opt3', name: 'Minimal Constellation', file: 'splash/particles/previews/option-3-minimal-constellation.html', desc: 'Sparse, intentional design with connected particle patterns' }
+        ],
+        feedback: {
+          'particles-opt1': "love the slow option and button animation, but miss the brand logo and fonts from the original. something that's missing from the original as well is this feeling that the particles are stars.",
+          'particles-opt2': "love the light dark icon animation, colour, and particles and glow button - still missing the fonts, and brand (the original title and fonts are what i want to keep)",
+          'particles-opt3': "bring back the brand title as is. it was perfect as is. the animation and enter button are cool i like them - i do like the little day icon"
+        }
+      },
+      { id: 'zen', name: 'Zen Minimalism', source: 'PR #11', description: 'Pure simplicity and calligraphic elegance',
+        options: [
+          { id: 'zen-opt1', name: 'Zen Refined', file: 'splash/zen/previews/option-1-refined.html', desc: 'Pure minimalism with expressive calligraphy' },
+          { id: 'zen-opt2', name: 'Haiku Style', file: 'splash/zen/previews/option-2-haiku.html', desc: 'Poetic minimalism with haiku-inspired spacing' }
+        ],
+        feedback: {
+          'zen-opt1': "add some zen effect, obvs it should be minimal.\nBring the brand title exactly as it is from the particles original\nmaybe create a smoke animation.",
+          'zen-opt2': "i do like this one. but bring back the brand title and styling exactly as it is in the original particles"
+        }
+      },
+      { id: 'ink', name: 'Ink Calligraphy', source: 'PR #11', description: 'Traditional ink brush and Arabic letterforms',
+        options: [
+          { id: 'ink-opt3', name: 'Live Calligraphy', file: 'splash/ink/previews/option-3-live-calligraphy.html', desc: 'Animated brush stroke revealing calligraphy in real-time' }
+        ],
+        feedback: {
+          'ink-opt3': "i like this one but the arabic is not rendered properly. i do like how you highlighted the arabic word one letter at a time. make sure this happens right to left and feels continuous not chopped."
+        }
+      },
+      { id: 'manuscript', name: 'Ancient Manuscript', source: 'PR #11', description: 'Aged parchment with classical ornaments',
+        options: [
+          { id: 'manuscript-opt1', name: 'Ornate Islamic', file: 'splash/manuscript/previews/option-1-ornate-islamic.html', desc: 'Rich Islamic illumination with gold leaf details' },
+          { id: 'manuscript-opt2', name: 'Codex Spine', file: 'splash/manuscript/previews/option-2-codex-spine.html', desc: 'Book spine perspective with leather-bound aesthetics' },
+          { id: 'manuscript-opt3', name: 'Scroll & Seal', file: 'splash/manuscript/previews/option-3-scroll-seal.html', desc: 'Unfurling scroll with wax seal authenticity' }
+        ],
+        feedback: {
+          'manuscript-opt1': "the original was way better at looking like it was unrolling like a book. you should stick to the original concept and polish.",
+          'manuscript-opt2': "i like this concept, but you need to actually fix the copy, word choice, and spacing to make it look like a book not an eye doctors office.",
+          'manuscript-opt3': "i like this idea, but it all looks too digital. this scroll needs to look like paper.\n\nalso refine the font choices for the english and arabic."
+        }
+      },
+      { id: 'light', name: 'Light & Shadow', source: 'PR #11', description: 'Dramatic interplay of light and depth',
+        options: [
+          { id: 'light-opt1', name: 'Improved Chiaroscuro', file: 'splash/light/previews/option-1-improved-chiaroscuro.html', desc: 'Dramatic light-dark contrast with Renaissance influence' },
+          { id: 'light-opt3', name: 'Minimal Ray Tracing', file: 'splash/light/previews/option-3-minimal-ray-tracing.html', desc: 'Clean light rays with minimalist approach' }
+        ],
+        feedback: {
+          'light-opt1': "the fonts were better on the original. the light in the back is nice. bring some of the light particles from option 3 in and make sure the animation is a bit slower.",
+          'light-opt3': "these ethereal particles are great, make them appear in the dark area really lightly as if dust and then keep the white level that crosses through the light."
+        }
+      }
+    ]
+  },
+  {
+    component: 'Main App Layout',
+    id: 'main-app',
+    categories: [
+      { id: 'celestial', name: 'Celestial Lens', source: 'PR #51', description: 'Cosmic orbits, lens-style poem focus, floating controls',
+        options: [{ id: 'celestial-l', name: 'Celestial Lens', file: 'main-app/celestial-lens/option-l-celestial-lens.html', desc: 'Cosmic orbits with lens-style poem focus' }], feedback: {} },
+      { id: 'calligraphic', name: 'Calligraphic Minimal', source: 'PR #51', description: 'Parchment, ink strokes, large calligraphy',
+        options: [{ id: 'calligraphic-m', name: 'Calligraphic Minimal', file: 'main-app/calligraphic-minimal/option-m-calligraphic-minimal.html', desc: 'Parchment and ink strokes with quiet controls' }], feedback: {} },
+      { id: 'bento', name: 'Bento Atlas', source: 'PR #51', description: 'Bento grid intro, modular cards',
+        options: [{ id: 'bento-n', name: 'Bento Atlas', file: 'main-app/bento-atlas/option-n-bento-atlas.html', desc: 'Modular bento grid with atlas side-pane reading' }], feedback: {} },
+      { id: 'desert', name: 'Desert Horizon', source: 'PR #51', description: 'Warm sunrise gradients, stamps, airy poem card',
+        options: [{ id: 'desert-o', name: 'Desert Horizon', file: 'main-app/desert-horizon/option-o-desert-horizon.html', desc: 'Warm sunrise gradients with airy poem card' }], feedback: {} },
+      { id: 'ink-mono', name: 'Ink Mono', source: 'PR #51', description: 'Monochrome editorial, dot grid',
+        options: [{ id: 'inkmono-p', name: 'Ink Mono', file: 'main-app/ink-mono/option-p-ink-mono.html', desc: 'Monochrome editorial with typewriter-style controls' }], feedback: {} },
+      { id: 'mosaic', name: 'Mosaic Tiles', source: 'PR #51', description: 'Geometric tile navigation',
+        options: [{ id: 'mosaic-t', name: 'Mosaic Tiles', file: 'main-app/mosaic-tiles/option-t-mosaic-tiles.html', desc: 'Geometric tile navigation, pattern framing for poems' }], feedback: {} },
+      { id: 'scroll', name: 'Scroll Story', source: 'PR #51', description: 'Chapter timeline, story arcs',
+        options: [{ id: 'scroll-u', name: 'Scroll Story', file: 'main-app/scroll-story/option-u-scroll-story.html', desc: 'Chapter timeline with sticky navigation controls' }], feedback: {} }
+    ]
+  },
+  {
+    component: 'Vertical Controls',
+    id: 'controls',
+    categories: [
+      { id: 'ctrl-all', name: 'Control Bar Styles', source: 'PR #50', description: 'Save, zoom, transliteration bar explorations',
+        options: [
+          { id: 'ctrl-minimalist', name: 'Minimalist (Jony Ive)', file: 'controls/minimalist/vertical-controls-option1-minimalist.html', desc: 'Right-aligned, icons-only with hover tooltips. Glass morphism.' },
+          { id: 'ctrl-notion', name: 'Notion / Linear', file: 'controls/notion/vertical-controls-option3-notion.html', desc: 'Compact 40px controls, A+/A- zoom, dark tooltips.' },
+          { id: 'ctrl-brutalist', name: 'Brutalist Terminal', file: 'controls/brutalist/vertical-controls-option4-wildcard.html', desc: 'Full-height left sidebar. Retro CRT aesthetic, monochrome green.' },
+          { id: 'ctrl-neumorphic', name: 'Neumorphic (Soft UI)', file: 'controls/neumorphic/vertical-controls-option6-neumorphic.html', desc: 'Left sidebar, soft shadows, tactile raised/inset states.' },
+          { id: 'ctrl-scandi', name: 'Scandinavian Minimal', file: 'controls/scandinavian/vertical-controls-option9-scandinavian.html', desc: 'Right-aligned circular buttons, Nordic simplicity.' }
+        ],
+        feedback: {}
+      }
+    ]
+  },
+  {
+    component: 'Auth & Login',
+    id: 'auth',
+    categories: [
+      { id: 'auth-flow', name: 'Authentication Flow', source: 'PR #49/#61', description: 'Sign-in, OAuth, save gating, mobile menus',
+        options: [
+          { id: 'auth-desktop', name: 'Desktop Not Signed In', file: 'auth/auth-desktop-not-signed-in.html', desc: 'Control bar with Sign In button and grayed-out Save heart.' },
+          { id: 'auth-modal', name: 'Auth Modal', file: 'auth/auth-modal.html', desc: 'Google and Apple OAuth with Arabic welcome message.' },
+          { id: 'auth-tooltip', name: 'Save Tooltip', file: 'auth/auth-save-tooltip.html', desc: 'Tooltip on unauthenticated heart click.' },
+          { id: 'auth-mobile', name: 'Mobile Compact', file: 'auth/auth-mobile-compact.html', desc: 'Responsive layout with overflow menu.' },
+          { id: 'auth-overflow', name: 'Mobile Overflow', file: 'auth/auth-mobile-overflow.html', desc: 'Full menu with bilingual labels.' }
+        ],
+        feedback: {}
+      }
+    ]
+  }
+];
+
+// ═══════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════
+let st = {
+  compIdx: 0,
+  catIdx: 0,
+  optIdx: 0,
+  sideOpen: true
+};
+
+// Review feedback stored per option id
+// { [optionId]: { verdict: 'keep'|'discard'|'skip'|null, comment: '' } }
+let reviewData = {};
+
+const STORAGE_KEY = 'design-review-feedback-v2';
+
+function loadReview() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) reviewData = JSON.parse(raw);
+  } catch {}
+}
+
+function persistReview() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(reviewData)); } catch {}
+}
+
+// ═══════════════════════════════════════════════════════════════
+// FLAT INDEX — for prev/next across all designs
+// ═══════════════════════════════════════════════════════════════
+let flatList = []; // [{compIdx, catIdx, optIdx, option, category, component}]
+
+function buildFlatList() {
+  flatList = [];
+  CATALOG.forEach((comp, ci) => {
+    comp.categories.forEach((cat, cati) => {
+      cat.options.forEach((opt, oi) => {
+        flatList.push({ compIdx: ci, catIdx: cati, optIdx: oi, option: opt, category: cat, component: comp });
+      });
+    });
+  });
+}
+
+function currentFlatIdx() {
+  return flatList.findIndex(f => f.compIdx === st.compIdx && f.catIdx === st.catIdx && f.optIdx === st.optIdx);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════════════
+function curComp() { return CATALOG[st.compIdx]; }
+function curCat() { return curComp().categories[st.catIdx]; }
+function curOpt() { return curCat().options[st.optIdx]; }
+function getReview(id) { return reviewData[id] || { verdict: null, comment: '' }; }
+function escHtml(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+
+// ═══════════════════════════════════════════════════════════════
+// POPULATE
+// ═══════════════════════════════════════════════════════════════
+function populateComps() {
+  const sel = document.getElementById('compSelect');
+  sel.innerHTML = '';
+  CATALOG.forEach((c, i) => {
+    const totalOpts = c.categories.reduce((s, cat) => s + cat.options.length, 0);
+    const o = document.createElement('option');
+    o.value = i;
+    o.textContent = `${c.component} (${totalOpts})`;
+    sel.appendChild(o);
+  });
+}
+
+function populateCats() {
+  const sel = document.getElementById('catSelect');
+  sel.innerHTML = '';
+  curComp().categories.forEach((c, i) => {
+    const o = document.createElement('option');
+    o.value = i;
+    o.textContent = `${c.name} (${c.options.length})`;
+    sel.appendChild(o);
+  });
+  sel.value = st.catIdx;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// EVENTS
+// ═══════════════════════════════════════════════════════════════
+function onCompChange() {
+  st.compIdx = parseInt(document.getElementById('compSelect').value) || 0;
+  st.catIdx = 0;
+  st.optIdx = 0;
+  populateCats();
+  render();
+}
+
+function onCatChange() {
+  st.catIdx = parseInt(document.getElementById('catSelect').value) || 0;
+  st.optIdx = 0;
+  render();
+}
+
+function goPrev() {
+  const fi = currentFlatIdx();
+  if (fi > 0) navigateToFlat(fi - 1);
+}
+
+function goNext() {
+  const fi = currentFlatIdx();
+  if (fi < flatList.length - 1) navigateToFlat(fi + 1);
+}
+
+function navigateToFlat(fi) {
+  const f = flatList[fi];
+  st.compIdx = f.compIdx;
+  st.catIdx = f.catIdx;
+  st.optIdx = f.optIdx;
+  document.getElementById('compSelect').value = st.compIdx;
+  populateCats();
+  render();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════════════════════
+function render() {
+  const cat = curCat();
+  const opt = curOpt();
+  const fi = currentFlatIdx();
+  const rev = getReview(opt.id);
+
+  // Nav counter
+  document.getElementById('navCounter').textContent = `${fi + 1} of ${flatList.length}`;
+  document.getElementById('prevBtn').disabled = fi <= 0;
+  document.getElementById('nextBtn').disabled = fi >= flatList.length - 1;
+
+  // Preview
+  loadPreview(opt, cat);
+
+  // Side panel info
+  document.getElementById('infoComp').textContent = curComp().component;
+  document.getElementById('infoCat').textContent = cat.name;
+  document.getElementById('infoOpt').textContent = opt.name;
+  document.getElementById('infoSrc').textContent = cat.source;
+
+  // Verdict buttons
+  document.querySelectorAll('.verdict-btn').forEach(b => {
+    b.className = 'verdict-btn' + (rev.verdict === b.dataset.v ? ` active-${b.dataset.v}` : '');
+  });
+
+  // Comment
+  document.getElementById('commentBox').value = rev.comment || '';
+
+  // Previous feedback
+  renderPrevFeedback(cat, opt);
+
+  // Progress
+  renderProgress();
+}
+
+function loadPreview(opt, cat) {
+  const container = document.getElementById('previewContent');
+  const empty = document.getElementById('emptyState');
+  const existing = container.querySelector('iframe');
+  if (existing) existing.remove();
+  if (empty) empty.style.display = 'none';
+
+  const iframe = document.createElement('iframe');
+  iframe.className = 'preview-iframe';
+  iframe.src = opt.file;
+  iframe.title = opt.name;
+  container.appendChild(iframe);
+
+  document.getElementById('pTitle').textContent = `${cat.name} — ${opt.name}`;
+  document.getElementById('pSub').textContent = opt.desc;
+}
+
+function renderPrevFeedback(cat, opt) {
+  const container = document.getElementById('prevFeedback');
+  const fb = cat.feedback && cat.feedback[opt.id];
+  if (!fb) {
+    const section = document.getElementById('prevFeedbackSection');
+    if (Object.keys(cat.feedback || {}).length === 0) {
+      container.innerHTML = '<span style="font-size:12px;color:var(--text-3)">No previous feedback for this category.</span>';
+    } else {
+      let html = '<span style="font-size:12px;color:var(--text-3)">No feedback for this specific option.</span>';
+      for (const [oid, note] of Object.entries(cat.feedback)) {
+        html += `<div class="note-card" style="margin-top:8px"><div class="note-label">${escHtml(oid)} <span class="note-round">Round 1</span></div>${escHtml(note)}</div>`;
+      }
+      container.innerHTML = html;
+    }
+    return;
+  }
+  container.innerHTML = `<div class="note-card highlighted"><div class="note-label">This option <span class="note-round">Round 1</span></div>${escHtml(fb)}</div>`;
+}
+
+function renderProgress() {
+  const total = flatList.length;
+  const reviewed = flatList.filter(f => {
+    const r = reviewData[f.option.id];
+    return r && r.verdict;
+  }).length;
+  const keeps = flatList.filter(f => reviewData[f.option.id]?.verdict === 'keep').length;
+  const discards = flatList.filter(f => reviewData[f.option.id]?.verdict === 'discard').length;
+  const skips = flatList.filter(f => reviewData[f.option.id]?.verdict === 'skip').length;
+  const pct = total ? Math.round((reviewed / total) * 100) : 0;
+
+  document.getElementById('progLabel').textContent = `${reviewed} of ${total} reviewed`;
+  document.getElementById('progPct').textContent = `${pct}%`;
+  document.getElementById('progFill').style.width = `${pct}%`;
+  document.getElementById('keepCount').textContent = keeps;
+  document.getElementById('discardCount').textContent = discards;
+  document.getElementById('skipCount').textContent = skips;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// REVIEW ACTIONS
+// ═══════════════════════════════════════════════════════════════
+function setVerdict(v) {
+  const opt = curOpt();
+  if (!reviewData[opt.id]) reviewData[opt.id] = { verdict: null, comment: '' };
+  reviewData[opt.id].verdict = reviewData[opt.id].verdict === v ? null : v;
+  persistReview();
+  render();
+}
+
+function saveComment() {
+  const opt = curOpt();
+  if (!reviewData[opt.id]) reviewData[opt.id] = { verdict: null, comment: '' };
+  reviewData[opt.id].comment = document.getElementById('commentBox').value;
+  persistReview();
+  renderProgress();
+}
+
+function openTab() {
+  window.open(curOpt().file, '_blank');
+}
+
+function toggleSide() {
+  st.sideOpen = !st.sideOpen;
+  document.getElementById('sidePanel').classList.toggle('collapsed', !st.sideOpen);
+}
+
+// ═══════════════════════════════════════════════════════════════
+// SUBMIT
+// ═══════════════════════════════════════════════════════════════
+function submitReview() {
+  const session = {
+    id: `review-${Date.now()}`,
+    timestamp: new Date().toISOString(),
+    branch: 'cursor/design-explorations-consolidation-b976',
+    sourcePRs: ['#11', '#50', '#51', '#49', '#61'],
+    pageUrl: window.location.href,
+    totalDesigns: flatList.length,
+    reviewedCount: 0,
+    decisions: []
+  };
+
+  flatList.forEach(f => {
+    const r = reviewData[f.option.id];
+    if (r && (r.verdict || r.comment)) {
+      session.reviewedCount++;
+      session.decisions.push({
+        component: f.component.id,
+        componentName: f.component.component,
+        category: f.category.id,
+        categoryName: f.category.name,
+        source: f.category.source,
+        optionId: f.option.id,
+        optionName: f.option.name,
+        file: f.option.file,
+        verdict: r.verdict || 'undecided',
+        comment: r.comment || ''
+      });
+    }
+  });
+
+  // Build markdown for GitHub comment
+  const keeps = session.decisions.filter(d => d.verdict === 'keep');
+  const discards = session.decisions.filter(d => d.verdict === 'discard');
+  const skips = session.decisions.filter(d => d.verdict === 'skip');
+  const undecided = session.decisions.filter(d => d.verdict === 'undecided');
+
+  let md = `## Design Review Feedback\n\n`;
+  md += `**Date:** ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}\n`;
+  md += `**Reviewed:** ${session.reviewedCount} of ${session.totalDesigns} designs\n`;
+  md += `**Branch:** \`${session.branch}\`\n\n`;
+
+  if (keeps.length) {
+    md += `### Keep (${keeps.length})\n\n`;
+    md += `| Component | Category | Option | Comment |\n|---|---|---|---|\n`;
+    keeps.forEach(d => { md += `| ${d.componentName} | ${d.categoryName} | ${d.optionName} | ${d.comment || '--'} |\n`; });
+    md += '\n';
+  }
+  if (discards.length) {
+    md += `### Discard (${discards.length})\n\n`;
+    md += `| Component | Category | Option | Comment |\n|---|---|---|---|\n`;
+    discards.forEach(d => { md += `| ${d.componentName} | ${d.categoryName} | ${d.optionName} | ${d.comment || '--'} |\n`; });
+    md += '\n';
+  }
+  if (skips.length) {
+    md += `### Skip (${skips.length})\n\n`;
+    md += `| Component | Category | Option | Comment |\n|---|---|---|---|\n`;
+    skips.forEach(d => { md += `| ${d.componentName} | ${d.categoryName} | ${d.optionName} | ${d.comment || '--'} |\n`; });
+    md += '\n';
+  }
+
+  // Show modal with both JSON and Markdown
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+  overlay.onclick = e => { if (e.target === overlay) overlay.remove(); };
+
+  const modal = document.createElement('div');
+  modal.style.cssText = 'background:var(--surface);border:1px solid var(--border);border-radius:var(--r);max-width:700px;width:100%;max-height:80vh;overflow-y:auto;padding:24px';
+  modal.innerHTML = `
+    <h3 style="margin-bottom:12px;font-size:16px">Review Summary</h3>
+    <div style="display:flex;gap:12px;margin-bottom:16px">
+      <span style="color:var(--green);font-size:13px">&#10003; ${keeps.length} keep</span>
+      <span style="color:var(--red);font-size:13px">&#10007; ${discards.length} discard</span>
+      <span style="color:var(--blue);font-size:13px">&#8594; ${skips.length} skip</span>
+      <span style="color:var(--text-3);font-size:13px">${session.totalDesigns - session.reviewedCount} unreviewed</span>
+    </div>
+    <div style="display:flex;gap:8px;margin-bottom:16px">
+      <button onclick="copyToClipboard('md')" style="padding:8px 16px;border-radius:var(--r-sm);border:1px solid var(--accent);background:var(--accent-dim);color:var(--accent);font-size:12px;font-weight:600;cursor:pointer">Copy Markdown</button>
+      <button onclick="copyToClipboard('json')" style="padding:8px 16px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface-2);color:var(--text-2);font-size:12px;font-weight:600;cursor:pointer">Copy JSON</button>
+      <button onclick="downloadJSON()" style="padding:8px 16px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface-2);color:var(--text-2);font-size:12px;font-weight:600;cursor:pointer">Download JSON</button>
+    </div>
+    <pre id="submitPreview" style="background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px;font-size:11px;color:var(--text-2);white-space:pre-wrap;max-height:300px;overflow-y:auto;line-height:1.5">${escHtml(md)}</pre>
+  `;
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+
+  window._submitMd = md;
+  window._submitJson = JSON.stringify(session, null, 2);
+}
+
+function copyToClipboard(type) {
+  const text = type === 'md' ? window._submitMd : window._submitJson;
+  navigator.clipboard.writeText(text).then(() => {
+    const pre = document.getElementById('submitPreview');
+    if (pre) {
+      pre.textContent = type === 'md' ? window._submitMd : window._submitJson;
+    }
+  });
+}
+
+function downloadJSON() {
+  const blob = new Blob([window._submitJson], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `design-review-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// KEYBOARD
+// ═══════════════════════════════════════════════════════════════
+document.addEventListener('keydown', e => {
+  if (e.target.tagName === 'TEXTAREA' || e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT') return;
+  switch (e.key) {
+    case 'ArrowLeft': e.preventDefault(); goPrev(); break;
+    case 'ArrowRight': e.preventDefault(); goNext(); break;
+    case 'k': case 'K': setVerdict('keep'); break;
+    case 'd': case 'D': setVerdict('discard'); break;
+    case 's': case 'S': setVerdict('skip'); break;
+    case 'i': case 'I': toggleSide(); break;
+    case 'f': case 'F':
+      const iframe = document.querySelector('.preview-iframe');
+      if (iframe) { document.fullscreenElement ? document.exitFullscreen() : iframe.requestFullscreen(); }
+      break;
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════
+// BOOT
+// ═══════════════════════════════════════════════════════════════
+loadReview();
+buildFlatList();
+populateComps();
+populateCats();
+render();
+</script>
+</body>
+</html>

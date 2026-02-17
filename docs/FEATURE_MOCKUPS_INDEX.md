@@ -94,61 +94,61 @@ Full menu with bilingual labels (Arabic + English).
 
 Cosmic orbits, lens-style poem focus, floating controls.
 
-![Option L — Celestial Lens](https://raw.githubusercontent.com/lesmartiepants/poetry-bil-araby/cursor/intro-main-app-mockups-6919/mockups/option-l-celestial-lens.png)
+![Option L — Celestial Lens](../mockups/option-l-celestial-lens.png)
 
 ## Option M — Calligraphic Minimal
 
 Parchment, ink strokes, large calligraphy + quiet controls.
 
-![Option M — Calligraphic Minimal](https://raw.githubusercontent.com/lesmartiepants/poetry-bil-araby/cursor/intro-main-app-mockups-6919/mockups/option-m-calligraphic-minimal.png)
+![Option M — Calligraphic Minimal](../mockups/option-m-calligraphic-minimal.png)
 
 ## Option N — Bento Atlas
 
 Bento grid intro, modular cards, atlas side-pane reading.
 
-![Option N — Bento Atlas](https://raw.githubusercontent.com/lesmartiepants/poetry-bil-araby/cursor/intro-main-app-mockups-6919/mockups/option-n-bento-atlas.png)
+![Option N — Bento Atlas](../mockups/option-n-bento-atlas.png)
 
 ## Option O — Desert Horizon
 
 Warm sunrise gradients, stamps, airy poem card.
 
-![Option O — Desert Horizon](https://raw.githubusercontent.com/lesmartiepants/poetry-bil-araby/cursor/intro-main-app-mockups-6919/mockups/option-o-desert-horizon.png)
+![Option O — Desert Horizon](../mockups/option-o-desert-horizon.png)
 
 ## Option P — Ink Mono
 
 Monochrome editorial, dot grid, typewriter-style controls.
 
-![Option P — Ink Mono](https://raw.githubusercontent.com/lesmartiepants/poetry-bil-araby/cursor/intro-main-app-mockups-6919/mockups/option-p-ink-mono.png)
+![Option P — Ink Mono](../mockups/option-p-ink-mono.png)
 
 ## Option Q — Glass Pavilion
 
 Frosted panels, layered glass cards, calm hierarchy.
 
-![Option Q — Glass Pavilion](https://raw.githubusercontent.com/lesmartiepants/poetry-bil-araby/cursor/intro-main-app-mockups-6919/mockups/option-q-glass-pavilion.png)
+![Option Q — Glass Pavilion](../mockups/option-q-glass-pavilion.png)
 
 ## Option R — Library Catalog
 
 Bookshelf nav, catalog index, archival reader pane.
 
-![Option R — Library Catalog](https://raw.githubusercontent.com/lesmartiepants/poetry-bil-araby/cursor/intro-main-app-mockups-6919/mockups/option-r-library-catalog.png)
+![Option R — Library Catalog](../mockups/option-r-library-catalog.png)
 
 ## Option S — Rhythm Wave
 
 Audio-first waveform, rhythm controls, player focus.
 
-![Option S — Rhythm Wave](https://raw.githubusercontent.com/lesmartiepants/poetry-bil-araby/cursor/intro-main-app-mockups-6919/mockups/option-s-rhythm-wave.png)
+![Option S — Rhythm Wave](../mockups/option-s-rhythm-wave.png)
 
 ## Option T — Mosaic Tiles
 
 Geometric tile navigation, pattern framing for poems.
 
-![Option T — Mosaic Tiles](https://raw.githubusercontent.com/lesmartiepants/poetry-bil-araby/cursor/intro-main-app-mockups-6919/mockups/option-t-mosaic-tiles.png)
+![Option T — Mosaic Tiles](../mockups/option-t-mosaic-tiles.png)
 
 ## Option U — Scroll Story
 
 Chapter timeline, story arcs, sticky navigation controls.
 
-![Option U — Scroll Story](https://raw.githubusercontent.com/lesmartiepants/poetry-bil-araby/cursor/intro-main-app-mockups-6919/mockups/option-u-scroll-story.png)
+![Option U — Scroll Story](../mockups/option-u-scroll-story.png)
 
 ---
 

@@ -828,6 +828,33 @@
             'controls/neumorphic/screenshot-option6-neumorphic.png',
             'controls/scandinavian/screenshot-option9-scandinavian.png'
           ]
+        },
+        {
+          id: 'auth-ui',
+          name: 'Auth / Login UI',
+          source: 'PR #49/#61',
+          description: 'Authentication flow: sign-in, OAuth modal, save gating, mobile menus',
+          components: {
+            splash: { options: [] },
+            walkthrough: { options: [] },
+            'main-app': {
+              options: [
+                { id: 'auth-desktop', name: 'Desktop Not Signed In', file: 'auth/auth-desktop-not-signed-in.html', description: 'Control bar with Sign In button and grayed-out Save heart.' },
+                { id: 'auth-modal', name: 'Auth Modal', file: 'auth/auth-modal.html', description: 'Google and Apple OAuth with Arabic welcome message.' },
+                { id: 'auth-tooltip', name: 'Save Tooltip', file: 'auth/auth-save-tooltip.html', description: 'Sign in to save poems tooltip on unauthenticated heart click.' },
+                { id: 'auth-mobile-compact', name: 'Mobile Compact', file: 'auth/auth-mobile-compact.html', description: 'Responsive layout with overflow menu for additional controls.' },
+                { id: 'auth-mobile-overflow', name: 'Mobile Overflow', file: 'auth/auth-mobile-overflow.html', description: 'Full menu with bilingual labels (Arabic + English).' }
+              ]
+            }
+          },
+          feedback: {},
+          screenshots: [
+            'auth/auth-desktop-not-signed-in.png',
+            'auth/auth-modal.png',
+            'auth/auth-save-tooltip.png',
+            'auth/auth-mobile-compact.png',
+            'auth/auth-mobile-overflow.png'
+          ]
         }
       ]
     };

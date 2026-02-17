@@ -1,0 +1,271 @@
+name: Design Review Preview Links
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize, ready_for_review]
+    paths:
+      - 'design-review/**'
+      - 'vercel.json'
+      - 'package.json'
+  issue_comment:
+    types: [created, edited]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to comment on'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  post-design-review-links:
+    name: Post Design Review Links
+    runs-on: ubuntu-latest
+    if: |
+      (github.event_name == 'pull_request' && github.event.pull_request.state == 'open') ||
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'issue_comment' &&
+       github.event.issue.pull_request != null &&
+       github.event.comment.user.login == 'vercel')
+    concurrency:
+      group: design-review-links-${{ github.event.pull_request.number || github.event.inputs.pr_number || github.run_id }}
+      cancel-in-progress: true
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Post/update PR comment with design review links
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const marker = '<!-- design-review-preview-links -->';
+            const waitMs = 20000;
+            const maxAttempts = 12;
+
+            // --- Resolve PR metadata ---
+            async function resolvePR() {
+              if (context.eventName === 'pull_request') {
+                return {
+                  issueNumber: context.issue.number,
+                  headSha: context.payload.pull_request.head.sha,
+                  preferredPreviewUrl: null
+                };
+              }
+              if (context.eventName === 'issue_comment') {
+                if (!context.payload.issue?.pull_request) return null;
+                if (context.payload.comment?.user?.login !== 'vercel') return null;
+                const pr = await github.rest.pulls.get({ owner, repo, pull_number: context.issue.number });
+                if (pr.data.state !== 'open') return null;
+                return {
+                  issueNumber: context.issue.number,
+                  headSha: pr.data.head.sha,
+                  preferredPreviewUrl: extractPreviewUrl(context.payload.comment?.body || '')
+                };
+              }
+              const num = Number.parseInt(context.payload.inputs?.pr_number || '', 10);
+              if (!num || num <= 0) { core.setFailed('Invalid pr_number'); return null; }
+              const pr = await github.rest.pulls.get({ owner, repo, pull_number: num });
+              if (pr.data.state !== 'open') return null;
+              return { issueNumber: num, headSha: pr.data.head.sha, preferredPreviewUrl: null };
+            }
+
+            // --- Extract Vercel preview URL ---
+            function extractPreviewUrl(body) {
+              const explicit = body.match(/\[Preview\]\((https:\/\/[^\s)]+)\)/i);
+              if (explicit) return explicit[1].replace(/\/+$/, '');
+              const vcMatch = body.match(/\[vc\]:\s*#[^:]*:([A-Za-z0-9+/_=-]+)/);
+              if (vcMatch) {
+                try {
+                  const norm = vcMatch[1].replace(/-/g, '+').replace(/_/g, '/').padEnd(Math.ceil(vcMatch[1].length / 4) * 4, '=');
+                  const payload = JSON.parse(Buffer.from(norm, 'base64').toString('utf8'));
+                  const proj = payload?.projects?.[0];
+                  const url = proj?.previewUrl || proj?.liveFeedback?.link;
+                  if (url) return (url.startsWith('http') ? url : `https://${url}`).replace(/\/+$/, '');
+                } catch {}
+              }
+              const domains = body.match(/https:\/\/[a-z0-9.-]+\.vercel\.app[^\s)]*/ig) || [];
+              const found = domains.find(u => !u.includes('open-feedback'));
+              return found ? found.replace(/\/+$/, '') : null;
+            }
+
+            // --- Wait for Vercel preview URL in PR comments ---
+            async function waitForPreviewUrl(issueNumber) {
+              for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+                const comments = await github.paginate(github.rest.issues.listComments, {
+                  owner, repo, issue_number: issueNumber, per_page: 100
+                });
+                const vercelComments = comments
+                  .filter(c => c.user?.login === 'vercel')
+                  .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+                for (const c of vercelComments) {
+                  const url = extractPreviewUrl(c.body || '');
+                  if (url) return url;
+                }
+                if (attempt < maxAttempts) {
+                  core.info(`Waiting for Vercel preview URL (attempt ${attempt}/${maxAttempts})...`);
+                  await new Promise(r => setTimeout(r, waitMs));
+                }
+              }
+              return null;
+            }
+
+            // --- Scan design-review directory for available designs ---
+            function scanDesigns() {
+              const root = path.join(process.cwd(), 'design-review');
+              const designs = { splash: [], mainApp: [], controls: [], auth: [] };
+
+              // Splash themes
+              const splashDir = path.join(root, 'splash');
+              if (fs.existsSync(splashDir)) {
+                for (const theme of fs.readdirSync(splashDir, { withFileTypes: true })) {
+                  if (!theme.isDirectory() || theme.name === 'current-state') continue;
+                  const previewsDir = path.join(splashDir, theme.name, 'previews');
+                  if (!fs.existsSync(previewsDir)) continue;
+                  const htmlFiles = fs.readdirSync(previewsDir).filter(f => f.endsWith('.html'));
+                  for (const f of htmlFiles) {
+                    designs.splash.push({
+                      theme: theme.name,
+                      file: `splash/${theme.name}/previews/${f}`,
+                      name: f.replace('.html', '').replace(/^option-\d+-/, '').replace(/-/g, ' ')
+                    });
+                  }
+                }
+              }
+
+              // Main app
+              const mainDir = path.join(root, 'main-app');
+              if (fs.existsSync(mainDir)) {
+                for (const dir of fs.readdirSync(mainDir, { withFileTypes: true })) {
+                  if (!dir.isDirectory()) continue;
+                  const htmlFiles = fs.readdirSync(path.join(mainDir, dir.name)).filter(f => f.endsWith('.html'));
+                  for (const f of htmlFiles) {
+                    designs.mainApp.push({
+                      name: dir.name,
+                      file: `main-app/${dir.name}/${f}`
+                    });
+                  }
+                }
+              }
+
+              // Controls
+              const ctrlDir = path.join(root, 'controls');
+              if (fs.existsSync(ctrlDir)) {
+                for (const dir of fs.readdirSync(ctrlDir, { withFileTypes: true })) {
+                  if (!dir.isDirectory()) continue;
+                  const htmlFiles = fs.readdirSync(path.join(ctrlDir, dir.name)).filter(f => f.endsWith('.html'));
+                  for (const f of htmlFiles) {
+                    designs.controls.push({
+                      name: dir.name,
+                      file: `controls/${dir.name}/${f}`
+                    });
+                  }
+                }
+              }
+
+              // Auth
+              const authDir = path.join(root, 'auth');
+              if (fs.existsSync(authDir)) {
+                const htmlFiles = fs.readdirSync(authDir).filter(f => f.endsWith('.html'));
+                for (const f of htmlFiles) {
+                  designs.auth.push({ name: f.replace('.html', '').replace(/^auth-/, ''), file: `auth/${f}` });
+                }
+              }
+
+              return designs;
+            }
+
+            function capitalize(s) { return s.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' '); }
+
+            // --- Build comment body ---
+            function buildComment(baseUrl, headSha, designs) {
+              const reviewUrl = `${baseUrl}/design-review/review.html`;
+              const lines = [
+                marker,
+                `## Design Review Links \`${headSha.slice(0, 7)}\``,
+                '',
+                `**Interactive Review Page:** [Open Review](${reviewUrl})`,
+                '',
+                '### Splash Screens',
+                '',
+                '| Theme | Option | Link |',
+                '|-------|--------|------|'
+              ];
+
+              for (const d of designs.splash) {
+                lines.push(`| ${capitalize(d.theme)} | ${capitalize(d.name)} | [Preview](${baseUrl}/design-review/${d.file}) |`);
+              }
+
+              lines.push('', '### Main App (Desktop)', '', '| Design | Link |', '|--------|------|');
+              for (const d of designs.mainApp) {
+                lines.push(`| ${capitalize(d.name)} | [Preview](${baseUrl}/design-review/${d.file}) |`);
+              }
+
+              lines.push('', '### Vertical Controls', '', '| Style | Link |', '|-------|------|');
+              for (const d of designs.controls) {
+                lines.push(`| ${capitalize(d.name)} | [Preview](${baseUrl}/design-review/${d.file}) |`);
+              }
+
+              if (designs.auth.length > 0) {
+                lines.push('', '### Auth UI', '', '| State | Link |', '|-------|------|');
+                for (const d of designs.auth) {
+                  lines.push(`| ${capitalize(d.name)} | [Preview](${baseUrl}/design-review/${d.file}) |`);
+                }
+              }
+
+              lines.push(
+                '',
+                '---',
+                `Total: ${designs.splash.length + designs.mainApp.length + designs.controls.length + designs.auth.length} design previews`,
+                '',
+                '_Auto-generated for design review commits._'
+              );
+              return lines.join('\n');
+            }
+
+            // --- Upsert comment ---
+            async function upsertComment(issueNumber, body) {
+              const comments = await github.paginate(github.rest.issues.listComments, {
+                owner, repo, issue_number: issueNumber, per_page: 100
+              });
+              const existing = comments.find(c =>
+                c.user?.login === 'github-actions[bot]' && (c.body || '').includes(marker)
+              );
+              if (existing) {
+                await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body });
+                core.info(`Updated design review links comment: ${existing.id}`);
+              } else {
+                await github.rest.issues.createComment({ owner, repo, issue_number: issueNumber, body });
+                core.info('Created new design review links comment.');
+              }
+            }
+
+            // --- Main ---
+            const prMeta = await resolvePR();
+            if (!prMeta) return;
+
+            let previewUrl = prMeta.preferredPreviewUrl;
+            if (!previewUrl) {
+              previewUrl = await waitForPreviewUrl(prMeta.issueNumber);
+            }
+            if (!previewUrl) {
+              if (context.eventName === 'pull_request') {
+                core.info('No Vercel preview URL detected yet; will retry on Vercel comment.');
+                return;
+              }
+              core.setFailed('Could not detect a Vercel preview URL.');
+              return;
+            }
+
+            const designs = scanDesigns();
+            const body = buildComment(previewUrl, prMeta.headSha, designs);
+            await upsertComment(prMeta.issueNumber, body);
+            core.info(`Posted design review links for ${previewUrl}/design-review/review.html`);

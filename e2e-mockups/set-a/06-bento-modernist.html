@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E2E #6: Bento Modernist — Silicon Valley Clean</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#111827;--bg2:#1f2937;--surface:#1e293b;--border:rgba(148,163,184,.15);--text:#f8fafc;--text-dim:#94a3b8;--accent:#6366f1;--accent2:#8b5cf6;--green:#22c55e;--font-ar:'Amiri',serif;--font-ui:'Inter',system-ui,sans-serif;--radius:16px}
+html{font-family:var(--font-ui);background:var(--bg);color:var(--text);scroll-behavior:smooth;overflow-x:hidden}
+canvas#dots{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.3}
+
+.screen{position:relative;width:100%;min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;overflow:hidden}
+.label{position:absolute;top:24px;left:24px;font-size:10px;letter-spacing:.25em;text-transform:uppercase;color:var(--accent);opacity:.5}
+
+/* SPLASH */
+#splash{background:var(--bg)}
+.sp{position:relative;z-index:2;text-align:center;padding:40px}
+.sp-logo{display:flex;flex-direction:row-reverse;align-items:flex-end;justify-content:center;gap:16px;margin-bottom:12px}
+.sp-ar{font-family:var(--font-ar);font-size:clamp(2.8rem,7vw,4rem);font-weight:700}
+.sp-en{font-size:clamp(2.2rem,6vw,4.5rem);font-weight:200;letter-spacing:-.03em;text-transform:lowercase}
+.sp-sub{font-size:12px;color:var(--text-dim);margin-bottom:48px;letter-spacing:.1em}
+.sp-enter{display:inline-flex;align-items:center;gap:10px;padding:14px 32px;background:var(--accent);color:#fff;font-size:13px;font-weight:600;border-radius:var(--radius);text-decoration:none;transition:all .3s;border:none;cursor:pointer}
+.sp-enter:hover{background:var(--accent2);transform:translateY(-2px);box-shadow:0 8px 24px rgba(99,102,241,.3)}
+.sp-enter svg{width:16px;height:16px}
+.sp-stats{display:flex;gap:24px;justify-content:center;margin-top:32px;font-size:11px;color:var(--text-dim)}
+.sp-stats span{display:flex;align-items:center;gap:6px}
+.sp-stats .dot{width:6px;height:6px;border-radius:50%;background:var(--green)}
+
+/* WALKTHROUGH */
+#walk{background:var(--bg)}
+.wk{position:relative;z-index:2;max-width:640px;width:90%;padding:48px 0}
+.wk-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:24px}
+.wk-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:24px;transition:all .3s}
+.wk-card:hover{transform:translateY(-3px);border-color:var(--accent);box-shadow:0 8px 24px rgba(99,102,241,.15)}
+.wk-icon{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:12px}
+.wk-card h3{font-size:14px;font-weight:600;margin-bottom:6px}
+.wk-card p{font-size:12px;color:var(--text-dim);line-height:1.6}
+.wk-cta{display:block;margin:0 auto;padding:14px 40px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-size:13px;font-weight:600;cursor:pointer;transition:all .2s}
+.wk-cta:hover{background:var(--accent2)}
+
+/* MAIN - Bento Grid */
+#main{background:var(--bg);padding:0;align-items:stretch}
+.m-wrap{position:relative;z-index:2;max-width:900px;margin:0 auto;padding:32px 20px;min-height:100vh}
+.m-nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
+.m-brand{display:flex;align-items:center;gap:8px;font-weight:700;font-size:14px;letter-spacing:.06em}
+.m-brand .dot{width:8px;height:8px;border-radius:50%;background:var(--accent)}
+.m-links{display:flex;gap:8px}
+.m-links span{font-size:12px;color:var(--text-dim);padding:6px 12px;border-radius:8px;cursor:pointer;transition:all .2s}
+.m-links span:hover{background:var(--surface);color:var(--text)}
+.bento{display:grid;grid-template-columns:repeat(12,1fr);gap:12px}
+.bento .poem-cell{grid-column:span 8;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:32px}
+.bento .side-cell{grid-column:span 4;display:flex;flex-direction:column;gap:12px}
+.side-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;flex:1}
+.side-card h4{font-size:11px;text-transform:uppercase;letter-spacing:.15em;color:var(--text-dim);margin-bottom:10px}
+.side-card .val{font-size:24px;font-weight:700;color:var(--accent)}
+.poem-cell .meta{font-size:11px;color:var(--accent);text-transform:uppercase;letter-spacing:.15em;margin-bottom:20px}
+.poem-cell .ar{font-family:var(--font-ar);font-size:clamp(1.3rem,3vw,1.8rem);line-height:2.2;direction:rtl;margin-bottom:16px}
+.poem-cell .en{font-size:13px;color:var(--text-dim);line-height:1.8;font-style:italic}
+.poem-cell .acts{display:flex;gap:8px;margin-top:20px;flex-wrap:wrap}
+.poem-cell .acts button{padding:8px 14px;border-radius:8px;background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.2);color:var(--accent);font-size:11px;cursor:pointer;font-family:var(--font-ui);transition:all .2s}
+.poem-cell .acts button:hover{background:rgba(99,102,241,.2)}
+.ai-row{grid-column:span 12;background:linear-gradient(135deg,rgba(99,102,241,.08),rgba(139,92,246,.06));border:1px solid var(--border);border-radius:var(--radius);padding:18px 22px;display:flex;gap:14px;align-items:flex-start}
+.ai-row .ico{font-size:16px}
+.ai-row p{font-size:12px;color:var(--text-dim);line-height:1.6}
+
+/* NOTION CONTROLS */
+.vc{position:fixed;right:14px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:1px;background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;z-index:100;box-shadow:0 8px 24px rgba(0,0,0,.3)}
+.vc button{width:38px;height:38px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;cursor:pointer;color:var(--text-dim);transition:all .15s;font-size:14px}
+.vc button:hover{background:rgba(255,255,255,.06);color:var(--text)}
+.vc button.on{background:rgba(99,102,241,.12);color:var(--accent)}
+.vc .div{height:1px;background:var(--border)}
+
+/* SETTINGS */
+#settings{background:var(--bg);padding:80px 20px}
+.st{position:relative;z-index:2;max-width:440px;margin:0 auto}
+.st-title{font-size:20px;font-weight:700;margin-bottom:24px;text-align:center}
+.st-row{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+.st-row label{font-size:13px}
+.st-row label small{display:block;font-size:11px;color:var(--text-dim);margin-top:3px}
+.tgl{width:44px;height:24px;border-radius:12px;background:var(--surface);position:relative;cursor:pointer;transition:background .2s;border:1px solid var(--border)}
+.tgl.on{background:var(--accent);border-color:var(--accent)}
+.tgl::after{content:'';position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;transition:transform .2s}
+.tgl.on::after{transform:translateX(20px)}
+.sl{display:flex;align-items:center;gap:8px}
+.sl span{font-size:11px;color:var(--text-dim)}
+input[type=range]{-webkit-appearance:none;width:100px;height:4px;border-radius:2px;background:var(--surface);outline:none}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--accent);cursor:pointer}
+.sv{display:block;width:100%;margin-top:24px;padding:14px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-size:13px;font-weight:600;cursor:pointer}
+.sv:hover{background:var(--accent2)}
+
+/* AUTH */
+#auth{background:var(--bg)}
+.auth-box{position:relative;z-index:2;width:90%;max-width:380px;background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:40px 28px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.3)}
+.auth-title{font-family:var(--font-ar);font-size:32px;margin-bottom:8px}
+.auth-sub{font-size:13px;color:var(--text-dim);margin-bottom:28px}
+.oa{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:13px;border-radius:12px;border:1px solid var(--border);background:transparent;color:var(--text);font-size:14px;cursor:pointer;margin-bottom:10px;transition:all .2s;font-family:var(--font-ui)}
+.oa:hover{background:rgba(99,102,241,.08);border-color:var(--accent)}
+.oa svg{width:18px;height:18px}
+.at{font-size:10px;color:var(--text-dim);margin-top:18px}
+
+.nav-bar{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:200;background:rgba(17,24,39,.9);backdrop-filter:blur(10px);padding:8px 14px;border-radius:var(--radius);border:1px solid var(--border)}
+.nav-bar a{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);text-decoration:none;padding:5px 10px;border-radius:8px;transition:all .2s}
+.nav-bar a:hover{color:var(--accent);background:rgba(99,102,241,.08)}
+
+@media(max-width:640px){.sp-logo{flex-direction:column;align-items:center;gap:2px}.wk-grid{grid-template-columns:1fr}.bento{grid-template-columns:1fr}.bento .poem-cell,.bento .side-cell,.bento .ai-row{grid-column:span 1}.vc{right:6px}.vc button{width:34px;height:34px;font-size:12px}}
+</style>
+</head>
+<body>
+<canvas id="dots"></canvas>
+<nav class="nav-bar"><a href="#splash">Splash</a><a href="#walk">Intro</a><a href="#main">Read</a><a href="#settings">Settings</a><a href="#auth">Auth</a></nav>
+
+<section class="screen" id="splash"><span class="label">Splash</span><div class="sp"><div class="sp-logo"><span class="sp-ar">قافية</span><span class="sp-en">qafiyah</span></div><div class="sp-sub">Arabic Poetry, Pair by Pair</div><button class="sp-enter" onclick="document.getElementById('walk').scrollIntoView({behavior:'smooth'})"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>Get Started</button><div class="sp-stats"><span><span class="dot"></span>84,329 poems</span><span>12 centuries</span><span>AI-powered</span></div></div></section>
+
+<section class="screen" id="walk"><span class="label">Walkthrough</span><div class="wk"><div class="wk-grid">
+  <div class="wk-card"><div class="wk-icon">&#128214;</div><h3>Discover</h3><p>84,000+ Arabic poems with English translations spanning 12 centuries.</p></div>
+  <div class="wk-card"><div class="wk-icon">&#127911;</div><h3>Listen</h3><p>AI audio recitation with transliteration guides for pronunciation.</p></div>
+  <div class="wk-card"><div class="wk-icon">&#10024;</div><h3>Understand</h3><p>Contextual AI insights explain rhetorical devices and historical context.</p></div>
+  <div class="wk-card"><div class="wk-icon">&#128278;</div><h3>Collect</h3><p>Save favorites and sync your personal anthology across devices.</p></div>
+</div><button class="wk-cta" onclick="document.getElementById('main').scrollIntoView({behavior:'smooth'})">Start Exploring</button></div></section>
+
+<section class="screen" id="main" style="align-items:stretch"><div class="m-wrap"><span class="label">Main App</span>
+  <div class="m-nav"><div class="m-brand"><span class="dot"></span>Qafiyah</div><div class="m-links"><span>Explore</span><span>Saved</span><span>Settings</span></div></div>
+  <div class="bento">
+    <div class="poem-cell"><div class="meta">Zuhayr ibn Abi Sulma &bull; Mu'allaqa</div><div class="ar">سَئِمتُ تَكاليفَ الحَياةِ وَمَن يَعِش<br>ثَمانينَ حَولاً لا أَبا لَكَ يَسأَمِ</div><div class="en">I have grown weary of life's burdens — and whoever lives<br>eighty years, let me tell you, grows weary indeed.</div><div class="acts"><button>&#9654; Listen</button><button>&#9825; Save</button><button>&#8634; Next</button><button>Aa Size</button><button>ع Trans</button></div></div>
+    <div class="side-cell"><div class="side-card"><h4>Poet</h4><div class="val" style="font-size:16px">Zuhayr ibn Abi Sulma</div><p style="font-size:11px;color:var(--text-dim);margin-top:6px">Pre-Islamic &middot; 6th century</p></div><div class="side-card"><h4>Your Collection</h4><div class="val">47</div><p style="font-size:11px;color:var(--text-dim);margin-top:4px">poems saved</p></div></div>
+    <div class="ai-row"><span class="ico">&#10024;</span><p>Zuhayr is known as the most philosophical of the pre-Islamic poets. This verse from his Mu'allaqa reflects deep world-weariness — a theme rare among his contemporaries who celebrated tribal glory.</p></div>
+  </div>
+</div></section>
+
+<div class="vc"><button>&#8635;</button><div class="div"></div><button class="on">&#9654;</button><div class="div"></div><button>&#9825;</button><div class="div"></div><button>Aa</button><div class="div"></div><button>ع</button><div class="div"></div><button>&#9790;</button></div>
+
+<section class="screen" id="settings"><span class="label">Settings</span><div class="st"><div class="st-title">Settings</div>
+  <div class="st-row"><label>Text Size<small>Arabic display size</small></label><div class="sl"><span>A</span><input type="range" min="14" max="32" value="22"><span style="font-size:16px">A</span></div></div>
+  <div class="st-row"><label>Transliteration<small>Latin pronunciation</small></label><div class="tgl on"></div></div>
+  <div class="st-row"><label>Dark Mode<small>Appearance</small></label><div class="tgl on"></div></div>
+  <div class="st-row"><label>Auto Audio<small>Play on load</small></label><div class="tgl"></div></div>
+  <div class="st-row"><label>AI Insights<small>Contextual analysis</small></label><div class="tgl on"></div></div>
+  <button class="sv">Save Changes</button>
+</div></section>
+
+<section class="screen" id="auth"><span class="label">Auth</span><div class="auth-box"><div class="auth-title">مرحباً</div><div class="auth-sub">Sign in to save and sync</div>
+  <button class="oa"><svg viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>Continue with Google</button>
+  <button class="oa"><svg viewBox="0 0 24 24" fill="#fff"><path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.52-3.23 0-1.44.64-2.2.52-3.06-.4C3.79 16.17 4.36 9.04 8.92 8.78c1.27.06 2.15.72 2.89.76.98-.2 1.92-.76 2.97-.69 1.26.1 2.21.59 2.83 1.5-2.59 1.54-1.97 4.93.36 5.87-.47 1.24-.73 1.79-1.37 2.89-.97 1.69-2.34 3.38-4.02 3.42-.74.02-1.23-.38-2.03-.4-.83.02-1.35.42-2.13.42-1.73-.04-3.05-1.84-4.03-3.52-2.75-4.72-3.05-10.27-1.35-13.17 1.2-2.04 3.09-3.23 5.1-3.28 1.1-.02 2.17.74 2.86.74.69 0 1.98-.92 3.34-.78.57.02 2.16.23 3.18 1.72-2.58 1.61-2.16 5.57.47 6.63z"/></svg>Continue with Apple</button>
+  <div class="at">By signing in you agree to our Terms and Privacy Policy</div>
+</div></section>
+
+<script>
+// Minimal floating particles
+const c=document.getElementById('dots'),ctx=c.getContext('2d');let W,H;
+function resize(){W=c.width=innerWidth;H=c.height=innerHeight}resize();addEventListener('resize',resize);
+let ps=[];for(let i=0;i<60;i++)ps.push({x:Math.random()*2e3,y:Math.random()*2e4,r:Math.random()+.5,vx:(Math.random()-.5)*.1,vy:(Math.random()-.5)*.1,a:Math.random()*.3+.05});
+(function loop(){ctx.clearRect(0,0,W,H);ps.forEach(p=>{p.x+=p.vx;p.y+=p.vy;if(p.x<0||p.x>W)p.vx*=-1;if(p.y<0||p.y>H)p.vy*=-1;ctx.beginPath();ctx.arc(p.x,p.y%H,p.r,0,Math.PI*2);ctx.fillStyle=`rgba(99,102,241,${p.a})`;ctx.fill()});requestAnimationFrame(loop)})();
+document.querySelectorAll('.tgl').forEach(t=>t.addEventListener('click',()=>t.classList.toggle('on')));
+</script>
+</body>
+</html>

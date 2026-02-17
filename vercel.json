@@ -45,11 +45,11 @@
     },
     {
       "source": "/design-review",
-      "destination": "/"
+      "destination": "/design-review-output/splash/round-1/master-comparison.html"
     },
     {
       "source": "/design-review/",
-      "destination": "/"
+      "destination": "/design-review-output/splash/round-1/master-comparison.html"
     }
   ],
   "git": {

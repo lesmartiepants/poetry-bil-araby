@@ -151,6 +151,7 @@ function buildCategoryComparisonPage(theme, index, totalThemesCount) {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${escapeHtml(theme.name)} - Category Comparison</title>
+  <base href="/design-review-output/splash/round-${manifest.round}/${theme.id}/">
   <style>
     :root {
       --bg: #07080b;
@@ -615,6 +616,7 @@ function buildMasterComparisonPage() {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Splash design review - master comparison</title>
+  <base href="/design-review-output/splash/round-${manifest.round}/">
   <style>
     :root {
       --bg: #07080b;

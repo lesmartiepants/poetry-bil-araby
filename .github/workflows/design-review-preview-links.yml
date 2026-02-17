@@ -11,6 +11,12 @@ on:
       - 'src/app.jsx'
       - 'vercel.json'
       - '.github/workflows/design-review-preview-links.yml'
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to comment on'
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -21,9 +27,9 @@ jobs:
   comment-design-review-links:
     name: Comment Design Review Links
     runs-on: ubuntu-latest
-    if: github.event.pull_request.state == 'open'
+    if: github.event_name != 'pull_request' || github.event.pull_request.state == 'open'
     concurrency:
-      group: design-review-preview-links-pr-${{ github.event.pull_request.number }}
+      group: design-review-preview-links-pr-${{ github.event.pull_request.number || github.event.inputs.pr_number || github.run_id }}
       cancel-in-progress: true
 
     steps:
@@ -39,12 +45,42 @@ jobs:
 
             const owner = context.repo.owner;
             const repo = context.repo.repo;
-            const issueNumber = context.issue.number;
-            const pullRequest = context.payload.pull_request;
-            const headSha = pullRequest.head.sha;
             const marker = '<!-- design-review-preview-links -->';
             const waitMs = 20000;
             const maxAttempts = 30; // 10 minutes max wait
+
+            async function resolvePullRequestMeta() {
+              if (context.eventName === 'pull_request') {
+                const pullRequest = context.payload.pull_request;
+                return {
+                  issueNumber: context.issue.number,
+                  headSha: pullRequest.head.sha
+                };
+              }
+
+              const inputPr = core.getInput('pr_number') || context.payload.inputs?.pr_number;
+              const issueNumber = Number.parseInt(inputPr || '', 10);
+              if (!Number.isInteger(issueNumber) || issueNumber <= 0) {
+                core.setFailed(`Invalid or missing pr_number input: "${inputPr || ''}"`);
+                return null;
+              }
+
+              const pr = await github.rest.pulls.get({
+                owner,
+                repo,
+                pull_number: issueNumber
+              });
+
+              if (pr.data.state !== 'open') {
+                core.info(`PR #${issueNumber} is ${pr.data.state}; skipping comment update.`);
+                return null;
+              }
+
+              return {
+                issueNumber,
+                headSha: pr.data.head.sha
+              };
+            }
 
             function toHttpsUrl(candidate) {
               if (!candidate) return null;
@@ -97,18 +133,75 @@ jobs:
               await new Promise((resolve) => setTimeout(resolve, ms));
             }
 
-            function loadThemeIdsFromManifest() {
-              const manifestPath = path.join(process.cwd(), 'design-review-output', 'splash', 'round-1', 'review-manifest.json');
-              try {
-                const raw = fs.readFileSync(manifestPath, 'utf8');
-                const parsed = JSON.parse(raw);
-                return (parsed.themes || []).map((theme) => theme.id).filter(Boolean);
-              } catch {
-                return ['particles', 'constellation', 'mandala', 'geometric', 'zen', 'aurora', 'ink', 'manuscript', 'light'];
-              }
+            function toDisplayName(identifier) {
+              return identifier
+                .split('-')
+                .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+                .join(' ');
             }
 
-            async function getCommitDateIso() {
+            function loadComponentEntries() {
+              const designReviewRoot = path.join(process.cwd(), 'design-review-output');
+              const results = [];
+
+              if (!fs.existsSync(designReviewRoot)) {
+                return results;
+              }
+
+              const componentDirs = fs
+                .readdirSync(designReviewRoot, { withFileTypes: true })
+                .filter((entry) => entry.isDirectory())
+                .map((entry) => entry.name);
+
+              for (const component of componentDirs) {
+                const componentPath = path.join(designReviewRoot, component);
+                const roundDirs = fs
+                  .readdirSync(componentPath, { withFileTypes: true })
+                  .filter((entry) => entry.isDirectory() && /^round-\d+$/.test(entry.name))
+                  .map((entry) => entry.name);
+
+                let latest = null;
+
+                for (const roundDirName of roundDirs) {
+                  const roundNumber = Number.parseInt(roundDirName.replace('round-', ''), 10);
+                  const manifestPath = path.join(componentPath, roundDirName, 'review-manifest.json');
+                  if (!fs.existsSync(manifestPath)) continue;
+
+                  try {
+                    const raw = fs.readFileSync(manifestPath, 'utf8');
+                    const manifest = JSON.parse(raw);
+                    const themes = (manifest.themes || []).map((theme) => theme.id).filter(Boolean);
+
+                    if (!latest || roundNumber > latest.round) {
+                      latest = {
+                        component,
+                        round: roundNumber,
+                        themes
+                      };
+                    }
+                  } catch (error) {
+                    core.warning(`Failed to parse manifest: ${manifestPath}`);
+                  }
+                }
+
+                if (latest) {
+                  results.push(latest);
+                }
+              }
+
+              if (results.length === 0) {
+                results.push({
+                  component: 'splash',
+                  round: 1,
+                  themes: ['particles', 'constellation', 'mandala', 'geometric', 'zen', 'aurora', 'ink', 'manuscript', 'light']
+                });
+              }
+
+              results.sort((a, b) => a.component.localeCompare(b.component));
+              return results;
+            }
+
+            async function getCommitDateIso(headSha) {
               const commit = await github.rest.repos.getCommit({
                 owner,
                 repo,
@@ -117,7 +210,7 @@ jobs:
               return commit.data?.commit?.committer?.date || commit.data?.commit?.author?.date || new Date().toISOString();
             }
 
-            async function getIssueComments() {
+            async function getIssueComments(issueNumber) {
               return github.paginate(github.rest.issues.listComments, {
                 owner,
                 repo,
@@ -146,9 +239,9 @@ jobs:
               return matchingCommitWindow || candidates[0] || null;
             }
 
-            async function waitForPreviewUrl(commitDateIso) {
+            async function waitForPreviewUrl(issueNumber, commitDateIso) {
               for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-                const comments = await getIssueComments();
+                const comments = await getIssueComments(issueNumber);
                 const selected = selectBestPreviewComment(comments, commitDateIso);
                 if (selected?.previewUrl) {
                   return sanitizeBaseUrl(selected.previewUrl);
@@ -162,37 +255,48 @@ jobs:
               return null;
             }
 
-            function buildCommentBody(baseUrl, themeIds) {
-              const baseRoutes = [
-                ['Design Review Home', '/design-review'],
-                ['Splash Master Comparison', '/design-review/splash'],
-                ['Splash Streamlined Review', '/design-review/splash/streamlined'],
-                ['Splash Matrix Review', '/design-review/splash/matrix']
-              ];
+            function buildCommentBody(baseUrl, headSha, components) {
+              const routeRows = [];
+              routeRows.push(['Design Review Home', '/design-review']);
 
-              const categoryRoutes = themeIds.map((themeId) => [
-                `Category: ${themeId}`,
-                `/design-review/splash/category/${themeId}`
-              ]);
+              for (const entry of components) {
+                const componentName = toDisplayName(entry.component);
+                routeRows.push([`${componentName} Master`, `/design-review/${entry.component}`]);
+                routeRows.push([`${componentName} Streamlined`, `/design-review/${entry.component}/streamlined`]);
+                routeRows.push([`${componentName} Matrix`, `/design-review/${entry.component}/matrix`]);
 
-              const routeRows = [...baseRoutes, ...categoryRoutes]
+                for (const themeId of entry.themes) {
+                  routeRows.push([`${componentName} Category: ${themeId}`, `/design-review/${entry.component}/category/${themeId}`]);
+                }
+              }
+
+              const tableRows = routeRows
                 .map(([label, route]) => `| ${label} | [Open](${baseUrl}${route}) |`)
                 .join('\n');
 
-              return `${marker}
-### Design Review Links for \`${headSha.slice(0, 7)}\`
+              const componentSummary = components
+                .map((entry) => `- ${toDisplayName(entry.component)} (latest tracked round: ${entry.round})`)
+                .join('\n');
 
-Preview deployment: [${baseUrl}](${baseUrl})
-
-| Page | Link |
-|---|---|
-${routeRows}
-
-_Auto-posted for design review/mockup related commits._`;
+              return [
+                marker,
+                `### Design Review Links for \`${headSha.slice(0, 7)}\``,
+                '',
+                `Preview deployment: [${baseUrl}](${baseUrl})`,
+                '',
+                'Components detected:',
+                componentSummary,
+                '',
+                '| Page | Link |',
+                '|---|---|',
+                tableRows,
+                '',
+                '_Auto-posted for design review/mockup related commits._'
+              ].join('\n');
             }
 
-            async function upsertBotComment(body) {
-              const comments = await getIssueComments();
+            async function upsertBotComment(issueNumber, body) {
+              const comments = await getIssueComments(issueNumber);
               const existing = comments.find(
                 (comment) =>
                   comment.user?.login === 'github-actions[bot]' &&
@@ -219,14 +323,17 @@ _Auto-posted for design review/mockup related commits._`;
               core.info('Created new design review links comment.');
             }
 
-            const commitDateIso = await getCommitDateIso();
-            const previewBaseUrl = await waitForPreviewUrl(commitDateIso);
-            const themeIds = loadThemeIdsFromManifest();
+            const prMeta = await resolvePullRequestMeta();
+            if (!prMeta) return;
+
+            const commitDateIso = await getCommitDateIso(prMeta.headSha);
+            const previewBaseUrl = await waitForPreviewUrl(prMeta.issueNumber, commitDateIso);
+            const components = loadComponentEntries();
 
             if (!previewBaseUrl) {
               core.setFailed('Could not detect a Vercel preview URL to build design review links.');
               return;
             }
 
-            const commentBody = buildCommentBody(previewBaseUrl, themeIds);
-            await upsertBotComment(commentBody);
+            const commentBody = buildCommentBody(previewBaseUrl, prMeta.headSha, components);
+            await upsertBotComment(prMeta.issueNumber, commentBody);

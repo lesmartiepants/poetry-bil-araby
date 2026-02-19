@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>B10: Signature Blend - Poetry bil Araby</title>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --gold: #C5A059;
+      --premium-gold: #D4AF37;
+      --dark-bg: #0b0b0d;
+      --premium-black: #161618;
+      --spotlight-white: #FFF9E6;
+      --dust-gold: rgba(212, 175, 55, 0.4);
+    }
+
+    body {
+      font-family: 'Tajawal', sans-serif;
+      background: var(--dark-bg);
+      color: #f0f0f0;
+      overflow-x: hidden;
+      transition: background 0.5s ease, color 0.5s ease;
+    }
+
+    body.light {
+      background: #FAF9F4;
+      color: #1a1a1a;
+    }
+
+    /* Splash Screen - Premium Blend */
+    .splash {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle at center, #1a1a1c 0%, var(--dark-bg) 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      animation: splashFadeOut 0.8s ease 3.8s forwards;
+      overflow: hidden;
+    }
+
+    /* Subtle Spotlight Base */
+    .signature-spotlight {
+      position: absolute;
+      width: 600px;
+      height: 600px;
+      border-radius: 50%;
+      background: radial-gradient(circle at center, rgba(255, 249, 230, 0.3) 0%, rgba(212, 175, 55, 0.15) 40%, transparent 70%);
+      filter: blur(80px);
+      animation: signatureGlow 5s ease-in-out infinite;
+      will-change: transform, opacity;
+    }
+
+    @keyframes signatureGlow {
+      0%, 100% {
+        transform: translate(calc(50vw - 300px), calc(50vh - 300px)) scale(1);
+        opacity: 0.6;
+      }
+      50% {
+        transform: translate(calc(50vw - 300px), calc(50vh - 300px)) scale(1.1);
+        opacity: 0.9;
+      }
+    }
+
+    /* Gold Particles */
+    .gold-particle {
+      position: absolute;
+      width: 5px;
+      height: 5px;
+      background: var(--premium-gold);
+      border-radius: 50%;
+      opacity: 0;
+      box-shadow: 0 0 15px rgba(212, 175, 55, 0.8);
+      animation: goldFloat 4s ease-in-out infinite;
+      will-change: transform, opacity;
+    }
+
+    @keyframes goldFloat {
+      0%, 100% {
+        opacity: 0;
+        transform: translate(0, 0) scale(0.5);
+      }
+      20% {
+        opacity: 1;
+      }
+      80% {
+        opacity: 0.8;
+      }
+      100% {
+        transform: translate(var(--tx), var(--ty)) scale(1);
+      }
+    }
+
+    /* Dust Particles */
+    .dust-particle {
+      position: absolute;
+      width: 3px;
+      height: 3px;
+      background: rgba(255, 249, 230, 0.6);
+      border-radius: 50%;
+      opacity: 0;
+      animation: dustFloat 3s ease-in-out infinite;
+      will-change: transform, opacity;
+    }
+
+    @keyframes dustFloat {
+      0%, 100% {
+        opacity: 0;
+        transform: translate(0, 0);
+      }
+      50% {
+        opacity: 0.8;
+        transform: translate(var(--dx), var(--dy));
+      }
+    }
+
+    /* Premium Scroll */
+    .premium-scroll {
+      position: relative;
+      width: 350px;
+      height: 450px;
+      background: linear-gradient(135deg, var(--premium-black) 0%, #1a1a1c 100%);
+      border: 3px solid var(--premium-gold);
+      border-radius: 12px;
+      padding: 60px 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 25px;
+      box-shadow: 0 0 80px rgba(212, 175, 55, 0.4), 0 30px 90px rgba(0,0,0,0.7);
+      animation: scrollReveal 2s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+      z-index: 10;
+    }
+
+    @keyframes scrollReveal {
+      0% {
+        height: 0;
+        opacity: 0;
+        transform: scaleY(0);
+      }
+      100% {
+        height: 450px;
+        opacity: 1;
+        transform: scaleY(1);
+      }
+    }
+
+    .scroll-cap {
+      position: absolute;
+      width: calc(100% + 6px);
+      height: 40px;
+      background: linear-gradient(90deg, var(--gold) 0%, var(--premium-gold) 50%, var(--gold) 100%);
+      left: -3px;
+      box-shadow: 0 0 30px rgba(212, 175, 55, 0.6);
+    }
+
+    .scroll-cap.top {
+      top: -3px;
+      border-radius: 12px 12px 0 0;
+    }
+
+    .scroll-cap.bottom {
+      bottom: -3px;
+      border-radius: 0 0 12px 12px;
+    }
+
+    .scroll-content {
+      text-align: center;
+      animation: contentEmerge 1s ease 1.5s forwards;
+      opacity: 0;
+      z-index: 1;
+    }
+
+    @keyframes contentEmerge {
+      to { opacity: 1; }
+    }
+
+    .scroll-icon {
+      font-size: 60px;
+      color: var(--premium-gold);
+      text-shadow: 0 0 40px rgba(212, 175, 55, 0.7);
+      margin-bottom: 20px;
+    }
+
+    .scroll-content h1 {
+      font-family: 'Amiri', serif;
+      font-size: 36px;
+      color: var(--premium-gold);
+      margin-bottom: 15px;
+      text-shadow: 0 0 30px rgba(212, 175, 55, 0.5);
+    }
+
+    .scroll-content p {
+      font-size: 15px;
+      color: var(--spotlight-white);
+      line-height: 1.6;
+    }
+
+    @keyframes splashFadeOut {
+      to { opacity: 0; pointer-events: none; }
+    }
+
+    /* Walkthrough */
+    .walkthrough {
+      position: fixed;
+      inset: 0;
+      background: rgba(11, 11, 13, 0.98);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9998;
+      padding: 20px;
+    }
+
+    .walkthrough.active { display: flex; }
+
+    .walkthrough-card {
+      background: linear-gradient(135deg, var(--premium-black) 0%, #1a1a1c 100%);
+      border-radius: 24px;
+      padding: 65px 55px;
+      max-width: 540px;
+      text-align: center;
+      border: 3px solid var(--premium-gold);
+      box-shadow: 0 0 70px rgba(212, 175, 55, 0.5), 0 30px 90px rgba(0,0,0,0.7);
+      animation: cardSignature 1s ease;
+    }
+
+    @keyframes cardSignature {
+      from {
+        transform: scale(0.9) translateY(40px);
+        opacity: 0;
+      }
+      to {
+        transform: scale(1) translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .walkthrough-card h2 {
+      font-family: 'Amiri', serif;
+      font-size: 34px;
+      color: var(--premium-gold);
+      margin-bottom: 25px;
+      text-shadow: 0 0 30px rgba(212, 175, 55, 0.5);
+    }
+
+    .walkthrough-card p {
+      color: #d8d8d8;
+      font-size: 16px;
+      line-height: 1.9;
+    }
+
+    .walkthrough-buttons {
+      display: flex;
+      gap: 15px;
+      margin-top: 45px;
+      justify-content: center;
+    }
+
+    .btn {
+      padding: 16px 38px;
+      border: none;
+      border-radius: 50px;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      min-width: 44px;
+      min-height: 44px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .btn-primary {
+      background: var(--premium-gold);
+      color: var(--dark-bg);
+      box-shadow: 0 0 35px rgba(212, 175, 55, 0.5);
+    }
+
+    .btn-primary:hover {
+      background: #E4BF47;
+      box-shadow: 0 0 50px rgba(212, 175, 55, 0.7), 0 10px 25px rgba(212, 175, 55, 0.4);
+      transform: translateY(-3px);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: #999;
+      border: 2px solid #444;
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--premium-gold);
+      color: var(--premium-gold);
+    }
+
+    /* Main App */
+    .app {
+      display: none;
+      min-height: 100vh;
+      padding: 95px 20px 40px;
+    }
+
+    .app.active { display: block; }
+
+    .header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: rgba(11, 11, 13, 0.95);
+      backdrop-filter: blur(20px);
+      padding: 24px 40px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid rgba(212, 175, 55, 0.4);
+      z-index: 100;
+      transition: background 0.3s ease;
+      box-shadow: 0 5px 40px rgba(212, 175, 55, 0.2);
+    }
+
+    .light .header {
+      background: rgba(250, 249, 244, 0.95);
+      border-bottom-color: var(--gold);
+      box-shadow: 0 2px 20px rgba(197, 160, 89, 0.15);
+    }
+
+    .logo {
+      font-family: 'Amiri', serif;
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--premium-gold);
+      text-shadow: 0 0 25px rgba(212, 175, 55, 0.5);
+      letter-spacing: 1px;
+    }
+
+    .light .logo {
+      color: var(--gold);
+      text-shadow: none;
+    }
+
+    .theme-toggle {
+      background: transparent;
+      border: 2px solid var(--premium-gold);
+      color: var(--premium-gold);
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 25px rgba(212, 175, 55, 0.4);
+      font-size: 22px;
+    }
+
+    .theme-toggle:hover {
+      background: var(--premium-gold);
+      color: var(--dark-bg);
+      box-shadow: 0 0 40px rgba(212, 175, 55, 0.7);
+      transform: rotate(180deg) scale(1.1);
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .poem-card {
+      background: linear-gradient(135deg, var(--premium-black) 0%, #1a1a1c 100%);
+      border-radius: 24px;
+      padding: 75px 60px;
+      margin: 45px 0;
+      border: 2px solid rgba(212, 175, 55, 0.4);
+      box-shadow: 0 0 70px rgba(212, 175, 55, 0.3), 0 20px 60px rgba(0,0,0,0.6);
+      transition: all 0.5s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .light .poem-card {
+      background: white;
+      border-color: var(--gold);
+      box-shadow: 0 15px 50px rgba(197, 160, 89, 0.2);
+    }
+
+    .poem-card::before {
+      content: '';
+      position: absolute;
+      width: 400px;
+      height: 400px;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: radial-gradient(circle, rgba(212, 175, 55, 0.12) 0%, transparent 70%);
+      animation: cardAmbient 6s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    @keyframes cardAmbient {
+      0%, 100% { opacity: 0.4; transform: translate(-50%, -50%) scale(1); }
+      50% { opacity: 0.7; transform: translate(-50%, -50%) scale(1.15); }
+    }
+
+    .poem-card:hover {
+      transform: translateY(-10px);
+      box-shadow: 0 0 90px rgba(212, 175, 55, 0.5), 0 30px 80px rgba(0,0,0,0.7);
+      border-color: var(--premium-gold);
+    }
+
+    .poem-title {
+      font-family: 'Amiri', serif;
+      font-size: 38px;
+      color: var(--premium-gold);
+      margin-bottom: 50px;
+      text-align: center;
+      text-shadow: 0 0 30px rgba(212, 175, 55, 0.4);
+      position: relative;
+      z-index: 1;
+    }
+
+    .light .poem-title {
+      color: var(--gold);
+      text-shadow: none;
+    }
+
+    .poem-verse {
+      font-family: 'Amiri', serif;
+      font-size: 28px;
+      line-height: 2.4;
+      text-align: center;
+      direction: rtl;
+      margin: 50px 0;
+      color: #f0f0f0;
+      position: relative;
+      z-index: 1;
+    }
+
+    .light .poem-verse {
+      color: #1a1a1a;
+    }
+
+    .poet-name {
+      text-align: center;
+      color: var(--gold);
+      font-size: 20px;
+      margin-top: 50px;
+      position: relative;
+      z-index: 1;
+      text-shadow: 0 0 20px rgba(197, 160, 89, 0.3);
+      letter-spacing: 1px;
+    }
+
+    .light .poet-name {
+      text-shadow: none;
+    }
+
+    .control-rail {
+      display: flex;
+      gap: 18px;
+      justify-content: center;
+      margin-top: 55px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .control-btn {
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      background: rgba(212, 175, 55, 0.15);
+      border: 2px solid var(--premium-gold);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      color: var(--premium-gold);
+      box-shadow: 0 0 25px rgba(212, 175, 55, 0.3);
+      font-size: 18px;
+    }
+
+    .control-btn:hover {
+      background: var(--premium-gold);
+      color: var(--dark-bg);
+      box-shadow: 0 0 40px rgba(212, 175, 55, 0.6);
+      transform: scale(1.25);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .signature-spotlight { width: 400px; height: 400px; }
+      .premium-scroll { width: 300px; height: 400px; padding: 50px 30px; }
+      .scroll-content h1 { font-size: 30px; }
+      .poem-card { padding: 50px 35px; }
+      .poem-verse { font-size: 24px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Splash Screen -->
+  <div class="splash">
+    <div class="signature-spotlight"></div>
+    <div id="particleContainer"></div>
+    <div class="premium-scroll">
+      <div class="scroll-cap top"></div>
+      <div class="scroll-content">
+        <div class="scroll-icon">◆</div>
+        <h1>Signature</h1>
+        <p>Gold particles · Spotlight dust · Premium scroll</p>
+      </div>
+      <div class="scroll-cap bottom"></div>
+    </div>
+  </div>
+
+  <!-- Walkthrough -->
+  <div class="walkthrough" id="walkthrough">
+    <div class="walkthrough-card">
+      <h2 id="walkthrough-title">Welcome to Signature Blend</h2>
+      <p id="walkthrough-text">Experience the ultimate fusion of gold particles, spotlight dust, and premium scroll design.</p>
+      <div class="walkthrough-buttons">
+        <button class="btn btn-secondary" onclick="skipWalkthrough()">Skip</button>
+        <button class="btn btn-primary" onclick="nextStep()">Begin</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main App -->
+  <div class="app" id="app">
+    <header class="header">
+      <div class="logo">ديوان الشعر</div>
+      <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">◆</button>
+    </header>
+
+    <div class="container">
+      <div class="poem-card">
+        <h2 class="poem-title">ديوان الشعر العربي</h2>
+        <div class="poem-verse" lang="ar">
+          أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ<br>
+          فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
+        </div>
+        <p class="poet-name">— أحمد شوقي</p>
+
+        <div class="control-rail">
+          <button class="control-btn" aria-label="Previous">‹</button>
+          <button class="control-btn" aria-label="Play">▶</button>
+          <button class="control-btn" aria-label="Next">›</button>
+          <button class="control-btn" aria-label="Bookmark">★</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Generate blend of particles
+    const particleContainer = document.getElementById('particleContainer');
+
+    // Gold particles (15)
+    for (let i = 0; i < 15; i++) {
+      const particle = document.createElement('div');
+      particle.className = 'gold-particle';
+      const tx = (Math.random() - 0.5) * 300;
+      const ty = (Math.random() - 0.5) * 300;
+      particle.style.setProperty('--tx', `${tx}px`);
+      particle.style.setProperty('--ty', `${ty}px`);
+      particle.style.left = `${35 + Math.random() * 30}%`;
+      particle.style.top = `${35 + Math.random() * 30}%`;
+      particle.style.animationDelay = `${Math.random() * 2}s`;
+      particleContainer.appendChild(particle);
+    }
+
+    // Dust particles (30)
+    for (let i = 0; i < 30; i++) {
+      const dust = document.createElement('div');
+      dust.className = 'dust-particle';
+      const dx = (Math.random() - 0.5) * 200;
+      const dy = (Math.random() - 0.5) * 200;
+      dust.style.setProperty('--dx', `${dx}px`);
+      dust.style.setProperty('--dy', `${dy}px`);
+      dust.style.left = `${30 + Math.random() * 40}%`;
+      dust.style.top = `${30 + Math.random() * 40}%`;
+      dust.style.animationDelay = `${Math.random() * 3}s`;
+      particleContainer.appendChild(dust);
+    }
+
+    let step = 0;
+    const steps = [
+      { title: 'Welcome to Signature Blend', text: 'Experience the ultimate fusion of gold particles, spotlight dust, and premium scroll design.' },
+      { title: 'Gold Particles', text: 'Premium golden orbs float majestically through the darkness.' },
+      { title: 'Spotlight Dust', text: 'Subtle dust particles dance in ethereal light beams.' },
+      { title: 'Premium Scroll', text: 'Each poem is presented on a gold-capped luxury scroll.' }
+    ];
+
+    setTimeout(() => {
+      document.getElementById('walkthrough').classList.add('active');
+    }, 4600);
+
+    function nextStep() {
+      step++;
+      if (step >= steps.length) {
+        startApp();
+      } else {
+        document.getElementById('walkthrough-title').textContent = steps[step].title;
+        document.getElementById('walkthrough-text').textContent = steps[step].text;
+      }
+    }
+
+    function skipWalkthrough() {
+      startApp();
+    }
+
+    function startApp() {
+      document.getElementById('walkthrough').classList.remove('active');
+      document.getElementById('app').classList.add('active');
+    }
+
+    function toggleTheme() {
+      document.body.classList.toggle('light');
+    }
+  </script>
+</body>
+</html>

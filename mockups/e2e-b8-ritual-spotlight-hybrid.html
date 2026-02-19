@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>B8: Ritual Spotlight - Poetry bil Araby</title>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --gold: #C5A059;
+      --ritual-red: #C41E3A;
+      --sacred-gold: #D4AF37;
+      --dark-bg: #0d0d0f;
+      --ink-black: #1a1a1c;
+      --ritual-white: #FAF9F6;
+    }
+
+    body {
+      font-family: 'Tajawal', sans-serif;
+      background: var(--dark-bg);
+      color: var(--ritual-white);
+      overflow-x: hidden;
+      transition: background 0.5s ease, color 0.5s ease;
+    }
+
+    body.light {
+      background: #FBF9F4;
+      color: #1a1a1a;
+    }
+
+    /* Splash Screen - Spotlight + Calligraphy Stroke */
+    .splash {
+      position: fixed;
+      inset: 0;
+      background: var(--dark-bg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      animation: splashFadeOut 0.8s ease 3.6s forwards;
+      overflow: hidden;
+    }
+
+    .ritual-spotlight {
+      position: absolute;
+      width: 500px;
+      height: 500px;
+      border-radius: 50%;
+      background: radial-gradient(circle at center, rgba(212, 175, 55, 0.4) 0%, rgba(196, 30, 58, 0.2) 40%, transparent 70%);
+      filter: blur(60px);
+      animation: spotlightPulse 4s ease-in-out infinite;
+      will-change: transform, opacity;
+    }
+
+    @keyframes spotlightPulse {
+      0%, 100% {
+        transform: translate(calc(50vw - 250px), calc(50vh - 250px)) scale(1);
+        opacity: 0.7;
+      }
+      50% {
+        transform: translate(calc(50vw - 250px), calc(50vh - 250px)) scale(1.15);
+        opacity: 1;
+      }
+    }
+
+    .calligraphy-container {
+      position: relative;
+      width: 400px;
+      height: 400px;
+      z-index: 10;
+    }
+
+    .stroke {
+      position: absolute;
+      background: var(--sacred-gold);
+      border-radius: 10px;
+      opacity: 0;
+      box-shadow: 0 0 30px rgba(212, 175, 55, 0.8);
+      animation: strokeReveal 1.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+      will-change: transform, opacity;
+    }
+
+    @keyframes strokeReveal {
+      0% {
+        opacity: 0;
+        transform: scale(0) rotate(var(--rotate));
+      }
+      50% {
+        opacity: 1;
+      }
+      100% {
+        opacity: 1;
+        transform: scale(1) rotate(var(--rotate));
+      }
+    }
+
+    .stroke:nth-child(1) {
+      width: 150px;
+      height: 8px;
+      top: 100px;
+      left: 125px;
+      --rotate: -15deg;
+      animation-delay: 0.2s;
+    }
+
+    .stroke:nth-child(2) {
+      width: 100px;
+      height: 8px;
+      top: 180px;
+      left: 150px;
+      --rotate: 20deg;
+      animation-delay: 0.5s;
+    }
+
+    .stroke:nth-child(3) {
+      width: 8px;
+      height: 120px;
+      top: 130px;
+      left: 200px;
+      --rotate: 10deg;
+      animation-delay: 0.8s;
+    }
+
+    .stroke:nth-child(4) {
+      width: 120px;
+      height: 8px;
+      top: 250px;
+      left: 140px;
+      --rotate: -10deg;
+      animation-delay: 1.1s;
+    }
+
+    .ritual-text {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      z-index: 20;
+      animation: textGlow 2s ease 1.5s forwards;
+      opacity: 0;
+    }
+
+    @keyframes textGlow {
+      to {
+        opacity: 1;
+      }
+    }
+
+    .ritual-text h1 {
+      font-family: 'Amiri', serif;
+      font-size: 44px;
+      color: var(--sacred-gold);
+      margin-bottom: 15px;
+      text-shadow: 0 0 40px rgba(212, 175, 55, 0.7);
+    }
+
+    .ritual-text p {
+      font-size: 16px;
+      color: var(--ritual-red);
+      text-shadow: 0 0 25px rgba(196, 30, 58, 0.6);
+    }
+
+    @keyframes splashFadeOut {
+      to { opacity: 0; pointer-events: none; }
+    }
+
+    /* Walkthrough */
+    .walkthrough {
+      position: fixed;
+      inset: 0;
+      background: rgba(13, 13, 15, 0.98);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9998;
+      padding: 20px;
+    }
+
+    .walkthrough.active { display: flex; }
+
+    .walkthrough-card {
+      background: linear-gradient(135deg, var(--ink-black) 0%, #151517 100%);
+      border-radius: 20px;
+      padding: 60px 50px;
+      max-width: 520px;
+      text-align: center;
+      border: 3px solid var(--ritual-red);
+      box-shadow: 0 0 60px rgba(196, 30, 58, 0.4), 0 30px 80px rgba(0,0,0,0.7);
+      animation: cardRitualAppear 1s ease;
+    }
+
+    @keyframes cardRitualAppear {
+      from {
+        transform: scale(0.9);
+        opacity: 0;
+        box-shadow: 0 0 0 transparent;
+      }
+      to {
+        transform: scale(1);
+        opacity: 1;
+        box-shadow: 0 0 60px rgba(196, 30, 58, 0.4), 0 30px 80px rgba(0,0,0,0.7);
+      }
+    }
+
+    .walkthrough-card h2 {
+      font-family: 'Amiri', serif;
+      font-size: 32px;
+      color: var(--sacred-gold);
+      margin-bottom: 25px;
+      text-shadow: 0 0 30px rgba(212, 175, 55, 0.5);
+    }
+
+    .walkthrough-card p {
+      color: #d5d5d5;
+      font-size: 16px;
+      line-height: 1.9;
+    }
+
+    .walkthrough-buttons {
+      display: flex;
+      gap: 15px;
+      margin-top: 40px;
+      justify-content: center;
+    }
+
+    .btn {
+      padding: 15px 35px;
+      border: none;
+      border-radius: 50px;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      min-width: 44px;
+      min-height: 44px;
+    }
+
+    .btn-primary {
+      background: var(--ritual-red);
+      color: white;
+      box-shadow: 0 0 30px rgba(196, 30, 58, 0.5);
+    }
+
+    .btn-primary:hover {
+      background: #D4284A;
+      box-shadow: 0 0 40px rgba(196, 30, 58, 0.7), 0 8px 20px rgba(196, 30, 58, 0.4);
+      transform: translateY(-3px);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: #999;
+      border: 2px solid #444;
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--ritual-red);
+      color: var(--ritual-red);
+    }
+
+    /* Main App */
+    .app {
+      display: none;
+      min-height: 100vh;
+      padding: 90px 20px 40px;
+    }
+
+    .app.active { display: block; }
+
+    .header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: rgba(13, 13, 15, 0.95);
+      backdrop-filter: blur(15px);
+      padding: 22px 35px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid rgba(196, 30, 58, 0.4);
+      z-index: 100;
+      transition: background 0.3s ease;
+      box-shadow: 0 5px 30px rgba(196, 30, 58, 0.2);
+    }
+
+    .light .header {
+      background: rgba(251, 249, 244, 0.95);
+      border-bottom-color: var(--ritual-red);
+      box-shadow: 0 2px 20px rgba(196, 30, 58, 0.1);
+    }
+
+    .logo {
+      font-family: 'Amiri', serif;
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--sacred-gold);
+      text-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
+    }
+
+    .light .logo {
+      color: var(--ritual-red);
+      text-shadow: none;
+    }
+
+    .theme-toggle {
+      background: transparent;
+      border: 2px solid var(--ritual-red);
+      color: var(--ritual-red);
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 20px rgba(196, 30, 58, 0.4);
+      font-size: 20px;
+    }
+
+    .theme-toggle:hover {
+      background: var(--ritual-red);
+      color: white;
+      box-shadow: 0 0 35px rgba(196, 30, 58, 0.7);
+      transform: rotate(180deg) scale(1.1);
+    }
+
+    .container {
+      max-width: 850px;
+      margin: 0 auto;
+    }
+
+    .poem-card {
+      background: linear-gradient(135deg, var(--ink-black) 0%, #151517 100%);
+      border-radius: 20px;
+      padding: 70px 55px;
+      margin: 40px 0;
+      border: 2px solid rgba(196, 30, 58, 0.4);
+      box-shadow: 0 0 50px rgba(196, 30, 58, 0.3), 0 15px 50px rgba(0,0,0,0.5);
+      transition: all 0.5s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .light .poem-card {
+      background: white;
+      border-color: var(--ritual-red);
+      box-shadow: 0 10px 40px rgba(196, 30, 58, 0.15);
+    }
+
+    .poem-card::before {
+      content: '';
+      position: absolute;
+      width: 300px;
+      height: 300px;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: radial-gradient(circle, rgba(212, 175, 55, 0.1) 0%, transparent 70%);
+      animation: cardSpotlight 5s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    @keyframes cardSpotlight {
+      0%, 100% { opacity: 0.3; transform: translate(-50%, -50%) scale(1); }
+      50% { opacity: 0.6; transform: translate(-50%, -50%) scale(1.2); }
+    }
+
+    .poem-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 0 70px rgba(196, 30, 58, 0.5), 0 25px 70px rgba(0,0,0,0.6);
+      border-color: var(--ritual-red);
+    }
+
+    .poem-title {
+      font-family: 'Amiri', serif;
+      font-size: 36px;
+      color: var(--sacred-gold);
+      margin-bottom: 45px;
+      text-align: center;
+      text-shadow: 0 0 25px rgba(212, 175, 55, 0.4);
+      position: relative;
+      z-index: 1;
+    }
+
+    .light .poem-title {
+      color: var(--ritual-red);
+      text-shadow: none;
+    }
+
+    .poem-verse {
+      font-family: 'Amiri', serif;
+      font-size: 26px;
+      line-height: 2.3;
+      text-align: center;
+      direction: rtl;
+      margin: 45px 0;
+      color: var(--ritual-white);
+      position: relative;
+      z-index: 1;
+    }
+
+    .light .poem-verse {
+      color: #1a1a1a;
+    }
+
+    .poet-name {
+      text-align: center;
+      color: var(--ritual-red);
+      font-size: 19px;
+      margin-top: 45px;
+      position: relative;
+      z-index: 1;
+      text-shadow: 0 0 15px rgba(196, 30, 58, 0.3);
+    }
+
+    .light .poet-name {
+      text-shadow: none;
+    }
+
+    .control-rail {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      margin-top: 50px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .control-btn {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: rgba(196, 30, 58, 0.2);
+      border: 2px solid var(--ritual-red);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      color: var(--ritual-red);
+      box-shadow: 0 0 20px rgba(196, 30, 58, 0.3);
+    }
+
+    .control-btn:hover {
+      background: var(--ritual-red);
+      color: white;
+      box-shadow: 0 0 35px rgba(196, 30, 58, 0.6);
+      transform: scale(1.2);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .ritual-spotlight { width: 350px; height: 350px; }
+      .calligraphy-container { width: 300px; height: 300px; }
+      .ritual-text h1 { font-size: 34px; }
+      .poem-card { padding: 45px 30px; }
+      .poem-verse { font-size: 22px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Splash Screen -->
+  <div class="splash">
+    <div class="ritual-spotlight"></div>
+    <div class="calligraphy-container">
+      <div class="stroke"></div>
+      <div class="stroke"></div>
+      <div class="stroke"></div>
+      <div class="stroke"></div>
+    </div>
+    <div class="ritual-text">
+      <h1>Ritual</h1>
+      <p>Where calligraphy meets sacred light</p>
+    </div>
+  </div>
+
+  <!-- Walkthrough -->
+  <div class="walkthrough" id="walkthrough">
+    <div class="walkthrough-card">
+      <h2 id="walkthrough-title">Welcome to Ritual Spotlight</h2>
+      <p id="walkthrough-text">Experience poetry through calligraphic revelation and sacred illumination.</p>
+      <div class="walkthrough-buttons">
+        <button class="btn btn-secondary" onclick="skipWalkthrough()">Skip</button>
+        <button class="btn btn-primary" onclick="nextStep()">Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main App -->
+  <div class="app" id="app">
+    <header class="header">
+      <div class="logo">ديوان الشعر</div>
+      <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">◐</button>
+    </header>
+
+    <div class="container">
+      <div class="poem-card">
+        <h2 class="poem-title">ديوان الشعر العربي</h2>
+        <div class="poem-verse" lang="ar">
+          أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ<br>
+          فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
+        </div>
+        <p class="poet-name">— أحمد شوقي</p>
+
+        <div class="control-rail">
+          <button class="control-btn" aria-label="Previous">‹</button>
+          <button class="control-btn" aria-label="Play">▶</button>
+          <button class="control-btn" aria-label="Next">›</button>
+          <button class="control-btn" aria-label="Bookmark">★</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let step = 0;
+    const steps = [
+      { title: 'Welcome to Ritual Spotlight', text: 'Experience poetry through calligraphic revelation and sacred illumination.' },
+      { title: 'Calligraphy Strokes', text: 'Watch as golden strokes paint sacred letters in the darkness.' },
+      { title: 'Sacred Spotlight', text: 'A gentle spotlight reveals each verse with reverence.' },
+      { title: 'Begin the Ritual', text: 'Enter the sacred space of classical Arabic poetry.' }
+    ];
+
+    setTimeout(() => {
+      document.getElementById('walkthrough').classList.add('active');
+    }, 4400);
+
+    function nextStep() {
+      step++;
+      if (step >= steps.length) {
+        startApp();
+      } else {
+        document.getElementById('walkthrough-title').textContent = steps[step].title;
+        document.getElementById('walkthrough-text').textContent = steps[step].text;
+      }
+    }
+
+    function skipWalkthrough() {
+      startApp();
+    }
+
+    function startApp() {
+      document.getElementById('walkthrough').classList.remove('active');
+      document.getElementById('app').classList.add('active');
+    }
+
+    function toggleTheme() {
+      document.body.classList.toggle('light');
+    }
+  </script>
+</body>
+</html>

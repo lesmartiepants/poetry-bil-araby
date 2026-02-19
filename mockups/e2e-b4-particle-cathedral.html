@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>B4: Particle Cathedral - Poetry bil Araby</title>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --gold: #C5A059;
+      --dark-bg: #0a0a0e;
+      --cathedral-purple: #5A4FCF;
+      --divine-gold: #FFD700;
+      --sacred-white: #F8F9FA;
+    }
+
+    body {
+      font-family: 'Tajawal', sans-serif;
+      background: var(--dark-bg);
+      color: var(--sacred-white);
+      overflow-x: hidden;
+      transition: background 0.5s ease, color 0.5s ease;
+    }
+
+    body.light {
+      background: #FAFAF8;
+      color: #1a1a1a;
+    }
+
+    /* Splash Screen - Dense Particle Dome */
+    .splash {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle at center, #1a1a2e 0%, var(--dark-bg) 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      animation: splashFadeOut 0.8s ease 3.5s forwards;
+      overflow: hidden;
+    }
+
+    .cathedral-dome {
+      position: relative;
+      width: 500px;
+      height: 500px;
+    }
+
+    .dome-particle {
+      position: absolute;
+      width: 4px;
+      height: 4px;
+      background: var(--cathedral-purple);
+      border-radius: 50%;
+      opacity: 0;
+      box-shadow: 0 0 10px rgba(90, 79, 207, 0.8);
+      animation: domeRise 4s ease-out infinite;
+      will-change: transform, opacity;
+    }
+
+    @keyframes domeRise {
+      0% {
+        opacity: 0;
+        transform: translate(0, 100px) scale(0.3);
+      }
+      20% {
+        opacity: 1;
+      }
+      80% {
+        opacity: 0.8;
+      }
+      100% {
+        opacity: 0;
+        transform: translate(var(--tx), var(--ty)) scale(1);
+      }
+    }
+
+    .dome-particle.gold {
+      background: var(--divine-gold);
+      box-shadow: 0 0 15px rgba(255, 215, 0, 0.8);
+      width: 5px;
+      height: 5px;
+    }
+
+    .cathedral-content {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      z-index: 10;
+      animation: contentReveal 2s ease 0.5s forwards;
+      opacity: 0;
+    }
+
+    @keyframes contentReveal {
+      0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.7);
+      }
+      100% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+    }
+
+    .cathedral-icon {
+      font-size: 80px;
+      color: var(--divine-gold);
+      text-shadow: 0 0 40px rgba(255, 215, 0, 0.6);
+      margin-bottom: 20px;
+    }
+
+    .cathedral-content h1 {
+      font-family: 'Amiri', serif;
+      font-size: 42px;
+      color: var(--sacred-white);
+      margin-bottom: 15px;
+      text-shadow: 0 0 30px rgba(248, 249, 250, 0.5);
+    }
+
+    .cathedral-content p {
+      font-size: 16px;
+      color: var(--cathedral-purple);
+      text-shadow: 0 0 20px rgba(90, 79, 207, 0.5);
+    }
+
+    @keyframes splashFadeOut {
+      to { opacity: 0; pointer-events: none; }
+    }
+
+    /* Walkthrough */
+    .walkthrough {
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 10, 14, 0.98);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9998;
+      padding: 20px;
+    }
+
+    .walkthrough.active { display: flex; }
+
+    .walkthrough-card {
+      background: linear-gradient(135deg, #1e1e3a 0%, #1a1a2e 100%);
+      border-radius: 24px;
+      padding: 60px 50px;
+      max-width: 520px;
+      text-align: center;
+      border: 2px solid var(--cathedral-purple);
+      box-shadow: 0 0 80px rgba(90, 79, 207, 0.4), 0 30px 80px rgba(0,0,0,0.6);
+      animation: cardMaterialize 1s ease;
+    }
+
+    @keyframes cardMaterialize {
+      from {
+        transform: scale(0.85) rotateX(20deg);
+        opacity: 0;
+      }
+      to {
+        transform: scale(1) rotateX(0deg);
+        opacity: 1;
+      }
+    }
+
+    .walkthrough-card h2 {
+      font-family: 'Amiri', serif;
+      font-size: 32px;
+      color: var(--divine-gold);
+      margin-bottom: 25px;
+      text-shadow: 0 0 25px rgba(255, 215, 0, 0.4);
+    }
+
+    .walkthrough-card p {
+      color: #d5d5d5;
+      font-size: 16px;
+      line-height: 1.9;
+    }
+
+    .walkthrough-buttons {
+      display: flex;
+      gap: 15px;
+      margin-top: 40px;
+      justify-content: center;
+    }
+
+    .btn {
+      padding: 15px 35px;
+      border: none;
+      border-radius: 50px;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      min-width: 44px;
+      min-height: 44px;
+    }
+
+    .btn-primary {
+      background: var(--cathedral-purple);
+      color: white;
+      box-shadow: 0 0 30px rgba(90, 79, 207, 0.5);
+    }
+
+    .btn-primary:hover {
+      background: #6A5FDF;
+      box-shadow: 0 0 40px rgba(90, 79, 207, 0.7), 0 8px 20px rgba(90, 79, 207, 0.4);
+      transform: translateY(-3px);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: #999;
+      border: 2px solid #444;
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--cathedral-purple);
+      color: var(--cathedral-purple);
+    }
+
+    /* Main App */
+    .app {
+      display: none;
+      min-height: 100vh;
+      padding: 90px 20px 40px;
+    }
+
+    .app.active { display: block; }
+
+    .header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: rgba(10, 10, 14, 0.95);
+      backdrop-filter: blur(15px);
+      padding: 22px 35px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid rgba(90, 79, 207, 0.3);
+      z-index: 100;
+      transition: background 0.3s ease;
+      box-shadow: 0 5px 30px rgba(90, 79, 207, 0.2);
+    }
+
+    .light .header {
+      background: rgba(250, 250, 248, 0.95);
+      border-bottom-color: #ddd;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+    }
+
+    .logo {
+      font-family: 'Amiri', serif;
+      font-size: 26px;
+      font-weight: 700;
+      color: var(--divine-gold);
+      text-shadow: 0 0 20px rgba(255, 215, 0, 0.4);
+    }
+
+    .light .logo {
+      color: var(--cathedral-purple);
+      text-shadow: none;
+    }
+
+    .theme-toggle {
+      background: transparent;
+      border: 2px solid var(--cathedral-purple);
+      color: var(--cathedral-purple);
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 20px rgba(90, 79, 207, 0.4);
+    }
+
+    .theme-toggle:hover {
+      background: var(--cathedral-purple);
+      color: white;
+      box-shadow: 0 0 35px rgba(90, 79, 207, 0.7);
+      transform: rotate(180deg) scale(1.1);
+    }
+
+    .container {
+      max-width: 850px;
+      margin: 0 auto;
+    }
+
+    .poem-card {
+      background: linear-gradient(135deg, #1e1e3a 0%, #1a1a2e 100%);
+      border-radius: 24px;
+      padding: 70px 55px;
+      margin: 40px 0;
+      border: 2px solid rgba(90, 79, 207, 0.4);
+      box-shadow: 0 0 60px rgba(90, 79, 207, 0.3), 0 15px 50px rgba(0,0,0,0.5);
+      transition: all 0.5s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .light .poem-card {
+      background: white;
+      border-color: #ddd;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    }
+
+    .poem-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 120%, rgba(90, 79, 207, 0.15) 0%, transparent 60%);
+      animation: cardAura 5s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    @keyframes cardAura {
+      0%, 100% { opacity: 0.5; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.05); }
+    }
+
+    .poem-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 0 80px rgba(90, 79, 207, 0.5), 0 25px 70px rgba(0,0,0,0.6);
+    }
+
+    .poem-title {
+      font-family: 'Amiri', serif;
+      font-size: 36px;
+      color: var(--divine-gold);
+      margin-bottom: 45px;
+      text-align: center;
+      text-shadow: 0 0 25px rgba(255, 215, 0, 0.3);
+      position: relative;
+      z-index: 1;
+    }
+
+    .light .poem-title {
+      color: var(--cathedral-purple);
+      text-shadow: none;
+    }
+
+    .poem-verse {
+      font-family: 'Amiri', serif;
+      font-size: 26px;
+      line-height: 2.3;
+      text-align: center;
+      direction: rtl;
+      margin: 45px 0;
+      color: var(--sacred-white);
+      position: relative;
+      z-index: 1;
+    }
+
+    .light .poem-verse {
+      color: #1a1a1a;
+    }
+
+    .poet-name {
+      text-align: center;
+      color: var(--cathedral-purple);
+      font-size: 19px;
+      margin-top: 45px;
+      position: relative;
+      z-index: 1;
+      text-shadow: 0 0 15px rgba(90, 79, 207, 0.3);
+    }
+
+    .light .poet-name {
+      text-shadow: none;
+    }
+
+    .control-rail {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      margin-top: 50px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .control-btn {
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: rgba(90, 79, 207, 0.2);
+      border: 2px solid var(--cathedral-purple);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      color: var(--cathedral-purple);
+      box-shadow: 0 0 20px rgba(90, 79, 207, 0.3);
+    }
+
+    .control-btn:hover {
+      background: var(--cathedral-purple);
+      color: white;
+      box-shadow: 0 0 35px rgba(90, 79, 207, 0.6);
+      transform: scale(1.2);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .cathedral-dome { width: 350px; height: 350px; }
+      .cathedral-content h1 { font-size: 32px; }
+      .poem-card { padding: 45px 30px; }
+      .poem-verse { font-size: 22px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Splash Screen -->
+  <div class="splash">
+    <div class="cathedral-dome" id="cathedral"></div>
+    <div class="cathedral-content">
+      <div class="cathedral-icon">✦</div>
+      <h1>Cathedral</h1>
+      <p>Where particles ascend to wisdom</p>
+    </div>
+  </div>
+
+  <!-- Walkthrough -->
+  <div class="walkthrough" id="walkthrough">
+    <div class="walkthrough-card">
+      <h2 id="walkthrough-title">Welcome to Particle Cathedral</h2>
+      <p id="walkthrough-text">Experience poetry within a sacred dome of ascending particles and divine light.</p>
+      <div class="walkthrough-buttons">
+        <button class="btn btn-secondary" onclick="skipWalkthrough()">Skip</button>
+        <button class="btn btn-primary" onclick="nextStep()">Enter</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main App -->
+  <div class="app" id="app">
+    <header class="header">
+      <div class="logo">ديوان الشعر</div>
+      <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">✦</button>
+    </header>
+
+    <div class="container">
+      <div class="poem-card">
+        <h2 class="poem-title">ديوان الشعر العربي</h2>
+        <div class="poem-verse" lang="ar">
+          أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ<br>
+          فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
+        </div>
+        <p class="poet-name">— أحمد شوقي</p>
+
+        <div class="control-rail">
+          <button class="control-btn" aria-label="Previous">‹</button>
+          <button class="control-btn" aria-label="Play">▶</button>
+          <button class="control-btn" aria-label="Next">›</button>
+          <button class="control-btn" aria-label="Bookmark">★</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Generate dense particle dome
+    const cathedral = document.getElementById('cathedral');
+    const centerX = 250;
+    const centerY = 250;
+
+    for (let i = 0; i < 80; i++) {
+      const particle = document.createElement('div');
+      particle.className = i % 8 === 0 ? 'dome-particle gold' : 'dome-particle';
+
+      const angle = (i / 80) * Math.PI * 2;
+      const radius = 50 + Math.random() * 150;
+      const endX = Math.cos(angle) * radius;
+      const endY = Math.sin(angle) * radius - 100;
+
+      particle.style.setProperty('--tx', `${endX}px`);
+      particle.style.setProperty('--ty', `${endY}px`);
+      particle.style.left = `${centerX}px`;
+      particle.style.top = `${centerY}px`;
+      particle.style.animationDelay = `${Math.random() * 2}s`;
+      particle.style.animationDuration = `${3 + Math.random() * 2}s`;
+
+      cathedral.appendChild(particle);
+    }
+
+    let step = 0;
+    const steps = [
+      { title: 'Welcome to Particle Cathedral', text: 'Experience poetry within a sacred dome of ascending particles and divine light.' },
+      { title: 'Sacred Particles', text: 'Dense particles rise like prayers toward the heavens.' },
+      { title: 'Divine Illumination', text: 'Golden light guides you through verses of wisdom.' },
+      { title: 'Enter the Cathedral', text: 'Begin your sacred journey through classical Arabic poetry.' }
+    ];
+
+    setTimeout(() => {
+      document.getElementById('walkthrough').classList.add('active');
+    }, 4300);
+
+    function nextStep() {
+      step++;
+      if (step >= steps.length) {
+        startApp();
+      } else {
+        document.getElementById('walkthrough-title').textContent = steps[step].title;
+        document.getElementById('walkthrough-text').textContent = steps[step].text;
+      }
+    }
+
+    function skipWalkthrough() {
+      startApp();
+    }
+
+    function startApp() {
+      document.getElementById('walkthrough').classList.remove('active');
+      document.getElementById('app').classList.add('active');
+    }
+
+    function toggleTheme() {
+      document.body.classList.toggle('light');
+    }
+  </script>
+</body>
+</html>

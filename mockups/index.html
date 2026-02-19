@@ -1,142 +1,380 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mockups Index</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mockups Gallery - Poetry bil Araby</title>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
   <style>
     :root {
-      --bg: #0a0b11;
-      --panel: #141724;
-      --line: #2a3045;
-      --text: #e7eaf8;
-      --muted: #a2aac9;
-      --accent: #8e79ff;
-      --accent-2: #d5b06a;
+      --bg: #0c0c0e;
+      --surface: #141416;
+      --line: #222224;
+      --text: #e0ddd8;
+      --muted: #888580;
+      --gold: #C5A059;
+      --gold-dim: rgba(197, 160, 89, 0.15);
+      --gold-glow: rgba(197, 160, 89, 0.3);
     }
 
-    * { box-sizing: border-box; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
     body {
-      margin: 0;
-      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      font-family: 'Tajawal', system-ui, sans-serif;
+      background: var(--bg);
       color: var(--text);
-      background: radial-gradient(circle at 20% -10%, #181b2c 0%, var(--bg) 38%);
+      overflow: hidden;
+      height: 100vh;
+      width: 100vw;
     }
 
-    .wrap {
-      width: min(1000px, 92vw);
-      margin: 0 auto;
-      padding: 28px 0 60px;
+    /* ===== LAYOUT ===== */
+    .gallery {
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
     }
 
-    h1 {
-      margin: 0 0 8px;
-      font-size: clamp(28px, 4vw, 42px);
-      letter-spacing: -0.02em;
+    /* ===== TOP BAR ===== */
+    .top-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 20px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--line);
+      flex-shrink: 0;
+      z-index: 20;
     }
 
-    p { color: var(--muted); margin-top: 0; }
-
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 12px;
-      margin-top: 18px;
+    .top-brand {
+      font-family: 'Amiri', serif;
+      font-size: 20px;
+      color: var(--gold);
     }
 
-    .card {
-      background: var(--panel);
-      border: 1px solid var(--line);
-      border-radius: 12px;
-      padding: 14px;
+    .top-info {
+      display: flex;
+      align-items: center;
+      gap: 16px;
     }
 
-    h2 {
-      margin: 0 0 10px;
-      font-size: 16px;
-      color: var(--accent-2);
-      letter-spacing: 0.01em;
-    }
-
-    ul { margin: 0; padding-left: 18px; }
-    li { margin: 8px 0; color: var(--muted); }
-
-    a {
-      color: var(--text);
-      text-decoration: none;
-      border-bottom: 1px dashed #4a4f69;
-      transition: color 0.15s ease, border-color 0.15s ease;
-    }
-
-    a:hover {
-      color: var(--accent);
-      border-color: var(--accent);
-    }
-
-    .footer {
-      margin-top: 20px;
-      font-size: 12px;
+    .mockup-counter {
+      font-size: 13px;
       color: var(--muted);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .mockup-title {
+      font-family: 'Amiri', serif;
+      font-size: 15px;
+      color: var(--text);
+      max-width: 300px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* ===== MAIN PREVIEW ===== */
+    .preview-area {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      background: #000;
+    }
+
+    .preview-iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+      background: var(--bg);
+    }
+
+    /* ===== ARROW NAVIGATION ===== */
+    .nav-arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 52px;
+      height: 52px;
+      border-radius: 50%;
+      background: rgba(12, 12, 14, 0.8);
+      border: 1px solid var(--line);
+      color: var(--gold);
+      font-size: 22px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s ease;
+      z-index: 10;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      min-width: 44px;
+      min-height: 44px;
+    }
+
+    .nav-arrow:hover {
+      background: var(--gold-dim);
+      border-color: var(--gold);
+      box-shadow: 0 0 20px var(--gold-glow);
+      transform: translateY(-50%) scale(1.08);
+    }
+
+    .nav-arrow:active {
+      transform: translateY(-50%) scale(0.96);
+    }
+
+    .nav-arrow.left { left: 16px; }
+    .nav-arrow.right { right: 16px; }
+
+    /* ===== THUMBNAIL STRIP ===== */
+    .thumb-strip {
+      display: flex;
+      gap: 6px;
+      padding: 10px 16px;
+      background: var(--surface);
+      border-top: 1px solid var(--line);
+      overflow-x: auto;
+      flex-shrink: 0;
+      z-index: 20;
+      scrollbar-width: thin;
+      scrollbar-color: var(--line) transparent;
+    }
+
+    .thumb-strip::-webkit-scrollbar {
+      height: 4px;
+    }
+
+    .thumb-strip::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .thumb-strip::-webkit-scrollbar-thumb {
+      background: var(--line);
+      border-radius: 4px;
+    }
+
+    .thumb {
+      flex-shrink: 0;
+      width: 140px;
+      padding: 8px 12px;
+      background: var(--bg);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-align: center;
+      min-height: 54px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+    }
+
+    .thumb:hover {
+      border-color: var(--gold);
+      background: var(--gold-dim);
+    }
+
+    .thumb.active {
+      border-color: var(--gold);
+      background: var(--gold-dim);
+      box-shadow: 0 0 12px var(--gold-glow);
+    }
+
+    .thumb-id {
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--gold);
+      letter-spacing: 0.05em;
+    }
+
+    .thumb-name {
+      font-size: 10px;
+      color: var(--muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 120px;
+    }
+
+    /* ===== KEYBOARD HINT ===== */
+    .key-hint {
+      position: absolute;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 11px;
+      color: var(--muted);
+      background: rgba(12, 12, 14, 0.85);
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid var(--line);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 10;
+      pointer-events: none;
+      opacity: 0.7;
+      transition: opacity 0.3s ease;
+    }
+
+    kbd {
+      display: inline-block;
+      padding: 1px 6px;
+      background: var(--line);
+      border-radius: 3px;
+      font-family: monospace;
+      font-size: 11px;
+      color: var(--text);
+    }
+
+    /* ===== REDUCED MOTION ===== */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    /* ===== MOBILE ===== */
+    @media (max-width: 768px) {
+      .nav-arrow { width: 44px; height: 44px; font-size: 18px; }
+      .nav-arrow.left { left: 8px; }
+      .nav-arrow.right { right: 8px; }
+      .thumb { width: 110px; padding: 6px 8px; }
+      .mockup-title { max-width: 160px; font-size: 13px; }
+      .key-hint { display: none; }
+      .top-bar { padding: 10px 14px; }
     }
   </style>
 </head>
 <body>
-  <main class="wrap">
-    <h1>Mockups Index</h1>
-    <p>Entry point for all design mockups in this folder.</p>
+  <div class="gallery">
+    <!-- Top Bar -->
+    <header class="top-bar">
+      <span class="top-brand">Poetry bil Araby</span>
+      <div class="top-info">
+        <span class="mockup-counter" id="counter">1 / 10</span>
+        <span class="mockup-title" id="currentTitle">A1 - Gold Orbit Story</span>
+      </div>
+    </header>
 
-    <section class="grid">
-      <article class="card">
-        <h2>Core Mockup Options (A-K)</h2>
-        <ul>
-          <li><a href="./option-a-refined-serendipity.html">Option A · Refined Serendipity</a></li>
-          <li><a href="./option-b-elegant-discovery.html">Option B · Elegant Discovery</a></li>
-          <li><a href="./option-c-scroll-clean.html">Option C · Scroll Clean</a></li>
-          <li><a href="./option-d-scroll-exciting.html">Option D · Scroll Exciting</a></li>
-          <li><a href="./option-e-scroll-hybrid.html">Option E · Scroll Hybrid</a></li>
-          <li><a href="./option-f-deco-frame-dropdown.html">Option F · Deco Frame + Dropdown</a></li>
-          <li><a href="./option-g-scroll-refined-e-controls.html">Option G · Scroll Refined E Controls</a></li>
-          <li><a href="./option-h-minimal-deco.html">Option H · Minimal Deco</a></li>
-          <li><a href="./option-i-heavy-frame-inline-category.html">Option I · Heavy Frame Inline Category</a></li>
-          <li><a href="./option-j-heavy-frame-icon-only-category.html">Option J · Heavy Frame Icon Category</a></li>
-          <li><a href="./option-k-heavy-frame-book-category.html">Option K · Heavy Frame Book Category</a></li>
-        </ul>
-      </article>
+    <!-- Preview Area -->
+    <div class="preview-area">
+      <iframe class="preview-iframe" id="preview" src="./e2e-a1-gold-orbit-story.html"></iframe>
+      <button class="nav-arrow left" id="prevBtn" aria-label="Previous mockup">&lsaquo;</button>
+      <button class="nav-arrow right" id="nextBtn" aria-label="Next mockup">&rsaquo;</button>
+      <div class="key-hint"><kbd>&larr;</kbd> <kbd>&rarr;</kbd> arrow keys to navigate</div>
+    </div>
 
-      <article class="card">
-        <h2>PR #62 End-to-End Deliverables</h2>
-        <ul>
-          <li><a href="./pr62-e2e-design-catalog.html">PR62 E2E Design Catalog (20 options)</a></li>
-          <li><a href="./pr62-e2e-design-recommendations.md">PR62 E2E Design Recommendations (Markdown)</a></li>
-        </ul>
-      </article>
+    <!-- Thumbnail Strip -->
+    <div class="thumb-strip" id="thumbStrip"></div>
+  </div>
 
-      <article class="card">
-        <h2>E2E Mockups - Set A (5 designs)</h2>
-        <ul>
-          <li><a href="./e2e-a1-gold-orbit-story.html">A1 · Gold Orbit Story</a> - Particles orbit golden poem with story mode</li>
-          <li><a href="./e2e-a2-paper-photon.html">A2 · Paper Photon</a> - Minimal paper texture with light particle effects</li>
-          <li><a href="./e2e-a3-ink-mono-archive.html">A3 · Ink Mono Archive</a> - Monochrome ink splash with archive feel</li>
-          <li><a href="./e2e-a6-nordic-quiet-reader.html">A6 · Nordic Quiet Reader</a> - Muted Nordic palette for focused reading</li>
-          <li><a href="./e2e-a8-deco-discovery.html">A8 · Deco Discovery</a> - Art Deco geometric frames with discovery flow</li>
-        </ul>
-      </article>
+  <script>
+    const mockups = [
+      { id: 'A1', name: 'Gold Orbit Story', file: 'e2e-a1-gold-orbit-story.html' },
+      { id: 'A2', name: 'Paper Photon', file: 'e2e-a2-paper-photon.html' },
+      { id: 'A3', name: 'Ink Mono Archive', file: 'e2e-a3-ink-mono-archive.html' },
+      { id: 'A6', name: 'Northern Lights', file: 'e2e-a6-nordic-quiet-reader.html' },
+      { id: 'A8', name: 'Deco Discovery', file: 'e2e-a8-deco-discovery.html' },
+      { id: 'B1', name: 'Ocean Depths', file: 'e2e-b1-zen-particles-steel-scroll.html' },
+      { id: 'B2', name: 'Spotlight Ether', file: 'e2e-b2-spotlight-ether.html' },
+      { id: 'B4', name: 'Particle Cathedral', file: 'e2e-b4-particle-cathedral.html' },
+      { id: 'B8', name: 'Lantern Festival', file: 'e2e-b8-ritual-spotlight-hybrid.html' },
+      { id: 'B10', name: 'Signature Blend', file: 'e2e-b10-signature-blend.html' },
+    ];
 
-      <article class="card">
-        <h2>E2E Mockups - Set B (5 designs)</h2>
-        <ul>
-          <li><a href="./e2e-b1-zen-particles-steel-scroll.html">B1 · Zen Particles Steel Scroll</a> - Zen particles with steel blue infinite scroll</li>
-          <li><a href="./e2e-b2-spotlight-ether.html">B2 · Spotlight Ether</a> - Ethereal spotlight with floating verse emphasis</li>
-          <li><a href="./e2e-b4-particle-cathedral.html">B4 · Particle Cathedral</a> - Cathedral-inspired layout with sacred particle system</li>
-          <li><a href="./e2e-b8-ritual-spotlight-hybrid.html">B8 · Ritual Spotlight Hybrid</a> - Ritual spotlight with hybrid interaction modes</li>
-          <li><a href="./e2e-b10-signature-blend.html">B10 · Signature Blend</a> - Signature blend of best patterns from all mockups</li>
-        </ul>
-      </article>
-    </section>
+    let currentIndex = 0;
+    const preview = document.getElementById('preview');
+    const counter = document.getElementById('counter');
+    const currentTitle = document.getElementById('currentTitle');
+    const thumbStrip = document.getElementById('thumbStrip');
+    const prevBtn = document.getElementById('prevBtn');
+    const nextBtn = document.getElementById('nextBtn');
 
-    <p class="footer">
-      Tip: open this file directly in browser as <code>mockups/index.html</code>.
-    </p>
-  </main>
+    /* Build thumbnails using safe DOM methods */
+    mockups.forEach(function(m, i) {
+      const thumb = document.createElement('div');
+      thumb.className = 'thumb' + (i === 0 ? ' active' : '');
+
+      const idSpan = document.createElement('span');
+      idSpan.className = 'thumb-id';
+      idSpan.textContent = m.id;
+
+      const nameSpan = document.createElement('span');
+      nameSpan.className = 'thumb-name';
+      nameSpan.textContent = m.name;
+
+      thumb.appendChild(idSpan);
+      thumb.appendChild(nameSpan);
+
+      thumb.addEventListener('click', function() { goTo(i); });
+      thumb.setAttribute('role', 'button');
+      thumb.setAttribute('tabindex', '0');
+      thumb.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goTo(i); }
+      });
+      thumbStrip.appendChild(thumb);
+    });
+
+    function goTo(index) {
+      if (index < 0) index = mockups.length - 1;
+      if (index >= mockups.length) index = 0;
+      currentIndex = index;
+      var m = mockups[index];
+
+      preview.src = './' + m.file;
+      counter.textContent = (index + 1) + ' / ' + mockups.length;
+      currentTitle.textContent = m.id + ' - ' + m.name;
+
+      /* Update active thumb */
+      var thumbs = document.querySelectorAll('.thumb');
+      for (var t = 0; t < thumbs.length; t++) {
+        if (t === index) {
+          thumbs[t].classList.add('active');
+        } else {
+          thumbs[t].classList.remove('active');
+        }
+      }
+
+      /* Scroll thumb into view */
+      var activeThumb = thumbStrip.children[index];
+      if (activeThumb) {
+        activeThumb.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      }
+    }
+
+    function goNext() { goTo(currentIndex + 1); }
+    function goPrev() { goTo(currentIndex - 1); }
+
+    /* Click navigation */
+    prevBtn.addEventListener('click', goPrev);
+    nextBtn.addEventListener('click', goNext);
+
+    /* Keyboard navigation */
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'ArrowLeft') { e.preventDefault(); goPrev(); }
+      if (e.key === 'ArrowRight') { e.preventDefault(); goNext(); }
+    });
+
+    /* Touch swipe support */
+    var touchStartX = 0;
+    var previewArea = document.querySelector('.preview-area');
+
+    previewArea.addEventListener('touchstart', function(e) {
+      touchStartX = e.touches[0].clientX;
+    }, { passive: true });
+
+    previewArea.addEventListener('touchend', function(e) {
+      var diff = touchStartX - e.changedTouches[0].clientX;
+      if (Math.abs(diff) > 50) {
+        if (diff > 0) goNext();
+        else goPrev();
+      }
+    }, { passive: true });
+  </script>
 </body>
 </html>

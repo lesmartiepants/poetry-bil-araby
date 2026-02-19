@@ -3,170 +3,233 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>B1: Zen Particles + Steel Scroll - Poetry bil Araby</title>
+  <title>B1: Ocean Depths - Poetry bil Araby</title>
   <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     :root {
-      --gold: #C5A059;
-      --dark-bg: #0c0c0e;
-      --zen-bg: #1c1c1e;
-      --steel: #A8B2BF;
-      --steel-dark: #6B7580;
-      --zen-white: #F8F8F6;
+      --abyss: #040B18;
+      --deep-blue: #0A1628;
+      --ocean-mid: #0E2240;
+      --biolum-cyan: #00E5CC;
+      --biolum-blue: #3399FF;
+      --biolum-purple: #9966FF;
+      --coral-pink: #FF6B8A;
+      --coral-orange: #FF8A5C;
+      --seafoam: #B8E8E0;
+      --pearl: #EEF4F8;
     }
 
     body {
       font-family: 'Tajawal', sans-serif;
-      background: var(--dark-bg);
-      color: var(--zen-white);
+      background: var(--abyss);
+      color: var(--pearl);
       overflow-x: hidden;
       transition: background 0.5s ease, color 0.5s ease;
     }
 
     body.light {
-      background: #FAFAF8;
-      color: #1a1a1a;
+      background: #E8F4F8;
+      color: #0A1628;
     }
 
-    /* Splash Screen - Zen Particle Field */
+    /* ===== BUBBLE CANVAS ===== */
+    canvas#bubbleCanvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 0;
+      pointer-events: none;
+      will-change: transform;
+    }
+
+    body.light canvas#bubbleCanvas {
+      opacity: 0.3;
+    }
+
+    /* ===== KELP SWAYING CSS ===== */
+    .kelp-forest {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 45vh;
+      pointer-events: none;
+      z-index: 1;
+      overflow: hidden;
+    }
+
+    body.light .kelp-forest { opacity: 0.2; }
+
+    .kelp {
+      position: absolute;
+      bottom: 0;
+      width: 8px;
+      background: linear-gradient(to top, #1A5C3A, #2D8B5E);
+      border-radius: 4px 4px 0 0;
+      transform-origin: bottom center;
+      animation: kelpSway 4s ease-in-out infinite;
+      will-change: transform;
+    }
+
+    .kelp::before {
+      content: '';
+      position: absolute;
+      top: 20%;
+      left: -12px;
+      width: 20px;
+      height: 30px;
+      background: linear-gradient(135deg, #2D8B5E, #1A5C3A);
+      border-radius: 50% 0 50% 50%;
+      animation: leafSway 5s ease-in-out infinite reverse;
+      will-change: transform;
+    }
+
+    .kelp::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      right: -12px;
+      width: 18px;
+      height: 25px;
+      background: linear-gradient(225deg, #2D8B5E, #1A5C3A);
+      border-radius: 0 50% 50% 50%;
+      animation: leafSway 4.5s ease-in-out infinite;
+      will-change: transform;
+    }
+
+    @keyframes kelpSway {
+      0%, 100% { transform: rotate(-3deg); }
+      50% { transform: rotate(3deg); }
+    }
+
+    @keyframes leafSway {
+      0%, 100% { transform: rotate(-5deg); }
+      50% { transform: rotate(5deg); }
+    }
+
+    /* ===== SPLASH SCREEN ===== */
     .splash {
       position: fixed;
       inset: 0;
-      background: radial-gradient(circle at center, #2a2a2c 0%, var(--dark-bg) 100%);
+      background: linear-gradient(180deg, var(--abyss) 0%, var(--deep-blue) 50%, var(--ocean-mid) 100%);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
       z-index: 9999;
-      animation: splashFadeOut 0.8s ease 3s forwards;
+      animation: splashFadeOut 1s ease 3.5s forwards;
       overflow: hidden;
     }
 
-    .zen-field {
+    /* Caustic light pattern */
+    .caustics {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 40%;
+      background:
+        radial-gradient(ellipse at 30% 20%, rgba(0, 229, 204, 0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 70% 30%, rgba(51, 153, 255, 0.06) 0%, transparent 50%);
+      animation: causticShift 8s ease-in-out infinite;
+      will-change: opacity;
+    }
+
+    @keyframes causticShift {
+      0%, 100% { opacity: 0.5; }
+      50% { opacity: 1; }
+    }
+
+    .splash-content {
       position: relative;
-      width: 400px;
-      height: 400px;
+      z-index: 10;
+      text-align: center;
     }
 
-    .zen-particle {
-      position: absolute;
-      width: 3px;
-      height: 3px;
-      background: var(--steel);
+    .biolum-ring {
+      width: 120px;
+      height: 120px;
       border-radius: 50%;
-      opacity: 0;
-      animation: zenFloat 4s ease-in-out infinite;
-      will-change: transform, opacity;
-      box-shadow: 0 0 10px rgba(168, 178, 191, 0.5);
-    }
-
-    @keyframes zenFloat {
-      0%, 100% {
-        transform: translate(0, 0);
-        opacity: 0;
-      }
-      10% {
-        opacity: 0.8;
-      }
-      50% {
-        opacity: 1;
-        transform: translate(var(--x), var(--y));
-      }
-      90% {
-        opacity: 0.8;
-      }
-    }
-
-    .steel-scroll-container {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      width: 300px;
-      height: 400px;
-      animation: scrollReveal 2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
-    }
-
-    @keyframes scrollReveal {
-      0% {
-        height: 0;
-        opacity: 0;
-        transform: translate(-50%, -50%) scaleY(0);
-      }
-      100% {
-        height: 400px;
-        opacity: 1;
-        transform: translate(-50%, -50%) scaleY(1);
-      }
-    }
-
-    .steel-scroll {
-      width: 100%;
-      height: 100%;
-      background: linear-gradient(180deg, var(--steel-dark) 0%, var(--steel) 50%, var(--steel-dark) 100%);
-      border-radius: 8px;
-      padding: 50px 30px;
+      border: 2px solid rgba(0, 229, 204, 0.3);
+      margin: 0 auto 30px;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 20px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
-      position: relative;
-    }
-
-    .steel-cap {
-      position: absolute;
-      width: 100%;
-      height: 30px;
-      background: linear-gradient(90deg, var(--steel-dark) 0%, var(--steel) 50%, var(--steel-dark) 100%);
-      left: 0;
-    }
-
-    .steel-cap.top {
-      top: 0;
-      border-radius: 8px 8px 0 0;
-    }
-
-    .steel-cap.bottom {
-      bottom: 0;
-      border-radius: 0 0 8px 8px;
-    }
-
-    .scroll-content {
-      text-align: center;
-      animation: contentFadeIn 0.8s ease 1.5s forwards;
       opacity: 0;
-      z-index: 1;
+      animation: ringPulse 1.5s ease 0.3s forwards;
+      box-shadow: 0 0 40px rgba(0, 229, 204, 0.2), inset 0 0 40px rgba(0, 229, 204, 0.1);
+      will-change: opacity, transform;
     }
 
-    @keyframes contentFadeIn {
-      to { opacity: 1; }
-    }
-
-    .scroll-content h1 {
+    .biolum-ring-inner {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(0, 229, 204, 0.3) 0%, transparent 70%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
       font-family: 'Amiri', serif;
-      font-size: 28px;
-      color: var(--dark-bg);
-      margin-bottom: 15px;
+      font-size: 36px;
+      color: var(--biolum-cyan);
+      text-shadow: 0 0 20px rgba(0, 229, 204, 0.8);
     }
 
-    .scroll-content p {
-      font-size: 14px;
-      color: var(--zen-bg);
+    @keyframes ringPulse {
+      0% { opacity: 0; transform: scale(0.8); }
+      60% { opacity: 1; transform: scale(1.05); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    .splash-title {
+      font-family: 'Amiri', serif;
+      font-size: clamp(32px, 6vw, 52px);
+      color: var(--biolum-cyan);
+      margin-bottom: 12px;
+      opacity: 0;
+      animation: bioReveal 1s ease 1s forwards;
+      text-shadow: 0 0 40px rgba(0, 229, 204, 0.5);
+      will-change: opacity, transform;
+    }
+
+    .splash-subtitle {
+      font-size: 15px;
+      color: var(--biolum-blue);
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      opacity: 0;
+      animation: bioReveal 1s ease 1.4s forwards;
+      will-change: opacity, transform;
+    }
+
+    .depth-line {
+      width: 60px;
+      height: 2px;
+      margin: 20px auto 0;
+      background: linear-gradient(90deg, transparent, var(--biolum-cyan), transparent);
+      opacity: 0;
+      animation: bioReveal 1s ease 1.8s forwards;
+      will-change: opacity, transform;
+    }
+
+    @keyframes bioReveal {
+      from { opacity: 0; transform: translateY(15px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     @keyframes splashFadeOut {
       to { opacity: 0; pointer-events: none; }
     }
 
-    /* Walkthrough */
+    /* ===== WALKTHROUGH ===== */
     .walkthrough {
       position: fixed;
       inset: 0;
-      background: rgba(12, 12, 14, 0.98);
+      background: rgba(4, 11, 24, 0.97);
       display: none;
       align-items: center;
       justify-content: center;
@@ -174,48 +237,90 @@
       padding: 20px;
     }
 
+    body.light .walkthrough {
+      background: rgba(232, 244, 248, 0.97);
+    }
+
     .walkthrough.active { display: flex; }
 
     .walkthrough-card {
-      background: var(--zen-bg);
-      border-radius: 12px;
-      padding: 60px 50px;
+      background: var(--deep-blue);
+      border-radius: 20px;
+      padding: 50px 45px;
       max-width: 500px;
       text-align: center;
-      border: 1px solid var(--steel-dark);
-      box-shadow: 0 30px 80px rgba(0,0,0,0.6);
-      animation: cardZoom 0.6s ease;
+      border: 1px solid rgba(0, 229, 204, 0.15);
+      box-shadow: 0 0 60px rgba(0, 229, 204, 0.1), 0 20px 60px rgba(0,0,0,0.5);
+      animation: cardFloat 0.7s ease;
+      will-change: transform, opacity;
     }
 
-    @keyframes cardZoom {
-      from { transform: scale(0.9); opacity: 0; }
-      to { transform: scale(1); opacity: 1; }
+    body.light .walkthrough-card {
+      background: white;
+      border-color: rgba(0, 229, 204, 0.2);
+      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    }
+
+    @keyframes cardFloat {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     .walkthrough-card h2 {
       font-family: 'Amiri', serif;
       font-size: 28px;
-      color: var(--steel);
-      margin-bottom: 20px;
+      color: var(--biolum-cyan);
+      margin-bottom: 18px;
+      text-shadow: 0 0 15px rgba(0, 229, 204, 0.3);
+    }
+
+    body.light .walkthrough-card h2 {
+      color: #00897B;
+      text-shadow: none;
     }
 
     .walkthrough-card p {
-      color: var(--zen-white);
+      color: var(--seafoam);
       font-size: 16px;
-      line-height: 1.8;
+      line-height: 1.9;
+      font-weight: 300;
+    }
+
+    body.light .walkthrough-card p {
+      color: #2E7D6E;
+    }
+
+    .step-indicators {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 24px;
+    }
+
+    .step-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(0, 229, 204, 0.2);
+      transition: all 0.3s ease;
+    }
+
+    .step-dot.active {
+      background: var(--biolum-cyan);
+      box-shadow: 0 0 12px rgba(0, 229, 204, 0.6);
     }
 
     .walkthrough-buttons {
       display: flex;
       gap: 15px;
-      margin-top: 40px;
+      margin-top: 30px;
       justify-content: center;
     }
 
     .btn {
       padding: 14px 32px;
       border: none;
-      border-radius: 8px;
+      border-radius: 25px;
       font-size: 15px;
       font-weight: 500;
       cursor: pointer;
@@ -225,31 +330,46 @@
     }
 
     .btn-primary {
-      background: var(--steel);
-      color: var(--dark-bg);
+      background: linear-gradient(135deg, var(--biolum-cyan), var(--biolum-blue));
+      color: var(--abyss);
+      font-weight: 600;
     }
 
     .btn-primary:hover {
-      background: #BCC6D3;
       transform: translateY(-2px);
-      box-shadow: 0 8px 20px rgba(168, 178, 191, 0.4);
+      box-shadow: 0 8px 25px rgba(0, 229, 204, 0.4);
     }
 
     .btn-secondary {
       background: transparent;
-      color: var(--steel);
-      border: 2px solid var(--steel-dark);
+      color: var(--seafoam);
+      border: 1px solid rgba(0, 229, 204, 0.2);
     }
 
     .btn-secondary:hover {
-      border-color: var(--steel);
+      border-color: var(--biolum-cyan);
     }
 
-    /* Main App */
+    /* ===== CORAL BUTTON (special CTA) ===== */
+    .btn-coral {
+      background: linear-gradient(135deg, var(--coral-pink), var(--coral-orange));
+      color: white;
+      border: none;
+      box-shadow: 0 4px 20px rgba(255, 107, 138, 0.3);
+    }
+
+    .btn-coral:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(255, 107, 138, 0.5);
+    }
+
+    /* ===== MAIN APP ===== */
     .app {
       display: none;
       min-height: 100vh;
       padding: 80px 20px 40px;
+      position: relative;
+      z-index: 2;
     }
 
     .app.active { display: block; }
@@ -259,32 +379,40 @@
       top: 0;
       left: 0;
       right: 0;
-      background: var(--zen-bg);
-      padding: 20px 30px;
+      background: rgba(4, 11, 24, 0.88);
+      backdrop-filter: blur(15px);
+      -webkit-backdrop-filter: blur(15px);
+      padding: 18px 30px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 1px solid var(--steel-dark);
+      border-bottom: 1px solid rgba(0, 229, 204, 0.1);
       z-index: 100;
       transition: background 0.3s ease;
     }
 
-    .light .header {
-      background: white;
-      border-bottom-color: #ddd;
+    body.light .header {
+      background: rgba(232, 244, 248, 0.92);
+      border-bottom-color: rgba(0, 229, 204, 0.15);
     }
 
     .logo {
       font-family: 'Amiri', serif;
       font-size: 24px;
       font-weight: 400;
-      color: var(--steel);
+      color: var(--biolum-cyan);
+      text-shadow: 0 0 15px rgba(0, 229, 204, 0.4);
+    }
+
+    body.light .logo {
+      color: #00897B;
+      text-shadow: none;
     }
 
     .theme-toggle {
       background: transparent;
-      border: 1px solid var(--steel-dark);
-      color: var(--steel);
+      border: 1px solid rgba(0, 229, 204, 0.2);
+      color: var(--biolum-cyan);
       width: 44px;
       height: 44px;
       border-radius: 50%;
@@ -293,12 +421,18 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      font-size: 18px;
+    }
+
+    body.light .theme-toggle {
+      border-color: rgba(0, 137, 123, 0.3);
+      color: #00897B;
     }
 
     .theme-toggle:hover {
-      background: var(--steel-dark);
-      color: var(--zen-white);
-      transform: rotate(180deg);
+      background: rgba(0, 229, 204, 0.1);
+      border-color: var(--biolum-cyan);
+      box-shadow: 0 0 15px rgba(0, 229, 204, 0.3);
     }
 
     .container {
@@ -307,122 +441,184 @@
     }
 
     .poem-card {
-      background: var(--zen-bg);
-      border-radius: 12px;
+      background: rgba(10, 22, 40, 0.85);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-radius: 20px;
       padding: 60px 50px;
       margin: 30px 0;
-      border: 1px solid var(--steel-dark);
-      box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+      border: 1px solid rgba(0, 229, 204, 0.1);
+      box-shadow: 0 0 50px rgba(0, 229, 204, 0.05);
       transition: all 0.4s ease;
+      position: relative;
+      overflow: hidden;
     }
 
-    .light .poem-card {
-      background: white;
-      border-color: #ddd;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    body.light .poem-card {
+      background: rgba(255, 255, 255, 0.9);
+      border-color: rgba(0, 229, 204, 0.15);
+      box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+    }
+
+    /* Bioluminescent shimmer at top of card */
+    .poem-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--biolum-cyan), var(--biolum-purple), var(--biolum-blue), transparent);
+      animation: bioShimmer 4s ease-in-out infinite;
+      will-change: opacity;
+    }
+
+    @keyframes bioShimmer {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 1; }
     }
 
     .poem-card:hover {
       transform: translateY(-5px);
-      box-shadow: 0 20px 60px rgba(168, 178, 191, 0.3);
+      box-shadow: 0 0 60px rgba(0, 229, 204, 0.12), 0 20px 60px rgba(0,0,0,0.3);
     }
 
     .poem-title {
       font-family: 'Amiri', serif;
       font-size: 32px;
-      color: var(--steel);
+      color: var(--biolum-cyan);
       margin-bottom: 40px;
       text-align: center;
+      text-shadow: 0 0 25px rgba(0, 229, 204, 0.3);
     }
 
+    body.light .poem-title {
+      color: #00897B;
+      text-shadow: none;
+    }
+
+    /* Bioluminescent text glow */
     .poem-verse {
       font-family: 'Amiri', serif;
       font-size: 24px;
-      line-height: 2.2;
+      line-height: 2.4;
       text-align: center;
       direction: rtl;
       margin: 40px 0;
-      color: var(--zen-white);
+      color: var(--pearl);
+      text-shadow: 0 0 8px rgba(0, 229, 204, 0.15);
     }
 
-    .light .poem-verse {
-      color: #1a1a1a;
+    body.light .poem-verse {
+      color: #0A1628;
+      text-shadow: none;
     }
 
     .poet-name {
       text-align: center;
-      color: var(--steel-dark);
+      color: var(--biolum-blue);
       font-size: 18px;
       margin-top: 40px;
+      text-shadow: 0 0 10px rgba(51, 153, 255, 0.2);
+    }
+
+    body.light .poet-name {
+      color: #2196F3;
+      text-shadow: none;
     }
 
     .control-rail {
       display: flex;
-      gap: 12px;
+      gap: 14px;
       justify-content: center;
       margin-top: 40px;
     }
 
+    /* Coral-styled buttons */
     .control-btn {
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
-      background: var(--steel-dark);
-      border: none;
+      width: 52px;
+      height: 52px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, rgba(255, 107, 138, 0.15), rgba(255, 138, 92, 0.15));
+      border: 1px solid rgba(255, 107, 138, 0.25);
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       transition: all 0.3s ease;
-      color: var(--zen-white);
+      color: var(--coral-pink);
+    }
+
+    body.light .control-btn {
+      background: rgba(255, 107, 138, 0.08);
+      border-color: rgba(255, 107, 138, 0.2);
+      color: #E91E63;
     }
 
     .control-btn:hover {
-      background: var(--steel);
-      color: var(--dark-bg);
+      background: linear-gradient(135deg, var(--coral-pink), var(--coral-orange));
+      color: white;
+      border-color: transparent;
+      box-shadow: 0 0 25px rgba(255, 107, 138, 0.4);
       transform: scale(1.1);
     }
 
+    /* ===== REDUCED MOTION ===== */
     @media (prefers-reduced-motion: reduce) {
-      * {
+      *, *::before, *::after {
         animation-duration: 0.01ms !important;
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
       }
+      canvas#bubbleCanvas { display: none; }
+      .kelp-forest { display: none; }
     }
 
+    /* ===== MOBILE ===== */
     @media (max-width: 768px) {
-      .zen-field { width: 300px; height: 300px; }
-      .steel-scroll-container { width: 250px; height: 350px; }
+      .biolum-ring { width: 90px; height: 90px; }
+      .biolum-ring-inner { width: 60px; height: 60px; font-size: 28px; }
       .poem-card { padding: 40px 25px; }
       .poem-verse { font-size: 20px; }
+      .header { padding: 15px 20px; }
+      .kelp { width: 6px; }
     }
   </style>
 </head>
 <body>
+  <!-- Bubble Canvas -->
+  <canvas id="bubbleCanvas"></canvas>
+
+  <!-- Kelp Forest CSS animation -->
+  <div class="kelp-forest" id="kelpForest"></div>
+
   <!-- Splash Screen -->
-  <div class="splash">
-    <div class="zen-field" id="zenField"></div>
-    <div class="steel-scroll-container">
-      <div class="steel-scroll">
-        <div class="steel-cap top"></div>
-        <div class="scroll-content">
-          <h1>Zen Serenity</h1>
-          <p>Steel-forged elegance meets floating wisdom</p>
-        </div>
-        <div class="steel-cap bottom"></div>
+  <div class="splash" id="splash">
+    <div class="caustics"></div>
+    <div class="splash-content">
+      <div class="biolum-ring">
+        <div class="biolum-ring-inner">&#1576;</div>
       </div>
+      <h1 class="splash-title">Ocean Depths</h1>
+      <p class="splash-subtitle">Poetry from the Deep</p>
+      <div class="depth-line"></div>
     </div>
   </div>
 
   <!-- Walkthrough -->
   <div class="walkthrough" id="walkthrough">
     <div class="walkthrough-card">
-      <h2 id="walkthrough-title">Welcome to Zen Particles</h2>
-      <p id="walkthrough-text">Experience poetry through minimalist particles and steel-crafted scrolls.</p>
+      <h2 id="walkthrough-title">Dive into Verse</h2>
+      <p id="walkthrough-text">Descend into the luminous depths where Arabic poetry glows with bioluminescent beauty among coral and kelp.</p>
+      <div class="step-indicators" id="stepIndicators">
+        <div class="step-dot active"></div>
+        <div class="step-dot"></div>
+        <div class="step-dot"></div>
+        <div class="step-dot"></div>
+      </div>
       <div class="walkthrough-buttons">
         <button class="btn btn-secondary" onclick="skipWalkthrough()">Skip</button>
-        <button class="btn btn-primary" onclick="nextStep()">Next</button>
+        <button class="btn btn-coral" onclick="nextStep()">Dive Deeper</button>
       </div>
     </div>
   </div>
@@ -430,56 +626,156 @@
   <!-- Main App -->
   <div class="app" id="app">
     <header class="header">
-      <div class="logo">ديوان الشعر</div>
-      <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">◐</button>
+      <div class="logo">&#1583;&#1610;&#1608;&#1575;&#1606; &#1575;&#1604;&#1588;&#1593;&#1585;</div>
+      <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">&#9684;</button>
     </header>
 
     <div class="container">
       <div class="poem-card">
-        <h2 class="poem-title">ديوان الشعر العربي</h2>
+        <h2 class="poem-title">&#1583;&#1610;&#1608;&#1575;&#1606; &#1575;&#1604;&#1588;&#1593;&#1585; &#1575;&#1604;&#1593;&#1585;&#1576;&#1610;</h2>
         <div class="poem-verse" lang="ar">
-          أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ<br>
-          فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
+          &#1571;&#1614;&#1606;&#1575; &#1575;&#1604;&#1576;&#1614;&#1581;&#1585;&#1615; &#1601;&#1610; &#1571;&#1614;&#1581;&#1588;&#1575;&#1574;&#1616;&#1607;&#1616; &#1575;&#1604;&#1583;&#1615;&#1585;&#1615;&#1617; &#1603;&#1575;&#1605;&#1616;&#1606;&#1612;<br>
+          &#1601;&#1614;&#1607;&#1614;&#1604; &#1587;&#1614;&#1571;&#1614;&#1604;&#1608;&#1575; &#1575;&#1604;&#1594;&#1614;&#1608;&#1617;&#1575;&#1589;&#1614; &#1593;&#1614;&#1606; &#1589;&#1614;&#1583;&#1614;&#1601;&#1575;&#1578;&#1610;
         </div>
-        <p class="poet-name">— أحمد شوقي</p>
+        <p class="poet-name">&mdash; &#1571;&#1581;&#1605;&#1583; &#1588;&#1608;&#1602;&#1610;</p>
 
         <div class="control-rail">
-          <button class="control-btn" aria-label="Previous">‹</button>
-          <button class="control-btn" aria-label="Play">▶</button>
-          <button class="control-btn" aria-label="Next">›</button>
-          <button class="control-btn" aria-label="Bookmark">★</button>
+          <button class="control-btn" aria-label="Previous">&#8249;</button>
+          <button class="control-btn" aria-label="Play">&#9654;</button>
+          <button class="control-btn" aria-label="Next">&#8250;</button>
+          <button class="control-btn" aria-label="Bookmark">&#9734;</button>
         </div>
       </div>
     </div>
   </div>
 
   <script>
-    // Generate zen particles
-    const zenField = document.getElementById('zenField');
-    for (let i = 0; i < 30; i++) {
-      const particle = document.createElement('div');
-      particle.className = 'zen-particle';
-      const x = (Math.random() - 0.5) * 200;
-      const y = (Math.random() - 0.5) * 200;
-      particle.style.setProperty('--x', `${x}px`);
-      particle.style.setProperty('--y', `${y}px`);
-      particle.style.left = '50%';
-      particle.style.top = '50%';
-      particle.style.animationDelay = `${Math.random() * 2}s`;
-      zenField.appendChild(particle);
+    /* ===== BUBBLE PARTICLE CANVAS ===== */
+    const canvas = document.getElementById('bubbleCanvas');
+    const ctx = canvas.getContext('2d');
+    let animId;
+
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    const isMobile = window.innerWidth <= 768;
+    const BUBBLE_COUNT = isMobile ? 15 : 30;
+
+    class Bubble {
+      constructor() {
+        this.reset();
+        this.y = Math.random() * canvas.height;
+      }
+
+      reset() {
+        this.x = Math.random() * canvas.width;
+        this.y = canvas.height + 20;
+        this.radius = 2 + Math.random() * 6;
+        this.speedY = 0.3 + Math.random() * 0.8;
+        this.drift = (Math.random() - 0.5) * 0.2;
+        this.wobble = Math.random() * Math.PI * 2;
+        this.wobbleSpeed = 0.01 + Math.random() * 0.02;
+        this.alpha = 0.15 + Math.random() * 0.3;
+        /* Bioluminescent color: cyan, blue, or purple */
+        const colors = [[0, 229, 204], [51, 153, 255], [153, 102, 255]];
+        this.color = colors[Math.floor(Math.random() * colors.length)];
+      }
+
+      update() {
+        this.y -= this.speedY;
+        this.wobble += this.wobbleSpeed;
+        this.x += this.drift + Math.sin(this.wobble) * 0.4;
+
+        if (this.y < -20) this.reset();
+      }
+
+      draw(ctx) {
+        const [r, g, b] = this.color;
+        ctx.save();
+
+        /* Glow */
+        const glow = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.radius * 4);
+        glow.addColorStop(0, `rgba(${r}, ${g}, ${b}, ${this.alpha * 0.3})`);
+        glow.addColorStop(1, `rgba(${r}, ${g}, ${b}, 0)`);
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius * 4, 0, Math.PI * 2);
+        ctx.fill();
+
+        /* Bubble body */
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${r}, ${g}, ${b}, ${this.alpha})`;
+        ctx.fill();
+
+        /* Highlight */
+        ctx.beginPath();
+        ctx.arc(this.x - this.radius * 0.3, this.y - this.radius * 0.3, this.radius * 0.3, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(255, 255, 255, ${this.alpha * 0.5})`;
+        ctx.fill();
+
+        ctx.restore();
+      }
     }
 
+    const bubbles = [];
+    for (let i = 0; i < BUBBLE_COUNT; i++) {
+      bubbles.push(new Bubble());
+    }
+
+    function animateBubbles() {
+      if (prefersReducedMotion) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      bubbles.forEach(b => {
+        b.update();
+        b.draw(ctx);
+      });
+      animId = requestAnimationFrame(animateBubbles);
+    }
+
+    if (!prefersReducedMotion) {
+      requestAnimationFrame(animateBubbles);
+    }
+
+    /* ===== GENERATE KELP ===== */
+    const kelpForest = document.getElementById('kelpForest');
+    const kelpCount = isMobile ? 8 : 16;
+    for (let i = 0; i < kelpCount; i++) {
+      const kelp = document.createElement('div');
+      kelp.className = 'kelp';
+      const height = 100 + Math.random() * 200;
+      const left = (i / kelpCount) * 100 + Math.random() * 5;
+      kelp.style.height = height + 'px';
+      kelp.style.left = left + '%';
+      kelp.style.animationDelay = (Math.random() * 2) + 's';
+      kelp.style.animationDuration = (3 + Math.random() * 3) + 's';
+      kelp.style.opacity = 0.15 + Math.random() * 0.25;
+      kelpForest.appendChild(kelp);
+    }
+
+    /* ===== WALKTHROUGH ===== */
     let step = 0;
     const steps = [
-      { title: 'Welcome to Zen Particles', text: 'Experience poetry through minimalist particles and steel-crafted scrolls.' },
-      { title: 'Particle Field', text: 'Watch as wisdom emerges from a field of floating zen particles.' },
-      { title: 'Steel-Forged Scrolls', text: 'Each poem is presented on a scroll of polished steel.' },
-      { title: 'Begin Your Journey', text: 'Find peace in the harmony of form and verse.' }
+      { title: 'Dive into Verse', text: 'Descend into the luminous depths where Arabic poetry glows with bioluminescent beauty among coral and kelp.' },
+      { title: 'Bioluminescent Words', text: 'Each verse illuminates the darkness like deep-sea creatures -- alive with their own inner light.' },
+      { title: 'Coral Navigation', text: 'Navigate through 84,000 poems with controls shaped like living coral.' },
+      { title: 'Begin Your Dive', text: 'Take a deep breath and explore the ocean of Arabic poetry.' }
     ];
+
+    function updateIndicators() {
+      const dots = document.querySelectorAll('.step-dot');
+      dots.forEach((dot, i) => dot.classList.toggle('active', i === step));
+    }
 
     setTimeout(() => {
       document.getElementById('walkthrough').classList.add('active');
-    }, 3000);
+    }, 4200);
 
     function nextStep() {
       step++;
@@ -488,12 +784,11 @@
       } else {
         document.getElementById('walkthrough-title').textContent = steps[step].title;
         document.getElementById('walkthrough-text').textContent = steps[step].text;
+        updateIndicators();
       }
     }
 
-    function skipWalkthrough() {
-      startApp();
-    }
+    function skipWalkthrough() { startApp(); }
 
     function startApp() {
       document.getElementById('walkthrough').classList.remove('active');

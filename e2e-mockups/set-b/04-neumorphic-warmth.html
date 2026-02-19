@@ -1,144 +1,491 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>E2E B4: Neumorphic Warmth — Soft Tactile + Warm Particles</title>
-<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-:root{--bg:#e0e0d8;--surface:#e0e0d8;--ink:#2d2a26;--ink-dim:rgba(45,42,38,.45);--gold:#9e8a6a;--shadow-d:#b5b5ad;--shadow-l:#ffffff;--accent:#7c6f58;--font-ar:'Amiri',serif;--font-ui:'Inter',system-ui,sans-serif;--radius:20px}
-html{font-family:var(--font-ui);background:var(--bg);color:var(--ink);scroll-behavior:smooth;overflow-x:hidden}
-canvas#warmDust{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.3}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Neumorphic Warmth — Innovative UI/UX Mockup</title>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0c0c0e;
+      --bg-light: #e5e1da;
+      --text-dark: #e8e8e8;
+      --text-light: #2c2c2c;
+      --gold: #C5A059;
+      --indigo: #4F46E5;
+      --shadow-light: #d1cec6;
+      --shadow-dark: #f9f6ef;
+      --neu-inset: inset 8px 8px 16px #d1cec6, inset -8px -8px 16px #f9f6ef;
+      --neu-outset: 8px 8px 16px #d1cec6, -8px -8px 16px #f9f6ef;
+    }
 
-.screen{position:relative;width:100%;min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column}
-.label{position:absolute;top:24px;left:24px;font-size:10px;letter-spacing:.25em;text-transform:uppercase;color:var(--gold);opacity:.4}
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-/* Neumorphic card mixin */
-.neu{background:var(--surface);border-radius:var(--radius);box-shadow:6px 6px 12px var(--shadow-d),-6px -6px 12px var(--shadow-l)}
-.neu-inset{box-shadow:inset 4px 4px 8px var(--shadow-d),inset -4px -4px 8px var(--shadow-l)}
+    body {
+      font-family: 'Tajawal', sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-dark);
+      transition: background 0.4s ease, color 0.4s ease;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
 
-/* SPLASH - Warm with particles */
-#splash{background:var(--ink)}
-.sp{position:relative;z-index:2;text-align:center;padding:40px}
-.sp-logo{display:flex;flex-direction:row-reverse;align-items:flex-end;justify-content:center;gap:16px;margin-bottom:48px}
-.sp-ar{font-family:var(--font-ar);font-size:clamp(3rem,8vw,4.5rem);font-weight:700;color:var(--bg)}
-.sp-en{font-size:clamp(2.5rem,7vw,5rem);font-weight:200;color:var(--bg);letter-spacing:-.03em;text-transform:lowercase}
-.sp-sub{font-size:11px;letter-spacing:.4em;text-transform:uppercase;color:rgba(224,224,216,.3);margin-bottom:52px}
-.sp-enter{display:inline-block;padding:16px 44px;background:rgba(224,224,216,.08);border:1px solid rgba(224,224,216,.15);color:var(--bg);font-size:12px;letter-spacing:.25em;text-transform:uppercase;text-decoration:none;border-radius:999px;transition:all .3s;backdrop-filter:blur(8px)}
-.sp-enter:hover{background:rgba(224,224,216,.15)}
+    body.light {
+      background: var(--bg-light);
+      color: var(--text-light);
+    }
 
-/* WALKTHROUGH */
-#walk{background:var(--bg)}
-.wk{position:relative;z-index:2;max-width:420px;width:90%;padding:48px 0}
-.wk-step{padding:24px;margin-bottom:16px}
-.wk-num{font-size:10px;letter-spacing:.2em;color:var(--gold);margin-bottom:10px;text-transform:uppercase}
-.wk-step h3{font-size:16px;font-weight:600;margin-bottom:6px}
-.wk-step p{font-size:12px;color:var(--ink-dim);line-height:1.7}
-.wk-cta{display:block;margin:16px auto 0;padding:14px 40px;background:var(--ink);color:var(--bg);border:none;border-radius:999px;font-size:12px;letter-spacing:.15em;text-transform:uppercase;cursor:pointer;box-shadow:4px 4px 8px var(--shadow-d),-4px -4px 8px var(--shadow-l)}
+    #splash {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-dark);
+      animation: splashFadeOut 1s ease 3s forwards;
+    }
 
-/* MAIN */
-#main{background:var(--bg);padding:0;align-items:stretch}
-.m-wrap{position:relative;z-index:2;max-width:700px;margin:0 auto;padding:40px 24px;min-height:100vh}
-.m-nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:32px}
-.m-brand{font-weight:600;font-size:15px;letter-spacing:.06em}
-.m-links{display:flex;gap:14px;font-size:12px;color:var(--ink-dim)}
-.m-links span{cursor:pointer;transition:color .2s}
-.m-links span:hover{color:var(--ink)}
-.poem-card{padding:40px 28px;text-align:center;margin-bottom:16px}
-.pm{font-size:10px;text-transform:uppercase;letter-spacing:.2em;color:var(--gold);margin-bottom:24px}
-.par{font-family:var(--font-ar);font-size:clamp(1.4rem,3.5vw,2rem);line-height:2.3;direction:rtl;margin-bottom:18px}
-.pen{font-size:14px;color:var(--ink-dim);line-height:1.8;font-style:italic}
-.pact{display:flex;gap:10px;justify-content:center;margin-top:24px;flex-wrap:wrap}
-.pact button{padding:10px 18px;border-radius:12px;background:var(--surface);border:none;color:var(--ink-dim);font-size:11px;cursor:pointer;font-family:var(--font-ui);box-shadow:3px 3px 6px var(--shadow-d),-3px -3px 6px var(--shadow-l);transition:all .2s}
-.pact button:hover{box-shadow:1px 1px 3px var(--shadow-d),-1px -1px 3px var(--shadow-l)}
-.pact button:active{box-shadow:inset 2px 2px 4px var(--shadow-d),inset -2px -2px 4px var(--shadow-l)}
-.ai{margin-top:16px;padding:20px 22px;border-radius:var(--radius)}
-.ai p{font-size:12px;color:var(--ink-dim);line-height:1.7}
+    body.light #splash {
+      background: var(--bg-light);
+    }
 
-/* NEUMORPHIC CONTROLS - core user preference */
-.vc{position:fixed;left:16px;top:50%;transform:translateY(-50%);width:72px;background:var(--surface);border-radius:24px;padding:16px 8px;box-shadow:8px 8px 16px var(--shadow-d),-8px -8px 16px var(--shadow-l);z-index:100}
-.vc button{width:56px;height:56px;display:flex;align-items:center;justify-content:center;background:var(--surface);border:none;border-radius:16px;cursor:pointer;color:var(--ink-dim);font-size:16px;margin:0 auto 8px;box-shadow:4px 4px 8px var(--shadow-d),-4px -4px 8px var(--shadow-l);transition:all .2s}
-.vc button:hover{box-shadow:2px 2px 4px var(--shadow-d),-2px -2px 4px var(--shadow-l)}
-.vc button.on{box-shadow:inset 3px 3px 6px var(--shadow-d),inset -3px -3px 6px var(--shadow-l);color:var(--ink)}
+    #warmCanvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0.4;
+    }
 
-/* SETTINGS */
-#settings{background:var(--bg);padding:80px 24px}
-.st{position:relative;z-index:2;max-width:420px;margin:0 auto;padding:32px;border-radius:var(--radius);box-shadow:6px 6px 12px var(--shadow-d),-6px -6px 12px var(--shadow-l)}
-.st-title{font-size:18px;font-weight:600;margin-bottom:24px;text-align:center}
-.st-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid rgba(45,42,38,.06)}
-.st-row label{font-size:13px}
-.st-row label small{display:block;font-size:10px;color:var(--ink-dim);margin-top:3px}
-.tgl{width:48px;height:26px;border-radius:13px;background:var(--surface);position:relative;cursor:pointer;box-shadow:inset 3px 3px 6px var(--shadow-d),inset -3px -3px 6px var(--shadow-l);transition:all .2s}
-.tgl.on::before{content:'';position:absolute;inset:0;border-radius:13px;background:var(--gold);opacity:.2}
-.tgl::after{content:'';position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:var(--surface);box-shadow:2px 2px 4px var(--shadow-d),-2px -2px 4px var(--shadow-l);transition:transform .2s}
-.tgl.on::after{transform:translateX(22px)}
-.sl{display:flex;align-items:center;gap:8px}
-.sl span{font-size:10px;color:var(--ink-dim)}
-input[type=range]{-webkit-appearance:none;width:100px;height:6px;border-radius:3px;background:var(--surface);outline:none;box-shadow:inset 2px 2px 4px var(--shadow-d),inset -2px -2px 4px var(--shadow-l)}
-input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--surface);cursor:pointer;box-shadow:3px 3px 6px var(--shadow-d),-3px -3px 6px var(--shadow-l)}
-.sv{display:block;width:100%;margin-top:20px;padding:14px;background:var(--ink);color:var(--bg);border:none;border-radius:14px;font-size:13px;font-weight:500;cursor:pointer}
+    .splash-title {
+      font-family: 'Amiri', serif;
+      font-size: 3rem;
+      font-weight: 700;
+      color: var(--gold);
+      text-align: center;
+      z-index: 2;
+      animation: softPulse 2s ease-in-out infinite;
+    }
 
-/* AUTH */
-#auth{background:var(--ink)}
-.auth-box{position:relative;z-index:2;width:90%;max-width:370px;background:var(--bg);border-radius:var(--radius);padding:40px 28px;text-align:center;box-shadow:0 20px 50px rgba(0,0,0,.3)}
-.auth-title{font-family:var(--font-ar);font-size:32px;margin-bottom:8px}
-.auth-sub{font-size:13px;color:var(--ink-dim);margin-bottom:24px}
-.oa{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:13px;border-radius:14px;background:var(--surface);border:none;color:var(--ink);font-size:14px;cursor:pointer;margin-bottom:10px;box-shadow:4px 4px 8px var(--shadow-d),-4px -4px 8px var(--shadow-l);font-family:var(--font-ui);transition:all .2s}
-.oa:hover{box-shadow:2px 2px 4px var(--shadow-d),-2px -2px 4px var(--shadow-l)}
-.oa svg{width:18px;height:18px}
-.at{font-size:10px;color:var(--ink-dim);margin-top:16px}
+    .splash-subtitle {
+      font-size: 1rem;
+      margin-top: 1rem;
+      opacity: 0.7;
+      z-index: 2;
+    }
 
-.nav-bar{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:200;background:var(--surface);padding:8px 14px;border-radius:999px;box-shadow:4px 4px 8px var(--shadow-d),-4px -4px 8px var(--shadow-l)}
-.nav-bar a{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-dim);text-decoration:none;padding:5px 10px;border-radius:999px;transition:all .2s}
-.nav-bar a:hover{color:var(--ink)}
+    @keyframes splashFadeOut {
+      to {
+        opacity: 0;
+        pointer-events: none;
+      }
+    }
 
-@media(max-width:640px){.sp-logo{flex-direction:column;align-items:center;gap:4px}.sp-ar{font-size:2.5rem}.sp-en{font-size:3rem}.vc{left:8px;width:56px;padding:10px 4px}.vc button{width:44px;height:44px;font-size:13px;border-radius:12px;margin-bottom:6px}}
-</style>
+    @keyframes softPulse {
+      0%, 100% {
+        transform: scale(1);
+        opacity: 0.9;
+      }
+      50% {
+        transform: scale(1.02);
+        opacity: 1;
+      }
+    }
+
+    #mainContent {
+      opacity: 0;
+      animation: contentFadeIn 1s ease 3.5s forwards;
+      padding: 3rem 2rem;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    @keyframes contentFadeIn {
+      to { opacity: 1; }
+    }
+
+    header {
+      margin-bottom: 3rem;
+      text-align: center;
+    }
+
+    h1 {
+      font-family: 'Amiri', serif;
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--gold);
+      margin-bottom: 1rem;
+    }
+
+    .subtitle {
+      font-size: 1rem;
+      opacity: 0.7;
+      font-weight: 300;
+    }
+
+    .poetry-card {
+      background: var(--bg-light);
+      border-radius: 24px;
+      padding: 3rem 2.5rem;
+      margin: 2rem 0;
+      box-shadow: var(--neu-outset);
+      transition: all 0.3s ease;
+    }
+
+    body.light .poetry-card {
+      background: var(--bg-light);
+    }
+
+    body:not(.light) .poetry-card {
+      background: #1a1a1c;
+      box-shadow: 8px 8px 16px #0a0a0a, -8px -8px 16px #1a1a1a;
+    }
+
+    .poetry-card:hover {
+      transform: translateY(-4px);
+    }
+
+    .verse {
+      font-family: 'Amiri', serif;
+      font-size: 1.85rem;
+      line-height: 2.3;
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .poet {
+      text-align: center;
+      font-size: 1.1rem;
+      color: var(--indigo);
+      font-weight: 500;
+    }
+
+    .walkthrough {
+      margin: 4rem 0;
+    }
+
+    .walkthrough h2 {
+      font-family: 'Amiri', serif;
+      font-size: 2rem;
+      color: var(--gold);
+      margin-bottom: 2.5rem;
+      text-align: center;
+    }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 2rem;
+    }
+
+    .step {
+      background: var(--bg-light);
+      border-radius: 20px;
+      padding: 2rem 1.5rem;
+      text-align: center;
+      box-shadow: var(--neu-outset);
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    body:not(.light) .step {
+      background: #1a1a1c;
+      box-shadow: 8px 8px 16px #0a0a0a, -8px -8px 16px #1a1a1a;
+    }
+
+    .step:hover {
+      box-shadow: 4px 4px 8px #d1cec6, -4px -4px 8px #f9f6ef;
+    }
+
+    body:not(.light) .step:hover {
+      box-shadow: 4px 4px 8px #0a0a0a, -4px -4px 8px #1a1a1a;
+    }
+
+    .step:active {
+      box-shadow: var(--neu-inset);
+    }
+
+    body:not(.light) .step:active {
+      box-shadow: inset 4px 4px 8px #0a0a0a, inset -4px -4px 8px #1a1a1a;
+    }
+
+    .step-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--bg-light);
+      box-shadow: var(--neu-outset);
+      color: var(--gold);
+      font-weight: 700;
+      font-size: 1.25rem;
+      margin-bottom: 1.25rem;
+    }
+
+    body:not(.light) .step-number {
+      background: #1a1a1c;
+      box-shadow: 4px 4px 8px #0a0a0a, -4px -4px 8px #1a1a1a;
+    }
+
+    .step h3 {
+      font-family: 'Amiri', serif;
+      font-size: 1.3rem;
+      margin-bottom: 0.75rem;
+      color: var(--gold);
+    }
+
+    .step p {
+      font-size: 0.9rem;
+      opacity: 0.75;
+      line-height: 1.7;
+    }
+
+    .controls {
+      position: fixed;
+      top: 2rem;
+      left: 2rem;
+      display: flex;
+      gap: 1rem;
+      z-index: 1000;
+    }
+
+    .btn-neu {
+      min-width: 44px;
+      min-height: 44px;
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 16px;
+      font-family: 'Tajawal', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background: var(--bg-light);
+      color: var(--text-light);
+      box-shadow: var(--neu-outset);
+    }
+
+    body:not(.light) .btn-neu {
+      background: #1a1a1c;
+      color: var(--text-dark);
+      box-shadow: 6px 6px 12px #0a0a0a, -6px -6px 12px #1a1a1a;
+    }
+
+    .btn-neu:hover {
+      box-shadow: 4px 4px 8px #d1cec6, -4px -4px 8px #f9f6ef;
+    }
+
+    body:not(.light) .btn-neu:hover {
+      box-shadow: 4px 4px 8px #0a0a0a, -4px -4px 8px #1a1a1a;
+    }
+
+    .btn-neu:active {
+      box-shadow: var(--neu-inset);
+    }
+
+    body:not(.light) .btn-neu:active {
+      box-shadow: inset 4px 4px 8px #0a0a0a, inset -4px -4px 8px #1a1a1a;
+    }
+
+    @media (max-width: 768px) {
+      .splash-title {
+        font-size: 2rem;
+      }
+
+      h1 {
+        font-size: 2rem;
+      }
+
+      .verse {
+        font-size: 1.4rem;
+        line-height: 2.1;
+      }
+
+      #mainContent {
+        padding: 2rem 1.5rem;
+      }
+
+      .poetry-card {
+        padding: 2rem 1.5rem;
+      }
+
+      .controls {
+        top: 1rem;
+        left: 1rem;
+      }
+
+      .steps {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    .btn-neu:focus-visible,
+    .step:focus-visible {
+      outline: 3px solid var(--indigo);
+      outline-offset: 2px;
+    }
+  </style>
 </head>
-<body>
-<canvas id="warmDust"></canvas>
-<nav class="nav-bar"><a href="#splash">Splash</a><a href="#walk">Intro</a><a href="#main">Read</a><a href="#settings">Settings</a><a href="#auth">Auth</a></nav>
+<body class="light">
+  <div id="splash">
+    <canvas id="warmCanvas"></canvas>
+    <div class="splash-title">دفء التصميم</div>
+    <div class="splash-subtitle">Neumorphic Warmth</div>
+  </div>
 
-<section class="screen" id="splash"><span class="label" style="color:rgba(224,224,216,.3)">Splash</span><div class="sp"><div class="sp-logo"><span class="sp-ar">قافية</span><span class="sp-en">qafiyah</span></div><div class="sp-sub">Arabic Poetry, Pair by Pair</div><a href="#walk" class="sp-enter">Enter</a></div></section>
+  <div class="controls">
+    <button class="btn-neu" onclick="toggleTheme()" aria-label="تبديل السمة">
+      🌙 / ☀️
+    </button>
+  </div>
 
-<section class="screen" id="walk"><span class="label">Walkthrough</span><div class="wk">
-  <div class="wk-step neu"><div class="wk-num">Step 01</div><h3>Discover Poetry</h3><p>84,000+ Arabic poems from classical to modern, each with English translation.</p></div>
-  <div class="wk-step neu"><div class="wk-num">Step 02</div><h3>Listen & Learn</h3><p>AI recitation with transliteration for pronunciation.</p></div>
-  <div class="wk-step neu"><div class="wk-num">Step 03</div><h3>Your Collection</h3><p>Save favorites, adjust display, sync across devices.</p></div>
-  <button class="wk-cta" onclick="document.getElementById('main').scrollIntoView({behavior:'smooth'})">Start Reading</button>
-</div></section>
+  <div id="mainContent">
+    <header>
+      <h1>لمسة ناعمة للشعر</h1>
+      <p class="subtitle">Neumorphic Warmth — Soft Tactile + Warm Particles</p>
+    </header>
 
-<section class="screen" id="main" style="align-items:stretch"><div class="m-wrap"><span class="label">Main App</span>
-  <div class="m-nav"><div class="m-brand">Qafiyah</div><div class="m-links"><span>Explore</span><span>Saved</span><span>Settings</span></div></div>
-  <div class="poem-card neu"><div class="pm">Ibn Zaydun &bull; Andalusian</div><div class="par">إِنّي ذَكَرتُكِ بِالزَهراءِ مُشتاقاً<br>وَالأُفقُ طَلقٌ وَمَرأى الأَرضِ قَد راقا</div><div class="pen">I remembered you in al-Zahra, longing,<br>the horizon clear and the earth's face radiant.</div><div class="pact"><button>&#9654; Listen</button><button>&#9825; Save</button><button>&#8634; Next</button><button>Aa</button><button>ع</button></div></div>
-  <div class="ai neu-inset"><p>&#10024; Ibn Zaydun's poem to Princess Wallada is the pinnacle of Andalusian love poetry. Al-Zahra (the Brilliant) was the Umayyad palace in Cordoba, destroyed by the time of this poem — making it both love letter and elegy.</p></div>
-</div></section>
+    <div class="poetry-card">
+      <div class="verse" lang="ar" dir="rtl">
+        أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ<br>
+        فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
+      </div>
+      <div class="poet">— أحمد شوقي</div>
+    </div>
 
-<div class="vc"><button>&#8635;</button><button class="on">&#9654;</button><button>&#9825;</button><button>Aa</button><button>ع</button><button>&#9788;</button></div>
+    <section class="walkthrough">
+      <h2>دليل التفاعل</h2>
+      <div class="steps">
+        <div class="step" tabindex="0">
+          <div class="step-number">1</div>
+          <h3>تصميم ناعم</h3>
+          <p>ظلال ناعمة تمنح إحساساً بالعمق والبروز</p>
+        </div>
+        <div class="step" tabindex="0">
+          <div class="step-number">2</div>
+          <h3>جسيمات دافئة</h3>
+          <p>جزيئات ذهبية تطفو في الخلفية بسلاسة</p>
+        </div>
+        <div class="step" tabindex="0">
+          <div class="step-number">3</div>
+          <h3>تفاعل لمسي</h3>
+          <p>أزرار تتفاعل مع الضغط بشكل واقعي</p>
+        </div>
+        <div class="step" tabindex="0">
+          <div class="step-number">4</div>
+          <h3>ألوان دافئة</h3>
+          <p>لوحة ألوان دافئة ومريحة للعين</p>
+        </div>
+      </div>
+    </section>
+  </div>
 
-<section class="screen" id="settings"><span class="label">Settings</span><div class="st"><div class="st-title">Settings</div>
-  <div class="st-row"><label>Text Size<small>Arabic display</small></label><div class="sl"><span>A</span><input type="range" min="14" max="32" value="22"><span style="font-size:16px">A</span></div></div>
-  <div class="st-row"><label>Transliteration<small>Pronunciation</small></label><div class="tgl on"></div></div>
-  <div class="st-row"><label>Light Mode<small>Warm paper</small></label><div class="tgl on"></div></div>
-  <div class="st-row"><label>Auto Audio<small>Autoplay</small></label><div class="tgl"></div></div>
-  <div class="st-row"><label>AI Insights<small>Analysis</small></label><div class="tgl on"></div></div>
-  <button class="sv">Save</button>
-</div></section>
+  <script>
+    const canvas = document.getElementById('warmCanvas');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+    let animationId;
 
-<section class="screen" id="auth"><span class="label" style="color:rgba(224,224,216,.3)">Auth</span><div class="auth-box"><div class="auth-title">مرحباً</div><div class="auth-sub">Sign in to save and sync</div>
-  <button class="oa"><svg viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>Continue with Google</button>
-  <button class="oa"><svg viewBox="0 0 24 24" fill="#2d2a26"><path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.52-3.23 0-1.44.64-2.2.52-3.06-.4C3.79 16.17 4.36 9.04 8.92 8.78c1.27.06 2.15.72 2.89.76.98-.2 1.92-.76 2.97-.69 1.26.1 2.21.59 2.83 1.5-2.59 1.54-1.97 4.93.36 5.87-.47 1.24-.73 1.79-1.37 2.89-.97 1.69-2.34 3.38-4.02 3.42-.74.02-1.23-.38-2.03-.4-.83.02-1.35.42-2.13.42-1.73-.04-3.05-1.84-4.03-3.52-2.75-4.72-3.05-10.27-1.35-13.17 1.2-2.04 3.09-3.23 5.1-3.28 1.1-.02 2.17.74 2.86.74.69 0 1.98-.92 3.34-.78.57.02 2.16.23 3.18 1.72-2.58 1.61-2.16 5.57.47 6.63z"/></svg>Continue with Apple</button>
-  <div class="at">Terms and Privacy Policy</div>
-</div></section>
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
 
-<script>
-// Warm dust particles on splash
-const c=document.getElementById('warmDust'),ctx=c.getContext('2d');let W,H;
-function resize(){W=c.width=innerWidth;H=c.height=innerHeight}resize();addEventListener('resize',resize);
-let ps=[];for(let i=0;i<60;i++)ps.push({x:Math.random()*2e3,y:Math.random()*2e4,r:Math.random()*1.5+.3,vx:(Math.random()-.5)*.08,vy:(Math.random()-.5)*.06,a:Math.random()*.2+.03,warm:Math.random()>.4});
-(function loop(){ctx.clearRect(0,0,W,H);ps.forEach(p=>{p.x+=p.vx;p.y+=p.vy;if(p.x<0||p.x>W)p.vx*=-1;if(p.y<0||p.y>H)p.vy*=-1;p.a+=Math.sin(Date.now()*.001+p.x)*.001;ctx.beginPath();ctx.arc(p.x%W,(p.y%H+H)%H,p.r,0,Math.PI*2);ctx.fillStyle=p.warm?`rgba(158,138,106,${p.a})`:`rgba(124,111,88,${p.a*.5})`;ctx.fill()});requestAnimationFrame(loop)})();
-document.querySelectorAll('.tgl').forEach(t=>t.addEventListener('click',()=>t.classList.toggle('on')));
-</script>
+    class WarmParticle {
+      constructor() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.size = Math.random() * 2 + 0.5;
+        this.speedX = Math.random() * 0.5 - 0.25;
+        this.speedY = Math.random() * 0.5 - 0.25;
+        this.opacity = Math.random() * 0.3 + 0.1;
+        this.hue = Math.random() > 0.5 ? '#C5A059' : '#d4a574';
+      }
+
+      update() {
+        this.x += this.speedX;
+        this.y += this.speedY;
+
+        if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
+        if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
+      }
+
+      draw() {
+        ctx.save();
+        ctx.globalAlpha = this.opacity;
+        ctx.fillStyle = this.hue;
+        ctx.shadowBlur = 8;
+        ctx.shadowColor = this.hue;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    function initParticles() {
+      particles = [];
+      for (let i = 0; i < 60; i++) {
+        particles.push(new WarmParticle());
+      }
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      particles.forEach(particle => {
+        particle.update();
+        particle.draw();
+      });
+
+      animationId = requestAnimationFrame(animate);
+    }
+
+    function stopParticles() {
+      cancelAnimationFrame(animationId);
+    }
+
+    resizeCanvas();
+    initParticles();
+    animate();
+
+    window.addEventListener('resize', () => {
+      resizeCanvas();
+      initParticles();
+    });
+
+    setTimeout(() => {
+      stopParticles();
+    }, 3000);
+
+    function toggleTheme() {
+      document.body.classList.toggle('light');
+    }
+
+    document.querySelectorAll('.step').forEach(step => {
+      step.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          step.click();
+        }
+      });
+    });
+  </script>
 </body>
 </html>

@@ -1,153 +1,478 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>E2E B1: Particle Scroll — Gold Particles + Scroll Unroll Reading</title>
-<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=EB+Garamond:ital,wght@0,400;0,500;1,400&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-:root{--bg:#0a0a0f;--gold:#c5a059;--gold-glow:rgba(197,160,89,.3);--indigo:rgba(138,110,218,.2);--parchment:#e8dcc4;--paper:#d4c4a8;--wood:#3d3428;--ink:#1a1512;--ink-dim:rgba(26,21,18,.45);--text:#f5f0e8;--text-dim:rgba(245,240,232,.45);--font-ar:'Amiri',serif;--font-serif:'EB Garamond',serif;--font-ui:'Inter',system-ui,sans-serif}
-html{font-family:var(--font-ui);background:var(--bg);color:var(--text);scroll-behavior:smooth;overflow-x:hidden}
-canvas#particles{position:fixed;inset:0;z-index:0;pointer-events:none}
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Particle Scroll — Innovative UI/UX Mockup</title>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-dark: #0c0c0e;
+      --bg-light: #FDFCF8;
+      --text-dark: #e8e8e8;
+      --text-light: #2c2c2c;
+      --gold: #C5A059;
+      --indigo: #4F46E5;
+      --shadow-dark: rgba(0, 0, 0, 0.3);
+      --shadow-light: rgba(0, 0, 0, 0.1);
+      --parchment-base: #f4ead5;
+      --parchment-accent: #e8dcc0;
+    }
 
-.screen{position:relative;width:100%;min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;overflow:hidden}
-.label{position:absolute;top:24px;left:24px;font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--gold);opacity:.5}
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
 
-/* SPLASH - Gold particles */
-#splash{background:linear-gradient(160deg,var(--bg),#12111a)}
-#splash::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 30% 40%,var(--indigo),transparent 55%),radial-gradient(circle at 70% 60%,var(--gold-glow),transparent 50%);opacity:.3;pointer-events:none;animation:pulse 18s ease-in-out infinite alternate}
-@keyframes pulse{0%{opacity:.2;transform:scale(1)}100%{opacity:.4;transform:scale(1.06)}}
-.sp{position:relative;z-index:2;text-align:center;padding:40px}
-.sp-logo{display:flex;flex-direction:row-reverse;align-items:flex-end;justify-content:center;gap:18px;margin-bottom:56px}
-.sp-ar{font-family:var(--font-ar);font-size:clamp(3rem,8vw,4.5rem);font-weight:700}
-.sp-en{font-size:clamp(2.5rem,7vw,5.25rem);font-weight:200;letter-spacing:-.04em;text-transform:lowercase}
-.sp-tag{font-size:11px;text-transform:uppercase;letter-spacing:.5em;background:linear-gradient(90deg,#8a6eda,var(--gold));-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:56px;font-weight:600}
-.sp-btn{display:inline-block;padding:18px 56px;border:2px solid var(--gold);background:linear-gradient(135deg,rgba(197,160,89,.12),rgba(197,160,89,.04));color:var(--gold);font-size:13px;text-transform:uppercase;letter-spacing:.35em;font-weight:600;cursor:pointer;transition:all .5s cubic-bezier(.16,1,.3,1);backdrop-filter:blur(12px);box-shadow:0 0 30px var(--gold-glow);text-decoration:none}
-.sp-btn:hover{background:linear-gradient(135deg,rgba(197,160,89,.28),rgba(197,160,89,.12));box-shadow:0 0 50px var(--gold-glow);transform:translateY(-3px)}
+    body {
+      font-family: 'Tajawal', sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-dark);
+      transition: background 0.4s ease, color 0.4s ease;
+      overflow-x: hidden;
+    }
 
-/* WALKTHROUGH - Gold-framed steps */
-#walk{background:var(--bg)}
-.wk{position:relative;z-index:2;max-width:420px;width:90%;padding:48px 0}
-.wk-step{margin-bottom:32px;padding:24px;border:1px solid rgba(197,160,89,.15);border-radius:12px;background:rgba(197,160,89,.03);backdrop-filter:blur(8px)}
-.wk-num{font-size:10px;letter-spacing:.2em;color:var(--gold);margin-bottom:10px;text-transform:uppercase}
-.wk-step h3{font-family:var(--font-ar);font-size:20px;margin-bottom:6px}
-.wk-step p{font-size:12px;color:var(--text-dim);line-height:1.7}
-.wk-cta{display:block;margin:16px auto 0;padding:14px 40px;background:var(--gold);color:var(--bg);border:none;border-radius:999px;font-size:12px;letter-spacing:.2em;text-transform:uppercase;font-weight:600;cursor:pointer}
+    body.light {
+      background: var(--bg-light);
+      color: var(--text-light);
+    }
 
-/* MAIN - Scroll/parchment reading in dark context */
-#main{background:var(--bg);padding:0;align-items:stretch}
-.m-wrap{position:relative;z-index:2;max-width:720px;margin:0 auto;padding:40px 24px;min-height:100vh}
-.m-nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:28px}
-.m-brand{display:flex;align-items:center;gap:10px}
-.m-brand .orb{width:18px;height:18px;border-radius:50%;background:radial-gradient(circle at 30% 30%,#fef3c7,var(--gold));box-shadow:0 0 10px var(--gold-glow)}
-.m-brand span{font-weight:600;font-size:13px;letter-spacing:.1em}
-.m-links{display:flex;gap:14px;font-size:12px;color:var(--text-dim)}
-.m-links span{cursor:pointer}
-.m-links span:hover{color:var(--gold)}
-/* The scroll-paper reading area */
-.scroll-reader{position:relative;background:linear-gradient(135deg,var(--parchment),var(--paper),#c9b896);border-radius:8px;padding:40px 32px;box-shadow:0 20px 50px rgba(0,0,0,.5),inset 0 0 60px rgba(139,115,85,.1);color:var(--ink);animation:paperReveal 1s ease-out forwards}
-@keyframes paperReveal{0%{transform:scaleY(.08);opacity:0}60%{transform:scaleY(1.02)}100%{transform:scaleY(1);opacity:1}}
-.scroll-reader::before{content:'';position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent,transparent 3px,rgba(139,115,85,.03) 3px,rgba(139,115,85,.03) 6px);border-radius:inherit;pointer-events:none}
-.rod{position:absolute;left:-6px;right:-6px;height:16px;background:linear-gradient(180deg,#5a4a35,var(--wood),#2d2419);border-radius:8px;box-shadow:0 3px 8px rgba(0,0,0,.4)}
-.rod.top{top:-8px}
-.rod.bottom{bottom:-8px}
-.pm{font-family:var(--font-ui);font-size:10px;text-transform:uppercase;letter-spacing:.2em;color:rgba(139,111,71,.6);margin-bottom:24px}
-.par{font-family:var(--font-ar);font-size:clamp(1.4rem,3.5vw,2rem);line-height:2.4;direction:rtl;color:var(--ink);margin-bottom:20px}
-.pen{font-family:var(--font-serif);font-size:15px;color:var(--ink-dim);line-height:1.9;font-style:italic}
-.pact{display:flex;gap:14px;margin-top:20px;font-size:12px;color:var(--ink-dim)}
-.pact span{cursor:pointer;transition:color .2s;border-bottom:1px solid transparent;padding-bottom:2px}
-.pact span:hover{color:var(--ink);border-color:var(--ink)}
-.ai-bar{margin-top:20px;padding:18px 22px;background:rgba(197,160,89,.06);border:1px solid rgba(197,160,89,.12);border-radius:12px}
-.ai-bar p{font-size:13px;color:var(--text-dim);line-height:1.7}
+    #splash {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #0a0a0c 0%, #1a1520 100%);
+      animation: splashFadeOut 1s ease 3s forwards;
+    }
 
-/* NOTION CONTROLS */
-.vc{position:fixed;right:14px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:1px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;overflow:hidden;z-index:100;box-shadow:0 8px 24px rgba(0,0,0,.3)}
-.vc button{width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;cursor:pointer;color:rgba(255,255,255,.4);transition:all .15s;font-size:15px}
-.vc button:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.8)}
-.vc button.on{background:rgba(197,160,89,.12);color:var(--gold)}
-.vc .div{height:1px;background:rgba(255,255,255,.06)}
+    body.light #splash {
+      background: linear-gradient(135deg, #f8f4ed 0%, #ede4d3 100%);
+    }
 
-/* SETTINGS */
-#settings{background:var(--bg);padding:80px 24px}
-.st{position:relative;z-index:2;max-width:440px;margin:0 auto}
-.st-title{font-family:var(--font-ar);font-size:24px;margin-bottom:28px;text-align:center}
-.st-row{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid rgba(255,255,255,.06)}
-.st-row label{font-size:13px;color:var(--text-dim)}
-.st-row label small{display:block;font-size:10px;opacity:.5;margin-top:3px}
-.tgl{width:44px;height:24px;border-radius:12px;background:rgba(255,255,255,.08);position:relative;cursor:pointer;transition:background .2s}
-.tgl.on{background:var(--gold)}
-.tgl::after{content:'';position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .2s}
-.tgl.on::after{transform:translateX(20px)}
-.sl{display:flex;align-items:center;gap:8px}
-.sl span{font-size:11px;color:var(--text-dim)}
-input[type=range]{-webkit-appearance:none;width:110px;height:3px;border-radius:2px;background:rgba(255,255,255,.1);outline:none}
-input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--gold);cursor:pointer;box-shadow:0 0 8px var(--gold-glow)}
-.sv{display:block;width:100%;margin-top:28px;padding:14px;background:var(--gold);color:var(--bg);border:none;border-radius:12px;font-size:13px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;cursor:pointer}
+    #particleCanvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
 
-/* AUTH */
-#auth{background:var(--bg)}
-.auth-box{position:relative;z-index:2;width:90%;max-width:380px;background:rgba(28,25,23,.9);border:1px solid rgba(197,160,89,.15);border-radius:16px;padding:40px 28px;text-align:center;backdrop-filter:blur(16px);box-shadow:0 25px 60px rgba(0,0,0,.4)}
-.auth-title{font-family:var(--font-ar);font-size:32px;margin-bottom:8px}
-.auth-sub{font-size:13px;color:var(--text-dim);margin-bottom:28px}
-.oa{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:13px;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);color:var(--text);font-size:14px;cursor:pointer;margin-bottom:10px;transition:all .2s;font-family:var(--font-ui)}
-.oa:hover{background:rgba(197,160,89,.08);border-color:rgba(197,160,89,.2)}
-.oa svg{width:18px;height:18px}
-.at{font-size:10px;color:rgba(255,255,255,.25);margin-top:18px}
+    .splash-title {
+      font-family: 'Amiri', serif;
+      font-size: 3rem;
+      font-weight: 700;
+      color: var(--gold);
+      text-align: center;
+      z-index: 2;
+      animation: titlePulse 2s ease-in-out infinite;
+    }
 
-.nav-bar{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:200;background:rgba(10,10,15,.85);backdrop-filter:blur(10px);padding:8px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.06)}
-.nav-bar a{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);text-decoration:none;padding:5px 10px;border-radius:999px;transition:all .2s}
-.nav-bar a:hover{color:var(--gold);background:rgba(197,160,89,.08)}
+    @keyframes splashFadeOut {
+      to {
+        opacity: 0;
+        pointer-events: none;
+      }
+    }
 
-@media(max-width:640px){.sp-logo{flex-direction:column;align-items:center;gap:4px}.sp-ar{font-size:2.5rem}.sp-en{font-size:3rem}.vc{right:6px}.vc button{width:36px;height:36px;font-size:13px}.scroll-reader{padding:28px 20px}.m-wrap{padding:24px 14px}}
-</style>
+    @keyframes titlePulse {
+      0%, 100% { transform: scale(1); opacity: 0.9; }
+      50% { transform: scale(1.05); opacity: 1; }
+    }
+
+    #mainContent {
+      opacity: 0;
+      animation: contentFadeIn 1s ease 3.5s forwards;
+      padding: 2rem;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    @keyframes contentFadeIn {
+      to { opacity: 1; }
+    }
+
+    .scroll-container {
+      background: linear-gradient(180deg, var(--parchment-base) 0%, var(--parchment-accent) 100%);
+      border-radius: 12px;
+      padding: 3rem 2rem;
+      box-shadow: 0 8px 24px var(--shadow-dark);
+      position: relative;
+      overflow: hidden;
+      animation: scrollUnroll 1.5s ease 3.5s backwards;
+      will-change: transform;
+    }
+
+    body.light .scroll-container {
+      box-shadow: 0 8px 24px var(--shadow-light);
+    }
+
+    @keyframes scrollUnroll {
+      from {
+        transform: scaleY(0.05) translateY(-200px);
+        opacity: 0;
+      }
+      to {
+        transform: scaleY(1) translateY(0);
+        opacity: 1;
+      }
+    }
+
+    .scroll-container::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(139, 115, 85, 0.03) 2px,
+        rgba(139, 115, 85, 0.03) 4px
+      );
+      pointer-events: none;
+    }
+
+    header {
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+
+    h1 {
+      font-family: 'Amiri', serif;
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--gold);
+      margin-bottom: 1rem;
+    }
+
+    .subtitle {
+      font-size: 1rem;
+      opacity: 0.8;
+      font-weight: 300;
+    }
+
+    .poetry-section {
+      background: rgba(255, 255, 255, 0.6);
+      border-radius: 8px;
+      padding: 2rem;
+      margin: 2rem 0;
+      border-right: 4px solid var(--gold);
+    }
+
+    body.light .poetry-section {
+      background: rgba(255, 255, 255, 0.9);
+    }
+
+    .verse {
+      font-family: 'Amiri', serif;
+      font-size: 1.75rem;
+      line-height: 2.2;
+      color: #2c2c2c;
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+
+    .poet {
+      text-align: left;
+      font-size: 1.1rem;
+      color: var(--indigo);
+      font-weight: 500;
+    }
+
+    .walkthrough {
+      margin: 3rem 0;
+    }
+
+    .walkthrough h2 {
+      font-family: 'Amiri', serif;
+      font-size: 2rem;
+      color: var(--gold);
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .step {
+      background: rgba(255, 255, 255, 0.4);
+      border-radius: 8px;
+      padding: 1.5rem;
+      text-align: center;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      cursor: pointer;
+    }
+
+    body.light .step {
+      background: rgba(255, 255, 255, 0.8);
+    }
+
+    .step:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 6px 20px var(--shadow-dark);
+    }
+
+    .step-number {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--gold);
+      color: white;
+      font-weight: 700;
+      font-size: 1.25rem;
+      margin-bottom: 1rem;
+    }
+
+    .step h3 {
+      font-family: 'Amiri', serif;
+      font-size: 1.25rem;
+      margin-bottom: 0.5rem;
+      color: var(--indigo);
+    }
+
+    .step p {
+      font-size: 0.9rem;
+      opacity: 0.85;
+      line-height: 1.6;
+    }
+
+    .controls {
+      position: fixed;
+      top: 2rem;
+      left: 2rem;
+      display: flex;
+      gap: 1rem;
+      z-index: 1000;
+    }
+
+    .btn {
+      min-width: 44px;
+      min-height: 44px;
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 8px;
+      font-family: 'Tajawal', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 8px var(--shadow-dark);
+      will-change: transform;
+    }
+
+    .btn-theme {
+      background: var(--gold);
+      color: white;
+    }
+
+    .btn-theme:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 16px var(--shadow-dark);
+    }
+
+    .btn-theme:active {
+      transform: scale(0.98);
+    }
+
+    @media (max-width: 768px) {
+      .splash-title {
+        font-size: 2rem;
+      }
+
+      h1 {
+        font-size: 2rem;
+      }
+
+      .verse {
+        font-size: 1.35rem;
+        line-height: 2;
+      }
+
+      .scroll-container {
+        padding: 2rem 1.5rem;
+      }
+
+      .controls {
+        top: 1rem;
+        left: 1rem;
+      }
+
+      .steps {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    .btn:focus-visible {
+      outline: 3px solid var(--indigo);
+      outline-offset: 2px;
+    }
+
+    .step:focus-visible {
+      outline: 3px solid var(--indigo);
+      outline-offset: 2px;
+    }
+  </style>
 </head>
 <body>
-<canvas id="particles"></canvas>
-<nav class="nav-bar"><a href="#splash">Splash</a><a href="#walk">Intro</a><a href="#main">Read</a><a href="#settings">Settings</a><a href="#auth">Auth</a></nav>
+  <div id="splash">
+    <canvas id="particleCanvas"></canvas>
+    <div class="splash-title">رحلة الشعر</div>
+  </div>
 
-<section class="screen" id="splash"><span class="label">Splash</span><div class="sp"><div class="sp-logo"><span class="sp-ar">قافية</span><span class="sp-en">qafiyah</span></div><div class="sp-tag">Arabic Poetry, Pair by Pair</div><a href="#walk" class="sp-btn">Begin Your Journey</a></div></section>
+  <div id="mainContent">
+    <div class="controls">
+      <button class="btn btn-theme" onclick="toggleTheme()" aria-label="تبديل السمة">
+        🌙 / ☀️
+      </button>
+    </div>
 
-<section class="screen" id="walk"><span class="label">Walkthrough</span><div class="wk">
-  <div class="wk-step"><div class="wk-num">Step 01</div><h3>اكتشف الشعر</h3><p>Discover 84,000+ Arabic poems spanning centuries, each with English translation.</p></div>
-  <div class="wk-step"><div class="wk-num">Step 02</div><h3>استمع وتعلّم</h3><p>AI-powered recitation with transliteration guides for pronunciation.</p></div>
-  <div class="wk-step"><div class="wk-num">Step 03</div><h3>احفظ المفضّلات</h3><p>Save verses, adjust display, build your personal anthology.</p></div>
-  <button class="wk-cta" onclick="document.getElementById('main').scrollIntoView({behavior:'smooth'})">Unroll the Scroll</button>
-</div></section>
+    <div class="scroll-container">
+      <header>
+        <h1>رحلة الشعر العربي</h1>
+        <p class="subtitle">Particle Scroll — Gold Particles + Scroll Unroll</p>
+      </header>
 
-<section class="screen" id="main" style="align-items:stretch"><div class="m-wrap"><span class="label">Main App</span>
-  <div class="m-nav"><div class="m-brand"><div class="orb"></div><span>Qafiyah</span></div><div class="m-links"><span>Explore</span><span>Saved</span><span>Settings</span></div></div>
-  <div class="scroll-reader"><div class="rod top"></div><div class="rod bottom"></div><div class="pm">Al-Mutanabbi &bull; Panegyric</div><div class="par">أنا الذي نظر الأعمى إلى أدبي<br>وأسمعت كلماتي من به صممُ</div><div class="pen">I am the one whose literature the blind can see,<br>whose words reach even the ears of the deaf.</div><div class="pact"><span>&#9654; Listen</span><span>&#9825; Save</span><span>&#8634; Next</span><span>Aa Size</span></div></div>
-  <div class="ai-bar"><p>&#10024; Al-Mutanabbi's supreme confidence in his craft. This famous couplet uses hyperbole (مبالغة) — a cornerstone of classical Arabic rhetoric — to assert the universality and power of his poetry.</p></div>
-</div></section>
+      <section class="poetry-section">
+        <div class="verse" lang="ar" dir="rtl">
+          أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ<br>
+          فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
+        </div>
+        <div class="poet">— أحمد شوقي</div>
+      </section>
 
-<div class="vc"><button>&#8635;</button><div class="div"></div><button class="on">&#9654;</button><div class="div"></div><button>&#9825;</button><div class="div"></div><button>Aa</button><div class="div"></div><button>ع</button><div class="div"></div><button>&#9790;</button><div class="div"></div><button>&#8599;</button></div>
+      <section class="walkthrough">
+        <h2>دليل التفاعل</h2>
+        <div class="steps">
+          <div class="step" tabindex="0">
+            <div class="step-number">1</div>
+            <h3>شاهد الجسيمات</h3>
+            <p>100 جسيم ذهبي يتحرك بسلاسة عبر الشاشة</p>
+          </div>
+          <div class="step" tabindex="0">
+            <div class="step-number">2</div>
+            <h3>انتقال السجل</h3>
+            <p>تحول تدريجي من الجسيمات إلى سجل ورقي ينفتح</p>
+          </div>
+          <div class="step" tabindex="0">
+            <div class="step-number">3</div>
+            <h3>اقرأ الشعر</h3>
+            <p>منطقة قراءة بملمس رق مع تدرجات لونية دافئة</p>
+          </div>
+          <div class="step" tabindex="0">
+            <div class="step-number">4</div>
+            <h3>بدّل السمة</h3>
+            <p>انتقال سلس بين الوضع الداكن والفاتح</p>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
 
-<section class="screen" id="settings"><span class="label">Settings</span><div class="st"><div class="st-title">الإعدادات</div>
-  <div class="st-row"><label>Text Size<small>Arabic display</small></label><div class="sl"><span>A</span><input type="range" min="14" max="32" value="22"><span style="font-size:16px">A</span></div></div>
-  <div class="st-row"><label>Transliteration<small>Latin pronunciation</small></label><div class="tgl on"></div></div>
-  <div class="st-row"><label>Dark Mode<small>Appearance</small></label><div class="tgl on"></div></div>
-  <div class="st-row"><label>Auto Audio<small>Play on load</small></label><div class="tgl"></div></div>
-  <div class="st-row"><label>AI Insights<small>Analysis</small></label><div class="tgl on"></div></div>
-  <button class="sv">Save Preferences</button>
-</div></section>
+  <script>
+    const canvas = document.getElementById('particleCanvas');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+    let animationId;
 
-<section class="screen" id="auth"><span class="label">Auth</span><div class="auth-box"><div class="auth-title">مرحباً</div><div class="auth-sub">Sign in to save and sync your poetry</div>
-  <button class="oa"><svg viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>Continue with Google</button>
-  <button class="oa"><svg viewBox="0 0 24 24" fill="#fff"><path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.52-3.23 0-1.44.64-2.2.52-3.06-.4C3.79 16.17 4.36 9.04 8.92 8.78c1.27.06 2.15.72 2.89.76.98-.2 1.92-.76 2.97-.69 1.26.1 2.21.59 2.83 1.5-2.59 1.54-1.97 4.93.36 5.87-.47 1.24-.73 1.79-1.37 2.89-.97 1.69-2.34 3.38-4.02 3.42-.74.02-1.23-.38-2.03-.4-.83.02-1.35.42-2.13.42-1.73-.04-3.05-1.84-4.03-3.52-2.75-4.72-3.05-10.27-1.35-13.17 1.2-2.04 3.09-3.23 5.1-3.28 1.1-.02 2.17.74 2.86.74.69 0 1.98-.92 3.34-.78.57.02 2.16.23 3.18 1.72-2.58 1.61-2.16 5.57.47 6.63z"/></svg>Continue with Apple</button>
-  <div class="at">By signing in you agree to our Terms and Privacy Policy</div>
-</div></section>
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
 
-<script>
-const c=document.getElementById('particles'),ctx=c.getContext('2d');let W,H;
-function resize(){W=c.width=innerWidth;H=c.height=innerHeight}resize();addEventListener('resize',resize);
-let ps=[];
-class P{constructor(){this.x=Math.random()*W;this.y=Math.random()*H;this.r=Math.random()*1.8+.3;this.vx=(Math.random()-.5)*.12;this.vy=(Math.random()-.5)*.12;this.a=Math.random()*.35+.08;this.gold=Math.random()>.3}
-update(){this.x+=this.vx;this.y+=this.vy;if(this.x<0||this.x>W)this.vx*=-1;if(this.y<0||this.y>H)this.vy*=-1;this.a+=Math.sin(Date.now()*.001+this.x)*.002}
-draw(){ctx.beginPath();ctx.arc(this.x,this.y,this.r,0,Math.PI*2);ctx.fillStyle=this.gold?`rgba(197,160,89,${this.a})`:`rgba(138,110,218,${this.a*.5})`;ctx.fill();if(this.r>1.2){ctx.beginPath();ctx.arc(this.x,this.y,this.r*3,0,Math.PI*2);ctx.fillStyle=this.gold?`rgba(197,160,89,${this.a*.12})`:`rgba(138,110,218,${this.a*.06})`;ctx.fill()}}}
-for(let i=0;i<180;i++)ps.push(new P);
-(function loop(){ctx.clearRect(0,0,W,H);ps.forEach(p=>{p.update();p.draw()});requestAnimationFrame(loop)})();
-document.querySelectorAll('.tgl').forEach(t=>t.addEventListener('click',()=>t.classList.toggle('on')));
-</script>
+    class Particle {
+      constructor() {
+        this.x = Math.random() * canvas.width;
+        this.y = Math.random() * canvas.height;
+        this.size = Math.random() * 3 + 1;
+        this.speedX = Math.random() * 2 - 1;
+        this.speedY = Math.random() * 2 - 1;
+        this.opacity = Math.random() * 0.5 + 0.5;
+      }
+
+      update() {
+        this.x += this.speedX;
+        this.y += this.speedY;
+
+        if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
+        if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
+      }
+
+      draw() {
+        ctx.save();
+        ctx.globalAlpha = this.opacity;
+        ctx.fillStyle = '#C5A059';
+        ctx.shadowBlur = 10;
+        ctx.shadowColor = '#C5A059';
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    function initParticles() {
+      particles = [];
+      for (let i = 0; i < 100; i++) {
+        particles.push(new Particle());
+      }
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+      particles.forEach(particle => {
+        particle.update();
+        particle.draw();
+      });
+
+      animationId = requestAnimationFrame(animate);
+    }
+
+    function stopParticles() {
+      cancelAnimationFrame(animationId);
+    }
+
+    resizeCanvas();
+    initParticles();
+    animate();
+
+    window.addEventListener('resize', () => {
+      resizeCanvas();
+      initParticles();
+    });
+
+    setTimeout(() => {
+      stopParticles();
+    }, 3000);
+
+    function toggleTheme() {
+      document.body.classList.toggle('light');
+    }
+
+    document.querySelectorAll('.step').forEach(step => {
+      step.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          step.click();
+        }
+      });
+    });
+  </script>
 </body>
 </html>

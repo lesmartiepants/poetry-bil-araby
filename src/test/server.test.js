@@ -628,4 +628,38 @@ describe('Backend API Server', () => {
       expect(response.body.tags).toContain('رومانسي');
     });
   });
+
+  describe('Keep-Alive Mechanism', () => {
+    it('should have health endpoint that returns totalPoems for keep-alive pings', async () => {
+      // Mock successful database query
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ count: '84329' }]
+      });
+
+      const response = await request(app)
+        .get('/api/health')
+        .expect('Content-Type', /json/)
+        .expect(200);
+
+      expect(response.body).toHaveProperty('status', 'ok');
+      expect(response.body).toHaveProperty('database', 'connected');
+      expect(response.body).toHaveProperty('totalPoems');
+      expect(response.body.totalPoems).toBe(84329);
+    });
+
+    it('should respond quickly to health checks (< 100ms)', async () => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ count: '84329' }]
+      });
+
+      const startTime = Date.now();
+      await request(app)
+        .get('/api/health')
+        .expect(200);
+      const duration = Date.now() - startTime;
+
+      // Health check should be very fast for keep-alive pings
+      expect(duration).toBeLessThan(100);
+    });
+  });
 });

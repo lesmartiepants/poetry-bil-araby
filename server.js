@@ -250,17 +250,83 @@ export { app, pool };
 const currentFile = fileURLToPath(import.meta.url);
 const mainFile = resolve(process.argv[1]);
 if (currentFile === mainFile) {
-  app.listen(PORT, () => {
+  const server = app.listen(PORT, () => {
     console.log(`🚀 Poetry API server running on http://localhost:${PORT}`);
     console.log(`   Health check: http://localhost:${PORT}/api/health`);
     console.log(`   Random poem: http://localhost:${PORT}/api/poems/random`);
   });
 
+  // Keep-alive mechanism to prevent Render free tier from sleeping (15 min idle timeout)
+  // Self-ping with randomized interval (9-13 min) to prevent synchronized load
+  let keepAliveTimeout = null;
+  
+  if (process.env.NODE_ENV === 'production') {
+    // Wait 30 seconds after startup before starting keep-alive pings
+    keepAliveTimeout = setTimeout(() => {
+      // Randomize interval between 9-13 minutes to prevent synchronized pings
+      const getRandomInterval = () => {
+        const min = 9 * 60 * 1000;  // 9 minutes
+        const max = 13 * 60 * 1000; // 13 minutes
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+      };
+      
+      const pingHealth = () => {
+        const url = process.env.RENDER_EXTERNAL_URL 
+          ? `${process.env.RENDER_EXTERNAL_URL}/api/health`
+          : `http://localhost:${PORT}/api/health`;
+        
+        fetch(url)
+          .then(res => {
+            if (!res.ok) {
+              throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+            }
+            return res.json();
+          })
+          .then(data => {
+            console.log(`✓ Keep-alive ping successful - ${data.totalPoems} poems in database`);
+            
+            // Schedule next ping with new random interval
+            keepAliveTimeout = setTimeout(() => {
+              pingHealth();
+            }, getRandomInterval());
+          })
+          .catch(err => {
+            console.error(`⚠ Keep-alive ping failed (${url}):`, err.message);
+            
+            // Retry with new random interval even on failure
+            keepAliveTimeout = setTimeout(() => {
+              pingHealth();
+            }, getRandomInterval());
+          });
+      };
+      
+      const initialInterval = getRandomInterval();
+      console.log(`🔄 Starting keep-alive self-ping (every 9-13 minutes, initial: ${Math.round(initialInterval / 60000)} min)`);
+      
+      // Start first ping after random interval
+      keepAliveTimeout = setTimeout(() => {
+        pingHealth();
+      }, initialInterval);
+    }, 30 * 1000); // Wait 30 seconds before first ping
+  }
+
   // Graceful shutdown
   process.on('SIGTERM', () => {
     console.log('SIGTERM signal received: closing HTTP server');
-    pool.end(() => {
-      console.log('Database pool closed');
+    
+    // Clear keep-alive timeout (no interval needed since we use chained timeouts)
+    if (keepAliveTimeout) {
+      clearTimeout(keepAliveTimeout);
+      console.log('Keep-alive timeout cleared');
+    }
+    
+    // Close server first, then database pool
+    server.close(() => {
+      console.log('HTTP server closed');
+      pool.end(() => {
+        console.log('Database pool closed');
+        process.exit(0);
+      });
     });
   });
 }

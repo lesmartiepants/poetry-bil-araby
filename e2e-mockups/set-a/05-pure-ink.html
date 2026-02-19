@@ -4,138 +4,396 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>E2E #5: Pure Ink — Stark Typography</title>
-<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-:root{--bg:#0a0a0a;--bg2:#0f0f10;--text:#f9fafb;--text-dim:#71717a;--grid-line:rgba(255,255,255,.04);--accent:#a1a1aa;--white:#fff;--mono:'IBM Plex Mono',monospace;--font-ar:'Amiri',serif;--font-ui:'Inter',system-ui,sans-serif;--radius:12px}
-html{font-family:var(--font-ui);background:var(--bg);color:var(--text);scroll-behavior:smooth;overflow-x:hidden}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --bg: #0a0a0a;
+  --bg2: #0f0f10;
+  --text: #f9fafb;
+  --text-dim: #71717a;
+  --grid-line: rgba(255, 255, 255, 0.04);
+  --accent: #a1a1aa;
+  --white: #fff;
+  --font-ar: 'Amiri', serif;
+  --font-ui: 'Tajawal', system-ui, sans-serif;
+}
+html.light {
+  --bg: #ffffff;
+  --bg2: #f9fafb;
+  --text: #0a0a0a;
+  --text-dim: #71717a;
+  --grid-line: rgba(0, 0, 0, 0.04);
+  --accent: #52525b;
+}
+html {
+  font-family: var(--font-ui);
+  background: var(--bg);
+  color: var(--text);
+}
+body { min-height: 100vh; }
 
-/* Dot grid background */
-body::before{content:'';position:fixed;inset:0;background-image:radial-gradient(circle,rgba(255,255,255,.06) 1px,transparent 1px);background-size:24px 24px;opacity:.4;pointer-events:none;z-index:0}
+.theme-toggle {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 100;
+  width: 48px;
+  height: 48px;
+  border-radius: 4px;
+  border: 1px solid var(--grid-line);
+  background: var(--bg2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  font-size: 20px;
+}
+.theme-toggle:hover {
+  border-color: var(--accent);
+  background: var(--bg);
+}
 
-.screen{position:relative;width:100%;min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;overflow:hidden}
-.label{position:absolute;top:24px;left:24px;font-family:var(--mono);font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:var(--text-dim);opacity:.5}
+canvas#ink {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+.screen {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+}
+
+.grid-overlay {
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.label {
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--accent);
+  opacity: 0.7;
+  z-index: 10;
+}
 
 /* SPLASH */
-#splash{background:var(--bg)}
-.sp{position:relative;z-index:2;text-align:center;padding:40px}
-.sp-logo{display:flex;flex-direction:row-reverse;align-items:flex-end;justify-content:center;gap:18px;margin-bottom:16px}
-.sp-ar{font-family:var(--font-ar);font-size:clamp(3rem,8vw,4.5rem);font-weight:700}
-.sp-en{font-size:clamp(2.5rem,7vw,5rem);font-weight:200;letter-spacing:-.04em;text-transform:lowercase}
-.sp-mono{font-family:var(--mono);font-size:12px;color:var(--text-dim);letter-spacing:.15em;margin-bottom:56px}
-.sp-enter{display:inline-block;font-family:var(--mono);padding:14px 40px;border:1px solid #333;color:var(--text);font-size:12px;letter-spacing:.2em;text-transform:uppercase;text-decoration:none;transition:all .3s}
-.sp-enter:hover{background:#fff;color:#000}
-.sp-hint{font-family:var(--mono);margin-top:32px;font-size:10px;color:rgba(255,255,255,.2)}
+#splash {
+  background: var(--bg);
+}
+.splash-content {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  padding: 40px;
+  max-width: 600px;
+  animation: inkReveal 1s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes inkReveal {
+  from { opacity: 0; clip-path: inset(0 50% 0 50%); }
+  to { opacity: 1; clip-path: inset(0 0 0 0); }
+}
 
-/* WALKTHROUGH */
-#walk{background:var(--bg2)}
-.wk{position:relative;z-index:2;max-width:480px;width:90%;padding:48px 0;font-family:var(--mono)}
-.wk-item{display:flex;gap:16px;margin-bottom:32px;align-items:flex-start}
-.wk-num{font-size:10px;color:var(--text-dim);border:1px solid #333;width:28px;height:28px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-weight:600}
-.wk-body h3{font-family:var(--font-ui);font-size:15px;font-weight:500;margin-bottom:4px}
-.wk-body p{font-size:12px;color:var(--text-dim);line-height:1.7}
-.wk-sep{height:1px;background:#222;margin:0 0 32px 44px}
-.wk-cta{display:block;margin:16px 0 0;padding:12px 32px;background:#fff;color:#000;border:none;font-size:11px;letter-spacing:.2em;text-transform:uppercase;cursor:pointer;font-family:var(--mono)}
+.ink-title {
+  font-family: var(--font-ar);
+  font-size: clamp(4rem, 10vw, 6rem);
+  font-weight: 700;
+  color: var(--white);
+  margin-bottom: 16px;
+  line-height: 1;
+  animation: strokeDraw 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.2s backwards;
+}
+@keyframes strokeDraw {
+  from { opacity: 0; transform: scaleY(0.5); }
+  to { opacity: 1; transform: scaleY(1); }
+}
+
+.ink-subtitle {
+  font-size: 11px;
+  color: var(--text-dim);
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  margin-bottom: 64px;
+  font-weight: 500;
+  animation: fadeIn 0.8s 0.6s backwards;
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.ink-btn {
+  padding: 16px 48px;
+  min-width: 44px;
+  min-height: 44px;
+  border: 2px solid var(--text);
+  background: transparent;
+  color: var(--text);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.35em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: scaleIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.9s backwards;
+  will-change: transform;
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+.ink-btn:hover {
+  background: var(--text);
+  color: var(--bg);
+}
 
 /* MAIN */
-#main{background:var(--bg);padding:0;align-items:stretch}
-.m-wrap{position:relative;z-index:2;max-width:720px;margin:0 auto;padding:32px 24px;min-height:100vh}
-.m-nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:32px;font-family:var(--mono);font-size:12px}
-.m-brand{font-weight:600;letter-spacing:.3em;font-size:11px}
-.m-links{display:flex;gap:14px;color:var(--text-dim)}
-.m-links span{cursor:pointer;transition:color .2s}
-.m-links span:hover{color:#fff}
-.poem{border:1px solid #262626;padding:40px 28px;margin-bottom:20px}
-.poem .meta{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.2em;color:var(--text-dim);margin-bottom:24px;padding-bottom:12px;border-bottom:1px solid #222}
-.poem .ar{font-family:var(--font-ar);font-size:clamp(1.3rem,3vw,1.8rem);line-height:2.4;direction:rtl;margin-bottom:20px}
-.poem .en{font-size:13px;color:var(--text-dim);line-height:1.9;font-style:italic}
-.poem .cursor-line{font-family:var(--mono);font-size:11px;color:var(--accent);margin-top:20px;padding-top:12px;border-top:1px solid #222}
-.poem .cursor-line span{color:#fff}
-.acts{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
-.acts button{font-family:var(--mono);padding:6px 14px;border:1px solid #333;background:transparent;color:var(--text-dim);font-size:10px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:all .2s}
-.acts button:hover{border-color:#fff;color:#fff}
-.ai-box{border-left:2px solid #333;padding:16px 20px;margin-top:20px}
-.ai-box p{font-size:12px;color:var(--text-dim);line-height:1.7}
+#main {
+  background: var(--bg);
+  display: none;
+  padding: 40px 24px;
+}
+.ink-layout {
+  position: relative;
+  z-index: 2;
+  max-width: 900px;
+  width: 100%;
+  margin: 0 auto;
+}
+.ink-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 48px;
+  padding: 16px 0;
+  border-bottom: 1px solid var(--grid-line);
+}
+.ink-brand {
+  font-family: var(--font-ar);
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--white);
+}
 
-/* MINIMALIST CONTROLS */
-.vc{position:fixed;right:14px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:2px;z-index:100}
-.vc button{width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:transparent;border:1px solid #222;cursor:pointer;color:var(--text-dim);font-size:12px;font-family:var(--mono);transition:all .15s}
-.vc button:hover{border-color:#555;color:#fff}
-.vc button.on{background:#fff;color:#000;border-color:#fff}
+.canvas-card {
+  background: var(--bg2);
+  border: 1px solid var(--grid-line);
+  padding: 56px;
+  margin-bottom: 32px;
+  position: relative;
+  transition: all 0.3s ease;
+}
+.canvas-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 2px;
+  height: 100%;
+  background: var(--accent);
+}
+.canvas-card:hover {
+  border-color: var(--accent);
+  background: var(--bg);
+}
 
-/* SETTINGS */
-#settings{background:var(--bg2);padding:80px 24px}
-.st{position:relative;z-index:2;max-width:420px;margin:0 auto}
-.st-title{font-family:var(--mono);font-size:11px;letter-spacing:.3em;text-transform:uppercase;margin-bottom:28px;text-align:center;color:var(--text-dim)}
-.st-row{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid #1a1a1a}
-.st-row label{font-size:13px}
-.st-row label small{display:block;font-family:var(--mono);font-size:10px;color:var(--text-dim);margin-top:3px}
-.tgl{width:40px;height:22px;border-radius:11px;background:#222;position:relative;cursor:pointer;transition:background .2s}
-.tgl.on{background:#fff}
-.tgl::after{content:'';position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:var(--bg);border:1px solid #333;transition:all .2s}
-.tgl.on::after{transform:translateX(18px);background:#000;border-color:#fff}
-.sl{display:flex;align-items:center;gap:8px}
-.sl span{font-family:var(--mono);font-size:10px;color:var(--text-dim)}
-input[type=range]{-webkit-appearance:none;width:90px;height:2px;background:#333;outline:none}
-input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:#fff;cursor:pointer}
-.sv-btn{display:block;width:100%;margin-top:24px;padding:12px;background:#fff;color:#000;border:none;font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;cursor:pointer}
+.poem-text {
+  font-family: var(--font-ar);
+  font-size: 36px;
+  line-height: 2.4;
+  color: var(--white);
+  text-align: right;
+  direction: rtl;
+  margin-bottom: 32px;
+  font-weight: 400;
+}
+.poem-attribution {
+  font-size: 13px;
+  color: var(--accent);
+  text-align: left;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
 
-/* AUTH */
-#auth{background:var(--bg)}
-.auth-box{position:relative;z-index:2;width:90%;max-width:360px;border:1px solid #262626;padding:40px 28px;text-align:center}
-.auth-title{font-family:var(--font-ar);font-size:32px;margin-bottom:8px}
-.auth-sub{font-family:var(--mono);font-size:11px;color:var(--text-dim);margin-bottom:28px}
-.oa{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:12px;border:1px solid #333;background:transparent;color:var(--text);font-size:13px;cursor:pointer;margin-bottom:8px;transition:all .2s;font-family:var(--font-ui)}
-.oa:hover{border-color:#fff}
-.oa svg{width:16px;height:16px}
-.at{font-family:var(--mono);font-size:9px;color:var(--text-dim);margin-top:20px}
+.stark-btn {
+  padding: 14px 40px;
+  min-width: 44px;
+  min-height: 44px;
+  background: var(--white);
+  color: var(--bg);
+  border: none;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3em;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.stark-btn:hover {
+  background: var(--accent);
+}
 
-.nav-bar{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:4px;z-index:200;background:rgba(10,10,10,.9);backdrop-filter:blur(8px);padding:6px 12px;border:1px solid #222}
-.nav-bar a{font-family:var(--mono);font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:var(--text-dim);text-decoration:none;padding:5px 8px;transition:color .2s}
-.nav-bar a:hover{color:#fff}
+@media (max-width: 768px) {
+  .ink-title { font-size: 4rem; }
+  .splash-content { padding: 24px; }
+  .canvas-card { padding: 32px 24px; }
+  .poem-text {
+    font-size: 28px;
+    line-height: 2.2;
+  }
+  .theme-toggle {
+    width: 44px;
+    height: 44px;
+    top: 16px;
+    right: 16px;
+  }
+  .label {
+    font-size: 8px;
+    top: 16px;
+    left: 16px;
+  }
+}
 
-@media(max-width:640px){.sp-logo{flex-direction:column;align-items:center;gap:2px}.sp-ar{font-size:2.5rem}.sp-en{font-size:2.8rem}.vc{right:6px}.vc button{width:30px;height:30px;font-size:10px}.poem{padding:24px 16px}.m-wrap{padding:16px 12px}}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
 </style>
 </head>
 <body>
-<nav class="nav-bar"><a href="#splash">Splash</a><a href="#walk">Intro</a><a href="#main">Read</a><a href="#settings">Settings</a><a href="#auth">Auth</a></nav>
+  <div class="grid-overlay"></div>
+  <canvas id="ink"></canvas>
 
-<section class="screen" id="splash"><span class="label">// splash</span><div class="sp"><div class="sp-logo"><span class="sp-ar">قافية</span><span class="sp-en">qafiyah</span></div><div class="sp-mono">ARABIC POETRY &middot; PAIR BY PAIR</div><a href="#walk" class="sp-enter">$ enter --</a><div class="sp-hint">v1.0.0 &middot; 84,329 poems loaded</div></div></section>
+  <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+    <span id="theme-icon">☀️</span>
+  </button>
 
-<section class="screen" id="walk"><span class="label">// walkthrough</span><div class="wk">
-  <div class="wk-item"><div class="wk-num">01</div><div class="wk-body"><h3>Discover</h3><p>84,000+ Arabic poems from pre-Islamic to modern, paired with English translations.</p></div></div>
-  <div class="wk-sep"></div>
-  <div class="wk-item"><div class="wk-num">02</div><div class="wk-body"><h3>Listen</h3><p>AI-powered native recitation with transliteration toggle for pronunciation.</p></div></div>
-  <div class="wk-sep"></div>
-  <div class="wk-item"><div class="wk-num">03</div><div class="wk-body"><h3>Collect</h3><p>Save favorites, adjust text size, sync across devices.</p></div></div>
-  <button class="wk-cta" onclick="document.getElementById('main').scrollIntoView({behavior:'smooth'})">$ START</button>
-</div></section>
+  <div class="screen" id="splash">
+    <div class="label">Pure Ink</div>
+    <div class="splash-content">
+      <h1 class="ink-title">قافية</h1>
+      <p class="ink-subtitle">Typography First</p>
+      <button class="ink-btn" onclick="showMain()">Enter</button>
+    </div>
+  </div>
 
-<section class="screen" id="main" style="align-items:stretch"><div class="m-wrap"><span class="label">// main</span>
-  <div class="m-nav"><div class="m-brand">QAFIYAH</div><div class="m-links"><span>/explore</span><span>/saved</span><span>/settings</span></div></div>
-  <div class="poem"><div class="meta">LABID IBN RABI'AH &middot; MU'ALLAQA &middot; LINE 01</div><div class="ar">عَفَتِ الدِيارُ مَحَلُّها فَمُقامُها<br>بِمِنىً تَأَبَّدَ غَولُها فَرِجامُها</div><div class="en">The dwellings are effaced, their brief encampments and long stays,<br>At Mina — overgrown now are Ghawl and Rijam.</div><div class="cursor-line">transliteration: <span>ʿafati d-diyāru maḥalluhā fa-muqāmuhā</span></div><div class="acts"><button>&#9654; play</button><button>&#9825; save</button><button>&#8634; next</button><button>Aa size</button><button>ع translit</button></div></div>
-  <div class="ai-box"><p>Labid's opening atlal (ruins) passage is considered the finest example of the classical qasida structure. The abandoned campsite becomes a canvas for memory and loss.</p></div>
-</div></section>
+  <div class="screen" id="main">
+    <div class="ink-layout">
+      <nav class="ink-nav">
+        <div class="ink-brand">قافية</div>
+      </nav>
 
-<div class="vc"><button>&#8635;</button><button class="on">&#9654;</button><button>&#9825;</button><button>Aa</button><button>ع</button><button>&#9790;</button></div>
+      <div class="canvas-card">
+        <div class="poem-text" lang="ar" dir="rtl">
+          أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ<br>
+          فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
+        </div>
+        <div class="poem-attribution">— أحمد شوقي</div>
+      </div>
 
-<section class="screen" id="settings"><span class="label">// settings</span><div class="st"><div class="st-title">PREFERENCES</div>
-  <div class="st-row"><label>Text Size<small>font-size: arabic</small></label><div class="sl"><span>14</span><input type="range" min="14" max="32" value="22"><span>32</span></div></div>
-  <div class="st-row"><label>Transliteration<small>enabled: true</small></label><div class="tgl on"></div></div>
-  <div class="st-row"><label>Dark Mode<small>theme: dark</small></label><div class="tgl on"></div></div>
-  <div class="st-row"><label>Auto Audio<small>autoplay: false</small></label><div class="tgl"></div></div>
-  <div class="st-row"><label>AI Insights<small>enabled: true</small></label><div class="tgl on"></div></div>
-  <button class="sv-btn">$ SAVE --force</button>
-</div></section>
-
-<section class="screen" id="auth"><span class="label">// auth</span><div class="auth-box"><div class="auth-title">مرحباً</div><div class="auth-sub">AUTHENTICATE TO SYNC</div>
-  <button class="oa"><svg viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>Google</button>
-  <button class="oa"><svg viewBox="0 0 24 24" fill="#fff"><path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.52-3.23 0-1.44.64-2.2.52-3.06-.4C3.79 16.17 4.36 9.04 8.92 8.78c1.27.06 2.15.72 2.89.76.98-.2 1.92-.76 2.97-.69 1.26.1 2.21.59 2.83 1.5-2.59 1.54-1.97 4.93.36 5.87-.47 1.24-.73 1.79-1.37 2.89-.97 1.69-2.34 3.38-4.02 3.42-.74.02-1.23-.38-2.03-.4-.83.02-1.35.42-2.13.42-1.73-.04-3.05-1.84-4.03-3.52-2.75-4.72-3.05-10.27-1.35-13.17 1.2-2.04 3.09-3.23 5.1-3.28 1.1-.02 2.17.74 2.86.74.69 0 1.98-.92 3.34-.78.57.02 2.16.23 3.18 1.72-2.58 1.61-2.16 5.57.47 6.63z"/></svg>Apple</button>
-  <div class="at">terms &amp; privacy policy apply</div>
-</div></section>
+      <button class="stark-btn">Next</button>
+    </div>
+  </div>
 
 <script>
-document.querySelectorAll('.tgl').forEach(t=>t.addEventListener('click',()=>t.classList.toggle('on')));
+function toggleTheme() {
+  const html = document.documentElement;
+  const icon = document.getElementById('theme-icon');
+  html.classList.toggle('light');
+  icon.textContent = html.classList.contains('light') ? '🌙' : '☀️';
+}
+
+function showMain() {
+  document.getElementById('splash').style.display = 'none';
+  document.getElementById('main').style.display = 'flex';
+}
+
+// Ink Stroke Animation
+const canvas = document.getElementById('ink');
+const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+class InkStroke {
+  constructor() {
+    this.x = Math.random() * canvas.width;
+    this.y = Math.random() * canvas.height;
+    this.length = Math.random() * 100 + 50;
+    this.angle = Math.random() * Math.PI * 2;
+    this.width = Math.random() * 3 + 1;
+    this.opacity = Math.random() * 0.15 + 0.05;
+    this.life = 0;
+    this.maxLife = Math.random() * 300 + 200;
+  }
+
+  update() {
+    this.life++;
+    this.opacity = Math.max(0, (1 - this.life / this.maxLife) * 0.2);
+  }
+
+  draw() {
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    ctx.rotate(this.angle);
+
+    ctx.strokeStyle = `rgba(255, 255, 255, ${this.opacity})`;
+    ctx.lineWidth = this.width;
+    ctx.lineCap = 'round';
+
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(this.length, 0);
+    ctx.stroke();
+
+    ctx.restore();
+  }
+}
+
+const strokes = [];
+
+function animateInk() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  if (Math.random() < 0.05 && strokes.length < 30) {
+    strokes.push(new InkStroke());
+  }
+
+  strokes.forEach((stroke, i) => {
+    stroke.update();
+    stroke.draw();
+    if (stroke.life > stroke.maxLife) strokes.splice(i, 1);
+  });
+
+  requestAnimationFrame(animateInk);
+}
+animateInk();
+
+window.addEventListener('resize', () => {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+});
 </script>
 </body>
 </html>

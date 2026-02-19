@@ -3,152 +3,416 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>E2E #3: Cosmic Scholar — Deep Space Academic</title>
-<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<title>E2E #3: Cosmic Scholar — Stellar Observatory</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-:root{--bg:#03050c;--bg2:#070b1b;--text:#eef2ff;--text-dim:rgba(226,232,240,.55);--violet:rgba(139,92,246,.5);--cyan:rgba(56,189,248,.4);--violet-solid:#8b5cf6;--cyan-solid:#38bdf8;--glass:rgba(255,255,255,.04);--glass-border:rgba(148,163,184,.12);--radius:16px;--font-ar:'Amiri',serif;--font-ui:'Inter',system-ui,sans-serif}
-html{font-family:var(--font-ui);background:var(--bg);color:var(--text);scroll-behavior:smooth;overflow-x:hidden}
-canvas#stars{position:fixed;inset:0;z-index:0;pointer-events:none}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --deep-space: #0a0a14;
+  --nebula: #1a1a2e;
+  --star: #ffffff;
+  --cosmic-blue: #4F46E5;
+  --cosmic-purple: #7C3AED;
+  --gold: #C5A059;
+  --text: #f5f0e8;
+  --text-dim: rgba(245, 240, 232, 0.5);
+  --font-ar: 'Amiri', serif;
+  --font-ui: 'Tajawal', system-ui, sans-serif;
+}
+html.light {
+  --deep-space: #f8f9ff;
+  --nebula: #e8eaf5;
+  --star: #1a1a2e;
+  --text: #0a0a14;
+  --text-dim: rgba(10, 10, 20, 0.5);
+}
+html {
+  font-family: var(--font-ui);
+  background: var(--deep-space);
+  color: var(--text);
+}
+body { min-height: 100vh; }
 
-.screen{position:relative;width:100%;min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;overflow:hidden}
-.screen::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at 20% 20%,var(--violet),transparent 40%),radial-gradient(circle at 80% 80%,var(--cyan),transparent 45%);opacity:.15;pointer-events:none}
-.label{position:absolute;top:24px;left:24px;font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--cyan-solid);opacity:.5}
+.theme-toggle {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 100;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid var(--cosmic-blue);
+  background: rgba(79, 70, 229, 0.1);
+  backdrop-filter: blur(12px);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  font-size: 20px;
+}
+.theme-toggle:hover {
+  background: rgba(79, 70, 229, 0.2);
+  transform: scale(1.1) rotate(180deg);
+}
+
+canvas#stars {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.screen {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.cosmic-glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 50%, rgba(79, 70, 229, 0.15), transparent 60%),
+              radial-gradient(circle at 20% 80%, rgba(124, 58, 237, 0.1), transparent 50%);
+  animation: pulseGlow 12s ease-in-out infinite alternate;
+  pointer-events: none;
+  will-change: opacity;
+}
+@keyframes pulseGlow {
+  0% { opacity: 0.5; }
+  100% { opacity: 0.8; }
+}
+
+.label {
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--cosmic-blue);
+  opacity: 0.7;
+}
 
 /* SPLASH */
-#splash .content{position:relative;z-index:2;text-align:center;padding:40px}
-.logo{display:flex;flex-direction:row-reverse;align-items:flex-end;justify-content:center;gap:18px;margin-bottom:48px}
-.logo-ar{font-family:var(--font-ar);font-size:clamp(3rem,8vw,4.5rem);font-weight:700}
-.logo-en{font-size:clamp(2.5rem,7vw,5.25rem);font-weight:200;letter-spacing:-.04em;text-transform:lowercase}
-.sub{font-size:11px;text-transform:uppercase;letter-spacing:.45em;color:var(--text-dim);margin-bottom:56px}
-.enter{display:inline-block;padding:16px 48px;border:1px solid var(--glass-border);background:var(--glass);backdrop-filter:blur(16px);color:var(--text);font-size:12px;letter-spacing:.3em;text-transform:uppercase;text-decoration:none;border-radius:999px;transition:all .4s}
-.enter:hover{background:rgba(139,92,246,.15);border-color:var(--violet-solid);box-shadow:0 0 30px rgba(139,92,246,.2)}
+#splash {
+  background: var(--deep-space);
+}
+.splash-content {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  padding: 40px;
+  max-width: 700px;
+  animation: cosmicEntry 1.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes cosmicEntry {
+  from { opacity: 0; transform: scale(0.8) translateY(50px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
 
-/* WALKTHROUGH */
-#walk{background:var(--bg2)}
-.w-inner{position:relative;z-index:2;max-width:480px;width:90%;padding:60px 0}
-.w-card{background:var(--glass);border:1px solid var(--glass-border);border-radius:var(--radius);padding:28px;margin-bottom:16px;backdrop-filter:blur(12px);transition:transform .3s}
-.w-card:hover{transform:translateY(-2px)}
-.w-icon{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--violet-solid),var(--cyan-solid));display:flex;align-items:center;justify-content:center;font-size:16px;margin-bottom:14px}
-.w-card h3{font-size:16px;font-weight:600;margin-bottom:6px}
-.w-card p{font-size:13px;color:var(--text-dim);line-height:1.7}
-.w-cta{display:block;margin:20px auto 0;padding:14px 40px;background:linear-gradient(135deg,var(--violet-solid),var(--cyan-solid));color:#fff;border:none;border-radius:999px;font-size:12px;letter-spacing:.2em;text-transform:uppercase;font-weight:600;cursor:pointer;transition:opacity .2s}
-.w-cta:hover{opacity:.85}
-.w-dots{display:flex;gap:6px;justify-content:center;margin-top:16px}
-.w-dots span{width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.15)}
-.w-dots span.on{background:var(--cyan-solid)}
+.cosmic-logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 48px;
+}
+.cosmic-title {
+  font-family: var(--font-ar);
+  font-size: clamp(3.5rem, 10vw, 5.5rem);
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--cosmic-blue), var(--cosmic-purple), var(--gold));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 3s ease-in-out infinite;
+  will-change: background-position;
+  background-size: 200% 200%;
+}
+@keyframes shimmer {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.cosmic-subtitle {
+  font-size: 12px;
+  color: var(--text-dim);
+  letter-spacing: 0.5em;
+  text-transform: uppercase;
+  animation: fadeIn 1s 0.5s backwards;
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.cosmic-cta {
+  padding: 18px 48px;
+  min-width: 44px;
+  min-height: 44px;
+  border: 2px solid var(--cosmic-blue);
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.2), rgba(124, 58, 237, 0.1));
+  color: var(--cosmic-blue);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.3em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  backdrop-filter: blur(12px);
+  border-radius: 8px;
+  margin-top: 32px;
+  animation: scaleIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.8s backwards;
+  will-change: transform;
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+.cosmic-cta:hover {
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.4), rgba(124, 58, 237, 0.2));
+  box-shadow: 0 0 40px rgba(79, 70, 229, 0.3);
+  transform: translateY(-4px);
+}
 
 /* MAIN */
-#main{background:var(--bg);padding:0;align-items:stretch}
-.m-wrap{position:relative;z-index:2;max-width:860px;margin:0 auto;padding:32px 24px;min-height:100vh}
-.m-nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:28px}
-.m-brand{display:flex;align-items:center;gap:10px}
-.orb{width:20px;height:20px;border-radius:50%;background:radial-gradient(circle at 30% 30%,#fef3c7,var(--violet-solid) 55%,#1e1b4b 80%);box-shadow:0 0 12px rgba(167,139,250,.6)}
-.m-brand span{font-weight:600;font-size:13px;letter-spacing:.1em;text-transform:uppercase}
-.m-links{display:flex;gap:14px;font-size:12px;color:var(--text-dim)}
-.m-links span{cursor:pointer;padding:6px 12px;border-radius:999px;transition:all .2s}
-.m-links span:hover{background:var(--glass);color:var(--text)}
-.poem{background:var(--glass);border:1px solid var(--glass-border);border-radius:20px;padding:48px 32px;text-align:center;backdrop-filter:blur(16px);margin-bottom:20px}
-.poem .meta{font-size:11px;text-transform:uppercase;letter-spacing:.2em;color:var(--cyan-solid);margin-bottom:28px}
-.poem .ar{font-family:var(--font-ar);font-size:clamp(1.4rem,3.5vw,2rem);line-height:2.2;direction:rtl;margin-bottom:20px}
-.poem .en{font-size:14px;color:var(--text-dim);line-height:1.9;font-style:italic}
-.actions{display:flex;gap:10px;justify-content:center;margin-top:24px;flex-wrap:wrap}
-.actions button{padding:8px 16px;border-radius:999px;border:1px solid var(--glass-border);background:var(--glass);color:var(--text-dim);font-size:11px;cursor:pointer;transition:all .2s;font-family:var(--font-ui)}
-.actions button:hover{border-color:var(--violet-solid);color:var(--text)}
-.ai-bar{background:linear-gradient(135deg,rgba(139,92,246,.08),rgba(56,189,248,.06));border:1px solid var(--glass-border);border-radius:var(--radius);padding:18px 22px;display:flex;gap:14px;align-items:flex-start}
-.ai-bar .ico{font-size:18px;margin-top:2px}
-.ai-bar p{font-size:13px;color:var(--text-dim);line-height:1.6}
+#main {
+  background: var(--deep-space);
+  display: none;
+  padding: 40px 24px;
+}
+.cosmic-layout {
+  position: relative;
+  z-index: 2;
+  max-width: 900px;
+  width: 100%;
+  margin: 0 auto;
+}
+.cosmic-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 48px;
+  padding: 16px 0;
+}
+.cosmic-brand {
+  font-family: var(--font-ar);
+  font-size: 28px;
+  font-weight: 700;
+  background: linear-gradient(90deg, var(--cosmic-blue), var(--gold));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
 
-/* NOTION CONTROLS */
-.vc{position:fixed;right:14px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:1px;background:var(--glass);border:1px solid var(--glass-border);border-radius:10px;overflow:hidden;z-index:100;box-shadow:0 8px 24px rgba(0,0,0,.4)}
-.vc button{width:38px;height:38px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;cursor:pointer;color:rgba(255,255,255,.4);transition:all .15s;font-size:14px}
-.vc button:hover{background:rgba(255,255,255,.06);color:rgba(255,255,255,.8)}
-.vc button.on{background:rgba(139,92,246,.12);color:var(--violet-solid)}
-.vc .div{height:1px;background:rgba(255,255,255,.06)}
+.observatory-card {
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.08), rgba(124, 58, 237, 0.05));
+  border: 1px solid rgba(79, 70, 229, 0.3);
+  border-radius: 16px;
+  padding: 48px;
+  margin-bottom: 32px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.observatory-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--cosmic-blue), transparent);
+  animation: scan 3s ease-in-out infinite;
+}
+@keyframes scan {
+  0%, 100% { transform: translateX(-100%); }
+  50% { transform: translateX(100%); }
+}
+.observatory-card:hover {
+  border-color: var(--cosmic-blue);
+  box-shadow: 0 8px 40px rgba(79, 70, 229, 0.2);
+  transform: translateY(-4px);
+}
 
-/* SETTINGS */
-#settings{background:var(--bg2);padding:80px 24px}
-.s-inner{position:relative;z-index:2;max-width:440px;margin:0 auto}
-.s-title{font-size:22px;font-weight:600;margin-bottom:28px;text-align:center}
-.s-row{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid rgba(255,255,255,.06)}
-.s-row label{font-size:14px;color:var(--text-dim)}
-.s-row label small{display:block;font-size:11px;opacity:.5;margin-top:3px}
-.tgl{width:44px;height:24px;border-radius:12px;background:rgba(255,255,255,.08);position:relative;cursor:pointer;transition:background .2s}
-.tgl.on{background:var(--violet-solid)}
-.tgl::after{content:'';position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .2s}
-.tgl.on::after{transform:translateX(20px)}
-.sl-wrap{display:flex;align-items:center;gap:8px}
-.sl-wrap span{font-size:11px;color:var(--text-dim)}
-input[type=range]{-webkit-appearance:none;width:110px;height:3px;border-radius:2px;background:rgba(255,255,255,.1);outline:none}
-input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:var(--violet-solid);cursor:pointer}
-.save{display:block;width:100%;margin-top:28px;padding:14px;background:linear-gradient(135deg,var(--violet-solid),var(--cyan-solid));color:#fff;border:none;border-radius:var(--radius);font-size:13px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;cursor:pointer}
+.poem-verse {
+  font-family: var(--font-ar);
+  font-size: 32px;
+  line-height: 2.2;
+  color: var(--text);
+  text-align: right;
+  direction: rtl;
+  margin-bottom: 32px;
+}
+.poem-author {
+  font-size: 14px;
+  color: var(--gold);
+  text-align: left;
+  font-weight: 600;
+}
 
-/* AUTH */
-#auth{background:var(--bg)}
-.auth-glass{position:relative;z-index:2;width:90%;max-width:380px;background:rgba(255,255,255,.03);border:1px solid var(--glass-border);border-radius:20px;padding:40px 28px;text-align:center;backdrop-filter:blur(20px);box-shadow:0 20px 50px rgba(0,0,0,.4)}
-.auth-title{font-family:var(--font-ar);font-size:32px;margin-bottom:8px}
-.auth-sub{font-size:13px;color:var(--text-dim);margin-bottom:28px}
-.oa{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:13px;border-radius:12px;border:1px solid var(--glass-border);background:var(--glass);color:var(--text);font-size:14px;cursor:pointer;margin-bottom:10px;transition:all .2s;font-family:var(--font-ui)}
-.oa:hover{background:rgba(139,92,246,.1);border-color:var(--violet-solid)}
-.oa svg{width:18px;height:18px}
-.at{font-size:10px;color:rgba(255,255,255,.3);margin-top:18px;line-height:1.6}
+.cosmic-btn {
+  padding: 14px 40px;
+  min-width: 44px;
+  min-height: 44px;
+  background: linear-gradient(135deg, var(--cosmic-blue), var(--cosmic-purple));
+  color: white;
+  border: none;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.25em;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.cosmic-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 24px rgba(79, 70, 229, 0.4);
+}
 
-.nav-bar{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:200;background:rgba(3,5,12,.85);backdrop-filter:blur(12px);padding:8px 14px;border-radius:999px;border:1px solid var(--glass-border)}
-.nav-bar a{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);text-decoration:none;padding:5px 10px;border-radius:999px;transition:all .2s}
-.nav-bar a:hover{color:var(--cyan-solid);background:rgba(56,189,248,.08)}
+@media (max-width: 768px) {
+  .cosmic-title { font-size: 3.5rem; }
+  .splash-content { padding: 24px; }
+  .observatory-card { padding: 32px 24px; }
+  .poem-verse {
+    font-size: 24px;
+    line-height: 2;
+  }
+  .theme-toggle {
+    width: 44px;
+    height: 44px;
+    top: 16px;
+    right: 16px;
+  }
+  .label {
+    font-size: 8px;
+    top: 16px;
+    left: 16px;
+  }
+}
 
-@media(max-width:640px){.logo{flex-direction:column;align-items:center;gap:4px}.logo-ar{font-size:2.5rem}.logo-en{font-size:3rem}.vc{right:6px}.vc button{width:34px;height:34px;font-size:12px}.poem{padding:32px 18px}.m-wrap{padding:20px 14px}}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .cosmic-glow { animation: none; }
+}
 </style>
 </head>
 <body>
-<canvas id="stars"></canvas>
-<nav class="nav-bar"><a href="#splash">Splash</a><a href="#walk">Intro</a><a href="#main">Read</a><a href="#settings">Settings</a><a href="#auth">Auth</a></nav>
+  <canvas id="stars"></canvas>
 
-<section class="screen" id="splash"><span class="label">Splash</span><div class="content"><div class="logo"><span class="logo-ar">قافية</span><span class="logo-en">qafiyah</span></div><div class="sub">Arabic Poetry, Pair by Pair</div><a href="#walk" class="enter">Explore the Cosmos of Verse</a></div></section>
+  <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+    <span id="theme-icon">☀️</span>
+  </button>
 
-<section class="screen" id="walk"><span class="label">Walkthrough</span><div class="w-inner">
-  <div class="w-card"><div class="w-icon">&#10024;</div><h3>Discover Poetry</h3><p>84,000+ Arabic poems from classical masters to contemporary voices, each with English translation.</p></div>
-  <div class="w-card"><div class="w-icon">&#127911;</div><h3>Listen & Recite</h3><p>AI-powered audio with transliteration guides. Hear the rhythm and melody of Arabic verse.</p></div>
-  <div class="w-card"><div class="w-icon">&#128278;</div><h3>Your Collection</h3><p>Save favorites, customize reading experience, sync across devices.</p></div>
-  <div class="w-dots"><span></span><span></span><span class="on"></span></div>
-  <button class="w-cta" onclick="document.getElementById('main').scrollIntoView({behavior:'smooth'})">Begin</button>
-</div></section>
+  <div class="screen" id="splash">
+    <div class="cosmic-glow"></div>
+    <div class="label">Cosmic Scholar</div>
+    <div class="splash-content">
+      <div class="cosmic-logo">
+        <h1 class="cosmic-title">قافية</h1>
+        <p class="cosmic-subtitle">Explore the Cosmos of Verse</p>
+      </div>
+      <button class="cosmic-cta" onclick="showMain()">Begin Exploration</button>
+    </div>
+  </div>
 
-<section class="screen" id="main" style="align-items:stretch"><div class="m-wrap"><span class="label">Main App</span>
-  <div class="m-nav"><div class="m-brand"><div class="orb"></div><span>Qafiyah</span></div><div class="m-links"><span>Explore</span><span>Saved</span><span>&#9881;</span></div></div>
-  <div class="poem"><div class="meta">Imru al-Qais &bull; The Mu'allaqa</div><div class="ar">قِفا نَبكِ مِن ذِكرى حَبيبٍ وَمَنزِلِ<br>بِسِقطِ اللِوى بَينَ الدَخولِ فَحَومَلِ</div><div class="en">Stop and weep for the memory of a beloved and a dwelling,<br>At the curve of the dune between al-Dakhul and Hawmal.</div><div class="actions"><button>&#9654; Listen</button><button>&#9825; Save</button><button>&#8634; Next</button><button>Aa Size</button><button>ع Trans</button></div></div>
-  <div class="ai-bar"><span class="ico">&#10024;</span><p>The opening of the Mu'allaqa — the most famous opening line in Arabic poetry. Imru al-Qais commands his companions to stop at the ruins of his beloved's campsite, beginning the qasida tradition.</p></div>
-</div></section>
+  <div class="screen" id="main">
+    <div class="cosmic-glow"></div>
+    <div class="cosmic-layout">
+      <nav class="cosmic-nav">
+        <div class="cosmic-brand">قافية</div>
+      </nav>
 
-<div class="vc"><button>&#8635;</button><div class="div"></div><button class="on">&#9654;</button><div class="div"></div><button>&#9825;</button><div class="div"></div><button>Aa</button><div class="div"></div><button>ع</button><div class="div"></div><button>&#9790;</button><div class="div"></div><button>&#8599;</button></div>
+      <div class="observatory-card">
+        <div class="poem-verse" lang="ar" dir="rtl">
+          أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ<br>
+          فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
+        </div>
+        <div class="poem-author">— أحمد شوقي</div>
+      </div>
 
-<section class="screen" id="settings"><span class="label">Settings</span><div class="s-inner"><div class="s-title">Settings</div>
-  <div class="s-row"><label>Text Size<small>Arabic display</small></label><div class="sl-wrap"><span>A</span><input type="range" min="14" max="32" value="22"><span style="font-size:16px">A</span></div></div>
-  <div class="s-row"><label>Transliteration<small>Latin pronunciation</small></label><div class="tgl on"></div></div>
-  <div class="s-row"><label>Dark Mode<small>Appearance</small></label><div class="tgl on"></div></div>
-  <div class="s-row"><label>Auto Audio<small>Play on load</small></label><div class="tgl"></div></div>
-  <div class="s-row"><label>AI Insights<small>Contextual analysis</small></label><div class="tgl on"></div></div>
-  <button class="save">Save</button>
-</div></section>
-
-<section class="screen" id="auth"><span class="label">Auth</span><div class="auth-glass"><div class="auth-title">مرحباً</div><div class="auth-sub">Sign in to save and sync</div>
-  <button class="oa"><svg viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>Continue with Google</button>
-  <button class="oa"><svg viewBox="0 0 24 24" fill="#fff"><path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.52-3.23 0-1.44.64-2.2.52-3.06-.4C3.79 16.17 4.36 9.04 8.92 8.78c1.27.06 2.15.72 2.89.76.98-.2 1.92-.76 2.97-.69 1.26.1 2.21.59 2.83 1.5-2.59 1.54-1.97 4.93.36 5.87-.47 1.24-.73 1.79-1.37 2.89-.97 1.69-2.34 3.38-4.02 3.42-.74.02-1.23-.38-2.03-.4-.83.02-1.35.42-2.13.42-1.73-.04-3.05-1.84-4.03-3.52-2.75-4.72-3.05-10.27-1.35-13.17 1.2-2.04 3.09-3.23 5.1-3.28 1.1-.02 2.17.74 2.86.74.69 0 1.98-.92 3.34-.78.57.02 2.16.23 3.18 1.72-2.58 1.61-2.16 5.57.47 6.63z"/></svg>Continue with Apple</button>
-  <div class="at">By signing in you agree to our Terms and Privacy Policy</div>
-</div></section>
+      <button class="cosmic-btn">Next Constellation</button>
+    </div>
+  </div>
 
 <script>
-const c=document.getElementById('stars'),ctx=c.getContext('2d');let W,H;
-function resize(){W=c.width=innerWidth;H=c.height=innerHeight}resize();addEventListener('resize',resize);
-let stars=[];
-class Star{constructor(){this.x=Math.random()*W;this.y=Math.random()*H;this.r=Math.random()*1.5+.3;this.a=Math.random()*.6+.2;this.twinkle=Math.random()*Math.PI*2;this.speed=Math.random()*.02+.005}
-update(){this.twinkle+=this.speed;this.a=.2+Math.abs(Math.sin(this.twinkle))*.5}
-draw(){ctx.beginPath();ctx.arc(this.x,this.y,this.r,0,Math.PI*2);ctx.fillStyle=`rgba(226,232,240,${this.a})`;ctx.fill();if(this.r>1){ctx.beginPath();ctx.arc(this.x,this.y,this.r*2.5,0,Math.PI*2);ctx.fillStyle=`rgba(226,232,240,${this.a*.1})`;ctx.fill()}}}
-for(let i=0;i<180;i++)stars.push(new Star);
-// Draw constellation lines
-function drawLines(){ctx.strokeStyle='rgba(148,163,184,.06)';ctx.lineWidth=.5;for(let i=0;i<stars.length;i++){for(let j=i+1;j<stars.length;j++){const dx=stars[i].x-stars[j].x,dy=stars[i].y-stars[j].y;if(Math.sqrt(dx*dx+dy*dy)<120){ctx.beginPath();ctx.moveTo(stars[i].x,stars[i].y);ctx.lineTo(stars[j].x,stars[j].y);ctx.stroke()}}}}
-(function loop(){ctx.clearRect(0,0,W,H);drawLines();stars.forEach(s=>{s.update();s.draw()});requestAnimationFrame(loop)})();
-document.querySelectorAll('.tgl').forEach(t=>t.addEventListener('click',()=>t.classList.toggle('on')));
+function toggleTheme() {
+  const html = document.documentElement;
+  const icon = document.getElementById('theme-icon');
+  html.classList.toggle('light');
+  icon.textContent = html.classList.contains('light') ? '🌙' : '☀️';
+}
+
+function showMain() {
+  document.getElementById('splash').style.display = 'none';
+  document.getElementById('main').style.display = 'flex';
+}
+
+// Starfield Animation
+const canvas = document.getElementById('stars');
+const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+class Star {
+  constructor() {
+    this.x = Math.random() * canvas.width;
+    this.y = Math.random() * canvas.height;
+    this.radius = Math.random() * 1.5;
+    this.opacity = Math.random() * 0.8 + 0.2;
+    this.twinkleSpeed = Math.random() * 0.02 + 0.01;
+  }
+
+  update() {
+    this.opacity += this.twinkleSpeed;
+    if (this.opacity > 1 || this.opacity < 0.2) {
+      this.twinkleSpeed *= -1;
+    }
+  }
+
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`;
+    ctx.fill();
+
+    // Add star glow
+    if (this.radius > 1) {
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.radius * 2, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(79, 70, 229, ${this.opacity * 0.2})`;
+      ctx.fill();
+    }
+  }
+}
+
+const stars = Array.from({ length: 150 }, () => new Star());
+
+function animateStars() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  stars.forEach(star => {
+    star.update();
+    star.draw();
+  });
+  requestAnimationFrame(animateStars);
+}
+animateStars();
+
+window.addEventListener('resize', () => {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+});
 </script>
 </body>
 </html>

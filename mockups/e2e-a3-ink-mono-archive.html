@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>A3 Ink Mono Archive - E2E Mockup</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    :root {
+      --gold: #C5A059;
+      --dark-bg: #0c0c0e;
+      --dark-surface: #131315;
+      --dark-line: #222224;
+      --dark-text: #e0ddd8;
+      --dark-muted: #888580;
+      --light-bg: #FDFCF8;
+      --light-surface: #FFFFFF;
+      --light-line: #e8e5de;
+      --light-text: #1a1918;
+      --light-muted: #6b6966;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Tajawal', system-ui, sans-serif;
+      background: var(--dark-bg);
+      color: var(--dark-text);
+      min-height: 100vh;
+      overflow-x: hidden;
+      transition: background 0.5s ease, color 0.5s ease;
+    }
+
+    body.light {
+      background: var(--light-bg);
+      color: var(--light-text);
+    }
+
+    /* ===== SPLASH: INK REVEAL ===== */
+    .splash {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: var(--dark-bg);
+      transition: opacity 1s ease, visibility 1s ease;
+    }
+
+    .splash.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .ink-container {
+      position: relative;
+      width: clamp(280px, 60vw, 600px);
+      text-align: center;
+    }
+
+    .ink-stroke {
+      position: absolute;
+      top: -20px;
+      right: -40px;
+      width: 120%;
+      height: 120%;
+      background: linear-gradient(135deg, var(--dark-text) 0%, transparent 50%);
+      clip-path: polygon(100% 0, 100% 0, 100% 100%, 100% 100%);
+      animation: inkReveal 2s ease forwards;
+      opacity: 0.05;
+    }
+
+    .splash-title {
+      font-family: 'Amiri', serif;
+      font-size: clamp(40px, 8vw, 80px);
+      color: var(--dark-text);
+      line-height: 1.2;
+      opacity: 0;
+      animation: fadeInUp 1s ease 1s forwards;
+    }
+
+    .splash-sub {
+      font-family: 'Tajawal', sans-serif;
+      font-size: clamp(12px, 2vw, 16px);
+      color: var(--dark-muted);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      direction: ltr;
+      margin-top: 16px;
+      opacity: 0;
+      animation: fadeInUp 1s ease 1.5s forwards;
+    }
+
+    .splash-line {
+      width: 60px;
+      height: 1px;
+      background: var(--dark-muted);
+      margin: 24px auto 0;
+      opacity: 0;
+      animation: fadeInUp 1s ease 1.8s forwards;
+    }
+
+    .splash-enter {
+      margin-top: 32px;
+      padding: 12px 36px;
+      background: transparent;
+      border: 1px solid var(--dark-muted);
+      color: var(--dark-text);
+      font-family: 'Tajawal', sans-serif;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      opacity: 0;
+      animation: fadeInUp 1s ease 2s forwards;
+    }
+
+    .splash-enter:hover {
+      background: var(--dark-text);
+      color: var(--dark-bg);
+    }
+
+    /* ===== WALKTHROUGH: TYPEWRITER ===== */
+    .walkthrough {
+      position: fixed;
+      inset: 0;
+      z-index: 90;
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: var(--dark-bg);
+      padding: 20px;
+    }
+
+    .walkthrough.active { display: flex; }
+    body.light .walkthrough { background: var(--light-bg); }
+
+    .type-steps {
+      max-width: 500px;
+      width: 100%;
+    }
+
+    .type-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 20px 0;
+      border-bottom: 1px solid var(--dark-line);
+      opacity: 0;
+      animation: fadeInUp 0.5s ease forwards;
+    }
+
+    body.light .type-step { border-color: var(--light-line); }
+
+    .type-step:nth-child(1) { animation-delay: 0.2s; }
+    .type-step:nth-child(2) { animation-delay: 0.5s; }
+    .type-step:nth-child(3) { animation-delay: 0.8s; }
+    .type-step:nth-child(4) { animation-delay: 1.1s; }
+
+    .type-num {
+      font-family: 'Amiri', serif;
+      font-size: 32px;
+      color: var(--dark-muted);
+      line-height: 1;
+      min-width: 32px;
+    }
+
+    body.light .type-num { color: var(--light-muted); }
+
+    .type-content h3 {
+      font-family: 'Tajawal', sans-serif;
+      font-size: 18px;
+      font-weight: 500;
+      margin-bottom: 4px;
+    }
+
+    .type-content p {
+      font-size: 14px;
+      color: var(--dark-muted);
+      line-height: 1.6;
+    }
+
+    body.light .type-content p { color: var(--light-muted); }
+
+    .walk-enter {
+      margin-top: 32px;
+      padding: 12px 36px;
+      background: var(--dark-text);
+      color: var(--dark-bg);
+      border: none;
+      font-family: 'Tajawal', sans-serif;
+      font-size: 15px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      opacity: 0;
+      animation: fadeInUp 0.5s ease 1.4s forwards;
+    }
+
+    body.light .walk-enter {
+      background: var(--light-text);
+      color: var(--light-bg);
+    }
+
+    /* ===== MAIN APP ===== */
+    .main-app {
+      display: none;
+      min-height: 100vh;
+      padding-bottom: 80px;
+    }
+
+    .main-app.active { display: block; }
+
+    /* Top bar - monochrome */
+    .top-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 20px;
+      background: var(--dark-bg);
+      border-bottom: 1px solid var(--dark-line);
+      direction: ltr;
+    }
+
+    body.light .top-bar {
+      background: var(--light-bg);
+      border-color: var(--light-line);
+    }
+
+    .top-brand {
+      font-family: 'Amiri', serif;
+      font-size: 20px;
+      letter-spacing: 0.02em;
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .top-btn {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: none;
+      color: var(--dark-muted);
+      cursor: pointer;
+      transition: color 0.2s ease;
+    }
+
+    body.light .top-btn { color: var(--light-muted); }
+    .top-btn:hover { color: var(--dark-text); }
+    body.light .top-btn:hover { color: var(--light-text); }
+
+    /* Mono Reader */
+    .reader {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 80px 20px 40px;
+    }
+
+    .poem-header {
+      text-align: center;
+      margin-bottom: 32px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--dark-line);
+    }
+
+    body.light .poem-header { border-color: var(--light-line); }
+
+    .poem-header h2 {
+      font-family: 'Tajawal', sans-serif;
+      font-size: 14px;
+      font-weight: 400;
+      color: var(--dark-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      direction: ltr;
+    }
+
+    body.light .poem-header h2 { color: var(--light-muted); }
+
+    .poem-header h1 {
+      font-family: 'Amiri', serif;
+      font-size: clamp(24px, 4vw, 36px);
+      margin-top: 8px;
+    }
+
+    .poem-body {
+      font-family: 'Amiri', serif;
+      font-size: clamp(22px, 3.5vw, 30px);
+      line-height: 2.4;
+      text-align: center;
+      direction: rtl;
+    }
+
+    .verse {
+      padding: 12px 0;
+      opacity: 0;
+      animation: fadeInUp 0.6s ease forwards;
+    }
+
+    .verse:nth-child(1) { animation-delay: 0.2s; }
+    .verse:nth-child(2) { animation-delay: 0.5s; }
+    .verse:nth-child(3) { animation-delay: 0.8s; }
+
+    .verse-divider {
+      width: 30px;
+      height: 1px;
+      background: var(--dark-line);
+      margin: 0 auto;
+    }
+
+    body.light .verse-divider { background: var(--light-line); }
+
+    /* Minimal icon rail */
+    .icon-rail {
+      position: fixed;
+      left: 16px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      z-index: 40;
+      direction: ltr;
+    }
+
+    .rail-btn {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: none;
+      color: var(--dark-muted);
+      cursor: pointer;
+      transition: color 0.2s ease;
+      border-radius: 8px;
+    }
+
+    body.light .rail-btn { color: var(--light-muted); }
+    .rail-btn:hover { color: var(--dark-text); background: rgba(255,255,255,0.03); }
+    body.light .rail-btn:hover { color: var(--light-text); background: rgba(0,0,0,0.03); }
+
+    /* Bottom Nav */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0;
+      padding: 8px 0;
+      background: var(--dark-bg);
+      border-top: 1px solid var(--dark-line);
+      direction: ltr;
+    }
+
+    body.light .bottom-nav {
+      background: var(--light-bg);
+      border-color: var(--light-line);
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+      padding: 8px 20px;
+      background: transparent;
+      border: none;
+      color: var(--dark-muted);
+      cursor: pointer;
+      font-family: 'Tajawal', sans-serif;
+      font-size: 11px;
+      transition: color 0.2s ease;
+    }
+
+    body.light .nav-item { color: var(--light-muted); }
+    .nav-item.active { color: var(--dark-text); }
+    body.light .nav-item.active { color: var(--light-text); }
+
+    /* ===== KEYFRAMES ===== */
+    @keyframes inkReveal {
+      0% { clip-path: polygon(100% 0, 100% 0, 100% 100%, 100% 100%); }
+      100% { clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%); }
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 768px) {
+      .icon-rail { display: none; }
+      .reader { padding: 70px 16px 40px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- SPLASH -->
+  <div class="splash" id="splash">
+    <div class="ink-container">
+      <div class="ink-stroke"></div>
+      <h1 class="splash-title">ديوان الشعر العربي</h1>
+      <p class="splash-sub">The Arabic Poetry Archive</p>
+      <div class="splash-line"></div>
+    </div>
+    <button class="splash-enter" onclick="enterWalkthrough()">ادخل</button>
+  </div>
+
+  <!-- WALKTHROUGH -->
+  <div class="walkthrough" id="walkthrough">
+    <div class="type-steps">
+      <div class="type-step">
+        <span class="type-num">1</span>
+        <div class="type-content">
+          <h3>اكتشف القصائد</h3>
+          <p>أكثر من 84,000 قصيدة من عصور مختلفة</p>
+        </div>
+      </div>
+      <div class="type-step">
+        <span class="type-num">2</span>
+        <div class="type-content">
+          <h3>استمع للإلقاء</h3>
+          <p>إلقاء صوتي بأداء طبيعي</p>
+        </div>
+      </div>
+      <div class="type-step">
+        <span class="type-num">3</span>
+        <div class="type-content">
+          <h3>رؤى ذكية</h3>
+          <p>تحليل وشرح بالذكاء الاصطناعي</p>
+        </div>
+      </div>
+      <div class="type-step">
+        <span class="type-num">4</span>
+        <div class="type-content">
+          <h3>احفظ واجمع</h3>
+          <p>أنشئ مجموعتك الخاصة</p>
+        </div>
+      </div>
+    </div>
+    <button class="walk-enter" onclick="enterApp()">تابع</button>
+  </div>
+
+  <!-- MAIN APP -->
+  <div class="main-app" id="mainApp">
+    <header class="top-bar">
+      <span class="top-brand">Qafiyah</span>
+      <div class="top-actions">
+        <button class="top-btn" onclick="toggleTheme()">
+          <i data-lucide="sun" style="width:18px;height:18px"></i>
+        </button>
+      </div>
+    </header>
+
+    <nav class="icon-rail">
+      <button class="rail-btn"><i data-lucide="heart" style="width:18px;height:18px"></i></button>
+      <button class="rail-btn"><i data-lucide="type" style="width:18px;height:18px"></i></button>
+      <button class="rail-btn"><i data-lucide="languages" style="width:18px;height:18px"></i></button>
+      <button class="rail-btn"><i data-lucide="rotate-ccw" style="width:18px;height:18px"></i></button>
+    </nav>
+
+    <main class="reader">
+      <div class="poem-header">
+        <h2>Ahmad Shawqi</h2>
+        <h1>أحمد شوقي — أمير الشعراء</h1>
+      </div>
+
+      <div class="poem-body">
+        <div class="verse">
+          أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ
+        </div>
+        <div class="verse-divider"></div>
+        <div class="verse">
+          فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
+        </div>
+        <div class="verse-divider"></div>
+        <div class="verse">
+          وَلي فيكَ ما لَم يَقُلِ الشِعرُ كُلَّهُ
+        </div>
+      </div>
+    </main>
+
+    <nav class="bottom-nav">
+      <button class="nav-item active">
+        <i data-lucide="compass" style="width:20px;height:20px"></i>
+        Discover
+      </button>
+      <button class="nav-item">
+        <i data-lucide="headphones" style="width:20px;height:20px"></i>
+        Listen
+      </button>
+      <button class="nav-item">
+        <i data-lucide="sparkles" style="width:20px;height:20px"></i>
+        Insight
+      </button>
+      <button class="nav-item">
+        <i data-lucide="copy" style="width:20px;height:20px"></i>
+        Copy
+      </button>
+      <button class="nav-item" onclick="toggleTheme()">
+        <i data-lucide="moon" style="width:20px;height:20px"></i>
+        Theme
+      </button>
+    </nav>
+  </div>
+
+  <script>
+    function enterWalkthrough() {
+      document.getElementById('splash').classList.add('hidden');
+      document.getElementById('walkthrough').classList.add('active');
+    }
+    function enterApp() {
+      document.getElementById('walkthrough').classList.remove('active');
+      document.getElementById('mainApp').classList.add('active');
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+    function toggleTheme() {
+      document.body.classList.toggle('light');
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+    });
+  </script>
+</body>
+</html>

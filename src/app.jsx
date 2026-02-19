@@ -10,6 +10,7 @@ import { useAuth, useUserSettings, useSavedPoems } from './hooks/useAuth';
 const FEATURES = {
   grounding: false,
   debug: true,
+  logging: true,      // Emit structured logs to console (captured by Vercel/browser)
   caching: true,      // Enable IndexedDB caching for audio/insights
   streaming: true,    // Enable streaming insights (progressive rendering)
   prefetching: true,  // Enable smart prefetching (rate-limited to avoid API issues)
@@ -1196,7 +1197,12 @@ export default function DiwanApp() {
   const current = filtered[currentIndex] || filtered[0] || poems[0];
 
   const addLog = (label, msg, type = 'info') => {
-    setLogs(prev => [...prev, { label, msg: String(msg), type, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) }]);
+    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    setLogs(prev => [...prev, { label, msg: String(msg), type, time }]);
+    if (FEATURES.logging) {
+      const logFn = type === 'error' ? console.error : type === 'success' ? console.info : console.log;
+      logFn(`[${label}] ${msg}`);
+    }
   };
 
   useEffect(() => {

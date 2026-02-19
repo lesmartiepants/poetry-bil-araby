@@ -1,6 +1,13 @@
 import { useState, useEffect } from 'react';
 import { supabase, isSupabaseConfigured } from '../supabaseClient';
 
+// Structured logger for auth/DB events — captured by Vercel and browser console
+const log = {
+  info: (label, msg, data) => console.info(`[Auth:${label}]`, msg, data ?? ''),
+  error: (label, msg, data) => console.error(`[Auth:${label}]`, msg, data ?? ''),
+  warn: (label, msg, data) => console.warn(`[Auth:${label}]`, msg, data ?? ''),
+};
+
 /**
  * Custom hook for managing Supabase authentication
  * Provides user state, sign in/out methods, and settings persistence
@@ -21,15 +28,17 @@ export function useAuth() {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+      log.info('Session', session ? `Restored session for ${session.user.email}` : 'No existing session');
     });
 
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       setSession(session);
       setUser(session?.user ?? null);
       setLoading(false);
+      log.info('StateChange', `${event}${session ? ` — ${session.user.email}` : ''}`);
     });
 
     return () => subscription.unsubscribe();
@@ -41,12 +50,14 @@ export function useAuth() {
       return { error: { message: 'Supabase is not configured' } };
     }
 
+    log.info('Login', 'Initiating Google OAuth');
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
         redirectTo: window.location.origin,
       },
     });
+    if (error) log.error('Login', 'Google OAuth failed', error.message);
     return { data, error };
   };
 
@@ -56,12 +67,14 @@ export function useAuth() {
       return { error: { message: 'Supabase is not configured' } };
     }
 
+    log.info('Login', 'Initiating Apple OAuth');
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'apple',
       options: {
         redirectTo: window.location.origin,
       },
     });
+    if (error) log.error('Login', 'Apple OAuth failed', error.message);
     return { data, error };
   };
 
@@ -70,7 +83,10 @@ export function useAuth() {
       return { error: { message: 'Supabase is not configured' } };
     }
 
+    log.info('Logout', 'Signing out');
     const { error } = await supabase.auth.signOut();
+    if (error) log.error('Logout', 'Sign out failed', error.message);
+    else log.info('Logout', 'Signed out successfully');
     return { error };
   };
 
@@ -106,6 +122,7 @@ export function useUserSettings(user) {
     if (!user || !isSupabaseConfigured()) return;
 
     try {
+      log.info('Settings', `Loading settings for user ${user.id}`);
       const { data, error } = await supabase
         .from('user_settings')
         .select('*')
@@ -113,13 +130,14 @@ export function useUserSettings(user) {
         .single();
 
       if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
-        console.error('Error loading settings:', error);
+        log.error('Settings', 'Failed to load settings', error.message);
         return;
       }
 
+      log.info('Settings', data ? 'Settings loaded' : 'No settings found (new user)');
       setSettings(data);
     } catch (error) {
-      console.error('Error loading settings:', error);
+      log.error('Settings', 'Exception loading settings', error.message);
     } finally {
       setLoading(false);
     }
@@ -129,6 +147,7 @@ export function useUserSettings(user) {
     if (!user || !isSupabaseConfigured()) return;
 
     try {
+      log.info('Settings', 'Saving settings', newSettings);
       const { data, error } = await supabase
         .from('user_settings')
         .upsert({
@@ -139,14 +158,15 @@ export function useUserSettings(user) {
         .single();
 
       if (error) {
-        console.error('Error saving settings:', error);
+        log.error('Settings', 'Failed to save settings', error.message);
         return { error };
       }
 
+      log.info('Settings', 'Settings saved successfully');
       setSettings(data);
       return { data };
     } catch (error) {
-      console.error('Error saving settings:', error);
+      log.error('Settings', 'Exception saving settings', error.message);
       return { error };
     }
   };
@@ -179,6 +199,7 @@ export function useSavedPoems(user) {
     if (!user || !isSupabaseConfigured()) return;
 
     try {
+      log.info('Poems', `Loading saved poems for user ${user.id}`);
       const { data, error } = await supabase
         .from('saved_poems')
         .select('*')
@@ -186,13 +207,14 @@ export function useSavedPoems(user) {
         .order('saved_at', { ascending: false });
 
       if (error) {
-        console.error('Error loading saved poems:', error);
+        log.error('Poems', 'Failed to load saved poems', error.message);
         return;
       }
 
+      log.info('Poems', `Loaded ${(data || []).length} saved poems`);
       setSavedPoems(data || []);
     } catch (error) {
-      console.error('Error loading saved poems:', error);
+      log.error('Poems', 'Exception loading saved poems', error.message);
     } finally {
       setLoading(false);
     }
@@ -202,6 +224,7 @@ export function useSavedPoems(user) {
     if (!user || !isSupabaseConfigured()) return { error: { message: 'Not authenticated' } };
 
     try {
+      log.info('Poems', `Saving poem: ${poem.poet} — ${poem.title} (id: ${poem.id})`);
       const { data, error } = await supabase
         .from('saved_poems')
         .insert({
@@ -217,14 +240,15 @@ export function useSavedPoems(user) {
         .single();
 
       if (error) {
-        console.error('Error saving poem:', error);
+        log.error('Poems', 'Failed to save poem', error.message);
         return { error };
       }
 
+      log.info('Poems', `Poem saved successfully (saved_id: ${data.id})`);
       setSavedPoems((prev) => [data, ...prev]);
       return { data };
     } catch (error) {
-      console.error('Error saving poem:', error);
+      log.error('Poems', 'Exception saving poem', error.message);
       return { error };
     }
   };
@@ -233,6 +257,7 @@ export function useSavedPoems(user) {
     if (!user || !isSupabaseConfigured()) return { error: { message: 'Not authenticated' } };
 
     try {
+      log.info('Poems', `Unsaving poem (id: ${poemId}, text: ${poemText ? 'yes' : 'no'})`);
       let query = supabase
         .from('saved_poems')
         .delete()
@@ -247,10 +272,11 @@ export function useSavedPoems(user) {
       const { error } = await query;
 
       if (error) {
-        console.error('Error unsaving poem:', error);
+        log.error('Poems', 'Failed to unsave poem', error.message);
         return { error };
       }
 
+      log.info('Poems', 'Poem unsaved successfully');
       setSavedPoems((prev) =>
         prev.filter((p) => {
           if (poemId) return p.poem_id !== poemId;
@@ -260,7 +286,7 @@ export function useSavedPoems(user) {
       );
       return { error: null };
     } catch (error) {
-      console.error('Error unsaving poem:', error);
+      log.error('Poems', 'Exception unsaving poem', error.message);
       return { error };
     }
   };

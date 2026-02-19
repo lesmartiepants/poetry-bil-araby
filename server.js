@@ -10,6 +10,15 @@ dotenv.config();
 const { Pool } = pg;
 const app = express();
 const PORT = process.env.PORT || 3001;
+const LOG_ENABLED = process.env.LOG_ENABLED !== 'false'; // on by default
+const LOG_DEBUG = process.env.LOG_DEBUG === 'true';       // verbose DB debug, off by default
+
+// Structured logger — captured by Render/Vercel logs
+const log = {
+  info: (label, msg, data) => LOG_ENABLED && console.log(`[${label}]`, msg, data !== undefined ? data : ''),
+  error: (label, msg, data) => console.error(`[${label}]`, msg, data !== undefined ? data : ''),
+  debug: (label, msg, data) => LOG_DEBUG && console.log(`[${label}:debug]`, msg, data !== undefined ? data : ''),
+};
 
 // PostgreSQL connection pool
 // Supports both DATABASE_URL (Supabase/Render) and individual env vars (local dev)
@@ -33,15 +42,25 @@ const pool = new Pool(
 // Test database connection
 pool.query('SELECT NOW()', (err, res) => {
   if (err) {
-    console.error('Error connecting to PostgreSQL:', err);
+    log.error('DB', 'Failed to connect to PostgreSQL', err.message);
   } else {
-    console.log('✓ Connected to PostgreSQL at', res.rows[0].now);
+    log.info('DB', `Connected to PostgreSQL at ${res.rows[0].now}`);
   }
 });
 
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Request logging middleware
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    log.info('HTTP', `${req.method} ${req.originalUrl} ${res.statusCode} ${duration}ms`);
+  });
+  next();
+});
 
 // Health check endpoint
 app.get('/api/health', async (req, res) => {
@@ -93,10 +112,8 @@ app.get('/api/poems/random', async (req, res) => {
 
     const poem = result.rows[0];
 
-    // Debug: check what we got from DB
-    console.error('Raw poem keys:', Object.keys(poem));
-    console.error('Arabic field exists?', 'arabic' in poem);
-    console.error('Arabic value type:', typeof poem.arabic);
+    log.debug('DB', 'Raw poem keys', Object.keys(poem));
+    log.debug('DB', `Arabic field: exists=${('arabic' in poem)}, type=${typeof poem.arabic}`);
 
     // Format the response to match the frontend structure
     const formattedPoem = {
@@ -110,12 +127,10 @@ app.get('/api/poems/random', async (req, res) => {
       tags: [poem.theme] // Using theme as tag
     };
 
-    console.error('Formatted keys:', Object.keys(formattedPoem));
-    console.error('Formatted arabic length:', formattedPoem.arabic?.length || 0);
-
+    log.info('Poems', `Random poem: id=${poem.id}, poet=${poem.poet}, arabic_len=${formattedPoem.arabic?.length || 0}`);
     res.json(formattedPoem);
   } catch (error) {
-    console.error('Error fetching random poem:', error);
+    log.error('Poems', `Error fetching random poem: ${error.message}`);
     res.status(500).json({ error: error.message });
   }
 });
@@ -158,9 +173,10 @@ app.get('/api/poems/by-poet/:poet', async (req, res) => {
       tags: [poem.theme]
     }));
 
+    log.info('Poems', `By poet "${poet}": returned ${poems.length} poems`);
     res.json(poems);
   } catch (error) {
-    console.error('Error fetching poems by poet:', error);
+    log.error('Poems', `Error fetching poems by poet: ${error.message}`);
     res.status(500).json({ error: error.message });
   }
 });
@@ -179,9 +195,10 @@ app.get('/api/poets', async (req, res) => {
     `;
 
     const result = await pool.query(query);
+    log.info('Poets', `Returned ${result.rows.length} poets`);
     res.json(result.rows);
   } catch (error) {
-    console.error('Error fetching poets:', error);
+    log.error('Poets', `Error fetching poets: ${error.message}`);
     res.status(500).json({ error: error.message });
   }
 });
@@ -225,9 +242,10 @@ app.get('/api/poems/search', async (req, res) => {
       tags: [poem.theme]
     }));
 
+    log.info('Search', `Query "${q}": returned ${poems.length} results`);
     res.json(poems);
   } catch (error) {
-    console.error('Error searching poems:', error);
+    log.error('Search', `Error searching poems: ${error.message}`);
     res.status(500).json({ error: error.message });
   }
 });
@@ -241,16 +259,16 @@ const currentFile = fileURLToPath(import.meta.url);
 const mainFile = resolve(process.argv[1]);
 if (currentFile === mainFile) {
   app.listen(PORT, () => {
-    console.log(`🚀 Poetry API server running on http://localhost:${PORT}`);
-    console.log(`   Health check: http://localhost:${PORT}/api/health`);
-    console.log(`   Random poem: http://localhost:${PORT}/api/poems/random`);
+    log.info('Server', `Poetry API running on http://localhost:${PORT}`);
+    log.info('Server', `Health: http://localhost:${PORT}/api/health | Poems: http://localhost:${PORT}/api/poems/random`);
+    log.info('Server', `Logging: enabled=${LOG_ENABLED}, debug=${LOG_DEBUG}`);
   });
 
   // Graceful shutdown
   process.on('SIGTERM', () => {
-    console.log('SIGTERM signal received: closing HTTP server');
+    log.info('Server', 'SIGTERM received — shutting down');
     pool.end(() => {
-      console.log('Database pool closed');
+      log.info('Server', 'Database pool closed');
     });
   });
 }

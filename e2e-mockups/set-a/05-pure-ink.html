@@ -1,399 +1,455 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>E2E #5: Pure Ink — Stark Typography</title>
+<title>Gravity Letters — حروف الجاذبية</title>
 <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
 :root {
-  --bg: #0a0a0a;
-  --bg2: #0f0f10;
-  --text: #f9fafb;
-  --text-dim: #71717a;
-  --grid-line: rgba(255, 255, 255, 0.04);
-  --accent: #a1a1aa;
-  --white: #fff;
-  --font-ar: 'Amiri', serif;
-  --font-ui: 'Tajawal', system-ui, sans-serif;
+  --ink: #0A0A0A;
+  --paper: #F5F0E8;
+  --accent: #8B2252;
+  --gold: #C5A059;
+  --bg: var(--ink);
+  --fg: var(--paper);
+  --fg-dim: rgba(245, 240, 232, 0.4);
+  --accent-glow: rgba(139, 34, 82, 0.35);
+  --gold-glow: rgba(197, 160, 89, 0.3);
+  --speed: 0.4s;
 }
-html.light {
-  --bg: #ffffff;
-  --bg2: #f9fafb;
-  --text: #0a0a0a;
-  --text-dim: #71717a;
-  --grid-line: rgba(0, 0, 0, 0.04);
-  --accent: #52525b;
+
+[data-theme="light"] {
+  --bg: var(--paper);
+  --fg: var(--ink);
+  --fg-dim: rgba(10, 10, 10, 0.38);
+  --accent-glow: rgba(139, 34, 82, 0.15);
+  --gold-glow: rgba(197, 160, 89, 0.18);
 }
-html {
-  font-family: var(--font-ui);
+
+html { font-size: 16px; scroll-behavior: smooth; }
+
+body {
+  font-family: 'Tajawal', sans-serif;
   background: var(--bg);
-  color: var(--text);
-}
-body { min-height: 100vh; }
-
-.theme-toggle {
-  position: fixed;
-  top: 24px;
-  right: 24px;
-  z-index: 100;
-  width: 48px;
-  height: 48px;
-  border-radius: 4px;
-  border: 1px solid var(--grid-line);
-  background: var(--bg2);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-  font-size: 20px;
-}
-.theme-toggle:hover {
-  border-color: var(--accent);
-  background: var(--bg);
+  color: var(--fg);
+  overflow-x: hidden;
+  transition: background var(--speed), color var(--speed);
 }
 
-canvas#ink {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  opacity: 0.6;
-}
-
-.screen {
-  position: relative;
-  width: 100%;
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-}
-
-.grid-overlay {
-  position: fixed;
-  inset: 0;
-  background-image:
-    linear-gradient(var(--grid-line) 1px, transparent 1px),
-    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
-  background-size: 40px 40px;
-  pointer-events: none;
-  z-index: 1;
-}
-
-.label {
-  position: absolute;
-  top: 24px;
-  left: 24px;
-  font-size: 10px;
-  letter-spacing: 0.3em;
-  text-transform: uppercase;
-  color: var(--accent);
-  opacity: 0.7;
-  z-index: 10;
-}
-
-/* SPLASH */
+/* ========== Splash ========== */
 #splash {
+  position: fixed; inset: 0; z-index: 100;
   background: var(--bg);
-}
-.splash-content {
-  position: relative;
-  z-index: 2;
-  text-align: center;
-  padding: 40px;
-  max-width: 600px;
-  animation: inkReveal 1s cubic-bezier(0.16, 1, 0.3, 1);
-}
-@keyframes inkReveal {
-  from { opacity: 0; clip-path: inset(0 50% 0 50%); }
-  to { opacity: 1; clip-path: inset(0 0 0 0); }
-}
-
-.ink-title {
-  font-family: var(--font-ar);
-  font-size: clamp(4rem, 10vw, 6rem);
-  font-weight: 700;
-  color: var(--white);
-  margin-bottom: 16px;
-  line-height: 1;
-  animation: strokeDraw 1.2s cubic-bezier(0.16, 1, 0.3, 1) 0.2s backwards;
-}
-@keyframes strokeDraw {
-  from { opacity: 0; transform: scaleY(0.5); }
-  to { opacity: 1; transform: scaleY(1); }
-}
-
-.ink-subtitle {
-  font-size: 11px;
-  color: var(--text-dim);
-  letter-spacing: 0.4em;
-  text-transform: uppercase;
-  margin-bottom: 64px;
-  font-weight: 500;
-  animation: fadeIn 0.8s 0.6s backwards;
-}
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.ink-btn {
-  padding: 16px 48px;
-  min-width: 44px;
-  min-height: 44px;
-  border: 2px solid var(--text);
-  background: transparent;
-  color: var(--text);
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.35em;
-  font-weight: 600;
+  display: flex; align-items: center; justify-content: center;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  animation: scaleIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.9s backwards;
-  will-change: transform;
+  transition: opacity 0.9s ease;
 }
-@keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.9); }
-  to { opacity: 1; transform: scale(1); }
-}
-.ink-btn:hover {
-  background: var(--text);
-  color: var(--bg);
-}
+#splash.out { opacity: 0; pointer-events: none; }
 
-/* MAIN */
-#main {
-  background: var(--bg);
-  display: none;
-  padding: 40px 24px;
-}
-.ink-layout {
-  position: relative;
-  z-index: 2;
-  max-width: 900px;
-  width: 100%;
-  margin: 0 auto;
-}
-.ink-nav {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 48px;
-  padding: 16px 0;
-  border-bottom: 1px solid var(--grid-line);
-}
-.ink-brand {
-  font-family: var(--font-ar);
-  font-size: 28px;
-  font-weight: 700;
-  color: var(--white);
-}
+canvas { display: block; width: 100%; height: 100%; }
 
-.canvas-card {
-  background: var(--bg2);
-  border: 1px solid var(--grid-line);
-  padding: 56px;
-  margin-bottom: 32px;
-  position: relative;
-  transition: all 0.3s ease;
-}
-.canvas-card::before {
-  content: '';
+#splash-title {
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 2px;
-  height: 100%;
-  background: var(--accent);
+  font-family: 'Amiri', serif;
+  font-size: clamp(2rem, 6vw, 4.5rem);
+  color: var(--fg);
+  opacity: 0;
+  transition: opacity 1.2s ease;
+  pointer-events: none;
+  text-align: center;
+  line-height: 1.6;
 }
-.canvas-card:hover {
-  border-color: var(--accent);
-  background: var(--bg);
+#splash-title span { color: var(--gold); }
+#splash-title.show { opacity: 1; }
+
+/* ========== App ========== */
+#app {
+  display: none; opacity: 0;
+  transition: opacity 0.6s ease;
+  min-height: 100vh;
+}
+#app.on { display: block; opacity: 1; }
+
+/* ========== Theme Toggle ========== */
+.theme-btn {
+  position: fixed; top: 1rem; left: 1rem; z-index: 50;
+  width: 48px; height: 48px;
+  border: 1.5px solid var(--fg-dim); border-radius: 50%;
+  background: transparent; color: var(--fg);
+  font-size: 1.25rem; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.3s ease;
+  touch-action: manipulation;
+}
+.theme-btn:hover,
+.theme-btn:focus-visible {
+  border-color: var(--gold);
+  box-shadow: 0 0 14px var(--gold-glow);
+  outline: none;
 }
 
-.poem-text {
-  font-family: var(--font-ar);
-  font-size: 36px;
-  line-height: 2.4;
-  color: var(--white);
-  text-align: right;
+/* ========== Walkthrough ========== */
+.walk { padding: 3.5rem 1.5rem; max-width: 620px; margin: 0 auto; }
+
+.step {
+  margin-bottom: 3.2rem;
+  opacity: 0; transform: translateY(20px);
+  animation: rise 0.65s ease forwards;
+}
+.step:nth-child(1) { animation-delay: 0.1s; }
+.step:nth-child(2) { animation-delay: 0.3s; }
+.step:nth-child(3) { animation-delay: 0.5s; }
+.step:nth-child(4) { animation-delay: 0.7s; }
+
+@keyframes rise { to { opacity: 1; transform: translateY(0); } }
+
+.step-num {
+  font-family: 'Amiri', serif;
+  font-size: 2.6rem; color: var(--gold);
+  line-height: 1; margin-bottom: 0.35rem;
+  will-change: opacity;
+}
+.step-title {
+  font-family: 'Amiri', serif;
+  font-size: 1.3rem; margin-bottom: 0.45rem;
+}
+.step-desc {
+  font-size: 0.95rem; color: var(--fg-dim); line-height: 1.8;
+}
+
+/* ========== Poem ========== */
+.poem { padding: 4rem 1.5rem 3rem; max-width: 700px; margin: 0 auto; text-align: center; }
+
+.bayt {
+  font-family: 'Amiri', serif;
+  font-size: clamp(1.3rem, 3.5vw, 2rem);
+  line-height: 2.3; margin-bottom: 1.4rem;
   direction: rtl;
-  margin-bottom: 32px;
-  font-weight: 400;
 }
-.poem-attribution {
-  font-size: 13px;
-  color: var(--accent);
-  text-align: left;
-  font-weight: 600;
-  letter-spacing: 0.05em;
+.bayt .l {
+  display: inline-block;
+  will-change: transform;
+  animation: floatL 3s ease-in-out infinite;
 }
-
-.stark-btn {
-  padding: 14px 40px;
-  min-width: 44px;
-  min-height: 44px;
-  background: var(--white);
-  color: var(--bg);
-  border: none;
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.3em;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-.stark-btn:hover {
-  background: var(--accent);
+@keyframes floatL {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(var(--fy, -3px)); }
 }
 
-@media (max-width: 768px) {
-  .ink-title { font-size: 4rem; }
-  .splash-content { padding: 24px; }
-  .canvas-card { padding: 32px 24px; }
-  .poem-text {
-    font-size: 28px;
-    line-height: 2.2;
-  }
-  .theme-toggle {
-    width: 44px;
-    height: 44px;
-    top: 16px;
-    right: 16px;
-  }
-  .label {
-    font-size: 8px;
-    top: 16px;
-    left: 16px;
-  }
+.poet {
+  font-family: 'Tajawal', sans-serif;
+  font-size: 1rem; color: var(--gold);
+  margin-top: 2.2rem; letter-spacing: 0.03em;
 }
 
+/* ========== Controls ========== */
+.ctrls {
+  display: flex; justify-content: center; gap: 1rem;
+  padding: 2rem 1.5rem 5rem; flex-wrap: wrap;
+}
+.cb {
+  min-width: 48px; min-height: 48px;
+  padding: 0.65rem 1.5rem;
+  border: 1px solid var(--fg-dim); border-radius: 6px;
+  background: transparent; color: var(--fg);
+  font-family: 'Tajawal', sans-serif; font-size: 0.9rem;
+  cursor: pointer; position: relative; overflow: hidden;
+  transition: all 0.3s ease;
+  touch-action: manipulation;
+}
+.cb::after {
+  content: attr(data-l);
+  position: absolute; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Amiri', serif; font-size: 2.4rem;
+  color: var(--accent); opacity: 0;
+  transition: opacity 0.3s ease; pointer-events: none;
+}
+.cb:hover::after,
+.cb:focus-visible::after { opacity: 0.13; }
+.cb:hover,
+.cb:focus-visible {
+  border-color: var(--accent);
+  box-shadow: 0 0 14px var(--accent-glow);
+  outline: none;
+}
+
+/* ========== Reduced Motion ========== */
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
+  .step { animation: none; opacity: 1; transform: none; }
+  .bayt .l { animation: none; }
+  #splash-title { transition-duration: 0s; }
+  #splash, #app { transition-duration: 0s; }
+}
+
+/* ========== Mobile ========== */
+@media (max-width: 600px) {
+  .walk { padding: 2.2rem 1.2rem; }
+  .step { margin-bottom: 2.4rem; }
+  .poem { padding: 2.5rem 1.2rem 2rem; }
+  .ctrls { gap: 0.65rem; padding-bottom: 3.5rem; }
 }
 </style>
 </head>
-<body>
-  <div class="grid-overlay"></div>
-  <canvas id="ink"></canvas>
+<body data-theme="dark">
 
-  <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
-    <span id="theme-icon">☀️</span>
-  </button>
+<!-- Splash Screen -->
+<div id="splash" aria-label="شاشة البداية - انقر للتخطي">
+  <canvas id="cv"></canvas>
+  <div id="splash-title">حروف <span>الجاذبية</span></div>
+</div>
 
-  <div class="screen" id="splash">
-    <div class="label">Pure Ink</div>
-    <div class="splash-content">
-      <h1 class="ink-title">قافية</h1>
-      <p class="ink-subtitle">Typography First</p>
-      <button class="ink-btn" onclick="showMain()">Enter</button>
+<!-- Theme Toggle -->
+<button class="theme-btn" id="themeBtn" aria-label="تبديل المظهر">&#9789;</button>
+
+<!-- Main Application -->
+<div id="app">
+
+  <!-- Walkthrough -->
+  <section class="walk" aria-label="خطوات الاستخدام">
+    <div class="step">
+      <div class="step-num">&#1633;</div>
+      <div class="step-title">اختر قصيدة</div>
+      <div class="step-desc">تصفّح بين آلاف القصائد العربيّة الكلاسيكيّة والمعاصرة، من المعلّقات حتى شعراء اليوم.</div>
     </div>
-  </div>
-
-  <div class="screen" id="main">
-    <div class="ink-layout">
-      <nav class="ink-nav">
-        <div class="ink-brand">قافية</div>
-      </nav>
-
-      <div class="canvas-card">
-        <div class="poem-text" lang="ar" dir="rtl">
-          أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ<br>
-          فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
-        </div>
-        <div class="poem-attribution">— أحمد شوقي</div>
-      </div>
-
-      <button class="stark-btn">Next</button>
+    <div class="step">
+      <div class="step-num">&#1634;</div>
+      <div class="step-title">استمع إلى الإيقاع</div>
+      <div class="step-desc">يُعرض كل بيت بإيقاع بصري يحاكي موسيقى الشعر حيث تتراقص الحروف برفق كأنّها تتنفّس.</div>
     </div>
-  </div>
+    <div class="step">
+      <div class="step-num">&#1635;</div>
+      <div class="step-title">تأمّل المعنى</div>
+      <div class="step-desc">اكتشف طبقات المعنى في كل بيت بمساعدة تحليل ذكي يضيء الصور البلاغيّة والأساليب الأدبيّة.</div>
+    </div>
+    <div class="step">
+      <div class="step-num">&#1636;</div>
+      <div class="step-title">شارك الجمال</div>
+      <div class="step-desc">احفظ أبياتك المفضّلة وشاركها بصورة أنيقة تليق بجمال القصيدة العربيّة.</div>
+    </div>
+  </section>
+
+  <!-- Poem Display -->
+  <section class="poem" aria-label="القصيدة">
+    <div class="bayt" id="b1"></div>
+    <div class="bayt" id="b2"></div>
+    <div class="poet">— أحمد شوقي</div>
+  </section>
+
+  <!-- Controls -->
+  <nav class="ctrls" aria-label="أدوات التحكم">
+    <button class="cb" data-l="ب" aria-label="القصيدة السابقة">السابق</button>
+    <button class="cb" data-l="ص" aria-label="تشغيل الصوت">استماع</button>
+    <button class="cb" data-l="ن" aria-label="تحليل البيت">تحليل</button>
+    <button class="cb" data-l="ت" aria-label="القصيدة التالية">التالي</button>
+  </nav>
+</div>
 
 <script>
-function toggleTheme() {
-  const html = document.documentElement;
-  const icon = document.getElementById('theme-icon');
-  html.classList.toggle('light');
-  icon.textContent = html.classList.contains('light') ? '🌙' : '☀️';
-}
+(function () {
+  'use strict';
 
-function showMain() {
-  document.getElementById('splash').style.display = 'none';
-  document.getElementById('main').style.display = 'flex';
-}
+  /* ---------- constants ---------- */
+  var MOBILE = window.innerWidth < 600;
+  var COUNT  = MOBILE ? 30 : 60;
+  var CHARS  = 'ابتثجحخدذرزسشصضطظعغفقكلمنهوي';
+  var G      = 0.16;
+  var BOUNCE = 0.42;
+  var FRIC   = 0.985;
+  var PILE   = 0.72;
+  var CSPEED = 0.018;
 
-// Ink Stroke Animation
-const canvas = document.getElementById('ink');
-const ctx = canvas.getContext('2d');
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
+  /* ---------- canvas ---------- */
+  var cv  = document.getElementById('cv');
+  var ctx = cv.getContext('2d');
+  var sp  = document.getElementById('splash');
+  var ttl = document.getElementById('splash-title');
+  var W, H;
 
-class InkStroke {
-  constructor() {
-    this.x = Math.random() * canvas.width;
-    this.y = Math.random() * canvas.height;
-    this.length = Math.random() * 100 + 50;
-    this.angle = Math.random() * Math.PI * 2;
-    this.width = Math.random() * 3 + 1;
-    this.opacity = Math.random() * 0.15 + 0.05;
-    this.life = 0;
-    this.maxLife = Math.random() * 300 + 200;
+  function resize() { W = cv.width = window.innerWidth; H = cv.height = window.innerHeight; }
+  resize();
+  window.addEventListener('resize', resize);
+
+  /* ---------- helpers ---------- */
+  function rChar() { return CHARS[Math.floor(Math.random() * CHARS.length)]; }
+  function isDark() { return document.body.getAttribute('data-theme') === 'dark'; }
+  function fg()     { return isDark() ? '#F5F0E8' : '#0A0A0A'; }
+
+  /* ---------- letter objects ---------- */
+  var letters = [];
+  for (var i = 0; i < COUNT; i++) {
+    var sz = 16 + Math.random() * 24;
+    letters.push({
+      c: rChar(),
+      x: Math.random() * W * 0.9 + W * 0.05,
+      y: -Math.random() * H * 1.4 - sz,
+      vy: 0,
+      vx: (Math.random() - 0.5) * 0.7,
+      s: sz,
+      a: 0.22 + Math.random() * 0.58,
+      on: false,
+      gY: H
+    });
   }
 
-  update() {
-    this.life++;
-    this.opacity = Math.max(0, (1 - this.life / this.maxLife) * 0.2);
+  /* ---------- splash loop ---------- */
+  var phase = 'fall';
+  var cT    = 0;
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function tick() {
+    if (phase === 'done') return;
+    ctx.clearRect(0, 0, W, H);
+
+    var clr = fg();
+    var settled = 0;
+
+    if (phase === 'fall') {
+      for (var i = 0; i < letters.length; i++) {
+        var L = letters[i];
+        if (!L.on) {
+          L.vy += G;
+          L.vy *= FRIC;
+          L.vx *= FRIC;
+          L.y += L.vy;
+          L.x += L.vx;
+          if (L.x < 10)     { L.x = 10;     L.vx *= -0.5; }
+          if (L.x > W - 10) { L.x = W - 10; L.vx *= -0.5; }
+          if (L.y >= L.gY - L.s) {
+            L.y = L.gY - L.s;
+            if (Math.abs(L.vy) < 1.5) {
+              L.on = true; L.vy = 0;
+              for (var j = 0; j < letters.length; j++) {
+                if (!letters[j].on && Math.abs(letters[j].x - L.x) < L.s * 1.4) {
+                  letters[j].gY = Math.min(letters[j].gY, L.y);
+                }
+              }
+            } else {
+              L.vy *= -BOUNCE;
+            }
+          }
+        }
+        if (L.on) settled++;
+
+        ctx.save();
+        ctx.globalAlpha = L.a;
+        ctx.font = L.s + 'px Amiri';
+        ctx.fillStyle = clr;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'alphabetic';
+        ctx.fillText(L.c, L.x, L.y);
+        ctx.restore();
+      }
+
+      if (settled / letters.length >= PILE) {
+        phase = 'compress';
+      }
+    }
+
+    if (phase === 'compress') {
+      cT += CSPEED;
+      var cx = W / 2;
+      var cy = H / 2;
+      var ease = cT * cT;
+
+      for (var k = 0; k < letters.length; k++) {
+        var M = letters[k];
+        M.x += (cx - M.x) * ease * 0.07;
+        M.y += (cy - M.y) * ease * 0.07;
+        M.a = Math.max(M.a * (1 - cT * 0.025), 0);
+
+        ctx.save();
+        ctx.globalAlpha = M.a;
+        ctx.font = M.s + 'px Amiri';
+        ctx.fillStyle = clr;
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'alphabetic';
+        ctx.fillText(M.c, M.x, M.y);
+        ctx.restore();
+      }
+
+      if (cT >= 1) {
+        phase = 'done';
+        ttl.classList.add('show');
+        setTimeout(leave, 1500);
+        return;
+      }
+    }
+
+    requestAnimationFrame(tick);
   }
 
-  draw() {
-    ctx.save();
-    ctx.translate(this.x, this.y);
-    ctx.rotate(this.angle);
-
-    ctx.strokeStyle = `rgba(255, 255, 255, ${this.opacity})`;
-    ctx.lineWidth = this.width;
-    ctx.lineCap = 'round';
-
-    ctx.beginPath();
-    ctx.moveTo(0, 0);
-    ctx.lineTo(this.length, 0);
-    ctx.stroke();
-
-    ctx.restore();
-  }
-}
-
-const strokes = [];
-
-function animateInk() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-  if (Math.random() < 0.05 && strokes.length < 30) {
-    strokes.push(new InkStroke());
+  function leave() {
+    sp.classList.add('out');
+    document.getElementById('app').classList.add('on');
+    setTimeout(function () { sp.style.display = 'none'; }, 950);
   }
 
-  strokes.forEach((stroke, i) => {
-    stroke.update();
-    stroke.draw();
-    if (stroke.life > stroke.maxLife) strokes.splice(i, 1);
+  if (reduced) {
+    sp.style.display = 'none';
+    var a = document.getElementById('app');
+    a.style.display = 'block';
+    a.style.opacity = '1';
+  } else {
+    tick();
+  }
+
+  /* skip on tap */
+  sp.addEventListener('click', function () {
+    if (phase !== 'done') {
+      phase = 'done';
+      ctx.clearRect(0, 0, W, H);
+      ttl.classList.add('show');
+      setTimeout(leave, 350);
+    }
   });
 
-  requestAnimationFrame(animateInk);
-}
-animateInk();
+  /* ---------- poem letter spans ---------- */
+  var v1 = '\u0623\u064E\u0646\u0627 \u0627\u0644\u0628\u064E\u062D\u0631\u064F \u0641\u064A \u0623\u064E\u062D\u0634\u0627\u0626\u0650\u0647\u0650 \u0627\u0644\u062F\u064F\u0631\u064F\u0651 \u0643\u0627\u0645\u0650\u0646\u064C';
+  var v2 = '\u0641\u064E\u0647\u064E\u0644 \u0633\u064E\u0623\u064E\u0644\u0648\u0627 \u0627\u0644\u063A\u064E\u0648\u0651\u0627\u0635\u064E \u0639\u064E\u0646 \u0635\u064E\u062F\u064E\u0641\u0627\u062A\u064A';
 
-window.addEventListener('resize', () => {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-});
+  function buildSpan(ch, fy, del, dur) {
+    var span = document.createElement('span');
+    span.className = 'l';
+    span.style.setProperty('--fy', fy + 'px');
+    span.style.animationDelay = del + 's';
+    span.style.animationDuration = dur + 's';
+    span.textContent = ch;
+    return span;
+  }
+
+  function render(text, id) {
+    var el = document.getElementById(id);
+    var frag = document.createDocumentFragment();
+    for (var i = 0; i < text.length; i++) {
+      if (text[i] === ' ') {
+        frag.appendChild(document.createTextNode(' '));
+      } else {
+        var fy  = -2 - Math.random() * 5;
+        var del = Math.random() * 2.5;
+        var dur = 2.5 + Math.random() * 1.5;
+        frag.appendChild(buildSpan(text[i], fy.toFixed(1), del.toFixed(2), dur.toFixed(2)));
+      }
+    }
+    el.appendChild(frag);
+  }
+
+  render(v1, 'b1');
+  render(v2, 'b2');
+
+  /* ---------- theme toggle ---------- */
+  var tb = document.getElementById('themeBtn');
+  tb.addEventListener('click', function () {
+    var d = document.body;
+    var nxt = d.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    d.setAttribute('data-theme', nxt);
+    tb.textContent = nxt === 'dark' ? '\u263D' : '\u263C';
+  });
+
+})();
 </script>
 </body>
 </html>

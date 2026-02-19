@@ -1,404 +1,404 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>E2E #4: Desert Poet — Cinematic Warmth</title>
+<title>Smoke & Ember — شعر عربي</title>
 <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-:root {
-  --sand: #f4d2a7;
-  --sand-dark: #db8a58;
-  --earth: #3a1d12;
-  --earth-mid: #7c4a2e;
-  --gold: #C5A059;
-  --text: #3a1d12;
-  --text-dim: rgba(58, 29, 18, 0.5);
-  --font-ar: 'Amiri', serif;
-  --font-ui: 'Tajawal', system-ui, sans-serif;
-}
-html.dark {
-  --sand: #2a1d15;
-  --sand-dark: #1a1210;
-  --earth: #f4d2a7;
-  --earth-mid: #c5a059;
-  --text: #f4d2a7;
-  --text-dim: rgba(244, 210, 167, 0.5);
-}
-html {
-  font-family: var(--font-ui);
-  background: var(--sand);
-  color: var(--text);
-}
-body { min-height: 100vh; }
-
-.theme-toggle {
-  position: fixed;
-  top: 24px;
-  right: 24px;
-  z-index: 100;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  border: 2px solid var(--gold);
-  background: rgba(197, 160, 89, 0.15);
-  backdrop-filter: blur(8px);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease;
-  font-size: 20px;
-}
-.theme-toggle:hover {
-  background: rgba(197, 160, 89, 0.3);
-  transform: scale(1.1);
-}
-
-canvas#desert {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  opacity: 0.4;
-}
-
-.screen {
-  position: relative;
-  width: 100%;
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-}
-
-.desert-rays {
-  position: absolute;
-  inset: 0;
-  background: radial-gradient(ellipse at 50% 20%, rgba(219, 138, 88, 0.2), transparent 60%);
-  animation: glowPulse 8s ease-in-out infinite alternate;
-  pointer-events: none;
-  will-change: opacity;
-}
-@keyframes glowPulse {
-  0% { opacity: 0.4; }
-  100% { opacity: 0.7; }
-}
-
-.label {
-  position: absolute;
-  top: 24px;
-  left: 24px;
-  font-size: 10px;
-  letter-spacing: 0.3em;
-  text-transform: uppercase;
-  color: var(--gold);
-  opacity: 0.7;
-}
-
-/* SPLASH */
-#splash {
-  background: var(--sand);
-}
-.splash-content {
-  position: relative;
-  z-index: 2;
-  text-align: center;
-  padding: 40px;
-  max-width: 700px;
-  animation: riseFromSand 1.4s cubic-bezier(0.16, 1, 0.3, 1);
-}
-@keyframes riseFromSand {
-  from { opacity: 0; transform: translateY(60px) scale(0.95); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
-}
-
-.desert-logo {
-  font-family: var(--font-ar);
-  font-size: clamp(4rem, 10vw, 6rem);
-  font-weight: 700;
-  color: var(--earth);
-  margin-bottom: 24px;
-  text-shadow: 0 2px 8px rgba(58, 29, 18, 0.15);
-  animation: sunRise 1.5s cubic-bezier(0.16, 1, 0.3, 1) 0.3s backwards;
-}
-@keyframes sunRise {
-  from { opacity: 0; transform: translateY(30px); filter: blur(4px); }
-  to { opacity: 1; transform: translateY(0); filter: blur(0); }
-}
-
-.desert-subtitle {
-  font-size: 13px;
-  color: var(--text-dim);
-  letter-spacing: 0.4em;
-  text-transform: uppercase;
-  margin-bottom: 56px;
-  animation: fadeIn 1s 0.7s backwards;
-}
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.desert-btn {
-  padding: 18px 52px;
-  min-width: 44px;
-  min-height: 44px;
-  border: 2px solid var(--gold);
-  background: linear-gradient(135deg, rgba(197, 160, 89, 0.2), rgba(219, 138, 88, 0.1));
-  color: var(--earth);
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.35em;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-  backdrop-filter: blur(8px);
-  border-radius: 4px;
-  animation: scaleIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) 1s backwards;
-  will-change: transform;
-}
-@keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.92); }
-  to { opacity: 1; transform: scale(1); }
-}
-.desert-btn:hover {
-  background: linear-gradient(135deg, rgba(197, 160, 89, 0.4), rgba(219, 138, 88, 0.2));
-  box-shadow: 0 8px 32px rgba(197, 160, 89, 0.3);
-  transform: translateY(-3px);
-}
-
-/* MAIN */
-#main {
-  background: var(--sand);
-  display: none;
-  padding: 40px 24px;
-}
-.desert-layout {
-  position: relative;
-  z-index: 2;
-  max-width: 900px;
-  width: 100%;
-  margin: 0 auto;
-}
-.desert-nav {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 48px;
-  padding: 16px 0;
-  border-bottom: 2px solid rgba(197, 160, 89, 0.2);
-}
-.desert-brand {
-  font-family: var(--font-ar);
-  font-size: 32px;
-  font-weight: 700;
-  color: var(--earth);
-}
-
-.oasis-card {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.3), rgba(255, 255, 255, 0.1));
-  border: 2px solid rgba(197, 160, 89, 0.3);
-  border-radius: 20px;
-  padding: 48px;
-  margin-bottom: 32px;
-  position: relative;
-  overflow: hidden;
-  box-shadow: 0 8px 32px rgba(58, 29, 18, 0.1);
-  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-}
-.oasis-card::before {
-  content: '';
-  position: absolute;
-  top: -50%;
-  left: -50%;
-  width: 200%;
-  height: 200%;
-  background: radial-gradient(circle, rgba(197, 160, 89, 0.1), transparent 70%);
-  animation: shimmerWave 6s linear infinite;
-}
-@keyframes shimmerWave {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
-}
-.oasis-card:hover {
-  border-color: var(--gold);
-  box-shadow: 0 12px 48px rgba(197, 160, 89, 0.25);
-  transform: translateY(-4px);
-}
-
-.poem-lines {
-  font-family: var(--font-ar);
-  font-size: 34px;
-  line-height: 2.3;
-  color: var(--earth);
-  text-align: right;
-  direction: rtl;
-  margin-bottom: 32px;
-  position: relative;
-  z-index: 1;
-}
-.poem-poet {
-  font-size: 15px;
-  color: var(--gold);
-  text-align: left;
-  font-weight: 600;
-  position: relative;
-  z-index: 1;
-}
-
-.mirage-btn {
-  padding: 14px 40px;
-  min-width: 44px;
-  min-height: 44px;
-  background: linear-gradient(135deg, var(--gold), var(--sand-dark));
-  color: white;
-  border: none;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.25em;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 16px rgba(197, 160, 89, 0.3);
-}
-.mirage-btn:hover {
-  transform: scale(1.05);
-  box-shadow: 0 6px 24px rgba(197, 160, 89, 0.4);
-}
-
-@media (max-width: 768px) {
-  .desert-logo { font-size: 4rem; }
-  .splash-content { padding: 24px; }
-  .oasis-card { padding: 32px 24px; }
-  .poem-lines {
-    font-size: 26px;
-    line-height: 2;
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --charcoal: #1A1614; --ember: #E8611A; --gold: #C5A059;
+    --smoke: #6B6B6B; --ash: #D4D0C8; --bg: #1A1614;
+    --text: #D4D0C8; --card-bg: rgba(30, 25, 22, 0.92);
+    --glow: rgba(232, 97, 26, 0.15);
   }
+  .light {
+    --bg: #F5F0E8; --text: #1A1614; --card-bg: rgba(255, 252, 245, 0.95);
+    --glow: rgba(232, 97, 26, 0.1);
+  }
+  body {
+    font-family: 'Tajawal', sans-serif; background: var(--bg);
+    color: var(--text); overflow-x: hidden; transition: background 0.5s, color 0.5s;
+  }
+  /* ---- Splash ---- */
+  #splash {
+    position: fixed; inset: 0; z-index: 100; display: flex;
+    align-items: center; justify-content: center;
+    background: radial-gradient(ellipse 60% 40% at 50% 95%, #5C2800 0%, #2A1508 30%, #0D0A08 70%);
+    transition: opacity 0.8s ease-out;
+  }
+  #splash.hide { opacity: 0; pointer-events: none; }
+  #splash-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  #splash-title {
+    position: relative; z-index: 2; font-family: 'Amiri', serif;
+    font-size: clamp(2rem, 6vw, 4.5rem); color: var(--ash);
+    text-shadow: 0 0 40px rgba(232,97,26,0.5), 0 0 80px rgba(197,160,89,0.3);
+    opacity: 0; animation: titleReveal 2s 0.5s forwards;
+    text-align: center; padding: 0 1rem;
+  }
+  @keyframes titleReveal {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(-10px); }
+  }
+  /* ---- Theme Toggle ---- */
   .theme-toggle {
-    width: 44px;
-    height: 44px;
-    top: 16px;
-    right: 16px;
+    position: fixed; top: 1rem; left: 1rem; z-index: 50;
+    width: 48px; height: 48px; border-radius: 50%; border: 2px solid var(--ember);
+    background: var(--card-bg); color: var(--text); font-size: 1.2rem;
+    cursor: pointer; display: flex; align-items: center; justify-content: center;
+    transition: box-shadow 0.3s, background 0.3s;
+    will-change: box-shadow;
   }
-  .label {
-    font-size: 8px;
-    top: 16px;
-    left: 16px;
+  .theme-toggle:hover, .theme-toggle:focus-visible {
+    box-shadow: 0 0 12px var(--ember), 0 0 24px rgba(232,97,26,0.3);
+    outline: none;
   }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
+  /* ---- Main App ---- */
+  #app {
+    max-width: 800px; margin: 0 auto; padding: 2rem 1rem 4rem;
+    opacity: 0; transition: opacity 0.6s 0.2s;
   }
-  .desert-rays { animation: none; }
-}
+  #app.visible { opacity: 1; }
+  h1.app-title {
+    font-family: 'Amiri', serif; text-align: center;
+    font-size: clamp(1.6rem, 4vw, 2.8rem); margin-bottom: 2rem;
+    color: var(--gold);
+  }
+  /* ---- Poem Card ---- */
+  .poem-card {
+    background: var(--card-bg); border-radius: 16px; padding: 2.5rem 2rem;
+    position: relative; overflow: hidden; margin-bottom: 2.5rem;
+    box-shadow: 0 12px 40px rgba(232,97,26,0.12), 0 0 80px rgba(232,97,26,0.06);
+    will-change: box-shadow;
+  }
+  .poem-card::after {
+    content: ''; position: absolute; bottom: -40%; left: 10%; right: 10%; height: 80%;
+    background: radial-gradient(ellipse at center bottom, rgba(232,97,26,0.18) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .poem-text {
+    font-family: 'Amiri', serif; font-size: clamp(1.25rem, 3vw, 1.75rem);
+    line-height: 2.2; text-align: center; position: relative; z-index: 1;
+  }
+  .poem-text .hemistich { display: block; margin: 0.25em 0; }
+  .poem-text .separator {
+    display: block; color: var(--ember); font-size: 0.6em;
+    margin: 0.3em 0; opacity: 0.7;
+  }
+  .poet-name {
+    text-align: center; margin-top: 1.5rem; font-size: 1.1rem;
+    color: var(--gold); font-family: 'Tajawal', sans-serif;
+    font-weight: 500; position: relative; z-index: 1;
+  }
+  /* ---- Walkthrough ---- */
+  .walkthrough { display: grid; gap: 1.25rem; margin-bottom: 2.5rem; }
+  .walk-step {
+    background: var(--card-bg); border-radius: 12px; padding: 1.25rem 1.5rem;
+    border-right: 3px solid var(--ember); opacity: 0;
+    transform: translateY(30px); transition: opacity 0.5s, transform 0.5s;
+    will-change: opacity, transform;
+  }
+  .walk-step.visible { opacity: 1; transform: translateY(0); }
+  .walk-step .step-num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 32px; height: 32px; border-radius: 50%;
+    background: var(--ember); color: #fff; font-weight: 700;
+    font-size: 0.85rem; margin-left: 0.75rem; flex-shrink: 0;
+  }
+  .walk-step .step-title {
+    font-family: 'Amiri', serif; font-size: 1.15rem;
+    color: var(--gold); margin-bottom: 0.35rem;
+    display: flex; align-items: center;
+  }
+  .walk-step p { font-size: 0.95rem; line-height: 1.7; color: var(--smoke); }
+  .light .walk-step p { color: #4A4540; }
+  /* ---- Controls ---- */
+  .controls { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; }
+  .btn {
+    font-family: 'Tajawal', sans-serif; font-size: 1rem; font-weight: 500;
+    padding: 0.75rem 2rem; border-radius: 10px; border: 2px solid var(--ember);
+    background: transparent; color: var(--text); cursor: pointer;
+    min-height: 48px; min-width: 48px;
+    transition: box-shadow 0.3s, background 0.3s, color 0.3s;
+    will-change: box-shadow;
+  }
+  .btn:hover, .btn:focus-visible {
+    background: var(--ember); color: #fff; outline: none;
+    box-shadow: 0 0 14px var(--ember), 0 0 28px rgba(232,97,26,0.25);
+    animation: emberPulse 1.5s infinite;
+  }
+  @keyframes emberPulse {
+    0%, 100% { box-shadow: 0 0 14px var(--ember), 0 0 28px rgba(232,97,26,0.25); }
+    50% { box-shadow: 0 0 20px var(--ember), 0 0 40px rgba(232,97,26,0.35); }
+  }
+  .btn.primary { background: var(--ember); color: #fff; }
+  /* ---- Reduced Motion ---- */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important; animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+    #splash { display: none; }
+    #app { opacity: 1; }
+    .walk-step { opacity: 1; transform: none; }
+  }
+  /* ---- Mobile ---- */
+  @media (max-width: 600px) {
+    .poem-card { padding: 1.5rem 1.25rem; }
+    .controls { flex-direction: column; align-items: stretch; }
+    .btn { width: 100%; text-align: center; }
+  }
 </style>
 </head>
 <body>
-  <canvas id="desert"></canvas>
-
-  <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
-    <span id="theme-icon">🌙</span>
-  </button>
-
-  <div class="screen" id="splash">
-    <div class="desert-rays"></div>
-    <div class="label">Desert Poet</div>
-    <div class="splash-content">
-      <h1 class="desert-logo">قافية</h1>
-      <p class="desert-subtitle">Verses From The Sands</p>
-      <button class="desert-btn" onclick="showMain()">Journey Begins</button>
-    </div>
+  <div id="splash">
+    <canvas id="splash-canvas"></canvas>
+    <div id="splash-title">دُخانٌ وَجَمر<br><span style="font-size:0.45em;color:var(--gold);font-family:'Tajawal',sans-serif">Smoke &amp; Ember</span></div>
   </div>
-
-  <div class="screen" id="main">
-    <div class="desert-rays"></div>
-    <div class="desert-layout">
-      <nav class="desert-nav">
-        <div class="desert-brand">قافية</div>
-      </nav>
-
-      <div class="oasis-card">
-        <div class="poem-lines" lang="ar" dir="rtl">
-          أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ<br>
-          فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
-        </div>
-        <div class="poem-poet">— أحمد شوقي</div>
+  <button class="theme-toggle" id="themeBtn" aria-label="تبديل السمة">&#9788;</button>
+  <main id="app">
+    <h1 class="app-title">شعر عربي — قصيدة اليوم</h1>
+    <div class="poem-card">
+      <div class="poem-text">
+        <span class="hemistich">أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ</span>
+        <span class="separator">***</span>
+        <span class="hemistich">فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي</span>
       </div>
-
-      <button class="mirage-btn">Next Oasis</button>
+      <div class="poet-name">— أحمد شوقي</div>
     </div>
-  </div>
-
+    <div class="walkthrough">
+      <div class="walk-step" data-step="1">
+        <div class="step-title"><span class="step-num">١</span>اختر الشاعر</div>
+        <p>تصفّح مجموعة واسعة من الشعراء العرب الكلاسيكيين والمعاصرين واختر من تريد.</p>
+      </div>
+      <div class="walk-step" data-step="2">
+        <div class="step-title"><span class="step-num">٢</span>استكشف القصائد</div>
+        <p>اقرأ القصائد بتنسيق جميل مع شرح للأبيات ومعاني المفردات.</p>
+      </div>
+      <div class="walk-step" data-step="3">
+        <div class="step-title"><span class="step-num">٣</span>استمع للإلقاء</div>
+        <p>استمتع بالإلقاء الصوتي للقصائد بأصوات مميّزة تنبض بالحياة.</p>
+      </div>
+      <div class="walk-step" data-step="4">
+        <div class="step-title"><span class="step-num">٤</span>شارك وأحفظ</div>
+        <p>احفظ قصائدك المفضّلة وشاركها مع الأصدقاء بسهولة.</p>
+      </div>
+    </div>
+    <div class="controls">
+      <button class="btn primary">قصيدة عشوائية</button>
+      <button class="btn">بحث بالشاعر</button>
+      <button class="btn">المفضّلة</button>
+    </div>
+  </main>
 <script>
-function toggleTheme() {
-  const html = document.documentElement;
-  const icon = document.getElementById('theme-icon');
-  html.classList.toggle('dark');
-  icon.textContent = html.classList.contains('dark') ? '☀️' : '🌙';
-}
+(function() {
+  /* ---- Canvas Smoke & Embers ---- */
+  var canvas = document.getElementById('splash-canvas');
+  var ctx = canvas.getContext('2d');
+  var isMobile = window.innerWidth < 600;
+  var SMOKE_COUNT = isMobile ? 20 : 40;
+  var EMBER_COUNT = isMobile ? 10 : 20;
+  var W, H, particles = [], raf;
 
-function showMain() {
-  document.getElementById('splash').style.display = 'none';
-  document.getElementById('main').style.display = 'flex';
-}
+  function resize() {
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
 
-// Desert Light Beams Animation
-const canvas = document.getElementById('desert');
-const ctx = canvas.getContext('2d');
-canvas.width = window.innerWidth;
-canvas.height = window.innerHeight;
-
-class LightBeam {
-  constructor() {
-    this.x = Math.random() * canvas.width;
-    this.y = 0;
-    this.height = Math.random() * 300 + 200;
-    this.width = Math.random() * 100 + 50;
-    this.opacity = Math.random() * 0.1 + 0.05;
-    this.speed = Math.random() * 0.5 + 0.2;
+  function createSmoke(layer) {
+    var p = {
+      type: 'smoke',
+      layer: layer,
+      x: 0, y: 0, originX: 0,
+      size: 0, speedY: 0, alpha: 0, maxAlpha: 0,
+      life: 0, maxLife: 0,
+      cpOffset1: 0, cpOffset2: 0
+    };
+    resetSmoke(p);
+    return p;
   }
 
-  update() {
-    this.opacity += this.speed * 0.01;
-    if (this.opacity > 0.15 || this.opacity < 0.03) {
-      this.speed *= -1;
-    }
+  function resetSmoke(p) {
+    p.originX = W * 0.5 + (Math.random() - 0.5) * W * 0.15;
+    p.x = p.originX;
+    p.y = H + Math.random() * 20;
+    p.size = p.layer === 0 ? 30 + Math.random() * 50 : 10 + Math.random() * 25;
+    p.speedY = p.layer === 0 ? -(0.3 + Math.random() * 0.5) : -(0.6 + Math.random() * 1.0);
+    p.alpha = 0;
+    p.maxAlpha = p.layer === 0 ? 0.06 + Math.random() * 0.08 : 0.08 + Math.random() * 0.12;
+    p.life = 0;
+    p.maxLife = 200 + Math.random() * 200;
+    p.cpOffset1 = (Math.random() - 0.5) * 100;
+    p.cpOffset2 = (Math.random() - 0.5) * 140;
   }
 
-  draw() {
-    const gradient = ctx.createLinearGradient(this.x, this.y, this.x, this.y + this.height);
-    gradient.addColorStop(0, `rgba(219, 138, 88, ${this.opacity})`);
-    gradient.addColorStop(1, 'rgba(219, 138, 88, 0)');
-
-    ctx.fillStyle = gradient;
-    ctx.fillRect(this.x - this.width / 2, this.y, this.width, this.height);
+  function updateSmoke(p) {
+    p.life++;
+    var t = p.life / p.maxLife;
+    // Bezier curve path for horizontal drift
+    var mt = 1 - t;
+    var mt2 = mt * mt;
+    var mt3 = mt2 * mt;
+    var t2 = t * t;
+    var t3 = t2 * t;
+    p.x = mt3 * p.originX
+      + 3 * mt2 * t * (p.originX + p.cpOffset1)
+      + 3 * mt * t2 * (p.originX + p.cpOffset2)
+      + t3 * (p.originX + p.cpOffset2 * 1.2);
+    p.y += p.speedY;
+    // Fade lifecycle
+    if (t < 0.15) p.alpha = p.maxAlpha * (t / 0.15);
+    else if (t > 0.55) p.alpha = p.maxAlpha * (1 - (t - 0.55) / 0.45);
+    else p.alpha = p.maxAlpha;
+    p.size += 0.04;
+    if (p.life >= p.maxLife || p.y < -p.size) resetSmoke(p);
   }
-}
 
-const beams = Array.from({ length: 8 }, () => new LightBeam());
+  function drawSmoke(p) {
+    ctx.save();
+    ctx.globalAlpha = Math.max(0, p.alpha);
+    ctx.fillStyle = p.layer === 0 ? '#3A3530' : '#5A5550';
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
 
-function animateDesert() {
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  beams.forEach(beam => {
-    beam.update();
-    beam.draw();
+  function createEmber() {
+    var e = {
+      type: 'ember',
+      x: 0, y: 0, size: 0, speedY: 0, driftX: 0,
+      alpha: 1, life: 0, maxLife: 0, hue: 0
+    };
+    resetEmber(e);
+    return e;
+  }
+
+  function resetEmber(e) {
+    e.x = W * 0.5 + (Math.random() - 0.5) * W * 0.1;
+    e.y = H - 20 - Math.random() * 40;
+    e.size = 1.5 + Math.random() * 3;
+    e.speedY = -(1 + Math.random() * 2);
+    e.driftX = (Math.random() - 0.5) * 1.2;
+    e.alpha = 1;
+    e.life = 0;
+    e.maxLife = 100 + Math.random() * 150;
+    e.hue = Math.random() > 0.5 ? 25 : 40;
+  }
+
+  function updateEmber(e) {
+    e.life++;
+    var t = e.life / e.maxLife;
+    e.y += e.speedY;
+    e.x += e.driftX + Math.sin(e.life * 0.04) * 0.3;
+    e.speedY *= 0.998;
+    var pulse = 0.7 + 0.3 * Math.sin(e.life * 0.2);
+    e.alpha = Math.max(0, (1 - t) * pulse);
+    if (e.life >= e.maxLife || e.y < 0) resetEmber(e);
+  }
+
+  function drawEmber(e) {
+    ctx.save();
+    ctx.globalAlpha = e.alpha;
+    var grad = ctx.createRadialGradient(e.x, e.y, 0, e.x, e.y, e.size * 2.5);
+    grad.addColorStop(0, e.hue === 25 ? '#E8611A' : '#C5A059');
+    grad.addColorStop(1, 'transparent');
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(e.x, e.y, e.size * 2.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = Math.min(1, e.alpha * 1.3);
+    ctx.fillStyle = '#FFD59A';
+    ctx.beginPath();
+    ctx.arc(e.x, e.y, e.size * 0.5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // Build back-layer smoke, front-layer smoke, then embers
+  var i;
+  for (i = 0; i < Math.floor(SMOKE_COUNT / 2); i++) {
+    var s = createSmoke(0);
+    s.life = Math.floor(Math.random() * s.maxLife);
+    particles.push(s);
+  }
+  for (i = 0; i < Math.ceil(SMOKE_COUNT / 2); i++) {
+    var s = createSmoke(1);
+    s.life = Math.floor(Math.random() * s.maxLife);
+    particles.push(s);
+  }
+  for (i = 0; i < EMBER_COUNT; i++) {
+    var e = createEmber();
+    e.life = Math.floor(Math.random() * e.maxLife);
+    particles.push(e);
+  }
+
+  // Sort: back smoke -> front smoke -> embers for layered depth
+  particles.sort(function(a, b) {
+    if (a.type === 'smoke' && b.type === 'smoke') return a.layer - b.layer;
+    if (a.type === 'smoke' && b.type === 'ember') return -1;
+    if (a.type === 'ember' && b.type === 'smoke') return 1;
+    return 0;
   });
-  requestAnimationFrame(animateDesert);
-}
-animateDesert();
 
-window.addEventListener('resize', () => {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-});
+  function animate() {
+    ctx.clearRect(0, 0, W, H);
+    // Campfire glow at bottom center
+    var glow = ctx.createRadialGradient(W / 2, H, 0, W / 2, H, H * 0.55);
+    glow.addColorStop(0, 'rgba(92, 40, 0, 0.4)');
+    glow.addColorStop(0.35, 'rgba(42, 21, 8, 0.15)');
+    glow.addColorStop(1, 'transparent');
+    ctx.fillStyle = glow;
+    ctx.fillRect(0, 0, W, H);
+    for (var j = 0; j < particles.length; j++) {
+      var p = particles[j];
+      if (p.type === 'smoke') { updateSmoke(p); drawSmoke(p); }
+      else { updateEmber(p); drawEmber(p); }
+    }
+    raf = requestAnimationFrame(animate);
+  }
+
+  var prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!prefersReduced) {
+    animate();
+    setTimeout(function() {
+      document.getElementById('splash').classList.add('hide');
+      document.getElementById('app').classList.add('visible');
+      setTimeout(function() { cancelAnimationFrame(raf); }, 900);
+    }, 3500);
+  } else {
+    document.getElementById('app').classList.add('visible');
+  }
+
+  /* ---- Walkthrough: sparks floating up and settling ---- */
+  var steps = document.querySelectorAll('.walk-step');
+  if (!prefersReduced) {
+    var obs = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          var delay = parseInt(entry.target.dataset.step, 10) * 180;
+          setTimeout(function() { entry.target.classList.add('visible'); }, delay);
+          obs.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.2 });
+    steps.forEach(function(s) { obs.observe(s); });
+  } else {
+    steps.forEach(function(s) { s.classList.add('visible'); });
+  }
+
+  /* ---- Theme Toggle ---- */
+  var themeBtn = document.getElementById('themeBtn');
+  var dark = true;
+  themeBtn.addEventListener('click', function() {
+    dark = !dark;
+    document.body.classList.toggle('light', !dark);
+    themeBtn.textContent = dark ? '\u2606' : '\u263D';
+  });
+})();
 </script>
 </body>
 </html>

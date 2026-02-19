@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>B2: Spotlight Ether - Poetry bil Araby</title>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --gold: #C5A059;
+      --dark-bg: #0a0a0c;
+      --spotlight: #FFF8DC;
+      --ether-blue: #4A5FE8;
+      --magic-dust: rgba(74, 95, 232, 0.6);
+    }
+
+    body {
+      font-family: 'Tajawal', sans-serif;
+      background: var(--dark-bg);
+      color: #e5e5e5;
+      overflow-x: hidden;
+      transition: background 0.5s ease, color 0.5s ease;
+    }
+
+    body.light {
+      background: #F8F8F6;
+      color: #1a1a1a;
+    }
+
+    /* Splash Screen - Moving Spotlight with Magic Dust */
+    .splash {
+      position: fixed;
+      inset: 0;
+      background: var(--dark-bg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      animation: splashFadeOut 0.8s ease 3.2s forwards;
+      overflow: hidden;
+    }
+
+    .spotlight-container {
+      position: relative;
+      width: 100%;
+      height: 100%;
+    }
+
+    .spotlight {
+      position: absolute;
+      width: 400px;
+      height: 400px;
+      border-radius: 50%;
+      background: radial-gradient(circle at center, var(--spotlight) 0%, rgba(255, 248, 220, 0.5) 30%, transparent 70%);
+      filter: blur(40px);
+      animation: spotlightMove 6s ease-in-out infinite;
+      will-change: transform;
+    }
+
+    @keyframes spotlightMove {
+      0%, 100% {
+        transform: translate(calc(50vw - 200px), calc(50vh - 200px)) scale(1);
+      }
+      25% {
+        transform: translate(calc(30vw - 200px), calc(40vh - 200px)) scale(1.2);
+      }
+      50% {
+        transform: translate(calc(60vw - 200px), calc(60vh - 200px)) scale(0.9);
+      }
+      75% {
+        transform: translate(calc(40vw - 200px), calc(30vh - 200px)) scale(1.1);
+      }
+    }
+
+    .magic-dust-particle {
+      position: absolute;
+      width: 6px;
+      height: 6px;
+      background: var(--ether-blue);
+      border-radius: 50%;
+      opacity: 0;
+      box-shadow: 0 0 15px var(--magic-dust);
+      animation: dustSparkle 3s ease-in-out infinite;
+      will-change: transform, opacity;
+    }
+
+    @keyframes dustSparkle {
+      0%, 100% {
+        opacity: 0;
+        transform: translate(0, 0) scale(0.5);
+      }
+      15% {
+        opacity: 1;
+        transform: translate(var(--dx), var(--dy)) scale(1);
+      }
+      85% {
+        opacity: 0.9;
+        transform: translate(calc(var(--dx) * 2), calc(var(--dy) * 2)) scale(0.7);
+      }
+    }
+
+    .center-content {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      z-index: 10;
+      animation: contentGlow 2s ease forwards;
+    }
+
+    @keyframes contentGlow {
+      0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.8);
+      }
+      100% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1);
+      }
+    }
+
+    .center-content h1 {
+      font-family: 'Amiri', serif;
+      font-size: 48px;
+      color: var(--spotlight);
+      margin-bottom: 20px;
+      text-shadow: 0 0 30px rgba(255, 248, 220, 0.8);
+    }
+
+    .center-content p {
+      font-size: 16px;
+      color: var(--ether-blue);
+      text-shadow: 0 0 20px var(--magic-dust);
+    }
+
+    @keyframes splashFadeOut {
+      to { opacity: 0; pointer-events: none; }
+    }
+
+    /* Walkthrough */
+    .walkthrough {
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 10, 12, 0.98);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9998;
+      padding: 20px;
+    }
+
+    .walkthrough.active { display: flex; }
+
+    .walkthrough-card {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16162a 100%);
+      border-radius: 20px;
+      padding: 60px 50px;
+      max-width: 500px;
+      text-align: center;
+      border: 2px solid var(--ether-blue);
+      box-shadow: 0 0 60px var(--magic-dust), 0 30px 80px rgba(0,0,0,0.6);
+      animation: cardEtherGlow 0.8s ease;
+    }
+
+    @keyframes cardEtherGlow {
+      from {
+        transform: scale(0.9);
+        opacity: 0;
+        box-shadow: 0 0 0 transparent;
+      }
+      to {
+        transform: scale(1);
+        opacity: 1;
+        box-shadow: 0 0 60px var(--magic-dust), 0 30px 80px rgba(0,0,0,0.6);
+      }
+    }
+
+    .walkthrough-card h2 {
+      font-family: 'Amiri', serif;
+      font-size: 30px;
+      color: var(--spotlight);
+      margin-bottom: 20px;
+      text-shadow: 0 0 20px rgba(255, 248, 220, 0.5);
+    }
+
+    .walkthrough-card p {
+      color: #d0d0d0;
+      font-size: 16px;
+      line-height: 1.8;
+    }
+
+    .walkthrough-buttons {
+      display: flex;
+      gap: 15px;
+      margin-top: 40px;
+      justify-content: center;
+    }
+
+    .btn {
+      padding: 14px 32px;
+      border: none;
+      border-radius: 50px;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      min-width: 44px;
+      min-height: 44px;
+    }
+
+    .btn-primary {
+      background: var(--ether-blue);
+      color: white;
+      box-shadow: 0 0 20px var(--magic-dust);
+    }
+
+    .btn-primary:hover {
+      background: #5A6FF8;
+      box-shadow: 0 0 30px var(--magic-dust), 0 8px 20px rgba(74, 95, 232, 0.4);
+      transform: translateY(-2px);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: #999;
+      border: 2px solid #444;
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--ether-blue);
+      color: var(--ether-blue);
+    }
+
+    /* Main App */
+    .app {
+      display: none;
+      min-height: 100vh;
+      padding: 80px 20px 40px;
+    }
+
+    .app.active { display: block; }
+
+    .header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: rgba(10, 10, 12, 0.95);
+      backdrop-filter: blur(10px);
+      padding: 20px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid rgba(74, 95, 232, 0.3);
+      z-index: 100;
+      transition: background 0.3s ease;
+    }
+
+    .light .header {
+      background: rgba(248, 248, 246, 0.95);
+      border-bottom-color: #ddd;
+    }
+
+    .logo {
+      font-family: 'Amiri', serif;
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--spotlight);
+      text-shadow: 0 0 15px rgba(255, 248, 220, 0.5);
+    }
+
+    .light .logo {
+      color: var(--ether-blue);
+      text-shadow: none;
+    }
+
+    .theme-toggle {
+      background: transparent;
+      border: 2px solid var(--ether-blue);
+      color: var(--ether-blue);
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 15px var(--magic-dust);
+    }
+
+    .theme-toggle:hover {
+      background: var(--ether-blue);
+      color: white;
+      box-shadow: 0 0 25px var(--magic-dust);
+      transform: rotate(180deg);
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .poem-card {
+      background: linear-gradient(135deg, #1a1a2e 0%, #16162a 100%);
+      border-radius: 20px;
+      padding: 60px 50px;
+      margin: 30px 0;
+      border: 2px solid rgba(74, 95, 232, 0.3);
+      box-shadow: 0 0 40px rgba(74, 95, 232, 0.2), 0 10px 40px rgba(0,0,0,0.4);
+      transition: all 0.4s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .light .poem-card {
+      background: white;
+      border-color: #ddd;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    }
+
+    .poem-card::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(74, 95, 232, 0.1) 0%, transparent 70%);
+      animation: cardGlow 4s ease-in-out infinite;
+      pointer-events: none;
+    }
+
+    @keyframes cardGlow {
+      0%, 100% { transform: translate(0, 0); }
+      50% { transform: translate(10%, 10%); }
+    }
+
+    .poem-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 0 60px rgba(74, 95, 232, 0.4), 0 20px 60px rgba(0,0,0,0.5);
+    }
+
+    .poem-title {
+      font-family: 'Amiri', serif;
+      font-size: 32px;
+      color: var(--spotlight);
+      margin-bottom: 40px;
+      text-align: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    .light .poem-title {
+      color: var(--ether-blue);
+    }
+
+    .poem-verse {
+      font-family: 'Amiri', serif;
+      font-size: 24px;
+      line-height: 2.2;
+      text-align: center;
+      direction: rtl;
+      margin: 40px 0;
+      color: #e5e5e5;
+      position: relative;
+      z-index: 1;
+    }
+
+    .light .poem-verse {
+      color: #1a1a1a;
+    }
+
+    .poet-name {
+      text-align: center;
+      color: var(--ether-blue);
+      font-size: 18px;
+      margin-top: 40px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .control-rail {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 40px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .control-btn {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: rgba(74, 95, 232, 0.2);
+      border: 2px solid var(--ether-blue);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      color: var(--ether-blue);
+      box-shadow: 0 0 15px var(--magic-dust);
+    }
+
+    .control-btn:hover {
+      background: var(--ether-blue);
+      color: white;
+      box-shadow: 0 0 25px var(--magic-dust);
+      transform: scale(1.15);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .spotlight { width: 300px; height: 300px; }
+      .center-content h1 { font-size: 36px; }
+      .poem-card { padding: 40px 25px; }
+      .poem-verse { font-size: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Splash Screen -->
+  <div class="splash">
+    <div class="spotlight-container">
+      <div class="spotlight"></div>
+      <div id="dustContainer"></div>
+      <div class="center-content">
+        <h1>Spotlight Ether</h1>
+        <p>Magic dust illuminates wisdom</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Walkthrough -->
+  <div class="walkthrough" id="walkthrough">
+    <div class="walkthrough-card">
+      <h2 id="walkthrough-title">Welcome to Spotlight Ether</h2>
+      <p id="walkthrough-text">Experience poetry illuminated by magical dust particles and ethereal light.</p>
+      <div class="walkthrough-buttons">
+        <button class="btn btn-secondary" onclick="skipWalkthrough()">Skip</button>
+        <button class="btn btn-primary" onclick="nextStep()">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main App -->
+  <div class="app" id="app">
+    <header class="header">
+      <div class="logo">ديوان الشعر</div>
+      <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">✦</button>
+    </header>
+
+    <div class="container">
+      <div class="poem-card">
+        <h2 class="poem-title">ديوان الشعر العربي</h2>
+        <div class="poem-verse" lang="ar">
+          أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ<br>
+          فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
+        </div>
+        <p class="poet-name">— أحمد شوقي</p>
+
+        <div class="control-rail">
+          <button class="control-btn" aria-label="Previous">‹</button>
+          <button class="control-btn" aria-label="Play">▶</button>
+          <button class="control-btn" aria-label="Next">›</button>
+          <button class="control-btn" aria-label="Bookmark">★</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Generate magic dust particles
+    const dustContainer = document.getElementById('dustContainer');
+    for (let i = 0; i < 40; i++) {
+      const particle = document.createElement('div');
+      particle.className = 'magic-dust-particle';
+      const dx = (Math.random() - 0.5) * 400;
+      const dy = (Math.random() - 0.5) * 400;
+      particle.style.setProperty('--dx', `${dx}px`);
+      particle.style.setProperty('--dy', `${dy}px`);
+      particle.style.left = `${30 + Math.random() * 40}%`;
+      particle.style.top = `${30 + Math.random() * 40}%`;
+      particle.style.animationDelay = `${Math.random() * 3}s`;
+      dustContainer.appendChild(particle);
+    }
+
+    let step = 0;
+    const steps = [
+      { title: 'Welcome to Spotlight Ether', text: 'Experience poetry illuminated by magical dust particles and ethereal light.' },
+      { title: 'Moving Spotlight', text: 'Watch as light dances across the darkness, revealing wisdom.' },
+      { title: 'Magic Dust', text: 'Ethereal particles sparkle and swirl around each verse.' },
+      { title: 'Begin Reading', text: 'Step into the illuminated world of classical Arabic poetry.' }
+    ];
+
+    setTimeout(() => {
+      document.getElementById('walkthrough').classList.add('active');
+    }, 4000);
+
+    function nextStep() {
+      step++;
+      if (step >= steps.length) {
+        startApp();
+      } else {
+        document.getElementById('walkthrough-title').textContent = steps[step].title;
+        document.getElementById('walkthrough-text').textContent = steps[step].text;
+      }
+    }
+
+    function skipWalkthrough() {
+      startApp();
+    }
+
+    function startApp() {
+      document.getElementById('walkthrough').classList.remove('active');
+      document.getElementById('app').classList.add('active');
+    }
+
+    function toggleTheme() {
+      document.body.classList.toggle('light');
+    }
+  </script>
+</body>
+</html>

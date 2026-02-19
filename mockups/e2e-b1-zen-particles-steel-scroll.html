@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>B1: Zen Particles + Steel Scroll - Poetry bil Araby</title>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --gold: #C5A059;
+      --dark-bg: #0c0c0e;
+      --zen-bg: #1c1c1e;
+      --steel: #A8B2BF;
+      --steel-dark: #6B7580;
+      --zen-white: #F8F8F6;
+    }
+
+    body {
+      font-family: 'Tajawal', sans-serif;
+      background: var(--dark-bg);
+      color: var(--zen-white);
+      overflow-x: hidden;
+      transition: background 0.5s ease, color 0.5s ease;
+    }
+
+    body.light {
+      background: #FAFAF8;
+      color: #1a1a1a;
+    }
+
+    /* Splash Screen - Zen Particle Field */
+    .splash {
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(circle at center, #2a2a2c 0%, var(--dark-bg) 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      animation: splashFadeOut 0.8s ease 3s forwards;
+      overflow: hidden;
+    }
+
+    .zen-field {
+      position: relative;
+      width: 400px;
+      height: 400px;
+    }
+
+    .zen-particle {
+      position: absolute;
+      width: 3px;
+      height: 3px;
+      background: var(--steel);
+      border-radius: 50%;
+      opacity: 0;
+      animation: zenFloat 4s ease-in-out infinite;
+      will-change: transform, opacity;
+      box-shadow: 0 0 10px rgba(168, 178, 191, 0.5);
+    }
+
+    @keyframes zenFloat {
+      0%, 100% {
+        transform: translate(0, 0);
+        opacity: 0;
+      }
+      10% {
+        opacity: 0.8;
+      }
+      50% {
+        opacity: 1;
+        transform: translate(var(--x), var(--y));
+      }
+      90% {
+        opacity: 0.8;
+      }
+    }
+
+    .steel-scroll-container {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 300px;
+      height: 400px;
+      animation: scrollReveal 2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+
+    @keyframes scrollReveal {
+      0% {
+        height: 0;
+        opacity: 0;
+        transform: translate(-50%, -50%) scaleY(0);
+      }
+      100% {
+        height: 400px;
+        opacity: 1;
+        transform: translate(-50%, -50%) scaleY(1);
+      }
+    }
+
+    .steel-scroll {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(180deg, var(--steel-dark) 0%, var(--steel) 50%, var(--steel-dark) 100%);
+      border-radius: 8px;
+      padding: 50px 30px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+      position: relative;
+    }
+
+    .steel-cap {
+      position: absolute;
+      width: 100%;
+      height: 30px;
+      background: linear-gradient(90deg, var(--steel-dark) 0%, var(--steel) 50%, var(--steel-dark) 100%);
+      left: 0;
+    }
+
+    .steel-cap.top {
+      top: 0;
+      border-radius: 8px 8px 0 0;
+    }
+
+    .steel-cap.bottom {
+      bottom: 0;
+      border-radius: 0 0 8px 8px;
+    }
+
+    .scroll-content {
+      text-align: center;
+      animation: contentFadeIn 0.8s ease 1.5s forwards;
+      opacity: 0;
+      z-index: 1;
+    }
+
+    @keyframes contentFadeIn {
+      to { opacity: 1; }
+    }
+
+    .scroll-content h1 {
+      font-family: 'Amiri', serif;
+      font-size: 28px;
+      color: var(--dark-bg);
+      margin-bottom: 15px;
+    }
+
+    .scroll-content p {
+      font-size: 14px;
+      color: var(--zen-bg);
+    }
+
+    @keyframes splashFadeOut {
+      to { opacity: 0; pointer-events: none; }
+    }
+
+    /* Walkthrough */
+    .walkthrough {
+      position: fixed;
+      inset: 0;
+      background: rgba(12, 12, 14, 0.98);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9998;
+      padding: 20px;
+    }
+
+    .walkthrough.active { display: flex; }
+
+    .walkthrough-card {
+      background: var(--zen-bg);
+      border-radius: 12px;
+      padding: 60px 50px;
+      max-width: 500px;
+      text-align: center;
+      border: 1px solid var(--steel-dark);
+      box-shadow: 0 30px 80px rgba(0,0,0,0.6);
+      animation: cardZoom 0.6s ease;
+    }
+
+    @keyframes cardZoom {
+      from { transform: scale(0.9); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+
+    .walkthrough-card h2 {
+      font-family: 'Amiri', serif;
+      font-size: 28px;
+      color: var(--steel);
+      margin-bottom: 20px;
+    }
+
+    .walkthrough-card p {
+      color: var(--zen-white);
+      font-size: 16px;
+      line-height: 1.8;
+    }
+
+    .walkthrough-buttons {
+      display: flex;
+      gap: 15px;
+      margin-top: 40px;
+      justify-content: center;
+    }
+
+    .btn {
+      padding: 14px 32px;
+      border: none;
+      border-radius: 8px;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      min-width: 44px;
+      min-height: 44px;
+    }
+
+    .btn-primary {
+      background: var(--steel);
+      color: var(--dark-bg);
+    }
+
+    .btn-primary:hover {
+      background: #BCC6D3;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(168, 178, 191, 0.4);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--steel);
+      border: 2px solid var(--steel-dark);
+    }
+
+    .btn-secondary:hover {
+      border-color: var(--steel);
+    }
+
+    /* Main App */
+    .app {
+      display: none;
+      min-height: 100vh;
+      padding: 80px 20px 40px;
+    }
+
+    .app.active { display: block; }
+
+    .header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: var(--zen-bg);
+      padding: 20px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--steel-dark);
+      z-index: 100;
+      transition: background 0.3s ease;
+    }
+
+    .light .header {
+      background: white;
+      border-bottom-color: #ddd;
+    }
+
+    .logo {
+      font-family: 'Amiri', serif;
+      font-size: 24px;
+      font-weight: 400;
+      color: var(--steel);
+    }
+
+    .theme-toggle {
+      background: transparent;
+      border: 1px solid var(--steel-dark);
+      color: var(--steel);
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .theme-toggle:hover {
+      background: var(--steel-dark);
+      color: var(--zen-white);
+      transform: rotate(180deg);
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .poem-card {
+      background: var(--zen-bg);
+      border-radius: 12px;
+      padding: 60px 50px;
+      margin: 30px 0;
+      border: 1px solid var(--steel-dark);
+      box-shadow: 0 10px 40px rgba(0,0,0,0.4);
+      transition: all 0.4s ease;
+    }
+
+    .light .poem-card {
+      background: white;
+      border-color: #ddd;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+    }
+
+    .poem-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 20px 60px rgba(168, 178, 191, 0.3);
+    }
+
+    .poem-title {
+      font-family: 'Amiri', serif;
+      font-size: 32px;
+      color: var(--steel);
+      margin-bottom: 40px;
+      text-align: center;
+    }
+
+    .poem-verse {
+      font-family: 'Amiri', serif;
+      font-size: 24px;
+      line-height: 2.2;
+      text-align: center;
+      direction: rtl;
+      margin: 40px 0;
+      color: var(--zen-white);
+    }
+
+    .light .poem-verse {
+      color: #1a1a1a;
+    }
+
+    .poet-name {
+      text-align: center;
+      color: var(--steel-dark);
+      font-size: 18px;
+      margin-top: 40px;
+    }
+
+    .control-rail {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin-top: 40px;
+    }
+
+    .control-btn {
+      width: 50px;
+      height: 50px;
+      border-radius: 50%;
+      background: var(--steel-dark);
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      color: var(--zen-white);
+    }
+
+    .control-btn:hover {
+      background: var(--steel);
+      color: var(--dark-bg);
+      transform: scale(1.1);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .zen-field { width: 300px; height: 300px; }
+      .steel-scroll-container { width: 250px; height: 350px; }
+      .poem-card { padding: 40px 25px; }
+      .poem-verse { font-size: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Splash Screen -->
+  <div class="splash">
+    <div class="zen-field" id="zenField"></div>
+    <div class="steel-scroll-container">
+      <div class="steel-scroll">
+        <div class="steel-cap top"></div>
+        <div class="scroll-content">
+          <h1>Zen Serenity</h1>
+          <p>Steel-forged elegance meets floating wisdom</p>
+        </div>
+        <div class="steel-cap bottom"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Walkthrough -->
+  <div class="walkthrough" id="walkthrough">
+    <div class="walkthrough-card">
+      <h2 id="walkthrough-title">Welcome to Zen Particles</h2>
+      <p id="walkthrough-text">Experience poetry through minimalist particles and steel-crafted scrolls.</p>
+      <div class="walkthrough-buttons">
+        <button class="btn btn-secondary" onclick="skipWalkthrough()">Skip</button>
+        <button class="btn btn-primary" onclick="nextStep()">Next</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main App -->
+  <div class="app" id="app">
+    <header class="header">
+      <div class="logo">ديوان الشعر</div>
+      <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">◐</button>
+    </header>
+
+    <div class="container">
+      <div class="poem-card">
+        <h2 class="poem-title">ديوان الشعر العربي</h2>
+        <div class="poem-verse" lang="ar">
+          أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ<br>
+          فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
+        </div>
+        <p class="poet-name">— أحمد شوقي</p>
+
+        <div class="control-rail">
+          <button class="control-btn" aria-label="Previous">‹</button>
+          <button class="control-btn" aria-label="Play">▶</button>
+          <button class="control-btn" aria-label="Next">›</button>
+          <button class="control-btn" aria-label="Bookmark">★</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Generate zen particles
+    const zenField = document.getElementById('zenField');
+    for (let i = 0; i < 30; i++) {
+      const particle = document.createElement('div');
+      particle.className = 'zen-particle';
+      const x = (Math.random() - 0.5) * 200;
+      const y = (Math.random() - 0.5) * 200;
+      particle.style.setProperty('--x', `${x}px`);
+      particle.style.setProperty('--y', `${y}px`);
+      particle.style.left = '50%';
+      particle.style.top = '50%';
+      particle.style.animationDelay = `${Math.random() * 2}s`;
+      zenField.appendChild(particle);
+    }
+
+    let step = 0;
+    const steps = [
+      { title: 'Welcome to Zen Particles', text: 'Experience poetry through minimalist particles and steel-crafted scrolls.' },
+      { title: 'Particle Field', text: 'Watch as wisdom emerges from a field of floating zen particles.' },
+      { title: 'Steel-Forged Scrolls', text: 'Each poem is presented on a scroll of polished steel.' },
+      { title: 'Begin Your Journey', text: 'Find peace in the harmony of form and verse.' }
+    ];
+
+    setTimeout(() => {
+      document.getElementById('walkthrough').classList.add('active');
+    }, 3800);
+
+    function nextStep() {
+      step++;
+      if (step >= steps.length) {
+        startApp();
+      } else {
+        document.getElementById('walkthrough-title').textContent = steps[step].title;
+        document.getElementById('walkthrough-text').textContent = steps[step].text;
+      }
+    }
+
+    function skipWalkthrough() {
+      startApp();
+    }
+
+    function startApp() {
+      document.getElementById('walkthrough').classList.remove('active');
+      document.getElementById('app').classList.add('active');
+    }
+
+    function toggleTheme() {
+      document.body.classList.toggle('light');
+    }
+  </script>
+</body>
+</html>

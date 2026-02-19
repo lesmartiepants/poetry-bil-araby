@@ -1,216 +1,94 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html lang="ar" dir="rtl">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>B10: Signature Blend - Poetry bil Araby</title>
+  <title>B10: Tessellation Garden - Poetry bil Araby</title>
   <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     :root {
+      --emerald: #0A3D2F;
       --gold: #C5A059;
-      --premium-gold: #D4AF37;
-      --dark-bg: #0b0b0d;
-      --premium-black: #161618;
-      --spotlight-white: #FFF9E6;
-      --dust-gold: rgba(212, 175, 55, 0.4);
+      --ivory: #FDFCF8;
+      --teal: #1A6B5A;
+      --emerald-light: #0E5840;
+      --gold-dim: rgba(197, 160, 89, 0.3);
     }
 
     body {
       font-family: 'Tajawal', sans-serif;
-      background: var(--dark-bg);
-      color: #f0f0f0;
+      background: var(--emerald);
+      color: var(--ivory);
       overflow-x: hidden;
       transition: background 0.5s ease, color 0.5s ease;
     }
 
     body.light {
-      background: #FAF9F4;
-      color: #1a1a1a;
+      background: var(--ivory);
+      color: #1a2a1f;
     }
 
-    /* Splash Screen - Premium Blend */
+    /* ========== SPLASH ========== */
     .splash {
       position: fixed;
       inset: 0;
-      background: radial-gradient(circle at center, #1a1a1c 0%, var(--dark-bg) 100%);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
       z-index: 9999;
-      animation: splashFadeOut 0.8s ease 3.8s forwards;
-      overflow: hidden;
-    }
-
-    /* Subtle Spotlight Base */
-    .signature-spotlight {
-      position: absolute;
-      width: 600px;
-      height: 600px;
-      border-radius: 50%;
-      background: radial-gradient(circle at center, rgba(255, 249, 230, 0.3) 0%, rgba(212, 175, 55, 0.15) 40%, transparent 70%);
-      filter: blur(80px);
-      animation: signatureGlow 5s ease-in-out infinite;
-      will-change: transform, opacity;
-    }
-
-    @keyframes signatureGlow {
-      0%, 100% {
-        transform: translate(calc(50vw - 300px), calc(50vh - 300px)) scale(1);
-        opacity: 0.6;
-      }
-      50% {
-        transform: translate(calc(50vw - 300px), calc(50vh - 300px)) scale(1.1);
-        opacity: 0.9;
-      }
-    }
-
-    /* Gold Particles */
-    .gold-particle {
-      position: absolute;
-      width: 5px;
-      height: 5px;
-      background: var(--premium-gold);
-      border-radius: 50%;
-      opacity: 0;
-      box-shadow: 0 0 15px rgba(212, 175, 55, 0.8);
-      animation: goldFloat 4s ease-in-out infinite;
-      will-change: transform, opacity;
-    }
-
-    @keyframes goldFloat {
-      0%, 100% {
-        opacity: 0;
-        transform: translate(0, 0) scale(0.5);
-      }
-      20% {
-        opacity: 1;
-      }
-      80% {
-        opacity: 0.8;
-      }
-      100% {
-        transform: translate(var(--tx), var(--ty)) scale(1);
-      }
-    }
-
-    /* Dust Particles */
-    .dust-particle {
-      position: absolute;
-      width: 3px;
-      height: 3px;
-      background: rgba(255, 249, 230, 0.6);
-      border-radius: 50%;
-      opacity: 0;
-      animation: dustFloat 3s ease-in-out infinite;
-      will-change: transform, opacity;
-    }
-
-    @keyframes dustFloat {
-      0%, 100% {
-        opacity: 0;
-        transform: translate(0, 0);
-      }
-      50% {
-        opacity: 0.8;
-        transform: translate(var(--dx), var(--dy));
-      }
-    }
-
-    /* Premium Scroll */
-    .premium-scroll {
-      position: relative;
-      width: 350px;
-      height: 450px;
-      background: linear-gradient(135deg, var(--premium-black) 0%, #1a1a1c 100%);
-      border: 3px solid var(--premium-gold);
-      border-radius: 12px;
-      padding: 60px 40px;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: 25px;
-      box-shadow: 0 0 80px rgba(212, 175, 55, 0.4), 0 30px 90px rgba(0,0,0,0.7);
-      animation: scrollReveal 2s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
-      z-index: 10;
+      background: var(--emerald);
+      will-change: opacity;
     }
 
-    @keyframes scrollReveal {
-      0% {
-        height: 0;
-        opacity: 0;
-        transform: scaleY(0);
-      }
-      100% {
-        height: 450px;
-        opacity: 1;
-        transform: scaleY(1);
-      }
+    .splash.fade-out {
+      animation: splashOut 0.8s ease forwards;
     }
 
-    .scroll-cap {
+    .splash canvas {
       position: absolute;
-      width: calc(100% + 6px);
-      height: 40px;
-      background: linear-gradient(90deg, var(--gold) 0%, var(--premium-gold) 50%, var(--gold) 100%);
-      left: -3px;
-      box-shadow: 0 0 30px rgba(212, 175, 55, 0.6);
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      will-change: transform;
     }
 
-    .scroll-cap.top {
-      top: -3px;
-      border-radius: 12px 12px 0 0;
-    }
-
-    .scroll-cap.bottom {
-      bottom: -3px;
-      border-radius: 0 0 12px 12px;
-    }
-
-    .scroll-content {
+    .splash-text {
+      position: relative;
+      z-index: 2;
       text-align: center;
-      animation: contentEmerge 1s ease 1.5s forwards;
       opacity: 0;
-      z-index: 1;
+      animation: textIn 1.2s ease 0.8s forwards;
     }
 
-    @keyframes contentEmerge {
+    .splash-text h1 {
+      font-family: 'Amiri', serif;
+      font-size: 48px;
+      color: var(--gold);
+      text-shadow: 0 0 40px rgba(197, 160, 89, 0.5);
+      margin-bottom: 12px;
+    }
+
+    .splash-text p {
+      font-size: 16px;
+      color: var(--teal);
+      letter-spacing: 2px;
+    }
+
+    @keyframes textIn {
       to { opacity: 1; }
     }
 
-    .scroll-icon {
-      font-size: 60px;
-      color: var(--premium-gold);
-      text-shadow: 0 0 40px rgba(212, 175, 55, 0.7);
-      margin-bottom: 20px;
-    }
-
-    .scroll-content h1 {
-      font-family: 'Amiri', serif;
-      font-size: 36px;
-      color: var(--premium-gold);
-      margin-bottom: 15px;
-      text-shadow: 0 0 30px rgba(212, 175, 55, 0.5);
-    }
-
-    .scroll-content p {
-      font-size: 15px;
-      color: var(--spotlight-white);
-      line-height: 1.6;
-    }
-
-    @keyframes splashFadeOut {
+    @keyframes splashOut {
       to { opacity: 0; pointer-events: none; }
     }
 
-    /* Walkthrough */
+    /* ========== WALKTHROUGH (Hexagonal Grid) ========== */
     .walkthrough {
       position: fixed;
       inset: 0;
-      background: rgba(11, 11, 13, 0.98);
+      background: rgba(6, 30, 22, 0.97);
       display: none;
       align-items: center;
       justify-content: center;
@@ -220,47 +98,62 @@
 
     .walkthrough.active { display: flex; }
 
-    .walkthrough-card {
-      background: linear-gradient(135deg, var(--premium-black) 0%, #1a1a1c 100%);
-      border-radius: 24px;
-      padding: 65px 55px;
-      max-width: 540px;
+    .hex-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+      max-width: 640px;
+      width: 100%;
+      animation: hexEnter 0.8s ease;
+    }
+
+    @keyframes hexEnter {
+      from { opacity: 0; transform: scale(0.9) translateY(30px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+
+    .hex-cell {
+      background: linear-gradient(135deg, rgba(10, 61, 47, 0.95), rgba(26, 107, 90, 0.4));
+      border: 2px solid var(--gold);
+      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+      padding: 50px 28px 40px;
       text-align: center;
-      border: 3px solid var(--premium-gold);
-      box-shadow: 0 0 70px rgba(212, 175, 55, 0.5), 0 30px 90px rgba(0,0,0,0.7);
-      animation: cardSignature 1s ease;
-    }
-
-    @keyframes cardSignature {
-      from {
-        transform: scale(0.9) translateY(40px);
-        opacity: 0;
-      }
-      to {
-        transform: scale(1) translateY(0);
-        opacity: 1;
-      }
-    }
-
-    .walkthrough-card h2 {
-      font-family: 'Amiri', serif;
-      font-size: 34px;
-      color: var(--premium-gold);
-      margin-bottom: 25px;
-      text-shadow: 0 0 30px rgba(212, 175, 55, 0.5);
-    }
-
-    .walkthrough-card p {
-      color: #d8d8d8;
-      font-size: 16px;
-      line-height: 1.9;
-    }
-
-    .walkthrough-buttons {
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      aspect-ratio: 1 / 1.15;
       display: flex;
-      gap: 15px;
-      margin-top: 45px;
+      flex-direction: column;
+      align-items: center;
       justify-content: center;
+    }
+
+    .hex-cell:hover {
+      transform: scale(1.05);
+    }
+
+    .hex-cell .hex-icon {
+      font-size: 36px;
+      margin-bottom: 10px;
+    }
+
+    .hex-cell h3 {
+      font-family: 'Amiri', serif;
+      font-size: 20px;
+      color: var(--gold);
+      margin-bottom: 8px;
+    }
+
+    .hex-cell p {
+      font-size: 13px;
+      color: rgba(253, 252, 248, 0.8);
+      line-height: 1.6;
+    }
+
+    .hex-grid-footer {
+      grid-column: 1 / -1;
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      padding-top: 10px;
     }
 
     .btn {
@@ -273,34 +166,33 @@
       transition: all 0.3s ease;
       min-width: 44px;
       min-height: 44px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
+      font-family: 'Tajawal', sans-serif;
     }
 
     .btn-primary {
-      background: var(--premium-gold);
-      color: var(--dark-bg);
-      box-shadow: 0 0 35px rgba(212, 175, 55, 0.5);
+      background: var(--gold);
+      color: var(--emerald);
+      box-shadow: 0 0 30px rgba(197, 160, 89, 0.4);
     }
 
     .btn-primary:hover {
-      background: #E4BF47;
-      box-shadow: 0 0 50px rgba(212, 175, 55, 0.7), 0 10px 25px rgba(212, 175, 55, 0.4);
+      background: #D4B06A;
+      box-shadow: 0 0 50px rgba(197, 160, 89, 0.6);
       transform: translateY(-3px);
     }
 
     .btn-secondary {
       background: transparent;
-      color: #999;
-      border: 2px solid #444;
+      color: rgba(253, 252, 248, 0.5);
+      border: 2px solid rgba(253, 252, 248, 0.2);
     }
 
     .btn-secondary:hover {
-      border-color: var(--premium-gold);
-      color: var(--premium-gold);
+      border-color: var(--gold);
+      color: var(--gold);
     }
 
-    /* Main App */
+    /* ========== MAIN APP ========== */
     .app {
       display: none;
       min-height: 100vh;
@@ -314,42 +206,35 @@
       top: 0;
       left: 0;
       right: 0;
-      background: rgba(11, 11, 13, 0.95);
+      background: rgba(10, 61, 47, 0.95);
       backdrop-filter: blur(20px);
-      padding: 24px 40px;
+      padding: 20px 35px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 2px solid rgba(212, 175, 55, 0.4);
+      border-bottom: 2px solid var(--gold-dim);
       z-index: 100;
       transition: background 0.3s ease;
-      box-shadow: 0 5px 40px rgba(212, 175, 55, 0.2);
     }
 
     .light .header {
-      background: rgba(250, 249, 244, 0.95);
-      border-bottom-color: var(--gold);
-      box-shadow: 0 2px 20px rgba(197, 160, 89, 0.15);
+      background: rgba(253, 252, 248, 0.95);
+      border-bottom-color: rgba(197, 160, 89, 0.4);
     }
 
     .logo {
       font-family: 'Amiri', serif;
-      font-size: 28px;
+      font-size: 26px;
       font-weight: 700;
-      color: var(--premium-gold);
-      text-shadow: 0 0 25px rgba(212, 175, 55, 0.5);
-      letter-spacing: 1px;
+      color: var(--gold);
     }
 
-    .light .logo {
-      color: var(--gold);
-      text-shadow: none;
-    }
+    .light .logo { color: var(--emerald); }
 
     .theme-toggle {
       background: transparent;
-      border: 2px solid var(--premium-gold);
-      color: var(--premium-gold);
+      border: 2px solid var(--gold);
+      color: var(--gold);
       width: 48px;
       height: 48px;
       border-radius: 50%;
@@ -358,79 +243,87 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 0 25px rgba(212, 175, 55, 0.4);
-      font-size: 22px;
+      font-size: 20px;
     }
 
     .theme-toggle:hover {
-      background: var(--premium-gold);
-      color: var(--dark-bg);
-      box-shadow: 0 0 40px rgba(212, 175, 55, 0.7);
-      transform: rotate(180deg) scale(1.1);
+      background: var(--gold);
+      color: var(--emerald);
+      transform: rotate(180deg);
     }
 
-    .container {
-      max-width: 900px;
-      margin: 0 auto;
+    .light .theme-toggle {
+      border-color: var(--emerald);
+      color: var(--emerald);
     }
 
+    .light .theme-toggle:hover {
+      background: var(--emerald);
+      color: var(--ivory);
+    }
+
+    .container { max-width: 900px; margin: 0 auto; }
+
+    /* Poem card with arabesque SVG border */
     .poem-card {
-      background: linear-gradient(135deg, var(--premium-black) 0%, #1a1a1c 100%);
-      border-radius: 24px;
-      padding: 75px 60px;
-      margin: 45px 0;
-      border: 2px solid rgba(212, 175, 55, 0.4);
-      box-shadow: 0 0 70px rgba(212, 175, 55, 0.3), 0 20px 60px rgba(0,0,0,0.6);
-      transition: all 0.5s ease;
       position: relative;
-      overflow: hidden;
+      background: linear-gradient(135deg, #072a1f, #0d4434);
+      border-radius: 20px;
+      padding: 80px 60px;
+      margin: 45px 0;
+      transition: all 0.5s ease;
+      overflow: visible;
     }
 
     .light .poem-card {
       background: white;
-      border-color: var(--gold);
-      box-shadow: 0 15px 50px rgba(197, 160, 89, 0.2);
+      box-shadow: 0 10px 40px rgba(10, 61, 47, 0.1);
     }
 
-    .poem-card::before {
-      content: '';
+    /* Arabesque SVG border */
+    .arabesque-border {
       position: absolute;
-      width: 400px;
-      height: 400px;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      background: radial-gradient(circle, rgba(212, 175, 55, 0.12) 0%, transparent 70%);
-      animation: cardAmbient 6s ease-in-out infinite;
+      inset: -4px;
       pointer-events: none;
+      z-index: 0;
     }
 
-    @keyframes cardAmbient {
-      0%, 100% { opacity: 0.4; transform: translate(-50%, -50%) scale(1); }
-      50% { opacity: 0.7; transform: translate(-50%, -50%) scale(1.15); }
+    .arabesque-border rect {
+      fill: none;
+      stroke: var(--gold);
+      stroke-width: 2.5;
+      rx: 20;
+    }
+
+    .arabesque-border .pattern-line {
+      fill: none;
+      stroke: var(--gold);
+      stroke-width: 1.5;
+      stroke-dasharray: 1200;
+      stroke-dashoffset: 1200;
+      animation: drawArabesque 4s ease forwards;
+      will-change: stroke-dashoffset;
+    }
+
+    @keyframes drawArabesque {
+      to { stroke-dashoffset: 0; }
     }
 
     .poem-card:hover {
-      transform: translateY(-10px);
-      box-shadow: 0 0 90px rgba(212, 175, 55, 0.5), 0 30px 80px rgba(0,0,0,0.7);
-      border-color: var(--premium-gold);
+      transform: translateY(-8px);
     }
+
+    .poem-content { position: relative; z-index: 1; }
 
     .poem-title {
       font-family: 'Amiri', serif;
-      font-size: 38px;
-      color: var(--premium-gold);
-      margin-bottom: 50px;
+      font-size: 36px;
+      color: var(--gold);
+      margin-bottom: 45px;
       text-align: center;
-      text-shadow: 0 0 30px rgba(212, 175, 55, 0.4);
-      position: relative;
-      z-index: 1;
     }
 
-    .light .poem-title {
-      color: var(--gold);
-      text-shadow: none;
-    }
+    .light .poem-title { color: var(--emerald); }
 
     .poem-verse {
       font-family: 'Amiri', serif;
@@ -438,104 +331,115 @@
       line-height: 2.4;
       text-align: center;
       direction: rtl;
-      margin: 50px 0;
-      color: #f0f0f0;
-      position: relative;
-      z-index: 1;
+      margin: 45px 0;
+      color: var(--ivory);
     }
 
-    .light .poem-verse {
-      color: #1a1a1a;
-    }
+    .light .poem-verse { color: #1a2a1f; }
 
     .poet-name {
       text-align: center;
-      color: var(--gold);
+      color: var(--teal);
       font-size: 20px;
-      margin-top: 50px;
-      position: relative;
-      z-index: 1;
-      text-shadow: 0 0 20px rgba(197, 160, 89, 0.3);
-      letter-spacing: 1px;
+      margin-top: 45px;
     }
 
-    .light .poet-name {
-      text-shadow: none;
-    }
+    .light .poet-name { color: var(--emerald); }
 
     .control-rail {
       display: flex;
-      gap: 18px;
+      gap: 16px;
       justify-content: center;
-      margin-top: 55px;
-      position: relative;
-      z-index: 1;
+      margin-top: 50px;
     }
 
     .control-btn {
-      width: 54px;
-      height: 54px;
+      width: 52px;
+      height: 52px;
       border-radius: 50%;
-      background: rgba(212, 175, 55, 0.15);
-      border: 2px solid var(--premium-gold);
+      background: rgba(197, 160, 89, 0.12);
+      border: 2px solid var(--gold);
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       transition: all 0.3s ease;
-      color: var(--premium-gold);
-      box-shadow: 0 0 25px rgba(212, 175, 55, 0.3);
+      color: var(--gold);
       font-size: 18px;
     }
 
     .control-btn:hover {
-      background: var(--premium-gold);
-      color: var(--dark-bg);
-      box-shadow: 0 0 40px rgba(212, 175, 55, 0.6);
-      transform: scale(1.25);
+      background: var(--gold);
+      color: var(--emerald);
+      transform: scale(1.2);
     }
 
+    .light .control-btn {
+      border-color: var(--emerald);
+      color: var(--emerald);
+      background: rgba(10, 61, 47, 0.06);
+    }
+
+    .light .control-btn:hover {
+      background: var(--emerald);
+      color: var(--ivory);
+    }
+
+    /* ========== Reduced Motion ========== */
     @media (prefers-reduced-motion: reduce) {
-      * {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
+      *, *::before, *::after {
+        animation: none !important;
+        transition: none !important;
       }
+      .splash { display: none !important; }
+      .walkthrough { display: none !important; }
+      .app { display: block !important; }
     }
 
+    /* ========== Mobile ========== */
     @media (max-width: 768px) {
-      .signature-spotlight { width: 400px; height: 400px; }
-      .premium-scroll { width: 300px; height: 400px; padding: 50px 30px; }
-      .scroll-content h1 { font-size: 30px; }
-      .poem-card { padding: 50px 35px; }
-      .poem-verse { font-size: 24px; }
+      .hex-grid {
+        grid-template-columns: 1fr;
+        max-width: 320px;
+      }
+      .hex-cell { padding: 40px 20px 30px; }
+      .poem-card { padding: 50px 30px; }
+      .poem-verse { font-size: 22px; }
+      .splash-text h1 { font-size: 36px; }
     }
   </style>
 </head>
 <body>
   <!-- Splash Screen -->
-  <div class="splash">
-    <div class="signature-spotlight"></div>
-    <div id="particleContainer"></div>
-    <div class="premium-scroll">
-      <div class="scroll-cap top"></div>
-      <div class="scroll-content">
-        <div class="scroll-icon">◆</div>
-        <h1>Signature</h1>
-        <p>Gold particles · Spotlight dust · Premium scroll</p>
-      </div>
-      <div class="scroll-cap bottom"></div>
+  <div class="splash" id="splash">
+    <canvas id="tessCanvas"></canvas>
+    <div class="splash-text">
+      <h1>حديقة الزخرفة</h1>
+      <p>Tessellation Garden</p>
     </div>
   </div>
 
-  <!-- Walkthrough -->
+  <!-- Walkthrough - Hexagonal Grid -->
   <div class="walkthrough" id="walkthrough">
-    <div class="walkthrough-card">
-      <h2 id="walkthrough-title">Welcome to Signature Blend</h2>
-      <p id="walkthrough-text">Experience the ultimate fusion of gold particles, spotlight dust, and premium scroll design.</p>
-      <div class="walkthrough-buttons">
-        <button class="btn btn-secondary" onclick="skipWalkthrough()">Skip</button>
-        <button class="btn btn-primary" onclick="nextStep()">Begin</button>
+    <div class="hex-grid">
+      <div class="hex-cell">
+        <div class="hex-icon">&#x2726;</div>
+        <h3>اكتشف الشعر</h3>
+        <p>تصفّح آلاف القصائد من التراث العربي الغني بين يديك</p>
+      </div>
+      <div class="hex-cell">
+        <div class="hex-icon">&#x2728;</div>
+        <h3>زخارف حية</h3>
+        <p>تجربة بصرية مستوحاة من فن الزخرفة الهندسية الإسلامية</p>
+      </div>
+      <div class="hex-cell">
+        <div class="hex-icon">&#x266B;</div>
+        <h3>استمع وتأمّل</h3>
+        <p>اسمع الأبيات بصوت يليق بجمال الكلمة العربية</p>
+      </div>
+      <div class="hex-grid-footer">
+        <button class="btn btn-secondary" onclick="skipWalkthrough()">تخطّي</button>
+        <button class="btn btn-primary" onclick="startApp()">ابدأ الرحلة</button>
       </div>
     </div>
   </div>
@@ -544,85 +448,305 @@
   <div class="app" id="app">
     <header class="header">
       <div class="logo">ديوان الشعر</div>
-      <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">◆</button>
+      <button class="theme-toggle" onclick="toggleTheme()" aria-label="تبديل السمة">&#9788;</button>
     </header>
 
     <div class="container">
-      <div class="poem-card">
-        <h2 class="poem-title">ديوان الشعر العربي</h2>
-        <div class="poem-verse" lang="ar">
-          أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ<br>
-          فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
-        </div>
-        <p class="poet-name">— أحمد شوقي</p>
+      <div class="poem-card" id="poemCard">
+        <!-- Arabesque SVG border injected by JS -->
+        <div class="poem-content">
+          <h2 class="poem-title">ديوان الشعر العربي</h2>
+          <div class="poem-verse" dir="rtl" lang="ar">
+            أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ<br>
+            فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
+          </div>
+          <p class="poet-name">— أحمد شوقي</p>
 
-        <div class="control-rail">
-          <button class="control-btn" aria-label="Previous">‹</button>
-          <button class="control-btn" aria-label="Play">▶</button>
-          <button class="control-btn" aria-label="Next">›</button>
-          <button class="control-btn" aria-label="Bookmark">★</button>
+          <div class="control-rail">
+            <button class="control-btn" aria-label="السابق">&#8249;</button>
+            <button class="control-btn" aria-label="تشغيل">&#9654;</button>
+            <button class="control-btn" aria-label="التالي">&#8250;</button>
+            <button class="control-btn" aria-label="حفظ">&#9733;</button>
+          </div>
         </div>
       </div>
     </div>
   </div>
 
   <script>
-    // Generate blend of particles
-    const particleContainer = document.getElementById('particleContainer');
+    /* ===========================================
+       TESSELLATION CANVAS - 8-Pointed Islamic Stars
+       =========================================== */
+    (function() {
+      const canvas = document.getElementById('tessCanvas');
+      const ctx = canvas.getContext('2d');
+      const isMobile = window.innerWidth < 768;
 
-    // Gold particles (15)
-    for (let i = 0; i < 15; i++) {
-      const particle = document.createElement('div');
-      particle.className = 'gold-particle';
-      const tx = (Math.random() - 0.5) * 300;
-      const ty = (Math.random() - 0.5) * 300;
-      particle.style.setProperty('--tx', `${tx}px`);
-      particle.style.setProperty('--ty', `${ty}px`);
-      particle.style.left = `${35 + Math.random() * 30}%`;
-      particle.style.top = `${35 + Math.random() * 30}%`;
-      particle.style.animationDelay = `${Math.random() * 2}s`;
-      particleContainer.appendChild(particle);
-    }
+      let W, H, time = 0, splitProgress = 0, splashing = true;
+      const EMERALD = '#0A3D2F';
+      const GOLD = '#C5A059';
+      const TEAL = '#1A6B5A';
 
-    // Dust particles (30)
-    for (let i = 0; i < 30; i++) {
-      const dust = document.createElement('div');
-      dust.className = 'dust-particle';
-      const dx = (Math.random() - 0.5) * 200;
-      const dy = (Math.random() - 0.5) * 200;
-      dust.style.setProperty('--dx', `${dx}px`);
-      dust.style.setProperty('--dy', `${dy}px`);
-      dust.style.left = `${30 + Math.random() * 40}%`;
-      dust.style.top = `${30 + Math.random() * 40}%`;
-      dust.style.animationDelay = `${Math.random() * 3}s`;
-      particleContainer.appendChild(dust);
-    }
-
-    let step = 0;
-    const steps = [
-      { title: 'Welcome to Signature Blend', text: 'Experience the ultimate fusion of gold particles, spotlight dust, and premium scroll design.' },
-      { title: 'Gold Particles', text: 'Premium golden orbs float majestically through the darkness.' },
-      { title: 'Spotlight Dust', text: 'Subtle dust particles dance in ethereal light beams.' },
-      { title: 'Premium Scroll', text: 'Each poem is presented on a gold-capped luxury scroll.' }
-    ];
-
-    setTimeout(() => {
-      document.getElementById('walkthrough').classList.add('active');
-    }, 4600);
-
-    function nextStep() {
-      step++;
-      if (step >= steps.length) {
-        startApp();
-      } else {
-        document.getElementById('walkthrough-title').textContent = steps[step].title;
-        document.getElementById('walkthrough-text').textContent = steps[step].text;
+      function resize() {
+        W = canvas.width = window.innerWidth;
+        H = canvas.height = window.innerHeight;
       }
-    }
+      resize();
+      window.addEventListener('resize', resize);
 
-    function skipWalkthrough() {
-      startApp();
-    }
+      // Draw an 8-pointed star at (cx, cy) with given outer radius
+      function drawStar8(cx, cy, outerR, rotation, alpha) {
+        const innerR = outerR * 0.42;
+        ctx.beginPath();
+        for (let i = 0; i < 16; i++) {
+          const angle = rotation + (i * Math.PI / 8);
+          const r = i % 2 === 0 ? outerR : innerR;
+          const x = cx + Math.cos(angle) * r;
+          const y = cy + Math.sin(angle) * r;
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.closePath();
+        ctx.strokeStyle = `rgba(197, 160, 89, ${alpha})`;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      }
+
+      // Draw connecting hexagonal tessellation lines
+      function drawHexConnect(cx, cy, size, rotation, alpha) {
+        for (let i = 0; i < 6; i++) {
+          const a = rotation + i * Math.PI / 3;
+          const x2 = cx + Math.cos(a) * size;
+          const y2 = cy + Math.sin(a) * size;
+          ctx.beginPath();
+          ctx.moveTo(cx, cy);
+          ctx.lineTo(x2, y2);
+          ctx.strokeStyle = `rgba(26, 107, 90, ${alpha * 0.5})`;
+          ctx.lineWidth = 0.8;
+          ctx.stroke();
+        }
+      }
+
+      // Build grid of star positions
+      const spacing = isMobile ? 100 : 120;
+      let stars = [];
+
+      function buildGrid() {
+        stars = [];
+        const cols = Math.ceil(W / spacing) + 2;
+        const rows = Math.ceil(H / (spacing * 0.866)) + 2;
+        for (let row = -1; row < rows; row++) {
+          for (let col = -1; col < cols; col++) {
+            const offsetX = (row % 2) * (spacing / 2);
+            const x = col * spacing + offsetX;
+            const y = row * spacing * 0.866;
+            stars.push({ x, y, baseX: x, baseY: y });
+          }
+        }
+      }
+      buildGrid();
+
+      function animate() {
+        time += 0.008;
+        ctx.clearRect(0, 0, W, H);
+        ctx.fillStyle = EMERALD;
+        ctx.fillRect(0, 0, W, H);
+
+        const rotation = time * 0.3;
+        const centerX = W / 2;
+        const centerY = H / 2;
+
+        for (let i = 0; i < stars.length; i++) {
+          const s = stars[i];
+          let dx = s.baseX - centerX;
+          let dy = s.baseY - centerY;
+          let dist = Math.sqrt(dx * dx + dy * dy);
+          let maxDist = Math.sqrt(centerX * centerX + centerY * centerY);
+
+          // Split effect: stars push outward from center
+          let pushX = 0, pushY = 0;
+          if (splitProgress > 0 && dist > 1) {
+            let pushDist = splitProgress * (800 + dist * 1.5);
+            pushX = (dx / dist) * pushDist;
+            pushY = (dy / dist) * pushDist;
+          }
+
+          s.x = s.baseX + pushX;
+          s.y = s.baseY + pushY;
+
+          let alpha = Math.max(0, 1 - splitProgress * 2);
+          let distFade = 1 - (dist / maxDist) * 0.3;
+          let finalAlpha = alpha * distFade;
+
+          if (finalAlpha > 0.01) {
+            let starSize = (spacing / 2.5) * (1 + Math.sin(time + i * 0.05) * 0.08);
+            drawHexConnect(s.x, s.y, spacing * 0.5, rotation * 0.5, finalAlpha * 0.6);
+            drawStar8(s.x, s.y, starSize, rotation + i * 0.02, finalAlpha);
+          }
+        }
+
+        if (splashing) {
+          requestAnimationFrame(animate);
+        }
+      }
+
+      animate();
+
+      // After 3s start splitting
+      setTimeout(function() {
+        let start = null;
+        function splitAnim(ts) {
+          if (!start) start = ts;
+          splitProgress = Math.min(1, (ts - start) / 1200);
+          if (splitProgress < 1) {
+            requestAnimationFrame(splitAnim);
+          } else {
+            splashing = false;
+            document.getElementById('splash').classList.add('fade-out');
+            setTimeout(function() {
+              document.getElementById('splash').style.display = 'none';
+              document.getElementById('walkthrough').classList.add('active');
+            }, 800);
+          }
+        }
+        requestAnimationFrame(splitAnim);
+      }, 3000);
+
+      // Halve star count on mobile by skipping every other during draw
+      // (handled by spacing already being larger)
+
+      // Rebuild on resize
+      window.addEventListener('resize', function() {
+        resize();
+        buildGrid();
+      });
+    })();
+
+    /* ===========================================
+       ARABESQUE SVG BORDER
+       =========================================== */
+    (function() {
+      const card = document.getElementById('poemCard');
+
+      function buildArabesque() {
+        const w = card.offsetWidth + 8;
+        const h = card.offsetHeight + 8;
+        const ns = 'http://www.w3.org/2000/svg';
+        const svg = document.createElementNS(ns, 'svg');
+        svg.setAttribute('class', 'arabesque-border');
+        svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+        svg.setAttribute('width', w);
+        svg.setAttribute('height', h);
+
+        // Outer rect
+        const rect = document.createElementNS(ns, 'rect');
+        rect.setAttribute('x', '2');
+        rect.setAttribute('y', '2');
+        rect.setAttribute('width', w - 4);
+        rect.setAttribute('height', h - 4);
+        rect.setAttribute('rx', '20');
+        svg.appendChild(rect);
+
+        // Arabesque pattern path - flowing vine along border
+        const margin = 14;
+        const cw = w - margin * 2;
+        const ch = h - margin * 2;
+        let d = `M ${margin} ${margin + 30}`;
+
+        // Top edge scallops
+        const scallops = 8;
+        const scW = cw / scallops;
+        for (let i = 0; i < scallops; i++) {
+          const x1 = margin + i * scW + scW * 0.3;
+          const y1 = margin - 6;
+          const x2 = margin + i * scW + scW * 0.7;
+          const y2 = margin - 6;
+          const x3 = margin + (i + 1) * scW;
+          const y3 = margin + 30;
+          d += ` C ${x1} ${y1}, ${x2} ${y2}, ${x3} ${y3}`;
+        }
+
+        // Right edge scallops
+        const rScallops = 6;
+        const rH = ch / rScallops;
+        for (let i = 0; i < rScallops; i++) {
+          const x1 = w - margin + 6;
+          const y1 = margin + 30 + i * rH + rH * 0.3;
+          const x2 = w - margin + 6;
+          const y2 = margin + 30 + i * rH + rH * 0.7;
+          const x3 = w - margin;
+          const y3 = margin + 30 + (i + 1) * rH;
+          d += ` C ${x1} ${y1}, ${x2} ${y2}, ${x3} ${y3}`;
+        }
+
+        // Bottom edge
+        const bScallops = 8;
+        const bW = cw / bScallops;
+        for (let i = 0; i < bScallops; i++) {
+          const x1 = w - margin - i * bW - bW * 0.3;
+          const y1 = h - margin + 6;
+          const x2 = w - margin - i * bW - bW * 0.7;
+          const y2 = h - margin + 6;
+          const x3 = w - margin - (i + 1) * bW;
+          const y3 = h - margin;
+          d += ` C ${x1} ${y1}, ${x2} ${y2}, ${x3} ${y3}`;
+        }
+
+        // Left edge
+        const lScallops = 6;
+        const lH = ch / lScallops;
+        for (let i = 0; i < lScallops; i++) {
+          const x1 = margin - 6;
+          const y1 = h - margin - 30 - i * lH - lH * 0.3;
+          const x2 = margin - 6;
+          const y2 = h - margin - 30 - i * lH - lH * 0.7;
+          const x3 = margin;
+          const y3 = h - margin - 30 - (i + 1) * lH;
+          d += ` C ${x1} ${y1}, ${x2} ${y2}, ${x3} ${y3}`;
+        }
+
+        const path = document.createElementNS(ns, 'path');
+        path.setAttribute('class', 'pattern-line');
+        path.setAttribute('d', d);
+        svg.appendChild(path);
+
+        // Remove old SVG if exists
+        const old = card.querySelector('.arabesque-border');
+        if (old) old.remove();
+        card.insertBefore(svg, card.firstChild);
+
+        // Measure and set dasharray
+        const len = path.getTotalLength();
+        path.style.strokeDasharray = len;
+        path.style.strokeDashoffset = len;
+        // Force reflow then animate
+        path.getBoundingClientRect();
+        path.style.animation = 'none';
+        requestAnimationFrame(function() {
+          path.style.animation = '';
+          path.style.strokeDasharray = len;
+          path.style.strokeDashoffset = len;
+          path.style.transition = 'stroke-dashoffset 3s ease';
+          path.style.strokeDashoffset = '0';
+        });
+      }
+
+      // Build after app is shown
+      const observer = new MutationObserver(function(mutations) {
+        for (const m of mutations) {
+          if (m.target.classList.contains('active')) {
+            setTimeout(buildArabesque, 100);
+            window.addEventListener('resize', buildArabesque);
+          }
+        }
+      });
+      observer.observe(document.getElementById('app'), { attributes: true, attributeFilter: ['class'] });
+    })();
+
+    /* ===========================================
+       APP LOGIC
+       =========================================== */
+    function skipWalkthrough() { startApp(); }
 
     function startApp() {
       document.getElementById('walkthrough').classList.remove('active');

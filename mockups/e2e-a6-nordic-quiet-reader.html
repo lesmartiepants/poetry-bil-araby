@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>A6: Nordic Quiet Reader - Poetry bil Araby</title>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --gold: #C5A059;
+      --dark-bg: #0c0c0e;
+      --light-bg: #F5F5F3;
+      --nordic-gray: #E8E8E6;
+      --nordic-dark: #2B2B2B;
+      --nordic-accent: #4A6FA5;
+    }
+
+    body {
+      font-family: 'Tajawal', sans-serif;
+      background: var(--light-bg);
+      color: #2a2a2a;
+      overflow-x: hidden;
+      transition: background 0.5s ease, color 0.5s ease;
+    }
+
+    body.dark {
+      background: var(--dark-bg);
+      color: #e5e5e5;
+    }
+
+    /* Splash Screen - Near-Static Calm */
+    .splash {
+      position: fixed;
+      inset: 0;
+      background: linear-gradient(180deg, var(--nordic-gray) 0%, var(--light-bg) 100%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      animation: splashFadeOut 0.8s ease 2.2s forwards;
+    }
+
+    .nordic-frame {
+      width: 350px;
+      height: 450px;
+      background: white;
+      border: 1px solid #d0d0ce;
+      box-shadow: 0 8px 40px rgba(0, 0, 0, 0.08);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+      animation: frameAppear 1.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+      will-change: opacity, transform;
+    }
+
+    @keyframes frameAppear {
+      0% { opacity: 0; transform: scale(0.95); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    .nordic-icon {
+      width: 80px;
+      height: 80px;
+      background: var(--nordic-accent);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 40px;
+      font-family: 'Amiri', serif;
+      animation: iconPulse 2s ease-in-out infinite;
+    }
+
+    @keyframes iconPulse {
+      0%, 100% { opacity: 0.9; }
+      50% { opacity: 1; }
+    }
+
+    .nordic-text {
+      text-align: center;
+      padding: 0 40px;
+    }
+
+    .nordic-text h1 {
+      font-family: 'Amiri', serif;
+      font-size: 28px;
+      color: var(--nordic-dark);
+      margin-bottom: 10px;
+      font-weight: 400;
+    }
+
+    .nordic-text p {
+      font-size: 14px;
+      color: #666;
+      font-weight: 300;
+    }
+
+    @keyframes splashFadeOut {
+      to { opacity: 0; pointer-events: none; }
+    }
+
+    /* Walkthrough - Minimal Scandinavian */
+    .walkthrough {
+      position: fixed;
+      inset: 0;
+      background: rgba(245, 245, 243, 0.98);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9998;
+      padding: 20px;
+    }
+
+    .dark .walkthrough {
+      background: rgba(12, 12, 14, 0.98);
+    }
+
+    .walkthrough.active { display: flex; }
+
+    .walkthrough-card {
+      background: white;
+      border-radius: 8px;
+      padding: 60px 50px;
+      max-width: 480px;
+      text-align: center;
+      border: 1px solid #e0e0de;
+      animation: cardFadeIn 0.6s ease;
+    }
+
+    .dark .walkthrough-card {
+      background: #1a1a1c;
+      border-color: #2a2a2c;
+    }
+
+    @keyframes cardFadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .walkthrough-card h2 {
+      font-family: 'Amiri', serif;
+      font-size: 26px;
+      color: var(--nordic-dark);
+      margin-bottom: 20px;
+      font-weight: 400;
+    }
+
+    .dark .walkthrough-card h2 {
+      color: #e5e5e5;
+    }
+
+    .walkthrough-card p {
+      color: #666;
+      font-size: 16px;
+      line-height: 1.8;
+      font-weight: 300;
+    }
+
+    .dark .walkthrough-card p {
+      color: #999;
+    }
+
+    .walkthrough-buttons {
+      display: flex;
+      gap: 15px;
+      margin-top: 40px;
+      justify-content: center;
+    }
+
+    .btn {
+      padding: 14px 32px;
+      border: none;
+      border-radius: 4px;
+      font-size: 15px;
+      font-weight: 400;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      min-width: 44px;
+      min-height: 44px;
+    }
+
+    .btn-primary {
+      background: var(--nordic-accent);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: #3d5a8a;
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: #666;
+      border: 1px solid #d0d0ce;
+    }
+
+    .btn-secondary:hover {
+      border-color: #999;
+    }
+
+    /* Main App */
+    .app {
+      display: none;
+      min-height: 100vh;
+      padding: 80px 20px 40px;
+    }
+
+    .app.active { display: block; }
+
+    .header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: white;
+      padding: 20px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid #e0e0de;
+      z-index: 100;
+      transition: background 0.3s ease;
+    }
+
+    .dark .header {
+      background: #1a1a1c;
+      border-bottom-color: #2a2a2c;
+    }
+
+    .logo {
+      font-family: 'Amiri', serif;
+      font-size: 22px;
+      font-weight: 400;
+      color: var(--nordic-dark);
+    }
+
+    .dark .logo {
+      color: #e5e5e5;
+    }
+
+    .theme-toggle {
+      background: transparent;
+      border: 1px solid #d0d0ce;
+      color: var(--nordic-dark);
+      width: 44px;
+      height: 44px;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .dark .theme-toggle {
+      border-color: #2a2a2c;
+      color: #e5e5e5;
+    }
+
+    .theme-toggle:hover {
+      background: var(--nordic-gray);
+      border-color: #999;
+    }
+
+    .dark .theme-toggle:hover {
+      background: #2a2a2c;
+    }
+
+    .container {
+      max-width: 750px;
+      margin: 0 auto;
+    }
+
+    .poem-card {
+      background: white;
+      border-radius: 8px;
+      padding: 60px 50px;
+      margin: 30px 0;
+      border: 1px solid #e0e0de;
+      transition: all 0.4s ease;
+    }
+
+    .dark .poem-card {
+      background: #1a1a1c;
+      border-color: #2a2a2c;
+    }
+
+    .poem-card:hover {
+      box-shadow: 0 12px 48px rgba(0, 0, 0, 0.08);
+      transform: translateY(-3px);
+    }
+
+    .poem-title {
+      font-family: 'Amiri', serif;
+      font-size: 28px;
+      color: var(--nordic-dark);
+      margin-bottom: 40px;
+      text-align: center;
+      font-weight: 400;
+    }
+
+    .dark .poem-title {
+      color: #e5e5e5;
+    }
+
+    .poem-verse {
+      font-family: 'Amiri', serif;
+      font-size: 22px;
+      line-height: 2.2;
+      text-align: center;
+      direction: rtl;
+      margin: 40px 0;
+      color: #2a2a2a;
+    }
+
+    .dark .poem-verse {
+      color: #d0d0d0;
+    }
+
+    .poet-name {
+      text-align: center;
+      color: #666;
+      font-size: 16px;
+      margin-top: 40px;
+      font-weight: 300;
+    }
+
+    .dark .poet-name {
+      color: #999;
+    }
+
+    .control-rail {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+      margin-top: 40px;
+    }
+
+    .control-btn {
+      width: 44px;
+      height: 44px;
+      border-radius: 4px;
+      background: var(--nordic-gray);
+      border: 1px solid #d0d0ce;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      color: var(--nordic-dark);
+    }
+
+    .dark .control-btn {
+      background: #2a2a2c;
+      border-color: #3a3a3c;
+      color: #e5e5e5;
+    }
+
+    .control-btn:hover {
+      background: var(--nordic-accent);
+      color: white;
+      border-color: var(--nordic-accent);
+      transform: translateY(-2px);
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .nordic-frame { width: 300px; height: 400px; }
+      .poem-card { padding: 40px 25px; }
+      .poem-verse { font-size: 20px; }
+      .header { padding: 15px 20px; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Splash Screen -->
+  <div class="splash">
+    <div class="nordic-frame">
+      <div class="nordic-icon">ش</div>
+      <div class="nordic-text">
+        <h1>Quiet Reading</h1>
+        <p>A calm space for Arabic poetry</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Walkthrough -->
+  <div class="walkthrough" id="walkthrough">
+    <div class="walkthrough-card">
+      <h2 id="walkthrough-title">Welcome to Nordic Quiet</h2>
+      <p id="walkthrough-text">Experience minimalist Scandinavian design meets classical Arabic verse.</p>
+      <div class="walkthrough-buttons">
+        <button class="btn btn-secondary" onclick="skipWalkthrough()">Skip</button>
+        <button class="btn btn-primary" onclick="nextStep()">Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main App -->
+  <div class="app" id="app">
+    <header class="header">
+      <div class="logo">ديوان الشعر</div>
+      <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">◐</button>
+    </header>
+
+    <div class="container">
+      <div class="poem-card">
+        <h2 class="poem-title">ديوان الشعر العربي</h2>
+        <div class="poem-verse" lang="ar">
+          أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ<br>
+          فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
+        </div>
+        <p class="poet-name">— أحمد شوقي</p>
+
+        <div class="control-rail">
+          <button class="control-btn" aria-label="Previous">‹</button>
+          <button class="control-btn" aria-label="Play">▸</button>
+          <button class="control-btn" aria-label="Next">›</button>
+          <button class="control-btn" aria-label="Bookmark">☆</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let step = 0;
+    const steps = [
+      { title: 'Welcome to Nordic Quiet', text: 'Experience minimalist Scandinavian design meets classical Arabic verse.' },
+      { title: 'Calm & Focused', text: 'No distractions. Just poetry and peaceful reading.' },
+      { title: 'Clean Controls', text: 'Simple, intuitive interface that stays out of your way.' },
+      { title: 'Begin Reading', text: 'Find tranquility in the beauty of classical Arabic poetry.' }
+    ];
+
+    setTimeout(() => {
+      document.getElementById('walkthrough').classList.add('active');
+    }, 3000);
+
+    function nextStep() {
+      step++;
+      if (step >= steps.length) {
+        startApp();
+      } else {
+        document.getElementById('walkthrough-title').textContent = steps[step].title;
+        document.getElementById('walkthrough-text').textContent = steps[step].text;
+      }
+    }
+
+    function skipWalkthrough() {
+      startApp();
+    }
+
+    function startApp() {
+      document.getElementById('walkthrough').classList.remove('active');
+      document.getElementById('app').classList.add('active');
+    }
+
+    function toggleTheme() {
+      document.body.classList.toggle('dark');
+    }
+  </script>
+</body>
+</html>

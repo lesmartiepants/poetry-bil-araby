@@ -4,6 +4,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { resolve } from 'path';
+import morgan from 'morgan';
 
 dotenv.config();
 
@@ -19,7 +20,10 @@ const pool = new Pool(
         connectionString: process.env.DATABASE_URL,
         ssl: {
           rejectUnauthorized: false // Required for Supabase/Render
-        }
+        },
+        query_timeout: 5000, // 5 seconds
+        connectionTimeoutMillis: 5000,
+        idleTimeoutMillis: 30000
       }
     : {
         user: process.env.PGUSER || process.env.USER,
@@ -27,6 +31,9 @@ const pool = new Pool(
         database: process.env.PGDATABASE || 'qafiyah',
         password: process.env.PGPASSWORD || '',
         port: process.env.PGPORT || 5432,
+        query_timeout: 5000, // 5 seconds
+        connectionTimeoutMillis: 5000,
+        idleTimeoutMillis: 30000
       }
 );
 
@@ -42,6 +49,9 @@ pool.query('SELECT NOW()', (err, res) => {
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Request logging (combined format includes: remote-addr, date, method, url, status, content-length, referrer, user-agent)
+app.use(morgan('combined'));
 
 // Health check endpoint
 app.get('/api/health', async (req, res) => {

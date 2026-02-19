@@ -1,522 +1,426 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Ethereal Spotlight — Innovative UI/UX Mockup</title>
-  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --bg-dark: #0c0c0e;
-      --bg-light: #FDFCF8;
-      --text-dark: #e8e8e8;
-      --text-light: #2c2c2c;
-      --gold: #C5A059;
-      --indigo: #4F46E5;
-      --shadow-dark: rgba(0, 0, 0, 0.3);
-      --shadow-light: rgba(0, 0, 0, 0.1);
-      --mx: 50%;
-      --my: 50%;
-    }
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>02 - Prism Refraction - انكسار المنشور</title>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0a0a12;
+            --bg-light: #f8f6f0;
+            --text-dark: #e8e8e8;
+            --text-light: #2c2c2c;
+            --gold: #C5A059;
+            --indigo: #4F46E5;
+            --prism-red: #FF6B6B;
+            --prism-orange: #FF9F43;
+            --prism-yellow: #FECA57;
+            --prism-green: #48DBFB;
+            --prism-blue: #5F6BFF;
+            --prism-violet: #C44DFF;
+            --shadow-dark: rgba(0,0,0,0.3);
+            --shadow-light: rgba(0,0,0,0.1);
+        }
 
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
-    body {
-      font-family: 'Tajawal', sans-serif;
-      background: var(--bg-dark);
-      color: var(--text-dark);
-      transition: background 0.4s ease, color 0.4s ease;
-      overflow-x: hidden;
-      position: relative;
-      min-height: 100vh;
-    }
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-dark);
+            transition: background 0.4s ease, color 0.4s ease;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
 
-    body.light {
-      background: var(--bg-light);
-      color: var(--text-light);
-    }
+        body.light { background: var(--bg-light); color: var(--text-light); }
 
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      z-index: 0;
-      background: radial-gradient(
-        circle 600px at var(--mx) var(--my),
-        rgba(197, 160, 89, 0.15) 0%,
-        rgba(79, 70, 229, 0.08) 40%,
-        transparent 70%
-      );
-      pointer-events: none;
-      transition: opacity 0.3s ease;
-      will-change: background;
-    }
+        /* ========== SPLASH ========== */
+        #splash {
+            position: fixed; inset: 0; z-index: 9999;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            background: var(--bg-dark);
+            animation: splashFadeOut 1s ease 3.5s forwards;
+            overflow: hidden;
+        }
 
-    body.light::before {
-      background: radial-gradient(
-        circle 600px at var(--mx) var(--my),
-        rgba(197, 160, 89, 0.25) 0%,
-        rgba(79, 70, 229, 0.12) 40%,
-        transparent 70%
-      );
-    }
+        body.light #splash { background: var(--bg-light); }
 
-    #splash {
-      position: fixed;
-      inset: 0;
-      z-index: 9999;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      background: linear-gradient(135deg, #0a0a0c 0%, #1a1520 100%);
-      animation: splashFadeOut 1s ease 3s forwards;
-    }
+        /* Prism triangle */
+        .prism {
+            width: 120px; height: 120px;
+            position: relative; z-index: 3;
+            animation: prismSpin 8s linear infinite;
+            will-change: transform;
+        }
 
-    body.light #splash {
-      background: linear-gradient(135deg, #f8f4ed 0%, #ede4d3 100%);
-    }
+        .prism-shape {
+            width: 100%; height: 100%;
+            background: conic-gradient(
+                from 0deg,
+                rgba(255,255,255,0.15) 0deg,
+                rgba(255,255,255,0.08) 120deg,
+                rgba(255,255,255,0.2) 240deg,
+                rgba(255,255,255,0.15) 360deg
+            );
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
 
-    #dustCanvas {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-    }
+        @keyframes prismSpin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
 
-    .splash-title {
-      font-family: 'Amiri', serif;
-      font-size: 3rem;
-      font-weight: 700;
-      color: var(--gold);
-      text-align: center;
-      z-index: 2;
-      animation: etherealGlow 2s ease-in-out infinite;
-    }
+        /* Rainbow beams emanating from prism */
+        .rainbow-beams {
+            position: absolute;
+            width: 600px; height: 600px;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1;
+            background: conic-gradient(
+                from 0deg at 50% 50%,
+                var(--prism-red) 0deg,
+                var(--prism-orange) 51deg,
+                var(--prism-yellow) 102deg,
+                var(--prism-green) 153deg,
+                var(--prism-blue) 204deg,
+                var(--prism-violet) 255deg,
+                var(--prism-red) 360deg
+            );
+            border-radius: 50%;
+            opacity: 0.2;
+            filter: blur(60px);
+            animation: beamPulse 3s ease-in-out infinite;
+            will-change: opacity;
+        }
 
-    .splash-subtitle {
-      font-size: 1.1rem;
-      color: var(--indigo);
-      margin-top: 1rem;
-      opacity: 0.8;
-      z-index: 2;
-    }
+        @keyframes beamPulse {
+            0%, 100% { opacity: 0.15; transform: translate(-50%, -50%) scale(0.9); }
+            50% { opacity: 0.3; transform: translate(-50%, -50%) scale(1.1); }
+        }
 
-    @keyframes splashFadeOut {
-      to {
-        opacity: 0;
-        pointer-events: none;
-      }
-    }
+        .splash-title {
+            font-family: 'Amiri', serif;
+            font-size: 3rem; font-weight: 700;
+            color: var(--gold);
+            text-align: center; z-index: 3;
+            margin-top: 2rem;
+            text-shadow: 0 0 40px rgba(197,160,89,0.4);
+        }
 
-    @keyframes etherealGlow {
-      0%, 100% {
-        text-shadow: 0 0 20px rgba(197, 160, 89, 0.5);
-        opacity: 0.9;
-      }
-      50% {
-        text-shadow: 0 0 40px rgba(197, 160, 89, 0.8), 0 0 60px rgba(197, 160, 89, 0.4);
-        opacity: 1;
-      }
-    }
+        .splash-subtitle {
+            font-size: 1.1rem;
+            color: var(--indigo);
+            margin-top: 0.75rem; opacity: 0.8; z-index: 3;
+        }
 
-    #mainContent {
-      opacity: 0;
-      animation: contentFadeIn 1s ease 3.5s forwards;
-      padding: 2rem;
-      max-width: 1000px;
-      margin: 0 auto;
-      position: relative;
-      z-index: 1;
-    }
+        @keyframes splashFadeOut { to { opacity: 0; pointer-events: none; } }
 
-    @keyframes contentFadeIn {
-      to { opacity: 1; }
-    }
+        /* ========== MAIN ========== */
+        #mainContent {
+            opacity: 0;
+            animation: contentFadeIn 1s ease 4s forwards;
+            padding: 2rem;
+            max-width: 1000px;
+            margin: 0 auto;
+            position: relative; z-index: 1;
+        }
 
-    header {
-      text-align: center;
-      margin-bottom: 3rem;
-      padding: 2rem;
-      background: rgba(12, 12, 14, 0.6);
-      backdrop-filter: blur(10px);
-      border-radius: 12px;
-      border: 1px solid rgba(197, 160, 89, 0.2);
-    }
+        @keyframes contentFadeIn { to { opacity: 1; } }
 
-    body.light header {
-      background: rgba(253, 252, 248, 0.7);
-      border-color: rgba(197, 160, 89, 0.3);
-    }
+        header {
+            text-align: center;
+            margin-bottom: 3rem; padding: 2rem;
+            border-radius: 16px;
+            position: relative;
+            overflow: hidden;
+            background: rgba(10,10,18,0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.08);
+        }
 
-    h1 {
-      font-family: 'Amiri', serif;
-      font-size: 2.75rem;
-      font-weight: 700;
-      color: var(--gold);
-      margin-bottom: 0.75rem;
-    }
+        body.light header {
+            background: rgba(248,246,240,0.7);
+            border-color: rgba(0,0,0,0.08);
+        }
 
-    .subtitle {
-      font-size: 1rem;
-      opacity: 0.8;
-      font-weight: 300;
-    }
+        /* Glass refraction effect on cards */
+        .glass-refraction {
+            position: relative;
+            overflow: hidden;
+        }
 
-    .poetry-card {
-      background: rgba(12, 12, 14, 0.7);
-      backdrop-filter: blur(20px);
-      border-radius: 16px;
-      padding: 3rem;
-      margin: 2rem 0;
-      border: 1px solid rgba(197, 160, 89, 0.3);
-      box-shadow: 0 8px 32px var(--shadow-dark);
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
+        .glass-refraction::before {
+            content: '';
+            position: absolute; inset: 0;
+            background: conic-gradient(
+                from 180deg at 80% 20%,
+                rgba(255,107,107,0.04),
+                rgba(254,202,87,0.04),
+                rgba(72,219,251,0.04),
+                rgba(196,77,255,0.04),
+                transparent
+            );
+            pointer-events: none;
+            will-change: opacity;
+        }
 
-    body.light .poetry-card {
-      background: rgba(253, 252, 248, 0.8);
-      box-shadow: 0 8px 32px var(--shadow-light);
-    }
+        h1 {
+            font-family: 'Amiri', serif;
+            font-size: 2.75rem; font-weight: 700;
+            color: var(--gold);
+            margin-bottom: 0.75rem;
+        }
 
-    .poetry-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 12px 48px var(--shadow-dark);
-    }
+        .subtitle { font-size: 1rem; opacity: 0.8; font-weight: 300; }
 
-    .verse {
-      font-family: 'Amiri', serif;
-      font-size: 1.85rem;
-      line-height: 2.3;
-      color: var(--text-dark);
-      text-align: center;
-      margin-bottom: 1.5rem;
-    }
+        .poetry-card {
+            background: rgba(10,10,18,0.7);
+            backdrop-filter: blur(20px);
+            border-radius: 16px; padding: 3rem;
+            margin: 2rem 0;
+            border: 1px solid rgba(255,255,255,0.08);
+            box-shadow: 0 8px 32px var(--shadow-dark);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative; overflow: hidden;
+        }
 
-    body.light .verse {
-      color: var(--text-light);
-    }
+        body.light .poetry-card {
+            background: rgba(255,255,255,0.7);
+            border-color: rgba(0,0,0,0.08);
+            box-shadow: 0 8px 32px var(--shadow-light);
+        }
 
-    .poet {
-      text-align: left;
-      font-size: 1.15rem;
-      color: var(--indigo);
-      font-weight: 500;
-    }
+        /* Subtle rainbow border on hover */
+        .poetry-card::after {
+            content: '';
+            position: absolute; inset: -1px;
+            border-radius: 17px;
+            padding: 1px;
+            background: conic-gradient(
+                var(--prism-red), var(--prism-orange), var(--prism-yellow),
+                var(--prism-green), var(--prism-blue), var(--prism-violet), var(--prism-red)
+            );
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            pointer-events: none;
+            will-change: opacity;
+        }
 
-    .walkthrough {
-      margin: 3rem 0;
-    }
+        .poetry-card:hover::after { opacity: 0.6; }
+        .poetry-card:hover { transform: translateY(-4px); }
 
-    .walkthrough h2 {
-      font-family: 'Amiri', serif;
-      font-size: 2.2rem;
-      color: var(--gold);
-      margin-bottom: 2.5rem;
-      text-align: center;
-    }
+        .verse {
+            font-family: 'Amiri', serif;
+            font-size: 1.85rem; line-height: 2.3;
+            text-align: center; margin-bottom: 1.5rem;
+            position: relative; z-index: 1;
+        }
 
-    .steps {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 1.5rem;
-    }
+        .poet {
+            text-align: left;
+            font-size: 1.15rem;
+            color: var(--indigo);
+            font-weight: 500;
+            position: relative; z-index: 1;
+        }
 
-    .step {
-      background: rgba(12, 12, 14, 0.6);
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(197, 160, 89, 0.2);
-      border-radius: 12px;
-      padding: 2rem 1.5rem;
-      text-align: center;
-      transition: all 0.3s ease;
-      cursor: pointer;
-    }
+        /* Walkthrough */
+        .walkthrough { margin: 3rem 0; }
 
-    body.light .step {
-      background: rgba(253, 252, 248, 0.7);
-      border-color: rgba(197, 160, 89, 0.3);
-    }
+        .walkthrough h2 {
+            font-family: 'Amiri', serif;
+            font-size: 2.2rem; color: var(--gold);
+            margin-bottom: 2.5rem; text-align: center;
+        }
 
-    .step:hover {
-      transform: translateY(-6px) scale(1.02);
-      border-color: var(--gold);
-      box-shadow: 0 8px 24px var(--shadow-dark);
-    }
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+        }
 
-    .step-number {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, var(--gold) 0%, var(--indigo) 100%);
-      color: white;
-      font-weight: 700;
-      font-size: 1.35rem;
-      margin-bottom: 1rem;
-      box-shadow: 0 4px 12px rgba(197, 160, 89, 0.3);
-    }
+        .step {
+            background: rgba(10,10,18,0.5);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 14px;
+            padding: 2rem 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative; overflow: hidden;
+        }
 
-    .step h3 {
-      font-family: 'Amiri', serif;
-      font-size: 1.3rem;
-      margin-bottom: 0.75rem;
-      color: var(--gold);
-    }
+        body.light .step {
+            background: rgba(255,255,255,0.6);
+            border-color: rgba(0,0,0,0.06);
+        }
 
-    .step p {
-      font-size: 0.95rem;
-      opacity: 0.85;
-      line-height: 1.7;
-    }
+        .step::after {
+            content: '';
+            position: absolute; inset: -1px;
+            border-radius: 15px; padding: 1px;
+            background: conic-gradient(
+                var(--prism-red), var(--prism-yellow), var(--prism-green),
+                var(--prism-blue), var(--prism-violet), var(--prism-red)
+            );
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
 
-    .controls {
-      position: fixed;
-      top: 2rem;
-      left: 2rem;
-      display: flex;
-      gap: 1rem;
-      z-index: 1000;
-    }
+        .step:hover::after { opacity: 0.5; }
+        .step:hover { transform: translateY(-5px); }
 
-    .btn {
-      min-width: 44px;
-      min-height: 44px;
-      padding: 0.75rem 1.5rem;
-      border: none;
-      border-radius: 10px;
-      font-family: 'Tajawal', sans-serif;
-      font-size: 1rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      background: linear-gradient(135deg, var(--gold) 0%, var(--indigo) 100%);
-      color: white;
-      box-shadow: 0 4px 12px var(--shadow-dark);
-      will-change: transform;
-    }
+        .step-number {
+            display: inline-flex;
+            align-items: center; justify-content: center;
+            width: 48px; height: 48px;
+            border-radius: 50%;
+            background: conic-gradient(
+                var(--prism-red), var(--prism-orange), var(--prism-yellow),
+                var(--prism-green), var(--prism-blue), var(--prism-violet), var(--prism-red)
+            );
+            color: white; font-weight: 700;
+            font-size: 1.35rem; margin-bottom: 1rem;
+        }
 
-    .btn:hover {
-      transform: scale(1.08);
-      box-shadow: 0 6px 20px var(--shadow-dark);
-    }
+        .step h3 {
+            font-family: 'Amiri', serif;
+            font-size: 1.3rem; margin-bottom: 0.75rem;
+            color: var(--gold);
+        }
 
-    .btn:active {
-      transform: scale(0.96);
-    }
+        .step p { font-size: 0.95rem; opacity: 0.85; line-height: 1.7; }
 
-    @media (max-width: 768px) {
-      .splash-title {
-        font-size: 2rem;
-      }
+        .controls {
+            position: fixed; top: 2rem; left: 2rem;
+            display: flex; gap: 1rem; z-index: 1000;
+        }
 
-      h1 {
-        font-size: 2rem;
-      }
+        .btn {
+            min-width: 44px; min-height: 44px;
+            padding: 0.75rem 1.5rem;
+            border: none; border-radius: 10px;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 1rem; font-weight: 500;
+            cursor: pointer; transition: all 0.3s ease;
+            background: conic-gradient(
+                from 45deg,
+                var(--prism-blue), var(--prism-violet), var(--gold), var(--prism-blue)
+            );
+            color: white;
+            box-shadow: 0 4px 16px var(--shadow-dark);
+            will-change: transform;
+        }
 
-      .verse {
-        font-size: 1.4rem;
-        line-height: 2.1;
-      }
+        .btn:hover { transform: scale(1.08); }
+        .btn:active { transform: scale(0.96); }
+        .btn:focus-visible { outline: 3px solid var(--indigo); outline-offset: 2px; }
+        .step:focus-visible { outline: 3px solid var(--indigo); outline-offset: 2px; }
 
-      .poetry-card {
-        padding: 2rem 1.5rem;
-      }
+        @media (max-width: 768px) {
+            .splash-title { font-size: 2rem; }
+            .prism { width: 80px; height: 80px; }
+            .rainbow-beams { width: 350px; height: 350px; }
+            h1 { font-size: 2rem; }
+            .verse { font-size: 1.4rem; line-height: 2.1; }
+            .poetry-card { padding: 2rem 1.5rem; }
+            .controls { top: 1rem; left: 1rem; }
+            .steps { grid-template-columns: 1fr; }
+        }
 
-      .controls {
-        top: 1rem;
-        left: 1rem;
-      }
-
-      .steps {
-        grid-template-columns: 1fr;
-      }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      * {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-      }
-    }
-
-    .btn:focus-visible,
-    .step:focus-visible {
-      outline: 3px solid var(--indigo);
-      outline-offset: 2px;
-    }
-  </style>
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
 </head>
 <body>
-  <div id="splash">
-    <canvas id="dustCanvas"></canvas>
-    <div class="splash-title">الضوء الأثيري</div>
-    <div class="splash-subtitle">Ethereal Spotlight</div>
-  </div>
-
-  <div id="mainContent">
-    <div class="controls">
-      <button class="btn" onclick="toggleTheme()" aria-label="تبديل السمة">
-        🌙 / ☀️
-      </button>
+    <div id="splash">
+        <div class="rainbow-beams"></div>
+        <div class="prism">
+            <div class="prism-shape"></div>
+        </div>
+        <div class="splash-title">انكسار المنشور</div>
+        <div class="splash-subtitle">Prism Refraction</div>
     </div>
 
-    <header>
-      <h1>رحلة في النور والكلمة</h1>
-      <p class="subtitle">Spotlight + Magic Dust — تفاعل بصري فريد</p>
-    </header>
+    <div id="mainContent">
+        <div class="controls">
+            <button class="btn" onclick="toggleTheme()" aria-label="Toggle theme">
+                &#9790; / &#9788;
+            </button>
+        </div>
 
-    <div class="poetry-card">
-      <div class="verse" lang="ar" dir="rtl">
-        أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ<br>
-        فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
-      </div>
-      <div class="poet">— أحمد شوقي</div>
+        <header class="glass-refraction">
+            <h1>رحلة في الضوء والألوان</h1>
+            <p class="subtitle">Prism Refraction -- انكسار الضوء عبر الشعر</p>
+        </header>
+
+        <div class="poetry-card glass-refraction">
+            <div class="verse" lang="ar" dir="rtl">
+                أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ<br>
+                فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
+            </div>
+            <div class="poet">-- أحمد شوقي</div>
+        </div>
+
+        <section class="walkthrough">
+            <h2>دليل التفاعل</h2>
+            <div class="steps">
+                <div class="step" tabindex="0">
+                    <div class="step-number">1</div>
+                    <h3>منشور دوّار</h3>
+                    <p>المنشور يكسر الضوء إلى طيف من الألوان</p>
+                </div>
+                <div class="step" tabindex="0">
+                    <div class="step-number">2</div>
+                    <h3>انعكاسات زجاجية</h3>
+                    <p>بطاقات بتأثير انكسار الضوء عند التحويم</p>
+                </div>
+                <div class="step" tabindex="0">
+                    <div class="step-number">3</div>
+                    <h3>حدود قوس قزح</h3>
+                    <p>حدود متدرجة بألوان الطيف تظهر بلمسة</p>
+                </div>
+                <div class="step" tabindex="0">
+                    <div class="step-number">4</div>
+                    <h3>تحولات سلسة</h3>
+                    <p>انتقالات ناعمة بين الوضع الداكن والفاتح</p>
+                </div>
+            </div>
+        </section>
     </div>
 
-    <section class="walkthrough">
-      <h2>دليل التفاعل</h2>
-      <div class="steps">
-        <div class="step" tabindex="0">
-          <div class="step-number">1</div>
-          <h3>حرّك الفأرة</h3>
-          <p>الضوء يتبع حركتك عبر الشاشة بسلاسة</p>
-        </div>
-        <div class="step" tabindex="0">
-          <div class="step-number">2</div>
-          <h3>غبار سحري</h3>
-          <p>جزيئات صغيرة تطفو وتتلألأ في الفضاء</p>
-        </div>
-        <div class="step" tabindex="0">
-          <div class="step-number">3</div>
-          <h3>تأثير الزجاج</h3>
-          <p>خلفيات شفافة مع تمويه لمسة عصرية</p>
-        </div>
-        <div class="step" tabindex="0">
-          <div class="step-number">4</div>
-          <h3>انتقالات سلسة</h3>
-          <p>تحولات ناعمة بين الوضع الداكن والفاتح</p>
-        </div>
-      </div>
-    </section>
-  </div>
-
-  <script>
-    let mouseX = window.innerWidth / 2;
-    let mouseY = window.innerHeight / 2;
-
-    document.addEventListener('mousemove', (e) => {
-      mouseX = e.clientX;
-      mouseY = e.clientY;
-      updateSpotlight();
-    });
-
-    function updateSpotlight() {
-      document.body.style.setProperty('--mx', `${mouseX}px`);
-      document.body.style.setProperty('--my', `${mouseY}px`);
-    }
-
-    const canvas = document.getElementById('dustCanvas');
-    const ctx = canvas.getContext('2d');
-    let particles = [];
-    let animationId;
-
-    function resizeCanvas() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    }
-
-    class DustParticle {
-      constructor() {
-        this.x = Math.random() * canvas.width;
-        this.y = Math.random() * canvas.height;
-        this.size = Math.random() * 1.5 + 0.5;
-        this.speedX = Math.random() * 0.5 - 0.25;
-        this.speedY = Math.random() * 0.5 - 0.25;
-        this.opacity = Math.random() * 0.4 + 0.2;
-        this.twinkle = Math.random() * 0.02 + 0.01;
-      }
-
-      update() {
-        this.x += this.speedX;
-        this.y += this.speedY;
-        this.opacity += this.twinkle;
-
-        if (this.opacity > 0.6 || this.opacity < 0.1) {
-          this.twinkle *= -1;
+    <script>
+        function toggleTheme() {
+            document.body.classList.toggle('light');
         }
 
-        if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
-        if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
-      }
-
-      draw() {
-        ctx.save();
-        ctx.globalAlpha = this.opacity;
-        ctx.fillStyle = '#C5A059';
-        ctx.shadowBlur = 4;
-        ctx.shadowColor = '#C5A059';
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-      }
-    }
-
-    function initParticles() {
-      particles = [];
-      for (let i = 0; i < 80; i++) {
-        particles.push(new DustParticle());
-      }
-    }
-
-    function animate() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      particles.forEach(particle => {
-        particle.update();
-        particle.draw();
-      });
-
-      animationId = requestAnimationFrame(animate);
-    }
-
-    function stopParticles() {
-      cancelAnimationFrame(animationId);
-    }
-
-    resizeCanvas();
-    initParticles();
-    animate();
-
-    window.addEventListener('resize', () => {
-      resizeCanvas();
-      initParticles();
-    });
-
-    setTimeout(() => {
-      stopParticles();
-    }, 3000);
-
-    function toggleTheme() {
-      document.body.classList.toggle('light');
-    }
-
-    document.querySelectorAll('.step').forEach(step => {
-      step.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          step.click();
-        }
-      });
-    });
-  </script>
+        document.querySelectorAll('.step').forEach(step => {
+            step.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    step.click();
+                }
+            });
+        });
+    </script>
 </body>
 </html>

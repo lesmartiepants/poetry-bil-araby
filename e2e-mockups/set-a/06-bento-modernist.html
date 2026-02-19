@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>E2E #6: Bento Modernist — Modular Grid</title>
+<title>E2E #6: Bento Modernist -- Modular Grid</title>
 <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -41,6 +41,8 @@ body { min-height: 100vh; }
   z-index: 100;
   width: 48px;
   height: 48px;
+  min-width: 44px;
+  min-height: 44px;
   border-radius: 12px;
   border: 1px solid var(--border);
   background: var(--card);
@@ -50,10 +52,15 @@ body { min-height: 100vh; }
   justify-content: center;
   transition: all 0.3s ease;
   font-size: 20px;
+  will-change: transform;
 }
 .theme-toggle:hover {
   border-color: var(--gold);
   transform: translateY(-2px);
+}
+.theme-toggle:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 2px;
 }
 
 .screen {
@@ -77,21 +84,18 @@ body { min-height: 100vh; }
   opacity: 0.7;
 }
 
-/* SPLASH */
+/* SPLASH - Animated Bento Assembly */
 #splash {
   background: var(--bg);
+  overflow: hidden;
 }
+
 .bento-splash {
   max-width: 1200px;
   width: 100%;
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 16px;
-  animation: gridAssemble 1.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-@keyframes gridAssemble {
-  from { opacity: 0; transform: scale(0.9); }
-  to { opacity: 1; transform: scale(1); }
 }
 
 .bento-card {
@@ -104,17 +108,39 @@ body { min-height: 100vh; }
   justify-content: center;
   align-items: center;
   transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-  animation: cardPop 0.6s cubic-bezier(0.16, 1, 0.3, 1) backwards;
-  will-change: transform;
+  will-change: transform, opacity;
+  /* Scattered start positions - animated to place */
+  opacity: 0;
+  transform: translate(var(--tx, 0), var(--ty, 0)) rotate(var(--rot, 0deg)) scale(0.7);
+  animation: tileAssemble 0.8s cubic-bezier(0.16, 1, 0.3, 1) var(--delay, 0s) forwards;
 }
-@keyframes cardPop {
-  from { opacity: 0; transform: translateY(30px); }
-  to { opacity: 1; transform: translateY(0); }
+
+/* Scatter positions for each card */
+.bento-card:nth-child(1) { --tx: -200px; --ty: -150px; --rot: -8deg; --delay: 0.2s; }
+.bento-card:nth-child(2) { --tx: 250px; --ty: -200px; --rot: 12deg; --delay: 0.4s; }
+.bento-card:nth-child(3) { --tx: -300px; --ty: 180px; --rot: -15deg; --delay: 0.6s; }
+.bento-card:nth-child(4) { --tx: 200px; --ty: 250px; --rot: 10deg; --delay: 0.8s; }
+
+@keyframes tileAssemble {
+  0% {
+    opacity: 0;
+    transform: translate(var(--tx), var(--ty)) rotate(var(--rot)) scale(0.7);
+  }
+  60% {
+    opacity: 1;
+    transform: translate(0, 0) rotate(0deg) scale(1.03);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(0, 0) rotate(0deg) scale(1);
+  }
 }
-.bento-card:nth-child(1) { grid-column: span 2; grid-row: span 2; animation-delay: 0.1s; }
-.bento-card:nth-child(2) { grid-column: span 2; animation-delay: 0.2s; }
-.bento-card:nth-child(3) { grid-column: span 2; animation-delay: 0.3s; }
-.bento-card:nth-child(4) { grid-column: span 2; animation-delay: 0.4s; }
+
+.bento-card:nth-child(1) { grid-column: span 2; grid-row: span 2; }
+.bento-card:nth-child(2) { grid-column: span 2; }
+.bento-card:nth-child(3) { grid-column: span 2; }
+.bento-card:nth-child(4) { grid-column: span 2; }
+
 .bento-card:hover {
   transform: translateY(-4px);
   border-color: var(--gold);
@@ -156,10 +182,15 @@ body { min-height: 100vh; }
   letter-spacing: 0.25em;
   cursor: pointer;
   transition: all 0.3s ease;
+  will-change: transform;
 }
 .hero-btn:hover {
   transform: scale(1.05);
   box-shadow: 0 8px 24px rgba(197, 160, 89, 0.3);
+}
+.hero-btn:focus-visible {
+  outline: 3px solid var(--indigo);
+  outline-offset: 2px;
 }
 
 .card-feature {
@@ -259,10 +290,15 @@ body { min-height: 100vh; }
   letter-spacing: 0.25em;
   cursor: pointer;
   transition: all 0.3s ease;
+  will-change: transform;
 }
 .notion-btn:hover {
   transform: scale(1.04);
   box-shadow: 0 4px 20px rgba(197, 160, 89, 0.3);
+}
+.notion-btn:focus-visible {
+  outline: 3px solid var(--indigo);
+  outline-offset: 2px;
 }
 
 @media (max-width: 768px) {
@@ -274,6 +310,11 @@ body { min-height: 100vh; }
     grid-row: span 1 !important;
     padding: 24px;
   }
+  /* Reduce scatter distance on mobile */
+  .bento-card:nth-child(1) { --tx: -80px; --ty: -60px; --rot: -5deg; }
+  .bento-card:nth-child(2) { --tx: 80px; --ty: -80px; --rot: 5deg; }
+  .bento-card:nth-child(3) { --tx: -100px; --ty: 60px; --rot: -8deg; }
+  .bento-card:nth-child(4) { --tx: 80px; --ty: 100px; --rot: 6deg; }
   .hero-title { font-size: 3rem; }
   .poem-module { padding: 32px 24px; }
   .poem-verse {
@@ -299,34 +340,38 @@ body { min-height: 100vh; }
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+  .bento-card {
+    opacity: 1 !important;
+    transform: none !important;
+  }
 }
 </style>
 </head>
 <body>
-  <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
-    <span id="theme-icon">☀️</span>
+  <button class="theme-toggle" id="themeBtn" aria-label="Toggle theme">
+    <span id="theme-icon">&#9788;</span>
   </button>
 
   <div class="screen" id="splash">
     <div class="label">Bento Modernist</div>
     <div class="bento-splash">
       <div class="bento-card card-hero">
-        <h1 class="hero-title">قافية</h1>
+        <h1 class="hero-title">&#1602;&#1575;&#1601;&#1610;&#1577;</h1>
         <p class="hero-subtitle">Modular Poetry Grid</p>
         <button class="hero-btn" onclick="showMain()">Explore</button>
       </div>
       <div class="bento-card card-feature">
-        <div class="feature-icon">📚</div>
+        <div class="feature-icon">&#128218;</div>
         <h3 class="feature-title">84K Poems</h3>
         <p class="feature-desc">Comprehensive Arabic collection</p>
       </div>
       <div class="bento-card card-feature">
-        <div class="feature-icon">✨</div>
+        <div class="feature-icon">&#10024;</div>
         <h3 class="feature-title">AI Insights</h3>
         <p class="feature-desc">Deep literary analysis</p>
       </div>
       <div class="bento-card card-feature">
-        <div class="feature-icon">🎨</div>
+        <div class="feature-icon">&#127912;</div>
         <h3 class="feature-title">Beautiful Design</h3>
         <p class="feature-desc">Crafted with care</p>
       </div>
@@ -336,15 +381,15 @@ body { min-height: 100vh; }
   <div class="screen" id="main">
     <div class="main-layout">
       <nav class="main-nav">
-        <div class="main-brand">قافية</div>
+        <div class="main-brand">&#1602;&#1575;&#1601;&#1610;&#1577;</div>
       </nav>
 
       <div class="poem-module">
         <div class="poem-verse" lang="ar" dir="rtl">
-          أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ<br>
-          فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
+          &#1571;&#1614;&#1606;&#1575; &#1575;&#1604;&#1576;&#1614;&#1581;&#1585;&#1615; &#1601;&#1610; &#1571;&#1614;&#1581;&#1588;&#1575;&#1574;&#1616;&#1607;&#1616; &#1575;&#1604;&#1583;&#1615;&#1585;&#1615;&#1617; &#1603;&#1575;&#1605;&#1616;&#1606;&#1612;<br>
+          &#1601;&#1614;&#1607;&#1614;&#1604; &#1587;&#1614;&#1571;&#1614;&#1604;&#1608;&#1575; &#1575;&#1604;&#1594;&#1614;&#1608;&#1617;&#1575;&#1589;&#1614; &#1593;&#1614;&#1606; &#1589;&#1614;&#1583;&#1614;&#1601;&#1575;&#1578;&#1610;
         </div>
-        <div class="poem-poet">— أحمد شوقي</div>
+        <div class="poem-poet">-- &#1571;&#1581;&#1605;&#1583; &#1588;&#1608;&#1602;&#1610;</div>
       </div>
 
       <button class="notion-btn">Next Poem</button>
@@ -352,12 +397,13 @@ body { min-height: 100vh; }
   </div>
 
 <script>
-function toggleTheme() {
-  const html = document.documentElement;
-  const icon = document.getElementById('theme-icon');
-  html.classList.toggle('light');
-  icon.textContent = html.classList.contains('light') ? '🌙' : '☀️';
-}
+var themeBtn = document.getElementById('themeBtn');
+var themeIcon = document.getElementById('theme-icon');
+
+themeBtn.addEventListener('click', function() {
+  document.documentElement.classList.toggle('light');
+  themeIcon.textContent = document.documentElement.classList.contains('light') ? '\u263E' : '\u2606';
+});
 
 function showMain() {
   document.getElementById('splash').style.display = 'none';

@@ -1,10 +1,7 @@
--- Enable UUID extension if not already enabled
-CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
 -- User settings table
 -- Stores user preferences like theme, font, voice settings, etc.
 CREATE TABLE IF NOT EXISTS user_settings (
-  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   theme VARCHAR(10) DEFAULT 'dark' CHECK (theme IN ('dark', 'light')),
   font_id VARCHAR(50) DEFAULT 'Amiri',
@@ -18,7 +15,7 @@ CREATE TABLE IF NOT EXISTS user_settings (
 -- Saved poems table (user favorites/hearts)
 -- Stores poems that users have saved to their collection
 CREATE TABLE IF NOT EXISTS saved_poems (
-  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   poem_id INTEGER,  -- References poems table (if using database mode)
   poem_text TEXT,   -- Store full poem text for AI-generated poems
@@ -33,7 +30,7 @@ CREATE TABLE IF NOT EXISTS saved_poems (
 -- Discussions table (future feature)
 -- Stores user discussions about specific poems
 CREATE TABLE IF NOT EXISTS discussions (
-  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   poem_id INTEGER,
   poem_text TEXT,
@@ -46,7 +43,7 @@ CREATE TABLE IF NOT EXISTS discussions (
 
 -- Discussion likes table (future feature)
 CREATE TABLE IF NOT EXISTS discussion_likes (
-  id UUID DEFAULT uuid_generate_v4() PRIMARY KEY,
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
   user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
   discussion_id UUID NOT NULL REFERENCES discussions(id) ON DELETE CASCADE,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),

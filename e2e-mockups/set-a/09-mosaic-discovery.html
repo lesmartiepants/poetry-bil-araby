@@ -1,159 +1,672 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>E2E #9: Mosaic Discovery — Pattern + Energy</title>
-<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-:root{--bg:#0d1117;--surface:#161b22;--border:rgba(48,54,61,.8);--text:#e6edf3;--text-dim:#8b949e;--teal:#39d2c0;--coral:#ff6b6b;--amber:#f0b429;--violet:#a78bfa;--font-ar:'Amiri',serif;--font-ui:'Space Grotesk',system-ui,sans-serif;--radius:12px}
-html{font-family:var(--font-ui);background:var(--bg);color:var(--text);scroll-behavior:smooth;overflow-x:hidden}
-canvas#geo{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:.15}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mosaic Discovery - Geometric + Brutalist</title>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0c0c0e;
+            --bg-light: #FDFCF8;
+            --text-dark: #FDFCF8;
+            --text-light: #0c0c0e;
+            --gold: #C5A059;
+            --indigo: #4F46E5;
+            --tile-dark: #1a1a1e;
+            --tile-light: #f5f4ef;
+        }
 
-.screen{position:relative;width:100%;min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;overflow:hidden}
-.label{position:absolute;top:24px;left:24px;font-size:10px;letter-spacing:.25em;text-transform:uppercase;color:var(--teal);opacity:.5}
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-/* SPLASH */
-.sp{position:relative;z-index:2;text-align:center;padding:40px}
-.sp-logo{display:flex;flex-direction:row-reverse;align-items:flex-end;justify-content:center;gap:14px;margin-bottom:12px}
-.sp-ar{font-family:var(--font-ar);font-size:clamp(3rem,8vw,4.5rem);font-weight:700}
-.sp-en{font-size:clamp(2.2rem,6vw,4.5rem);font-weight:400;letter-spacing:-.02em;text-transform:lowercase}
-.sp-sub{font-size:12px;color:var(--text-dim);margin-bottom:44px;letter-spacing:.1em}
-.sp-enter{display:inline-block;padding:16px 44px;background:var(--teal);color:var(--bg);font-size:13px;font-weight:600;letter-spacing:.15em;text-transform:uppercase;text-decoration:none;border-radius:var(--radius);transition:all .3s;border:none;cursor:pointer}
-.sp-enter:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(57,210,192,.25)}
-.sp-tiles{display:flex;gap:8px;justify-content:center;margin-top:32px}
-.sp-tiles .tile{width:32px;height:32px;border-radius:6px;border:1px solid var(--border)}
-.sp-tiles .tile:nth-child(1){background:rgba(57,210,192,.15)}
-.sp-tiles .tile:nth-child(2){background:rgba(255,107,107,.12)}
-.sp-tiles .tile:nth-child(3){background:rgba(240,180,41,.1)}
-.sp-tiles .tile:nth-child(4){background:rgba(167,139,250,.12)}
-.sp-tiles .tile:nth-child(5){background:rgba(57,210,192,.08)}
+        body {
+            font-family: 'Courier New', 'Courier', monospace;
+            background: var(--bg-dark);
+            color: var(--text-dark);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+            transition: background 0.3s ease, color 0.3s ease;
+        }
 
-/* WALKTHROUGH - Tile assembly */
-#walk{background:var(--bg)}
-.wk{position:relative;z-index:2;max-width:640px;width:90%;padding:48px 0}
-.wk-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:24px}
-.wk-tile{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;transition:all .3s;position:relative;overflow:hidden}
-.wk-tile::before{content:'';position:absolute;top:0;left:0;width:100%;height:3px}
-.wk-tile:nth-child(1)::before{background:var(--teal)}
-.wk-tile:nth-child(2)::before{background:var(--coral)}
-.wk-tile:nth-child(3)::before{background:var(--amber)}
-.wk-tile:hover{transform:translateY(-3px);box-shadow:0 8px 20px rgba(0,0,0,.3)}
-.wk-tile h3{font-size:14px;font-weight:600;margin-bottom:6px}
-.wk-tile p{font-size:11px;color:var(--text-dim);line-height:1.6}
-.wk-cta{display:block;margin:0 auto;padding:14px 36px;background:var(--teal);color:var(--bg);border:none;border-radius:var(--radius);font-size:13px;font-weight:600;cursor:pointer}
+        body.light {
+            background: var(--bg-light);
+            color: var(--text-light);
+        }
 
-/* MAIN - Mosaic reading */
-#main{background:var(--bg);padding:0;align-items:stretch}
-.m-wrap{position:relative;z-index:2;max-width:840px;margin:0 auto;padding:32px 20px;min-height:100vh}
-.m-nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px}
-.m-brand{font-weight:700;font-size:15px;letter-spacing:.06em}
-.m-links{display:flex;gap:8px}
-.m-links span{font-size:12px;color:var(--text-dim);padding:6px 12px;border-radius:8px;cursor:pointer;border:1px solid transparent;transition:all .2s}
-.m-links span:hover{border-color:var(--border);background:var(--surface)}
-.mosaic{display:grid;grid-template-columns:repeat(12,1fr);gap:10px}
-.poem-tile{grid-column:span 7;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:32px 24px;border-top:3px solid var(--teal)}
-.meta-tile{grid-column:span 5;display:grid;gap:10px}
-.meta-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px}
-.meta-card h4{font-size:10px;text-transform:uppercase;letter-spacing:.15em;color:var(--text-dim);margin-bottom:8px}
-.meta-card .big{font-size:20px;font-weight:700;color:var(--teal)}
-.ai-tile{grid-column:span 12;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:18px 22px;display:flex;gap:12px;border-left:3px solid var(--amber)}
-.ai-tile .ico{font-size:16px}
-.ai-tile p{font-size:12px;color:var(--text-dim);line-height:1.6}
-.pm{font-size:10px;text-transform:uppercase;letter-spacing:.15em;color:var(--teal);margin-bottom:18px}
-.par{font-family:var(--font-ar);font-size:clamp(1.3rem,3vw,1.7rem);line-height:2.3;direction:rtl;margin-bottom:14px}
-.pen{font-size:12px;color:var(--text-dim);line-height:1.8;font-style:italic}
-.acts{display:flex;gap:6px;margin-top:18px;flex-wrap:wrap}
-.acts button{padding:7px 12px;border-radius:8px;background:rgba(57,210,192,.08);border:1px solid rgba(57,210,192,.2);color:var(--teal);font-size:10px;cursor:pointer;font-family:var(--font-ui);font-weight:500;transition:all .2s}
-.acts button:hover{background:rgba(57,210,192,.15)}
+        /* Geometric Background Pattern */
+        .geometric-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            opacity: 0.05;
+        }
 
-/* BRUTALIST-ISH CONTROLS */
-.vc{position:fixed;right:12px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:4px;z-index:100}
-.vc button{width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:var(--surface);border:2px solid var(--border);cursor:pointer;color:var(--text-dim);font-size:14px;font-weight:600;transition:all .2s;border-radius:0}
-.vc button:hover{border-color:var(--teal);color:var(--teal)}
-.vc button.on{background:var(--teal);color:var(--bg);border-color:var(--teal)}
+        body.light .geometric-background {
+            opacity: 0.03;
+        }
 
-/* SETTINGS */
-#settings{background:var(--bg);padding:80px 20px}
-.st{position:relative;z-index:2;max-width:440px;margin:0 auto;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:28px}
-.st-title{font-size:18px;font-weight:700;margin-bottom:24px;text-align:center}
-.st-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid rgba(48,54,61,.5)}
-.st-row label{font-size:13px}
-.st-row label small{display:block;font-size:10px;color:var(--text-dim);margin-top:3px}
-.tgl{width:44px;height:24px;border-radius:4px;background:rgba(255,255,255,.06);position:relative;cursor:pointer;transition:background .2s;border:1px solid var(--border)}
-.tgl.on{background:var(--teal);border-color:var(--teal)}
-.tgl::after{content:'';position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:2px;background:#fff;transition:transform .2s}
-.tgl.on::after{transform:translateX(20px)}
-.sl{display:flex;align-items:center;gap:8px}
-.sl span{font-size:10px;color:var(--text-dim)}
-input[type=range]{-webkit-appearance:none;width:100px;height:4px;background:rgba(255,255,255,.08);outline:none;border-radius:0}
-input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;background:var(--teal);cursor:pointer;border-radius:0}
-.sv{display:block;width:100%;margin-top:20px;padding:14px;background:var(--teal);color:var(--bg);border:none;border-radius:var(--radius);font-size:13px;font-weight:600;cursor:pointer}
+        /* Container */
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+            min-height: 100vh;
+        }
 
-/* AUTH */
-#auth{background:var(--bg)}
-.auth-box{position:relative;z-index:2;width:90%;max-width:370px;background:var(--surface);border:2px solid var(--border);padding:40px 28px;text-align:center;border-top:4px solid var(--teal)}
-.auth-title{font-family:var(--font-ar);font-size:32px;margin-bottom:8px}
-.auth-sub{font-size:13px;color:var(--text-dim);margin-bottom:28px}
-.oa{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:12px;border:1px solid var(--border);background:transparent;color:var(--text);font-size:13px;cursor:pointer;margin-bottom:8px;transition:all .2s;font-family:var(--font-ui)}
-.oa:hover{border-color:var(--teal);background:rgba(57,210,192,.05)}
-.oa svg{width:16px;height:16px}
-.at{font-size:10px;color:var(--text-dim);margin-top:18px}
+        /* Header - Brutalist Style */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 3rem;
+            padding: 1.5rem;
+            border: 4px solid var(--gold);
+            background: var(--tile-dark);
+        }
 
-.nav-bar{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:4px;z-index:200;background:var(--surface);padding:6px 12px;border:1px solid var(--border);border-radius:var(--radius)}
-.nav-bar a{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);text-decoration:none;padding:5px 10px;border-radius:6px;transition:all .2s}
-.nav-bar a:hover{color:var(--teal);background:rgba(57,210,192,.08)}
+        body.light header {
+            background: var(--tile-light);
+            border-color: var(--indigo);
+        }
 
-@media(max-width:640px){.sp-logo{flex-direction:column;align-items:center;gap:2px}.wk-grid{grid-template-columns:1fr}.mosaic{grid-template-columns:1fr}.poem-tile,.meta-tile,.ai-tile{grid-column:span 1}.vc{right:6px}.vc button{width:34px;height:34px;font-size:12px}}
-</style>
+        .logo {
+            font-family: 'Amiri', serif;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--gold);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        body.light .logo {
+            color: var(--indigo);
+        }
+
+        /* Brutalist Theme Toggle */
+        .theme-toggle {
+            width: 60px;
+            height: 60px;
+            border: 4px solid var(--gold);
+            cursor: pointer;
+            background: var(--bg-dark);
+            color: var(--gold);
+            font-size: 1.5rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            min-width: 60px;
+            min-height: 60px;
+            font-family: 'Courier New', monospace;
+        }
+
+        body.light .theme-toggle {
+            background: var(--bg-light);
+            border-color: var(--indigo);
+            color: var(--indigo);
+        }
+
+        .theme-toggle:hover {
+            transform: translate(-4px, -4px);
+            box-shadow: 4px 4px 0 var(--gold);
+        }
+
+        body.light .theme-toggle:hover {
+            box-shadow: 4px 4px 0 var(--indigo);
+        }
+
+        .theme-toggle:active {
+            transform: translate(0, 0);
+            box-shadow: none;
+        }
+
+        /* Splash Screen - Mosaic Assembly */
+        .splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1000;
+            background: var(--bg-dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.5s ease;
+        }
+
+        body.light .splash-screen {
+            background: var(--bg-light);
+        }
+
+        .splash-screen.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        .mosaic-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 120px);
+            grid-template-rows: repeat(4, 120px);
+            gap: 8px;
+        }
+
+        .mosaic-tile {
+            background: var(--tile-dark);
+            border: 3px solid var(--gold);
+            opacity: 0;
+            transform: scale(0) rotate(180deg);
+            will-change: transform, opacity;
+        }
+
+        body.light .mosaic-tile {
+            background: var(--tile-light);
+            border-color: var(--indigo);
+        }
+
+        .mosaic-tile:nth-child(1) { animation: tileAssemble 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) 0.1s forwards; }
+        .mosaic-tile:nth-child(2) { animation: tileAssemble 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) 0.15s forwards; }
+        .mosaic-tile:nth-child(3) { animation: tileAssemble 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) 0.2s forwards; }
+        .mosaic-tile:nth-child(4) { animation: tileAssemble 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) 0.25s forwards; }
+        .mosaic-tile:nth-child(5) { animation: tileAssemble 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) 0.3s forwards; }
+        .mosaic-tile:nth-child(6) { animation: tileAssemble 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) 0.35s forwards; }
+        .mosaic-tile:nth-child(7) { animation: tileAssemble 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) 0.4s forwards; }
+        .mosaic-tile:nth-child(8) { animation: tileAssemble 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) 0.45s forwards; }
+        .mosaic-tile:nth-child(9) { animation: tileAssemble 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) 0.5s forwards; }
+        .mosaic-tile:nth-child(10) { animation: tileAssemble 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) 0.55s forwards; }
+        .mosaic-tile:nth-child(11) { animation: tileAssemble 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) 0.6s forwards; }
+        .mosaic-tile:nth-child(12) { animation: tileAssemble 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) 0.65s forwards; }
+        .mosaic-tile:nth-child(13) { animation: tileAssemble 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) 0.7s forwards; }
+        .mosaic-tile:nth-child(14) { animation: tileAssemble 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) 0.75s forwards; }
+        .mosaic-tile:nth-child(15) { animation: tileAssemble 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) 0.8s forwards; }
+        .mosaic-tile:nth-child(16) { animation: tileAssemble 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) 0.85s forwards; }
+
+        @keyframes tileAssemble {
+            0% {
+                opacity: 0;
+                transform: scale(0) rotate(180deg);
+            }
+            70% {
+                opacity: 1;
+                transform: scale(1.1) rotate(-10deg);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) rotate(0deg);
+            }
+        }
+
+        /* Main Content */
+        .main-content {
+            opacity: 0;
+            animation: fadeIn 0.8s ease-out 2s forwards;
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* Poem Display - Brutalist Box */
+        .poem-container {
+            padding: 3rem;
+            margin-bottom: 3rem;
+            border: 6px solid var(--gold);
+            background: var(--tile-dark);
+            position: relative;
+        }
+
+        body.light .poem-container {
+            background: var(--tile-light);
+            border-color: var(--indigo);
+        }
+
+        .poem-container::before {
+            content: '';
+            position: absolute;
+            top: -12px;
+            left: -12px;
+            right: 12px;
+            bottom: 12px;
+            border: 6px solid var(--gold);
+            z-index: -1;
+        }
+
+        body.light .poem-container::before {
+            border-color: var(--indigo);
+        }
+
+        .poem-text {
+            font-family: 'Amiri', serif;
+            font-size: 2rem;
+            line-height: 2.2;
+            text-align: center;
+            direction: rtl;
+            margin-bottom: 2rem;
+        }
+
+        .poem-attribution {
+            text-align: center;
+            color: var(--gold);
+            font-size: 1.2rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        body.light .poem-attribution {
+            color: var(--indigo);
+        }
+
+        /* Brutalist Controls */
+        .controls {
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 4rem;
+        }
+
+        .control-btn {
+            padding: 1.2rem 2.5rem;
+            border: 4px solid var(--gold);
+            cursor: pointer;
+            font-family: 'Courier New', monospace;
+            font-size: 1rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background: var(--bg-dark);
+            color: var(--text-dark);
+            transition: all 0.2s ease;
+            min-width: 140px;
+            min-height: 56px;
+            position: relative;
+        }
+
+        body.light .control-btn {
+            background: var(--bg-light);
+            color: var(--text-light);
+            border-color: var(--indigo);
+        }
+
+        .control-btn:hover {
+            transform: translate(-4px, -4px);
+            box-shadow: 4px 4px 0 var(--gold);
+        }
+
+        body.light .control-btn:hover {
+            box-shadow: 4px 4px 0 var(--indigo);
+        }
+
+        .control-btn:active {
+            transform: translate(0, 0);
+            box-shadow: none;
+        }
+
+        .control-btn.primary {
+            background: var(--gold);
+            color: var(--bg-dark);
+            border-color: var(--gold);
+        }
+
+        body.light .control-btn.primary {
+            background: var(--indigo);
+            color: var(--bg-light);
+            border-color: var(--indigo);
+        }
+
+        /* Walkthrough - Flipping Tiles */
+        .walkthrough {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .walkthrough-tile {
+            height: 280px;
+            perspective: 1000px;
+            opacity: 0;
+            transform: translateY(50px);
+        }
+
+        .walkthrough-tile.visible {
+            animation: tileReveal 0.6s ease-out forwards;
+        }
+
+        .walkthrough-tile:nth-child(1) { animation-delay: 0.1s; }
+        .walkthrough-tile:nth-child(2) { animation-delay: 0.2s; }
+        .walkthrough-tile:nth-child(3) { animation-delay: 0.3s; }
+        .walkthrough-tile:nth-child(4) { animation-delay: 0.4s; }
+
+        @keyframes tileReveal {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .tile-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+        }
+
+        .walkthrough-tile:hover .tile-inner {
+            transform: rotateY(180deg);
+        }
+
+        .tile-front,
+        .tile-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            backface-visibility: hidden;
+            border: 4px solid var(--gold);
+            background: var(--tile-dark);
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        body.light .tile-front,
+        body.light .tile-back {
+            background: var(--tile-light);
+            border-color: var(--indigo);
+        }
+
+        .tile-front {
+            align-items: center;
+            text-align: center;
+        }
+
+        .tile-front h3 {
+            font-size: 1.8rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--gold);
+        }
+
+        body.light .tile-front h3 {
+            color: var(--indigo);
+        }
+
+        .tile-back {
+            transform: rotateY(180deg);
+        }
+
+        .tile-back p {
+            font-family: 'Tajawal', sans-serif;
+            line-height: 1.8;
+            font-size: 0.95rem;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 2rem;
+            border-top: 4px solid var(--gold);
+            margin-top: 3rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        body.light footer {
+            border-color: var(--indigo);
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            header {
+                padding: 1rem;
+                border-width: 3px;
+            }
+
+            .logo {
+                font-size: 1.3rem;
+                letter-spacing: 1px;
+            }
+
+            .theme-toggle {
+                width: 50px;
+                height: 50px;
+                min-width: 50px;
+                min-height: 50px;
+                font-size: 1.2rem;
+                border-width: 3px;
+            }
+
+            .poem-text {
+                font-size: 1.5rem;
+                line-height: 2;
+            }
+
+            .poem-container {
+                padding: 2rem 1.5rem;
+                border-width: 4px;
+            }
+
+            .poem-container::before {
+                top: -8px;
+                left: -8px;
+                right: 8px;
+                bottom: 8px;
+                border-width: 4px;
+            }
+
+            .mosaic-grid {
+                grid-template-columns: repeat(4, 80px);
+                grid-template-rows: repeat(4, 80px);
+                gap: 6px;
+            }
+
+            .mosaic-tile {
+                border-width: 2px;
+            }
+
+            .walkthrough {
+                grid-template-columns: 1fr;
+            }
+
+            .control-btn {
+                min-width: 120px;
+                padding: 1rem 2rem;
+                font-size: 0.9rem;
+                border-width: 3px;
+            }
+        }
+
+        /* Reduced Motion */
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+
+            .tile-inner {
+                transition: none;
+            }
+        }
+    </style>
 </head>
 <body>
-<canvas id="geo"></canvas>
-<nav class="nav-bar"><a href="#splash">Splash</a><a href="#walk">Intro</a><a href="#main">Read</a><a href="#settings">Settings</a><a href="#auth">Auth</a></nav>
+    <!-- Geometric Background -->
+    <svg class="geometric-background" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+            <pattern id="geometric-pattern" x="0" y="0" width="100" height="100" patternUnits="userSpaceOnUse">
+                <rect x="0" y="0" width="50" height="50" fill="none" stroke="currentColor" stroke-width="1"/>
+                <rect x="50" y="50" width="50" height="50" fill="none" stroke="currentColor" stroke-width="1"/>
+                <line x1="0" y1="0" x2="50" y2="50" stroke="currentColor" stroke-width="1"/>
+                <line x1="50" y1="0" x2="100" y2="50" stroke="currentColor" stroke-width="1"/>
+                <line x1="0" y1="50" x2="50" y2="100" stroke="currentColor" stroke-width="1"/>
+                <line x1="50" y1="50" x2="100" y2="100" stroke="currentColor" stroke-width="1"/>
+            </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#geometric-pattern)"/>
+    </svg>
 
-<section class="screen" id="splash"><span class="label">Splash</span><div class="sp"><div class="sp-logo"><span class="sp-ar">قافية</span><span class="sp-en">qafiyah</span></div><div class="sp-sub">Arabic Poetry, Pair by Pair</div><button class="sp-enter" onclick="document.getElementById('walk').scrollIntoView({behavior:'smooth'})">Discover</button><div class="sp-tiles"><div class="tile"></div><div class="tile"></div><div class="tile"></div><div class="tile"></div><div class="tile"></div></div></div></section>
+    <!-- Splash Screen -->
+    <div class="splash-screen" id="splash">
+        <div class="mosaic-grid">
+            <div class="mosaic-tile"></div>
+            <div class="mosaic-tile"></div>
+            <div class="mosaic-tile"></div>
+            <div class="mosaic-tile"></div>
+            <div class="mosaic-tile"></div>
+            <div class="mosaic-tile"></div>
+            <div class="mosaic-tile"></div>
+            <div class="mosaic-tile"></div>
+            <div class="mosaic-tile"></div>
+            <div class="mosaic-tile"></div>
+            <div class="mosaic-tile"></div>
+            <div class="mosaic-tile"></div>
+            <div class="mosaic-tile"></div>
+            <div class="mosaic-tile"></div>
+            <div class="mosaic-tile"></div>
+            <div class="mosaic-tile"></div>
+        </div>
+    </div>
 
-<section class="screen" id="walk"><span class="label">Walkthrough</span><div class="wk"><div class="wk-grid">
-  <div class="wk-tile"><h3>Discover</h3><p>84,000+ Arabic poems spanning 12 centuries with translations.</p></div>
-  <div class="wk-tile"><h3>Listen</h3><p>AI recitation with transliteration for pronunciation mastery.</p></div>
-  <div class="wk-tile"><h3>Collect</h3><p>Save favorites, customize display, sync across devices.</p></div>
-</div><button class="wk-cta" onclick="document.getElementById('main').scrollIntoView({behavior:'smooth'})">Start</button></div></section>
+    <!-- Main Container -->
+    <div class="container main-content">
+        <header>
+            <div class="logo">POETRY</div>
+            <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+                L
+            </button>
+        </header>
 
-<section class="screen" id="main" style="align-items:stretch"><div class="m-wrap"><span class="label">Main App</span>
-  <div class="m-nav"><div class="m-brand">Qafiyah</div><div class="m-links"><span>Explore</span><span>Saved</span><span>Settings</span></div></div>
-  <div class="mosaic">
-    <div class="poem-tile"><div class="pm">Hassan ibn Thabit &bull; Panegyric</div><div class="par">وَإِنَّ أَشعَرَ بَيتٍ أَنتَ قائِلُهُ<br>بَيتٌ يُقالُ إِذا أَنشَدتَهُ صَدَقا</div><div class="pen">The finest verse you can compose<br>is one that rings with truth when recited.</div><div class="acts"><button>&#9654; Listen</button><button>&#9825; Save</button><button>&#8634; Next</button><button>Aa</button><button>ع</button></div></div>
-    <div class="meta-tile"><div class="meta-card"><h4>Poet</h4><div class="big" style="font-size:14px;color:var(--text)">Hassan ibn Thabit</div><p style="font-size:10px;color:var(--text-dim);margin-top:4px">Companion of the Prophet &middot; 7th c.</p></div><div class="meta-card"><h4>Your Collection</h4><div class="big">47</div></div><div class="meta-card"><h4>Era</h4><div class="big" style="font-size:14px;color:var(--coral)">Early Islamic</div></div></div>
-    <div class="ai-tile"><span class="ico">&#10024;</span><p>Hassan ibn Thabit was known as "The Poet of the Prophet." His verse here articulates a core principle of Arabic poetics: truth (صدق) as the highest measure of poetic excellence.</p></div>
-  </div>
-</div></section>
+        <main>
+            <!-- Poem Display -->
+            <div class="poem-container">
+                <div class="poem-text" lang="ar" dir="rtl">
+                    أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ<br>
+                    فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
+                </div>
+                <div class="poem-attribution" lang="ar" dir="rtl">— أحمد شوقي</div>
+            </div>
 
-<div class="vc"><button>&#8635;</button><button class="on">&#9654;</button><button>&#9825;</button><button>Aa</button><button>ع</button><button>&#9790;</button></div>
+            <!-- Brutalist Controls -->
+            <div class="controls">
+                <button class="control-btn primary">GENERATE</button>
+                <button class="control-btn">SAVE</button>
+                <button class="control-btn">SHARE</button>
+                <button class="control-btn">AUDIO</button>
+            </div>
 
-<section class="screen" id="settings"><span class="label">Settings</span><div class="st"><div class="st-title">Settings</div>
-  <div class="st-row"><label>Text Size<small>Arabic display</small></label><div class="sl"><span>A</span><input type="range" min="14" max="32" value="22"><span style="font-size:16px">A</span></div></div>
-  <div class="st-row"><label>Transliteration<small>Pronunciation</small></label><div class="tgl on"></div></div>
-  <div class="st-row"><label>Dark Mode<small>Theme</small></label><div class="tgl on"></div></div>
-  <div class="st-row"><label>Auto Audio<small>Autoplay</small></label><div class="tgl"></div></div>
-  <div class="st-row"><label>AI Insights<small>Analysis</small></label><div class="tgl on"></div></div>
-  <button class="sv">Save</button>
-</div></section>
+            <!-- Walkthrough Tiles -->
+            <div class="walkthrough">
+                <div class="walkthrough-tile">
+                    <div class="tile-inner">
+                        <div class="tile-front">
+                            <h3>01</h3>
+                        </div>
+                        <div class="tile-back">
+                            <p><strong>DISCOVER POETRY:</strong> Explore thousands of classical Arabic poems from renowned poets across centuries. Each verse carries the beauty and wisdom of Arab literary tradition.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="walkthrough-tile">
+                    <div class="tile-inner">
+                        <div class="tile-front">
+                            <h3>02</h3>
+                        </div>
+                        <div class="tile-back">
+                            <p><strong>AI INSIGHTS:</strong> Get detailed analysis, context, and interpretations powered by advanced language models. Understand the deeper meanings behind each verse.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="walkthrough-tile">
+                    <div class="tile-inner">
+                        <div class="tile-front">
+                            <h3>03</h3>
+                        </div>
+                        <div class="tile-back">
+                            <p><strong>IMMERSIVE XP:</strong> Listen to beautiful recitations, customize your reading experience, and immerse yourself in the rhythm and flow of Arabic poetry.</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="walkthrough-tile">
+                    <div class="tile-inner">
+                        <div class="tile-front">
+                            <h3>04</h3>
+                        </div>
+                        <div class="tile-back">
+                            <p><strong>YOUR COLLECTION:</strong> Save your favorite poems, build collections, and share them with friends. Your personal library of Arabic literary treasures.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
 
-<section class="screen" id="auth"><span class="label">Auth</span><div class="auth-box"><div class="auth-title">مرحباً</div><div class="auth-sub">Sign in to save and sync</div>
-  <button class="oa"><svg viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>Google</button>
-  <button class="oa"><svg viewBox="0 0 24 24" fill="#fff"><path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.52-3.23 0-1.44.64-2.2.52-3.06-.4C3.79 16.17 4.36 9.04 8.92 8.78c1.27.06 2.15.72 2.89.76.98-.2 1.92-.76 2.97-.69 1.26.1 2.21.59 2.83 1.5-2.59 1.54-1.97 4.93.36 5.87-.47 1.24-.73 1.79-1.37 2.89-.97 1.69-2.34 3.38-4.02 3.42-.74.02-1.23-.38-2.03-.4-.83.02-1.35.42-2.13.42-1.73-.04-3.05-1.84-4.03-3.52-2.75-4.72-3.05-10.27-1.35-13.17 1.2-2.04 3.09-3.23 5.1-3.28 1.1-.02 2.17.74 2.86.74.69 0 1.98-.92 3.34-.78.57.02 2.16.23 3.18 1.72-2.58 1.61-2.16 5.57.47 6.63z"/></svg>Apple</button>
-  <div class="at">Terms and Privacy Policy apply</div>
-</div></section>
+        <footer>
+            <p>&copy; 2026 MOSAIC DISCOVERY</p>
+        </footer>
+    </div>
 
-<script>
-// Geometric patterns
-const c=document.getElementById('geo'),ctx=c.getContext('2d');let W,H,t=0;
-function resize(){W=c.width=innerWidth;H=c.height=innerHeight}resize();addEventListener('resize',resize);
-function drawGeo(){ctx.clearRect(0,0,W,H);t+=.001;
-const s=80;for(let x=0;x<W+s;x+=s){for(let y=0;y<H+s;y+=s){const a=Math.sin(t+x*.01+y*.01)*.5+.5;ctx.save();ctx.translate(x,y);ctx.rotate(t+x*.003);ctx.strokeStyle=`rgba(57,210,192,${a*.08})`;ctx.lineWidth=.5;ctx.beginPath();for(let i=0;i<8;i++){const angle=i*Math.PI/4;ctx.moveTo(0,0);ctx.lineTo(Math.cos(angle)*s*.3,Math.sin(angle)*s*.3)}ctx.stroke();ctx.restore()}}}
-(function loop(){drawGeo();requestAnimationFrame(loop)})();
-document.querySelectorAll('.tgl').forEach(t=>t.addEventListener('click',()=>t.classList.toggle('on')));
-</script>
+    <script>
+        // Theme Toggle
+        const themeToggle = document.getElementById('themeToggle');
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('light');
+            themeToggle.textContent = document.body.classList.contains('light') ? 'D' : 'L';
+        });
+
+        // Splash Screen
+        setTimeout(() => {
+            document.getElementById('splash').classList.add('hidden');
+        }, 2500);
+
+        // Walkthrough Tiles Animation Observer
+        const observerOptions = {
+            threshold: 0.2,
+            rootMargin: '0px 0px -100px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.walkthrough-tile').forEach(tile => {
+            observer.observe(tile);
+        });
+
+        // Control Button Interactions
+        document.querySelectorAll('.control-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                console.log(`Button clicked: ${this.textContent}`);
+            });
+        });
+    </script>
 </body>
 </html>

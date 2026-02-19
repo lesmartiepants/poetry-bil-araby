@@ -1,0 +1,23 @@
+services:
+  - type: web
+    name: poetry-bil-araby-api
+    runtime: node
+    env: node
+    region: oregon
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
+    healthCheckPath: /api/health
+    autoDeploy: true
+
+    envVars:
+      - key: NODE_ENV
+        value: production
+
+      - key: PORT
+        value: 10000
+
+      # User must set these manually in Render dashboard:
+      # - DATABASE_URL (from .env)
+      # - SUPABASE_PROJECT_URL (optional, for direct Supabase API access)
+      # - SUPABASE_SECRET_KEY (optional, for direct Supabase API access)

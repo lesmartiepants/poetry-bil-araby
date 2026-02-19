@@ -34,11 +34,6 @@ export default defineConfig({
 
     // Use forks pool for better performance
     pool: 'forks',
-    poolOptions: {
-      forks: {
-        singleFork: false,
-      },
-    },
 
     // Optimize CI performance
     ...(process.env.CI && {

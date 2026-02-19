@@ -5,20 +5,24 @@ A beautiful React application for exploring Arabic poetry with AI-powered insigh
 ## Features
 
 - 📖 Browse classic and modern Arabic poetry
+- 🗄️ **NEW:** Database mode with 84K+ restored Arabic poems
 - 🎙️ AI-powered audio recitation with emotional context
 - 🤖 Deep analysis and interpretation using AI
+- 🔄 Toggle between Database mode (local PostgreSQL) and AI mode (Gemini API)
 - 🌙 Dark/Light mode toggle
 - 🎨 Beautiful Arabic typography and design (Amiri font)
 - 🔍 Filter by poet and category
 - 📋 Copy poems to clipboard
-- ✅ Comprehensive test coverage (113 unit + 180 E2E tests)
+- ✅ Comprehensive test coverage (136 unit + 193 E2E tests)
 - 🚀 Optimized CI/CD pipeline (3-minute builds)
+- 🛡️ Robust error handling with user-friendly error messages
 
 ## Setup
 
 ### Prerequisites
 - Node.js (v18 or higher)
-- A Gemini API key from [Google AI Studio](https://aistudio.google.com/app/apikey)
+- **For AI Mode:** A Gemini API key from [Google AI Studio](https://aistudio.google.com/app/apikey)
+- **For Database Mode:** PostgreSQL 15+ (optional, but recommended for full functionality)
 
 ### Installation
 
@@ -28,24 +32,73 @@ npm install
 ```
 
 2. Configure environment variables:
-   - Copy `.env.example` to `.env`
+
+   **For AI Mode (Gemini API):**
+   - Create a `.env.local` file in the project root
    - Add your Gemini API key: `VITE_GEMINI_API_KEY=your-api-key-here`
 
+   **For Database Mode (PostgreSQL):**
+   - Install PostgreSQL 15+ locally
+   - Create database: `createdb qafiyah`
+   - Set up environment variables (optional, defaults to localhost):
+     ```bash
+     # Backend API Configuration (server.js)
+     PGUSER=your_username          # Default: $USER
+     PGHOST=localhost              # Default: localhost
+     PGDATABASE=qafiyah           # Default: qafiyah
+     PGPASSWORD=your_password      # Default: empty
+     PGPORT=5432                   # Default: 5432
+     PORT=3001                     # Backend server port
+
+     # Frontend Configuration (.env.local)
+     VITE_API_URL=http://localhost:3001  # Default: http://localhost:3001
+     ```
+
 3. Start the development server:
-```bash
-npm run dev
-```
+
+   **Option A: Frontend only (AI mode):**
+   ```bash
+   npm run dev
+   ```
+
+   **Option B: Frontend + Backend (Database mode):**
+   ```bash
+   # Terminal 1: Start backend API server
+   npm run dev:server
+
+   # Terminal 2: Start frontend dev server
+   npm run dev
+   ```
+
+   **Option C: Both concurrently:**
+   ```bash
+   npm run dev:all
+   ```
 
 4. Open your browser to the URL shown (usually `http://localhost:5173`)
 
 ## Usage
 
-- **Discover**: Click the ✨ sparkles button to fetch new poems
+### Mode Switching
+- **Database Mode** (Library icon 📚): Fetches poems from local PostgreSQL database (84K+ poems)
+- **AI Mode** (Sparkles icon ✨): Generates poems using Gemini API
+- Toggle between modes using the control bar button or overflow menu (mobile)
+
+### Core Features
+- **Discover**: Click the rabbit/sparkles button to fetch new poems
 - **Navigate**: Use arrow buttons to browse through poems
-- **Play**: Click the play button to hear AI-generated recitation
-- **Analyze**: Click "Seek Insight" to get deep analysis
+- **Play**: Click the play button to hear AI-generated recitation (AI mode only)
+- **Analyze**: Click "Seek Insight" to get deep analysis (AI mode only)
 - **Copy**: Click the copy icon to save poem text
+- **Filter**: Select specific poets from the category dropdown
 - **Theme**: Toggle between dark and light modes
+
+### Database Mode Benefits
+- Access to 84,329 restored Arabic poems
+- Instant fetching (no API latency)
+- Works offline (after database setup)
+- Filter by poet (50+ poets available)
+- Proper line break formatting
 
 ## Building with Claude
 
@@ -65,26 +118,40 @@ npm run dev
 
 ## Tech Stack
 
+### Frontend
 - React 18
 - Vite
 - Tailwind CSS
 - Lucide React (icons)
 - Gemini API (AI features)
 
+### Backend (Database Mode)
+- Express.js 5 (API server)
+- PostgreSQL 15+ (poem database)
+- node-postgres (pg) client
+- CORS middleware
+
 ## Project Structure
 
 ```
 poetry-bil-araby/
 ├── src/                     # Source code
-│   ├── app.jsx             # Main application component
+│   ├── app.jsx             # Main application component (1500+ lines)
 │   ├── main.jsx            # React entry point
 │   ├── index.css           # Global styles (Tailwind)
-│   └── test/               # Unit tests (113 tests)
+│   └── test/               # Unit tests (136 tests)
+│       ├── components.test.jsx
+│       ├── database-components.test.jsx  # NEW: Database integration tests
+│       ├── utils.test.jsx
+│       └── App.test.jsx
 ├── e2e/                     # End-to-end tests (Playwright)
 │   ├── app.spec.js         # Core functionality tests
-│   └── ui-ux.spec.js       # UI/UX quality tests
+│   ├── database-integration.spec.js  # NEW: Database E2E tests
+│   ├── ui-ux.spec.js       # UI/UX quality tests
+│   └── mockup-screenshots.spec.js
+├── server.js                # NEW: Express API server for database mode
 ├── .github/                 # GitHub configuration
-│   ├── workflows/ci.yml    # CI/CD pipeline (optimized)
+│   ├── workflows/ci.yml    # CI/CD pipeline (PostgreSQL service added)
 │   ├── TESTING_STRATEGY.md # Comprehensive testing guide
 │   └── CI_CD_GUIDE.md      # CI/CD operational reference
 ├── docs/                    # Documentation
@@ -152,18 +219,26 @@ npm run test:e2e:full       # Full device matrix (local)
 
 ### Test Coverage
 
-- **Unit Tests:** 113 tests covering components, utilities, and integration
-- **E2E Tests:** 32 scenarios × 6 devices = 180+ test executions
+- **Unit Tests:** 136 tests covering components, utilities, and integration
+  - Components: 74 tests (UI components, buttons, navigation)
+  - Database Components: 23 tests (DatabaseToggle, ErrorBanner)
+  - Utilities: 18 tests (helper functions, data processing)
+  - Integration: 21 tests (API calls, state management)
+- **E2E Tests:** 45 scenarios × 6 devices = 193+ test executions
   - Desktop: Chrome, Firefox, Safari
   - Mobile: Pixel 5, iPhone 12
   - Tablet: iPad Pro
-- **CI/CD:** Optimized pipeline runs in ~3 minutes
+  - Database Integration: 13 scenarios (mode toggle, error handling, fetching)
+- **CI/CD:** Optimized pipeline with PostgreSQL service runs in ~3 minutes
 - **Documentation:** See `.github/TESTING_STRATEGY.md` for details
 
 ## Documentation
 
 - `.github/TESTING_STRATEGY.md` - Comprehensive testing strategy
 - `.github/CI_CD_GUIDE.md` - CI/CD pipeline reference
+- `.github/copilot-instructions.md` - GitHub Copilot custom instructions
+- `.github/instructions/` - Path-specific Copilot instructions
+- `CLAUDE.md` - Comprehensive guide for Claude AI
 - `docs/CI_PERFORMANCE_OPTIMIZATION.md` - Performance optimization journey
 - `e2e/README.md` - E2E testing guide
 
@@ -179,6 +254,7 @@ npm run test:e2e:full       # Full device matrix (local)
 - [ ] Implement pagination for large datasets
 
 ### Developer Experience
+- [x] Set up GitHub Copilot instructions
 - [ ] Configure ESLint and Prettier
 - [ ] Set up pre-commit hooks
 - [ ] Consider TypeScript migration

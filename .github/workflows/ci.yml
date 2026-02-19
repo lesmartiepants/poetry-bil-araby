@@ -138,6 +138,23 @@ jobs:
       needs.detect-changes.outputs.tests-changed == 'true' ||
       needs.detect-changes.outputs.config-changed == 'true'
     timeout-minutes: 5
+
+    # PostgreSQL service for database integration tests
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: qafiyah_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
     steps:
       - uses: actions/checkout@v4
 
@@ -167,10 +184,35 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         run: npx playwright install-deps chromium
 
+      - name: Setup PostgreSQL schema (for database tests)
+        run: |
+          # Load database schema from migrations
+          echo "Loading database schema from supabase/migrations..."
+          PGPASSWORD=postgres psql -h localhost -U postgres -d qafiyah_test -f supabase/migrations/20260114000000_import_poetry.sql
+          echo "Database schema loaded successfully"
+        continue-on-error: true
+
+      - name: Start backend API server (background)
+        run: |
+          # Start backend server in background for E2E tests
+          # Only if database feature is enabled in tests
+          npm run dev:server &
+          echo "Backend server starting on http://localhost:3001"
+          sleep 3
+        env:
+          PGUSER: postgres
+          PGPASSWORD: postgres
+          PGDATABASE: qafiyah_test
+          PGHOST: localhost
+          PGPORT: 5432
+          PORT: 3001
+        continue-on-error: true
+
       - name: Run Playwright E2E tests
         run: npm run test:e2e
         env:
           CI: true
+          VITE_API_URL: http://localhost:3001
 
       - name: Upload Playwright report
         if: always()

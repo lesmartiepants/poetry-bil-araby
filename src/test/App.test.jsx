@@ -159,8 +159,9 @@ describe('DiwanApp', () => {
     it('allows discovering new poems without left/right navigation', async () => {
       render(<DiwanApp />)
 
-      // Mock API response for fetching a new poem
+      // Mock database API response (app is in database mode by default)
       const newPoem = {
+        id: 2,
         poet: "Mahmoud Darwish",
         poetArabic: "محمود درويش",
         title: "Identity Card",
@@ -170,7 +171,11 @@ describe('DiwanApp', () => {
         tags: ["Modern", "Political", "Free Verse"]
       }
 
-      mockSuccessfulFetch(createMockGeminiResponse({ text: JSON.stringify(newPoem) }))
+      // Mock the database endpoint instead of Gemini API
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => newPoem,
+      })
 
       // Click discover button
       const discoverButton = screen.getByLabelText('Discover new poem')

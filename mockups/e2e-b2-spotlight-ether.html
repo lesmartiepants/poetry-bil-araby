@@ -1,537 +1,552 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>B2: Spotlight Ether - Poetry bil Araby</title>
-  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ink in Water — Arabic Poetry</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --deep-water: #0A1628;
+    --indigo: #2B3A67;
+    --gold: #C5A059;
+    --paper: #F5F0E8;
+    --crimson: #8B2252;
+    --bg: var(--deep-water);
+    --text: var(--paper);
+    --card-bg: rgba(43, 58, 103, 0.25);
+    --card-border: linear-gradient(135deg, rgba(197,160,89,0.5), rgba(43,58,103,0.3), rgba(139,34,82,0.4));
+  }
+  [data-theme="light"] {
+    --bg: var(--paper);
+    --text: var(--deep-water);
+    --card-bg: rgba(255, 255, 255, 0.6);
+    --card-border: linear-gradient(135deg, rgba(197,160,89,0.6), rgba(43,58,103,0.2), rgba(139,34,82,0.3));
+  }
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Tajawal', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+    transition: background 0.8s ease, color 0.6s ease;
+  }
 
-    :root {
-      --gold: #C5A059;
-      --dark-bg: #0a0a0c;
-      --spotlight: #FFF8DC;
-      --ether-blue: #4A5FE8;
-      --magic-dust: rgba(74, 95, 232, 0.6);
+  /* ======== Splash Screen ======== */
+  #splash {
+    position: fixed; inset: 0; z-index: 100;
+    background: var(--deep-water);
+    display: flex; align-items: center; justify-content: center;
+    transition: opacity 1s ease;
+  }
+  #splash.fade-out { opacity: 0; pointer-events: none; }
+  #splash-canvas {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+  }
+  .splash-title {
+    position: relative; z-index: 2;
+    font-family: 'Amiri', serif;
+    font-size: clamp(2rem, 6vw, 4.5rem);
+    color: var(--paper);
+    opacity: 0;
+    text-shadow: 0 0 30px rgba(197,160,89,0.6), 0 0 60px rgba(43,58,103,0.4);
+    transition: opacity 1.5s ease;
+    pointer-events: none;
+  }
+  .splash-title.visible { opacity: 1; }
+
+  /* ======== Walkthrough ======== */
+  #walkthrough {
+    position: fixed; inset: 0; z-index: 90;
+    background: var(--deep-water);
+    display: none; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 2rem; padding: 2rem;
+  }
+  #walkthrough.active { display: flex; }
+  .walk-step {
+    opacity: 0; transform: scale(0.8);
+    filter: blur(4px);
+    transition: all 0.9s cubic-bezier(0.22, 1, 0.36, 1);
+    text-align: center; max-width: 500px;
+    font-family: 'Tajawal', sans-serif;
+    font-size: clamp(1rem, 2.5vw, 1.3rem);
+    color: var(--paper);
+    line-height: 1.9;
+  }
+  .walk-step.reveal {
+    opacity: 1; transform: scale(1); filter: blur(0);
+  }
+  .walk-step .step-num {
+    display: inline-block;
+    width: 38px; height: 38px; line-height: 38px;
+    border-radius: 50%;
+    background: var(--indigo);
+    color: var(--gold);
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+  }
+  .walk-btn {
+    min-width: 44px; min-height: 44px;
+    padding: 14px 36px;
+    border: none; border-radius: 50px;
+    background: var(--gold);
+    color: var(--deep-water);
+    font-family: 'Tajawal', sans-serif;
+    font-size: 1.1rem; font-weight: 700;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.6s ease, box-shadow 0.4s ease, transform 0.2s ease;
+    will-change: box-shadow;
+  }
+  .walk-btn:hover { box-shadow: 0 0 0 10px rgba(197,160,89,0.25); transform: scale(1.04); }
+
+  /* ======== Main App ======== */
+  #app {
+    display: none; flex-direction: column;
+    align-items: center; min-height: 100vh;
+    padding: 2rem 1rem;
+    position: relative;
+  }
+  #app.active { display: flex; }
+
+  /* Watercolor wash drifting background */
+  .watercolor-bg {
+    position: fixed; inset: 0; z-index: -1;
+    background:
+      radial-gradient(ellipse 80% 60% at 20% 30%, rgba(43,58,103,0.35) 0%, transparent 70%),
+      radial-gradient(ellipse 70% 50% at 75% 70%, rgba(139,34,82,0.2) 0%, transparent 70%),
+      radial-gradient(ellipse 90% 70% at 50% 50%, rgba(197,160,89,0.12) 0%, transparent 60%);
+    animation: driftWash 20s ease-in-out infinite alternate;
+    will-change: transform;
+  }
+  @keyframes driftWash {
+    0%   { transform: translate(0, 0) scale(1); }
+    33%  { transform: translate(-20px, 15px) scale(1.03); }
+    66%  { transform: translate(15px, -10px) scale(0.98); }
+    100% { transform: translate(-10px, 20px) scale(1.02); }
+  }
+  [data-theme="light"] .watercolor-bg {
+    background:
+      radial-gradient(ellipse 80% 60% at 20% 30%, rgba(43,58,103,0.12) 0%, transparent 70%),
+      radial-gradient(ellipse 70% 50% at 75% 70%, rgba(139,34,82,0.08) 0%, transparent 70%),
+      radial-gradient(ellipse 90% 70% at 50% 50%, rgba(197,160,89,0.1) 0%, transparent 60%);
+  }
+
+  /* Header */
+  .app-header {
+    display: flex; align-items: center; justify-content: space-between;
+    width: 100%; max-width: 700px;
+    margin-bottom: 2.5rem;
+  }
+  .app-title {
+    font-family: 'Amiri', serif;
+    font-size: clamp(1.5rem, 4vw, 2.5rem);
+    text-shadow: 0 0 20px rgba(197,160,89,0.3);
+  }
+
+  /* Circular ink-droplet controls */
+  .ctrl-btn {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    border: 2px solid var(--gold);
+    background: transparent;
+    color: var(--gold);
+    font-size: 1.2rem;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: box-shadow 0.4s ease, background 0.3s ease;
+    will-change: box-shadow;
+    flex-shrink: 0;
+  }
+  .ctrl-btn:hover, .ctrl-btn:focus-visible {
+    box-shadow: 0 0 0 10px rgba(197,160,89,0.2);
+    background: rgba(197,160,89,0.1);
+  }
+  .controls-row { display: flex; gap: 0.75rem; }
+
+  /* Poem Card with watercolor border */
+  .poem-card {
+    width: 100%; max-width: 700px;
+    padding: 2.5rem 2rem;
+    border-radius: 16px;
+    background: var(--card-bg);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.3s ease, box-shadow 0.4s ease;
+    will-change: transform;
+  }
+  .poem-card::before {
+    content: '';
+    position: absolute; inset: 0;
+    border-radius: 16px;
+    padding: 2px;
+    background: var(--card-border);
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+  }
+  .poem-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+  }
+
+  .poem-text {
+    font-family: 'Amiri', serif;
+    font-size: clamp(1.3rem, 3.5vw, 2rem);
+    line-height: 2.2;
+    text-align: center;
+    direction: rtl;
+    margin-bottom: 1.5rem;
+  }
+  .poem-text .hemistich { display: block; }
+  .poem-text .separator {
+    display: block;
+    color: var(--gold);
+    font-size: 1.5rem;
+    margin: 0.2rem 0;
+    opacity: 0.6;
+  }
+  .poet-name {
+    font-family: 'Tajawal', sans-serif;
+    font-weight: 500;
+    text-align: center;
+    color: var(--gold);
+    font-size: 1.1rem;
+    opacity: 0.85;
+  }
+
+  /* Action buttons row */
+  .actions-row {
+    display: flex; gap: 1rem;
+    justify-content: center;
+    margin-top: 2rem;
+    width: 100%; max-width: 700px;
+    flex-wrap: wrap;
+  }
+  .action-btn {
+    min-width: 44px; min-height: 44px;
+    padding: 10px 24px;
+    border-radius: 50px;
+    border: 1.5px solid var(--indigo);
+    background: rgba(43,58,103,0.2);
+    color: var(--text);
+    font-family: 'Tajawal', sans-serif;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: box-shadow 0.4s ease, border-color 0.3s ease, background 0.3s ease;
+    will-change: box-shadow;
+  }
+  .action-btn:hover {
+    box-shadow: 0 0 0 8px rgba(43,58,103,0.15);
+    border-color: var(--gold);
+    background: rgba(43,58,103,0.35);
+  }
+
+  /* Footer */
+  .app-footer {
+    margin-top: auto; padding-top: 3rem;
+    font-size: 0.85rem; opacity: 0.5;
+    text-align: center;
+  }
+
+  /* ======== Responsive ======== */
+  @media (max-width: 768px) {
+    .poem-card { padding: 1.5rem 1.2rem; }
+    .app-header { padding: 0 0.5rem; }
+    .actions-row { gap: 0.6rem; }
+    .action-btn { padding: 10px 18px; font-size: 0.9rem; }
+  }
+
+  /* ======== Reduced Motion ======== */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
     }
-
-    body {
-      font-family: 'Tajawal', sans-serif;
-      background: var(--dark-bg);
-      color: #e5e5e5;
-      overflow-x: hidden;
-      transition: background 0.5s ease, color 0.5s ease;
-    }
-
-    body.light {
-      background: #F8F8F6;
-      color: #1a1a1a;
-    }
-
-    /* Splash Screen - Moving Spotlight with Magic Dust */
-    .splash {
-      position: fixed;
-      inset: 0;
-      background: var(--dark-bg);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 9999;
-      animation: splashFadeOut 0.8s ease 3.2s forwards;
-      overflow: hidden;
-    }
-
-    .spotlight-container {
-      position: relative;
-      width: 100%;
-      height: 100%;
-    }
-
-    .spotlight {
-      position: absolute;
-      width: 400px;
-      height: 400px;
-      border-radius: 50%;
-      background: radial-gradient(circle at center, var(--spotlight) 0%, rgba(255, 248, 220, 0.5) 30%, transparent 70%);
-      filter: blur(40px);
-      animation: spotlightMove 6s ease-in-out infinite;
-      will-change: transform;
-    }
-
-    @keyframes spotlightMove {
-      0%, 100% {
-        transform: translate(calc(50vw - 200px), calc(50vh - 200px)) scale(1);
-      }
-      25% {
-        transform: translate(calc(30vw - 200px), calc(40vh - 200px)) scale(1.2);
-      }
-      50% {
-        transform: translate(calc(60vw - 200px), calc(60vh - 200px)) scale(0.9);
-      }
-      75% {
-        transform: translate(calc(40vw - 200px), calc(30vh - 200px)) scale(1.1);
-      }
-    }
-
-    .magic-dust-particle {
-      position: absolute;
-      width: 6px;
-      height: 6px;
-      background: var(--ether-blue);
-      border-radius: 50%;
-      opacity: 0;
-      box-shadow: 0 0 15px var(--magic-dust);
-      animation: dustSparkle 3s ease-in-out infinite;
-      will-change: transform, opacity;
-    }
-
-    @keyframes dustSparkle {
-      0%, 100% {
-        opacity: 0;
-        transform: translate(0, 0) scale(0.5);
-      }
-      15% {
-        opacity: 1;
-        transform: translate(var(--dx), var(--dy)) scale(1);
-      }
-      85% {
-        opacity: 0.9;
-        transform: translate(calc(var(--dx) * 2), calc(var(--dy) * 2)) scale(0.7);
-      }
-    }
-
-    .center-content {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      text-align: center;
-      z-index: 10;
-      animation: contentGlow 2s ease forwards;
-    }
-
-    @keyframes contentGlow {
-      0% {
-        opacity: 0;
-        transform: translate(-50%, -50%) scale(0.8);
-      }
-      100% {
-        opacity: 1;
-        transform: translate(-50%, -50%) scale(1);
-      }
-    }
-
-    .center-content h1 {
-      font-family: 'Amiri', serif;
-      font-size: 48px;
-      color: var(--spotlight);
-      margin-bottom: 20px;
-      text-shadow: 0 0 30px rgba(255, 248, 220, 0.8);
-    }
-
-    .center-content p {
-      font-size: 16px;
-      color: var(--ether-blue);
-      text-shadow: 0 0 20px var(--magic-dust);
-    }
-
-    @keyframes splashFadeOut {
-      to { opacity: 0; pointer-events: none; }
-    }
-
-    /* Walkthrough */
-    .walkthrough {
-      position: fixed;
-      inset: 0;
-      background: rgba(10, 10, 12, 0.98);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 9998;
-      padding: 20px;
-    }
-
-    .walkthrough.active { display: flex; }
-
-    .walkthrough-card {
-      background: linear-gradient(135deg, #1a1a2e 0%, #16162a 100%);
-      border-radius: 20px;
-      padding: 60px 50px;
-      max-width: 500px;
-      text-align: center;
-      border: 2px solid var(--ether-blue);
-      box-shadow: 0 0 60px var(--magic-dust), 0 30px 80px rgba(0,0,0,0.6);
-      animation: cardEtherGlow 0.8s ease;
-    }
-
-    @keyframes cardEtherGlow {
-      from {
-        transform: scale(0.9);
-        opacity: 0;
-        box-shadow: 0 0 0 transparent;
-      }
-      to {
-        transform: scale(1);
-        opacity: 1;
-        box-shadow: 0 0 60px var(--magic-dust), 0 30px 80px rgba(0,0,0,0.6);
-      }
-    }
-
-    .walkthrough-card h2 {
-      font-family: 'Amiri', serif;
-      font-size: 30px;
-      color: var(--spotlight);
-      margin-bottom: 20px;
-      text-shadow: 0 0 20px rgba(255, 248, 220, 0.5);
-    }
-
-    .walkthrough-card p {
-      color: #d0d0d0;
-      font-size: 16px;
-      line-height: 1.8;
-    }
-
-    .walkthrough-buttons {
-      display: flex;
-      gap: 15px;
-      margin-top: 40px;
-      justify-content: center;
-    }
-
-    .btn {
-      padding: 14px 32px;
-      border: none;
-      border-radius: 50px;
-      font-size: 15px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      min-width: 44px;
-      min-height: 44px;
-    }
-
-    .btn-primary {
-      background: var(--ether-blue);
-      color: white;
-      box-shadow: 0 0 20px var(--magic-dust);
-    }
-
-    .btn-primary:hover {
-      background: #5A6FF8;
-      box-shadow: 0 0 30px var(--magic-dust), 0 8px 20px rgba(74, 95, 232, 0.4);
-      transform: translateY(-2px);
-    }
-
-    .btn-secondary {
-      background: transparent;
-      color: #999;
-      border: 2px solid #444;
-    }
-
-    .btn-secondary:hover {
-      border-color: var(--ether-blue);
-      color: var(--ether-blue);
-    }
-
-    /* Main App */
-    .app {
-      display: none;
-      min-height: 100vh;
-      padding: 80px 20px 40px;
-    }
-
-    .app.active { display: block; }
-
-    .header {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      background: rgba(10, 10, 12, 0.95);
-      backdrop-filter: blur(10px);
-      padding: 20px 30px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid rgba(74, 95, 232, 0.3);
-      z-index: 100;
-      transition: background 0.3s ease;
-    }
-
-    .light .header {
-      background: rgba(248, 248, 246, 0.95);
-      border-bottom-color: #ddd;
-    }
-
-    .logo {
-      font-family: 'Amiri', serif;
-      font-size: 24px;
-      font-weight: 700;
-      color: var(--spotlight);
-      text-shadow: 0 0 15px rgba(255, 248, 220, 0.5);
-    }
-
-    .light .logo {
-      color: var(--ether-blue);
-      text-shadow: none;
-    }
-
-    .theme-toggle {
-      background: transparent;
-      border: 2px solid var(--ether-blue);
-      color: var(--ether-blue);
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 0 15px var(--magic-dust);
-    }
-
-    .theme-toggle:hover {
-      background: var(--ether-blue);
-      color: white;
-      box-shadow: 0 0 25px var(--magic-dust);
-      transform: rotate(180deg);
-    }
-
-    .container {
-      max-width: 800px;
-      margin: 0 auto;
-    }
-
-    .poem-card {
-      background: linear-gradient(135deg, #1a1a2e 0%, #16162a 100%);
-      border-radius: 20px;
-      padding: 60px 50px;
-      margin: 30px 0;
-      border: 2px solid rgba(74, 95, 232, 0.3);
-      box-shadow: 0 0 40px rgba(74, 95, 232, 0.2), 0 10px 40px rgba(0,0,0,0.4);
-      transition: all 0.4s ease;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .light .poem-card {
-      background: white;
-      border-color: #ddd;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-    }
-
-    .poem-card::before {
-      content: '';
-      position: absolute;
-      top: -50%;
-      left: -50%;
-      width: 200%;
-      height: 200%;
-      background: radial-gradient(circle, rgba(74, 95, 232, 0.1) 0%, transparent 70%);
-      animation: cardGlow 4s ease-in-out infinite;
-      pointer-events: none;
-    }
-
-    @keyframes cardGlow {
-      0%, 100% { transform: translate(0, 0); }
-      50% { transform: translate(10%, 10%); }
-    }
-
-    .poem-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 0 60px rgba(74, 95, 232, 0.4), 0 20px 60px rgba(0,0,0,0.5);
-    }
-
-    .poem-title {
-      font-family: 'Amiri', serif;
-      font-size: 32px;
-      color: var(--spotlight);
-      margin-bottom: 40px;
-      text-align: center;
-      position: relative;
-      z-index: 1;
-    }
-
-    .light .poem-title {
-      color: var(--ether-blue);
-    }
-
-    .poem-verse {
-      font-family: 'Amiri', serif;
-      font-size: 24px;
-      line-height: 2.2;
-      text-align: center;
-      direction: rtl;
-      margin: 40px 0;
-      color: #e5e5e5;
-      position: relative;
-      z-index: 1;
-    }
-
-    .light .poem-verse {
-      color: #1a1a1a;
-    }
-
-    .poet-name {
-      text-align: center;
-      color: var(--ether-blue);
-      font-size: 18px;
-      margin-top: 40px;
-      position: relative;
-      z-index: 1;
-    }
-
-    .control-rail {
-      display: flex;
-      gap: 12px;
-      justify-content: center;
-      margin-top: 40px;
-      position: relative;
-      z-index: 1;
-    }
-
-    .control-btn {
-      width: 50px;
-      height: 50px;
-      border-radius: 50%;
-      background: rgba(74, 95, 232, 0.2);
-      border: 2px solid var(--ether-blue);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.3s ease;
-      color: var(--ether-blue);
-      box-shadow: 0 0 15px var(--magic-dust);
-    }
-
-    .control-btn:hover {
-      background: var(--ether-blue);
-      color: white;
-      box-shadow: 0 0 25px var(--magic-dust);
-      transform: scale(1.15);
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      * {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-      }
-    }
-
-    @media (max-width: 768px) {
-      .spotlight { width: 300px; height: 300px; }
-      .center-content h1 { font-size: 36px; }
-      .poem-card { padding: 40px 25px; }
-      .poem-verse { font-size: 20px; }
-    }
-  </style>
+    .watercolor-bg { animation: none; }
+    #splash-canvas { display: none; }
+    .splash-title { opacity: 1; }
+    .walk-step { opacity: 1; transform: none; filter: none; }
+    .walk-btn { opacity: 1; }
+  }
+</style>
 </head>
-<body>
-  <!-- Splash Screen -->
-  <div class="splash">
-    <div class="spotlight-container">
-      <div class="spotlight"></div>
-      <div id="dustContainer"></div>
-      <div class="center-content">
-        <h1>Spotlight Ether</h1>
-        <p>Magic dust illuminates wisdom</p>
-      </div>
+<body data-theme="dark">
+
+<!-- ======== Splash Screen ======== -->
+<div id="splash">
+  <canvas id="splash-canvas"></canvas>
+  <div class="splash-title" id="splashTitle">حِبرٌ في الماء</div>
+</div>
+
+<!-- ======== Walkthrough ======== -->
+<div id="walkthrough">
+  <div class="walk-step" id="ws1">
+    <span class="step-num">١</span>
+    <p>اكتشف كنوز الشعر العربي من بحور القصائد القديمة والحديثة</p>
+  </div>
+  <div class="walk-step" id="ws2">
+    <span class="step-num">٢</span>
+    <p>استمع إلى القصائد بأصوات مُنتقاة تنساب كالحبر في الماء</p>
+  </div>
+  <div class="walk-step" id="ws3">
+    <span class="step-num">٣</span>
+    <p>احفظ أبياتك المفضلة وشاركها مع من تحب</p>
+  </div>
+  <div class="walk-step" id="ws4">
+    <span class="step-num">٤</span>
+    <p>بدّل بين الوضع الداكن والفاتح حسب ذوقك</p>
+  </div>
+  <button class="walk-btn" id="walkBtn" aria-label="ابدأ الرحلة">ابدأ الرحلة</button>
+</div>
+
+<!-- ======== Main Application ======== -->
+<div id="app">
+  <div class="watercolor-bg"></div>
+
+  <header class="app-header">
+    <h1 class="app-title">حِبرٌ في الماء</h1>
+    <div class="controls-row">
+      <button class="ctrl-btn" id="themeToggle" aria-label="تبديل السمة" title="تبديل السمة">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="5"/>
+          <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+        </svg>
+      </button>
+      <button class="ctrl-btn" id="refreshBtn" aria-label="قصيدة جديدة" title="قصيدة جديدة">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M23 4v6h-6M1 20v-6h6"/>
+          <path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/>
+        </svg>
+      </button>
     </div>
+  </header>
+
+  <article class="poem-card">
+    <div class="poem-text">
+      <span class="hemistich">أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ</span>
+      <span class="separator">***</span>
+      <span class="hemistich">فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي</span>
+    </div>
+    <div class="poet-name">— أحمد شوقي</div>
+  </article>
+
+  <div class="actions-row">
+    <button class="action-btn">حفظ</button>
+    <button class="action-btn">مشاركة</button>
+    <button class="action-btn">استماع</button>
+    <button class="action-btn">تحليل</button>
   </div>
 
-  <!-- Walkthrough -->
-  <div class="walkthrough" id="walkthrough">
-    <div class="walkthrough-card">
-      <h2 id="walkthrough-title">Welcome to Spotlight Ether</h2>
-      <p id="walkthrough-text">Experience poetry illuminated by magical dust particles and ethereal light.</p>
-      <div class="walkthrough-buttons">
-        <button class="btn btn-secondary" onclick="skipWalkthrough()">Skip</button>
-        <button class="btn btn-primary" onclick="nextStep()">Next</button>
-      </div>
-    </div>
-  </div>
+  <footer class="app-footer">حِبرٌ في الماء — تجربة شعرية تفاعلية</footer>
+</div>
 
-  <!-- Main App -->
-  <div class="app" id="app">
-    <header class="header">
-      <div class="logo">ديوان الشعر</div>
-      <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">✦</button>
-    </header>
+<script>
+(function () {
+  "use strict";
 
-    <div class="container">
-      <div class="poem-card">
-        <h2 class="poem-title">ديوان الشعر العربي</h2>
-        <div class="poem-verse" lang="ar">
-          أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ<br>
-          فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
-        </div>
-        <p class="poet-name">— أحمد شوقي</p>
+  /* ============================================
+     CONFIGURATION
+     ============================================ */
+  const INK_COLORS = ["#2B3A67", "#C5A059", "#8B2252"];
+  const IS_MOBILE = window.matchMedia("(max-width: 768px)").matches;
+  const REDUCED = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const PARTICLES_PER_DROP = IS_MOBILE ? 18 : 42;
+  const DROP_COUNT = 3;
+  const DROP_STAGGER_MS = 1000;
 
-        <div class="control-rail">
-          <button class="control-btn" aria-label="Previous">‹</button>
-          <button class="control-btn" aria-label="Play">▶</button>
-          <button class="control-btn" aria-label="Next">›</button>
-          <button class="control-btn" aria-label="Bookmark">★</button>
-        </div>
-      </div>
-    </div>
-  </div>
+  /* ============================================
+     INK PARTICLE SYSTEM
+     ============================================ */
+  const canvas = document.getElementById("splash-canvas");
+  const ctx = canvas.getContext("2d");
+  let particles = [];
+  let rafId = null;
+  let splashEnded = false;
 
-  <script>
-    // Generate magic dust particles
-    const dustContainer = document.getElementById('dustContainer');
-    for (let i = 0; i < 40; i++) {
-      const particle = document.createElement('div');
-      particle.className = 'magic-dust-particle';
-      const dx = (Math.random() - 0.5) * 400;
-      const dy = (Math.random() - 0.5) * 400;
-      particle.style.setProperty('--dx', `${dx}px`);
-      particle.style.setProperty('--dy', `${dy}px`);
-      particle.style.left = `${30 + Math.random() * 40}%`;
-      particle.style.top = `${30 + Math.random() * 40}%`;
-      particle.style.animationDelay = `${Math.random() * 3}s`;
-      dustContainer.appendChild(particle);
+  function resizeCanvas() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resizeCanvas();
+  window.addEventListener("resize", resizeCanvas);
+
+  function hexToRgb(hex) {
+    return {
+      r: parseInt(hex.slice(1, 3), 16),
+      g: parseInt(hex.slice(3, 5), 16),
+      b: parseInt(hex.slice(5, 7), 16)
+    };
+  }
+
+  function spawnDrop(x, y, color) {
+    var rgb = hexToRgb(color);
+    for (var i = 0; i < PARTICLES_PER_DROP; i++) {
+      var angle = Math.random() * Math.PI * 2;
+      var speed = 0.4 + Math.random() * 3.2;
+      particles.push({
+        x: x,
+        y: y,
+        vx: Math.cos(angle) * speed,
+        vy: Math.sin(angle) * speed + 0.5,
+        r: rgb.r, g: rgb.g, b: rgb.b,
+        alpha: 0.7 + Math.random() * 0.3,
+        size: 2 + Math.random() * 5,
+        decay: 0.003 + Math.random() * 0.007,
+        drag: 0.965 + Math.random() * 0.025
+      });
+    }
+  }
+
+  function tickParticles() {
+    ctx.fillStyle = "rgba(10, 22, 40, 0.055)";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    for (var i = particles.length - 1; i >= 0; i--) {
+      var p = particles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.vx *= p.drag;
+      p.vy *= p.drag;
+      p.alpha -= p.decay;
+
+      if (p.alpha <= 0) {
+        particles.splice(i, 1);
+        continue;
+      }
+
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(" + p.r + "," + p.g + "," + p.b + "," + p.alpha.toFixed(3) + ")";
+      ctx.fill();
     }
 
-    let step = 0;
-    const steps = [
-      { title: 'Welcome to Spotlight Ether', text: 'Experience poetry illuminated by magical dust particles and ethereal light.' },
-      { title: 'Moving Spotlight', text: 'Watch as light dances across the darkness, revealing wisdom.' },
-      { title: 'Magic Dust', text: 'Ethereal particles sparkle and swirl around each verse.' },
-      { title: 'Begin Reading', text: 'Step into the illuminated world of classical Arabic poetry.' }
+    if (!splashEnded) {
+      rafId = requestAnimationFrame(tickParticles);
+    }
+  }
+
+  /* ============================================
+     SPLASH FLOW
+     ============================================ */
+  function showTitle() {
+    document.getElementById("splashTitle").classList.add("visible");
+  }
+
+  function endSplash() {
+    splashEnded = true;
+    if (rafId) cancelAnimationFrame(rafId);
+    var splash = document.getElementById("splash");
+    splash.classList.add("fade-out");
+    setTimeout(function () {
+      splash.style.display = "none";
+      beginWalkthrough();
+    }, 1050);
+  }
+
+  function startSplash() {
+    if (REDUCED) {
+      showTitle();
+      setTimeout(endSplash, 1500);
+      return;
+    }
+
+    // Fill initial dark background
+    ctx.fillStyle = "#0A1628";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Stagger ink drops over ~3 seconds
+    for (var d = 0; d < DROP_COUNT; d++) {
+      (function (idx) {
+        setTimeout(function () {
+          var x = canvas.width * (0.2 + Math.random() * 0.6);
+          var y = canvas.height * (0.1 + Math.random() * 0.25);
+          spawnDrop(x, y, INK_COLORS[idx % INK_COLORS.length]);
+        }, idx * DROP_STAGGER_MS);
+      })(d);
+    }
+
+    tickParticles();
+
+    // Title appears as ink settles
+    setTimeout(showTitle, 2200);
+    // Splash fades after 4 seconds
+    setTimeout(endSplash, 4000);
+  }
+
+  /* ============================================
+     WALKTHROUGH
+     ============================================ */
+  function beginWalkthrough() {
+    var wt = document.getElementById("walkthrough");
+    wt.classList.add("active");
+
+    var steps = [
+      document.getElementById("ws1"),
+      document.getElementById("ws2"),
+      document.getElementById("ws3"),
+      document.getElementById("ws4")
     ];
 
-    setTimeout(() => {
-      document.getElementById('walkthrough').classList.add('active');
-    }, 3000);
+    steps.forEach(function (step, i) {
+      setTimeout(function () {
+        step.classList.add("reveal");
+      }, 350 + i * 650);
+    });
 
-    function nextStep() {
-      step++;
-      if (step >= steps.length) {
-        startApp();
-      } else {
-        document.getElementById('walkthrough-title').textContent = steps[step].title;
-        document.getElementById('walkthrough-text').textContent = steps[step].text;
-      }
-    }
+    var btn = document.getElementById("walkBtn");
+    setTimeout(function () {
+      btn.style.opacity = "1";
+    }, 350 + steps.length * 650 + 200);
 
-    function skipWalkthrough() {
-      startApp();
-    }
+    btn.addEventListener("click", function () {
+      wt.style.opacity = "0";
+      wt.style.transition = "opacity 0.5s ease";
+      setTimeout(function () {
+        wt.style.display = "none";
+        document.getElementById("app").classList.add("active");
+      }, 500);
+    });
+  }
 
-    function startApp() {
-      document.getElementById('walkthrough').classList.remove('active');
-      document.getElementById('app').classList.add('active');
-    }
+  /* ============================================
+     THEME TOGGLE
+     ============================================ */
+  document.getElementById("themeToggle").addEventListener("click", function () {
+    var body = document.body;
+    var current = body.getAttribute("data-theme");
+    body.setAttribute("data-theme", current === "dark" ? "light" : "dark");
+  });
 
-    function toggleTheme() {
-      document.body.classList.toggle('light');
-    }
-  </script>
+  /* ============================================
+     REFRESH / NEW POEM ANIMATION
+     ============================================ */
+  document.getElementById("refreshBtn").addEventListener("click", function () {
+    var card = document.querySelector(".poem-card");
+    card.style.transition = "opacity 0.4s ease, transform 0.4s ease, filter 0.4s ease";
+    card.style.opacity = "0";
+    card.style.transform = "scale(0.92)";
+    card.style.filter = "blur(4px)";
+    setTimeout(function () {
+      card.style.opacity = "1";
+      card.style.transform = "scale(1)";
+      card.style.filter = "blur(0)";
+    }, 500);
+  });
+
+  /* ============================================
+     INIT
+     ============================================ */
+  startSplash();
+})();
+</script>
 </body>
 </html>

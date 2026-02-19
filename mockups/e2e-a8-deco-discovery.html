@@ -1,530 +1,510 @@
 <!DOCTYPE html>
-<html lang="en" dir="ltr">
+<html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>A8: Deco Discovery - Poetry bil Araby</title>
-  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Desert Mirage — Arabic Poetry Discovery</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  /* ---- Reset & Custom Properties ---- */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --sand: #E8D5B7; --sienna: #A0522D; --desert-night: #1A0F0A;
+    --oasis: #2D7B6F; --gold: #C5A059;
+    --sand-light: #F5EDE0; --sienna-dark: #6B3720;
+    --bg: var(--desert-night); --fg: var(--sand); --card-bg: rgba(26,15,10,0.85);
+    --card-border: var(--sienna); --glow: var(--oasis);
+  }
+  [data-theme="light"] {
+    --bg: var(--sand-light); --fg: var(--desert-night); --card-bg: rgba(255,255,255,0.92);
+    --card-border: var(--gold); --glow: var(--oasis);
+  }
+  html { font-size: 16px; scroll-behavior: smooth; }
+  body {
+    font-family: 'Tajawal', sans-serif; background: var(--bg); color: var(--fg);
+    min-height: 100vh; overflow-x: hidden; transition: background 0.6s, color 0.6s;
+  }
 
-    :root {
-      --gold: #C5A059;
-      --gilded: #D4AF37;
-      --dark-bg: #0c0c0e;
-      --light-bg: #1a1716;
-      --cream: #F5F1E8;
-      --deco-black: #0a0a0a;
+  /* ---- SVG Sand Texture Background ---- */
+  body::before {
+    content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.05;
+    background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.55' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.6'/%3E%3C/svg%3E");
+  }
+
+  /* ---- Splash Screen ---- */
+  .splash {
+    position: fixed; inset: 0; z-index: 1000;
+    background: linear-gradient(180deg, #0D0A14 0%, #1A0F0A 40%, #3D2B1F 100%);
+    display: flex; align-items: center; justify-content: center; flex-direction: column;
+    transition: opacity 1s ease-out; will-change: opacity;
+  }
+  .splash.hidden { opacity: 0; pointer-events: none; }
+
+  /* Twinkling Stars */
+  .stars { position: absolute; inset: 0; overflow: hidden; }
+  .star {
+    position: absolute; background: #FFF; border-radius: 50%;
+    animation: twinkle var(--dur) ease-in-out infinite alternate;
+    will-change: opacity;
+  }
+  @keyframes twinkle { 0% { opacity: 0.1; } 100% { opacity: 0.95; } }
+
+  /* Parallax Dune Layers */
+  .dune {
+    position: absolute; bottom: 0; left: -5%; width: 110%;
+    will-change: transform;
+  }
+  .dune-1 {
+    height: 25%; background: var(--sienna); border-radius: 55% 75% 0 0 / 100% 100% 0 0;
+    animation: dune-drift-1 10s ease-in-out infinite alternate; z-index: 4;
+  }
+  .dune-2 {
+    height: 33%; background: #4A2A15; border-radius: 75% 45% 0 0 / 100% 100% 0 0;
+    animation: dune-drift-2 14s ease-in-out infinite alternate; z-index: 3;
+  }
+  .dune-3 {
+    height: 40%; background: #3D2B1F; border-radius: 45% 65% 0 0 / 100% 100% 0 0;
+    animation: dune-drift-3 18s ease-in-out infinite alternate; z-index: 2;
+  }
+  .dune-4 {
+    height: 48%; background: #2E1F14; border-radius: 65% 50% 0 0 / 100% 100% 0 0;
+    animation: dune-drift-4 23s ease-in-out infinite alternate; z-index: 1;
+  }
+  @keyframes dune-drift-1 { 0% { transform: translateX(0); } 100% { transform: translateX(18px); } }
+  @keyframes dune-drift-2 { 0% { transform: translateX(0); } 100% { transform: translateX(-22px); } }
+  @keyframes dune-drift-3 { 0% { transform: translateX(0); } 100% { transform: translateX(12px); } }
+  @keyframes dune-drift-4 { 0% { transform: translateX(0); } 100% { transform: translateX(-9px); } }
+
+  /* Heat Shimmer SVG Filter */
+  svg.shimmer-filter { position: absolute; width: 0; height: 0; }
+
+  /* Heat Shimmer Title */
+  .splash-title {
+    position: relative; z-index: 10; font-family: 'Amiri', serif;
+    font-size: clamp(2.2rem, 7vw, 4.5rem); color: var(--gold);
+    text-shadow: 0 0 50px rgba(197,160,89,0.4), 0 0 100px rgba(197,160,89,0.15);
+    animation: shimmer 2.8s ease-in-out infinite;
+    filter: url(#heat-shimmer);
+    will-change: transform, filter;
+  }
+  .splash-subtitle {
+    position: relative; z-index: 10; font-family: 'Tajawal', sans-serif;
+    font-size: clamp(0.9rem, 2.5vw, 1.25rem); color: var(--sand);
+    opacity: 0.65; margin-top: 0.75rem; letter-spacing: 0.02em;
+    animation: shimmer 3.2s ease-in-out infinite 0.5s;
+    will-change: transform;
+  }
+  @keyframes shimmer {
+    0%, 100% { transform: translateY(0) scaleX(1); }
+    20% { transform: translateY(-1.2px) scaleX(1.004); }
+    40% { transform: translateY(1.5px) scaleX(0.996); }
+    60% { transform: translateY(-0.8px) scaleX(1.003); }
+    80% { transform: translateY(0.6px) scaleX(0.998); }
+  }
+
+  /* ---- Walkthrough Overlay ---- */
+  .walkthrough {
+    position: fixed; inset: 0; z-index: 900; background: var(--bg);
+    display: flex; align-items: center; justify-content: center; flex-direction: column;
+    padding: 2rem; opacity: 0; pointer-events: none;
+    transition: opacity 0.8s ease;
+  }
+  .walkthrough.active { opacity: 1; pointer-events: auto; }
+  .walkthrough.hidden { opacity: 0; pointer-events: none; }
+
+  .wt-steps { max-width: 500px; width: 100%; }
+  .wt-step {
+    opacity: 0; transform: translateY(60px);
+    margin-bottom: 1.5rem; padding: 1.2rem 1.4rem;
+    background: var(--card-bg); border-right: 3px solid var(--gold);
+    border-radius: 8px; font-family: 'Tajawal', sans-serif;
+    font-size: 1.05rem; line-height: 1.85;
+    will-change: transform, opacity;
+  }
+  .wt-step.visible { animation: rise-from-sand 0.7s ease-out forwards; }
+  .wt-step:nth-child(2).visible { animation-delay: 0.35s; }
+  .wt-step:nth-child(3).visible { animation-delay: 0.7s; }
+  .wt-step:nth-child(4).visible { animation-delay: 1.05s; }
+
+  @keyframes rise-from-sand {
+    0% { opacity: 0; transform: translateY(60px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  .wt-step strong { color: var(--gold); font-weight: 700; }
+  .wt-step .step-num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 30px; height: 30px; background: var(--oasis); color: #fff;
+    border-radius: 50%; font-size: 0.85rem; font-weight: 700; margin-left: 0.6rem;
+  }
+
+  .wt-enter {
+    margin-top: 2rem; padding: 0.9rem 2.8rem; min-height: 48px; min-width: 48px;
+    background: var(--oasis); color: #fff; border: none; border-radius: 30px;
+    font-family: 'Tajawal', sans-serif; font-size: 1.1rem; font-weight: 500;
+    cursor: pointer; transition: transform 0.2s, box-shadow 0.3s;
+    touch-action: manipulation;
+  }
+  .wt-enter:hover { transform: scale(1.05); box-shadow: 0 6px 28px rgba(45,123,111,0.4); }
+  .wt-enter:active { transform: scale(0.97); }
+
+  /* ---- Main Application ---- */
+  .app {
+    display: none; flex-direction: column; align-items: center;
+    min-height: 100vh; padding: 1.5rem; position: relative; z-index: 1;
+  }
+  .app.active { display: flex; }
+
+  /* App Header */
+  .app-header {
+    width: 100%; max-width: 720px; display: flex; align-items: center;
+    justify-content: space-between; margin-bottom: 2.5rem; padding: 0.75rem 0;
+  }
+  .app-logo {
+    font-family: 'Amiri', serif; font-size: 1.6rem; color: var(--gold);
+    text-shadow: 0 0 20px rgba(197,160,89,0.2);
+  }
+  .theme-toggle {
+    width: 48px; height: 48px; border: 2px solid var(--card-border);
+    background: transparent; border-radius: 50%; font-size: 1.25rem;
+    cursor: pointer; color: var(--fg); display: flex; align-items: center;
+    justify-content: center; transition: background 0.3s, border-color 0.3s;
+    touch-action: manipulation;
+  }
+  .theme-toggle:hover { background: rgba(197,160,89,0.15); }
+
+  /* Poem Card with Oasis Glow */
+  .poem-card {
+    width: 100%; max-width: 720px; background: var(--card-bg);
+    border: 1px solid var(--card-border); border-radius: 16px;
+    padding: clamp(1.75rem, 4vw, 3rem); position: relative; overflow: hidden;
+    box-shadow:
+      0 0 80px -20px rgba(45,123,111,0.3),
+      0 0 140px -40px rgba(45,123,111,0.15),
+      inset 0 0 60px -30px rgba(45,123,111,0.08);
+    transition: background 0.6s, border-color 0.6s, box-shadow 0.6s;
+  }
+  /* Radial oasis glow overlay */
+  .poem-card::before {
+    content: ''; position: absolute; inset: -60%; z-index: 0; pointer-events: none;
+    background: radial-gradient(ellipse at center, rgba(45,123,111,0.1) 0%, transparent 65%);
+  }
+
+  .poem-content { position: relative; z-index: 1; }
+
+  /* Clip-path inset reveal from bottom */
+  .poem-line {
+    font-family: 'Amiri', serif; font-size: clamp(1.35rem, 3.5vw, 1.9rem);
+    line-height: 2.3; text-align: center; color: var(--fg);
+    clip-path: inset(100% 0 0 0);
+    will-change: clip-path;
+  }
+  .poem-line.revealed { animation: emerge-from-sand 0.9s ease-out forwards; }
+  .poem-line:nth-child(2).revealed { animation-delay: 0.4s; }
+  .poem-line:nth-child(3).revealed { animation-delay: 0.8s; }
+  .poem-line:nth-child(4).revealed { animation-delay: 1.2s; }
+
+  @keyframes emerge-from-sand {
+    0% { clip-path: inset(100% 0 0 0); }
+    100% { clip-path: inset(0 0 0 0); }
+  }
+
+  .poem-separator {
+    width: 60px; height: 2px; background: var(--gold); margin: 1.5rem auto;
+    opacity: 0; transition: opacity 0.5s ease 1.4s;
+  }
+  .poem-separator.visible { opacity: 0.6; }
+
+  .poem-author {
+    text-align: center; font-family: 'Tajawal', sans-serif; font-size: 1.05rem;
+    color: var(--gold); margin-top: 0.5rem; opacity: 0;
+    transition: opacity 0.6s ease 1.7s;
+  }
+  .poem-author.visible { opacity: 1; }
+
+  /* New Poem Button */
+  .new-poem-btn {
+    margin-top: 2.5rem; padding: 0.8rem 2.2rem; min-height: 48px;
+    background: transparent; color: var(--gold); border: 2px solid var(--gold);
+    border-radius: 30px; font-family: 'Tajawal', sans-serif; font-size: 1.05rem;
+    cursor: pointer; transition: background 0.3s, color 0.3s, transform 0.2s;
+    touch-action: manipulation;
+  }
+  .new-poem-btn:hover { background: var(--gold); color: var(--desert-night); transform: scale(1.03); }
+  .new-poem-btn:active { transform: scale(0.97); }
+
+  /* Footer */
+  .app-footer {
+    margin-top: auto; padding-top: 3rem; padding-bottom: 1.5rem;
+    font-size: 0.85rem; opacity: 0.45; text-align: center;
+    font-family: 'Tajawal', sans-serif;
+  }
+
+  /* ---- Accessibility: Reduced Motion ---- */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
     }
+    .poem-line { clip-path: inset(0 0 0 0) !important; }
+    .splash-title, .splash-subtitle { filter: none !important; transform: none !important; }
+    .wt-step { opacity: 1 !important; transform: none !important; }
+    .dune { transform: none !important; }
+  }
 
-    body {
-      font-family: 'Tajawal', sans-serif;
-      background: var(--deco-black);
-      color: var(--cream);
-      overflow-x: hidden;
-      transition: background 0.4s ease, color 0.4s ease;
-    }
-
-    body.light {
-      background: var(--cream);
-      color: #1a1a1a;
-    }
-
-    /* Splash Screen - Art Deco Frame Reveal */
-    .splash {
-      position: fixed;
-      inset: 0;
-      background: radial-gradient(circle at center, #1a1716 0%, var(--deco-black) 100%);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 9999;
-      animation: splashFadeOut 0.7s ease 2.8s forwards;
-    }
-
-    .deco-frame {
-      width: 400px;
-      height: 500px;
-      position: relative;
-      animation: frameReveal 1.5s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
-      will-change: transform, opacity;
-    }
-
-    @keyframes frameReveal {
-      0% {
-        transform: scale(0.7) rotateY(90deg);
-        opacity: 0;
-      }
-      60% {
-        transform: scale(1.05) rotateY(-5deg);
-        opacity: 1;
-      }
-      100% {
-        transform: scale(1) rotateY(0deg);
-        opacity: 1;
-      }
-    }
-
-    .deco-border {
-      position: absolute;
-      inset: 0;
-      border: 4px solid var(--gilded);
-      background: linear-gradient(135deg, rgba(212, 175, 55, 0.1) 0%, rgba(197, 160, 89, 0.05) 100%);
-      clip-path: polygon(
-        0 30px, 30px 0, calc(100% - 30px) 0, 100% 30px,
-        100% calc(100% - 30px), calc(100% - 30px) 100%, 30px 100%, 0 calc(100% - 30px)
-      );
-      box-shadow:
-        0 0 30px rgba(212, 175, 55, 0.4),
-        inset 0 0 30px rgba(212, 175, 55, 0.2);
-    }
-
-    .deco-corner {
-      position: absolute;
-      width: 40px;
-      height: 40px;
-      border: 2px solid var(--gold);
-      animation: cornerGlow 2s ease-in-out infinite;
-    }
-
-    @keyframes cornerGlow {
-      0%, 100% { opacity: 0.6; }
-      50% { opacity: 1; box-shadow: 0 0 20px rgba(212, 175, 55, 0.6); }
-    }
-
-    .deco-corner:nth-child(1) { top: 10px; left: 10px; border-right: none; border-bottom: none; }
-    .deco-corner:nth-child(2) { top: 10px; right: 10px; border-left: none; border-bottom: none; }
-    .deco-corner:nth-child(3) { bottom: 10px; left: 10px; border-right: none; border-top: none; }
-    .deco-corner:nth-child(4) { bottom: 10px; right: 10px; border-left: none; border-top: none; }
-
-    .deco-content {
-      position: absolute;
-      inset: 60px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 30px;
-      animation: contentFadeIn 0.8s ease 1s forwards;
-      opacity: 0;
-    }
-
-    @keyframes contentFadeIn {
-      to { opacity: 1; }
-    }
-
-    .deco-icon {
-      font-family: 'Amiri', serif;
-      font-size: 80px;
-      color: var(--gilded);
-      text-shadow: 0 0 30px rgba(212, 175, 55, 0.6);
-    }
-
-    .deco-title {
-      font-family: 'Amiri', serif;
-      font-size: 32px;
-      color: var(--gilded);
-      text-align: center;
-      letter-spacing: 3px;
-    }
-
-    .gilded-divider {
-      width: 150px;
-      height: 2px;
-      background: linear-gradient(90deg, transparent 0%, var(--gilded) 50%, transparent 100%);
-      animation: dividerExpand 1s ease 1.2s forwards;
-      transform: scaleX(0);
-    }
-
-    @keyframes dividerExpand {
-      to { transform: scaleX(1); }
-    }
-
-    @keyframes splashFadeOut {
-      to { opacity: 0; pointer-events: none; }
-    }
-
-    /* Walkthrough */
-    .walkthrough {
-      position: fixed;
-      inset: 0;
-      background: rgba(10, 10, 10, 0.97);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 9998;
-      padding: 20px;
-    }
-
-    .walkthrough.active { display: flex; }
-
-    .walkthrough-card {
-      background: var(--light-bg);
-      border: 3px solid var(--gilded);
-      border-radius: 0;
-      padding: 60px 50px;
-      max-width: 500px;
-      text-align: center;
-      box-shadow: 0 0 50px rgba(212, 175, 55, 0.3);
-      animation: cardSlideUp 0.6s ease;
-      position: relative;
-    }
-
-    @keyframes cardSlideUp {
-      from { transform: translateY(60px); opacity: 0; }
-      to { transform: translateY(0); opacity: 1; }
-    }
-
-    .walkthrough-card::before,
-    .walkthrough-card::after {
-      content: '';
-      position: absolute;
-      width: 30px;
-      height: 30px;
-      border: 2px solid var(--gold);
-    }
-
-    .walkthrough-card::before {
-      top: 10px;
-      left: 10px;
-      border-right: none;
-      border-bottom: none;
-    }
-
-    .walkthrough-card::after {
-      bottom: 10px;
-      right: 10px;
-      border-left: none;
-      border-top: none;
-    }
-
-    .walkthrough-card h2 {
-      font-family: 'Amiri', serif;
-      font-size: 30px;
-      color: var(--gilded);
-      margin-bottom: 25px;
-      letter-spacing: 2px;
-    }
-
-    .walkthrough-card p {
-      color: var(--cream);
-      font-size: 16px;
-      line-height: 1.8;
-    }
-
-    .walkthrough-buttons {
-      display: flex;
-      gap: 15px;
-      margin-top: 40px;
-      justify-content: center;
-    }
-
-    .btn {
-      padding: 16px 36px;
-      border: none;
-      font-size: 15px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      min-width: 44px;
-      min-height: 44px;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-
-    .btn-primary {
-      background: var(--gilded);
-      color: var(--deco-black);
-    }
-
-    .btn-primary:hover {
-      background: var(--gold);
-      box-shadow: 0 8px 30px rgba(212, 175, 55, 0.5);
-      transform: translateY(-3px);
-    }
-
-    .btn-secondary {
-      background: transparent;
-      color: var(--cream);
-      border: 2px solid var(--gold);
-    }
-
-    .btn-secondary:hover {
-      background: rgba(197, 160, 89, 0.1);
-    }
-
-    /* Main App */
-    .app {
-      display: none;
-      min-height: 100vh;
-      padding: 90px 20px 40px;
-    }
-
-    .app.active { display: block; }
-
-    .header {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      background: var(--deco-black);
-      padding: 25px 35px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 2px solid var(--gilded);
-      z-index: 100;
-      transition: background 0.3s ease;
-    }
-
-    .light .header {
-      background: var(--cream);
-      border-bottom-color: var(--gold);
-    }
-
-    .logo {
-      font-family: 'Amiri', serif;
-      font-size: 26px;
-      font-weight: 700;
-      color: var(--gilded);
-      letter-spacing: 2px;
-      text-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
-    }
-
-    .theme-toggle {
-      background: transparent;
-      border: 2px solid var(--gilded);
-      color: var(--gilded);
-      width: 44px;
-      height: 44px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-    }
-
-    .theme-toggle:hover {
-      background: var(--gilded);
-      color: var(--deco-black);
-      box-shadow: 0 0 20px rgba(212, 175, 55, 0.5);
-    }
-
-    .container {
-      max-width: 850px;
-      margin: 0 auto;
-    }
-
-    .poem-card {
-      background: var(--light-bg);
-      border: 3px solid var(--gilded);
-      padding: 60px 50px;
-      margin: 40px 0;
-      position: relative;
-      box-shadow: 0 0 40px rgba(212, 175, 55, 0.2);
-      transition: all 0.4s ease;
-    }
-
-    .light .poem-card {
-      background: white;
-    }
-
-    .poem-card::before,
-    .poem-card::after {
-      content: '';
-      position: absolute;
-      width: 40px;
-      height: 40px;
-      border: 2px solid var(--gold);
-    }
-
-    .poem-card::before {
-      top: 12px;
-      left: 12px;
-      border-right: none;
-      border-bottom: none;
-    }
-
-    .poem-card::after {
-      bottom: 12px;
-      right: 12px;
-      border-left: none;
-      border-top: none;
-    }
-
-    .poem-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 0 60px rgba(212, 175, 55, 0.4);
-    }
-
-    .poem-title {
-      font-family: 'Amiri', serif;
-      font-size: 34px;
-      color: var(--gilded);
-      margin-bottom: 40px;
-      text-align: center;
-      letter-spacing: 2px;
-    }
-
-    .poem-verse {
-      font-family: 'Amiri', serif;
-      font-size: 26px;
-      line-height: 2.2;
-      text-align: center;
-      direction: rtl;
-      margin: 40px 0;
-      color: var(--cream);
-    }
-
-    .light .poem-verse {
-      color: #1a1a1a;
-    }
-
-    .poet-name {
-      text-align: center;
-      color: var(--gold);
-      font-size: 18px;
-      margin-top: 40px;
-      letter-spacing: 1px;
-    }
-
-    .control-rail {
-      display: flex;
-      gap: 15px;
-      justify-content: center;
-      margin-top: 50px;
-    }
-
-    .control-btn {
-      width: 50px;
-      height: 50px;
-      background: transparent;
-      border: 2px solid var(--gilded);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.3s ease;
-      color: var(--gilded);
-      font-size: 18px;
-    }
-
-    .control-btn:hover {
-      background: var(--gilded);
-      color: var(--deco-black);
-      box-shadow: 0 0 25px rgba(212, 175, 55, 0.5);
-      transform: scale(1.1);
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      * {
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
-        transition-duration: 0.01ms !important;
-      }
-    }
-
-    @media (max-width: 768px) {
-      .deco-frame { width: 320px; height: 420px; }
-      .poem-card { padding: 40px 25px; }
-      .poem-verse { font-size: 22px; }
-      .header { padding: 20px 25px; }
-    }
-  </style>
+  /* ---- Mobile Responsive ---- */
+  @media (max-width: 600px) {
+    .poem-card { padding: 1.25rem; border-radius: 12px; }
+    .wt-step { padding: 1rem 1.1rem; font-size: 0.95rem; margin-bottom: 1.15rem; }
+    .wt-steps { max-width: 100%; }
+    .app-header { padding: 0.5rem 0; margin-bottom: 1.75rem; }
+    .app-logo { font-size: 1.3rem; }
+    .new-poem-btn { margin-top: 1.75rem; }
+  }
+  @media (max-width: 380px) {
+    .splash-title { font-size: 1.8rem; }
+    .poem-line { font-size: 1.15rem; line-height: 2.1; }
+  }
+</style>
 </head>
 <body>
-  <!-- Splash Screen -->
-  <div class="splash">
-    <div class="deco-frame">
-      <div class="deco-border"></div>
-      <div class="deco-corner"></div>
-      <div class="deco-corner"></div>
-      <div class="deco-corner"></div>
-      <div class="deco-corner"></div>
-      <div class="deco-content">
-        <div class="deco-icon">◆</div>
-        <h1 class="deco-title">DECO</h1>
-        <div class="gilded-divider"></div>
-        <p style="color: var(--cream); font-size: 14px; letter-spacing: 2px;">DISCOVERY</p>
-      </div>
-    </div>
+
+  <!-- SVG filter for heat shimmer effect -->
+  <svg class="shimmer-filter" aria-hidden="true">
+    <defs>
+      <filter id="heat-shimmer">
+        <feTurbulence type="turbulence" baseFrequency="0.015 0.08" numOctaves="2" result="turbulence" seed="3">
+          <animate attributeName="baseFrequency" dur="4s" values="0.015 0.08;0.02 0.1;0.015 0.08" repeatCount="indefinite"/>
+        </feTurbulence>
+        <feDisplacementMap in="SourceGraphic" in2="turbulence" scale="3" xChannelSelector="R" yChannelSelector="G"/>
+      </filter>
+    </defs>
+  </svg>
+
+  <!-- ======== Splash Screen ======== -->
+  <div class="splash" id="splash" role="status" aria-label="Loading desert mirage">
+    <div class="stars" id="stars" aria-hidden="true"></div>
+    <div class="dune dune-4" aria-hidden="true"></div>
+    <div class="dune dune-3" aria-hidden="true"></div>
+    <div class="dune dune-2" aria-hidden="true"></div>
+    <div class="dune dune-1" aria-hidden="true"></div>
+    <h1 class="splash-title">سراب الصحراء</h1>
+    <p class="splash-subtitle">رحلة في بحر الشعر العربي</p>
   </div>
 
-  <!-- Walkthrough -->
-  <div class="walkthrough" id="walkthrough">
-    <div class="walkthrough-card">
-      <h2 id="walkthrough-title">Art Deco Elegance</h2>
-      <p id="walkthrough-text">Experience Arabic poetry framed in 1920s luxury and geometric beauty.</p>
-      <div class="walkthrough-buttons">
-        <button class="btn btn-secondary" onclick="skipWalkthrough()">Skip</button>
-        <button class="btn btn-primary" onclick="nextStep()">Next</button>
+  <!-- ======== Walkthrough ======== -->
+  <div class="walkthrough" id="walkthrough" role="dialog" aria-label="Welcome walkthrough" aria-modal="true">
+    <div class="wt-steps">
+      <div class="wt-step">
+        <span class="step-num" aria-hidden="true">1</span>
+        <strong>اكتشف القصائد</strong> — تصفّح آلاف الأبيات من عيون الشعر العربي الكلاسيكي والمعاصر.
+      </div>
+      <div class="wt-step">
+        <span class="step-num" aria-hidden="true">2</span>
+        <strong>استمع للإيقاع</strong> — اشعر بموسيقى الكلمات وهي تنبثق من رمال الزمن.
+      </div>
+      <div class="wt-step">
+        <span class="step-num" aria-hidden="true">3</span>
+        <strong>غيّر المظهر</strong> — اختر بين ليل الصحراء ونهارها حسب ذوقك ومزاجك.
+      </div>
+      <div class="wt-step">
+        <span class="step-num" aria-hidden="true">4</span>
+        <strong>شارك الجمال</strong> — انشر القصائد التي تلامس روحك مع من تحبّ.
       </div>
     </div>
+    <button class="wt-enter" id="wt-enter" aria-label="Enter the poetry application">ادخل واحة الشعر</button>
   </div>
 
-  <!-- Main App -->
-  <div class="app" id="app">
-    <header class="header">
-      <div class="logo">◆ ديوان ◆</div>
-      <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">◐</button>
+  <!-- ======== Main App ======== -->
+  <main class="app" id="app">
+    <header class="app-header">
+      <div class="app-logo" aria-label="Desert Mirage logo">سراب الصحراء</div>
+      <button class="theme-toggle" id="theme-toggle" aria-label="Toggle light and dark theme">
+        <span id="theme-icon" aria-hidden="true">&#9790;</span>
+      </button>
     </header>
 
-    <div class="container">
-      <div class="poem-card">
-        <h2 class="poem-title">ديوان الشعر العربي</h2>
-        <div class="poem-verse" lang="ar">
-          أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ<br>
-          فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
-        </div>
-        <p class="poet-name">— أحمد شوقي —</p>
-
-        <div class="control-rail">
-          <button class="control-btn" aria-label="Previous">‹</button>
-          <button class="control-btn" aria-label="Play">▶</button>
-          <button class="control-btn" aria-label="Next">›</button>
-          <button class="control-btn" aria-label="Bookmark">★</button>
-        </div>
+    <article class="poem-card" aria-label="Poetry display">
+      <div class="poem-content" id="poem-content">
+        <p class="poem-line" data-line="0">أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ</p>
+        <p class="poem-line" data-line="1">فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي</p>
       </div>
-    </div>
-  </div>
+      <div class="poem-separator" id="poem-sep" aria-hidden="true"></div>
+      <div class="poem-author" id="poem-author">-- أحمد شوقي</div>
+    </article>
 
-  <script>
-    let step = 0;
-    const steps = [
-      { title: 'Art Deco Elegance', text: 'Experience Arabic poetry framed in 1920s luxury and geometric beauty.' },
-      { title: 'Gilded Frames', text: 'Each poem is presented as a precious artwork with golden borders.' },
-      { title: 'Geometric Harmony', text: 'Clean lines and symmetry honor both Art Deco and Arabic calligraphy.' },
-      { title: 'Begin Your Journey', text: 'Step into the golden age of poetry and design.' }
-    ];
+    <button class="new-poem-btn" id="new-poem" aria-label="Reveal a new poem">قصيدة جديدة</button>
 
-    setTimeout(() => {
-      document.getElementById('walkthrough').classList.add('active');
-    }, 3500);
+    <footer class="app-footer" role="contentinfo">
+      سراب الصحراء &mdash; شعر عربي بين الكثبان
+    </footer>
+  </main>
 
-    function nextStep() {
-      step++;
-      if (step >= steps.length) {
-        startApp();
-      } else {
-        document.getElementById('walkthrough-title').textContent = steps[step].title;
-        document.getElementById('walkthrough-text').textContent = steps[step].text;
+<script>
+(function () {
+  'use strict';
+
+  /* -------- Generate Stars -------- */
+  var starsContainer = document.getElementById('stars');
+  var starCount = 80;
+  for (var i = 0; i < starCount; i++) {
+    var star = document.createElement('div');
+    star.className = 'star';
+    star.style.left = (Math.random() * 100).toFixed(1) + '%';
+    star.style.top = (Math.random() * 48).toFixed(1) + '%';
+    star.style.setProperty('--dur', (1.2 + Math.random() * 3.5).toFixed(2) + 's');
+    star.style.animationDelay = (Math.random() * 5).toFixed(2) + 's';
+    var size = (1 + Math.random() * 2).toFixed(1);
+    star.style.width = size + 'px';
+    star.style.height = size + 'px';
+    starsContainer.appendChild(star);
+  }
+
+  /* -------- Splash to Walkthrough Transition -------- */
+  var splash = document.getElementById('splash');
+  var walkthrough = document.getElementById('walkthrough');
+  var app = document.getElementById('app');
+  var prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var splashDuration = prefersReduced ? 400 : 4000;
+
+  setTimeout(function () {
+    splash.classList.add('hidden');
+    walkthrough.classList.add('active');
+    setTimeout(function () {
+      var steps = document.querySelectorAll('.wt-step');
+      for (var j = 0; j < steps.length; j++) {
+        steps[j].classList.add('visible');
       }
-    }
+    }, 250);
+  }, splashDuration);
 
-    function skipWalkthrough() {
-      startApp();
-    }
+  /* -------- Walkthrough to Main App -------- */
+  document.getElementById('wt-enter').addEventListener('click', function () {
+    walkthrough.classList.add('hidden');
+    setTimeout(function () {
+      walkthrough.style.display = 'none';
+      app.classList.add('active');
+      revealPoem();
+    }, prefersReduced ? 50 : 800);
+  });
 
-    function startApp() {
-      document.getElementById('walkthrough').classList.remove('active');
-      document.getElementById('app').classList.add('active');
-    }
+  /* -------- Theme Toggle -------- */
+  var isDark = true;
+  var themeToggle = document.getElementById('theme-toggle');
+  var themeIcon = document.getElementById('theme-icon');
 
-    function toggleTheme() {
-      document.body.classList.toggle('light');
+  themeToggle.addEventListener('click', function () {
+    isDark = !isDark;
+    if (isDark) {
+      document.documentElement.removeAttribute('data-theme');
+      themeIcon.textContent = '\u263E';
+    } else {
+      document.documentElement.setAttribute('data-theme', 'light');
+      themeIcon.textContent = '\u263C';
     }
-  </script>
+  });
+
+  /* -------- Poem Data -------- */
+  var poems = [
+    {
+      lines: [
+        '\u0623\u064E\u0646\u0627 \u0627\u0644\u0628\u064E\u062D\u0631\u064F \u0641\u064A \u0623\u064E\u062D\u0634\u0627\u0626\u0650\u0647\u0650 \u0627\u0644\u062F\u064F\u0631\u064F\u0651 \u0643\u0627\u0645\u0650\u0646\u064C',
+        '\u0641\u064E\u0647\u064E\u0644 \u0633\u064E\u0623\u064E\u0644\u0648\u0627 \u0627\u0644\u063A\u064E\u0648\u0651\u0627\u0635\u064E \u0639\u064E\u0646 \u0635\u064E\u062F\u064E\u0641\u0627\u062A\u064A'
+      ],
+      author: '\u2014 \u0623\u062D\u0645\u062F \u0634\u0648\u0642\u064A'
+    },
+    {
+      lines: [
+        '\u0642\u0650\u0641\u0627 \u0646\u064E\u0628\u0643\u0650 \u0645\u0650\u0646 \u0630\u0650\u0643\u0631\u0649 \u062D\u064E\u0628\u064A\u0628\u064D \u0648\u064E\u0645\u064E\u0646\u0632\u0650\u0644\u0650',
+        '\u0628\u0650\u0633\u0650\u0642\u0637\u0650 \u0627\u0644\u0644\u0650\u0648\u0649 \u0628\u064E\u064A\u0646\u064E \u0627\u0644\u062F\u064E\u062E\u0648\u0644\u0650 \u0641\u064E\u062D\u064E\u0648\u0645\u064E\u0644\u0650'
+      ],
+      author: '\u2014 \u0627\u0645\u0631\u0624 \u0627\u0644\u0642\u064A\u0633'
+    },
+    {
+      lines: [
+        '\u0639\u0644\u0649 \u0642\u064E\u062F\u0631\u0650 \u0623\u064E\u0647\u0644\u0650 \u0627\u0644\u0639\u064E\u0632\u0645\u0650 \u062A\u064E\u0623\u062A\u064A \u0627\u0644\u0639\u064E\u0632\u0627\u0626\u0650\u0645\u064F',
+        '\u0648\u064E\u062A\u064E\u0623\u062A\u064A \u0639\u064E\u0644\u0649 \u0642\u064E\u062F\u0631\u0650 \u0627\u0644\u0643\u0650\u0631\u0627\u0645\u0650 \u0627\u0644\u0645\u064E\u0643\u0627\u0631\u0650\u0645\u064F'
+      ],
+      author: '\u2014 \u0627\u0644\u0645\u062A\u0646\u0628\u064A'
+    },
+    {
+      lines: [
+        '\u0648\u064E\u0645\u0627 \u0646\u064E\u064A\u0644\u064F \u0627\u0644\u0645\u064E\u0637\u0627\u0644\u0650\u0628\u0650 \u0628\u0650\u0627\u0644\u062A\u064E\u0645\u064E\u0646\u0651\u064A',
+        '\u0648\u064E\u0644\u0643\u0650\u0646 \u062A\u064F\u0624\u062E\u064E\u0630\u064F \u0627\u0644\u062F\u064F\u0646\u064A\u0627 \u063A\u0650\u0644\u0627\u0628\u0627'
+      ],
+      author: '\u2014 \u0623\u062D\u0645\u062F \u0634\u0648\u0642\u064A'
+    },
+    {
+      lines: [
+        '\u0625\u0650\u0630\u0627 \u0627\u0644\u0645\u064E\u0631\u0621\u064F \u0644\u064E\u0645 \u064A\u064F\u062F\u0646\u064E\u0633 \u0645\u0650\u0646\u064E \u0627\u0644\u0644\u064F\u0624\u0645\u0650 \u0639\u0650\u0631\u0636\u064F\u0647\u064F',
+        '\u0641\u064E\u0643\u064F\u0644\u064F\u0651 \u0631\u0650\u062F\u0627\u0621\u064D \u064A\u064E\u0631\u062A\u064E\u062F\u064A\u0647\u0650 \u062C\u064E\u0645\u064A\u0644\u064F'
+      ],
+      author: '\u2014 \u0627\u0644\u0633\u0645\u0648\u0623\u0644 \u0628\u0646 \u0639\u0627\u062F\u064A\u0627'
+    }
+  ];
+  var currentPoem = 0;
+
+  /* -------- Reveal Poem Lines -------- */
+  function revealPoem() {
+    var lines = document.querySelectorAll('.poem-line');
+    var sep = document.getElementById('poem-sep');
+    var author = document.getElementById('poem-author');
+
+    for (var k = 0; k < lines.length; k++) {
+      lines[k].classList.remove('revealed');
+    }
+    sep.classList.remove('visible');
+    author.classList.remove('visible');
+
+    void document.getElementById('poem-content').offsetWidth;
+
+    requestAnimationFrame(function () {
+      var freshLines = document.querySelectorAll('.poem-line');
+      for (var m = 0; m < freshLines.length; m++) {
+        freshLines[m].classList.add('revealed');
+      }
+      sep.classList.add('visible');
+      author.classList.add('visible');
+    });
+  }
+
+  /* -------- New Poem Button -------- */
+  document.getElementById('new-poem').addEventListener('click', function () {
+    currentPoem = (currentPoem + 1) % poems.length;
+    var poem = poems[currentPoem];
+    var content = document.getElementById('poem-content');
+    var sep = document.getElementById('poem-sep');
+    var author = document.getElementById('poem-author');
+
+    sep.classList.remove('visible');
+    author.classList.remove('visible');
+
+    while (content.firstChild) {
+      content.removeChild(content.firstChild);
+    }
+    for (var n = 0; n < poem.lines.length; n++) {
+      var p = document.createElement('p');
+      p.className = 'poem-line';
+      p.setAttribute('data-line', String(n));
+      p.textContent = poem.lines[n];
+      content.appendChild(p);
+    }
+    author.textContent = poem.author;
+
+    void content.offsetWidth;
+    requestAnimationFrame(function () {
+      var newLines = content.querySelectorAll('.poem-line');
+      for (var q = 0; q < newLines.length; q++) {
+        newLines[q].classList.add('revealed');
+      }
+      sep.classList.add('visible');
+      author.classList.add('visible');
+    });
+  });
+})();
+</script>
 </body>
 </html>

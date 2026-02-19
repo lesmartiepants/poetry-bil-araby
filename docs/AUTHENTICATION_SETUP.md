@@ -58,19 +58,33 @@ supabase link --project-ref your-project-ref
 supabase db push
 ```
 
-**Alternative**: Manually run the SQL migration in Supabase Studio:
+**Important**: The migrations are compatible with PostgreSQL 17+ (uses `gen_random_uuid()` instead of `uuid_generate_v4()` extension).
+
+**Migrations Applied:**
+1. `20260119000000_auth_and_user_features.sql` - Creates auth tables (user_settings, saved_poems, discussions)
+2. `20260219000000_postgrest_schema_grants.sql` - Grants schema access to PostgREST (required for Supabase Data API)
+
+**Alternative**: Manually run the SQL migrations in Supabase Studio:
 1. Go to **SQL Editor** in your Supabase dashboard
-2. Open `supabase/migrations/20260119000000_auth_and_user_features.sql`
-3. Copy and paste the SQL
-4. Click "Run"
+2. Run both migration files in order:
+   - First: `supabase/migrations/20260119000000_auth_and_user_features.sql`
+   - Second: `supabase/migrations/20260219000000_postgrest_schema_grants.sql`
+3. Copy and paste the SQL for each
+4. Click "Run" for each migration
 
 ### What Gets Created
 
-The migration creates these tables:
+**Migration 1** (`20260119000000_auth_and_user_features.sql`):
 - **`user_settings`**: Stores user preferences (theme, font, voice, transliteration)
 - **`saved_poems`**: User's favorite poems collection
 - **`discussions`**: Future feature for poem discussions
 - **`discussion_likes`**: Future feature for discussion interactions
+
+**Migration 2** (`20260219000000_postgrest_schema_grants.sql`):
+- Grants schema access to PostgREST roles (anon, authenticated, service_role)
+- Enables Supabase Data API to access public tables
+- Sets up proper permissions for poetry data tables (poems, poets, themes, etc.)
+- Configures default privileges for future tables
 
 All tables have Row Level Security (RLS) enabled, ensuring users can only access their own data.
 
@@ -198,7 +212,13 @@ All tables have RLS enabled with policies that ensure:
 ### "Supabase is not configured" error
 - Check that `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are set
 - Ensure `.env.local` is in project root
+- Verify anon key is in JWT format (long string starting with `eyJ`)
 - Restart dev server after adding variables
+
+### Migration errors with uuid_generate_v4()
+- **Solution**: Use PostgreSQL 17+ which has `gen_random_uuid()` built-in
+- The migrations have been updated to use `gen_random_uuid()` instead of the `uuid-ossp` extension
+- If using older Postgres, manually replace `gen_random_uuid()` with `uuid_generate_v4()` and enable the extension
 
 ### OAuth redirect errors
 - Verify redirect URIs match exactly in both provider and Supabase

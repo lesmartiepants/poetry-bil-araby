@@ -105,13 +105,17 @@ pg_restore --clean --no-owner --no-acl \
 
 1. Scroll down to **Environment Variables**
 2. Click **"Add Environment Variable"**
-3. Add this variable:
+3. Add these variables:
    - **Key**: `DATABASE_URL`
    - **Value**: Paste your Supabase connection string from Step 1.2
      ```
      postgresql://postgres:[YOUR-PASSWORD]@db.xxx.supabase.co:5432/postgres
      ```
-4. Click **"Add"**
+   - **Key**: `LOG_ENABLED` (Optional)
+   - **Value**: `true` (enables HTTP request logging, default: true)
+   - **Key**: `LOG_DEBUG` (Optional)
+   - **Value**: `false` (enables verbose database query logging, default: false)
+4. Click **"Add"** for each variable
 
 ### 2.3 Deploy
 
@@ -147,16 +151,28 @@ pg_restore --clean --no-owner --no-acl \
 
 ## Step 3: Update Vercel Frontend
 
-### 3.1 Add Environment Variable
+### 3.1 Add Environment Variables
 
 1. Go to [vercel.com](https://vercel.com) and open your project
 2. Go to **Settings** → **Environment Variables**
-3. Click **"Add New"**
-4. Fill in:
+3. Click **"Add New"** for each variable:
    - **Key**: `VITE_API_URL`
    - **Value**: Your Render URL (e.g., `https://poetry-bil-araby-api.onrender.com`)
    - **Environment**: Select **Production**, **Preview**, and **Development**
-5. Click **"Save"**
+
+   - **Key**: `VITE_GEMINI_API_KEY`
+   - **Value**: Your Gemini API key
+   - **Environment**: Select **Production**, **Preview**, and **Development**
+
+   **Optional** (for authentication features):
+   - **Key**: `VITE_SUPABASE_URL`
+   - **Value**: Your Supabase project URL
+   - **Environment**: Select **Production**, **Preview**, and **Development**
+
+   - **Key**: `VITE_SUPABASE_ANON_KEY`
+   - **Value**: Your Supabase anon key (JWT format)
+   - **Environment**: Select **Production**, **Preview**, and **Development**
+4. Click **"Save"** for each variable
 
 ### 3.2 Redeploy Frontend
 

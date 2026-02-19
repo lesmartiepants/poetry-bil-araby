@@ -42,7 +42,7 @@ npm install
    - Add your Gemini API key: `VITE_GEMINI_API_KEY=your-api-key-here`
 
    **For Database Mode (PostgreSQL):**
-   - Install PostgreSQL 15+ locally
+   - Install PostgreSQL 15+ locally (requires Postgres 17 for Supabase auth migrations)
    - Create database: `createdb qafiyah`
    - Set up environment variables (optional, defaults to localhost):
      ```bash
@@ -53,6 +53,8 @@ npm install
      PGPASSWORD=your_password      # Default: empty
      PGPORT=5432                   # Default: 5432
      PORT=3001                     # Backend server port
+     LOG_ENABLED=true              # Enable HTTP request logging (default: true)
+     LOG_DEBUG=false               # Enable verbose database debug logs (default: false)
 
      # Frontend Configuration (.env.local)
      VITE_API_URL=http://localhost:3001  # Default: http://localhost:3001
@@ -162,12 +164,14 @@ When Supabase is configured, the app provides:
 - Lucide React (icons)
 - Gemini API (AI features)
 - Supabase (authentication & user data - optional)
+- Structured logging (captured by Vercel/browser console)
 
 ### Backend (Database Mode)
 - Express.js 5 (API server)
-- PostgreSQL 15+ (poem database)
+- PostgreSQL 15+ (poem database, requires 17 for auth features)
 - node-postgres (pg) client
 - CORS middleware
+- Structured logging with LOG_ENABLED/LOG_DEBUG flags
 
 ### Authentication & User Data (Optional)
 - Supabase Auth (Google & Apple OAuth)

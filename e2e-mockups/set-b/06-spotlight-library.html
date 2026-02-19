@@ -1,132 +1,513 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>E2E B06: Spotlight Library — Spotlight + Scroll Story + Notion</title>
-<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-html{font-family:'Inter',system-ui,sans-serif;background:#060606;color:#f0ece4;scroll-behavior:smooth;overflow-x:hidden}
-.screen{position:relative;width:100%;min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;overflow:hidden}
-.label{position:absolute;top:24px;left:24px;font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:#e8c46a;opacity:.4}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>06 - Spotlight Library - مكتبة الأضواء</title>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0c0c0e;
+            --bg-light: #FDFCF8;
+            --text-dark: #e8e8e8;
+            --text-light: #1a1a1a;
+            --gold: #C5A059;
+            --indigo: #4F46E5;
+        }
 
-/* SPLASH */
-#splash{background:#060606}
-.sp{position:relative;z-index:2;text-align:center;padding:40px}
-.sp-logo{display:flex;flex-direction:row-reverse;align-items:flex-end;justify-content:center;gap:16px;margin-bottom:48px}
-.sp-ar{font-family:'Amiri',serif;font-size:clamp(3rem,8vw,4.5rem);font-weight:700;color:#fff}
-.sp-en{font-size:clamp(2.5rem,7vw,5rem);font-weight:200;color:#fff;letter-spacing:-.03em;text-transform:lowercase}
-.sp-sub{font-size:11px;letter-spacing:.4em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:52px}
-.sp-enter{display:inline-block;padding:16px 44px;border:1px solid rgba(232,196,106,.25);color:#e8c46a;font-size:12px;letter-spacing:.25em;text-transform:uppercase;text-decoration:none;border-radius:999px;transition:all .3s;background:rgba(232,196,106,.06)}
-.sp-enter:hover{background:rgba(232,196,106,.12)}
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-/* WALKTHROUGH */
-#walk{background:#060606;color:#f0ece4}
-.wk{position:relative;z-index:2;max-width:420px;width:90%;padding:48px 0}
-.wk-step{margin-bottom:28px;padding:20px 24px;border-left:2px solid rgba(232,196,106,.2);border-radius:0 12px 12px 0;background:rgba(255,255,255,.02)}
-.wk-step h3{font-size:15px;font-weight:600;margin-bottom:4px}
-.wk-step p{font-size:12px;color:rgba(240,236,228,.35);line-height:1.7}
-.wk-cta{display:block;margin:16px auto 0;padding:14px 40px;background:#e8c46a;color:#060606;border:none;border-radius:999px;font-size:12px;letter-spacing:.15em;text-transform:uppercase;font-weight:600;cursor:pointer}
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-dark);
+            overflow-x: hidden;
+            transition: background 0.4s ease, color 0.4s ease;
+        }
 
-/* MAIN */
-#main{background:#060606;color:#f0ece4;padding:0;align-items:stretch}
-.m-wrap{position:relative;z-index:2;max-width:700px;margin:0 auto;padding:40px 24px;min-height:100vh}
-.m-nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:32px}
-.m-brand{font-weight:600;font-size:14px;letter-spacing:.06em}
-.m-links{display:flex;gap:14px;font-size:12px;color:rgba(240,236,228,.35)}
-.m-links span{cursor:pointer}
-.poem{padding:40px 28px;text-align:center;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);border-radius:16px;margin-bottom:16px}
-.pm{font-size:10px;text-transform:uppercase;letter-spacing:.2em;color:#e8c46a;margin-bottom:24px}
-.par{font-family:'Amiri',serif;font-size:clamp(1.4rem,3.5vw,2rem);line-height:2.3;direction:rtl;margin-bottom:18px}
-.pen{font-size:14px;color:rgba(240,236,228,.35);line-height:1.8;font-style:italic}
-.pact{display:flex;gap:8px;justify-content:center;margin-top:22px;flex-wrap:wrap}
-.pact button{padding:8px 16px;border-radius:8px;background:rgba(232,196,106,.08);border:1px solid rgba(232,196,106,.15);color:rgba(240,236,228,.35);font-size:11px;cursor:pointer;font-family:'Inter',sans-serif;transition:all .2s}
-.pact button:hover{border-color:#e8c46a;color:#fff}
-.ai{padding:18px 22px;border-left:2px solid #e8c46a;border-radius:0 12px 12px 0;background:rgba(232,196,106,.04)}
-.ai p{font-size:12px;color:rgba(240,236,228,.35);line-height:1.7}
+        body.light {
+            background: var(--bg-light);
+            color: var(--text-light);
+        }
 
-/* SETTINGS */
-#settings{background:#060606;color:#f0ece4;padding:80px 24px}
-.st{position:relative;z-index:2;max-width:420px;margin:0 auto}
-.st-title{font-size:18px;font-weight:600;margin-bottom:24px;text-align:center}
-.st-row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid rgba(255,255,255,.06)}
-.st-row label{font-size:13px;color:rgba(240,236,228,.35)}
-.st-row label small{display:block;font-size:10px;opacity:.6;margin-top:2px}
-.tgl{width:44px;height:24px;border-radius:12px;background:rgba(255,255,255,.08);position:relative;cursor:pointer;transition:background .2s}
-.tgl.on{background:#e8c46a}
-.tgl::after{content:'';position:absolute;top:2px;left:2px;width:20px;height:20px;border-radius:50%;background:#fff;transition:transform .2s}
-.tgl.on::after{transform:translateX(20px)}
-input[type=range]{-webkit-appearance:none;width:100px;height:3px;border-radius:2px;background:rgba(255,255,255,.1);outline:none}
-input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;background:#e8c46a;cursor:pointer}
-.sv{display:block;width:100%;margin-top:24px;padding:14px;background:#e8c46a;color:#060606;border:none;border-radius:12px;font-size:13px;font-weight:600;cursor:pointer}
+        /* Splash Screen */
+        .splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100vh;
+            background: var(--bg-dark);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            animation: splashFadeOut 1s ease 3.5s forwards;
+        }
 
-/* AUTH */
-#auth{background:#060606}
-.auth-box{position:relative;z-index:2;width:90%;max-width:370px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:40px 28px;text-align:center;backdrop-filter:blur(16px);box-shadow:0 20px 50px rgba(0,0,0,.4)}
-.auth-title{font-family:'Amiri',serif;font-size:32px;margin-bottom:8px;color:#fff}
-.auth-sub{font-size:13px;color:rgba(255,255,255,.35);margin-bottom:28px}
-.oa{display:flex;align-items:center;justify-content:center;gap:10px;width:100%;padding:13px;border-radius:12px;border:1px solid rgba(255,255,255,.08);background:transparent;color:#fff;font-size:14px;cursor:pointer;margin-bottom:10px;transition:all .2s;font-family:'Inter',sans-serif}
-.oa:hover{background:rgba(232,196,106,.06)}
-.oa svg{width:18px;height:18px}
-.at{font-size:10px;color:rgba(255,255,255,.2);margin-top:18px}
+        body.light .splash-screen {
+            background: var(--bg-light);
+        }
 
-.nav-bar{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);display:flex;gap:6px;z-index:200;background:rgba(0,0,0,.85);backdrop-filter:blur(10px);padding:8px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.06)}
-.nav-bar a{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.35);text-decoration:none;padding:5px 10px;border-radius:999px;transition:all .2s}
-.nav-bar a:hover{color:#e8c46a}
+        .spotlight-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
 
-@media(max-width:640px){.sp-logo{flex-direction:column;align-items:center;gap:4px}.sp-ar{font-size:2.5rem}.sp-en{font-size:3rem}.poem{padding:28px 18px}.m-wrap{padding:24px 14px}}
-</style>
+        .spotlight {
+            position: absolute;
+            width: 300px;
+            height: 600px;
+            background: radial-gradient(ellipse at center, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0.6) 30%, rgba(255, 255, 255, 0.2) 60%, transparent 100%);
+            filter: blur(20px);
+            animation: spotlightSweep 3s ease-in-out infinite;
+            pointer-events: none;
+            will-change: transform;
+        }
+
+        @keyframes spotlightSweep {
+            0% { left: -150px; top: 0; opacity: 0; }
+            20% { opacity: 1; }
+            50% { left: 50%; top: 0; transform: translateX(-50%); }
+            80% { opacity: 1; }
+            100% { left: calc(100% + 150px); top: 0; opacity: 0; }
+        }
+
+        .splash-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-family: 'Amiri', serif;
+            font-size: 3rem;
+            font-weight: 700;
+            text-align: center;
+            color: transparent;
+            background: linear-gradient(135deg, var(--gold), var(--indigo));
+            background-clip: text;
+            -webkit-background-clip: text;
+            opacity: 0;
+            animation: textIlluminate 3s ease-in-out infinite;
+        }
+
+        @keyframes textIlluminate {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; text-shadow: 0 0 30px rgba(197, 160, 89, 0.5); }
+        }
+
+        @keyframes splashFadeOut {
+            to { opacity: 0; pointer-events: none; }
+        }
+
+        .main-content {
+            min-height: 100vh;
+            padding: 2rem;
+            opacity: 0;
+            animation: contentFadeIn 1s ease 4s forwards;
+        }
+
+        @keyframes contentFadeIn {
+            to { opacity: 1; }
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 3rem;
+            padding-bottom: 1rem;
+            border-bottom: 2px solid var(--gold);
+        }
+
+        h1 {
+            font-family: 'Amiri', serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--gold);
+        }
+
+        .theme-toggle {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 3px solid var(--gold);
+            background: transparent;
+            color: var(--gold);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            will-change: transform;
+        }
+
+        .theme-toggle:hover {
+            background: var(--gold);
+            color: var(--bg-dark);
+            transform: rotate(180deg);
+        }
+
+        body.light .theme-toggle:hover {
+            color: var(--bg-light);
+        }
+
+        .library-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .shelf {
+            margin-bottom: 3rem;
+            padding: 2rem;
+            background: #1a1a1c;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3), inset 0 -3px 10px rgba(0, 0, 0, 0.5);
+            transition: background 0.4s ease;
+        }
+
+        body.light .shelf {
+            background: #e8e6e0;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1), inset 0 -3px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .shelf-label {
+            font-family: 'Amiri', serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--gold);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .shelf-label::before {
+            content: '📚';
+            font-size: 2rem;
+        }
+
+        .book-spines {
+            display: flex;
+            gap: 1rem;
+            overflow-x: auto;
+            padding: 1rem 0;
+        }
+
+        .book-spine {
+            min-width: 80px;
+            height: 300px;
+            padding: 1.5rem 1rem;
+            background: linear-gradient(135deg, #2a2a2e 0%, #2a2a2e 100%);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            font-family: 'Amiri', serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--gold);
+            box-shadow: 4px 0 8px rgba(0, 0, 0, 0.3), inset -2px 0 4px rgba(0, 0, 0, 0.5);
+            will-change: transform;
+        }
+
+        body.light .book-spine {
+            background: linear-gradient(135deg, #d4d2c8 0%, #d4d2c8 100%);
+            box-shadow: 4px 0 8px rgba(0, 0, 0, 0.1), inset -2px 0 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .book-spine:nth-child(2n) {
+            background: linear-gradient(135deg, var(--indigo) 0%, #5b52e8 100%);
+            color: white;
+        }
+
+        .book-spine:nth-child(3n) {
+            background: linear-gradient(135deg, var(--gold) 0%, #d4b06a 100%);
+            color: var(--bg-dark);
+        }
+
+        .book-spine:hover {
+            transform: translateY(-10px);
+            box-shadow: 4px 10px 20px rgba(197, 160, 89, 0.4);
+        }
+
+        .poem-display {
+            margin-top: 3rem;
+            padding: 3rem;
+            background: linear-gradient(135deg, rgba(26, 26, 28, 0.8) 0%, rgba(42, 42, 46, 0.8) 100%);
+            border-radius: 16px;
+            border: 2px solid var(--gold);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s ease;
+        }
+
+        body.light .poem-display {
+            background: linear-gradient(135deg, rgba(232, 230, 224, 0.8) 0%, rgba(212, 210, 200, 0.8) 100%);
+        }
+
+        .poem-display::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(197, 160, 89, 0.1) 0%, transparent 70%);
+            animation: spotlightRotate 10s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes spotlightRotate {
+            to { transform: rotate(360deg); }
+        }
+
+        .poem-text {
+            font-family: 'Amiri', serif;
+            font-size: 2rem;
+            line-height: 2.5;
+            text-align: center;
+            color: var(--text-dark);
+            position: relative;
+            z-index: 1;
+        }
+
+        body.light .poem-text {
+            color: var(--text-light);
+        }
+
+        .poem-author {
+            font-family: 'Amiri', serif;
+            font-size: 1.3rem;
+            text-align: center;
+            color: var(--gold);
+            margin-top: 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .walkthrough {
+            margin-top: 4rem;
+            padding: 2rem;
+            background: #1a1a1c;
+            border-radius: 12px;
+            transition: background 0.4s ease;
+        }
+
+        body.light .walkthrough {
+            background: #e8e6e0;
+        }
+
+        .walkthrough h2 {
+            font-family: 'Amiri', serif;
+            font-size: 2rem;
+            color: var(--gold);
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+        }
+
+        .step {
+            padding: 1.5rem;
+            background: #2a2a2e;
+            border-radius: 8px;
+            border-left: 4px solid var(--gold);
+            transition: all 0.3s ease;
+        }
+
+        body.light .step {
+            background: #d4d2c8;
+        }
+
+        .step:hover {
+            transform: translateX(-5px);
+            box-shadow: 0 5px 20px rgba(197, 160, 89, 0.3);
+        }
+
+        .step-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--gold);
+            margin-bottom: 0.5rem;
+        }
+
+        .step-title {
+            font-family: 'Amiri', serif;
+            font-size: 1.3rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .step-desc {
+            font-size: 1rem;
+            opacity: 0.8;
+            line-height: 1.6;
+        }
+
+        @media (max-width: 768px) {
+            h1 { font-size: 1.8rem; }
+            .splash-text { font-size: 2rem; }
+            .theme-toggle { width: 50px; height: 50px; font-size: 1.2rem; }
+            .shelf { padding: 1rem; }
+            .book-spine { min-width: 60px; height: 250px; font-size: 0.9rem; }
+            .poem-display { padding: 2rem; }
+            .poem-text { font-size: 1.5rem; line-height: 2; }
+            .steps { grid-template-columns: 1fr; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+
+        .book-spine:focus, .theme-toggle:focus {
+            outline: 3px solid var(--gold);
+            outline-offset: 3px;
+        }
+    </style>
 </head>
 <body>
-<nav class="nav-bar"><a href="#splash">Splash</a><a href="#walk">Intro</a><a href="#main">Read</a><a href="#settings">Settings</a><a href="#auth">Auth</a></nav>
+    <div class="splash-screen">
+        <div class="spotlight-container">
+            <div class="spotlight"></div>
+            <div class="splash-text">مكتبة الأضواء</div>
+        </div>
+    </div>
 
-<section class="screen" id="splash"><span class="label" style="color:rgba(255,255,255,.2)">Splash</span><div class="sp"><div class="sp-logo"><span class="sp-ar">قافية</span><span class="sp-en">qafiyah</span></div><div class="sp-sub">Arabic Poetry, Pair by Pair</div><a href="#walk" class="sp-enter">Enter</a></div></section>
+    <div class="main-content">
+        <header>
+            <h1>مكتبة الأضواء - Spotlight Library</h1>
+            <button class="theme-toggle" aria-label="Toggle theme">☀️</button>
+        </header>
 
-<section class="screen" id="walk"><span class="label">Walkthrough</span><div class="wk">
-  <div class="wk-step"><h3>Discover Poetry</h3><p>84,000+ Arabic poems from classical to modern, each with English translation.</p></div>
-  <div class="wk-step"><h3>Listen & Learn</h3><p>AI recitation with transliteration for pronunciation mastery.</p></div>
-  <div class="wk-step"><h3>Your Collection</h3><p>Save favorites, customize display, sync across devices.</p></div>
-  <button class="wk-cta" onclick="document.getElementById('main').scrollIntoView({behavior:'smooth'})">Start Reading</button>
-</div></section>
+        <div class="library-container">
+            <div class="shelf">
+                <div class="shelf-label">الكلاسيكيات العربية</div>
+                <div class="book-spines">
+                    <div class="book-spine" tabindex="0">أحمد شوقي</div>
+                    <div class="book-spine" tabindex="0">المتنبي</div>
+                    <div class="book-spine" tabindex="0">جبران خليل</div>
+                    <div class="book-spine" tabindex="0">نزار قباني</div>
+                    <div class="book-spine" tabindex="0">محمود درويش</div>
+                    <div class="book-spine" tabindex="0">الجواهري</div>
+                    <div class="book-spine" tabindex="0">أبو نواس</div>
+                    <div class="book-spine" tabindex="0">أحمد مطر</div>
+                </div>
+            </div>
 
-<section class="screen" id="main" style="align-items:stretch"><div class="m-wrap"><span class="label">Main App</span>
-  <div class="m-nav"><div class="m-brand">Qafiyah</div><div class="m-links"><span>Explore</span><span>Saved</span><span>Settings</span></div></div>
-  <div class="poem"><div class="pm">Badr Shakir al-Sayyab &bull; Modern</div><div class="par">عيناكِ غابتا نخيلٍ ساعةَ السَحَر<br>أو شُرفتان راحَ ينأى عنهما القمر</div><div class="pen">Your eyes are two palm groves at the hour of dawn,<br>or two balconies from which the moon recedes.</div><div class="pact"><button>&#9654; Listen</button><button>&#9825; Save</button><button>&#8634; Next</button><button>Aa Size</button><button>ع Trans</button></div></div>
-  <div class="ai"><p>&#10024; Al-Sayyab launched the free verse movement in Arabic poetry. "Rain Song" (1954) broke the qasida meter, opening Arabic poetry to modernist forms while retaining its musical power.</p></div>
-</div></section>
+            <div class="shelf">
+                <div class="shelf-label">الشعر الحديث</div>
+                <div class="book-spines">
+                    <div class="book-spine" tabindex="0">أدونيس</div>
+                    <div class="book-spine" tabindex="0">بدر شاكر</div>
+                    <div class="book-spine" tabindex="0">صلاح عبد الصبور</div>
+                    <div class="book-spine" tabindex="0">فدوى طوقان</div>
+                    <div class="book-spine" tabindex="0">أمل دنقل</div>
+                    <div class="book-spine" tabindex="0">سعدي يوسف</div>
+                </div>
+            </div>
 
-<div class="vc" style="position:fixed;right:14px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:1px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;overflow:hidden;z-index:100;box-shadow:0 8px 24px rgba(0,0,0,.3)">
-  <button style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;cursor:pointer;color:rgba(255,255,255,.4);font-size:15px">&#8635;</button>
-  <div style="height:1px;background:rgba(255,255,255,.06)"></div>
-  <button style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:rgba(232,196,106,.12);border:none;cursor:pointer;color:#e8c46a;font-size:15px">&#9654;</button>
-  <div style="height:1px;background:rgba(255,255,255,.06)"></div>
-  <button style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;cursor:pointer;color:rgba(255,255,255,.4);font-size:15px">&#9825;</button>
-  <div style="height:1px;background:rgba(255,255,255,.06)"></div>
-  <button style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;cursor:pointer;color:rgba(255,255,255,.4);font-size:15px">Aa</button>
-  <div style="height:1px;background:rgba(255,255,255,.06)"></div>
-  <button style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;cursor:pointer;color:rgba(255,255,255,.4);font-size:15px">ع</button>
-  <div style="height:1px;background:rgba(255,255,255,.06)"></div>
-  <button style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;cursor:pointer;color:rgba(255,255,255,.4);font-size:15px">&#9790;</button>
-</div>
+            <div class="poem-display">
+                <div class="poem-text" lang="ar">
+                    أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ
+                    <br>
+                    فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
+                </div>
+                <div class="poem-author">— أحمد شوقي</div>
+            </div>
 
-<section class="screen" id="settings"><span class="label">Settings</span><div class="st"><div class="st-title">Settings</div>
-  <div class="st-row"><label>Text Size<small>Arabic display</small></label><div style="display:flex;align-items:center;gap:8px"><span style="font-size:10px;color:rgba(240,236,228,.35)">A</span><input type="range" min="14" max="32" value="22"><span style="font-size:16px;color:rgba(240,236,228,.35)">A</span></div></div>
-  <div class="st-row"><label>Transliteration<small>Pronunciation</small></label><div class="tgl on"></div></div>
-  <div class="st-row"><label>Dark Mode<small>Theme</small></label><div class="tgl on"></div></div>
-  <div class="st-row"><label>Auto Audio<small>Autoplay</small></label><div class="tgl"></div></div>
-  <div class="st-row"><label>AI Insights<small>Analysis</small></label><div class="tgl on"></div></div>
-  <button class="sv">Save</button>
-</div></section>
+            <div class="walkthrough">
+                <h2>كيفية الاستخدام</h2>
+                <div class="steps">
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <div class="step-title">تصفح الرفوف</div>
+                        <div class="step-desc">استكشف مجموعات الشعر المنظمة حسب الفترة والنمط</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div class="step-title">اختر شاعرًا</div>
+                        <div class="step-desc">انقر على كتاب لاستعراض أعمال الشاعر</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div class="step-title">استمتع بالقراءة</div>
+                        <div class="step-desc">اقرأ القصائد مع إضاءة مسرحية جميلة</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">4</div>
+                        <div class="step-title">بدّل السمة</div>
+                        <div class="step-desc">اختر بين الوضع الليلي والنهاري</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-<section class="screen" id="auth"><span class="label" style="color:rgba(255,255,255,.2)">Auth</span><div class="auth-box"><div class="auth-title">مرحباً</div><div class="auth-sub">Sign in to save and sync</div>
-  <button class="oa"><svg viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>Continue with Google</button>
-  <button class="oa"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.52-3.23 0-1.44.64-2.2.52-3.06-.4C3.79 16.17 4.36 9.04 8.92 8.78c1.27.06 2.15.72 2.89.76.98-.2 1.92-.76 2.97-.69 1.26.1 2.21.59 2.83 1.5-2.59 1.54-1.97 4.93.36 5.87-.47 1.24-.73 1.79-1.37 2.89-.97 1.69-2.34 3.38-4.02 3.42-.74.02-1.23-.38-2.03-.4-.83.02-1.35.42-2.13.42-1.73-.04-3.05-1.84-4.03-3.52-2.75-4.72-3.05-10.27-1.35-13.17 1.2-2.04 3.09-3.23 5.1-3.28 1.1-.02 2.17.74 2.86.74.69 0 1.98-.92 3.34-.78.57.02 2.16.23 3.18 1.72-2.58 1.61-2.16 5.57.47 6.63z"/></svg>Continue with Apple</button>
-  <div class="at">Terms and Privacy Policy</div>
-</div></section>
+    <script>
+        const themeToggle = document.querySelector('.theme-toggle');
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('light');
+            themeToggle.textContent = document.body.classList.contains('light') ? '🌙' : '☀️';
+        });
 
-<script>
-document.querySelectorAll('.tgl').forEach(t=>t.addEventListener('click',()=>t.classList.toggle('on')));
-</script>
+        const bookSpines = document.querySelectorAll('.book-spine');
+        const poemText = document.querySelector('.poem-text');
+        const poemAuthor = document.querySelector('.poem-author');
+
+        const poems = [
+            { line1: 'أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ', line2: 'فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي', author: 'أحمد شوقي' },
+            { line1: 'على قَدْرِ أهْلِ العَزْم تأتي العَزائِمُ', line2: 'وَتأتي علَى قَدْرِ الكِرامِ المَكارمُ', author: 'المتنبي' },
+            { line1: 'أعطني الناي وغنِّ', line2: 'فالغنا سرُّ الخلود', author: 'جبران خليل جبران' },
+            { line1: 'قارئة الفنجان جاءت', line2: 'تحمل الأحزان في عينيها', author: 'نزار قباني' },
+            { line1: 'على هذا الأرض ما يستحق الحياة', line2: 'تردد إبريل', author: 'محمود درويش' },
+            { line1: 'يا نديمَيَّ اِلى مَتى الإِنتِظارُ', line2: 'ما لِذي الكَأسِ لا يَدورُ يُدارُ', author: 'أبو نواس' },
+            { line1: 'ولدتُ بلا وطنٍ ولا مكان', line2: 'بلا اسمٍ بلا عنوان', author: 'أحمد مطر' },
+            { line1: 'هذه الدنيا مقامات', line2: 'وكلُّ الناس عمّار', author: 'الجواهري' }
+        ];
+
+        bookSpines.forEach((spine, index) => {
+            const handleClick = () => {
+                const poem = poems[index % poems.length];
+                poemText.textContent = '';
+                poemText.appendChild(document.createTextNode(poem.line1));
+                poemText.appendChild(document.createElement('br'));
+                poemText.appendChild(document.createTextNode(poem.line2));
+                poemAuthor.textContent = `— ${poem.author}`;
+
+                const poemDisplay = document.querySelector('.poem-display');
+                poemDisplay.style.transform = 'scale(0.95)';
+                setTimeout(() => {
+                    poemDisplay.style.transform = 'scale(1)';
+                }, 200);
+            };
+
+            spine.addEventListener('click', handleClick);
+            spine.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    handleClick();
+                }
+            });
+        });
+    </script>
 </body>
 </html>

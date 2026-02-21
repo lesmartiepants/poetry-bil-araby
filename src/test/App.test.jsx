@@ -149,9 +149,9 @@ describe('DiwanApp', () => {
       render(<DiwanApp />)
 
       // Option K design removed left/right navigation
-      // Verify primary buttons exist: Listen, Dive In, Discover, Poets
+      // Verify primary buttons exist: Listen, Learn, Discover, Poets
       expect(screen.getByLabelText(/play recitation|pause recitation/i)).toBeInTheDocument()
-      expect(screen.getByLabelText('Dive into poem meaning')).toBeInTheDocument()
+      expect(screen.getByLabelText('Learn about poem meaning')).toBeInTheDocument()
       expect(screen.getByLabelText('Discover new poem')).toBeInTheDocument()
       expect(screen.getByLabelText('Select poet category')).toBeInTheDocument()
     })

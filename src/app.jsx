@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Play, Pause, BookOpen, RefreshCw, Volume2, ChevronDown, Quote, Globe, Moon, Sun, Loader2, ChevronRight, ChevronLeft, Search, X, Copy, LayoutGrid, Check, Bug, Trash2, Sparkles, PenTool, Library, Compass, Rabbit, MoreHorizontal } from 'lucide-react';
+import { Play, Pause, BookOpen, RefreshCw, Volume2, ChevronDown, Quote, Globe, Moon, Sun, Loader2, ChevronRight, ChevronLeft, Search, X, Copy, LayoutGrid, Check, Bug, Trash2, Sparkles, PenTool, Library, Compass, Rabbit, MoreHorizontal, Heart, LogIn, LogOut, User } from 'lucide-react';
+import { useAuth, useUserSettings, useSavedPoems } from './hooks/useAuth';
 
 /* =============================================================================
   1. FEATURE FLAGS & DESIGN SYSTEM
@@ -9,6 +10,7 @@ import { Play, Pause, BookOpen, RefreshCw, Volume2, ChevronDown, Quote, Globe, M
 const FEATURES = {
   grounding: false,
   debug: true,
+  logging: true,      // Emit structured logs to console (captured by Vercel/browser)
   caching: true,      // Enable IndexedDB caching for audio/insights
   streaming: true,    // Enable streaming insights (progressive rendering)
   prefetching: true,  // Enable smart prefetching (rate-limited to avoid API issues)
@@ -946,6 +948,183 @@ const OverflowMenu = ({
 };
 
 /* =============================================================================
+  AUTH COMPONENTS
+  =============================================================================
+*/
+
+const AuthModal = ({ isOpen, onClose, onSignInWithGoogle, onSignInWithApple, theme }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className={`relative w-full max-w-md ${theme.glass} ${theme.border} border ${DESIGN.radius} p-8 shadow-2xl`}>
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/10 transition-colors"
+          aria-label="Close"
+        >
+          <X size={20} className={theme.text} />
+        </button>
+
+        <div className="text-center mb-8">
+          <h2 className={`font-amiri text-3xl ${theme.titleColor} mb-2`}>مرحباً</h2>
+          <p className={`font-brand-en text-sm ${theme.text} opacity-60`}>Sign in to save poems and preferences</p>
+        </div>
+
+        <div className="space-y-3">
+          <button
+            onClick={onSignInWithGoogle}
+            className={`w-full py-3 px-4 ${theme.brandBg} ${theme.brandBorder} border ${DESIGN.radius} ${theme.brand} font-brand-en text-sm font-medium hover:bg-opacity-80 transition-all flex items-center justify-center gap-3`}
+          >
+            <svg className="w-5 h-5" viewBox="0 0 24 24">
+              <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+              <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+            Continue with Google
+          </button>
+
+          <button
+            onClick={onSignInWithApple}
+            className={`w-full py-3 px-4 ${theme.brandBg} ${theme.brandBorder} border ${DESIGN.radius} ${theme.brand} font-brand-en text-sm font-medium hover:bg-opacity-80 transition-all flex items-center justify-center gap-3`}
+          >
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
+            </svg>
+            Continue with Apple
+          </button>
+        </div>
+
+        <p className={`mt-6 text-center text-xs ${theme.text} opacity-40 font-brand-en`}>
+          By signing in, you agree to our Terms of Service and Privacy Policy
+        </p>
+      </div>
+    </div>
+  );
+};
+
+const AuthButton = ({ user, onSignIn, onSignOut, theme }) => {
+  const [showMenu, setShowMenu] = useState(false);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    const clickOut = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setShowMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', clickOut);
+    return () => document.removeEventListener('mousedown', clickOut);
+  }, []);
+
+  if (!user) {
+    return (
+      <div className="flex flex-col items-center gap-1 min-w-[56px]">
+        <button
+          onClick={onSignIn}
+          className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105"
+          aria-label="Sign In"
+        >
+          <LogIn size={21} className="text-[#C5A059]" />
+        </button>
+        <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">
+          Sign In
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative flex flex-col items-center gap-1 min-w-[56px]" ref={menuRef}>
+      <button
+        onClick={() => setShowMenu(!showMenu)}
+        className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105"
+        aria-label="User Menu"
+      >
+        {user.user_metadata?.avatar_url ? (
+          <img 
+            src={user.user_metadata.avatar_url} 
+            alt="User avatar" 
+            className="w-[21px] h-[21px] rounded-full object-cover"
+          />
+        ) : (
+          <User size={21} className="text-[#C5A059]" />
+        )}
+      </button>
+      <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">
+        Account
+      </span>
+
+      {showMenu && (
+        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3 min-w-[200px] bg-[rgba(20,18,16,0.98)] backdrop-blur-[48px] border border-[rgba(197,160,89,0.15)] rounded-3xl p-3 shadow-[0_-10px_40px_rgba(0,0,0,0.7)] z-50">
+          <div className="px-4 py-3 border-b border-[rgba(197,160,89,0.08)]">
+            <p className="font-brand-en text-xs text-[#C5A059] font-medium truncate">
+              {user.email || user.user_metadata?.full_name || 'User'}
+            </p>
+          </div>
+          <button
+            onClick={() => {
+              onSignOut();
+              setShowMenu(false);
+            }}
+            className="w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex items-center gap-3 hover:bg-[rgba(197,160,89,0.08)]"
+          >
+            <LogOut size={18} className="text-[#C5A059]" />
+            <div className="flex flex-col items-start">
+              <div className="font-amiri text-base text-[#C5A059] font-medium">تسجيل الخروج</div>
+              <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Sign Out</div>
+            </div>
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const SavePoemButton = ({ poem, isSaved, onSave, onUnsave, disabled }) => {
+  const [showTooltip, setShowTooltip] = useState(false);
+
+  const handleClick = () => {
+    if (disabled) {
+      setShowTooltip(true);
+      setTimeout(() => setShowTooltip(false), 2000);
+      return;
+    }
+
+    if (isSaved) {
+      onUnsave();
+    } else {
+      onSave();
+    }
+  };
+
+  return (
+    <div className="relative flex flex-col items-center gap-1 min-w-[52px]">
+      <button
+        onClick={handleClick}
+        className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105"
+        aria-label={isSaved ? "Unsave poem" : "Save poem"}
+      >
+        <Heart
+          size={21}
+          className={`${isSaved ? 'fill-red-500 text-red-500' : 'text-[#C5A059]'} transition-all`}
+        />
+      </button>
+      <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">
+        {isSaved ? 'Saved' : 'Save'}
+      </span>
+
+      {showTooltip && disabled && (
+        <div className="absolute bottom-full mb-2 px-3 py-2 bg-stone-900 text-white text-xs rounded-lg whitespace-nowrap shadow-lg">
+          Sign in to save poems
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* =============================================================================
   6. MAIN APPLICATION
   =============================================================================
 */
@@ -984,6 +1163,12 @@ export default function DiwanApp() {
   const activeInsightRequests = useRef(new Set()); // Track in-flight insight generation requests
   const pollingIntervals = useRef([]); // Track all polling intervals for cleanup
 
+  // Auth state
+  const { user, loading: authLoading, signInWithGoogle, signInWithApple, signOut, isConfigured: isSupabaseConfigured } = useAuth();
+  const { settings, saveSettings } = useUserSettings(user);
+  const { savedPoems, savePoem, unsavePoem, isPoemSaved } = useSavedPoems(user);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+
   const theme = darkMode ? THEME.dark : THEME.light;
 
   const currentFontClass = useMemo(() => {
@@ -1012,7 +1197,12 @@ export default function DiwanApp() {
   const current = filtered[currentIndex] || filtered[0] || poems[0];
 
   const addLog = (label, msg, type = 'info') => {
-    setLogs(prev => [...prev, { label, msg: String(msg), type, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) }]);
+    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    setLogs(prev => [...prev, { label, msg: String(msg), type, time }]);
+    if (FEATURES.logging) {
+      const logFn = type === 'error' ? console.error : type === 'success' ? console.info : console.log;
+      logFn(`[${label}] ${msg}`);
+    }
   };
 
   useEffect(() => {
@@ -1037,6 +1227,32 @@ export default function DiwanApp() {
     window.addEventListener('resize', detectOverflow);
     return () => window.removeEventListener('resize', detectOverflow);
   }, []);
+
+  // Load user settings on mount
+  useEffect(() => {
+    if (user && settings) {
+      if (settings.theme) {
+        setDarkMode(settings.theme === 'dark');
+      }
+      if (settings.font_id) {
+        setCurrentFont(settings.font_id);
+      }
+    }
+  }, [user, settings]);
+
+  // Save settings when theme or font changes (with debounce)
+  useEffect(() => {
+    if (!user || !isSupabaseConfigured) return;
+
+    const timeoutId = setTimeout(() => {
+      saveSettings({
+        theme: darkMode ? 'dark' : 'light',
+        font_id: currentFont,
+      });
+    }, 1000); // Debounce by 1 second
+
+    return () => clearTimeout(timeoutId);
+  }, [darkMode, currentFont, user, isSupabaseConfigured]);
 
   const handleScroll = (e) => {
     setHeaderOpacity(Math.max(0, 1 - e.target.scrollTop / 30));
@@ -1700,6 +1916,64 @@ export default function DiwanApp() {
     }
   };
 
+  // Auth handlers
+  const handleSignIn = () => {
+    setShowAuthModal(true);
+  };
+
+  const handleSignInWithGoogle = async () => {
+    const { error } = await signInWithGoogle();
+    if (error) {
+      addLog("Auth Error", error.message, "error");
+    } else {
+      setShowAuthModal(false);
+      addLog("Auth", "Signed in with Google", "success");
+    }
+  };
+
+  const handleSignInWithApple = async () => {
+    const { error } = await signInWithApple();
+    if (error) {
+      addLog("Auth Error", error.message, "error");
+    } else {
+      setShowAuthModal(false);
+      addLog("Auth", "Signed in with Apple", "success");
+    }
+  };
+
+  const handleSignOut = async () => {
+    const { error } = await signOut();
+    if (error) {
+      addLog("Auth Error", error.message, "error");
+    } else {
+      addLog("Auth", "Signed out successfully", "success");
+    }
+  };
+
+  // Save/unsave poem handlers
+  const handleSavePoem = async () => {
+    if (!user) {
+      handleSignIn();
+      return;
+    }
+
+    const { error } = await savePoem(current);
+    if (error) {
+      addLog("Save Error", error.message, "error");
+    } else {
+      addLog("Save", `Saved poem: ${current?.poet} - ${current?.title}`, "success");
+    }
+  };
+
+  const handleUnsavePoem = async () => {
+    const { error } = await unsavePoem(current?.id, current?.arabic);
+    if (error) {
+      addLog("Unsave Error", error.message, "error");
+    } else {
+      addLog("Unsave", `Removed poem: ${current?.poet} - ${current?.title}`, "success");
+    }
+  };
+
   useEffect(() => {
     setInterpretation(null);
     audioRef.current.pause();
@@ -1971,32 +2245,42 @@ export default function DiwanApp() {
           <footer className="fixed bottom-0 left-0 right-0 py-2 pb-3 md:pb-2 px-4 flex flex-col items-center z-50 bg-gradient-to-t from-black/5 to-transparent safe-bottom">
             <div ref={controlBarRef} className={`flex items-center gap-2 px-5 py-2 rounded-full shadow-2xl border ${DESIGN.glass} ${theme.border} ${theme.shadow} ${DESIGN.anim} max-w-[calc(100vw-2rem)] w-fit`}>
 
-              <div className="flex flex-col items-center gap-1 min-w-[56px]">
+              <div className="flex flex-col items-center gap-1 min-w-[52px]">
                 <button onClick={togglePlay} disabled={isGeneratingAudio} aria-label={isPlaying ? "Pause recitation" : "Play recitation"} className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105">
                   {isGeneratingAudio ? <Loader2 className="animate-spin text-[#C5A059]" size={21} /> : isPlaying ? <Pause fill="#C5A059" size={21} /> : <Volume2 className="text-[#C5A059]" size={21} />}
                 </button>
                 <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">Listen</span>
               </div>
 
-              <div className="flex flex-col items-center gap-1 min-w-[56px]">
-                <button onClick={handleAnalyze} disabled={isInterpreting || interpretation} aria-label="Dive into poem meaning" className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105 disabled:opacity-50">
+              <div className="flex flex-col items-center gap-1 min-w-[52px]">
+                <button onClick={handleAnalyze} disabled={isInterpreting || interpretation} aria-label="Learn about poem meaning" className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105 disabled:opacity-50">
                   {isInterpreting ? <Loader2 className="animate-spin text-[#C5A059]" size={21} /> : <Compass className="text-[#C5A059]" size={21} />}
                 </button>
-                <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">Dive In</span>
+                <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">Learn</span>
               </div>
 
-              <div className="flex flex-col items-center gap-1 min-w-[56px]">
+              <div className="flex flex-col items-center gap-1 min-w-[52px]">
                 <button onClick={handleFetch} disabled={isFetching} aria-label="Discover new poem" className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105">
                   {isFetching ? <Loader2 className="animate-spin text-[#C5A059]" size={21} /> : <Rabbit className="text-[#C5A059] rabbit-bounce" size={21} />}
                 </button>
                 <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">Discover</span>
               </div>
 
-              <div className="w-px h-10 bg-stone-500/20 mx-2 flex-shrink-0" />
+              {isSupabaseConfigured && (
+                <SavePoemButton
+                  poem={current}
+                  isSaved={isPoemSaved(current)}
+                  onSave={handleSavePoem}
+                  onUnsave={handleUnsavePoem}
+                  disabled={!user}
+                />
+              )}
+
+              <div className="w-px h-10 bg-stone-500/20 mx-1 flex-shrink-0" />
 
               {!isOverflow ? (
                 <>
-                  <div className="flex flex-col items-center gap-1 min-w-[56px]">
+                  <div className="flex flex-col items-center gap-1 min-w-[52px]">
                     <button onClick={handleCopy} aria-label="Copy poem to clipboard" className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105">
                       {showCopySuccess ? <Check size={21} className="text-green-500" /> : <Copy size={21} className="text-[#C5A059]" />}
                     </button>
@@ -2017,6 +2301,15 @@ export default function DiwanApp() {
                   />
 
                   <CategoryPill selected={selectedCategory} onSelect={setSelectedCategory} darkMode={darkMode} />
+
+                  {isSupabaseConfigured && (
+                    <AuthButton
+                      user={user}
+                      onSignIn={handleSignIn}
+                      onSignOut={handleSignOut}
+                      theme={theme}
+                    />
+                  )}
                 </>
               ) : (
                 <OverflowMenu
@@ -2079,6 +2372,15 @@ export default function DiwanApp() {
           </div>
         </div>
       </div>
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onSignInWithGoogle={handleSignInWithGoogle}
+        onSignInWithApple={handleSignInWithApple}
+        theme={theme}
+      />
     </div>
   );
 }

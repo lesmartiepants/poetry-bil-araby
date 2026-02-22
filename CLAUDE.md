@@ -34,13 +34,15 @@ npm run test:e2e:debug   # Debug mode
 ### Single-File Component Design
 The entire application lives in `src/app.jsx` (~1500+ lines). This is intentional for simplicity but creates specific patterns you must understand:
 
-**Feature Flags** (app.jsx:9-15)
+**Feature Flags** (app.jsx:9-18)
 ```javascript
 const FEATURES = {
+  grounding: false,   // Experimental: Google Search grounding
+  debug: true,        // Debug panel visibility
+  logging: true,      // Emit structured logs to console (captured by Vercel/browser)
   caching: true,      // IndexedDB caching for AI insights
   streaming: true,    // Streaming AI responses
   prefetching: true,  // Aggressive prefetching
-  debug: true,        // Debug panel visibility
   database: true      // Enable database poem source (requires backend)
 };
 ```
@@ -73,6 +75,8 @@ The app supports two poem sources:
 // Frontend (VITE_ prefix)
 const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
 const geminiKey = import.meta.env.VITE_GEMINI_API_KEY || "";
+VITE_SUPABASE_URL      // Supabase project URL (optional, for auth features)
+VITE_SUPABASE_ANON_KEY // Supabase anonymous key (optional, for auth features)
 
 // Backend (server.js)
 DATABASE_URL       // Supabase/Render connection string (production)
@@ -82,6 +86,8 @@ PGDATABASE        // Database name (local, defaults to qafiyah)
 PGPASSWORD        // Database password (local, defaults to empty)
 PGPORT            // Database port (local, defaults to 5432)
 PORT              // API server port (defaults to 3001)
+LOG_ENABLED       // Enable HTTP request logging (defaults to true)
+LOG_DEBUG         // Enable verbose database debug logs (defaults to false)
 ```
 
 **Important:** Never commit API keys or database credentials.
@@ -111,11 +117,12 @@ PORT              // API server port (defaults to 3001)
 
 ## Key Files (Absolute Paths)
 
-**Core:** `src/app.jsx` (main app), `server.js` (API), `package.json` (scripts)
-**Tests:** `src/test/*.test.jsx`, `e2e/*.spec.js`
+**Core:** `src/app.jsx` (main app), `src/hooks/useAuth.js` (auth hooks), `src/supabaseClient.js` (Supabase config), `server.js` (API), `package.json` (scripts)
+**Tests:** `src/test/*.test.jsx`, `src/test/auth.test.jsx`, `e2e/*.spec.js`
 **Config:** `vite.config.js`, `vitest.config.js`, `playwright.config.js`, `tailwind.config.js`
+**Migrations:** `supabase/migrations/*.sql` (auth & user features, PostgREST schema grants)
 **Agents:** `.claude/agents/*.md` (9 agent definitions), `.cursor/rules/agents.mdc` (Cursor discovery)
-**Docs:** `README.md`, `DEPLOYMENT.md`, `.github/TESTING_STRATEGY.md`
+**Docs:** `README.md`, `DEPLOYMENT.md`, `docs/AUTHENTICATION_SETUP.md`, `.github/TESTING_STRATEGY.md`
 
 ## Common Gotchas
 
@@ -129,10 +136,11 @@ PORT              // API server port (defaults to 3001)
 2. **Arabic Typography**: Always test with actual Arabic text. The app uses specialized fonts (Amiri, Tajawal) that may render differently than Latin text.
 
 3. **Environment Variable Management**:
-   - Frontend: `VITE_GEMINI_API_KEY` (AI mode), `VITE_API_URL` (database mode)
-   - Backend: `DATABASE_URL` (production) or individual PG* vars (local)
+   - Frontend: `VITE_GEMINI_API_KEY` (AI mode), `VITE_API_URL` (database mode), `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` (auth, optional)
+   - Backend: `DATABASE_URL` (production) or individual PG* vars (local), `LOG_ENABLED` and `LOG_DEBUG` (logging control)
    - Development: Set in `.env.local` (gitignored)
    - Production: Set in Vercel (frontend) and Render (backend)
+   - **Important**: Supabase anon keys must be in JWT format (long strings starting with `eyJ`)
 
 4. **Test Environment Differences**: CI runs with much more aggressive timeouts. If tests pass locally but fail in CI, check timeout values in config files.
 
@@ -141,13 +149,25 @@ PORT              // API server port (defaults to 3001)
 6. **Theme State**: Theme is stored in component state only (not localStorage). Refreshing the page resets to dark mode. This is intentional for simplicity.
 
 7. **Database Mode Requirements**: To use database mode locally:
-   - Install PostgreSQL 15+
+   - Install PostgreSQL 15+ (17 required for Supabase auth features due to `gen_random_uuid()` requirement)
    - Create `qafiyah` database
    - Start backend: `npm run dev:server`
    - Start frontend: `npm run dev`
    - Or use `npm run dev:all` to run both concurrently
 
-8. **Backend Keep-Alive**: Backend uses self-ping mechanism (pings itself every 9-13 minutes with randomized intervals in production) to prevent Render free tier cold starts (15 min timeout). Frontend also provides backup pings when users have the app open.
+8. **Authentication (Optional)**: Supabase auth features are optional:
+   - App works fully without authentication
+   - When configured, enables saved poems and persistent settings
+   - Requires running migrations: `supabase db push`
+   - PostgREST schema grants migration required for Supabase Data API access
+
+9. **Structured Logging**: Three-layer logging system:
+   - **Frontend**: `FEATURES.logging` flag (app.jsx) emits logs to console
+   - **Backend**: `LOG_ENABLED` (HTTP requests) and `LOG_DEBUG` (verbose DB queries) env vars
+   - **Auth Hooks**: Structured logger in `useAuth.js` for auth/settings/saved poems operations
+   - All logs formatted as `[Context:Label] message data` for easy filtering
+
+10. **Backend Keep-Alive**: Backend uses self-ping mechanism (pings itself every 9-13 minutes with randomized intervals in production) to prevent Render free tier cold starts (15 min timeout). Frontend also provides backup pings when users have the app open.
 
 ## Git Workflow
 

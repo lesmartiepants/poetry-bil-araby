@@ -59,6 +59,7 @@ discussion_likes (
 **AuthButton Component:**
 - Desktop: User avatar with dropdown menu
 - Shows email/name when signed in
+- Access to My Poems and Settings views
 - Sign out functionality
 - "Sign In" button when not authenticated
 
@@ -67,6 +68,22 @@ discussion_likes (
 - Visual feedback on hover/click
 - Tooltip for unauthenticated users
 - Real-time saved state synchronization
+
+**SavedPoemsView Component:**
+- Full-screen overlay showing all saved poems
+- Browse saved poems with poet name, title, and preview
+- Click poem to read full text
+- Unsave poems with heart button
+- Empty state with helpful prompt
+- Accessible from AuthButton dropdown and mobile OverflowMenu
+
+**SettingsView Component:**
+- Full-screen overlay for user preferences
+- Theme toggle with visual cards (dark/light)
+- Font picker with 8 fonts and live preview
+- Instant updates to app appearance
+- Shows user email at bottom
+- Accessible from AuthButton dropdown and mobile OverflowMenu
 
 ### 4. Features Implemented ✅
 
@@ -82,6 +99,8 @@ discussion_likes (
 - ✅ Font preference auto-saved
 - ✅ Settings loaded on app start
 - ✅ 1-second debounce to prevent excessive saves
+- ✅ Settings view with theme toggle and font picker
+- ✅ Live preview of appearance changes
 
 **Saved Poems:**
 - ✅ Heart button to save poems
@@ -89,6 +108,9 @@ discussion_likes (
 - ✅ Works with both database and AI-generated poems
 - ✅ Instant save/unsave
 - ✅ Collection stored in Supabase
+- ✅ Saved Poems view to browse collection
+- ✅ Click to read saved poems
+- ✅ Unsave from collection view
 
 **Future-Ready Features:**
 - ✅ Voice preference field (ready for implementation)
@@ -223,12 +245,13 @@ VITE_API_URL=http://localhost:3001
 
 ## What's NOT Included (Future Work)
 
-1. **My Collection View**: Saved poems display page
-2. **Discussion UI**: Comment system on poems
-3. **Voice Selection**: UI for choosing recitation voice
-4. **Transliteration Toggle**: Show/hide transliteration
-5. **Most Discussed**: View popular discussions
-6. **Social Features**: Like, share, follow
+1. **Discussion UI**: Comment system on poems
+2. **Voice Selection**: UI for choosing recitation voice
+3. **Transliteration Toggle**: Show/hide transliteration
+4. **Most Discussed**: View popular discussions
+5. **Social Features**: Like, share, follow
+6. **Search Saved Poems**: Filter and search within saved collection
+7. **Sort Saved Poems**: Sort by date, poet, or title
 
 These features have database schemas ready but require UI implementation.
 

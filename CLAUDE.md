@@ -32,7 +32,7 @@ npm run test:e2e:debug   # Debug mode
 ## Architecture
 
 ### Single-File Component Design
-The entire application lives in `src/app.jsx` (~1500+ lines). This is intentional for simplicity but creates specific patterns you must understand:
+The entire application lives in `src/app.jsx` (~2700+ lines). This is intentional for simplicity but creates specific patterns you must understand:
 
 **Feature Flags** (app.jsx:9-18)
 ```javascript

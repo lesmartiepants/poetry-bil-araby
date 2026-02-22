@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Play, Pause, BookOpen, RefreshCw, Volume2, ChevronDown, Quote, Globe, Moon, Sun, Loader2, ChevronRight, ChevronLeft, Search, X, Copy, LayoutGrid, Check, Bug, Trash2, Sparkles, PenTool, Library, Compass, Rabbit, MoreHorizontal, Heart, LogIn, LogOut, User } from 'lucide-react';
+import { Play, Pause, BookOpen, RefreshCw, Volume2, ChevronDown, Quote, Globe, Moon, Sun, Loader2, ChevronRight, ChevronLeft, Search, X, Copy, LayoutGrid, Check, Bug, Trash2, Sparkles, PenTool, Library, Compass, Rabbit, MoreHorizontal, Heart, LogIn, LogOut, User, Settings2 } from 'lucide-react';
 import { useAuth, useUserSettings, useSavedPoems } from './hooks/useAuth';
 
 /* =============================================================================
@@ -830,7 +830,10 @@ const OverflowMenu = ({
   onCopy,
   showCopySuccess,
   useDatabase,
-  onToggleDatabase
+  onToggleDatabase,
+  user,
+  onOpenSavedPoems,
+  onOpenSettings
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -923,6 +926,31 @@ const OverflowMenu = ({
             </div>
           </button>
 
+          {user && (
+            <>
+              <button
+                onClick={() => { onOpenSavedPoems(); setIsOpen(false); }}
+                className="w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex items-center gap-3 border-b border-[rgba(197,160,89,0.08)] hover:bg-[rgba(197,160,89,0.08)]"
+              >
+                <BookOpen size={18} className="text-[#C5A059]" />
+                <div className="flex flex-col items-start">
+                  <div className="font-amiri text-base text-[#C5A059] font-medium">قصائدي</div>
+                  <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">My Poems</div>
+                </div>
+              </button>
+              <button
+                onClick={() => { onOpenSettings(); setIsOpen(false); }}
+                className="w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex items-center gap-3 border-b border-[rgba(197,160,89,0.08)] hover:bg-[rgba(197,160,89,0.08)]"
+              >
+                <Settings2 size={18} className="text-[#C5A059]" />
+                <div className="flex flex-col items-start">
+                  <div className="font-amiri text-base text-[#C5A059] font-medium">الإعدادات</div>
+                  <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Settings</div>
+                </div>
+              </button>
+            </>
+          )}
+
           <div className="border-b border-[rgba(197,160,89,0.08)] last:border-b-0">
             <div className="px-5 py-2">
               <div className="font-brand-en text-[8px] uppercase tracking-[0.12em] opacity-30 text-[#a8a29e]">Poets</div>
@@ -1004,7 +1032,7 @@ const AuthModal = ({ isOpen, onClose, onSignInWithGoogle, onSignInWithApple, the
   );
 };
 
-const AuthButton = ({ user, onSignIn, onSignOut, theme }) => {
+const AuthButton = ({ user, onSignIn, onSignOut, onOpenSavedPoems, onOpenSettings, theme }) => {
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef(null);
 
@@ -1063,6 +1091,32 @@ const AuthButton = ({ user, onSignIn, onSignOut, theme }) => {
               {user.email || user.user_metadata?.full_name || 'User'}
             </p>
           </div>
+          <button
+            onClick={() => {
+              onOpenSavedPoems();
+              setShowMenu(false);
+            }}
+            className="w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex items-center gap-3 border-b border-[rgba(197,160,89,0.08)] hover:bg-[rgba(197,160,89,0.08)]"
+          >
+            <BookOpen size={18} className="text-[#C5A059]" />
+            <div className="flex flex-col items-start">
+              <div className="font-amiri text-base text-[#C5A059] font-medium">قصائدي</div>
+              <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">My Poems</div>
+            </div>
+          </button>
+          <button
+            onClick={() => {
+              onOpenSettings();
+              setShowMenu(false);
+            }}
+            className="w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex items-center gap-3 border-b border-[rgba(197,160,89,0.08)] hover:bg-[rgba(197,160,89,0.08)]"
+          >
+            <Settings2 size={18} className="text-[#C5A059]" />
+            <div className="flex flex-col items-start">
+              <div className="font-amiri text-base text-[#C5A059] font-medium">الإعدادات</div>
+              <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Settings</div>
+            </div>
+          </button>
           <button
             onClick={() => {
               onSignOut();
@@ -1124,6 +1178,202 @@ const SavePoemButton = ({ poem, isSaved, onSave, onUnsave, disabled }) => {
   );
 };
 
+const SavedPoemsView = ({ isOpen, onClose, savedPoems, onSelectPoem, onUnsavePoem, theme, currentFontClass }) => {
+  if (!isOpen) return null;
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '';
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'Just now';
+    if (mins < 60) return `${mins}m ago`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    if (days < 30) return `${days}d ago`;
+    return new Date(dateStr).toLocaleDateString();
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
+    >
+      <div className={`relative w-full max-w-2xl max-h-[85vh] flex flex-col ${theme.glass} ${theme.border} border ${DESIGN.radius} shadow-2xl`}>
+        <div className="flex items-center justify-between p-6 pb-4 border-b border-stone-500/10 flex-shrink-0">
+          <div>
+            <h2 className={`font-amiri text-2xl ${theme.titleColor}`}>قصائدي المحفوظة</h2>
+            <p className={`font-brand-en text-xs ${theme.text} opacity-50 mt-1`}>My Saved Poems ({savedPoems.length})</p>
+          </div>
+          <button
+            onClick={onClose}
+            className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full hover:bg-white/10 transition-colors"
+            aria-label="Close"
+          >
+            <X size={20} className={theme.text} />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
+          {savedPoems.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 gap-4">
+              <Heart size={48} className={`${theme.text} opacity-20`} />
+              <div className="text-center">
+                <p className={`font-amiri text-xl ${theme.text} opacity-40`}>لا توجد قصائد محفوظة</p>
+                <p className={`font-brand-en text-sm ${theme.text} opacity-30 mt-1`}>No saved poems yet</p>
+                <p className={`font-brand-en text-xs ${theme.text} opacity-20 mt-3`}>Tap the heart icon on any poem to save it</p>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {savedPoems.map((sp) => (
+                <div
+                  key={sp.id}
+                  className={`group ${theme.glass} ${theme.border} border ${DESIGN.radius} p-4 transition-all hover:border-[#C5A059]/30`}
+                >
+                  <button
+                    onClick={() => onSelectPoem(sp)}
+                    className="w-full text-left cursor-pointer bg-transparent border-none p-0"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <p className={`font-amiri text-sm ${theme.titleColor} font-medium`}>{sp.poet_name_ar || sp.poet_name || 'Unknown'}</p>
+                        <p className={`font-brand-en text-xs ${theme.text} opacity-50 mt-0.5`}>{sp.poem_title || sp.poem_title_ar || ''}</p>
+                        <p className={`${currentFontClass} text-sm ${theme.text} opacity-70 mt-2 line-clamp-2`} dir="rtl">
+                          {(sp.poem_text || '').slice(0, 80)}{(sp.poem_text || '').length > 80 ? '...' : ''}
+                        </p>
+                      </div>
+                    </div>
+                    {sp.saved_at && (
+                      <p className={`font-brand-en text-[10px] ${theme.text} opacity-30 mt-2`}>{formatDate(sp.saved_at)}</p>
+                    )}
+                  </button>
+                  <div className="flex justify-end mt-2">
+                    <button
+                      onClick={() => onUnsavePoem(sp)}
+                      className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full hover:bg-red-500/10 transition-colors"
+                      aria-label="Remove from saved"
+                    >
+                      <Heart size={16} className="fill-red-500 text-red-500" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const SettingsView = ({ isOpen, onClose, darkMode, onToggleDarkMode, currentFont, onSelectFont, user, theme }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
+    >
+      <div className={`relative w-full max-w-lg max-h-[85vh] flex flex-col ${theme.glass} ${theme.border} border ${DESIGN.radius} shadow-2xl`}>
+        <div className="flex items-center justify-between p-6 pb-4 border-b border-stone-500/10 flex-shrink-0">
+          <div>
+            <h2 className={`font-amiri text-2xl ${theme.titleColor}`}>الإعدادات</h2>
+            <p className={`font-brand-en text-xs ${theme.text} opacity-50 mt-1`}>Preferences</p>
+          </div>
+          <button
+            onClick={onClose}
+            className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full hover:bg-white/10 transition-colors"
+            aria-label="Close"
+          >
+            <X size={20} className={theme.text} />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-6 custom-scrollbar space-y-8">
+          {/* Theme Section */}
+          <div>
+            <div className="mb-3">
+              <h3 className={`font-amiri text-lg ${theme.titleColor}`}>المظهر</h3>
+              <p className={`font-brand-en text-[10px] uppercase tracking-[0.12em] ${theme.text} opacity-40`}>Appearance</p>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => { if (!darkMode) onToggleDarkMode(); }}
+                className={`p-4 ${DESIGN.radius} border-2 transition-all flex flex-col items-center gap-2 cursor-pointer ${
+                  darkMode
+                    ? 'border-[#C5A059] bg-[#C5A059]/10'
+                    : `${theme.border} bg-transparent hover:border-[#C5A059]/30`
+                }`}
+              >
+                <Moon size={24} className={darkMode ? 'text-[#C5A059]' : `${theme.text} opacity-50`} />
+                <div className="text-center">
+                  <p className={`font-amiri text-sm ${darkMode ? 'text-[#C5A059]' : theme.text}`}>ليلي</p>
+                  <p className={`font-brand-en text-[9px] uppercase tracking-[0.1em] ${theme.text} opacity-40`}>Dark</p>
+                </div>
+              </button>
+              <button
+                onClick={() => { if (darkMode) onToggleDarkMode(); }}
+                className={`p-4 ${DESIGN.radius} border-2 transition-all flex flex-col items-center gap-2 cursor-pointer ${
+                  !darkMode
+                    ? 'border-[#C5A059] bg-[#C5A059]/10'
+                    : `${theme.border} bg-transparent hover:border-[#C5A059]/30`
+                }`}
+              >
+                <Sun size={24} className={!darkMode ? 'text-[#C5A059]' : `${theme.text} opacity-50`} />
+                <div className="text-center">
+                  <p className={`font-amiri text-sm ${!darkMode ? 'text-[#C5A059]' : theme.text}`}>نهاري</p>
+                  <p className={`font-brand-en text-[9px] uppercase tracking-[0.1em] ${theme.text} opacity-40`}>Light</p>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          {/* Font Section */}
+          <div>
+            <div className="mb-3">
+              <h3 className={`font-amiri text-lg ${theme.titleColor}`}>الخط</h3>
+              <p className={`font-brand-en text-[10px] uppercase tracking-[0.12em] ${theme.text} opacity-40`}>Typography</p>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {FONTS.map((font) => (
+                <button
+                  key={font.id}
+                  onClick={() => onSelectFont(font.id)}
+                  className={`p-3 ${DESIGN.radius} border-2 transition-all flex flex-col items-center gap-1.5 cursor-pointer ${
+                    currentFont === font.id
+                      ? 'border-[#C5A059] bg-[#C5A059]/10'
+                      : `${theme.border} bg-transparent hover:border-[#C5A059]/30`
+                  }`}
+                >
+                  <p className={`${font.family} text-lg ${currentFont === font.id ? 'text-[#C5A059]' : theme.text}`} dir="rtl">
+                    بسم الله
+                  </p>
+                  <div className="text-center">
+                    <p className={`font-amiri text-xs ${theme.text} opacity-60`}>{font.labelAr}</p>
+                    <p className={`font-brand-en text-[8px] uppercase tracking-[0.1em] ${theme.text} opacity-30`}>{font.label}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* User Info */}
+          {user && (
+            <div className={`pt-4 border-t border-stone-500/10`}>
+              <p className={`font-brand-en text-xs ${theme.text} opacity-30 text-center`}>
+                Signed in as {user.email || user.user_metadata?.full_name || 'User'}
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 /* =============================================================================
   6. MAIN APPLICATION
   =============================================================================
@@ -1168,6 +1418,8 @@ export default function DiwanApp() {
   const { settings, saveSettings } = useUserSettings(user);
   const { savedPoems, savePoem, unsavePoem, isPoemSaved } = useSavedPoems(user);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showSavedPoems, setShowSavedPoems] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   const theme = darkMode ? THEME.dark : THEME.light;
 
@@ -1974,6 +2226,58 @@ export default function DiwanApp() {
     }
   };
 
+  const handleOpenSavedPoems = () => {
+    if (!user) {
+      handleSignIn();
+      return;
+    }
+    setShowSavedPoems(true);
+  };
+
+  const handleSelectSavedPoem = (savedPoem) => {
+    const mappedPoem = {
+      id: savedPoem.poem_id || savedPoem.id,
+      poet: savedPoem.poet_name || '',
+      poetArabic: savedPoem.poet_name_ar || '',
+      title: savedPoem.poem_title || '',
+      titleArabic: savedPoem.poem_title_ar || '',
+      arabic: savedPoem.poem_text || '',
+      english: savedPoem.poem_translation || '',
+      tags: savedPoem.tags || [],
+    };
+    setPoems(prev => {
+      const exists = prev.find(p => p.arabic === mappedPoem.arabic);
+      if (exists) {
+        setCurrentIndex(prev.indexOf(exists));
+        return prev;
+      }
+      setCurrentIndex(prev.length);
+      return [...prev, mappedPoem];
+    });
+    setShowSavedPoems(false);
+  };
+
+  const handleOpenSettings = () => {
+    if (!user) {
+      handleSignIn();
+      return;
+    }
+    setShowSettings(true);
+  };
+
+  const handleSelectFont = (fontId) => {
+    setCurrentFont(fontId);
+  };
+
+  const handleUnsavePoemFromList = async (sp) => {
+    const { error } = await unsavePoem(sp.poem_id || sp.id, sp.poem_text);
+    if (error) {
+      addLog("Unsave Error", error.message, "error");
+    } else {
+      addLog("Unsave", `Removed poem from saved list`, "success");
+    }
+  };
+
   useEffect(() => {
     setInterpretation(null);
     audioRef.current.pause();
@@ -2307,6 +2611,8 @@ export default function DiwanApp() {
                       user={user}
                       onSignIn={handleSignIn}
                       onSignOut={handleSignOut}
+                      onOpenSavedPoems={handleOpenSavedPoems}
+                      onOpenSettings={handleOpenSettings}
                       theme={theme}
                     />
                   )}
@@ -2323,6 +2629,9 @@ export default function DiwanApp() {
                   showCopySuccess={showCopySuccess}
                   useDatabase={useDatabase}
                   onToggleDatabase={() => setUseDatabase(!useDatabase)}
+                  user={user}
+                  onOpenSavedPoems={handleOpenSavedPoems}
+                  onOpenSettings={handleOpenSettings}
                 />
               )}
             </div>
@@ -2379,6 +2688,29 @@ export default function DiwanApp() {
         onClose={() => setShowAuthModal(false)}
         onSignInWithGoogle={handleSignInWithGoogle}
         onSignInWithApple={handleSignInWithApple}
+        theme={theme}
+      />
+
+      {/* Saved Poems View */}
+      <SavedPoemsView
+        isOpen={showSavedPoems}
+        onClose={() => setShowSavedPoems(false)}
+        savedPoems={savedPoems}
+        onSelectPoem={handleSelectSavedPoem}
+        onUnsavePoem={handleUnsavePoemFromList}
+        theme={theme}
+        currentFontClass={currentFontClass}
+      />
+
+      {/* Settings View */}
+      <SettingsView
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+        darkMode={darkMode}
+        onToggleDarkMode={() => setDarkMode(!darkMode)}
+        currentFont={currentFont}
+        onSelectFont={handleSelectFont}
+        user={user}
         theme={theme}
       />
     </div>

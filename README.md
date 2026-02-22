@@ -127,7 +127,9 @@ npm install
 When Supabase is configured, the app provides:
 - **Sign In**: Click the "Sign In" button to authenticate with Google or Apple
 - **Save Poems**: Click the heart ❤️ button to save poems to your personal collection
-- **Persistent Settings**: Your theme and font preferences are automatically saved
+- **My Poems**: View and browse all your saved poems from the account menu
+- **Settings**: Customize theme and font preferences with live preview
+- **Persistent Settings**: Your preferences are automatically saved across sessions
 - **User Profile**: Access your account menu to view settings and sign out
 
 **Note**: Authentication features only appear when Supabase environment variables are configured. The app works fully without authentication.
@@ -292,7 +294,9 @@ npm run test:e2e:full       # Full device matrix (local)
 ## TODO
 
 ### Features
-- [ ] Add poem favorites and bookmarks
+- [x] Add poem favorites and bookmarks
+- [x] Saved Poems view to browse collection
+- [x] Settings view for theme and font preferences
 - [ ] Implement search functionality
 - [ ] Add social media sharing
 - [ ] Create poem collections and playlists

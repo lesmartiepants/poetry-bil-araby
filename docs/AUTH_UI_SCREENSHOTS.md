@@ -147,7 +147,7 @@ Mobile views now show:
 **Note:** The overflow menu shows bilingual labels (Arabic + English) for all options.
 
 **Additional Controls Not Shown in Screenshot:**
-The Save and Sign In buttons also appear in this overflow menu when scrolled (menu is scrollable with `max-h-[80vh]`).
+When authenticated, the My Poems and Settings buttons also appear in this overflow menu before the poet list (menu is scrollable with `max-h-[80vh]`).
 
 ---
 
@@ -290,7 +290,17 @@ The Save and Sign In buttons also appear in this overflow menu when scrolled (me
 
 **Contents:**
 - **User Email:** Display user's email address
-- **Sign Out Button:** 
+- **My Poems Button:**
+  - Arabic: قصائدي
+  - English: My Poems
+  - Icon: BookOpen
+  - Opens SavedPoemsView overlay
+- **Settings Button:**
+  - Arabic: الإعدادات
+  - English: Settings
+  - Icon: Settings2
+  - Opens SettingsView overlay
+- **Sign Out Button:**
   - Arabic: تسجيل الخروج
   - English: Sign Out
   - Icon: Logout icon
@@ -355,12 +365,103 @@ VITE_SUPABASE_ANON_KEY=eyJhbGc...
 
 ---
 
+## New Overlay Views
+
+### 8. Saved Poems View
+
+**Key UI Elements:**
+- **Header:**
+  - Title: "قصائدي المحفوظة" (My Saved Poems in Arabic)
+  - Subtitle: "My Saved Poems (count)" in English
+  - Close button (X) in top-right corner
+- **Poem List:**
+  - Each saved poem card shows:
+    - Poet name (Arabic)
+    - Poem title (English subtitle)
+    - First 80 characters of poem text
+    - Time saved (relative time: "5m ago", "2h ago", etc.)
+    - Unsave button (filled red heart icon)
+  - Cards are clickable to read full poem
+  - Scrollable list with custom scrollbar
+- **Empty State:**
+  - Heart icon (faded)
+  - "لا توجد قصائد محفوظة" (No saved poems in Arabic)
+  - "No saved poems yet" (English subtitle)
+  - "Tap the heart icon on any poem to save it" (helper text)
+
+**Trigger:**
+- Click "My Poems" in AuthButton dropdown (desktop)
+- Click "My Poems" in OverflowMenu (mobile)
+
+**Functionality:**
+- Browse all saved poems
+- Click poem card to view full poem in main view
+- Click heart to unsave poem from collection
+- Click outside or press Escape to close
+- Requires authentication
+
+**Design Pattern:**
+- Follows AuthModal pattern
+- Glassmorphic card with backdrop blur
+- Full-screen overlay (z-50)
+- Click-outside to dismiss
+- Escape key to close
+
+---
+
+### 9. Settings View
+
+**Key UI Elements:**
+- **Header:**
+  - Title: "الإعدادات" (Settings in Arabic)
+  - Subtitle: "Preferences" in English
+  - Close button (X) in top-right corner
+- **Theme Section:**
+  - Section title: "المظهر" (Appearance in Arabic)
+  - Two cards:
+    - Dark mode card with Moon icon
+    - Light mode card with Sun icon
+  - Selected card has gold border and background highlight
+- **Font Section:**
+  - Section title: "الخط" (Typography in Arabic)
+  - Grid of 8 font cards (2 columns on mobile, 4 on desktop):
+    - Each shows "بسم الله" in selected font
+    - Arabic label and English subtitle
+    - Selected font has gold border and background highlight
+  - Available fonts: Amiri, Alexandria, El Messiri, Lalezar, Rakkas, Fustat, Kufam, Katibeh
+- **User Info:**
+  - Shows user email at bottom
+  - Small text: "Signed in as [email]"
+
+**Trigger:**
+- Click "Settings" in AuthButton dropdown (desktop)
+- Click "Settings" in OverflowMenu (mobile)
+
+**Functionality:**
+- Toggle theme (dark/light) with visual cards
+- Select font with live preview
+- Changes apply instantly to app
+- Settings auto-saved to database (1-second debounce)
+- Click outside or press Escape to close
+- Requires authentication
+
+**Design Pattern:**
+- Follows AuthModal pattern
+- Glassmorphic card with backdrop blur
+- Full-screen overlay (z-50)
+- Click-outside to dismiss
+- Escape key to close
+
+---
+
 ## Technical Implementation Notes
 
 ### Components
 - **AuthModal:** Modal dialog with Google/Apple OAuth buttons
-- **AuthButton:** Sign In button or user avatar with dropdown
+- **AuthButton:** Sign In button or user avatar with dropdown (includes My Poems and Settings)
 - **SavePoemButton:** Heart button with tooltip and saved state
+- **SavedPoemsView:** Full-screen overlay for browsing saved poems collection
+- **SettingsView:** Full-screen overlay for theme and font preferences
 
 ### Hooks
 - **useAuth():** Manages authentication state and OAuth methods
@@ -424,5 +525,6 @@ The authentication UI is designed to be:
 - **Responsive:** Adapts to mobile with overflow menu
 - **Accessible:** Keyboard navigation and ARIA labels
 - **Secure:** OAuth via Supabase, RLS policies enforce data isolation
+- **Complete:** Includes full collection management and settings UI
 
-All auth-related UI elements follow the existing design system (colors, fonts, spacing) to maintain visual consistency.
+All auth-related UI elements follow the existing design system (colors, fonts, spacing) to maintain visual consistency. The new overlay views (SavedPoemsView and SettingsView) follow the established AuthModal pattern for a consistent user experience.

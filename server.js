@@ -28,7 +28,10 @@ const pool = new Pool(
         connectionString: process.env.DATABASE_URL,
         ssl: {
           rejectUnauthorized: false // Required for Supabase/Render
-        }
+        },
+        query_timeout: 5000, // 5 seconds
+        connectionTimeoutMillis: 5000,
+        idleTimeoutMillis: 30000
       }
     : {
         user: process.env.PGUSER || process.env.USER,
@@ -36,6 +39,9 @@ const pool = new Pool(
         database: process.env.PGDATABASE || 'qafiyah',
         password: process.env.PGPASSWORD || '',
         port: process.env.PGPORT || 5432,
+        query_timeout: 5000, // 5 seconds
+        connectionTimeoutMillis: 5000,
+        idleTimeoutMillis: 30000
       }
 );
 
@@ -258,17 +264,83 @@ export { app, pool };
 const currentFile = fileURLToPath(import.meta.url);
 const mainFile = resolve(process.argv[1]);
 if (currentFile === mainFile) {
-  app.listen(PORT, () => {
+  const server = app.listen(PORT, () => {
     log.info('Server', `Poetry API running on http://localhost:${PORT}`);
     log.info('Server', `Health: http://localhost:${PORT}/api/health | Poems: http://localhost:${PORT}/api/poems/random`);
     log.info('Server', `Logging: enabled=${LOG_ENABLED}, debug=${LOG_DEBUG}`);
   });
 
+  // Keep-alive mechanism to prevent Render free tier from sleeping (15 min idle timeout)
+  // Self-ping with randomized interval (9-13 min) to prevent synchronized load
+  let keepAliveTimeout = null;
+  
+  if (process.env.NODE_ENV === 'production') {
+    // Wait 30 seconds after startup before starting keep-alive pings
+    keepAliveTimeout = setTimeout(() => {
+      // Randomize interval between 9-13 minutes to prevent synchronized pings
+      const getRandomInterval = () => {
+        const min = 9 * 60 * 1000;  // 9 minutes
+        const max = 13 * 60 * 1000; // 13 minutes
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+      };
+      
+      const pingHealth = () => {
+        const url = process.env.RENDER_EXTERNAL_URL 
+          ? `${process.env.RENDER_EXTERNAL_URL}/api/health`
+          : `http://localhost:${PORT}/api/health`;
+        
+        fetch(url)
+          .then(res => {
+            if (!res.ok) {
+              throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+            }
+            return res.json();
+          })
+          .then(data => {
+            console.log(`✓ Keep-alive ping successful - ${data.totalPoems} poems in database`);
+            
+            // Schedule next ping with new random interval
+            keepAliveTimeout = setTimeout(() => {
+              pingHealth();
+            }, getRandomInterval());
+          })
+          .catch(err => {
+            console.error(`⚠ Keep-alive ping failed (${url}):`, err.message);
+            
+            // Retry with new random interval even on failure
+            keepAliveTimeout = setTimeout(() => {
+              pingHealth();
+            }, getRandomInterval());
+          });
+      };
+      
+      const initialInterval = getRandomInterval();
+      console.log(`🔄 Starting keep-alive self-ping (every 9-13 minutes, initial: ${Math.round(initialInterval / 60000)} min)`);
+      
+      // Start first ping after random interval
+      keepAliveTimeout = setTimeout(() => {
+        pingHealth();
+      }, initialInterval);
+    }, 30 * 1000); // Wait 30 seconds before first ping
+  }
+
   // Graceful shutdown
   process.on('SIGTERM', () => {
     log.info('Server', 'SIGTERM received — shutting down');
-    pool.end(() => {
-      log.info('Server', 'Database pool closed');
+
+    // Clear keep-alive timeout
+    if (keepAliveTimeout) {
+      clearTimeout(keepAliveTimeout);
+      log.info('Server', 'Keep-alive timeout cleared');
+    }
+
+    // Close server first, then database pool
+    server.close(() => {
+      log.info('Server', 'HTTP server closed');
+      pool.end(() => {
+        log.info('Server', 'Database pool closed');
+        process.exit(0);
+      });
     });
   });
 }

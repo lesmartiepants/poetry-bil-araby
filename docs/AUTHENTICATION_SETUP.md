@@ -6,8 +6,10 @@ This guide explains how to set up Supabase authentication for Poetry Bil-Araby, 
 
 The application supports optional authentication through Supabase, providing:
 - **Single Sign-On (SSO)**: Google and Apple OAuth
-- **User Settings**: Persistent theme and font preferences
-- **Saved Poems**: Personal collection of favorite poems
+- **Saved Poems**: Personal collection of favorite poems with browse and read functionality
+- **My Poems View**: Full-screen overlay to browse, read, and manage saved poems
+- **Settings View**: Full-screen overlay to customize theme and font preferences with live preview
+- **User Settings**: Persistent theme and font preferences across sessions
 - **Future Features**: Discussions, custom voices, transliteration preferences
 
 **Important**: Authentication is completely optional. The app works fully without it.
@@ -144,9 +146,11 @@ For detailed Apple OAuth setup, see [Supabase Apple Auth Docs](https://supabase.
 3. You should see a "Sign In" button in the control bar
 4. Click it and try signing in with Google
 5. After successful sign-in, you should see:
-   - Your user icon/avatar
+   - Your user icon/avatar with dropdown menu
    - A heart button to save poems
-   - Settings are now persisted
+   - "My Poems" option in account dropdown to view saved collection
+   - "Settings" option in account dropdown to customize preferences
+   - Settings are now persisted across sessions
 
 ## Deployment
 

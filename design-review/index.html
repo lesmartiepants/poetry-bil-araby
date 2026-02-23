@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Design Review - Poetry Bil-Araby</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --bg:#09090b;--surface:#141416;--surface-2:#1c1c1f;--surface-3:#27272a;
+      --border:#2e2e32;--border-light:#3f3f46;--text:#fafafa;--text-2:#a1a1aa;--text-3:#71717a;
+      --accent:#d4a84b;--accent-dim:rgba(212,168,75,.12);
+      --green:#22c55e;--green-dim:rgba(34,197,94,.12);
+      --red:#ef4444;--red-dim:rgba(239,68,68,.12);
+      --blue:#3b82f6;--blue-dim:rgba(59,130,246,.12);
+      --purple:#a855f7;--purple-dim:rgba(168,85,247,.12);
+      --r:10px;--r-sm:6px;
+    }
+    body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;background:var(--bg);color:var(--text);height:100vh;overflow:hidden;-webkit-font-smoothing:antialiased}
+    button{font-family:inherit;cursor:pointer}
+    select{font-family:inherit}
+
+    .app{display:grid;grid-template-rows:auto 1fr;height:100vh}
+
+    /* ── Toolbar ── */
+    .toolbar{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;z-index:100}
+    .tb-group{display:flex;align-items:center;gap:6px}
+    .tb-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);white-space:nowrap}
+    .tb-select{appearance:none;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:7px 28px 7px 10px;border-radius:var(--r-sm);font-size:12px;font-weight:500;outline:none;min-width:140px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath d='M2.5 4L5 6.5 7.5 4' stroke='%2371717a' fill='none' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;transition:border-color .15s}
+    .tb-select:hover,.tb-select:focus{border-color:var(--accent)}
+    .tb-select option{background:var(--surface-2);color:var(--text)}
+    .tb-sep{width:1px;height:24px;background:var(--border);flex-shrink:0}
+    .tb-spacer{flex:1}
+
+    /* Nav buttons */
+    .nav-btn{display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface-2);color:var(--text-2);font-size:12px;font-weight:500;transition:all .15s;white-space:nowrap}
+    .nav-btn:hover:not(:disabled){background:var(--surface-3);color:var(--text);border-color:var(--border-light)}
+    .nav-btn:disabled{opacity:.3;cursor:default}
+    .nav-btn svg{width:14px;height:14px}
+    .nav-counter{font-size:12px;color:var(--text-3);font-variant-numeric:tabular-nums;min-width:50px;text-align:center}
+
+    /* Submit */
+    .submit-btn{padding:6px 16px;border-radius:var(--r-sm);border:1px solid var(--accent);background:var(--accent-dim);color:var(--accent);font-size:12px;font-weight:600;transition:all .15s}
+    .submit-btn:hover{background:var(--accent);color:var(--bg)}
+
+    /* ── Main area ── */
+    .main{display:flex;overflow:hidden}
+
+    /* Preview */
+    .preview{flex:1;display:flex;flex-direction:column;min-width:0}
+    .preview-header{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:var(--surface);border-bottom:1px solid var(--border);min-height:40px}
+    .preview-title{font-size:12px;font-weight:600;color:var(--text-2)}
+    .preview-sub{font-size:11px;color:var(--text-3)}
+    .preview-iframe{width:100%;height:100%;border:none;background:#000}
+    .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:12px;padding:40px;text-align:center}
+    .empty-state h2{font-size:16px;font-weight:600}
+    .empty-state p{font-size:13px;color:var(--text-2);max-width:340px;line-height:1.5}
+    .icon-btn{width:28px;height:28px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface-2);color:var(--text-3);display:inline-flex;align-items:center;justify-content:center;font-size:13px;transition:all .12s}
+    .icon-btn:hover{background:var(--surface-3);color:var(--text);border-color:var(--border-light)}
+
+    /* ── Side panel ── */
+    .side{width:330px;min-width:330px;background:var(--surface);border-left:1px solid var(--border);display:flex;flex-direction:column;overflow-y:auto;transition:width .25s,min-width .25s,opacity .25s}
+    .side.collapsed{width:0;min-width:0;opacity:0;overflow:hidden;border:none}
+    .side-section{padding:14px 16px;border-bottom:1px solid var(--border)}
+    .side-section:last-child{border-bottom:none}
+    .ss-title{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);margin-bottom:10px}
+
+    /* Info rows */
+    .info-row{display:flex;justify-content:space-between;padding:4px 0;font-size:12px}
+    .info-k{color:var(--text-3)}.info-v{color:var(--text);font-weight:500}
+
+    /* Verdict buttons */
+    .verdict-group{display:flex;gap:6px;margin-bottom:10px}
+    .verdict-btn{flex:1;padding:8px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface-2);font-size:12px;font-weight:600;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:4px}
+    .verdict-btn:hover{border-color:var(--border-light)}
+    .verdict-btn.active-keep{background:var(--green-dim);border-color:var(--green);color:var(--green)}
+    .verdict-btn.active-discard{background:var(--red-dim);border-color:var(--red);color:var(--red)}
+    .verdict-btn.active-skip{background:var(--blue-dim);border-color:var(--blue);color:var(--blue)}
+    .verdict-btn.active-revisit{background:var(--purple-dim);border-color:var(--purple);color:var(--purple)}
+    .verdict-btn .v-icon{font-size:14px}
+
+    /* Generation badges */
+    .gen-badge{display:inline-block;padding:1px 6px;border-radius:3px;font-size:9px;font-weight:700;letter-spacing:.03em;vertical-align:middle;margin-left:4px}
+    .gen-badge.gen-4{background:rgba(212,168,75,.2);color:var(--accent);border:1px solid rgba(212,168,75,.3)}
+    .gen-badge.gen-3{background:var(--blue-dim);color:var(--blue);border:1px solid rgba(59,130,246,.3)}
+    .gen-badge.gen-2{background:var(--surface-3);color:var(--text-3);border:1px solid var(--border)}
+    .gen-badge.gen-1{background:var(--surface-2);color:var(--text-3);border:1px solid var(--border)}
+
+    /* Tags input */
+    .tags-input{width:100%;padding:6px 10px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface-2);color:var(--text);font-size:11px;outline:none;font-family:inherit;margin-top:6px;transition:border-color .15s}
+    .tags-input:focus{border-color:var(--accent)}
+    .tags-input::placeholder{color:var(--text-3)}
+
+    /* Sync indicator */
+    .sync-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:4px;vertical-align:middle}
+    .sync-dot.synced{background:var(--green)}.sync-dot.syncing{background:var(--accent)}.sync-dot.offline{background:var(--red)}
+
+    /* Comment box */
+    .comment-box{width:100%;min-height:72px;padding:8px 10px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface-2);color:var(--text);font-size:12px;line-height:1.5;resize:vertical;outline:none;font-family:inherit;transition:border-color .15s}
+    .comment-box:focus{border-color:var(--accent)}
+    .comment-box::placeholder{color:var(--text-3)}
+
+    /* Progress bar */
+    .progress-wrap{margin-top:4px}
+    .progress-bar{height:4px;border-radius:2px;background:var(--surface-3);overflow:hidden;margin-top:6px}
+    .progress-fill{height:100%;border-radius:2px;background:var(--accent);transition:width .3s}
+    .progress-text{font-size:11px;color:var(--text-3);display:flex;justify-content:space-between}
+
+    /* Note cards (previous feedback) */
+    .note-card{background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px;margin-bottom:6px;font-size:12px;color:var(--text-2);line-height:1.6;white-space:pre-wrap}
+    .note-card.highlighted{border-color:var(--accent)}
+    .note-label{font-size:10px;font-weight:600;color:var(--accent);margin-bottom:4px}
+    .note-round{font-size:10px;color:var(--text-3);float:right}
+
+    /* Keyboard hints */
+    .kbd{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 4px;border-radius:3px;background:var(--surface-3);border:1px solid var(--border);font-size:9px;font-weight:600;color:var(--text-3);font-family:inherit}
+
+    /* ── Mobile bottom bar ── */
+    .mobile-bar{display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;background:var(--surface);border-top:1px solid var(--border);padding:8px 12px;padding-bottom:max(8px,env(safe-area-inset-bottom));flex-direction:column;gap:6px}
+    .mobile-bar .verdict-row{display:flex;gap:6px}
+    .mobile-bar .verdict-row .verdict-btn{flex:1;padding:10px 0;font-size:13px}
+    .mobile-bar .comment-row{display:flex;gap:6px;align-items:flex-start}
+    .mobile-bar .comment-row .comment-box{min-height:38px;flex:1;font-size:13px}
+    .mobile-bar .mobile-progress{display:flex;justify-content:space-between;font-size:10px;color:var(--text-3);padding:0 2px}
+    .mobile-bar .mobile-progress span{display:flex;align-items:center;gap:3px}
+    .mobile-submit-btn{padding:10px 0;border-radius:var(--r-sm);border:1px solid var(--accent);background:var(--accent-dim);color:var(--accent);font-size:12px;font-weight:600;width:100%}
+    .mobile-comment-toggle{width:38px;height:38px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface-2);color:var(--text-3);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+    .mobile-comment-toggle.has-comment{color:var(--accent);border-color:var(--accent)}
+
+    /* Responsive */
+    @media(max-width:768px){
+      .side{display:none}
+      .tb-sep{display:none}
+      .tb-select{min-width:100px;font-size:11px}
+      .toolbar{padding:6px 10px;gap:4px}
+      .toolbar .tb-label{font-size:9px}
+      .toolbar .submit-btn{display:none}
+      .toolbar .icon-btn{display:none}
+      .preview-header{padding:6px 10px;min-height:34px}
+      .preview-title{font-size:11px}
+      .preview-sub{font-size:10px}
+      .mobile-bar{display:flex}
+      .preview{padding-bottom:130px}
+      .nav-btn{padding:5px 8px;font-size:11px}
+      .nav-counter{font-size:11px;min-width:40px}
+    }
+    ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
+  </style>
+</head>
+<body>
+<div class="app">
+  <!-- Toolbar -->
+  <div class="toolbar">
+    <div class="tb-group">
+      <span class="tb-label">Component</span>
+      <select class="tb-select" id="compSelect" onchange="onCompChange()"></select>
+    </div>
+    <div class="tb-sep"></div>
+    <div class="tb-group">
+      <span class="tb-label">Category</span>
+      <select class="tb-select" id="catSelect" onchange="onCatChange()"></select>
+    </div>
+    <div class="tb-sep"></div>
+    <div class="tb-group">
+      <button class="nav-btn" id="prevBtn" onclick="goPrev()" title="Previous (Left arrow)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 3L5 8l5 5"/></svg>Prev</button>
+      <span class="nav-counter" id="navCounter">--</span>
+      <button class="nav-btn" id="nextBtn" onclick="goNext()" title="Next (Right arrow)">Next<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 3l5 5-5 5"/></svg></button>
+    </div>
+    <div class="tb-spacer"></div>
+    <span id="syncStatus" title="API sync status"><span class="sync-dot offline"></span><span style="font-size:10px;color:var(--text-3)" id="syncLabel">Offline</span></span>
+    <button class="submit-btn" onclick="submitReview()" title="Export review feedback">Submit Review</button>
+    <button class="icon-btn" onclick="toggleSide()" title="Toggle panel (I)">&#9776;</button>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="preview" id="previewPane">
+      <div class="preview-header">
+        <div>
+          <div class="preview-title" id="pTitle">Select a design</div>
+          <div class="preview-sub" id="pSub"></div>
+        </div>
+        <div style="display:flex;gap:4px">
+          <button class="icon-btn" onclick="openTab()" title="Open in new tab">&#8599;</button>
+        </div>
+      </div>
+      <div id="previewContent" style="flex:1;position:relative">
+        <div class="empty-state" id="emptyState">
+          <div style="font-size:32px">&#9998;</div>
+          <h2>Poetry Bil-Araby Design Review</h2>
+          <p>Select a component and category to start reviewing designs. Use arrow keys or Prev/Next to cycle through options.</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:4px">
+            <span style="font-size:10px;color:var(--text-3)"><span class="kbd">&larr;</span><span class="kbd">&rarr;</span> Prev/Next &nbsp; <span class="kbd">K</span> Keep &nbsp; <span class="kbd">D</span> Discard &nbsp; <span class="kbd">S</span> Skip &nbsp; <span class="kbd">I</span> Panel</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mobile bottom bar -->
+    <div class="mobile-bar" id="mobileBar">
+      <div class="verdict-row" id="mobileVerdictRow">
+        <button class="verdict-btn" data-v="keep" onclick="setVerdict('keep')"><span class="v-icon">&#10003;</span> Keep</button>
+        <button class="verdict-btn" data-v="discard" onclick="setVerdict('discard')"><span class="v-icon">&#10007;</span> Discard</button>
+        <button class="verdict-btn" data-v="revisit" onclick="setVerdict('revisit')"><span class="v-icon">&#8635;</span> Revisit</button>
+        <button class="verdict-btn" data-v="skip" onclick="setVerdict('skip')"><span class="v-icon">&#8594;</span> Skip</button>
+      </div>
+      <div class="comment-row">
+        <textarea class="comment-box" id="mobileCommentBox" placeholder="Comment..." oninput="saveMobileComment()"></textarea>
+        <button class="mobile-submit-btn" onclick="submitReview()" style="width:auto;padding:10px 14px">Submit</button>
+      </div>
+      <div class="mobile-progress">
+        <span id="mobileProgLabel">0/0</span>
+        <span><span style="color:var(--green)">&#10003;<span id="mobileKeep">0</span></span> &nbsp;<span style="color:var(--red)">&#10007;<span id="mobileDiscard">0</span></span> &nbsp;<span style="color:var(--purple)">&#8635;<span id="mobileRevisit">0</span></span> &nbsp;<span style="color:var(--blue)">&#8594;<span id="mobileSkip">0</span></span></span>
+      </div>
+    </div>
+
+    <!-- Side panel -->
+    <div class="side" id="sidePanel">
+      <div class="side-section">
+        <div class="ss-title">Current Design</div>
+        <div id="infoBlock">
+          <div class="info-row"><span class="info-k">Component</span><span class="info-v" id="infoComp">--</span></div>
+          <div class="info-row"><span class="info-k">Category</span><span class="info-v" id="infoCat">--</span></div>
+          <div class="info-row"><span class="info-k">Option</span><span class="info-v" id="infoOpt">--</span></div>
+          <div class="info-row"><span class="info-k">Source</span><span class="info-v" id="infoSrc">--</span></div>
+        </div>
+      </div>
+
+      <div class="side-section">
+        <div class="ss-title">Your Review</div>
+        <div class="verdict-group" id="verdictGroup">
+          <button class="verdict-btn" data-v="keep" onclick="setVerdict('keep')"><span class="v-icon">&#10003;</span> Keep</button>
+          <button class="verdict-btn" data-v="discard" onclick="setVerdict('discard')"><span class="v-icon">&#10007;</span> Discard</button>
+          <button class="verdict-btn" data-v="revisit" onclick="setVerdict('revisit')"><span class="v-icon">&#8635;</span> Revisit</button>
+          <button class="verdict-btn" data-v="skip" onclick="setVerdict('skip')"><span class="v-icon">&#8594;</span> Skip</button>
+        </div>
+        <textarea class="comment-box" id="commentBox" placeholder="Add a comment about this design..." oninput="saveComment()"></textarea>
+        <input class="tags-input" id="tagsInput" placeholder="Tags (comma-separated, e.g. animation, typography)" oninput="saveTags()" />
+      </div>
+
+      <div class="side-section" id="prevFeedbackSection">
+        <div class="ss-title">Previous Feedback (Round 1)</div>
+        <div id="prevFeedback"><span style="font-size:12px;color:var(--text-3)">No previous feedback.</span></div>
+      </div>
+
+      <div class="side-section">
+        <div class="ss-title">Review Progress</div>
+        <div class="progress-wrap">
+          <div class="progress-text"><span id="progLabel">0 of 0 reviewed</span><span id="progPct">0%</span></div>
+          <div class="progress-bar"><div class="progress-fill" id="progFill" style="width:0%"></div></div>
+        </div>
+        <div style="margin-top:8px;display:flex;gap:6px;font-size:11px;flex-wrap:wrap">
+          <span style="color:var(--green)">&#10003; <span id="keepCount">0</span> keep</span>
+          <span style="color:var(--red)">&#10007; <span id="discardCount">0</span> discard</span>
+          <span style="color:var(--purple)">&#8635; <span id="revisitCount">0</span> revisit</span>
+          <span style="color:var(--blue)">&#8594; <span id="skipCount">0</span> skip</span>
+        </div>
+      </div>
+
+      <div class="side-section">
+        <div class="ss-title">Keyboard Shortcuts</div>
+        <div style="display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--text-3)">
+          <div><span class="kbd">&larr;</span> <span class="kbd">&rarr;</span> Prev / Next design</div>
+          <div><span class="kbd">K</span> Keep &nbsp; <span class="kbd">D</span> Discard &nbsp; <span class="kbd">S</span> Skip</div>
+          <div><span class="kbd">I</span> Toggle panel &nbsp; <span class="kbd">F</span> Fullscreen</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════════════
+// CATALOG — component-first hierarchy
+// generation: 1=component exploration, 2=initial E2E, 3=hardened, 4=radical redesign
+// ═══════════════════════════════════════════════════════════════
+const CATALOG = [
+  {
+    component: 'Splash Screen',
+    id: 'splash',
+    categories: [
+      { id: 'particles', name: 'Particle Field', source: 'PR #11', description: 'Interactive particle system with fluid motion',
+        options: [
+          { id: 'particles-opt1', name: 'Refined Particles', file: 'splash/particles/previews/option-1-refined-particles.html', desc: 'Improved hierarchy with larger title and reduced particle density', generation: 1 },
+          { id: 'particles-opt2', name: 'Gold Mystical', file: 'splash/particles/previews/option-2-gold-mystical.html', desc: 'Rich gold palette with Arabic poetry heritage aesthetic', generation: 1 },
+          { id: 'particles-opt3', name: 'Minimal Constellation', file: 'splash/particles/previews/option-3-minimal-constellation.html', desc: 'Sparse, intentional design with connected particle patterns', generation: 1 }
+        ],
+        feedback: {
+          'particles-opt1': "love the slow option and button animation, but miss the brand logo and fonts from the original. something that's missing from the original as well is this feeling that the particles are stars.",
+          'particles-opt2': "love the light dark icon animation, colour, and particles and glow button - still missing the fonts, and brand (the original title and fonts are what i want to keep)",
+          'particles-opt3': "bring back the brand title as is. it was perfect as is. the animation and enter button are cool i like them - i do like the little day icon"
+        }
+      },
+      { id: 'zen', name: 'Zen Minimalism', source: 'PR #11', description: 'Pure simplicity and calligraphic elegance',
+        options: [
+          { id: 'zen-opt1', name: 'Zen Refined', file: 'splash/zen/previews/option-1-refined.html', desc: 'Pure minimalism with expressive calligraphy', generation: 1 },
+          { id: 'zen-opt2', name: 'Haiku Style', file: 'splash/zen/previews/option-2-haiku.html', desc: 'Poetic minimalism with haiku-inspired spacing', generation: 1 }
+        ],
+        feedback: {
+          'zen-opt1': "add some zen effect, obvs it should be minimal.\nBring the brand title exactly as it is from the particles original\nmaybe create a smoke animation.",
+          'zen-opt2': "i do like this one. but bring back the brand title and styling exactly as it is in the original particles"
+        }
+      },
+      { id: 'ink', name: 'Ink Calligraphy', source: 'PR #11', description: 'Traditional ink brush and Arabic letterforms',
+        options: [
+          { id: 'ink-opt3', name: 'Live Calligraphy', file: 'splash/ink/previews/option-3-live-calligraphy.html', desc: 'Animated brush stroke revealing calligraphy in real-time', generation: 1 }
+        ],
+        feedback: {
+          'ink-opt3': "i like this one but the arabic is not rendered properly. i do like how you highlighted the arabic word one letter at a time. make sure this happens right to left and feels continuous not chopped."
+        }
+      },
+      { id: 'manuscript', name: 'Ancient Manuscript', source: 'PR #11', description: 'Aged parchment with classical ornaments',
+        options: [
+          { id: 'manuscript-opt1', name: 'Ornate Islamic', file: 'splash/manuscript/previews/option-1-ornate-islamic.html', desc: 'Rich Islamic illumination with gold leaf details', generation: 1 },
+          { id: 'manuscript-opt2', name: 'Codex Spine', file: 'splash/manuscript/previews/option-2-codex-spine.html', desc: 'Book spine perspective with leather-bound aesthetics', generation: 1 },
+          { id: 'manuscript-opt3', name: 'Scroll & Seal', file: 'splash/manuscript/previews/option-3-scroll-seal.html', desc: 'Unfurling scroll with wax seal authenticity', generation: 1 }
+        ],
+        feedback: {
+          'manuscript-opt1': "the original was way better at looking like it was unrolling like a book. you should stick to the original concept and polish.",
+          'manuscript-opt2': "i like this concept, but you need to actually fix the copy, word choice, and spacing to make it look like a book not an eye doctors office.",
+          'manuscript-opt3': "i like this idea, but it all looks too digital. this scroll needs to look like paper.\n\nalso refine the font choices for the english and arabic."
+        }
+      },
+      { id: 'light', name: 'Light & Shadow', source: 'PR #11', description: 'Dramatic interplay of light and depth',
+        options: [
+          { id: 'light-opt1', name: 'Improved Chiaroscuro', file: 'splash/light/previews/option-1-improved-chiaroscuro.html', desc: 'Dramatic light-dark contrast with Renaissance influence', generation: 1 },
+          { id: 'light-opt3', name: 'Minimal Ray Tracing', file: 'splash/light/previews/option-3-minimal-ray-tracing.html', desc: 'Clean light rays with minimalist approach', generation: 1 }
+        ],
+        feedback: {
+          'light-opt1': "the fonts were better on the original. the light in the back is nice. bring some of the light particles from option 3 in and make sure the animation is a bit slower.",
+          'light-opt3': "these ethereal particles are great, make them appear in the dark area really lightly as if dust and then keep the white level that crosses through the light."
+        }
+      }
+    ]
+  },
+  {
+    component: 'Main App Layout',
+    id: 'main-app',
+    categories: [
+      { id: 'celestial', name: 'Celestial Lens', source: 'PR #51', description: 'Cosmic orbits, lens-style poem focus, floating controls',
+        options: [{ id: 'celestial-l', name: 'Celestial Lens', file: 'main-app/celestial-lens/option-l-celestial-lens.html', desc: 'Cosmic orbits with lens-style poem focus', generation: 1 }], feedback: {} },
+      { id: 'calligraphic', name: 'Calligraphic Minimal', source: 'PR #51', description: 'Parchment, ink strokes, large calligraphy',
+        options: [{ id: 'calligraphic-m', name: 'Calligraphic Minimal', file: 'main-app/calligraphic-minimal/option-m-calligraphic-minimal.html', desc: 'Parchment and ink strokes with quiet controls', generation: 1 }], feedback: {} },
+      { id: 'bento', name: 'Bento Atlas', source: 'PR #51', description: 'Bento grid intro, modular cards',
+        options: [{ id: 'bento-n', name: 'Bento Atlas', file: 'main-app/bento-atlas/option-n-bento-atlas.html', desc: 'Modular bento grid with atlas side-pane reading', generation: 1 }], feedback: {} },
+      { id: 'desert', name: 'Desert Horizon', source: 'PR #51', description: 'Warm sunrise gradients, stamps, airy poem card',
+        options: [{ id: 'desert-o', name: 'Desert Horizon', file: 'main-app/desert-horizon/option-o-desert-horizon.html', desc: 'Warm sunrise gradients with airy poem card', generation: 1 }], feedback: {} },
+      { id: 'ink-mono', name: 'Ink Mono', source: 'PR #51', description: 'Monochrome editorial, dot grid',
+        options: [{ id: 'inkmono-p', name: 'Ink Mono', file: 'main-app/ink-mono/option-p-ink-mono.html', desc: 'Monochrome editorial with typewriter-style controls', generation: 1 }], feedback: {} },
+      { id: 'mosaic', name: 'Mosaic Tiles', source: 'PR #51', description: 'Geometric tile navigation',
+        options: [{ id: 'mosaic-t', name: 'Mosaic Tiles', file: 'main-app/mosaic-tiles/option-t-mosaic-tiles.html', desc: 'Geometric tile navigation, pattern framing for poems', generation: 1 }], feedback: {} },
+      { id: 'scroll', name: 'Scroll Story', source: 'PR #51', description: 'Chapter timeline, story arcs',
+        options: [{ id: 'scroll-u', name: 'Scroll Story', file: 'main-app/scroll-story/option-u-scroll-story.html', desc: 'Chapter timeline with sticky navigation controls', generation: 1 }], feedback: {} }
+    ]
+  },
+  {
+    component: 'Vertical Controls',
+    id: 'controls',
+    categories: [
+      { id: 'ctrl-all', name: 'Control Bar Styles', source: 'PR #50', description: 'Save, zoom, transliteration bar explorations',
+        options: [
+          { id: 'ctrl-minimalist', name: 'Minimalist (Jony Ive)', file: 'controls/minimalist/vertical-controls-option1-minimalist.html', desc: 'Right-aligned, icons-only with hover tooltips. Glass morphism.', generation: 1 },
+          { id: 'ctrl-notion', name: 'Notion / Linear', file: 'controls/notion/vertical-controls-option3-notion.html', desc: 'Compact 40px controls, A+/A- zoom, dark tooltips.', generation: 1 },
+          { id: 'ctrl-brutalist', name: 'Brutalist Terminal', file: 'controls/brutalist/vertical-controls-option4-wildcard.html', desc: 'Full-height left sidebar. Retro CRT aesthetic, monochrome green.', generation: 1 },
+          { id: 'ctrl-neumorphic', name: 'Neumorphic (Soft UI)', file: 'controls/neumorphic/vertical-controls-option6-neumorphic.html', desc: 'Left sidebar, soft shadows, tactile raised/inset states.', generation: 1 },
+          { id: 'ctrl-scandi', name: 'Scandinavian Minimal', file: 'controls/scandinavian/vertical-controls-option9-scandinavian.html', desc: 'Right-aligned circular buttons, Nordic simplicity.', generation: 1 }
+        ],
+        feedback: {}
+      }
+    ]
+  },
+  {
+    component: 'Auth & Login',
+    id: 'auth',
+    categories: [
+      { id: 'auth-flow', name: 'Authentication Flow', source: 'PR #49/#61', description: 'Sign-in, OAuth, save gating, mobile menus',
+        options: [
+          { id: 'auth-desktop', name: 'Desktop Not Signed In', file: 'auth/auth-desktop-not-signed-in.html', desc: 'Control bar with Sign In button and grayed-out Save heart.', generation: 1 },
+          { id: 'auth-modal', name: 'Auth Modal', file: 'auth/auth-modal.html', desc: 'Google and Apple OAuth with Arabic welcome message.', generation: 1 },
+          { id: 'auth-tooltip', name: 'Save Tooltip', file: 'auth/auth-save-tooltip.html', desc: 'Tooltip on unauthenticated heart click.', generation: 1 },
+          { id: 'auth-mobile', name: 'Mobile Compact', file: 'auth/auth-mobile-compact.html', desc: 'Responsive layout with overflow menu.', generation: 1 },
+          { id: 'auth-overflow', name: 'Mobile Overflow', file: 'auth/auth-mobile-overflow.html', desc: 'Full menu with bilingual labels.', generation: 1 }
+        ],
+        feedback: {}
+      }
+    ]
+  },
+  // ═══════════════════════════════════════════════════════════════
+  // E2E FLOWS — complete app mockups (splash + walkthrough + main app)
+  // ═══════════════════════════════════════════════════════════════
+  {
+    component: 'E2E Flows',
+    id: 'e2e',
+    categories: [
+      { id: 'e2e-78ab', name: 'Set 78ab', source: 'PR #64', description: 'Complete app flows from branch 78ab. Gen 4 items are radical redesigns (iteration 7).',
+        options: [
+          { id: 'e2e-78ab-a1', name: 'A1 Gold Orbit Story', file: 'e2e/set-78ab/e2e-a1-gold-orbit-story.html', desc: 'Gold particle orbits with story-driven navigation', generation: 3, iteration: 7, source_branch: 'cursor/innovative-ui-ux-mockups-78ab', source_pr: '#64' },
+          { id: 'e2e-78ab-a2', name: 'A2 Paper Photon', file: 'e2e/set-78ab/e2e-a2-paper-photon.html', desc: 'Paper texture with photon light effects', generation: 4, iteration: 7, source_branch: 'cursor/innovative-ui-ux-mockups-78ab', source_pr: '#64' },
+          { id: 'e2e-78ab-a3', name: 'A3 Ink Mono Archive', file: 'e2e/set-78ab/e2e-a3-ink-mono-archive.html', desc: 'Monochrome ink archive with editorial layout', generation: 3, iteration: 7, source_branch: 'cursor/innovative-ui-ux-mockups-78ab', source_pr: '#64' },
+          { id: 'e2e-78ab-a6', name: 'A6 Nordic Quiet Reader', file: 'e2e/set-78ab/e2e-a6-nordic-quiet-reader.html', desc: 'Scandinavian-inspired calm reading experience', generation: 4, iteration: 7, source_branch: 'cursor/innovative-ui-ux-mockups-78ab', source_pr: '#64' },
+          { id: 'e2e-78ab-a8', name: 'A8 Deco Discovery', file: 'e2e/set-78ab/e2e-a8-deco-discovery.html', desc: 'Art deco framing with discovery navigation', generation: 4, iteration: 7, source_branch: 'cursor/innovative-ui-ux-mockups-78ab', source_pr: '#64' },
+          { id: 'e2e-78ab-b1', name: 'B1 Zen Particles Steel Scroll', file: 'e2e/set-78ab/e2e-b1-zen-particles-steel-scroll.html', desc: 'Zen minimalism with steel-toned scroll interface', generation: 3, iteration: 7, source_branch: 'cursor/innovative-ui-ux-mockups-78ab', source_pr: '#64' },
+          { id: 'e2e-78ab-b2', name: 'B2 Spotlight Ether', file: 'e2e/set-78ab/e2e-b2-spotlight-ether.html', desc: 'Ethereal spotlight with floating text presentation', generation: 4, iteration: 7, source_branch: 'cursor/innovative-ui-ux-mockups-78ab', source_pr: '#64' },
+          { id: 'e2e-78ab-b4', name: 'B4 Particle Cathedral', file: 'e2e/set-78ab/e2e-b4-particle-cathedral.html', desc: 'Cathedral-scale particle field with vaulted reading space', generation: 4, iteration: 7, source_branch: 'cursor/innovative-ui-ux-mockups-78ab', source_pr: '#64' },
+          { id: 'e2e-78ab-b8', name: 'B8 Ritual Spotlight Hybrid', file: 'e2e/set-78ab/e2e-b8-ritual-spotlight-hybrid.html', desc: 'Ritualistic spotlight with hybrid navigation', generation: 4, iteration: 7, source_branch: 'cursor/innovative-ui-ux-mockups-78ab', source_pr: '#64' },
+          { id: 'e2e-78ab-b10', name: 'B10 Signature Blend', file: 'e2e/set-78ab/e2e-b10-signature-blend.html', desc: 'Blended signature styles with tessellating patterns', generation: 4, iteration: 7, source_branch: 'cursor/innovative-ui-ux-mockups-78ab', source_pr: '#64' }
+        ],
+        feedback: {}
+      },
+      { id: 'e2e-c0cf-a', name: 'Set c0cf-A', source: 'PR #65', description: 'Complete app flows set A from branch c0cf. Gen 4 items are radical redesigns.',
+        options: [
+          { id: 'e2e-c0cf-a-01', name: '01 Ethereal Gold', file: 'e2e/set-c0cf-a/01-ethereal-gold.html', desc: 'Ethereal gold tones with floating poem presentation', generation: 3, iteration: 7, source_branch: 'cursor/innovative-ui-ux-mockups-c0cf', source_pr: '#65' },
+          { id: 'e2e-c0cf-a-02', name: '02 Zen Manuscript', file: 'e2e/set-c0cf-a/02-zen-manuscript.html', desc: 'Zen simplicity meets manuscript aesthetics', generation: 4, iteration: 7, source_branch: 'cursor/innovative-ui-ux-mockups-c0cf', source_pr: '#65' },
+          { id: 'e2e-c0cf-a-03', name: '03 Cosmic Scholar', file: 'e2e/set-c0cf-a/03-cosmic-scholar.html', desc: 'Cosmic backdrop with scholarly reading interface', generation: 3, iteration: 7, source_branch: 'cursor/innovative-ui-ux-mockups-c0cf', source_pr: '#65' },
+          { id: 'e2e-c0cf-a-04', name: '04 Desert Poet', file: 'e2e/set-c0cf-a/04-desert-poet.html', desc: 'Desert landscape with poetry-focused warm tones', generation: 4, iteration: 7, source_branch: 'cursor/innovative-ui-ux-mockups-c0cf', source_pr: '#65' },
+          { id: 'e2e-c0cf-a-05', name: '05 Pure Ink', file: 'e2e/set-c0cf-a/05-pure-ink.html', desc: 'Pure ink brushstroke aesthetics with gravity letters', generation: 4, iteration: 7, source_branch: 'cursor/innovative-ui-ux-mockups-c0cf', source_pr: '#65' },
+          { id: 'e2e-c0cf-a-06', name: '06 Bento Modernist', file: 'e2e/set-c0cf-a/06-bento-modernist.html', desc: 'Modern bento grid with shattered mirror effect', generation: 4, iteration: 7, source_branch: 'cursor/innovative-ui-ux-mockups-c0cf', source_pr: '#65' },
+          { id: 'e2e-c0cf-a-07', name: '07 Scroll Keeper', file: 'e2e/set-c0cf-a/07-scroll-keeper.html', desc: 'Ancient scroll keeper with preserved text layout', generation: 3, iteration: 7, source_branch: 'cursor/innovative-ui-ux-mockups-c0cf', source_pr: '#65' },
+          { id: 'e2e-c0cf-a-08', name: '08 Glass Pavilion', file: 'e2e/set-c0cf-a/08-glass-pavilion.html', desc: 'Glass pavilion architecture with translucent layers', generation: 3, iteration: 7, source_branch: 'cursor/innovative-ui-ux-mockups-c0cf', source_pr: '#65' },
+          { id: 'e2e-c0cf-a-09', name: '09 Mosaic Discovery', file: 'e2e/set-c0cf-a/09-mosaic-discovery.html', desc: 'Living geometry with mosaic tile discovery', generation: 4, iteration: 7, source_branch: 'cursor/innovative-ui-ux-mockups-c0cf', source_pr: '#65' },
+          { id: 'e2e-c0cf-a-10', name: '10 Calligraphy Flow', file: 'e2e/set-c0cf-a/10-calligraphy-flow.html', desc: 'Breathing typography with calligraphic flow', generation: 4, iteration: 7, source_branch: 'cursor/innovative-ui-ux-mockups-c0cf', source_pr: '#65' }
+        ],
+        feedback: {}
+      },
+      { id: 'e2e-c0cf-b', name: 'Set c0cf-B', source: 'PR #65', description: 'Complete app flows set B from branch c0cf. Gen 3 hardened iterations.',
+        options: [
+          { id: 'e2e-c0cf-b-01', name: '01 Particle Scroll', file: 'e2e/set-c0cf-b/01-particle-scroll.html', desc: 'Particle effects with scroll-based navigation', generation: 3, iteration: 6, source_branch: 'cursor/innovative-ui-ux-mockups-c0cf', source_pr: '#65' },
+          { id: 'e2e-c0cf-b-02', name: '02 Ethereal Spotlight', file: 'e2e/set-c0cf-b/02-ethereal-spotlight.html', desc: 'Ethereal light with spotlight poem presentation', generation: 3, iteration: 6, source_branch: 'cursor/innovative-ui-ux-mockups-c0cf', source_pr: '#65' },
+          { id: 'e2e-c0cf-b-03', name: '03 Notion Zen', file: 'e2e/set-c0cf-b/03-notion-zen.html', desc: 'Notion-inspired layout with zen minimalism', generation: 3, iteration: 6, source_branch: 'cursor/innovative-ui-ux-mockups-c0cf', source_pr: '#65' },
+          { id: 'e2e-c0cf-b-04', name: '04 Neumorphic Warmth', file: 'e2e/set-c0cf-b/04-neumorphic-warmth.html', desc: 'Warm neumorphic surfaces with soft shadows', generation: 3, iteration: 6, source_branch: 'cursor/innovative-ui-ux-mockups-c0cf', source_pr: '#65' },
+          { id: 'e2e-c0cf-b-05', name: '05 Scroll Codex', file: 'e2e/set-c0cf-b/05-scroll-codex.html', desc: 'Codex-style scroll with chapter navigation', generation: 3, iteration: 6, source_branch: 'cursor/innovative-ui-ux-mockups-c0cf', source_pr: '#65' },
+          { id: 'e2e-c0cf-b-06', name: '06 Spotlight Library', file: 'e2e/set-c0cf-b/06-spotlight-library.html', desc: 'Library shelves with spotlight reading mode', generation: 3, iteration: 6, source_branch: 'cursor/innovative-ui-ux-mockups-c0cf', source_pr: '#65' },
+          { id: 'e2e-c0cf-b-07', name: '07 Particle Neumorphic', file: 'e2e/set-c0cf-b/07-particle-neumorphic.html', desc: 'Particle effects with neumorphic controls', generation: 3, iteration: 6, source_branch: 'cursor/innovative-ui-ux-mockups-c0cf', source_pr: '#65' },
+          { id: 'e2e-c0cf-b-08', name: '08 Zen Spotlight', file: 'e2e/set-c0cf-b/08-zen-spotlight.html', desc: 'Zen calm with focused spotlight on text', generation: 3, iteration: 6, source_branch: 'cursor/innovative-ui-ux-mockups-c0cf', source_pr: '#65' },
+          { id: 'e2e-c0cf-b-09', name: '09 Scandinavian Scroll', file: 'e2e/set-c0cf-b/09-scandinavian-scroll.html', desc: 'Nordic simplicity with scroll-based reading', generation: 3, iteration: 6, source_branch: 'cursor/innovative-ui-ux-mockups-c0cf', source_pr: '#65' },
+          { id: 'e2e-c0cf-b-10', name: '10 Ethereal Constellation', file: 'e2e/set-c0cf-b/10-ethereal-constellation.html', desc: 'Constellation patterns with ethereal transitions', generation: 3, iteration: 6, source_branch: 'cursor/innovative-ui-ux-mockups-c0cf', source_pr: '#65' }
+        ],
+        feedback: {}
+      }
+    ]
+  }
+];
+
+// ═══════════════════════════════════════════════════════════════
+// API CONFIG
+// ═══════════════════════════════════════════════════════════════
+const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? 'http://localhost:3001'
+  : 'https://poetry-bil-araby-api.onrender.com';
+let apiAvailable = false;
+let syncTimer = null;
+let currentSession = null;
+
+// ═══════════════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════════════
+let st = { compIdx: 0, catIdx: 0, optIdx: 0, sideOpen: true };
+
+// Review feedback: { [optionId]: { verdict, comment, tags } }
+let reviewData = {};
+const STORAGE_KEY = 'design-review-feedback-v3';
+
+function loadReview() {
+  try { const raw = localStorage.getItem(STORAGE_KEY); if (raw) reviewData = JSON.parse(raw); } catch {}
+}
+
+function persistReview() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(reviewData)); } catch {}
+  scheduleSyncToAPI();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// API SYNC — dual persistence (localStorage instant + API debounced 2s)
+// ═══════════════════════════════════════════════════════════════
+function setSyncStatus(status) {
+  const dot = document.querySelector('#syncStatus .sync-dot');
+  const label = document.getElementById('syncLabel');
+  if (dot) dot.className = 'sync-dot ' + status;
+  if (label) label.textContent = { synced: 'Synced', syncing: 'Syncing...', offline: 'Offline' }[status] || status;
+}
+
+function scheduleSyncToAPI() {
+  if (!apiAvailable || !currentSession) return;
+  clearTimeout(syncTimer);
+  setSyncStatus('syncing');
+  syncTimer = setTimeout(() => syncVerdictsToAPI(), 2000);
+}
+
+async function syncVerdictsToAPI() {
+  if (!currentSession) return;
+  try {
+    const verdicts = [];
+    for (const [key, data] of Object.entries(reviewData)) {
+      if (data.verdict) verdicts.push({
+        item_key: key, verdict: data.verdict, comment: data.comment || null,
+        tags: data.tags ? data.tags.split(',').map(t => t.trim()).filter(Boolean) : null
+      });
+    }
+    if (!verdicts.length) { setSyncStatus('synced'); return; }
+    const res = await fetch(API_BASE + '/api/design-review/sessions/' + currentSession.id + '/verdicts', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ verdicts })
+    });
+    setSyncStatus(res.ok ? 'synced' : 'offline');
+  } catch { setSyncStatus('offline'); }
+}
+
+async function initAPI() {
+  try {
+    const r = await fetch(API_BASE + '/api/design-review/items', { signal: AbortSignal.timeout(5000) });
+    if (!r.ok) throw 0;
+    apiAvailable = true;
+
+    // Sync CATALOG items to DB
+    const items = [];
+    CATALOG.forEach(comp => comp.categories.forEach(cat => cat.options.forEach(opt => {
+      items.push({ item_key: opt.id, name: opt.name, component: comp.id, category: cat.id,
+        file_path: opt.file, description: opt.desc, generation: opt.generation || 1,
+        iteration: opt.iteration || null, source_branch: opt.source_branch || null,
+        source_pr: opt.source_pr || cat.source || null });
+    })));
+    fetch(API_BASE + '/api/design-review/items/sync', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items })
+    }).catch(() => {});
+
+    // Resume or create session
+    const sess = await (await fetch(API_BASE + '/api/design-review/sessions')).json();
+    const active = sess.find(s => s.status === 'in_progress');
+    if (active) {
+      currentSession = active;
+      const verts = await (await fetch(API_BASE + '/api/design-review/sessions/' + active.id + '/verdicts')).json();
+      verts.forEach(v => {
+        if (!reviewData[v.item_key] || !reviewData[v.item_key].verdict)
+          reviewData[v.item_key] = { verdict: v.verdict, comment: v.comment || '', tags: (v.tags || []).join(', ') };
+      });
+      persistReview(); renderProgress();
+    } else {
+      const cr = await fetch(API_BASE + '/api/design-review/sessions', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reviewer: 'owner', branch: 'feature/design-review-system', total_designs: flatList.length })
+      });
+      if (cr.ok) currentSession = await cr.json();
+    }
+    setSyncStatus('synced');
+  } catch { apiAvailable = false; setSyncStatus('offline'); }
+}
+
+// ═══════════════════════════════════════════════════════════════
+// FLAT INDEX
+// ═══════════════════════════════════════════════════════════════
+let flatList = [];
+function buildFlatList() {
+  flatList = [];
+  CATALOG.forEach((comp, ci) => comp.categories.forEach((cat, cati) =>
+    cat.options.forEach((opt, oi) => flatList.push({ compIdx: ci, catIdx: cati, optIdx: oi, option: opt, category: cat, component: comp }))
+  ));
+}
+function currentFlatIdx() { return flatList.findIndex(f => f.compIdx === st.compIdx && f.catIdx === st.catIdx && f.optIdx === st.optIdx); }
+
+// ═══════════════════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════════════════
+function curComp() { return CATALOG[st.compIdx]; }
+function curCat() { return curComp().categories[st.catIdx]; }
+function curOpt() { return curCat().options[st.optIdx]; }
+function getReview(id) { return reviewData[id] || { verdict: null, comment: '', tags: '' }; }
+function escHtml(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+function genBadge(gen) {
+  const l = { 4: 'Gen 4 Redesign', 3: 'Gen 3 Hardened', 2: 'Gen 2 Draft', 1: 'Gen 1 Explore' };
+  return '<span class="gen-badge gen-' + gen + '">' + (l[gen] || 'Gen ' + gen) + '</span>';
+}
+
+// ═══════════════════════════════════════════════════════════════
+// POPULATE
+// ═══════════════════════════════════════════════════════════════
+function populateComps() {
+  const sel = document.getElementById('compSelect');
+  sel.textContent = '';
+  CATALOG.forEach((c, i) => {
+    const total = c.categories.reduce((s, cat) => s + cat.options.length, 0);
+    const o = document.createElement('option'); o.value = i; o.textContent = c.component + ' (' + total + ')'; sel.appendChild(o);
+  });
+}
+function populateCats() {
+  const sel = document.getElementById('catSelect');
+  sel.textContent = '';
+  curComp().categories.forEach((c, i) => {
+    const o = document.createElement('option'); o.value = i; o.textContent = c.name + ' (' + c.options.length + ')'; sel.appendChild(o);
+  });
+  sel.value = st.catIdx;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// EVENTS
+// ═══════════════════════════════════════════════════════════════
+function onCompChange() { st.compIdx = parseInt(document.getElementById('compSelect').value) || 0; st.catIdx = 0; st.optIdx = 0; populateCats(); render(); }
+function onCatChange() { st.catIdx = parseInt(document.getElementById('catSelect').value) || 0; st.optIdx = 0; render(); }
+function goPrev() { const fi = currentFlatIdx(); if (fi > 0) navigateToFlat(fi - 1); }
+function goNext() { const fi = currentFlatIdx(); if (fi < flatList.length - 1) navigateToFlat(fi + 1); }
+function navigateToFlat(fi) {
+  const f = flatList[fi]; st.compIdx = f.compIdx; st.catIdx = f.catIdx; st.optIdx = f.optIdx;
+  document.getElementById('compSelect').value = st.compIdx; populateCats(); render();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// RENDER
+// ═══════════════════════════════════════════════════════════════
+function render() {
+  const cat = curCat(), opt = curOpt(), fi = currentFlatIdx(), rev = getReview(opt.id);
+
+  document.getElementById('navCounter').textContent = (fi + 1) + ' of ' + flatList.length;
+  document.getElementById('prevBtn').disabled = fi <= 0;
+  document.getElementById('nextBtn').disabled = fi >= flatList.length - 1;
+
+  loadPreview(opt, cat);
+
+  document.getElementById('infoComp').textContent = curComp().component;
+  document.getElementById('infoCat').textContent = cat.name;
+  // Use textContent for the base, then append badge via DOM
+  const infoOpt = document.getElementById('infoOpt');
+  infoOpt.textContent = opt.name;
+  if (opt.generation) { const tmp = document.createElement('span'); tmp.innerHTML = ' ' + genBadge(opt.generation); infoOpt.appendChild(tmp); }
+  document.getElementById('infoSrc').textContent = cat.source;
+
+  document.querySelectorAll('.verdict-btn').forEach(b => {
+    b.className = 'verdict-btn' + (rev.verdict === b.dataset.v ? ' active-' + b.dataset.v : '');
+  });
+
+  document.getElementById('commentBox').value = rev.comment || '';
+  const ti = document.getElementById('tagsInput'); if (ti) ti.value = rev.tags || '';
+  const mc = document.getElementById('mobileCommentBox'); if (mc) mc.value = rev.comment || '';
+
+  renderPrevFeedback(cat, opt);
+  renderProgress();
+}
+
+function loadPreview(opt, cat) {
+  const container = document.getElementById('previewContent');
+  const empty = document.getElementById('emptyState');
+  const existing = container.querySelector('iframe');
+  if (existing) existing.remove();
+  if (empty) empty.style.display = 'none';
+
+  const iframe = document.createElement('iframe');
+  iframe.className = 'preview-iframe'; iframe.src = opt.file; iframe.title = opt.name;
+  container.appendChild(iframe);
+
+  const pTitle = document.getElementById('pTitle');
+  pTitle.textContent = cat.name + ' \u2014 ' + opt.name;
+  if (opt.generation >= 3) { const tmp = document.createElement('span'); tmp.innerHTML = ' ' + genBadge(opt.generation); pTitle.appendChild(tmp); }
+  document.getElementById('pSub').textContent = opt.desc;
+}
+
+function renderPrevFeedback(cat, opt) {
+  const container = document.getElementById('prevFeedback');
+  const fb = cat.feedback && cat.feedback[opt.id];
+  if (!fb) {
+    if (!Object.keys(cat.feedback || {}).length) {
+      container.textContent = 'No previous feedback for this category.';
+      container.style.cssText = 'font-size:12px;color:var(--text-3)';
+      return;
+    }
+    container.style.cssText = '';
+    container.textContent = '';
+    const hint = document.createElement('span');
+    hint.textContent = 'No feedback for this specific option.';
+    hint.style.cssText = 'font-size:12px;color:var(--text-3)';
+    container.appendChild(hint);
+    for (const [oid, note] of Object.entries(cat.feedback)) {
+      const card = document.createElement('div');
+      card.className = 'note-card'; card.style.marginTop = '8px';
+      const lbl = document.createElement('div');
+      lbl.className = 'note-label'; lbl.textContent = oid;
+      const rnd = document.createElement('span');
+      rnd.className = 'note-round'; rnd.textContent = 'Round 1';
+      lbl.appendChild(rnd);
+      card.appendChild(lbl);
+      const txt = document.createTextNode(note);
+      card.appendChild(txt);
+      container.appendChild(card);
+    }
+    return;
+  }
+  container.style.cssText = '';
+  container.textContent = '';
+  const card = document.createElement('div');
+  card.className = 'note-card highlighted';
+  const lbl = document.createElement('div');
+  lbl.className = 'note-label'; lbl.textContent = 'This option ';
+  const rnd = document.createElement('span');
+  rnd.className = 'note-round'; rnd.textContent = 'Round 1';
+  lbl.appendChild(rnd);
+  card.appendChild(lbl);
+  card.appendChild(document.createTextNode(fb));
+  container.appendChild(card);
+}
+
+function renderProgress() {
+  const total = flatList.length;
+  const reviewed = flatList.filter(f => reviewData[f.option.id]?.verdict).length;
+  const keeps = flatList.filter(f => reviewData[f.option.id]?.verdict === 'keep').length;
+  const discards = flatList.filter(f => reviewData[f.option.id]?.verdict === 'discard').length;
+  const revisits = flatList.filter(f => reviewData[f.option.id]?.verdict === 'revisit').length;
+  const skips = flatList.filter(f => reviewData[f.option.id]?.verdict === 'skip').length;
+  const pct = total ? Math.round((reviewed / total) * 100) : 0;
+
+  document.getElementById('progLabel').textContent = reviewed + ' of ' + total + ' reviewed';
+  document.getElementById('progPct').textContent = pct + '%';
+  document.getElementById('progFill').style.width = pct + '%';
+  document.getElementById('keepCount').textContent = keeps;
+  document.getElementById('discardCount').textContent = discards;
+  document.getElementById('revisitCount').textContent = revisits;
+  document.getElementById('skipCount').textContent = skips;
+
+  const mp = document.getElementById('mobileProgLabel'); if (mp) mp.textContent = reviewed + '/' + total;
+  const mk = document.getElementById('mobileKeep'); if (mk) mk.textContent = keeps;
+  const md = document.getElementById('mobileDiscard'); if (md) md.textContent = discards;
+  const mr = document.getElementById('mobileRevisit'); if (mr) mr.textContent = revisits;
+  const ms = document.getElementById('mobileSkip'); if (ms) ms.textContent = skips;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// REVIEW ACTIONS
+// ═══════════════════════════════════════════════════════════════
+function setVerdict(v) {
+  const opt = curOpt();
+  if (!reviewData[opt.id]) reviewData[opt.id] = { verdict: null, comment: '', tags: '' };
+  reviewData[opt.id].verdict = reviewData[opt.id].verdict === v ? null : v;
+  persistReview(); render();
+}
+function saveComment() {
+  const opt = curOpt();
+  if (!reviewData[opt.id]) reviewData[opt.id] = { verdict: null, comment: '', tags: '' };
+  reviewData[opt.id].comment = document.getElementById('commentBox').value;
+  const mc = document.getElementById('mobileCommentBox'); if (mc) mc.value = reviewData[opt.id].comment;
+  persistReview(); renderProgress();
+}
+function saveMobileComment() {
+  const opt = curOpt();
+  if (!reviewData[opt.id]) reviewData[opt.id] = { verdict: null, comment: '', tags: '' };
+  reviewData[opt.id].comment = document.getElementById('mobileCommentBox').value;
+  document.getElementById('commentBox').value = reviewData[opt.id].comment;
+  persistReview(); renderProgress();
+}
+function saveTags() {
+  const opt = curOpt();
+  if (!reviewData[opt.id]) reviewData[opt.id] = { verdict: null, comment: '', tags: '' };
+  reviewData[opt.id].tags = document.getElementById('tagsInput').value;
+  persistReview();
+}
+function openTab() { window.open(curOpt().file, '_blank'); }
+function toggleSide() { st.sideOpen = !st.sideOpen; document.getElementById('sidePanel').classList.toggle('collapsed', !st.sideOpen); }
+
+// ═══════════════════════════════════════════════════════════════
+// SUBMIT
+// ═══════════════════════════════════════════════════════════════
+async function submitReview() {
+  const reviewed = flatList.filter(f => reviewData[f.option.id]?.verdict).length;
+  const keeps = flatList.filter(f => reviewData[f.option.id]?.verdict === 'keep').length;
+  const discards = flatList.filter(f => reviewData[f.option.id]?.verdict === 'discard').length;
+  const revisits = flatList.filter(f => reviewData[f.option.id]?.verdict === 'revisit').length;
+  const skips = flatList.filter(f => reviewData[f.option.id]?.verdict === 'skip').length;
+
+  const decisions = [];
+  flatList.forEach(f => {
+    const r = reviewData[f.option.id];
+    if (r && (r.verdict || r.comment)) decisions.push({
+      component: f.component.id, componentName: f.component.component, category: f.category.id,
+      categoryName: f.category.name, optionId: f.option.id, optionName: f.option.name,
+      file: f.option.file, generation: f.option.generation || 1,
+      verdict: r.verdict || 'undecided', comment: r.comment || '', tags: r.tags || ''
+    });
+  });
+
+  // Finalize via API
+  if (apiAvailable && currentSession) {
+    try {
+      await syncVerdictsToAPI();
+      await fetch(API_BASE + '/api/design-review/sessions/' + currentSession.id, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'completed', reviewed_count: reviewed })
+      });
+    } catch {}
+  }
+
+  // Build markdown
+  let md = '## Design Review Feedback\n\n';
+  md += '**Date:** ' + new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString() + '\n';
+  md += '**Reviewed:** ' + reviewed + ' of ' + flatList.length + ' designs\n';
+  md += '**Round:** ' + (currentSession ? currentSession.round_number : 'N/A') + '\n\n';
+
+  const byV = { keep: [], discard: [], revisit: [], skip: [] };
+  decisions.forEach(d => { if (byV[d.verdict]) byV[d.verdict].push(d); });
+  for (const [v, label] of [['keep','Keep'],['discard','Discard'],['revisit','Revisit'],['skip','Skip']]) {
+    if (byV[v] && byV[v].length) {
+      md += '### ' + label + ' (' + byV[v].length + ')\n\n| Component | Option | Gen | Comment |\n|---|---|---|---|\n';
+      byV[v].forEach(d => { md += '| ' + d.componentName + ' | ' + d.optionName + ' | ' + d.generation + ' | ' + (d.comment || '--') + ' |\n'; });
+      md += '\n';
+    }
+  }
+
+  // Show modal using DOM methods
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+
+  const modal = document.createElement('div');
+  modal.style.cssText = 'background:var(--surface);border:1px solid var(--border);border-radius:var(--r);max-width:700px;width:100%;max-height:80vh;overflow-y:auto;padding:24px';
+
+  const h = document.createElement('h3');
+  h.style.cssText = 'margin-bottom:12px;font-size:16px';
+  h.textContent = 'Review Complete' + (currentSession ? ' \u2014 Round ' + currentSession.round_number : '');
+  modal.appendChild(h);
+
+  const stats = document.createElement('div');
+  stats.style.cssText = 'display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;font-size:13px';
+  stats.textContent = '';
+  [['var(--green)', '\u2713 ' + keeps + ' keep'], ['var(--red)', '\u2717 ' + discards + ' discard'],
+   ['var(--purple)', '\u21BB ' + revisits + ' revisit'], ['var(--blue)', '\u2192 ' + skips + ' skip'],
+   ['var(--text-3)', (flatList.length - reviewed) + ' unreviewed']].forEach(([c, t]) => {
+    const s = document.createElement('span'); s.style.color = c; s.textContent = t; stats.appendChild(s);
+  });
+  modal.appendChild(stats);
+
+  if (apiAvailable) {
+    const db = document.createElement('div'); db.style.cssText = 'font-size:11px;color:var(--green);margin-bottom:12px'; db.textContent = '\u2713 Saved to database'; modal.appendChild(db);
+  }
+
+  const btns = document.createElement('div');
+  btns.style.cssText = 'display:flex;gap:8px;margin-bottom:16px';
+  [['Copy Markdown', 'md', true], ['Copy JSON', 'json', false], ['Download JSON', 'dl', false]].forEach(([label, type, primary]) => {
+    const b = document.createElement('button');
+    b.style.cssText = 'padding:8px 16px;border-radius:var(--r-sm);font-size:12px;font-weight:600;cursor:pointer;border:1px solid ' + (primary ? 'var(--accent)' : 'var(--border)') + ';background:' + (primary ? 'var(--accent-dim)' : 'var(--surface-2)') + ';color:' + (primary ? 'var(--accent)' : 'var(--text-2)');
+    b.textContent = label;
+    b.addEventListener('click', () => type === 'dl' ? downloadJSON() : copyToClipboard(type));
+    btns.appendChild(b);
+  });
+  modal.appendChild(btns);
+
+  const pre = document.createElement('pre');
+  pre.id = 'submitPreview';
+  pre.style.cssText = 'background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px;font-size:11px;color:var(--text-2);white-space:pre-wrap;max-height:300px;overflow-y:auto;line-height:1.5';
+  pre.textContent = md;
+  modal.appendChild(pre);
+
+  overlay.appendChild(modal);
+  document.body.appendChild(overlay);
+
+  window._submitMd = md;
+  window._submitJson = JSON.stringify({ timestamp: new Date().toISOString(), totalDesigns: flatList.length, reviewedCount: reviewed, decisions }, null, 2);
+}
+
+function copyToClipboard(type) {
+  const text = type === 'md' ? window._submitMd : window._submitJson;
+  navigator.clipboard.writeText(text).then(() => {
+    const pre = document.getElementById('submitPreview');
+    if (pre) pre.textContent = text;
+  });
+}
+function downloadJSON() {
+  const blob = new Blob([window._submitJson], { type: 'application/json' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'design-review-' + new Date().toISOString().slice(0,10) + '.json'; a.click();
+}
+
+// ═══════════════════════════════════════════════════════════════
+// KEYBOARD
+// ═══════════════════════════════════════════════════════════════
+document.addEventListener('keydown', e => {
+  if (['TEXTAREA','INPUT','SELECT'].includes(e.target.tagName)) return;
+  switch (e.key) {
+    case 'ArrowLeft': e.preventDefault(); goPrev(); break;
+    case 'ArrowRight': e.preventDefault(); goNext(); break;
+    case 'k': case 'K': setVerdict('keep'); break;
+    case 'd': case 'D': setVerdict('discard'); break;
+    case 'r': case 'R': setVerdict('revisit'); break;
+    case 's': case 'S': setVerdict('skip'); break;
+    case 'i': case 'I': toggleSide(); break;
+    case 'f': case 'F':
+      const iframe = document.querySelector('.preview-iframe');
+      if (iframe) { document.fullscreenElement ? document.exitFullscreen() : iframe.requestFullscreen(); }
+      break;
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════
+// BOOT
+// ═══════════════════════════════════════════════════════════════
+loadReview();
+buildFlatList();
+populateComps();
+populateCats();
+render();
+initAPI();
+</script>
+</body>
+</html>

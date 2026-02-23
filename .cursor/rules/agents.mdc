@@ -5,7 +5,7 @@ alwaysApply: true
 
 # Available Agents (`.claude/agents/`)
 
-This project defines 9 specialized agents that coordinate development workflows. Reference them by name and understand their roles when planning or executing tasks.
+This project defines 10 specialized agents that coordinate development workflows. Reference them by name and understand their roles when planning or executing tasks.
 
 ## Agent Registry
 
@@ -20,6 +20,7 @@ This project defines 9 specialized agents that coordinate development workflows.
 | **github-issue-manager** | Creates/tracks/links GitHub issues across lifecycle | Bug discovered, test failure, tech debt, feature request |
 | **docs-sync-reviewer** | Syncs documentation with code changes post-commit | After code commits, documentation drift detected |
 | **ui-ux-reviewer** | Identifies ugly components, generates 2-3 visual alternatives | UI changes, design review, visual quality issues |
+| **design-review-agent** | Refines kept designs based on review feedback, applies CSS/animation/layout changes | Refine designs from review, apply verdicts, iterate on kept designs |
 
 ## Agent Coordination Flow
 
@@ -37,6 +38,7 @@ This project defines 9 specialized agents that coordinate development workflows.
      worktree-manager    docs-sync-reviewer
 
      ui-ux-reviewer (standalone, user-invoked)
+     design-review-agent (post-review refinement, works with ui-ux-reviewer)
 ```
 
 ## Key Coordination Patterns
@@ -46,6 +48,7 @@ This project defines 9 specialized agents that coordinate development workflows.
 - **CI failures**: ci-test-guardian -> test-suite-maintainer -> github-issue-manager
 - **Pre-release**: test-orchestrator coordinates all agents
 - **Design review**: ui-ux-reviewer generates visual alternatives independently
+- **Design refinement**: design-review-agent fetches review feedback, applies changes, syncs to DB
 
 ## Agent Definition Files
 
@@ -60,6 +63,7 @@ All agent definitions with full instructions live in:
 - `.claude/agents/github-issue-manager.md`
 - `.claude/agents/docs-sync-reviewer.md`
 - `.claude/agents/ui-ux-reviewer.md`
+- `.claude/agents/design-review-agent.md`
 
 Read the relevant agent file(s) before executing tasks that fall within their domain.
 

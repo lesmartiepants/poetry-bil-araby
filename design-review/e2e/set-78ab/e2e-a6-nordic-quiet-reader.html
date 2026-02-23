@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aurora Calligraphy — شعر بالعربي</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --aurora-green: #66FFCC;
+    --aurora-purple: #9966FF;
+    --night: #0A0E14;
+    --gold: #D4B86A;
+    --ice: #C8E6F0;
+    --bg: var(--night);
+    --text: var(--ice);
+    --card-bg: rgba(10, 14, 20, 0.85);
+    --card-border: rgba(102, 255, 204, 0.2);
+    --muted: rgba(200, 230, 240, 0.5);
+  }
+
+  .light-theme {
+    --bg: #F0F4F8;
+    --text: #1A1E28;
+    --card-bg: rgba(255, 255, 255, 0.92);
+    --card-border: rgba(153, 102, 255, 0.25);
+    --muted: rgba(26, 30, 40, 0.5);
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Tajawal', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+    transition: background 0.6s ease, color 0.6s ease;
+  }
+
+  /* ============================================
+     SPLASH SCREEN
+     ============================================ */
+  #splash {
+    position: fixed; inset: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: center;
+    transition: opacity 0.8s ease;
+  }
+  #splash.hidden { opacity: 0; pointer-events: none; }
+  #splash canvas {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%;
+  }
+
+  /* ============================================
+     WALKTHROUGH
+     ============================================ */
+  #walkthrough {
+    position: fixed; inset: 0; z-index: 90;
+    display: flex; align-items: center; justify-content: center;
+    background: var(--bg);
+    transition: opacity 0.6s ease;
+  }
+  #walkthrough.hidden { opacity: 0; pointer-events: none; }
+
+  .wt-card {
+    max-width: 440px; width: 90%;
+    padding: 2.5rem 2rem;
+    text-align: center;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    backdrop-filter: blur(12px);
+  }
+
+  .wt-star {
+    display: block;
+    font-size: 2.2rem;
+    margin-bottom: 0.75rem;
+    color: var(--gold);
+    line-height: 1;
+  }
+
+  .wt-title {
+    font-family: 'Amiri', serif;
+    font-size: 1.65rem;
+    color: var(--aurora-green);
+    margin-bottom: 0.2rem;
+  }
+
+  .wt-latin {
+    font-family: 'Tajawal', sans-serif;
+    font-size: 0.9rem;
+    color: var(--muted);
+    margin-bottom: 1.1rem;
+    direction: ltr;
+    unicode-bidi: isolate;
+  }
+
+  .wt-body {
+    font-size: 1.05rem;
+    line-height: 1.85;
+    margin-bottom: 1.5rem;
+  }
+
+  .wt-dots {
+    display: flex; gap: 8px;
+    justify-content: center;
+    margin-bottom: 1.25rem;
+  }
+
+  .wt-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--muted);
+    transition: background 0.3s ease;
+  }
+  .wt-dot.active { background: var(--aurora-green); }
+
+  .wt-btn {
+    min-width: 140px; min-height: 48px;
+    padding: 0.7rem 2rem;
+    font-family: 'Tajawal', sans-serif;
+    font-size: 1rem; font-weight: 500;
+    border: 1px solid var(--aurora-green);
+    border-radius: 10px;
+    background: transparent;
+    color: var(--aurora-green);
+    cursor: pointer;
+    touch-action: manipulation;
+    transition: background 0.3s ease, color 0.3s ease;
+  }
+  .wt-btn:hover, .wt-btn:focus-visible {
+    background: var(--aurora-green);
+    color: var(--night);
+  }
+
+  /* ============================================
+     MAIN APP
+     ============================================ */
+  #app {
+    display: none;
+    min-height: 100vh;
+    padding: 1.5rem;
+  }
+  #app.visible {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  header {
+    width: 100%; max-width: 720px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+    padding: 0.5rem 0;
+  }
+
+  .brand {
+    font-family: 'Amiri', serif;
+    font-size: 1.45rem;
+    color: var(--aurora-green);
+  }
+
+  .theme-toggle {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    border: 1px solid var(--card-border);
+    background: var(--card-bg);
+    color: var(--gold);
+    font-size: 1.3rem;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    touch-action: manipulation;
+    transition: border-color 0.3s ease;
+  }
+  .theme-toggle:hover, .theme-toggle:focus-visible {
+    border-color: var(--gold);
+  }
+
+  /* ============================================
+     POEM CARD
+     ============================================ */
+  .poem-card {
+    position: relative;
+    width: 100%; max-width: 720px;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: 2.5rem 2rem;
+    backdrop-filter: blur(12px);
+    overflow: hidden;
+  }
+
+  .aurora-border {
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--aurora-green), var(--aurora-purple), var(--aurora-green));
+    background-size: 200% 100%;
+    will-change: background-position;
+    animation: shimmer 4s ease-in-out infinite;
+  }
+
+  @keyframes shimmer {
+    0%, 100% { background-position: 0% 0; }
+    50% { background-position: 100% 0; }
+  }
+
+  .poem-text {
+    font-family: 'Amiri', serif;
+    font-size: 1.7rem;
+    line-height: 2.4;
+    text-align: center;
+    color: var(--text);
+    margin-bottom: 1.5rem;
+  }
+
+  .poem-divider {
+    width: 60px; height: 2px;
+    margin: 0 auto 1rem;
+    background: linear-gradient(90deg, var(--aurora-green), var(--aurora-purple));
+    border-radius: 1px;
+  }
+
+  .poem-poet {
+    font-family: 'Tajawal', sans-serif;
+    font-size: 1.05rem;
+    text-align: center;
+    color: var(--gold);
+  }
+
+  /* ============================================
+     STAR CHIPS
+     ============================================ */
+  .stars-section {
+    width: 100%; max-width: 720px;
+    margin-top: 2rem;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+  }
+
+  .star-chip {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1.25rem 0.5rem;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    transition: border-color 0.3s ease;
+  }
+  .star-chip:hover { border-color: var(--aurora-purple); }
+
+  .star-chip-icon {
+    font-size: 1.3rem;
+    color: var(--gold);
+    margin-bottom: 0.4rem;
+  }
+
+  .star-chip-ar {
+    font-family: 'Amiri', serif;
+    font-size: 1rem;
+    color: var(--aurora-green);
+    margin-bottom: 0.15rem;
+  }
+
+  .star-chip-en {
+    font-size: 0.75rem;
+    color: var(--muted);
+    direction: ltr;
+    unicode-bidi: isolate;
+  }
+
+  /* ============================================
+     HERITAGE NOTE
+     ============================================ */
+  .heritage-note {
+    width: 100%; max-width: 720px;
+    margin-top: 1.5rem;
+    padding: 1.25rem 1.5rem;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 12px;
+    font-size: 0.95rem;
+    line-height: 1.8;
+    text-align: center;
+    color: var(--muted);
+  }
+  .heritage-note strong {
+    color: var(--aurora-green);
+    font-weight: 500;
+  }
+
+  footer {
+    width: 100%; max-width: 720px;
+    text-align: center;
+    margin-top: 2.5rem;
+    padding: 1rem 0;
+    font-size: 0.85rem;
+    color: var(--muted);
+  }
+
+  /* ============================================
+     RESPONSIVE
+     ============================================ */
+  @media (max-width: 768px) {
+    .poem-text { font-size: 1.35rem; line-height: 2.2; }
+    .stars-section { grid-template-columns: repeat(2, 1fr); }
+    .wt-card { padding: 2rem 1.5rem; }
+    .poem-card { padding: 2rem 1.25rem; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+    #splash { display: none !important; }
+    #walkthrough { display: none !important; }
+    #app { display: flex !important; flex-direction: column; align-items: center; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================================
+     SPLASH
+     ============================================ -->
+<div id="splash">
+  <canvas id="splashCanvas"></canvas>
+</div>
+
+<!-- ============================================
+     WALKTHROUGH
+     ============================================ -->
+<div id="walkthrough" class="hidden">
+  <div class="wt-card">
+    <span class="wt-star" aria-hidden="true">&#9733;</span>
+    <div class="wt-title" id="wtTitle"></div>
+    <div class="wt-latin" id="wtLatin"></div>
+    <p class="wt-body" id="wtBody"></p>
+    <div class="wt-dots" id="wtDots" aria-hidden="true"></div>
+    <button class="wt-btn" id="wtBtn" type="button">التالي</button>
+  </div>
+</div>
+
+<!-- ============================================
+     MAIN APP
+     ============================================ -->
+<div id="app">
+  <header>
+    <span class="brand">أنوار الخطّ</span>
+    <button class="theme-toggle" id="themeBtn" type="button" aria-label="تبديل السمة">&#9790;</button>
+  </header>
+
+  <div class="poem-card">
+    <div class="aurora-border" aria-hidden="true"></div>
+    <p class="poem-text">
+      أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ<br>
+      فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
+    </p>
+    <div class="poem-divider" aria-hidden="true"></div>
+    <p class="poem-poet">-- أحمد شوقي</p>
+  </div>
+
+  <div class="stars-section" role="list" aria-label="نجوم ذات أسماء عربية">
+    <div class="star-chip" role="listitem">
+      <span class="star-chip-icon" aria-hidden="true">&#9733;</span>
+      <span class="star-chip-ar">الدبران</span>
+      <span class="star-chip-en">Aldebaran</span>
+    </div>
+    <div class="star-chip" role="listitem">
+      <span class="star-chip-icon" aria-hidden="true">&#9733;</span>
+      <span class="star-chip-ar">النسر الطائر</span>
+      <span class="star-chip-en">Altair</span>
+    </div>
+    <div class="star-chip" role="listitem">
+      <span class="star-chip-icon" aria-hidden="true">&#9733;</span>
+      <span class="star-chip-ar">ذنب الدجاجة</span>
+      <span class="star-chip-en">Deneb</span>
+    </div>
+    <div class="star-chip" role="listitem">
+      <span class="star-chip-icon" aria-hidden="true">&#9733;</span>
+      <span class="star-chip-ar">النسر الواقع</span>
+      <span class="star-chip-en">Vega</span>
+    </div>
+  </div>
+
+  <div class="heritage-note">
+    <strong>من تراث الفلك العربي:</strong>
+    أكثر من نصف أسماء النجوم المتداولة عالميًّا اليوم ذات أصول عربية،
+    شاهدة على إسهامات علماء المسلمين في رصد السماء وتوثيقها.
+  </div>
+
+  <footer>أنوار الخطّ -- تراث الفلك العربي يتجلّى في حروف الشعر</footer>
+</div>
+
+<!-- ============================================
+     SCRIPTS
+     ============================================ -->
+<script>
+(function () {
+  'use strict';
+
+  /* ========== Walkthrough Data ========== */
+  var STEPS = [
+    {
+      ar: 'الدبران',
+      en: 'Aldebaran',
+      body: 'عين الثور المتوهّجة -- سمّاها الفلكيّون العرب «الدبران» لأنّها تتبع الثريّا في مسيرها عبر السماء.'
+    },
+    {
+      ar: 'النسر الطائر',
+      en: 'Altair',
+      body: 'نجم المثلّث الصيفي، أطلق عليه العرب اسم «النسر الطائر» لجناحيه المنشورين من نجمَيه المرافقَين.'
+    },
+    {
+      ar: 'ذنب الدجاجة',
+      en: 'Deneb',
+      body: 'ألمع نجوم كوكبة الدجاجة، واسمه العربي يعني «ذنب الدجاجة»، إرث فلكي خالد.'
+    },
+    {
+      ar: 'النسر الواقع',
+      en: 'Vega',
+      body: 'من أسطع نجوم السماء، اسمه من «النسر الواقع» أي النسر المنقضّ -- شاهد على عبقرية الراصدين العرب.'
+    }
+  ];
+
+  /* ========== DOM refs ========== */
+  var splashEl    = document.getElementById('splash');
+  var canvas      = document.getElementById('splashCanvas');
+  var ctx         = canvas.getContext('2d');
+  var wtEl        = document.getElementById('walkthrough');
+  var wtTitle     = document.getElementById('wtTitle');
+  var wtLatin     = document.getElementById('wtLatin');
+  var wtBody      = document.getElementById('wtBody');
+  var wtDots      = document.getElementById('wtDots');
+  var wtBtn       = document.getElementById('wtBtn');
+  var appEl       = document.getElementById('app');
+  var themeBtn    = document.getElementById('themeBtn');
+
+  var prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  /* ============================================
+     SPLASH CANVAS -- Aurora + Ba Masking
+     ============================================ */
+  var splashRaf = 0;
+  var splashDone = false;
+
+  function sizeCanvas() {
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  sizeCanvas();
+  window.addEventListener('resize', sizeCanvas);
+
+  function segmentCount() {
+    return window.innerWidth <= 768 ? 40 : 80;
+  }
+
+  function drawAuroraBand(target, w, h, time, bandIdx, segs) {
+    var baseY     = h * 0.28 + bandIdx * h * 0.13;
+    var amplitude = 45 + bandIdx * 14;
+    var speed     = 0.0007 + bandIdx * 0.00025;
+    var phase     = time * speed;
+
+    target.beginPath();
+    target.moveTo(0, h);
+    for (var i = 0; i <= segs; i++) {
+      var x = (i / segs) * w;
+      var y = baseY + Math.sin((i / segs) * Math.PI * 3 + phase + bandIdx * 0.9) * amplitude;
+      target.lineTo(x, y);
+    }
+    target.lineTo(w, h);
+    target.closePath();
+
+    var grad = target.createLinearGradient(0, baseY - amplitude, 0, baseY + amplitude + h * 0.25);
+    if (bandIdx % 2 === 0) {
+      grad.addColorStop(0, 'rgba(102,255,204,0.38)');
+      grad.addColorStop(0.55, 'rgba(102,255,204,0.07)');
+      grad.addColorStop(1, 'transparent');
+    } else {
+      grad.addColorStop(0, 'rgba(153,102,255,0.32)');
+      grad.addColorStop(0.55, 'rgba(153,102,255,0.06)');
+      grad.addColorStop(1, 'transparent');
+    }
+    target.fillStyle = grad;
+    target.fill();
+  }
+
+  function drawSplash(time) {
+    var w = canvas.width;
+    var h = canvas.height;
+    var segs = segmentCount();
+
+    ctx.clearRect(0, 0, w, h);
+
+    /* Night sky background */
+    ctx.fillStyle = '#0A0E14';
+    ctx.fillRect(0, 0, w, h);
+
+    /* Background aurora bands */
+    for (var b = 0; b < 3; b++) {
+      drawAuroraBand(ctx, w, h, time, b, segs);
+    }
+
+    /* ------ Masked Ba letter ------ */
+    var fontSize = Math.min(w, h) * 0.52;
+    var off = document.createElement('canvas');
+    off.width = w;
+    off.height = h;
+    var oc = off.getContext('2d');
+
+    /* Draw letter shape */
+    oc.font = '700 ' + fontSize + 'px Amiri, serif';
+    oc.textAlign = 'center';
+    oc.textBaseline = 'middle';
+    oc.fillStyle = '#ffffff';
+    oc.fillText('\u0628', w / 2, h / 2);
+
+    /* source-atop: paint only inside the letter */
+    oc.globalCompositeOperation = 'source-atop';
+
+    for (var mb = 0; mb < 4; mb++) {
+      var by = h * 0.22 + mb * h * 0.14;
+      var amp = 55 + mb * 10;
+      var sp  = 0.0009 + mb * 0.0004;
+      var ph  = time * sp;
+
+      oc.beginPath();
+      oc.moveTo(0, h);
+      for (var j = 0; j <= segs; j++) {
+        var px = (j / segs) * w;
+        var py = by + Math.sin((j / segs) * Math.PI * 2.5 + ph + mb * 1.4) * amp;
+        oc.lineTo(px, py);
+      }
+      oc.lineTo(w, h);
+      oc.closePath();
+
+      var g = oc.createLinearGradient(0, by - amp, w, by + amp);
+      if (mb % 2 === 0) {
+        g.addColorStop(0, 'rgba(102,255,204,0.92)');
+        g.addColorStop(1, 'rgba(153,102,255,0.7)');
+      } else {
+        g.addColorStop(0, 'rgba(153,102,255,0.88)');
+        g.addColorStop(1, 'rgba(102,255,204,0.65)');
+      }
+      oc.fillStyle = g;
+      oc.fill();
+    }
+
+    ctx.drawImage(off, 0, 0);
+
+    /* Shimmer particles */
+    for (var p = 0; p < 14; p++) {
+      var sx = (Math.sin(time * 0.00028 + p * 2.3) * 0.5 + 0.5) * w;
+      var sy = (Math.cos(time * 0.00035 + p * 1.8) * 0.5 + 0.5) * h;
+      var sr = 1.1 + Math.sin(time * 0.002 + p) * 0.9;
+      ctx.beginPath();
+      ctx.arc(sx, sy, Math.max(sr, 0.5), 0, Math.PI * 2);
+      ctx.fillStyle = p % 3 === 0
+        ? 'rgba(212,184,106,0.55)'
+        : p % 3 === 1
+          ? 'rgba(102,255,204,0.5)'
+          : 'rgba(153,102,255,0.45)';
+      ctx.fill();
+    }
+  }
+
+  function splashLoop(time) {
+    if (splashDone) return;
+    drawSplash(time);
+    splashRaf = requestAnimationFrame(splashLoop);
+  }
+
+  /* ========== Splash lifecycle ========== */
+  if (!prefersReduced) {
+    splashRaf = requestAnimationFrame(splashLoop);
+
+    setTimeout(function () {
+      splashDone = true;
+      cancelAnimationFrame(splashRaf);
+      splashEl.classList.add('hidden');
+
+      setTimeout(function () {
+        splashEl.style.display = 'none';
+        showWalkthrough();
+      }, 850);
+    }, 4000);
+  } else {
+    splashEl.style.display = 'none';
+    wtEl.style.display = 'none';
+    appEl.classList.add('visible');
+  }
+
+  /* ============================================
+     WALKTHROUGH LOGIC
+     ============================================ */
+  var wtStep = 0;
+
+  function renderStep() {
+    var s = STEPS[wtStep];
+    wtTitle.textContent = s.ar;
+    wtLatin.textContent = s.en;
+    wtBody.textContent  = s.body;
+
+    /* Build dots safely using DOM methods */
+    while (wtDots.firstChild) {
+      wtDots.removeChild(wtDots.firstChild);
+    }
+    for (var i = 0; i < STEPS.length; i++) {
+      var dot = document.createElement('span');
+      dot.className = 'wt-dot' + (i === wtStep ? ' active' : '');
+      wtDots.appendChild(dot);
+    }
+
+    wtBtn.textContent = wtStep < STEPS.length - 1 ? 'التالي' : 'ابدأ الرحلة';
+  }
+
+  function showWalkthrough() {
+    wtEl.classList.remove('hidden');
+    renderStep();
+  }
+
+  wtBtn.addEventListener('click', function () {
+    if (wtStep < STEPS.length - 1) {
+      wtStep++;
+      renderStep();
+    } else {
+      wtEl.classList.add('hidden');
+      setTimeout(function () {
+        wtEl.style.display = 'none';
+        appEl.classList.add('visible');
+      }, 650);
+    }
+  });
+
+  /* ============================================
+     THEME TOGGLE
+     ============================================ */
+  var isLight = false;
+  var moonChar = '\u263E';  /* crescent moon */
+  var sunChar  = '\u2600';  /* sun */
+
+  themeBtn.addEventListener('click', function () {
+    isLight = !isLight;
+    document.body.classList.toggle('light-theme', isLight);
+    themeBtn.textContent = isLight ? sunChar : moonChar;
+    themeBtn.setAttribute(
+      'aria-label',
+      isLight ? 'التبديل إلى الوضع الداكن' : 'التبديل إلى الوضع الفاتح'
+    );
+  });
+
+})();
+</script>
+</body>
+</html>

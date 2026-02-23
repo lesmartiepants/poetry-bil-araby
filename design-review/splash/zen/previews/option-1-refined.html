@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Option 1: Refined Zen - Minimal with Smoke</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #000000;
+      color: #ffffff;
+      overflow: hidden;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    body.light {
+      background: #fff;
+      color: #000;
+    }
+
+    /* Particle canvas */
+    .particle-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    /* Smoke canvas */
+    .smoke-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 2;
+      opacity: 0.4;
+    }
+
+    .theme-toggle {
+      position: fixed;
+      top: 2rem;
+      right: 2rem;
+      z-index: 50;
+      padding: 0.75rem;
+      border-radius: 9999px;
+      backdrop-filter: blur(24px);
+      background: rgba(255, 255, 255, 0.05);
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .theme-toggle:hover {
+      transform: scale(1.1);
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    body.light .theme-toggle {
+      background: rgba(0, 0, 0, 0.05);
+    }
+
+    body.light .theme-toggle:hover {
+      background: rgba(0, 0, 0, 0.1);
+    }
+
+    .theme-icon {
+      width: 20px;
+      height: 20px;
+      color: rgba(255, 255, 255, 0.6);
+    }
+
+    body.light .theme-icon {
+      color: rgba(0, 0, 0, 0.6);
+    }
+
+    .content {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      max-width: 800px;
+      padding: 40px;
+      opacity: 0;
+      animation: fadeIn 1.5s ease-out 0.3s forwards;
+    }
+
+    @keyframes fadeIn {
+      to { opacity: 1; }
+    }
+
+    /* Logo with particles brand styling - RTL layout */
+    .logo {
+      display: flex;
+      flex-direction: row-reverse; /* Arabic on right */
+      align-items: flex-end; /* Align to bottom baseline */
+      justify-content: center;
+      gap: 24px;
+      margin-bottom: 48px;
+    }
+
+    .logo-ar {
+      font-family: 'Amiri', serif;
+      font-size: 72px;
+      font-weight: 700;
+      color: #ffffff;
+      letter-spacing: 0.05em;
+      margin-bottom: 8px; /* Slight offset */
+    }
+
+    body.light .logo-ar {
+      color: #000000;
+    }
+
+    .logo-en {
+      font-size: 84px;
+      font-weight: 200;
+      color: #ffffff;
+      letter-spacing: -0.03em;
+      text-transform: lowercase;
+    }
+
+    body.light .logo-en {
+      color: #000000;
+    }
+
+    /* Enhanced subtitle */
+    .subtitle {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.4em;
+      color: #a8a8a8;
+      margin-bottom: 64px;
+      font-weight: 500;
+      opacity: 0;
+      animation: fadeIn 1s ease-out 2s forwards;
+    }
+
+    body.light .subtitle {
+      color: #666666;
+    }
+
+    @media (max-width: 768px) {
+      .logo-ar {
+        font-size: 48px;
+      }
+      .logo-en {
+        font-size: 56px;
+      }
+      .subtitle {
+        font-size: 9px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Particle canvas (brand particles) -->
+  <canvas id="particleCanvas" class="particle-canvas"></canvas>
+
+  <!-- Smoke canvas (minimal zen smoke) -->
+  <canvas id="smokeCanvas" class="smoke-canvas"></canvas>
+
+  <button class="theme-toggle" onclick="toggleTheme(event)" aria-label="Toggle theme">
+    <svg class="theme-icon sun-icon" style="display: none;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <circle cx="12" cy="12" r="5"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+    <svg class="theme-icon moon-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+    </svg>
+  </button>
+
+  <div class="content" onclick="fadeOut()">
+    <div class="logo">
+      <span class="logo-ar">بالعربي</span>
+      <span class="logo-en">poetry</span>
+    </div>
+
+    <div class="subtitle">
+      Verses Connecting Across Time and Space
+    </div>
+  </div>
+
+  <script>
+    // Theme toggle
+    function toggleTheme(e) {
+      e.stopPropagation();
+      document.body.classList.toggle('light');
+      const sunIcon = document.querySelector('.sun-icon');
+      const moonIcon = document.querySelector('.moon-icon');
+
+      if (document.body.classList.contains('light')) {
+        sunIcon.style.display = 'block';
+        moonIcon.style.display = 'none';
+      } else {
+        sunIcon.style.display = 'none';
+        moonIcon.style.display = 'block';
+      }
+    }
+
+    function fadeOut() {
+      document.querySelector('.content').style.opacity = '0';
+      document.querySelector('.content').style.transition = 'opacity 0.7s ease';
+    }
+
+    // ========== PARTICLES SYSTEM (Brand) ==========
+    const particleCanvas = document.getElementById('particleCanvas');
+    const particleCtx = particleCanvas.getContext('2d');
+
+    particleCanvas.width = window.innerWidth;
+    particleCanvas.height = window.innerHeight;
+
+    const particles = [];
+    const particleCount = 400;
+    const mouse = { x: particleCanvas.width / 2, y: particleCanvas.height / 2 };
+
+    // Generate particles in calligraphic pattern
+    for (let i = 0; i < particleCount; i++) {
+      const curve = Math.floor(Math.random() * 3);
+      const curves = [
+        { x: 0.7, y: 0.5, radius: 0.12 },
+        { x: 0.5, y: 0.5, radius: 0.10 },
+        { x: 0.3, y: 0.5, radius: 0.14 }
+      ];
+
+      const c = curves[curve];
+      const angle = Math.random() * Math.PI * 2;
+      const distance = Math.random() * c.radius;
+
+      particles.push({
+        x: (c.x + Math.cos(angle) * distance) * particleCanvas.width,
+        y: (c.y + Math.sin(angle) * distance) * particleCanvas.height,
+        originX: (c.x + Math.cos(angle) * distance) * particleCanvas.width,
+        originY: (c.y + Math.sin(angle) * distance) * particleCanvas.height,
+        vx: 0,
+        vy: 0,
+        radius: Math.random() * 1.5 + 0.5,
+        opacity: Math.random() * 0.4 + 0.4,
+        twinklePhase: Math.random() * Math.PI * 2,
+        twinkleSpeed: Math.random() * 0.02 + 0.01
+      });
+    }
+
+    // Mouse tracking
+    window.addEventListener('mousemove', (e) => {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+    });
+
+    // Particle animation loop
+    function animateParticles() {
+      particleCtx.clearRect(0, 0, particleCanvas.width, particleCanvas.height);
+
+      particles.forEach(p => {
+        // Mouse repulsion
+        const dx = mouse.x - p.x;
+        const dy = mouse.y - p.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        const minDistance = 120;
+
+        if (distance < minDistance) {
+          const force = (minDistance - distance) / minDistance;
+          p.vx -= (dx / distance) * force * 0.8;
+          p.vy -= (dy / distance) * force * 0.8;
+        }
+
+        // Return to origin
+        p.vx += (p.originX - p.x) * 0.001;
+        p.vy += (p.originY - p.y) * 0.001;
+
+        // Apply velocity with damping
+        p.vx *= 0.95;
+        p.vy *= 0.95;
+        p.x += p.vx;
+        p.y += p.vy;
+
+        // Update twinkling phase
+        p.twinklePhase += p.twinkleSpeed;
+
+        // Calculate twinkling opacity
+        const twinkle = Math.sin(p.twinklePhase) * 0.3 + 0.7;
+        const finalOpacity = p.opacity * twinkle;
+
+        // Adapt colors for light/dark mode
+        const isDark = !document.body.classList.contains('light');
+        const coreColor = isDark ? 'rgba(200, 220, 255,' : 'rgba(100, 120, 140,';
+        const glowColor = isDark ? 'rgba(180, 200, 255,' : 'rgba(80, 100, 120,';
+
+        // Draw particle with glow halo
+        particleCtx.beginPath();
+        const glowGradient = particleCtx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius * 4);
+        glowGradient.addColorStop(0, `${coreColor} ${finalOpacity * 0.6})`);
+        glowGradient.addColorStop(0.3, `${glowColor} ${finalOpacity * 0.3})`);
+        glowGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        particleCtx.fillStyle = glowGradient;
+        particleCtx.arc(p.x, p.y, p.radius * 4, 0, Math.PI * 2);
+        particleCtx.fill();
+
+        // Inner bright core
+        particleCtx.beginPath();
+        const coreGradient = particleCtx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius);
+        coreGradient.addColorStop(0, isDark ? `rgba(255, 255, 255, ${finalOpacity})` : `rgba(0, 0, 0, ${finalOpacity})`);
+        coreGradient.addColorStop(0.7, isDark ? `rgba(240, 245, 255, ${finalOpacity * 0.5})` : `rgba(100, 100, 100, ${finalOpacity * 0.5})`);
+        coreGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        particleCtx.fillStyle = coreGradient;
+        particleCtx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        particleCtx.fill();
+      });
+
+      requestAnimationFrame(animateParticles);
+    }
+
+    animateParticles();
+
+    // ========== SMOKE SYSTEM (Zen minimal) ==========
+    const smokeCanvas = document.getElementById('smokeCanvas');
+    const smokeCtx = smokeCanvas.getContext('2d');
+
+    smokeCanvas.width = window.innerWidth;
+    smokeCanvas.height = window.innerHeight;
+
+    const smokeParticles = [];
+    const smokeCount = 30;
+
+    // Create smoke particles
+    for (let i = 0; i < smokeCount; i++) {
+      smokeParticles.push({
+        x: Math.random() * smokeCanvas.width,
+        y: smokeCanvas.height + Math.random() * 200,
+        vx: (Math.random() - 0.5) * 0.3,
+        vy: -(Math.random() * 0.4 + 0.2),
+        radius: Math.random() * 60 + 40,
+        opacity: Math.random() * 0.15 + 0.05,
+        life: Math.random() * 100
+      });
+    }
+
+    function animateSmoke() {
+      smokeCtx.clearRect(0, 0, smokeCanvas.width, smokeCanvas.height);
+
+      const isDark = !document.body.classList.contains('light');
+
+      smokeParticles.forEach((s, index) => {
+        // Move smoke
+        s.x += s.vx;
+        s.y += s.vy;
+        s.life++;
+
+        // Fade out over time
+        const lifeFade = Math.max(0, 1 - s.life / 200);
+        const currentOpacity = s.opacity * lifeFade;
+
+        // Reset particle when it fades out
+        if (s.life > 200 || s.y < -100) {
+          s.x = Math.random() * smokeCanvas.width;
+          s.y = smokeCanvas.height + Math.random() * 200;
+          s.life = 0;
+          s.opacity = Math.random() * 0.15 + 0.05;
+        }
+
+        // Draw smoke puff
+        smokeCtx.beginPath();
+        const gradient = smokeCtx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.radius);
+        if (isDark) {
+          gradient.addColorStop(0, `rgba(255, 255, 255, ${currentOpacity})`);
+          gradient.addColorStop(0.5, `rgba(240, 240, 240, ${currentOpacity * 0.5})`);
+          gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        } else {
+          gradient.addColorStop(0, `rgba(0, 0, 0, ${currentOpacity})`);
+          gradient.addColorStop(0.5, `rgba(50, 50, 50, ${currentOpacity * 0.5})`);
+          gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
+        }
+        smokeCtx.fillStyle = gradient;
+        smokeCtx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
+        smokeCtx.fill();
+      });
+
+      requestAnimationFrame(animateSmoke);
+    }
+
+    animateSmoke();
+
+    // Resize handler
+    window.addEventListener('resize', () => {
+      particleCanvas.width = window.innerWidth;
+      particleCanvas.height = window.innerHeight;
+      smokeCanvas.width = window.innerWidth;
+      smokeCanvas.height = window.innerHeight;
+    });
+  </script>
+</body>
+</html>

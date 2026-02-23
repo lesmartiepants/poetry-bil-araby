@@ -100,9 +100,9 @@ PORT              // API server port (defaults to 3001)
 
 ## Agent System
 
-9 specialized agents live in `.claude/agents/`. Cursor discovers them via `.cursor/rules/agents.mdc`.
+10 specialized agents live in `.claude/agents/`. Cursor discovers them via `.cursor/rules/agents.mdc`.
 
-**Agents:** `test-orchestrator`, `test-suite-maintainer`, `test-coverage-reviewer`, `ci-test-guardian`, `git-workflow-manager`, `worktree-manager`, `github-issue-manager`, `docs-sync-reviewer`, `ui-ux-reviewer`
+**Agents:** `test-orchestrator`, `test-suite-maintainer`, `test-coverage-reviewer`, `ci-test-guardian`, `git-workflow-manager`, `worktree-manager`, `github-issue-manager`, `docs-sync-reviewer`, `ui-ux-reviewer`, `design-review-agent`
 
 **Maintenance Rule -- MANDATORY when creating or modifying agents:**
 1. Update `.cursor/rules/agents.mdc` -- keep the Agent Registry table, coordination flow, and file list in sync
@@ -114,7 +114,7 @@ PORT              // API server port (defaults to 3001)
 **Core:** `src/app.jsx` (main app), `server.js` (API), `package.json` (scripts)
 **Tests:** `src/test/*.test.jsx`, `e2e/*.spec.js`
 **Config:** `vite.config.js`, `vitest.config.js`, `playwright.config.js`, `tailwind.config.js`
-**Agents:** `.claude/agents/*.md` (9 agent definitions), `.cursor/rules/agents.mdc` (Cursor discovery)
+**Agents:** `.claude/agents/*.md` (10 agent definitions), `.cursor/rules/agents.mdc` (Cursor discovery)
 **Docs:** `README.md`, `DEPLOYMENT.md`, `.github/TESTING_STRATEGY.md`
 
 ## Common Gotchas

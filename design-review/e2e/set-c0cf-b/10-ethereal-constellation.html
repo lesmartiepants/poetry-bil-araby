@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>10 - Ethereal Constellation - كوكبة أثيرية</title>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #030510;
+            --bg-light: #FDFCF8;
+            --text-dark: #eef2ff;
+            --text-light: #1a1a1a;
+            --gold: #C5A059;
+            --indigo: #4F46E5;
+            --purple: #a78bfa;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-dark);
+            overflow-x: hidden;
+            transition: background 0.4s ease;
+        }
+        body.light { background: var(--bg-light); color: var(--text-light); }
+        .splash-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100vh;
+            background: var(--bg-dark); display: flex; align-items: center;
+            justify-content: center; z-index: 9999;
+            animation: splashFadeOut 1s ease 4s forwards;
+        }
+        body.light .splash-screen { background: var(--bg-light); }
+        .constellation-container {
+            position: relative; width: 500px; height: 400px;
+        }
+        .constellation-svg {
+            width: 100%; height: 100%;
+        }
+        .star {
+            fill: var(--purple); animation: starPulse 2s ease-in-out infinite;
+        }
+        .star:nth-child(2n) { animation-delay: 0.5s; }
+        .star:nth-child(3n) { animation-delay: 1s; }
+        @keyframes starPulse {
+            0%, 100% { opacity: 0.6; r: 3; }
+            50% { opacity: 1; r: 5; }
+        }
+        .constellation-line {
+            stroke: var(--purple); stroke-width: 1; fill: none;
+            stroke-dasharray: 1000; stroke-dashoffset: 1000;
+            animation: drawLine 3s ease-out forwards;
+        }
+        .constellation-line:nth-child(1) { animation-delay: 0.5s; }
+        .constellation-line:nth-child(2) { animation-delay: 1s; }
+        .constellation-line:nth-child(3) { animation-delay: 1.5s; }
+        .constellation-line:nth-child(4) { animation-delay: 2s; }
+        .constellation-line:nth-child(5) { animation-delay: 2.5s; }
+        @keyframes drawLine {
+            to { stroke-dashoffset: 0; }
+        }
+        .splash-text {
+            position: absolute; bottom: -60px; left: 50%;
+            transform: translateX(-50%); font-family: 'Amiri', serif;
+            font-size: 2rem; font-weight: 700; text-align: center;
+            color: var(--purple); animation: textFadeIn 1s ease 2s forwards;
+            opacity: 0;
+        }
+        @keyframes textFadeIn { to { opacity: 1; } }
+        @keyframes splashFadeOut {
+            to { opacity: 0; pointer-events: none; }
+        }
+        .main-content {
+            min-height: 100vh; padding: 2rem; opacity: 0;
+            animation: contentFadeIn 1s ease 4.5s forwards;
+        }
+        @keyframes contentFadeIn { to { opacity: 1; } }
+        header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 3rem;
+        }
+        h1 {
+            font-family: 'Amiri', serif; font-size: 2.5rem;
+            font-weight: 700; color: var(--purple);
+        }
+        .theme-toggle {
+            width: 60px; height: 60px; border-radius: 50%;
+            border: 2px solid var(--purple); background: transparent;
+            color: var(--purple); font-size: 1.5rem; cursor: pointer;
+            transition: all 0.3s ease; display: flex;
+            align-items: center; justify-content: center; will-change: transform;
+        }
+        .theme-toggle:hover {
+            background: var(--purple); color: var(--bg-dark);
+            transform: rotate(360deg);
+        }
+        body.light .theme-toggle:hover { color: var(--bg-light); }
+        .container { max-width: 900px; margin: 0 auto; }
+        .poem-card {
+            padding: 3rem; background: rgba(255, 255, 255, 0.03);
+            border-radius: 20px; border: 1px solid rgba(167, 139, 250, 0.2);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3); margin-bottom: 2rem;
+        }
+        body.light .poem-card {
+            background: white;
+            border: 1px solid rgba(167, 139, 250, 0.15);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+        }
+        .poem-text {
+            font-family: 'Amiri', serif; font-size: 2rem; line-height: 2.5;
+            text-align: center; color: var(--text-dark); margin-bottom: 2rem;
+        }
+        body.light .poem-text { color: var(--text-light); }
+        .poem-author {
+            font-family: 'Amiri', serif; font-size: 1.3rem;
+            text-align: center; color: var(--purple);
+        }
+        .vertical-controls {
+            position: fixed; right: 20px; top: 50%; transform: translateY(-50%);
+            display: flex; flex-direction: column; gap: 1px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px; overflow: hidden;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+        }
+        body.light .vertical-controls {
+            background: rgba(0, 0, 0, 0.03);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+        }
+        .notion-btn {
+            width: 44px; height: 44px; display: flex;
+            align-items: center; justify-content: center;
+            background: transparent; border: none; cursor: pointer;
+            color: rgba(167, 139, 250, 0.6); font-size: 1.1rem;
+            transition: all 0.2s ease;
+        }
+        body.light .notion-btn { color: rgba(0, 0, 0, 0.4); }
+        .notion-btn:hover {
+            background: rgba(167, 139, 250, 0.15); color: var(--purple);
+        }
+        body.light .notion-btn:hover {
+            background: rgba(167, 139, 250, 0.1);
+            color: var(--indigo);
+        }
+        .divider {
+            height: 1px; background: rgba(255, 255, 255, 0.06);
+        }
+        body.light .divider { background: rgba(0, 0, 0, 0.06); }
+        .walkthrough {
+            margin-top: 3rem; padding: 2.5rem;
+            background: rgba(255, 255, 255, 0.03); border-radius: 20px;
+            border: 1px solid rgba(167, 139, 250, 0.2);
+        }
+        body.light .walkthrough {
+            background: white; border: 1px solid rgba(167, 139, 250, 0.15);
+        }
+        .walkthrough h2 {
+            font-family: 'Amiri', serif; font-size: 2rem;
+            color: var(--purple); margin-bottom: 2rem; text-align: center;
+        }
+        .steps {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+        }
+        .step {
+            padding: 1.5rem; background: rgba(167, 139, 250, 0.05);
+            border-radius: 12px; border-left: 3px solid var(--purple);
+            transition: all 0.3s ease;
+        }
+        .step:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(167, 139, 250, 0.3);
+        }
+        .step-number {
+            font-size: 2rem; font-weight: 700;
+            color: var(--purple); margin-bottom: 0.5rem;
+        }
+        .step-title {
+            font-family: 'Amiri', serif; font-size: 1.2rem;
+            font-weight: 700; margin-bottom: 0.5rem;
+        }
+        .step-desc {
+            font-size: 0.95rem; opacity: 0.7; line-height: 1.6;
+        }
+        @media (max-width: 768px) {
+            h1 { font-size: 1.8rem; }
+            .constellation-container { width: 90%; height: 300px; }
+            .splash-text { font-size: 1.5rem; bottom: -50px; }
+            .theme-toggle { width: 50px; height: 50px; font-size: 1.2rem; }
+            .poem-card { padding: 2rem; }
+            .poem-text { font-size: 1.5rem; line-height: 2; }
+            .vertical-controls { right: 10px; }
+            .notion-btn { width: 38px; height: 38px; font-size: 1rem; }
+            .steps { grid-template-columns: 1fr; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+        .theme-toggle:focus, .notion-btn:focus {
+            outline: 3px solid var(--purple); outline-offset: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="splash-screen">
+        <div class="constellation-container">
+            <svg class="constellation-svg" viewBox="0 0 500 400">
+                <line class="constellation-line" x1="100" y1="150" x2="200" y2="100"/>
+                <line class="constellation-line" x1="200" y1="100" x2="300" y2="150"/>
+                <line class="constellation-line" x1="300" y1="150" x2="400" y2="120"/>
+                <line class="constellation-line" x1="200" y1="100" x2="250" y2="250"/>
+                <line class="constellation-line" x1="300" y1="150" x2="250" y2="250"/>
+                <circle class="star" cx="100" cy="150" r="4"/>
+                <circle class="star" cx="200" cy="100" r="5"/>
+                <circle class="star" cx="300" cy="150" r="4"/>
+                <circle class="star" cx="400" cy="120" r="4"/>
+                <circle class="star" cx="250" cy="250" r="5"/>
+            </svg>
+            <div class="splash-text">كوكبة أثيرية</div>
+        </div>
+    </div>
+    <div class="main-content">
+        <header>
+            <h1>كوكبة أثيرية - Ethereal Constellation</h1>
+            <button class="theme-toggle" aria-label="Toggle theme">☀️</button>
+        </header>
+        <div class="container">
+            <div class="poem-card">
+                <div class="poem-text" lang="ar">
+                    أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ
+                    <br>
+                    فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
+                </div>
+                <div class="poem-author">— أحمد شوقي</div>
+            </div>
+            <div class="walkthrough">
+                <h2>كيفية الاستخدام</h2>
+                <div class="steps">
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <div class="step-title">انطلق</div>
+                        <div class="step-desc">ابدأ رحلتك في عالم الشعر العربي</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div class="step-title">اكتشف</div>
+                        <div class="step-desc">استكشف قصائد من عصور مختلفة</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div class="step-title">تفاعل</div>
+                        <div class="step-desc">احفظ واستمع وشارك المفضلات</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">4</div>
+                        <div class="step-title">استمتع</div>
+                        <div class="step-desc">اغمر نفسك في جمال اللغة العربية</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="vertical-controls">
+            <button class="notion-btn" aria-label="Refresh">↻</button>
+            <div class="divider"></div>
+            <button class="notion-btn" aria-label="Play">▶</button>
+            <div class="divider"></div>
+            <button class="notion-btn" aria-label="Save">♥</button>
+            <div class="divider"></div>
+            <button class="notion-btn" aria-label="Text size">Aa</button>
+            <div class="divider"></div>
+            <button class="notion-btn" aria-label="Translation">ع</button>
+        </div>
+    </div>
+    <script>
+        const themeToggle = document.querySelector('.theme-toggle');
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('light');
+            themeToggle.textContent = document.body.classList.contains('light') ? '🌙' : '☀️';
+        });
+        const buttons = document.querySelectorAll('.notion-btn');
+        buttons.forEach(btn => {
+            btn.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    btn.click();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

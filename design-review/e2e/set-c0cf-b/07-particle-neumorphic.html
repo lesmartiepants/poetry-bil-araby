@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>07 - Waveform Spectrum - طيف الموجات</title>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0c0c0e;
+            --bg-light: #f0f0f4;
+            --text-dark: #e8e8e8;
+            --text-light: #1a1a1a;
+            --gold: #C5A059;
+            --indigo: #4F46E5;
+            --spectrum-1: #FF6B6B;
+            --spectrum-2: #FFD93D;
+            --spectrum-3: #6BCB77;
+            --spectrum-4: #4D96FF;
+            --spectrum-5: #9B59B6;
+            --card-dark: #161622;
+            --card-light: #e0e0e6;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-dark);
+            overflow-x: hidden;
+            transition: background 0.4s ease, color 0.4s ease;
+        }
+
+        body.light {
+            background: var(--bg-light);
+            color: var(--text-light);
+        }
+
+        /* ========== SPLASH ========== */
+        .splash-screen {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100vh;
+            background: var(--bg-dark);
+            display: flex; align-items: center; justify-content: center;
+            flex-direction: column;
+            z-index: 9999;
+            animation: splashFadeOut 1s ease 4s forwards;
+        }
+
+        body.light .splash-screen { background: var(--bg-light); }
+
+        #waveCanvas {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            will-change: transform;
+        }
+
+        .splash-content {
+            position: relative; z-index: 2;
+            text-align: center;
+        }
+
+        .splash-title {
+            font-family: 'Amiri', serif;
+            font-size: 2.8rem;
+            font-weight: 700;
+            color: var(--gold);
+            margin-bottom: 0.5rem;
+            text-shadow: 0 0 30px rgba(197,160,89,0.4);
+            animation: spectrumGlow 3s ease-in-out infinite;
+        }
+
+        .splash-subtitle {
+            font-size: 1rem;
+            opacity: 0.7;
+            letter-spacing: 0.15em;
+        }
+
+        @keyframes spectrumGlow {
+            0%, 100% { filter: hue-rotate(0deg); }
+            50% { filter: hue-rotate(30deg); }
+        }
+
+        @keyframes splashFadeOut {
+            to { opacity: 0; pointer-events: none; }
+        }
+
+        /* ========== MAIN ========== */
+        .main-content {
+            min-height: 100vh;
+            padding: 2rem;
+            opacity: 0;
+            animation: contentFadeIn 1s ease 4.5s forwards;
+        }
+
+        @keyframes contentFadeIn { to { opacity: 1; } }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 3rem;
+        }
+
+        h1 {
+            font-family: 'Amiri', serif;
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: var(--gold);
+        }
+
+        .theme-toggle {
+            width: 56px; height: 56px;
+            min-width: 44px; min-height: 44px;
+            border-radius: 50%;
+            background: var(--card-dark);
+            border: 2px solid rgba(197,160,89,0.3);
+            color: var(--gold);
+            font-size: 1.4rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            will-change: transform;
+        }
+
+        body.light .theme-toggle {
+            background: var(--card-light);
+            border-color: rgba(197,160,89,0.4);
+        }
+
+        .theme-toggle:hover { transform: scale(1.1); }
+        .theme-toggle:focus { outline: 3px solid var(--gold); outline-offset: 3px; }
+
+        .container { max-width: 900px; margin: 0 auto; }
+
+        /* Waveform player bar */
+        .waveform-bar {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 1rem 1.5rem;
+            background: var(--card-dark);
+            border-radius: 16px;
+            margin-bottom: 2rem;
+            border: 1px solid rgba(197,160,89,0.15);
+        }
+
+        body.light .waveform-bar {
+            background: var(--card-light);
+            border-color: rgba(197,160,89,0.25);
+        }
+
+        .waveform-display {
+            flex: 1;
+            height: 48px;
+            position: relative;
+            overflow: hidden;
+            border-radius: 8px;
+        }
+
+        #miniWaveCanvas {
+            width: 100%;
+            height: 100%;
+            will-change: transform;
+        }
+
+        .time-label {
+            font-size: 0.85rem;
+            opacity: 0.6;
+            font-variant-numeric: tabular-nums;
+            min-width: 44px;
+            text-align: center;
+        }
+
+        .slider-track {
+            width: 100%;
+            height: 6px;
+            background: rgba(197,160,89,0.15);
+            border-radius: 3px;
+            position: relative;
+            margin: 0.5rem 0;
+            cursor: pointer;
+        }
+
+        .slider-fill {
+            height: 100%;
+            width: 35%;
+            background: linear-gradient(90deg, var(--spectrum-1), var(--spectrum-2), var(--spectrum-3), var(--spectrum-4), var(--spectrum-5));
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        /* Poem card */
+        .poem-card {
+            padding: 3rem;
+            background: var(--card-dark);
+            border-radius: 20px;
+            border: 1px solid rgba(197,160,89,0.15);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            margin-bottom: 2rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        body.light .poem-card {
+            background: var(--card-light);
+            border-color: rgba(197,160,89,0.25);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.08);
+        }
+
+        .poem-card::before {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--spectrum-1), var(--spectrum-2), var(--spectrum-3), var(--spectrum-4), var(--spectrum-5));
+            will-change: opacity;
+        }
+
+        .poem-text {
+            font-family: 'Amiri', serif;
+            font-size: 2rem;
+            line-height: 2.5;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .poem-author {
+            font-family: 'Amiri', serif;
+            font-size: 1.3rem;
+            text-align: center;
+            color: var(--gold);
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 2rem;
+        }
+
+        .spectrum-btn {
+            min-width: 56px; height: 56px;
+            min-height: 44px;
+            border-radius: 14px;
+            background: var(--card-dark);
+            border: 1px solid rgba(197,160,89,0.2);
+            color: var(--gold);
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.25s ease;
+            padding: 0 1.5rem;
+            font-family: 'Tajawal', sans-serif;
+            position: relative;
+            overflow: hidden;
+            will-change: transform;
+        }
+
+        body.light .spectrum-btn {
+            background: var(--card-light);
+            border-color: rgba(197,160,89,0.3);
+        }
+
+        .spectrum-btn::after {
+            content: '';
+            position: absolute;
+            bottom: 0; left: 0; right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--spectrum-1), var(--spectrum-4));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .spectrum-btn:hover::after { opacity: 1; }
+        .spectrum-btn:hover { transform: translateY(-3px); }
+        .spectrum-btn:active { transform: scale(0.95); }
+        .spectrum-btn:focus { outline: 3px solid var(--gold); outline-offset: 3px; }
+
+        /* Walkthrough */
+        .walkthrough {
+            margin-top: 3rem;
+            padding: 2.5rem;
+            background: var(--card-dark);
+            border-radius: 20px;
+            border: 1px solid rgba(197,160,89,0.15);
+        }
+
+        body.light .walkthrough {
+            background: var(--card-light);
+            border-color: rgba(197,160,89,0.25);
+        }
+
+        .walkthrough h2 {
+            font-family: 'Amiri', serif;
+            font-size: 2rem;
+            color: var(--gold);
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 2rem;
+        }
+
+        .step {
+            padding: 1.5rem;
+            border-radius: 14px;
+            border: 1px solid rgba(197,160,89,0.1);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .step::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, var(--spectrum-1), var(--spectrum-3));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            will-change: opacity;
+        }
+
+        .step:hover::before { opacity: 1; }
+        .step:hover { transform: translateY(-4px); border-color: rgba(197,160,89,0.3); }
+
+        .step-number {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--spectrum-2), var(--spectrum-4));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+
+        .step-title {
+            font-family: 'Amiri', serif;
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .step-desc {
+            font-size: 0.95rem;
+            opacity: 0.7;
+            line-height: 1.6;
+        }
+
+        /* Eq bars animation */
+        .eq-bars {
+            display: flex;
+            gap: 3px;
+            align-items: flex-end;
+            height: 24px;
+            margin-bottom: 0.5rem;
+        }
+
+        .eq-bar {
+            width: 4px;
+            border-radius: 2px;
+            animation: eqBounce 0.8s ease-in-out infinite alternate;
+            will-change: height;
+        }
+
+        .eq-bar:nth-child(1) { height: 8px; background: var(--spectrum-1); animation-delay: 0s; }
+        .eq-bar:nth-child(2) { height: 16px; background: var(--spectrum-2); animation-delay: 0.1s; }
+        .eq-bar:nth-child(3) { height: 12px; background: var(--spectrum-3); animation-delay: 0.2s; }
+        .eq-bar:nth-child(4) { height: 20px; background: var(--spectrum-4); animation-delay: 0.15s; }
+        .eq-bar:nth-child(5) { height: 10px; background: var(--spectrum-5); animation-delay: 0.05s; }
+
+        @keyframes eqBounce {
+            from { transform: scaleY(0.4); }
+            to { transform: scaleY(1); }
+        }
+
+        /* ========== MOBILE ========== */
+        @media (max-width: 768px) {
+            h1 { font-size: 1.8rem; }
+            .splash-title { font-size: 2rem; }
+            .theme-toggle { width: 48px; height: 48px; font-size: 1.2rem; }
+            .poem-card { padding: 2rem; }
+            .poem-text { font-size: 1.5rem; line-height: 2; }
+            .spectrum-btn { min-width: 48px; height: 48px; font-size: 1rem; padding: 0 1rem; }
+            .steps { grid-template-columns: 1fr; }
+            .waveform-bar { flex-wrap: wrap; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+            #waveCanvas, #miniWaveCanvas { display: none; }
+            .eq-bar { animation: none !important; }
+        }
+    </style>
+</head>
+<body>
+    <div class="splash-screen">
+        <canvas id="waveCanvas"></canvas>
+        <div class="splash-content">
+            <div class="eq-bars" style="justify-content:center;height:40px;gap:5px;margin-bottom:1rem">
+                <div class="eq-bar" style="width:6px"></div>
+                <div class="eq-bar" style="width:6px"></div>
+                <div class="eq-bar" style="width:6px"></div>
+                <div class="eq-bar" style="width:6px"></div>
+                <div class="eq-bar" style="width:6px"></div>
+            </div>
+            <div class="splash-title">طيف الموجات</div>
+            <div class="splash-subtitle">Waveform Spectrum</div>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <header>
+            <h1>طيف الموجات - Waveform Spectrum</h1>
+            <button class="theme-toggle" id="themeBtn" aria-label="Toggle theme">&#9788;</button>
+        </header>
+
+        <div class="container">
+            <div class="waveform-bar">
+                <button class="spectrum-btn" style="min-width:48px;padding:0" aria-label="Play">&#9654;</button>
+                <span class="time-label">1:24</span>
+                <div class="waveform-display">
+                    <canvas id="miniWaveCanvas"></canvas>
+                </div>
+                <span class="time-label">3:47</span>
+            </div>
+            <div style="padding:0 1rem; margin-bottom:2rem;">
+                <div class="slider-track"><div class="slider-fill"></div></div>
+            </div>
+
+            <div class="poem-card">
+                <div class="poem-text" lang="ar">
+                    أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ
+                    <br>
+                    فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
+                </div>
+                <div class="poem-author">-- أحمد شوقي</div>
+                <div class="controls">
+                    <button class="spectrum-btn" aria-label="Play">&#9654;</button>
+                    <button class="spectrum-btn" aria-label="Save">&#9829;</button>
+                    <button class="spectrum-btn" aria-label="Next">&#8635;</button>
+                    <button class="spectrum-btn">Aa</button>
+                    <button class="spectrum-btn">&#1593;</button>
+                </div>
+            </div>
+
+            <div class="walkthrough">
+                <h2>كيفية الاستخدام</h2>
+                <div class="steps">
+                    <div class="step">
+                        <div class="eq-bars">
+                            <div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div><div class="eq-bar"></div>
+                        </div>
+                        <div class="step-number">1</div>
+                        <div class="step-title">استكشف</div>
+                        <div class="step-desc">تصفح آلاف القصائد العربية الكلاسيكية والحديثة</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div class="step-title">استمع</div>
+                        <div class="step-desc">اسمع القصائد بصوت عالي الجودة</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div class="step-title">احفظ</div>
+                        <div class="step-desc">أنشئ مجموعتك الخاصة من القصائد المفضلة</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">4</div>
+                        <div class="step-title">خصّص</div>
+                        <div class="step-desc">اضبط حجم الخط والسمة حسب تفضيلاتك</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Theme Toggle
+        var themeBtn = document.getElementById('themeBtn');
+        themeBtn.addEventListener('click', function() {
+            document.body.classList.toggle('light');
+            themeBtn.textContent = document.body.classList.contains('light') ? '\u263E' : '\u2606';
+        });
+
+        // === Waveform Splash Canvas ===
+        var canvas = document.getElementById('waveCanvas');
+        var ctx = canvas.getContext('2d');
+        var splashAnimId;
+        var isMobile = window.innerWidth <= 768;
+        var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        var spectrumColors = ['#FF6B6B','#FFD93D','#6BCB77','#4D96FF','#9B59B6'];
+        var waveCount = isMobile ? 3 : 5;
+
+        function drawWaves(time) {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            for (var w = 0; w < waveCount; w++) {
+                ctx.beginPath();
+                ctx.strokeStyle = spectrumColors[w % spectrumColors.length];
+                ctx.lineWidth = 2;
+                ctx.globalAlpha = 0.5 - (w * 0.08);
+                var amplitude = 40 + w * 15;
+                var frequency = 0.005 + w * 0.002;
+                var speed = time * 0.001 + w * 0.5;
+                for (var x = 0; x < canvas.width; x += 2) {
+                    var y = canvas.height / 2 + Math.sin(x * frequency + speed) * amplitude
+                        + Math.sin(x * frequency * 2.5 + speed * 1.3) * (amplitude * 0.3);
+                    if (x === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.stroke();
+            }
+            ctx.globalAlpha = 1;
+            splashAnimId = requestAnimationFrame(drawWaves);
+        }
+
+        if (!reducedMotion) {
+            drawWaves(0);
+            setTimeout(function() { cancelAnimationFrame(splashAnimId); }, 5000);
+        }
+
+        // === Mini waveform in player bar ===
+        var miniCanvas = document.getElementById('miniWaveCanvas');
+        var miniCtx = miniCanvas.getContext('2d');
+        var miniAnimId;
+
+        function resizeMini() {
+            var rect = miniCanvas.parentElement.getBoundingClientRect();
+            miniCanvas.width = rect.width;
+            miniCanvas.height = rect.height;
+        }
+
+        function drawMiniWave(time) {
+            resizeMini();
+            miniCtx.clearRect(0, 0, miniCanvas.width, miniCanvas.height);
+            var barWidth = isMobile ? 4 : 3;
+            var gap = isMobile ? 3 : 2;
+            var bars = Math.floor(miniCanvas.width / (barWidth + gap));
+            for (var i = 0; i < bars; i++) {
+                var h = Math.abs(Math.sin(i * 0.15 + time * 0.002)) * miniCanvas.height * 0.8 + 2;
+                var colorIdx = Math.floor((i / bars) * spectrumColors.length);
+                miniCtx.fillStyle = spectrumColors[Math.min(colorIdx, spectrumColors.length - 1)];
+                miniCtx.globalAlpha = 0.7;
+                miniCtx.fillRect(i * (barWidth + gap), (miniCanvas.height - h) / 2, barWidth, h);
+            }
+            miniCtx.globalAlpha = 1;
+            miniAnimId = requestAnimationFrame(drawMiniWave);
+        }
+
+        if (!reducedMotion) {
+            setTimeout(function() {
+                resizeMini();
+                drawMiniWave(0);
+            }, 4600);
+        }
+
+        // Button interactions
+        document.querySelectorAll('.spectrum-btn').forEach(function(btn) {
+            btn.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); btn.click(); }
+            });
+        });
+    </script>
+</body>
+</html>

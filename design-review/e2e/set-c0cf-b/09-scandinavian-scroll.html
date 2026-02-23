@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wind & Sand — رياح الصحراء</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --desert-night: #1A1410;
+    --sand: #D4C5A0;
+    --gold: #C5A059;
+    --sienna: #A0522D;
+    --sky-blue: #2A3F5F;
+    --cream: #F5ECD7;
+    --dark-brown: #3B2A1A;
+    --bg: var(--desert-night);
+    --fg: var(--sand);
+    --card-bg: rgba(212, 197, 160, 0.08);
+    --card-border: rgba(197, 160, 89, 0.2);
+  }
+  [data-theme="light"] {
+    --bg: var(--cream);
+    --fg: var(--dark-brown);
+    --card-bg: rgba(160, 82, 45, 0.07);
+    --card-border: rgba(160, 82, 45, 0.2);
+  }
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Tajawal', sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    overflow-x: hidden;
+    min-height: 100vh;
+    transition: background 0.5s, color 0.5s;
+  }
+  /* ===== Splash Screen ===== */
+  #splash {
+    position: fixed; inset: 0; z-index: 1000;
+    display: flex; align-items: center; justify-content: center;
+    background: radial-gradient(ellipse at 50% 60%, #3B2A1A 0%, #1A1410 70%);
+    transition: opacity 0.8s ease;
+  }
+  #splash.hidden { opacity: 0; pointer-events: none; }
+  #splash-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+  #skip-btn {
+    position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
+    background: transparent; border: 1px solid var(--sand);
+    color: var(--sand); padding: 10px 28px; border-radius: 24px;
+    font-family: 'Tajawal', sans-serif; font-size: 1rem;
+    cursor: pointer; z-index: 1001; transition: background 0.3s;
+    min-width: 44px; min-height: 44px;
+  }
+  #skip-btn:hover { background: rgba(212, 197, 160, 0.15); }
+  #skip-btn:focus { outline: 3px solid var(--gold); outline-offset: 2px; }
+  /* ===== Main App ===== */
+  #app { display: none; position: relative; min-height: 100vh; }
+  #app.visible { display: block; }
+  #ambient-canvas {
+    position: fixed; inset: 0; width: 100%; height: 100%;
+    z-index: 0; pointer-events: none;
+  }
+  .content { position: relative; z-index: 1; }
+  /* ===== Header ===== */
+  header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 20px 32px;
+  }
+  .logo { font-family: 'Amiri', serif; font-size: 1.6rem; color: var(--gold); }
+  #theme-toggle {
+    background: transparent; border: 1px solid var(--gold);
+    color: var(--gold); width: 44px; height: 44px;
+    border-radius: 50%; font-size: 1.2rem; cursor: pointer;
+    transition: box-shadow 0.3s, background 0.3s;
+    will-change: transform;
+  }
+  #theme-toggle:hover { background: rgba(197, 160, 89, 0.15); }
+  #theme-toggle:focus { outline: 3px solid var(--gold); outline-offset: 2px; }
+  /* ===== Poem Card ===== */
+  .poem-section {
+    display: flex; align-items: center; justify-content: center;
+    min-height: 60vh; padding: 40px 20px;
+  }
+  .poem-card {
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 20px; padding: 48px 40px;
+    max-width: 700px; width: 100%; text-align: center;
+    position: relative; overflow: hidden;
+    transition: transform 0.4s ease;
+    will-change: transform;
+  }
+  .poem-card:hover { transform: skewX(-1deg); }
+  .poem-card::before {
+    content: ''; position: absolute; inset: 0;
+    background:
+      radial-gradient(circle at 20% 30%, rgba(160,82,45,0.04) 1px, transparent 1px),
+      radial-gradient(circle at 60% 70%, rgba(212,197,160,0.05) 1px, transparent 1px),
+      radial-gradient(circle at 80% 20%, rgba(160,82,45,0.03) 1px, transparent 1px);
+    background-size: 11px 11px, 17px 17px, 13px 13px;
+    pointer-events: none;
+  }
+  .poem-text {
+    font-family: 'Amiri', serif; font-size: 2rem;
+    line-height: 2.4; color: var(--fg);
+    position: relative; z-index: 1;
+  }
+  .poem-text .hemistich { display: block; margin-bottom: 8px; }
+  .poet-name {
+    font-family: 'Tajawal', sans-serif; font-size: 1rem;
+    color: var(--gold); margin-top: 24px;
+    position: relative; z-index: 1;
+  }
+  /* ===== Controls ===== */
+  .controls {
+    display: flex; gap: 16px; justify-content: center;
+    padding: 24px 20px; flex-wrap: wrap;
+  }
+  .ctrl-btn {
+    width: 54px; height: 54px; border-radius: 50%;
+    background: transparent; border: 1.5px solid var(--sand);
+    color: var(--fg); font-size: 1.2rem; cursor: pointer;
+    font-family: 'Tajawal', sans-serif;
+    transition: box-shadow 0.3s, background 0.3s;
+    will-change: transform;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .ctrl-btn:hover {
+    box-shadow: 0 0 20px 6px rgba(212, 197, 160, 0.3);
+    background: rgba(212, 197, 160, 0.08);
+  }
+  .ctrl-btn:focus { outline: 3px solid var(--gold); outline-offset: 2px; }
+  /* ===== Walkthrough ===== */
+  .walkthrough {
+    padding: 80px 24px; max-width: 900px; margin: 0 auto;
+  }
+  .walk-title {
+    font-family: 'Amiri', serif; font-size: 2rem;
+    color: var(--gold); text-align: center; margin-bottom: 48px;
+  }
+  .bento-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+  .step-card {
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px; padding: 32px 24px;
+    position: relative; overflow: hidden;
+    opacity: 0; transform: translateX(40px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+    will-change: transform, opacity;
+  }
+  .step-card.revealed { opacity: 1; transform: translateX(0); }
+  .step-card::before {
+    content: ''; position: absolute; inset: 0;
+    background:
+      radial-gradient(circle at 30% 40%, rgba(160,82,45,0.04) 1px, transparent 1px),
+      radial-gradient(circle at 70% 60%, rgba(212,197,160,0.04) 1px, transparent 1px);
+    background-size: 9px 9px, 15px 15px;
+    pointer-events: none;
+  }
+  .step-num {
+    font-family: 'Amiri', serif; font-size: 2.5rem;
+    color: var(--gold); opacity: 0.3; position: relative; z-index: 1;
+  }
+  .step-label {
+    font-family: 'Amiri', serif; font-size: 1.4rem;
+    color: var(--gold); margin: 8px 0 12px; position: relative; z-index: 1;
+  }
+  .step-desc {
+    font-size: 1rem; line-height: 1.8;
+    color: var(--fg); opacity: 0.8; position: relative; z-index: 1;
+  }
+  /* ===== Footer ===== */
+  footer {
+    text-align: center; padding: 40px 20px;
+    font-size: 0.9rem; opacity: 0.5;
+  }
+  /* ===== Reduced Motion ===== */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0s !important;
+      transition-duration: 0s !important;
+    }
+    #splash-canvas, #ambient-canvas { display: none; }
+    .step-card { opacity: 1; transform: none; }
+    .poem-card:hover { transform: none; }
+  }
+  /* ===== Mobile ===== */
+  @media (max-width: 768px) {
+    .poem-text { font-size: 1.5rem; line-height: 2.2; }
+    .poem-card { padding: 32px 24px; }
+    .ctrl-btn { width: 48px; height: 48px; font-size: 1.1rem; }
+    .bento-grid { grid-template-columns: 1fr; }
+    header { padding: 16px 20px; }
+    .walkthrough { padding: 60px 16px; }
+    .walk-title { font-size: 1.6rem; }
+  }
+</style>
+</head>
+<body>
+  <!-- Splash Screen -->
+  <div id="splash" role="dialog" aria-label="شاشة الترحيب">
+    <canvas id="splash-canvas" aria-hidden="true"></canvas>
+    <button id="skip-btn" type="button">تخطي</button>
+  </div>
+
+  <!-- Main Application -->
+  <div id="app" aria-live="polite">
+    <canvas id="ambient-canvas" aria-hidden="true"></canvas>
+    <div class="content">
+      <header>
+        <div class="logo">رياح الصحراء</div>
+        <button id="theme-toggle" type="button" aria-label="تبديل السمة"></button>
+      </header>
+
+      <main>
+        <section class="poem-section" aria-label="القصيدة">
+          <article class="poem-card">
+            <div class="poem-text" lang="ar">
+              <span class="hemistich">أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ</span>
+              <span class="hemistich">فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي</span>
+            </div>
+            <div class="poet-name">-- أحمد شوقي</div>
+          </article>
+        </section>
+
+        <nav class="controls" aria-label="أدوات التحكم">
+          <button class="ctrl-btn" type="button" aria-label="تشغيل" data-action="play"></button>
+          <button class="ctrl-btn" type="button" aria-label="حفظ" data-action="save"></button>
+          <button class="ctrl-btn" type="button" aria-label="التالي" data-action="next"></button>
+          <button class="ctrl-btn" type="button" aria-label="حجم الخط" data-action="font"></button>
+          <button class="ctrl-btn" type="button" aria-label="عربي" data-action="arabic"></button>
+        </nav>
+
+        <section class="walkthrough" aria-label="كيفية الاستخدام">
+          <h2 class="walk-title">كيف تبدأ رحلتك</h2>
+          <div class="bento-grid" id="bento-grid"></div>
+        </section>
+      </main>
+
+      <footer>
+        <p>Wind & Sand — رياح الصحراء</p>
+      </footer>
+    </div>
+  </div>
+
+<script>
+(function() {
+  'use strict';
+  /* ===== Configuration ===== */
+  var isMobile = window.innerWidth < 768;
+  var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var SPLASH_PARTICLE_COUNT = isMobile ? 50 : 100;
+  var AMBIENT_PARTICLE_COUNT = isMobile ? 15 : 30;
+
+  /* ===== Utility: safe DOM text ===== */
+  function setText(el, text) { el.textContent = text; }
+
+  /* ===== Theme Toggle ===== */
+  var isDark = true;
+  var themeBtn = document.getElementById('theme-toggle');
+  setText(themeBtn, '\u263D'); // moon
+  themeBtn.addEventListener('click', function() {
+    isDark = !isDark;
+    if (isDark) {
+      document.documentElement.removeAttribute('data-theme');
+      setText(themeBtn, '\u263D');
+    } else {
+      document.documentElement.setAttribute('data-theme', 'light');
+      setText(themeBtn, '\u2600');
+    }
+  });
+
+  /* ===== Control Buttons ===== */
+  var btnLabels = { play: '\u25B6', save: '\u2665', next: '\u21BB', font: 'Aa', arabic: '\u0639' };
+  var ctrls = document.querySelectorAll('.ctrl-btn');
+  for (var i = 0; i < ctrls.length; i++) {
+    var action = ctrls[i].getAttribute('data-action');
+    if (action && btnLabels[action]) {
+      setText(ctrls[i], btnLabels[action]);
+    }
+  }
+
+  /* ===== Walkthrough Steps ===== */
+  var steps = [
+    { num: '\u0661', label: '\u0627\u0628\u062F\u0623', desc: '\u062A\u0635\u0641\u062D \u0645\u0643\u062A\u0628\u0629 \u0634\u0639\u0631\u064A\u0629 \u063A\u0646\u064A\u0629' },
+    { num: '\u0662', label: '\u0627\u0633\u062A\u0643\u0634\u0641', desc: '\u0627\u0643\u062A\u0634\u0641 \u0634\u0639\u0631\u0627\u0621 \u0645\u0646 \u0645\u062E\u062A\u0644\u0641 \u0627\u0644\u0639\u0635\u0648\u0631' },
+    { num: '\u0663', label: '\u0627\u0633\u062A\u0645\u0639', desc: '\u0627\u0633\u0645\u0639 \u0627\u0644\u0642\u0635\u0627\u0626\u062F \u0628\u0635\u0648\u062A \u0648\u0627\u0636\u062D' },
+    { num: '\u0664', label: '\u0634\u0627\u0631\u0643', desc: '\u0634\u0627\u0631\u0643 \u0642\u0635\u0627\u0626\u062F\u0643 \u0627\u0644\u0645\u0641\u0636\u0644\u0629' }
+  ];
+  var grid = document.getElementById('bento-grid');
+  steps.forEach(function(step) {
+    var card = document.createElement('div');
+    card.className = 'step-card';
+    var numEl = document.createElement('div');
+    numEl.className = 'step-num';
+    setText(numEl, step.num);
+    var labelEl = document.createElement('h3');
+    labelEl.className = 'step-label';
+    setText(labelEl, step.label);
+    var descEl = document.createElement('p');
+    descEl.className = 'step-desc';
+    setText(descEl, step.desc);
+    card.appendChild(numEl);
+    card.appendChild(labelEl);
+    card.appendChild(descEl);
+    grid.appendChild(card);
+  });
+
+  /* ===== IntersectionObserver for walkthrough ===== */
+  if ('IntersectionObserver' in window && !prefersReducedMotion) {
+    var observer = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('revealed');
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15 });
+    var cards = document.querySelectorAll('.step-card');
+    for (var c = 0; c < cards.length; c++) observer.observe(cards[c]);
+  } else {
+    var allCards = document.querySelectorAll('.step-card');
+    for (var j = 0; j < allCards.length; j++) allCards[j].classList.add('revealed');
+  }
+
+  /* ===== Particle System ===== */
+  function createParticle(w, h) {
+    var colors = ['#D4C5A0', '#C5A059', '#A0522D', '#BFB08A', '#C9A96E'];
+    return {
+      x: Math.random() * w,
+      y: Math.random() * h,
+      vx: (Math.random() - 0.5) * 0.5,
+      vy: Math.random() * 0.3 + 0.1,
+      size: Math.random() * 3 + 1,
+      opacity: Math.random() * 0.6 + 0.2,
+      color: colors[Math.floor(Math.random() * colors.length)]
+    };
+  }
+
+  /* ===== Splash Animation ===== */
+  var splash = document.getElementById('splash');
+  var splashCanvas = document.getElementById('splash-canvas');
+  var sCtx = splashCanvas.getContext('2d');
+  var splashParticles = [];
+  var splashPhase = 0; // 0=scatter, 1=gather, 2=vortex, 3=settle
+  var splashTimer = 0;
+  var splashDone = false;
+  var splashRafId = null;
+
+  function initSplash() {
+    splashCanvas.width = window.innerWidth;
+    splashCanvas.height = window.innerHeight;
+    splashParticles = [];
+    for (var i = 0; i < SPLASH_PARTICLE_COUNT; i++) {
+      splashParticles.push(createParticle(splashCanvas.width, splashCanvas.height));
+    }
+  }
+
+  // Target positions forming the word "رياح"
+  var wordTargets = [];
+  function computeWordTargets(w, h) {
+    wordTargets = [];
+    var cx = w / 2;
+    var cy = h / 2;
+    var count = splashParticles.length;
+    // Arrange in a circular cluster representing the word shape
+    for (var i = 0; i < count; i++) {
+      var angle = (i / count) * Math.PI * 2;
+      var radius = 60 + Math.random() * 40;
+      wordTargets.push({
+        x: cx + Math.cos(angle) * radius * (1 + 0.3 * Math.sin(angle * 3)),
+        y: cy + Math.sin(angle) * radius * 0.6
+      });
+    }
+  }
+
+  function animateSplash(time) {
+    if (splashDone) return;
+    splashRafId = requestAnimationFrame(animateSplash);
+    var w = splashCanvas.width;
+    var h = splashCanvas.height;
+    sCtx.clearRect(0, 0, w, h);
+    splashTimer++;
+
+    // Phase transitions
+    if (splashTimer === 1) computeWordTargets(w, h);
+    if (splashTimer === 90) splashPhase = 1;   // gather
+    if (splashTimer === 220) splashPhase = 2;  // vortex
+    if (splashTimer === 340) splashPhase = 3;  // settle/fade
+    if (splashTimer >= 420) { endSplash(); return; }
+
+    var cx = w / 2;
+    var cy = h / 2;
+
+    for (var i = 0; i < splashParticles.length; i++) {
+      var p = splashParticles[i];
+      if (splashPhase === 0) {
+        // Free scatter with wind
+        p.vx += Math.sin(time * 0.001 + i) * 0.02 + 0.03;
+        p.vy += 0.01;
+        p.vx *= 0.99; p.vy *= 0.99;
+      } else if (splashPhase === 1) {
+        // Gather toward word shape
+        var t = wordTargets[i];
+        var dx = t.x - p.x;
+        var dy = t.y - p.y;
+        p.vx += dx * 0.008;
+        p.vy += dy * 0.008;
+        p.vx *= 0.94; p.vy *= 0.94;
+      } else if (splashPhase === 2) {
+        // Vortex swirl
+        var ax = p.x - cx;
+        var ay = p.y - cy;
+        var dist = Math.sqrt(ax * ax + ay * ay) || 1;
+        var tangentX = -ay / dist;
+        var tangentY = ax / dist;
+        p.vx += tangentX * 0.4 - ax * 0.002;
+        p.vy += tangentY * 0.4 - ay * 0.002;
+        p.vx *= 0.97; p.vy *= 0.97;
+      } else {
+        // Settle: slow down and fade
+        p.vx *= 0.92; p.vy *= 0.92;
+        p.vy += 0.05;
+        p.opacity *= 0.98;
+      }
+      p.x += p.vx;
+      p.y += p.vy;
+      // Wrap horizontally
+      if (p.x > w + 10) p.x = -10;
+      if (p.x < -10) p.x = w + 10;
+      if (p.y > h + 10) { p.y = -10; p.x = Math.random() * w; }
+
+      sCtx.beginPath();
+      sCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      sCtx.fillStyle = p.color;
+      sCtx.globalAlpha = p.opacity;
+      sCtx.fill();
+    }
+    sCtx.globalAlpha = 1;
+
+    // Draw word hint during gather phase
+    if (splashPhase === 1 && splashTimer > 140) {
+      var wordOpacity = Math.min((splashTimer - 140) / 60, 0.6);
+      sCtx.font = '3rem Amiri';
+      sCtx.textAlign = 'center';
+      sCtx.textBaseline = 'middle';
+      sCtx.fillStyle = 'rgba(197, 160, 89, ' + wordOpacity + ')';
+      sCtx.fillText('\u0631\u064A\u0627\u062D', cx, cy);
+    }
+  }
+
+  function endSplash() {
+    splashDone = true;
+    if (splashRafId) cancelAnimationFrame(splashRafId);
+    splash.classList.add('hidden');
+    document.getElementById('app').classList.add('visible');
+    setTimeout(function() { splash.style.display = 'none'; }, 800);
+    startAmbient();
+  }
+
+  document.getElementById('skip-btn').addEventListener('click', endSplash);
+
+  /* ===== Ambient Canvas ===== */
+  var ambientCanvas = document.getElementById('ambient-canvas');
+  var aCtx = ambientCanvas.getContext('2d');
+  var ambientParticles = [];
+  var mouseX = 0;
+  var mouseY = 0;
+  var ambientRafId = null;
+
+  function initAmbient() {
+    ambientCanvas.width = window.innerWidth;
+    ambientCanvas.height = window.innerHeight;
+    ambientParticles = [];
+    for (var i = 0; i < AMBIENT_PARTICLE_COUNT; i++) {
+      var p = createParticle(ambientCanvas.width, ambientCanvas.height);
+      p.vx *= 0.3; p.vy *= 0.2;
+      p.size = Math.random() * 2.5 + 0.5;
+      p.opacity = Math.random() * 0.35 + 0.1;
+      ambientParticles.push(p);
+    }
+    mouseX = ambientCanvas.width / 2;
+    mouseY = ambientCanvas.height / 2;
+  }
+
+  function animateAmbient(time) {
+    ambientRafId = requestAnimationFrame(animateAmbient);
+    var w = ambientCanvas.width;
+    var h = ambientCanvas.height;
+    aCtx.clearRect(0, 0, w, h);
+
+    for (var i = 0; i < ambientParticles.length; i++) {
+      var p = ambientParticles[i];
+      // Wind toward mouse
+      var dx = mouseX - p.x;
+      var dy = mouseY - p.y;
+      var dist = Math.sqrt(dx * dx + dy * dy) || 1;
+      var windForce = Math.min(0.02, 50 / dist);
+      p.vx += (dx / dist) * windForce + Math.sin(time * 0.0005 + i * 0.7) * 0.005;
+      p.vy += (dy / dist) * windForce * 0.3 + 0.003;
+      // Turbulence
+      p.vx += Math.sin(time * 0.001 + p.y * 0.01) * 0.008;
+      // Damping
+      p.vx *= 0.985; p.vy *= 0.985;
+      p.x += p.vx;
+      p.y += p.vy;
+      // Wrap
+      if (p.x > w + 5) p.x = -5;
+      if (p.x < -5) p.x = w + 5;
+      if (p.y > h + 5) { p.y = -5; p.x = Math.random() * w; }
+      if (p.y < -5) p.y = h + 5;
+
+      aCtx.beginPath();
+      aCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      aCtx.fillStyle = p.color;
+      aCtx.globalAlpha = p.opacity;
+      aCtx.fill();
+    }
+    aCtx.globalAlpha = 1;
+  }
+
+  function startAmbient() {
+    if (prefersReducedMotion) return;
+    initAmbient();
+    animateAmbient(0);
+  }
+
+  /* ===== Mouse / Touch Tracking ===== */
+  document.addEventListener('mousemove', function(e) {
+    mouseX = e.clientX; mouseY = e.clientY;
+  });
+  document.addEventListener('touchmove', function(e) {
+    if (e.touches.length > 0) {
+      mouseX = e.touches[0].clientX;
+      mouseY = e.touches[0].clientY;
+    }
+  }, { passive: true });
+
+  /* ===== Resize Handler ===== */
+  var resizeTimeout;
+  window.addEventListener('resize', function() {
+    clearTimeout(resizeTimeout);
+    resizeTimeout = setTimeout(function() {
+      isMobile = window.innerWidth < 768;
+      if (!splashDone) {
+        splashCanvas.width = window.innerWidth;
+        splashCanvas.height = window.innerHeight;
+      }
+      if (ambientCanvas) {
+        ambientCanvas.width = window.innerWidth;
+        ambientCanvas.height = window.innerHeight;
+      }
+    }, 150);
+  });
+
+  /* ===== Initialize ===== */
+  if (prefersReducedMotion) {
+    // Skip splash entirely
+    splash.style.display = 'none';
+    document.getElementById('app').classList.add('visible');
+  } else {
+    initSplash();
+    requestAnimationFrame(animateSplash);
+  }
+})();
+</script>
+</body>
+</html>

@@ -397,7 +397,7 @@ describe('DiwanApp', () => {
       }, { timeout: 3000 })
     })
 
-    it('shows error banner when AI Discover fails with a non-retryable error', async () => {
+    it('logs error when AI Discover fails with a non-retryable error', async () => {
       render(<DiwanApp />)
 
       // Switch to AI mode
@@ -412,6 +412,7 @@ describe('DiwanApp', () => {
 
       await userEvent.click(screen.getByLabelText('Discover new poem'))
 
+      // Error is logged to the auto-expanded DebugPanel (rendered in the DOM even when collapsed)
       await waitFor(() => {
         expect(document.body.textContent).toContain('Quota exceeded for this project')
       }, { timeout: 3000 })
@@ -484,7 +485,7 @@ describe('DiwanApp', () => {
       }, { timeout: 3000 })
     })
 
-    it('shows error banner when AI Insights fails with an HTTP error from Gemini', async () => {
+    it('logs error when AI Insights fails with an HTTP error from Gemini', async () => {
       render(<DiwanApp />)
 
       global.fetch.mockResolvedValueOnce({ ok: true, json: async () => createDbPoem(102) })
@@ -501,6 +502,7 @@ describe('DiwanApp', () => {
 
       await userEvent.click(screen.getByLabelText('Learn about poem meaning'))
 
+      // Error is logged to the auto-expanded DebugPanel (rendered in the DOM even when collapsed)
       await waitFor(() => {
         expect(document.body.textContent).toContain('API key not valid')
       }, { timeout: 3000 })

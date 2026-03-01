@@ -397,22 +397,60 @@ describe('DiwanApp', () => {
       }, { timeout: 3000 })
     })
 
-    it('shows error banner when AI Discover fails with an HTTP error from Gemini', async () => {
+    it('shows error banner when AI Discover fails with a non-retryable error', async () => {
       render(<DiwanApp />)
 
       // Switch to AI mode
       await userEvent.click(screen.getByLabelText('Switch to AI Mode'))
 
+      // 429 quota errors are shown immediately (not retried with a fallback model)
       global.fetch.mockResolvedValueOnce({
         ok: false,
-        status: 404,
-        json: async () => ({ error: { message: 'Model not found or deprecated' } })
+        status: 429,
+        json: async () => ({ error: { message: 'Quota exceeded for this project' } })
       })
 
       await userEvent.click(screen.getByLabelText('Discover new poem'))
 
       await waitFor(() => {
-        expect(document.body.textContent).toContain('Model not found or deprecated')
+        expect(document.body.textContent).toContain('Quota exceeded for this project')
+      }, { timeout: 3000 })
+    })
+
+    it('uses fallback model when primary AI model returns not-found', async () => {
+      render(<DiwanApp />)
+
+      // Switch to AI mode
+      await userEvent.click(screen.getByLabelText('Switch to AI Mode'))
+
+      const aiPoem = {
+        poet: 'Al-Mutanabbi',
+        poetArabic: 'المتنبي',
+        title: 'Ode to Courage',
+        titleArabic: 'قصيدة الشجاعة',
+        arabic: 'عَلَى قَدْرِ أَهْلِ الْعَزْمِ تَأْتِي الْعَزَائِمُ',
+        english: 'To the measure of the resolute come resolutions',
+        tags: ['Classical', 'Epic', 'Ode']
+      }
+
+      // Primary model → 404 not found; fallback model → success
+      global.fetch
+        .mockResolvedValueOnce({
+          ok: false,
+          status: 404,
+          json: async () => ({ error: { message: 'gemini-2.0-flash is not found for API version v1beta' } })
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            candidates: [{ content: { parts: [{ text: JSON.stringify(aiPoem) }] } }]
+          })
+        })
+
+      await userEvent.click(screen.getByLabelText('Discover new poem'))
+
+      await waitFor(() => {
+        expect(screen.getByText('Al-Mutanabbi')).toBeInTheDocument()
       }, { timeout: 3000 })
     })
 

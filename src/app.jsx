@@ -157,11 +157,51 @@ const getTTSInstruction = (poem, poet, mood, era) => {
 
 /**
  * API Model Endpoints
+ * textFallbacks: tried in order when the primary text model returns HTTP 404/410 (model unavailable).
  */
 const API_MODELS = {
-  insights: 'gemini-2.5-flash-preview-09-2025',
+  insights: 'gemini-2.0-flash',
   tts: 'gemini-2.5-flash-preview-tts',
-  discovery: 'gemini-2.5-flash-preview-09-2025'
+  discovery: 'gemini-2.0-flash',
+  textFallbacks: ['gemini-1.5-flash', 'gemini-1.5-pro'],
+};
+
+/**
+ * Fetch from a Gemini text endpoint with automatic model fallback.
+ * Retries with models from API_MODELS.textFallbacks on HTTP 404 / 410 (model unavailable/deprecated).
+ * Throws `<label>: <geminiErrorMessage>` for non-retryable errors or when all fallbacks are exhausted.
+ *
+ * @param {string}   endpoint - Gemini method segment, e.g. 'generateContent' or 'streamGenerateContent?alt=sse'
+ * @param {string}   body     - Pre-serialised JSON request body
+ * @param {string}   apiKey
+ * @param {string}   primary  - Primary model (e.g. API_MODELS.discovery)
+ * @param {string}   label    - Human-readable prefix for the thrown error message
+ * @param {Function} addLog   - Component logging helper
+ * @returns {Promise<Response>} Resolved Response with ok === true
+ */
+const geminiTextFetch = async (endpoint, body, apiKey, primary, label, addLog) => {
+  const models = [primary, ...API_MODELS.textFallbacks];
+  for (let i = 0; i < models.length; i++) {
+    const model = models[i];
+    if (i > 0) addLog("Model Fallback", `Trying fallback: ${model}`, "warning");
+    // If endpoint already has a query string (e.g. ?alt=sse) append &key, otherwise ?key
+    const sep = endpoint.includes('?') ? '&' : '?';
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:${endpoint}${sep}key=${apiKey}`,
+      { method: "POST", headers: { "Content-Type": "application/json" }, body }
+    );
+    if (res.ok) {
+      if (i > 0) addLog("Model Fallback", `✓ Using fallback model: ${model}`, "success");
+      return res;
+    }
+    const errData = await res.json().catch(() => ({}));
+    const errMsg = errData.error?.message || `HTTP ${res.status}`;
+    // Only retry on model-unavailable HTTP codes: 404 Not Found, 410 Gone (deprecated)
+    if ((res.status !== 404 && res.status !== 410) || i === models.length - 1) {
+      throw new Error(`${label}: ${errMsg}`);
+    }
+    addLog("Model Fallback", `${model} not available, trying next...`, "warning");
+  }
 };
 
 /**
@@ -640,6 +680,9 @@ const DebugPanel = ({ logs, onClear, darkMode }) => {
   const scrollRef = useRef(null);
 
   useEffect(() => {
+    if (logs.length > 0 && logs[logs.length - 1].type === 'error') {
+      setIsExpanded(true);
+    }
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
@@ -1900,21 +1943,11 @@ export default function DiwanApp() {
         let firstChunkTime = null;
         let chunkCount = 0;
 
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${API_MODELS.insights}:streamGenerateContent?alt=sse&key=${apiKey}`;
-        const res = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: promptText }] }],
-            systemInstruction: { parts: [{ text: INSIGHTS_SYSTEM_PROMPT }] }
-          })
+        const insightsStreamBody = JSON.stringify({
+          contents: [{ parts: [{ text: promptText }] }],
+          systemInstruction: { parts: [{ text: INSIGHTS_SYSTEM_PROMPT }] }
         });
-
-        if (!res.ok) {
-          const errData = await res.json().catch(() => ({}));
-          const errMsg = errData.error?.message || `HTTP ${res.status}`;
-          throw new Error(`AI Insights failed: ${errMsg}`);
-        }
+        const res = await geminiTextFetch('streamGenerateContent?alt=sse', insightsStreamBody, apiKey, API_MODELS.insights, 'AI Insights failed', addLog);
 
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
@@ -1970,20 +2003,11 @@ export default function DiwanApp() {
         // Non-streaming fallback (original implementation)
         addLog("Insights", "Analyzing poem...", "info");
         const poetInfoFallback = current?.poet ? ` by ${current.poet}` : '';
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${API_MODELS.insights}:generateContent?key=${apiKey}`;
-        const res = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: `Deep Analysis of${poetInfoFallback}:\n\n${current?.arabic}` }] }],
-            systemInstruction: { parts: [{ text: INSIGHTS_SYSTEM_PROMPT }] }
-          })
+        const insightsFallbackBody = JSON.stringify({
+          contents: [{ parts: [{ text: `Deep Analysis of${poetInfoFallback}:\n\n${current?.arabic}` }] }],
+          systemInstruction: { parts: [{ text: INSIGHTS_SYSTEM_PROMPT }] }
         });
-        if (!res.ok) {
-          const errData = await res.json().catch(() => ({}));
-          const errMsg = errData.error?.message || `HTTP ${res.status}`;
-          throw new Error(`AI Insights failed: ${errMsg}`);
-        }
+        const res = await geminiTextFetch('generateContent', insightsFallbackBody, apiKey, API_MODELS.insights, 'AI Insights failed', addLog);
         const data = await res.json();
         insightText = data.candidates?.[0]?.content?.parts?.[0]?.text;
         setInterpretation(insightText);
@@ -2114,18 +2138,7 @@ export default function DiwanApp() {
           "info"
         );
 
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${API_MODELS.discovery}:generateContent?key=${apiKey}`;
-        const res = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: requestBody
-        });
-
-        if (!res.ok) {
-          const errData = await res.json().catch(() => ({}));
-          const errMsg = errData.error?.message || `HTTP ${res.status}`;
-          throw new Error(`AI Discovery failed: ${errMsg}`);
-        }
+        const res = await geminiTextFetch('generateContent', requestBody, apiKey, API_MODELS.discovery, 'AI Discovery failed', addLog);
 
         const data = await res.json();
         const apiTime = performance.now() - apiStart;

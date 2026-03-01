@@ -777,7 +777,7 @@ const ErrorBanner = ({ error, onDismiss, onRetry, theme }) => {
             <X size={20} className="text-red-500" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className={`${theme.text} text-sm font-medium mb-2`}>Database Connection Error</p>
+            <p className={`${theme.text} text-sm font-medium mb-2`}>Error</p>
             <p className={`${theme.text} text-xs opacity-70 mb-3`}>{error}</p>
             <div className="flex gap-2">
               {onRetry && (
@@ -1870,6 +1870,11 @@ export default function DiwanApp() {
     let insightText = "";
 
     try {
+      // Guard: AI Insights require a Gemini API key
+      if (!apiKey) {
+        throw new Error("AI Insights require a Gemini API key. Add VITE_GEMINI_API_KEY to your environment to enable this feature.");
+      }
+
       // Use streaming if feature flag is enabled
       if (FEATURES.streaming) {
         const promptText = `Deep Analysis of: ${current?.arabic}`;
@@ -1994,9 +1999,11 @@ export default function DiwanApp() {
       }
     } catch (e) {
       addLog("Analysis Error", `${e.message} | Poem ID: ${current?.id}`, "error");
-      // Show partial results if streaming was interrupted
+      // Show partial results if streaming was interrupted; otherwise show error to user
       if (FEATURES.streaming && insightText) {
         addLog("Insights", "Showing partial results", "warning");
+      } else {
+        setBackendError(e.message);
       }
     } finally {
       setIsInterpreting(false);
@@ -2071,6 +2078,10 @@ export default function DiwanApp() {
 
       } else {
         // GEMINI AI MODE: Original implementation
+        if (!apiKey) {
+          throw new Error("AI Discovery requires a Gemini API key. Add VITE_GEMINI_API_KEY to your environment, or switch to Local Database mode.");
+        }
+
         const prompt = selectedCategory === "All"
           ? "Find a masterpiece Arabic poem. COMPLETE text."
           : `Find a famous poem by ${selectedCategory}. COMPLETE text.`;
@@ -2100,6 +2111,13 @@ export default function DiwanApp() {
           headers: { "Content-Type": "application/json" },
           body: requestBody
         });
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          const errMsg = errData.error?.message || `HTTP ${res.status}`;
+          throw new Error(`AI Discovery failed: ${errMsg}`);
+        }
+
         const data = await res.json();
         const apiTime = performance.now() - apiStart;
 
@@ -2135,6 +2153,7 @@ export default function DiwanApp() {
 
         addLog("Discovery API", `✓ Poem found | API: ${(apiTime / 1000).toFixed(2)}s | Response: ${(responseSize / 1024).toFixed(1)}KB | ${jsonChars} chars`, "success");
         addLog("Discovery Metrics", `${estimatedOutputTokens} tokens | ${tokensPerSecond} tok/s | Arabic: ${arabicPoemChars} chars | English: ${englishPoemChars} chars | Poet: ${newPoem.poet}`, "success");
+        setBackendError(null); // Clear any previous error on success
         setPoems(prev => {
           const updated = [...prev, newPoem];
           const searchStr = selectedCategory.toLowerCase();
@@ -2146,6 +2165,9 @@ export default function DiwanApp() {
       }
     } catch (e) {
       addLog("Discovery Error", `${e.message} | Source: ${useDatabase ? 'Database' : 'Gemini'}`, "error");
+      if (!useDatabase) {
+        setBackendError(e.message);
+      }
     }
     setIsFetching(false);
   };

@@ -28,7 +28,7 @@ CREATE TABLE IF NOT EXISTS design_review_sessions (
   round_number INTEGER NOT NULL,
   total_designs INTEGER DEFAULT 0,
   reviewed_count INTEGER DEFAULT 0,
-  status TEXT DEFAULT 'in_progress',
+  status TEXT DEFAULT 'in_progress' CHECK (status IN ('in_progress', 'completed', 'abandoned')),
   notes TEXT,
   created_at TIMESTAMPTZ DEFAULT now(),
   completed_at TIMESTAMPTZ

@@ -893,8 +893,9 @@ const OverflowMenu = ({
     <div className="relative flex flex-col items-center gap-1 min-w-[56px]" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105"
+        className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:scale-105 ${goldHoverClass}`}
         aria-label="More options"
+        aria-expanded={isOpen}
       >
         <MoreHorizontal size={21} style={{ color: gold }} />
       </button>
@@ -938,8 +939,9 @@ const OverflowMenu = ({
           {/* Font accordion */}
           <div className={`border-b ${divider}`}>
             <button
-              onClick={() => setFontSubmenuOpen(!fontSubmenuOpen)}
+              onClick={() => { setFontSubmenuOpen(!fontSubmenuOpen); setPoetSubmenuOpen(false); }}
               className={`w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex items-center gap-3 ${fontSubmenuOpen ? '' : goldHoverClass}`}
+              aria-expanded={fontSubmenuOpen}
             >
               <PenTool size={18} style={{ color: gold }} />
               <div className="flex flex-col items-start flex-1">
@@ -998,8 +1000,9 @@ const OverflowMenu = ({
           {/* Poet accordion */}
           <div>
             <button
-              onClick={() => setPoetSubmenuOpen(!poetSubmenuOpen)}
+              onClick={() => { setPoetSubmenuOpen(!poetSubmenuOpen); setFontSubmenuOpen(false); }}
               className={`w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex items-center gap-3 ${poetSubmenuOpen ? '' : goldHoverClass}`}
+              aria-expanded={poetSubmenuOpen}
             >
               <Library size={18} style={{ color: gold }} />
               <div className="flex flex-col items-start flex-1">

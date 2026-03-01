@@ -845,7 +845,8 @@ const OverflowMenu = ({
   const goldHoverClass = darkMode ? 'hover:bg-[rgba(197,160,89,0.08)]' : 'hover:bg-[rgba(139,115,85,0.08)]';
   const goldActiveClass = darkMode ? 'bg-[rgba(197,160,89,0.15)]' : 'bg-[rgba(139,115,85,0.12)]';
   const divider = darkMode ? 'border-[rgba(197,160,89,0.08)]' : 'border-[rgba(139,115,85,0.12)]';
-  const submenuBg = darkMode ? 'rgba(0,0,0,0.28)' : 'rgba(139,115,85,0.07)';
+  // Dark: slightly lighter than the near-black menu bg; Light: warm tinted inset
+  const submenuBg = darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(139,115,85,0.07)';
 
   useEffect(() => {
     const clickOut = (e) => {
@@ -901,8 +902,14 @@ const OverflowMenu = ({
 
       {isOpen && (
         <div
-          className="absolute bottom-full right-[-20px] mb-3 min-w-[220px] max-h-[80vh] overflow-y-auto custom-scrollbar backdrop-blur-[48px] rounded-3xl p-3 shadow-[0_-10px_40px_rgba(0,0,0,0.7)] z-50"
-          style={{ background: darkMode ? 'rgba(20,18,16,0.98)' : 'rgba(255,252,248,0.98)', border: `1px solid ${darkMode ? 'rgba(197,160,89,0.15)' : 'rgba(139,115,85,0.25)'}` }}
+          className="absolute bottom-full right-[-20px] mb-3 min-w-[220px] max-h-[80vh] overflow-y-auto custom-scrollbar backdrop-blur-[48px] rounded-3xl p-3 z-50"
+          style={{
+            background: darkMode ? 'rgba(20,18,16,0.98)' : 'rgba(255,252,248,0.98)',
+            border: `1px solid ${darkMode ? 'rgba(197,160,89,0.15)' : 'rgba(139,115,85,0.18)'}`,
+            boxShadow: darkMode
+              ? '0 -10px 40px rgba(0,0,0,0.7)'
+              : '0 -2px 12px rgba(139,115,85,0.10), 0 -6px 24px rgba(139,115,85,0.07), 0 1px 3px rgba(0,0,0,0.04)'
+          }}
         >
           <button onClick={handleCopy} className={itemClass}>
             {showCopySuccess ? <Check size={18} className="text-green-500" /> : <Copy size={18} style={{ color: gold }} />}
@@ -932,25 +939,28 @@ const OverflowMenu = ({
           <div className={`border-b ${divider}`}>
             <button
               onClick={() => setFontSubmenuOpen(!fontSubmenuOpen)}
-              className={`w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex items-center gap-3 ${goldHoverClass}`}
+              className={`w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex items-center gap-3 ${fontSubmenuOpen ? '' : goldHoverClass}`}
             >
               <PenTool size={18} style={{ color: gold }} />
               <div className="flex flex-col items-start flex-1">
                 <div className="font-amiri text-base font-medium" style={{ color: gold }}>اختيار الخط</div>
                 <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Font: {currentFont}</div>
               </div>
-              <ChevronDown size={14} style={{ color: gold }} className={`opacity-50 transition-transform duration-200 ${fontSubmenuOpen ? 'rotate-180' : ''}`} />
+              <ChevronDown size={14} style={{ color: gold }} className={`transition-transform duration-200 ${fontSubmenuOpen ? 'rotate-180' : 'opacity-50'}`} />
             </button>
             {fontSubmenuOpen && (
-              <div className="pb-2 px-2 mx-2 mb-2 rounded-xl" style={{ background: submenuBg }}>
+              <div
+                className="pt-1 pb-2 px-1 mx-2 mb-2 mt-0.5 rounded-xl"
+                style={{ background: submenuBg, border: `1px solid ${darkMode ? 'rgba(197,160,89,0.10)' : 'rgba(139,115,85,0.14)'}` }}
+              >
                 {FONTS.map((font) => (
                   <button
                     key={font.id}
                     onClick={() => handleSelectFont(font.id)}
-                    className={`w-full p-[8px_12px] cursor-pointer rounded-xl transition-all duration-200 flex items-center gap-3 mb-1 ${currentFont === font.id ? goldActiveClass : goldHoverClass}`}
+                    className={`w-full p-[8px_12px] cursor-pointer rounded-lg transition-all duration-200 flex items-center gap-3 mb-0.5 ${currentFont === font.id ? goldActiveClass : goldHoverClass}`}
                   >
                     <div className="flex flex-col items-start flex-1">
-                      <div className={`${font.family} text-base font-medium`} style={{ color: gold }} dir="rtl">{font.labelAr}</div>
+                      <div className={`${font.family} text-sm font-medium`} style={{ color: gold }} dir="rtl">{font.labelAr}</div>
                       <div className="font-brand-en text-[8px] uppercase tracking-[0.12em] opacity-40 text-[#a8a29e]">{font.label}</div>
                     </div>
                     {currentFont === font.id && <Check size={13} style={{ color: gold }} />}
@@ -989,22 +999,25 @@ const OverflowMenu = ({
           <div>
             <button
               onClick={() => setPoetSubmenuOpen(!poetSubmenuOpen)}
-              className={`w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex items-center gap-3 ${goldHoverClass}`}
+              className={`w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex items-center gap-3 ${poetSubmenuOpen ? '' : goldHoverClass}`}
             >
               <Library size={18} style={{ color: gold }} />
               <div className="flex flex-col items-start flex-1">
                 <div className="font-amiri text-base font-medium" style={{ color: gold }}>اختيار الشاعر</div>
                 <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Poet: {CATEGORIES.find(c => c.id === selectedCategory)?.label || 'All'}</div>
               </div>
-              <ChevronDown size={14} style={{ color: gold }} className={`opacity-50 transition-transform duration-200 ${poetSubmenuOpen ? 'rotate-180' : ''}`} />
+              <ChevronDown size={14} style={{ color: gold }} className={`transition-transform duration-200 ${poetSubmenuOpen ? 'rotate-180' : 'opacity-50'}`} />
             </button>
             {poetSubmenuOpen && (
-              <div className="pb-2 px-2 mx-2 mb-2 rounded-xl" style={{ background: submenuBg }}>
+              <div
+                className="pt-1 pb-2 px-1 mx-2 mb-2 mt-0.5 rounded-xl"
+                style={{ background: submenuBg, border: `1px solid ${darkMode ? 'rgba(197,160,89,0.10)' : 'rgba(139,115,85,0.14)'}` }}
+              >
                 {CATEGORIES.map(cat => (
                   <button
                     key={cat.id}
                     onClick={() => handleSelectCategory(cat.id)}
-                    className={`w-full p-[8px_12px] cursor-pointer rounded-xl transition-all duration-200 flex items-center gap-3 mb-1 ${selectedCategory === cat.id ? goldActiveClass : goldHoverClass}`}
+                    className={`w-full p-[8px_12px] cursor-pointer rounded-lg transition-all duration-200 flex items-center gap-3 mb-0.5 ${selectedCategory === cat.id ? goldActiveClass : goldHoverClass}`}
                   >
                     <div className="flex flex-col items-start flex-1">
                       <div className="font-amiri text-sm font-medium" style={{ color: gold }}>{cat.labelAr}</div>

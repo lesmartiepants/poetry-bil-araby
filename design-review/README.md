@@ -2,20 +2,70 @@
 
 Consolidated design explorations for the Poetry Bil-Araby app, bringing together work from multiple PRs into a single review space.
 
-## Quick Start
+## Accessing the Review UI
 
-Open `review.html` in your browser for the interactive review experience.
+### Vercel Preview (Recommended)
+Every PR automatically deploys a Vercel preview. Append `/design-review/` to the preview URL:
 
-### Keyboard Shortcuts
+```
+https://<your-app-name>-<pr-slug>.vercel.app/design-review/
+```
+
+### Local Development
+```bash
+npm run dev:all   # starts both frontend (5173) and API server (3001)
+# then open: http://localhost:5173/design-review/
+```
+
+## What Works Without a DB Migration
+
+The review UI works **immediately** after deploy with no database setup required:
+
+- Browse all ~90 mockups across 5 component categories
+- Preview designs in the iframe panel
+- Record verdicts (Keep / Discard / Revisit / Skip)
+- **Verdicts persist in `localStorage`** — they survive page refreshes
+
+The sync indicator will show **offline** if the Render API is unreachable; this is expected without the migration and does not break the UI.
+
+## Enabling Full API Persistence (Optional)
+
+API-backed session history requires the database migration to be applied once against your Supabase project:
+
+```bash
+# Option A: psql
+psql $DATABASE_URL -f supabase/migrations/20260222000000_design_review_tables.sql
+
+# Option B: Supabase Dashboard
+# Open the SQL editor and paste the contents of the migration file above
+```
+
+After the migration the Render API (`https://poetry-bil-araby-api.onrender.com`) picks up the new tables automatically. The review UI will then show **"✓ Saved to database"** after each verdict and support cross-session history.
+
+### API Endpoints (all under `/api/design-review/`)
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/items` | GET | List all design items |
+| `/items/sync` | POST | Bulk upsert from CATALOG (idempotent) |
+| `/sessions` | GET | List review sessions |
+| `/sessions` | POST | Create new session |
+| `/sessions/:id` | PATCH | Complete session / add notes |
+| `/sessions/:id/verdicts` | GET | Verdicts for a session |
+| `/sessions/:id/verdicts` | POST | Submit / update verdicts |
+| `/items/:key/history` | GET | Full verdict history for one design |
+| `/summary` | GET | Aggregated stats |
+| `/claude-context` | GET | Structured JSON for the design-review-agent |
+
+## Keyboard Shortcuts
+
 | Key | Action |
 |-----|--------|
-| `Left/Right` | Cycle through features |
-| `Up/Down` | Cycle through options |
-| `1` | Switch to Splash component |
-| `2` | Switch to Walkthrough component |
-| `3` | Switch to Main App component |
-| `4` | Switch to Controls component |
-| `I` | Toggle info/feedback panel |
+| `←` / `→` | Previous / Next design |
+| `K` | Keep |
+| `D` | Discard |
+| `R` | Revisit |
+| `S` | Skip |
+| `I` | Toggle info panel |
 | `F` | Fullscreen preview |
 
 ## What's Here

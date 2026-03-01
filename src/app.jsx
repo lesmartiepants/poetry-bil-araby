@@ -1417,6 +1417,7 @@ export default function DiwanApp() {
   const activeAudioRequests = useRef(new Set()); // Track in-flight audio generation requests
   const activeInsightRequests = useRef(new Set()); // Track in-flight insight generation requests
   const pollingIntervals = useRef([]); // Track all polling intervals for cleanup
+  const pendingRafRef = useRef(null); // Track pending rAF id for overflow detection deduplication
 
   // Auth state
   const { user, loading: authLoading, signInWithGoogle, signInWithApple, signOut, isConfigured: isSupabaseConfigured } = useAuth();
@@ -1475,34 +1476,46 @@ export default function DiwanApp() {
     // With Supabase buttons the bar is wider, so use a larger threshold.
     const narrowThreshold = isSupabaseConfigured ? 660 : 540;
 
-    const detectOverflow = () => {
-      if (!controlBarRef.current) return;
-      const bar = controlBarRef.current;
-      const vw = window.visualViewport?.width ?? window.innerWidth;
+    const scheduleDetect = () => {
+      // Deduplicate: cancel any pending frame before scheduling a new one
+      if (pendingRafRef.current !== null) cancelAnimationFrame(pendingRafRef.current);
+      pendingRafRef.current = requestAnimationFrame(() => {
+        pendingRafRef.current = null;
+        if (!controlBarRef.current) return;
+        const bar = controlBarRef.current;
+        const vw = window.visualViewport?.width ?? window.innerWidth;
 
-      // Temporarily clip overflow so scrollWidth accurately reflects content width on iOS Safari,
-      // where scrollWidth may equal clientWidth for flex containers with overflow:visible.
-      const savedOverflow = bar.style.overflow;
-      bar.style.overflow = 'hidden';
-      const hasContentOverflow = bar.scrollWidth > bar.clientWidth;
-      bar.style.overflow = savedOverflow;
+        // Temporarily clip overflow so scrollWidth accurately reflects content width on iOS Safari,
+        // where scrollWidth may equal clientWidth for flex containers with overflow:visible.
+        const savedOverflow = bar.style.overflow;
+        bar.style.overflow = 'hidden';
+        const hasContentOverflow = bar.scrollWidth > bar.clientWidth;
+        bar.style.overflow = savedOverflow;
 
-      // Stay in overflow mode on narrow screens regardless of current bar width,
-      // which prevents oscillation when the bar shrinks after switching to OverflowMenu.
-      setIsOverflow(hasContentOverflow || vw < narrowThreshold);
+        // Stay in overflow mode on narrow screens regardless of current bar width,
+        // which prevents oscillation when the bar shrinks after switching to OverflowMenu.
+        setIsOverflow(hasContentOverflow || vw < narrowThreshold);
+      });
     };
 
-    const rafId = requestAnimationFrame(detectOverflow);
+    scheduleDetect();
 
-    // ResizeObserver catches font-load changes and dynamic content updates
-    const resizeObserver = new ResizeObserver(() => requestAnimationFrame(detectOverflow));
-    if (controlBarRef.current) resizeObserver.observe(controlBarRef.current);
+    // ResizeObserver catches font-load changes and dynamic content updates.
+    // Guard for environments where ResizeObserver is unavailable (older browsers, some test envs).
+    let resizeObserver = null;
+    if (typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(scheduleDetect);
+      if (controlBarRef.current) resizeObserver.observe(controlBarRef.current);
+    }
 
-    window.addEventListener('resize', detectOverflow);
+    window.addEventListener('resize', scheduleDetect);
     return () => {
-      cancelAnimationFrame(rafId);
-      resizeObserver.disconnect();
-      window.removeEventListener('resize', detectOverflow);
+      if (pendingRafRef.current !== null) {
+        cancelAnimationFrame(pendingRafRef.current);
+        pendingRafRef.current = null;
+      }
+      resizeObserver?.disconnect();
+      window.removeEventListener('resize', scheduleDetect);
     };
   }, [isSupabaseConfigured]);
 

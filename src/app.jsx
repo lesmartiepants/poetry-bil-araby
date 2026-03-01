@@ -157,11 +157,106 @@ const getTTSInstruction = (poem, poet, mood, era) => {
 
 /**
  * API Model Endpoints
+ * Text model list is built dynamically by discoverTextModels(); textDefaults is the fallback
+ * used when the ListModels API is unavailable. Starts with the cheapest Gemini 2.5 model.
  */
 const API_MODELS = {
-  insights: 'gemini-2.5-flash-preview-09-2025',
   tts: 'gemini-2.5-flash-preview-tts',
-  discovery: 'gemini-2.5-flash-preview-09-2025'
+  textDefaults: ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'],
+};
+
+/**
+ * Module-level cache for the ranked list of available Gemini text models.
+ * Populated on first call to discoverTextModels(); shared across all handlers.
+ */
+let _discoveredTextModels = null;
+
+/**
+ * Fetch and rank available Gemini text models via the ListModels API.
+ * Prefers newer versions and cheaper (flash) models over pro.
+ * Falls back to API_MODELS.textDefaults if the API is unreachable or returns no usable models.
+ * Result is cached for the lifetime of the page.
+ */
+const discoverTextModels = async (apiKey, addLog) => {
+  if (_discoveredTextModels) return _discoveredTextModels;
+  try {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`,
+      { method: 'GET' }
+    );
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const { models = [] } = await res.json();
+    const ranked = models
+      .filter(m =>
+        Array.isArray(m.supportedGenerationMethods) &&
+        m.supportedGenerationMethods.includes('generateContent') &&
+        typeof m.name === 'string' &&
+        m.name.includes('gemini') &&
+        !m.name.includes('embedding') &&
+        !m.name.includes('tts')
+      )
+      .map(m => {
+        const id = m.name.replace('models/', '');
+        const vm = id.match(/gemini-(\d+)\.(\d+)/);
+        const major = vm ? parseInt(vm[1]) : 0;
+        const minor = vm ? parseInt(vm[2]) : 0;
+        const isFlash = id.includes('flash');
+        // '8b' identifies Google's 8-billion-parameter lite variants (e.g. gemini-1.5-flash-8b)
+        const isLite = id.includes('lite') || id.includes('8b');
+        // Scoring: major version (×1000) > minor version (×100) > flash bonus (+10) > lite penalty (−5)
+        // Higher score = try first; prefers newest model, then flash (cheaper) over pro, avoids lite.
+        const score = major * 1000 + minor * 100 + (isFlash ? 10 : 0) - (isLite ? 5 : 0);
+        return { id, score };
+      })
+      .sort((a, b) => b.score - a.score)
+      .map(m => m.id);
+    if (ranked.length > 0) {
+      _discoveredTextModels = ranked;
+      if (addLog) addLog('Model Discovery', `${ranked.length} models ranked: ${ranked.slice(0, 3).join(', ')}`, 'info');
+      return _discoveredTextModels;
+    }
+  } catch (err) {
+    if (addLog) addLog('Model Discovery', `ListModels unavailable: ${err.message} — using defaults`, 'warning');
+  }
+  _discoveredTextModels = [...API_MODELS.textDefaults];
+  return _discoveredTextModels;
+};
+
+/**
+ * Fetch from a Gemini text endpoint with automatic model fallback.
+ * Uses the dynamically discovered model list (ranked newest/cheapest first).
+ * Retries on HTTP 404/410 (model unavailable/deprecated); throws immediately on other errors.
+ *
+ * @param {string}   endpoint - Gemini method segment, e.g. 'generateContent' or 'streamGenerateContent?alt=sse'
+ * @param {string}   body     - Pre-serialised JSON request body
+ * @param {string}   apiKey
+ * @param {string}   label    - Human-readable prefix for the thrown error message
+ * @param {Function} addLog   - Component logging helper
+ * @returns {Promise<Response>} Resolved Response with ok === true
+ */
+const geminiTextFetch = async (endpoint, body, apiKey, label, addLog) => {
+  const models = await discoverTextModels(apiKey, addLog);
+  for (let i = 0; i < models.length; i++) {
+    const model = models[i];
+    if (i > 0) addLog("Model Fallback", `Trying fallback: ${model}`, "warning");
+    // If endpoint already has a query string (e.g. ?alt=sse) append &key, otherwise ?key
+    const sep = endpoint.includes('?') ? '&' : '?';
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:${endpoint}${sep}key=${apiKey}`,
+      { method: "POST", headers: { "Content-Type": "application/json" }, body }
+    );
+    if (res.ok) {
+      if (i > 0) addLog("Model Fallback", `✓ Using fallback model: ${model}`, "success");
+      return res;
+    }
+    const errData = await res.json().catch(() => ({}));
+    const errMsg = errData.error?.message || `HTTP ${res.status}`;
+    // Only retry on model-unavailable HTTP codes: 404 Not Found, 410 Gone (deprecated)
+    if ((res.status !== 404 && res.status !== 410) || i === models.length - 1) {
+      throw new Error(`${label}: ${errMsg}`);
+    }
+    addLog("Model Fallback", `${model} not available, trying next...`, "warning");
+  }
 };
 
 /**
@@ -558,15 +653,11 @@ const prefetchManager = {
       }
 
       const apiStart = performance.now();
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${API_MODELS.insights}:generateContent?key=${apiKey}`;
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: promptText }] }],
-          systemInstruction: { parts: [{ text: INSIGHTS_SYSTEM_PROMPT }] }
-        })
+      const prefetchBody = JSON.stringify({
+        contents: [{ parts: [{ text: promptText }] }],
+        systemInstruction: { parts: [{ text: INSIGHTS_SYSTEM_PROMPT }] }
       });
+      const res = await geminiTextFetch('generateContent', prefetchBody, apiKey, 'Prefetch Insights', addLog);
 
       const data = await res.json();
       const apiTime = performance.now() - apiStart;
@@ -640,6 +731,9 @@ const DebugPanel = ({ logs, onClear, darkMode }) => {
   const scrollRef = useRef(null);
 
   useEffect(() => {
+    if (logs.length > 0 && logs[logs.length - 1].type === 'error') {
+      setIsExpanded(true);
+    }
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
@@ -777,7 +871,7 @@ const ErrorBanner = ({ error, onDismiss, onRetry, theme }) => {
             <X size={20} className="text-red-500" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className={`${theme.text} text-sm font-medium mb-2`}>Database Connection Error</p>
+            <p className={`${theme.text} text-sm font-medium mb-2`}>Error</p>
             <p className={`${theme.text} text-xs opacity-70 mb-3`}>{error}</p>
             <div className="flex gap-2">
               {onRetry && (
@@ -1476,7 +1570,6 @@ export default function DiwanApp() {
   });
   const [cacheStats, setCacheStats] = useState({ audioHits: 0, audioMisses: 0, insightsHits: 0, insightsMisses: 0 });
   const [isPrefetching, setIsPrefetching] = useState(false);
-  const [backendError, setBackendError] = useState(null);
   const activeAudioRequests = useRef(new Set()); // Track in-flight audio generation requests
   const activeInsightRequests = useRef(new Set()); // Track in-flight insight generation requests
   const pollingIntervals = useRef([]); // Track all polling intervals for cleanup
@@ -1533,6 +1626,13 @@ export default function DiwanApp() {
       setCurrentIndex(0);
     }
   }, [selectedCategory]);
+
+  // Eagerly populate the discovered model list so it's ready before any user action.
+  // Using the default fetch mock in tests means this never consumes a mockResolvedValueOnce.
+  useEffect(() => {
+    const key = import.meta.env.VITE_GEMINI_API_KEY || "";
+    if (key) discoverTextModels(key, addLog);
+  }, []);
 
   useEffect(() => {
     // Threshold below which overflow mode is always active (prevents oscillation on narrow screens).
@@ -1972,9 +2072,15 @@ export default function DiwanApp() {
     let insightText = "";
 
     try {
+      // Guard: AI Insights require a Gemini API key
+      if (!apiKey) {
+        throw new Error("AI Insights require a Gemini API key. Add VITE_GEMINI_API_KEY to your environment to enable this feature.");
+      }
+
       // Use streaming if feature flag is enabled
       if (FEATURES.streaming) {
-        const promptText = `Deep Analysis of: ${current?.arabic}`;
+        const poetInfo = current?.poet ? ` by ${current.poet}` : '';
+        const promptText = `Deep Analysis of${poetInfo}:\n\n${current?.arabic}`;
         const requestSize = new Blob([
           JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
         ]).size;
@@ -1996,19 +2102,11 @@ export default function DiwanApp() {
         let firstChunkTime = null;
         let chunkCount = 0;
 
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${API_MODELS.insights}:streamGenerateContent?alt=sse&key=${apiKey}`;
-        const res = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: promptText }] }],
-            systemInstruction: { parts: [{ text: INSIGHTS_SYSTEM_PROMPT }] }
-          })
+        const insightsStreamBody = JSON.stringify({
+          contents: [{ parts: [{ text: promptText }] }],
+          systemInstruction: { parts: [{ text: INSIGHTS_SYSTEM_PROMPT }] }
         });
-
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
-        }
+        const res = await geminiTextFetch('streamGenerateContent?alt=sse', insightsStreamBody, apiKey, 'AI Insights failed', addLog);
 
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
@@ -2063,15 +2161,12 @@ export default function DiwanApp() {
       } else {
         // Non-streaming fallback (original implementation)
         addLog("Insights", "Analyzing poem...", "info");
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${API_MODELS.insights}:generateContent?key=${apiKey}`;
-        const res = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: `Deep Analysis of: ${current?.arabic}` }] }],
-            systemInstruction: { parts: [{ text: INSIGHTS_SYSTEM_PROMPT }] }
-          })
+        const poetInfoFallback = current?.poet ? ` by ${current.poet}` : '';
+        const insightsFallbackBody = JSON.stringify({
+          contents: [{ parts: [{ text: `Deep Analysis of${poetInfoFallback}:\n\n${current?.arabic}` }] }],
+          systemInstruction: { parts: [{ text: INSIGHTS_SYSTEM_PROMPT }] }
         });
+        const res = await geminiTextFetch('generateContent', insightsFallbackBody, apiKey, 'AI Insights failed', addLog);
         const data = await res.json();
         insightText = data.candidates?.[0]?.content?.parts?.[0]?.text;
         setInterpretation(insightText);
@@ -2134,7 +2229,6 @@ export default function DiwanApp() {
           }
 
           // Clear any previous backend errors on success
-          setBackendError(null);
 
           const newPoem = await res.json();
           const apiTime = performance.now() - apiStart;
@@ -2166,13 +2260,16 @@ export default function DiwanApp() {
             ? 'Backend server is not running. Please start it with: npm run dev:server'
             : dbError.message;
 
-          setBackendError(errorMessage);
           addLog("Discovery DB Error", errorMessage, "error");
           throw dbError; // Re-throw to be caught by outer catch
         }
 
       } else {
         // GEMINI AI MODE: Original implementation
+        if (!apiKey) {
+          throw new Error("AI Discovery requires a Gemini API key. Add VITE_GEMINI_API_KEY to your environment, or switch to Local Database mode.");
+        }
+
         const prompt = selectedCategory === "All"
           ? "Find a masterpiece Arabic poem. COMPLETE text."
           : `Find a famous poem by ${selectedCategory}. COMPLETE text.`;
@@ -2196,12 +2293,8 @@ export default function DiwanApp() {
           "info"
         );
 
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${API_MODELS.discovery}:generateContent?key=${apiKey}`;
-        const res = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: requestBody
-        });
+        const res = await geminiTextFetch('generateContent', requestBody, apiKey, 'AI Discovery failed', addLog);
+
         const data = await res.json();
         const apiTime = performance.now() - apiStart;
 
@@ -2539,13 +2632,6 @@ export default function DiwanApp() {
       <div className="scroll-progress" />
 
       <DebugPanel logs={logs} onClear={() => setLogs([])} darkMode={darkMode} />
-
-      <ErrorBanner
-        error={backendError}
-        onDismiss={() => setBackendError(null)}
-        onRetry={handleFetch}
-        theme={theme}
-      />
 
       <header style={{ opacity: headerOpacity }} className="fixed top-4 md:top-8 left-0 right-0 z-40 pointer-events-none transition-opacity duration-300 flex flex-row items-center justify-center gap-4 md:gap-8 px-4 md:px-6">
         <div className={`flex flex-row-reverse items-center gap-2 md:gap-4 ${theme.brand} tracking-wide header-luminescence`}>

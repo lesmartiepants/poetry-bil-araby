@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import DiwanApp from '../app.jsx'
-import { createMockGeminiResponse, mockSuccessfulFetch } from './utils'
+import { createMockGeminiResponse, mockSuccessfulFetch, createDbPoem, createStreamingMock } from './utils'
 
 describe('DiwanApp', () => {
   beforeEach(() => {
@@ -361,6 +361,151 @@ describe('DiwanApp', () => {
 
       // Should clean up without errors
       expect(true).toBe(true)
+    })
+  })
+
+  describe('AI Features Smoke Tests', () => {
+    const mockInsightText = 'POEM:\nTranslation line\nTHE DEPTH: Deep meaning here.\nTHE AUTHOR: Celebrated poet info.'
+
+    it('Learn button is enabled for a DB poem (no english/tags)', async () => {
+      render(<DiwanApp />)
+
+      global.fetch.mockResolvedValueOnce({ ok: true, json: async () => createDbPoem(100) })
+
+      await userEvent.click(screen.getByLabelText('Discover new poem'))
+      await waitFor(() => expect(screen.getByText('Mahmoud Darwish')).toBeInTheDocument(), { timeout: 3000 })
+
+      expect(screen.getByLabelText('Learn about poem meaning')).not.toBeDisabled()
+    })
+
+    it('shows insights after clicking Learn on a DB poem', async () => {
+      render(<DiwanApp />)
+
+      global.fetch.mockResolvedValueOnce({ ok: true, json: async () => createDbPoem(101) })
+
+      await userEvent.click(screen.getByLabelText('Discover new poem'))
+      await waitFor(() => expect(screen.getByText('Mahmoud Darwish')).toBeInTheDocument(), { timeout: 3000 })
+
+      // Mock the Gemini insights streaming response BEFORE clicking Learn
+      global.fetch.mockResolvedValueOnce(createStreamingMock(mockInsightText))
+
+      await userEvent.click(screen.getByLabelText('Learn about poem meaning'))
+
+      // Wait for insight content (insightParts.depth) to appear in the DOM
+      await waitFor(() => {
+        expect(document.body.textContent).toContain('Deep meaning here.')
+      }, { timeout: 3000 })
+    })
+
+    it('logs error when AI Discover fails with a non-retryable error', async () => {
+      render(<DiwanApp />)
+
+      // Switch to AI mode
+      await userEvent.click(screen.getByLabelText('Switch to AI Mode'))
+
+      // 429 quota errors are shown immediately (not retried with a fallback model)
+      global.fetch.mockResolvedValueOnce({
+        ok: false,
+        status: 429,
+        json: async () => ({ error: { message: 'Quota exceeded for this project' } })
+      })
+
+      await userEvent.click(screen.getByLabelText('Discover new poem'))
+
+      // Error is logged to the auto-expanded DebugPanel (rendered in the DOM even when collapsed)
+      await waitFor(() => {
+        expect(document.body.textContent).toContain('Quota exceeded for this project')
+      }, { timeout: 3000 })
+    })
+
+    it('uses fallback model when primary AI model returns not-found', async () => {
+      render(<DiwanApp />)
+
+      // Switch to AI mode
+      await userEvent.click(screen.getByLabelText('Switch to AI Mode'))
+
+      const aiPoem = {
+        poet: 'Al-Mutanabbi',
+        poetArabic: 'المتنبي',
+        title: 'Ode to Courage',
+        titleArabic: 'قصيدة الشجاعة',
+        arabic: 'عَلَى قَدْرِ أَهْلِ الْعَزْمِ تَأْتِي الْعَزَائِمُ',
+        english: 'To the measure of the resolute come resolutions',
+        tags: ['Classical', 'Epic', 'Ode']
+      }
+
+      // Primary model → 404 not found; fallback model → success
+      global.fetch
+        .mockResolvedValueOnce({
+          ok: false,
+          status: 404,
+          json: async () => ({ error: { message: 'gemini-2.0-flash is not found for API version v1beta' } })
+        })
+        .mockResolvedValueOnce({
+          ok: true,
+          json: async () => ({
+            candidates: [{ content: { parts: [{ text: JSON.stringify(aiPoem) }] } }]
+          })
+        })
+
+      await userEvent.click(screen.getByLabelText('Discover new poem'))
+
+      await waitFor(() => {
+        expect(screen.getByText('Al-Mutanabbi')).toBeInTheDocument()
+      }, { timeout: 3000 })
+    })
+
+    it('discovers a new poem in AI mode when Gemini responds successfully', async () => {
+      render(<DiwanApp />)
+
+      // Switch to AI mode
+      await userEvent.click(screen.getByLabelText('Switch to AI Mode'))
+
+      const aiPoem = {
+        poet: 'Al-Mutanabbi',
+        poetArabic: 'المتنبي',
+        title: 'Ode to Courage',
+        titleArabic: 'قصيدة الشجاعة',
+        arabic: 'عَلَى قَدْرِ أَهْلِ الْعَزْمِ تَأْتِي الْعَزَائِمُ',
+        english: 'To the measure of the resolute come resolutions',
+        tags: ['Classical', 'Epic', 'Ode']
+      }
+
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          candidates: [{ content: { parts: [{ text: JSON.stringify(aiPoem) }] } }]
+        })
+      })
+
+      await userEvent.click(screen.getByLabelText('Discover new poem'))
+
+      await waitFor(() => {
+        expect(screen.getByText('Al-Mutanabbi')).toBeInTheDocument()
+      }, { timeout: 3000 })
+    })
+
+    it('logs error when AI Insights fails with an HTTP error from Gemini', async () => {
+      render(<DiwanApp />)
+
+      global.fetch.mockResolvedValueOnce({ ok: true, json: async () => createDbPoem(102) })
+
+      await userEvent.click(screen.getByLabelText('Discover new poem'))
+      await waitFor(() => expect(screen.getByText('Mahmoud Darwish')).toBeInTheDocument(), { timeout: 3000 })
+
+      // Mock Gemini returning an API error for insights
+      global.fetch.mockResolvedValueOnce({
+        ok: false,
+        status: 400,
+        json: async () => ({ error: { message: 'API key not valid' } })
+      })
+
+      await userEvent.click(screen.getByLabelText('Learn about poem meaning'))
+
+      // Error is logged to the auto-expanded DebugPanel (rendered in the DOM even when collapsed)
+      await waitFor(() => {
+        expect(document.body.textContent).toContain('API key not valid')
+      }, { timeout: 3000 })
     })
   })
 })

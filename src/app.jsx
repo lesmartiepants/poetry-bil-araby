@@ -824,7 +824,7 @@ const OverflowMenu = ({
   darkMode,
   onToggleDarkMode,
   currentFont,
-  onCycleFont,
+  onSelectFont,
   selectedCategory,
   onSelectCategory,
   onCopy,
@@ -836,10 +836,16 @@ const OverflowMenu = ({
   onOpenSettings
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [fontSubmenuOpen, setFontSubmenuOpen] = useState(false);
   const dropdownRef = useRef(null);
 
   useEffect(() => {
-    const clickOut = (e) => { if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setIsOpen(false); };
+    const clickOut = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setIsOpen(false);
+        setFontSubmenuOpen(false);
+      }
+    };
     document.addEventListener("mousedown", clickOut);
     return () => document.removeEventListener("mousedown", clickOut);
   }, []);
@@ -859,8 +865,9 @@ const OverflowMenu = ({
     setIsOpen(false);
   };
 
-  const handleCycleFont = () => {
-    onCycleFont();
+  const handleSelectFont = (fontId) => {
+    onSelectFont(fontId);
+    setFontSubmenuOpen(false);
     setIsOpen(false);
   };
 
@@ -915,16 +922,36 @@ const OverflowMenu = ({
             </div>
           </button>
 
-          <button
-            onClick={handleCycleFont}
-            className="w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex items-center gap-3 border-b border-[rgba(197,160,89,0.08)] hover:bg-[rgba(197,160,89,0.08)]"
-          >
-            <PenTool size={18} className="text-[#C5A059]" />
-            <div className="flex flex-col items-start">
-              <div className="font-amiri text-base text-[#C5A059] font-medium">تبديل الخط</div>
-              <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Font: {currentFont}</div>
-            </div>
-          </button>
+          <div className="border-b border-[rgba(197,160,89,0.08)]">
+            <button
+              onClick={() => setFontSubmenuOpen(!fontSubmenuOpen)}
+              className="w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex items-center gap-3 hover:bg-[rgba(197,160,89,0.08)]"
+            >
+              <PenTool size={18} className="text-[#C5A059]" />
+              <div className="flex flex-col items-start flex-1">
+                <div className="font-amiri text-base text-[#C5A059] font-medium">اختيار الخط</div>
+                <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Font: {currentFont}</div>
+              </div>
+              <ChevronDown size={14} className={`text-[#C5A059] opacity-50 transition-transform duration-200 ${fontSubmenuOpen ? 'rotate-180' : ''}`} />
+            </button>
+            {fontSubmenuOpen && (
+              <div className="pb-2 px-3">
+                {FONTS.map((font) => (
+                  <button
+                    key={font.id}
+                    onClick={() => handleSelectFont(font.id)}
+                    className={`w-full p-[8px_12px] cursor-pointer rounded-xl transition-all duration-200 flex items-center gap-3 mb-1 ${currentFont === font.id ? 'bg-[rgba(197,160,89,0.15)]' : 'hover:bg-[rgba(197,160,89,0.08)]'}`}
+                  >
+                    <div className="flex flex-col items-start flex-1">
+                      <div className={`${font.family} text-base text-[#C5A059] font-medium`} dir="rtl">{font.labelAr}</div>
+                      <div className="font-brand-en text-[8px] uppercase tracking-[0.12em] opacity-40 text-[#a8a29e]">{font.label}</div>
+                    </div>
+                    {currentFont === font.id && <Check size={13} className="text-[#C5A059]" />}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
 
           {user && (
             <>
@@ -2622,7 +2649,7 @@ export default function DiwanApp() {
                   darkMode={darkMode}
                   onToggleDarkMode={() => setDarkMode(!darkMode)}
                   currentFont={currentFont}
-                  onCycleFont={cycleFont}
+                  onSelectFont={handleSelectFont}
                   selectedCategory={selectedCategory}
                   onSelectCategory={setSelectedCategory}
                   onCopy={handleCopy}

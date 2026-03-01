@@ -86,6 +86,16 @@ export default defineConfig({
       name: 'Mobile Chrome',
       use: { ...devices['Pixel 5'] },
     },
+    // Narrow-viewport regression for iOS-class phones (iPhone 16 Pro: 402px CSS width)
+    {
+      name: 'iPhone 16 Pro',
+      use: {
+        ...devices['Desktop Chrome'],
+        viewport: { width: 402, height: 874 },
+        isMobile: true,
+        hasTouch: true,
+      },
+    },
   ] : [
     // Local: Full device matrix for comprehensive testing
     // Desktop browsers
@@ -119,6 +129,16 @@ export default defineConfig({
     {
       name: 'Mobile Safari',
       use: { ...devices['iPhone 12'] },
+    },
+    // Narrow-viewport regression for iOS-class phones (iPhone 16 Pro: 402px CSS width)
+    {
+      name: 'iPhone 16 Pro',
+      use: {
+        ...devices['Desktop Chrome'],
+        viewport: { width: 402, height: 874 },
+        isMobile: true,
+        hasTouch: true,
+      },
     },
 
     // Tablet viewports

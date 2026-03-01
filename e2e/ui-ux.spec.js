@@ -328,3 +328,39 @@ test.describe('UI/UX - Visual Consistency', () => {
     expect(headerSize).toBeGreaterThan(bodySize * 2);
   });
 });
+
+// Narrow-viewport regression: control bar must start in overflow mode on iPhone 16 Pro (402px).
+// test.use() overrides the project viewport so these tests run correctly in any CI project.
+test.describe('UI/UX - Control Bar Overflow - Narrow (iPhone 16 Pro)', () => {
+  test.use({ viewport: { width: 402, height: 874 } });
+
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+  });
+
+  test('control bar should start in overflow mode', async ({ page }) => {
+    // On a 402px viewport the control bar must be in overflow mode —
+    // the "More options" button (MoreHorizontal icon) must be present instead of all buttons inline.
+    await expect(page.getByRole('button', { name: /more options/i })).toBeVisible();
+
+    // The THEME and POETS buttons are only visible in non-overflow (expanded) mode.
+    await expect(page.getByRole('button', { name: /theme options/i })).not.toBeVisible();
+    await expect(page.getByRole('button', { name: /select poet/i })).not.toBeVisible();
+  });
+});
+
+test.describe('UI/UX - Control Bar Overflow - Desktop', () => {
+  test.use({ viewport: { width: 1440, height: 900 } });
+
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+  });
+
+  test('control bar should show all inline buttons', async ({ page }) => {
+    // On desktop the full button set is visible and "More options" is not shown.
+    await expect(page.getByRole('button', { name: /theme options/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /more options/i })).not.toBeVisible();
+  });
+});

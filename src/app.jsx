@@ -1405,13 +1405,19 @@ export default function DiwanApp() {
   const [isFetching, setIsFetching] = useState(false);
   const [logs, setLogs] = useState([]);
   const [showCopySuccess, setShowCopySuccess] = useState(false);
-  const [isOverflow, setIsOverflow] = useState(false);
+  const [isOverflow, setIsOverflow] = useState(() => {
+    // Use 660 as the conservative initial threshold (covers both Supabase and non-Supabase button sets).
+    // The detectOverflow effect below will refine this after mount.
+    const vw = window.visualViewport?.width ?? window.innerWidth;
+    return vw < 660;
+  });
   const [cacheStats, setCacheStats] = useState({ audioHits: 0, audioMisses: 0, insightsHits: 0, insightsMisses: 0 });
   const [isPrefetching, setIsPrefetching] = useState(false);
   const [backendError, setBackendError] = useState(null);
   const activeAudioRequests = useRef(new Set()); // Track in-flight audio generation requests
   const activeInsightRequests = useRef(new Set()); // Track in-flight insight generation requests
   const pollingIntervals = useRef([]); // Track all polling intervals for cleanup
+  const pendingRafRef = useRef(null); // Track pending rAF id for overflow detection deduplication
 
   // Auth state
   const { user, loading: authLoading, signInWithGoogle, signInWithApple, signOut, isConfigured: isSupabaseConfigured } = useAuth();
@@ -1466,19 +1472,52 @@ export default function DiwanApp() {
   }, [selectedCategory]);
 
   useEffect(() => {
-    const detectOverflow = () => {
-      if (controlBarRef.current) {
-        const controlBar = controlBarRef.current;
-        const viewportWidth = window.innerWidth;
-        const controlBarWidth = controlBar.scrollWidth;
-        setIsOverflow(controlBarWidth > viewportWidth * 0.9);
-      }
+    // Threshold below which overflow mode is always active (prevents oscillation on narrow screens).
+    // With Supabase buttons the bar is wider, so use a larger threshold.
+    const narrowThreshold = isSupabaseConfigured ? 660 : 540;
+
+    const scheduleDetect = () => {
+      // Deduplicate: cancel any pending frame before scheduling a new one
+      if (pendingRafRef.current !== null) cancelAnimationFrame(pendingRafRef.current);
+      pendingRafRef.current = requestAnimationFrame(() => {
+        pendingRafRef.current = null;
+        if (!controlBarRef.current) return;
+        const bar = controlBarRef.current;
+        const vw = window.visualViewport?.width ?? window.innerWidth;
+
+        // Temporarily clip overflow so scrollWidth accurately reflects content width on iOS Safari,
+        // where scrollWidth may equal clientWidth for flex containers with overflow:visible.
+        const savedOverflow = bar.style.overflow;
+        bar.style.overflow = 'hidden';
+        const hasContentOverflow = bar.scrollWidth > bar.clientWidth;
+        bar.style.overflow = savedOverflow;
+
+        // Stay in overflow mode on narrow screens regardless of current bar width,
+        // which prevents oscillation when the bar shrinks after switching to OverflowMenu.
+        setIsOverflow(hasContentOverflow || vw < narrowThreshold);
+      });
     };
 
-    detectOverflow();
-    window.addEventListener('resize', detectOverflow);
-    return () => window.removeEventListener('resize', detectOverflow);
-  }, []);
+    scheduleDetect();
+
+    // ResizeObserver catches font-load changes and dynamic content updates.
+    // Guard for environments where ResizeObserver is unavailable (older browsers, some test envs).
+    let resizeObserver = null;
+    if (typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(scheduleDetect);
+      if (controlBarRef.current) resizeObserver.observe(controlBarRef.current);
+    }
+
+    window.addEventListener('resize', scheduleDetect);
+    return () => {
+      if (pendingRafRef.current !== null) {
+        cancelAnimationFrame(pendingRafRef.current);
+        pendingRafRef.current = null;
+      }
+      resizeObserver?.disconnect();
+      window.removeEventListener('resize', scheduleDetect);
+    };
+  }, [isSupabaseConfigured]);
 
   // Load user settings on mount
   useEffect(() => {

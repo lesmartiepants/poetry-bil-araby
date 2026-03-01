@@ -641,7 +641,7 @@ function loadPreview(opt, cat) {
   if (empty) empty.style.display = 'none';
 
   const iframe = document.createElement('iframe');
-  iframe.className = 'preview-iframe'; iframe.src = opt.file; iframe.title = opt.name;
+  iframe.className = 'preview-iframe'; iframe.src = '/design-review/' + opt.file; iframe.title = opt.name;
   container.appendChild(iframe);
 
   const pTitle = document.getElementById('pTitle');
@@ -747,7 +747,7 @@ function saveTags() {
   reviewData[opt.id].tags = document.getElementById('tagsInput').value;
   persistReview();
 }
-function openTab() { window.open(curOpt().file, '_blank'); }
+function openTab() { window.open('/design-review/' + curOpt().file, '_blank'); }
 function toggleSide() { st.sideOpen = !st.sideOpen; document.getElementById('sidePanel').classList.toggle('collapsed', !st.sideOpen); }
 
 // ═══════════════════════════════════════════════════════════════

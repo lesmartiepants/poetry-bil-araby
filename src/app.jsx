@@ -1877,7 +1877,8 @@ export default function DiwanApp() {
 
       // Use streaming if feature flag is enabled
       if (FEATURES.streaming) {
-        const promptText = `Deep Analysis of: ${current?.arabic}`;
+        const poetInfo = current?.poet ? ` by ${current.poet}` : '';
+        const promptText = `Deep Analysis of${poetInfo}:\n\n${current?.arabic}`;
         const requestSize = new Blob([
           JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
         ]).size;
@@ -1910,7 +1911,9 @@ export default function DiwanApp() {
         });
 
         if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
+          const errData = await res.json().catch(() => ({}));
+          const errMsg = errData.error?.message || `HTTP ${res.status}`;
+          throw new Error(`AI Insights failed: ${errMsg}`);
         }
 
         const reader = res.body.getReader();
@@ -1966,15 +1969,21 @@ export default function DiwanApp() {
       } else {
         // Non-streaming fallback (original implementation)
         addLog("Insights", "Analyzing poem...", "info");
+        const poetInfoFallback = current?.poet ? ` by ${current.poet}` : '';
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${API_MODELS.insights}:generateContent?key=${apiKey}`;
         const res = await fetch(url, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            contents: [{ parts: [{ text: `Deep Analysis of: ${current?.arabic}` }] }],
+            contents: [{ parts: [{ text: `Deep Analysis of${poetInfoFallback}:\n\n${current?.arabic}` }] }],
             systemInstruction: { parts: [{ text: INSIGHTS_SYSTEM_PROMPT }] }
           })
         });
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          const errMsg = errData.error?.message || `HTTP ${res.status}`;
+          throw new Error(`AI Insights failed: ${errMsg}`);
+        }
         const data = await res.json();
         insightText = data.candidates?.[0]?.content?.parts?.[0]?.text;
         setInterpretation(insightText);

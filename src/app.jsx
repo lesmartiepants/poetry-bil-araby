@@ -837,13 +837,22 @@ const OverflowMenu = ({
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [fontSubmenuOpen, setFontSubmenuOpen] = useState(false);
+  const [poetSubmenuOpen, setPoetSubmenuOpen] = useState(false);
   const dropdownRef = useRef(null);
+
+  // Theme-aware tokens
+  const gold = darkMode ? '#C5A059' : '#8B7355';
+  const goldHoverClass = darkMode ? 'hover:bg-[rgba(197,160,89,0.08)]' : 'hover:bg-[rgba(139,115,85,0.08)]';
+  const goldActiveClass = darkMode ? 'bg-[rgba(197,160,89,0.15)]' : 'bg-[rgba(139,115,85,0.12)]';
+  const divider = darkMode ? 'border-[rgba(197,160,89,0.08)]' : 'border-[rgba(139,115,85,0.12)]';
+  const submenuBg = darkMode ? 'rgba(0,0,0,0.28)' : 'rgba(139,115,85,0.07)';
 
   useEffect(() => {
     const clickOut = (e) => {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
         setIsOpen(false);
         setFontSubmenuOpen(false);
+        setPoetSubmenuOpen(false);
       }
     };
     document.addEventListener("mousedown", clickOut);
@@ -862,6 +871,7 @@ const OverflowMenu = ({
 
   const handleSelectCategory = (catId) => {
     onSelectCategory(catId);
+    setPoetSubmenuOpen(false);
     setIsOpen(false);
   };
 
@@ -876,6 +886,8 @@ const OverflowMenu = ({
     setIsOpen(false);
   };
 
+  const itemClass = `w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex items-center gap-3 border-b ${divider} ${goldHoverClass}`;
+
   return (
     <div className="relative flex flex-col items-center gap-1 min-w-[56px]" ref={dropdownRef}>
       <button
@@ -883,70 +895,65 @@ const OverflowMenu = ({
         className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105"
         aria-label="More options"
       >
-        <MoreHorizontal size={21} className="text-[#C5A059]" />
+        <MoreHorizontal size={21} style={{ color: gold }} />
       </button>
-      <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">More</span>
+      <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap" style={{ color: gold }}>More</span>
 
       {isOpen && (
-        <div className="absolute bottom-full right-[-20px] mb-3 min-w-[220px] max-h-[80vh] overflow-y-auto custom-scrollbar bg-[rgba(20,18,16,0.98)] backdrop-blur-[48px] border border-[rgba(197,160,89,0.15)] rounded-3xl p-3 shadow-[0_-10px_40px_rgba(0,0,0,0.7)] z-50">
-          <button
-            onClick={handleCopy}
-            className="w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex items-center gap-3 border-b border-[rgba(197,160,89,0.08)] hover:bg-[rgba(197,160,89,0.08)]"
-          >
-            {showCopySuccess ? <Check size={18} className="text-green-500" /> : <Copy size={18} className="text-[#C5A059]" />}
+        <div
+          className="absolute bottom-full right-[-20px] mb-3 min-w-[220px] max-h-[80vh] overflow-y-auto custom-scrollbar backdrop-blur-[48px] rounded-3xl p-3 shadow-[0_-10px_40px_rgba(0,0,0,0.7)] z-50"
+          style={{ background: darkMode ? 'rgba(20,18,16,0.98)' : 'rgba(255,252,248,0.98)', border: `1px solid ${darkMode ? 'rgba(197,160,89,0.15)' : 'rgba(139,115,85,0.25)'}` }}
+        >
+          <button onClick={handleCopy} className={itemClass}>
+            {showCopySuccess ? <Check size={18} className="text-green-500" /> : <Copy size={18} style={{ color: gold }} />}
             <div className="flex flex-col items-start">
-              <div className="font-amiri text-base text-[#C5A059] font-medium">نسخ</div>
+              <div className="font-amiri text-base font-medium" style={{ color: gold }}>نسخ</div>
               <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Copy</div>
             </div>
           </button>
 
-          <button
-            onClick={handleToggleDatabase}
-            className="w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex items-center gap-3 border-b border-[rgba(197,160,89,0.08)] hover:bg-[rgba(197,160,89,0.08)]"
-          >
-            {useDatabase ? <Library size={18} className="text-[#C5A059]" /> : <Sparkles size={18} className="text-[#C5A059]" />}
+          <button onClick={handleToggleDatabase} className={itemClass}>
+            {useDatabase ? <Library size={18} style={{ color: gold }} /> : <Sparkles size={18} style={{ color: gold }} />}
             <div className="flex flex-col items-start">
-              <div className="font-amiri text-base text-[#C5A059] font-medium">{useDatabase ? 'قاعدة البيانات' : 'الذكاء الاصطناعي'}</div>
+              <div className="font-amiri text-base font-medium" style={{ color: gold }}>{useDatabase ? 'قاعدة البيانات' : 'الذكاء الاصطناعي'}</div>
               <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">{useDatabase ? 'Local Database' : 'AI Generated'}</div>
             </div>
           </button>
 
-          <button
-            onClick={handleToggleDarkMode}
-            className="w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex items-center gap-3 border-b border-[rgba(197,160,89,0.08)] hover:bg-[rgba(197,160,89,0.08)]"
-          >
-            {darkMode ? <Sun size={18} className="text-[#C5A059]" /> : <Moon size={18} className="text-[#C5A059]" />}
+          <button onClick={handleToggleDarkMode} className={itemClass}>
+            {darkMode ? <Sun size={18} style={{ color: gold }} /> : <Moon size={18} style={{ color: gold }} />}
             <div className="flex flex-col items-start">
-              <div className="font-amiri text-base text-[#C5A059] font-medium">{darkMode ? 'الوضع النهاري' : 'الوضع الليلي'}</div>
+              <div className="font-amiri text-base font-medium" style={{ color: gold }}>{darkMode ? 'الوضع النهاري' : 'الوضع الليلي'}</div>
               <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Theme</div>
             </div>
           </button>
 
-          <div className="border-b border-[rgba(197,160,89,0.08)]">
+          {/* Font accordion */}
+          <div className={`border-b ${divider}`}>
             <button
               onClick={() => setFontSubmenuOpen(!fontSubmenuOpen)}
-              className="w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex items-center gap-3 hover:bg-[rgba(197,160,89,0.08)]"
+              className={`w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex items-center gap-3 ${goldHoverClass}`}
             >
-              <PenTool size={18} className="text-[#C5A059]" />
+              <PenTool size={18} style={{ color: gold }} />
               <div className="flex flex-col items-start flex-1">
-                <div className="font-amiri text-base text-[#C5A059] font-medium">اختيار الخط</div>
+                <div className="font-amiri text-base font-medium" style={{ color: gold }}>اختيار الخط</div>
                 <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Font: {currentFont}</div>
               </div>
-              <ChevronDown size={14} className={`text-[#C5A059] opacity-50 transition-transform duration-200 ${fontSubmenuOpen ? 'rotate-180' : ''}`} />
+              <ChevronDown size={14} style={{ color: gold }} className={`opacity-50 transition-transform duration-200 ${fontSubmenuOpen ? 'rotate-180' : ''}`} />
             </button>
             {fontSubmenuOpen && (
-              <div className="pb-2 px-3">
+              <div className="pb-2 px-2 mx-2 mb-2 rounded-xl" style={{ background: submenuBg }}>
                 {FONTS.map((font) => (
                   <button
                     key={font.id}
                     onClick={() => handleSelectFont(font.id)}
-                    className={`w-full p-[8px_12px] cursor-pointer rounded-xl transition-all duration-200 flex items-center gap-3 mb-1 ${currentFont === font.id ? 'bg-[rgba(197,160,89,0.15)]' : 'hover:bg-[rgba(197,160,89,0.08)]'}`}
+                    className={`w-full p-[8px_12px] cursor-pointer rounded-xl transition-all duration-200 flex items-center gap-3 mb-1 ${currentFont === font.id ? goldActiveClass : goldHoverClass}`}
                   >
                     <div className="flex flex-col items-start flex-1">
-                      <div className={`${font.family} text-base text-[#C5A059] font-medium`} dir="rtl">{font.labelAr}</div>
+                      <div className={`${font.family} text-base font-medium`} style={{ color: gold }} dir="rtl">{font.labelAr}</div>
                       <div className="font-brand-en text-[8px] uppercase tracking-[0.12em] opacity-40 text-[#a8a29e]">{font.label}</div>
                     </div>
-                    {currentFont === font.id && <Check size={13} className="text-[#C5A059]" />}
+                    {currentFont === font.id && <Check size={13} style={{ color: gold }} />}
                   </button>
                 ))}
               </div>
@@ -957,44 +964,57 @@ const OverflowMenu = ({
             <>
               <button
                 onClick={() => { onOpenSavedPoems(); setIsOpen(false); }}
-                className="w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex items-center gap-3 border-b border-[rgba(197,160,89,0.08)] hover:bg-[rgba(197,160,89,0.08)]"
+                className={itemClass}
               >
-                <BookOpen size={18} className="text-[#C5A059]" />
+                <BookOpen size={18} style={{ color: gold }} />
                 <div className="flex flex-col items-start">
-                  <div className="font-amiri text-base text-[#C5A059] font-medium">قصائدي</div>
+                  <div className="font-amiri text-base font-medium" style={{ color: gold }}>قصائدي</div>
                   <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">My Poems</div>
                 </div>
               </button>
               <button
                 onClick={() => { onOpenSettings(); setIsOpen(false); }}
-                className="w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex items-center gap-3 border-b border-[rgba(197,160,89,0.08)] hover:bg-[rgba(197,160,89,0.08)]"
+                className={itemClass}
               >
-                <Settings2 size={18} className="text-[#C5A059]" />
+                <Settings2 size={18} style={{ color: gold }} />
                 <div className="flex flex-col items-start">
-                  <div className="font-amiri text-base text-[#C5A059] font-medium">الإعدادات</div>
+                  <div className="font-amiri text-base font-medium" style={{ color: gold }}>الإعدادات</div>
                   <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Settings</div>
                 </div>
               </button>
             </>
           )}
 
-          <div className="border-b border-[rgba(197,160,89,0.08)] last:border-b-0">
-            <div className="px-5 py-2">
-              <div className="font-brand-en text-[8px] uppercase tracking-[0.12em] opacity-30 text-[#a8a29e]">Poets</div>
-            </div>
-            {CATEGORIES.map(cat => (
-              <button
-                key={cat.id}
-                onClick={() => handleSelectCategory(cat.id)}
-                className={`w-full p-[10px_20px] cursor-pointer transition-all duration-200 flex items-center gap-2 hover:bg-[rgba(197,160,89,0.08)] ${selectedCategory === cat.id ? 'bg-[rgba(197,160,89,0.12)]' : ''}`}
-              >
-                <Library size={14} className="text-[#C5A059] opacity-60" />
-                <div className="flex flex-col items-start">
-                  <div className="font-amiri text-sm text-[#C5A059] font-medium">{cat.labelAr}</div>
-                  <div className="font-brand-en text-[8px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">{cat.label}</div>
-                </div>
-              </button>
-            ))}
+          {/* Poet accordion */}
+          <div>
+            <button
+              onClick={() => setPoetSubmenuOpen(!poetSubmenuOpen)}
+              className={`w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex items-center gap-3 ${goldHoverClass}`}
+            >
+              <Library size={18} style={{ color: gold }} />
+              <div className="flex flex-col items-start flex-1">
+                <div className="font-amiri text-base font-medium" style={{ color: gold }}>اختيار الشاعر</div>
+                <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Poet: {CATEGORIES.find(c => c.id === selectedCategory)?.label || 'All'}</div>
+              </div>
+              <ChevronDown size={14} style={{ color: gold }} className={`opacity-50 transition-transform duration-200 ${poetSubmenuOpen ? 'rotate-180' : ''}`} />
+            </button>
+            {poetSubmenuOpen && (
+              <div className="pb-2 px-2 mx-2 mb-2 rounded-xl" style={{ background: submenuBg }}>
+                {CATEGORIES.map(cat => (
+                  <button
+                    key={cat.id}
+                    onClick={() => handleSelectCategory(cat.id)}
+                    className={`w-full p-[8px_12px] cursor-pointer rounded-xl transition-all duration-200 flex items-center gap-3 mb-1 ${selectedCategory === cat.id ? goldActiveClass : goldHoverClass}`}
+                  >
+                    <div className="flex flex-col items-start flex-1">
+                      <div className="font-amiri text-sm font-medium" style={{ color: gold }}>{cat.labelAr}</div>
+                      <div className="font-brand-en text-[8px] uppercase tracking-[0.12em] opacity-40 text-[#a8a29e]">{cat.label}</div>
+                    </div>
+                    {selectedCategory === cat.id && <Check size={13} style={{ color: gold }} />}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}

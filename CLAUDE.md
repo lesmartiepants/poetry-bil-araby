@@ -106,9 +106,9 @@ LOG_DEBUG         // Enable verbose database debug logs (defaults to false)
 
 ## Agent System
 
-9 specialized agents live in `.claude/agents/`. Cursor discovers them via `.cursor/rules/agents.mdc`.
+10 specialized agents live in `.claude/agents/`. Cursor discovers them via `.cursor/rules/agents.mdc`.
 
-**Agents:** `test-orchestrator`, `test-suite-maintainer`, `test-coverage-reviewer`, `ci-test-guardian`, `git-workflow-manager`, `worktree-manager`, `github-issue-manager`, `docs-sync-reviewer`, `ui-ux-reviewer`
+**Agents:** `test-orchestrator`, `test-suite-maintainer`, `test-coverage-reviewer`, `ci-test-guardian`, `git-workflow-manager`, `worktree-manager`, `github-issue-manager`, `docs-sync-reviewer`, `ui-ux-reviewer`, `design-review-agent`
 
 **Maintenance Rule -- MANDATORY when creating or modifying agents:**
 1. Update `.cursor/rules/agents.mdc` -- keep the Agent Registry table, coordination flow, and file list in sync

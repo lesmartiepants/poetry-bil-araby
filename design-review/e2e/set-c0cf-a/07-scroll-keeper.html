@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E2E #7: Scroll Keeper -- Physical Unroll</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --parchment: #e8dcc4;
+  --paper: #d4c4a8;
+  --wood: #3d3428;
+  --ink: #1a1512;
+  --ink-dim: rgba(26, 21, 18, 0.5);
+  --gold: #C5A059;
+  --shadow: rgba(0, 0, 0, 0.15);
+  --font-ar: 'Amiri', serif;
+  --font-ui: 'Tajawal', system-ui, sans-serif;
+}
+html.dark {
+  --parchment: #1a1512;
+  --paper: #0c0c0e;
+  --wood: #e8dcc4;
+  --ink: #e8dcc4;
+  --ink-dim: rgba(232, 220, 196, 0.5);
+  --shadow: rgba(0, 0, 0, 0.3);
+}
+html {
+  font-family: var(--font-ui);
+  background: var(--paper);
+  color: var(--ink);
+}
+body { min-height: 100vh; }
+
+.theme-toggle {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 100;
+  width: 48px;
+  height: 48px;
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: 8px;
+  border: 2px solid var(--wood);
+  background: var(--parchment);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  font-size: 20px;
+  box-shadow: 0 4px 12px var(--shadow);
+  will-change: transform;
+}
+.theme-toggle:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px var(--shadow);
+}
+.theme-toggle:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 2px;
+}
+
+/* Dust particle canvas */
+#dustCanvas {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  will-change: transform;
+}
+
+/* Paper texture canvas */
+canvas#texture {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+.screen {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 2;
+}
+
+.label {
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--gold);
+  opacity: 0.7;
+}
+
+/* SPLASH - Dramatic Scroll Unroll from Center */
+#splash {
+  background: var(--paper);
+  overflow: hidden;
+}
+
+.scroll-container {
+  max-width: 700px;
+  width: 100%;
+  background: var(--parchment);
+  border: 8px solid var(--wood);
+  border-radius: 4px;
+  padding: 64px 48px;
+  box-shadow: 0 20px 60px var(--shadow);
+  /* Dramatic unroll from center with elastic easing */
+  animation: scrollDramaticUnroll 1.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  will-change: transform, clip-path;
+  transform-origin: center center;
+}
+
+@keyframes scrollDramaticUnroll {
+  0% {
+    opacity: 0;
+    transform: scaleY(0.02) scaleX(0.8);
+    clip-path: inset(49% 5% 49% 5%);
+  }
+  30% {
+    opacity: 1;
+    transform: scaleY(0.4) scaleX(0.95);
+    clip-path: inset(30% 2% 30% 2%);
+  }
+  60% {
+    transform: scaleY(1.06) scaleX(1.01);
+    clip-path: inset(0% 0% 0% 0%);
+  }
+  80% {
+    transform: scaleY(0.98) scaleX(1);
+  }
+  100% {
+    opacity: 1;
+    transform: scaleY(1) scaleX(1);
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+.scroll-title {
+  font-family: var(--font-ar);
+  font-size: clamp(3rem, 8vw, 4.5rem);
+  font-weight: 700;
+  color: var(--ink);
+  text-align: center;
+  margin-bottom: 16px;
+  animation: fadeIn 1s 0.8s backwards;
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.scroll-subtitle {
+  font-size: 13px;
+  color: var(--ink-dim);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  text-align: center;
+  margin-bottom: 48px;
+  animation: fadeIn 1s 1s backwards;
+}
+
+.scroll-btn {
+  display: block;
+  margin: 0 auto;
+  padding: 16px 48px;
+  min-width: 44px;
+  min-height: 44px;
+  background: var(--wood);
+  color: var(--parchment);
+  border: none;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.25em;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px var(--shadow);
+  animation: scaleIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) 1.2s backwards;
+  will-change: transform;
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+.scroll-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px var(--shadow);
+}
+.scroll-btn:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 2px;
+}
+
+/* MAIN */
+#main {
+  background: var(--paper);
+  display: none;
+  padding: 40px 24px;
+}
+.main-layout {
+  max-width: 900px;
+  width: 100%;
+  margin: 0 auto;
+}
+.main-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 48px;
+  padding: 16px 24px;
+  background: var(--parchment);
+  border: 4px solid var(--wood);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px var(--shadow);
+}
+.main-brand {
+  font-family: var(--font-ar);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.poem-scroll {
+  background: var(--parchment);
+  border: 4px solid var(--wood);
+  border-radius: 4px;
+  padding: 48px;
+  margin-bottom: 24px;
+  box-shadow: 0 8px 24px var(--shadow);
+  transition: all 0.3s ease;
+}
+.poem-scroll:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px var(--shadow);
+}
+
+.poem-text {
+  font-family: var(--font-ar);
+  font-size: 32px;
+  line-height: 2.2;
+  color: var(--ink);
+  text-align: right;
+  direction: rtl;
+  margin-bottom: 32px;
+}
+.poem-author {
+  font-size: 14px;
+  color: var(--gold);
+  text-align: left;
+  font-weight: 600;
+}
+
+.scandi-btn {
+  padding: 14px 40px;
+  min-width: 44px;
+  min-height: 44px;
+  background: var(--wood);
+  color: var(--parchment);
+  border: none;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.25em;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px var(--shadow);
+  will-change: transform;
+}
+.scandi-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px var(--shadow);
+}
+.scandi-btn:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 2px;
+}
+
+@media (max-width: 768px) {
+  .scroll-container {
+    padding: 48px 32px;
+    border-width: 4px;
+  }
+  .scroll-title { font-size: 3rem; }
+  .poem-scroll { padding: 32px 24px; }
+  .poem-text {
+    font-size: 24px;
+    line-height: 2;
+  }
+  .theme-toggle {
+    width: 44px;
+    height: 44px;
+    top: 16px;
+    right: 16px;
+  }
+  .label {
+    font-size: 8px;
+    top: 16px;
+    left: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  #dustCanvas { display: none; }
+  .scroll-container {
+    opacity: 1 !important;
+    transform: none !important;
+    clip-path: none !important;
+  }
+}
+</style>
+</head>
+<body>
+  <canvas id="texture"></canvas>
+  <canvas id="dustCanvas"></canvas>
+
+  <button class="theme-toggle" id="themeBtn" aria-label="Toggle theme">
+    <span id="theme-icon">&#9790;</span>
+  </button>
+
+  <div class="screen" id="splash">
+    <div class="label">Scroll Keeper</div>
+    <div class="scroll-container">
+      <h1 class="scroll-title">&#1602;&#1575;&#1601;&#1610;&#1577;</h1>
+      <p class="scroll-subtitle">Ancient Scrolls, Modern Reading</p>
+      <button class="scroll-btn" onclick="showMain()">Unroll</button>
+    </div>
+  </div>
+
+  <div class="screen" id="main">
+    <div class="main-layout">
+      <nav class="main-nav">
+        <div class="main-brand">&#1602;&#1575;&#1601;&#1610;&#1577;</div>
+      </nav>
+
+      <div class="poem-scroll">
+        <div class="poem-text" lang="ar" dir="rtl">
+          &#1571;&#1614;&#1606;&#1575; &#1575;&#1604;&#1576;&#1614;&#1581;&#1585;&#1615; &#1601;&#1610; &#1571;&#1614;&#1581;&#1588;&#1575;&#1574;&#1616;&#1607;&#1616; &#1575;&#1604;&#1583;&#1615;&#1585;&#1615;&#1617; &#1603;&#1575;&#1605;&#1616;&#1606;&#1612;<br>
+          &#1601;&#1614;&#1607;&#1614;&#1604; &#1587;&#1614;&#1571;&#1614;&#1604;&#1608;&#1575; &#1575;&#1604;&#1594;&#1614;&#1608;&#1617;&#1575;&#1589;&#1614; &#1593;&#1614;&#1606; &#1589;&#1614;&#1583;&#1614;&#1601;&#1575;&#1578;&#1610;
+        </div>
+        <div class="poem-author">-- &#1571;&#1581;&#1605;&#1583; &#1588;&#1608;&#1602;&#1610;</div>
+      </div>
+
+      <button class="scandi-btn">Next Scroll</button>
+    </div>
+  </div>
+
+<script>
+var themeBtn = document.getElementById('themeBtn');
+var themeIcon = document.getElementById('theme-icon');
+
+themeBtn.addEventListener('click', function() {
+  document.documentElement.classList.toggle('dark');
+  themeIcon.textContent = document.documentElement.classList.contains('dark') ? '\u2606' : '\u263E';
+});
+
+function showMain() {
+  document.getElementById('splash').style.display = 'none';
+  document.getElementById('main').style.display = 'flex';
+}
+
+// Paper texture
+var texCanvas = document.getElementById('texture');
+var texCtx = texCanvas.getContext('2d');
+texCanvas.width = window.innerWidth;
+texCanvas.height = window.innerHeight;
+
+for (var i = 0; i < 200; i++) {
+  texCtx.fillStyle = 'rgba(61, 52, 40, ' + (Math.random() * 0.05) + ')';
+  texCtx.fillRect(Math.random() * texCanvas.width, Math.random() * texCanvas.height, 2, 2);
+}
+
+// === Floating Parchment Dust Particles ===
+var dustCanvas = document.getElementById('dustCanvas');
+var dustCtx = dustCanvas.getContext('2d');
+var isMobile = window.innerWidth <= 768;
+var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+var dustParticles = [];
+var dustAnimId;
+
+function resizeDust() {
+  dustCanvas.width = window.innerWidth;
+  dustCanvas.height = window.innerHeight;
+}
+resizeDust();
+window.addEventListener('resize', resizeDust);
+
+var maxDust = isMobile ? 25 : 50;
+var dustColors = ['#C5A059', '#d4c4a8', '#e8dcc4', '#B89B6E'];
+
+function DustMote() {
+  this.x = Math.random() * dustCanvas.width;
+  this.y = Math.random() * dustCanvas.height;
+  this.size = Math.random() * 2 + 0.5;
+  this.speedX = (Math.random() - 0.5) * 0.3;
+  this.speedY = (Math.random() - 0.5) * 0.3 - 0.2;
+  this.opacity = Math.random() * 0.4 + 0.1;
+  this.drift = Math.random() * Math.PI * 2;
+  this.driftSpeed = Math.random() * 0.01 + 0.005;
+  this.color = dustColors[Math.floor(Math.random() * dustColors.length)];
+}
+
+DustMote.prototype.update = function() {
+  this.drift += this.driftSpeed;
+  this.x += this.speedX + Math.sin(this.drift) * 0.3;
+  this.y += this.speedY;
+  this.opacity += (Math.random() - 0.5) * 0.01;
+  if (this.opacity > 0.5) this.opacity = 0.5;
+  if (this.opacity < 0.05) this.opacity = 0.05;
+  if (this.y < -10) { this.y = dustCanvas.height + 10; this.x = Math.random() * dustCanvas.width; }
+  if (this.x < -10) this.x = dustCanvas.width + 10;
+  if (this.x > dustCanvas.width + 10) this.x = -10;
+};
+
+DustMote.prototype.draw = function() {
+  dustCtx.beginPath();
+  dustCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+  dustCtx.fillStyle = this.color;
+  dustCtx.globalAlpha = this.opacity;
+  dustCtx.fill();
+  dustCtx.globalAlpha = 1;
+};
+
+function initDust() {
+  dustParticles = [];
+  for (var i = 0; i < maxDust; i++) {
+    dustParticles.push(new DustMote());
+  }
+}
+
+function animateDust() {
+  dustCtx.clearRect(0, 0, dustCanvas.width, dustCanvas.height);
+  dustParticles.forEach(function(p) { p.update(); p.draw(); });
+  dustAnimId = requestAnimationFrame(animateDust);
+}
+
+if (!reducedMotion) {
+  initDust();
+  animateDust();
+}
+
+window.addEventListener('resize', function() {
+  texCanvas.width = window.innerWidth;
+  texCanvas.height = window.innerHeight;
+  for (var i = 0; i < 200; i++) {
+    texCtx.fillStyle = 'rgba(61, 52, 40, ' + (Math.random() * 0.05) + ')';
+    texCtx.fillRect(Math.random() * texCanvas.width, Math.random() * texCanvas.height, 2, 2);
+  }
+  resizeDust();
+});
+</script>
+</body>
+</html>

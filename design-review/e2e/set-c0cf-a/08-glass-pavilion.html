@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Glass Pavilion - Aurora + Frosted Glass</title>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0c0c0e;
+            --bg-light: #FDFCF8;
+            --text-dark: #FDFCF8;
+            --text-light: #0c0c0e;
+            --gold: #C5A059;
+            --indigo: #4F46E5;
+            --glass-bg-dark: rgba(12, 12, 14, 0.3);
+            --glass-bg-light: rgba(253, 252, 248, 0.3);
+            --glass-border-dark: rgba(197, 160, 89, 0.2);
+            --glass-border-light: rgba(79, 70, 229, 0.2);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-dark);
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+            transition: background 0.4s ease, color 0.4s ease;
+        }
+
+        body.light {
+            background: var(--bg-light);
+            color: var(--text-light);
+        }
+
+        /* Aurora Background Animation */
+        .aurora-background {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .aurora-layer {
+            position: absolute;
+            width: 200%;
+            height: 200%;
+            top: -50%;
+            left: -50%;
+            will-change: transform, opacity;
+        }
+
+        .aurora-layer-1 {
+            background: radial-gradient(ellipse at 30% 40%, rgba(197, 160, 89, 0.3) 0%, transparent 50%),
+                        radial-gradient(ellipse at 70% 60%, rgba(79, 70, 229, 0.3) 0%, transparent 50%),
+                        radial-gradient(ellipse at 50% 80%, rgba(147, 51, 234, 0.2) 0%, transparent 50%);
+            animation: aurora-drift-1 20s ease-in-out infinite;
+        }
+
+        .aurora-layer-2 {
+            background: radial-gradient(ellipse at 60% 30%, rgba(79, 70, 229, 0.2) 0%, transparent 50%),
+                        radial-gradient(ellipse at 40% 70%, rgba(197, 160, 89, 0.2) 0%, transparent 50%);
+            animation: aurora-drift-2 25s ease-in-out infinite;
+            animation-delay: -5s;
+        }
+
+        body.light .aurora-layer-1 {
+            background: radial-gradient(ellipse at 30% 40%, rgba(197, 160, 89, 0.15) 0%, transparent 50%),
+                        radial-gradient(ellipse at 70% 60%, rgba(79, 70, 229, 0.15) 0%, transparent 50%),
+                        radial-gradient(ellipse at 50% 80%, rgba(147, 51, 234, 0.1) 0%, transparent 50%);
+        }
+
+        body.light .aurora-layer-2 {
+            background: radial-gradient(ellipse at 60% 30%, rgba(79, 70, 229, 0.1) 0%, transparent 50%),
+                        radial-gradient(ellipse at 40% 70%, rgba(197, 160, 89, 0.1) 0%, transparent 50%);
+        }
+
+        @keyframes aurora-drift-1 {
+            0%, 100% {
+                transform: translate(0, 0) rotate(0deg);
+                opacity: 1;
+            }
+            25% {
+                transform: translate(-10%, 10%) rotate(5deg);
+                opacity: 0.8;
+            }
+            50% {
+                transform: translate(-5%, -5%) rotate(-3deg);
+                opacity: 1;
+            }
+            75% {
+                transform: translate(8%, 5%) rotate(3deg);
+                opacity: 0.9;
+            }
+        }
+
+        @keyframes aurora-drift-2 {
+            0%, 100% {
+                transform: translate(0, 0) rotate(0deg);
+                opacity: 0.8;
+            }
+            33% {
+                transform: translate(8%, -8%) rotate(-5deg);
+                opacity: 1;
+            }
+            66% {
+                transform: translate(-8%, 8%) rotate(5deg);
+                opacity: 0.7;
+            }
+        }
+
+        /* Glass Panel Base */
+        .glass-panel {
+            background: var(--glass-bg-dark);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border-dark);
+            border-radius: 24px;
+            position: relative;
+            will-change: transform, opacity;
+        }
+
+        body.light .glass-panel {
+            background: var(--glass-bg-light);
+            border-color: var(--glass-border-light);
+        }
+
+        /* Container */
+        .container {
+            position: relative;
+            z-index: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 3rem;
+        }
+
+        .logo {
+            font-family: 'Amiri', serif;
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--gold);
+            text-shadow: 0 2px 10px rgba(197, 160, 89, 0.3);
+        }
+
+        /* Neumorphic Theme Toggle */
+        .theme-toggle {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            background: var(--bg-dark);
+            box-shadow: 8px 8px 16px rgba(0, 0, 0, 0.4),
+                        -8px -8px 16px rgba(255, 255, 255, 0.05);
+            color: var(--gold);
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            min-width: 60px;
+            min-height: 60px;
+        }
+
+        body.light .theme-toggle {
+            background: var(--bg-light);
+            box-shadow: 8px 8px 16px rgba(0, 0, 0, 0.1),
+                        -8px -8px 16px rgba(255, 255, 255, 0.9);
+            color: var(--indigo);
+        }
+
+        .theme-toggle:active {
+            box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.3),
+                        inset -4px -4px 8px rgba(255, 255, 255, 0.05);
+        }
+
+        body.light .theme-toggle:active {
+            box-shadow: inset 4px 4px 8px rgba(0, 0, 0, 0.1),
+                        inset -4px -4px 8px rgba(255, 255, 255, 0.5);
+        }
+
+        /* Splash Screen */
+        .splash-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+        }
+
+        .splash-screen.hidden {
+            animation: fadeOut 0.8s ease-out forwards;
+        }
+
+        .splash-panels {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 2rem;
+            width: 80%;
+            max-width: 800px;
+        }
+
+        .splash-glass-panel {
+            background: var(--glass-bg-dark);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--glass-border-dark);
+            border-radius: 24px;
+            height: 200px;
+            opacity: 0;
+            will-change: transform, opacity;
+        }
+
+        body.light .splash-glass-panel {
+            background: var(--glass-bg-light);
+            border-color: var(--glass-border-light);
+        }
+
+        .splash-glass-panel:nth-child(1) {
+            animation: glassFloat 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) 0.2s forwards;
+        }
+
+        .splash-glass-panel:nth-child(2) {
+            animation: glassFloat 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) 0.4s forwards;
+        }
+
+        .splash-glass-panel:nth-child(3) {
+            animation: glassFloat 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) 0.6s forwards;
+        }
+
+        .splash-glass-panel:nth-child(4) {
+            animation: glassFloat 1.2s cubic-bezier(0.34, 1.56, 0.64, 1) 0.8s forwards;
+        }
+
+        @keyframes glassFloat {
+            from {
+                opacity: 0;
+                transform: translateY(100px) scale(0.8);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        @keyframes fadeOut {
+            to {
+                opacity: 0;
+                visibility: hidden;
+            }
+        }
+
+        /* Main Content */
+        .main-content {
+            opacity: 0;
+            animation: fadeIn 1s ease-out 2s forwards;
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* Poem Display */
+        .poem-container {
+            padding: 3rem;
+            margin-bottom: 2rem;
+        }
+
+        .poem-text {
+            font-family: 'Amiri', serif;
+            font-size: 2rem;
+            line-height: 2.2;
+            text-align: center;
+            direction: rtl;
+            margin-bottom: 2rem;
+        }
+
+        .poem-attribution {
+            text-align: center;
+            color: var(--gold);
+            font-size: 1.2rem;
+            font-weight: 500;
+        }
+
+        /* Neumorphic Controls */
+        .controls {
+            display: flex;
+            gap: 1.5rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-bottom: 3rem;
+        }
+
+        .control-btn {
+            padding: 1rem 2rem;
+            border-radius: 20px;
+            border: none;
+            cursor: pointer;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 1rem;
+            font-weight: 500;
+            background: var(--bg-dark);
+            color: var(--text-dark);
+            box-shadow: 6px 6px 12px rgba(0, 0, 0, 0.4),
+                        -6px -6px 12px rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+            min-width: 120px;
+            min-height: 50px;
+        }
+
+        body.light .control-btn {
+            background: var(--bg-light);
+            color: var(--text-light);
+            box-shadow: 6px 6px 12px rgba(0, 0, 0, 0.1),
+                        -6px -6px 12px rgba(255, 255, 255, 0.9);
+        }
+
+        .control-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .control-btn:active {
+            box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.3),
+                        inset -3px -3px 6px rgba(255, 255, 255, 0.05);
+            transform: translateY(0);
+        }
+
+        body.light .control-btn:active {
+            box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.1),
+                        inset -3px -3px 6px rgba(255, 255, 255, 0.5);
+        }
+
+        .control-btn.primary {
+            background: linear-gradient(135deg, var(--gold), var(--indigo));
+            color: white;
+            box-shadow: 6px 6px 12px rgba(0, 0, 0, 0.3),
+                        0 0 20px rgba(197, 160, 89, 0.2);
+        }
+
+        .control-btn.primary:active {
+            box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.4),
+                        inset -3px -3px 6px rgba(255, 255, 255, 0.1);
+        }
+
+        /* Walkthrough Cards */
+        .walkthrough {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .walkthrough-card {
+            padding: 2rem;
+            min-height: 200px;
+            opacity: 0;
+            transform: translateX(-100px);
+            will-change: transform, opacity;
+        }
+
+        .walkthrough-card.visible {
+            animation: slideInBlur 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+        }
+
+        .walkthrough-card:nth-child(1) { animation-delay: 0.1s; }
+        .walkthrough-card:nth-child(2) { animation-delay: 0.2s; }
+        .walkthrough-card:nth-child(3) { animation-delay: 0.3s; }
+        .walkthrough-card:nth-child(4) { animation-delay: 0.4s; }
+
+        @keyframes slideInBlur {
+            0% {
+                opacity: 0;
+                transform: translateX(-100px);
+                filter: blur(10px);
+            }
+            100% {
+                opacity: 1;
+                transform: translateX(0);
+                filter: blur(0);
+            }
+        }
+
+        .walkthrough-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--gold);
+        }
+
+        .walkthrough-card p {
+            line-height: 1.8;
+            opacity: 0.9;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 2rem;
+            opacity: 0.7;
+            font-size: 0.9rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .logo {
+                font-size: 1.5rem;
+            }
+
+            .theme-toggle {
+                width: 50px;
+                height: 50px;
+                min-width: 50px;
+                min-height: 50px;
+                font-size: 1.2rem;
+            }
+
+            .poem-text {
+                font-size: 1.5rem;
+                line-height: 2;
+            }
+
+            .poem-container {
+                padding: 2rem 1.5rem;
+            }
+
+            .splash-panels {
+                grid-template-columns: 1fr;
+                width: 90%;
+                gap: 1.5rem;
+            }
+
+            .splash-glass-panel {
+                height: 150px;
+            }
+
+            .walkthrough {
+                grid-template-columns: 1fr;
+            }
+
+            .control-btn {
+                min-width: 100px;
+                padding: 0.875rem 1.5rem;
+            }
+        }
+
+        /* Reduced Motion */
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+
+            .aurora-layer {
+                animation: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Aurora Background -->
+    <div class="aurora-background">
+        <div class="aurora-layer aurora-layer-1"></div>
+        <div class="aurora-layer aurora-layer-2"></div>
+    </div>
+
+    <!-- Splash Screen -->
+    <div class="splash-screen" id="splash">
+        <div class="splash-panels">
+            <div class="splash-glass-panel"></div>
+            <div class="splash-glass-panel"></div>
+            <div class="splash-glass-panel"></div>
+            <div class="splash-glass-panel"></div>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container main-content">
+        <header>
+            <div class="logo">شِعر بالعربي</div>
+            <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+                ☀️
+            </button>
+        </header>
+
+        <main>
+            <!-- Poem Display -->
+            <div class="glass-panel poem-container">
+                <div class="poem-text" lang="ar" dir="rtl">
+                    أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ<br>
+                    فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
+                </div>
+                <div class="poem-attribution" lang="ar" dir="rtl">— أحمد شوقي</div>
+            </div>
+
+            <!-- Neumorphic Controls -->
+            <div class="controls">
+                <button class="control-btn primary">Generate Poem</button>
+                <button class="control-btn">Save</button>
+                <button class="control-btn">Share</button>
+                <button class="control-btn">Listen</button>
+            </div>
+
+            <!-- Walkthrough Cards -->
+            <div class="walkthrough">
+                <div class="glass-panel walkthrough-card">
+                    <h3>Discover Poetry</h3>
+                    <p>Explore thousands of classical Arabic poems from renowned poets across centuries. Each verse carries the beauty and wisdom of Arab literary tradition.</p>
+                </div>
+                <div class="glass-panel walkthrough-card">
+                    <h3>AI-Powered Insights</h3>
+                    <p>Get detailed analysis, context, and interpretations powered by advanced language models. Understand the deeper meanings behind each verse.</p>
+                </div>
+                <div class="glass-panel walkthrough-card">
+                    <h3>Immersive Experience</h3>
+                    <p>Listen to beautiful recitations, customize your reading experience, and immerse yourself in the rhythm and flow of Arabic poetry.</p>
+                </div>
+                <div class="glass-panel walkthrough-card">
+                    <h3>Personal Collection</h3>
+                    <p>Save your favorite poems, build collections, and share them with friends. Your personal library of Arabic literary treasures.</p>
+                </div>
+            </div>
+        </main>
+
+        <footer>
+            <p>&copy; 2026 Glass Pavilion - Aurora + Frosted Glass Design</p>
+        </footer>
+    </div>
+
+    <script>
+        // Theme Toggle
+        const themeToggle = document.getElementById('themeToggle');
+        themeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('light');
+            themeToggle.textContent = document.body.classList.contains('light') ? '🌙' : '☀️';
+        });
+
+        // Splash Screen
+        setTimeout(() => {
+            document.getElementById('splash').classList.add('hidden');
+        }, 2500);
+
+        // Walkthrough Animation Observer
+        const observerOptions = {
+            threshold: 0.2,
+            rootMargin: '0px 0px -100px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.walkthrough-card').forEach(card => {
+            observer.observe(card);
+        });
+
+        // Control Button Interactions
+        document.querySelectorAll('.control-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                console.log(`Button clicked: ${this.textContent}`);
+            });
+        });
+    </script>
+</body>
+</html>

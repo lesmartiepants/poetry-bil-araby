@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Option 3: Notion/Linear Clean - Vertical Controls</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+      background: #0c0c0e;
+      color: #e7e5e4;
+      overflow: hidden;
+      height: 100vh;
+    }
+    
+    .container {
+      display: flex;
+      height: 100vh;
+      position: relative;
+    }
+    
+    /* Notion/Linear Style Vertical Control Bar - Right Side */
+    .vertical-controls {
+      position: fixed;
+      right: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+      z-index: 1000;
+    }
+    
+    .control-btn {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      color: rgba(255, 255, 255, 0.45);
+      position: relative;
+    }
+    
+    .control-btn:hover {
+      background: rgba(255, 255, 255, 0.06);
+      color: rgba(255, 255, 255, 0.8);
+    }
+    
+    .control-btn.active {
+      background: rgba(99, 102, 241, 0.12);
+      color: #818cf8;
+    }
+    
+    .control-btn svg {
+      width: 18px;
+      height: 18px;
+      stroke-width: 2;
+    }
+    
+    .divider {
+      height: 1px;
+      background: rgba(255, 255, 255, 0.06);
+    }
+    
+    /* Tooltip - Notion style */
+    .tooltip {
+      position: absolute;
+      right: calc(100% + 8px);
+      background: #2d2d2d;
+      color: #fff;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 500;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.1s;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    }
+    
+    .tooltip::after {
+      content: '';
+      position: absolute;
+      right: -4px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 0;
+      height: 0;
+      border-left: 4px solid #2d2d2d;
+      border-top: 4px solid transparent;
+      border-bottom: 4px solid transparent;
+    }
+    
+    .control-btn:hover .tooltip {
+      opacity: 1;
+    }
+    
+    /* Counter badge */
+    .counter {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      background: #6366f1;
+      color: white;
+      width: 14px;
+      height: 14px;
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 9px;
+      font-weight: 700;
+    }
+    
+    /* Sample content */
+    .content {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 100px 0 80px;
+    }
+    
+    .poem-container {
+      max-width: 800px;
+      text-align: center;
+    }
+    
+    .poem-title {
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 700;
+      color: #C5A059;
+      margin-bottom: 1rem;
+      font-family: 'Amiri', serif;
+    }
+    
+    .poem-text {
+      font-size: clamp(1.25rem, 2vw, 1.5rem);
+      line-height: 2.4;
+      color: #e7e5e4;
+      font-family: 'Amiri', serif;
+      transition: font-size 0.2s ease;
+    }
+    
+    .design-label {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.5px;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.6);
+    }
+    
+    /* Zoom levels */
+    .zoom-1 { font-size: clamp(1rem, 1.6vw, 1.2rem); }
+    .zoom-2 { font-size: clamp(1.25rem, 2vw, 1.5rem); }
+    .zoom-3 { font-size: clamp(1.5rem, 2.4vw, 1.8rem); }
+    
+    /* Slider for text zoom */
+    .zoom-slider-container {
+      padding: 8px;
+      background: rgba(255, 255, 255, 0.04);
+      display: none;
+    }
+    
+    .zoom-slider-container.show {
+      display: block;
+    }
+    
+    .zoom-slider {
+      writing-mode: bt-lr;
+      -webkit-appearance: slider-vertical;
+      width: 24px;
+      height: 80px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      outline: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="design-label">Option 3: Notion/Linear</div>
+  
+  <div class="container">
+    <div class="content">
+      <div class="poem-container">
+        <h1 class="poem-title" dir="rtl">قصيدة عن الحب</h1>
+        <p class="poem-text zoom-2" id="poemText" dir="rtl">
+          يا من هواه أعزه وأذلني<br>
+          كيف السبيل إلى وصالك دلني<br><br>
+          والله لو عاقبتني ما ضرني<br>
+          حبي لك الدنيا وما حولي ملني
+        </p>
+      </div>
+    </div>
+    
+    <!-- Vertical Control Bar (Right Side) -->
+    <div class="vertical-controls">
+      <!-- Save/Heart Button -->
+      <button class="control-btn active heart" id="saveBtn" aria-label="Save to collection">
+        <span class="tooltip">Saved</span>
+        <span class="counter">7</span>
+        <svg fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
+        </svg>
+      </button>
+      
+      <div class="divider"></div>
+      
+      <!-- Text Zoom In -->
+      <button class="control-btn" id="zoomIn" aria-label="Increase text size">
+        <span class="tooltip">Larger text</span>
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <text x="7" y="17" font-size="14" font-weight="bold" fill="currentColor">A+</text>
+        </svg>
+      </button>
+      
+      <!-- Text Zoom Out -->
+      <button class="control-btn" id="zoomOut" aria-label="Decrease text size">
+        <span class="tooltip">Smaller text</span>
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <text x="8" y="17" font-size="12" font-weight="bold" fill="currentColor">A-</text>
+        </svg>
+      </button>
+      
+      <div class="divider"></div>
+      
+      <!-- Transliteration Toggle -->
+      <button class="control-btn" id="translitBtn" aria-label="Toggle transliteration">
+        <span class="tooltip">Transliteration</span>
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M7 8h10M7 12h4m1 8-4-4H8"></path>
+          <path d="m12.5 16 3.5 4 3.5-4"></path>
+        </svg>
+      </button>
+      
+      <div class="divider"></div>
+      
+      <!-- Reset -->
+      <button class="control-btn" id="resetBtn" aria-label="Reset all settings">
+        <span class="tooltip">Reset</span>
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+        </svg>
+      </button>
+    </div>
+  </div>
+  
+  <script>
+    // Interactive functionality
+    let zoomLevel = 2;
+    let saveCount = 7;
+    let isSaved = true;
+    let translitEnabled = false;
+    
+    const poemText = document.getElementById('poemText');
+    const saveBtn = document.getElementById('saveBtn');
+    const zoomIn = document.getElementById('zoomIn');
+    const zoomOut = document.getElementById('zoomOut');
+    const translitBtn = document.getElementById('translitBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const counter = document.querySelector('.counter');
+    const saveTooltip = saveBtn.querySelector('.tooltip');
+    
+    saveBtn.addEventListener('click', () => {
+      isSaved = !isSaved;
+      saveBtn.classList.toggle('active');
+      if (isSaved) {
+        saveCount++;
+        saveTooltip.textContent = 'Saved';
+      } else {
+        saveCount--;
+        saveTooltip.textContent = 'Save';
+      }
+      counter.textContent = saveCount;
+    });
+    
+    zoomIn.addEventListener('click', () => {
+      if (zoomLevel < 3) {
+        zoomLevel++;
+        poemText.className = `poem-text zoom-${zoomLevel}`;
+      }
+    });
+    
+    zoomOut.addEventListener('click', () => {
+      if (zoomLevel > 1) {
+        zoomLevel--;
+        poemText.className = `poem-text zoom-${zoomLevel}`;
+      }
+    });
+    
+    translitBtn.addEventListener('click', () => {
+      translitEnabled = !translitEnabled;
+      translitBtn.classList.toggle('active');
+      if (translitEnabled) {
+        poemText.innerHTML = `يا من هواه أعزه وأذلني<br><span style="opacity: 0.35; font-size: 0.8em; font-style: italic; font-family: Inter;">yā man hawāhu a'azzahu wa-adhallanī</span><br>كيف السبيل إلى وصالك دلني<br><span style="opacity: 0.35; font-size: 0.8em; font-style: italic; font-family: Inter;">kayfa as-sabīlu ilā wiṣālika dallanī</span><br><br>والله لو عاقبتني ما ضرني<br><span style="opacity: 0.35; font-size: 0.8em; font-style: italic; font-family: Inter;">wallāhi law 'āqabtanī mā ḍarranī</span><br>حبي لك الدنيا وما حولي ملني<br><span style="opacity: 0.35; font-size: 0.8em; font-style: italic; font-family: Inter;">ḥubbī laka ad-dunyā wa mā ḥawlī mallanī</span>`;
+      } else {
+        poemText.innerHTML = `يا من هواه أعزه وأذلني<br>كيف السبيل إلى وصالك دلني<br><br>والله لو عاقبتني ما ضرني<br>حبي لك الدنيا وما حولي ملني`;
+      }
+    });
+    
+    resetBtn.addEventListener('click', () => {
+      zoomLevel = 2;
+      translitEnabled = false;
+      poemText.className = `poem-text zoom-${zoomLevel}`;
+      poemText.innerHTML = `يا من هواه أعزه وأذلني<br>كيف السبيل إلى وصالك دلني<br><br>والله لو عاقبتني ما ضرني<br>حبي لك الدنيا وما حولي ملني`;
+      translitBtn.classList.remove('active');
+    });
+  </script>
+</body>
+</html>

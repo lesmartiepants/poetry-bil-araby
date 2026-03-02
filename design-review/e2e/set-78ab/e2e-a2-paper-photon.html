@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Constellation Verse - Arabic Poetry</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --void: #050510; --navy: #0A0F2E; --star: #E8E4F0;
+  --nebula: #3A1F5E; --gold: #C5A059; --star-dim: rgba(232,228,240,0.5);
+  --glow-gold: rgba(197,160,89,0.4); --glow-star: rgba(232,228,240,0.3);
+  --font-display: 'Amiri', serif; --font-ui: 'Tajawal', sans-serif;
+  --transition-speed: 0.4s;
+}
+[data-theme="light"] {
+  --void: #F0EEF5; --navy: #E0DCF0; --star: #1A1030;
+  --nebula: #C8B0E8; --gold: #9A7530; --star-dim: rgba(26,16,48,0.4);
+  --glow-gold: rgba(154,117,48,0.3); --glow-star: rgba(26,16,48,0.15);
+}
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: var(--font-ui); background: var(--void); color: var(--star);
+  min-height: 100vh; overflow-x: hidden;
+  transition: background var(--transition-speed), color var(--transition-speed);
+}
+
+/* ---- Splash ---- */
+#splash {
+  position: fixed; inset: 0; z-index: 100; display: flex; align-items: center;
+  justify-content: center; background: var(--void); transition: opacity 1s ease;
+}
+#splash.fade-out { opacity: 0; pointer-events: none; }
+#splash-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+#splash-text {
+  position: relative; z-index: 1; font-family: var(--font-display);
+  font-size: clamp(1.4rem, 4vw, 2.6rem); color: var(--gold);
+  text-shadow: 0 0 20px var(--glow-gold), 0 0 40px var(--glow-gold);
+  opacity: 0; animation: textReveal 2s 1.5s forwards;
+}
+@keyframes textReveal { to { opacity: 1; } }
+
+/* ---- Walkthrough ---- */
+#walkthrough {
+  position: fixed; inset: 0; z-index: 90; background: var(--void);
+  display: none; flex-direction: column; align-items: center; justify-content: center;
+  transition: opacity 0.6s ease;
+}
+#walkthrough.active { display: flex; }
+#walkthrough.fade-out { opacity: 0; pointer-events: none; }
+.wt-card {
+  display: none; flex-direction: column; align-items: center; gap: 1.2rem;
+  max-width: 380px; padding: 2.5rem 2rem; text-align: center;
+  border: 1px solid var(--star-dim); border-radius: 16px;
+  background: rgba(10,15,46,0.6); position: relative;
+  will-change: opacity, transform; animation: cardIn 0.5s ease forwards;
+}
+.wt-card.active { display: flex; }
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.wt-dots { display: flex; gap: 18px; position: relative; margin-bottom: 0.5rem; }
+.wt-dot {
+  width: 8px; height: 8px; border-radius: 50%; background: var(--star);
+  box-shadow: 0 0 6px var(--glow-star);
+}
+.wt-line {
+  position: absolute; top: 50%; left: 14px; right: 14px; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--star-dim), transparent);
+}
+.wt-card h3 { font-family: var(--font-display); font-size: 1.3rem; color: var(--gold); }
+.wt-card p { font-size: 0.95rem; line-height: 1.7; color: var(--star-dim); }
+.wt-nav { display: flex; gap: 1rem; margin-top: 2rem; }
+.wt-btn {
+  min-width: 100px; min-height: 44px; padding: 0.6rem 1.6rem;
+  border: 1px solid var(--gold); border-radius: 24px; background: transparent;
+  color: var(--gold); font-family: var(--font-ui); font-size: 0.95rem;
+  cursor: pointer; transition: background 0.3s, box-shadow 0.3s;
+  touch-action: manipulation;
+}
+.wt-btn:hover, .wt-btn:focus-visible {
+  background: rgba(197,160,89,0.15); box-shadow: 0 0 14px var(--glow-gold);
+  outline: 2px solid var(--gold); outline-offset: 2px;
+}
+.wt-indicators { display: flex; gap: 10px; margin-top: 1.5rem; }
+.wt-ind {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--star-dim); transition: background 0.3s, box-shadow 0.3s;
+}
+.wt-ind.active { background: var(--gold); box-shadow: 0 0 8px var(--glow-gold); }
+
+/* ---- Main App ---- */
+#app {
+  display: none; flex-direction: column; align-items: center;
+  min-height: 100vh; position: relative; padding: 2rem 1rem;
+}
+#app.active { display: flex; }
+#bg-canvas {
+  position: fixed; inset: 0; width: 100%; height: 100%;
+  z-index: 0; pointer-events: none;
+}
+.poem-card {
+  position: relative; z-index: 1; max-width: 640px; width: 100%;
+  margin-top: 15vh; padding: 3rem 2.5rem; border-radius: 20px;
+  border: 1px solid rgba(232,228,240,0.1);
+  background: linear-gradient(135deg, rgba(10,15,46,0.7), rgba(58,31,94,0.25));
+  backdrop-filter: blur(12px); will-change: transform;
+  animation: floatCard 8s ease-in-out infinite;
+}
+@keyframes floatCard {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+.poem-text {
+  font-family: var(--font-display); font-size: clamp(1.3rem, 3.5vw, 1.9rem);
+  line-height: 2.2; text-align: center; color: var(--star);
+  text-shadow: 0 0 12px var(--glow-star);
+}
+.poem-divider {
+  display: block; width: 60px; height: 1px; margin: 1.5rem auto;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+}
+.poem-author {
+  display: block; text-align: center; font-family: var(--font-ui);
+  font-size: 1rem; color: var(--gold); margin-top: 0.5rem;
+  text-shadow: 0 0 10px var(--glow-gold);
+}
+
+/* ---- Controls ---- */
+.controls {
+  position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%);
+  z-index: 10; display: flex; gap: 1rem;
+}
+.ctrl-btn {
+  width: 50px; height: 50px; border-radius: 50%; border: 1px solid var(--star-dim);
+  background: rgba(10,15,46,0.7); color: var(--star); font-size: 1.2rem;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: box-shadow 0.3s, border-color 0.3s, background 0.3s;
+  backdrop-filter: blur(8px); touch-action: manipulation;
+}
+.ctrl-btn:hover, .ctrl-btn:focus-visible {
+  border-color: var(--gold);
+  box-shadow: 0 0 18px var(--glow-gold), 0 0 6px var(--glow-star);
+  outline: 2px solid var(--gold); outline-offset: 2px;
+}
+.ctrl-btn:active { background: rgba(197,160,89,0.2); }
+
+/* ---- Reduced Motion ---- */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .poem-card { animation: none; }
+}
+/* ---- Mobile ---- */
+@media (max-width: 768px) {
+  .poem-card { margin-top: 10vh; padding: 2rem 1.5rem; }
+  .controls { bottom: 1.2rem; gap: 0.8rem; }
+}
+</style>
+</head>
+<body data-theme="dark">
+
+<!-- Splash -->
+<div id="splash">
+  <canvas id="splash-canvas"></canvas>
+  <span id="splash-text">بُرجُ الشِّعر</span>
+</div>
+
+<!-- Walkthrough -->
+<div id="walkthrough">
+  <div class="wt-card active" data-step="0">
+    <div class="wt-dots">
+      <div class="wt-dot"></div><div class="wt-dot"></div><div class="wt-dot"></div>
+      <div class="wt-line"></div>
+    </div>
+    <h3>مرحبًا بالشعر</h3>
+    <p>اكتشف روائع الشعر العربي في فضاء من النجوم والأبراج السماوية</p>
+  </div>
+  <div class="wt-card" data-step="1">
+    <div class="wt-dots">
+      <div class="wt-dot"></div><div class="wt-dot"></div><div class="wt-dot"></div>
+      <div class="wt-line"></div>
+    </div>
+    <h3>أبيات خالدة</h3>
+    <p>كل قصيدة نجمة تتلألأ في سماء الأدب العربي منذ قرون</p>
+  </div>
+  <div class="wt-card" data-step="2">
+    <div class="wt-dots">
+      <div class="wt-dot"></div><div class="wt-dot"></div><div class="wt-dot"></div>
+      <div class="wt-line"></div>
+    </div>
+    <h3>تجربة غامرة</h3>
+    <p>اسحب وتنقّل بين الأبيات في عالم بصري يحتفي بجمال الكلمة</p>
+  </div>
+  <div class="wt-card" data-step="3">
+    <div class="wt-dots">
+      <div class="wt-dot"></div><div class="wt-dot"></div><div class="wt-dot"></div>
+      <div class="wt-line"></div>
+    </div>
+    <h3>لنبدأ الرحلة</h3>
+    <p>انطلق الآن في فضاء الشعر العربي واستمتع بسحر الكلمات</p>
+  </div>
+  <div class="wt-nav">
+    <button class="wt-btn" id="wt-prev" style="visibility:hidden">السابق</button>
+    <button class="wt-btn" id="wt-next">التالي</button>
+  </div>
+  <div class="wt-indicators">
+    <div class="wt-ind active"></div>
+    <div class="wt-ind"></div>
+    <div class="wt-ind"></div>
+    <div class="wt-ind"></div>
+  </div>
+</div>
+
+<!-- Main App -->
+<div id="app">
+  <canvas id="bg-canvas"></canvas>
+  <div class="poem-card">
+    <div class="poem-text">
+      أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ
+      <br>
+      فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
+    </div>
+    <span class="poem-divider"></span>
+    <span class="poem-author">— أحمد شوقي</span>
+  </div>
+  <div class="controls">
+    <button class="ctrl-btn" id="btn-theme" aria-label="تبديل السمة" title="تبديل السمة">&#9788;</button>
+    <button class="ctrl-btn" id="btn-refresh" aria-label="قصيدة جديدة" title="قصيدة جديدة">&#8635;</button>
+    <button class="ctrl-btn" id="btn-share" aria-label="مشاركة" title="مشاركة">&#10022;</button>
+  </div>
+</div>
+
+<script>
+(() => {
+  /* ---- Helpers ---- */
+  const isMobile = () => window.innerWidth <= 768;
+  const prefersReduced = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const rand = (a, b) => Math.random() * (b - a) + a;
+
+  /* ============================================
+     1. SPLASH SCREEN - Star Field + Constellations
+     ============================================ */
+  const splashCanvas = document.getElementById('splash-canvas');
+  const sCtx = splashCanvas.getContext('2d');
+  let splashStars = [], splashLines = [], splashNebs = [], splashRAF;
+  const CONST_DIST = 160;
+
+  function initSplash() {
+    splashCanvas.width = window.innerWidth;
+    splashCanvas.height = window.innerHeight;
+    const count = isMobile() ? 40 : 80;
+    splashStars = [];
+    for (let i = 0; i < count; i++) {
+      splashStars.push({
+        x: rand(0, splashCanvas.width), y: rand(0, splashCanvas.height),
+        r: rand(1, 3), baseAlpha: rand(0.3, 1), alpha: 0,
+        fadeDelay: rand(0, 2000), pulseSpeed: rand(0.002, 0.006),
+        pulsePhase: rand(0, Math.PI * 2)
+      });
+    }
+    /* Constellation lines between nearby stars */
+    splashLines = [];
+    for (let i = 0; i < splashStars.length; i++) {
+      for (let j = i + 1; j < splashStars.length; j++) {
+        const dx = splashStars[i].x - splashStars[j].x;
+        const dy = splashStars[i].y - splashStars[j].y;
+        if (Math.sqrt(dx * dx + dy * dy) < CONST_DIST) {
+          splashLines.push({ a: i, b: j, progress: 0, delay: rand(500, 3000) });
+        }
+      }
+    }
+    /* Nebula blobs */
+    splashNebs = [
+      { x: splashCanvas.width * 0.2, y: splashCanvas.height * 0.3, r: 300, c: '58,31,94', dx: 0.15, dy: 0.1 },
+      { x: splashCanvas.width * 0.8, y: splashCanvas.height * 0.7, r: 250, c: '197,160,89', dx: -0.1, dy: 0.12 },
+      { x: splashCanvas.width * 0.5, y: splashCanvas.height * 0.5, r: 350, c: '58,31,94', dx: 0.08, dy: -0.08 }
+    ];
+  }
+
+  function drawSplash(ts) {
+    sCtx.clearRect(0, 0, splashCanvas.width, splashCanvas.height);
+    sCtx.fillStyle = '#050510';
+    sCtx.fillRect(0, 0, splashCanvas.width, splashCanvas.height);
+
+    /* Nebulae */
+    splashNebs.forEach(n => {
+      n.x += n.dx; n.y += n.dy;
+      if (n.x < -100 || n.x > splashCanvas.width + 100) n.dx *= -1;
+      if (n.y < -100 || n.y > splashCanvas.height + 100) n.dy *= -1;
+      const g = sCtx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.r);
+      g.addColorStop(0, 'rgba(' + n.c + ',0.05)');
+      g.addColorStop(1, 'rgba(0,0,0,0)');
+      sCtx.fillStyle = g;
+      sCtx.fillRect(0, 0, splashCanvas.width, splashCanvas.height);
+    });
+
+    /* Stars with radial glow */
+    splashStars.forEach(s => {
+      if (ts > s.fadeDelay && s.alpha < s.baseAlpha) {
+        s.alpha = Math.min(s.alpha + 0.01, s.baseAlpha);
+      }
+      const pulse = Math.sin(ts * s.pulseSpeed + s.pulsePhase) * 0.2 + 0.8;
+      const a = s.alpha * pulse;
+      const g = sCtx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.r * 4);
+      g.addColorStop(0, 'rgba(232,228,240,' + a + ')');
+      g.addColorStop(0.4, 'rgba(232,228,240,' + (a * 0.3) + ')');
+      g.addColorStop(1, 'rgba(232,228,240,0)');
+      sCtx.fillStyle = g;
+      sCtx.beginPath();
+      sCtx.arc(s.x, s.y, s.r * 4, 0, Math.PI * 2);
+      sCtx.fill();
+      sCtx.fillStyle = 'rgba(232,228,240,' + a + ')';
+      sCtx.beginPath();
+      sCtx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      sCtx.fill();
+    });
+
+    /* Constellation lines draw slowly */
+    splashLines.forEach(l => {
+      if (ts > l.delay && l.progress < 1) l.progress = Math.min(l.progress + 0.005, 1);
+      if (l.progress > 0) {
+        const sa = splashStars[l.a], sb = splashStars[l.b];
+        const ex = sa.x + (sb.x - sa.x) * l.progress;
+        const ey = sa.y + (sb.y - sa.y) * l.progress;
+        sCtx.strokeStyle = 'rgba(232,228,240,' + (0.12 * l.progress) + ')';
+        sCtx.lineWidth = 0.6;
+        sCtx.beginPath();
+        sCtx.moveTo(sa.x, sa.y);
+        sCtx.lineTo(ex, ey);
+        sCtx.stroke();
+      }
+    });
+    splashRAF = requestAnimationFrame(drawSplash);
+  }
+
+  initSplash();
+  if (!prefersReduced()) splashRAF = requestAnimationFrame(drawSplash);
+
+  window.addEventListener('resize', () => { initSplash(); initBg(); });
+
+  /* Splash -> Walkthrough after 4 seconds */
+  setTimeout(() => {
+    document.getElementById('splash').classList.add('fade-out');
+    setTimeout(() => {
+      document.getElementById('splash').style.display = 'none';
+      cancelAnimationFrame(splashRAF);
+      document.getElementById('walkthrough').classList.add('active');
+    }, 1000);
+  }, 4000);
+
+  /* ============================================
+     2. WALKTHROUGH - 4 Constellation Cards
+     ============================================ */
+  let wtStep = 0;
+  const wtCards = document.querySelectorAll('.wt-card');
+  const wtInds = document.querySelectorAll('.wt-ind');
+  const wtPrev = document.getElementById('wt-prev');
+  const wtNext = document.getElementById('wt-next');
+
+  function showStep(n) {
+    wtCards.forEach(c => c.classList.remove('active'));
+    wtInds.forEach(c => c.classList.remove('active'));
+    wtCards[n].classList.add('active');
+    wtInds[n].classList.add('active');
+    wtPrev.style.visibility = n === 0 ? 'hidden' : 'visible';
+    wtNext.textContent = n === 3 ? 'ابدأ' : 'التالي';
+  }
+
+  wtNext.addEventListener('click', () => {
+    if (wtStep < 3) { wtStep++; showStep(wtStep); }
+    else {
+      document.getElementById('walkthrough').classList.add('fade-out');
+      setTimeout(() => {
+        document.getElementById('walkthrough').style.display = 'none';
+        document.getElementById('app').classList.add('active');
+        initBg();
+        if (!prefersReduced()) bgRAF = requestAnimationFrame(drawBg);
+      }, 600);
+    }
+  });
+
+  wtPrev.addEventListener('click', () => {
+    if (wtStep > 0) { wtStep--; showStep(wtStep); }
+  });
+
+  /* ============================================
+     3. BACKGROUND TWINKLE CANVAS (Main App)
+     ============================================ */
+  const bgCanvas = document.getElementById('bg-canvas');
+  const bCtx = bgCanvas.getContext('2d');
+  let bgStars = [], bgRAF;
+
+  function initBg() {
+    bgCanvas.width = window.innerWidth;
+    bgCanvas.height = window.innerHeight;
+    const count = isMobile() ? 40 : 80;
+    bgStars = [];
+    for (let i = 0; i < count; i++) {
+      bgStars.push({
+        x: rand(0, bgCanvas.width), y: rand(0, bgCanvas.height),
+        r: rand(0.5, 2), alpha: rand(0.2, 0.8),
+        speed: rand(0.001, 0.004), phase: rand(0, Math.PI * 2)
+      });
+    }
+  }
+
+  function drawBg(ts) {
+    const isDark = document.body.dataset.theme === 'dark';
+    bCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
+    bgStars.forEach(s => {
+      const a = s.alpha * (Math.sin(ts * s.speed + s.phase) * 0.3 + 0.7);
+      const c = isDark ? '232,228,240' : '26,16,48';
+      const g = bCtx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.r * 3);
+      g.addColorStop(0, 'rgba(' + c + ',' + a + ')');
+      g.addColorStop(1, 'rgba(' + c + ',0)');
+      bCtx.fillStyle = g;
+      bCtx.beginPath();
+      bCtx.arc(s.x, s.y, s.r * 3, 0, Math.PI * 2);
+      bCtx.fill();
+      bCtx.fillStyle = 'rgba(' + c + ',' + a + ')';
+      bCtx.beginPath();
+      bCtx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      bCtx.fill();
+    });
+    bgRAF = requestAnimationFrame(drawBg);
+  }
+
+  /* ============================================
+     4. CONTROLS
+     ============================================ */
+  /* Theme toggle */
+  document.getElementById('btn-theme').addEventListener('click', () => {
+    const body = document.body;
+    const btn = document.getElementById('btn-theme');
+    if (body.dataset.theme === 'dark') {
+      body.dataset.theme = 'light';
+      btn.innerHTML = '&#9790;';
+    } else {
+      body.dataset.theme = 'dark';
+      btn.innerHTML = '&#9788;';
+    }
+  });
+
+  /* Refresh poem animation */
+  document.getElementById('btn-refresh').addEventListener('click', () => {
+    const card = document.querySelector('.poem-card');
+    card.style.transition = 'opacity 0.4s, transform 0.4s';
+    card.style.opacity = '0';
+    card.style.transform = 'translateY(12px)';
+    setTimeout(() => {
+      card.style.opacity = '1';
+      card.style.transform = 'translateY(0)';
+    }, 400);
+  });
+
+  /* Share button */
+  document.getElementById('btn-share').addEventListener('click', () => {
+    const text = '\u0623\u064E\u0646\u0627 \u0627\u0644\u0628\u064E\u062D\u0631\u064F \u0641\u064A \u0623\u064E\u062D\u0634\u0627\u0626\u0650\u0647\u0650 \u0627\u0644\u062F\u064F\u0631\u064F\u0651 \u0643\u0627\u0645\u0650\u0646\u064C / \u0641\u064E\u0647\u064E\u0644 \u0633\u064E\u0623\u064E\u0644\u0648\u0627 \u0627\u0644\u063A\u064E\u0648\u0651\u0627\u0635\u064E \u0639\u064E\u0646 \u0635\u064E\u062F\u064E\u0641\u0627\u062A\u064A \u2014 \u0623\u062D\u0645\u062F \u0634\u0648\u0642\u064A';
+    if (navigator.share) {
+      navigator.share({ title: 'Constellation Verse', text: text });
+    } else if (navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+    }
+  });
+})();
+</script>
+</body>
+</html>

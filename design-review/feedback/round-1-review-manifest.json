@@ -1,0 +1,208 @@
+{
+  "component": "splash",
+  "round": 1,
+  "expectedOptionsPerTheme": 3,
+  "themes": [
+    {
+      "id": "particles",
+      "name": "Particle Field",
+      "description": "Interactive particle system with fluid motion",
+      "originalPath": "/?skipSplash=true&mockup=particles",
+      "missingOptionSlots": [],
+      "options": [
+        {
+          "number": 1,
+          "name": "Refined Particles",
+          "file": "option-1-refined-particles.html",
+          "description": "Improved hierarchy with larger title and reduced particle density"
+        },
+        {
+          "number": 2,
+          "name": "Gold Mystical",
+          "file": "option-2-gold-mystical.html",
+          "description": "Rich gold palette with Arabic poetry heritage aesthetic"
+        },
+        {
+          "number": 3,
+          "name": "Minimal Constellation",
+          "file": "option-3-minimal-constellation.html",
+          "description": "Sparse, intentional design with connected particle patterns"
+        }
+      ]
+    },
+    {
+      "id": "constellation",
+      "name": "Constellation Poetry",
+      "description": "Star patterns forming poetic connections",
+      "originalPath": "/?skipSplash=true&mockup=constellation",
+      "missingOptionSlots": [],
+      "options": [
+        {
+          "number": 1,
+          "name": "Refined Constellation",
+          "file": "option-1-refined.html",
+          "description": "Warmer palette with purposeful star connections"
+        },
+        {
+          "number": 2,
+          "name": "Minimal Stars",
+          "file": "option-2-minimal.html",
+          "description": "Sparse star field with elegant restraint"
+        },
+        {
+          "number": 3,
+          "name": "Animated Cosmos",
+          "file": "option-3-animated.html",
+          "description": "Dynamic star movement with flowing connections"
+        }
+      ]
+    },
+    {
+      "id": "mandala",
+      "name": "Breathing Mandala",
+      "description": "Sacred geometry with meditative breathing",
+      "originalPath": "/?skipSplash=true&mockup=mandala",
+      "missingOptionSlots": [2, 3],
+      "options": [
+        {
+          "number": 1,
+          "name": "Islamic Mandala",
+          "file": "option-1-refined.html",
+          "description": "Islamic geometric patterns with natural breathing rhythm"
+        }
+      ]
+    },
+    {
+      "id": "geometric",
+      "name": "Geometric Patterns",
+      "description": "Islamic tessellation and sacred mathematics",
+      "originalPath": "/?skipSplash=true&mockup=geometric",
+      "missingOptionSlots": [],
+      "options": [
+        {
+          "number": 1,
+          "name": "Khatam Variation A",
+          "file": "khatam-variation-a-gold-indigo.html",
+          "description": "Gold and indigo geometric lattice exploration"
+        },
+        {
+          "number": 2,
+          "name": "Khatam Variation B",
+          "file": "khatam-variation-b-turquoise-coral.html",
+          "description": "Turquoise and coral geometric lattice exploration"
+        },
+        {
+          "number": 3,
+          "name": "Sacred Grid",
+          "file": "option-3-sacred-grid.html",
+          "description": "Mathematical precision with sacred geometry principles"
+        },
+        {
+          "number": 4,
+          "name": "Khatam Variation C",
+          "file": "khatam-variation-c-emerald-amber.html",
+          "description": "Emerald and amber geometric lattice exploration"
+        }
+      ]
+    },
+    {
+      "id": "zen",
+      "name": "Zen Minimalism",
+      "description": "Pure simplicity and calligraphic elegance",
+      "originalPath": "/?skipSplash=true&mockup=zen",
+      "missingOptionSlots": [3],
+      "options": [
+        {
+          "number": 1,
+          "name": "Zen Refined",
+          "file": "option-1-refined.html",
+          "description": "Pure minimalism with expressive calligraphy"
+        },
+        {
+          "number": 2,
+          "name": "Haiku Style",
+          "file": "option-2-haiku.html",
+          "description": "Poetic minimalism with haiku-inspired spacing"
+        }
+      ]
+    },
+    {
+      "id": "aurora",
+      "name": "Aurora Light",
+      "description": "Flowing gradients and ethereal atmosphere",
+      "originalPath": "/?skipSplash=true&mockup=aurora",
+      "missingOptionSlots": [2, 3],
+      "options": [
+        {
+          "number": 1,
+          "name": "Aurora Refined",
+          "file": "option-1-refined.html",
+          "description": "Warmer palette with enhanced aurora drama"
+        }
+      ]
+    },
+    {
+      "id": "ink",
+      "name": "Ink Calligraphy",
+      "description": "Traditional ink brush and Arabic letterforms",
+      "originalPath": "/?skipSplash=true&mockup=ink",
+      "missingOptionSlots": [1, 2],
+      "options": [
+        {
+          "number": 3,
+          "name": "Live Calligraphy",
+          "file": "option-3-live-calligraphy.html",
+          "description": "Animated brush stroke revealing calligraphy in real-time"
+        }
+      ]
+    },
+    {
+      "id": "manuscript",
+      "name": "Ancient Manuscript",
+      "description": "Aged parchment with classical ornaments",
+      "originalPath": "/?skipSplash=true&mockup=manuscript",
+      "missingOptionSlots": [],
+      "options": [
+        {
+          "number": 1,
+          "name": "Ornate Islamic",
+          "file": "option-1-ornate-islamic.html",
+          "description": "Rich Islamic illumination with gold leaf details"
+        },
+        {
+          "number": 2,
+          "name": "Codex Spine",
+          "file": "option-2-codex-spine.html",
+          "description": "Book spine perspective with leather-bound aesthetics"
+        },
+        {
+          "number": 3,
+          "name": "Scroll and Seal",
+          "file": "option-3-scroll-seal.html",
+          "description": "Unfurling scroll with wax seal authenticity"
+        }
+      ]
+    },
+    {
+      "id": "light",
+      "name": "Light and Shadow",
+      "description": "Dramatic interplay of light and depth",
+      "originalPath": "/?skipSplash=true&mockup=light",
+      "missingOptionSlots": [2],
+      "options": [
+        {
+          "number": 1,
+          "name": "Improved Chiaroscuro",
+          "file": "option-1-improved-chiaroscuro.html",
+          "description": "Dramatic light-dark contrast with Renaissance influence"
+        },
+        {
+          "number": 3,
+          "name": "Minimal Ray Tracing",
+          "file": "option-3-minimal-ray-tracing.html",
+          "description": "Clean light rays with minimalist approach"
+        }
+      ]
+    }
+  ]
+}

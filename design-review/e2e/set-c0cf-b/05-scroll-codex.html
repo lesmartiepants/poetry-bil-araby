@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>05 - Digital Manuscript - المخطوطة الرقمية</title>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0d1117;
+            --bg-light: #f6f8fa;
+            --text-dark: #c9d1d9;
+            --text-light: #24292f;
+            --gold: #C5A059;
+            --green: #3fb950;
+            --blue: #58a6ff;
+            --comment: #8b949e;
+            --panel-dark: #161b22;
+            --panel-light: #ffffff;
+            --border-dark: #30363d;
+            --border-light: #d0d7de;
+            --cursor-color: #58a6ff;
+            --shadow-dark: rgba(0,0,0,0.3);
+            --shadow-light: rgba(0,0,0,0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'IBM Plex Mono', 'Tajawal', monospace;
+            background: var(--bg-dark);
+            color: var(--text-dark);
+            transition: background 0.4s ease, color 0.4s ease;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        body.light { background: var(--bg-light); color: var(--text-light); }
+
+        /* ========== SPLASH ========== */
+        #splash {
+            position: fixed; inset: 0; z-index: 9999;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            background: var(--bg-dark);
+            animation: splashFadeOut 0.8s ease 4.5s forwards;
+            padding: 2rem;
+        }
+
+        body.light #splash { background: var(--bg-light); }
+
+        .terminal-window {
+            max-width: 600px; width: 100%;
+            background: var(--panel-dark);
+            border: 1px solid var(--border-dark);
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 16px 48px rgba(0,0,0,0.5);
+        }
+
+        body.light .terminal-window {
+            background: var(--panel-light);
+            border-color: var(--border-light);
+            box-shadow: 0 16px 48px rgba(0,0,0,0.15);
+        }
+
+        .terminal-bar {
+            display: flex; align-items: center;
+            gap: 8px; padding: 12px 16px;
+            background: rgba(0,0,0,0.2);
+            border-bottom: 1px solid var(--border-dark);
+        }
+
+        body.light .terminal-bar {
+            background: rgba(0,0,0,0.04);
+            border-color: var(--border-light);
+        }
+
+        .terminal-dot {
+            width: 12px; height: 12px;
+            border-radius: 50%;
+        }
+
+        .terminal-dot.red { background: #ff5f56; }
+        .terminal-dot.yellow { background: #ffbd2e; }
+        .terminal-dot.green { background: #27c93f; }
+
+        .terminal-title {
+            flex: 1; text-align: center;
+            font-size: 0.8rem; opacity: 0.5;
+        }
+
+        .terminal-body {
+            padding: 1.5rem; min-height: 180px;
+            font-size: 0.95rem; line-height: 1.8;
+            direction: ltr; text-align: left;
+        }
+
+        .typed-line {
+            opacity: 0;
+            will-change: opacity;
+        }
+
+        .typed-line:nth-child(1) { animation: typeIn 0.3s ease 0.5s forwards; }
+        .typed-line:nth-child(2) { animation: typeIn 0.3s ease 1.2s forwards; }
+        .typed-line:nth-child(3) { animation: typeIn 0.3s ease 1.9s forwards; }
+        .typed-line:nth-child(4) { animation: typeIn 0.3s ease 2.6s forwards; }
+        .typed-line:nth-child(5) { animation: typeIn 0.3s ease 3.3s forwards; }
+
+        @keyframes typeIn { to { opacity: 1; } }
+
+        .line-num {
+            color: var(--comment);
+            display: inline-block;
+            min-width: 2.5em;
+            text-align: right;
+            margin-left: 1em;
+            user-select: none;
+        }
+
+        .kw { color: var(--blue); }
+        .str { color: var(--green); }
+        .cmt { color: var(--comment); font-style: italic; }
+        .fn { color: #d2a8ff; }
+        .gold { color: var(--gold); }
+
+        .cursor-blink {
+            display: inline-block;
+            width: 8px; height: 1.1em;
+            background: var(--cursor-color);
+            vertical-align: text-bottom;
+            animation: blink 1s step-end infinite;
+            will-change: opacity;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        @keyframes splashFadeOut { to { opacity: 0; pointer-events: none; } }
+
+        /* ========== MAIN ========== */
+        #mainContent {
+            opacity: 0;
+            animation: contentFadeIn 1s ease 5s forwards;
+            padding: 2rem;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        @keyframes contentFadeIn { to { opacity: 1; } }
+
+        header {
+            margin-bottom: 3rem;
+            padding: 1.5rem 2rem;
+            background: var(--panel-dark);
+            border: 1px solid var(--border-dark);
+            border-radius: 8px;
+            display: flex; justify-content: space-between;
+            align-items: center;
+        }
+
+        body.light header {
+            background: var(--panel-light);
+            border-color: var(--border-light);
+        }
+
+        h1 {
+            font-family: 'Amiri', serif;
+            font-size: 2rem; font-weight: 700;
+            color: var(--gold);
+        }
+
+        .tab-bar {
+            display: flex; gap: 0;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--border-dark);
+        }
+
+        body.light .tab-bar { border-color: var(--border-light); }
+
+        .tab {
+            padding: 0.75rem 1.5rem;
+            min-height: 44px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.85rem;
+            background: transparent;
+            border: none; color: var(--comment);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s ease;
+        }
+
+        .tab.active {
+            color: var(--gold);
+            border-bottom-color: var(--gold);
+            background: rgba(197,160,89,0.05);
+        }
+
+        .tab:hover {
+            color: var(--text-dark);
+            background: rgba(255,255,255,0.03);
+        }
+
+        body.light .tab:hover { color: var(--text-light); background: rgba(0,0,0,0.03); }
+
+        .tab:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; }
+
+        /* Code-style poem card */
+        .poem-card {
+            background: var(--panel-dark);
+            border: 1px solid var(--border-dark);
+            border-radius: 8px;
+            overflow: hidden;
+            margin-bottom: 2rem;
+        }
+
+        body.light .poem-card {
+            background: var(--panel-light);
+            border-color: var(--border-light);
+        }
+
+        .poem-card-bar {
+            display: flex; align-items: center;
+            gap: 8px; padding: 10px 16px;
+            background: rgba(0,0,0,0.2);
+            border-bottom: 1px solid var(--border-dark);
+            font-size: 0.8rem; color: var(--comment);
+        }
+
+        body.light .poem-card-bar {
+            background: rgba(0,0,0,0.04);
+            border-color: var(--border-light);
+        }
+
+        .poem-body {
+            padding: 2rem;
+        }
+
+        .poem-text {
+            font-family: 'Amiri', serif;
+            font-size: 1.85rem;
+            line-height: 2.3;
+            text-align: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .poet {
+            text-align: center;
+            font-size: 1rem;
+            color: var(--green);
+            font-family: 'IBM Plex Mono', monospace;
+        }
+
+        .controls {
+            display: flex;
+            gap: 0.75rem;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 2rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-dark);
+        }
+
+        body.light .controls { border-color: var(--border-light); }
+
+        .mono-btn {
+            min-width: 44px; min-height: 44px;
+            padding: 0.6rem 1.2rem;
+            background: transparent;
+            border: 1px solid var(--border-dark);
+            border-radius: 6px;
+            color: var(--text-dark);
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            will-change: transform;
+        }
+
+        body.light .mono-btn {
+            border-color: var(--border-light);
+            color: var(--text-light);
+        }
+
+        .mono-btn:hover {
+            border-color: var(--gold);
+            color: var(--gold);
+            background: rgba(197,160,89,0.05);
+            transform: translateY(-2px);
+        }
+
+        .mono-btn:active { transform: scale(0.96); }
+        .mono-btn:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+        /* Walkthrough */
+        .walkthrough {
+            margin: 3rem 0;
+        }
+
+        .walkthrough h2 {
+            font-family: 'Amiri', serif;
+            font-size: 2rem; color: var(--gold);
+            margin-bottom: 2rem; text-align: center;
+        }
+
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .step {
+            background: var(--panel-dark);
+            border: 1px solid var(--border-dark);
+            border-radius: 8px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        body.light .step {
+            background: var(--panel-light);
+            border-color: var(--border-light);
+        }
+
+        .step::before {
+            content: '>';
+            position: absolute; top: 1rem; left: 1rem;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 1.2rem;
+            color: var(--green);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .step:hover::before { opacity: 1; }
+        .step:hover { border-color: var(--green); transform: translateY(-3px); }
+
+        .step-number {
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 1.5rem; font-weight: 600;
+            color: var(--blue);
+            margin-bottom: 0.5rem;
+        }
+
+        .step-title {
+            font-family: 'Amiri', serif;
+            font-size: 1.2rem; font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .step-desc {
+            font-size: 0.9rem;
+            opacity: 0.7; line-height: 1.6;
+        }
+
+        .step:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
+
+        /* Status bar */
+        .status-bar {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            height: 28px;
+            background: var(--panel-dark);
+            border-top: 1px solid var(--border-dark);
+            display: flex; align-items: center;
+            padding: 0 1rem; gap: 1.5rem;
+            font-size: 0.75rem;
+            color: var(--comment);
+            z-index: 100;
+        }
+
+        body.light .status-bar {
+            background: var(--panel-light);
+            border-color: var(--border-light);
+        }
+
+        .status-item { display: flex; align-items: center; gap: 0.3rem; }
+        .status-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--green);
+        }
+
+        /* ========== MOBILE ========== */
+        @media (max-width: 768px) {
+            h1 { font-size: 1.6rem; }
+            .terminal-body { font-size: 0.8rem; padding: 1rem; }
+            .poem-text { font-size: 1.4rem; line-height: 2.1; }
+            .poem-body { padding: 1.5rem; }
+            header { flex-direction: column; gap: 1rem; text-align: center; }
+            .tab-bar { overflow-x: auto; flex-wrap: nowrap; }
+            .tab { white-space: nowrap; font-size: 0.75rem; padding: 0.6rem 1rem; }
+            .steps { grid-template-columns: 1fr; }
+            .status-bar { font-size: 0.65rem; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+            .cursor-blink { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <div id="splash">
+        <div class="terminal-window">
+            <div class="terminal-bar">
+                <div class="terminal-dot red"></div>
+                <div class="terminal-dot yellow"></div>
+                <div class="terminal-dot green"></div>
+                <div class="terminal-title">qafiyah -- manuscript.js</div>
+            </div>
+            <div class="terminal-body">
+                <div class="typed-line"><span class="line-num">1</span> <span class="cmt">// Loading the Digital Manuscript...</span></div>
+                <div class="typed-line"><span class="line-num">2</span> <span class="kw">import</span> { <span class="fn">poems</span> } <span class="kw">from</span> <span class="str">'@qafiyah/corpus'</span>;</div>
+                <div class="typed-line"><span class="line-num">3</span> <span class="kw">const</span> <span class="fn">manuscript</span> = <span class="kw">await</span> <span class="fn">load</span>(<span class="str">'84329 poems'</span>);</div>
+                <div class="typed-line"><span class="line-num">4</span> <span class="fn">render</span>(<span class="gold">manuscript</span>);</div>
+                <div class="typed-line"><span class="line-num">5</span> <span class="cmt">// Ready.</span> <span class="cursor-blink"></span></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="mainContent">
+        <header>
+            <h1>المخطوطة الرقمية</h1>
+            <button class="mono-btn" onclick="toggleTheme()" aria-label="Toggle theme" style="font-size:1.1rem">
+                &#9790; / &#9788;
+            </button>
+        </header>
+
+        <div class="tab-bar">
+            <button class="tab active">poem.qaf</button>
+            <button class="tab">insights.ai</button>
+            <button class="tab">settings.cfg</button>
+            <button class="tab">history.log</button>
+        </div>
+
+        <div class="poem-card">
+            <div class="poem-card-bar">
+                <span>&#9679; poem.qaf</span>
+                <span style="margin-right:auto">UTF-8</span>
+                <span>Ln 1, Col 1</span>
+            </div>
+            <div class="poem-body">
+                <div class="poem-text" lang="ar" dir="rtl">
+                    أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ<br>
+                    فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
+                </div>
+                <div class="poet">// -- أحمد شوقي</div>
+                <div class="controls">
+                    <button class="mono-btn" aria-label="Play">&gt; play</button>
+                    <button class="mono-btn" aria-label="Save">&lt;3 save</button>
+                    <button class="mono-btn" aria-label="Next">next()</button>
+                    <button class="mono-btn">font++</button>
+                    <button class="mono-btn">lang: ar</button>
+                </div>
+            </div>
+        </div>
+
+        <section class="walkthrough">
+            <h2>دليل التفاعل</h2>
+            <div class="steps">
+                <div class="step" tabindex="0">
+                    <div class="step-number">01</div>
+                    <div class="step-title">واجهة الأوامر</div>
+                    <div class="step-desc">جمالية المحطة الطرفية مع محرر الأكواد</div>
+                </div>
+                <div class="step" tabindex="0">
+                    <div class="step-number">02</div>
+                    <div class="step-title">كتابة حرفية</div>
+                    <div class="step-desc">نص يظهر حرفاً بحرف كالآلة الكاتبة</div>
+                </div>
+                <div class="step" tabindex="0">
+                    <div class="step-number">03</div>
+                    <div class="step-title">ألسنة ملفات</div>
+                    <div class="step-desc">تنقل بين الشعر والرؤى والإعدادات</div>
+                </div>
+                <div class="step" tabindex="0">
+                    <div class="step-number">04</div>
+                    <div class="step-title">أدوات المطور</div>
+                    <div class="step-desc">أزرار بخط أحادي المسافة وشريط حالة</div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <div class="status-bar">
+        <div class="status-item"><div class="status-dot"></div> Ready</div>
+        <div class="status-item">UTF-8</div>
+        <div class="status-item">Poems: 84,329</div>
+        <div class="status-item" style="margin-right:auto">IBM Plex Mono</div>
+        <div class="status-item">Qafiyah v2.0</div>
+    </div>
+
+    <script>
+        function toggleTheme() {
+            document.body.classList.toggle('light');
+        }
+
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+            });
+        });
+
+        document.querySelectorAll('.step').forEach(step => {
+            step.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    step.click();
+                }
+            });
+        });
+
+        document.querySelectorAll('.mono-btn').forEach(btn => {
+            btn.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    btn.click();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

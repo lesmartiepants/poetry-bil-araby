@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Auth Mockup — Sign In Modal</title>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Tajawal', -apple-system, sans-serif; background: #0c0c0e; color: #e7e5e4; height: 100vh; display: flex; align-items: center; justify-content: center; }
+    .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); }
+    .modal { position: relative; z-index: 10; background: #1c1917; border: 1px solid #292524; border-radius: 16px; padding: 40px 32px; width: 380px; text-align: center; box-shadow: 0 25px 50px rgba(0,0,0,0.5); }
+    .close-btn { position: absolute; top: 12px; right: 12px; background: transparent; border: none; color: #78716c; font-size: 20px; cursor: pointer; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border-radius: 8px; }
+    .close-btn:hover { background: #292524; color: #e7e5e4; }
+    .welcome { font-family: 'Amiri', serif; font-size: 36px; color: #fafaf9; margin-bottom: 8px; direction: rtl; }
+    .subtitle { font-size: 14px; color: #a8a29e; margin-bottom: 32px; }
+    .oauth-btn { display: flex; align-items: center; justify-content: center; gap: 12px; width: 100%; padding: 14px 20px; border-radius: 12px; border: 1px solid #292524; background: #1a1a1c; color: #e7e5e4; font-size: 15px; font-family: 'Tajawal', sans-serif; cursor: pointer; margin-bottom: 12px; transition: all 0.2s; }
+    .oauth-btn:hover { background: #292524; border-color: #44403c; }
+    .oauth-btn svg { width: 20px; height: 20px; }
+    .terms { font-size: 11px; color: #57534e; margin-top: 20px; line-height: 1.5; }
+    .terms a { color: #78716c; text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="overlay"></div>
+  <div class="modal">
+    <button class="close-btn">✕</button>
+    <div class="welcome">مرحباً</div>
+    <div class="subtitle">Sign in to save poems and preferences</div>
+    <button class="oauth-btn">
+      <svg viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+      Continue with Google
+    </button>
+    <button class="oauth-btn">
+      <svg viewBox="0 0 24 24" fill="#e7e5e4"><path d="M17.05 20.28c-.98.95-2.05.88-3.08.4-1.09-.5-2.08-.52-3.23 0-1.44.64-2.2.52-3.06-.4C3.79 16.17 4.36 9.04 8.92 8.78c1.27.06 2.15.72 2.89.76.98-.2 1.92-.76 2.97-.69 1.26.1 2.21.59 2.83 1.5-2.59 1.54-1.97 4.93.36 5.87-.47 1.24-.73 1.79-1.37 2.89-.97 1.69-2.34 3.38-4.02 3.42-.74.02-1.23-.38-2.03-.4-.83.02-1.35.42-2.13.42-1.73-.04-3.05-1.84-4.03-3.52-2.75-4.72-3.05-10.27-1.35-13.17 1.2-2.04 3.09-3.23 5.1-3.28 1.1-.02 2.17.74 2.86.74.69 0 1.98-.92 3.34-.78.57.02 2.16.23 3.18 1.72-2.58 1.61-2.16 5.57.47 6.63z"/></svg>
+      Continue with Apple
+    </button>
+    <div class="terms">By signing in, you agree to our <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a></div>
+  </div>
+</body>
+</html>

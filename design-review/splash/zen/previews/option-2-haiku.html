@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Option 2: Haiku Minimalism - Particles Brand</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, sans-serif;
+      background: #000000;
+      color: #ffffff;
+      overflow: hidden;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+    }
+
+    body.light {
+      background: #fafaf9;
+      color: #000;
+    }
+
+    /* Particle canvas */
+    .particle-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .theme-toggle {
+      position: fixed;
+      top: 2rem;
+      right: 2rem;
+      z-index: 50;
+      padding: 0.75rem;
+      border-radius: 9999px;
+      background: transparent;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    .theme-toggle:hover {
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    body.light .theme-toggle {
+      border-color: rgba(0, 0, 0, 0.1);
+    }
+
+    body.light .theme-toggle:hover {
+      border-color: rgba(0, 0, 0, 0.3);
+    }
+
+    .theme-icon {
+      width: 18px;
+      height: 18px;
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    body.light .theme-icon {
+      color: rgba(0, 0, 0, 0.5);
+    }
+
+    .content {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      max-width: 800px;
+      padding: 40px;
+    }
+
+    /* Single zen brush stroke */
+    .stroke {
+      width: 200px;
+      height: 3px;
+      background: rgba(255, 255, 255, 0.95);
+      margin: 0 auto 3rem;
+      transform-origin: left center;
+      animation: drawLine 1.2s ease-out forwards, breathePulse 4s ease-in-out 1.5s infinite;
+    }
+
+    body.light .stroke {
+      background: rgba(0, 0, 0, 0.95);
+    }
+
+    @keyframes drawLine {
+      from {
+        transform: scaleX(0);
+      }
+      to {
+        transform: scaleX(1);
+      }
+    }
+
+    @keyframes breathePulse {
+      0%, 100% {
+        opacity: 0.95;
+        transform: scaleX(1);
+      }
+      50% {
+        opacity: 1;
+        transform: scaleX(1.05);
+      }
+    }
+
+    .text {
+      opacity: 0;
+      animation: fadeIn 1s ease-out 1s forwards;
+    }
+
+    @keyframes fadeIn {
+      to { opacity: 1; }
+    }
+
+    /* Logo with particles brand styling - RTL layout */
+    .logo {
+      display: flex;
+      flex-direction: row-reverse; /* Arabic on right */
+      align-items: flex-end; /* Align to bottom baseline */
+      justify-content: center;
+      gap: 24px;
+      margin-bottom: 48px;
+    }
+
+    .logo-ar {
+      font-family: 'Amiri', serif;
+      font-size: 72px;
+      font-weight: 700;
+      color: #ffffff;
+      letter-spacing: 0.05em;
+      margin-bottom: 8px; /* Slight offset */
+    }
+
+    body.light .logo-ar {
+      color: #000000;
+    }
+
+    .logo-en {
+      font-size: 84px;
+      font-weight: 200;
+      color: #ffffff;
+      letter-spacing: -0.03em;
+      text-transform: lowercase;
+    }
+
+    body.light .logo-en {
+      color: #000000;
+    }
+
+    /* Enhanced subtitle */
+    .subtitle {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.4em;
+      color: #a8a8a8;
+      font-weight: 500;
+      opacity: 0;
+      animation: fadeIn 1s ease-out 2.5s forwards;
+    }
+
+    body.light .subtitle {
+      color: #666666;
+    }
+
+    @media (max-width: 768px) {
+      .stroke {
+        width: 150px;
+      }
+      .logo-ar {
+        font-size: 48px;
+      }
+      .logo-en {
+        font-size: 56px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Particle canvas (brand particles) -->
+  <canvas id="particleCanvas" class="particle-canvas"></canvas>
+
+  <button class="theme-toggle" onclick="toggleTheme(event)" aria-label="Toggle theme">
+    <svg class="theme-icon sun-icon" style="display: none;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <circle cx="12" cy="12" r="4"></circle>
+      <line x1="12" y1="1" x2="12" y2="3"></line>
+      <line x1="12" y1="21" x2="12" y2="23"></line>
+      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+      <line x1="1" y1="12" x2="3" y2="12"></line>
+      <line x1="21" y1="12" x2="23" y2="12"></line>
+      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+    </svg>
+    <svg class="theme-icon moon-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+    </svg>
+  </button>
+
+  <div class="content" onclick="fadeOut()">
+    <div class="stroke"></div>
+    <div class="text">
+      <div class="logo">
+        <span class="logo-ar">بالعربي</span>
+        <span class="logo-en">poetry</span>
+      </div>
+      <div class="subtitle">Verses Connecting Across Time and Space</div>
+    </div>
+  </div>
+
+  <script>
+    function toggleTheme(e) {
+      e.stopPropagation();
+      document.body.classList.toggle('light');
+      const sunIcon = document.querySelector('.sun-icon');
+      const moonIcon = document.querySelector('.moon-icon');
+
+      if (document.body.classList.contains('light')) {
+        sunIcon.style.display = 'block';
+        moonIcon.style.display = 'none';
+      } else {
+        sunIcon.style.display = 'none';
+        moonIcon.style.display = 'block';
+      }
+    }
+
+    function fadeOut() {
+      const content = document.querySelector('.content');
+      content.style.opacity = '0';
+      content.style.transition = 'opacity 0.8s ease';
+    }
+
+    // ========== PARTICLES SYSTEM (Brand) ==========
+    const particleCanvas = document.getElementById('particleCanvas');
+    const particleCtx = particleCanvas.getContext('2d');
+
+    particleCanvas.width = window.innerWidth;
+    particleCanvas.height = window.innerHeight;
+
+    const particles = [];
+    const particleCount = 400;
+    const mouse = { x: particleCanvas.width / 2, y: particleCanvas.height / 2 };
+
+    // Generate particles in calligraphic pattern
+    for (let i = 0; i < particleCount; i++) {
+      const curve = Math.floor(Math.random() * 3);
+      const curves = [
+        { x: 0.7, y: 0.5, radius: 0.12 },
+        { x: 0.5, y: 0.5, radius: 0.10 },
+        { x: 0.3, y: 0.5, radius: 0.14 }
+      ];
+
+      const c = curves[curve];
+      const angle = Math.random() * Math.PI * 2;
+      const distance = Math.random() * c.radius;
+
+      particles.push({
+        x: (c.x + Math.cos(angle) * distance) * particleCanvas.width,
+        y: (c.y + Math.sin(angle) * distance) * particleCanvas.height,
+        originX: (c.x + Math.cos(angle) * distance) * particleCanvas.width,
+        originY: (c.y + Math.sin(angle) * distance) * particleCanvas.height,
+        vx: 0,
+        vy: 0,
+        radius: Math.random() * 1.5 + 0.5,
+        opacity: Math.random() * 0.4 + 0.4,
+        twinklePhase: Math.random() * Math.PI * 2,
+        twinkleSpeed: Math.random() * 0.02 + 0.01
+      });
+    }
+
+    // Mouse tracking
+    window.addEventListener('mousemove', (e) => {
+      mouse.x = e.clientX;
+      mouse.y = e.clientY;
+    });
+
+    // Particle animation loop
+    function animateParticles() {
+      particleCtx.clearRect(0, 0, particleCanvas.width, particleCanvas.height);
+
+      particles.forEach(p => {
+        // Mouse repulsion
+        const dx = mouse.x - p.x;
+        const dy = mouse.y - p.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        const minDistance = 120;
+
+        if (distance < minDistance) {
+          const force = (minDistance - distance) / minDistance;
+          p.vx -= (dx / distance) * force * 0.8;
+          p.vy -= (dy / distance) * force * 0.8;
+        }
+
+        // Return to origin
+        p.vx += (p.originX - p.x) * 0.001;
+        p.vy += (p.originY - p.y) * 0.001;
+
+        // Apply velocity with damping
+        p.vx *= 0.95;
+        p.vy *= 0.95;
+        p.x += p.vx;
+        p.y += p.vy;
+
+        // Update twinkling phase
+        p.twinklePhase += p.twinkleSpeed;
+
+        // Calculate twinkling opacity
+        const twinkle = Math.sin(p.twinklePhase) * 0.3 + 0.7;
+        const finalOpacity = p.opacity * twinkle * 0.5; // Reduced opacity for zen aesthetic
+
+        // Adapt colors for light/dark mode
+        const isDark = !document.body.classList.contains('light');
+        const coreColor = isDark ? 'rgba(200, 220, 255,' : 'rgba(100, 120, 140,';
+        const glowColor = isDark ? 'rgba(180, 200, 255,' : 'rgba(80, 100, 120,';
+
+        // Draw particle with glow halo
+        particleCtx.beginPath();
+        const glowGradient = particleCtx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius * 4);
+        glowGradient.addColorStop(0, `${coreColor} ${finalOpacity * 0.6})`);
+        glowGradient.addColorStop(0.3, `${glowColor} ${finalOpacity * 0.3})`);
+        glowGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        particleCtx.fillStyle = glowGradient;
+        particleCtx.arc(p.x, p.y, p.radius * 4, 0, Math.PI * 2);
+        particleCtx.fill();
+
+        // Inner bright core
+        particleCtx.beginPath();
+        const coreGradient = particleCtx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius);
+        coreGradient.addColorStop(0, isDark ? `rgba(255, 255, 255, ${finalOpacity})` : `rgba(0, 0, 0, ${finalOpacity})`);
+        coreGradient.addColorStop(0.7, isDark ? `rgba(240, 245, 255, ${finalOpacity * 0.5})` : `rgba(100, 100, 100, ${finalOpacity * 0.5})`);
+        coreGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        particleCtx.fillStyle = coreGradient;
+        particleCtx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        particleCtx.fill();
+      });
+
+      requestAnimationFrame(animateParticles);
+    }
+
+    animateParticles();
+
+    // Resize handler
+    window.addEventListener('resize', () => {
+      particleCanvas.width = window.innerWidth;
+      particleCanvas.height = window.innerHeight;
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>02 - Prism Refraction - انكسار المنشور</title>
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0a0a12;
+            --bg-light: #f8f6f0;
+            --text-dark: #e8e8e8;
+            --text-light: #2c2c2c;
+            --gold: #C5A059;
+            --indigo: #4F46E5;
+            --prism-red: #FF6B6B;
+            --prism-orange: #FF9F43;
+            --prism-yellow: #FECA57;
+            --prism-green: #48DBFB;
+            --prism-blue: #5F6BFF;
+            --prism-violet: #C44DFF;
+            --shadow-dark: rgba(0,0,0,0.3);
+            --shadow-light: rgba(0,0,0,0.1);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Tajawal', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-dark);
+            transition: background 0.4s ease, color 0.4s ease;
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        body.light { background: var(--bg-light); color: var(--text-light); }
+
+        /* ========== SPLASH ========== */
+        #splash {
+            position: fixed; inset: 0; z-index: 9999;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            background: var(--bg-dark);
+            animation: splashFadeOut 1s ease 3.5s forwards;
+            overflow: hidden;
+        }
+
+        body.light #splash { background: var(--bg-light); }
+
+        /* Prism triangle */
+        .prism {
+            width: 120px; height: 120px;
+            position: relative; z-index: 3;
+            animation: prismSpin 8s linear infinite;
+            will-change: transform;
+        }
+
+        .prism-shape {
+            width: 100%; height: 100%;
+            background: conic-gradient(
+                from 0deg,
+                rgba(255,255,255,0.15) 0deg,
+                rgba(255,255,255,0.08) 120deg,
+                rgba(255,255,255,0.2) 240deg,
+                rgba(255,255,255,0.15) 360deg
+            );
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        @keyframes prismSpin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Rainbow beams emanating from prism */
+        .rainbow-beams {
+            position: absolute;
+            width: 600px; height: 600px;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1;
+            background: conic-gradient(
+                from 0deg at 50% 50%,
+                var(--prism-red) 0deg,
+                var(--prism-orange) 51deg,
+                var(--prism-yellow) 102deg,
+                var(--prism-green) 153deg,
+                var(--prism-blue) 204deg,
+                var(--prism-violet) 255deg,
+                var(--prism-red) 360deg
+            );
+            border-radius: 50%;
+            opacity: 0.2;
+            filter: blur(60px);
+            animation: beamPulse 3s ease-in-out infinite;
+            will-change: opacity;
+        }
+
+        @keyframes beamPulse {
+            0%, 100% { opacity: 0.15; transform: translate(-50%, -50%) scale(0.9); }
+            50% { opacity: 0.3; transform: translate(-50%, -50%) scale(1.1); }
+        }
+
+        .splash-title {
+            font-family: 'Amiri', serif;
+            font-size: 3rem; font-weight: 700;
+            color: var(--gold);
+            text-align: center; z-index: 3;
+            margin-top: 2rem;
+            text-shadow: 0 0 40px rgba(197,160,89,0.4);
+        }
+
+        .splash-subtitle {
+            font-size: 1.1rem;
+            color: var(--indigo);
+            margin-top: 0.75rem; opacity: 0.8; z-index: 3;
+        }
+
+        @keyframes splashFadeOut { to { opacity: 0; pointer-events: none; } }
+
+        /* ========== MAIN ========== */
+        #mainContent {
+            opacity: 0;
+            animation: contentFadeIn 1s ease 4s forwards;
+            padding: 2rem;
+            max-width: 1000px;
+            margin: 0 auto;
+            position: relative; z-index: 1;
+        }
+
+        @keyframes contentFadeIn { to { opacity: 1; } }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem; padding: 2rem;
+            border-radius: 16px;
+            position: relative;
+            overflow: hidden;
+            background: rgba(10,10,18,0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+
+        body.light header {
+            background: rgba(248,246,240,0.7);
+            border-color: rgba(0,0,0,0.08);
+        }
+
+        /* Glass refraction effect on cards */
+        .glass-refraction {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .glass-refraction::before {
+            content: '';
+            position: absolute; inset: 0;
+            background: conic-gradient(
+                from 180deg at 80% 20%,
+                rgba(255,107,107,0.04),
+                rgba(254,202,87,0.04),
+                rgba(72,219,251,0.04),
+                rgba(196,77,255,0.04),
+                transparent
+            );
+            pointer-events: none;
+            will-change: opacity;
+        }
+
+        h1 {
+            font-family: 'Amiri', serif;
+            font-size: 2.75rem; font-weight: 700;
+            color: var(--gold);
+            margin-bottom: 0.75rem;
+        }
+
+        .subtitle { font-size: 1rem; opacity: 0.8; font-weight: 300; }
+
+        .poetry-card {
+            background: rgba(10,10,18,0.7);
+            backdrop-filter: blur(20px);
+            border-radius: 16px; padding: 3rem;
+            margin: 2rem 0;
+            border: 1px solid rgba(255,255,255,0.08);
+            box-shadow: 0 8px 32px var(--shadow-dark);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative; overflow: hidden;
+        }
+
+        body.light .poetry-card {
+            background: rgba(255,255,255,0.7);
+            border-color: rgba(0,0,0,0.08);
+            box-shadow: 0 8px 32px var(--shadow-light);
+        }
+
+        /* Subtle rainbow border on hover */
+        .poetry-card::after {
+            content: '';
+            position: absolute; inset: -1px;
+            border-radius: 17px;
+            padding: 1px;
+            background: conic-gradient(
+                var(--prism-red), var(--prism-orange), var(--prism-yellow),
+                var(--prism-green), var(--prism-blue), var(--prism-violet), var(--prism-red)
+            );
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            pointer-events: none;
+            will-change: opacity;
+        }
+
+        .poetry-card:hover::after { opacity: 0.6; }
+        .poetry-card:hover { transform: translateY(-4px); }
+
+        .verse {
+            font-family: 'Amiri', serif;
+            font-size: 1.85rem; line-height: 2.3;
+            text-align: center; margin-bottom: 1.5rem;
+            position: relative; z-index: 1;
+        }
+
+        .poet {
+            text-align: left;
+            font-size: 1.15rem;
+            color: var(--indigo);
+            font-weight: 500;
+            position: relative; z-index: 1;
+        }
+
+        /* Walkthrough */
+        .walkthrough { margin: 3rem 0; }
+
+        .walkthrough h2 {
+            font-family: 'Amiri', serif;
+            font-size: 2.2rem; color: var(--gold);
+            margin-bottom: 2.5rem; text-align: center;
+        }
+
+        .steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .step {
+            background: rgba(10,10,18,0.5);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.06);
+            border-radius: 14px;
+            padding: 2rem 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative; overflow: hidden;
+        }
+
+        body.light .step {
+            background: rgba(255,255,255,0.6);
+            border-color: rgba(0,0,0,0.06);
+        }
+
+        .step::after {
+            content: '';
+            position: absolute; inset: -1px;
+            border-radius: 15px; padding: 1px;
+            background: conic-gradient(
+                var(--prism-red), var(--prism-yellow), var(--prism-green),
+                var(--prism-blue), var(--prism-violet), var(--prism-red)
+            );
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .step:hover::after { opacity: 0.5; }
+        .step:hover { transform: translateY(-5px); }
+
+        .step-number {
+            display: inline-flex;
+            align-items: center; justify-content: center;
+            width: 48px; height: 48px;
+            border-radius: 50%;
+            background: conic-gradient(
+                var(--prism-red), var(--prism-orange), var(--prism-yellow),
+                var(--prism-green), var(--prism-blue), var(--prism-violet), var(--prism-red)
+            );
+            color: white; font-weight: 700;
+            font-size: 1.35rem; margin-bottom: 1rem;
+        }
+
+        .step h3 {
+            font-family: 'Amiri', serif;
+            font-size: 1.3rem; margin-bottom: 0.75rem;
+            color: var(--gold);
+        }
+
+        .step p { font-size: 0.95rem; opacity: 0.85; line-height: 1.7; }
+
+        .controls {
+            position: fixed; top: 2rem; left: 2rem;
+            display: flex; gap: 1rem; z-index: 1000;
+        }
+
+        .btn {
+            min-width: 44px; min-height: 44px;
+            padding: 0.75rem 1.5rem;
+            border: none; border-radius: 10px;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 1rem; font-weight: 500;
+            cursor: pointer; transition: all 0.3s ease;
+            background: conic-gradient(
+                from 45deg,
+                var(--prism-blue), var(--prism-violet), var(--gold), var(--prism-blue)
+            );
+            color: white;
+            box-shadow: 0 4px 16px var(--shadow-dark);
+            will-change: transform;
+        }
+
+        .btn:hover { transform: scale(1.08); }
+        .btn:active { transform: scale(0.96); }
+        .btn:focus-visible { outline: 3px solid var(--indigo); outline-offset: 2px; }
+        .step:focus-visible { outline: 3px solid var(--indigo); outline-offset: 2px; }
+
+        @media (max-width: 768px) {
+            .splash-title { font-size: 2rem; }
+            .prism { width: 80px; height: 80px; }
+            .rainbow-beams { width: 350px; height: 350px; }
+            h1 { font-size: 2rem; }
+            .verse { font-size: 1.4rem; line-height: 2.1; }
+            .poetry-card { padding: 2rem 1.5rem; }
+            .controls { top: 1rem; left: 1rem; }
+            .steps { grid-template-columns: 1fr; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="splash">
+        <div class="rainbow-beams"></div>
+        <div class="prism">
+            <div class="prism-shape"></div>
+        </div>
+        <div class="splash-title">انكسار المنشور</div>
+        <div class="splash-subtitle">Prism Refraction</div>
+    </div>
+
+    <div id="mainContent">
+        <div class="controls">
+            <button class="btn" onclick="toggleTheme()" aria-label="Toggle theme">
+                &#9790; / &#9788;
+            </button>
+        </div>
+
+        <header class="glass-refraction">
+            <h1>رحلة في الضوء والألوان</h1>
+            <p class="subtitle">Prism Refraction -- انكسار الضوء عبر الشعر</p>
+        </header>
+
+        <div class="poetry-card glass-refraction">
+            <div class="verse" lang="ar" dir="rtl">
+                أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ<br>
+                فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
+            </div>
+            <div class="poet">-- أحمد شوقي</div>
+        </div>
+
+        <section class="walkthrough">
+            <h2>دليل التفاعل</h2>
+            <div class="steps">
+                <div class="step" tabindex="0">
+                    <div class="step-number">1</div>
+                    <h3>منشور دوّار</h3>
+                    <p>المنشور يكسر الضوء إلى طيف من الألوان</p>
+                </div>
+                <div class="step" tabindex="0">
+                    <div class="step-number">2</div>
+                    <h3>انعكاسات زجاجية</h3>
+                    <p>بطاقات بتأثير انكسار الضوء عند التحويم</p>
+                </div>
+                <div class="step" tabindex="0">
+                    <div class="step-number">3</div>
+                    <h3>حدود قوس قزح</h3>
+                    <p>حدود متدرجة بألوان الطيف تظهر بلمسة</p>
+                </div>
+                <div class="step" tabindex="0">
+                    <div class="step-number">4</div>
+                    <h3>تحولات سلسة</h3>
+                    <p>انتقالات ناعمة بين الوضع الداكن والفاتح</p>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        function toggleTheme() {
+            document.body.classList.toggle('light');
+        }
+
+        document.querySelectorAll('.step').forEach(step => {
+            step.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    step.click();
+                }
+            });
+        });
+    </script>
+</body>
+</html>

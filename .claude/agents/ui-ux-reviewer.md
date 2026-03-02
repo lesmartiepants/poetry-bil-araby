@@ -120,10 +120,10 @@ const option3 = `
 </button>
 `;
 
-// Write to preview files
-fs.writeFileSync('previews/button-option-1.html', createFullPage(option1));
-fs.writeFileSync('previews/button-option-2.html', createFullPage(option2));
-fs.writeFileSync('previews/button-option-3.html', createFullPage(option3));
+// Write to preview files (inside design-review/{component}/{category}/previews/)
+fs.writeFileSync('design-review/{component}/{category}/previews/button-option-1.html', createFullPage(option1));
+fs.writeFileSync('design-review/{component}/{category}/previews/button-option-2.html', createFullPage(option2));
+fs.writeFileSync('design-review/{component}/{category}/previews/button-option-3.html', createFullPage(option3));
 ```
 
 **Method B: Screenshot Mockups (Visual)**
@@ -407,6 +407,14 @@ This file MUST contain:
 - Clear visual hierarchy
 - Consistent structure for any component
 
+### Phase 4: Post-Generation Registration
+
+After generating new designs and placing them in `design-review/{component}/{category}/`:
+
+1. **Sync designs to the database**: Call `POST /api/design-review/items/sync` to register the newly created design files in the database. This ensures the review system catalog stays in sync with files on disk.
+
+2. **Capture screenshots of new designs**: Run `npm run screenshots` to automatically capture screenshots of all new design HTML files. This produces the `.png` assets referenced in VISUAL-COMPARISON.html and ensures every design option has a visual thumbnail.
+
 ## Example Scenarios
 
 ### Scenario 1: Ugly Button Component
@@ -515,7 +523,7 @@ Each with screenshot + HTML preview for instant visual comparison.
 ## Artifact Files Created
 
 ```
-design-review-output/
+design-review/{component}/{category}/
 ├── current-state/
 │   ├── landing.png
 │   ├── poem-view.png
@@ -587,11 +595,11 @@ node scripts/generate-design-previews.js
 node scripts/generate-mockup-screenshots.js
 
 # Open preview in browser
-open design-review-output/previews/button-option-1.html
-open design-review-output/previews/poem-card-minimal.html
+open design-review/{component}/{category}/previews/button-option-1.html
+open design-review/{component}/{category}/previews/poem-card-minimal.html
 
 # View mockups
-open design-review-output/mockups/
+open design-review/{component}/{category}/mockups/
 ```
 
 ## Quality Standards
@@ -632,7 +640,7 @@ You show options, user picks direction. Generate mockups immediately for visual 
 **Every design review MUST produce these exact files:**
 
 ```
-design-review-output/
+design-review/{component}/{category}/
 ├── VISUAL-COMPARISON.html          ← Single-page comparison (REQUIRED)
 ├── DESIGN-REVIEW.md                ← Markdown summary
 ├── current-state/

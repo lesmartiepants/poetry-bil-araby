@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E2E #3: Cosmic Scholar — Stellar Observatory</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --deep-space: #0a0a14;
+  --nebula: #1a1a2e;
+  --star: #ffffff;
+  --cosmic-blue: #4F46E5;
+  --cosmic-purple: #7C3AED;
+  --gold: #C5A059;
+  --text: #f5f0e8;
+  --text-dim: rgba(245, 240, 232, 0.5);
+  --font-ar: 'Amiri', serif;
+  --font-ui: 'Tajawal', system-ui, sans-serif;
+}
+html.light {
+  --deep-space: #f8f9ff;
+  --nebula: #e8eaf5;
+  --star: #1a1a2e;
+  --text: #0a0a14;
+  --text-dim: rgba(10, 10, 20, 0.5);
+}
+html {
+  font-family: var(--font-ui);
+  background: var(--deep-space);
+  color: var(--text);
+}
+body { min-height: 100vh; }
+
+.theme-toggle {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  z-index: 100;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: 2px solid var(--cosmic-blue);
+  background: rgba(79, 70, 229, 0.1);
+  backdrop-filter: blur(12px);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  font-size: 20px;
+}
+.theme-toggle:hover {
+  background: rgba(79, 70, 229, 0.2);
+  transform: scale(1.1) rotate(180deg);
+}
+
+canvas#stars {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.screen {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.cosmic-glow {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 50%, rgba(79, 70, 229, 0.15), transparent 60%),
+              radial-gradient(circle at 20% 80%, rgba(124, 58, 237, 0.1), transparent 50%);
+  animation: pulseGlow 12s ease-in-out infinite alternate;
+  pointer-events: none;
+  will-change: opacity;
+}
+@keyframes pulseGlow {
+  0% { opacity: 0.5; }
+  100% { opacity: 0.8; }
+}
+
+.label {
+  position: absolute;
+  top: 24px;
+  left: 24px;
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--cosmic-blue);
+  opacity: 0.7;
+}
+
+/* SPLASH */
+#splash {
+  background: var(--deep-space);
+}
+.splash-content {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  padding: 40px;
+  max-width: 700px;
+  animation: cosmicEntry 1.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes cosmicEntry {
+  from { opacity: 0; transform: scale(0.8) translateY(50px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.cosmic-logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  margin-bottom: 48px;
+}
+.cosmic-title {
+  font-family: var(--font-ar);
+  font-size: clamp(3.5rem, 10vw, 5.5rem);
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--cosmic-blue), var(--cosmic-purple), var(--gold));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 3s ease-in-out infinite;
+  will-change: background-position;
+  background-size: 200% 200%;
+}
+@keyframes shimmer {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+.cosmic-subtitle {
+  font-size: 12px;
+  color: var(--text-dim);
+  letter-spacing: 0.5em;
+  text-transform: uppercase;
+  animation: fadeIn 1s 0.5s backwards;
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.cosmic-cta {
+  padding: 18px 48px;
+  min-width: 44px;
+  min-height: 44px;
+  border: 2px solid var(--cosmic-blue);
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.2), rgba(124, 58, 237, 0.1));
+  color: var(--cosmic-blue);
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.3em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  backdrop-filter: blur(12px);
+  border-radius: 8px;
+  margin-top: 32px;
+  animation: scaleIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.8s backwards;
+  will-change: transform;
+}
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.9); }
+  to { opacity: 1; transform: scale(1); }
+}
+.cosmic-cta:hover {
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.4), rgba(124, 58, 237, 0.2));
+  box-shadow: 0 0 40px rgba(79, 70, 229, 0.3);
+  transform: translateY(-4px);
+}
+
+/* MAIN */
+#main {
+  background: var(--deep-space);
+  display: none;
+  padding: 40px 24px;
+}
+.cosmic-layout {
+  position: relative;
+  z-index: 2;
+  max-width: 900px;
+  width: 100%;
+  margin: 0 auto;
+}
+.cosmic-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 48px;
+  padding: 16px 0;
+}
+.cosmic-brand {
+  font-family: var(--font-ar);
+  font-size: 28px;
+  font-weight: 700;
+  background: linear-gradient(90deg, var(--cosmic-blue), var(--gold));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.observatory-card {
+  background: linear-gradient(135deg, rgba(79, 70, 229, 0.08), rgba(124, 58, 237, 0.05));
+  border: 1px solid rgba(79, 70, 229, 0.3);
+  border-radius: 16px;
+  padding: 48px;
+  margin-bottom: 32px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.observatory-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--cosmic-blue), transparent);
+  animation: scan 3s ease-in-out infinite;
+}
+@keyframes scan {
+  0%, 100% { transform: translateX(-100%); }
+  50% { transform: translateX(100%); }
+}
+.observatory-card:hover {
+  border-color: var(--cosmic-blue);
+  box-shadow: 0 8px 40px rgba(79, 70, 229, 0.2);
+  transform: translateY(-4px);
+}
+
+.poem-verse {
+  font-family: var(--font-ar);
+  font-size: 32px;
+  line-height: 2.2;
+  color: var(--text);
+  text-align: right;
+  direction: rtl;
+  margin-bottom: 32px;
+}
+.poem-author {
+  font-size: 14px;
+  color: var(--gold);
+  text-align: left;
+  font-weight: 600;
+}
+
+.cosmic-btn {
+  padding: 14px 40px;
+  min-width: 44px;
+  min-height: 44px;
+  background: linear-gradient(135deg, var(--cosmic-blue), var(--cosmic-purple));
+  color: white;
+  border: none;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.25em;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+.cosmic-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 24px rgba(79, 70, 229, 0.4);
+}
+
+@media (max-width: 768px) {
+  .cosmic-title { font-size: 3.5rem; }
+  .splash-content { padding: 24px; }
+  .observatory-card { padding: 32px 24px; }
+  .poem-verse {
+    font-size: 24px;
+    line-height: 2;
+  }
+  .theme-toggle {
+    width: 44px;
+    height: 44px;
+    top: 16px;
+    right: 16px;
+  }
+  .label {
+    font-size: 8px;
+    top: 16px;
+    left: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .cosmic-glow { animation: none; }
+}
+</style>
+</head>
+<body>
+  <canvas id="stars"></canvas>
+
+  <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
+    <span id="theme-icon">☀️</span>
+  </button>
+
+  <div class="screen" id="splash">
+    <div class="cosmic-glow"></div>
+    <div class="label">Cosmic Scholar</div>
+    <div class="splash-content">
+      <div class="cosmic-logo">
+        <h1 class="cosmic-title">قافية</h1>
+        <p class="cosmic-subtitle">Explore the Cosmos of Verse</p>
+      </div>
+      <button class="cosmic-cta" onclick="showMain()">Begin Exploration</button>
+    </div>
+  </div>
+
+  <div class="screen" id="main">
+    <div class="cosmic-glow"></div>
+    <div class="cosmic-layout">
+      <nav class="cosmic-nav">
+        <div class="cosmic-brand">قافية</div>
+      </nav>
+
+      <div class="observatory-card">
+        <div class="poem-verse" lang="ar" dir="rtl">
+          أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ<br>
+          فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
+        </div>
+        <div class="poem-author">— أحمد شوقي</div>
+      </div>
+
+      <button class="cosmic-btn">Next Constellation</button>
+    </div>
+  </div>
+
+<script>
+function toggleTheme() {
+  const html = document.documentElement;
+  const icon = document.getElementById('theme-icon');
+  html.classList.toggle('light');
+  icon.textContent = html.classList.contains('light') ? '🌙' : '☀️';
+}
+
+function showMain() {
+  document.getElementById('splash').style.display = 'none';
+  document.getElementById('main').style.display = 'flex';
+}
+
+// Starfield Animation
+const canvas = document.getElementById('stars');
+const ctx = canvas.getContext('2d');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
+
+class Star {
+  constructor() {
+    this.x = Math.random() * canvas.width;
+    this.y = Math.random() * canvas.height;
+    this.radius = Math.random() * 1.5;
+    this.opacity = Math.random() * 0.8 + 0.2;
+    this.twinkleSpeed = Math.random() * 0.02 + 0.01;
+  }
+
+  update() {
+    this.opacity += this.twinkleSpeed;
+    if (this.opacity > 1 || this.opacity < 0.2) {
+      this.twinkleSpeed *= -1;
+    }
+  }
+
+  draw() {
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255, 255, 255, ${this.opacity})`;
+    ctx.fill();
+
+    // Add star glow
+    if (this.radius > 1) {
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.radius * 2, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(79, 70, 229, ${this.opacity * 0.2})`;
+      ctx.fill();
+    }
+  }
+}
+
+const stars = Array.from({ length: 150 }, () => new Star());
+
+function animateStars() {
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  stars.forEach(star => {
+    star.update();
+    star.draw();
+  });
+  requestAnimationFrame(animateStars);
+}
+animateStars();
+
+window.addEventListener('resize', () => {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+});
+</script>
+</body>
+</html>

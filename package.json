@@ -18,7 +18,8 @@
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:debug": "playwright test --debug",
     "test:e2e:report": "playwright show-report",
-    "test:e2e:full": "playwright test --config=playwright.config.full.js"
+    "test:e2e:full": "playwright test --config=playwright.config.full.js",
+    "screenshots": "node scripts/capture-design-screenshots.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.90.1",

@@ -51,21 +51,39 @@ global.fetch = vi.fn(() =>
 document.execCommand = vi.fn(() => true)
 
 // Mock IndexedDB for caching functionality
+// Properly calls onsuccess via microtask so Promise-based cache operations resolve
+const makeMockIDBRequest = (result = null) => {
+  const req = { result, error: null }
+  Object.defineProperty(req, 'onsuccess', {
+    set(handler) { queueMicrotask(() => handler?.()) },
+    get() { return null },
+  })
+  Object.defineProperty(req, 'onerror', {
+    set() {},
+    get() { return null },
+  })
+  return req
+}
+
 global.indexedDB = {
-  open: vi.fn(() => ({
-    onsuccess: null,
-    onerror: null,
-    onupgradeneeded: null,
-    result: {
+  open: vi.fn(() => {
+    const db = {
+      objectStoreNames: { contains: vi.fn(() => true) },
       transaction: vi.fn(() => ({
         objectStore: vi.fn(() => ({
-          get: vi.fn(() => ({ onsuccess: null, onerror: null, result: null })),
-          put: vi.fn(() => ({ onsuccess: null, onerror: null })),
-          delete: vi.fn(() => ({ onsuccess: null, onerror: null })),
+          get: vi.fn(() => makeMockIDBRequest(null)),    // always cache miss
+          put: vi.fn(() => makeMockIDBRequest(undefined)),
+          delete: vi.fn(() => makeMockIDBRequest(undefined)),
         })),
       })),
       close: vi.fn(),
-    },
-  })),
+    }
+    const openReq = makeMockIDBRequest(db)
+    Object.defineProperty(openReq, 'onupgradeneeded', {
+      set() {},
+      get() { return null },
+    })
+    return openReq
+  }),
   deleteDatabase: vi.fn(),
 }

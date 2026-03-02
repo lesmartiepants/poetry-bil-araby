@@ -6,6 +6,9 @@ A beautiful React application for exploring Arabic poetry with AI-powered insigh
 
 - 📖 Browse classic and modern Arabic poetry
 - 🗄️ **NEW:** Database mode with 84K+ restored Arabic poems
+- 🔐 **NEW:** User authentication with Google/Apple SSO (Supabase)
+- ❤️ **NEW:** Save favorite poems to your personal collection
+- ⚙️ **NEW:** Persistent user settings (theme, font preferences)
 - 🎙️ AI-powered audio recitation with emotional context
 - 🤖 Deep analysis and interpretation using AI
 - 🔄 Toggle between Database mode (local PostgreSQL) and AI mode (Gemini API)
@@ -23,6 +26,7 @@ A beautiful React application for exploring Arabic poetry with AI-powered insigh
 - Node.js (v18 or higher)
 - **For AI Mode:** A Gemini API key from [Google AI Studio](https://aistudio.google.com/app/apikey)
 - **For Database Mode:** PostgreSQL 15+ (optional, but recommended for full functionality)
+- **For Authentication (Optional):** A Supabase account and project ([supabase.com](https://supabase.com))
 
 ### Installation
 
@@ -38,7 +42,7 @@ npm install
    - Add your Gemini API key: `VITE_GEMINI_API_KEY=your-api-key-here`
 
    **For Database Mode (PostgreSQL):**
-   - Install PostgreSQL 15+ locally
+   - Install PostgreSQL 15+ locally (requires Postgres 17 for Supabase auth migrations)
    - Create database: `createdb qafiyah`
    - Set up environment variables (optional, defaults to localhost):
      ```bash
@@ -49,10 +53,36 @@ npm install
      PGPASSWORD=your_password      # Default: empty
      PGPORT=5432                   # Default: 5432
      PORT=3001                     # Backend server port
+     LOG_ENABLED=true              # Enable HTTP request logging (default: true)
+     LOG_DEBUG=false               # Enable verbose database debug logs (default: false)
 
      # Frontend Configuration (.env.local)
      VITE_API_URL=http://localhost:3001  # Default: http://localhost:3001
      ```
+
+   **For Authentication (Optional - Supabase):**
+   - Create a Supabase project at [supabase.com](https://supabase.com)
+   - Go to Project Settings → API
+   - Add to `.env.local`:
+     ```bash
+     VITE_SUPABASE_URL=your-project-url
+     VITE_SUPABASE_ANON_KEY=your-anon-key
+     ```
+   - Run database migrations:
+     ```bash
+     # Install Supabase CLI (if not already installed)
+     npm install -g supabase
+     
+     # Link to your project
+     supabase link --project-ref your-project-ref
+     
+     # Push migrations
+     supabase db push
+     ```
+   - Configure OAuth providers in Supabase Dashboard:
+     - Go to Authentication → Providers
+     - Enable Google and/or Apple
+     - Add OAuth credentials from respective platforms
 
 3. Start the development server:
 
@@ -93,6 +123,17 @@ npm install
 - **Filter**: Select specific poets from the category dropdown
 - **Theme**: Toggle between dark and light modes
 
+### Authentication Features (Optional)
+When Supabase is configured, the app provides:
+- **Sign In**: Click the "Sign In" button to authenticate with Google or Apple
+- **Save Poems**: Click the heart ❤️ button to save poems to your personal collection
+- **My Poems**: View and browse all your saved poems from the account menu
+- **Settings**: Customize theme and font preferences with live preview
+- **Persistent Settings**: Your preferences are automatically saved across sessions
+- **User Profile**: Access your account menu to view settings and sign out
+
+**Note**: Authentication features only appear when Supabase environment variables are configured. The app works fully without authentication.
+
 ### Database Mode Benefits
 - Access to 84,329 restored Arabic poems
 - Instant fetching (no API latency)
@@ -124,12 +165,20 @@ npm install
 - Tailwind CSS
 - Lucide React (icons)
 - Gemini API (AI features)
+- Supabase (authentication & user data - optional)
+- Structured logging (captured by Vercel/browser console)
 
 ### Backend (Database Mode)
 - Express.js 5 (API server)
-- PostgreSQL 15+ (poem database)
+- PostgreSQL 15+ (poem database, requires 17 for auth features)
 - node-postgres (pg) client
 - CORS middleware
+- Structured logging with LOG_ENABLED/LOG_DEBUG flags
+
+### Authentication & User Data (Optional)
+- Supabase Auth (Google & Apple OAuth)
+- Supabase Database (user settings, saved poems, discussions)
+- Row Level Security (RLS) policies for data protection
 
 ## Project Structure
 
@@ -245,7 +294,9 @@ npm run test:e2e:full       # Full device matrix (local)
 ## TODO
 
 ### Features
-- [ ] Add poem favorites and bookmarks
+- [x] Add poem favorites and bookmarks
+- [x] Saved Poems view to browse collection
+- [x] Settings view for theme and font preferences
 - [ ] Implement search functionality
 - [ ] Add social media sharing
 - [ ] Create poem collections and playlists

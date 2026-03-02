@@ -1,4 +1,5 @@
 import { render } from '@testing-library/react'
+import { vi } from 'vitest'
 
 // Custom render function with common providers
 export function renderWithProviders(ui, options = {}) {
@@ -70,4 +71,34 @@ export function mockSuccessfulFetch(data) {
 // Helper to mock failed API calls
 export function mockFailedFetch(error = 'Network error') {
   global.fetch.mockRejectedValueOnce(new Error(error))
+}
+
+// Helper to create a minimal DB poem (matches real backend response structure)
+export function createDbPoem(id, overrides = {}) {
+  return {
+    id,
+    poet: 'Mahmoud Darwish',
+    title: 'Identity Card',
+    arabic: 'سَجِّلْ أَنَا عَرَبِيّ',
+    ...overrides,
+  }
+}
+
+// Helper to create a mock Gemini SSE streaming response for insights/generation
+export function createStreamingMock(text) {
+  const sseData = `data: ${JSON.stringify({
+    candidates: [{ content: { parts: [{ text }] } }]
+  })}\n\n`
+  const encoded = new TextEncoder().encode(sseData)
+  return {
+    ok: true,
+    body: {
+      getReader: () => ({
+        read: vi.fn()
+          .mockResolvedValueOnce({ done: false, value: encoded })
+          .mockResolvedValueOnce({ done: true, value: undefined })
+      })
+    },
+    json: async () => ({})
+  }
 }

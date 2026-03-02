@@ -13,7 +13,21 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Run design review migrations
-        run: psql "$DATABASE_URL" -f supabase/migrations/20260222000000_design_review_tables.sql
+        run: |
+          echo "Running migration: 20260222000000_design_review_tables.sql"
+          psql "$DATABASE_URL" -f supabase/migrations/20260222000000_design_review_tables.sql
+          echo "Migration completed successfully ✓"
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Verify tables exist
+        run: |
+          echo "Verifying tables were created..."
+          psql "$DATABASE_URL" -c "\dt design_*" | tee /tmp/tables.txt
+          grep -q "design_items" /tmp/tables.txt && echo "✓ design_items" || echo "✗ design_items MISSING"
+          grep -q "design_review_sessions" /tmp/tables.txt && echo "✓ design_review_sessions" || echo "✗ design_review_sessions MISSING"
+          grep -q "design_verdicts" /tmp/tables.txt && echo "✓ design_verdicts" || echo "✗ design_verdicts MISSING"
+          grep -q "design_review_history" /tmp/tables.txt && echo "✓ design_review_history" || echo "✗ design_review_history MISSING"
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
 

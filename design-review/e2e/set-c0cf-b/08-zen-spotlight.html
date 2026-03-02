@@ -501,12 +501,8 @@
             setTimeout(function() { cancelAnimationFrame(sandAnimId); }, 5500);
         }
 
-        // Button interactions
-        document.querySelectorAll('.earth-btn, .stone-btn').forEach(function(btn) {
-            btn.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); btn.click(); }
-            });
-        });
+
+
     </script>
 </body>
 </html>

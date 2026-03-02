@@ -282,15 +282,8 @@
             document.body.classList.toggle('light');
             themeToggle.textContent = document.body.classList.contains('light') ? '🌙' : '☀️';
         });
-        const buttons = document.querySelectorAll('.notion-btn');
-        buttons.forEach(btn => {
-            btn.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    btn.click();
-                }
-            });
-        });
+
+
     </script>
 </body>
 </html>

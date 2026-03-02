@@ -114,7 +114,7 @@ Reference these guidelines when:
 
 - `advanced-event-handler-refs` - Store event handlers in refs
 - `advanced-init-once` - Initialize app once per app load
-- `advanced-use-latest` - useLatest for stable callback refs
+- `advanced-use-latest` - use `useEffectEvent` (or equivalent) for stable event callbacks
 
 ## How to Use
 

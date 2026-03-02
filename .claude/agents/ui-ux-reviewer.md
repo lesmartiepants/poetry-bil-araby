@@ -120,10 +120,11 @@ const option3 = `
 </button>
 `;
 
-// Write to preview files (inside design-review/{component}/{category}/previews/)
-fs.writeFileSync('design-review/{component}/{category}/previews/button-option-1.html', createFullPage(option1));
-fs.writeFileSync('design-review/{component}/{category}/previews/button-option-2.html', createFullPage(option2));
-fs.writeFileSync('design-review/{component}/{category}/previews/button-option-3.html', createFullPage(option3));
+// Write to preview files (inside design-review/<component>/<category>/previews/)
+// Replace <component> and <category> with real folder names before running.
+fs.writeFileSync('design-review/<component>/<category>/previews/button-option-1.html', createFullPage(option1));
+fs.writeFileSync('design-review/<component>/<category>/previews/button-option-2.html', createFullPage(option2));
+fs.writeFileSync('design-review/<component>/<category>/previews/button-option-3.html', createFullPage(option3));
 ```
 
 **Method B: Screenshot Mockups (Visual)**

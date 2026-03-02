@@ -206,13 +206,17 @@ jobs:
             // --- Build comment body ---
             function buildComment(baseUrl, headSha, designs) {
               const reviewUrl = `${baseUrl}/design-review/`;
+              const total = designs.splash.length + designs.mainApp.length + designs.controls.length + designs.auth.length + designs.e2e.length;
               const lines = [
                 marker,
                 `## Design Review Links \`${headSha.slice(0, 7)}\``,
                 '',
                 `**Interactive Review Page:** [Open Review](${reviewUrl})`,
                 '',
-                '### Splash Screens',
+                `**Total:** ${total} design previews`,
+                '',
+                '<details>',
+                '<summary>Splash Screens (' + designs.splash.length + ')</summary>',
                 '',
                 '| Theme | Option | Link |',
                 '|-------|--------|------|'
@@ -221,36 +225,39 @@ jobs:
               for (const d of designs.splash) {
                 lines.push(`| ${capitalize(d.theme)} | ${capitalize(d.name)} | [Preview](${baseUrl}/design-review/${d.file}) |`);
               }
+              lines.push('', '</details>');
 
-              lines.push('', '### Main App (Desktop)', '', '| Design | Link |', '|--------|------|');
+              lines.push('', '<details>', '<summary>Main App (' + designs.mainApp.length + ')</summary>', '', '| Design | Link |', '|--------|------|');
               for (const d of designs.mainApp) {
                 lines.push(`| ${capitalize(d.name)} | [Preview](${baseUrl}/design-review/${d.file}) |`);
               }
+              lines.push('', '</details>');
 
-              lines.push('', '### Vertical Controls', '', '| Style | Link |', '|-------|------|');
+              lines.push('', '<details>', '<summary>Vertical Controls (' + designs.controls.length + ')</summary>', '', '| Style | Link |', '|-------|------|');
               for (const d of designs.controls) {
                 lines.push(`| ${capitalize(d.name)} | [Preview](${baseUrl}/design-review/${d.file}) |`);
               }
+              lines.push('', '</details>');
 
               if (designs.auth.length > 0) {
-                lines.push('', '### Auth UI', '', '| State | Link |', '|-------|------|');
+                lines.push('', '<details>', '<summary>Auth UI (' + designs.auth.length + ')</summary>', '', '| State | Link |', '|-------|------|');
                 for (const d of designs.auth) {
                   lines.push(`| ${capitalize(d.name)} | [Preview](${baseUrl}/design-review/${d.file}) |`);
                 }
+                lines.push('', '</details>');
               }
 
               if (designs.e2e.length > 0) {
-                lines.push('', '### E2E Flows', '', '| Set | Design | Link |', '|-----|--------|------|');
+                lines.push('', '<details>', '<summary>E2E Flows (' + designs.e2e.length + ')</summary>', '', '| Set | Design | Link |', '|-----|--------|------|');
                 for (const d of designs.e2e) {
                   lines.push(`| ${capitalize(d.set)} | ${capitalize(d.name)} | [Preview](${baseUrl}/design-review/${d.file}) |`);
                 }
+                lines.push('', '</details>');
               }
 
               lines.push(
                 '',
                 '---',
-                `Total: ${designs.splash.length + designs.mainApp.length + designs.controls.length + designs.auth.length + designs.e2e.length} design previews`,
-                '',
                 '_Auto-generated for design review commits._'
               );
               return lines.join('\n');

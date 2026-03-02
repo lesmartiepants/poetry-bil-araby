@@ -8,7 +8,7 @@ jobs:
   migrate:
     name: Run Database Migrations
     runs-on: ubuntu-latest
-    if: ${{ secrets.DATABASE_URL != '' }}
+    environment: production
     steps:
       - uses: actions/checkout@v4
 
@@ -34,6 +34,7 @@ jobs:
   deploy:
     name: Deploy to Production
     runs-on: ubuntu-latest
+    environment: production
     needs: migrate
     if: always()
     steps:

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Play, Pause, BookOpen, RefreshCw, Volume2, ChevronDown, Quote, Globe, Moon, Sun, Loader2, ChevronRight, ChevronLeft, Search, X, Copy, LayoutGrid, Check, Bug, Trash2, Sparkles, PenTool, Library, Compass, Rabbit, MoreHorizontal } from 'lucide-react';
+import { Play, Pause, BookOpen, RefreshCw, Volume2, ChevronDown, Quote, Globe, Moon, Sun, Loader2, ChevronRight, ChevronLeft, Search, X, Copy, LayoutGrid, Check, Bug, Trash2, Sparkles, PenTool, Library, Compass, Rabbit, MoreHorizontal, Heart, LogIn, LogOut, User, Settings2 } from 'lucide-react';
+import { useAuth, useUserSettings, useSavedPoems } from './hooks/useAuth';
 
 /* =============================================================================
   1. FEATURE FLAGS & DESIGN SYSTEM
@@ -9,6 +10,7 @@ import { Play, Pause, BookOpen, RefreshCw, Volume2, ChevronDown, Quote, Globe, M
 const FEATURES = {
   grounding: false,
   debug: true,
+  logging: true,      // Emit structured logs to console (captured by Vercel/browser)
   caching: true,      // Enable IndexedDB caching for audio/insights
   streaming: true,    // Enable streaming insights (progressive rendering)
   prefetching: true,  // Enable smart prefetching (rate-limited to avoid API issues)
@@ -155,11 +157,106 @@ const getTTSInstruction = (poem, poet, mood, era) => {
 
 /**
  * API Model Endpoints
+ * Text model list is built dynamically by discoverTextModels(); textDefaults is the fallback
+ * used when the ListModels API is unavailable. Starts with the cheapest Gemini 2.5 model.
  */
 const API_MODELS = {
-  insights: 'gemini-2.5-flash-preview-09-2025',
   tts: 'gemini-2.5-flash-preview-tts',
-  discovery: 'gemini-2.5-flash-preview-09-2025'
+  textDefaults: ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'],
+};
+
+/**
+ * Module-level cache for the ranked list of available Gemini text models.
+ * Populated on first call to discoverTextModels(); shared across all handlers.
+ */
+let _discoveredTextModels = null;
+
+/**
+ * Fetch and rank available Gemini text models via the ListModels API.
+ * Prefers newer versions and cheaper (flash) models over pro.
+ * Falls back to API_MODELS.textDefaults if the API is unreachable or returns no usable models.
+ * Result is cached for the lifetime of the page.
+ */
+const discoverTextModels = async (apiKey, addLog) => {
+  if (_discoveredTextModels) return _discoveredTextModels;
+  try {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`,
+      { method: 'GET' }
+    );
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const { models = [] } = await res.json();
+    const ranked = models
+      .filter(m =>
+        Array.isArray(m.supportedGenerationMethods) &&
+        m.supportedGenerationMethods.includes('generateContent') &&
+        typeof m.name === 'string' &&
+        m.name.includes('gemini') &&
+        !m.name.includes('embedding') &&
+        !m.name.includes('tts')
+      )
+      .map(m => {
+        const id = m.name.replace('models/', '');
+        const vm = id.match(/gemini-(\d+)\.(\d+)/);
+        const major = vm ? parseInt(vm[1]) : 0;
+        const minor = vm ? parseInt(vm[2]) : 0;
+        const isFlash = id.includes('flash');
+        // '8b' identifies Google's 8-billion-parameter lite variants (e.g. gemini-1.5-flash-8b)
+        const isLite = id.includes('lite') || id.includes('8b');
+        // Scoring: major version (×1000) > minor version (×100) > flash bonus (+10) > lite penalty (−5)
+        // Higher score = try first; prefers newest model, then flash (cheaper) over pro, avoids lite.
+        const score = major * 1000 + minor * 100 + (isFlash ? 10 : 0) - (isLite ? 5 : 0);
+        return { id, score };
+      })
+      .sort((a, b) => b.score - a.score)
+      .map(m => m.id);
+    if (ranked.length > 0) {
+      _discoveredTextModels = ranked;
+      if (addLog) addLog('Model Discovery', `${ranked.length} models ranked: ${ranked.slice(0, 3).join(', ')}`, 'info');
+      return _discoveredTextModels;
+    }
+  } catch (err) {
+    if (addLog) addLog('Model Discovery', `ListModels unavailable: ${err.message} — using defaults`, 'warning');
+  }
+  _discoveredTextModels = [...API_MODELS.textDefaults];
+  return _discoveredTextModels;
+};
+
+/**
+ * Fetch from a Gemini text endpoint with automatic model fallback.
+ * Uses the dynamically discovered model list (ranked newest/cheapest first).
+ * Retries on HTTP 404/410 (model unavailable/deprecated); throws immediately on other errors.
+ *
+ * @param {string}   endpoint - Gemini method segment, e.g. 'generateContent' or 'streamGenerateContent?alt=sse'
+ * @param {string}   body     - Pre-serialised JSON request body
+ * @param {string}   apiKey
+ * @param {string}   label    - Human-readable prefix for the thrown error message
+ * @param {Function} addLog   - Component logging helper
+ * @returns {Promise<Response>} Resolved Response with ok === true
+ */
+const geminiTextFetch = async (endpoint, body, apiKey, label, addLog) => {
+  const models = await discoverTextModels(apiKey, addLog);
+  for (let i = 0; i < models.length; i++) {
+    const model = models[i];
+    if (i > 0) addLog("Model Fallback", `Trying fallback: ${model}`, "warning");
+    // If endpoint already has a query string (e.g. ?alt=sse) append &key, otherwise ?key
+    const sep = endpoint.includes('?') ? '&' : '?';
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/${model}:${endpoint}${sep}key=${apiKey}`,
+      { method: "POST", headers: { "Content-Type": "application/json" }, body }
+    );
+    if (res.ok) {
+      if (i > 0) addLog("Model Fallback", `✓ Using fallback model: ${model}`, "success");
+      return res;
+    }
+    const errData = await res.json().catch(() => ({}));
+    const errMsg = errData.error?.message || `HTTP ${res.status}`;
+    // Only retry on model-unavailable HTTP codes: 404 Not Found, 410 Gone (deprecated)
+    if ((res.status !== 404 && res.status !== 410) || i === models.length - 1) {
+      throw new Error(`${label}: ${errMsg}`);
+    }
+    addLog("Model Fallback", `${model} not available, trying next...`, "warning");
+  }
 };
 
 /**
@@ -556,15 +653,11 @@ const prefetchManager = {
       }
 
       const apiStart = performance.now();
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${API_MODELS.insights}:generateContent?key=${apiKey}`;
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: promptText }] }],
-          systemInstruction: { parts: [{ text: INSIGHTS_SYSTEM_PROMPT }] }
-        })
+      const prefetchBody = JSON.stringify({
+        contents: [{ parts: [{ text: promptText }] }],
+        systemInstruction: { parts: [{ text: INSIGHTS_SYSTEM_PROMPT }] }
       });
+      const res = await geminiTextFetch('generateContent', prefetchBody, apiKey, 'Prefetch Insights', addLog);
 
       const data = await res.json();
       const apiTime = performance.now() - apiStart;
@@ -638,6 +731,9 @@ const DebugPanel = ({ logs, onClear, darkMode }) => {
   const scrollRef = useRef(null);
 
   useEffect(() => {
+    if (logs.length > 0 && logs[logs.length - 1].type === 'error') {
+      setIsExpanded(true);
+    }
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
@@ -775,7 +871,7 @@ const ErrorBanner = ({ error, onDismiss, onRetry, theme }) => {
             <X size={20} className="text-red-500" />
           </div>
           <div className="flex-1 min-w-0">
-            <p className={`${theme.text} text-sm font-medium mb-2`}>Database Connection Error</p>
+            <p className={`${theme.text} text-sm font-medium mb-2`}>Error</p>
             <p className={`${theme.text} text-xs opacity-70 mb-3`}>{error}</p>
             <div className="flex gap-2">
               {onRetry && (
@@ -822,19 +918,38 @@ const OverflowMenu = ({
   darkMode,
   onToggleDarkMode,
   currentFont,
-  onCycleFont,
+  onSelectFont,
   selectedCategory,
   onSelectCategory,
   onCopy,
   showCopySuccess,
   useDatabase,
-  onToggleDatabase
+  onToggleDatabase,
+  user,
+  onOpenSavedPoems,
+  onOpenSettings
 }) => {
   const [isOpen, setIsOpen] = useState(false);
+  const [fontSubmenuOpen, setFontSubmenuOpen] = useState(false);
+  const [poetSubmenuOpen, setPoetSubmenuOpen] = useState(false);
   const dropdownRef = useRef(null);
 
+  // Theme-aware tokens
+  const gold = darkMode ? '#C5A059' : '#8B7355';
+  const goldHoverClass = darkMode ? 'hover:bg-[rgba(197,160,89,0.08)]' : 'hover:bg-[rgba(139,115,85,0.08)]';
+  const goldActiveClass = darkMode ? 'bg-[rgba(197,160,89,0.15)]' : 'bg-[rgba(139,115,85,0.12)]';
+  const divider = darkMode ? 'border-[rgba(197,160,89,0.08)]' : 'border-[rgba(139,115,85,0.12)]';
+  // Dark: slightly lighter than the near-black menu bg; Light: warm tinted inset
+  const submenuBg = darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(139,115,85,0.07)';
+
   useEffect(() => {
-    const clickOut = (e) => { if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setIsOpen(false); };
+    const clickOut = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setIsOpen(false);
+        setFontSubmenuOpen(false);
+        setPoetSubmenuOpen(false);
+      }
+    };
     document.addEventListener("mousedown", clickOut);
     return () => document.removeEventListener("mousedown", clickOut);
   }, []);
@@ -851,11 +966,13 @@ const OverflowMenu = ({
 
   const handleSelectCategory = (catId) => {
     onSelectCategory(catId);
+    setPoetSubmenuOpen(false);
     setIsOpen(false);
   };
 
-  const handleCycleFont = () => {
-    onCycleFont();
+  const handleSelectFont = (fontId) => {
+    onSelectFont(fontId);
+    setFontSubmenuOpen(false);
     setIsOpen(false);
   };
 
@@ -864,83 +981,552 @@ const OverflowMenu = ({
     setIsOpen(false);
   };
 
+  const itemClass = `w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex items-center gap-3 border-b ${divider} ${goldHoverClass}`;
+
   return (
     <div className="relative flex flex-col items-center gap-1 min-w-[56px]" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105"
+        className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:scale-105 ${goldHoverClass}`}
         aria-label="More options"
+        aria-expanded={isOpen}
       >
-        <MoreHorizontal size={21} className="text-[#C5A059]" />
+        <MoreHorizontal size={21} style={{ color: gold }} />
       </button>
-      <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">More</span>
+      <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap" style={{ color: gold }}>More</span>
 
       {isOpen && (
-        <div className="absolute bottom-full right-[-20px] mb-3 min-w-[220px] max-h-[80vh] overflow-y-auto custom-scrollbar bg-[rgba(20,18,16,0.98)] backdrop-blur-[48px] border border-[rgba(197,160,89,0.15)] rounded-3xl p-3 shadow-[0_-10px_40px_rgba(0,0,0,0.7)] z-50">
-          <button
-            onClick={handleCopy}
-            className="w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex items-center gap-3 border-b border-[rgba(197,160,89,0.08)] hover:bg-[rgba(197,160,89,0.08)]"
-          >
-            {showCopySuccess ? <Check size={18} className="text-green-500" /> : <Copy size={18} className="text-[#C5A059]" />}
+        <div
+          className="absolute bottom-full right-[-20px] mb-3 min-w-[220px] max-h-[80vh] overflow-y-auto custom-scrollbar backdrop-blur-[48px] rounded-3xl p-3 z-50"
+          style={{
+            background: darkMode ? 'rgba(20,18,16,0.98)' : 'rgba(255,252,248,0.98)',
+            border: `1px solid ${darkMode ? 'rgba(197,160,89,0.15)' : 'rgba(139,115,85,0.18)'}`,
+            boxShadow: darkMode
+              ? '0 -10px 40px rgba(0,0,0,0.7)'
+              : '0 -2px 12px rgba(139,115,85,0.10), 0 -6px 24px rgba(139,115,85,0.07), 0 1px 3px rgba(0,0,0,0.04)'
+          }}
+        >
+          <button onClick={handleCopy} className={itemClass}>
+            {showCopySuccess ? <Check size={18} className="text-green-500" /> : <Copy size={18} style={{ color: gold }} />}
             <div className="flex flex-col items-start">
-              <div className="font-amiri text-base text-[#C5A059] font-medium">نسخ</div>
+              <div className="font-amiri text-base font-medium" style={{ color: gold }}>نسخ</div>
               <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Copy</div>
             </div>
           </button>
 
-          <button
-            onClick={handleToggleDatabase}
-            className="w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex items-center gap-3 border-b border-[rgba(197,160,89,0.08)] hover:bg-[rgba(197,160,89,0.08)]"
-          >
-            {useDatabase ? <Library size={18} className="text-[#C5A059]" /> : <Sparkles size={18} className="text-[#C5A059]" />}
+          <button onClick={handleToggleDatabase} className={itemClass}>
+            {useDatabase ? <Library size={18} style={{ color: gold }} /> : <Sparkles size={18} style={{ color: gold }} />}
             <div className="flex flex-col items-start">
-              <div className="font-amiri text-base text-[#C5A059] font-medium">{useDatabase ? 'قاعدة البيانات' : 'الذكاء الاصطناعي'}</div>
+              <div className="font-amiri text-base font-medium" style={{ color: gold }}>{useDatabase ? 'قاعدة البيانات' : 'الذكاء الاصطناعي'}</div>
               <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">{useDatabase ? 'Local Database' : 'AI Generated'}</div>
             </div>
           </button>
 
-          <button
-            onClick={handleToggleDarkMode}
-            className="w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex items-center gap-3 border-b border-[rgba(197,160,89,0.08)] hover:bg-[rgba(197,160,89,0.08)]"
-          >
-            {darkMode ? <Sun size={18} className="text-[#C5A059]" /> : <Moon size={18} className="text-[#C5A059]" />}
+          <button onClick={handleToggleDarkMode} className={itemClass}>
+            {darkMode ? <Sun size={18} style={{ color: gold }} /> : <Moon size={18} style={{ color: gold }} />}
             <div className="flex flex-col items-start">
-              <div className="font-amiri text-base text-[#C5A059] font-medium">{darkMode ? 'الوضع النهاري' : 'الوضع الليلي'}</div>
+              <div className="font-amiri text-base font-medium" style={{ color: gold }}>{darkMode ? 'الوضع النهاري' : 'الوضع الليلي'}</div>
               <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Theme</div>
             </div>
           </button>
 
-          <button
-            onClick={handleCycleFont}
-            className="w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex items-center gap-3 border-b border-[rgba(197,160,89,0.08)] hover:bg-[rgba(197,160,89,0.08)]"
-          >
-            <PenTool size={18} className="text-[#C5A059]" />
-            <div className="flex flex-col items-start">
-              <div className="font-amiri text-base text-[#C5A059] font-medium">تبديل الخط</div>
-              <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Font: {currentFont}</div>
-            </div>
-          </button>
-
-          <div className="border-b border-[rgba(197,160,89,0.08)] last:border-b-0">
-            <div className="px-5 py-2">
-              <div className="font-brand-en text-[8px] uppercase tracking-[0.12em] opacity-30 text-[#a8a29e]">Poets</div>
-            </div>
-            {CATEGORIES.map(cat => (
-              <button
-                key={cat.id}
-                onClick={() => handleSelectCategory(cat.id)}
-                className={`w-full p-[10px_20px] cursor-pointer transition-all duration-200 flex items-center gap-2 hover:bg-[rgba(197,160,89,0.08)] ${selectedCategory === cat.id ? 'bg-[rgba(197,160,89,0.12)]' : ''}`}
+          {/* Font accordion */}
+          <div className={`border-b ${divider}`}>
+            <button
+              onClick={() => { setFontSubmenuOpen(!fontSubmenuOpen); setPoetSubmenuOpen(false); }}
+              className={`w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex items-center gap-3 ${fontSubmenuOpen ? '' : goldHoverClass}`}
+              aria-expanded={fontSubmenuOpen}
+            >
+              <PenTool size={18} style={{ color: gold }} />
+              <div className="flex flex-col items-start flex-1">
+                <div className="font-amiri text-base font-medium" style={{ color: gold }}>اختيار الخط</div>
+                <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Font: {currentFont}</div>
+              </div>
+              <ChevronDown size={14} style={{ color: gold }} className={`transition-transform duration-200 ${fontSubmenuOpen ? 'rotate-180' : 'opacity-50'}`} />
+            </button>
+            {fontSubmenuOpen && (
+              <div
+                className="pt-1 pb-2 px-1 mx-2 mb-2 mt-0.5 rounded-xl"
+                style={{ background: submenuBg, border: `1px solid ${darkMode ? 'rgba(197,160,89,0.10)' : 'rgba(139,115,85,0.14)'}` }}
               >
-                <Library size={14} className="text-[#C5A059] opacity-60" />
+                {FONTS.map((font) => (
+                  <button
+                    key={font.id}
+                    onClick={() => handleSelectFont(font.id)}
+                    className={`w-full p-[8px_12px] cursor-pointer rounded-lg transition-all duration-200 flex items-center gap-3 mb-0.5 ${currentFont === font.id ? goldActiveClass : goldHoverClass}`}
+                  >
+                    <div className="flex flex-col items-start flex-1">
+                      <div className={`${font.family} text-sm font-medium`} style={{ color: gold }} dir="rtl">{font.labelAr}</div>
+                      <div className="font-brand-en text-[8px] uppercase tracking-[0.12em] opacity-40 text-[#a8a29e]">{font.label}</div>
+                    </div>
+                    {currentFont === font.id && <Check size={13} style={{ color: gold }} />}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {user && (
+            <>
+              <button
+                onClick={() => { onOpenSavedPoems(); setIsOpen(false); }}
+                className={itemClass}
+              >
+                <BookOpen size={18} style={{ color: gold }} />
                 <div className="flex flex-col items-start">
-                  <div className="font-amiri text-sm text-[#C5A059] font-medium">{cat.labelAr}</div>
-                  <div className="font-brand-en text-[8px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">{cat.label}</div>
+                  <div className="font-amiri text-base font-medium" style={{ color: gold }}>قصائدي</div>
+                  <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">My Poems</div>
                 </div>
               </button>
-            ))}
+              <button
+                onClick={() => { onOpenSettings(); setIsOpen(false); }}
+                className={itemClass}
+              >
+                <Settings2 size={18} style={{ color: gold }} />
+                <div className="flex flex-col items-start">
+                  <div className="font-amiri text-base font-medium" style={{ color: gold }}>الإعدادات</div>
+                  <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Settings</div>
+                </div>
+              </button>
+            </>
+          )}
+
+          {/* Poet accordion */}
+          <div>
+            <button
+              onClick={() => { setPoetSubmenuOpen(!poetSubmenuOpen); setFontSubmenuOpen(false); }}
+              className={`w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex items-center gap-3 ${poetSubmenuOpen ? '' : goldHoverClass}`}
+              aria-expanded={poetSubmenuOpen}
+            >
+              <Library size={18} style={{ color: gold }} />
+              <div className="flex flex-col items-start flex-1">
+                <div className="font-amiri text-base font-medium" style={{ color: gold }}>اختيار الشاعر</div>
+                <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Poet: {CATEGORIES.find(c => c.id === selectedCategory)?.label || 'All'}</div>
+              </div>
+              <ChevronDown size={14} style={{ color: gold }} className={`transition-transform duration-200 ${poetSubmenuOpen ? 'rotate-180' : 'opacity-50'}`} />
+            </button>
+            {poetSubmenuOpen && (
+              <div
+                className="pt-1 pb-2 px-1 mx-2 mb-2 mt-0.5 rounded-xl"
+                style={{ background: submenuBg, border: `1px solid ${darkMode ? 'rgba(197,160,89,0.10)' : 'rgba(139,115,85,0.14)'}` }}
+              >
+                {CATEGORIES.map(cat => (
+                  <button
+                    key={cat.id}
+                    onClick={() => handleSelectCategory(cat.id)}
+                    className={`w-full p-[8px_12px] cursor-pointer rounded-lg transition-all duration-200 flex items-center gap-3 mb-0.5 ${selectedCategory === cat.id ? goldActiveClass : goldHoverClass}`}
+                  >
+                    <div className="flex flex-col items-start flex-1">
+                      <div className="font-amiri text-sm font-medium" style={{ color: gold }}>{cat.labelAr}</div>
+                      <div className="font-brand-en text-[8px] uppercase tracking-[0.12em] opacity-40 text-[#a8a29e]">{cat.label}</div>
+                    </div>
+                    {selectedCategory === cat.id && <Check size={13} style={{ color: gold }} />}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       )}
+    </div>
+  );
+};
+
+/* =============================================================================
+  AUTH COMPONENTS
+  =============================================================================
+*/
+
+const AuthModal = ({ isOpen, onClose, onSignInWithGoogle, onSignInWithApple, theme }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+      <div className={`relative w-full max-w-md ${theme.glass} ${theme.border} border ${DESIGN.radius} p-8 shadow-2xl`}>
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/10 transition-colors"
+          aria-label="Close"
+        >
+          <X size={20} className={theme.text} />
+        </button>
+
+        <div className="text-center mb-8">
+          <h2 className={`font-amiri text-3xl ${theme.titleColor} mb-2`}>مرحباً</h2>
+          <p className={`font-brand-en text-sm ${theme.text} opacity-60`}>Sign in to save poems and preferences</p>
+        </div>
+
+        <div className="space-y-3">
+          <button
+            onClick={onSignInWithGoogle}
+            className={`w-full py-3 px-4 ${theme.brandBg} ${theme.brandBorder} border ${DESIGN.radius} ${theme.brand} font-brand-en text-sm font-medium hover:bg-opacity-80 transition-all flex items-center justify-center gap-3`}
+          >
+            <svg className="w-5 h-5" viewBox="0 0 24 24">
+              <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+              <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+              <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+              <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+            </svg>
+            Continue with Google
+          </button>
+
+          <button
+            onClick={onSignInWithApple}
+            className={`w-full py-3 px-4 ${theme.brandBg} ${theme.brandBorder} border ${DESIGN.radius} ${theme.brand} font-brand-en text-sm font-medium hover:bg-opacity-80 transition-all flex items-center justify-center gap-3`}
+          >
+            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
+            </svg>
+            Continue with Apple
+          </button>
+        </div>
+
+        <p className={`mt-6 text-center text-xs ${theme.text} opacity-40 font-brand-en`}>
+          By signing in, you agree to our Terms of Service and Privacy Policy
+        </p>
+      </div>
+    </div>
+  );
+};
+
+const AuthButton = ({ user, onSignIn, onSignOut, onOpenSavedPoems, onOpenSettings, theme }) => {
+  const [showMenu, setShowMenu] = useState(false);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    const clickOut = (e) => {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
+        setShowMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', clickOut);
+    return () => document.removeEventListener('mousedown', clickOut);
+  }, []);
+
+  if (!user) {
+    return (
+      <div className="flex flex-col items-center gap-1 min-w-[56px]">
+        <button
+          onClick={onSignIn}
+          className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105"
+          aria-label="Sign In"
+        >
+          <LogIn size={21} className="text-[#C5A059]" />
+        </button>
+        <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">
+          Sign In
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <div className="relative flex flex-col items-center gap-1 min-w-[56px]" ref={menuRef}>
+      <button
+        onClick={() => setShowMenu(!showMenu)}
+        className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105"
+        aria-label="User Menu"
+      >
+        {user.user_metadata?.avatar_url ? (
+          <img 
+            src={user.user_metadata.avatar_url} 
+            alt="User avatar" 
+            className="w-[21px] h-[21px] rounded-full object-cover"
+          />
+        ) : (
+          <User size={21} className="text-[#C5A059]" />
+        )}
+      </button>
+      <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">
+        Account
+      </span>
+
+      {showMenu && (
+        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3 min-w-[200px] bg-[rgba(20,18,16,0.98)] backdrop-blur-[48px] border border-[rgba(197,160,89,0.15)] rounded-3xl p-3 shadow-[0_-10px_40px_rgba(0,0,0,0.7)] z-50">
+          <div className="px-4 py-3 border-b border-[rgba(197,160,89,0.08)]">
+            <p className="font-brand-en text-xs text-[#C5A059] font-medium truncate">
+              {user.email || user.user_metadata?.full_name || 'User'}
+            </p>
+          </div>
+          <button
+            onClick={() => {
+              onOpenSavedPoems();
+              setShowMenu(false);
+            }}
+            className="w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex items-center gap-3 border-b border-[rgba(197,160,89,0.08)] hover:bg-[rgba(197,160,89,0.08)]"
+          >
+            <BookOpen size={18} className="text-[#C5A059]" />
+            <div className="flex flex-col items-start">
+              <div className="font-amiri text-base text-[#C5A059] font-medium">قصائدي</div>
+              <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">My Poems</div>
+            </div>
+          </button>
+          <button
+            onClick={() => {
+              onOpenSettings();
+              setShowMenu(false);
+            }}
+            className="w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex items-center gap-3 border-b border-[rgba(197,160,89,0.08)] hover:bg-[rgba(197,160,89,0.08)]"
+          >
+            <Settings2 size={18} className="text-[#C5A059]" />
+            <div className="flex flex-col items-start">
+              <div className="font-amiri text-base text-[#C5A059] font-medium">الإعدادات</div>
+              <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Settings</div>
+            </div>
+          </button>
+          <button
+            onClick={() => {
+              onSignOut();
+              setShowMenu(false);
+            }}
+            className="w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex items-center gap-3 hover:bg-[rgba(197,160,89,0.08)]"
+          >
+            <LogOut size={18} className="text-[#C5A059]" />
+            <div className="flex flex-col items-start">
+              <div className="font-amiri text-base text-[#C5A059] font-medium">تسجيل الخروج</div>
+              <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Sign Out</div>
+            </div>
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+const SavePoemButton = ({ poem, isSaved, onSave, onUnsave, disabled }) => {
+  const [showTooltip, setShowTooltip] = useState(false);
+
+  const handleClick = () => {
+    if (disabled) {
+      setShowTooltip(true);
+      setTimeout(() => setShowTooltip(false), 2000);
+      return;
+    }
+
+    if (isSaved) {
+      onUnsave();
+    } else {
+      onSave();
+    }
+  };
+
+  return (
+    <div className="relative flex flex-col items-center gap-1 min-w-[52px]">
+      <button
+        onClick={handleClick}
+        className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105"
+        aria-label={isSaved ? "Unsave poem" : "Save poem"}
+      >
+        <Heart
+          size={21}
+          className={`${isSaved ? 'fill-red-500 text-red-500' : 'text-[#C5A059]'} transition-all`}
+        />
+      </button>
+      <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">
+        {isSaved ? 'Saved' : 'Save'}
+      </span>
+
+      {showTooltip && disabled && (
+        <div className="absolute bottom-full mb-2 px-3 py-2 bg-stone-900 text-white text-xs rounded-lg whitespace-nowrap shadow-lg">
+          Sign in to save poems
+        </div>
+      )}
+    </div>
+  );
+};
+
+const SavedPoemsView = ({ isOpen, onClose, savedPoems, onSelectPoem, onUnsavePoem, theme, currentFontClass }) => {
+  if (!isOpen) return null;
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '';
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 1) return 'Just now';
+    if (mins < 60) return `${mins}m ago`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours}h ago`;
+    const days = Math.floor(hours / 24);
+    if (days < 30) return `${days}d ago`;
+    return new Date(dateStr).toLocaleDateString();
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
+    >
+      <div className={`relative w-full max-w-2xl max-h-[85vh] flex flex-col ${theme.glass} ${theme.border} border ${DESIGN.radius} shadow-2xl`}>
+        <div className="flex items-center justify-between p-6 pb-4 border-b border-stone-500/10 flex-shrink-0">
+          <div>
+            <h2 className={`font-amiri text-2xl ${theme.titleColor}`}>قصائدي المحفوظة</h2>
+            <p className={`font-brand-en text-xs ${theme.text} opacity-50 mt-1`}>My Saved Poems ({savedPoems.length})</p>
+          </div>
+          <button
+            onClick={onClose}
+            className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full hover:bg-white/10 transition-colors"
+            aria-label="Close"
+          >
+            <X size={20} className={theme.text} />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-6 custom-scrollbar">
+          {savedPoems.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 gap-4">
+              <Heart size={48} className={`${theme.text} opacity-20`} />
+              <div className="text-center">
+                <p className={`font-amiri text-xl ${theme.text} opacity-40`}>لا توجد قصائد محفوظة</p>
+                <p className={`font-brand-en text-sm ${theme.text} opacity-30 mt-1`}>No saved poems yet</p>
+                <p className={`font-brand-en text-xs ${theme.text} opacity-20 mt-3`}>Tap the heart icon on any poem to save it</p>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {savedPoems.map((sp) => (
+                <div
+                  key={sp.id}
+                  className={`group ${theme.glass} ${theme.border} border ${DESIGN.radius} p-4 transition-all hover:border-[#C5A059]/30`}
+                >
+                  <button
+                    onClick={() => onSelectPoem(sp)}
+                    className="w-full text-left cursor-pointer bg-transparent border-none p-0"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <p className={`font-amiri text-sm ${theme.titleColor} font-medium`}>{sp.poet_name_ar || sp.poet_name || 'Unknown'}</p>
+                        <p className={`font-brand-en text-xs ${theme.text} opacity-50 mt-0.5`}>{sp.poem_title || sp.poem_title_ar || ''}</p>
+                        <p className={`${currentFontClass} text-sm ${theme.text} opacity-70 mt-2 line-clamp-2`} dir="rtl">
+                          {(sp.poem_text || '').slice(0, 80)}{(sp.poem_text || '').length > 80 ? '...' : ''}
+                        </p>
+                      </div>
+                    </div>
+                    {sp.saved_at && (
+                      <p className={`font-brand-en text-[10px] ${theme.text} opacity-30 mt-2`}>{formatDate(sp.saved_at)}</p>
+                    )}
+                  </button>
+                  <div className="flex justify-end mt-2">
+                    <button
+                      onClick={() => onUnsavePoem(sp)}
+                      className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full hover:bg-red-500/10 transition-colors"
+                      aria-label="Remove from saved"
+                    >
+                      <Heart size={16} className="fill-red-500 text-red-500" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const SettingsView = ({ isOpen, onClose, darkMode, onToggleDarkMode, currentFont, onSelectFont, user, theme }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
+    >
+      <div className={`relative w-full max-w-lg max-h-[85vh] flex flex-col ${theme.glass} ${theme.border} border ${DESIGN.radius} shadow-2xl`}>
+        <div className="flex items-center justify-between p-6 pb-4 border-b border-stone-500/10 flex-shrink-0">
+          <div>
+            <h2 className={`font-amiri text-2xl ${theme.titleColor}`}>الإعدادات</h2>
+            <p className={`font-brand-en text-xs ${theme.text} opacity-50 mt-1`}>Preferences</p>
+          </div>
+          <button
+            onClick={onClose}
+            className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full hover:bg-white/10 transition-colors"
+            aria-label="Close"
+          >
+            <X size={20} className={theme.text} />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-6 custom-scrollbar space-y-8">
+          {/* Theme Section */}
+          <div>
+            <div className="mb-3">
+              <h3 className={`font-amiri text-lg ${theme.titleColor}`}>المظهر</h3>
+              <p className={`font-brand-en text-[10px] uppercase tracking-[0.12em] ${theme.text} opacity-40`}>Appearance</p>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                onClick={() => { if (!darkMode) onToggleDarkMode(); }}
+                className={`p-4 ${DESIGN.radius} border-2 transition-all flex flex-col items-center gap-2 cursor-pointer ${
+                  darkMode
+                    ? 'border-[#C5A059] bg-[#C5A059]/10'
+                    : `${theme.border} bg-transparent hover:border-[#C5A059]/30`
+                }`}
+              >
+                <Moon size={24} className={darkMode ? 'text-[#C5A059]' : `${theme.text} opacity-50`} />
+                <div className="text-center">
+                  <p className={`font-amiri text-sm ${darkMode ? 'text-[#C5A059]' : theme.text}`}>ليلي</p>
+                  <p className={`font-brand-en text-[9px] uppercase tracking-[0.1em] ${theme.text} opacity-40`}>Dark</p>
+                </div>
+              </button>
+              <button
+                onClick={() => { if (darkMode) onToggleDarkMode(); }}
+                className={`p-4 ${DESIGN.radius} border-2 transition-all flex flex-col items-center gap-2 cursor-pointer ${
+                  !darkMode
+                    ? 'border-[#C5A059] bg-[#C5A059]/10'
+                    : `${theme.border} bg-transparent hover:border-[#C5A059]/30`
+                }`}
+              >
+                <Sun size={24} className={!darkMode ? 'text-[#C5A059]' : `${theme.text} opacity-50`} />
+                <div className="text-center">
+                  <p className={`font-amiri text-sm ${!darkMode ? 'text-[#C5A059]' : theme.text}`}>نهاري</p>
+                  <p className={`font-brand-en text-[9px] uppercase tracking-[0.1em] ${theme.text} opacity-40`}>Light</p>
+                </div>
+              </button>
+            </div>
+          </div>
+
+          {/* Font Section */}
+          <div>
+            <div className="mb-3">
+              <h3 className={`font-amiri text-lg ${theme.titleColor}`}>الخط</h3>
+              <p className={`font-brand-en text-[10px] uppercase tracking-[0.12em] ${theme.text} opacity-40`}>Typography</p>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {FONTS.map((font) => (
+                <button
+                  key={font.id}
+                  onClick={() => onSelectFont(font.id)}
+                  className={`p-3 ${DESIGN.radius} border-2 transition-all flex flex-col items-center gap-1.5 cursor-pointer ${
+                    currentFont === font.id
+                      ? 'border-[#C5A059] bg-[#C5A059]/10'
+                      : `${theme.border} bg-transparent hover:border-[#C5A059]/30`
+                  }`}
+                >
+                  <p className={`${font.family} text-lg ${currentFont === font.id ? 'text-[#C5A059]' : theme.text}`} dir="rtl">
+                    بسم الله
+                  </p>
+                  <div className="text-center">
+                    <p className={`font-amiri text-xs ${theme.text} opacity-60`}>{font.labelAr}</p>
+                    <p className={`font-brand-en text-[8px] uppercase tracking-[0.1em] ${theme.text} opacity-30`}>{font.label}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* User Info */}
+          {user && (
+            <div className={`pt-4 border-t border-stone-500/10`}>
+              <p className={`font-brand-en text-xs ${theme.text} opacity-30 text-center`}>
+                Signed in as {user.email || user.user_metadata?.full_name || 'User'}
+              </p>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };
@@ -976,13 +1562,26 @@ export default function DiwanApp() {
   const [isFetching, setIsFetching] = useState(false);
   const [logs, setLogs] = useState([]);
   const [showCopySuccess, setShowCopySuccess] = useState(false);
-  const [isOverflow, setIsOverflow] = useState(false);
+  const [isOverflow, setIsOverflow] = useState(() => {
+    // Use 660 as the conservative initial threshold (covers both Supabase and non-Supabase button sets).
+    // The detectOverflow effect below will refine this after mount.
+    const vw = window.visualViewport?.width ?? window.innerWidth;
+    return vw < 660;
+  });
   const [cacheStats, setCacheStats] = useState({ audioHits: 0, audioMisses: 0, insightsHits: 0, insightsMisses: 0 });
   const [isPrefetching, setIsPrefetching] = useState(false);
-  const [backendError, setBackendError] = useState(null);
   const activeAudioRequests = useRef(new Set()); // Track in-flight audio generation requests
   const activeInsightRequests = useRef(new Set()); // Track in-flight insight generation requests
   const pollingIntervals = useRef([]); // Track all polling intervals for cleanup
+  const pendingRafRef = useRef(null); // Track pending rAF id for overflow detection deduplication
+
+  // Auth state
+  const { user, loading: authLoading, signInWithGoogle, signInWithApple, signOut, isConfigured: isSupabaseConfigured } = useAuth();
+  const { settings, saveSettings } = useUserSettings(user);
+  const { savedPoems, savePoem, unsavePoem, isPoemSaved } = useSavedPoems(user);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showSavedPoems, setShowSavedPoems] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   const theme = darkMode ? THEME.dark : THEME.light;
 
@@ -1012,7 +1611,12 @@ export default function DiwanApp() {
   const current = filtered[currentIndex] || filtered[0] || poems[0];
 
   const addLog = (label, msg, type = 'info') => {
-    setLogs(prev => [...prev, { label, msg: String(msg), type, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }) }]);
+    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    setLogs(prev => [...prev, { label, msg: String(msg), type, time }]);
+    if (FEATURES.logging) {
+      const logFn = type === 'error' ? console.error : type === 'success' ? console.info : console.log;
+      logFn(`[${label}] ${msg}`);
+    }
   };
 
   useEffect(() => {
@@ -1023,20 +1627,86 @@ export default function DiwanApp() {
     }
   }, [selectedCategory]);
 
+  // Eagerly populate the discovered model list so it's ready before any user action.
+  // Using the default fetch mock in tests means this never consumes a mockResolvedValueOnce.
   useEffect(() => {
-    const detectOverflow = () => {
-      if (controlBarRef.current) {
-        const controlBar = controlBarRef.current;
-        const viewportWidth = window.innerWidth;
-        const controlBarWidth = controlBar.scrollWidth;
-        setIsOverflow(controlBarWidth > viewportWidth * 0.9);
-      }
+    const key = import.meta.env.VITE_GEMINI_API_KEY || "";
+    if (key) discoverTextModels(key, addLog);
+  }, []);
+
+  useEffect(() => {
+    // Threshold below which overflow mode is always active (prevents oscillation on narrow screens).
+    // With Supabase buttons the bar is wider, so use a larger threshold.
+    const narrowThreshold = isSupabaseConfigured ? 660 : 540;
+
+    const scheduleDetect = () => {
+      // Deduplicate: cancel any pending frame before scheduling a new one
+      if (pendingRafRef.current !== null) cancelAnimationFrame(pendingRafRef.current);
+      pendingRafRef.current = requestAnimationFrame(() => {
+        pendingRafRef.current = null;
+        if (!controlBarRef.current) return;
+        const bar = controlBarRef.current;
+        const vw = window.visualViewport?.width ?? window.innerWidth;
+
+        // Temporarily clip overflow so scrollWidth accurately reflects content width on iOS Safari,
+        // where scrollWidth may equal clientWidth for flex containers with overflow:visible.
+        const savedOverflow = bar.style.overflow;
+        bar.style.overflow = 'hidden';
+        const hasContentOverflow = bar.scrollWidth > bar.clientWidth;
+        bar.style.overflow = savedOverflow;
+
+        // Stay in overflow mode on narrow screens regardless of current bar width,
+        // which prevents oscillation when the bar shrinks after switching to OverflowMenu.
+        setIsOverflow(hasContentOverflow || vw < narrowThreshold);
+      });
     };
 
-    detectOverflow();
-    window.addEventListener('resize', detectOverflow);
-    return () => window.removeEventListener('resize', detectOverflow);
-  }, []);
+    scheduleDetect();
+
+    // ResizeObserver catches font-load changes and dynamic content updates.
+    // Guard for environments where ResizeObserver is unavailable (older browsers, some test envs).
+    let resizeObserver = null;
+    if (typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(scheduleDetect);
+      if (controlBarRef.current) resizeObserver.observe(controlBarRef.current);
+    }
+
+    window.addEventListener('resize', scheduleDetect);
+    return () => {
+      if (pendingRafRef.current !== null) {
+        cancelAnimationFrame(pendingRafRef.current);
+        pendingRafRef.current = null;
+      }
+      resizeObserver?.disconnect();
+      window.removeEventListener('resize', scheduleDetect);
+    };
+  }, [isSupabaseConfigured]);
+
+  // Load user settings on mount
+  useEffect(() => {
+    if (user && settings) {
+      if (settings.theme) {
+        setDarkMode(settings.theme === 'dark');
+      }
+      if (settings.font_id) {
+        setCurrentFont(settings.font_id);
+      }
+    }
+  }, [user, settings]);
+
+  // Save settings when theme or font changes (with debounce)
+  useEffect(() => {
+    if (!user || !isSupabaseConfigured) return;
+
+    const timeoutId = setTimeout(() => {
+      saveSettings({
+        theme: darkMode ? 'dark' : 'light',
+        font_id: currentFont,
+      });
+    }, 1000); // Debounce by 1 second
+
+    return () => clearTimeout(timeoutId);
+  }, [darkMode, currentFont, user, isSupabaseConfigured]);
 
   const handleScroll = (e) => {
     setHeaderOpacity(Math.max(0, 1 - e.target.scrollTop / 30));
@@ -1402,9 +2072,15 @@ export default function DiwanApp() {
     let insightText = "";
 
     try {
+      // Guard: AI Insights require a Gemini API key
+      if (!apiKey) {
+        throw new Error("AI Insights require a Gemini API key. Add VITE_GEMINI_API_KEY to your environment to enable this feature.");
+      }
+
       // Use streaming if feature flag is enabled
       if (FEATURES.streaming) {
-        const promptText = `Deep Analysis of: ${current?.arabic}`;
+        const poetInfo = current?.poet ? ` by ${current.poet}` : '';
+        const promptText = `Deep Analysis of${poetInfo}:\n\n${current?.arabic}`;
         const requestSize = new Blob([
           JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
         ]).size;
@@ -1426,19 +2102,11 @@ export default function DiwanApp() {
         let firstChunkTime = null;
         let chunkCount = 0;
 
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${API_MODELS.insights}:streamGenerateContent?alt=sse&key=${apiKey}`;
-        const res = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: promptText }] }],
-            systemInstruction: { parts: [{ text: INSIGHTS_SYSTEM_PROMPT }] }
-          })
+        const insightsStreamBody = JSON.stringify({
+          contents: [{ parts: [{ text: promptText }] }],
+          systemInstruction: { parts: [{ text: INSIGHTS_SYSTEM_PROMPT }] }
         });
-
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
-        }
+        const res = await geminiTextFetch('streamGenerateContent?alt=sse', insightsStreamBody, apiKey, 'AI Insights failed', addLog);
 
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
@@ -1493,15 +2161,12 @@ export default function DiwanApp() {
       } else {
         // Non-streaming fallback (original implementation)
         addLog("Insights", "Analyzing poem...", "info");
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${API_MODELS.insights}:generateContent?key=${apiKey}`;
-        const res = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: `Deep Analysis of: ${current?.arabic}` }] }],
-            systemInstruction: { parts: [{ text: INSIGHTS_SYSTEM_PROMPT }] }
-          })
+        const poetInfoFallback = current?.poet ? ` by ${current.poet}` : '';
+        const insightsFallbackBody = JSON.stringify({
+          contents: [{ parts: [{ text: `Deep Analysis of${poetInfoFallback}:\n\n${current?.arabic}` }] }],
+          systemInstruction: { parts: [{ text: INSIGHTS_SYSTEM_PROMPT }] }
         });
+        const res = await geminiTextFetch('generateContent', insightsFallbackBody, apiKey, 'AI Insights failed', addLog);
         const data = await res.json();
         insightText = data.candidates?.[0]?.content?.parts?.[0]?.text;
         setInterpretation(insightText);
@@ -1564,7 +2229,6 @@ export default function DiwanApp() {
           }
 
           // Clear any previous backend errors on success
-          setBackendError(null);
 
           const newPoem = await res.json();
           const apiTime = performance.now() - apiStart;
@@ -1596,13 +2260,16 @@ export default function DiwanApp() {
             ? 'Backend server is not running. Please start it with: npm run dev:server'
             : dbError.message;
 
-          setBackendError(errorMessage);
           addLog("Discovery DB Error", errorMessage, "error");
           throw dbError; // Re-throw to be caught by outer catch
         }
 
       } else {
         // GEMINI AI MODE: Original implementation
+        if (!apiKey) {
+          throw new Error("AI Discovery requires a Gemini API key. Add VITE_GEMINI_API_KEY to your environment, or switch to Local Database mode.");
+        }
+
         const prompt = selectedCategory === "All"
           ? "Find a masterpiece Arabic poem. COMPLETE text."
           : `Find a famous poem by ${selectedCategory}. COMPLETE text.`;
@@ -1626,12 +2293,8 @@ export default function DiwanApp() {
           "info"
         );
 
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${API_MODELS.discovery}:generateContent?key=${apiKey}`;
-        const res = await fetch(url, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: requestBody
-        });
+        const res = await geminiTextFetch('generateContent', requestBody, apiKey, 'AI Discovery failed', addLog);
+
         const data = await res.json();
         const apiTime = performance.now() - apiStart;
 
@@ -1697,6 +2360,116 @@ export default function DiwanApp() {
       setTimeout(() => setShowCopySuccess(false), 2000);
     } catch (e) {
       addLog("Copy Error", e.message, "error");
+    }
+  };
+
+  // Auth handlers
+  const handleSignIn = () => {
+    setShowAuthModal(true);
+  };
+
+  const handleSignInWithGoogle = async () => {
+    const { error } = await signInWithGoogle();
+    if (error) {
+      addLog("Auth Error", error.message, "error");
+    } else {
+      setShowAuthModal(false);
+      addLog("Auth", "Signed in with Google", "success");
+    }
+  };
+
+  const handleSignInWithApple = async () => {
+    const { error } = await signInWithApple();
+    if (error) {
+      addLog("Auth Error", error.message, "error");
+    } else {
+      setShowAuthModal(false);
+      addLog("Auth", "Signed in with Apple", "success");
+    }
+  };
+
+  const handleSignOut = async () => {
+    const { error } = await signOut();
+    if (error) {
+      addLog("Auth Error", error.message, "error");
+    } else {
+      addLog("Auth", "Signed out successfully", "success");
+    }
+  };
+
+  // Save/unsave poem handlers
+  const handleSavePoem = async () => {
+    if (!user) {
+      handleSignIn();
+      return;
+    }
+
+    const { error } = await savePoem(current);
+    if (error) {
+      addLog("Save Error", error.message, "error");
+    } else {
+      addLog("Save", `Saved poem: ${current?.poet} - ${current?.title}`, "success");
+    }
+  };
+
+  const handleUnsavePoem = async () => {
+    const { error } = await unsavePoem(current?.id, current?.arabic);
+    if (error) {
+      addLog("Unsave Error", error.message, "error");
+    } else {
+      addLog("Unsave", `Removed poem: ${current?.poet} - ${current?.title}`, "success");
+    }
+  };
+
+  const handleOpenSavedPoems = () => {
+    if (!user) {
+      handleSignIn();
+      return;
+    }
+    setShowSavedPoems(true);
+  };
+
+  const handleSelectSavedPoem = (savedPoem) => {
+    const mappedPoem = {
+      id: savedPoem.poem_id || savedPoem.id,
+      poet: savedPoem.poet_name || '',
+      poetArabic: savedPoem.poet_name_ar || '',
+      title: savedPoem.poem_title || '',
+      titleArabic: savedPoem.poem_title_ar || '',
+      arabic: savedPoem.poem_text || '',
+      english: savedPoem.poem_translation || '',
+      tags: savedPoem.tags || [],
+    };
+    setPoems(prev => {
+      const exists = prev.find(p => p.arabic === mappedPoem.arabic);
+      if (exists) {
+        setCurrentIndex(prev.indexOf(exists));
+        return prev;
+      }
+      setCurrentIndex(prev.length);
+      return [...prev, mappedPoem];
+    });
+    setShowSavedPoems(false);
+  };
+
+  const handleOpenSettings = () => {
+    if (!user) {
+      handleSignIn();
+      return;
+    }
+    setShowSettings(true);
+  };
+
+  const handleSelectFont = (fontId) => {
+    setCurrentFont(fontId);
+  };
+
+  const handleUnsavePoemFromList = async (sp) => {
+    const { error } = await unsavePoem(sp.poem_id || sp.id, sp.poem_text);
+    if (error) {
+      addLog("Unsave Error", error.message, "error");
+    } else {
+      addLog("Unsave", `Removed poem from saved list`, "success");
     }
   };
 
@@ -1860,13 +2633,6 @@ export default function DiwanApp() {
 
       <DebugPanel logs={logs} onClear={() => setLogs([])} darkMode={darkMode} />
 
-      <ErrorBanner
-        error={backendError}
-        onDismiss={() => setBackendError(null)}
-        onRetry={handleFetch}
-        theme={theme}
-      />
-
       <header style={{ opacity: headerOpacity }} className="fixed top-4 md:top-8 left-0 right-0 z-40 pointer-events-none transition-opacity duration-300 flex flex-row items-center justify-center gap-4 md:gap-8 px-4 md:px-6">
         <div className={`flex flex-row-reverse items-center gap-2 md:gap-4 ${theme.brand} tracking-wide header-luminescence`}>
           <PenTool className="w-8 h-8 md:w-[42px] md:h-[42px] opacity-95" strokeWidth={1.5} />
@@ -1971,32 +2737,42 @@ export default function DiwanApp() {
           <footer className="fixed bottom-0 left-0 right-0 py-2 pb-3 md:pb-2 px-4 flex flex-col items-center z-50 bg-gradient-to-t from-black/5 to-transparent safe-bottom">
             <div ref={controlBarRef} className={`flex items-center gap-2 px-5 py-2 rounded-full shadow-2xl border ${DESIGN.glass} ${theme.border} ${theme.shadow} ${DESIGN.anim} max-w-[calc(100vw-2rem)] w-fit`}>
 
-              <div className="flex flex-col items-center gap-1 min-w-[56px]">
+              <div className="flex flex-col items-center gap-1 min-w-[52px]">
                 <button onClick={togglePlay} disabled={isGeneratingAudio} aria-label={isPlaying ? "Pause recitation" : "Play recitation"} className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105">
                   {isGeneratingAudio ? <Loader2 className="animate-spin text-[#C5A059]" size={21} /> : isPlaying ? <Pause fill="#C5A059" size={21} /> : <Volume2 className="text-[#C5A059]" size={21} />}
                 </button>
                 <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">Listen</span>
               </div>
 
-              <div className="flex flex-col items-center gap-1 min-w-[56px]">
-                <button onClick={handleAnalyze} disabled={isInterpreting || interpretation} aria-label="Dive into poem meaning" className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105 disabled:opacity-50">
+              <div className="flex flex-col items-center gap-1 min-w-[52px]">
+                <button onClick={handleAnalyze} disabled={isInterpreting || interpretation} aria-label="Learn about poem meaning" className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105 disabled:opacity-50">
                   {isInterpreting ? <Loader2 className="animate-spin text-[#C5A059]" size={21} /> : <Compass className="text-[#C5A059]" size={21} />}
                 </button>
-                <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">Dive In</span>
+                <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">Learn</span>
               </div>
 
-              <div className="flex flex-col items-center gap-1 min-w-[56px]">
+              <div className="flex flex-col items-center gap-1 min-w-[52px]">
                 <button onClick={handleFetch} disabled={isFetching} aria-label="Discover new poem" className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105">
                   {isFetching ? <Loader2 className="animate-spin text-[#C5A059]" size={21} /> : <Rabbit className="text-[#C5A059] rabbit-bounce" size={21} />}
                 </button>
                 <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">Discover</span>
               </div>
 
-              <div className="w-px h-10 bg-stone-500/20 mx-2 flex-shrink-0" />
+              {isSupabaseConfigured && (
+                <SavePoemButton
+                  poem={current}
+                  isSaved={isPoemSaved(current)}
+                  onSave={handleSavePoem}
+                  onUnsave={handleUnsavePoem}
+                  disabled={!user}
+                />
+              )}
+
+              <div className="w-px h-10 bg-stone-500/20 mx-1 flex-shrink-0" />
 
               {!isOverflow ? (
                 <>
-                  <div className="flex flex-col items-center gap-1 min-w-[56px]">
+                  <div className="flex flex-col items-center gap-1 min-w-[52px]">
                     <button onClick={handleCopy} aria-label="Copy poem to clipboard" className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105">
                       {showCopySuccess ? <Check size={21} className="text-green-500" /> : <Copy size={21} className="text-[#C5A059]" />}
                     </button>
@@ -2017,19 +2793,33 @@ export default function DiwanApp() {
                   />
 
                   <CategoryPill selected={selectedCategory} onSelect={setSelectedCategory} darkMode={darkMode} />
+
+                  {isSupabaseConfigured && (
+                    <AuthButton
+                      user={user}
+                      onSignIn={handleSignIn}
+                      onSignOut={handleSignOut}
+                      onOpenSavedPoems={handleOpenSavedPoems}
+                      onOpenSettings={handleOpenSettings}
+                      theme={theme}
+                    />
+                  )}
                 </>
               ) : (
                 <OverflowMenu
                   darkMode={darkMode}
                   onToggleDarkMode={() => setDarkMode(!darkMode)}
                   currentFont={currentFont}
-                  onCycleFont={cycleFont}
+                  onSelectFont={handleSelectFont}
                   selectedCategory={selectedCategory}
                   onSelectCategory={setSelectedCategory}
                   onCopy={handleCopy}
                   showCopySuccess={showCopySuccess}
                   useDatabase={useDatabase}
                   onToggleDatabase={() => setUseDatabase(!useDatabase)}
+                  user={user}
+                  onOpenSavedPoems={handleOpenSavedPoems}
+                  onOpenSettings={handleOpenSettings}
                 />
               )}
             </div>
@@ -2079,6 +2869,38 @@ export default function DiwanApp() {
           </div>
         </div>
       </div>
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onSignInWithGoogle={handleSignInWithGoogle}
+        onSignInWithApple={handleSignInWithApple}
+        theme={theme}
+      />
+
+      {/* Saved Poems View */}
+      <SavedPoemsView
+        isOpen={showSavedPoems}
+        onClose={() => setShowSavedPoems(false)}
+        savedPoems={savedPoems}
+        onSelectPoem={handleSelectSavedPoem}
+        onUnsavePoem={handleUnsavePoemFromList}
+        theme={theme}
+        currentFontClass={currentFontClass}
+      />
+
+      {/* Settings View */}
+      <SettingsView
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+        darkMode={darkMode}
+        onToggleDarkMode={() => setDarkMode(!darkMode)}
+        currentFont={currentFont}
+        onSelectFont={handleSelectFont}
+        user={user}
+        theme={theme}
+      />
     </div>
   );
 }

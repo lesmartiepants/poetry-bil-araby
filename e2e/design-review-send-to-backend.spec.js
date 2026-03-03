@@ -16,6 +16,12 @@ import { test, expect } from '@playwright/test';
 const API_BASE = 'http://localhost:3001';
 
 test.describe('Design Review — Send to Backend', () => {
+  // Force desktop viewport — these tests exercise backend integration,
+  // not mobile responsiveness. The side panel (with .verdict-btn) is
+  // hidden at <768px, and the toolbar nav-btn duplicates cause strict
+  // mode violations on narrow viewports.
+  test.use({ viewport: { width: 1280, height: 720 } });
+
   test.beforeEach(async ({ page }) => {
     // Clear any previous review data from localStorage so we start clean
     await page.goto('/design-review/index.html');
@@ -25,6 +31,9 @@ test.describe('Design Review — Send to Backend', () => {
   });
 
   test('persists verdicts to database via Send to Backend button', async ({ page, request }) => {
+    // Give backend-dependent tests more time (CI default is 10s)
+    test.setTimeout(30000);
+
     // 1. Wait for the toolbar to render (proves CATALOG loaded and page is interactive)
     await page.waitForSelector('.toolbar', { timeout: 10000 });
 
@@ -42,7 +51,7 @@ test.describe('Design Review — Send to Backend', () => {
     await expect(keepBtn).toHaveClass(/active-keep/, { timeout: 3000 });
 
     // 4. Click "Submit Review" to open the summary modal
-    const submitBtn = page.locator('.submit-btn');
+    const submitBtn = page.locator('.toolbar .submit-btn');
     await expect(submitBtn).toBeVisible();
     await submitBtn.click();
 
@@ -68,8 +77,13 @@ test.describe('Design Review — Send to Backend', () => {
   });
 
   test('shows error state when backend is unavailable', async ({ page, context }) => {
-    // Block all design-review API calls to simulate backend down
+    test.setTimeout(30000);
+
+    // Block all design-review API calls to simulate backend down.
+    // We must navigate AFTER setting the route so initAPI() sees the block.
     await context.route('**/api/design-review/**', route => route.abort('failed'));
+    await page.goto('/design-review/index.html');
+    await page.waitForLoadState('domcontentloaded');
 
     // Wait for page to load (initAPI will fail, sync-dot stays offline)
     await page.waitForSelector('.toolbar', { timeout: 10000 });
@@ -83,7 +97,7 @@ test.describe('Design Review — Send to Backend', () => {
     await keepBtn.click();
 
     // Open submit modal
-    await page.locator('.submit-btn').click();
+    await page.locator('.toolbar .submit-btn').click();
     await expect(page.locator('h3:has-text("Review Summary")')).toBeVisible({ timeout: 5000 });
 
     // Click Send to Backend — should show error
@@ -95,6 +109,8 @@ test.describe('Design Review — Send to Backend', () => {
   });
 
   test('auto-syncs verdicts before completing session', async ({ page, request }) => {
+    test.setTimeout(30000);
+
     // Wait for backend connection
     await page.waitForSelector('.toolbar', { timeout: 10000 });
     await expect(page.locator('#syncStatus .sync-dot.synced')).toBeVisible({ timeout: 15000 });
@@ -105,8 +121,8 @@ test.describe('Design Review — Send to Backend', () => {
     await keepBtn.click();
     await expect(keepBtn).toHaveClass(/active-keep/);
 
-    // Navigate to next design
-    const nextBtn = page.locator('.nav-btn:has-text("Next")');
+    // Navigate to next design (use specific toolbar button to avoid strict mode violation)
+    const nextBtn = page.locator('#nextBtn');
     if (await nextBtn.isVisible()) {
       await nextBtn.click();
       await page.waitForTimeout(500);
@@ -118,7 +134,7 @@ test.describe('Design Review — Send to Backend', () => {
     }
 
     // Submit and send to backend
-    await page.locator('.submit-btn').click();
+    await page.locator('.toolbar .submit-btn').click();
     await expect(page.locator('h3:has-text("Review Summary")')).toBeVisible({ timeout: 5000 });
 
     const sendBtn = page.locator('button:has-text("Send to Backend")');

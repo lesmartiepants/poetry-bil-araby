@@ -103,101 +103,114 @@
       align-items: center;
       gap: 0.6rem;
       padding: 0.875rem 2.5rem;
-      background: var(--gold);
-      color: #fff;
-      border: none;
-      border-radius: 40px;
+      background: transparent;
+      color: var(--gold);
+      border: 1.5px solid var(--gold);
+      border-radius: 8px;
       font-family: 'Tajawal', sans-serif;
-      font-size: 1.1rem;
+      font-size: 1.05rem;
       font-weight: 500;
       cursor: pointer;
       min-height: 44px;
       min-width: 44px;
-      transition: transform 0.25s ease, box-shadow 0.25s ease;
-      box-shadow: 0 4px 24px rgba(197,160,89,0.3);
+      transition: background 0.3s ease, transform 0.2s ease;
     }
-    .cta-enter:hover { transform: scale(1.05); box-shadow: 0 6px 32px rgba(197,160,89,0.45); }
+    .cta-enter:hover { background: rgba(197,160,89,0.12); transform: scale(1.03); }
     .cta-enter:active { transform: scale(0.97); }
     .cta-enter:focus-visible { outline: 3px solid var(--indigo); outline-offset: 3px; }
 
-    /* ===== ONBOARDING ===== */
+    /* ===== ONBOARDING -- PARTICLE EMISSION ===== */
     #onboarding {
-      position: fixed;
-      inset: 0;
-      z-index: 9998;
-      display: none;
-      align-items: center;
-      justify-content: center;
-      background: rgba(8,8,10,0.92);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      cursor: pointer;
+      position: fixed; inset: 0; z-index: 9998;
+      display: none; flex-direction: column;
+      align-items: center; justify-content: center;
+      background: rgba(8,8,10,0.95);
+      cursor: pointer; overflow: hidden;
     }
     #onboarding.active { display: flex; }
-    body.light #onboarding { background: rgba(253,252,248,0.92); }
+    body.light #onboarding { background: rgba(253,252,248,0.95); }
 
-    .onboard-card {
-      width: min(360px, 88vw);
-      background: rgba(20,16,30,0.85);
-      border: 1px solid rgba(197,160,89,0.2);
-      border-radius: 20px;
-      padding: 2.5rem 2rem 2rem;
+    /* Floating particle dots background */
+    .particle-field {
+      position: absolute; inset: 0; pointer-events: none;
+      overflow: hidden;
+    }
+    .particle-dot {
+      position: absolute; width: 3px; height: 3px;
+      border-radius: 50%; background: var(--gold);
+      opacity: 0; animation: particleFloat 4s ease-in-out infinite;
+    }
+    .particle-dot:nth-child(1) { left: 15%; top: 20%; animation-delay: 0s; }
+    .particle-dot:nth-child(2) { left: 70%; top: 35%; animation-delay: 0.7s; }
+    .particle-dot:nth-child(3) { left: 30%; top: 65%; animation-delay: 1.4s; }
+    .particle-dot:nth-child(4) { left: 80%; top: 15%; animation-delay: 0.3s; }
+    .particle-dot:nth-child(5) { left: 50%; top: 80%; animation-delay: 2s; }
+    .particle-dot:nth-child(6) { left: 10%; top: 50%; animation-delay: 1s; }
+    .particle-dot:nth-child(7) { left: 85%; top: 70%; animation-delay: 1.8s; }
+    .particle-dot:nth-child(8) { left: 45%; top: 10%; animation-delay: 0.5s; }
+    @keyframes particleFloat {
+      0%, 100% { opacity: 0; transform: translateY(0) scale(0.5); }
+      50% { opacity: 0.4; transform: translateY(-20px) scale(1); }
+    }
+
+    /* Content panel */
+    .emit-panel {
+      position: relative; z-index: 5;
+      max-width: 340px; width: 88%;
       text-align: center;
-      position: relative;
+      opacity: 0; transform: scale(0.95);
+      transition: opacity 0.6s ease, transform 0.6s ease;
     }
-    body.light .onboard-card {
-      background: rgba(255,255,255,0.9);
-      border-color: rgba(197,160,89,0.3);
-    }
+    .emit-panel.active { opacity: 1; transform: scale(1); }
 
-    .onboard-icon {
-      width: 56px;
-      height: 56px;
-      margin: 0 auto 1.25rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 50%;
-      background: rgba(197,160,89,0.12);
+    .emit-count {
+      font-family: 'Forum', serif;
+      font-size: 0.7rem; color: var(--gold);
+      letter-spacing: 0.3em; opacity: 0.5;
+      margin-bottom: 0.8rem; direction: ltr;
     }
-    .onboard-icon svg { color: var(--gold); width: 28px; height: 28px; }
-
-    .onboard-title {
+    .emit-ar {
+      font-family: 'Amiri', serif;
+      font-size: clamp(2rem, 5vw, 2.6rem);
+      color: var(--gold); line-height: 1.3;
+      margin-bottom: 0.3rem;
+    }
+    .emit-en {
       font-family: 'Tajawal', sans-serif;
-      font-size: 1.15rem;
-      font-weight: 700;
-      color: var(--gold);
-      margin-bottom: 0.5rem;
+      font-size: 0.82rem; font-weight: 300;
+      color: var(--text-dark); opacity: 0.5;
+      letter-spacing: 0.1em; margin-bottom: 1rem; direction: ltr;
     }
-    .onboard-desc {
-      font-size: 0.95rem;
-      font-weight: 300;
-      opacity: 0.7;
-      line-height: 1.7;
-      margin-bottom: 1.5rem;
+    body.light .emit-en { color: var(--text-light); }
+    .emit-desc {
+      font-family: 'Tajawal', sans-serif;
+      font-size: 0.86rem; line-height: 1.8;
+      color: var(--text-dark); opacity: 0.6; direction: ltr;
     }
+    body.light .emit-desc { color: var(--text-light); }
 
-    .onboard-dots {
-      display: flex;
+    /* Orbit ring indicators */
+    .emit-orbits {
+      position: relative; z-index: 5;
+      display: flex; gap: 12px; margin-top: 2rem;
       justify-content: center;
-      gap: 0.5rem;
     }
-    .onboard-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: rgba(197,160,89,0.25);
-      transition: background 0.3s ease, transform 0.3s ease;
+    .emit-ring {
+      width: 10px; height: 10px; border-radius: 50%;
+      border: 1px solid rgba(197,160,89,0.3);
+      transition: all 0.6s ease;
     }
-    .onboard-dot.active {
+    .emit-ring.active {
+      border-color: var(--gold);
+      box-shadow: 0 0 8px rgba(197,160,89,0.4);
       background: var(--gold);
-      transform: scale(1.3);
     }
+    .emit-ring.past { border-color: var(--gold); background: rgba(197,160,89,0.3); }
 
-    .onboard-hint {
-      margin-top: 1rem;
-      font-size: 0.8rem;
-      opacity: 0.4;
+    .emit-hint {
+      position: relative; z-index: 5;
+      font-size: 11px; color: var(--gold); opacity: 0.3;
+      margin-top: 1.2rem; letter-spacing: 0.2em;
     }
 
     /* ===== MAIN APP ===== */
@@ -462,7 +475,40 @@
   </div>
 
   <!-- Onboarding -->
-  <div id="onboarding" role="dialog" aria-label="دليل الاستخدام"></div>
+  <div id="onboarding" role="dialog" aria-label="دليل الاستخدام" data-step="0">
+    <div class="particle-field">
+      <div class="particle-dot"></div><div class="particle-dot"></div>
+      <div class="particle-dot"></div><div class="particle-dot"></div>
+      <div class="particle-dot"></div><div class="particle-dot"></div>
+      <div class="particle-dot"></div><div class="particle-dot"></div>
+    </div>
+
+    <div class="emit-panel active" data-emit="0">
+      <div class="emit-count">01 / 03</div>
+      <div class="emit-ar" lang="ar" dir="rtl">جسيمات ذهبية</div>
+      <div class="emit-en">Gold Particles</div>
+      <div class="emit-desc">Floating particles that form, dissolve, and reform. Poetry in constant motion.</div>
+    </div>
+    <div class="emit-panel" data-emit="1">
+      <div class="emit-count">02 / 03</div>
+      <div class="emit-ar" lang="ar" dir="rtl">سجل المخطوط</div>
+      <div class="emit-en">The Parchment Scroll</div>
+      <div class="emit-desc">84,000 poems unfurl on textured scrolls. Centuries of Arabic verse at your fingertips.</div>
+    </div>
+    <div class="emit-panel" data-emit="2">
+      <div class="emit-count">03 / 03</div>
+      <div class="emit-ar" lang="ar" dir="rtl">استمع واستكشف</div>
+      <div class="emit-en">Listen & Explore</div>
+      <div class="emit-desc">AI voices bring verses to life. Navigate, save, and discover your own path through poetry.</div>
+    </div>
+
+    <div class="emit-orbits">
+      <div class="emit-ring active" data-ring="0"></div>
+      <div class="emit-ring" data-ring="1"></div>
+      <div class="emit-ring" data-ring="2"></div>
+    </div>
+    <div class="emit-hint">tap</div>
+  </div>
 
   <!-- Main App -->
   <div id="app">
@@ -590,114 +636,38 @@
         initParticles();
       });
 
-      /* ===== Onboarding System ===== */
-      var onboardSteps = [
-        {
-          icon: 'sparkles',
-          title: 'Gold Particles',
-          titleAr: 'جسيمات ذهبية',
-          desc: 'Floating gold particles create an immersive entry experience.',
-          descAr: 'جسيمات ذهبية عائمة تصنع تجربة دخول آسرة.'
-        },
-        {
-          icon: 'scroll',
-          title: 'Parchment Scroll',
-          titleAr: 'سجل ورقي',
-          desc: 'Poetry unfurls on a textured parchment scroll.',
-          descAr: 'الشعر ينفتح على سجل بملمس الرق.'
-        },
-        {
-          icon: 'headphones',
-          title: 'Listen & Explore',
-          titleAr: 'استمع واستكشف',
-          desc: 'Navigate poems, toggle themes, and discover Arabic verse.',
-          descAr: 'تصفح القصائد وبدّل السمات واستكشف الشعر العربي.'
-        }
-      ];
-
+      /* ===== Onboarding -- Particle Emission ===== */
+      var emitPanels = document.querySelectorAll('.emit-panel');
+      var emitRings = document.querySelectorAll('.emit-ring');
       var onboardEl = document.getElementById('onboarding');
-      var currentStep = 0;
+      var emitStep = 0;
+      var totalEmit = emitPanels.length;
 
-      function renderOnboardStep(idx) {
-        var step = onboardSteps[idx];
-
-        // Clear previous content
-        while (onboardEl.firstChild) {
-          onboardEl.removeChild(onboardEl.firstChild);
+      function showEmitStep() {
+        onboardEl.setAttribute('data-step', emitStep);
+        for (var i = 0; i < emitPanels.length; i++) {
+          emitPanels[i].classList.remove('active');
+          emitRings[i].classList.remove('active');
+          emitRings[i].classList.remove('past');
+          if (i < emitStep) emitRings[i].classList.add('past');
         }
-
-        var card = document.createElement('div');
-        card.className = 'onboard-card';
-
-        // Icon circle
-        var iconWrap = document.createElement('div');
-        iconWrap.className = 'onboard-icon';
-        var iconEl = document.createElement('i');
-        iconEl.setAttribute('data-lucide', step.icon);
-        iconWrap.appendChild(iconEl);
-        card.appendChild(iconWrap);
-
-        // Title
-        var titleEl = document.createElement('div');
-        titleEl.className = 'onboard-title';
-        titleEl.textContent = step.title;
-        card.appendChild(titleEl);
-
-        // Arabic title
-        var titleArEl = document.createElement('div');
-        titleArEl.className = 'onboard-title';
-        titleArEl.style.fontSize = '1rem';
-        titleArEl.style.marginTop = '-0.25rem';
-        titleArEl.style.marginBottom = '0.75rem';
-        titleArEl.textContent = step.titleAr;
-        card.appendChild(titleArEl);
-
-        // Description EN
-        var descEl = document.createElement('div');
-        descEl.className = 'onboard-desc';
-        descEl.textContent = step.desc;
-        card.appendChild(descEl);
-
-        // Description AR
-        var descArEl = document.createElement('div');
-        descArEl.className = 'onboard-desc';
-        descArEl.style.marginTop = '-0.75rem';
-        descArEl.textContent = step.descAr;
-        card.appendChild(descArEl);
-
-        // Dots
-        var dots = document.createElement('div');
-        dots.className = 'onboard-dots';
-        for (var d = 0; d < onboardSteps.length; d++) {
-          var dot = document.createElement('div');
-          dot.className = 'onboard-dot' + (d === idx ? ' active' : '');
-          dots.appendChild(dot);
+        if (emitStep < totalEmit) {
+          emitPanels[emitStep].classList.add('active');
+          emitRings[emitStep].classList.add('active');
         }
-        card.appendChild(dots);
-
-        // Hint
-        var hint = document.createElement('div');
-        hint.className = 'onboard-hint';
-        hint.textContent = idx < onboardSteps.length - 1 ? 'Tap to continue' : 'Tap to start';
-        card.appendChild(hint);
-
-        onboardEl.appendChild(card);
-        lucide.createIcons({ nameAttr: 'data-lucide' });
       }
 
-      function advanceOnboard() {
-        currentStep++;
-        if (currentStep >= onboardSteps.length) {
+      onboardEl.addEventListener('click', function(e) {
+        if (e.target.closest('#ctaEnter')) return;
+        emitStep++;
+        if (emitStep >= totalEmit) {
           onboardEl.classList.remove('active');
-          var appEl = document.getElementById('app');
-          appEl.classList.add('active');
+          document.getElementById('app').classList.add('active');
           lucide.createIcons({ nameAttr: 'data-lucide' });
         } else {
-          renderOnboardStep(currentStep);
+          showEmitStep();
         }
-      }
-
-      onboardEl.addEventListener('click', advanceOnboard);
+      });
 
       /* ===== CTA Enter ===== */
       document.getElementById('ctaEnter').addEventListener('click', function() {
@@ -705,7 +675,8 @@
         var splashEl = document.getElementById('splash');
         splashEl.classList.add('hidden');
         onboardEl.classList.add('active');
-        renderOnboardStep(0);
+        emitStep = 0;
+        showEmitStep();
       });
 
       /* ===== Theme Toggle ===== */

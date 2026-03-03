@@ -14,8 +14,12 @@ permissions:
 
 jobs:
   integration:
-    name: Design Review — Real DB API Tests
+    name: Design Review — Real DB API Tests (${{ matrix.connection_approach }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        connection_approach: [database_url, postgres_env]
 
     steps:
       - uses: actions/checkout@v4
@@ -29,18 +33,53 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Validate connection secrets for this approach
+        id: preflight
+        run: |
+          if [ "${{ matrix.connection_approach }}" = "database_url" ]; then
+            if [ -n "$DATABASE_URL_SECRET" ]; then
+              echo "run_tests=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "::warning::Skipping database_url approach (DATABASE_URL secret not set)"
+              echo "run_tests=false" >> "$GITHUB_OUTPUT"
+            fi
+          else
+            if [ -n "$PGHOST_SECRET" ] && [ -n "$PGDATABASE_SECRET" ] && [ -n "$PGUSER_SECRET" ] && [ -n "$PGPASSWORD_SECRET" ]; then
+              echo "run_tests=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "::warning::Skipping postgres_env approach (PGHOST/PGDATABASE/PGUSER/PGPASSWORD secrets required)"
+              echo "run_tests=false" >> "$GITHUB_OUTPUT"
+            fi
+          fi
+        env:
+          DATABASE_URL_SECRET: ${{ secrets.DATABASE_URL }}
+          PGHOST_SECRET: ${{ secrets.PGHOST }}
+          PGDATABASE_SECRET: ${{ secrets.PGDATABASE }}
+          PGUSER_SECRET: ${{ secrets.PGUSER }}
+          PGPASSWORD_SECRET: ${{ secrets.PGPASSWORD }}
+
       # ── Run integration tests against the real Supabase DB ────────────────
       - name: Run design review integration tests
+        if: steps.preflight.outputs.run_tests == 'true'
         run: npm run test:integration
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_URL: ${{ matrix.connection_approach == 'database_url' && secrets.DATABASE_URL || '' }}
+          PGHOST: ${{ matrix.connection_approach == 'postgres_env' && secrets.PGHOST || '' }}
+          PGDATABASE: ${{ matrix.connection_approach == 'postgres_env' && secrets.PGDATABASE || '' }}
+          PGUSER: ${{ matrix.connection_approach == 'postgres_env' && secrets.PGUSER || '' }}
+          PGPASSWORD: ${{ matrix.connection_approach == 'postgres_env' && secrets.PGPASSWORD || '' }}
+          PGPORT: ${{ matrix.connection_approach == 'postgres_env' && (secrets.PGPORT || '5432') || '' }}
           # GitHub Actions runners have IPv6 disabled. Supabase hostnames resolve to IPv6
           # first, causing ENETUNREACH. Force Node.js DNS to prefer IPv4.
           NODE_OPTIONS: --dns-result-order=ipv4first
 
+      - name: Report skipped approach
+        if: steps.preflight.outputs.run_tests != 'true'
+        run: echo "Integration tests skipped for ${{ matrix.connection_approach }} due to missing secrets."
+
       # ── Report outcome on the PR ──────────────────────────────────────────
       - name: Post success comment to PR
-        if: success()
+        if: success() && steps.preflight.outputs.run_tests == 'true'
         uses: actions/github-script@v7
         with:
           script: |
@@ -59,7 +98,7 @@ jobs:
             });
 
       - name: Post failure comment to PR
-        if: failure()
+        if: failure() && steps.preflight.outputs.run_tests == 'true'
         uses: actions/github-script@v7
         with:
           script: |

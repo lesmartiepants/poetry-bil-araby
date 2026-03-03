@@ -1,58 +1,103 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Option 2: Gold Mystical - Luxury Arabic Heritage Design</title>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&display=swap" rel="stylesheet">
+  <title>E2E #2: Gold Mystical - Full Flow</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Forum&family=Reem+Kufi:wght@400;700&family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+    :root {
+      --bg-primary: #0a0a0f;
+      --bg-secondary: #100e18;
+      --bg-card: #1a1528;
+      --text-primary: #ffffff;
+      --text-secondary: #a0a0b8;
+      --text-muted: #6b5d7d;
+      --border-color: #2a2540;
+      --gold: #c5a059;
+      --gold-light: #d4af6a;
+      --gold-dark: #8a6e2f;
+      --indigo: #8a6eda;
     }
+
+    [data-theme="light"] {
+      --bg-primary: #faf8f3;
+      --bg-secondary: #f0ede4;
+      --bg-card: #ffffff;
+      --text-primary: #1a1520;
+      --text-secondary: #6a6080;
+      --text-muted: #9a90a8;
+      --border-color: #d5d0c4;
+      --gold: #a08040;
+      --gold-light: #b8954a;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
 
     body {
-      font-family: system-ui, -apple-system, sans-serif;
-      background: linear-gradient(135deg, #0a0a0f 0%, #1a1520 100%);
-      color: #ffffff;
-      overflow: hidden;
-      height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
+      font-family: 'Tajawal', system-ui, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      transition: background 0.4s ease, color 0.4s ease;
     }
 
-    /* Animated gradient background */
-    body::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: radial-gradient(circle at 30% 50%, rgba(197, 160, 89, 0.08) 0%, transparent 50%),
-                  radial-gradient(circle at 70% 50%, rgba(138, 110, 218, 0.06) 0%, transparent 50%);
-      animation: gradientShift 20s ease-in-out infinite;
-    }
-
+    @keyframes fadeIn { to { opacity: 1; } }
     @keyframes gradientShift {
       0%, 100% { opacity: 0.6; transform: scale(1); }
       50% { opacity: 1; transform: scale(1.1); }
     }
 
+    /* ============================================
+       SPLASH SCREEN
+       ============================================ */
+    .splash {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #0a0a0f 0%, #1a1520 100%);
+      transition: opacity 0.6s ease, visibility 0.6s ease;
+    }
+
+    .splash::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: radial-gradient(circle at 30% 50%, rgba(197, 160, 89, 0.08) 0%, transparent 50%),
+                  radial-gradient(circle at 70% 50%, rgba(138, 110, 218, 0.06) 0%, transparent 50%);
+      animation: gradientShift 20s ease-in-out infinite;
+    }
+
+    [data-theme="light"] .splash {
+      background: linear-gradient(135deg, #faf8f3 0%, #f0ede4 100%);
+    }
+
+    [data-theme="light"] .splash::before {
+      background: radial-gradient(circle at 30% 50%, rgba(197, 160, 89, 0.05) 0%, transparent 50%),
+                  radial-gradient(circle at 70% 50%, rgba(138, 110, 218, 0.03) 0%, transparent 50%);
+    }
+
+    .splash.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
     .particle-canvas {
       position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
+      top: 0; left: 0; width: 100%; height: 100%;
       pointer-events: none;
       opacity: 0.7;
     }
 
-    .content {
+    .splash-content {
       position: relative;
       z-index: 10;
       text-align: center;
@@ -60,220 +105,575 @@
       padding: 40px;
     }
 
-    /* Original brand title with gold accent - EXACT specs from splash-particles.jsx */
-    .logo-container {
+    /* Canonical brand */
+    .splash-brand {
       display: flex;
-      flex-direction: row-reverse;
-      align-items: center;
+      align-items: flex-end;
       justify-content: center;
-      gap: 16px;
-      margin-bottom: 64px;
-      letter-spacing: 0.02em;
+      gap: 0.35em;
+      margin-bottom: 24px;
     }
 
-    .logo {
-      display: flex;
-      align-items: flex-end; /* baseline alignment */
-      gap: 24px;
-    }
-
-    .logo-ar {
-      font-family: 'Amiri', serif;
-      font-size: 72px; /* text-6xl md:text-7xl equivalent */
-      font-weight: 700; /* font-bold */
-      color: #ffffff; /* Keep original white, not gold */
-      margin-bottom: 8px; /* mb-2 offset for baseline */
-    }
-
-    .logo-en {
-      font-size: 84px; /* text-7xl md:text-8xl equivalent */
-      font-weight: 300; /* font-light */
-      color: #ffffff; /* Keep original white, not gold */
-      letter-spacing: -0.05em; /* tracking-tighter */
+    .splash-brand-en {
+      font-family: 'Forum', cursive;
+      font-size: clamp(3rem, 6vw, 4.5rem);
       text-transform: lowercase;
+      letter-spacing: -0.05em;
+      line-height: 1;
+      color: var(--text-primary);
     }
 
-    /* Mystical subtitle with indigo accent */
-    .subtitle {
+    .splash-brand-ar {
+      font-family: 'Reem Kufi', sans-serif;
+      font-weight: 700;
+      font-size: clamp(1.875rem, 4vw, 3rem);
+      line-height: 1;
+      color: var(--text-primary);
+    }
+
+    .splash-subtitle {
       font-size: 12px;
       text-transform: uppercase;
       letter-spacing: 0.5em;
-      background: linear-gradient(90deg, #8a6eda 0%, #c5a059 100%);
+      background: linear-gradient(90deg, var(--indigo) 0%, var(--gold) 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
-      margin-bottom: 72px;
+      margin-bottom: 48px;
       font-weight: 600;
     }
 
-    /* Luxurious gold button with glow */
-    .cta-button {
+    .splash-cta {
       display: inline-block;
-      padding: 20px 64px;
-      border: 2px solid #c5a059;
+      padding: 18px 56px;
+      border: 2px solid var(--gold);
       background: linear-gradient(135deg, rgba(197, 160, 89, 0.15) 0%, rgba(197, 160, 89, 0.05) 100%);
-      color: #c5a059;
+      color: var(--gold);
+      font-family: 'Tajawal', sans-serif;
       font-size: 14px;
       text-transform: uppercase;
       letter-spacing: 0.4em;
       font-weight: 700;
       cursor: pointer;
       transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-      position: relative;
-      overflow: hidden;
       backdrop-filter: blur(10px);
       box-shadow: 0 0 30px rgba(197, 160, 89, 0.2),
-              inset 0 0 20px rgba(197, 160, 89, 0.1);
+                  inset 0 0 20px rgba(197, 160, 89, 0.1);
+      min-height: 48px;
     }
 
-    .cta-button::before {
-      content: '';
-      position: absolute;
-      top: -50%;
-      left: -50%;
-      width: 200%;
-      height: 200%;
-      background: radial-gradient(circle, rgba(197, 160, 89, 0.3) 0%, transparent 70%);
-      transform: translate(-50%, -50%) scale(0);
-      transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-
-    .cta-button:hover::before {
-      transform: translate(-50%, -50%) scale(1);
-    }
-
-    .cta-button:hover {
+    .splash-cta:hover {
       background: linear-gradient(135deg, rgba(197, 160, 89, 0.3) 0%, rgba(197, 160, 89, 0.15) 100%);
       box-shadow: 0 0 50px rgba(197, 160, 89, 0.5),
                   inset 0 0 30px rgba(197, 160, 89, 0.2);
       transform: translateY(-4px);
     }
 
-    /* Mystical hint */
-    .hint {
-      margin-top: 56px;
+    .splash-hint {
+      margin-top: 48px;
       font-size: 10px;
       letter-spacing: 0.4em;
-      color: #6b5d7d;
+      color: var(--text-muted);
       text-transform: uppercase;
       font-weight: 500;
-      opacity: 0.8;
     }
 
-    /* Elegant theme toggle */
+    /* Theme toggle */
     .theme-toggle {
       position: fixed;
-      top: 32px;
-      right: 32px;
-      width: 52px;
-      height: 52px;
+      top: 1rem; right: 1rem;
+      width: 52px; height: 52px;
       border: 1px solid rgba(197, 160, 89, 0.3);
       border-radius: 50%;
       background: rgba(197, 160, 89, 0.05);
-      color: #c5a059;
+      color: var(--gold);
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       transition: all 0.4s ease;
       backdrop-filter: blur(10px);
+      z-index: 2000;
     }
 
     .theme-toggle:hover {
       background: rgba(197, 160, 89, 0.15);
       border-color: rgba(197, 160, 89, 0.6);
       box-shadow: 0 0 30px rgba(197, 160, 89, 0.3);
-      transform: rotate(180deg);
     }
 
-    /* Gold particles */
-    .particle {
-      position: absolute;
+    .theme-toggle svg { width: 20px; height: 20px; }
+
+    .icon-sun, .icon-moon { display: none; }
+    [data-mode="dark"] .icon-sun { display: flex; }
+    [data-mode="light"] .icon-moon { display: flex; }
+
+    /* ============================================
+       ONBOARDING (Gold themed)
+       ============================================ */
+    .onboarding {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      z-index: 900;
+      background: var(--bg-primary);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.5s ease, visibility 0.5s ease;
+    }
+
+    .onboarding.active { opacity: 1; visibility: visible; }
+
+    .onboarding-card {
+      max-width: 360px;
+      width: 100%;
+      text-align: center;
+      display: none;
+    }
+
+    .onboarding-card.active {
+      display: block;
+      animation: fadeIn 0.5s ease-out;
+    }
+
+    .onboarding-icon {
+      width: 48px; height: 48px;
+      color: var(--gold);
+      margin: 0 auto 1.5rem;
+    }
+
+    .onboarding-title {
+      font-family: 'Tajawal', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      color: var(--text-primary);
+    }
+
+    .onboarding-title-ar {
+      font-family: 'Reem Kufi', sans-serif;
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: var(--gold);
+      margin-bottom: 1rem;
+      direction: rtl;
+    }
+
+    .onboarding-desc {
+      font-size: 0.9375rem;
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 0.5rem;
+    }
+
+    .onboarding-desc-ar {
+      font-family: 'Tajawal', sans-serif;
+      font-size: 0.875rem;
+      color: var(--text-muted);
+      line-height: 1.7;
+      direction: rtl;
+      margin-bottom: 2rem;
+    }
+
+    .onboarding-dots {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 2rem;
+    }
+
+    .onboarding-dot {
+      width: 8px; height: 8px;
       border-radius: 50%;
-      pointer-events: none;
+      background: var(--border-color);
+      transition: background 0.3s ease;
+    }
+
+    .onboarding-dot.active { background: var(--gold); }
+
+    .onboarding-next {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 32px;
+      border: 1px solid var(--gold);
+      border-radius: 0;
+      background: transparent;
+      color: var(--gold);
+      font-family: 'Tajawal', sans-serif;
+      font-size: 0.875rem;
+      font-weight: 600;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      min-height: 48px;
+    }
+
+    .onboarding-next:hover {
+      background: rgba(197, 160, 89, 0.1);
+      box-shadow: 0 0 20px rgba(197, 160, 89, 0.15);
+    }
+
+    .onboarding-next svg { width: 16px; height: 16px; }
+
+    /* ============================================
+       MAIN APP
+       ============================================ */
+    .main-app {
+      min-height: 100vh;
+      display: none;
+      flex-direction: column;
+      background: var(--bg-primary);
+    }
+
+    .main-app.active { display: flex; }
+
+    .app-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border-color);
+      background: var(--bg-secondary);
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: flex-end;
+      gap: 0.25em;
+    }
+
+    .nav-brand-en {
+      font-family: 'Forum', cursive;
+      font-size: 1.25rem;
+      text-transform: lowercase;
+      letter-spacing: -0.05em;
+      line-height: 1;
+      color: var(--text-primary);
+    }
+
+    .nav-brand-ar {
+      font-family: 'Reem Kufi', sans-serif;
+      font-weight: 700;
+      font-size: 0.875rem;
+      line-height: 1;
+      color: var(--text-primary);
+    }
+
+    .nav-actions { display: flex; gap: 0.5rem; }
+
+    .nav-btn {
+      width: 44px; height: 44px;
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: color 0.2s ease;
+    }
+
+    .nav-btn:hover { color: var(--gold); }
+    .nav-btn svg { width: 20px; height: 20px; }
+
+    .poem-area {
+      flex: 1;
+      display: flex;
+      position: relative;
+    }
+
+    .poem-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+      padding-right: 56px;
+    }
+
+    .poem-text {
+      font-family: 'Amiri', serif;
+      font-size: clamp(1.25rem, 3vw, 1.625rem);
+      line-height: 2.2;
+      color: var(--text-primary);
+      direction: rtl;
+      text-align: center;
+      max-width: 600px;
+      margin-bottom: 1.5rem;
+    }
+
+    .poem-poet {
+      font-family: 'Tajawal', sans-serif;
+      font-size: 0.8125rem;
+      color: var(--gold);
+      direction: rtl;
+    }
+
+    .vertical-controls {
+      position: absolute;
+      right: 0; top: 0; bottom: 0;
+      width: 48px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      border-left: 1px solid var(--border-color);
+      background: var(--bg-secondary);
+      padding: 8px 0;
+    }
+
+    .vc-btn {
+      width: 44px; height: 44px;
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: color 0.2s ease, background 0.2s ease;
+    }
+
+    .vc-btn:hover {
+      color: var(--gold);
+      background: rgba(197, 160, 89, 0.08);
+    }
+
+    .vc-btn svg { width: 18px; height: 18px; }
+
+    .vc-divider {
+      width: 24px; height: 1px;
+      background: var(--border-color);
+      margin: 4px 0;
+    }
+
+    .bottom-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      padding: 0.5rem 1rem;
+      border-top: 1px solid var(--border-color);
+      background: var(--bg-secondary);
+    }
+
+    .bb-btn {
+      width: 48px; height: 48px;
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: color 0.2s ease;
+    }
+
+    .bb-btn:hover { color: var(--gold); }
+    .bb-btn svg { width: 20px; height: 20px; }
+
+    @media (max-width: 480px) {
+      .splash-brand-en { font-size: 2.5rem; }
+      .splash-brand-ar { font-size: 1.5rem; }
     }
   </style>
 </head>
-<body>
-  <!-- Particle canvas -->
-  <canvas id="particleCanvas" class="particle-canvas"></canvas>
+<body data-mode="dark">
 
-  <!-- Theme toggle -->
-  <button class="theme-toggle" aria-label="Toggle theme">
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-      <circle cx="12" cy="12" r="5"></circle>
-      <line x1="12" y1="1" x2="12" y2="3"></line>
-      <line x1="12" y1="21" x2="12" y2="23"></line>
-      <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
-      <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
-      <line x1="1" y1="12" x2="3" y2="12"></line>
-      <line x1="21" y1="12" x2="23" y2="12"></line>
-      <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
-      <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
-    </svg>
+  <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+    <span class="icon-sun"><i data-lucide="sun"></i></span>
+    <span class="icon-moon"><i data-lucide="moon"></i></span>
   </button>
 
-  <!-- Content -->
-  <div class="content">
-    <div class="logo-container">
-      <h1 class="logo">
-        <span class="logo-ar">بالعربي</span>
-        <span class="logo-en">poetry</span>
-      </h1>
+  <!-- ========== SPLASH ========== -->
+  <section class="splash" id="splashScreen">
+    <canvas id="particleCanvas" class="particle-canvas"></canvas>
+    <div class="splash-content">
+      <div class="splash-brand">
+        <span class="splash-brand-en">poetry</span>
+        <span class="splash-brand-ar" dir="rtl" lang="ar">بالعربي</span>
+      </div>
+      <div class="splash-subtitle">Verses Connecting Across Time and Space</div>
+      <button class="splash-cta" id="splashCta">Enter</button>
+      <div class="splash-hint">Move your cursor to disturb the field</div>
+    </div>
+  </section>
+
+  <!-- ========== ONBOARDING ========== -->
+  <section class="onboarding" id="onboarding">
+    <div class="onboarding-card active" data-step="0">
+      <i data-lucide="book-open" class="onboarding-icon"></i>
+      <h2 class="onboarding-title">Discover Arabic Poetry</h2>
+      <p class="onboarding-title-ar" lang="ar" dir="rtl">اكتشف الشعر العربي</p>
+      <p class="onboarding-desc">Explore verses from classical and modern Arabic poets, spanning centuries of literary tradition.</p>
+      <p class="onboarding-desc-ar" lang="ar" dir="rtl">استكشف أبيات الشعر العربي من شعراء كلاسيكيين ومعاصرين عبر قرون من التراث الأدبي.</p>
+      <div class="onboarding-dots">
+        <span class="onboarding-dot active"></span>
+        <span class="onboarding-dot"></span>
+        <span class="onboarding-dot"></span>
+      </div>
+      <button class="onboarding-next" data-advance="1">
+        <span>Next</span>
+        <i data-lucide="arrow-right"></i>
+      </button>
     </div>
 
-    <div class="subtitle">
-      Verses Connecting Across Time and Space
+    <div class="onboarding-card" data-step="1">
+      <i data-lucide="languages" class="onboarding-icon"></i>
+      <h2 class="onboarding-title">Bilingual Experience</h2>
+      <p class="onboarding-title-ar" lang="ar" dir="rtl">تجربة ثنائية اللغة</p>
+      <p class="onboarding-desc">Read poems in their original Arabic with AI-powered English translations and cultural context.</p>
+      <p class="onboarding-desc-ar" lang="ar" dir="rtl">اقرأ القصائد بالعربية الأصلية مع ترجمات إنجليزية وسياق ثقافي مدعوم بالذكاء الاصطناعي.</p>
+      <div class="onboarding-dots">
+        <span class="onboarding-dot"></span>
+        <span class="onboarding-dot active"></span>
+        <span class="onboarding-dot"></span>
+      </div>
+      <button class="onboarding-next" data-advance="2">
+        <span>Next</span>
+        <i data-lucide="arrow-right"></i>
+      </button>
     </div>
 
-    <button class="cta-button">
-      Enter
-    </button>
-
-    <div class="hint">
-      Move your cursor to disturb the field
+    <div class="onboarding-card" data-step="2">
+      <i data-lucide="heart" class="onboarding-icon"></i>
+      <h2 class="onboarding-title">Save Your Favorites</h2>
+      <p class="onboarding-title-ar" lang="ar" dir="rtl">احفظ قصائدك المفضلة</p>
+      <p class="onboarding-desc">Build your personal collection of poems and revisit the verses that move you most.</p>
+      <p class="onboarding-desc-ar" lang="ar" dir="rtl">أنشئ مجموعتك الشخصية من القصائد وأعد زيارة الأبيات التي تحرّك مشاعرك.</p>
+      <div class="onboarding-dots">
+        <span class="onboarding-dot"></span>
+        <span class="onboarding-dot"></span>
+        <span class="onboarding-dot active"></span>
+      </div>
+      <button class="onboarding-next" id="onboardingFinish">
+        <span>Start Exploring</span>
+        <i data-lucide="arrow-right"></i>
+      </button>
     </div>
-  </div>
+  </section>
+
+  <!-- ========== MAIN APP ========== -->
+  <main class="main-app" id="mainApp">
+    <nav class="app-nav">
+      <div class="nav-brand">
+        <span class="nav-brand-en">poetry</span>
+        <span class="nav-brand-ar" dir="rtl" lang="ar">بالعربي</span>
+      </div>
+      <div class="nav-actions">
+        <button class="nav-btn" aria-label="Search"><i data-lucide="search"></i></button>
+        <button class="nav-btn" aria-label="Menu"><i data-lucide="menu"></i></button>
+      </div>
+    </nav>
+
+    <div class="poem-area">
+      <div class="poem-content">
+        <div class="poem-text" lang="ar" dir="rtl">
+          وما نيلُ المطالبِ بالتمنّي<br>
+          ولكنْ تُؤخَذُ الدنيا غِلابا<br><br>
+          وما استعصى على قومٍ منالٌ<br>
+          إذا الإقدامُ كان لهم رِكابا
+        </div>
+        <p class="poem-poet" lang="ar" dir="rtl">-- أحمد شوقي</p>
+      </div>
+
+      <aside class="vertical-controls">
+        <button class="vc-btn" aria-label="Favorite"><i data-lucide="heart"></i></button>
+        <button class="vc-btn" aria-label="Font"><i data-lucide="type"></i></button>
+        <button class="vc-btn" aria-label="Languages"><i data-lucide="languages"></i></button>
+        <div class="vc-divider"></div>
+        <button class="vc-btn" aria-label="Collection"><i data-lucide="book-open"></i></button>
+        <button class="vc-btn" aria-label="Style"><i data-lucide="italic"></i></button>
+        <div class="vc-divider"></div>
+        <button class="vc-btn" aria-label="Sign in"><i data-lucide="log-in"></i></button>
+        <button class="vc-btn" aria-label="Settings"><i data-lucide="settings"></i></button>
+      </aside>
+    </div>
+
+    <nav class="bottom-bar">
+      <button class="bb-btn" aria-label="Listen"><i data-lucide="music"></i></button>
+      <button class="bb-btn" aria-label="Insights"><i data-lucide="lightbulb"></i></button>
+      <button class="bb-btn" aria-label="New poem"><i data-lucide="refresh-cw"></i></button>
+      <button class="bb-btn" aria-label="Library"><i data-lucide="library"></i></button>
+      <button class="bb-btn" aria-label="Shuffle"><i data-lucide="shuffle"></i></button>
+    </nav>
+  </main>
 
   <script>
-    // Gold mystical particle system
-    const canvas = document.getElementById('particleCanvas');
-    const ctx = canvas.getContext('2d');
+    lucide.createIcons();
 
+    // Theme toggle
+    var isDark = true;
+    document.getElementById('themeToggle').addEventListener('click', function(e) {
+      e.stopPropagation();
+      isDark = !isDark;
+      document.documentElement.setAttribute('data-theme', isDark ? '' : 'light');
+      document.body.setAttribute('data-mode', isDark ? 'dark' : 'light');
+    });
+
+    // Flow navigation
+    document.getElementById('splashCta').addEventListener('click', function() {
+      document.getElementById('splashScreen').classList.add('hidden');
+      document.getElementById('onboarding').classList.add('active');
+    });
+
+    document.querySelectorAll('.onboarding-next[data-advance]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var target = parseInt(this.getAttribute('data-advance'));
+        document.querySelectorAll('.onboarding-card').forEach(function(c) { c.classList.remove('active'); });
+        var next = document.querySelector('.onboarding-card[data-step="' + target + '"]');
+        if (next) next.classList.add('active');
+      });
+    });
+
+    document.getElementById('onboardingFinish').addEventListener('click', function() {
+      document.getElementById('onboarding').classList.remove('active');
+      document.getElementById('mainApp').classList.add('active');
+    });
+
+    // Gold mystical particle system
+    var canvas = document.getElementById('particleCanvas');
+    var ctx = canvas.getContext('2d');
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
-    const particles = [];
-    const particleCount = 500;
-    const mouse = { x: canvas.width / 2, y: canvas.height / 2 };
+    var particles = [];
+    var particleCount = 500;
+    var mouse = { x: canvas.width / 2, y: canvas.height / 2 };
 
-    // Color palette - gold and indigo
-    const colors = [
+    var colors = [
       'rgba(197, 160, 89, ',
       'rgba(212, 175, 106, ',
       'rgba(138, 110, 218, ',
     ];
 
-    // Generate particles
-    for (let i = 0; i < particleCount; i++) {
-      const curve = Math.floor(Math.random() * 3);
-      const curves = [
+    for (var i = 0; i < particleCount; i++) {
+      var curve = Math.floor(Math.random() * 3);
+      var curves = [
         { x: 0.7, y: 0.5, radius: 0.15 },
         { x: 0.5, y: 0.5, radius: 0.12 },
         { x: 0.3, y: 0.5, radius: 0.16 }
       ];
-
-      const c = curves[curve];
-      const angle = Math.random() * Math.PI * 2;
-      const distance = Math.random() * c.radius;
+      var c = curves[curve];
+      var angle = Math.random() * Math.PI * 2;
+      var dist = Math.random() * c.radius;
 
       particles.push({
-        x: (c.x + Math.cos(angle) * distance) * canvas.width,
-        y: (c.y + Math.sin(angle) * distance) * canvas.height,
-        originX: (c.x + Math.cos(angle) * distance) * canvas.width,
-        originY: (c.y + Math.sin(angle) * distance) * canvas.height,
-        vx: 0,
-        vy: 0,
+        x: (c.x + Math.cos(angle) * dist) * canvas.width,
+        y: (c.y + Math.sin(angle) * dist) * canvas.height,
+        originX: (c.x + Math.cos(angle) * dist) * canvas.width,
+        originY: (c.y + Math.sin(angle) * dist) * canvas.height,
+        vx: 0, vy: 0,
         radius: Math.random() * 2 + 0.5,
         opacity: Math.random() * 0.5 + 0.3,
         color: colors[Math.floor(Math.random() * colors.length)],
@@ -281,52 +681,37 @@
       });
     }
 
-    // Mouse tracking
-    window.addEventListener('mousemove', (e) => {
-      mouse.x = e.clientX;
-      mouse.y = e.clientY;
-    });
+    window.addEventListener('mousemove', function(e) { mouse.x = e.clientX; mouse.y = e.clientY; });
 
-    let time = 0;
+    var time = 0;
 
-    // Animation loop
     function animate() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       time += 0.01;
 
-      particles.forEach((p, i) => {
-        // Mouse repulsion
-        const dx = mouse.x - p.x;
-        const dy = mouse.y - p.y;
-        const distance = Math.sqrt(dx * dx + dy * dy);
-        const minDistance = 150;
-
-        if (distance < minDistance) {
-          const force = (minDistance - distance) / minDistance;
+      particles.forEach(function(p, i) {
+        var dx = mouse.x - p.x;
+        var dy = mouse.y - p.y;
+        var distance = Math.sqrt(dx * dx + dy * dy);
+        if (distance < 150) {
+          var force = (150 - distance) / 150;
           p.vx -= (dx / distance) * force * 1.2;
           p.vy -= (dy / distance) * force * 1.2;
         }
 
-        // Return to origin with organic movement
         p.vx += (p.originX - p.x) * 0.0008;
         p.vy += (p.originY - p.y) * 0.0008;
-
-        // Gentle floating motion
         p.vx += Math.sin(time + i * 0.1) * 0.05;
         p.vy += Math.cos(time + i * 0.1) * 0.05;
-
-        // Apply velocity
         p.vx *= 0.96;
         p.vy *= 0.96;
         p.x += p.vx;
         p.y += p.vy;
 
-        // Twinkling effect
-        const twinkle = Math.sin(time * p.twinkleSpeed * 100) * 0.3 + 0.7;
+        var twinkle = Math.sin(time * p.twinkleSpeed * 100) * 0.3 + 0.7;
 
-        // Draw particle with enhanced glow
         ctx.beginPath();
-        const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius * 3);
+        var gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius * 3);
         gradient.addColorStop(0, p.color + (p.opacity * twinkle) + ')');
         gradient.addColorStop(0.5, p.color + (p.opacity * twinkle * 0.3) + ')');
         gradient.addColorStop(1, p.color + '0)');
@@ -340,8 +725,7 @@
 
     animate();
 
-    // Resize handler
-    window.addEventListener('resize', () => {
+    window.addEventListener('resize', function() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
     });

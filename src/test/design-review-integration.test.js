@@ -11,8 +11,14 @@
  * Test data is written with reviewer='ci-integration' for easy identification.
  */
 
+import dns from 'node:dns';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
+
+// GitHub Actions runners don't have IPv6 connectivity. Supabase hostnames
+// resolve to IPv6 first (ENETUNREACH). Force DNS to prefer IPv4 in this
+// worker process before any pg connection is attempted.
+dns.setDefaultResultOrder('ipv4first');
 
 const CI_REVIEWER = 'ci-integration';
 const CI_ITEM_KEY = 'ci-integration-test-item';

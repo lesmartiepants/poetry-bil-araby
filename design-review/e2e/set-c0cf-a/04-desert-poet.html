@@ -199,11 +199,41 @@
 
   /* ============ Main App ============ */
   #app {
-    max-width: 800px; margin: 0 auto; padding: 2rem 1rem 4rem;
+    max-width: 800px; margin: 0 auto; padding: 2rem 1rem 7rem;
     padding-right: 4.5rem;
     opacity: 0; transition: opacity 0.6s 0.2s;
+    position: relative; z-index: 1;
   }
   #app.visible { opacity: 1; }
+
+  /* Parallax dune layers */
+  .dune-layers {
+    position: fixed; bottom: 0; left: 0; right: 0; height: 100vh;
+    z-index: 0; pointer-events: none; overflow: hidden;
+  }
+  .dune-layer {
+    position: absolute; bottom: 0; left: -5%; right: -5%;
+    height: 40%;
+  }
+  .dune-layer-1 {
+    background:
+      radial-gradient(ellipse 120% 60% at 30% 100%, #8B6914 0%, transparent 70%),
+      radial-gradient(ellipse 100% 50% at 70% 100%, #A07828 0%, transparent 60%);
+    opacity: 0.15; z-index: 1;
+  }
+  .dune-layer-2 {
+    height: 30%;
+    background:
+      radial-gradient(ellipse 110% 70% at 50% 100%, #C5A059 0%, transparent 65%),
+      radial-gradient(ellipse 90% 50% at 20% 100%, #B8923A 0%, transparent 55%);
+    opacity: 0.1; z-index: 2;
+  }
+  .dune-layer-3 {
+    height: 20%;
+    background:
+      radial-gradient(ellipse 130% 80% at 60% 100%, #D4B06A 0%, transparent 60%);
+    opacity: 0.08; z-index: 3;
+  }
 
   /* ============ Controls - Vertical (Desktop) ============ */
   .controls-vertical {
@@ -216,59 +246,88 @@
     width: 44px; height: 44px;
     border-radius: 12px;
     background: var(--card-bg);
-    border: 1px solid rgba(232, 97, 26, 0.25);
+    border: 1px solid rgba(197, 160, 89, 0.25);
     color: var(--text);
     cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     transition: background 0.25s, border-color 0.25s, transform 0.2s, box-shadow 0.3s;
   }
   .ctrl-btn:hover, .ctrl-btn:focus-visible {
-    border-color: var(--ember);
-    background: rgba(232, 97, 26, 0.08);
+    border-color: var(--gold);
+    background: rgba(197, 160, 89, 0.1);
     transform: scale(1.08);
-    box-shadow: 0 0 12px rgba(232, 97, 26, 0.15);
+    box-shadow: 0 0 12px rgba(197, 160, 89, 0.15);
   }
   .ctrl-btn svg { width: 20px; height: 20px; }
 
-  /* ============ Controls - Bottom Bar (Mobile) ============ */
+  /* ============ Controls - Caravan Dune-Wave Bar (Mobile) ============ */
   .controls-bottom {
     display: none;
     position: fixed; bottom: 0; left: 0; right: 0;
-    background: var(--card-bg);
-    border-top: 1px solid rgba(232, 97, 26, 0.2);
-    padding: 0.5rem 1rem;
     z-index: 50;
+    flex-direction: column;
+    align-items: stretch;
+  }
+  /* Dune wave SVG crest */
+  .controls-bottom .dune-crest {
+    display: block; width: 100%; height: 24px;
+    fill: rgba(30, 25, 22, 0.95);
+  }
+  .light .controls-bottom .dune-crest { fill: rgba(245, 240, 232, 0.95); }
+
+  .controls-bottom .caravan-bar {
+    display: flex;
     justify-content: space-around;
+    align-items: center;
+    padding: 8px 1rem 14px;
+    background: rgba(30, 25, 22, 0.95);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
   }
-  .controls-bottom .ctrl-btn {
-    border: none; background: transparent;
+  .light .controls-bottom .caravan-bar {
+    background: rgba(245, 240, 232, 0.95);
+  }
+
+  .caravan-btn {
+    width: 44px; height: 44px;
+    display: flex; align-items: center; justify-content: center;
+    background: transparent; border: none;
+    color: var(--gold); opacity: 0.6;
+    cursor: pointer; transition: all 0.2s;
     border-radius: 8px;
   }
+  .caravan-btn:hover, .caravan-btn:focus-visible { opacity: 1; transform: translateY(-2px); }
+  .caravan-btn svg { width: 20px; height: 20px; }
 
   /* ============ Poem Card ============ */
   .poem-card {
     background: var(--card-bg); border-radius: 16px; padding: 3rem 2.5rem;
     position: relative; overflow: hidden; margin-bottom: 2.5rem;
-    box-shadow: 0 12px 40px rgba(232,97,26,0.12), 0 0 80px rgba(232,97,26,0.06);
-    border: 1px solid rgba(232, 97, 26, 0.15);
+    box-shadow: 0 12px 40px rgba(197,160,89,0.08), 0 0 60px rgba(197,160,89,0.04);
+    border: 1px solid rgba(197, 160, 89, 0.15);
     transition: box-shadow 0.3s;
   }
+  /* Warm amber glow */
   .poem-card::after {
     content: ''; position: absolute; bottom: -40%; left: 10%; right: 10%; height: 80%;
-    background: radial-gradient(ellipse at center bottom, rgba(232,97,26,0.18) 0%, transparent 70%);
+    background: radial-gradient(ellipse at center bottom, rgba(197,160,89,0.12) 0%, transparent 70%);
     pointer-events: none;
   }
   .poem-text {
     font-family: 'Amiri', serif; font-size: clamp(1.35rem, 3vw, 1.85rem);
     line-height: 2.4; text-align: center; position: relative; z-index: 1;
+    /* Mirage shimmer animation */
+    animation: mirageShimmer 4s ease-in-out infinite;
+  }
+  @keyframes mirageShimmer {
+    0%, 100% { text-shadow: 0 0 0 transparent; }
+    50% { text-shadow: 0 0 8px rgba(197,160,89,0.15), 0 2px 4px rgba(197,160,89,0.05); }
   }
   .poem-text .hemistich { display: block; margin: 0.3em 0; }
   .poem-text .separator {
     display: block; width: 40px; height: 1px;
-    background: var(--ember); margin: 0.8em auto;
-    opacity: 0.5;
+    background: var(--gold); margin: 0.8em auto;
+    opacity: 0.4;
   }
   .poet-name {
     text-align: center; margin-top: 1.8rem; font-size: 1.05rem;
@@ -282,7 +341,7 @@
 
   /* ============ Responsive ============ */
   @media (max-width: 768px) {
-    #app { padding: 2rem 1rem 5rem; padding-right: 1rem; }
+    #app { padding: 2rem 1rem 7rem; padding-right: 1rem; }
     .controls-vertical { display: none; }
     .controls-bottom { display: flex; }
     .poem-card { padding: 2rem 1.5rem; }
@@ -351,24 +410,33 @@
 
   <!-- ======== Main App ======== -->
   <main id="app">
+    <!-- Parallax Dune Layers -->
+    <div class="dune-layers" aria-hidden="true">
+      <div class="dune-layer dune-layer-1"></div>
+      <div class="dune-layer dune-layer-2"></div>
+      <div class="dune-layer dune-layer-3"></div>
+    </div>
+
     <!-- Vertical Controls (Desktop) -->
     <nav class="controls-vertical" aria-label="App controls">
+      <button class="ctrl-btn" aria-label="Next poem"><i data-lucide="shuffle"></i></button>
       <button class="ctrl-btn" aria-label="Save poem"><i data-lucide="heart"></i></button>
-      <button class="ctrl-btn" aria-label="Change font"><i data-lucide="type"></i></button>
-      <button class="ctrl-btn" aria-label="Toggle language"><i data-lucide="languages"></i></button>
-      <button class="ctrl-btn" aria-label="Poem library"><i data-lucide="book-open"></i></button>
-      <button class="ctrl-btn" aria-label="Font style"><i data-lucide="italic"></i></button>
-      <button class="ctrl-btn" aria-label="Sign in"><i data-lucide="log-in"></i></button>
+      <button class="ctrl-btn" aria-label="Listen"><i data-lucide="headphones"></i></button>
+      <button class="ctrl-btn" aria-label="Share poem"><i data-lucide="share-2"></i></button>
       <button class="ctrl-btn" id="themeBtn" aria-label="Toggle theme"><i data-lucide="sun"></i></button>
     </nav>
 
-    <!-- Bottom Controls (Mobile) -->
+    <!-- Caravan Dune-Wave Controls (Mobile) -->
     <nav class="controls-bottom" aria-label="App controls">
-      <button class="ctrl-btn" aria-label="Listen"><i data-lucide="music"></i></button>
-      <button class="ctrl-btn" aria-label="AI insight"><i data-lucide="lightbulb"></i></button>
-      <button class="ctrl-btn" aria-label="New poem"><i data-lucide="refresh-cw"></i></button>
-      <button class="ctrl-btn" aria-label="Library"><i data-lucide="library"></i></button>
-      <button class="ctrl-btn" aria-label="Random poem"><i data-lucide="shuffle"></i></button>
+      <svg class="dune-crest" viewBox="0 0 400 24" preserveAspectRatio="none" aria-hidden="true">
+        <path d="M0,24 C50,24 70,4 120,8 C170,12 190,2 240,6 C290,10 310,0 360,4 C380,6 400,16 400,24 Z"/>
+      </svg>
+      <div class="caravan-bar">
+        <button class="caravan-btn" aria-label="Next poem"><i data-lucide="shuffle"></i></button>
+        <button class="caravan-btn" aria-label="Save poem"><i data-lucide="heart"></i></button>
+        <button class="caravan-btn" aria-label="Listen"><i data-lucide="headphones"></i></button>
+        <button class="caravan-btn" aria-label="Share poem"><i data-lucide="share-2"></i></button>
+      </div>
     </nav>
 
     <div class="poem-card">

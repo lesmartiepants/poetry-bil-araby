@@ -1,0 +1,721 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>E2E: Improved Chiaroscuro - Light & Shadow</title>
+  <link href="https://fonts.googleapis.com/css2?family=Forum&family=Reem+Kufi:wght@400;700&family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    :root {
+      --gold: #C5A059;
+      --gold-glow: rgba(197, 160, 89, 0.35);
+      --bg: #0a0a0a;
+      --bg2: #111111;
+      --text: #FDFCF8;
+      --text-dim: rgba(253, 252, 248, 0.5);
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html {
+      font-family: 'Tajawal', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      scroll-behavior: smooth;
+      overflow-x: hidden;
+    }
+    body { min-height: 100vh; }
+
+    /* ===== SCREEN BASE ===== */
+    .screen {
+      position: relative;
+      width: 100%;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ===== SPLASH SCREEN ===== */
+    #splash {
+      background: var(--bg);
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      transition: opacity 0.8s ease;
+    }
+    #splash.hidden { opacity: 0; pointer-events: none; }
+
+    /* Single unified shadow layer */
+    .shadow-base {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(
+        ellipse 30% 40% at var(--light-x, 30%) var(--light-y, 20%),
+        rgba(0, 0, 0, 0.3),
+        rgba(0, 0, 0, 0.85) 50%,
+        rgba(0, 0, 0, 0.97)
+      );
+      transition: background 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Dynamic lattice */
+    .lattice-overlay {
+      position: absolute;
+      inset: 0;
+      opacity: 0.5;
+      background-image:
+        repeating-linear-gradient(
+          calc(var(--light-angle, 25deg)),
+          transparent,
+          transparent 60px,
+          rgba(0, 0, 0, 0.8) 60px,
+          rgba(0, 0, 0, 0.8) 70px
+        ),
+        repeating-linear-gradient(
+          calc(90deg + var(--light-angle, 25deg)),
+          transparent,
+          transparent 60px,
+          rgba(0, 0, 0, 0.8) 60px,
+          rgba(0, 0, 0, 0.8) 70px
+        );
+      mix-blend-mode: multiply;
+    }
+
+    /* 3 hero light rays - narrower beams */
+    .light-rays {
+      position: absolute;
+      inset: 0;
+      mix-blend-mode: screen;
+      pointer-events: none;
+    }
+    .light-ray {
+      position: absolute;
+      width: 60px;
+      height: 100%;
+      background: linear-gradient(
+        180deg,
+        rgba(255, 235, 180, 0.35) 0%,
+        rgba(255, 220, 150, 0.25) 40%,
+        rgba(255, 200, 120, 0.08) 70%,
+        transparent 100%
+      );
+      filter: blur(18px);
+      transform-origin: center top;
+      animation: rayMovement 10s ease-in-out infinite alternate;
+    }
+    .light-ray:nth-child(1) {
+      left: calc(var(--light-x, 30%) - 60px);
+      animation-delay: 0s;
+      opacity: 0.7;
+    }
+    .light-ray:nth-child(2) {
+      left: var(--light-x, 30%);
+      animation-delay: 0.3s;
+      opacity: 1;
+    }
+    .light-ray:nth-child(3) {
+      left: calc(var(--light-x, 30%) + 60px);
+      animation-delay: 0.6s;
+      opacity: 0.6;
+    }
+    @keyframes rayMovement {
+      0% { transform: translateY(0) rotate(-5deg) skewX(2deg); }
+      100% { transform: translateY(-15px) rotate(5deg) skewX(-2deg); }
+    }
+
+    /* Splash content */
+    .splash-content {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      max-width: 700px;
+      padding: 0 2rem;
+      animation: fadeInUp 1.5s ease-out;
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(40px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Brand logo */
+    .brand {
+      display: flex;
+      flex-direction: row-reverse;
+      align-items: flex-end;
+      justify-content: center;
+      gap: 16px;
+      margin-bottom: 3rem;
+    }
+    .brand-en {
+      font-family: 'Forum', serif;
+      font-size: clamp(3rem, 6vw, 4.5rem);
+      letter-spacing: -0.05em;
+      text-transform: lowercase;
+      color: var(--text);
+      text-shadow:
+        calc(var(--shadow-x, 5px) * 0.8) calc(var(--shadow-y, -3px) * 0.8) 20px rgba(0, 0, 0, 0.6),
+        0 0 35px rgba(255, 235, 180, 0.15);
+    }
+    .brand-ar {
+      font-family: 'Reem Kufi', sans-serif;
+      font-size: clamp(1.875rem, 4vw, 3rem);
+      font-weight: 700;
+      color: var(--gold);
+      text-shadow:
+        calc(var(--shadow-x, 5px)) calc(var(--shadow-y, -3px)) 25px rgba(255, 235, 180, 0.4),
+        0 0 50px rgba(255, 235, 180, 0.2);
+    }
+
+    /* Verse */
+    .verse {
+      margin-bottom: 2.5rem;
+    }
+    .verse-ar {
+      font-family: 'Amiri', serif;
+      font-size: clamp(1.5rem, 4vw, 2.5rem);
+      color: var(--text);
+      margin-bottom: 0.75rem;
+      text-shadow: 0 2px 20px rgba(0, 0, 0, 0.9), 0 0 30px rgba(255, 235, 180, 0.25);
+    }
+    .verse-en {
+      font-size: clamp(1rem, 2.5vw, 1.5rem);
+      font-weight: 300;
+      font-style: italic;
+      color: #d6d3d1;
+      opacity: 0.85;
+      text-shadow: 0 2px 15px rgba(0, 0, 0, 0.8);
+    }
+
+    /* Description */
+    .splash-desc {
+      font-size: clamp(0.875rem, 2vw, 1.125rem);
+      line-height: 1.8;
+      color: #d6d3d1;
+      opacity: 0.75;
+      margin-bottom: 3rem;
+      max-width: 550px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* CTA button */
+    .enter-btn {
+      display: inline-block;
+      padding: 18px 56px;
+      min-width: 44px;
+      min-height: 44px;
+      border: 2px solid var(--gold);
+      background: rgba(197, 160, 89, 0.08);
+      color: var(--gold);
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.35em;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+      backdrop-filter: blur(12px);
+      box-shadow: 0 0 30px var(--gold-glow);
+      border-radius: 2px;
+      position: relative;
+      overflow: hidden;
+      font-family: 'Tajawal', sans-serif;
+    }
+    .enter-btn:hover {
+      background: rgba(197, 160, 89, 0.2);
+      box-shadow: 0 0 50px var(--gold-glow), 0 8px 24px rgba(197, 160, 89, 0.2);
+      transform: translateY(-3px);
+    }
+    .enter-btn .sweep {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent, rgba(255, 235, 180, 0.2), transparent);
+      animation: sweep 2.5s ease-in-out infinite;
+      pointer-events: none;
+      opacity: 0;
+    }
+    .enter-btn:hover .sweep { opacity: 1; }
+    @keyframes sweep {
+      0% { transform: translateX(-100%); }
+      50%, 100% { transform: translateX(200%); }
+    }
+    .enter-btn-ar {
+      font-family: 'Reem Kufi', sans-serif;
+      font-size: 0.875rem;
+      opacity: 0.7;
+      margin-top: 0.25rem;
+      display: block;
+      letter-spacing: normal;
+    }
+
+    /* ===== ONBOARDING ===== */
+    #onboarding {
+      display: none;
+      background: var(--bg);
+      position: fixed;
+      inset: 0;
+      z-index: 90;
+    }
+    .onboard-cards {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      max-width: 480px;
+      padding: 2rem;
+    }
+    .onboard-card {
+      display: none;
+      animation: cardFadeIn 0.6s ease;
+    }
+    .onboard-card.active { display: block; }
+    @keyframes cardFadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .onboard-icon {
+      width: 56px;
+      height: 56px;
+      margin: 0 auto 1.5rem;
+      border: 2px solid var(--gold);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--gold);
+    }
+    .onboard-title {
+      font-family: 'Tajawal', sans-serif;
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      color: var(--text);
+    }
+    .onboard-title-ar {
+      font-family: 'Reem Kufi', sans-serif;
+      font-size: 1.25rem;
+      color: var(--gold);
+      margin-bottom: 1rem;
+      direction: rtl;
+    }
+    .onboard-desc {
+      font-size: 0.95rem;
+      line-height: 1.7;
+      color: var(--text-dim);
+      margin-bottom: 0.5rem;
+    }
+    .onboard-desc-ar {
+      font-family: 'Tajawal', sans-serif;
+      font-size: 0.95rem;
+      line-height: 1.7;
+      color: var(--text-dim);
+      direction: rtl;
+      margin-bottom: 2rem;
+    }
+    .onboard-dots {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 1.5rem;
+    }
+    .onboard-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(197, 160, 89, 0.3);
+      transition: background 0.3s ease;
+    }
+    .onboard-dot.active { background: var(--gold); }
+    .onboard-tap {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      color: var(--text-dim);
+      cursor: pointer;
+    }
+
+    /* Onboarding background glow */
+    #onboarding::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 50% 50%, var(--gold-glow), transparent 60%);
+      opacity: 0.15;
+      pointer-events: none;
+    }
+
+    /* ===== MAIN APP ===== */
+    #main {
+      display: none;
+      background: var(--bg);
+    }
+    .main-layout {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      max-width: 900px;
+      padding: 32px 24px;
+      min-height: 100vh;
+    }
+    .main-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      margin-bottom: 24px;
+    }
+    .main-brand {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+    }
+    .main-brand-en {
+      font-family: 'Forum', serif;
+      font-size: 1.4rem;
+      color: var(--text);
+      letter-spacing: -0.03em;
+    }
+    .main-brand-ar {
+      font-family: 'Reem Kufi', sans-serif;
+      font-size: 1rem;
+      color: var(--gold);
+      font-weight: 700;
+    }
+
+    /* Poem card */
+    .poem-card {
+      background: rgba(197, 160, 89, 0.04);
+      border: 1px solid rgba(197, 160, 89, 0.15);
+      border-radius: 16px;
+      padding: 40px;
+      margin-bottom: 24px;
+      transition: all 0.3s ease;
+    }
+    .poem-card:hover {
+      border-color: var(--gold);
+      box-shadow: 0 8px 32px var(--gold-glow);
+    }
+    .poem-text {
+      font-family: 'Amiri', serif;
+      font-size: 28px;
+      line-height: 2;
+      text-align: right;
+      direction: rtl;
+      margin-bottom: 24px;
+    }
+    .poem-poet {
+      font-size: 14px;
+      color: var(--gold);
+      text-align: left;
+      font-weight: 600;
+    }
+
+    /* Vertical controls - right side */
+    .vertical-controls {
+      position: fixed;
+      right: 20px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      overflow: hidden;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+      z-index: 50;
+    }
+    .vc-btn {
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      color: rgba(197, 160, 89, 0.5);
+      transition: all 0.2s ease;
+    }
+    .vc-btn:hover {
+      background: rgba(197, 160, 89, 0.12);
+      color: var(--gold);
+    }
+    .vc-divider {
+      height: 1px;
+      background: rgba(255, 255, 255, 0.06);
+    }
+
+    /* Bottom bar - mobile */
+    .bottom-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      display: none;
+      justify-content: space-around;
+      align-items: center;
+      height: 56px;
+      background: rgba(10, 10, 10, 0.95);
+      backdrop-filter: blur(12px);
+      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      z-index: 50;
+    }
+    .bb-btn {
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      color: rgba(197, 160, 89, 0.5);
+      transition: all 0.2s ease;
+    }
+    .bb-btn:hover { color: var(--gold); }
+
+    /* Mobile overrides */
+    @media (max-width: 768px) {
+      .brand-en { font-size: 3rem; }
+      .brand-ar { font-size: 1.875rem; }
+      .enter-btn { padding: 16px 40px; font-size: 11px; }
+      .splash-content { padding: 24px; }
+      .poem-card { padding: 24px; }
+      .poem-text { font-size: 22px; line-height: 1.8; }
+      .vertical-controls { display: none; }
+      .bottom-bar { display: flex; }
+    }
+
+    /* Reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- ===== SPLASH SCREEN ===== -->
+  <div class="screen" id="splash">
+    <div class="shadow-base"></div>
+    <div class="lattice-overlay"></div>
+    <div class="light-rays">
+      <div class="light-ray"></div>
+      <div class="light-ray"></div>
+      <div class="light-ray"></div>
+    </div>
+
+    <div class="splash-content">
+      <div class="brand">
+        <div class="brand-ar" lang="ar" dir="rtl">بالعربي</div>
+        <div class="brand-en">poetry</div>
+      </div>
+
+      <div class="verse">
+        <div class="verse-ar" lang="ar" dir="rtl">بين النور والظل تتجلى الحكمة</div>
+        <div class="verse-en">Between light and shadow, wisdom reveals itself</div>
+      </div>
+
+      <p class="splash-desc">
+        Poetry lives in the tension between illumination and obscurity.
+        Like sunlight through a mashrabiya screen, meaning reveals itself
+        layer by layer.
+      </p>
+
+      <button class="enter-btn" id="enterBtn">
+        <span>Step Into Light</span>
+        <span class="enter-btn-ar" lang="ar" dir="rtl">ادخل إلى النور</span>
+        <div class="sweep"></div>
+      </button>
+    </div>
+  </div>
+
+  <!-- ===== ONBOARDING ===== -->
+  <div class="screen" id="onboarding">
+    <div class="onboard-cards">
+      <div class="onboard-card active" data-card="0">
+        <div class="onboard-icon">
+          <i data-lucide="book-open" style="width:24px;height:24px"></i>
+        </div>
+        <div class="onboard-title">Discover Poetry</div>
+        <div class="onboard-title-ar" lang="ar">اكتشف الشعر العربي</div>
+        <div class="onboard-desc">Over 84,000 poems from across the ages, ready for you to explore.</div>
+        <div class="onboard-desc-ar" lang="ar">أكثر من 84,000 قصيدة من مختلف العصور بانتظارك</div>
+      </div>
+
+      <div class="onboard-card" data-card="1">
+        <div class="onboard-icon">
+          <i data-lucide="headphones" style="width:24px;height:24px"></i>
+        </div>
+        <div class="onboard-title">Listen & Feel</div>
+        <div class="onboard-title-ar" lang="ar">استمع واشعر</div>
+        <div class="onboard-desc">AI-powered recitation brings each verse to life with natural voice.</div>
+        <div class="onboard-desc-ar" lang="ar">إلقاء صوتي بالذكاء الاصطناعي يجعل كل بيت ينبض بالحياة</div>
+      </div>
+
+      <div class="onboard-card" data-card="2">
+        <div class="onboard-icon">
+          <i data-lucide="sparkles" style="width:24px;height:24px"></i>
+        </div>
+        <div class="onboard-title">AI Insights</div>
+        <div class="onboard-title-ar" lang="ar">رؤى ذكية</div>
+        <div class="onboard-desc">Deep analysis and explanations powered by AI to unlock every verse.</div>
+        <div class="onboard-desc-ar" lang="ar">تحليل وشرح بالذكاء الاصطناعي لفهم كل بيت</div>
+      </div>
+
+      <div class="onboard-dots">
+        <div class="onboard-dot active" data-dot="0"></div>
+        <div class="onboard-dot" data-dot="1"></div>
+        <div class="onboard-dot" data-dot="2"></div>
+      </div>
+      <div class="onboard-tap" id="onboardTap">Tap to continue</div>
+    </div>
+  </div>
+
+  <!-- ===== MAIN APP ===== -->
+  <div class="screen" id="main">
+    <div class="main-layout">
+      <nav class="main-nav">
+        <div class="main-brand">
+          <span class="main-brand-en">poetry</span>
+          <span class="main-brand-ar" lang="ar" dir="rtl">بالعربي</span>
+        </div>
+      </nav>
+
+      <div class="poem-card">
+        <div class="poem-text" lang="ar" dir="rtl">
+          أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ<br>
+          فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
+        </div>
+        <div class="poem-poet">Ahmad Shawqi</div>
+      </div>
+    </div>
+
+    <!-- Vertical controls (desktop) -->
+    <div class="vertical-controls">
+      <button class="vc-btn" aria-label="Save"><i data-lucide="heart" style="width:18px;height:18px"></i></button>
+      <div class="vc-divider"></div>
+      <button class="vc-btn" aria-label="Font size"><i data-lucide="type" style="width:18px;height:18px"></i></button>
+      <div class="vc-divider"></div>
+      <button class="vc-btn" aria-label="Translate"><i data-lucide="languages" style="width:18px;height:18px"></i></button>
+      <div class="vc-divider"></div>
+      <button class="vc-btn" aria-label="Insights"><i data-lucide="book-open" style="width:18px;height:18px"></i></button>
+      <div class="vc-divider"></div>
+      <button class="vc-btn" aria-label="Italic"><i data-lucide="italic" style="width:18px;height:18px"></i></button>
+      <div class="vc-divider"></div>
+      <button class="vc-btn" aria-label="Sign in"><i data-lucide="log-in" style="width:18px;height:18px"></i></button>
+      <div class="vc-divider"></div>
+      <button class="vc-btn" aria-label="Settings"><i data-lucide="settings" style="width:18px;height:18px"></i></button>
+    </div>
+
+    <!-- Bottom bar (mobile) -->
+    <div class="bottom-bar">
+      <button class="bb-btn" aria-label="Listen"><i data-lucide="music" style="width:20px;height:20px"></i></button>
+      <button class="bb-btn" aria-label="Insights"><i data-lucide="lightbulb" style="width:20px;height:20px"></i></button>
+      <button class="bb-btn" aria-label="Refresh"><i data-lucide="refresh-cw" style="width:20px;height:20px"></i></button>
+      <button class="bb-btn" aria-label="Library"><i data-lucide="library" style="width:20px;height:20px"></i></button>
+      <button class="bb-btn" aria-label="Shuffle"><i data-lucide="shuffle" style="width:20px;height:20px"></i></button>
+    </div>
+  </div>
+
+  <script>
+    /* ===== SPOTLIGHT ANIMATION ===== */
+    var prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var duration = 10000;
+    var direction = 1;
+    var lastX = 20;
+    var lastY = 15;
+    var targetX = 20 + Math.random() * 60;
+    var targetY = 10 + Math.random() * 15;
+    var transitionStart = Date.now();
+    var transitionDuration = 3000 + Math.random() * 4000;
+
+    function pickNewTarget() {
+      lastX = targetX;
+      lastY = targetY;
+      targetX = 15 + Math.random() * 70;
+      targetY = 10 + Math.random() * 20;
+      transitionStart = Date.now();
+      transitionDuration = 3000 + Math.random() * 4000;
+    }
+
+    function easeInOut(t) {
+      return t < 0.5 ? 2 * t * t : -1 + (4 - 2 * t) * t;
+    }
+
+    function animateSpotlight() {
+      if (prefersReduced) return;
+      var now = Date.now();
+      var progress = Math.min((now - transitionStart) / transitionDuration, 1);
+      var eased = easeInOut(progress);
+
+      var lightX = lastX + (targetX - lastX) * eased;
+      var lightY = lastY + (targetY - lastY) * eased;
+      var lightAngle = 15 + (lightX - 15) * 0.3;
+      var shadowX = (lightX - 50) * 0.15;
+      var shadowY = -3 - (lightY * 0.1);
+
+      document.documentElement.style.setProperty('--light-x', lightX + '%');
+      document.documentElement.style.setProperty('--light-y', lightY + '%');
+      document.documentElement.style.setProperty('--light-angle', lightAngle + 'deg');
+      document.documentElement.style.setProperty('--shadow-x', shadowX + 'px');
+      document.documentElement.style.setProperty('--shadow-y', shadowY + 'px');
+
+      if (progress >= 1) {
+        pickNewTarget();
+      }
+
+      requestAnimationFrame(animateSpotlight);
+    }
+    animateSpotlight();
+
+    /* ===== SPLASH -> ONBOARDING ===== */
+    document.getElementById('enterBtn').addEventListener('click', function () {
+      var splash = document.getElementById('splash');
+      splash.classList.add('hidden');
+      setTimeout(function () {
+        splash.style.display = 'none';
+        document.getElementById('onboarding').style.display = 'flex';
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+      }, 800);
+    });
+
+    /* ===== ONBOARDING TAP-TO-ADVANCE ===== */
+    var currentCard = 0;
+    var totalCards = 3;
+
+    document.getElementById('onboardTap').addEventListener('click', advanceCard);
+    document.getElementById('onboarding').addEventListener('click', function (e) {
+      if (e.target.id !== 'onboardTap') advanceCard();
+    });
+
+    function advanceCard() {
+      currentCard++;
+      if (currentCard >= totalCards) {
+        var ob = document.getElementById('onboarding');
+        ob.style.opacity = '0';
+        ob.style.transition = 'opacity 0.6s ease';
+        setTimeout(function () {
+          ob.style.display = 'none';
+          document.getElementById('main').style.display = 'flex';
+          if (typeof lucide !== 'undefined') lucide.createIcons();
+        }, 600);
+        return;
+      }
+      var cards = document.querySelectorAll('.onboard-card');
+      var dots = document.querySelectorAll('.onboard-dot');
+      cards.forEach(function (c) { c.classList.remove('active'); });
+      dots.forEach(function (d) { d.classList.remove('active'); });
+      cards[currentCard].classList.add('active');
+      dots[currentCard].classList.add('active');
+    }
+
+    /* ===== INIT LUCIDE ===== */
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+  </script>
+</body>
+</html>

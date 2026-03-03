@@ -133,22 +133,87 @@
     /* ── Bottom navigation bar (desktop) ── */
     .bottom-nav{display:flex;align-items:center;justify-content:center;gap:10px;padding:6px 14px;background:var(--surface);border-top:1px solid var(--border)}
 
-    /* ── Mobile bottom bar ── */
-    .mobile-bar{display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;background:var(--surface);border-top:1px solid var(--border);padding:6px 10px;padding-bottom:max(6px,env(safe-area-inset-bottom));flex-direction:column;gap:5px}
-    .mobile-bar .mobile-nav-row{display:flex;align-items:center;gap:6px}
-    .mobile-bar .mobile-nav-row .nav-btn{padding:5px 10px;font-size:12px}
-    .mobile-bar .mobile-tally{font-size:10px;color:var(--text-3);display:flex;align-items:center;gap:4px}
-    .mobile-bar .mobile-submit-compact{width:auto;padding:6px 14px;font-size:11px}
-    .mobile-bar .verdict-row{display:flex;gap:6px}
-    .mobile-bar .verdict-row .verdict-btn{flex:1;padding:12px 0;font-size:14px;border-radius:var(--r)}
-    .mobile-bar .comment-row{display:flex;gap:6px;align-items:center}
-    .mobile-bar .comment-row .comment-box{min-height:36px;flex:1;font-size:13px;padding:7px 10px;resize:none}
-    .mobile-bar .mobile-progress{display:flex;justify-content:space-between;font-size:10px;color:var(--text-3);padding:0 2px}
-    .mobile-bar .mobile-progress span{display:flex;align-items:center;gap:3px}
-    .mobile-submit-btn{padding:10px 0;border-radius:var(--r);border:1px solid var(--accent);background:var(--accent-dim);color:var(--accent);font-size:13px;font-weight:600;width:100%;transition:all .15s}
-    .mobile-submit-btn:active{background:var(--accent);color:var(--bg)}
-    .mobile-comment-toggle{width:36px;height:36px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface-2);color:var(--text-3);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
-    .mobile-comment-toggle.has-comment{color:var(--accent);border-color:var(--accent)}
+    /* ── Mobile Action Dock (Option B) ── */
+    .mobile-dock{
+      display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;
+      background:linear-gradient(to top,rgba(9,9,11,.98) 70%,transparent);
+      padding:40px 20px 20px;padding-bottom:max(20px,env(safe-area-inset-bottom));
+      flex-direction:column;align-items:center;gap:12px;
+    }
+    .dock-progress{width:100%;display:flex;align-items:center;gap:8px}
+    .dock-prog-bar{flex:1;height:3px;border-radius:2px;background:var(--surface-3);overflow:hidden}
+    .dock-prog-fill{width:0;height:100%;border-radius:2px;background:var(--accent);transition:width .3s}
+    .dock-prog-text{font-size:10px;color:var(--text-3);font-variant-numeric:tabular-nums;white-space:nowrap}
+    .dock-controls{display:flex;align-items:center;gap:0;width:100%;justify-content:center}
+    .dock-nav{
+      width:44px;height:44px;border-radius:50%;border:none;
+      background:transparent;color:var(--text-3);
+      display:flex;align-items:center;justify-content:center;
+      cursor:pointer;transition:all .15s;
+    }
+    .dock-nav:hover{color:var(--text)}
+    .dock-nav:active{transform:scale(.9)}
+    .dock-nav:disabled{opacity:.2;cursor:default}
+    .dock-nav svg{width:20px;height:20px}
+    .verdict-circle{
+      width:56px;height:56px;border-radius:50%;border:2px solid var(--border);
+      background:var(--surface-2);
+      display:flex;align-items:center;justify-content:center;
+      font-size:22px;color:var(--text-3);
+      cursor:pointer;transition:all .2s;margin:0 4px;
+    }
+    .verdict-circle:active{transform:scale(.88)}
+    .verdict-circle.vc-center{width:68px;height:68px;font-size:28px;border-color:var(--border-light)}
+    .verdict-circle.active-keep{background:var(--green-dim);border-color:var(--green);color:var(--green);box-shadow:0 0 24px rgba(34,197,94,.2)}
+    .verdict-circle.active-discard{background:var(--red-dim);border-color:var(--red);color:var(--red);box-shadow:0 0 24px rgba(239,68,68,.2)}
+    .verdict-circle.active-revisit{background:var(--purple-dim);border-color:var(--purple);color:var(--purple);box-shadow:0 0 24px rgba(168,85,247,.2)}
+    .verdict-label{font-size:9px;color:var(--text-3);margin-top:2px;text-align:center;letter-spacing:.03em}
+    .verdict-col{display:flex;flex-direction:column;align-items:center;gap:2px}
+    .dock-bottom{display:flex;align-items:center;gap:8px;width:100%}
+    .comment-trigger{
+      flex:1;display:flex;align-items:center;gap:8px;
+      padding:10px 14px;
+      background:var(--surface-2);border:1px solid var(--border);
+      border-radius:20px;cursor:pointer;transition:border-color .15s;
+    }
+    .comment-trigger:hover{border-color:var(--border-light)}
+    .comment-trigger .ct-icon{font-size:16px;color:var(--text-3)}
+    .comment-trigger .ct-text{font-size:12px;color:var(--text-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .comment-trigger.has-text .ct-text{color:var(--text-2)}
+    .comment-trigger.has-text .ct-icon{color:var(--accent)}
+    .dock-submit{
+      height:40px;padding:0 20px;border-radius:20px;border:none;
+      background:var(--accent);color:var(--bg);
+      font-size:12px;font-weight:700;font-family:inherit;
+      cursor:pointer;transition:all .15s;flex-shrink:0;
+    }
+    .dock-submit:hover{filter:brightness(1.1)}
+    .dock-submit:active{transform:scale(.95)}
+    /* Comment bottom sheet */
+    .comment-overlay{
+      position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;
+      display:none;align-items:flex-end;
+    }
+    .comment-overlay.open{display:flex}
+    .comment-sheet{
+      width:100%;background:var(--surface);
+      border-radius:16px 16px 0 0;padding:16px;
+      padding-bottom:max(16px,env(safe-area-inset-bottom));
+      display:flex;flex-direction:column;gap:10px;
+    }
+    .comment-sheet .cs-handle{width:36px;height:4px;border-radius:2px;background:var(--border);margin:0 auto 4px}
+    .comment-sheet textarea{
+      width:100%;height:100px;
+      background:var(--surface-2);border:1px solid var(--border);
+      border-radius:12px;color:var(--text);font-size:14px;
+      padding:12px;resize:none;outline:none;font-family:inherit;
+    }
+    .comment-sheet textarea:focus{border-color:var(--accent)}
+    .comment-sheet textarea::placeholder{color:var(--text-3)}
+    .comment-sheet .cs-actions{display:flex;justify-content:flex-end;gap:8px}
+    .comment-sheet .cs-btn{padding:8px 20px;border-radius:20px;border:none;font-size:12px;font-weight:600;font-family:inherit;cursor:pointer}
+    .cs-cancel{background:var(--surface-3);color:var(--text-2)}
+    .cs-save{background:var(--accent);color:var(--bg)}
 
     /* Responsive */
     @media(max-width:768px){
@@ -164,8 +229,8 @@
       .preview-title{font-size:10px}
       .preview-sub{font-size:9px}
       .bottom-nav{display:none}
-      .mobile-bar{display:flex}
-      .preview{padding-bottom:150px}
+      .mobile-dock{display:flex}
+      .preview{padding-bottom:200px}
       .edge-nav{width:44px}
     }
     ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
@@ -224,23 +289,46 @@
       </div>
     </div>
 
-    <!-- Mobile bottom bar -->
-    <div class="mobile-bar" id="mobileBar">
-      <div class="verdict-row" id="mobileVerdictRow">
-        <button class="verdict-btn" data-v="keep" onclick="setVerdict('keep')"><span class="v-icon">&#10003;</span> Keep</button>
-        <button class="verdict-btn" data-v="discard" onclick="setVerdict('discard')"><span class="v-icon">&#10007;</span> Discard</button>
-        <button class="verdict-btn" data-v="revisit" onclick="setVerdict('revisit')"><span class="v-icon">&#8635;</span> Revisit</button>
+    <!-- Mobile Action Dock (Option B) -->
+    <div class="mobile-dock" id="mobileDock">
+      <div class="dock-progress">
+        <div class="dock-prog-bar"><div class="dock-prog-fill" id="dockProgFill"></div></div>
+        <span class="dock-prog-text" id="dockProgText">--</span>
       </div>
-      <div class="mobile-nav-row">
-        <button class="nav-btn" id="prevBtnMobile" onclick="goPrev()" aria-label="Previous design"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 3L5 8l5 5"/></svg></button>
-        <span class="nav-counter" id="navCounterMobile">--</span>
-        <button class="nav-btn" id="nextBtnMobile" onclick="goNext()" aria-label="Next design"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 3l5 5-5 5"/></svg></button>
-        <span style="flex:1"></span>
-        <span class="mobile-tally"><span style="color:var(--green)">&#10003;<span id="mobileKeep">0</span></span><span style="color:var(--red)">&#10007;<span id="mobileDiscard">0</span></span><span style="color:var(--purple)">&#8635;<span id="mobileRevisit">0</span></span></span>
-        <button class="mobile-submit-btn mobile-submit-compact" onclick="submitReview()">Submit</button>
+      <div class="dock-controls">
+        <button class="dock-nav" id="prevBtnMobile" onclick="goPrev()" aria-label="Previous design"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 3L5 8l5 5"/></svg></button>
+        <div class="verdict-col">
+          <button class="verdict-circle" data-v="discard" onclick="setVerdict('discard')" aria-label="Discard">&#10007;</button>
+          <span class="verdict-label">Discard</span>
+        </div>
+        <div class="verdict-col">
+          <button class="verdict-circle vc-center" data-v="keep" onclick="setVerdict('keep')" aria-label="Keep">&#10003;</button>
+          <span class="verdict-label">Keep</span>
+        </div>
+        <div class="verdict-col">
+          <button class="verdict-circle" data-v="revisit" onclick="setVerdict('revisit')" aria-label="Revisit">&#8635;</button>
+          <span class="verdict-label">Revisit</span>
+        </div>
+        <button class="dock-nav" id="nextBtnMobile" onclick="goNext()" aria-label="Next design"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 3l5 5-5 5"/></svg></button>
       </div>
-      <div class="comment-row">
-        <textarea class="comment-box" id="mobileCommentBox" placeholder="Quick comment..." oninput="saveMobileComment()"></textarea>
+      <div class="dock-bottom">
+        <div class="comment-trigger" id="commentTrigger" onclick="openMobileComment()">
+          <span class="ct-icon">💬</span>
+          <span class="ct-text" id="commentTriggerText">Add comment...</span>
+        </div>
+        <button class="dock-submit" onclick="submitReview()">Submit</button>
+      </div>
+    </div>
+
+    <!-- Mobile comment bottom sheet -->
+    <div class="comment-overlay" id="commentOverlay" onclick="if(event.target===this)closeMobileComment()">
+      <div class="comment-sheet">
+        <div class="cs-handle"></div>
+        <textarea id="mobileCommentBox" placeholder="What do you think about this design?" oninput="saveMobileComment()"></textarea>
+        <div class="cs-actions">
+          <button class="cs-btn cs-cancel" onclick="closeMobileComment()">Cancel</button>
+          <button class="cs-btn cs-save" onclick="closeMobileComment()">Save</button>
+        </div>
       </div>
     </div>
 
@@ -657,10 +745,12 @@ function render() {
   const pbb = document.getElementById('prevBtnBottom'); if (pbb) pbb.disabled = fi <= 0;
   const nbb = document.getElementById('nextBtnBottom'); if (nbb) nbb.disabled = fi >= flatList.length - 1;
 
-  // Mobile nav
-  const ncm = document.getElementById('navCounterMobile'); if (ncm) ncm.textContent = (fi + 1) + '/' + flatList.length;
+  // Mobile nav (dock)
   const pbm = document.getElementById('prevBtnMobile'); if (pbm) pbm.disabled = fi <= 0;
   const nbm = document.getElementById('nextBtnMobile'); if (nbm) nbm.disabled = fi >= flatList.length - 1;
+  // Dock progress bar
+  const dpf = document.getElementById('dockProgFill'); if (dpf) dpf.style.width = (flatList.length ? Math.round(((fi + 1) / flatList.length) * 100) : 0) + '%';
+  const dpt = document.getElementById('dockProgText'); if (dpt) dpt.textContent = (fi + 1) + ' / ' + flatList.length;
 
   // Edge nav zones
   const enp = document.getElementById('edgeNavPrev'); if (enp) enp.disabled = fi <= 0;
@@ -679,11 +769,19 @@ function render() {
   document.querySelectorAll('.verdict-btn').forEach(b => {
     b.className = 'verdict-btn' + (rev.verdict === b.dataset.v ? ' active-' + b.dataset.v : '');
   });
+  document.querySelectorAll('.verdict-circle').forEach(b => {
+    const base = 'verdict-circle' + (b.classList.contains('vc-center') ? ' vc-center' : '');
+    b.className = base + (rev.verdict === b.dataset.v ? ' active-' + b.dataset.v : '');
+  });
 
   document.getElementById('commentBox').value = rev.comment || '';
   const ti = document.getElementById('tagsInput'); if (ti) ti.value = rev.tags || '';
   const mc = document.getElementById('mobileCommentBox'); if (mc) mc.value = rev.comment || '';
-
+  // Update comment trigger text
+  const ctt = document.getElementById('commentTriggerText');
+  if (ctt) ctt.textContent = rev.comment ? rev.comment.substring(0, 40) + (rev.comment.length > 40 ? '…' : '') : 'Add comment...';
+  const ct = document.getElementById('commentTrigger');
+  if (ct) ct.classList.toggle('has-text', !!(rev.comment));
   renderPrevFeedback(cat, opt);
   renderProgress();
 }
@@ -795,6 +893,16 @@ function saveMobileComment() {
   reviewData[opt.id].comment = document.getElementById('mobileCommentBox').value;
   document.getElementById('commentBox').value = reviewData[opt.id].comment;
   persistReview(); renderProgress();
+}
+function openMobileComment() {
+  document.getElementById('commentOverlay').classList.add('open');
+  const ta = document.getElementById('mobileCommentBox');
+  if (ta) setTimeout(() => ta.focus(), 100); // delay for sheet open animation
+}
+function closeMobileComment() {
+  document.getElementById('commentOverlay').classList.remove('open');
+  saveMobileComment();
+  render();
 }
 function saveTags() {
   const opt = curOpt();

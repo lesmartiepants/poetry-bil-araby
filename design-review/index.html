@@ -34,15 +34,17 @@
     .tb-spacer{flex:1}
 
     /* Nav buttons */
-    .nav-btn{display:inline-flex;align-items:center;gap:3px;padding:4px 10px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface-2);color:var(--text-2);font-size:11px;font-weight:500;transition:all .15s;white-space:nowrap}
-    .nav-btn:hover:not(:disabled){background:var(--surface-3);color:var(--text);border-color:var(--border-light)}
+    .nav-btn{display:inline-flex;align-items:center;gap:5px;padding:7px 16px;border-radius:var(--r);border:1px solid var(--border);background:var(--surface-2);color:var(--text-2);font-size:13px;font-weight:500;transition:all .15s;white-space:nowrap}
+    .nav-btn:hover:not(:disabled){background:var(--surface-3);color:var(--text);border-color:var(--border-light);transform:translateY(-1px)}
+    .nav-btn:active:not(:disabled){transform:translateY(0)}
     .nav-btn:disabled{opacity:.3;cursor:default}
-    .nav-btn svg{width:12px;height:12px}
-    .nav-counter{font-size:11px;color:var(--text-3);font-variant-numeric:tabular-nums;min-width:44px;text-align:center}
+    .nav-btn svg{width:14px;height:14px}
+    .nav-counter{font-size:13px;color:var(--text-2);font-weight:500;font-variant-numeric:tabular-nums;min-width:50px;text-align:center}
 
     /* Submit */
-    .submit-btn{padding:4px 12px;border-radius:var(--r-sm);border:1px solid var(--accent);background:var(--accent-dim);color:var(--accent);font-size:11px;font-weight:600;transition:all .15s}
-    .submit-btn:hover{background:var(--accent);color:var(--bg)}
+    .submit-btn{padding:7px 18px;border-radius:var(--r);border:1px solid var(--accent);background:var(--accent-dim);color:var(--accent);font-size:12px;font-weight:600;transition:all .15s}
+    .submit-btn:hover{background:var(--accent);color:var(--bg);transform:translateY(-1px);box-shadow:0 4px 12px rgba(212,168,75,.25)}
+    .submit-btn:active{transform:translateY(0)}
 
     /* ── Main area ── */
     .main{display:flex;overflow:hidden}
@@ -56,7 +58,7 @@
     .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:12px;padding:40px;text-align:center}
     .empty-state h2{font-size:16px;font-weight:600}
     .empty-state p{font-size:13px;color:var(--text-2);max-width:340px;line-height:1.5}
-    .icon-btn{width:24px;height:24px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface-2);color:var(--text-3);display:inline-flex;align-items:center;justify-content:center;font-size:12px;transition:all .12s}
+    .icon-btn{width:28px;height:28px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface-2);color:var(--text-3);display:inline-flex;align-items:center;justify-content:center;font-size:14px;transition:all .12s}
     .icon-btn:hover{background:var(--surface-3);color:var(--text);border-color:var(--border-light)}
 
     /* ── Side panel ── */
@@ -71,14 +73,15 @@
     .info-k{color:var(--text-3)}.info-v{color:var(--text);font-weight:500}
 
     /* Verdict buttons */
-    .verdict-group{display:flex;gap:6px;margin-bottom:10px}
-    .verdict-btn{flex:1;padding:8px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface-2);font-size:12px;font-weight:600;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:4px}
-    .verdict-btn:hover{border-color:var(--border-light)}
-    .verdict-btn.active-keep{background:var(--green-dim);border-color:var(--green);color:var(--green)}
-    .verdict-btn.active-discard{background:var(--red-dim);border-color:var(--red);color:var(--red)}
-    .verdict-btn.active-skip{background:var(--blue-dim);border-color:var(--blue);color:var(--blue)}
-    .verdict-btn.active-revisit{background:var(--purple-dim);border-color:var(--purple);color:var(--purple)}
-    .verdict-btn .v-icon{font-size:14px}
+    .verdict-group{display:flex;gap:8px;margin-bottom:10px}
+    .verdict-btn{flex:1;padding:10px 8px;border-radius:var(--r);border:1px solid var(--border);background:var(--surface-2);font-size:13px;font-weight:600;transition:all .18s;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer}
+    .verdict-btn:hover{border-color:var(--border-light);transform:translateY(-1px);box-shadow:0 3px 10px rgba(0,0,0,.2)}
+    .verdict-btn:active{transform:translateY(0)}
+    .verdict-btn.active-keep{background:var(--green-dim);border-color:var(--green);color:var(--green);box-shadow:0 0 16px rgba(34,197,94,.15)}
+    .verdict-btn.active-discard{background:var(--red-dim);border-color:var(--red);color:var(--red);box-shadow:0 0 16px rgba(239,68,68,.15)}
+    .verdict-btn.active-skip{background:var(--blue-dim);border-color:var(--blue);color:var(--blue);box-shadow:0 0 16px rgba(59,130,246,.15)}
+    .verdict-btn.active-revisit{background:var(--purple-dim);border-color:var(--purple);color:var(--purple);box-shadow:0 0 16px rgba(168,85,247,.15)}
+    .verdict-btn .v-icon{font-size:16px}
 
     /* Generation badges */
     .gen-badge{display:inline-block;padding:1px 6px;border-radius:3px;font-size:9px;font-weight:700;letter-spacing:.03em;vertical-align:middle;margin-left:4px}
@@ -119,47 +122,118 @@
     .kbd{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 4px;border-radius:3px;background:var(--surface-3);border:1px solid var(--border);font-size:9px;font-weight:600;color:var(--text-3);font-family:inherit}
 
     /* ── Edge nav zones (thumb-friendly prev/next) ── */
-    .edge-nav{position:absolute;top:0;bottom:0;width:48px;z-index:10;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0;transition:opacity .2s;-webkit-tap-highlight-color:transparent}
+    .edge-nav{position:absolute;top:0;bottom:0;width:60px;z-index:10;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0;transition:opacity .2s;-webkit-tap-highlight-color:transparent}
     .edge-nav:hover,.edge-nav:active,.edge-nav:focus-visible{opacity:1}
     .edge-nav:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
-    .edge-nav.left{left:0;border-radius:0 var(--r) var(--r) 0;background:linear-gradient(to right,rgba(0,0,0,.35),transparent)}
-    .edge-nav.right{right:0;border-radius:var(--r) 0 0 var(--r);background:linear-gradient(to left,rgba(0,0,0,.35),transparent)}
-    .edge-nav svg{width:20px;height:20px;stroke:var(--text);opacity:.85;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))}
+    .edge-nav.left{left:0;border-radius:0 var(--r) var(--r) 0;background:linear-gradient(to right,rgba(0,0,0,.4),transparent)}
+    .edge-nav.right{right:0;border-radius:var(--r) 0 0 var(--r);background:linear-gradient(to left,rgba(0,0,0,.4),transparent)}
+    .edge-nav svg{width:24px;height:24px;stroke:var(--text);opacity:.9;filter:drop-shadow(0 1px 3px rgba(0,0,0,.6))}
     .edge-nav:disabled{cursor:default;opacity:0!important}
 
     /* ── Bottom navigation bar (desktop) ── */
-    .bottom-nav{display:flex;align-items:center;justify-content:center;gap:8px;padding:4px 14px;background:var(--surface);border-top:1px solid var(--border)}
+    .bottom-nav{display:flex;align-items:center;justify-content:center;gap:10px;padding:6px 14px;background:var(--surface);border-top:1px solid var(--border)}
 
-    /* ── Mobile bottom bar ── */
-    .mobile-bar{display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;background:var(--surface);border-top:1px solid var(--border);padding:8px 12px;padding-bottom:max(8px,env(safe-area-inset-bottom));flex-direction:column;gap:6px}
-    .mobile-bar .mobile-nav-row{display:flex;align-items:center;justify-content:center;gap:8px}
-    .mobile-bar .verdict-row{display:flex;gap:6px}
-    .mobile-bar .verdict-row .verdict-btn{flex:1;padding:10px 0;font-size:13px}
-    .mobile-bar .comment-row{display:flex;gap:6px;align-items:flex-start}
-    .mobile-bar .comment-row .comment-box{min-height:38px;flex:1;font-size:13px}
-    .mobile-bar .mobile-progress{display:flex;justify-content:space-between;font-size:10px;color:var(--text-3);padding:0 2px}
-    .mobile-bar .mobile-progress span{display:flex;align-items:center;gap:3px}
-    .mobile-submit-btn{padding:10px 0;border-radius:var(--r-sm);border:1px solid var(--accent);background:var(--accent-dim);color:var(--accent);font-size:12px;font-weight:600;width:100%}
-    .mobile-comment-toggle{width:38px;height:38px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface-2);color:var(--text-3);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
-    .mobile-comment-toggle.has-comment{color:var(--accent);border-color:var(--accent)}
+    /* ── Mobile Action Dock (Option B) ── */
+    .mobile-dock{
+      display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;
+      background:linear-gradient(to top,rgba(9,9,11,.98) 70%,transparent);
+      padding:40px 20px 20px;padding-bottom:max(20px,env(safe-area-inset-bottom));
+      flex-direction:column;align-items:center;gap:12px;
+    }
+    .dock-progress{width:100%;display:flex;align-items:center;gap:8px}
+    .dock-prog-bar{flex:1;height:3px;border-radius:2px;background:var(--surface-3);overflow:hidden}
+    .dock-prog-fill{width:0;height:100%;border-radius:2px;background:var(--accent);transition:width .3s}
+    .dock-prog-text{font-size:10px;color:var(--text-3);font-variant-numeric:tabular-nums;white-space:nowrap}
+    .dock-controls{display:flex;align-items:center;gap:0;width:100%;justify-content:space-between}
+    .dock-nav{
+      width:56px;height:56px;border-radius:50%;border:none;
+      background:var(--surface-2);color:var(--text-3);
+      display:flex;align-items:center;justify-content:center;
+      cursor:pointer;transition:all .15s;flex-shrink:0;
+    }
+    .dock-nav:hover{color:var(--text);background:var(--surface-3)}
+    .dock-nav:active{transform:scale(.9)}
+    .dock-nav:disabled{opacity:.2;cursor:default;background:transparent}
+    .dock-nav svg{width:22px;height:22px}
+    .verdict-circle{
+      width:56px;height:56px;border-radius:50%;border:2px solid var(--border);
+      background:var(--surface-2);
+      display:flex;align-items:center;justify-content:center;
+      font-size:22px;color:var(--text-3);
+      cursor:pointer;transition:all .2s;margin:0 4px;
+    }
+    .verdict-circle:active{transform:scale(.88)}
+    .verdict-circle.vc-center{width:68px;height:68px;font-size:28px;border-color:var(--border-light)}
+    .verdict-circle.active-keep{background:var(--green-dim);border-color:var(--green);color:var(--green);box-shadow:0 0 24px rgba(34,197,94,.2)}
+    .verdict-circle.active-discard{background:var(--red-dim);border-color:var(--red);color:var(--red);box-shadow:0 0 24px rgba(239,68,68,.2)}
+    .verdict-circle.active-revisit{background:var(--purple-dim);border-color:var(--purple);color:var(--purple);box-shadow:0 0 24px rgba(168,85,247,.2)}
+    .verdict-label{font-size:9px;color:var(--text-3);margin-top:2px;text-align:center;letter-spacing:.03em}
+    .verdict-col{display:flex;flex-direction:column;align-items:center;gap:2px}
+    .dock-bottom{display:flex;align-items:center;gap:8px;width:100%}
+    .comment-trigger{
+      flex:1;display:flex;align-items:center;gap:8px;
+      padding:10px 14px;
+      background:var(--surface-2);border:1px solid var(--border);
+      border-radius:20px;cursor:pointer;transition:border-color .15s;
+    }
+    .comment-trigger:hover{border-color:var(--border-light)}
+    .comment-trigger .ct-icon{color:var(--text-3);display:flex;align-items:center}
+    .comment-trigger .ct-icon svg{width:18px;height:18px}
+    .comment-trigger .ct-text{font-size:12px;color:var(--text-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .comment-trigger.has-text .ct-text{color:var(--text-2)}
+    .comment-trigger.has-text .ct-icon{color:var(--accent)}
+    .dock-submit{
+      height:40px;padding:0 20px;border-radius:20px;border:none;
+      background:var(--accent);color:var(--bg);
+      font-size:12px;font-weight:700;font-family:inherit;
+      cursor:pointer;transition:all .15s;flex-shrink:0;
+    }
+    .dock-submit:hover{filter:brightness(1.1)}
+    .dock-submit:active{transform:scale(.95)}
+    /* Comment bottom sheet */
+    .comment-overlay{
+      position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;
+      display:none;align-items:flex-end;
+    }
+    .comment-overlay.open{display:flex}
+    .comment-sheet{
+      width:100%;background:var(--surface);
+      border-radius:16px 16px 0 0;padding:16px;
+      padding-bottom:max(16px,env(safe-area-inset-bottom));
+      display:flex;flex-direction:column;gap:10px;
+    }
+    .comment-sheet .cs-handle{width:36px;height:4px;border-radius:2px;background:var(--border);margin:0 auto 4px}
+    .comment-sheet textarea{
+      width:100%;height:100px;
+      background:var(--surface-2);border:1px solid var(--border);
+      border-radius:12px;color:var(--text);font-size:14px;
+      padding:12px;resize:none;outline:none;font-family:inherit;
+    }
+    .comment-sheet textarea:focus{border-color:var(--accent)}
+    .comment-sheet textarea::placeholder{color:var(--text-3)}
+    .comment-sheet .cs-actions{display:flex;justify-content:flex-end;gap:8px}
+    .comment-sheet .cs-btn{padding:8px 20px;border-radius:20px;border:none;font-size:12px;font-weight:600;font-family:inherit;cursor:pointer}
+    .cs-cancel{background:var(--surface-3);color:var(--text-2)}
+    .cs-save{background:var(--accent);color:var(--bg)}
+    @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 
     /* Responsive */
     @media(max-width:768px){
       .side{display:none}
       .tb-sep{display:none}
-      .tb-select{min-width:90px;font-size:10px}
+      .tb-select{min-width:90px;font-size:11px}
       .toolbar{padding:5px 8px;gap:4px}
       .toolbar .tb-label{font-size:8px}
       .toolbar .submit-btn{display:none}
       .toolbar .icon-btn{display:none}
+      .toolbar .tb-group{display:none}
       .preview-header{padding:4px 10px;min-height:28px}
       .preview-title{font-size:10px}
       .preview-sub{font-size:9px}
       .bottom-nav{display:none}
-      .mobile-bar{display:flex}
-      .preview{padding-bottom:160px}
-      .nav-btn{padding:4px 6px;font-size:10px}
-      .nav-counter{font-size:10px;min-width:36px}
+      .mobile-dock{display:flex}
+      .preview{padding-bottom:200px}
+      .edge-nav{width:44px}
     }
     ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
   </style>
@@ -217,25 +291,46 @@
       </div>
     </div>
 
-    <!-- Mobile bottom bar -->
-    <div class="mobile-bar" id="mobileBar">
-      <div class="mobile-nav-row">
-        <button class="nav-btn" id="prevBtnMobile" onclick="goPrev()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:14px;height:14px"><path d="M10 3L5 8l5 5"/></svg>Prev</button>
-        <span class="nav-counter" id="navCounterMobile">--</span>
-        <button class="nav-btn" id="nextBtnMobile" onclick="goNext()">Next<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:14px;height:14px"><path d="M6 3l5 5-5 5"/></svg></button>
+    <!-- Mobile Action Dock (Option B) -->
+    <div class="mobile-dock" id="mobileDock">
+      <div class="dock-progress">
+        <div class="dock-prog-bar"><div class="dock-prog-fill" id="dockProgFill"></div></div>
+        <span class="dock-prog-text" id="dockProgText">--</span>
       </div>
-      <div class="verdict-row" id="mobileVerdictRow">
-        <button class="verdict-btn" data-v="keep" onclick="setVerdict('keep')"><span class="v-icon">&#10003;</span> Keep</button>
-        <button class="verdict-btn" data-v="discard" onclick="setVerdict('discard')"><span class="v-icon">&#10007;</span> Discard</button>
-        <button class="verdict-btn" data-v="revisit" onclick="setVerdict('revisit')"><span class="v-icon">&#8635;</span> Revisit</button>
+      <div class="dock-controls">
+        <button class="dock-nav" id="prevBtnMobile" onclick="goPrev()" aria-label="Previous design"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 3L5 8l5 5"/></svg></button>
+        <div class="verdict-col">
+          <button class="verdict-circle" data-v="discard" onclick="setVerdict('discard')" aria-label="Discard">&#10007;</button>
+          <span class="verdict-label">Discard</span>
+        </div>
+        <div class="verdict-col">
+          <button class="verdict-circle vc-center" data-v="keep" onclick="setVerdict('keep')" aria-label="Keep">&#10003;</button>
+          <span class="verdict-label">Keep</span>
+        </div>
+        <div class="verdict-col">
+          <button class="verdict-circle" data-v="revisit" onclick="setVerdict('revisit')" aria-label="Revisit">&#8635;</button>
+          <span class="verdict-label">Revisit</span>
+        </div>
+        <button class="dock-nav" id="nextBtnMobile" onclick="goNext()" aria-label="Next design"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 3l5 5-5 5"/></svg></button>
       </div>
-      <div class="comment-row">
-        <textarea class="comment-box" id="mobileCommentBox" placeholder="Comment..." oninput="saveMobileComment()"></textarea>
-        <button class="mobile-submit-btn" onclick="submitReview()" style="width:auto;padding:10px 14px">Submit</button>
+      <div class="dock-bottom">
+        <div class="comment-trigger" id="commentTrigger" onclick="openMobileComment()">
+          <span class="ct-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
+          <span class="ct-text" id="commentTriggerText">Add comment...</span>
+        </div>
+        <button class="dock-submit" onclick="submitReview()">Submit</button>
       </div>
-      <div class="mobile-progress">
-        <span id="mobileProgLabel">0/0</span>
-        <span><span style="color:var(--green)">&#10003;<span id="mobileKeep">0</span></span> &nbsp;<span style="color:var(--red)">&#10007;<span id="mobileDiscard">0</span></span> &nbsp;<span style="color:var(--purple)">&#8635;<span id="mobileRevisit">0</span></span></span>
+    </div>
+
+    <!-- Mobile comment bottom sheet -->
+    <div class="comment-overlay" id="commentOverlay" onclick="if(event.target===this)closeMobileComment()">
+      <div class="comment-sheet">
+        <div class="cs-handle"></div>
+        <textarea id="mobileCommentBox" placeholder="What do you think about this design?" oninput="saveMobileComment()"></textarea>
+        <div class="cs-actions">
+          <button class="cs-btn cs-cancel" onclick="closeMobileComment()">Cancel</button>
+          <button class="cs-btn cs-save" onclick="closeMobileComment()">Save</button>
+        </div>
       </div>
     </div>
 
@@ -640,7 +735,7 @@ function navigateToFlat(fi) {
 // ═══════════════════════════════════════════════════════════════
 // RENDER
 // ═══════════════════════════════════════════════════════════════
-function render() {
+function render(skipPreview) {
   const cat = curCat(), opt = curOpt(), fi = currentFlatIdx(), rev = getReview(opt.id);
 
   document.getElementById('navCounter').textContent = (fi + 1) + ' of ' + flatList.length;
@@ -652,16 +747,18 @@ function render() {
   const pbb = document.getElementById('prevBtnBottom'); if (pbb) pbb.disabled = fi <= 0;
   const nbb = document.getElementById('nextBtnBottom'); if (nbb) nbb.disabled = fi >= flatList.length - 1;
 
-  // Mobile nav
-  const ncm = document.getElementById('navCounterMobile'); if (ncm) ncm.textContent = (fi + 1) + '/' + flatList.length;
+  // Mobile nav (dock)
   const pbm = document.getElementById('prevBtnMobile'); if (pbm) pbm.disabled = fi <= 0;
   const nbm = document.getElementById('nextBtnMobile'); if (nbm) nbm.disabled = fi >= flatList.length - 1;
+  // Dock progress bar
+  const dpf = document.getElementById('dockProgFill'); if (dpf) dpf.style.width = (flatList.length ? Math.round(((fi + 1) / flatList.length) * 100) : 0) + '%';
+  const dpt = document.getElementById('dockProgText'); if (dpt) dpt.textContent = (fi + 1) + ' / ' + flatList.length;
 
   // Edge nav zones
   const enp = document.getElementById('edgeNavPrev'); if (enp) enp.disabled = fi <= 0;
   const enn = document.getElementById('edgeNavNext'); if (enn) enn.disabled = fi >= flatList.length - 1;
 
-  loadPreview(opt, cat);
+  if (!skipPreview) loadPreview(opt, cat);
 
   document.getElementById('infoComp').textContent = curComp().component;
   document.getElementById('infoCat').textContent = cat.name;
@@ -674,11 +771,19 @@ function render() {
   document.querySelectorAll('.verdict-btn').forEach(b => {
     b.className = 'verdict-btn' + (rev.verdict === b.dataset.v ? ' active-' + b.dataset.v : '');
   });
+  document.querySelectorAll('.verdict-circle').forEach(b => {
+    const base = 'verdict-circle' + (b.classList.contains('vc-center') ? ' vc-center' : '');
+    b.className = base + (rev.verdict === b.dataset.v ? ' active-' + b.dataset.v : '');
+  });
 
   document.getElementById('commentBox').value = rev.comment || '';
   const ti = document.getElementById('tagsInput'); if (ti) ti.value = rev.tags || '';
   const mc = document.getElementById('mobileCommentBox'); if (mc) mc.value = rev.comment || '';
-
+  // Update comment trigger text
+  const ctt = document.getElementById('commentTriggerText');
+  if (ctt) ctt.textContent = rev.comment ? rev.comment.substring(0, 40) + (rev.comment.length > 40 ? '…' : '') : 'Add comment...';
+  const ct = document.getElementById('commentTrigger');
+  if (ct) ct.classList.toggle('has-text', !!(rev.comment));
   renderPrevFeedback(cat, opt);
   renderProgress();
 }
@@ -775,7 +880,7 @@ function setVerdict(v) {
   const opt = curOpt();
   if (!reviewData[opt.id]) reviewData[opt.id] = { verdict: null, comment: '', tags: '' };
   reviewData[opt.id].verdict = reviewData[opt.id].verdict === v ? null : v;
-  persistReview(); render();
+  persistReview(); render(true);
 }
 function saveComment() {
   const opt = curOpt();
@@ -790,6 +895,16 @@ function saveMobileComment() {
   reviewData[opt.id].comment = document.getElementById('mobileCommentBox').value;
   document.getElementById('commentBox').value = reviewData[opt.id].comment;
   persistReview(); renderProgress();
+}
+function openMobileComment() {
+  document.getElementById('commentOverlay').classList.add('open');
+  const ta = document.getElementById('mobileCommentBox');
+  if (ta) setTimeout(() => ta.focus(), 100); // delay for sheet open animation
+}
+function closeMobileComment() {
+  document.getElementById('commentOverlay').classList.remove('open');
+  saveMobileComment();
+  render(true);
 }
 function saveTags() {
   const opt = curOpt();
@@ -827,26 +942,15 @@ async function submitReview() {
     }
   });
 
-  // Finalize via API
-  if (apiAvailable && currentSession) {
-    try {
-      await syncVerdictsToAPI();
-      await fetch(API_BASE + '/api/design-review/sessions/' + currentSession.id, {
-        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'completed', reviewed_count: reviewed })
-      });
-    } catch {}
-  }
-
   // Build markdown
   let md = '## Design Review Feedback\n\n';
   md += '**Date:** ' + new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString() + '\n';
   md += '**Reviewed:** ' + reviewed + ' of ' + flatList.length + ' designs\n';
   md += '**Round:** ' + (currentSession ? currentSession.round_number : 'N/A') + '\n\n';
 
-  const byV = { keep: [], discard: [], revisit: [] };
+  const byV = { keep: [], discard: [], revisit: [], undecided: [] };
   decisions.forEach(d => { if (byV[d.verdict]) byV[d.verdict].push(d); });
-  for (const [v, label] of [['keep','Keep'],['discard','Discard'],['revisit','Revisit']]) {
+  for (const [v, label] of [['keep','Keep'],['discard','Discard'],['revisit','Revisit'],['undecided','Comment Only']]) {
     if (byV[v] && byV[v].length) {
       md += '### ' + label + ' (' + byV[v].length + ')\n\n| Component | Option | Gen | Comment |\n|---|---|---|---|\n';
       byV[v].forEach(d => { md += '| ' + d.componentName + ' | ' + d.optionName + ' | ' + d.generation + ' | ' + (d.comment || '--') + ' |\n'; });
@@ -854,32 +958,36 @@ async function submitReview() {
     }
   }
 
-  // Show modal using DOM methods
+  // Show modal
   const overlay = document.createElement('div');
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
   overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
 
   const modal = document.createElement('div');
-  modal.style.cssText = 'background:var(--surface);border:1px solid var(--border);border-radius:var(--r);max-width:700px;width:100%;max-height:80vh;overflow-y:auto;padding:24px';
+  modal.style.cssText = 'background:var(--surface);border:1px solid var(--border);border-radius:12px;max-width:700px;width:100%;max-height:85vh;overflow-y:auto;padding:24px;position:relative';
+
+  // Close button (✕)
+  const closeBtn = document.createElement('button');
+  closeBtn.style.cssText = 'position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--surface-2);color:var(--text-2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s';
+  closeBtn.textContent = '\u2715';
+  closeBtn.addEventListener('click', () => overlay.remove());
+  closeBtn.addEventListener('mouseenter', () => { closeBtn.style.background = 'var(--surface-3)'; closeBtn.style.color = 'var(--text)'; });
+  closeBtn.addEventListener('mouseleave', () => { closeBtn.style.background = 'var(--surface-2)'; closeBtn.style.color = 'var(--text-2)'; });
+  modal.appendChild(closeBtn);
 
   const h = document.createElement('h3');
-  h.style.cssText = 'margin-bottom:12px;font-size:16px';
-  h.textContent = 'Review Complete' + (currentSession ? ' \u2014 Round ' + currentSession.round_number : '');
+  h.style.cssText = 'margin-bottom:12px;font-size:16px;padding-right:40px';
+  h.textContent = 'Review Summary' + (currentSession ? ' \u2014 Round ' + currentSession.round_number : '');
   modal.appendChild(h);
 
   const stats = document.createElement('div');
   stats.style.cssText = 'display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;font-size:13px';
-  stats.textContent = '';
   [['var(--green)', '\u2713 ' + keeps + ' keep'], ['var(--red)', '\u2717 ' + discards + ' discard'],
    ['var(--purple)', '\u21BB ' + revisits + ' revisit'],
    ['var(--text-3)', (flatList.length - reviewed) + ' unreviewed']].forEach(([c, t]) => {
     const s = document.createElement('span'); s.style.color = c; s.textContent = t; stats.appendChild(s);
   });
   modal.appendChild(stats);
-
-  if (apiAvailable) {
-    const db = document.createElement('div'); db.style.cssText = 'font-size:11px;color:var(--green);margin-bottom:12px'; db.textContent = '\u2713 Saved to database'; modal.appendChild(db);
-  }
 
   // Visual summary of all reviewed items
   if (decisions.length > 0) {
@@ -891,14 +999,14 @@ async function submitReview() {
     const summaryList = document.createElement('div');
     summaryList.style.cssText = 'max-height:200px;overflow-y:auto;margin-bottom:16px;display:flex;flex-direction:column;gap:4px';
 
-    const verdictColors = { keep: 'var(--green)', discard: 'var(--red)', revisit: 'var(--purple)', undecided: 'var(--text-3)' };
-    const verdictIcons = { keep: '\u2713', discard: '\u2717', revisit: '\u21BB', undecided: '?' };
+    const verdictColors = { keep: 'var(--green)', discard: 'var(--red)', revisit: 'var(--purple)', undecided: 'var(--accent)' };
+    const verdictIcons = { keep: '\u2713', discard: '\u2717', revisit: '\u21BB', undecided: '\u2709' };
     decisions.forEach(d => {
       const item = document.createElement('div');
       item.style.cssText = 'display:flex;align-items:flex-start;gap:8px;padding:6px 8px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-sm);font-size:12px';
 
       const badge = document.createElement('span');
-      const verdictBgColors = { keep: 'var(--green-dim)', discard: 'var(--red-dim)', revisit: 'var(--purple-dim)', undecided: 'var(--surface-3)' };
+      const verdictBgColors = { keep: 'var(--green-dim)', discard: 'var(--red-dim)', revisit: 'var(--purple-dim)', undecided: 'var(--accent-dim)' };
       badge.style.cssText = 'flex-shrink:0;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:' + (verdictColors[d.verdict] || 'var(--text-3)') + ';background:' + (verdictBgColors[d.verdict] || 'var(--surface-3)');
       badge.textContent = verdictIcons[d.verdict] || '?';
       item.appendChild(badge);
@@ -915,7 +1023,7 @@ async function submitReview() {
       info.appendChild(compEl);
       if (d.comment) {
         const commentEl = document.createElement('div');
-        commentEl.style.cssText = 'font-size:11px;color:var(--text-2);margin-top:2px;white-space:pre-wrap';
+        commentEl.style.cssText = 'font-size:11px;color:var(--text-2);margin-top:2px;white-space:pre-wrap;padding-left:12px;border-left:2px solid var(--accent-dim)';
         commentEl.textContent = d.comment;
         info.appendChild(commentEl);
       }
@@ -926,11 +1034,44 @@ async function submitReview() {
     modal.appendChild(summaryList);
   }
 
+  // Action buttons row
   const btns = document.createElement('div');
-  btns.style.cssText = 'display:flex;gap:8px;margin-bottom:16px';
-  [['Copy Markdown', 'md', true], ['Copy JSON', 'json', false], ['Download JSON', 'dl', false]].forEach(([label, type, primary]) => {
+  btns.style.cssText = 'display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap';
+
+  // Send to Backend button
+  const sendBtn = document.createElement('button');
+  sendBtn.style.cssText = 'padding:10px 24px;border-radius:var(--r);font-size:13px;font-weight:700;cursor:pointer;border:none;background:var(--accent);color:var(--bg);transition:all .15s;display:flex;align-items:center;gap:6px';
+  sendBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg> Send to Backend';
+  sendBtn.addEventListener('click', async () => {
+    sendBtn.disabled = true;
+    sendBtn.style.opacity = '.7';
+    sendBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="animation:spin .8s linear infinite"><circle cx="12" cy="12" r="10" stroke-dasharray="40" stroke-dashoffset="10"/></svg> Sending\u2026';
+    try {
+      if (apiAvailable && currentSession) {
+        await syncVerdictsToAPI();
+        const res = await fetch(API_BASE + '/api/design-review/sessions/' + currentSession.id, {
+          method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'completed', reviewed_count: reviewed })
+        });
+        if (!res.ok) throw new Error('API returned ' + res.status);
+      } else {
+        throw new Error('Backend not available');
+      }
+      sendBtn.style.background = 'var(--green)';
+      sendBtn.style.opacity = '1';
+      sendBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Saved Successfully';
+    } catch (err) {
+      sendBtn.style.background = 'var(--red)';
+      sendBtn.style.opacity = '1';
+      sendBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg> Error \u2014 ' + (err.message || 'Failed');
+      sendBtn.disabled = false;
+    }
+  });
+  btns.appendChild(sendBtn);
+
+  [['Copy Markdown', 'md'], ['Copy JSON', 'json'], ['Download JSON', 'dl']].forEach(([label, type]) => {
     const b = document.createElement('button');
-    b.style.cssText = 'padding:8px 16px;border-radius:var(--r-sm);font-size:12px;font-weight:600;cursor:pointer;border:1px solid ' + (primary ? 'var(--accent)' : 'var(--border)') + ';background:' + (primary ? 'var(--accent-dim)' : 'var(--surface-2)') + ';color:' + (primary ? 'var(--accent)' : 'var(--text-2)');
+    b.style.cssText = 'padding:8px 16px;border-radius:var(--r-sm);font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--surface-2);color:var(--text-2);transition:all .15s';
     b.textContent = label;
     b.addEventListener('click', () => type === 'dl' ? downloadJSON() : copyToClipboard(type));
     btns.appendChild(b);

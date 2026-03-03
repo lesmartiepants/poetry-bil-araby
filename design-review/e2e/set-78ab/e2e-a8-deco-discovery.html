@@ -11,15 +11,16 @@
   /* ---- Reset & Custom Properties ---- */
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
-    --sand: #E8D5B7; --sienna: #A0522D; --desert-night: #1A0F0A;
-    --oasis: #2D7B6F; --gold: #C5A059;
-    --sand-light: #F5EDE0; --sienna-dark: #6B3720;
-    --bg: var(--desert-night); --fg: var(--sand); --card-bg: rgba(26,15,10,0.85);
-    --card-border: var(--sienna); --glow: var(--oasis);
+    /* Fort / sandstone palette aligned */
+    --sand: #F5E6C8; --gold: #C4A265; --gold-dark: #8B6914;
+    --fort-dark: #2C1810; --fort-deep: #1a1a2e;
+    --sand-light: #FAF3E0; --sienna: #8B6914;
+    --bg: var(--fort-deep); --fg: var(--sand); --card-bg: rgba(28,20,10,0.88);
+    --card-border: var(--gold); --glow: var(--gold-dark);
   }
   [data-theme="light"] {
-    --bg: var(--sand-light); --fg: var(--desert-night); --card-bg: rgba(255,255,255,0.92);
-    --card-border: var(--gold); --glow: var(--oasis);
+    --bg: var(--sand-light); --fg: var(--fort-dark); --card-bg: rgba(255,255,255,0.93);
+    --card-border: var(--gold); --glow: var(--gold-dark);
   }
   html { font-size: 16px; scroll-behavior: smooth; }
   body {
@@ -36,7 +37,7 @@
   /* ---- Splash Screen ---- */
   .splash {
     position: fixed; inset: 0; z-index: 1000;
-    background: linear-gradient(180deg, #0D0A14 0%, #1A0F0A 40%, #3D2B1F 100%);
+    background: linear-gradient(180deg, #1a1a2e 0%, #2C1810 45%, #4A2E18 100%);
     display: flex; align-items: center; justify-content: center; flex-direction: column;
     transition: opacity 1s ease-out; will-change: opacity;
   }
@@ -57,19 +58,19 @@
     will-change: transform;
   }
   .dune-1 {
-    height: 25%; background: var(--sienna); border-radius: 55% 75% 0 0 / 100% 100% 0 0;
+    height: 25%; background: #8B6914; border-radius: 55% 75% 0 0 / 100% 100% 0 0;
     animation: dune-drift-1 10s ease-in-out infinite alternate; z-index: 4;
   }
   .dune-2 {
-    height: 33%; background: #4A2A15; border-radius: 75% 45% 0 0 / 100% 100% 0 0;
+    height: 33%; background: #5A4010; border-radius: 75% 45% 0 0 / 100% 100% 0 0;
     animation: dune-drift-2 14s ease-in-out infinite alternate; z-index: 3;
   }
   .dune-3 {
-    height: 40%; background: #3D2B1F; border-radius: 45% 65% 0 0 / 100% 100% 0 0;
+    height: 40%; background: #3D2C0E; border-radius: 45% 65% 0 0 / 100% 100% 0 0;
     animation: dune-drift-3 18s ease-in-out infinite alternate; z-index: 2;
   }
   .dune-4 {
-    height: 48%; background: #2E1F14; border-radius: 65% 50% 0 0 / 100% 100% 0 0;
+    height: 48%; background: #2C1810; border-radius: 65% 50% 0 0 / 100% 100% 0 0;
     animation: dune-drift-4 23s ease-in-out infinite alternate; z-index: 1;
   }
   @keyframes dune-drift-1 { 0% { transform: translateX(0); } 100% { transform: translateX(18px); } }
@@ -136,18 +137,18 @@
   .wt-step strong { color: var(--gold); font-weight: 700; }
   .wt-step .step-num {
     display: inline-flex; align-items: center; justify-content: center;
-    width: 30px; height: 30px; background: var(--oasis); color: #fff;
+    width: 30px; height: 30px; background: var(--gold-dark); color: var(--sand);
     border-radius: 50%; font-size: 0.85rem; font-weight: 700; margin-left: 0.6rem;
   }
 
   .wt-enter {
     margin-top: 2rem; padding: 0.9rem 2.8rem; min-height: 48px; min-width: 48px;
-    background: var(--oasis); color: #fff; border: none; border-radius: 30px;
-    font-family: 'Tajawal', sans-serif; font-size: 1.1rem; font-weight: 500;
+    background: var(--gold); color: var(--fort-dark); border: none; border-radius: 30px;
+    font-family: 'Tajawal', sans-serif; font-size: 1.1rem; font-weight: 700;
     cursor: pointer; transition: transform 0.2s, box-shadow 0.3s;
     touch-action: manipulation;
   }
-  .wt-enter:hover { transform: scale(1.05); box-shadow: 0 6px 28px rgba(45,123,111,0.4); }
+  .wt-enter:hover { transform: scale(1.05); box-shadow: 0 6px 28px rgba(196,162,101,0.5); }
   .wt-enter:active { transform: scale(0.97); }
 
   /* ---- Main Application ---- */
@@ -285,14 +286,14 @@
   </svg>
 
   <!-- ======== Splash Screen ======== -->
-  <div class="splash" id="splash" role="status" aria-label="Loading desert mirage">
+  <div class="splash" id="splash" role="status" aria-label="Loading Poetry bil Araby">
     <div class="stars" id="stars" aria-hidden="true"></div>
     <div class="dune dune-4" aria-hidden="true"></div>
     <div class="dune dune-3" aria-hidden="true"></div>
     <div class="dune dune-2" aria-hidden="true"></div>
     <div class="dune dune-1" aria-hidden="true"></div>
-    <h1 class="splash-title">سراب الصحراء</h1>
-    <p class="splash-subtitle">رحلة في بحر الشعر العربي</p>
+    <h1 class="splash-title">Poetry bil Araby</h1>
+    <p class="splash-subtitle" style="font-family:'Amiri',serif;direction:rtl;font-size:clamp(1rem,2.5vw,1.4rem);opacity:0.8;margin-top:6px;">شعر بالعربي</p>
   </div>
 
   <!-- ======== Walkthrough ======== -->
@@ -300,28 +301,28 @@
     <div class="wt-steps">
       <div class="wt-step">
         <span class="step-num" aria-hidden="true">1</span>
-        <strong>اكتشف القصائد</strong> — تصفّح آلاف الأبيات من عيون الشعر العربي الكلاسيكي والمعاصر.
+        <strong>Discover Poems</strong> — Browse thousands of verses from the Arabic literary heritage, classical and modern.
       </div>
       <div class="wt-step">
         <span class="step-num" aria-hidden="true">2</span>
-        <strong>استمع للإيقاع</strong> — اشعر بموسيقى الكلمات وهي تنبثق من رمال الزمن.
+        <strong>Hear the Rhythm</strong> — Listen as the musicality of Arabic words rises from centuries past.
       </div>
       <div class="wt-step">
         <span class="step-num" aria-hidden="true">3</span>
-        <strong>غيّر المظهر</strong> — اختر بين ليل الصحراء ونهارها حسب ذوقك ومزاجك.
+        <strong>AI Insights</strong> — Unlock the meaning, metre, and metaphor behind each poem.
       </div>
       <div class="wt-step">
         <span class="step-num" aria-hidden="true">4</span>
-        <strong>شارك الجمال</strong> — انشر القصائد التي تلامس روحك مع من تحبّ.
+        <strong>Share the Beauty</strong> — Send poems that touch your soul to those you love.
       </div>
     </div>
-    <button class="wt-enter" id="wt-enter" aria-label="Enter the poetry application">ادخل واحة الشعر</button>
+    <button class="wt-enter" id="wt-enter" aria-label="Enter the poetry application">Enter Poetry bil Araby</button>
   </div>
 
   <!-- ======== Main App ======== -->
   <main class="app" id="app">
     <header class="app-header">
-      <div class="app-logo" aria-label="Desert Mirage logo">سراب الصحراء</div>
+      <div class="app-logo" aria-label="Poetry bil Araby logo">Poetry bil Araby <span style="font-size:0.65em;opacity:0.7;font-family:'Amiri',serif;direction:rtl;">شعر بالعربي</span></div>
       <button class="theme-toggle" id="theme-toggle" aria-label="Toggle light and dark theme">
         <span id="theme-icon" aria-hidden="true">&#9790;</span>
       </button>
@@ -339,7 +340,7 @@
     <button class="new-poem-btn" id="new-poem" aria-label="Reveal a new poem">قصيدة جديدة</button>
 
     <footer class="app-footer" role="contentinfo">
-      سراب الصحراء &mdash; شعر عربي بين الكثبان
+      Poetry bil Araby &mdash; <span style="font-family:'Amiri',serif;direction:rtl;">شعر بالعربي</span>
     </footer>
   </main>
 

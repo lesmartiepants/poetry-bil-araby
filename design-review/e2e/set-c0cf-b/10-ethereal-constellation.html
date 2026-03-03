@@ -1,296 +1,987 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>10 - Ethereal Constellation - كوكبة أثيرية</title>
-    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --bg-dark: #030510;
-            --bg-light: #FDFCF8;
-            --text-dark: #eef2ff;
-            --text-light: #1a1a1a;
-            --gold: #C5A059;
-            --indigo: #4F46E5;
-            --purple: #a78bfa;
-        }
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            font-family: 'Tajawal', sans-serif;
-            background: var(--bg-dark);
-            color: var(--text-dark);
-            overflow-x: hidden;
-            transition: background 0.4s ease;
-        }
-        body.light { background: var(--bg-light); color: var(--text-light); }
-        .splash-screen {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100vh;
-            background: var(--bg-dark); display: flex; align-items: center;
-            justify-content: center; z-index: 9999;
-            animation: splashFadeOut 1s ease 4s forwards;
-        }
-        body.light .splash-screen { background: var(--bg-light); }
-        .constellation-container {
-            position: relative; width: 500px; height: 400px;
-        }
-        .constellation-svg {
-            width: 100%; height: 100%;
-        }
-        .star {
-            fill: var(--purple); animation: starPulse 2s ease-in-out infinite;
-        }
-        .star:nth-child(2n) { animation-delay: 0.5s; }
-        .star:nth-child(3n) { animation-delay: 1s; }
-        @keyframes starPulse {
-            0%, 100% { opacity: 0.6; r: 3; }
-            50% { opacity: 1; r: 5; }
-        }
-        .constellation-line {
-            stroke: var(--purple); stroke-width: 1; fill: none;
-            stroke-dasharray: 1000; stroke-dashoffset: 1000;
-            animation: drawLine 3s ease-out forwards;
-        }
-        .constellation-line:nth-child(1) { animation-delay: 0.5s; }
-        .constellation-line:nth-child(2) { animation-delay: 1s; }
-        .constellation-line:nth-child(3) { animation-delay: 1.5s; }
-        .constellation-line:nth-child(4) { animation-delay: 2s; }
-        .constellation-line:nth-child(5) { animation-delay: 2.5s; }
-        @keyframes drawLine {
-            to { stroke-dashoffset: 0; }
-        }
-        .splash-text {
-            position: absolute; bottom: -60px; left: 50%;
-            transform: translateX(-50%); font-family: 'Amiri', serif;
-            font-size: 2rem; font-weight: 700; text-align: center;
-            color: var(--purple); animation: textFadeIn 1s ease 2s forwards;
-            opacity: 0;
-        }
-        @keyframes textFadeIn { to { opacity: 1; } }
-        @keyframes splashFadeOut {
-            to { opacity: 0; pointer-events: none; }
-        }
-        .main-content {
-            min-height: 100vh; padding: 2rem; opacity: 0;
-            animation: contentFadeIn 1s ease 4.5s forwards;
-        }
-        @keyframes contentFadeIn { to { opacity: 1; } }
-        header {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: 3rem;
-        }
-        h1 {
-            font-family: 'Amiri', serif; font-size: 2.5rem;
-            font-weight: 700; color: var(--purple);
-        }
-        .theme-toggle {
-            width: 60px; height: 60px; border-radius: 50%;
-            border: 2px solid var(--purple); background: transparent;
-            color: var(--purple); font-size: 1.5rem; cursor: pointer;
-            transition: all 0.3s ease; display: flex;
-            align-items: center; justify-content: center; will-change: transform;
-        }
-        .theme-toggle:hover {
-            background: var(--purple); color: var(--bg-dark);
-            transform: rotate(360deg);
-        }
-        body.light .theme-toggle:hover { color: var(--bg-light); }
-        .container { max-width: 900px; margin: 0 auto; }
-        .poem-card {
-            padding: 3rem; background: rgba(255, 255, 255, 0.03);
-            border-radius: 20px; border: 1px solid rgba(167, 139, 250, 0.2);
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3); margin-bottom: 2rem;
-        }
-        body.light .poem-card {
-            background: white;
-            border: 1px solid rgba(167, 139, 250, 0.15);
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
-        }
-        .poem-text {
-            font-family: 'Amiri', serif; font-size: 2rem; line-height: 2.5;
-            text-align: center; color: var(--text-dark); margin-bottom: 2rem;
-        }
-        body.light .poem-text { color: var(--text-light); }
-        .poem-author {
-            font-family: 'Amiri', serif; font-size: 1.3rem;
-            text-align: center; color: var(--purple);
-        }
-        .vertical-controls {
-            position: fixed; right: 20px; top: 50%; transform: translateY(-50%);
-            display: flex; flex-direction: column; gap: 1px;
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 12px; overflow: hidden;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-        }
-        body.light .vertical-controls {
-            background: rgba(0, 0, 0, 0.03);
-            border: 1px solid rgba(0, 0, 0, 0.08);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
-        }
-        .notion-btn {
-            width: 44px; height: 44px; display: flex;
-            align-items: center; justify-content: center;
-            background: transparent; border: none; cursor: pointer;
-            color: rgba(167, 139, 250, 0.6); font-size: 1.1rem;
-            transition: all 0.2s ease;
-        }
-        body.light .notion-btn { color: rgba(0, 0, 0, 0.4); }
-        .notion-btn:hover {
-            background: rgba(167, 139, 250, 0.15); color: var(--purple);
-        }
-        body.light .notion-btn:hover {
-            background: rgba(167, 139, 250, 0.1);
-            color: var(--indigo);
-        }
-        .divider {
-            height: 1px; background: rgba(255, 255, 255, 0.06);
-        }
-        body.light .divider { background: rgba(0, 0, 0, 0.06); }
-        .walkthrough {
-            margin-top: 3rem; padding: 2.5rem;
-            background: rgba(255, 255, 255, 0.03); border-radius: 20px;
-            border: 1px solid rgba(167, 139, 250, 0.2);
-        }
-        body.light .walkthrough {
-            background: white; border: 1px solid rgba(167, 139, 250, 0.15);
-        }
-        .walkthrough h2 {
-            font-family: 'Amiri', serif; font-size: 2rem;
-            color: var(--purple); margin-bottom: 2rem; text-align: center;
-        }
-        .steps {
-            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 2rem;
-        }
-        .step {
-            padding: 1.5rem; background: rgba(167, 139, 250, 0.05);
-            border-radius: 12px; border-left: 3px solid var(--purple);
-            transition: all 0.3s ease;
-        }
-        .step:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(167, 139, 250, 0.3);
-        }
-        .step-number {
-            font-size: 2rem; font-weight: 700;
-            color: var(--purple); margin-bottom: 0.5rem;
-        }
-        .step-title {
-            font-family: 'Amiri', serif; font-size: 1.2rem;
-            font-weight: 700; margin-bottom: 0.5rem;
-        }
-        .step-desc {
-            font-size: 0.95rem; opacity: 0.7; line-height: 1.6;
-        }
-        @media (max-width: 768px) {
-            h1 { font-size: 1.8rem; }
-            .constellation-container { width: 90%; height: 300px; }
-            .splash-text { font-size: 1.5rem; bottom: -50px; }
-            .theme-toggle { width: 50px; height: 50px; font-size: 1.2rem; }
-            .poem-card { padding: 2rem; }
-            .poem-text { font-size: 1.5rem; line-height: 2; }
-            .vertical-controls { right: 10px; }
-            .notion-btn { width: 38px; height: 38px; font-size: 1rem; }
-            .steps { grid-template-columns: 1fr; }
-        }
-        @media (prefers-reduced-motion: reduce) {
-            *, *::before, *::after {
-                animation-duration: 0.01ms !important;
-                animation-iteration-count: 1 !important;
-                transition-duration: 0.01ms !important;
-            }
-        }
-        .theme-toggle:focus, .notion-btn:focus {
-            outline: 3px solid var(--purple); outline-offset: 3px;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>10 - Ethereal Constellation — شعر بالعربي</title>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    /* ============================================================
+       DESIGN TOKENS
+    ============================================================ */
+    :root {
+      --black:         #0a0a0a;
+      --charcoal-deep: #111111;
+      --charcoal:      #1a1a1a;
+      --charcoal-mid:  #2d2d2d;
+      --charcoal-soft: #3a3a3a;
+      --gray:          #6b6b6b;
+      --gray-light:    #9b9b9b;
+      --white:         #f5f5f5;
+      --white-dim:     #e0e0e0;
+
+      --purple-vivid:  #7c3aed;
+      --purple-mid:    #a855f7;
+      --purple-soft:   #c084fc;
+      --purple-glow:   rgba(124, 58, 237, 0.18);
+      --purple-border: rgba(168, 85, 247, 0.28);
+      --purple-line:   rgba(192, 132, 252, 0.45);
+
+      --surface:       rgba(255, 255, 255, 0.03);
+      --surface-mid:   rgba(255, 255, 255, 0.055);
+      --border:        rgba(255, 255, 255, 0.08);
+
+      /* 8px grid */
+      --sp-1: 8px;  --sp-2: 16px; --sp-3: 24px; --sp-4: 32px;
+      --sp-5: 40px; --sp-6: 48px; --sp-7: 56px; --sp-8: 64px;
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Tajawal', sans-serif;
+      background: var(--black);
+      color: var(--white);
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    /* ============================================================
+       SPLASH / ONBOARDING OVERLAY
+    ============================================================ */
+    #onboarding {
+      position: fixed; inset: 0; z-index: 9000;
+      background: var(--black);
+      display: flex; flex-direction: column;
+      transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1),
+                  transform 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    #onboarding.exit {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* Starfield canvas behind onboarding */
+    #onboarding-canvas {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      pointer-events: none;
+    }
+
+    /* ---- Step track (slides) ---- */
+    .step-track {
+      flex: 1;
+      display: flex;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .ob-step {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: var(--sp-6) var(--sp-5);
+      text-align: center;
+      transform: translateX(-100%);
+      transition: transform 0.55s cubic-bezier(0.16, 1, 0.3, 1);
+      will-change: transform;
+    }
+    html[dir="rtl"] .ob-step { transform: translateX(100%); }
+
+    .ob-step.active {
+      transform: translateX(0);
+    }
+    .ob-step.exit-left {
+      transform: translateX(-100%);
+    }
+    .ob-step.exit-right {
+      transform: translateX(100%);
+    }
+    html[dir="rtl"] .ob-step.exit-left  { transform: translateX(100%); }
+    html[dir="rtl"] .ob-step.exit-right { transform: translateX(-100%); }
+
+    /* Constellation graphic per step */
+    .ob-graphic {
+      width: 200px; height: 160px;
+      margin-bottom: var(--sp-6);
+      position: relative;
+    }
+    .ob-graphic svg { width: 100%; height: 100%; }
+
+    .ob-step-num {
+      font-family: 'Tajawal', sans-serif;
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      color: var(--purple-mid);
+      margin-bottom: var(--sp-2);
+    }
+    .ob-title {
+      font-family: 'Amiri', serif;
+      font-size: clamp(1.8rem, 5vw, 2.6rem);
+      font-weight: 700;
+      color: var(--white);
+      margin-bottom: var(--sp-2);
+      line-height: 1.25;
+    }
+    .ob-sub {
+      font-size: 1rem;
+      line-height: 1.7;
+      color: var(--gray-light);
+      max-width: 380px;
+    }
+
+    /* ---- Bottom bar: progress + nav ---- */
+    .ob-footer {
+      position: relative; z-index: 2;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: var(--sp-4) var(--sp-5);
+      border-top: 1px solid var(--border);
+      background: rgba(10, 10, 10, 0.85);
+      backdrop-filter: blur(8px);
+    }
+
+    /* Progress dots */
+    .ob-dots {
+      display: flex; gap: var(--sp-1);
+    }
+    .ob-dot {
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--charcoal-mid);
+      transition: background 0.3s, width 0.3s;
+      cursor: pointer;
+    }
+    .ob-dot.active {
+      background: var(--purple-mid);
+      width: 20px;
+      border-radius: 3px;
+    }
+
+    /* Nav buttons */
+    .ob-nav {
+      display: flex; gap: var(--sp-2);
+    }
+    .ob-btn {
+      height: 40px;
+      padding: 0 var(--sp-3);
+      border-radius: 2px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--gray-light);
+      font-family: 'Tajawal', sans-serif;
+      font-size: 0.88rem;
+      cursor: pointer;
+      display: flex; align-items: center; gap: 6px;
+      transition: border-color 0.2s, color 0.2s, background 0.2s;
+    }
+    .ob-btn:hover {
+      border-color: var(--purple-border);
+      color: var(--white);
+      background: var(--surface-mid);
+    }
+    .ob-btn:focus {
+      outline: 2px solid var(--purple-mid);
+      outline-offset: 3px;
+    }
+    .ob-btn-primary {
+      background: var(--purple-vivid);
+      border-color: var(--purple-vivid);
+      color: var(--white);
+    }
+    .ob-btn-primary:hover {
+      background: var(--purple-mid);
+      border-color: var(--purple-mid);
+      color: var(--white);
+    }
+    .ob-btn svg { width: 14px; height: 14px; }
+
+    /* ============================================================
+       MAIN APP
+    ============================================================ */
+    #app {
+      display: none;
+      min-height: 100vh;
+      position: relative;
+    }
+    #app.visible { display: block; }
+
+    /* Background constellation canvas */
+    #bg-canvas {
+      position: fixed; inset: 0; width: 100%; height: 100%;
+      z-index: 0; pointer-events: none;
+      opacity: 0.35;
+    }
+
+    .app-inner {
+      position: relative; z-index: 1;
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 0 var(--sp-5) var(--sp-8);
+    }
+
+    /* ============================================================
+       HEADER
+    ============================================================ */
+    header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: var(--sp-4) 0;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: var(--sp-8);
+    }
+
+    .logo {
+      display: flex; flex-direction: column; gap: 2px;
+    }
+    .logo-ar {
+      font-family: 'Amiri', serif;
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--white);
+      line-height: 1;
+    }
+    .logo-en {
+      font-family: 'Tajawal', sans-serif;
+      font-size: 0.65rem;
+      font-weight: 400;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--gray);
+    }
+
+    .theme-toggle {
+      width: 40px; height: 40px;
+      border-radius: 2px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--gray-light);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: border-color 0.25s, color 0.25s, background 0.25s;
+    }
+    .theme-toggle:hover {
+      border-color: var(--purple-border);
+      color: var(--white);
+      background: var(--surface-mid);
+    }
+    .theme-toggle:focus {
+      outline: 2px solid var(--purple-mid);
+      outline-offset: 3px;
+    }
+    .theme-toggle svg { width: 16px; height: 16px; }
+
+    /* ============================================================
+       POEM CARD
+    ============================================================ */
+    .poem-card {
+      background: var(--charcoal-deep);
+      border: 1px solid var(--purple-border);
+      border-radius: 4px;
+      padding: var(--sp-8) var(--sp-7);
+      margin-bottom: var(--sp-4);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Purple left rule */
+    .poem-card::before {
+      content: '';
+      position: absolute;
+      top: var(--sp-5); bottom: var(--sp-5);
+      right: 0; width: 2px;
+      background: linear-gradient(to bottom, transparent, var(--purple-vivid), transparent);
+    }
+
+    /* Faint radial purple glow behind poem */
+    .poem-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at 50% 50%, var(--purple-glow) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .poem-text {
+      font-family: 'Amiri', serif;
+      font-size: clamp(1.5rem, 3.5vw, 2.1rem);
+      line-height: 2.7;
+      text-align: center;
+      color: var(--white);
+      position: relative; z-index: 1;
+      margin-bottom: var(--sp-5);
+    }
+
+    /* Purple accent on first hemistich */
+    .poem-text .line-accent {
+      display: block;
+      color: var(--purple-soft);
+    }
+    .poem-text .line-normal {
+      display: block;
+      color: var(--white-dim);
+    }
+
+    .poem-author {
+      font-family: 'Amiri', serif;
+      font-size: 1rem;
+      text-align: center;
+      color: var(--purple-soft);
+      position: relative; z-index: 1;
+      letter-spacing: 0.06em;
+    }
+
+    /* ============================================================
+       VERTICAL CONTROL RAIL
+    ============================================================ */
+    .vertical-controls {
+      position: fixed;
+      right: var(--sp-3);
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex; flex-direction: column; gap: 1px;
+      background: var(--charcoal-deep);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .notion-btn {
+      width: 44px; height: 44px;
+      display: flex; align-items: center; justify-content: center;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      color: var(--gray);
+      transition: background 0.2s, color 0.2s;
+    }
+    .notion-btn:hover {
+      background: var(--purple-glow);
+      color: var(--purple-soft);
+    }
+    .notion-btn:focus {
+      outline: 2px solid var(--purple-mid);
+      outline-offset: -2px;
+    }
+    .notion-btn svg { width: 16px; height: 16px; }
+    .rail-divider {
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ============================================================
+       WALKTHROUGH
+    ============================================================ */
+    .walkthrough {
+      background: var(--charcoal-deep);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: var(--sp-6);
+      margin-top: var(--sp-4);
+    }
+    .walkthrough h2 {
+      font-family: 'Amiri', serif;
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--purple-soft);
+      margin-bottom: var(--sp-5);
+      text-align: center;
+    }
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1px;
+      background: var(--border);
+      border: 1px solid var(--border);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    .step {
+      background: var(--charcoal);
+      padding: var(--sp-4) var(--sp-3);
+      transition: background 0.2s;
+    }
+    .step:hover { background: var(--charcoal-mid); }
+    .step-num {
+      font-family: 'Tajawal', sans-serif;
+      font-size: 0.68rem;
+      font-weight: 500;
+      letter-spacing: 0.22em;
+      color: var(--purple-mid);
+      text-transform: uppercase;
+      margin-bottom: var(--sp-2);
+    }
+    .step-title {
+      font-family: 'Amiri', serif;
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--white);
+      margin-bottom: 6px;
+    }
+    .step-desc {
+      font-size: 0.88rem;
+      line-height: 1.65;
+      color: var(--gray-light);
+    }
+
+    /* ============================================================
+       FOOTER
+    ============================================================ */
+    footer {
+      margin-top: var(--sp-8);
+      padding-top: var(--sp-4);
+      border-top: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      font-size: 0.75rem;
+      color: var(--gray);
+    }
+    .footer-brand-ar {
+      font-family: 'Amiri', serif;
+      font-size: 0.95rem;
+    }
+
+    /* ============================================================
+       REDUCED MOTION
+    ============================================================ */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0s !important;
+        transition-duration: 0s !important;
+      }
+      .ob-step { transform: translateX(0) !important; }
+      #onboarding-canvas, #bg-canvas { display: none; }
+    }
+
+    /* ============================================================
+       MOBILE
+    ============================================================ */
+    @media (max-width: 768px) {
+      .app-inner { padding: 0 var(--sp-3) var(--sp-6); }
+      .poem-card { padding: var(--sp-5) var(--sp-4); }
+      .poem-text { font-size: 1.4rem; }
+      .vertical-controls { display: none; }
+      .steps-grid { grid-template-columns: 1fr; }
+      .ob-footer { padding: var(--sp-3) var(--sp-3); }
+    }
+  </style>
 </head>
 <body>
-    <div class="splash-screen">
-        <div class="constellation-container">
-            <svg class="constellation-svg" viewBox="0 0 500 400">
-                <line class="constellation-line" x1="100" y1="150" x2="200" y2="100"/>
-                <line class="constellation-line" x1="200" y1="100" x2="300" y2="150"/>
-                <line class="constellation-line" x1="300" y1="150" x2="400" y2="120"/>
-                <line class="constellation-line" x1="200" y1="100" x2="250" y2="250"/>
-                <line class="constellation-line" x1="300" y1="150" x2="250" y2="250"/>
-                <circle class="star" cx="100" cy="150" r="4"/>
-                <circle class="star" cx="200" cy="100" r="5"/>
-                <circle class="star" cx="300" cy="150" r="4"/>
-                <circle class="star" cx="400" cy="120" r="4"/>
-                <circle class="star" cx="250" cy="250" r="5"/>
-            </svg>
-            <div class="splash-text">كوكبة أثيرية</div>
+
+  <!-- ============================================================
+       ONBOARDING (sequential, slide-based)
+  ============================================================ -->
+  <div id="onboarding" role="dialog" aria-modal="true" aria-label="مقدمة التطبيق">
+    <canvas id="onboarding-canvas" aria-hidden="true"></canvas>
+
+    <div class="step-track" aria-live="polite">
+
+      <!-- Step 0: Brand intro + constellation -->
+      <div class="ob-step active" id="ob-step-0" aria-label="مرحباً">
+        <div class="ob-graphic" aria-hidden="true">
+          <svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <filter id="glow0">
+                <feGaussianBlur stdDeviation="2" result="blur"/>
+                <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+            </defs>
+            <!-- Lines -->
+            <line x1="40" y1="100" x2="80" y2="60"  stroke="#7c3aed" stroke-width="1" opacity="0.5"/>
+            <line x1="80" y1="60"  x2="120" y2="80" stroke="#7c3aed" stroke-width="1" opacity="0.5"/>
+            <line x1="120" y1="80" x2="160" y2="50" stroke="#7c3aed" stroke-width="1" opacity="0.5"/>
+            <line x1="80" y1="60"  x2="100" y2="120" stroke="#a855f7" stroke-width="1" opacity="0.4"/>
+            <line x1="120" y1="80" x2="100" y2="120" stroke="#a855f7" stroke-width="1" opacity="0.4"/>
+            <!-- Stars -->
+            <circle cx="40"  cy="100" r="3.5" fill="#c084fc" filter="url(#glow0)"/>
+            <circle cx="80"  cy="60"  r="5"   fill="#a855f7" filter="url(#glow0)"/>
+            <circle cx="120" cy="80"  r="3.5" fill="#c084fc" filter="url(#glow0)"/>
+            <circle cx="160" cy="50"  r="3"   fill="#7c3aed" filter="url(#glow0)"/>
+            <circle cx="100" cy="120" r="4"   fill="#a855f7" filter="url(#glow0)"/>
+          </svg>
         </div>
+        <div class="ob-step-num">01 / 04</div>
+        <h2 class="ob-title">شعر بالعربي</h2>
+        <p class="ob-sub">مكتبة شعرية عربية تضم أكثر من ٨٤ ألف قصيدة من روائع الأدب</p>
+      </div>
+
+      <!-- Step 1: Browse -->
+      <div class="ob-step" id="ob-step-1" aria-label="اكتشف">
+        <div class="ob-graphic" aria-hidden="true">
+          <svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <filter id="glow1">
+                <feGaussianBlur stdDeviation="2" result="blur"/>
+                <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+            </defs>
+            <!-- Grid of stars — "browse" metaphor -->
+            <circle cx="50"  cy="50"  r="2.5" fill="#c084fc" filter="url(#glow1)"/>
+            <circle cx="100" cy="50"  r="4"   fill="#a855f7" filter="url(#glow1)"/>
+            <circle cx="150" cy="50"  r="2"   fill="#7c3aed" filter="url(#glow1)"/>
+            <circle cx="50"  cy="90"  r="3"   fill="#7c3aed" filter="url(#glow1)"/>
+            <circle cx="100" cy="90"  r="5"   fill="#c084fc" filter="url(#glow1)"/>
+            <circle cx="150" cy="90"  r="2.5" fill="#a855f7" filter="url(#glow1)"/>
+            <circle cx="50"  cy="130" r="2"   fill="#a855f7" filter="url(#glow1)"/>
+            <circle cx="100" cy="130" r="3"   fill="#7c3aed" filter="url(#glow1)"/>
+            <circle cx="150" cy="130" r="4"   fill="#c084fc" filter="url(#glow1)"/>
+            <!-- connecting lines -->
+            <line x1="100" y1="50" x2="100" y2="90"   stroke="#7c3aed" stroke-width="1" opacity="0.35"/>
+            <line x1="100" y1="90" x2="100" y2="130"  stroke="#7c3aed" stroke-width="1" opacity="0.35"/>
+            <line x1="50"  y1="90" x2="100" y2="90"   stroke="#a855f7" stroke-width="1" opacity="0.3"/>
+            <line x1="100" y1="90" x2="150" y2="90"   stroke="#a855f7" stroke-width="1" opacity="0.3"/>
+          </svg>
+        </div>
+        <div class="ob-step-num">02 / 04</div>
+        <h2 class="ob-title">اكتشف</h2>
+        <p class="ob-sub">استكشف قصائد من مختلف العصور والحضارات — من العصر الجاهلي حتى الحديث</p>
+      </div>
+
+      <!-- Step 2: Listen -->
+      <div class="ob-step" id="ob-step-2" aria-label="استمع">
+        <div class="ob-graphic" aria-hidden="true">
+          <svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <filter id="glow2">
+                <feGaussianBlur stdDeviation="2" result="blur"/>
+                <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+            </defs>
+            <!-- Sound wave / arc metaphor -->
+            <path d="M40 80 Q70 40 100 80 Q130 120 160 80" stroke="#7c3aed" stroke-width="1.5" fill="none" opacity="0.5"/>
+            <path d="M55 80 Q77 55 100 80 Q123 105 145 80" stroke="#a855f7" stroke-width="1.5" fill="none" opacity="0.6"/>
+            <path d="M68 80 Q84 65 100 80 Q116 95 132 80" stroke="#c084fc" stroke-width="2"   fill="none" opacity="0.7"/>
+            <circle cx="100" cy="80" r="5"   fill="#a855f7" filter="url(#glow2)"/>
+            <circle cx="40"  cy="80" r="2.5" fill="#7c3aed" filter="url(#glow2)"/>
+            <circle cx="160" cy="80" r="2.5" fill="#7c3aed" filter="url(#glow2)"/>
+          </svg>
+        </div>
+        <div class="ob-step-num">03 / 04</div>
+        <h2 class="ob-title">استمع</h2>
+        <p class="ob-sub">استمع إلى القصائد بصوت واضح وتلاوة رائعة تُحيي جمال اللغة العربية</p>
+      </div>
+
+      <!-- Step 3: Save & share -->
+      <div class="ob-step" id="ob-step-3" aria-label="شارك">
+        <div class="ob-graphic" aria-hidden="true">
+          <svg viewBox="0 0 200 160" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <filter id="glow3">
+                <feGaussianBlur stdDeviation="2" result="blur"/>
+                <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+              </filter>
+            </defs>
+            <!-- Heart outline -->
+            <path d="M100 125 C60 95, 30 70, 30 50 C30 32, 45 22, 60 22 C75 22, 90 35, 100 45 C110 35, 125 22, 140 22 C155 22, 170 32, 170 50 C170 70, 140 95, 100 125 Z"
+                  stroke="#7c3aed" stroke-width="1.5" fill="none" opacity="0.5"/>
+            <!-- Stars orbiting -->
+            <circle cx="68"  cy="38"  r="3"   fill="#c084fc" filter="url(#glow3)"/>
+            <circle cx="132" cy="38"  r="3"   fill="#a855f7" filter="url(#glow3)"/>
+            <circle cx="100" cy="75"  r="5"   fill="#7c3aed" filter="url(#glow3)"/>
+            <circle cx="55"  cy="72"  r="2"   fill="#c084fc" filter="url(#glow3)"/>
+            <circle cx="145" cy="72"  r="2"   fill="#c084fc" filter="url(#glow3)"/>
+          </svg>
+        </div>
+        <div class="ob-step-num">04 / 04</div>
+        <h2 class="ob-title">شارك واستمتع</h2>
+        <p class="ob-sub">احفظ مفضلاتك وشاركها مع من تحب — اجعل الشعر جزءاً من يومك</p>
+      </div>
+
+    </div><!-- .step-track -->
+
+    <!-- Bottom navigation bar -->
+    <div class="ob-footer">
+      <div class="ob-dots" id="ob-dots" aria-label="خطوات التعريف"></div>
+      <div class="ob-nav">
+        <button class="ob-btn" id="ob-back" type="button" aria-label="رجوع" style="display:none">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+          رجوع
+        </button>
+        <button class="ob-btn ob-btn-primary" id="ob-next" type="button">
+          التالي
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
     </div>
-    <div class="main-content">
-        <header>
-            <h1>كوكبة أثيرية - Ethereal Constellation</h1>
-            <button class="theme-toggle" aria-label="Toggle theme">☀️</button>
-        </header>
-        <div class="container">
-            <div class="poem-card">
-                <div class="poem-text" lang="ar">
-                    أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ
-                    <br>
-                    فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
-                </div>
-                <div class="poem-author">— أحمد شوقي</div>
-            </div>
-            <div class="walkthrough">
-                <h2>كيفية الاستخدام</h2>
-                <div class="steps">
-                    <div class="step">
-                        <div class="step-number">1</div>
-                        <div class="step-title">انطلق</div>
-                        <div class="step-desc">ابدأ رحلتك في عالم الشعر العربي</div>
-                    </div>
-                    <div class="step">
-                        <div class="step-number">2</div>
-                        <div class="step-title">اكتشف</div>
-                        <div class="step-desc">استكشف قصائد من عصور مختلفة</div>
-                    </div>
-                    <div class="step">
-                        <div class="step-number">3</div>
-                        <div class="step-title">تفاعل</div>
-                        <div class="step-desc">احفظ واستمع وشارك المفضلات</div>
-                    </div>
-                    <div class="step">
-                        <div class="step-number">4</div>
-                        <div class="step-title">استمتع</div>
-                        <div class="step-desc">اغمر نفسك في جمال اللغة العربية</div>
-                    </div>
-                </div>
-            </div>
+
+  </div><!-- #onboarding -->
+
+
+  <!-- ============================================================
+       MAIN APPLICATION
+  ============================================================ -->
+  <div id="app" aria-live="polite">
+    <canvas id="bg-canvas" aria-hidden="true"></canvas>
+
+    <div class="app-inner">
+
+      <header>
+        <div class="logo">
+          <span class="logo-ar">شعر بالعربي</span>
+          <span class="logo-en">Poetry bil Araby</span>
         </div>
-        <div class="vertical-controls">
-            <button class="notion-btn" aria-label="Refresh">↻</button>
-            <div class="divider"></div>
-            <button class="notion-btn" aria-label="Play">▶</button>
-            <div class="divider"></div>
-            <button class="notion-btn" aria-label="Save">♥</button>
-            <div class="divider"></div>
-            <button class="notion-btn" aria-label="Text size">Aa</button>
-            <div class="divider"></div>
-            <button class="notion-btn" aria-label="Translation">ع</button>
-        </div>
-    </div>
-    <script>
-        const themeToggle = document.querySelector('.theme-toggle');
-        themeToggle.addEventListener('click', () => {
-            document.body.classList.toggle('light');
-            themeToggle.textContent = document.body.classList.contains('light') ? '🌙' : '☀️';
-        });
-        const buttons = document.querySelectorAll('.notion-btn');
-        buttons.forEach(btn => {
-            btn.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    btn.click();
-                }
-            });
-        });
-    </script>
+        <button class="theme-toggle" id="theme-toggle" type="button" aria-label="تبديل السمة">
+          <!-- Moon icon (shown in dark mode) -->
+          <svg id="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+          </svg>
+          <!-- Sun icon (shown in light mode) -->
+          <svg id="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="display:none">
+            <circle cx="12" cy="12" r="4"/>
+            <line x1="12" y1="2"  x2="12" y2="5"/>
+            <line x1="12" y1="19" x2="12" y2="22"/>
+            <line x1="4.22" y1="4.22"   x2="6.34" y2="6.34"/>
+            <line x1="17.66" y1="17.66" x2="19.78" y2="19.78"/>
+            <line x1="2"  y1="12" x2="5"  y2="12"/>
+            <line x1="19" y1="12" x2="22" y2="12"/>
+            <line x1="4.22" y1="19.78" x2="6.34" y2="17.66"/>
+            <line x1="17.66" y1="6.34" x2="19.78" y2="4.22"/>
+          </svg>
+        </button>
+      </header>
+
+      <main>
+        <!-- Poem card -->
+        <article class="poem-card" aria-label="القصيدة">
+          <div class="poem-text" lang="ar">
+            <span class="line-accent">أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ</span>
+            <span class="line-normal">فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي</span>
+          </div>
+          <div class="poem-author">— أحمد شوقي</div>
+        </article>
+
+        <!-- Walkthrough -->
+        <section class="walkthrough" aria-label="كيفية الاستخدام">
+          <h2>كيفية الاستخدام</h2>
+          <div class="steps-grid">
+            <div class="step">
+              <div class="step-num">01</div>
+              <div class="step-title">انطلق</div>
+              <div class="step-desc">ابدأ رحلتك في عالم الشعر العربي</div>
+            </div>
+            <div class="step">
+              <div class="step-num">02</div>
+              <div class="step-title">اكتشف</div>
+              <div class="step-desc">استكشف قصائد من عصور مختلفة</div>
+            </div>
+            <div class="step">
+              <div class="step-num">03</div>
+              <div class="step-title">تفاعل</div>
+              <div class="step-desc">احفظ واستمع وشارك المفضلات</div>
+            </div>
+            <div class="step">
+              <div class="step-num">04</div>
+              <div class="step-title">استمتع</div>
+              <div class="step-desc">اغمر نفسك في جمال اللغة العربية</div>
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer>
+        <span class="footer-brand-ar">شعر بالعربي</span>
+        <span>Poetry bil Araby</span>
+      </footer>
+
+    </div><!-- .app-inner -->
+
+    <!-- Vertical control rail -->
+    <nav class="vertical-controls" aria-label="أدوات التحكم">
+      <button class="notion-btn" type="button" aria-label="التالي">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
+      </button>
+      <div class="rail-divider"></div>
+      <button class="notion-btn" type="button" aria-label="تشغيل">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      </button>
+      <div class="rail-divider"></div>
+      <button class="notion-btn" type="button" aria-label="حفظ">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+      </button>
+      <div class="rail-divider"></div>
+      <button class="notion-btn" type="button" aria-label="حجم الخط">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+      </button>
+      <div class="rail-divider"></div>
+      <button class="notion-btn" type="button" aria-label="ترجمة">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+      </button>
+    </nav>
+
+  </div><!-- #app -->
+
+
+<script>
+(function () {
+  'use strict';
+
+  var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var isMobile = window.innerWidth < 768;
+
+  /* ============================================================
+     ONBOARDING CONTROLLER
+  ============================================================ */
+  var TOTAL_STEPS  = 4;
+  var currentStep  = 0;
+  var isAnimating  = false;
+
+  var obEl   = document.getElementById('onboarding');
+  var appEl  = document.getElementById('app');
+  var backBtn = document.getElementById('ob-back');
+  var nextBtn = document.getElementById('ob-next');
+  var dotsEl  = document.getElementById('ob-dots');
+
+  /* Build progress dots */
+  var dots = [];
+  for (var d = 0; d < TOTAL_STEPS; d++) {
+    var dot = document.createElement('button');
+    dot.className = 'ob-dot' + (d === 0 ? ' active' : '');
+    dot.setAttribute('aria-label', 'الخطوة ' + (d + 1));
+    dot.setAttribute('type', 'button');
+    (function(idx) {
+      dot.addEventListener('click', function() { goToStep(idx); });
+    })(d);
+    dotsEl.appendChild(dot);
+    dots.push(dot);
+  }
+
+  function updateDots() {
+    for (var i = 0; i < dots.length; i++) {
+      dots[i].className = 'ob-dot' + (i === currentStep ? ' active' : '');
+    }
+  }
+
+  function updateNav() {
+    backBtn.style.display = currentStep > 0 ? '' : 'none';
+    if (currentStep === TOTAL_STEPS - 1) {
+      nextBtn.textContent = 'ابدأ';
+      nextBtn.innerHTML = 'ابدأ';
+    } else {
+      nextBtn.innerHTML = 'التالي <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>';
+    }
+  }
+
+  function getStepEl(idx) {
+    return document.getElementById('ob-step-' + idx);
+  }
+
+  function goToStep(target) {
+    if (isAnimating || target === currentStep) return;
+    if (target < 0 || target >= TOTAL_STEPS) return;
+
+    isAnimating = true;
+    var prev    = currentStep;
+    var forward = target > prev;
+    currentStep = target;
+
+    var prevEl = getStepEl(prev);
+    var nextEl = getStepEl(target);
+
+    /* Prime the incoming slide off-screen */
+    nextEl.className = 'ob-step' + (forward ? ' exit-right' : ' exit-left');
+    /* Force reflow */
+    void nextEl.offsetHeight;
+
+    /* Animate both */
+    prevEl.className = 'ob-step' + (forward ? ' exit-left' : ' exit-right');
+    nextEl.className = 'ob-step active';
+
+    updateDots();
+    updateNav();
+
+    var dur = prefersReducedMotion ? 0 : 560;
+    setTimeout(function() { isAnimating = false; }, dur);
+  }
+
+  function finishOnboarding() {
+    obEl.classList.add('exit');
+    appEl.classList.add('visible');
+    setTimeout(function() {
+      obEl.style.display = 'none';
+      startBgCanvas();
+    }, 800);
+  }
+
+  nextBtn.addEventListener('click', function() {
+    if (currentStep === TOTAL_STEPS - 1) {
+      finishOnboarding();
+    } else {
+      goToStep(currentStep + 1);
+    }
+  });
+
+  backBtn.addEventListener('click', function() {
+    goToStep(currentStep - 1);
+  });
+
+  /* Init nav */
+  updateNav();
+
+  /* ============================================================
+     ONBOARDING CANVAS — Ambient stars
+  ============================================================ */
+  var obCanvas  = document.getElementById('onboarding-canvas');
+  var obCtx     = obCanvas.getContext('2d');
+  var obStars   = [];
+  var obRaf     = null;
+
+  function initObCanvas() {
+    obCanvas.width  = window.innerWidth;
+    obCanvas.height = window.innerHeight;
+    obStars = [];
+    var count = isMobile ? 60 : 120;
+    for (var i = 0; i < count; i++) {
+      obStars.push({
+        x:       Math.random() * obCanvas.width,
+        y:       Math.random() * obCanvas.height,
+        r:       Math.random() * 1.4 + 0.3,
+        opacity: Math.random() * 0.55 + 0.1,
+        twinkle: Math.random() * Math.PI * 2,
+        speed:   Math.random() * 0.03 + 0.008,
+        /* Purple-tinted palette */
+        color:   ['#c084fc', '#a855f7', '#7c3aed', '#e0e0e0', '#9b9b9b'][Math.floor(Math.random() * 5)]
+      });
+    }
+  }
+
+  function animateObCanvas(t) {
+    if (obEl.style.display === 'none') return;
+    obRaf = requestAnimationFrame(animateObCanvas);
+    var w = obCanvas.width;
+    var h = obCanvas.height;
+    obCtx.clearRect(0, 0, w, h);
+
+    for (var i = 0; i < obStars.length; i++) {
+      var s = obStars[i];
+      s.twinkle += s.speed;
+      var alpha = s.opacity * (0.65 + 0.35 * Math.sin(s.twinkle));
+      obCtx.beginPath();
+      obCtx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      obCtx.fillStyle  = s.color;
+      obCtx.globalAlpha = alpha;
+      obCtx.fill();
+    }
+    obCtx.globalAlpha = 1;
+  }
+
+  if (!prefersReducedMotion) {
+    initObCanvas();
+    requestAnimationFrame(animateObCanvas);
+  }
+
+  /* ============================================================
+     BG CANVAS — Constellation effect on poem page
+  ============================================================ */
+  var bgCanvas = document.getElementById('bg-canvas');
+  var bgCtx    = bgCanvas.getContext('2d');
+  var bgStars  = [];
+  var bgLines  = [];
+  var bgRaf    = null;
+
+  function initBgCanvas() {
+    bgCanvas.width  = window.innerWidth;
+    bgCanvas.height = window.innerHeight;
+    bgStars = [];
+    var count = isMobile ? 50 : 100;
+    for (var i = 0; i < count; i++) {
+      bgStars.push({
+        x:       Math.random() * bgCanvas.width,
+        y:       Math.random() * bgCanvas.height,
+        r:       Math.random() * 1.6 + 0.3,
+        opacity: Math.random() * 0.5 + 0.08,
+        twinkle: Math.random() * Math.PI * 2,
+        speed:   Math.random() * 0.025 + 0.006,
+        color:   ['#c084fc', '#a855f7', '#7c3aed', '#f5f5f5', '#9b9b9b'][Math.floor(Math.random() * 5)]
+      });
+    }
+
+    /* Pre-compute constellation connections (neighbours within 120px) */
+    bgLines = [];
+    var CONNECT_DIST = isMobile ? 90 : 120;
+    for (var a = 0; a < bgStars.length; a++) {
+      for (var b = a + 1; b < bgStars.length; b++) {
+        var dx = bgStars[a].x - bgStars[b].x;
+        var dy = bgStars[a].y - bgStars[b].y;
+        if (Math.sqrt(dx * dx + dy * dy) < CONNECT_DIST) {
+          bgLines.push({ a: a, b: b });
+        }
+      }
+    }
+  }
+
+  function animateBgCanvas(t) {
+    bgRaf = requestAnimationFrame(animateBgCanvas);
+    var w = bgCanvas.width;
+    var h = bgCanvas.height;
+    bgCtx.clearRect(0, 0, w, h);
+
+    /* Draw constellation lines first */
+    for (var l = 0; l < bgLines.length; l++) {
+      var sa = bgStars[bgLines[l].a];
+      var sb = bgStars[bgLines[l].b];
+      bgCtx.beginPath();
+      bgCtx.moveTo(sa.x, sa.y);
+      bgCtx.lineTo(sb.x, sb.y);
+      bgCtx.strokeStyle = 'rgba(124, 58, 237, 0.12)';
+      bgCtx.lineWidth   = 0.5;
+      bgCtx.globalAlpha = 1;
+      bgCtx.stroke();
+    }
+
+    /* Draw stars */
+    for (var i = 0; i < bgStars.length; i++) {
+      var s = bgStars[i];
+      s.twinkle += s.speed;
+      var alpha = s.opacity * (0.6 + 0.4 * Math.sin(s.twinkle));
+      bgCtx.beginPath();
+      bgCtx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+      bgCtx.fillStyle  = s.color;
+      bgCtx.globalAlpha = alpha;
+      bgCtx.fill();
+    }
+    bgCtx.globalAlpha = 1;
+  }
+
+  function startBgCanvas() {
+    if (prefersReducedMotion) return;
+    initBgCanvas();
+    requestAnimationFrame(animateBgCanvas);
+  }
+
+  /* ============================================================
+     THEME TOGGLE
+  ============================================================ */
+  var themeBtn = document.getElementById('theme-toggle');
+  var iconMoon = document.getElementById('icon-moon');
+  var iconSun  = document.getElementById('icon-sun');
+  var isDark   = true;
+
+  themeBtn.addEventListener('click', function() {
+    isDark = !isDark;
+    iconMoon.style.display = isDark ? '' : 'none';
+    iconSun.style.display  = isDark ? 'none' : '';
+  });
+
+  /* ============================================================
+     RESIZE
+  ============================================================ */
+  var resizeT;
+  window.addEventListener('resize', function() {
+    clearTimeout(resizeT);
+    resizeT = setTimeout(function() {
+      isMobile = window.innerWidth < 768;
+      if (obCanvas) {
+        obCanvas.width  = window.innerWidth;
+        obCanvas.height = window.innerHeight;
+      }
+      if (bgCanvas && appEl.classList.contains('visible')) {
+        bgCanvas.width  = window.innerWidth;
+        bgCanvas.height = window.innerHeight;
+        /* Recompute constellation lines for new size */
+        initBgCanvas();
+      }
+    }, 150);
+  });
+
+})();
+</script>
 </body>
 </html>

@@ -98,11 +98,14 @@
       max-width: 800px;
       padding: 40px;
       opacity: 0;
-      animation: fadeIn 1.5s ease-out 0.3s forwards;
+      will-change: opacity, transform;
+      /* 40% faster: 1.5s -> 0.9s, delay 0.3s -> 0.2s */
+      animation: fadeIn 0.9s cubic-bezier(0.4, 0, 0.2, 1) 0.2s forwards;
     }
 
     @keyframes fadeIn {
-      to { opacity: 1; }
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     /* Logo with particles brand styling - RTL layout */
@@ -149,7 +152,9 @@
       margin-bottom: 64px;
       font-weight: 500;
       opacity: 0;
-      animation: fadeIn 1s ease-out 2s forwards;
+      will-change: opacity;
+      /* 40% faster: 1s -> 0.6s, delay 2s -> 1.2s */
+      animation: fadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) 1.2s forwards;
     }
 
     body.light .subtitle {
@@ -250,17 +255,20 @@
       const angle = Math.random() * Math.PI * 2;
       const distance = Math.random() * c.radius;
 
+      const px = (c.x + Math.cos(angle) * distance) * particleCanvas.width;
+      const py = (c.y + Math.sin(angle) * distance) * particleCanvas.height;
       particles.push({
-        x: (c.x + Math.cos(angle) * distance) * particleCanvas.width,
-        y: (c.y + Math.sin(angle) * distance) * particleCanvas.height,
-        originX: (c.x + Math.cos(angle) * distance) * particleCanvas.width,
-        originY: (c.y + Math.sin(angle) * distance) * particleCanvas.height,
+        x: px,
+        y: py,
+        originX: px,
+        originY: py,
         vx: 0,
         vy: 0,
         radius: Math.random() * 1.5 + 0.5,
         opacity: Math.random() * 0.4 + 0.4,
         twinklePhase: Math.random() * Math.PI * 2,
-        twinkleSpeed: Math.random() * 0.02 + 0.01
+        // 40% faster twinkle: was 0.01-0.03, now 0.018-0.045
+        twinkleSpeed: Math.random() * 0.027 + 0.018
       });
     }
 
@@ -287,13 +295,13 @@
           p.vy -= (dy / distance) * force * 0.8;
         }
 
-        // Return to origin
-        p.vx += (p.originX - p.x) * 0.001;
-        p.vy += (p.originY - p.y) * 0.001;
+        // Return to origin — 40% faster spring
+        p.vx += (p.originX - p.x) * 0.0016;
+        p.vy += (p.originY - p.y) * 0.0016;
 
-        // Apply velocity with damping
-        p.vx *= 0.95;
-        p.vy *= 0.95;
+        // Apply velocity with tighter damping for fluid but snappier motion
+        p.vx *= 0.91;
+        p.vy *= 0.91;
         p.x += p.vx;
         p.y += p.vy;
 
@@ -309,14 +317,14 @@
         const coreColor = isDark ? 'rgba(200, 220, 255,' : 'rgba(100, 120, 140,';
         const glowColor = isDark ? 'rgba(180, 200, 255,' : 'rgba(80, 100, 120,';
 
-        // Draw particle with glow halo
+        // Draw particle with tighter glow halo (radius *2.5, reduced from *4)
         particleCtx.beginPath();
-        const glowGradient = particleCtx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius * 4);
-        glowGradient.addColorStop(0, `${coreColor} ${finalOpacity * 0.6})`);
-        glowGradient.addColorStop(0.3, `${glowColor} ${finalOpacity * 0.3})`);
+        const glowGradient = particleCtx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius * 2.5);
+        glowGradient.addColorStop(0, `${coreColor} ${finalOpacity * 0.5})`);
+        glowGradient.addColorStop(0.4, `${glowColor} ${finalOpacity * 0.2})`);
         glowGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
         particleCtx.fillStyle = glowGradient;
-        particleCtx.arc(p.x, p.y, p.radius * 4, 0, Math.PI * 2);
+        particleCtx.arc(p.x, p.y, p.radius * 2.5, 0, Math.PI * 2);
         particleCtx.fill();
 
         // Inner bright core
@@ -345,16 +353,21 @@
     const smokeParticles = [];
     const smokeCount = 30;
 
-    // Create smoke particles
+    // Create smoke particles — GPU hint on canvas
+    smokeCanvas.style.willChange = 'transform';
+    smokeCanvas.style.transform = 'translateZ(0)';
+
     for (let i = 0; i < smokeCount; i++) {
       smokeParticles.push({
         x: Math.random() * smokeCanvas.width,
         y: smokeCanvas.height + Math.random() * 200,
-        vx: (Math.random() - 0.5) * 0.3,
-        vy: -(Math.random() * 0.4 + 0.2),
+        // 40% faster: vx was 0.3, vy was 0.2-0.6
+        vx: (Math.random() - 0.5) * 0.5,
+        vy: -(Math.random() * 0.6 + 0.3),
         radius: Math.random() * 60 + 40,
         opacity: Math.random() * 0.15 + 0.05,
-        life: Math.random() * 100
+        // Stagger lifecycle start
+        life: Math.random() * 140
       });
     }
 
@@ -364,21 +377,24 @@
       const isDark = !document.body.classList.contains('light');
 
       smokeParticles.forEach((s, index) => {
-        // Move smoke
+        // Move smoke — use transform-equivalent positional update (no layout ops)
         s.x += s.vx;
         s.y += s.vy;
         s.life++;
 
-        // Fade out over time
-        const lifeFade = Math.max(0, 1 - s.life / 200);
+        // Smooth ease-out fade using cosine curve to avoid linear pop
+        const lifeRatio = Math.max(0, 1 - s.life / 140);
+        const lifeFade = lifeRatio * lifeRatio; // quadratic ease-out
         const currentOpacity = s.opacity * lifeFade;
 
-        // Reset particle when it fades out
-        if (s.life > 200 || s.y < -100) {
+        // Reset particle — 140 life cycles (40% shorter = 40% faster turnover)
+        if (s.life > 140 || s.y < -100) {
           s.x = Math.random() * smokeCanvas.width;
-          s.y = smokeCanvas.height + Math.random() * 200;
+          s.y = smokeCanvas.height + Math.random() * 100;
           s.life = 0;
           s.opacity = Math.random() * 0.15 + 0.05;
+          s.vx = (Math.random() - 0.5) * 0.5;
+          s.vy = -(Math.random() * 0.6 + 0.3);
         }
 
         // Draw smoke puff

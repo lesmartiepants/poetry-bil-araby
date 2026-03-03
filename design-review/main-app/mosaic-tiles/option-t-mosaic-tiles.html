@@ -161,6 +161,191 @@
       font-size: 12px;
       border: 1px solid rgba(94, 234, 212, 0.3);
     }
+
+    /* ============================================
+       MOBILE-FIRST RESPONSIVE — MOSAIC TILES
+       ============================================ */
+    -webkit-text-size-adjust: 100%;
+
+    /* Tablet: single-column screens */
+    @media (max-width: 1024px) {
+      .screens {
+        grid-template-columns: 1fr;
+      }
+      .screen {
+        min-height: auto;
+      }
+    }
+
+    /* Mobile: 768px and below */
+    @media (max-width: 768px) {
+      body {
+        overflow-x: hidden;
+      }
+
+      .canvas {
+        padding: 16px;
+        margin: 0 auto;
+      }
+
+      .meta {
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 14px;
+      }
+
+      .meta .title {
+        font-size: clamp(18px, 5vw, 24px);
+        width: 100%;
+      }
+
+      .screens {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+
+      .screen {
+        border-radius: 22px;
+        padding: 20px;
+        min-height: auto;
+      }
+
+      .screen-label {
+        font-size: 9px;
+        top: 12px;
+        right: 16px;
+      }
+
+      /* Nav: wrap on mobile */
+      .nav {
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .nav .brand {
+        font-size: 13px;
+        letter-spacing: 0.14em;
+      }
+
+      .nav > span:not(.brand) {
+        font-size: 13px;
+        min-height: 36px;
+        display: flex;
+        align-items: center;
+      }
+
+      /* Mosaic grid: reduce columns on mobile */
+      .mosaic {
+        margin-top: 40px;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+      }
+
+      .mosaic .tile {
+        height: 64px;
+        border-radius: 10px;
+      }
+
+      /* Hero: readable on mobile */
+      .hero {
+        margin-top: 20px;
+        gap: 12px;
+      }
+
+      .hero h1 {
+        font-size: clamp(22px, 6vw, 36px);
+        line-height: 1.15;
+      }
+
+      .hero p {
+        font-size: 14px;
+        max-width: 100%;
+        color: rgba(153, 246, 228, 0.8);
+      }
+
+      /* CTA: touch-friendly */
+      .cta {
+        min-height: 44px;
+        padding: 12px 20px;
+        font-size: 13px;
+        width: auto;
+        display: flex;
+        align-items: center;
+      }
+
+      /* Poem frame: full width */
+      .poem-frame {
+        margin-top: 40px;
+        padding: 20px;
+        border-radius: 16px;
+      }
+
+      .poem-frame .arabic {
+        font-size: clamp(18px, 5vw, 22px);
+        line-height: 2;
+      }
+
+      .poem-frame .english {
+        font-size: 13px;
+        margin-top: 10px;
+      }
+
+      /* Controls: touch-friendly pills */
+      .controls {
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 14px;
+      }
+
+      .control-pill {
+        min-height: 44px;
+        min-width: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 13px;
+        padding: 10px 16px;
+      }
+    }
+
+    /* Small phones: 480px and below */
+    @media (max-width: 480px) {
+      .canvas {
+        padding: 12px;
+      }
+
+      .screen {
+        padding: 14px;
+        border-radius: 18px;
+      }
+
+      .mosaic {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px;
+      }
+
+      .mosaic .tile {
+        height: 52px;
+        border-radius: 8px;
+      }
+
+      .hero h1 {
+        font-size: clamp(18px, 6vw, 28px);
+      }
+
+      .poem-frame .arabic {
+        font-size: clamp(16px, 5vw, 20px);
+      }
+
+      /* Collapse to minimal nav on very small screens */
+      .nav > span:not(.brand) {
+        display: none;
+      }
+
+      .nav > span.brand {
+        display: flex;
+      }
+    }
   </style>
 </head>
 <body>

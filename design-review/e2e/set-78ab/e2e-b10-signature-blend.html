@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>B10: Tessellation Garden - Poetry bil Araby</title>
+  <title>Poetry bil Araby — Tessellation Garden</title>
   <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -58,22 +58,59 @@
       position: relative;
       z-index: 2;
       text-align: center;
-      opacity: 0;
-      animation: textIn 1.2s ease 0.8s forwards;
+    }
+
+    /* Semi-transparent backdrop to ensure readability over the geometric pattern */
+    .splash-text-backdrop {
+      position: absolute;
+      inset: -28px -40px;
+      background: radial-gradient(ellipse at center, rgba(6,24,18,0.82) 40%, transparent 80%);
+      border-radius: 50%;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .splash-text-inner {
+      position: relative;
+      z-index: 2;
     }
 
     .splash-text h1 {
-      font-family: 'Amiri', serif;
-      font-size: 48px;
-      color: var(--gold);
-      text-shadow: 0 0 40px rgba(197, 160, 89, 0.5);
-      margin-bottom: 12px;
+      font-family: 'Tajawal', sans-serif;
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      font-weight: 700;
+      color: #F5E6C8;
+      text-shadow: 0 2px 20px rgba(0,0,0,0.9), 0 0 40px rgba(197,160,89,0.4);
+      margin-bottom: 10px;
+      letter-spacing: 0.04em;
+      opacity: 0;
+      animation: textRevealDelay 1s ease 2s forwards;
     }
 
-    .splash-text p {
-      font-size: 16px;
-      color: var(--teal);
+    .splash-text .brand-ar {
+      font-family: 'Amiri', serif;
+      font-size: clamp(1.1rem, 3vw, 1.8rem);
+      color: var(--gold);
+      direction: rtl;
+      display: block;
+      text-shadow: 0 2px 16px rgba(0,0,0,0.8);
+      opacity: 0;
+      animation: textRevealDelay 1s ease 2.5s forwards;
+    }
+
+    .splash-text .brand-sub {
+      font-size: 14px;
+      color: rgba(197,160,89,0.7);
       letter-spacing: 2px;
+      display: block;
+      margin-top: 8px;
+      opacity: 0;
+      animation: textRevealDelay 1s ease 3s forwards;
+    }
+
+    @keyframes textRevealDelay {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
     }
 
     @keyframes textIn {
@@ -414,8 +451,12 @@
   <div class="splash" id="splash">
     <canvas id="tessCanvas"></canvas>
     <div class="splash-text">
-      <h1>حديقة الزخرفة</h1>
-      <p>Tessellation Garden</p>
+      <div class="splash-text-backdrop"></div>
+      <div class="splash-text-inner">
+        <h1>Poetry bil Araby</h1>
+        <span class="brand-ar">شعر بالعربي</span>
+        <span class="brand-sub">Arabesque &bull; Verse &bull; Discovery</span>
+      </div>
     </div>
   </div>
 
@@ -424,22 +465,22 @@
     <div class="hex-grid">
       <div class="hex-cell">
         <div class="hex-icon">&#x2726;</div>
-        <h3>اكتشف الشعر</h3>
-        <p>تصفّح آلاف القصائد من التراث العربي الغني بين يديك</p>
+        <h3>Discover Poems</h3>
+        <p>Browse thousands of verses from the rich Arabic literary heritage</p>
       </div>
       <div class="hex-cell">
         <div class="hex-icon">&#x2728;</div>
-        <h3>زخارف حية</h3>
-        <p>تجربة بصرية مستوحاة من فن الزخرفة الهندسية الإسلامية</p>
+        <h3>Living Patterns</h3>
+        <p>A visual experience inspired by Islamic geometric arabesque art</p>
       </div>
       <div class="hex-cell">
         <div class="hex-icon">&#x266B;</div>
-        <h3>استمع وتأمّل</h3>
-        <p>اسمع الأبيات بصوت يليق بجمال الكلمة العربية</p>
+        <h3>Listen &amp; Reflect</h3>
+        <p>Hear verses recited in a voice worthy of Arabic poetry's beauty</p>
       </div>
       <div class="hex-grid-footer">
-        <button class="btn btn-secondary" onclick="skipWalkthrough()">تخطّي</button>
-        <button class="btn btn-primary" onclick="startApp()">ابدأ الرحلة</button>
+        <button class="btn btn-secondary" onclick="skipWalkthrough()">Skip</button>
+        <button class="btn btn-primary" onclick="startApp()">Begin Journey</button>
       </div>
     </div>
   </div>
@@ -447,7 +488,7 @@
   <!-- Main App -->
   <div class="app" id="app">
     <header class="header">
-      <div class="logo">ديوان الشعر</div>
+      <div class="logo" style="font-family:'Tajawal',sans-serif;font-size:20px;font-weight:700;letter-spacing:0.02em;">Poetry bil Araby <span style="font-family:'Amiri',serif;font-size:0.65em;opacity:0.75;direction:rtl;font-weight:400;">شعر بالعربي</span></div>
       <button class="theme-toggle" onclick="toggleTheme()" aria-label="تبديل السمة">&#9788;</button>
     </header>
 
@@ -455,7 +496,7 @@
       <div class="poem-card" id="poemCard">
         <!-- Arabesque SVG border injected by JS -->
         <div class="poem-content">
-          <h2 class="poem-title">ديوان الشعر العربي</h2>
+          <h2 class="poem-title" style="font-family:'Tajawal',sans-serif;font-size:22px;font-weight:700;letter-spacing:0.02em;">Poetry bil Araby</h2>
           <div class="poem-verse" dir="rtl" lang="ar">
             أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ<br>
             فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي

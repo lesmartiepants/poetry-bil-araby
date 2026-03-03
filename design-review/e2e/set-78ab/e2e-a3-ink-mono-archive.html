@@ -67,36 +67,48 @@
     /* SVG brush stroke calligraphy */
     .brush-svg {
       position: absolute;
-      top: -60px;
+      top: -80px;
       left: 50%;
       transform: translateX(-50%);
-      width: 320px;
-      height: 180px;
+      width: clamp(280px, 70vw, 520px);
+      height: 200px;
       overflow: visible;
+      direction: rtl;
     }
 
-    .brush-stroke {
+    /* Real Arabic calligraphy text rendered as SVG with ink-draw effect */
+    .calligraphy-text {
+      font-family: 'Amiri', serif;
       fill: none;
       stroke: var(--dark-text);
-      stroke-width: 3;
+      stroke-width: 0.8;
       stroke-linecap: round;
       stroke-linejoin: round;
-      stroke-dasharray: 800;
-      stroke-dashoffset: 800;
-      animation: drawStroke 2.5s ease forwards;
-      will-change: stroke-dashoffset;
+      paint-order: stroke fill;
+      opacity: 0;
+      animation: calligraphyReveal 1.8s ease forwards;
     }
 
-    .brush-stroke:nth-child(2) { animation-delay: 0.4s; }
-    .brush-stroke:nth-child(3) { animation-delay: 0.8s; }
-    .brush-stroke:nth-child(4) { animation-delay: 1.2s; }
-    .brush-stroke:nth-child(5) { animation-delay: 1.6s; }
+    .calligraphy-text.line-1 {
+      animation-delay: 0.2s;
+      font-size: 38px;
+    }
 
-    body.light .brush-stroke {
+    .calligraphy-text.line-2 {
+      animation-delay: 1.1s;
+      font-size: 32px;
+    }
+
+    .calligraphy-text.line-3 {
+      animation-delay: 2.0s;
+      font-size: 28px;
+    }
+
+    body.light .calligraphy-text {
       stroke: var(--light-text);
     }
 
-    /* Thick accent strokes */
+    /* Thick accent underline */
     .brush-thick {
       fill: none;
       stroke: var(--dark-muted);
@@ -105,12 +117,21 @@
       stroke-dasharray: 400;
       stroke-dashoffset: 400;
       animation: drawStroke 2s ease 0.3s forwards;
-      opacity: 0.15;
+      opacity: 0.12;
       will-change: stroke-dashoffset;
+    }
+
+    body.light .brush-thick {
+      stroke: var(--light-muted);
     }
 
     @keyframes drawStroke {
       to { stroke-dashoffset: 0; }
+    }
+
+    @keyframes calligraphyReveal {
+      0%   { opacity: 0; transform: translateY(8px); }
+      100% { opacity: 1; transform: translateY(0); }
     }
 
     /* Ink splatter dots that appear after strokes */
@@ -562,34 +583,39 @@
   <!-- SPLASH -->
   <div class="splash" id="splash">
     <div class="ink-container">
-      <!-- SVG Brush Stroke Animation - Arabic Calligraphy Inspired -->
-      <svg class="brush-svg" viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg">
-        <!-- Background accent stroke (thick, faded) -->
-        <path class="brush-thick" d="M40 90 C80 60, 160 40, 240 80 S300 120, 280 90"/>
-        <!-- Main calligraphy strokes (drawing Arabic letter forms) -->
-        <!-- Alif-like vertical -->
-        <path class="brush-stroke" d="M100 30 C98 50, 102 80, 100 110 Q99 130, 95 140"/>
-        <!-- Ba-like horizontal with curve -->
-        <path class="brush-stroke" d="M80 100 C120 95, 180 88, 230 95 Q250 98, 240 110 C230 120, 200 118, 190 105"/>
-        <!-- Dot below (for ba) -->
-        <path class="brush-stroke" d="M160 125 C162 128, 158 132, 155 128 Z" style="fill: currentColor; stroke: none; opacity: 0; animation: dotReveal 0.4s ease 1.4s forwards;"/>
-        <!-- Lam-like tall stroke -->
-        <path class="brush-stroke" d="M200 25 C198 45, 205 70, 200 100 Q198 120, 195 130"/>
-        <!-- Connecting swash -->
-        <path class="brush-stroke" d="M60 95 C50 110, 55 130, 80 135 Q120 140, 160 130 S220 125, 260 135"/>
+      <!-- SVG Real Arabic Calligraphy with ink-reveal animation -->
+      <svg class="brush-svg" viewBox="0 0 520 200" xmlns="http://www.w3.org/2000/svg">
+        <!-- Background accent underline stroke (thick, faded) -->
+        <path class="brush-thick" d="M60 170 C140 160, 280 155, 460 165"/>
+        <!-- Real Arabic poetry lines rendered as SVG text with ink aesthetic -->
+        <!-- Line 1: قفا نبك من ذكرى حبيب ومنزل (Imru' al-Qais) -->
+        <text class="calligraphy-text line-1"
+              x="260" y="70"
+              text-anchor="middle"
+              dominant-baseline="middle">قِفَا نَبْكِ مِنْ ذِكْرَى حَبِيبٍ وَمَنْزِلِ</text>
+        <!-- Line 2: على قدر أهل العزم تأتي العزائم (Al-Mutanabbi) -->
+        <text class="calligraphy-text line-2"
+              x="260" y="120"
+              text-anchor="middle"
+              dominant-baseline="middle">عَلَى قَدْرِ أَهْلِ الْعَزْمِ تَأْتِي الْعَزَائِمُ</text>
+        <!-- Line 3: أنا البحر في أحشائه الدر كامن (Shawqi) -->
+        <text class="calligraphy-text line-3"
+              x="260" y="163"
+              text-anchor="middle"
+              dominant-baseline="middle">أَنَا الْبَحْرُ فِي أَحْشَائِهِ الدُّرُّ كَامِنٌ</text>
       </svg>
 
-      <!-- Ink splatter dots -->
-      <div class="ink-dot" style="top: -30px; right: 30%; animation-delay: 1.8s;"></div>
-      <div class="ink-dot" style="top: -10px; right: 20%; animation-delay: 2.0s; width: 3px; height: 3px;"></div>
-      <div class="ink-dot" style="top: -45px; right: 55%; animation-delay: 2.2s; width: 5px; height: 5px;"></div>
-      <div class="ink-dot" style="top: -20px; right: 65%; animation-delay: 2.4s;"></div>
+      <!-- Ink splatter accent dots -->
+      <div class="ink-dot" style="top: -8px; right: 28%; animation-delay: 2.4s;"></div>
+      <div class="ink-dot" style="top: 4px; right: 18%; animation-delay: 2.6s; width: 3px; height: 3px;"></div>
+      <div class="ink-dot" style="top: -15px; right: 52%; animation-delay: 2.8s; width: 5px; height: 5px;"></div>
+      <div class="ink-dot" style="top: -6px; right: 68%; animation-delay: 3.0s;"></div>
 
-      <h1 class="splash-title">&#1583;&#1610;&#1608;&#1575;&#1606; &#1575;&#1604;&#1588;&#1593;&#1585; &#1575;&#1604;&#1593;&#1585;&#1576;&#1610;</h1>
-      <p class="splash-sub">The Arabic Poetry Archive</p>
+      <h1 class="splash-title">Poetry bil Araby</h1>
+      <p class="splash-sub" style="direction:rtl;letter-spacing:0.05em;">شعر بالعربي</p>
       <div class="splash-line"></div>
     </div>
-    <button class="splash-enter" onclick="enterWalkthrough()">&#1575;&#1583;&#1582;&#1604;</button>
+    <button class="splash-enter" onclick="enterWalkthrough()">Enter Archive</button>
   </div>
 
   <!-- WALKTHROUGH with typewriter reveal -->
@@ -630,7 +656,7 @@
   <!-- MAIN APP -->
   <div class="main-app" id="mainApp">
     <header class="top-bar">
-      <span class="top-brand">Qafiyah</span>
+      <span class="top-brand">Poetry bil Araby</span>
       <div class="top-actions">
         <button class="top-btn" onclick="toggleTheme()">
           <i data-lucide="sun" style="width:18px;height:18px"></i>
@@ -693,7 +719,7 @@
   <style>
     @keyframes dotReveal {
       from { opacity: 0; }
-      to { opacity: 0.8; }
+      to { opacity: 0.5; }
     }
   </style>
 

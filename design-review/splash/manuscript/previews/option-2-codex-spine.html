@@ -3,10 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Option 2: Ancient Codex with Book Spine</title>
+  <title>Option 2: Ancient Codex with Book Spine (Page Flip)</title>
   <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Cinzel:wght@600&display=swap" rel="stylesheet">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
+
     body {
       font-family: 'Amiri', serif;
       background: #0f0d0a;
@@ -16,7 +17,7 @@
       justify-content: center;
       padding: 20px;
       overflow: hidden;
-      perspective: 1500px;
+      perspective: 1800px;
     }
 
     /* Open book container with 3D effect */
@@ -30,14 +31,8 @@
     }
 
     @keyframes bookOpen {
-      0% {
-        transform: rotateY(-25deg) scale(0.9);
-        opacity: 0;
-      }
-      100% {
-        transform: rotateY(0deg) scale(1);
-        opacity: 1;
-      }
+      0% { transform: rotateY(-25deg) scale(0.9); opacity: 0; }
+      100% { transform: rotateY(0deg) scale(1); opacity: 1; }
     }
 
     /* Left page */
@@ -53,27 +48,79 @@
       box-shadow:
         inset -15px 0 30px rgba(0, 0, 0, 0.5),
         -10px 10px 40px rgba(0, 0, 0, 0.6);
-      padding: 50px 40px 50px 60px;
+      /* More generous padding for breathing room */
+      padding: 48px 44px 48px 56px;
       transform-origin: right center;
       transform: rotateY(-2deg);
+      overflow: hidden;
     }
 
-    /* Right page */
-    .page-right {
+    /* Right page — page-flip wrapper */
+    .page-right-wrapper {
       position: absolute;
       right: 0;
       top: 0;
       width: 48%;
       height: 100%;
+      perspective: 1200px;
+    }
+
+    /* The flipping page itself */
+    .page-right {
+      position: absolute;
+      inset: 0;
       background: linear-gradient(to left, #1a1410 0%, #2d2419 20%, #3d3428 100%);
       border: 2px solid #5a4a35;
       border-left: none;
       box-shadow:
         inset 15px 0 30px rgba(0, 0, 0, 0.5),
         10px 10px 40px rgba(0, 0, 0, 0.6);
-      padding: 50px 60px 50px 40px;
+      /* More padding */
+      padding: 48px 56px 48px 44px;
       transform-origin: left center;
-      transform: rotateY(2deg);
+      transform-style: preserve-3d;
+      /* Entry flip: rotate in from right */
+      animation: pageFlipIn 1.2s cubic-bezier(0.4, 0, 0.2, 1) 0.8s both;
+      will-change: transform;
+    }
+
+    @keyframes pageFlipIn {
+      0% {
+        transform: rotateY(90deg);
+        box-shadow: -20px 0 40px rgba(0, 0, 0, 0.8), inset 15px 0 30px rgba(0, 0, 0, 0.5);
+      }
+      60% {
+        transform: rotateY(-8deg);
+      }
+      80% {
+        transform: rotateY(3deg);
+      }
+      100% {
+        transform: rotateY(2deg);
+        box-shadow: inset 15px 0 30px rgba(0, 0, 0, 0.5), 10px 10px 40px rgba(0, 0, 0, 0.6);
+      }
+    }
+
+    /* Flip button — triggers re-flip */
+    .flip-trigger {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      padding: 6px 14px;
+      background: rgba(212, 165, 116, 0.12);
+      border: 1px solid rgba(212, 165, 116, 0.35);
+      color: #d4a574;
+      font-family: 'Cinzel', serif;
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      z-index: 20;
+    }
+
+    .flip-trigger:hover {
+      background: rgba(212, 165, 116, 0.25);
     }
 
     /* Book spine in center */
@@ -84,11 +131,7 @@
       width: 4%;
       height: 100%;
       background: linear-gradient(to bottom,
-        #1a1410 0%,
-        #2d2419 10%,
-        #3d3428 50%,
-        #2d2419 90%,
-        #1a1410 100%);
+        #1a1410 0%, #2d2419 10%, #3d3428 50%, #2d2419 90%, #1a1410 100%);
       box-shadow:
         inset 0 0 20px rgba(0, 0, 0, 0.8),
         0 0 30px rgba(0, 0, 0, 0.8);
@@ -97,12 +140,7 @@
       border-bottom: 2px solid #5a4a35;
     }
 
-    /* Leather binding texture on spine */
-    .spine-bands {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-    }
+    .spine-bands { position: absolute; width: 100%; height: 100%; }
 
     .spine-band {
       position: absolute;
@@ -111,13 +149,12 @@
       background: #4a3f2f;
       box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.6);
     }
-
     .spine-band:nth-child(1) { top: 15%; }
     .spine-band:nth-child(2) { top: 35%; }
     .spine-band:nth-child(3) { top: 55%; }
     .spine-band:nth-child(4) { top: 75%; }
 
-    /* Page content styling */
+    /* Page content */
     .page-content {
       display: flex;
       flex-direction: column;
@@ -126,19 +163,20 @@
       height: 100%;
       text-align: center;
       position: relative;
+      gap: 0;
     }
 
     /* Illuminated drop cap */
     .drop-cap {
       font-family: 'Cinzel', serif;
-      font-size: 120px;
+      font-size: 110px;
       font-weight: 600;
       background: linear-gradient(135deg, #d4a574 0%, #f5d89e 50%, #d4a574 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
-      line-height: 0.8;
-      margin-bottom: 20px;
+      line-height: 0.85;
+      margin-bottom: 24px;
       filter: drop-shadow(0 4px 8px rgba(212, 165, 116, 0.4));
       animation: shimmer 4s ease-in-out infinite;
     }
@@ -149,22 +187,26 @@
     }
 
     .title-arabic {
-      font-size: 72px;
+      font-size: 68px;
       font-weight: bold;
       color: #c9b896;
-      letter-spacing: 0.08em;
-      margin-bottom: 16px;
+      /* Increased letter-spacing for breathing room */
+      letter-spacing: 0.1em;
+      margin-bottom: 20px;
       text-shadow: 0 2px 8px rgba(201, 184, 150, 0.3);
+      /* Looser line-height */
+      line-height: 1.3;
     }
 
     .title-english {
       font-family: 'Cinzel', serif;
-      font-size: 42px;
+      font-size: 40px;
       font-weight: 600;
       color: #8b7355;
-      letter-spacing: 0.15em;
+      letter-spacing: 0.2em;
       text-transform: uppercase;
-      margin-bottom: 30px;
+      margin-bottom: 28px;
+      line-height: 1.4;
     }
 
     /* Manuscript line decorations */
@@ -188,75 +230,66 @@
       border-radius: 50%;
     }
 
+    /* Polished description text — looser */
     .description {
       font-size: 20px;
       color: #c9b896;
-      line-height: 1.6;
+      /* 20% more line-height */
+      line-height: 2.0;
       max-width: 90%;
-      margin: 0 auto 12px;
+      margin: 0 auto 16px;
       opacity: 0.9;
+      /* Slight letter-spacing for legibility */
+      letter-spacing: 0.03em;
     }
 
     .description-sub {
       font-family: 'Cinzel', serif;
-      font-size: 14px;
+      font-size: 13px;
       color: #8b7355;
-      letter-spacing: 0.12em;
+      letter-spacing: 0.15em;
       text-transform: uppercase;
-      opacity: 0.7;
+      opacity: 0.75;
+      line-height: 1.8;
     }
 
     /* Aged page edges */
-    .page-edge {
-      position: absolute;
-      pointer-events: none;
-    }
-
-    .page-edge.top {
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 30px;
-      background: linear-gradient(to bottom, rgba(26, 20, 16, 0.6), transparent);
-    }
-
-    .page-edge.bottom {
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 30px;
-      background: linear-gradient(to top, rgba(26, 20, 16, 0.6), transparent);
-    }
+    .page-edge { position: absolute; pointer-events: none; }
+    .page-edge.top { top: 0; left: 0; right: 0; height: 30px; background: linear-gradient(to bottom, rgba(26, 20, 16, 0.6), transparent); }
+    .page-edge.bottom { bottom: 0; left: 0; right: 0; height: 30px; background: linear-gradient(to top, rgba(26, 20, 16, 0.6), transparent); }
 
     /* Page numbers (folio) */
     .folio {
       position: absolute;
-      bottom: 20px;
+      bottom: 18px;
       font-family: 'Cinzel', serif;
-      font-size: 14px;
+      font-size: 13px;
       color: #8b7355;
-      opacity: 0.5;
+      opacity: 0.45;
+      letter-spacing: 0.1em;
     }
+    .page-left .folio { left: 56px; }
 
-    .page-left .folio { left: 60px; }
-    .page-right .folio { right: 60px; }
+    .page-right .folio { right: 56px; }
 
-    /* Enter button on right page */
+    /* Enter button — ornate manuscript style */
     .enter-button {
-      margin-top: 30px;
-      padding: 14px 42px;
+      margin-top: 26px;
+      padding: 15px 44px;
       background: transparent;
       border: 2px solid #d4a574;
       color: #d4a574;
       font-family: 'Cinzel', serif;
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 600;
-      letter-spacing: 0.3em;
+      letter-spacing: 0.32em;
       text-transform: uppercase;
       cursor: pointer;
-      transition: all 0.4s ease;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
       position: relative;
       overflow: hidden;
+      touch-action: manipulation;
+      box-shadow: 0 0 16px rgba(212, 165, 116, 0.1);
     }
 
     .enter-button::before {
@@ -264,23 +297,19 @@
       position: absolute;
       inset: 0;
       background: linear-gradient(135deg, #d4a574, #f5d89e);
-      transform: translateX(-100%);
-      transition: transform 0.4s ease;
+      transform: translateX(-101%);
+      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     }
 
     .enter-button:hover {
       color: #1a1410;
-      box-shadow: 0 0 20px rgba(212, 165, 116, 0.5);
+      box-shadow: 0 0 28px rgba(212, 165, 116, 0.5);
+      transform: translateY(-1px);
     }
 
-    .enter-button:hover::before {
-      transform: translateX(0);
-    }
+    .enter-button:hover::before { transform: translateX(0); }
 
-    .enter-button span {
-      position: relative;
-      z-index: 1;
-    }
+    .enter-button span { position: relative; z-index: 1; }
 
     /* Paper texture overlay */
     .paper-texture {
@@ -300,7 +329,6 @@
       background: radial-gradient(circle at top left, transparent 60%, rgba(26, 20, 16, 0.4) 100%);
       pointer-events: none;
     }
-
     .page-left .corner-wear.top-left { top: 0; left: 0; }
     .page-left .corner-wear.bottom-left { bottom: 0; left: 0; transform: rotate(-90deg); }
     .page-right .corner-wear.top-right { top: 0; right: 0; transform: rotate(90deg); }
@@ -309,6 +337,7 @@
 </head>
 <body>
   <div class="book-container">
+
     <!-- Left page -->
     <div class="page-left">
       <div class="paper-texture"></div>
@@ -337,27 +366,51 @@
       </div>
     </div>
 
-    <!-- Right page -->
-    <div class="page-right">
-      <div class="paper-texture"></div>
-      <div class="page-edge top"></div>
-      <div class="page-edge bottom"></div>
-      <div class="corner-wear top-right"></div>
-      <div class="corner-wear bottom-right"></div>
+    <!-- Right page — with page-flip animation wrapper -->
+    <div class="page-right-wrapper">
+      <div class="page-right" id="pageRight">
+        <div class="paper-texture"></div>
+        <div class="page-edge top"></div>
+        <div class="page-edge bottom"></div>
+        <div class="corner-wear top-right"></div>
+        <div class="corner-wear bottom-right"></div>
 
-      <div class="page-content">
-        <h1 class="title-arabic">بالعربي</h1>
-        <h2 class="title-english">Poetry</h2>
-        <div class="manuscript-line"></div>
-        <p class="description">كل قصيدة كنز من التراث</p>
-        <p class="description-sub">Every poem a treasure</p>
-        <button class="enter-button">
-          <span>ENTER</span>
-        </button>
+        <!-- Flip again button -->
+        <button class="flip-trigger" onclick="flipPage()">Flip Page</button>
+
+        <div class="page-content">
+          <h1 class="title-arabic">بالعربي</h1>
+          <h2 class="title-english">Poetry</h2>
+          <div class="manuscript-line"></div>
+          <p class="description">كل قصيدة كنز<br/>من التراث</p>
+          <p class="description-sub">Every poem — a treasure of heritage</p>
+          <button class="enter-button">
+            <span>ENTER</span>
+          </button>
+        </div>
+
+        <div class="folio">II</div>
       </div>
-
-      <div class="folio">II</div>
     </div>
+
   </div>
+
+  <script>
+    let flipped = false;
+
+    function flipPage() {
+      const page = document.getElementById('pageRight');
+      if (!flipped) {
+        page.style.transition = 'transform 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
+        page.style.transformStyle = 'preserve-3d';
+        page.style.transform = 'rotateY(-180deg)';
+        flipped = true;
+      } else {
+        page.style.transition = 'transform 0.8s cubic-bezier(0.4, 0, 0.2, 1)';
+        page.style.transform = 'rotateY(2deg)';
+        flipped = false;
+      }
+    }
+  </script>
 </body>
 </html>

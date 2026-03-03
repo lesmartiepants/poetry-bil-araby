@@ -2,143 +2,206 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>E2E #7: Scroll Keeper -- Physical Unroll</title>
-<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>E2E #7: Scroll Keeper — Parchment</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
+
 :root {
-  --parchment: #e8dcc4;
-  --paper: #d4c4a8;
-  --wood: #3d3428;
-  --ink: #1a1512;
-  --ink-dim: rgba(26, 21, 18, 0.5);
-  --gold: #C5A059;
-  --shadow: rgba(0, 0, 0, 0.15);
+  /* Parchment / warm paper palette */
+  --parchment-light: #faf6ee;
+  --parchment:       #f0e8d5;
+  --parchment-mid:   #e4d5b8;
+  --parchment-dark:  #d2b48c;
+  --vellum:          #c8a87a;
+  --ink:             #2a1f14;
+  --ink-mid:         #4a3826;
+  --ink-dim:         rgba(42, 31, 20, 0.5);
+  --ink-faint:       rgba(42, 31, 20, 0.22);
+  --gold:            #C5A059;
+  --gold-dim:        rgba(197, 160, 89, 0.3);
+  --sienna:          #8B5E3C;
+  --shadow-warm:     rgba(74, 42, 16, 0.18);
+  --shadow-deep:     rgba(30, 18, 8, 0.28);
   --font-ar: 'Amiri', serif;
   --font-ui: 'Tajawal', system-ui, sans-serif;
 }
+
+/* Dark parchment (aged, lamplight) */
 html.dark {
-  --parchment: #1a1512;
-  --paper: #0c0c0e;
-  --wood: #e8dcc4;
-  --ink: #e8dcc4;
-  --ink-dim: rgba(232, 220, 196, 0.5);
-  --shadow: rgba(0, 0, 0, 0.3);
+  --parchment-light: #1f1a14;
+  --parchment:       #18140f;
+  --parchment-mid:   #2a2318;
+  --parchment-dark:  #342b1e;
+  --vellum:          #4a3828;
+  --ink:             #e8dcc8;
+  --ink-mid:         #c8b898;
+  --ink-dim:         rgba(232, 220, 200, 0.5);
+  --ink-faint:       rgba(232, 220, 200, 0.2);
+  --shadow-warm:     rgba(0, 0, 0, 0.4);
+  --shadow-deep:     rgba(0, 0, 0, 0.55);
 }
+
 html {
   font-family: var(--font-ui);
-  background: var(--paper);
-  color: var(--ink);
-}
-body { min-height: 100vh; }
-
-.theme-toggle {
-  position: fixed;
-  top: 24px;
-  right: 24px;
-  z-index: 100;
-  width: 48px;
-  height: 48px;
-  min-width: 44px;
-  min-height: 44px;
-  border-radius: 8px;
-  border: 2px solid var(--wood);
   background: var(--parchment);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  color: var(--ink);
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+}
+body { min-height: 100vh; min-height: 100dvh; }
+
+/* ===========================================
+   PAPER TEXTURE OVERLAY
+   Subtle SVG-noise grain simulating aged paper
+   =========================================== */
+body::before {
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  pointer-events: none;
+  /* Paper grain via SVG turbulence filter */
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='400' height='400' filter='url(%23noise)' opacity='0.045'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 200px 200px;
+  opacity: 0.7;
+  mix-blend-mode: multiply;
+}
+html.dark body::before { mix-blend-mode: overlay; opacity: 0.35; }
+
+/* Warm radial vignette for parchment edges */
+body::after {
+  content: '';
+  position: fixed; inset: 0; z-index: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 90% 90% at 50% 50%,
+    transparent 60%,
+    rgba(139, 94, 60, 0.12) 85%,
+    rgba(74, 42, 16, 0.22) 100%
+  );
+}
+html.dark body::after {
+  background: radial-gradient(
+    ellipse 90% 90% at 50% 50%,
+    transparent 55%,
+    rgba(0, 0, 0, 0.25) 85%,
+    rgba(0, 0, 0, 0.45) 100%
+  );
+}
+
+/* ---- Floating Dust Canvas ---- */
+#dustCanvas {
+  position: fixed; inset: 0; z-index: 1;
+  pointer-events: none; will-change: transform;
+}
+
+/* ---- Theme Toggle ---- */
+.theme-toggle {
+  position: fixed; top: 24px; right: 24px; z-index: 100;
+  width: 48px; height: 48px; min-width: 44px; min-height: 44px;
+  border-radius: 8px;
+  border: 1.5px solid var(--vellum);
+  background: var(--parchment-mid);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
   transition: all 0.3s ease;
-  font-size: 20px;
-  box-shadow: 0 4px 12px var(--shadow);
+  color: var(--ink-mid);
+  box-shadow: 0 3px 10px var(--shadow-warm);
   will-change: transform;
 }
 .theme-toggle:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px var(--shadow);
+  box-shadow: 0 5px 16px var(--shadow-warm);
+  border-color: var(--gold);
+  color: var(--ink);
 }
 .theme-toggle:focus-visible {
-  outline: 3px solid var(--gold);
-  outline-offset: 2px;
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
 }
 
-/* Dust particle canvas */
-#dustCanvas {
-  position: fixed;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  will-change: transform;
-}
-
-/* Paper texture canvas */
-canvas#texture {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  opacity: 0.4;
-}
-
+/* ---- Screen base ---- */
 .screen {
-  position: relative;
-  width: 100%;
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-  z-index: 2;
+  position: relative; width: 100%;
+  min-height: 100vh; min-height: 100dvh;
+  display: flex; align-items: center; justify-content: center;
+  padding: 28px; z-index: 2;
 }
-
 .label {
-  position: absolute;
-  top: 24px;
-  left: 24px;
-  font-size: 10px;
-  letter-spacing: 0.3em;
-  text-transform: uppercase;
-  color: var(--gold);
-  opacity: 0.7;
+  position: absolute; top: 24px; left: 24px;
+  font-size: 9px; letter-spacing: 0.38em; text-transform: uppercase;
+  color: var(--gold); opacity: 0.6; font-weight: 500;
 }
 
-/* SPLASH - Dramatic Scroll Unroll from Center */
+/* ===========================================
+   SPLASH — Parchment Scroll Unroll
+   =========================================== */
 #splash {
-  background: var(--paper);
+  background: var(--parchment);
   overflow: hidden;
 }
 
 .scroll-container {
-  max-width: 700px;
-  width: 100%;
-  background: var(--parchment);
-  border: 8px solid var(--wood);
-  border-radius: 4px;
-  padding: 64px 48px;
-  box-shadow: 0 20px 60px var(--shadow);
-  /* Dramatic unroll from center with elastic easing */
-  animation: scrollDramaticUnroll 1.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  max-width: 680px; width: 100%;
+  position: relative;
+
+  /* ---- Parchment paper styling ---- */
+  background: linear-gradient(
+    to bottom,
+    var(--parchment-light) 0%,
+    var(--parchment) 25%,
+    var(--parchment-mid) 75%,
+    var(--parchment-dark) 100%
+  );
+  border: none;
+  border-radius: 3px;
+
+  /* Warm parchment edge shadow — simulates paper weight */
+  box-shadow:
+    0 2px 0 var(--vellum),            /* bottom edge band */
+    0 4px 0 var(--parchment-dark),    /* second edge band */
+    0 20px 50px var(--shadow-deep),   /* drop shadow */
+    inset 0 0 60px rgba(139, 94, 60, 0.08),  /* inner warmth */
+    inset 0 0 120px rgba(74, 42, 16, 0.04);  /* deeper warmth */
+
+  padding: 64px 52px 56px;
+
+  /* Dramatic unroll from center */
+  animation: scrollUnroll 2s cubic-bezier(0.34, 1.45, 0.64, 1) forwards;
   will-change: transform, clip-path;
   transform-origin: center center;
 }
+html.dark .scroll-container {
+  background: linear-gradient(
+    to bottom,
+    var(--parchment-mid) 0%,
+    var(--parchment-dark) 40%,
+    var(--vellum) 100%
+  );
+  box-shadow:
+    0 2px 0 var(--vellum),
+    0 4px 0 rgba(0,0,0,0.5),
+    0 24px 60px var(--shadow-deep),
+    inset 0 0 80px rgba(255, 200, 120, 0.04);
+}
 
-@keyframes scrollDramaticUnroll {
+@keyframes scrollUnroll {
   0% {
     opacity: 0;
-    transform: scaleY(0.02) scaleX(0.8);
-    clip-path: inset(49% 5% 49% 5%);
+    transform: scaleY(0.02) scaleX(0.75);
+    clip-path: inset(49% 6% 49% 6% round 4px);
   }
-  30% {
+  25% {
     opacity: 1;
-    transform: scaleY(0.4) scaleX(0.95);
-    clip-path: inset(30% 2% 30% 2%);
+    transform: scaleY(0.35) scaleX(0.92);
+    clip-path: inset(32% 2% 32% 2% round 3px);
   }
-  60% {
-    transform: scaleY(1.06) scaleX(1.01);
+  55% {
+    transform: scaleY(1.05) scaleX(1.008);
     clip-path: inset(0% 0% 0% 0%);
   }
-  80% {
+  75% {
     transform: scaleY(0.98) scaleX(1);
   }
   100% {
@@ -148,172 +211,269 @@ canvas#texture {
   }
 }
 
+/* Left-edge aged paper crinkle lines */
+.scroll-container::before,
+.scroll-container::after {
+  content: '';
+  position: absolute;
+  top: 8%; bottom: 8%;
+  width: 2px;
+  background: linear-gradient(to bottom,
+    transparent,
+    var(--parchment-dark) 20%,
+    var(--parchment-dark) 80%,
+    transparent
+  );
+  opacity: 0.4;
+}
+.scroll-container::before { left: 18px; }
+.scroll-container::after  { right: 18px; }
+
+/* Brand label at top */
+.scroll-brand-label {
+  font-size: 9px; letter-spacing: 0.42em; text-transform: uppercase;
+  color: var(--gold); text-align: center; margin-bottom: 1rem;
+  font-weight: 500; opacity: 0.7;
+  animation: fadeIn 0.8s 0.9s backwards;
+}
+
 .scroll-title {
   font-family: var(--font-ar);
-  font-size: clamp(3rem, 8vw, 4.5rem);
-  font-weight: 700;
-  color: var(--ink);
-  text-align: center;
-  margin-bottom: 16px;
-  animation: fadeIn 1s 0.8s backwards;
+  font-size: clamp(2.8rem, 8vw, 4.2rem);
+  font-weight: 700; color: var(--ink);
+  text-align: center; margin-bottom: 8px;
+  line-height: 1.1;
+  animation: fadeIn 1s 0.9s backwards;
 }
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+html.dark .scroll-title { color: var(--ink); }
+
+.scroll-rule {
+  width: 60px; height: 1.5px; border: none; margin: 14px auto 10px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  animation: fadeIn 0.8s 1.1s backwards;
 }
 
 .scroll-subtitle {
-  font-size: 13px;
-  color: var(--ink-dim);
-  letter-spacing: 0.3em;
-  text-transform: uppercase;
-  text-align: center;
-  margin-bottom: 48px;
-  animation: fadeIn 1s 1s backwards;
+  font-size: 12px; color: var(--ink-dim);
+  letter-spacing: 0.32em; text-transform: uppercase;
+  text-align: center; margin-bottom: 44px;
+  animation: fadeIn 0.8s 1.15s backwards;
 }
 
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* Parchment-style CTA button */
 .scroll-btn {
-  display: block;
+  display: flex; align-items: center; gap: 10px;
   margin: 0 auto;
-  padding: 16px 48px;
-  min-width: 44px;
-  min-height: 44px;
-  background: var(--wood);
-  color: var(--parchment);
-  border: none;
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.25em;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 12px var(--shadow);
-  animation: scaleIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) 1.2s backwards;
+  padding: 14px 44px; min-width: 44px; min-height: 48px;
+  background: linear-gradient(135deg, var(--ink-mid), var(--ink));
+  color: var(--parchment-light);
+  border: none; border-radius: 4px;
+  font-family: var(--font-ui);
+  font-size: 11px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.32em;
+  cursor: pointer; transition: all 0.3s ease;
+  box-shadow: 0 3px 12px var(--shadow-warm), inset 0 1px 0 rgba(255,240,200,0.1);
+  animation: scaleIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) 1.3s backwards;
   will-change: transform;
 }
+html.dark .scroll-btn {
+  background: linear-gradient(135deg, var(--vellum), var(--gold));
+  color: var(--ink);
+}
 @keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.9); }
-  to { opacity: 1; transform: scale(1); }
+  from { opacity: 0; transform: scale(0.92); }
+  to   { opacity: 1; transform: scale(1); }
 }
 .scroll-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px var(--shadow);
+  box-shadow: 0 6px 18px var(--shadow-warm);
 }
 .scroll-btn:focus-visible {
-  outline: 3px solid var(--gold);
-  outline-offset: 2px;
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
 }
 
-/* MAIN */
+/* Bottom decorative stamp */
+.scroll-stamp {
+  margin-top: 36px; text-align: center;
+  font-size: 10px; color: var(--ink-dim);
+  letter-spacing: 0.18em;
+  animation: fadeIn 1s 1.5s backwards;
+}
+
+/* ===========================================
+   MAIN APP
+   =========================================== */
 #main {
-  background: var(--paper);
-  display: none;
-  padding: 40px 24px;
+  background: var(--parchment);
+  display: none; padding: 40px 24px 60px;
+  align-items: flex-start;
 }
 .main-layout {
-  max-width: 900px;
-  width: 100%;
+  max-width: 880px; width: 100%;
   margin: 0 auto;
 }
+
+/* Nav bar — parchment card style */
 .main-nav {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 48px;
-  padding: 16px 24px;
-  background: var(--parchment);
-  border: 4px solid var(--wood);
-  border-radius: 8px;
-  box-shadow: 0 4px 12px var(--shadow);
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 44px;
+  padding: 14px 24px;
+  background: linear-gradient(to bottom, var(--parchment-light), var(--parchment-mid));
+  border: 1.5px solid var(--vellum);
+  border-radius: 6px;
+  box-shadow: 0 4px 14px var(--shadow-warm), inset 0 1px 0 rgba(255,245,220,0.5);
+}
+html.dark .main-nav {
+  background: linear-gradient(to bottom, var(--parchment-mid), var(--parchment-dark));
+  border-color: var(--vellum);
+  box-shadow: 0 4px 14px var(--shadow-deep);
+  inset: 0;
 }
 .main-brand {
-  font-family: var(--font-ar);
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--ink);
+  font-family: var(--font-ar); font-size: 22px;
+  font-weight: 700; color: var(--ink-mid);
+}
+html.dark .main-brand { color: var(--ink); }
+.main-brand-en {
+  font-size: 9px; letter-spacing: 0.28em; text-transform: uppercase;
+  color: var(--ink-dim); font-family: var(--font-ui); margin-top: 1px;
 }
 
+/* Poem scroll card — the centrepiece */
 .poem-scroll {
-  background: var(--parchment);
-  border: 4px solid var(--wood);
+  position: relative;
+  background: linear-gradient(
+    160deg,
+    var(--parchment-light) 0%,
+    var(--parchment) 40%,
+    var(--parchment-mid) 100%
+  );
+  border: 1.5px solid var(--vellum);
   border-radius: 4px;
-  padding: 48px;
-  margin-bottom: 24px;
-  box-shadow: 0 8px 24px var(--shadow);
-  transition: all 0.3s ease;
+  padding: 52px 56px 44px;
+  margin-bottom: 28px;
+  box-shadow:
+    0 8px 30px var(--shadow-warm),
+    0 1px 0 var(--parchment-dark) inset,
+    inset 0 0 40px rgba(139, 94, 60, 0.06);
+  transition: transform 0.4s cubic-bezier(0.16,1,0.3,1), box-shadow 0.4s ease;
+  will-change: transform;
+}
+html.dark .poem-scroll {
+  background: linear-gradient(
+    160deg, var(--parchment-mid) 0%,
+    var(--parchment-dark) 50%,
+    var(--vellum) 100%
+  );
+  box-shadow: 0 10px 36px var(--shadow-deep), inset 0 0 60px rgba(255,200,100,0.03);
 }
 .poem-scroll:hover {
   transform: translateY(-4px);
-  box-shadow: 0 12px 32px var(--shadow);
+  box-shadow: 0 14px 42px var(--shadow-deep), inset 0 0 50px rgba(139, 94, 60, 0.07);
 }
+
+/* Edge crinkle lines on poem card */
+.poem-scroll::before,
+.poem-scroll::after {
+  content: '';
+  position: absolute; top: 12%; bottom: 12%;
+  width: 1.5px;
+  background: linear-gradient(to bottom,
+    transparent, var(--vellum) 25%, var(--vellum) 75%, transparent
+  );
+  opacity: 0.35;
+}
+.poem-scroll::before { left: 14px; }
+.poem-scroll::after  { right: 14px; }
 
 .poem-text {
   font-family: var(--font-ar);
-  font-size: 32px;
-  line-height: 2.2;
-  color: var(--ink);
-  text-align: right;
-  direction: rtl;
-  margin-bottom: 32px;
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  line-height: 2.3; color: var(--ink);
+  text-align: right; direction: rtl;
+  margin-bottom: 28px;
+  letter-spacing: 0.01em;
+  text-shadow: 0 1px 2px rgba(74, 42, 16, 0.08);
 }
-.poem-author {
-  font-size: 14px;
-  color: var(--gold);
-  text-align: left;
-  font-weight: 600;
+html.dark .poem-text {
+  color: var(--ink);
+  text-shadow: none;
 }
 
+/* Decorative rule before poet attribution */
+.poem-rule {
+  width: 40px; height: 1px; border: none;
+  background: linear-gradient(90deg, var(--gold), var(--sienna));
+  margin: 0 0 16px auto;
+  opacity: 0.55;
+}
+.poem-author {
+  font-family: var(--font-ui);
+  font-size: 13px; color: var(--sienna);
+  font-weight: 600; letter-spacing: 0.06em;
+}
+html.dark .poem-author { color: var(--gold); }
+
+/* Action buttons — parchment style */
+.scroll-actions { display: flex; gap: 12px; align-items: center; }
+
 .scandi-btn {
-  padding: 14px 40px;
-  min-width: 44px;
-  min-height: 44px;
-  background: var(--wood);
-  color: var(--parchment);
-  border: none;
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.25em;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 12px var(--shadow);
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 13px 36px; min-width: 44px; min-height: 48px;
+  background: linear-gradient(135deg, var(--ink-mid), var(--ink));
+  color: var(--parchment-light);
+  border: none; border-radius: 5px;
+  font-family: var(--font-ui); font-size: 11px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.28em;
+  cursor: pointer; transition: all 0.3s ease;
+  box-shadow: 0 3px 10px var(--shadow-warm);
   will-change: transform;
+}
+html.dark .scandi-btn {
+  background: linear-gradient(135deg, var(--vellum), var(--gold));
+  color: var(--ink);
 }
 .scandi-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 16px var(--shadow);
+  box-shadow: 0 6px 18px var(--shadow-warm);
 }
 .scandi-btn:focus-visible {
-  outline: 3px solid var(--gold);
-  outline-offset: 2px;
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
 }
 
+.icon-btn {
+  width: 44px; height: 44px; border-radius: 6px;
+  border: 1.5px solid var(--vellum);
+  background: var(--parchment-mid);
+  color: var(--ink-mid); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 6px var(--shadow-warm);
+}
+.icon-btn:hover {
+  border-color: var(--gold);
+  background: var(--parchment);
+  transform: translateY(-1px);
+  color: var(--sienna);
+}
+
+/* ---- Mobile ---- */
 @media (max-width: 768px) {
-  .scroll-container {
-    padding: 48px 32px;
-    border-width: 4px;
-  }
-  .scroll-title { font-size: 3rem; }
-  .poem-scroll { padding: 32px 24px; }
-  .poem-text {
-    font-size: 24px;
-    line-height: 2;
-  }
-  .theme-toggle {
-    width: 44px;
-    height: 44px;
-    top: 16px;
-    right: 16px;
-  }
-  .label {
-    font-size: 8px;
-    top: 16px;
-    left: 16px;
-  }
+  .scroll-container { padding: 44px 28px 40px; border-width: 3px; }
+  .scroll-title { font-size: clamp(2.5rem, 10vw, 3.5rem); }
+  .poem-scroll { padding: 32px 24px 28px; }
+  .poem-text { font-size: clamp(1.2rem, 5vw, 1.6rem); line-height: 2.1; }
+  .theme-toggle { width: 44px; height: 44px; top: 16px; right: 16px; }
+  .label { font-size: 8px; top: 16px; left: 16px; }
+  .main-layout { padding-top: 8px; }
+  #main { padding: 32px 16px 48px; }
 }
 
+/* ---- Reduced Motion ---- */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
@@ -322,151 +482,186 @@ canvas#texture {
   }
   #dustCanvas { display: none; }
   .scroll-container {
-    opacity: 1 !important;
-    transform: none !important;
-    clip-path: none !important;
+    opacity: 1 !important; transform: none !important; clip-path: none !important;
   }
+  .poem-scroll:hover { transform: none; }
 }
 </style>
 </head>
 <body>
-  <canvas id="texture"></canvas>
-  <canvas id="dustCanvas"></canvas>
 
-  <button class="theme-toggle" id="themeBtn" aria-label="Toggle theme">
-    <span id="theme-icon">&#9790;</span>
-  </button>
+<canvas id="dustCanvas"></canvas>
 
-  <div class="screen" id="splash">
-    <div class="label">Scroll Keeper</div>
-    <div class="scroll-container">
-      <h1 class="scroll-title">&#1602;&#1575;&#1601;&#1610;&#1577;</h1>
-      <p class="scroll-subtitle">Ancient Scrolls, Modern Reading</p>
-      <button class="scroll-btn" onclick="showMain()">Unroll</button>
-    </div>
+<button class="theme-toggle" id="themeBtn" aria-label="Toggle light/dark theme">
+  <svg id="theme-svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+       stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"/>
+  </svg>
+</button>
+
+<!-- ===== SPLASH ===== -->
+<div class="screen" id="splash">
+  <div class="label">Scroll Keeper</div>
+  <div class="scroll-container">
+    <div class="scroll-brand-label">Poetry bil Araby</div>
+    <h1 class="scroll-title" lang="ar">شعر بالعربي</h1>
+    <hr class="scroll-rule">
+    <p class="scroll-subtitle">Ancient Scrolls, Modern Reading</p>
+    <button class="scroll-btn" onclick="showMain()">
+      <!-- Scroll/unroll SVG icon -->
+      <svg width="14" height="16" viewBox="0 0 14 16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+        <path d="M2 3C2 1.9 2.9 1 4 1H12C13.1 1 14 1.9 14 3V13C14 14.1 13.1 15 12 15H4C2.9 15 2 14.1 2 13V3Z"/>
+        <line x1="5" y1="5" x2="11" y2="5"/>
+        <line x1="5" y1="8" x2="11" y2="8"/>
+        <line x1="5" y1="11" x2="9" y2="11"/>
+      </svg>
+      Unroll the Scroll
+    </button>
+    <div class="scroll-stamp" lang="ar">قافية &nbsp;·&nbsp; ثمانون ألف قصيدة</div>
   </div>
+</div>
 
-  <div class="screen" id="main">
-    <div class="main-layout">
-      <nav class="main-nav">
-        <div class="main-brand">&#1602;&#1575;&#1601;&#1610;&#1577;</div>
-      </nav>
-
-      <div class="poem-scroll">
-        <div class="poem-text" lang="ar" dir="rtl">
-          &#1571;&#1614;&#1606;&#1575; &#1575;&#1604;&#1576;&#1614;&#1581;&#1585;&#1615; &#1601;&#1610; &#1571;&#1614;&#1581;&#1588;&#1575;&#1574;&#1616;&#1607;&#1616; &#1575;&#1604;&#1583;&#1615;&#1585;&#1615;&#1617; &#1603;&#1575;&#1605;&#1616;&#1606;&#1612;<br>
-          &#1601;&#1614;&#1607;&#1614;&#1604; &#1587;&#1614;&#1571;&#1614;&#1604;&#1608;&#1575; &#1575;&#1604;&#1594;&#1614;&#1608;&#1617;&#1575;&#1589;&#1614; &#1593;&#1614;&#1606; &#1589;&#1614;&#1583;&#1614;&#1601;&#1575;&#1578;&#1610;
-        </div>
-        <div class="poem-author">-- &#1571;&#1581;&#1605;&#1583; &#1588;&#1608;&#1602;&#1610;</div>
+<!-- ===== MAIN ===== -->
+<div class="screen" id="main">
+  <div class="main-layout">
+    <nav class="main-nav">
+      <div>
+        <div class="main-brand" lang="ar">شعر بالعربي</div>
+        <div class="main-brand-en">Poetry bil Araby</div>
       </div>
+      <!-- Filter/menu icon -->
+      <button class="icon-btn" aria-label="Browse poets">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <line x1="3" y1="6" x2="21" y2="6"/>
+          <line x1="3" y1="12" x2="17" y2="12"/>
+          <line x1="3" y1="18" x2="13" y2="18"/>
+        </svg>
+      </button>
+    </nav>
 
+    <div class="poem-scroll">
+      <div class="poem-text" lang="ar" dir="rtl">
+        أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ<br>
+        فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
+      </div>
+      <hr class="poem-rule">
+      <div class="poem-author" lang="ar">— أحمد شوقي</div>
+    </div>
+
+    <div class="scroll-actions">
       <button class="scandi-btn">Next Scroll</button>
+      <!-- Bookmark icon -->
+      <button class="icon-btn" aria-label="Save poem">
+        <svg width="16" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+        </svg>
+      </button>
+      <!-- Share icon -->
+      <button class="icon-btn" aria-label="Share poem">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+          <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+          <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+        </svg>
+      </button>
     </div>
   </div>
+</div>
 
 <script>
-var themeBtn = document.getElementById('themeBtn');
-var themeIcon = document.getElementById('theme-icon');
+/* ---- Theme Toggle ---- */
+var isDark = false; /* default: light parchment */
+var MOON = '<path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"/>';
+var SUN  = '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>';
 
-themeBtn.addEventListener('click', function() {
-  document.documentElement.classList.toggle('dark');
-  themeIcon.textContent = document.documentElement.classList.contains('dark') ? '\u2606' : '\u263E';
+document.getElementById('themeBtn').addEventListener('click', function() {
+  isDark = !isDark;
+  document.documentElement.classList.toggle('dark', isDark);
+  document.getElementById('theme-svg').innerHTML = isDark ? SUN : MOON;
 });
 
+/* ---- Navigation ---- */
 function showMain() {
-  document.getElementById('splash').style.display = 'none';
-  document.getElementById('main').style.display = 'flex';
+  var splash = document.getElementById('splash');
+  var main   = document.getElementById('main');
+  splash.style.opacity = '0';
+  splash.style.transition = 'opacity 0.5s ease';
+  setTimeout(function() {
+    splash.style.display = 'none';
+    main.style.display = 'flex';
+    main.style.opacity = '0';
+    main.style.transition = 'opacity 0.5s ease';
+    requestAnimationFrame(function() {
+      requestAnimationFrame(function() { main.style.opacity = '1'; });
+    });
+  }, 500);
 }
 
-// Paper texture
-var texCanvas = document.getElementById('texture');
-var texCtx = texCanvas.getContext('2d');
-texCanvas.width = window.innerWidth;
-texCanvas.height = window.innerHeight;
-
-for (var i = 0; i < 200; i++) {
-  texCtx.fillStyle = 'rgba(61, 52, 40, ' + (Math.random() * 0.05) + ')';
-  texCtx.fillRect(Math.random() * texCanvas.width, Math.random() * texCanvas.height, 2, 2);
-}
-
-// === Floating Parchment Dust Particles ===
+/* ---- Floating Parchment Dust ---- */
 var dustCanvas = document.getElementById('dustCanvas');
-var dustCtx = dustCanvas.getContext('2d');
-var isMobile = window.innerWidth <= 768;
+var dustCtx    = dustCanvas.getContext('2d');
+var isMobile   = window.innerWidth <= 768;
 var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 var dustParticles = [];
 var dustAnimId;
 
 function resizeDust() {
-  dustCanvas.width = window.innerWidth;
+  dustCanvas.width  = window.innerWidth;
   dustCanvas.height = window.innerHeight;
 }
 resizeDust();
 window.addEventListener('resize', resizeDust);
 
-var maxDust = isMobile ? 25 : 50;
-var dustColors = ['#C5A059', '#d4c4a8', '#e8dcc4', '#B89B6E'];
+/* Warm sepia dust motes */
+var DUST_COLORS_LIGHT = ['#C5A059', '#d4c4a8', '#e8dcc4', '#B89B6E', '#a08060'];
+var DUST_COLORS_DARK  = ['#C5A059', '#8B7040', '#6B5030', '#d4b068'];
 
 function DustMote() {
-  this.x = Math.random() * dustCanvas.width;
-  this.y = Math.random() * dustCanvas.height;
-  this.size = Math.random() * 2 + 0.5;
-  this.speedX = (Math.random() - 0.5) * 0.3;
-  this.speedY = (Math.random() - 0.5) * 0.3 - 0.2;
-  this.opacity = Math.random() * 0.4 + 0.1;
-  this.drift = Math.random() * Math.PI * 2;
-  this.driftSpeed = Math.random() * 0.01 + 0.005;
-  this.color = dustColors[Math.floor(Math.random() * dustColors.length)];
+  this.x       = Math.random() * dustCanvas.width;
+  this.y       = Math.random() * dustCanvas.height;
+  this.size    = Math.random() * 2.2 + 0.4;
+  this.speedX  = (Math.random() - 0.5) * 0.25;
+  this.speedY  = -(Math.random() * 0.22 + 0.08);
+  this.opacity = Math.random() * 0.35 + 0.08;
+  this.drift   = Math.random() * Math.PI * 2;
+  this.driftSp = Math.random() * 0.008 + 0.003;
 }
-
 DustMote.prototype.update = function() {
-  this.drift += this.driftSpeed;
-  this.x += this.speedX + Math.sin(this.drift) * 0.3;
-  this.y += this.speedY;
-  this.opacity += (Math.random() - 0.5) * 0.01;
-  if (this.opacity > 0.5) this.opacity = 0.5;
-  if (this.opacity < 0.05) this.opacity = 0.05;
-  if (this.y < -10) { this.y = dustCanvas.height + 10; this.x = Math.random() * dustCanvas.width; }
-  if (this.x < -10) this.x = dustCanvas.width + 10;
+  this.drift  += this.driftSp;
+  this.x      += this.speedX + Math.sin(this.drift) * 0.28;
+  this.y      += this.speedY;
+  this.opacity += (Math.random() - 0.5) * 0.008;
+  if (this.opacity > 0.45)  this.opacity = 0.45;
+  if (this.opacity < 0.04)  this.opacity = 0.04;
+  if (this.y < -10)  { this.y = dustCanvas.height + 10; this.x = Math.random() * dustCanvas.width; }
+  if (this.x < -10)   this.x = dustCanvas.width + 10;
   if (this.x > dustCanvas.width + 10) this.x = -10;
 };
-
 DustMote.prototype.draw = function() {
+  var colors = document.documentElement.classList.contains('dark') ? DUST_COLORS_DARK : DUST_COLORS_LIGHT;
+  var clr = colors[Math.floor(Math.random() * colors.length)];
   dustCtx.beginPath();
   dustCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-  dustCtx.fillStyle = this.color;
+  dustCtx.fillStyle = clr;
   dustCtx.globalAlpha = this.opacity;
   dustCtx.fill();
   dustCtx.globalAlpha = 1;
 };
 
+var MAX_DUST = isMobile ? 28 : 55;
+
 function initDust() {
   dustParticles = [];
-  for (var i = 0; i < maxDust; i++) {
-    dustParticles.push(new DustMote());
-  }
+  for (var i = 0; i < MAX_DUST; i++) dustParticles.push(new DustMote());
 }
-
 function animateDust() {
   dustCtx.clearRect(0, 0, dustCanvas.width, dustCanvas.height);
   dustParticles.forEach(function(p) { p.update(); p.draw(); });
   dustAnimId = requestAnimationFrame(animateDust);
 }
 
-if (!reducedMotion) {
-  initDust();
-  animateDust();
-}
-
-window.addEventListener('resize', function() {
-  texCanvas.width = window.innerWidth;
-  texCanvas.height = window.innerHeight;
-  for (var i = 0; i < 200; i++) {
-    texCtx.fillStyle = 'rgba(61, 52, 40, ' + (Math.random() * 0.05) + ')';
-    texCtx.fillRect(Math.random() * texCanvas.width, Math.random() * texCanvas.height, 2, 2);
-  }
-  resizeDust();
-});
+if (!reducedMotion) { initDust(); animateDust(); }
+window.addEventListener('resize', function() { resizeDust(); });
 </script>
 </body>
 </html>

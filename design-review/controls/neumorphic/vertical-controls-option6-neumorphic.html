@@ -194,6 +194,131 @@
     .zoom-1 { font-size: clamp(1rem, 1.6vw, 1.2rem); }
     .zoom-2 { font-size: clamp(1.25rem, 2vw, 1.5rem); }
     .zoom-3 { font-size: clamp(1.5rem, 2.4vw, 1.8rem); }
+
+    /* ── Mobile: tablet breakpoint (768px) ──
+       Target: sidebar matches notion option3 compactness
+       Buttons shrink to ~48px, sidebar narrows to 68px
+    ── */
+    @media (max-width: 768px) {
+      .vertical-controls {
+        width: 68px;
+        padding: 14px 8px;
+        border-radius: 20px;
+        left: 10px;
+        box-shadow:
+          10px 10px 20px #a8b0ba,
+          -10px -10px 20px #ffffff;
+      }
+
+      .control-section {
+        margin-bottom: 16px;
+      }
+
+      .section-icon {
+        font-size: 8px;
+        letter-spacing: 0.8px;
+        margin-bottom: 8px;
+      }
+
+      .control-btn {
+        width: 48px;
+        height: 48px;
+        border-radius: 14px;
+        margin: 0 auto 8px;
+        box-shadow:
+          5px 5px 10px #a8b0ba,
+          -5px -5px 10px #ffffff;
+      }
+
+      .control-btn svg {
+        width: 20px;
+        height: 20px;
+      }
+
+      .badge {
+        width: 20px;
+        height: 20px;
+        border-radius: 10px;
+        font-size: 9px;
+        top: -4px;
+        right: -4px;
+      }
+
+      .divider {
+        margin: 10px 8px;
+      }
+
+      .content {
+        padding: 0 20px 0 92px;
+      }
+    }
+
+    /* ── Mobile: phone breakpoint (480px) ──
+       Target: matches notion option3 40px button sizing,
+       sidebar becomes truly minimal -- 56px wide
+    ── */
+    @media (max-width: 480px) {
+      .vertical-controls {
+        width: 56px;
+        padding: 10px 6px;
+        border-radius: 16px;
+        left: 8px;
+        box-shadow:
+          8px 8px 16px #a8b0ba,
+          -8px -8px 16px #ffffff;
+      }
+
+      .control-section {
+        margin-bottom: 10px;
+      }
+
+      .section-icon {
+        /* Hide section labels at phone size -- too cramped */
+        display: none;
+      }
+
+      /* Match Notion option3 sizing: 40x40px buttons */
+      .control-btn {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        margin: 0 auto 6px;
+        box-shadow:
+          4px 4px 8px #a8b0ba,
+          -4px -4px 8px #ffffff;
+      }
+
+      .control-btn svg {
+        width: 18px;
+        height: 18px;
+      }
+
+      .badge {
+        width: 16px;
+        height: 16px;
+        border-radius: 8px;
+        font-size: 8px;
+        font-weight: 700;
+        top: -4px;
+        right: -4px;
+      }
+
+      .divider {
+        margin: 6px 4px;
+      }
+
+      .content {
+        padding: 0 12px 0 72px;
+      }
+
+      .poem-container {
+        padding: 28px 16px;
+        border-radius: 20px;
+        box-shadow:
+          14px 14px 28px #a8b0ba,
+          -14px -14px 28px #ffffff;
+      }
+    }
   </style>
 </head>
 <body>

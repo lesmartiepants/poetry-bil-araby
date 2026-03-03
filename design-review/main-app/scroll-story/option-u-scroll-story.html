@@ -150,6 +150,224 @@
       border-radius: 999px;
       border: 1px solid rgba(148, 163, 184, 0.2);
     }
+
+    /* ============================================
+       MOBILE-FIRST RESPONSIVE — SCROLL STORY
+       ============================================ */
+    -webkit-text-size-adjust: 100%;
+
+    /* Tablet: single-column screens */
+    @media (max-width: 1024px) {
+      .screens {
+        grid-template-columns: 1fr;
+      }
+      .screen {
+        min-height: auto;
+      }
+    }
+
+    /* Mobile: 768px and below */
+    @media (max-width: 768px) {
+      body {
+        overflow-x: hidden;
+      }
+
+      .canvas {
+        padding: 16px;
+        margin: 0 auto;
+      }
+
+      .meta {
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 14px;
+      }
+
+      .meta .title {
+        font-size: clamp(18px, 5vw, 24px);
+        width: 100%;
+      }
+
+      .screens {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+
+      .screen {
+        border-radius: 22px;
+        padding: 20px;
+        /* Extra bottom padding for sticky-bar */
+        padding-bottom: 88px;
+        min-height: auto;
+      }
+
+      .screen-label {
+        font-size: 9px;
+        top: 12px;
+        right: 16px;
+      }
+
+      /* Nav: wrap on mobile */
+      .nav {
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .nav .brand {
+        font-size: 13px;
+        letter-spacing: 0.14em;
+      }
+
+      .nav > span:not(.brand) {
+        font-size: 13px;
+        min-height: 36px;
+        display: flex;
+        align-items: center;
+      }
+
+      /* Story hero heading */
+      .story-hero {
+        font-size: clamp(22px, 6vw, 36px);
+        line-height: 1.2;
+        max-width: 100%;
+        margin-top: 24px;
+      }
+
+      /* Timeline: readable chapters */
+      .timeline {
+        margin-top: 28px;
+        gap: 16px;
+      }
+
+      .chapter {
+        gap: 12px;
+        align-items: flex-start;
+      }
+
+      .chapter .dot {
+        width: 10px;
+        height: 10px;
+        flex-shrink: 0;
+        margin-top: 5px;
+      }
+
+      .chapter h3 {
+        font-size: clamp(14px, 4vw, 16px);
+        margin-bottom: 4px;
+      }
+
+      .chapter p {
+        font-size: 13px;
+        line-height: 1.5;
+      }
+
+      /* Sticky bar: relative on mobile so it flows within the card */
+      .sticky-bar {
+        position: relative;
+        bottom: auto;
+        left: auto;
+        right: auto;
+        margin-top: 24px;
+        flex-wrap: wrap;
+        gap: 8px;
+        justify-content: center;
+        border-radius: 16px;
+        padding: 10px 14px;
+      }
+
+      .sticky-bar span {
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        padding: 8px 14px;
+        flex: 1;
+        text-align: center;
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        border-radius: 999px;
+        white-space: nowrap;
+      }
+
+      /* Reader card: full-width Arabic poem */
+      .reader {
+        margin-top: 24px;
+        padding: 18px;
+        border-radius: 16px;
+      }
+
+      .reader .arabic {
+        font-size: clamp(18px, 5vw, 22px);
+        line-height: 2;
+      }
+
+      .reader .english {
+        font-size: 13px;
+        margin-top: 10px;
+        line-height: 1.6;
+      }
+
+      /* Chapter nav: touch-friendly */
+      .chapter-nav {
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 14px;
+      }
+
+      .chapter-nav span {
+        min-height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 8px 14px;
+        font-size: 12px;
+        flex: 1;
+        text-align: center;
+        white-space: nowrap;
+      }
+    }
+
+    /* Remove the extra bottom padding on the main screen (no sticky bar) */
+    @media (max-width: 768px) {
+      .screen.main {
+        padding-bottom: 20px;
+      }
+    }
+
+    /* Small phones: 480px and below */
+    @media (max-width: 480px) {
+      .canvas {
+        padding: 12px;
+      }
+
+      .screen {
+        padding: 14px;
+        padding-bottom: 80px;
+        border-radius: 18px;
+      }
+
+      .screen.main {
+        padding-bottom: 14px;
+      }
+
+      .story-hero {
+        font-size: clamp(18px, 6vw, 28px);
+      }
+
+      .reader .arabic {
+        font-size: clamp(16px, 5vw, 20px);
+      }
+
+      /* Collapse nav labels on very small screens */
+      .nav > span:not(.brand) {
+        display: none;
+      }
+
+      .sticky-bar span {
+        font-size: 11px;
+        padding: 8px 10px;
+      }
+    }
   </style>
 </head>
 <body>

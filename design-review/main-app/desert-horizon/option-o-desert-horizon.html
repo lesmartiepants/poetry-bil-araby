@@ -148,6 +148,181 @@
       gap: 10px;
       justify-content: center;
     }
+
+    /* ============================================
+       MOBILE-FIRST RESPONSIVE — DESERT HORIZON
+       ============================================ */
+    -webkit-text-size-adjust: 100%;
+
+    /* Tablet: single-column screens */
+    @media (max-width: 1024px) {
+      .screens {
+        grid-template-columns: 1fr;
+      }
+      .screen {
+        min-height: auto;
+      }
+    }
+
+    /* Mobile: 768px and below */
+    @media (max-width: 768px) {
+      body {
+        overflow-x: hidden;
+      }
+
+      .canvas {
+        padding: 16px;
+        margin: 0 auto;
+      }
+
+      .meta {
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 14px;
+      }
+
+      .meta .title {
+        font-size: clamp(18px, 5vw, 24px);
+        width: 100%;
+      }
+
+      .screens {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+
+      .screen {
+        border-radius: 22px;
+        padding: 20px;
+        min-height: auto;
+      }
+
+      .screen-label {
+        font-size: 9px;
+        top: 12px;
+        right: 16px;
+      }
+
+      /* Nav: collapse multi-link nav */
+      .nav {
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .nav .brand {
+        font-size: 13px;
+        letter-spacing: 0.12em;
+      }
+
+      /* Pill touch target */
+      .pill {
+        min-height: 44px;
+        padding: 10px 16px;
+        font-size: 13px;
+        display: flex;
+        align-items: center;
+      }
+
+      /* Remaining nav items become text links on mobile */
+      .nav > span:not(.pill):not(.brand) {
+        font-size: 13px;
+        min-height: 36px;
+        display: flex;
+        align-items: center;
+      }
+
+      /* Hero: compress top margin for mobile */
+      .hero {
+        margin-top: 36px;
+        gap: 14px;
+      }
+
+      .hero h1 {
+        font-size: clamp(26px, 7vw, 42px);
+        line-height: 1.15;
+        max-width: 100%;
+      }
+
+      .hero p {
+        font-size: 14px;
+        max-width: 100%;
+      }
+
+      /* Stamps: wrap naturally, touch-friendly */
+      .stamps {
+        gap: 8px;
+        margin-top: 8px;
+      }
+
+      .stamp {
+        min-height: 36px;
+        display: flex;
+        align-items: center;
+        padding: 8px 12px;
+        font-size: 11px;
+      }
+
+      /* Main card: full width on mobile */
+      .main-card {
+        margin: 40px auto 0;
+        max-width: 100%;
+        padding: 20px;
+        border-radius: 18px;
+      }
+
+      .main-card .arabic {
+        font-size: clamp(18px, 5vw, 22px);
+        line-height: 2;
+      }
+
+      .main-card .english {
+        font-size: 14px;
+        margin-top: 10px;
+      }
+
+      /* Controls: full-width, touch-friendly */
+      .controls {
+        margin-top: 20px;
+        gap: 10px;
+        justify-content: center;
+      }
+
+      .controls .pill {
+        flex: 1;
+        justify-content: center;
+        max-width: 120px;
+      }
+    }
+
+    /* Small phones: 480px and below */
+    @media (max-width: 480px) {
+      .canvas {
+        padding: 12px;
+      }
+
+      .screen {
+        padding: 14px;
+        border-radius: 18px;
+      }
+
+      .hero h1 {
+        font-size: clamp(22px, 7vw, 32px);
+      }
+
+      .main-card {
+        padding: 16px;
+        border-radius: 14px;
+      }
+
+      .main-card .arabic {
+        font-size: clamp(16px, 5vw, 20px);
+      }
+
+      /* Hide extra nav links on very small screens */
+      .nav > span:not(.pill):not(.brand) {
+        display: none;
+      }
+    }
   </style>
 </head>
 <body>

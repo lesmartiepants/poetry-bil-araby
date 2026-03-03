@@ -63,7 +63,7 @@
       transition: background-image 1.5s ease-out;
     }
 
-    /* IMPROVED: 3 hero light rays with better contrast */
+    /* REFINED: 3 hero light rays — narrower, faster */
     .light-rays {
       position: absolute;
       inset: 0;
@@ -73,41 +73,44 @@
 
     .light-ray {
       position: absolute;
-      width: 120px;
+      /* Narrower beam: 120px -> 60px */
+      width: 60px;
       height: 100%;
       background: linear-gradient(
         180deg,
-        rgba(255, 235, 180, 0.3) 0%,
-        rgba(255, 220, 150, 0.2) 40%,
-        rgba(255, 200, 120, 0.05) 70%,
+        rgba(255, 235, 180, 0.45) 0%,
+        rgba(255, 220, 150, 0.28) 40%,
+        rgba(255, 200, 120, 0.08) 70%,
         transparent 100%
       );
-      filter: blur(25px);
+      filter: blur(14px);
       transform-origin: center top;
-      animation: rayMovement 8s ease-in-out infinite;
+      /* 50% faster: 8s -> 4s; alternate for smooth back-and-forth */
+      animation: rayMovement 4s cubic-bezier(0.45, 0, 0.55, 1) infinite alternate;
+      will-change: transform;
     }
 
     .light-ray:nth-child(1) {
-      left: calc(var(--light-x, 30%) - 120px);
+      left: calc(var(--light-x, 30%) - 70px);
       animation-delay: 0s;
-      opacity: 0.8;
+      opacity: 0.7;
     }
 
     .light-ray:nth-child(2) {
-      left: var(--light-x, 30%);
-      animation-delay: 0.2s;
+      left: calc(var(--light-x, 30%) - 10px);
+      animation-delay: 0s;
       opacity: 1;
     }
 
     .light-ray:nth-child(3) {
-      left: calc(var(--light-x, 30%) + 120px);
-      animation-delay: 0.4s;
-      opacity: 0.7;
+      left: calc(var(--light-x, 30%) + 50px);
+      animation-delay: 0s;
+      opacity: 0.65;
     }
 
     @keyframes rayMovement {
-      0%, 100% { transform: translateY(0) rotate(-5deg) skewX(2deg); }
-      50% { transform: translateY(-15px) rotate(5deg) skewX(-2deg); }
+      0%   { transform: translateY(0) rotate(-6deg) skewX(3deg); }
+      100% { transform: translateY(-18px) rotate(6deg) skewX(-3deg); }
     }
 
     /* Content container */
@@ -345,26 +348,52 @@
   </div>
 
   <script>
-    // Animate light position over 8-second cycle
+    // Spotlight: faster 4s cycle, alternating direction, subtle randomness per cycle
+    const duration = 4000; // 50% faster than original 8s
     let startTime = Date.now();
-    const duration = 8000;
+
+    // Random offset added each cycle for natural spotlight wander
+    let randomOffsetX = 0;
+    let randomOffsetY = 0;
+    let lastPhaseDir = 1; // tracks ping-pong direction
+
+    // Ping-pong phase (0->1->0->1...) using sin for smooth alternate
+    function getPingPongPhase(elapsed) {
+      // Normalized phase 0-1 over duration, then converts to 0->1->0 with sin
+      const raw = (elapsed % (duration * 2)) / (duration * 2);
+      return 0.5 - 0.5 * Math.cos(raw * Math.PI * 2);
+    }
+
+    let cycleCount = 0;
+    let lastCycleRaw = 0;
 
     function animate() {
       const elapsed = Date.now() - startTime;
-      const phase = (elapsed % duration) / duration;
 
-      // Light moves from 20% to 80% horizontally
-      const lightX = 20 + (phase * 60);
-      const lightY = 15 + (Math.sin(phase * Math.PI) * 10);
+      // Detect new cycle start for random offset injection
+      const cycleRaw = Math.floor(elapsed / duration);
+      if (cycleRaw !== lastCycleRaw) {
+        lastCycleRaw = cycleRaw;
+        // Subtle per-cycle random wander ±5%
+        randomOffsetX = (Math.random() - 0.5) * 10;
+        randomOffsetY = (Math.random() - 0.5) * 6;
+      }
 
-      // Calculate angle for lattice rotation
-      const lightAngle = 15 + (phase * 20);
+      // Ping-pong phase: 0 -> 1 -> 0 smoothly
+      const phase = getPingPongPhase(elapsed);
 
-      // Calculate text shadow offset (follows light)
-      const shadowX = (lightX - 50) * 0.15;
-      const shadowY = -3 - (phase * 2);
+      // Spotlight sweeps: narrower range 25–70% (was 20–80%)
+      const baseX = 25 + phase * 45;
+      const lightX = baseX + randomOffsetX * 0.4;
+      const lightY = 15 + (phase * 12) + randomOffsetY * 0.3;
 
-      // Update CSS variables
+      // Lattice angle follows light
+      const lightAngle = 12 + (phase * 18);
+
+      // Text shadow offset
+      const shadowX = (lightX - 50) * 0.12;
+      const shadowY = -2 - (phase * 1.5);
+
       document.documentElement.style.setProperty('--light-x', `${lightX}%`);
       document.documentElement.style.setProperty('--light-y', `${lightY}%`);
       document.documentElement.style.setProperty('--light-angle', `${lightAngle}deg`);

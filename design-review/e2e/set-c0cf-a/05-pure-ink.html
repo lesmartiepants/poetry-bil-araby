@@ -2,9 +2,9 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Gravity Letters — حروف الجاذبية</title>
-<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Pure Ink — حروف الجاذبية</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -15,236 +15,357 @@
   --gold: #C5A059;
   --bg: var(--ink);
   --fg: var(--paper);
-  --fg-dim: rgba(245, 240, 232, 0.4);
-  --accent-glow: rgba(139, 34, 82, 0.35);
-  --gold-glow: rgba(197, 160, 89, 0.3);
+  --fg-dim: rgba(245, 240, 232, 0.42);
+  --fg-faint: rgba(245, 240, 232, 0.2);
+  --accent-glow: rgba(139, 34, 82, 0.32);
+  --gold-glow: rgba(197, 160, 89, 0.28);
+  --card-bg: rgba(20, 18, 15, 0.96);
+  --card-border: rgba(197, 160, 89, 0.2);
   --speed: 0.4s;
 }
-
 [data-theme="light"] {
   --bg: var(--paper);
   --fg: var(--ink);
-  --fg-dim: rgba(10, 10, 10, 0.38);
-  --accent-glow: rgba(139, 34, 82, 0.15);
-  --gold-glow: rgba(197, 160, 89, 0.18);
+  --fg-dim: rgba(10, 10, 10, 0.4);
+  --fg-faint: rgba(10, 10, 10, 0.18);
+  --accent-glow: rgba(139, 34, 82, 0.12);
+  --gold-glow: rgba(197, 160, 89, 0.15);
+  --card-bg: rgba(255, 253, 248, 0.97);
+  --card-border: rgba(139, 34, 82, 0.18);
 }
 
 html { font-size: 16px; scroll-behavior: smooth; }
-
 body {
   font-family: 'Tajawal', sans-serif;
   background: var(--bg);
   color: var(--fg);
   overflow-x: hidden;
   transition: background var(--speed), color var(--speed);
+  min-height: 100vh; min-height: 100dvh;
 }
 
-/* ========== Splash ========== */
+/* ===========================================
+   SPLASH
+   =========================================== */
 #splash {
   position: fixed; inset: 0; z-index: 100;
   background: var(--bg);
   display: flex; align-items: center; justify-content: center;
-  cursor: pointer;
+  overflow: hidden;
   transition: opacity 0.9s ease;
 }
 #splash.out { opacity: 0; pointer-events: none; }
 
-canvas { display: block; width: 100%; height: 100%; }
-
-#splash-title {
-  position: absolute;
-  font-family: 'Amiri', serif;
-  font-size: clamp(2rem, 6vw, 4.5rem);
-  color: var(--fg);
-  opacity: 0;
-  transition: opacity 1.2s ease;
-  pointer-events: none;
-  text-align: center;
-  line-height: 1.6;
+/* Canvas fills splash */
+#cv {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  display: block;
 }
-#splash-title span { color: var(--gold); }
-#splash-title.show { opacity: 1; }
 
-/* ========== App ========== */
+/*
+  Splash title: starts hidden, fades IN after letter animation,
+  then fades OUT before page transition.
+  Sequence: wait ~2.5s (fall+settle) → show title → 1.5s display → leave
+*/
+#splash-brand {
+  position: absolute;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 6px;
+  text-align: center;
+  /* Hidden by default; JS controls visibility */
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 1.2s ease;
+  z-index: 10;
+}
+#splash-brand.show { opacity: 1; }
+#splash-brand.hide { opacity: 0; }
+
+.sb-ar {
+  font-family: 'Amiri', serif;
+  font-size: clamp(3rem, 10vw, 5.5rem);
+  color: var(--fg);
+  line-height: 1.1;
+}
+.sb-line {
+  width: 48px; height: 1.5px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  border: none; margin: 4px 0;
+}
+.sb-en {
+  font-family: 'Tajawal', sans-serif;
+  font-size: clamp(0.6rem, 1.5vw, 0.75rem);
+  letter-spacing: 0.45em; text-transform: uppercase;
+  color: var(--gold); font-weight: 500;
+  opacity: 0.8;
+}
+
+/* ===========================================
+   APP
+   =========================================== */
 #app {
   display: none; opacity: 0;
-  transition: opacity 0.6s ease;
-  min-height: 100vh;
+  flex-direction: column;
+  min-height: 100vh; min-height: 100dvh;
+  transition: opacity 0.7s ease;
 }
-#app.on { display: block; opacity: 1; }
+#app.on { display: flex; }
+#app.fade-in { opacity: 1; }
 
-/* ========== Theme Toggle ========== */
+/* ---- App Header ---- */
+.app-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 1rem clamp(1rem, 4vw, 2.5rem);
+  border-bottom: 1px solid var(--fg-faint);
+}
+.header-brand-ar {
+  font-family: 'Amiri', serif;
+  font-size: 1.4rem; color: var(--gold);
+  letter-spacing: 0.02em;
+}
+.header-brand-en {
+  font-size: 9px; letter-spacing: 0.35em;
+  text-transform: uppercase; color: var(--fg-dim);
+  font-family: 'Tajawal', sans-serif;
+  margin-top: 1px;
+}
+
+/* ---- Theme Toggle (in header) ---- */
 .theme-btn {
-  position: fixed; top: 1rem; left: 1rem; z-index: 50;
-  width: 48px; height: 48px;
+  width: 44px; height: 44px;
   border: 1.5px solid var(--fg-dim); border-radius: 50%;
   background: transparent; color: var(--fg);
-  font-size: 1.25rem; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
-  transition: all 0.3s ease;
+  cursor: pointer; transition: border-color 0.3s, box-shadow 0.3s;
   touch-action: manipulation;
 }
-.theme-btn:hover,
-.theme-btn:focus-visible {
+.theme-btn:hover, .theme-btn:focus-visible {
   border-color: var(--gold);
-  box-shadow: 0 0 14px var(--gold-glow);
+  box-shadow: 0 0 12px var(--gold-glow);
   outline: none;
 }
 
-/* ========== Walkthrough ========== */
-.walk { padding: 3.5rem 1.5rem; max-width: 620px; margin: 0 auto; }
-
-.step {
-  margin-bottom: 3.2rem;
-  opacity: 0; transform: translateY(20px);
-  animation: rise 0.65s ease forwards;
+/* ---- Walkthrough ---- */
+.walk {
+  padding: clamp(2rem, 6vw, 4rem) clamp(1rem, 4vw, 2.5rem);
+  max-width: 660px; margin: 0 auto; width: 100%;
 }
-.step:nth-child(1) { animation-delay: 0.1s; }
-.step:nth-child(2) { animation-delay: 0.3s; }
-.step:nth-child(3) { animation-delay: 0.5s; }
-.step:nth-child(4) { animation-delay: 0.7s; }
-
+.walk-label {
+  font-size: 9px; letter-spacing: 0.42em; text-transform: uppercase;
+  color: var(--gold); opacity: 0.65; font-weight: 500; margin-bottom: 1.6rem;
+}
+.step {
+  margin-bottom: 2.8rem;
+  opacity: 0; transform: translateY(18px);
+  animation: rise 0.6s ease forwards;
+}
+.step:nth-child(2) { animation-delay: 0.1s; }
+.step:nth-child(3) { animation-delay: 0.25s; }
+.step:nth-child(4) { animation-delay: 0.4s; }
+.step:nth-child(5) { animation-delay: 0.55s; }
 @keyframes rise { to { opacity: 1; transform: translateY(0); } }
 
 .step-num {
   font-family: 'Amiri', serif;
-  font-size: 2.6rem; color: var(--gold);
-  line-height: 1; margin-bottom: 0.35rem;
-  will-change: opacity;
+  font-size: 2.4rem; color: var(--gold);
+  line-height: 1; margin-bottom: 0.3rem;
+  opacity: 0.55;
 }
 .step-title {
   font-family: 'Amiri', serif;
-  font-size: 1.3rem; margin-bottom: 0.45rem;
+  font-size: 1.25rem; margin-bottom: 0.4rem;
+  color: var(--fg);
 }
 .step-desc {
-  font-size: 0.95rem; color: var(--fg-dim); line-height: 1.8;
+  font-size: 0.92rem; color: var(--fg-dim); line-height: 1.85;
+  font-family: 'Tajawal', sans-serif;
 }
 
-/* ========== Poem ========== */
-.poem { padding: 4rem 1.5rem 3rem; max-width: 700px; margin: 0 auto; text-align: center; }
+/* ---- Poem Display (ANCHORED — no float, proper container) ---- */
+.poem-section {
+  padding: clamp(2.5rem, 7vw, 4.5rem) clamp(1rem, 4vw, 2.5rem);
+  max-width: 780px; margin: 0 auto; width: 100%;
+}
+
+.poem-container {
+  /* Fully anchored card — no floating or absolute positioning */
+  position: static;
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 16px;
+  padding: clamp(2rem, 5vw, 3.5rem) clamp(1.5rem, 4vw, 3rem);
+  box-shadow:
+    0 8px 40px rgba(0, 0, 0, 0.2),
+    0 0 60px rgba(139, 34, 82, 0.06);
+  transition: border-color 0.4s ease, box-shadow 0.4s ease;
+}
+.poem-container:hover {
+  border-color: rgba(197, 160, 89, 0.4);
+  box-shadow:
+    0 12px 48px rgba(0, 0, 0, 0.25),
+    0 0 80px var(--gold-glow);
+}
+
+/* Top accent bar */
+.poem-container::before {
+  content: '';
+  display: block; height: 2px; width: 48px;
+  background: linear-gradient(90deg, var(--gold), var(--accent));
+  margin: 0 auto 2rem;
+  border-radius: 1px; opacity: 0.75;
+}
 
 .bayt {
   font-family: 'Amiri', serif;
-  font-size: clamp(1.3rem, 3.5vw, 2rem);
-  line-height: 2.3; margin-bottom: 1.4rem;
-  direction: rtl;
+  font-size: clamp(1.35rem, 3.8vw, 2.1rem);
+  line-height: 2.2;
+  margin-bottom: 0.6rem;
+  direction: rtl; text-align: center;
+  color: var(--fg);
+  /* Static — no floating animation on the readable poem text */
 }
-.bayt .l {
-  display: inline-block;
-  will-change: transform;
-  animation: floatL 3s ease-in-out infinite;
-}
-@keyframes floatL {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(var(--fy, -3px)); }
+.bayt:last-of-type { margin-bottom: 0; }
+
+.bayt-divider {
+  width: 30px; height: 1.5px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  margin: 0.8rem auto;
+  border: none; opacity: 0.55;
 }
 
 .poet {
   font-family: 'Tajawal', sans-serif;
-  font-size: 1rem; color: var(--gold);
-  margin-top: 2.2rem; letter-spacing: 0.03em;
+  font-size: 0.95rem; color: var(--gold);
+  text-align: center; margin-top: 1.8rem;
+  letter-spacing: 0.04em;
 }
 
-/* ========== Controls ========== */
+/* ---- Controls ---- */
 .ctrls {
-  display: flex; justify-content: center; gap: 1rem;
-  padding: 2rem 1.5rem 5rem; flex-wrap: wrap;
+  display: flex; justify-content: center; gap: 0.875rem;
+  padding: 1.5rem clamp(1rem, 4vw, 2.5rem) clamp(3rem, 6vw, 5rem);
+  flex-wrap: wrap;
 }
 .cb {
   min-width: 48px; min-height: 48px;
   padding: 0.65rem 1.5rem;
-  border: 1px solid var(--fg-dim); border-radius: 6px;
+  border: 1px solid var(--fg-dim); border-radius: 8px;
   background: transparent; color: var(--fg);
   font-family: 'Tajawal', sans-serif; font-size: 0.9rem;
-  cursor: pointer; position: relative; overflow: hidden;
-  transition: all 0.3s ease;
+  cursor: pointer; transition: all 0.3s ease;
   touch-action: manipulation;
 }
-.cb::after {
-  content: attr(data-l);
-  position: absolute; inset: 0;
-  display: flex; align-items: center; justify-content: center;
-  font-family: 'Amiri', serif; font-size: 2.4rem;
-  color: var(--accent); opacity: 0;
-  transition: opacity 0.3s ease; pointer-events: none;
-}
-.cb:hover::after,
-.cb:focus-visible::after { opacity: 0.13; }
-.cb:hover,
-.cb:focus-visible {
-  border-color: var(--accent);
-  box-shadow: 0 0 14px var(--accent-glow);
+.cb:hover, .cb:focus-visible {
+  border-color: var(--gold);
+  box-shadow: 0 0 12px var(--gold-glow);
   outline: none;
+  transform: translateY(-1px);
+}
+.cb.primary {
+  background: var(--accent); color: #fff; border-color: var(--accent);
+}
+.cb.primary:hover {
+  background: #7a1b47;
+  box-shadow: 0 4px 18px var(--accent-glow);
 }
 
-/* ========== Reduced Motion ========== */
+/* ===========================================
+   REDUCED MOTION
+   =========================================== */
 @media (prefers-reduced-motion: reduce) {
   .step { animation: none; opacity: 1; transform: none; }
-  .bayt .l { animation: none; }
-  #splash-title { transition-duration: 0s; }
+  #splash-brand { transition-duration: 0s; }
   #splash, #app { transition-duration: 0s; }
 }
 
-/* ========== Mobile ========== */
+/* ===========================================
+   MOBILE
+   =========================================== */
 @media (max-width: 600px) {
-  .walk { padding: 2.2rem 1.2rem; }
-  .step { margin-bottom: 2.4rem; }
-  .poem { padding: 2.5rem 1.2rem 2rem; }
-  .ctrls { gap: 0.65rem; padding-bottom: 3.5rem; }
+  .walk { padding: 2rem 1.2rem; }
+  .step { margin-bottom: 2.2rem; }
+  .poem-section { padding: 2.5rem 1.2rem 2rem; }
+  .poem-container { padding: 1.75rem 1.25rem; }
+  .ctrls { gap: 0.6rem; padding-bottom: 3.5rem; }
 }
 </style>
 </head>
 <body data-theme="dark">
 
-<!-- Splash Screen -->
+<!-- ===================== SPLASH SCREEN ===================== -->
 <div id="splash" aria-label="شاشة البداية - انقر للتخطي">
   <canvas id="cv"></canvas>
-  <div id="splash-title">حروف <span>الجاذبية</span></div>
+  <!--
+    Brand text shown AFTER letter animation ends.
+    Decorated letters animate → settle → compress → fade out,
+    then this brand block fades in clearly, then page transitions.
+  -->
+  <div id="splash-brand">
+    <span class="sb-ar" lang="ar">شعر بالعربي</span>
+    <hr class="sb-line">
+    <span class="sb-en">Poetry bil Araby</span>
+  </div>
 </div>
 
-<!-- Theme Toggle -->
-<button class="theme-btn" id="themeBtn" aria-label="تبديل المظهر">&#9789;</button>
-
-<!-- Main Application -->
+<!-- ===================== MAIN APP ===================== -->
 <div id="app">
+
+  <header class="app-header">
+    <div>
+      <div class="header-brand-ar" lang="ar">شعر بالعربي</div>
+      <div class="header-brand-en">Poetry bil Araby</div>
+    </div>
+    <button class="theme-btn" id="themeBtn" aria-label="تبديل المظهر">
+      <svg id="theme-svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"/>
+      </svg>
+    </button>
+  </header>
 
   <!-- Walkthrough -->
   <section class="walk" aria-label="خطوات الاستخدام">
+    <div class="walk-label">كيف تبدأ</div>
     <div class="step">
-      <div class="step-num">&#1633;</div>
-      <div class="step-title">اختر قصيدة</div>
-      <div class="step-desc">تصفّح بين آلاف القصائد العربيّة الكلاسيكيّة والمعاصرة، من المعلّقات حتى شعراء اليوم.</div>
+      <div class="step-num" lang="ar">١</div>
+      <div class="step-title" lang="ar">اختر قصيدة</div>
+      <div class="step-desc" lang="ar">تصفّح بين آلاف القصائد العربيّة الكلاسيكيّة والمعاصرة، من المعلّقات حتى شعراء اليوم.</div>
     </div>
     <div class="step">
-      <div class="step-num">&#1634;</div>
-      <div class="step-title">استمع إلى الإيقاع</div>
-      <div class="step-desc">يُعرض كل بيت بإيقاع بصري يحاكي موسيقى الشعر حيث تتراقص الحروف برفق كأنّها تتنفّس.</div>
+      <div class="step-num" lang="ar">٢</div>
+      <div class="step-title" lang="ar">استمع إلى الإيقاع</div>
+      <div class="step-desc" lang="ar">يُعرض كل بيت بإيقاع بصري هادئ يحاكي موسيقى الشعر حيث تتراقص الكلمات برفق.</div>
     </div>
     <div class="step">
-      <div class="step-num">&#1635;</div>
-      <div class="step-title">تأمّل المعنى</div>
-      <div class="step-desc">اكتشف طبقات المعنى في كل بيت بمساعدة تحليل ذكي يضيء الصور البلاغيّة والأساليب الأدبيّة.</div>
+      <div class="step-num" lang="ar">٣</div>
+      <div class="step-title" lang="ar">تأمّل المعنى</div>
+      <div class="step-desc" lang="ar">اكتشف طبقات المعنى في كل بيت بمساعدة تحليل ذكي يُضيء الصور البلاغيّة والأساليب الأدبيّة.</div>
     </div>
     <div class="step">
-      <div class="step-num">&#1636;</div>
-      <div class="step-title">شارك الجمال</div>
-      <div class="step-desc">احفظ أبياتك المفضّلة وشاركها بصورة أنيقة تليق بجمال القصيدة العربيّة.</div>
+      <div class="step-num" lang="ar">٤</div>
+      <div class="step-title" lang="ar">شارك الجمال</div>
+      <div class="step-desc" lang="ar">احفظ أبياتك المفضّلة وشاركها بصورة أنيقة تليق بجمال القصيدة العربيّة.</div>
     </div>
   </section>
 
-  <!-- Poem Display -->
-  <section class="poem" aria-label="القصيدة">
-    <div class="bayt" id="b1"></div>
-    <div class="bayt" id="b2"></div>
-    <div class="poet">— أحمد شوقي</div>
+  <!-- Poem Display — properly anchored in flow -->
+  <section class="poem-section" aria-label="القصيدة">
+    <div class="poem-container">
+      <div class="bayt" lang="ar" dir="rtl">أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ</div>
+      <hr class="bayt-divider">
+      <div class="bayt" lang="ar" dir="rtl">فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي</div>
+      <div class="poet" lang="ar">— أحمد شوقي</div>
+    </div>
   </section>
 
   <!-- Controls -->
   <nav class="ctrls" aria-label="أدوات التحكم">
-    <button class="cb" data-l="ب" aria-label="القصيدة السابقة">السابق</button>
-    <button class="cb" data-l="ص" aria-label="تشغيل الصوت">استماع</button>
-    <button class="cb" data-l="ن" aria-label="تحليل البيت">تحليل</button>
-    <button class="cb" data-l="ت" aria-label="القصيدة التالية">التالي</button>
+    <button class="cb" aria-label="القصيدة السابقة" lang="ar">السابق</button>
+    <button class="cb primary" aria-label="القصيدة التالية" lang="ar">التالي</button>
+    <button class="cb" aria-label="تحليل البيت" lang="ar">تحليل</button>
+    <button class="cb" aria-label="حفظ" lang="ar">حفظ</button>
   </nav>
 </div>
 
@@ -254,19 +375,21 @@ canvas { display: block; width: 100%; height: 100%; }
 
   /* ---------- constants ---------- */
   var MOBILE = window.innerWidth < 600;
-  var COUNT  = MOBILE ? 30 : 60;
+  var COUNT  = MOBILE ? 28 : 55;
   var CHARS  = 'ابتثجحخدذرزسشصضطظعغفقكلمنهوي';
-  var G      = 0.16;
-  var BOUNCE = 0.42;
-  var FRIC   = 0.985;
-  var PILE   = 0.72;
-  var CSPEED = 0.018;
+  var G      = 0.15;
+  var BOUNCE = 0.40;
+  var FRIC   = 0.984;
+  var PILE   = 0.70;
+  var CSPEED = 0.016;
+
+  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   /* ---------- canvas ---------- */
   var cv  = document.getElementById('cv');
   var ctx = cv.getContext('2d');
   var sp  = document.getElementById('splash');
-  var ttl = document.getElementById('splash-title');
+  var brand = document.getElementById('splash-brand');
   var W, H;
 
   function resize() { W = cv.width = window.innerWidth; H = cv.height = window.innerHeight; }
@@ -281,15 +404,15 @@ canvas { display: block; width: 100%; height: 100%; }
   /* ---------- letter objects ---------- */
   var letters = [];
   for (var i = 0; i < COUNT; i++) {
-    var sz = 16 + Math.random() * 24;
+    var sz = 14 + Math.random() * 22;
     letters.push({
       c: rChar(),
-      x: Math.random() * W * 0.9 + W * 0.05,
-      y: -Math.random() * H * 1.4 - sz,
+      x: Math.random() * W * 0.88 + W * 0.06,
+      y: -Math.random() * H * 1.3 - sz,
       vy: 0,
-      vx: (Math.random() - 0.5) * 0.7,
+      vx: (Math.random() - 0.5) * 0.65,
       s: sz,
-      a: 0.22 + Math.random() * 0.58,
+      a: 0.2 + Math.random() * 0.55,
       on: false,
       gY: H
     });
@@ -298,38 +421,32 @@ canvas { display: block; width: 100%; height: 100%; }
   /* ---------- splash loop ---------- */
   var phase = 'fall';
   var cT    = 0;
-  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   function tick() {
     if (phase === 'done') return;
     ctx.clearRect(0, 0, W, H);
 
-    var clr = fg();
+    var clr     = fg();
     var settled = 0;
 
     if (phase === 'fall') {
       for (var i = 0; i < letters.length; i++) {
         var L = letters[i];
         if (!L.on) {
-          L.vy += G;
-          L.vy *= FRIC;
-          L.vx *= FRIC;
-          L.y += L.vy;
-          L.x += L.vx;
-          if (L.x < 10)     { L.x = 10;     L.vx *= -0.5; }
-          if (L.x > W - 10) { L.x = W - 10; L.vx *= -0.5; }
+          L.vy += G; L.vy *= FRIC; L.vx *= FRIC;
+          L.y += L.vy; L.x += L.vx;
+          if (L.x < 8)       { L.x = 8;       L.vx *= -0.5; }
+          if (L.x > W - 8)   { L.x = W - 8;   L.vx *= -0.5; }
           if (L.y >= L.gY - L.s) {
             L.y = L.gY - L.s;
             if (Math.abs(L.vy) < 1.5) {
               L.on = true; L.vy = 0;
               for (var j = 0; j < letters.length; j++) {
-                if (!letters[j].on && Math.abs(letters[j].x - L.x) < L.s * 1.4) {
+                if (!letters[j].on && Math.abs(letters[j].x - L.x) < L.s * 1.3) {
                   letters[j].gY = Math.min(letters[j].gY, L.y);
                 }
               }
-            } else {
-              L.vy *= -BOUNCE;
-            }
+            } else { L.vy *= -BOUNCE; }
           }
         }
         if (L.on) settled++;
@@ -344,22 +461,20 @@ canvas { display: block; width: 100%; height: 100%; }
         ctx.restore();
       }
 
-      if (settled / letters.length >= PILE) {
-        phase = 'compress';
-      }
+      if (settled / letters.length >= PILE) phase = 'compress';
     }
 
     if (phase === 'compress') {
       cT += CSPEED;
-      var cx = W / 2;
-      var cy = H / 2;
+      var cx2 = W / 2, cy2 = H / 2;
       var ease = cT * cT;
 
       for (var k = 0; k < letters.length; k++) {
         var M = letters[k];
-        M.x += (cx - M.x) * ease * 0.07;
-        M.y += (cy - M.y) * ease * 0.07;
-        M.a = Math.max(M.a * (1 - cT * 0.025), 0);
+        M.x += (cx2 - M.x) * ease * 0.07;
+        M.y += (cy2 - M.y) * ease * 0.07;
+        /* Fade decorative letters TO ZERO as they compress */
+        M.a = Math.max(0, M.a * (1 - cT * 0.03));
 
         ctx.save();
         ctx.globalAlpha = M.a;
@@ -373,8 +488,11 @@ canvas { display: block; width: 100%; height: 100%; }
 
       if (cT >= 1) {
         phase = 'done';
-        ttl.classList.add('show');
-        setTimeout(leave, 1500);
+        /* Letters fully hidden — now show clean brand text */
+        ctx.clearRect(0, 0, W, H);
+        brand.classList.add('show');
+        /* Wait 1.4s displaying brand, then transition to app */
+        setTimeout(leave, 1400);
         return;
       }
     }
@@ -383,70 +501,48 @@ canvas { display: block; width: 100%; height: 100%; }
   }
 
   function leave() {
-    sp.classList.add('out');
-    document.getElementById('app').classList.add('on');
-    setTimeout(function () { sp.style.display = 'none'; }, 950);
+    /* Fade brand out before transition */
+    brand.classList.remove('show');
+    brand.classList.add('hide');
+    setTimeout(function() {
+      sp.classList.add('out');
+      var app = document.getElementById('app');
+      app.classList.add('on');
+      requestAnimationFrame(function() {
+        requestAnimationFrame(function() { app.classList.add('fade-in'); });
+      });
+      setTimeout(function () { sp.style.display = 'none'; }, 950);
+    }, 600);
   }
 
   if (reduced) {
     sp.style.display = 'none';
     var a = document.getElementById('app');
-    a.style.display = 'block';
-    a.style.opacity = '1';
+    a.classList.add('on');
+    requestAnimationFrame(function() { a.classList.add('fade-in'); });
   } else {
     tick();
   }
 
-  /* skip on tap */
+  /* Skip on tap */
   sp.addEventListener('click', function () {
     if (phase !== 'done') {
       phase = 'done';
+      cT = 1;
       ctx.clearRect(0, 0, W, H);
-      ttl.classList.add('show');
-      setTimeout(leave, 350);
+      brand.classList.add('show');
+      setTimeout(leave, 500);
     }
   });
 
-  /* ---------- poem letter spans ---------- */
-  var v1 = '\u0623\u064E\u0646\u0627 \u0627\u0644\u0628\u064E\u062D\u0631\u064F \u0641\u064A \u0623\u064E\u062D\u0634\u0627\u0626\u0650\u0647\u0650 \u0627\u0644\u062F\u064F\u0631\u064F\u0651 \u0643\u0627\u0645\u0650\u0646\u064C';
-  var v2 = '\u0641\u064E\u0647\u064E\u0644 \u0633\u064E\u0623\u064E\u0644\u0648\u0627 \u0627\u0644\u063A\u064E\u0648\u0651\u0627\u0635\u064E \u0639\u064E\u0646 \u0635\u064E\u062F\u064E\u0641\u0627\u062A\u064A';
-
-  function buildSpan(ch, fy, del, dur) {
-    var span = document.createElement('span');
-    span.className = 'l';
-    span.style.setProperty('--fy', fy + 'px');
-    span.style.animationDelay = del + 's';
-    span.style.animationDuration = dur + 's';
-    span.textContent = ch;
-    return span;
-  }
-
-  function render(text, id) {
-    var el = document.getElementById(id);
-    var frag = document.createDocumentFragment();
-    for (var i = 0; i < text.length; i++) {
-      if (text[i] === ' ') {
-        frag.appendChild(document.createTextNode(' '));
-      } else {
-        var fy  = -2 - Math.random() * 5;
-        var del = Math.random() * 2.5;
-        var dur = 2.5 + Math.random() * 1.5;
-        frag.appendChild(buildSpan(text[i], fy.toFixed(1), del.toFixed(2), dur.toFixed(2)));
-      }
-    }
-    el.appendChild(frag);
-  }
-
-  render(v1, 'b1');
-  render(v2, 'b2');
-
   /* ---------- theme toggle ---------- */
+  var MOON = '<path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"/>';
+  var SUN  = '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>';
   var tb = document.getElementById('themeBtn');
   tb.addEventListener('click', function () {
-    var d = document.body;
-    var nxt = d.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-    d.setAttribute('data-theme', nxt);
-    tb.textContent = nxt === 'dark' ? '\u263D' : '\u263C';
+    var nxt = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    document.body.setAttribute('data-theme', nxt);
+    document.getElementById('theme-svg').innerHTML = nxt === 'dark' ? MOON : SUN;
   });
 
 })();

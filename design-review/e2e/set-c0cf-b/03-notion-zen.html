@@ -30,6 +30,8 @@
             overflow-x: hidden;
             min-height: 100vh;
             perspective: 1200px;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
         body.light { background: var(--bg-light); color: var(--text-light); }
@@ -149,7 +151,7 @@
         /* ========== MAIN ========== */
         #mainContent {
             opacity: 0;
-            animation: contentFadeIn 1s ease 4.5s forwards;
+            animation: contentFadeIn 0.8s ease 4.5s forwards;
             padding: 3rem 2rem;
             max-width: 900px;
             margin: 0 auto;
@@ -157,6 +159,26 @@
         }
 
         @keyframes contentFadeIn { to { opacity: 1; } }
+
+        /* ========== STAGGERED ENTRANCE ANIMATIONS ========== */
+        .anim-enter {
+            opacity: 0;
+            transform: translateY(24px);
+            animation: sectionEnter 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+            will-change: transform, opacity;
+        }
+
+        .anim-enter:nth-child(1) { animation-delay: 4.7s; }
+        .anim-enter:nth-child(2) { animation-delay: 4.95s; }
+        .anim-enter:nth-child(3) { animation-delay: 5.2s; }
+
+        .anim-enter.delay-1 { animation-delay: 4.7s; }
+        .anim-enter.delay-2 { animation-delay: 4.95s; }
+        .anim-enter.delay-3 { animation-delay: 5.2s; }
+
+        @keyframes sectionEnter {
+            to { opacity: 1; transform: translateY(0); }
+        }
 
         header {
             margin-bottom: 3rem;
@@ -170,12 +192,14 @@
             font-size: 2.5rem; font-weight: 700;
             color: var(--gold);
             margin-bottom: 0.75rem;
+            letter-spacing: 0.01em;
         }
 
         .subtitle {
             font-size: 1rem;
             opacity: 0.7;
             font-weight: 300;
+            letter-spacing: 0.02em;
         }
 
         /* Paper-cut card style */
@@ -186,10 +210,19 @@
             border-radius: 4px;
             position: relative;
             border: 1px solid var(--fold-line);
+            transition: border-color 0.35s ease, box-shadow 0.35s ease, transform 0.35s ease;
         }
 
         body.light .poetry-section {
             background: rgba(255,255,255,0.6);
+        }
+
+        .poetry-section:hover {
+            border-color: rgba(197,160,89,0.3);
+            box-shadow:
+                4px 4px 0 rgba(197,160,89,0.1),
+                8px 8px 0 rgba(197,160,89,0.05);
+            transform: translateY(-2px);
         }
 
         /* Fold lines */
@@ -199,6 +232,7 @@
             position: absolute;
             background: var(--fold-line);
             pointer-events: none;
+            transition: background 0.35s ease;
         }
 
         .poetry-section::before {
@@ -209,6 +243,11 @@
         .poetry-section::after {
             left: 0; right: 0;
             top: 50%; height: 1px;
+        }
+
+        .poetry-section:hover::before,
+        .poetry-section:hover::after {
+            background: rgba(197,160,89,0.25);
         }
 
         /* Paper-cut shadow effect */
@@ -231,7 +270,7 @@
         .poet {
             text-align: center;
             font-size: 1.1rem;
-            color: var(--indigo);
+            color: var(--gold);
             font-weight: 400;
             opacity: 0.8;
             position: relative; z-index: 1;
@@ -257,12 +296,21 @@
             background: transparent;
             padding: 2rem 1.5rem;
             text-align: center;
-            transition: all 0.3s ease;
+            transition: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
             cursor: pointer;
             border: 1px solid transparent;
             border-radius: 4px;
             position: relative;
+            opacity: 0;
+            transform: translateY(20px);
+            animation: sectionEnter 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+            will-change: transform, opacity;
         }
+
+        .step:nth-child(1) { animation-delay: 5.3s; }
+        .step:nth-child(2) { animation-delay: 5.45s; }
+        .step:nth-child(3) { animation-delay: 5.6s; }
+        .step:nth-child(4) { animation-delay: 5.75s; }
 
         /* Paper fold corner effect */
         .step::before {
@@ -272,21 +320,26 @@
             width: 24px; height: 24px;
             background: linear-gradient(135deg, transparent 50%, rgba(197,160,89,0.1) 50%);
             border-radius: 0 4px 0 0;
-            transition: all 0.3s ease;
+            transition: all 0.35s ease;
         }
 
         .step:hover::before {
-            width: 32px; height: 32px;
-            background: linear-gradient(135deg, transparent 50%, rgba(197,160,89,0.2) 50%);
+            width: 36px; height: 36px;
+            background: linear-gradient(135deg, transparent 50%, rgba(197,160,89,0.25) 50%);
         }
 
         .step:hover {
-            background: rgba(197,160,89,0.03);
+            background: rgba(197,160,89,0.04);
             border-color: var(--fold-line);
-            transform: translateY(-2px);
+            transform: translateY(-4px);
             box-shadow:
-                3px 3px 0 rgba(197,160,89,0.06),
-                6px 6px 0 rgba(197,160,89,0.03);
+                3px 3px 0 rgba(197,160,89,0.08),
+                6px 6px 0 rgba(197,160,89,0.04);
+        }
+
+        .step:active {
+            transform: translateY(-1px) scale(0.99);
+            transition-duration: 0.1s;
         }
 
         .step-number {
@@ -300,13 +353,17 @@
             font-weight: 600;
             font-size: 1.1rem;
             margin-bottom: 1.25rem;
-            /* Slight rotation for origami feel */
             transform: rotate(45deg);
+            transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1), background 0.35s ease;
         }
 
         .step-number span {
             transform: rotate(-45deg);
             display: block;
+        }
+
+        .step:hover .step-number {
+            background: rgba(197,160,89,0.1);
         }
 
         .step h3 {
@@ -330,15 +387,23 @@
             display: flex; flex-direction: column;
             gap: 0.5rem;
             z-index: 1000;
-            background: rgba(12,12,14,0.4);
-            backdrop-filter: blur(10px);
+            background: rgba(12,12,14,0.5);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             padding: 0.75rem;
             border-radius: 8px;
             border: 1px solid var(--fold-line);
+            opacity: 0;
+            animation: railEnter 0.5s ease 5s forwards;
+        }
+
+        @keyframes railEnter {
+            from { opacity: 0; transform: translateY(-50%) translateX(12px); }
+            to { opacity: 1; transform: translateY(-50%) translateX(0); }
         }
 
         body.light .notion-rail {
-            background: rgba(253,252,248,0.8);
+            background: rgba(253,252,248,0.85);
         }
 
         .rail-btn {
@@ -348,20 +413,24 @@
             background: transparent;
             color: var(--text-dark);
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.25s cubic-bezier(0.22, 1, 0.36, 1);
             display: flex; align-items: center; justify-content: center;
-            font-size: 1.1rem;
+            font-size: 1rem;
             position: relative;
+            letter-spacing: 0;
         }
 
         body.light .rail-btn { color: var(--text-light); }
 
         .rail-btn:hover {
-            background: rgba(197,160,89,0.1);
+            background: rgba(197,160,89,0.12);
             transform: scale(1.1);
         }
 
-        .rail-btn:active { transform: scale(0.95); }
+        .rail-btn:active {
+            transform: scale(0.92);
+            transition-duration: 0.08s;
+        }
 
         .rail-btn::after {
             content: attr(data-label);
@@ -372,10 +441,12 @@
             padding: 0.5rem 1rem;
             border-radius: 4px;
             font-size: 0.85rem;
+            font-family: 'Tajawal', sans-serif;
             white-space: nowrap;
             opacity: 0; pointer-events: none;
-            transition: opacity 0.2s ease;
+            transition: opacity 0.2s ease, transform 0.2s ease;
             border: 1px solid var(--fold-line);
+            transform: translateX(-4px);
         }
 
         body.light .rail-btn::after {
@@ -383,7 +454,21 @@
             color: var(--text-light);
         }
 
-        .rail-btn:hover::after { opacity: 1; }
+        .rail-btn:hover::after {
+            opacity: 1;
+            transform: translateX(0);
+        }
+
+        /* SVG icon buttons in rail */
+        .rail-icon {
+            width: 18px; height: 18px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 1.8;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            flex-shrink: 0;
+        }
 
         .theme-toggle {
             position: fixed; top: 2rem; left: 2rem;
@@ -398,20 +483,50 @@
             font-family: 'Tajawal', sans-serif;
             font-size: 0.95rem; font-weight: 500;
             z-index: 1000;
+            opacity: 0;
+            animation: fadeIn 0.5s ease 5s forwards;
+            letter-spacing: 0.02em;
         }
+
+        @keyframes fadeIn { to { opacity: 1; } }
 
         body.light .theme-toggle { color: var(--text-light); }
 
         .theme-toggle:hover {
-            background: rgba(197,160,89,0.05);
-            border-color: rgba(197,160,89,0.3);
+            background: rgba(197,160,89,0.06);
+            border-color: rgba(197,160,89,0.35);
+            transform: translateY(-1px);
+        }
+
+        .theme-toggle:active {
+            transform: translateY(0) scale(0.98);
+            transition-duration: 0.08s;
         }
 
         .theme-toggle:focus-visible,
         .rail-btn:focus-visible,
         .step:focus-visible {
-            outline: 3px solid var(--indigo);
-            outline-offset: 2px;
+            outline: 2px solid var(--gold);
+            outline-offset: 3px;
+        }
+
+        /* Divider line with gold center pip */
+        .section-divider {
+            height: 1px;
+            background: var(--fold-line);
+            position: relative;
+            margin: 2.5rem 0;
+        }
+
+        .section-divider::before {
+            content: '';
+            position: absolute;
+            left: 50%; top: 50%;
+            transform: translate(-50%, -50%);
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--gold);
+            opacity: 0.4;
         }
 
         /* ========== MOBILE ========== */
@@ -425,9 +540,10 @@
             #mainContent { padding: 2rem 1.5rem; }
             .poetry-section { padding: 2rem 1.5rem; }
             .notion-rail { right: 1rem; padding: 0.5rem; }
-            .rail-btn { width: 44px; height: 44px; font-size: 1rem; }
+            .rail-btn { width: 44px; height: 44px; }
             .theme-toggle { top: 1rem; left: 1rem; padding: 0.5rem 1rem; }
             .steps { grid-template-columns: 1fr; }
+            .splash-title-wrap { top: calc(50% + 110px); }
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -435,6 +551,10 @@
                 animation-duration: 0.01ms !important;
                 animation-iteration-count: 1 !important;
                 transition-duration: 0.01ms !important;
+            }
+            .step, .anim-enter, #mainContent, .notion-rail, .theme-toggle {
+                opacity: 1 !important;
+                transform: none !important;
             }
         }
     </style>
@@ -461,34 +581,52 @@
         </div>
     </div>
 
-    <button class="theme-toggle" onclick="toggleTheme()" aria-label="Toggle theme">
-        &#9790; / &#9788;
+    <button class="theme-toggle" onclick="toggleTheme()" aria-label="تبديل السمة">
+        وضع النهار
     </button>
 
-    <div class="notion-rail">
-        <button class="rail-btn" data-label="شعر جديد" aria-label="شعر جديد">&#128260;</button>
-        <button class="rail-btn" data-label="استمع" aria-label="استمع">&#9654;</button>
-        <button class="rail-btn" data-label="حفظ" aria-label="حفظ">&#9825;</button>
-        <button class="rail-btn" data-label="حجم النص" aria-label="حجم النص">Aa</button>
-        <button class="rail-btn" data-label="نسخ" aria-label="نسخ">&#128203;</button>
-        <button class="rail-btn" data-label="مشاركة" aria-label="مشاركة">&#8599;</button>
-    </div>
+    <nav class="notion-rail" aria-label="أدوات الشعر">
+        <!-- Refresh / New poem -->
+        <button class="rail-btn" data-label="شعر جديد" aria-label="شعر جديد">
+            <svg class="rail-icon" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+        </button>
+        <!-- Play -->
+        <button class="rail-btn" data-label="استمع" aria-label="استمع">
+            <svg class="rail-icon" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+        </button>
+        <!-- Heart / Save -->
+        <button class="rail-btn" data-label="حفظ" aria-label="حفظ">
+            <svg class="rail-icon" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+        </button>
+        <!-- Text size -->
+        <button class="rail-btn" data-label="حجم النص" aria-label="حجم النص" style="font-family:'Tajawal',sans-serif;font-size:0.8rem;font-weight:600;">Aa</button>
+        <!-- Copy -->
+        <button class="rail-btn" data-label="نسخ" aria-label="نسخ">
+            <svg class="rail-icon" viewBox="0 0 24 24"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        </button>
+        <!-- Share -->
+        <button class="rail-btn" data-label="مشاركة" aria-label="مشاركة">
+            <svg class="rail-icon" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+        </button>
+    </nav>
 
     <div id="mainContent">
-        <header>
+        <header class="anim-enter delay-1">
             <h1>طي الورق</h1>
-            <p class="subtitle">Origami Unfold -- Japanese-Inspired Clean Design</p>
+            <p class="subtitle">Origami Unfold — Japanese-Inspired Clean Design</p>
         </header>
 
-        <section class="poetry-section paper-cut">
+        <section class="poetry-section paper-cut anim-enter delay-2">
             <div class="verse" lang="ar" dir="rtl">
                 أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ<br>
                 فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
             </div>
-            <div class="poet">-- أحمد شوقي</div>
+            <div class="poet">— أحمد شوقي</div>
         </section>
 
-        <section class="walkthrough">
+        <div class="section-divider anim-enter delay-3"></div>
+
+        <section class="walkthrough anim-enter delay-3">
             <h2>دليل التفاعل</h2>
             <div class="steps">
                 <div class="step" tabindex="0">
@@ -518,10 +656,12 @@
     <script>
         function toggleTheme() {
             document.body.classList.toggle('light');
+            var btn = document.querySelector('.theme-toggle');
+            btn.textContent = document.body.classList.contains('light') ? 'وضع الليل' : 'وضع النهار';
         }
 
-        document.querySelectorAll('.step').forEach(step => {
-            step.addEventListener('keydown', (e) => {
+        document.querySelectorAll('.step').forEach(function(step) {
+            step.addEventListener('keydown', function(e) {
                 if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
                     step.click();
@@ -529,10 +669,11 @@
             });
         });
 
-        document.querySelectorAll('.rail-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                btn.style.transform = 'scale(0.9)';
-                setTimeout(() => { btn.style.transform = ''; }, 150);
+        document.querySelectorAll('.rail-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                btn.style.transition = 'transform 0.08s ease';
+                btn.style.transform = 'scale(0.88)';
+                setTimeout(function() { btn.style.transform = ''; }, 150);
             });
         });
     </script>

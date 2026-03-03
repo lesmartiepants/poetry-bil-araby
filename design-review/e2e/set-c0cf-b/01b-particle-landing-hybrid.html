@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>شعر بالعربي — Particle Landing Hybrid</title>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    /* ============================================================
+       DESIGN TOKENS
+    ============================================================ */
+    :root {
+      --bg-dark:        #0c0c0e;
+      --bg-warm:        #e5e1da;
+      --bg-warm-card:   #ece8e1;
+      --text-dark:      #e8e8e8;
+      --text-warm:      #2c2c2c;
+      --gold:           #C5A059;
+      --gold-dim:       rgba(197, 160, 89, 0.18);
+      --gold-line:      rgba(197, 160, 89, 0.15);
+      --indigo:         #4F46E5;
+      --neu-out-light:  8px 8px 18px #d1cec6, -8px -8px 18px #f9f6ef;
+      --neu-in-light:   inset 8px 8px 16px #d1cec6, inset -8px -8px 16px #f9f6ef;
+      --neu-out-dark:   8px 8px 16px #070707, -8px -8px 16px #111113;
+      --neu-in-dark:    inset 6px 6px 12px #070707, inset -6px -6px 12px #111113;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Tajawal', sans-serif;
+      background: var(--bg-dark);
+      color: var(--text-dark);
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    /* ============================================================
+       SECTION 1 — LANDING / PARTICLE SPLASH
+       Full-screen dark with gold particle canvas + brand lockup
+    ============================================================ */
+    #landing {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(160deg, #0a0a0c 0%, #12101a 60%, #0c0c0e 100%);
+      overflow: hidden;
+    }
+
+    #particleCanvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .landing-content {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .brand-arabic {
+      font-family: 'Amiri', serif;
+      font-size: clamp(2.4rem, 6vw, 4.5rem);
+      font-weight: 700;
+      color: var(--gold);
+      letter-spacing: 0.04em;
+      animation: landingReveal 1.2s cubic-bezier(0.22, 1, 0.36, 1) 0.4s both;
+      text-shadow:
+        0 0 40px rgba(197, 160, 89, 0.35),
+        0 2px 8px rgba(0, 0, 0, 0.6);
+    }
+
+    .brand-divider {
+      width: 80px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold), transparent);
+      animation: landingReveal 1.2s ease 0.8s both;
+    }
+
+    .brand-english {
+      font-family: 'Tajawal', sans-serif;
+      font-size: clamp(0.9rem, 2.2vw, 1.25rem);
+      font-weight: 300;
+      color: rgba(232, 232, 232, 0.65);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      animation: landingReveal 1.2s ease 1s both;
+    }
+
+    .landing-tagline {
+      font-family: 'Amiri', serif;
+      font-size: clamp(1rem, 2.5vw, 1.4rem);
+      color: rgba(232, 232, 232, 0.45);
+      margin-top: 0.5rem;
+      animation: landingReveal 1.2s ease 1.4s both;
+    }
+
+    .landing-cta {
+      margin-top: 2.5rem;
+      display: flex;
+      gap: 1rem;
+      animation: landingReveal 1.2s ease 1.8s both;
+    }
+
+    .btn-cta {
+      min-width: 44px;
+      min-height: 44px;
+      padding: 0.85rem 2rem;
+      border: none;
+      border-radius: 8px;
+      font-family: 'Tajawal', sans-serif;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .btn-cta-primary {
+      background: var(--gold);
+      color: #0c0c0e;
+      box-shadow: 0 4px 24px rgba(197, 160, 89, 0.4);
+    }
+
+    .btn-cta-primary:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 32px rgba(197, 160, 89, 0.55);
+    }
+
+    .btn-cta-ghost {
+      background: transparent;
+      color: rgba(232, 232, 232, 0.75);
+      border: 1px solid rgba(197, 160, 89, 0.3);
+    }
+
+    .btn-cta-ghost:hover {
+      background: rgba(197, 160, 89, 0.06);
+      border-color: rgba(197, 160, 89, 0.55);
+      transform: translateY(-2px);
+    }
+
+    /* Scroll invitation arrow */
+    .scroll-hint {
+      position: absolute;
+      bottom: 2.5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      animation: landingReveal 1s ease 2.4s both;
+    }
+
+    .scroll-hint span {
+      font-size: 0.75rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(197, 160, 89, 0.45);
+    }
+
+    .scroll-arrow {
+      width: 24px;
+      height: 24px;
+      border-right: 1.5px solid rgba(197, 160, 89, 0.45);
+      border-bottom: 1.5px solid rgba(197, 160, 89, 0.45);
+      transform: rotate(45deg);
+      animation: arrowBounce 1.8s ease-in-out infinite;
+    }
+
+    @keyframes arrowBounce {
+      0%, 100% { transform: rotate(45deg) translateY(0); opacity: 0.45; }
+      50%       { transform: rotate(45deg) translateY(6px); opacity: 0.9; }
+    }
+
+    @keyframes landingReveal {
+      from { opacity: 0; transform: translateY(18px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ============================================================
+       TRANSITION BRIDGE — gradient fade between landing and onboarding
+    ============================================================ */
+    .section-bridge {
+      height: 120px;
+      background: linear-gradient(180deg, #0c0c0e 0%, #11101a 50%, #1a1620 100%);
+    }
+
+    /* ============================================================
+       SECTION 2 — ONBOARDING
+       Sequential steps in clean minimal dark style (03-notion-zen)
+    ============================================================ */
+    #onboarding {
+      background: linear-gradient(180deg, #1a1620 0%, #16141e 50%, #1e1b14 100%);
+      padding: 5rem 2rem;
+    }
+
+    .onboarding-inner {
+      max-width: 860px;
+      margin: 0 auto;
+    }
+
+    .section-label {
+      font-size: 0.75rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--gold);
+      opacity: 0.65;
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+
+    .section-heading {
+      font-family: 'Amiri', serif;
+      font-size: clamp(1.8rem, 4vw, 2.6rem);
+      font-weight: 700;
+      color: var(--text-dark);
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+
+    .section-subheading {
+      font-size: 1rem;
+      opacity: 0.5;
+      font-weight: 300;
+      text-align: center;
+      margin-bottom: 4rem;
+    }
+
+    /* Divider line */
+    .gold-rule {
+      width: 48px;
+      height: 2px;
+      background: var(--gold);
+      margin: 0 auto 4rem;
+      opacity: 0.6;
+    }
+
+    /* Onboarding step list — vertical sequential layout */
+    .onboarding-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 2.5rem;
+      position: relative;
+    }
+
+    /* Connecting timeline line */
+    .onboarding-steps::before {
+      content: '';
+      position: absolute;
+      top: 28px;
+      bottom: 28px;
+      right: 21px; /* aligns with step-number center in RTL */
+      width: 1px;
+      background: linear-gradient(180deg,
+        transparent 0%,
+        var(--gold-line) 15%,
+        var(--gold-line) 85%,
+        transparent 100%
+      );
+    }
+
+    .onboarding-step {
+      display: flex;
+      align-items: flex-start;
+      gap: 1.5rem;
+      padding: 2rem 2rem 2rem 1.5rem;
+      border-radius: 8px;
+      border: 1px solid transparent;
+      transition: border-color 0.3s ease, background 0.3s ease;
+      position: relative;
+      cursor: default;
+    }
+
+    .onboarding-step:hover {
+      border-color: var(--gold-line);
+      background: rgba(197, 160, 89, 0.03);
+    }
+
+    /* Paper-fold corner on hover (from 03-notion-zen) */
+    .onboarding-step::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 0;
+      height: 0;
+      background: linear-gradient(225deg, transparent 50%, rgba(197, 160, 89, 0.12) 50%);
+      border-radius: 0 0 8px 0;
+      transition: width 0.3s ease, height 0.3s ease;
+    }
+
+    .onboarding-step:hover::after {
+      width: 28px;
+      height: 28px;
+    }
+
+    .ostep-number {
+      flex-shrink: 0;
+      width: 44px;
+      height: 44px;
+      border-radius: 6px;
+      border: 1.5px solid var(--gold);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--gold);
+      font-weight: 700;
+      font-size: 1rem;
+      /* Origami diamond rotation (from 03) */
+      transform: rotate(45deg);
+      background: rgba(197, 160, 89, 0.04);
+    }
+
+    .ostep-number span {
+      transform: rotate(-45deg);
+      display: block;
+    }
+
+    .ostep-body { flex: 1; }
+
+    .ostep-title {
+      font-family: 'Amiri', serif;
+      font-size: 1.35rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: var(--text-dark);
+    }
+
+    .ostep-desc {
+      font-size: 0.9rem;
+      opacity: 0.6;
+      line-height: 1.8;
+    }
+
+    .ostep-tag {
+      display: inline-block;
+      margin-top: 0.75rem;
+      padding: 0.2rem 0.75rem;
+      border-radius: 100px;
+      font-size: 0.75rem;
+      background: var(--gold-dim);
+      color: var(--gold);
+      letter-spacing: 0.05em;
+    }
+
+    /* ============================================================
+       TRANSITION BRIDGE 2 — dark purple-brown to warm parchment
+    ============================================================ */
+    .section-bridge-2 {
+      height: 140px;
+      background: linear-gradient(180deg, #1e1b14 0%, #c8bfb0 100%);
+    }
+
+    /* ============================================================
+       SECTION 3 — MAIN APP
+       Neumorphic warm paper (from 04-neumorphic-warmth)
+       + action rail (from 03-notion-zen)
+    ============================================================ */
+    #main-app {
+      background: var(--bg-warm);
+      color: var(--text-warm);
+      padding: 4rem 2rem 6rem;
+      min-height: 100vh;
+    }
+
+    .main-app-inner {
+      max-width: 860px;
+      margin: 0 auto;
+      position: relative;
+    }
+
+    /* App header */
+    .app-header {
+      text-align: center;
+      margin-bottom: 3rem;
+      padding-bottom: 2rem;
+      border-bottom: 1px solid rgba(197, 160, 89, 0.2);
+    }
+
+    .app-brand {
+      font-family: 'Amiri', serif;
+      font-size: clamp(1.8rem, 4vw, 2.6rem);
+      font-weight: 700;
+      color: var(--gold);
+      margin-bottom: 0.4rem;
+    }
+
+    .app-brand-en {
+      font-size: 0.85rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(44, 44, 44, 0.4);
+    }
+
+    /* Poem card — neumorphic warm */
+    .poem-card {
+      background: var(--bg-warm-card);
+      border-radius: 24px;
+      padding: 3rem 2.5rem;
+      margin: 2rem 0;
+      box-shadow: var(--neu-out-light);
+      transition: box-shadow 0.3s ease, transform 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Subtle parchment texture overlay */
+    .poem-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 3px,
+        rgba(139, 115, 85, 0.018) 3px,
+        rgba(139, 115, 85, 0.018) 4px
+      );
+      pointer-events: none;
+      border-radius: 24px;
+    }
+
+    /* Gold left border accent */
+    .poem-card::after {
+      content: '';
+      position: absolute;
+      top: 2rem;
+      right: 0;
+      bottom: 2rem;
+      width: 3px;
+      background: linear-gradient(180deg, transparent, var(--gold), transparent);
+      border-radius: 2px;
+    }
+
+    .poem-card:hover {
+      box-shadow: 4px 4px 10px #d1cec6, -4px -4px 10px #f9f6ef;
+      transform: translateY(-3px);
+    }
+
+    .verse {
+      font-family: 'Amiri', serif;
+      font-size: clamp(1.4rem, 3.5vw, 1.9rem);
+      line-height: 2.4;
+      text-align: center;
+      margin-bottom: 1.5rem;
+      color: #1e1c18;
+      position: relative;
+      z-index: 1;
+    }
+
+    .poet-attr {
+      text-align: center;
+      font-size: 1rem;
+      color: var(--indigo);
+      font-weight: 400;
+      opacity: 0.75;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Poem meta row */
+    .poem-meta {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+      flex-wrap: wrap;
+      position: relative;
+      z-index: 1;
+    }
+
+    .meta-badge {
+      padding: 0.3rem 1rem;
+      border-radius: 100px;
+      font-size: 0.8rem;
+      background: rgba(197, 160, 89, 0.12);
+      color: rgba(44, 44, 44, 0.65);
+      border: 1px solid rgba(197, 160, 89, 0.2);
+    }
+
+    /* Action row below poem card */
+    .poem-actions {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      margin: 1.5rem 0 3rem;
+      flex-wrap: wrap;
+    }
+
+    .btn-action {
+      min-width: 44px;
+      min-height: 44px;
+      padding: 0.7rem 1.4rem;
+      border: none;
+      border-radius: 14px;
+      font-family: 'Tajawal', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      background: var(--bg-warm-card);
+      color: var(--text-warm);
+      box-shadow: var(--neu-out-light);
+      transition: box-shadow 0.2s ease, transform 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .btn-action:hover {
+      box-shadow: 4px 4px 8px #d1cec6, -4px -4px 8px #f9f6ef;
+      transform: translateY(-2px);
+    }
+
+    .btn-action:active {
+      box-shadow: var(--neu-in-light);
+      transform: translateY(0);
+    }
+
+    .btn-action-primary {
+      background: var(--gold);
+      color: #fff;
+      box-shadow: 4px 4px 12px rgba(197, 160, 89, 0.35), -2px -2px 6px rgba(255,255,255,0.25);
+    }
+
+    .btn-action-primary:hover {
+      box-shadow: 6px 6px 16px rgba(197, 160, 89, 0.45), -2px -2px 8px rgba(255,255,255,0.3);
+    }
+
+    /* Feature cards row */
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+      margin-top: 1rem;
+    }
+
+    .feature-card {
+      background: var(--bg-warm-card);
+      border-radius: 20px;
+      padding: 1.75rem 1.5rem;
+      text-align: center;
+      box-shadow: var(--neu-out-light);
+      cursor: pointer;
+      transition: box-shadow 0.25s ease, transform 0.25s ease;
+    }
+
+    .feature-card:hover {
+      box-shadow: 4px 4px 8px #d1cec6, -4px -4px 8px #f9f6ef;
+      transform: translateY(-3px);
+    }
+
+    .feature-card:active {
+      box-shadow: var(--neu-in-light);
+    }
+
+    .feature-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--bg-warm-card);
+      box-shadow: var(--neu-out-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1rem;
+      color: var(--gold);
+      font-size: 1.3rem;
+    }
+
+    .feature-title {
+      font-family: 'Amiri', serif;
+      font-size: 1.15rem;
+      color: var(--text-warm);
+      margin-bottom: 0.4rem;
+      font-weight: 600;
+    }
+
+    .feature-desc {
+      font-size: 0.82rem;
+      opacity: 0.6;
+      line-height: 1.65;
+    }
+
+    /* Section heading in warm mode */
+    .warm-section-heading {
+      font-family: 'Amiri', serif;
+      font-size: 1.7rem;
+      color: var(--gold);
+      text-align: center;
+      margin-bottom: 2rem;
+      margin-top: 3rem;
+      font-weight: 600;
+    }
+
+    /* ============================================================
+       GLOBAL NAV / NOTION SIDE RAIL
+       Visible once user reaches main app section
+    ============================================================ */
+    .notion-rail {
+      position: fixed;
+      right: 1.5rem;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      z-index: 900;
+      background: rgba(229, 225, 218, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      padding: 0.75rem;
+      border-radius: 10px;
+      border: 1px solid rgba(197, 160, 89, 0.2);
+      box-shadow: 3px 3px 10px #d1cec6, -2px -2px 6px #f9f6ef;
+      opacity: 0;
+      /* Revealed after landing section is passed */
+      transition: opacity 0.5s ease;
+    }
+
+    .notion-rail.visible { opacity: 1; }
+
+    /* In the dark landing zone, override rail to dark bg */
+    .notion-rail.dark-mode {
+      background: rgba(22, 20, 30, 0.75);
+      border-color: rgba(197, 160, 89, 0.15);
+      box-shadow: none;
+    }
+
+    .rail-btn {
+      min-width: 44px;
+      min-height: 44px;
+      width: 44px;
+      height: 44px;
+      border: none;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--text-warm);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      position: relative;
+      transition: background 0.2s ease, transform 0.15s ease;
+    }
+
+    .notion-rail.dark-mode .rail-btn { color: var(--text-dark); }
+
+    .rail-btn:hover {
+      background: rgba(197, 160, 89, 0.12);
+      transform: scale(1.08);
+    }
+
+    .rail-btn:active { transform: scale(0.93); }
+
+    /* Tooltip */
+    .rail-btn::after {
+      content: attr(data-label);
+      position: absolute;
+      right: calc(100% + 0.75rem);
+      top: 50%;
+      transform: translateY(-50%);
+      background: #1e1c18;
+      color: #e8e8e8;
+      padding: 0.4rem 0.85rem;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+      font-family: 'Tajawal', sans-serif;
+    }
+
+    .rail-btn:hover::after { opacity: 1; }
+
+    /* Theme toggle — top-left corner */
+    .theme-toggle {
+      position: fixed;
+      top: 1.5rem;
+      left: 1.5rem;
+      z-index: 1000;
+      min-width: 44px;
+      min-height: 44px;
+      padding: 0.6rem 1.2rem;
+      border: 1px solid rgba(197, 160, 89, 0.3);
+      border-radius: 8px;
+      background: rgba(12, 12, 14, 0.55);
+      backdrop-filter: blur(8px);
+      color: rgba(232, 232, 232, 0.8);
+      font-family: 'Tajawal', sans-serif;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: background 0.3s ease, border-color 0.3s ease;
+    }
+
+    .theme-toggle:hover {
+      background: rgba(197, 160, 89, 0.12);
+      border-color: rgba(197, 160, 89, 0.5);
+    }
+
+    /* ============================================================
+       RESPONSIVE
+    ============================================================ */
+    @media (max-width: 768px) {
+      .brand-arabic  { font-size: 2.2rem; }
+      .landing-cta   { flex-direction: column; align-items: center; }
+
+      #onboarding    { padding: 4rem 1.25rem; }
+      .onboarding-steps::before { right: 19px; }
+
+      .poem-card     { padding: 2rem 1.5rem; }
+      .poem-card::after { display: none; }
+
+      .feature-grid  { grid-template-columns: 1fr 1fr; }
+
+      .notion-rail   {
+        right: 0.75rem;
+        padding: 0.5rem;
+      }
+
+      .rail-btn::after { display: none; } /* hide tooltips on mobile */
+
+      .section-bridge   { height: 80px; }
+      .section-bridge-2 { height: 100px; }
+    }
+
+    @media (max-width: 480px) {
+      .feature-grid { grid-template-columns: 1fr; }
+      .onboarding-step {
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 1rem;
+      }
+      .onboarding-steps::before { display: none; }
+    }
+
+    /* ============================================================
+       REDUCED MOTION
+    ============================================================ */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+      .notion-rail { opacity: 1; }
+    }
+
+    /* ============================================================
+       FOCUS / A11Y
+    ============================================================ */
+    .btn-cta:focus-visible,
+    .btn-action:focus-visible,
+    .feature-card:focus-visible,
+    .rail-btn:focus-visible,
+    .theme-toggle:focus-visible {
+      outline: 3px solid var(--indigo);
+      outline-offset: 2px;
+    }
+
+    /* ============================================================
+       SCROLL-REVEAL UTILITY
+    ============================================================ */
+    .reveal {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.65s ease, transform 0.65s ease;
+    }
+
+    .reveal.revealed {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .reveal-delay-1 { transition-delay: 0.1s; }
+    .reveal-delay-2 { transition-delay: 0.2s; }
+    .reveal-delay-3 { transition-delay: 0.3s; }
+    .reveal-delay-4 { transition-delay: 0.4s; }
+  </style>
+</head>
+<body>
+
+  <!-- ================================================================
+       GLOBAL: Theme toggle + Notion side rail
+  ================================================================ -->
+  <button class="theme-toggle" id="themeToggle" onclick="toggleTheme()" aria-label="تبديل السمة">
+    &#9790; / &#9788;
+  </button>
+
+  <nav class="notion-rail dark-mode" id="notionRail" aria-label="أدوات التفاعل">
+    <button class="rail-btn" data-label="شعر جديد" aria-label="شعر جديد">&#128260;</button>
+    <button class="rail-btn" data-label="استمع"    aria-label="استمع">&#9654;</button>
+    <button class="rail-btn" data-label="حفظ"      aria-label="حفظ">&#9825;</button>
+    <button class="rail-btn" data-label="حجم النص"  aria-label="حجم النص">Aa</button>
+    <button class="rail-btn" data-label="نسخ"      aria-label="نسخ">&#128203;</button>
+    <button class="rail-btn" data-label="مشاركة"   aria-label="مشاركة">&#8599;</button>
+  </nav>
+
+  <!-- ================================================================
+       SECTION 1 — LANDING (Particle Scroll branding)
+  ================================================================ -->
+  <section id="landing" aria-label="صفحة الترحيب">
+    <canvas id="particleCanvas" aria-hidden="true"></canvas>
+
+    <div class="landing-content">
+      <h1 class="brand-arabic">شعر بالعربي</h1>
+      <div class="brand-divider" aria-hidden="true"></div>
+      <p class="brand-english">Poetry bil Araby</p>
+      <p class="landing-tagline">أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ</p>
+
+      <div class="landing-cta">
+        <button class="btn-cta btn-cta-primary" onclick="scrollToOnboarding()" aria-label="ابدأ الرحلة">
+          ابدأ الرحلة
+        </button>
+        <button class="btn-cta btn-cta-ghost" onclick="scrollToApp()" aria-label="الدخول المباشر">
+          الدخول المباشر
+        </button>
+      </div>
+    </div>
+
+    <div class="scroll-hint" aria-hidden="true">
+      <span>اكتشف</span>
+      <div class="scroll-arrow"></div>
+    </div>
+  </section>
+
+  <!-- Bridge: dark → onboarding dark-purple -->
+  <div class="section-bridge" aria-hidden="true"></div>
+
+  <!-- ================================================================
+       SECTION 2 — ONBOARDING (Notion-Zen sequential steps)
+  ================================================================ -->
+  <section id="onboarding" aria-label="دليل الاستخدام">
+    <div class="onboarding-inner">
+      <p class="section-label reveal">كيف تعمل</p>
+      <h2 class="section-heading reveal reveal-delay-1">رحلتك مع الشعر العربي</h2>
+      <p class="section-subheading reveal reveal-delay-2">
+        أربع خطوات بسيطة تبدأ بها رحلتك في عالم القصيدة
+      </p>
+      <div class="gold-rule reveal reveal-delay-2" aria-hidden="true"></div>
+
+      <ol class="onboarding-steps" aria-label="خطوات الاستخدام">
+
+        <li class="onboarding-step reveal reveal-delay-1">
+          <div class="ostep-number" aria-hidden="true"><span>1</span></div>
+          <div class="ostep-body">
+            <h3 class="ostep-title">اكتشف قصيدة</h3>
+            <p class="ostep-desc">
+              من أرشيف يضم أكثر من 84,000 قصيدة لأعظم الشعراء العرب عبر العصور،
+              كل قصيدة منتقاة بعناية لتمنحك تجربة أصيلة.
+            </p>
+            <span class="ostep-tag">84,329 قصيدة</span>
+          </div>
+        </li>
+
+        <li class="onboarding-step reveal reveal-delay-2">
+          <div class="ostep-number" aria-hidden="true"><span>2</span></div>
+          <div class="ostep-body">
+            <h3 class="ostep-title">استمع بصوت عذب</h3>
+            <p class="ostep-desc">
+              تقنية صوت مولودة بالذكاء الاصطناعي تُحوّل كل بيت إلى لحن يُعذّب السمع،
+              مع ضبط حجم الصوت وسرعة الإلقاء.
+            </p>
+            <span class="ostep-tag">تحويل صوتي</span>
+          </div>
+        </li>
+
+        <li class="onboarding-step reveal reveal-delay-3">
+          <div class="ostep-number" aria-hidden="true"><span>3</span></div>
+          <div class="ostep-body">
+            <h3 class="ostep-title">اقرأ الشرح والتحليل</h3>
+            <p class="ostep-desc">
+              لكل قصيدة بطاقة تحليلية تكشف المعنى العميق، الصور البلاغية،
+              والسياق التاريخي — مُعدّة بالذكاء الاصطناعي في لحظات.
+            </p>
+            <span class="ostep-tag">تحليل أدبي</span>
+          </div>
+        </li>
+
+        <li class="onboarding-step reveal reveal-delay-4">
+          <div class="ostep-number" aria-hidden="true"><span>4</span></div>
+          <div class="ostep-body">
+            <h3 class="ostep-title">احفظ وشارك</h3>
+            <p class="ostep-desc">
+              بناء مكتبتك الشخصية من أجمل الأبيات، ومشاركتها مع من تحب
+              بنقرة واحدة.
+            </p>
+            <span class="ostep-tag">مكتبة شخصية</span>
+          </div>
+        </li>
+
+      </ol>
+    </div>
+  </section>
+
+  <!-- Bridge 2: dark-warm to full warm parchment -->
+  <div class="section-bridge-2" aria-hidden="true"></div>
+
+  <!-- ================================================================
+       SECTION 3 — MAIN APP (Neumorphic Warmth paper)
+  ================================================================ -->
+  <section id="main-app" aria-label="تطبيق الشعر">
+    <div class="main-app-inner">
+
+      <!-- App header -->
+      <header class="app-header reveal">
+        <div class="app-brand">شعر بالعربي</div>
+        <div class="app-brand-en">Poetry bil Araby</div>
+      </header>
+
+      <!-- Poem card -->
+      <article class="poem-card reveal reveal-delay-1" lang="ar" dir="rtl">
+        <div class="verse">
+          أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ<br>
+          فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
+        </div>
+        <div class="poet-attr">— أحمد شوقي</div>
+        <div class="poem-meta">
+          <span class="meta-badge">العصر الحديث</span>
+          <span class="meta-badge">الفخر</span>
+          <span class="meta-badge">بحر الطويل</span>
+        </div>
+      </article>
+
+      <!-- Quick actions -->
+      <div class="poem-actions reveal reveal-delay-2" role="toolbar" aria-label="أدوات القصيدة">
+        <button class="btn-action btn-action-primary" aria-label="قصيدة جديدة">
+          &#128260; جديد
+        </button>
+        <button class="btn-action" aria-label="استماع">
+          &#9654; استمع
+        </button>
+        <button class="btn-action" aria-label="تحليل القصيدة">
+          &#128214; تحليل
+        </button>
+        <button class="btn-action" aria-label="حفظ القصيدة">
+          &#9825; حفظ
+        </button>
+        <button class="btn-action" aria-label="مشاركة">
+          &#8599; مشاركة
+        </button>
+      </div>
+
+      <!-- Feature grid -->
+      <h2 class="warm-section-heading reveal">استكشف المزيد</h2>
+
+      <div class="feature-grid" role="list">
+
+        <div class="feature-card reveal reveal-delay-1" role="listitem" tabindex="0">
+          <div class="feature-icon" aria-hidden="true">&#128218;</div>
+          <div class="feature-title">مكتبة الشعراء</div>
+          <p class="feature-desc">
+            تصفّح ديوان كل شاعر من المتنبي حتى درويش في واجهة واحدة
+          </p>
+        </div>
+
+        <div class="feature-card reveal reveal-delay-2" role="listitem" tabindex="0">
+          <div class="feature-icon" aria-hidden="true">&#127925;</div>
+          <div class="feature-title">تلاوة مولودة</div>
+          <p class="feature-desc">
+            صوت عربي طبيعي يُحيي القصيدة من حبر الصفحة إلى حياة الأذن
+          </p>
+        </div>
+
+        <div class="feature-card reveal reveal-delay-3" role="listitem" tabindex="0">
+          <div class="feature-icon" aria-hidden="true">&#128269;</div>
+          <div class="feature-title">البحث الذكي</div>
+          <p class="feature-desc">
+            ابحث بالمعنى أو الصورة أو البيت، وتوقّع ما تقصده حتى قبل أن تنتهي
+          </p>
+        </div>
+
+        <div class="feature-card reveal reveal-delay-4" role="listitem" tabindex="0">
+          <div class="feature-icon" aria-hidden="true">&#127775;</div>
+          <div class="feature-title">أبيات اليوم</div>
+          <p class="feature-desc">
+            كل صباح بيتان مختاران ليبدأ يومك بجمال اللغة العربية
+          </p>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ================================================================
+       JAVASCRIPT
+  ================================================================ -->
+  <script>
+    /* ---- Particle Engine (from 01-particle-scroll) ---- */
+    const canvas = document.getElementById('particleCanvas');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+    let particleAnimId;
+
+    function resizeCanvas() {
+      canvas.width  = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+
+    class Particle {
+      constructor() {
+        this.reset();
+      }
+
+      reset() {
+        this.x       = Math.random() * canvas.width;
+        this.y       = Math.random() * canvas.height;
+        this.size    = Math.random() * 2.5 + 0.8;
+        this.speedX  = (Math.random() - 0.5) * 1.4;
+        this.speedY  = (Math.random() - 0.5) * 1.4;
+        this.opacity = Math.random() * 0.55 + 0.25;
+        /* Alternate between warm gold and cooler champagne */
+        this.color   = Math.random() > 0.4 ? '#C5A059' : '#d4b87a';
+      }
+
+      update() {
+        this.x += this.speedX;
+        this.y += this.speedY;
+        if (this.x < 0 || this.x > canvas.width)  this.speedX *= -1;
+        if (this.y < 0 || this.y > canvas.height)  this.speedY *= -1;
+      }
+
+      draw() {
+        ctx.save();
+        ctx.globalAlpha  = this.opacity;
+        ctx.fillStyle    = this.color;
+        ctx.shadowBlur   = 12;
+        ctx.shadowColor  = this.color;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    /* Draw faint connecting lines between nearby particles */
+    function drawConnections() {
+      const maxDist = 120;
+      for (let i = 0; i < particles.length; i++) {
+        for (let j = i + 1; j < particles.length; j++) {
+          const dx   = particles[i].x - particles[j].x;
+          const dy   = particles[i].y - particles[j].y;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < maxDist) {
+            ctx.save();
+            ctx.globalAlpha = (1 - dist / maxDist) * 0.08;
+            ctx.strokeStyle = '#C5A059';
+            ctx.lineWidth   = 0.6;
+            ctx.beginPath();
+            ctx.moveTo(particles[i].x, particles[i].y);
+            ctx.lineTo(particles[j].x, particles[j].y);
+            ctx.stroke();
+            ctx.restore();
+          }
+        }
+      }
+    }
+
+    function initParticles() {
+      particles = [];
+      const count = Math.min(110, Math.floor((canvas.width * canvas.height) / 9000));
+      for (let i = 0; i < count; i++) {
+        particles.push(new Particle());
+      }
+    }
+
+    function animateParticles() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawConnections();
+      particles.forEach(p => { p.update(); p.draw(); });
+      particleAnimId = requestAnimationFrame(animateParticles);
+    }
+
+    /* Stop particle loop when landing section leaves viewport */
+    function stopParticles() { cancelAnimationFrame(particleAnimId); }
+
+    resizeCanvas();
+    initParticles();
+    animateParticles();
+
+    window.addEventListener('resize', () => { resizeCanvas(); initParticles(); });
+
+    /* ---- Scroll helpers ---- */
+    function scrollToOnboarding() {
+      document.getElementById('onboarding').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function scrollToApp() {
+      document.getElementById('main-app').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    /* ---- Notion rail visibility + mode toggle based on scroll ---- */
+    const rail          = document.getElementById('notionRail');
+    const landingEl     = document.getElementById('landing');
+    const onboardingEl  = document.getElementById('onboarding');
+    const mainAppEl     = document.getElementById('main-app');
+    let particlesStopped = false;
+
+    function onScroll() {
+      const scrollY        = window.scrollY;
+      const landingH       = landingEl.offsetHeight;
+      const onboardingTop  = onboardingEl.offsetTop;
+      const appTop         = mainAppEl.offsetTop;
+
+      /* Stop particles once user scrolls past landing */
+      if (!particlesStopped && scrollY > landingH * 0.6) {
+        stopParticles();
+        particlesStopped = true;
+      }
+
+      /* Show rail once past landing */
+      if (scrollY > landingH * 0.5) {
+        rail.classList.add('visible');
+      } else {
+        rail.classList.remove('visible');
+      }
+
+      /* Switch rail to warm mode when in main app section */
+      if (scrollY >= appTop - 200) {
+        rail.classList.remove('dark-mode');
+      } else {
+        rail.classList.add('dark-mode');
+      }
+    }
+
+    window.addEventListener('scroll', onScroll, { passive: true });
+
+    /* ---- Scroll-reveal (IntersectionObserver) ---- */
+    const revealEls = document.querySelectorAll('.reveal');
+
+    const revealObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('revealed');
+          revealObserver.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.12, rootMargin: '0px 0px -40px 0px' });
+
+    revealEls.forEach(el => revealObserver.observe(el));
+
+    /* ---- Theme toggle ---- */
+    function toggleTheme() {
+      document.body.classList.toggle('warm-theme');
+    }
+
+    /* ---- Rail button press feedback ---- */
+    document.querySelectorAll('.rail-btn, .btn-action, .feature-card').forEach(el => {
+      el.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          el.click();
+        }
+      });
+      el.addEventListener('click', () => {
+        const orig = el.style.transform;
+        el.style.transform = 'scale(0.92)';
+        setTimeout(() => { el.style.transform = orig || ''; }, 150);
+      });
+    });
+  </script>
+
+</body>
+</html>

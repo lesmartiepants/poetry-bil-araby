@@ -7,17 +7,30 @@
     <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-dark: #1a1610;
-            --bg-light: #f5f0e6;
-            --text-dark: #ddd5c4;
+            --bg-dark:    #1a1610;
+            --bg-light:   #f5f0e6;
+            --surface-d:  #231e17;
+            --surface-l:  #eae5da;
+            --text-dark:  #ddd5c4;
             --text-light: #3d3428;
-            --gold: #C5A059;
-            --sand: #C4A882;
-            --earth: #8B7355;
-            --stone: #6b5d4e;
+            --gold:       #C5A059;
+            --sand:       #C4A882;
+            --sand-light: #d4b892;
+            --earth:      #8B7355;
+            --earth-dim:  rgba(139,115,85,0.18);
             --deep-earth: #2d2419;
-            --shadow-dark: rgba(0,0,0,0.3);
-            --shadow-light: rgba(0,0,0,0.1);
+            --border-d:   rgba(196,168,130,0.12);
+            --border-l:   rgba(139,115,85,0.2);
+
+            --sp-1: 8px;
+            --sp-2: 16px;
+            --sp-3: 24px;
+            --sp-4: 32px;
+            --sp-5: 40px;
+            --sp-6: 48px;
+
+            --t-base:   all 0.22s ease;
+            --t-spring: all 0.38s cubic-bezier(0.22, 1, 0.36, 1);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -29,196 +42,232 @@
             overflow-x: hidden;
             transition: background 0.4s ease, color 0.4s ease;
             min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
         body.light { background: var(--bg-light); color: var(--text-light); }
 
-        /* ========== SPLASH: Hourglass Sand ========== */
+        /* ===== SVG ICON HELPER ===== */
+        .icon {
+            width: 18px; height: 18px;
+            stroke: currentColor; fill: none;
+            stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round;
+            flex-shrink: 0;
+        }
+
+        /* ========== ZEN RAKE PATTERN ========== */
+        body::after {
+            content: '';
+            position: fixed; inset: 0;
+            z-index: 0; pointer-events: none;
+            opacity: 0.035;
+            background: repeating-linear-gradient(
+                0deg,
+                transparent, transparent 19px,
+                var(--sand) 19px, var(--sand) 20px
+            );
+        }
+
+        /* ========== SPLASH ========== */
         .splash-screen {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100vh;
+            position: fixed; inset: 0;
             background: var(--bg-dark);
             display: flex; align-items: center; justify-content: center;
-            flex-direction: column;
+            flex-direction: column; gap: var(--sp-3);
             z-index: 9999;
-            animation: splashFadeOut 1s ease 4.5s forwards;
+            animation: splashFadeOut 0.9s ease 5s forwards;
         }
 
         body.light .splash-screen { background: var(--bg-light); }
 
-        #sandCanvas {
-            position: absolute; top: 0; left: 0;
-            width: 100%; height: 100%;
-            will-change: transform;
-        }
-
-        /* Hourglass shape */
-        .hourglass {
+        /* Hourglass vessel — redesigned, no clip-path weirdness */
+        .hourglass-wrap {
             position: relative; z-index: 2;
-            width: 100px; height: 160px;
-            display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            margin-bottom: 1.5rem;
+            display: flex; flex-direction: column; align-items: center;
+            gap: 0;
         }
 
-        .hourglass-half {
-            width: 80px; height: 70px;
-            border: 3px solid var(--sand);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .hourglass-top {
-            border-radius: 40px 40px 0 0;
-            clip-path: polygon(0% 0%, 100% 0%, 55% 100%, 45% 100%);
-        }
-
-        .hourglass-bottom {
-            border-radius: 0 0 40px 40px;
-            clip-path: polygon(45% 0%, 55% 0%, 100% 100%, 0% 100%);
-        }
-
-        .hourglass-sand-top {
-            position: absolute; bottom: 0; left: 0; right: 0;
-            height: 60%;
-            background: var(--sand);
-            animation: sandDrain 3s ease-in-out forwards;
-            will-change: height;
-        }
-
-        .hourglass-sand-bottom {
-            position: absolute; bottom: 0; left: 0; right: 0;
-            height: 0%;
-            background: var(--sand);
-            animation: sandFill 3s ease-in-out forwards;
-            will-change: height;
-        }
-
-        @keyframes sandDrain { to { height: 5%; } }
-        @keyframes sandFill { to { height: 60%; } }
-
-        .hourglass-neck {
-            width: 6px; height: 8px;
-            background: var(--sand);
-            opacity: 0.7;
+        .hourglass-svg {
+            width: 80px; height: 140px;
+            overflow: visible;
         }
 
         .splash-text {
             position: relative; z-index: 2;
             font-family: 'Amiri', serif;
-            font-size: 2.5rem; font-weight: 700;
+            font-size: 2.4rem; font-weight: 700;
             color: var(--sand);
             text-align: center;
+            letter-spacing: 0.02em;
+            animation: fadeSlideUp 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.5s both;
         }
 
         .splash-sub {
             position: relative; z-index: 2;
-            font-size: 1rem; opacity: 0.6;
-            margin-top: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--earth);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        @keyframes fadeSlideUp {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         @keyframes splashFadeOut { to { opacity: 0; pointer-events: none; } }
 
-        /* ========== ZEN RAKE PATTERN BACKGROUND ========== */
-        body::after {
-            content: '';
-            position: fixed; inset: 0;
-            z-index: 0;
-            pointer-events: none;
-            opacity: 0.04;
-            background:
-                repeating-linear-gradient(
-                    0deg,
-                    transparent,
-                    transparent 18px,
-                    var(--sand) 18px,
-                    var(--sand) 19px
-                );
+        /* The accumulating sand fill in the bottom chamber */
+        #sandFillRect {
+            transform-origin: bottom;
+            transition: height 0.06s linear;
         }
 
         /* ========== MAIN ========== */
         .main-content {
-            min-height: 100vh; padding: 2rem;
+            min-height: 100vh;
+            padding: var(--sp-3) var(--sp-3) var(--sp-6);
             opacity: 0;
-            animation: contentFadeIn 1s ease 5s forwards;
+            animation: contentFadeIn 0.9s ease 5.5s forwards;
             position: relative; z-index: 1;
         }
 
         @keyframes contentFadeIn { to { opacity: 1; } }
 
+        .container { max-width: 860px; margin: 0 auto; }
+
+        /* ========== HEADER ========== */
         header {
-            display: flex; justify-content: space-between;
-            align-items: center;
-            margin-bottom: 3rem;
-            padding-bottom: 1rem;
-            border-bottom: 2px solid rgba(196,168,130,0.2);
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: var(--sp-5);
+            padding-bottom: var(--sp-3);
+            border-bottom: 1px solid var(--border-d);
         }
+
+        body.light header { border-color: var(--border-l); }
 
         h1 {
             font-family: 'Amiri', serif;
-            font-size: 2.2rem; font-weight: 700;
+            font-size: 2.1rem; font-weight: 700;
             color: var(--sand);
+            letter-spacing: 0.01em;
         }
 
-        /* Stone buttons */
-        .stone-btn {
-            min-width: 56px; min-height: 56px;
+        /* Round stone button */
+        .btn-stone {
+            width: 52px; height: 52px;
+            min-width: 44px; min-height: 44px;
             border-radius: 50%;
-            background: linear-gradient(145deg, var(--earth), var(--stone));
+            background: linear-gradient(145deg, var(--earth), #6b5d4e);
             border: 2px solid var(--sand);
             color: var(--sand);
-            font-size: 1.3rem;
             cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 3px 3px 8px rgba(0,0,0,0.3), -2px -2px 6px rgba(196,168,130,0.1);
+            transition: var(--t-spring);
+            box-shadow:
+                4px 4px 10px rgba(0,0,0,0.4),
+                -2px -2px 6px rgba(196,168,130,0.08);
+            display: flex; align-items: center; justify-content: center;
             will-change: transform;
         }
 
-        body.light .stone-btn {
-            background: linear-gradient(145deg, var(--sand), #d4b892);
-            color: var(--deep-earth);
+        body.light .btn-stone {
+            background: linear-gradient(145deg, var(--sand), var(--sand-light));
             border-color: var(--earth);
+            color: var(--deep-earth);
+            box-shadow:
+                4px 4px 10px rgba(0,0,0,0.15),
+                -2px -2px 6px rgba(255,255,255,0.6);
         }
 
-        .stone-btn:hover {
+        .btn-stone:hover {
             transform: scale(1.1);
-            box-shadow: 4px 4px 12px rgba(0,0,0,0.4);
+            box-shadow:
+                6px 6px 14px rgba(0,0,0,0.5),
+                -3px -3px 8px rgba(196,168,130,0.1);
         }
 
-        .stone-btn:active { transform: scale(0.95); }
-        .stone-btn:focus { outline: 3px solid var(--gold); outline-offset: 3px; }
+        .btn-stone:active {
+            transform: scale(0.94);
+            transition-duration: 0.08s;
+        }
 
-        .container { max-width: 900px; margin: 0 auto; }
+        .btn-stone:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
 
-        /* Poem card - sand/earth aesthetic */
+        /* ========== SAND PROGRESS BAR ========== */
+        .sand-progress {
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(139,115,85,0.2);
+            margin-bottom: var(--sp-4);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .sand-progress-fill {
+            height: 100%;
+            border-radius: 3px;
+            width: 42%;
+            background: linear-gradient(90deg, var(--sand), var(--gold));
+            position: relative;
+            transition: width 0.5s ease;
+        }
+
+        /* Sand texture shimmer */
+        .sand-progress-fill::after {
+            content: '';
+            position: absolute; inset: 0;
+            background: linear-gradient(90deg,
+                transparent 0%,
+                rgba(255,255,255,0.25) 50%,
+                transparent 100%
+            );
+            animation: shimmer 2s ease-in-out infinite;
+        }
+
+        @keyframes shimmer {
+            0%   { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        /* ========== POEM CARD ========== */
         .poem-card {
-            padding: 3rem;
-            background: rgba(45,36,25,0.6);
-            border-radius: 16px;
-            border: 2px solid rgba(196,168,130,0.2);
-            box-shadow: 0 10px 40px var(--shadow-dark);
-            margin-bottom: 2rem;
+            padding: var(--sp-5) var(--sp-4);
+            background: rgba(45,36,25,0.7);
+            border-radius: 20px;
+            border: 1px solid var(--border-d);
+            box-shadow:
+                0 12px 40px rgba(0,0,0,0.4),
+                inset 0 1px 0 rgba(196,168,130,0.08);
+            margin-bottom: var(--sp-4);
             position: relative;
             overflow: hidden;
+            transition: var(--t-spring);
         }
 
         body.light .poem-card {
-            background: rgba(255,248,235,0.8);
-            border-color: rgba(139,115,85,0.3);
-            box-shadow: 0 10px 40px var(--shadow-light);
+            background: rgba(255,248,235,0.85);
+            border-color: var(--border-l);
+            box-shadow:
+                0 12px 40px rgba(0,0,0,0.08),
+                inset 0 1px 0 rgba(255,255,255,0.8);
         }
 
-        /* Zen ripple decoration */
+        .poem-card:hover { transform: translateY(-3px); }
+
+        /* Zen ripple rings */
         .poem-card::before {
             content: '';
-            position: absolute; bottom: -20px; left: 50%;
+            position: absolute;
+            bottom: -40px; left: 50%;
             transform: translateX(-50%);
-            width: 200px; height: 200px;
+            width: 240px; height: 240px;
             border-radius: 50%;
-            border: 1px solid rgba(196,168,130,0.1);
+            border: 1px solid rgba(196,168,130,0.06);
             box-shadow:
-                0 0 0 20px rgba(196,168,130,0.05),
-                0 0 0 40px rgba(196,168,130,0.03),
-                0 0 0 60px rgba(196,168,130,0.02);
+                0 0 0 24px rgba(196,168,130,0.04),
+                0 0 0 48px rgba(196,168,130,0.025),
+                0 0 0 72px rgba(196,168,130,0.012);
             pointer-events: none;
         }
 
@@ -226,130 +275,182 @@
             font-family: 'Amiri', serif;
             font-size: 2rem; line-height: 2.5;
             text-align: center;
-            margin-bottom: 2rem;
+            margin-bottom: var(--sp-3);
             position: relative; z-index: 1;
         }
 
         .poem-author {
             font-family: 'Amiri', serif;
-            font-size: 1.3rem;
+            font-size: 1.2rem;
             text-align: center;
             color: var(--sand);
+            margin-bottom: var(--sp-4);
             position: relative; z-index: 1;
         }
 
-        .controls {
-            display: flex; gap: 1rem;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin-top: 2rem;
+        /* Horizontal rule with sand aesthetic */
+        .card-rule {
+            height: 1px;
+            background: linear-gradient(90deg,
+                transparent,
+                var(--border-d) 30%,
+                var(--border-d) 70%,
+                transparent
+            );
+            margin: 0 0 var(--sp-3);
             position: relative; z-index: 1;
         }
 
-        .earth-btn {
-            min-width: 48px; min-height: 48px;
-            padding: 0.6rem 1.4rem;
-            border-radius: 24px;
-            background: linear-gradient(145deg, var(--earth), var(--stone));
-            border: 1px solid var(--sand);
+        /* ========== ACTION BUTTONS ========== */
+        .card-actions {
+            display: flex; gap: var(--sp-1);
+            justify-content: center; flex-wrap: wrap;
+            position: relative; z-index: 1;
+        }
+
+        .btn-earth {
+            min-height: 44px;
+            padding: 0 var(--sp-2);
+            border-radius: 22px;
+            background: linear-gradient(145deg, var(--earth), #6b5d4e);
+            border: 1px solid rgba(196,168,130,0.25);
             color: var(--sand);
-            font-size: 1rem;
             font-family: 'Tajawal', sans-serif;
+            font-size: 0.9rem; font-weight: 500;
             cursor: pointer;
-            transition: all 0.2s ease;
-            box-shadow: 2px 2px 6px rgba(0,0,0,0.3);
+            transition: var(--t-base);
+            box-shadow: 2px 2px 8px rgba(0,0,0,0.35);
+            display: flex; align-items: center; gap: 7px;
             will-change: transform;
         }
 
-        body.light .earth-btn {
-            background: linear-gradient(145deg, var(--sand), #d4b892);
+        body.light .btn-earth {
+            background: linear-gradient(145deg, var(--sand), var(--sand-light));
             color: var(--deep-earth);
-            border-color: var(--earth);
+            border-color: rgba(139,115,85,0.3);
+            box-shadow: 2px 2px 8px rgba(0,0,0,0.1);
         }
 
-        .earth-btn:hover { transform: translateY(-2px); box-shadow: 3px 3px 10px rgba(0,0,0,0.4); }
-        .earth-btn:active { transform: scale(0.96); }
-        .earth-btn:focus { outline: 3px solid var(--gold); outline-offset: 3px; }
+        .btn-earth:hover {
+            transform: translateY(-2px);
+            box-shadow: 3px 3px 12px rgba(0,0,0,0.45);
+        }
 
-        /* Walkthrough */
+        .btn-earth:active {
+            transform: translateY(0) scale(0.97);
+            transition-duration: 0.08s;
+        }
+
+        .btn-earth:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+
+        /* ========== WALKTHROUGH ========== */
         .walkthrough {
-            margin-top: 3rem; padding: 2.5rem;
-            background: rgba(45,36,25,0.4);
-            border-radius: 16px;
-            border: 1px solid rgba(196,168,130,0.15);
+            background: rgba(45,36,25,0.45);
+            border-radius: 20px;
+            border: 1px solid var(--border-d);
+            padding: var(--sp-4);
         }
 
         body.light .walkthrough {
-            background: rgba(255,248,235,0.6);
-            border-color: rgba(139,115,85,0.2);
+            background: rgba(255,248,235,0.7);
+            border-color: var(--border-l);
         }
 
         .walkthrough h2 {
             font-family: 'Amiri', serif;
-            font-size: 2rem; color: var(--sand);
-            margin-bottom: 2rem; text-align: center;
+            font-size: 1.9rem; color: var(--sand);
+            margin-bottom: var(--sp-4); text-align: center;
+            letter-spacing: 0.01em;
         }
 
         .steps {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 2rem;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: var(--sp-2);
         }
 
         .step {
-            padding: 1.5rem;
-            border-radius: 12px;
-            border: 1px solid rgba(196,168,130,0.15);
-            transition: all 0.3s ease;
+            padding: var(--sp-3) var(--sp-2);
+            border-radius: 14px;
+            border: 1px solid transparent;
+            background: rgba(45,36,25,0.5);
+            transition: var(--t-spring);
             text-align: center;
+            cursor: pointer;
             position: relative;
         }
 
-        /* Small zen stone decoration */
+        body.light .step {
+            background: rgba(255,248,235,0.6);
+        }
+
+        /* Bottom sand-line decoration */
         .step::after {
             content: '';
             display: block;
-            width: 40px; height: 3px;
+            width: 32px; height: 2px;
             background: var(--sand);
             border-radius: 2px;
-            margin: 1rem auto 0;
-            opacity: 0.3;
+            margin: var(--sp-2) auto 0;
+            opacity: 0.25;
+            transition: opacity 0.3s ease, width 0.3s ease;
         }
+
+        .step:hover::after { opacity: 0.6; width: 48px; }
 
         .step:hover {
             transform: translateY(-5px);
-            border-color: var(--sand);
-            box-shadow: 0 8px 24px rgba(139,115,85,0.2);
+            border-color: rgba(196,168,130,0.3);
+            background: rgba(45,36,25,0.7);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
         }
 
-        .step-number {
-            font-size: 2rem; font-weight: 700;
+        body.light .step:hover {
+            background: rgba(255,248,235,0.9);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+        }
+
+        .step:active { transform: translateY(-1px); transition-duration: 0.1s; }
+        .step:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+
+        /* Step icon */
+        .step-icon {
+            display: inline-flex;
+            align-items: center; justify-content: center;
+            width: 48px; height: 48px;
+            border-radius: 50%;
+            border: 1px solid rgba(196,168,130,0.2);
             color: var(--sand);
-            margin-bottom: 0.5rem;
+            margin-bottom: var(--sp-1);
+            background: rgba(139,115,85,0.15);
         }
 
         .step-title {
             font-family: 'Amiri', serif;
             font-size: 1.2rem; font-weight: 700;
-            margin-bottom: 0.5rem;
+            margin-bottom: 6px;
+            color: var(--sand);
         }
 
+        body.light .step-title { color: var(--earth); }
+
         .step-desc {
-            font-size: 0.95rem;
-            opacity: 0.7; line-height: 1.6;
+            font-size: 0.84rem;
+            opacity: 0.7; line-height: 1.65;
         }
 
         /* ========== MOBILE ========== */
         @media (max-width: 768px) {
-            h1 { font-size: 1.8rem; }
+            h1 { font-size: 1.7rem; }
             .splash-text { font-size: 2rem; }
-            .stone-btn { width: 48px; height: 48px; min-width: 44px; min-height: 44px; font-size: 1.1rem; }
-            .poem-card { padding: 2rem; }
-            .poem-text { font-size: 1.5rem; line-height: 2; }
-            .steps { grid-template-columns: 1fr; }
-            .hourglass { width: 70px; height: 120px; }
-            .hourglass-half { width: 60px; height: 50px; }
+            .poem-card { padding: var(--sp-4) var(--sp-3); }
+            .poem-text { font-size: 1.5rem; line-height: 2.1; }
+            .steps { grid-template-columns: repeat(2, 1fr); }
+            .main-content { padding: var(--sp-2) var(--sp-2) var(--sp-6); }
+            .walkthrough { padding: var(--sp-3); }
         }
+
+        @media (max-width: 480px) { .steps { grid-template-columns: 1fr; } }
 
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after {
@@ -357,71 +458,153 @@
                 animation-iteration-count: 1 !important;
                 transition-duration: 0.01ms !important;
             }
-            #sandCanvas { display: none; }
+            .main-content { opacity: 1; }
+            .sand-progress-fill::after { animation: none; }
         }
     </style>
 </head>
 <body>
+    <!-- ===== SPLASH: Sand-fill hourglass ===== -->
     <div class="splash-screen">
-        <canvas id="sandCanvas"></canvas>
-        <div class="hourglass">
-            <div class="hourglass-half hourglass-top">
-                <div class="hourglass-sand-top"></div>
-            </div>
-            <div class="hourglass-neck"></div>
-            <div class="hourglass-half hourglass-bottom">
-                <div class="hourglass-sand-bottom"></div>
-            </div>
+        <!--
+            The hourglass is drawn as an inline SVG.
+            Sand grains fall from a canvas overlaid on the full screen.
+            A separate animated rect inside the SVG tracks accumulated fill.
+        -->
+        <div class="hourglass-wrap">
+            <svg class="hourglass-svg" viewBox="0 0 80 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Outer frame -->
+                <path d="M8 4 L72 4 L72 8 L48 62 L48 78 L72 132 L72 136 L8 136 L8 132 L32 78 L32 62 L8 8 Z"
+                      fill="none" stroke="#C4A882" stroke-width="2.5" stroke-linejoin="round"/>
+                <!-- Top caps -->
+                <rect x="4" y="2" width="72" height="8" rx="3" fill="#8B7355" opacity="0.8"/>
+                <rect x="4" y="130" width="72" height="8" rx="3" fill="#8B7355" opacity="0.8"/>
+
+                <!-- Sand draining from top — animates from 55% fill to 0 -->
+                <clipPath id="topClip">
+                    <path d="M9 8 L71 8 L47 62 L33 62 Z"/>
+                </clipPath>
+                <rect id="topSandRect"
+                    x="9" y="8" width="62"
+                    height="54" rx="0"
+                    fill="url(#sandGrad)"
+                    clip-path="url(#topClip)"
+                    opacity="0.85"/>
+
+                <!-- Sand accumulating in bottom — animates from 0 to 55% fill -->
+                <clipPath id="bottomClip">
+                    <path d="M33 78 L47 78 L71 132 L9 132 Z"/>
+                </clipPath>
+                <!-- Anchor rect at bottom, grows upward via transform-origin trick -->
+                <g clip-path="url(#bottomClip)">
+                    <rect id="bottomSandRect"
+                        x="9" y="132" width="62" height="0"
+                        fill="url(#sandGrad)" opacity="0.9"/>
+                </g>
+
+                <!-- Neck trickle -->
+                <rect id="neckTrickle" x="37" y="62" width="6" height="16"
+                    fill="#C4A882" opacity="0.6"/>
+
+                <!-- Gradient definition -->
+                <defs>
+                    <linearGradient id="sandGrad" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#d4b892"/>
+                        <stop offset="100%" stop-color="#C4A882"/>
+                    </linearGradient>
+                </defs>
+            </svg>
         </div>
         <div class="splash-text">حديقة الرمل</div>
         <div class="splash-sub">Sand Garden</div>
     </div>
 
+    <!-- ===== MAIN CONTENT ===== -->
     <div class="main-content">
-        <header>
-            <h1>حديقة الرمل - Sand Garden</h1>
-            <button class="stone-btn" id="themeBtn" aria-label="Toggle theme">&#9788;</button>
-        </header>
-
         <div class="container">
+            <header>
+                <h1>حديقة الرمل</h1>
+                <button class="btn-stone" id="themeBtn" aria-label="تبديل السمة">
+                    <svg class="icon" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="5"/>
+                        <line x1="12" y1="1" x2="12" y2="3"/>
+                        <line x1="12" y1="21" x2="12" y2="23"/>
+                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                        <line x1="1" y1="12" x2="3" y2="12"/>
+                        <line x1="21" y1="12" x2="23" y2="12"/>
+                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                    </svg>
+                </button>
+            </header>
+
+            <!-- Sand fill progress — represents reading/time passage -->
+            <div class="sand-progress" aria-label="تقدم القراءة" role="progressbar" aria-valuenow="42" aria-valuemin="0" aria-valuemax="100">
+                <div class="sand-progress-fill" style="width: 42%"></div>
+            </div>
+
             <div class="poem-card">
-                <div class="poem-text" lang="ar">
-                    أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ
-                    <br>
+                <div class="poem-text" lang="ar" dir="rtl">
+                    أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ<br>
                     فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
                 </div>
-                <div class="poem-author">-- أحمد شوقي</div>
-                <div class="controls">
-                    <button class="earth-btn" aria-label="Play">&#9654;</button>
-                    <button class="earth-btn" aria-label="Save">&#9829;</button>
-                    <button class="earth-btn" aria-label="Next">&#8635;</button>
-                    <button class="earth-btn">Aa</button>
-                    <button class="earth-btn">&#1593;</button>
+                <div class="poem-author">— أحمد شوقي</div>
+                <div class="card-rule"></div>
+                <div class="card-actions">
+                    <button class="btn-earth" aria-label="استمع">
+                        <svg class="icon" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                        استمع
+                    </button>
+                    <button class="btn-earth" aria-label="حفظ">
+                        <svg class="icon" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                        حفظ
+                    </button>
+                    <button class="btn-earth" aria-label="شعر جديد">
+                        <svg class="icon" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                        جديد
+                    </button>
+                    <button class="btn-earth" aria-label="حجم النص" style="font-size:0.85rem; font-weight:600;">Aa</button>
+                    <button class="btn-earth" aria-label="مشاركة">
+                        <svg class="icon" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                        مشاركة
+                    </button>
                 </div>
             </div>
 
             <div class="walkthrough">
                 <h2>كيفية الاستخدام</h2>
                 <div class="steps">
-                    <div class="step">
-                        <div class="step-number">1</div>
+                    <div class="step" tabindex="0">
+                        <div class="step-icon">
+                            <svg class="icon" viewBox="0 0 24 24">
+                                <!-- Hourglass SVG icon -->
+                                <path d="M5 2h14M5 22h14M17 2l-5 9-5-9M7 22l5-9 5 9"/>
+                            </svg>
+                        </div>
                         <div class="step-title">تأمل</div>
-                        <div class="step-desc">حبات الرمل تتساقط كالساعة الرملية</div>
+                        <div class="step-desc">الرمل يتساقط ويتراكم كما في ساعة الزمن</div>
                     </div>
-                    <div class="step">
-                        <div class="step-number">2</div>
+                    <div class="step" tabindex="0">
+                        <div class="step-icon">
+                            <svg class="icon" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+                        </div>
                         <div class="step-title">اقرأ</div>
                         <div class="step-desc">استكشف آلاف القصائد من عصور مختلفة</div>
                     </div>
-                    <div class="step">
-                        <div class="step-number">3</div>
-                        <div class="step-title">تفاعل</div>
-                        <div class="step-desc">أزرار حجرية بألوان الأرض الدافئة</div>
+                    <div class="step" tabindex="0">
+                        <div class="step-icon">
+                            <svg class="icon" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
+                        </div>
+                        <div class="step-title">استمع</div>
+                        <div class="step-desc">تلاوة شعرية بأصوات عالية الجودة</div>
                     </div>
-                    <div class="step">
-                        <div class="step-number">4</div>
-                        <div class="step-title">استرخ</div>
-                        <div class="step-desc">خطوط المشط الزن في الخلفية الهادئة</div>
+                    <div class="step" tabindex="0">
+                        <div class="step-icon">
+                            <svg class="icon" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                        </div>
+                        <div class="step-title">احفظ</div>
+                        <div class="step-desc">اجمع قصائدك المفضلة في مكتبتك الخاصة</div>
                     </div>
                 </div>
             </div>
@@ -429,84 +612,207 @@
     </div>
 
     <script>
-        var themeBtn = document.getElementById('themeBtn');
-        themeBtn.addEventListener('click', function() {
+        // ===== Theme toggle =====
+        document.getElementById('themeBtn').addEventListener('click', function() {
             document.body.classList.toggle('light');
-            themeBtn.textContent = document.body.classList.contains('light') ? '\u263E' : '\u2606';
         });
 
-        // === Sand Grain Canvas (hourglass effect) ===
-        var canvas = document.getElementById('sandCanvas');
-        var ctx = canvas.getContext('2d');
-        var isMobile = window.innerWidth <= 768;
-        var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-        var grains = [];
-        var sandAnimId;
-
-        function resizeCanvas() {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        }
-        resizeCanvas();
-        window.addEventListener('resize', resizeCanvas);
-
-        var maxGrains = isMobile ? 60 : 120;
-        var sandColors = ['#C4A882','#B89B6E','#D4B892','#A89070','#C5A059'];
-
-        function SandGrain() {
-            this.reset();
-        }
-        SandGrain.prototype.reset = function() {
-            this.x = canvas.width * 0.4 + Math.random() * canvas.width * 0.2;
-            this.y = -10;
-            this.size = Math.random() * 2 + 1;
-            this.speedY = Math.random() * 2 + 1;
-            this.speedX = (Math.random() - 0.5) * 0.8;
-            this.color = sandColors[Math.floor(Math.random() * sandColors.length)];
-            this.opacity = Math.random() * 0.6 + 0.3;
-        };
-        SandGrain.prototype.update = function() {
-            this.y += this.speedY;
-            this.x += this.speedX;
-            this.speedY += 0.05;
-            if (this.y > canvas.height + 10) { this.reset(); }
-        };
-        SandGrain.prototype.draw = function() {
-            ctx.beginPath();
-            ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-            ctx.fillStyle = this.color;
-            ctx.globalAlpha = this.opacity;
-            ctx.fill();
-            ctx.globalAlpha = 1;
-        };
-
-        function initGrains() {
-            grains = [];
-            for (var i = 0; i < maxGrains; i++) {
-                var g = new SandGrain();
-                g.y = Math.random() * canvas.height;
-                grains.push(g);
-            }
-        }
-
-        function animateSand() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            grains.forEach(function(g) { g.update(); g.draw(); });
-            sandAnimId = requestAnimationFrame(animateSand);
-        }
-
-        if (!reducedMotion) {
-            initGrains();
-            animateSand();
-            setTimeout(function() { cancelAnimationFrame(sandAnimId); }, 5500);
-        }
-
-        // Button interactions
-        document.querySelectorAll('.earth-btn, .stone-btn').forEach(function(btn) {
-            btn.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); btn.click(); }
+        // ===== Keyboard accessibility =====
+        document.querySelectorAll('.step, .btn-earth, .btn-stone').forEach(function(el) {
+            el.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); el.click(); }
             });
         });
+
+        // =======================================================
+        // SAND HOURGLASS ANIMATION
+        //
+        // The SVG hourglass has:
+        //   - #topSandRect   : sand draining from top (height 54px → 0)
+        //   - #bottomSandRect: sand filling at bottom (height 0 → 54px)
+        //
+        // Both animated over ~4 seconds, synchronized.
+        // Grains also fall from a canvas overlay for visual depth.
+        // =======================================================
+
+        var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+        if (!reducedMotion) {
+            var topRect    = document.getElementById('topSandRect');
+            var bottomRect = document.getElementById('bottomSandRect');
+
+            // Total sand height in SVG units
+            var SAND_H  = 52;
+            var FILL_H  = 50; // how much fills the bottom
+            var duration = 4200; // ms
+            var startTime = null;
+
+            function animateHourglass(ts) {
+                if (!startTime) startTime = ts;
+                var elapsed = ts - startTime;
+                var prog = Math.min(elapsed / duration, 1);
+
+                // Ease-in-out cubic
+                var ease = prog < 0.5
+                    ? 4 * prog * prog * prog
+                    : 1 - Math.pow(-2 * prog + 2, 3) / 2;
+
+                // Top drains
+                var topH = SAND_H * (1 - ease);
+                var topY = 8; // top of top chamber in SVG coords
+                topRect.setAttribute('y', topY);
+                topRect.setAttribute('height', topH.toString());
+
+                // Bottom fills — grows upward from y=132
+                var botH = FILL_H * ease;
+                bottomRect.setAttribute('y', (132 - botH).toString());
+                bottomRect.setAttribute('height', botH.toString());
+
+                if (prog < 1) {
+                    requestAnimationFrame(animateHourglass);
+                }
+            }
+
+            requestAnimationFrame(animateHourglass);
+        }
+
+        // =======================================================
+        // FALLING SAND GRAIN CANVAS
+        // Grains originate from a narrow neck area and accumulate
+        // at the bottom of the screen with realistic spread.
+        // The canvas covers only the splash area.
+        // =======================================================
+
+        if (!reducedMotion) {
+            // Create a canvas overlaid on the splash
+            var splash = document.querySelector('.splash-screen');
+            var sCanvas = document.createElement('canvas');
+            sCanvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1;';
+            splash.appendChild(sCanvas);
+
+            var sCtx = sCanvas.getContext('2d');
+            var grains = [];
+            var sAnimId;
+
+            // Grid-based accumulation for realistic stacking
+            var COLS = 200;
+            var stackHeights = new Array(COLS).fill(0);
+
+            function resizeSCanvas() {
+                sCanvas.width = sCanvas.offsetWidth;
+                sCanvas.height = sCanvas.offsetHeight;
+                stackHeights = new Array(COLS).fill(0);
+            }
+
+            resizeSCanvas();
+            window.addEventListener('resize', resizeSCanvas);
+
+            var sandColors = ['#C4A882','#B89B6E','#D4B892','#A89070','#C5A059'];
+
+            function Grain() {
+                this.reset();
+            }
+
+            Grain.prototype.reset = function() {
+                // Spawn from center neck of screen
+                var cx = sCanvas.width * 0.5;
+                this.x = cx + (Math.random() - 0.5) * 14;
+                this.y = sCanvas.height * 0.3;
+                this.vx = (Math.random() - 0.5) * 1.4;
+                this.vy = Math.random() * 1.5 + 0.8;
+                this.r = Math.random() * 2.2 + 0.8;
+                this.color = sandColors[Math.floor(Math.random() * sandColors.length)];
+                this.alpha = Math.random() * 0.5 + 0.45;
+                this.landed = false;
+            };
+
+            Grain.prototype.update = function() {
+                if (this.landed) return;
+                this.vy += 0.12; // gravity
+                this.vx *= 0.99; // slight drag
+                this.x += this.vx;
+                this.y += this.vy;
+
+                // Boundary X
+                if (this.x < 0) { this.x = 0; this.vx = Math.abs(this.vx) * 0.6; }
+                if (this.x > sCanvas.width) { this.x = sCanvas.width; this.vx = -Math.abs(this.vx) * 0.6; }
+
+                // Check landing against stack
+                var col = Math.floor((this.x / sCanvas.width) * COLS);
+                col = Math.max(0, Math.min(COLS - 1, col));
+                var floorY = sCanvas.height - stackHeights[col];
+
+                if (this.y + this.r >= floorY) {
+                    this.y = floorY - this.r;
+                    this.landed = true;
+
+                    // Spread: find lowest neighboring col
+                    var leftH  = col > 0        ? stackHeights[col - 1] : 9999;
+                    var rightH = col < COLS - 1  ? stackHeights[col + 1] : 9999;
+                    var minH   = Math.min(stackHeights[col], leftH, rightH);
+
+                    if (stackHeights[col] - minH > this.r * 2.5) {
+                        // Roll to lower side
+                        if (leftH < rightH && col > 0) { col = col - 1; }
+                        else if (col < COLS - 1) { col = col + 1; }
+                    }
+
+                    stackHeights[col] += this.r * 1.6;
+                }
+            };
+
+            Grain.prototype.draw = function() {
+                sCtx.save();
+                sCtx.globalAlpha = this.alpha;
+                sCtx.fillStyle = this.color;
+                sCtx.beginPath();
+                sCtx.ellipse(this.x, this.y, this.r, this.r * 0.85, 0, 0, Math.PI * 2);
+                sCtx.fill();
+                sCtx.restore();
+            };
+
+            var maxGrains = 300;
+            var spawnRate = 3; // grains per frame
+
+            function animateSand() {
+                sCtx.clearRect(0, 0, sCanvas.width, sCanvas.height);
+
+                // Spawn new grains
+                if (grains.filter(function(g) { return !g.landed; }).length < 60) {
+                    for (var i = 0; i < spawnRate; i++) {
+                        if (grains.length < maxGrains) { grains.push(new Grain()); }
+                    }
+                }
+
+                grains.forEach(function(g) { g.update(); g.draw(); });
+
+                // Draw stacked sand as a smooth filled polygon at the bottom
+                sCtx.save();
+                sCtx.globalAlpha = 0.7;
+                sCtx.fillStyle = 'rgba(196,168,130,0.55)';
+                sCtx.beginPath();
+                sCtx.moveTo(0, sCanvas.height);
+                for (var c = 0; c < COLS; c++) {
+                    var x = (c / COLS) * sCanvas.width;
+                    var y = sCanvas.height - stackHeights[c];
+                    if (c === 0) sCtx.lineTo(x, y);
+                    else sCtx.lineTo(x, y);
+                }
+                sCtx.lineTo(sCanvas.width, sCanvas.height);
+                sCtx.closePath();
+                sCtx.fill();
+                sCtx.restore();
+
+                sAnimId = requestAnimationFrame(animateSand);
+            }
+
+            animateSand();
+
+            // Stop after splash ends
+            setTimeout(function() {
+                cancelAnimationFrame(sAnimId);
+            }, 6000);
+        }
     </script>
 </body>
 </html>

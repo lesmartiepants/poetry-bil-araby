@@ -262,17 +262,19 @@
       text-shadow: 0 1px 4px rgba(0, 0, 0, 1);
     }
 
-    /* Dust particles in light beam */
+    /* Dust particles in light beam — slightly larger, faster */
     .dust-particle {
       position: absolute;
-      width: 2px;
-      height: 2px;
-      background: rgba(255, 245, 220, 0.7);
+      width: 2.5px;
+      height: 2.5px;
+      background: rgba(255, 245, 220, 0.8);
       border-radius: 50%;
-      box-shadow: 0 0 8px rgba(255, 245, 220, 0.8);
-      animation: floatDust 6s ease-in-out infinite;
+      box-shadow: 0 0 10px rgba(255, 245, 220, 0.9);
+      /* 4s cycle (was 6s = ~33% faster) */
+      animation: floatDust 4s ease-in-out infinite;
       z-index: 3;
       pointer-events: none;
+      will-change: transform, opacity;
     }
 
     @keyframes floatDust {
@@ -280,12 +282,12 @@
         transform: translateY(0) translateX(0);
         opacity: 0;
       }
-      10% { opacity: 0.7; }
+      12% { opacity: 0.8; }
       50% {
-        transform: translateY(-60px) translateX(8px);
-        opacity: 0.9;
+        transform: translateY(-70px) translateX(10px);
+        opacity: 1;
       }
-      90% { opacity: 0.7; }
+      88% { opacity: 0.8; }
     }
   </style>
 </head>
@@ -297,12 +299,16 @@
     <!-- ONE perfect light ray -->
     <div class="light-ray"></div>
 
-    <!-- Dust particles in beam -->
-    <div class="dust-particle" style="left: 62%; top: 30%; animation-delay: 0s;"></div>
-    <div class="dust-particle" style="left: 64%; top: 45%; animation-delay: 1.2s;"></div>
-    <div class="dust-particle" style="left: 66%; top: 55%; animation-delay: 2.5s;"></div>
-    <div class="dust-particle" style="left: 68%; top: 38%; animation-delay: 3.8s;"></div>
-    <div class="dust-particle" style="left: 63%; top: 48%; animation-delay: 5s;"></div>
+    <!-- Dust particles in beam — increased ~80% (5 -> 9 particles) -->
+    <div class="dust-particle" style="left: 61%; top: 28%; animation-delay: 0s;"></div>
+    <div class="dust-particle" style="left: 64%; top: 42%; animation-delay: 0.9s;"></div>
+    <div class="dust-particle" style="left: 67%; top: 57%; animation-delay: 1.8s;"></div>
+    <div class="dust-particle" style="left: 69%; top: 35%; animation-delay: 2.7s;"></div>
+    <div class="dust-particle" style="left: 62%; top: 50%; animation-delay: 3.6s;"></div>
+    <div class="dust-particle" style="left: 65%; top: 22%; animation-delay: 4.5s;"></div>
+    <div class="dust-particle" style="left: 71%; top: 62%; animation-delay: 0.4s;"></div>
+    <div class="dust-particle" style="left: 60%; top: 70%; animation-delay: 1.5s;"></div>
+    <div class="dust-particle" style="left: 63%; top: 15%; animation-delay: 2.2s;"></div>
 
     <!-- Theme toggle -->
     <button class="theme-toggle" aria-label="Toggle theme">
@@ -343,9 +349,9 @@
   </div>
 
   <script>
-    // Animate light ray and content brightness over 8-second cycle
+    // Animate light ray and content brightness over 4-second cycle (2x speed)
     let startTime = Date.now();
-    const duration = 8000;
+    const duration = 4000;
 
     // Fade in content after 1 second
     setTimeout(() => {
@@ -353,16 +359,26 @@
       document.documentElement.style.setProperty('--content-y', '0px');
     }, 1000);
 
+    // Ping-pong helper for smooth back-and-forth
+    function pingPong(elapsed, cycleDuration) {
+      const raw = (elapsed % (cycleDuration * 2)) / (cycleDuration * 2);
+      return 0.5 - 0.5 * Math.cos(raw * Math.PI * 2);
+    }
+
     function animate() {
       const elapsed = Date.now() - startTime;
       const phase = (elapsed % duration) / duration;
 
-      // Light ray position shifts subtly
-      const lightX = 62 + (Math.sin(phase * Math.PI * 2) * 3);
-      const rayAngle = -12 + (Math.sin(phase * Math.PI * 2) * 4);
+      // Wider spotlight movement: ±14% (was ±3%)
+      // Using ping-pong so it alternates smoothly
+      const pp = pingPong(elapsed, duration);
+      const lightX = 50 + (pp * 28 - 14); // sweeps 36%–64%
 
-      // Content brightness follows light intensity
-      const brightness = 0.9 + (Math.sin(phase * Math.PI * 2) * 0.15);
+      // More dynamic angle swing: ±10deg (was ±4deg)
+      const rayAngle = -12 + (Math.sin(phase * Math.PI * 2) * 10);
+
+      // Brightness breathes with the movement
+      const brightness = 0.85 + (Math.sin(phase * Math.PI * 2) * 0.2);
 
       // Update CSS variables
       document.documentElement.style.setProperty('--light-x', `${lightX}%`);

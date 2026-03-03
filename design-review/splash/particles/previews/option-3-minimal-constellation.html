@@ -83,42 +83,64 @@
       font-weight: 400;
     }
 
-    /* Pure text link - no button chrome */
-    .cta-link {
+    /* Prominent CTA button with pulse */
+    .cta-button {
       display: inline-block;
-      font-size: 15px;
-      text-transform: lowercase;
-      letter-spacing: 0.2em;
-      font-weight: 300;
-      color: #a1a1a1;
-      text-decoration: none;
+      padding: 16px 48px;
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      background: rgba(255, 255, 255, 0.04);
+      color: #e8e8e8;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.35em;
+      font-weight: 400;
       cursor: pointer;
-      transition: all 0.4s ease;
+      touch-action: manipulation;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
       position: relative;
-      padding: 8px 0;
+      backdrop-filter: blur(4px);
+      animation: buttonPulse 3s ease-in-out infinite;
+      outline: none;
     }
 
-    .cta-link::after {
+    @keyframes buttonPulse {
+      0%, 100% {
+        box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.08),
+                    0 0 12px rgba(255, 255, 255, 0.04);
+      }
+      50% {
+        box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.0),
+                    0 0 24px rgba(255, 255, 255, 0.12);
+        border-color: rgba(255, 255, 255, 0.8);
+      }
+    }
+
+    .cta-button::after {
       content: '';
       position: absolute;
       bottom: 0;
-      left: 50%;
-      width: 0;
+      left: 10%;
+      width: 80%;
       height: 1px;
-      background: #fafafa;
-      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-      transform: translateX(-50%);
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
+      transform: scaleX(0);
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    .cta-link:hover {
-      color: #fafafa;
+    .cta-button:hover {
+      color: #ffffff;
+      border-color: rgba(255, 255, 255, 0.9);
+      background: rgba(255, 255, 255, 0.08);
+      transform: translateY(-2px);
+      animation: none;
+      box-shadow: 0 0 32px rgba(255, 255, 255, 0.15);
     }
 
-    .cta-link:hover::after {
-      width: 100%;
+    .cta-button:hover::after {
+      transform: scaleX(1);
     }
 
-    /* Subtle hint */
+    /* Tap hint */
     .hint {
       margin-top: 80px;
       font-size: 9px;
@@ -126,6 +148,7 @@
       color: #3f3f46;
       text-transform: uppercase;
       font-weight: 400;
+      touch-action: manipulation;
     }
 
     /* Minimalist theme toggle */
@@ -201,12 +224,12 @@
       Verses Connecting Across Time and Space
     </div>
 
-    <a href="#" class="cta-link">
-      enter →
-    </a>
+    <button class="cta-button" id="ctaBtn">
+      Enter the Tradition
+    </button>
 
     <div class="hint">
-      Move your cursor to disturb the field
+      Tap anywhere or click to begin
     </div>
   </div>
 
@@ -235,17 +258,25 @@
       const angle = Math.random() * Math.PI * 2;
       const distance = Math.random() * c.radius;
 
+      // Particles start scattered wide then drift to formation (bigger initial radius ~40% up)
+      const scatterAngle = Math.random() * Math.PI * 2;
+      const scatterDist = Math.random() * 0.35; // wider initial scatter
+      const ox = (c.x + Math.cos(angle) * distance) * canvas.width;
+      const oy = (c.y + Math.sin(angle) * distance) * canvas.height;
+
       particles.push({
-        x: (c.x + Math.cos(angle) * distance) * canvas.width,
-        y: (c.y + Math.sin(angle) * distance) * canvas.height,
-        originX: (c.x + Math.cos(angle) * distance) * canvas.width,
-        originY: (c.y + Math.sin(angle) * distance) * canvas.height,
+        x: ox + Math.cos(scatterAngle) * scatterDist * canvas.width,
+        y: oy + Math.sin(scatterAngle) * scatterDist * canvas.height,
+        originX: ox,
+        originY: oy,
         vx: 0,
         vy: 0,
-        radius: Math.random() * 1.2 + 0.8, // Larger particles
-        opacity: Math.random() * 0.3 + 0.5,
+        // ~40% bigger radii than before (was 0.8-2.0, now 1.1-2.8)
+        radius: Math.random() * 1.7 + 1.1,
+        opacity: Math.random() * 0.3 + 0.55,
         twinklePhase: Math.random() * Math.PI * 2,
-        twinkleSpeed: Math.random() * 0.5 + 0.5
+        // Slower twinkle (~30% slower): was 0.5-1.0, now 0.3-0.7
+        twinkleSpeed: Math.random() * 0.4 + 0.3
       });
     }
 
@@ -256,11 +287,56 @@
     });
 
     let time = 0;
+    let constellationTriggered = false;
 
-    // Animation loop - minimal and elegant
+    // Full-screen tap/click handler to trigger constellation burst
+    function triggerConstellation() {
+      if (constellationTriggered) return;
+      constellationTriggered = true;
+
+      // Burst particles outward from center, then snap back
+      particles.forEach(p => {
+        const angle = Math.random() * Math.PI * 2;
+        const burst = 8 + Math.random() * 12;
+        p.vx += Math.cos(angle) * burst;
+        p.vy += Math.sin(angle) * burst;
+      });
+
+      // Highlight the CTA button on tap
+      const btn = document.getElementById('ctaBtn');
+      if (btn) {
+        btn.style.borderColor = 'rgba(255,255,255,0.95)';
+        btn.style.background = 'rgba(255,255,255,0.12)';
+        btn.style.transform = 'translateY(-3px) scale(1.04)';
+        setTimeout(() => {
+          btn.style.transition = 'all 0.6s cubic-bezier(0.16,1,0.3,1)';
+          btn.style.borderColor = '';
+          btn.style.background = '';
+          btn.style.transform = '';
+        }, 300);
+      }
+
+      // Allow re-trigger after 2s
+      setTimeout(() => { constellationTriggered = false; }, 2000);
+    }
+
+    // Attach full-screen tap handler (canvas layer + body)
+    canvas.style.pointerEvents = 'auto';
+    canvas.style.cursor = 'pointer';
+    canvas.addEventListener('click', triggerConstellation);
+    canvas.addEventListener('touchend', (e) => { e.preventDefault(); triggerConstellation(); }, { passive: false });
+    document.body.style.touchAction = 'manipulation';
+
+    // Also wire the CTA button
+    const ctaBtn = document.getElementById('ctaBtn');
+    if (ctaBtn) {
+      ctaBtn.addEventListener('click', (e) => { e.stopPropagation(); triggerConstellation(); });
+    }
+
+    // Animation loop - minimal and elegant, ~30% slower time progression
     function animate() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      time += 0.005;
+      time += 0.0035; // was 0.005, now ~30% slower
 
       // Draw connection lines first (behind particles)
       particles.forEach((p, i) => {
@@ -303,13 +379,13 @@
           p.vy += (dy / distance) * force;
         }
 
-        // Return to origin
-        p.vx += (p.originX - p.x) * 0.0005;
-        p.vy += (p.originY - p.y) * 0.0005;
+        // Return to origin — gentle pull, ~30% softer
+        p.vx += (p.originX - p.x) * 0.00035;
+        p.vy += (p.originY - p.y) * 0.00035;
 
-        // Apply velocity
-        p.vx *= 0.97;
-        p.vy *= 0.97;
+        // Apply velocity — slightly more damping for calmer drift
+        p.vx *= 0.975;
+        p.vy *= 0.975;
         p.x += p.vx;
         p.y += p.vy;
 

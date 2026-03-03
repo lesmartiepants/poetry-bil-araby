@@ -3,27 +3,65 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Neumorphic Warmth — Innovative UI/UX Mockup</title>
+  <title>04 - Neumorphic Warmth - دفء التصميم</title>
   <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
   <style>
+    /*
+     * COLOR SYSTEM — warm paper neumorphic
+     *
+     * Background:      #ede8df  (warm parchment)
+     * Paper highlight: #f5f0e6  (lighter warm)
+     * Shadow dark:     #ccc5b7  (warm gray-brown)
+     * Shadow light:    #ffffff  (pure white glint)
+     *
+     * Text:            #3d3425  (warm dark brown)
+     * Accent gold:     #c4a265  (warm muted gold)
+     * Accent earth:    #b07040  (warm terracotta for interactive)
+     *
+     * Contrast ratios:
+     *   #3d3425 on #ede8df  → ~9.2:1  (AAA)
+     *   #b07040 on #ede8df  → ~4.6:1  (AA)
+     */
+
     :root {
-      --bg-dark: #0c0c0e;
-      --bg-light: #e5e1da;
-      --text-dark: #e8e8e8;
-      --text-light: #2c2c2c;
-      --gold: #C5A059;
-      --indigo: #4F46E5;
-      --shadow-light: #d1cec6;
-      --shadow-dark: #f9f6ef;
-      --neu-inset: inset 8px 8px 16px #d1cec6, inset -8px -8px 16px #f9f6ef;
-      --neu-outset: 8px 8px 16px #d1cec6, -8px -8px 16px #f9f6ef;
+      /* Warm paper base */
+      --bg-warm:         #ede8df;
+      --bg-warm-light:   #f5f0e6;
+      --bg-warm-deep:    #e3ddd3;
+
+      /* Neumorphic shadows — warm-tinted, not gray */
+      --neu-shadow-dark:  #ccc5b7;
+      --neu-shadow-light: #ffffff;
+
+      /* Neumorphic recipes */
+      --neu-outset:
+        8px 8px 18px var(--neu-shadow-dark),
+        -8px -8px 18px var(--neu-shadow-light);
+      --neu-outset-sm:
+        5px 5px 10px var(--neu-shadow-dark),
+        -5px -5px 10px var(--neu-shadow-light);
+      --neu-inset:
+        inset 6px 6px 14px var(--neu-shadow-dark),
+        inset -6px -6px 14px var(--neu-shadow-light);
+
+      /* Typography */
+      --text-primary:   #3d3425;
+      --text-secondary: #6b5c48;
+      --text-muted:     #9c8878;
+
+      /* Accents */
+      --gold:      #c4a265;
+      --earth:     #b07040;
+      --earth-dim: rgba(176, 112, 64, 0.15);
+
+      /* Legacy dark mode fallbacks (kept for toggle) */
+      --bg-dark:   #1c1914;
+      --text-dark: #ddd5c4;
+      --neu-dark-shadow-dark:  #111009;
+      --neu-dark-shadow-light: #282318;
     }
 
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
       font-family: 'Tajawal', sans-serif;
@@ -32,84 +70,101 @@
       transition: background 0.4s ease, color 0.4s ease;
       overflow-x: hidden;
       min-height: 100vh;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
     }
 
-    body.light {
-      background: var(--bg-light);
-      color: var(--text-light);
+    /* ===== WARM MODE (default) ===== */
+    body.warm {
+      background: var(--bg-warm);
+      color: var(--text-primary);
     }
 
+    /* ========== SPLASH ========== */
     #splash {
-      position: fixed;
-      inset: 0;
-      z-index: 9999;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
+      position: fixed; inset: 0; z-index: 9999;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
       background: var(--bg-dark);
       animation: splashFadeOut 1s ease 3s forwards;
+      gap: 0;
     }
 
-    body.light #splash {
-      background: var(--bg-light);
-    }
+    body.warm #splash { background: var(--bg-warm); }
 
     #warmCanvas {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      opacity: 0.4;
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      opacity: 0.45;
+    }
+
+    .splash-logo {
+      position: relative; z-index: 2;
+      width: 80px; height: 80px;
+      border-radius: 24px;
+      background: var(--bg-warm-light);
+      box-shadow: var(--neu-outset);
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 2rem;
+      animation: softPulse 2.4s ease-in-out infinite;
+    }
+
+    body:not(.warm) .splash-logo {
+      background: #1c1914;
+      box-shadow:
+        8px 8px 18px var(--neu-dark-shadow-dark),
+        -8px -8px 18px var(--neu-dark-shadow-light);
+    }
+
+    .splash-logo svg {
+      width: 40px; height: 40px;
+      stroke: var(--gold);
+      fill: none;
+      stroke-width: 1.5;
+      stroke-linecap: round;
+      stroke-linejoin: round;
     }
 
     .splash-title {
       font-family: 'Amiri', serif;
-      font-size: 3rem;
-      font-weight: 700;
+      font-size: 2.8rem; font-weight: 700;
       color: var(--gold);
       text-align: center;
       z-index: 2;
-      animation: softPulse 2s ease-in-out infinite;
+      position: relative;
+      letter-spacing: 0.02em;
     }
 
     .splash-subtitle {
-      font-size: 1rem;
-      margin-top: 1rem;
-      opacity: 0.7;
+      font-size: 0.95rem;
+      margin-top: 0.75rem;
+      opacity: 0.6;
       z-index: 2;
+      position: relative;
+      letter-spacing: 0.08em;
     }
 
     @keyframes splashFadeOut {
-      to {
-        opacity: 0;
-        pointer-events: none;
-      }
+      to { opacity: 0; pointer-events: none; }
     }
 
     @keyframes softPulse {
-      0%, 100% {
-        transform: scale(1);
-        opacity: 0.9;
-      }
-      50% {
-        transform: scale(1.02);
-        opacity: 1;
-      }
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.04); }
     }
 
+    /* ========== MAIN ========== */
     #mainContent {
       opacity: 0;
-      animation: contentFadeIn 1s ease 3.5s forwards;
-      padding: 3rem 2rem;
-      max-width: 900px;
+      animation: contentFadeIn 0.9s ease 3.5s forwards;
+      padding: 3.5rem 2rem 5rem;
+      max-width: 860px;
       margin: 0 auto;
     }
 
-    @keyframes contentFadeIn {
-      to { opacity: 1; }
-    }
+    @keyframes contentFadeIn { to { opacity: 1; } }
 
+    /* ========== HEADER ========== */
     header {
       margin-bottom: 3rem;
       text-align: center;
@@ -117,58 +172,155 @@
 
     h1 {
       font-family: 'Amiri', serif;
-      font-size: 2.5rem;
-      font-weight: 700;
+      font-size: 2.5rem; font-weight: 700;
       color: var(--gold);
-      margin-bottom: 1rem;
+      margin-bottom: 0.75rem;
+      letter-spacing: 0.01em;
     }
 
     .subtitle {
-      font-size: 1rem;
-      opacity: 0.7;
+      font-size: 0.95rem;
+      color: var(--text-secondary);
       font-weight: 300;
+      letter-spacing: 0.03em;
     }
 
+    body:not(.warm) h1 { color: var(--gold); }
+    body:not(.warm) .subtitle { color: var(--text-dark); opacity: 0.65; }
+
+    /* ========== POETRY CARD ========== */
     .poetry-card {
-      background: var(--bg-light);
       border-radius: 24px;
       padding: 3rem 2.5rem;
-      margin: 2rem 0;
+      margin: 0 0 2.5rem;
+      background: var(--bg-warm);
       box-shadow: var(--neu-outset);
-      transition: all 0.3s ease;
+      transition: box-shadow 0.3s ease, transform 0.3s ease;
     }
 
-    body.light .poetry-card {
-      background: var(--bg-light);
-    }
-
-    body:not(.light) .poetry-card {
-      background: #1a1a1c;
-      box-shadow: 8px 8px 16px #0a0a0a, -8px -8px 16px #1a1a1a;
+    body:not(.warm) .poetry-card {
+      background: #1c1914;
+      box-shadow:
+        8px 8px 18px var(--neu-dark-shadow-dark),
+        -8px -8px 18px var(--neu-dark-shadow-light);
     }
 
     .poetry-card:hover {
-      transform: translateY(-4px);
+      box-shadow:
+        12px 12px 24px var(--neu-shadow-dark),
+        -12px -12px 24px var(--neu-shadow-light);
+      transform: translateY(-3px);
+    }
+
+    body:not(.warm) .poetry-card:hover {
+      box-shadow:
+        12px 12px 24px var(--neu-dark-shadow-dark),
+        -12px -12px 24px var(--neu-dark-shadow-light);
     }
 
     .verse {
       font-family: 'Amiri', serif;
-      font-size: 1.85rem;
-      line-height: 2.3;
+      font-size: 1.9rem;
+      line-height: 2.4;
       text-align: center;
-      margin-bottom: 1.5rem;
+      margin-bottom: 1.75rem;
+      color: var(--text-primary);
     }
+
+    body:not(.warm) .verse { color: var(--text-dark); }
 
     .poet {
       text-align: center;
-      font-size: 1.1rem;
-      color: var(--indigo);
+      font-size: 1.05rem;
+      color: var(--earth);
       font-weight: 500;
+      letter-spacing: 0.02em;
     }
 
-    .walkthrough {
-      margin: 4rem 0;
+    body:not(.warm) .poet { color: var(--gold); opacity: 0.85; }
+
+    /* Inset divider line */
+    .card-divider {
+      height: 2px;
+      border-radius: 2px;
+      background: var(--bg-warm-deep);
+      box-shadow:
+        inset 1px 1px 2px var(--neu-shadow-dark),
+        inset -1px -1px 2px var(--neu-shadow-light);
+      margin: 2rem 0;
     }
+
+    body:not(.warm) .card-divider {
+      background: #141210;
+      box-shadow:
+        inset 1px 1px 2px var(--neu-dark-shadow-dark),
+        inset -1px -1px 2px var(--neu-dark-shadow-light);
+    }
+
+    /* ========== ACTION BUTTONS ========== */
+    .card-actions {
+      display: flex; gap: 1rem;
+      justify-content: center; flex-wrap: wrap;
+    }
+
+    .btn-neu {
+      min-height: 44px;
+      padding: 0.65rem 1.5rem;
+      border: none;
+      border-radius: 12px;
+      font-family: 'Tajawal', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: box-shadow 0.2s ease, transform 0.2s ease;
+      background: var(--bg-warm);
+      color: var(--text-primary);
+      box-shadow: var(--neu-outset-sm);
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+
+    body:not(.warm) .btn-neu {
+      background: #1c1914;
+      color: var(--text-dark);
+      box-shadow:
+        5px 5px 10px var(--neu-dark-shadow-dark),
+        -5px -5px 10px var(--neu-dark-shadow-light);
+    }
+
+    .btn-neu svg {
+      width: 16px; height: 16px;
+      stroke: currentColor; fill: none;
+      stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+      flex-shrink: 0;
+    }
+
+    .btn-neu:hover {
+      box-shadow:
+        3px 3px 8px var(--neu-shadow-dark),
+        -3px -3px 8px var(--neu-shadow-light);
+      color: var(--earth);
+    }
+
+    body:not(.warm) .btn-neu:hover {
+      box-shadow:
+        3px 3px 8px var(--neu-dark-shadow-dark),
+        -3px -3px 8px var(--neu-dark-shadow-light);
+      color: var(--gold);
+    }
+
+    .btn-neu:active {
+      box-shadow: var(--neu-inset);
+      transform: scale(0.97);
+    }
+
+    body:not(.warm) .btn-neu:active {
+      box-shadow:
+        inset 6px 6px 14px var(--neu-dark-shadow-dark),
+        inset -6px -6px 14px var(--neu-dark-shadow-light);
+    }
+
+    /* ========== WALKTHROUGH ========== */
+    .walkthrough { margin: 3.5rem 0 0; }
 
     .walkthrough h2 {
       font-family: 'Amiri', serif;
@@ -180,151 +332,121 @@
 
     .steps {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 2rem;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 1.75rem;
     }
 
     .step {
-      background: var(--bg-light);
+      background: var(--bg-warm);
       border-radius: 20px;
       padding: 2rem 1.5rem;
       text-align: center;
       box-shadow: var(--neu-outset);
-      transition: all 0.3s ease;
+      transition: box-shadow 0.25s ease, transform 0.25s ease;
       cursor: pointer;
+      user-select: none;
     }
 
-    body:not(.light) .step {
-      background: #1a1a1c;
-      box-shadow: 8px 8px 16px #0a0a0a, -8px -8px 16px #1a1a1a;
+    body:not(.warm) .step {
+      background: #1c1914;
+      box-shadow:
+        8px 8px 18px var(--neu-dark-shadow-dark),
+        -8px -8px 18px var(--neu-dark-shadow-light);
     }
 
     .step:hover {
-      box-shadow: 4px 4px 8px #d1cec6, -4px -4px 8px #f9f6ef;
+      box-shadow:
+        4px 4px 10px var(--neu-shadow-dark),
+        -4px -4px 10px var(--neu-shadow-light);
+      transform: translateY(-3px);
     }
 
-    body:not(.light) .step:hover {
-      box-shadow: 4px 4px 8px #0a0a0a, -4px -4px 8px #1a1a1a;
+    body:not(.warm) .step:hover {
+      box-shadow:
+        4px 4px 10px var(--neu-dark-shadow-dark),
+        -4px -4px 10px var(--neu-dark-shadow-light);
     }
 
     .step:active {
       box-shadow: var(--neu-inset);
+      transform: translateY(0) scale(0.98);
     }
 
-    body:not(.light) .step:active {
-      box-shadow: inset 4px 4px 8px #0a0a0a, inset -4px -4px 8px #1a1a1a;
+    body:not(.warm) .step:active {
+      box-shadow:
+        inset 6px 6px 14px var(--neu-dark-shadow-dark),
+        inset -6px -6px 14px var(--neu-dark-shadow-light);
     }
 
+    /* Circular neumorphic number badge */
     .step-number {
       display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 48px;
-      height: 48px;
+      align-items: center; justify-content: center;
+      width: 52px; height: 52px;
       border-radius: 50%;
-      background: var(--bg-light);
-      box-shadow: var(--neu-outset);
+      background: var(--bg-warm);
+      box-shadow: var(--neu-outset-sm);
       color: var(--gold);
       font-weight: 700;
-      font-size: 1.25rem;
+      font-size: 1.3rem;
       margin-bottom: 1.25rem;
+      transition: box-shadow 0.2s ease;
     }
 
-    body:not(.light) .step-number {
-      background: #1a1a1c;
-      box-shadow: 4px 4px 8px #0a0a0a, -4px -4px 8px #1a1a1a;
+    body:not(.warm) .step-number {
+      background: #1c1914;
+      box-shadow:
+        5px 5px 10px var(--neu-dark-shadow-dark),
+        -5px -5px 10px var(--neu-dark-shadow-light);
+    }
+
+    .step:hover .step-number {
+      box-shadow:
+        inset 3px 3px 6px var(--neu-shadow-dark),
+        inset -3px -3px 6px var(--neu-shadow-light);
     }
 
     .step h3 {
       font-family: 'Amiri', serif;
-      font-size: 1.3rem;
-      margin-bottom: 0.75rem;
-      color: var(--gold);
+      font-size: 1.25rem;
+      margin-bottom: 0.6rem;
+      color: var(--earth);
+      font-weight: 600;
     }
+
+    body:not(.warm) .step h3 { color: var(--gold); }
 
     .step p {
-      font-size: 0.9rem;
-      opacity: 0.75;
-      line-height: 1.7;
+      font-size: 0.88rem;
+      color: var(--text-secondary);
+      line-height: 1.75;
     }
 
+    body:not(.warm) .step p { color: var(--text-dark); opacity: 0.7; }
+
+    /* ========== CONTROLS (top-left) ========== */
     .controls {
       position: fixed;
-      top: 2rem;
-      left: 2rem;
-      display: flex;
-      gap: 1rem;
+      top: 2rem; left: 2rem;
+      display: flex; gap: 0.75rem;
       z-index: 1000;
     }
 
-    .btn-neu {
-      min-width: 44px;
-      min-height: 44px;
-      padding: 0.75rem 1.5rem;
-      border: none;
-      border-radius: 16px;
-      font-family: 'Tajawal', sans-serif;
-      font-size: 0.95rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      background: var(--bg-light);
-      color: var(--text-light);
-      box-shadow: var(--neu-outset);
+    .btn-neu:focus-visible,
+    .step:focus-visible {
+      outline: 2px solid var(--earth);
+      outline-offset: 3px;
     }
 
-    body:not(.light) .btn-neu {
-      background: #1a1a1c;
-      color: var(--text-dark);
-      box-shadow: 6px 6px 12px #0a0a0a, -6px -6px 12px #1a1a1a;
-    }
-
-    .btn-neu:hover {
-      box-shadow: 4px 4px 8px #d1cec6, -4px -4px 8px #f9f6ef;
-    }
-
-    body:not(.light) .btn-neu:hover {
-      box-shadow: 4px 4px 8px #0a0a0a, -4px -4px 8px #1a1a1a;
-    }
-
-    .btn-neu:active {
-      box-shadow: var(--neu-inset);
-    }
-
-    body:not(.light) .btn-neu:active {
-      box-shadow: inset 4px 4px 8px #0a0a0a, inset -4px -4px 8px #1a1a1a;
-    }
-
+    /* ========== MOBILE ========== */
     @media (max-width: 768px) {
-      .splash-title {
-        font-size: 2rem;
-      }
-
-      h1 {
-        font-size: 2rem;
-      }
-
-      .verse {
-        font-size: 1.4rem;
-        line-height: 2.1;
-      }
-
-      #mainContent {
-        padding: 2rem 1.5rem;
-      }
-
-      .poetry-card {
-        padding: 2rem 1.5rem;
-      }
-
-      .controls {
-        top: 1rem;
-        left: 1rem;
-      }
-
-      .steps {
-        grid-template-columns: 1fr;
-      }
+      .splash-title { font-size: 2.2rem; }
+      h1 { font-size: 2rem; }
+      .verse { font-size: 1.45rem; line-height: 2.2; }
+      #mainContent { padding: 2rem 1.25rem 4rem; }
+      .poetry-card { padding: 2rem 1.5rem; }
+      .controls { top: 1rem; left: 1rem; }
+      .steps { grid-template-columns: 1fr; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -333,32 +455,34 @@
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
       }
-    }
-
-    .btn-neu:focus-visible,
-    .step:focus-visible {
-      outline: 3px solid var(--indigo);
-      outline-offset: 2px;
+      #mainContent { opacity: 1; }
     }
   </style>
 </head>
-<body class="light">
+<body class="warm">
   <div id="splash">
     <canvas id="warmCanvas"></canvas>
+    <div class="splash-logo">
+      <svg viewBox="0 0 24 24">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>
+        <path d="M8 12h8M12 8v8"/>
+      </svg>
+    </div>
     <div class="splash-title">دفء التصميم</div>
     <div class="splash-subtitle">Neumorphic Warmth</div>
   </div>
 
   <div class="controls">
     <button class="btn-neu" onclick="toggleTheme()" aria-label="تبديل السمة">
-      🌙 / ☀️
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+      السمة
     </button>
   </div>
 
   <div id="mainContent">
     <header>
       <h1>لمسة ناعمة للشعر</h1>
-      <p class="subtitle">Neumorphic Warmth — Soft Tactile + Warm Particles</p>
+      <p class="subtitle">Neumorphic Warmth — Soft Tactile Design on Warm Paper</p>
     </header>
 
     <div class="poetry-card">
@@ -367,6 +491,22 @@
         فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
       </div>
       <div class="poet">— أحمد شوقي</div>
+      <div class="card-divider"></div>
+      <div class="card-actions">
+        <button class="btn-neu" aria-label="استمع">
+          <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          استمع
+        </button>
+        <button class="btn-neu" aria-label="حفظ">
+          <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          حفظ
+        </button>
+        <button class="btn-neu" aria-label="شعر جديد">
+          <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+          جديد
+        </button>
+        <button class="btn-neu" aria-label="حجم النص" style="font-size:0.85rem;">Aa</button>
+      </div>
     </div>
 
     <section class="walkthrough">
@@ -375,115 +515,97 @@
         <div class="step" tabindex="0">
           <div class="step-number">1</div>
           <h3>تصميم ناعم</h3>
-          <p>ظلال ناعمة تمنح إحساساً بالعمق والبروز</p>
+          <p>ظلال دافئة تمنح إحساساً بالعمق والنعومة</p>
         </div>
         <div class="step" tabindex="0">
           <div class="step-number">2</div>
-          <h3>جسيمات دافئة</h3>
-          <p>جزيئات ذهبية تطفو في الخلفية بسلاسة</p>
+          <h3>جسيمات ذهبية</h3>
+          <p>جزيئات دافئة تطفو في خلفية الورق بسلاسة</p>
         </div>
         <div class="step" tabindex="0">
           <div class="step-number">3</div>
           <h3>تفاعل لمسي</h3>
-          <p>أزرار تتفاعل مع الضغط بشكل واقعي</p>
+          <p>أزرار تضغط داخلاً عند اللمس بشكل واقعي</p>
         </div>
         <div class="step" tabindex="0">
           <div class="step-number">4</div>
-          <h3>ألوان دافئة</h3>
-          <p>لوحة ألوان دافئة ومريحة للعين</p>
+          <h3>ألوان ورقية</h3>
+          <p>لوحة ألوان الرق الدافئة المريحة للعين</p>
         </div>
       </div>
     </section>
   </div>
 
   <script>
-    const canvas = document.getElementById('warmCanvas');
-    const ctx = canvas.getContext('2d');
-    let particles = [];
-    let animationId;
+    // ===== Warm particle canvas =====
+    var canvas = document.getElementById('warmCanvas');
+    var ctx = canvas.getContext('2d');
+    var particles = [];
+    var animationId;
 
     function resizeCanvas() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
     }
 
-    class WarmParticle {
-      constructor() {
-        this.x = Math.random() * canvas.width;
-        this.y = Math.random() * canvas.height;
-        this.size = Math.random() * 2 + 0.5;
-        this.speedX = Math.random() * 0.5 - 0.25;
-        this.speedY = Math.random() * 0.5 - 0.25;
-        this.opacity = Math.random() * 0.3 + 0.1;
-        this.hue = Math.random() > 0.5 ? '#C5A059' : '#d4a574';
-      }
-
-      update() {
-        this.x += this.speedX;
-        this.y += this.speedY;
-
-        if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
-        if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
-      }
-
-      draw() {
-        ctx.save();
-        ctx.globalAlpha = this.opacity;
-        ctx.fillStyle = this.hue;
-        ctx.shadowBlur = 8;
-        ctx.shadowColor = this.hue;
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-      }
+    function WarmParticle() {
+      this.x = Math.random() * canvas.width;
+      this.y = Math.random() * canvas.height;
+      this.size = Math.random() * 2.5 + 0.5;
+      this.speedX = (Math.random() - 0.5) * 0.4;
+      this.speedY = (Math.random() - 0.5) * 0.4;
+      this.opacity = Math.random() * 0.25 + 0.08;
+      // Warm gold / amber palette
+      var warmPalette = ['#c4a265','#d4b07a','#b8924e','#e2c98a','#a07840'];
+      this.color = warmPalette[Math.floor(Math.random() * warmPalette.length)];
     }
+
+    WarmParticle.prototype.update = function() {
+      this.x += this.speedX;
+      this.y += this.speedY;
+      if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
+      if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
+    };
+
+    WarmParticle.prototype.draw = function() {
+      ctx.save();
+      ctx.globalAlpha = this.opacity;
+      ctx.fillStyle = this.color;
+      ctx.shadowBlur = 6;
+      ctx.shadowColor = this.color;
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    };
 
     function initParticles() {
       particles = [];
-      for (let i = 0; i < 60; i++) {
-        particles.push(new WarmParticle());
-      }
+      for (var i = 0; i < 70; i++) { particles.push(new WarmParticle()); }
     }
 
     function animate() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      particles.forEach(particle => {
-        particle.update();
-        particle.draw();
-      });
-
+      particles.forEach(function(p) { p.update(); p.draw(); });
       animationId = requestAnimationFrame(animate);
-    }
-
-    function stopParticles() {
-      cancelAnimationFrame(animationId);
     }
 
     resizeCanvas();
     initParticles();
     animate();
 
-    window.addEventListener('resize', () => {
-      resizeCanvas();
-      initParticles();
-    });
+    window.addEventListener('resize', function() { resizeCanvas(); initParticles(); });
+    setTimeout(function() { cancelAnimationFrame(animationId); }, 3200);
 
-    setTimeout(() => {
-      stopParticles();
-    }, 3000);
-
+    // ===== Theme toggle =====
     function toggleTheme() {
-      document.body.classList.toggle('light');
+      document.body.classList.toggle('warm');
     }
 
-    document.querySelectorAll('.step').forEach(step => {
-      step.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          step.click();
-        }
+    // ===== Keyboard access for steps =====
+    document.querySelectorAll('.step').forEach(function(step) {
+      step.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); step.click(); }
       });
     });
   </script>

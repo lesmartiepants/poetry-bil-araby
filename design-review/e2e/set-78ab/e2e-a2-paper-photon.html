@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Constellation Verse - Arabic Poetry</title>
+<title>Poetry bil Araby — Constellation Verse (English)</title>
 <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -33,10 +33,27 @@ body {
 #splash.fade-out { opacity: 0; pointer-events: none; }
 #splash-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
 #splash-text {
-  position: relative; z-index: 1; font-family: var(--font-display);
-  font-size: clamp(1.4rem, 4vw, 2.6rem); color: var(--gold);
-  text-shadow: 0 0 20px var(--glow-gold), 0 0 40px var(--glow-gold);
+  position: relative; z-index: 1; text-align: center;
   opacity: 0; animation: textReveal 2s 1.5s forwards;
+}
+#splash-text .brand-en {
+  display: block;
+  font-family: var(--font-ui);
+  font-size: clamp(2rem, 5vw, 3.2rem);
+  font-weight: 700;
+  color: var(--gold);
+  letter-spacing: 0.05em;
+  text-shadow: 0 0 20px var(--glow-gold), 0 0 40px var(--glow-gold);
+  line-height: 1.2;
+}
+#splash-text .brand-ar {
+  display: block;
+  font-family: var(--font-display);
+  font-size: clamp(1rem, 2.5vw, 1.5rem);
+  color: var(--star-dim);
+  margin-top: 10px;
+  direction: rtl;
+  opacity: 0.75;
 }
 @keyframes textReveal { to { opacity: 1; } }
 
@@ -69,8 +86,9 @@ body {
   position: absolute; top: 50%; left: 14px; right: 14px; height: 1px;
   background: linear-gradient(90deg, transparent, var(--star-dim), transparent);
 }
-.wt-card h3 { font-family: var(--font-display); font-size: 1.3rem; color: var(--gold); }
-.wt-card p { font-size: 0.95rem; line-height: 1.7; color: var(--star-dim); }
+.wt-card h3 { font-family: var(--font-ui); font-size: 1.6rem; font-weight: 700; color: var(--gold); line-height: 1.3; }
+.wt-card p { font-size: 1.05rem; line-height: 1.75; color: var(--star-dim); margin-top: 8px; }
+.wt-card .arabic-secondary { font-family: var(--font-display); font-size: 0.9rem; color: var(--star-dim); opacity: 0.65; margin-top: 10px; direction: rtl; display: block; letter-spacing: 0.01em; }
 .wt-nav { display: flex; gap: 1rem; margin-top: 2rem; }
 .wt-btn {
   min-width: 100px; min-height: 44px; padding: 0.6rem 1.6rem;
@@ -113,9 +131,10 @@ body {
   50% { transform: translateY(-8px); }
 }
 .poem-text {
-  font-family: var(--font-display); font-size: clamp(1.3rem, 3.5vw, 1.9rem);
-  line-height: 2.2; text-align: center; color: var(--star);
+  font-family: var(--font-display); font-size: clamp(1.5rem, 3.5vw, 2.1rem);
+  line-height: 2.3; text-align: center; color: var(--star);
   text-shadow: 0 0 12px var(--glow-star);
+  direction: rtl;
 }
 .poem-divider {
   display: block; width: 60px; height: 1px; margin: 1.5rem auto;
@@ -123,8 +142,13 @@ body {
 }
 .poem-author {
   display: block; text-align: center; font-family: var(--font-ui);
-  font-size: 1rem; color: var(--gold); margin-top: 0.5rem;
+  font-size: 1.15rem; font-weight: 500; color: var(--gold); margin-top: 0.5rem;
   text-shadow: 0 0 10px var(--glow-gold);
+}
+.poem-author-label {
+  display: block; text-align: center; font-family: var(--font-ui);
+  font-size: 0.78rem; color: var(--star-dim); margin-top: 0.25rem;
+  letter-spacing: 0.08em; text-transform: uppercase;
 }
 
 /* ---- Controls ---- */
@@ -167,7 +191,10 @@ body {
 <!-- Splash -->
 <div id="splash">
   <canvas id="splash-canvas"></canvas>
-  <span id="splash-text">بُرجُ الشِّعر</span>
+  <div id="splash-text">
+    <span class="brand-en">Poetry bil Araby</span>
+    <span class="brand-ar">شعر بالعربي</span>
+  </div>
 </div>
 
 <!-- Walkthrough -->
@@ -177,36 +204,40 @@ body {
       <div class="wt-dot"></div><div class="wt-dot"></div><div class="wt-dot"></div>
       <div class="wt-line"></div>
     </div>
-    <h3>مرحبًا بالشعر</h3>
-    <p>اكتشف روائع الشعر العربي في فضاء من النجوم والأبراج السماوية</p>
+    <h3>Welcome to Poetry bil Araby</h3>
+    <p>Explore the timeless beauty of Arabic poetry among stars and constellations</p>
+    <span class="arabic-secondary">مرحبًا بك في شعر بالعربي</span>
   </div>
   <div class="wt-card" data-step="1">
     <div class="wt-dots">
       <div class="wt-dot"></div><div class="wt-dot"></div><div class="wt-dot"></div>
       <div class="wt-line"></div>
     </div>
-    <h3>أبيات خالدة</h3>
-    <p>كل قصيدة نجمة تتلألأ في سماء الأدب العربي منذ قرون</p>
+    <h3>Timeless Verses</h3>
+    <p>84,000+ poems from Arabic literary heritage — each one a star in the canon</p>
+    <span class="arabic-secondary">أبيات خالدة عبر القرون</span>
   </div>
   <div class="wt-card" data-step="2">
     <div class="wt-dots">
       <div class="wt-dot"></div><div class="wt-dot"></div><div class="wt-dot"></div>
       <div class="wt-line"></div>
     </div>
-    <h3>تجربة غامرة</h3>
-    <p>اسحب وتنقّل بين الأبيات في عالم بصري يحتفي بجمال الكلمة</p>
+    <h3>AI-Powered Insights</h3>
+    <p>Understand metre, meaning and metaphor with intelligent commentary</p>
+    <span class="arabic-secondary">رؤى ذكية لفهم الشعر</span>
   </div>
   <div class="wt-card" data-step="3">
     <div class="wt-dots">
       <div class="wt-dot"></div><div class="wt-dot"></div><div class="wt-dot"></div>
       <div class="wt-line"></div>
     </div>
-    <h3>لنبدأ الرحلة</h3>
-    <p>انطلق الآن في فضاء الشعر العربي واستمتع بسحر الكلمات</p>
+    <h3>Begin Your Journey</h3>
+    <p>Step into the constellation of Arabic verse — your personal diwan awaits</p>
+    <span class="arabic-secondary">ابدأ رحلتك الشعرية</span>
   </div>
   <div class="wt-nav">
-    <button class="wt-btn" id="wt-prev" style="visibility:hidden">السابق</button>
-    <button class="wt-btn" id="wt-next">التالي</button>
+    <button class="wt-btn" id="wt-prev" style="visibility:hidden">Back</button>
+    <button class="wt-btn" id="wt-next">Next</button>
   </div>
   <div class="wt-indicators">
     <div class="wt-ind active"></div>
@@ -368,7 +399,7 @@ body {
     wtCards[n].classList.add('active');
     wtInds[n].classList.add('active');
     wtPrev.style.visibility = n === 0 ? 'hidden' : 'visible';
-    wtNext.textContent = n === 3 ? 'ابدأ' : 'التالي';
+    wtNext.textContent = n === 3 ? 'Begin' : 'Next';
   }
 
   wtNext.addEventListener('click', () => {

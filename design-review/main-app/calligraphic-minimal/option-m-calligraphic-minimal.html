@@ -146,6 +146,186 @@
       left: 32px;
       right: 32px;
     }
+
+    /* ============================================
+       MOBILE-FIRST RESPONSIVE — CALLIGRAPHIC MINIMAL
+       ============================================ */
+    -webkit-text-size-adjust: 100%;
+
+    /* Tablet: single-column screens */
+    @media (max-width: 1024px) {
+      .screens {
+        grid-template-columns: 1fr;
+      }
+      .screen {
+        min-height: auto;
+      }
+    }
+
+    /* Mobile: 768px and below */
+    @media (max-width: 768px) {
+      body {
+        overflow-x: hidden;
+      }
+
+      .canvas {
+        padding: 16px;
+        margin: 0 auto;
+      }
+
+      .meta {
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 14px;
+      }
+
+      .meta .title {
+        font-size: clamp(18px, 5vw, 24px);
+        width: 100%;
+      }
+
+      .screens {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+
+      .screen {
+        border-radius: 20px;
+        padding: 20px;
+        min-height: auto;
+        /* Extra bottom padding for control-row which is absolute */
+        padding-bottom: 80px;
+      }
+
+      .screen-label {
+        font-size: 9px;
+        top: 12px;
+        right: 16px;
+      }
+
+      /* Nav: collapse multi-item nav on mobile */
+      .nav {
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+
+      .nav .brand {
+        font-size: clamp(15px, 4vw, 18px);
+        width: 100%;
+      }
+
+      .nav span {
+        font-size: 13px;
+        min-height: 36px;
+        display: flex;
+        align-items: center;
+      }
+
+      /* Intro hero: compress top margin */
+      .intro-hero {
+        margin-top: 40px;
+        gap: 16px;
+      }
+
+      .intro-hero h1 {
+        font-size: clamp(26px, 7vw, 44px);
+        line-height: 1.15;
+        max-width: 100%;
+      }
+
+      .intro-hero .calligraphy {
+        font-size: clamp(30px, 8vw, 42px);
+      }
+
+      .intro-hero p {
+        font-size: 14px;
+        max-width: 100%;
+      }
+
+      /* CTA: touch-friendly */
+      .cta {
+        min-height: 44px;
+        display: flex;
+        align-items: flex-end;
+        padding-bottom: 8px;
+        font-size: 14px;
+      }
+
+      /* Main screen poem */
+      .main-title {
+        font-size: clamp(16px, 4.5vw, 20px);
+        margin-top: 20px;
+      }
+
+      .poem {
+        font-size: clamp(18px, 5vw, 22px);
+        line-height: 2;
+        max-width: 100%;
+      }
+
+      .poem .english {
+        font-size: 13px;
+      }
+
+      /* Margin line: adjust for narrower left padding */
+      .margin-line {
+        left: 20px;
+        top: 100px;
+      }
+
+      /* Control row: push from absolute to flow on mobile */
+      .control-row {
+        position: relative;
+        bottom: auto;
+        left: auto;
+        right: auto;
+        margin-top: 24px;
+        gap: 0;
+        justify-content: space-between;
+      }
+
+      .control-row span {
+        min-height: 44px;
+        min-width: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+      }
+
+      .divider {
+        margin: 16px 0;
+      }
+    }
+
+    /* Small phones: 480px and below */
+    @media (max-width: 480px) {
+      .canvas {
+        padding: 12px;
+      }
+
+      .screen {
+        padding: 14px;
+        padding-bottom: 72px;
+        border-radius: 16px;
+      }
+
+      .intro-hero h1 {
+        font-size: clamp(22px, 7vw, 32px);
+      }
+
+      .intro-hero .calligraphy {
+        font-size: clamp(26px, 8vw, 36px);
+      }
+
+      .poem {
+        font-size: clamp(16px, 5vw, 20px);
+      }
+
+      .nav .brand {
+        font-size: 16px;
+      }
+    }
   </style>
 </head>
 <body>

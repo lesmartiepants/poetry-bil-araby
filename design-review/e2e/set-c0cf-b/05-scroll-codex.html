@@ -6,22 +6,38 @@
     <title>05 - Digital Manuscript - المخطوطة الرقمية</title>
     <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
+        /*
+         * 8px spacing grid:
+         *   xs  = 8px  | sm  = 16px | md = 24px
+         *   lg  = 32px | xl  = 48px | 2xl = 64px
+         */
         :root {
-            --bg-dark: #0d1117;
-            --bg-light: #f6f8fa;
-            --text-dark: #c9d1d9;
+            --bg-dark:    #0d1117;
+            --bg-light:   #f6f8fa;
+            --text-dark:  #c9d1d9;
             --text-light: #24292f;
-            --gold: #C5A059;
-            --green: #3fb950;
-            --blue: #58a6ff;
-            --comment: #8b949e;
+            --gold:       #C5A059;
+            --green:      #3fb950;
+            --blue:       #58a6ff;
+            --comment:    #8b949e;
             --panel-dark: #161b22;
             --panel-light: #ffffff;
             --border-dark: #30363d;
             --border-light: #d0d7de;
             --cursor-color: #58a6ff;
-            --shadow-dark: rgba(0,0,0,0.3);
-            --shadow-light: rgba(0,0,0,0.1);
+
+            /* Spacing scale (8px grid) */
+            --sp-1: 8px;
+            --sp-2: 16px;
+            --sp-3: 24px;
+            --sp-4: 32px;
+            --sp-5: 40px;
+            --sp-6: 48px;
+
+            /* Transition presets */
+            --t-fast:   all 0.15s ease;
+            --t-base:   all 0.25s ease;
+            --t-smooth: all 0.35s cubic-bezier(0.22, 1, 0.36, 1);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -33,6 +49,8 @@
             transition: background 0.4s ease, color 0.4s ease;
             overflow-x: hidden;
             min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
 
         body.light { background: var(--bg-light); color: var(--text-light); }
@@ -43,31 +61,35 @@
             display: flex; flex-direction: column;
             align-items: center; justify-content: center;
             background: var(--bg-dark);
-            animation: splashFadeOut 0.8s ease 4.5s forwards;
-            padding: 2rem;
+            animation: splashFadeOut 0.7s ease 4.5s forwards;
+            padding: var(--sp-3);
         }
 
         body.light #splash { background: var(--bg-light); }
 
         .terminal-window {
-            max-width: 600px; width: 100%;
+            max-width: 580px; width: 100%;
             background: var(--panel-dark);
             border: 1px solid var(--border-dark);
-            border-radius: 8px;
+            border-radius: 10px;
             overflow: hidden;
-            box-shadow: 0 16px 48px rgba(0,0,0,0.5);
+            box-shadow:
+                0 0 0 1px rgba(255,255,255,0.04),
+                0 24px 56px rgba(0,0,0,0.55);
         }
 
         body.light .terminal-window {
             background: var(--panel-light);
             border-color: var(--border-light);
-            box-shadow: 0 16px 48px rgba(0,0,0,0.15);
+            box-shadow:
+                0 0 0 1px rgba(0,0,0,0.06),
+                0 24px 56px rgba(0,0,0,0.12);
         }
 
         .terminal-bar {
             display: flex; align-items: center;
-            gap: 8px; padding: 12px 16px;
-            background: rgba(0,0,0,0.2);
+            gap: var(--sp-1); padding: 12px var(--sp-2);
+            background: rgba(0,0,0,0.25);
             border-bottom: 1px solid var(--border-dark);
         }
 
@@ -79,58 +101,64 @@
         .terminal-dot {
             width: 12px; height: 12px;
             border-radius: 50%;
+            flex-shrink: 0;
         }
 
-        .terminal-dot.red { background: #ff5f56; }
+        .terminal-dot.red    { background: #ff5f56; }
         .terminal-dot.yellow { background: #ffbd2e; }
-        .terminal-dot.green { background: #27c93f; }
+        .terminal-dot.green  { background: #27c93f; }
 
         .terminal-title {
             flex: 1; text-align: center;
-            font-size: 0.8rem; opacity: 0.5;
+            font-size: 0.78rem; opacity: 0.45;
+            letter-spacing: 0.03em;
         }
 
         .terminal-body {
-            padding: 1.5rem; min-height: 180px;
-            font-size: 0.95rem; line-height: 1.8;
+            padding: var(--sp-3);
+            min-height: 188px;
+            font-size: 0.9rem; line-height: 1.9;
             direction: ltr; text-align: left;
         }
 
         .typed-line {
             opacity: 0;
             will-change: opacity;
+            transition: opacity 0.1s ease;
         }
 
-        .typed-line:nth-child(1) { animation: typeIn 0.3s ease 0.5s forwards; }
-        .typed-line:nth-child(2) { animation: typeIn 0.3s ease 1.2s forwards; }
-        .typed-line:nth-child(3) { animation: typeIn 0.3s ease 1.9s forwards; }
-        .typed-line:nth-child(4) { animation: typeIn 0.3s ease 2.6s forwards; }
-        .typed-line:nth-child(5) { animation: typeIn 0.3s ease 3.3s forwards; }
+        .typed-line:nth-child(1) { animation: typeIn 0.25s ease 0.5s forwards; }
+        .typed-line:nth-child(2) { animation: typeIn 0.25s ease 1.2s forwards; }
+        .typed-line:nth-child(3) { animation: typeIn 0.25s ease 1.9s forwards; }
+        .typed-line:nth-child(4) { animation: typeIn 0.25s ease 2.6s forwards; }
+        .typed-line:nth-child(5) { animation: typeIn 0.25s ease 3.3s forwards; }
 
         @keyframes typeIn { to { opacity: 1; } }
 
         .line-num {
             color: var(--comment);
             display: inline-block;
-            min-width: 2.5em;
+            min-width: 2em;
             text-align: right;
-            margin-left: 1em;
+            margin-left: 1.25em;
             user-select: none;
+            opacity: 0.5;
         }
 
-        .kw { color: var(--blue); }
-        .str { color: var(--green); }
-        .cmt { color: var(--comment); font-style: italic; }
-        .fn { color: #d2a8ff; }
+        .kw   { color: var(--blue); }
+        .str  { color: var(--green); }
+        .cmt  { color: var(--comment); font-style: italic; }
+        .fn   { color: #d2a8ff; }
         .gold { color: var(--gold); }
 
         .cursor-blink {
             display: inline-block;
-            width: 8px; height: 1.1em;
+            width: 7px; height: 1em;
             background: var(--cursor-color);
             vertical-align: text-bottom;
             animation: blink 1s step-end infinite;
             will-change: opacity;
+            border-radius: 1px;
         }
 
         @keyframes blink {
@@ -143,22 +171,24 @@
         /* ========== MAIN ========== */
         #mainContent {
             opacity: 0;
-            animation: contentFadeIn 1s ease 5s forwards;
-            padding: 2rem;
+            animation: contentFadeIn 0.8s ease 5s forwards;
+            padding: var(--sp-3) var(--sp-3) var(--sp-6);
             max-width: 900px;
             margin: 0 auto;
         }
 
         @keyframes contentFadeIn { to { opacity: 1; } }
 
+        /* ========== HEADER ========== */
         header {
-            margin-bottom: 3rem;
-            padding: 1.5rem 2rem;
+            margin-bottom: var(--sp-4);
+            padding: var(--sp-2) var(--sp-3);
             background: var(--panel-dark);
             border: 1px solid var(--border-dark);
-            border-radius: 8px;
+            border-radius: 10px;
             display: flex; justify-content: space-between;
             align-items: center;
+            gap: var(--sp-2);
         }
 
         body.light header {
@@ -170,113 +200,160 @@
             font-family: 'Amiri', serif;
             font-size: 2rem; font-weight: 700;
             color: var(--gold);
+            letter-spacing: 0.01em;
         }
 
+        /* ========== TABS ========== */
         .tab-bar {
             display: flex; gap: 0;
-            margin-bottom: 2rem;
+            margin-bottom: var(--sp-3);
             border-bottom: 1px solid var(--border-dark);
+            overflow-x: auto;
+            scrollbar-width: none;
         }
+
+        .tab-bar::-webkit-scrollbar { display: none; }
 
         body.light .tab-bar { border-color: var(--border-light); }
 
         .tab {
-            padding: 0.75rem 1.5rem;
+            padding: var(--sp-1) var(--sp-2);
             min-height: 44px;
             font-family: 'IBM Plex Mono', monospace;
-            font-size: 0.85rem;
+            font-size: 0.82rem;
+            letter-spacing: 0.01em;
             background: transparent;
             border: none; color: var(--comment);
             cursor: pointer;
             border-bottom: 2px solid transparent;
-            transition: all 0.2s ease;
+            transition: var(--t-fast);
+            white-space: nowrap;
+            position: relative;
         }
 
         .tab.active {
             color: var(--gold);
             border-bottom-color: var(--gold);
-            background: rgba(197,160,89,0.05);
+            background: rgba(197,160,89,0.06);
         }
 
-        .tab:hover {
+        .tab:hover:not(.active) {
             color: var(--text-dark);
-            background: rgba(255,255,255,0.03);
+            background: rgba(255,255,255,0.04);
         }
 
-        body.light .tab:hover { color: var(--text-light); background: rgba(0,0,0,0.03); }
+        body.light .tab:hover:not(.active) { color: var(--text-light); background: rgba(0,0,0,0.03); }
 
         .tab:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; }
 
-        /* Code-style poem card */
+        /* Tab close dot indicator */
+        .tab.active::after {
+            content: '';
+            position: absolute;
+            top: 50%; right: var(--sp-1);
+            transform: translateY(-50%);
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: var(--gold);
+            opacity: 0.6;
+        }
+
+        /* ========== POEM CARD ========== */
         .poem-card {
             background: var(--panel-dark);
             border: 1px solid var(--border-dark);
-            border-radius: 8px;
+            border-radius: 10px;
             overflow: hidden;
-            margin-bottom: 2rem;
+            margin-bottom: var(--sp-3);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+            transition: box-shadow 0.3s ease, border-color 0.3s ease;
         }
 
         body.light .poem-card {
             background: var(--panel-light);
             border-color: var(--border-light);
+            box-shadow: 0 4px 16px rgba(0,0,0,0.06);
+        }
+
+        .poem-card:hover {
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+            border-color: rgba(197,160,89,0.2);
         }
 
         .poem-card-bar {
             display: flex; align-items: center;
-            gap: 8px; padding: 10px 16px;
+            gap: var(--sp-1); padding: 10px var(--sp-2);
             background: rgba(0,0,0,0.2);
             border-bottom: 1px solid var(--border-dark);
-            font-size: 0.8rem; color: var(--comment);
+            font-size: 0.78rem; color: var(--comment);
+            letter-spacing: 0.02em;
         }
 
         body.light .poem-card-bar {
-            background: rgba(0,0,0,0.04);
+            background: rgba(0,0,0,0.03);
             border-color: var(--border-light);
         }
 
-        .poem-body {
-            padding: 2rem;
+        .file-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--gold);
+            flex-shrink: 0;
         }
+
+        .poem-body { padding: var(--sp-4) var(--sp-4) var(--sp-3); }
 
         .poem-text {
             font-family: 'Amiri', serif;
             font-size: 1.85rem;
-            line-height: 2.3;
+            line-height: 2.4;
             text-align: center;
-            margin-bottom: 1.5rem;
+            margin-bottom: var(--sp-3);
         }
 
         .poet {
             text-align: center;
-            font-size: 1rem;
+            font-size: 0.9rem;
             color: var(--green);
             font-family: 'IBM Plex Mono', monospace;
+            letter-spacing: 0.03em;
+            opacity: 0.85;
         }
 
+        /* ========== POEM CONTROLS ========== */
         .controls {
             display: flex;
-            gap: 0.75rem;
+            gap: var(--sp-1);
             justify-content: center;
             flex-wrap: wrap;
-            margin-top: 2rem;
-            padding-top: 1.5rem;
+            margin-top: var(--sp-3);
+            padding-top: var(--sp-2);
             border-top: 1px solid var(--border-dark);
         }
 
         body.light .controls { border-color: var(--border-light); }
 
         .mono-btn {
-            min-width: 44px; min-height: 44px;
-            padding: 0.6rem 1.2rem;
+            min-height: 44px;
+            padding: 0.5rem var(--sp-2);
             background: transparent;
             border: 1px solid var(--border-dark);
-            border-radius: 6px;
+            border-radius: 7px;
             color: var(--text-dark);
             font-family: 'IBM Plex Mono', monospace;
-            font-size: 0.9rem;
+            font-size: 0.85rem;
+            letter-spacing: 0.02em;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: var(--t-fast);
             will-change: transform;
+            display: flex; align-items: center; gap: 6px;
+        }
+
+        .mono-btn svg {
+            width: 14px; height: 14px;
+            stroke: currentColor; fill: none;
+            stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+            flex-shrink: 0;
         }
 
         body.light .mono-btn {
@@ -287,36 +364,39 @@
         .mono-btn:hover {
             border-color: var(--gold);
             color: var(--gold);
-            background: rgba(197,160,89,0.05);
+            background: rgba(197,160,89,0.06);
             transform: translateY(-2px);
         }
 
-        .mono-btn:active { transform: scale(0.96); }
+        .mono-btn:active {
+            transform: translateY(0) scale(0.96);
+            transition-duration: 0.08s;
+        }
+
         .mono-btn:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
 
-        /* Walkthrough */
-        .walkthrough {
-            margin: 3rem 0;
-        }
+        /* ========== WALKTHROUGH ========== */
+        .walkthrough { margin: var(--sp-5) 0 0; }
 
         .walkthrough h2 {
             font-family: 'Amiri', serif;
             font-size: 2rem; color: var(--gold);
-            margin-bottom: 2rem; text-align: center;
+            margin-bottom: var(--sp-3); text-align: center;
+            letter-spacing: 0.01em;
         }
 
         .steps {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-            gap: 1.5rem;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: var(--sp-2);
         }
 
         .step {
             background: var(--panel-dark);
             border: 1px solid var(--border-dark);
-            border-radius: 8px;
-            padding: 1.5rem;
-            transition: all 0.3s ease;
+            border-radius: 10px;
+            padding: var(--sp-3) var(--sp-2);
+            transition: var(--t-smooth);
             cursor: pointer;
             position: relative;
             overflow: hidden;
@@ -327,50 +407,69 @@
             border-color: var(--border-light);
         }
 
+        /* Animated left accent bar */
         .step::before {
-            content: '>';
-            position: absolute; top: 1rem; left: 1rem;
-            font-family: 'IBM Plex Mono', monospace;
-            font-size: 1.2rem;
-            color: var(--green);
-            opacity: 0;
-            transition: opacity 0.3s ease;
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 3px; height: 100%;
+            background: var(--green);
+            transform: scaleY(0);
+            transform-origin: bottom;
+            transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+            border-radius: 0 2px 2px 0;
         }
 
-        .step:hover::before { opacity: 1; }
-        .step:hover { border-color: var(--green); transform: translateY(-3px); }
+        .step:hover::before { transform: scaleY(1); }
+
+        .step:hover {
+            border-color: rgba(63,185,80,0.4);
+            transform: translateY(-4px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+        }
+
+        body.light .step:hover { box-shadow: 0 8px 24px rgba(0,0,0,0.08); }
+
+        .step:active {
+            transform: translateY(-1px);
+            transition-duration: 0.1s;
+        }
 
         .step-number {
             font-family: 'IBM Plex Mono', monospace;
-            font-size: 1.5rem; font-weight: 600;
+            font-size: 1.4rem; font-weight: 600;
             color: var(--blue);
-            margin-bottom: 0.5rem;
+            margin-bottom: var(--sp-1);
+            letter-spacing: -0.03em;
         }
 
         .step-title {
             font-family: 'Amiri', serif;
-            font-size: 1.2rem; font-weight: 700;
-            margin-bottom: 0.5rem;
+            font-size: 1.15rem; font-weight: 700;
+            margin-bottom: 6px;
         }
 
         .step-desc {
-            font-size: 0.9rem;
-            opacity: 0.7; line-height: 1.6;
+            font-size: 0.82rem;
+            opacity: 0.65; line-height: 1.65;
+            font-family: 'Tajawal', sans-serif;
         }
 
         .step:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
 
-        /* Status bar */
+        /* ========== STATUS BAR ========== */
         .status-bar {
             position: fixed; bottom: 0; left: 0; right: 0;
             height: 28px;
             background: var(--panel-dark);
             border-top: 1px solid var(--border-dark);
             display: flex; align-items: center;
-            padding: 0 1rem; gap: 1.5rem;
-            font-size: 0.75rem;
+            padding: 0 var(--sp-2); gap: var(--sp-2);
+            font-size: 0.72rem;
             color: var(--comment);
             z-index: 100;
+            font-family: 'IBM Plex Mono', monospace;
+            letter-spacing: 0.02em;
         }
 
         body.light .status-bar {
@@ -378,24 +477,36 @@
             border-color: var(--border-light);
         }
 
-        .status-item { display: flex; align-items: center; gap: 0.3rem; }
+        .status-item {
+            display: flex; align-items: center;
+            gap: 5px; white-space: nowrap;
+        }
+
         .status-dot {
-            width: 8px; height: 8px;
+            width: 7px; height: 7px;
             border-radius: 50%;
             background: var(--green);
+            animation: statusPulse 2.4s ease-in-out infinite;
         }
+
+        @keyframes statusPulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .status-spacer { flex: 1; }
 
         /* ========== MOBILE ========== */
         @media (max-width: 768px) {
             h1 { font-size: 1.6rem; }
-            .terminal-body { font-size: 0.8rem; padding: 1rem; }
-            .poem-text { font-size: 1.4rem; line-height: 2.1; }
-            .poem-body { padding: 1.5rem; }
-            header { flex-direction: column; gap: 1rem; text-align: center; }
-            .tab-bar { overflow-x: auto; flex-wrap: nowrap; }
-            .tab { white-space: nowrap; font-size: 0.75rem; padding: 0.6rem 1rem; }
+            .terminal-body { font-size: 0.78rem; padding: var(--sp-2); min-height: 160px; }
+            .poem-text { font-size: 1.45rem; line-height: 2.2; }
+            .poem-body { padding: var(--sp-3) var(--sp-2) var(--sp-2); }
+            header { flex-direction: column; gap: var(--sp-1); text-align: center; }
+            .tab { font-size: 0.75rem; padding: var(--sp-1) var(--sp-1); }
             .steps { grid-template-columns: 1fr; }
-            .status-bar { font-size: 0.65rem; }
+            .status-bar { font-size: 0.65rem; gap: var(--sp-1); }
+            #mainContent { padding: var(--sp-2) var(--sp-2) var(--sp-6); }
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -405,6 +516,8 @@
                 transition-duration: 0.01ms !important;
             }
             .cursor-blink { display: none; }
+            #mainContent { opacity: 1; }
+            .status-dot { animation: none; }
         }
     </style>
 </head>
@@ -415,7 +528,7 @@
                 <div class="terminal-dot red"></div>
                 <div class="terminal-dot yellow"></div>
                 <div class="terminal-dot green"></div>
-                <div class="terminal-title">qafiyah -- manuscript.js</div>
+                <div class="terminal-title">qafiyah — manuscript.js</div>
             </div>
             <div class="terminal-body">
                 <div class="typed-line"><span class="line-num">1</span> <span class="cmt">// Loading the Digital Manuscript...</span></div>
@@ -430,22 +543,26 @@
     <div id="mainContent">
         <header>
             <h1>المخطوطة الرقمية</h1>
-            <button class="mono-btn" onclick="toggleTheme()" aria-label="Toggle theme" style="font-size:1.1rem">
-                &#9790; / &#9788;
+            <button class="mono-btn" onclick="toggleTheme()" aria-label="Toggle theme">
+                <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+                theme
             </button>
         </header>
 
-        <div class="tab-bar">
-            <button class="tab active">poem.qaf</button>
-            <button class="tab">insights.ai</button>
-            <button class="tab">settings.cfg</button>
-            <button class="tab">history.log</button>
+        <div class="tab-bar" role="tablist" aria-label="ملفات المخطوطة">
+            <button class="tab active" role="tab" aria-selected="true">poem.qaf</button>
+            <button class="tab" role="tab" aria-selected="false">insights.ai</button>
+            <button class="tab" role="tab" aria-selected="false">settings.cfg</button>
+            <button class="tab" role="tab" aria-selected="false">history.log</button>
         </div>
 
         <div class="poem-card">
             <div class="poem-card-bar">
-                <span>&#9679; poem.qaf</span>
-                <span style="margin-right:auto">UTF-8</span>
+                <div class="file-dot"></div>
+                <span>poem.qaf</span>
+                <span class="status-spacer"></span>
+                <span>UTF-8</span>
+                <span style="opacity:0.5; margin-right:8px;">|</span>
                 <span>Ln 1, Col 1</span>
             </div>
             <div class="poem-body">
@@ -453,11 +570,20 @@
                     أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ<br>
                     فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
                 </div>
-                <div class="poet">// -- أحمد شوقي</div>
+                <div class="poet">// — أحمد شوقي</div>
                 <div class="controls">
-                    <button class="mono-btn" aria-label="Play">&gt; play</button>
-                    <button class="mono-btn" aria-label="Save">&lt;3 save</button>
-                    <button class="mono-btn" aria-label="Next">next()</button>
+                    <button class="mono-btn" aria-label="Play">
+                        <svg viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+                        play
+                    </button>
+                    <button class="mono-btn" aria-label="Save">
+                        <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                        save
+                    </button>
+                    <button class="mono-btn" aria-label="Next poem">
+                        <svg viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+                        next()
+                    </button>
                     <button class="mono-btn">font++</button>
                     <button class="mono-btn">lang: ar</button>
                 </div>
@@ -491,11 +617,15 @@
         </section>
     </div>
 
-    <div class="status-bar">
-        <div class="status-item"><div class="status-dot"></div> Ready</div>
+    <div class="status-bar" role="status" aria-live="polite">
+        <div class="status-item">
+            <div class="status-dot"></div>
+            Ready
+        </div>
         <div class="status-item">UTF-8</div>
         <div class="status-item">Poems: 84,329</div>
-        <div class="status-item" style="margin-right:auto">IBM Plex Mono</div>
+        <div class="status-spacer"></div>
+        <div class="status-item">IBM Plex Mono</div>
         <div class="status-item">Qafiyah v2.0</div>
     </div>
 
@@ -504,16 +634,20 @@
             document.body.classList.toggle('light');
         }
 
-        // Tab switching
-        document.querySelectorAll('.tab').forEach(tab => {
-            tab.addEventListener('click', () => {
-                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        // Tab switching with ARIA
+        document.querySelectorAll('.tab').forEach(function(tab) {
+            tab.addEventListener('click', function() {
+                document.querySelectorAll('.tab').forEach(function(t) {
+                    t.classList.remove('active');
+                    t.setAttribute('aria-selected', 'false');
+                });
                 tab.classList.add('active');
+                tab.setAttribute('aria-selected', 'true');
             });
         });
 
-        document.querySelectorAll('.step').forEach(step => {
-            step.addEventListener('keydown', (e) => {
+        document.querySelectorAll('.step').forEach(function(step) {
+            step.addEventListener('keydown', function(e) {
                 if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
                     step.click();
@@ -521,8 +655,8 @@
             });
         });
 
-        document.querySelectorAll('.mono-btn').forEach(btn => {
-            btn.addEventListener('keydown', (e) => {
+        document.querySelectorAll('.mono-btn').forEach(function(btn) {
+            btn.addEventListener('keydown', function(e) {
                 if (e.key === 'Enter' || e.key === ' ') {
                     e.preventDefault();
                     btn.click();

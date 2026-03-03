@@ -157,26 +157,41 @@
 
     body.light .walkthrough { background: var(--light-bg); }
 
-    .walk-steps {
-      display: flex;
-      gap: 24px;
-      max-width: 900px;
+    /* Sequential card container */
+    .walk-step-container {
+      position: relative;
       width: 100%;
-      flex-wrap: wrap;
+      max-width: 400px;
+      min-height: 260px;
+      display: flex;
+      align-items: center;
       justify-content: center;
     }
 
     .walk-card {
       background: var(--dark-surface);
       border: 1px solid var(--dark-line);
-      border-radius: 16px;
-      padding: 28px 24px;
+      border-radius: 20px;
+      padding: 40px 32px;
       text-align: center;
-      width: 180px;
+      width: 100%;
+      max-width: 360px;
+      position: absolute;
       opacity: 0;
-      animation: fadeInUp 0.6s ease forwards;
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-      cursor: default;
+      transform: translateX(40px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+      pointer-events: none;
+    }
+
+    .walk-card.active {
+      opacity: 1;
+      transform: translateX(0);
+      pointer-events: auto;
+    }
+
+    .walk-card.exit-left {
+      opacity: 0;
+      transform: translateX(-40px);
     }
 
     body.light .walk-card {
@@ -184,22 +199,13 @@
       border-color: var(--light-line);
     }
 
-    .walk-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
-    }
-
-    .walk-card:nth-child(1) { animation-delay: 0.1s; }
-    .walk-card:nth-child(2) { animation-delay: 0.3s; }
-    .walk-card:nth-child(3) { animation-delay: 0.5s; }
-    .walk-card:nth-child(4) { animation-delay: 0.7s; }
-
     .walk-icon {
-      width: 48px;
-      height: 48px;
-      margin: 0 auto 16px;
+      width: 56px;
+      height: 56px;
+      margin: 0 auto 20px;
       border-radius: 50%;
-      background: rgba(197, 160, 89, 0.1);
+      background: rgba(197, 160, 89, 0.12);
+      border: 1px solid rgba(197, 160, 89, 0.3);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -209,23 +215,24 @@
 
     .walk-card h3 {
       font-family: 'Tajawal', sans-serif;
-      font-size: 16px;
+      font-size: 20px;
       font-weight: 500;
-      margin-bottom: 8px;
+      margin-bottom: 12px;
     }
 
     .walk-card p {
-      font-size: 13px;
+      font-size: 14px;
       color: var(--dark-muted);
-      line-height: 1.6;
+      line-height: 1.7;
     }
 
     body.light .walk-card p { color: var(--light-muted); }
 
+    /* Progress dots */
     .walk-progress {
       display: flex;
       gap: 8px;
-      margin-top: 32px;
+      margin-top: 36px;
     }
 
     .walk-dot {
@@ -238,8 +245,32 @@
 
     .walk-dot.active { background: var(--gold); width: 24px; border-radius: 4px; }
 
-    .walk-skip {
+    /* Navigation buttons */
+    .walk-nav {
+      display: flex;
+      gap: 12px;
       margin-top: 20px;
+      align-items: center;
+    }
+
+    .walk-back {
+      padding: 10px 24px;
+      background: transparent;
+      border: 1px solid var(--dark-line);
+      color: var(--dark-muted);
+      border-radius: 8px;
+      font-family: 'Tajawal', sans-serif;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      visibility: hidden;
+    }
+
+    .walk-back.visible { visibility: visible; }
+
+    .walk-back:hover { border-color: var(--gold); color: var(--gold); }
+
+    .walk-skip {
       padding: 12px 32px;
       background: var(--gold);
       color: var(--dark-bg);
@@ -650,43 +681,52 @@
       <div class="orbit-ring" style="top:50%;left:50%;transform:translate(-50%,-50%)"></div>
     </div>
     <div class="splash-content">
-      <h1 class="splash-title">ديوان الشعر العربي</h1>
-      <p class="splash-subtitle">Diwan Al-Shi'r Al-'Arabi</p>
+      <h1 class="splash-title">Poetry bil Araby</h1>
+      <p class="splash-subtitle" style="font-size:clamp(13px,2vw,18px);color:var(--gold);opacity:0.7;direction:rtl;font-family:'Amiri',serif;margin-top:6px;">شعر بالعربي</p>
     </div>
-    <button class="splash-enter" onclick="enterWalkthrough()">ادخل الديوان</button>
+    <button class="splash-enter" onclick="enterWalkthrough()">Enter the Diwan</button>
   </div>
 
-  <!-- WALKTHROUGH -->
+  <!-- WALKTHROUGH - Sequential Steps -->
   <div class="walkthrough" id="walkthrough">
-    <div class="walk-steps">
-      <div class="walk-card">
+    <div class="walk-step-container">
+      <!-- Step 1 -->
+      <div class="walk-card active" id="wcard-0">
         <div class="walk-icon"><i data-lucide="compass" style="width:24px;height:24px"></i></div>
-        <h3>اكتشف</h3>
-        <p>تصفح 84,000 قصيدة من التراث العربي</p>
+        <h3>Discover</h3>
+        <p>Browse 84,000 poems from the Arabic literary heritage</p>
       </div>
-      <div class="walk-card">
+      <!-- Step 2 -->
+      <div class="walk-card" id="wcard-1">
         <div class="walk-icon"><i data-lucide="headphones" style="width:24px;height:24px"></i></div>
-        <h3>استمع</h3>
-        <p>استمع للقصائد بأصوات طبيعية</p>
+        <h3>Listen</h3>
+        <p>Hear poems recited in natural, expressive voices</p>
       </div>
-      <div class="walk-card">
+      <!-- Step 3 -->
+      <div class="walk-card" id="wcard-2">
         <div class="walk-icon"><i data-lucide="sparkles" style="width:24px;height:24px"></i></div>
-        <h3>تأمل</h3>
-        <p>رؤى ذكية مدعومة بالذكاء الاصطناعي</p>
+        <h3>Reflect</h3>
+        <p>AI-powered insights illuminate meaning and meter</p>
       </div>
-      <div class="walk-card">
+      <!-- Step 4 -->
+      <div class="walk-card" id="wcard-3">
         <div class="walk-icon"><i data-lucide="heart" style="width:24px;height:24px"></i></div>
-        <h3>احفظ</h3>
-        <p>احفظ قصائدك المفضلة</p>
+        <h3>Save</h3>
+        <p>Collect your favourite verses into a personal diwan</p>
       </div>
     </div>
+
     <div class="walk-progress">
-      <div class="walk-dot active"></div>
-      <div class="walk-dot"></div>
-      <div class="walk-dot"></div>
-      <div class="walk-dot"></div>
+      <div class="walk-dot active" id="wdot-0"></div>
+      <div class="walk-dot" id="wdot-1"></div>
+      <div class="walk-dot" id="wdot-2"></div>
+      <div class="walk-dot" id="wdot-3"></div>
     </div>
-    <button class="walk-skip" onclick="enterApp()">ابدأ الاستكشاف</button>
+
+    <div class="walk-nav">
+      <button class="walk-back" id="walkBack" onclick="walkPrev()">Back</button>
+      <button class="walk-skip" id="walkNext" onclick="walkNext()">Next</button>
+    </div>
   </div>
 
   <!-- MAIN APP -->
@@ -694,8 +734,8 @@
     <!-- Top bar -->
     <header class="top-bar">
       <div class="top-brand">
-        <div class="top-brand-icon">ق</div>
-        <span class="top-brand-text">Qafiyah</span>
+        <div class="top-brand-icon" style="font-family:'Tajawal',sans-serif;font-size:12px;font-weight:700;">ش</div>
+        <span class="top-brand-text">Poetry bil Araby</span>
       </div>
       <div class="top-actions">
         <button class="top-btn" onclick="toggleTheme()" title="Toggle theme">
@@ -819,9 +859,60 @@
       canvas.appendChild(p);
     }
 
+    /* Sequential walkthrough state */
+    let walkStep = 0;
+    const WALK_TOTAL = 4;
+
     function enterWalkthrough() {
       document.getElementById('splash').classList.add('hidden');
       document.getElementById('walkthrough').classList.add('active');
+      updateWalkUI();
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+
+    function updateWalkUI() {
+      for (let i = 0; i < WALK_TOTAL; i++) {
+        const card = document.getElementById('wcard-' + i);
+        const dot = document.getElementById('wdot-' + i);
+        card.classList.remove('active', 'exit-left');
+        dot.classList.remove('active');
+        if (i === walkStep) {
+          card.classList.add('active');
+          dot.classList.add('active');
+        }
+      }
+      const backBtn = document.getElementById('walkBack');
+      const nextBtn = document.getElementById('walkNext');
+      backBtn.classList.toggle('visible', walkStep > 0);
+      nextBtn.textContent = walkStep === WALK_TOTAL - 1 ? 'Begin' : 'Next';
+    }
+
+    function walkNext() {
+      if (walkStep < WALK_TOTAL - 1) {
+        const current = document.getElementById('wcard-' + walkStep);
+        current.classList.remove('active');
+        current.classList.add('exit-left');
+        setTimeout(() => current.classList.remove('exit-left'), 500);
+        walkStep++;
+        updateWalkUI();
+      } else {
+        enterApp();
+      }
+    }
+
+    function walkPrev() {
+      if (walkStep > 0) {
+        const current = document.getElementById('wcard-' + walkStep);
+        current.classList.remove('active');
+        current.style.transform = 'translateX(40px)';
+        current.style.opacity = '0';
+        setTimeout(() => {
+          current.style.transform = '';
+          current.style.opacity = '';
+        }, 500);
+        walkStep--;
+        updateWalkUI();
+      }
     }
 
     function enterApp() {

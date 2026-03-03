@@ -172,68 +172,129 @@
     #onboarding.active { display: flex; }
     body.light #onboarding { background: rgba(255,255,255,0.94); }
 
-    .onboard-card {
+    /* Hybrid particle+neumorphic onboarding */
+    .fusion-field {
+      position: absolute; inset: 0;
+      overflow: hidden;
+      border-radius: 20px;
+      pointer-events: none;
+    }
+    .fusion-mote {
+      position: absolute;
+      width: 4px; height: 4px;
+      border-radius: 50%;
+      background: var(--gold);
+      opacity: 0;
+      animation: fusionFloat 6s ease-in-out infinite;
+    }
+    .fusion-mote:nth-child(1) { left: 15%; top: 20%; animation-delay: 0s; }
+    .fusion-mote:nth-child(2) { left: 75%; top: 30%; animation-delay: 1s; }
+    .fusion-mote:nth-child(3) { left: 40%; top: 70%; animation-delay: 2s; }
+    .fusion-mote:nth-child(4) { left: 85%; top: 65%; animation-delay: 3s; }
+    .fusion-mote:nth-child(5) { left: 25%; top: 80%; animation-delay: 4s; }
+    .fusion-mote:nth-child(6) { left: 60%; top: 15%; animation-delay: 5s; }
+
+    @keyframes fusionFloat {
+      0%, 100% { opacity: 0; transform: translateY(0) scale(1); }
+      30% { opacity: 0.6; }
+      50% { opacity: 0.4; transform: translateY(-20px) scale(1.5); }
+      70% { opacity: 0.6; }
+    }
+
+    .fusion-panel {
       width: min(360px, 88vw);
       background: var(--card-dark);
       border: 1px solid var(--border-dark);
       border-radius: 20px;
       padding: 2.5rem 2rem 2rem;
       text-align: center;
+      position: relative;
+      overflow: hidden;
+      cursor: pointer;
+      display: none;
     }
-    body.light .onboard-card {
+    .fusion-panel.active { display: block; animation: fusionReveal 0.45s ease; }
+    body.light .fusion-panel {
       background: var(--card-light);
       border-color: var(--border-light);
     }
 
-    .onboard-icon {
-      width: 56px;
-      height: 56px;
+    @keyframes fusionReveal {
+      from { opacity: 0; transform: scale(0.96); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    .fusion-well {
+      width: 56px; height: 56px;
       margin: 0 auto 1.25rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 50%;
-      background: rgba(197,160,89,0.08);
-      border: 1px solid var(--border-dark);
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 16px;
+      background: var(--card-dark);
+      box-shadow:
+        inset 3px 3px 6px rgba(0,0,0,0.5),
+        inset -2px -2px 4px rgba(197,160,89,0.06);
+      border: 1px solid rgba(197,160,89,0.08);
     }
-    .onboard-icon svg { color: var(--gold); width: 28px; height: 28px; }
+    body.light .fusion-well {
+      background: var(--card-light);
+      box-shadow:
+        inset 3px 3px 6px rgba(0,0,0,0.08),
+        inset -2px -2px 4px rgba(255,255,255,0.7);
+    }
+    .fusion-well i { color: var(--gold); width: 26px; height: 26px; }
 
-    .onboard-title {
+    .fusion-title {
       font-family: 'Tajawal', sans-serif;
-      font-size: 1.15rem;
-      font-weight: 700;
+      font-size: 1.15rem; font-weight: 700;
       color: var(--gold);
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.2rem;
     }
-    .onboard-desc {
-      font-size: 0.95rem;
-      font-weight: 300;
-      opacity: 0.6;
-      line-height: 1.7;
-      margin-bottom: 1.5rem;
+    .fusion-subtitle {
+      font-size: 0.85rem; font-weight: 300;
+      opacity: 0.5; margin-bottom: 0.8rem;
     }
+    .fusion-desc {
+      font-size: 0.92rem; font-weight: 300;
+      opacity: 0.65; line-height: 1.7;
+      margin-bottom: 0.4rem;
+    }
+    .fusion-desc[lang="ar"] { font-family: 'Tajawal', sans-serif; direction: rtl; }
+    .fusion-desc.en { direction: ltr; font-size: 0.82rem; opacity: 0.45; }
 
-    .onboard-dots {
-      display: flex;
-      justify-content: center;
-      gap: 0.5rem;
+    .fusion-track {
+      display: flex; justify-content: center; gap: 6px;
+      margin-top: 1.25rem;
     }
-    .onboard-dot {
-      width: 8px;
-      height: 8px;
+    .fusion-node {
+      width: 10px; height: 10px;
       border-radius: 50%;
-      background: rgba(197,160,89,0.2);
-      transition: background 0.3s ease, transform 0.3s ease;
+      background: var(--card-dark);
+      box-shadow:
+        2px 2px 4px rgba(0,0,0,0.4),
+        -1px -1px 3px rgba(197,160,89,0.05);
+      border: 1px solid rgba(197,160,89,0.08);
+      transition: box-shadow 0.3s, border-color 0.3s;
     }
-    .onboard-dot.active {
-      background: var(--gold);
-      transform: scale(1.3);
+    body.light .fusion-node {
+      background: var(--card-light);
+      box-shadow:
+        2px 2px 4px rgba(0,0,0,0.06),
+        -1px -1px 3px rgba(255,255,255,0.6);
+    }
+    .fusion-node.active {
+      border-color: var(--gold);
+      box-shadow:
+        0 0 8px rgba(197,160,89,0.3),
+        inset 2px 2px 4px rgba(197,160,89,0.15);
+    }
+    .fusion-node.past {
+      border-color: rgba(197,160,89,0.3);
     }
 
-    .onboard-hint {
-      margin-top: 1rem;
-      font-size: 0.8rem;
-      opacity: 0.35;
+    .fusion-hint {
+      margin-top: 0.8rem;
+      font-size: 0.78rem;
+      opacity: 0.3;
     }
 
     /* ===== MAIN APP ===== */
@@ -557,7 +618,71 @@
   </div>
 
   <!-- Onboarding -->
-  <div id="onboarding" role="dialog" aria-label="دليل الاستخدام"></div>
+  <div id="onboarding" role="dialog" aria-label="دليل الاستخدام">
+      <div class="fusion-panel active" data-step="0">
+          <div class="fusion-field">
+              <div class="fusion-mote"></div>
+              <div class="fusion-mote"></div>
+              <div class="fusion-mote"></div>
+              <div class="fusion-mote"></div>
+              <div class="fusion-mote"></div>
+              <div class="fusion-mote"></div>
+          </div>
+          <div class="fusion-well"><i data-lucide="audio-waveform"></i></div>
+          <div class="fusion-title" lang="ar">موجة صوتية</div>
+          <div class="fusion-subtitle">Waveform Audio</div>
+          <div class="fusion-desc" lang="ar">اختبر الشعر من خلال الموجات الصوتية المتحركة</div>
+          <div class="fusion-desc en">Experience poetry through animated waveforms and audio</div>
+          <div class="fusion-track">
+              <div class="fusion-node active"></div>
+              <div class="fusion-node"></div>
+              <div class="fusion-node"></div>
+          </div>
+          <div class="fusion-hint">tap to continue</div>
+      </div>
+      <div class="fusion-panel" data-step="1">
+          <div class="fusion-field">
+              <div class="fusion-mote"></div>
+              <div class="fusion-mote"></div>
+              <div class="fusion-mote"></div>
+              <div class="fusion-mote"></div>
+              <div class="fusion-mote"></div>
+              <div class="fusion-mote"></div>
+          </div>
+          <div class="fusion-well"><i data-lucide="book-open"></i></div>
+          <div class="fusion-title" lang="ar">اقرأ واكتشف</div>
+          <div class="fusion-subtitle">Read & Discover</div>
+          <div class="fusion-desc" lang="ar">تصفح آلاف القصائد العربية الكلاسيكية والحديثة</div>
+          <div class="fusion-desc en">Browse thousands of classical and modern Arabic poems</div>
+          <div class="fusion-track">
+              <div class="fusion-node past"></div>
+              <div class="fusion-node active"></div>
+              <div class="fusion-node"></div>
+          </div>
+          <div class="fusion-hint">tap to continue</div>
+      </div>
+      <div class="fusion-panel" data-step="2">
+          <div class="fusion-field">
+              <div class="fusion-mote"></div>
+              <div class="fusion-mote"></div>
+              <div class="fusion-mote"></div>
+              <div class="fusion-mote"></div>
+              <div class="fusion-mote"></div>
+              <div class="fusion-mote"></div>
+          </div>
+          <div class="fusion-well"><i data-lucide="headphones"></i></div>
+          <div class="fusion-title" lang="ar">استمع واحفظ</div>
+          <div class="fusion-subtitle">Listen & Save</div>
+          <div class="fusion-desc" lang="ar">استمع للإلقاء وأنشئ مجموعتك الشخصية</div>
+          <div class="fusion-desc en">Listen to recitations and build your personal collection</div>
+          <div class="fusion-track">
+              <div class="fusion-node past"></div>
+              <div class="fusion-node past"></div>
+              <div class="fusion-node active"></div>
+          </div>
+          <div class="fusion-hint">tap to start</div>
+      </div>
+  </div>
 
   <!-- Main App -->
   <div id="app">
@@ -714,96 +839,24 @@
         miniAnimId = requestAnimationFrame(drawMiniWave);
       }
 
-      /* ===== Onboarding ===== */
-      var onboardSteps = [
-        {
-          icon: 'audio-waveform',
-          title: 'Waveform Audio',
-          titleAr: 'موجة صوتية',
-          desc: 'Experience poetry through animated waveforms and audio.',
-          descAr: 'اختبر الشعر من خلال الموجات الصوتية المتحركة.'
-        },
-        {
-          icon: 'book-open',
-          title: 'Read & Discover',
-          titleAr: 'اقرأ واكتشف',
-          desc: 'Browse thousands of classical and modern Arabic poems.',
-          descAr: 'تصفح آلاف القصائد العربية الكلاسيكية والحديثة.'
-        },
-        {
-          icon: 'headphones',
-          title: 'Listen & Save',
-          titleAr: 'استمع واحفظ',
-          desc: 'Listen to recitations and build your personal collection.',
-          descAr: 'استمع للإلقاء وأنشئ مجموعتك الشخصية.'
-        }
-      ];
-
+      /* ===== Fusion onboarding ===== */
       var onboardEl = document.getElementById('onboarding');
+      var fusionPanels = document.querySelectorAll('.fusion-panel');
       var currentStep = 0;
+      var totalFusionSteps = fusionPanels.length;
 
-      function renderOnboardStep(idx) {
-        var step = onboardSteps[idx];
-
-        while (onboardEl.firstChild) {
-          onboardEl.removeChild(onboardEl.firstChild);
+      function showFusionStep() {
+        for (var i = 0; i < fusionPanels.length; i++) {
+          fusionPanels[i].classList.remove('active');
         }
-
-        var card = document.createElement('div');
-        card.className = 'onboard-card';
-
-        var iconWrap = document.createElement('div');
-        iconWrap.className = 'onboard-icon';
-        var iconEl = document.createElement('i');
-        iconEl.setAttribute('data-lucide', step.icon);
-        iconWrap.appendChild(iconEl);
-        card.appendChild(iconWrap);
-
-        var titleEl = document.createElement('div');
-        titleEl.className = 'onboard-title';
-        titleEl.textContent = step.title;
-        card.appendChild(titleEl);
-
-        var titleArEl = document.createElement('div');
-        titleArEl.className = 'onboard-title';
-        titleArEl.style.fontSize = '1rem';
-        titleArEl.style.marginTop = '-0.25rem';
-        titleArEl.style.marginBottom = '0.75rem';
-        titleArEl.textContent = step.titleAr;
-        card.appendChild(titleArEl);
-
-        var descEl = document.createElement('div');
-        descEl.className = 'onboard-desc';
-        descEl.textContent = step.desc;
-        card.appendChild(descEl);
-
-        var descArEl = document.createElement('div');
-        descArEl.className = 'onboard-desc';
-        descArEl.style.marginTop = '-0.75rem';
-        descArEl.textContent = step.descAr;
-        card.appendChild(descArEl);
-
-        var dots = document.createElement('div');
-        dots.className = 'onboard-dots';
-        for (var d = 0; d < onboardSteps.length; d++) {
-          var dot = document.createElement('div');
-          dot.className = 'onboard-dot' + (d === idx ? ' active' : '');
-          dots.appendChild(dot);
+        if (currentStep < totalFusionSteps) {
+          fusionPanels[currentStep].classList.add('active');
         }
-        card.appendChild(dots);
-
-        var hint = document.createElement('div');
-        hint.className = 'onboard-hint';
-        hint.textContent = idx < onboardSteps.length - 1 ? 'Tap to continue' : 'Tap to start';
-        card.appendChild(hint);
-
-        onboardEl.appendChild(card);
-        lucide.createIcons({ nameAttr: 'data-lucide' });
       }
 
-      function advanceOnboard() {
+      function advanceFusion() {
         currentStep++;
-        if (currentStep >= onboardSteps.length) {
+        if (currentStep >= totalFusionSteps) {
           onboardEl.classList.remove('active');
           var appEl = document.getElementById('app');
           appEl.classList.add('active');
@@ -813,11 +866,11 @@
             drawMiniWave(0);
           }
         } else {
-          renderOnboardStep(currentStep);
+          showFusionStep();
         }
       }
 
-      onboardEl.addEventListener('click', advanceOnboard);
+      onboardEl.addEventListener('click', advanceFusion);
 
       /* ===== CTA Enter ===== */
       document.getElementById('ctaEnter').addEventListener('click', function() {
@@ -825,7 +878,7 @@
         var splashEl = document.getElementById('splash');
         splashEl.classList.add('hidden');
         onboardEl.classList.add('active');
-        renderOnboardStep(0);
+        lucide.createIcons({ nameAttr: 'data-lucide' });
       });
 
       /* ===== Theme Toggle ===== */

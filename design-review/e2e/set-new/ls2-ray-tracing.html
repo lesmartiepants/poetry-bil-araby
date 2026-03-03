@@ -368,48 +368,101 @@
     font-weight: 600;
   }
 
-  /* Vertical controls */
-  .vertical-controls {
-    position: fixed; right: 20px; top: 50%; transform: translateY(-50%);
-    display: flex; flex-direction: column; gap: 1px;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 12px; overflow: hidden;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-    z-index: 50;
-  }
-  .vc-btn {
-    width: 44px; height: 44px;
-    display: flex; align-items: center; justify-content: center;
-    background: transparent; border: none; cursor: pointer;
-    color: rgba(251, 191, 36, 0.4);
-    transition: all 0.2s ease;
-  }
-  .vc-btn:hover {
-    background: rgba(251, 191, 36, 0.1);
-    color: var(--warm);
-  }
-  .vc-divider { height: 1px; background: rgba(255, 255, 255, 0.06); }
+  /* ===== CONTROLS ===== */
+  /* Light Architecture — vertical light beams that pulse and expand on tap */
 
-  /* Bottom bar (mobile) */
-  .bottom-bar {
-    position: fixed; bottom: 0; left: 0; right: 0;
-    display: none;
-    justify-content: space-around; align-items: center;
-    height: 56px;
-    background: rgba(0, 0, 0, 0.95);
-    backdrop-filter: blur(12px);
-    border-top: 1px solid rgba(255, 255, 255, 0.06);
+  .beam-controls {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 88px;
     z-index: 50;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 56px;
+    padding-bottom: 16px;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, transparent 100%);
   }
-  .bb-btn {
-    width: 44px; height: 44px;
-    display: flex; align-items: center; justify-content: center;
-    background: transparent; border: none; cursor: pointer;
-    color: rgba(251, 191, 36, 0.4);
-    transition: all 0.2s ease;
+
+  .beam-btn {
+    position: relative;
+    width: 44px;
+    height: 72px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 0;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
   }
-  .bb-btn:hover { color: var(--warm); }
+
+  /* The light beam line */
+  .beam-line {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 2px;
+    height: 48px;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.15));
+    box-shadow: 0 0 6px rgba(255, 255, 255, 0.2), 0 0 12px rgba(255, 245, 220, 0.1);
+    transition: all 0.25s ease;
+    animation: beamPulse 3s ease-in-out infinite;
+  }
+
+  @keyframes beamPulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 0.9; }
+  }
+
+  .beam-btn:nth-child(1) .beam-line { animation-delay: 0s; }
+  .beam-btn:nth-child(2) .beam-line { animation-delay: 0.75s; }
+  .beam-btn:nth-child(3) .beam-line { animation-delay: 1.5s; }
+  .beam-btn:nth-child(4) .beam-line { animation-delay: 2.25s; }
+
+  /* Label below beam */
+  .beam-label {
+    font-family: 'Tajawal', sans-serif;
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: transparent;
+    margin-top: 6px;
+    transition: color 0.25s ease;
+    white-space: nowrap;
+  }
+
+  /* Active/tap state: beam flashes and expands */
+  .beam-btn:active .beam-line,
+  .beam-btn.flashed .beam-line {
+    width: 6px;
+    opacity: 1;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 1), rgba(255, 245, 220, 0.6));
+    box-shadow: 0 0 16px rgba(255, 255, 255, 0.5), 0 0 32px rgba(255, 245, 220, 0.3);
+  }
+
+  .beam-btn:active .beam-label,
+  .beam-btn.flashed .beam-label {
+    color: rgba(255, 255, 255, 0.8);
+  }
+
+  /* Hover hint (desktop) */
+  @media (hover: hover) {
+    .beam-btn:hover .beam-line {
+      width: 3px;
+      opacity: 0.8;
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+    }
+    .beam-btn:hover .beam-label {
+      color: rgba(255, 255, 255, 0.4);
+    }
+  }
 
   @media (max-width: 768px) {
     .brand-en { font-size: 3rem; }
@@ -417,8 +470,6 @@
     .splash-content { padding: 24px; }
     .poem-card { padding: 24px; }
     .poem-text { font-size: 22px; line-height: 1.8; }
-    .vertical-controls { display: none; }
-    .bottom-bar { display: flex; }
   }
 
   @media (prefers-reduced-motion: reduce) {
@@ -515,30 +566,24 @@
       </div>
     </div>
 
-    <!-- Vertical controls -->
-    <div class="vertical-controls">
-      <button class="vc-btn" aria-label="Save"><i data-lucide="heart" style="width:18px;height:18px"></i></button>
-      <div class="vc-divider"></div>
-      <button class="vc-btn" aria-label="Font size"><i data-lucide="type" style="width:18px;height:18px"></i></button>
-      <div class="vc-divider"></div>
-      <button class="vc-btn" aria-label="Translate"><i data-lucide="languages" style="width:18px;height:18px"></i></button>
-      <div class="vc-divider"></div>
-      <button class="vc-btn" aria-label="Insights"><i data-lucide="book-open" style="width:18px;height:18px"></i></button>
-      <div class="vc-divider"></div>
-      <button class="vc-btn" aria-label="Italic"><i data-lucide="italic" style="width:18px;height:18px"></i></button>
-      <div class="vc-divider"></div>
-      <button class="vc-btn" aria-label="Sign in"><i data-lucide="log-in" style="width:18px;height:18px"></i></button>
-      <div class="vc-divider"></div>
-      <button class="vc-btn" aria-label="Settings"><i data-lucide="settings" style="width:18px;height:18px"></i></button>
-    </div>
-
-    <!-- Bottom bar (mobile) -->
-    <div class="bottom-bar">
-      <button class="bb-btn" aria-label="Listen"><i data-lucide="music" style="width:20px;height:20px"></i></button>
-      <button class="bb-btn" aria-label="Insights"><i data-lucide="lightbulb" style="width:20px;height:20px"></i></button>
-      <button class="bb-btn" aria-label="Refresh"><i data-lucide="refresh-cw" style="width:20px;height:20px"></i></button>
-      <button class="bb-btn" aria-label="Library"><i data-lucide="library" style="width:20px;height:20px"></i></button>
-      <button class="bb-btn" aria-label="Shuffle"><i data-lucide="shuffle" style="width:20px;height:20px"></i></button>
+    <!-- ===== CONTROLS: Light Architecture Beams ===== -->
+    <div class="beam-controls">
+      <button class="beam-btn" aria-label="Next poem" data-action="next">
+        <div class="beam-line"></div>
+        <span class="beam-label">next</span>
+      </button>
+      <button class="beam-btn" aria-label="Save poem" data-action="save">
+        <div class="beam-line"></div>
+        <span class="beam-label">save</span>
+      </button>
+      <button class="beam-btn" aria-label="Listen" data-action="listen">
+        <div class="beam-line"></div>
+        <span class="beam-label">listen</span>
+      </button>
+      <button class="beam-btn" aria-label="Share" data-action="share">
+        <div class="beam-line"></div>
+        <span class="beam-label">share</span>
+      </button>
     </div>
   </div>
 
@@ -675,6 +720,17 @@
     cards[currentCard].classList.add('active');
     dots[currentCard].classList.add('active');
   }
+
+  /* ===== BEAM CONTROLS ===== */
+  document.querySelectorAll('.beam-btn').forEach(function(btn) {
+    btn.addEventListener('touchstart', function() {
+      this.classList.add('flashed');
+    }, { passive: true });
+    btn.addEventListener('touchend', function() {
+      var el = this;
+      setTimeout(function() { el.classList.remove('flashed'); }, 250);
+    });
+  });
 
   /* ===== INIT ===== */
   if (typeof lucide !== 'undefined') lucide.createIcons();

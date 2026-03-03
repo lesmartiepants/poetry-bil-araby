@@ -318,6 +318,43 @@ html.dark #onboarding { background: var(--paper); }
   max-width: 800px; width: 100%; margin: 0 auto;
 }
 
+/* ============ Illuminated Margins ============ */
+.illuminated-frame {
+  position: relative;
+  padding: 0 24px;
+}
+/* Gold decorative borders left and right */
+.illuminated-frame::before,
+.illuminated-frame::after {
+  content: '';
+  position: absolute; top: 0; bottom: 0; width: 3px;
+  background:
+    repeating-linear-gradient(
+      180deg,
+      var(--gold) 0px,
+      var(--gold) 8px,
+      transparent 8px,
+      transparent 12px,
+      var(--gold-dim) 12px,
+      var(--gold-dim) 16px,
+      transparent 16px,
+      transparent 20px
+    );
+  opacity: 0.6;
+}
+.illuminated-frame::before { left: 0; }
+.illuminated-frame::after { right: 0; }
+
+/* Margin annotations */
+.margin-note {
+  position: absolute;
+  font-family: var(--font-ar); font-size: 0.7rem;
+  color: var(--ink-dim); font-style: italic;
+  opacity: 0.35; writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}
+.margin-note-left { left: -20px; top: 50%; transform: translateY(-50%) rotate(180deg); }
+
 /* ============ Controls - Vertical (Desktop) ============ */
 .controls-vertical {
   position: fixed; top: 50%; right: 0.75rem;
@@ -343,24 +380,63 @@ html.dark #onboarding { background: var(--paper); }
 }
 .ctrl-btn svg { width: 20px; height: 20px; }
 
-/* ============ Controls - Bottom Bar (Mobile) ============ */
+/* ============ CONTROLS: Scroll Roller Handles (Mobile) ============ */
 .controls-bottom {
   display: none;
   position: fixed; bottom: 0; left: 0; right: 0;
-  background: var(--parchment);
-  border-top: 2px solid var(--wood);
-  padding: 0.5rem 1rem;
   z-index: 50;
-  justify-content: space-around;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  flex-direction: column;
+  align-items: center;
 }
-.controls-bottom .ctrl-btn {
-  border: none; background: transparent;
-  box-shadow: none; border-radius: 8px;
+/* Ornate scroll roller ends */
+.scroll-roller-bar {
+  display: flex; align-items: center; justify-content: center;
+  width: 100%; padding: 0;
 }
+.scroll-roller-end {
+  width: 28px; height: 56px; flex-shrink: 0;
+  background: linear-gradient(180deg, #8b7355, #5a4630, #3d2a14, #5a4630, #8b7355);
+  border: 1px solid rgba(197,160,89,0.3);
+  border-radius: 4px;
+  box-shadow: 2px 0 6px var(--shadow), -2px 0 6px var(--shadow);
+  position: relative;
+}
+/* Ornate gold tips on rollers */
+.scroll-roller-end::before,
+.scroll-roller-end::after {
+  content: '';
+  position: absolute; left: 4px; right: 4px; height: 3px;
+  background: var(--gold);
+  border-radius: 2px;
+}
+.scroll-roller-end::before { top: 6px; }
+.scroll-roller-end::after { bottom: 6px; }
 
-/* ============ Poem Card ============ */
+/* Gilded icons between the scroll rollers */
+.scroll-icons-strip {
+  display: flex; align-items: center; justify-content: space-around;
+  flex: 1;
+  padding: 10px 8px 14px;
+  background: var(--parchment);
+  border-top: 2px solid var(--gold-dim);
+  border-bottom: none;
+}
+html.dark .scroll-icons-strip { background: var(--paper-light); }
+
+.scroll-action-btn {
+  width: 44px; height: 44px;
+  display: flex; align-items: center; justify-content: center;
+  background: transparent; border: none;
+  color: var(--gold); cursor: pointer;
+  transition: all 0.2s; border-radius: 8px;
+}
+.scroll-action-btn:hover, .scroll-action-btn:focus-visible {
+  color: var(--ink);
+  background: rgba(197,160,89,0.12);
+}
+.scroll-action-btn svg { width: 20px; height: 20px; }
+
+/* ============ Poem Card - Illuminated Manuscript ============ */
 .poem-scroll {
   background: var(--parchment);
   border: 3px solid var(--wood);
@@ -372,12 +448,12 @@ html.dark #onboarding { background: var(--paper); }
     inset 0 0 30px rgba(197, 160, 89, 0.04);
   transition: all 0.3s ease;
   position: relative;
-  /* Paper edge darkening */
+  /* Aged paper texture */
   background-image:
     linear-gradient(90deg, rgba(61, 52, 40, 0.06) 0%, transparent 3%, transparent 97%, rgba(61, 52, 40, 0.06) 100%),
     linear-gradient(180deg, rgba(61, 52, 40, 0.04) 0%, transparent 2%, transparent 98%, rgba(61, 52, 40, 0.04) 100%);
 }
-/* Scroll roller ends */
+/* Scroll roller ends on card */
 .poem-scroll::before,
 .poem-scroll::after {
   content: '';
@@ -395,6 +471,7 @@ html.dark #onboarding { background: var(--paper); }
   box-shadow: 0 12px 32px var(--shadow), inset 0 0 30px rgba(197, 160, 89, 0.04);
 }
 
+/* Gilded drop cap effect */
 .poem-text {
   font-family: var(--font-ar);
   font-size: 1.75rem;
@@ -403,6 +480,14 @@ html.dark #onboarding { background: var(--paper); }
   text-align: center;
   direction: rtl;
   margin-bottom: 1.5rem;
+}
+.poem-text::first-letter {
+  font-size: 2.8rem;
+  color: var(--gold);
+  float: right;
+  margin-left: 8px;
+  line-height: 1;
+  text-shadow: 0 0 8px rgba(197,160,89,0.3);
 }
 .poem-author {
   font-size: 1rem;
@@ -417,12 +502,13 @@ html.dark #onboarding { background: var(--paper); }
 
 /* ============ Responsive ============ */
 @media (max-width: 768px) {
-  #main { padding: 2rem 1rem 5rem; padding-right: 1rem; }
+  #main { padding: 2rem 1rem 6rem; padding-right: 1rem; }
   .controls-vertical { display: none; }
   .controls-bottom { display: flex; }
   .scroll-container { padding: 40px 28px; border-width: 4px; }
   .poem-scroll { padding: 2rem 1.5rem; }
   .poem-text { font-size: 1.35rem; line-height: 2.1; }
+  .illuminated-frame { padding: 0 12px; }
 }
 @media (max-width: 480px) {
   .poem-scroll { padding: 1.5rem 1.25rem; }
@@ -502,31 +588,37 @@ html.dark #onboarding { background: var(--paper); }
     <div class="main-layout">
       <!-- Vertical Controls (Desktop) -->
       <nav class="controls-vertical" aria-label="App controls">
+        <button class="ctrl-btn" aria-label="Next poem"><i data-lucide="shuffle"></i></button>
         <button class="ctrl-btn" aria-label="Save poem"><i data-lucide="heart"></i></button>
-        <button class="ctrl-btn" aria-label="Change font"><i data-lucide="type"></i></button>
-        <button class="ctrl-btn" aria-label="Toggle language"><i data-lucide="languages"></i></button>
-        <button class="ctrl-btn" aria-label="Poem library"><i data-lucide="book-open"></i></button>
-        <button class="ctrl-btn" aria-label="Font style"><i data-lucide="italic"></i></button>
-        <button class="ctrl-btn" aria-label="Sign in"><i data-lucide="log-in"></i></button>
+        <button class="ctrl-btn" aria-label="Listen"><i data-lucide="headphones"></i></button>
+        <button class="ctrl-btn" aria-label="Share poem"><i data-lucide="share-2"></i></button>
         <button class="ctrl-btn" id="themeBtn" aria-label="Toggle theme"><i data-lucide="sun"></i></button>
       </nav>
 
-      <!-- Bottom Controls (Mobile) -->
+      <!-- Scroll Roller Controls (Mobile) -->
       <nav class="controls-bottom" aria-label="App controls">
-        <button class="ctrl-btn" aria-label="Listen"><i data-lucide="music"></i></button>
-        <button class="ctrl-btn" aria-label="AI insight"><i data-lucide="lightbulb"></i></button>
-        <button class="ctrl-btn" aria-label="New poem"><i data-lucide="refresh-cw"></i></button>
-        <button class="ctrl-btn" aria-label="Library"><i data-lucide="library"></i></button>
-        <button class="ctrl-btn" aria-label="Random poem"><i data-lucide="shuffle"></i></button>
+        <div class="scroll-roller-bar">
+          <div class="scroll-roller-end"></div>
+          <div class="scroll-icons-strip">
+            <button class="scroll-action-btn" aria-label="Next poem"><i data-lucide="shuffle"></i></button>
+            <button class="scroll-action-btn" aria-label="Save poem"><i data-lucide="heart"></i></button>
+            <button class="scroll-action-btn" aria-label="Listen"><i data-lucide="headphones"></i></button>
+            <button class="scroll-action-btn" aria-label="Share poem"><i data-lucide="share-2"></i></button>
+          </div>
+          <div class="scroll-roller-end"></div>
+        </div>
       </nav>
 
-      <div class="poem-scroll">
+      <!-- Illuminated Frame -->
+      <div class="illuminated-frame">
+        <div class="poem-scroll">
         <div class="poem-text" lang="ar" dir="rtl">
           أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ<br>
           فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
         </div>
         <div class="poem-author">أحمد شوقي</div>
       </div>
+      </div><!-- /illuminated-frame -->
     </div>
   </div>
 

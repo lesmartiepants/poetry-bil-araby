@@ -37,52 +37,31 @@ npm install
 
 2. Configure environment variables:
 
-   **For AI Mode (Gemini API):**
-   - Create a `.env.local` file in the project root
-   - Add your Gemini API key: `VITE_GEMINI_API_KEY=your-api-key-here`
+   Create a `.env` file in the project root with the variables your setup needs:
 
-   **For Database Mode (PostgreSQL):**
-   - Install PostgreSQL 15+ locally (requires Postgres 17 for Supabase auth migrations)
-   - Create database: `createdb qafiyah`
-   - Set up environment variables (optional, defaults to localhost):
-     ```bash
-     # Backend API Configuration (server.js)
-     PGUSER=your_username          # Default: $USER
-     PGHOST=localhost              # Default: localhost
-     PGDATABASE=qafiyah           # Default: qafiyah
-     PGPASSWORD=your_password      # Default: empty
-     PGPORT=5432                   # Default: 5432
-     PORT=3001                     # Backend server port
-     LOG_ENABLED=true              # Enable HTTP request logging (default: true)
-     LOG_DEBUG=false               # Enable verbose database debug logs (default: false)
+   ```bash
+   # Frontend — required for AI mode
+   VITE_GEMINI_API_KEY=your-gemini-api-key
 
-     # Frontend Configuration (.env.local)
-     VITE_API_URL=http://localhost:3001  # Default: http://localhost:3001
-     ```
+   # Frontend — required for Database mode
+   VITE_API_URL=http://localhost:3001          # Points to backend API
 
-   **For Authentication (Optional - Supabase):**
-   - Create a Supabase project at [supabase.com](https://supabase.com)
-   - Go to Project Settings → API
-   - Add to `.env.local`:
-     ```bash
-     VITE_SUPABASE_URL=your-project-url
-     VITE_SUPABASE_ANON_KEY=your-anon-key
-     ```
-   - Run database migrations:
-     ```bash
-     # Install Supabase CLI (if not already installed)
-     npm install -g supabase
-     
-     # Link to your project
-     supabase link --project-ref your-project-ref
-     
-     # Push migrations
-     supabase db push
-     ```
-   - Configure OAuth providers in Supabase Dashboard:
-     - Go to Authentication → Providers
-     - Enable Google and/or Apple
-     - Add OAuth credentials from respective platforms
+   # Frontend — optional, enables auth / saved poems
+   VITE_SUPABASE_URL=https://your-ref.supabase.co
+   VITE_SUPABASE_ANON_KEY=your-jwt-anon-key   # Must start with "eyJ"
+
+   # Backend (server.js) — required for Database mode
+   DATABASE_URL=postgresql://user:pass@host:6543/postgres  # Supabase pooler
+   ```
+
+   **Local PostgreSQL alternative** (instead of Supabase):
+   - Install PostgreSQL 15+ and run `createdb qafiyah`
+   - The backend defaults to `localhost:5432/qafiyah` when `DATABASE_URL` is not set
+
+   **Authentication (optional):**
+   - Install the Supabase CLI: `brew install supabase/tap/supabase`
+   - Link and push migrations: `supabase link --project-ref <ref> && supabase db push`
+   - Enable Google/Apple OAuth in the Supabase Dashboard under Authentication → Providers
 
 3. Start the development server:
 
@@ -195,8 +174,9 @@ poetry-bil-araby/
 │       └── App.test.jsx
 ├── e2e/                     # End-to-end tests (Playwright)
 │   ├── app.spec.js         # Core functionality tests
-│   ├── database-integration.spec.js  # NEW: Database E2E tests
+│   ├── database-integration.spec.js  # Database E2E tests
 │   ├── ui-ux.spec.js       # UI/UX quality tests
+│   ├── design-review-prod.spec.js   # Design review UI + API tests
 │   └── mockup-screenshots.spec.js
 ├── server.js                # NEW: Express API server for database mode
 ├── .github/                 # GitHub configuration
@@ -213,51 +193,43 @@ poetry-bil-araby/
 
 ## Deployment
 
-### Vercel Setup (Recommended)
+### Environment Variables by Service
 
-1. **Install Vercel GitHub App**
-   - Go to [vercel.com/new](https://vercel.com/new)
-   - Click "Import Git Repository"
-   - Select `lesmartiepants/poetry-bil-araby`
+| Variable | Vercel | Render | GitHub Actions |
+|---|---|---|---|
+| `VITE_GEMINI_API_KEY` | Yes | — | — |
+| `VITE_API_URL` | Yes | — | Yes |
+| `VITE_SUPABASE_URL` | Yes | — | — |
+| `VITE_SUPABASE_ANON_KEY` | Yes | — | — |
+| `DATABASE_URL` | — | Yes | Yes |
+| `SUPABASE_SECRET_KEY` | — | Yes | — |
+| `SUPABASE_PROJECT_URL` | — | Yes | — |
+| `SUPABASE_ACCESS_TOKEN` | — | — | Yes |
+| `SUPABASE_PROJECT_REF` | — | — | Yes |
 
-2. **Configure Project**
-   - Framework Preset: **Vite**
-   - Build Command: `npm run build`
-   - Output Directory: `dist`
-   - Install Command: `npm install`
+### Vercel (Frontend)
 
-3. **Add Environment Variables**
-   - In Vercel dashboard, go to Settings → Environment Variables
-   - Add: `VITE_GEMINI_API_KEY` = `your-api-key-here`
-   - Apply to: Production, Preview, Development
+Framework preset: **Vite** | Build: `npm run build` | Output: `dist`
 
-4. **Enable Automatic Deployments**
-   - Every push to `main` → Production deployment
-   - Every PR → Preview deployment with unique URL
-   - PR comments will include preview links
+Set the four `VITE_*` variables above for Production, Preview, and Development environments. Vercel auto-deploys on push to `main` and creates preview URLs for PRs.
 
-5. **Optional: Custom Domain**
-   - Go to Settings → Domains
-   - Add your custom domain
+### Render (Backend API)
 
-### Benefits of Vercel Integration
-- ✅ Automatic preview deployments for every PR
-- ✅ Instant rollbacks
-- ✅ Edge network CDN
-- ✅ Zero configuration
-- ✅ Automatic HTTPS
+Runtime: **Node** | Build: `npm install` | Start: `node server.js`
+
+The `DATABASE_URL` must use the Supabase **connection pooler** host (e.g. `aws-1-us-east-1.pooler.supabase.com:6543`), not the direct host. The direct host (`db.*.supabase.co`) is not reachable from external services.
 
 ## Testing
 
 ### Run Tests
 
 ```bash
-# Unit tests (113 tests)
+# Unit tests
 npm test                    # Watch mode
 npm run test:run            # Single run
 npm run test:coverage       # With coverage
 
-# E2E tests (180+ test executions across devices)
+# E2E tests
 npm run test:e2e            # All E2E tests
 npm run test:e2e:ui         # UI/UX tests only
 npm run test:e2e:headed     # With browser visible
@@ -268,17 +240,14 @@ npm run test:e2e:full       # Full device matrix (local)
 
 ### Test Coverage
 
-- **Unit Tests:** 136 tests covering components, utilities, and integration
-  - Components: 74 tests (UI components, buttons, navigation)
-  - Database Components: 23 tests (DatabaseToggle, ErrorBanner)
-  - Utilities: 18 tests (helper functions, data processing)
-  - Integration: 21 tests (API calls, state management)
-- **E2E Tests:** 45 scenarios × 6 devices = 193+ test executions
-  - Desktop: Chrome, Firefox, Safari
-  - Mobile: Pixel 5, iPhone 12
-  - Tablet: iPad Pro
-  - Database Integration: 13 scenarios (mode toggle, error handling, fetching)
-- **CI/CD:** Optimized pipeline with PostgreSQL service runs in ~3 minutes
+- **Unit Tests:** 168 tests covering components, utilities, design-review, and integration
+- **E2E Tests:** 5 suites across up to 7 device configs
+  - `app.spec.js` — core user flows
+  - `database-integration.spec.js` — database mode toggle, fetching, errors
+  - `ui-ux.spec.js` — responsive design, accessibility, typography
+  - `design-review-prod.spec.js` — design-review UI + prod API round-trip
+  - `mockup-screenshots.spec.js` — screenshot capture
+- **CI/CD:** Optimized pipeline with PostgreSQL service
 - **Documentation:** See `.github/TESTING_STRATEGY.md` for details
 
 ## Documentation

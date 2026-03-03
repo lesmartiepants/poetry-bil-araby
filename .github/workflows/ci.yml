@@ -322,20 +322,9 @@ jobs:
       - name: Deploy to preview environment
         run: echo "Preview deployment will be configured with Vercel/Netlify"
 
-      # Comment on PR with preview link
-      - name: Comment preview URL on PR
-        uses: actions/github-script@v7
-        if: always()
-        with:
-          script: |
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: '🚀 Preview deployment ready! (Vercel/Netlify integration pending)'
-            })
+      # Vercel handles preview comments automatically — no extra comment needed
 
-  # Stage 6: Provide feedback on PR
+  # Stage 6: Provide feedback on PR (upserts a single comment per PR)
   pr-feedback:
     name: PR Feedback Bot
     runs-on: ubuntu-latest
@@ -350,73 +339,57 @@ jobs:
             const testStatus = '${{ needs.test.result }}';
             const e2eStatus = '${{ needs.e2e-tests.result }}';
             const uiUxStatus = '${{ needs.ui-ux-tests.result }}';
-            const codeChanged = '${{ needs.detect-changes.outputs.code-changed }}' === 'true';
-            const testsChanged = '${{ needs.detect-changes.outputs.tests-changed }}' === 'true';
-            const configChanged = '${{ needs.detect-changes.outputs.config-changed }}' === 'true';
 
-            const statusEmoji = (status) => {
-              if (status === 'success') return '✅';
-              if (status === 'failure') return '❌';
-              if (status === 'skipped') return '⏭️';
-              return '⚠️';
-            };
+            const icon = (s) => s === 'success' ? '✅' : s === 'failure' ? '❌' : s === 'skipped' ? '⏭️' : '⚠️';
+            const allPassed = [buildStatus, testStatus, e2eStatus, uiUxStatus].every(s => s === 'success' || s === 'skipped');
 
-            // Smart skip messages
-            const skipReason = !codeChanged && !testsChanged && !configChanged
-              ? 'Documentation-only changes detected - tests skipped'
-              : '';
+            // Build compact body — expand details only on failure
+            let body = `## CI ${allPassed ? '✅' : '❌'}\n\n`;
+            body += `| Check | Status |\n|-------|--------|\n`;
+            body += `| Build | ${icon(buildStatus)} ${buildStatus} |\n`;
+            body += `| Unit Tests | ${icon(testStatus)} ${testStatus} |\n`;
+            body += `| E2E Tests | ${icon(e2eStatus)} ${e2eStatus} |\n`;
+            body += `| UI/UX Tests | ${icon(uiUxStatus)} ${uiUxStatus} |\n`;
 
-            const body = `
-            ## 🤖 CI/CD Feedback Loop - Poetry Bil-Araby
+            // Only show action items when something failed
+            const failures = [];
+            if (buildStatus === 'failure') failures.push('Build');
+            if (testStatus === 'failure') failures.push('Unit Tests');
+            if (e2eStatus === 'failure') failures.push('E2E Tests');
+            if (uiUxStatus === 'failure') failures.push('UI/UX Tests');
 
-            ${skipReason ? `### ℹ️ ${skipReason}\n\n` : ''}
+            if (failures.length > 0) {
+              body += `\n**Failing:** ${failures.join(', ')} — [view logs](${process.env.RUN_URL})\n`;
+            }
 
-            ### 📦 Changed File Categories:
-            - Code Files: ${codeChanged ? '✅ Yes' : '❌ No'}
-            - Test Files: ${testsChanged ? '✅ Yes' : '❌ No'}
-            - Config Files: ${configChanged ? '✅ Yes' : '❌ No'}
+            body += `\n<sub>Run [#${process.env.RUN_NUMBER}](${process.env.RUN_URL}) · ${new Date().toISOString().slice(0, 16)}Z</sub>`;
 
-            | Check | Status | Description |
-            |-------|--------|-------------|
-            | Build | ${statusEmoji(buildStatus)} ${buildStatus} | Application build and compilation |
-            | Unit Tests | ${statusEmoji(testStatus)} ${testStatus} | Component and unit test coverage |
-            | E2E Tests | ${statusEmoji(e2eStatus)} ${e2eStatus} | Playwright functional tests across browsers |
-            | UI/UX Tests | ${statusEmoji(uiUxStatus)} ${uiUxStatus} | Design quality and accessibility checks |
+            // Upsert: find existing bot comment and update it, or create one
+            const MARKER = '<!-- ci-feedback-bot -->';
+            body = MARKER + '\n' + body;
 
-            ### 📊 Test Coverage Details
-
-            **E2E Testing:**
-            - Core functionality tests across Desktop Chrome, Firefox, Safari
-            - Mobile testing on Pixel 5 and iPhone 12 emulation
-            - Tablet testing on iPad Pro emulation
-            - [View Playwright Report](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
-
-            **UI/UX Testing:**
-            - Responsive layout validation
-            - Arabic typography and RTL text handling
-            - Accessibility compliance (WCAG guidelines)
-            - Touch target sizing for mobile
-            - Color contrast and visual consistency
-            - [View UI/UX Report](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
-
-            ### 🎯 Next Steps for AI Contributors:
-            ${e2eStatus === 'failure' ? '- ❌ **Action Required:** E2E tests failing - review test results and fix issues\n' : ''}${uiUxStatus === 'failure' ? '- ❌ **Action Required:** UI/UX tests failing - review design quality issues\n' : ''}- Download test artifacts for detailed failure analysis
-            - Review screenshots and videos for visual regressions
-            - Check Playwright HTML reports for detailed test traces
-            - Ensure all tests pass before merging
-
-            ### 🔍 Debug Resources:
-            - **Playwright Report:** Check "playwright-report" artifact
-            - **UI/UX Screenshots:** Check "ui-ux-screenshots" artifact
-            - **Test Results:** Check "playwright-results" artifact
-            - **Coverage Report:** Check CodeCov integration
-
-            *Automated testing ensures Poetry Bil-Araby maintains high quality across all devices and browsers*
-            `;
-
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
+            const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              body: body
-            })
+              issue_number: context.issue.number,
+            });
+            const existing = comments.find(c => c.body.includes(MARKER));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body: body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: body,
+              });
+            }
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          RUN_NUMBER: ${{ github.run_number }}

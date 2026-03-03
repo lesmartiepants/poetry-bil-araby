@@ -85,6 +85,7 @@
 
     /* Generation badges */
     .gen-badge{display:inline-block;padding:1px 6px;border-radius:3px;font-size:9px;font-weight:700;letter-spacing:.03em;vertical-align:middle;margin-left:4px}
+    .gen-badge.gen-5{background:rgba(34,197,94,.2);color:var(--green);border:1px solid rgba(34,197,94,.3)}
     .gen-badge.gen-4{background:rgba(212,168,75,.2);color:var(--accent);border:1px solid rgba(212,168,75,.3)}
     .gen-badge.gen-3{background:var(--blue-dim);color:var(--blue);border:1px solid rgba(59,130,246,.3)}
     .gen-badge.gen-2{background:var(--surface-3);color:var(--text-3);border:1px solid var(--border)}
@@ -394,14 +395,30 @@
 // ═══════════════════════════════════════════════════════════════
 const CATALOG = [
   {
+    component: 'Branding',
+    id: 'branding',
+    categories: [
+      { id: 'logo', name: 'Logo Options', source: 'PR #129', description: 'Canonical Poetry بالعربي brand treatment — Forum + Reem Kufi baseline-aligned',
+        options: [
+          { id: 'logo-canonical', name: 'Canonical Clean', file: 'branding/logo-option-1-canonical.html', desc: 'Clean baseline: Forum + Reem Kufi, white/dark reversible', generation: 5 },
+          { id: 'logo-gold', name: 'Gold Accent', file: 'branding/logo-option-2-gold-accent.html', desc: 'Gold #C5A059 gradient on poetry, white Arabic', generation: 5 },
+          { id: 'logo-calligraphic', name: 'Calligraphic', file: 'branding/logo-option-3-calligraphic.html', desc: 'Manuscript feel with Amiri, connected flourish via CSS borders', generation: 5 },
+          { id: 'logo-minimal', name: 'Ultra-Minimal', file: 'branding/logo-option-4-minimal.html', desc: 'Tajawal Light + system sans, hairline weight', generation: 5 },
+          { id: 'logo-illuminated', name: 'Illuminated', file: 'branding/logo-option-5-illuminated.html', desc: 'Ornate gold border-image pattern, warm parchment glow', generation: 5 }
+        ],
+        feedback: {}
+      }
+    ]
+  },
+  {
     component: 'Splash Screen',
     id: 'splash',
     categories: [
       { id: 'particles', name: 'Particle Field', source: 'PR #11', description: 'Interactive particle system with fluid motion',
         options: [
           { id: 'particles-opt1', name: 'Refined Particles', file: 'splash/particles/previews/option-1-refined-particles.html', desc: 'Improved hierarchy with larger title and reduced particle density', generation: 1 },
-          { id: 'particles-opt2', name: 'Gold Mystical', file: 'splash/particles/previews/option-2-gold-mystical.html', desc: 'Rich gold palette with Arabic poetry heritage aesthetic', generation: 1 },
-          { id: 'particles-opt3', name: 'Minimal Constellation', file: 'splash/particles/previews/option-3-minimal-constellation.html', desc: 'Sparse, intentional design with connected particle patterns', generation: 1 }
+          { id: 'particles-opt2', name: 'Gold Mystical', file: 'splash/particles/previews/option-2-gold-mystical.html', desc: 'Rich gold palette with Arabic poetry heritage aesthetic — expanded to full E2E', generation: 5 },
+          { id: 'particles-opt3', name: 'Minimal Constellation', file: 'splash/particles/previews/option-3-minimal-constellation.html', desc: 'Sparse, intentional design with connected particle patterns — expanded to full E2E', generation: 5 }
         ],
         feedback: {
           'particles-opt1': "love the slow option and button animation, but miss the brand logo and fonts from the original. something that's missing from the original as well is this feeling that the particles are stars.",
@@ -411,8 +428,8 @@ const CATALOG = [
       },
       { id: 'zen', name: 'Zen Minimalism', source: 'PR #11', description: 'Pure simplicity and calligraphic elegance',
         options: [
-          { id: 'zen-opt1', name: 'Zen Refined', file: 'splash/zen/previews/option-1-refined.html', desc: 'Pure minimalism with expressive calligraphy', generation: 1 },
-          { id: 'zen-opt2', name: 'Haiku Style', file: 'splash/zen/previews/option-2-haiku.html', desc: 'Poetic minimalism with haiku-inspired spacing', generation: 1 }
+          { id: 'zen-opt1', name: 'Zen Refined', file: 'splash/zen/previews/option-1-refined.html', desc: 'Pure minimalism with expressive calligraphy — expanded to full E2E', generation: 5 },
+          { id: 'zen-opt2', name: 'Haiku Style', file: 'splash/zen/previews/option-2-haiku.html', desc: 'Poetic minimalism with haiku-inspired spacing — expanded to full E2E', generation: 5 }
         ],
         feedback: {
           'zen-opt1': "add some zen effect, obvs it should be minimal.\nBring the brand title exactly as it is from the particles original\nmaybe create a smoke animation.",
@@ -441,8 +458,8 @@ const CATALOG = [
       },
       { id: 'light', name: 'Light & Shadow', source: 'PR #11', description: 'Dramatic interplay of light and depth',
         options: [
-          { id: 'light-opt1', name: 'Improved Chiaroscuro', file: 'splash/light/previews/option-1-improved-chiaroscuro.html', desc: 'Dramatic light-dark contrast with Renaissance influence', generation: 1 },
-          { id: 'light-opt3', name: 'Minimal Ray Tracing', file: 'splash/light/previews/option-3-minimal-ray-tracing.html', desc: 'Clean light rays with minimalist approach', generation: 1 }
+          { id: 'light-opt1', name: 'Improved Chiaroscuro', file: 'splash/light/previews/option-1-improved-chiaroscuro.html', desc: 'Dramatic light-dark contrast with Renaissance influence — expanded to full E2E', generation: 5 },
+          { id: 'light-opt3', name: 'Minimal Ray Tracing', file: 'splash/light/previews/option-3-minimal-ray-tracing.html', desc: 'Clean light rays with minimalist approach — expanded to full E2E', generation: 5 }
         ],
         feedback: {
           'light-opt1': "the fonts were better on the original. the light in the back is nice. bring some of the light particles from option 3 in and make sure the animation is a bit slower.",
@@ -478,9 +495,9 @@ const CATALOG = [
       { id: 'ctrl-all', name: 'Control Bar Styles', source: 'PR #50', description: 'Save, zoom, transliteration bar explorations',
         options: [
           { id: 'ctrl-minimalist', name: 'Minimalist (Jony Ive)', file: 'controls/minimalist/vertical-controls-option1-minimalist.html', desc: 'Right-aligned, icons-only with hover tooltips. Glass morphism.', generation: 1 },
-          { id: 'ctrl-notion', name: 'Notion / Linear', file: 'controls/notion/vertical-controls-option3-notion.html', desc: 'Compact 40px controls, A+/A- zoom, dark tooltips.', generation: 1 },
-          { id: 'ctrl-brutalist', name: 'Brutalist Terminal', file: 'controls/brutalist/vertical-controls-option4-wildcard.html', desc: 'Full-height left sidebar. Retro CRT aesthetic, monochrome green.', generation: 1 },
-          { id: 'ctrl-neumorphic', name: 'Neumorphic (Soft UI)', file: 'controls/neumorphic/vertical-controls-option6-neumorphic.html', desc: 'Left sidebar, soft shadows, tactile raised/inset states.', generation: 1 },
+          { id: 'ctrl-notion', name: 'Notion / Linear', file: 'controls/notion/vertical-controls-option3-notion.html', desc: 'Compact controls with Lucide icons, updated layout (heart, type, languages, book-open, italic, log-in, settings)', generation: 5 },
+          { id: 'ctrl-brutalist', name: 'Brutalist Terminal', file: 'controls/brutalist/vertical-controls-option4-wildcard.html', desc: 'Full-height left sidebar. Retro CRT aesthetic with Lucide icons and updated control layout.', generation: 5 },
+          { id: 'ctrl-neumorphic', name: 'Neumorphic (Soft UI)', file: 'controls/neumorphic/vertical-controls-option6-neumorphic.html', desc: 'Soft shadows with Lucide icons, mobile-fixed sizing, updated control layout.', generation: 5 },
           { id: 'ctrl-scandi', name: 'Scandinavian Minimal', file: 'controls/scandinavian/vertical-controls-option9-scandinavian.html', desc: 'Right-aligned circular buttons, Nordic simplicity.', generation: 1 }
         ],
         feedback: {}
@@ -500,6 +517,13 @@ const CATALOG = [
           { id: 'auth-overflow', name: 'Mobile Overflow', file: 'auth/auth-mobile-overflow.html', desc: 'Full menu with bilingual labels.', generation: 1 }
         ],
         feedback: {}
+      },
+      { id: 'auth-e2e', name: 'Auth E2E Flows', source: 'PR #129', description: 'Complete sign-in and sign-out guided flows with pulsing glow overlay',
+        options: [
+          { id: 'auth-e2e-sso', name: 'SSO Sign-In Flow', file: 'auth/e2e-auth-sso-flow.html', desc: 'Guided tap overlay: heart → tooltip → auth modal (Google/Apple/Email) → signed-in → save poem', generation: 5 },
+          { id: 'auth-e2e-signout', name: 'Sign-Out Flow', file: 'auth/e2e-auth-signout-flow.html', desc: 'Guided tap overlay: sign-out → confirmation → signed-out → re-auth cycle', generation: 5 }
+        ],
+        feedback: {}
       }
     ]
   },
@@ -512,46 +536,46 @@ const CATALOG = [
     categories: [
       { id: 'e2e-78ab', name: 'Set 78ab', source: 'PR #64', description: 'Complete app flows from branch 78ab. Gen 4 items are radical redesigns (iteration 7).',
         options: [
-          { id: 'e2e-78ab-a1', name: 'A1 Gold Orbit Story', file: 'e2e/set-78ab/e2e-a1-gold-orbit-story.html', desc: 'Gold particle orbits with story-driven navigation', generation: 3, iteration: 7, source_branch: 'cursor/innovative-ui-ux-mockups-78ab', source_pr: '#64' },
-          { id: 'e2e-78ab-a2', name: 'A2 Paper Photon', file: 'e2e/set-78ab/e2e-a2-paper-photon.html', desc: 'Paper texture with photon light effects', generation: 4, iteration: 7, source_branch: 'cursor/innovative-ui-ux-mockups-78ab', source_pr: '#64' },
-          { id: 'e2e-78ab-a3', name: 'A3 Ink Mono Archive', file: 'e2e/set-78ab/e2e-a3-ink-mono-archive.html', desc: 'Monochrome ink archive with editorial layout', generation: 3, iteration: 7, source_branch: 'cursor/innovative-ui-ux-mockups-78ab', source_pr: '#64' },
+          { id: 'e2e-78ab-a1', name: 'A1 Gold Orbit Story', file: 'e2e/set-78ab/e2e-a1-gold-orbit-story.html', desc: 'Gold particle orbits — sequential bilingual walkthrough, updated controls, faster orbits', generation: 5, iteration: 7, source_branch: 'cursor/innovative-ui-ux-mockups-78ab', source_pr: '#64' },
+          { id: 'e2e-78ab-a2', name: 'A2 Paper Photon', file: 'e2e/set-78ab/e2e-a2-paper-photon.html', desc: 'Paper texture — English-primary bilingual onboarding, fixed font scale', generation: 5, iteration: 7, source_branch: 'cursor/innovative-ui-ux-mockups-78ab', source_pr: '#64' },
+          { id: 'e2e-78ab-a3', name: 'A3 Ink Mono Archive', file: 'e2e/set-78ab/e2e-a3-ink-mono-archive.html', desc: 'Monochrome ink — real Arabic letter-by-letter reveal (RTL), brand, updated controls', generation: 5, iteration: 7, source_branch: 'cursor/innovative-ui-ux-mockups-78ab', source_pr: '#64' },
           { id: 'e2e-78ab-a6', name: 'A6 Nordic Quiet Reader', file: 'e2e/set-78ab/e2e-a6-nordic-quiet-reader.html', desc: 'Scandinavian-inspired calm reading experience', generation: 4, iteration: 7, source_branch: 'cursor/innovative-ui-ux-mockups-78ab', source_pr: '#64' },
-          { id: 'e2e-78ab-a8', name: 'A8 Deco Discovery', file: 'e2e/set-78ab/e2e-a8-deco-discovery.html', desc: 'Art deco framing with discovery navigation', generation: 4, iteration: 7, source_branch: 'cursor/innovative-ui-ux-mockups-78ab', source_pr: '#64' },
+          { id: 'e2e-78ab-a8', name: 'A8 Deco Discovery', file: 'e2e/set-78ab/e2e-a8-deco-discovery.html', desc: 'Art deco — unified color palette, bilingual walkthrough, updated controls', generation: 5, iteration: 7, source_branch: 'cursor/innovative-ui-ux-mockups-78ab', source_pr: '#64' },
           { id: 'e2e-78ab-b1', name: 'B1 Zen Particles Steel Scroll', file: 'e2e/set-78ab/e2e-b1-zen-particles-steel-scroll.html', desc: 'Zen minimalism with steel-toned scroll interface', generation: 3, iteration: 7, source_branch: 'cursor/innovative-ui-ux-mockups-78ab', source_pr: '#64' },
           { id: 'e2e-78ab-b2', name: 'B2 Spotlight Ether', file: 'e2e/set-78ab/e2e-b2-spotlight-ether.html', desc: 'Ethereal spotlight with floating text presentation', generation: 4, iteration: 7, source_branch: 'cursor/innovative-ui-ux-mockups-78ab', source_pr: '#64' },
           { id: 'e2e-78ab-b4', name: 'B4 Particle Cathedral', file: 'e2e/set-78ab/e2e-b4-particle-cathedral.html', desc: 'Cathedral-scale particle field with vaulted reading space', generation: 4, iteration: 7, source_branch: 'cursor/innovative-ui-ux-mockups-78ab', source_pr: '#64' },
-          { id: 'e2e-78ab-b8', name: 'B8 Ritual Spotlight Hybrid', file: 'e2e/set-78ab/e2e-b8-ritual-spotlight-hybrid.html', desc: 'Ritualistic spotlight with hybrid navigation', generation: 4, iteration: 7, source_branch: 'cursor/innovative-ui-ux-mockups-78ab', source_pr: '#64' },
-          { id: 'e2e-78ab-b10', name: 'B10 Signature Blend', file: 'e2e/set-78ab/e2e-b10-signature-blend.html', desc: 'Blended signature styles with tessellating patterns', generation: 4, iteration: 7, source_branch: 'cursor/innovative-ui-ux-mockups-78ab', source_pr: '#64' }
+          { id: 'e2e-78ab-b8', name: 'B8 Ritual Spotlight Hybrid', file: 'e2e/set-78ab/e2e-b8-ritual-spotlight-hybrid.html', desc: 'Ritualistic spotlight — brand added, vertical line removed, updated controls', generation: 5, iteration: 7, source_branch: 'cursor/innovative-ui-ux-mockups-78ab', source_pr: '#64' },
+          { id: 'e2e-78ab-b10', name: 'B10 Signature Blend', file: 'e2e/set-78ab/e2e-b10-signature-blend.html', desc: 'Signature blend — improved text contrast, fade-then-draw sequence, updated controls', generation: 5, iteration: 7, source_branch: 'cursor/innovative-ui-ux-mockups-78ab', source_pr: '#64' }
         ],
         feedback: {}
       },
       { id: 'e2e-c0cf-a', name: 'Set c0cf-A', source: 'PR #65', description: 'Complete app flows set A from branch c0cf. Gen 4 items are radical redesigns.',
         options: [
           { id: 'e2e-c0cf-a-01', name: '01 Ethereal Gold', file: 'e2e/set-c0cf-a/01-ethereal-gold.html', desc: 'Ethereal gold tones with floating poem presentation', generation: 3, iteration: 7, source_branch: 'cursor/innovative-ui-ux-mockups-c0cf', source_pr: '#65' },
-          { id: 'e2e-c0cf-a-02', name: '02 Zen Manuscript', file: 'e2e/set-c0cf-a/02-zen-manuscript.html', desc: 'Zen simplicity meets manuscript aesthetics', generation: 4, iteration: 7, source_branch: 'cursor/innovative-ui-ux-mockups-c0cf', source_pr: '#65' },
+          { id: 'e2e-c0cf-a-02', name: '02 Zen Manuscript', file: 'e2e/set-c0cf-a/02-zen-manuscript.html', desc: 'Zen + manuscript — no emojis, water ripple kept, brand, bilingual onboarding, updated controls', generation: 5, iteration: 7, source_branch: 'cursor/innovative-ui-ux-mockups-c0cf', source_pr: '#65' },
           { id: 'e2e-c0cf-a-03', name: '03 Cosmic Scholar', file: 'e2e/set-c0cf-a/03-cosmic-scholar.html', desc: 'Cosmic backdrop with scholarly reading interface', generation: 3, iteration: 7, source_branch: 'cursor/innovative-ui-ux-mockups-c0cf', source_pr: '#65' },
-          { id: 'e2e-c0cf-a-04', name: '04 Desert Poet', file: 'e2e/set-c0cf-a/04-desert-poet.html', desc: 'Desert landscape with poetry-focused warm tones', generation: 4, iteration: 7, source_branch: 'cursor/innovative-ui-ux-mockups-c0cf', source_pr: '#65' },
+          { id: 'e2e-c0cf-a-04', name: '04 Desert Poet', file: 'e2e/set-c0cf-a/04-desert-poet.html', desc: 'Desert landscape — polished poem page, bilingual onboarding, brand at splash, updated controls', generation: 5, iteration: 7, source_branch: 'cursor/innovative-ui-ux-mockups-c0cf', source_pr: '#65' },
           { id: 'e2e-c0cf-a-05', name: '05 Pure Ink', file: 'e2e/set-c0cf-a/05-pure-ink.html', desc: 'Pure ink brushstroke aesthetics with gravity letters', generation: 4, iteration: 7, source_branch: 'cursor/innovative-ui-ux-mockups-c0cf', source_pr: '#65' },
           { id: 'e2e-c0cf-a-06', name: '06 Bento Modernist', file: 'e2e/set-c0cf-a/06-bento-modernist.html', desc: 'Modern bento grid with shattered mirror effect', generation: 4, iteration: 7, source_branch: 'cursor/innovative-ui-ux-mockups-c0cf', source_pr: '#65' },
-          { id: 'e2e-c0cf-a-07', name: '07 Scroll Keeper', file: 'e2e/set-c0cf-a/07-scroll-keeper.html', desc: 'Ancient scroll keeper with preserved text layout', generation: 3, iteration: 7, source_branch: 'cursor/innovative-ui-ux-mockups-c0cf', source_pr: '#65' },
+          { id: 'e2e-c0cf-a-07', name: '07 Scroll Keeper', file: 'e2e/set-c0cf-a/07-scroll-keeper.html', desc: 'Scroll keeper — paper/parchment textures, CSS grain noise, brand, updated controls', generation: 5, iteration: 7, source_branch: 'cursor/innovative-ui-ux-mockups-c0cf', source_pr: '#65' },
           { id: 'e2e-c0cf-a-08', name: '08 Glass Pavilion', file: 'e2e/set-c0cf-a/08-glass-pavilion.html', desc: 'Glass pavilion architecture with translucent layers', generation: 3, iteration: 7, source_branch: 'cursor/innovative-ui-ux-mockups-c0cf', source_pr: '#65' },
-          { id: 'e2e-c0cf-a-09', name: '09 Mosaic Discovery', file: 'e2e/set-c0cf-a/09-mosaic-discovery.html', desc: 'Living geometry with mosaic tile discovery', generation: 4, iteration: 7, source_branch: 'cursor/innovative-ui-ux-mockups-c0cf', source_pr: '#65' },
-          { id: 'e2e-c0cf-a-10', name: '10 Calligraphy Flow', file: 'e2e/set-c0cf-a/10-calligraphy-flow.html', desc: 'Breathing typography with calligraphic flow', generation: 4, iteration: 7, source_branch: 'cursor/innovative-ui-ux-mockups-c0cf', source_pr: '#65' }
+          { id: 'e2e-c0cf-a-09', name: '09 Mosaic Discovery', file: 'e2e/set-c0cf-a/09-mosaic-discovery.html', desc: 'Mosaic — CTA button on splash, sequential bilingual walkthrough, brand, updated controls', generation: 5, iteration: 7, source_branch: 'cursor/innovative-ui-ux-mockups-c0cf', source_pr: '#65' },
+          { id: 'e2e-c0cf-a-10', name: '10 Calligraphy Flow', file: 'e2e/set-c0cf-a/10-calligraphy-flow.html', desc: 'Calligraphy — fixed Arabic rendering (connected RTL), sequential bilingual flow, brand', generation: 5, iteration: 7, source_branch: 'cursor/innovative-ui-ux-mockups-c0cf', source_pr: '#65' }
         ],
         feedback: {}
       },
       { id: 'e2e-c0cf-b', name: 'Set c0cf-B', source: 'PR #65', description: 'Complete app flows set B from branch c0cf. Gen 3 hardened iterations.',
         options: [
-          { id: 'e2e-c0cf-b-01', name: '01 Particle Scroll', file: 'e2e/set-c0cf-b/01-particle-scroll.html', desc: 'Particle effects with scroll-based navigation', generation: 3, iteration: 6, source_branch: 'cursor/innovative-ui-ux-mockups-c0cf', source_pr: '#65' },
+          { id: 'e2e-c0cf-b-01', name: '01 Particle Scroll', file: 'e2e/set-c0cf-b/01-particle-scroll.html', desc: 'Particle splash kept — redesigned onboarding + main app, updated controls', generation: 5, iteration: 6, source_branch: 'cursor/innovative-ui-ux-mockups-c0cf', source_pr: '#65' },
           { id: 'e2e-c0cf-b-02', name: '02 Ethereal Spotlight', file: 'e2e/set-c0cf-b/02-ethereal-spotlight.html', desc: 'Ethereal light with spotlight poem presentation', generation: 3, iteration: 6, source_branch: 'cursor/innovative-ui-ux-mockups-c0cf', source_pr: '#65' },
           { id: 'e2e-c0cf-b-03', name: '03 Notion Zen', file: 'e2e/set-c0cf-b/03-notion-zen.html', desc: 'Notion-inspired layout with zen minimalism', generation: 3, iteration: 6, source_branch: 'cursor/innovative-ui-ux-mockups-c0cf', source_pr: '#65' },
-          { id: 'e2e-c0cf-b-04', name: '04 Neumorphic Warmth', file: 'e2e/set-c0cf-b/04-neumorphic-warmth.html', desc: 'Warm neumorphic surfaces with soft shadows', generation: 3, iteration: 6, source_branch: 'cursor/innovative-ui-ux-mockups-c0cf', source_pr: '#65' },
-          { id: 'e2e-c0cf-b-05', name: '05 Scroll Codex', file: 'e2e/set-c0cf-b/05-scroll-codex.html', desc: 'Codex-style scroll with chapter navigation', generation: 3, iteration: 6, source_branch: 'cursor/innovative-ui-ux-mockups-c0cf', source_pr: '#65' },
+          { id: 'e2e-c0cf-b-04', name: '04 Neumorphic Warmth', file: 'e2e/set-c0cf-b/04-neumorphic-warmth.html', desc: 'Neumorphic + paper — color harmony fix, brand, updated controls', generation: 5, iteration: 6, source_branch: 'cursor/innovative-ui-ux-mockups-c0cf', source_pr: '#65' },
+          { id: 'e2e-c0cf-b-05', name: '05 Scroll Codex', file: 'e2e/set-c0cf-b/05-scroll-codex.html', desc: 'Codex scroll — smoother CSS animation, brand, general polish, updated controls', generation: 5, iteration: 6, source_branch: 'cursor/innovative-ui-ux-mockups-c0cf', source_pr: '#65' },
           { id: 'e2e-c0cf-b-06', name: '06 Spotlight Library', file: 'e2e/set-c0cf-b/06-spotlight-library.html', desc: 'Library shelves with spotlight reading mode', generation: 3, iteration: 6, source_branch: 'cursor/innovative-ui-ux-mockups-c0cf', source_pr: '#65' },
-          { id: 'e2e-c0cf-b-07', name: '07 Particle Neumorphic', file: 'e2e/set-c0cf-b/07-particle-neumorphic.html', desc: 'Particle effects with neumorphic controls', generation: 3, iteration: 6, source_branch: 'cursor/innovative-ui-ux-mockups-c0cf', source_pr: '#65' },
-          { id: 'e2e-c0cf-b-08', name: '08 Zen Spotlight', file: 'e2e/set-c0cf-b/08-zen-spotlight.html', desc: 'Zen calm with focused spotlight on text', generation: 3, iteration: 6, source_branch: 'cursor/innovative-ui-ux-mockups-c0cf', source_pr: '#65' },
-          { id: 'e2e-c0cf-b-09', name: '09 Scandinavian Scroll', file: 'e2e/set-c0cf-b/09-scandinavian-scroll.html', desc: 'Nordic simplicity with scroll-based reading', generation: 3, iteration: 6, source_branch: 'cursor/innovative-ui-ux-mockups-c0cf', source_pr: '#65' },
-          { id: 'e2e-c0cf-b-10', name: '10 Ethereal Constellation', file: 'e2e/set-c0cf-b/10-ethereal-constellation.html', desc: 'Constellation patterns with ethereal transitions', generation: 3, iteration: 6, source_branch: 'cursor/innovative-ui-ux-mockups-c0cf', source_pr: '#65' }
+          { id: 'e2e-c0cf-b-07', name: '07 Particle Neumorphic', file: 'e2e/set-c0cf-b/07-particle-neumorphic.html', desc: 'Black/white/gold palette, no emojis, designer-level cleanup, updated controls', generation: 5, iteration: 6, source_branch: 'cursor/innovative-ui-ux-mockups-c0cf', source_pr: '#65' },
+          { id: 'e2e-c0cf-b-08', name: '08 Zen Spotlight', file: 'e2e/set-c0cf-b/08-zen-spotlight.html', desc: 'Actual hourglass with falling sand (canvas particles), no emojis, deep polish', generation: 5, iteration: 6, source_branch: 'cursor/innovative-ui-ux-mockups-c0cf', source_pr: '#65' },
+          { id: 'e2e-c0cf-b-09', name: '09 Scandinavian Scroll', file: 'e2e/set-c0cf-b/09-scandinavian-scroll.html', desc: 'Nordic scroll intro — brand added, no emojis, elevated typography, updated controls', generation: 5, iteration: 6, source_branch: 'cursor/innovative-ui-ux-mockups-c0cf', source_pr: '#65' },
+          { id: 'e2e-c0cf-b-10', name: '10 Ethereal Constellation', file: 'e2e/set-c0cf-b/10-ethereal-constellation.html', desc: 'Dark + purple accent, sequential bilingual walkthrough, no emojis, updated controls', generation: 5, iteration: 6, source_branch: 'cursor/innovative-ui-ux-mockups-c0cf', source_pr: '#65' }
         ],
         feedback: {}
       }
@@ -696,7 +720,7 @@ function curOpt() { return curCat().options[st.optIdx]; }
 function getReview(id) { return reviewData[id] || { verdict: null, comment: '', tags: '' }; }
 function escHtml(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
 function genBadge(gen) {
-  const l = { 4: 'Gen 4 Redesign', 3: 'Gen 3 Hardened', 2: 'Gen 2 Draft', 1: 'Gen 1 Explore' };
+  const l = { 5: 'Gen 5 Polished', 4: 'Gen 4 Redesign', 3: 'Gen 3 Hardened', 2: 'Gen 2 Draft', 1: 'Gen 1 Explore' };
   return '<span class="gen-badge gen-' + gen + '">' + (l[gen] || 'Gen ' + gen) + '</span>';
 }
 

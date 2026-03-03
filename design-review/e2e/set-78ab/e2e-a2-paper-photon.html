@@ -69,61 +69,98 @@ body {
   box-shadow: 0 0 30px var(--glow-gold);
 }
 
-/* ---- Walkthrough ---- */
+/* ---- Walkthrough (Editorial/Magazine) ---- */
 #walkthrough {
   position: fixed; inset: 0; z-index: 90; background: var(--void);
   display: none; flex-direction: column; align-items: center; justify-content: center;
-  transition: opacity 0.6s ease;
+  cursor: pointer; overflow: hidden;
 }
 #walkthrough.active { display: flex; }
-#walkthrough.fade-out { opacity: 0; pointer-events: none; }
-.wt-card {
-  display: none; flex-direction: column; align-items: center; gap: 1rem;
-  max-width: 400px; padding: 2.5rem 2rem; text-align: center;
-  border: 1px solid var(--star-dim); border-radius: 16px;
-  background: rgba(10,15,46,0.6); position: relative;
-  will-change: opacity, transform; animation: cardIn 0.5s ease forwards;
+
+/* Editorial spread: text-heavy, magazine typography */
+.editorial-page {
+  display: none; flex-direction: column; align-items: center;
+  max-width: 480px; width: 90%; padding: 3rem 2rem;
+  position: relative; text-align: left;
 }
-.wt-card.active { display: flex; }
-@keyframes cardIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+.editorial-page.active {
+  display: flex;
+  animation: pageFlip 0.6s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.wt-icon {
-  width: 48px; height: 48px; border-radius: 50%;
-  background: rgba(197,160,89,0.1); display: flex;
-  align-items: center; justify-content: center; color: var(--gold);
+@keyframes pageFlip {
+  from { opacity: 0; transform: rotateY(-8deg) translateX(30px); }
+  to { opacity: 1; transform: rotateY(0deg) translateX(0); }
 }
-.wt-card h3 {
-  font-family: var(--font-ui); font-size: clamp(1.1rem, 2.5vw, 1.4rem);
-  color: var(--star); font-weight: 500; direction: ltr;
+
+/* Issue number / section header */
+.editorial-section {
+  font-family: var(--font-ui); font-size: 0.65rem;
+  letter-spacing: 0.4em; text-transform: uppercase;
+  color: var(--gold); margin-bottom: 2rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(197, 160, 89, 0.3);
+  width: 100%;
 }
-.wt-card .wt-ar {
-  font-family: var(--font-ui); font-size: clamp(0.9rem, 2vw, 1.1rem);
-  color: var(--gold); direction: rtl;
+
+/* Large editorial headline */
+.editorial-headline {
+  font-family: var(--font-display); font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 700; color: var(--star); line-height: 1.2;
+  margin-bottom: 0.75rem; direction: ltr;
 }
-.wt-card p {
-  font-size: clamp(0.8rem, 1.8vw, 0.95rem); line-height: 1.7;
-  color: var(--star-dim); direction: ltr;
+
+.editorial-headline-ar {
+  font-family: var(--font-display); font-size: clamp(1.5rem, 4vw, 2.25rem);
+  font-weight: 700; color: var(--gold); line-height: 1.4;
+  direction: rtl; margin-bottom: 1.5rem;
 }
-.wt-nav { display: flex; gap: 1rem; margin-top: 2rem; }
-.wt-btn {
-  min-width: 100px; min-height: 44px; padding: 0.6rem 1.6rem;
-  border: 1px solid var(--gold); border-radius: 24px; background: transparent;
-  color: var(--gold); font-family: var(--font-ui); font-size: 0.95rem;
-  cursor: pointer; transition: background 0.3s, box-shadow 0.3s;
-  touch-action: manipulation;
+
+/* Body copy: text-heavy editorial style */
+.editorial-body {
+  font-family: var(--font-display); font-size: 1rem;
+  line-height: 1.9; color: var(--star-dim); direction: ltr;
+  margin-bottom: 0.75rem;
 }
-.wt-btn:hover, .wt-btn:focus-visible {
-  background: rgba(197,160,89,0.15); box-shadow: 0 0 14px var(--glow-gold);
-  outline: 2px solid var(--gold); outline-offset: 2px;
+
+.editorial-body-ar {
+  font-family: var(--font-display); font-size: 0.95rem;
+  line-height: 1.9; color: rgba(197, 160, 89, 0.4);
+  direction: rtl; margin-bottom: 1.5rem;
 }
-.wt-indicators { display: flex; gap: 10px; margin-top: 1.5rem; }
-.wt-ind {
-  width: 10px; height: 10px; border-radius: 50%;
-  background: var(--star-dim); transition: background 0.3s, box-shadow 0.3s;
+
+/* Pull quote */
+.editorial-pull {
+  font-family: var(--font-display); font-size: 1.125rem;
+  font-style: italic; color: var(--gold); line-height: 1.6;
+  padding: 1rem 0; margin: 0.5rem 0;
+  border-top: 1px solid rgba(197, 160, 89, 0.2);
+  border-bottom: 1px solid rgba(197, 160, 89, 0.2);
+  text-align: center;
 }
-.wt-ind.active { background: var(--gold); box-shadow: 0 0 8px var(--glow-gold); }
+
+/* Page number at bottom */
+.editorial-page-num {
+  margin-top: auto; padding-top: 1.5rem;
+  font-family: var(--font-ui); font-size: 0.7rem;
+  letter-spacing: 0.3em; color: rgba(232, 228, 240, 0.2);
+  text-transform: uppercase; width: 100%; text-align: right;
+}
+
+.editorial-hint {
+  position: fixed; bottom: 2rem; left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.65rem; letter-spacing: 0.3em;
+  text-transform: uppercase; color: rgba(232, 228, 240, 0.2);
+  z-index: 5;
+}
+
+/* Thin line progress */
+.editorial-progress {
+  position: fixed; bottom: 0; left: 0;
+  height: 2px; background: var(--gold);
+  transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 5; opacity: 0.6;
+}
 
 /* ---- Main App ---- */
 #app {
@@ -265,42 +302,38 @@ body {
   <button class="splash-enter" onclick="startWalkthrough()">Enter</button>
 </div>
 
-<!-- Walkthrough -->
+<!-- Walkthrough (Editorial/Magazine) -->
 <div id="walkthrough">
-  <div class="wt-card active" data-step="0">
-    <div class="wt-icon"><i data-lucide="compass" style="width:24px;height:24px"></i></div>
-    <h3>Discover 84,000+ Poems</h3>
-    <div class="wt-ar">اكتشف الشعر العربي</div>
-    <p>Browse a vast archive of classical and modern Arabic poetry spanning centuries of literary tradition.</p>
+  <div class="editorial-page active" data-page="0">
+    <div class="editorial-section">Issue No. 1 -- The Archive</div>
+    <div class="editorial-headline">Discover Arabic Poetry</div>
+    <div class="editorial-headline-ar" lang="ar" dir="rtl">اكتشف الشعر العربي</div>
+    <div class="editorial-body">Over 84,000 poems from the golden age of Arabic literature through the modern era. A living archive spanning centuries of verse, wisdom, and beauty -- waiting to be read.</div>
+    <div class="editorial-body-ar" lang="ar" dir="rtl">أكثر من 84,000 قصيدة من العصر الذهبي للأدب العربي إلى العصر الحديث في أرشيف حي ينتظر القراءة</div>
+    <div class="editorial-page-num">Page 1 of 3</div>
   </div>
-  <div class="wt-card" data-step="1">
-    <div class="wt-icon"><i data-lucide="headphones" style="width:24px;height:24px"></i></div>
-    <h3>Listen to Natural Recitation</h3>
-    <div class="wt-ar">استمع للإلقاء</div>
-    <p>Hear poems recited with natural AI-generated voices that capture the rhythm and beauty of Arabic verse.</p>
+
+  <div class="editorial-page" data-page="1">
+    <div class="editorial-section">Issue No. 2 -- The Voice</div>
+    <div class="editorial-headline">Listen & Feel</div>
+    <div class="editorial-headline-ar" lang="ar" dir="rtl">استمع واشعر</div>
+    <div class="editorial-body">AI-powered recitation captures the natural rhythm and melody of Arabic verse. Each poem breathes with the cadence of its original meter.</div>
+    <div class="editorial-pull" lang="ar" dir="rtl">"الشعر ديوان العرب"</div>
+    <div class="editorial-body-ar" lang="ar" dir="rtl">إلقاء صوتي يلتقط الإيقاع الطبيعي ولحن الشعر العربي</div>
+    <div class="editorial-page-num">Page 2 of 3</div>
   </div>
-  <div class="wt-card" data-step="2">
-    <div class="wt-icon"><i data-lucide="sparkles" style="width:24px;height:24px"></i></div>
-    <h3>AI-Powered Insights</h3>
-    <div class="wt-ar">رؤى ذكية</div>
-    <p>Get deep analysis of meter, meaning, and historical context with intelligent annotations.</p>
+
+  <div class="editorial-page" data-page="2">
+    <div class="editorial-section">Issue No. 3 -- The Insight</div>
+    <div class="editorial-headline">AI Insights</div>
+    <div class="editorial-headline-ar" lang="ar" dir="rtl">رؤى ذكية</div>
+    <div class="editorial-body">Deep analysis illuminates meter, meaning, and historical context. Intelligent annotations guide you through layers of poetic tradition.</div>
+    <div class="editorial-body-ar" lang="ar" dir="rtl">تحليل عميق يكشف الوزن والمعنى والسياق التاريخي لكل قصيدة</div>
+    <div class="editorial-page-num">Page 3 of 3</div>
   </div>
-  <div class="wt-card" data-step="3">
-    <div class="wt-icon"><i data-lucide="heart" style="width:24px;height:24px"></i></div>
-    <h3>Save Your Favorites</h3>
-    <div class="wt-ar">احفظ المفضلات</div>
-    <p>Build your personal collection and share the beauty of Arabic poetry with friends.</p>
-  </div>
-  <div class="wt-nav">
-    <button class="wt-btn" id="wt-prev" style="visibility:hidden">Previous</button>
-    <button class="wt-btn" id="wt-next">Next</button>
-  </div>
-  <div class="wt-indicators">
-    <div class="wt-ind active"></div>
-    <div class="wt-ind"></div>
-    <div class="wt-ind"></div>
-    <div class="wt-ind"></div>
-  </div>
+
+  <div class="editorial-hint">Tap to turn page</div>
+  <div class="editorial-progress" id="edProgress" style="width: 33%"></div>
 </div>
 
 <!-- Main App -->
@@ -451,39 +484,31 @@ body {
   window.addEventListener('resize', function() { initSplash(); initBg(); });
 
   /* ============================================
-     2. WALKTHROUGH
+     2. WALKTHROUGH (Editorial Page-Flip)
      ============================================ */
-  var wtStep = 0;
-  var wtCards = document.querySelectorAll('.wt-card');
-  var wtInds = document.querySelectorAll('.wt-ind');
-  var wtPrev = document.getElementById('wt-prev');
-  var wtNext = document.getElementById('wt-next');
+  var edPages = document.querySelectorAll('.editorial-page');
+  var edProgress = document.getElementById('edProgress');
+  var currentEd = 0;
+  var totalEd = 3;
 
-  function showStep(n) {
-    for (var i = 0; i < wtCards.length; i++) wtCards[i].classList.remove('active');
-    for (var j = 0; j < wtInds.length; j++) wtInds[j].classList.remove('active');
-    wtCards[n].classList.add('active');
-    wtInds[n].classList.add('active');
-    wtPrev.style.visibility = n === 0 ? 'hidden' : 'visible';
-    wtNext.textContent = n === 3 ? 'Start' : 'Next';
-  }
-
-  wtNext.addEventListener('click', function() {
-    if (wtStep < 3) { wtStep++; showStep(wtStep); }
-    else {
-      document.getElementById('walkthrough').classList.add('fade-out');
+  document.getElementById('walkthrough').addEventListener('click', function() {
+    currentEd++;
+    if (currentEd >= totalEd) {
+      var wt = document.getElementById('walkthrough');
+      wt.style.opacity = '0';
+      wt.style.transition = 'opacity 0.6s ease';
       setTimeout(function() {
-        document.getElementById('walkthrough').style.display = 'none';
+        wt.style.display = 'none';
         document.getElementById('app').classList.add('active');
         initBg();
         if (!prefersReduced()) bgRAF = requestAnimationFrame(drawBg);
         if (typeof lucide !== 'undefined') lucide.createIcons();
       }, 600);
+    } else {
+      edPages.forEach(function(p) { p.classList.remove('active'); });
+      edPages[currentEd].classList.add('active');
+      edProgress.style.width = ((currentEd + 1) / totalEd * 100) + '%';
     }
-  });
-
-  wtPrev.addEventListener('click', function() {
-    if (wtStep > 0) { wtStep--; showStep(wtStep); }
   });
 
   window.startWalkthrough = function() {

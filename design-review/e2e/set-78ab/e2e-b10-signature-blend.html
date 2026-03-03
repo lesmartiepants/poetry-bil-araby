@@ -73,49 +73,94 @@ body.light { background: var(--ivory); color: #1a2a1f; }
 @keyframes fadeInContent { to { opacity: 1; } }
 @keyframes splashOut { to { opacity: 0; pointer-events: none; } }
 
-/* ===== WALKTHROUGH ===== */
+/* ===== WALKTHROUGH (Organic Biomorphic) ===== */
 .walkthrough {
   position: fixed; inset: 0; z-index: 9998;
-  background: rgba(6,30,22,0.97); display: none;
+  background: var(--emerald); display: none;
   align-items: center; justify-content: center;
-  padding: 20px; cursor: pointer;
-  flex-direction: column;
+  cursor: pointer; flex-direction: column;
+  overflow: hidden;
 }
 .walkthrough.active { display: flex; }
 
-.walk-card {
-  max-width: 400px; width: 90%; padding: 2rem; text-align: center;
-  background: linear-gradient(135deg, rgba(10,61,47,0.9), rgba(26,107,90,0.3));
-  border: 1px solid var(--gold-dim); border-radius: 16px;
-  opacity: 0; transform: translateY(20px);
-  transition: opacity 0.5s ease, transform 0.5s ease;
+/* Animated organic blob background */
+.bio-blob {
+  position: absolute; border-radius: 50%;
+  filter: blur(60px); pointer-events: none;
+  transition: all 1.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
-.walk-card.visible { opacity: 1; transform: translateY(0); }
+.bio-blob-1 {
+  width: 300px; height: 300px;
+  background: rgba(26, 107, 90, 0.3);
+}
+.bio-blob-2 {
+  width: 250px; height: 250px;
+  background: rgba(197, 160, 89, 0.15);
+}
+/* Blob positions per step */
+.walkthrough[data-step="0"] .bio-blob-1 { top: 10%; left: -5%; transform: scale(1); }
+.walkthrough[data-step="0"] .bio-blob-2 { bottom: 15%; right: -10%; transform: scale(0.8); }
+.walkthrough[data-step="1"] .bio-blob-1 { top: 30%; left: 20%; transform: scale(1.2); }
+.walkthrough[data-step="1"] .bio-blob-2 { bottom: 5%; right: 15%; transform: scale(1.1); }
+.walkthrough[data-step="2"] .bio-blob-1 { top: 15%; left: 40%; transform: scale(0.9); }
+.walkthrough[data-step="2"] .bio-blob-2 { bottom: 20%; right: 30%; transform: scale(1.3); }
 
-.walk-icon {
-  width: 48px; height: 48px; margin: 0 auto 16px; border-radius: 50%;
-  background: rgba(197,160,89,0.1); display: flex; align-items: center;
-  justify-content: center; color: var(--gold);
+.bio-card {
+  position: relative; z-index: 2;
+  max-width: 400px; width: 90%; padding: 2.5rem 2rem; text-align: center;
+  background: rgba(10, 61, 47, 0.5);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(197, 160, 89, 0.15);
+  border-radius: 32px;
+  display: none;
 }
-.walk-card h3 {
-  font-family: 'Tajawal', sans-serif; font-size: clamp(1.1rem, 2.5vw, 1.4rem);
+.bio-card.active {
+  display: block;
+  animation: bioReveal 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes bioReveal {
+  from { opacity: 0; transform: scale(0.92) translateY(16px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.bio-icon {
+  width: 52px; height: 52px; margin: 0 auto 1.25rem;
+  border-radius: 16px; background: rgba(197, 160, 89, 0.1);
+  border: 1px solid rgba(197, 160, 89, 0.2);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--gold);
+}
+.bio-card h3 {
+  font-family: 'Tajawal', sans-serif; font-size: 1.25rem;
   font-weight: 500; color: var(--ivory); direction: ltr; margin-bottom: 4px;
 }
-.walk-card .walk-ar {
-  font-family: 'Tajawal', sans-serif; font-size: clamp(0.9rem, 2vw, 1.1rem);
-  color: var(--gold); direction: rtl; margin-bottom: 8px;
+.bio-card .bio-ar {
+  font-family: 'Tajawal', sans-serif; font-size: 1.05rem;
+  color: var(--gold); direction: rtl; margin-bottom: 1rem;
 }
-.walk-card p {
-  font-size: clamp(0.8rem, 1.8vw, 0.95rem); line-height: 1.7;
-  color: var(--muted); direction: ltr;
+.bio-card p {
+  font-size: 0.9rem; line-height: 1.7; color: var(--muted); direction: ltr;
+  margin-bottom: 0.5rem;
 }
-.walk-progress { display: flex; gap: 8px; margin-top: 2rem; }
-.walk-dot {
-  width: 8px; height: 8px; border-radius: 50%; background: rgba(197,160,89,0.2);
-  transition: all 0.3s;
+.bio-card .bio-desc-ar {
+  font-family: 'Tajawal', sans-serif; font-size: 0.85rem;
+  line-height: 1.7; color: rgba(197, 160, 89, 0.4); direction: rtl;
 }
-.walk-dot.active { background: var(--gold); width: 24px; border-radius: 4px; }
-.walk-hint { margin-top: 1rem; font-size: 13px; color: var(--muted); opacity: 0.6; }
+.bio-dots { display: flex; gap: 10px; margin-top: 2rem; z-index: 2; }
+.bio-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: rgba(197, 160, 89, 0.15);
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.bio-dot.active {
+  background: var(--gold);
+  transform: scale(1.3);
+  box-shadow: 0 0 10px rgba(197, 160, 89, 0.4);
+}
+.bio-hint {
+  margin-top: 1rem; font-size: 0.7rem; letter-spacing: 0.25em;
+  text-transform: uppercase; color: rgba(253, 252, 248, 0.25); z-index: 2;
+}
 
 /* ===== MAIN APP ===== */
 .app { display: none; min-height: 100vh; padding-bottom: 80px; }
@@ -274,20 +319,43 @@ body.light .bottom-nav { background: rgba(253,252,248,0.95); }
       <span class="splash-brand-ar">بالعربي</span>
     </div>
     <p class="splash-subtitle">Tessellation Garden</p>
+    <button class="splash-enter" id="splashEnter">Enter</button>
   </div>
-  <button class="splash-enter" id="splashEnter">Enter</button>
 </div>
 
-<!-- Walkthrough -->
-<div class="walkthrough" id="walkthrough">
-  <div class="walk-card" id="walkCard">
-    <div class="walk-icon" id="walkIcon"></div>
-    <h3 id="walkTitle"></h3>
-    <div class="walk-ar" id="walkAr"></div>
-    <p id="walkDesc"></p>
+<!-- Walkthrough (Organic Biomorphic) -->
+<div class="walkthrough" id="walkthrough" data-step="0">
+  <div class="bio-blob bio-blob-1"></div>
+  <div class="bio-blob bio-blob-2"></div>
+
+  <div class="bio-card active" data-card="0">
+    <div class="bio-icon"><i data-lucide="compass" style="width:24px;height:24px"></i></div>
+    <h3>Discover Arabic Poetry</h3>
+    <div class="bio-ar" lang="ar" dir="rtl">اكتشف الشعر العربي</div>
+    <p>Over 84,000 poems growing like a garden of verse across centuries.</p>
+    <div class="bio-desc-ar" lang="ar" dir="rtl">أكثر من 84,000 قصيدة تنمو كحديقة من الشعر عبر القرون</div>
   </div>
-  <div class="walk-progress" id="walkProgress"></div>
-  <span class="walk-hint">Tap anywhere to continue</span>
+  <div class="bio-card" data-card="1">
+    <div class="bio-icon"><i data-lucide="headphones" style="width:24px;height:24px"></i></div>
+    <h3>Listen & Feel</h3>
+    <div class="bio-ar" lang="ar" dir="rtl">استمع واشعر</div>
+    <p>AI-powered recitation brings each verse to life, organically flowing.</p>
+    <div class="bio-desc-ar" lang="ar" dir="rtl">إلقاء صوتي يبعث الحياة في كل بيت بانسيابية طبيعية</div>
+  </div>
+  <div class="bio-card" data-card="2">
+    <div class="bio-icon"><i data-lucide="sparkles" style="width:24px;height:24px"></i></div>
+    <h3>AI Insights</h3>
+    <div class="bio-ar" lang="ar" dir="rtl">رؤى ذكية</div>
+    <p>Deep analysis that unfolds meaning layer by layer, like petals opening.</p>
+    <div class="bio-desc-ar" lang="ar" dir="rtl">تحليل عميق يكشف المعاني طبقة بعد طبقة كتفتح البتلات</div>
+  </div>
+
+  <div class="bio-dots">
+    <div class="bio-dot active" data-dot="0"></div>
+    <div class="bio-dot" data-dot="1"></div>
+    <div class="bio-dot" data-dot="2"></div>
+  </div>
+  <div class="bio-hint">Tap anywhere to continue</div>
 </div>
 
 <!-- Main App -->
@@ -422,64 +490,38 @@ body.light .bottom-nav { background: rgba(253,252,248,0.95); }
     document.getElementById('splash').classList.add('fade-out');
     setTimeout(function() {
       document.getElementById('splash').style.display = 'none';
-      document.getElementById('walkthrough').classList.add('active');
-      currentStep = 0; renderStep();
+      var wt = document.getElementById('walkthrough');
+      wt.classList.add('active');
+      wt.setAttribute('data-step', '0');
+      if (typeof lucide !== 'undefined') lucide.createIcons();
     }, 800);
   });
 })();
 
-/* Walkthrough */
-var walkSteps = [
-  { icon: 'hexagon', title: 'Tessellation Garden', ar: '\u062D\u062F\u064A\u0642\u0629 \u0627\u0644\u0632\u062E\u0631\u0641\u0629', desc: 'A visual experience inspired by Islamic geometric art, surrounding you with poetry.' },
-  { icon: 'compass', title: 'Discover 84,000+ Poems', ar: '\u0627\u0643\u062A\u0634\u0641 \u0627\u0644\u0634\u0639\u0631', desc: 'Browse classical and modern Arabic poems spanning centuries of literary tradition.' },
-  { icon: 'headphones', title: 'Listen to Recitation', ar: '\u0627\u0633\u062A\u0645\u0639 \u0644\u0644\u0625\u0644\u0642\u0627\u0621', desc: 'Hear poems with natural AI voices capturing the melody of Arabic verse.' },
-  { icon: 'heart', title: 'Save Your Favorites', ar: '\u0627\u062D\u0641\u0638 \u0648\u0634\u0627\u0631\u0643', desc: 'Build your personal collection and share Arabic poetry with the world.' }
-];
+/* Walkthrough (Organic Biomorphic) */
+var bioCards = document.querySelectorAll('.bio-card');
+var bioDots = document.querySelectorAll('.bio-dot');
 var currentStep = 0;
-
-function renderStep() {
-  var step = walkSteps[currentStep];
-  var card = document.getElementById('walkCard');
-  var iconEl = document.getElementById('walkIcon');
-  var titleEl = document.getElementById('walkTitle');
-  var arEl = document.getElementById('walkAr');
-  var descEl = document.getElementById('walkDesc');
-  var progress = document.getElementById('walkProgress');
-
-  while (iconEl.firstChild) iconEl.removeChild(iconEl.firstChild);
-  var ic = document.createElement('i');
-  ic.setAttribute('data-lucide', step.icon);
-  ic.style.width = '24px'; ic.style.height = '24px';
-  iconEl.appendChild(ic);
-
-  titleEl.textContent = step.title;
-  arEl.textContent = step.ar;
-  descEl.textContent = step.desc;
-
-  while (progress.firstChild) progress.removeChild(progress.firstChild);
-  for (var d = 0; d < walkSteps.length; d++) {
-    var dot = document.createElement('div');
-    dot.className = 'walk-dot' + (d === currentStep ? ' active' : '');
-    progress.appendChild(dot);
-  }
-
-  card.classList.remove('visible');
-  requestAnimationFrame(function() {
-    requestAnimationFrame(function() { card.classList.add('visible'); });
-  });
-  if (typeof lucide !== 'undefined') lucide.createIcons();
-}
+var totalBioSteps = 3;
 
 document.getElementById('walkthrough').addEventListener('click', function() {
   currentStep++;
-  if (currentStep >= walkSteps.length) {
-    document.getElementById('walkthrough').style.display = 'none';
-    document.getElementById('app').classList.add('active');
-    if (typeof lucide !== 'undefined') lucide.createIcons();
-    // Build arabesque border after app visible
-    setTimeout(buildArabesque, 100);
+  if (currentStep >= totalBioSteps) {
+    var wt = document.getElementById('walkthrough');
+    wt.style.opacity = '0';
+    wt.style.transition = 'opacity 0.6s ease';
+    setTimeout(function() {
+      wt.style.display = 'none';
+      document.getElementById('app').classList.add('active');
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+      setTimeout(buildArabesque, 100);
+    }, 600);
   } else {
-    renderStep();
+    bioCards.forEach(function(c) { c.classList.remove('active'); });
+    bioDots.forEach(function(d) { d.classList.remove('active'); });
+    bioCards[currentStep].classList.add('active');
+    bioDots[currentStep].classList.add('active');
+    document.getElementById('walkthrough').setAttribute('data-step', currentStep);
   }
 });
 

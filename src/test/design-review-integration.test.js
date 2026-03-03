@@ -5,8 +5,9 @@
  * They are excluded from the normal `npm test` run (vitest.config.js).
  * Run via: npm run test:integration
  *
- * Required env vars:
- *   DATABASE_URL  — Supabase connection string (set as DATABASE_URL repo secret)
+ * Required env vars (either approach works):
+ *   1) DATABASE_URL
+ *   2) PGHOST + PGDATABASE + PGUSER + PGPASSWORD (+ optional PGPORT)
  *
  * Test data is written with reviewer='ci-integration' for easy identification.
  */
@@ -19,9 +20,15 @@ import request from 'supertest';
 const CI_REVIEWER = 'ci-integration';
 const CI_ITEM_KEY = 'ci-integration-test-item';
 
-// Safety net: if DATABASE_URL is not set this suite is skipped gracefully.
-// In CI this env var is always provided via the design-review-integration workflow.
-describe.skipIf(!process.env.DATABASE_URL)('Design Review — Real Database Integration', () => {
+const hasDatabaseConnectionConfig =
+  Boolean(process.env.DATABASE_URL) ||
+  (Boolean(process.env.PGHOST) &&
+   Boolean(process.env.PGDATABASE) &&
+   Boolean(process.env.PGUSER) &&
+   Boolean(process.env.PGPASSWORD));
+
+// Safety net: skip gracefully unless one supported DB connection strategy is configured.
+describe.skipIf(!hasDatabaseConnectionConfig)('Design Review — Real Database Integration', () => {
   let app;
   let pool;
   let sessionId;

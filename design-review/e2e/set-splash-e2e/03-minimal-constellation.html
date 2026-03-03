@@ -1,0 +1,1096 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Minimal Constellation — Poetry Bil-Araby</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #050510;
+    --bg-end: #0a0a1a;
+    --text: #e8e8f0;
+    --ice: #7eb8d8;
+    --ice-dim: rgba(126,184,216,0.25);
+    --ice-glow: rgba(126,184,216,0.15);
+    --gold: #c5a059;
+    --gold-dim: rgba(197,160,89,0.2);
+    --surface: rgba(255,255,255,0.04);
+    --surface-border: rgba(126,184,216,0.12);
+    --muted: rgba(232,232,240,0.5);
+    --transition-speed: 0.4s;
+  }
+  [data-theme="light"] {
+    --bg: #f8f8fc;
+    --bg-end: #efeff6;
+    --text: #1a1a2e;
+    --ice: #4a8fb0;
+    --ice-dim: rgba(74,143,176,0.2);
+    --ice-glow: rgba(74,143,176,0.1);
+    --gold: #a07e28;
+    --gold-dim: rgba(160,126,40,0.18);
+    --surface: rgba(26,26,46,0.04);
+    --surface-border: rgba(74,143,176,0.15);
+    --muted: rgba(26,26,46,0.45);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; scroll-behavior: smooth; }
+  body {
+    font-family: 'Tajawal', sans-serif;
+    background: linear-gradient(135deg, var(--bg), var(--bg-end));
+    color: var(--text);
+    overflow-x: hidden;
+    min-height: 100vh;
+    transition: background var(--transition-speed), color var(--transition-speed);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  /* ============================================
+     SPLASH SCREEN
+     ============================================ */
+  #splash {
+    position: fixed; inset: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column;
+    background: #050510;
+    transition: opacity 1s ease;
+    will-change: opacity;
+    overflow: hidden;
+    cursor: pointer;
+  }
+  #splash.hidden { opacity: 0; pointer-events: none; }
+
+  #splash-canvas {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%; display: block;
+    z-index: 1;
+  }
+
+  .splash-content {
+    position: relative; z-index: 2;
+    text-align: center;
+    display: flex; flex-direction: column;
+    align-items: center; gap: 1.2rem;
+    pointer-events: none;
+  }
+
+  .splash-hint {
+    font-size: 0.8rem;
+    color: var(--muted);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    opacity: 0;
+    animation: hintFadeIn 2s ease 1.5s forwards;
+  }
+  @keyframes hintFadeIn {
+    to { opacity: 0.6; }
+  }
+
+  .splash-title {
+    font-family: 'Tajawal', sans-serif;
+    font-weight: 300;
+    font-size: 1.6rem;
+    letter-spacing: 0.12em;
+    color: var(--text);
+    opacity: 0;
+    animation: splashFadeUp 1.5s ease 0.3s forwards;
+  }
+  .splash-title-ar {
+    font-family: 'Amiri', serif;
+    font-size: 2.4rem;
+    font-weight: 700;
+    color: var(--ice);
+    opacity: 0;
+    animation: splashFadeUp 1.5s ease 0.6s forwards;
+    text-shadow: 0 0 30px var(--ice-glow);
+  }
+  @keyframes splashFadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .splash-enter {
+    pointer-events: auto;
+    margin-top: 1.5rem;
+    padding: 0.9rem 3.2rem;
+    font-family: 'Tajawal', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 500;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ice);
+    background: rgba(126,184,216,0.08);
+    border: 2px solid var(--ice);
+    border-radius: 50px;
+    cursor: pointer;
+    opacity: 0;
+    animation: enterBtnAppear 1.2s ease 1s forwards;
+    transition: all 0.3s ease;
+    box-shadow: 0 0 20px var(--ice-glow), 0 0 60px rgba(126,184,216,0.06), inset 0 0 20px rgba(126,184,216,0.04);
+    position: relative;
+    overflow: hidden;
+  }
+  .splash-enter::before {
+    content: '';
+    position: absolute; inset: -2px;
+    border-radius: 50px;
+    background: linear-gradient(135deg, transparent 30%, rgba(126,184,216,0.15) 50%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  .splash-enter:hover, .splash-enter:focus-visible {
+    background: rgba(126,184,216,0.15);
+    box-shadow: 0 0 30px rgba(126,184,216,0.3), 0 0 80px rgba(126,184,216,0.1), inset 0 0 30px rgba(126,184,216,0.06);
+    transform: scale(1.04);
+    color: #fff;
+    border-color: #a0d4f0;
+  }
+  .splash-enter:hover::before { opacity: 1; }
+  .splash-enter:active {
+    transform: scale(0.97);
+    box-shadow: 0 0 40px rgba(126,184,216,0.4), 0 0 100px rgba(126,184,216,0.15);
+    background: rgba(126,184,216,0.25);
+  }
+  @keyframes enterBtnAppear {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .splash-theme-toggle {
+    position: absolute; top: 1.2rem; right: 1.2rem;
+    z-index: 3;
+    background: none; border: 1px solid var(--surface-border);
+    color: var(--muted);
+    font-size: 1.1rem;
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.3s ease;
+    opacity: 0;
+    animation: hintFadeIn 1s ease 2s forwards;
+  }
+  .splash-theme-toggle:hover {
+    color: var(--ice);
+    border-color: var(--ice-dim);
+  }
+
+  /* ============================================
+     ONBOARDING
+     ============================================ */
+  #onboarding {
+    position: fixed; inset: 0; z-index: 90;
+    display: none;
+    align-items: center; justify-content: center;
+    flex-direction: column;
+    background: linear-gradient(135deg, var(--bg), var(--bg-end));
+    transition: opacity 0.8s ease;
+    overflow: hidden;
+  }
+  #onboarding.active { display: flex; }
+  #onboarding.hidden { opacity: 0; pointer-events: none; }
+
+  #onboarding-canvas {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%; display: block;
+    z-index: 1;
+  }
+
+  .onboarding-card {
+    position: relative; z-index: 2;
+    text-align: center;
+    max-width: 440px;
+    width: 90%;
+    padding: 3rem 2rem;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+  }
+  .onboarding-card.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .onboarding-card.exit {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+
+  .ob-icon {
+    font-size: 2.6rem;
+    margin-bottom: 1.2rem;
+    display: block;
+  }
+  .ob-title {
+    font-family: 'Tajawal', sans-serif;
+    font-weight: 500;
+    font-size: 1.8rem;
+    letter-spacing: 0.08em;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+  }
+  .ob-title-ar {
+    font-family: 'Amiri', serif;
+    font-size: 1.3rem;
+    color: var(--ice);
+    margin-bottom: 1rem;
+    direction: rtl;
+  }
+  .ob-desc {
+    font-size: 0.95rem;
+    color: var(--muted);
+    line-height: 1.7;
+    max-width: 340px;
+    margin: 0 auto 2rem;
+  }
+
+  .ob-line-decoration {
+    width: 60px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--ice-dim), transparent);
+    margin: 0 auto 1.5rem;
+  }
+
+  .ob-dots {
+    display: flex;
+    justify-content: center;
+    gap: 0.6rem;
+    margin-bottom: 1.8rem;
+  }
+  .ob-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--surface-border);
+    transition: all 0.4s ease;
+  }
+  .ob-dot.active {
+    background: var(--ice);
+    box-shadow: 0 0 8px var(--ice-glow);
+    width: 20px;
+    border-radius: 3px;
+  }
+
+  .ob-next-btn {
+    padding: 0.75rem 2.5rem;
+    font-family: 'Tajawal', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ice);
+    background: transparent;
+    border: 1.5px solid var(--ice-dim);
+    border-radius: 40px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  .ob-next-btn:hover, .ob-next-btn:focus-visible {
+    background: rgba(126,184,216,0.1);
+    border-color: var(--ice);
+    box-shadow: 0 0 16px var(--ice-glow);
+  }
+  .ob-next-btn:active {
+    transform: scale(0.96);
+    background: rgba(126,184,216,0.18);
+  }
+
+  .ob-skip {
+    position: absolute; bottom: 2rem; right: 2rem;
+    z-index: 3;
+    background: none; border: none;
+    color: var(--muted);
+    font-family: 'Tajawal', sans-serif;
+    font-size: 0.8rem;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    opacity: 0.6;
+    transition: opacity 0.3s;
+  }
+  .ob-skip:hover { opacity: 1; color: var(--ice); }
+
+  /* ============================================
+     MAIN APP
+     ============================================ */
+  #app {
+    display: none;
+    min-height: 100vh;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+    position: relative;
+  }
+  #app.active { display: flex; }
+
+  #app-canvas {
+    position: fixed; inset: 0;
+    width: 100%; height: 100%; display: block;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .app-header {
+    position: fixed; top: 0; left: 0; right: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 1.5rem;
+  }
+  .app-brand {
+    font-family: 'Tajawal', sans-serif;
+    font-weight: 300;
+    font-size: 0.85rem;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+  }
+  .app-brand span {
+    font-family: 'Amiri', serif;
+    color: var(--ice);
+    font-size: 0.95rem;
+  }
+  .app-theme-btn {
+    background: none; border: 1px solid var(--surface-border);
+    color: var(--muted);
+    font-size: 1rem;
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.3s ease;
+  }
+  .app-theme-btn:hover {
+    color: var(--ice);
+    border-color: var(--ice-dim);
+  }
+
+  .poem-frame {
+    position: relative; z-index: 1;
+    width: 100%;
+    max-width: 560px;
+    padding: 3rem 2rem;
+    background: var(--surface);
+    border: 1px solid var(--surface-border);
+    border-radius: 16px;
+    text-align: center;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  .poem-frame:hover {
+    box-shadow: 0 4px 40px rgba(126,184,216,0.06);
+  }
+
+  .poem-content {
+    direction: rtl;
+    margin-bottom: 1.5rem;
+  }
+  .poem-line {
+    font-family: 'Amiri', serif;
+    font-size: 1.65rem;
+    line-height: 2.2;
+    color: var(--text);
+    transition: font-size 0.3s ease;
+  }
+  .poem-separator {
+    display: block;
+    width: 30px; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--ice-dim), transparent);
+    margin: 0.6rem auto;
+  }
+  .poet-name {
+    font-family: 'Amiri', serif;
+    font-size: 1rem;
+    color: var(--gold);
+    direction: rtl;
+  }
+
+  .poem-controls {
+    display: flex;
+    justify-content: center;
+    gap: 0.6rem;
+    margin-top: 1.5rem;
+  }
+  .ctrl-btn {
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    background: var(--surface);
+    border: 1px solid var(--surface-border);
+    color: var(--muted);
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.3s ease;
+  }
+  .ctrl-btn:hover, .ctrl-btn:focus-visible {
+    color: var(--ice);
+    border-color: var(--ice-dim);
+    background: rgba(126,184,216,0.06);
+  }
+  .ctrl-btn:active { transform: scale(0.92); }
+  .ctrl-btn.active {
+    color: var(--ice);
+    border-color: var(--ice);
+    box-shadow: 0 0 12px var(--ice-glow);
+  }
+
+  /* ============================================
+     RESPONSIVE
+     ============================================ */
+  @media (max-width: 600px) {
+    .splash-title { font-size: 1.2rem; }
+    .splash-title-ar { font-size: 1.8rem; }
+    .splash-enter { padding: 0.75rem 2.4rem; font-size: 1rem; }
+    .ob-title { font-size: 1.4rem; }
+    .poem-line { font-size: 1.35rem; }
+    .poem-frame { padding: 2rem 1.2rem; }
+    .app-header { padding: 0.8rem 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================================
+     SPLASH SCREEN
+     ============================================ -->
+<div id="splash" role="region" aria-label="Splash screen">
+  <canvas id="splash-canvas" aria-hidden="true"></canvas>
+  <button class="splash-theme-toggle" id="splashThemeBtn" aria-label="Toggle theme">☆</button>
+  <div class="splash-content">
+    <p class="splash-hint" aria-live="polite">tap anywhere to see the stars</p>
+    <div class="splash-title">poetry</div>
+    <div class="splash-title-ar" dir="rtl">بالعربي</div>
+    <button class="splash-enter" id="enterBtn" aria-label="Enter the app">Enter</button>
+  </div>
+</div>
+
+<!-- ============================================
+     ONBOARDING
+     ============================================ -->
+<div id="onboarding" role="region" aria-label="Onboarding">
+  <canvas id="onboarding-canvas" aria-hidden="true"></canvas>
+  <div class="onboarding-card" id="obCard">
+    <div class="ob-icon" id="obIcon">✦</div>
+    <div class="ob-line-decoration"></div>
+    <div class="ob-title" id="obTitle">Discover</div>
+    <div class="ob-title-ar" id="obTitleAr" dir="rtl">اكتشف</div>
+    <div class="ob-desc" id="obDesc">Explore a vast collection of Arabic poetry spanning centuries of literary tradition.</div>
+    <div class="ob-dots" id="obDots">
+      <div class="ob-dot active"></div>
+      <div class="ob-dot"></div>
+      <div class="ob-dot"></div>
+      <div class="ob-dot"></div>
+    </div>
+    <button class="ob-next-btn" id="obNextBtn" aria-label="Next step">Continue</button>
+  </div>
+  <button class="ob-skip" id="obSkipBtn" aria-label="Skip onboarding">Skip</button>
+</div>
+
+<!-- ============================================
+     MAIN APP
+     ============================================ -->
+<div id="app" role="main">
+  <canvas id="app-canvas" aria-hidden="true"></canvas>
+  <header class="app-header">
+    <div class="app-brand">poetry <span dir="rtl">بالعربي</span></div>
+    <button class="app-theme-btn" id="appThemeBtn" aria-label="Toggle theme">☆</button>
+  </header>
+  <div class="poem-frame">
+    <div class="poem-content">
+      <div class="poem-line">وَما الحُبُّ إِلّا نَظرَةٌ بَعدَ نَظرَةٍ</div>
+      <span class="poem-separator"></span>
+      <div class="poem-line">تَزيدُ إِذا ما زادَها النَّظَرُ نَظرا</div>
+    </div>
+    <div class="poet-name">— ابن حزم</div>
+    <div class="poem-controls">
+      <button class="ctrl-btn" id="playBtn" aria-label="Play recitation">▶</button>
+      <button class="ctrl-btn" id="nextBtn" aria-label="Next poem">⟳</button>
+      <button class="ctrl-btn" id="saveBtn" aria-label="Save poem">♡</button>
+      <button class="ctrl-btn" id="fontBtn" aria-label="Change font size">ع</button>
+      <button class="ctrl-btn" id="arabicBtn" aria-label="Toggle Amiri font">آ</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  "use strict";
+
+  /* ============================================
+     CONSTELLATION PARTICLE SYSTEM
+     ============================================ */
+  var LINE_DISTANCE = 120;
+  var BURST_COUNT = 12;
+
+  function ConstellationField(canvas, opts) {
+    var self = this;
+    self.canvas = canvas;
+    self.ctx = canvas.getContext("2d");
+    self.particles = [];
+    self.running = false;
+    self.raf = null;
+    self.mouse = { x: -9999, y: -9999 };
+    self.opts = {
+      count: opts.count || 80,
+      baseSpeed: opts.baseSpeed || 0.2,
+      lineDistance: opts.lineDistance || LINE_DISTANCE,
+      mouseRadius: opts.mouseRadius || 100,
+      ambient: opts.ambient || false,
+      startBig: opts.startBig || false
+    };
+
+    self.resize = function() {
+      var dpr = Math.min(window.devicePixelRatio || 1, 2);
+      var rect = self.canvas.getBoundingClientRect();
+      self.w = rect.width;
+      self.h = rect.height;
+      self.canvas.width = self.w * dpr;
+      self.canvas.height = self.h * dpr;
+      self.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+
+    self.createParticle = function(x, y, isBurst) {
+      var cx = typeof x === "number" ? x : Math.random() * self.w;
+      var cy = typeof y === "number" ? y : Math.random() * self.h;
+      var speed = self.opts.baseSpeed;
+      var size;
+
+      if (isBurst) {
+        var angle = Math.random() * Math.PI * 2;
+        var velocity = 1.5 + Math.random() * 3;
+        size = 1.5 + Math.random() * 2.5;
+        return {
+          x: cx, y: cy,
+          vx: Math.cos(angle) * velocity,
+          vy: Math.sin(angle) * velocity,
+          size: size,
+          baseSize: size,
+          alpha: 0.9,
+          isBurst: true,
+          life: 1.0,
+          decay: 0.006 + Math.random() * 0.008
+        };
+      }
+
+      if (self.opts.startBig) {
+        /* Start from edges, drift slowly inward */
+        var edge = Math.floor(Math.random() * 4);
+        var margin = 0.15;
+        if (edge === 0) { cx = Math.random() * self.w; cy = -self.h * margin * Math.random(); }
+        else if (edge === 1) { cx = self.w + self.w * margin * Math.random(); cy = Math.random() * self.h; }
+        else if (edge === 2) { cx = Math.random() * self.w; cy = self.h + self.h * margin * Math.random(); }
+        else { cx = -self.w * margin * Math.random(); cy = Math.random() * self.h; }
+
+        var centerX = self.w / 2 + (Math.random() - 0.5) * self.w * 0.6;
+        var centerY = self.h / 2 + (Math.random() - 0.5) * self.h * 0.6;
+        var dx = centerX - cx;
+        var dy = centerY - cy;
+        var dist = Math.sqrt(dx * dx + dy * dy) || 1;
+        var driftSpeed = 0.08 + Math.random() * 0.12;
+        size = 1.8 + Math.random() * 2.2;
+        return {
+          x: cx, y: cy,
+          vx: (dx / dist) * driftSpeed + (Math.random() - 0.5) * 0.05,
+          vy: (dy / dist) * driftSpeed + (Math.random() - 0.5) * 0.05,
+          size: size,
+          baseSize: size,
+          alpha: 0.15 + Math.random() * 0.5,
+          isBurst: false,
+          life: 1,
+          decay: 0
+        };
+      }
+
+      var angle2 = Math.random() * Math.PI * 2;
+      size = 1 + Math.random() * 1.5;
+      return {
+        x: cx, y: cy,
+        vx: Math.cos(angle2) * speed * (0.5 + Math.random()),
+        vy: Math.sin(angle2) * speed * (0.5 + Math.random()),
+        size: size,
+        baseSize: size,
+        alpha: 0.2 + Math.random() * 0.5,
+        isBurst: false,
+        life: 1,
+        decay: 0
+      };
+    };
+
+    self.init = function() {
+      self.resize();
+      self.particles = [];
+      var i;
+      for (i = 0; i < self.opts.count; i++) {
+        self.particles.push(self.createParticle());
+      }
+    };
+
+    self.burst = function(bx, by) {
+      var i;
+      for (i = 0; i < BURST_COUNT; i++) {
+        self.particles.push(self.createParticle(bx, by, true));
+      }
+    };
+
+    self.draw = function() {
+      var ctx = self.ctx;
+      var w = self.w;
+      var h = self.h;
+      var particles = self.particles;
+      var lineDist = self.opts.lineDistance;
+      var mouseR = self.opts.mouseRadius;
+      var isDark = !document.documentElement.hasAttribute("data-theme");
+
+      ctx.clearRect(0, 0, w, h);
+
+      /* Draw connection lines first */
+      var i, j, p, q, dx, dy, dist, lineAlpha;
+      for (i = 0; i < particles.length; i++) {
+        p = particles[i];
+        for (j = i + 1; j < particles.length; j++) {
+          q = particles[j];
+          dx = p.x - q.x;
+          dy = p.y - q.y;
+          dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < lineDist) {
+            lineAlpha = (1 - dist / lineDist) * 0.15 * Math.min(p.alpha, q.alpha);
+            if (isDark) {
+              ctx.strokeStyle = "rgba(126,184,216," + lineAlpha + ")";
+            } else {
+              ctx.strokeStyle = "rgba(74,143,176," + lineAlpha + ")";
+            }
+            ctx.lineWidth = 0.5;
+            ctx.beginPath();
+            ctx.moveTo(p.x, p.y);
+            ctx.lineTo(q.x, q.y);
+            ctx.stroke();
+          }
+        }
+      }
+
+      /* Draw particles */
+      for (i = particles.length - 1; i >= 0; i--) {
+        p = particles[i];
+
+        /* Update position */
+        p.x += p.vx;
+        p.y += p.vy;
+
+        /* Mouse repel */
+        dx = p.x - self.mouse.x;
+        dy = p.y - self.mouse.y;
+        dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < mouseR && dist > 0) {
+          var force = (mouseR - dist) / mouseR * 0.3;
+          p.vx += (dx / dist) * force;
+          p.vy += (dy / dist) * force;
+        }
+
+        /* Dampen velocity for non-burst */
+        if (!p.isBurst) {
+          p.vx *= 0.999;
+          p.vy *= 0.999;
+          /* Gentle random drift */
+          p.vx += (Math.random() - 0.5) * 0.01;
+          p.vy += (Math.random() - 0.5) * 0.01;
+        }
+
+        /* Burst decay */
+        if (p.isBurst) {
+          p.life -= p.decay;
+          p.alpha = p.life * 0.9;
+          p.size = p.baseSize * p.life;
+          p.vx *= 0.985;
+          p.vy *= 0.985;
+          if (p.life <= 0) {
+            particles.splice(i, 1);
+            continue;
+          }
+        }
+
+        /* Wrap edges for non-burst */
+        if (!p.isBurst) {
+          if (p.x < -20) p.x = w + 20;
+          if (p.x > w + 20) p.x = -20;
+          if (p.y < -20) p.y = h + 20;
+          if (p.y > h + 20) p.y = -20;
+        }
+
+        /* Draw glow */
+        if (p.alpha > 0.3 && p.size > 1.2) {
+          var grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 4);
+          if (isDark) {
+            grad.addColorStop(0, "rgba(126,184,216," + (p.alpha * 0.15) + ")");
+          } else {
+            grad.addColorStop(0, "rgba(74,143,176," + (p.alpha * 0.1) + ")");
+          }
+          grad.addColorStop(1, "rgba(0,0,0,0)");
+          ctx.fillStyle = grad;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, p.size * 4, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        /* Draw particle */
+        if (isDark) {
+          ctx.fillStyle = "rgba(232,232,240," + p.alpha + ")";
+        } else {
+          ctx.fillStyle = "rgba(26,26,46," + (p.alpha * 0.7) + ")";
+        }
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      if (self.running) {
+        self.raf = requestAnimationFrame(self.draw);
+      }
+    };
+
+    self.start = function() {
+      if (self.running) return;
+      self.running = true;
+      self.draw();
+    };
+
+    self.stop = function() {
+      self.running = false;
+      if (self.raf) cancelAnimationFrame(self.raf);
+    };
+
+    self.handleMouse = function(e) {
+      var rect = self.canvas.getBoundingClientRect();
+      self.mouse.x = e.clientX - rect.left;
+      self.mouse.y = e.clientY - rect.top;
+    };
+
+    self.handleMouseLeave = function() {
+      self.mouse.x = -9999;
+      self.mouse.y = -9999;
+    };
+  }
+
+  /* ============================================
+     DOM ELEMENTS
+     ============================================ */
+  var splash = document.getElementById("splash");
+  var splashCanvas = document.getElementById("splash-canvas");
+  var enterBtn = document.getElementById("enterBtn");
+  var splashThemeBtn = document.getElementById("splashThemeBtn");
+
+  var onboarding = document.getElementById("onboarding");
+  var obCanvas = document.getElementById("onboarding-canvas");
+  var obCard = document.getElementById("obCard");
+  var obIcon = document.getElementById("obIcon");
+  var obTitle = document.getElementById("obTitle");
+  var obTitleAr = document.getElementById("obTitleAr");
+  var obDesc = document.getElementById("obDesc");
+  var obDots = document.getElementById("obDots");
+  var obNextBtn = document.getElementById("obNextBtn");
+  var obSkipBtn = document.getElementById("obSkipBtn");
+
+  var appEl = document.getElementById("app");
+  var appCanvas = document.getElementById("app-canvas");
+  var appThemeBtn = document.getElementById("appThemeBtn");
+
+  /* ============================================
+     SPLASH CONSTELLATION (starts big, drifts slow)
+     ============================================ */
+  var splashField = new ConstellationField(splashCanvas, {
+    count: 150,
+    baseSpeed: 0.15,
+    lineDistance: 140,
+    mouseRadius: 100,
+    startBig: true
+  });
+  splashField.init();
+  splashField.start();
+
+  splashCanvas.addEventListener("mousemove", splashField.handleMouse);
+  splashCanvas.addEventListener("mouseleave", splashField.handleMouseLeave);
+
+  /* Tap/click anywhere on splash triggers burst */
+  splash.addEventListener("click", function(e) {
+    if (e.target === enterBtn || enterBtn.contains(e.target)) return;
+    if (e.target === splashThemeBtn) return;
+    var rect = splashCanvas.getBoundingClientRect();
+    var bx = e.clientX - rect.left;
+    var by = e.clientY - rect.top;
+    splashField.burst(bx, by);
+  });
+
+  /* Touch support for burst */
+  splash.addEventListener("touchstart", function(e) {
+    if (e.target === enterBtn || enterBtn.contains(e.target)) return;
+    if (e.target === splashThemeBtn) return;
+    var touch = e.touches[0];
+    var rect = splashCanvas.getBoundingClientRect();
+    var bx = touch.clientX - rect.left;
+    var by = touch.clientY - rect.top;
+    splashField.burst(bx, by);
+  }, { passive: true });
+
+  /* Keyboard support for burst (Space key triggers center burst) */
+  splash.addEventListener("keydown", function(e) {
+    if (e.target === enterBtn || e.target === splashThemeBtn) return;
+    if (e.key === " " || e.key === "Spacebar") {
+      e.preventDefault();
+      splashField.burst(splashField.w / 2, splashField.h / 2);
+    }
+  });
+
+  /* ============================================
+     ENTER → ONBOARDING TRANSITION
+     ============================================ */
+  enterBtn.addEventListener("click", function(e) {
+    e.stopPropagation();
+    splash.classList.add("hidden");
+    setTimeout(function() {
+      splash.style.display = "none";
+      splashField.stop();
+      showOnboarding();
+    }, 1000);
+  });
+
+  /* ============================================
+     ONBOARDING SEQUENTIAL STEPS
+     ============================================ */
+  var obSteps = [
+    { icon: "✦", title: "Discover", titleAr: "اكتشف", desc: "Explore a vast collection of Arabic poetry spanning centuries of literary tradition.", btn: "Continue" },
+    { icon: "◇", title: "Explore", titleAr: "استكشف", desc: "Browse by poet, era, or theme. Find verses that resonate with your soul.", btn: "Continue" },
+    { icon: "♪", title: "Listen", titleAr: "استمع", desc: "Hear poems recited aloud with authentic pronunciation and natural rhythm.", btn: "Continue" },
+    { icon: "✧", title: "Share", titleAr: "شارك", desc: "Save your favorite verses and share the beauty of Arabic poetry with others.", btn: "Begin" }
+  ];
+  var obStep = 0;
+  var obField = null;
+  var obTransitioning = false;
+
+  function showOnboarding() {
+    onboarding.classList.add("active");
+    obField = new ConstellationField(obCanvas, {
+      count: 50,
+      baseSpeed: 0.12,
+      lineDistance: 110,
+      mouseRadius: 80
+    });
+    obField.init();
+    obField.start();
+    obCanvas.addEventListener("mousemove", obField.handleMouse);
+    obCanvas.addEventListener("mouseleave", obField.handleMouseLeave);
+    renderObStep(0, true);
+  }
+
+  function renderObStep(index, immediate) {
+    var step = obSteps[index];
+    if (!immediate) {
+      obCard.classList.remove("visible");
+      obCard.classList.add("exit");
+    }
+    var delay = immediate ? 50 : 400;
+    setTimeout(function() {
+      obIcon.textContent = step.icon;
+      obTitle.textContent = step.title;
+      obTitleAr.textContent = step.titleAr;
+      obDesc.textContent = step.desc;
+      obNextBtn.textContent = step.btn;
+
+      /* Update dots */
+      var dots = obDots.children;
+      var i;
+      for (i = 0; i < dots.length; i++) {
+        if (i === index) {
+          dots[i].classList.add("active");
+        } else {
+          dots[i].classList.remove("active");
+        }
+      }
+
+      obCard.classList.remove("exit");
+      /* Force browser reflow so removing/adding classes triggers CSS transition */
+      var _reflow = obCard.offsetWidth;
+      obCard.classList.add("visible");
+      obTransitioning = false;
+    }, delay);
+  }
+
+  obNextBtn.addEventListener("click", function() {
+    if (obTransitioning) return;
+    obTransitioning = true;
+    obStep++;
+    if (obStep >= obSteps.length) {
+      finishOnboarding();
+    } else {
+      renderObStep(obStep, false);
+    }
+  });
+
+  obSkipBtn.addEventListener("click", function() {
+    finishOnboarding();
+  });
+
+  function finishOnboarding() {
+    onboarding.classList.add("hidden");
+    setTimeout(function() {
+      onboarding.classList.remove("active");
+      if (obField) obField.stop();
+      showApp();
+    }, 800);
+  }
+
+  /* ============================================
+     MAIN APP
+     ============================================ */
+  var appField = null;
+
+  function showApp() {
+    appEl.classList.add("active");
+    appField = new ConstellationField(appCanvas, {
+      count: 40,
+      baseSpeed: 0.1,
+      lineDistance: 100,
+      mouseRadius: 70,
+      ambient: true
+    });
+    appField.init();
+    appField.start();
+  }
+
+  /* Resize handling */
+  var resizeTimer;
+  window.addEventListener("resize", function() {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function() {
+      if (splashField && splashField.running) { splashField.resize(); }
+      if (obField && obField.running) { obField.resize(); }
+      if (appField && appField.running) { appField.resize(); }
+    }, 150);
+  });
+
+  /* ============================================
+     THEME TOGGLE
+     ============================================ */
+  var isDark = true;
+  var SUN_SYMBOL = "☆";
+  var MOON_SYMBOL = "☾";
+
+  function toggleTheme() {
+    isDark = !isDark;
+    if (isDark) {
+      document.documentElement.removeAttribute("data-theme");
+      splashThemeBtn.textContent = SUN_SYMBOL;
+      appThemeBtn.textContent = SUN_SYMBOL;
+    } else {
+      document.documentElement.setAttribute("data-theme", "light");
+      splashThemeBtn.textContent = MOON_SYMBOL;
+      appThemeBtn.textContent = MOON_SYMBOL;
+    }
+  }
+
+  splashThemeBtn.addEventListener("click", function(e) {
+    e.stopPropagation();
+    toggleTheme();
+  });
+  appThemeBtn.addEventListener("click", toggleTheme);
+
+  /* ============================================
+     APP MOCK INTERACTIONS
+     ============================================ */
+  var poems = [
+    {
+      lines: [
+        "وَما الحُبُّ إِلّا نَظرَةٌ بَعدَ نَظرَةٍ",
+        "تَزيدُ إِذا ما زادَها النَّظَرُ نَظرا"
+      ],
+      poet: "ابن حزم"
+    },
+    {
+      lines: [
+        "عَلى قَدرِ أَهلِ العَزمِ تَأتي العَزائِمُ",
+        "وَتَأتي عَلى قَدرِ الكِرامِ المَكارِمُ"
+      ],
+      poet: "المتنبي"
+    },
+    {
+      lines: [
+        "أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ",
+        "فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي"
+      ],
+      poet: "أحمد شوقي"
+    },
+    {
+      lines: [
+        "إِذا غامَرتَ في شَرَفٍ مَرومٍ",
+        "فَلا تَقنَع بِما دونَ النُجومِ"
+      ],
+      poet: "المتنبي"
+    }
+  ];
+  var currentPoem = 0;
+  var fontLevel = 0;
+  var fontSizes = ["1.65rem", "1.9rem", "2.2rem", "1.4rem"];
+
+  document.getElementById("nextBtn").addEventListener("click", function() {
+    currentPoem = (currentPoem + 1) % poems.length;
+    var p = poems[currentPoem];
+    var lines = document.querySelectorAll(".poem-line");
+    var poetEl = document.querySelector(".poet-name");
+    lines[0].textContent = p.lines[0];
+    lines[1].textContent = p.lines[1];
+    poetEl.textContent = "— " + p.poet;
+
+    var frame = document.querySelector(".poem-frame");
+    frame.style.transform = "scale(0.97)";
+    setTimeout(function() { frame.style.transform = ""; }, 250);
+  });
+
+  document.getElementById("playBtn").addEventListener("click", function() {
+    var btn = this;
+    btn.classList.add("active");
+    btn.textContent = "❚❚";
+    setTimeout(function() {
+      btn.classList.remove("active");
+      btn.textContent = "▶";
+    }, 2000);
+  });
+
+  document.getElementById("saveBtn").addEventListener("click", function() {
+    var btn = this;
+    if (btn.classList.contains("active")) {
+      btn.classList.remove("active");
+      btn.textContent = "♡";
+    } else {
+      btn.classList.add("active");
+      btn.textContent = "♥";
+    }
+  });
+
+  document.getElementById("fontBtn").addEventListener("click", function() {
+    fontLevel = (fontLevel + 1) % fontSizes.length;
+    var lines = document.querySelectorAll(".poem-line");
+    var i;
+    for (i = 0; i < lines.length; i++) {
+      lines[i].style.fontSize = fontSizes[fontLevel];
+    }
+  });
+
+  document.getElementById("arabicBtn").addEventListener("click", function() {
+    var btn = this;
+    btn.classList.toggle("active");
+    var poemContent = document.querySelector(".poem-content");
+    if (btn.classList.contains("active")) {
+      poemContent.style.fontFamily = "'Amiri', serif";
+    } else {
+      poemContent.style.fontFamily = "";
+    }
+  });
+
+})();
+</script>
+</body>
+</html>

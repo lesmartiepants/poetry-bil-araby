@@ -249,14 +249,83 @@
       letter-spacing: normal;
     }
 
-    /* ===== ONBOARDING ===== */
+    /* ===== ONBOARDING (Chiaroscuro) ===== */
     #onboarding {
       display: none;
-      background: var(--bg);
+      background: #000000;
       position: fixed;
       inset: 0;
       z-index: 90;
+      cursor: pointer;
+      overflow: hidden;
     }
+
+    /* Dynamic spotlight that shifts position per step */
+    .chiaroscuro-light {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      transition: background 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Step 0: light from upper-left */
+    .chiaroscuro-light[data-light="0"] {
+      background: radial-gradient(
+        ellipse 35% 45% at 25% 30%,
+        rgba(255, 235, 180, 0.18),
+        rgba(255, 220, 160, 0.06) 40%,
+        transparent 70%
+      );
+    }
+    /* Step 1: light from center-right */
+    .chiaroscuro-light[data-light="1"] {
+      background: radial-gradient(
+        ellipse 40% 50% at 75% 45%,
+        rgba(255, 235, 180, 0.20),
+        rgba(255, 220, 160, 0.08) 40%,
+        transparent 70%
+      );
+    }
+    /* Step 2: light from below-center */
+    .chiaroscuro-light[data-light="2"] {
+      background: radial-gradient(
+        ellipse 50% 40% at 50% 75%,
+        rgba(255, 235, 180, 0.22),
+        rgba(255, 220, 160, 0.10) 40%,
+        transparent 70%
+      );
+    }
+
+    /* Shadow lattice that rotates with light */
+    .chiaroscuro-shadow {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.3;
+      transition: all 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .chiaroscuro-shadow[data-light="0"] {
+      background: repeating-linear-gradient(
+        25deg,
+        transparent, transparent 80px,
+        rgba(0, 0, 0, 0.7) 80px, rgba(0, 0, 0, 0.7) 90px
+      );
+    }
+    .chiaroscuro-shadow[data-light="1"] {
+      background: repeating-linear-gradient(
+        -15deg,
+        transparent, transparent 70px,
+        rgba(0, 0, 0, 0.7) 70px, rgba(0, 0, 0, 0.7) 80px
+      );
+    }
+    .chiaroscuro-shadow[data-light="2"] {
+      background: repeating-linear-gradient(
+        80deg,
+        transparent, transparent 90px,
+        rgba(0, 0, 0, 0.6) 90px, rgba(0, 0, 0, 0.6) 100px
+      );
+    }
+
     .onboard-cards {
       position: relative;
       z-index: 2;
@@ -266,23 +335,26 @@
     }
     .onboard-card {
       display: none;
-      animation: cardFadeIn 0.6s ease;
     }
-    .onboard-card.active { display: block; }
-    @keyframes cardFadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
+    .onboard-card.active {
+      display: block;
+      animation: chiaroReveal 0.8s ease-out;
+    }
+    @keyframes chiaroReveal {
+      from { opacity: 0; transform: translateY(30px) scale(0.97); filter: brightness(0); }
+      to { opacity: 1; transform: translateY(0) scale(1); filter: brightness(1); }
     }
     .onboard-icon {
       width: 56px;
       height: 56px;
       margin: 0 auto 1.5rem;
-      border: 2px solid var(--gold);
+      border: 1px solid rgba(255, 235, 180, 0.25);
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      color: var(--gold);
+      color: rgba(255, 235, 180, 0.7);
+      box-shadow: 0 0 20px rgba(255, 235, 180, 0.08);
     }
     .onboard-title {
       font-family: 'Tajawal', sans-serif;
@@ -290,6 +362,7 @@
       font-weight: 700;
       margin-bottom: 0.5rem;
       color: var(--text);
+      text-shadow: 0 2px 15px rgba(255, 235, 180, 0.15);
     }
     .onboard-title-ar {
       font-family: 'Reem Kufi', sans-serif;
@@ -297,18 +370,19 @@
       color: var(--gold);
       margin-bottom: 1rem;
       direction: rtl;
+      text-shadow: 0 0 20px rgba(197, 160, 89, 0.3);
     }
     .onboard-desc {
       font-size: 0.95rem;
       line-height: 1.7;
-      color: var(--text-dim);
+      color: rgba(253, 252, 248, 0.6);
       margin-bottom: 0.5rem;
     }
     .onboard-desc-ar {
       font-family: 'Tajawal', sans-serif;
       font-size: 0.95rem;
       line-height: 1.7;
-      color: var(--text-dim);
+      color: rgba(253, 252, 248, 0.45);
       direction: rtl;
       margin-bottom: 2rem;
     }
@@ -322,26 +396,19 @@
       width: 8px;
       height: 8px;
       border-radius: 50%;
-      background: rgba(197, 160, 89, 0.3);
-      transition: background 0.3s ease;
+      background: rgba(255, 235, 180, 0.15);
+      transition: all 0.6s ease;
     }
-    .onboard-dot.active { background: var(--gold); }
+    .onboard-dot.active {
+      background: rgba(255, 235, 180, 0.7);
+      box-shadow: 0 0 8px rgba(255, 235, 180, 0.3);
+    }
     .onboard-tap {
-      font-size: 0.75rem;
+      font-size: 0.7rem;
       text-transform: uppercase;
-      letter-spacing: 0.2em;
-      color: var(--text-dim);
+      letter-spacing: 0.3em;
+      color: rgba(253, 252, 248, 0.3);
       cursor: pointer;
-    }
-
-    /* Onboarding background glow */
-    #onboarding::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: radial-gradient(circle at 50% 50%, var(--gold-glow), transparent 60%);
-      opacity: 0.15;
-      pointer-events: none;
     }
 
     /* ===== MAIN APP ===== */
@@ -534,17 +601,20 @@
     </div>
   </div>
 
-  <!-- ===== ONBOARDING ===== -->
+  <!-- ===== ONBOARDING (Chiaroscuro) ===== -->
   <div class="screen" id="onboarding">
+    <div class="chiaroscuro-light" data-light="0"></div>
+    <div class="chiaroscuro-shadow" data-light="0"></div>
+
     <div class="onboard-cards">
       <div class="onboard-card active" data-card="0">
         <div class="onboard-icon">
           <i data-lucide="book-open" style="width:24px;height:24px"></i>
         </div>
-        <div class="onboard-title">Discover Poetry</div>
-        <div class="onboard-title-ar" lang="ar">اكتشف الشعر العربي</div>
-        <div class="onboard-desc">Over 84,000 poems from across the ages, ready for you to explore.</div>
-        <div class="onboard-desc-ar" lang="ar">أكثر من 84,000 قصيدة من مختلف العصور بانتظارك</div>
+        <div class="onboard-title">Discover Arabic Poetry</div>
+        <div class="onboard-title-ar" lang="ar" dir="rtl">اكتشف الشعر العربي</div>
+        <div class="onboard-desc">Over 84,000 poems emerge from the shadows, spanning centuries of tradition.</div>
+        <div class="onboard-desc-ar" lang="ar" dir="rtl">أكثر من 84,000 قصيدة تنبثق من الظلال عبر قرون من التراث</div>
       </div>
 
       <div class="onboard-card" data-card="1">
@@ -552,9 +622,9 @@
           <i data-lucide="headphones" style="width:24px;height:24px"></i>
         </div>
         <div class="onboard-title">Listen & Feel</div>
-        <div class="onboard-title-ar" lang="ar">استمع واشعر</div>
-        <div class="onboard-desc">AI-powered recitation brings each verse to life with natural voice.</div>
-        <div class="onboard-desc-ar" lang="ar">إلقاء صوتي بالذكاء الاصطناعي يجعل كل بيت ينبض بالحياة</div>
+        <div class="onboard-title-ar" lang="ar" dir="rtl">استمع واشعر</div>
+        <div class="onboard-desc">AI-powered recitation brings each verse to life, like light revealing hidden text.</div>
+        <div class="onboard-desc-ar" lang="ar" dir="rtl">إلقاء صوتي بالذكاء الاصطناعي يجعل كل بيت ينبض بالحياة</div>
       </div>
 
       <div class="onboard-card" data-card="2">
@@ -562,9 +632,9 @@
           <i data-lucide="sparkles" style="width:24px;height:24px"></i>
         </div>
         <div class="onboard-title">AI Insights</div>
-        <div class="onboard-title-ar" lang="ar">رؤى ذكية</div>
-        <div class="onboard-desc">Deep analysis and explanations powered by AI to unlock every verse.</div>
-        <div class="onboard-desc-ar" lang="ar">تحليل وشرح بالذكاء الاصطناعي لفهم كل بيت</div>
+        <div class="onboard-title-ar" lang="ar" dir="rtl">رؤى ذكية</div>
+        <div class="onboard-desc">Deep analysis illuminates meaning hidden in every verse.</div>
+        <div class="onboard-desc-ar" lang="ar" dir="rtl">تحليل عميق يضيء المعاني الكامنة في كل بيت</div>
       </div>
 
       <div class="onboard-dots">
@@ -572,7 +642,7 @@
         <div class="onboard-dot" data-dot="1"></div>
         <div class="onboard-dot" data-dot="2"></div>
       </div>
-      <div class="onboard-tap" id="onboardTap">Tap to continue</div>
+      <div class="onboard-tap" id="onboardTap">Tap anywhere to continue</div>
     </div>
   </div>
 
@@ -684,7 +754,7 @@
       }, 800);
     });
 
-    /* ===== ONBOARDING TAP-TO-ADVANCE ===== */
+    /* ===== ONBOARDING TAP-TO-ADVANCE (Chiaroscuro) ===== */
     var currentCard = 0;
     var totalCards = 3;
 
@@ -698,12 +768,12 @@
       if (currentCard >= totalCards) {
         var ob = document.getElementById('onboarding');
         ob.style.opacity = '0';
-        ob.style.transition = 'opacity 0.6s ease';
+        ob.style.transition = 'opacity 0.8s ease';
         setTimeout(function () {
           ob.style.display = 'none';
           document.getElementById('main').style.display = 'flex';
           if (typeof lucide !== 'undefined') lucide.createIcons();
-        }, 600);
+        }, 800);
         return;
       }
       var cards = document.querySelectorAll('.onboard-card');
@@ -712,6 +782,12 @@
       dots.forEach(function (d) { d.classList.remove('active'); });
       cards[currentCard].classList.add('active');
       dots[currentCard].classList.add('active');
+
+      /* Shift the chiaroscuro light source */
+      var lightEl = document.querySelector('.chiaroscuro-light');
+      var shadowEl = document.querySelector('.chiaroscuro-shadow');
+      if (lightEl) lightEl.setAttribute('data-light', currentCard);
+      if (shadowEl) shadowEl.setAttribute('data-light', currentCard);
     }
 
     /* ===== INIT LUCIDE ===== */

@@ -396,7 +396,7 @@
       align-items: center;
       justify-content: center;
       padding: 2rem 1rem;
-      padding-right: 56px;
+      padding-bottom: 110px;
     }
 
     .poem-text {
@@ -417,70 +417,103 @@
       direction: rtl;
     }
 
-    .vertical-controls {
+    /* ===== CONTROLS ===== */
+    /* Gold Orbit — small gold circles orbiting the poem area */
+
+    .orbit-container {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 100px;
+      pointer-events: none;
+      z-index: 100;
+    }
+
+    .orbit-ring {
       position: absolute;
-      right: 0; top: 0; bottom: 0;
-      width: 48px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 4px;
-      border-left: 1px solid var(--border-color);
-      background: var(--bg-secondary);
-      padding: 8px 0;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 280px;
+      height: 50px;
     }
 
-    .vc-btn {
-      width: 44px; height: 44px;
-      border: none;
-      background: transparent;
-      color: var(--text-secondary);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      border-radius: 8px;
-      transition: color 0.2s ease, background 0.2s ease;
-    }
-
-    .vc-btn:hover {
-      color: var(--gold);
+    .orbit-node {
+      position: absolute;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 1.5px solid var(--gold);
       background: rgba(197, 160, 89, 0.08);
-    }
-
-    .vc-btn svg { width: 18px; height: 18px; }
-
-    .vc-divider {
-      width: 24px; height: 1px;
-      background: var(--border-color);
-      margin: 4px 0;
-    }
-
-    .bottom-bar {
-      display: flex;
-      align-items: center;
-      justify-content: space-around;
-      padding: 0.5rem 1rem;
-      border-top: 1px solid var(--border-color);
-      background: var(--bg-secondary);
-    }
-
-    .bb-btn {
-      width: 48px; height: 48px;
-      border: none;
-      background: transparent;
-      color: var(--text-secondary);
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      border-radius: 8px;
-      transition: color 0.2s ease;
+      pointer-events: auto;
+      transition: background 0.3s ease, box-shadow 0.3s ease, transform 0.3s ease;
+      backdrop-filter: blur(8px);
     }
 
-    .bb-btn:hover { color: var(--gold); }
-    .bb-btn svg { width: 20px; height: 20px; }
+    .orbit-node:hover,
+    .orbit-node:active {
+      background: rgba(197, 160, 89, 0.2);
+      box-shadow: 0 0 24px rgba(197, 160, 89, 0.4);
+      transform: scale(1.12);
+    }
+
+    .orbit-node:active {
+      box-shadow: 0 0 36px rgba(197, 160, 89, 0.6);
+    }
+
+    .orbit-node svg {
+      width: 16px;
+      height: 16px;
+      color: var(--gold);
+    }
+
+    [data-theme="light"] .orbit-node {
+      background: rgba(160, 128, 64, 0.06);
+    }
+
+    [data-theme="light"] .orbit-node:hover {
+      background: rgba(160, 128, 64, 0.15);
+      box-shadow: 0 0 20px rgba(160, 128, 64, 0.3);
+    }
+
+    /* Label on hover */
+    .orbit-label {
+      position: absolute;
+      top: -22px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Tajawal', sans-serif;
+      font-size: 9px;
+      letter-spacing: 0.25em;
+      text-transform: uppercase;
+      color: var(--gold);
+      white-space: nowrap;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+    }
+
+    .orbit-node:hover .orbit-label,
+    .orbit-node:active .orbit-label {
+      opacity: 1;
+    }
+
+    /* Slow ambient orbit animation */
+    @keyframes orbitFloat {
+      0% { transform: translateY(0px); }
+      50% { transform: translateY(-4px); }
+      100% { transform: translateY(0px); }
+    }
+
+    .orbit-node:nth-child(1) { animation: orbitFloat 4s ease-in-out infinite; }
+    .orbit-node:nth-child(2) { animation: orbitFloat 4s ease-in-out 1s infinite; }
+    .orbit-node:nth-child(3) { animation: orbitFloat 4s ease-in-out 2s infinite; }
+    .orbit-node:nth-child(4) { animation: orbitFloat 4s ease-in-out 3s infinite; }
 
     @media (max-width: 480px) {
       .splash-brand-en { font-size: 2.5rem; }
@@ -587,26 +620,29 @@
         <p class="poem-poet" lang="ar" dir="rtl">-- أحمد شوقي</p>
       </div>
 
-      <aside class="vertical-controls">
-        <button class="vc-btn" aria-label="Favorite"><i data-lucide="heart"></i></button>
-        <button class="vc-btn" aria-label="Font"><i data-lucide="type"></i></button>
-        <button class="vc-btn" aria-label="Languages"><i data-lucide="languages"></i></button>
-        <div class="vc-divider"></div>
-        <button class="vc-btn" aria-label="Collection"><i data-lucide="book-open"></i></button>
-        <button class="vc-btn" aria-label="Style"><i data-lucide="italic"></i></button>
-        <div class="vc-divider"></div>
-        <button class="vc-btn" aria-label="Sign in"><i data-lucide="log-in"></i></button>
-        <button class="vc-btn" aria-label="Settings"><i data-lucide="settings"></i></button>
-      </aside>
     </div>
 
-    <nav class="bottom-bar">
-      <button class="bb-btn" aria-label="Listen"><i data-lucide="music"></i></button>
-      <button class="bb-btn" aria-label="Insights"><i data-lucide="lightbulb"></i></button>
-      <button class="bb-btn" aria-label="New poem"><i data-lucide="refresh-cw"></i></button>
-      <button class="bb-btn" aria-label="Library"><i data-lucide="library"></i></button>
-      <button class="bb-btn" aria-label="Shuffle"><i data-lucide="shuffle"></i></button>
-    </nav>
+    <!-- ===== CONTROLS: Gold Orbit ===== -->
+    <div class="orbit-container">
+      <div class="orbit-ring">
+        <button class="orbit-node" style="left: 0; bottom: 0;" aria-label="Next poem" data-action="next">
+          <span class="orbit-label">next</span>
+          <i data-lucide="shuffle"></i>
+        </button>
+        <button class="orbit-node" style="left: 78px; bottom: 16px;" aria-label="Save poem" data-action="save">
+          <span class="orbit-label">save</span>
+          <i data-lucide="heart"></i>
+        </button>
+        <button class="orbit-node" style="left: 156px; bottom: 16px;" aria-label="Listen" data-action="listen">
+          <span class="orbit-label">listen</span>
+          <i data-lucide="volume-2"></i>
+        </button>
+        <button class="orbit-node" style="left: 234px; bottom: 0;" aria-label="Share" data-action="share">
+          <span class="orbit-label">share</span>
+          <i data-lucide="share"></i>
+        </button>
+      </div>
+    </div>
   </main>
 
   <script>

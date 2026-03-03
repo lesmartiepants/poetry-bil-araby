@@ -2,39 +2,57 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Breathing Typography — شعر حي</title>
-<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Poetry bil Araby — شعر بالعربي — الخط الحي</title>
+<!--
+  Arabic font loaded first for correct rendering.
+  Using Amiri (classical Arabic calligraphy) + Tajawal (UI).
+-->
+<link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Noto+Naskh+Arabic:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
+  /* =============================================
+     ARABIC RENDERING: always explicit direction/font
+     ============================================= */
   :root {
-    --ink: #0c0c0e;
+    --ink:      #0c0c0e;
     --parchment: #F5ECD7;
-    --reed: #8B6914;
-    --gold: #C5A059;
-    --crimson: #8B2252;
-    --bg: var(--ink);
-    --fg: var(--parchment);
-    --accent: var(--gold);
+    --reed:     #8B6914;
+    --gold:     #C5A059;
+    --crimson:  #8B2252;
+    --bg:       var(--ink);
+    --fg:       var(--parchment);
+    --accent:   var(--gold);
+    --gold-glow: rgba(197, 160, 89, 0.28);
+    --card-bg:  rgba(18, 16, 12, 0.95);
+    --card-border: rgba(197, 160, 89, 0.22);
   }
   [data-theme="light"] {
-    --bg: var(--parchment);
-    --fg: var(--ink);
+    --bg:    var(--parchment);
+    --fg:    var(--ink);
     --accent: var(--reed);
+    --card-bg: rgba(255, 253, 248, 0.97);
+    --card-border: rgba(139, 105, 20, 0.22);
+    --gold-glow: rgba(139, 105, 20, 0.2);
   }
   *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; overflow-x: hidden; }
   body {
-    font-family: 'Amiri', serif;
+    /* Arabic-first font stack */
+    font-family: 'Tajawal', 'Amiri', 'Noto Naskh Arabic', system-ui, sans-serif;
     background: var(--bg);
     color: var(--fg);
-    overflow-x: hidden;
+    min-height: 100vh; min-height: 100dvh;
     transition: background 0.6s ease, color 0.6s ease;
-    min-height: 100vh;
+    overflow-x: hidden;
   }
 
-  /* ---- Splash Screen ---- */
+  /* =============================================
+     SPLASH SCREEN
+     ============================================= */
   #splash {
     position: fixed; inset: 0; z-index: 100;
     display: flex; align-items: center; justify-content: center;
+    flex-direction: column;
     background: var(--bg);
     transition: opacity 0.8s ease;
   }
@@ -43,70 +61,96 @@
     position: absolute; inset: 0;
     width: 100%; height: 100%;
   }
+
+  /* SVG calligraphy strokes */
   .splash-calligraphy {
     position: relative; z-index: 2;
     text-align: center;
   }
-  .splash-calligraphy svg { width: min(90vw, 700px); height: auto; }
+  .splash-calligraphy svg {
+    width: min(90vw, 680px); height: auto;
+  }
   .stroke-path {
-    fill: none;
-    stroke: var(--gold);
-    stroke-width: 2.5;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-    stroke-dasharray: 1000;
-    stroke-dashoffset: 1000;
+    fill: none; stroke: var(--gold);
+    stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round;
+    stroke-dasharray: 1000; stroke-dashoffset: 1000;
     animation: draw-stroke 3s ease-out forwards;
     will-change: stroke-dashoffset;
   }
   .stroke-path:nth-child(2) { animation-delay: 0.4s; stroke: var(--crimson); }
   .stroke-path:nth-child(3) { animation-delay: 0.8s; }
   .stroke-path:nth-child(4) { animation-delay: 1.2s; stroke: var(--crimson); }
-  @keyframes draw-stroke {
-    to { stroke-dashoffset: 0; }
+  @keyframes draw-stroke { to { stroke-dashoffset: 0; } }
+
+  /* Splash brand text — properly Arabic with correct font */
+  .splash-brand {
+    margin-top: 1.5rem;
+    text-align: center;
   }
-  .splash-title {
-    font-size: clamp(3rem, 10vw, 7rem);
-    font-family: 'Amiri', serif;
+  .splash-brand-ar {
+    /* Arabic: correct font, direction, encoding */
+    font-family: 'Amiri', 'Noto Naskh Arabic', serif;
+    font-size: clamp(3rem, 10vw, 6rem);
+    font-weight: 700;
     color: var(--fg);
+    direction: rtl;
+    unicode-bidi: bidi-override;
+    line-height: 1.2;
     opacity: 0;
-    animation: fade-up 1s ease 2s forwards;
+    animation: fade-up 1s ease 2.2s forwards;
     will-change: opacity, transform;
+    /* Breathing effect on each character done via JS spans */
+  }
+  .splash-brand-en {
+    font-family: 'Tajawal', system-ui, sans-serif;
+    font-size: clamp(0.65rem, 1.5vw, 0.8rem);
+    letter-spacing: 0.42em; text-transform: uppercase;
+    color: var(--gold); font-weight: 500;
+    opacity: 0;
+    animation: fade-up 0.8s ease 2.8s forwards;
+    margin-top: 0.5rem;
+    display: block;
   }
   .splash-subtitle {
-    font-family: 'Tajawal', sans-serif;
-    font-size: clamp(1rem, 3vw, 1.4rem);
+    font-family: 'Tajawal', system-ui, sans-serif;
+    font-size: clamp(0.85rem, 2vw, 1rem);
     color: var(--gold);
     opacity: 0;
-    animation: fade-up 1s ease 2.6s forwards;
-    margin-top: 0.5rem;
+    animation: fade-up 0.8s ease 3s forwards;
+    margin-top: 0.3rem;
+    direction: rtl;
+    display: block;
   }
+
+  /* Enter button */
   .splash-enter {
     margin-top: 2rem;
     background: none; border: 1.5px solid var(--gold);
     color: var(--gold);
-    font-family: 'Tajawal', sans-serif;
-    font-size: 1.1rem;
-    padding: 12px 36px;
-    border-radius: 30px;
+    font-family: 'Tajawal', system-ui, sans-serif;
+    font-size: 1rem;
+    padding: 12px 36px; border-radius: 30px;
     cursor: pointer;
     opacity: 0;
-    animation: fade-up 1s ease 3.2s forwards;
-    min-height: 44px; min-width: 44px;
-    transition: background 0.3s, color 0.3s;
+    animation: fade-up 1s ease 3.5s forwards;
+    min-height: 48px; min-width: 44px;
+    transition: background 0.3s, color 0.3s, box-shadow 0.3s, transform 0.3s;
+    display: inline-flex; align-items: center; gap: 10px;
+    direction: rtl;
   }
   .splash-enter:hover, .splash-enter:focus-visible {
-    background: var(--gold);
-    color: var(--ink);
-    outline: 2px solid var(--gold);
-    outline-offset: 3px;
+    background: var(--gold); color: var(--ink);
+    box-shadow: 0 4px 20px var(--gold-glow);
+    transform: translateY(-2px);
+    outline: none;
   }
+
   @keyframes fade-up {
-    from { opacity: 0; transform: translateY(18px); }
+    from { opacity: 0; transform: translateY(16px); }
     to   { opacity: 1; transform: translateY(0); }
   }
 
-  /* ---- Breathing Letters ---- */
+  /* Breathing letter micro-animation */
   .breathe-letter {
     display: inline-block;
     animation: breathe 3.5s ease-in-out infinite;
@@ -114,135 +158,243 @@
   }
   @keyframes breathe {
     0%, 100% { transform: scale(1); }
-    50%      { transform: scale(1.08); }
+    50%       { transform: scale(1.07); }
   }
 
-  /* ---- Main App ---- */
+  /* =============================================
+     MAIN APP
+     ============================================= */
   #app {
-    display: none;
+    display: none; opacity: 0;
+    transition: opacity 0.6s ease;
+    min-height: 100vh; min-height: 100dvh;
     flex-direction: column;
-    min-height: 100vh;
   }
-  #app.visible { display: flex; }
+  #app.visible { display: flex; opacity: 1; }
+
+  /* Header */
   header {
     display: flex; justify-content: space-between; align-items: center;
     padding: 1rem clamp(1rem, 4vw, 3rem);
-    border-bottom: 1px solid color-mix(in srgb, var(--fg) 15%, transparent);
+    border-bottom: 1px solid rgba(197, 160, 89, 0.12);
   }
-  .logo { font-family: 'Amiri', serif; font-size: 1.6rem; color: var(--accent); }
+  .logo-wrap { display: flex; flex-direction: column; gap: 2px; }
+  .logo-ar {
+    font-family: 'Amiri', 'Noto Naskh Arabic', serif;
+    font-size: 1.5rem; color: var(--accent);
+    direction: rtl; unicode-bidi: bidi-override;
+    line-height: 1;
+  }
+  .logo-en {
+    font-family: 'Tajawal', system-ui, sans-serif;
+    font-size: 9px; letter-spacing: 0.35em; text-transform: uppercase;
+    color: var(--fg); opacity: 0.45; font-weight: 400;
+    direction: ltr;
+  }
   .theme-toggle {
-    background: none; border: 1.5px solid var(--fg);
+    background: none; border: 1.5px solid rgba(197, 160, 89, 0.3);
     color: var(--fg); width: 44px; height: 44px;
     border-radius: 50%; cursor: pointer;
     font-size: 1.2rem;
     display: flex; align-items: center; justify-content: center;
-    transition: border-color 0.3s, color 0.3s;
+    transition: border-color 0.3s, box-shadow 0.3s;
   }
   .theme-toggle:hover, .theme-toggle:focus-visible {
-    border-color: var(--gold); color: var(--gold);
-    outline: 2px solid var(--gold); outline-offset: 2px;
+    border-color: var(--gold);
+    box-shadow: 0 0 14px var(--gold-glow);
+    outline: none;
   }
 
-  /* ---- Walkthrough ---- */
-  .walkthrough {
-    padding: clamp(2rem, 6vw, 5rem) clamp(1rem, 4vw, 3rem);
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(min(260px, 100%), 1fr));
-    gap: 2rem;
+  /* =============================================
+     SEQUENTIAL WALKTHROUGH
+     ============================================= */
+  .walkthrough-section {
+    padding: clamp(2rem, 6vw, 4rem) clamp(1rem, 4vw, 3rem);
+    max-width: 600px; margin: 0 auto; width: 100%;
   }
-  .walk-step {
-    position: relative;
-    padding: 2rem 1.5rem;
-    border: 1px solid color-mix(in srgb, var(--gold) 30%, transparent);
-    border-radius: 12px;
-    overflow: hidden;
-    opacity: 0;
-    transform: translateY(24px);
-    transition: opacity 0.7s ease, transform 0.7s ease;
-  }
-  .walk-step.revealed { opacity: 1; transform: translateY(0); }
-  .walk-step::before {
-    content: '';
-    position: absolute; top: 0; left: 0;
-    width: 100%; height: 3px;
-    background: linear-gradient(90deg, var(--gold), var(--crimson));
-    transform: scaleX(0);
-    transform-origin: right;
-    transition: transform 1s ease;
-  }
-  .walk-step.revealed::before { transform: scaleX(1); }
-  .step-num {
+  .wt-label {
     font-family: 'Tajawal', sans-serif;
-    font-size: 2.5rem; font-weight: 700;
-    color: var(--gold); opacity: 0.3;
-    line-height: 1;
-  }
-  .step-title {
-    font-family: 'Amiri', serif;
-    font-size: 1.4rem;
-    margin: 0.5rem 0;
-    color: var(--fg);
-  }
-  .step-desc {
-    font-family: 'Tajawal', sans-serif;
-    font-size: 0.95rem;
-    color: color-mix(in srgb, var(--fg) 70%, transparent);
-    line-height: 1.7;
+    font-size: 9px; letter-spacing: 0.42em; text-transform: uppercase;
+    color: var(--gold); opacity: 0.65; font-weight: 500;
+    margin-bottom: 1.5rem; direction: rtl;
+    display: block;
   }
 
-  /* ---- Poem Section ---- */
+  /* Progress */
+  .wt-progress-bar {
+    height: 2px; background: var(--card-border);
+    border-radius: 2px; margin-bottom: 1.8rem; overflow: hidden;
+  }
+  .wt-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--crimson), var(--gold));
+    border-radius: 2px;
+    transition: width 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  /* Dots */
+  .wt-dots {
+    display: flex; justify-content: center; gap: 10px; margin-bottom: 2rem;
+  }
+  .wt-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--card-border);
+    transition: all 0.35s ease; cursor: pointer;
+  }
+  .wt-dot.active { background: var(--gold); transform: scale(1.4); box-shadow: 0 0 8px var(--gold-glow); }
+  .wt-dot.done   { background: var(--crimson); transform: scale(1.1); }
+
+  /* Step card */
+  .wt-card {
+    background: var(--card-bg); border: 1px solid var(--card-border);
+    border-radius: 16px; padding: 2.5rem 2rem 1.8rem;
+    overflow: hidden; position: relative;
+    opacity: 0; transform: translateX(28px);
+    transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.16,1,0.3,1);
+    will-change: opacity, transform;
+    min-height: 280px;
+    display: flex; flex-direction: column;
+    align-items: center; text-align: center;
+  }
+  .wt-card.in    { opacity: 1; transform: translateX(0); }
+  .wt-card.out-l { opacity: 0; transform: translateX(-28px); }
+  .wt-card.out-r { opacity: 0; transform: translateX(28px); }
+
+  /* Calligraphic top bar */
+  .wt-card::before {
+    content: ''; position: absolute; top: 0; left: 15%; right: 15%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold), var(--crimson), transparent);
+    opacity: 0.55;
+  }
+
+  .wt-step-num {
+    font-family: 'Tajawal', sans-serif;
+    font-size: 9px; letter-spacing: 0.42em; text-transform: uppercase;
+    color: var(--gold); opacity: 0.65; font-weight: 500;
+    margin-bottom: 0.5rem; direction: rtl;
+  }
+  .wt-step-title {
+    /* Arabic title: explicit font + direction */
+    font-family: 'Amiri', 'Noto Naskh Arabic', serif;
+    font-size: 1.6rem; color: var(--fg);
+    margin-bottom: 0.7rem;
+    direction: rtl; unicode-bidi: bidi-override;
+    line-height: 1.3;
+  }
+  .wt-step-desc {
+    font-family: 'Tajawal', system-ui, sans-serif;
+    font-size: 0.92rem; line-height: 1.85;
+    color: var(--fg); opacity: 0.6;
+    max-width: 360px; margin: 0 auto 1.8rem;
+    direction: rtl;
+  }
+
+  .wt-nav {
+    display: flex; justify-content: center; gap: 12px; margin-top: auto; width: 100%;
+  }
+  .wt-btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 0.65rem 1.5rem; min-height: 48px;
+    border: 1px solid var(--card-border);
+    border-radius: 8px; background: transparent;
+    color: var(--fg); font-family: 'Tajawal', sans-serif;
+    font-size: 0.9rem; cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  .wt-btn:hover { border-color: var(--gold); background: rgba(197,160,89,0.06); }
+  .wt-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+  .wt-btn.primary {
+    background: var(--gold); color: var(--ink);
+    border-color: var(--gold); font-weight: 600;
+    box-shadow: 0 4px 14px var(--gold-glow);
+  }
+  .wt-btn.primary:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px var(--gold-glow);
+  }
+
+  /* =============================================
+     POEM SECTION
+     ============================================= */
   .poem-section {
     flex: 1;
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
-    padding: clamp(3rem, 8vw, 6rem) clamp(1rem, 4vw, 3rem);
-    text-align: center;
-  }
-  .poem-verse {
-    font-family: 'Amiri', serif;
-    font-size: clamp(2rem, 6vw, 3.5rem);
-    line-height: 2;
-    color: var(--fg);
-    max-width: 900px;
-    animation: verse-breathe 4s ease-in-out infinite;
-    will-change: transform, opacity;
-  }
-  .poem-verse:nth-child(2) { animation-delay: -1.2s; }
-  @keyframes verse-breathe {
-    0%, 100% { transform: scale(1); opacity: 0.92; }
-    50%      { transform: scale(1.03); opacity: 1; }
-  }
-  .poem-divider {
-    width: 60px; height: 2px;
-    background: var(--gold);
-    margin: 2rem auto;
-    border: none;
-  }
-  .poet-name {
-    font-family: 'Tajawal', sans-serif;
-    font-size: 1.2rem;
-    color: var(--crimson);
-    margin-top: 1.5rem;
+    padding: clamp(2rem, 7vw, 5rem) clamp(1rem, 4vw, 3rem);
   }
 
-  /* ---- Ink Particle Canvas ---- */
+  .poem-wrap {
+    max-width: 800px; width: 100%;
+    background: var(--card-bg);
+    border: 1px solid var(--card-border);
+    border-radius: 16px;
+    padding: clamp(2rem, 5vw, 3.5rem) clamp(1.5rem, 4vw, 3rem);
+    box-shadow: 0 8px 40px rgba(0,0,0,0.2);
+    text-align: center;
+  }
+
+  /* Decorative calligraphic dot ornament */
+  .poem-ornament {
+    width: 40px; margin: 0 auto 1.5rem;
+    display: flex; justify-content: center; gap: 6px;
+  }
+  .poem-ornament span {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--gold); opacity: 0.6;
+  }
+  .poem-ornament span:nth-child(2) { background: var(--crimson); opacity: 0.7; }
+
+  .poem-verse {
+    /* Explicit Arabic font and direction — readable, not floating */
+    font-family: 'Amiri', 'Noto Naskh Arabic', serif;
+    font-size: clamp(1.5rem, 4.5vw, 2.4rem);
+    line-height: 2; color: var(--fg);
+    direction: rtl; unicode-bidi: bidi-override;
+    text-align: center;
+    margin-bottom: 0.6rem;
+    /* Static — no floating or transform animation on readable text */
+  }
+  .poem-verse:last-of-type { margin-bottom: 0; }
+
+  .poem-divider {
+    width: 50px; height: 1.5px; border: none;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    margin: 1.2rem auto;
+    opacity: 0.55;
+  }
+
+  .poet-name {
+    font-family: 'Tajawal', system-ui, sans-serif;
+    font-size: 1rem; color: var(--crimson);
+    margin-top: 1.5rem; letter-spacing: 0.04em;
+    direction: rtl;
+  }
+  [data-theme="light"] .poet-name { color: var(--reed); }
+
+  /* =============================================
+     FOOTER
+     ============================================= */
+  footer {
+    text-align: center;
+    padding: 1.5rem 1rem;
+    font-family: 'Tajawal', system-ui, sans-serif;
+    font-size: 0.82rem;
+    color: var(--fg); opacity: 0.35;
+    border-top: 1px solid rgba(197, 160, 89, 0.08);
+    direction: rtl;
+  }
+
+  /* Ink particle canvas */
   #ink-canvas {
     position: fixed; inset: 0;
     pointer-events: none; z-index: 50;
     width: 100%; height: 100%;
   }
 
-  /* ---- Footer ---- */
-  footer {
-    text-align: center;
-    padding: 2rem 1rem;
-    font-family: 'Tajawal', sans-serif;
-    font-size: 0.85rem;
-    color: color-mix(in srgb, var(--fg) 40%, transparent);
-    border-top: 1px solid color-mix(in srgb, var(--fg) 10%, transparent);
-  }
-
-  /* ---- Reduced Motion ---- */
+  /* =============================================
+     REDUCED MOTION
+     ============================================= */
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
       animation-duration: 0.01ms !important;
@@ -250,121 +402,158 @@
       transition-duration: 0.01ms !important;
     }
     .breathe-letter { animation: none; }
-    .poem-verse { animation: none; opacity: 1; }
     .stroke-path { stroke-dashoffset: 0; }
-    .splash-title, .splash-subtitle, .splash-enter { opacity: 1; transform: none; }
+    .splash-brand-ar, .splash-brand-en, .splash-subtitle, .splash-enter { opacity: 1; transform: none; }
+    .wt-card { opacity: 1; transform: none; }
   }
 
-  /* ---- Mobile ---- */
+  /* =============================================
+     MOBILE
+     ============================================= */
   @media (max-width: 600px) {
-    .poem-verse { font-size: clamp(1.6rem, 7vw, 2.4rem); line-height: 1.9; }
-    .walkthrough { grid-template-columns: 1fr; gap: 1.5rem; }
+    .walkthrough-section { padding: 1.8rem 1rem; }
+    .wt-card { padding: 1.8rem 1.25rem 1.25rem; }
+    .poem-section { padding: 2rem 1rem; }
+    .poem-wrap { padding: 1.75rem 1.25rem; }
     header { padding: 0.8rem 1rem; }
   }
 </style>
 </head>
 <body>
-  <!-- Ink Particle Overlay -->
+  <!-- Ink Particle Canvas -->
   <canvas id="ink-canvas" aria-hidden="true"></canvas>
 
-  <!-- Splash Screen -->
+  <!-- ===================== SPLASH SCREEN ===================== -->
   <div id="splash" role="dialog" aria-label="شاشة البداية">
     <canvas id="splash-canvas" aria-hidden="true"></canvas>
     <div class="splash-calligraphy">
       <svg viewBox="0 0 600 180" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <!-- Stylized calligraphic strokes evoking Arabic letter forms -->
         <path class="stroke-path" d="M50,140 Q80,40 140,60 T240,80 Q280,85 300,120 T360,90"/>
         <path class="stroke-path" d="M180,50 Q220,130 280,100 T380,110 Q420,100 450,60"/>
         <path class="stroke-path" d="M320,140 Q360,50 420,70 T500,90 Q530,95 550,130"/>
         <path class="stroke-path" d="M400,40 Q440,120 480,80 T560,100 Q575,110 580,60"/>
         <!-- Letter dots -->
-        <circle cx="160" cy="45" r="4" fill="var(--gold)" opacity="0" style="animation:fade-up 0.5s ease 1.5s forwards"/>
-        <circle cx="260" cy="130" r="4" fill="var(--crimson)" opacity="0" style="animation:fade-up 0.5s ease 1.8s forwards"/>
-        <circle cx="440" cy="45" r="4" fill="var(--gold)" opacity="0" style="animation:fade-up 0.5s ease 2.1s forwards"/>
-        <circle cx="520" cy="55" r="3.5" fill="var(--gold)" opacity="0" style="animation:fade-up 0.5s ease 2.3s forwards"/>
-        <circle cx="525" cy="65" r="3.5" fill="var(--gold)" opacity="0" style="animation:fade-up 0.5s ease 2.3s forwards"/>
+        <circle cx="160" cy="45" r="4" fill="#C5A059" opacity="0" style="animation:fade-up 0.5s ease 1.5s forwards"/>
+        <circle cx="260" cy="130" r="4" fill="#8B2252" opacity="0" style="animation:fade-up 0.5s ease 1.8s forwards"/>
+        <circle cx="440" cy="45" r="4" fill="#C5A059" opacity="0" style="animation:fade-up 0.5s ease 2.1s forwards"/>
+        <circle cx="520" cy="55" r="3.5" fill="#C5A059" opacity="0" style="animation:fade-up 0.5s ease 2.3s forwards"/>
+        <circle cx="525" cy="65" r="3.5" fill="#C5A059" opacity="0" style="animation:fade-up 0.5s ease 2.3s forwards"/>
       </svg>
-      <div class="splash-title" id="splash-title"></div>
-      <div class="splash-subtitle">حيث الحرف يتنفّس</div>
-      <button class="splash-enter" id="enter-btn" aria-label="ادخل إلى التطبيق">ادخل</button>
+
+      <!-- Arabic brand text with proper rendering -->
+      <div class="splash-brand">
+        <div class="splash-brand-ar" id="splash-title" lang="ar">شعر بالعربي</div>
+        <span class="splash-brand-en">Poetry bil Araby</span>
+        <span class="splash-subtitle">حيث الحرف يتنفّس</span>
+        <button class="splash-enter" id="enter-btn" lang="ar" aria-label="ادخل إلى التطبيق">
+          <!-- Reed pen icon -->
+          <svg width="14" height="20" viewBox="0 0 14 20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M2 18L5 14L12 4C12.8 2.8 12.5 1.2 11.3 0.5C10.1 -0.2 8.6 0.3 8 1.5L2 13L2 18Z"/>
+            <line x1="2" y1="18" x2="5" y2="14"/>
+          </svg>
+          ادخل
+        </button>
+      </div>
     </div>
   </div>
 
-  <!-- Main Application -->
+  <!-- ===================== MAIN APPLICATION ===================== -->
   <div id="app">
+
     <header>
-      <div class="logo">شِعر حيّ</div>
-      <button class="theme-toggle" id="theme-toggle" aria-label="تبديل المظهر" title="تبديل بين الوضع الداكن والفاتح">
-        <span id="theme-icon">\u2600</span>
+      <div class="logo-wrap">
+        <!-- Arabic logo: font-family + direction + lang attribute -->
+        <span class="logo-ar" lang="ar" dir="rtl">شعر بالعربي</span>
+        <span class="logo-en" dir="ltr">Poetry bil Araby</span>
+      </div>
+      <button class="theme-toggle" id="theme-toggle" lang="ar" aria-label="تبديل المظهر">
+        <svg id="theme-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"
+             stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"/>
+        </svg>
       </button>
     </header>
 
-    <!-- Walkthrough: 4 Steps -->
-    <section class="walkthrough" aria-label="خطوات الاستكشاف">
-      <div class="walk-step" data-step="1">
-        <div class="step-num">\u0661</div>
-        <h3 class="step-title">الحبر يسري</h3>
-        <p class="step-desc">كل حرف يُرسم أمامك كأنه يخطّ بقلم القصب، يتبعه ذرات الحبر المتناثرة على الورق العتيق.</p>
+    <!-- Sequential Walkthrough -->
+    <section class="walkthrough-section" aria-label="خطوات الاستكشاف">
+      <span class="wt-label">خطوات البداية</span>
+
+      <!-- Progress bar -->
+      <div class="wt-progress-bar">
+        <div class="wt-fill" id="wt-fill" style="width:25%"></div>
       </div>
-      <div class="walk-step" data-step="2">
-        <div class="step-num">\u0662</div>
-        <h3 class="step-title">الحروف تتنفّس</h3>
-        <p class="step-desc">كل حرف عربي ينبض بإيقاعه الخاص ـ يكبر ويصغر كأنه كائن حي يتنفّس على الشاشة.</p>
+
+      <!-- Step dots -->
+      <div class="wt-dots" id="wt-dots">
+        <div class="wt-dot active" data-step="0" aria-label="الخطوة الأولى"></div>
+        <div class="wt-dot" data-step="1" aria-label="الخطوة الثانية"></div>
+        <div class="wt-dot" data-step="2" aria-label="الخطوة الثالثة"></div>
+        <div class="wt-dot" data-step="3" aria-label="الخطوة الرابعة"></div>
       </div>
-      <div class="walk-step" data-step="3">
-        <div class="step-num">\u0663</div>
-        <h3 class="step-title">الشعر يملأ الفضاء</h3>
-        <p class="step-desc">الأبيات تظهر بحجم ضخم ـ النص هو التصميم بذاته، والفراغ هو الإطار الذي يحتويه.</p>
-      </div>
-      <div class="walk-step" data-step="4">
-        <div class="step-num">\u0664</div>
-        <h3 class="step-title">بين النور والظلام</h3>
-        <p class="step-desc">بدّل بين مظهر الحبر الذهبي على السواد، أو الخط الداكن على الورق الأصفر العتيق.</p>
+
+      <!-- Step card -->
+      <div class="wt-card in" id="wt-card">
+        <!-- JS populated -->
       </div>
     </section>
 
-    <!-- Poem Display -->
+    <!-- Poem Display — static, properly anchored in document flow -->
     <section class="poem-section" aria-label="القصيدة">
-      <div class="poem-verse" id="verse1">
-        أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ
+      <div class="poem-wrap">
+        <div class="poem-ornament">
+          <span></span><span></span><span></span>
+        </div>
+        <!-- Arabic verses: explicit font, direction, lang attribute -->
+        <div class="poem-verse" id="verse1" lang="ar" dir="rtl">
+          أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ
+        </div>
+        <hr class="poem-divider">
+        <div class="poem-verse" id="verse2" lang="ar" dir="rtl">
+          فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
+        </div>
+        <div class="poet-name" lang="ar">~ أحمد شوقي</div>
       </div>
-      <hr class="poem-divider">
-      <div class="poem-verse" id="verse2">
-        فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
-      </div>
-      <div class="poet-name">~ أحمد شوقي</div>
     </section>
 
-    <footer>صُنع بحب للحرف العربي</footer>
+    <footer lang="ar">صُنع بحب للحرف العربي &nbsp;·&nbsp; Poetry bil Araby</footer>
   </div>
 
 <script>
 (function () {
   "use strict";
 
-  /* ============================================
-     1. CONSTANTS & PREFERENCES
-     ============================================ */
   var prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var isDark = true;
-  var SUN_CHAR = '\u2600';
-  var MOON_CHAR = '\u263E';
+  var MOON = '<path d="M21 12.79A9 9 0 1 1 11.21 3a7 7 0 0 0 9.79 9.79z"/>';
+  var SUN  = '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/>';
 
   /* ============================================
-     2. BREATHING LETTERS IN SPLASH TITLE
+     1. SVG STROKE-DASHARRAY INIT
      ============================================ */
-  var titleText = '\u0627\u0644\u062E\u0637 \u064A\u062A\u0646\u0641\u0651\u0633';
-  var titleEl = document.getElementById('splash-title');
-
-  titleText.split('').forEach(function (ch, i) {
-    var span = document.createElement('span');
-    span.textContent = ch;
-    if (ch !== ' ' && !prefersReduced) {
-      span.className = 'breathe-letter';
-      span.style.animationDelay = (i * 0.18) + 's';
-    }
-    titleEl.appendChild(span);
+  document.querySelectorAll('.stroke-path').forEach(function (path) {
+    var len = path.getTotalLength();
+    path.style.strokeDasharray  = len;
+    path.style.strokeDashoffset = len;
   });
+
+  /* ============================================
+     2. BREATHING LETTERS IN SPLASH TITLE (optional decoration)
+     Apply to splash title ONLY, NOT the main poem
+     ============================================ */
+  var titleEl = document.getElementById('splash-title');
+  if (!prefersReduced && titleEl) {
+    var titleText = titleEl.textContent.trim();
+    titleEl.textContent = '';
+    titleText.split('').forEach(function (ch, i) {
+      var span = document.createElement('span');
+      span.textContent = ch;
+      if (ch !== ' ') {
+        span.className = 'breathe-letter';
+        span.style.animationDelay = (i * 0.16) + 's';
+      }
+      titleEl.appendChild(span);
+    });
+  }
 
   /* ============================================
      3. SPLASH INK PARTICLE CANVAS
@@ -382,45 +571,36 @@
   resizeSplashCanvas();
 
   function SplashParticle(x, y) {
-    this.x = x;
-    this.y = y;
-    this.vx = (Math.random() - 0.5) * 1.8;
-    this.vy = (Math.random() - 0.5) * 1.2 + 0.6;
-    this.life = 1.0;
-    this.decay = 0.006 + Math.random() * 0.014;
-    this.radius = 1.2 + Math.random() * 2.8;
+    this.x = x; this.y = y;
+    this.vx = (Math.random() - 0.5) * 1.6;
+    this.vy = (Math.random() - 0.5) * 1 + 0.5;
+    this.life = 1.0; this.decay = 0.006 + Math.random() * 0.012;
+    this.radius = 1 + Math.random() * 2.5;
   }
 
   function splashLoop() {
     if (!splashRunning) return;
     sCtx.clearRect(0, 0, splashCanvas.width, splashCanvas.height);
 
-    penAngle += 0.015;
-    var penX = splashCanvas.width * 0.5 + Math.sin(penAngle * 1.3) * splashCanvas.width * 0.18;
-    var penY = splashCanvas.height * 0.38 + Math.cos(penAngle * 0.7) * 35;
+    penAngle += 0.014;
+    var penX = splashCanvas.width * 0.5 + Math.sin(penAngle * 1.3) * splashCanvas.width * 0.17;
+    var penY = splashCanvas.height * 0.36 + Math.cos(penAngle * 0.7) * 32;
 
-    if (!prefersReduced && Math.random() < 0.7) {
+    if (!prefersReduced && Math.random() < 0.65) {
       sParticles.push(new SplashParticle(penX, penY));
     }
 
     sCtx.fillStyle = '#C5A059';
-    sCtx.globalAlpha = 0.35;
-    sCtx.beginPath();
-    sCtx.arc(penX, penY, 4, 0, Math.PI * 2);
-    sCtx.fill();
+    sCtx.globalAlpha = 0.3;
+    sCtx.beginPath(); sCtx.arc(penX, penY, 4, 0, Math.PI * 2); sCtx.fill();
 
     for (var i = sParticles.length - 1; i >= 0; i--) {
       var p = sParticles[i];
-      p.x += p.vx;
-      p.y += p.vy;
-      p.vy += 0.025;
-      p.life -= p.decay;
+      p.x += p.vx; p.y += p.vy; p.vy += 0.022; p.life -= p.decay;
       if (p.life <= 0) { sParticles.splice(i, 1); continue; }
-      sCtx.globalAlpha = p.life * 0.55;
+      sCtx.globalAlpha = p.life * 0.5;
       sCtx.fillStyle = (i % 3 === 0) ? '#8B2252' : '#C5A059';
-      sCtx.beginPath();
-      sCtx.arc(p.x, p.y, p.radius * p.life, 0, Math.PI * 2);
-      sCtx.fill();
+      sCtx.beginPath(); sCtx.arc(p.x, p.y, p.radius * p.life, 0, Math.PI * 2); sCtx.fill();
     }
     sCtx.globalAlpha = 1;
     requestAnimationFrame(splashLoop);
@@ -429,19 +609,10 @@
   if (!prefersReduced) { splashLoop(); }
 
   /* ============================================
-     4. SVG STROKE-DASHARRAY INIT
-     ============================================ */
-  document.querySelectorAll('.stroke-path').forEach(function (path) {
-    var totalLen = path.getTotalLength();
-    path.style.strokeDasharray = totalLen;
-    path.style.strokeDashoffset = totalLen;
-  });
-
-  /* ============================================
-     5. ENTER APP TRANSITION
+     4. ENTER APP TRANSITION
      ============================================ */
   var splash = document.getElementById('splash');
-  var app = document.getElementById('app');
+  var app    = document.getElementById('app');
 
   document.getElementById('enter-btn').addEventListener('click', function () {
     splash.classList.add('hidden');
@@ -451,75 +622,122 @@
       splash.style.display = 'none';
       app.classList.add('visible');
       revealWalkthrough();
-      applyBreathingToPoem();
+      startInkParticles();
     }, 850);
+  });
+
+  /* ============================================
+     5. SEQUENTIAL WALKTHROUGH
+     ============================================ */
+  var WT_STEPS = [
+    {
+      num: 'الخطوة ١ / ٤',
+      title: 'الحبر يسري',
+      desc: 'كل حرف يُرسم أمامك كأنه يخطّ بقلم القصب، يتبعه ذرات الحبر المتناثرة على الورق.'
+    },
+    {
+      num: 'الخطوة ٢ / ٤',
+      title: 'الحروف تتنفّس',
+      desc: 'كل حرف عربي ينبض بإيقاعه الخاص — يكبر ويصغر كأنه كائن حي يتنفّس على الشاشة.'
+    },
+    {
+      num: 'الخطوة ٣ / ٤',
+      title: 'الشعر يملأ الفضاء',
+      desc: 'الأبيات تظهر بحجم كبير — النص هو التصميم بذاته، والفراغ هو الإطار الذي يحتويه.'
+    },
+    {
+      num: 'الخطوة ٤ / ٤',
+      title: 'بين النور والظلام',
+      desc: 'بدّل بين مظهر الحبر الذهبي على السواد، أو الخط الداكن على الورق الأصفر العتيق.'
+    }
+  ];
+
+  var wtStep = 0;
+  var TOTAL  = WT_STEPS.length;
+
+  function revealWalkthrough() { renderWtStep(0, 'forward'); }
+
+  function renderWtStep(idx, dir) {
+    var card = document.getElementById('wt-card');
+    card.classList.remove('in', 'out-l', 'out-r');
+    card.classList.add(dir === 'forward' ? 'out-r' : 'out-l');
+
+    setTimeout(function() {
+      var s      = WT_STEPS[idx];
+      var isLast  = (idx === TOTAL - 1);
+      var isFirst = (idx === 0);
+
+      card.innerHTML =
+        '<div class="wt-step-num" lang="ar">' + s.num + '</div>' +
+        '<h2 class="wt-step-title" lang="ar" dir="rtl">' + s.title + '</h2>' +
+        '<p class="wt-step-desc" lang="ar" dir="rtl">' + s.desc + '</p>' +
+        '<div class="wt-nav">' +
+          (!isFirst ? '<button class="wt-btn" id="wt-prev" lang="ar">السابق</button>' : '') +
+          '<button class="wt-btn primary" id="wt-next" lang="ar">' +
+            (isLast ? 'ابدأ الاستكشاف' : 'التالي') +
+          '</button>' +
+        '</div>';
+
+      card.classList.remove('out-r', 'out-l');
+      requestAnimationFrame(function() {
+        requestAnimationFrame(function() { card.classList.add('in'); });
+      });
+
+      /* Update dots and fill */
+      document.querySelectorAll('.wt-dot').forEach(function(d, i) {
+        d.className = 'wt-dot' +
+          (i === idx ? ' active' : '') +
+          (i < idx   ? ' done'   : '');
+      });
+      document.getElementById('wt-fill').style.width = ((idx + 1) / TOTAL * 100) + '%';
+
+      /* Button listeners */
+      var nb = document.getElementById('wt-next');
+      if (nb) nb.addEventListener('click', function() {
+        if (wtStep < TOTAL - 1) { wtStep++; renderWtStep(wtStep, 'forward'); }
+        /* Last step: scroll down to poem */
+        else {
+          document.querySelector('.poem-section').scrollIntoView({ behavior: 'smooth' });
+        }
+      });
+      var pb = document.getElementById('wt-prev');
+      if (pb) pb.addEventListener('click', function() {
+        if (wtStep > 0) { wtStep--; renderWtStep(wtStep, 'back'); }
+      });
+    }, 250);
+  }
+
+  /* Dot click */
+  document.getElementById('wt-dots').addEventListener('click', function(e) {
+    var dot = e.target.closest('.wt-dot');
+    if (!dot) return;
+    var idx = parseInt(dot.getAttribute('data-step'), 10);
+    if (!isNaN(idx) && idx !== wtStep) {
+      var dir = idx > wtStep ? 'forward' : 'back';
+      wtStep = idx;
+      renderWtStep(wtStep, dir);
+    }
   });
 
   /* ============================================
      6. DARK / LIGHT THEME TOGGLE
      ============================================ */
-  var themeBtn = document.getElementById('theme-toggle');
+  var themeBtn  = document.getElementById('theme-toggle');
   var themeIcon = document.getElementById('theme-icon');
 
   themeBtn.addEventListener('click', function () {
     isDark = !isDark;
     if (isDark) {
       document.documentElement.removeAttribute('data-theme');
-      themeIcon.textContent = SUN_CHAR;
+      themeIcon.innerHTML = SUN;
     } else {
       document.documentElement.setAttribute('data-theme', 'light');
-      themeIcon.textContent = MOON_CHAR;
+      themeIcon.innerHTML = MOON;
     }
   });
 
   /* ============================================
-     7. WALKTHROUGH REVEAL WITH OBSERVER
-     ============================================ */
-  function revealWalkthrough() {
-    var steps = document.querySelectorAll('.walk-step');
-    if (!('IntersectionObserver' in window) || prefersReduced) {
-      steps.forEach(function (s) { s.classList.add('revealed'); });
-      return;
-    }
-    var observer = new IntersectionObserver(function (entries) {
-      entries.forEach(function (entry) {
-        if (entry.isIntersecting) {
-          var el = entry.target;
-          var delay = parseInt(el.getAttribute('data-step'), 10) * 150;
-          setTimeout(function () { el.classList.add('revealed'); }, delay);
-          observer.unobserve(el);
-        }
-      });
-    }, { threshold: 0.15, rootMargin: '0px 0px -40px 0px' });
-    steps.forEach(function (s) { observer.observe(s); });
-  }
-
-  /* ============================================
-     8. POEM BREATHING LETTERS
-     ============================================ */
-  function applyBreathingToPoem() {
-    if (prefersReduced) return;
-    var verseIds = ['verse1', 'verse2'];
-    verseIds.forEach(function (id, vIdx) {
-      var el = document.getElementById(id);
-      var text = el.textContent.trim();
-      el.textContent = '';
-      var charIndex = 0;
-      text.split('').forEach(function (ch) {
-        var span = document.createElement('span');
-        span.textContent = ch;
-        if (ch !== ' ') {
-          span.className = 'breathe-letter';
-          span.style.animationDelay = (charIndex * 0.08 + vIdx * 1.2) + 's';
-          charIndex++;
-        }
-        el.appendChild(span);
-      });
-    });
-  }
-
-  /* ============================================
-     9. AMBIENT INK PARTICLES (Main App)
+     7. AMBIENT INK PARTICLES (Main App)
      ============================================ */
   var inkCanvas = document.getElementById('ink-canvas');
   var iCtx = inkCanvas.getContext('2d');
@@ -527,36 +745,34 @@
   var inkRunning = false;
 
   function resizeInkCanvas() {
-    inkCanvas.width = window.innerWidth;
+    inkCanvas.width  = window.innerWidth;
     inkCanvas.height = window.innerHeight;
   }
   resizeInkCanvas();
 
   function AmbientDrop() {
-    this.x = Math.random() * inkCanvas.width;
-    this.y = Math.random() * inkCanvas.height * 0.3;
-    this.radius = 0.8 + Math.random() * 2.5;
-    this.life = 1.0;
-    this.decay = 0.002 + Math.random() * 0.005;
-    this.drift = (Math.random() - 0.5) * 0.25;
-    this.fall = 0.1 + Math.random() * 0.25;
+    this.x      = Math.random() * inkCanvas.width;
+    this.y      = Math.random() * inkCanvas.height * 0.3;
+    this.radius = 0.7 + Math.random() * 2.2;
+    this.life   = 1.0;
+    this.decay  = 0.002 + Math.random() * 0.005;
+    this.drift  = (Math.random() - 0.5) * 0.22;
+    this.fall   = 0.08 + Math.random() * 0.2;
   }
 
   function inkLoop() {
     if (!inkRunning || prefersReduced) return;
     iCtx.clearRect(0, 0, inkCanvas.width, inkCanvas.height);
 
-    if (Math.random() < 0.12 && inkDrops.length < 80) {
+    if (Math.random() < 0.1 && inkDrops.length < 70) {
       inkDrops.push(new AmbientDrop());
     }
 
     for (var i = inkDrops.length - 1; i >= 0; i--) {
       var d = inkDrops[i];
-      d.x += d.drift;
-      d.y += d.fall;
-      d.life -= d.decay;
+      d.x += d.drift; d.y += d.fall; d.life -= d.decay;
       if (d.life <= 0) { inkDrops.splice(i, 1); continue; }
-      iCtx.globalAlpha = d.life * 0.2;
+      iCtx.globalAlpha = d.life * 0.18;
       iCtx.fillStyle = isDark ? '#C5A059' : '#8B6914';
       iCtx.beginPath();
       iCtx.arc(d.x, d.y, d.radius * d.life, 0, Math.PI * 2);
@@ -566,16 +782,23 @@
     requestAnimationFrame(inkLoop);
   }
 
-  var appObserver = new MutationObserver(function () {
-    if (app.classList.contains('visible') && !inkRunning) {
-      inkRunning = true;
-      inkLoop();
-    }
-  });
-  appObserver.observe(app, { attributes: true, attributeFilter: ['class'] });
+  function startInkParticles() {
+    if (prefersReduced) return;
+    inkRunning = true;
+    inkLoop();
+  }
 
   /* ============================================
-     10. WINDOW RESIZE HANDLER
+     8. REDUCED MOTION FALLBACK
+     ============================================ */
+  if (prefersReduced) {
+    splash.style.display = 'none';
+    app.classList.add('visible');
+    revealWalkthrough();
+  }
+
+  /* ============================================
+     9. RESIZE
      ============================================ */
   window.addEventListener('resize', function () {
     resizeSplashCanvas();

@@ -3,42 +3,43 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Neumorphic Warmth — Innovative UI/UX Mockup</title>
-  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <title>Neumorphic Warmth -- Poetry bil Araby</title>
+  <link href="https://fonts.googleapis.com/css2?family=Forum&family=Reem+Kufi:wght@400;700&family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
   <style>
     :root {
-      --bg-dark: #0c0c0e;
-      --bg-light: #e5e1da;
-      --text-dark: #e8e8e8;
-      --text-light: #2c2c2c;
-      --gold: #C5A059;
-      --indigo: #4F46E5;
-      --shadow-light: #d1cec6;
-      --shadow-dark: #f9f6ef;
-      --neu-inset: inset 8px 8px 16px #d1cec6, inset -8px -8px 16px #f9f6ef;
-      --neu-outset: 8px 8px 16px #d1cec6, -8px -8px 16px #f9f6ef;
+      /* Paper-warm palette */
+      --bg: #e8e3d9;
+      --bg-card: #e5e0d6;
+      --shadow-dark: #c9c4ba;
+      --shadow-light: #fffdf5;
+      --text-primary: #3d3529;
+      --text-muted: #7a7060;
+      --gold: #b8923a;
+      --gold-soft: #d4b06a;
+      --accent: #6366f1;
+      --accent-bg: rgba(99, 102, 241, 0.1);
+
+      --neu-outset: 8px 8px 16px var(--shadow-dark), -8px -8px 16px var(--shadow-light);
+      --neu-inset: inset 6px 6px 12px var(--shadow-dark), inset -6px -6px 12px var(--shadow-light);
+      --neu-outset-sm: 4px 4px 8px var(--shadow-dark), -4px -4px 8px var(--shadow-light);
+      --control-size: 48px;
+      --icon-size: 20px;
     }
 
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
       font-family: 'Tajawal', sans-serif;
-      background: var(--bg-dark);
-      color: var(--text-dark);
-      transition: background 0.4s ease, color 0.4s ease;
+      background: var(--bg);
+      color: var(--text-primary);
       overflow-x: hidden;
       min-height: 100vh;
     }
 
-    body.light {
-      background: var(--bg-light);
-      color: var(--text-light);
-    }
-
+    /* =============================================
+       1. SPLASH SCREEN
+       ============================================= */
     #splash {
       position: fixed;
       inset: 0;
@@ -47,12 +48,8 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      background: var(--bg-dark);
-      animation: splashFadeOut 1s ease 3s forwards;
-    }
-
-    body.light #splash {
-      background: var(--bg-light);
+      background: var(--bg);
+      animation: splashFadeOut 0.8s ease 3s forwards;
     }
 
     #warmCanvas {
@@ -60,54 +57,190 @@
       inset: 0;
       width: 100%;
       height: 100%;
-      opacity: 0.4;
+      opacity: 0.35;
     }
 
-    .splash-title {
-      font-family: 'Amiri', serif;
-      font-size: 3rem;
-      font-weight: 700;
-      color: var(--gold);
+    .brand-logo {
+      z-index: 2;
       text-align: center;
-      z-index: 2;
-      animation: softPulse 2s ease-in-out infinite;
+      animation: softPulse 2.5s ease-in-out infinite;
     }
 
-    .splash-subtitle {
-      font-size: 1rem;
-      margin-top: 1rem;
-      opacity: 0.7;
+    .brand-logo .en {
+      font-family: 'Forum', serif;
+      font-size: clamp(3rem, 6vw, 4.5rem);
+      letter-spacing: -0.05em;
+      color: var(--gold);
+      text-transform: lowercase;
+      line-height: 1.1;
+    }
+
+    .brand-logo .ar {
+      font-family: 'Reem Kufi', sans-serif;
+      font-weight: 700;
+      font-size: clamp(1.875rem, 4vw, 3rem);
+      color: var(--gold-soft);
+      direction: rtl;
+    }
+
+    .splash-tagline {
+      font-size: 0.9rem;
+      margin-top: 1.5rem;
+      opacity: 0.6;
       z-index: 2;
+      font-weight: 300;
+      letter-spacing: 0.5px;
     }
 
     @keyframes splashFadeOut {
-      to {
-        opacity: 0;
-        pointer-events: none;
-      }
+      to { opacity: 0; pointer-events: none; }
     }
 
     @keyframes softPulse {
-      0%, 100% {
-        transform: scale(1);
-        opacity: 0.9;
-      }
-      50% {
-        transform: scale(1.02);
-        opacity: 1;
-      }
+      0%, 100% { transform: scale(1); opacity: 0.9; }
+      50% { transform: scale(1.02); opacity: 1; }
     }
 
+    /* =============================================
+       2. ONBOARDING
+       ============================================= */
+    #onboarding {
+      display: none;
+      position: fixed;
+      inset: 0;
+      z-index: 5000;
+      background: var(--bg);
+      padding: 2rem;
+      overflow-y: auto;
+    }
+
+    #onboarding.visible {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .onboarding-card {
+      background: var(--bg-card);
+      border-radius: 24px;
+      padding: 3rem 2.5rem;
+      max-width: 480px;
+      width: 100%;
+      box-shadow: var(--neu-outset);
+      text-align: center;
+    }
+
+    .onboarding-card h2 {
+      font-family: 'Amiri', serif;
+      font-size: 1.8rem;
+      color: var(--gold);
+      margin-bottom: 0.5rem;
+    }
+
+    .onboarding-card .en-title {
+      font-family: 'Tajawal', sans-serif;
+      font-size: 1rem;
+      color: var(--text-muted);
+      margin-bottom: 2rem;
+      font-weight: 300;
+    }
+
+    .onboarding-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+      margin-bottom: 2rem;
+      text-align: right;
+    }
+
+    .onb-step {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      direction: rtl;
+    }
+
+    .onb-step-icon {
+      flex-shrink: 0;
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 14px;
+      background: var(--bg-card);
+      box-shadow: var(--neu-outset-sm);
+      color: var(--gold);
+    }
+
+    .onb-step-icon i {
+      width: 20px;
+      height: 20px;
+    }
+
+    .onb-step-text {
+      flex: 1;
+    }
+
+    .onb-step-text strong {
+      display: block;
+      font-size: 0.95rem;
+      margin-bottom: 2px;
+    }
+
+    .onb-step-text span {
+      font-size: 0.8rem;
+      opacity: 0.65;
+      font-style: italic;
+      direction: ltr;
+      display: block;
+      text-align: left;
+    }
+
+    .btn-start {
+      min-width: 44px;
+      min-height: 44px;
+      padding: 0.85rem 2.5rem;
+      border: none;
+      border-radius: 16px;
+      font-family: 'Tajawal', sans-serif;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      background: var(--bg-card);
+      color: var(--gold);
+      box-shadow: var(--neu-outset);
+      transition: all 0.2s ease;
+    }
+
+    .btn-start:hover {
+      box-shadow: var(--neu-outset-sm);
+    }
+
+    .btn-start:active {
+      box-shadow: var(--neu-inset);
+    }
+
+    /* =============================================
+       3. MAIN APP
+       ============================================= */
     #mainContent {
-      opacity: 0;
-      animation: contentFadeIn 1s ease 3.5s forwards;
+      display: none;
       padding: 3rem 2rem;
       max-width: 900px;
       margin: 0 auto;
+      padding-bottom: 100px;
+    }
+
+    #mainContent.visible {
+      display: block;
+      animation: contentFadeIn 0.6s ease forwards;
     }
 
     @keyframes contentFadeIn {
-      to { opacity: 1; }
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     header {
@@ -115,211 +248,308 @@
       text-align: center;
     }
 
-    h1 {
+    header h1 {
       font-family: 'Amiri', serif;
-      font-size: 2.5rem;
+      font-size: clamp(1.8rem, 4vw, 2.5rem);
       font-weight: 700;
       color: var(--gold);
-      margin-bottom: 1rem;
+      margin-bottom: 0.5rem;
     }
 
     .subtitle {
-      font-size: 1rem;
-      opacity: 0.7;
+      font-size: 0.9rem;
+      opacity: 0.6;
       font-weight: 300;
     }
 
+    /* Poetry Card */
     .poetry-card {
-      background: var(--bg-light);
+      background: var(--bg-card);
       border-radius: 24px;
       padding: 3rem 2.5rem;
       margin: 2rem 0;
       box-shadow: var(--neu-outset);
-      transition: all 0.3s ease;
-    }
-
-    body.light .poetry-card {
-      background: var(--bg-light);
-    }
-
-    body:not(.light) .poetry-card {
-      background: #1a1a1c;
-      box-shadow: 8px 8px 16px #0a0a0a, -8px -8px 16px #1a1a1a;
+      transition: transform 0.3s ease;
     }
 
     .poetry-card:hover {
-      transform: translateY(-4px);
+      transform: translateY(-3px);
     }
 
     .verse {
       font-family: 'Amiri', serif;
-      font-size: 1.85rem;
+      font-size: clamp(1.4rem, 3vw, 1.85rem);
       line-height: 2.3;
       text-align: center;
       margin-bottom: 1.5rem;
+      color: var(--text-primary);
     }
 
     .poet {
       text-align: center;
-      font-size: 1.1rem;
-      color: var(--indigo);
+      font-size: 1rem;
+      color: var(--gold);
       font-weight: 500;
     }
 
+    /* Feature walkthrough */
     .walkthrough {
       margin: 4rem 0;
     }
 
     .walkthrough h2 {
       font-family: 'Amiri', serif;
-      font-size: 2rem;
+      font-size: 1.8rem;
       color: var(--gold);
-      margin-bottom: 2.5rem;
+      margin-bottom: 0.5rem;
       text-align: center;
+    }
+
+    .walkthrough .en-sub {
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-bottom: 2rem;
+      font-weight: 300;
     }
 
     .steps {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 2rem;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
     }
 
     .step {
-      background: var(--bg-light);
+      background: var(--bg-card);
       border-radius: 20px;
-      padding: 2rem 1.5rem;
+      padding: 1.75rem 1.25rem;
       text-align: center;
       box-shadow: var(--neu-outset);
-      transition: all 0.3s ease;
+      transition: all 0.2s ease;
       cursor: pointer;
     }
 
-    body:not(.light) .step {
-      background: #1a1a1c;
-      box-shadow: 8px 8px 16px #0a0a0a, -8px -8px 16px #1a1a1a;
-    }
-
     .step:hover {
-      box-shadow: 4px 4px 8px #d1cec6, -4px -4px 8px #f9f6ef;
-    }
-
-    body:not(.light) .step:hover {
-      box-shadow: 4px 4px 8px #0a0a0a, -4px -4px 8px #1a1a1a;
+      box-shadow: var(--neu-outset-sm);
     }
 
     .step:active {
       box-shadow: var(--neu-inset);
     }
 
-    body:not(.light) .step:active {
-      box-shadow: inset 4px 4px 8px #0a0a0a, inset -4px -4px 8px #1a1a1a;
-    }
-
-    .step-number {
+    .step-icon {
       display: inline-flex;
       align-items: center;
       justify-content: center;
       width: 48px;
       height: 48px;
       border-radius: 50%;
-      background: var(--bg-light);
-      box-shadow: var(--neu-outset);
+      background: var(--bg-card);
+      box-shadow: var(--neu-outset-sm);
       color: var(--gold);
-      font-weight: 700;
-      font-size: 1.25rem;
-      margin-bottom: 1.25rem;
+      margin-bottom: 1rem;
     }
 
-    body:not(.light) .step-number {
-      background: #1a1a1c;
-      box-shadow: 4px 4px 8px #0a0a0a, -4px -4px 8px #1a1a1a;
+    .step-icon i {
+      width: 22px;
+      height: 22px;
     }
 
     .step h3 {
       font-family: 'Amiri', serif;
-      font-size: 1.3rem;
-      margin-bottom: 0.75rem;
+      font-size: 1.15rem;
+      margin-bottom: 0.5rem;
       color: var(--gold);
     }
 
     .step p {
-      font-size: 0.9rem;
-      opacity: 0.75;
-      line-height: 1.7;
+      font-size: 0.85rem;
+      opacity: 0.7;
+      line-height: 1.6;
     }
 
-    .controls {
+    /* =============================================
+       4. VERTICAL CONTROLS (Desktop, Right Side)
+       ============================================= */
+    .vertical-controls {
       position: fixed;
-      top: 2rem;
-      left: 2rem;
+      right: 16px;
+      top: 50%;
+      transform: translateY(-50%);
       display: flex;
-      gap: 1rem;
-      z-index: 1000;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      background: var(--bg-card);
+      border-radius: 24px;
+      padding: 12px 8px;
+      box-shadow: var(--neu-outset);
+      z-index: 2000;
     }
 
-    .btn-neu {
+    .ctrl-btn {
+      width: var(--control-size);
+      height: var(--control-size);
       min-width: 44px;
       min-height: 44px;
-      padding: 0.75rem 1.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-card);
       border: none;
-      border-radius: 16px;
-      font-family: 'Tajawal', sans-serif;
-      font-size: 0.95rem;
-      font-weight: 500;
+      border-radius: 14px;
       cursor: pointer;
       transition: all 0.2s ease;
-      background: var(--bg-light);
-      color: var(--text-light);
-      box-shadow: var(--neu-outset);
+      color: var(--text-muted);
+      position: relative;
+      box-shadow: var(--neu-outset-sm);
     }
 
-    body:not(.light) .btn-neu {
-      background: #1a1a1c;
-      color: var(--text-dark);
-      box-shadow: 6px 6px 12px #0a0a0a, -6px -6px 12px #1a1a1a;
+    .ctrl-btn:hover {
+      box-shadow: 2px 2px 4px var(--shadow-dark), -2px -2px 4px var(--shadow-light);
+      color: var(--text-primary);
     }
 
-    .btn-neu:hover {
-      box-shadow: 4px 4px 8px #d1cec6, -4px -4px 8px #f9f6ef;
+    .ctrl-btn.active {
+      box-shadow: var(--neu-inset);
+      color: var(--gold);
     }
 
-    body:not(.light) .btn-neu:hover {
-      box-shadow: 4px 4px 8px #0a0a0a, -4px -4px 8px #1a1a1a;
+    .ctrl-btn i {
+      width: var(--icon-size);
+      height: var(--icon-size);
     }
 
-    .btn-neu:active {
+    .ctrl-tooltip {
+      position: absolute;
+      right: calc(100% + 10px);
+      background: var(--text-primary);
+      color: var(--bg);
+      padding: 4px 10px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 600;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s;
+    }
+
+    .ctrl-tooltip::after {
+      content: '';
+      position: absolute;
+      right: -4px;
+      top: 50%;
+      transform: translateY(-50%);
+      border-left: 4px solid var(--text-primary);
+      border-top: 4px solid transparent;
+      border-bottom: 4px solid transparent;
+    }
+
+    .ctrl-btn:hover .ctrl-tooltip {
+      opacity: 1;
+    }
+
+    .ctrl-divider {
+      width: 28px;
+      height: 2px;
+      background: linear-gradient(to right, var(--bg-card), var(--shadow-dark), var(--bg-card));
+      border-radius: 1px;
+    }
+
+    /* =============================================
+       5. MOBILE BOTTOM BAR
+       ============================================= */
+    .bottom-bar {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--bg-card);
+      box-shadow: 0 -6px 16px var(--shadow-dark);
+      z-index: 2000;
+      padding: 10px 0;
+      padding-bottom: max(10px, env(safe-area-inset-bottom));
+    }
+
+    .bottom-bar-inner {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    .bottom-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      background: var(--bg-card);
+      border: none;
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: all 0.2s ease;
+      min-width: 44px;
+      min-height: 44px;
+      justify-content: center;
+      padding: 6px;
+      border-radius: 12px;
+      box-shadow: var(--neu-outset-sm);
+    }
+
+    .bottom-btn:active {
       box-shadow: var(--neu-inset);
     }
 
-    body:not(.light) .btn-neu:active {
-      box-shadow: inset 4px 4px 8px #0a0a0a, inset -4px -4px 8px #1a1a1a;
+    .bottom-btn.active {
+      color: var(--gold);
+      box-shadow: var(--neu-inset);
     }
 
+    .bottom-btn i {
+      width: 20px;
+      height: 20px;
+    }
+
+    .bottom-btn-label {
+      font-size: 9px;
+      font-weight: 600;
+    }
+
+    /* =============================================
+       6. RESPONSIVE
+       ============================================= */
     @media (max-width: 768px) {
-      .splash-title {
-        font-size: 2rem;
+      .vertical-controls {
+        display: none;
       }
 
-      h1 {
-        font-size: 2rem;
+      .bottom-bar {
+        display: block;
+      }
+
+      .onboarding-card {
+        padding: 2rem 1.5rem;
+      }
+
+      header h1 {
+        font-size: 1.8rem;
       }
 
       .verse {
-        font-size: 1.4rem;
-        line-height: 2.1;
+        font-size: 1.3rem;
+        line-height: 2;
       }
 
       #mainContent {
-        padding: 2rem 1.5rem;
+        padding: 2rem 1.25rem;
+        padding-bottom: 100px;
       }
 
       .poetry-card {
-        padding: 2rem 1.5rem;
-      }
-
-      .controls {
-        top: 1rem;
-        left: 1rem;
+        padding: 2rem 1.25rem;
       }
 
       .steps {
@@ -335,30 +565,73 @@
       }
     }
 
-    .btn-neu:focus-visible,
+    .btn-start:focus-visible,
+    .ctrl-btn:focus-visible,
     .step:focus-visible {
-      outline: 3px solid var(--indigo);
+      outline: 3px solid var(--accent);
       outline-offset: 2px;
     }
   </style>
 </head>
-<body class="light">
+<body>
+  <!-- ===== 1. SPLASH ===== -->
   <div id="splash">
     <canvas id="warmCanvas"></canvas>
-    <div class="splash-title">دفء التصميم</div>
-    <div class="splash-subtitle">Neumorphic Warmth</div>
+    <div class="brand-logo">
+      <div class="en">poetry</div>
+      <div class="ar" lang="ar">بالعربي</div>
+    </div>
+    <div class="splash-tagline">Neumorphic Warmth</div>
   </div>
 
-  <div class="controls">
-    <button class="btn-neu" onclick="toggleTheme()" aria-label="تبديل السمة">
-      🌙 / ☀️
-    </button>
+  <!-- ===== 2. ONBOARDING ===== -->
+  <div id="onboarding">
+    <div class="onboarding-card">
+      <h2 lang="ar">مرحبا بك</h2>
+      <div class="en-title">Welcome to Poetry bil Araby</div>
+
+      <div class="onboarding-steps">
+        <div class="onb-step">
+          <div class="onb-step-icon"><i data-lucide="refresh-cw"></i></div>
+          <div class="onb-step-text">
+            <strong lang="ar">اكتشف قصائد جديدة</strong>
+            <span>Discover new poems with a tap</span>
+          </div>
+        </div>
+        <div class="onb-step">
+          <div class="onb-step-icon"><i data-lucide="music"></i></div>
+          <div class="onb-step-text">
+            <strong lang="ar">استمع للقصيدة</strong>
+            <span>Listen to poems read aloud</span>
+          </div>
+        </div>
+        <div class="onb-step">
+          <div class="onb-step-icon"><i data-lucide="languages"></i></div>
+          <div class="onb-step-text">
+            <strong lang="ar">ترجمة صوتية</strong>
+            <span>Transliteration for pronunciation</span>
+          </div>
+        </div>
+        <div class="onb-step">
+          <div class="onb-step-icon"><i data-lucide="heart"></i></div>
+          <div class="onb-step-text">
+            <strong lang="ar">احفظ المفضلة</strong>
+            <span>Save your favorite poems</span>
+          </div>
+        </div>
+      </div>
+
+      <button class="btn-start" id="startBtn">
+        <span lang="ar">ابدأ الرحلة</span>
+      </button>
+    </div>
   </div>
 
+  <!-- ===== 3. MAIN APP ===== -->
   <div id="mainContent">
     <header>
-      <h1>لمسة ناعمة للشعر</h1>
-      <p class="subtitle">Neumorphic Warmth — Soft Tactile + Warm Particles</p>
+      <h1 lang="ar">لمسة ناعمة للشعر</h1>
+      <p class="subtitle">Neumorphic Warmth -- Soft Tactile + Paper Background</p>
     </header>
 
     <div class="poetry-card">
@@ -366,120 +639,204 @@
         أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ<br>
         فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
       </div>
-      <div class="poet">— أحمد شوقي</div>
+      <div class="poet" lang="ar">-- أحمد شوقي</div>
     </div>
 
     <section class="walkthrough">
-      <h2>دليل التفاعل</h2>
+      <h2 lang="ar">دليل التفاعل</h2>
+      <div class="en-sub">Feature Walkthrough</div>
       <div class="steps">
         <div class="step" tabindex="0">
-          <div class="step-number">1</div>
-          <h3>تصميم ناعم</h3>
-          <p>ظلال ناعمة تمنح إحساساً بالعمق والبروز</p>
+          <div class="step-icon"><i data-lucide="layers"></i></div>
+          <h3 lang="ar">تصميم ناعم</h3>
+          <p lang="ar">ظلال ناعمة تمنح إحساسا بالعمق والبروز</p>
         </div>
         <div class="step" tabindex="0">
-          <div class="step-number">2</div>
-          <h3>جسيمات دافئة</h3>
-          <p>جزيئات ذهبية تطفو في الخلفية بسلاسة</p>
+          <div class="step-icon"><i data-lucide="sparkles"></i></div>
+          <h3 lang="ar">جسيمات دافئة</h3>
+          <p lang="ar">جزيئات ذهبية تطفو في الخلفية بسلاسة</p>
         </div>
         <div class="step" tabindex="0">
-          <div class="step-number">3</div>
-          <h3>تفاعل لمسي</h3>
-          <p>أزرار تتفاعل مع الضغط بشكل واقعي</p>
+          <div class="step-icon"><i data-lucide="hand"></i></div>
+          <h3 lang="ar">تفاعل لمسي</h3>
+          <p lang="ar">أزرار تتفاعل مع الضغط بشكل واقعي</p>
         </div>
         <div class="step" tabindex="0">
-          <div class="step-number">4</div>
-          <h3>ألوان دافئة</h3>
-          <p>لوحة ألوان دافئة ومريحة للعين</p>
+          <div class="step-icon"><i data-lucide="palette"></i></div>
+          <h3 lang="ar">ألوان دافئة</h3>
+          <p lang="ar">لوحة ألوان دافئة ومريحة للعين</p>
         </div>
       </div>
     </section>
   </div>
 
+  <!-- ===== 4. VERTICAL CONTROLS (Desktop) ===== -->
+  <nav class="vertical-controls" aria-label="Poem controls">
+    <button class="ctrl-btn active" id="saveBtn" aria-label="Save poem">
+      <span class="ctrl-tooltip">Save</span>
+      <i data-lucide="heart"></i>
+    </button>
+    <div class="ctrl-divider"></div>
+    <button class="ctrl-btn" id="textSizeBtn" aria-label="Text size">
+      <span class="ctrl-tooltip">Text Size</span>
+      <i data-lucide="type"></i>
+    </button>
+    <button class="ctrl-btn" id="translitBtn" aria-label="Transliteration">
+      <span class="ctrl-tooltip">Transliteration</span>
+      <i data-lucide="languages"></i>
+    </button>
+    <button class="ctrl-btn" id="translateBtn" aria-label="Translation">
+      <span class="ctrl-tooltip">Translation</span>
+      <i data-lucide="book-open"></i>
+    </button>
+    <button class="ctrl-btn" id="fontBtn" aria-label="Font">
+      <span class="ctrl-tooltip">Font</span>
+      <i data-lucide="italic"></i>
+    </button>
+    <div class="ctrl-divider"></div>
+    <button class="ctrl-btn" id="signInBtn" aria-label="Sign In">
+      <span class="ctrl-tooltip">Sign In</span>
+      <i data-lucide="log-in"></i>
+    </button>
+    <button class="ctrl-btn" id="settingsBtn" aria-label="Settings">
+      <span class="ctrl-tooltip">Settings</span>
+      <i data-lucide="settings"></i>
+    </button>
+  </nav>
+
+  <!-- ===== 5. MOBILE BOTTOM BAR ===== -->
+  <nav class="bottom-bar" aria-label="Poem actions">
+    <div class="bottom-bar-inner">
+      <button class="bottom-btn" aria-label="Listen to poem">
+        <i data-lucide="music"></i>
+        <span class="bottom-btn-label">Listen</span>
+      </button>
+      <button class="bottom-btn" aria-label="Explain poem">
+        <i data-lucide="lightbulb"></i>
+        <span class="bottom-btn-label">Explain</span>
+      </button>
+      <button class="bottom-btn" aria-label="Get new poem">
+        <i data-lucide="refresh-cw"></i>
+        <span class="bottom-btn-label">Discover</span>
+      </button>
+      <button class="bottom-btn" aria-label="Browse poets">
+        <i data-lucide="library"></i>
+        <span class="bottom-btn-label">Poets</span>
+      </button>
+      <button class="bottom-btn" aria-label="Random poem">
+        <i data-lucide="shuffle"></i>
+        <span class="bottom-btn-label">Surprise</span>
+      </button>
+    </div>
+  </nav>
+
   <script>
-    const canvas = document.getElementById('warmCanvas');
-    const ctx = canvas.getContext('2d');
-    let particles = [];
-    let animationId;
+    // Initialize Lucide icons
+    lucide.createIcons();
+
+    // --- Warm particle animation for splash ---
+    var canvas = document.getElementById('warmCanvas');
+    var ctx = canvas.getContext('2d');
+    var particles = [];
+    var animId;
 
     function resizeCanvas() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
     }
 
-    class WarmParticle {
-      constructor() {
-        this.x = Math.random() * canvas.width;
-        this.y = Math.random() * canvas.height;
-        this.size = Math.random() * 2 + 0.5;
-        this.speedX = Math.random() * 0.5 - 0.25;
-        this.speedY = Math.random() * 0.5 - 0.25;
-        this.opacity = Math.random() * 0.3 + 0.1;
-        this.hue = Math.random() > 0.5 ? '#C5A059' : '#d4a574';
-      }
-
-      update() {
-        this.x += this.speedX;
-        this.y += this.speedY;
-
-        if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
-        if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
-      }
-
-      draw() {
-        ctx.save();
-        ctx.globalAlpha = this.opacity;
-        ctx.fillStyle = this.hue;
-        ctx.shadowBlur = 8;
-        ctx.shadowColor = this.hue;
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-      }
+    function WarmParticle() {
+      this.x = Math.random() * canvas.width;
+      this.y = Math.random() * canvas.height;
+      this.size = Math.random() * 2 + 0.5;
+      this.speedX = Math.random() * 0.5 - 0.25;
+      this.speedY = Math.random() * 0.5 - 0.25;
+      this.opacity = Math.random() * 0.3 + 0.1;
+      this.hue = Math.random() > 0.5 ? '#b8923a' : '#d4b06a';
     }
+
+    WarmParticle.prototype.update = function() {
+      this.x += this.speedX;
+      this.y += this.speedY;
+      if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
+      if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
+    };
+
+    WarmParticle.prototype.draw = function() {
+      ctx.save();
+      ctx.globalAlpha = this.opacity;
+      ctx.fillStyle = this.hue;
+      ctx.shadowBlur = 8;
+      ctx.shadowColor = this.hue;
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    };
 
     function initParticles() {
       particles = [];
-      for (let i = 0; i < 60; i++) {
+      for (var i = 0; i < 60; i++) {
         particles.push(new WarmParticle());
       }
     }
 
     function animate() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      particles.forEach(particle => {
-        particle.update();
-        particle.draw();
-      });
-
-      animationId = requestAnimationFrame(animate);
-    }
-
-    function stopParticles() {
-      cancelAnimationFrame(animationId);
+      particles.forEach(function(p) { p.update(); p.draw(); });
+      animId = requestAnimationFrame(animate);
     }
 
     resizeCanvas();
     initParticles();
     animate();
+    window.addEventListener('resize', function() { resizeCanvas(); initParticles(); });
 
-    window.addEventListener('resize', () => {
-      resizeCanvas();
-      initParticles();
+    // --- Sequential flow: Splash -> Onboarding -> Main ---
+    setTimeout(function() {
+      cancelAnimationFrame(animId);
+      // Show onboarding after splash fades
+      document.getElementById('onboarding').classList.add('visible');
+      // Re-init icons for onboarding section
+      lucide.createIcons();
+    }, 3800);
+
+    document.getElementById('startBtn').addEventListener('click', function() {
+      document.getElementById('onboarding').classList.remove('visible');
+      document.getElementById('onboarding').style.display = 'none';
+      document.getElementById('mainContent').classList.add('visible');
+      // Re-init icons for main content
+      lucide.createIcons();
     });
 
-    setTimeout(() => {
-      stopParticles();
-    }, 3000);
+    // --- Control interactivity ---
+    var saveBtn = document.getElementById('saveBtn');
+    var textSizeBtn = document.getElementById('textSizeBtn');
+    var translitBtn = document.getElementById('translitBtn');
+    var fontBtn = document.getElementById('fontBtn');
+    var isSaved = true;
 
-    function toggleTheme() {
-      document.body.classList.toggle('light');
-    }
+    saveBtn.addEventListener('click', function() {
+      isSaved = !isSaved;
+      saveBtn.classList.toggle('active');
+      saveBtn.querySelector('.ctrl-tooltip').textContent = isSaved ? 'Saved' : 'Save';
+    });
 
-    document.querySelectorAll('.step').forEach(step => {
-      step.addEventListener('keydown', (e) => {
+    textSizeBtn.addEventListener('click', function() {
+      textSizeBtn.classList.toggle('active');
+    });
+
+    translitBtn.addEventListener('click', function() {
+      translitBtn.classList.toggle('active');
+    });
+
+    fontBtn.addEventListener('click', function() {
+      fontBtn.classList.toggle('active');
+    });
+
+    // Keyboard support for steps
+    document.querySelectorAll('.step').forEach(function(step) {
+      step.addEventListener('keydown', function(e) {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
           step.click();

@@ -3,8 +3,11 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Particle Scroll — Innovative UI/UX Mockup</title>
-  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <title>Particle Scroll — poetry bil-araby</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Forum&family=Reem+Kufi:wght@400;700&family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
   <style>
     :root {
       --bg-dark: #0c0c0e;
@@ -12,45 +15,46 @@
       --text-dark: #e8e8e8;
       --text-light: #2c2c2c;
       --gold: #C5A059;
+      --gold-soft: #d4b574;
       --indigo: #4F46E5;
-      --shadow-dark: rgba(0, 0, 0, 0.3);
-      --shadow-light: rgba(0, 0, 0, 0.1);
-      --parchment-base: #f4ead5;
-      --parchment-accent: #e8dcc0;
+      --parchment: #f4ead5;
+      --parchment-deep: #e8dcc0;
+      --ink: #2c2218;
+      --shadow-dark: rgba(0,0,0,0.3);
+      --shadow-light: rgba(0,0,0,0.1);
     }
 
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    *{margin:0;padding:0;box-sizing:border-box}
 
     body {
       font-family: 'Tajawal', sans-serif;
       background: var(--bg-dark);
       color: var(--text-dark);
-      transition: background 0.4s ease, color 0.4s ease;
+      min-height: 100vh;
       overflow-x: hidden;
+      transition: background 0.5s ease, color 0.5s ease;
     }
-
     body.light {
       background: var(--bg-light);
       color: var(--text-light);
     }
 
+    /* ===== SPLASH ===== */
     #splash {
       position: fixed;
       inset: 0;
       z-index: 9999;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      background: linear-gradient(135deg, #0a0a0c 0%, #1a1520 100%);
-      animation: splashFadeOut 1s ease 3s forwards;
+      gap: 2rem;
+      background: linear-gradient(160deg, #08080a 0%, #14101e 50%, #0c0c0e 100%);
+      transition: opacity 0.8s ease;
     }
-
-    body.light #splash {
-      background: linear-gradient(135deg, #f8f4ed 0%, #ede4d3 100%);
+    #splash.hidden {
+      opacity: 0;
+      pointer-events: none;
     }
 
     #particleCanvas {
@@ -60,343 +64,480 @@
       height: 100%;
     }
 
-    .splash-title {
-      font-family: 'Amiri', serif;
-      font-size: 3rem;
+    .brand {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      align-items: flex-end;
+      gap: 0.6rem;
+      user-select: none;
+    }
+    .brand .en {
+      font-family: 'Forum', serif;
+      font-size: clamp(3rem, 6vw, 4.5rem);
+      color: var(--gold);
+      line-height: 1;
+    }
+    .brand .ar {
+      font-family: 'Reem Kufi', sans-serif;
+      font-weight: 700;
+      font-size: clamp(1.875rem, 4vw, 3rem);
+      color: var(--gold-soft);
+      line-height: 1.2;
+    }
+
+    .splash-sub {
+      position: relative;
+      z-index: 2;
+      font-family: 'Tajawal', sans-serif;
+      font-size: 1rem;
+      font-weight: 300;
+      color: rgba(232,232,232,0.5);
+      letter-spacing: 0.05em;
+    }
+
+    .cta-enter {
+      position: relative;
+      z-index: 2;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.875rem 2.5rem;
+      background: var(--gold);
+      color: #fff;
+      border: none;
+      border-radius: 40px;
+      font-family: 'Tajawal', sans-serif;
+      font-size: 1.1rem;
+      font-weight: 500;
+      cursor: pointer;
+      min-height: 44px;
+      min-width: 44px;
+      transition: transform 0.25s ease, box-shadow 0.25s ease;
+      box-shadow: 0 4px 24px rgba(197,160,89,0.3);
+    }
+    .cta-enter:hover { transform: scale(1.05); box-shadow: 0 6px 32px rgba(197,160,89,0.45); }
+    .cta-enter:active { transform: scale(0.97); }
+    .cta-enter:focus-visible { outline: 3px solid var(--indigo); outline-offset: 3px; }
+
+    /* ===== ONBOARDING ===== */
+    #onboarding {
+      position: fixed;
+      inset: 0;
+      z-index: 9998;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(8,8,10,0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      cursor: pointer;
+    }
+    #onboarding.active { display: flex; }
+    body.light #onboarding { background: rgba(253,252,248,0.92); }
+
+    .onboard-card {
+      width: min(360px, 88vw);
+      background: rgba(20,16,30,0.85);
+      border: 1px solid rgba(197,160,89,0.2);
+      border-radius: 20px;
+      padding: 2.5rem 2rem 2rem;
+      text-align: center;
+      position: relative;
+    }
+    body.light .onboard-card {
+      background: rgba(255,255,255,0.9);
+      border-color: rgba(197,160,89,0.3);
+    }
+
+    .onboard-icon {
+      width: 56px;
+      height: 56px;
+      margin: 0 auto 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      background: rgba(197,160,89,0.12);
+    }
+    .onboard-icon svg { color: var(--gold); width: 28px; height: 28px; }
+
+    .onboard-title {
+      font-family: 'Tajawal', sans-serif;
+      font-size: 1.15rem;
       font-weight: 700;
       color: var(--gold);
-      text-align: center;
-      z-index: 2;
-      animation: titlePulse 2s ease-in-out infinite;
+      margin-bottom: 0.5rem;
+    }
+    .onboard-desc {
+      font-size: 0.95rem;
+      font-weight: 300;
+      opacity: 0.7;
+      line-height: 1.7;
+      margin-bottom: 1.5rem;
     }
 
-    @keyframes splashFadeOut {
-      to {
-        opacity: 0;
-        pointer-events: none;
-      }
+    .onboard-dots {
+      display: flex;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+    .onboard-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: rgba(197,160,89,0.25);
+      transition: background 0.3s ease, transform 0.3s ease;
+    }
+    .onboard-dot.active {
+      background: var(--gold);
+      transform: scale(1.3);
     }
 
-    @keyframes titlePulse {
-      0%, 100% { transform: scale(1); opacity: 0.9; }
-      50% { transform: scale(1.05); opacity: 1; }
+    .onboard-hint {
+      margin-top: 1rem;
+      font-size: 0.8rem;
+      opacity: 0.4;
     }
 
-    #mainContent {
-      opacity: 0;
-      animation: contentFadeIn 1s ease 3.5s forwards;
-      padding: 2rem;
-      max-width: 900px;
+    /* ===== MAIN APP ===== */
+    #app {
+      display: none;
+      min-height: 100vh;
+      padding: 2rem 1.25rem 6rem;
+    }
+    #app.active { display: block; }
+
+    .app-inner {
+      max-width: 520px;
       margin: 0 auto;
     }
 
-    @keyframes contentFadeIn {
-      to { opacity: 1; }
+    /* App Brand */
+    .app-brand {
+      display: flex;
+      align-items: flex-end;
+      gap: 0.4rem;
+      margin-bottom: 2rem;
+      user-select: none;
+    }
+    .app-brand .en {
+      font-family: 'Forum', serif;
+      font-size: 1.5rem;
+      color: var(--gold);
+      line-height: 1;
+    }
+    .app-brand .ar {
+      font-family: 'Reem Kufi', sans-serif;
+      font-weight: 700;
+      font-size: 1rem;
+      color: var(--gold-soft);
+      line-height: 1.2;
     }
 
-    .scroll-container {
-      background: linear-gradient(180deg, var(--parchment-base) 0%, var(--parchment-accent) 100%);
-      border-radius: 12px;
-      padding: 3rem 2rem;
-      box-shadow: 0 8px 24px var(--shadow-dark);
+    /* Scroll Parchment */
+    .scroll-parchment {
       position: relative;
+      background: linear-gradient(180deg, var(--parchment) 0%, var(--parchment-deep) 100%);
+      border-radius: 16px;
+      padding: 2.5rem 2rem;
+      box-shadow: 0 8px 32px var(--shadow-dark);
       overflow: hidden;
-      animation: scrollUnroll 1.5s ease 3.5s backwards;
-      will-change: transform;
+      animation: scrollUnroll 1s cubic-bezier(0.22,1,0.36,1) both;
     }
-
-    body.light .scroll-container {
-      box-shadow: 0 8px 24px var(--shadow-light);
+    body.light .scroll-parchment {
+      box-shadow: 0 8px 32px var(--shadow-light);
     }
 
     @keyframes scrollUnroll {
-      from {
-        transform: scaleY(0.05) translateY(-200px);
-        opacity: 0;
-      }
-      to {
-        transform: scaleY(1) translateY(0);
-        opacity: 1;
-      }
+      from { transform: scaleY(0.02); opacity: 0; }
+      to { transform: scaleY(1); opacity: 1; }
     }
 
-    .scroll-container::before {
+    /* Paper texture overlay */
+    .scroll-parchment::before {
       content: '';
       position: absolute;
       inset: 0;
       background: repeating-linear-gradient(
         0deg,
-        transparent,
-        transparent 2px,
-        rgba(139, 115, 85, 0.03) 2px,
-        rgba(139, 115, 85, 0.03) 4px
+        transparent, transparent 2px,
+        rgba(139,115,85,0.03) 2px, rgba(139,115,85,0.03) 4px
       );
       pointer-events: none;
     }
 
-    header {
-      margin-bottom: 2rem;
+    /* Scroll roller tops */
+    .scroll-parchment::after {
+      content: '';
+      position: absolute;
+      top: -6px;
+      left: 8%;
+      right: 8%;
+      height: 12px;
+      background: linear-gradient(90deg, var(--gold) 0%, var(--gold-soft) 50%, var(--gold) 100%);
+      border-radius: 6px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    .parchment-header {
       text-align: center;
+      margin-bottom: 2rem;
     }
-
-    h1 {
+    .parchment-header h2 {
       font-family: 'Amiri', serif;
-      font-size: 2.5rem;
+      font-size: 1.6rem;
       font-weight: 700;
-      color: var(--gold);
-      margin-bottom: 1rem;
+      color: var(--ink);
+      margin-bottom: 0.25rem;
     }
-
-    .subtitle {
-      font-size: 1rem;
-      opacity: 0.8;
+    .parchment-header .era {
+      font-size: 0.85rem;
+      color: rgba(44,34,24,0.5);
       font-weight: 300;
     }
 
-    .poetry-section {
-      background: rgba(255, 255, 255, 0.6);
-      border-radius: 8px;
-      padding: 2rem;
-      margin: 2rem 0;
-      border-right: 4px solid var(--gold);
-    }
-
-    body.light .poetry-section {
-      background: rgba(255, 255, 255, 0.9);
-    }
-
-    .verse {
-      font-family: 'Amiri', serif;
-      font-size: 1.75rem;
-      line-height: 2.2;
-      color: #2c2c2c;
+    /* Poem display */
+    .poem-area {
       text-align: center;
-      margin-bottom: 1rem;
+      padding: 1.5rem 0;
     }
-
-    .poet {
-      text-align: left;
-      font-size: 1.1rem;
-      color: var(--indigo);
-      font-weight: 500;
-    }
-
-    .walkthrough {
-      margin: 3rem 0;
-    }
-
-    .walkthrough h2 {
-      font-family: 'Amiri', serif;
-      font-size: 2rem;
-      color: var(--gold);
-      margin-bottom: 2rem;
-      text-align: center;
-    }
-
-    .steps {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1.5rem;
-    }
-
-    .step {
-      background: rgba(255, 255, 255, 0.4);
-      border-radius: 8px;
-      padding: 1.5rem;
-      text-align: center;
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-      cursor: pointer;
-    }
-
-    body.light .step {
-      background: rgba(255, 255, 255, 0.8);
-    }
-
-    .step:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 6px 20px var(--shadow-dark);
-    }
-
-    .step-number {
-      display: inline-flex;
+    .bayt {
+      display: flex;
       align-items: center;
       justify-content: center;
-      width: 44px;
-      height: 44px;
+      gap: 1.5rem;
+      margin-bottom: 1.25rem;
+      flex-wrap: wrap;
+    }
+    .hemistich {
+      font-family: 'Amiri', serif;
+      font-size: clamp(1.25rem, 4vw, 1.7rem);
+      line-height: 2;
+      color: var(--ink);
+      flex: 1;
+      min-width: 120px;
+    }
+    .hemistich:first-child { text-align: left; }
+    .hemistich:last-child { text-align: right; }
+    .bayt-sep {
+      width: 6px;
+      height: 6px;
       border-radius: 50%;
       background: var(--gold);
-      color: white;
-      font-weight: 700;
-      font-size: 1.25rem;
-      margin-bottom: 1rem;
+      flex-shrink: 0;
     }
 
-    .step h3 {
-      font-family: 'Amiri', serif;
-      font-size: 1.25rem;
-      margin-bottom: 0.5rem;
-      color: var(--indigo);
-    }
-
-    .step p {
-      font-size: 0.9rem;
-      opacity: 0.85;
-      line-height: 1.6;
-    }
-
-    .controls {
-      position: fixed;
-      top: 2rem;
-      left: 2rem;
-      display: flex;
-      gap: 1rem;
-      z-index: 1000;
-    }
-
-    .btn {
-      min-width: 44px;
-      min-height: 44px;
-      padding: 0.75rem 1.5rem;
-      border: none;
-      border-radius: 8px;
+    .poet-name {
       font-family: 'Tajawal', sans-serif;
       font-size: 0.95rem;
       font-weight: 500;
+      color: var(--gold);
+      text-align: center;
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid rgba(197,160,89,0.3);
+    }
+
+    /* Section below parchment */
+    .info-section {
+      margin-top: 2rem;
+      padding: 1.5rem;
+      background: rgba(197,160,89,0.06);
+      border: 1px solid rgba(197,160,89,0.12);
+      border-radius: 12px;
+    }
+    body.light .info-section {
+      background: rgba(197,160,89,0.08);
+      border-color: rgba(197,160,89,0.15);
+    }
+    .info-section h3 {
+      font-family: 'Amiri', serif;
+      font-size: 1.2rem;
+      color: var(--gold);
+      margin-bottom: 0.75rem;
+    }
+    .info-section p {
+      font-size: 0.9rem;
+      line-height: 1.8;
+      opacity: 0.75;
+    }
+
+    /* ===== CONTROLS: Desktop vertical ===== */
+    .controls-desktop {
+      position: fixed;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+      z-index: 1000;
+    }
+    .ctrl-btn {
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(20,16,30,0.7);
+      border: 1px solid rgba(197,160,89,0.15);
+      border-radius: 12px;
+      color: var(--gold-soft);
       cursor: pointer;
-      transition: all 0.3s ease;
-      box-shadow: 0 2px 8px var(--shadow-dark);
-      will-change: transform;
+      transition: background 0.2s ease, transform 0.2s ease;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
     }
-
-    .btn-theme {
-      background: var(--gold);
-      color: white;
+    body.light .ctrl-btn {
+      background: rgba(255,255,255,0.8);
+      border-color: rgba(197,160,89,0.2);
     }
+    .ctrl-btn:hover { background: rgba(197,160,89,0.15); transform: scale(1.08); }
+    .ctrl-btn:focus-visible { outline: 3px solid var(--indigo); outline-offset: 2px; }
+    .ctrl-btn svg { width: 20px; height: 20px; }
 
-    .btn-theme:hover {
-      transform: scale(1.05);
-      box-shadow: 0 4px 16px var(--shadow-dark);
+    /* ===== CONTROLS: Mobile bottom bar ===== */
+    .controls-mobile {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      display: none;
+      justify-content: space-around;
+      align-items: center;
+      height: 56px;
+      background: rgba(12,12,14,0.9);
+      border-top: 1px solid rgba(197,160,89,0.12);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      z-index: 1000;
     }
-
-    .btn-theme:active {
-      transform: scale(0.98);
+    body.light .controls-mobile {
+      background: rgba(253,252,248,0.9);
+      border-top-color: rgba(197,160,89,0.15);
+    }
+    .controls-mobile .ctrl-btn {
+      background: transparent;
+      border: none;
+      border-radius: 8px;
+      backdrop-filter: none;
     }
 
     @media (max-width: 768px) {
-      .splash-title {
-        font-size: 2rem;
-      }
-
-      h1 {
-        font-size: 2rem;
-      }
-
-      .verse {
-        font-size: 1.35rem;
-        line-height: 2;
-      }
-
-      .scroll-container {
-        padding: 2rem 1.5rem;
-      }
-
-      .controls {
-        top: 1rem;
-        left: 1rem;
-      }
-
-      .steps {
-        grid-template-columns: 1fr;
-      }
+      .controls-desktop { display: none; }
+      .controls-mobile { display: flex; }
+      #app { padding-bottom: 5rem; }
+      .scroll-parchment { padding: 2rem 1.5rem; }
+      .bayt { gap: 0.75rem; }
+    }
+    @media (min-width: 769px) {
+      .controls-desktop { display: flex; }
+      .controls-mobile { display: none; }
     }
 
     @media (prefers-reduced-motion: reduce) {
-      * {
+      *, *::before, *::after {
         animation-duration: 0.01ms !important;
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
       }
     }
-
-    .btn:focus-visible {
-      outline: 3px solid var(--indigo);
-      outline-offset: 2px;
-    }
-
-    .step:focus-visible {
-      outline: 3px solid var(--indigo);
-      outline-offset: 2px;
-    }
   </style>
 </head>
 <body>
+
+  <!-- Splash -->
   <div id="splash">
     <canvas id="particleCanvas"></canvas>
-    <div class="splash-title">رحلة الشعر</div>
+    <div class="brand">
+      <span class="en">poetry</span>
+      <span class="ar">بالعربي</span>
+    </div>
+    <div class="splash-sub">Particle Scroll</div>
+    <button class="cta-enter" id="ctaEnter" aria-label="ادخل التطبيق">
+      <span>ابدأ الرحلة</span>
+      <i data-lucide="sparkles"></i>
+    </button>
   </div>
 
-  <div id="mainContent">
-    <div class="controls">
-      <button class="btn btn-theme" onclick="toggleTheme()" aria-label="تبديل السمة">
-        🌙 / ☀️
-      </button>
-    </div>
+  <!-- Onboarding -->
+  <div id="onboarding" role="dialog" aria-label="دليل الاستخدام"></div>
 
-    <div class="scroll-container">
-      <header>
-        <h1>رحلة الشعر العربي</h1>
-        <p class="subtitle">Particle Scroll — Gold Particles + Scroll Unroll</p>
-      </header>
+  <!-- Main App -->
+  <div id="app">
+    <div class="app-inner">
+      <div class="app-brand">
+        <span class="en">poetry</span>
+        <span class="ar">بالعربي</span>
+      </div>
 
-      <section class="poetry-section">
-        <div class="verse" lang="ar" dir="rtl">
-          أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ<br>
-          فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
+      <div class="scroll-parchment">
+        <div class="parchment-header">
+          <h2>من عيون الشعر العربي</h2>
+          <div class="era">العصر الحديث</div>
         </div>
-        <div class="poet">— أحمد شوقي</div>
-      </section>
 
-      <section class="walkthrough">
-        <h2>دليل التفاعل</h2>
-        <div class="steps">
-          <div class="step" tabindex="0">
-            <div class="step-number">1</div>
-            <h3>شاهد الجسيمات</h3>
-            <p>100 جسيم ذهبي يتحرك بسلاسة عبر الشاشة</p>
-          </div>
-          <div class="step" tabindex="0">
-            <div class="step-number">2</div>
-            <h3>انتقال السجل</h3>
-            <p>تحول تدريجي من الجسيمات إلى سجل ورقي ينفتح</p>
-          </div>
-          <div class="step" tabindex="0">
-            <div class="step-number">3</div>
-            <h3>اقرأ الشعر</h3>
-            <p>منطقة قراءة بملمس رق مع تدرجات لونية دافئة</p>
-          </div>
-          <div class="step" tabindex="0">
-            <div class="step-number">4</div>
-            <h3>بدّل السمة</h3>
-            <p>انتقال سلس بين الوضع الداكن والفاتح</p>
+        <div class="poem-area">
+          <div class="bayt">
+            <span class="hemistich">أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ</span>
+            <span class="bayt-sep"></span>
+            <span class="hemistich">فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي</span>
           </div>
         </div>
-      </section>
+
+        <div class="poet-name">احمد شوقي</div>
+      </div>
+
+      <div class="info-section">
+        <h3>عن القصيدة</h3>
+        <p>
+          من روائع أمير الشعراء أحمد شوقي، حيث يشبّه نفسه بالبحر الذي
+          يحوي الدرر في أعماقه، ويتحدى من يشكك في قدراته أن يسأل
+          الغواصين عما يخفيه من جواهر.
+        </p>
+      </div>
     </div>
+
+    <!-- Desktop controls -->
+    <nav class="controls-desktop" aria-label="أدوات التحكم">
+      <button class="ctrl-btn" aria-label="المفضلة"><i data-lucide="heart"></i></button>
+      <button class="ctrl-btn" aria-label="الخط"><i data-lucide="type"></i></button>
+      <button class="ctrl-btn" aria-label="اللغات"><i data-lucide="languages"></i></button>
+      <button class="ctrl-btn" aria-label="الديوان"><i data-lucide="book-open"></i></button>
+      <button class="ctrl-btn" aria-label="القافية"><i data-lucide="italic"></i></button>
+      <button class="ctrl-btn" id="themeToggleDesktop" aria-label="تبديل السمة"><i data-lucide="sun"></i></button>
+      <button class="ctrl-btn" aria-label="تسجيل الدخول"><i data-lucide="log-in"></i></button>
+      <button class="ctrl-btn" aria-label="الاعدادات"><i data-lucide="settings"></i></button>
+    </nav>
+
+    <!-- Mobile controls -->
+    <nav class="controls-mobile" aria-label="أدوات التحكم">
+      <button class="ctrl-btn" aria-label="الاستماع"><i data-lucide="music"></i></button>
+      <button class="ctrl-btn" aria-label="أفكار"><i data-lucide="lightbulb"></i></button>
+      <button class="ctrl-btn" id="themeToggleMobile" aria-label="تبديل السمة"><i data-lucide="sun"></i></button>
+      <button class="ctrl-btn" aria-label="تحديث"><i data-lucide="refresh-cw"></i></button>
+      <button class="ctrl-btn" aria-label="المكتبة"><i data-lucide="library"></i></button>
+      <button class="ctrl-btn" aria-label="عشوائي"><i data-lucide="shuffle"></i></button>
+    </nav>
   </div>
 
   <script>
-    const canvas = document.getElementById('particleCanvas');
-    const ctx = canvas.getContext('2d');
-    let particles = [];
-    let animationId;
+    (function() {
+      'use strict';
 
-    function resizeCanvas() {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    }
+      /* ===== Particle System (preserved from original) ===== */
+      var canvas = document.getElementById('particleCanvas');
+      var ctx = canvas.getContext('2d');
+      var particles = [];
+      var animFrameId;
 
-    class Particle {
-      constructor() {
+      function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+
+      function Particle() {
         this.x = Math.random() * canvas.width;
         this.y = Math.random() * canvas.height;
         this.size = Math.random() * 3 + 1;
@@ -405,15 +546,14 @@
         this.opacity = Math.random() * 0.5 + 0.5;
       }
 
-      update() {
+      Particle.prototype.update = function() {
         this.x += this.speedX;
         this.y += this.speedY;
-
         if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
         if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
-      }
+      };
 
-      draw() {
+      Particle.prototype.draw = function() {
         ctx.save();
         ctx.globalAlpha = this.opacity;
         ctx.fillStyle = '#C5A059';
@@ -423,56 +563,165 @@
         ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
         ctx.fill();
         ctx.restore();
+      };
+
+      function initParticles() {
+        particles = [];
+        for (var i = 0; i < 100; i++) {
+          particles.push(new Particle());
+        }
       }
-    }
 
-    function initParticles() {
-      particles = [];
-      for (let i = 0; i < 100; i++) {
-        particles.push(new Particle());
+      function animateParticles() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        for (var i = 0; i < particles.length; i++) {
+          particles[i].update();
+          particles[i].draw();
+        }
+        animFrameId = requestAnimationFrame(animateParticles);
       }
-    }
 
-    function animate() {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-      particles.forEach(particle => {
-        particle.update();
-        particle.draw();
-      });
-
-      animationId = requestAnimationFrame(animate);
-    }
-
-    function stopParticles() {
-      cancelAnimationFrame(animationId);
-    }
-
-    resizeCanvas();
-    initParticles();
-    animate();
-
-    window.addEventListener('resize', () => {
       resizeCanvas();
       initParticles();
-    });
+      animateParticles();
 
-    setTimeout(() => {
-      stopParticles();
-    }, 3000);
-
-    function toggleTheme() {
-      document.body.classList.toggle('light');
-    }
-
-    document.querySelectorAll('.step').forEach(step => {
-      step.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          step.click();
-        }
+      window.addEventListener('resize', function() {
+        resizeCanvas();
+        initParticles();
       });
-    });
+
+      /* ===== Onboarding System ===== */
+      var onboardSteps = [
+        {
+          icon: 'sparkles',
+          title: 'Gold Particles',
+          titleAr: 'جسيمات ذهبية',
+          desc: 'Floating gold particles create an immersive entry experience.',
+          descAr: 'جسيمات ذهبية عائمة تصنع تجربة دخول آسرة.'
+        },
+        {
+          icon: 'scroll',
+          title: 'Parchment Scroll',
+          titleAr: 'سجل ورقي',
+          desc: 'Poetry unfurls on a textured parchment scroll.',
+          descAr: 'الشعر ينفتح على سجل بملمس الرق.'
+        },
+        {
+          icon: 'headphones',
+          title: 'Listen & Explore',
+          titleAr: 'استمع واستكشف',
+          desc: 'Navigate poems, toggle themes, and discover Arabic verse.',
+          descAr: 'تصفح القصائد وبدّل السمات واستكشف الشعر العربي.'
+        }
+      ];
+
+      var onboardEl = document.getElementById('onboarding');
+      var currentStep = 0;
+
+      function renderOnboardStep(idx) {
+        var step = onboardSteps[idx];
+
+        // Clear previous content
+        while (onboardEl.firstChild) {
+          onboardEl.removeChild(onboardEl.firstChild);
+        }
+
+        var card = document.createElement('div');
+        card.className = 'onboard-card';
+
+        // Icon circle
+        var iconWrap = document.createElement('div');
+        iconWrap.className = 'onboard-icon';
+        var iconEl = document.createElement('i');
+        iconEl.setAttribute('data-lucide', step.icon);
+        iconWrap.appendChild(iconEl);
+        card.appendChild(iconWrap);
+
+        // Title
+        var titleEl = document.createElement('div');
+        titleEl.className = 'onboard-title';
+        titleEl.textContent = step.title;
+        card.appendChild(titleEl);
+
+        // Arabic title
+        var titleArEl = document.createElement('div');
+        titleArEl.className = 'onboard-title';
+        titleArEl.style.fontSize = '1rem';
+        titleArEl.style.marginTop = '-0.25rem';
+        titleArEl.style.marginBottom = '0.75rem';
+        titleArEl.textContent = step.titleAr;
+        card.appendChild(titleArEl);
+
+        // Description EN
+        var descEl = document.createElement('div');
+        descEl.className = 'onboard-desc';
+        descEl.textContent = step.desc;
+        card.appendChild(descEl);
+
+        // Description AR
+        var descArEl = document.createElement('div');
+        descArEl.className = 'onboard-desc';
+        descArEl.style.marginTop = '-0.75rem';
+        descArEl.textContent = step.descAr;
+        card.appendChild(descArEl);
+
+        // Dots
+        var dots = document.createElement('div');
+        dots.className = 'onboard-dots';
+        for (var d = 0; d < onboardSteps.length; d++) {
+          var dot = document.createElement('div');
+          dot.className = 'onboard-dot' + (d === idx ? ' active' : '');
+          dots.appendChild(dot);
+        }
+        card.appendChild(dots);
+
+        // Hint
+        var hint = document.createElement('div');
+        hint.className = 'onboard-hint';
+        hint.textContent = idx < onboardSteps.length - 1 ? 'Tap to continue' : 'Tap to start';
+        card.appendChild(hint);
+
+        onboardEl.appendChild(card);
+        lucide.createIcons({ nameAttr: 'data-lucide' });
+      }
+
+      function advanceOnboard() {
+        currentStep++;
+        if (currentStep >= onboardSteps.length) {
+          onboardEl.classList.remove('active');
+          var appEl = document.getElementById('app');
+          appEl.classList.add('active');
+          lucide.createIcons({ nameAttr: 'data-lucide' });
+        } else {
+          renderOnboardStep(currentStep);
+        }
+      }
+
+      onboardEl.addEventListener('click', advanceOnboard);
+
+      /* ===== CTA Enter ===== */
+      document.getElementById('ctaEnter').addEventListener('click', function() {
+        cancelAnimationFrame(animFrameId);
+        var splashEl = document.getElementById('splash');
+        splashEl.classList.add('hidden');
+        onboardEl.classList.add('active');
+        renderOnboardStep(0);
+      });
+
+      /* ===== Theme Toggle ===== */
+      function toggleTheme() {
+        document.body.classList.toggle('light');
+      }
+
+      var dtBtn = document.getElementById('themeToggleDesktop');
+      var mbBtn = document.getElementById('themeToggleMobile');
+      if (dtBtn) dtBtn.addEventListener('click', toggleTheme);
+      if (mbBtn) mbBtn.addEventListener('click', toggleTheme);
+
+      /* ===== Init Lucide ===== */
+      lucide.createIcons({ nameAttr: 'data-lucide' });
+
+    })();
   </script>
 </body>
 </html>

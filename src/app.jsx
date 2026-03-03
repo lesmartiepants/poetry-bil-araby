@@ -2901,6 +2901,12 @@ export default function DiwanApp() {
         user={user}
         theme={theme}
       />
+      <a href="/design-review" style={{ position:'fixed', bottom:16, left:16, padding:'6px 12px',
+        background:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.1)',
+        borderRadius:6, fontSize:11, color:'rgba(255,255,255,0.4)', textDecoration:'none',
+        zIndex:9999, fontFamily:'system-ui' }}>
+        Design Review
+      </a>
     </div>
   );
 }

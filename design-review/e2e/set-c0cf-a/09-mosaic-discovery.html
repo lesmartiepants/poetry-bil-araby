@@ -208,8 +208,28 @@
     opacity: 0; transition: opacity 0.9s ease 0.3s;
     min-height: 100vh; padding: 1.5rem 1rem;
     padding-right: 4.5rem;
+    /* Deep blue/gold Islamic palette background */
+    background:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Cpath d='M40 0L55 15L80 15L65 40L80 65L55 65L40 80L25 65L0 65L15 40L0 15L25 15Z' fill='none' stroke='%23C5A059' stroke-width='0.3'/%3E%3C/svg%3E"),
+      var(--bg);
+    background-size: 80px 80px, auto;
+    background-blend-mode: overlay;
   }
   #app.show { opacity: 1; }
+  html.light #app {
+    background:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Cpath d='M40 0L55 15L80 15L65 40L80 65L55 65L40 80L25 65L0 65L15 40L0 15L25 15Z' fill='none' stroke='%23C5A059' stroke-width='0.3'/%3E%3C/svg%3E"),
+      var(--bg);
+    background-size: 80px 80px, auto;
+  }
+
+  /* Star pattern overlay */
+  #app::before {
+    content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Cpath d='M30 5L35 25L55 30L35 35L30 55L25 35L5 30L25 25Z' fill='none' stroke='%23C5A059' stroke-width='0.3'/%3E%3C/svg%3E");
+    background-size: 60px 60px;
+    opacity: 0.04;
+  }
 
   /* ============ Controls - Vertical (Desktop) ============ */
   .controls-vertical {
@@ -235,37 +255,85 @@
   }
   .ctrl-btn svg { width: 20px; height: 20px; }
 
-  /* ============ Controls - Bottom Bar (Mobile) ============ */
+  /* ============ CONTROLS: Tessellated Tile Strip (Mobile) ============ */
   .controls-bottom {
     display: none;
     position: fixed; bottom: 0; left: 0; right: 0;
-    background: var(--card-bg);
-    border-top: 1px solid var(--gold-dim);
-    padding: 0.5rem 1rem;
     z-index: 50;
-    justify-content: space-around;
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+    flex-direction: column;
+    align-items: stretch;
   }
-  .controls-bottom .ctrl-btn {
-    border: none; background: transparent;
-    border-radius: 8px;
+  /* Geometric border at top */
+  .controls-bottom::before {
+    content: '';
+    display: block; height: 3px;
+    background: repeating-linear-gradient(
+      90deg,
+      var(--gold) 0px, var(--gold) 12px,
+      transparent 12px, transparent 16px,
+      var(--gold-dim) 16px, var(--gold-dim) 28px,
+      transparent 28px, transparent 32px
+    );
   }
 
-  /* ============ Poem Card ============ */
-  .poem-wrap { max-width: 720px; margin: 2.5rem auto 3rem; }
+  .tessellated-strip {
+    display: flex;
+    justify-content: space-around;
+    align-items: stretch;
+    background: var(--card-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    padding: 0;
+  }
+
+  /* Each tile is a hexagonal/star-shaped control */
+  .tile-btn {
+    flex: 1;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 3px;
+    min-height: 56px; min-width: 44px;
+    background: transparent;
+    border: none;
+    color: var(--gold);
+    opacity: 0.6;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    padding: 8px 4px;
+  }
+  /* Tile separator lines */
+  .tile-btn + .tile-btn::before {
+    content: '';
+    position: absolute; left: 0; top: 12px; bottom: 12px; width: 1px;
+    background: var(--gold-dim);
+  }
+  .tile-btn:hover, .tile-btn:focus-visible { opacity: 1; background: rgba(197,160,89,0.08); }
+  .tile-btn svg { width: 20px; height: 20px; }
+  .tile-btn .tile-label {
+    font-size: 9px; font-family: 'Tajawal', sans-serif;
+    letter-spacing: 0.03em;
+  }
+
+  /* ============ Poem Card - Archway Container ============ */
+  .poem-wrap { max-width: 720px; margin: 2.5rem auto 3rem; position: relative; z-index: 1; }
   .poem-card {
     position: relative; overflow: hidden;
-    background: var(--card-bg); border: 2px solid var(--gold);
-    border-radius: 14px; padding: 3.2rem 2.8rem;
+    background: var(--card-bg);
+    border: 2px solid var(--gold);
+    /* Archway shape */
+    border-radius: 50% 50% 14px 14px / 20% 20% 14px 14px;
+    padding: 3.5rem 2.8rem 3.2rem;
     transition: background var(--speed), border-color var(--speed);
   }
-  /* Tessellation watermark */
+  /* Tessellation watermark - enhanced star pattern */
   .poem-card::before {
     content: ''; position: absolute; inset: 0; pointer-events: none;
-    opacity: 0.05;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Cpath d='M40 0L55 15L80 15L65 40L80 65L55 65L40 80L25 65L0 65L15 40L0 15L25 15Z' fill='none' stroke='%23C5A059' stroke-width='0.6'/%3E%3C/svg%3E");
-    background-size: 80px 80px;
+    opacity: 0.06;
+    background-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Cpath d='M40 0L55 15L80 15L65 40L80 65L55 65L40 80L25 65L0 65L15 40L0 15L25 15Z' fill='none' stroke='%23C5A059' stroke-width='0.6'/%3E%3C/svg%3E"),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Cpath d='M30 5L35 25L55 30L35 35L30 55L25 35L5 30L25 25Z' fill='none' stroke='%23C5A059' stroke-width='0.4'/%3E%3C/svg%3E");
+    background-size: 80px 80px, 60px 60px;
   }
   /* Geometric corner frames */
   .corner {
@@ -293,14 +361,14 @@
 
   /* ============ Responsive ============ */
   @media (max-width: 768px) {
-    #app { padding: 1.5rem 1rem; padding-bottom: 5rem; padding-right: 1rem; }
+    #app { padding: 1.5rem 1rem; padding-bottom: 6rem; padding-right: 1rem; }
     .controls-vertical { display: none; }
     .controls-bottom { display: flex; }
     .poem-text { font-size: 1.25rem; line-height: 2; }
-    .poem-card { padding: 2rem 1.3rem; }
+    .poem-card { padding: 2.5rem 1.3rem 2rem; }
   }
   @media (max-width: 480px) {
-    .poem-card { padding: 1.5rem 1rem; }
+    .poem-card { padding: 2rem 1rem 1.5rem; }
   }
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
@@ -346,22 +414,21 @@
 <div id="app">
   <!-- Vertical Controls (Desktop) -->
   <nav class="controls-vertical" aria-label="App controls">
+    <button class="ctrl-btn" aria-label="Next poem"><i data-lucide="shuffle"></i></button>
     <button class="ctrl-btn" aria-label="Save poem"><i data-lucide="heart"></i></button>
-    <button class="ctrl-btn" aria-label="Change font"><i data-lucide="type"></i></button>
-    <button class="ctrl-btn" aria-label="Toggle language"><i data-lucide="languages"></i></button>
-    <button class="ctrl-btn" aria-label="Poem library"><i data-lucide="book-open"></i></button>
-    <button class="ctrl-btn" aria-label="Font style"><i data-lucide="italic"></i></button>
-    <button class="ctrl-btn" aria-label="Sign in"><i data-lucide="log-in"></i></button>
+    <button class="ctrl-btn" aria-label="Listen"><i data-lucide="headphones"></i></button>
+    <button class="ctrl-btn" aria-label="Share poem"><i data-lucide="share-2"></i></button>
     <button class="ctrl-btn" id="toggleTheme" aria-label="Toggle theme"><i data-lucide="sun"></i></button>
   </nav>
 
-  <!-- Bottom Controls (Mobile) -->
+  <!-- Tessellated Tile Strip Controls (Mobile) -->
   <nav class="controls-bottom" aria-label="App controls">
-    <button class="ctrl-btn" aria-label="Listen"><i data-lucide="music"></i></button>
-    <button class="ctrl-btn" aria-label="AI insight"><i data-lucide="lightbulb"></i></button>
-    <button class="ctrl-btn" aria-label="New poem"><i data-lucide="refresh-cw"></i></button>
-    <button class="ctrl-btn" aria-label="Library"><i data-lucide="library"></i></button>
-    <button class="ctrl-btn" aria-label="Random poem"><i data-lucide="shuffle"></i></button>
+    <div class="tessellated-strip">
+      <button class="tile-btn" aria-label="Next poem"><i data-lucide="shuffle"></i><span class="tile-label">Shuffle</span></button>
+      <button class="tile-btn" aria-label="Save poem"><i data-lucide="heart"></i><span class="tile-label">Save</span></button>
+      <button class="tile-btn" aria-label="Listen"><i data-lucide="headphones"></i><span class="tile-label">Listen</span></button>
+      <button class="tile-btn" aria-label="Share poem"><i data-lucide="share-2"></i><span class="tile-label">Share</span></button>
+    </div>
   </nav>
 
   <section class="poem-wrap">

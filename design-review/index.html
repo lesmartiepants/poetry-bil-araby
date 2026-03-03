@@ -669,7 +669,11 @@ async function initAPI() {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ reviewer: 'owner', branch: 'feature/design-review-system', total_designs: flatList.length })
       });
-      if (cr.ok) currentSession = await cr.json();
+      if (!cr.ok) {
+        const errBody = await cr.json().catch(() => ({}));
+        throw new Error(errBody.error || `Session creation failed (${cr.status})`);
+      }
+      currentSession = await cr.json();
     }
     setSyncStatus('synced');
   } catch { apiAvailable = false; setSyncStatus('offline'); }

@@ -113,44 +113,97 @@
   [data-theme="light"] #onboarding { background: rgba(245, 236, 215, 0.95); }
   #onboarding.active { opacity: 1; pointer-events: auto; }
 
-  .onboard-card {
+  /* Nordic / Scandinavian onboarding */
+  .nord-panel {
     max-width: 380px; width: 90%;
-    background: var(--card-bg);
-    border: 1.5px solid var(--gold);
-    border-radius: 16px;
-    padding: 2.5rem 2rem;
     text-align: center;
     cursor: pointer;
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    transition: transform 0.5s ease, opacity 0.5s ease;
+    padding: 3.5rem 2rem;
+    display: none;
+    position: relative;
   }
-  .onboard-card .icon-wrap {
-    width: 56px; height: 56px;
-    margin: 0 auto 1.2rem;
-    display: flex; align-items: center; justify-content: center;
-    border-radius: 50%;
-    background: rgba(197, 160, 89, 0.12);
-    color: var(--gold);
+  .nord-panel.active { display: block; animation: nordFade 0.6s ease; }
+
+  @keyframes nordFade {
+    from { opacity: 0; }
+    to { opacity: 1; }
   }
-  .onboard-card .icon-wrap svg { width: 28px; height: 28px; }
-  .onboard-card h3 {
+
+  /* Ultra-thin horizontal rule -- Nordic minimal line */
+  .nord-rule {
+    width: 48px; height: 1px;
+    background: var(--gold);
+    margin: 0 auto 2rem;
+    opacity: 0.5;
+  }
+
+  .nord-title {
     font-family: 'Amiri', serif;
-    font-size: 1.3rem;
+    font-size: 1.4rem;
+    color: var(--sand);
+    margin-bottom: 0.25rem;
+    letter-spacing: 0.02em;
+  }
+  [data-theme="light"] .nord-title { color: var(--dark-brown); }
+
+  .nord-subtitle {
+    font-family: 'Tajawal', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 300;
     color: var(--gold);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 2rem;
+    direction: ltr;
+  }
+
+  .nord-desc {
+    font-size: 0.92rem;
+    font-weight: 300;
+    opacity: 0.6;
+    line-height: 1.8;
     margin-bottom: 0.4rem;
+    max-width: 300px;
+    margin-left: auto;
+    margin-right: auto;
   }
-  .onboard-card .subtitle { font-size: 0.9rem; opacity: 0.6; margin-bottom: 1rem; }
-  .onboard-card p { font-size: 0.88rem; line-height: 1.7; opacity: 0.85; margin-bottom: 0.5rem; }
-  .onboard-card p[lang="ar"] { font-family: 'Tajawal', sans-serif; direction: rtl; }
-  .onboard-card p.en-text { direction: ltr; text-align: center; font-size: 0.82rem; opacity: 0.55; }
-  .onboard-dots { display: flex; gap: 0.5rem; justify-content: center; margin-top: 1.5rem; }
-  .onboard-dot {
-    width: 8px; height: 8px; border-radius: 50%;
-    background: var(--gold-dim); transition: background 0.3s, transform 0.3s;
+  .nord-desc[lang="ar"] { font-family: 'Tajawal', sans-serif; direction: rtl; }
+  .nord-desc.en { direction: ltr; font-size: 0.8rem; opacity: 0.35; }
+
+  /* Dot-line indicator: thin line with dots */
+  .nord-progress {
+    display: flex; align-items: center; justify-content: center;
+    gap: 0; margin-top: 2.5rem;
   }
-  .onboard-dot.active { background: var(--gold); transform: scale(1.3); }
-  .onboard-tap { font-size: 0.72rem; color: var(--sand); opacity: 0.5; margin-top: 1rem; }
+  .nord-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: rgba(212, 197, 160, 0.2);
+    transition: background 0.4s, transform 0.4s;
+    flex-shrink: 0;
+  }
+  .nord-dot.active {
+    background: var(--gold);
+    transform: scale(1.3);
+  }
+  .nord-dot.past {
+    background: var(--sand);
+    opacity: 0.4;
+  }
+  .nord-line {
+    width: 32px; height: 1px;
+    background: rgba(212, 197, 160, 0.15);
+    flex-shrink: 0;
+  }
+
+  .nord-hint {
+    font-size: 0.7rem;
+    font-weight: 300;
+    color: var(--sand);
+    opacity: 0.3;
+    margin-top: 1.5rem;
+    letter-spacing: 0.1em;
+  }
 
   /* ============ Main App ============ */
   #app { display: none; position: relative; min-height: 100vh; }
@@ -278,15 +331,51 @@
 
   <!-- ======== Onboarding ======== -->
   <div id="onboarding">
-    <div class="onboard-card" id="onboardCard">
-      <div class="icon-wrap" id="onboardIcon"></div>
-      <h3 id="onboardTitle"></h3>
-      <div class="subtitle" id="onboardSubtitle"></div>
-      <p lang="ar" id="onboardTextAr"></p>
-      <p class="en-text" id="onboardTextEn"></p>
-      <div class="onboard-dots" id="onboardDots"></div>
-      <div class="onboard-tap">tap to continue</div>
-    </div>
+      <div class="nord-panel active" data-step="0">
+          <div class="nord-rule"></div>
+          <div class="nord-title" lang="ar">رياح الصحراء</div>
+          <div class="nord-subtitle">Wind & Sand</div>
+          <div class="nord-desc" lang="ar">تصفّح مكتبة شعرية غنية من التراث العربي</div>
+          <div class="nord-desc en">Browse a rich poetry library from Arabic heritage</div>
+          <div class="nord-progress">
+              <div class="nord-dot active"></div>
+              <div class="nord-line"></div>
+              <div class="nord-dot"></div>
+              <div class="nord-line"></div>
+              <div class="nord-dot"></div>
+          </div>
+          <div class="nord-hint">tap to continue</div>
+      </div>
+      <div class="nord-panel" data-step="1">
+          <div class="nord-rule"></div>
+          <div class="nord-title" lang="ar">اكتشف شعراء</div>
+          <div class="nord-subtitle">Discover Poets</div>
+          <div class="nord-desc" lang="ar">اكتشف شعراء من مختلف العصور العربية</div>
+          <div class="nord-desc en">Discover poets from various Arabic eras</div>
+          <div class="nord-progress">
+              <div class="nord-dot past"></div>
+              <div class="nord-line"></div>
+              <div class="nord-dot active"></div>
+              <div class="nord-line"></div>
+              <div class="nord-dot"></div>
+          </div>
+          <div class="nord-hint">tap to continue</div>
+      </div>
+      <div class="nord-panel" data-step="2">
+          <div class="nord-rule"></div>
+          <div class="nord-title" lang="ar">استمع وتأمّل</div>
+          <div class="nord-subtitle">Listen & Reflect</div>
+          <div class="nord-desc" lang="ar">اسمع القصائد بصوت واضح وتدبّر معانيها</div>
+          <div class="nord-desc en">Listen to poems clearly and contemplate their meaning</div>
+          <div class="nord-progress">
+              <div class="nord-dot past"></div>
+              <div class="nord-line"></div>
+              <div class="nord-dot past"></div>
+              <div class="nord-line"></div>
+              <div class="nord-dot active"></div>
+          </div>
+          <div class="nord-hint">tap to begin</div>
+      </div>
   </div>
 
   <!-- ======== Main App ======== -->
@@ -333,63 +422,28 @@
   var SPLASH_PARTICLE_COUNT = isMobile ? 50 : 100;
   var AMBIENT_PARTICLE_COUNT = isMobile ? 15 : 30;
 
-  /* ---------- Onboarding data ---------- */
-  var onboardSteps = [
-    {
-      icon: 'wind',
-      titleAr: 'رياح الصحراء',
-      subtitle: 'Wind & Sand',
-      textAr: 'تصفّح مكتبة شعرية غنية من التراث العربي',
-      textEn: 'Browse a rich poetry library from Arabic heritage'
-    },
-    {
-      icon: 'search',
-      titleAr: 'اكتشف شعراء',
-      subtitle: 'Discover Poets',
-      textAr: 'اكتشف شعراء من مختلف العصور العربية',
-      textEn: 'Discover poets from various Arabic eras'
-    },
-    {
-      icon: 'headphones',
-      titleAr: 'استمع وتأمّل',
-      subtitle: 'Listen & Reflect',
-      textAr: 'اسمع القصائد بصوت واضح وتدبّر معانيها',
-      textEn: 'Listen to poems clearly and contemplate their meaning'
-    }
-  ];
+  /* ---------- Nordic onboarding ---------- */
+  var nordPanels = document.querySelectorAll('.nord-panel');
   var currentStep = 0;
+  var totalNordSteps = nordPanels.length;
 
-  function showOnboardStep(idx) {
-    var step = onboardSteps[idx];
-    var iconWrap = document.getElementById('onboardIcon');
-    while (iconWrap.firstChild) iconWrap.removeChild(iconWrap.firstChild);
-    var iconEl = document.createElement('i');
-    iconEl.setAttribute('data-lucide', step.icon);
-    iconWrap.appendChild(iconEl);
-
-    document.getElementById('onboardTitle').textContent = step.titleAr;
-    document.getElementById('onboardSubtitle').textContent = step.subtitle;
-    document.getElementById('onboardTextAr').textContent = step.textAr;
-    document.getElementById('onboardTextEn').textContent = step.textEn;
-
-    var dotsContainer = document.getElementById('onboardDots');
-    while (dotsContainer.firstChild) dotsContainer.removeChild(dotsContainer.firstChild);
-    for (var i = 0; i < onboardSteps.length; i++) {
-      var dot = document.createElement('span');
-      dot.className = 'onboard-dot' + (i === idx ? ' active' : '');
-      dotsContainer.appendChild(dot);
+  function showNordStep() {
+    for (var i = 0; i < nordPanels.length; i++) {
+      nordPanels[i].classList.remove('active');
     }
-    lucide.createIcons({ nodes: [iconWrap] });
+    if (currentStep < totalNordSteps) {
+      nordPanels[currentStep].classList.add('active');
+    }
   }
 
-  function advanceOnboard() {
+  function advanceNord() {
     currentStep++;
-    if (currentStep >= onboardSteps.length) {
+    if (currentStep >= totalNordSteps) {
       document.getElementById('onboarding').classList.remove('active');
       document.getElementById('app').classList.add('visible');
       startAmbient();
     } else {
-      showOnboardStep(currentStep);
+      showNordStep();
     }
   }
 
@@ -455,12 +509,11 @@
     setTimeout(function() {
       splash.style.display = 'none';
       document.getElementById('onboarding').classList.add('active');
-      showOnboardStep(0);
     }, 800);
   }
 
   document.getElementById('enterBtn').addEventListener('click', enterApp);
-  document.getElementById('onboardCard').addEventListener('click', advanceOnboard);
+  document.getElementById('onboarding').addEventListener('click', advanceNord);
 
   /* ---------- Ambient Canvas ---------- */
   var ambientCanvas = document.getElementById('ambient-canvas');

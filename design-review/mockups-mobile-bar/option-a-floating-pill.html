@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Option A — Floating Pill Bar</title>
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --bg:#09090b;--surface:#18181b;--surface-2:#1c1c1f;--surface-3:#27272a;
+      --border:#2e2e32;--border-light:#3f3f46;--text:#fafafa;--text-2:#a1a1aa;--text-3:#71717a;
+      --accent:#d4a84b;--accent-dim:rgba(212,168,75,.15);
+      --green:#22c55e;--green-dim:rgba(34,197,94,.15);
+      --red:#ef4444;--red-dim:rgba(239,68,68,.15);
+      --purple:#a855f7;--purple-dim:rgba(168,85,247,.15);
+    }
+    body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Helvetica Neue',sans-serif;background:var(--bg);color:var(--text);width:390px;height:844px;overflow:hidden;margin:0 auto;display:flex;flex-direction:column;-webkit-font-smoothing:antialiased}
+
+    /* ── Fake toolbar ── */
+    .toolbar{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 14px;display:flex;align-items:center;gap:8px}
+    .tb-label{font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3)}
+    .tb-select{appearance:none;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:6px 24px 6px 10px;border-radius:6px;font-size:11px;font-weight:500;font-family:inherit}
+
+    /* ── Fake preview ── */
+    .preview{flex:1;background:#0c0c0e;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+    .preview-label{position:absolute;top:0;left:0;right:0;padding:6px 12px;background:var(--surface);border-bottom:1px solid var(--border);font-size:10px;color:var(--text-2)}
+    .fake-content{text-align:center;opacity:.4}
+    .fake-content h1{font-size:28px;font-weight:300;margin-bottom:8px}
+    .fake-content p{font-size:12px;color:var(--text-3)}
+
+    /* ═══════════════════════════════════════════
+       OPTION A — Floating Pill Bar
+       Rounded capsule floating above bottom edge.
+       Verdict icons left, nav center, message + submit right.
+       Message tap unrolls textarea pushing bar up.
+       ═══════════════════════════════════════════ */
+    .floating-bar{
+      position:fixed;bottom:16px;left:12px;right:12px;
+      background:rgba(24,24,27,.92);
+      backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:22px;
+      padding:6px 8px;
+      display:flex;flex-direction:column;gap:0;
+      box-shadow:0 8px 32px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.04);
+      transition:all .3s cubic-bezier(.4,0,.2,1);
+      z-index:200;
+    }
+    .bar-main{display:flex;align-items:center;gap:4px}
+
+    /* Verdict pill buttons */
+    .v-pill{
+      width:40px;height:40px;border-radius:50%;border:none;
+      display:flex;align-items:center;justify-content:center;
+      font-size:18px;background:transparent;color:var(--text-3);
+      transition:all .2s;cursor:pointer;
+    }
+    .v-pill:active{transform:scale(.9)}
+    .v-pill.active-keep{background:var(--green-dim);color:var(--green)}
+    .v-pill.active-discard{background:var(--red-dim);color:var(--red)}
+    .v-pill.active-revisit{background:var(--purple-dim);color:var(--purple)}
+    .v-pill:not(.active-keep):not(.active-discard):not(.active-revisit):hover{background:var(--surface-3)}
+
+    .bar-sep{width:1px;height:24px;background:var(--border);margin:0 4px;flex-shrink:0}
+
+    /* Center nav */
+    .bar-nav{display:flex;align-items:center;gap:2px;flex:1;justify-content:center}
+    .bar-nav-btn{
+      width:34px;height:34px;border-radius:50%;border:none;
+      background:transparent;color:var(--text-3);
+      display:flex;align-items:center;justify-content:center;
+      transition:all .15s;cursor:pointer;
+    }
+    .bar-nav-btn:hover{background:var(--surface-3);color:var(--text)}
+    .bar-nav-btn:active{transform:scale(.9)}
+    .bar-nav-btn:disabled{opacity:.25;cursor:default}
+    .bar-nav-btn svg{width:16px;height:16px}
+    .bar-counter{font-size:11px;color:var(--text-2);font-variant-numeric:tabular-nums;min-width:36px;text-align:center;font-weight:500}
+
+    /* Right icons */
+    .bar-right{display:flex;align-items:center;gap:2px}
+    .bar-icon{
+      width:40px;height:40px;border-radius:50%;border:none;
+      background:transparent;color:var(--text-3);
+      display:flex;align-items:center;justify-content:center;
+      font-size:18px;transition:all .15s;cursor:pointer;position:relative;
+    }
+    .bar-icon:hover{background:var(--surface-3);color:var(--text)}
+    .bar-icon:active{transform:scale(.9)}
+    .bar-icon.active{color:var(--accent)}
+    .bar-icon .dot{position:absolute;top:8px;right:8px;width:6px;height:6px;border-radius:50%;background:var(--accent);display:none}
+    .bar-icon.has-comment .dot{display:block}
+
+    .submit-pill{
+      height:36px;padding:0 16px;border-radius:18px;border:none;
+      background:var(--accent);color:var(--bg);
+      font-size:12px;font-weight:700;font-family:inherit;
+      cursor:pointer;transition:all .15s;letter-spacing:.02em;
+    }
+    .submit-pill:hover{filter:brightness(1.1)}
+    .submit-pill:active{transform:scale(.96)}
+
+    /* Message drawer */
+    .msg-drawer{
+      max-height:0;overflow:hidden;
+      transition:max-height .3s cubic-bezier(.4,0,.2,1),padding .3s;
+      padding:0 4px;
+    }
+    .msg-drawer.open{max-height:120px;padding:8px 4px 4px}
+    .msg-textarea{
+      width:100%;height:56px;
+      background:var(--surface-3);border:1px solid var(--border);
+      border-radius:14px;color:var(--text);font-size:13px;
+      padding:10px 14px;resize:none;outline:none;font-family:inherit;
+      transition:border-color .15s;
+    }
+    .msg-textarea:focus{border-color:var(--accent)}
+    .msg-textarea::placeholder{color:var(--text-3)}
+
+    /* Progress tally (tiny, above bar) */
+    .tally{
+      position:fixed;bottom:72px;left:0;right:0;
+      display:flex;justify-content:center;gap:10px;
+      font-size:10px;color:var(--text-3);
+      transition:bottom .3s;
+    }
+    .tally.pushed{bottom:136px}
+  </style>
+</head>
+<body>
+  <div class="toolbar">
+    <span class="tb-label">Component</span>
+    <select class="tb-select"><option>Splash Screen (11)</option></select>
+    <span class="tb-label" style="margin-left:4px">Category</span>
+    <select class="tb-select"><option>Particle Field (3)</option></select>
+  </div>
+
+  <div class="preview">
+    <div class="preview-label">Particle Field — Gold Mystical &nbsp;·&nbsp; <span style="color:var(--text-3)">Rich gold palette with Arabic poetry heritage aesthetic</span></div>
+    <div class="fake-content">
+      <h1 style="font-size:36px;direction:rtl;font-weight:400">بالعربي poetry</h1>
+      <p>Mockup preview area</p>
+    </div>
+  </div>
+
+  <div class="tally" id="tally">
+    <span style="color:var(--green)">✓ 3</span>
+    <span style="color:var(--red)">✗ 1</span>
+    <span style="color:var(--purple)">↻ 0</span>
+    <span>· 4/58</span>
+  </div>
+
+  <div class="floating-bar" id="bar">
+    <div class="bar-main">
+      <!-- Verdicts -->
+      <button class="v-pill active-keep" onclick="toggleV(this,'keep')" title="Keep">✓</button>
+      <button class="v-pill" onclick="toggleV(this,'discard')" title="Discard">✗</button>
+      <button class="v-pill" onclick="toggleV(this,'revisit')" title="Revisit">↻</button>
+
+      <div class="bar-sep"></div>
+
+      <!-- Nav -->
+      <div class="bar-nav">
+        <button class="bar-nav-btn" disabled><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 3L5 8l5 5"/></svg></button>
+        <span class="bar-counter">2 / 58</span>
+        <button class="bar-nav-btn"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 3l5 5-5 5"/></svg></button>
+      </div>
+
+      <div class="bar-sep"></div>
+
+      <!-- Right: message + submit -->
+      <button class="bar-icon" id="msgToggle" onclick="toggleMsg()" title="Comment">
+        💬<span class="dot"></span>
+      </button>
+      <button class="submit-pill">Submit</button>
+    </div>
+
+    <!-- Expandable message drawer -->
+    <div class="msg-drawer" id="msgDrawer">
+      <textarea class="msg-textarea" placeholder="Add a quick note..."></textarea>
+    </div>
+  </div>
+
+  <script>
+    function toggleMsg(){
+      const d=document.getElementById('msgDrawer');
+      const t=document.getElementById('tally');
+      const btn=document.getElementById('msgToggle');
+      d.classList.toggle('open');
+      t.classList.toggle('pushed');
+      btn.classList.toggle('active');
+    }
+    function toggleV(el,v){
+      const classes={keep:'active-keep',discard:'active-discard',revisit:'active-revisit'};
+      const was=el.classList.contains(classes[v]);
+      document.querySelectorAll('.v-pill').forEach(b=>b.className='v-pill');
+      if(!was) el.classList.add(classes[v]);
+    }
+  </script>
+</body>
+</html>

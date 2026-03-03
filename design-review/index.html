@@ -50,11 +50,11 @@
     .main{display:flex;overflow:hidden}
 
     /* Preview */
-    .preview{flex:1;display:flex;flex-direction:column;min-width:0}
+    .preview{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
     .preview-header{display:flex;align-items:center;justify-content:space-between;padding:4px 14px;background:var(--surface);border-bottom:1px solid var(--border);min-height:30px}
     .preview-title{font-size:11px;font-weight:600;color:var(--text-2)}
     .preview-sub{font-size:10px;color:var(--text-3)}
-    .preview-iframe{width:100%;height:100%;border:none;background:#000}
+    .preview-iframe{width:100%;height:100%;border:none;background:#000;display:block}
     .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:12px;padding:40px;text-align:center}
     .empty-state h2{font-size:16px;font-weight:600}
     .empty-state p{font-size:13px;color:var(--text-2);max-width:340px;line-height:1.5}
@@ -272,7 +272,7 @@
           <button class="icon-btn" onclick="openTab()" title="Open in new tab">&#8599;</button>
         </div>
       </div>
-      <div id="previewContent" style="flex:1;position:relative">
+      <div id="previewContent" style="flex:1;position:relative;overflow:hidden">
         <button class="edge-nav left" id="edgeNavPrev" onclick="goPrev()" title="Previous" aria-label="Previous design"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 3L5 8l5 5"/></svg></button>
         <button class="edge-nav right" id="edgeNavNext" onclick="goNext()" title="Next" aria-label="Next design"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 3l5 5-5 5"/></svg></button>
         <div class="empty-state" id="emptyState">
@@ -429,12 +429,10 @@ const CATALOG = [
       },
       { id: 'manuscript', name: 'Ancient Manuscript', source: 'PR #11', description: 'Aged parchment with classical ornaments',
         options: [
-          { id: 'manuscript-opt1', name: 'Ornate Islamic', file: 'splash/manuscript/previews/option-1-ornate-islamic.html', desc: 'Rich Islamic illumination with gold leaf details', generation: 1 },
           { id: 'manuscript-opt2', name: 'Codex Spine', file: 'splash/manuscript/previews/option-2-codex-spine.html', desc: 'Book spine perspective with leather-bound aesthetics', generation: 1 },
           { id: 'manuscript-opt3', name: 'Scroll & Seal', file: 'splash/manuscript/previews/option-3-scroll-seal.html', desc: 'Unfurling scroll with wax seal authenticity', generation: 1 }
         ],
         feedback: {
-          'manuscript-opt1': "the original was way better at looking like it was unrolling like a book. you should stick to the original concept and polish.",
           'manuscript-opt2': "i like this concept, but you need to actually fix the copy, word choice, and spacing to make it look like a book not an eye doctors office.",
           'manuscript-opt3': "i like this idea, but it all looks too digital. this scroll needs to look like paper.\n\nalso refine the font choices for the english and arabic."
         }

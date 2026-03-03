@@ -1,0 +1,1033 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gold Mystical — Poetry Bil-Araby</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --bg-end: #1a1520;
+    --text: #f0e6d3;
+    --gold: #c5a059;
+    --gold-dim: rgba(197,160,89,0.25);
+    --gold-glow: rgba(197,160,89,0.15);
+    --purple: #8a6eda;
+    --purple-dim: rgba(138,110,218,0.2);
+    --surface: rgba(255,255,255,0.05);
+    --surface-border: rgba(197,160,89,0.15);
+    --muted: rgba(240,230,211,0.55);
+    --transition-speed: 0.4s;
+  }
+  [data-theme="light"] {
+    --bg: #faf6ef;
+    --bg-end: #f0eae0;
+    --text: #2a1a3e;
+    --gold: #b8941c;
+    --gold-dim: rgba(184,148,28,0.2);
+    --gold-glow: rgba(184,148,28,0.1);
+    --purple: #6a4ec0;
+    --purple-dim: rgba(106,78,192,0.15);
+    --surface: rgba(42,26,62,0.05);
+    --surface-border: rgba(184,148,28,0.2);
+    --muted: rgba(42,26,62,0.5);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; scroll-behavior: smooth; }
+  body {
+    font-family: 'Tajawal', sans-serif;
+    background: linear-gradient(135deg, var(--bg), var(--bg-end));
+    color: var(--text);
+    overflow-x: hidden;
+    min-height: 100vh;
+    transition: background var(--transition-speed), color var(--transition-speed);
+  }
+
+  /* ---- Splash Screen ---- */
+  #splash {
+    position: fixed; inset: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column;
+    background: linear-gradient(135deg, #0a0a0f, #1a1520);
+    transition: opacity 0.8s ease;
+    will-change: opacity;
+    overflow: hidden;
+  }
+  #splash.hidden { opacity: 0; pointer-events: none; }
+
+  /* Animated gradient pulse overlay */
+  .splash-gradient {
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse at 50% 50%, rgba(197,160,89,0.06) 0%, transparent 60%),
+                radial-gradient(ellipse at 20% 80%, rgba(138,110,218,0.05) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 20%, rgba(197,160,89,0.04) 0%, transparent 50%);
+    animation: gradientPulse 6s ease-in-out infinite alternate;
+    pointer-events: none;
+  }
+  @keyframes gradientPulse {
+    0% { opacity: 0.6; transform: scale(1); }
+    100% { opacity: 1; transform: scale(1.05); }
+  }
+
+  #splash-canvas {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%; display: block;
+    z-index: 1;
+  }
+  .splash-content {
+    position: relative; z-index: 2;
+    display: flex; flex-direction: column; align-items: center;
+    gap: 1.8rem;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 1.2s ease;
+  }
+  .splash-content.visible { opacity: 1; pointer-events: auto; }
+  .splash-brand {
+    text-align: center; line-height: 1.3;
+  }
+  .splash-brand-en {
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 1.1rem; font-weight: 300;
+    color: rgba(240,230,211,0.5);
+    letter-spacing: 0.25em; text-transform: lowercase;
+    display: block; margin-bottom: 0.3rem;
+  }
+  .splash-brand-ar {
+    font-family: 'Amiri', serif;
+    font-size: 3rem; font-weight: 700;
+    color: var(--gold);
+    display: block;
+    text-shadow: 0 0 30px rgba(197,160,89,0.3);
+  }
+  .splash-enter {
+    min-width: 44px; min-height: 44px;
+    padding: 0.75rem 3rem;
+    font-family: 'Tajawal', sans-serif;
+    font-size: 0.95rem; font-weight: 500;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--gold);
+    background: transparent;
+    border: 1px solid var(--gold);
+    border-radius: 2rem;
+    cursor: pointer;
+    position: relative; overflow: hidden;
+    transition: color 0.4s ease, box-shadow 0.4s ease;
+    z-index: 1;
+    animation: enterPulse 2.5s ease-in-out infinite;
+    box-shadow: 0 0 15px rgba(197,160,89,0.15);
+  }
+  @keyframes enterPulse {
+    0%, 100% { box-shadow: 0 0 15px rgba(197,160,89,0.15), inset 0 0 15px rgba(197,160,89,0); }
+    50% { box-shadow: 0 0 25px rgba(197,160,89,0.3), inset 0 0 20px rgba(197,160,89,0.05); }
+  }
+  .splash-enter::before {
+    content: ''; position: absolute;
+    top: 0; left: -100%; width: 100%; height: 100%;
+    background: var(--gold);
+    transition: left 0.4s ease;
+    z-index: -1;
+  }
+  .splash-enter:hover { color: #0a0a0f; }
+  .splash-enter:hover::before { left: 0; }
+  .splash-enter:focus-visible {
+    outline: 2px solid var(--gold); outline-offset: 3px;
+  }
+
+  /* ---- Theme Toggle ---- */
+  .theme-toggle {
+    position: fixed; top: 1rem; right: 1rem; z-index: 200;
+    width: 48px; height: 48px; min-width: 44px; min-height: 44px;
+    border-radius: 50%;
+    border: 1px solid var(--surface-border);
+    background: var(--surface);
+    color: var(--gold);
+    font-size: 1.3rem; cursor: pointer;
+    display: none; align-items: center; justify-content: center;
+    transition: background 0.3s, transform 0.2s, border-color 0.3s;
+    will-change: transform;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  .theme-toggle.visible { display: flex; }
+  .theme-toggle:hover { transform: scale(1.08); border-color: var(--gold-dim); }
+  .theme-toggle:active { transform: scale(0.95); }
+  .theme-toggle:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+
+  /* ---- Onboarding ---- */
+  #onboarding {
+    display: none; flex-direction: column; align-items: center;
+    justify-content: center;
+    padding: 2rem 1.5rem; min-height: 100vh;
+    background: linear-gradient(135deg, var(--bg), var(--bg-end));
+    transition: background var(--transition-speed);
+  }
+  #onboarding.active { display: flex; }
+
+  .onboard-card {
+    width: 100%; max-width: 440px;
+    text-align: center;
+    padding: 3rem 2rem;
+    opacity: 0; transform: translateY(20px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+    will-change: opacity, transform;
+  }
+  .onboard-card.visible { opacity: 1; transform: translateY(0); }
+
+  .onboard-icon {
+    width: 68px; height: 68px;
+    margin: 0 auto 1.5rem;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--gold-glow), var(--purple-dim));
+    border: 1px solid var(--gold-dim);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.6rem;
+    box-shadow: 0 0 20px rgba(197,160,89,0.1);
+  }
+  .onboard-step {
+    font-family: 'Tajawal', sans-serif;
+    font-size: 0.75rem; font-weight: 500;
+    letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--gold); margin-bottom: 0.8rem;
+  }
+  .onboard-title {
+    font-family: 'Tajawal', sans-serif;
+    font-size: 1.5rem; font-weight: 700;
+    color: var(--text); margin-bottom: 0.4rem;
+  }
+  .onboard-subtitle {
+    font-family: 'Amiri', serif;
+    font-size: 1.2rem; font-weight: 400;
+    color: var(--gold); margin-bottom: 1rem;
+    direction: rtl;
+  }
+  .onboard-desc {
+    font-size: 1rem; line-height: 1.7;
+    color: var(--muted); max-width: 360px;
+    margin: 0 auto;
+  }
+
+  .onboard-dots {
+    display: flex; gap: 0.5rem;
+    justify-content: center;
+    margin: 2rem 0 1.5rem;
+  }
+  .onboard-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--surface-border);
+    transition: background 0.3s, transform 0.3s, box-shadow 0.3s;
+  }
+  .onboard-dot.active {
+    background: var(--gold);
+    transform: scale(1.3);
+    box-shadow: 0 0 8px rgba(197,160,89,0.4);
+  }
+
+  .onboard-nav {
+    display: flex; gap: 1rem; align-items: center;
+  }
+  .onboard-btn {
+    min-width: 44px; min-height: 44px;
+    padding: 0.7rem 2.2rem;
+    font-family: 'Tajawal', sans-serif;
+    font-size: 0.95rem; font-weight: 500;
+    border-radius: 2rem; cursor: pointer;
+    transition: background 0.3s, color 0.3s, transform 0.2s, border-color 0.3s;
+    will-change: transform;
+  }
+  .onboard-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+  .onboard-btn-next {
+    background: var(--gold); color: #0a0a0f;
+    border: 1px solid var(--gold);
+  }
+  .onboard-btn-next:hover { transform: translateY(-2px); }
+  .onboard-btn-next:active { transform: translateY(0); }
+  .onboard-btn-skip {
+    background: transparent; color: var(--muted);
+    border: 1px solid var(--surface-border);
+  }
+  .onboard-btn-skip:hover { border-color: var(--gold-dim); color: var(--text); }
+
+  /* ---- Main App ---- */
+  #app {
+    display: none; flex-direction: column; align-items: center;
+    padding: 2rem 1rem 4rem; min-height: 100vh;
+    background: linear-gradient(135deg, var(--bg), var(--bg-end));
+    transition: background var(--transition-speed);
+    position: relative;
+  }
+  #app.visible { display: flex; }
+  #app-canvas {
+    position: fixed; inset: 0;
+    width: 100%; height: 100%;
+    pointer-events: none; z-index: 0;
+  }
+
+  .app-header {
+    text-align: center; margin-bottom: 2rem; margin-top: 1.5rem;
+    position: relative; z-index: 1;
+  }
+  .app-header-brand {
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 0.8rem; font-weight: 300;
+    letter-spacing: 0.2em; text-transform: lowercase;
+    color: var(--muted); display: block; margin-bottom: 0.2rem;
+  }
+  .app-header h1 {
+    font-family: 'Amiri', serif; font-size: 2rem;
+    color: var(--gold); margin-bottom: 0.2rem;
+    text-shadow: 0 0 20px rgba(197,160,89,0.2);
+  }
+  .app-header p {
+    font-size: 0.9rem; color: var(--muted);
+  }
+
+  .poem-frame {
+    width: 100%; max-width: 640px;
+    background: var(--surface);
+    border: 1px solid var(--surface-border);
+    border-radius: 1rem;
+    overflow: hidden;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    will-change: transform;
+    transition: transform 0.4s, box-shadow 0.4s;
+    position: relative; z-index: 1;
+    box-shadow: 0 4px 30px rgba(0,0,0,0.2), 0 0 40px rgba(197,160,89,0.05);
+  }
+  .poem-frame:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 40px rgba(0,0,0,0.3), 0 0 50px rgba(197,160,89,0.08);
+  }
+
+  .poem-accent-line {
+    width: 100%; height: 2px;
+    background: linear-gradient(90deg, transparent, var(--gold), var(--purple), var(--gold), transparent);
+  }
+
+  .poem-content {
+    padding: 2rem 2rem 2.5rem; text-align: center;
+  }
+  .poem-content[dir="rtl"] { direction: rtl; }
+  .poem-line {
+    font-family: 'Amiri', serif; font-size: 1.65rem;
+    line-height: 2.4; color: var(--text);
+    margin-bottom: 0.3rem;
+  }
+  .poem-separator {
+    width: 48px; height: 1px; margin: 1rem auto;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  }
+  .poet-name {
+    font-family: 'Amiri', serif; font-size: 1.05rem;
+    color: var(--gold); margin-top: 0.8rem;
+    direction: rtl;
+  }
+
+  .btn-row {
+    display: flex; gap: 0.75rem; margin-top: 1.5rem;
+    flex-wrap: wrap; justify-content: center;
+    position: relative; z-index: 1;
+  }
+  .ctrl-btn {
+    min-width: 44px; min-height: 44px;
+    width: 44px; height: 44px;
+    border-radius: 50%;
+    border: 1px solid var(--surface-border);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 1.1rem; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.3s, border-color 0.3s, transform 0.2s, box-shadow 0.3s;
+    will-change: transform;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+  }
+  .ctrl-btn:hover {
+    border-color: var(--gold-dim);
+    transform: scale(1.08);
+    box-shadow: 0 0 12px rgba(197,160,89,0.15);
+  }
+  .ctrl-btn:active { transform: scale(0.95); }
+  .ctrl-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+  .ctrl-btn.active {
+    background: var(--gold);
+    color: #0a0a0f;
+    border-color: var(--gold);
+    box-shadow: 0 0 15px rgba(197,160,89,0.3);
+  }
+
+  .footer-note {
+    margin-top: 3rem; text-align: center;
+    font-size: 0.8rem; color: var(--muted); opacity: 0.4;
+    position: relative; z-index: 1;
+  }
+
+  /* ---- Responsive ---- */
+  @media (max-width: 768px) {
+    .splash-brand-ar { font-size: 2.2rem; }
+    .splash-brand-en { font-size: 0.9rem; }
+    .onboard-card { padding: 2rem 1.5rem; }
+    .onboard-title { font-size: 1.3rem; }
+    .poem-line { font-size: 1.3rem; line-height: 2.2; }
+    .poem-content { padding: 1.5rem 1.2rem 2rem; }
+    .app-header h1 { font-size: 1.6rem; }
+  }
+
+  /* ---- Reduced motion ---- */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+    #splash { transition: none; }
+    .splash-content { opacity: 1; transition: none; }
+    .splash-gradient { animation: none; opacity: 0.8; }
+    .splash-enter { animation: none; }
+    .onboard-card { opacity: 1; transform: none; transition: none; }
+    .poem-frame:hover { transform: none; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- Splash Screen -->
+  <div id="splash">
+    <div class="splash-gradient"></div>
+    <canvas id="splash-canvas"></canvas>
+    <div class="splash-content" id="splashContent">
+      <div class="splash-brand">
+        <span class="splash-brand-en">poetry</span>
+        <span class="splash-brand-ar" dir="rtl">بالعربي</span>
+      </div>
+      <button class="splash-enter" id="splashEnter" aria-label="Enter the app">Enter</button>
+    </div>
+  </div>
+
+  <!-- Theme Toggle -->
+  <button class="theme-toggle" id="themeBtn" aria-label="Toggle theme">&#9734;</button>
+
+  <!-- Onboarding -->
+  <div id="onboarding" aria-label="Onboarding walkthrough">
+
+    <div class="onboard-card" id="onboardCard">
+      <div class="onboard-icon" id="onboardIcon">&#128218;</div>
+      <div class="onboard-step" id="onboardStep">Step 1 of 4</div>
+      <h2 class="onboard-title" id="onboardTitle">Discover</h2>
+      <p class="onboard-subtitle" id="onboardSubtitle" dir="rtl">اكتشف</p>
+      <p class="onboard-desc" id="onboardDesc">Browse thousands of Arabic poems from the classical and modern eras.</p>
+    </div>
+
+    <div class="onboard-dots" aria-hidden="true">
+      <div class="onboard-dot active" data-dot="0"></div>
+      <div class="onboard-dot" data-dot="1"></div>
+      <div class="onboard-dot" data-dot="2"></div>
+      <div class="onboard-dot" data-dot="3"></div>
+    </div>
+
+    <div class="onboard-nav">
+      <button class="onboard-btn onboard-btn-skip" id="onboardSkip" aria-label="Skip onboarding">Skip</button>
+      <button class="onboard-btn onboard-btn-next" id="onboardNext" aria-label="Next step">Next</button>
+    </div>
+  </div>
+
+  <!-- Main App -->
+  <div id="app">
+    <canvas id="app-canvas"></canvas>
+
+    <header class="app-header">
+      <span class="app-header-brand">poetry</span>
+      <h1 dir="rtl">شعر بالعربي</h1>
+      <p>Arabic poetry, one verse at a time</p>
+    </header>
+
+    <div class="poem-frame">
+      <div class="poem-accent-line"></div>
+      <div class="poem-content" dir="rtl">
+        <p class="poem-line">يا ليلُ الصَّبُّ متى غَدُهُ</p>
+        <div class="poem-separator"></div>
+        <p class="poem-line">أَقِيامَةُ السّاعةِ مَوعِدُهُ</p>
+        <p class="poet-name">— الحصري القيرواني</p>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="ctrl-btn" id="playBtn" aria-label="Play recitation" title="Listen">&#9654;</button>
+      <button class="ctrl-btn" id="saveBtn" aria-label="Save poem" title="Save">&#9825;</button>
+      <button class="ctrl-btn" id="nextBtn" aria-label="Next poem" title="Next">&#8594;</button>
+      <button class="ctrl-btn" id="fontBtn" aria-label="Increase font size" title="Font size">A+</button>
+      <button class="ctrl-btn" id="arabicBtn" aria-label="Toggle Arabic display" title="Arabic">ع</button>
+    </div>
+
+    <p class="footer-note">Gold Mystical — design review mockup</p>
+  </div>
+
+<script>
+(function() {
+  "use strict";
+
+  var prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ============================================
+     PARTICLE SYSTEM
+     ============================================ */
+  function ParticleField(canvasEl, opts) {
+    var self = this;
+    self.canvas = canvasEl;
+    self.ctx = canvasEl.getContext("2d");
+    self.particles = [];
+    self.count = opts.count || 300;
+    self.mouseX = -9999;
+    self.mouseY = -9999;
+    self.mouseRadius = opts.mouseRadius || 120;
+    self.baseSpeed = opts.baseSpeed || 0.3;
+    self.ambient = opts.ambient || false;
+    self.goldGlow = opts.goldGlow || false;
+    self.cW = 0;
+    self.cH = 0;
+    self.animId = null;
+    self.running = false;
+    self.dpr = window.devicePixelRatio || 1;
+
+    self.resize = function() {
+      self.cW = self.canvas.parentElement ? self.canvas.parentElement.offsetWidth : window.innerWidth;
+      self.cH = self.canvas.parentElement ? self.canvas.parentElement.offsetHeight : window.innerHeight;
+      if (self.cW === 0) self.cW = window.innerWidth;
+      if (self.cH === 0) self.cH = window.innerHeight;
+      self.canvas.width = self.cW * self.dpr;
+      self.canvas.height = self.cH * self.dpr;
+      self.canvas.style.width = self.cW + "px";
+      self.canvas.style.height = self.cH + "px";
+      self.ctx.setTransform(self.dpr, 0, 0, self.dpr, 0, 0);
+    };
+
+    self.initParticles = function() {
+      self.particles = [];
+      var i, p;
+      for (i = 0; i < self.count; i++) {
+        p = {
+          x: Math.random() * self.cW,
+          y: Math.random() * self.cH,
+          homeX: 0,
+          homeY: 0,
+          vx: (Math.random() - 0.5) * self.baseSpeed,
+          vy: (Math.random() - 0.5) * self.baseSpeed,
+          size: Math.random() * 2.0 + 0.3,
+          brightness: Math.random() * 0.6 + 0.4,
+          twinkleSpeed: Math.random() * 0.003 + 0.001,
+          twinkleOffset: Math.random() * Math.PI * 2,
+          isAmethyst: Math.random() < 0.2
+        };
+        p.homeX = p.x;
+        p.homeY = p.y;
+        self.particles.push(p);
+      }
+      if (!self.ambient) {
+        self.arrangeCalligraphy();
+      }
+    };
+
+    self.arrangeCalligraphy = function() {
+      var cx = self.cW / 2;
+      var cy = self.cH / 2;
+      var curveCount = 5;
+      var perCurve = Math.floor(self.count * 0.35 / curveCount);
+      var idx = 0;
+      var c, j, t, angle, rx, ry, spread;
+
+      for (c = 0; c < curveCount; c++) {
+        var offsetY = (c - 2) * (self.cH * 0.08);
+        var curveType = c % 3;
+        for (j = 0; j < perCurve && idx < self.count; j++) {
+          t = j / perCurve;
+          spread = (Math.random() - 0.5) * 20;
+
+          if (curveType === 0) {
+            angle = (t * Math.PI * 0.8) - Math.PI * 0.4;
+            rx = self.cW * 0.28;
+            ry = self.cH * 0.12;
+            self.particles[idx].homeX = cx + Math.cos(angle) * rx + spread;
+            self.particles[idx].homeY = cy + offsetY + Math.sin(angle) * ry + spread;
+          } else if (curveType === 1) {
+            self.particles[idx].homeX = cx + (t - 0.5) * self.cW * 0.4 + spread;
+            self.particles[idx].homeY = cy + offsetY + Math.sin(t * Math.PI * 2) * self.cH * 0.06 + spread;
+          } else {
+            angle = Math.random() * Math.PI * 2;
+            var r = Math.random() * 30;
+            self.particles[idx].homeX = cx + (t - 0.5) * self.cW * 0.25 + Math.cos(angle) * r;
+            self.particles[idx].homeY = cy + offsetY + Math.sin(angle) * r;
+          }
+          self.particles[idx].x = self.particles[idx].homeX + (Math.random() - 0.5) * self.cW * 0.5;
+          self.particles[idx].y = self.particles[idx].homeY + (Math.random() - 0.5) * self.cH * 0.5;
+          idx++;
+        }
+      }
+    };
+
+    self.update = function(time) {
+      var i, p, dx, dy, dist, force, tx, ty;
+      var returnStrength = self.ambient ? 0.002 : 0.015;
+      var drift = self.ambient ? 0.15 : 0.08;
+
+      for (i = 0; i < self.particles.length; i++) {
+        p = self.particles[i];
+
+        p.brightness = 0.4 + 0.6 * Math.abs(Math.sin(time * p.twinkleSpeed + p.twinkleOffset));
+
+        dx = p.x - self.mouseX;
+        dy = p.y - self.mouseY;
+        dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < self.mouseRadius && dist > 0) {
+          force = (self.mouseRadius - dist) / self.mouseRadius;
+          force = force * force * 3;
+          p.vx += (dx / dist) * force;
+          p.vy += (dy / dist) * force;
+        }
+
+        if (!self.ambient) {
+          tx = p.homeX - p.x;
+          ty = p.homeY - p.y;
+          p.vx += tx * returnStrength;
+          p.vy += ty * returnStrength;
+        } else {
+          p.vx += (Math.random() - 0.5) * drift * 0.1;
+          p.vy += (Math.random() - 0.5) * drift * 0.1;
+        }
+
+        p.vx *= 0.95;
+        p.vy *= 0.95;
+
+        p.x += p.vx;
+        p.y += p.vy;
+
+        if (self.ambient) {
+          if (p.x < -10) p.x = self.cW + 10;
+          if (p.x > self.cW + 10) p.x = -10;
+          if (p.y < -10) p.y = self.cH + 10;
+          if (p.y > self.cH + 10) p.y = -10;
+        }
+      }
+    };
+
+    self.draw = function(time) {
+      var ctx = self.ctx;
+      var isDark = !document.documentElement.getAttribute("data-theme");
+
+      ctx.clearRect(0, 0, self.cW, self.cH);
+
+      var i, p, alpha, sz, r, g, b;
+
+      for (i = 0; i < self.particles.length; i++) {
+        p = self.particles[i];
+        alpha = p.brightness;
+        sz = p.size;
+
+        if (p.isAmethyst) {
+          if (isDark) { r = 138; g = 110; b = 218; }
+          else { r = 106; g = 78; b = 192; }
+        } else {
+          if (isDark) { r = 197; g = 160; b = 89; }
+          else { r = 184; g = 148; b = 28; }
+        }
+
+        /* Gold glow halo for splash particles */
+        if (self.goldGlow && sz > 0.7) {
+          var glowRad = sz * 4;
+          var grad = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, glowRad);
+          grad.addColorStop(0, "rgba(" + r + "," + g + "," + b + "," + (alpha * 0.3) + ")");
+          grad.addColorStop(0.3, "rgba(" + r + "," + g + "," + b + "," + (alpha * 0.1) + ")");
+          grad.addColorStop(1, "rgba(" + r + "," + g + "," + b + ",0)");
+          ctx.beginPath();
+          ctx.fillStyle = grad;
+          ctx.arc(p.x, p.y, glowRad, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (sz > 0.8) {
+          var grad2 = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, sz * 2.5);
+          grad2.addColorStop(0, "rgba(" + r + "," + g + "," + b + "," + (alpha * 0.35) + ")");
+          grad2.addColorStop(0.4, "rgba(" + r + "," + g + "," + b + "," + (alpha * 0.08) + ")");
+          grad2.addColorStop(1, "rgba(" + r + "," + g + "," + b + ",0)");
+          ctx.beginPath();
+          ctx.fillStyle = grad2;
+          ctx.arc(p.x, p.y, sz * 2.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        /* Hard bright core */
+        ctx.beginPath();
+        ctx.fillStyle = "rgba(" + r + "," + g + "," + b + "," + alpha + ")";
+        ctx.arc(p.x, p.y, sz * 0.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        /* Cross spikes on brighter particles */
+        if (p.brightness > 0.7 && sz > 1.0) {
+          var spikeLen = sz * 2;
+          var spikeAlpha = (p.brightness - 0.7) * 1.5;
+          ctx.strokeStyle = "rgba(" + r + "," + g + "," + b + "," + (spikeAlpha * 0.4) + ")";
+          ctx.lineWidth = 0.5;
+          ctx.beginPath();
+          ctx.moveTo(p.x - spikeLen, p.y);
+          ctx.lineTo(p.x + spikeLen, p.y);
+          ctx.moveTo(p.x, p.y - spikeLen);
+          ctx.lineTo(p.x, p.y + spikeLen);
+          ctx.stroke();
+        }
+      }
+    };
+
+    self.render = function(timestamp) {
+      if (!self.running) return;
+      var time = timestamp || 0;
+      self.update(time);
+      self.draw(time);
+      self.animId = requestAnimationFrame(self.render);
+    };
+
+    self.start = function() {
+      if (self.running) return;
+      self.running = true;
+      self.resize();
+      self.initParticles();
+      if (prefersReduced) {
+        self.update(2000);
+        self.draw(2000);
+      } else {
+        self.animId = requestAnimationFrame(self.render);
+      }
+    };
+
+    self.stop = function() {
+      self.running = false;
+      if (self.animId) {
+        cancelAnimationFrame(self.animId);
+        self.animId = null;
+      }
+    };
+
+    self.handleMouse = function(e) {
+      var rect = self.canvas.getBoundingClientRect();
+      self.mouseX = e.clientX - rect.left;
+      self.mouseY = e.clientY - rect.top;
+    };
+
+    self.handleMouseLeave = function() {
+      self.mouseX = -9999;
+      self.mouseY = -9999;
+    };
+  }
+
+  /* ============================================
+     SPLASH SCREEN PARTICLES
+     ============================================ */
+  var splashCanvas = document.getElementById("splash-canvas");
+  var splashField = new ParticleField(splashCanvas, {
+    count: 300,
+    baseSpeed: 0.3,
+    mouseRadius: 120,
+    ambient: false,
+    goldGlow: true
+  });
+
+  splashField.start();
+
+  splashCanvas.addEventListener("mousemove", function(e) {
+    splashField.handleMouse(e);
+  });
+  splashCanvas.addEventListener("mouseleave", function() {
+    splashField.handleMouseLeave();
+  });
+  splashCanvas.addEventListener("touchmove", function(e) {
+    if (e.touches.length > 0) {
+      var touch = e.touches[0];
+      var rect = splashCanvas.getBoundingClientRect();
+      splashField.mouseX = touch.clientX - rect.left;
+      splashField.mouseY = touch.clientY - rect.top;
+    }
+  }, { passive: true });
+  splashCanvas.addEventListener("touchend", function() {
+    splashField.handleMouseLeave();
+  });
+
+  window.addEventListener("resize", function() {
+    if (splashField.running) splashField.resize();
+    if (appField && appField.running) appField.resize();
+  });
+
+  /* Show splash content after a brief delay */
+  var splashContent = document.getElementById("splashContent");
+  setTimeout(function() {
+    splashContent.classList.add("visible");
+  }, prefersReduced ? 100 : 800);
+
+  /* ============================================
+     SPLASH -> ONBOARDING
+     ============================================ */
+  var splash = document.getElementById("splash");
+  var onboarding = document.getElementById("onboarding");
+  var app = document.getElementById("app");
+  var themeBtn = document.getElementById("themeBtn");
+
+  function exitSplash() {
+    splash.classList.add("hidden");
+    splashField.stop();
+    setTimeout(function() {
+      splash.style.display = "none";
+      onboarding.classList.add("active");
+      themeBtn.classList.add("visible");
+      showOnboardStep(0);
+    }, 800);
+  }
+
+  document.getElementById("splashEnter").addEventListener("click", exitSplash);
+  document.getElementById("splashEnter").addEventListener("keydown", function(e) {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      exitSplash();
+    }
+  });
+
+  /* ============================================
+     SEQUENTIAL ONBOARDING (4 steps)
+     ============================================ */
+  var onboardSteps = [
+    {
+      icon: "📚",
+      step: "Step 1 of 4",
+      title: "Discover",
+      subtitle: "اكتشف",
+      desc: "Browse thousands of Arabic poems from the classical and modern eras, spanning centuries of literary tradition."
+    },
+    {
+      icon: "🔍",
+      step: "Step 2 of 4",
+      title: "Explore",
+      subtitle: "استكشف",
+      desc: "Find your favorite poets and dive deep into their collections, from pre-Islamic masters to contemporary voices."
+    },
+    {
+      icon: "🎧",
+      step: "Step 3 of 4",
+      title: "Listen",
+      subtitle: "استمع",
+      desc: "Hear poems recited aloud with the rhythm and melody of authentic Arabic prosody."
+    },
+    {
+      icon: "❤️",
+      step: "Step 4 of 4",
+      title: "Share",
+      subtitle: "شارك",
+      desc: "Save your favorite verses and share the beauty of Arabic poetry with friends and family."
+    }
+  ];
+
+  var currentOnboardStep = 0;
+  var onboardCard = document.getElementById("onboardCard");
+  var onboardIcon = document.getElementById("onboardIcon");
+  var onboardStepEl = document.getElementById("onboardStep");
+  var onboardTitle = document.getElementById("onboardTitle");
+  var onboardSubtitle = document.getElementById("onboardSubtitle");
+  var onboardDesc = document.getElementById("onboardDesc");
+  var onboardNextBtn = document.getElementById("onboardNext");
+  var dots = document.querySelectorAll(".onboard-dot");
+
+  function showOnboardStep(idx) {
+    var data = onboardSteps[idx];
+    currentOnboardStep = idx;
+
+    onboardCard.classList.remove("visible");
+
+    setTimeout(function() {
+      onboardIcon.textContent = data.icon;
+      onboardStepEl.textContent = data.step;
+      onboardTitle.textContent = data.title;
+      onboardSubtitle.textContent = data.subtitle;
+      onboardDesc.textContent = data.desc;
+
+      var i;
+      for (i = 0; i < dots.length; i++) {
+        if (i === idx) {
+          dots[i].classList.add("active");
+        } else {
+          dots[i].classList.remove("active");
+        }
+      }
+
+      if (idx === onboardSteps.length - 1) {
+        onboardNextBtn.textContent = "Get Started";
+        onboardNextBtn.setAttribute("aria-label", "Start using the app");
+      } else {
+        onboardNextBtn.textContent = "Next";
+        onboardNextBtn.setAttribute("aria-label", "Next step");
+      }
+
+      onboardCard.classList.add("visible");
+    }, prefersReduced ? 10 : 300);
+  }
+
+  function enterApp() {
+    onboarding.classList.remove("active");
+    app.classList.add("visible");
+    startAppParticles();
+  }
+
+  onboardNextBtn.addEventListener("click", function() {
+    if (currentOnboardStep < onboardSteps.length - 1) {
+      showOnboardStep(currentOnboardStep + 1);
+    } else {
+      enterApp();
+    }
+  });
+
+  document.getElementById("onboardSkip").addEventListener("click", enterApp);
+
+  /* Keyboard navigation for onboarding */
+  document.addEventListener("keydown", function(e) {
+    if (!onboarding.classList.contains("active")) return;
+    if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+      e.preventDefault();
+      if (currentOnboardStep < onboardSteps.length - 1) {
+        showOnboardStep(currentOnboardStep + 1);
+      }
+    } else if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+      e.preventDefault();
+      if (currentOnboardStep > 0) {
+        showOnboardStep(currentOnboardStep - 1);
+      }
+    }
+  });
+
+  /* ============================================
+     MAIN APP AMBIENT PARTICLES
+     ============================================ */
+  var appCanvas = document.getElementById("app-canvas");
+  var appField = null;
+
+  function startAppParticles() {
+    appField = new ParticleField(appCanvas, {
+      count: 60,
+      baseSpeed: 0.15,
+      mouseRadius: 80,
+      ambient: true,
+      goldGlow: false
+    });
+    appField.start();
+  }
+
+  /* ============================================
+     THEME TOGGLE
+     ============================================ */
+  var isDark = true;
+  var SUN_SYMBOL = "☆";
+  var MOON_SYMBOL = "☾";
+  themeBtn.textContent = SUN_SYMBOL;
+
+  themeBtn.addEventListener("click", function() {
+    isDark = !isDark;
+    if (isDark) {
+      document.documentElement.removeAttribute("data-theme");
+      themeBtn.textContent = SUN_SYMBOL;
+    } else {
+      document.documentElement.setAttribute("data-theme", "light");
+      themeBtn.textContent = MOON_SYMBOL;
+    }
+  });
+
+  /* ============================================
+     APP MOCK INTERACTIONS
+     ============================================ */
+  var poems = [
+    {
+      lines: [
+        "يا ليلُ الصَّبُّ متى غَدُهُ",
+        "أَقِيامَةُ السّاعةِ مَوعِدُهُ"
+      ],
+      poet: "الحصري القيرواني"
+    },
+    {
+      lines: [
+        "عَلى قَدرِ أَهلِ العَزمِ تَأتي العَزائِمُ",
+        "وَتَأتي عَلى قَدرِ الكِرامِ المَكارِمُ"
+      ],
+      poet: "المتنبي"
+    },
+    {
+      lines: [
+        "أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ",
+        "فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي"
+      ],
+      poet: "أحمد شوقي"
+    },
+    {
+      lines: [
+        "إِذا غامَرتَ في شَرَفٍ مَرومٍ",
+        "فَلا تَقنَع بِما دونَ النُجومِ"
+      ],
+      poet: "المتنبي"
+    }
+  ];
+  var currentPoem = 0;
+  var fontLevel = 0;
+  var fontSizes = ["1.65rem", "1.9rem", "2.2rem", "1.4rem"];
+
+  document.getElementById("nextBtn").addEventListener("click", function() {
+    currentPoem = (currentPoem + 1) % poems.length;
+    var p = poems[currentPoem];
+    var lines = document.querySelectorAll(".poem-line");
+    var poetEl = document.querySelector(".poet-name");
+    lines[0].textContent = p.lines[0];
+    lines[1].textContent = p.lines[1];
+    poetEl.textContent = "— " + p.poet;
+
+    var frame = document.querySelector(".poem-frame");
+    frame.style.transform = "scale(0.97)";
+    setTimeout(function() { frame.style.transform = ""; }, 250);
+  });
+
+  document.getElementById("playBtn").addEventListener("click", function() {
+    var btn = this;
+    btn.classList.add("active");
+    btn.textContent = "❚❚";
+    setTimeout(function() {
+      btn.classList.remove("active");
+      btn.textContent = "▶";
+    }, 2000);
+  });
+
+  document.getElementById("saveBtn").addEventListener("click", function() {
+    var btn = this;
+    if (btn.classList.contains("active")) {
+      btn.classList.remove("active");
+      btn.textContent = "♡";
+    } else {
+      btn.classList.add("active");
+      btn.textContent = "♥";
+    }
+  });
+
+  document.getElementById("fontBtn").addEventListener("click", function() {
+    fontLevel = (fontLevel + 1) % fontSizes.length;
+    var lines = document.querySelectorAll(".poem-line");
+    var i;
+    for (i = 0; i < lines.length; i++) {
+      lines[i].style.fontSize = fontSizes[fontLevel];
+    }
+  });
+
+  document.getElementById("arabicBtn").addEventListener("click", function() {
+    var btn = this;
+    btn.classList.toggle("active");
+    var poemContent = document.querySelector(".poem-content");
+    if (btn.classList.contains("active")) {
+      poemContent.style.fontFamily = "'Amiri', serif";
+    } else {
+      poemContent.style.fontFamily = "";
+    }
+  });
+
+})();
+</script>
+</body>
+</html>

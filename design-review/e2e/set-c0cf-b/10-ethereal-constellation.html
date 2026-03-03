@@ -3,17 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>10 - Ethereal Constellation - كوكبة أثيرية</title>
-    <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <title>E2E #10: Ethereal Constellation - كوكبة أثيرية</title>
+    <link href="https://fonts.googleapis.com/css2?family=Forum&family=Reem+Kufi:wght@400;700&family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
     <style>
         :root {
-            --bg-dark: #030510;
+            --bg-dark: #1a1a2e;
+            --bg-dark2: #16213e;
             --bg-light: #FDFCF8;
             --text-dark: #eef2ff;
-            --text-light: #1a1a1a;
+            --text-light: #1a1a2e;
+            --text-dim-dark: rgba(238, 242, 255, 0.5);
+            --text-dim-light: rgba(26, 26, 46, 0.5);
             --gold: #C5A059;
-            --indigo: #4F46E5;
-            --purple: #a78bfa;
+            --purple: #6b21a8;
+            --purple-light: #a78bfa;
+            --purple-glow: rgba(107, 33, 168, 0.3);
         }
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
@@ -22,23 +27,30 @@
             color: var(--text-dark);
             overflow-x: hidden;
             transition: background 0.4s ease;
+            min-height: 100vh;
         }
         body.light { background: var(--bg-light); color: var(--text-light); }
+
+        /* ===== SPLASH ===== */
         .splash-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100vh;
-            background: var(--bg-dark); display: flex; align-items: center;
-            justify-content: center; z-index: 9999;
-            animation: splashFadeOut 1s ease 4s forwards;
+            background: var(--bg-dark);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.8s ease;
         }
+        .splash-screen.hidden { opacity: 0; pointer-events: none; }
         body.light .splash-screen { background: var(--bg-light); }
+
         .constellation-container {
-            position: relative; width: 500px; height: 400px;
+            position: relative; text-align: center;
         }
         .constellation-svg {
-            width: 100%; height: 100%;
+            width: min(500px, 90vw); height: auto;
         }
         .star {
-            fill: var(--purple); animation: starPulse 2s ease-in-out infinite;
+            fill: var(--purple-light);
+            animation: starPulse 2s ease-in-out infinite;
         }
         .star:nth-child(2n) { animation-delay: 0.5s; }
         .star:nth-child(3n) { animation-delay: 1s; }
@@ -47,7 +59,7 @@
             50% { opacity: 1; r: 5; }
         }
         .constellation-line {
-            stroke: var(--purple); stroke-width: 1; fill: none;
+            stroke: var(--purple-light); stroke-width: 1; fill: none;
             stroke-dasharray: 1000; stroke-dashoffset: 1000;
             animation: drawLine 3s ease-out forwards;
         }
@@ -56,142 +68,351 @@
         .constellation-line:nth-child(3) { animation-delay: 1.5s; }
         .constellation-line:nth-child(4) { animation-delay: 2s; }
         .constellation-line:nth-child(5) { animation-delay: 2.5s; }
-        @keyframes drawLine {
-            to { stroke-dashoffset: 0; }
-        }
-        .splash-text {
-            position: absolute; bottom: -60px; left: 50%;
-            transform: translateX(-50%); font-family: 'Amiri', serif;
-            font-size: 2rem; font-weight: 700; text-align: center;
-            color: var(--purple); animation: textFadeIn 1s ease 2s forwards;
+        @keyframes drawLine { to { stroke-dashoffset: 0; } }
+
+        .splash-brand {
+            display: flex;
+            flex-direction: row-reverse;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 14px;
+            margin-top: 1.5rem;
             opacity: 0;
+            animation: fadeUp 1s ease 2s forwards;
         }
-        @keyframes textFadeIn { to { opacity: 1; } }
-        @keyframes splashFadeOut {
-            to { opacity: 0; pointer-events: none; }
+        .splash-brand-en {
+            font-family: 'Forum', serif;
+            font-size: clamp(2.5rem, 5vw, 4rem);
+            letter-spacing: -0.05em;
+            text-transform: lowercase;
+            color: var(--text-dark);
         }
+        body.light .splash-brand-en { color: var(--text-light); }
+        .splash-brand-ar {
+            font-family: 'Reem Kufi', sans-serif;
+            font-size: clamp(1.5rem, 3.5vw, 2.5rem);
+            font-weight: 700;
+            color: var(--purple-light);
+        }
+        .splash-sub {
+            font-family: 'Amiri', serif;
+            font-size: 1.1rem;
+            color: var(--purple-light);
+            opacity: 0;
+            animation: fadeUp 1s ease 2.5s forwards;
+            margin-top: 0.5rem;
+        }
+        .splash-enter {
+            margin-top: 2rem;
+            background: none;
+            border: 1.5px solid var(--purple-light);
+            color: var(--purple-light);
+            font-family: 'Tajawal', sans-serif;
+            font-size: 1.1rem;
+            padding: 12px 36px;
+            border-radius: 30px;
+            cursor: pointer;
+            opacity: 0;
+            animation: fadeUp 1s ease 3s forwards;
+            min-height: 44px; min-width: 44px;
+            transition: background 0.3s, color 0.3s;
+        }
+        .splash-enter:hover {
+            background: var(--purple);
+            color: white;
+        }
+        @keyframes fadeUp {
+            from { opacity: 0; transform: translateY(18px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ===== ONBOARDING ===== */
+        #onboarding {
+            display: none;
+            position: fixed; inset: 0; z-index: 90;
+            background: var(--bg-dark);
+            align-items: center; justify-content: center;
+            flex-direction: column;
+        }
+        body.light #onboarding { background: var(--bg-light); }
+        #onboarding::before {
+            content: '';
+            position: absolute; inset: 0;
+            background: radial-gradient(circle at 50% 50%, var(--purple-glow), transparent 60%);
+            opacity: 0.2;
+            pointer-events: none;
+        }
+        .onboard-container {
+            position: relative; z-index: 2;
+            text-align: center;
+            max-width: 480px;
+            padding: 2rem;
+        }
+        .onboard-card {
+            display: none;
+            animation: cardFadeIn 0.6s ease;
+        }
+        .onboard-card.active { display: block; }
+        @keyframes cardFadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .onboard-icon {
+            width: 56px; height: 56px;
+            margin: 0 auto 1.5rem;
+            border: 2px solid var(--purple-light);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--purple-light);
+        }
+        .onboard-title-en {
+            font-size: 1.5rem; font-weight: 700;
+            margin-bottom: 0.5rem;
+            direction: ltr;
+        }
+        .onboard-title-ar {
+            font-family: 'Reem Kufi', sans-serif;
+            font-size: 1.25rem;
+            color: var(--purple-light);
+            margin-bottom: 1rem;
+        }
+        .onboard-desc-en {
+            font-size: 0.95rem; line-height: 1.7;
+            color: var(--text-dim-dark);
+            margin-bottom: 0.5rem;
+            direction: ltr;
+        }
+        body.light .onboard-desc-en { color: var(--text-dim-light); }
+        .onboard-desc-ar {
+            font-size: 0.95rem; line-height: 1.7;
+            color: var(--text-dim-dark);
+            margin-bottom: 2rem;
+        }
+        body.light .onboard-desc-ar { color: var(--text-dim-light); }
+        .onboard-dots {
+            display: flex; justify-content: center;
+            gap: 8px; margin-bottom: 1.5rem;
+        }
+        .onboard-dot {
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: rgba(167, 139, 250, 0.3);
+            transition: background 0.3s;
+        }
+        .onboard-dot.active { background: var(--purple-light); }
+        .onboard-tap {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.2em;
+            color: var(--text-dim-dark);
+            cursor: pointer;
+        }
+        body.light .onboard-tap { color: var(--text-dim-light); }
+
+        /* ===== MAIN ===== */
         .main-content {
-            min-height: 100vh; padding: 2rem; opacity: 0;
-            animation: contentFadeIn 1s ease 4.5s forwards;
+            min-height: 100vh; padding: 2rem;
+            display: none;
+            position: relative; z-index: 1;
         }
-        @keyframes contentFadeIn { to { opacity: 1; } }
+        .main-content.visible { display: block; }
+
         header {
             display: flex; justify-content: space-between; align-items: center;
             margin-bottom: 3rem;
         }
-        h1 {
-            font-family: 'Amiri', serif; font-size: 2.5rem;
-            font-weight: 700; color: var(--purple);
+        .header-brand {
+            display: flex;
+            flex-direction: row-reverse;
+            align-items: flex-end;
+            gap: 8px;
+        }
+        .header-brand-en {
+            font-family: 'Forum', serif;
+            font-size: 1.4rem;
+            color: var(--text-dark);
+            letter-spacing: -0.03em;
+        }
+        body.light .header-brand-en { color: var(--text-light); }
+        .header-brand-ar {
+            font-family: 'Reem Kufi', sans-serif;
+            font-size: 1rem;
+            color: var(--purple-light);
+            font-weight: 700;
         }
         .theme-toggle {
-            width: 60px; height: 60px; border-radius: 50%;
-            border: 2px solid var(--purple); background: transparent;
-            color: var(--purple); font-size: 1.5rem; cursor: pointer;
+            width: 44px; height: 44px; border-radius: 50%;
+            border: 2px solid var(--purple-light); background: transparent;
+            color: var(--purple-light); cursor: pointer;
             transition: all 0.3s ease; display: flex;
-            align-items: center; justify-content: center; will-change: transform;
+            align-items: center; justify-content: center;
         }
         .theme-toggle:hover {
-            background: var(--purple); color: var(--bg-dark);
-            transform: rotate(360deg);
+            background: var(--purple); color: white;
         }
-        body.light .theme-toggle:hover { color: var(--bg-light); }
+        body.light .theme-toggle:hover { color: white; }
+        .theme-toggle:focus { outline: 3px solid var(--purple-light); outline-offset: 3px; }
+
         .container { max-width: 900px; margin: 0 auto; }
+
         .poem-card {
-            padding: 3rem; background: rgba(255, 255, 255, 0.03);
-            border-radius: 20px; border: 1px solid rgba(167, 139, 250, 0.2);
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3); margin-bottom: 2rem;
+            padding: 3rem;
+            background: rgba(107, 33, 168, 0.06);
+            border-radius: 20px;
+            border: 1px solid rgba(167, 139, 250, 0.2);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            margin-bottom: 2rem;
         }
         body.light .poem-card {
             background: white;
-            border: 1px solid rgba(167, 139, 250, 0.15);
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(107, 33, 168, 0.12);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
         }
         .poem-text {
             font-family: 'Amiri', serif; font-size: 2rem; line-height: 2.5;
-            text-align: center; color: var(--text-dark); margin-bottom: 2rem;
+            text-align: center; margin-bottom: 2rem;
         }
-        body.light .poem-text { color: var(--text-light); }
         .poem-author {
             font-family: 'Amiri', serif; font-size: 1.3rem;
-            text-align: center; color: var(--purple);
+            text-align: center; color: var(--purple-light);
         }
+
+        /* Vertical controls */
         .vertical-controls {
             position: fixed; right: 20px; top: 50%; transform: translateY(-50%);
             display: flex; flex-direction: column; gap: 1px;
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(107, 33, 168, 0.08);
+            border: 1px solid rgba(167, 139, 250, 0.15);
             border-radius: 12px; overflow: hidden;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            z-index: 50;
         }
         body.light .vertical-controls {
-            background: rgba(0, 0, 0, 0.03);
-            border: 1px solid rgba(0, 0, 0, 0.08);
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+            background: rgba(107, 33, 168, 0.04);
+            border-color: rgba(107, 33, 168, 0.1);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
         }
-        .notion-btn {
-            width: 44px; height: 44px; display: flex;
-            align-items: center; justify-content: center;
+        .vc-btn {
+            width: 44px; height: 44px;
+            display: flex; align-items: center; justify-content: center;
             background: transparent; border: none; cursor: pointer;
-            color: rgba(167, 139, 250, 0.6); font-size: 1.1rem;
+            color: rgba(167, 139, 250, 0.5);
             transition: all 0.2s ease;
         }
-        body.light .notion-btn { color: rgba(0, 0, 0, 0.4); }
-        .notion-btn:hover {
-            background: rgba(167, 139, 250, 0.15); color: var(--purple);
+        .vc-btn:hover {
+            background: rgba(167, 139, 250, 0.12);
+            color: var(--purple-light);
         }
-        body.light .notion-btn:hover {
-            background: rgba(167, 139, 250, 0.1);
-            color: var(--indigo);
+        body.light .vc-btn { color: rgba(107, 33, 168, 0.4); }
+        body.light .vc-btn:hover { color: var(--purple); background: rgba(107, 33, 168, 0.08); }
+        .vc-btn:focus { outline: 3px solid var(--purple-light); outline-offset: 3px; }
+        .vc-divider {
+            height: 1px; background: rgba(167, 139, 250, 0.1);
         }
-        .divider {
-            height: 1px; background: rgba(255, 255, 255, 0.06);
+        body.light .vc-divider { background: rgba(107, 33, 168, 0.08); }
+
+        /* Bottom bar (mobile) */
+        .bottom-bar {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            display: none;
+            justify-content: space-around; align-items: center;
+            height: 56px;
+            background: rgba(26, 26, 46, 0.95);
+            backdrop-filter: blur(12px);
+            border-top: 1px solid rgba(167, 139, 250, 0.1);
+            z-index: 50;
         }
-        body.light .divider { background: rgba(0, 0, 0, 0.06); }
+        body.light .bottom-bar {
+            background: rgba(253, 252, 248, 0.95);
+            border-color: rgba(107, 33, 168, 0.08);
+        }
+        .bb-btn {
+            width: 44px; height: 44px;
+            display: flex; align-items: center; justify-content: center;
+            background: transparent; border: none; cursor: pointer;
+            color: rgba(167, 139, 250, 0.5);
+            transition: all 0.2s ease;
+        }
+        .bb-btn:hover { color: var(--purple-light); }
+        body.light .bb-btn { color: rgba(107, 33, 168, 0.4); }
+        body.light .bb-btn:hover { color: var(--purple); }
+
+        /* Walkthrough */
         .walkthrough {
             margin-top: 3rem; padding: 2.5rem;
-            background: rgba(255, 255, 255, 0.03); border-radius: 20px;
-            border: 1px solid rgba(167, 139, 250, 0.2);
+            background: rgba(107, 33, 168, 0.06);
+            border-radius: 20px;
+            border: 1px solid rgba(167, 139, 250, 0.15);
         }
         body.light .walkthrough {
-            background: white; border: 1px solid rgba(167, 139, 250, 0.15);
+            background: white;
+            border: 1px solid rgba(107, 33, 168, 0.1);
         }
         .walkthrough h2 {
             font-family: 'Amiri', serif; font-size: 2rem;
-            color: var(--purple); margin-bottom: 2rem; text-align: center;
+            color: var(--purple-light); margin-bottom: 0.5rem; text-align: center;
         }
+        .walk-sub {
+            font-size: 0.95rem;
+            color: var(--text-dim-dark);
+            text-align: center;
+            margin-bottom: 2rem;
+            direction: ltr;
+        }
+        body.light .walk-sub { color: var(--text-dim-light); }
         .steps {
             display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 2rem;
         }
         .step {
             padding: 1.5rem; background: rgba(167, 139, 250, 0.05);
-            border-radius: 12px; border-left: 3px solid var(--purple);
+            border-radius: 12px; border-right: 3px solid var(--purple-light);
             transition: all 0.3s ease;
         }
+        body.light .step { border-right-color: var(--purple); }
         .step:hover {
             transform: translateY(-5px);
-            box-shadow: 0 10px 30px rgba(167, 139, 250, 0.3);
+            box-shadow: 0 10px 30px var(--purple-glow);
         }
-        .step-number {
-            font-size: 2rem; font-weight: 700;
-            color: var(--purple); margin-bottom: 0.5rem;
+        .step-icon {
+            display: flex; align-items: center; justify-content: center;
+            width: 40px; height: 40px;
+            margin: 0 auto 0.75rem;
+            color: var(--purple-light);
         }
-        .step-title {
+        .step-title-ar {
             font-family: 'Amiri', serif; font-size: 1.2rem;
-            font-weight: 700; margin-bottom: 0.5rem;
+            font-weight: 700; margin-bottom: 0.25rem;
+            text-align: center;
         }
+        .step-title-en {
+            font-size: 0.8rem;
+            color: var(--text-dim-dark);
+            text-align: center;
+            margin-bottom: 0.5rem;
+            direction: ltr;
+        }
+        body.light .step-title-en { color: var(--text-dim-light); }
         .step-desc {
             font-size: 0.95rem; opacity: 0.7; line-height: 1.6;
+            text-align: center;
         }
+        .step-desc-en {
+            font-size: 0.85rem; opacity: 0.5; line-height: 1.6;
+            text-align: center;
+            direction: ltr;
+            margin-top: 0.25rem;
+        }
+
         @media (max-width: 768px) {
-            h1 { font-size: 1.8rem; }
-            .constellation-container { width: 90%; height: 300px; }
-            .splash-text { font-size: 1.5rem; bottom: -50px; }
-            .theme-toggle { width: 50px; height: 50px; font-size: 1.2rem; }
+            .constellation-svg { width: 90%; }
+            .splash-brand-en { font-size: 2.5rem; }
+            .splash-brand-ar { font-size: 1.5rem; }
+            .splash-sub { font-size: 0.95rem; }
             .poem-card { padding: 2rem; }
             .poem-text { font-size: 1.5rem; line-height: 2; }
-            .vertical-controls { right: 10px; }
-            .notion-btn { width: 38px; height: 38px; font-size: 1rem; }
+            .vertical-controls { display: none; }
+            .bottom-bar { display: flex; }
             .steps { grid-template-columns: 1fr; }
         }
         @media (prefers-reduced-motion: reduce) {
@@ -201,13 +422,11 @@
                 transition-duration: 0.01ms !important;
             }
         }
-        .theme-toggle:focus, .notion-btn:focus {
-            outline: 3px solid var(--purple); outline-offset: 3px;
-        }
     </style>
 </head>
 <body>
-    <div class="splash-screen">
+    <!-- ===== SPLASH ===== -->
+    <div class="splash-screen" id="splash">
         <div class="constellation-container">
             <svg class="constellation-svg" viewBox="0 0 500 400">
                 <line class="constellation-line" x1="100" y1="150" x2="200" y2="100"/>
@@ -221,13 +440,67 @@
                 <circle class="star" cx="400" cy="120" r="4"/>
                 <circle class="star" cx="250" cy="250" r="5"/>
             </svg>
-            <div class="splash-text">كوكبة أثيرية</div>
+            <div class="splash-brand">
+                <span class="splash-brand-ar" lang="ar" dir="rtl">بالعربي</span>
+                <span class="splash-brand-en">poetry</span>
+            </div>
+            <div class="splash-sub" lang="ar" dir="rtl">كوكبة أثيرية</div>
+            <button class="splash-enter" id="enterBtn">Enter / ادخل</button>
         </div>
     </div>
-    <div class="main-content">
+
+    <!-- ===== ONBOARDING ===== -->
+    <div id="onboarding">
+        <div class="onboard-container">
+            <div class="onboard-card active" data-card="0">
+                <div class="onboard-icon">
+                    <i data-lucide="compass" style="width:24px;height:24px"></i>
+                </div>
+                <div class="onboard-title-en">Begin Your Journey</div>
+                <div class="onboard-title-ar" lang="ar" dir="rtl">انطلق في رحلتك</div>
+                <div class="onboard-desc-en">Start your journey through the world of Arabic poetry.</div>
+                <div class="onboard-desc-ar" lang="ar" dir="rtl">ابدأ رحلتك في عالم الشعر العربي</div>
+            </div>
+
+            <div class="onboard-card" data-card="1">
+                <div class="onboard-icon">
+                    <i data-lucide="search" style="width:24px;height:24px"></i>
+                </div>
+                <div class="onboard-title-en">Discover</div>
+                <div class="onboard-title-ar" lang="ar" dir="rtl">اكتشف</div>
+                <div class="onboard-desc-en">Explore poems from different eras and traditions.</div>
+                <div class="onboard-desc-ar" lang="ar" dir="rtl">استكشف قصائد من عصور مختلفة</div>
+            </div>
+
+            <div class="onboard-card" data-card="2">
+                <div class="onboard-icon">
+                    <i data-lucide="heart" style="width:24px;height:24px"></i>
+                </div>
+                <div class="onboard-title-en">Save & Share</div>
+                <div class="onboard-title-ar" lang="ar" dir="rtl">احفظ وشارك</div>
+                <div class="onboard-desc-en">Save favorites, listen, and share the beauty of Arabic.</div>
+                <div class="onboard-desc-ar" lang="ar" dir="rtl">احفظ واستمع وشارك المفضلات</div>
+            </div>
+
+            <div class="onboard-dots">
+                <div class="onboard-dot active" data-dot="0"></div>
+                <div class="onboard-dot" data-dot="1"></div>
+                <div class="onboard-dot" data-dot="2"></div>
+            </div>
+            <div class="onboard-tap" id="onboardTap">Tap to continue</div>
+        </div>
+    </div>
+
+    <!-- ===== MAIN APP ===== -->
+    <div class="main-content" id="mainApp">
         <header>
-            <h1>كوكبة أثيرية - Ethereal Constellation</h1>
-            <button class="theme-toggle" aria-label="Toggle theme">☀️</button>
+            <div class="header-brand">
+                <span class="header-brand-ar" lang="ar" dir="rtl">بالعربي</span>
+                <span class="header-brand-en">poetry</span>
+            </div>
+            <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+                <i data-lucide="sun" style="width:18px;height:18px"></i>
+            </button>
         </header>
         <div class="container">
             <div class="poem-card">
@@ -236,61 +509,134 @@
                     <br>
                     فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
                 </div>
-                <div class="poem-author">— أحمد شوقي</div>
+                <div class="poem-author" lang="ar">-- أحمد شوقي</div>
             </div>
+
             <div class="walkthrough">
-                <h2>كيفية الاستخدام</h2>
+                <h2 lang="ar">كيفية الاستخدام</h2>
+                <div class="walk-sub">How to Use</div>
                 <div class="steps">
                     <div class="step">
-                        <div class="step-number">1</div>
-                        <div class="step-title">انطلق</div>
-                        <div class="step-desc">ابدأ رحلتك في عالم الشعر العربي</div>
+                        <div class="step-icon">
+                            <i data-lucide="compass" style="width:28px;height:28px"></i>
+                        </div>
+                        <div class="step-title-ar" lang="ar">انطلق</div>
+                        <div class="step-title-en">Begin</div>
+                        <div class="step-desc" lang="ar">ابدأ رحلتك في عالم الشعر العربي</div>
+                        <div class="step-desc-en">Start your journey in Arabic poetry</div>
                     </div>
                     <div class="step">
-                        <div class="step-number">2</div>
-                        <div class="step-title">اكتشف</div>
-                        <div class="step-desc">استكشف قصائد من عصور مختلفة</div>
+                        <div class="step-icon">
+                            <i data-lucide="search" style="width:28px;height:28px"></i>
+                        </div>
+                        <div class="step-title-ar" lang="ar">اكتشف</div>
+                        <div class="step-title-en">Discover</div>
+                        <div class="step-desc" lang="ar">استكشف قصائد من عصور مختلفة</div>
+                        <div class="step-desc-en">Explore poems from different eras</div>
                     </div>
                     <div class="step">
-                        <div class="step-number">3</div>
-                        <div class="step-title">تفاعل</div>
-                        <div class="step-desc">احفظ واستمع وشارك المفضلات</div>
+                        <div class="step-icon">
+                            <i data-lucide="hand" style="width:28px;height:28px"></i>
+                        </div>
+                        <div class="step-title-ar" lang="ar">تفاعل</div>
+                        <div class="step-title-en">Interact</div>
+                        <div class="step-desc" lang="ar">احفظ واستمع وشارك المفضلات</div>
+                        <div class="step-desc-en">Save, listen, and share favorites</div>
                     </div>
                     <div class="step">
-                        <div class="step-number">4</div>
-                        <div class="step-title">استمتع</div>
-                        <div class="step-desc">اغمر نفسك في جمال اللغة العربية</div>
+                        <div class="step-icon">
+                            <i data-lucide="sparkles" style="width:28px;height:28px"></i>
+                        </div>
+                        <div class="step-title-ar" lang="ar">استمتع</div>
+                        <div class="step-title-en">Enjoy</div>
+                        <div class="step-desc" lang="ar">اغمر نفسك في جمال اللغة العربية</div>
+                        <div class="step-desc-en">Immerse yourself in Arabic beauty</div>
                     </div>
                 </div>
             </div>
         </div>
+
+        <!-- Vertical controls (desktop) -->
         <div class="vertical-controls">
-            <button class="notion-btn" aria-label="Refresh">↻</button>
-            <div class="divider"></div>
-            <button class="notion-btn" aria-label="Play">▶</button>
-            <div class="divider"></div>
-            <button class="notion-btn" aria-label="Save">♥</button>
-            <div class="divider"></div>
-            <button class="notion-btn" aria-label="Text size">Aa</button>
-            <div class="divider"></div>
-            <button class="notion-btn" aria-label="Translation">ع</button>
+            <button class="vc-btn" aria-label="Save"><i data-lucide="heart" style="width:18px;height:18px"></i></button>
+            <div class="vc-divider"></div>
+            <button class="vc-btn" aria-label="Font size"><i data-lucide="type" style="width:18px;height:18px"></i></button>
+            <div class="vc-divider"></div>
+            <button class="vc-btn" aria-label="Translate"><i data-lucide="languages" style="width:18px;height:18px"></i></button>
+            <div class="vc-divider"></div>
+            <button class="vc-btn" aria-label="Insights"><i data-lucide="book-open" style="width:18px;height:18px"></i></button>
+            <div class="vc-divider"></div>
+            <button class="vc-btn" aria-label="Italic"><i data-lucide="italic" style="width:18px;height:18px"></i></button>
+            <div class="vc-divider"></div>
+            <button class="vc-btn" aria-label="Sign in"><i data-lucide="log-in" style="width:18px;height:18px"></i></button>
+            <div class="vc-divider"></div>
+            <button class="vc-btn" aria-label="Settings"><i data-lucide="settings" style="width:18px;height:18px"></i></button>
+        </div>
+
+        <!-- Bottom bar (mobile) -->
+        <div class="bottom-bar">
+            <button class="bb-btn" aria-label="Listen"><i data-lucide="music" style="width:20px;height:20px"></i></button>
+            <button class="bb-btn" aria-label="Insights"><i data-lucide="lightbulb" style="width:20px;height:20px"></i></button>
+            <button class="bb-btn" aria-label="Refresh"><i data-lucide="refresh-cw" style="width:20px;height:20px"></i></button>
+            <button class="bb-btn" aria-label="Library"><i data-lucide="library" style="width:20px;height:20px"></i></button>
+            <button class="bb-btn" aria-label="Shuffle"><i data-lucide="shuffle" style="width:20px;height:20px"></i></button>
         </div>
     </div>
+
     <script>
-        const themeToggle = document.querySelector('.theme-toggle');
-        themeToggle.addEventListener('click', () => {
+    (function () {
+        "use strict";
+
+        /* ===== SPLASH -> ONBOARDING ===== */
+        document.getElementById('enterBtn').addEventListener('click', function () {
+            var splash = document.getElementById('splash');
+            splash.classList.add('hidden');
+            setTimeout(function () {
+                splash.style.display = 'none';
+                document.getElementById('onboarding').style.display = 'flex';
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            }, 800);
+        });
+
+        /* ===== ONBOARDING TAP-TO-ADVANCE ===== */
+        var currentCard = 0;
+        var totalCards = 3;
+        var onboarding = document.getElementById('onboarding');
+
+        document.getElementById('onboardTap').addEventListener('click', advanceCard);
+        onboarding.addEventListener('click', function (e) {
+            if (e.target.id !== 'onboardTap') advanceCard();
+        });
+
+        function advanceCard() {
+            currentCard++;
+            if (currentCard >= totalCards) {
+                onboarding.style.opacity = '0';
+                onboarding.style.transition = 'opacity 0.6s ease';
+                setTimeout(function () {
+                    onboarding.style.display = 'none';
+                    document.getElementById('mainApp').classList.add('visible');
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
+                }, 600);
+                return;
+            }
+            var cards = document.querySelectorAll('.onboard-card');
+            var dots = document.querySelectorAll('.onboard-dot');
+            cards.forEach(function (c) { c.classList.remove('active'); });
+            dots.forEach(function (d) { d.classList.remove('active'); });
+            cards[currentCard].classList.add('active');
+            dots[currentCard].classList.add('active');
+        }
+
+        /* ===== THEME TOGGLE ===== */
+        document.getElementById('themeToggle').addEventListener('click', function () {
             document.body.classList.toggle('light');
-            themeToggle.textContent = document.body.classList.contains('light') ? '🌙' : '☀️';
+            if (typeof lucide !== 'undefined') lucide.createIcons();
         });
-        const buttons = document.querySelectorAll('.notion-btn');
-        buttons.forEach(btn => {
-            btn.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                    e.preventDefault();
-                    btn.click();
-                }
-            });
-        });
+
+        /* ===== INIT LUCIDE ===== */
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    })();
     </script>
 </body>
 </html>

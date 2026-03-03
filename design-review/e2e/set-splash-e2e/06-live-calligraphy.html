@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Live Calligraphy — Poetry Bil-Araby</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #080808;
+    --text: #e8e0d0;
+    --accent: #c5a059;
+    --gold: #c5a059;
+    --sienna: #8b4513;
+    --gold-dim: rgba(197,160,89,0.18);
+    --gold-glow: rgba(197,160,89,0.12);
+    --surface: rgba(255,255,255,0.03);
+    --surface-border: rgba(197,160,89,0.2);
+    --muted: rgba(232,224,208,0.45);
+    --line: rgba(197,160,89,0.12);
+    --ink: rgba(139,69,19,0.35);
+    --transition-speed: 0.35s;
+  }
+  [data-theme="light"] {
+    --bg: #faf5eb;
+    --text: #1a1510;
+    --accent: #8b6914;
+    --gold: #9a7a28;
+    --sienna: #6b3410;
+    --gold-dim: rgba(154,122,40,0.16);
+    --gold-glow: rgba(154,122,40,0.1);
+    --surface: rgba(26,21,16,0.04);
+    --surface-border: rgba(139,69,19,0.2);
+    --muted: rgba(26,21,16,0.4);
+    --line: rgba(26,21,16,0.08);
+    --ink: rgba(139,69,19,0.15);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; scroll-behavior: smooth; }
+  body {
+    font-family: 'Tajawal', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow-x: hidden;
+    min-height: 100vh;
+    transition: background var(--transition-speed), color var(--transition-speed);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+    canvas { display: none; }
+  }
+
+  /* ============================================
+     SPLASH SCREEN — Live Calligraphy
+     ============================================ */
+  #splash {
+    position: fixed; inset: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column;
+    background: #080808;
+    transition: opacity 0.6s ease;
+    will-change: opacity;
+    overflow: hidden;
+  }
+  #splash.hidden { opacity: 0; pointer-events: none; }
+
+  #splashCanvas {
+    position: absolute; inset: 0;
+    z-index: 1;
+    width: 100%; height: 100%;
+    pointer-events: none;
+  }
+
+  .splash-content {
+    position: relative; z-index: 2;
+    text-align: center;
+    display: flex; flex-direction: column;
+    align-items: center;
+    gap: 0;
+    pointer-events: none;
+  }
+
+  .splash-brand-en {
+    font-family: 'Tajawal', sans-serif;
+    font-weight: 300;
+    font-size: 2rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--text);
+    opacity: 0;
+    transform: translateY(14px);
+    transition: opacity 1s ease, transform 1s ease;
+    margin-bottom: 1rem;
+    line-height: 1.3;
+  }
+  .splash-brand-en.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .splash-brand-divider {
+    width: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--sienna), var(--accent), var(--sienna), transparent);
+    transition: width 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    margin-bottom: 1rem;
+  }
+  .splash-brand-divider.visible {
+    width: 200px;
+  }
+
+  .splash-brand-ar {
+    font-family: 'Amiri', serif;
+    font-size: 3.2rem;
+    font-weight: 700;
+    color: var(--gold);
+    opacity: 0;
+    transform: translateY(14px);
+    transition: opacity 1s ease, transform 1s ease;
+    margin-bottom: 2.5rem;
+    direction: rtl;
+    line-height: 1.4;
+  }
+  .splash-brand-ar.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Sequential letter highlight for Arabic */
+  .splash-brand-ar .char {
+    display: inline;
+    opacity: 0.4;
+    transition: opacity 0.4s ease, color 0.4s ease, text-shadow 0.4s ease;
+  }
+  .splash-brand-ar .char.lit {
+    opacity: 1;
+    color: var(--gold);
+    text-shadow: 0 0 18px rgba(197,160,89,0.3);
+  }
+
+  .splash-subtitle {
+    font-family: 'Tajawal', sans-serif;
+    font-weight: 300;
+    font-size: 0.82rem;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+    opacity: 0;
+    transition: opacity 0.8s ease;
+    margin-bottom: 3rem;
+  }
+  .splash-subtitle.visible { opacity: 1; }
+
+  .splash-enter {
+    pointer-events: auto;
+    position: relative;
+    padding: 0.9rem 3.4rem;
+    font-family: 'Tajawal', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 400;
+    letter-spacing: 0.3em;
+    text-transform: lowercase;
+    color: var(--accent);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.8s ease, transform 0.8s ease,
+                color 0.3s ease;
+    overflow: visible;
+  }
+  .splash-enter.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* Brush stroke border via SVG-like shape */
+  .splash-enter::before {
+    content: '';
+    position: absolute;
+    inset: -4px -8px;
+    border: 1.5px solid var(--surface-border);
+    border-radius: 40% 10% 40% 10% / 50% 30% 50% 30%;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  }
+  .splash-enter:hover::before,
+  .splash-enter:focus-visible::before {
+    border-color: var(--gold-dim);
+    box-shadow: 0 0 20px 3px rgba(197,160,89,0.12);
+  }
+  .splash-enter:hover,
+  .splash-enter:focus-visible {
+    color: var(--gold);
+  }
+  .splash-enter:active {
+    transform: scale(0.96);
+  }
+  .splash-enter.visible {
+    animation: brushPulse 3.5s ease-in-out 0.5s infinite;
+  }
+  @keyframes brushPulse {
+    0%, 100% { filter: drop-shadow(0 0 0 rgba(197,160,89,0)); }
+    50% { filter: drop-shadow(0 0 12px rgba(197,160,89,0.15)); }
+  }
+  .splash-enter:hover,
+  .splash-enter:focus-visible {
+    animation: none;
+  }
+
+  .splash-theme-toggle {
+    position: absolute; top: 1.5rem; right: 1.5rem;
+    z-index: 3;
+    background: none; border: 1px solid var(--surface-border);
+    color: var(--muted);
+    font-size: 0.85rem;
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.3s ease;
+    opacity: 0;
+  }
+  .splash-theme-toggle.visible { opacity: 1; }
+  .splash-theme-toggle:hover {
+    color: var(--gold);
+    border-color: var(--gold-dim);
+  }
+
+  /* ============================================
+     ONBOARDING — Calligraphic Accents
+     ============================================ */
+  #onboarding {
+    position: fixed; inset: 0; z-index: 90;
+    display: none;
+    align-items: center; justify-content: center;
+    flex-direction: column;
+    background: var(--bg);
+    transition: opacity 0.6s ease;
+    overflow: hidden;
+  }
+  #onboarding.active { display: flex; }
+  #onboarding.hidden { opacity: 0; pointer-events: none; }
+
+  .onboarding-card {
+    position: relative; z-index: 2;
+    text-align: center;
+    max-width: 440px;
+    width: 90%;
+    padding: 4rem 2rem 3rem;
+    opacity: 0;
+    transform: translateY(20px);
+    transition: opacity 0.45s ease, transform 0.45s ease;
+  }
+  .onboarding-card.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .onboarding-card.exit {
+    opacity: 0;
+    transform: translateY(-14px);
+  }
+
+  .ob-calligraphic-accent {
+    display: block;
+    width: 60px;
+    height: 3px;
+    margin: 0 auto 2.2rem;
+    background: linear-gradient(90deg, transparent, var(--sienna), var(--accent), var(--sienna), transparent);
+    border-radius: 2px;
+    opacity: 0.6;
+  }
+
+  .ob-step-num {
+    font-family: 'Amiri', serif;
+    font-size: 0.8rem;
+    color: var(--gold);
+    letter-spacing: 0.15em;
+    margin-bottom: 1.6rem;
+    display: block;
+  }
+
+  .ob-title {
+    font-family: 'Tajawal', sans-serif;
+    font-weight: 400;
+    font-size: 1.6rem;
+    letter-spacing: 0.12em;
+    color: var(--text);
+    margin-bottom: 0.5rem;
+  }
+  .ob-title-ar {
+    font-family: 'Amiri', serif;
+    font-size: 1.15rem;
+    color: var(--gold);
+    margin-bottom: 1.8rem;
+    direction: rtl;
+  }
+  .ob-desc {
+    font-size: 0.88rem;
+    color: var(--muted);
+    line-height: 1.9;
+    max-width: 320px;
+    margin: 0 auto 2.8rem;
+    font-weight: 300;
+  }
+
+  .ob-dots {
+    display: flex;
+    justify-content: center;
+    gap: 0.7rem;
+    margin-bottom: 2.2rem;
+  }
+  .ob-dot {
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: var(--surface-border);
+    transition: all 0.4s ease;
+  }
+  .ob-dot.active {
+    background: var(--gold);
+    width: 20px;
+    border-radius: 2px;
+  }
+
+  .ob-next-btn {
+    padding: 0.75rem 2.6rem;
+    font-family: 'Tajawal', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 400;
+    letter-spacing: 0.22em;
+    text-transform: lowercase;
+    color: var(--accent);
+    background: transparent;
+    border: 1px solid var(--surface-border);
+    border-radius: 0;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  .ob-next-btn:hover, .ob-next-btn:focus-visible {
+    color: var(--gold);
+    border-color: var(--gold-dim);
+    background: rgba(197,160,89,0.04);
+  }
+  .ob-next-btn:active { transform: scale(0.96); }
+
+  .ob-skip {
+    position: absolute; bottom: 2.5rem; right: 2.5rem;
+    z-index: 3;
+    background: none; border: none;
+    color: var(--muted);
+    font-family: 'Tajawal', sans-serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    cursor: pointer;
+    opacity: 0.45;
+    transition: opacity 0.3s, color 0.3s;
+  }
+  .ob-skip:hover { opacity: 1; color: var(--accent); }
+
+  /* ============================================
+     MAIN APP — Calligraphic Borders
+     ============================================ */
+  #app {
+    display: none;
+    min-height: 100vh;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+    position: relative;
+  }
+  #app.active { display: flex; }
+
+  .app-header {
+    position: fixed; top: 0; left: 0; right: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.2rem 1.8rem;
+  }
+  .app-brand {
+    font-family: 'Tajawal', sans-serif;
+    font-weight: 300;
+    font-size: 0.75rem;
+    letter-spacing: 0.18em;
+    color: var(--muted);
+  }
+  .app-brand-ar {
+    font-family: 'Amiri', serif;
+    color: var(--gold);
+    font-size: 0.85rem;
+    margin-right: 0.3rem;
+  }
+  .app-theme-btn {
+    background: none; border: 1px solid var(--surface-border);
+    color: var(--muted);
+    font-size: 0.85rem;
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.3s ease;
+  }
+  .app-theme-btn:hover {
+    color: var(--gold);
+    border-color: var(--gold-dim);
+  }
+
+  .poem-frame {
+    position: relative; z-index: 1;
+    width: 100%;
+    max-width: 540px;
+    padding: 4rem 2.5rem;
+    text-align: center;
+  }
+
+  /* Calligraphic border accent */
+  .poem-border-accent {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+  }
+  .poem-border-accent::before,
+  .poem-border-accent::after {
+    content: '';
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--sienna), var(--accent), var(--sienna), transparent);
+    border-radius: 1px;
+    opacity: 0.5;
+  }
+  .poem-border-accent::before { top: 0; }
+  .poem-border-accent::after { bottom: 0; }
+
+  .poem-border-left,
+  .poem-border-right {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 2px;
+    height: 60px;
+    background: linear-gradient(180deg, transparent, var(--sienna), var(--accent), var(--sienna), transparent);
+    border-radius: 1px;
+    opacity: 0.3;
+  }
+  .poem-border-left { left: 0; }
+  .poem-border-right { right: 0; }
+
+  .poem-content {
+    position: relative; z-index: 1;
+    direction: rtl;
+    margin-bottom: 2rem;
+  }
+  .poem-line {
+    font-family: 'Amiri', serif;
+    font-size: 1.6rem;
+    line-height: 2.4;
+    color: var(--text);
+    transition: font-size 0.3s ease;
+  }
+  .poem-separator {
+    display: block;
+    width: 20px; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--ink), transparent);
+    margin: 0.4rem auto;
+  }
+  .poet-name {
+    font-family: 'Amiri', serif;
+    font-size: 0.92rem;
+    color: var(--gold);
+    direction: rtl;
+    letter-spacing: 0.02em;
+    position: relative; z-index: 1;
+  }
+
+  .poem-controls {
+    display: flex;
+    justify-content: center;
+    gap: 0.9rem;
+    margin-top: 2.8rem;
+    position: relative; z-index: 1;
+  }
+  .ctrl-btn {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: transparent;
+    border: 1px solid var(--surface-border);
+    color: var(--muted);
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.3s ease;
+  }
+  .ctrl-btn:hover, .ctrl-btn:focus-visible {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+  .ctrl-btn:active { transform: scale(0.92); }
+  .ctrl-btn.active {
+    color: var(--gold);
+    border-color: var(--gold);
+  }
+
+  /* ============================================
+     RESPONSIVE
+     ============================================ */
+  @media (max-width: 600px) {
+    .splash-brand-en { font-size: 1.3rem; letter-spacing: 0.2em; }
+    .splash-brand-ar { font-size: 2.4rem; margin-bottom: 2rem; }
+    .splash-brand-divider.visible { width: 140px; }
+    .splash-enter { padding: 0.8rem 2.2rem; font-size: 0.82rem; }
+    .splash-subtitle { font-size: 0.75rem; }
+    .ob-title { font-size: 1.3rem; }
+    .onboarding-card { padding: 3rem 1.2rem 2.5rem; }
+    .poem-line { font-size: 1.3rem; }
+    .poem-frame { padding: 3rem 1.2rem; }
+    .app-header { padding: 0.8rem 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================================
+     SPLASH SCREEN
+     ============================================ -->
+<div id="splash" role="region" aria-label="Splash screen">
+  <canvas id="splashCanvas" aria-hidden="true"></canvas>
+  <button class="splash-theme-toggle" id="splashThemeBtn" aria-label="Toggle theme">☀</button>
+  <div class="splash-content">
+    <div class="splash-brand-en" id="splashEn">Poetry Bil-Araby</div>
+    <div class="splash-brand-divider" id="splashDivider"></div>
+    <div class="splash-brand-ar" id="splashAr" dir="rtl">شعر بالعربي</div>
+    <div class="splash-subtitle" id="splashSub">arabic poetry, brought to life</div>
+    <button class="splash-enter" id="enterBtn" aria-label="Enter the app">enter</button>
+  </div>
+</div>
+
+<!-- ============================================
+     ONBOARDING
+     ============================================ -->
+<div id="onboarding" role="region" aria-label="Onboarding">
+  <div class="onboarding-card" id="obCard">
+    <div class="ob-calligraphic-accent"></div>
+    <div class="ob-step-num" id="obStepNum">step i</div>
+    <div class="ob-title" id="obTitle">Discover</div>
+    <div class="ob-title-ar" id="obTitleAr" dir="rtl">اكتشف</div>
+    <div class="ob-desc" id="obDesc">Explore a vast collection of Arabic poetry spanning centuries of literary tradition.</div>
+    <div class="ob-dots" id="obDots">
+      <div class="ob-dot active"></div>
+      <div class="ob-dot"></div>
+      <div class="ob-dot"></div>
+      <div class="ob-dot"></div>
+    </div>
+    <button class="ob-next-btn" id="obNextBtn" aria-label="Next step">continue</button>
+  </div>
+  <button class="ob-skip" id="obSkipBtn" aria-label="Skip onboarding">skip</button>
+</div>
+
+<!-- ============================================
+     MAIN APP
+     ============================================ -->
+<div id="app" role="main">
+  <header class="app-header">
+    <div class="app-brand">
+      <span class="app-brand-ar" dir="rtl">شعر بالعربي</span>
+      Poetry Bil-Araby
+    </div>
+    <button class="app-theme-btn" id="appThemeBtn" aria-label="Toggle theme">☀</button>
+  </header>
+  <div class="poem-frame">
+    <div class="poem-border-accent" aria-hidden="true">
+      <div class="poem-border-left"></div>
+      <div class="poem-border-right"></div>
+    </div>
+    <div class="poem-content">
+      <div class="poem-line">تَعَدَّدَت الأسبابُ وَالمَوتُ واحِدٌ</div>
+      <span class="poem-separator"></span>
+      <div class="poem-line">وَالأَرزاقُ مَكتوبٌ عَلَيها الطَّريقُ</div>
+    </div>
+    <div class="poet-name">— المتنبي</div>
+    <div class="poem-controls">
+      <button class="ctrl-btn" id="playBtn" aria-label="Play recitation">▶</button>
+      <button class="ctrl-btn" id="nextBtn" aria-label="Next poem">⟳</button>
+      <button class="ctrl-btn" id="saveBtn" aria-label="Save poem">♡</button>
+      <button class="ctrl-btn" id="fontBtn" aria-label="Change font size">ع</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  "use strict";
+
+  var prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ============================================
+     DOM ELEMENTS
+     ============================================ */
+  var splash = document.getElementById("splash");
+  var splashCanvas = document.getElementById("splashCanvas");
+  var splashEn = document.getElementById("splashEn");
+  var splashDivider = document.getElementById("splashDivider");
+  var splashAr = document.getElementById("splashAr");
+  var splashSub = document.getElementById("splashSub");
+  var enterBtn = document.getElementById("enterBtn");
+  var splashThemeBtn = document.getElementById("splashThemeBtn");
+
+  var onboarding = document.getElementById("onboarding");
+  var obCard = document.getElementById("obCard");
+  var obStepNum = document.getElementById("obStepNum");
+  var obTitle = document.getElementById("obTitle");
+  var obTitleAr = document.getElementById("obTitleAr");
+  var obDesc = document.getElementById("obDesc");
+  var obDots = document.getElementById("obDots");
+  var obNextBtn = document.getElementById("obNextBtn");
+  var obSkipBtn = document.getElementById("obSkipBtn");
+
+  var appEl = document.getElementById("app");
+  var appThemeBtn = document.getElementById("appThemeBtn");
+
+  /* ============================================
+     CANVAS BRUSH STROKE ANIMATION
+     Smooth calligraphic strokes drawn behind text.
+     ============================================ */
+  var ctx = splashCanvas.getContext("2d");
+  var canvasW, canvasH;
+  var strokes = [];
+  var animFrame;
+
+  function resizeCanvas() {
+    canvasW = window.innerWidth;
+    canvasH = window.innerHeight;
+    splashCanvas.width = canvasW;
+    splashCanvas.height = canvasH;
+  }
+  resizeCanvas();
+  window.addEventListener("resize", resizeCanvas);
+
+  function createBrushStroke() {
+    var startX = Math.random() * canvasW;
+    var startY = Math.random() * canvasH;
+    var points = [];
+    var numPoints = 30 + Math.floor(Math.random() * 40);
+    var angle = Math.random() * Math.PI * 2;
+    var speed = 1.5 + Math.random() * 2;
+    var curve = (Math.random() - 0.5) * 0.08;
+    var x = startX;
+    var y = startY;
+    var i;
+    for (i = 0; i < numPoints; i++) {
+      points.push({ x: x, y: y });
+      angle += curve + (Math.random() - 0.5) * 0.04;
+      x += Math.cos(angle) * speed;
+      y += Math.sin(angle) * speed;
+    }
+    return {
+      points: points,
+      drawn: 0,
+      maxWidth: 1 + Math.random() * 3,
+      opacity: 0.04 + Math.random() * 0.08,
+      color: Math.random() > 0.5 ? "139,69,19" : "197,160,89",
+      speed: 0.4 + Math.random() * 0.6,
+      fadeOut: false,
+      fadeOpacity: 1
+    };
+  }
+
+  function drawStrokes() {
+    ctx.clearRect(0, 0, canvasW, canvasH);
+    var i, s, j, p1, p2, t, w;
+    for (i = 0; i < strokes.length; i++) {
+      s = strokes[i];
+      if (s.drawn < s.points.length) {
+        s.drawn = Math.min(s.drawn + s.speed, s.points.length);
+      } else if (!s.fadeOut) {
+        s.fadeOut = true;
+      }
+      if (s.fadeOut) {
+        s.fadeOpacity -= 0.005;
+        if (s.fadeOpacity <= 0) {
+          strokes.splice(i, 1);
+          i--;
+          continue;
+        }
+      }
+      var endIdx = Math.floor(s.drawn);
+      if (endIdx < 2) continue;
+      ctx.beginPath();
+      ctx.moveTo(s.points[0].x, s.points[0].y);
+      for (j = 1; j < endIdx; j++) {
+        p1 = s.points[j - 1];
+        p2 = s.points[j];
+        var mx = (p1.x + p2.x) / 2;
+        var my = (p1.y + p2.y) / 2;
+        ctx.quadraticCurveTo(p1.x, p1.y, mx, my);
+      }
+      t = endIdx / s.points.length;
+      w = s.maxWidth * Math.sin(t * Math.PI);
+      ctx.strokeStyle = "rgba(" + s.color + "," + (s.opacity * s.fadeOpacity) + ")";
+      ctx.lineWidth = Math.max(0.5, w);
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      ctx.stroke();
+    }
+
+    if (strokes.length < 6 && Math.random() < 0.02) {
+      strokes.push(createBrushStroke());
+    }
+
+    animFrame = requestAnimationFrame(drawStrokes);
+  }
+
+  if (!prefersReduced) {
+    var k;
+    for (k = 0; k < 3; k++) {
+      strokes.push(createBrushStroke());
+    }
+    drawStrokes();
+  }
+
+  /* ============================================
+     SPLASH — Sequential Reveal with
+     Right-to-Left Arabic Letter Highlighting
+     ============================================ */
+  var arText = "شعر بالعربي";
+  var charSpans = [];
+
+  function wrapArChars() {
+    var html = "";
+    var i;
+    for (i = 0; i < arText.length; i++) {
+      if (arText[i] === " ") {
+        html += " ";
+      } else {
+        html += '<span class="char">' + arText[i] + "</span>";
+      }
+    }
+    splashAr.innerHTML = html;
+    charSpans = splashAr.querySelectorAll(".char");
+  }
+  wrapArChars();
+
+  var splashDelay = prefersReduced ? 50 : 500;
+
+  setTimeout(function() {
+    splashEn.classList.add("visible");
+  }, splashDelay);
+
+  setTimeout(function() {
+    splashDivider.classList.add("visible");
+  }, splashDelay + 600);
+
+  setTimeout(function() {
+    splashAr.classList.add("visible");
+    /* Highlight each character right-to-left after Arabic fades in */
+    setTimeout(function() {
+      var idx = 0;
+      var interval = setInterval(function() {
+        if (idx < charSpans.length) {
+          charSpans[idx].classList.add("lit");
+          idx++;
+        } else {
+          clearInterval(interval);
+        }
+      }, prefersReduced ? 10 : 120);
+    }, prefersReduced ? 10 : 500);
+  }, splashDelay + 1000);
+
+  setTimeout(function() {
+    splashSub.classList.add("visible");
+  }, splashDelay + 2200);
+
+  setTimeout(function() {
+    enterBtn.classList.add("visible");
+  }, splashDelay + 2800);
+
+  setTimeout(function() {
+    splashThemeBtn.classList.add("visible");
+  }, splashDelay + 3200);
+
+  /* ============================================
+     ENTER → ONBOARDING TRANSITION
+     ============================================ */
+  enterBtn.addEventListener("click", function(e) {
+    e.stopPropagation();
+    if (animFrame) {
+      cancelAnimationFrame(animFrame);
+      animFrame = null;
+    }
+    splash.classList.add("hidden");
+    setTimeout(function() {
+      splash.style.display = "none";
+      showOnboarding();
+    }, 600);
+  });
+
+  enterBtn.addEventListener("keydown", function(e) {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      enterBtn.click();
+    }
+  });
+
+  /* ============================================
+     ONBOARDING SEQUENTIAL STEPS
+     ============================================ */
+  var romanNumerals = ["i", "ii", "iii", "iv"];
+  var obSteps = [
+    { title: "Discover", titleAr: "اكتشف", desc: "Explore a vast collection of Arabic poetry spanning centuries of literary tradition.", btn: "continue" },
+    { title: "Explore", titleAr: "استكشف", desc: "Browse by poet, era, or theme. Find verses that resonate with your soul.", btn: "continue" },
+    { title: "Listen", titleAr: "استمع", desc: "Hear poems recited aloud with authentic pronunciation and natural rhythm.", btn: "continue" },
+    { title: "Begin", titleAr: "ابدأ", desc: "Save your favorite verses and share the beauty of Arabic poetry with others.", btn: "enter" }
+  ];
+  var obStep = 0;
+  var obTransitioning = false;
+
+  function showOnboarding() {
+    onboarding.classList.add("active");
+    renderObStep(0, true);
+  }
+
+  function renderObStep(index, immediate) {
+    var step = obSteps[index];
+    if (!immediate) {
+      obCard.classList.remove("visible");
+      obCard.classList.add("exit");
+    }
+    var delay = immediate ? 50 : 320;
+    setTimeout(function() {
+      obStepNum.textContent = "step " + romanNumerals[index];
+      obTitle.textContent = step.title;
+      obTitleAr.textContent = step.titleAr;
+      obDesc.textContent = step.desc;
+      obNextBtn.textContent = step.btn;
+
+      var dots = obDots.children;
+      var i;
+      for (i = 0; i < dots.length; i++) {
+        if (i === index) {
+          dots[i].classList.add("active");
+        } else {
+          dots[i].classList.remove("active");
+        }
+      }
+
+      obCard.classList.remove("exit");
+      void obCard.offsetWidth;
+      obCard.classList.add("visible");
+      obTransitioning = false;
+    }, delay);
+  }
+
+  obNextBtn.addEventListener("click", function() {
+    if (obTransitioning) return;
+    obTransitioning = true;
+    obStep++;
+    if (obStep >= obSteps.length) {
+      finishOnboarding();
+    } else {
+      renderObStep(obStep, false);
+    }
+  });
+
+  obSkipBtn.addEventListener("click", function() {
+    finishOnboarding();
+  });
+
+  document.addEventListener("keydown", function(e) {
+    if (!onboarding.classList.contains("active")) return;
+    if (onboarding.classList.contains("hidden")) return;
+    if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+      e.preventDefault();
+      obNextBtn.click();
+    }
+    if (e.key === "Escape") {
+      e.preventDefault();
+      obSkipBtn.click();
+    }
+  });
+
+  function finishOnboarding() {
+    onboarding.classList.add("hidden");
+    setTimeout(function() {
+      onboarding.classList.remove("active");
+      showApp();
+    }, 600);
+  }
+
+  /* ============================================
+     MAIN APP
+     ============================================ */
+  function showApp() {
+    appEl.classList.add("active");
+  }
+
+  /* ============================================
+     THEME TOGGLE
+     ============================================ */
+  var isDark = true;
+  var SUN = "☀";
+  var MOON = "☾";
+
+  function toggleTheme() {
+    isDark = !isDark;
+    if (isDark) {
+      document.documentElement.removeAttribute("data-theme");
+      splashThemeBtn.textContent = SUN;
+      appThemeBtn.textContent = SUN;
+    } else {
+      document.documentElement.setAttribute("data-theme", "light");
+      splashThemeBtn.textContent = MOON;
+      appThemeBtn.textContent = MOON;
+    }
+  }
+
+  splashThemeBtn.addEventListener("click", function(e) {
+    e.stopPropagation();
+    toggleTheme();
+  });
+  appThemeBtn.addEventListener("click", toggleTheme);
+
+  /* ============================================
+     APP MOCK INTERACTIONS
+     ============================================ */
+  var poems = [
+    {
+      lines: [
+        "تَعَدَّدَت الأسبابُ وَالمَوتُ واحِدٌ",
+        "وَالأَرزاقُ مَكتوبٌ عَلَيها الطَّريقُ"
+      ],
+      poet: "المتنبي"
+    },
+    {
+      lines: [
+        "عَلى قَدرِ أَهلِ العَزمِ تَأتي العَزائِمُ",
+        "وَتَأتي عَلى قَدرِ الكِرامِ المَكارِمُ"
+      ],
+      poet: "المتنبي"
+    },
+    {
+      lines: [
+        "وَما نَيلُ المَطالِبِ بِالتَمَنّي",
+        "وَلَكِن تُؤخَذُ الدُنيا غِلابا"
+      ],
+      poet: "أحمد شوقي"
+    },
+    {
+      lines: [
+        "إِذا غامَرتَ في شَرَفٍ مَرومٍ",
+        "فَلا تَقنَع بِما دونَ النُجومِ"
+      ],
+      poet: "المتنبي"
+    }
+  ];
+  var currentPoem = 0;
+  var fontLevel = 0;
+  var fontSizes = ["1.6rem", "1.9rem", "2.2rem", "1.3rem"];
+
+  document.getElementById("nextBtn").addEventListener("click", function() {
+    currentPoem = (currentPoem + 1) % poems.length;
+    var p = poems[currentPoem];
+    var lines = document.querySelectorAll(".poem-line");
+    var poetEl = document.querySelector(".poet-name");
+
+    var frame = document.querySelector(".poem-frame");
+    frame.style.opacity = "0";
+    frame.style.transform = "translateY(6px)";
+    setTimeout(function() {
+      lines[0].textContent = p.lines[0];
+      lines[1].textContent = p.lines[1];
+      poetEl.textContent = "— " + p.poet;
+      frame.style.opacity = "";
+      frame.style.transform = "";
+    }, 200);
+  });
+
+  document.getElementById("playBtn").addEventListener("click", function() {
+    var btn = this;
+    btn.classList.add("active");
+    btn.textContent = "❚❚";
+    setTimeout(function() {
+      btn.classList.remove("active");
+      btn.textContent = "▶";
+    }, 2000);
+  });
+
+  document.getElementById("saveBtn").addEventListener("click", function() {
+    var btn = this;
+    if (btn.classList.contains("active")) {
+      btn.classList.remove("active");
+      btn.textContent = "♡";
+    } else {
+      btn.classList.add("active");
+      btn.textContent = "♥";
+    }
+  });
+
+  document.getElementById("fontBtn").addEventListener("click", function() {
+    fontLevel = (fontLevel + 1) % fontSizes.length;
+    var lines = document.querySelectorAll(".poem-line");
+    var i;
+    for (i = 0; i < lines.length; i++) {
+      lines[i].style.fontSize = fontSizes[fontLevel];
+    }
+  });
+
+  var poemFrame = document.querySelector(".poem-frame");
+  if (poemFrame) {
+    poemFrame.style.transition = "opacity 0.25s ease, transform 0.25s ease";
+  }
+
+})();
+</script>
+</body>
+</html>

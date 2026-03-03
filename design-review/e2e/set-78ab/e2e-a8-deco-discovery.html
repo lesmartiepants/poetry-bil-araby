@@ -91,45 +91,42 @@
   .splash-enter:hover { background: var(--gold); color: var(--desert-night); box-shadow: 0 0 30px rgba(197,160,89,0.3); }
   @keyframes fadeIn { to { opacity: 1; } }
 
-  /* ---- Walkthrough (sequential tap) ---- */
+  /* ---- Walkthrough (Art Deco Geometric) ---- */
   .walkthrough {
     position: fixed; inset: 0; z-index: 900; background: var(--bg);
     display: none; flex-direction: column; align-items: center; justify-content: center;
-    padding: 2rem; cursor: pointer;
+    cursor: pointer; overflow: hidden;
   }
   .walkthrough.active { display: flex; }
-
-  .walk-card {
-    max-width: 400px; width: 90%; padding: 2rem; text-align: center;
-    background: var(--card-bg); border: 1px solid var(--card-border);
-    border-radius: 16px; opacity: 0; transform: translateY(20px);
-    transition: opacity 0.5s ease, transform 0.5s ease;
+  .deco-frame { position: absolute; inset: 0; pointer-events: none; }
+  .deco-line-h { position: absolute; height: 1px; left: 5%; right: 5%; background: linear-gradient(90deg, transparent, var(--gold), transparent); opacity: 0.2; }
+  .deco-line-h:nth-child(1) { top: 12%; }
+  .deco-line-h:nth-child(2) { bottom: 12%; }
+  .deco-line-v { position: absolute; width: 1px; top: 12%; bottom: 12%; background: linear-gradient(180deg, transparent, var(--gold), transparent); opacity: 0.15; }
+  .deco-line-v:nth-child(3) { left: 5%; }
+  .deco-line-v:nth-child(4) { right: 5%; }
+  .deco-corner { position: absolute; width: 32px; height: 32px; border-color: rgba(197,160,89,0.35); border-style: solid; }
+  .deco-corner.tl { top: 10%; left: 3%; border-width: 2px 0 0 2px; }
+  .deco-corner.tr { top: 10%; right: 3%; border-width: 2px 2px 0 0; }
+  .deco-corner.bl { bottom: 10%; left: 3%; border-width: 0 0 2px 2px; }
+  .deco-corner.br { bottom: 10%; right: 3%; border-width: 0 2px 2px 0; }
+  .deco-panel {
+    display: none; flex-direction: column; align-items: center;
+    max-width: 420px; width: 88%; padding: 2.5rem 2rem; text-align: center; position: relative; z-index: 2;
   }
-  .walk-card.visible { opacity: 1; transform: translateY(0); }
-
-  .walk-icon {
-    width: 48px; height: 48px; margin: 0 auto 16px; border-radius: 50%;
-    background: rgba(45,123,111,0.15); display: flex; align-items: center;
-    justify-content: center; color: var(--oasis);
-  }
-  .walk-card h3 {
-    font-family: 'Tajawal', sans-serif; font-size: clamp(1.1rem, 2.5vw, 1.4rem);
-    font-weight: 500; color: var(--fg); direction: ltr; margin-bottom: 4px;
-  }
-  .walk-card .walk-ar {
-    font-family: 'Tajawal', sans-serif; font-size: clamp(0.9rem, 2vw, 1.1rem);
-    color: var(--gold); direction: rtl; margin-bottom: 8px;
-  }
-  .walk-card p {
-    font-size: clamp(0.8rem, 1.8vw, 0.95rem); line-height: 1.7; color: var(--muted); direction: ltr;
-  }
-  .walk-progress { display: flex; gap: 8px; margin-top: 2rem; }
-  .walk-dot {
-    width: 8px; height: 8px; border-radius: 50%; background: var(--card-border);
-    transition: all 0.3s;
-  }
-  .walk-dot.active { background: var(--gold); width: 24px; border-radius: 4px; }
-  .walk-hint { margin-top: 1rem; font-size: 13px; color: var(--muted); opacity: 0.6; }
+  .deco-panel.active { display: flex; animation: decoReveal 0.6s cubic-bezier(0.16,1,0.3,1); }
+  @keyframes decoReveal { from { opacity: 0; transform: scaleY(0.9); } to { opacity: 1; transform: scaleY(1); } }
+  .deco-step-num { font-family: 'Tajawal', sans-serif; font-size: 0.6rem; letter-spacing: 0.5em; text-transform: uppercase; color: var(--gold); margin-bottom: 1rem; }
+  .deco-divider { width: 80px; height: 2px; background: linear-gradient(90deg, transparent, var(--gold), transparent); margin: 0 auto 1.5rem; }
+  .deco-divider-thin { width: 40px; height: 1px; background: linear-gradient(90deg, transparent, var(--gold), transparent); margin: 1rem auto; }
+  .deco-title { font-family: 'Tajawal', sans-serif; font-size: 1.5rem; font-weight: 700; color: var(--fg); direction: ltr; letter-spacing: 0.05em; margin-bottom: 0.25rem; }
+  .deco-title-ar { font-family: 'Tajawal', sans-serif; font-size: 1.2rem; font-weight: 700; color: var(--gold); direction: rtl; margin-bottom: 1rem; }
+  .deco-desc { font-size: 0.9rem; line-height: 1.8; color: var(--muted); direction: ltr; margin-bottom: 0.5rem; }
+  .deco-desc-ar { font-family: 'Tajawal', sans-serif; font-size: 0.85rem; line-height: 1.8; color: rgba(197,160,89,0.35); direction: rtl; }
+  .deco-progress { display: flex; gap: 16px; margin-top: 2rem; z-index: 2; }
+  .deco-diamond { width: 10px; height: 10px; background: rgba(197,160,89,0.15); transform: rotate(45deg); transition: all 0.4s ease; }
+  .deco-diamond.active { background: var(--gold); box-shadow: 0 0 8px rgba(197,160,89,0.4); }
+  .deco-hint { margin-top: 1.5rem; font-size: 0.65rem; letter-spacing: 0.3em; text-transform: uppercase; color: rgba(232,213,183,0.2); z-index: 2; }
 
   /* ---- Main App ---- */
   .app { display: none; min-height: 100vh; padding-bottom: 80px; }
@@ -285,16 +282,36 @@
     <button class="splash-enter" id="splashEnter">Enter</button>
   </div>
 
-  <!-- Walkthrough (sequential tap-to-advance) -->
+  <!-- Walkthrough (Art Deco Geometric) -->
   <div class="walkthrough" id="walkthrough">
-    <div class="walk-card" id="walkCard">
-      <div class="walk-icon" id="walkIcon"></div>
-      <h3 id="walkTitle"></h3>
-      <div class="walk-ar" id="walkAr"></div>
-      <p id="walkDesc"></p>
+    <div class="deco-frame"><div class="deco-line-h"></div><div class="deco-line-h"></div><div class="deco-line-v"></div><div class="deco-line-v"></div></div>
+    <div class="deco-corner tl"></div><div class="deco-corner tr"></div><div class="deco-corner bl"></div><div class="deco-corner br"></div>
+    <div class="deco-panel active" data-panel="0">
+      <div class="deco-step-num">Step I</div><div class="deco-divider"></div>
+      <div class="deco-title">Discover Arabic Poetry</div>
+      <div class="deco-title-ar" lang="ar" dir="rtl">اكتشف الشعر العربي</div>
+      <div class="deco-divider-thin"></div>
+      <div class="deco-desc">Over 84,000 poems from across the ages, a monument of literary heritage carved in verse.</div>
+      <div class="deco-desc-ar" lang="ar" dir="rtl">أكثر من 84,000 قصيدة عبر العصور صرح من التراث الأدبي محفور في الشعر</div>
     </div>
-    <div class="walk-progress" id="walkProgress"></div>
-    <span class="walk-hint">Tap anywhere to continue</span>
+    <div class="deco-panel" data-panel="1">
+      <div class="deco-step-num">Step II</div><div class="deco-divider"></div>
+      <div class="deco-title">Listen & Feel</div>
+      <div class="deco-title-ar" lang="ar" dir="rtl">استمع واشعر</div>
+      <div class="deco-divider-thin"></div>
+      <div class="deco-desc">AI-powered recitation captures the symmetry and rhythm of every verse with natural precision.</div>
+      <div class="deco-desc-ar" lang="ar" dir="rtl">إلقاء صوتي يلتقط التناظر والإيقاع في كل بيت بدقة طبيعية</div>
+    </div>
+    <div class="deco-panel" data-panel="2">
+      <div class="deco-step-num">Step III</div><div class="deco-divider"></div>
+      <div class="deco-title">AI Insights</div>
+      <div class="deco-title-ar" lang="ar" dir="rtl">رؤى ذكية</div>
+      <div class="deco-divider-thin"></div>
+      <div class="deco-desc">Deep analysis unveils the geometric patterns of meaning woven into every line of poetry.</div>
+      <div class="deco-desc-ar" lang="ar" dir="rtl">تحليل عميق يكشف الأنماط الهندسية للمعنى المنسوجة في كل بيت</div>
+    </div>
+    <div class="deco-progress"><div class="deco-diamond active" data-dot="0"></div><div class="deco-diamond" data-dot="1"></div><div class="deco-diamond" data-dot="2"></div></div>
+    <div class="deco-hint">Tap anywhere to continue</div>
   </div>
 
   <!-- Main App -->
@@ -381,65 +398,32 @@
     starsEl.appendChild(s);
   }
 
-  // Walkthrough steps (English primary, bilingual)
-  var walkSteps = [
-    { icon: 'compass', title: 'Discover 84,000+ Poems', ar: 'اكتشف القصائد', desc: 'Browse thousands of classical and modern Arabic poems from centuries of literary heritage.' },
-    { icon: 'headphones', title: 'Listen to Recitation', ar: 'استمع للإيقاع', desc: 'Hear poems brought to life with natural AI voices capturing the melody of Arabic verse.' },
-    { icon: 'sparkles', title: 'AI-Powered Insights', ar: 'رؤى ذكية', desc: 'Get deep analysis of meter, meaning, and historical context with intelligent annotations.' },
-    { icon: 'heart', title: 'Save Your Favorites', ar: 'شارك الجمال', desc: 'Build your personal collection and share the beauty of Arabic poetry.' }
-  ];
+  // Art Deco Geometric walkthrough
+  var decoPanels = document.querySelectorAll('.deco-panel');
+  var decoDiamonds = document.querySelectorAll('.deco-diamond');
   var currentStep = 0;
+  var totalDecoSteps = 3;
 
-  function renderStep() {
-    var step = walkSteps[currentStep];
-    var card = document.getElementById('walkCard');
-    var iconEl = document.getElementById('walkIcon');
-    var titleEl = document.getElementById('walkTitle');
-    var arEl = document.getElementById('walkAr');
-    var descEl = document.getElementById('walkDesc');
-    var progress = document.getElementById('walkProgress');
-
-    while (iconEl.firstChild) iconEl.removeChild(iconEl.firstChild);
-    var ic = document.createElement('i');
-    ic.setAttribute('data-lucide', step.icon);
-    ic.style.width = '24px'; ic.style.height = '24px';
-    iconEl.appendChild(ic);
-
-    titleEl.textContent = step.title;
-    arEl.textContent = step.ar;
-    descEl.textContent = step.desc;
-
-    while (progress.firstChild) progress.removeChild(progress.firstChild);
-    for (var d = 0; d < walkSteps.length; d++) {
-      var dot = document.createElement('div');
-      dot.className = 'walk-dot' + (d === currentStep ? ' active' : '');
-      progress.appendChild(dot);
-    }
-
-    card.classList.remove('visible');
-    requestAnimationFrame(function() {
-      requestAnimationFrame(function() { card.classList.add('visible'); });
-    });
-    if (typeof lucide !== 'undefined') lucide.createIcons();
-  }
-
-  // Splash enter
   document.getElementById('splashEnter').addEventListener('click', function() {
     document.getElementById('splash').classList.add('hidden');
     document.getElementById('walkthrough').classList.add('active');
-    currentStep = 0;
-    renderStep();
   });
 
-  // Tap to advance
   document.getElementById('walkthrough').addEventListener('click', function() {
     currentStep++;
-    if (currentStep >= walkSteps.length) {
-      document.getElementById('walkthrough').style.display = 'none';
-      document.getElementById('app').classList.add('active');
-      if (typeof lucide !== 'undefined') lucide.createIcons();
+    if (currentStep >= totalDecoSteps) {
+      var wt = document.getElementById('walkthrough');
+      wt.style.opacity = '0'; wt.style.transition = 'opacity 0.6s ease';
+      setTimeout(function() {
+        wt.style.display = 'none';
+        document.getElementById('app').classList.add('active');
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+      }, 600);
     } else {
-      renderStep();
+      decoPanels.forEach(function(p) { p.classList.remove('active'); });
+      decoDiamonds.forEach(function(d) { d.classList.remove('active'); });
+      decoPanels[currentStep].classList.add('active');
+      decoDiamonds[currentStep].classList.add('active');
     }
   });
 

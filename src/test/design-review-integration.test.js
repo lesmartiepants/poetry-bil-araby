@@ -16,9 +16,12 @@ import request from 'supertest';
 const CI_REVIEWER = 'ci-integration';
 const CI_ITEM_KEY = 'ci-integration-test-item';
 
-// Safety net: if DATABASE_URL is not set this suite is skipped gracefully.
-// In CI this env var is always provided via the design-review-integration workflow.
-describe.skipIf(!process.env.DATABASE_URL)('Design Review — Real Database Integration', () => {
+// Safety net: skip gracefully unless DATABASE_URL or individual PGHOST/PGDATABASE/PGUSER env vars are set.
+// In CI this is always provided via the design-review-integration workflow (PGHOST/PGDATABASE/PGUSER/PGPASSWORD).
+const hasDbConfig = Boolean(process.env.DATABASE_URL) ||
+  (Boolean(process.env.PGHOST) && Boolean(process.env.PGDATABASE) && Boolean(process.env.PGUSER));
+
+describe.skipIf(!hasDbConfig)('Design Review — Real Database Integration', () => {
   let app;
   let pool;
   let sessionId;

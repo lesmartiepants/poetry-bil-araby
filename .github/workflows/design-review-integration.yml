@@ -62,10 +62,17 @@ jobs:
           echo "Schema seeded ✓"
 
       # ── Run integration tests against the local PostgreSQL DB ─────────────
+      # Use PGHOST/PGUSER/PGPASSWORD/PGDATABASE instead of DATABASE_URL because
+      # server.js unconditionally enables SSL when DATABASE_URL is set, but the
+      # local postgres:15 service container has no SSL support.
       - name: Run design review integration tests
         run: npm run test:integration
         env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/design_review_test
+          PGHOST: localhost
+          PGPORT: 5432
+          PGDATABASE: design_review_test
+          PGUSER: postgres
+          PGPASSWORD: postgres
 
       # ── Report outcome on the PR ──────────────────────────────────────────
       - name: Post success comment to PR

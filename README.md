@@ -362,20 +362,20 @@ The release readiness analysis (see PR #58) audited the app against a mobile-fir
 
 ### P0 — Blocks Public Launch
 
-- [x] **Debug panel in production**: `FEATURES.debug` now gates on `import.meta.env.DEV` — panel is hidden in production builds.
-- [x] **No React error boundary**: `ErrorBoundary` added in `main.jsx`; crashes show a bilingual recovery UI instead of a blank screen.
-- [ ] **Gemini API key exposed client-side**: `VITE_GEMINI_API_KEY` is bundled into the client-side JS. Proxy AI calls through the Express backend or restrict the key to the production domain.
-- [x] **No SEO / Open Graph metadata**: Added description, OG, and Twitter Card meta tags to `index.html`.
-- [x] **Favicon is the Vite default**: Replaced with a branded SVG app icon (`public/app-icon.svg`).
-- [ ] **No graceful degradation without API key**: When `VITE_GEMINI_API_KEY` is absent or empty, AI mode silently fails. Add an explicit fallback UI directing users to database mode.
-- [x] **Version is `0.0.0`**: Updated `package.json` to `1.0.0`.
+- [x] **Debug panel in production** ([#111](https://github.com/lesmartiepants/poetry-bil-araby/issues/111)): `FEATURES.debug` now gates on `import.meta.env.DEV` — panel is hidden in production builds.
+- [x] **No React error boundary** ([#112](https://github.com/lesmartiepants/poetry-bil-araby/issues/112)): `ErrorBoundary` added in `main.jsx`; crashes show a bilingual recovery UI instead of a blank screen.
+- [ ] **Gemini API key exposed client-side** ([#113](https://github.com/lesmartiepants/poetry-bil-araby/issues/113)): `VITE_GEMINI_API_KEY` is bundled into the client-side JS. Proxy AI calls through the Express backend or restrict the key to the production domain.
+- [x] **No SEO / Open Graph metadata** ([#114](https://github.com/lesmartiepants/poetry-bil-araby/issues/114)): Added description, OG, and Twitter Card meta tags to `index.html`.
+- [x] **Favicon is the Vite default** ([#115](https://github.com/lesmartiepants/poetry-bil-araby/issues/115)): Replaced with a branded SVG app icon (`public/app-icon.svg`).
+- [ ] **No graceful degradation without API key** ([#116](https://github.com/lesmartiepants/poetry-bil-araby/issues/116)): When `VITE_GEMINI_API_KEY` is absent or empty, AI mode silently fails. Add an explicit fallback UI directing users to database mode.
+- [x] **Version is `0.0.0`** ([#117](https://github.com/lesmartiepants/poetry-bil-araby/issues/117)): Updated `package.json` to `1.0.0`.
 
 ### P1 — Launch-Critical Polish
 
-- [ ] No splash screen or first-time onboarding (extensive design exploration exists in PR #11)
-- [x] PWA manifest added (`public/manifest.json` with app name, theme color, and icon); service worker not yet implemented
-- [x] Light mode dropdown theming inconsistency (fixed: all dropdown panels now respect the active theme)
-- [ ] No analytics or error tracking (zero visibility into post-launch behavior)
+- [ ] No splash screen or first-time onboarding ([#118](https://github.com/lesmartiepants/poetry-bil-araby/issues/118); extensive design exploration exists in PR #11)
+- [x] PWA manifest added ([#119](https://github.com/lesmartiepants/poetry-bil-araby/issues/119)): `public/manifest.json` with app name, theme color, and icon; service worker not yet implemented
+- [x] Light mode dropdown theming inconsistency ([#121](https://github.com/lesmartiepants/poetry-bil-araby/issues/121)): fixed — all dropdown panels now respect the active theme
+- [ ] No analytics or error tracking ([#122](https://github.com/lesmartiepants/poetry-bil-araby/issues/122)): zero visibility into post-launch behavior
 
 ### P2 — Post-Launch
 

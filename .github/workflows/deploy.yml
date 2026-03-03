@@ -12,24 +12,30 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
       - name: Run design review migrations
         run: |
-          echo "Running migration: 20260222000000_design_review_tables.sql"
-          psql "$DATABASE_URL" -f supabase/migrations/20260222000000_design_review_tables.sql
+          echo "Running migrations via Supabase CLI..."
+          supabase db push --project-ref $SUPABASE_PROJECT_REF
           echo "Migration completed successfully ✓"
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
 
       - name: Verify tables exist
         run: |
-          echo "Verifying tables were created..."
-          psql "$DATABASE_URL" -c "\dt design_*" | tee /tmp/tables.txt
-          grep -q "design_items" /tmp/tables.txt && echo "✓ design_items" || echo "✗ design_items MISSING"
-          grep -q "design_review_sessions" /tmp/tables.txt && echo "✓ design_review_sessions" || echo "✗ design_review_sessions MISSING"
-          grep -q "design_verdicts" /tmp/tables.txt && echo "✓ design_verdicts" || echo "✗ design_verdicts MISSING"
-          grep -q "design_review_history" /tmp/tables.txt && echo "✓ design_review_history" || echo "✗ design_review_history MISSING"
+          echo "Verifying migration was applied..."
+          supabase migration list --project-ref $SUPABASE_PROJECT_REF | tee /tmp/migrations.txt
+          grep -q "20260222000000" /tmp/migrations.txt \
+            && echo "✓ design review tables migration applied" \
+            || echo "✗ design review tables migration NOT found"
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
 
   deploy:
     name: Deploy to Production
@@ -37,6 +43,8 @@ jobs:
     environment: production
     needs: migrate
     if: always()
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 

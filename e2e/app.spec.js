@@ -123,6 +123,14 @@ test.describe('Poetry Bil-Araby - Core Functionality', () => {
       if (moreButtonVisible) {
         await moreButton.click();
         await page.waitForTimeout(300);
+
+        // Expand the poet submenu accordion within the overflow menu
+        const poetAccordion = page.locator('button:has-text("اختيار الشاعر")').first();
+        const poetAccordionVisible = await poetAccordion.isVisible().catch(() => false);
+        if (poetAccordionVisible) {
+          await poetAccordion.click();
+          await page.waitForTimeout(300);
+        }
       }
     }
 

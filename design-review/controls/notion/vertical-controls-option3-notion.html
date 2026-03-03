@@ -4,28 +4,47 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Option 3: Notion/Linear Clean - Vertical Controls</title>
+  <link href="https://fonts.googleapis.com/css2?family=Forum&family=Reem+Kufi:wght@400;700&family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
   <style>
+    :root {
+      --bg-primary: #0c0c0e;
+      --bg-surface: rgba(255, 255, 255, 0.04);
+      --border-subtle: rgba(255, 255, 255, 0.08);
+      --text-primary: #e7e5e4;
+      --text-muted: rgba(255, 255, 255, 0.45);
+      --text-hover: rgba(255, 255, 255, 0.8);
+      --accent: #6366f1;
+      --accent-bg: rgba(99, 102, 241, 0.12);
+      --accent-text: #818cf8;
+      --gold: #C5A059;
+      --tooltip-bg: #2d2d2d;
+      --shadow: rgba(0, 0, 0, 0.3);
+      --control-size: 44px;
+      --icon-size: 20px;
+    }
+
     * {
       margin: 0;
       padding: 0;
       box-sizing: border-box;
     }
-    
+
     body {
       font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-      background: #0c0c0e;
-      color: #e7e5e4;
+      background: var(--bg-primary);
+      color: var(--text-primary);
       overflow: hidden;
       height: 100vh;
     }
-    
+
     .container {
       display: flex;
       height: 100vh;
       position: relative;
     }
-    
-    /* Notion/Linear Style Vertical Control Bar - Right Side */
+
+    /* --- Vertical Control Bar (Desktop, Right Side) --- */
     .vertical-controls {
       position: fixed;
       right: 20px;
@@ -34,17 +53,17 @@
       display: flex;
       flex-direction: column;
       gap: 1px;
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
       border-radius: 10px;
       overflow: hidden;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+      box-shadow: 0 8px 24px var(--shadow);
       z-index: 1000;
     }
-    
+
     .control-btn {
-      width: 40px;
-      height: 40px;
+      width: var(--control-size);
+      height: var(--control-size);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -52,36 +71,35 @@
       border: none;
       cursor: pointer;
       transition: all 0.15s ease;
-      color: rgba(255, 255, 255, 0.45);
+      color: var(--text-muted);
       position: relative;
     }
-    
+
     .control-btn:hover {
       background: rgba(255, 255, 255, 0.06);
-      color: rgba(255, 255, 255, 0.8);
+      color: var(--text-hover);
     }
-    
+
     .control-btn.active {
-      background: rgba(99, 102, 241, 0.12);
-      color: #818cf8;
+      background: var(--accent-bg);
+      color: var(--accent-text);
     }
-    
-    .control-btn svg {
-      width: 18px;
-      height: 18px;
-      stroke-width: 2;
+
+    .control-btn i {
+      width: var(--icon-size);
+      height: var(--icon-size);
     }
-    
+
     .divider {
       height: 1px;
       background: rgba(255, 255, 255, 0.06);
     }
-    
-    /* Tooltip - Notion style */
+
+    /* Tooltip - Notion dark style */
     .tooltip {
       position: absolute;
       right: calc(100% + 8px);
-      background: #2d2d2d;
+      background: var(--tooltip-bg);
       color: #fff;
       padding: 4px 8px;
       border-radius: 4px;
@@ -93,7 +111,7 @@
       transition: opacity 0.1s;
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
     }
-    
+
     .tooltip::after {
       content: '';
       position: absolute;
@@ -102,33 +120,76 @@
       transform: translateY(-50%);
       width: 0;
       height: 0;
-      border-left: 4px solid #2d2d2d;
+      border-left: 4px solid var(--tooltip-bg);
       border-top: 4px solid transparent;
       border-bottom: 4px solid transparent;
     }
-    
+
     .control-btn:hover .tooltip {
       opacity: 1;
     }
-    
-    /* Counter badge */
-    .counter {
-      position: absolute;
-      top: 4px;
-      right: 4px;
-      background: #6366f1;
-      color: white;
-      width: 14px;
-      height: 14px;
-      border-radius: 7px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 9px;
-      font-weight: 700;
+
+    /* --- Mobile Bottom Bar --- */
+    .bottom-bar {
+      display: none;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: var(--bg-surface);
+      border-top: 1px solid var(--border-subtle);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      z-index: 1000;
+      padding: 8px 0;
+      padding-bottom: max(8px, env(safe-area-inset-bottom));
     }
-    
-    /* Sample content */
+
+    .bottom-bar-inner {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    .bottom-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      color: var(--text-muted);
+      transition: color 0.15s ease;
+      min-width: var(--control-size);
+      min-height: var(--control-size);
+      justify-content: center;
+      padding: 4px;
+    }
+
+    .bottom-btn:hover,
+    .bottom-btn:active {
+      color: var(--text-hover);
+    }
+
+    .bottom-btn.active {
+      color: var(--accent-text);
+    }
+
+    .bottom-btn i {
+      width: var(--icon-size);
+      height: var(--icon-size);
+    }
+
+    .bottom-btn-label {
+      font-size: 10px;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+    }
+
+    /* --- Sample Content --- */
     .content {
       flex: 1;
       display: flex;
@@ -136,34 +197,34 @@
       justify-content: center;
       padding: 0 100px 0 80px;
     }
-    
+
     .poem-container {
       max-width: 800px;
       text-align: center;
     }
-    
+
     .poem-title {
       font-size: clamp(2rem, 4vw, 3rem);
       font-weight: 700;
-      color: #C5A059;
+      color: var(--gold);
       margin-bottom: 1rem;
       font-family: 'Amiri', serif;
     }
-    
+
     .poem-text {
       font-size: clamp(1.25rem, 2vw, 1.5rem);
       line-height: 2.4;
-      color: #e7e5e4;
+      color: var(--text-primary);
       font-family: 'Amiri', serif;
       transition: font-size 0.2s ease;
     }
-    
+
     .design-label {
       position: fixed;
       top: 20px;
       left: 20px;
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
       padding: 6px 12px;
       border-radius: 6px;
       font-size: 11px;
@@ -172,42 +233,37 @@
       text-transform: uppercase;
       color: rgba(255, 255, 255, 0.6);
     }
-    
+
     /* Zoom levels */
     .zoom-1 { font-size: clamp(1rem, 1.6vw, 1.2rem); }
     .zoom-2 { font-size: clamp(1.25rem, 2vw, 1.5rem); }
     .zoom-3 { font-size: clamp(1.5rem, 2.4vw, 1.8rem); }
-    
-    /* Slider for text zoom */
-    .zoom-slider-container {
-      padding: 8px;
-      background: rgba(255, 255, 255, 0.04);
-      display: none;
-    }
-    
-    .zoom-slider-container.show {
-      display: block;
-    }
-    
-    .zoom-slider {
-      writing-mode: bt-lr;
-      -webkit-appearance: slider-vertical;
-      width: 24px;
-      height: 80px;
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 12px;
-      outline: none;
+
+    /* --- Responsive: Mobile --- */
+    @media (max-width: 768px) {
+      .vertical-controls {
+        display: none;
+      }
+
+      .bottom-bar {
+        display: block;
+      }
+
+      .content {
+        padding: 20px;
+        padding-bottom: 80px;
+      }
     }
   </style>
 </head>
 <body>
   <div class="design-label">Option 3: Notion/Linear</div>
-  
+
   <div class="container">
     <div class="content">
       <div class="poem-container">
-        <h1 class="poem-title" dir="rtl">قصيدة عن الحب</h1>
-        <p class="poem-text zoom-2" id="poemText" dir="rtl">
+        <h1 class="poem-title" dir="rtl" lang="ar">قصيدة عن الحب</h1>
+        <p class="poem-text zoom-2" id="poemText" dir="rtl" lang="ar">
           يا من هواه أعزه وأذلني<br>
           كيف السبيل إلى وصالك دلني<br><br>
           والله لو عاقبتني ما ضرني<br>
@@ -215,118 +271,139 @@
         </p>
       </div>
     </div>
-    
-    <!-- Vertical Control Bar (Right Side) -->
-    <div class="vertical-controls">
-      <!-- Save/Heart Button -->
-      <button class="control-btn active heart" id="saveBtn" aria-label="Save to collection">
-        <span class="tooltip">Saved</span>
-        <span class="counter">7</span>
-        <svg fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-        </svg>
+
+    <!-- Vertical Control Bar (Desktop, Right Side) -->
+    <nav class="vertical-controls" aria-label="Poem controls">
+      <button class="control-btn active" id="saveBtn" aria-label="Save poem">
+        <span class="tooltip">Save</span>
+        <i data-lucide="heart"></i>
       </button>
-      
+
       <div class="divider"></div>
-      
-      <!-- Text Zoom In -->
-      <button class="control-btn" id="zoomIn" aria-label="Increase text size">
-        <span class="tooltip">Larger text</span>
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <text x="7" y="17" font-size="14" font-weight="bold" fill="currentColor">A+</text>
-        </svg>
+
+      <button class="control-btn" id="textSizeBtn" aria-label="Text size toggle">
+        <span class="tooltip">Text Size</span>
+        <i data-lucide="type"></i>
       </button>
-      
-      <!-- Text Zoom Out -->
-      <button class="control-btn" id="zoomOut" aria-label="Decrease text size">
-        <span class="tooltip">Smaller text</span>
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <text x="8" y="17" font-size="12" font-weight="bold" fill="currentColor">A-</text>
-        </svg>
-      </button>
-      
-      <div class="divider"></div>
-      
-      <!-- Transliteration Toggle -->
+
       <button class="control-btn" id="translitBtn" aria-label="Toggle transliteration">
         <span class="tooltip">Transliteration</span>
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path d="M7 8h10M7 12h4m1 8-4-4H8"></path>
-          <path d="m12.5 16 3.5 4 3.5-4"></path>
-        </svg>
+        <i data-lucide="languages"></i>
       </button>
-      
+
+      <button class="control-btn" id="translateBtn" aria-label="Toggle translation">
+        <span class="tooltip">Translation</span>
+        <i data-lucide="book-open"></i>
+      </button>
+
+      <button class="control-btn" id="fontBtn" aria-label="Toggle font">
+        <span class="tooltip">Font</span>
+        <i data-lucide="italic"></i>
+      </button>
+
       <div class="divider"></div>
-      
-      <!-- Reset -->
-      <button class="control-btn" id="resetBtn" aria-label="Reset all settings">
-        <span class="tooltip">Reset</span>
-        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
-        </svg>
+
+      <button class="control-btn" id="signInBtn" aria-label="Sign in">
+        <span class="tooltip">Sign In</span>
+        <i data-lucide="log-in"></i>
       </button>
-    </div>
+
+      <button class="control-btn" id="settingsBtn" aria-label="Settings">
+        <span class="tooltip">Settings</span>
+        <i data-lucide="settings"></i>
+      </button>
+    </nav>
+
+    <!-- Mobile Bottom Bar -->
+    <nav class="bottom-bar" aria-label="Poem actions">
+      <div class="bottom-bar-inner">
+        <button class="bottom-btn" id="listenBtn" aria-label="Listen to poem">
+          <i data-lucide="music"></i>
+          <span class="bottom-btn-label">Listen</span>
+        </button>
+        <button class="bottom-btn" id="explainBtn" aria-label="Explain poem">
+          <i data-lucide="lightbulb"></i>
+          <span class="bottom-btn-label">Explain</span>
+        </button>
+        <button class="bottom-btn" id="discoverBtn" aria-label="Get new poem">
+          <i data-lucide="refresh-cw"></i>
+          <span class="bottom-btn-label">Discover</span>
+        </button>
+        <button class="bottom-btn" id="poetsBtn" aria-label="Browse poets">
+          <i data-lucide="library"></i>
+          <span class="bottom-btn-label">Poets</span>
+        </button>
+        <button class="bottom-btn" id="surpriseBtn" aria-label="Random poem">
+          <i data-lucide="shuffle"></i>
+          <span class="bottom-btn-label">Surprise</span>
+        </button>
+      </div>
+    </nav>
   </div>
-  
+
   <script>
-    // Interactive functionality
+    // Initialize Lucide icons
+    lucide.createIcons();
+
+    // State
     let zoomLevel = 2;
-    let saveCount = 7;
     let isSaved = true;
     let translitEnabled = false;
-    
+    let fontToggled = false;
+
     const poemText = document.getElementById('poemText');
     const saveBtn = document.getElementById('saveBtn');
-    const zoomIn = document.getElementById('zoomIn');
-    const zoomOut = document.getElementById('zoomOut');
+    const textSizeBtn = document.getElementById('textSizeBtn');
     const translitBtn = document.getElementById('translitBtn');
-    const resetBtn = document.getElementById('resetBtn');
-    const counter = document.querySelector('.counter');
-    const saveTooltip = saveBtn.querySelector('.tooltip');
-    
+    const fontBtn = document.getElementById('fontBtn');
+
+    const originalPoem =
+      '\u064A\u0627 \u0645\u0646 \u0647\u0648\u0627\u0647 \u0623\u0639\u0632\u0647 \u0648\u0623\u0630\u0644\u0646\u064A<br>' +
+      '\u0643\u064A\u0641 \u0627\u0644\u0633\u0628\u064A\u0644 \u0625\u0644\u0649 \u0648\u0635\u0627\u0644\u0643 \u062F\u0644\u0646\u064A<br><br>' +
+      '\u0648\u0627\u0644\u0644\u0647 \u0644\u0648 \u0639\u0627\u0642\u0628\u062A\u0646\u064A \u0645\u0627 \u0636\u0631\u0646\u064A<br>' +
+      '\u062D\u0628\u064A \u0644\u0643 \u0627\u0644\u062F\u0646\u064A\u0627 \u0648\u0645\u0627 \u062D\u0648\u0644\u064A \u0645\u0644\u0646\u064A';
+
+    const translitPoem =
+      '\u064A\u0627 \u0645\u0646 \u0647\u0648\u0627\u0647 \u0623\u0639\u0632\u0647 \u0648\u0623\u0630\u0644\u0646\u064A<br>' +
+      '<span style="opacity:0.35;font-size:0.8em;font-style:italic;font-family:Inter,sans-serif">' +
+      'y\u0101 man haw\u0101hu a\u2019azzahu wa-adhallan\u012B</span><br>' +
+      '\u0643\u064A\u0641 \u0627\u0644\u0633\u0628\u064A\u0644 \u0625\u0644\u0649 \u0648\u0635\u0627\u0644\u0643 \u062F\u0644\u0646\u064A<br>' +
+      '<span style="opacity:0.35;font-size:0.8em;font-style:italic;font-family:Inter,sans-serif">' +
+      'kayfa as-sab\u012Blu il\u0101 wi\u1E63\u0101lika dallan\u012B</span><br><br>' +
+      '\u0648\u0627\u0644\u0644\u0647 \u0644\u0648 \u0639\u0627\u0642\u0628\u062A\u0646\u064A \u0645\u0627 \u0636\u0631\u0646\u064A<br>' +
+      '<span style="opacity:0.35;font-size:0.8em;font-style:italic;font-family:Inter,sans-serif">' +
+      'wall\u0101hi law \u2018\u0101qabtan\u012B m\u0101 \u1E0Darran\u012B</span><br>' +
+      '\u062D\u0628\u064A \u0644\u0643 \u0627\u0644\u062F\u0646\u064A\u0627 \u0648\u0645\u0627 \u062D\u0648\u0644\u064A \u0645\u0644\u0646\u064A<br>' +
+      '<span style="opacity:0.35;font-size:0.8em;font-style:italic;font-family:Inter,sans-serif">' +
+      '\u1E25ubb\u012B laka ad-duny\u0101 wa m\u0101 \u1E25awl\u012B mallan\u012B</span>';
+
+    // Save toggle
     saveBtn.addEventListener('click', () => {
       isSaved = !isSaved;
       saveBtn.classList.toggle('active');
-      if (isSaved) {
-        saveCount++;
-        saveTooltip.textContent = 'Saved';
-      } else {
-        saveCount--;
-        saveTooltip.textContent = 'Save';
-      }
-      counter.textContent = saveCount;
+      saveBtn.querySelector('.tooltip').textContent = isSaved ? 'Saved' : 'Save';
     });
-    
-    zoomIn.addEventListener('click', () => {
-      if (zoomLevel < 3) {
-        zoomLevel++;
-        poemText.className = `poem-text zoom-${zoomLevel}`;
-      }
+
+    // Text size cycle (1 -> 2 -> 3 -> 1)
+    textSizeBtn.addEventListener('click', () => {
+      zoomLevel = (zoomLevel % 3) + 1;
+      poemText.className = 'poem-text zoom-' + zoomLevel;
+      textSizeBtn.classList.toggle('active', zoomLevel !== 2);
     });
-    
-    zoomOut.addEventListener('click', () => {
-      if (zoomLevel > 1) {
-        zoomLevel--;
-        poemText.className = `poem-text zoom-${zoomLevel}`;
-      }
-    });
-    
+
+    // Transliteration toggle
     translitBtn.addEventListener('click', () => {
       translitEnabled = !translitEnabled;
       translitBtn.classList.toggle('active');
-      if (translitEnabled) {
-        poemText.innerHTML = `يا من هواه أعزه وأذلني<br><span style="opacity: 0.35; font-size: 0.8em; font-style: italic; font-family: Inter;">yā man hawāhu a'azzahu wa-adhallanī</span><br>كيف السبيل إلى وصالك دلني<br><span style="opacity: 0.35; font-size: 0.8em; font-style: italic; font-family: Inter;">kayfa as-sabīlu ilā wiṣālika dallanī</span><br><br>والله لو عاقبتني ما ضرني<br><span style="opacity: 0.35; font-size: 0.8em; font-style: italic; font-family: Inter;">wallāhi law 'āqabtanī mā ḍarranī</span><br>حبي لك الدنيا وما حولي ملني<br><span style="opacity: 0.35; font-size: 0.8em; font-style: italic; font-family: Inter;">ḥubbī laka ad-dunyā wa mā ḥawlī mallanī</span>`;
-      } else {
-        poemText.innerHTML = `يا من هواه أعزه وأذلني<br>كيف السبيل إلى وصالك دلني<br><br>والله لو عاقبتني ما ضرني<br>حبي لك الدنيا وما حولي ملني`;
-      }
+      // Note: static content only, no user-supplied data
+      poemText.innerHTML = translitEnabled ? translitPoem : originalPoem;
     });
-    
-    resetBtn.addEventListener('click', () => {
-      zoomLevel = 2;
-      translitEnabled = false;
-      poemText.className = `poem-text zoom-${zoomLevel}`;
-      poemText.innerHTML = `يا من هواه أعزه وأذلني<br>كيف السبيل إلى وصالك دلني<br><br>والله لو عاقبتني ما ضرني<br>حبي لك الدنيا وما حولي ملني`;
-      translitBtn.classList.remove('active');
+
+    // Font toggle (Amiri <-> Tajawal)
+    fontBtn.addEventListener('click', () => {
+      fontToggled = !fontToggled;
+      fontBtn.classList.toggle('active');
+      poemText.style.fontFamily = fontToggled ? "'Tajawal', sans-serif" : "'Amiri', serif";
     });
   </script>
 </body>

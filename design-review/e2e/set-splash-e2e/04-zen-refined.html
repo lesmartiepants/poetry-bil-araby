@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zen Refined — Poetry Bil-Araby</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --bg-end: #0f0e0c;
+    --text: #e0ddd5;
+    --accent: #8b7355;
+    --accent-dim: rgba(139,115,85,0.25);
+    --accent-glow: rgba(139,115,85,0.12);
+    --gold: #c5a059;
+    --gold-dim: rgba(197,160,89,0.18);
+    --surface: rgba(255,255,255,0.03);
+    --surface-border: rgba(139,115,85,0.15);
+    --muted: rgba(224,221,213,0.45);
+    --ink: rgba(139,115,85,0.06);
+    --transition-speed: 0.4s;
+  }
+  [data-theme="light"] {
+    --bg: #f5f2eb;
+    --bg-end: #eeebe3;
+    --text: #2a2520;
+    --accent: #7a6345;
+    --accent-dim: rgba(122,99,69,0.2);
+    --accent-glow: rgba(122,99,69,0.1);
+    --gold: #9a7a28;
+    --gold-dim: rgba(154,122,40,0.16);
+    --surface: rgba(42,37,32,0.04);
+    --surface-border: rgba(122,99,69,0.15);
+    --muted: rgba(42,37,32,0.4);
+    --ink: rgba(42,37,32,0.04);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; scroll-behavior: smooth; }
+  body {
+    font-family: 'Tajawal', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow-x: hidden;
+    min-height: 100vh;
+    transition: background var(--transition-speed), color var(--transition-speed);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  /* ============================================
+     SPLASH SCREEN
+     ============================================ */
+  #splash {
+    position: fixed; inset: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column;
+    background: #0a0a0a;
+    transition: opacity 0.8s ease;
+    will-change: opacity;
+    overflow: hidden;
+  }
+  #splash.hidden { opacity: 0; pointer-events: none; }
+
+  #splash-canvas {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%; display: block;
+    z-index: 1;
+  }
+
+  .splash-content {
+    position: relative; z-index: 2;
+    text-align: center;
+    display: flex; flex-direction: column;
+    align-items: center; gap: 0.6rem;
+    pointer-events: none;
+  }
+
+  .splash-title {
+    font-family: 'Tajawal', sans-serif;
+    font-weight: 300;
+    font-size: 1.5rem;
+    letter-spacing: 0.2em;
+    color: var(--text);
+    opacity: 0;
+    animation: zenFadeIn 1.8s ease 0.4s forwards;
+  }
+  .splash-title-ar {
+    font-family: 'Amiri', serif;
+    font-size: 2.8rem;
+    font-weight: 700;
+    color: var(--gold);
+    opacity: 0;
+    animation: zenFadeIn 1.8s ease 0.8s forwards;
+  }
+  @keyframes zenFadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .splash-enter {
+    pointer-events: auto;
+    margin-top: 2.5rem;
+    padding: 1rem 3.6rem;
+    font-family: 'Tajawal', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 400;
+    letter-spacing: 0.25em;
+    text-transform: lowercase;
+    color: var(--accent);
+    background: transparent;
+    border: 1px solid var(--accent-dim);
+    border-radius: 0;
+    cursor: pointer;
+    opacity: 0;
+    animation: zenFadeIn 1.2s ease 1.4s forwards;
+    transition: all 0.35s ease;
+  }
+  .splash-enter:hover, .splash-enter:focus-visible {
+    color: var(--gold);
+    border-color: var(--gold-dim);
+    background: rgba(197,160,89,0.04);
+    letter-spacing: 0.3em;
+  }
+  .splash-enter:active {
+    transform: scale(0.97);
+    background: rgba(197,160,89,0.08);
+  }
+
+  .splash-theme-toggle {
+    position: absolute; top: 1.5rem; right: 1.5rem;
+    z-index: 3;
+    background: none; border: 1px solid var(--surface-border);
+    color: var(--muted);
+    font-size: 0.85rem;
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.3s ease;
+    opacity: 0;
+    animation: zenFadeIn 1s ease 2s forwards;
+  }
+  .splash-theme-toggle:hover {
+    color: var(--gold);
+    border-color: var(--gold-dim);
+  }
+
+  /* ============================================
+     ONBOARDING
+     ============================================ */
+  #onboarding {
+    position: fixed; inset: 0; z-index: 90;
+    display: none;
+    align-items: center; justify-content: center;
+    flex-direction: column;
+    background: var(--bg);
+    transition: opacity 0.8s ease;
+    overflow: hidden;
+  }
+  #onboarding.active { display: flex; }
+  #onboarding.hidden { opacity: 0; pointer-events: none; }
+
+  #onboarding-canvas {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%; display: block;
+    z-index: 1;
+  }
+
+  .onboarding-card {
+    position: relative; z-index: 2;
+    text-align: center;
+    max-width: 460px;
+    width: 90%;
+    padding: 4rem 2.5rem;
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 0.5s ease, transform 0.5s ease;
+  }
+  .onboarding-card.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .onboarding-card.exit {
+    opacity: 0;
+    transform: translateY(-16px);
+  }
+
+  .ob-icon {
+    font-size: 2rem;
+    margin-bottom: 1.5rem;
+    display: block;
+    color: var(--accent);
+  }
+
+  .ob-ink-stroke {
+    width: 40px;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent-dim), transparent);
+    margin: 0 auto 1.8rem;
+  }
+
+  .ob-title {
+    font-family: 'Tajawal', sans-serif;
+    font-weight: 300;
+    font-size: 1.7rem;
+    letter-spacing: 0.12em;
+    color: var(--text);
+    margin-bottom: 0.4rem;
+  }
+  .ob-title-ar {
+    font-family: 'Amiri', serif;
+    font-size: 1.2rem;
+    color: var(--gold);
+    margin-bottom: 1.2rem;
+    direction: rtl;
+  }
+  .ob-desc {
+    font-size: 0.9rem;
+    color: var(--muted);
+    line-height: 1.8;
+    max-width: 320px;
+    margin: 0 auto 2.5rem;
+    font-weight: 300;
+  }
+
+  .ob-dots {
+    display: flex;
+    justify-content: center;
+    gap: 0.7rem;
+    margin-bottom: 2rem;
+  }
+  .ob-dot {
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: var(--surface-border);
+    transition: all 0.4s ease;
+  }
+  .ob-dot.active {
+    background: var(--gold);
+    width: 18px;
+    border-radius: 2px;
+  }
+
+  .ob-next-btn {
+    padding: 0.8rem 2.8rem;
+    font-family: 'Tajawal', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 400;
+    letter-spacing: 0.2em;
+    text-transform: lowercase;
+    color: var(--accent);
+    background: transparent;
+    border: 1px solid var(--accent-dim);
+    border-radius: 0;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  .ob-next-btn:hover, .ob-next-btn:focus-visible {
+    color: var(--gold);
+    border-color: var(--gold-dim);
+    background: rgba(197,160,89,0.04);
+  }
+  .ob-next-btn:active {
+    transform: scale(0.97);
+  }
+
+  .ob-skip {
+    position: absolute; bottom: 2.5rem; right: 2.5rem;
+    z-index: 3;
+    background: none; border: none;
+    color: var(--muted);
+    font-family: 'Tajawal', sans-serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.12em;
+    cursor: pointer;
+    opacity: 0.5;
+    transition: opacity 0.3s;
+  }
+  .ob-skip:hover { opacity: 1; color: var(--accent); }
+
+  /* ============================================
+     MAIN APP
+     ============================================ */
+  #app {
+    display: none;
+    min-height: 100vh;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem 1rem;
+    position: relative;
+  }
+  #app.active { display: flex; }
+
+  #app-canvas {
+    position: fixed; inset: 0;
+    width: 100%; height: 100%; display: block;
+    z-index: 0;
+    pointer-events: none;
+  }
+
+  .app-header {
+    position: fixed; top: 0; left: 0; right: 0;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.2rem 1.8rem;
+  }
+  .app-brand {
+    font-family: 'Tajawal', sans-serif;
+    font-weight: 300;
+    font-size: 0.8rem;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+  }
+  .app-brand span {
+    font-family: 'Amiri', serif;
+    color: var(--gold);
+    font-size: 0.9rem;
+  }
+  .app-theme-btn {
+    background: none; border: 1px solid var(--surface-border);
+    color: var(--muted);
+    font-size: 0.85rem;
+    width: 32px; height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.3s ease;
+  }
+  .app-theme-btn:hover {
+    color: var(--gold);
+    border-color: var(--gold-dim);
+  }
+
+  .poem-frame {
+    position: relative; z-index: 1;
+    width: 100%;
+    max-width: 540px;
+    padding: 4rem 2.5rem;
+    text-align: center;
+  }
+
+  .poem-ink-top, .poem-ink-bottom {
+    display: block;
+    width: 50px;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent-dim), transparent);
+    margin: 0 auto 2rem;
+  }
+  .poem-ink-bottom {
+    margin: 2rem auto 0;
+  }
+
+  .poem-content {
+    direction: rtl;
+    margin-bottom: 1.8rem;
+  }
+  .poem-line {
+    font-family: 'Amiri', serif;
+    font-size: 1.7rem;
+    line-height: 2.4;
+    color: var(--text);
+    transition: font-size 0.3s ease;
+  }
+  .poem-separator {
+    display: block;
+    width: 20px; height: 1px;
+    background: var(--accent-dim);
+    margin: 0.4rem auto;
+  }
+  .poet-name {
+    font-family: 'Amiri', serif;
+    font-size: 0.95rem;
+    color: var(--gold);
+    direction: rtl;
+    letter-spacing: 0.02em;
+  }
+
+  .poem-controls {
+    display: flex;
+    justify-content: center;
+    gap: 0.8rem;
+    margin-top: 2.5rem;
+  }
+  .ctrl-btn {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: transparent;
+    border: 1px solid var(--surface-border);
+    color: var(--muted);
+    font-size: 0.9rem;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.3s ease;
+  }
+  .ctrl-btn:hover, .ctrl-btn:focus-visible {
+    color: var(--accent);
+    border-color: var(--accent-dim);
+  }
+  .ctrl-btn:active { transform: scale(0.92); }
+  .ctrl-btn.active {
+    color: var(--gold);
+    border-color: var(--gold);
+  }
+
+  /* ============================================
+     RESPONSIVE
+     ============================================ */
+  @media (max-width: 600px) {
+    .splash-title { font-size: 1.2rem; }
+    .splash-title-ar { font-size: 2.2rem; }
+    .splash-enter { padding: 0.85rem 2.4rem; font-size: 0.9rem; }
+    .ob-title { font-size: 1.35rem; }
+    .onboarding-card { padding: 3rem 1.5rem; }
+    .poem-line { font-size: 1.4rem; }
+    .poem-frame { padding: 3rem 1.2rem; }
+    .app-header { padding: 0.8rem 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================================
+     SPLASH SCREEN
+     ============================================ -->
+<div id="splash" role="region" aria-label="Splash screen">
+  <canvas id="splash-canvas" aria-hidden="true"></canvas>
+  <button class="splash-theme-toggle" id="splashThemeBtn" aria-label="Toggle theme">☀</button>
+  <div class="splash-content">
+    <div class="splash-title">poetry</div>
+    <div class="splash-title-ar" dir="rtl">بالعربي</div>
+    <button class="splash-enter" id="enterBtn" aria-label="Enter the app">enter</button>
+  </div>
+</div>
+
+<!-- ============================================
+     ONBOARDING
+     ============================================ -->
+<div id="onboarding" role="region" aria-label="Onboarding">
+  <canvas id="onboarding-canvas" aria-hidden="true"></canvas>
+  <div class="onboarding-card" id="obCard">
+    <div class="ob-icon" id="obIcon">筆</div>
+    <div class="ob-ink-stroke"></div>
+    <div class="ob-title" id="obTitle">Discover</div>
+    <div class="ob-title-ar" id="obTitleAr" dir="rtl">اكتشف</div>
+    <div class="ob-desc" id="obDesc">Explore a vast collection of Arabic poetry spanning centuries of literary tradition.</div>
+    <div class="ob-dots" id="obDots">
+      <div class="ob-dot active"></div>
+      <div class="ob-dot"></div>
+      <div class="ob-dot"></div>
+      <div class="ob-dot"></div>
+    </div>
+    <button class="ob-next-btn" id="obNextBtn" aria-label="Next step">continue</button>
+  </div>
+  <button class="ob-skip" id="obSkipBtn" aria-label="Skip onboarding">skip</button>
+</div>
+
+<!-- ============================================
+     MAIN APP
+     ============================================ -->
+<div id="app" role="main">
+  <canvas id="app-canvas" aria-hidden="true"></canvas>
+  <header class="app-header">
+    <div class="app-brand">poetry <span dir="rtl">بالعربي</span></div>
+    <button class="app-theme-btn" id="appThemeBtn" aria-label="Toggle theme">☀</button>
+  </header>
+  <div class="poem-frame">
+    <span class="poem-ink-top"></span>
+    <div class="poem-content">
+      <div class="poem-line">أَلا كُلُّ شَيءٍ ما خَلا اللَهَ باطِلُ</div>
+      <span class="poem-separator"></span>
+      <div class="poem-line">وَكُلُّ نَعيمٍ لا مَحالَةَ زائِلُ</div>
+    </div>
+    <div class="poet-name">— لبيد بن ربيعة</div>
+    <span class="poem-ink-bottom"></span>
+    <div class="poem-controls">
+      <button class="ctrl-btn" id="playBtn" aria-label="Play recitation">▶</button>
+      <button class="ctrl-btn" id="nextBtn" aria-label="Next poem">⟳</button>
+      <button class="ctrl-btn" id="saveBtn" aria-label="Save poem">♡</button>
+      <button class="ctrl-btn" id="fontBtn" aria-label="Change font size">ع</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  "use strict";
+
+  /* ============================================
+     ZEN SMOKE / INK WISP SYSTEM
+     Organic bezier curves that drift and dissolve
+     like ink dropping in water.
+     ============================================ */
+
+  function ZenSmoke(canvas, opts) {
+    var self = this;
+    self.canvas = canvas;
+    self.ctx = canvas.getContext("2d");
+    self.wisps = [];
+    self.running = false;
+    self.raf = null;
+    self.time = 0;
+    self.opts = {
+      count: opts.count || 8,
+      speed: opts.speed || 1,
+      opacity: opts.opacity || 0.07,
+      spread: opts.spread || 1
+    };
+
+    self.resize = function() {
+      var dpr = Math.min(window.devicePixelRatio || 1, 2);
+      var rect = self.canvas.getBoundingClientRect();
+      self.w = rect.width;
+      self.h = rect.height;
+      self.canvas.width = self.w * dpr;
+      self.canvas.height = self.h * dpr;
+      self.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    };
+
+    self.createWisp = function(forceX, forceY) {
+      var cx = typeof forceX === "number" ? forceX : Math.random() * self.w;
+      var cy = typeof forceY === "number" ? forceY : Math.random() * self.h;
+      var angle = Math.random() * Math.PI * 2;
+      var baseSpeed = (0.15 + Math.random() * 0.35) * self.opts.speed;
+      var spread = self.opts.spread;
+
+      return {
+        x: cx,
+        y: cy,
+        vx: Math.cos(angle) * baseSpeed,
+        vy: Math.sin(angle) * baseSpeed - 0.1,
+        life: 1.0,
+        decay: 0.002 + Math.random() * 0.004,
+        width: (30 + Math.random() * 80) * spread,
+        amplitude: (15 + Math.random() * 40) * spread,
+        frequency: 0.008 + Math.random() * 0.015,
+        phase: Math.random() * Math.PI * 2,
+        segments: 5 + Math.floor(Math.random() * 4),
+        curl: (Math.random() - 0.5) * 0.02
+      };
+    };
+
+    self.init = function() {
+      self.resize();
+      self.wisps = [];
+      var i;
+      for (i = 0; i < self.opts.count; i++) {
+        var w = self.createWisp();
+        w.life = 0.3 + Math.random() * 0.7;
+        self.wisps.push(w);
+      }
+    };
+
+    self.draw = function() {
+      var ctx = self.ctx;
+      var w = self.w;
+      var h = self.h;
+      var wisps = self.wisps;
+      var isDark = !document.documentElement.hasAttribute("data-theme");
+      var baseOpacity = self.opts.opacity;
+
+      self.time += 1;
+
+      ctx.clearRect(0, 0, w, h);
+
+      var i, wisp, j, t, px, py, cpx, cpy, alpha, seg;
+      for (i = wisps.length - 1; i >= 0; i--) {
+        wisp = wisps[i];
+
+        wisp.x += wisp.vx;
+        wisp.y += wisp.vy;
+        wisp.vx += wisp.curl;
+        wisp.phase += wisp.frequency;
+        wisp.life -= wisp.decay;
+
+        if (wisp.life <= 0) {
+          wisps.splice(i, 1);
+          wisps.push(self.createWisp());
+          continue;
+        }
+
+        alpha = wisp.life * baseOpacity;
+        if (alpha < 0.003) continue;
+
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+
+        /* Varying stroke width along the wisp */
+        var segLen = wisp.width / wisp.segments;
+
+        for (seg = 0; seg < wisp.segments - 1; seg++) {
+          t = seg / wisp.segments;
+          var t2 = (seg + 1) / wisp.segments;
+          var waveOffset = Math.sin(wisp.phase + t * Math.PI * 2) * wisp.amplitude;
+          var waveOffset2 = Math.sin(wisp.phase + t2 * Math.PI * 2) * wisp.amplitude;
+
+          px = wisp.x + t * wisp.width * wisp.vx * 3;
+          py = wisp.y + waveOffset + t * wisp.width * wisp.vy * 0.5;
+          cpx = wisp.x + t2 * wisp.width * wisp.vx * 3;
+          cpy = wisp.y + waveOffset2 + t2 * wisp.width * wisp.vy * 0.5;
+
+          /* Stroke tapers at ends */
+          var taper = Math.sin(t * Math.PI);
+          var strokeW = 1 + taper * 3 * wisp.life;
+
+          ctx.beginPath();
+          ctx.moveTo(px, py);
+          /* Smooth bezier with a control point offset for organic feel */
+          var mx = (px + cpx) / 2;
+          var my = (py + cpy) / 2 + Math.sin(wisp.phase + seg) * 4;
+          ctx.quadraticCurveTo(mx, my, cpx, cpy);
+
+          ctx.lineWidth = strokeW;
+          if (isDark) {
+            ctx.strokeStyle = "rgba(139,115,85," + (alpha * 1.2) + ")";
+          } else {
+            ctx.strokeStyle = "rgba(42,37,32," + (alpha * 0.8) + ")";
+          }
+          ctx.stroke();
+        }
+
+        ctx.restore();
+      }
+
+      if (self.running) {
+        self.raf = requestAnimationFrame(self.draw);
+      }
+    };
+
+    self.start = function() {
+      if (self.running) return;
+      self.running = true;
+      self.draw();
+    };
+
+    self.stop = function() {
+      self.running = false;
+      if (self.raf) cancelAnimationFrame(self.raf);
+    };
+
+    /* Emit a burst of ink wisps at a point */
+    self.inkDrop = function(dx, dy) {
+      var count = 4 + Math.floor(Math.random() * 4);
+      var k;
+      for (k = 0; k < count; k++) {
+        var nw = self.createWisp(dx, dy);
+        nw.decay = 0.005 + Math.random() * 0.008;
+        nw.width = 20 + Math.random() * 50;
+        self.wisps.push(nw);
+      }
+    };
+  }
+
+  /* ============================================
+     DOM ELEMENTS
+     ============================================ */
+  var splash = document.getElementById("splash");
+  var splashCanvas = document.getElementById("splash-canvas");
+  var enterBtn = document.getElementById("enterBtn");
+  var splashThemeBtn = document.getElementById("splashThemeBtn");
+
+  var onboarding = document.getElementById("onboarding");
+  var obCanvas = document.getElementById("onboarding-canvas");
+  var obCard = document.getElementById("obCard");
+  var obIcon = document.getElementById("obIcon");
+  var obTitle = document.getElementById("obTitle");
+  var obTitleAr = document.getElementById("obTitleAr");
+  var obDesc = document.getElementById("obDesc");
+  var obDots = document.getElementById("obDots");
+  var obNextBtn = document.getElementById("obNextBtn");
+  var obSkipBtn = document.getElementById("obSkipBtn");
+
+  var appEl = document.getElementById("app");
+  var appCanvas = document.getElementById("app-canvas");
+  var appThemeBtn = document.getElementById("appThemeBtn");
+
+  /* ============================================
+     SPLASH SMOKE (dense, drifting ink wisps)
+     ============================================ */
+  var splashSmoke = new ZenSmoke(splashCanvas, {
+    count: 12,
+    speed: 0.8,
+    opacity: 0.08,
+    spread: 1.2
+  });
+  splashSmoke.init();
+  splashSmoke.start();
+
+  /* Tap/click on splash triggers ink drop */
+  splash.addEventListener("click", function(e) {
+    if (e.target === enterBtn || enterBtn.contains(e.target)) return;
+    if (e.target === splashThemeBtn) return;
+    var rect = splashCanvas.getBoundingClientRect();
+    splashSmoke.inkDrop(e.clientX - rect.left, e.clientY - rect.top);
+  });
+
+  splash.addEventListener("touchstart", function(e) {
+    if (e.target === enterBtn || enterBtn.contains(e.target)) return;
+    if (e.target === splashThemeBtn) return;
+    var touch = e.touches[0];
+    var rect = splashCanvas.getBoundingClientRect();
+    splashSmoke.inkDrop(touch.clientX - rect.left, touch.clientY - rect.top);
+  }, { passive: true });
+
+  /* ============================================
+     ENTER → ONBOARDING TRANSITION
+     ============================================ */
+  enterBtn.addEventListener("click", function(e) {
+    e.stopPropagation();
+    splash.classList.add("hidden");
+    setTimeout(function() {
+      splash.style.display = "none";
+      splashSmoke.stop();
+      showOnboarding();
+    }, 800);
+  });
+
+  /* ============================================
+     ONBOARDING SEQUENTIAL STEPS
+     ============================================ */
+  var obSteps = [
+    { icon: "筆", title: "Discover", titleAr: "اكتشف", desc: "Explore a vast collection of Arabic poetry spanning centuries of literary tradition.", btn: "continue" },
+    { icon: "墨", title: "Explore", titleAr: "استكشف", desc: "Browse by poet, era, or theme. Find verses that resonate with your soul.", btn: "continue" },
+    { icon: "音", title: "Listen", titleAr: "استمع", desc: "Hear poems recited aloud with authentic pronunciation and natural rhythm.", btn: "continue" },
+    { icon: "和", title: "Share", titleAr: "شارك", desc: "Save your favorite verses and share the beauty of Arabic poetry with others.", btn: "begin" }
+  ];
+  var obStep = 0;
+  var obSmoke = null;
+  var obTransitioning = false;
+
+  function showOnboarding() {
+    onboarding.classList.add("active");
+    obSmoke = new ZenSmoke(obCanvas, {
+      count: 6,
+      speed: 0.5,
+      opacity: 0.05,
+      spread: 0.8
+    });
+    obSmoke.init();
+    obSmoke.start();
+    renderObStep(0, true);
+  }
+
+  function renderObStep(index, immediate) {
+    var step = obSteps[index];
+    if (!immediate) {
+      obCard.classList.remove("visible");
+      obCard.classList.add("exit");
+    }
+    var delay = immediate ? 50 : 350;
+    setTimeout(function() {
+      obIcon.textContent = step.icon;
+      obTitle.textContent = step.title;
+      obTitleAr.textContent = step.titleAr;
+      obDesc.textContent = step.desc;
+      obNextBtn.textContent = step.btn;
+
+      var dots = obDots.children;
+      var i;
+      for (i = 0; i < dots.length; i++) {
+        if (i === index) {
+          dots[i].classList.add("active");
+        } else {
+          dots[i].classList.remove("active");
+        }
+      }
+
+      obCard.classList.remove("exit");
+      /* Force browser reflow so removing/adding classes triggers CSS transition */
+      var _reflow = obCard.offsetWidth;
+      obCard.classList.add("visible");
+      obTransitioning = false;
+    }, delay);
+  }
+
+  obNextBtn.addEventListener("click", function() {
+    if (obTransitioning) return;
+    obTransitioning = true;
+    obStep++;
+    if (obStep >= obSteps.length) {
+      finishOnboarding();
+    } else {
+      renderObStep(obStep, false);
+    }
+  });
+
+  obSkipBtn.addEventListener("click", function() {
+    finishOnboarding();
+  });
+
+  function finishOnboarding() {
+    onboarding.classList.add("hidden");
+    setTimeout(function() {
+      onboarding.classList.remove("active");
+      if (obSmoke) obSmoke.stop();
+      showApp();
+    }, 800);
+  }
+
+  /* ============================================
+     MAIN APP
+     ============================================ */
+  var appSmoke = null;
+
+  function showApp() {
+    appEl.classList.add("active");
+    appSmoke = new ZenSmoke(appCanvas, {
+      count: 4,
+      speed: 0.3,
+      opacity: 0.035,
+      spread: 0.6
+    });
+    appSmoke.init();
+    appSmoke.start();
+  }
+
+  /* Resize handling */
+  var resizeTimer;
+  window.addEventListener("resize", function() {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function() {
+      if (splashSmoke && splashSmoke.running) { splashSmoke.resize(); }
+      if (obSmoke && obSmoke.running) { obSmoke.resize(); }
+      if (appSmoke && appSmoke.running) { appSmoke.resize(); }
+    }, 150);
+  });
+
+  /* ============================================
+     THEME TOGGLE
+     ============================================ */
+  var isDark = true;
+  var SUN = "☀";
+  var MOON = "☾";
+
+  function toggleTheme() {
+    isDark = !isDark;
+    if (isDark) {
+      document.documentElement.removeAttribute("data-theme");
+      splashThemeBtn.textContent = SUN;
+      appThemeBtn.textContent = SUN;
+    } else {
+      document.documentElement.setAttribute("data-theme", "light");
+      splashThemeBtn.textContent = MOON;
+      appThemeBtn.textContent = MOON;
+    }
+  }
+
+  splashThemeBtn.addEventListener("click", function(e) {
+    e.stopPropagation();
+    toggleTheme();
+  });
+  appThemeBtn.addEventListener("click", toggleTheme);
+
+  /* ============================================
+     APP MOCK INTERACTIONS
+     ============================================ */
+  var poems = [
+    {
+      lines: [
+        "أَلا كُلُّ شَيءٍ ما خَلا اللَهَ باطِلُ",
+        "وَكُلُّ نَعيمٍ لا مَحالَةَ زائِلُ"
+      ],
+      poet: "لبيد بن ربيعة"
+    },
+    {
+      lines: [
+        "عَلى قَدرِ أَهلِ العَزمِ تَأتي العَزائِمُ",
+        "وَتَأتي عَلى قَدرِ الكِرامِ المَكارِمُ"
+      ],
+      poet: "المتنبي"
+    },
+    {
+      lines: [
+        "وَما الحُبُّ إِلّا نَظرَةٌ بَعدَ نَظرَةٍ",
+        "تَزيدُ إِذا ما زادَها النَّظَرُ نَظرا"
+      ],
+      poet: "ابن حزم"
+    },
+    {
+      lines: [
+        "إِذا غامَرتَ في شَرَفٍ مَرومٍ",
+        "فَلا تَقنَع بِما دونَ النُجومِ"
+      ],
+      poet: "المتنبي"
+    }
+  ];
+  var currentPoem = 0;
+  var fontLevel = 0;
+  var fontSizes = ["1.7rem", "2rem", "2.3rem", "1.4rem"];
+
+  document.getElementById("nextBtn").addEventListener("click", function() {
+    currentPoem = (currentPoem + 1) % poems.length;
+    var p = poems[currentPoem];
+    var lines = document.querySelectorAll(".poem-line");
+    var poetEl = document.querySelector(".poet-name");
+    lines[0].textContent = p.lines[0];
+    lines[1].textContent = p.lines[1];
+    poetEl.textContent = "— " + p.poet;
+
+    var frame = document.querySelector(".poem-frame");
+    frame.style.opacity = "0.6";
+    setTimeout(function() { frame.style.opacity = ""; }, 200);
+  });
+
+  document.getElementById("playBtn").addEventListener("click", function() {
+    var btn = this;
+    btn.classList.add("active");
+    btn.textContent = "❚❚";
+    setTimeout(function() {
+      btn.classList.remove("active");
+      btn.textContent = "▶";
+    }, 2000);
+  });
+
+  document.getElementById("saveBtn").addEventListener("click", function() {
+    var btn = this;
+    if (btn.classList.contains("active")) {
+      btn.classList.remove("active");
+      btn.textContent = "♡";
+    } else {
+      btn.classList.add("active");
+      btn.textContent = "♥";
+    }
+  });
+
+  document.getElementById("fontBtn").addEventListener("click", function() {
+    fontLevel = (fontLevel + 1) % fontSizes.length;
+    var lines = document.querySelectorAll(".poem-line");
+    var i;
+    for (i = 0; i < lines.length; i++) {
+      lines[i].style.fontSize = fontSizes[fontLevel];
+    }
+  });
+
+})();
+</script>
+</body>
+</html>

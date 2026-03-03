@@ -266,7 +266,7 @@
                 );
         }
 
-        /* ========== MAIN ========== */
+        /* ========== MAIN - Hourglass Frame ========== */
         .main-content {
             min-height: 100vh; padding: 2rem;
             display: none;
@@ -322,14 +322,30 @@
 
         .container { max-width: 900px; margin: 0 auto; }
 
-        /* Poem card */
+        /* Hourglass-shaped poem frame */
+        .hourglass-frame {
+            position: relative;
+            padding: 2rem 0;
+            margin-bottom: 2rem;
+        }
+
+        /* Top narrow section (hourglass top) */
+        .hourglass-frame::before,
+        .hourglass-frame::after {
+            content: '';
+            position: absolute; left: 50%; transform: translateX(-50%);
+            width: 2px; background: rgba(196,168,130,0.3);
+        }
+        .hourglass-frame::before { top: 0; height: 20px; }
+        .hourglass-frame::after { bottom: 0; height: 20px; }
+
+        /* Poem card within hourglass */
         .poem-card {
             padding: 3rem;
             background: rgba(45,36,25,0.6);
             border-radius: 16px;
             border: 2px solid rgba(196,168,130,0.2);
             box-shadow: 0 10px 40px var(--shadow-dark);
-            margin-bottom: 2rem;
             position: relative;
             overflow: hidden;
         }
@@ -338,26 +354,25 @@
             border-color: rgba(139,115,85,0.3);
             box-shadow: 0 10px 40px var(--shadow-light);
         }
-        .poem-card::before {
-            content: '';
-            position: absolute; bottom: -20px; left: 50%;
-            transform: translateX(-50%);
-            width: 200px; height: 200px;
-            border-radius: 50%;
-            border: 1px solid rgba(196,168,130,0.1);
-            box-shadow:
-                0 0 0 20px rgba(196,168,130,0.05),
-                0 0 0 40px rgba(196,168,130,0.03),
-                0 0 0 60px rgba(196,168,130,0.02);
-            pointer-events: none;
-        }
 
+        /* Sand grain reveal animation -- text appears line by line */
         .poem-text {
             font-family: 'Amiri', serif;
             font-size: 2rem; line-height: 2.5;
             text-align: center;
             margin-bottom: 2rem;
             position: relative; z-index: 1;
+        }
+        .poem-line {
+            display: block;
+            opacity: 0;
+            animation: sandReveal 0.8s ease forwards;
+        }
+        .poem-line:nth-child(1) { animation-delay: 0.3s; }
+        .poem-line:nth-child(2) { animation-delay: 0.8s; }
+        @keyframes sandReveal {
+            from { opacity: 0; transform: translateY(-8px); filter: blur(2px); }
+            to { opacity: 1; transform: translateY(0); filter: blur(0); }
         }
 
         .poem-author {
@@ -366,9 +381,10 @@
             text-align: center;
             color: var(--sand);
             position: relative; z-index: 1;
+            opacity: 0; animation: sandReveal 0.8s ease 1.3s forwards;
         }
 
-        /* Vertical controls */
+        /* Vertical controls (desktop) */
         .vertical-controls {
             position: fixed; right: 20px; top: 50%;
             transform: translateY(-50%);
@@ -401,31 +417,71 @@
             height: 1px; background: rgba(196, 168, 130, 0.15);
         }
 
-        /* Bottom bar (mobile) */
+        /* ===== CONTROLS: Timeline Sand Scrubber (Mobile) ===== */
         .bottom-bar {
             position: fixed; bottom: 0; left: 0; right: 0;
             display: none;
-            justify-content: space-around; align-items: center;
-            height: 56px;
+            flex-direction: column;
+            align-items: stretch;
+            z-index: 50;
             background: rgba(26, 22, 16, 0.95);
             backdrop-filter: blur(12px);
             border-top: 1px solid rgba(196, 168, 130, 0.15);
-            z-index: 50;
+            padding: 8px 1.5rem 12px;
         }
         body.light .bottom-bar {
             background: rgba(245, 240, 230, 0.95);
             border-color: rgba(139, 115, 85, 0.15);
         }
-        .bb-btn {
+
+        /* Timeline line with sand-grain dots */
+        .timeline-track {
+            position: relative;
+            height: 3px;
+            background: rgba(196,168,130,0.15);
+            border-radius: 2px;
+            margin-bottom: 10px;
+        }
+        .timeline-fill {
+            height: 100%; width: 35%;
+            background: var(--gold);
+            border-radius: 2px;
+        }
+        /* Sand grain dots along timeline */
+        .sand-dot {
+            position: absolute; top: 50%; transform: translateY(-50%);
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--sand);
+            opacity: 0.4;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .sand-dot:hover { opacity: 1; transform: translateY(-50%) scale(1.4); }
+        .sand-dot.active { opacity: 1; background: var(--gold); }
+        .sand-dot:nth-child(2) { left: 10%; }
+        .sand-dot:nth-child(3) { left: 25%; }
+        .sand-dot:nth-child(4) { left: 35%; }
+        .sand-dot:nth-child(5) { left: 50%; }
+        .sand-dot:nth-child(6) { left: 65%; }
+        .sand-dot:nth-child(7) { left: 80%; }
+        .sand-dot:nth-child(8) { left: 95%; }
+
+        /* Action buttons below timeline */
+        .timeline-actions {
+            display: flex; justify-content: space-around; align-items: center;
+        }
+        .timeline-btn {
             width: 44px; height: 44px;
             display: flex; align-items: center; justify-content: center;
             background: transparent; border: none; cursor: pointer;
             color: var(--sand);
             opacity: 0.5;
             transition: all 0.2s ease;
+            border-radius: 8px;
         }
-        .bb-btn:hover { opacity: 1; }
-        body.light .bb-btn { color: var(--stone); }
+        .timeline-btn:hover { opacity: 1; }
+        body.light .timeline-btn { color: var(--stone); }
 
         /* Walkthrough */
         .walkthrough {
@@ -609,13 +665,15 @@
         </header>
 
         <div class="container">
-            <div class="poem-card">
-                <div class="poem-text" lang="ar">
-                    أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ
-                    <br>
-                    فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
+            <!-- Hourglass Frame -->
+            <div class="hourglass-frame">
+                <div class="poem-card">
+                    <div class="poem-text" lang="ar">
+                        <span class="poem-line">أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ</span>
+                        <span class="poem-line">فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي</span>
+                    </div>
+                    <div class="poem-author" lang="ar">-- أحمد شوقي</div>
                 </div>
-                <div class="poem-author" lang="ar">-- أحمد شوقي</div>
             </div>
 
             <div class="walkthrough">
@@ -664,28 +722,33 @@
 
         <!-- Vertical controls (desktop) -->
         <div class="vertical-controls">
-            <button class="vc-btn" aria-label="Save"><i data-lucide="heart" style="width:18px;height:18px"></i></button>
+            <button class="vc-btn" aria-label="Next poem"><i data-lucide="shuffle" style="width:18px;height:18px"></i></button>
             <div class="vc-divider"></div>
-            <button class="vc-btn" aria-label="Font size"><i data-lucide="type" style="width:18px;height:18px"></i></button>
+            <button class="vc-btn" aria-label="Save poem"><i data-lucide="heart" style="width:18px;height:18px"></i></button>
             <div class="vc-divider"></div>
-            <button class="vc-btn" aria-label="Translate"><i data-lucide="languages" style="width:18px;height:18px"></i></button>
+            <button class="vc-btn" aria-label="Listen"><i data-lucide="headphones" style="width:18px;height:18px"></i></button>
             <div class="vc-divider"></div>
-            <button class="vc-btn" aria-label="Insights"><i data-lucide="book-open" style="width:18px;height:18px"></i></button>
-            <div class="vc-divider"></div>
-            <button class="vc-btn" aria-label="Italic"><i data-lucide="italic" style="width:18px;height:18px"></i></button>
-            <div class="vc-divider"></div>
-            <button class="vc-btn" aria-label="Sign in"><i data-lucide="log-in" style="width:18px;height:18px"></i></button>
-            <div class="vc-divider"></div>
-            <button class="vc-btn" aria-label="Settings"><i data-lucide="settings" style="width:18px;height:18px"></i></button>
+            <button class="vc-btn" aria-label="Share"><i data-lucide="share-2" style="width:18px;height:18px"></i></button>
         </div>
 
-        <!-- Bottom bar (mobile) -->
+        <!-- Timeline Sand Scrubber (mobile) -->
         <div class="bottom-bar">
-            <button class="bb-btn" aria-label="Listen"><i data-lucide="music" style="width:20px;height:20px"></i></button>
-            <button class="bb-btn" aria-label="Insights"><i data-lucide="lightbulb" style="width:20px;height:20px"></i></button>
-            <button class="bb-btn" aria-label="Refresh"><i data-lucide="refresh-cw" style="width:20px;height:20px"></i></button>
-            <button class="bb-btn" aria-label="Library"><i data-lucide="library" style="width:20px;height:20px"></i></button>
-            <button class="bb-btn" aria-label="Shuffle"><i data-lucide="shuffle" style="width:20px;height:20px"></i></button>
+            <div class="timeline-track">
+                <div class="timeline-fill"></div>
+                <div class="sand-dot active" style="left:5%"></div>
+                <div class="sand-dot" style="left:20%"></div>
+                <div class="sand-dot" style="left:35%"></div>
+                <div class="sand-dot" style="left:50%"></div>
+                <div class="sand-dot" style="left:65%"></div>
+                <div class="sand-dot" style="left:80%"></div>
+                <div class="sand-dot" style="left:95%"></div>
+            </div>
+            <div class="timeline-actions">
+                <button class="timeline-btn" aria-label="Next poem"><i data-lucide="shuffle" style="width:20px;height:20px"></i></button>
+                <button class="timeline-btn" aria-label="Save poem"><i data-lucide="heart" style="width:20px;height:20px"></i></button>
+                <button class="timeline-btn" aria-label="Listen"><i data-lucide="headphones" style="width:20px;height:20px"></i></button>
+                <button class="timeline-btn" aria-label="Share"><i data-lucide="share-2" style="width:20px;height:20px"></i></button>
+            </div>
         </div>
     </div>
 

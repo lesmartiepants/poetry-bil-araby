@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Logo Option 2 - Gold Gradient | Poetry بالعربي</title>
+  <link href="https://fonts.googleapis.com/css2?family=Forum&family=Reem+Kufi:wght@400;700&family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    :root {
+      --bg-primary: #0a0a0f;
+      --bg-secondary: #12111a;
+      --bg-card: #1a182e;
+      --text-primary: #ffffff;
+      --text-secondary: #a0a0b8;
+      --border-color: #2a2a3e;
+      --accent: #C5A059;
+      --gold-light: #e8d5a3;
+      --gold-mid: #C5A059;
+      --gold-dark: #8a6e2f;
+      --glow-opacity: 0.15;
+    }
+
+    [data-theme="light"] {
+      --bg-primary: #faf8f3;
+      --bg-secondary: #f0ede4;
+      --bg-card: #ffffff;
+      --text-primary: #1a1a2e;
+      --text-secondary: #5a5a72;
+      --border-color: #d5d0c4;
+      --glow-opacity: 0.08;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Tajawal', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+
+    .brand {
+      display: flex;
+      align-items: flex-end;
+      gap: 0.35em;
+      position: relative;
+    }
+
+    .brand-en {
+      font-family: 'Forum', cursive;
+      text-transform: lowercase;
+      letter-spacing: -0.05em;
+      line-height: 1;
+      background: linear-gradient(135deg, var(--gold-light) 0%, var(--gold-mid) 40%, var(--gold-dark) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .brand-ar {
+      font-family: 'Reem Kufi', sans-serif;
+      font-weight: 700;
+      line-height: 1;
+      color: var(--text-primary);
+      direction: rtl;
+    }
+
+    .brand-glow {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 120%;
+      height: 200%;
+      background: radial-gradient(ellipse, rgba(197, 160, 89, var(--glow-opacity)) 0%, transparent 70%);
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    /* Hero context */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-primary);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 500px;
+      height: 500px;
+      background: radial-gradient(ellipse, rgba(197, 160, 89, 0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .hero .brand {
+      justify-content: center;
+      z-index: 1;
+    }
+
+    .hero .brand-en {
+      font-size: clamp(3rem, 6vw, 4.5rem);
+    }
+
+    .hero .brand-ar {
+      font-size: clamp(1.875rem, 4vw, 3rem);
+    }
+
+    .hero .brand-icon {
+      width: clamp(1.5rem, 3vw, 2.25rem);
+      height: clamp(1.5rem, 3vw, 2.25rem);
+      color: var(--gold-mid);
+      margin-bottom: 0.15em;
+    }
+
+    .hero-label {
+      margin-top: 1.5rem;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      z-index: 1;
+    }
+
+    /* Section layout */
+    .section {
+      padding: 3rem 1.5rem;
+      border-top: 1px solid var(--border-color);
+    }
+
+    /* Nav context */
+    .nav-demo {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 0.75rem 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .nav-demo .brand-en {
+      font-size: 1.25rem;
+    }
+
+    .nav-demo .brand-ar {
+      font-size: 0.875rem;
+    }
+
+    .nav-demo .brand-icon {
+      width: 0.875rem;
+      height: 0.875rem;
+      color: var(--gold-mid);
+      margin-bottom: 0.1em;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    .nav-link {
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      text-decoration: none;
+    }
+
+    /* Card context */
+    .card-demo {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 2rem;
+      max-width: 360px;
+      margin: 0 auto;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card-demo::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--gold-mid), transparent);
+    }
+
+    .card-demo .brand {
+      margin-bottom: 1.25rem;
+    }
+
+    .card-demo .brand-en {
+      font-size: 1.5rem;
+    }
+
+    .card-demo .brand-ar {
+      font-size: 1.05rem;
+    }
+
+    .card-demo .brand-icon {
+      width: 1rem;
+      height: 1rem;
+      color: var(--gold-mid);
+      margin-bottom: 0.1em;
+    }
+
+    .card-poem {
+      font-family: 'Amiri', serif;
+      font-size: 1.125rem;
+      line-height: 1.9;
+      color: var(--text-primary);
+      direction: rtl;
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+
+    .card-poet {
+      font-family: 'Tajawal', sans-serif;
+      font-size: 0.8125rem;
+      color: var(--gold-mid);
+      text-align: center;
+    }
+
+    /* Theme toggle */
+    .theme-toggle {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: 1px solid var(--border-color);
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 100;
+      transition: background 0.3s ease;
+    }
+
+    .theme-toggle:hover {
+      background: var(--bg-card);
+    }
+
+    .theme-toggle svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    /* Context labels */
+    .context-badge {
+      display: inline-block;
+      font-size: 0.625rem;
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      color: var(--gold-mid);
+      border: 1px solid var(--gold-mid);
+      border-radius: 4px;
+      padding: 0.2em 0.6em;
+      margin-bottom: 1rem;
+    }
+
+    /* Icon visibility for theme toggle */
+    .icon-sun, .icon-moon {
+      display: none;
+    }
+
+    [data-mode="dark"] .icon-sun {
+      display: block;
+    }
+
+    [data-mode="light"] .icon-moon {
+      display: block;
+    }
+  </style>
+</head>
+<body data-mode="dark">
+  <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+    <span class="icon-sun"><i data-lucide="sun"></i></span>
+    <span class="icon-moon"><i data-lucide="moon"></i></span>
+  </button>
+
+  <!-- Hero Context -->
+  <section class="hero">
+    <div class="brand">
+      <div class="brand-glow"></div>
+      <i data-lucide="pen-tool" class="brand-icon"></i>
+      <span class="brand-en">poetry</span>
+      <span class="brand-ar" dir="rtl" lang="ar">بالعربي</span>
+    </div>
+    <p class="hero-label">Option 2 -- Gold Gradient</p>
+  </section>
+
+  <!-- Nav Context -->
+  <section class="section">
+    <span class="context-badge">Navigation</span>
+    <div class="nav-demo">
+      <div class="brand">
+        <i data-lucide="pen-tool" class="brand-icon"></i>
+        <span class="brand-en">poetry</span>
+        <span class="brand-ar" dir="rtl" lang="ar">بالعربي</span>
+      </div>
+      <nav class="nav-links">
+        <a href="#" class="nav-link">Discover</a>
+        <a href="#" class="nav-link">Poets</a>
+      </nav>
+    </div>
+  </section>
+
+  <!-- Card Context -->
+  <section class="section">
+    <span class="context-badge">Card</span>
+    <div class="card-demo">
+      <div class="brand">
+        <i data-lucide="pen-tool" class="brand-icon"></i>
+        <span class="brand-en">poetry</span>
+        <span class="brand-ar" dir="rtl" lang="ar">بالعربي</span>
+      </div>
+      <p class="card-poem" lang="ar" dir="rtl">
+        وما نيلُ المطالبِ بالتمنّي<br>
+        ولكنْ تُؤخَذُ الدنيا غِلابا
+      </p>
+      <p class="card-poet" lang="ar" dir="rtl">-- أحمد شوقي</p>
+    </div>
+  </section>
+
+  <script>
+    lucide.createIcons();
+
+    const toggle = document.getElementById('themeToggle');
+    let isDark = true;
+
+    toggle.addEventListener('click', function() {
+      isDark = !isDark;
+      document.documentElement.setAttribute('data-theme', isDark ? '' : 'light');
+      document.body.setAttribute('data-mode', isDark ? 'dark' : 'light');
+    });
+  </script>
+</body>
+</html>

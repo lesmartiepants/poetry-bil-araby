@@ -163,130 +163,179 @@ body.light { background: var(--ivory); color: #1a2a1f; }
 }
 
 /* ===== MAIN APP ===== */
-.app { display: none; min-height: 100vh; padding-bottom: 80px; }
+/* Biomorphic — organic blob shapes contain the poem, flowing borders */
+.app { display: none; min-height: 100vh; position: relative; overflow: hidden; }
 .app.active { display: block; }
 
-/* Top bar */
-.app-top {
-  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 12px 20px; background: rgba(10,61,47,0.9);
-  backdrop-filter: blur(12px); border-bottom: 1px solid var(--gold-dim);
+/* Organic background blobs */
+.bio-bg {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
+}
+.bio-bg-blob {
+  position: absolute; border-radius: 50%; filter: blur(80px);
+  animation: bioPulse 8s ease-in-out infinite alternate;
+}
+.bio-bg-blob-1 {
+  width: 400px; height: 400px;
+  background: rgba(26, 107, 90, 0.2);
+  top: -10%; left: -10%;
+}
+.bio-bg-blob-2 {
+  width: 350px; height: 350px;
+  background: rgba(197, 160, 89, 0.1);
+  bottom: -5%; right: -15%;
+  animation-delay: 3s;
+}
+@keyframes bioPulse {
+  from { transform: scale(1) translate(0, 0); }
+  to { transform: scale(1.15) translate(10px, -10px); }
+}
+
+/* Organic blob poem container via SVG clip */
+.bio-reader {
+  position: relative; z-index: 2;
+  min-height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+  padding: 2rem 20px;
+}
+
+.bio-poem-container {
+  position: relative;
+  max-width: 400px; width: 100%;
+  padding: 2.5rem 2rem;
+  background: linear-gradient(135deg, rgba(10, 61, 47, 0.6), rgba(14, 88, 64, 0.4));
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(197, 160, 89, 0.15);
+  /* Organic flowing border radius */
+  border-radius: 60% 40% 50% 50% / 45% 55% 45% 55%;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+  animation: blobMorph 12s ease-in-out infinite;
+}
+@keyframes blobMorph {
+  0% { border-radius: 60% 40% 50% 50% / 45% 55% 45% 55%; }
+  33% { border-radius: 45% 55% 40% 60% / 55% 45% 55% 45%; }
+  66% { border-radius: 50% 50% 55% 45% / 40% 60% 50% 50%; }
+  100% { border-radius: 60% 40% 50% 50% / 45% 55% 45% 55%; }
+}
+
+.bio-poet {
+  font-family: 'Tajawal', sans-serif;
+  font-size: 12px; font-weight: 500;
+  letter-spacing: 0.2em; color: var(--gold);
+  text-align: center; direction: ltr;
+  margin-bottom: 0.25rem;
+}
+.bio-poet-ar {
+  font-family: 'Amiri', serif;
+  font-size: 14px; color: var(--muted);
+  text-align: center; direction: rtl;
+  margin-bottom: 1.5rem;
+}
+
+.bio-verses {
+  font-family: 'Amiri', serif;
+  font-size: clamp(1.25rem, 3.5vw, 1.5rem);
+  line-height: 2.2;
+  color: var(--ivory);
+  direction: rtl; text-align: center;
+  margin-bottom: 1rem;
+}
+
+.bio-translation {
+  font-family: 'Tajawal', sans-serif;
+  font-size: 13px; color: var(--muted);
+  text-align: center; direction: ltr;
+  line-height: 1.6;
+}
+
+/* ===== CONTROLS ===== */
+/* Organic wave pull-up — controls sit on the wave crest */
+
+.wave-trigger {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  z-index: 55; display: flex; justify-content: center;
+  padding: 14px 0 20px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.wave-trigger-bar {
+  width: 40px; height: 4px;
+  background: rgba(197, 160, 89, 0.3);
+  border-radius: 2px;
+  transition: background 0.3s ease;
+}
+.wave-trigger:hover .wave-trigger-bar,
+.wave-trigger:active .wave-trigger-bar {
+  background: var(--gold);
+}
+
+.wave-overlay {
+  position: fixed; inset: 0; z-index: 58;
+  background: rgba(10, 61, 47, 0.4);
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.wave-overlay.visible { opacity: 1; pointer-events: auto; }
+
+.wave-panel {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  z-index: 60;
+  transform: translateY(100%);
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.wave-panel.open { transform: translateY(0); }
+
+/* SVG wave shape at top */
+.wave-shape {
+  display: block; width: 100%;
+  margin-bottom: -2px;
+}
+.wave-shape path {
+  fill: rgba(10, 61, 47, 0.85);
+}
+
+.wave-content {
+  background: rgba(10, 61, 47, 0.85);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  padding: 0.5rem 1.5rem 2rem;
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+}
+
+.wave-action {
+  display: flex; flex-direction: column;
+  align-items: center; gap: 6px;
+  padding: 12px 8px;
+  min-height: 52px; min-width: 52px;
+  background: transparent; border: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.2s ease;
+}
+.wave-action:active { transform: scale(0.95); }
+
+.wave-action-icon {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: rgba(197, 160, 89, 0.1);
+  border: 1px solid rgba(197, 160, 89, 0.2);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--gold);
+  transition: all 0.2s ease;
+}
+.wave-action:hover .wave-action-icon,
+.wave-action:active .wave-action-icon {
+  background: rgba(197, 160, 89, 0.2);
+  border-color: var(--gold);
+}
+
+.wave-action-label {
+  font-family: 'Tajawal', sans-serif;
+  font-size: 10px; letter-spacing: 0.1em;
+  color: var(--muted);
   direction: ltr;
 }
-body.light .app-top { background: rgba(253,252,248,0.9); }
-.app-top-brand { display: flex; align-items: flex-end; gap: 6px; }
-.app-top-brand-en {
-  font-family: 'Forum', serif; font-size: 20px;
-  letter-spacing: -0.05em; color: var(--gold); line-height: 1;
-}
-.app-top-brand-ar {
-  font-family: 'Reem Kufi', sans-serif; font-weight: 700;
-  font-size: 14px; color: var(--gold); line-height: 1;
-}
-.app-top-actions { display: flex; gap: 8px; }
-.app-top-btn {
-  width: 40px; height: 40px; display: flex; align-items: center;
-  justify-content: center; background: transparent;
-  border: 1px solid var(--gold-dim); border-radius: 8px;
-  color: var(--muted); cursor: pointer; transition: all 0.2s;
-}
-.app-top-btn:hover { color: var(--gold); border-color: var(--gold); }
-
-/* Reader */
-.reader { max-width: 720px; margin: 0 auto; padding: 80px 20px 40px; }
-
-/* Poem card with arabesque draw animation */
-.poem-card {
-  position: relative; background: linear-gradient(135deg, #072a1f, #0d4434);
-  border-radius: 20px; padding: 3rem 2.5rem; overflow: visible;
-  transition: all 0.5s ease; direction: rtl;
-  opacity: 0; animation: fadeIn 0.6s ease 0.3s forwards;
-}
-body.light .poem-card { background: white; box-shadow: 0 10px 40px rgba(10,61,47,0.1); }
-@keyframes fadeIn { to { opacity: 1; } }
-
-.arabesque-border {
-  position: absolute; inset: -4px; pointer-events: none; z-index: 0;
-}
-.arabesque-border rect { fill: none; stroke: var(--gold); stroke-width: 2.5; rx: 20; }
-.arabesque-border .pattern-line {
-  fill: none; stroke: var(--gold); stroke-width: 1.5;
-  transition: stroke-dashoffset 3s ease;
-}
-.poem-content { position: relative; z-index: 1; }
-
-.poem-meta { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
-.poet-avatar {
-  width: 44px; height: 44px; border-radius: 50%;
-  background: linear-gradient(135deg, rgba(197,160,89,0.2), rgba(26,107,90,0.15));
-  display: flex; align-items: center; justify-content: center;
-  color: var(--gold); font-family: 'Amiri', serif; font-size: 20px;
-}
-.poet-info h2 { font-family: 'Tajawal', sans-serif; font-size: 16px; font-weight: 500; }
-.poet-info span { font-size: 13px; color: var(--muted); }
-
-.poem-verses {
-  font-family: 'Amiri', serif; font-size: clamp(20px, 3.5vw, 28px);
-  line-height: 2.2; text-align: center; padding: 20px 0;
-  border-top: 1px solid var(--gold-dim); border-bottom: 1px solid var(--gold-dim);
-}
-.verse-line { opacity: 0; animation: fadeInUp 0.5s ease forwards; }
-.verse-line:nth-child(1) { animation-delay: 0.5s; }
-.verse-line:nth-child(2) { animation-delay: 0.8s; }
-
-.hemistich-divider {
-  display: inline-block; width: 40px; height: 1px; background: var(--gold);
-  vertical-align: middle; margin: 0 12px; opacity: 0.4;
-}
-
-.poem-actions { display: flex; gap: 12px; margin-top: 24px; justify-content: center; }
-.poem-action-btn {
-  display: flex; align-items: center; gap: 6px; padding: 10px 16px;
-  background: transparent; border: 1px solid var(--gold-dim); border-radius: 10px;
-  color: var(--muted); font-family: 'Tajawal', sans-serif; font-size: 13px;
-  cursor: pointer; transition: all 0.2s;
-}
-.poem-action-btn:hover { color: var(--gold); border-color: var(--gold); }
-
-/* Vertical Rail */
-.vertical-rail {
-  position: fixed; right: 16px; top: 50%; transform: translateY(-50%);
-  display: flex; flex-direction: column; gap: 4px; z-index: 40; direction: ltr;
-}
-.rail-btn {
-  width: 44px; height: 44px; display: flex; align-items: center;
-  justify-content: center; background: rgba(10,61,47,0.8);
-  border: 1px solid var(--gold-dim); border-radius: 10px;
-  color: var(--muted); cursor: pointer; transition: all 0.2s;
-  backdrop-filter: blur(8px); position: relative;
-}
-.rail-btn:hover { color: var(--gold); border-color: var(--gold); transform: scale(1.08); }
-.rail-btn .tooltip {
-  position: absolute; right: 52px; top: 50%; transform: translateY(-50%);
-  background: rgba(10,61,47,0.9); border: 1px solid var(--gold-dim);
-  color: var(--ivory); font-family: 'Tajawal', sans-serif; font-size: 12px;
-  padding: 4px 10px; border-radius: 6px; white-space: nowrap;
-  opacity: 0; pointer-events: none; transition: opacity 0.2s;
-}
-.rail-btn:hover .tooltip { opacity: 1; }
-
-/* Bottom Nav */
-.bottom-nav {
-  position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
-  display: flex; align-items: center; justify-content: center; gap: 4px;
-  padding: 10px 20px; background: rgba(10,61,47,0.9);
-  backdrop-filter: blur(16px); border-top: 1px solid var(--gold-dim); direction: ltr;
-}
-body.light .bottom-nav { background: rgba(253,252,248,0.95); }
-.nav-item {
-  display: flex; flex-direction: column; align-items: center; gap: 4px;
-  padding: 8px 16px; background: transparent; border: none;
-  color: var(--muted); cursor: pointer; font-family: 'Tajawal', sans-serif;
-  font-size: 11px; transition: color 0.2s; min-width: 60px;
-}
-.nav-item.active { color: var(--gold); }
-.nav-item:hover { color: var(--gold); }
 
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(20px); }
@@ -299,12 +348,11 @@ body.light .bottom-nav { background: rgba(253,252,248,0.95); }
   .splash { display: none !important; }
   .walkthrough { display: none !important; }
   .app { display: block !important; }
+  .bio-poem-container { border-radius: 30px; }
 }
 @media (max-width: 768px) {
-  .vertical-rail { display: none; }
-  .reader { padding: 70px 16px 40px; }
-  .poem-card { padding: 1.5rem; }
-  .poem-actions { flex-wrap: wrap; }
+  .bio-poem-container { padding: 2rem 1.5rem; }
+  .wave-content { gap: 1.5rem; padding: 0.5rem 1rem 1.5rem; }
 }
 </style>
 </head>
@@ -358,72 +406,63 @@ body.light .bottom-nav { background: rgba(253,252,248,0.95); }
   <div class="bio-hint">Tap anywhere to continue</div>
 </div>
 
-<!-- Main App -->
+<!-- ===== MAIN APP ===== -->
 <div class="app" id="app">
-  <header class="app-top">
-    <div class="app-top-brand">
-      <span class="app-top-brand-en">poetry</span>
-      <span class="app-top-brand-ar">بالعربي</span>
-    </div>
-    <div class="app-top-actions">
-      <button class="app-top-btn" id="themeToggle" aria-label="Toggle theme">
-        <i data-lucide="sun" style="width:18px;height:18px"></i>
-      </button>
-      <button class="app-top-btn" aria-label="Settings">
-        <i data-lucide="settings" style="width:18px;height:18px"></i>
-      </button>
-    </div>
-  </header>
-
-  <nav class="vertical-rail">
-    <button class="rail-btn"><i data-lucide="heart" style="width:18px;height:18px"></i><span class="tooltip">Save</span></button>
-    <button class="rail-btn"><i data-lucide="type" style="width:18px;height:18px"></i><span class="tooltip">Font size</span></button>
-    <button class="rail-btn"><i data-lucide="languages" style="width:18px;height:18px"></i><span class="tooltip">Transliteration</span></button>
-    <button class="rail-btn"><i data-lucide="book-open" style="width:18px;height:18px"></i><span class="tooltip">Tafsir</span></button>
-    <button class="rail-btn"><i data-lucide="italic" style="width:18px;height:18px"></i><span class="tooltip">Tashkeel</span></button>
-    <button class="rail-btn"><i data-lucide="log-in" style="width:18px;height:18px"></i><span class="tooltip">Sign in</span></button>
-    <button class="rail-btn"><i data-lucide="settings" style="width:18px;height:18px"></i><span class="tooltip">Settings</span></button>
-  </nav>
-
-  <div class="reader">
-    <article class="poem-card" id="poemCard">
-      <div class="poem-content">
-        <div class="poem-meta">
-          <div class="poet-avatar">م</div>
-          <div class="poet-info">
-            <h2>المتنبي</h2>
-            <span>Al-Mutanabbi</span>
-          </div>
-        </div>
-        <div class="poem-verses" dir="rtl" lang="ar">
-          <div class="verse-line">
-            عَلَى قَدْرِ أَهْلِ العَزْمِ تَأْتِي العَزَائِمُ
-            <span class="hemistich-divider"></span>
-            وَتَأْتِي عَلَى قَدْرِ الكِرَامِ المَكَارِمُ
-          </div>
-        </div>
-        <div class="poem-actions">
-          <button class="poem-action-btn">
-            <i data-lucide="copy" style="width:16px;height:16px"></i> نسخ
-          </button>
-          <button class="poem-action-btn">
-            <i data-lucide="share-2" style="width:16px;height:16px"></i> مشاركة
-          </button>
-          <button class="poem-action-btn">
-            <i data-lucide="bookmark" style="width:16px;height:16px"></i> حفظ
-          </button>
-        </div>
-      </div>
-    </article>
+  <!-- Biomorphic background blobs -->
+  <div class="bio-bg">
+    <div class="bio-bg-blob bio-bg-blob-1"></div>
+    <div class="bio-bg-blob bio-bg-blob-2"></div>
   </div>
 
-  <nav class="bottom-nav">
-    <button class="nav-item"><i data-lucide="music" style="width:20px;height:20px"></i>Music</button>
-    <button class="nav-item"><i data-lucide="lightbulb" style="width:20px;height:20px"></i>Insight</button>
-    <button class="nav-item active"><i data-lucide="refresh-cw" style="width:20px;height:20px"></i>Refresh</button>
-    <button class="nav-item"><i data-lucide="library" style="width:20px;height:20px"></i>Library</button>
-    <button class="nav-item"><i data-lucide="shuffle" style="width:20px;height:20px"></i>Shuffle</button>
-  </nav>
+  <!-- Organic blob poem container -->
+  <main class="bio-reader">
+    <div class="bio-poem-container">
+      <div class="bio-poet">Al-Mutanabbi</div>
+      <div class="bio-poet-ar" lang="ar" dir="rtl">المتنبي</div>
+      <div class="bio-verses" lang="ar" dir="rtl">
+        عَلَى قَدْرِ أَهْلِ العَزْمِ تَأْتِي العَزَائِمُ<br>
+        وَتَأْتِي عَلَى قَدْرِ الكِرَامِ المَكَارِمُ
+      </div>
+      <div class="bio-translation">
+        Great deeds come to those of great resolve,<br>
+        and noble acts to those of noble character.
+      </div>
+    </div>
+  </main>
+
+  <!-- ===== CONTROLS ===== -->
+  <!-- Pull-up trigger -->
+  <div class="wave-trigger" id="waveTrigger" aria-label="Open controls">
+    <div class="wave-trigger-bar"></div>
+  </div>
+
+  <!-- Overlay -->
+  <div class="wave-overlay" id="waveOverlay"></div>
+
+  <!-- Organic wave pull-up panel -->
+  <div class="wave-panel" id="wavePanel">
+    <svg class="wave-shape" viewBox="0 0 400 30" preserveAspectRatio="none">
+      <path d="M0,30 C50,5 100,25 150,10 C200,-5 250,20 300,8 C350,-2 380,18 400,12 L400,30 Z"/>
+    </svg>
+    <div class="wave-content">
+      <button class="wave-action" data-action="next">
+        <div class="wave-action-icon"><i data-lucide="arrow-right" style="width:16px;height:16px"></i></div>
+        <span class="wave-action-label">Next</span>
+      </button>
+      <button class="wave-action" data-action="save">
+        <div class="wave-action-icon"><i data-lucide="heart" style="width:16px;height:16px"></i></div>
+        <span class="wave-action-label">Save</span>
+      </button>
+      <button class="wave-action" data-action="listen">
+        <div class="wave-action-icon"><i data-lucide="headphones" style="width:16px;height:16px"></i></div>
+        <span class="wave-action-label">Listen</span>
+      </button>
+      <button class="wave-action" data-action="share">
+        <div class="wave-action-icon"><i data-lucide="share-2" style="width:16px;height:16px"></i></div>
+        <span class="wave-action-label">Share</span>
+      </button>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -514,7 +553,6 @@ document.getElementById('walkthrough').addEventListener('click', function() {
       wt.style.display = 'none';
       document.getElementById('app').classList.add('active');
       if (typeof lucide !== 'undefined') lucide.createIcons();
-      setTimeout(buildArabesque, 100);
     }, 600);
   } else {
     bioCards.forEach(function(c) { c.classList.remove('active'); });
@@ -525,62 +563,43 @@ document.getElementById('walkthrough').addEventListener('click', function() {
   }
 });
 
-/* Arabesque SVG border with draw animation */
-function buildArabesque() {
-  var card = document.getElementById('poemCard');
-  var w = card.offsetWidth + 8;
-  var h = card.offsetHeight + 8;
-  var ns = 'http://www.w3.org/2000/svg';
-  var svg = document.createElementNS(ns, 'svg');
-  svg.setAttribute('class', 'arabesque-border');
-  svg.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
-  svg.setAttribute('width', w);
-  svg.setAttribute('height', h);
+/* ===== ORGANIC WAVE CONTROLS ===== */
+var wavePanel = document.getElementById('wavePanel');
+var waveOverlay = document.getElementById('waveOverlay');
+var waveTrigger = document.getElementById('waveTrigger');
 
-  var rect = document.createElementNS(ns, 'rect');
-  rect.setAttribute('x', '2'); rect.setAttribute('y', '2');
-  rect.setAttribute('width', w - 4); rect.setAttribute('height', h - 4);
-  rect.setAttribute('rx', '20');
-  svg.appendChild(rect);
-
-  var margin = 14;
-  var cw = w - margin * 2;
-  var ch = h - margin * 2;
-  var d = 'M ' + margin + ' ' + (margin + 30);
-  var scW = cw / 8;
-  for (var i = 0; i < 8; i++) {
-    d += ' C ' + (margin + i * scW + scW * 0.3) + ' ' + (margin - 6) + ', ' +
-         (margin + i * scW + scW * 0.7) + ' ' + (margin - 6) + ', ' +
-         (margin + (i + 1) * scW) + ' ' + (margin + 30);
-  }
-  var rH = ch / 6;
-  for (var j = 0; j < 6; j++) {
-    d += ' C ' + (w - margin + 6) + ' ' + (margin + 30 + j * rH + rH * 0.3) + ', ' +
-         (w - margin + 6) + ' ' + (margin + 30 + j * rH + rH * 0.7) + ', ' +
-         (w - margin) + ' ' + (margin + 30 + (j + 1) * rH);
-  }
-
-  var path = document.createElementNS(ns, 'path');
-  path.setAttribute('class', 'pattern-line');
-  path.setAttribute('d', d);
-  svg.appendChild(path);
-
-  var old = card.querySelector('.arabesque-border');
-  if (old) old.parentNode.removeChild(old);
-  card.insertBefore(svg, card.firstChild);
-
-  var len = path.getTotalLength();
-  path.style.strokeDasharray = len;
-  path.style.strokeDashoffset = len;
-  path.getBoundingClientRect();
-  requestAnimationFrame(function() {
-    path.style.strokeDashoffset = '0';
-  });
+function openWave() {
+  wavePanel.classList.add('open');
+  waveOverlay.classList.add('visible');
+  waveTrigger.style.display = 'none';
+}
+function closeWave() {
+  wavePanel.classList.remove('open');
+  waveOverlay.classList.remove('visible');
+  waveTrigger.style.display = '';
 }
 
-/* Theme toggle */
-document.getElementById('themeToggle').addEventListener('click', function() {
-  document.body.classList.toggle('light');
+waveTrigger.addEventListener('click', openWave);
+waveTrigger.addEventListener('touchstart', function(e) {
+  e.preventDefault(); openWave();
+});
+waveOverlay.addEventListener('click', closeWave);
+
+/* Touch feedback on wave actions */
+document.querySelectorAll('.wave-action').forEach(function(action) {
+  action.addEventListener('touchstart', function() {
+    var icon = action.querySelector('.wave-action-icon');
+    if (icon) {
+      icon.style.background = 'rgba(197, 160, 89, 0.25)';
+      icon.style.borderColor = 'var(--gold)';
+    }
+  }, { passive: true });
+  action.addEventListener('touchend', function() {
+    var icon = action.querySelector('.wave-action-icon');
+    setTimeout(function() {
+      if (icon) { icon.style.background = ''; icon.style.borderColor = ''; }
+    }, 150);
+  }, { passive: true });
 });
 
 document.addEventListener('DOMContentLoaded', function() {

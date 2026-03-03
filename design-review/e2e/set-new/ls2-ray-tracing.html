@@ -223,14 +223,80 @@
     letter-spacing: normal;
   }
 
-  /* ===== ONBOARDING ===== */
+  /* ===== ONBOARDING (Ray Tracing / Light Architecture) ===== */
   #onboarding {
     display: none;
-    background: var(--bg);
+    background: #000000;
     position: fixed;
     inset: 0;
     z-index: 90;
+    cursor: pointer;
+    overflow: hidden;
   }
+
+  /* Geometric light lines that frame the text */
+  .ray-frame {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  /* Horizontal converging lines */
+  .ray-line {
+    position: absolute;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 245, 220, 0.3), transparent);
+    transition: all 1s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .ray-line-v {
+    position: absolute;
+    width: 1px;
+    background: linear-gradient(180deg, transparent, rgba(255, 245, 220, 0.25), transparent);
+    transition: all 1s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Step 0: lines converge from edges toward center-top */
+  .ray-frame[data-step="0"] .ray-line:nth-child(1) { top: 30%; left: 0; width: 40%; transform: rotate(3deg); }
+  .ray-frame[data-step="0"] .ray-line:nth-child(2) { top: 35%; right: 0; width: 35%; transform: rotate(-2deg); }
+  .ray-frame[data-step="0"] .ray-line:nth-child(3) { top: 65%; left: 5%; width: 90%; opacity: 0.15; }
+  .ray-frame[data-step="0"] .ray-line-v:nth-child(4) { left: 50%; top: 0; height: 25%; }
+  .ray-frame[data-step="0"] .ray-line-v:nth-child(5) { left: 25%; top: 10%; height: 80%; opacity: 0.08; }
+  .ray-frame[data-step="0"] .ray-line-v:nth-child(6) { left: 75%; top: 10%; height: 80%; opacity: 0.08; }
+
+  /* Step 1: lines refract to center-right */
+  .ray-frame[data-step="1"] .ray-line:nth-child(1) { top: 40%; left: 10%; width: 80%; transform: rotate(-1deg); }
+  .ray-frame[data-step="1"] .ray-line:nth-child(2) { top: 55%; left: 20%; width: 60%; transform: rotate(1deg); }
+  .ray-frame[data-step="1"] .ray-line:nth-child(3) { top: 25%; left: 30%; width: 40%; opacity: 0.2; }
+  .ray-frame[data-step="1"] .ray-line-v:nth-child(4) { left: 65%; top: 15%; height: 70%; }
+  .ray-frame[data-step="1"] .ray-line-v:nth-child(5) { left: 35%; top: 20%; height: 60%; opacity: 0.12; }
+  .ray-frame[data-step="1"] .ray-line-v:nth-child(6) { left: 50%; top: 5%; height: 90%; opacity: 0.06; }
+
+  /* Step 2: lines converge to center, forming a frame */
+  .ray-frame[data-step="2"] .ray-line:nth-child(1) { top: 28%; left: 15%; width: 70%; transform: rotate(0deg); opacity: 0.4; }
+  .ray-frame[data-step="2"] .ray-line:nth-child(2) { top: 72%; left: 15%; width: 70%; transform: rotate(0deg); opacity: 0.4; }
+  .ray-frame[data-step="2"] .ray-line:nth-child(3) { top: 50%; left: 10%; width: 80%; opacity: 0.08; }
+  .ray-frame[data-step="2"] .ray-line-v:nth-child(4) { left: 15%; top: 28%; height: 44%; opacity: 0.35; }
+  .ray-frame[data-step="2"] .ray-line-v:nth-child(5) { left: 85%; top: 28%; height: 44%; opacity: 0.35; }
+  .ray-frame[data-step="2"] .ray-line-v:nth-child(6) { left: 50%; top: 20%; height: 60%; opacity: 0.06; }
+
+  /* Central glow that shifts */
+  .ray-glow {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    transition: background 1s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .ray-glow[data-step="0"] {
+    background: radial-gradient(ellipse 30% 35% at 50% 35%, rgba(255, 245, 220, 0.08), transparent 70%);
+  }
+  .ray-glow[data-step="1"] {
+    background: radial-gradient(ellipse 35% 30% at 55% 48%, rgba(255, 245, 220, 0.10), transparent 70%);
+  }
+  .ray-glow[data-step="2"] {
+    background: radial-gradient(ellipse 40% 40% at 50% 50%, rgba(255, 245, 220, 0.12), transparent 60%);
+  }
+
   .onboard-cards {
     position: relative;
     z-index: 2;
@@ -240,66 +306,67 @@
   }
   .onboard-card {
     display: none;
-    animation: cardFadeIn 0.6s ease;
   }
-  .onboard-card.active { display: block; }
-  @keyframes cardFadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
+  .onboard-card.active {
+    display: block;
+    animation: rayReveal 0.7s ease-out;
+  }
+  @keyframes rayReveal {
+    from { opacity: 0; transform: scale(0.95); filter: brightness(0.2); }
+    to { opacity: 1; transform: scale(1); filter: brightness(1); }
   }
   .onboard-icon {
-    width: 56px; height: 56px;
+    width: 52px; height: 52px;
     margin: 0 auto 1.5rem;
-    border: 2px solid var(--warm);
-    border-radius: 50%;
+    border: 1px solid rgba(255, 245, 220, 0.2);
+    border-radius: 2px;
     display: flex; align-items: center; justify-content: center;
-    color: var(--warm);
+    color: rgba(255, 245, 220, 0.6);
   }
   .onboard-title {
-    font-size: 1.5rem; font-weight: 700;
-    margin-bottom: 0.5rem; color: var(--text);
+    font-size: 1.4rem; font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: rgba(231, 229, 228, 0.95);
+    letter-spacing: 0.02em;
   }
   .onboard-title-ar {
     font-family: 'Reem Kufi', sans-serif;
-    font-size: 1.25rem;
-    color: var(--warm);
+    font-size: 1.2rem;
+    color: rgba(251, 191, 36, 0.8);
     margin-bottom: 1rem;
     direction: rtl;
   }
   .onboard-desc {
     font-size: 0.95rem; line-height: 1.7;
-    color: var(--text-dim);
+    color: rgba(231, 229, 228, 0.5);
     margin-bottom: 0.5rem;
   }
   .onboard-desc-ar {
     font-size: 0.95rem; line-height: 1.7;
-    color: var(--text-dim);
+    color: rgba(231, 229, 228, 0.35);
     direction: rtl;
     margin-bottom: 2rem;
   }
   .onboard-dots {
     display: flex; justify-content: center;
-    gap: 8px; margin-bottom: 1.5rem;
+    gap: 12px; margin-bottom: 1.5rem;
   }
   .onboard-dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: rgba(251, 191, 36, 0.3);
-    transition: background 0.3s;
+    width: 20px; height: 2px;
+    border-radius: 1px;
+    background: rgba(255, 245, 220, 0.15);
+    transition: all 0.6s ease;
   }
-  .onboard-dot.active { background: var(--warm); }
+  .onboard-dot.active {
+    background: rgba(255, 245, 220, 0.6);
+    width: 32px;
+  }
   .onboard-tap {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     text-transform: uppercase;
-    letter-spacing: 0.2em;
-    color: var(--text-dim);
+    letter-spacing: 0.3em;
+    color: rgba(231, 229, 228, 0.25);
     cursor: pointer;
-  }
-  #onboarding::before {
-    content: '';
-    position: absolute; inset: 0;
-    background: radial-gradient(circle at 50% 50%, rgba(251, 191, 36, 0.08), transparent 60%);
-    pointer-events: none;
   }
 
   /* ===== MAIN APP ===== */
@@ -458,42 +525,52 @@
     </div>
   </div>
 
-  <!-- ===== ONBOARDING ===== -->
+  <!-- ===== ONBOARDING (Light Architecture) ===== -->
   <div class="screen" id="onboarding">
+    <div class="ray-glow" data-step="0"></div>
+    <div class="ray-frame" data-step="0">
+      <div class="ray-line"></div>
+      <div class="ray-line"></div>
+      <div class="ray-line"></div>
+      <div class="ray-line-v"></div>
+      <div class="ray-line-v"></div>
+      <div class="ray-line-v"></div>
+    </div>
+
     <div class="onboard-cards">
       <div class="onboard-card active" data-card="0">
         <div class="onboard-icon">
-          <i data-lucide="book-open" style="width:24px;height:24px"></i>
+          <i data-lucide="book-open" style="width:22px;height:22px"></i>
         </div>
-        <div class="onboard-title">Discover Poetry</div>
-        <div class="onboard-title-ar" lang="ar">اكتشف الشعر العربي</div>
-        <div class="onboard-desc">Over 84,000 poems from across the ages, ready for you to explore.</div>
-        <div class="onboard-desc-ar" lang="ar">أكثر من 84,000 قصيدة من مختلف العصور بانتظارك</div>
+        <div class="onboard-title">Discover Arabic Poetry</div>
+        <div class="onboard-title-ar" lang="ar" dir="rtl">اكتشف الشعر العربي</div>
+        <div class="onboard-desc">Over 84,000 poems traced in light, spanning centuries of tradition.</div>
+        <div class="onboard-desc-ar" lang="ar" dir="rtl">أكثر من 84,000 قصيدة مرسومة بالنور عبر قرون من التراث</div>
       </div>
       <div class="onboard-card" data-card="1">
         <div class="onboard-icon">
-          <i data-lucide="headphones" style="width:24px;height:24px"></i>
+          <i data-lucide="headphones" style="width:22px;height:22px"></i>
         </div>
         <div class="onboard-title">Listen & Feel</div>
-        <div class="onboard-title-ar" lang="ar">استمع واشعر</div>
-        <div class="onboard-desc">AI-powered recitation brings each verse to life with natural voice.</div>
-        <div class="onboard-desc-ar" lang="ar">إلقاء صوتي بالذكاء الاصطناعي يجعل كل بيت ينبض بالحياة</div>
+        <div class="onboard-title-ar" lang="ar" dir="rtl">استمع واشعر</div>
+        <div class="onboard-desc">AI recitation refracts each verse into sound and emotion.</div>
+        <div class="onboard-desc-ar" lang="ar" dir="rtl">إلقاء صوتي بالذكاء الاصطناعي يحول كل بيت إلى صوت وشعور</div>
       </div>
       <div class="onboard-card" data-card="2">
         <div class="onboard-icon">
-          <i data-lucide="sparkles" style="width:24px;height:24px"></i>
+          <i data-lucide="sparkles" style="width:22px;height:22px"></i>
         </div>
         <div class="onboard-title">AI Insights</div>
-        <div class="onboard-title-ar" lang="ar">رؤى ذكية</div>
-        <div class="onboard-desc">Deep analysis and explanations powered by AI to unlock every verse.</div>
-        <div class="onboard-desc-ar" lang="ar">تحليل وشرح بالذكاء الاصطناعي لفهم كل بيت</div>
+        <div class="onboard-title-ar" lang="ar" dir="rtl">رؤى ذكية</div>
+        <div class="onboard-desc">Deep analysis converges light on hidden meanings in every verse.</div>
+        <div class="onboard-desc-ar" lang="ar" dir="rtl">تحليل عميق يسلط الضوء على المعاني الكامنة في كل بيت</div>
       </div>
       <div class="onboard-dots">
         <div class="onboard-dot active" data-dot="0"></div>
         <div class="onboard-dot" data-dot="1"></div>
         <div class="onboard-dot" data-dot="2"></div>
       </div>
-      <div class="onboard-tap" id="onboardTap">Tap to continue</div>
+      <div class="onboard-tap" id="onboardTap">Tap anywhere to continue</div>
     </div>
   </div>
 
@@ -646,7 +723,7 @@
     }, 800);
   });
 
-  /* ===== ONBOARDING TAP-TO-ADVANCE ===== */
+  /* ===== ONBOARDING TAP-TO-ADVANCE (Light Architecture) ===== */
   var currentCard = 0;
   var totalCards = 3;
 
@@ -660,12 +737,12 @@
     if (currentCard >= totalCards) {
       var ob = document.getElementById('onboarding');
       ob.style.opacity = '0';
-      ob.style.transition = 'opacity 0.6s ease';
+      ob.style.transition = 'opacity 0.8s ease';
       setTimeout(function () {
         ob.style.display = 'none';
         document.getElementById('main').style.display = 'flex';
         if (typeof lucide !== 'undefined') lucide.createIcons();
-      }, 600);
+      }, 800);
       return;
     }
     var cards = document.querySelectorAll('.onboard-card');
@@ -674,6 +751,12 @@
     dots.forEach(function (d) { d.classList.remove('active'); });
     cards[currentCard].classList.add('active');
     dots[currentCard].classList.add('active');
+
+    /* Refract the geometric light lines to new positions */
+    var rayFrame = document.querySelector('.ray-frame');
+    var rayGlow = document.querySelector('.ray-glow');
+    if (rayFrame) rayFrame.setAttribute('data-step', currentCard);
+    if (rayGlow) rayGlow.setAttribute('data-step', currentCard);
   }
 
   /* ===== INIT ===== */

@@ -15,7 +15,7 @@ test.describe('Design Review — Page UI', () => {
     await page.goto(`file://${process.cwd()}/design-review/index.html`);
     await page.waitForLoadState('domcontentloaded');
     // Wait for the page to render the catalog
-    await page.waitForSelector('text=1 of', { timeout: 5000 });
+    await page.waitForSelector('#navCounter', { timeout: 5000 });
   });
 
   test('page loads with toolbar, nav counter, and Submit Review button', async ({ page }) => {

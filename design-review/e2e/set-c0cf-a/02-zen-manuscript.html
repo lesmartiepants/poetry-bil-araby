@@ -42,12 +42,12 @@ canvas#water {
   width: 12px; height: 12px; margin-left: -6px;
   border-radius: 50% 50% 50% 0; transform: rotate(-45deg);
   background: radial-gradient(circle at 40% 40%, var(--moonlight), var(--ripple-silver));
-  opacity: 0; animation: dropFall 1.2s cubic-bezier(0.55,0,1,0.45) 0.3s forwards;
+  opacity: 0; animation: dropFall 3s cubic-bezier(0.25,0.1,0.25,1) 0.5s forwards;
 }
 @keyframes dropFall {
-  0% { opacity: 1; transform: rotate(-45deg) translateY(0); }
-  80% { opacity: 1; }
-  100% { opacity: 0; transform: rotate(-45deg) translateY(45vh); }
+  0% { opacity: 0.8; transform: rotate(-45deg) translateY(0); }
+  60% { opacity: 0.6; }
+  100% { opacity: 0; transform: rotate(-45deg) translateY(40vh); }
 }
 
 .splash-ring {
@@ -55,22 +55,22 @@ canvas#water {
   border-radius: 50%; border: 2px solid var(--ripple-silver);
   opacity: 0; transform: translate(-50%,-50%);
 }
-.splash-ring:nth-child(2) { animation: splashExpand 2.5s ease-out 1.5s forwards; }
-.splash-ring:nth-child(3) { animation: splashExpand 2.5s ease-out 1.8s forwards; border-color: var(--lotus); }
-.splash-ring:nth-child(4) { animation: splashExpand 2.5s ease-out 2.1s forwards; border-color: var(--gold); }
+.splash-ring:nth-child(2) { animation: splashExpand 4.5s ease-out 3s forwards; }
+.splash-ring:nth-child(3) { animation: splashExpand 4.5s ease-out 3.6s forwards; border-color: var(--lotus); }
+.splash-ring:nth-child(4) { animation: splashExpand 4.5s ease-out 4.2s forwards; border-color: var(--gold); }
 @keyframes splashExpand {
-  0% { width: 0; height: 0; opacity: 0.8; }
-  100% { width: 120vmax; height: 120vmax; opacity: 0; }
+  0% { width: 0; height: 0; opacity: 0.5; }
+  100% { width: 100vmax; height: 100vmax; opacity: 0; }
 }
 
 .splash-content {
   position: relative; z-index: 5; text-align: center; padding: 40px;
   max-width: 600px; opacity: 0;
-  animation: revealTitle 1.2s cubic-bezier(0.16,1,0.3,1) 1.8s forwards;
+  animation: revealTitle 2s cubic-bezier(0.16,1,0.3,1) 2.8s forwards;
 }
 @keyframes revealTitle {
-  from { opacity: 0; transform: translateY(20px) scale(0.95); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 .splash-brand {
@@ -97,62 +97,99 @@ canvas#water {
   border: 1px solid var(--gold); color: var(--gold);
   font-family: var(--font-ui); font-size: 15px; border-radius: 8px;
   cursor: pointer; transition: all 0.3s ease;
-  opacity: 0; animation: revealTitle 0.8s cubic-bezier(0.16,1,0.3,1) 2.4s forwards;
+  opacity: 0; animation: revealTitle 1.5s cubic-bezier(0.16,1,0.3,1) 4s forwards;
 }
 .splash-enter:hover {
   background: var(--gold); color: var(--deep-water);
   box-shadow: 0 0 30px rgba(197,160,89,0.3);
 }
 
-/* ===== WALKTHROUGH ===== */
+/* ===== WALKTHROUGH -- ZEN INK WASH ===== */
 .walkthrough {
   position: fixed; inset: 0; z-index: 90;
   display: none; flex-direction: column; align-items: center; justify-content: center;
   padding: 20px; cursor: pointer;
+  background: var(--deep-water);
 }
 .walkthrough.active { display: flex; }
 
-.walk-card {
-  max-width: 400px; width: 90%; padding: 2rem; text-align: center;
-  background: var(--card-bg); border: 1px solid var(--card-border);
-  border-radius: 16px; backdrop-filter: blur(12px);
-  opacity: 0; transform: translateY(20px);
-  transition: opacity 0.5s ease, transform 0.5s ease;
+/* Ink wash background that shifts per step */
+.walkthrough::before {
+  content: ''; position: absolute; inset: 0;
+  background: radial-gradient(ellipse 70% 50% at 50% 60%, rgba(184,200,216,0.06), transparent);
+  transition: opacity 1.5s ease;
 }
-.walk-card.visible { opacity: 1; transform: translateY(0); }
-
-.walk-icon {
-  width: 56px; height: 56px; margin: 0 auto 16px; border-radius: 50%;
-  border: 2px solid var(--ripple-silver); background: rgba(184,200,216,0.05);
-  display: flex; align-items: center; justify-content: center;
-  color: var(--ripple-silver);
-  animation: circleRipple 2s ease-out infinite;
+.walkthrough[data-step="1"]::before {
+  background: radial-gradient(ellipse 60% 60% at 40% 40%, rgba(196,122,138,0.06), transparent);
 }
-@keyframes circleRipple {
-  0% { box-shadow: 0 0 0 0 rgba(184,200,216,0.2); }
-  70% { box-shadow: 0 0 0 20px rgba(184,200,216,0); }
-  100% { box-shadow: 0 0 0 0 rgba(184,200,216,0); }
+.walkthrough[data-step="2"]::before {
+  background: radial-gradient(ellipse 50% 70% at 60% 50%, rgba(197,160,89,0.06), transparent);
 }
 
-.walk-card h3 {
-  font-family: var(--font-ui); font-size: clamp(1.1rem, 2.5vw, 1.4rem);
-  font-weight: 500; color: var(--moonlight); direction: ltr; margin-bottom: 4px;
+/* Washi paper panel */
+.zen-panel {
+  position: relative; max-width: 360px; width: 88%;
+  padding: 2.5rem 2rem;
+  background: rgba(13,26,40,0.5);
+  border-left: 2px solid rgba(184,200,216,0.12);
+  text-align: center;
+  opacity: 0; transform: translateY(16px);
+  transition: opacity 1.2s ease, transform 1.2s ease;
 }
-.walk-card .walk-ar {
-  font-family: var(--font-ui); font-size: clamp(0.9rem, 2vw, 1.1rem);
-  color: var(--gold); direction: rtl; margin-bottom: 8px;
+.zen-panel.active { opacity: 1; transform: translateY(0); }
+
+/* Brushstroke accent -- horizontal ink line */
+.zen-panel::after {
+  content: ''; position: absolute; bottom: 0; left: 50%;
+  transform: translateX(-50%);
+  width: 60px; height: 2px;
+  background: linear-gradient(90deg, transparent, var(--ripple-silver), transparent);
+  opacity: 0.3;
 }
-.walk-card p {
-  font-size: clamp(0.8rem, 1.8vw, 0.95rem); line-height: 1.7;
-  color: var(--text-dim); direction: ltr;
+
+.zen-kanji {
+  font-family: var(--font-ar); font-size: clamp(2.2rem, 5vw, 3rem);
+  color: var(--gold); line-height: 1.2; margin-bottom: 0.5rem;
+  opacity: 0; animation: inkReveal 1.5s ease forwards;
+  animation-play-state: paused;
 }
-.walk-progress { display: flex; gap: 8px; margin-top: 2rem; }
-.walk-dot {
-  width: 8px; height: 8px; border-radius: 50%; background: var(--card-border);
-  transition: all 0.3s;
+.zen-panel.active .zen-kanji { animation-play-state: running; }
+@keyframes inkReveal {
+  0% { opacity: 0; filter: blur(4px); transform: scale(0.95); }
+  100% { opacity: 1; filter: blur(0); transform: scale(1); }
 }
-.walk-dot.active { background: var(--gold); width: 24px; border-radius: 4px; }
-.walk-hint { margin-top: 1rem; font-size: 13px; color: var(--text-dim); opacity: 0.6; }
+
+.zen-title {
+  font-family: var(--font-ui); font-size: 0.85rem;
+  font-weight: 300; color: var(--text-dim); letter-spacing: 0.15em;
+  text-transform: uppercase; direction: ltr; margin-bottom: 1.2rem;
+}
+
+.zen-desc {
+  font-family: var(--font-ui); font-size: 0.88rem;
+  line-height: 1.8; color: var(--text-dim); direction: ltr;
+  max-width: 280px; margin: 0 auto;
+}
+
+/* Ink drop indicators */
+.zen-drops {
+  display: flex; gap: 16px; margin-top: 2.5rem; justify-content: center;
+}
+.zen-drop {
+  width: 6px; height: 6px; border-radius: 50%;
+  background: rgba(184,200,216,0.2);
+  transition: all 1s ease;
+}
+.zen-drop.active {
+  background: var(--ripple-silver);
+  box-shadow: 0 0 12px rgba(184,200,216,0.3);
+}
+.zen-drop.past { background: rgba(184,200,216,0.4); }
+
+.zen-hint {
+  margin-top: 1.5rem; font-size: 12px; color: var(--text-dim);
+  opacity: 0.4; letter-spacing: 0.2em;
+}
 
 /* ===== MAIN APP ===== */
 .main-app { display: none; min-height: 100vh; padding-bottom: 80px; position: relative; z-index: 1; }
@@ -320,15 +357,28 @@ html.light .bottom-nav { background: rgba(216,228,240,0.95); }
 </div>
 
 <!-- WALKTHROUGH -->
-<div class="walkthrough" id="walkthrough">
-  <div class="walk-card" id="walkCard">
-    <div class="walk-icon" id="walkIcon"></div>
-    <h3 id="walkTitle"></h3>
-    <div class="walk-ar" id="walkAr"></div>
-    <p id="walkDesc"></p>
+<div class="walkthrough" id="walkthrough" data-step="0">
+  <div class="zen-panel active" data-zen="0">
+    <div class="zen-kanji" lang="ar" dir="rtl">تأمّل</div>
+    <div class="zen-title">Contemplate</div>
+    <div class="zen-desc">Poetry as meditation. Each verse a stone dropped into still water.</div>
   </div>
-  <div class="walk-progress" id="walkProgress"></div>
-  <span class="walk-hint">Tap anywhere to continue</span>
+  <div class="zen-panel" data-zen="1">
+    <div class="zen-kanji" lang="ar" dir="rtl">استمع</div>
+    <div class="zen-title">Listen</div>
+    <div class="zen-desc">84,000 poems from across centuries. The voice of Arabic tradition, breathing.</div>
+  </div>
+  <div class="zen-panel" data-zen="2">
+    <div class="zen-kanji" lang="ar" dir="rtl">اكتشف</div>
+    <div class="zen-title">Discover</div>
+    <div class="zen-desc">AI reveals the meaning beneath. Understanding deepens like ripples on water.</div>
+  </div>
+  <div class="zen-drops">
+    <div class="zen-drop active" data-drop="0"></div>
+    <div class="zen-drop" data-drop="1"></div>
+    <div class="zen-drop" data-drop="2"></div>
+  </div>
+  <div class="zen-hint">tap</div>
 </div>
 
 <!-- MAIN APP -->
@@ -469,8 +519,8 @@ function animate() {
 }
 
 if (!reducedMotion) {
-  setTimeout(function() { addRipple(canvas.width / 2, canvas.height * 0.48, 2, 350); }, 1500);
-  setTimeout(function() { addRipple(canvas.width / 2, canvas.height * 0.48, 1.5, 450); }, 1800);
+  setTimeout(function() { addRipple(canvas.width / 2, canvas.height * 0.48, 0.8, 350); }, 3000);
+  setTimeout(function() { addRipple(canvas.width / 2, canvas.height * 0.48, 0.6, 450); }, 3800);
   animate();
 }
 
@@ -479,47 +529,25 @@ document.addEventListener('click', function(e) {
   addRipple(e.clientX, e.clientY, 1.5 + Math.random(), 120 + Math.random() * 100);
 });
 
-/* Walkthrough */
-var walkSteps = [
-  { icon: 'waves', title: 'Poetry on Still Water', ar: '\u0634\u0639\u0631 \u0639\u0644\u0649 \u0627\u0644\u0645\u0627\u0621', desc: 'A serene experience where Arabic poetry floats on rippling water, inviting contemplation.' },
-  { icon: 'compass', title: 'Discover 84,000+ Poems', ar: '\u0627\u0643\u062A\u0634\u0641 \u0628\u062D\u0631 \u0627\u0644\u0634\u0639\u0631', desc: 'Browse classical and modern Arabic poems spanning centuries of literary heritage.' },
-  { icon: 'sparkles', title: 'AI-Powered Insights', ar: '\u0631\u0624\u0649 \u0630\u0643\u064A\u0629', desc: 'Get deep analysis of meter, meaning, and historical context with intelligent annotations.' },
-  { icon: 'heart', title: 'Save Your Favorites', ar: '\u0627\u062D\u0641\u0638 \u0648\u0634\u0627\u0631\u0643', desc: 'Build your personal collection and share the beauty of Arabic poetry.' }
-];
-var currentStep = 0;
+/* Walkthrough -- Zen Ink Wash */
+var zenPanels = document.querySelectorAll('.zen-panel');
+var zenDrops = document.querySelectorAll('.zen-drop');
+var zenStep = 0;
+var totalZen = zenPanels.length;
 
-function renderStep() {
-  var step = walkSteps[currentStep];
-  var card = document.getElementById('walkCard');
-  var iconEl = document.getElementById('walkIcon');
-  var titleEl = document.getElementById('walkTitle');
-  var arEl = document.getElementById('walkAr');
-  var descEl = document.getElementById('walkDesc');
-  var progress = document.getElementById('walkProgress');
-
-  while (iconEl.firstChild) iconEl.removeChild(iconEl.firstChild);
-  var ic = document.createElement('i');
-  ic.setAttribute('data-lucide', step.icon);
-  ic.style.width = '24px'; ic.style.height = '24px';
-  iconEl.appendChild(ic);
-
-  titleEl.textContent = step.title;
-  arEl.textContent = step.ar;
-  descEl.textContent = step.desc;
-
-  while (progress.firstChild) progress.removeChild(progress.firstChild);
-  for (var d = 0; d < walkSteps.length; d++) {
-    var dot = document.createElement('div');
-    dot.className = 'walk-dot' + (d === currentStep ? ' active' : '');
-    progress.appendChild(dot);
+function showZenStep() {
+  for (var i = 0; i < zenPanels.length; i++) {
+    zenPanels[i].classList.remove('active');
+    zenDrops[i].classList.remove('active');
+    zenDrops[i].classList.remove('past');
+    if (i < zenStep) zenDrops[i].classList.add('past');
   }
-
-  card.classList.remove('visible');
-  requestAnimationFrame(function() {
-    requestAnimationFrame(function() { card.classList.add('visible'); });
-  });
-  if (typeof lucide !== 'undefined') lucide.createIcons();
-  addRipple(canvas.width / 2, canvas.height / 2, 2.5);
+  if (zenStep < totalZen) {
+    zenPanels[zenStep].classList.add('active');
+    zenDrops[zenStep].classList.add('active');
+    document.getElementById('walkthrough').setAttribute('data-step', zenStep);
+  }
+  addRipple(canvas.width / 2, canvas.height / 2, 0.8);
 }
 
 document.getElementById('splashEnter').addEventListener('click', function() {
@@ -527,19 +555,20 @@ document.getElementById('splashEnter').addEventListener('click', function() {
   setTimeout(function() {
     document.getElementById('splash').style.display = 'none';
     document.getElementById('walkthrough').classList.add('active');
-    currentStep = 0;
-    renderStep();
+    zenStep = 0;
+    showZenStep();
   }, 800);
 });
 
-document.getElementById('walkthrough').addEventListener('click', function() {
-  currentStep++;
-  if (currentStep >= walkSteps.length) {
+document.getElementById('walkthrough').addEventListener('click', function(e) {
+  if (e.target.closest('.splash-enter')) return;
+  zenStep++;
+  if (zenStep >= totalZen) {
     document.getElementById('walkthrough').style.display = 'none';
     document.getElementById('mainApp').classList.add('active');
     if (typeof lucide !== 'undefined') lucide.createIcons();
   } else {
-    renderStep();
+    showZenStep();
   }
 });
 

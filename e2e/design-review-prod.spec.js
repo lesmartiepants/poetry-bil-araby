@@ -11,7 +11,11 @@ import { test, expect } from '@playwright/test';
 const PROD_API = 'https://poetry-bil-araby-2mb0.onrender.com';
 
 test.describe('Design Review — Page UI', () => {
-  test.beforeEach(async ({ page }) => {
+  // The design-review page hides the side panel and nav counter on mobile
+  // viewports, so these UI tests only run on desktop-width browsers.
+  test.beforeEach(async ({ page }, testInfo) => {
+    const vw = testInfo.project.use.viewport?.width ?? 1920;
+    test.skip(vw < 768, 'Design-review page UI requires desktop viewport');
     await page.goto(`file://${process.cwd()}/design-review/index.html`);
     await page.waitForLoadState('domcontentloaded');
     // Wait for the page to render the catalog

@@ -570,6 +570,40 @@ let syncTimer = null;
 let currentSession = null;
 
 // ═══════════════════════════════════════════════════════════════
+// SILENT LOG — collects events for debugging; surfaced on error
+// ═══════════════════════════════════════════════════════════════
+const _log = [];
+function log(tag, msg, data) {
+  const entry = { t: new Date().toISOString(), tag, msg };
+  if (data !== undefined) entry.data = typeof data === 'object' ? JSON.parse(JSON.stringify(data)) : data;
+  _log.push(entry);
+  if (_log.length > 500) _log.shift();
+}
+// Wrap fetch to auto-log every request
+const _nativeFetch = window.fetch.bind(window);
+window.fetch = async function(url, opts) {
+  const method = (opts && opts.method) || 'GET';
+  const shortUrl = String(url).replace(API_BASE, '');
+  let bodyPreview = null;
+  if (opts && opts.body) {
+    try { const j = JSON.parse(opts.body); bodyPreview = JSON.stringify(j).slice(0, 300); } catch { bodyPreview = String(opts.body).slice(0, 300); }
+  }
+  log('fetch', method + ' ' + shortUrl, bodyPreview ? { body: bodyPreview } : undefined);
+  const t0 = performance.now();
+  try {
+    const res = await _nativeFetch(url, opts);
+    const ms = Math.round(performance.now() - t0);
+    log('fetch', method + ' ' + shortUrl + ' → ' + res.status + ' (' + ms + 'ms)');
+    return res;
+  } catch (err) {
+    const ms = Math.round(performance.now() - t0);
+    log('fetch', method + ' ' + shortUrl + ' → ERROR (' + ms + 'ms): ' + err.message);
+    throw err;
+  }
+};
+log('init', 'page loaded', { api: API_BASE, ua: navigator.userAgent.slice(0, 120) });
+
+// ═══════════════════════════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════════════════════════
 let st = { compIdx: 0, catIdx: 0, optIdx: 0, sideOpen: true };
@@ -628,14 +662,17 @@ async function syncVerdictsToAPI() {
       });
     }
     if (!verdicts.length) { setSyncStatus('synced'); return; }
+    log('sync', 'posting ' + verdicts.length + ' verdicts', { sessionId: currentSession.id });
     const res = await fetch(API_BASE + '/api/design-review/sessions/' + currentSession.id + '/verdicts', {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ verdicts })
     });
+    log('sync', res.ok ? 'synced' : 'sync failed (' + res.status + ')');
     setSyncStatus(res.ok ? 'synced' : 'offline');
-  } catch { setSyncStatus('offline'); }
+  } catch (err) { log('sync', 'ERROR: ' + err.message); setSyncStatus('offline'); }
 }
 
 async function initAPI() {
+  log('initAPI', 'starting', { apiAvailable, hasSession: !!currentSession });
   try {
     const r = await fetch(API_BASE + '/api/design-review/items', { signal: AbortSignal.timeout(30000) });
     if (!r.ok) throw 0;
@@ -661,7 +698,7 @@ async function initAPI() {
       const verts = await (await fetch(API_BASE + '/api/design-review/sessions/' + active.id + '/verdicts')).json();
       verts.forEach(v => {
         if (!reviewData[v.item_key] || !reviewData[v.item_key].verdict)
-          reviewData[v.item_key] = { verdict: v.verdict, comment: v.comment || '', tags: (v.tags || []).join(', ') };
+          reviewData[v.item_key] = { verdict: v.verdict, comment: v.comment || '', tags: Array.isArray(v.tags) ? v.tags.join(', ') : (v.tags || '') };
       });
       persistReview(); renderProgress();
     } else {
@@ -675,8 +712,12 @@ async function initAPI() {
       }
       currentSession = await cr.json();
     }
+    log('initAPI', 'success', { sessionId: currentSession?.id, round: currentSession?.round_number });
     setSyncStatus('synced');
-  } catch { apiAvailable = false; setSyncStatus('offline'); }
+  } catch (err) {
+    log('initAPI', 'FAILED', { error: err?.message || String(err), apiAvailable, hasSession: !!currentSession });
+    apiAvailable = false; setSyncStatus('offline');
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -883,7 +924,9 @@ function renderProgress() {
 function setVerdict(v) {
   const opt = curOpt();
   if (!reviewData[opt.id]) reviewData[opt.id] = { verdict: null, comment: '', tags: '' };
-  reviewData[opt.id].verdict = reviewData[opt.id].verdict === v ? null : v;
+  const prev = reviewData[opt.id].verdict;
+  reviewData[opt.id].verdict = prev === v ? null : v;
+  log('verdict', opt.id + ': ' + (prev || 'none') + ' → ' + (reviewData[opt.id].verdict || 'cleared'));
   persistReview(); render(true);
 }
 function saveComment() {
@@ -1047,30 +1090,68 @@ async function submitReview() {
   sendBtn.style.cssText = 'padding:10px 24px;border-radius:var(--r);font-size:13px;font-weight:700;cursor:pointer;border:none;background:var(--accent);color:var(--bg);transition:all .15s;display:flex;align-items:center;gap:6px';
   sendBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg> Send to Backend';
   sendBtn.addEventListener('click', async () => {
+    log('submit', 'Send to Backend clicked', { apiAvailable, hasSession: !!currentSession, reviewed });
     sendBtn.disabled = true;
     sendBtn.style.opacity = '.7';
-    sendBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="animation:spin .8s linear infinite"><circle cx="12" cy="12" r="10" stroke-dasharray="40" stroke-dashoffset="10"/></svg> Sending\u2026';
+    sendBtn.textContent = 'Sending\u2026';
+    // Remove previous log buttons if retrying
+    const oldLogBtns = sendBtn.parentElement.querySelector('.log-btns');
+    if (oldLogBtns) oldLogBtns.remove();
     try {
       // Retry initAPI if no session yet (Render cold start can take ~30s)
       if (!apiAvailable || !currentSession) {
         sendBtn.textContent = 'Waking backend\u2026';
+        log('submit', 'retrying initAPI (cold start)');
         await initAPI();
         if (!apiAvailable || !currentSession) throw new Error('Backend not available \u2014 try again in a few seconds');
       }
+      sendBtn.textContent = 'Syncing verdicts\u2026';
       await syncVerdictsToAPI();
+      sendBtn.textContent = 'Completing session\u2026';
       const res = await fetch(API_BASE + '/api/design-review/sessions/' + currentSession.id, {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'completed', reviewed_count: reviewed })
       });
       if (!res.ok) throw new Error('API returned ' + res.status);
+      log('submit', 'success');
       sendBtn.style.background = 'var(--green)';
       sendBtn.style.opacity = '1';
-      sendBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Saved Successfully';
+      sendBtn.textContent = '\u2713 Saved Successfully';
     } catch (err) {
+      log('submit', 'FAILED', { error: err.message, stack: err.stack });
       sendBtn.style.background = 'var(--red)';
       sendBtn.style.opacity = '1';
-      sendBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg> Error \u2014 ' + (err.message || 'Failed');
+      sendBtn.textContent = '\u2717 Error \u2014 ' + (err.message || 'Failed');
       sendBtn.disabled = false;
+      // Show log buttons next to error
+      const logBtns = document.createElement('span');
+      logBtns.className = 'log-btns';
+      logBtns.style.cssText = 'display:inline-flex;gap:4px;margin-left:8px';
+      const showBtn = document.createElement('button');
+      showBtn.style.cssText = 'padding:6px 12px;border-radius:var(--r-sm);font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--surface-2);color:var(--text-2)';
+      showBtn.textContent = 'Show Logs';
+      showBtn.addEventListener('click', () => {
+        let logPre = document.getElementById('debugLogPre');
+        if (logPre) { logPre.parentElement.remove(); return; }
+        const wrap = document.createElement('div');
+        wrap.style.cssText = 'margin-top:8px';
+        logPre = document.createElement('pre');
+        logPre.id = 'debugLogPre';
+        logPre.style.cssText = 'background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-sm);padding:10px;font-size:10px;color:var(--text-2);white-space:pre-wrap;max-height:250px;overflow-y:auto;line-height:1.4;font-family:ui-monospace,SFMono-Regular,Menlo,monospace';
+        logPre.textContent = _log.map(e => e.t.slice(11, 23) + ' [' + e.tag + '] ' + e.msg + (e.data ? ' ' + JSON.stringify(e.data) : '')).join('\n');
+        wrap.appendChild(logPre);
+        sendBtn.parentElement.parentElement.insertBefore(wrap, sendBtn.parentElement.nextSibling);
+      });
+      const copyBtn = document.createElement('button');
+      copyBtn.style.cssText = 'padding:6px 12px;border-radius:var(--r-sm);font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--surface-2);color:var(--text-2)';
+      copyBtn.textContent = 'Copy Logs';
+      copyBtn.addEventListener('click', () => {
+        const txt = _log.map(e => e.t.slice(11, 23) + ' [' + e.tag + '] ' + e.msg + (e.data ? ' ' + JSON.stringify(e.data) : '')).join('\n');
+        navigator.clipboard.writeText(txt).then(() => { copyBtn.textContent = 'Copied!'; setTimeout(() => { copyBtn.textContent = 'Copy Logs'; }, 1500); });
+      });
+      logBtns.appendChild(showBtn);
+      logBtns.appendChild(copyBtn);
+      sendBtn.parentElement.appendChild(logBtns);
     }
   });
   btns.appendChild(sendBtn);

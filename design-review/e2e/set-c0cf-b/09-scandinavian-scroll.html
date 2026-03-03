@@ -214,8 +214,8 @@
     opacity: 0;
     animation: nordicFadeIn 1s ease forwards;
   }
-  .poem-text .hemistich:nth-child(1) { animation-delay: 0.3s; }
-  .poem-text .hemistich:nth-child(2) { animation-delay: 0.9s; }
+  .poem-text .hemistich:first-of-type { animation-delay: 0.3s; }
+  .poem-text .hemistich:last-of-type { animation-delay: 0.9s; }
 
   @keyframes nordicFadeIn {
     from { opacity: 0; transform: translateY(6px); }

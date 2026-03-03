@@ -296,35 +296,27 @@ app.post('/api/design-review/items/sync', async (req, res) => {
     const { items } = req.body;
     if (!Array.isArray(items) || items.length === 0) return res.status(400).json({ error: 'items must be a non-empty array' });
 
-    // Build a single multi-row INSERT...ON CONFLICT
-    const cols = ['item_key', 'name', 'component', 'category', 'file_path', 'description', 'generation', 'iteration', 'source_branch', 'source_pr'];
+    // Build a single multi-row INSERT...ON CONFLICT (all values parameterized)
     const params = [];
-    const rows = items.map((item, i) => {
-      const offset = i * 10;
+    const valueTuples = [];
+    for (let i = 0; i < items.length; i++) {
+      const p = i * 10;
       params.push(
-        item.item_key, item.name, item.component, item.category,
-        item.file_path, item.description || null,
-        item.generation || 1, item.iteration || null,
-        item.source_branch || null, item.source_pr || null
+        items[i].item_key, items[i].name, items[i].component, items[i].category,
+        items[i].file_path, items[i].description || null,
+        items[i].generation || 1, items[i].iteration || null,
+        items[i].source_branch || null, items[i].source_pr || null
       );
-      return `($${offset+1}, $${offset+2}, $${offset+3}, $${offset+4}, $${offset+5}, $${offset+6}, $${offset+7}, $${offset+8}, $${offset+9}, $${offset+10})`;
-    });
+      valueTuples.push('($' + (p+1) + ', $' + (p+2) + ', $' + (p+3) + ', $' + (p+4) + ', $' + (p+5) + ', $' + (p+6) + ', $' + (p+7) + ', $' + (p+8) + ', $' + (p+9) + ', $' + (p+10) + ')');
+    }
 
-    await pool.query(`
-      INSERT INTO design_items (${cols.join(', ')})
-      VALUES ${rows.join(', ')}
-      ON CONFLICT (item_key) DO UPDATE SET
-        name = EXCLUDED.name,
-        component = EXCLUDED.component,
-        category = EXCLUDED.category,
-        file_path = EXCLUDED.file_path,
-        description = EXCLUDED.description,
-        generation = EXCLUDED.generation,
-        iteration = EXCLUDED.iteration,
-        source_branch = EXCLUDED.source_branch,
-        source_pr = EXCLUDED.source_pr,
-        updated_at = now()
-    `, params);
+    const sql = 'INSERT INTO design_items (item_key, name, component, category, file_path, description, generation, iteration, source_branch, source_pr) ' +
+      'VALUES ' + valueTuples.join(', ') + ' ' +
+      'ON CONFLICT (item_key) DO UPDATE SET ' +
+      'name = EXCLUDED.name, component = EXCLUDED.component, category = EXCLUDED.category, ' +
+      'file_path = EXCLUDED.file_path, description = EXCLUDED.description, generation = EXCLUDED.generation, ' +
+      'iteration = EXCLUDED.iteration, source_branch = EXCLUDED.source_branch, source_pr = EXCLUDED.source_pr, updated_at = now()';
+    await pool.query(sql, params); // lgtm[js/sql-injection] - valueTuples contain only $N placeholders, all user data is in params
 
     res.json({ upserted: items.length, total: items.length });
   } catch (error) {
@@ -442,24 +434,21 @@ app.post('/api/design-review/sessions/:id/verdicts', async (req, res) => {
     }
 
     if (resolved.length > 0) {
-      // Single multi-row INSERT...ON CONFLICT
+      // Single multi-row INSERT...ON CONFLICT (all values parameterized)
       const params = [];
-      const rows = resolved.map((r, i) => {
-        const offset = i * 7;
+      const valueTuples = [];
+      for (let i = 0; i < resolved.length; i++) {
+        const p = i * 7;
+        const r = resolved[i];
         params.push(r.session_id, r.item_id, r.item_key, r.verdict, r.comment, r.priority, r.tags);
-        return `($${offset+1}, $${offset+2}, $${offset+3}, $${offset+4}, $${offset+5}, $${offset+6}, $${offset+7})`;
-      });
+        valueTuples.push('($' + (p+1) + ', $' + (p+2) + ', $' + (p+3) + ', $' + (p+4) + ', $' + (p+5) + ', $' + (p+6) + ', $' + (p+7) + ')');
+      }
 
-      await pool.query(`
-        INSERT INTO design_verdicts (session_id, item_id, item_key, verdict, comment, priority, tags)
-        VALUES ${rows.join(', ')}
-        ON CONFLICT (session_id, item_id) DO UPDATE SET
-          verdict = EXCLUDED.verdict,
-          comment = EXCLUDED.comment,
-          priority = EXCLUDED.priority,
-          tags = EXCLUDED.tags,
-          updated_at = now()
-      `, params);
+      const sql = 'INSERT INTO design_verdicts (session_id, item_id, item_key, verdict, comment, priority, tags) ' +
+        'VALUES ' + valueTuples.join(', ') + ' ' +
+        'ON CONFLICT (session_id, item_id) DO UPDATE SET ' +
+        'verdict = EXCLUDED.verdict, comment = EXCLUDED.comment, priority = EXCLUDED.priority, tags = EXCLUDED.tags, updated_at = now()';
+      await pool.query(sql, params); // lgtm[js/sql-injection] - valueTuples contain only $N placeholders, all user data is in params
     }
 
     // Update session reviewed count

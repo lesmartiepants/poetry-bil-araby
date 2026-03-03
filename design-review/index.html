@@ -23,24 +23,25 @@
     .app{display:grid;grid-template-rows:auto 1fr;height:100vh}
 
     /* ── Toolbar ── */
-    .toolbar{background:var(--surface);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;z-index:100}
-    .tb-group{display:flex;align-items:center;gap:6px}
-    .tb-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);white-space:nowrap}
-    .tb-select{appearance:none;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:7px 28px 7px 10px;border-radius:var(--r-sm);font-size:12px;font-weight:500;outline:none;min-width:140px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath d='M2.5 4L5 6.5 7.5 4' stroke='%2371717a' fill='none' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 8px center;transition:border-color .15s}
+    .toolbar{background:var(--surface);border-bottom:1px solid var(--border);padding:6px 12px;display:flex;align-items:center;gap:8px;z-index:100}
+    .tb-group{display:flex;align-items:center;gap:4px}
+    .tb-filters{display:flex;align-items:center;gap:4px}
+    .tb-label{font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--text-3);white-space:nowrap}
+    .tb-select{appearance:none;background:var(--surface-2);border:1px solid var(--border);color:var(--text);padding:5px 24px 5px 8px;border-radius:var(--r-sm);font-size:11px;font-weight:500;outline:none;min-width:120px;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='10' viewBox='0 0 10 10'%3E%3Cpath d='M2.5 4L5 6.5 7.5 4' stroke='%2371717a' fill='none' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 6px center;transition:border-color .15s}
     .tb-select:hover,.tb-select:focus{border-color:var(--accent)}
     .tb-select option{background:var(--surface-2);color:var(--text)}
-    .tb-sep{width:1px;height:24px;background:var(--border);flex-shrink:0}
+    .tb-sep{width:1px;height:20px;background:var(--border);flex-shrink:0}
     .tb-spacer{flex:1}
 
     /* Nav buttons */
-    .nav-btn{display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface-2);color:var(--text-2);font-size:12px;font-weight:500;transition:all .15s;white-space:nowrap}
+    .nav-btn{display:inline-flex;align-items:center;gap:3px;padding:4px 10px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface-2);color:var(--text-2);font-size:11px;font-weight:500;transition:all .15s;white-space:nowrap}
     .nav-btn:hover:not(:disabled){background:var(--surface-3);color:var(--text);border-color:var(--border-light)}
     .nav-btn:disabled{opacity:.3;cursor:default}
-    .nav-btn svg{width:14px;height:14px}
-    .nav-counter{font-size:12px;color:var(--text-3);font-variant-numeric:tabular-nums;min-width:50px;text-align:center}
+    .nav-btn svg{width:12px;height:12px}
+    .nav-counter{font-size:11px;color:var(--text-3);font-variant-numeric:tabular-nums;min-width:44px;text-align:center}
 
     /* Submit */
-    .submit-btn{padding:6px 16px;border-radius:var(--r-sm);border:1px solid var(--accent);background:var(--accent-dim);color:var(--accent);font-size:12px;font-weight:600;transition:all .15s}
+    .submit-btn{padding:4px 12px;border-radius:var(--r-sm);border:1px solid var(--accent);background:var(--accent-dim);color:var(--accent);font-size:11px;font-weight:600;transition:all .15s}
     .submit-btn:hover{background:var(--accent);color:var(--bg)}
 
     /* ── Main area ── */
@@ -48,14 +49,14 @@
 
     /* Preview */
     .preview{flex:1;display:flex;flex-direction:column;min-width:0}
-    .preview-header{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;background:var(--surface);border-bottom:1px solid var(--border);min-height:40px}
-    .preview-title{font-size:12px;font-weight:600;color:var(--text-2)}
-    .preview-sub{font-size:11px;color:var(--text-3)}
+    .preview-header{display:flex;align-items:center;justify-content:space-between;padding:4px 14px;background:var(--surface);border-bottom:1px solid var(--border);min-height:30px}
+    .preview-title{font-size:11px;font-weight:600;color:var(--text-2)}
+    .preview-sub{font-size:10px;color:var(--text-3)}
     .preview-iframe{width:100%;height:100%;border:none;background:#000}
     .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:12px;padding:40px;text-align:center}
     .empty-state h2{font-size:16px;font-weight:600}
     .empty-state p{font-size:13px;color:var(--text-2);max-width:340px;line-height:1.5}
-    .icon-btn{width:28px;height:28px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface-2);color:var(--text-3);display:inline-flex;align-items:center;justify-content:center;font-size:13px;transition:all .12s}
+    .icon-btn{width:24px;height:24px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface-2);color:var(--text-3);display:inline-flex;align-items:center;justify-content:center;font-size:12px;transition:all .12s}
     .icon-btn:hover{background:var(--surface-3);color:var(--text);border-color:var(--border-light)}
 
     /* ── Side panel ── */
@@ -92,8 +93,10 @@
     .tags-input::placeholder{color:var(--text-3)}
 
     /* Sync indicator */
-    .sync-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:4px;vertical-align:middle}
-    .sync-dot.synced{background:var(--green)}.sync-dot.syncing{background:var(--accent)}.sync-dot.offline{background:var(--red)}
+    .sync-dot{width:6px;height:6px;border-radius:50%;display:inline-block;vertical-align:middle}
+    .sync-dot.synced{background:var(--green)}.sync-dot.syncing{background:var(--accent)}.sync-dot.offline{background:var(--border-light)}
+    .sync-label{font-size:9px;color:var(--text-3);margin-left:3px;vertical-align:middle}
+    .sync-label.hidden{display:none}
 
     /* Comment box */
     .comment-box{width:100%;min-height:72px;padding:8px 10px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface-2);color:var(--text);font-size:12px;line-height:1.5;resize:vertical;outline:none;font-family:inherit;transition:border-color .15s}
@@ -116,7 +119,7 @@
     .kbd{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 4px;border-radius:3px;background:var(--surface-3);border:1px solid var(--border);font-size:9px;font-weight:600;color:var(--text-3);font-family:inherit}
 
     /* ── Bottom navigation bar (desktop) ── */
-    .bottom-nav{display:flex;align-items:center;justify-content:center;gap:10px;padding:8px 14px;background:var(--surface);border-top:1px solid var(--border)}
+    .bottom-nav{display:flex;align-items:center;justify-content:center;gap:8px;padding:4px 14px;background:var(--surface);border-top:1px solid var(--border)}
 
     /* ── Mobile bottom bar ── */
     .mobile-bar{display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;background:var(--surface);border-top:1px solid var(--border);padding:8px 12px;padding-bottom:max(8px,env(safe-area-inset-bottom));flex-direction:column;gap:6px}
@@ -135,19 +138,19 @@
     @media(max-width:768px){
       .side{display:none}
       .tb-sep{display:none}
-      .tb-select{min-width:100px;font-size:11px}
-      .toolbar{padding:6px 10px;gap:4px}
-      .toolbar .tb-label{font-size:9px}
+      .tb-select{min-width:90px;font-size:10px}
+      .toolbar{padding:5px 8px;gap:4px}
+      .toolbar .tb-label{font-size:8px}
       .toolbar .submit-btn{display:none}
       .toolbar .icon-btn{display:none}
-      .preview-header{padding:6px 10px;min-height:34px}
-      .preview-title{font-size:11px}
-      .preview-sub{font-size:10px}
+      .preview-header{padding:4px 10px;min-height:28px}
+      .preview-title{font-size:10px}
+      .preview-sub{font-size:9px}
       .bottom-nav{display:none}
       .mobile-bar{display:flex}
       .preview{padding-bottom:160px}
-      .nav-btn{padding:5px 8px;font-size:11px}
-      .nav-counter{font-size:11px;min-width:40px}
+      .nav-btn{padding:4px 6px;font-size:10px}
+      .nav-counter{font-size:10px;min-width:36px}
     }
     ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
   </style>
@@ -156,13 +159,10 @@
 <div class="app">
   <!-- Toolbar -->
   <div class="toolbar">
-    <div class="tb-group">
+    <div class="tb-filters">
       <span class="tb-label">Component</span>
       <select class="tb-select" id="compSelect" onchange="onCompChange()"></select>
-    </div>
-    <div class="tb-sep"></div>
-    <div class="tb-group">
-      <span class="tb-label">Category</span>
+      <span class="tb-label" style="margin-left:4px">Category</span>
       <select class="tb-select" id="catSelect" onchange="onCatChange()"></select>
     </div>
     <div class="tb-sep"></div>
@@ -172,7 +172,7 @@
       <button class="nav-btn" id="nextBtn" onclick="goNext()" title="Next (Right arrow)">Next<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 3l5 5-5 5"/></svg></button>
     </div>
     <div class="tb-spacer"></div>
-    <span id="syncStatus" title="API sync status"><span class="sync-dot offline"></span><span style="font-size:10px;color:var(--text-3)" id="syncLabel">Offline</span></span>
+    <span id="syncStatus" title="API sync status"><span class="sync-dot offline"></span><span class="sync-label hidden" id="syncLabel"></span></span>
     <button class="submit-btn" onclick="submitReview()" title="Export review feedback">Submit Review</button>
     <button class="icon-btn" onclick="toggleSide()" title="Toggle panel (I)">&#9776;</button>
   </div>
@@ -497,7 +497,11 @@ function setSyncStatus(status) {
   const dot = document.querySelector('#syncStatus .sync-dot');
   const label = document.getElementById('syncLabel');
   if (dot) dot.className = 'sync-dot ' + status;
-  if (label) label.textContent = { synced: 'Synced', syncing: 'Syncing...', offline: 'Offline' }[status] || status;
+  if (label) {
+    const text = { synced: 'Synced', syncing: 'Syncing...', offline: '' }[status] || '';
+    label.textContent = text;
+    label.className = 'sync-label' + (text ? '' : ' hidden');
+  }
 }
 
 function scheduleSyncToAPI() {

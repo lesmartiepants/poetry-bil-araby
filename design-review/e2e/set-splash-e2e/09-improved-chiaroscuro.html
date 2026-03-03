@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Improved Chiaroscuro — Poetry Bil-Araby</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #000000;
+    --text: #f0ece4;
+    --gold: #c5a059;
+    --gold-dim: rgba(197,160,89,0.25);
+    --gold-glow: rgba(197,160,89,0.12);
+    --surface: rgba(240,236,228,0.04);
+    --surface-border: rgba(240,236,228,0.08);
+    --muted: rgba(240,236,228,0.55);
+    --transition-speed: 0.4s;
+  }
+  [data-theme="light"] {
+    --bg: #f5f0e8;
+    --text: #1a1a1a;
+    --gold: #a68a3e;
+    --gold-dim: rgba(166,138,62,0.2);
+    --gold-glow: rgba(166,138,62,0.08);
+    --surface: rgba(26,26,26,0.04);
+    --surface-border: rgba(26,26,26,0.1);
+    --muted: rgba(26,26,26,0.5);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; scroll-behavior: smooth; }
+  body {
+    font-family: 'Tajawal', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow-x: hidden;
+    min-height: 100vh;
+    transition: background var(--transition-speed), color var(--transition-speed);
+  }
+
+  /* ---- Splash Screen ---- */
+  #splash {
+    position: fixed; inset: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column;
+    background: #000000;
+    transition: opacity 0.8s ease;
+    will-change: opacity;
+  }
+  #splash.hidden { opacity: 0; pointer-events: none; }
+  #splash-canvas {
+    position: absolute; inset: 0;
+    width: 100%; height: 100%; display: block;
+  }
+  .splash-content {
+    position: relative; z-index: 2;
+    display: flex; flex-direction: column; align-items: center;
+    gap: 1.5rem;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 1.2s ease;
+  }
+  .splash-content.visible { opacity: 1; pointer-events: auto; }
+  .splash-brand {
+    text-align: center; line-height: 1.3;
+  }
+  .splash-brand-en {
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 1.1rem; font-weight: 300;
+    color: rgba(240,236,228,0.6);
+    letter-spacing: 0.25em; text-transform: lowercase;
+    display: block; margin-bottom: 0.3rem;
+  }
+  .splash-brand-ar {
+    font-family: 'Amiri', serif;
+    font-size: 3rem; font-weight: 700;
+    color: #f0ece4;
+    display: block;
+  }
+  .splash-enter {
+    font-family: 'Tajawal', sans-serif;
+    font-size: 0.95rem; font-weight: 500;
+    letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--gold);
+    background: transparent;
+    border: 1px solid var(--gold);
+    padding: 0.7rem 2.5rem;
+    cursor: pointer;
+    transition: background 0.3s, color 0.3s, box-shadow 0.3s;
+  }
+  .splash-enter:hover,
+  .splash-enter:focus-visible {
+    background: var(--gold);
+    color: #000;
+    box-shadow: 0 0 30px rgba(197,160,89,0.3);
+    outline: none;
+  }
+
+  /* ---- Onboarding ---- */
+  #onboarding {
+    display: none;
+    position: fixed; inset: 0; z-index: 90;
+    background: var(--bg);
+    flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 2rem;
+    transition: background var(--transition-speed);
+  }
+  #onboarding.active { display: flex; }
+
+  .onboarding-card {
+    max-width: 420px; width: 100%;
+    text-align: center;
+    opacity: 0; transform: translateY(24px);
+    transition: opacity 0.6s ease, transform 0.6s ease;
+    position: relative;
+    padding: 3rem 2rem;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .onboarding-card.visible { opacity: 1; transform: translateY(0); }
+
+  /* Chiaroscuro card: lit on left, shadow on right */
+  .onboarding-card::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(105deg,
+      rgba(240,236,228,0.08) 0%,
+      rgba(240,236,228,0.03) 35%,
+      transparent 60%,
+      rgba(0,0,0,0.3) 100%);
+    border-radius: 4px;
+    pointer-events: none;
+  }
+  [data-theme="light"] .onboarding-card::before {
+    background: linear-gradient(105deg,
+      rgba(255,255,255,0.9) 0%,
+      rgba(255,255,255,0.4) 35%,
+      transparent 60%,
+      rgba(0,0,0,0.06) 100%);
+  }
+  .onboarding-card::after {
+    content: '';
+    position: absolute; inset: 0;
+    border: 1px solid var(--surface-border);
+    border-radius: 4px;
+    pointer-events: none;
+  }
+
+  .ob-icon {
+    font-size: 2.4rem;
+    margin-bottom: 1rem;
+    display: block;
+    filter: drop-shadow(0 0 12px rgba(197,160,89,0.4));
+  }
+  .ob-title {
+    font-family: 'Tajawal', sans-serif;
+    font-size: 1.5rem; font-weight: 700;
+    color: var(--text);
+    margin-bottom: 0.3rem;
+  }
+  .ob-subtitle {
+    font-family: 'Amiri', serif;
+    font-size: 1.15rem;
+    color: var(--gold);
+    margin-bottom: 1rem;
+    direction: rtl;
+  }
+  .ob-desc {
+    font-size: 0.95rem;
+    color: var(--muted);
+    line-height: 1.6;
+    margin-bottom: 2rem;
+    position: relative;
+  }
+
+  .ob-dots {
+    display: flex; gap: 0.5rem;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+  }
+  .ob-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--surface-border);
+    transition: background 0.3s, box-shadow 0.3s;
+  }
+  .ob-dot.active {
+    background: var(--gold);
+    box-shadow: 0 0 8px var(--gold-dim);
+  }
+
+  .ob-next {
+    font-family: 'Tajawal', sans-serif;
+    font-size: 0.9rem; font-weight: 500;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--gold);
+    background: transparent;
+    border: 1px solid var(--gold-dim);
+    padding: 0.6rem 2rem;
+    cursor: pointer;
+    transition: background 0.3s, color 0.3s, border-color 0.3s;
+  }
+  .ob-next:hover,
+  .ob-next:focus-visible {
+    background: var(--gold);
+    color: #000;
+    border-color: var(--gold);
+    outline: none;
+  }
+
+  /* ---- Main App ---- */
+  #app {
+    display: none;
+    min-height: 100vh;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    position: relative;
+    transition: background var(--transition-speed);
+  }
+  #app.active { display: flex; }
+
+  .app-header {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+  .app-title {
+    font-family: 'Amiri', serif;
+    font-size: 1.6rem; font-weight: 700;
+    color: var(--text);
+  }
+  .app-subtitle {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-top: 0.25rem;
+  }
+
+  .poem-frame {
+    max-width: 560px; width: 100%;
+    position: relative;
+    padding: 2.5rem 2rem;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 2rem;
+  }
+  /* Dramatic chiaroscuro lighting on poem card */
+  .poem-frame::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: linear-gradient(110deg,
+      rgba(240,236,228,0.1) 0%,
+      rgba(240,236,228,0.04) 30%,
+      transparent 55%,
+      rgba(0,0,0,0.5) 100%);
+    border-radius: 4px;
+    pointer-events: none;
+  }
+  [data-theme="light"] .poem-frame::before {
+    background: linear-gradient(110deg,
+      rgba(255,255,255,0.95) 0%,
+      rgba(255,255,255,0.5) 30%,
+      transparent 55%,
+      rgba(0,0,0,0.05) 100%);
+  }
+  .poem-frame::after {
+    content: '';
+    position: absolute; inset: 0;
+    border: 1px solid var(--surface-border);
+    border-radius: 4px;
+    pointer-events: none;
+  }
+  .poem-accent-line {
+    width: 40px; height: 2px;
+    background: var(--gold);
+    margin: 0 auto 1.5rem;
+    box-shadow: 0 0 10px var(--gold-dim);
+  }
+  .poem-content {
+    text-align: center;
+    position: relative;
+  }
+  .poem-line {
+    font-family: 'Amiri', serif;
+    font-size: 1.55rem;
+    line-height: 2;
+    color: var(--text);
+  }
+  .poem-separator {
+    width: 20px; height: 1px;
+    background: var(--gold-dim);
+    margin: 0.8rem auto;
+  }
+  .poet-name {
+    font-family: 'Tajawal', sans-serif;
+    font-size: 0.85rem;
+    color: var(--gold);
+    margin-top: 1.2rem;
+  }
+
+  .btn-row {
+    display: flex; gap: 0.75rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+  }
+  .ctrl-btn {
+    width: 44px; height: 44px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1rem;
+    color: var(--muted);
+    background: var(--surface);
+    border: 1px solid var(--surface-border);
+    border-radius: 50%;
+    cursor: pointer;
+    transition: color 0.3s, border-color 0.3s, box-shadow 0.3s, background 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+  /* Spotlight hover: radial glow from center */
+  .ctrl-btn::before {
+    content: '';
+    position: absolute; inset: 0;
+    border-radius: 50%;
+    background: radial-gradient(circle at center, rgba(197,160,89,0.15) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+  }
+  .ctrl-btn:hover::before,
+  .ctrl-btn:focus-visible::before {
+    opacity: 1;
+  }
+  .ctrl-btn:hover,
+  .ctrl-btn:focus-visible {
+    color: var(--gold);
+    border-color: var(--gold-dim);
+    box-shadow: 0 0 16px rgba(197,160,89,0.12);
+    outline: none;
+  }
+
+  .theme-toggle {
+    position: fixed; top: 1rem; right: 1rem; z-index: 110;
+    font-size: 1.2rem;
+    color: var(--muted);
+    background: var(--surface);
+    border: 1px solid var(--surface-border);
+    border-radius: 50%;
+    width: 40px; height: 40px;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    transition: color 0.3s, border-color 0.3s;
+  }
+  .theme-toggle:hover,
+  .theme-toggle:focus-visible {
+    color: var(--gold);
+    border-color: var(--gold-dim);
+    outline: none;
+  }
+
+  .footer-note {
+    font-size: 0.75rem;
+    color: var(--muted);
+    text-align: center;
+    opacity: 0.6;
+  }
+
+  /* ---- Reduced Motion ---- */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+    }
+    #splash-canvas { display: none; }
+  }
+
+  /* ---- Mobile ---- */
+  @media (max-width: 480px) {
+    .splash-brand-ar { font-size: 2.2rem; }
+    .splash-brand-en { font-size: 0.9rem; }
+    .onboarding-card { padding: 2rem 1.5rem; }
+    .ob-title { font-size: 1.3rem; }
+    .poem-line { font-size: 1.25rem; }
+    .poem-frame { padding: 2rem 1.5rem; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- Theme Toggle -->
+  <button class="theme-toggle" id="themeBtn" aria-label="Toggle light/dark theme" title="Toggle theme">☾</button>
+
+  <!-- ============ Splash Screen ============ -->
+  <div id="splash" role="dialog" aria-label="Welcome screen">
+    <canvas id="splash-canvas" aria-hidden="true"></canvas>
+    <div class="splash-content" id="splashContent">
+      <div class="splash-brand">
+        <span class="splash-brand-en">poetry bil-araby</span>
+        <span class="splash-brand-ar" dir="rtl">شعر بالعربي</span>
+      </div>
+      <button class="splash-enter" id="enterBtn" aria-label="Enter the app">Enter</button>
+    </div>
+  </div>
+
+  <!-- ============ Onboarding ============ -->
+  <div id="onboarding" role="dialog" aria-label="Onboarding steps">
+    <div class="onboarding-card" id="obCard">
+      <span class="ob-icon" id="obIcon" aria-hidden="true"></span>
+      <div class="ob-title" id="obTitle"></div>
+      <div class="ob-subtitle" id="obSubtitle" dir="rtl"></div>
+      <div class="ob-desc" id="obDesc"></div>
+      <div class="ob-dots" id="obDots" aria-hidden="true"></div>
+      <button class="ob-next" id="obNext" aria-label="Next step">Next</button>
+    </div>
+  </div>
+
+  <!-- ============ Main App ============ -->
+  <div id="app">
+    <header class="app-header">
+      <div class="app-title" dir="rtl">شعر بالعربي</div>
+      <p class="app-subtitle">Arabic poetry, one verse at a time</p>
+    </header>
+
+    <div class="poem-frame">
+      <div class="poem-accent-line"></div>
+      <div class="poem-content" dir="rtl">
+        <p class="poem-line">سَيَذكُرُني قَومي إِذا جَدَّ جِدُّهُم</p>
+        <div class="poem-separator"></div>
+        <p class="poem-line">وَفي اللَيلَةِ الظَلماءِ يُفتَقَدُ البَدرُ</p>
+        <p class="poet-name">— أبو فراس الحمداني</p>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="ctrl-btn" id="playBtn" aria-label="Play recitation" title="Listen">&#9654;</button>
+      <button class="ctrl-btn" id="saveBtn" aria-label="Save poem" title="Save">&#9825;</button>
+      <button class="ctrl-btn" id="nextBtn" aria-label="Next poem" title="Next">&#8594;</button>
+      <button class="ctrl-btn" id="fontBtn" aria-label="Increase font size" title="Font size">A+</button>
+      <button class="ctrl-btn" id="arabicBtn" aria-label="Toggle Arabic display" title="Arabic">ع</button>
+    </div>
+
+    <p class="footer-note">Improved Chiaroscuro — design review mockup</p>
+  </div>
+
+<script>
+(function() {
+  "use strict";
+
+  var prefersReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* ============================================
+     SPOTLIGHT SYSTEM
+     Fast, narrow beam that sweeps with subtle randomness
+     ============================================ */
+  function Spotlight(canvasEl) {
+    var self = this;
+    self.canvas = canvasEl;
+    self.ctx = canvasEl.getContext("2d");
+    self.cW = 0;
+    self.cH = 0;
+    self.dpr = window.devicePixelRatio || 1;
+    self.animId = null;
+    self.running = false;
+    self.time = 0;
+
+    /* Spotlight state */
+    self.spotX = 0;
+    self.spotY = 0;
+    self.targetX = 0;
+    self.targetY = 0;
+    /* Random wobble accumulators */
+    self.noisePhaseX = Math.random() * Math.PI * 2;
+    self.noisePhaseY = Math.random() * Math.PI * 2;
+    self.noisePhaseX2 = Math.random() * Math.PI * 2;
+    self.noisePhaseY2 = Math.random() * Math.PI * 2;
+
+    self.resize = function() {
+      var parent = self.canvas.parentElement;
+      self.cW = parent ? parent.offsetWidth : window.innerWidth;
+      self.cH = parent ? parent.offsetHeight : window.innerHeight;
+      if (self.cW === 0) self.cW = window.innerWidth;
+      if (self.cH === 0) self.cH = window.innerHeight;
+      self.canvas.width = self.cW * self.dpr;
+      self.canvas.height = self.cH * self.dpr;
+      self.canvas.style.width = self.cW + "px";
+      self.canvas.style.height = self.cH + "px";
+      self.ctx.setTransform(self.dpr, 0, 0, self.dpr, 0, 0);
+      self.spotX = self.cW * 0.5;
+      self.spotY = self.cH * 0.5;
+    };
+
+    self.update = function(dt) {
+      self.time += dt;
+
+      /* Primary sweep: fast sinusoidal back-and-forth */
+      var sweepSpeed = 1.8;
+      var sweepX = Math.sin(self.time * sweepSpeed) * (self.cW * 0.38);
+      var sweepY = Math.cos(self.time * sweepSpeed * 0.7) * (self.cH * 0.12);
+
+      /* Layer 1: medium-frequency random wobble */
+      self.noisePhaseX += dt * 3.2;
+      self.noisePhaseY += dt * 2.7;
+      var wobbleX = Math.sin(self.noisePhaseX) * (self.cW * 0.06)
+                  + Math.sin(self.noisePhaseX * 1.7) * (self.cW * 0.03);
+      var wobbleY = Math.cos(self.noisePhaseY) * (self.cH * 0.04)
+                  + Math.cos(self.noisePhaseY * 2.1) * (self.cH * 0.025);
+
+      /* Layer 2: high-frequency jitter for organic feel */
+      self.noisePhaseX2 += dt * 7.5;
+      self.noisePhaseY2 += dt * 6.3;
+      var jitterX = Math.sin(self.noisePhaseX2) * (self.cW * 0.012);
+      var jitterY = Math.cos(self.noisePhaseY2) * (self.cH * 0.01);
+
+      self.targetX = self.cW * 0.5 + sweepX + wobbleX + jitterX;
+      self.targetY = self.cH * 0.5 + sweepY + wobbleY + jitterY;
+
+      /* Smooth follow with fast lerp */
+      var lerp = 1.0 - Math.pow(0.04, dt);
+      self.spotX += (self.targetX - self.spotX) * lerp;
+      self.spotY += (self.targetY - self.spotY) * lerp;
+    };
+
+    self.draw = function() {
+      var ctx = self.ctx;
+      var w = self.cW;
+      var h = self.cH;
+
+      /* Pure black base */
+      ctx.fillStyle = "#000000";
+      ctx.fillRect(0, 0, w, h);
+
+      /* Narrow spotlight beam - tight radial gradient */
+      var beamRadius = Math.min(w, h) * 0.28;
+      var grad = ctx.createRadialGradient(
+        self.spotX, self.spotY, 0,
+        self.spotX, self.spotY, beamRadius
+      );
+      grad.addColorStop(0, "rgba(240,236,228,0.18)");
+      grad.addColorStop(0.15, "rgba(240,236,228,0.12)");
+      grad.addColorStop(0.35, "rgba(197,160,89,0.06)");
+      grad.addColorStop(0.6, "rgba(197,160,89,0.02)");
+      grad.addColorStop(1, "rgba(0,0,0,0)");
+
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, w, h);
+
+      /* Secondary softer glow to warm the center */
+      var glowRadius = Math.min(w, h) * 0.45;
+      var grad2 = ctx.createRadialGradient(
+        self.spotX, self.spotY, 0,
+        self.spotX, self.spotY, glowRadius
+      );
+      grad2.addColorStop(0, "rgba(240,236,228,0.06)");
+      grad2.addColorStop(0.4, "rgba(197,160,89,0.02)");
+      grad2.addColorStop(1, "rgba(0,0,0,0)");
+
+      ctx.fillStyle = grad2;
+      ctx.fillRect(0, 0, w, h);
+    };
+
+    self.loop = function() {
+      if (!self.running) return;
+      var dt = 1 / 60;
+      self.update(dt);
+      self.draw();
+      self.animId = requestAnimationFrame(self.loop);
+    };
+
+    self.start = function() {
+      if (self.running) return;
+      self.running = true;
+      self.resize();
+      self.loop();
+    };
+
+    self.stop = function() {
+      self.running = false;
+      if (self.animId) {
+        cancelAnimationFrame(self.animId);
+        self.animId = null;
+      }
+    };
+
+    window.addEventListener("resize", function() {
+      self.resize();
+    });
+  }
+
+  /* ============================================
+     ONBOARDING DATA
+     ============================================ */
+  var onboardingSteps = [
+    {
+      icon: "📜",
+      title: "Discover",
+      subtitle: "اكتشف",
+      desc: "Uncover timeless Arabic poetry from the golden age to modern masters, illuminated from the shadows."
+    },
+    {
+      icon: "🔍",
+      title: "Explore",
+      subtitle: "استكشف",
+      desc: "Browse by poet, era, or theme. Every verse emerges from darkness into light."
+    },
+    {
+      icon: "🎧",
+      title: "Listen",
+      subtitle: "استمع",
+      desc: "Hear poems brought to life with AI-powered Arabic recitation, as if whispered from the shadows."
+    },
+    {
+      icon: "✨",
+      title: "Share",
+      subtitle: "شارك",
+      desc: "Save your favorites and share the beauty of Arabic verse with the world."
+    }
+  ];
+
+  /* ============================================
+     STATE & ELEMENTS
+     ============================================ */
+  var currentStep = 0;
+  var spotlight = null;
+
+  var splash = document.getElementById("splash");
+  var splashContent = document.getElementById("splashContent");
+  var splashCanvas = document.getElementById("splash-canvas");
+  var enterBtn = document.getElementById("enterBtn");
+
+  var onboarding = document.getElementById("onboarding");
+  var obCard = document.getElementById("obCard");
+  var obIcon = document.getElementById("obIcon");
+  var obTitle = document.getElementById("obTitle");
+  var obSubtitle = document.getElementById("obSubtitle");
+  var obDesc = document.getElementById("obDesc");
+  var obDots = document.getElementById("obDots");
+  var obNext = document.getElementById("obNext");
+
+  var app = document.getElementById("app");
+  var themeBtn = document.getElementById("themeBtn");
+
+  /* ============================================
+     SPLASH INIT
+     ============================================ */
+  function initSplash() {
+    if (prefersReduced) {
+      splashContent.classList.add("visible");
+      return;
+    }
+    spotlight = new Spotlight(splashCanvas);
+    spotlight.start();
+
+    /* Reveal brand text after brief delay */
+    setTimeout(function() {
+      splashContent.classList.add("visible");
+    }, 800);
+  }
+
+  /* ============================================
+     TRANSITIONS
+     ============================================ */
+  function goToOnboarding() {
+    if (spotlight) {
+      spotlight.stop();
+    }
+    splash.classList.add("hidden");
+    setTimeout(function() {
+      splash.style.display = "none";
+      onboarding.classList.add("active");
+      showStep(0);
+    }, 800);
+  }
+
+  function showStep(idx) {
+    currentStep = idx;
+    var step = onboardingSteps[idx];
+
+    obCard.classList.remove("visible");
+    setTimeout(function() {
+      obIcon.textContent = step.icon;
+      obTitle.textContent = step.title;
+      obSubtitle.textContent = step.subtitle;
+      obDesc.textContent = step.desc;
+
+      /* Update dots */
+      obDots.innerHTML = "";
+      for (var i = 0; i < onboardingSteps.length; i++) {
+        var dot = document.createElement("div");
+        dot.className = "ob-dot" + (i === idx ? " active" : "");
+        obDots.appendChild(dot);
+      }
+
+      obNext.textContent = idx < onboardingSteps.length - 1 ? "Next" : "Begin";
+
+      obCard.classList.add("visible");
+    }, 150);
+  }
+
+  function advanceOnboarding() {
+    if (currentStep < onboardingSteps.length - 1) {
+      showStep(currentStep + 1);
+    } else {
+      goToApp();
+    }
+  }
+
+  function goToApp() {
+    onboarding.classList.remove("active");
+    app.classList.add("active");
+  }
+
+  /* ============================================
+     THEME TOGGLE
+     ============================================ */
+  function toggleTheme() {
+    var current = document.documentElement.getAttribute("data-theme");
+    if (current === "light") {
+      document.documentElement.removeAttribute("data-theme");
+      themeBtn.textContent = "☾";
+      themeBtn.setAttribute("aria-label", "Switch to light theme");
+    } else {
+      document.documentElement.setAttribute("data-theme", "light");
+      themeBtn.textContent = "☀";
+      themeBtn.setAttribute("aria-label", "Switch to dark theme");
+    }
+  }
+
+  /* ============================================
+     EVENT LISTENERS
+     ============================================ */
+  enterBtn.addEventListener("click", goToOnboarding);
+  obNext.addEventListener("click", advanceOnboarding);
+  themeBtn.addEventListener("click", toggleTheme);
+
+  /* Keyboard support */
+  document.addEventListener("keydown", function(e) {
+    if (e.key === "Enter") {
+      if (splash && splash.style.display !== "none" && !splash.classList.contains("hidden")) {
+        goToOnboarding();
+      } else if (onboarding.classList.contains("active")) {
+        advanceOnboarding();
+      }
+    }
+  });
+
+  /* ============================================
+     BOOT
+     ============================================ */
+  initSplash();
+
+})();
+</script>
+</body>
+</html>

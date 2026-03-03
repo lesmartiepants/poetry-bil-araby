@@ -477,71 +477,85 @@
       font-weight: 600;
     }
 
-    /* Vertical controls - right side */
-    .vertical-controls {
-      position: fixed;
-      right: 20px;
-      top: 50%;
-      transform: translateY(-50%);
-      display: flex;
-      flex-direction: column;
-      gap: 1px;
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 12px;
-      overflow: hidden;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-      z-index: 50;
-    }
-    .vc-btn {
-      width: 44px;
-      height: 44px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: transparent;
-      border: none;
-      cursor: pointer;
-      color: rgba(197, 160, 89, 0.5);
-      transition: all 0.2s ease;
-    }
-    .vc-btn:hover {
-      background: rgba(197, 160, 89, 0.12);
-      color: var(--gold);
-    }
-    .vc-divider {
-      height: 1px;
-      background: rgba(255, 255, 255, 0.06);
-    }
+    /* ===== CONTROLS ===== */
+    /* Chiaroscuro Light Reveal — invisible until touched, warm amber glow */
 
-    /* Bottom bar - mobile */
-    .bottom-bar {
+    .chiaro-controls {
       position: fixed;
       bottom: 0;
       left: 0;
       right: 0;
-      display: none;
-      justify-content: space-around;
-      align-items: center;
-      height: 56px;
-      background: rgba(10, 10, 10, 0.95);
-      backdrop-filter: blur(12px);
-      border-top: 1px solid rgba(255, 255, 255, 0.06);
+      height: 80px;
       z-index: 50;
-    }
-    .bb-btn {
-      width: 44px;
-      height: 44px;
       display: flex;
       align-items: center;
       justify-content: center;
-      background: transparent;
-      border: none;
-      cursor: pointer;
-      color: rgba(197, 160, 89, 0.5);
-      transition: all 0.2s ease;
+      gap: 24px;
+      background: linear-gradient(to top, rgba(0, 0, 0, 0.95) 0%, rgba(0, 0, 0, 0.6) 60%, transparent 100%);
+      padding-bottom: 12px;
     }
-    .bb-btn:hover { color: var(--gold); }
+
+    .chiaro-btn {
+      position: relative;
+      width: 52px;
+      height: 52px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 4px;
+      border-radius: 50%;
+      outline: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .chiaro-btn svg {
+      width: 18px;
+      height: 18px;
+      color: transparent;
+      transition: color 0.15s ease;
+    }
+
+    .chiaro-btn-label {
+      font-family: 'Tajawal', sans-serif;
+      font-size: 8px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: transparent;
+      transition: color 0.15s ease;
+      position: absolute;
+      bottom: 2px;
+    }
+
+    /* Light reveal on touch/active */
+    .chiaro-btn:active,
+    .chiaro-btn.lit {
+      background: radial-gradient(circle at center, rgba(255, 200, 100, 0.25) 0%, rgba(255, 180, 80, 0.1) 40%, transparent 70%);
+      box-shadow: 0 0 30px rgba(255, 200, 100, 0.2), 0 0 60px rgba(255, 180, 80, 0.1);
+    }
+
+    .chiaro-btn:active svg,
+    .chiaro-btn.lit svg {
+      color: rgba(255, 220, 150, 0.9);
+    }
+
+    .chiaro-btn:active .chiaro-btn-label,
+    .chiaro-btn.lit .chiaro-btn-label {
+      color: rgba(255, 200, 100, 0.7);
+    }
+
+    /* Hover — subtle warmth hint (desktop) */
+    @media (hover: hover) {
+      .chiaro-btn:hover {
+        background: radial-gradient(circle at center, rgba(255, 200, 100, 0.08) 0%, transparent 60%);
+      }
+      .chiaro-btn:hover svg {
+        color: rgba(255, 220, 150, 0.35);
+      }
+    }
 
     /* Mobile overrides */
     @media (max-width: 768px) {
@@ -551,8 +565,6 @@
       .splash-content { padding: 24px; }
       .poem-card { padding: 24px; }
       .poem-text { font-size: 22px; line-height: 1.8; }
-      .vertical-controls { display: none; }
-      .bottom-bar { display: flex; }
     }
 
     /* Reduced motion */
@@ -665,30 +677,24 @@
       </div>
     </div>
 
-    <!-- Vertical controls (desktop) -->
-    <div class="vertical-controls">
-      <button class="vc-btn" aria-label="Save"><i data-lucide="heart" style="width:18px;height:18px"></i></button>
-      <div class="vc-divider"></div>
-      <button class="vc-btn" aria-label="Font size"><i data-lucide="type" style="width:18px;height:18px"></i></button>
-      <div class="vc-divider"></div>
-      <button class="vc-btn" aria-label="Translate"><i data-lucide="languages" style="width:18px;height:18px"></i></button>
-      <div class="vc-divider"></div>
-      <button class="vc-btn" aria-label="Insights"><i data-lucide="book-open" style="width:18px;height:18px"></i></button>
-      <div class="vc-divider"></div>
-      <button class="vc-btn" aria-label="Italic"><i data-lucide="italic" style="width:18px;height:18px"></i></button>
-      <div class="vc-divider"></div>
-      <button class="vc-btn" aria-label="Sign in"><i data-lucide="log-in" style="width:18px;height:18px"></i></button>
-      <div class="vc-divider"></div>
-      <button class="vc-btn" aria-label="Settings"><i data-lucide="settings" style="width:18px;height:18px"></i></button>
-    </div>
-
-    <!-- Bottom bar (mobile) -->
-    <div class="bottom-bar">
-      <button class="bb-btn" aria-label="Listen"><i data-lucide="music" style="width:20px;height:20px"></i></button>
-      <button class="bb-btn" aria-label="Insights"><i data-lucide="lightbulb" style="width:20px;height:20px"></i></button>
-      <button class="bb-btn" aria-label="Refresh"><i data-lucide="refresh-cw" style="width:20px;height:20px"></i></button>
-      <button class="bb-btn" aria-label="Library"><i data-lucide="library" style="width:20px;height:20px"></i></button>
-      <button class="bb-btn" aria-label="Shuffle"><i data-lucide="shuffle" style="width:20px;height:20px"></i></button>
+    <!-- ===== CONTROLS: Chiaroscuro Light Reveal ===== -->
+    <div class="chiaro-controls">
+      <button class="chiaro-btn" aria-label="Next poem" data-action="next">
+        <i data-lucide="shuffle" style="width:18px;height:18px"></i>
+        <span class="chiaro-btn-label">next</span>
+      </button>
+      <button class="chiaro-btn" aria-label="Save poem" data-action="save">
+        <i data-lucide="heart" style="width:18px;height:18px"></i>
+        <span class="chiaro-btn-label">save</span>
+      </button>
+      <button class="chiaro-btn" aria-label="Listen" data-action="listen">
+        <i data-lucide="volume-2" style="width:18px;height:18px"></i>
+        <span class="chiaro-btn-label">listen</span>
+      </button>
+      <button class="chiaro-btn" aria-label="Share" data-action="share">
+        <i data-lucide="share" style="width:18px;height:18px"></i>
+        <span class="chiaro-btn-label">share</span>
+      </button>
     </div>
   </div>
 
@@ -789,6 +795,18 @@
       if (lightEl) lightEl.setAttribute('data-light', currentCard);
       if (shadowEl) shadowEl.setAttribute('data-light', currentCard);
     }
+
+    /* ===== CHIAROSCURO CONTROLS ===== */
+    // Touch creates brief "lit" state for mobile feedback
+    document.querySelectorAll('.chiaro-btn').forEach(function(btn) {
+      btn.addEventListener('touchstart', function() {
+        this.classList.add('lit');
+      }, { passive: true });
+      btn.addEventListener('touchend', function() {
+        var el = this;
+        setTimeout(function() { el.classList.remove('lit'); }, 200);
+      });
+    });
 
     /* ===== INIT LUCIDE ===== */
     if (typeof lucide !== 'undefined') lucide.createIcons();

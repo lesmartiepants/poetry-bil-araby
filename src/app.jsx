@@ -9,7 +9,7 @@ import { useAuth, useUserSettings, useSavedPoems } from './hooks/useAuth';
 
 const FEATURES = {
   grounding: false,
-  debug: true,
+  debug: import.meta.env.DEV,
   logging: true,      // Emit structured logs to console (captured by Vercel/browser)
   caching: true,      // Enable IndexedDB caching for audio/insights
   streaming: true,    // Enable streaming insights (progressive rendering)
@@ -54,7 +54,8 @@ const THEME = {
     btnPrimary: 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-indigo-500/40', 
     titleColor: 'text-[#C5A059]', // Antique Gold
     poetColor: 'text-[#C5A059]', // Unified Gold
-    controlIcon: 'text-stone-300 hover:text-white'
+    controlIcon: 'text-stone-300 hover:text-white',
+    dropdownBg: 'rgba(20,18,16,0.98)',  // Used in inline style for floating dropdown panels
   },
   light: {
     bg: 'bg-[#FDFCF8]',
@@ -71,7 +72,8 @@ const THEME = {
     btnPrimary: 'bg-gradient-to-br from-indigo-600 to-purple-700 text-white shadow-indigo-200',
     titleColor: 'text-[#8B7355]', // Antique Gold (rich, warm tone - 5.2:1 contrast)
     poetColor: 'text-[#8B7355]', // Antique Gold (rich, warm tone - 5.2:1 contrast)
-    controlIcon: 'text-indigo-950/90 hover:text-black'
+    controlIcon: 'text-indigo-950/90 hover:text-black',
+    dropdownBg: 'rgba(255,252,248,0.98)',  // Used in inline style for floating dropdown panels
   }
 };
 
@@ -790,7 +792,7 @@ const CategoryPill = ({ selected, onSelect, darkMode }) => {
       <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">Poets</span>
 
       {isOpen && (
-        <div className="absolute bottom-full right-[-20px] mb-3 min-w-[220px] bg-[rgba(20,18,16,0.98)] backdrop-blur-[48px] border border-[rgba(197,160,89,0.15)] rounded-3xl p-3 shadow-[0_-10px_40px_rgba(0,0,0,0.7)] z-50">
+        <div className="absolute bottom-full right-[-20px] mb-3 min-w-[220px] backdrop-blur-[48px] border border-[rgba(197,160,89,0.15)] rounded-3xl p-3 shadow-[0_-10px_40px_rgba(0,0,0,0.7)] z-50" style={{ background: THEME[darkMode ? 'dark' : 'light'].dropdownBg }}>
           {CATEGORIES.map(cat => (
             <button
               key={cat.id}
@@ -839,7 +841,7 @@ const ThemeDropdown = ({ darkMode, onToggleDarkMode, currentFont, onCycleFont, f
       <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">Theme</span>
 
       {isOpen && (
-        <div className="absolute bottom-full right-[-20px] mb-3 min-w-[200px] bg-[rgba(20,18,16,0.98)] backdrop-blur-[48px] border border-[rgba(197,160,89,0.15)] rounded-3xl p-3 shadow-[0_-10px_40px_rgba(0,0,0,0.7)] z-50">
+        <div className="absolute bottom-full right-[-20px] mb-3 min-w-[200px] backdrop-blur-[48px] border border-[rgba(197,160,89,0.15)] rounded-3xl p-3 shadow-[0_-10px_40px_rgba(0,0,0,0.7)] z-50" style={{ background: THEME[darkMode ? 'dark' : 'light'].dropdownBg }}>
           <button
             onClick={handleCycleFont}
             className="w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex flex-col items-center border-b border-[rgba(197,160,89,0.08)] hover:bg-[rgba(197,160,89,0.08)]"
@@ -999,7 +1001,7 @@ const OverflowMenu = ({
         <div
           className="absolute bottom-full right-[-20px] mb-3 min-w-[220px] max-h-[80vh] overflow-y-auto custom-scrollbar backdrop-blur-[48px] rounded-3xl p-3 z-50"
           style={{
-            background: darkMode ? 'rgba(20,18,16,0.98)' : 'rgba(255,252,248,0.98)',
+            background: THEME[darkMode ? 'dark' : 'light'].dropdownBg,
             border: `1px solid ${darkMode ? 'rgba(197,160,89,0.15)' : 'rgba(139,115,85,0.18)'}`,
             boxShadow: darkMode
               ? '0 -10px 40px rgba(0,0,0,0.7)'
@@ -1189,7 +1191,7 @@ const AuthModal = ({ isOpen, onClose, onSignInWithGoogle, onSignInWithApple, the
   );
 };
 
-const AuthButton = ({ user, onSignIn, onSignOut, onOpenSavedPoems, onOpenSettings, theme }) => {
+const AuthButton = ({ user, onSignIn, onSignOut, onOpenSavedPoems, onOpenSettings, theme, darkMode }) => {
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef(null);
 
@@ -1242,7 +1244,7 @@ const AuthButton = ({ user, onSignIn, onSignOut, onOpenSavedPoems, onOpenSetting
       </span>
 
       {showMenu && (
-        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3 min-w-[200px] bg-[rgba(20,18,16,0.98)] backdrop-blur-[48px] border border-[rgba(197,160,89,0.15)] rounded-3xl p-3 shadow-[0_-10px_40px_rgba(0,0,0,0.7)] z-50">
+        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3 min-w-[200px] backdrop-blur-[48px] border border-[rgba(197,160,89,0.15)] rounded-3xl p-3 shadow-[0_-10px_40px_rgba(0,0,0,0.7)] z-50" style={{ background: THEME[darkMode ? 'dark' : 'light'].dropdownBg }}>
           <div className="px-4 py-3 border-b border-[rgba(197,160,89,0.08)]">
             <p className="font-brand-en text-xs text-[#C5A059] font-medium truncate">
               {user.email || user.user_metadata?.full_name || 'User'}
@@ -2802,6 +2804,7 @@ export default function DiwanApp() {
                       onOpenSavedPoems={handleOpenSavedPoems}
                       onOpenSettings={handleOpenSettings}
                       theme={theme}
+                      darkMode={darkMode}
                     />
                   )}
                 </>

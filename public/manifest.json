@@ -1,0 +1,17 @@
+{
+  "name": "Poetry Bil-Araby | بالعربي",
+  "short_name": "قافية",
+  "description": "Explore classical and modern Arabic poetry with AI-powered insights.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0c0c0e",
+  "theme_color": "#C5A059",
+  "icons": [
+    {
+      "src": "/app-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

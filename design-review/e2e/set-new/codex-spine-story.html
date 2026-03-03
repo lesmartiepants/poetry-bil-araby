@@ -517,141 +517,227 @@
     }
 
     /* ===== MAIN APP ===== */
+    /* Scroll-Story adapted to Medieval Codex — parchment reader, serif typography */
     #main {
       display: none;
       background: #0f0d0a;
+      position: relative;
     }
     .main-layout {
       position: relative;
       z-index: 2;
       width: 100%;
-      max-width: 900px;
-      padding: 32px 24px;
+      padding: 0;
       min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding-top: 56px;
     }
     .main-nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 8px 0;
-      margin-bottom: 24px;
-      border-bottom: 1px solid rgba(197, 160, 89, 0.15);
+      padding: 0 20px;
+      height: 56px;
+      z-index: 60;
+      background: rgba(15, 13, 10, 0.95);
+      backdrop-filter: blur(8px);
     }
     .main-brand {
-      display: flex;
-      align-items: flex-end;
-      gap: 8px;
-    }
-    .main-brand-en {
-      font-family: 'Forum', cursive;
-      font-size: 1.25rem;
-      color: var(--parchment);
-      text-transform: lowercase;
-      letter-spacing: -0.05em;
-    }
-    .main-brand-ar {
-      font-family: 'Reem Kufi', sans-serif;
-      font-size: 0.875rem;
+      font-family: 'Cinzel', serif;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 0.2em;
       color: var(--gold);
-      font-weight: 700;
     }
-    .nav-actions { display: flex; gap: 0.5rem; }
-    .nav-btn {
-      width: 44px; height: 44px;
-      border: none; background: transparent;
-      color: rgba(197, 160, 89, 0.5);
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer; border-radius: 8px;
-      transition: color 0.2s ease;
+    .main-chapter {
+      font-family: 'Cinzel', serif;
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      color: var(--gold-dark);
     }
-    .nav-btn:hover { color: var(--gold); }
-    .nav-btn svg { width: 20px; height: 20px; }
 
-    /* Poem card */
-    .poem-card {
-      background: rgba(197, 160, 89, 0.04);
-      border: 1px solid rgba(197, 160, 89, 0.12);
-      border-radius: 8px;
-      padding: 40px;
-      margin-bottom: 24px;
-      transition: all 0.3s ease;
+    /* Reader area */
+    .reader-area {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 2rem 20px;
     }
-    .poem-card:hover {
-      border-color: rgba(197, 160, 89, 0.25);
-      box-shadow: 0 4px 20px rgba(197, 160, 89, 0.1);
+
+    /* Parchment reader card */
+    .reader-card {
+      background: linear-gradient(145deg, var(--parchment) 0%, var(--parchment-dark) 100%);
+      border-radius: 6px;
+      padding: 2rem 1.5rem;
+      position: relative;
+      box-shadow:
+        inset 0 0 25px rgba(42, 34, 24, 0.08),
+        0 8px 24px rgba(0, 0, 0, 0.4);
     }
+
+    /* Paper texture */
+    .reader-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 28px,
+          rgba(42, 34, 24, 0.04) 28px,
+          rgba(42, 34, 24, 0.04) 29px
+        );
+      border-radius: inherit;
+      pointer-events: none;
+    }
+
+    .reader-poet {
+      font-family: 'Cinzel', serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--gold-dark);
+      margin-bottom: 1.25rem;
+      position: relative;
+    }
+
     .poem-text {
       font-family: 'Amiri', serif;
-      font-size: clamp(1.25rem, 3vw, 1.625rem);
+      font-size: clamp(1.375rem, 3.5vw, 1.625rem);
       line-height: 2.2;
-      color: var(--parchment);
+      color: var(--ink);
       direction: rtl;
-      text-align: center;
-      margin-bottom: 1.5rem;
-    }
-    .poem-poet {
-      font-size: 0.8125rem;
-      color: var(--gold);
-      text-align: center;
-      direction: rtl;
+      text-align: right;
+      margin-bottom: 1rem;
+      position: relative;
     }
 
-    /* Vertical controls */
-    .vertical-controls {
-      position: fixed; right: 0; top: 0; bottom: 0;
-      width: 48px;
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      gap: 4px;
-      border-left: 1px solid rgba(197, 160, 89, 0.1);
-      background: rgba(15, 13, 10, 0.95);
-      padding: 8px 0;
-      z-index: 50;
-    }
-    .vc-btn {
-      width: 44px; height: 44px;
-      border: none; background: transparent;
-      color: rgba(197, 160, 89, 0.4);
-      display: flex; align-items: center; justify-content: center;
-      cursor: pointer; border-radius: 8px;
-      transition: all 0.2s ease;
-    }
-    .vc-btn:hover { color: var(--gold); background: rgba(197, 160, 89, 0.08); }
-    .vc-btn svg { width: 18px; height: 18px; }
-    .vc-divider {
-      width: 24px; height: 1px;
-      background: rgba(197, 160, 89, 0.1);
-      margin: 4px 0;
+    .poem-english {
+      font-family: 'Tajawal', sans-serif;
+      font-size: 13px;
+      color: var(--ink-light);
+      line-height: 1.6;
+      margin-bottom: 1rem;
+      position: relative;
     }
 
-    /* Bottom bar */
-    .bottom-bar {
-      position: fixed; bottom: 0; left: 0; right: 0;
-      display: none;
-      justify-content: space-around;
-      align-items: center;
-      height: 56px;
-      background: rgba(15, 13, 10, 0.95);
-      backdrop-filter: blur(12px);
-      border-top: 1px solid rgba(197, 160, 89, 0.1);
-      z-index: 50;
+    .reader-divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--gold-dark), transparent);
+      margin-bottom: 1rem;
+      opacity: 0.4;
     }
-    .bb-btn {
-      width: 44px; height: 44px;
-      display: flex; align-items: center; justify-content: center;
-      background: transparent; border: none; cursor: pointer;
-      color: rgba(197, 160, 89, 0.4);
+
+    .reader-scene-nav {
+      display: flex;
+      gap: 10px;
+      position: relative;
+    }
+
+    .scene-tag {
+      font-family: 'Cinzel', serif;
+      font-size: 10px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--ink-light);
+      padding: 6px 12px;
+      border: 1px solid rgba(197, 160, 89, 0.2);
+      border-radius: 2px;
+      background: transparent;
+      cursor: pointer;
       transition: all 0.2s ease;
     }
-    .bb-btn:hover { color: var(--gold); }
+
+    .scene-tag:hover {
+      border-color: var(--gold-dark);
+      color: var(--ink);
+    }
+
+    /* ===== CONTROLS ===== */
+    /* Medieval Codex Bookmark Ribbons — hanging from top of screen */
+
+    .bookmark-ribbons {
+      position: fixed;
+      top: 56px;
+      right: 20px;
+      display: flex;
+      gap: 10px;
+      z-index: 55;
+    }
+
+    .ribbon {
+      width: 28px;
+      height: 52px;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding-bottom: 6px;
+      border-radius: 0 0 3px 3px;
+      position: relative;
+      transition: height 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      -webkit-tap-highlight-color: transparent;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+    }
+
+    /* Ribbon notch at bottom */
+    .ribbon::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 14px solid transparent;
+      border-right: 14px solid transparent;
+      border-bottom: 8px solid #0f0d0a;
+    }
+
+    .ribbon:hover, .ribbon:active {
+      height: 76px;
+    }
+
+    .ribbon-label {
+      font-family: 'Cinzel', serif;
+      font-size: 7px;
+      font-weight: 600;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.85);
+      writing-mode: vertical-lr;
+      text-orientation: mixed;
+      transform: rotate(180deg);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+    }
+
+    .ribbon:hover .ribbon-label,
+    .ribbon:active .ribbon-label {
+      opacity: 1;
+    }
+
+    /* Ribbon colors */
+    .ribbon-next { background: #8b1a2b; }
+    .ribbon-save { background: #1a2e5a; }
+    .ribbon-listen { background: #1a4d2e; }
+    .ribbon-share { background: var(--gold-dark); }
 
     @media (max-width: 768px) {
       .book-assembly { width: 95%; }
       .cover { padding: 2rem 1.5rem; }
       .codex-page { padding: 2rem 1.5rem; min-height: 360px; }
-      .vertical-controls { display: none; }
-      .bottom-bar { display: flex; }
-      .poem-card { padding: 24px; }
+      .bookmark-ribbons { right: 12px; }
+      .ribbon { width: 24px; height: 44px; }
+      .ribbon:hover, .ribbon:active { height: 68px; }
     }
 
     @media (prefers-reduced-motion: reduce) {
@@ -757,49 +843,43 @@
   <div class="screen" id="main">
     <div class="main-layout">
       <nav class="main-nav">
-        <div class="main-brand">
-          <span class="main-brand-en">poetry</span>
-          <span class="main-brand-ar" lang="ar" dir="rtl">بالعربي</span>
-        </div>
-        <div class="nav-actions">
-          <button class="nav-btn" aria-label="Search"><i data-lucide="search"></i></button>
-          <button class="nav-btn" aria-label="Menu"><i data-lucide="menu"></i></button>
-        </div>
+        <div class="main-brand">QAFIYAH</div>
+        <div class="main-chapter">Chapter 2</div>
       </nav>
 
-      <div class="poem-card">
-        <div class="poem-text" lang="ar" dir="rtl">
-          أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ<br>
-          فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
+      <div class="reader-area">
+        <div class="reader-card">
+          <div class="reader-poet">Nizar Qabbani -- A Quiet Love</div>
+          <div class="poem-text" lang="ar" dir="rtl">
+            أُحِبُّكِ حِينَ تَغِيبِينَ شَيْئًا فَشَيْئًا<br>
+            كَأَنَّكِ فِي السَّفَرِ تَتَعَلَّمِينَ نُطْقِي
+          </div>
+          <div class="poem-english">I love you as you fade little by little, as if in travel you learn my speech.</div>
+          <div class="reader-divider"></div>
+          <div class="reader-scene-nav">
+            <button class="scene-tag">Prev Scene</button>
+            <button class="scene-tag">Next Scene</button>
+            <button class="scene-tag">Insight</button>
+          </div>
         </div>
-        <div class="poem-poet" lang="ar" dir="rtl">-- أحمد شوقي</div>
       </div>
     </div>
 
-    <!-- Vertical controls -->
-    <div class="vertical-controls">
-      <button class="vc-btn" aria-label="Save"><i data-lucide="heart" style="width:18px;height:18px"></i></button>
-      <div class="vc-divider"></div>
-      <button class="vc-btn" aria-label="Font size"><i data-lucide="type" style="width:18px;height:18px"></i></button>
-      <div class="vc-divider"></div>
-      <button class="vc-btn" aria-label="Translate"><i data-lucide="languages" style="width:18px;height:18px"></i></button>
-      <div class="vc-divider"></div>
-      <button class="vc-btn" aria-label="Collection"><i data-lucide="book-open" style="width:18px;height:18px"></i></button>
-      <div class="vc-divider"></div>
-      <button class="vc-btn" aria-label="Style"><i data-lucide="italic" style="width:18px;height:18px"></i></button>
-      <div class="vc-divider"></div>
-      <button class="vc-btn" aria-label="Sign in"><i data-lucide="log-in" style="width:18px;height:18px"></i></button>
-      <div class="vc-divider"></div>
-      <button class="vc-btn" aria-label="Settings"><i data-lucide="settings" style="width:18px;height:18px"></i></button>
-    </div>
-
-    <!-- Bottom bar -->
-    <div class="bottom-bar">
-      <button class="bb-btn" aria-label="Listen"><i data-lucide="music" style="width:20px;height:20px"></i></button>
-      <button class="bb-btn" aria-label="Insights"><i data-lucide="lightbulb" style="width:20px;height:20px"></i></button>
-      <button class="bb-btn" aria-label="Refresh"><i data-lucide="refresh-cw" style="width:20px;height:20px"></i></button>
-      <button class="bb-btn" aria-label="Library"><i data-lucide="library" style="width:20px;height:20px"></i></button>
-      <button class="bb-btn" aria-label="Shuffle"><i data-lucide="shuffle" style="width:20px;height:20px"></i></button>
+    <!-- ===== CONTROLS ===== -->
+    <!-- Bookmark Ribbons: 4 colored ribbons hanging from top -->
+    <div class="bookmark-ribbons">
+      <button class="ribbon ribbon-next" aria-label="Next poem">
+        <span class="ribbon-label">Next</span>
+      </button>
+      <button class="ribbon ribbon-save" aria-label="Save poem">
+        <span class="ribbon-label">Save</span>
+      </button>
+      <button class="ribbon ribbon-listen" aria-label="Listen">
+        <span class="ribbon-label">Listen</span>
+      </button>
+      <button class="ribbon ribbon-share" aria-label="Share">
+        <span class="ribbon-label">Share</span>
+      </button>
     </div>
   </div>
 
@@ -856,6 +936,18 @@
   document.getElementById('walkthroughFinish').addEventListener('click', function (e) {
     e.stopPropagation();
     advancePage();
+  });
+
+  /* ===== RIBBON TOUCH FEEDBACK ===== */
+  document.querySelectorAll('.ribbon').forEach(function (ribbon) {
+    ribbon.addEventListener('touchstart', function () {
+      ribbon.style.height = '76px';
+    }, { passive: true });
+    ribbon.addEventListener('touchend', function () {
+      setTimeout(function () {
+        ribbon.style.height = '';
+      }, 200);
+    }, { passive: true });
   });
 })();
 </script>

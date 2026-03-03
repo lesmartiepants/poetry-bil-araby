@@ -4,11 +4,7 @@
   "framework": "vite",
   "cleanUrls": false,
   "trailingSlash": false,
-  "git": {
-    "deploymentEnabled": {
-      "main": true
-    }
-  },
+  "git": {},
   "github": {
     "enabled": true,
     "autoAlias": true,

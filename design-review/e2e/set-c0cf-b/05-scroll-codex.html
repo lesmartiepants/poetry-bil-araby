@@ -254,7 +254,7 @@
         .onboard-dot.active { background: var(--gold); transform: scale(1.3); }
         .onboard-tap { font-size: 0.72rem; color: var(--comment); margin-top: 1rem; }
 
-        /* ========== MAIN ========== */
+        /* ========== MAIN - Open Book Layout ========== */
         #mainContent {
             opacity: 0;
             transition: opacity 0.8s ease;
@@ -262,6 +262,7 @@
             padding-right: 4.5rem;
             max-width: 900px;
             margin: 0 auto;
+            padding-bottom: 5rem;
         }
         #mainContent.show { opacity: 1; }
 
@@ -294,131 +295,152 @@
         }
         .ctrl-btn svg { width: 20px; height: 20px; }
 
-        /* ========== Controls - Bottom Bar (Mobile) ========== */
+        /* ========== CONTROLS: Page Tab Bar (Mobile) ========== */
         .controls-bottom {
             display: none;
-            position: fixed; bottom: 28px; left: 0; right: 0;
-            background: var(--panel-dark);
-            border-top: 1px solid var(--border-dark);
-            padding: 0.5rem 1rem;
+            position: fixed; bottom: 0; left: 0; right: 0;
             z-index: 50;
-            justify-content: space-around;
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
-        }
-        body.light .controls-bottom {
-            background: var(--panel-light);
-            border-color: var(--border-light);
-        }
-        .controls-bottom .ctrl-btn {
-            border: none; background: transparent;
-            border-radius: 8px;
+            flex-direction: row;
+            justify-content: center;
+            align-items: flex-end;
+            gap: 0;
+            padding: 0;
         }
 
-        header {
-            margin-bottom: 2.5rem;
-            padding: 1.5rem 2rem;
+        /* Each tab looks like a page corner peeking up */
+        .page-tab {
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            gap: 3px;
+            width: 72px; min-height: 52px;
             background: var(--panel-dark);
             border: 1px solid var(--border-dark);
-            border-radius: 8px;
-            display: flex; justify-content: space-between;
-            align-items: center;
-        }
-
-        body.light header {
-            background: var(--panel-light);
-            border-color: var(--border-light);
-        }
-
-        h1 {
-            font-family: 'Amiri', serif;
-            font-size: 2rem; font-weight: 700;
-            color: var(--gold);
-        }
-
-        .tab-bar {
-            display: flex; gap: 0;
-            margin-bottom: 2rem;
-            border-bottom: 1px solid var(--border-dark);
-        }
-
-        body.light .tab-bar { border-color: var(--border-light); }
-
-        .tab {
-            padding: 0.75rem 1.5rem;
-            min-height: 44px;
-            font-family: 'IBM Plex Mono', monospace;
-            font-size: 0.85rem;
-            background: transparent;
-            border: none; color: var(--comment);
+            border-bottom: none;
+            border-radius: 8px 8px 0 0;
+            color: var(--comment);
             cursor: pointer;
-            border-bottom: 2px solid transparent;
+            font-size: 9px;
+            font-family: 'IBM Plex Mono', monospace;
             transition: all 0.2s ease;
+            /* Page corner effect */
+            position: relative;
+            padding: 8px 4px 6px;
         }
-
-        .tab.active {
+        body.light .page-tab {
+            background: var(--panel-light);
+            border-color: var(--border-light);
+        }
+        .page-tab:hover {
             color: var(--gold);
-            border-bottom-color: var(--gold);
-            background: rgba(197,160,89,0.05);
+            transform: translateY(-4px);
+        }
+        .page-tab:hover::after {
+            content: '';
+            position: absolute; top: 0; right: 0;
+            width: 8px; height: 8px;
+            background: linear-gradient(135deg, var(--gold) 50%, transparent 50%);
+            border-radius: 0 8px 0 0;
+        }
+        .page-tab svg { width: 18px; height: 18px; }
+
+        /* Open Book Layout */
+        .book-spread {
+            display: flex;
+            gap: 0;
+            min-height: 50vh;
+            position: relative;
         }
 
-        .tab:hover {
-            color: var(--text-dark);
-            background: rgba(255,255,255,0.03);
+        /* Center binding */
+        .book-spread::before {
+            content: '';
+            position: absolute; top: 0; bottom: 0;
+            left: 50%; transform: translateX(-50%);
+            width: 3px;
+            background: linear-gradient(180deg, transparent, var(--border-dark) 10%, var(--border-dark) 90%, transparent);
+            z-index: 2;
+        }
+        body.light .book-spread::before {
+            background: linear-gradient(180deg, transparent, var(--border-light) 10%, var(--border-light) 90%, transparent);
         }
 
-        body.light .tab:hover { color: var(--text-light); background: rgba(0,0,0,0.03); }
-        .tab:focus-visible { outline: 2px solid var(--blue); outline-offset: -2px; }
-
-        /* Code-style poem card */
-        .poem-card {
+        /* Left page - poet info */
+        .page-left {
+            flex: 1;
             background: var(--panel-dark);
             border: 1px solid var(--border-dark);
-            border-radius: 8px;
-            overflow: hidden;
-            margin-bottom: 2rem;
-            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            border-radius: 4px 0 0 4px;
+            padding: 2rem 1.5rem;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            /* Paper texture */
+            background-image:
+                linear-gradient(180deg, rgba(255,255,255,0.02) 0%, transparent 100%);
         }
-        .poem-card:hover {
-            border-color: rgba(197,160,89,0.3);
-            box-shadow: 0 4px 24px rgba(197,160,89,0.06);
-        }
-
-        body.light .poem-card {
+        body.light .page-left {
             background: var(--panel-light);
             border-color: var(--border-light);
         }
 
-        .poem-card-bar {
-            display: flex; align-items: center;
-            gap: 8px; padding: 10px 16px;
-            background: rgba(0,0,0,0.2);
-            border-bottom: 1px solid var(--border-dark);
-            font-size: 0.8rem; color: var(--comment);
+        .poet-info { text-align: center; }
+        .poet-info h3 {
+            font-family: 'Amiri', serif;
+            font-size: 1.3rem;
+            color: var(--gold);
+            margin-bottom: 0.5rem;
+        }
+        .poet-info .era {
+            font-size: 0.8rem;
+            color: var(--comment);
+            margin-bottom: 1rem;
+        }
+        .poet-info .desc {
+            font-size: 0.85rem;
+            line-height: 1.8;
+            opacity: 0.6;
         }
 
-        body.light .poem-card-bar {
-            background: rgba(0,0,0,0.04);
+        /* Right page - poem */
+        .page-right {
+            flex: 1;
+            background: var(--panel-dark);
+            border: 1px solid var(--border-dark);
+            border-radius: 0 4px 4px 0;
+            padding: 2.5rem 2rem;
+            display: flex; flex-direction: column;
+            justify-content: center;
+            /* Slight page curl at bottom-right */
+            position: relative;
+        }
+        body.light .page-right {
+            background: var(--panel-light);
             border-color: var(--border-light);
         }
-
-        .poem-body {
-            padding: 2.5rem 2rem;
+        /* Page curl corner */
+        .page-right::after {
+            content: '';
+            position: absolute; bottom: 0; right: 0;
+            width: 20px; height: 20px;
+            background: linear-gradient(315deg, var(--panel-dark) 45%, rgba(197,160,89,0.1) 50%, transparent 60%);
+            border-radius: 0 0 4px 0;
+        }
+        body.light .page-right::after {
+            background: linear-gradient(315deg, var(--panel-light) 45%, rgba(197,160,89,0.1) 50%, transparent 60%);
         }
 
         .poem-text {
             font-family: 'Amiri', serif;
-            font-size: 1.85rem;
+            font-size: 1.65rem;
             line-height: 2.3;
             text-align: center;
-            margin-bottom: 1.5rem;
+            margin-bottom: 1rem;
         }
 
         .poet {
             text-align: center;
-            font-size: 1rem;
-            color: var(--green);
-            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.9rem;
+            color: var(--gold);
+            font-family: 'Amiri', serif;
         }
 
         /* Status bar */
@@ -451,14 +473,12 @@
             #mainContent { padding: 2rem 1rem; padding-bottom: 6rem; padding-right: 1rem; }
             .controls-vertical { display: none; }
             .controls-bottom { display: flex; }
-            h1 { font-size: 1.6rem; }
-            .terminal-body { font-size: 0.8rem; padding: 1rem; }
-            .poem-text { font-size: 1.4rem; line-height: 2.1; }
-            .poem-body { padding: 1.5rem; }
-            header { flex-direction: column; gap: 1rem; text-align: center; }
-            .tab-bar { overflow-x: auto; flex-wrap: nowrap; }
-            .tab { white-space: nowrap; font-size: 0.75rem; padding: 0.6rem 1rem; }
-            .status-bar { font-size: 0.65rem; }
+            .status-bar { display: none; }
+            .book-spread { flex-direction: column; }
+            .book-spread::before { display: none; }
+            .page-left { border-radius: 4px 4px 0 0; padding: 1.5rem; }
+            .page-right { border-radius: 0 0 4px 4px; padding: 1.5rem; }
+            .poem-text { font-size: 1.35rem; line-height: 2.1; }
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -515,61 +535,54 @@
         </div>
     </div>
 
-    <!-- ======== Main App ======== -->
+    <!-- ======== Main App - Open Book Layout ======== -->
     <div id="mainContent">
         <!-- Vertical Controls (Desktop) -->
         <nav class="controls-vertical" aria-label="App controls">
+            <button class="ctrl-btn" aria-label="Next poem"><i data-lucide="shuffle"></i></button>
             <button class="ctrl-btn" aria-label="Save poem"><i data-lucide="heart"></i></button>
-            <button class="ctrl-btn" aria-label="Change font"><i data-lucide="type"></i></button>
-            <button class="ctrl-btn" aria-label="Toggle language"><i data-lucide="languages"></i></button>
-            <button class="ctrl-btn" aria-label="Poem library"><i data-lucide="book-open"></i></button>
-            <button class="ctrl-btn" aria-label="Font style"><i data-lucide="italic"></i></button>
-            <button class="ctrl-btn" aria-label="Sign in"><i data-lucide="log-in"></i></button>
+            <button class="ctrl-btn" aria-label="Listen"><i data-lucide="headphones"></i></button>
+            <button class="ctrl-btn" aria-label="Share poem"><i data-lucide="share-2"></i></button>
             <button class="ctrl-btn" id="toggleTheme" aria-label="Toggle theme"><i data-lucide="sun"></i></button>
         </nav>
 
-        <!-- Bottom Controls (Mobile) -->
+        <!-- Page Tab Bar Controls (Mobile) -->
         <nav class="controls-bottom" aria-label="App controls">
-            <button class="ctrl-btn" aria-label="Listen"><i data-lucide="music"></i></button>
-            <button class="ctrl-btn" aria-label="AI insight"><i data-lucide="lightbulb"></i></button>
-            <button class="ctrl-btn" aria-label="New poem"><i data-lucide="refresh-cw"></i></button>
-            <button class="ctrl-btn" aria-label="Library"><i data-lucide="library"></i></button>
-            <button class="ctrl-btn" aria-label="Random poem"><i data-lucide="shuffle"></i></button>
+            <button class="page-tab" aria-label="Next poem"><i data-lucide="shuffle"></i><span>Shuffle</span></button>
+            <button class="page-tab" aria-label="Save poem"><i data-lucide="heart"></i><span>Save</span></button>
+            <button class="page-tab" aria-label="Listen"><i data-lucide="headphones"></i><span>Listen</span></button>
+            <button class="page-tab" aria-label="Share poem"><i data-lucide="share-2"></i><span>Share</span></button>
         </nav>
 
-        <header>
-            <h1>المخطوطة الرقمية</h1>
-        </header>
-
-        <div class="tab-bar">
-            <button class="tab active">poem.qaf</button>
-            <button class="tab">insights.ai</button>
-            <button class="tab">settings.cfg</button>
-            <button class="tab">history.log</button>
-        </div>
-
-        <div class="poem-card">
-            <div class="poem-card-bar">
-                <span>poem.qaf</span>
-                <span style="margin-right:auto">UTF-8</span>
-                <span>Ln 1, Col 1</span>
+        <!-- Open Book Spread -->
+        <div class="book-spread">
+            <!-- Left page - Poet Info -->
+            <div class="page-left">
+                <div class="poet-info">
+                    <h3 lang="ar">أحمد شوقي</h3>
+                    <div class="era">العصر الحديث -- Modern Era</div>
+                    <div class="desc" lang="ar">
+                        أمير الشعراء، من أعظم شعراء العربية في العصر الحديث.
+                        ولد في القاهرة ونظم الشعر في مختلف الأغراض.
+                    </div>
+                </div>
             </div>
-            <div class="poem-body">
+
+            <!-- Right page - Poem -->
+            <div class="page-right">
                 <div class="poem-text" lang="ar" dir="rtl">
                     أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ<br>
                     فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
                 </div>
-                <div class="poet">// -- أحمد شوقي</div>
+                <div class="poet">-- أحمد شوقي</div>
             </div>
         </div>
     </div>
 
     <div class="status-bar">
         <div class="status-item"><div class="status-dot"></div> Ready</div>
-        <div class="status-item">UTF-8</div>
         <div class="status-item">Poems: 84,329</div>
-        <div class="status-item" style="margin-right:auto">IBM Plex Mono</div>
-        <div class="status-item">Qafiyah v2.0</div>
+        <div class="status-item" style="margin-right:auto">Codex v2.0</div>
     </div>
 
     <script>

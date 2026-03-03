@@ -425,7 +425,7 @@
       align-items: center;
       justify-content: center;
       padding: 2rem 1rem;
-      padding-right: 56px;
+      padding-bottom: 80px;
     }
 
     .poem-text {
@@ -446,81 +446,125 @@
       direction: rtl;
     }
 
-    /* Vertical controls (right side) */
-    .vertical-controls {
+    /* ===== CONTROLS ===== */
+    /* Wabi-Sabi Single Dot — organic, imperfect, sequential reveal */
+
+    .wabi-dot-container {
+      position: fixed;
+      bottom: 32px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .wabi-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 47% 53% 49% 51% / 52% 48% 52% 48%;
+      background: #8b7355;
+      opacity: 0.5;
+      cursor: pointer;
+      transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      border: none;
+      outline: none;
+      position: relative;
+      min-width: 44px;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-clip: content-box;
+      padding: 18px;
+    }
+
+    .wabi-dot::before {
+      content: '';
+      display: block;
+      width: 8px;
+      height: 8px;
+      border-radius: 47% 53% 49% 51% / 52% 48% 52% 48%;
+      background: #8b7355;
+      transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+
+    [data-theme="light"] .wabi-dot::before {
+      background: #6b5a42;
+    }
+
+    .wabi-dot.expanded::before {
+      width: 0;
+      height: 0;
+      opacity: 0;
+    }
+
+    /* Expanded action ring */
+    .wabi-actions {
       position: absolute;
-      right: 0;
-      top: 0;
       bottom: 0;
-      width: 48px;
+      left: 50%;
+      transform: translateX(-50%);
       display: flex;
-      flex-direction: column;
       align-items: center;
-      justify-content: center;
-      gap: 4px;
-      border-left: 1px solid var(--border-color);
-      background: var(--bg-secondary);
-      padding: 8px 0;
+      gap: 12px;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.5s ease, visibility 0.5s ease;
+      pointer-events: none;
     }
 
-    .vc-btn {
-      width: 44px;
-      height: 44px;
+    .wabi-actions.visible {
+      opacity: 1;
+      visibility: visible;
+      pointer-events: auto;
+    }
+
+    .wabi-action {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 44px;
+      min-height: 44px;
       border: none;
       background: transparent;
-      color: var(--text-secondary);
-      display: flex;
-      align-items: center;
-      justify-content: center;
       cursor: pointer;
-      border-radius: 8px;
-      transition: color 0.2s ease, background 0.2s ease;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+      padding: 0;
     }
 
-    .vc-btn:hover {
+    .wabi-action.revealed {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .wabi-action-label {
+      font-family: 'Tajawal', sans-serif;
+      font-size: 11px;
+      font-weight: 400;
+      letter-spacing: 0.15em;
+      text-transform: lowercase;
+      color: #8b7355;
+      white-space: nowrap;
+      transition: color 0.3s ease;
+    }
+
+    [data-theme="light"] .wabi-action-label {
+      color: #6b5a42;
+    }
+
+    .wabi-action:active .wabi-action-label {
       color: var(--text-primary);
-      background: rgba(255, 255, 255, 0.05);
     }
 
-    [data-theme="light"] .vc-btn:hover {
-      background: rgba(0, 0, 0, 0.05);
+    /* Fade-out animation for closing */
+    .wabi-actions.fading {
+      opacity: 0;
+      transition: opacity 0.4s ease;
     }
-
-    .vc-btn svg { width: 18px; height: 18px; }
-
-    .vc-divider {
-      width: 24px;
-      height: 1px;
-      background: var(--border-color);
-      margin: 4px 0;
-    }
-
-    /* Bottom bar (mobile) */
-    .bottom-bar {
-      display: flex;
-      align-items: center;
-      justify-content: space-around;
-      padding: 0.5rem 1rem;
-      border-top: 1px solid var(--border-color);
-      background: var(--bg-secondary);
-    }
-
-    .bb-btn {
-      width: 48px;
-      height: 48px;
-      border: none;
-      background: transparent;
-      color: var(--text-secondary);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      border-radius: 8px;
-      transition: color 0.2s ease;
-    }
-
-    .bb-btn:hover { color: var(--text-primary); }
-    .bb-btn svg { width: 20px; height: 20px; }
 
     /* Responsive */
     @media (max-width: 480px) {
@@ -634,28 +678,26 @@
         <p class="poem-poet" lang="ar" dir="rtl">-- أحمد شوقي</p>
       </div>
 
-      <!-- Vertical controls (right) -->
-      <aside class="vertical-controls">
-        <button class="vc-btn" aria-label="Favorite"><i data-lucide="heart"></i></button>
-        <button class="vc-btn" aria-label="Font"><i data-lucide="type"></i></button>
-        <button class="vc-btn" aria-label="Languages"><i data-lucide="languages"></i></button>
-        <div class="vc-divider"></div>
-        <button class="vc-btn" aria-label="Collection"><i data-lucide="book-open"></i></button>
-        <button class="vc-btn" aria-label="Style"><i data-lucide="italic"></i></button>
-        <div class="vc-divider"></div>
-        <button class="vc-btn" aria-label="Sign in"><i data-lucide="log-in"></i></button>
-        <button class="vc-btn" aria-label="Settings"><i data-lucide="settings"></i></button>
-      </aside>
     </div>
 
-    <!-- Bottom bar (mobile) -->
-    <nav class="bottom-bar">
-      <button class="bb-btn" aria-label="Listen"><i data-lucide="music"></i></button>
-      <button class="bb-btn" aria-label="Insights"><i data-lucide="lightbulb"></i></button>
-      <button class="bb-btn" aria-label="New poem"><i data-lucide="refresh-cw"></i></button>
-      <button class="bb-btn" aria-label="Library"><i data-lucide="library"></i></button>
-      <button class="bb-btn" aria-label="Shuffle"><i data-lucide="shuffle"></i></button>
-    </nav>
+    <!-- ===== CONTROLS: Wabi-Sabi Single Dot ===== -->
+    <div class="wabi-dot-container" id="wabiDotContainer">
+      <button class="wabi-dot" id="wabiDot" aria-label="Open actions"></button>
+      <div class="wabi-actions" id="wabiActions">
+        <button class="wabi-action" data-action="next" aria-label="Next poem">
+          <span class="wabi-action-label">next</span>
+        </button>
+        <button class="wabi-action" data-action="save" aria-label="Save poem">
+          <span class="wabi-action-label">save</span>
+        </button>
+        <button class="wabi-action" data-action="listen" aria-label="Listen">
+          <span class="wabi-action-label">listen</span>
+        </button>
+        <button class="wabi-action" data-action="share" aria-label="Share">
+          <span class="wabi-action-label">share</span>
+        </button>
+      </div>
+    </div>
   </main>
 
   <script>
@@ -863,6 +905,65 @@
     }
 
     animateSmoke();
+
+    // ========== WABI-SABI CONTROLS ==========
+    var wabiDot = document.getElementById('wabiDot');
+    var wabiActions = document.getElementById('wabiActions');
+    var wabiActionBtns = wabiActions.querySelectorAll('.wabi-action');
+    var wabiOpen = false;
+    var wabiRevealTimer = null;
+
+    function openWabi() {
+      if (wabiOpen) return;
+      wabiOpen = true;
+      wabiDot.classList.add('expanded');
+      wabiActions.classList.remove('fading');
+      wabiActions.classList.add('visible');
+
+      // Sequentially reveal each action with 400ms stagger
+      wabiActionBtns.forEach(function(btn, i) {
+        btn.classList.remove('revealed');
+      });
+      var idx = 0;
+      wabiRevealTimer = setInterval(function() {
+        if (idx < wabiActionBtns.length) {
+          wabiActionBtns[idx].classList.add('revealed');
+          idx++;
+        } else {
+          clearInterval(wabiRevealTimer);
+        }
+      }, 400);
+    }
+
+    function closeWabi() {
+      if (!wabiOpen) return;
+      wabiOpen = false;
+      clearInterval(wabiRevealTimer);
+      wabiActions.classList.add('fading');
+      setTimeout(function() {
+        wabiActions.classList.remove('visible', 'fading');
+        wabiActionBtns.forEach(function(btn) {
+          btn.classList.remove('revealed');
+        });
+        wabiDot.classList.remove('expanded');
+      }, 400);
+    }
+
+    wabiDot.addEventListener('click', function(e) {
+      e.stopPropagation();
+      if (wabiOpen) {
+        closeWabi();
+      } else {
+        openWabi();
+      }
+    });
+
+    // Close when tapping outside
+    document.addEventListener('click', function(e) {
+      if (wabiOpen && !document.getElementById('wabiDotContainer').contains(e.target)) {
+        closeWabi();
+      }
+    });
 
     // ========== RESIZE ==========
     window.addEventListener('resize', function() {

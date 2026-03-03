@@ -115,8 +115,12 @@
     /* Keyboard hints */
     .kbd{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 4px;border-radius:3px;background:var(--surface-3);border:1px solid var(--border);font-size:9px;font-weight:600;color:var(--text-3);font-family:inherit}
 
+    /* ── Bottom navigation bar (desktop) ── */
+    .bottom-nav{display:flex;align-items:center;justify-content:center;gap:10px;padding:8px 14px;background:var(--surface);border-top:1px solid var(--border)}
+
     /* ── Mobile bottom bar ── */
     .mobile-bar{display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;background:var(--surface);border-top:1px solid var(--border);padding:8px 12px;padding-bottom:max(8px,env(safe-area-inset-bottom));flex-direction:column;gap:6px}
+    .mobile-bar .mobile-nav-row{display:flex;align-items:center;justify-content:center;gap:8px}
     .mobile-bar .verdict-row{display:flex;gap:6px}
     .mobile-bar .verdict-row .verdict-btn{flex:1;padding:10px 0;font-size:13px}
     .mobile-bar .comment-row{display:flex;gap:6px;align-items:flex-start}
@@ -139,8 +143,9 @@
       .preview-header{padding:6px 10px;min-height:34px}
       .preview-title{font-size:11px}
       .preview-sub{font-size:10px}
+      .bottom-nav{display:none}
       .mobile-bar{display:flex}
-      .preview{padding-bottom:130px}
+      .preview{padding-bottom:160px}
       .nav-btn{padding:5px 8px;font-size:11px}
       .nav-counter{font-size:11px;min-width:40px}
     }
@@ -190,19 +195,28 @@
           <h2>Poetry Bil-Araby Design Review</h2>
           <p>Select a component and category to start reviewing designs. Use arrow keys or Prev/Next to cycle through options.</p>
           <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:4px">
-            <span style="font-size:10px;color:var(--text-3)"><span class="kbd">&larr;</span><span class="kbd">&rarr;</span> Prev/Next &nbsp; <span class="kbd">K</span> Keep &nbsp; <span class="kbd">D</span> Discard &nbsp; <span class="kbd">S</span> Skip &nbsp; <span class="kbd">I</span> Panel</span>
+            <span style="font-size:10px;color:var(--text-3)"><span class="kbd">&larr;</span><span class="kbd">&rarr;</span> Prev/Next &nbsp; <span class="kbd">K</span> Keep &nbsp; <span class="kbd">D</span> Discard &nbsp; <span class="kbd">R</span> Revisit &nbsp; <span class="kbd">I</span> Panel</span>
           </div>
         </div>
+      </div>
+      <div class="bottom-nav" id="bottomNav">
+        <button class="nav-btn" id="prevBtnBottom" onclick="goPrev()" title="Previous (Left arrow)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 3L5 8l5 5"/></svg>Prev</button>
+        <span class="nav-counter" id="navCounterBottom">--</span>
+        <button class="nav-btn" id="nextBtnBottom" onclick="goNext()" title="Next (Right arrow)">Next<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 3l5 5-5 5"/></svg></button>
       </div>
     </div>
 
     <!-- Mobile bottom bar -->
     <div class="mobile-bar" id="mobileBar">
+      <div class="mobile-nav-row">
+        <button class="nav-btn" id="prevBtnMobile" onclick="goPrev()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:14px;height:14px"><path d="M10 3L5 8l5 5"/></svg>Prev</button>
+        <span class="nav-counter" id="navCounterMobile">--</span>
+        <button class="nav-btn" id="nextBtnMobile" onclick="goNext()">Next<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:14px;height:14px"><path d="M6 3l5 5-5 5"/></svg></button>
+      </div>
       <div class="verdict-row" id="mobileVerdictRow">
         <button class="verdict-btn" data-v="keep" onclick="setVerdict('keep')"><span class="v-icon">&#10003;</span> Keep</button>
         <button class="verdict-btn" data-v="discard" onclick="setVerdict('discard')"><span class="v-icon">&#10007;</span> Discard</button>
         <button class="verdict-btn" data-v="revisit" onclick="setVerdict('revisit')"><span class="v-icon">&#8635;</span> Revisit</button>
-        <button class="verdict-btn" data-v="skip" onclick="setVerdict('skip')"><span class="v-icon">&#8594;</span> Skip</button>
       </div>
       <div class="comment-row">
         <textarea class="comment-box" id="mobileCommentBox" placeholder="Comment..." oninput="saveMobileComment()"></textarea>
@@ -210,7 +224,7 @@
       </div>
       <div class="mobile-progress">
         <span id="mobileProgLabel">0/0</span>
-        <span><span style="color:var(--green)">&#10003;<span id="mobileKeep">0</span></span> &nbsp;<span style="color:var(--red)">&#10007;<span id="mobileDiscard">0</span></span> &nbsp;<span style="color:var(--purple)">&#8635;<span id="mobileRevisit">0</span></span> &nbsp;<span style="color:var(--blue)">&#8594;<span id="mobileSkip">0</span></span></span>
+        <span><span style="color:var(--green)">&#10003;<span id="mobileKeep">0</span></span> &nbsp;<span style="color:var(--red)">&#10007;<span id="mobileDiscard">0</span></span> &nbsp;<span style="color:var(--purple)">&#8635;<span id="mobileRevisit">0</span></span></span>
       </div>
     </div>
 
@@ -232,7 +246,6 @@
           <button class="verdict-btn" data-v="keep" onclick="setVerdict('keep')"><span class="v-icon">&#10003;</span> Keep</button>
           <button class="verdict-btn" data-v="discard" onclick="setVerdict('discard')"><span class="v-icon">&#10007;</span> Discard</button>
           <button class="verdict-btn" data-v="revisit" onclick="setVerdict('revisit')"><span class="v-icon">&#8635;</span> Revisit</button>
-          <button class="verdict-btn" data-v="skip" onclick="setVerdict('skip')"><span class="v-icon">&#8594;</span> Skip</button>
         </div>
         <textarea class="comment-box" id="commentBox" placeholder="Add a comment about this design..." oninput="saveComment()"></textarea>
         <input class="tags-input" id="tagsInput" placeholder="Tags (comma-separated, e.g. animation, typography)" oninput="saveTags()" />
@@ -253,7 +266,6 @@
           <span style="color:var(--green)">&#10003; <span id="keepCount">0</span> keep</span>
           <span style="color:var(--red)">&#10007; <span id="discardCount">0</span> discard</span>
           <span style="color:var(--purple)">&#8635; <span id="revisitCount">0</span> revisit</span>
-          <span style="color:var(--blue)">&#8594; <span id="skipCount">0</span> skip</span>
         </div>
       </div>
 
@@ -261,7 +273,7 @@
         <div class="ss-title">Keyboard Shortcuts</div>
         <div style="display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--text-3)">
           <div><span class="kbd">&larr;</span> <span class="kbd">&rarr;</span> Prev / Next design</div>
-          <div><span class="kbd">K</span> Keep &nbsp; <span class="kbd">D</span> Discard &nbsp; <span class="kbd">S</span> Skip</div>
+          <div><span class="kbd">K</span> Keep &nbsp; <span class="kbd">D</span> Discard &nbsp; <span class="kbd">R</span> Revisit</div>
           <div><span class="kbd">I</span> Toggle panel &nbsp; <span class="kbd">F</span> Fullscreen</div>
         </div>
       </div>
@@ -461,7 +473,16 @@ let reviewData = {};
 const STORAGE_KEY = 'design-review-feedback-v3';
 
 function loadReview() {
-  try { const raw = localStorage.getItem(STORAGE_KEY); if (raw) reviewData = JSON.parse(raw); } catch {}
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      reviewData = JSON.parse(raw);
+      // Migrate any 'skip' verdicts to 'revisit'
+      for (const key in reviewData) {
+        if (reviewData[key].verdict === 'skip') reviewData[key].verdict = 'revisit';
+      }
+    }
+  } catch {}
 }
 
 function persistReview() {
@@ -611,6 +632,16 @@ function render() {
   document.getElementById('prevBtn').disabled = fi <= 0;
   document.getElementById('nextBtn').disabled = fi >= flatList.length - 1;
 
+  // Bottom nav (desktop)
+  const ncb = document.getElementById('navCounterBottom'); if (ncb) ncb.textContent = (fi + 1) + ' of ' + flatList.length;
+  const pbb = document.getElementById('prevBtnBottom'); if (pbb) pbb.disabled = fi <= 0;
+  const nbb = document.getElementById('nextBtnBottom'); if (nbb) nbb.disabled = fi >= flatList.length - 1;
+
+  // Mobile nav
+  const ncm = document.getElementById('navCounterMobile'); if (ncm) ncm.textContent = (fi + 1) + '/' + flatList.length;
+  const pbm = document.getElementById('prevBtnMobile'); if (pbm) pbm.disabled = fi <= 0;
+  const nbm = document.getElementById('nextBtnMobile'); if (nbm) nbm.disabled = fi >= flatList.length - 1;
+
   loadPreview(opt, cat);
 
   document.getElementById('infoComp').textContent = curComp().component;
@@ -699,8 +730,10 @@ function renderProgress() {
   const reviewed = flatList.filter(f => reviewData[f.option.id]?.verdict).length;
   const keeps = flatList.filter(f => reviewData[f.option.id]?.verdict === 'keep').length;
   const discards = flatList.filter(f => reviewData[f.option.id]?.verdict === 'discard').length;
-  const revisits = flatList.filter(f => reviewData[f.option.id]?.verdict === 'revisit').length;
-  const skips = flatList.filter(f => reviewData[f.option.id]?.verdict === 'skip').length;
+  const revisits = flatList.filter(f => {
+    const v = reviewData[f.option.id]?.verdict;
+    return v === 'revisit' || v === 'skip';
+  }).length;
   const pct = total ? Math.round((reviewed / total) * 100) : 0;
 
   document.getElementById('progLabel').textContent = reviewed + ' of ' + total + ' reviewed';
@@ -709,13 +742,11 @@ function renderProgress() {
   document.getElementById('keepCount').textContent = keeps;
   document.getElementById('discardCount').textContent = discards;
   document.getElementById('revisitCount').textContent = revisits;
-  document.getElementById('skipCount').textContent = skips;
 
   const mp = document.getElementById('mobileProgLabel'); if (mp) mp.textContent = reviewed + '/' + total;
   const mk = document.getElementById('mobileKeep'); if (mk) mk.textContent = keeps;
   const md = document.getElementById('mobileDiscard'); if (md) md.textContent = discards;
   const mr = document.getElementById('mobileRevisit'); if (mr) mr.textContent = revisits;
-  const ms = document.getElementById('mobileSkip'); if (ms) ms.textContent = skips;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -757,18 +788,24 @@ async function submitReview() {
   const reviewed = flatList.filter(f => reviewData[f.option.id]?.verdict).length;
   const keeps = flatList.filter(f => reviewData[f.option.id]?.verdict === 'keep').length;
   const discards = flatList.filter(f => reviewData[f.option.id]?.verdict === 'discard').length;
-  const revisits = flatList.filter(f => reviewData[f.option.id]?.verdict === 'revisit').length;
-  const skips = flatList.filter(f => reviewData[f.option.id]?.verdict === 'skip').length;
+  const revisits = flatList.filter(f => {
+    const v = reviewData[f.option.id]?.verdict;
+    return v === 'revisit' || v === 'skip';
+  }).length;
 
   const decisions = [];
   flatList.forEach(f => {
     const r = reviewData[f.option.id];
-    if (r && (r.verdict || r.comment)) decisions.push({
-      component: f.component.id, componentName: f.component.component, category: f.category.id,
-      categoryName: f.category.name, optionId: f.option.id, optionName: f.option.name,
-      file: f.option.file, generation: f.option.generation || 1,
-      verdict: r.verdict || 'undecided', comment: r.comment || '', tags: r.tags || ''
-    });
+    if (r && (r.verdict || r.comment)) {
+      let verdict = r.verdict || 'undecided';
+      if (verdict === 'skip') verdict = 'revisit';
+      decisions.push({
+        component: f.component.id, componentName: f.component.component, category: f.category.id,
+        categoryName: f.category.name, optionId: f.option.id, optionName: f.option.name,
+        file: f.option.file, generation: f.option.generation || 1,
+        verdict: verdict, comment: r.comment || '', tags: r.tags || ''
+      });
+    }
   });
 
   // Finalize via API
@@ -788,9 +825,9 @@ async function submitReview() {
   md += '**Reviewed:** ' + reviewed + ' of ' + flatList.length + ' designs\n';
   md += '**Round:** ' + (currentSession ? currentSession.round_number : 'N/A') + '\n\n';
 
-  const byV = { keep: [], discard: [], revisit: [], skip: [] };
+  const byV = { keep: [], discard: [], revisit: [] };
   decisions.forEach(d => { if (byV[d.verdict]) byV[d.verdict].push(d); });
-  for (const [v, label] of [['keep','Keep'],['discard','Discard'],['revisit','Revisit'],['skip','Skip']]) {
+  for (const [v, label] of [['keep','Keep'],['discard','Discard'],['revisit','Revisit']]) {
     if (byV[v] && byV[v].length) {
       md += '### ' + label + ' (' + byV[v].length + ')\n\n| Component | Option | Gen | Comment |\n|---|---|---|---|\n';
       byV[v].forEach(d => { md += '| ' + d.componentName + ' | ' + d.optionName + ' | ' + d.generation + ' | ' + (d.comment || '--') + ' |\n'; });
@@ -815,7 +852,7 @@ async function submitReview() {
   stats.style.cssText = 'display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;font-size:13px';
   stats.textContent = '';
   [['var(--green)', '\u2713 ' + keeps + ' keep'], ['var(--red)', '\u2717 ' + discards + ' discard'],
-   ['var(--purple)', '\u21BB ' + revisits + ' revisit'], ['var(--blue)', '\u2192 ' + skips + ' skip'],
+   ['var(--purple)', '\u21BB ' + revisits + ' revisit'],
    ['var(--text-3)', (flatList.length - reviewed) + ' unreviewed']].forEach(([c, t]) => {
     const s = document.createElement('span'); s.style.color = c; s.textContent = t; stats.appendChild(s);
   });
@@ -823,6 +860,50 @@ async function submitReview() {
 
   if (apiAvailable) {
     const db = document.createElement('div'); db.style.cssText = 'font-size:11px;color:var(--green);margin-bottom:12px'; db.textContent = '\u2713 Saved to database'; modal.appendChild(db);
+  }
+
+  // Visual summary of all reviewed items
+  if (decisions.length > 0) {
+    const summaryTitle = document.createElement('div');
+    summaryTitle.style.cssText = 'font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);margin-bottom:8px';
+    summaryTitle.textContent = 'All Reviewed Items (' + decisions.length + ')';
+    modal.appendChild(summaryTitle);
+
+    const summaryList = document.createElement('div');
+    summaryList.style.cssText = 'max-height:200px;overflow-y:auto;margin-bottom:16px;display:flex;flex-direction:column;gap:4px';
+
+    const verdictColors = { keep: 'var(--green)', discard: 'var(--red)', revisit: 'var(--purple)', undecided: 'var(--text-3)' };
+    const verdictIcons = { keep: '\u2713', discard: '\u2717', revisit: '\u21BB', undecided: '?' };
+    decisions.forEach(d => {
+      const item = document.createElement('div');
+      item.style.cssText = 'display:flex;align-items:flex-start;gap:8px;padding:6px 8px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-sm);font-size:12px';
+
+      const badge = document.createElement('span');
+      badge.style.cssText = 'flex-shrink:0;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:' + (verdictColors[d.verdict] || 'var(--text-3)') + ';background:' + (d.verdict === 'keep' ? 'var(--green-dim)' : d.verdict === 'discard' ? 'var(--red-dim)' : d.verdict === 'revisit' ? 'var(--purple-dim)' : 'var(--surface-3)');
+      badge.textContent = verdictIcons[d.verdict] || '?';
+      item.appendChild(badge);
+
+      const info = document.createElement('div');
+      info.style.cssText = 'flex:1;min-width:0';
+      const nameEl = document.createElement('div');
+      nameEl.style.cssText = 'font-weight:600;color:var(--text)';
+      nameEl.textContent = d.optionName;
+      info.appendChild(nameEl);
+      const compEl = document.createElement('div');
+      compEl.style.cssText = 'font-size:10px;color:var(--text-3)';
+      compEl.textContent = d.componentName + ' \u2014 ' + d.categoryName;
+      info.appendChild(compEl);
+      if (d.comment) {
+        const commentEl = document.createElement('div');
+        commentEl.style.cssText = 'font-size:11px;color:var(--text-2);margin-top:2px;white-space:pre-wrap';
+        commentEl.textContent = d.comment;
+        info.appendChild(commentEl);
+      }
+      item.appendChild(info);
+
+      summaryList.appendChild(item);
+    });
+    modal.appendChild(summaryList);
   }
 
   const btns = document.createElement('div');
@@ -873,7 +954,7 @@ document.addEventListener('keydown', e => {
     case 'k': case 'K': setVerdict('keep'); break;
     case 'd': case 'D': setVerdict('discard'); break;
     case 'r': case 'R': setVerdict('revisit'); break;
-    case 's': case 'S': setVerdict('skip'); break;
+    case 's': case 'S': setVerdict('revisit'); break;
     case 'i': case 'I': toggleSide(); break;
     case 'f': case 'F':
       const iframe = document.querySelector('.preview-iframe');

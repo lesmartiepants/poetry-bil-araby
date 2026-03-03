@@ -948,9 +948,9 @@ async function submitReview() {
   md += '**Reviewed:** ' + reviewed + ' of ' + flatList.length + ' designs\n';
   md += '**Round:** ' + (currentSession ? currentSession.round_number : 'N/A') + '\n\n';
 
-  const byV = { keep: [], discard: [], revisit: [] };
+  const byV = { keep: [], discard: [], revisit: [], undecided: [] };
   decisions.forEach(d => { if (byV[d.verdict]) byV[d.verdict].push(d); });
-  for (const [v, label] of [['keep','Keep'],['discard','Discard'],['revisit','Revisit']]) {
+  for (const [v, label] of [['keep','Keep'],['discard','Discard'],['revisit','Revisit'],['undecided','Comment Only']]) {
     if (byV[v] && byV[v].length) {
       md += '### ' + label + ' (' + byV[v].length + ')\n\n| Component | Option | Gen | Comment |\n|---|---|---|---|\n';
       byV[v].forEach(d => { md += '| ' + d.componentName + ' | ' + d.optionName + ' | ' + d.generation + ' | ' + (d.comment || '--') + ' |\n'; });
@@ -999,14 +999,14 @@ async function submitReview() {
     const summaryList = document.createElement('div');
     summaryList.style.cssText = 'max-height:200px;overflow-y:auto;margin-bottom:16px;display:flex;flex-direction:column;gap:4px';
 
-    const verdictColors = { keep: 'var(--green)', discard: 'var(--red)', revisit: 'var(--purple)', undecided: 'var(--text-3)' };
-    const verdictIcons = { keep: '\u2713', discard: '\u2717', revisit: '\u21BB', undecided: '?' };
+    const verdictColors = { keep: 'var(--green)', discard: 'var(--red)', revisit: 'var(--purple)', undecided: 'var(--accent)' };
+    const verdictIcons = { keep: '\u2713', discard: '\u2717', revisit: '\u21BB', undecided: '\u2709' };
     decisions.forEach(d => {
       const item = document.createElement('div');
       item.style.cssText = 'display:flex;align-items:flex-start;gap:8px;padding:6px 8px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-sm);font-size:12px';
 
       const badge = document.createElement('span');
-      const verdictBgColors = { keep: 'var(--green-dim)', discard: 'var(--red-dim)', revisit: 'var(--purple-dim)', undecided: 'var(--surface-3)' };
+      const verdictBgColors = { keep: 'var(--green-dim)', discard: 'var(--red-dim)', revisit: 'var(--purple-dim)', undecided: 'var(--accent-dim)' };
       badge.style.cssText = 'flex-shrink:0;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:' + (verdictColors[d.verdict] || 'var(--text-3)') + ';background:' + (verdictBgColors[d.verdict] || 'var(--surface-3)');
       badge.textContent = verdictIcons[d.verdict] || '?';
       item.appendChild(badge);

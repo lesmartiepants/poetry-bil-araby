@@ -1,9 +1,9 @@
 name: Design Review DB Integration
 
 # Runs on every PR push to main.
-# Connects directly to the production Supabase database and runs integration
-# tests to confirm the persist-to-DB feature works on this PR.
-# Tables are expected to already exist (migration is tested separately on deploy to main).
+# Spins up a local PostgreSQL service container (IPv4, no external connectivity needed),
+# seeds the design review schema, and runs integration tests to confirm the
+# persist-to-DB API works end-to-end on this PR.
 on:
   pull_request:
     branches: [main]
@@ -14,12 +14,25 @@ permissions:
 
 jobs:
   integration:
-    name: Design Review — Real DB API Tests (${{ matrix.connection_approach }})
+    name: Design Review — DB API Tests
     runs-on: ubuntu-latest
-    strategy:
-      fail-fast: false
-      matrix:
-        connection_approach: [database_url, postgres_env]
+    # Skip on forked PRs: secrets are not available from forks.
+    if: github.event.pull_request.head.repo.fork == false
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: design_review_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
 
     steps:
       - uses: actions/checkout@v4
@@ -33,53 +46,30 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Validate connection secrets for this approach
-        id: preflight
+      - name: Seed design review schema
         run: |
-          if [ "${{ matrix.connection_approach }}" = "database_url" ]; then
-            if [ -n "$DATABASE_URL_SECRET" ]; then
-              echo "run_tests=true" >> "$GITHUB_OUTPUT"
-            else
-              echo "::warning::Skipping database_url approach (DATABASE_URL secret not set)"
-              echo "run_tests=false" >> "$GITHUB_OUTPUT"
-            fi
-          else
-            if [ -n "$PGHOST_SECRET" ] && [ -n "$PGDATABASE_SECRET" ] && [ -n "$PGUSER_SECRET" ] && [ -n "$PGPASSWORD_SECRET" ]; then
-              echo "run_tests=true" >> "$GITHUB_OUTPUT"
-            else
-              echo "::warning::Skipping postgres_env approach (PGHOST/PGDATABASE/PGUSER/PGPASSWORD secrets required)"
-              echo "run_tests=false" >> "$GITHUB_OUTPUT"
-            fi
-          fi
-        env:
-          DATABASE_URL_SECRET: ${{ secrets.DATABASE_URL }}
-          PGHOST_SECRET: ${{ secrets.PGHOST }}
-          PGDATABASE_SECRET: ${{ secrets.PGDATABASE }}
-          PGUSER_SECRET: ${{ secrets.PGUSER }}
-          PGPASSWORD_SECRET: ${{ secrets.PGPASSWORD }}
+          # Minimal poems table so /api/health works (full poetry data only exists in prod)
+          PGPASSWORD=postgres psql -h localhost -U postgres -d design_review_test -c "
+            CREATE TABLE IF NOT EXISTS poems (
+              id SERIAL PRIMARY KEY,
+              title TEXT,
+              content TEXT,
+              created_at TIMESTAMPTZ DEFAULT now()
+            );"
+          # Apply the design review tables migration
+          PGPASSWORD=postgres psql -h localhost -U postgres -d design_review_test \
+            -f supabase/migrations/20260222000000_design_review_tables.sql
+          echo "Schema seeded ✓"
 
-      # ── Run integration tests against the real Supabase DB ────────────────
+      # ── Run integration tests against the local PostgreSQL DB ─────────────
       - name: Run design review integration tests
-        if: steps.preflight.outputs.run_tests == 'true'
         run: npm run test:integration
         env:
-          DATABASE_URL: ${{ matrix.connection_approach == 'database_url' && secrets.DATABASE_URL || '' }}
-          PGHOST: ${{ matrix.connection_approach == 'postgres_env' && secrets.PGHOST || '' }}
-          PGDATABASE: ${{ matrix.connection_approach == 'postgres_env' && secrets.PGDATABASE || '' }}
-          PGUSER: ${{ matrix.connection_approach == 'postgres_env' && secrets.PGUSER || '' }}
-          PGPASSWORD: ${{ matrix.connection_approach == 'postgres_env' && secrets.PGPASSWORD || '' }}
-          PGPORT: ${{ matrix.connection_approach == 'postgres_env' && (secrets.PGPORT || '5432') || '' }}
-          # GitHub Actions runners have IPv6 disabled. Supabase hostnames resolve to IPv6
-          # first, causing ENETUNREACH. Force Node.js DNS to prefer IPv4.
-          NODE_OPTIONS: --dns-result-order=ipv4first
-
-      - name: Report skipped approach
-        if: steps.preflight.outputs.run_tests != 'true'
-        run: echo "Integration tests skipped for ${{ matrix.connection_approach }} due to missing secrets."
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/design_review_test
 
       # ── Report outcome on the PR ──────────────────────────────────────────
       - name: Post success comment to PR
-        if: success() && steps.preflight.outputs.run_tests == 'true'
+        if: success()
         uses: actions/github-script@v7
         with:
           script: |
@@ -88,7 +78,7 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               body: '## ✅ Design Review DB Integration\n\n' +
-                    '**All integration tests passed against real Supabase DB**\n\n' +
+                    '**All 9 integration tests passed against a real PostgreSQL schema**\n\n' +
                     '- Items sync ✓\n' +
                     '- Session create ✓\n' +
                     '- Verdict submit ✓\n' +
@@ -98,7 +88,7 @@ jobs:
             });
 
       - name: Post failure comment to PR
-        if: failure() && steps.preflight.outputs.run_tests == 'true'
+        if: failure()
         uses: actions/github-script@v7
         with:
           script: |

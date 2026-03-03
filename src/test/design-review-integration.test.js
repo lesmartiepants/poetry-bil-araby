@@ -1,60 +1,29 @@
 /**
  * Design Review — Real Database Integration Tests
  *
- * These tests run against the ACTUAL Supabase database.
- * They are excluded from the normal `npm test` run (vitest.config.js).
- * Run via: npm run test:integration
+ * In CI: a local PostgreSQL service container is used (seeded with the design review schema).
+ * Locally: set DATABASE_URL or PGHOST/PGDATABASE/PGUSER/PGPASSWORD to run against any DB.
  *
- * Required env vars (either approach works):
- *   1) DATABASE_URL
- *   2) PGHOST + PGDATABASE + PGUSER + PGPASSWORD (+ optional PGPORT)
+ * These tests are excluded from the normal `npm test` run (vitest.config.js).
+ * Run via: npm run test:integration
  *
  * Test data is written with reviewer='ci-integration' for easy identification.
  */
 
-import dns from 'node:dns';
-import { URL } from 'node:url';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
 
 const CI_REVIEWER = 'ci-integration';
 const CI_ITEM_KEY = 'ci-integration-test-item';
 
-const hasDatabaseConnectionConfig =
-  Boolean(process.env.DATABASE_URL) ||
-  (Boolean(process.env.PGHOST) &&
-   Boolean(process.env.PGDATABASE) &&
-   Boolean(process.env.PGUSER) &&
-   Boolean(process.env.PGPASSWORD));
-
-// Safety net: skip gracefully unless one supported DB connection strategy is configured.
-describe.skipIf(!hasDatabaseConnectionConfig)('Design Review — Real Database Integration', () => {
+// Safety net: if DATABASE_URL is not set this suite is skipped gracefully.
+// In CI this env var is always provided via the design-review-integration workflow.
+describe.skipIf(!process.env.DATABASE_URL)('Design Review — Real Database Integration', () => {
   let app;
   let pool;
   let sessionId;
 
   beforeAll(async () => {
-    // GitHub Actions runners block IPv6 to external networks. Supabase hostnames
-    // may resolve to IPv6 first, causing ENETUNREACH. Explicitly resolve the
-    // hostname to an IPv4 address and patch DATABASE_URL BEFORE importing server.js
-    // so that the pg.Pool is created with a literal IPv4 address — bypassing the
-    // OS resolver's IPv6 preference entirely.
-    if (process.env.DATABASE_URL) {
-      try {
-        const parsedUrl = new URL(process.env.DATABASE_URL);
-        const ipv4Addrs = await dns.promises.resolve4(parsedUrl.hostname);
-        if (ipv4Addrs.length > 0) {
-          const original = parsedUrl.hostname;
-          parsedUrl.hostname = ipv4Addrs[0];
-          process.env.DATABASE_URL = parsedUrl.toString();
-          console.log(`[CI] Patched DATABASE_URL: ${original} → ${ipv4Addrs[0]} (IPv4)`);
-        }
-      } catch (resolveErr) {
-        // Already an IP address or DNS failure — proceed with original URL.
-        console.warn('[CI] IPv4 pre-resolve skipped:', resolveErr.message);
-      }
-    }
-
     // Import server.js inside beforeAll so no pool is created when DATABASE_URL is absent.
     // This avoids noisy connection errors and open handles when the suite is skipped.
     const serverModule = await import('../../server.js');

@@ -144,17 +144,17 @@
     .dock-prog-bar{flex:1;height:3px;border-radius:2px;background:var(--surface-3);overflow:hidden}
     .dock-prog-fill{width:0;height:100%;border-radius:2px;background:var(--accent);transition:width .3s}
     .dock-prog-text{font-size:10px;color:var(--text-3);font-variant-numeric:tabular-nums;white-space:nowrap}
-    .dock-controls{display:flex;align-items:center;gap:0;width:100%;justify-content:center}
+    .dock-controls{display:flex;align-items:center;gap:0;width:100%;justify-content:space-between}
     .dock-nav{
-      width:44px;height:44px;border-radius:50%;border:none;
-      background:transparent;color:var(--text-3);
+      width:56px;height:56px;border-radius:50%;border:none;
+      background:var(--surface-2);color:var(--text-3);
       display:flex;align-items:center;justify-content:center;
-      cursor:pointer;transition:all .15s;
+      cursor:pointer;transition:all .15s;flex-shrink:0;
     }
-    .dock-nav:hover{color:var(--text)}
+    .dock-nav:hover{color:var(--text);background:var(--surface-3)}
     .dock-nav:active{transform:scale(.9)}
-    .dock-nav:disabled{opacity:.2;cursor:default}
-    .dock-nav svg{width:20px;height:20px}
+    .dock-nav:disabled{opacity:.2;cursor:default;background:transparent}
+    .dock-nav svg{width:22px;height:22px}
     .verdict-circle{
       width:56px;height:56px;border-radius:50%;border:2px solid var(--border);
       background:var(--surface-2);
@@ -177,7 +177,8 @@
       border-radius:20px;cursor:pointer;transition:border-color .15s;
     }
     .comment-trigger:hover{border-color:var(--border-light)}
-    .comment-trigger .ct-icon{font-size:16px;color:var(--text-3)}
+    .comment-trigger .ct-icon{color:var(--text-3);display:flex;align-items:center}
+    .comment-trigger .ct-icon svg{width:18px;height:18px}
     .comment-trigger .ct-text{font-size:12px;color:var(--text-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .comment-trigger.has-text .ct-text{color:var(--text-2)}
     .comment-trigger.has-text .ct-icon{color:var(--accent)}
@@ -214,6 +215,7 @@
     .comment-sheet .cs-btn{padding:8px 20px;border-radius:20px;border:none;font-size:12px;font-weight:600;font-family:inherit;cursor:pointer}
     .cs-cancel{background:var(--surface-3);color:var(--text-2)}
     .cs-save{background:var(--accent);color:var(--bg)}
+    @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
 
     /* Responsive */
     @media(max-width:768px){
@@ -313,7 +315,7 @@
       </div>
       <div class="dock-bottom">
         <div class="comment-trigger" id="commentTrigger" onclick="openMobileComment()">
-          <span class="ct-icon">💬</span>
+          <span class="ct-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
           <span class="ct-text" id="commentTriggerText">Add comment...</span>
         </div>
         <button class="dock-submit" onclick="submitReview()">Submit</button>
@@ -733,7 +735,7 @@ function navigateToFlat(fi) {
 // ═══════════════════════════════════════════════════════════════
 // RENDER
 // ═══════════════════════════════════════════════════════════════
-function render() {
+function render(skipPreview) {
   const cat = curCat(), opt = curOpt(), fi = currentFlatIdx(), rev = getReview(opt.id);
 
   document.getElementById('navCounter').textContent = (fi + 1) + ' of ' + flatList.length;
@@ -756,7 +758,7 @@ function render() {
   const enp = document.getElementById('edgeNavPrev'); if (enp) enp.disabled = fi <= 0;
   const enn = document.getElementById('edgeNavNext'); if (enn) enn.disabled = fi >= flatList.length - 1;
 
-  loadPreview(opt, cat);
+  if (!skipPreview) loadPreview(opt, cat);
 
   document.getElementById('infoComp').textContent = curComp().component;
   document.getElementById('infoCat').textContent = cat.name;
@@ -878,7 +880,7 @@ function setVerdict(v) {
   const opt = curOpt();
   if (!reviewData[opt.id]) reviewData[opt.id] = { verdict: null, comment: '', tags: '' };
   reviewData[opt.id].verdict = reviewData[opt.id].verdict === v ? null : v;
-  persistReview(); render();
+  persistReview(); render(true);
 }
 function saveComment() {
   const opt = curOpt();
@@ -902,7 +904,7 @@ function openMobileComment() {
 function closeMobileComment() {
   document.getElementById('commentOverlay').classList.remove('open');
   saveMobileComment();
-  render();
+  render(true);
 }
 function saveTags() {
   const opt = curOpt();
@@ -940,17 +942,6 @@ async function submitReview() {
     }
   });
 
-  // Finalize via API
-  if (apiAvailable && currentSession) {
-    try {
-      await syncVerdictsToAPI();
-      await fetch(API_BASE + '/api/design-review/sessions/' + currentSession.id, {
-        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'completed', reviewed_count: reviewed })
-      });
-    } catch {}
-  }
-
   // Build markdown
   let md = '## Design Review Feedback\n\n';
   md += '**Date:** ' + new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString() + '\n';
@@ -967,32 +958,36 @@ async function submitReview() {
     }
   }
 
-  // Show modal using DOM methods
+  // Show modal
   const overlay = document.createElement('div');
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
   overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
 
   const modal = document.createElement('div');
-  modal.style.cssText = 'background:var(--surface);border:1px solid var(--border);border-radius:var(--r);max-width:700px;width:100%;max-height:80vh;overflow-y:auto;padding:24px';
+  modal.style.cssText = 'background:var(--surface);border:1px solid var(--border);border-radius:12px;max-width:700px;width:100%;max-height:85vh;overflow-y:auto;padding:24px;position:relative';
+
+  // Close button (✕)
+  const closeBtn = document.createElement('button');
+  closeBtn.style.cssText = 'position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--surface-2);color:var(--text-2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s';
+  closeBtn.textContent = '\u2715';
+  closeBtn.addEventListener('click', () => overlay.remove());
+  closeBtn.addEventListener('mouseenter', () => { closeBtn.style.background = 'var(--surface-3)'; closeBtn.style.color = 'var(--text)'; });
+  closeBtn.addEventListener('mouseleave', () => { closeBtn.style.background = 'var(--surface-2)'; closeBtn.style.color = 'var(--text-2)'; });
+  modal.appendChild(closeBtn);
 
   const h = document.createElement('h3');
-  h.style.cssText = 'margin-bottom:12px;font-size:16px';
-  h.textContent = 'Review Complete' + (currentSession ? ' \u2014 Round ' + currentSession.round_number : '');
+  h.style.cssText = 'margin-bottom:12px;font-size:16px;padding-right:40px';
+  h.textContent = 'Review Summary' + (currentSession ? ' \u2014 Round ' + currentSession.round_number : '');
   modal.appendChild(h);
 
   const stats = document.createElement('div');
   stats.style.cssText = 'display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;font-size:13px';
-  stats.textContent = '';
   [['var(--green)', '\u2713 ' + keeps + ' keep'], ['var(--red)', '\u2717 ' + discards + ' discard'],
    ['var(--purple)', '\u21BB ' + revisits + ' revisit'],
    ['var(--text-3)', (flatList.length - reviewed) + ' unreviewed']].forEach(([c, t]) => {
     const s = document.createElement('span'); s.style.color = c; s.textContent = t; stats.appendChild(s);
   });
   modal.appendChild(stats);
-
-  if (apiAvailable) {
-    const db = document.createElement('div'); db.style.cssText = 'font-size:11px;color:var(--green);margin-bottom:12px'; db.textContent = '\u2713 Saved to database'; modal.appendChild(db);
-  }
 
   // Visual summary of all reviewed items
   if (decisions.length > 0) {
@@ -1028,7 +1023,7 @@ async function submitReview() {
       info.appendChild(compEl);
       if (d.comment) {
         const commentEl = document.createElement('div');
-        commentEl.style.cssText = 'font-size:11px;color:var(--text-2);margin-top:2px;white-space:pre-wrap';
+        commentEl.style.cssText = 'font-size:11px;color:var(--text-2);margin-top:2px;white-space:pre-wrap;padding-left:12px;border-left:2px solid var(--accent-dim)';
         commentEl.textContent = d.comment;
         info.appendChild(commentEl);
       }
@@ -1039,11 +1034,44 @@ async function submitReview() {
     modal.appendChild(summaryList);
   }
 
+  // Action buttons row
   const btns = document.createElement('div');
-  btns.style.cssText = 'display:flex;gap:8px;margin-bottom:16px';
-  [['Copy Markdown', 'md', true], ['Copy JSON', 'json', false], ['Download JSON', 'dl', false]].forEach(([label, type, primary]) => {
+  btns.style.cssText = 'display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap';
+
+  // Send to Backend button
+  const sendBtn = document.createElement('button');
+  sendBtn.style.cssText = 'padding:10px 24px;border-radius:var(--r);font-size:13px;font-weight:700;cursor:pointer;border:none;background:var(--accent);color:var(--bg);transition:all .15s;display:flex;align-items:center;gap:6px';
+  sendBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg> Send to Backend';
+  sendBtn.addEventListener('click', async () => {
+    sendBtn.disabled = true;
+    sendBtn.style.opacity = '.7';
+    sendBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="animation:spin .8s linear infinite"><circle cx="12" cy="12" r="10" stroke-dasharray="40" stroke-dashoffset="10"/></svg> Sending\u2026';
+    try {
+      if (apiAvailable && currentSession) {
+        await syncVerdictsToAPI();
+        const res = await fetch(API_BASE + '/api/design-review/sessions/' + currentSession.id, {
+          method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'completed', reviewed_count: reviewed })
+        });
+        if (!res.ok) throw new Error('API returned ' + res.status);
+      } else {
+        throw new Error('Backend not available');
+      }
+      sendBtn.style.background = 'var(--green)';
+      sendBtn.style.opacity = '1';
+      sendBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Saved Successfully';
+    } catch (err) {
+      sendBtn.style.background = 'var(--red)';
+      sendBtn.style.opacity = '1';
+      sendBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg> Error \u2014 ' + (err.message || 'Failed');
+      sendBtn.disabled = false;
+    }
+  });
+  btns.appendChild(sendBtn);
+
+  [['Copy Markdown', 'md'], ['Copy JSON', 'json'], ['Download JSON', 'dl']].forEach(([label, type]) => {
     const b = document.createElement('button');
-    b.style.cssText = 'padding:8px 16px;border-radius:var(--r-sm);font-size:12px;font-weight:600;cursor:pointer;border:1px solid ' + (primary ? 'var(--accent)' : 'var(--border)') + ';background:' + (primary ? 'var(--accent-dim)' : 'var(--surface-2)') + ';color:' + (primary ? 'var(--accent)' : 'var(--text-2)');
+    b.style.cssText = 'padding:8px 16px;border-radius:var(--r-sm);font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--surface-2);color:var(--text-2);transition:all .15s';
     b.textContent = label;
     b.addEventListener('click', () => type === 'dl' ? downloadJSON() : copyToClipboard(type));
     btns.appendChild(b);

@@ -80,12 +80,33 @@
 
         .splash-sub {
             position: relative; z-index: 2;
-            font-size: 1rem; opacity: 0;
+            font-size: 0.85rem; opacity: 0;
             margin-top: 0.5rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
             animation: fadeUp 1s ease 2s forwards;
             color: var(--sand);
         }
         body.light .splash-sub { color: var(--stone); }
+
+        /* Sand ripple rings around hourglass */
+        .splash-ripple {
+            position: absolute; z-index: 1;
+            width: 200px; height: 200px;
+            border-radius: 50%;
+            border: 1px solid rgba(196,168,130,0.15);
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(0.6);
+            opacity: 0;
+            animation: rippleExpand 4s ease-out 1.5s infinite;
+        }
+        .splash-ripple:nth-child(2) { animation-delay: 2.5s; }
+        .splash-ripple:nth-child(3) { animation-delay: 3.5s; }
+
+        @keyframes rippleExpand {
+            0% { opacity: 0.5; transform: translate(-50%, -50%) scale(0.6); }
+            100% { opacity: 0; transform: translate(-50%, -50%) scale(2.2); }
+        }
 
         .splash-enter {
             position: relative; z-index: 2;
@@ -111,6 +132,121 @@
         @keyframes fadeUp {
             from { opacity: 0; transform: translateY(18px); }
             to   { opacity: 1; transform: translateY(0); }
+        }
+
+        /* ========== ONBOARDING OVERLAY ========== */
+        #onboarding {
+            position: fixed; inset: 0; z-index: 9998;
+            background: rgba(26, 22, 16, 0.95);
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.6s ease;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            cursor: pointer;
+        }
+        body.light #onboarding { background: rgba(245, 240, 230, 0.95); }
+        #onboarding.active { opacity: 1; pointer-events: auto; }
+
+        /* Hourglass-themed onboarding panels */
+        .hour-panel {
+            max-width: 360px; width: 88%;
+            text-align: center;
+            padding: 2.5rem 2rem;
+            position: relative;
+            display: none;
+        }
+        .hour-panel.active { display: block; animation: hourReveal 0.5s ease; }
+
+        @keyframes hourReveal {
+            from { opacity: 0; transform: translateY(16px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Hourglass frame around content */
+        .hour-frame {
+            position: relative;
+            padding: 2rem 1.5rem;
+            border-top: 2px solid var(--sand);
+            border-bottom: 2px solid var(--sand);
+        }
+        .hour-frame::before,
+        .hour-frame::after {
+            content: '';
+            position: absolute;
+            left: 50%; transform: translateX(-50%);
+            width: 40px; height: 2px;
+            background: var(--gold);
+        }
+        .hour-frame::before { top: -6px; }
+        .hour-frame::after { bottom: -6px; }
+
+        /* Waist pinch lines */
+        .hour-waist {
+            position: absolute;
+            left: 50%; transform: translateX(-50%);
+            width: 20px; height: 1px;
+            background: rgba(196,168,130,0.3);
+            top: 50%;
+        }
+
+        .hour-icon {
+            width: 48px; height: 48px;
+            margin: 0 auto 1rem;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--gold);
+            opacity: 0.8;
+        }
+        .hour-icon i { width: 28px; height: 28px; }
+
+        .hour-title {
+            font-family: 'Amiri', serif;
+            font-size: 1.3rem; font-weight: 700;
+            color: var(--sand);
+            margin-bottom: 0.2rem;
+        }
+        body.light .hour-title { color: var(--deep-earth); }
+
+        .hour-subtitle {
+            font-size: 0.82rem;
+            color: var(--stone);
+            margin-bottom: 0.8rem;
+            direction: ltr;
+        }
+
+        .hour-desc {
+            font-size: 0.92rem;
+            opacity: 0.7; line-height: 1.7;
+            margin-bottom: 0.3rem;
+        }
+        .hour-desc[lang="ar"] { font-family: 'Tajawal', sans-serif; direction: rtl; }
+        .hour-desc.en { direction: ltr; font-size: 0.82rem; opacity: 0.45; }
+
+        /* Sand grain indicators */
+        .hour-grains {
+            display: flex; justify-content: center; gap: 10px;
+            margin-top: 1.5rem;
+        }
+        .hour-grain {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: rgba(196,168,130,0.2);
+            transition: background 0.4s, transform 0.4s;
+        }
+        .hour-grain.active {
+            background: var(--gold);
+            transform: scale(1.4);
+        }
+        .hour-grain.past {
+            background: var(--sand);
+            opacity: 0.5;
+        }
+
+        .hour-hint {
+            font-size: 0.72rem;
+            color: var(--stone);
+            margin-top: 1rem;
+            opacity: 0.5;
         }
 
         /* ========== ZEN RAKE PATTERN ========== */
@@ -396,6 +532,9 @@
 <body>
     <!-- ===== SPLASH ===== -->
     <div class="splash-screen" id="splash">
+        <div class="splash-ripple"></div>
+        <div class="splash-ripple"></div>
+        <div class="splash-ripple"></div>
         <canvas id="hourglassCanvas" width="160" height="260"></canvas>
         <div class="splash-brand">
             <span class="splash-brand-ar" lang="ar" dir="rtl">بالعربي</span>
@@ -403,6 +542,58 @@
         </div>
         <div class="splash-sub">Sand Garden</div>
         <button class="splash-enter" id="enterBtn">Enter / ادخل</button>
+    </div>
+
+    <!-- ===== ONBOARDING ===== -->
+    <div id="onboarding">
+        <div class="hour-panel active" data-step="0">
+            <div class="hour-frame">
+                <div class="hour-waist"></div>
+                <div class="hour-icon"><i data-lucide="hourglass"></i></div>
+                <div class="hour-title" lang="ar">تأمل</div>
+                <div class="hour-subtitle">Contemplate</div>
+                <div class="hour-desc" lang="ar">حبات الرمل تتساقط كالساعة الرملية، كل لحظة فريدة</div>
+                <div class="hour-desc en">Sand grains fall like an hourglass, each moment unique</div>
+            </div>
+            <div class="hour-grains">
+                <div class="hour-grain active"></div>
+                <div class="hour-grain"></div>
+                <div class="hour-grain"></div>
+            </div>
+            <div class="hour-hint">tap to continue</div>
+        </div>
+        <div class="hour-panel" data-step="1">
+            <div class="hour-frame">
+                <div class="hour-waist"></div>
+                <div class="hour-icon"><i data-lucide="book-open"></i></div>
+                <div class="hour-title" lang="ar">اقرأ واكتشف</div>
+                <div class="hour-subtitle">Read & Discover</div>
+                <div class="hour-desc" lang="ar">استكشف آلاف القصائد من عصور مختلفة في هدوء</div>
+                <div class="hour-desc en">Explore thousands of poems across eras in tranquility</div>
+            </div>
+            <div class="hour-grains">
+                <div class="hour-grain past"></div>
+                <div class="hour-grain active"></div>
+                <div class="hour-grain"></div>
+            </div>
+            <div class="hour-hint">tap to continue</div>
+        </div>
+        <div class="hour-panel" data-step="2">
+            <div class="hour-frame">
+                <div class="hour-waist"></div>
+                <div class="hour-icon"><i data-lucide="wind"></i></div>
+                <div class="hour-title" lang="ar">استرخ وتنفس</div>
+                <div class="hour-subtitle">Relax & Breathe</div>
+                <div class="hour-desc" lang="ar">خطوط المشط الزن في الخلفية الهادئة ترافق قراءتك</div>
+                <div class="hour-desc en">Zen rake lines in the calm background accompany your reading</div>
+            </div>
+            <div class="hour-grains">
+                <div class="hour-grain past"></div>
+                <div class="hour-grain past"></div>
+                <div class="hour-grain active"></div>
+            </div>
+            <div class="hour-hint">tap to begin</div>
+        </div>
     </div>
 
     <!-- ===== MAIN APP ===== -->
@@ -511,14 +702,41 @@
             if (typeof lucide !== 'undefined') lucide.createIcons();
         });
 
-        /* ===== SPLASH -> MAIN ===== */
+        /* ===== ONBOARDING ===== */
+        var hourPanels = document.querySelectorAll('.hour-panel');
+        var currentHourStep = 0;
+        var totalHourSteps = hourPanels.length;
+
+        function showHourStep() {
+            for (var i = 0; i < hourPanels.length; i++) {
+                hourPanels[i].classList.remove('active');
+            }
+            if (currentHourStep < totalHourSteps) {
+                hourPanels[currentHourStep].classList.add('active');
+            }
+        }
+
+        function advanceHour() {
+            currentHourStep++;
+            if (currentHourStep >= totalHourSteps) {
+                document.getElementById('onboarding').classList.remove('active');
+                document.getElementById('mainApp').classList.add('visible');
+                if (typeof lucide !== 'undefined') lucide.createIcons();
+            } else {
+                showHourStep();
+            }
+        }
+
+        document.getElementById('onboarding').addEventListener('click', advanceHour);
+
+        /* ===== SPLASH -> ONBOARDING ===== */
         document.getElementById('enterBtn').addEventListener('click', function () {
             var splash = document.getElementById('splash');
             splash.classList.add('hidden');
             hourglassRunning = false;
             setTimeout(function () {
                 splash.style.display = 'none';
-                document.getElementById('mainApp').classList.add('visible');
+                document.getElementById('onboarding').classList.add('active');
                 if (typeof lucide !== 'undefined') lucide.createIcons();
             }, 800);
         });

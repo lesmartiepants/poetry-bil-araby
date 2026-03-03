@@ -131,7 +131,7 @@ html.dark body::after { opacity: 0.3; }
   box-shadow:
     0 20px 60px var(--shadow),
     inset 0 0 40px rgba(197, 160, 89, 0.06);
-  animation: scrollDramaticUnroll 1.8s cubic-bezier(0.34, 1.56, 0.64, 1) 0.8s backwards;
+  animation: scrollDramaticUnroll 2.2s cubic-bezier(0.25, 1, 0.5, 1) 0.8s backwards;
   /* Paper edge effect */
   background-image:
     linear-gradient(90deg, rgba(61, 52, 40, 0.06) 0%, transparent 3%, transparent 97%, rgba(61, 52, 40, 0.06) 100%),
@@ -139,10 +139,9 @@ html.dark body::after { opacity: 0.3; }
 }
 
 @keyframes scrollDramaticUnroll {
-  0% { opacity: 0; transform: scaleY(0.02) scaleX(0.8); clip-path: inset(49% 5% 49% 5%); }
-  30% { opacity: 1; transform: scaleY(0.4) scaleX(0.95); clip-path: inset(30% 2% 30% 2%); }
-  60% { transform: scaleY(1.06) scaleX(1.01); clip-path: inset(0% 0% 0% 0%); }
-  80% { transform: scaleY(0.98) scaleX(1); }
+  0% { opacity: 0; transform: scaleY(0.02) scaleX(0.85); clip-path: inset(49% 5% 49% 5%); }
+  40% { opacity: 1; transform: scaleY(0.5) scaleX(0.96); clip-path: inset(25% 2% 25% 2%); }
+  70% { transform: scaleY(1.02) scaleX(1); clip-path: inset(0% 0% 0% 0%); }
   100% { opacity: 1; transform: scaleY(1) scaleX(1); clip-path: inset(0 0 0 0); }
 }
 
@@ -193,67 +192,118 @@ html.dark body::after { opacity: 0.3; }
 #enterBtn:hover { transform: translateY(-2px); box-shadow: 0 6px 16px var(--shadow); }
 #enterBtn:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 
-/* ============ Onboarding ============ */
+/* ============ Onboarding -- Illuminated Manuscript ============ */
 #onboarding {
   position: fixed; inset: 0; z-index: 90;
-  background: rgba(212, 196, 168, 0.92);
-  display: flex; align-items: center; justify-content: center;
+  background: var(--paper);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
   opacity: 0; pointer-events: none;
   transition: opacity 0.6s ease;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  cursor: pointer;
+  overflow: hidden;
 }
-html.dark #onboarding { background: rgba(12, 12, 14, 0.92); }
+html.dark #onboarding { background: var(--paper); }
 #onboarding.active { opacity: 1; pointer-events: auto; }
 
-.onboard-card {
-  max-width: 380px; width: 90%;
-  background: var(--parchment);
-  border: 2px solid var(--wood);
-  border-radius: 12px;
+/* Gilded border frame */
+.gilt-frame {
+  position: absolute; inset: 16px;
+  border: 2px solid var(--gold-dim);
+  pointer-events: none;
+}
+.gilt-frame::before, .gilt-frame::after {
+  content: ''; position: absolute;
+  width: 24px; height: 24px;
+  border: 2px solid var(--gold);
+}
+.gilt-frame::before { top: -2px; left: -2px; border-right: none; border-bottom: none; }
+.gilt-frame::after { bottom: -2px; right: -2px; border-left: none; border-top: none; }
+
+/* Manuscript page */
+.ms-page {
+  position: relative; z-index: 5;
+  max-width: 340px; width: 88%;
   padding: 2.5rem 2rem;
+  background: var(--parchment);
+  border: 1.5px solid var(--wood);
+  box-shadow: 0 8px 32px var(--shadow);
   text-align: center;
-  cursor: pointer;
-  box-shadow: 0 12px 40px var(--shadow);
-  transition: transform 0.5s ease, opacity 0.5s ease;
-  /* Paper card texture */
+  opacity: 0; transform: translateX(20px) rotateY(-3deg);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+  /* Parchment texture edge */
   background-image:
-    linear-gradient(90deg, rgba(61, 52, 40, 0.04) 0%, transparent 4%, transparent 96%, rgba(61, 52, 40, 0.04) 100%);
+    linear-gradient(90deg, rgba(61,52,40,0.05) 0%, transparent 3%, transparent 97%, rgba(61,52,40,0.05) 100%);
 }
-.onboard-card .icon-wrap {
-  width: 56px; height: 56px;
-  margin: 0 auto 1.2rem;
-  display: flex; align-items: center; justify-content: center;
-  border-radius: 50%;
-  background: rgba(197, 160, 89, 0.15);
-  color: var(--gold);
+.ms-page.active { opacity: 1; transform: translateX(0) rotateY(0); }
+
+/* Chapter marker */
+.ms-chapter {
+  font-family: 'Forum', serif;
+  font-size: 0.75rem; color: var(--gold);
+  letter-spacing: 0.3em; text-transform: uppercase;
+  margin-bottom: 0.8rem; direction: ltr;
 }
-.onboard-card .icon-wrap svg { width: 28px; height: 28px; }
-.onboard-card h3 {
+
+/* Decorative illuminated initial */
+.ms-initial {
   font-family: var(--font-ar);
-  font-size: 1.3rem;
-  color: var(--gold);
-  margin-bottom: 0.4rem;
+  font-size: clamp(2.4rem, 6vw, 3.2rem);
+  color: var(--gold); line-height: 1.2;
+  margin-bottom: 0.3rem;
+  text-shadow: 0 0 20px rgba(197,160,89,0.2);
 }
-.onboard-card .subtitle {
-  font-size: 0.9rem; opacity: 0.6;
-  margin-bottom: 1rem;
+
+.ms-subtitle {
+  font-family: var(--font-ui);
+  font-size: 0.85rem; font-weight: 400;
+  color: var(--ink-dim);
+  margin-bottom: 1rem; direction: ltr;
 }
-.onboard-card p {
-  font-size: 0.88rem; line-height: 1.7; opacity: 0.85;
-  margin-bottom: 0.5rem;
+
+/* Decorative gold rule */
+.ms-rule {
+  width: 60px; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  margin: 0 auto 1rem;
 }
-.onboard-card p[lang="ar"] { font-family: var(--font-ui); direction: rtl; }
-.onboard-card p.en-text { direction: ltr; text-align: center; font-size: 0.82rem; opacity: 0.55; }
-.onboard-dots {
-  display: flex; gap: 0.5rem; justify-content: center; margin-top: 1.5rem;
+
+.ms-text {
+  font-family: var(--font-ui);
+  font-size: 0.86rem; line-height: 1.8;
+  color: var(--ink); opacity: 0.7; direction: ltr;
 }
-.onboard-dot {
-  width: 8px; height: 8px; border-radius: 50%;
-  background: var(--ink-dim); transition: background 0.3s, transform 0.3s;
+
+/* Folio number */
+.ms-folio {
+  position: absolute; bottom: 10px; left: 50%;
+  transform: translateX(-50%);
+  font-family: 'Forum', serif; font-size: 0.7rem;
+  color: var(--ink-dim); opacity: 0.5;
 }
-.onboard-dot.active { background: var(--gold); transform: scale(1.3); }
-.onboard-tap { font-size: 0.72rem; color: var(--ink-dim); margin-top: 1rem; }
+
+/* Bookmark tabs */
+.ms-tabs {
+  position: relative; z-index: 5;
+  display: flex; gap: 8px; margin-top: 2rem;
+  justify-content: center;
+}
+.ms-tab {
+  width: 20px; height: 4px; border-radius: 2px;
+  background: var(--ink-dim); opacity: 0.3;
+  transition: all 0.6s ease;
+}
+.ms-tab.active {
+  background: var(--gold);
+  opacity: 1; width: 32px;
+}
+.ms-tab.past { opacity: 0.6; background: var(--gold-dim); }
+
+.ms-hint {
+  position: relative; z-index: 5;
+  font-size: 11px; color: var(--ink-dim); opacity: 0.4;
+  margin-top: 1.2rem; letter-spacing: 0.2em;
+}
 
 /* ============ Main App ============ */
 #main {
@@ -411,16 +461,40 @@ html.dark #onboarding { background: rgba(12, 12, 14, 0.92); }
   </div>
 
   <!-- ======== Onboarding ======== -->
-  <div id="onboarding">
-    <div class="onboard-card" id="onboardCard">
-      <div class="icon-wrap" id="onboardIcon"></div>
-      <h3 id="onboardTitle"></h3>
-      <div class="subtitle" id="onboardSubtitle"></div>
-      <p lang="ar" id="onboardTextAr"></p>
-      <p class="en-text" id="onboardTextEn"></p>
-      <div class="onboard-dots" id="onboardDots"></div>
-      <div class="onboard-tap">tap to continue</div>
+  <div id="onboarding" data-step="0">
+    <div class="gilt-frame"></div>
+
+    <div class="ms-page active" data-ms="0">
+      <div class="ms-chapter">Chapter I</div>
+      <div class="ms-initial" lang="ar" dir="rtl">المخطوط</div>
+      <div class="ms-subtitle">The Manuscript</div>
+      <div class="ms-rule"></div>
+      <div class="ms-text">Ancient scrolls unrolled for modern eyes. Thousands of poems preserved across centuries.</div>
+      <div class="ms-folio">f. 1r</div>
     </div>
+    <div class="ms-page" data-ms="1">
+      <div class="ms-chapter">Chapter II</div>
+      <div class="ms-initial" lang="ar" dir="rtl">الصوت</div>
+      <div class="ms-subtitle">The Voice</div>
+      <div class="ms-rule"></div>
+      <div class="ms-text">Hear the words as they were meant to be spoken. AI recitation that honours the rhythm of Arabic verse.</div>
+      <div class="ms-folio">f. 2r</div>
+    </div>
+    <div class="ms-page" data-ms="2">
+      <div class="ms-chapter">Chapter III</div>
+      <div class="ms-initial" lang="ar" dir="rtl">الحفظ</div>
+      <div class="ms-subtitle">The Collection</div>
+      <div class="ms-rule"></div>
+      <div class="ms-text">Mark the passages that move you. Build your own library of treasured verses.</div>
+      <div class="ms-folio">f. 3r</div>
+    </div>
+
+    <div class="ms-tabs">
+      <div class="ms-tab active" data-tab="0"></div>
+      <div class="ms-tab" data-tab="1"></div>
+      <div class="ms-tab" data-tab="2"></div>
+    </div>
+    <div class="ms-hint">tap</div>
   </div>
 
   <!-- ======== Main App ======== -->
@@ -460,64 +534,23 @@ html.dark #onboarding { background: rgba(12, 12, 14, 0.92); }
 (function() {
   'use strict';
 
-  /* ---------- Onboarding data ---------- */
-  var onboardSteps = [
-    {
-      icon: 'scroll',
-      titleAr: 'مخطوطات حيّة',
-      subtitle: 'Living Manuscripts',
-      textAr: 'استعد تجربة قراءة الشعر كما كانت على المخطوطات القديمة',
-      textEn: 'Experience poetry reading as it was on ancient scrolls'
-    },
-    {
-      icon: 'search',
-      titleAr: 'اكتشف الشعراء',
-      subtitle: 'Discover Poets',
-      textAr: 'تصفّح آلاف القصائد من التراث العربي الأصيل',
-      textEn: 'Browse thousands of poems from authentic Arabic heritage'
-    },
-    {
-      icon: 'headphones',
-      titleAr: 'استمع وتأمّل',
-      subtitle: 'Listen & Reflect',
-      textAr: 'اسمع القصيدة بصوت الذكاء الاصطناعي وتدبّر معانيها',
-      textEn: 'Listen to AI-narrated poetry and contemplate its meaning'
+  /* ---------- Onboarding -- Illuminated Manuscript ---------- */
+  var msPages = document.querySelectorAll('.ms-page');
+  var msTabs = document.querySelectorAll('.ms-tab');
+  var msStep = 0;
+  var totalMs = msPages.length;
+
+  function showMsStep() {
+    document.getElementById('onboarding').setAttribute('data-step', msStep);
+    for (var i = 0; i < msPages.length; i++) {
+      msPages[i].classList.remove('active');
+      msTabs[i].classList.remove('active');
+      msTabs[i].classList.remove('past');
+      if (i < msStep) msTabs[i].classList.add('past');
     }
-  ];
-  var currentStep = 0;
-
-  function showOnboardStep(idx) {
-    var step = onboardSteps[idx];
-    var iconWrap = document.getElementById('onboardIcon');
-    while (iconWrap.firstChild) iconWrap.removeChild(iconWrap.firstChild);
-    var iconEl = document.createElement('i');
-    iconEl.setAttribute('data-lucide', step.icon);
-    iconWrap.appendChild(iconEl);
-
-    document.getElementById('onboardTitle').textContent = step.titleAr;
-    document.getElementById('onboardSubtitle').textContent = step.subtitle;
-    document.getElementById('onboardTextAr').textContent = step.textAr;
-    document.getElementById('onboardTextEn').textContent = step.textEn;
-
-    var dotsContainer = document.getElementById('onboardDots');
-    while (dotsContainer.firstChild) dotsContainer.removeChild(dotsContainer.firstChild);
-    for (var i = 0; i < onboardSteps.length; i++) {
-      var dot = document.createElement('span');
-      dot.className = 'onboard-dot' + (i === idx ? ' active' : '');
-      dotsContainer.appendChild(dot);
-    }
-
-    lucide.createIcons({ nodes: [iconWrap] });
-  }
-
-  function advanceOnboard() {
-    currentStep++;
-    if (currentStep >= onboardSteps.length) {
-      document.getElementById('onboarding').classList.remove('active');
-      var main = document.getElementById('main');
-      main.classList.add('show');
-    } else {
-      showOnboardStep(currentStep);
+    if (msStep < totalMs) {
+      msPages[msStep].classList.add('active');
+      msTabs[msStep].classList.add('active');
     }
   }
 
@@ -528,7 +561,8 @@ html.dark #onboarding { background: rgba(12, 12, 14, 0.92); }
     setTimeout(function() {
       splash.style.display = 'none';
       document.getElementById('onboarding').classList.add('active');
-      showOnboardStep(0);
+      msStep = 0;
+      showMsStep();
     }, 800);
   }
 
@@ -541,7 +575,16 @@ html.dark #onboarding { background: rgba(12, 12, 14, 0.92); }
   }
 
   document.getElementById('enterBtn').addEventListener('click', enterApp);
-  document.getElementById('onboardCard').addEventListener('click', advanceOnboard);
+  document.getElementById('onboarding').addEventListener('click', function(e) {
+    if (e.target.closest('#enterBtn')) return;
+    msStep++;
+    if (msStep >= totalMs) {
+      document.getElementById('onboarding').classList.remove('active');
+      document.getElementById('main').classList.add('show');
+    } else {
+      showMsStep();
+    }
+  });
 
   /* ---------- Theme Toggle ---------- */
   var themeBtn = document.getElementById('themeBtn');

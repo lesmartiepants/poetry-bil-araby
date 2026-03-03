@@ -152,101 +152,182 @@
   .onboard-dot.active { background: var(--gold); transform: scale(1.3); }
   .onboard-tap { font-size: 0.72rem; color: var(--sand); opacity: 0.5; margin-top: 1rem; }
 
-  /* ============ Main App ============ */
-  #app { display: none; position: relative; min-height: 100vh; }
-  #app.visible { display: block; }
-  #ambient-canvas {
-    position: fixed; inset: 0; width: 100%; height: 100%;
-    z-index: 0; pointer-events: none;
+  /* ===== MAIN APP ===== */
+  #app {
+    display: none; position: relative; min-height: 100vh;
+    background: #fafaf9;
+    color: #2c2c2b;
+    transition: none;
   }
-  .content { position: relative; z-index: 1; padding: 2rem 1rem; padding-right: 4.5rem; }
+  #app.visible { display: flex; flex-direction: column; min-height: 100vh; }
+  [data-theme="light"] #app { background: #fafaf9; color: #2c2c2b; }
+  #ambient-canvas { display: none; }
 
-  /* ============ Controls - Vertical (Desktop) ============ */
-  .controls-vertical {
-    position: fixed; top: 50%; right: 0.75rem;
-    transform: translateY(-50%);
-    display: flex; flex-direction: column; gap: 0.5rem;
-    z-index: 50;
+  /* Birch accent — single 1px line across the top */
+  .birch-line-top {
+    width: 100%;
+    height: 1px;
+    background: #d6d3cd;
+    flex-shrink: 0;
   }
-  .ctrl-btn {
-    width: 44px; height: 44px;
-    border-radius: 12px;
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
-    color: var(--fg);
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    transition: background 0.25s, border-color 0.25s, transform 0.2s;
-    backdrop-filter: blur(10px);
-    -webkit-backdrop-filter: blur(10px);
-  }
-  .ctrl-btn:hover, .ctrl-btn:focus-visible {
-    border-color: var(--gold);
-    background: rgba(197, 160, 89, 0.1);
-    transform: scale(1.08);
-  }
-  .ctrl-btn svg { width: 20px; height: 20px; }
 
-  /* ============ Controls - Bottom Bar (Mobile) ============ */
-  .controls-bottom {
-    display: none;
-    position: fixed; bottom: 0; left: 0; right: 0;
-    background: var(--card-bg);
-    border-top: 1px solid var(--card-border);
-    padding: 0.5rem 1rem; z-index: 50;
-    justify-content: space-around;
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
+  .content {
+    position: relative; z-index: 1;
+    flex: 1;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 4rem 2rem 6rem;
   }
-  .controls-bottom .ctrl-btn { border: none; background: transparent; border-radius: 8px; }
 
-  /* ============ Poem Card ============ */
+  /* Poem — extreme whitespace, single-line centered */
   .poem-section {
-    display: flex; align-items: center; justify-content: center;
-    min-height: 50vh; padding: 2rem 0;
-    max-width: 720px; margin: 0 auto;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    flex: 1;
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 0;
   }
   .poem-card {
-    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
-    border-radius: 20px; padding: 3rem 2.5rem;
-    width: 100%; text-align: center;
-    position: relative; overflow: hidden;
-    transition: transform 0.3s ease;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    width: 100%;
+    text-align: center;
+    position: relative;
   }
-  .poem-card:hover { transform: translateY(-3px); }
-  .poem-card::before {
-    content: ''; position: absolute; inset: 0;
-    background:
-      radial-gradient(circle at 20% 30%, rgba(160,82,45,0.04) 1px, transparent 1px),
-      radial-gradient(circle at 60% 70%, rgba(212,197,160,0.05) 1px, transparent 1px);
-    background-size: 11px 11px, 17px 17px;
+  .poem-card::before { display: none; }
+  .poem-card:hover { transform: none; }
+
+  .poem-text {
+    font-family: 'Amiri', serif;
+    font-size: 1.6rem;
+    line-height: 3.2;
+    color: #2c2c2b;
+    letter-spacing: 0.01em;
+  }
+  .poem-text .hemistich {
+    display: block;
+    margin-bottom: 2rem;
+    opacity: 0;
+    animation: nordicFadeIn 1s ease forwards;
+  }
+  .poem-text .hemistich:nth-child(1) { animation-delay: 0.3s; }
+  .poem-text .hemistich:nth-child(2) { animation-delay: 0.9s; }
+
+  @keyframes nordicFadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Birch separator between hemistichs */
+  .bayt-sep {
+    display: block;
+    width: 24px;
+    height: 1px;
+    background: #c5c0b8;
+    margin: 0 auto 2rem;
+    opacity: 0;
+    animation: nordicFadeIn 0.6s ease 0.6s forwards;
+  }
+
+  .poet-name {
+    font-family: 'Tajawal', sans-serif;
+    font-weight: 300;
+    font-size: 0.8rem;
+    color: #9a9590;
+    margin-top: 3rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    opacity: 0;
+    animation: nordicFadeIn 0.8s ease 1.2s forwards;
+  }
+  .poet-name::before, .poet-name::after { display: none; }
+
+  /* ===== CONTROLS ===== */
+  /* Ultra-thin dot line — nearly invisible until interaction */
+  .controls-dot-line {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 64px;
+    padding: 0 1rem;
+  }
+  .controls-dot-line::before {
+    content: '';
+    position: absolute;
+    bottom: 32px; left: 10%; right: 10%;
+    height: 1px;
+    background: #e0ddd8;
+  }
+
+  .dot-action {
+    position: relative;
+    width: 44px; height: 44px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 0;
+    margin: 0 16px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  /* The tiny dot */
+  .dot-action::before {
+    content: '';
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: #c5c0b8;
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+                background 0.3s ease;
+  }
+  .dot-action:hover::before,
+  .dot-action:active::before {
+    transform: scale(1.8);
+    background: #2c2c2b;
+  }
+
+  /* Label appears on hover/tap */
+  .dot-label {
+    position: absolute;
+    bottom: 44px;
+    font-family: 'Tajawal', sans-serif;
+    font-weight: 300;
+    font-size: 0.62rem;
+    color: #9a9590;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
     pointer-events: none;
   }
-  .poem-text {
-    font-family: 'Amiri', serif; font-size: 1.85rem;
-    line-height: 2.4; color: var(--fg);
-    position: relative; z-index: 1;
+  .dot-action:hover .dot-label,
+  .dot-action:active .dot-label {
+    opacity: 1;
+    transform: translateY(0);
   }
-  .poem-text .hemistich { display: block; margin-bottom: 0.3em; }
-  .poet-name {
-    font-family: 'Amiri', serif; font-size: 1rem;
-    color: var(--gold); margin-top: 1.5rem;
-    position: relative; z-index: 1;
-  }
-  .poet-name::before, .poet-name::after {
-    content: ''; display: inline-block; width: 36px; height: 1px;
-    background: var(--gold-dim); vertical-align: middle; margin: 0 0.8rem;
-  }
+
+  /* Hide the old controls */
+  .controls-vertical { display: none; }
+  .controls-bottom { display: none; }
 
   /* ============ Responsive ============ */
   @media (max-width: 768px) {
-    .content { padding: 2rem 1rem 5rem; padding-right: 1rem; }
-    .controls-vertical { display: none; }
-    .controls-bottom { display: flex; }
-    .poem-text { font-size: 1.4rem; line-height: 2.2; }
-    .poem-card { padding: 2rem 1.5rem; }
+    .content { padding: 3rem 1.5rem 5rem; }
+    .poem-text { font-size: 1.35rem; line-height: 2.8; }
+    .poem-text .hemistich { margin-bottom: 1.5rem; }
+    .bayt-sep { margin-bottom: 1.5rem; }
+    .poet-name { margin-top: 2.5rem; }
+    .dot-action { margin: 0 10px; }
   }
 
   /* ============ Reduced Motion ============ */
@@ -291,38 +372,35 @@
 
   <!-- ======== Main App ======== -->
   <div id="app" aria-live="polite">
-    <canvas id="ambient-canvas" aria-hidden="true"></canvas>
+    <div class="birch-line-top" aria-hidden="true"></div>
     <div class="content">
-      <!-- Vertical Controls (Desktop) -->
-      <nav class="controls-vertical" aria-label="App controls">
-        <button class="ctrl-btn" aria-label="Save poem"><i data-lucide="heart"></i></button>
-        <button class="ctrl-btn" aria-label="Change font"><i data-lucide="type"></i></button>
-        <button class="ctrl-btn" aria-label="Toggle language"><i data-lucide="languages"></i></button>
-        <button class="ctrl-btn" aria-label="Poem library"><i data-lucide="book-open"></i></button>
-        <button class="ctrl-btn" aria-label="Font style"><i data-lucide="italic"></i></button>
-        <button class="ctrl-btn" aria-label="Sign in"><i data-lucide="log-in"></i></button>
-        <button class="ctrl-btn" id="theme-toggle" aria-label="Toggle theme"><i data-lucide="sun"></i></button>
-      </nav>
-
-      <!-- Bottom Controls (Mobile) -->
-      <nav class="controls-bottom" aria-label="App controls">
-        <button class="ctrl-btn" aria-label="Listen"><i data-lucide="music"></i></button>
-        <button class="ctrl-btn" aria-label="AI insight"><i data-lucide="lightbulb"></i></button>
-        <button class="ctrl-btn" aria-label="New poem"><i data-lucide="refresh-cw"></i></button>
-        <button class="ctrl-btn" aria-label="Library"><i data-lucide="library"></i></button>
-        <button class="ctrl-btn" aria-label="Random poem"><i data-lucide="shuffle"></i></button>
-      </nav>
-
       <section class="poem-section" aria-label="Poem">
         <article class="poem-card">
           <div class="poem-text" lang="ar">
             <span class="hemistich">أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ</span>
+            <span class="bayt-sep" aria-hidden="true"></span>
             <span class="hemistich">فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي</span>
           </div>
           <div class="poet-name">أحمد شوقي</div>
         </article>
       </section>
     </div>
+
+    <!-- Ultra-thin dot line controls -->
+    <nav class="controls-dot-line" aria-label="Poem actions">
+      <button class="dot-action" aria-label="Next poem">
+        <span class="dot-label">shuffle</span>
+      </button>
+      <button class="dot-action" aria-label="Save poem">
+        <span class="dot-label">save</span>
+      </button>
+      <button class="dot-action" aria-label="Listen to poem">
+        <span class="dot-label">listen</span>
+      </button>
+      <button class="dot-action" aria-label="Share poem">
+        <span class="dot-label">share</span>
+      </button>
+    </nav>
   </div>
 
 <script>

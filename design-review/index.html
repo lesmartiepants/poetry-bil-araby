@@ -413,16 +413,6 @@ const CATALOG = [
     component: 'Auth & Login',
     id: 'auth',
     categories: [
-      { id: 'auth-flow', name: 'Authentication Flow', source: 'PR #49/#61', description: 'Sign-in, OAuth, save gating, mobile menus',
-        options: [
-          { id: 'auth-desktop', name: 'Desktop Not Signed In', file: 'auth/auth-desktop-not-signed-in.html', desc: 'Control bar with Sign In button and grayed-out Save heart.', generation: 1 },
-          { id: 'auth-modal', name: 'Auth Modal', file: 'auth/auth-modal.html', desc: 'Google and Apple OAuth with Arabic welcome message.', generation: 1 },
-          { id: 'auth-tooltip', name: 'Save Tooltip', file: 'auth/auth-save-tooltip.html', desc: 'Tooltip on unauthenticated heart click.', generation: 1 },
-          { id: 'auth-mobile', name: 'Mobile Compact', file: 'auth/auth-mobile-compact.html', desc: 'Responsive layout with overflow menu.', generation: 1 },
-          { id: 'auth-overflow', name: 'Mobile Overflow', file: 'auth/auth-mobile-overflow.html', desc: 'Full menu with bilingual labels.', generation: 1 }
-        ],
-        feedback: {}
-      },
       { id: 'auth-e2e', name: 'Auth E2E Flows', source: 'PR #129', description: 'Complete sign-in and sign-out guided flows with pulsing glow overlay',
         options: [
           { id: 'auth-e2e-sso', name: 'SSO Sign-In Flow', file: 'auth/e2e-auth-sso-flow.html', desc: 'Guided tap overlay: heart → tooltip → auth modal (Google/Apple/Email) → signed-in → save poem', generation: 5 },

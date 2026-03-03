@@ -6,9 +6,8 @@
  * Run via: npm run test:integration
  *
  * Required env vars:
- *   DATABASE_URL  — Supabase connection string (set as repo secret)
+ *   DATABASE_URL  — Supabase connection string (set as DATABASE_URL repo secret)
  *
- * Safe to run on a PR branch: all migrations use IF NOT EXISTS (idempotent).
  * Test data is written with reviewer='ci-integration' for easy identification.
  */
 

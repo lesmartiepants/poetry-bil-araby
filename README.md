@@ -283,6 +283,40 @@ See [DEPLOYMENT.md](DEPLOYMENT.md) for the complete step-by-step guide covering:
 - Keep-alive configuration to prevent Render cold starts
 - Troubleshooting common connectivity issues
 
+### Vercel Setup (Recommended)
+
+1. **Install Vercel GitHub App**
+   - Go to [vercel.com/new](https://vercel.com/new)
+   - Click "Import Git Repository"
+   - Select `lesmartiepants/poetry-bil-araby`
+
+2. **Configure Project**
+   - Framework Preset: **Vite**
+   - Build Command: `npm run build`
+   - Output Directory: `dist`
+   - Install Command: `npm install`
+
+3. **Add Environment Variables**
+   - In Vercel dashboard, go to Settings → Environment Variables
+   - Add: `VITE_GEMINI_API_KEY` = `your-api-key-here`
+   - Apply to: Production, Preview, Development
+
+4. **Enable Automatic Deployments**
+   - Every push to `main` → Production deployment
+   - Every PR → Preview deployment with unique URL
+   - PR comments will include preview links
+
+5. **Optional: Custom Domain**
+   - Go to Settings → Domains
+   - Add your custom domain
+
+### Benefits of Vercel Integration
+- Automatic preview deployments for every PR
+- Instant rollbacks
+- Edge network CDN
+- Zero configuration
+- Automatic HTTPS
+
 ## Project Structure
 
 ```
@@ -328,19 +362,19 @@ The release readiness analysis (see PR #58) audited the app against a mobile-fir
 
 ### P0 — Blocks Public Launch
 
-- [ ] **Debug panel in production**: `FEATURES.debug` is `true` in `app.jsx`. Must be disabled before launch or gated by `NODE_ENV`.
-- [ ] **No React error boundary**: Any component crash results in a blank white screen. A `<ErrorBoundary>` wrapper with a recovery UI is needed.
+- [x] **Debug panel in production**: `FEATURES.debug` now gates on `import.meta.env.DEV` — panel is hidden in production builds.
+- [x] **No React error boundary**: `ErrorBoundary` added in `main.jsx`; crashes show a bilingual recovery UI instead of a blank screen.
 - [ ] **Gemini API key exposed client-side**: `VITE_GEMINI_API_KEY` is bundled into the client-side JS. Proxy AI calls through the Express backend or restrict the key to the production domain.
-- [ ] **No SEO / Open Graph metadata**: `index.html` has no `<meta og:*>` or `<meta twitter:*>` tags. Sharing the URL shows a blank preview.
-- [ ] **Favicon is the Vite default**: `index.html` references `/vite.svg`. Replace with a proper app icon.
+- [x] **No SEO / Open Graph metadata**: Added description, OG, and Twitter Card meta tags to `index.html`.
+- [x] **Favicon is the Vite default**: Replaced with a branded SVG app icon (`public/app-icon.svg`).
 - [ ] **No graceful degradation without API key**: When `VITE_GEMINI_API_KEY` is absent or empty, AI mode silently fails. Add an explicit fallback UI directing users to database mode.
-- [ ] **Version is `0.0.0`**: Update `package.json` to `1.0.0` before the public release.
+- [x] **Version is `0.0.0`**: Updated `package.json` to `1.0.0`.
 
 ### P1 — Launch-Critical Polish
 
 - [ ] No splash screen or first-time onboarding (extensive design exploration exists in PR #11)
-- [ ] No PWA manifest or service worker (users cannot add the app to their home screen)
-- [ ] Light mode dropdown theming inconsistency
+- [x] PWA manifest added (`public/manifest.json` with app name, theme color, and icon); service worker not yet implemented
+- [x] Light mode dropdown theming inconsistency (fixed: all dropdown panels now respect the active theme)
 - [ ] No analytics or error tracking (zero visibility into post-launch behavior)
 
 ### P2 — Post-Launch
@@ -362,6 +396,27 @@ The release readiness analysis (see PR #58) audited the app against a mobile-fir
 - GitHub Copilot and Claude AI development instructions
 
 See the full analysis in PR #58 (`RELEASE_READINESS.md`) for effort estimates, decision points, and a phased implementation plan.
+
+## TODO
+
+### Features
+- [x] Add poem favorites and bookmarks
+- [x] Saved Poems view to browse collection
+- [x] Settings view for theme and font preferences
+- [ ] Implement search functionality
+- [ ] Add social media sharing
+- [ ] Create poem collections and playlists
+- [ ] Expand poet and category library
+- [ ] Add keyboard shortcuts
+- [ ] Implement pagination for large datasets
+
+### Developer Experience
+- [x] Set up GitHub Copilot instructions
+- [ ] Configure ESLint and Prettier
+- [ ] Set up pre-commit hooks
+- [ ] Consider TypeScript migration
+- [ ] Add JSDoc comments to functions
+- [ ] Create CONTRIBUTING.md
 
 ## References
 

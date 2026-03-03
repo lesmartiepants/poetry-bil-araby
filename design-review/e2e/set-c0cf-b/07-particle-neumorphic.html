@@ -236,17 +236,25 @@
       opacity: 0.35;
     }
 
-    /* ===== MAIN APP ===== */
+    /* ===== MAIN APP - Particle Neumorphic Fusion ===== */
     #app {
       display: none;
       min-height: 100vh;
       padding: 2rem 1.25rem 6rem;
+      position: relative;
     }
     #app.active { display: block; }
+
+    /* Floating particle canvas behind everything */
+    #fusionParticleCanvas {
+      position: fixed; inset: 0; width: 100%; height: 100%;
+      z-index: 0; pointer-events: none;
+    }
 
     .app-inner {
       max-width: 520px;
       margin: 0 auto;
+      position: relative; z-index: 1;
     }
 
     /* App Brand */
@@ -271,89 +279,27 @@
       line-height: 1.2;
     }
 
-    /* Waveform Player */
-    .player-bar {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      padding: 1rem 1.25rem;
-      background: var(--card-dark);
-      border: 1px solid var(--border-dark);
-      border-radius: 16px;
-      margin-bottom: 1.5rem;
-    }
-    body.light .player-bar {
-      background: var(--card-light);
-      border-color: var(--border-light);
-    }
-
-    .play-btn {
-      width: 44px;
-      height: 44px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--gold);
-      color: var(--black);
-      border: none;
-      border-radius: 50%;
-      cursor: pointer;
-      flex-shrink: 0;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-    .play-btn:hover { transform: scale(1.08); box-shadow: 0 0 16px rgba(197,160,89,0.3); }
-    .play-btn:focus-visible { outline: 3px solid var(--indigo); outline-offset: 2px; }
-    .play-btn svg { width: 20px; height: 20px; }
-
-    .waveform-display {
-      flex: 1;
-      height: 40px;
-      position: relative;
-      overflow: hidden;
-      border-radius: 6px;
-    }
-    #miniWaveCanvas {
-      width: 100%;
-      height: 100%;
-      will-change: transform;
-    }
-
-    .time-label {
-      font-size: 0.8rem;
-      opacity: 0.45;
-      font-variant-numeric: tabular-nums;
-      min-width: 36px;
-      text-align: center;
-      flex-shrink: 0;
-    }
-
-    .progress-track {
-      width: 100%;
-      height: 3px;
-      background: rgba(197,160,89,0.1);
-      border-radius: 2px;
-      margin: -0.5rem 1.25rem 1.5rem;
-    }
-    .progress-fill {
-      height: 100%;
-      width: 35%;
-      background: var(--gold);
-      border-radius: 2px;
-    }
-
-    /* Poem Card */
+    /* Poem Card - Neumorphic soft shadow with particle accent */
     .poem-card {
       background: var(--card-dark);
       border: 1px solid var(--border-dark);
-      border-radius: 20px;
+      border-radius: 24px;
       padding: 2.5rem 2rem;
       margin-bottom: 1.5rem;
       position: relative;
-      overflow: hidden;
+      overflow: visible;
+      /* Neumorphic soft shadow */
+      box-shadow:
+        8px 8px 16px rgba(0,0,0,0.4),
+        -4px -4px 12px rgba(30,30,30,0.3);
+      z-index: 1;
     }
     body.light .poem-card {
       background: var(--card-light);
       border-color: var(--border-light);
+      box-shadow:
+        8px 8px 16px rgba(0,0,0,0.08),
+        -4px -4px 12px rgba(255,255,255,0.6);
     }
 
     /* Gold accent line at top */
@@ -394,6 +340,7 @@
       border-radius: 50%;
       background: var(--gold);
       flex-shrink: 0;
+      box-shadow: 0 0 8px rgba(197,160,89,0.4);
     }
 
     .poet-name {
@@ -410,31 +357,18 @@
       border-top-color: var(--border-light);
     }
 
-    /* Mini EQ in card */
-    .card-eq {
-      display: flex;
-      justify-content: center;
-      gap: 3px;
-      align-items: flex-end;
-      height: 20px;
-      margin-bottom: 1rem;
-    }
-    .card-eq .eq-bar {
-      width: 3px;
-      background: var(--gold);
-      opacity: 0.4;
-    }
-
     /* Info Section */
     .info-section {
       padding: 1.5rem;
       background: var(--card-dark);
       border: 1px solid var(--border-dark);
       border-radius: 16px;
+      box-shadow: 4px 4px 8px rgba(0,0,0,0.3), -2px -2px 6px rgba(30,30,30,0.2);
     }
     body.light .info-section {
       background: var(--card-light);
       border-color: var(--border-light);
+      box-shadow: 4px 4px 8px rgba(0,0,0,0.06), -2px -2px 6px rgba(255,255,255,0.4);
     }
     .info-section h3 {
       font-family: 'Amiri', serif;
@@ -483,7 +417,7 @@
     .ctrl-btn:focus-visible { outline: 3px solid var(--indigo); outline-offset: 2px; }
     .ctrl-btn svg { width: 20px; height: 20px; }
 
-    /* ===== CONTROLS: Mobile bottom bar ===== */
+    /* ===== CONTROLS: Orbiting Particle Icons (Mobile) ===== */
     .controls-mobile {
       position: fixed;
       bottom: 0;
@@ -492,22 +426,55 @@
       display: none;
       justify-content: space-around;
       align-items: center;
-      height: 56px;
-      background: rgba(0,0,0,0.95);
-      border-top: 1px solid var(--border-dark);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
+      height: 64px;
+      background: transparent;
       z-index: 1000;
     }
-    body.light .controls-mobile {
-      background: rgba(255,255,255,0.95);
-      border-top-color: var(--border-light);
-    }
-    .controls-mobile .ctrl-btn {
+
+    .orbit-btn {
+      width: 48px; height: 48px;
+      display: flex; align-items: center; justify-content: center;
       background: transparent;
       border: none;
-      border-radius: 8px;
+      color: var(--gold);
+      cursor: pointer;
+      border-radius: 50%;
+      position: relative;
+      transition: all 0.3s ease;
+      /* Gold dot indicator */
     }
+    .orbit-btn::before {
+      content: '';
+      position: absolute; inset: 0;
+      border-radius: 50%;
+      border: 1px solid rgba(197,160,89,0.15);
+      transition: all 0.3s ease;
+    }
+    .orbit-btn:hover::before {
+      border-color: var(--gold);
+      box-shadow: 0 0 12px rgba(197,160,89,0.2);
+    }
+    .orbit-btn:hover {
+      transform: scale(1.1);
+    }
+    /* Gold particle dot that orbits */
+    .orbit-btn::after {
+      content: '';
+      position: absolute; top: -2px; right: -2px;
+      width: 6px; height: 6px;
+      border-radius: 50%;
+      background: var(--gold);
+      box-shadow: 0 0 6px rgba(197,160,89,0.5);
+      animation: orbitDot 3s linear infinite;
+    }
+    @keyframes orbitDot {
+      0% { transform: rotate(0deg) translateX(22px) rotate(0deg); }
+      100% { transform: rotate(360deg) translateX(22px) rotate(-360deg); }
+    }
+    .orbit-btn:nth-child(2)::after { animation-delay: -0.75s; }
+    .orbit-btn:nth-child(3)::after { animation-delay: -1.5s; }
+    .orbit-btn:nth-child(4)::after { animation-delay: -2.25s; }
+    .orbit-btn svg { width: 20px; height: 20px; position: relative; z-index: 1; }
 
     @media (max-width: 768px) {
       .controls-desktop { display: none; }
@@ -515,7 +482,6 @@
       #app { padding-bottom: 5rem; }
       .poem-card { padding: 2rem 1.5rem; }
       .bayt { gap: 0.75rem; }
-      .player-bar { flex-wrap: wrap; gap: 0.5rem; }
     }
     @media (min-width: 769px) {
       .controls-desktop { display: flex; }
@@ -561,33 +527,15 @@
 
   <!-- Main App -->
   <div id="app">
+    <canvas id="fusionParticleCanvas" aria-hidden="true"></canvas>
     <div class="app-inner">
       <div class="app-brand">
         <span class="en">poetry</span>
         <span class="ar">بالعربي</span>
       </div>
 
-      <!-- Player Bar -->
-      <div class="player-bar">
-        <button class="play-btn" aria-label="تشغيل"><i data-lucide="play"></i></button>
-        <span class="time-label">1:24</span>
-        <div class="waveform-display">
-          <canvas id="miniWaveCanvas"></canvas>
-        </div>
-        <span class="time-label">3:47</span>
-      </div>
-      <div class="progress-track"><div class="progress-fill"></div></div>
-
-      <!-- Poem Card -->
+      <!-- Poem Card - Neumorphic with floating particles -->
       <div class="poem-card">
-        <div class="card-eq">
-          <div class="eq-bar" style="height:6px"></div>
-          <div class="eq-bar" style="height:12px"></div>
-          <div class="eq-bar" style="height:9px"></div>
-          <div class="eq-bar" style="height:15px"></div>
-          <div class="eq-bar" style="height:7px"></div>
-        </div>
-
         <div class="poem-area">
           <div class="bayt">
             <span class="hemistich">أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ</span>
@@ -611,25 +559,20 @@
     </div>
 
     <!-- Desktop Controls -->
-    <nav class="controls-desktop" aria-label="أدوات التحكم">
-      <button class="ctrl-btn" aria-label="المفضلة"><i data-lucide="heart"></i></button>
-      <button class="ctrl-btn" aria-label="الخط"><i data-lucide="type"></i></button>
-      <button class="ctrl-btn" aria-label="اللغات"><i data-lucide="languages"></i></button>
-      <button class="ctrl-btn" aria-label="الديوان"><i data-lucide="book-open"></i></button>
-      <button class="ctrl-btn" aria-label="القافية"><i data-lucide="italic"></i></button>
-      <button class="ctrl-btn" id="themeToggleDesktop" aria-label="تبديل السمة"><i data-lucide="sun"></i></button>
-      <button class="ctrl-btn" aria-label="تسجيل الدخول"><i data-lucide="log-in"></i></button>
-      <button class="ctrl-btn" aria-label="الاعدادات"><i data-lucide="settings"></i></button>
+    <nav class="controls-desktop" aria-label="App controls">
+      <button class="ctrl-btn" aria-label="Next poem"><i data-lucide="shuffle"></i></button>
+      <button class="ctrl-btn" aria-label="Save poem"><i data-lucide="heart"></i></button>
+      <button class="ctrl-btn" aria-label="Listen"><i data-lucide="headphones"></i></button>
+      <button class="ctrl-btn" aria-label="Share"><i data-lucide="share-2"></i></button>
+      <button class="ctrl-btn" id="themeToggleDesktop" aria-label="Toggle theme"><i data-lucide="sun"></i></button>
     </nav>
 
-    <!-- Mobile Controls -->
-    <nav class="controls-mobile" aria-label="أدوات التحكم">
-      <button class="ctrl-btn" aria-label="الاستماع"><i data-lucide="music"></i></button>
-      <button class="ctrl-btn" aria-label="أفكار"><i data-lucide="lightbulb"></i></button>
-      <button class="ctrl-btn" id="themeToggleMobile" aria-label="تبديل السمة"><i data-lucide="sun"></i></button>
-      <button class="ctrl-btn" aria-label="تحديث"><i data-lucide="refresh-cw"></i></button>
-      <button class="ctrl-btn" aria-label="المكتبة"><i data-lucide="library"></i></button>
-      <button class="ctrl-btn" aria-label="عشوائي"><i data-lucide="shuffle"></i></button>
+    <!-- Orbiting Particle Icons (Mobile) -->
+    <nav class="controls-mobile" aria-label="App controls">
+      <button class="orbit-btn" aria-label="Next poem"><i data-lucide="shuffle"></i></button>
+      <button class="orbit-btn" aria-label="Save poem"><i data-lucide="heart"></i></button>
+      <button class="orbit-btn" aria-label="Listen"><i data-lucide="headphones"></i></button>
+      <button class="orbit-btn" aria-label="Share"><i data-lucide="share-2"></i></button>
     </nav>
   </div>
 

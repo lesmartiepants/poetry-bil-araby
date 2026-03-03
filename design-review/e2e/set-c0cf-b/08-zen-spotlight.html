@@ -7,812 +7,871 @@
     <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg-dark:    #1a1610;
-            --bg-light:   #f5f0e6;
-            --surface-d:  #231e17;
-            --surface-l:  #eae5da;
-            --text-dark:  #ddd5c4;
-            --text-light: #3d3428;
-            --gold:       #C5A059;
-            --sand:       #C4A882;
-            --sand-light: #d4b892;
-            --earth:      #8B7355;
-            --earth-dim:  rgba(139,115,85,0.18);
-            --deep-earth: #2d2419;
-            --border-d:   rgba(196,168,130,0.12);
-            --border-l:   rgba(139,115,85,0.2);
-
-            --sp-1: 8px;
-            --sp-2: 16px;
-            --sp-3: 24px;
-            --sp-4: 32px;
-            --sp-5: 40px;
-            --sp-6: 48px;
-
-            --t-base:   all 0.22s ease;
-            --t-spring: all 0.38s cubic-bezier(0.22, 1, 0.36, 1);
+            --bg-dark:     #12100d;
+            --bg-light:    #f4f0e7;
+            --surface-dark:  #1e1a14;
+            --surface-light: #ede8db;
+            --text-dark:   #d9cfc0;
+            --text-muted-dark:  #8a7f6e;
+            --text-light:  #2e2618;
+            --text-muted-light: #7a6e5a;
+            --gold:   #C5A059;
+            --sand:   #c8a87a;
+            --sand2:  #b89a68;
+            --earth:  #8b7355;
+            --stone:  #5a4d3e;
+            --vessel: rgba(196,168,130,0.12);
+            --vessel-border: rgba(196,168,130,0.35);
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: 'Tajawal', sans-serif;
             background: var(--bg-dark);
             color: var(--text-dark);
             overflow-x: hidden;
-            transition: background 0.4s ease, color 0.4s ease;
-            min-height: 100vh;
+            transition: background 0.5s ease, color 0.5s ease;
             -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
+            min-height: 100vh;
         }
 
         body.light { background: var(--bg-light); color: var(--text-light); }
 
-        /* ===== SVG ICON HELPER ===== */
-        .icon {
-            width: 18px; height: 18px;
-            stroke: currentColor; fill: none;
-            stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round;
-            flex-shrink: 0;
-        }
-
-        /* ========== ZEN RAKE PATTERN ========== */
-        body::after {
+        /* Subtle raked-sand lines in background */
+        body::before {
             content: '';
             position: fixed; inset: 0;
             z-index: 0; pointer-events: none;
             opacity: 0.035;
             background: repeating-linear-gradient(
                 0deg,
-                transparent, transparent 19px,
-                var(--sand) 19px, var(--sand) 20px
+                transparent,
+                transparent 22px,
+                var(--sand) 22px,
+                var(--sand) 23px
             );
         }
 
-        /* ========== SPLASH ========== */
-        .splash-screen {
+        /* ══════════════════════════════════════════
+           SPLASH -- sand filling a vessel
+        ══════════════════════════════════════════ */
+        .splash {
             position: fixed; inset: 0;
             background: var(--bg-dark);
-            display: flex; align-items: center; justify-content: center;
-            flex-direction: column; gap: var(--sp-3);
-            z-index: 9999;
-            animation: splashFadeOut 0.9s ease 5s forwards;
+            display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            z-index: 9999; gap: 32px;
+            animation: splashOut 0.9s ease 5s forwards;
         }
 
-        body.light .splash-screen { background: var(--bg-light); }
+        body.light .splash { background: var(--bg-light); }
 
-        /* Hourglass vessel — redesigned, no clip-path weirdness */
-        .hourglass-wrap {
-            position: relative; z-index: 2;
-            display: flex; flex-direction: column; align-items: center;
-            gap: 0;
-        }
-
-        .hourglass-svg {
-            width: 80px; height: 140px;
-            overflow: visible;
-        }
-
-        .splash-text {
-            position: relative; z-index: 2;
-            font-family: 'Amiri', serif;
-            font-size: 2.4rem; font-weight: 700;
-            color: var(--sand);
-            text-align: center;
-            letter-spacing: 0.02em;
-            animation: fadeSlideUp 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.5s both;
-        }
-
-        .splash-sub {
-            position: relative; z-index: 2;
-            font-size: 0.85rem;
-            color: var(--earth);
-            letter-spacing: 0.1em;
-            text-transform: uppercase;
-        }
-
-        @keyframes fadeSlideUp {
-            from { opacity: 0; transform: translateY(12px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes splashFadeOut { to { opacity: 0; pointer-events: none; } }
-
-        /* The accumulating sand fill in the bottom chamber */
-        #sandFillRect {
-            transform-origin: bottom;
-            transition: height 0.06s linear;
-        }
-
-        /* ========== MAIN ========== */
-        .main-content {
-            min-height: 100vh;
-            padding: var(--sp-3) var(--sp-3) var(--sp-6);
-            opacity: 0;
-            animation: contentFadeIn 0.9s ease 5.5s forwards;
-            position: relative; z-index: 1;
-        }
-
-        @keyframes contentFadeIn { to { opacity: 1; } }
-
-        .container { max-width: 860px; margin: 0 auto; }
-
-        /* ========== HEADER ========== */
-        header {
-            display: flex; justify-content: space-between; align-items: center;
-            margin-bottom: var(--sp-5);
-            padding-bottom: var(--sp-3);
-            border-bottom: 1px solid var(--border-d);
-        }
-
-        body.light header { border-color: var(--border-l); }
-
-        h1 {
-            font-family: 'Amiri', serif;
-            font-size: 2.1rem; font-weight: 700;
-            color: var(--sand);
-            letter-spacing: 0.01em;
-        }
-
-        /* Round stone button */
-        .btn-stone {
-            width: 52px; height: 52px;
-            min-width: 44px; min-height: 44px;
-            border-radius: 50%;
-            background: linear-gradient(145deg, var(--earth), #6b5d4e);
-            border: 2px solid var(--sand);
-            color: var(--sand);
-            cursor: pointer;
-            transition: var(--t-spring);
-            box-shadow:
-                4px 4px 10px rgba(0,0,0,0.4),
-                -2px -2px 6px rgba(196,168,130,0.08);
-            display: flex; align-items: center; justify-content: center;
+        #splashCanvas {
+            position: absolute; inset: 0;
+            width: 100%; height: 100%;
             will-change: transform;
         }
 
-        body.light .btn-stone {
-            background: linear-gradient(145deg, var(--sand), var(--sand-light));
-            border-color: var(--earth);
-            color: var(--deep-earth);
-            box-shadow:
-                4px 4px 10px rgba(0,0,0,0.15),
-                -2px -2px 6px rgba(255,255,255,0.6);
+        .splash-vessel-wrap {
+            position: relative; z-index: 2;
+            display: flex; flex-direction: column;
+            align-items: center; gap: 16px;
         }
 
-        .btn-stone:hover {
-            transform: scale(1.1);
-            box-shadow:
-                6px 6px 14px rgba(0,0,0,0.5),
-                -3px -3px 8px rgba(196,168,130,0.1);
+        /* SVG vessel */
+        .vessel-svg { display: block; }
+
+        .splash-label {
+            text-align: center;
         }
 
-        .btn-stone:active {
-            transform: scale(0.94);
-            transition-duration: 0.08s;
+        .splash-title {
+            font-family: 'Amiri', serif;
+            font-size: 2.5rem; font-weight: 700;
+            color: var(--sand);
+            letter-spacing: 0.02em;
+            line-height: 1.2;
         }
 
-        .btn-stone:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
-
-        /* ========== SAND PROGRESS BAR ========== */
-        .sand-progress {
-            height: 6px;
-            border-radius: 3px;
-            background: rgba(139,115,85,0.2);
-            margin-bottom: var(--sp-4);
-            overflow: hidden;
-            position: relative;
+        .splash-sub {
+            font-size: 0.8rem; font-weight: 500;
+            letter-spacing: 0.22em; text-transform: uppercase;
+            color: var(--text-muted-dark);
+            margin-top: 6px;
         }
 
-        .sand-progress-fill {
-            height: 100%;
-            border-radius: 3px;
-            width: 42%;
-            background: linear-gradient(90deg, var(--sand), var(--gold));
-            position: relative;
-            transition: width 0.5s ease;
+        body.light .splash-sub { color: var(--text-muted-light); }
+
+        @keyframes splashOut { to { opacity: 0; pointer-events: none; } }
+
+        /* ══════════════════════════════════════════
+           MAIN
+        ══════════════════════════════════════════ */
+        .main {
+            position: relative; z-index: 1;
+            min-height: 100vh; padding: 32px;
+            opacity: 0;
+            animation: fadeIn 0.9s ease 5.6s forwards;
         }
 
-        /* Sand texture shimmer */
-        .sand-progress-fill::after {
-            content: '';
-            position: absolute; inset: 0;
-            background: linear-gradient(90deg,
-                transparent 0%,
-                rgba(255,255,255,0.25) 50%,
-                transparent 100%
-            );
-            animation: shimmer 2s ease-in-out infinite;
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to   { opacity: 1; transform: translateY(0); }
         }
 
-        @keyframes shimmer {
-            0%   { transform: translateX(-100%); }
-            100% { transform: translateX(100%); }
+        /* ══════════════════════════════════════════
+           HEADER
+        ══════════════════════════════════════════ */
+        header {
+            display: flex; align-items: center;
+            justify-content: space-between;
+            margin-bottom: 40px;
+            padding-bottom: 24px;
+            border-bottom: 1px solid rgba(196,168,130,0.14);
         }
 
-        /* ========== POEM CARD ========== */
-        .poem-card {
-            padding: var(--sp-5) var(--sp-4);
-            background: rgba(45,36,25,0.7);
+        .brand { display: flex; flex-direction: column; gap: 2px; }
+
+        .brand-ar {
+            font-family: 'Amiri', serif;
+            font-size: 1.75rem; font-weight: 700;
+            color: var(--sand); line-height: 1.2;
+        }
+
+        .brand-en {
+            font-size: 0.75rem; font-weight: 500;
+            letter-spacing: 0.18em; text-transform: uppercase;
+            color: var(--text-muted-dark);
+        }
+
+        body.light .brand-en { color: var(--text-muted-light); }
+
+        /* Theme button -- stone aesthetic */
+        .theme-btn {
+            width: 48px; height: 48px; border-radius: 50%;
+            border: 1px solid var(--vessel-border);
+            cursor: pointer; flex-shrink: 0;
+            background: linear-gradient(145deg, var(--earth), var(--stone));
+            box-shadow: 4px 4px 10px rgba(0,0,0,0.4), -2px -2px 6px rgba(196,168,130,0.07);
+            display: flex; align-items: center; justify-content: center;
+            color: var(--sand);
+            transition: transform 0.25s ease, box-shadow 0.25s ease;
+            will-change: transform;
+        }
+
+        body.light .theme-btn {
+            background: linear-gradient(145deg, var(--sand), #d4b892);
+            color: var(--stone);
+            box-shadow: 4px 4px 10px rgba(0,0,0,0.15), -2px -2px 6px rgba(255,255,255,0.6);
+        }
+
+        .theme-btn:hover  { transform: scale(1.09); }
+        .theme-btn:active { transform: scale(0.94); }
+        .theme-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 4px; }
+
+        /* ══════════════════════════════════════════
+           SAND FILL WIDGET (main screen)
+        ══════════════════════════════════════════ */
+        .container { max-width: 880px; margin: 0 auto; }
+
+        .sand-vessel-panel {
+            display: flex; align-items: center; gap: 32px;
+            padding: 32px;
+            background: var(--surface-dark);
             border-radius: 20px;
-            border: 1px solid var(--border-d);
-            box-shadow:
-                0 12px 40px rgba(0,0,0,0.4),
-                inset 0 1px 0 rgba(196,168,130,0.08);
-            margin-bottom: var(--sp-4);
-            position: relative;
-            overflow: hidden;
-            transition: var(--t-spring);
+            border: 1px solid var(--vessel-border);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.35);
+            margin-bottom: 32px;
+        }
+
+        body.light .sand-vessel-panel {
+            background: var(--surface-light);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.10);
+        }
+
+        .vessel-container {
+            flex-shrink: 0;
+        }
+
+        .vessel-info { flex: 1; }
+
+        .vessel-label {
+            font-size: 0.75rem; font-weight: 600;
+            letter-spacing: 0.16em; text-transform: uppercase;
+            color: var(--text-muted-dark); margin-bottom: 8px;
+        }
+
+        body.light .vessel-label { color: var(--text-muted-light); }
+
+        .vessel-heading {
+            font-family: 'Amiri', serif;
+            font-size: 1.5rem; font-weight: 700;
+            color: var(--sand); margin-bottom: 12px;
+        }
+
+        .vessel-desc {
+            font-size: 0.9375rem; line-height: 1.7;
+            color: var(--text-muted-dark); margin-bottom: 20px;
+        }
+
+        body.light .vessel-desc { color: var(--text-muted-light); }
+
+        .fill-bar {
+            height: 6px; border-radius: 3px;
+            background: rgba(196,168,130,0.12);
+            border: 1px solid rgba(196,168,130,0.18);
+            overflow: hidden; margin-bottom: 8px;
+        }
+
+        .fill-bar-inner {
+            height: 100%; width: 0%;
+            border-radius: 3px;
+            background: linear-gradient(90deg, var(--sand2), var(--gold));
+            transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .fill-pct {
+            font-size: 0.8125rem; font-weight: 600;
+            color: var(--sand); letter-spacing: 0.04em;
+        }
+
+        /* ══════════════════════════════════════════
+           POEM CARD
+        ══════════════════════════════════════════ */
+        .poem-card {
+            padding: 48px;
+            background: var(--surface-dark);
+            border-radius: 20px;
+            border: 1px solid var(--vessel-border);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+            margin-bottom: 32px;
+            position: relative; overflow: hidden;
         }
 
         body.light .poem-card {
-            background: rgba(255,248,235,0.85);
-            border-color: var(--border-l);
-            box-shadow:
-                0 12px 40px rgba(0,0,0,0.08),
-                inset 0 1px 0 rgba(255,255,255,0.8);
+            background: var(--surface-light);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.08);
         }
 
-        .poem-card:hover { transform: translateY(-3px); }
-
-        /* Zen ripple rings */
+        /* Zen ripple rings at bottom */
         .poem-card::before {
             content: '';
-            position: absolute;
-            bottom: -40px; left: 50%;
+            position: absolute; bottom: -60px; left: 50%;
             transform: translateX(-50%);
             width: 240px; height: 240px;
             border-radius: 50%;
-            border: 1px solid rgba(196,168,130,0.06);
+            border: 1px solid rgba(196,168,130,0.08);
             box-shadow:
                 0 0 0 24px rgba(196,168,130,0.04),
                 0 0 0 48px rgba(196,168,130,0.025),
-                0 0 0 72px rgba(196,168,130,0.012);
+                0 0 0 72px rgba(196,168,130,0.013);
             pointer-events: none;
         }
 
         .poem-text {
             font-family: 'Amiri', serif;
-            font-size: 2rem; line-height: 2.5;
-            text-align: center;
-            margin-bottom: var(--sp-3);
+            font-size: 1.875rem; font-weight: 400;
+            line-height: 2.4; text-align: center;
+            margin-bottom: 32px;
+            position: relative; z-index: 1;
+        }
+
+        .poem-divider {
+            width: 48px; height: 1px;
+            background: rgba(196,168,130,0.30);
+            margin: 0 auto 24px;
             position: relative; z-index: 1;
         }
 
         .poem-author {
             font-family: 'Amiri', serif;
-            font-size: 1.2rem;
-            text-align: center;
-            color: var(--sand);
-            margin-bottom: var(--sp-4);
+            font-size: 1.125rem; font-weight: 400;
+            text-align: center; color: var(--sand);
+            letter-spacing: 0.04em;
             position: relative; z-index: 1;
         }
 
-        /* Horizontal rule with sand aesthetic */
-        .card-rule {
-            height: 1px;
-            background: linear-gradient(90deg,
-                transparent,
-                var(--border-d) 30%,
-                var(--border-d) 70%,
-                transparent
-            );
-            margin: 0 0 var(--sp-3);
-            position: relative; z-index: 1;
-        }
-
-        /* ========== ACTION BUTTONS ========== */
-        .card-actions {
-            display: flex; gap: var(--sp-1);
+        /* ══════════════════════════════════════════
+           CONTROLS
+        ══════════════════════════════════════════ */
+        .controls {
+            display: flex; gap: 12px;
             justify-content: center; flex-wrap: wrap;
-            position: relative; z-index: 1;
+            margin-top: 32px; position: relative; z-index: 1;
         }
 
-        .btn-earth {
-            min-height: 44px;
-            padding: 0 var(--sp-2);
-            border-radius: 22px;
-            background: linear-gradient(145deg, var(--earth), #6b5d4e);
-            border: 1px solid rgba(196,168,130,0.25);
+        .earth-btn {
+            height: 48px; min-width: 48px; padding: 0 20px;
+            border-radius: 24px;
+            border: 1px solid var(--vessel-border);
+            cursor: pointer;
+            background: linear-gradient(145deg, var(--earth), var(--stone));
             color: var(--sand);
             font-family: 'Tajawal', sans-serif;
-            font-size: 0.9rem; font-weight: 500;
-            cursor: pointer;
-            transition: var(--t-base);
-            box-shadow: 2px 2px 8px rgba(0,0,0,0.35);
-            display: flex; align-items: center; gap: 7px;
+            font-size: 0.875rem; font-weight: 500; letter-spacing: 0.06em;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            box-shadow: 3px 3px 8px rgba(0,0,0,0.35), -1px -1px 4px rgba(196,168,130,0.06);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
             will-change: transform;
         }
 
-        body.light .btn-earth {
-            background: linear-gradient(145deg, var(--sand), var(--sand-light));
-            color: var(--deep-earth);
-            border-color: rgba(139,115,85,0.3);
-            box-shadow: 2px 2px 8px rgba(0,0,0,0.1);
+        body.light .earth-btn {
+            background: linear-gradient(145deg, var(--sand), #d4b892);
+            color: var(--stone);
+            box-shadow: 3px 3px 8px rgba(0,0,0,0.12), -1px -1px 4px rgba(255,255,255,0.55);
         }
 
-        .btn-earth:hover {
-            transform: translateY(-2px);
-            box-shadow: 3px 3px 12px rgba(0,0,0,0.45);
-        }
+        .earth-btn:hover  { transform: translateY(-2px); box-shadow: 4px 6px 14px rgba(0,0,0,0.42); }
+        .earth-btn:active { transform: scale(0.96); }
+        .earth-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 4px; }
+        .earth-btn svg { flex-shrink: 0; display: block; }
 
-        .btn-earth:active {
-            transform: translateY(0) scale(0.97);
-            transition-duration: 0.08s;
-        }
-
-        .btn-earth:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
-
-        /* ========== WALKTHROUGH ========== */
+        /* ══════════════════════════════════════════
+           WALKTHROUGH
+        ══════════════════════════════════════════ */
         .walkthrough {
-            background: rgba(45,36,25,0.45);
+            margin-top: 40px; padding: 40px;
+            background: var(--surface-dark);
             border-radius: 20px;
-            border: 1px solid var(--border-d);
-            padding: var(--sp-4);
+            border: 1px solid var(--vessel-border);
+            box-shadow: 0 8px 32px rgba(0,0,0,0.28);
         }
 
         body.light .walkthrough {
-            background: rgba(255,248,235,0.7);
-            border-color: var(--border-l);
+            background: var(--surface-light);
+            box-shadow: 0 6px 24px rgba(0,0,0,0.08);
         }
 
-        .walkthrough h2 {
+        .section-title {
             font-family: 'Amiri', serif;
-            font-size: 1.9rem; color: var(--sand);
-            margin-bottom: var(--sp-4); text-align: center;
-            letter-spacing: 0.01em;
+            font-size: 1.625rem; font-weight: 700;
+            color: var(--sand); text-align: center;
+            margin-bottom: 32px; letter-spacing: 0.02em;
         }
 
         .steps {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-            gap: var(--sp-2);
+            grid-template-columns: repeat(auto-fit, minmax(192px, 1fr));
+            gap: 16px;
         }
 
         .step {
-            padding: var(--sp-3) var(--sp-2);
-            border-radius: 14px;
-            border: 1px solid transparent;
-            background: rgba(45,36,25,0.5);
-            transition: var(--t-spring);
-            text-align: center;
-            cursor: pointer;
-            position: relative;
+            padding: 24px; border-radius: 16px;
+            background: var(--bg-dark);
+            border: 1px solid rgba(196,168,130,0.10);
+            transition: border-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative; overflow: hidden;
+            text-align: right;
         }
 
-        body.light .step {
-            background: rgba(255,248,235,0.6);
-        }
-
-        /* Bottom sand-line decoration */
-        .step::after {
-            content: '';
-            display: block;
-            width: 32px; height: 2px;
-            background: var(--sand);
-            border-radius: 2px;
-            margin: var(--sp-2) auto 0;
-            opacity: 0.25;
-            transition: opacity 0.3s ease, width 0.3s ease;
-        }
-
-        .step:hover::after { opacity: 0.6; width: 48px; }
+        body.light .step { background: var(--bg-light); }
 
         .step:hover {
-            transform: translateY(-5px);
-            border-color: rgba(196,168,130,0.3);
-            background: rgba(45,36,25,0.7);
-            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            border-color: rgba(196,168,130,0.32);
+            transform: translateY(-4px);
+            box-shadow: 0 10px 28px rgba(0,0,0,0.28);
         }
 
-        body.light .step:hover {
-            background: rgba(255,248,235,0.9);
-            box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+        /* Sand trickle accent on hover */
+        .step::after {
+            content: '';
+            position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+            width: 0; height: 2px; border-radius: 1px;
+            background: linear-gradient(90deg, var(--sand2), var(--gold));
+            transition: width 0.4s ease;
         }
 
-        .step:active { transform: translateY(-1px); transition-duration: 0.1s; }
-        .step:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+        .step:hover::after { width: 60%; }
 
-        /* Step icon */
-        .step-icon {
-            display: inline-flex;
-            align-items: center; justify-content: center;
-            width: 48px; height: 48px;
-            border-radius: 50%;
-            border: 1px solid rgba(196,168,130,0.2);
-            color: var(--sand);
-            margin-bottom: var(--sp-1);
-            background: rgba(139,115,85,0.15);
+        .step-num span {
+            display: block;
+            font-size: 2rem; font-weight: 700; line-height: 1;
+            color: var(--sand); opacity: 0.35;
+            margin-bottom: 12px;
         }
 
         .step-title {
             font-family: 'Amiri', serif;
-            font-size: 1.2rem; font-weight: 700;
-            margin-bottom: 6px;
-            color: var(--sand);
+            font-size: 1.125rem; font-weight: 700;
+            margin-bottom: 8px; line-height: 1.3;
         }
-
-        body.light .step-title { color: var(--earth); }
 
         .step-desc {
-            font-size: 0.84rem;
-            opacity: 0.7; line-height: 1.65;
+            font-size: 0.875rem; font-weight: 400;
+            line-height: 1.65; color: var(--text-muted-dark);
         }
 
-        /* ========== MOBILE ========== */
+        body.light .step-desc { color: var(--text-muted-light); }
+
+        /* ══════════════════════════════════════════
+           MOBILE
+        ══════════════════════════════════════════ */
         @media (max-width: 768px) {
-            h1 { font-size: 1.7rem; }
-            .splash-text { font-size: 2rem; }
-            .poem-card { padding: var(--sp-4) var(--sp-3); }
-            .poem-text { font-size: 1.5rem; line-height: 2.1; }
-            .steps { grid-template-columns: repeat(2, 1fr); }
-            .main-content { padding: var(--sp-2) var(--sp-2) var(--sp-6); }
-            .walkthrough { padding: var(--sp-3); }
+            .main { padding: 20px; }
+            .brand-ar { font-size: 1.375rem; }
+            .splash-title { font-size: 1.875rem; }
+            .sand-vessel-panel { flex-direction: column; align-items: flex-start; padding: 24px; }
+            .poem-card { padding: 28px 20px; }
+            .poem-text { font-size: 1.5rem; line-height: 2.2; }
+            .walkthrough { padding: 24px; }
+            .steps { grid-template-columns: 1fr; }
         }
 
-        @media (max-width: 480px) { .steps { grid-template-columns: 1fr; } }
-
+        /* ══════════════════════════════════════════
+           REDUCED MOTION
+        ══════════════════════════════════════════ */
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after {
                 animation-duration: 0.01ms !important;
                 animation-iteration-count: 1 !important;
                 transition-duration: 0.01ms !important;
             }
-            .main-content { opacity: 1; }
-            .sand-progress-fill::after { animation: none; }
+            #splashCanvas { display: none; }
+            .main { opacity: 1 !important; animation: none !important; }
+            .fill-bar-inner { transition: none !important; }
         }
     </style>
 </head>
 <body>
-    <!-- ===== SPLASH: Sand-fill hourglass ===== -->
-    <div class="splash-screen">
-        <!--
-            The hourglass is drawn as an inline SVG.
-            Sand grains fall from a canvas overlaid on the full screen.
-            A separate animated rect inside the SVG tracks accumulated fill.
-        -->
-        <div class="hourglass-wrap">
-            <svg class="hourglass-svg" viewBox="0 0 80 140" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <!-- Outer frame -->
-                <path d="M8 4 L72 4 L72 8 L48 62 L48 78 L72 132 L72 136 L8 136 L8 132 L32 78 L32 62 L8 8 Z"
-                      fill="none" stroke="#C4A882" stroke-width="2.5" stroke-linejoin="round"/>
-                <!-- Top caps -->
-                <rect x="4" y="2" width="72" height="8" rx="3" fill="#8B7355" opacity="0.8"/>
-                <rect x="4" y="130" width="72" height="8" rx="3" fill="#8B7355" opacity="0.8"/>
 
-                <!-- Sand draining from top — animates from 55% fill to 0 -->
-                <clipPath id="topClip">
-                    <path d="M9 8 L71 8 L47 62 L33 62 Z"/>
-                </clipPath>
-                <rect id="topSandRect"
-                    x="9" y="8" width="62"
-                    height="54" rx="0"
-                    fill="url(#sandGrad)"
-                    clip-path="url(#topClip)"
-                    opacity="0.85"/>
+    <!-- ══ SPLASH ══ -->
+    <div class="splash" role="presentation">
+        <canvas id="splashCanvas" aria-hidden="true"></canvas>
 
-                <!-- Sand accumulating in bottom — animates from 0 to 55% fill -->
-                <clipPath id="bottomClip">
-                    <path d="M33 78 L47 78 L71 132 L9 132 Z"/>
-                </clipPath>
-                <!-- Anchor rect at bottom, grows upward via transform-origin trick -->
-                <g clip-path="url(#bottomClip)">
-                    <rect id="bottomSandRect"
-                        x="9" y="132" width="62" height="0"
-                        fill="url(#sandGrad)" opacity="0.9"/>
-                </g>
-
-                <!-- Neck trickle -->
-                <rect id="neckTrickle" x="37" y="62" width="6" height="16"
-                    fill="#C4A882" opacity="0.6"/>
-
-                <!-- Gradient definition -->
+        <div class="splash-vessel-wrap">
+            <!-- Animated SVG vessel that fills with sand -->
+            <svg class="vessel-svg" width="120" height="160" viewBox="0 0 120 160" aria-hidden="true">
                 <defs>
-                    <linearGradient id="sandGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stop-color="#d4b892"/>
-                        <stop offset="100%" stop-color="#C4A882"/>
+                    <!-- Clip path shaped like a bowl/vessel -->
+                    <clipPath id="vesselClip">
+                        <path d="M30,10 L90,10 Q96,10 98,16 L110,80 Q114,100 110,120 Q100,150 60,155 Q20,150 10,120 Q6,100 10,80 L22,16 Q24,10 30,10 Z"/>
+                    </clipPath>
+                    <linearGradient id="sandGrad" x1="0" y1="0" x2="1" y2="0">
+                        <stop offset="0%"   stop-color="#b89a68"/>
+                        <stop offset="50%"  stop-color="#c8a87a"/>
+                        <stop offset="100%" stop-color="#d4b892"/>
                     </linearGradient>
                 </defs>
+
+                <!-- Vessel outline -->
+                <path d="M30,10 L90,10 Q96,10 98,16 L110,80 Q114,100 110,120 Q100,150 60,155 Q20,150 10,120 Q6,100 10,80 L22,16 Q24,10 30,10 Z"
+                      fill="none" stroke="rgba(196,168,130,0.4)" stroke-width="1.5"/>
+
+                <!-- Sand fill -- rises from bottom, clipped to vessel shape -->
+                <g clip-path="url(#vesselClip)">
+                    <!-- Static base fill -->
+                    <rect id="sandLevel" x="0" y="155" width="120" height="155" fill="url(#sandGrad)" opacity="0.85">
+                        <animate attributeName="y" from="155" to="70" dur="4.2s" fill="freeze"
+                                 calcMode="spline" keyTimes="0;0.3;0.7;1" keySplines="0.25 0.1 0.25 1; 0.42 0 0.58 1; 0.25 0.1 0.25 1"/>
+                    </rect>
+                    <!-- Ripple surface wave on the sand -->
+                    <ellipse cx="60" cy="70" rx="48" ry="3" fill="rgba(212,184,146,0.5)" opacity="0">
+                        <animate attributeName="opacity" from="0" to="0.6" begin="1.5s" dur="1s" fill="freeze"/>
+                        <animate attributeName="ry" values="3;4;3" dur="2s" begin="2s" repeatCount="indefinite"/>
+                    </ellipse>
+                </g>
+
+                <!-- Grain stream from top (falling sand particles represented as small ellipses) -->
+                <g opacity="0.7">
+                    <ellipse cx="60" cy="20" rx="1.5" ry="2" fill="#c8a87a">
+                        <animate attributeName="cy" values="20;155" dur="0.8s" begin="0s" repeatCount="indefinite"/>
+                        <animate attributeName="opacity" values="1;0.4;0" dur="0.8s" begin="0s" repeatCount="indefinite"/>
+                    </ellipse>
+                    <ellipse cx="57" cy="20" rx="1" ry="1.5" fill="#b89a68">
+                        <animate attributeName="cy" values="20;155" dur="0.9s" begin="0.2s" repeatCount="indefinite"/>
+                        <animate attributeName="opacity" values="1;0.5;0" dur="0.9s" begin="0.2s" repeatCount="indefinite"/>
+                    </ellipse>
+                    <ellipse cx="63" cy="20" rx="1.2" ry="1.8" fill="#d4b892">
+                        <animate attributeName="cy" values="20;155" dur="0.7s" begin="0.1s" repeatCount="indefinite"/>
+                        <animate attributeName="opacity" values="1;0.4;0" dur="0.7s" begin="0.1s" repeatCount="indefinite"/>
+                    </ellipse>
+                    <ellipse cx="58" cy="20" rx="1" ry="1.5" fill="#c8a87a">
+                        <animate attributeName="cy" values="20;155" dur="1.0s" begin="0.35s" repeatCount="indefinite"/>
+                        <animate attributeName="opacity" values="0.8;0.4;0" dur="1.0s" begin="0.35s" repeatCount="indefinite"/>
+                    </ellipse>
+                </g>
             </svg>
+
+            <div class="splash-label">
+                <div class="splash-title">حديقة الرمل</div>
+                <div class="splash-sub">Sand Garden</div>
+            </div>
         </div>
-        <div class="splash-text">حديقة الرمل</div>
-        <div class="splash-sub">Sand Garden</div>
     </div>
 
-    <!-- ===== MAIN CONTENT ===== -->
-    <div class="main-content">
-        <div class="container">
-            <header>
-                <h1>حديقة الرمل</h1>
-                <button class="btn-stone" id="themeBtn" aria-label="تبديل السمة">
-                    <svg class="icon" viewBox="0 0 24 24">
-                        <circle cx="12" cy="12" r="5"/>
-                        <line x1="12" y1="1" x2="12" y2="3"/>
-                        <line x1="12" y1="21" x2="12" y2="23"/>
-                        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
-                        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-                        <line x1="1" y1="12" x2="3" y2="12"/>
-                        <line x1="21" y1="12" x2="23" y2="12"/>
-                        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
-                        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-                    </svg>
-                </button>
-            </header>
-
-            <!-- Sand fill progress — represents reading/time passage -->
-            <div class="sand-progress" aria-label="تقدم القراءة" role="progressbar" aria-valuenow="42" aria-valuemin="0" aria-valuemax="100">
-                <div class="sand-progress-fill" style="width: 42%"></div>
+    <!-- ══ MAIN ══ -->
+    <div class="main">
+        <header>
+            <div class="brand">
+                <div class="brand-ar">شعر بالعربي</div>
+                <div class="brand-en">Poetry bil Araby</div>
             </div>
 
+            <button class="theme-btn" id="themeBtn" aria-label="تبديل السمة / Toggle theme">
+                <svg id="iconSun" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <circle cx="12" cy="12" r="5"/>
+                    <line x1="12" y1="1" x2="12" y2="3"/>
+                    <line x1="12" y1="21" x2="12" y2="23"/>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                    <line x1="1" y1="12" x2="3" y2="12"/>
+                    <line x1="21" y1="12" x2="23" y2="12"/>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                </svg>
+                <svg id="iconMoon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="display:none">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                </svg>
+            </button>
+        </header>
+
+        <div class="container">
+
+            <!-- Sand fill progress panel -->
+            <div class="sand-vessel-panel">
+                <div class="vessel-container">
+                    <!-- Live canvas vessel that accumulates sand -->
+                    <canvas id="vesselCanvas" width="120" height="148" aria-label="وعاء يمتلئ بالرمل" style="display:block"></canvas>
+                </div>
+                <div class="vessel-info">
+                    <div class="vessel-label">مؤشر الرمل</div>
+                    <div class="vessel-heading">كلما قرأت، امتلأ الوعاء</div>
+                    <div class="vessel-desc">حبات الرمل تتراكم ببطء كل مرة تتأمل فيها قصيدة. هذا الوعاء يعكس رحلتك الشعرية.</div>
+                    <div class="fill-bar">
+                        <div class="fill-bar-inner" id="fillBar"></div>
+                    </div>
+                    <div class="fill-pct" id="fillPct">0%</div>
+                </div>
+            </div>
+
+            <!-- Poem card -->
             <div class="poem-card">
-                <div class="poem-text" lang="ar" dir="rtl">
-                    أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ<br>
+                <div class="poem-text" lang="ar">
+                    أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ
+                    <br>
                     فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
                 </div>
-                <div class="poem-author">— أحمد شوقي</div>
-                <div class="card-rule"></div>
-                <div class="card-actions">
-                    <button class="btn-earth" aria-label="استمع">
-                        <svg class="icon" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
-                        استمع
+                <div class="poem-divider" aria-hidden="true"></div>
+                <div class="poem-author">أحمد شوقي</div>
+
+                <div class="controls">
+                    <button class="earth-btn" id="readBtn" aria-label="قرأت هذه القصيدة / Mark as read">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/>
+                            <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/>
+                        </svg>
+                        <span>قرأت</span>
                     </button>
-                    <button class="btn-earth" aria-label="حفظ">
-                        <svg class="icon" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-                        حفظ
+
+                    <button class="earth-btn" aria-label="حفظ / Save">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+                        </svg>
+                        <span>حفظ</span>
                     </button>
-                    <button class="btn-earth" aria-label="شعر جديد">
-                        <svg class="icon" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
-                        جديد
+
+                    <button class="earth-btn" aria-label="التالي / Next">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <polyline points="1 4 1 10 7 10"/>
+                            <path d="M3.51 15a9 9 0 1 0 .49-3.99"/>
+                        </svg>
+                        <span>التالي</span>
                     </button>
-                    <button class="btn-earth" aria-label="حجم النص" style="font-size:0.85rem; font-weight:600;">Aa</button>
-                    <button class="btn-earth" aria-label="مشاركة">
-                        <svg class="icon" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-                        مشاركة
+
+                    <button class="earth-btn" aria-label="حجم الخط / Font size">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <polyline points="4 7 4 4 20 4 20 7"/>
+                            <line x1="9" y1="20" x2="15" y2="20"/>
+                            <line x1="12" y1="4" x2="12" y2="20"/>
+                        </svg>
+                        <span>خط</span>
+                    </button>
+
+                    <button class="earth-btn" aria-label="مشاركة / Share">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <circle cx="18" cy="5" r="3"/>
+                            <circle cx="6" cy="12" r="3"/>
+                            <circle cx="18" cy="19" r="3"/>
+                            <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+                            <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+                        </svg>
+                        <span>مشاركة</span>
                     </button>
                 </div>
             </div>
 
+            <!-- Walkthrough -->
             <div class="walkthrough">
-                <h2>كيفية الاستخدام</h2>
+                <h2 class="section-title">رحلة الرمل</h2>
                 <div class="steps">
-                    <div class="step" tabindex="0">
-                        <div class="step-icon">
-                            <svg class="icon" viewBox="0 0 24 24">
-                                <!-- Hourglass SVG icon -->
-                                <path d="M5 2h14M5 22h14M17 2l-5 9-5-9M7 22l5-9 5 9"/>
-                            </svg>
-                        </div>
+                    <div class="step">
+                        <div class="step-num"><span>01</span></div>
                         <div class="step-title">تأمل</div>
-                        <div class="step-desc">الرمل يتساقط ويتراكم كما في ساعة الزمن</div>
+                        <div class="step-desc">اقرأ القصائد بتمهل كما تتساقط حبات الرمل</div>
                     </div>
-                    <div class="step" tabindex="0">
-                        <div class="step-icon">
-                            <svg class="icon" viewBox="0 0 24 24"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
-                        </div>
-                        <div class="step-title">اقرأ</div>
-                        <div class="step-desc">استكشف آلاف القصائد من عصور مختلفة</div>
+                    <div class="step">
+                        <div class="step-num"><span>02</span></div>
+                        <div class="step-title">تراكم</div>
+                        <div class="step-desc">كل قصيدة تقرأها تضيف طبقة رمل للوعاء</div>
                     </div>
-                    <div class="step" tabindex="0">
-                        <div class="step-icon">
-                            <svg class="icon" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/></svg>
-                        </div>
-                        <div class="step-title">استمع</div>
-                        <div class="step-desc">تلاوة شعرية بأصوات عالية الجودة</div>
-                    </div>
-                    <div class="step" tabindex="0">
-                        <div class="step-icon">
-                            <svg class="icon" viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-                        </div>
+                    <div class="step">
+                        <div class="step-num"><span>03</span></div>
                         <div class="step-title">احفظ</div>
-                        <div class="step-desc">اجمع قصائدك المفضلة في مكتبتك الخاصة</div>
+                        <div class="step-desc">أنشئ مجموعتك من القصائد التي لمست قلبك</div>
+                    </div>
+                    <div class="step">
+                        <div class="step-num"><span>04</span></div>
+                        <div class="step-title">استرخ</div>
+                        <div class="step-desc">خطوط المشط الزن في الخلفية تهدئ الحواس</div>
                     </div>
                 </div>
             </div>
+
         </div>
     </div>
 
     <script>
-        // ===== Theme toggle =====
-        document.getElementById('themeBtn').addEventListener('click', function() {
-            document.body.classList.toggle('light');
-        });
-
-        // ===== Keyboard accessibility =====
-        document.querySelectorAll('.step, .btn-earth, .btn-stone').forEach(function(el) {
-            el.addEventListener('keydown', function(e) {
-                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); el.click(); }
-            });
-        });
-
-        // =======================================================
-        // SAND HOURGLASS ANIMATION
-        //
-        // The SVG hourglass has:
-        //   - #topSandRect   : sand draining from top (height 54px → 0)
-        //   - #bottomSandRect: sand filling at bottom (height 0 → 54px)
-        //
-        // Both animated over ~4 seconds, synchronized.
-        // Grains also fall from a canvas overlay for visual depth.
-        // =======================================================
+    (function() {
+        'use strict';
 
         var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-        if (!reducedMotion) {
-            var topRect    = document.getElementById('topSandRect');
-            var bottomRect = document.getElementById('bottomSandRect');
+        /* ── Theme toggle ── */
+        var themeBtn = document.getElementById('themeBtn');
+        var iconSun  = document.getElementById('iconSun');
+        var iconMoon = document.getElementById('iconMoon');
 
-            // Total sand height in SVG units
-            var SAND_H  = 52;
-            var FILL_H  = 50; // how much fills the bottom
-            var duration = 4200; // ms
-            var startTime = null;
+        themeBtn.addEventListener('click', function() {
+            var isLight = document.body.classList.toggle('light');
+            iconSun.style.display  = isLight ? 'none'  : 'block';
+            iconMoon.style.display = isLight ? 'block' : 'none';
+        });
 
-            function animateHourglass(ts) {
-                if (!startTime) startTime = ts;
-                var elapsed = ts - startTime;
-                var prog = Math.min(elapsed / duration, 1);
+        /* ══════════════════════════════════════════════
+           VESSEL CANVAS -- accumulating sand
+        ══════════════════════════════════════════════ */
+        var vc    = document.getElementById('vesselCanvas');
+        var vCtx  = vc.getContext('2d');
+        var W     = vc.width;
+        var H     = vc.height;
 
-                // Ease-in-out cubic
-                var ease = prog < 0.5
-                    ? 4 * prog * prog * prog
-                    : 1 - Math.pow(-2 * prog + 2, 3) / 2;
+        // Fill level: 0.0 -> 1.0 (fraction of vessel filled)
+        var fillLevel     = 0.0;
+        var targetFill    = 0.0;
+        var poemsRead     = 0;
+        var maxPoems      = 10;
 
-                // Top drains
-                var topH = SAND_H * (1 - ease);
-                var topY = 8; // top of top chamber in SVG coords
-                topRect.setAttribute('y', topY);
-                topRect.setAttribute('height', topH.toString());
+        // Grains that are actively falling
+        var fallingGrains = [];
+        var settledPixels = [];  // [{x, y, r, color}] settled grains on surface
+        var vesselAnimId;
 
-                // Bottom fills — grows upward from y=132
-                var botH = FILL_H * ease;
-                bottomRect.setAttribute('y', (132 - botH).toString());
-                bottomRect.setAttribute('height', botH.toString());
+        var sandColors = ['#c8a87a','#b89a68','#d4b892','#a89070','#C5A059'];
 
-                if (prog < 1) {
-                    requestAnimationFrame(animateHourglass);
-                }
-            }
+        /* Vessel shape: a bowl.
+           We define it as a trapezoid that widens toward the bottom.
+           Top: x=[20,100], Bottom: x=[4, 116], Height = H-8 */
+        var VT = 8;   // top y
+        var VB = H-4; // bottom y
+        var VTL = 20; // top-left x
+        var VTR = 100; // top-right x
+        var VBL = 4;  // bottom-left x
+        var VBR = 116; // bottom-right x
 
-            requestAnimationFrame(animateHourglass);
+        function vesselXatY(y, side) {
+            /* Linearly interpolates x boundary at given y within vessel */
+            var t = (y - VT) / (VB - VT);
+            if (side === 'left')  return VTL + (VBL - VTL) * t;
+            return VTR + (VBR - VTR) * t;
         }
 
-        // =======================================================
-        // FALLING SAND GRAIN CANVAS
-        // Grains originate from a narrow neck area and accumulate
-        // at the bottom of the screen with realistic spread.
-        // The canvas covers only the splash area.
-        // =======================================================
+        /* The sand surface y corresponding to fillLevel.
+           0 = empty (surface at VB), 1 = full (surface at VT) */
+        function surfaceY() {
+            return VB - (VB - VT) * fillLevel;
+        }
+
+        /* Draw the vessel outline */
+        function drawVessel() {
+            vCtx.beginPath();
+            vCtx.moveTo(VTL, VT);
+            vCtx.lineTo(VTR, VT);
+            vCtx.lineTo(VBR, VB);
+            vCtx.lineTo(VBL, VB);
+            vCtx.closePath();
+            vCtx.strokeStyle = 'rgba(196,168,130,0.45)';
+            vCtx.lineWidth = 1.5;
+            vCtx.stroke();
+        }
+
+        /* Draw accumulated sand fill */
+        function drawSandFill() {
+            if (fillLevel <= 0) return;
+            var sy = surfaceY();
+
+            vCtx.save();
+            // Clip to vessel interior
+            vCtx.beginPath();
+            vCtx.moveTo(VTL+1, VT);
+            vCtx.lineTo(VTR-1, VT);
+            vCtx.lineTo(VBR-1, VB);
+            vCtx.lineTo(VBL+1, VB);
+            vCtx.closePath();
+            vCtx.clip();
+
+            // Sand gradient fill
+            var grad = vCtx.createLinearGradient(0, sy, 0, VB);
+            grad.addColorStop(0,   'rgba(212,184,146,0.95)');
+            grad.addColorStop(0.3, 'rgba(200,168,122,0.9)');
+            grad.addColorStop(1,   'rgba(139,115,85,0.85)');
+            vCtx.fillStyle = grad;
+
+            vCtx.beginPath();
+            // Slightly wavy surface
+            var waveAmp = 1.5;
+            vCtx.moveTo(vesselXatY(sy, 'left'), sy);
+            for (var x = vesselXatY(sy, 'left'); x <= vesselXatY(sy, 'right'); x += 2) {
+                var wx = x - vesselXatY(sy, 'left');
+                var tw = vesselXatY(sy, 'right') - vesselXatY(sy, 'left');
+                var wy = sy + Math.sin((wx / tw) * Math.PI * 3 + Date.now() * 0.0015) * waveAmp;
+                vCtx.lineTo(x, wy);
+            }
+            vCtx.lineTo(VBR-1, VB);
+            vCtx.lineTo(VBL+1, VB);
+            vCtx.closePath();
+            vCtx.fill();
+
+            // Surface sheen
+            var sheen = vCtx.createLinearGradient(vesselXatY(sy,'left'), 0, vesselXatY(sy,'right'), 0);
+            sheen.addColorStop(0,    'rgba(255,255,255,0)');
+            sheen.addColorStop(0.45, 'rgba(255,255,255,0.07)');
+            sheen.addColorStop(1,    'rgba(255,255,255,0)');
+            vCtx.fillStyle = sheen;
+            vCtx.fillRect(VBL, sy, VBR - VBL, Math.min(10, VB - sy));
+
+            vCtx.restore();
+        }
+
+        /* Active falling grains */
+        function Grain(fromTop) {
+            this.x = W / 2 + (Math.random() - 0.5) * 8;
+            this.y = fromTop ? VT + 2 : surfaceY() - 40 - Math.random() * 20;
+            this.vy = 0.8 + Math.random() * 1.4;
+            this.vx = (Math.random() - 0.5) * 0.9;
+            this.r  = 1.2 + Math.random() * 1.0;
+            this.color = sandColors[Math.floor(Math.random() * sandColors.length)];
+            this.opacity = 0.75 + Math.random() * 0.25;
+            this.settled = false;
+        }
+
+        Grain.prototype.update = function() {
+            this.vy += 0.12; // gravity
+            this.vx *= 0.98; // slight drag
+            this.y  += this.vy;
+            this.x  += this.vx;
+
+            var sy = surfaceY();
+            // Clamp to vessel walls
+            var xl = vesselXatY(this.y, 'left')  + this.r;
+            var xr = vesselXatY(this.y, 'right') - this.r;
+            if (this.x < xl) { this.x = xl; this.vx = Math.abs(this.vx) * 0.4; }
+            if (this.x > xr) { this.x = xr; this.vx = -Math.abs(this.vx) * 0.4; }
+
+            // Hit the sand surface or bottom
+            if (this.y >= sy - this.r || this.y >= VB - this.r) {
+                this.y = Math.min(sy - this.r, VB - this.r);
+                this.settled = true;
+            }
+        };
+
+        Grain.prototype.draw = function() {
+            vCtx.beginPath();
+            vCtx.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+            vCtx.fillStyle = this.color;
+            vCtx.globalAlpha = this.opacity;
+            vCtx.fill();
+            vCtx.globalAlpha = 1;
+        };
+
+        /* Emit a burst of grains when a poem is marked read */
+        function emitBurst(count) {
+            for (var i = 0; i < count; i++) {
+                setTimeout(function() {
+                    fallingGrains.push(new Grain(true));
+                }, i * 60);
+            }
+        }
+
+        /* Animation loop */
+        function animateVessel(ts) {
+            vCtx.clearRect(0, 0, W, H);
+
+            // Smoothly approach target fill
+            if (fillLevel < targetFill) {
+                fillLevel += (targetFill - fillLevel) * 0.018;
+                if (fillLevel > targetFill - 0.001) fillLevel = targetFill;
+            }
+
+            drawSandFill();
+            drawVessel();
+
+            // Update & draw grains
+            for (var i = fallingGrains.length - 1; i >= 0; i--) {
+                var g = fallingGrains[i];
+                g.update();
+                g.draw();
+                if (g.settled) {
+                    fallingGrains.splice(i, 1);
+                }
+            }
+
+            // Draw a subtle idle trickle when vessel isn't full
+            if (fillLevel < 0.98 && Math.random() < 0.06) {
+                fallingGrains.push(new Grain(true));
+            }
+
+            vesselAnimId = requestAnimationFrame(animateVessel);
+        }
 
         if (!reducedMotion) {
-            // Create a canvas overlaid on the splash
-            var splash = document.querySelector('.splash-screen');
-            var sCanvas = document.createElement('canvas');
-            sCanvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1;';
-            splash.appendChild(sCanvas);
-
-            var sCtx = sCanvas.getContext('2d');
-            var grains = [];
-            var sAnimId;
-
-            // Grid-based accumulation for realistic stacking
-            var COLS = 200;
-            var stackHeights = new Array(COLS).fill(0);
-
-            function resizeSCanvas() {
-                sCanvas.width = sCanvas.offsetWidth;
-                sCanvas.height = sCanvas.offsetHeight;
-                stackHeights = new Array(COLS).fill(0);
-            }
-
-            resizeSCanvas();
-            window.addEventListener('resize', resizeSCanvas);
-
-            var sandColors = ['#C4A882','#B89B6E','#D4B892','#A89070','#C5A059'];
-
-            function Grain() {
-                this.reset();
-            }
-
-            Grain.prototype.reset = function() {
-                // Spawn from center neck of screen
-                var cx = sCanvas.width * 0.5;
-                this.x = cx + (Math.random() - 0.5) * 14;
-                this.y = sCanvas.height * 0.3;
-                this.vx = (Math.random() - 0.5) * 1.4;
-                this.vy = Math.random() * 1.5 + 0.8;
-                this.r = Math.random() * 2.2 + 0.8;
-                this.color = sandColors[Math.floor(Math.random() * sandColors.length)];
-                this.alpha = Math.random() * 0.5 + 0.45;
-                this.landed = false;
-            };
-
-            Grain.prototype.update = function() {
-                if (this.landed) return;
-                this.vy += 0.12; // gravity
-                this.vx *= 0.99; // slight drag
-                this.x += this.vx;
-                this.y += this.vy;
-
-                // Boundary X
-                if (this.x < 0) { this.x = 0; this.vx = Math.abs(this.vx) * 0.6; }
-                if (this.x > sCanvas.width) { this.x = sCanvas.width; this.vx = -Math.abs(this.vx) * 0.6; }
-
-                // Check landing against stack
-                var col = Math.floor((this.x / sCanvas.width) * COLS);
-                col = Math.max(0, Math.min(COLS - 1, col));
-                var floorY = sCanvas.height - stackHeights[col];
-
-                if (this.y + this.r >= floorY) {
-                    this.y = floorY - this.r;
-                    this.landed = true;
-
-                    // Spread: find lowest neighboring col
-                    var leftH  = col > 0        ? stackHeights[col - 1] : 9999;
-                    var rightH = col < COLS - 1  ? stackHeights[col + 1] : 9999;
-                    var minH   = Math.min(stackHeights[col], leftH, rightH);
-
-                    if (stackHeights[col] - minH > this.r * 2.5) {
-                        // Roll to lower side
-                        if (leftH < rightH && col > 0) { col = col - 1; }
-                        else if (col < COLS - 1) { col = col + 1; }
-                    }
-
-                    stackHeights[col] += this.r * 1.6;
-                }
-            };
-
-            Grain.prototype.draw = function() {
-                sCtx.save();
-                sCtx.globalAlpha = this.alpha;
-                sCtx.fillStyle = this.color;
-                sCtx.beginPath();
-                sCtx.ellipse(this.x, this.y, this.r, this.r * 0.85, 0, 0, Math.PI * 2);
-                sCtx.fill();
-                sCtx.restore();
-            };
-
-            var maxGrains = 300;
-            var spawnRate = 3; // grains per frame
-
-            function animateSand() {
-                sCtx.clearRect(0, 0, sCanvas.width, sCanvas.height);
-
-                // Spawn new grains
-                if (grains.filter(function(g) { return !g.landed; }).length < 60) {
-                    for (var i = 0; i < spawnRate; i++) {
-                        if (grains.length < maxGrains) { grains.push(new Grain()); }
-                    }
-                }
-
-                grains.forEach(function(g) { g.update(); g.draw(); });
-
-                // Draw stacked sand as a smooth filled polygon at the bottom
-                sCtx.save();
-                sCtx.globalAlpha = 0.7;
-                sCtx.fillStyle = 'rgba(196,168,130,0.55)';
-                sCtx.beginPath();
-                sCtx.moveTo(0, sCanvas.height);
-                for (var c = 0; c < COLS; c++) {
-                    var x = (c / COLS) * sCanvas.width;
-                    var y = sCanvas.height - stackHeights[c];
-                    if (c === 0) sCtx.lineTo(x, y);
-                    else sCtx.lineTo(x, y);
-                }
-                sCtx.lineTo(sCanvas.width, sCanvas.height);
-                sCtx.closePath();
-                sCtx.fill();
-                sCtx.restore();
-
-                sAnimId = requestAnimationFrame(animateSand);
-            }
-
-            animateSand();
-
-            // Stop after splash ends
-            setTimeout(function() {
-                cancelAnimationFrame(sAnimId);
-            }, 6000);
+            animateVessel(0);
+        } else {
+            // Static representation
+            fillLevel = 0;
+            drawSandFill();
+            drawVessel();
         }
+
+        /* UI fill bar update */
+        function updateFillUI() {
+            var pct = Math.round(fillLevel * 100);
+            document.getElementById('fillBar').style.width = pct + '%';
+            document.getElementById('fillPct').textContent = pct + '%';
+        }
+
+        setInterval(function() { updateFillUI(); }, 100);
+
+        /* "Read" button increments fill */
+        var readBtn = document.getElementById('readBtn');
+        readBtn.addEventListener('click', function() {
+            poemsRead = Math.min(poemsRead + 1, maxPoems);
+            targetFill = poemsRead / maxPoems;
+            emitBurst(22);
+        });
+
+        /* ── Keyboard accessibility ── */
+        document.querySelectorAll('.earth-btn, .theme-btn').forEach(function(btn) {
+            btn.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    btn.click();
+                }
+            });
+        });
+
+    })();
     </script>
+
 </body>
 </html>

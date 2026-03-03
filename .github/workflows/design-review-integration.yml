@@ -34,6 +34,9 @@ jobs:
         run: npm run test:integration
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          # GitHub Actions runners have IPv6 disabled. Supabase hostnames resolve to IPv6
+          # first, causing ENETUNREACH. Force Node.js DNS to prefer IPv4.
+          NODE_OPTIONS: --dns-result-order=ipv4first
 
       # ── Report outcome on the PR ──────────────────────────────────────────
       - name: Post success comment to PR

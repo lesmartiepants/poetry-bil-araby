@@ -30,6 +30,29 @@ describe.skipIf(!process.env.DATABASE_URL)('Design Review — Real Database Inte
     const serverModule = await import('../../server.js');
     app = serverModule.app;
     pool = serverModule.pool;
+
+    // Pre-flight: verify DB connectivity and log available tables for debugging.
+    // A single clear error here is far easier to diagnose than 9 cascading failures.
+    const dbInfo = await pool.query(
+      `SELECT current_database() AS db, version() AS pg_version`
+    );
+    console.log('[CI] Connected to DB:', dbInfo.rows[0].db, '|', dbInfo.rows[0].pg_version.split(' ').slice(0, 2).join(' '));
+
+    const tables = await pool.query(
+      `SELECT table_name FROM information_schema.tables
+       WHERE table_schema = 'public' ORDER BY table_name`
+    );
+    const tableNames = tables.rows.map(r => r.table_name);
+    console.log('[CI] Available tables:', tableNames.join(', ') || '(none)');
+
+    const designTables = ['design_items', 'design_review_sessions', 'design_verdicts', 'design_review_history'];
+    const missing = designTables.filter(t => !tableNames.includes(t));
+    if (missing.length > 0) {
+      throw new Error(
+        `Design review tables missing from DB: ${missing.join(', ')}. ` +
+        `Run the migration (supabase db push) and retry.`
+      );
+    }
   });
 
   afterAll(async () => {

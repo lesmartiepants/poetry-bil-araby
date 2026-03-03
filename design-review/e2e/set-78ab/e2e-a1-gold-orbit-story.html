@@ -6,7 +6,7 @@
   <title>A1 Gold Orbit Story - E2E Mockup</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Forum&family=Reem+Kufi:wght@400;700&family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
   <style>
     :root {
@@ -74,7 +74,7 @@
       border-radius: 50%;
       opacity: 0;
       will-change: transform, opacity;
-      animation: float 6s ease-in-out infinite, fadeIn 2s ease forwards;
+      animation: float 4s ease-in-out infinite, fadeIn 1.5s ease forwards;
     }
 
     .particle.large {
@@ -87,13 +87,13 @@
       position: absolute;
       border: 1px solid rgba(197, 160, 89, 0.15);
       border-radius: 50%;
-      animation: rotate 30s linear infinite;
+      animation: rotate 18s linear infinite;
       will-change: transform;
     }
 
     .orbit-ring:nth-child(1) { width: 300px; height: 300px; }
-    .orbit-ring:nth-child(2) { width: 450px; height: 450px; animation-duration: 45s; animation-direction: reverse; }
-    .orbit-ring:nth-child(3) { width: 600px; height: 600px; animation-duration: 60s; }
+    .orbit-ring:nth-child(2) { width: 450px; height: 450px; animation-duration: 28s; animation-direction: reverse; }
+    .orbit-ring:nth-child(3) { width: 600px; height: 600px; animation-duration: 38s; }
 
     .splash-content {
       position: relative;
@@ -102,13 +102,29 @@
       animation: fadeInUp 1.5s ease 0.5s both;
     }
 
-    .splash-title {
-      font-family: 'Amiri', serif;
-      font-size: clamp(36px, 7vw, 72px);
+    /* Brand Logo */
+    .brand {
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .brand-en {
+      font-family: 'Forum', serif;
+      font-size: clamp(3rem, 6vw, 4.5rem);
+      letter-spacing: -0.05em;
       color: var(--gold);
-      text-shadow: 0 0 40px rgba(197, 160, 89, 0.4);
-      line-height: 1.3;
-      animation: glow 3s ease-in-out infinite;
+      line-height: 1;
+    }
+
+    .brand-ar {
+      font-family: 'Reem Kufi', sans-serif;
+      font-weight: 700;
+      font-size: clamp(1.875rem, 4vw, 3rem);
+      color: var(--gold);
+      line-height: 1;
     }
 
     .splash-subtitle {
@@ -140,7 +156,7 @@
       box-shadow: 0 0 30px rgba(197, 160, 89, 0.3);
     }
 
-    /* ===== WALKTHROUGH ===== */
+    /* ===== WALKTHROUGH (Sequential Tap-to-Advance) ===== */
     .walkthrough {
       position: fixed;
       inset: 0;
@@ -151,48 +167,35 @@
       justify-content: center;
       background: var(--dark-bg);
       padding: 20px;
+      cursor: pointer;
     }
 
     .walkthrough.active { display: flex; }
 
     body.light .walkthrough { background: var(--light-bg); }
 
-    .walk-steps {
-      display: flex;
-      gap: 24px;
-      max-width: 900px;
-      width: 100%;
-      flex-wrap: wrap;
-      justify-content: center;
-    }
-
     .walk-card {
       background: var(--dark-surface);
       border: 1px solid var(--dark-line);
       border-radius: 16px;
-      padding: 28px 24px;
+      padding: 32px 28px;
       text-align: center;
-      width: 180px;
+      max-width: 360px;
+      width: 90%;
       opacity: 0;
-      animation: fadeInUp 0.6s ease forwards;
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-      cursor: default;
+      transform: translateY(20px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+
+    .walk-card.visible {
+      opacity: 1;
+      transform: translateY(0);
     }
 
     body.light .walk-card {
       background: var(--light-surface);
       border-color: var(--light-line);
     }
-
-    .walk-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 8px 24px rgba(0,0,0,0.2);
-    }
-
-    .walk-card:nth-child(1) { animation-delay: 0.1s; }
-    .walk-card:nth-child(2) { animation-delay: 0.3s; }
-    .walk-card:nth-child(3) { animation-delay: 0.5s; }
-    .walk-card:nth-child(4) { animation-delay: 0.7s; }
 
     .walk-icon {
       width: 48px;
@@ -204,15 +207,24 @@
       align-items: center;
       justify-content: center;
       color: var(--gold);
-      animation: float 4s ease-in-out infinite;
     }
 
     .walk-card h3 {
       font-family: 'Tajawal', sans-serif;
-      font-size: 16px;
+      font-size: 18px;
       font-weight: 500;
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
+
+    .walk-card .walk-en {
+      font-family: 'Tajawal', sans-serif;
+      font-size: 14px;
+      color: var(--dark-muted);
+      margin-bottom: 8px;
+      direction: ltr;
+    }
+
+    body.light .walk-card .walk-en { color: var(--light-muted); }
 
     .walk-card p {
       font-size: 13px;
@@ -238,21 +250,14 @@
 
     .walk-dot.active { background: var(--gold); width: 24px; border-radius: 4px; }
 
-    .walk-skip {
-      margin-top: 20px;
-      padding: 12px 32px;
-      background: var(--gold);
-      color: var(--dark-bg);
-      border: none;
-      border-radius: 8px;
-      font-family: 'Tajawal', sans-serif;
-      font-size: 15px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.3s ease;
+    .walk-hint {
+      margin-top: 16px;
+      font-size: 13px;
+      color: var(--dark-muted);
+      opacity: 0.6;
     }
 
-    .walk-skip:hover { box-shadow: 0 0 20px rgba(197, 160, 89, 0.4); }
+    body.light .walk-hint { color: var(--light-muted); }
 
     /* ===== MAIN APP ===== */
     .main-app {
@@ -287,28 +292,24 @@
 
     .top-brand {
       display: flex;
-      align-items: center;
-      gap: 10px;
+      align-items: flex-end;
+      gap: 6px;
     }
 
-    .top-brand-icon {
-      width: 32px;
-      height: 32px;
-      background: linear-gradient(135deg, var(--gold), #a0824a);
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--dark-bg);
-      font-family: 'Amiri', serif;
-      font-size: 18px;
+    .top-brand-en {
+      font-family: 'Forum', serif;
+      font-size: 20px;
+      letter-spacing: -0.05em;
+      color: var(--gold);
+      line-height: 1;
+    }
+
+    .top-brand-ar {
+      font-family: 'Reem Kufi', sans-serif;
       font-weight: 700;
-    }
-
-    .top-brand-text {
-      font-family: 'Tajawal', sans-serif;
-      font-size: 15px;
-      font-weight: 500;
+      font-size: 14px;
+      color: var(--gold);
+      line-height: 1;
     }
 
     .top-actions {
@@ -448,8 +449,6 @@
 
     .verse-line:nth-child(1) { animation-delay: 0.2s; }
     .verse-line:nth-child(2) { animation-delay: 0.5s; }
-    .verse-line:nth-child(3) { animation-delay: 0.8s; }
-    .verse-line:nth-child(4) { animation-delay: 1.1s; }
 
     .hemistich-divider {
       display: inline-block;
@@ -493,10 +492,10 @@
       border-color: var(--gold);
     }
 
-    /* Vertical Rail (Notion style) */
+    /* Vertical Rail (right side) */
     .vertical-rail {
       position: fixed;
-      left: 16px;
+      right: 16px;
       top: 50%;
       transform: translateY(-50%);
       display: flex;
@@ -536,7 +535,7 @@
 
     .rail-btn .tooltip {
       position: absolute;
-      left: 52px;
+      right: 52px;
       top: 50%;
       transform: translateY(-50%);
       background: var(--dark-surface);
@@ -626,8 +625,6 @@
     /* ===== RESPONSIVE ===== */
     @media (max-width: 768px) {
       .vertical-rail { display: none; }
-      .walk-steps { flex-direction: column; align-items: center; }
-      .walk-card { width: 90%; max-width: 300px; }
       .reader { padding: 70px 16px 40px; }
       .poem-card { padding: 24px 16px; }
       .poem-actions { flex-wrap: wrap; }
@@ -650,43 +647,25 @@
       <div class="orbit-ring" style="top:50%;left:50%;transform:translate(-50%,-50%)"></div>
     </div>
     <div class="splash-content">
-      <h1 class="splash-title">ديوان الشعر العربي</h1>
+      <div class="brand">
+        <span class="brand-en">poetry</span>
+        <span class="brand-ar">بالعربي</span>
+      </div>
       <p class="splash-subtitle">Diwan Al-Shi'r Al-'Arabi</p>
     </div>
     <button class="splash-enter" onclick="enterWalkthrough()">ادخل الديوان</button>
   </div>
 
-  <!-- WALKTHROUGH -->
+  <!-- WALKTHROUGH (Sequential Tap-to-Advance) -->
   <div class="walkthrough" id="walkthrough">
-    <div class="walk-steps">
-      <div class="walk-card">
-        <div class="walk-icon"><i data-lucide="compass" style="width:24px;height:24px"></i></div>
-        <h3>اكتشف</h3>
-        <p>تصفح 84,000 قصيدة من التراث العربي</p>
-      </div>
-      <div class="walk-card">
-        <div class="walk-icon"><i data-lucide="headphones" style="width:24px;height:24px"></i></div>
-        <h3>استمع</h3>
-        <p>استمع للقصائد بأصوات طبيعية</p>
-      </div>
-      <div class="walk-card">
-        <div class="walk-icon"><i data-lucide="sparkles" style="width:24px;height:24px"></i></div>
-        <h3>تأمل</h3>
-        <p>رؤى ذكية مدعومة بالذكاء الاصطناعي</p>
-      </div>
-      <div class="walk-card">
-        <div class="walk-icon"><i data-lucide="heart" style="width:24px;height:24px"></i></div>
-        <h3>احفظ</h3>
-        <p>احفظ قصائدك المفضلة</p>
-      </div>
+    <div class="walk-card" id="walkCard">
+      <div class="walk-icon" id="walkIcon"></div>
+      <h3 id="walkTitle"></h3>
+      <div class="walk-en" id="walkEn"></div>
+      <p id="walkDesc"></p>
     </div>
-    <div class="walk-progress">
-      <div class="walk-dot active"></div>
-      <div class="walk-dot"></div>
-      <div class="walk-dot"></div>
-      <div class="walk-dot"></div>
-    </div>
-    <button class="walk-skip" onclick="enterApp()">ابدأ الاستكشاف</button>
+    <div class="walk-progress" id="walkProgress"></div>
+    <span class="walk-hint">Tap anywhere to continue</span>
   </div>
 
   <!-- MAIN APP -->
@@ -694,8 +673,8 @@
     <!-- Top bar -->
     <header class="top-bar">
       <div class="top-brand">
-        <div class="top-brand-icon">ق</div>
-        <span class="top-brand-text">Qafiyah</span>
+        <span class="top-brand-en">poetry</span>
+        <span class="top-brand-ar">بالعربي</span>
       </div>
       <div class="top-actions">
         <button class="top-btn" onclick="toggleTheme()" title="Toggle theme">
@@ -707,27 +686,35 @@
       </div>
     </header>
 
-    <!-- Vertical Rail (Notion style) -->
+    <!-- Vertical Rail (right side) -->
     <nav class="vertical-rail">
       <button class="rail-btn">
         <i data-lucide="heart" style="width:18px;height:18px"></i>
-        <span class="tooltip">حفظ</span>
+        <span class="tooltip">Save</span>
       </button>
       <button class="rail-btn">
-        <i data-lucide="a-large-small" style="width:18px;height:18px"></i>
-        <span class="tooltip">تكبير الخط</span>
-      </button>
-      <button class="rail-btn">
-        <i data-lucide="a-large-small" style="width:16px;height:16px"></i>
-        <span class="tooltip">تصغير الخط</span>
+        <i data-lucide="type" style="width:18px;height:18px"></i>
+        <span class="tooltip">Font size</span>
       </button>
       <button class="rail-btn">
         <i data-lucide="languages" style="width:18px;height:18px"></i>
-        <span class="tooltip">نقحرة</span>
+        <span class="tooltip">Transliteration</span>
       </button>
       <button class="rail-btn">
-        <i data-lucide="rotate-ccw" style="width:18px;height:18px"></i>
-        <span class="tooltip">إعادة تعيين</span>
+        <i data-lucide="book-open" style="width:18px;height:18px"></i>
+        <span class="tooltip">Tafsir</span>
+      </button>
+      <button class="rail-btn">
+        <i data-lucide="italic" style="width:18px;height:18px"></i>
+        <span class="tooltip">Tashkeel</span>
+      </button>
+      <button class="rail-btn">
+        <i data-lucide="log-in" style="width:18px;height:18px"></i>
+        <span class="tooltip">Sign in</span>
+      </button>
+      <button class="rail-btn">
+        <i data-lucide="settings" style="width:18px;height:18px"></i>
+        <span class="tooltip">Settings</span>
       </button>
     </nav>
 
@@ -735,30 +722,24 @@
     <main class="reader">
       <div class="poet-filter">
         <button class="poet-chip active">الكل</button>
-        <button class="poet-chip">أحمد شوقي</button>
         <button class="poet-chip">المتنبي</button>
+        <button class="poet-chip">أحمد شوقي</button>
         <button class="poet-chip">نزار قباني</button>
-        <button class="poet-chip">أبو الطيب</button>
       </div>
 
       <article class="poem-card">
         <div class="poem-meta">
-          <div class="poet-avatar">ش</div>
+          <div class="poet-avatar">م</div>
           <div class="poet-info">
-            <h2>أحمد شوقي</h2>
-            <span>أمير الشعراء</span>
+            <h2>المتنبي</h2>
+            <span>Al-Mutanabbi</span>
           </div>
         </div>
-        <div class="poem-verses">
+        <div class="poem-verses" dir="rtl" lang="ar">
           <div class="verse-line">
-            أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ
+            عَلَى قَدْرِ أَهْلِ العَزْمِ تَأْتِي العَزَائِمُ
             <span class="hemistich-divider"></span>
-            فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
-          </div>
-          <div class="verse-line">
-            وَلي فيكَ ما لَم يَقُلِ الشِعرُ كُلَّهُ
-            <span class="hemistich-divider"></span>
-            وَما لَم تَزَل تَجري بِهِ كَلِماتي
+            وَتَأْتِي عَلَى قَدْرِ الكِرَامِ المَكَارِمُ
           </div>
         </div>
         <div class="poem-actions">
@@ -780,49 +761,111 @@
 
     <!-- Bottom Nav -->
     <nav class="bottom-nav">
-      <button class="nav-item active">
-        <i data-lucide="compass" style="width:20px;height:20px"></i>
-        Discover
+      <button class="nav-item">
+        <i data-lucide="music" style="width:20px;height:20px"></i>
+        Music
       </button>
       <button class="nav-item">
-        <i data-lucide="headphones" style="width:20px;height:20px"></i>
-        Listen
-      </button>
-      <button class="nav-item">
-        <i data-lucide="sparkles" style="width:20px;height:20px"></i>
+        <i data-lucide="lightbulb" style="width:20px;height:20px"></i>
         Insight
       </button>
-      <button class="nav-item">
-        <i data-lucide="copy" style="width:20px;height:20px"></i>
-        Copy
+      <button class="nav-item active">
+        <i data-lucide="refresh-cw" style="width:20px;height:20px"></i>
+        Refresh
       </button>
-      <button class="nav-item" onclick="toggleTheme()">
-        <i data-lucide="moon" style="width:20px;height:20px"></i>
-        Theme
+      <button class="nav-item">
+        <i data-lucide="library" style="width:20px;height:20px"></i>
+        Library
+      </button>
+      <button class="nav-item">
+        <i data-lucide="shuffle" style="width:20px;height:20px"></i>
+        Shuffle
       </button>
     </nav>
   </div>
 
   <script>
     // Generate particles
-    const canvas = document.querySelector('.splash-canvas');
-    const isMobile = window.innerWidth < 768;
-    const particleCount = isMobile ? 100 : 240;
+    var canvas = document.querySelector('.splash-canvas');
+    var isMobile = window.innerWidth < 768;
+    var particleCount = isMobile ? 80 : 200;
 
-    for (let i = 0; i < particleCount; i++) {
-      const p = document.createElement('div');
+    for (var i = 0; i < particleCount; i++) {
+      var p = document.createElement('div');
       p.className = 'particle' + (Math.random() > 0.85 ? ' large' : '');
       p.style.left = Math.random() * 100 + '%';
       p.style.top = Math.random() * 100 + '%';
-      p.style.animationDelay = (Math.random() * 5) + 's';
-      p.style.animationDuration = (4 + Math.random() * 4) + 's';
+      p.style.animationDelay = (Math.random() * 3) + 's';
+      p.style.animationDuration = (3 + Math.random() * 3) + 's';
       canvas.appendChild(p);
+    }
+
+    // Sequential walkthrough data (bilingual)
+    var walkSteps = [
+      { icon: 'compass', titleAr: '\u0627\u0643\u062A\u0634\u0641', titleEn: 'Discover', descAr: '\u062A\u0635\u0641\u062D 84,000 \u0642\u0635\u064A\u062F\u0629 \u0645\u0646 \u0627\u0644\u062A\u0631\u0627\u062B \u0627\u0644\u0639\u0631\u0628\u064A' },
+      { icon: 'headphones', titleAr: '\u0627\u0633\u062A\u0645\u0639', titleEn: 'Listen', descAr: '\u0627\u0633\u062A\u0645\u0639 \u0644\u0644\u0642\u0635\u0627\u0626\u062F \u0628\u0623\u0635\u0648\u0627\u062A \u0637\u0628\u064A\u0639\u064A\u0629' },
+      { icon: 'sparkles', titleAr: '\u062A\u0623\u0645\u0644', titleEn: 'Reflect', descAr: '\u0631\u0624\u0649 \u0630\u0643\u064A\u0629 \u0645\u062F\u0639\u0648\u0645\u0629 \u0628\u0627\u0644\u0630\u0643\u0627\u0621 \u0627\u0644\u0627\u0635\u0637\u0646\u0627\u0639\u064A' },
+      { icon: 'heart', titleAr: '\u0627\u062D\u0641\u0638', titleEn: 'Save', descAr: '\u0627\u062D\u0641\u0638 \u0642\u0635\u0627\u0626\u062F\u0643 \u0627\u0644\u0645\u0641\u0636\u0644\u0629' }
+    ];
+
+    var currentWalkStep = 0;
+
+    function renderWalkStep() {
+      var step = walkSteps[currentWalkStep];
+      var card = document.getElementById('walkCard');
+      var iconEl = document.getElementById('walkIcon');
+      var titleEl = document.getElementById('walkTitle');
+      var enEl = document.getElementById('walkEn');
+      var descEl = document.getElementById('walkDesc');
+      var progress = document.getElementById('walkProgress');
+
+      // Update content using safe DOM methods
+      while (iconEl.firstChild) iconEl.removeChild(iconEl.firstChild);
+      var iconTag = document.createElement('i');
+      iconTag.setAttribute('data-lucide', step.icon);
+      iconTag.style.width = '24px';
+      iconTag.style.height = '24px';
+      iconEl.appendChild(iconTag);
+
+      titleEl.textContent = step.titleAr;
+      enEl.textContent = step.titleEn;
+      descEl.textContent = step.descAr;
+
+      // Update dots
+      while (progress.firstChild) progress.removeChild(progress.firstChild);
+      for (var di = 0; di < walkSteps.length; di++) {
+        var dot = document.createElement('div');
+        dot.className = 'walk-dot' + (di === currentWalkStep ? ' active' : '');
+        progress.appendChild(dot);
+      }
+
+      // Animate card
+      card.classList.remove('visible');
+      requestAnimationFrame(function() {
+        requestAnimationFrame(function() {
+          card.classList.add('visible');
+        });
+      });
+
+      if (typeof lucide !== 'undefined') lucide.createIcons();
     }
 
     function enterWalkthrough() {
       document.getElementById('splash').classList.add('hidden');
       document.getElementById('walkthrough').classList.add('active');
+      currentWalkStep = 0;
+      renderWalkStep();
     }
+
+    // Tap to advance walkthrough
+    document.getElementById('walkthrough').addEventListener('click', function() {
+      currentWalkStep++;
+      if (currentWalkStep >= walkSteps.length) {
+        enterApp();
+      } else {
+        renderWalkStep();
+      }
+    });
 
     function enterApp() {
       document.getElementById('walkthrough').classList.remove('active');
@@ -835,7 +878,7 @@
     }
 
     // Init icons
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', function() {
       if (typeof lucide !== 'undefined') lucide.createIcons();
     });
   </script>

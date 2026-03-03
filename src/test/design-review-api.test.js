@@ -122,7 +122,7 @@ describe('Design Review API', () => {
         .send({ items: 'not-array' })
         .expect(400);
 
-      expect(response.body.error).toBe('items must be an array');
+      expect(response.body.error).toBe('items must be a non-empty array');
     });
 
     it('should upsert design items', async () => {
@@ -308,9 +308,9 @@ describe('Design Review API', () => {
 
     it('should save verdicts', async () => {
       mockTablesExist();
-      // Mock item lookup
-      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 10 }] });
-      // Mock verdict upsert
+      // Mock batch item_key -> id lookup (SELECT ... WHERE item_key = ANY($1))
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 10, item_key: 'splash-zen-1' }] });
+      // Mock batch verdict upsert (single INSERT...ON CONFLICT)
       mockPool.query.mockResolvedValueOnce({ rows: [] });
       // Mock count query
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: '1' }] });

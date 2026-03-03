@@ -671,28 +671,45 @@ async function syncVerdictsToAPI() {
   } catch (err) { log('sync', 'ERROR: ' + err.message); setSyncStatus('offline'); }
 }
 
+// Build a stable hash of the CATALOG so we only sync when it changes
+function catalogHash() {
+  let h = 0;
+  const s = JSON.stringify(CATALOG.map(c => c.categories.map(cat => cat.options.map(o => o.id))));
+  for (let i = 0; i < s.length; i++) { h = ((h << 5) - h + s.charCodeAt(i)) | 0; }
+  return h.toString(36);
+}
+
 async function initAPI() {
   log('initAPI', 'starting', { apiAvailable, hasSession: !!currentSession });
   try {
-    const r = await fetch(API_BASE + '/api/design-review/items', { signal: AbortSignal.timeout(30000) });
+    // 1. Ping backend (lightweight health check, no data transfer)
+    const r = await fetch(API_BASE + '/api/health', { signal: AbortSignal.timeout(30000) });
     if (!r.ok) throw 0;
     apiAvailable = true;
 
-    // Sync CATALOG items to DB
-    const items = [];
-    CATALOG.forEach(comp => comp.categories.forEach(cat => cat.options.forEach(opt => {
-      items.push({ item_key: opt.id, name: opt.name, component: comp.id, category: cat.id,
-        file_path: opt.file, description: opt.desc, generation: opt.generation || 1,
-        iteration: opt.iteration || null, source_branch: opt.source_branch || null,
-        source_pr: opt.source_pr || cat.source || null });
-    })));
-    fetch(API_BASE + '/api/design-review/items/sync', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items })
-    }).catch(() => {});
+    // 2. Sync CATALOG only if hash changed (skip on repeat visits)
+    const hash = catalogHash();
+    const lastHash = localStorage.getItem('catalog_hash');
+    if (hash !== lastHash) {
+      const items = [];
+      CATALOG.forEach(comp => comp.categories.forEach(cat => cat.options.forEach(opt => {
+        items.push({ item_key: opt.id, name: opt.name, component: comp.id, category: cat.id,
+          file_path: opt.file, description: opt.desc, generation: opt.generation || 1,
+          iteration: opt.iteration || null, source_branch: opt.source_branch || null,
+          source_pr: opt.source_pr || cat.source || null });
+      })));
+      log('initAPI', 'syncing catalog (hash changed)', { hash, lastHash });
+      fetch(API_BASE + '/api/design-review/items/sync', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items })
+      }).then(res => { if (res.ok) localStorage.setItem('catalog_hash', hash); }).catch(() => {});
+    } else {
+      log('initAPI', 'catalog sync skipped (hash match)');
+    }
 
-    // Resume or create session
-    const sess = await (await fetch(API_BASE + '/api/design-review/sessions')).json();
-    const active = sess.find(s => s.status === 'in_progress');
+    // 3. Get active session + verdicts in parallel
+    const sessRes = await fetch(API_BASE + '/api/design-review/sessions?status=in_progress');
+    const sessions = await sessRes.json();
+    const active = sessions[0];
     if (active) {
       currentSession = active;
       const verts = await (await fetch(API_BASE + '/api/design-review/sessions/' + active.id + '/verdicts')).json();

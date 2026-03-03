@@ -1,9 +1,8 @@
 name: Design Review DB Integration
 
 # Runs on every PR push to main.
-# Connects directly to the production Supabase database and runs integration
-# tests to confirm the persist-to-DB feature works on this PR.
-# Tables are expected to already exist (migration is tested separately on deploy to main).
+# Spins up a local PostgreSQL service, applies the design-review migration, and
+# runs integration tests to confirm the persist-to-DB feature works on this PR.
 on:
   pull_request:
     branches: [main]
@@ -17,6 +16,21 @@ jobs:
     name: Design Review — Real DB API Tests
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: design_review_test
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
     steps:
       - uses: actions/checkout@v4
 
@@ -29,11 +43,19 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # ── Run integration tests against the real Supabase DB ────────────────
+      # ── Apply design-review schema + minimal poems table for health check ──
+      - name: Apply database schema
+        run: |
+          PGPASSWORD=postgres psql -h localhost -U postgres -d design_review_test \
+            -f supabase/migrations/20260222000000_design_review_tables.sql
+          PGPASSWORD=postgres psql -h localhost -U postgres -d design_review_test \
+            -c "CREATE TABLE IF NOT EXISTS poems (id SERIAL PRIMARY KEY, content TEXT);"
+
+      # ── Run integration tests against the local DB ────────────────────────
       - name: Run design review integration tests
         run: npm run test:integration
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/design_review_test
 
       # ── Report outcome on the PR ──────────────────────────────────────────
       - name: Post success comment to PR

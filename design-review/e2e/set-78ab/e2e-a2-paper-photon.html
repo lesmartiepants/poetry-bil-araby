@@ -162,10 +162,11 @@ body {
   z-index: 5; opacity: 0.6;
 }
 
-/* ---- Main App ---- */
+/* ===== MAIN APP ===== */
+/* Editorial Magazine Spread — full-bleed poem, generous margins, serif typography */
 #app {
-  display: none; flex-direction: column; align-items: center;
-  min-height: 100vh; position: relative; padding: 2rem 1rem;
+  display: none; flex-direction: column;
+  min-height: 100vh; position: relative;
 }
 #app.active { display: flex; }
 #bg-canvas {
@@ -173,105 +174,158 @@ body {
   z-index: 0; pointer-events: none;
 }
 
-/* Top bar with brand */
-.app-top {
+/* Minimal editorial top bar */
+.mag-nav {
   position: fixed; top: 0; left: 0; right: 0; z-index: 50;
   display: flex; align-items: center; justify-content: space-between;
-  padding: 12px 20px; background: rgba(5,5,16,0.85);
-  backdrop-filter: blur(12px); border-bottom: 1px solid rgba(232,228,240,0.1);
+  padding: 0 24px; height: 48px;
+  background: rgba(5, 5, 16, 0.6);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(197, 160, 89, 0.1);
   direction: ltr;
 }
-[data-theme="light"] .app-top {
-  background: rgba(240,238,245,0.9);
+.mag-issue {
+  font-family: var(--font-ui); font-size: 10px;
+  letter-spacing: 0.35em; text-transform: uppercase;
+  color: var(--gold); opacity: 0.7;
 }
-.app-top-brand {
-  display: flex; align-items: flex-end; gap: 6px;
-}
-.app-top-brand-en {
-  font-family: 'Forum', serif; font-size: 18px;
-  letter-spacing: -0.05em; color: var(--gold); line-height: 1;
-}
-.app-top-brand-ar {
-  font-family: 'Reem Kufi', sans-serif; font-weight: 700;
-  font-size: 13px; color: var(--gold); line-height: 1;
-}
-.app-top-actions { display: flex; gap: 8px; }
-.app-top-btn {
-  width: 40px; height: 40px; display: flex; align-items: center;
-  justify-content: center; background: transparent;
-  border: 1px solid rgba(232,228,240,0.15); border-radius: 8px;
-  color: var(--star-dim); cursor: pointer; transition: all 0.2s;
-}
-.app-top-btn:hover { color: var(--gold); border-color: var(--gold); }
-
-.poem-card {
-  position: relative; z-index: 1; max-width: 640px; width: 100%;
-  margin-top: 5rem; padding: 3rem 2.5rem; border-radius: 20px;
-  border: 1px solid rgba(232,228,240,0.1);
-  background: linear-gradient(135deg, rgba(10,15,46,0.7), rgba(58,31,94,0.25));
-  backdrop-filter: blur(12px); will-change: transform;
-  animation: floatCard 8s ease-in-out infinite;
-}
-@keyframes floatCard {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-8px); }
-}
-.poem-text {
-  font-family: var(--font-display); font-size: clamp(1.3rem, 3.5vw, 1.9rem);
-  line-height: 2.2; text-align: center; color: var(--star);
-  text-shadow: 0 0 12px var(--glow-star);
-}
-.poem-divider {
-  display: block; width: 60px; height: 1px; margin: 1.5rem auto;
-  background: linear-gradient(90deg, transparent, var(--gold), transparent);
-}
-.poem-author {
-  display: block; text-align: center; font-family: var(--font-ui);
-  font-size: 1rem; color: var(--gold); margin-top: 0.5rem;
-  text-shadow: 0 0 10px var(--glow-gold);
+.mag-brand {
+  font-family: 'Forum', serif; font-size: 16px;
+  letter-spacing: -0.03em; color: var(--star-dim);
 }
 
-/* Vertical Rail (right side) */
-.vertical-rail {
-  position: fixed; right: 16px; top: 50%; transform: translateY(-50%);
-  display: flex; flex-direction: column; gap: 4px; z-index: 40; direction: ltr;
+/* Magazine spread reader */
+.mag-spread {
+  position: relative; z-index: 2;
+  min-height: 100vh;
+  display: flex; flex-direction: column;
+  justify-content: center;
+  padding: 80px 10vw 100px;
 }
-.rail-btn {
-  width: 44px; height: 44px; display: flex; align-items: center;
-  justify-content: center; background: rgba(10,15,46,0.7);
-  border: 1px solid rgba(232,228,240,0.1); border-radius: 10px;
-  color: var(--star-dim); cursor: pointer; transition: all 0.2s;
-  backdrop-filter: blur(8px); position: relative;
-}
-.rail-btn:hover { color: var(--gold); border-color: var(--gold); transform: scale(1.08); }
-.rail-btn .tooltip {
-  position: absolute; right: 52px; top: 50%; transform: translateY(-50%);
-  background: rgba(10,15,46,0.9); border: 1px solid rgba(232,228,240,0.15);
-  color: var(--star); font-family: var(--font-ui); font-size: 12px;
-  padding: 4px 10px; border-radius: 6px; white-space: nowrap;
-  opacity: 0; pointer-events: none; transition: opacity 0.2s;
-}
-.rail-btn:hover .tooltip { opacity: 1; }
 
-/* Bottom Nav */
-.bottom-nav {
-  position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
-  display: flex; align-items: center; justify-content: center; gap: 4px;
-  padding: 10px 20px; background: rgba(5,5,16,0.9);
-  backdrop-filter: blur(16px); border-top: 1px solid rgba(232,228,240,0.1);
+/* Small-caps poet name */
+.mag-poet {
+  font-family: var(--font-ui); font-size: 11px;
+  font-weight: 500; letter-spacing: 0.35em;
+  text-transform: uppercase; color: var(--gold);
+  margin-bottom: 0.5rem; direction: ltr;
+}
+.mag-poet-ar {
+  font-family: var(--font-display); font-size: 14px;
+  color: var(--star-dim); direction: rtl;
+  margin-bottom: 2rem;
+}
+
+/* Full-bleed large poem text */
+.mag-verses {
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 5vw, 3rem);
+  line-height: 2;
+  color: var(--star);
+  direction: rtl;
+  text-align: right;
+  margin-bottom: 1.5rem;
+}
+
+/* Pull quote styling for translation */
+.mag-pull-quote {
+  font-family: var(--font-display);
+  font-size: clamp(1rem, 2.5vw, 1.25rem);
+  font-style: italic;
+  color: var(--star-dim);
+  line-height: 1.7;
   direction: ltr;
+  padding: 1.25rem 0;
+  border-top: 1px solid rgba(197, 160, 89, 0.15);
+  border-bottom: 1px solid rgba(197, 160, 89, 0.15);
+  max-width: 500px;
 }
-[data-theme="light"] .bottom-nav {
-  background: rgba(240,238,245,0.95);
+
+/* Page folio */
+.mag-folio {
+  position: fixed; bottom: 20px; left: 24px;
+  font-family: var(--font-ui); font-size: 10px;
+  letter-spacing: 0.25em; text-transform: uppercase;
+  color: rgba(232, 228, 240, 0.2);
+  direction: ltr; z-index: 2;
 }
-.nav-item {
-  display: flex; flex-direction: column; align-items: center; gap: 4px;
-  padding: 8px 16px; background: transparent; border: none;
-  color: var(--star-dim); cursor: pointer; font-family: var(--font-ui);
-  font-size: 11px; transition: color 0.2s; min-width: 60px;
+
+/* ===== CONTROLS ===== */
+/* Editorial text-menu — swipe-up text links, no icons */
+
+.text-menu-trigger {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  z-index: 55; display: flex; justify-content: center;
+  padding: 16px 0 20px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
-.nav-item.active { color: var(--gold); }
-.nav-item:hover { color: var(--gold); }
+.text-menu-trigger-line {
+  width: 32px; height: 2px;
+  background: rgba(197, 160, 89, 0.3);
+  border-radius: 1px;
+  transition: background 0.3s ease;
+}
+.text-menu-trigger:hover .text-menu-trigger-line,
+.text-menu-trigger:active .text-menu-trigger-line {
+  background: var(--gold);
+}
+
+.text-menu-overlay {
+  position: fixed; inset: 0; z-index: 58;
+  background: rgba(5, 5, 16, 0.5);
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.text-menu-overlay.visible {
+  opacity: 1; pointer-events: auto;
+}
+
+.text-menu {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  z-index: 60;
+  background: rgba(5, 5, 16, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(197, 160, 89, 0.1);
+  padding: 2rem 10vw 2.5rem;
+  transform: translateY(100%);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex; flex-direction: column; gap: 0;
+}
+.text-menu.open { transform: translateY(0); }
+
+.text-menu-item {
+  display: block;
+  padding: 16px 0;
+  min-height: 48px;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-style: italic;
+  color: var(--star-dim);
+  background: transparent; border: none;
+  border-bottom: 1px solid rgba(232, 228, 240, 0.06);
+  cursor: pointer; text-align: left;
+  direction: ltr;
+  transition: color 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.text-menu-item:last-child { border-bottom: none; }
+.text-menu-item:hover,
+.text-menu-item:active {
+  color: var(--gold);
+}
+
+.text-menu-close {
+  margin-top: 1rem;
+  font-family: var(--font-ui); font-size: 10px;
+  letter-spacing: 0.3em; text-transform: uppercase;
+  color: rgba(232, 228, 240, 0.2);
+  background: transparent; border: none;
+  cursor: pointer; padding: 10px 0;
+  min-height: 44px;
+  -webkit-tap-highlight-color: transparent;
+}
 
 /* ---- Reduced Motion ---- */
 @media (prefers-reduced-motion: reduce) {
@@ -280,12 +334,11 @@ body {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-  .poem-card { animation: none; }
 }
 /* ---- Mobile ---- */
 @media (max-width: 768px) {
-  .vertical-rail { display: none; }
-  .poem-card { margin-top: 4rem; padding: 2rem 1.5rem; }
+  .mag-spread { padding: 80px 24px 100px; }
+  .text-menu { padding: 1.5rem 24px 2rem; }
 }
 </style>
 </head>
@@ -336,52 +389,49 @@ body {
   <div class="editorial-progress" id="edProgress" style="width: 33%"></div>
 </div>
 
-<!-- Main App -->
+<!-- ===== MAIN APP ===== -->
 <div id="app">
   <canvas id="bg-canvas"></canvas>
 
-  <header class="app-top">
-    <div class="app-top-brand">
-      <span class="app-top-brand-en">poetry</span>
-      <span class="app-top-brand-ar">بالعربي</span>
-    </div>
-    <div class="app-top-actions">
-      <button class="app-top-btn" id="btn-theme" aria-label="Toggle theme">
-        <i data-lucide="sun" style="width:18px;height:18px"></i>
-      </button>
-      <button class="app-top-btn" aria-label="Settings">
-        <i data-lucide="settings" style="width:18px;height:18px"></i>
-      </button>
-    </div>
+  <!-- Minimal editorial nav -->
+  <header class="mag-nav">
+    <span class="mag-issue">Vol. I</span>
+    <span class="mag-brand">poetry بالعربي</span>
   </header>
 
-  <nav class="vertical-rail">
-    <button class="rail-btn"><i data-lucide="heart" style="width:18px;height:18px"></i><span class="tooltip">Save</span></button>
-    <button class="rail-btn"><i data-lucide="type" style="width:18px;height:18px"></i><span class="tooltip">Font size</span></button>
-    <button class="rail-btn"><i data-lucide="languages" style="width:18px;height:18px"></i><span class="tooltip">Transliteration</span></button>
-    <button class="rail-btn"><i data-lucide="book-open" style="width:18px;height:18px"></i><span class="tooltip">Tafsir</span></button>
-    <button class="rail-btn"><i data-lucide="italic" style="width:18px;height:18px"></i><span class="tooltip">Tashkeel</span></button>
-    <button class="rail-btn"><i data-lucide="log-in" style="width:18px;height:18px"></i><span class="tooltip">Sign in</span></button>
-    <button class="rail-btn"><i data-lucide="settings" style="width:18px;height:18px"></i><span class="tooltip">Settings</span></button>
-  </nav>
-
-  <div class="poem-card">
-    <div class="poem-text" dir="rtl" lang="ar">
-      عَلَى قَدْرِ أَهْلِ العَزْمِ تَأْتِي العَزَائِمُ
-      <br>
+  <!-- Magazine spread -->
+  <main class="mag-spread">
+    <div class="mag-poet">Al-Mutanabbi</div>
+    <div class="mag-poet-ar" lang="ar" dir="rtl">المتنبي</div>
+    <div class="mag-verses" lang="ar" dir="rtl">
+      عَلَى قَدْرِ أَهْلِ العَزْمِ تَأْتِي العَزَائِمُ<br>
       وَتَأْتِي عَلَى قَدْرِ الكِرَامِ المَكَارِمُ
     </div>
-    <span class="poem-divider"></span>
-    <span class="poem-author">-- المتنبي (Al-Mutanabbi)</span>
+    <div class="mag-pull-quote">
+      "Great deeds come to those of great resolve,<br>
+      and noble acts to those of noble character."
+    </div>
+  </main>
+
+  <div class="mag-folio">Page 1</div>
+
+  <!-- ===== CONTROLS ===== -->
+  <!-- Swipe-up trigger -->
+  <div class="text-menu-trigger" id="textMenuTrigger" aria-label="Open actions">
+    <div class="text-menu-trigger-line"></div>
   </div>
 
-  <nav class="bottom-nav">
-    <button class="nav-item"><i data-lucide="music" style="width:20px;height:20px"></i>Music</button>
-    <button class="nav-item"><i data-lucide="lightbulb" style="width:20px;height:20px"></i>Insight</button>
-    <button class="nav-item active"><i data-lucide="refresh-cw" style="width:20px;height:20px"></i>Refresh</button>
-    <button class="nav-item"><i data-lucide="library" style="width:20px;height:20px"></i>Library</button>
-    <button class="nav-item"><i data-lucide="shuffle" style="width:20px;height:20px"></i>Shuffle</button>
-  </nav>
+  <!-- Overlay -->
+  <div class="text-menu-overlay" id="textMenuOverlay"></div>
+
+  <!-- Editorial text menu -->
+  <div class="text-menu" id="textMenu">
+    <button class="text-menu-item" data-action="next">next</button>
+    <button class="text-menu-item" data-action="save">save</button>
+    <button class="text-menu-item" data-action="listen">listen</button>
+    <button class="text-menu-item" data-action="share">share</button>
+    <button class="text-menu-close" id="textMenuClose">close</button>
+  </div>
 </div>
 
 <script>
@@ -564,15 +614,40 @@ body {
   }
 
   /* ============================================
-     4. CONTROLS
+     4. TEXT MENU CONTROLS
      ============================================ */
-  document.getElementById('btn-theme').addEventListener('click', function() {
-    var body = document.body;
-    if (body.dataset.theme === 'dark') {
-      body.dataset.theme = 'light';
-    } else {
-      body.dataset.theme = 'dark';
-    }
+  var textMenu = document.getElementById('textMenu');
+  var textOverlay = document.getElementById('textMenuOverlay');
+  var textTrigger = document.getElementById('textMenuTrigger');
+  var textClose = document.getElementById('textMenuClose');
+
+  function openTextMenu() {
+    textMenu.classList.add('open');
+    textOverlay.classList.add('visible');
+    textTrigger.style.display = 'none';
+  }
+  function closeTextMenu() {
+    textMenu.classList.remove('open');
+    textOverlay.classList.remove('visible');
+    textTrigger.style.display = '';
+  }
+
+  textTrigger.addEventListener('click', openTextMenu);
+  textTrigger.addEventListener('touchstart', function(e) {
+    e.preventDefault();
+    openTextMenu();
+  });
+  textOverlay.addEventListener('click', closeTextMenu);
+  textClose.addEventListener('click', closeTextMenu);
+
+  /* Touch feedback on menu items */
+  document.querySelectorAll('.text-menu-item').forEach(function(item) {
+    item.addEventListener('touchstart', function() {
+      item.style.color = 'var(--gold)';
+    }, { passive: true });
+    item.addEventListener('touchend', function() {
+      setTimeout(function() { item.style.color = ''; }, 150);
+    }, { passive: true });
   });
 
   /* Init icons */

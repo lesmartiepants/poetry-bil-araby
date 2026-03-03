@@ -137,6 +137,8 @@
     .mobile-bar{display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;background:var(--surface);border-top:1px solid var(--border);padding:6px 10px;padding-bottom:max(6px,env(safe-area-inset-bottom));flex-direction:column;gap:5px}
     .mobile-bar .mobile-nav-row{display:flex;align-items:center;gap:6px}
     .mobile-bar .mobile-nav-row .nav-btn{padding:5px 10px;font-size:12px}
+    .mobile-bar .mobile-tally{font-size:10px;color:var(--text-3);display:flex;align-items:center;gap:4px}
+    .mobile-bar .mobile-submit-compact{width:auto;padding:6px 14px;font-size:11px}
     .mobile-bar .verdict-row{display:flex;gap:6px}
     .mobile-bar .verdict-row .verdict-btn{flex:1;padding:12px 0;font-size:14px;border-radius:var(--r)}
     .mobile-bar .comment-row{display:flex;gap:6px;align-items:center}
@@ -230,12 +232,12 @@
         <button class="verdict-btn" data-v="revisit" onclick="setVerdict('revisit')"><span class="v-icon">&#8635;</span> Revisit</button>
       </div>
       <div class="mobile-nav-row">
-        <button class="nav-btn" id="prevBtnMobile" onclick="goPrev()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 3L5 8l5 5"/></svg></button>
+        <button class="nav-btn" id="prevBtnMobile" onclick="goPrev()" aria-label="Previous design"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 3L5 8l5 5"/></svg></button>
         <span class="nav-counter" id="navCounterMobile">--</span>
-        <button class="nav-btn" id="nextBtnMobile" onclick="goNext()"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 3l5 5-5 5"/></svg></button>
+        <button class="nav-btn" id="nextBtnMobile" onclick="goNext()" aria-label="Next design"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 3l5 5-5 5"/></svg></button>
         <span style="flex:1"></span>
-        <span style="font-size:10px;color:var(--text-3);display:flex;align-items:center;gap:4px"><span style="color:var(--green)">&#10003;<span id="mobileKeep">0</span></span><span style="color:var(--red)">&#10007;<span id="mobileDiscard">0</span></span><span style="color:var(--purple)">&#8635;<span id="mobileRevisit">0</span></span></span>
-        <button class="mobile-submit-btn" onclick="submitReview()" style="width:auto;padding:6px 14px;font-size:11px">Submit</button>
+        <span class="mobile-tally"><span style="color:var(--green)">&#10003;<span id="mobileKeep">0</span></span><span style="color:var(--red)">&#10007;<span id="mobileDiscard">0</span></span><span style="color:var(--purple)">&#8635;<span id="mobileRevisit">0</span></span></span>
+        <button class="mobile-submit-btn mobile-submit-compact" onclick="submitReview()">Submit</button>
       </div>
       <div class="comment-row">
         <textarea class="comment-box" id="mobileCommentBox" placeholder="Quick comment..." oninput="saveMobileComment()"></textarea>

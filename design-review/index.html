@@ -131,14 +131,14 @@
     .edge-nav:disabled{cursor:default;opacity:0!important}
 
     /* ── Bottom navigation bar (desktop) ── */
-    .bottom-nav{display:flex;align-items:center;justify-content:center;gap:10px;padding:6px 14px;background:var(--surface);border-top:1px solid var(--border)}
+    .bottom-nav{display:flex;align-items:center;justify-content:center;gap:10px;padding:6px 14px;background:transparent;border-top:none}
 
     /* ── Mobile Action Dock (Option B) ── */
     .mobile-dock{
       display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;
-      background:linear-gradient(to top,rgba(9,9,11,.98) 70%,transparent);
-      padding:40px 20px 20px;padding-bottom:max(20px,env(safe-area-inset-bottom));
-      flex-direction:column;align-items:center;gap:12px;
+      background:linear-gradient(to top,rgba(9,9,11,.98) 60%,transparent);
+      padding:28px 14px 14px;padding-bottom:max(14px,env(safe-area-inset-bottom));
+      flex-direction:column;align-items:center;gap:8px;
     }
     .dock-progress{width:100%;display:flex;align-items:center;gap:8px}
     .dock-prog-bar{flex:1;height:3px;border-radius:2px;background:var(--surface-3);overflow:hidden}
@@ -146,29 +146,29 @@
     .dock-prog-text{font-size:10px;color:var(--text-3);font-variant-numeric:tabular-nums;white-space:nowrap}
     .dock-controls{display:flex;align-items:center;gap:0;width:100%;justify-content:space-between}
     .dock-nav{
-      width:56px;height:56px;border-radius:50%;border:none;
-      background:var(--surface-2);color:var(--text-3);
+      width:48px;height:48px;border-radius:50%;border:none;
+      background:transparent;color:var(--text-3);
       display:flex;align-items:center;justify-content:center;
       cursor:pointer;transition:all .15s;flex-shrink:0;
     }
-    .dock-nav:hover{color:var(--text);background:var(--surface-3)}
+    .dock-nav:hover{color:var(--text);background:rgba(255,255,255,.06)}
     .dock-nav:active{transform:scale(.9)}
     .dock-nav:disabled{opacity:.2;cursor:default;background:transparent}
     .dock-nav svg{width:22px;height:22px}
     .verdict-circle{
-      width:56px;height:56px;border-radius:50%;border:2px solid var(--border);
+      width:54px;height:54px;border-radius:50%;border:2px solid var(--border);
       background:var(--surface-2);
       display:flex;align-items:center;justify-content:center;
       font-size:22px;color:var(--text-3);
-      cursor:pointer;transition:all .2s;margin:0 4px;
+      cursor:pointer;transition:all .2s;margin:0 2px;
     }
     .verdict-circle:active{transform:scale(.88)}
-    .verdict-circle.vc-center{width:68px;height:68px;font-size:28px;border-color:var(--border-light)}
+    .verdict-circle.vc-center{width:64px;height:64px;font-size:26px;border-color:var(--border-light)}
     .verdict-circle.active-keep{background:var(--green-dim);border-color:var(--green);color:var(--green);box-shadow:0 0 24px rgba(34,197,94,.2)}
     .verdict-circle.active-discard{background:var(--red-dim);border-color:var(--red);color:var(--red);box-shadow:0 0 24px rgba(239,68,68,.2)}
     .verdict-circle.active-revisit{background:var(--purple-dim);border-color:var(--purple);color:var(--purple);box-shadow:0 0 24px rgba(168,85,247,.2)}
     .verdict-label{font-size:9px;color:var(--text-3);margin-top:2px;text-align:center;letter-spacing:.03em}
-    .verdict-col{display:flex;flex-direction:column;align-items:center;gap:2px}
+    .verdict-col{display:flex;flex-direction:column;align-items:center;gap:1px}
     .dock-bottom{display:flex;align-items:center;gap:8px;width:100%}
     .comment-trigger{
       flex:1;display:flex;align-items:center;gap:8px;
@@ -232,7 +232,7 @@
       .preview-sub{font-size:9px}
       .bottom-nav{display:none}
       .mobile-dock{display:flex}
-      .preview{padding-bottom:200px}
+      .preview{padding-bottom:180px}
       .edge-nav{width:44px}
     }
     ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}

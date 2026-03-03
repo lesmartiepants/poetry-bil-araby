@@ -49,8 +49,9 @@
       align-items: center;
       justify-content: center;
       background: var(--bg);
-      animation: splashFadeOut 0.8s ease 3s forwards;
+      transition: opacity 0.8s ease;
     }
+    #splash.hidden { opacity: 0; pointer-events: none; }
 
     #warmCanvas {
       position: absolute;
@@ -60,166 +61,148 @@
       opacity: 0.35;
     }
 
-    .brand-logo {
+    /* Neumorphic brand circle */
+    .brand-circle {
       z-index: 2;
-      text-align: center;
-      animation: softPulse 2.5s ease-in-out infinite;
+      width: 180px; height: 180px;
+      border-radius: 50%;
+      background: var(--bg-card);
+      box-shadow: var(--neu-outset);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      margin-bottom: 2rem;
+      opacity: 0;
+      animation: neuFadeIn 1.2s ease 0.5s forwards;
     }
-
-    .brand-logo .en {
+    .brand-circle .en {
       font-family: 'Forum', serif;
-      font-size: clamp(3rem, 6vw, 4.5rem);
+      font-size: 2rem;
       letter-spacing: -0.05em;
       color: var(--gold);
-      text-transform: lowercase;
       line-height: 1.1;
     }
-
-    .brand-logo .ar {
+    .brand-circle .ar {
       font-family: 'Reem Kufi', sans-serif;
       font-weight: 700;
-      font-size: clamp(1.875rem, 4vw, 3rem);
+      font-size: 1.2rem;
       color: var(--gold-soft);
       direction: rtl;
     }
+    @keyframes neuFadeIn {
+      from { opacity: 0; transform: scale(0.9); }
+      to { opacity: 1; transform: scale(1); }
+    }
 
     .splash-tagline {
-      font-size: 0.9rem;
-      margin-top: 1.5rem;
-      opacity: 0.6;
-      z-index: 2;
+      font-size: 0.85rem;
+      opacity: 0; z-index: 2;
       font-weight: 300;
-      letter-spacing: 0.5px;
-    }
-
-    @keyframes splashFadeOut {
-      to { opacity: 0; pointer-events: none; }
-    }
-
-    @keyframes softPulse {
-      0%, 100% { transform: scale(1); opacity: 0.9; }
-      50% { transform: scale(1.02); opacity: 1; }
-    }
-
-    /* =============================================
-       2. ONBOARDING
-       ============================================= */
-    #onboarding {
-      display: none;
-      position: fixed;
-      inset: 0;
-      z-index: 5000;
-      background: var(--bg);
-      padding: 2rem;
-      overflow-y: auto;
-    }
-
-    #onboarding.visible {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .onboarding-card {
-      background: var(--bg-card);
-      border-radius: 24px;
-      padding: 3rem 2.5rem;
-      max-width: 480px;
-      width: 100%;
-      box-shadow: var(--neu-outset);
-      text-align: center;
-    }
-
-    .onboarding-card h2 {
-      font-family: 'Amiri', serif;
-      font-size: 1.8rem;
-      color: var(--gold);
-      margin-bottom: 0.5rem;
-    }
-
-    .onboarding-card .en-title {
-      font-family: 'Tajawal', sans-serif;
-      font-size: 1rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
       color: var(--text-muted);
       margin-bottom: 2rem;
-      font-weight: 300;
+      animation: neuFadeIn 1s ease 1.2s forwards;
     }
 
-    .onboarding-steps {
-      display: flex;
-      flex-direction: column;
-      gap: 1.25rem;
-      margin-bottom: 2rem;
-      text-align: right;
-    }
-
-    .onb-step {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      direction: rtl;
-    }
-
-    .onb-step-icon {
-      flex-shrink: 0;
-      width: 44px;
-      height: 44px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 14px;
-      background: var(--bg-card);
-      box-shadow: var(--neu-outset-sm);
-      color: var(--gold);
-    }
-
-    .onb-step-icon i {
-      width: 20px;
-      height: 20px;
-    }
-
-    .onb-step-text {
-      flex: 1;
-    }
-
-    .onb-step-text strong {
-      display: block;
-      font-size: 0.95rem;
-      margin-bottom: 2px;
-    }
-
-    .onb-step-text span {
-      font-size: 0.8rem;
-      opacity: 0.65;
-      font-style: italic;
-      direction: ltr;
-      display: block;
-      text-align: left;
-    }
-
-    .btn-start {
-      min-width: 44px;
-      min-height: 44px;
+    .splash-cta {
+      z-index: 2;
+      min-width: 44px; min-height: 44px;
       padding: 0.85rem 2.5rem;
-      border: none;
-      border-radius: 16px;
+      border: none; border-radius: 16px;
       font-family: 'Tajawal', sans-serif;
-      font-size: 1rem;
-      font-weight: 600;
+      font-size: 1rem; font-weight: 600;
       cursor: pointer;
       background: var(--bg-card);
       color: var(--gold);
       box-shadow: var(--neu-outset);
-      transition: all 0.2s ease;
+      transition: box-shadow 0.2s ease;
+      opacity: 0;
+      animation: neuFadeIn 0.8s ease 1.8s forwards;
     }
+    .splash-cta:hover { box-shadow: var(--neu-outset-sm); }
+    .splash-cta:active { box-shadow: var(--neu-inset); }
 
-    .btn-start:hover {
-      box-shadow: var(--neu-outset-sm);
+    /* =============================================
+       2. ONBOARDING -- NEUMORPHIC SOFT SURFACES
+       ============================================= */
+    #onboarding {
+      display: none;
+      position: fixed; inset: 0; z-index: 5000;
+      background: var(--bg);
+      flex-direction: column;
+      align-items: center; justify-content: center;
+      cursor: pointer;
     }
+    #onboarding.visible { display: flex; }
 
-    .btn-start:active {
+    /* Neumorphic pressed panel */
+    .neu-panel {
+      max-width: 340px; width: 88%;
+      padding: 2.5rem 2rem;
+      background: var(--bg-card);
+      border-radius: 24px;
+      box-shadow: var(--neu-outset);
+      text-align: center;
+      opacity: 0; transform: translateY(12px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+    .neu-panel.active { opacity: 1; transform: translateY(0); }
+
+    /* Neumorphic icon well */
+    .neu-icon {
+      width: 56px; height: 56px;
+      margin: 0 auto 1.2rem;
+      border-radius: 16px;
+      background: var(--bg-card);
       box-shadow: var(--neu-inset);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--gold);
+    }
+    .neu-icon i { width: 24px; height: 24px; }
+
+    .neu-ar {
+      font-family: 'Amiri', serif;
+      font-size: clamp(1.8rem, 4vw, 2.2rem);
+      color: var(--gold); line-height: 1.3;
+      margin-bottom: 0.3rem;
+    }
+    .neu-en {
+      font-family: 'Tajawal', sans-serif;
+      font-size: 0.82rem; font-weight: 300;
+      color: var(--text-muted);
+      margin-bottom: 1rem; direction: ltr;
+    }
+    .neu-desc {
+      font-family: 'Tajawal', sans-serif;
+      font-size: 0.86rem; line-height: 1.8;
+      color: var(--text-primary); opacity: 0.7; direction: ltr;
+    }
+
+    /* Neumorphic pill indicators */
+    .neu-pills {
+      display: flex; gap: 10px; margin-top: 2rem;
+      justify-content: center;
+    }
+    .neu-pill {
+      width: 24px; height: 6px;
+      border-radius: 3px;
+      background: var(--bg-card);
+      box-shadow: var(--neu-outset-sm);
+      transition: all 0.5s ease;
+    }
+    .neu-pill.active {
+      width: 36px;
+      box-shadow: var(--neu-inset);
+      background: var(--gold);
+    }
+    .neu-pill.past {
+      box-shadow: var(--neu-inset);
+    }
+
+    .neu-hint {
+      font-size: 11px; color: var(--text-muted);
+      opacity: 0.4; margin-top: 1.2rem;
+      letter-spacing: 0.2em;
     }
 
     /* =============================================
@@ -577,54 +560,41 @@
   <!-- ===== 1. SPLASH ===== -->
   <div id="splash">
     <canvas id="warmCanvas"></canvas>
-    <div class="brand-logo">
+    <div class="brand-circle">
       <div class="en">poetry</div>
       <div class="ar" lang="ar">بالعربي</div>
     </div>
     <div class="splash-tagline">Neumorphic Warmth</div>
+    <button class="splash-cta" id="splashCta">Enter</button>
   </div>
 
   <!-- ===== 2. ONBOARDING ===== -->
-  <div id="onboarding">
-    <div class="onboarding-card">
-      <h2 lang="ar">مرحبا بك</h2>
-      <div class="en-title">Welcome to Poetry bil Araby</div>
-
-      <div class="onboarding-steps">
-        <div class="onb-step">
-          <div class="onb-step-icon"><i data-lucide="refresh-cw"></i></div>
-          <div class="onb-step-text">
-            <strong lang="ar">اكتشف قصائد جديدة</strong>
-            <span>Discover new poems with a tap</span>
-          </div>
-        </div>
-        <div class="onb-step">
-          <div class="onb-step-icon"><i data-lucide="music"></i></div>
-          <div class="onb-step-text">
-            <strong lang="ar">استمع للقصيدة</strong>
-            <span>Listen to poems read aloud</span>
-          </div>
-        </div>
-        <div class="onb-step">
-          <div class="onb-step-icon"><i data-lucide="languages"></i></div>
-          <div class="onb-step-text">
-            <strong lang="ar">ترجمة صوتية</strong>
-            <span>Transliteration for pronunciation</span>
-          </div>
-        </div>
-        <div class="onb-step">
-          <div class="onb-step-icon"><i data-lucide="heart"></i></div>
-          <div class="onb-step-text">
-            <strong lang="ar">احفظ المفضلة</strong>
-            <span>Save your favorite poems</span>
-          </div>
-        </div>
-      </div>
-
-      <button class="btn-start" id="startBtn">
-        <span lang="ar">ابدأ الرحلة</span>
-      </button>
+  <div id="onboarding" data-step="0">
+    <div class="neu-panel active" data-neu="0">
+      <div class="neu-icon"><i data-lucide="refresh-cw"></i></div>
+      <div class="neu-ar" lang="ar" dir="rtl">اكتشف القصائد</div>
+      <div class="neu-en">Discover Poems</div>
+      <div class="neu-desc">Tap to explore 84,000 poems. Each refresh reveals a new treasure from Arabic literary heritage.</div>
     </div>
+    <div class="neu-panel" data-neu="1">
+      <div class="neu-icon"><i data-lucide="music"></i></div>
+      <div class="neu-ar" lang="ar" dir="rtl">استمع للإلقاء</div>
+      <div class="neu-en">Listen to Recitation</div>
+      <div class="neu-desc">AI voices bring each verse to life. Feel the warmth and rhythm of Arabic poetry spoken aloud.</div>
+    </div>
+    <div class="neu-panel" data-neu="2">
+      <div class="neu-icon"><i data-lucide="heart"></i></div>
+      <div class="neu-ar" lang="ar" dir="rtl">احفظ المفضلة</div>
+      <div class="neu-en">Save Favorites</div>
+      <div class="neu-desc">Build your personal collection. Press the verses that move you into your own soft, warm library.</div>
+    </div>
+
+    <div class="neu-pills">
+      <div class="neu-pill active" data-pill="0"></div>
+      <div class="neu-pill" data-pill="1"></div>
+      <div class="neu-pill" data-pill="2"></div>
+    </div>
+    <div class="neu-hint">tap</div>
   </div>
 
   <!-- ===== 3. MAIN APP ===== -->
@@ -792,21 +762,48 @@
     animate();
     window.addEventListener('resize', function() { resizeCanvas(); initParticles(); });
 
-    // --- Sequential flow: Splash -> Onboarding -> Main ---
-    setTimeout(function() {
-      cancelAnimationFrame(animId);
-      // Show onboarding after splash fades
-      document.getElementById('onboarding').classList.add('visible');
-      // Re-init icons for onboarding section
-      lucide.createIcons();
-    }, 3800);
+    // --- Splash -> Onboarding -> Main ---
+    var neuPanels = document.querySelectorAll('.neu-panel');
+    var neuPills = document.querySelectorAll('.neu-pill');
+    var neuStep = 0;
+    var totalNeu = neuPanels.length;
 
-    document.getElementById('startBtn').addEventListener('click', function() {
-      document.getElementById('onboarding').classList.remove('visible');
-      document.getElementById('onboarding').style.display = 'none';
-      document.getElementById('mainContent').classList.add('visible');
-      // Re-init icons for main content
+    function showNeuStep() {
+      document.getElementById('onboarding').setAttribute('data-step', neuStep);
+      for (var i = 0; i < neuPanels.length; i++) {
+        neuPanels[i].classList.remove('active');
+        neuPills[i].classList.remove('active');
+        neuPills[i].classList.remove('past');
+        if (i < neuStep) neuPills[i].classList.add('past');
+      }
+      if (neuStep < totalNeu) {
+        neuPanels[neuStep].classList.add('active');
+        neuPills[neuStep].classList.add('active');
+      }
       lucide.createIcons();
+    }
+
+    document.getElementById('splashCta').addEventListener('click', function() {
+      cancelAnimationFrame(animId);
+      document.getElementById('splash').classList.add('hidden');
+      setTimeout(function() {
+        document.getElementById('splash').style.display = 'none';
+        document.getElementById('onboarding').classList.add('visible');
+        neuStep = 0;
+        showNeuStep();
+      }, 800);
+    });
+
+    document.getElementById('onboarding').addEventListener('click', function(e) {
+      if (e.target.closest('#splashCta')) return;
+      neuStep++;
+      if (neuStep >= totalNeu) {
+        document.getElementById('onboarding').style.display = 'none';
+        document.getElementById('mainContent').classList.add('visible');
+        lucide.createIcons();
+      } else {
+        showNeuStep();
+      }
     });
 
     // --- Control interactivity ---

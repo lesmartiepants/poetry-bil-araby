@@ -206,7 +206,7 @@
     }
 
     /* =============================================
-       3. MAIN APP
+       3. MAIN APP - Soft Pressed Neumorphic Surface
        ============================================= */
     #mainContent {
       display: none;
@@ -245,18 +245,22 @@
       font-weight: 300;
     }
 
-    /* Poetry Card */
+    /* Poetry Card -- Soft pressed surface with deep inset poem area */
     .poetry-card {
       background: var(--bg-card);
-      border-radius: 24px;
-      padding: 3rem 2.5rem;
+      border-radius: 32px;
+      padding: 1.5rem;
       margin: 2rem 0;
       box-shadow: var(--neu-outset);
       transition: transform 0.3s ease;
     }
 
-    .poetry-card:hover {
-      transform: translateY(-3px);
+    /* Deeply inset poem area */
+    .verse-inset {
+      background: var(--bg-card);
+      border-radius: 20px;
+      padding: 2.5rem 2rem;
+      box-shadow: var(--neu-inset);
     }
 
     .verse {
@@ -273,6 +277,17 @@
       font-size: 1rem;
       color: var(--gold);
       font-weight: 500;
+    }
+
+    /* Raised edges around card */
+    .poetry-card::before {
+      content: '';
+      position: absolute;
+      inset: -2px;
+      border-radius: 34px;
+      background: linear-gradient(145deg, var(--shadow-light), var(--shadow-dark));
+      z-index: -1;
+      opacity: 0.3;
     }
 
     /* Feature walkthrough */
@@ -441,7 +456,7 @@
     }
 
     /* =============================================
-       5. MOBILE BOTTOM BAR
+       5. MOBILE BOTTOM BAR - Raised Platform with Inset Buttons
        ============================================= */
     .bottom-bar {
       display: none;
@@ -450,10 +465,14 @@
       left: 0;
       right: 0;
       background: var(--bg-card);
-      box-shadow: 0 -6px 16px var(--shadow-dark);
+      /* Raised platform effect */
+      box-shadow:
+        0 -8px 16px var(--shadow-dark),
+        inset 0 2px 4px var(--shadow-light);
       z-index: 2000;
-      padding: 10px 0;
-      padding-bottom: max(10px, env(safe-area-inset-bottom));
+      padding: 12px 0 10px;
+      padding-bottom: max(12px, env(safe-area-inset-bottom));
+      border-radius: 20px 20px 0 0;
     }
 
     .bottom-bar-inner {
@@ -468,7 +487,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 2px;
+      gap: 3px;
       background: var(--bg-card);
       border: none;
       cursor: pointer;
@@ -477,13 +496,17 @@
       min-width: 44px;
       min-height: 44px;
       justify-content: center;
-      padding: 6px;
-      border-radius: 12px;
+      padding: 8px;
+      border-radius: 14px;
+      /* Raised buttons */
       box-shadow: var(--neu-outset-sm);
     }
 
+    /* Deeply pressed inset on active/tap */
     .bottom-btn:active {
       box-shadow: var(--neu-inset);
+      color: var(--gold);
+      transform: scale(0.96);
     }
 
     .bottom-btn.active {
@@ -605,11 +628,13 @@
     </header>
 
     <div class="poetry-card">
-      <div class="verse" lang="ar" dir="rtl">
-        أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ<br>
-        فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
+      <div class="verse-inset">
+        <div class="verse" lang="ar" dir="rtl">
+          أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ<br>
+          فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
+        </div>
+        <div class="poet" lang="ar">-- أحمد شوقي</div>
       </div>
-      <div class="poet" lang="ar">-- أحمد شوقي</div>
     </div>
 
     <section class="walkthrough">
@@ -642,60 +667,48 @@
 
   <!-- ===== 4. VERTICAL CONTROLS (Desktop) ===== -->
   <nav class="vertical-controls" aria-label="Poem controls">
-    <button class="ctrl-btn active" id="saveBtn" aria-label="Save poem">
+    <button class="ctrl-btn" aria-label="Next poem">
+      <span class="ctrl-tooltip">Shuffle</span>
+      <i data-lucide="shuffle"></i>
+    </button>
+    <div class="ctrl-divider"></div>
+    <button class="ctrl-btn" id="saveBtn" aria-label="Save poem">
       <span class="ctrl-tooltip">Save</span>
       <i data-lucide="heart"></i>
     </button>
-    <div class="ctrl-divider"></div>
-    <button class="ctrl-btn" id="textSizeBtn" aria-label="Text size">
-      <span class="ctrl-tooltip">Text Size</span>
-      <i data-lucide="type"></i>
+    <button class="ctrl-btn" aria-label="Listen">
+      <span class="ctrl-tooltip">Listen</span>
+      <i data-lucide="headphones"></i>
     </button>
-    <button class="ctrl-btn" id="translitBtn" aria-label="Transliteration">
-      <span class="ctrl-tooltip">Transliteration</span>
-      <i data-lucide="languages"></i>
-    </button>
-    <button class="ctrl-btn" id="translateBtn" aria-label="Translation">
-      <span class="ctrl-tooltip">Translation</span>
-      <i data-lucide="book-open"></i>
-    </button>
-    <button class="ctrl-btn" id="fontBtn" aria-label="Font">
-      <span class="ctrl-tooltip">Font</span>
-      <i data-lucide="italic"></i>
+    <button class="ctrl-btn" aria-label="Share">
+      <span class="ctrl-tooltip">Share</span>
+      <i data-lucide="share-2"></i>
     </button>
     <div class="ctrl-divider"></div>
-    <button class="ctrl-btn" id="signInBtn" aria-label="Sign In">
-      <span class="ctrl-tooltip">Sign In</span>
-      <i data-lucide="log-in"></i>
-    </button>
     <button class="ctrl-btn" id="settingsBtn" aria-label="Settings">
       <span class="ctrl-tooltip">Settings</span>
       <i data-lucide="settings"></i>
     </button>
   </nav>
 
-  <!-- ===== 5. MOBILE BOTTOM BAR ===== -->
+  <!-- ===== 5. MOBILE BOTTOM BAR - Raised Platform ===== -->
   <nav class="bottom-bar" aria-label="Poem actions">
     <div class="bottom-bar-inner">
-      <button class="bottom-btn" aria-label="Listen to poem">
-        <i data-lucide="music"></i>
+      <button class="bottom-btn" aria-label="Next poem">
+        <i data-lucide="shuffle"></i>
+        <span class="bottom-btn-label">Shuffle</span>
+      </button>
+      <button class="bottom-btn" aria-label="Save poem">
+        <i data-lucide="heart"></i>
+        <span class="bottom-btn-label">Save</span>
+      </button>
+      <button class="bottom-btn" aria-label="Listen">
+        <i data-lucide="headphones"></i>
         <span class="bottom-btn-label">Listen</span>
       </button>
-      <button class="bottom-btn" aria-label="Explain poem">
-        <i data-lucide="lightbulb"></i>
-        <span class="bottom-btn-label">Explain</span>
-      </button>
-      <button class="bottom-btn" aria-label="Get new poem">
-        <i data-lucide="refresh-cw"></i>
-        <span class="bottom-btn-label">Discover</span>
-      </button>
-      <button class="bottom-btn" aria-label="Browse poets">
-        <i data-lucide="library"></i>
-        <span class="bottom-btn-label">Poets</span>
-      </button>
-      <button class="bottom-btn" aria-label="Random poem">
-        <i data-lucide="shuffle"></i>
-        <span class="bottom-btn-label">Surprise</span>
+      <button class="bottom-btn" aria-label="Share poem">
+        <i data-lucide="share-2"></i>
+        <span class="bottom-btn-label">Share</span>
       </button>
     </div>
   </nav>

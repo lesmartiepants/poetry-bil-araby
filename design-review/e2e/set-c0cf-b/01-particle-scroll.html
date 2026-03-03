@@ -217,13 +217,23 @@
     #app {
       display: none;
       min-height: 100vh;
-      padding: 2rem 1.25rem 6rem;
+      padding: 2rem 1.25rem 7rem;
+      background: #080810;
+      position: relative;
     }
     #app.active { display: block; }
+    body.light #app { background: #fafaf8; }
+
+    /* Particle trail background canvas */
+    #appParticleCanvas {
+      position: fixed; inset: 0; width: 100%; height: 100%;
+      z-index: 0; pointer-events: none;
+    }
 
     .app-inner {
       max-width: 520px;
       margin: 0 auto;
+      position: relative; z-index: 1;
     }
 
     /* App Brand */
@@ -248,72 +258,34 @@
       line-height: 1.2;
     }
 
-    /* Scroll Parchment */
-    .scroll-parchment {
+    /* Poem Card - dark with particle feel */
+    .poem-card-particle {
       position: relative;
-      background: linear-gradient(180deg, var(--parchment) 0%, var(--parchment-deep) 100%);
-      border-radius: 16px;
+      background: rgba(12,12,20,0.85);
+      border: 1px solid rgba(197,160,89,0.12);
+      border-radius: 20px;
       padding: 2.5rem 2rem;
-      box-shadow: 0 8px 32px var(--shadow-dark);
       overflow: hidden;
-      animation: scrollUnroll 1s cubic-bezier(0.22,1,0.36,1) both;
     }
-    body.light .scroll-parchment {
-      box-shadow: 0 8px 32px var(--shadow-light);
+    body.light .poem-card-particle {
+      background: rgba(255,255,255,0.85);
+      border-color: rgba(197,160,89,0.15);
     }
-
-    @keyframes scrollUnroll {
-      from { transform: scaleY(0.02); opacity: 0; }
-      to { transform: scaleY(1); opacity: 1; }
-    }
-
-    /* Paper texture overlay */
-    .scroll-parchment::before {
+    /* Subtle particle glow */
+    .poem-card-particle::before {
       content: '';
-      position: absolute;
-      inset: 0;
-      background: repeating-linear-gradient(
-        0deg,
-        transparent, transparent 2px,
-        rgba(139,115,85,0.03) 2px, rgba(139,115,85,0.03) 4px
-      );
+      position: absolute; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 200px; height: 200px;
+      background: radial-gradient(circle, rgba(197,160,89,0.08) 0%, transparent 70%);
       pointer-events: none;
     }
 
-    /* Scroll roller tops */
-    .scroll-parchment::after {
-      content: '';
-      position: absolute;
-      top: -6px;
-      left: 8%;
-      right: 8%;
-      height: 12px;
-      background: linear-gradient(90deg, var(--gold) 0%, var(--gold-soft) 50%, var(--gold) 100%);
-      border-radius: 6px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-    }
-
-    .parchment-header {
-      text-align: center;
-      margin-bottom: 2rem;
-    }
-    .parchment-header h2 {
-      font-family: 'Amiri', serif;
-      font-size: 1.6rem;
-      font-weight: 700;
-      color: var(--ink);
-      margin-bottom: 0.25rem;
-    }
-    .parchment-header .era {
-      font-size: 0.85rem;
-      color: rgba(44,34,24,0.5);
-      font-weight: 300;
-    }
-
-    /* Poem display */
+    /* Poem text with shimmering particle effect */
     .poem-area {
       text-align: center;
       padding: 1.5rem 0;
+      position: relative; z-index: 1;
     }
     .bayt {
       display: flex;
@@ -327,9 +299,14 @@
       font-family: 'Amiri', serif;
       font-size: clamp(1.25rem, 4vw, 1.7rem);
       line-height: 2;
-      color: var(--ink);
       flex: 1;
       min-width: 120px;
+      /* Particle shimmer on text */
+      animation: particleShimmer 3s ease-in-out infinite;
+    }
+    @keyframes particleShimmer {
+      0%, 100% { text-shadow: 0 0 0 transparent; opacity: 0.95; }
+      50% { text-shadow: 0 0 12px rgba(197,160,89,0.2), 0 0 24px rgba(197,160,89,0.08); opacity: 1; }
     }
     .hemistich:first-child { text-align: left; }
     .hemistich:last-child { text-align: right; }
@@ -339,6 +316,7 @@
       border-radius: 50%;
       background: var(--gold);
       flex-shrink: 0;
+      box-shadow: 0 0 8px rgba(197,160,89,0.4);
     }
 
     .poet-name {
@@ -349,20 +327,21 @@
       text-align: center;
       margin-top: 1rem;
       padding-top: 1rem;
-      border-top: 1px solid rgba(197,160,89,0.3);
+      border-top: 1px solid rgba(197,160,89,0.15);
+      position: relative; z-index: 1;
     }
 
-    /* Section below parchment */
+    /* Info section */
     .info-section {
       margin-top: 2rem;
       padding: 1.5rem;
-      background: rgba(197,160,89,0.06);
-      border: 1px solid rgba(197,160,89,0.12);
+      background: rgba(197,160,89,0.04);
+      border: 1px solid rgba(197,160,89,0.1);
       border-radius: 12px;
     }
     body.light .info-section {
-      background: rgba(197,160,89,0.08);
-      border-color: rgba(197,160,89,0.15);
+      background: rgba(197,160,89,0.06);
+      border-color: rgba(197,160,89,0.12);
     }
     .info-section h3 {
       font-family: 'Amiri', serif;
@@ -410,7 +389,7 @@
     .ctrl-btn:focus-visible { outline: 3px solid var(--indigo); outline-offset: 2px; }
     .ctrl-btn svg { width: 20px; height: 20px; }
 
-    /* ===== CONTROLS: Mobile bottom bar ===== */
+    /* ===== CONTROLS: Particle Burst Tap-Zones (Mobile) ===== */
     .controls-mobile {
       position: fixed;
       bottom: 0;
@@ -419,29 +398,49 @@
       display: none;
       justify-content: space-around;
       align-items: center;
-      height: 56px;
-      background: rgba(12,12,14,0.9);
-      border-top: 1px solid rgba(197,160,89,0.12);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
+      height: 64px;
+      background: transparent;
       z-index: 1000;
     }
     body.light .controls-mobile {
-      background: rgba(253,252,248,0.9);
-      border-top-color: rgba(197,160,89,0.15);
+      background: transparent;
     }
-    .controls-mobile .ctrl-btn {
+
+    .particle-zone {
+      width: 56px; height: 56px;
+      display: flex; align-items: center; justify-content: center;
       background: transparent;
       border: none;
-      border-radius: 8px;
-      backdrop-filter: none;
+      color: rgba(197,160,89,0.3);
+      cursor: pointer;
+      transition: all 0.3s ease;
+      border-radius: 50%;
+      position: relative;
     }
+    /* Invisible until interaction */
+    .particle-zone::before {
+      content: '';
+      position: absolute; inset: 0;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(197,160,89,0) 0%, rgba(197,160,89,0) 100%);
+      transition: background 0.3s ease;
+    }
+    .particle-zone:hover, .particle-zone:focus-visible {
+      color: var(--gold);
+    }
+    .particle-zone:hover::before {
+      background: radial-gradient(circle, rgba(197,160,89,0.15) 0%, transparent 70%);
+    }
+    .particle-zone:active::before {
+      background: radial-gradient(circle, rgba(197,160,89,0.3) 0%, transparent 60%);
+    }
+    .particle-zone svg { width: 20px; height: 20px; position: relative; z-index: 1; }
 
     @media (max-width: 768px) {
       .controls-desktop { display: none; }
       .controls-mobile { display: flex; }
       #app { padding-bottom: 5rem; }
-      .scroll-parchment { padding: 2rem 1.5rem; }
+      .poem-card-particle { padding: 2rem 1.5rem; }
       .bayt { gap: 0.75rem; }
     }
     @media (min-width: 769px) {
@@ -512,18 +511,14 @@
 
   <!-- Main App -->
   <div id="app">
+    <canvas id="appParticleCanvas" aria-hidden="true"></canvas>
     <div class="app-inner">
       <div class="app-brand">
         <span class="en">poetry</span>
         <span class="ar">بالعربي</span>
       </div>
 
-      <div class="scroll-parchment">
-        <div class="parchment-header">
-          <h2>من عيون الشعر العربي</h2>
-          <div class="era">العصر الحديث</div>
-        </div>
-
+      <div class="poem-card-particle">
         <div class="poem-area">
           <div class="bayt">
             <span class="hemistich">أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ</span>
@@ -546,25 +541,20 @@
     </div>
 
     <!-- Desktop controls -->
-    <nav class="controls-desktop" aria-label="أدوات التحكم">
-      <button class="ctrl-btn" aria-label="المفضلة"><i data-lucide="heart"></i></button>
-      <button class="ctrl-btn" aria-label="الخط"><i data-lucide="type"></i></button>
-      <button class="ctrl-btn" aria-label="اللغات"><i data-lucide="languages"></i></button>
-      <button class="ctrl-btn" aria-label="الديوان"><i data-lucide="book-open"></i></button>
-      <button class="ctrl-btn" aria-label="القافية"><i data-lucide="italic"></i></button>
-      <button class="ctrl-btn" id="themeToggleDesktop" aria-label="تبديل السمة"><i data-lucide="sun"></i></button>
-      <button class="ctrl-btn" aria-label="تسجيل الدخول"><i data-lucide="log-in"></i></button>
-      <button class="ctrl-btn" aria-label="الاعدادات"><i data-lucide="settings"></i></button>
+    <nav class="controls-desktop" aria-label="App controls">
+      <button class="ctrl-btn" aria-label="Next poem"><i data-lucide="shuffle"></i></button>
+      <button class="ctrl-btn" aria-label="Save poem"><i data-lucide="heart"></i></button>
+      <button class="ctrl-btn" aria-label="Listen"><i data-lucide="headphones"></i></button>
+      <button class="ctrl-btn" aria-label="Share"><i data-lucide="share-2"></i></button>
+      <button class="ctrl-btn" id="themeToggleDesktop" aria-label="Toggle theme"><i data-lucide="sun"></i></button>
     </nav>
 
-    <!-- Mobile controls -->
-    <nav class="controls-mobile" aria-label="أدوات التحكم">
-      <button class="ctrl-btn" aria-label="الاستماع"><i data-lucide="music"></i></button>
-      <button class="ctrl-btn" aria-label="أفكار"><i data-lucide="lightbulb"></i></button>
-      <button class="ctrl-btn" id="themeToggleMobile" aria-label="تبديل السمة"><i data-lucide="sun"></i></button>
-      <button class="ctrl-btn" aria-label="تحديث"><i data-lucide="refresh-cw"></i></button>
-      <button class="ctrl-btn" aria-label="المكتبة"><i data-lucide="library"></i></button>
-      <button class="ctrl-btn" aria-label="عشوائي"><i data-lucide="shuffle"></i></button>
+    <!-- Particle Burst Tap-Zones (Mobile) -->
+    <nav class="controls-mobile" aria-label="App controls">
+      <button class="particle-zone" aria-label="Next poem"><i data-lucide="shuffle"></i></button>
+      <button class="particle-zone" aria-label="Save poem"><i data-lucide="heart"></i></button>
+      <button class="particle-zone" aria-label="Listen"><i data-lucide="headphones"></i></button>
+      <button class="particle-zone" aria-label="Share"><i data-lucide="share-2"></i></button>
     </nav>
   </div>
 

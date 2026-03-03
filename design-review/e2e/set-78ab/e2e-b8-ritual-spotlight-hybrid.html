@@ -3,274 +3,260 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Floating Library — مكتبة عائمة</title>
-<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<title>B8 Ritual Spotlight - Floating Library</title>
+<link href="https://fonts.googleapis.com/css2?family=Forum&family=Reem+Kufi:wght@400;700&family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
 <style>
 :root {
-  --parchment: #F5ECD7;
-  --leather: #8B4513;
-  --library: #1A0F0A;
-  --gold: #C5A059;
-  --dust: #D4C5A0;
-  --ink: #2A1F14;
+  --parchment: #F5ECD7; --leather: #8B4513; --library: #1A0F0A;
+  --gold: #C5A059; --dust: #D4C5A0; --ink: #2A1F14;
   --glow: rgba(197,160,89,0.35);
 }
 [data-theme="light"] {
-  --bg: var(--parchment);
-  --text: var(--ink);
-  --card-bg: #FFF8EE;
-  --fold: #E8D9BF;
-  --shadow: rgba(42,31,20,0.18);
-  --tab-bg: var(--dust);
-  --tab-text: var(--leather);
+  --bg: var(--parchment); --text: var(--ink); --card-bg: #FFF8EE;
+  --fold: #E8D9BF; --shadow: rgba(42,31,20,0.18);
+  --tab-bg: var(--dust); --tab-text: var(--leather); --muted: rgba(42,31,20,0.5);
 }
 [data-theme="dark"] {
-  --bg: var(--library);
-  --text: var(--parchment);
-  --card-bg: #2A1F14;
-  --fold: #3D2E1E;
-  --shadow: rgba(0,0,0,0.5);
-  --tab-bg: #3D2E1E;
-  --tab-text: var(--gold);
+  --bg: var(--library); --text: var(--parchment); --card-bg: #2A1F14;
+  --fold: #3D2E1E; --shadow: rgba(0,0,0,0.5);
+  --tab-bg: #3D2E1E; --tab-text: var(--gold); --muted: rgba(245,236,215,0.5);
 }
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 body {
-  font-family: 'Tajawal', sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100vh;
-  overflow-x: hidden;
-  transition: background 0.5s, color 0.5s;
+  font-family: 'Tajawal', sans-serif; background: var(--bg); color: var(--text);
+  min-height: 100vh; overflow-x: hidden; transition: background 0.5s, color 0.5s;
 }
+
 /* ---- SPLASH ---- */
 #splash {
-  position: fixed; inset: 0; z-index: 100;
-  background: var(--library);
+  position: fixed; inset: 0; z-index: 100; background: var(--library);
   display: flex; align-items: center; justify-content: center;
   transition: opacity 0.8s ease;
 }
 #splash.hidden { opacity: 0; pointer-events: none; }
 #splash-canvas { width: 100%; height: 100%; display: block; }
+
 /* ---- WALKTHROUGH ---- */
 #walkthrough {
-  position: fixed; inset: 0; z-index: 90;
-  background: var(--bg);
-  display: flex; align-items: center; justify-content: center;
-  transition: opacity 0.6s;
+  position: fixed; inset: 0; z-index: 90; background: var(--bg);
+  display: none; flex-direction: column; align-items: center; justify-content: center;
+  transition: opacity 0.6s; cursor: pointer; padding: 20px;
 }
-#walkthrough.hidden { opacity: 0; pointer-events: none; }
-.wt-container { width: 90%; max-width: 520px; text-align: center; }
-.wt-book {
-  position: relative;
-  background: var(--card-bg);
-  border-radius: 8px 24px 24px 8px;
-  padding: 2.5rem 2rem;
-  margin: 0 auto 1.5rem;
-  max-width: 440px;
-  box-shadow: -4px 4px 18px var(--shadow), 4px 2px 10px var(--shadow);
-  will-change: transform, opacity;
-  transition: transform 0.5s, opacity 0.5s;
+#walkthrough.active { display: flex; }
+
+.walk-card {
+  max-width: 400px; width: 90%; padding: 2rem; text-align: center;
+  background: var(--card-bg); border: 1px solid rgba(139,69,19,0.3);
+  border-radius: 16px; opacity: 0; transform: translateY(20px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+  box-shadow: 0 4px 24px var(--shadow);
 }
-.wt-book::after {
-  content: '';
-  position: absolute;
-  top: 8%; bottom: 8%; left: 50%;
-  width: 2px;
-  background: linear-gradient(to bottom, transparent, var(--fold), transparent);
-  transform: translateX(-1px);
+.walk-card.visible { opacity: 1; transform: translateY(0); }
+
+.walk-icon {
+  width: 48px; height: 48px; margin: 0 auto 16px; border-radius: 50%;
+  background: rgba(197,160,89,0.12); display: flex; align-items: center;
+  justify-content: center; color: var(--gold);
 }
-.wt-book[data-depth="1"] { box-shadow: -2px 2px 8px var(--shadow); }
-.wt-book[data-depth="2"] { box-shadow: -4px 4px 16px var(--shadow); }
-.wt-book[data-depth="3"] { box-shadow: -6px 6px 24px var(--shadow); }
-.wt-book[data-depth="4"] { box-shadow: -8px 8px 32px var(--shadow); }
-.wt-title {
-  font-family: 'Amiri', serif; font-size: 1.35rem;
-  color: var(--gold); margin-bottom: 0.6rem;
+.walk-card h3 {
+  font-family: 'Tajawal', sans-serif; font-size: clamp(1.1rem, 2.5vw, 1.4rem);
+  font-weight: 500; color: var(--text); direction: ltr; margin-bottom: 4px;
 }
-.wt-desc { font-size: 0.95rem; line-height: 1.7; opacity: 0.85; }
-.wt-dots { display: flex; gap: 10px; justify-content: center; margin: 1.2rem 0; }
-.wt-dot {
-  width: 44px; height: 44px; border-radius: 50%;
-  background: transparent; border: none; cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
+.walk-card .walk-ar {
+  font-family: 'Tajawal', sans-serif; font-size: clamp(0.9rem, 2vw, 1.1rem);
+  color: var(--gold); direction: rtl; margin-bottom: 8px;
 }
-.wt-dot::after {
-  content: ''; width: 10px; height: 10px; border-radius: 50%;
-  background: var(--dust); display: block;
-  transition: background 0.3s, transform 0.3s;
+.walk-card p {
+  font-size: clamp(0.8rem, 1.8vw, 0.95rem); line-height: 1.7; color: var(--muted); direction: ltr;
 }
-.wt-dot.active::after { background: var(--gold); transform: scale(1.3); }
-.wt-nav {
-  min-width: 44px; min-height: 44px; padding: 0.6rem 1.6rem;
-  border: 2px solid var(--gold); background: transparent; color: var(--gold);
-  font-family: 'Tajawal', sans-serif; font-size: 1rem; border-radius: 6px;
-  cursor: pointer; transition: background 0.3s, color 0.3s;
+.walk-progress { display: flex; gap: 8px; margin-top: 2rem; }
+.walk-dot {
+  width: 8px; height: 8px; border-radius: 50%; background: var(--fold);
+  transition: all 0.3s;
 }
-.wt-nav:hover, .wt-nav:focus-visible {
-  background: var(--gold); color: var(--library);
-}
+.walk-dot.active { background: var(--gold); width: 24px; border-radius: 4px; }
+.walk-hint { margin-top: 1rem; font-size: 13px; color: var(--muted); opacity: 0.6; }
+
 /* ---- MAIN APP ---- */
-#app { display: none; min-height: 100vh; padding: 1.5rem; }
-#app.visible { display: flex; flex-direction: column; align-items: center; }
+#app { display: none; min-height: 100vh; padding-bottom: 80px; }
+#app.active { display: block; }
+
+/* Top bar */
+.app-top {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 20px; background: rgba(26,15,10,0.85);
+  backdrop-filter: blur(12px); border-bottom: 1px solid rgba(139,69,19,0.3);
+  direction: ltr;
+}
+[data-theme="light"] .app-top { background: rgba(245,236,215,0.9); }
+.app-top-brand { display: flex; align-items: flex-end; gap: 6px; }
+.app-top-brand-en {
+  font-family: 'Forum', serif; font-size: 20px;
+  letter-spacing: -0.05em; color: var(--gold); line-height: 1;
+}
+.app-top-brand-ar {
+  font-family: 'Reem Kufi', sans-serif; font-weight: 700;
+  font-size: 14px; color: var(--gold); line-height: 1;
+}
+.app-top-actions { display: flex; gap: 8px; }
+.app-top-btn {
+  width: 40px; height: 40px; display: flex; align-items: center;
+  justify-content: center; background: transparent;
+  border: 1px solid rgba(139,69,19,0.3); border-radius: 8px;
+  color: var(--muted); cursor: pointer; transition: all 0.2s;
+}
+.app-top-btn:hover { color: var(--gold); border-color: var(--gold); }
+
+/* Scroll container - NO vertical line */
 .scroll-container {
-  position: relative;
-  width: 100%; max-width: 680px;
-  margin: 2rem auto;
-  background: var(--card-bg);
-  border-radius: 40px 12px 12px 40px / 50px 12px 12px 50px;
-  padding: 3rem 2.5rem;
-  box-shadow: inset 0 0 40px var(--glow), 0 8px 32px var(--shadow);
-  will-change: transform;
+  position: relative; width: 100%; max-width: 680px; margin: 0 auto;
+  background: var(--card-bg); border-radius: 20px;
+  padding: 3rem 2.5rem; box-shadow: inset 0 0 40px var(--glow), 0 8px 32px var(--shadow);
   transition: background 0.5s, box-shadow 0.5s;
-}
-.scroll-container::before {
-  content: '';
-  position: absolute; top: 5%; bottom: 5%; left: 50%;
-  width: 2px;
-  background: linear-gradient(to bottom, transparent, var(--fold), var(--fold), transparent);
-  transform: translateX(-1px);
-}
-.scroll-container::after {
-  content: '';
-  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
-  border-radius: inherit;
-  pointer-events: none;
-  box-shadow: inset 8px 0 16px -6px var(--shadow), inset -8px 0 16px -6px var(--shadow);
 }
 .poem-header { text-align: center; margin-bottom: 2rem; }
 .poet-name {
-  font-family: 'Amiri', serif; font-size: 1.6rem;
-  color: var(--gold); margin-bottom: 0.3rem;
+  font-family: 'Amiri', serif; font-size: 1.6rem; color: var(--gold); margin-bottom: 0.3rem;
 }
 .poem-label { font-size: 0.85rem; opacity: 0.6; }
 .bayt {
-  display: flex; justify-content: center; gap: 2rem;
-  flex-wrap: wrap; margin: 1.5rem 0;
-  font-family: 'Amiri', serif; font-size: 1.45rem;
-  line-height: 2.2;
+  display: flex; justify-content: center; gap: 2rem; flex-wrap: wrap;
+  margin: 1.5rem 0; font-family: 'Amiri', serif;
+  font-size: clamp(1.15rem, 3vw, 1.45rem); line-height: 2.2;
 }
 .shatr { flex: 1 1 200px; text-align: center; min-width: 0; }
 .separator {
   width: 60px; height: 2px; margin: 0 auto;
   background: linear-gradient(to right, transparent, var(--gold), transparent);
 }
-/* ---- BOOKMARK TABS ---- */
-.tabs-bar {
-  display: flex; gap: 0.5rem; justify-content: center; flex-wrap: wrap;
-  margin-top: 2rem; width: 100%; max-width: 680px;
+
+.reader { max-width: 720px; margin: 0 auto; padding: 80px 20px 40px; }
+
+/* Vertical Rail */
+.vertical-rail {
+  position: fixed; right: 16px; top: 50%; transform: translateY(-50%);
+  display: flex; flex-direction: column; gap: 4px; z-index: 40; direction: ltr;
 }
-.tab-btn {
-  font-family: 'Tajawal', sans-serif; font-size: 0.9rem;
-  min-width: 44px; min-height: 44px;
-  padding: 0.55rem 1.3rem;
-  background: var(--tab-bg); color: var(--tab-text);
-  border: none; cursor: pointer;
-  border-radius: 4px 4px 0 0;
-  transform: rotate(-1.2deg);
-  box-shadow: 0 -2px 6px var(--shadow);
-  transition: transform 0.25s, background 0.3s, color 0.3s;
-  will-change: transform;
+.rail-btn {
+  width: 44px; height: 44px; display: flex; align-items: center;
+  justify-content: center; background: var(--card-bg);
+  border: 1px solid rgba(139,69,19,0.3); border-radius: 10px;
+  color: var(--muted); cursor: pointer; transition: all 0.2s; position: relative;
 }
-.tab-btn:nth-child(2) { transform: rotate(0.8deg); }
-.tab-btn:nth-child(3) { transform: rotate(-0.5deg); }
-.tab-btn:nth-child(4) { transform: rotate(1.5deg); }
-.tab-btn:hover, .tab-btn:focus-visible {
-  transform: rotate(0deg) translateY(-3px);
-  background: var(--gold); color: var(--library);
+.rail-btn:hover { color: var(--gold); border-color: var(--gold); transform: scale(1.08); }
+.rail-btn .tooltip {
+  position: absolute; right: 52px; top: 50%; transform: translateY(-50%);
+  background: var(--card-bg); border: 1px solid rgba(139,69,19,0.3);
+  color: var(--text); font-family: 'Tajawal', sans-serif; font-size: 12px;
+  padding: 4px 10px; border-radius: 6px; white-space: nowrap;
+  opacity: 0; pointer-events: none; transition: opacity 0.2s;
 }
-.tab-btn.active {
-  background: var(--gold); color: var(--library);
-  transform: rotate(0deg) translateY(-4px);
-  font-weight: 700;
+.rail-btn:hover .tooltip { opacity: 1; }
+
+/* Bottom Nav */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
+  display: flex; align-items: center; justify-content: center; gap: 4px;
+  padding: 10px 20px; background: rgba(26,15,10,0.9);
+  backdrop-filter: blur(16px); border-top: 1px solid rgba(139,69,19,0.3);
+  direction: ltr;
 }
-/* ---- THEME TOGGLE ---- */
-.theme-toggle {
-  position: fixed; top: 1rem; left: 1rem; z-index: 110;
-  min-width: 44px; min-height: 44px;
-  background: var(--tab-bg); border: 2px solid var(--gold);
-  border-radius: 50%; cursor: pointer;
-  font-size: 1.2rem; display: flex; align-items: center; justify-content: center;
-  transition: background 0.3s, color 0.3s;
-  color: var(--gold);
+[data-theme="light"] .bottom-nav { background: rgba(245,236,215,0.95); }
+.nav-item {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 8px 16px; background: transparent; border: none;
+  color: var(--muted); cursor: pointer; font-family: 'Tajawal', sans-serif;
+  font-size: 11px; transition: color 0.2s; min-width: 60px;
 }
-.theme-toggle:hover, .theme-toggle:focus-visible {
-  background: var(--gold); color: var(--library);
-}
-/* ---- REDUCED MOTION ---- */
+.nav-item.active { color: var(--gold); }
+.nav-item:hover { color: var(--gold); }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
-    animation-duration: 0.01ms !important;
-    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important; transition-duration: 0.01ms !important;
   }
-  .tab-btn { transform: none !important; }
-  .tab-btn:hover { transform: translateY(-3px) !important; }
 }
-/* ---- MOBILE ---- */
 @media (max-width: 768px) {
-  .scroll-container {
-    padding: 2rem 1.2rem;
-    border-radius: 24px 8px 8px 24px / 30px 8px 8px 30px;
-  }
+  .vertical-rail { display: none; }
+  .scroll-container { padding: 2rem 1.2rem; }
+  .reader { padding: 70px 16px 40px; }
   .bayt { font-size: 1.15rem; gap: 1rem; }
-  .poet-name { font-size: 1.3rem; }
-  .tab-btn { padding: 0.5rem 1rem; font-size: 0.82rem; }
 }
 </style>
 </head>
 <body data-theme="dark">
 
-<button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">&#9788;</button>
-
 <!-- SPLASH -->
 <div id="splash"><canvas id="splash-canvas"></canvas></div>
 
 <!-- WALKTHROUGH -->
-<div id="walkthrough" class="hidden">
-  <div class="wt-container">
-    <div class="wt-book" id="wtBook" data-depth="1">
-      <p class="wt-title" id="wtTitle"></p>
-      <p class="wt-desc" id="wtDesc"></p>
-    </div>
-    <div class="wt-dots" id="wtDots"></div>
-    <button class="wt-nav" id="wtNav">التالي</button>
+<div id="walkthrough">
+  <div class="walk-card" id="walkCard">
+    <div class="walk-icon" id="walkIcon"></div>
+    <h3 id="walkTitle"></h3>
+    <div class="walk-ar" id="walkAr"></div>
+    <p id="walkDesc"></p>
   </div>
+  <div class="walk-progress" id="walkProgress"></div>
+  <span class="walk-hint">Tap anywhere to continue</span>
 </div>
 
 <!-- MAIN APP -->
 <div id="app">
-  <div class="scroll-container">
-    <div class="poem-header">
-      <h1 class="poet-name">أحمد شوقي</h1>
-      <p class="poem-label">أمير الشعراء</p>
+  <header class="app-top">
+    <div class="app-top-brand">
+      <span class="app-top-brand-en">poetry</span>
+      <span class="app-top-brand-ar">بالعربي</span>
     </div>
-    <div class="separator"></div>
-    <div class="bayt">
-      <span class="shatr">أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ</span>
-      <span class="shatr">فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي</span>
+    <div class="app-top-actions">
+      <button class="app-top-btn" id="themeToggle" aria-label="Toggle theme">
+        <i data-lucide="sun" style="width:18px;height:18px"></i>
+      </button>
+      <button class="app-top-btn" aria-label="Settings">
+        <i data-lucide="settings" style="width:18px;height:18px"></i>
+      </button>
     </div>
-    <div class="separator"></div>
+  </header>
+
+  <nav class="vertical-rail">
+    <button class="rail-btn"><i data-lucide="heart" style="width:18px;height:18px"></i><span class="tooltip">Save</span></button>
+    <button class="rail-btn"><i data-lucide="type" style="width:18px;height:18px"></i><span class="tooltip">Font size</span></button>
+    <button class="rail-btn"><i data-lucide="languages" style="width:18px;height:18px"></i><span class="tooltip">Transliteration</span></button>
+    <button class="rail-btn"><i data-lucide="book-open" style="width:18px;height:18px"></i><span class="tooltip">Tafsir</span></button>
+    <button class="rail-btn"><i data-lucide="italic" style="width:18px;height:18px"></i><span class="tooltip">Tashkeel</span></button>
+    <button class="rail-btn"><i data-lucide="log-in" style="width:18px;height:18px"></i><span class="tooltip">Sign in</span></button>
+    <button class="rail-btn"><i data-lucide="settings" style="width:18px;height:18px"></i><span class="tooltip">Settings</span></button>
+  </nav>
+
+  <div class="reader">
+    <div class="scroll-container">
+      <div class="poem-header">
+        <h1 class="poet-name">المتنبي</h1>
+        <p class="poem-label">Al-Mutanabbi</p>
+      </div>
+      <div class="separator"></div>
+      <div class="bayt" dir="rtl" lang="ar">
+        <span class="shatr">عَلَى قَدْرِ أَهْلِ العَزْمِ تَأْتِي العَزَائِمُ</span>
+        <span class="shatr">وَتَأْتِي عَلَى قَدْرِ الكِرَامِ المَكَارِمُ</span>
+      </div>
+      <div class="separator"></div>
+    </div>
   </div>
-  <div class="tabs-bar">
-    <button class="tab-btn active">القصيدة</button>
-    <button class="tab-btn">الشاعر</button>
-    <button class="tab-btn">التفسير</button>
-    <button class="tab-btn">مشاركة</button>
-  </div>
+
+  <nav class="bottom-nav">
+    <button class="nav-item"><i data-lucide="music" style="width:20px;height:20px"></i>Music</button>
+    <button class="nav-item"><i data-lucide="lightbulb" style="width:20px;height:20px"></i>Insight</button>
+    <button class="nav-item active"><i data-lucide="refresh-cw" style="width:20px;height:20px"></i>Refresh</button>
+    <button class="nav-item"><i data-lucide="library" style="width:20px;height:20px"></i>Library</button>
+    <button class="nav-item"><i data-lucide="shuffle" style="width:20px;height:20px"></i>Shuffle</button>
+  </nav>
 </div>
 
 <script>
 /* ============================================
-   THEME TOGGLE
-   ============================================ */
-var themeBtn = document.getElementById('themeToggle');
-themeBtn.addEventListener('click', function() {
-  var isDark = document.body.getAttribute('data-theme') === 'dark';
-  document.body.setAttribute('data-theme', isDark ? 'light' : 'dark');
-  themeBtn.textContent = isDark ? '\u263E' : '\u2606';
-});
-
-/* ============================================
-   SPLASH — FLOATING SCROLLS ON CANVAS
+   SPLASH -- FLOATING SCROLLS ON CANVAS
    ============================================ */
 var canvas = document.getElementById('splash-canvas');
 var ctx = canvas.getContext('2d');
@@ -279,58 +265,38 @@ var SCROLL_COUNT = isMobile ? 6 : 12;
 var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 var cW, cH;
 
-function resizeCanvas() {
-  cW = canvas.width = window.innerWidth;
-  cH = canvas.height = window.innerHeight;
-}
+function resizeCanvas() { cW = canvas.width = window.innerWidth; cH = canvas.height = window.innerHeight; }
 resizeCanvas();
 window.addEventListener('resize', resizeCanvas);
 
 function createScroll(i, total) {
   var isCenter = i === Math.floor(total / 2);
   var s = {
-    w: 60 + Math.random() * 50,
-    h: 28 + Math.random() * 18,
-    x: Math.random() * cW,
-    y: Math.random() * cH,
-    vx: (Math.random() - 0.5) * 0.4,
-    vy: (Math.random() - 0.5) * 0.4,
-    angle: (Math.random() - 0.5) * 0.3,
-    va: (Math.random() - 0.5) * 0.003,
-    wobblePhase: Math.random() * Math.PI * 2,
-    wobbleSpeed: 0.008 + Math.random() * 0.008,
-    wobbleAmp: 0.6 + Math.random() * 0.8,
-    glowAlpha: 0.15 + Math.random() * 0.25,
-    isCenter: isCenter,
-    openProgress: 0
+    w: 60 + Math.random() * 50, h: 28 + Math.random() * 18,
+    x: Math.random() * cW, y: Math.random() * cH,
+    vx: (Math.random() - 0.5) * 0.4, vy: (Math.random() - 0.5) * 0.4,
+    angle: (Math.random() - 0.5) * 0.3, va: (Math.random() - 0.5) * 0.003,
+    wobblePhase: Math.random() * Math.PI * 2, wobbleSpeed: 0.008 + Math.random() * 0.008,
+    wobbleAmp: 0.6 + Math.random() * 0.8, glowAlpha: 0.15 + Math.random() * 0.25,
+    isCenter: isCenter, openProgress: 0
   };
-  if (isCenter) {
-    s.x = cW / 2; s.y = cH / 2;
-    s.vx = 0; s.vy = 0;
-    s.w = 80; s.h = 36;
-  }
+  if (isCenter) { s.x = cW / 2; s.y = cH / 2; s.vx = 0; s.vy = 0; s.w = 80; s.h = 36; }
   return s;
 }
-
 var scrollObjs = [];
-for (var si = 0; si < SCROLL_COUNT; si++) {
-  scrollObjs.push(createScroll(si, SCROLL_COUNT));
-}
+for (var si = 0; si < SCROLL_COUNT; si++) scrollObjs.push(createScroll(si, SCROLL_COUNT));
 
 function updateScroll(s, t) {
   if (reducedMotion) return;
   s.wobblePhase += s.wobbleSpeed;
-  var wobble = Math.sin(s.wobblePhase) * s.wobbleAmp;
   s.x += s.vx + Math.sin(s.wobblePhase * 0.7) * 0.15;
-  s.y += s.vy + wobble * 0.1;
+  s.y += s.vy + Math.sin(s.wobblePhase) * s.wobbleAmp * 0.1;
   s.angle += s.va;
   if (s.x < -s.w) s.x = cW + s.w;
   if (s.x > cW + s.w) s.x = -s.w;
   if (s.y < -s.h) s.y = cH + s.h;
   if (s.y > cH + s.h) s.y = -s.h;
-  if (s.isCenter && t > 2000) {
-    s.openProgress = Math.min(1, (t - 2000) / 1200);
-  }
+  if (s.isCenter && t > 2000) s.openProgress = Math.min(1, (t - 2000) / 1200);
 }
 
 function drawScroll(s) {
@@ -340,44 +306,23 @@ function drawScroll(s) {
   var scale = s.isCenter ? 1 + s.openProgress * 0.8 : 1;
   var dw = s.w * (1 + s.openProgress * 1.2) * scale;
   var dh = s.h * scale;
-  var r = 8;
-
   ctx.shadowColor = 'rgba(197,160,89,' + (s.glowAlpha + s.openProgress * 0.3) + ')';
   ctx.shadowBlur = 18 + s.openProgress * 20;
-
   ctx.beginPath();
-  ctx.roundRect(-dw / 2, -dh / 2, dw, dh, r);
+  ctx.roundRect(-dw / 2, -dh / 2, dw, dh, 8);
   ctx.fillStyle = '#F5ECD7';
   ctx.fill();
   ctx.shadowBlur = 0;
-
   ctx.strokeStyle = 'rgba(139,69,19,0.5)';
   ctx.lineWidth = 1.5;
   ctx.stroke();
-
-  /* curl accents on edges */
-  ctx.beginPath();
-  ctx.moveTo(-dw / 2 + 5, -dh / 2 + 4);
-  ctx.lineTo(-dw / 2 + 5, dh / 2 - 4);
-  ctx.strokeStyle = 'rgba(139,69,19,0.2)';
-  ctx.lineWidth = 1;
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.moveTo(dw / 2 - 5, -dh / 2 + 4);
-  ctx.lineTo(dw / 2 - 5, dh / 2 - 4);
-  ctx.stroke();
-
   if (s.isCenter && s.openProgress > 0.5) {
     var alpha = Math.min(1, (s.openProgress - 0.5) * 2);
     ctx.globalAlpha = alpha;
     ctx.fillStyle = '#2A1F14';
     ctx.font = '700 ' + (14 * scale) + 'px Amiri, serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('\u0645\u0643\u062A\u0628\u0629 \u0639\u0627\u0626\u0645\u0629', 0, -4 * scale);
-    ctx.font = (10 * scale) + 'px Tajawal, sans-serif';
-    ctx.fillStyle = '#8B4513';
-    ctx.fillText('Floating Library', 0, 10 * scale);
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillText('poetry \u0628\u0627\u0644\u0639\u0631\u0628\u064A', 0, 0);
     ctx.globalAlpha = 1;
   }
   ctx.restore();
@@ -386,14 +331,13 @@ function drawScroll(s) {
 var splashStart = performance.now();
 var splashDone = false;
 
-function drawDustParticles(t) {
+function drawDust(t) {
   for (var p = 0; p < 25; p++) {
     var px = (Math.sin(t * 0.0003 + p * 1.3) * 0.5 + 0.5) * cW;
     var py = (Math.cos(t * 0.0004 + p * 0.9) * 0.5 + 0.5) * cH;
-    var a = 0.08 + Math.sin(t * 0.001 + p) * 0.07;
     ctx.beginPath();
     ctx.arc(px, py, 1.2, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(212,197,160,' + a + ')';
+    ctx.fillStyle = 'rgba(212,197,160,' + (0.08 + Math.sin(t * 0.001 + p) * 0.07) + ')';
     ctx.fill();
   }
 }
@@ -403,20 +347,15 @@ function animateSplash(now) {
   ctx.clearRect(0, 0, cW, cH);
   ctx.fillStyle = '#1A0F0A';
   ctx.fillRect(0, 0, cW, cH);
-
-  drawDustParticles(t);
-
-  for (var i = 0; i < scrollObjs.length; i++) {
-    updateScroll(scrollObjs[i], t);
-    drawScroll(scrollObjs[i]);
-  }
-
+  drawDust(t);
+  for (var i = 0; i < scrollObjs.length; i++) { updateScroll(scrollObjs[i], t); drawScroll(scrollObjs[i]); }
   if (t > 3500 && !splashDone) {
     splashDone = true;
     document.getElementById('splash').classList.add('hidden');
     setTimeout(function() {
       document.getElementById('splash').style.display = 'none';
-      showWalkthrough();
+      document.getElementById('walkthrough').classList.add('active');
+      currentStep = 0; renderStep();
     }, 800);
     return;
   }
@@ -425,104 +364,75 @@ function animateSplash(now) {
 requestAnimationFrame(animateSplash);
 
 /* ============================================
-   WALKTHROUGH — BOOK/SCROLL STEPS
+   WALKTHROUGH -- SEQUENTIAL TAP-TO-ADVANCE
    ============================================ */
-var WT_STEPS = [
-  { title: '\u0645\u0643\u062A\u0628\u0629 \u0639\u0627\u0626\u0645\u0629',
-    desc: '\u0631\u062D\u0644\u0629 \u0628\u064A\u0646 \u0623\u062C\u0645\u0644 \u0623\u0628\u064A\u0627\u062A \u0627\u0644\u0634\u0639\u0631 \u0627\u0644\u0639\u0631\u0628\u064A\u060C \u0643\u0623\u0646\u0643 \u062A\u062A\u0635\u0641\u062D \u0645\u062E\u0637\u0648\u0637\u0627\u062A \u0642\u062F\u064A\u0645\u0629 \u062A\u0637\u0641\u0648 \u0641\u064A \u0641\u0636\u0627\u0621 \u0644\u0627 \u0645\u062A\u0646\u0627\u0647\u064D.',
-    depth: 1 },
-  { title: '\u0645\u062E\u0637\u0648\u0637\u0627\u062A \u062D\u064A\u0651\u0629',
-    desc: '\u0643\u0644 \u0642\u0635\u064A\u062F\u0629 \u062A\u064F\u0639\u0631\u0636 \u0639\u0644\u0649 \u0644\u0641\u0627\u0641\u0629 \u062A\u0646\u0628\u0636 \u0628\u0627\u0644\u062D\u064A\u0627\u0629\u060C \u0628\u062A\u0635\u0645\u064A\u0645 \u0645\u0633\u062A\u0648\u062D\u0649 \u0645\u0646 \u0627\u0644\u0645\u062E\u0637\u0648\u0637\u0627\u062A \u0627\u0644\u0639\u0631\u0628\u064A\u0629 \u0627\u0644\u0623\u0635\u064A\u0644\u0629.',
-    depth: 2 },
-  { title: '\u0627\u0643\u062A\u0634\u0641 \u0648\u0627\u0633\u062A\u0645\u062A\u0639',
-    desc: '\u062A\u0635\u0641\u0651\u062D \u0627\u0644\u0642\u0635\u0627\u0626\u062F\u060C \u0627\u0642\u0631\u0623 \u0627\u0644\u062A\u0641\u0633\u064A\u0631\u0627\u062A\u060C \u0648\u0634\u0627\u0631\u0643 \u0645\u0627 \u064A\u0644\u0647\u0645\u0643 \u0645\u0639 \u0627\u0644\u0639\u0627\u0644\u0645.',
-    depth: 3 },
-  { title: '\u0647\u064A\u0651\u0627 \u0646\u0628\u062F\u0623',
-    desc: '\u0627\u063A\u0645\u0631 \u0646\u0641\u0633\u0643 \u0641\u064A \u0628\u062D\u0631 \u0627\u0644\u0634\u0639\u0631 \u0627\u0644\u0639\u0631\u0628\u064A. \u0627\u0636\u063A\u0637 \u00AB\u0627\u0628\u062F\u0623\u00BB \u0644\u0644\u0627\u0646\u0637\u0644\u0627\u0642.',
-    depth: 4 }
+var walkSteps = [
+  { icon: 'scroll', title: 'Floating Library', ar: '\u0645\u0643\u062A\u0628\u0629 \u0639\u0627\u0626\u0645\u0629', desc: 'Journey through the finest Arabic poetry, displayed on scrolls that float in space.' },
+  { icon: 'compass', title: 'Discover 84,000+ Poems', ar: '\u0627\u0643\u062A\u0634\u0641 \u0627\u0644\u0642\u0635\u0627\u0626\u062F', desc: 'Browse classical and modern Arabic poems from centuries of literary tradition.' },
+  { icon: 'headphones', title: 'Listen to Recitation', ar: '\u0627\u0633\u062A\u0645\u0639 \u0644\u0644\u0625\u0644\u0642\u0627\u0621', desc: 'Hear poems brought to life with natural AI voices capturing the melody of Arabic verse.' },
+  { icon: 'heart', title: 'Save Your Favorites', ar: '\u0627\u062D\u0641\u0638 \u0648\u0634\u0627\u0631\u0643', desc: 'Build your personal collection and share what inspires you with the world.' }
 ];
-var wtStep = 0;
-
-function clearDots() {
-  var dotsEl = document.getElementById('wtDots');
-  while (dotsEl.firstChild) { dotsEl.removeChild(dotsEl.firstChild); }
-  return dotsEl;
-}
-
-function showWalkthrough() {
-  var wt = document.getElementById('walkthrough');
-  wt.classList.remove('hidden');
-  var dotsEl = clearDots();
-  for (var i = 0; i < WT_STEPS.length; i++) {
-    (function(idx) {
-      var dot = document.createElement('button');
-      dot.className = 'wt-dot' + (idx === 0 ? ' active' : '');
-      dot.setAttribute('aria-label', '\u062E\u0637\u0648\u0629 ' + (idx + 1));
-      dot.addEventListener('click', function() { goToStep(idx); });
-      dotsEl.appendChild(dot);
-    })(i);
-  }
-  renderStep();
-}
+var currentStep = 0;
 
 function renderStep() {
-  var s = WT_STEPS[wtStep];
-  var book = document.getElementById('wtBook');
-  var title = document.getElementById('wtTitle');
-  var desc = document.getElementById('wtDesc');
-  var nav = document.getElementById('wtNav');
+  var step = walkSteps[currentStep];
+  var card = document.getElementById('walkCard');
+  var iconEl = document.getElementById('walkIcon');
+  var titleEl = document.getElementById('walkTitle');
+  var arEl = document.getElementById('walkAr');
+  var descEl = document.getElementById('walkDesc');
+  var progress = document.getElementById('walkProgress');
 
-  book.setAttribute('data-depth', s.depth);
-  book.style.transform = 'scale(0.95)';
-  book.style.opacity = '0';
-  setTimeout(function() {
-    book.style.transform = 'scale(1)';
-    book.style.opacity = '1';
-  }, 50);
+  while (iconEl.firstChild) iconEl.removeChild(iconEl.firstChild);
+  var ic = document.createElement('i');
+  ic.setAttribute('data-lucide', step.icon);
+  ic.style.width = '24px'; ic.style.height = '24px';
+  iconEl.appendChild(ic);
 
-  title.textContent = s.title;
-  desc.textContent = s.desc;
-  nav.textContent = wtStep < WT_STEPS.length - 1
-    ? '\u0627\u0644\u062A\u0627\u0644\u064A'
-    : '\u0627\u0628\u062F\u0623';
+  titleEl.textContent = step.title;
+  arEl.textContent = step.ar;
+  descEl.textContent = step.desc;
 
-  var dots = document.querySelectorAll('.wt-dot');
-  for (var d = 0; d < dots.length; d++) {
-    if (d === wtStep) dots[d].classList.add('active');
-    else dots[d].classList.remove('active');
+  while (progress.firstChild) progress.removeChild(progress.firstChild);
+  for (var d = 0; d < walkSteps.length; d++) {
+    var dot = document.createElement('div');
+    dot.className = 'walk-dot' + (d === currentStep ? ' active' : '');
+    progress.appendChild(dot);
   }
+
+  card.classList.remove('visible');
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() { card.classList.add('visible'); });
+  });
+  if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
-function goToStep(idx) { wtStep = idx; renderStep(); }
-
-document.getElementById('wtNav').addEventListener('click', function() {
-  if (wtStep < WT_STEPS.length - 1) {
-    wtStep++;
-    renderStep();
+document.getElementById('walkthrough').addEventListener('click', function() {
+  currentStep++;
+  if (currentStep >= walkSteps.length) {
+    document.getElementById('walkthrough').style.display = 'none';
+    document.getElementById('app').classList.add('active');
+    if (typeof lucide !== 'undefined') lucide.createIcons();
   } else {
-    var wt = document.getElementById('walkthrough');
-    wt.classList.add('hidden');
-    setTimeout(function() {
-      wt.style.display = 'none';
-      document.getElementById('app').classList.add('visible');
-    }, 600);
+    renderStep();
   }
 });
 
 /* ============================================
-   TAB BUTTONS
+   THEME TOGGLE
    ============================================ */
-var tabBtns = document.querySelectorAll('.tab-btn');
-for (var ti = 0; ti < tabBtns.length; ti++) {
-  (function(btn) {
-    btn.addEventListener('click', function() {
-      for (var j = 0; j < tabBtns.length; j++) {
-        tabBtns[j].classList.remove('active');
-      }
-      btn.classList.add('active');
-    });
-  })(tabBtns[ti]);
-}
+document.getElementById('themeToggle').addEventListener('click', function() {
+  var body = document.body;
+  if (body.getAttribute('data-theme') === 'dark') {
+    body.setAttribute('data-theme', 'light');
+  } else {
+    body.setAttribute('data-theme', 'dark');
+  }
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+});
 </script>
 </body>
 </html>

@@ -1,761 +1,549 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>B10: Tessellation Garden - Poetry bil Araby</title>
-  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>B10 Signature Blend - Tessellation Garden</title>
+<link href="https://fonts.googleapis.com/css2?family=Forum&family=Reem+Kufi:wght@400;700&family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --emerald: #0A3D2F; --gold: #C5A059; --ivory: #FDFCF8;
+  --teal: #1A6B5A; --emerald-light: #0E5840;
+  --gold-dim: rgba(197,160,89,0.3);
+  --muted: rgba(253,252,248,0.5);
+}
+body {
+  font-family: 'Tajawal', sans-serif; background: var(--emerald);
+  color: var(--ivory); overflow-x: hidden;
+  transition: background 0.5s ease, color 0.5s ease;
+}
+body.light { background: var(--ivory); color: #1a2a1f; }
 
-    :root {
-      --emerald: #0A3D2F;
-      --gold: #C5A059;
-      --ivory: #FDFCF8;
-      --teal: #1A6B5A;
-      --emerald-light: #0E5840;
-      --gold-dim: rgba(197, 160, 89, 0.3);
-    }
+/* ===== SPLASH ===== */
+.splash {
+  position: fixed; inset: 0; z-index: 9999;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--emerald);
+}
+.splash.fade-out { animation: splashOut 0.8s ease forwards; }
+.splash canvas {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+}
 
-    body {
-      font-family: 'Tajawal', sans-serif;
-      background: var(--emerald);
-      color: var(--ivory);
-      overflow-x: hidden;
-      transition: background 0.5s ease, color 0.5s ease;
-    }
+.splash-content {
+  position: relative; z-index: 2; text-align: center;
+  opacity: 0; animation: fadeInContent 1.5s ease 0.8s forwards;
+}
 
-    body.light {
-      background: var(--ivory);
-      color: #1a2a1f;
-    }
+/* Brand */
+.splash-brand {
+  display: flex; align-items: flex-end; justify-content: center;
+  gap: 0.5rem; margin-bottom: 1rem;
+}
+.splash-brand-en {
+  font-family: 'Forum', serif; font-size: clamp(3rem, 6vw, 4.5rem);
+  letter-spacing: -0.05em; color: var(--gold); line-height: 1;
+  text-shadow: 0 0 40px rgba(197,160,89,0.5);
+}
+.splash-brand-ar {
+  font-family: 'Reem Kufi', sans-serif; font-weight: 700;
+  font-size: clamp(1.875rem, 4vw, 3rem); color: var(--gold); line-height: 1;
+}
 
-    /* ========== SPLASH ========== */
-    .splash {
-      position: fixed;
-      inset: 0;
-      z-index: 9999;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--emerald);
-      will-change: opacity;
-    }
+/* Fixed: high contrast splash subtitle */
+.splash-subtitle {
+  font-size: clamp(14px, 2.5vw, 18px); color: var(--ivory);
+  letter-spacing: 0.15em; direction: ltr; opacity: 0.8;
+}
 
-    .splash.fade-out {
-      animation: splashOut 0.8s ease forwards;
-    }
+.splash-enter {
+  margin-top: 2.5rem; padding: 14px 40px; min-height: 44px;
+  background: transparent; border: 1px solid var(--gold); color: var(--gold);
+  font-family: 'Tajawal', sans-serif; font-size: 15px; border-radius: 8px;
+  cursor: pointer; transition: all 0.3s ease;
+  opacity: 0; animation: fadeInContent 1s ease 2s forwards;
+}
+.splash-enter:hover {
+  background: var(--gold); color: var(--emerald);
+  box-shadow: 0 0 30px rgba(197,160,89,0.4);
+}
 
-    .splash canvas {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      will-change: transform;
-    }
+@keyframes fadeInContent { to { opacity: 1; } }
+@keyframes splashOut { to { opacity: 0; pointer-events: none; } }
 
-    .splash-text {
-      position: relative;
-      z-index: 2;
-      text-align: center;
-      opacity: 0;
-      animation: textIn 1.2s ease 0.8s forwards;
-    }
+/* ===== WALKTHROUGH ===== */
+.walkthrough {
+  position: fixed; inset: 0; z-index: 9998;
+  background: rgba(6,30,22,0.97); display: none;
+  align-items: center; justify-content: center;
+  padding: 20px; cursor: pointer;
+  flex-direction: column;
+}
+.walkthrough.active { display: flex; }
 
-    .splash-text h1 {
-      font-family: 'Amiri', serif;
-      font-size: 48px;
-      color: var(--gold);
-      text-shadow: 0 0 40px rgba(197, 160, 89, 0.5);
-      margin-bottom: 12px;
-    }
+.walk-card {
+  max-width: 400px; width: 90%; padding: 2rem; text-align: center;
+  background: linear-gradient(135deg, rgba(10,61,47,0.9), rgba(26,107,90,0.3));
+  border: 1px solid var(--gold-dim); border-radius: 16px;
+  opacity: 0; transform: translateY(20px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.walk-card.visible { opacity: 1; transform: translateY(0); }
 
-    .splash-text p {
-      font-size: 16px;
-      color: var(--teal);
-      letter-spacing: 2px;
-    }
+.walk-icon {
+  width: 48px; height: 48px; margin: 0 auto 16px; border-radius: 50%;
+  background: rgba(197,160,89,0.1); display: flex; align-items: center;
+  justify-content: center; color: var(--gold);
+}
+.walk-card h3 {
+  font-family: 'Tajawal', sans-serif; font-size: clamp(1.1rem, 2.5vw, 1.4rem);
+  font-weight: 500; color: var(--ivory); direction: ltr; margin-bottom: 4px;
+}
+.walk-card .walk-ar {
+  font-family: 'Tajawal', sans-serif; font-size: clamp(0.9rem, 2vw, 1.1rem);
+  color: var(--gold); direction: rtl; margin-bottom: 8px;
+}
+.walk-card p {
+  font-size: clamp(0.8rem, 1.8vw, 0.95rem); line-height: 1.7;
+  color: var(--muted); direction: ltr;
+}
+.walk-progress { display: flex; gap: 8px; margin-top: 2rem; }
+.walk-dot {
+  width: 8px; height: 8px; border-radius: 50%; background: rgba(197,160,89,0.2);
+  transition: all 0.3s;
+}
+.walk-dot.active { background: var(--gold); width: 24px; border-radius: 4px; }
+.walk-hint { margin-top: 1rem; font-size: 13px; color: var(--muted); opacity: 0.6; }
 
-    @keyframes textIn {
-      to { opacity: 1; }
-    }
+/* ===== MAIN APP ===== */
+.app { display: none; min-height: 100vh; padding-bottom: 80px; }
+.app.active { display: block; }
 
-    @keyframes splashOut {
-      to { opacity: 0; pointer-events: none; }
-    }
+/* Top bar */
+.app-top {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 20px; background: rgba(10,61,47,0.9);
+  backdrop-filter: blur(12px); border-bottom: 1px solid var(--gold-dim);
+  direction: ltr;
+}
+body.light .app-top { background: rgba(253,252,248,0.9); }
+.app-top-brand { display: flex; align-items: flex-end; gap: 6px; }
+.app-top-brand-en {
+  font-family: 'Forum', serif; font-size: 20px;
+  letter-spacing: -0.05em; color: var(--gold); line-height: 1;
+}
+.app-top-brand-ar {
+  font-family: 'Reem Kufi', sans-serif; font-weight: 700;
+  font-size: 14px; color: var(--gold); line-height: 1;
+}
+.app-top-actions { display: flex; gap: 8px; }
+.app-top-btn {
+  width: 40px; height: 40px; display: flex; align-items: center;
+  justify-content: center; background: transparent;
+  border: 1px solid var(--gold-dim); border-radius: 8px;
+  color: var(--muted); cursor: pointer; transition: all 0.2s;
+}
+.app-top-btn:hover { color: var(--gold); border-color: var(--gold); }
 
-    /* ========== WALKTHROUGH (Hexagonal Grid) ========== */
-    .walkthrough {
-      position: fixed;
-      inset: 0;
-      background: rgba(6, 30, 22, 0.97);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 9998;
-      padding: 20px;
-    }
+/* Reader */
+.reader { max-width: 720px; margin: 0 auto; padding: 80px 20px 40px; }
 
-    .walkthrough.active { display: flex; }
+/* Poem card with arabesque draw animation */
+.poem-card {
+  position: relative; background: linear-gradient(135deg, #072a1f, #0d4434);
+  border-radius: 20px; padding: 3rem 2.5rem; overflow: visible;
+  transition: all 0.5s ease; direction: rtl;
+  opacity: 0; animation: fadeIn 0.6s ease 0.3s forwards;
+}
+body.light .poem-card { background: white; box-shadow: 0 10px 40px rgba(10,61,47,0.1); }
+@keyframes fadeIn { to { opacity: 1; } }
 
-    .hex-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 20px;
-      max-width: 640px;
-      width: 100%;
-      animation: hexEnter 0.8s ease;
-    }
+.arabesque-border {
+  position: absolute; inset: -4px; pointer-events: none; z-index: 0;
+}
+.arabesque-border rect { fill: none; stroke: var(--gold); stroke-width: 2.5; rx: 20; }
+.arabesque-border .pattern-line {
+  fill: none; stroke: var(--gold); stroke-width: 1.5;
+  transition: stroke-dashoffset 3s ease;
+}
+.poem-content { position: relative; z-index: 1; }
 
-    @keyframes hexEnter {
-      from { opacity: 0; transform: scale(0.9) translateY(30px); }
-      to { opacity: 1; transform: scale(1) translateY(0); }
-    }
+.poem-meta { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+.poet-avatar {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: linear-gradient(135deg, rgba(197,160,89,0.2), rgba(26,107,90,0.15));
+  display: flex; align-items: center; justify-content: center;
+  color: var(--gold); font-family: 'Amiri', serif; font-size: 20px;
+}
+.poet-info h2 { font-family: 'Tajawal', sans-serif; font-size: 16px; font-weight: 500; }
+.poet-info span { font-size: 13px; color: var(--muted); }
 
-    .hex-cell {
-      background: linear-gradient(135deg, rgba(10, 61, 47, 0.95), rgba(26, 107, 90, 0.4));
-      border: 2px solid var(--gold);
-      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-      padding: 50px 28px 40px;
-      text-align: center;
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-      aspect-ratio: 1 / 1.15;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
+.poem-verses {
+  font-family: 'Amiri', serif; font-size: clamp(20px, 3.5vw, 28px);
+  line-height: 2.2; text-align: center; padding: 20px 0;
+  border-top: 1px solid var(--gold-dim); border-bottom: 1px solid var(--gold-dim);
+}
+.verse-line { opacity: 0; animation: fadeInUp 0.5s ease forwards; }
+.verse-line:nth-child(1) { animation-delay: 0.5s; }
+.verse-line:nth-child(2) { animation-delay: 0.8s; }
 
-    .hex-cell:hover {
-      transform: scale(1.05);
-    }
+.hemistich-divider {
+  display: inline-block; width: 40px; height: 1px; background: var(--gold);
+  vertical-align: middle; margin: 0 12px; opacity: 0.4;
+}
 
-    .hex-cell .hex-icon {
-      font-size: 36px;
-      margin-bottom: 10px;
-    }
+.poem-actions { display: flex; gap: 12px; margin-top: 24px; justify-content: center; }
+.poem-action-btn {
+  display: flex; align-items: center; gap: 6px; padding: 10px 16px;
+  background: transparent; border: 1px solid var(--gold-dim); border-radius: 10px;
+  color: var(--muted); font-family: 'Tajawal', sans-serif; font-size: 13px;
+  cursor: pointer; transition: all 0.2s;
+}
+.poem-action-btn:hover { color: var(--gold); border-color: var(--gold); }
 
-    .hex-cell h3 {
-      font-family: 'Amiri', serif;
-      font-size: 20px;
-      color: var(--gold);
-      margin-bottom: 8px;
-    }
+/* Vertical Rail */
+.vertical-rail {
+  position: fixed; right: 16px; top: 50%; transform: translateY(-50%);
+  display: flex; flex-direction: column; gap: 4px; z-index: 40; direction: ltr;
+}
+.rail-btn {
+  width: 44px; height: 44px; display: flex; align-items: center;
+  justify-content: center; background: rgba(10,61,47,0.8);
+  border: 1px solid var(--gold-dim); border-radius: 10px;
+  color: var(--muted); cursor: pointer; transition: all 0.2s;
+  backdrop-filter: blur(8px); position: relative;
+}
+.rail-btn:hover { color: var(--gold); border-color: var(--gold); transform: scale(1.08); }
+.rail-btn .tooltip {
+  position: absolute; right: 52px; top: 50%; transform: translateY(-50%);
+  background: rgba(10,61,47,0.9); border: 1px solid var(--gold-dim);
+  color: var(--ivory); font-family: 'Tajawal', sans-serif; font-size: 12px;
+  padding: 4px 10px; border-radius: 6px; white-space: nowrap;
+  opacity: 0; pointer-events: none; transition: opacity 0.2s;
+}
+.rail-btn:hover .tooltip { opacity: 1; }
 
-    .hex-cell p {
-      font-size: 13px;
-      color: rgba(253, 252, 248, 0.8);
-      line-height: 1.6;
-    }
+/* Bottom Nav */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
+  display: flex; align-items: center; justify-content: center; gap: 4px;
+  padding: 10px 20px; background: rgba(10,61,47,0.9);
+  backdrop-filter: blur(16px); border-top: 1px solid var(--gold-dim); direction: ltr;
+}
+body.light .bottom-nav { background: rgba(253,252,248,0.95); }
+.nav-item {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 8px 16px; background: transparent; border: none;
+  color: var(--muted); cursor: pointer; font-family: 'Tajawal', sans-serif;
+  font-size: 11px; transition: color 0.2s; min-width: 60px;
+}
+.nav-item.active { color: var(--gold); }
+.nav-item:hover { color: var(--gold); }
 
-    .hex-grid-footer {
-      grid-column: 1 / -1;
-      display: flex;
-      justify-content: center;
-      gap: 15px;
-      padding-top: 10px;
-    }
-
-    .btn {
-      padding: 16px 38px;
-      border: none;
-      border-radius: 50px;
-      font-size: 15px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      min-width: 44px;
-      min-height: 44px;
-      font-family: 'Tajawal', sans-serif;
-    }
-
-    .btn-primary {
-      background: var(--gold);
-      color: var(--emerald);
-      box-shadow: 0 0 30px rgba(197, 160, 89, 0.4);
-    }
-
-    .btn-primary:hover {
-      background: #D4B06A;
-      box-shadow: 0 0 50px rgba(197, 160, 89, 0.6);
-      transform: translateY(-3px);
-    }
-
-    .btn-secondary {
-      background: transparent;
-      color: rgba(253, 252, 248, 0.5);
-      border: 2px solid rgba(253, 252, 248, 0.2);
-    }
-
-    .btn-secondary:hover {
-      border-color: var(--gold);
-      color: var(--gold);
-    }
-
-    /* ========== MAIN APP ========== */
-    .app {
-      display: none;
-      min-height: 100vh;
-      padding: 95px 20px 40px;
-    }
-
-    .app.active { display: block; }
-
-    .header {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      background: rgba(10, 61, 47, 0.95);
-      backdrop-filter: blur(20px);
-      padding: 20px 35px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 2px solid var(--gold-dim);
-      z-index: 100;
-      transition: background 0.3s ease;
-    }
-
-    .light .header {
-      background: rgba(253, 252, 248, 0.95);
-      border-bottom-color: rgba(197, 160, 89, 0.4);
-    }
-
-    .logo {
-      font-family: 'Amiri', serif;
-      font-size: 26px;
-      font-weight: 700;
-      color: var(--gold);
-    }
-
-    .light .logo { color: var(--emerald); }
-
-    .theme-toggle {
-      background: transparent;
-      border: 2px solid var(--gold);
-      color: var(--gold);
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-    }
-
-    .theme-toggle:hover {
-      background: var(--gold);
-      color: var(--emerald);
-      transform: rotate(180deg);
-    }
-
-    .light .theme-toggle {
-      border-color: var(--emerald);
-      color: var(--emerald);
-    }
-
-    .light .theme-toggle:hover {
-      background: var(--emerald);
-      color: var(--ivory);
-    }
-
-    .container { max-width: 900px; margin: 0 auto; }
-
-    /* Poem card with arabesque SVG border */
-    .poem-card {
-      position: relative;
-      background: linear-gradient(135deg, #072a1f, #0d4434);
-      border-radius: 20px;
-      padding: 80px 60px;
-      margin: 45px 0;
-      transition: all 0.5s ease;
-      overflow: visible;
-    }
-
-    .light .poem-card {
-      background: white;
-      box-shadow: 0 10px 40px rgba(10, 61, 47, 0.1);
-    }
-
-    /* Arabesque SVG border */
-    .arabesque-border {
-      position: absolute;
-      inset: -4px;
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    .arabesque-border rect {
-      fill: none;
-      stroke: var(--gold);
-      stroke-width: 2.5;
-      rx: 20;
-    }
-
-    .arabesque-border .pattern-line {
-      fill: none;
-      stroke: var(--gold);
-      stroke-width: 1.5;
-      stroke-dasharray: 1200;
-      stroke-dashoffset: 1200;
-      animation: drawArabesque 4s ease forwards;
-      will-change: stroke-dashoffset;
-    }
-
-    @keyframes drawArabesque {
-      to { stroke-dashoffset: 0; }
-    }
-
-    .poem-card:hover {
-      transform: translateY(-8px);
-    }
-
-    .poem-content { position: relative; z-index: 1; }
-
-    .poem-title {
-      font-family: 'Amiri', serif;
-      font-size: 36px;
-      color: var(--gold);
-      margin-bottom: 45px;
-      text-align: center;
-    }
-
-    .light .poem-title { color: var(--emerald); }
-
-    .poem-verse {
-      font-family: 'Amiri', serif;
-      font-size: 28px;
-      line-height: 2.4;
-      text-align: center;
-      direction: rtl;
-      margin: 45px 0;
-      color: var(--ivory);
-    }
-
-    .light .poem-verse { color: #1a2a1f; }
-
-    .poet-name {
-      text-align: center;
-      color: var(--teal);
-      font-size: 20px;
-      margin-top: 45px;
-    }
-
-    .light .poet-name { color: var(--emerald); }
-
-    .control-rail {
-      display: flex;
-      gap: 16px;
-      justify-content: center;
-      margin-top: 50px;
-    }
-
-    .control-btn {
-      width: 52px;
-      height: 52px;
-      border-radius: 50%;
-      background: rgba(197, 160, 89, 0.12);
-      border: 2px solid var(--gold);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.3s ease;
-      color: var(--gold);
-      font-size: 18px;
-    }
-
-    .control-btn:hover {
-      background: var(--gold);
-      color: var(--emerald);
-      transform: scale(1.2);
-    }
-
-    .light .control-btn {
-      border-color: var(--emerald);
-      color: var(--emerald);
-      background: rgba(10, 61, 47, 0.06);
-    }
-
-    .light .control-btn:hover {
-      background: var(--emerald);
-      color: var(--ivory);
-    }
-
-    /* ========== Reduced Motion ========== */
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after {
-        animation: none !important;
-        transition: none !important;
-      }
-      .splash { display: none !important; }
-      .walkthrough { display: none !important; }
-      .app { display: block !important; }
-    }
-
-    /* ========== Mobile ========== */
-    @media (max-width: 768px) {
-      .hex-grid {
-        grid-template-columns: 1fr;
-        max-width: 320px;
-      }
-      .hex-cell { padding: 40px 20px 30px; }
-      .poem-card { padding: 50px 30px; }
-      .poem-verse { font-size: 22px; }
-      .splash-text h1 { font-size: 36px; }
-    }
-  </style>
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important; transition: none !important;
+  }
+  .splash { display: none !important; }
+  .walkthrough { display: none !important; }
+  .app { display: block !important; }
+}
+@media (max-width: 768px) {
+  .vertical-rail { display: none; }
+  .reader { padding: 70px 16px 40px; }
+  .poem-card { padding: 1.5rem; }
+  .poem-actions { flex-wrap: wrap; }
+}
+</style>
 </head>
 <body>
-  <!-- Splash Screen -->
-  <div class="splash" id="splash">
-    <canvas id="tessCanvas"></canvas>
-    <div class="splash-text">
-      <h1>حديقة الزخرفة</h1>
-      <p>Tessellation Garden</p>
+
+<!-- Splash -->
+<div class="splash" id="splash">
+  <canvas id="tessCanvas"></canvas>
+  <div class="splash-content">
+    <div class="splash-brand">
+      <span class="splash-brand-en">poetry</span>
+      <span class="splash-brand-ar">بالعربي</span>
     </div>
+    <p class="splash-subtitle">Tessellation Garden</p>
   </div>
+  <button class="splash-enter" id="splashEnter">Enter</button>
+</div>
 
-  <!-- Walkthrough - Hexagonal Grid -->
-  <div class="walkthrough" id="walkthrough">
-    <div class="hex-grid">
-      <div class="hex-cell">
-        <div class="hex-icon">&#x2726;</div>
-        <h3>اكتشف الشعر</h3>
-        <p>تصفّح آلاف القصائد من التراث العربي الغني بين يديك</p>
-      </div>
-      <div class="hex-cell">
-        <div class="hex-icon">&#x2728;</div>
-        <h3>زخارف حية</h3>
-        <p>تجربة بصرية مستوحاة من فن الزخرفة الهندسية الإسلامية</p>
-      </div>
-      <div class="hex-cell">
-        <div class="hex-icon">&#x266B;</div>
-        <h3>استمع وتأمّل</h3>
-        <p>اسمع الأبيات بصوت يليق بجمال الكلمة العربية</p>
-      </div>
-      <div class="hex-grid-footer">
-        <button class="btn btn-secondary" onclick="skipWalkthrough()">تخطّي</button>
-        <button class="btn btn-primary" onclick="startApp()">ابدأ الرحلة</button>
-      </div>
+<!-- Walkthrough -->
+<div class="walkthrough" id="walkthrough">
+  <div class="walk-card" id="walkCard">
+    <div class="walk-icon" id="walkIcon"></div>
+    <h3 id="walkTitle"></h3>
+    <div class="walk-ar" id="walkAr"></div>
+    <p id="walkDesc"></p>
+  </div>
+  <div class="walk-progress" id="walkProgress"></div>
+  <span class="walk-hint">Tap anywhere to continue</span>
+</div>
+
+<!-- Main App -->
+<div class="app" id="app">
+  <header class="app-top">
+    <div class="app-top-brand">
+      <span class="app-top-brand-en">poetry</span>
+      <span class="app-top-brand-ar">بالعربي</span>
     </div>
-  </div>
+    <div class="app-top-actions">
+      <button class="app-top-btn" id="themeToggle" aria-label="Toggle theme">
+        <i data-lucide="sun" style="width:18px;height:18px"></i>
+      </button>
+      <button class="app-top-btn" aria-label="Settings">
+        <i data-lucide="settings" style="width:18px;height:18px"></i>
+      </button>
+    </div>
+  </header>
 
-  <!-- Main App -->
-  <div class="app" id="app">
-    <header class="header">
-      <div class="logo">ديوان الشعر</div>
-      <button class="theme-toggle" onclick="toggleTheme()" aria-label="تبديل السمة">&#9788;</button>
-    </header>
+  <nav class="vertical-rail">
+    <button class="rail-btn"><i data-lucide="heart" style="width:18px;height:18px"></i><span class="tooltip">Save</span></button>
+    <button class="rail-btn"><i data-lucide="type" style="width:18px;height:18px"></i><span class="tooltip">Font size</span></button>
+    <button class="rail-btn"><i data-lucide="languages" style="width:18px;height:18px"></i><span class="tooltip">Transliteration</span></button>
+    <button class="rail-btn"><i data-lucide="book-open" style="width:18px;height:18px"></i><span class="tooltip">Tafsir</span></button>
+    <button class="rail-btn"><i data-lucide="italic" style="width:18px;height:18px"></i><span class="tooltip">Tashkeel</span></button>
+    <button class="rail-btn"><i data-lucide="log-in" style="width:18px;height:18px"></i><span class="tooltip">Sign in</span></button>
+    <button class="rail-btn"><i data-lucide="settings" style="width:18px;height:18px"></i><span class="tooltip">Settings</span></button>
+  </nav>
 
-    <div class="container">
-      <div class="poem-card" id="poemCard">
-        <!-- Arabesque SVG border injected by JS -->
-        <div class="poem-content">
-          <h2 class="poem-title">ديوان الشعر العربي</h2>
-          <div class="poem-verse" dir="rtl" lang="ar">
-            أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ<br>
-            فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
-          </div>
-          <p class="poet-name">— أحمد شوقي</p>
-
-          <div class="control-rail">
-            <button class="control-btn" aria-label="السابق">&#8249;</button>
-            <button class="control-btn" aria-label="تشغيل">&#9654;</button>
-            <button class="control-btn" aria-label="التالي">&#8250;</button>
-            <button class="control-btn" aria-label="حفظ">&#9733;</button>
+  <div class="reader">
+    <article class="poem-card" id="poemCard">
+      <div class="poem-content">
+        <div class="poem-meta">
+          <div class="poet-avatar">م</div>
+          <div class="poet-info">
+            <h2>المتنبي</h2>
+            <span>Al-Mutanabbi</span>
           </div>
         </div>
+        <div class="poem-verses" dir="rtl" lang="ar">
+          <div class="verse-line">
+            عَلَى قَدْرِ أَهْلِ العَزْمِ تَأْتِي العَزَائِمُ
+            <span class="hemistich-divider"></span>
+            وَتَأْتِي عَلَى قَدْرِ الكِرَامِ المَكَارِمُ
+          </div>
+        </div>
+        <div class="poem-actions">
+          <button class="poem-action-btn">
+            <i data-lucide="copy" style="width:16px;height:16px"></i> نسخ
+          </button>
+          <button class="poem-action-btn">
+            <i data-lucide="share-2" style="width:16px;height:16px"></i> مشاركة
+          </button>
+          <button class="poem-action-btn">
+            <i data-lucide="bookmark" style="width:16px;height:16px"></i> حفظ
+          </button>
+        </div>
       </div>
-    </div>
+    </article>
   </div>
 
-  <script>
-    /* ===========================================
-       TESSELLATION CANVAS - 8-Pointed Islamic Stars
-       =========================================== */
-    (function() {
-      const canvas = document.getElementById('tessCanvas');
-      const ctx = canvas.getContext('2d');
-      const isMobile = window.innerWidth < 768;
+  <nav class="bottom-nav">
+    <button class="nav-item"><i data-lucide="music" style="width:20px;height:20px"></i>Music</button>
+    <button class="nav-item"><i data-lucide="lightbulb" style="width:20px;height:20px"></i>Insight</button>
+    <button class="nav-item active"><i data-lucide="refresh-cw" style="width:20px;height:20px"></i>Refresh</button>
+    <button class="nav-item"><i data-lucide="library" style="width:20px;height:20px"></i>Library</button>
+    <button class="nav-item"><i data-lucide="shuffle" style="width:20px;height:20px"></i>Shuffle</button>
+  </nav>
+</div>
 
-      let W, H, time = 0, splitProgress = 0, splashing = true;
-      const EMERALD = '#0A3D2F';
-      const GOLD = '#C5A059';
-      const TEAL = '#1A6B5A';
+<script>
+/* Tessellation Canvas */
+(function() {
+  var canvas = document.getElementById('tessCanvas');
+  var ctx = canvas.getContext('2d');
+  var isMob = window.innerWidth < 768;
+  var W, H, time = 0, splashing = true;
 
-      function resize() {
-        W = canvas.width = window.innerWidth;
-        H = canvas.height = window.innerHeight;
-      }
-      resize();
-      window.addEventListener('resize', resize);
+  function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; buildGrid(); }
+  resize();
+  window.addEventListener('resize', resize);
 
-      // Draw an 8-pointed star at (cx, cy) with given outer radius
-      function drawStar8(cx, cy, outerR, rotation, alpha) {
-        const innerR = outerR * 0.42;
-        ctx.beginPath();
-        for (let i = 0; i < 16; i++) {
-          const angle = rotation + (i * Math.PI / 8);
-          const r = i % 2 === 0 ? outerR : innerR;
-          const x = cx + Math.cos(angle) * r;
-          const y = cy + Math.sin(angle) * r;
-          if (i === 0) ctx.moveTo(x, y);
-          else ctx.lineTo(x, y);
-        }
-        ctx.closePath();
-        ctx.strokeStyle = `rgba(197, 160, 89, ${alpha})`;
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-      }
-
-      // Draw connecting hexagonal tessellation lines
-      function drawHexConnect(cx, cy, size, rotation, alpha) {
-        for (let i = 0; i < 6; i++) {
-          const a = rotation + i * Math.PI / 3;
-          const x2 = cx + Math.cos(a) * size;
-          const y2 = cy + Math.sin(a) * size;
-          ctx.beginPath();
-          ctx.moveTo(cx, cy);
-          ctx.lineTo(x2, y2);
-          ctx.strokeStyle = `rgba(26, 107, 90, ${alpha * 0.5})`;
-          ctx.lineWidth = 0.8;
-          ctx.stroke();
-        }
-      }
-
-      // Build grid of star positions
-      const spacing = isMobile ? 100 : 120;
-      let stars = [];
-
-      function buildGrid() {
-        stars = [];
-        const cols = Math.ceil(W / spacing) + 2;
-        const rows = Math.ceil(H / (spacing * 0.866)) + 2;
-        for (let row = -1; row < rows; row++) {
-          for (let col = -1; col < cols; col++) {
-            const offsetX = (row % 2) * (spacing / 2);
-            const x = col * spacing + offsetX;
-            const y = row * spacing * 0.866;
-            stars.push({ x, y, baseX: x, baseY: y });
-          }
-        }
-      }
-      buildGrid();
-
-      function animate() {
-        time += 0.008;
-        ctx.clearRect(0, 0, W, H);
-        ctx.fillStyle = EMERALD;
-        ctx.fillRect(0, 0, W, H);
-
-        const rotation = time * 0.3;
-        const centerX = W / 2;
-        const centerY = H / 2;
-
-        for (let i = 0; i < stars.length; i++) {
-          const s = stars[i];
-          let dx = s.baseX - centerX;
-          let dy = s.baseY - centerY;
-          let dist = Math.sqrt(dx * dx + dy * dy);
-          let maxDist = Math.sqrt(centerX * centerX + centerY * centerY);
-
-          // Split effect: stars push outward from center
-          let pushX = 0, pushY = 0;
-          if (splitProgress > 0 && dist > 1) {
-            let pushDist = splitProgress * (800 + dist * 1.5);
-            pushX = (dx / dist) * pushDist;
-            pushY = (dy / dist) * pushDist;
-          }
-
-          s.x = s.baseX + pushX;
-          s.y = s.baseY + pushY;
-
-          let alpha = Math.max(0, 1 - splitProgress * 2);
-          let distFade = 1 - (dist / maxDist) * 0.3;
-          let finalAlpha = alpha * distFade;
-
-          if (finalAlpha > 0.01) {
-            let starSize = (spacing / 2.5) * (1 + Math.sin(time + i * 0.05) * 0.08);
-            drawHexConnect(s.x, s.y, spacing * 0.5, rotation * 0.5, finalAlpha * 0.6);
-            drawStar8(s.x, s.y, starSize, rotation + i * 0.02, finalAlpha);
-          }
-        }
-
-        if (splashing) {
-          requestAnimationFrame(animate);
-        }
-      }
-
-      animate();
-
-      // After 3s start splitting
-      setTimeout(function() {
-        let start = null;
-        function splitAnim(ts) {
-          if (!start) start = ts;
-          splitProgress = Math.min(1, (ts - start) / 1200);
-          if (splitProgress < 1) {
-            requestAnimationFrame(splitAnim);
-          } else {
-            splashing = false;
-            document.getElementById('splash').classList.add('fade-out');
-            setTimeout(function() {
-              document.getElementById('splash').style.display = 'none';
-              document.getElementById('walkthrough').classList.add('active');
-            }, 800);
-          }
-        }
-        requestAnimationFrame(splitAnim);
-      }, 3000);
-
-      // Halve star count on mobile by skipping every other during draw
-      // (handled by spacing already being larger)
-
-      // Rebuild on resize
-      window.addEventListener('resize', function() {
-        resize();
-        buildGrid();
-      });
-    })();
-
-    /* ===========================================
-       ARABESQUE SVG BORDER
-       =========================================== */
-    (function() {
-      const card = document.getElementById('poemCard');
-
-      function buildArabesque() {
-        const w = card.offsetWidth + 8;
-        const h = card.offsetHeight + 8;
-        const ns = 'http://www.w3.org/2000/svg';
-        const svg = document.createElementNS(ns, 'svg');
-        svg.setAttribute('class', 'arabesque-border');
-        svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
-        svg.setAttribute('width', w);
-        svg.setAttribute('height', h);
-
-        // Outer rect
-        const rect = document.createElementNS(ns, 'rect');
-        rect.setAttribute('x', '2');
-        rect.setAttribute('y', '2');
-        rect.setAttribute('width', w - 4);
-        rect.setAttribute('height', h - 4);
-        rect.setAttribute('rx', '20');
-        svg.appendChild(rect);
-
-        // Arabesque pattern path - flowing vine along border
-        const margin = 14;
-        const cw = w - margin * 2;
-        const ch = h - margin * 2;
-        let d = `M ${margin} ${margin + 30}`;
-
-        // Top edge scallops
-        const scallops = 8;
-        const scW = cw / scallops;
-        for (let i = 0; i < scallops; i++) {
-          const x1 = margin + i * scW + scW * 0.3;
-          const y1 = margin - 6;
-          const x2 = margin + i * scW + scW * 0.7;
-          const y2 = margin - 6;
-          const x3 = margin + (i + 1) * scW;
-          const y3 = margin + 30;
-          d += ` C ${x1} ${y1}, ${x2} ${y2}, ${x3} ${y3}`;
-        }
-
-        // Right edge scallops
-        const rScallops = 6;
-        const rH = ch / rScallops;
-        for (let i = 0; i < rScallops; i++) {
-          const x1 = w - margin + 6;
-          const y1 = margin + 30 + i * rH + rH * 0.3;
-          const x2 = w - margin + 6;
-          const y2 = margin + 30 + i * rH + rH * 0.7;
-          const x3 = w - margin;
-          const y3 = margin + 30 + (i + 1) * rH;
-          d += ` C ${x1} ${y1}, ${x2} ${y2}, ${x3} ${y3}`;
-        }
-
-        // Bottom edge
-        const bScallops = 8;
-        const bW = cw / bScallops;
-        for (let i = 0; i < bScallops; i++) {
-          const x1 = w - margin - i * bW - bW * 0.3;
-          const y1 = h - margin + 6;
-          const x2 = w - margin - i * bW - bW * 0.7;
-          const y2 = h - margin + 6;
-          const x3 = w - margin - (i + 1) * bW;
-          const y3 = h - margin;
-          d += ` C ${x1} ${y1}, ${x2} ${y2}, ${x3} ${y3}`;
-        }
-
-        // Left edge
-        const lScallops = 6;
-        const lH = ch / lScallops;
-        for (let i = 0; i < lScallops; i++) {
-          const x1 = margin - 6;
-          const y1 = h - margin - 30 - i * lH - lH * 0.3;
-          const x2 = margin - 6;
-          const y2 = h - margin - 30 - i * lH - lH * 0.7;
-          const x3 = margin;
-          const y3 = h - margin - 30 - (i + 1) * lH;
-          d += ` C ${x1} ${y1}, ${x2} ${y2}, ${x3} ${y3}`;
-        }
-
-        const path = document.createElementNS(ns, 'path');
-        path.setAttribute('class', 'pattern-line');
-        path.setAttribute('d', d);
-        svg.appendChild(path);
-
-        // Remove old SVG if exists
-        const old = card.querySelector('.arabesque-border');
-        if (old) old.remove();
-        card.insertBefore(svg, card.firstChild);
-
-        // Measure and set dasharray
-        const len = path.getTotalLength();
-        path.style.strokeDasharray = len;
-        path.style.strokeDashoffset = len;
-        // Force reflow then animate
-        path.getBoundingClientRect();
-        path.style.animation = 'none';
-        requestAnimationFrame(function() {
-          path.style.animation = '';
-          path.style.strokeDasharray = len;
-          path.style.strokeDashoffset = len;
-          path.style.transition = 'stroke-dashoffset 3s ease';
-          path.style.strokeDashoffset = '0';
-        });
-      }
-
-      // Build after app is shown
-      const observer = new MutationObserver(function(mutations) {
-        for (const m of mutations) {
-          if (m.target.classList.contains('active')) {
-            setTimeout(buildArabesque, 100);
-            window.addEventListener('resize', buildArabesque);
-          }
-        }
-      });
-      observer.observe(document.getElementById('app'), { attributes: true, attributeFilter: ['class'] });
-    })();
-
-    /* ===========================================
-       APP LOGIC
-       =========================================== */
-    function skipWalkthrough() { startApp(); }
-
-    function startApp() {
-      document.getElementById('walkthrough').classList.remove('active');
-      document.getElementById('app').classList.add('active');
+  function drawStar8(cx, cy, outerR, rotation, alpha) {
+    var innerR = outerR * 0.42;
+    ctx.beginPath();
+    for (var i = 0; i < 16; i++) {
+      var angle = rotation + (i * Math.PI / 8);
+      var r = i % 2 === 0 ? outerR : innerR;
+      var x = cx + Math.cos(angle) * r;
+      var y = cy + Math.sin(angle) * r;
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
     }
+    ctx.closePath();
+    ctx.strokeStyle = 'rgba(197,160,89,' + alpha + ')';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  }
 
-    function toggleTheme() {
-      document.body.classList.toggle('light');
+  var spacing = isMob ? 100 : 120;
+  var stars = [];
+  function buildGrid() {
+    stars = [];
+    var cols = Math.ceil(W / spacing) + 2;
+    var rows = Math.ceil(H / (spacing * 0.866)) + 2;
+    for (var row = -1; row < rows; row++) {
+      for (var col = -1; col < cols; col++) {
+        var ox = (row % 2) * (spacing / 2);
+        stars.push({ x: col * spacing + ox, y: row * spacing * 0.866 });
+      }
     }
-  </script>
+  }
+  buildGrid();
+
+  function animate() {
+    time += 0.008;
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = '#0A3D2F';
+    ctx.fillRect(0, 0, W, H);
+    var rot = time * 0.3;
+    for (var i = 0; i < stars.length; i++) {
+      var s = stars[i];
+      var starSize = (spacing / 2.5) * (1 + Math.sin(time + i * 0.05) * 0.08);
+      drawStar8(s.x, s.y, starSize, rot + i * 0.02, 0.25);
+    }
+    if (splashing) requestAnimationFrame(animate);
+  }
+  animate();
+
+  // Splash enter
+  document.getElementById('splashEnter').addEventListener('click', function() {
+    splashing = false;
+    document.getElementById('splash').classList.add('fade-out');
+    setTimeout(function() {
+      document.getElementById('splash').style.display = 'none';
+      document.getElementById('walkthrough').classList.add('active');
+      currentStep = 0; renderStep();
+    }, 800);
+  });
+})();
+
+/* Walkthrough */
+var walkSteps = [
+  { icon: 'hexagon', title: 'Tessellation Garden', ar: '\u062D\u062F\u064A\u0642\u0629 \u0627\u0644\u0632\u062E\u0631\u0641\u0629', desc: 'A visual experience inspired by Islamic geometric art, surrounding you with poetry.' },
+  { icon: 'compass', title: 'Discover 84,000+ Poems', ar: '\u0627\u0643\u062A\u0634\u0641 \u0627\u0644\u0634\u0639\u0631', desc: 'Browse classical and modern Arabic poems spanning centuries of literary tradition.' },
+  { icon: 'headphones', title: 'Listen to Recitation', ar: '\u0627\u0633\u062A\u0645\u0639 \u0644\u0644\u0625\u0644\u0642\u0627\u0621', desc: 'Hear poems with natural AI voices capturing the melody of Arabic verse.' },
+  { icon: 'heart', title: 'Save Your Favorites', ar: '\u0627\u062D\u0641\u0638 \u0648\u0634\u0627\u0631\u0643', desc: 'Build your personal collection and share Arabic poetry with the world.' }
+];
+var currentStep = 0;
+
+function renderStep() {
+  var step = walkSteps[currentStep];
+  var card = document.getElementById('walkCard');
+  var iconEl = document.getElementById('walkIcon');
+  var titleEl = document.getElementById('walkTitle');
+  var arEl = document.getElementById('walkAr');
+  var descEl = document.getElementById('walkDesc');
+  var progress = document.getElementById('walkProgress');
+
+  while (iconEl.firstChild) iconEl.removeChild(iconEl.firstChild);
+  var ic = document.createElement('i');
+  ic.setAttribute('data-lucide', step.icon);
+  ic.style.width = '24px'; ic.style.height = '24px';
+  iconEl.appendChild(ic);
+
+  titleEl.textContent = step.title;
+  arEl.textContent = step.ar;
+  descEl.textContent = step.desc;
+
+  while (progress.firstChild) progress.removeChild(progress.firstChild);
+  for (var d = 0; d < walkSteps.length; d++) {
+    var dot = document.createElement('div');
+    dot.className = 'walk-dot' + (d === currentStep ? ' active' : '');
+    progress.appendChild(dot);
+  }
+
+  card.classList.remove('visible');
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() { card.classList.add('visible'); });
+  });
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+document.getElementById('walkthrough').addEventListener('click', function() {
+  currentStep++;
+  if (currentStep >= walkSteps.length) {
+    document.getElementById('walkthrough').style.display = 'none';
+    document.getElementById('app').classList.add('active');
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+    // Build arabesque border after app visible
+    setTimeout(buildArabesque, 100);
+  } else {
+    renderStep();
+  }
+});
+
+/* Arabesque SVG border with draw animation */
+function buildArabesque() {
+  var card = document.getElementById('poemCard');
+  var w = card.offsetWidth + 8;
+  var h = card.offsetHeight + 8;
+  var ns = 'http://www.w3.org/2000/svg';
+  var svg = document.createElementNS(ns, 'svg');
+  svg.setAttribute('class', 'arabesque-border');
+  svg.setAttribute('viewBox', '0 0 ' + w + ' ' + h);
+  svg.setAttribute('width', w);
+  svg.setAttribute('height', h);
+
+  var rect = document.createElementNS(ns, 'rect');
+  rect.setAttribute('x', '2'); rect.setAttribute('y', '2');
+  rect.setAttribute('width', w - 4); rect.setAttribute('height', h - 4);
+  rect.setAttribute('rx', '20');
+  svg.appendChild(rect);
+
+  var margin = 14;
+  var cw = w - margin * 2;
+  var ch = h - margin * 2;
+  var d = 'M ' + margin + ' ' + (margin + 30);
+  var scW = cw / 8;
+  for (var i = 0; i < 8; i++) {
+    d += ' C ' + (margin + i * scW + scW * 0.3) + ' ' + (margin - 6) + ', ' +
+         (margin + i * scW + scW * 0.7) + ' ' + (margin - 6) + ', ' +
+         (margin + (i + 1) * scW) + ' ' + (margin + 30);
+  }
+  var rH = ch / 6;
+  for (var j = 0; j < 6; j++) {
+    d += ' C ' + (w - margin + 6) + ' ' + (margin + 30 + j * rH + rH * 0.3) + ', ' +
+         (w - margin + 6) + ' ' + (margin + 30 + j * rH + rH * 0.7) + ', ' +
+         (w - margin) + ' ' + (margin + 30 + (j + 1) * rH);
+  }
+
+  var path = document.createElementNS(ns, 'path');
+  path.setAttribute('class', 'pattern-line');
+  path.setAttribute('d', d);
+  svg.appendChild(path);
+
+  var old = card.querySelector('.arabesque-border');
+  if (old) old.parentNode.removeChild(old);
+  card.insertBefore(svg, card.firstChild);
+
+  var len = path.getTotalLength();
+  path.style.strokeDasharray = len;
+  path.style.strokeDashoffset = len;
+  path.getBoundingClientRect();
+  requestAnimationFrame(function() {
+    path.style.strokeDashoffset = '0';
+  });
+}
+
+/* Theme toggle */
+document.getElementById('themeToggle').addEventListener('click', function() {
+  document.body.classList.toggle('light');
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+});
+</script>
 </body>
 </html>

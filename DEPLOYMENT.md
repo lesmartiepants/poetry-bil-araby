@@ -34,13 +34,13 @@ This guide walks you through deploying the Poetry app with:
 ### 1.2 Get Database Connection String
 
 1. In your Supabase project dashboard, go to **Settings** → **Database**
-2. Scroll down to **Connection string**
-3. Select **URI** mode
-4. Copy the connection string - it looks like:
+2. Scroll down to **Connection Pooling** (not the direct connection)
+3. Copy the **Transaction mode** pooler URI. It looks like:
    ```
-   postgresql://postgres:[YOUR-PASSWORD]@db.xxx.supabase.co:5432/postgres
+   postgresql://postgres.YOUR_REF:[YOUR-PASSWORD]@aws-N-REGION.pooler.supabase.com:6543/postgres
    ```
-5. **IMPORTANT**: Replace `[YOUR-PASSWORD]` with the password you set in step 1.1
+4. **IMPORTANT**: Use the **pooler** host (`pooler.supabase.com`), not the direct host (`db.*.supabase.co`). The direct host is not reachable from external services like Render.
+5. Replace `[YOUR-PASSWORD]` with the password you set in step 1.1
 6. Save this connection string somewhere safe - you'll need it later
 
 ### 1.3 Upload Database Dump
@@ -107,14 +107,11 @@ pg_restore --clean --no-owner --no-acl \
 2. Click **"Add Environment Variable"**
 3. Add these variables:
    - **Key**: `DATABASE_URL`
-   - **Value**: Paste your Supabase connection string from Step 1.2
-     ```
-     postgresql://postgres:[YOUR-PASSWORD]@db.xxx.supabase.co:5432/postgres
-     ```
-   - **Key**: `LOG_ENABLED` (Optional)
-   - **Value**: `true` (enables HTTP request logging, default: true)
-   - **Key**: `LOG_DEBUG` (Optional)
-   - **Value**: `false` (enables verbose database query logging, default: false)
+   - **Value**: Your Supabase **pooler** connection string from Step 1.2
+   - **Key**: `SUPABASE_SECRET_KEY`
+   - **Value**: Your Supabase service_role key (JWT format, starts with `eyJ`)
+   - **Key**: `SUPABASE_PROJECT_URL`
+   - **Value**: Your Supabase project URL (e.g. `https://your-ref.supabase.co`)
 4. Click **"Add"** for each variable
 
 ### 2.3 Deploy
@@ -124,23 +121,23 @@ pg_restore --clean --no-owner --no-acl \
    - Clone your repo
    - Run `npm install`
    - Start `node server.js`
-   - Assign a URL like: `https://poetry-bil-araby-api.onrender.com`
+   - Assign a URL like: `https://your-service-name.onrender.com`
 3. Wait for deployment to complete (~2-3 minutes)
 4. Check logs for: `✓ Connected to PostgreSQL`
 
 ### 2.4 Test Backend API
 
-1. Copy your Render URL (e.g., `https://poetry-bil-araby-api.onrender.com`)
+1. Copy your Render URL (e.g., `https://your-service-name.onrender.com`)
 2. Test in browser or terminal:
    ```bash
    # Health check:
-   curl https://poetry-bil-araby-api.onrender.com/api/health
+   curl https://your-service-name.onrender.com/api/health
 
    # Should return:
    # {"status":"ok","database":"connected","totalPoems":84329}
 
    # Random poem:
-   curl https://poetry-bil-araby-api.onrender.com/api/poems/random
+   curl https://your-service-name.onrender.com/api/poems/random
    ```
 
 **If you see errors**, check Render logs:
@@ -155,24 +152,16 @@ pg_restore --clean --no-owner --no-acl \
 
 1. Go to [vercel.com](https://vercel.com) and open your project
 2. Go to **Settings** → **Environment Variables**
-3. Click **"Add New"** for each variable:
-   - **Key**: `VITE_API_URL`
-   - **Value**: Your Render URL (e.g., `https://poetry-bil-araby-api.onrender.com`)
-   - **Environment**: Select **Production**, **Preview**, and **Development**
+3. Add these variables (all for Production, Preview, and Development):
 
-   - **Key**: `VITE_GEMINI_API_KEY`
-   - **Value**: Your Gemini API key
-   - **Environment**: Select **Production**, **Preview**, and **Development**
+   | Key | Value |
+   |---|---|
+   | `VITE_API_URL` | Your Render URL (e.g. `https://your-service.onrender.com`) |
+   | `VITE_GEMINI_API_KEY` | Your Gemini API key |
+   | `VITE_SUPABASE_URL` | Your Supabase project URL |
+   | `VITE_SUPABASE_ANON_KEY` | Supabase anon key (**must** be JWT format, starts with `eyJ`) |
 
-   **Optional** (for authentication features):
-   - **Key**: `VITE_SUPABASE_URL`
-   - **Value**: Your Supabase project URL
-   - **Environment**: Select **Production**, **Preview**, and **Development**
-
-   - **Key**: `VITE_SUPABASE_ANON_KEY`
-   - **Value**: Your Supabase anon key (JWT format)
-   - **Environment**: Select **Production**, **Preview**, and **Development**
-4. Click **"Save"** for each variable
+   **Note**: Do NOT add `DATABASE_URL` to Vercel. The database is only used by the Render backend.
 
 ### 3.2 Redeploy Frontend
 
@@ -227,27 +216,30 @@ The backend now keeps itself alive automatically:
 ```
 ┌─────────────────────────────────────────────┐
 │  Vercel (Frontend)                          │
-│  - React app                                │
-│  - VITE_API_URL = Render URL                │
-│  - Keep-alive ping every 10 min (backup)   │
+│  - React app (Vite build)                   │
+│  - VITE_API_URL, VITE_GEMINI_API_KEY        │
+│  - VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY│
 └─────────────┬───────────────────────────────┘
               │ HTTPS
               ▼
 ┌─────────────────────────────────────────────┐
-│  Render (Backend - FREE)                    │
+│  Render (Backend API - FREE)                │
 │  - Express API (server.js)                  │
-│  - /api/poems/random                        │
+│  - /api/poems/*, /api/poets                 │
+│  - /api/design-review/*                     │
 │  - /api/health                              │
-│  - Self-ping every 9-13 min (randomized)  │
-│  - Never sleeps (kept awake 24/7)          │
+│  - Self-ping every 9-13 min (randomized)    │
+│  - DATABASE_URL, SUPABASE_SECRET_KEY        │
 └─────────────┬───────────────────────────────┘
-              │ DATABASE_URL
+              │ Supabase Connection Pooler
               ▼
 ┌─────────────────────────────────────────────┐
 │  Supabase (Database - FREE)                 │
-│  - PostgreSQL 16                            │
+│  - PostgreSQL 17                            │
 │  - 84,329 poems                             │
-│  - 500 MB storage (40 MB used)              │
+│  - Design review tables                     │
+│  - Auth tables (optional)                   │
+│  - Pooler: aws-N-region.pooler.supabase.com │
 └─────────────────────────────────────────────┘
 ```
 

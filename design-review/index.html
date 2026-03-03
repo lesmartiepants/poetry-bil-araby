@@ -564,7 +564,7 @@ const CATALOG = [
 // ═══════════════════════════════════════════════════════════════
 const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
   ? 'http://localhost:3001'
-  : 'https://poetry-bil-araby-api.onrender.com';
+  : 'https://poetry-bil-araby-2mb0.onrender.com';
 let apiAvailable = false;
 let syncTimer = null;
 let currentSession = null;
@@ -667,9 +667,13 @@ async function initAPI() {
     } else {
       const cr = await fetch(API_BASE + '/api/design-review/sessions', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reviewer: 'owner', branch: 'feature/design-review-system', total_designs: flatList.length })
+        body: JSON.stringify({ reviewer: 'owner', branch: 'main', total_designs: flatList.length })
       });
-      if (cr.ok) currentSession = await cr.json();
+      if (!cr.ok) {
+        const errBody = await cr.json().catch(() => ({}));
+        throw new Error(errBody.error || `Session creation failed (${cr.status})`);
+      }
+      currentSession = await cr.json();
     }
     setSyncStatus('synced');
   } catch { apiAvailable = false; setSyncStatus('offline'); }
@@ -1047,16 +1051,17 @@ async function submitReview() {
     sendBtn.style.opacity = '.7';
     sendBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="animation:spin .8s linear infinite"><circle cx="12" cy="12" r="10" stroke-dasharray="40" stroke-dashoffset="10"/></svg> Sending\u2026';
     try {
-      if (apiAvailable && currentSession) {
-        await syncVerdictsToAPI();
-        const res = await fetch(API_BASE + '/api/design-review/sessions/' + currentSession.id, {
-          method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status: 'completed', reviewed_count: reviewed })
-        });
-        if (!res.ok) throw new Error('API returned ' + res.status);
-      } else {
-        throw new Error('Backend not available');
+      // Retry initAPI if no session yet
+      if (!apiAvailable || !currentSession) {
+        await initAPI();
+        if (!apiAvailable || !currentSession) throw new Error('Backend not available');
       }
+      await syncVerdictsToAPI();
+      const res = await fetch(API_BASE + '/api/design-review/sessions/' + currentSession.id, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: 'completed', reviewed_count: reviewed })
+      });
+      if (!res.ok) throw new Error('API returned ' + res.status);
       sendBtn.style.background = 'var(--green)';
       sendBtn.style.opacity = '1';
       sendBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Saved Successfully';

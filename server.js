@@ -421,12 +421,6 @@ app.post('/api/design-review/sessions/:id/verdicts', async (req, res) => {
       }
       if (!item_id) continue; // skip if item not found
 
-      // Record history before upsert
-      const existing = await pool.query(
-        'SELECT verdict, comment, tags FROM design_verdicts WHERE session_id = $1 AND item_id = $2',
-        [id, item_id]
-      );
-
       await pool.query(`
         INSERT INTO design_verdicts (session_id, item_id, item_key, verdict, comment, priority, tags)
         VALUES ($1, $2, $3, $4, $5, $6, $7)
@@ -437,19 +431,6 @@ app.post('/api/design-review/sessions/:id/verdicts', async (req, res) => {
           tags = EXCLUDED.tags,
           updated_at = now()
       `, [id, item_id, v.item_key, v.verdict, v.comment || null, v.priority || 0, v.tags || null]);
-
-      // Write to history
-      const old_value = existing.rows.length > 0 ? existing.rows[0] : null;
-      await pool.query(`
-        INSERT INTO design_review_history (item_key, session_id, action, old_value, new_value, commit_sha)
-        VALUES ($1, $2, $3, $4, $5, $6)
-      `, [
-        v.item_key, id,
-        old_value ? 'update_verdict' : 'create_verdict',
-        old_value ? JSON.stringify(old_value) : null,
-        JSON.stringify({ verdict: v.verdict, comment: v.comment, tags: v.tags }),
-        v.commit_sha || null
-      ]);
 
       saved++;
     }
@@ -467,26 +448,6 @@ app.post('/api/design-review/sessions/:id/verdicts', async (req, res) => {
     res.json({ saved, total: verdicts.length });
   } catch (error) {
     console.error('Error saving verdicts:', error);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// GET /api/design-review/items/:itemKey/history — full verdict history for one design
-app.get('/api/design-review/items/:itemKey/history', async (req, res) => {
-  try {
-    if (!(await designTablesExist())) return res.json([]);
-    const { itemKey } = req.params;
-    const result = await pool.query(
-      `SELECT h.*, s.round_number, s.reviewer
-       FROM design_review_history h
-       LEFT JOIN design_review_sessions s ON h.session_id = s.id
-       WHERE h.item_key = $1
-       ORDER BY h.created_at DESC`,
-      [itemKey]
-    );
-    res.json(result.rows);
-  } catch (error) {
-    console.error('Error fetching item history:', error);
     res.status(500).json({ error: error.message });
   }
 });

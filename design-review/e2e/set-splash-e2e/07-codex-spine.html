@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Codex Spine — Poetry Bil-Araby</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #12100e;
+    --text: #d4c5a0;
+    --accent: #c5a059;
+    --gold: #c5a059;
+    --leather: #8b4513;
+    --leather-dark: #2a1f15;
+    --parchment: #d4c5a0;
+    --gold-dim: rgba(197,160,89,0.18);
+    --gold-glow: rgba(197,160,89,0.12);
+    --surface: rgba(255,255,255,0.03);
+    --surface-border: rgba(197,160,89,0.25);
+    --muted: rgba(212,197,160,0.5);
+    --line: rgba(197,160,89,0.15);
+    --page-cream: #f5ece0;
+    --page-shadow: rgba(18,16,14,0.6);
+    --transition-speed: 0.4s;
+  }
+  [data-theme="light"] {
+    --bg: #f5ece0;
+    --text: #2a1f15;
+    --accent: #8b6914;
+    --gold: #9a7a28;
+    --leather: #6b3410;
+    --leather-dark: #3a2a1a;
+    --parchment: #2a1f15;
+    --gold-dim: rgba(154,122,40,0.16);
+    --gold-glow: rgba(154,122,40,0.1);
+    --surface: rgba(26,21,16,0.04);
+    --surface-border: rgba(139,69,19,0.25);
+    --muted: rgba(42,31,21,0.45);
+    --line: rgba(42,31,21,0.1);
+    --page-cream: #fffbf5;
+    --page-shadow: rgba(42,31,21,0.2);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html { font-size: 16px; scroll-behavior: smooth; }
+  body {
+    font-family: 'Tajawal', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow-x: hidden;
+    min-height: 100vh;
+    transition: background var(--transition-speed), color var(--transition-speed);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  /* ============================================
+     SPLASH SCREEN — Codex Spine
+     ============================================ */
+  #splash {
+    position: fixed; inset: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column;
+    background:
+      radial-gradient(ellipse at 30% 20%, rgba(139,69,19,0.15) 0%, transparent 50%),
+      radial-gradient(ellipse at 70% 80%, rgba(139,69,19,0.1) 0%, transparent 50%),
+      radial-gradient(ellipse at 50% 50%, rgba(42,31,21,0.4) 0%, transparent 70%),
+      #12100e;
+    transition: opacity 0.8s ease;
+    will-change: opacity;
+    overflow: hidden;
+  }
+  #splash.hidden { opacity: 0; pointer-events: none; }
+
+  /* Leather texture overlay */
+  .splash-texture {
+    position: absolute; inset: 0;
+    background:
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 3px,
+        rgba(139,69,19,0.03) 3px,
+        rgba(139,69,19,0.03) 4px
+      ),
+      repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 5px,
+        rgba(139,69,19,0.02) 5px,
+        rgba(139,69,19,0.02) 6px
+      );
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* Gold tooling lines — top and bottom */
+  .splash-tooling-top,
+  .splash-tooling-bottom {
+    position: absolute;
+    left: 10%; right: 10%;
+    height: 2px;
+    z-index: 2;
+    pointer-events: none;
+  }
+  .splash-tooling-top { top: 12%; }
+  .splash-tooling-bottom { bottom: 12%; }
+  .splash-tooling-top::before,
+  .splash-tooling-top::after,
+  .splash-tooling-bottom::before,
+  .splash-tooling-bottom::after {
+    content: '';
+    position: absolute;
+    left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent 5%, var(--gold-dim) 20%, var(--gold) 50%, var(--gold-dim) 80%, transparent 95%);
+    opacity: 0.4;
+  }
+  .splash-tooling-top::before { top: 0; }
+  .splash-tooling-top::after { top: 6px; opacity: 0.2; }
+  .splash-tooling-bottom::before { bottom: 0; }
+  .splash-tooling-bottom::after { bottom: 6px; opacity: 0.2; }
+
+  /* Corner ornaments */
+  .splash-corner {
+    position: absolute;
+    width: 40px; height: 40px;
+    border-color: var(--gold);
+    opacity: 0.25;
+    z-index: 2;
+    pointer-events: none;
+  }
+  .splash-corner.tl { top: 10%; left: 8%; border-top: 1px solid; border-left: 1px solid; }
+  .splash-corner.tr { top: 10%; right: 8%; border-top: 1px solid; border-right: 1px solid; }
+  .splash-corner.bl { bottom: 10%; left: 8%; border-bottom: 1px solid; border-left: 1px solid; }
+  .splash-corner.br { bottom: 10%; right: 8%; border-bottom: 1px solid; border-right: 1px solid; }
+
+  /* Page flip element */
+  .splash-page-flip {
+    position: absolute;
+    right: 0; top: 0; bottom: 0;
+    width: 50%;
+    z-index: 3;
+    pointer-events: none;
+    transform-origin: left center;
+    transform: perspective(1200px) rotateY(0deg);
+    opacity: 0;
+  }
+  .splash-page-flip.animate {
+    animation: pageFlipHint 3s ease-in-out 2s infinite;
+  }
+  @keyframes pageFlipHint {
+    0%, 100% { transform: perspective(1200px) rotateY(0deg); opacity: 0; }
+    15% { opacity: 0.3; }
+    30% { transform: perspective(1200px) rotateY(-12deg); opacity: 0.3; }
+    50% { transform: perspective(1200px) rotateY(-5deg); opacity: 0.15; }
+    70% { transform: perspective(1200px) rotateY(0deg); opacity: 0; }
+  }
+  .splash-page-flip-inner {
+    width: 100%; height: 100%;
+    background: linear-gradient(90deg, rgba(245,236,224,0.06), rgba(245,236,224,0.02));
+    border-left: 1px solid rgba(197,160,89,0.1);
+  }
+
+  .splash-theme-toggle {
+    position: absolute; top: 1.5rem; right: 1.5rem;
+    background: none; border: 1px solid var(--surface-border);
+    color: var(--muted);
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 0.9rem;
+    z-index: 10;
+    transition: all 0.3s ease;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .splash-theme-toggle:hover { color: var(--gold); border-color: var(--gold-dim); }
+
+  .splash-content {
+    position: relative; z-index: 5;
+    text-align: center;
+    display: flex; flex-direction: column;
+    align-items: center;
+    padding: 3rem 2rem;
+    pointer-events: none;
+  }
+
+  .splash-brand-en {
+    font-family: 'Tajawal', sans-serif;
+    font-weight: 300;
+    font-size: 1.8rem;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: var(--text);
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 1.2s ease, transform 1.2s ease;
+    margin-bottom: 2rem;
+    line-height: 2;
+  }
+  .splash-brand-en.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .splash-brand-divider {
+    width: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--leather), var(--accent), var(--leather), transparent);
+    transition: width 1.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    margin-bottom: 2rem;
+  }
+  .splash-brand-divider.visible {
+    width: 220px;
+  }
+
+  .splash-brand-ar {
+    font-family: 'Amiri', serif;
+    font-size: 3.6rem;
+    font-weight: 700;
+    color: var(--text);
+    direction: rtl;
+    opacity: 0;
+    transform: translateY(16px);
+    transition: opacity 1s ease 0.3s, transform 1s ease 0.3s;
+    margin-bottom: 2.5rem;
+    line-height: 2;
+    letter-spacing: 0.04em;
+  }
+  .splash-brand-ar.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .splash-subtitle {
+    font-family: 'Tajawal', sans-serif;
+    font-weight: 300;
+    font-size: 0.88rem;
+    letter-spacing: 0.25em;
+    color: var(--muted);
+    text-transform: lowercase;
+    opacity: 0;
+    transition: opacity 0.8s ease 0.6s;
+    margin-bottom: 3.5rem;
+    line-height: 2;
+  }
+  .splash-subtitle.visible { opacity: 1; }
+
+  /* Enter button — styled as a page corner flip */
+  .splash-enter {
+    position: relative;
+    pointer-events: auto;
+    font-family: 'Tajawal', sans-serif;
+    font-weight: 400;
+    font-size: 0.85rem;
+    letter-spacing: 0.25em;
+    text-transform: lowercase;
+    color: var(--parchment);
+    background: transparent;
+    border: 1px solid var(--surface-border);
+    padding: 1rem 3rem;
+    cursor: pointer;
+    overflow: hidden;
+    transition: all 0.5s ease;
+    opacity: 0;
+    transform: translateY(10px);
+    line-height: 2;
+  }
+  .splash-enter.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  /* Page corner fold on the button */
+  .splash-enter::after {
+    content: '';
+    position: absolute;
+    top: 0; right: 0;
+    width: 18px; height: 18px;
+    background: linear-gradient(225deg, var(--bg) 48%, var(--gold) 50%, transparent 52%);
+    transition: all 0.4s ease;
+  }
+  .splash-enter:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+    box-shadow: 0 0 30px rgba(197,160,89,0.08);
+  }
+  .splash-enter:hover::after {
+    width: 24px; height: 24px;
+  }
+
+  /* ============================================
+     PAGE FLIP TRANSITION OVERLAY
+     ============================================ */
+  .page-flip-overlay {
+    position: fixed; inset: 0;
+    z-index: 200;
+    pointer-events: none;
+    perspective: 1400px;
+    display: none;
+  }
+  .page-flip-overlay.active { display: block; }
+  .page-flip-page {
+    position: absolute;
+    top: 0; right: 0;
+    width: 100%; height: 100%;
+    transform-origin: left center;
+    background: linear-gradient(90deg,
+      var(--page-cream) 0%,
+      #ede4d4 60%,
+      #e0d5c0 100%
+    );
+    box-shadow: -4px 0 20px var(--page-shadow);
+    transform: perspective(1400px) rotateY(0deg);
+  }
+  .page-flip-page.flipping {
+    animation: fullPageFlip 0.8s cubic-bezier(0.4, 0.0, 0.2, 1) forwards;
+  }
+  @keyframes fullPageFlip {
+    0% { transform: perspective(1400px) rotateY(0deg); }
+    100% { transform: perspective(1400px) rotateY(-180deg); }
+  }
+  /* Paper grain on flip page */
+  .page-flip-page::before {
+    content: '';
+    position: absolute; inset: 0;
+    background:
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        rgba(139,69,19,0.02) 2px,
+        rgba(139,69,19,0.02) 3px
+      );
+    pointer-events: none;
+  }
+
+  /* ============================================
+     ONBOARDING — Book Pages
+     ============================================ */
+  #onboarding {
+    position: fixed; inset: 0;
+    display: none; align-items: center; justify-content: center;
+    z-index: 50;
+    background:
+      radial-gradient(ellipse at 50% 50%, rgba(42,31,21,0.3) 0%, transparent 70%),
+      var(--bg);
+    perspective: 1200px;
+  }
+  #onboarding.active { display: flex; }
+  #onboarding.hidden {
+    opacity: 0;
+    transition: opacity 0.6s ease;
+    pointer-events: none;
+  }
+
+  .onboarding-card {
+    position: relative;
+    width: 90%;
+    max-width: 420px;
+    padding: 4rem 3rem 3.5rem;
+    text-align: center;
+    background:
+      radial-gradient(ellipse at 50% 30%, rgba(245,236,224,0.04) 0%, transparent 60%),
+      var(--surface);
+    border: 1px solid var(--surface-border);
+    transform-origin: left center;
+    opacity: 0;
+    transform: perspective(1200px) rotateY(30deg) scale(0.95);
+    transition: opacity 0.5s ease, transform 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+  }
+  .onboarding-card.visible {
+    opacity: 1;
+    transform: perspective(1200px) rotateY(0deg) scale(1);
+  }
+  .onboarding-card.exit {
+    opacity: 0;
+    transform: perspective(1200px) rotateY(-60deg) scale(0.9);
+    transition: opacity 0.4s ease, transform 0.5s cubic-bezier(0.55, 0.06, 0.68, 0.19);
+  }
+
+  /* Page edge detail on onboarding card */
+  .onboarding-card::before {
+    content: '';
+    position: absolute;
+    top: 8px; bottom: 8px; left: 0;
+    width: 3px;
+    background: linear-gradient(180deg,
+      transparent,
+      var(--gold-dim) 20%,
+      var(--gold) 50%,
+      var(--gold-dim) 80%,
+      transparent
+    );
+    opacity: 0.35;
+  }
+  /* Parchment texture on card */
+  .onboarding-card::after {
+    content: '';
+    position: absolute; inset: 0;
+    background:
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 4px,
+        rgba(139,69,19,0.015) 4px,
+        rgba(139,69,19,0.015) 5px
+      );
+    pointer-events: none;
+    border-radius: inherit;
+  }
+
+  .ob-page-num {
+    font-family: 'Tajawal', sans-serif;
+    font-weight: 300;
+    font-size: 0.72rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 2.5rem;
+    line-height: 2;
+  }
+
+  .ob-title {
+    font-family: 'Tajawal', sans-serif;
+    font-weight: 500;
+    font-size: 1.6rem;
+    letter-spacing: 0.15em;
+    color: var(--text);
+    margin-bottom: 1rem;
+    line-height: 2;
+  }
+
+  .ob-title-ar {
+    font-family: 'Amiri', serif;
+    font-size: 1.8rem;
+    color: var(--gold);
+    direction: rtl;
+    margin-bottom: 2.5rem;
+    line-height: 2;
+    letter-spacing: 0.03em;
+  }
+
+  .ob-desc {
+    font-family: 'Tajawal', sans-serif;
+    font-weight: 300;
+    font-size: 0.92rem;
+    color: var(--muted);
+    max-width: 320px;
+    margin: 0 auto 3rem;
+    line-height: 2.2;
+    letter-spacing: 0.03em;
+  }
+
+  .ob-dots {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 2.5rem;
+  }
+  .ob-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--line);
+    transition: all 0.4s ease;
+  }
+  .ob-dot.active {
+    background: var(--gold);
+    box-shadow: 0 0 8px var(--gold-glow);
+  }
+
+  .ob-next-btn {
+    font-family: 'Tajawal', sans-serif;
+    font-weight: 400;
+    font-size: 0.82rem;
+    letter-spacing: 0.2em;
+    text-transform: lowercase;
+    color: var(--parchment);
+    background: none;
+    border: 1px solid var(--surface-border);
+    padding: 0.85rem 2.5rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    line-height: 2;
+  }
+  .ob-next-btn:hover {
+    border-color: var(--gold);
+    color: var(--gold);
+  }
+
+  .ob-skip {
+    position: absolute;
+    bottom: 2.5rem; right: 2.5rem;
+    font-family: 'Tajawal', sans-serif;
+    font-weight: 300;
+    font-size: 0.78rem;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: color 0.3s ease;
+    line-height: 2;
+  }
+  .ob-skip:hover { color: var(--gold); }
+
+  /* ============================================
+     MAIN APP
+     ============================================ */
+  #app {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding: 0 1.5rem 3rem;
+  }
+  #app.active { display: flex; }
+
+  .app-header {
+    width: 100%;
+    max-width: 600px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 0.5rem;
+  }
+  .app-brand {
+    font-family: 'Tajawal', sans-serif;
+    font-weight: 300;
+    font-size: 0.78rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    display: flex;
+    align-items: baseline;
+    gap: 0.8rem;
+    line-height: 2;
+  }
+  .app-brand-ar {
+    font-family: 'Amiri', serif;
+    font-size: 1rem;
+    font-weight: 400;
+    letter-spacing: 0.02em;
+    color: var(--text);
+  }
+  .app-theme-btn {
+    background: none; border: 1px solid var(--surface-border);
+    color: var(--muted);
+    font-size: 0.85rem;
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.3s ease;
+  }
+  .app-theme-btn:hover {
+    color: var(--gold);
+    border-color: var(--gold-dim);
+  }
+
+  /* Poem card — parchment style */
+  .poem-frame {
+    position: relative;
+    width: 100%;
+    max-width: 560px;
+    padding: 4rem 3rem;
+    text-align: center;
+    margin-top: 2rem;
+    background:
+      radial-gradient(ellipse at 50% 30%, rgba(245,236,224,0.035) 0%, transparent 60%),
+      var(--surface);
+    border: 1px solid var(--surface-border);
+    transition: opacity 0.35s ease, transform 0.35s ease;
+  }
+
+  /* Warm ambient glow behind the poem card */
+  .poem-frame::before {
+    content: '';
+    position: absolute;
+    inset: -20px;
+    background: radial-gradient(ellipse at 50% 50%, var(--gold-glow) 0%, transparent 70%);
+    z-index: -1;
+    pointer-events: none;
+  }
+
+  /* Parchment texture */
+  .poem-frame::after {
+    content: '';
+    position: absolute; inset: 0;
+    background:
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 3px,
+        rgba(139,69,19,0.015) 3px,
+        rgba(139,69,19,0.015) 4px
+      );
+    pointer-events: none;
+  }
+
+  /* Spine binding accent — left edge */
+  .poem-spine-accent {
+    position: absolute;
+    top: 12px; bottom: 12px; left: 0;
+    width: 4px;
+    background: linear-gradient(180deg,
+      transparent,
+      var(--leather) 15%,
+      var(--gold) 50%,
+      var(--leather) 85%,
+      transparent
+    );
+    opacity: 0.3;
+    pointer-events: none;
+  }
+
+  /* Gold tooling lines on the poem card */
+  .poem-tooling-top,
+  .poem-tooling-bottom {
+    position: absolute;
+    left: 2rem; right: 2rem;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold-dim) 30%, var(--gold) 50%, var(--gold-dim) 70%, transparent);
+    opacity: 0.3;
+    pointer-events: none;
+  }
+  .poem-tooling-top { top: 1.5rem; }
+  .poem-tooling-bottom { bottom: 1.5rem; }
+
+  .poem-content {
+    position: relative; z-index: 1;
+    direction: rtl;
+    margin-bottom: 2.5rem;
+    padding: 0.5rem 0;
+  }
+  .poem-line {
+    font-family: 'Amiri', serif;
+    font-size: 1.65rem;
+    line-height: 2.5;
+    color: var(--text);
+    letter-spacing: 0.02em;
+    transition: font-size 0.3s ease;
+  }
+  .poem-separator {
+    display: block;
+    width: 24px; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--leather), transparent);
+    margin: 0.6rem auto;
+    opacity: 0.4;
+  }
+  .poet-name {
+    font-family: 'Amiri', serif;
+    font-size: 0.95rem;
+    color: var(--gold);
+    direction: rtl;
+    letter-spacing: 0.03em;
+    position: relative; z-index: 1;
+    line-height: 2;
+  }
+
+  .poem-controls {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 3rem;
+    position: relative; z-index: 1;
+  }
+  .ctrl-btn {
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    background: transparent;
+    border: 1px solid var(--surface-border);
+    color: var(--muted);
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.3s ease;
+  }
+  .ctrl-btn:hover, .ctrl-btn:focus-visible {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+  .ctrl-btn:active { transform: scale(0.92); }
+  .ctrl-btn.active {
+    color: var(--gold);
+    border-color: var(--gold);
+  }
+
+  /* ============================================
+     RESPONSIVE
+     ============================================ */
+  @media (max-width: 600px) {
+    .splash-brand-en { font-size: 1.2rem; letter-spacing: 0.2em; }
+    .splash-brand-ar { font-size: 2.6rem; margin-bottom: 2rem; }
+    .splash-brand-divider.visible { width: 150px; }
+    .splash-enter { padding: 0.85rem 2.2rem; font-size: 0.8rem; }
+    .splash-subtitle { font-size: 0.75rem; }
+    .splash-corner { width: 28px; height: 28px; }
+    .onboarding-card { padding: 3rem 1.8rem 2.5rem; }
+    .ob-title { font-size: 1.3rem; }
+    .ob-title-ar { font-size: 1.5rem; }
+    .poem-frame { padding: 3rem 1.8rem; }
+    .poem-line { font-size: 1.35rem; }
+    .app-header { padding: 1rem 0.5rem; }
+    .poem-tooling-top, .poem-tooling-bottom { left: 1rem; right: 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============================================
+     SPLASH SCREEN
+     ============================================ -->
+<div id="splash" role="region" aria-label="Splash screen">
+  <div class="splash-texture" aria-hidden="true"></div>
+  <div class="splash-tooling-top" aria-hidden="true"></div>
+  <div class="splash-tooling-bottom" aria-hidden="true"></div>
+  <div class="splash-corner tl" aria-hidden="true"></div>
+  <div class="splash-corner tr" aria-hidden="true"></div>
+  <div class="splash-corner bl" aria-hidden="true"></div>
+  <div class="splash-corner br" aria-hidden="true"></div>
+  <div class="splash-page-flip" id="pageFlipHint" aria-hidden="true">
+    <div class="splash-page-flip-inner"></div>
+  </div>
+  <button class="splash-theme-toggle" id="splashThemeBtn" aria-label="Toggle theme">☀</button>
+  <div class="splash-content">
+    <div class="splash-brand-en" id="splashEn">Poetry Bil-Araby</div>
+    <div class="splash-brand-divider" id="splashDivider"></div>
+    <div class="splash-brand-ar" id="splashAr" dir="rtl">شعر بالعربي</div>
+    <div class="splash-subtitle" id="splashSub">open the codex of arabic verse</div>
+    <button class="splash-enter" id="enterBtn" aria-label="Enter the app">turn the page</button>
+  </div>
+</div>
+
+<!-- Page flip transition overlay -->
+<div class="page-flip-overlay" id="pageFlipOverlay" aria-hidden="true">
+  <div class="page-flip-page" id="pageFlipPage"></div>
+</div>
+
+<!-- ============================================
+     ONBOARDING
+     ============================================ -->
+<div id="onboarding" role="region" aria-label="Onboarding">
+  <div class="onboarding-card" id="obCard">
+    <div class="ob-page-num" id="obPageNum">page i</div>
+    <div class="ob-title" id="obTitle">Discover</div>
+    <div class="ob-title-ar" id="obTitleAr" dir="rtl">اكتشف</div>
+    <div class="ob-desc" id="obDesc">Explore a vast collection of Arabic poetry spanning centuries of literary tradition.</div>
+    <div class="ob-dots" id="obDots">
+      <div class="ob-dot active"></div>
+      <div class="ob-dot"></div>
+      <div class="ob-dot"></div>
+      <div class="ob-dot"></div>
+    </div>
+    <button class="ob-next-btn" id="obNextBtn" aria-label="Next step">continue</button>
+  </div>
+  <button class="ob-skip" id="obSkipBtn" aria-label="Skip onboarding">skip</button>
+</div>
+
+<!-- ============================================
+     MAIN APP
+     ============================================ -->
+<div id="app" role="main">
+  <header class="app-header">
+    <div class="app-brand">
+      <span class="app-brand-ar" dir="rtl">شعر بالعربي</span>
+      Poetry Bil-Araby
+    </div>
+    <button class="app-theme-btn" id="appThemeBtn" aria-label="Toggle theme">☀</button>
+  </header>
+  <div class="poem-frame">
+    <div class="poem-spine-accent" aria-hidden="true"></div>
+    <div class="poem-tooling-top" aria-hidden="true"></div>
+    <div class="poem-tooling-bottom" aria-hidden="true"></div>
+    <div class="poem-content">
+      <div class="poem-line">عَلى قَدرِ أَهلِ العَزمِ تَأتي العَزائِمُ</div>
+      <span class="poem-separator" aria-hidden="true"></span>
+      <div class="poem-line">وَتَأتي عَلى قَدرِ الكِرامِ المَكارِمُ</div>
+    </div>
+    <div class="poet-name">— المتنبي</div>
+    <div class="poem-controls">
+      <button class="ctrl-btn" id="playBtn" aria-label="Play recitation">▶</button>
+      <button class="ctrl-btn" id="nextBtn" aria-label="Next poem">⟳</button>
+      <button class="ctrl-btn" id="saveBtn" aria-label="Save poem">♡</button>
+      <button class="ctrl-btn" id="fontBtn" aria-label="Change font size">ع</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  "use strict";
+
+  var splash = document.getElementById("splash");
+  var splashEn = document.getElementById("splashEn");
+  var splashDivider = document.getElementById("splashDivider");
+  var splashAr = document.getElementById("splashAr");
+  var splashSub = document.getElementById("splashSub");
+  var enterBtn = document.getElementById("enterBtn");
+  var pageFlipHint = document.getElementById("pageFlipHint");
+  var pageFlipOverlay = document.getElementById("pageFlipOverlay");
+  var pageFlipPage = document.getElementById("pageFlipPage");
+  var onboarding = document.getElementById("onboarding");
+  var obCard = document.getElementById("obCard");
+  var obPageNum = document.getElementById("obPageNum");
+  var obTitle = document.getElementById("obTitle");
+  var obTitleAr = document.getElementById("obTitleAr");
+  var obDesc = document.getElementById("obDesc");
+  var obDots = document.getElementById("obDots");
+  var obNextBtn = document.getElementById("obNextBtn");
+  var obSkipBtn = document.getElementById("obSkipBtn");
+  var appEl = document.getElementById("app");
+  var splashThemeBtn = document.getElementById("splashThemeBtn");
+  var appThemeBtn = document.getElementById("appThemeBtn");
+
+  /* ============================================
+     SPLASH REVEAL SEQUENCE
+     ============================================ */
+  setTimeout(function() { splashEn.classList.add("visible"); }, 400);
+  setTimeout(function() { splashDivider.classList.add("visible"); }, 900);
+  setTimeout(function() { splashAr.classList.add("visible"); }, 1200);
+  setTimeout(function() { splashSub.classList.add("visible"); }, 1800);
+  setTimeout(function() { enterBtn.classList.add("visible"); }, 2200);
+  setTimeout(function() { pageFlipHint.classList.add("animate"); }, 2600);
+
+  /* ============================================
+     PAGE FLIP TRANSITION
+     ============================================ */
+  function triggerPageFlip(callback) {
+    pageFlipOverlay.classList.add("active");
+    void pageFlipPage.offsetWidth;
+    pageFlipPage.classList.add("flipping");
+
+    setTimeout(function() {
+      if (callback) callback();
+    }, 500);
+
+    setTimeout(function() {
+      pageFlipPage.classList.remove("flipping");
+      pageFlipOverlay.classList.remove("active");
+    }, 900);
+  }
+
+  /* ============================================
+     ENTER BUTTON → SPLASH EXIT
+     ============================================ */
+  enterBtn.addEventListener("click", function() {
+    enterBtn.style.pointerEvents = "none";
+    triggerPageFlip(function() {
+      splash.classList.add("hidden");
+      setTimeout(function() {
+        splash.style.display = "none";
+        showOnboarding();
+      }, 400);
+    });
+  });
+
+  enterBtn.addEventListener("keydown", function(e) {
+    if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      enterBtn.click();
+    }
+  });
+
+  /* ============================================
+     ONBOARDING SEQUENTIAL STEPS
+     ============================================ */
+  var romanNumerals = ["i", "ii", "iii", "iv"];
+  var obSteps = [
+    { title: "Discover", titleAr: "اكتشف", desc: "Explore a vast collection of Arabic poetry spanning centuries of literary tradition.", btn: "continue" },
+    { title: "Explore", titleAr: "استكشف", desc: "Browse by poet, era, or theme. Find verses that resonate with your soul.", btn: "continue" },
+    { title: "Listen", titleAr: "استمع", desc: "Hear poems recited aloud with authentic pronunciation and natural rhythm.", btn: "continue" },
+    { title: "Share", titleAr: "شارك", desc: "Save your favorite verses and share the beauty of Arabic poetry with others.", btn: "begin" }
+  ];
+  var obStep = 0;
+  var obTransitioning = false;
+
+  function showOnboarding() {
+    onboarding.classList.add("active");
+    renderObStep(0, true);
+  }
+
+  function renderObStep(index, immediate) {
+    var step = obSteps[index];
+    if (!immediate) {
+      obCard.classList.remove("visible");
+      obCard.classList.add("exit");
+    }
+    var delay = immediate ? 80 : 500;
+    setTimeout(function() {
+      obPageNum.textContent = "page " + romanNumerals[index];
+      obTitle.textContent = step.title;
+      obTitleAr.textContent = step.titleAr;
+      obDesc.textContent = step.desc;
+      obNextBtn.textContent = step.btn;
+
+      var dots = obDots.children;
+      var i;
+      for (i = 0; i < dots.length; i++) {
+        if (i === index) {
+          dots[i].classList.add("active");
+        } else {
+          dots[i].classList.remove("active");
+        }
+      }
+
+      obCard.classList.remove("exit");
+      void obCard.offsetWidth;
+      obCard.classList.add("visible");
+      obTransitioning = false;
+    }, delay);
+  }
+
+  obNextBtn.addEventListener("click", function() {
+    if (obTransitioning) return;
+    obTransitioning = true;
+    obStep++;
+    if (obStep >= obSteps.length) {
+      finishOnboarding();
+    } else {
+      renderObStep(obStep, false);
+    }
+  });
+
+  obSkipBtn.addEventListener("click", function() {
+    finishOnboarding();
+  });
+
+  document.addEventListener("keydown", function(e) {
+    if (!onboarding.classList.contains("active")) return;
+    if (onboarding.classList.contains("hidden")) return;
+    if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+      e.preventDefault();
+      obNextBtn.click();
+    }
+    if (e.key === "Escape") {
+      e.preventDefault();
+      obSkipBtn.click();
+    }
+  });
+
+  function finishOnboarding() {
+    triggerPageFlip(function() {
+      onboarding.classList.add("hidden");
+      setTimeout(function() {
+        onboarding.classList.remove("active");
+        showApp();
+      }, 400);
+    });
+  }
+
+  /* ============================================
+     MAIN APP
+     ============================================ */
+  function showApp() {
+    appEl.classList.add("active");
+  }
+
+  /* ============================================
+     THEME TOGGLE
+     ============================================ */
+  var isDark = true;
+  var SUN = "☀";
+  var MOON = "☾";
+
+  function toggleTheme() {
+    isDark = !isDark;
+    if (isDark) {
+      document.documentElement.removeAttribute("data-theme");
+      splashThemeBtn.textContent = SUN;
+      appThemeBtn.textContent = SUN;
+    } else {
+      document.documentElement.setAttribute("data-theme", "light");
+      splashThemeBtn.textContent = MOON;
+      appThemeBtn.textContent = MOON;
+    }
+  }
+
+  splashThemeBtn.addEventListener("click", function(e) {
+    e.stopPropagation();
+    toggleTheme();
+  });
+  appThemeBtn.addEventListener("click", toggleTheme);
+
+  /* ============================================
+     APP MOCK INTERACTIONS
+     ============================================ */
+  var poems = [
+    {
+      lines: [
+        "عَلى قَدرِ أَهلِ العَزمِ تَأتي العَزائِمُ",
+        "وَتَأتي عَلى قَدرِ الكِرامِ المَكارِمُ"
+      ],
+      poet: "المتنبي"
+    },
+    {
+      lines: [
+        "وَما نَيلُ المَطالِبِ بِالتَمَنّي",
+        "وَلَكِن تُؤخَذُ الدُنيا غِلابا"
+      ],
+      poet: "أحمد شوقي"
+    },
+    {
+      lines: [
+        "إِذا غامَرتَ في شَرَفٍ مَرومٍ",
+        "فَلا تَقنَع بِما دونَ النُجومِ"
+      ],
+      poet: "المتنبي"
+    },
+    {
+      lines: [
+        "أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ",
+        "فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي"
+      ],
+      poet: "حافظ إبراهيم"
+    }
+  ];
+  var currentPoem = 0;
+  var fontLevel = 0;
+  var fontSizes = ["1.65rem", "1.95rem", "2.3rem", "1.35rem"];
+
+  document.getElementById("nextBtn").addEventListener("click", function() {
+    currentPoem = (currentPoem + 1) % poems.length;
+    var p = poems[currentPoem];
+    var lines = document.querySelectorAll(".poem-line");
+    var poetEl = document.querySelector(".poet-name");
+    var frame = document.querySelector(".poem-frame");
+
+    frame.style.opacity = "0";
+    frame.style.transform = "translateY(6px)";
+    setTimeout(function() {
+      lines[0].textContent = p.lines[0];
+      lines[1].textContent = p.lines[1];
+      poetEl.textContent = "— " + p.poet;
+      frame.style.opacity = "";
+      frame.style.transform = "";
+    }, 250);
+  });
+
+  document.getElementById("playBtn").addEventListener("click", function() {
+    var btn = this;
+    btn.classList.add("active");
+    btn.textContent = "❚❚";
+    setTimeout(function() {
+      btn.classList.remove("active");
+      btn.textContent = "▶";
+    }, 2000);
+  });
+
+  document.getElementById("saveBtn").addEventListener("click", function() {
+    var btn = this;
+    if (btn.classList.contains("active")) {
+      btn.classList.remove("active");
+      btn.textContent = "♡";
+    } else {
+      btn.classList.add("active");
+      btn.textContent = "♥";
+    }
+  });
+
+  document.getElementById("fontBtn").addEventListener("click", function() {
+    fontLevel = (fontLevel + 1) % fontSizes.length;
+    var lines = document.querySelectorAll(".poem-line");
+    var i;
+    for (i = 0; i < lines.length; i++) {
+      lines[i].style.fontSize = fontSizes[fontLevel];
+    }
+  });
+
+  var poemFrame = document.querySelector(".poem-frame");
+  if (poemFrame) {
+    poemFrame.style.transition = "opacity 0.35s ease, transform 0.35s ease";
+  }
+
+})();
+</script>
+</body>
+</html>

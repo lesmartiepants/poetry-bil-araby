@@ -260,342 +260,293 @@
     body.light .walk-hint { color: var(--light-muted); }
 
     /* ===== MAIN APP ===== */
+    /* Glassmorphism — frosted glass layers with gold particle orbits */
     .main-app {
       display: none;
       min-height: 100vh;
-      padding-bottom: 80px;
+      position: relative;
+      overflow: hidden;
     }
-
     .main-app.active { display: block; }
 
-    /* Top bar */
-    .top-bar {
+    /* Gold orbit particles visible through glass */
+    .glass-orbits {
       position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
+      inset: 0;
+      z-index: 0;
+      overflow: hidden;
+      pointer-events: none;
+    }
+    .glass-orbit-ring {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      border: 1px solid rgba(197, 160, 89, 0.1);
+      border-radius: 50%;
+      animation: rotate 20s linear infinite;
+    }
+    .glass-orbit-ring:nth-child(1) { width: 500px; height: 500px; }
+    .glass-orbit-ring:nth-child(2) { width: 700px; height: 700px; animation-duration: 30s; animation-direction: reverse; }
+    .glass-orbit-ring:nth-child(3) { width: 900px; height: 900px; animation-duration: 40s; }
+    .glass-particle {
+      position: absolute;
+      width: 3px; height: 3px;
+      background: var(--gold);
+      border-radius: 50%;
+      box-shadow: 0 0 6px rgba(197, 160, 89, 0.4);
+      animation: float 5s ease-in-out infinite;
+    }
+
+    /* Top frosted nav */
+    .glass-nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
       z-index: 50;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 12px 20px;
-      background: rgba(12, 12, 14, 0.85);
-      backdrop-filter: blur(12px);
-      border-bottom: 1px solid var(--dark-line);
+      padding: 0 20px;
+      height: 56px;
+      background: rgba(12, 12, 14, 0.4);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-bottom: 1px solid rgba(197, 160, 89, 0.1);
       direction: ltr;
     }
-
-    body.light .top-bar {
-      background: rgba(253, 252, 248, 0.9);
-      border-color: var(--light-line);
-    }
-
-    .top-brand {
+    .glass-nav-brand {
       display: flex;
       align-items: flex-end;
       gap: 6px;
     }
-
-    .top-brand-en {
+    .glass-nav-brand-en {
       font-family: 'Forum', serif;
       font-size: 20px;
       letter-spacing: -0.05em;
       color: var(--gold);
       line-height: 1;
     }
-
-    .top-brand-ar {
+    .glass-nav-brand-ar {
       font-family: 'Reem Kufi', sans-serif;
       font-weight: 700;
       font-size: 14px;
       color: var(--gold);
       line-height: 1;
     }
-
-    .top-actions {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-    }
-
-    .top-btn {
-      width: 40px;
-      height: 40px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: transparent;
-      border: 1px solid var(--dark-line);
-      border-radius: 8px;
-      color: var(--dark-muted);
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    body.light .top-btn {
-      border-color: var(--light-line);
-      color: var(--light-muted);
-    }
-
-    .top-btn:hover {
-      color: var(--gold);
-      border-color: var(--gold);
-    }
-
-    /* Poem reader */
-    .reader {
-      max-width: 720px;
-      margin: 0 auto;
-      padding: 80px 20px 40px;
-    }
-
-    .poet-filter {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 24px;
-      direction: rtl;
-    }
-
-    .poet-chip {
-      padding: 8px 16px;
-      border-radius: 20px;
-      font-family: 'Tajawal', sans-serif;
-      font-size: 13px;
-      border: 1px solid var(--dark-line);
-      background: transparent;
-      color: var(--dark-muted);
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    body.light .poet-chip {
-      border-color: var(--light-line);
-      color: var(--light-muted);
-    }
-
-    .poet-chip.active {
-      background: rgba(197, 160, 89, 0.15);
-      border-color: var(--gold);
-      color: var(--gold);
-    }
-
-    .poem-card {
-      background: var(--dark-surface);
-      border: 1px solid var(--dark-line);
-      border-radius: 20px;
-      padding: 40px 32px;
-      direction: rtl;
-      animation: fadeInUp 0.6s ease;
-    }
-
-    body.light .poem-card {
-      background: var(--light-surface);
-      border-color: var(--light-line);
-      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    }
-
-    .poem-meta {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      margin-bottom: 24px;
-    }
-
-    .poet-avatar {
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
-      background: linear-gradient(135deg, rgba(197, 160, 89, 0.2), rgba(79, 70, 229, 0.1));
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--gold);
-      font-family: 'Amiri', serif;
-      font-size: 20px;
-    }
-
-    .poet-info h2 {
-      font-family: 'Tajawal', sans-serif;
-      font-size: 16px;
-      font-weight: 500;
-    }
-
-    .poet-info span {
-      font-size: 13px;
-      color: var(--dark-muted);
-    }
-
-    body.light .poet-info span { color: var(--light-muted); }
-
-    .poem-verses {
-      font-family: 'Amiri', serif;
-      font-size: clamp(20px, 3.5vw, 28px);
-      line-height: 2.2;
-      text-align: center;
-      padding: 20px 0;
-      border-top: 1px solid var(--dark-line);
-      border-bottom: 1px solid var(--dark-line);
-    }
-
-    body.light .poem-verses {
-      border-color: var(--light-line);
-    }
-
-    .verse-line {
-      opacity: 0;
-      animation: fadeInUp 0.5s ease forwards;
-    }
-
-    .verse-line:nth-child(1) { animation-delay: 0.2s; }
-    .verse-line:nth-child(2) { animation-delay: 0.5s; }
-
-    .hemistich-divider {
-      display: inline-block;
-      width: 40px;
-      height: 1px;
-      background: var(--gold);
-      vertical-align: middle;
-      margin: 0 12px;
-      opacity: 0.4;
-    }
-
-    .poem-actions {
-      display: flex;
-      gap: 12px;
-      margin-top: 24px;
-      justify-content: center;
-    }
-
-    .poem-action-btn {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      padding: 10px 16px;
-      background: transparent;
-      border: 1px solid var(--dark-line);
-      border-radius: 10px;
-      color: var(--dark-muted);
-      font-family: 'Tajawal', sans-serif;
-      font-size: 13px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    body.light .poem-action-btn {
-      border-color: var(--light-line);
-      color: var(--light-muted);
-    }
-
-    .poem-action-btn:hover {
-      color: var(--gold);
-      border-color: var(--gold);
-    }
-
-    /* Vertical Rail (right side) */
-    .vertical-rail {
-      position: fixed;
-      right: 16px;
-      top: 50%;
-      transform: translateY(-50%);
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      z-index: 40;
-      direction: ltr;
-    }
-
-    .rail-btn {
-      width: 44px;
-      height: 44px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--dark-surface);
-      border: 1px solid var(--dark-line);
-      border-radius: 10px;
-      color: var(--dark-muted);
-      cursor: pointer;
-      transition: all 0.2s ease;
-      position: relative;
-    }
-
-    body.light .rail-btn {
-      background: var(--light-surface);
-      border-color: var(--light-line);
-      color: var(--light-muted);
-      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
-    }
-
-    .rail-btn:hover {
-      color: var(--gold);
-      border-color: var(--gold);
-      transform: scale(1.08);
-    }
-
-    .rail-btn .tooltip {
-      position: absolute;
-      right: 52px;
-      top: 50%;
-      transform: translateY(-50%);
-      background: var(--dark-surface);
-      border: 1px solid var(--dark-line);
-      color: var(--dark-text);
+    .glass-nav-label {
       font-family: 'Tajawal', sans-serif;
       font-size: 12px;
-      padding: 4px 10px;
-      border-radius: 6px;
-      white-space: nowrap;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.2s ease;
+      color: rgba(197, 160, 89, 0.6);
+      letter-spacing: 0.1em;
     }
 
-    .rail-btn:hover .tooltip { opacity: 1; }
-
-    /* Bottom Nav */
-    .bottom-nav {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      z-index: 50;
+    /* Poem glass layers */
+    .glass-reader {
+      position: relative;
+      z-index: 2;
+      min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 4px;
-      padding: 10px 20px;
-      background: rgba(12, 12, 14, 0.9);
-      backdrop-filter: blur(16px);
-      border-top: 1px solid var(--dark-line);
+      padding: 80px 20px 120px;
+    }
+
+    .glass-stack {
+      position: relative;
+      width: 100%;
+      max-width: 400px;
+    }
+
+    /* Back layer — deeper glass */
+    .glass-layer-back {
+      position: absolute;
+      inset: -16px -12px;
+      background: rgba(197, 160, 89, 0.04);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border: 1px solid rgba(197, 160, 89, 0.08);
+      border-radius: 24px;
+      transform: rotate(-1.5deg);
+    }
+
+    /* Mid layer — medium glass */
+    .glass-layer-mid {
+      position: absolute;
+      inset: -8px -6px;
+      background: rgba(197, 160, 89, 0.06);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(197, 160, 89, 0.1);
+      border-radius: 22px;
+      transform: rotate(0.8deg);
+    }
+
+    /* Front layer — main frosted card */
+    .glass-card {
+      position: relative;
+      background: rgba(22, 22, 24, 0.55);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(197, 160, 89, 0.15);
+      border-radius: 20px;
+      padding: 2rem 1.5rem;
+      box-shadow: 0 16px 40px rgba(0, 0, 0, 0.3);
+    }
+
+    .glass-poet-name {
+      font-family: 'Tajawal', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--gold);
+      margin-bottom: 0.5rem;
+      direction: rtl;
+    }
+    .glass-poet-en {
+      font-family: 'Tajawal', sans-serif;
+      font-size: 11px;
+      color: var(--dark-muted);
+      margin-bottom: 1.5rem;
       direction: ltr;
     }
 
-    body.light .bottom-nav {
-      background: rgba(253, 252, 248, 0.95);
-      border-color: var(--light-line);
+    .glass-divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(197, 160, 89, 0.25), transparent);
+      margin-bottom: 1.5rem;
     }
 
-    .nav-item {
+    .glass-verses {
+      font-family: 'Amiri', serif;
+      font-size: clamp(1.25rem, 3.5vw, 1.625rem);
+      line-height: 2.2;
+      text-align: center;
+      color: var(--dark-text);
+      direction: rtl;
+      margin-bottom: 1rem;
+    }
+
+    .glass-translation {
+      font-family: 'Tajawal', sans-serif;
+      font-size: 13px;
+      color: var(--dark-muted);
+      text-align: center;
+      direction: ltr;
+      line-height: 1.6;
+    }
+
+    /* ===== CONTROLS ===== */
+    /* Glassmorphism Pull-Up Sheet — frosted half-height drawer */
+
+    .glass-sheet-handle {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      z-index: 55;
+      display: flex;
+      justify-content: center;
+      padding: 14px 0 18px;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .glass-sheet-handle-bar {
+      width: 40px;
+      height: 4px;
+      background: rgba(197, 160, 89, 0.4);
+      border-radius: 2px;
+      transition: background 0.3s ease;
+    }
+    .glass-sheet-handle:hover .glass-sheet-handle-bar,
+    .glass-sheet-handle:active .glass-sheet-handle-bar {
+      background: var(--gold);
+    }
+
+    .glass-sheet {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      z-index: 60;
+      height: 50vh;
+      background: rgba(12, 12, 14, 0.5);
+      backdrop-filter: blur(30px);
+      -webkit-backdrop-filter: blur(30px);
+      border-top: 1px solid rgba(197, 160, 89, 0.15);
+      border-radius: 24px 24px 0 0;
+      padding: 1.5rem 1.5rem 2rem;
+      transform: translateY(100%);
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
       display: flex;
       flex-direction: column;
-      align-items: center;
-      gap: 4px;
-      padding: 8px 16px;
-      background: transparent;
-      border: none;
-      color: var(--dark-muted);
-      cursor: pointer;
-      transition: color 0.2s ease;
-      font-family: 'Tajawal', sans-serif;
-      font-size: 11px;
-      min-width: 60px;
+      gap: 0.75rem;
+    }
+    .glass-sheet.open {
+      transform: translateY(0);
     }
 
-    body.light .nav-item { color: var(--light-muted); }
+    .glass-sheet-drag {
+      width: 36px;
+      height: 4px;
+      background: rgba(197, 160, 89, 0.3);
+      border-radius: 2px;
+      margin: 0 auto 0.75rem;
+      cursor: pointer;
+    }
 
-    .nav-item.active { color: var(--gold); }
-    .nav-item:hover { color: var(--gold); }
+    .glass-sheet-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 18px;
+      min-height: 52px;
+      background: rgba(197, 160, 89, 0.06);
+      border: 1px solid rgba(197, 160, 89, 0.1);
+      border-radius: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .glass-sheet-item:hover,
+    .glass-sheet-item:active {
+      background: rgba(197, 160, 89, 0.12);
+      border-color: rgba(197, 160, 89, 0.25);
+    }
+
+    .glass-sheet-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: rgba(197, 160, 89, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--gold);
+      flex-shrink: 0;
+    }
+
+    .glass-sheet-label {
+      font-family: 'Tajawal', sans-serif;
+      font-size: 15px;
+      font-weight: 400;
+      color: var(--dark-text);
+      direction: ltr;
+    }
+    .glass-sheet-sublabel {
+      font-family: 'Tajawal', sans-serif;
+      font-size: 11px;
+      color: var(--dark-muted);
+      direction: ltr;
+    }
+
+    /* Sheet overlay */
+    .glass-sheet-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 58;
+      background: rgba(0, 0, 0, 0.4);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease;
+    }
+    .glass-sheet-overlay.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
 
     /* ===== KEYFRAMES ===== */
     @keyframes float {
@@ -624,16 +575,22 @@
 
     /* ===== RESPONSIVE ===== */
     @media (max-width: 768px) {
-      .vertical-rail { display: none; }
-      .reader { padding: 70px 16px 40px; }
-      .poem-card { padding: 24px 16px; }
-      .poem-actions { flex-wrap: wrap; }
       .orbit-ring:nth-child(3) { display: none; }
+      .glass-orbit-ring:nth-child(3) { display: none; }
+      .glass-card { padding: 1.5rem 1.25rem; }
+      .glass-sheet-item { padding: 12px 14px; min-height: 48px; }
     }
 
     @media (max-width: 480px) {
       .orbit-ring:nth-child(2) { display: none; }
-      .poet-filter { flex-wrap: wrap; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
     }
   </style>
 </head>
@@ -668,120 +625,94 @@
     <span class="walk-hint">Tap anywhere to continue</span>
   </div>
 
-  <!-- MAIN APP -->
+  <!-- ===== MAIN APP ===== -->
   <div class="main-app" id="mainApp">
-    <!-- Top bar -->
-    <header class="top-bar">
-      <div class="top-brand">
-        <span class="top-brand-en">poetry</span>
-        <span class="top-brand-ar">بالعربي</span>
+    <!-- Gold orbit particles behind glass -->
+    <div class="glass-orbits" id="glassOrbits">
+      <div class="glass-orbit-ring"></div>
+      <div class="glass-orbit-ring"></div>
+      <div class="glass-orbit-ring"></div>
+    </div>
+
+    <!-- Frosted nav -->
+    <header class="glass-nav">
+      <div class="glass-nav-brand">
+        <span class="glass-nav-brand-en">poetry</span>
+        <span class="glass-nav-brand-ar">بالعربي</span>
       </div>
-      <div class="top-actions">
-        <button class="top-btn" onclick="toggleTheme()" title="Toggle theme">
-          <i data-lucide="sun" style="width:18px;height:18px"></i>
-        </button>
-        <button class="top-btn" title="Settings">
-          <i data-lucide="settings" style="width:18px;height:18px"></i>
-        </button>
-      </div>
+      <div class="glass-nav-label">Diwan</div>
     </header>
 
-    <!-- Vertical Rail (right side) -->
-    <nav class="vertical-rail">
-      <button class="rail-btn">
-        <i data-lucide="heart" style="width:18px;height:18px"></i>
-        <span class="tooltip">Save</span>
-      </button>
-      <button class="rail-btn">
-        <i data-lucide="type" style="width:18px;height:18px"></i>
-        <span class="tooltip">Font size</span>
-      </button>
-      <button class="rail-btn">
-        <i data-lucide="languages" style="width:18px;height:18px"></i>
-        <span class="tooltip">Transliteration</span>
-      </button>
-      <button class="rail-btn">
-        <i data-lucide="book-open" style="width:18px;height:18px"></i>
-        <span class="tooltip">Tafsir</span>
-      </button>
-      <button class="rail-btn">
-        <i data-lucide="italic" style="width:18px;height:18px"></i>
-        <span class="tooltip">Tashkeel</span>
-      </button>
-      <button class="rail-btn">
-        <i data-lucide="log-in" style="width:18px;height:18px"></i>
-        <span class="tooltip">Sign in</span>
-      </button>
-      <button class="rail-btn">
-        <i data-lucide="settings" style="width:18px;height:18px"></i>
-        <span class="tooltip">Settings</span>
-      </button>
-    </nav>
-
-    <!-- Reader -->
-    <main class="reader">
-      <div class="poet-filter">
-        <button class="poet-chip active">الكل</button>
-        <button class="poet-chip">المتنبي</button>
-        <button class="poet-chip">أحمد شوقي</button>
-        <button class="poet-chip">نزار قباني</button>
-      </div>
-
-      <article class="poem-card">
-        <div class="poem-meta">
-          <div class="poet-avatar">م</div>
-          <div class="poet-info">
-            <h2>المتنبي</h2>
-            <span>Al-Mutanabbi</span>
-          </div>
-        </div>
-        <div class="poem-verses" dir="rtl" lang="ar">
-          <div class="verse-line">
-            عَلَى قَدْرِ أَهْلِ العَزْمِ تَأْتِي العَزَائِمُ
-            <span class="hemistich-divider"></span>
+    <!-- Frosted glass poem layers -->
+    <main class="glass-reader">
+      <div class="glass-stack">
+        <div class="glass-layer-back"></div>
+        <div class="glass-layer-mid"></div>
+        <div class="glass-card">
+          <div class="glass-poet-name" lang="ar" dir="rtl">المتنبي</div>
+          <div class="glass-poet-en">Al-Mutanabbi</div>
+          <div class="glass-divider"></div>
+          <div class="glass-verses" lang="ar" dir="rtl">
+            عَلَى قَدْرِ أَهْلِ العَزْمِ تَأْتِي العَزَائِمُ<br>
             وَتَأْتِي عَلَى قَدْرِ الكِرَامِ المَكَارِمُ
           </div>
+          <div class="glass-translation">
+            Great deeds come to those of great resolve,<br>
+            and noble acts to those of noble character.
+          </div>
         </div>
-        <div class="poem-actions">
-          <button class="poem-action-btn">
-            <i data-lucide="copy" style="width:16px;height:16px"></i>
-            نسخ
-          </button>
-          <button class="poem-action-btn">
-            <i data-lucide="share-2" style="width:16px;height:16px"></i>
-            مشاركة
-          </button>
-          <button class="poem-action-btn">
-            <i data-lucide="bookmark" style="width:16px;height:16px"></i>
-            حفظ
-          </button>
-        </div>
-      </article>
+      </div>
     </main>
 
-    <!-- Bottom Nav -->
-    <nav class="bottom-nav">
-      <button class="nav-item">
-        <i data-lucide="music" style="width:20px;height:20px"></i>
-        Music
-      </button>
-      <button class="nav-item">
-        <i data-lucide="lightbulb" style="width:20px;height:20px"></i>
-        Insight
-      </button>
-      <button class="nav-item active">
-        <i data-lucide="refresh-cw" style="width:20px;height:20px"></i>
-        Refresh
-      </button>
-      <button class="nav-item">
-        <i data-lucide="library" style="width:20px;height:20px"></i>
-        Library
-      </button>
-      <button class="nav-item">
-        <i data-lucide="shuffle" style="width:20px;height:20px"></i>
-        Shuffle
-      </button>
-    </nav>
+    <!-- ===== CONTROLS ===== -->
+    <!-- Pull-up handle -->
+    <div class="glass-sheet-handle" id="sheetHandle" aria-label="Open controls">
+      <div class="glass-sheet-handle-bar"></div>
+    </div>
+
+    <!-- Overlay -->
+    <div class="glass-sheet-overlay" id="sheetOverlay"></div>
+
+    <!-- Frosted pull-up sheet -->
+    <div class="glass-sheet" id="glassSheet">
+      <div class="glass-sheet-drag" id="sheetDrag"></div>
+      <div class="glass-sheet-item" data-action="next">
+        <div class="glass-sheet-icon">
+          <i data-lucide="arrow-right" style="width:18px;height:18px"></i>
+        </div>
+        <div>
+          <div class="glass-sheet-label">Next Poem</div>
+          <div class="glass-sheet-sublabel">Discover another verse</div>
+        </div>
+      </div>
+      <div class="glass-sheet-item" data-action="save">
+        <div class="glass-sheet-icon">
+          <i data-lucide="heart" style="width:18px;height:18px"></i>
+        </div>
+        <div>
+          <div class="glass-sheet-label">Save</div>
+          <div class="glass-sheet-sublabel">Add to your collection</div>
+        </div>
+      </div>
+      <div class="glass-sheet-item" data-action="listen">
+        <div class="glass-sheet-icon">
+          <i data-lucide="headphones" style="width:18px;height:18px"></i>
+        </div>
+        <div>
+          <div class="glass-sheet-label">Listen</div>
+          <div class="glass-sheet-sublabel">AI recitation</div>
+        </div>
+      </div>
+      <div class="glass-sheet-item" data-action="share">
+        <div class="glass-sheet-icon">
+          <i data-lucide="share-2" style="width:18px;height:18px"></i>
+        </div>
+        <div>
+          <div class="glass-sheet-label">Share</div>
+          <div class="glass-sheet-sublabel">Send to a friend</div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -871,11 +802,64 @@
       document.getElementById('walkthrough').classList.remove('active');
       document.getElementById('mainApp').classList.add('active');
       if (typeof lucide !== 'undefined') lucide.createIcons();
+      initGlassParticles();
     }
 
-    function toggleTheme() {
-      document.body.classList.toggle('light');
+    /* ===== GLASS ORBIT PARTICLES ===== */
+    function initGlassParticles() {
+      var orbits = document.getElementById('glassOrbits');
+      for (var j = 0; j < 30; j++) {
+        var gp = document.createElement('div');
+        gp.className = 'glass-particle';
+        gp.style.left = Math.random() * 100 + '%';
+        gp.style.top = Math.random() * 100 + '%';
+        gp.style.animationDelay = (Math.random() * 4) + 's';
+        gp.style.animationDuration = (4 + Math.random() * 4) + 's';
+        gp.style.opacity = (0.2 + Math.random() * 0.5).toString();
+        orbits.appendChild(gp);
+      }
     }
+
+    /* ===== PULL-UP SHEET CONTROLS ===== */
+    var sheet = document.getElementById('glassSheet');
+    var overlay = document.getElementById('sheetOverlay');
+    var handle = document.getElementById('sheetHandle');
+    var drag = document.getElementById('sheetDrag');
+
+    function openSheet() {
+      sheet.classList.add('open');
+      overlay.classList.add('visible');
+      handle.style.display = 'none';
+    }
+    function closeSheet() {
+      sheet.classList.remove('open');
+      overlay.classList.remove('visible');
+      handle.style.display = '';
+    }
+
+    handle.addEventListener('click', openSheet);
+    handle.addEventListener('touchstart', function(e) {
+      e.preventDefault();
+      openSheet();
+    });
+    overlay.addEventListener('click', closeSheet);
+    drag.addEventListener('click', closeSheet);
+    drag.addEventListener('touchstart', function(e) {
+      e.preventDefault();
+      closeSheet();
+    });
+
+    /* Touch feedback on sheet items */
+    document.querySelectorAll('.glass-sheet-item').forEach(function(item) {
+      item.addEventListener('touchstart', function() {
+        item.style.background = 'rgba(197, 160, 89, 0.18)';
+      }, { passive: true });
+      item.addEventListener('touchend', function() {
+        setTimeout(function() {
+          item.style.background = '';
+        }, 150);
+      }, { passive: true });
+    });
 
     // Init icons
     document.addEventListener('DOMContentLoaded', function() {

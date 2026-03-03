@@ -442,4 +442,126 @@ describe('Design Review API', () => {
       expect(response.body.summary.total_items).toBe(1);
     });
   });
+
+  // ─────────────────────────────────────────────────────────────────────────
+  // FULL PERSIST-TO-DB FLOW
+  // Simulates what the browser does in initAPI() + syncVerdictsToAPI()
+  // + the "Send to Backend" button click (PATCH session to completed).
+  // This is the exact sequence that was broken by the silent session-creation
+  // failure when design tables hadn't been migrated yet.
+  // ─────────────────────────────────────────────────────────────────────────
+  describe('Full persist-to-DB flow (Send to Backend)', () => {
+    it('should return 503 when tables are missing during session creation', async () => {
+      // initAPI() step 1: GET /items (tables missing → 200 [])
+      mockTablesNotExist();
+      const itemsRes = await request(app).get('/api/design-review/items').expect(200);
+      expect(itemsRes.body).toEqual([]);
+
+      // initAPI() step 2: GET /sessions (tables missing → 200 [])
+      mockTablesNotExist();
+      const sessRes = await request(app).get('/api/design-review/sessions').expect(200);
+      expect(sessRes.body).toEqual([]);
+
+      // initAPI() step 3: POST /sessions (tables missing → 503)
+      mockTablesNotExist();
+      const createRes = await request(app)
+        .post('/api/design-review/sessions')
+        .send({ reviewer: 'owner', total_designs: 57 })
+        .expect(503);
+      expect(createRes.body.error).toContain('Design tables not created yet');
+    });
+
+    it('should succeed end-to-end when tables exist: create session → save verdicts → complete', async () => {
+      // Step 1: GET /api/design-review/items (health check)
+      mockTablesExist();
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ id: 1, item_key: 'splash-zen-1', name: 'Zen Refined', component: 'splash', category: 'zen' }]
+      });
+      const itemsRes = await request(app).get('/api/design-review/items').expect(200);
+      expect(itemsRes.body).toHaveLength(1);
+
+      // Step 2: GET /api/design-review/sessions (no active session)
+      mockTablesExist();
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+      const sessListRes = await request(app).get('/api/design-review/sessions').expect(200);
+      expect(sessListRes.body).toEqual([]);
+
+      // Step 3: POST /api/design-review/sessions (create new)
+      mockTablesExist();
+      mockPool.query.mockResolvedValueOnce({ rows: [{ next_round: 1 }] });
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ id: 42, reviewer: 'owner', round_number: 1, total_designs: 57, status: 'in_progress' }]
+      });
+      const createRes = await request(app)
+        .post('/api/design-review/sessions')
+        .send({ reviewer: 'owner', total_designs: 57 })
+        .expect(201);
+      expect(createRes.body.id).toBe(42);
+      expect(createRes.body.status).toBe('in_progress');
+      const sessionId = createRes.body.id;
+
+      // Step 4: POST /api/design-review/sessions/:id/verdicts
+      mockTablesExist();
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 1 }] });  // item lookup
+      mockPool.query.mockResolvedValueOnce({ rows: [] });            // existing verdict check
+      mockPool.query.mockResolvedValueOnce({ rows: [] });            // verdict upsert
+      mockPool.query.mockResolvedValueOnce({ rows: [] });            // history insert
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: '1' }] }); // count
+      mockPool.query.mockResolvedValueOnce({ rows: [] });            // update reviewed_count
+      const verdictsRes = await request(app)
+        .post(`/api/design-review/sessions/${sessionId}/verdicts`)
+        .send({ verdicts: [{ item_key: 'splash-zen-1', verdict: 'keep', comment: 'Love it' }] })
+        .expect(200);
+      expect(verdictsRes.body.saved).toBe(1);
+      expect(verdictsRes.body.total).toBe(1);
+
+      // Step 5: PATCH /api/design-review/sessions/:id (complete)
+      mockTablesExist();
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ id: sessionId, status: 'completed', reviewed_count: 1, completed_at: new Date().toISOString() }]
+      });
+      const patchRes = await request(app)
+        .patch(`/api/design-review/sessions/${sessionId}`)
+        .send({ status: 'completed', reviewed_count: 1 })
+        .expect(200);
+      expect(patchRes.body.status).toBe('completed');
+      expect(patchRes.body.reviewed_count).toBe(1);
+    });
+
+    it('should resume an existing in_progress session and add verdicts', async () => {
+      // Step 1: GET /sessions → active session found
+      mockTablesExist();
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ id: 7, reviewer: 'owner', round_number: 2, status: 'in_progress', total_designs: 57 }]
+      });
+      const sessListRes = await request(app).get('/api/design-review/sessions').expect(200);
+      const active = sessListRes.body.find(s => s.status === 'in_progress');
+      expect(active).toBeDefined();
+      expect(active.id).toBe(7);
+
+      // Step 2: GET /sessions/:id/verdicts → previous verdicts
+      mockTablesExist();
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ session_id: 7, item_key: 'splash-ink-1', verdict: 'revisit', comment: 'Needs more work' }]
+      });
+      const existingVerdicts = await request(app)
+        .get('/api/design-review/sessions/7/verdicts')
+        .expect(200);
+      expect(existingVerdicts.body).toHaveLength(1);
+
+      // Step 3: POST new verdicts → saved
+      mockTablesExist();
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 2 }] });  // item lookup
+      mockPool.query.mockResolvedValueOnce({ rows: [] });            // no existing verdict
+      mockPool.query.mockResolvedValueOnce({ rows: [] });            // upsert
+      mockPool.query.mockResolvedValueOnce({ rows: [] });            // history
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: '2' }] }); // count
+      mockPool.query.mockResolvedValueOnce({ rows: [] });            // update count
+      const newVerdicts = await request(app)
+        .post('/api/design-review/sessions/7/verdicts')
+        .send({ verdicts: [{ item_key: 'splash-zen-1', verdict: 'keep', comment: 'Great' }] })
+        .expect(200);
+      expect(newVerdicts.body.saved).toBe(1);
+    });
+  });
 });

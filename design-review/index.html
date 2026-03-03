@@ -637,7 +637,7 @@ async function syncVerdictsToAPI() {
 
 async function initAPI() {
   try {
-    const r = await fetch(API_BASE + '/api/design-review/items', { signal: AbortSignal.timeout(5000) });
+    const r = await fetch(API_BASE + '/api/design-review/items', { signal: AbortSignal.timeout(10000) });
     if (!r.ok) throw 0;
     apiAvailable = true;
 
@@ -669,7 +669,11 @@ async function initAPI() {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ reviewer: 'owner', branch: 'feature/design-review-system', total_designs: flatList.length })
       });
-      if (cr.ok) currentSession = await cr.json();
+      if (!cr.ok) {
+        const errBody = await cr.json().catch(() => ({}));
+        throw new Error(errBody.error || `Session creation failed (${cr.status})`);
+      }
+      currentSession = await cr.json();
     }
     setSyncStatus('synced');
   } catch { apiAvailable = false; setSyncStatus('offline'); }
@@ -1047,6 +1051,11 @@ async function submitReview() {
     sendBtn.style.opacity = '.7';
     sendBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="animation:spin .8s linear infinite"><circle cx="12" cy="12" r="10" stroke-dasharray="40" stroke-dashoffset="10"/></svg> Sending\u2026';
     try {
+      if (!apiAvailable || !currentSession) {
+        sendBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="animation:spin .8s linear infinite"><circle cx="12" cy="12" r="10" stroke-dasharray="40" stroke-dashoffset="10"/></svg> Connecting\u2026';
+        await initAPI();
+        if (!apiAvailable || !currentSession) throw new Error('Backend connection failed. Please try again.');
+      }
       if (apiAvailable && currentSession) {
         await syncVerdictsToAPI();
         const res = await fetch(API_BASE + '/api/design-review/sessions/' + currentSession.id, {

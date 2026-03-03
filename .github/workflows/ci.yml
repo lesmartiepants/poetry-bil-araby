@@ -188,9 +188,20 @@ jobs:
         run: |
           # Load database schema from migrations
           echo "Loading database schema from supabase/migrations..."
-          PGPASSWORD=postgres psql -h localhost -U postgres -d qafiyah_test -f supabase/migrations/20260114000000_import_poetry.sql
+          PGPASSWORD=postgres psql -h localhost -U postgres -d qafiyah_test -f supabase/migrations/20260114000000_import_poetry.sql || echo "Poetry import migration not found (optional)"
+          PGPASSWORD=postgres psql -h localhost -U postgres -d qafiyah_test -f supabase/migrations/20260222000000_design_review_tables.sql
           echo "Database schema loaded successfully"
         continue-on-error: true
+
+      - name: Run design review integration tests (real DB)
+        run: npm run test:integration
+        env:
+          CI: true
+          PGUSER: postgres
+          PGPASSWORD: postgres
+          PGDATABASE: qafiyah_test
+          PGHOST: localhost
+          PGPORT: 5432
 
       - name: Start backend API server (background)
         run: |

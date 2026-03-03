@@ -6,7 +6,7 @@
   <title>A3 Ink Mono Archive - E2E Mockup</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Forum&family=Reem+Kufi:wght@400;700&family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
   <script src="https://unpkg.com/lucide@latest"></script>
   <style>
     :root {
@@ -21,34 +21,47 @@
       --light-line: #e8e5de;
       --light-text: #1a1918;
       --light-muted: #6b6966;
+      --speed: 0.5s;
+    }
+
+    [data-theme="dark"] {
+      --bg: var(--dark-bg);
+      --surface: var(--dark-surface);
+      --line: var(--dark-line);
+      --text: var(--dark-text);
+      --muted: var(--dark-muted);
+      --surface-hover: rgba(255,255,255,0.03);
+    }
+    [data-theme="light"] {
+      --bg: var(--light-bg);
+      --surface: var(--light-surface);
+      --line: var(--light-line);
+      --text: var(--light-text);
+      --muted: var(--light-muted);
+      --surface-hover: rgba(0,0,0,0.03);
     }
 
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
       font-family: 'Tajawal', system-ui, sans-serif;
-      background: var(--dark-bg);
-      color: var(--dark-text);
+      background: var(--bg);
+      color: var(--text);
       min-height: 100vh;
       overflow-x: hidden;
-      transition: background 0.5s ease, color 0.5s ease;
+      transition: background var(--speed) ease, color var(--speed) ease;
     }
 
-    body.light {
-      background: var(--light-bg);
-      color: var(--light-text);
-    }
-
-    /* ===== SPLASH: SVG BRUSH STROKE ANIMATION ===== */
+    /* ===== SPLASH ===== */
     .splash {
       position: fixed;
       inset: 0;
-      z-index: 100;
+      z-index: 1000;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      background: var(--dark-bg);
+      background: var(--bg);
       transition: opacity 1s ease, visibility 1s ease;
     }
 
@@ -64,120 +77,132 @@
       text-align: center;
     }
 
-    /* SVG brush stroke calligraphy */
+    /* SVG Arabic calligraphy reveal */
     .brush-svg {
       position: absolute;
-      top: -60px;
+      top: -80px;
       left: 50%;
       transform: translateX(-50%);
-      width: 320px;
-      height: 180px;
+      width: 360px;
+      height: 160px;
       overflow: visible;
     }
 
-    .brush-stroke {
+    .arabic-letter {
+      font-family: 'Amiri', serif;
+      font-size: 120px;
       fill: none;
-      stroke: var(--dark-text);
-      stroke-width: 3;
-      stroke-linecap: round;
-      stroke-linejoin: round;
-      stroke-dasharray: 800;
-      stroke-dashoffset: 800;
-      animation: drawStroke 2.5s ease forwards;
+      stroke: var(--text);
+      stroke-width: 1.2;
+      stroke-dasharray: 600;
+      stroke-dashoffset: 600;
       will-change: stroke-dashoffset;
     }
+    .arabic-letter:nth-child(1) { animation: drawLetter 2s ease 0.2s forwards; }
+    .arabic-letter:nth-child(2) { animation: drawLetter 2s ease 0.6s forwards; }
+    .arabic-letter:nth-child(3) { animation: drawLetter 2s ease 1.0s forwards; }
+    .arabic-letter:nth-child(4) { animation: drawLetter 2s ease 1.4s forwards; }
 
-    .brush-stroke:nth-child(2) { animation-delay: 0.4s; }
-    .brush-stroke:nth-child(3) { animation-delay: 0.8s; }
-    .brush-stroke:nth-child(4) { animation-delay: 1.2s; }
-    .brush-stroke:nth-child(5) { animation-delay: 1.6s; }
-
-    body.light .brush-stroke {
-      stroke: var(--light-text);
+    .arabic-fill {
+      font-family: 'Amiri', serif;
+      font-size: 120px;
+      fill: var(--text);
+      opacity: 0;
     }
+    .arabic-fill:nth-child(5) { animation: fillReveal 0.8s ease 2.0s forwards; }
+    .arabic-fill:nth-child(6) { animation: fillReveal 0.8s ease 2.2s forwards; }
+    .arabic-fill:nth-child(7) { animation: fillReveal 0.8s ease 2.4s forwards; }
+    .arabic-fill:nth-child(8) { animation: fillReveal 0.8s ease 2.6s forwards; }
 
-    /* Thick accent strokes */
-    .brush-thick {
+    /* Background ink wash */
+    .ink-wash {
       fill: none;
-      stroke: var(--dark-muted);
-      stroke-width: 8;
+      stroke: var(--muted);
+      stroke-width: 6;
       stroke-linecap: round;
       stroke-dasharray: 400;
       stroke-dashoffset: 400;
-      animation: drawStroke 2s ease 0.3s forwards;
-      opacity: 0.15;
+      animation: drawLetter 2.5s ease 0.1s forwards;
+      opacity: 0.08;
       will-change: stroke-dashoffset;
     }
 
-    @keyframes drawStroke {
+    @keyframes drawLetter {
       to { stroke-dashoffset: 0; }
     }
+    @keyframes fillReveal {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
 
-    /* Ink splatter dots that appear after strokes */
+    /* Ink splatter dots */
     .ink-dot {
       position: absolute;
       width: 4px;
       height: 4px;
       border-radius: 50%;
-      background: var(--dark-muted);
+      background: var(--muted);
       opacity: 0;
       animation: dotAppear 0.3s ease forwards;
       will-change: opacity;
     }
-
-    body.light .ink-dot { background: var(--light-muted); }
 
     @keyframes dotAppear {
       0% { opacity: 0; transform: scale(0); }
       100% { opacity: 0.4; transform: scale(1); }
     }
 
-    .splash-title {
-      font-family: 'Amiri', serif;
-      font-size: clamp(40px, 8vw, 80px);
-      color: var(--dark-text);
-      line-height: 1.2;
+    .splash-brand {
+      display: flex; align-items: flex-end;
+      justify-content: center; gap: 0.5rem;
+      margin-bottom: 1rem;
       opacity: 0;
       animation: fadeInUp 1s ease 2s forwards;
-      position: relative;
       will-change: opacity, transform;
     }
-
-    body.light .splash-title { color: var(--light-text); }
+    .splash-brand-en {
+      font-family: 'Forum', serif;
+      font-size: clamp(3rem, 6vw, 4.5rem);
+      letter-spacing: -0.05em;
+      line-height: 1;
+    }
+    .splash-brand-ar {
+      font-family: 'Reem Kufi', sans-serif;
+      font-weight: 700;
+      font-size: clamp(1.875rem, 4vw, 3rem);
+      color: var(--gold);
+      line-height: 1;
+    }
 
     .splash-sub {
       font-family: 'Tajawal', sans-serif;
       font-size: clamp(12px, 2vw, 16px);
-      color: var(--dark-muted);
+      color: var(--muted);
       letter-spacing: 0.2em;
       text-transform: uppercase;
       direction: ltr;
-      margin-top: 16px;
+      margin-top: 8px;
       opacity: 0;
       animation: fadeInUp 1s ease 2.4s forwards;
       will-change: opacity, transform;
     }
 
-    body.light .splash-sub { color: var(--light-muted); }
-
     .splash-line {
       width: 60px;
       height: 1px;
-      background: var(--dark-muted);
+      background: var(--muted);
       margin: 24px auto 0;
       opacity: 0;
       animation: fadeInUp 1s ease 2.6s forwards;
       will-change: opacity, transform;
     }
 
-    body.light .splash-line { background: var(--light-muted); }
-
     .splash-enter {
       margin-top: 32px;
       padding: 12px 36px;
       background: transparent;
-      border: 1px solid var(--dark-muted);
-      color: var(--dark-text);
+      border: 1px solid var(--muted);
+      color: var(--text);
       font-family: 'Tajawal', sans-serif;
       font-size: 14px;
       cursor: pointer;
@@ -189,130 +214,103 @@
       will-change: opacity, transform;
     }
 
-    body.light .splash-enter {
-      border-color: var(--light-muted);
-      color: var(--light-text);
-    }
-
     .splash-enter:hover {
-      background: var(--dark-text);
-      color: var(--dark-bg);
+      background: var(--text);
+      color: var(--bg);
     }
+    .splash-enter:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
 
-    body.light .splash-enter:hover {
-      background: var(--light-text);
-      color: var(--light-bg);
-    }
-
-    /* ===== WALKTHROUGH: TYPEWRITER ===== */
-    .walkthrough {
+    /* ===== ONBOARDING ===== */
+    #onboarding {
       position: fixed;
       inset: 0;
-      z-index: 90;
+      z-index: 900;
       display: none;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      background: var(--dark-bg);
+      background: var(--bg);
       padding: 20px;
+      transition: background var(--speed);
     }
+    #onboarding.active { display: flex; }
 
-    .walkthrough.active { display: flex; }
-    body.light .walkthrough { background: var(--light-bg); }
-
-    .type-steps {
-      max-width: 500px;
-      width: 100%;
+    .onboard-card {
+      display: none; flex-direction: column;
+      align-items: center; text-align: center;
+      max-width: 420px; width: 100%;
+      padding: 2.5rem 2rem;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      transition: background var(--speed), border-color var(--speed);
     }
+    .onboard-card.active { display: flex; }
 
-    .type-step {
-      display: flex;
-      align-items: flex-start;
-      gap: 16px;
-      padding: 20px 0;
-      border-bottom: 1px solid var(--dark-line);
-      opacity: 0;
-      transform: translateY(16px);
+    .onboard-icon {
+      width: 44px; height: 44px;
+      color: var(--muted);
+      margin-bottom: 1.5rem;
     }
-
-    .type-step.revealed {
-      animation: typeReveal 0.6s ease forwards;
+    .onboard-title-en {
+      font-family: 'Forum', serif;
+      font-size: 1.3rem;
+      letter-spacing: -0.03em;
+      margin-bottom: 0.25rem;
+      direction: ltr;
     }
-
-    @keyframes typeReveal {
-      from { opacity: 0; transform: translateY(16px); }
-      to { opacity: 1; transform: translateY(0); }
+    .onboard-title-ar {
+      font-family: 'Reem Kufi', sans-serif;
+      font-weight: 700;
+      font-size: 1.15rem;
+      color: var(--gold);
+      margin-bottom: 1rem;
     }
-
-    body.light .type-step { border-color: var(--light-line); }
-
-    .type-num {
-      font-family: 'Amiri', serif;
-      font-size: 32px;
-      color: var(--dark-muted);
-      line-height: 1;
-      min-width: 32px;
-    }
-
-    body.light .type-num { color: var(--light-muted); }
-
-    .type-content h3 {
-      font-family: 'Tajawal', sans-serif;
-      font-size: 18px;
-      font-weight: 500;
-      margin-bottom: 4px;
-    }
-
-    .type-content p {
-      font-size: 14px;
-      color: var(--dark-muted);
+    .onboard-desc-en {
+      font-size: 0.9rem;
       line-height: 1.6;
+      opacity: 0.75;
+      margin-bottom: 0.35rem;
+      direction: ltr;
+      text-align: center;
+    }
+    .onboard-desc-ar {
+      font-family: 'Tajawal', sans-serif;
+      font-size: 0.85rem;
+      line-height: 1.6;
+      opacity: 0.65;
+      margin-bottom: 1.5rem;
     }
 
-    /* Typewriter cursor */
-    .type-cursor {
-      display: inline-block;
-      width: 2px;
-      height: 1em;
-      background: var(--dark-text);
-      margin-left: 2px;
-      animation: cursorBlink 0.8s step-end infinite;
-      vertical-align: text-bottom;
-      will-change: opacity;
+    .onboard-dots {
+      display: flex; gap: 8px;
+      margin-bottom: 1.5rem;
+    }
+    .onboard-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: var(--line);
+      transition: background 0.3s, transform 0.3s;
+    }
+    .onboard-dot.active {
+      background: var(--text);
+      transform: scale(1.3);
     }
 
-    body.light .type-cursor { background: var(--light-text); }
-
-    @keyframes cursorBlink {
-      0%, 100% { opacity: 1; }
-      50% { opacity: 0; }
-    }
-
-    body.light .type-content p { color: var(--light-muted); }
-
-    .walk-enter {
-      margin-top: 32px;
+    .onboard-next {
       padding: 12px 36px;
-      background: var(--dark-text);
-      color: var(--dark-bg);
+      background: var(--text);
+      color: var(--bg);
       border: none;
       font-family: 'Tajawal', sans-serif;
       font-size: 15px;
       cursor: pointer;
       transition: all 0.3s ease;
-      opacity: 0;
       min-width: 44px;
       min-height: 44px;
     }
-
-    .walk-enter.revealed {
-      animation: typeReveal 0.5s ease forwards;
-    }
-
-    body.light .walk-enter {
-      background: var(--light-text);
-      color: var(--light-bg);
-    }
+    .onboard-next:hover { opacity: 0.85; transform: translateY(-2px); }
+    .onboard-next:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
 
     /* ===== MAIN APP ===== */
     .main-app {
@@ -320,34 +318,39 @@
       min-height: 100vh;
       padding-bottom: 80px;
     }
-
     .main-app.active { display: block; }
 
-    /* Top bar - monochrome */
+    /* Top bar */
     .top-bar {
       position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
+      top: 0; left: 0; right: 0;
       z-index: 50;
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 14px 20px;
-      background: var(--dark-bg);
-      border-bottom: 1px solid var(--dark-line);
+      background: var(--bg);
+      border-bottom: 1px solid var(--line);
       direction: ltr;
-    }
-
-    body.light .top-bar {
-      background: var(--light-bg);
-      border-color: var(--light-line);
+      transition: background var(--speed), border-color var(--speed);
     }
 
     .top-brand {
-      font-family: 'Amiri', serif;
+      display: flex; align-items: flex-end;
+      gap: 0.35rem;
+    }
+    .top-brand-en {
+      font-family: 'Forum', serif;
       font-size: 20px;
-      letter-spacing: 0.02em;
+      letter-spacing: -0.05em;
+      line-height: 1;
+    }
+    .top-brand-ar {
+      font-family: 'Reem Kufi', sans-serif;
+      font-weight: 700;
+      font-size: 14px;
+      color: var(--gold);
+      line-height: 1;
     }
 
     .top-actions {
@@ -356,21 +359,22 @@
     }
 
     .top-btn {
-      width: 44px;
-      height: 44px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      width: 44px; height: 44px;
+      display: flex; align-items: center; justify-content: center;
       background: transparent;
       border: none;
-      color: var(--dark-muted);
+      color: var(--muted);
       cursor: pointer;
       transition: color 0.2s ease;
     }
+    .top-btn:hover { color: var(--text); }
+    .top-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 
-    body.light .top-btn { color: var(--light-muted); }
-    .top-btn:hover { color: var(--dark-text); }
-    body.light .top-btn:hover { color: var(--light-text); }
+    /* Theme toggle icon switching */
+    .top-btn .icon-sun { display: none; }
+    .top-btn .icon-moon { display: block; }
+    [data-theme="light"] .top-btn .icon-sun { display: block; }
+    [data-theme="light"] .top-btn .icon-moon { display: none; }
 
     /* Mono Reader */
     .reader {
@@ -383,22 +387,19 @@
       text-align: center;
       margin-bottom: 32px;
       padding-bottom: 20px;
-      border-bottom: 1px solid var(--dark-line);
+      border-bottom: 1px solid var(--line);
+      transition: border-color var(--speed);
     }
-
-    body.light .poem-header { border-color: var(--light-line); }
 
     .poem-header h2 {
       font-family: 'Tajawal', sans-serif;
       font-size: 14px;
       font-weight: 400;
-      color: var(--dark-muted);
+      color: var(--muted);
       text-transform: uppercase;
       letter-spacing: 0.15em;
       direction: ltr;
     }
-
-    body.light .poem-header h2 { color: var(--light-muted); }
 
     .poem-header h1 {
       font-family: 'Amiri', serif;
@@ -420,29 +421,25 @@
       animation: fadeInUp 0.6s ease forwards;
       will-change: opacity, transform;
     }
-
     .verse:nth-child(1) { animation-delay: 0.2s; }
     .verse:nth-child(2) { animation-delay: 0.5s; }
     .verse:nth-child(3) { animation-delay: 0.8s; }
 
-    /* Dramatic verse separator - animated ink stroke */
     .verse-divider {
       width: 30px;
       height: 1px;
-      background: var(--dark-line);
+      background: var(--line);
       margin: 0 auto;
       position: relative;
       overflow: visible;
+      transition: background var(--speed);
     }
-
     .verse-divider::after {
       content: '';
       position: absolute;
-      top: -1px;
-      left: 0;
-      width: 100%;
-      height: 3px;
-      background: var(--dark-muted);
+      top: -1px; left: 0;
+      width: 100%; height: 3px;
+      background: var(--muted);
       transform: scaleX(0);
       transform-origin: left;
       animation: dividerDraw 0.8s ease 1.5s forwards;
@@ -453,10 +450,7 @@
       to { transform: scaleX(1); }
     }
 
-    body.light .verse-divider { background: var(--light-line); }
-    body.light .verse-divider::after { background: var(--light-muted); }
-
-    /* Minimal icon rail */
+    /* Vertical icon rail */
     .icon-rail {
       position: fixed;
       left: 16px;
@@ -470,65 +464,53 @@
     }
 
     .rail-btn {
-      width: 44px;
-      height: 44px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      width: 44px; height: 44px;
+      display: flex; align-items: center; justify-content: center;
       background: transparent;
       border: none;
-      color: var(--dark-muted);
+      color: var(--muted);
       cursor: pointer;
-      transition: color 0.2s ease;
+      transition: color 0.2s ease, background 0.2s ease;
       border-radius: 8px;
     }
-
-    body.light .rail-btn { color: var(--light-muted); }
-    .rail-btn:hover { color: var(--dark-text); background: rgba(255,255,255,0.03); }
-    body.light .rail-btn:hover { color: var(--light-text); background: rgba(0,0,0,0.03); }
+    .rail-btn:hover { color: var(--text); background: var(--surface-hover); }
+    .rail-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 
     /* Bottom Nav */
     .bottom-nav {
       position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
+      bottom: 0; left: 0; right: 0;
       z-index: 50;
       display: flex;
       align-items: center;
       justify-content: center;
       gap: 0;
-      padding: 8px 0;
-      background: var(--dark-bg);
-      border-top: 1px solid var(--dark-line);
+      padding: 6px 0;
+      background: var(--bg);
+      border-top: 1px solid var(--line);
       direction: ltr;
-    }
-
-    body.light .bottom-nav {
-      background: var(--light-bg);
-      border-color: var(--light-line);
+      transition: background var(--speed), border-color var(--speed);
     }
 
     .nav-item {
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 4px;
-      padding: 8px 20px;
+      gap: 3px;
+      padding: 6px 16px;
       background: transparent;
       border: none;
-      color: var(--dark-muted);
+      color: var(--muted);
       cursor: pointer;
       font-family: 'Tajawal', sans-serif;
-      font-size: 11px;
+      font-size: 10px;
       transition: color 0.2s ease;
       min-width: 44px;
       min-height: 44px;
     }
-
-    body.light .nav-item { color: var(--light-muted); }
-    .nav-item.active { color: var(--dark-text); }
-    body.light .nav-item.active { color: var(--light-text); }
+    .nav-item:hover { color: var(--text); }
+    .nav-item.active { color: var(--text); }
+    .nav-item:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
 
     /* ===== KEYFRAMES ===== */
     @keyframes fadeInUp {
@@ -543,40 +525,43 @@
         animation-iteration-count: 1 !important;
         transition-duration: 0.01ms !important;
       }
-      .brush-stroke, .brush-thick {
-        stroke-dashoffset: 0 !important;
-      }
-      .type-cursor { animation: none; opacity: 1; }
+      .arabic-letter { stroke-dashoffset: 0 !important; }
+      .ink-wash { stroke-dashoffset: 0 !important; }
+      .splash { display: none !important; }
+      #onboarding { display: none !important; }
+      .main-app { display: block !important; }
     }
 
     /* ===== RESPONSIVE ===== */
     @media (max-width: 768px) {
       .icon-rail { display: none; }
       .reader { padding: 70px 16px 40px; }
-      .brush-svg { width: 240px; height: 140px; }
+      .brush-svg { width: 280px; height: 130px; }
+      .arabic-letter, .arabic-fill { font-size: 90px; }
+      .splash-brand-en { font-size: clamp(2.2rem, 8vw, 3rem); }
+      .splash-brand-ar { font-size: clamp(1.4rem, 5vw, 1.875rem); }
     }
   </style>
 </head>
-<body>
+<body data-theme="dark">
 
   <!-- SPLASH -->
   <div class="splash" id="splash">
     <div class="ink-container">
-      <!-- SVG Brush Stroke Animation - Arabic Calligraphy Inspired -->
-      <svg class="brush-svg" viewBox="0 0 320 180" xmlns="http://www.w3.org/2000/svg">
-        <!-- Background accent stroke (thick, faded) -->
-        <path class="brush-thick" d="M40 90 C80 60, 160 40, 240 80 S300 120, 280 90"/>
-        <!-- Main calligraphy strokes (drawing Arabic letter forms) -->
-        <!-- Alif-like vertical -->
-        <path class="brush-stroke" d="M100 30 C98 50, 102 80, 100 110 Q99 130, 95 140"/>
-        <!-- Ba-like horizontal with curve -->
-        <path class="brush-stroke" d="M80 100 C120 95, 180 88, 230 95 Q250 98, 240 110 C230 120, 200 118, 190 105"/>
-        <!-- Dot below (for ba) -->
-        <path class="brush-stroke" d="M160 125 C162 128, 158 132, 155 128 Z" style="fill: currentColor; stroke: none; opacity: 0; animation: dotReveal 0.4s ease 1.4s forwards;"/>
-        <!-- Lam-like tall stroke -->
-        <path class="brush-stroke" d="M200 25 C198 45, 205 70, 200 100 Q198 120, 195 130"/>
-        <!-- Connecting swash -->
-        <path class="brush-stroke" d="M60 95 C50 110, 55 130, 80 135 Q120 140, 160 130 S220 125, 260 135"/>
+      <!-- SVG Arabic Calligraphy - Real Arabic word "شعر" (poetry) -->
+      <svg class="brush-svg" viewBox="0 0 360 160" xmlns="http://www.w3.org/2000/svg">
+        <!-- Background ink wash stroke -->
+        <path class="ink-wash" d="M30 80 C80 50, 180 40, 280 70 S340 100, 320 80"/>
+        <!-- Stroke outlines that draw in RTL -->
+        <text class="arabic-letter" x="280" y="120" text-anchor="end">ش</text>
+        <text class="arabic-letter" x="210" y="120" text-anchor="end">ع</text>
+        <text class="arabic-letter" x="140" y="120" text-anchor="end">ر</text>
+        <text class="arabic-letter" x="80" y="85" text-anchor="end" style="font-size:60px; animation-delay:1.6s">عربي</text>
+        <!-- Fill reveals after stroke is drawn -->
+        <text class="arabic-fill" x="280" y="120" text-anchor="end">ش</text>
+        <text class="arabic-fill" x="210" y="120" text-anchor="end">ع</text>
+        <text class="arabic-fill" x="140" y="120" text-anchor="end">ر</text>
+        <text class="arabic-fill" x="80" y="85" text-anchor="end" style="font-size:60px; animation-delay:2.8s">عربي</text>
       </svg>
 
       <!-- Ink splatter dots -->
@@ -585,209 +570,167 @@
       <div class="ink-dot" style="top: -45px; right: 55%; animation-delay: 2.2s; width: 5px; height: 5px;"></div>
       <div class="ink-dot" style="top: -20px; right: 65%; animation-delay: 2.4s;"></div>
 
-      <h1 class="splash-title">&#1583;&#1610;&#1608;&#1575;&#1606; &#1575;&#1604;&#1588;&#1593;&#1585; &#1575;&#1604;&#1593;&#1585;&#1576;&#1610;</h1>
+      <div class="splash-brand">
+        <span class="splash-brand-en">poetry</span>
+        <span class="splash-brand-ar" lang="ar" dir="rtl">بالعربي</span>
+      </div>
       <p class="splash-sub">The Arabic Poetry Archive</p>
       <div class="splash-line"></div>
     </div>
-    <button class="splash-enter" onclick="enterWalkthrough()">&#1575;&#1583;&#1582;&#1604;</button>
+    <button class="splash-enter" id="splashEnter">ادخل</button>
   </div>
 
-  <!-- WALKTHROUGH with typewriter reveal -->
-  <div class="walkthrough" id="walkthrough">
-    <div class="type-steps" id="typeSteps">
-      <div class="type-step" id="step0">
-        <span class="type-num">1</span>
-        <div class="type-content">
-          <h3>&#1575;&#1603;&#1578;&#1588;&#1601; &#1575;&#1604;&#1602;&#1589;&#1575;&#1574;&#1583;</h3>
-          <p><span id="typeText0"></span><span class="type-cursor" id="cursor0"></span></p>
-        </div>
+  <!-- ONBOARDING -->
+  <div id="onboarding">
+    <div class="onboard-card active" data-step="0">
+      <i data-lucide="compass" class="onboard-icon"></i>
+      <div class="onboard-title-en">Discover Poems</div>
+      <div class="onboard-title-ar" lang="ar" dir="rtl">اكتشف القصائد</div>
+      <div class="onboard-desc-en">Browse over 84,000 poems from the Arabic literary tradition</div>
+      <div class="onboard-desc-ar" lang="ar" dir="rtl">تصفّح اكثر من 84,000 قصيدة من التراث الادبي العربي</div>
+      <div class="onboard-dots">
+        <span class="onboard-dot active"></span>
+        <span class="onboard-dot"></span>
+        <span class="onboard-dot"></span>
       </div>
-      <div class="type-step" id="step1">
-        <span class="type-num">2</span>
-        <div class="type-content">
-          <h3>&#1575;&#1587;&#1578;&#1605;&#1593; &#1604;&#1604;&#1573;&#1604;&#1602;&#1575;&#1569;</h3>
-          <p><span id="typeText1"></span><span class="type-cursor" id="cursor1" style="display:none;"></span></p>
-        </div>
-      </div>
-      <div class="type-step" id="step2">
-        <span class="type-num">3</span>
-        <div class="type-content">
-          <h3>&#1585;&#1572;&#1609; &#1584;&#1603;&#1610;&#1577;</h3>
-          <p><span id="typeText2"></span><span class="type-cursor" id="cursor2" style="display:none;"></span></p>
-        </div>
-      </div>
-      <div class="type-step" id="step3">
-        <span class="type-num">4</span>
-        <div class="type-content">
-          <h3>&#1575;&#1581;&#1601;&#1592; &#1608;&#1575;&#1580;&#1605;&#1593;</h3>
-          <p><span id="typeText3"></span><span class="type-cursor" id="cursor3" style="display:none;"></span></p>
-        </div>
-      </div>
+      <button class="onboard-next">التالي</button>
     </div>
-    <button class="walk-enter" id="walkEnter" onclick="enterApp()">&#1578;&#1575;&#1576;&#1593;</button>
+    <div class="onboard-card" data-step="1">
+      <i data-lucide="headphones" class="onboard-icon"></i>
+      <div class="onboard-title-en">Listen and Reflect</div>
+      <div class="onboard-title-ar" lang="ar" dir="rtl">استمع وتامّل</div>
+      <div class="onboard-desc-en">Hear poems recited with AI-powered natural voice synthesis</div>
+      <div class="onboard-desc-ar" lang="ar" dir="rtl">اسمع القصائد بالقاء صوتي طبيعي بالذكاء الاصطناعي</div>
+      <div class="onboard-dots">
+        <span class="onboard-dot"></span>
+        <span class="onboard-dot active"></span>
+        <span class="onboard-dot"></span>
+      </div>
+      <button class="onboard-next">التالي</button>
+    </div>
+    <div class="onboard-card" data-step="2">
+      <i data-lucide="sparkles" class="onboard-icon"></i>
+      <div class="onboard-title-en">AI Insights</div>
+      <div class="onboard-title-ar" lang="ar" dir="rtl">رؤى ذكية</div>
+      <div class="onboard-desc-en">Get meaning analysis and context powered by AI</div>
+      <div class="onboard-desc-ar" lang="ar" dir="rtl">احصل على تحليل المعاني والسياق بالذكاء الاصطناعي</div>
+      <div class="onboard-dots">
+        <span class="onboard-dot"></span>
+        <span class="onboard-dot"></span>
+        <span class="onboard-dot active"></span>
+      </div>
+      <button class="onboard-next">ابدا</button>
+    </div>
   </div>
 
   <!-- MAIN APP -->
   <div class="main-app" id="mainApp">
     <header class="top-bar">
-      <span class="top-brand">Qafiyah</span>
+      <div class="top-brand">
+        <span class="top-brand-en">poetry</span>
+        <span class="top-brand-ar" lang="ar" dir="rtl">بالعربي</span>
+      </div>
       <div class="top-actions">
-        <button class="top-btn" onclick="toggleTheme()">
-          <i data-lucide="sun" style="width:18px;height:18px"></i>
+        <button class="top-btn" id="themeToggle" aria-label="Toggle theme">
+          <span class="icon-sun"><i data-lucide="sun" style="width:18px;height:18px"></i></span>
+          <span class="icon-moon"><i data-lucide="moon" style="width:18px;height:18px"></i></span>
         </button>
       </div>
     </header>
 
-    <nav class="icon-rail">
-      <button class="rail-btn"><i data-lucide="heart" style="width:18px;height:18px"></i></button>
-      <button class="rail-btn"><i data-lucide="type" style="width:18px;height:18px"></i></button>
-      <button class="rail-btn"><i data-lucide="languages" style="width:18px;height:18px"></i></button>
-      <button class="rail-btn"><i data-lucide="rotate-ccw" style="width:18px;height:18px"></i></button>
+    <nav class="icon-rail" aria-label="Poem controls">
+      <button class="rail-btn" aria-label="Save poem"><i data-lucide="heart" style="width:18px;height:18px"></i></button>
+      <button class="rail-btn" aria-label="Change font"><i data-lucide="type" style="width:18px;height:18px"></i></button>
+      <button class="rail-btn" aria-label="Switch language"><i data-lucide="languages" style="width:18px;height:18px"></i></button>
+      <button class="rail-btn" aria-label="Open reader"><i data-lucide="book-open" style="width:18px;height:18px"></i></button>
+      <button class="rail-btn" aria-label="Poetry analysis"><i data-lucide="italic" style="width:18px;height:18px"></i></button>
+      <button class="rail-btn" aria-label="Sign in"><i data-lucide="log-in" style="width:18px;height:18px"></i></button>
+      <button class="rail-btn" aria-label="Settings"><i data-lucide="settings" style="width:18px;height:18px"></i></button>
     </nav>
 
     <main class="reader">
       <div class="poem-header">
         <h2>Ahmad Shawqi</h2>
-        <h1>&#1571;&#1581;&#1605;&#1583; &#1588;&#1608;&#1602;&#1610; &mdash; &#1571;&#1605;&#1610;&#1585; &#1575;&#1604;&#1588;&#1593;&#1585;&#1575;&#1569;</h1>
+        <h1 lang="ar" dir="rtl">احمد شوقي -- امير الشعراء</h1>
       </div>
 
-      <div class="poem-body">
+      <div class="poem-body" lang="ar" dir="rtl">
         <div class="verse">
-          &#1571;&#1614;&#1606;&#1575; &#1575;&#1604;&#1576;&#1614;&#1581;&#1585;&#1615; &#1601;&#1610; &#1571;&#1614;&#1581;&#1588;&#1575;&#1574;&#1616;&#1607;&#1616; &#1575;&#1604;&#1583;&#1615;&#1585;&#1615;&#1617; &#1603;&#1575;&#1605;&#1616;&#1606;&#1612;
+          انا البَحرُ في احشائِهِ الدُرُّ كامِنٌ
         </div>
         <div class="verse-divider"></div>
         <div class="verse">
-          &#1601;&#1614;&#1607;&#1614;&#1604; &#1587;&#1614;&#1571;&#1614;&#1604;&#1608;&#1575; &#1575;&#1604;&#1594;&#1614;&#1608;&#1617;&#1575;&#1589;&#1614; &#1593;&#1614;&#1606; &#1589;&#1614;&#1583;&#1614;&#1601;&#1575;&#1578;&#1610;
+          فَهَل سالوا الغَوّاصَ عَن صَدَفاتي
         </div>
         <div class="verse-divider"></div>
         <div class="verse">
-          &#1608;&#1614;&#1604;&#1610; &#1601;&#1610;&#1603;&#1614; &#1605;&#1575; &#1604;&#1614;&#1605; &#1610;&#1614;&#1602;&#1615;&#1604;&#1616; &#1575;&#1604;&#1588;&#1616;&#1593;&#1585;&#1615; &#1603;&#1615;&#1604;&#1614;&#1617;&#1607;&#1615;
+          وَلي فيكَ ما لَم يَقُلِ الشِعرُ كُلَّهُ
         </div>
       </div>
     </main>
 
-    <nav class="bottom-nav">
-      <button class="nav-item active">
-        <i data-lucide="compass" style="width:20px;height:20px"></i>
-        Discover
-      </button>
-      <button class="nav-item">
-        <i data-lucide="headphones" style="width:20px;height:20px"></i>
-        Listen
-      </button>
-      <button class="nav-item">
-        <i data-lucide="sparkles" style="width:20px;height:20px"></i>
-        Insight
-      </button>
-      <button class="nav-item">
-        <i data-lucide="copy" style="width:20px;height:20px"></i>
-        Copy
-      </button>
-      <button class="nav-item" onclick="toggleTheme()">
-        <i data-lucide="moon" style="width:20px;height:20px"></i>
-        Theme
-      </button>
+    <nav class="bottom-nav" aria-label="Navigation">
+      <button class="bottom-btn nav-item" aria-label="Audio"><i data-lucide="music" style="width:20px;height:20px"></i><span>Audio</span></button>
+      <button class="bottom-btn nav-item active" aria-label="Insights"><i data-lucide="lightbulb" style="width:20px;height:20px"></i><span>Insights</span></button>
+      <button class="bottom-btn nav-item" aria-label="New poem"><i data-lucide="refresh-cw" style="width:20px;height:20px"></i><span>New</span></button>
+      <button class="bottom-btn nav-item" aria-label="Library"><i data-lucide="library" style="width:20px;height:20px"></i><span>Library</span></button>
+      <button class="bottom-btn nav-item" aria-label="Random poem"><i data-lucide="shuffle" style="width:20px;height:20px"></i><span>Random</span></button>
     </nav>
   </div>
 
-  <style>
-    @keyframes dotReveal {
-      from { opacity: 0; }
-      to { opacity: 0.8; }
-    }
-  </style>
-
   <script>
-    /* ===== TYPEWRITER WALKTHROUGH ===== */
-    const typeTexts = [
-      '\u0623\u0643\u062B\u0631 \u0645\u0646 84,000 \u0642\u0635\u064A\u062F\u0629 \u0645\u0646 \u0639\u0635\u0648\u0631 \u0645\u062E\u062A\u0644\u0641\u0629',
-      '\u0625\u0644\u0642\u0627\u0621 \u0635\u0648\u062A\u064A \u0628\u0623\u062F\u0627\u0621 \u0637\u0628\u064A\u0639\u064A',
-      '\u062A\u062D\u0644\u064A\u0644 \u0648\u0634\u0631\u062D \u0628\u0627\u0644\u0630\u0643\u0627\u0621 \u0627\u0644\u0627\u0635\u0637\u0646\u0627\u0639\u064A',
-      '\u0623\u0646\u0634\u0626 \u0645\u062C\u0645\u0648\u0639\u062A\u0643 \u0627\u0644\u062E\u0627\u0635\u0629'
-    ];
+    (function () {
+      'use strict';
 
-    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    let typewriterRunning = false;
+      var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    function typewriterEffect(stepIndex) {
-      return new Promise((resolve) => {
-        const textEl = document.getElementById(`typeText${stepIndex}`);
-        const cursorEl = document.getElementById(`cursor${stepIndex}`);
-        const stepEl = document.getElementById(`step${stepIndex}`);
-        const text = typeTexts[stepIndex];
-
-        stepEl.classList.add('revealed');
-
-        if (prefersReducedMotion) {
-          textEl.textContent = text;
-          cursorEl.style.display = 'inline-block';
-          resolve();
-          return;
-        }
-
-        /* Show cursor */
-        if (stepIndex > 0) {
-          /* Hide previous cursor */
-          const prevCursor = document.getElementById(`cursor${stepIndex - 1}`);
-          if (prevCursor) prevCursor.style.display = 'none';
-        }
-        cursorEl.style.display = 'inline-block';
-
-        let charIndex = 0;
-        const speed = 35;
-
-        function typeChar() {
-          if (charIndex < text.length) {
-            textEl.textContent += text.charAt(charIndex);
-            charIndex++;
-            setTimeout(typeChar, speed);
-          } else {
-            resolve();
-          }
-        }
-
-        /* Small delay before typing starts */
-        setTimeout(typeChar, 300);
+      /* ===== Splash CTA ===== */
+      document.getElementById('splashEnter').addEventListener('click', function () {
+        document.getElementById('splash').classList.add('hidden');
+        document.getElementById('onboarding').classList.add('active');
+        if (typeof lucide !== 'undefined') lucide.createIcons();
       });
-    }
 
-    async function runWalkthrough() {
-      if (typewriterRunning) return;
-      typewriterRunning = true;
-
-      for (let i = 0; i < typeTexts.length; i++) {
-        await new Promise(r => setTimeout(r, 400));
-        await typewriterEffect(i);
+      /* ===== Reduced motion ===== */
+      if (prefersReducedMotion) {
+        document.getElementById('mainApp').classList.add('active');
       }
 
-      /* Show the enter button */
-      await new Promise(r => setTimeout(r, 400));
-      document.getElementById('walkEnter').classList.add('revealed');
+      /* ===== Onboarding ===== */
+      var currentStep = 0;
+      var totalSteps = 3;
 
-      /* Hide last cursor */
-      const lastCursor = document.getElementById(`cursor${typeTexts.length - 1}`);
-      if (lastCursor) lastCursor.style.display = 'none';
-    }
+      document.getElementById('onboarding').addEventListener('click', function (e) {
+        if (e.target.classList.contains('onboard-next') || e.target.closest('.onboard-next')) {
+          currentStep++;
+          if (currentStep >= totalSteps) {
+            document.getElementById('onboarding').classList.remove('active');
+            document.getElementById('onboarding').style.display = 'none';
+            document.getElementById('mainApp').classList.add('active');
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+            return;
+          }
+          var cards = document.querySelectorAll('.onboard-card');
+          for (var i = 0; i < cards.length; i++) {
+            cards[i].classList.remove('active');
+          }
+          cards[currentStep].classList.add('active');
+          if (typeof lucide !== 'undefined') lucide.createIcons();
+        }
+      });
 
-    function enterWalkthrough() {
-      document.getElementById('splash').classList.add('hidden');
-      document.getElementById('walkthrough').classList.add('active');
-      runWalkthrough();
-    }
+      /* ===== Theme Toggle ===== */
+      document.getElementById('themeToggle').addEventListener('click', function () {
+        var cur = document.body.getAttribute('data-theme');
+        var next = cur === 'dark' ? 'light' : 'dark';
+        document.body.setAttribute('data-theme', next);
+      });
 
-    function enterApp() {
-      document.getElementById('walkthrough').classList.remove('active');
-      document.getElementById('mainApp').classList.add('active');
-      if (typeof lucide !== 'undefined') lucide.createIcons();
-    }
-
-    function toggleTheme() {
-      document.body.classList.toggle('light');
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-      if (typeof lucide !== 'undefined') lucide.createIcons();
-    });
+      /* ===== Lucide Icons ===== */
+      document.addEventListener('DOMContentLoaded', function () {
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+      });
+    })();
   </script>
 </body>
 </html>

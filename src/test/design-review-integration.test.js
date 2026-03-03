@@ -11,12 +11,8 @@
  * Test data is written with reviewer='ci-integration' for easy identification.
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
-
-// Re-import server.js WITHOUT pg mocking — connects to real DATABASE_URL.
-// We reset the module registry so the mock from other test files doesn't bleed in.
-const { app } = await import('../../server.js');
 
 const CI_REVIEWER = 'ci-integration';
 const CI_ITEM_KEY = 'ci-integration-test-item';
@@ -24,10 +20,27 @@ const CI_ITEM_KEY = 'ci-integration-test-item';
 // Safety net: if DATABASE_URL is not set this suite is skipped gracefully.
 // In CI this env var is always provided via the design-review-integration workflow.
 describe.skipIf(!process.env.DATABASE_URL)('Design Review — Real Database Integration', () => {
+  let app;
+  let pool;
   let sessionId;
 
+  beforeAll(async () => {
+    // Import server.js inside beforeAll so no pool is created when DATABASE_URL is absent.
+    // This avoids noisy connection errors and open handles when the suite is skipped.
+    const serverModule = await import('../../server.js');
+    app = serverModule.app;
+    pool = serverModule.pool;
+  });
+
+  afterAll(async () => {
+    if (pool && typeof pool.end === 'function') {
+      await pool.end();
+    }
+  });
+
   it('GET /api/health returns ok with poem count', async () => {
-    const res = await request(app).get('/api/health').expect(200);
+    const res = await request(app).get('/api/health');
+    expect(res.status, `health check failed: ${JSON.stringify(res.body)}`).toBe(200);
     expect(res.body.status).toBe('ok');
   });
 
@@ -43,34 +56,34 @@ describe.skipIf(!process.env.DATABASE_URL)('Design Review — Real Database Inte
           file_path: '/ci/integration-test',
           description: 'Created by CI integration test — safe to ignore'
         }]
-      })
-      .expect(200);
+      });
+    expect(res.status, `items/sync failed: ${JSON.stringify(res.body)}`).toBe(200);
     expect(res.body.upserted).toBe(1);
     expect(res.body.total).toBe(1);
   });
 
   it('GET /api/design-review/items returns the synced item', async () => {
-    const res = await request(app)
-      .get('/api/design-review/items?component=ci')
-      .expect(200);
+    const res = await request(app).get('/api/design-review/items?component=ci');
+    expect(res.status, `GET items failed: ${JSON.stringify(res.body)}`).toBe(200);
     expect(Array.isArray(res.body)).toBe(true);
     const item = res.body.find(i => i.item_key === CI_ITEM_KEY);
-    expect(item).toBeDefined();
+    expect(item, `item ${CI_ITEM_KEY} not found in ${JSON.stringify(res.body)}`).toBeDefined();
     expect(item.name).toBe('CI Integration Test Item');
   });
 
   it('POST /api/design-review/sessions creates a new session', async () => {
     const res = await request(app)
       .post('/api/design-review/sessions')
-      .send({ reviewer: CI_REVIEWER, total_designs: 1 })
-      .expect(201);
-    expect(typeof res.body.id).toBe('number');
+      .send({ reviewer: CI_REVIEWER, total_designs: 1 });
+    expect(res.status, `POST sessions failed: ${JSON.stringify(res.body)}`).toBe(201);
+    expect(typeof res.body.id, `session id should be number, got: ${JSON.stringify(res.body)}`).toBe('number');
     expect(res.body.status).toBe('in_progress');
     expect(res.body.reviewer).toBe(CI_REVIEWER);
     sessionId = res.body.id;
   });
 
   it('POST /api/design-review/sessions/:id/verdicts saves a verdict', async () => {
+    expect(sessionId, 'sessionId not set — did the session creation test pass?').toBeDefined();
     const res = await request(app)
       .post(`/api/design-review/sessions/${sessionId}/verdicts`)
       .send({
@@ -79,47 +92,46 @@ describe.skipIf(!process.env.DATABASE_URL)('Design Review — Real Database Inte
           verdict: 'keep',
           comment: 'CI integration test verdict — safe to ignore'
         }]
-      })
-      .expect(200);
+      });
+    expect(res.status, `POST verdicts failed: ${JSON.stringify(res.body)}`).toBe(200);
     expect(res.body.saved).toBe(1);
     expect(res.body.total).toBe(1);
   });
 
   it('GET /api/design-review/sessions/:id/verdicts returns the saved verdict', async () => {
-    const res = await request(app)
-      .get(`/api/design-review/sessions/${sessionId}/verdicts`)
-      .expect(200);
+    expect(sessionId, 'sessionId not set — did the session creation test pass?').toBeDefined();
+    const res = await request(app).get(`/api/design-review/sessions/${sessionId}/verdicts`);
+    expect(res.status, `GET verdicts failed: ${JSON.stringify(res.body)}`).toBe(200);
     expect(Array.isArray(res.body)).toBe(true);
     const verdict = res.body.find(v => v.item_key === CI_ITEM_KEY);
-    expect(verdict).toBeDefined();
+    expect(verdict, `verdict for ${CI_ITEM_KEY} not found`).toBeDefined();
     expect(verdict.verdict).toBe('keep');
   });
 
   it('PATCH /api/design-review/sessions/:id marks the session completed', async () => {
+    expect(sessionId, 'sessionId not set — did the session creation test pass?').toBeDefined();
     const res = await request(app)
       .patch(`/api/design-review/sessions/${sessionId}`)
-      .send({ status: 'completed', reviewed_count: 1 })
-      .expect(200);
+      .send({ status: 'completed', reviewed_count: 1 });
+    expect(res.status, `PATCH session failed: ${JSON.stringify(res.body)}`).toBe(200);
     expect(res.body.status).toBe('completed');
     expect(res.body.reviewed_count).toBe(1);
   });
 
   it('GET /api/design-review/summary reflects the persisted data', async () => {
-    const res = await request(app)
-      .get('/api/design-review/summary')
-      .expect(200);
-    expect(res.body.total_items).toBeGreaterThan(0);
-    expect(res.body.sessions).toBeGreaterThan(0);
+    const res = await request(app).get('/api/design-review/summary');
+    expect(res.status, `GET summary failed: ${JSON.stringify(res.body)}`).toBe(200);
+    expect(res.body.total_items, `total_items should be > 0, got: ${JSON.stringify(res.body)}`).toBeGreaterThan(0);
+    expect(res.body.sessions, `sessions should be > 0`).toBeGreaterThan(0);
     expect(typeof res.body.verdicts.keep).toBe('number');
-    expect(res.body.verdicts.keep).toBeGreaterThan(0);
   });
 
   it('GET /api/design-review/items/:itemKey/history shows verdict history', async () => {
-    const res = await request(app)
-      .get(`/api/design-review/items/${CI_ITEM_KEY}/history`)
-      .expect(200);
+    expect(sessionId, 'sessionId not set — did the session creation test pass?').toBeDefined();
+    const res = await request(app).get(`/api/design-review/items/${CI_ITEM_KEY}/history`);
+    expect(res.status, `GET history failed: ${JSON.stringify(res.body)}`).toBe(200);
     expect(Array.isArray(res.body)).toBe(true);
-    expect(res.body.length).toBeGreaterThan(0);
+    expect(res.body.length, `history should not be empty for ${CI_ITEM_KEY}`).toBeGreaterThan(0);
     expect(res.body[0].action).toBe('create_verdict');
   });
 });

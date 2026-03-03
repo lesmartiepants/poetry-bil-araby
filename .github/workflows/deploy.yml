@@ -43,6 +43,8 @@ jobs:
     environment: production
     needs: migrate
     if: always()
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
 

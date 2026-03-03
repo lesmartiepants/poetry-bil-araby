@@ -12,13 +12,9 @@
  */
 
 import dns from 'node:dns';
+import { URL } from 'node:url';
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import request from 'supertest';
-
-// GitHub Actions runners don't have IPv6 connectivity. Supabase hostnames
-// resolve to IPv6 first (ENETUNREACH). Force DNS to prefer IPv4 in this
-// worker process before any pg connection is attempted.
-dns.setDefaultResultOrder('ipv4first');
 
 const CI_REVIEWER = 'ci-integration';
 const CI_ITEM_KEY = 'ci-integration-test-item';
@@ -31,6 +27,27 @@ describe.skipIf(!process.env.DATABASE_URL)('Design Review — Real Database Inte
   let sessionId;
 
   beforeAll(async () => {
+    // GitHub Actions runners block IPv6 to external networks. Supabase hostnames
+    // may resolve to IPv6 first, causing ENETUNREACH. Explicitly resolve the
+    // hostname to an IPv4 address and patch DATABASE_URL BEFORE importing server.js
+    // so that the pg.Pool is created with a literal IPv4 address — bypassing the
+    // OS resolver's IPv6 preference entirely.
+    if (process.env.DATABASE_URL) {
+      try {
+        const parsedUrl = new URL(process.env.DATABASE_URL);
+        const ipv4Addrs = await dns.promises.resolve4(parsedUrl.hostname);
+        if (ipv4Addrs.length > 0) {
+          const original = parsedUrl.hostname;
+          parsedUrl.hostname = ipv4Addrs[0];
+          process.env.DATABASE_URL = parsedUrl.toString();
+          console.log(`[CI] Patched DATABASE_URL: ${original} → ${ipv4Addrs[0]} (IPv4)`);
+        }
+      } catch (resolveErr) {
+        // Already an IP address or DNS failure — proceed with original URL.
+        console.warn('[CI] IPv4 pre-resolve skipped:', resolveErr.message);
+      }
+    }
+
     // Import server.js inside beforeAll so no pool is created when DATABASE_URL is absent.
     // This avoids noisy connection errors and open handles when the suite is skipped.
     const serverModule = await import('../../server.js');

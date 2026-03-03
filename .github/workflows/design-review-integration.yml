@@ -1,0 +1,93 @@
+name: Design Review DB Integration
+
+# Runs on every PR to main when relevant files change.
+# Applies the design review migration via Supabase CLI (idempotent — all DDL uses IF NOT EXISTS),
+# then runs integration tests against the real Supabase database so we can confirm the
+# persist-to-DB feature works before merging.
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'server.js'
+      - 'design-review/**'
+      - 'supabase/migrations/20260222000000_design_review_tables.sql'
+      - 'src/test/design-review-integration.test.js'
+      - '.github/workflows/design-review-integration.yml'
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  integration:
+    name: Design Review — Migrate & Integration Test
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '21'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # ── Apply migration via Supabase CLI ──────────────────────────────────
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Link Supabase project
+        run: supabase link --project-ref $SUPABASE_PROJECT_REF
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
+
+      - name: Apply design review migration (idempotent)
+        run: |
+          echo "Applying design review tables migration..."
+          supabase db push
+          echo "Migration applied ✓"
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+      # ── Run integration tests against the real DB ─────────────────────────
+      - name: Run design review integration tests
+        run: npm run test:integration
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      # ── Report outcome on the PR ──────────────────────────────────────────
+      - name: Post success comment to PR
+        if: success()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '## ✅ Design Review DB Integration\n\n' +
+                    '**All integration tests passed**\n\n' +
+                    '- Migration applied via Supabase CLI ✓\n' +
+                    '- Items sync, session create, verdict submit, session complete all verified against real DB ✓\n' +
+                    '- Persist-to-DB feature confirmed working on this PR'
+            });
+
+      - name: Post failure comment to PR
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: '## ❌ Design Review DB Integration\n\n' +
+                    '**Integration tests failed** — see logs for details.\n\n' +
+                    `Workflow run: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`
+            });

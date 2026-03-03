@@ -12,26 +12,34 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install PostgreSQL client
-        run: sudo apt-get install -y --no-install-recommends postgresql-client
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - name: Link Supabase project
+        run: supabase link --project-ref $SUPABASE_PROJECT_REF
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          SUPABASE_PROJECT_REF: ${{ secrets.SUPABASE_PROJECT_REF }}
 
       - name: Run all migrations
         run: |
-          echo "Applying migrations to production database..."
-          psql "$DATABASE_URL" -f supabase/migrations/20260119000000_auth_and_user_features.sql || true
-          psql "$DATABASE_URL" -f supabase/migrations/20260222000000_design_review_tables.sql
-          echo "Migrations applied ✓"
+          echo "Running migrations via Supabase CLI..."
+          supabase db push
+          echo "Migration completed successfully ✓"
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
       - name: Verify design review tables exist
         run: |
-          echo "Verifying design review tables..."
-          psql "$DATABASE_URL" -c "SELECT COUNT(*) FROM design_items;" \
-            && echo "✓ design_items table ready" \
-            || (echo "✗ design_items table missing — migration may have failed" && exit 1)
+          echo "Verifying migration was applied..."
+          supabase migration list | tee /tmp/migrations.txt
+          grep -q "20260222000000" /tmp/migrations.txt \
+            && echo "✓ design review tables migration applied" \
+            || (echo "✗ design review tables migration NOT found" && exit 1)
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
 
   deploy:
     name: Deploy to Production

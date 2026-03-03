@@ -19,7 +19,7 @@ export default defineConfig({
     setupFiles: './src/test/setup.js',
     css: true,
     include: ['src/**/*.test.{js,jsx,ts,tsx}'],
-    exclude: ['node_modules/', 'dist/', 'e2e/'],
+    exclude: ['node_modules/', 'dist/', 'e2e/', 'src/test/*-integration.test.js'],
 
     // Aggressive timeouts for CI performance
     testTimeout: process.env.CI ? 3000 : 5000, // 3s in CI, 5s locally

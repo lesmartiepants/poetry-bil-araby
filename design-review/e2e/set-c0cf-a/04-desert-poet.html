@@ -4,7 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Smoke & Ember — شعر عربي</title>
-<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Forum&family=Reem+Kufi:wght@400;700&family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
@@ -12,6 +13,8 @@
     --smoke: #6B6B6B; --ash: #D4D0C8; --bg: #1A1614;
     --text: #D4D0C8; --card-bg: rgba(30, 25, 22, 0.92);
     --glow: rgba(232, 97, 26, 0.15);
+    --gold-dim: rgba(197, 160, 89, 0.35);
+    --speed: 0.5s;
   }
   .light {
     --bg: #F5F0E8; --text: #1A1614; --card-bg: rgba(255, 252, 245, 0.95);
@@ -19,58 +22,205 @@
   }
   body {
     font-family: 'Tajawal', sans-serif; background: var(--bg);
-    color: var(--text); overflow-x: hidden; transition: background 0.5s, color 0.5s;
+    color: var(--text); overflow-x: hidden; transition: background var(--speed), color var(--speed);
+    min-height: 100vh;
   }
-  /* ---- Splash ---- */
+
+  /* ============ Splash ============ */
   #splash {
     position: fixed; inset: 0; z-index: 100; display: flex;
+    flex-direction: column;
     align-items: center; justify-content: center;
     background: radial-gradient(ellipse 60% 40% at 50% 95%, #5C2800 0%, #2A1508 30%, #0D0A08 70%);
     transition: opacity 0.8s ease-out;
   }
   #splash.hide { opacity: 0; pointer-events: none; }
   #splash-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
-  #splash-title {
-    position: relative; z-index: 2; font-family: 'Amiri', serif;
-    font-size: clamp(2rem, 6vw, 4.5rem); color: var(--ash);
-    text-shadow: 0 0 40px rgba(232,97,26,0.5), 0 0 80px rgba(197,160,89,0.3);
-    opacity: 0; animation: titleReveal 2s 0.5s forwards;
-    text-align: center; padding: 0 1rem;
+
+  /* Brand Logo on Splash */
+  .splash-brand {
+    position: relative; z-index: 10;
+    display: flex; align-items: flex-end; justify-content: center;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    opacity: 0;
+    animation: fadeUp 1.2s ease 0.5s forwards;
   }
-  @keyframes titleReveal {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(-10px); }
+  .splash-brand .en {
+    font-family: 'Forum', serif;
+    font-size: clamp(3rem, 6vw, 4.5rem);
+    letter-spacing: -0.05em;
+    color: var(--gold);
+    line-height: 1;
+    text-shadow: 0 0 40px rgba(197,160,89,0.3);
   }
-  /* ---- Theme Toggle ---- */
-  .theme-toggle {
-    position: fixed; top: 1rem; left: 1rem; z-index: 50;
-    width: 48px; height: 48px; border-radius: 50%; border: 2px solid var(--ember);
-    background: var(--card-bg); color: var(--text); font-size: 1.2rem;
-    cursor: pointer; display: flex; align-items: center; justify-content: center;
-    transition: box-shadow 0.3s, background 0.3s;
-    will-change: box-shadow;
+  .splash-brand .ar {
+    font-family: 'Reem Kufi', sans-serif;
+    font-weight: 700;
+    font-size: clamp(1.875rem, 4vw, 3rem);
+    color: var(--ash);
+    line-height: 1;
+    padding-bottom: 0.15em;
   }
-  .theme-toggle:hover, .theme-toggle:focus-visible {
-    box-shadow: 0 0 12px var(--ember), 0 0 24px rgba(232,97,26,0.3);
-    outline: none;
+
+  .splash-subtitle {
+    position: relative; z-index: 10;
+    font-family: 'Amiri', serif;
+    font-size: clamp(1rem, 2.5vw, 1.4rem);
+    color: var(--ash);
+    opacity: 0;
+    animation: fadeUp 1s ease 1.2s forwards;
+    text-align: center;
+    margin-bottom: 2rem;
   }
-  /* ---- Main App ---- */
+  .splash-subtitle span { color: var(--ember); }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* CTA Button */
+  #enterBtn {
+    position: relative; z-index: 10;
+    background: transparent;
+    border: 1.5px solid var(--ember);
+    color: var(--ember);
+    font-family: 'Tajawal', sans-serif;
+    font-size: 1.05rem;
+    font-weight: 500;
+    padding: 0.8rem 2.5rem;
+    border-radius: 8px;
+    cursor: pointer;
+    min-width: 44px; min-height: 44px;
+    transition: background 0.3s, transform 0.2s, box-shadow 0.3s;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 1.8s forwards;
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+  #enterBtn:hover, #enterBtn:focus-visible {
+    background: rgba(232, 97, 26, 0.15);
+    box-shadow: 0 0 20px rgba(232, 97, 26, 0.25);
+    transform: scale(1.04);
+  }
+
+  /* ============ Onboarding ============ */
+  #onboarding {
+    position: fixed; inset: 0; z-index: 90;
+    background: rgba(26, 22, 20, 0.95);
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.6s ease;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  .light #onboarding { background: rgba(245, 240, 232, 0.95); }
+  #onboarding.active { opacity: 1; pointer-events: auto; }
+
+  .onboard-card {
+    max-width: 380px; width: 90%;
+    background: var(--card-bg);
+    border: 1.5px solid var(--ember);
+    border-radius: 16px;
+    padding: 2.5rem 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: transform 0.5s ease, opacity 0.5s ease;
+  }
+  .onboard-card .icon-wrap {
+    width: 56px; height: 56px;
+    margin: 0 auto 1.2rem;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 50%;
+    background: rgba(232, 97, 26, 0.12);
+    color: var(--ember);
+  }
+  .onboard-card .icon-wrap svg { width: 28px; height: 28px; }
+  .onboard-card h3 {
+    font-family: 'Amiri', serif;
+    font-size: 1.3rem;
+    color: var(--gold);
+    margin-bottom: 0.4rem;
+  }
+  .onboard-card .subtitle {
+    font-family: 'Tajawal', sans-serif;
+    font-size: 0.9rem;
+    opacity: 0.6;
+    margin-bottom: 1rem;
+  }
+  .onboard-card p {
+    font-size: 0.88rem; line-height: 1.7; opacity: 0.85;
+    margin-bottom: 0.5rem;
+  }
+  .onboard-card p[lang="ar"] { font-family: 'Tajawal', sans-serif; direction: rtl; }
+  .onboard-card p.en-text { direction: ltr; text-align: center; font-size: 0.82rem; opacity: 0.55; }
+  .onboard-dots {
+    display: flex; gap: 0.5rem; justify-content: center; margin-top: 1.5rem;
+  }
+  .onboard-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: rgba(232, 97, 26, 0.25); transition: background 0.3s, transform 0.3s;
+  }
+  .onboard-dot.active { background: var(--ember); transform: scale(1.3); }
+  .onboard-tap { font-size: 0.72rem; color: var(--smoke); margin-top: 1rem; }
+
+  /* ============ Main App ============ */
   #app {
     max-width: 800px; margin: 0 auto; padding: 2rem 1rem 4rem;
+    padding-right: 4.5rem;
     opacity: 0; transition: opacity 0.6s 0.2s;
   }
   #app.visible { opacity: 1; }
-  h1.app-title {
-    font-family: 'Amiri', serif; text-align: center;
-    font-size: clamp(1.6rem, 4vw, 2.8rem); margin-bottom: 2rem;
-    color: var(--gold);
+
+  /* ============ Controls - Vertical (Desktop) ============ */
+  .controls-vertical {
+    position: fixed; top: 50%; right: 0.75rem;
+    transform: translateY(-50%);
+    display: flex; flex-direction: column; gap: 0.5rem;
+    z-index: 50;
   }
-  /* ---- Poem Card ---- */
+  .ctrl-btn {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    background: var(--card-bg);
+    border: 1px solid rgba(232, 97, 26, 0.25);
+    color: var(--text);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.25s, border-color 0.25s, transform 0.2s, box-shadow 0.3s;
+  }
+  .ctrl-btn:hover, .ctrl-btn:focus-visible {
+    border-color: var(--ember);
+    background: rgba(232, 97, 26, 0.08);
+    transform: scale(1.08);
+    box-shadow: 0 0 12px rgba(232, 97, 26, 0.15);
+  }
+  .ctrl-btn svg { width: 20px; height: 20px; }
+
+  /* ============ Controls - Bottom Bar (Mobile) ============ */
+  .controls-bottom {
+    display: none;
+    position: fixed; bottom: 0; left: 0; right: 0;
+    background: var(--card-bg);
+    border-top: 1px solid rgba(232, 97, 26, 0.2);
+    padding: 0.5rem 1rem;
+    z-index: 50;
+    justify-content: space-around;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+  }
+  .controls-bottom .ctrl-btn {
+    border: none; background: transparent;
+    border-radius: 8px;
+  }
+
+  /* ============ Poem Card ============ */
   .poem-card {
-    background: var(--card-bg); border-radius: 16px; padding: 2.5rem 2rem;
+    background: var(--card-bg); border-radius: 16px; padding: 3rem 2.5rem;
     position: relative; overflow: hidden; margin-bottom: 2.5rem;
     box-shadow: 0 12px 40px rgba(232,97,26,0.12), 0 0 80px rgba(232,97,26,0.06);
-    will-change: box-shadow;
+    border: 1px solid rgba(232, 97, 26, 0.15);
+    transition: box-shadow 0.3s;
   }
   .poem-card::after {
     content: ''; position: absolute; bottom: -40%; left: 10%; right: 10%; height: 80%;
@@ -78,121 +228,113 @@
     pointer-events: none;
   }
   .poem-text {
-    font-family: 'Amiri', serif; font-size: clamp(1.25rem, 3vw, 1.75rem);
-    line-height: 2.2; text-align: center; position: relative; z-index: 1;
+    font-family: 'Amiri', serif; font-size: clamp(1.35rem, 3vw, 1.85rem);
+    line-height: 2.4; text-align: center; position: relative; z-index: 1;
   }
-  .poem-text .hemistich { display: block; margin: 0.25em 0; }
+  .poem-text .hemistich { display: block; margin: 0.3em 0; }
   .poem-text .separator {
-    display: block; color: var(--ember); font-size: 0.6em;
-    margin: 0.3em 0; opacity: 0.7;
+    display: block; width: 40px; height: 1px;
+    background: var(--ember); margin: 0.8em auto;
+    opacity: 0.5;
   }
   .poet-name {
-    text-align: center; margin-top: 1.5rem; font-size: 1.1rem;
-    color: var(--gold); font-family: 'Tajawal', sans-serif;
-    font-weight: 500; position: relative; z-index: 1;
+    text-align: center; margin-top: 1.8rem; font-size: 1.05rem;
+    color: var(--gold); font-family: 'Amiri', serif;
+    position: relative; z-index: 1;
   }
-  /* ---- Walkthrough ---- */
-  .walkthrough { display: grid; gap: 1.25rem; margin-bottom: 2.5rem; }
-  .walk-step {
-    background: var(--card-bg); border-radius: 12px; padding: 1.25rem 1.5rem;
-    border-right: 3px solid var(--ember); opacity: 0;
-    transform: translateY(30px); transition: opacity 0.5s, transform 0.5s;
-    will-change: opacity, transform;
+  .poet-name::before, .poet-name::after {
+    content: ''; display: inline-block; width: 36px; height: 1px;
+    background: var(--gold-dim); vertical-align: middle; margin: 0 0.8rem;
   }
-  .walk-step.visible { opacity: 1; transform: translateY(0); }
-  .walk-step .step-num {
-    display: inline-flex; align-items: center; justify-content: center;
-    width: 32px; height: 32px; border-radius: 50%;
-    background: var(--ember); color: #fff; font-weight: 700;
-    font-size: 0.85rem; margin-left: 0.75rem; flex-shrink: 0;
+
+  /* ============ Responsive ============ */
+  @media (max-width: 768px) {
+    #app { padding: 2rem 1rem 5rem; padding-right: 1rem; }
+    .controls-vertical { display: none; }
+    .controls-bottom { display: flex; }
+    .poem-card { padding: 2rem 1.5rem; }
+    .poem-text { font-size: 1.25rem; line-height: 2.1; }
   }
-  .walk-step .step-title {
-    font-family: 'Amiri', serif; font-size: 1.15rem;
-    color: var(--gold); margin-bottom: 0.35rem;
-    display: flex; align-items: center;
+  @media (max-width: 480px) {
+    .poem-card { padding: 1.5rem 1.25rem; }
   }
-  .walk-step p { font-size: 0.95rem; line-height: 1.7; color: var(--smoke); }
-  .light .walk-step p { color: #4A4540; }
-  /* ---- Controls ---- */
-  .controls { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; }
-  .btn {
-    font-family: 'Tajawal', sans-serif; font-size: 1rem; font-weight: 500;
-    padding: 0.75rem 2rem; border-radius: 10px; border: 2px solid var(--ember);
-    background: transparent; color: var(--text); cursor: pointer;
-    min-height: 48px; min-width: 48px;
-    transition: box-shadow 0.3s, background 0.3s, color 0.3s;
-    will-change: box-shadow;
-  }
-  .btn:hover, .btn:focus-visible {
-    background: var(--ember); color: #fff; outline: none;
-    box-shadow: 0 0 14px var(--ember), 0 0 28px rgba(232,97,26,0.25);
-    animation: emberPulse 1.5s infinite;
-  }
-  @keyframes emberPulse {
-    0%, 100% { box-shadow: 0 0 14px var(--ember), 0 0 28px rgba(232,97,26,0.25); }
-    50% { box-shadow: 0 0 20px var(--ember), 0 0 40px rgba(232,97,26,0.35); }
-  }
-  .btn.primary { background: var(--ember); color: #fff; }
-  /* ---- Reduced Motion ---- */
+
+  /* ============ Reduced Motion ============ */
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
       animation-duration: 0.01ms !important; animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
     }
-    #splash { display: none; }
-    #app { opacity: 1; }
-    .walk-step { opacity: 1; transform: none; }
-  }
-  /* ---- Mobile ---- */
-  @media (max-width: 600px) {
-    .poem-card { padding: 1.5rem 1.25rem; }
-    .controls { flex-direction: column; align-items: stretch; }
-    .btn { width: 100%; text-align: center; }
+    #splash { display: none !important; }
+    #onboarding { display: none !important; }
+    #app { opacity: 1 !important; }
   }
 </style>
 </head>
 <body>
+  <!-- ======== Splash ======== -->
   <div id="splash">
     <canvas id="splash-canvas"></canvas>
-    <div id="splash-title">دُخانٌ وَجَمر<br><span style="font-size:0.45em;color:var(--gold);font-family:'Tajawal',sans-serif">Smoke &amp; Ember</span></div>
+    <div class="splash-brand">
+      <span class="en">poetry</span>
+      <span class="ar">بالعربي</span>
+    </div>
+    <div class="splash-subtitle"><span>Smoke & Ember</span> — دُخانٌ وَجَمر</div>
+    <button id="enterBtn" aria-label="Enter the app">
+      <span>ابدأ الرحلة</span>
+      <i data-lucide="arrow-left" style="width:18px;height:18px;"></i>
+    </button>
   </div>
-  <button class="theme-toggle" id="themeBtn" aria-label="تبديل السمة">&#9788;</button>
+
+  <!-- ======== Onboarding ======== -->
+  <div id="onboarding">
+    <div class="onboard-card" id="onboardCard">
+      <div class="icon-wrap" id="onboardIcon"></div>
+      <h3 id="onboardTitle"></h3>
+      <div class="subtitle" id="onboardSubtitle"></div>
+      <p lang="ar" id="onboardTextAr"></p>
+      <p class="en-text" id="onboardTextEn"></p>
+      <div class="onboard-dots" id="onboardDots"></div>
+      <div class="onboard-tap">tap to continue</div>
+    </div>
+  </div>
+
+  <!-- ======== Main App ======== -->
   <main id="app">
-    <h1 class="app-title">شعر عربي — قصيدة اليوم</h1>
+    <!-- Vertical Controls (Desktop) -->
+    <nav class="controls-vertical" aria-label="App controls">
+      <button class="ctrl-btn" aria-label="Save poem"><i data-lucide="heart"></i></button>
+      <button class="ctrl-btn" aria-label="Change font"><i data-lucide="type"></i></button>
+      <button class="ctrl-btn" aria-label="Toggle language"><i data-lucide="languages"></i></button>
+      <button class="ctrl-btn" aria-label="Poem library"><i data-lucide="book-open"></i></button>
+      <button class="ctrl-btn" aria-label="Font style"><i data-lucide="italic"></i></button>
+      <button class="ctrl-btn" aria-label="Sign in"><i data-lucide="log-in"></i></button>
+      <button class="ctrl-btn" id="themeBtn" aria-label="Toggle theme"><i data-lucide="sun"></i></button>
+    </nav>
+
+    <!-- Bottom Controls (Mobile) -->
+    <nav class="controls-bottom" aria-label="App controls">
+      <button class="ctrl-btn" aria-label="Listen"><i data-lucide="music"></i></button>
+      <button class="ctrl-btn" aria-label="AI insight"><i data-lucide="lightbulb"></i></button>
+      <button class="ctrl-btn" aria-label="New poem"><i data-lucide="refresh-cw"></i></button>
+      <button class="ctrl-btn" aria-label="Library"><i data-lucide="library"></i></button>
+      <button class="ctrl-btn" aria-label="Random poem"><i data-lucide="shuffle"></i></button>
+    </nav>
+
     <div class="poem-card">
       <div class="poem-text">
         <span class="hemistich">أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ</span>
-        <span class="separator">***</span>
+        <span class="separator"></span>
         <span class="hemistich">فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي</span>
       </div>
-      <div class="poet-name">— أحمد شوقي</div>
-    </div>
-    <div class="walkthrough">
-      <div class="walk-step" data-step="1">
-        <div class="step-title"><span class="step-num">١</span>اختر الشاعر</div>
-        <p>تصفّح مجموعة واسعة من الشعراء العرب الكلاسيكيين والمعاصرين واختر من تريد.</p>
-      </div>
-      <div class="walk-step" data-step="2">
-        <div class="step-title"><span class="step-num">٢</span>استكشف القصائد</div>
-        <p>اقرأ القصائد بتنسيق جميل مع شرح للأبيات ومعاني المفردات.</p>
-      </div>
-      <div class="walk-step" data-step="3">
-        <div class="step-title"><span class="step-num">٣</span>استمع للإلقاء</div>
-        <p>استمتع بالإلقاء الصوتي للقصائد بأصوات مميّزة تنبض بالحياة.</p>
-      </div>
-      <div class="walk-step" data-step="4">
-        <div class="step-title"><span class="step-num">٤</span>شارك وأحفظ</div>
-        <p>احفظ قصائدك المفضّلة وشاركها مع الأصدقاء بسهولة.</p>
-      </div>
-    </div>
-    <div class="controls">
-      <button class="btn primary">قصيدة عشوائية</button>
-      <button class="btn">بحث بالشاعر</button>
-      <button class="btn">المفضّلة</button>
+      <div class="poet-name">أحمد شوقي</div>
     </div>
   </main>
+
 <script>
 (function() {
+  'use strict';
+
   /* ---- Canvas Smoke & Embers ---- */
   var canvas = document.getElementById('splash-canvas');
   var ctx = canvas.getContext('2d');
@@ -210,8 +352,7 @@
 
   function createSmoke(layer) {
     var p = {
-      type: 'smoke',
-      layer: layer,
+      type: 'smoke', layer: layer,
       x: 0, y: 0, originX: 0,
       size: 0, speedY: 0, alpha: 0, maxAlpha: 0,
       life: 0, maxLife: 0,
@@ -238,7 +379,6 @@
   function updateSmoke(p) {
     p.life++;
     var t = p.life / p.maxLife;
-    // Bezier curve path for horizontal drift
     var mt = 1 - t;
     var mt2 = mt * mt;
     var mt3 = mt2 * mt;
@@ -249,7 +389,6 @@
       + 3 * mt * t2 * (p.originX + p.cpOffset2)
       + t3 * (p.originX + p.cpOffset2 * 1.2);
     p.y += p.speedY;
-    // Fade lifecycle
     if (t < 0.15) p.alpha = p.maxAlpha * (t / 0.15);
     else if (t > 0.55) p.alpha = p.maxAlpha * (1 - (t - 0.55) / 0.45);
     else p.alpha = p.maxAlpha;
@@ -318,7 +457,6 @@
     ctx.restore();
   }
 
-  // Build back-layer smoke, front-layer smoke, then embers
   var i;
   for (i = 0; i < Math.floor(SMOKE_COUNT / 2); i++) {
     var s = createSmoke(0);
@@ -326,17 +464,16 @@
     particles.push(s);
   }
   for (i = 0; i < Math.ceil(SMOKE_COUNT / 2); i++) {
-    var s = createSmoke(1);
-    s.life = Math.floor(Math.random() * s.maxLife);
-    particles.push(s);
+    var s2 = createSmoke(1);
+    s2.life = Math.floor(Math.random() * s2.maxLife);
+    particles.push(s2);
   }
   for (i = 0; i < EMBER_COUNT; i++) {
-    var e = createEmber();
-    e.life = Math.floor(Math.random() * e.maxLife);
-    particles.push(e);
+    var em = createEmber();
+    em.life = Math.floor(Math.random() * em.maxLife);
+    particles.push(em);
   }
 
-  // Sort: back smoke -> front smoke -> embers for layered depth
   particles.sort(function(a, b) {
     if (a.type === 'smoke' && b.type === 'smoke') return a.layer - b.layer;
     if (a.type === 'smoke' && b.type === 'ember') return -1;
@@ -346,7 +483,6 @@
 
   function animate() {
     ctx.clearRect(0, 0, W, H);
-    // Campfire glow at bottom center
     var glow = ctx.createRadialGradient(W / 2, H, 0, W / 2, H, H * 0.55);
     glow.addColorStop(0, 'rgba(92, 40, 0, 0.4)');
     glow.addColorStop(0.35, 'rgba(42, 21, 8, 0.15)');
@@ -361,43 +497,106 @@
     raf = requestAnimationFrame(animate);
   }
 
+  /* ---------- Onboarding data ---------- */
+  var onboardSteps = [
+    {
+      icon: 'search',
+      titleAr: 'اختر الشاعر',
+      subtitle: 'Choose a Poet',
+      textAr: 'تصفّح مجموعة واسعة من الشعراء العرب الكلاسيكيين والمعاصرين',
+      textEn: 'Browse a vast collection of classical and contemporary Arab poets'
+    },
+    {
+      icon: 'book-open',
+      titleAr: 'استكشف القصائد',
+      subtitle: 'Explore Poems',
+      textAr: 'اقرأ القصائد بتنسيق جميل مع شرح للأبيات ومعاني المفردات',
+      textEn: 'Read poems with beautiful formatting and vocabulary explanations'
+    },
+    {
+      icon: 'headphones',
+      titleAr: 'استمع للإلقاء',
+      subtitle: 'Listen to Recitation',
+      textAr: 'استمتع بالإلقاء الصوتي للقصائد بأصوات مميّزة تنبض بالحياة',
+      textEn: 'Enjoy AI-powered poetry recitation that brings verses to life'
+    }
+  ];
+  var currentStep = 0;
+
+  function showOnboardStep(idx) {
+    var step = onboardSteps[idx];
+    var iconWrap = document.getElementById('onboardIcon');
+    while (iconWrap.firstChild) iconWrap.removeChild(iconWrap.firstChild);
+    var iconEl = document.createElement('i');
+    iconEl.setAttribute('data-lucide', step.icon);
+    iconWrap.appendChild(iconEl);
+
+    document.getElementById('onboardTitle').textContent = step.titleAr;
+    document.getElementById('onboardSubtitle').textContent = step.subtitle;
+    document.getElementById('onboardTextAr').textContent = step.textAr;
+    document.getElementById('onboardTextEn').textContent = step.textEn;
+
+    var dotsContainer = document.getElementById('onboardDots');
+    while (dotsContainer.firstChild) dotsContainer.removeChild(dotsContainer.firstChild);
+    for (var d = 0; d < onboardSteps.length; d++) {
+      var dot = document.createElement('span');
+      dot.className = 'onboard-dot' + (d === idx ? ' active' : '');
+      dotsContainer.appendChild(dot);
+    }
+
+    lucide.createIcons({ nodes: [iconWrap] });
+  }
+
+  function advanceOnboard() {
+    currentStep++;
+    if (currentStep >= onboardSteps.length) {
+      document.getElementById('onboarding').classList.remove('active');
+      document.getElementById('app').classList.add('visible');
+    } else {
+      showOnboardStep(currentStep);
+    }
+  }
+
+  /* ---------- Splash -> Onboarding ---------- */
+  function enterApp() {
+    cancelAnimationFrame(raf);
+    var splash = document.getElementById('splash');
+    splash.classList.add('hide');
+    setTimeout(function() {
+      splash.style.display = 'none';
+      document.getElementById('onboarding').classList.add('active');
+      showOnboardStep(0);
+    }, 800);
+  }
+
+  /* ---------- init ---------- */
   var prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (!prefersReduced) {
     animate();
-    setTimeout(function() {
-      document.getElementById('splash').classList.add('hide');
-      document.getElementById('app').classList.add('visible');
-      setTimeout(function() { cancelAnimationFrame(raf); }, 900);
-    }, 3500);
   } else {
+    document.getElementById('splash').style.display = 'none';
     document.getElementById('app').classList.add('visible');
   }
 
-  /* ---- Walkthrough: sparks floating up and settling ---- */
-  var steps = document.querySelectorAll('.walk-step');
-  if (!prefersReduced) {
-    var obs = new IntersectionObserver(function(entries) {
-      entries.forEach(function(entry) {
-        if (entry.isIntersecting) {
-          var delay = parseInt(entry.target.dataset.step, 10) * 180;
-          setTimeout(function() { entry.target.classList.add('visible'); }, delay);
-          obs.unobserve(entry.target);
-        }
-      });
-    }, { threshold: 0.2 });
-    steps.forEach(function(s) { obs.observe(s); });
-  } else {
-    steps.forEach(function(s) { s.classList.add('visible'); });
-  }
+  document.getElementById('enterBtn').addEventListener('click', enterApp);
+  document.getElementById('onboardCard').addEventListener('click', advanceOnboard);
 
-  /* ---- Theme Toggle ---- */
+  /* ---------- Theme Toggle ---------- */
   var themeBtn = document.getElementById('themeBtn');
-  var dark = true;
   themeBtn.addEventListener('click', function() {
-    dark = !dark;
-    document.body.classList.toggle('light', !dark);
-    themeBtn.textContent = dark ? '\u2606' : '\u263D';
+    document.body.classList.toggle('light');
+    var isLight = document.body.classList.contains('light');
+    var icon = themeBtn.querySelector('i');
+    if (icon) {
+      icon.setAttribute('data-lucide', isLight ? 'moon' : 'sun');
+      lucide.createIcons({ nodes: [themeBtn] });
+    }
+    themeBtn.setAttribute('aria-label',
+      isLight ? 'Switch to dark theme' : 'Switch to light theme');
   });
+
+  /* ---------- Lucide icons init ---------- */
+  lucide.createIcons();
 })();
 </script>
 </body>

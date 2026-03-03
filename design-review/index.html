@@ -118,6 +118,14 @@
     /* Keyboard hints */
     .kbd{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 4px;border-radius:3px;background:var(--surface-3);border:1px solid var(--border);font-size:9px;font-weight:600;color:var(--text-3);font-family:inherit}
 
+    /* ── Edge nav zones (thumb-friendly prev/next) ── */
+    .edge-nav{position:absolute;top:0;bottom:0;width:48px;z-index:10;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0;transition:opacity .2s;-webkit-tap-highlight-color:transparent}
+    .edge-nav:hover,.edge-nav:active{opacity:1}
+    .edge-nav.left{left:0;border-radius:0 var(--r) var(--r) 0;background:linear-gradient(to right,rgba(0,0,0,.35),transparent)}
+    .edge-nav.right{right:0;border-radius:var(--r) 0 0 var(--r);background:linear-gradient(to left,rgba(0,0,0,.35),transparent)}
+    .edge-nav svg{width:20px;height:20px;stroke:var(--text);opacity:.85;filter:drop-shadow(0 1px 2px rgba(0,0,0,.5))}
+    .edge-nav:disabled{cursor:default;opacity:0!important}
+
     /* ── Bottom navigation bar (desktop) ── */
     .bottom-nav{display:flex;align-items:center;justify-content:center;gap:8px;padding:4px 14px;background:var(--surface);border-top:1px solid var(--border)}
 
@@ -190,6 +198,8 @@
         </div>
       </div>
       <div id="previewContent" style="flex:1;position:relative">
+        <button class="edge-nav left" id="edgeNavPrev" onclick="goPrev()" title="Previous"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 3L5 8l5 5"/></svg></button>
+        <button class="edge-nav right" id="edgeNavNext" onclick="goNext()" title="Next"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 3l5 5-5 5"/></svg></button>
         <div class="empty-state" id="emptyState">
           <div style="font-size:32px">&#9998;</div>
           <h2>Poetry Bil-Araby Design Review</h2>
@@ -645,6 +655,10 @@ function render() {
   const ncm = document.getElementById('navCounterMobile'); if (ncm) ncm.textContent = (fi + 1) + '/' + flatList.length;
   const pbm = document.getElementById('prevBtnMobile'); if (pbm) pbm.disabled = fi <= 0;
   const nbm = document.getElementById('nextBtnMobile'); if (nbm) nbm.disabled = fi >= flatList.length - 1;
+
+  // Edge nav zones
+  const enp = document.getElementById('edgeNavPrev'); if (enp) enp.disabled = fi <= 0;
+  const enn = document.getElementById('edgeNavNext'); if (enn) enn.disabled = fi >= flatList.length - 1;
 
   loadPreview(opt, cat);
 

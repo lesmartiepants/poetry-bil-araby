@@ -6,7 +6,7 @@
 <title>A8 Deco Discovery - Desert Mirage</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Forum&family=Reem+Kufi:wght@400;700&family=Amiri:ital,wght@0,400;0,700;1,400&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Forum&family=Reem+Kufi:wght@400;700&family=Amiri:ital,wght@0,400;0,700;1,400&family=Tajawal:wght@300;400;500;700&family=Poiret+One&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/lucide@latest"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -131,122 +131,232 @@
   .walk-dot.active { background: var(--gold); width: 24px; border-radius: 4px; }
   .walk-hint { margin-top: 1rem; font-size: 13px; color: var(--muted); opacity: 0.6; }
 
-  /* ---- Main App ---- */
-  .app { display: none; min-height: 100vh; padding-bottom: 80px; }
+  /* ===== MAIN APP ===== */
+  /* Art Deco Geometric — stepped corners, sunburst motifs, gold dividers */
+  .app { display: none; min-height: 100vh; position: relative; }
   .app.active { display: block; }
 
-  .app-top {
+  /* Deco nav */
+  .deco-nav {
     position: fixed; top: 0; left: 0; right: 0; z-index: 50;
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 12px 20px; background: rgba(26,15,10,0.85);
-    backdrop-filter: blur(12px); border-bottom: 1px solid var(--card-border);
+    display: flex; align-items: center; justify-content: center;
+    padding: 0 20px; height: 52px;
+    background: rgba(26, 15, 10, 0.9);
+    backdrop-filter: blur(10px);
     direction: ltr;
   }
-  [data-theme="light"] .app-top { background: rgba(245,237,224,0.9); }
+  .deco-nav::after {
+    content: ''; position: absolute; bottom: 0; left: 10%; right: 10%;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    opacity: 0.4;
+  }
+  .deco-nav-brand {
+    font-family: 'Poiret One', sans-serif;
+    font-size: 18px; letter-spacing: 0.3em;
+    text-transform: uppercase; color: var(--gold);
+  }
 
-  .app-top-brand { display: flex; align-items: flex-end; gap: 6px; }
-  .app-top-brand-en {
-    font-family: 'Forum', serif; font-size: 20px;
-    letter-spacing: -0.05em; color: var(--gold); line-height: 1;
-  }
-  .app-top-brand-ar {
-    font-family: 'Reem Kufi', sans-serif; font-weight: 700;
-    font-size: 14px; color: var(--gold); line-height: 1;
-  }
-  .app-top-actions { display: flex; gap: 8px; }
-  .app-top-btn {
-    width: 40px; height: 40px; display: flex; align-items: center;
-    justify-content: center; background: transparent;
-    border: 1px solid var(--card-border); border-radius: 8px;
-    color: var(--muted); cursor: pointer; transition: all 0.2s;
-  }
-  .app-top-btn:hover { color: var(--gold); border-color: var(--gold); }
-
-  /* Reader */
-  .reader { max-width: 720px; margin: 0 auto; padding: 80px 20px 40px; }
-
-  .poem-card {
-    background: var(--card-bg); border: 1px solid var(--card-border);
-    border-radius: 20px; padding: 3rem 2.5rem; direction: rtl;
-    position: relative; overflow: hidden;
-    box-shadow: 0 0 80px -20px rgba(45,123,111,0.2), 0 0 140px -40px rgba(45,123,111,0.1);
-    animation: fadeInUp 0.6s ease;
-  }
-  .poem-card::before {
-    content: ''; position: absolute; inset: -60%; z-index: 0; pointer-events: none;
-    background: radial-gradient(ellipse at center, rgba(45,123,111,0.06) 0%, transparent 65%);
-  }
-  .poem-content { position: relative; z-index: 1; }
-  .poem-meta { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
-  .poet-avatar {
-    width: 44px; height: 44px; border-radius: 50%;
-    background: linear-gradient(135deg, rgba(197,160,89,0.2), rgba(45,123,111,0.15));
+  /* Geometric panel frame */
+  .deco-frame {
+    position: relative; z-index: 2;
+    min-height: 100vh;
     display: flex; align-items: center; justify-content: center;
-    color: var(--gold); font-family: 'Amiri', serif; font-size: 20px;
-  }
-  .poet-info h2 { font-family: 'Tajawal', sans-serif; font-size: 16px; font-weight: 500; }
-  .poet-info span { font-size: 13px; color: var(--muted); }
-
-  .poem-verses {
-    font-family: 'Amiri', serif; font-size: clamp(20px, 3.5vw, 28px);
-    line-height: 2.2; text-align: center; padding: 20px 0;
-    border-top: 1px solid var(--card-border); border-bottom: 1px solid var(--card-border);
-  }
-  .verse-line { opacity: 0; animation: fadeInUp 0.5s ease forwards; }
-  .verse-line:nth-child(1) { animation-delay: 0.2s; }
-  .verse-line:nth-child(2) { animation-delay: 0.5s; }
-
-  .hemistich-divider {
-    display: inline-block; width: 40px; height: 1px; background: var(--gold);
-    vertical-align: middle; margin: 0 12px; opacity: 0.4;
+    padding: 80px 20px 120px;
   }
 
-  .poem-actions { display: flex; gap: 12px; margin-top: 24px; justify-content: center; }
-  .poem-action-btn {
-    display: flex; align-items: center; gap: 6px; padding: 10px 16px;
-    background: transparent; border: 1px solid var(--card-border); border-radius: 10px;
-    color: var(--muted); font-family: 'Tajawal', sans-serif; font-size: 13px;
-    cursor: pointer; transition: all 0.2s;
+  .deco-panel {
+    position: relative;
+    max-width: 400px; width: 100%;
+    padding: 2.5rem 2rem;
+    background: rgba(26, 15, 10, 0.75);
+    backdrop-filter: blur(8px);
   }
-  .poem-action-btn:hover { color: var(--gold); border-color: var(--gold); }
 
-  /* Vertical Rail */
-  .vertical-rail {
-    position: fixed; right: 16px; top: 50%; transform: translateY(-50%);
-    display: flex; flex-direction: column; gap: 4px; z-index: 40; direction: ltr;
+  /* Stepped corner borders (Art Deco) */
+  .deco-panel::before,
+  .deco-panel::after {
+    content: ''; position: absolute;
+    width: 24px; height: 24px;
+    border-color: var(--gold); border-style: solid;
   }
-  .rail-btn {
-    width: 44px; height: 44px; display: flex; align-items: center;
-    justify-content: center; background: var(--card-bg);
-    border: 1px solid var(--card-border); border-radius: 10px;
-    color: var(--muted); cursor: pointer; transition: all 0.2s; position: relative;
+  .deco-panel::before {
+    top: 0; left: 0;
+    border-width: 2px 0 0 2px;
   }
-  .rail-btn:hover { color: var(--gold); border-color: var(--gold); transform: scale(1.08); }
-  .rail-btn .tooltip {
-    position: absolute; right: 52px; top: 50%; transform: translateY(-50%);
-    background: var(--card-bg); border: 1px solid var(--card-border);
-    color: var(--fg); font-family: 'Tajawal', sans-serif; font-size: 12px;
-    padding: 4px 10px; border-radius: 6px; white-space: nowrap;
-    opacity: 0; pointer-events: none; transition: opacity 0.2s;
+  .deco-panel::after {
+    top: 0; right: 0;
+    border-width: 2px 2px 0 0;
   }
-  .rail-btn:hover .tooltip { opacity: 1; }
+  .deco-panel-bottom::before,
+  .deco-panel-bottom::after {
+    content: ''; position: absolute;
+    width: 24px; height: 24px;
+    border-color: var(--gold); border-style: solid;
+  }
+  .deco-panel-bottom::before {
+    bottom: 0; left: 0;
+    border-width: 0 0 2px 2px;
+  }
+  .deco-panel-bottom::after {
+    bottom: 0; right: 0;
+    border-width: 0 2px 2px 0;
+  }
 
-  /* Bottom Nav */
-  .bottom-nav {
-    position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
-    display: flex; align-items: center; justify-content: center; gap: 4px;
-    padding: 10px 20px; background: rgba(26,15,10,0.9);
-    backdrop-filter: blur(16px); border-top: 1px solid var(--card-border); direction: ltr;
+  /* Inner stepped border */
+  .deco-inner-border {
+    position: absolute;
+    inset: 8px;
+    border: 1px solid rgba(197, 160, 89, 0.15);
+    pointer-events: none;
   }
-  [data-theme="light"] .bottom-nav { background: rgba(245,237,224,0.95); }
-  .nav-item {
-    display: flex; flex-direction: column; align-items: center; gap: 4px;
-    padding: 8px 16px; background: transparent; border: none;
-    color: var(--muted); cursor: pointer; font-family: 'Tajawal', sans-serif;
-    font-size: 11px; transition: color 0.2s; min-width: 60px;
+
+  /* Gold divider lines */
+  .deco-divider {
+    height: 1px; margin: 1.25rem 0;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    opacity: 0.35;
   }
-  .nav-item.active { color: var(--gold); }
-  .nav-item:hover { color: var(--gold); }
+
+  /* Sunburst ornament */
+  .deco-sunburst {
+    display: flex; justify-content: center; gap: 3px;
+    margin: 1rem 0;
+  }
+  .deco-ray {
+    width: 1px; background: var(--gold); opacity: 0.3;
+    transform-origin: bottom center;
+  }
+  .deco-ray:nth-child(1) { height: 12px; transform: rotate(-20deg); }
+  .deco-ray:nth-child(2) { height: 16px; transform: rotate(-10deg); }
+  .deco-ray:nth-child(3) { height: 20px; }
+  .deco-ray:nth-child(4) { height: 16px; transform: rotate(10deg); }
+  .deco-ray:nth-child(5) { height: 12px; transform: rotate(20deg); }
+
+  .deco-poet {
+    font-family: 'Poiret One', sans-serif;
+    font-size: 12px; letter-spacing: 0.3em;
+    text-transform: uppercase; color: var(--gold);
+    text-align: center; margin-bottom: 0.5rem;
+    direction: ltr;
+  }
+  .deco-poet-ar {
+    font-family: 'Amiri', serif;
+    font-size: 14px; color: var(--muted);
+    text-align: center; direction: rtl;
+    margin-bottom: 1rem;
+  }
+
+  .deco-verses {
+    font-family: 'Amiri', serif;
+    font-size: clamp(1.25rem, 3.5vw, 1.625rem);
+    line-height: 2.2;
+    text-align: center;
+    color: var(--fg);
+    direction: rtl;
+    margin-bottom: 1rem;
+  }
+
+  .deco-translation {
+    font-family: 'Tajawal', sans-serif;
+    font-size: 13px; color: var(--muted);
+    text-align: center; direction: ltr;
+    line-height: 1.6;
+  }
+
+  /* ===== CONTROLS ===== */
+  /* Gold Deco Fan — opens from bottom center, each segment is an action */
+
+  .deco-fan-trigger {
+    position: fixed; bottom: 20px; left: 50%;
+    transform: translateX(-50%);
+    z-index: 55;
+    width: 48px; height: 48px;
+    background: transparent;
+    border: 1px solid rgba(197, 160, 89, 0.4);
+    color: var(--gold);
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.3s ease;
+    -webkit-tap-highlight-color: transparent;
+    /* Deco diamond shape */
+    transform: translateX(-50%) rotate(45deg);
+  }
+  .deco-fan-trigger-icon {
+    transform: rotate(-45deg);
+    font-family: 'Poiret One', sans-serif;
+    font-size: 18px; letter-spacing: 0.1em;
+  }
+  .deco-fan-trigger:hover,
+  .deco-fan-trigger:active {
+    border-color: var(--gold);
+    background: rgba(197, 160, 89, 0.1);
+  }
+
+  .deco-fan-overlay {
+    position: fixed; inset: 0; z-index: 58;
+    background: rgba(26, 15, 10, 0.6);
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+  .deco-fan-overlay.visible {
+    opacity: 1; pointer-events: auto;
+  }
+
+  .deco-fan {
+    position: fixed;
+    bottom: 80px; left: 50%;
+    transform: translateX(-50%);
+    z-index: 60;
+    display: flex;
+    gap: 0;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+  }
+  .deco-fan.open {
+    opacity: 1; pointer-events: auto;
+  }
+
+  .fan-segment {
+    width: 64px; height: 64px;
+    background: rgba(26, 15, 10, 0.85);
+    border: 1px solid rgba(197, 160, 89, 0.3);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 4px;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    -webkit-tap-highlight-color: transparent;
+    transform-origin: bottom center;
+  }
+  /* Fan spread positions */
+  .fan-segment:nth-child(1) { transform: rotate(-24deg) translateY(-20px); transition-delay: 0s; }
+  .fan-segment:nth-child(2) { transform: rotate(-8deg) translateY(-28px); transition-delay: 0.05s; }
+  .fan-segment:nth-child(3) { transform: rotate(8deg) translateY(-28px); transition-delay: 0.1s; }
+  .fan-segment:nth-child(4) { transform: rotate(24deg) translateY(-20px); transition-delay: 0.15s; }
+
+  .deco-fan:not(.open) .fan-segment {
+    transform: rotate(0deg) translateY(0);
+    opacity: 0;
+  }
+
+  .fan-segment:hover,
+  .fan-segment:active {
+    background: rgba(197, 160, 89, 0.15);
+    border-color: var(--gold);
+  }
+
+  .fan-segment-icon {
+    color: var(--gold); display: flex;
+    align-items: center; justify-content: center;
+  }
+  .fan-segment-label {
+    font-family: 'Poiret One', sans-serif;
+    font-size: 8px; letter-spacing: 0.15em;
+    text-transform: uppercase; color: var(--gold);
+    opacity: 0.7;
+  }
 
   @keyframes fadeInUp {
     from { opacity: 0; transform: translateY(20px); }
@@ -261,10 +371,8 @@
     .dune { transform: none !important; }
   }
   @media (max-width: 768px) {
-    .vertical-rail { display: none; }
-    .reader { padding: 70px 16px 40px; }
-    .poem-card { padding: 1.5rem; }
-    .poem-actions { flex-wrap: wrap; }
+    .deco-panel { padding: 2rem 1.5rem; }
+    .fan-segment { width: 56px; height: 56px; }
   }
 </style>
 </head>
@@ -297,72 +405,82 @@
     <span class="walk-hint">Tap anywhere to continue</span>
   </div>
 
-  <!-- Main App -->
+  <!-- ===== MAIN APP ===== -->
   <main class="app" id="app">
-    <header class="app-top">
-      <div class="app-top-brand">
-        <span class="app-top-brand-en">poetry</span>
-        <span class="app-top-brand-ar">بالعربي</span>
-      </div>
-      <div class="app-top-actions">
-        <button class="app-top-btn" id="themeToggle" aria-label="Toggle theme">
-          <i data-lucide="sun" style="width:18px;height:18px"></i>
-        </button>
-        <button class="app-top-btn" aria-label="Settings">
-          <i data-lucide="settings" style="width:18px;height:18px"></i>
-        </button>
-      </div>
+    <!-- Deco nav -->
+    <header class="deco-nav">
+      <span class="deco-nav-brand">Qafiyah</span>
     </header>
 
-    <nav class="vertical-rail">
-      <button class="rail-btn"><i data-lucide="heart" style="width:18px;height:18px"></i><span class="tooltip">Save</span></button>
-      <button class="rail-btn"><i data-lucide="type" style="width:18px;height:18px"></i><span class="tooltip">Font size</span></button>
-      <button class="rail-btn"><i data-lucide="languages" style="width:18px;height:18px"></i><span class="tooltip">Transliteration</span></button>
-      <button class="rail-btn"><i data-lucide="book-open" style="width:18px;height:18px"></i><span class="tooltip">Tafsir</span></button>
-      <button class="rail-btn"><i data-lucide="italic" style="width:18px;height:18px"></i><span class="tooltip">Tashkeel</span></button>
-      <button class="rail-btn"><i data-lucide="log-in" style="width:18px;height:18px"></i><span class="tooltip">Sign in</span></button>
-      <button class="rail-btn"><i data-lucide="settings" style="width:18px;height:18px"></i><span class="tooltip">Settings</span></button>
-    </nav>
+    <!-- Geometric panel framing the poem -->
+    <div class="deco-frame">
+      <div class="deco-panel">
+        <div class="deco-panel-bottom"></div>
+        <div class="deco-inner-border"></div>
 
-    <div class="reader">
-      <article class="poem-card">
-        <div class="poem-content">
-          <div class="poem-meta">
-            <div class="poet-avatar">م</div>
-            <div class="poet-info">
-              <h2>المتنبي</h2>
-              <span>Al-Mutanabbi</span>
-            </div>
-          </div>
-          <div class="poem-verses" dir="rtl" lang="ar">
-            <div class="verse-line">
-              عَلَى قَدْرِ أَهْلِ العَزْمِ تَأْتِي العَزَائِمُ
-              <span class="hemistich-divider"></span>
-              وَتَأْتِي عَلَى قَدْرِ الكِرَامِ المَكَارِمُ
-            </div>
-          </div>
-          <div class="poem-actions">
-            <button class="poem-action-btn">
-              <i data-lucide="copy" style="width:16px;height:16px"></i> نسخ
-            </button>
-            <button class="poem-action-btn">
-              <i data-lucide="share-2" style="width:16px;height:16px"></i> مشاركة
-            </button>
-            <button class="poem-action-btn">
-              <i data-lucide="bookmark" style="width:16px;height:16px"></i> حفظ
-            </button>
-          </div>
+        <div class="deco-sunburst">
+          <div class="deco-ray"></div>
+          <div class="deco-ray"></div>
+          <div class="deco-ray"></div>
+          <div class="deco-ray"></div>
+          <div class="deco-ray"></div>
         </div>
-      </article>
+
+        <div class="deco-poet">Al-Mutanabbi</div>
+        <div class="deco-poet-ar" lang="ar" dir="rtl">المتنبي</div>
+
+        <div class="deco-divider"></div>
+
+        <div class="deco-verses" lang="ar" dir="rtl">
+          عَلَى قَدْرِ أَهْلِ العَزْمِ تَأْتِي العَزَائِمُ<br>
+          وَتَأْتِي عَلَى قَدْرِ الكِرَامِ المَكَارِمُ
+        </div>
+
+        <div class="deco-divider"></div>
+
+        <div class="deco-translation">
+          Great deeds come to those of great resolve,<br>
+          and noble acts to those of noble character.
+        </div>
+
+        <div class="deco-sunburst">
+          <div class="deco-ray"></div>
+          <div class="deco-ray"></div>
+          <div class="deco-ray"></div>
+          <div class="deco-ray"></div>
+          <div class="deco-ray"></div>
+        </div>
+      </div>
     </div>
 
-    <nav class="bottom-nav">
-      <button class="nav-item"><i data-lucide="music" style="width:20px;height:20px"></i>Music</button>
-      <button class="nav-item"><i data-lucide="lightbulb" style="width:20px;height:20px"></i>Insight</button>
-      <button class="nav-item active"><i data-lucide="refresh-cw" style="width:20px;height:20px"></i>Refresh</button>
-      <button class="nav-item"><i data-lucide="library" style="width:20px;height:20px"></i>Library</button>
-      <button class="nav-item"><i data-lucide="shuffle" style="width:20px;height:20px"></i>Shuffle</button>
-    </nav>
+    <!-- ===== CONTROLS ===== -->
+    <!-- Diamond trigger -->
+    <button class="deco-fan-trigger" id="fanTrigger" aria-label="Open actions">
+      <span class="deco-fan-trigger-icon">+</span>
+    </button>
+
+    <!-- Overlay -->
+    <div class="deco-fan-overlay" id="fanOverlay"></div>
+
+    <!-- Gold fan segments -->
+    <div class="deco-fan" id="decoFan">
+      <div class="fan-segment" data-action="next">
+        <div class="fan-segment-icon"><i data-lucide="arrow-right" style="width:16px;height:16px"></i></div>
+        <div class="fan-segment-label">Next</div>
+      </div>
+      <div class="fan-segment" data-action="save">
+        <div class="fan-segment-icon"><i data-lucide="heart" style="width:16px;height:16px"></i></div>
+        <div class="fan-segment-label">Save</div>
+      </div>
+      <div class="fan-segment" data-action="listen">
+        <div class="fan-segment-icon"><i data-lucide="headphones" style="width:16px;height:16px"></i></div>
+        <div class="fan-segment-label">Listen</div>
+      </div>
+      <div class="fan-segment" data-action="share">
+        <div class="fan-segment-icon"><i data-lucide="share-2" style="width:16px;height:16px"></i></div>
+        <div class="fan-segment-label">Share</div>
+      </div>
+    </div>
   </main>
 
 <script>
@@ -443,14 +561,40 @@
     }
   });
 
-  // Theme toggle
-  document.getElementById('themeToggle').addEventListener('click', function() {
-    var html = document.documentElement;
-    if (html.getAttribute('data-theme') === 'light') {
-      html.removeAttribute('data-theme');
-    } else {
-      html.setAttribute('data-theme', 'light');
-    }
+  /* ===== DECO FAN CONTROLS ===== */
+  var fan = document.getElementById('decoFan');
+  var fanOverlay = document.getElementById('fanOverlay');
+  var fanTrigger = document.getElementById('fanTrigger');
+
+  function openFan() {
+    fan.classList.add('open');
+    fanOverlay.classList.add('visible');
+    fanTrigger.style.display = 'none';
+  }
+  function closeFan() {
+    fan.classList.remove('open');
+    fanOverlay.classList.remove('visible');
+    fanTrigger.style.display = '';
+  }
+
+  fanTrigger.addEventListener('click', openFan);
+  fanTrigger.addEventListener('touchstart', function(e) {
+    e.preventDefault(); openFan();
+  });
+  fanOverlay.addEventListener('click', closeFan);
+
+  /* Touch feedback on fan segments */
+  document.querySelectorAll('.fan-segment').forEach(function(seg) {
+    seg.addEventListener('touchstart', function() {
+      seg.style.background = 'rgba(197, 160, 89, 0.2)';
+      seg.style.borderColor = 'var(--gold)';
+    }, { passive: true });
+    seg.addEventListener('touchend', function() {
+      setTimeout(function() {
+        seg.style.background = '';
+        seg.style.borderColor = '';
+      }, 150);
+    }, { passive: true });
   });
 
   // Init icons

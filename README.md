@@ -153,6 +153,14 @@ When Supabase is configured, the app provides:
 
 Authentication features only appear when Supabase environment variables are configured. The app is fully functional without authentication.
 
+### Database Mode Benefits
+
+- Access to 84,329 restored Arabic poems
+- Instant response (no external API latency)
+- Works offline after initial database setup
+- Filter by poet (50+ poets available)
+- Proper Arabic line break formatting preserved from source texts
+
 ## Testing
 
 ```bash
@@ -316,32 +324,44 @@ poetry-bil-araby/
 
 ## Production Readiness
 
-### Remaining Items
+The release readiness analysis (see PR #58) audited the app against a mobile-first public launch checklist. The following is the current status.
 
-**Features**
-- [ ] Implement search functionality
-- [ ] Add social media sharing
-- [ ] Create poem collections and playlists
-- [ ] Expand poet and category library
-- [ ] Add keyboard shortcuts for core actions
-- [ ] Implement pagination for large result sets
+### P0 — Blocks Public Launch
 
-**Developer Experience**
-- [ ] Configure ESLint and Prettier
-- [ ] Set up pre-commit hooks (e.g., lint-staged)
-- [ ] Consider TypeScript migration
-- [ ] Add JSDoc comments to exported functions
-- [ ] Create CONTRIBUTING.md
+- [ ] **Debug panel in production**: `FEATURES.debug` is `true` in `app.jsx`. Must be disabled before launch or gated by `NODE_ENV`.
+- [ ] **No React error boundary**: Any component crash results in a blank white screen. A `<ErrorBoundary>` wrapper with a recovery UI is needed.
+- [ ] **Gemini API key exposed client-side**: `VITE_GEMINI_API_KEY` is bundled into the client-side JS. Proxy AI calls through the Express backend or restrict the key to the production domain.
+- [ ] **No SEO / Open Graph metadata**: `index.html` has no `<meta og:*>` or `<meta twitter:*>` tags. Sharing the URL shows a blank preview.
+- [ ] **Favicon is the Vite default**: `index.html` references `/vite.svg`. Replace with a proper app icon.
+- [ ] **No graceful degradation without API key**: When `VITE_GEMINI_API_KEY` is absent or empty, AI mode silently fails. Add an explicit fallback UI directing users to database mode.
+- [ ] **Version is `0.0.0`**: Update `package.json` to `1.0.0` before the public release.
 
-**Already Complete**
-- Poem favorites and bookmarks
-- Saved Poems view
-- Settings view with live theme and font preview
-- GitHub Copilot and Claude AI instructions
-- PostgreSQL-backed database mode
+### P1 — Launch-Critical Polish
+
+- [ ] No splash screen or first-time onboarding (extensive design exploration exists in PR #11)
+- [ ] No PWA manifest or service worker (users cannot add the app to their home screen)
+- [ ] Light mode dropdown theming inconsistency
+- [ ] No analytics or error tracking (zero visibility into post-launch behavior)
+
+### P2 — Post-Launch
+
+- [ ] File decomposition: `src/app.jsx` is ~2,800 lines; split into `components/`, `hooks/`, and `utils/`
+- [ ] Full WCAG AA accessibility audit (keyboard navigation, screen reader, `aria-live`)
+- [ ] Transliteration toggle and text zoom controls (design mockups exist in PR #50)
+- [ ] Web Vitals / performance monitoring
+- [ ] Harden E2E CI: `continue-on-error: true` on DB setup means tests can pass without real database coverage
+
+### Already Complete
+
+- Poem favorites, saved poems view, and persistent settings
 - Supabase authentication (Google and Apple SSO)
+- PostgreSQL-backed database mode with 84,329 poems
+- Backend keep-alive to prevent Render cold starts
+- Rate limiting dependency added (`express-rate-limit`)
 - Optimized CI/CD pipeline with PostgreSQL service
-- Keep-alive mechanism for Render free tier
+- GitHub Copilot and Claude AI development instructions
+
+See the full analysis in PR #58 (`RELEASE_READINESS.md`) for effort estimates, decision points, and a phased implementation plan.
 
 ## References
 

@@ -3,434 +3,389 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Option 4: WILD CARD - Brutalist Maximalism</title>
+  <title>Option 4: WILD CARD - Brutalist Terminal</title>
+  <link href="https://fonts.googleapis.com/css2?family=Forum&family=Reem+Kufi:wght@400;700&family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
+    :root {
+      --bg: #0a0a0a;
+      --green: #00ff00;
+      --green-dim: rgba(0, 255, 0, 0.5);
+      --green-faint: rgba(0, 255, 0, 0.15);
+      --green-glow: rgba(0, 255, 0, 0.3);
+      --control-size: 44px;
+      --icon-size: 20px;
     }
-    
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
     body {
       font-family: 'Courier New', monospace;
-      background: #0a0a0a;
-      color: #00ff00;
+      background: var(--bg);
+      color: var(--green);
       overflow: hidden;
       height: 100vh;
       position: relative;
     }
-    
-    /* Scan line effect */
+
+    /* CRT scan lines -- toned down for readability */
     body::before {
       content: '';
       position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
+      inset: 0;
       background: repeating-linear-gradient(
         0deg,
-        rgba(0, 255, 0, 0.03) 0px,
-        transparent 1px,
-        transparent 2px,
-        rgba(0, 255, 0, 0.03) 3px
+        rgba(0,255,0,0.015) 0px, transparent 1px,
+        transparent 3px, rgba(0,255,0,0.015) 4px
       );
       pointer-events: none;
-      animation: scanline 8s linear infinite;
       z-index: 9999;
     }
-    
-    @keyframes scanline {
-      0% { transform: translateY(0); }
-      100% { transform: translateY(100%); }
+
+    /* CRT vignette */
+    body::after {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background: radial-gradient(ellipse at center, transparent 60%, rgba(0,0,0,0.4) 100%);
+      pointer-events: none;
+      z-index: 9998;
     }
-    
-    .container {
-      display: flex;
-      height: 100vh;
-      position: relative;
-    }
-    
-    /* Brutalist Vertical Control Bar - Left Side with System Info */
+
+    .container { display: flex; height: 100vh; position: relative; }
+
+    /* --- Vertical Controls (Desktop, Right Side) --- */
     .vertical-controls {
       position: fixed;
-      left: 0;
-      top: 0;
-      height: 100vh;
-      width: 200px;
-      background: #000;
-      border-right: 3px solid #00ff00;
+      right: 16px;
+      top: 50%;
+      transform: translateY(-50%);
       display: flex;
       flex-direction: column;
+      gap: 2px;
+      background: #000;
+      border: 2px solid var(--green);
+      box-shadow: 0 0 20px var(--green-glow);
       z-index: 1000;
-      font-family: 'Courier New', monospace;
-      padding: 20px 0;
-      box-shadow: 0 0 30px rgba(0, 255, 0, 0.3);
+      padding: 4px;
     }
-    
-    .system-header {
-      padding: 10px 15px;
-      border-bottom: 2px solid #00ff00;
-      margin-bottom: 10px;
-    }
-    
-    .system-title {
-      font-size: 16px;
-      font-weight: bold;
-      color: #00ff00;
-      margin-bottom: 5px;
-      text-transform: uppercase;
-      letter-spacing: 2px;
-    }
-    
-    .system-time {
-      font-size: 11px;
-      color: #00ff00;
-      opacity: 0.7;
-      font-family: monospace;
-    }
-    
-    .control-section {
-      margin-bottom: 20px;
-      padding: 0 15px;
-    }
-    
-    .section-label {
-      font-size: 10px;
-      color: #00ff00;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 8px;
-      opacity: 0.6;
-      border-bottom: 1px solid rgba(0, 255, 0, 0.2);
-      padding-bottom: 4px;
-    }
-    
+
     .control-btn {
-      width: 100%;
-      padding: 12px 8px;
+      width: var(--control-size);
+      height: var(--control-size);
       display: flex;
       align-items: center;
-      gap: 10px;
+      justify-content: center;
       background: transparent;
-      border: 2px solid #00ff00;
+      border: 1px solid var(--green-faint);
       cursor: pointer;
       transition: all 0.1s;
-      color: #00ff00;
+      color: var(--green-dim);
       position: relative;
-      margin-bottom: 6px;
       font-family: 'Courier New', monospace;
-      font-size: 12px;
+    }
+
+    .control-btn:hover {
+      background: var(--green);
+      color: #000;
+      box-shadow: 0 0 12px var(--green-dim);
+    }
+
+    .control-btn.active {
+      background: var(--green);
+      color: #000;
+    }
+
+    .control-btn i { width: var(--icon-size); height: var(--icon-size); }
+
+    /* Terminal-style tooltip */
+    .tooltip {
+      position: absolute;
+      right: calc(100% + 10px);
+      background: #000;
+      color: var(--green);
+      padding: 4px 8px;
+      border: 1px solid var(--green);
+      font-size: 10px;
+      font-weight: bold;
+      font-family: 'Courier New', monospace;
       text-transform: uppercase;
       letter-spacing: 1px;
+      white-space: nowrap;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.1s;
     }
-    
-    .control-btn:hover {
-      background: #00ff00;
-      color: #000;
-      box-shadow: 0 0 20px rgba(0, 255, 0, 0.5);
-    }
-    
-    .control-btn.active {
-      background: #00ff00;
-      color: #000;
-      animation: blink 1s infinite;
-    }
-    
-    @keyframes blink {
-      0%, 50%, 100% { opacity: 1; }
-      25%, 75% { opacity: 0.7; }
-    }
-    
-    .control-btn svg {
-      width: 18px;
-      height: 18px;
-      stroke-width: 2.5;
-    }
-    
-    .status-indicator {
-      width: 8px;
-      height: 8px;
-      background: #00ff00;
-      border-radius: 50%;
-      margin-left: auto;
-    }
-    
-    .status-indicator.inactive {
-      background: transparent;
-      border: 1px solid #00ff00;
-    }
-    
-    /* Counter display */
-    .counter-display {
-      font-size: 10px;
-      color: #00ff00;
+    .tooltip::before { content: '>'; margin-right: 4px; }
+    .control-btn:hover .tooltip { opacity: 1; }
+
+    .divider { height: 1px; background: var(--green-faint); margin: 2px 0; }
+
+    /* --- Mobile Bottom Bar (Terminal) --- */
+    .bottom-bar {
+      display: none;
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
       background: #000;
-      border: 1px solid #00ff00;
-      padding: 2px 6px;
-      margin-left: auto;
-      font-family: monospace;
+      border-top: 2px solid var(--green);
+      box-shadow: 0 -4px 16px var(--green-glow);
+      z-index: 1000;
+      padding: 8px 0;
+      padding-bottom: max(8px, env(safe-area-inset-bottom));
     }
-    
-    /* Sample content */
+
+    .bottom-bar-inner {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      max-width: 500px;
+      margin: 0 auto;
+    }
+
+    .bottom-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      background: transparent;
+      border: 1px solid var(--green-faint);
+      cursor: pointer;
+      color: var(--green-dim);
+      transition: all 0.1s;
+      min-width: 44px;
+      min-height: 44px;
+      justify-content: center;
+      padding: 4px 8px;
+      font-family: 'Courier New', monospace;
+    }
+    .bottom-btn:active, .bottom-btn.active { background: var(--green); color: #000; }
+    .bottom-btn i { width: 18px; height: 18px; }
+    .bottom-btn-label { font-size: 8px; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; }
+
+    /* --- Content --- */
     .content {
       flex: 1;
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 0 80px 0 240px;
-      background: #0a0a0a;
+      padding: 0 80px;
+      background: var(--bg);
     }
-    
+
     .poem-container {
       max-width: 900px;
       text-align: center;
-      border: 3px solid #00ff00;
+      border: 2px solid var(--green);
       padding: 40px;
-      background: rgba(0, 0, 0, 0.8);
-      box-shadow: 0 0 40px rgba(0, 255, 0, 0.2);
+      background: rgba(0,0,0,0.8);
+      box-shadow: 0 0 40px rgba(0,255,0,0.1);
       position: relative;
     }
-    
     .poem-container::before {
       content: '>>> POETRY.SYS LOADED <<<';
       position: absolute;
-      top: -20px;
-      left: 20px;
+      top: -16px; left: 20px;
       background: #000;
       padding: 4px 12px;
       font-size: 10px;
-      color: #00ff00;
-      border: 2px solid #00ff00;
+      color: var(--green);
+      border: 1px solid var(--green);
+      letter-spacing: 1px;
     }
-    
+
     .poem-title {
       font-size: clamp(2rem, 4vw, 3rem);
       font-weight: 700;
-      color: #00ff00;
+      color: var(--green);
       margin-bottom: 1.5rem;
       font-family: 'Amiri', serif;
-      text-shadow: 0 0 10px rgba(0, 255, 0, 0.5);
+      text-shadow: 0 0 8px var(--green-glow);
     }
-    
     .poem-text {
       font-size: clamp(1.25rem, 2vw, 1.5rem);
       line-height: 2.4;
-      color: #00ff00;
+      color: var(--green);
       font-family: 'Amiri', serif;
       transition: font-size 0.2s ease;
+      text-shadow: 0 0 2px var(--green-glow);
     }
-    
+
     .design-label {
       position: fixed;
-      top: 20px;
-      right: 20px;
+      top: 20px; left: 20px;
       background: #000;
-      border: 3px solid #00ff00;
-      padding: 10px 20px;
-      font-size: 12px;
+      border: 2px solid var(--green);
+      padding: 8px 16px;
+      font-size: 11px;
       font-weight: bold;
       letter-spacing: 2px;
       text-transform: uppercase;
-      color: #00ff00;
-      animation: glow 2s ease-in-out infinite;
+      color: var(--green);
+      animation: glow 3s ease-in-out infinite;
     }
-    
     @keyframes glow {
-      0%, 100% { box-shadow: 0 0 5px rgba(0, 255, 0, 0.5); }
-      50% { box-shadow: 0 0 20px rgba(0, 255, 0, 0.8); }
+      0%, 100% { box-shadow: 0 0 4px var(--green-glow); }
+      50% { box-shadow: 0 0 16px var(--green-dim); }
     }
-    
-    /* Zoom levels */
-    .zoom-1 { font-size: clamp(1rem, 1.6vw, 1.2rem); }
-    .zoom-2 { font-size: clamp(1.25rem, 2vw, 1.5rem); }
-    .zoom-3 { font-size: clamp(1.5rem, 2.4vw, 1.8rem); }
-    
-    /* Terminal cursor */
+
     .cursor {
       display: inline-block;
-      width: 8px;
-      height: 1.2em;
-      background: #00ff00;
+      width: 8px; height: 1.2em;
+      background: var(--green);
       animation: cursor-blink 1s step-end infinite;
       margin-left: 4px;
+      vertical-align: text-bottom;
     }
-    
     @keyframes cursor-blink {
       0%, 50% { opacity: 1; }
       51%, 100% { opacity: 0; }
     }
-    
-    .stats-footer {
-      margin-top: auto;
-      padding: 15px;
-      border-top: 2px solid #00ff00;
-      font-size: 10px;
-      line-height: 1.6;
-    }
-    
-    .stat-line {
-      display: flex;
-      justify-content: space-between;
-      margin-bottom: 4px;
+
+    .zoom-1 { font-size: clamp(1rem, 1.6vw, 1.2rem); }
+    .zoom-2 { font-size: clamp(1.25rem, 2vw, 1.5rem); }
+    .zoom-3 { font-size: clamp(1.5rem, 2.4vw, 1.8rem); }
+
+    @media (max-width: 768px) {
+      .vertical-controls { display: none; }
+      .bottom-bar { display: block; }
+      .content { padding: 20px; padding-bottom: 80px; }
+      .poem-container { padding: 24px 16px; }
     }
   </style>
 </head>
 <body>
   <div class="design-label">WILD CARD: BRUTALIST</div>
-  
+
   <div class="container">
-    <!-- Brutalist Vertical Control Bar (Left Side) -->
-    <div class="vertical-controls">
-      <div class="system-header">
-        <div class="system-title">[ POEM.SYS ]</div>
-        <div class="system-time" id="systemTime">00:00:00</div>
-      </div>
-      
-      <!-- Collection Section -->
-      <div class="control-section">
-        <div class="section-label">&gt; ARCHIVE</div>
-        <button class="control-btn active" id="saveBtn" aria-label="Save to collection">
-          <svg fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-          </svg>
-          <span>SAVE</span>
-          <span class="counter-display" id="saveCounter">042</span>
-        </button>
-      </div>
-      
-      <!-- Display Section -->
-      <div class="control-section">
-        <div class="section-label">&gt; DISPLAY</div>
-        <button class="control-btn" id="zoomIn" aria-label="Increase text size">
-          <span>ZOOM [+]</span>
-          <span class="status-indicator inactive"></span>
-        </button>
-        <button class="control-btn" id="zoomOut" aria-label="Decrease text size">
-          <span>ZOOM [-]</span>
-          <span class="status-indicator inactive"></span>
-        </button>
-        <button class="control-btn" id="zoomReset" aria-label="Reset zoom">
-          <span>RESET</span>
-          <span class="status-indicator inactive"></span>
-        </button>
-      </div>
-      
-      <!-- Translation Section -->
-      <div class="control-section">
-        <div class="section-label">&gt; LANGUAGE</div>
-        <button class="control-btn" id="translitBtn" aria-label="Toggle transliteration">
-          <span>TRANSLIT</span>
-          <span class="status-indicator inactive" id="translitStatus"></span>
-        </button>
-      </div>
-      
-      <!-- Stats Footer -->
-      <div class="stats-footer">
-        <div class="stat-line">
-          <span>ZOOM:</span>
-          <span id="zoomStat">100%</span>
-        </div>
-        <div class="stat-line">
-          <span>MODE:</span>
-          <span id="modeStat">ARABIC</span>
-        </div>
-        <div class="stat-line">
-          <span>STATUS:</span>
-          <span>ONLINE</span>
-        </div>
-      </div>
-    </div>
-    
     <div class="content">
       <div class="poem-container">
-        <h1 class="poem-title" dir="rtl">قصيدة عن الحب<span class="cursor"></span></h1>
-        <p class="poem-text zoom-2" id="poemText" dir="rtl">
-          يا من هواه أعزه وأذلني<br>
-          كيف السبيل إلى وصالك دلني<br><br>
-          والله لو عاقبتني ما ضرني<br>
-          حبي لك الدنيا وما حولي ملني
+        <h1 class="poem-title" dir="rtl" lang="ar">&#1602;&#1589;&#1610;&#1583;&#1577; &#1593;&#1606; &#1575;&#1604;&#1581;&#1576;<span class="cursor"></span></h1>
+        <p class="poem-text zoom-2" id="poemText" dir="rtl" lang="ar">
+          &#1610;&#1575; &#1605;&#1606; &#1607;&#1608;&#1575;&#1607; &#1571;&#1593;&#1586;&#1607; &#1608;&#1571;&#1584;&#1604;&#1606;&#1610;<br>
+          &#1603;&#1610;&#1601; &#1575;&#1604;&#1587;&#1576;&#1610;&#1604; &#1573;&#1604;&#1609; &#1608;&#1589;&#1575;&#1604;&#1603; &#1583;&#1604;&#1606;&#1610;<br><br>
+          &#1608;&#1575;&#1604;&#1604;&#1607; &#1604;&#1608; &#1593;&#1575;&#1602;&#1576;&#1578;&#1606;&#1610; &#1605;&#1575; &#1590;&#1585;&#1606;&#1610;<br>
+          &#1581;&#1576;&#1610; &#1604;&#1603; &#1575;&#1604;&#1583;&#1606;&#1610;&#1575; &#1608;&#1605;&#1575; &#1581;&#1608;&#1604;&#1610; &#1605;&#1604;&#1606;&#1610;
         </p>
       </div>
     </div>
+
+    <!-- Vertical Control Bar (Desktop, Right Side) -->
+    <nav class="vertical-controls" aria-label="Poem controls">
+      <button class="control-btn active" id="saveBtn" aria-label="Save poem">
+        <span class="tooltip">Save</span>
+        <i data-lucide="heart"></i>
+      </button>
+      <div class="divider"></div>
+      <button class="control-btn" id="textSizeBtn" aria-label="Text size toggle">
+        <span class="tooltip">Text Size</span>
+        <i data-lucide="type"></i>
+      </button>
+      <button class="control-btn" id="translitBtn" aria-label="Toggle transliteration">
+        <span class="tooltip">Translit</span>
+        <i data-lucide="languages"></i>
+      </button>
+      <button class="control-btn" id="translateBtn" aria-label="Toggle translation">
+        <span class="tooltip">Translate</span>
+        <i data-lucide="book-open"></i>
+      </button>
+      <button class="control-btn" id="fontBtn" aria-label="Toggle font">
+        <span class="tooltip">Font</span>
+        <i data-lucide="italic"></i>
+      </button>
+      <div class="divider"></div>
+      <button class="control-btn" id="signInBtn" aria-label="Sign in">
+        <span class="tooltip">Sign In</span>
+        <i data-lucide="log-in"></i>
+      </button>
+      <button class="control-btn" id="settingsBtn" aria-label="Settings">
+        <span class="tooltip">Settings</span>
+        <i data-lucide="settings"></i>
+      </button>
+    </nav>
+
+    <!-- Mobile Bottom Bar -->
+    <nav class="bottom-bar" aria-label="Poem actions">
+      <div class="bottom-bar-inner">
+        <button class="bottom-btn" id="listenBtn" aria-label="Listen to poem">
+          <i data-lucide="music"></i>
+          <span class="bottom-btn-label">Listen</span>
+        </button>
+        <button class="bottom-btn" id="explainBtn" aria-label="Explain poem">
+          <i data-lucide="lightbulb"></i>
+          <span class="bottom-btn-label">Explain</span>
+        </button>
+        <button class="bottom-btn" id="discoverBtn" aria-label="Get new poem">
+          <i data-lucide="refresh-cw"></i>
+          <span class="bottom-btn-label">Discover</span>
+        </button>
+        <button class="bottom-btn" id="poetsBtn" aria-label="Browse poets">
+          <i data-lucide="library"></i>
+          <span class="bottom-btn-label">Poets</span>
+        </button>
+        <button class="bottom-btn" id="surpriseBtn" aria-label="Random poem">
+          <i data-lucide="shuffle"></i>
+          <span class="bottom-btn-label">Surprise</span>
+        </button>
+      </div>
+    </nav>
   </div>
-  
+
   <script>
-    // System time
-    function updateTime() {
-      const now = new Date();
-      const timeStr = now.toTimeString().split(' ')[0];
-      document.getElementById('systemTime').textContent = timeStr;
-    }
-    setInterval(updateTime, 1000);
-    updateTime();
-    
-    // Interactive functionality
-    let zoomLevel = 2;
-    let saveCount = 42;
-    let isSaved = true;
-    let translitEnabled = false;
-    
-    const poemText = document.getElementById('poemText');
-    const saveBtn = document.getElementById('saveBtn');
-    const zoomIn = document.getElementById('zoomIn');
-    const zoomOut = document.getElementById('zoomOut');
-    const zoomReset = document.getElementById('zoomReset');
-    const translitBtn = document.getElementById('translitBtn');
-    const saveCounter = document.getElementById('saveCounter');
-    const translitStatus = document.getElementById('translitStatus');
-    const zoomStat = document.getElementById('zoomStat');
-    const modeStat = document.getElementById('modeStat');
-    
-    function updateZoomStat() {
-      const percentage = zoomLevel === 1 ? '80%' : zoomLevel === 2 ? '100%' : '120%';
-      zoomStat.textContent = percentage;
-    }
-    
-    saveBtn.addEventListener('click', () => {
+    lucide.createIcons();
+
+    var zoomLevel = 2;
+    var isSaved = true;
+    var translitEnabled = false;
+    var fontToggled = false;
+
+    var poemText = document.getElementById('poemText');
+    var saveBtn = document.getElementById('saveBtn');
+    var textSizeBtn = document.getElementById('textSizeBtn');
+    var translitBtn = document.getElementById('translitBtn');
+    var fontBtn = document.getElementById('fontBtn');
+
+    var originalHTML = poemText.innerHTML;
+
+    // Static transliteration content (no user input involved)
+    var translitHTML = (function() {
+      var lines = [];
+      lines.push('\u064A\u0627 \u0645\u0646 \u0647\u0648\u0627\u0647 \u0623\u0639\u0632\u0647 \u0648\u0623\u0630\u0644\u0646\u064A<br>');
+      lines.push('<span style="opacity:0.5;font-size:0.75em;font-family:Courier New,monospace">');
+      lines.push('&gt; y\u0101 man haw\u0101hu a\u2019azzahu wa-adhallan\u012B</span><br>');
+      lines.push('\u0643\u064A\u0641 \u0627\u0644\u0633\u0628\u064A\u0644 \u0625\u0644\u0649 \u0648\u0635\u0627\u0644\u0643 \u062F\u0644\u0646\u064A<br>');
+      lines.push('<span style="opacity:0.5;font-size:0.75em;font-family:Courier New,monospace">');
+      lines.push('&gt; kayfa as-sab\u012Blu il\u0101 wi\u1E63\u0101lika dallan\u012B</span><br><br>');
+      lines.push('\u0648\u0627\u0644\u0644\u0647 \u0644\u0648 \u0639\u0627\u0642\u0628\u062A\u0646\u064A \u0645\u0627 \u0636\u0631\u0646\u064A<br>');
+      lines.push('<span style="opacity:0.5;font-size:0.75em;font-family:Courier New,monospace">');
+      lines.push('&gt; wall\u0101hi law \u2018\u0101qabtan\u012B m\u0101 \u1E0Darran\u012B</span><br>');
+      lines.push('\u062D\u0628\u064A \u0644\u0643 \u0627\u0644\u062F\u0646\u064A\u0627 \u0648\u0645\u0627 \u062D\u0648\u0644\u064A \u0645\u0644\u0646\u064A<br>');
+      lines.push('<span style="opacity:0.5;font-size:0.75em;font-family:Courier New,monospace">');
+      lines.push('&gt; \u1E25ubb\u012B laka ad-duny\u0101 wa m\u0101 \u1E25awl\u012B mallan\u012B</span>');
+      return lines.join('');
+    })();
+
+    saveBtn.addEventListener('click', function() {
       isSaved = !isSaved;
       saveBtn.classList.toggle('active');
-      if (isSaved) {
-        saveCount++;
-      } else {
-        saveCount--;
-      }
-      saveCounter.textContent = String(saveCount).padStart(3, '0');
+      saveBtn.querySelector('.tooltip').textContent = isSaved ? 'Saved' : 'Save';
     });
-    
-    zoomIn.addEventListener('click', () => {
-      if (zoomLevel < 3) {
-        zoomLevel++;
-        poemText.className = `poem-text zoom-${zoomLevel}`;
-        updateZoomStat();
-      }
+
+    textSizeBtn.addEventListener('click', function() {
+      zoomLevel = (zoomLevel % 3) + 1;
+      poemText.className = 'poem-text zoom-' + zoomLevel;
+      textSizeBtn.classList.toggle('active', zoomLevel !== 2);
     });
-    
-    zoomOut.addEventListener('click', () => {
-      if (zoomLevel > 1) {
-        zoomLevel--;
-        poemText.className = `poem-text zoom-${zoomLevel}`;
-        updateZoomStat();
-      }
-    });
-    
-    zoomReset.addEventListener('click', () => {
-      zoomLevel = 2;
-      poemText.className = `poem-text zoom-${zoomLevel}`;
-      updateZoomStat();
-    });
-    
-    translitBtn.addEventListener('click', () => {
+
+    translitBtn.addEventListener('click', function() {
       translitEnabled = !translitEnabled;
       translitBtn.classList.toggle('active');
-      translitStatus.classList.toggle('inactive');
-      if (translitEnabled) {
-        modeStat.textContent = 'AR+LAT';
-        poemText.innerHTML = `يا من هواه أعزه وأذلني<br><span style="opacity: 0.5; font-size: 0.75em; font-family: 'Courier New';">&gt; yā man hawāhu a'azzahu wa-adhallanī</span><br>كيف السبيل إلى وصالك دلني<br><span style="opacity: 0.5; font-size: 0.75em; font-family: 'Courier New';">&gt; kayfa as-sabīlu ilā wiṣālika dallanī</span><br><br>والله لو عاقبتني ما ضرني<br><span style="opacity: 0.5; font-size: 0.75em; font-family: 'Courier New';">&gt; wallāhi law 'āqabtanī mā ḍarranī</span><br>حبي لك الدنيا وما حولي ملني<br><span style="opacity: 0.5; font-size: 0.75em; font-family: 'Courier New';">&gt; ḥubbī laka ad-dunyā wa mā ḥawlī mallanī</span>`;
-      } else {
-        modeStat.textContent = 'ARABIC';
-        poemText.innerHTML = `يا من هواه أعزه وأذلني<br>كيف السبيل إلى وصالك دلني<br><br>والله لو عاقبتني ما ضرني<br>حبي لك الدنيا وما حولي ملني`;
-      }
+      poemText.innerHTML = translitEnabled ? translitHTML : originalHTML;
+    });
+
+    fontBtn.addEventListener('click', function() {
+      fontToggled = !fontToggled;
+      fontBtn.classList.toggle('active');
+      poemText.style.fontFamily = fontToggled ? "'Tajawal', sans-serif" : "'Amiri', serif";
     });
   </script>
 </body>

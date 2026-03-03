@@ -71,11 +71,18 @@ app.use((req, res, next) => {
 // Health check endpoint
 app.get('/api/health', async (req, res) => {
   try {
-    const result = await pool.query('SELECT COUNT(*) FROM poems');
+    let totalPoems = 0;
+    try {
+      const result = await pool.query('SELECT COUNT(*) FROM poems');
+      totalPoems = parseInt(result.rows[0].count);
+    } catch (err) {
+      // 42P01 = "undefined_table": poems table absent in dedicated design-review DB -- not an error
+      if (err.code !== '42P01') throw err;
+    }
     res.json({
       status: 'ok',
       database: 'connected',
-      totalPoems: parseInt(result.rows[0].count)
+      totalPoems
     });
   } catch (error) {
     res.status(500).json({

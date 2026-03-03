@@ -44,6 +44,8 @@ jobs:
             code:
               - 'src/**'
               - 'index.html'
+              - 'server.js'
+              - 'design-review/**'
             tests:
               - 'src/test/**'
               - 'e2e/**'
@@ -189,16 +191,20 @@ jobs:
           # Load database schema from migrations
           echo "Loading database schema from supabase/migrations..."
           PGPASSWORD=postgres psql -h localhost -U postgres -d qafiyah_test -f supabase/migrations/20260114000000_import_poetry.sql
+          echo "Loading design review tables..."
+          PGPASSWORD=postgres psql -h localhost -U postgres -d qafiyah_test -f supabase/migrations/20260220_create_design_review_tables.sql
           echo "Database schema loaded successfully"
         continue-on-error: true
 
       - name: Start backend API server (background)
         run: |
           # Start backend server in background for E2E tests
-          # Only if database feature is enabled in tests
           npm run dev:server &
           echo "Backend server starting on http://localhost:3001"
-          sleep 3
+          for i in $(seq 1 15); do
+            curl -sf http://localhost:3001/api/health > /dev/null 2>&1 && echo "Server ready" && break
+            echo "Waiting for server... ($i/15)" && sleep 1
+          done
         env:
           PGUSER: postgres
           PGPASSWORD: postgres

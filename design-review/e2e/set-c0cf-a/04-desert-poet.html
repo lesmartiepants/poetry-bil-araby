@@ -3,78 +3,256 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Smoke & Ember — شعر عربي</title>
-<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<title>Smoke &amp; Ember — Desert Poet</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Forum&family=Reem+Kufi:wght@400;700&family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
     --charcoal: #1A1614; --ember: #E8611A; --gold: #C5A059;
-    --smoke: #6B6B6B; --ash: #D4D0C8; --bg: #1A1614;
-    --text: #D4D0C8; --card-bg: rgba(30, 25, 22, 0.92);
-    --glow: rgba(232, 97, 26, 0.15);
+    --smoke: #6B6B6B; --ash: #D4D0C8;
+    --speed: 0.5s;
   }
-  .light {
-    --bg: #F5F0E8; --text: #1A1614; --card-bg: rgba(255, 252, 245, 0.95);
+  [data-theme="dark"] {
+    --bg: #1A1614; --text: #D4D0C8;
+    --card-bg: rgba(30, 25, 22, 0.92);
+    --glow: rgba(232, 97, 26, 0.15);
+    --muted: #6B6B6B;
+    --surface: rgba(30, 25, 22, 0.6);
+  }
+  [data-theme="light"] {
+    --bg: #F5F0E8; --text: #1A1614;
+    --card-bg: rgba(255, 252, 245, 0.95);
     --glow: rgba(232, 97, 26, 0.1);
+    --muted: #7a7570;
+    --surface: rgba(255, 252, 245, 0.8);
   }
   body {
     font-family: 'Tajawal', sans-serif; background: var(--bg);
-    color: var(--text); overflow-x: hidden; transition: background 0.5s, color 0.5s;
+    color: var(--text); overflow-x: hidden;
+    transition: background var(--speed), color var(--speed);
+    min-height: 100vh;
   }
-  /* ---- Splash ---- */
+
+  /* ======== Splash ======== */
   #splash {
-    position: fixed; inset: 0; z-index: 100; display: flex;
+    position: fixed; inset: 0; z-index: 1000;
+    display: flex; flex-direction: column;
     align-items: center; justify-content: center;
     background: radial-gradient(ellipse 60% 40% at 50% 95%, #5C2800 0%, #2A1508 30%, #0D0A08 70%);
     transition: opacity 0.8s ease-out;
   }
   #splash.hide { opacity: 0; pointer-events: none; }
   #splash-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
-  #splash-title {
-    position: relative; z-index: 2; font-family: 'Amiri', serif;
-    font-size: clamp(2rem, 6vw, 4.5rem); color: var(--ash);
-    text-shadow: 0 0 40px rgba(232,97,26,0.5), 0 0 80px rgba(197,160,89,0.3);
-    opacity: 0; animation: titleReveal 2s 0.5s forwards;
-    text-align: center; padding: 0 1rem;
+
+  .splash-brand {
+    position: relative; z-index: 2;
+    display: flex; align-items: flex-end;
+    justify-content: center; gap: 0.5rem;
+    margin-bottom: 1rem;
+    opacity: 0; animation: titleReveal 1.5s 0.3s forwards;
   }
+  .splash-brand-en {
+    font-family: 'Forum', serif;
+    font-size: clamp(3rem, 6vw, 4.5rem);
+    letter-spacing: -0.05em;
+    color: var(--ash);
+    line-height: 1;
+    text-shadow: 0 0 40px rgba(232,97,26,0.4);
+  }
+  .splash-brand-ar {
+    font-family: 'Reem Kufi', sans-serif;
+    font-weight: 700;
+    font-size: clamp(1.875rem, 4vw, 3rem);
+    color: var(--gold);
+    line-height: 1;
+    text-shadow: 0 0 30px rgba(197,160,89,0.3);
+  }
+  .splash-tagline {
+    position: relative; z-index: 2;
+    font-size: 0.85rem; color: var(--gold);
+    letter-spacing: 0.15em; text-transform: uppercase;
+    text-align: center; direction: ltr;
+    opacity: 0; animation: titleReveal 1s 0.8s forwards;
+    margin-bottom: 2.5rem;
+  }
+  .splash-cta {
+    position: relative; z-index: 2;
+    background: transparent;
+    border: 2px solid var(--ember);
+    color: var(--ash);
+    font-family: 'Tajawal', sans-serif;
+    font-size: 1rem; font-weight: 500;
+    padding: 0.85rem 2.5rem;
+    border-radius: 10px;
+    cursor: pointer;
+    min-width: 44px; min-height: 44px;
+    transition: all 0.3s ease;
+    opacity: 0; animation: titleReveal 1s 1.2s forwards;
+  }
+  .splash-cta:hover {
+    background: var(--ember); color: #fff;
+    box-shadow: 0 0 14px var(--ember), 0 0 28px rgba(232,97,26,0.25);
+    transform: translateY(-2px);
+  }
+  .splash-cta:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+
   @keyframes titleReveal {
     from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
   }
-  /* ---- Theme Toggle ---- */
+
+  /* ======== Onboarding ======== */
+  #onboarding {
+    position: fixed; inset: 0; z-index: 900;
+    display: none; flex-direction: column;
+    align-items: center; justify-content: center;
+    background: var(--bg);
+    padding: 2rem;
+    transition: background var(--speed);
+  }
+  #onboarding.active { display: flex; }
+
+  .onboard-card {
+    display: none; flex-direction: column;
+    align-items: center; text-align: center;
+    max-width: 380px; width: 100%;
+    padding: 2.5rem 2rem;
+    background: var(--card-bg);
+    border-radius: 16px;
+    box-shadow: 0 12px 40px rgba(232,97,26,0.08);
+    transition: background var(--speed);
+  }
+  .onboard-card.active { display: flex; }
+
+  .onboard-icon {
+    width: 48px; height: 48px;
+    color: var(--ember);
+    margin-bottom: 1.5rem;
+  }
+  .onboard-title-en {
+    font-family: 'Forum', serif;
+    font-size: 1.4rem;
+    letter-spacing: -0.03em;
+    margin-bottom: 0.25rem;
+    direction: ltr;
+  }
+  .onboard-title-ar {
+    font-family: 'Reem Kufi', sans-serif;
+    font-weight: 700;
+    font-size: 1.2rem;
+    color: var(--ember);
+    margin-bottom: 1rem;
+  }
+  .onboard-desc-en {
+    font-size: 0.9rem;
+    line-height: 1.6;
+    opacity: 0.8;
+    margin-bottom: 0.35rem;
+    direction: ltr;
+    text-align: center;
+  }
+  .onboard-desc-ar {
+    font-family: 'Tajawal', sans-serif;
+    font-size: 0.85rem;
+    line-height: 1.6;
+    opacity: 0.7;
+    margin-bottom: 1.5rem;
+  }
+
+  .onboard-dots {
+    display: flex; gap: 8px;
+    margin-bottom: 1.5rem;
+  }
+  .onboard-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: rgba(232, 97, 26, 0.25);
+    transition: background 0.3s, transform 0.3s;
+  }
+  .onboard-dot.active {
+    background: var(--ember);
+    transform: scale(1.3);
+  }
+
+  .onboard-next {
+    background: var(--ember);
+    color: #fff;
+    border: none;
+    font-family: 'Tajawal', sans-serif;
+    font-size: 0.95rem; font-weight: 600;
+    padding: 0.75rem 2rem;
+    border-radius: 10px;
+    cursor: pointer;
+    min-width: 44px; min-height: 44px;
+    transition: all 0.3s ease;
+  }
+  .onboard-next:hover {
+    box-shadow: 0 0 14px var(--ember), 0 0 28px rgba(232,97,26,0.25);
+    transform: translateY(-2px);
+  }
+  .onboard-next:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+
+  /* ======== Main App ======== */
+  #app {
+    display: none;
+    max-width: 800px; margin: 0 auto;
+    padding: 2rem 1rem 5rem;
+    transition: background var(--speed);
+  }
+  #app.active { display: block; }
+
+  /* Theme toggle */
   .theme-toggle {
     position: fixed; top: 1rem; left: 1rem; z-index: 50;
     width: 48px; height: 48px; border-radius: 50%; border: 2px solid var(--ember);
-    background: var(--card-bg); color: var(--text); font-size: 1.2rem;
+    background: var(--card-bg); color: var(--text);
     cursor: pointer; display: flex; align-items: center; justify-content: center;
-    transition: box-shadow 0.3s, background 0.3s;
+    transition: box-shadow 0.3s, background var(--speed);
     will-change: box-shadow;
   }
   .theme-toggle:hover, .theme-toggle:focus-visible {
     box-shadow: 0 0 12px var(--ember), 0 0 24px rgba(232,97,26,0.3);
     outline: none;
   }
-  /* ---- Main App ---- */
-  #app {
-    max-width: 800px; margin: 0 auto; padding: 2rem 1rem 4rem;
-    opacity: 0; transition: opacity 0.6s 0.2s;
+  .theme-toggle .icon-sun { display: none; }
+  .theme-toggle .icon-moon { display: block; }
+  [data-theme="light"] .theme-toggle .icon-sun { display: block; }
+  [data-theme="light"] .theme-toggle .icon-moon { display: none; }
+
+  /* App brand */
+  .app-brand {
+    display: flex; align-items: flex-end;
+    justify-content: center; gap: 0.4rem;
+    margin-bottom: 2rem;
+    direction: ltr;
   }
-  #app.visible { opacity: 1; }
-  h1.app-title {
-    font-family: 'Amiri', serif; text-align: center;
-    font-size: clamp(1.6rem, 4vw, 2.8rem); margin-bottom: 2rem;
+  .app-brand-en {
+    font-family: 'Forum', serif;
+    font-size: clamp(1.6rem, 3vw, 2.2rem);
+    letter-spacing: -0.05em;
+    line-height: 1;
+  }
+  .app-brand-ar {
+    font-family: 'Reem Kufi', sans-serif;
+    font-weight: 700;
+    font-size: clamp(1.1rem, 2vw, 1.5rem);
     color: var(--gold);
+    line-height: 1;
   }
-  /* ---- Poem Card ---- */
+
+  /* Poem Card */
   .poem-card {
     background: var(--card-bg); border-radius: 16px; padding: 2.5rem 2rem;
-    position: relative; overflow: hidden; margin-bottom: 2.5rem;
-    box-shadow: 0 12px 40px rgba(232,97,26,0.12), 0 0 80px rgba(232,97,26,0.06);
-    will-change: box-shadow;
+    position: relative; overflow: hidden; margin-bottom: 2rem;
+    box-shadow: 0 12px 40px rgba(232,97,26,0.1), 0 0 80px rgba(232,97,26,0.04);
+    transition: background var(--speed);
   }
   .poem-card::after {
     content: ''; position: absolute; bottom: -40%; left: 10%; right: 10%; height: 80%;
-    background: radial-gradient(ellipse at center bottom, rgba(232,97,26,0.18) 0%, transparent 70%);
+    background: radial-gradient(ellipse at center bottom, rgba(232,97,26,0.12) 0%, transparent 70%);
     pointer-events: none;
   }
   .poem-text {
@@ -91,109 +269,174 @@
     color: var(--gold); font-family: 'Tajawal', sans-serif;
     font-weight: 500; position: relative; z-index: 1;
   }
-  /* ---- Walkthrough ---- */
-  .walkthrough { display: grid; gap: 1.25rem; margin-bottom: 2.5rem; }
-  .walk-step {
-    background: var(--card-bg); border-radius: 12px; padding: 1.25rem 1.5rem;
-    border-right: 3px solid var(--ember); opacity: 0;
-    transform: translateY(30px); transition: opacity 0.5s, transform 0.5s;
-    will-change: opacity, transform;
+
+  /* ======== Vertical Controls Rail ======== */
+  .controls-rail {
+    position: fixed; right: 0.75rem; top: 50%;
+    transform: translateY(-50%);
+    display: flex; flex-direction: column;
+    gap: 2px; z-index: 50;
   }
-  .walk-step.visible { opacity: 1; transform: translateY(0); }
-  .walk-step .step-num {
-    display: inline-flex; align-items: center; justify-content: center;
-    width: 32px; height: 32px; border-radius: 50%;
-    background: var(--ember); color: #fff; font-weight: 700;
-    font-size: 0.85rem; margin-left: 0.75rem; flex-shrink: 0;
+  .rail-btn {
+    width: 44px; height: 44px;
+    display: flex; align-items: center; justify-content: center;
+    background: transparent; border: none;
+    color: var(--muted); cursor: pointer;
+    border-radius: 8px;
+    transition: color 0.2s, background 0.2s;
   }
-  .walk-step .step-title {
-    font-family: 'Amiri', serif; font-size: 1.15rem;
-    color: var(--gold); margin-bottom: 0.35rem;
-    display: flex; align-items: center;
+  .rail-btn:hover {
+    color: var(--text);
+    background: var(--surface);
   }
-  .walk-step p { font-size: 0.95rem; line-height: 1.7; color: var(--smoke); }
-  .light .walk-step p { color: #4A4540; }
-  /* ---- Controls ---- */
-  .controls { display: flex; flex-wrap: wrap; gap: 1rem; justify-content: center; }
-  .btn {
-    font-family: 'Tajawal', sans-serif; font-size: 1rem; font-weight: 500;
-    padding: 0.75rem 2rem; border-radius: 10px; border: 2px solid var(--ember);
-    background: transparent; color: var(--text); cursor: pointer;
-    min-height: 48px; min-width: 48px;
-    transition: box-shadow 0.3s, background 0.3s, color 0.3s;
-    will-change: box-shadow;
+  .rail-btn:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; }
+
+  /* ======== Bottom Bar ======== */
+  .bottom-bar {
+    position: fixed; bottom: 0; left: 0; right: 0;
+    z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    gap: 0; padding: 6px 0;
+    background: var(--bg);
+    border-top: 1px solid rgba(232, 97, 26, 0.2);
+    transition: background var(--speed);
   }
-  .btn:hover, .btn:focus-visible {
-    background: var(--ember); color: #fff; outline: none;
-    box-shadow: 0 0 14px var(--ember), 0 0 28px rgba(232,97,26,0.25);
-    animation: emberPulse 1.5s infinite;
+  .bottom-btn {
+    display: flex; flex-direction: column;
+    align-items: center; gap: 2px;
+    padding: 6px 16px;
+    background: transparent; border: none;
+    color: var(--muted); cursor: pointer;
+    font-family: 'Tajawal', sans-serif;
+    font-size: 10px;
+    min-width: 44px; min-height: 44px;
+    transition: color 0.2s;
   }
-  @keyframes emberPulse {
-    0%, 100% { box-shadow: 0 0 14px var(--ember), 0 0 28px rgba(232,97,26,0.25); }
-    50% { box-shadow: 0 0 20px var(--ember), 0 0 40px rgba(232,97,26,0.35); }
+  .bottom-btn:hover { color: var(--text); }
+  .bottom-btn.active { color: var(--ember); }
+  .bottom-btn:focus-visible { outline: 2px solid var(--ember); outline-offset: 2px; }
+
+  /* ======== Responsive ======== */
+  @media (max-width: 600px) {
+    .poem-card { padding: 1.5rem 1.25rem; }
+    .controls-rail { display: none; }
+    .splash-brand-en { font-size: clamp(2.2rem, 8vw, 3rem); }
+    .splash-brand-ar { font-size: clamp(1.4rem, 5vw, 1.875rem); }
   }
-  .btn.primary { background: var(--ember); color: #fff; }
-  /* ---- Reduced Motion ---- */
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
       animation-duration: 0.01ms !important; animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
     }
-    #splash { display: none; }
-    #app { opacity: 1; }
-    .walk-step { opacity: 1; transform: none; }
-  }
-  /* ---- Mobile ---- */
-  @media (max-width: 600px) {
-    .poem-card { padding: 1.5rem 1.25rem; }
-    .controls { flex-direction: column; align-items: stretch; }
-    .btn { width: 100%; text-align: center; }
+    #splash { display: none !important; }
+    #onboarding { display: none !important; }
+    #app { display: block !important; }
   }
 </style>
 </head>
-<body>
-  <div id="splash">
-    <canvas id="splash-canvas"></canvas>
-    <div id="splash-title">دُخانٌ وَجَمر<br><span style="font-size:0.45em;color:var(--gold);font-family:'Tajawal',sans-serif">Smoke &amp; Ember</span></div>
+<body data-theme="dark">
+
+<!-- ======== Splash ======== -->
+<div id="splash">
+  <canvas id="splash-canvas"></canvas>
+  <div class="splash-brand">
+    <span class="splash-brand-en">poetry</span>
+    <span class="splash-brand-ar" lang="ar" dir="rtl">بالعربي</span>
   </div>
-  <button class="theme-toggle" id="themeBtn" aria-label="تبديل السمة">&#9788;</button>
-  <main id="app">
-    <h1 class="app-title">شعر عربي — قصيدة اليوم</h1>
-    <div class="poem-card">
-      <div class="poem-text">
-        <span class="hemistich">أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ</span>
-        <span class="separator">***</span>
-        <span class="hemistich">فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي</span>
-      </div>
-      <div class="poet-name">— أحمد شوقي</div>
+  <div class="splash-tagline">Smoke &amp; Ember</div>
+  <button class="splash-cta" id="splashCta">ادخل</button>
+</div>
+
+<!-- ======== Onboarding ======== -->
+<div id="onboarding">
+  <div class="onboard-card active" data-step="0">
+    <i data-lucide="compass" class="onboard-icon"></i>
+    <div class="onboard-title-en">Discover Poems</div>
+    <div class="onboard-title-ar" lang="ar" dir="rtl">اكتشف القصائد</div>
+    <div class="onboard-desc-en">Browse over 84,000 poems from the Arabic literary tradition</div>
+    <div class="onboard-desc-ar" lang="ar" dir="rtl">تصفّح اكثر من 84,000 قصيدة من التراث الادبي العربي</div>
+    <div class="onboard-dots">
+      <span class="onboard-dot active"></span>
+      <span class="onboard-dot"></span>
+      <span class="onboard-dot"></span>
     </div>
-    <div class="walkthrough">
-      <div class="walk-step" data-step="1">
-        <div class="step-title"><span class="step-num">١</span>اختر الشاعر</div>
-        <p>تصفّح مجموعة واسعة من الشعراء العرب الكلاسيكيين والمعاصرين واختر من تريد.</p>
-      </div>
-      <div class="walk-step" data-step="2">
-        <div class="step-title"><span class="step-num">٢</span>استكشف القصائد</div>
-        <p>اقرأ القصائد بتنسيق جميل مع شرح للأبيات ومعاني المفردات.</p>
-      </div>
-      <div class="walk-step" data-step="3">
-        <div class="step-title"><span class="step-num">٣</span>استمع للإلقاء</div>
-        <p>استمتع بالإلقاء الصوتي للقصائد بأصوات مميّزة تنبض بالحياة.</p>
-      </div>
-      <div class="walk-step" data-step="4">
-        <div class="step-title"><span class="step-num">٤</span>شارك وأحفظ</div>
-        <p>احفظ قصائدك المفضّلة وشاركها مع الأصدقاء بسهولة.</p>
-      </div>
+    <button class="onboard-next">التالي</button>
+  </div>
+  <div class="onboard-card" data-step="1">
+    <i data-lucide="headphones" class="onboard-icon"></i>
+    <div class="onboard-title-en">Listen and Reflect</div>
+    <div class="onboard-title-ar" lang="ar" dir="rtl">استمع وتامّل</div>
+    <div class="onboard-desc-en">Hear poems recited with AI-powered natural voice synthesis</div>
+    <div class="onboard-desc-ar" lang="ar" dir="rtl">اسمع القصائد بالقاء صوتي طبيعي بالذكاء الاصطناعي</div>
+    <div class="onboard-dots">
+      <span class="onboard-dot"></span>
+      <span class="onboard-dot active"></span>
+      <span class="onboard-dot"></span>
     </div>
-    <div class="controls">
-      <button class="btn primary">قصيدة عشوائية</button>
-      <button class="btn">بحث بالشاعر</button>
-      <button class="btn">المفضّلة</button>
+    <button class="onboard-next">التالي</button>
+  </div>
+  <div class="onboard-card" data-step="2">
+    <i data-lucide="sparkles" class="onboard-icon"></i>
+    <div class="onboard-title-en">AI Insights</div>
+    <div class="onboard-title-ar" lang="ar" dir="rtl">رؤى ذكية</div>
+    <div class="onboard-desc-en">Get meaning analysis and context powered by AI</div>
+    <div class="onboard-desc-ar" lang="ar" dir="rtl">احصل على تحليل المعاني والسياق بالذكاء الاصطناعي</div>
+    <div class="onboard-dots">
+      <span class="onboard-dot"></span>
+      <span class="onboard-dot"></span>
+      <span class="onboard-dot active"></span>
     </div>
-  </main>
+    <button class="onboard-next">ابدا</button>
+  </div>
+</div>
+
+<!-- ======== Main App ======== -->
+<main id="app">
+  <button class="theme-toggle" id="themeBtn" aria-label="Toggle theme">
+    <span class="icon-sun"><i data-lucide="sun" style="width:20px;height:20px"></i></span>
+    <span class="icon-moon"><i data-lucide="moon" style="width:20px;height:20px"></i></span>
+  </button>
+
+  <div class="app-brand">
+    <span class="app-brand-en">poetry</span>
+    <span class="app-brand-ar" lang="ar" dir="rtl">بالعربي</span>
+  </div>
+
+  <div class="poem-card">
+    <div class="poem-text" lang="ar" dir="rtl">
+      <span class="hemistich">انا البَحرُ في احشائِهِ الدُرُّ كامِنٌ</span>
+      <span class="separator">***</span>
+      <span class="hemistich">فَهَل سالوا الغَوّاصَ عَن صَدَفاتي</span>
+    </div>
+    <div class="poet-name">-- احمد شوقي</div>
+  </div>
+
+  <!-- Vertical Controls Rail -->
+  <nav class="controls-rail" aria-label="Poem controls">
+    <button class="rail-btn" aria-label="Save poem"><i data-lucide="heart" style="width:18px;height:18px"></i></button>
+    <button class="rail-btn" aria-label="Change font"><i data-lucide="type" style="width:18px;height:18px"></i></button>
+    <button class="rail-btn" aria-label="Switch language"><i data-lucide="languages" style="width:18px;height:18px"></i></button>
+    <button class="rail-btn" aria-label="Open reader"><i data-lucide="book-open" style="width:18px;height:18px"></i></button>
+    <button class="rail-btn" aria-label="Poetry analysis"><i data-lucide="italic" style="width:18px;height:18px"></i></button>
+    <button class="rail-btn" aria-label="Sign in"><i data-lucide="log-in" style="width:18px;height:18px"></i></button>
+    <button class="rail-btn" aria-label="Settings"><i data-lucide="settings" style="width:18px;height:18px"></i></button>
+  </nav>
+
+  <!-- Bottom Bar -->
+  <nav class="bottom-bar" aria-label="Navigation">
+    <button class="bottom-btn" aria-label="Audio"><i data-lucide="music" style="width:20px;height:20px"></i><span>Audio</span></button>
+    <button class="bottom-btn active" aria-label="Insights"><i data-lucide="lightbulb" style="width:20px;height:20px"></i><span>Insights</span></button>
+    <button class="bottom-btn" aria-label="New poem"><i data-lucide="refresh-cw" style="width:20px;height:20px"></i><span>New</span></button>
+    <button class="bottom-btn" aria-label="Library"><i data-lucide="library" style="width:20px;height:20px"></i><span>Library</span></button>
+    <button class="bottom-btn" aria-label="Random poem"><i data-lucide="shuffle" style="width:20px;height:20px"></i><span>Random</span></button>
+  </nav>
+</main>
+
 <script>
 (function() {
-  /* ---- Canvas Smoke & Embers ---- */
+  'use strict';
+
+  /* ======== Canvas Smoke & Embers ======== */
   var canvas = document.getElementById('splash-canvas');
   var ctx = canvas.getContext('2d');
   var isMobile = window.innerWidth < 600;
@@ -210,12 +453,10 @@
 
   function createSmoke(layer) {
     var p = {
-      type: 'smoke',
-      layer: layer,
+      type: 'smoke', layer: layer,
       x: 0, y: 0, originX: 0,
       size: 0, speedY: 0, alpha: 0, maxAlpha: 0,
-      life: 0, maxLife: 0,
-      cpOffset1: 0, cpOffset2: 0
+      life: 0, maxLife: 0, cpOffset1: 0, cpOffset2: 0
     };
     resetSmoke(p);
     return p;
@@ -238,18 +479,11 @@
   function updateSmoke(p) {
     p.life++;
     var t = p.life / p.maxLife;
-    // Bezier curve path for horizontal drift
-    var mt = 1 - t;
-    var mt2 = mt * mt;
-    var mt3 = mt2 * mt;
-    var t2 = t * t;
-    var t3 = t2 * t;
-    p.x = mt3 * p.originX
-      + 3 * mt2 * t * (p.originX + p.cpOffset1)
-      + 3 * mt * t2 * (p.originX + p.cpOffset2)
-      + t3 * (p.originX + p.cpOffset2 * 1.2);
+    var mt = 1 - t, mt2 = mt * mt, mt3 = mt2 * mt;
+    var t2 = t * t, t3 = t2 * t;
+    p.x = mt3 * p.originX + 3 * mt2 * t * (p.originX + p.cpOffset1)
+      + 3 * mt * t2 * (p.originX + p.cpOffset2) + t3 * (p.originX + p.cpOffset2 * 1.2);
     p.y += p.speedY;
-    // Fade lifecycle
     if (t < 0.15) p.alpha = p.maxAlpha * (t / 0.15);
     else if (t > 0.55) p.alpha = p.maxAlpha * (1 - (t - 0.55) / 0.45);
     else p.alpha = p.maxAlpha;
@@ -269,8 +503,7 @@
 
   function createEmber() {
     var e = {
-      type: 'ember',
-      x: 0, y: 0, size: 0, speedY: 0, driftX: 0,
+      type: 'ember', x: 0, y: 0, size: 0, speedY: 0, driftX: 0,
       alpha: 1, life: 0, maxLife: 0, hue: 0
     };
     resetEmber(e);
@@ -318,7 +551,6 @@
     ctx.restore();
   }
 
-  // Build back-layer smoke, front-layer smoke, then embers
   var i;
   for (i = 0; i < Math.floor(SMOKE_COUNT / 2); i++) {
     var s = createSmoke(0);
@@ -326,17 +558,16 @@
     particles.push(s);
   }
   for (i = 0; i < Math.ceil(SMOKE_COUNT / 2); i++) {
-    var s = createSmoke(1);
-    s.life = Math.floor(Math.random() * s.maxLife);
-    particles.push(s);
+    var s2 = createSmoke(1);
+    s2.life = Math.floor(Math.random() * s2.maxLife);
+    particles.push(s2);
   }
   for (i = 0; i < EMBER_COUNT; i++) {
-    var e = createEmber();
-    e.life = Math.floor(Math.random() * e.maxLife);
-    particles.push(e);
+    var em = createEmber();
+    em.life = Math.floor(Math.random() * em.maxLife);
+    particles.push(em);
   }
 
-  // Sort: back smoke -> front smoke -> embers for layered depth
   particles.sort(function(a, b) {
     if (a.type === 'smoke' && b.type === 'smoke') return a.layer - b.layer;
     if (a.type === 'smoke' && b.type === 'ember') return -1;
@@ -346,7 +577,6 @@
 
   function animate() {
     ctx.clearRect(0, 0, W, H);
-    // Campfire glow at bottom center
     var glow = ctx.createRadialGradient(W / 2, H, 0, W / 2, H, H * 0.55);
     glow.addColorStop(0, 'rgba(92, 40, 0, 0.4)');
     glow.addColorStop(0.35, 'rgba(42, 21, 8, 0.15)');
@@ -361,42 +591,57 @@
     raf = requestAnimationFrame(animate);
   }
 
+  /* ======== Splash CTA ======== */
+  document.getElementById('splashCta').addEventListener('click', function () {
+    cancelAnimationFrame(raf);
+    var splash = document.getElementById('splash');
+    splash.classList.add('hide');
+    setTimeout(function () { splash.style.display = 'none'; }, 900);
+    document.getElementById('onboarding').classList.add('active');
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+  });
+
+  /* ======== Init ======== */
   var prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (!prefersReduced) {
     animate();
-    setTimeout(function() {
-      document.getElementById('splash').classList.add('hide');
-      document.getElementById('app').classList.add('visible');
-      setTimeout(function() { cancelAnimationFrame(raf); }, 900);
-    }, 3500);
   } else {
-    document.getElementById('app').classList.add('visible');
+    document.getElementById('app').classList.add('active');
   }
 
-  /* ---- Walkthrough: sparks floating up and settling ---- */
-  var steps = document.querySelectorAll('.walk-step');
-  if (!prefersReduced) {
-    var obs = new IntersectionObserver(function(entries) {
-      entries.forEach(function(entry) {
-        if (entry.isIntersecting) {
-          var delay = parseInt(entry.target.dataset.step, 10) * 180;
-          setTimeout(function() { entry.target.classList.add('visible'); }, delay);
-          obs.unobserve(entry.target);
-        }
-      });
-    }, { threshold: 0.2 });
-    steps.forEach(function(s) { obs.observe(s); });
-  } else {
-    steps.forEach(function(s) { s.classList.add('visible'); });
-  }
+  /* ======== Onboarding ======== */
+  var currentStep = 0;
+  var totalSteps = 3;
 
-  /* ---- Theme Toggle ---- */
-  var themeBtn = document.getElementById('themeBtn');
-  var dark = true;
-  themeBtn.addEventListener('click', function() {
-    dark = !dark;
-    document.body.classList.toggle('light', !dark);
-    themeBtn.textContent = dark ? '\u2606' : '\u263D';
+  document.getElementById('onboarding').addEventListener('click', function (e) {
+    if (e.target.classList.contains('onboard-next') || e.target.closest('.onboard-next')) {
+      currentStep++;
+      if (currentStep >= totalSteps) {
+        document.getElementById('onboarding').classList.remove('active');
+        document.getElementById('onboarding').style.display = 'none';
+        document.getElementById('app').classList.add('active');
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+        return;
+      }
+      var cards = document.querySelectorAll('.onboard-card');
+      for (var ci = 0; ci < cards.length; ci++) {
+        cards[ci].classList.remove('active');
+      }
+      cards[currentStep].classList.add('active');
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+  });
+
+  /* ======== Theme Toggle ======== */
+  document.getElementById('themeBtn').addEventListener('click', function () {
+    var cur = document.body.getAttribute('data-theme');
+    var next = cur === 'dark' ? 'light' : 'dark';
+    document.body.setAttribute('data-theme', next);
+  });
+
+  /* ======== Lucide Icons ======== */
+  document.addEventListener('DOMContentLoaded', function () {
+    if (typeof lucide !== 'undefined') lucide.createIcons();
   });
 })();
 </script>

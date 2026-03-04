@@ -214,7 +214,6 @@
   }
   #app.visible { display: flex; flex-direction: column; min-height: 100vh; }
   [data-theme="light"] #app { background: #fafaf9; color: #2c2c2b; }
-  #ambient-canvas { display: none; }
 
   /* Birch accent — single 1px line across the top */
   .birch-line-top {
@@ -498,7 +497,7 @@
   var isMobile = window.innerWidth < 768;
   var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var SPLASH_PARTICLE_COUNT = isMobile ? 50 : 100;
-  var AMBIENT_PARTICLE_COUNT = isMobile ? 15 : 30;
+
 
   /* ---------- Nordic onboarding ---------- */
   var nordPanels = document.querySelectorAll('.nord-panel');
@@ -519,7 +518,6 @@
     if (currentStep >= totalNordSteps) {
       document.getElementById('onboarding').classList.remove('active');
       document.getElementById('app').classList.add('visible');
-      startAmbient();
     } else {
       showNordStep();
     }
@@ -593,94 +591,11 @@
   document.getElementById('enterBtn').addEventListener('click', enterApp);
   document.getElementById('onboarding').addEventListener('click', advanceNord);
 
-  /* ---------- Ambient Canvas ---------- */
-  var ambientCanvas = document.getElementById('ambient-canvas');
-  var aCtx = ambientCanvas.getContext('2d');
-  var ambientParticles = [];
-  var mouseX = 0, mouseY = 0;
-
-  function initAmbient() {
-    ambientCanvas.width = window.innerWidth;
-    ambientCanvas.height = window.innerHeight;
-    ambientParticles = [];
-    for (var i = 0; i < AMBIENT_PARTICLE_COUNT; i++) {
-      var p = createParticle(ambientCanvas.width, ambientCanvas.height);
-      p.vx *= 0.3; p.vy *= 0.2;
-      p.size = Math.random() * 2.5 + 0.5;
-      p.opacity = Math.random() * 0.35 + 0.1;
-      ambientParticles.push(p);
-    }
-    mouseX = ambientCanvas.width / 2;
-    mouseY = ambientCanvas.height / 2;
-  }
-
-  function animateAmbient(time) {
-    requestAnimationFrame(animateAmbient);
-    var w = ambientCanvas.width;
-    var h = ambientCanvas.height;
-    aCtx.clearRect(0, 0, w, h);
-
-    for (var i = 0; i < ambientParticles.length; i++) {
-      var p = ambientParticles[i];
-      var dx = mouseX - p.x;
-      var dy = mouseY - p.y;
-      var dist = Math.sqrt(dx * dx + dy * dy) || 1;
-      var windForce = Math.min(0.02, 50 / dist);
-      p.vx += (dx / dist) * windForce + Math.sin(time * 0.0005 + i * 0.7) * 0.005;
-      p.vy += (dy / dist) * windForce * 0.3 + 0.003;
-      p.vx += Math.sin(time * 0.001 + p.y * 0.01) * 0.008;
-      p.vx *= 0.985; p.vy *= 0.985;
-      p.x += p.vx; p.y += p.vy;
-      if (p.x > w + 5) p.x = -5;
-      if (p.x < -5) p.x = w + 5;
-      if (p.y > h + 5) { p.y = -5; p.x = Math.random() * w; }
-      if (p.y < -5) p.y = h + 5;
-
-      aCtx.beginPath();
-      aCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-      aCtx.fillStyle = p.color;
-      aCtx.globalAlpha = p.opacity;
-      aCtx.fill();
-    }
-    aCtx.globalAlpha = 1;
-  }
-
-  function startAmbient() {
-    if (prefersReducedMotion) return;
-    initAmbient();
-    animateAmbient(0);
-  }
-
-  document.addEventListener('mousemove', function(e) { mouseX = e.clientX; mouseY = e.clientY; });
-  document.addEventListener('touchmove', function(e) {
-    if (e.touches.length > 0) { mouseX = e.touches[0].clientX; mouseY = e.touches[0].clientY; }
-  }, { passive: true });
-
-  /* ---------- Theme Toggle ---------- */
-  var themeBtn = document.getElementById('theme-toggle');
-  themeBtn.addEventListener('click', function() {
-    var isLight = document.documentElement.getAttribute('data-theme') === 'light';
-    if (isLight) {
-      document.documentElement.removeAttribute('data-theme');
-    } else {
-      document.documentElement.setAttribute('data-theme', 'light');
-    }
-    var icon = themeBtn.querySelector('i');
-    if (icon) {
-      icon.setAttribute('data-lucide', isLight ? 'sun' : 'moon');
-      lucide.createIcons({ nodes: [themeBtn] });
-    }
-  });
-
   /* ---------- Resize ---------- */
   window.addEventListener('resize', function() {
     if (!splashDone) {
       splashCanvas.width = window.innerWidth;
       splashCanvas.height = window.innerHeight;
-    }
-    if (ambientCanvas) {
-      ambientCanvas.width = window.innerWidth;
-      ambientCanvas.height = window.innerHeight;
     }
   });
 

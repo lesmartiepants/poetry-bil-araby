@@ -110,11 +110,11 @@
   .deco-corner.tr { top: 10%; right: 3%; border-width: 2px 2px 0 0; }
   .deco-corner.bl { bottom: 10%; left: 3%; border-width: 0 0 2px 2px; }
   .deco-corner.br { bottom: 10%; right: 3%; border-width: 0 2px 2px 0; }
-  .deco-panel {
+  .walkthrough .deco-panel {
     display: none; flex-direction: column; align-items: center;
     max-width: 420px; width: 88%; padding: 2.5rem 2rem; text-align: center; position: relative; z-index: 2;
   }
-  .deco-panel.active { display: flex; animation: decoReveal 0.6s cubic-bezier(0.16,1,0.3,1); }
+  .walkthrough .deco-panel.active { display: flex; animation: decoReveal 0.6s cubic-bezier(0.16,1,0.3,1); }
   @keyframes decoReveal { from { opacity: 0; transform: scaleY(0.9); } to { opacity: 1; transform: scaleY(1); } }
   .deco-step-num { font-family: 'Tajawal', sans-serif; font-size: 0.6rem; letter-spacing: 0.5em; text-transform: uppercase; color: var(--gold); margin-bottom: 1rem; }
   .deco-divider { width: 80px; height: 2px; background: linear-gradient(90deg, transparent, var(--gold), transparent); margin: 0 auto 1.5rem; }
@@ -517,7 +517,7 @@
   }
 
   // Art Deco Geometric walkthrough
-  var decoPanels = document.querySelectorAll('.deco-panel');
+  var decoPanels = document.querySelectorAll('.walkthrough .deco-panel');
   var decoDiamonds = document.querySelectorAll('.deco-diamond');
   var currentStep = 0;
   var totalDecoSteps = 3;

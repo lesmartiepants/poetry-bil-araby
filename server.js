@@ -1,6 +1,7 @@
 import express from 'express';
 import pg from 'pg';
 import cors from 'cors';
+import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { resolve } from 'path';
@@ -57,6 +58,7 @@ pool.query('SELECT NOW()', (err, res) => {
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use('/api/', rateLimit({ windowMs: 60_000, max: 100, standardHeaders: true, legacyHeaders: false }));
 
 // Request logging middleware
 app.use((req, res, next) => {

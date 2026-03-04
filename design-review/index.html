@@ -324,6 +324,7 @@
       <div class="dock-progress">
         <div class="dock-prog-bar"><div class="dock-prog-fill" id="dockProgFill"></div></div>
         <span class="dock-prog-text" id="dockProgText">--</span>
+        <span id="syncStatusMobile" class="dock-sync"><span class="sync-dot offline"></span></span>
       </div>
       <div class="dock-controls">
         <button class="dock-nav" id="prevBtnMobile" onclick="goPrev()" aria-label="Previous design"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 3L5 8l5 5"/></svg></button>
@@ -342,11 +343,30 @@
         <button class="dock-nav" id="nextBtnMobile" onclick="goNext()" aria-label="Next design"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 3l5 5-5 5"/></svg></button>
       </div>
       <div class="dock-bottom">
-        <div class="comment-trigger" id="commentTrigger" onclick="openMobileComment()">
-          <span class="ct-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
-          <span class="ct-text" id="commentTriggerText">Add comment...</span>
+        <button class="dock-selector" id="dockSelector" onclick="toggleMobileAccordion()">
+          <span class="ds-num" id="dockSelectorNum">1.</span>
+          <span class="ds-name" id="dockSelectorName">--</span>
+          <svg class="ds-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6l4 4 4-4"/></svg>
+        </button>
+        <div class="dock-actions">
+          <button class="comment-trigger-compact" id="commentTriggerCompact" onclick="openMobileComment()" aria-label="Add comment">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </button>
+          <button class="dock-submit" onclick="submitReview()">Submit</button>
         </div>
-        <button class="dock-submit" onclick="submitReview()">Submit</button>
+      </div>
+      <div class="dock-philosophy" id="dockPhilosophy"></div>
+    </div>
+
+    <!-- Mobile design browser bottom sheet -->
+    <div class="mobile-acc-overlay" id="mobileAccOverlay" onclick="if(event.target===this)closeMobileAccordion()">
+      <div class="mobile-acc-sheet">
+        <div class="mobile-acc-head">
+          <span class="mobile-acc-title">Browse Designs</span>
+          <button class="mobile-acc-close" onclick="closeMobileAccordion()">&times;</button>
+        </div>
+        <div class="mobile-acc-scroll" id="mobileAccScroll"></div>
+        <nav class="mobile-acc-tabs" id="mobileAccTabs"></nav>
       </div>
     </div>
 
@@ -590,6 +610,9 @@ function setSyncStatus(status) {
     label.textContent = text;
     label.className = 'sync-label' + (text ? '' : ' hidden');
   }
+  // Mobile sync dot
+  var mobileDot = document.querySelector('#syncStatusMobile .sync-dot');
+  if (mobileDot) mobileDot.className = 'sync-dot ' + status;
 }
 
 function scheduleSyncToAPI() {
@@ -733,6 +756,62 @@ function getAccordionCategories() {
   return cats;
 }
 
+function renderAccordionItem(f, currentFi, onSelect) {
+  var opt = f.option;
+  var itemFi = flatList.indexOf(f);
+  var isActive = itemFi === currentFi;
+  var rev = getReview(opt.id);
+  var item = document.createElement('button');
+  item.className = 'acc-item' + (isActive ? ' active' : '');
+  if (rev.verdict) {
+    var dot = document.createElement('span');
+    dot.className = 'acc-item-verdict';
+    var dotColor = { keep: 'var(--green)', discard: 'var(--red)', revisit: 'var(--purple)' }[rev.verdict] || 'var(--text-3)';
+    dot.style.background = dotColor;
+    dot.style.setProperty('--verdict-color', dotColor);
+    item.appendChild(dot);
+  }
+  var numSpan = document.createElement('span');
+  numSpan.className = 'acc-item-num';
+  numSpan.textContent = (itemFi + 1);
+  item.appendChild(numSpan);
+  var nameSpan = document.createElement('span');
+  nameSpan.className = 'acc-item-name';
+  nameSpan.textContent = opt.name;
+  item.appendChild(nameSpan);
+  if (opt.isVC) {
+    var vcBadge = document.createElement('span');
+    vcBadge.className = 'vc-badge';
+    vcBadge.textContent = 'VC';
+    item.appendChild(vcBadge);
+  } else if (opt.philosophy) {
+    var sep = document.createElement('span');
+    sep.className = 'acc-item-sep';
+    sep.textContent = '|';
+    item.appendChild(sep);
+    var philSpan = document.createElement('span');
+    philSpan.className = 'acc-item-philosophy';
+    philSpan.textContent = opt.philosophy;
+    item.appendChild(philSpan);
+  }
+  var openLink = document.createElement('span');
+  openLink.className = 'acc-item-open';
+  openLink.title = 'Open in new tab';
+  openLink.textContent = '\u2197';
+  item.appendChild(openLink);
+  (function(targetFi, optFile) {
+    item.addEventListener('click', function(e) {
+      if (e.target.closest('.acc-item-open')) {
+        e.stopPropagation();
+        window.open('/design-review/' + optFile, '_blank');
+        return;
+      }
+      onSelect(targetFi);
+    });
+  })(itemFi, opt.file);
+  return item;
+}
+
 function buildAccordion() {
   var panel = document.getElementById('accPanel');
   panel.textContent = '';
@@ -788,60 +867,10 @@ function buildAccordion() {
   var itemsContainer = document.createElement('div');
   itemsContainer.className = 'acc-items';
   sortedItems.forEach(function(f) {
-    var opt = f.option;
-    var itemFi = flatList.indexOf(f);
-    var isActive = itemFi === fi;
-    var rev = getReview(opt.id);
-    var item = document.createElement('button');
-    item.className = 'acc-item' + (isActive ? ' active' : '');
-    // Verdict dot
-    if (rev.verdict) {
-      var dot = document.createElement('span');
-      dot.className = 'acc-item-verdict';
-      var dotColor = { keep: 'var(--green)', discard: 'var(--red)', revisit: 'var(--purple)' }[rev.verdict] || 'var(--text-3)';
-      dot.style.background = dotColor;
-      dot.style.setProperty('--verdict-color', dotColor);
-      item.appendChild(dot);
-    }
-    var numSpan = document.createElement('span');
-    numSpan.className = 'acc-item-num';
-    numSpan.textContent = (itemFi + 1);
-    item.appendChild(numSpan);
-    var nameSpan = document.createElement('span');
-    nameSpan.className = 'acc-item-name';
-    nameSpan.textContent = opt.name;
-    item.appendChild(nameSpan);
-    if (opt.isVC) {
-      var vcBadge = document.createElement('span');
-      vcBadge.className = 'vc-badge';
-      vcBadge.textContent = 'VC';
-      item.appendChild(vcBadge);
-    } else if (opt.philosophy) {
-      var sep = document.createElement('span');
-      sep.className = 'acc-item-sep';
-      sep.textContent = '|';
-      item.appendChild(sep);
-      var philSpan = document.createElement('span');
-      philSpan.className = 'acc-item-philosophy';
-      philSpan.textContent = opt.philosophy;
-      item.appendChild(philSpan);
-    }
-    var openLink = document.createElement('span');
-    openLink.className = 'acc-item-open';
-    openLink.title = 'Open in new tab';
-    openLink.textContent = '\u2197';
-    item.appendChild(openLink);
-    (function(targetFi, optFile) {
-      item.addEventListener('click', function(e) {
-        if (e.target.closest('.acc-item-open')) {
-          e.stopPropagation();
-          window.open('/design-review/' + optFile, '_blank');
-          return;
-        }
-        navigateToFlat(targetFi);
-        closeAccordion();
-      });
-    })(itemFi, opt.file);
+    var item = renderAccordionItem(f, fi, function(targetFi) {
+      navigateToFlat(targetFi);
+      closeAccordion();
+    });
     itemsContainer.appendChild(item);
   });
   panel.appendChild(itemsContainer);
@@ -850,6 +879,138 @@ function buildAccordion() {
 document.addEventListener('click', function(e) {
   if (accOpen && !e.target.closest('.toolbar') && !e.target.closest('.acc-panel')) closeAccordion();
 });
+
+// ═══════════════════════════════════════════════════════════════
+// MOBILE ACCORDION (Bottom Sheet + Scroll-Spy)
+// ═══════════════════════════════════════════════════════════════
+let mobileAccOpen = false;
+function toggleMobileAccordion() {
+  if (mobileAccOpen) closeMobileAccordion(); else openMobileAccordion();
+}
+function openMobileAccordion() {
+  mobileAccOpen = true;
+  document.getElementById('mobileAccOverlay').classList.add('open');
+  var sel = document.getElementById('dockSelector');
+  if (sel) sel.classList.add('active');
+  buildMobileAccordion();
+}
+function closeMobileAccordion() {
+  mobileAccOpen = false;
+  document.getElementById('mobileAccOverlay').classList.remove('open');
+  var sel = document.getElementById('dockSelector');
+  if (sel) sel.classList.remove('active');
+}
+
+let mobileAccObserver = null;
+function buildMobileAccordion() {
+  var scroll = document.getElementById('mobileAccScroll');
+  var tabs = document.getElementById('mobileAccTabs');
+  scroll.textContent = '';
+  tabs.textContent = '';
+  var fi = currentFlatIdx();
+  var cats = getAccordionCategories();
+  var sectionEls = [];
+  var activeCard = null;
+
+  cats.forEach(function(cat, ci) {
+    // Section header
+    var section = document.createElement('div');
+    section.className = 'mobile-acc-section';
+    section.dataset.catIdx = ci;
+    var divL = document.createElement('span');
+    divL.className = 'divider';
+    var title = document.createElement('span');
+    title.className = 'title';
+    title.textContent = cat.name;
+    var divR = document.createElement('span');
+    divR.className = 'divider';
+    section.appendChild(divL);
+    section.appendChild(title);
+    section.appendChild(divR);
+    scroll.appendChild(section);
+    sectionEls.push(section);
+
+    // Cards
+    cat.items.forEach(function(f) {
+      var opt = f.option;
+      var itemFi = flatList.indexOf(f);
+      var isActive = itemFi === fi;
+      var rev = getReview(opt.id);
+      var card = document.createElement('div');
+      card.className = 'mobile-acc-card' + (isActive ? ' active' : '');
+      // Top row
+      var top = document.createElement('div');
+      top.className = 'mac-top';
+      var num = document.createElement('span');
+      num.className = 'mac-num';
+      num.textContent = (itemFi + 1) + '.';
+      top.appendChild(num);
+      var name = document.createElement('span');
+      name.className = 'mac-name';
+      name.textContent = opt.name;
+      top.appendChild(name);
+      if (opt.isVC) {
+        var vcBadge = document.createElement('span');
+        vcBadge.className = 'vc-badge';
+        vcBadge.textContent = 'VC';
+        top.appendChild(vcBadge);
+      }
+      if (rev.verdict) {
+        var dot = document.createElement('span');
+        dot.className = 'mac-verdict ' + rev.verdict;
+        top.appendChild(dot);
+      }
+      card.appendChild(top);
+      // Philosophy subtitle
+      if (opt.philosophy) {
+        var phil = document.createElement('div');
+        phil.className = 'mac-phil';
+        phil.textContent = opt.philosophy;
+        card.appendChild(phil);
+      }
+      (function(targetFi) {
+        card.addEventListener('click', function() {
+          navigateToFlat(targetFi);
+          closeMobileAccordion();
+        });
+      })(itemFi);
+      scroll.appendChild(card);
+      if (isActive) activeCard = card;
+    });
+
+    // Tab
+    var tab = document.createElement('button');
+    tab.className = 'mat-tab' + (ci === 0 ? ' active' : '');
+    tab.textContent = cat.name.replace(/^⭐\s*/, '').replace(/&|Glass|Organic|Manuscripts|Cultural|Particle|Light|Minimal/i, function(m) { return m.substring(0, 4); });
+    tab.dataset.catIdx = ci;
+    (function(targetSection) {
+      tab.addEventListener('click', function() {
+        targetSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    })(section);
+    tabs.appendChild(tab);
+  });
+
+  // Scroll-spy with IntersectionObserver
+  if (mobileAccObserver) mobileAccObserver.disconnect();
+  mobileAccObserver = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        var idx = entry.target.dataset.catIdx;
+        tabs.querySelectorAll('.mat-tab').forEach(function(t) {
+          t.classList.toggle('active', t.dataset.catIdx === idx);
+          if (t.dataset.catIdx === idx) {
+            t.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+          }
+        });
+      }
+    });
+  }, { root: scroll, rootMargin: '0px 0px -70% 0px', threshold: 0 });
+  sectionEls.forEach(function(s) { mobileAccObserver.observe(s); });
+
+  // Scroll active card into view
+  if (activeCard) setTimeout(function() { activeCard.scrollIntoView({ block: 'center' }); }, 100);
+}
 
 // ═══════════════════════════════════════════════════════════════
 // POPULATE
@@ -926,6 +1087,18 @@ function render(skipPreview) {
   // Dock progress bar
   const dpf = document.getElementById('dockProgFill'); if (dpf) dpf.style.width = (flatList.length ? Math.round(((fi + 1) / flatList.length) * 100) : 0) + '%';
   const dpt = document.getElementById('dockProgText'); if (dpt) dpt.textContent = (fi + 1) + ' / ' + flatList.length;
+
+  // Dock selector
+  var dsNum = document.getElementById('dockSelectorNum');
+  if (dsNum) dsNum.textContent = (fi + 1) + '.';
+  var dsName = document.getElementById('dockSelectorName');
+  if (dsName) dsName.textContent = opt.name;
+  // Dock philosophy subtitle
+  var dPhi = document.getElementById('dockPhilosophy');
+  if (dPhi) { dPhi.textContent = opt.philosophy || ''; dPhi.classList.toggle('visible', !!opt.philosophy); }
+  // Compact comment indicator
+  var ctc = document.getElementById('commentTriggerCompact');
+  if (ctc) ctc.classList.toggle('has-text', !!(rev.comment));
 
   if (!skipPreview) loadPreview(opt, cat);
 

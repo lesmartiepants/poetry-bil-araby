@@ -190,6 +190,67 @@ body {
   padding: 6px 0;
 }
 
+    /* ===== MOBILE RESPONSIVE ===== */
+    @media (max-width: 480px) {
+      /* Reduce poem padding to match VC strip width */
+      .poem-content {
+        padding-left: 56px;
+        padding-bottom: 72px; /* space for bottom bar */
+        padding-top: 1.5rem;
+        padding-right: 0.75rem;
+      }
+      .poem-area { padding-left: 0; }
+
+      /* Bottom bar: safe area + compact sizing */
+      .bottom-bar {
+        padding-bottom: calc(0.5rem + env(safe-area-inset-bottom, 0px));
+      }
+      .bb-btn {
+        width: 44px; height: 44px;
+        min-width: 44px; min-height: 44px;
+      }
+      .bb-btn svg { width: 18px; height: 18px; }
+
+      /* VC strip: narrower on mobile */
+      .vc-strip {
+        width: 48px;
+        gap: 4px;
+      }
+
+      /* Ensure 44px minimum touch target */
+      .vc-toggle {
+        width: 44px; height: 44px;
+        min-width: 44px; min-height: 44px;
+      }
+
+      /* Settings panel: fit mobile viewport */
+      .vc-settings {
+        left: 54px;
+        min-width: 160px;
+        max-width: calc(100vw - 64px);
+        padding: 12px;
+      }
+
+      /* Verse transliteration: readable on narrow screens */
+      .verse-translit {
+        font-size: 0.6875rem;
+        margin-bottom: 0.5rem;
+        word-break: break-word;
+      }
+
+      /* Translation block: constrain width */
+      .poem-translation {
+        max-width: calc(100vw - 80px);
+        font-size: 0.8125rem;
+      }
+
+      /* Main layout: tighter on mobile */
+      .main-layout {
+        padding: 16px 12px;
+      }
+    }
+
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
@@ -233,7 +294,7 @@ body {
       display: flex;
       align-items: center;
       justify-content: space-around;
-      padding: 0.5rem 1rem;
+      padding: 0.5rem 1rem calc(0.5rem + env(safe-area-inset-bottom, 0px));
       border-top: 1px solid #1e1e24;
       background: rgba(0, 0, 0, 0.95);
       z-index: 40;

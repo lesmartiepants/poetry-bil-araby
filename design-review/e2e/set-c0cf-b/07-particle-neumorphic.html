@@ -757,16 +757,18 @@
 
       /* ===== Mini Waveform in Player ===== */
       var miniCanvas = document.getElementById('miniWaveCanvas');
-      var miniCtx = miniCanvas.getContext('2d');
+      var miniCtx = miniCanvas ? miniCanvas.getContext('2d') : null;
       var miniAnimId;
 
       function resizeMini() {
+        if (!miniCanvas) return;
         var rect = miniCanvas.parentElement.getBoundingClientRect();
         miniCanvas.width = rect.width;
         miniCanvas.height = rect.height;
       }
 
       function drawMiniWave(time) {
+        if (!miniCanvas) return;
         resizeMini();
         miniCtx.clearRect(0, 0, miniCanvas.width, miniCanvas.height);
         var barWidth = isMobile ? 3 : 2;

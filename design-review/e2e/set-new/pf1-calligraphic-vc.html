@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PF1 Calligraphic - Vertical Controls</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Forum&family=Reem+Kufi:wght@400;700&family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Tajawal', system-ui, sans-serif;
+      background: #000000;
+      color: #ffffff;
+    }
+
+    /* ===== MAIN APP ===== */
+    #main {
+      display: flex;
+      background: #000000;
+      min-height: 100vh;
+    }
+    .main-layout {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      max-width: 900px;
+      padding: 32px 24px;
+      min-height: 100vh;
+      margin: 0 auto;
+    }
+    .main-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      margin-bottom: 24px;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    .main-brand {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+    }
+    .main-brand-en {
+      font-family: 'Forum', cursive;
+      font-size: 1.25rem;
+      color: #ffffff;
+      text-transform: lowercase;
+      letter-spacing: -0.05em;
+    }
+    .main-brand-ar {
+      font-family: 'Reem Kufi', sans-serif;
+      font-size: 0.875rem;
+      color: #ffffff;
+      font-weight: 700;
+    }
+    .nav-actions { display: flex; gap: 0.5rem; }
+    .nav-btn {
+      width: 44px; height: 44px;
+      border: none; background: transparent;
+      color: #666666;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; border-radius: 8px;
+      transition: color 0.2s ease;
+    }
+    .nav-btn:hover { color: #ffffff; }
+    .nav-btn svg { width: 20px; height: 20px; }
+
+    /* Poem display */
+    .poem-area {
+      flex: 1;
+      display: flex;
+      position: relative;
+    }
+    .poem-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 1rem;
+      padding-right: 72px;
+      min-height: 60vh;
+    }
+    .poem-text {
+      font-family: 'Amiri', serif;
+      font-size: clamp(1.25rem, 3vw, 1.625rem);
+      line-height: 2.2;
+      color: #ffffff;
+      direction: rtl;
+      text-align: center;
+      max-width: 600px;
+      margin-bottom: 1.5rem;
+    }
+    .poem-translation {
+      font-family: 'Tajawal', sans-serif;
+      font-size: 0.875rem;
+      color: #888888;
+      text-align: center;
+      line-height: 1.6;
+      max-width: 500px;
+      margin-bottom: 1rem;
+      display: none;
+    }
+    .poem-transliteration {
+      font-family: 'Tajawal', sans-serif;
+      font-size: 0.8125rem;
+      color: #666666;
+      text-align: center;
+      font-style: italic;
+      max-width: 500px;
+      margin-bottom: 1rem;
+      display: none;
+    }
+    .poem-poet {
+      font-family: 'Tajawal', sans-serif;
+      font-size: 0.8125rem;
+      color: #888888;
+      direction: rtl;
+    }
+
+    /* ===== VERTICAL CONTROLS - Illuminated Manuscript Style ===== */
+    /* Gilded margin strip with illuminated initial toggles */
+    .vc-strip {
+      position: fixed;
+      right: 0;
+      top: 0;
+      bottom: 0;
+      width: 52px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      z-index: 50;
+      background: linear-gradient(180deg, #0a0800 0%, #0f0c04 50%, #0a0800 100%);
+      border-left: 1px solid rgba(197, 160, 89, 0.15);
+    }
+
+    /* Gilded edge detail */
+    .vc-strip::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 10%;
+      bottom: 10%;
+      width: 2px;
+      background: linear-gradient(180deg, transparent, rgba(197, 160, 89, 0.3), rgba(197, 160, 89, 0.5), rgba(197, 160, 89, 0.3), transparent);
+    }
+
+    .vc-toggle {
+      width: 40px;
+      height: 40px;
+      border: 1px solid rgba(197, 160, 89, 0.2);
+      background: rgba(197, 160, 89, 0.03);
+      color: rgba(197, 160, 89, 0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      position: relative;
+      /* Illuminated manuscript initial shape */
+      border-radius: 2px;
+    }
+
+    .vc-toggle:hover {
+      border-color: rgba(197, 160, 89, 0.5);
+      color: rgba(197, 160, 89, 0.8);
+      background: rgba(197, 160, 89, 0.08);
+      box-shadow: 0 0 12px rgba(197, 160, 89, 0.1);
+    }
+
+    .vc-toggle.active {
+      border-color: rgba(197, 160, 89, 0.7);
+      color: rgba(197, 160, 89, 1);
+      background: rgba(197, 160, 89, 0.12);
+      box-shadow: 0 0 20px rgba(197, 160, 89, 0.2), inset 0 0 8px rgba(197, 160, 89, 0.05);
+    }
+
+    .vc-toggle svg {
+      width: 18px;
+      height: 18px;
+    }
+
+    .vc-badge {
+      position: absolute;
+      top: 2px;
+      right: 2px;
+      font-family: 'Tajawal', sans-serif;
+      font-size: 7px;
+      font-weight: 700;
+      color: rgba(197, 160, 89, 0.8);
+      letter-spacing: 0.05em;
+    }
+
+    .vc-divider {
+      width: 20px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(197, 160, 89, 0.2), transparent);
+      margin: 2px 0;
+    }
+
+    /* Settings panel */
+    .vc-settings {
+      display: none;
+      position: fixed;
+      right: 56px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(10, 8, 0, 0.95);
+      border: 1px solid rgba(197, 160, 89, 0.2);
+      border-radius: 4px;
+      padding: 16px;
+      min-width: 180px;
+      z-index: 49;
+      backdrop-filter: blur(12px);
+    }
+    .vc-settings.visible { display: block; }
+    .vc-settings-title {
+      font-family: 'Tajawal', sans-serif;
+      font-size: 11px;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: rgba(197, 160, 89, 0.6);
+      margin-bottom: 12px;
+    }
+    .vc-settings-item {
+      font-family: 'Tajawal', sans-serif;
+      font-size: 13px;
+      color: #888;
+      padding: 6px 0;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- ===== MAIN APP (visible from start) ===== -->
+  <div id="main">
+    <div class="main-layout">
+      <nav class="main-nav">
+        <div class="main-brand">
+          <span class="main-brand-en">poetry</span>
+          <span class="main-brand-ar" lang="ar" dir="rtl">بالعربي</span>
+        </div>
+        <div class="nav-actions">
+          <button class="nav-btn" aria-label="Search"><i data-lucide="search"></i></button>
+          <button class="nav-btn" aria-label="Menu"><i data-lucide="menu"></i></button>
+        </div>
+      </nav>
+
+      <div class="poem-area">
+        <div class="poem-content">
+          <div class="poem-text" lang="ar" dir="rtl">
+            وما نيلُ المطالبِ بالتمنّي<br>
+            ولكنْ تُؤخَذُ الدنيا غِلابا<br><br>
+            وما استعصى على قومٍ منالٌ<br>
+            إذا الإقدامُ كان لهم رِكابا
+          </div>
+          <div class="poem-translation" id="translationRow">
+            Wishes alone won't earn you what you seek,<br>
+            the world is taken only by the bold.<br><br>
+            No goal is unreachable for a people<br>
+            whose courage serves as their steed.
+          </div>
+          <div class="poem-transliteration" id="transliterationRow">
+            wa ma naylu al-matalibi bil-tamanni<br>
+            wa lakin tu'khadhu ad-dunya ghilaba
+          </div>
+          <p class="poem-poet" lang="ar" dir="rtl">-- أحمد شوقي</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vertical Controls - Illuminated Manuscript -->
+    <div class="vc-strip">
+      <button class="vc-toggle" data-action="translation" aria-label="Toggle translation">
+        <i data-lucide="languages"></i>
+      </button>
+      <div class="vc-divider"></div>
+      <button class="vc-toggle" data-action="transliteration" aria-label="Toggle transliteration">
+        <i data-lucide="text-cursor-input"></i>
+      </button>
+      <div class="vc-divider"></div>
+      <button class="vc-toggle" data-action="textsize" aria-label="Text size">
+        <i data-lucide="type"></i>
+        <span class="vc-badge">M</span>
+      </button>
+      <div class="vc-divider"></div>
+      <button class="vc-toggle" data-action="settings" aria-label="Settings">
+        <i data-lucide="settings"></i>
+      </button>
+    </div>
+
+    <!-- Settings panel -->
+    <div class="vc-settings" id="settingsPanel">
+      <div class="vc-settings-title">Settings</div>
+      <div class="vc-settings-item">Theme: Dark</div>
+      <div class="vc-settings-item">Font: Amiri</div>
+      <div class="vc-settings-item">Auto-play: Off</div>
+    </div>
+  </div>
+
+<script>
+(function() {
+  "use strict";
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+
+  document.querySelectorAll('.vc-toggle').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var action = btn.dataset.action;
+      if (action === 'textsize') {
+        var sizes = ['S','M','L','XL'];
+        var badge = btn.querySelector('.vc-badge');
+        var idx = sizes.indexOf(badge.textContent);
+        idx = (idx + 1) % sizes.length;
+        badge.textContent = sizes[idx];
+        document.querySelector('.poem-content').style.fontSize =
+          {'S':'1rem','M':'1.25rem','L':'1.5rem','XL':'2rem'}[sizes[idx]];
+      } else if (action === 'translation') {
+        btn.classList.toggle('active');
+        var el = document.getElementById('translationRow');
+        el.style.display = btn.classList.contains('active') ? 'block' : 'none';
+      } else if (action === 'transliteration') {
+        btn.classList.toggle('active');
+        var el2 = document.getElementById('transliterationRow');
+        el2.style.display = btn.classList.contains('active') ? 'block' : 'none';
+      } else if (action === 'settings') {
+        btn.classList.toggle('active');
+        var panel = document.getElementById('settingsPanel');
+        panel.classList.toggle('visible');
+      }
+    });
+  });
+})();
+</script>
+</body>
+</html>

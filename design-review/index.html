@@ -32,7 +32,7 @@
     .tb-select option{background:var(--surface-2);color:var(--text)}
     .tb-sep{width:1px;height:20px;background:var(--border);flex-shrink:0}
     .tb-detail{font-size:11px;color:var(--text-2);display:flex;align-items:center;gap:6px;overflow:hidden;min-width:0}
-    .tb-detail .td-phil{color:var(--text-3);font-style:italic;font-size:11px}
+    .tb-detail .td-phil{color:rgba(212,168,75,.6);font-style:italic;font-size:11px}
     .tb-spacer{flex:1}
 
     /* Nav buttons */
@@ -69,29 +69,34 @@
     .preview-open-overlay .expand-icon{font-size:22px;line-height:1}
     .preview-open-overlay .expand-label{font-size:8px;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
 
-    /* ── Accordion catalog ── */
-    .acc-toggle{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--r);border:1px solid var(--border);background:var(--surface-2);color:var(--text-2);font-size:12px;font-weight:600;transition:all .15s;white-space:nowrap;cursor:pointer}
-    .acc-toggle:hover{background:var(--surface-3);color:var(--text);border-color:var(--border-light)}
-    .acc-toggle.active{background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
-    .acc-toggle svg{width:12px;height:12px;transition:transform .2s}
-    .acc-toggle.active svg{transform:rotate(180deg)}
-    .acc-panel{position:absolute;top:100%;left:0;right:0;z-index:90;background:var(--surface);border-bottom:1px solid var(--border);max-height:0;overflow:hidden;transition:max-height .3s ease,box-shadow .3s;box-shadow:none}
-    .acc-panel.open{max-height:60vh;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.4)}
-    .acc-chips{display:flex;flex-wrap:wrap;gap:4px;padding:8px 14px;border-bottom:1px solid var(--border)}
-    .acc-chip{padding:4px 10px;border-radius:12px;border:1px solid var(--border);background:var(--surface-2);color:var(--text-3);font-size:10px;font-weight:600;cursor:pointer;transition:all .12s;white-space:nowrap}
-    .acc-chip:hover{background:var(--surface-3);color:var(--text)}
-    .acc-chip.active{background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
-    .acc-chip .chip-count{font-size:9px;opacity:.7;margin-left:2px}
-    .acc-items{display:flex;flex-direction:column}
-    .acc-item{display:flex;align-items:center;gap:8px;padding:6px 14px 6px 14px;cursor:pointer;transition:background .1s;border:none;background:none;text-align:left;color:inherit;width:100%;font-family:inherit;font-size:12px}
-    .acc-item:hover{background:var(--surface-2)}
-    .acc-item.active{background:var(--accent-dim);color:var(--accent)}
+    /* ── Accordion catalog (premium) ── */
+    .acc-toggle{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--r);border:1px solid var(--border);background:linear-gradient(135deg,var(--surface-2),var(--surface));color:var(--text);font-size:13px;font-weight:400;transition:all .2s cubic-bezier(.4,0,.2,1);white-space:nowrap;cursor:pointer;letter-spacing:.01em}
+    .acc-toggle:hover{background:linear-gradient(135deg,var(--surface-3),var(--surface-2));color:var(--text);border-color:var(--border-light);box-shadow:0 2px 8px rgba(0,0,0,.2);transform:translateY(-1px)}
+    .acc-toggle.active{background:linear-gradient(135deg,rgba(212,168,75,.08),rgba(212,168,75,.03));border-color:rgba(212,168,75,.3);color:var(--accent)}
+    .acc-toggle svg{width:11px;height:11px;transition:transform .25s cubic-bezier(.4,0,.2,1);opacity:.5}
+    .acc-toggle:hover svg{opacity:.8}
+    .acc-toggle.active svg{transform:rotate(180deg);opacity:.8}
+    .acc-panel{position:absolute;top:100%;left:0;right:0;z-index:90;background:var(--surface);border-bottom:1px solid var(--border);max-height:0;overflow:hidden;transition:max-height .35s cubic-bezier(.4,0,.2,1),box-shadow .35s;box-shadow:none}
+    .acc-panel.open{max-height:60vh;overflow-y:auto;box-shadow:0 12px 32px rgba(0,0,0,.5),0 2px 8px rgba(0,0,0,.2)}
+    .acc-panel::before{content:'';position:sticky;top:0;display:block;height:8px;background:linear-gradient(to bottom,var(--surface),transparent);z-index:1;pointer-events:none}
+    .acc-chips{display:flex;flex-wrap:wrap;gap:5px;padding:10px 16px;border-bottom:1px solid var(--border);background:rgba(20,20,22,.5)}
+    .acc-chip{padding:6px 14px;border-radius:14px;border:1px solid var(--border);background:var(--surface-2);color:var(--text-3);font-size:10px;font-weight:600;cursor:pointer;transition:all .15s cubic-bezier(.4,0,.2,1);white-space:nowrap}
+    .acc-chip:hover{background:var(--surface-3);color:var(--text);transform:scale(1.02)}
+    .acc-chip.active{background:var(--accent-dim);border-color:rgba(212,168,75,.35);color:var(--accent);box-shadow:inset 0 1px 3px rgba(0,0,0,.15)}
+    .acc-chip .chip-count{font-size:9px;opacity:.6;margin-left:3px}
+    .acc-items{display:flex;flex-direction:column;padding:4px 0}
+    .acc-item{display:flex;align-items:center;gap:8px;padding:10px 16px 10px 16px;cursor:pointer;transition:all .15s cubic-bezier(.4,0,.2,1);border:none;background:none;text-align:left;color:inherit;width:100%;font-family:inherit;font-size:12px;position:relative;border-left:3px solid transparent}
+    .acc-item:hover{background:rgba(255,255,255,.02);border-left-color:var(--accent)}
+    .acc-item.active{background:var(--accent-dim);border-left-color:var(--accent);color:var(--accent)}
+    .acc-item .acc-item-num{font-size:10px;color:var(--text-3);font-variant-numeric:tabular-nums;min-width:20px;text-align:right;flex-shrink:0;opacity:.5}
     .acc-item .acc-item-name{flex:1;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .acc-item .acc-item-verdict{width:8px;height:8px;border-radius:50%;flex-shrink:0}
-    .acc-item .acc-item-open{color:var(--text-3);font-size:11px;opacity:0;transition:opacity .1s;flex-shrink:0;padding:2px 6px;border-radius:4px}
-    .acc-item:hover .acc-item-open{opacity:1}
-    .acc-item .acc-item-philosophy{font-size:10px;color:var(--text-3);margin-left:2px;flex-shrink:0;font-style:italic}
-    .acc-item .vc-badge{font-size:8px;font-weight:700;color:var(--accent);background:var(--accent-dim);border:1px solid rgba(212,168,75,.25);padding:0 4px;border-radius:3px;flex-shrink:0;letter-spacing:.04em}
+    .acc-item .acc-item-verdict{width:10px;height:10px;border-radius:50%;flex-shrink:0;transition:box-shadow .15s}
+    .acc-item:hover .acc-item-verdict{box-shadow:0 0 6px currentColor}
+    .acc-item .acc-item-sep{color:var(--border);font-size:10px;flex-shrink:0;margin:0 1px}
+    .acc-item .acc-item-open{color:var(--text-3);font-size:12px;opacity:0;transition:all .2s cubic-bezier(.4,0,.2,1);flex-shrink:0;padding:2px 6px;border-radius:4px;transform:translateX(4px)}
+    .acc-item:hover .acc-item-open{opacity:1;transform:translateX(0)}
+    .acc-item .acc-item-philosophy{font-size:11px;color:var(--text-3);flex-shrink:0;font-style:italic}
+    .acc-item .vc-badge{font-size:8px;font-weight:700;color:var(--accent);background:var(--accent-dim);border:1px solid rgba(212,168,75,.25);padding:0 5px;border-radius:3px;flex-shrink:0;letter-spacing:.04em}
     .acc-item .acc-item-open:hover{background:var(--surface-3);color:var(--text)}
     .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;gap:12px;padding:40px;text-align:center}
     .empty-state h2{font-size:16px;font-weight:600}
@@ -160,15 +165,6 @@
 
     /* Keyboard hints */
     .kbd{display:inline-flex;align-items:center;justify-content:center;min-width:18px;height:18px;padding:0 4px;border-radius:3px;background:var(--surface-3);border:1px solid var(--border);font-size:9px;font-weight:600;color:var(--text-3);font-family:inherit}
-
-    /* ── Edge nav zones (thumb-friendly prev/next) ── */
-    .edge-nav{position:absolute;top:0;bottom:0;width:60px;z-index:10;display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0;transition:opacity .2s;-webkit-tap-highlight-color:transparent}
-    .edge-nav:hover,.edge-nav:active,.edge-nav:focus-visible{opacity:1}
-    .edge-nav:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
-    .edge-nav.left{left:0;border-radius:0 var(--r) var(--r) 0;background:linear-gradient(to right,rgba(0,0,0,.4),transparent)}
-    .edge-nav.right{right:0;border-radius:var(--r) 0 0 var(--r);background:linear-gradient(to left,rgba(0,0,0,.4),transparent)}
-    .edge-nav svg{width:24px;height:24px;stroke:var(--text);opacity:.9;filter:drop-shadow(0 1px 3px rgba(0,0,0,.6))}
-    .edge-nav:disabled{cursor:default;opacity:0!important}
 
     /* ── Bottom navigation bar (desktop) ── */
     .bottom-nav{display:flex;align-items:center;justify-content:center;gap:10px;padding:6px 14px;background:transparent;border-top:none}
@@ -265,17 +261,16 @@
       .toolbar .icon-btn{display:none}
       .toolbar .tb-group{display:none}
       .tb-detail{display:none}
-      .acc-toggle{padding:6px 10px;font-size:11px}
-      .acc-item{padding:8px 14px 8px 14px;font-size:13px;min-height:44px}
-      .acc-chips{padding:6px 8px;gap:3px}
-      .acc-chip{font-size:9px;padding:4px 8px}
+      .acc-toggle{padding:7px 12px;font-size:12px}
+      .acc-item{padding:10px 14px 10px 14px;font-size:13px;min-height:44px}
+      .acc-chips{padding:8px 10px;gap:4px}
+      .acc-chip{font-size:9px;padding:5px 10px}
       .preview-header{padding:0;min-height:28px}
       .preview-title{font-size:10px}
       .preview-sub{font-size:9px}
       .bottom-nav{display:none}
       .mobile-dock{display:flex}
       .preview{padding-bottom:180px}
-      .edge-nav{width:44px}
     }
     ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
   </style>
@@ -319,8 +314,6 @@
       </div>
       <div id="previewContent" style="flex:1;position:relative">
         <div class="preview-open-overlay" id="previewOpenOverlay" onclick="openTab()" title="Open in new tab"><span class="expand-icon">&#8599;</span><span class="expand-label">expand</span></div>
-        <button class="edge-nav left" id="edgeNavPrev" onclick="goPrev()" title="Previous" aria-label="Previous design"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 3L5 8l5 5"/></svg></button>
-        <button class="edge-nav right" id="edgeNavNext" onclick="goNext()" title="Next" aria-label="Next design"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 3l5 5-5 5"/></svg></button>
         <div class="empty-state" id="emptyState">
           <div style="font-size:32px">&#9998;</div>
           <h2>Poetry Bil-Araby Design Review</h2>
@@ -778,7 +771,8 @@ function buildAccordion() {
     countSpan.className = 'chip-count';
     countSpan.textContent = ' ' + cat.items.length;
     chip.appendChild(countSpan);
-    chip.addEventListener('click', function() {
+    chip.addEventListener('click', function(e) {
+      e.stopPropagation();
       accSelectedChip = cat.id;
       buildAccordion();
     });
@@ -817,6 +811,10 @@ function buildAccordion() {
       dot.style.background = dotColor;
       item.appendChild(dot);
     }
+    var numSpan = document.createElement('span');
+    numSpan.className = 'acc-item-num';
+    numSpan.textContent = (itemFi + 1);
+    item.appendChild(numSpan);
     var nameSpan = document.createElement('span');
     nameSpan.className = 'acc-item-name';
     nameSpan.textContent = opt.name;
@@ -827,6 +825,10 @@ function buildAccordion() {
       vcBadge.textContent = 'VC';
       item.appendChild(vcBadge);
     } else if (opt.philosophy) {
+      var sep = document.createElement('span');
+      sep.className = 'acc-item-sep';
+      sep.textContent = '|';
+      item.appendChild(sep);
       var philSpan = document.createElement('span');
       philSpan.className = 'acc-item-philosophy';
       philSpan.textContent = opt.philosophy;
@@ -854,7 +856,7 @@ function buildAccordion() {
 }
 // Close accordion when clicking outside
 document.addEventListener('click', function(e) {
-  if (accOpen && !e.target.closest('.toolbar')) closeAccordion();
+  if (accOpen && !e.target.closest('.toolbar') && !e.target.closest('.acc-panel')) closeAccordion();
 });
 
 // ═══════════════════════════════════════════════════════════════
@@ -932,10 +934,6 @@ function render(skipPreview) {
   // Dock progress bar
   const dpf = document.getElementById('dockProgFill'); if (dpf) dpf.style.width = (flatList.length ? Math.round(((fi + 1) / flatList.length) * 100) : 0) + '%';
   const dpt = document.getElementById('dockProgText'); if (dpt) dpt.textContent = (fi + 1) + ' / ' + flatList.length;
-
-  // Edge nav zones
-  const enp = document.getElementById('edgeNavPrev'); if (enp) enp.disabled = fi <= 0;
-  const enn = document.getElementById('edgeNavNext'); if (enn) enn.disabled = fi >= flatList.length - 1;
 
   if (!skipPreview) loadPreview(opt, cat);
 

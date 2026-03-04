@@ -32,8 +32,7 @@
     .tb-select option{background:var(--surface-2);color:var(--text)}
     .tb-sep{width:1px;height:20px;background:var(--border);flex-shrink:0}
     .tb-detail{font-size:11px;color:var(--text-2);display:flex;align-items:center;gap:6px;overflow:hidden;min-width:0}
-    .tb-detail .td-name{color:var(--text);font-size:11px;font-weight:500}
-    .tb-detail .td-phil{color:var(--text-3);font-style:italic;font-size:10px}
+    .tb-detail .td-phil{color:var(--text-3);font-style:italic;font-size:11px}
     .tb-spacer{flex:1}
 
     /* Nav buttons */
@@ -78,16 +77,13 @@
     .acc-toggle.active svg{transform:rotate(180deg)}
     .acc-panel{position:absolute;top:100%;left:0;right:0;z-index:90;background:var(--surface);border-bottom:1px solid var(--border);max-height:0;overflow:hidden;transition:max-height .3s ease,box-shadow .3s;box-shadow:none}
     .acc-panel.open{max-height:60vh;overflow-y:auto;box-shadow:0 8px 24px rgba(0,0,0,.4)}
-    .acc-group{border-bottom:1px solid var(--border)}
-    .acc-group:last-child{border-bottom:none}
-    .acc-group-head{display:flex;align-items:center;gap:8px;padding:8px 14px;font-size:11px;font-weight:700;color:var(--text-3);text-transform:uppercase;letter-spacing:.06em;cursor:pointer;transition:background .12s;user-select:none}
-    .acc-group-head:hover{background:var(--surface-2)}
-    .acc-group-head .acc-arrow{width:10px;height:10px;transition:transform .2s;flex-shrink:0}
-    .acc-group-head.collapsed .acc-arrow{transform:rotate(-90deg)}
-    .acc-group-head .acc-count{font-size:9px;font-weight:600;color:var(--text-3);background:var(--surface-3);padding:1px 6px;border-radius:8px;margin-left:auto}
+    .acc-chips{display:flex;flex-wrap:wrap;gap:4px;padding:8px 14px;border-bottom:1px solid var(--border)}
+    .acc-chip{padding:4px 10px;border-radius:12px;border:1px solid var(--border);background:var(--surface-2);color:var(--text-3);font-size:10px;font-weight:600;cursor:pointer;transition:all .12s;white-space:nowrap}
+    .acc-chip:hover{background:var(--surface-3);color:var(--text)}
+    .acc-chip.active{background:var(--accent-dim);border-color:var(--accent);color:var(--accent)}
+    .acc-chip .chip-count{font-size:9px;opacity:.7;margin-left:2px}
     .acc-items{display:flex;flex-direction:column}
-    .acc-group-head.collapsed+.acc-items{display:none}
-    .acc-item{display:flex;align-items:center;gap:8px;padding:6px 14px 6px 28px;cursor:pointer;transition:background .1s;border:none;background:none;text-align:left;color:inherit;width:100%;font-family:inherit;font-size:12px}
+    .acc-item{display:flex;align-items:center;gap:8px;padding:6px 14px 6px 14px;cursor:pointer;transition:background .1s;border:none;background:none;text-align:left;color:inherit;width:100%;font-family:inherit;font-size:12px}
     .acc-item:hover{background:var(--surface-2)}
     .acc-item.active{background:var(--accent-dim);color:var(--accent)}
     .acc-item .acc-item-name{flex:1;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -270,8 +266,9 @@
       .toolbar .tb-group{display:none}
       .tb-detail{display:none}
       .acc-toggle{padding:6px 10px;font-size:11px}
-      .acc-item{padding:8px 14px 8px 24px;font-size:13px;min-height:44px}
-      .acc-group-head{padding:10px 14px;font-size:12px}
+      .acc-item{padding:8px 14px 8px 14px;font-size:13px;min-height:44px}
+      .acc-chips{padding:6px 8px;gap:3px}
+      .acc-chip{font-size:9px;padding:4px 8px}
       .preview-header{padding:0;min-height:28px}
       .preview-title{font-size:10px}
       .preview-sub{font-size:9px}
@@ -720,101 +717,140 @@ function closeAccordion() {
   document.getElementById('accPanel').classList.remove('open');
   document.getElementById('accToggle').classList.remove('active');
 }
-function buildAccordion() {
-  const panel = document.getElementById('accPanel');
-  panel.textContent = '';
-  const fi = currentFlatIdx();
+// Two-level accordion: category chips (level 1) + filtered design list (level 2)
+let accSelectedChip = null; // tracks selected category chip id
+
+function getAccordionCategories() {
+  // Build ordered category list: Favorites first, then E2E categories, then Branding/Auth
+  var cats = [];
+  // Favorites (dynamic)
+  var favItems = flatList.filter(function(f) {
+    var v = reviewData[f.option.id] && reviewData[f.option.id].verdict;
+    return v === 'keep' || v === 'revisit';
+  });
+  if (favItems.length) cats.push({ id: '_favorites', name: '\u2B50 Favorites', items: favItems });
+  // E2E categories in order
+  var e2eComp = CATALOG.find(function(c) { return c.id === 'e2e'; });
+  if (e2eComp) {
+    e2eComp.categories.forEach(function(cat, cati) {
+      var ci = CATALOG.indexOf(e2eComp);
+      var items = flatList.filter(function(f) { return f.compIdx === ci && f.catIdx === cati; });
+      cats.push({ id: cat.id, name: cat.name, items: items });
+    });
+  }
+  // Non-E2E components (Branding, Auth)
   CATALOG.forEach(function(comp, ci) {
+    if (comp.id === 'e2e') return;
     comp.categories.forEach(function(cat, cati) {
-      var group = document.createElement('div');
-      group.className = 'acc-group';
-      // Group header
-      var head = document.createElement('div');
-      head.className = 'acc-group-head';
-      var arrowSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-      arrowSvg.setAttribute('class', 'acc-arrow');
-      arrowSvg.setAttribute('viewBox', '0 0 16 16');
-      arrowSvg.setAttribute('fill', 'none');
-      arrowSvg.setAttribute('stroke', 'currentColor');
-      arrowSvg.setAttribute('stroke-width', '2');
-      arrowSvg.setAttribute('stroke-linecap', 'round');
-      var arrowPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-      arrowPath.setAttribute('d', 'M4 6l4 4 4-4');
-      arrowSvg.appendChild(arrowPath);
-      head.appendChild(arrowSvg);
-      var headLabel = document.createElement('span');
-      headLabel.textContent = comp.component + ' / ' + cat.name;
-      head.appendChild(headLabel);
-      var countBadge = document.createElement('span');
-      countBadge.className = 'acc-count';
-      countBadge.textContent = cat.options.length;
-      head.appendChild(countBadge);
-      head.addEventListener('click', function() { this.classList.toggle('collapsed'); });
-      // Collapse groups not containing current selection
-      var containsCurrent = ci === st.compIdx && cati === st.catIdx;
-      if (!containsCurrent) head.classList.add('collapsed');
-      group.appendChild(head);
-      // Items container
-      var items = document.createElement('div');
-      items.className = 'acc-items';
-      cat.options.forEach(function(opt, oi) {
-        var itemFi = flatList.findIndex(function(f) { return f.compIdx === ci && f.catIdx === cati && f.optIdx === oi; });
-        var isActive = itemFi === fi;
-        var rev = getReview(opt.id);
-        var item = document.createElement('button');
-        item.className = 'acc-item' + (isActive ? ' active' : '');
-        // Verdict dot
-        if (rev.verdict) {
-          var dot = document.createElement('span');
-          dot.className = 'acc-item-verdict';
-          var dotColor = { keep: 'var(--green)', discard: 'var(--red)', revisit: 'var(--purple)' }[rev.verdict] || 'var(--text-3)';
-          dot.style.background = dotColor;
-          item.appendChild(dot);
-        }
-        var nameSpan = document.createElement('span');
-        nameSpan.className = 'acc-item-name';
-        nameSpan.textContent = opt.name;
-        item.appendChild(nameSpan);
-        if (opt.isVC) {
-          var vcBadge = document.createElement('span');
-          vcBadge.className = 'vc-badge';
-          vcBadge.textContent = 'VC';
-          item.appendChild(vcBadge);
-        } else if (opt.philosophy) {
-          var philSpan = document.createElement('span');
-          philSpan.className = 'acc-item-philosophy';
-          philSpan.textContent = opt.philosophy;
-          item.appendChild(philSpan);
-        }
-        if (opt.generation >= 5) {
-          var badgeTmp = document.createElement('span');
-          badgeTmp.className = 'gen-badge gen-' + opt.generation;
-          badgeTmp.textContent = 'v' + opt.generation;
-          item.appendChild(badgeTmp);
-        }
-        var openLink = document.createElement('span');
-        openLink.className = 'acc-item-open';
-        openLink.title = 'Open in new tab';
-        openLink.textContent = '\u2197';
-        item.appendChild(openLink);
-        // Click item to navigate to it
-        (function(targetFi, optFile) {
-          item.addEventListener('click', function(e) {
-            if (e.target.closest('.acc-item-open')) {
-              e.stopPropagation();
-              window.open('/design-review/' + optFile, '_blank');
-              return;
-            }
-            navigateToFlat(targetFi);
-            closeAccordion();
-          });
-        })(itemFi, opt.file);
-        items.appendChild(item);
-      });
-      group.appendChild(items);
-      panel.appendChild(group);
+      var items = flatList.filter(function(f) { return f.compIdx === ci && f.catIdx === cati; });
+      cats.push({ id: cat.id, name: comp.component + ': ' + cat.name, items: items });
     });
   });
+  return cats;
+}
+
+function buildAccordion() {
+  var panel = document.getElementById('accPanel');
+  panel.textContent = '';
+  var fi = currentFlatIdx();
+  var cats = getAccordionCategories();
+
+  // Determine default selected chip
+  if (!accSelectedChip) {
+    // Default: Favorites if any, else the category containing current selection
+    var favCat = cats.find(function(c) { return c.id === '_favorites'; });
+    if (favCat) {
+      accSelectedChip = '_favorites';
+    } else {
+      var curCatObj = curCat();
+      accSelectedChip = curCatObj ? curCatObj.id : (cats[0] ? cats[0].id : null);
+    }
+  }
+
+  // Level 1: Category chips
+  var chipsRow = document.createElement('div');
+  chipsRow.className = 'acc-chips';
+  cats.forEach(function(cat) {
+    var chip = document.createElement('button');
+    chip.className = 'acc-chip' + (accSelectedChip === cat.id ? ' active' : '');
+    chip.textContent = cat.name;
+    var countSpan = document.createElement('span');
+    countSpan.className = 'chip-count';
+    countSpan.textContent = ' ' + cat.items.length;
+    chip.appendChild(countSpan);
+    chip.addEventListener('click', function() {
+      accSelectedChip = cat.id;
+      buildAccordion();
+    });
+    chipsRow.appendChild(chip);
+  });
+  panel.appendChild(chipsRow);
+
+  // Level 2: Filtered design list
+  var selectedCat = cats.find(function(c) { return c.id === accSelectedChip; });
+  if (!selectedCat && cats.length) { selectedCat = cats[0]; accSelectedChip = selectedCat.id; }
+  if (!selectedCat) return;
+
+  // Sort: favorites (kept/revisited) float to top within category
+  var sortedItems = selectedCat.items.slice().sort(function(a, b) {
+    var va = reviewData[a.option.id] && reviewData[a.option.id].verdict;
+    var vb = reviewData[b.option.id] && reviewData[b.option.id].verdict;
+    var scoreA = (va === 'keep' || va === 'revisit') ? 0 : 1;
+    var scoreB = (vb === 'keep' || vb === 'revisit') ? 0 : 1;
+    return scoreA - scoreB;
+  });
+
+  var itemsContainer = document.createElement('div');
+  itemsContainer.className = 'acc-items';
+  sortedItems.forEach(function(f) {
+    var opt = f.option;
+    var itemFi = flatList.indexOf(f);
+    var isActive = itemFi === fi;
+    var rev = getReview(opt.id);
+    var item = document.createElement('button');
+    item.className = 'acc-item' + (isActive ? ' active' : '');
+    // Verdict dot
+    if (rev.verdict) {
+      var dot = document.createElement('span');
+      dot.className = 'acc-item-verdict';
+      var dotColor = { keep: 'var(--green)', discard: 'var(--red)', revisit: 'var(--purple)' }[rev.verdict] || 'var(--text-3)';
+      dot.style.background = dotColor;
+      item.appendChild(dot);
+    }
+    var nameSpan = document.createElement('span');
+    nameSpan.className = 'acc-item-name';
+    nameSpan.textContent = opt.name;
+    item.appendChild(nameSpan);
+    if (opt.isVC) {
+      var vcBadge = document.createElement('span');
+      vcBadge.className = 'vc-badge';
+      vcBadge.textContent = 'VC';
+      item.appendChild(vcBadge);
+    } else if (opt.philosophy) {
+      var philSpan = document.createElement('span');
+      philSpan.className = 'acc-item-philosophy';
+      philSpan.textContent = opt.philosophy;
+      item.appendChild(philSpan);
+    }
+    var openLink = document.createElement('span');
+    openLink.className = 'acc-item-open';
+    openLink.title = 'Open in new tab';
+    openLink.textContent = '\u2197';
+    item.appendChild(openLink);
+    (function(targetFi, optFile) {
+      item.addEventListener('click', function(e) {
+        if (e.target.closest('.acc-item-open')) {
+          e.stopPropagation();
+          window.open('/design-review/' + optFile, '_blank');
+          return;
+        }
+        navigateToFlat(targetFi);
+        closeAccordion();
+      });
+    })(itemFi, opt.file);
+    itemsContainer.appendChild(item);
+  });
+  panel.appendChild(itemsContainer);
 }
 // Close accordion when clicking outside
 document.addEventListener('click', function(e) {
@@ -863,23 +899,20 @@ function render(skipPreview) {
   document.getElementById('prevBtn').disabled = fi <= 0;
   document.getElementById('nextBtn').disabled = fi >= flatList.length - 1;
 
-  // Update accordion toggle label with current category
+  // Update accordion toggle label with current design name
   var accLabel = document.getElementById('accToggleLabel');
-  if (accLabel) accLabel.textContent = cat.name;
+  if (accLabel) accLabel.textContent = opt.name;
 
-  // Update toolbar detail: design name · philosophy [v6]
+  // Update toolbar detail: philosophy + version badge
   var tbDetail = document.getElementById('tbDetail');
   if (tbDetail) {
     tbDetail.textContent = '';
-    var nameSpan = document.createElement('span');
-    nameSpan.className = 'td-name';
-    nameSpan.textContent = opt.name;
-    tbDetail.appendChild(nameSpan);
-    tbDetail.appendChild(document.createTextNode(' \u00B7 '));
-    var philSpan = document.createElement('span');
-    philSpan.className = 'td-phil';
-    philSpan.textContent = opt.philosophy || opt.desc.substring(0, 30);
-    tbDetail.appendChild(philSpan);
+    if (opt.philosophy) {
+      var philSpan = document.createElement('span');
+      philSpan.className = 'td-phil';
+      philSpan.textContent = opt.philosophy;
+      tbDetail.appendChild(philSpan);
+    }
     if (opt.generation >= 3) {
       var badge = document.createElement('span');
       badge.className = 'gen-badge gen-' + opt.generation;

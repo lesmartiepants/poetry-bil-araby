@@ -674,7 +674,22 @@ async function syncVerdictsToAPI() {
 // Build a stable hash of the CATALOG so we only sync when it changes
 function catalogHash() {
   let h = 0;
-  const s = JSON.stringify(CATALOG.map(c => c.categories.map(cat => cat.options.map(o => o.id))));
+  // Hash relevant catalog metadata (not just option ids) so any change triggers a re-sync
+  const itemsPayload = CATALOG.map(c => ({
+    id: c.id,
+    name: c.name,
+    categories: (c.categories || []).map(cat => ({
+      id: cat.id,
+      name: cat.name,
+      options: (cat.options || []).map(o => ({
+        id: o.id,
+        name: o.name,
+        description: o.description,
+        file_path: o.file_path
+      }))
+    }))
+  }));
+  const s = JSON.stringify(itemsPayload);
   for (let i = 0; i < s.length; i++) { h = ((h << 5) - h + s.charCodeAt(i)) | 0; }
   return h.toString(36);
 }

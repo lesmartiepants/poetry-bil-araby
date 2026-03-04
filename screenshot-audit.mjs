@@ -67,6 +67,8 @@ const CTA_SELECTORS = [
   'button:has-text("\u0627\u0628\u062F\u0623")',
   'button:has-text("\u0627\u062F\u062E\u0644")',
   'button:has-text("\u0627\u0641\u062A\u062D")',
+  'button:has-text("\u0627\u0628\u062F\u0623 \u0627\u0644\u0631\u062D\u0644\u0629")',
+  'button:has-text("\u0627\u062F\u062E\u0644 \u0627\u0644\u062A\u0637\u0628\u064A\u0642")',
 ];
 
 async function captureFlowScreenshots(context, file) {
@@ -109,8 +111,23 @@ async function captureFlowScreenshots(context, file) {
     count++;
     console.log('  [2/4] onboarding: ' + basename(file));
 
+    // Try onboarding advancement buttons first
+    for (const sel of [
+      '.onboarding-dots + button', 'button:has-text("Next")',
+      'button:has-text("\u0627\u0644\u062A\u0627\u0644\u064A")',
+      '.ob-advance', '.walk-hint', '.onboarding-btn'
+    ]) {
+      try {
+        const btn = page.locator(sel).first();
+        if (await btn.isVisible({ timeout: 300 })) {
+          await btn.click();
+          await page.waitForTimeout(600);
+        }
+      } catch {}
+    }
+
     // Advance through onboarding by tapping center
-    for (let i = 0; i < 6; i++) {
+    for (let i = 0; i < 12; i++) {
       try {
         const wt = page.locator('#walkthrough, .walkthrough, .onboarding-overlay').first();
         if (await wt.isVisible({ timeout: 300 })) {
@@ -124,7 +141,8 @@ async function captureFlowScreenshots(context, file) {
     for (const sel of [
       'button:has-text("Begin Reading")', 'button:has-text("Explore")',
       'button:has-text("Start")', 'button:has-text("Enter")',
-      '.ob-finish', '.walkthrough-finish'
+      'button:has-text("tap to turn page")', 'button:has-text("TAP ANYWHERE")',
+      '.ob-finish', '.walkthrough-finish', '.ob-advance', '.walk-hint', '.onboarding-btn'
     ]) {
       try {
         const btn = page.locator(sel).first();

@@ -228,7 +228,10 @@
     [data-mode="light"] .icon-moon { display: flex; }
 
     /* ============================================
-       ONBOARDING
+       ONBOARDING — MUJI MINIMALISM
+       Ultra-clean, single word per step,
+       massive whitespace, barely-there transitions,
+       thin hairline type, no icons
        ============================================ */
     .onboarding {
       position: fixed;
@@ -245,106 +248,110 @@
       padding: 2rem;
       opacity: 0;
       visibility: hidden;
-      transition: opacity 0.5s ease, visibility 0.5s ease;
+      transition: opacity 0.8s ease, visibility 0.8s ease;
     }
 
     .onboarding.active { opacity: 1; visibility: visible; }
 
-    .onboarding-card {
-      max-width: 360px;
+    /* Muji step — single word, massive whitespace */
+    .muji-step {
+      position: absolute;
+      top: 0;
+      left: 0;
       width: 100%;
-      text-align: center;
-      display: none;
-    }
-
-    .onboarding-card.active {
-      display: block;
-      animation: fadeIn 0.5s ease-out;
-    }
-
-    .onboarding-icon {
-      width: 48px;
-      height: 48px;
-      color: var(--text-secondary);
-      margin: 0 auto 1.5rem;
-    }
-
-    .onboarding-title {
-      font-family: 'Tajawal', sans-serif;
-      font-size: 1.25rem;
-      font-weight: 700;
-      margin-bottom: 0.5rem;
-      color: var(--text-primary);
-    }
-
-    .onboarding-title-ar {
-      font-family: 'Reem Kufi', sans-serif;
-      font-size: 1.125rem;
-      font-weight: 700;
-      color: var(--text-secondary);
-      margin-bottom: 1rem;
-      direction: rtl;
-    }
-
-    .onboarding-desc {
-      font-size: 0.9375rem;
-      color: var(--text-secondary);
-      line-height: 1.6;
-      margin-bottom: 0.5rem;
-    }
-
-    .onboarding-desc-ar {
-      font-family: 'Tajawal', sans-serif;
-      font-size: 0.875rem;
-      color: var(--text-muted);
-      line-height: 1.7;
-      direction: rtl;
-      margin-bottom: 2rem;
-    }
-
-    .onboarding-dots {
+      height: 100%;
       display: flex;
-      justify-content: center;
-      gap: 8px;
-      margin-bottom: 2rem;
-    }
-
-    .onboarding-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--border-color);
-      transition: background 0.3s ease;
-    }
-
-    .onboarding-dot.active { background: var(--text-primary); }
-
-    .onboarding-next {
-      display: inline-flex;
+      flex-direction: column;
       align-items: center;
-      gap: 8px;
-      padding: 12px 32px;
-      border: 1px solid var(--border-color);
-      border-radius: 999px;
-      background: transparent;
+      justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                  visibility 1.2s ease;
+    }
+
+    .muji-step.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    /* Single Arabic word — large, thin, centered */
+    .muji-word {
+      font-family: 'Amiri', serif;
+      font-size: clamp(3rem, 10vw, 6rem);
+      font-weight: 400;
       color: var(--text-primary);
+      direction: rtl;
+      letter-spacing: 0.05em;
+      line-height: 1;
+      margin-bottom: 2rem;
+      opacity: 0;
+      transform: translateY(4px);
+      transition: opacity 1s ease 0.2s, transform 1s ease 0.2s;
+    }
+
+    .muji-step.active .muji-word {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Hairline English subtitle */
+    .muji-sub {
       font-family: 'Tajawal', sans-serif;
-      font-size: 0.875rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      min-height: 48px;
+      font-size: 10px;
+      font-weight: 300;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      opacity: 0;
+      transition: opacity 1s ease 0.6s;
     }
 
-    .onboarding-next:hover {
-      background: rgba(255, 255, 255, 0.05);
+    .muji-step.active .muji-sub {
+      opacity: 1;
     }
 
-    [data-theme="light"] .onboarding-next:hover {
-      background: rgba(0, 0, 0, 0.04);
+    /* Thin hairline progress — barely visible */
+    .muji-progress {
+      position: fixed;
+      bottom: 48%;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 24px;
+      align-items: center;
     }
 
-    .onboarding-next svg { width: 16px; height: 16px; }
+    .muji-line {
+      width: 20px;
+      height: 1px;
+      background: var(--border-color);
+      transition: all 0.8s ease;
+    }
+
+    .muji-line.active {
+      width: 32px;
+      background: var(--text-secondary);
+    }
+
+    .muji-line.past {
+      background: rgba(168, 168, 168, 0.2);
+    }
+
+    /* Tap hint — barely visible */
+    .muji-hint {
+      position: fixed;
+      bottom: 10%;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Tajawal', sans-serif;
+      font-size: 9px;
+      font-weight: 300;
+      letter-spacing: 0.3em;
+      text-transform: lowercase;
+      color: var(--text-muted);
+      opacity: 0.4;
+    }
 
     /* ============================================
        MAIN APP
@@ -579,58 +586,29 @@
     </div>
   </section>
 
-  <!-- ========== ONBOARDING ========== -->
+  <!-- ========== ONBOARDING — MUJI MINIMALISM ========== -->
   <section class="onboarding" id="onboarding">
-    <div class="onboarding-card active" data-step="0">
-      <i data-lucide="book-open" class="onboarding-icon"></i>
-      <h2 class="onboarding-title">Discover Arabic Poetry</h2>
-      <p class="onboarding-title-ar" lang="ar" dir="rtl">اكتشف الشعر العربي</p>
-      <p class="onboarding-desc">Explore verses from classical and modern Arabic poets, spanning centuries of literary tradition.</p>
-      <p class="onboarding-desc-ar" lang="ar" dir="rtl">استكشف أبيات الشعر العربي من شعراء كلاسيكيين ومعاصرين عبر قرون من التراث الأدبي.</p>
-      <div class="onboarding-dots">
-        <span class="onboarding-dot active"></span>
-        <span class="onboarding-dot"></span>
-        <span class="onboarding-dot"></span>
-      </div>
-      <button class="onboarding-next" data-advance="1">
-        <span>Next</span>
-        <i data-lucide="arrow-right"></i>
-      </button>
+    <div class="muji-step active" data-step="0">
+      <div class="muji-word" lang="ar" dir="rtl">اكتشف</div>
+      <div class="muji-sub">discover</div>
     </div>
 
-    <div class="onboarding-card" data-step="1">
-      <i data-lucide="languages" class="onboarding-icon"></i>
-      <h2 class="onboarding-title">Bilingual Experience</h2>
-      <p class="onboarding-title-ar" lang="ar" dir="rtl">تجربة ثنائية اللغة</p>
-      <p class="onboarding-desc">Read poems in their original Arabic with AI-powered English translations and cultural context.</p>
-      <p class="onboarding-desc-ar" lang="ar" dir="rtl">اقرأ القصائد بالعربية الأصلية مع ترجمات إنجليزية وسياق ثقافي مدعوم بالذكاء الاصطناعي.</p>
-      <div class="onboarding-dots">
-        <span class="onboarding-dot"></span>
-        <span class="onboarding-dot active"></span>
-        <span class="onboarding-dot"></span>
-      </div>
-      <button class="onboarding-next" data-advance="2">
-        <span>Next</span>
-        <i data-lucide="arrow-right"></i>
-      </button>
+    <div class="muji-step" data-step="1">
+      <div class="muji-word" lang="ar" dir="rtl">اقرأ</div>
+      <div class="muji-sub">read</div>
     </div>
 
-    <div class="onboarding-card" data-step="2">
-      <i data-lucide="heart" class="onboarding-icon"></i>
-      <h2 class="onboarding-title">Save Your Favorites</h2>
-      <p class="onboarding-title-ar" lang="ar" dir="rtl">احفظ قصائدك المفضلة</p>
-      <p class="onboarding-desc">Build your personal collection of poems and revisit the verses that move you most.</p>
-      <p class="onboarding-desc-ar" lang="ar" dir="rtl">أنشئ مجموعتك الشخصية من القصائد وأعد زيارة الأبيات التي تحرّك مشاعرك.</p>
-      <div class="onboarding-dots">
-        <span class="onboarding-dot"></span>
-        <span class="onboarding-dot"></span>
-        <span class="onboarding-dot active"></span>
-      </div>
-      <button class="onboarding-next" id="onboardingFinish">
-        <span>Start Exploring</span>
-        <i data-lucide="arrow-right"></i>
-      </button>
+    <div class="muji-step" data-step="2">
+      <div class="muji-word" lang="ar" dir="rtl">عِش</div>
+      <div class="muji-sub">live</div>
     </div>
+
+    <div class="muji-progress">
+      <span class="muji-line active"></span>
+      <span class="muji-line"></span>
+      <span class="muji-line"></span>
+    </div>
+    <div class="muji-hint">tap</div>
   </section>
 
   <!-- ========== MAIN APP ========== -->
@@ -698,18 +676,25 @@
       document.getElementById('onboarding').classList.add('active');
     });
 
-    document.querySelectorAll('.onboarding-next[data-advance]').forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        var target = parseInt(this.getAttribute('data-advance'));
-        document.querySelectorAll('.onboarding-card').forEach(function(c) { c.classList.remove('active'); });
-        var next = document.querySelector('.onboarding-card[data-step="' + target + '"]');
-        if (next) next.classList.add('active');
-      });
-    });
+    // Muji onboarding — tap anywhere to advance, single word per step
+    var mujiStep = 0;
+    var mujiSteps = document.querySelectorAll('.muji-step');
+    var mujiLines = document.querySelectorAll('.muji-line');
 
-    document.getElementById('onboardingFinish').addEventListener('click', function() {
-      document.getElementById('onboarding').classList.remove('active');
-      document.getElementById('mainApp').classList.add('active');
+    document.getElementById('onboarding').addEventListener('click', function() {
+      mujiStep++;
+      if (mujiStep >= mujiSteps.length) {
+        document.getElementById('onboarding').classList.remove('active');
+        document.getElementById('mainApp').classList.add('active');
+        return;
+      }
+      mujiSteps.forEach(function(s) { s.classList.remove('active'); });
+      mujiSteps[mujiStep].classList.add('active');
+      mujiLines.forEach(function(line, i) {
+        line.classList.remove('active', 'past');
+        if (i < mujiStep) line.classList.add('past');
+        if (i === mujiStep) line.classList.add('active');
+      });
     });
 
     // Particle system (faster per PM feedback)

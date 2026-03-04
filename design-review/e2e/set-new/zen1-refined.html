@@ -215,7 +215,9 @@
     [data-mode="light"] .icon-moon { display: flex; }
 
     /* ============================================
-       ONBOARDING
+       ONBOARDING — WABI-SABI AESTHETIC
+       Imperfect, asymmetric, brushstroke reveals,
+       ink wash fading, irregular organic shapes
        ============================================ */
     .onboarding {
       position: fixed;
@@ -232,7 +234,8 @@
       padding: 2rem;
       opacity: 0;
       visibility: hidden;
-      transition: opacity 0.5s ease, visibility 0.5s ease;
+      transition: opacity 0.6s ease, visibility 0.6s ease;
+      overflow: hidden;
     }
 
     .onboarding.active {
@@ -240,106 +243,218 @@
       visibility: visible;
     }
 
-    .onboarding-card {
-      max-width: 360px;
-      width: 100%;
-      text-align: center;
-      display: none;
+    /* Ink wash background texture */
+    .onboarding::before {
+      content: '';
+      position: absolute;
+      top: -20%;
+      left: -10%;
+      width: 120%;
+      height: 140%;
+      background:
+        radial-gradient(ellipse 40% 30% at 25% 35%, rgba(139, 115, 85, 0.06) 0%, transparent 70%),
+        radial-gradient(ellipse 35% 45% at 70% 60%, rgba(139, 115, 85, 0.04) 0%, transparent 70%),
+        radial-gradient(ellipse 50% 25% at 50% 80%, rgba(139, 115, 85, 0.03) 0%, transparent 70%);
+      pointer-events: none;
+      animation: inkWashDrift 12s ease-in-out infinite alternate;
     }
 
-    .onboarding-card.active {
-      display: block;
-      animation: fadeIn 0.5s ease-out;
+    [data-theme="light"] .onboarding::before {
+      background:
+        radial-gradient(ellipse 40% 30% at 25% 35%, rgba(107, 90, 66, 0.08) 0%, transparent 70%),
+        radial-gradient(ellipse 35% 45% at 70% 60%, rgba(107, 90, 66, 0.05) 0%, transparent 70%),
+        radial-gradient(ellipse 50% 25% at 50% 80%, rgba(107, 90, 66, 0.04) 0%, transparent 70%);
     }
 
-    .onboarding-icon {
-      width: 48px;
-      height: 48px;
-      color: var(--text-secondary);
-      margin: 0 auto 1.5rem;
+    @keyframes inkWashDrift {
+      0% { transform: translate(0, 0) rotate(0deg); }
+      100% { transform: translate(2%, -1%) rotate(0.5deg); }
     }
 
-    .onboarding-title {
-      font-family: 'Tajawal', sans-serif;
-      font-size: 1.25rem;
-      font-weight: 700;
-      margin-bottom: 0.5rem;
-      color: var(--text-primary);
+    /* Wabi-sabi card — asymmetric placement, irregular shape */
+    .wabi-card {
+      position: absolute;
+      width: 90%;
+      max-width: 400px;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.8s ease, visibility 0.8s ease;
     }
 
-    .onboarding-title-ar {
-      font-family: 'Reem Kufi', sans-serif;
-      font-size: 1.125rem;
-      font-weight: 700;
-      color: var(--text-secondary);
-      margin-bottom: 1rem;
-      direction: rtl;
+    .wabi-card.active {
+      opacity: 1;
+      visibility: visible;
     }
 
-    .onboarding-desc {
-      font-size: 0.9375rem;
-      color: var(--text-secondary);
-      line-height: 1.6;
-      margin-bottom: 0.5rem;
+    /* Asymmetric placement per card */
+    .wabi-card[data-step="0"] {
+      top: 28%;
+      left: 8%;
+      transform: rotate(-0.8deg);
     }
 
-    .onboarding-desc-ar {
-      font-family: 'Tajawal', sans-serif;
-      font-size: 0.875rem;
-      color: var(--text-muted);
-      line-height: 1.7;
-      direction: rtl;
-      margin-bottom: 2rem;
+    .wabi-card[data-step="1"] {
+      top: 32%;
+      right: 6%;
+      left: auto;
+      transform: rotate(0.5deg);
     }
 
-    .onboarding-dots {
-      display: flex;
-      justify-content: center;
-      gap: 8px;
-      margin-bottom: 2rem;
+    .wabi-card[data-step="2"] {
+      top: 25%;
+      left: 12%;
+      transform: rotate(-0.3deg);
     }
 
-    .onboarding-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: var(--border-color);
-      transition: background 0.3s ease;
+    /* Brushstroke reveal animation */
+    @keyframes brushReveal {
+      0% {
+        clip-path: polygon(0% 50%, 0% 50%, 0% 50%, 0% 50%);
+        opacity: 0;
+      }
+      30% {
+        clip-path: polygon(0% 20%, 60% 0%, 55% 80%, 0% 100%);
+        opacity: 0.6;
+      }
+      70% {
+        clip-path: polygon(0% 0%, 90% 0%, 100% 70%, 5% 100%);
+        opacity: 0.9;
+      }
+      100% {
+        clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%);
+        opacity: 1;
+      }
     }
 
-    .onboarding-dot.active {
-      background: var(--text-primary);
+    .wabi-card.active {
+      animation: brushReveal 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
     }
 
-    .onboarding-next {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 12px 32px;
-      border: 1px solid var(--border-color);
-      border-radius: 999px;
+    /* Irregular border — not perfect rectangles */
+    .wabi-card-inner {
+      padding: 2.5rem 2rem;
+      border: 1px solid rgba(139, 115, 85, 0.15);
+      border-radius: 2px 8px 4px 6px;
+      position: relative;
       background: transparent;
-      color: var(--text-primary);
+    }
+
+    [data-theme="light"] .wabi-card-inner {
+      border-color: rgba(107, 90, 66, 0.2);
+    }
+
+    /* Ink brush accent line — irregular */
+    .wabi-card-inner::before {
+      content: '';
+      position: absolute;
+      top: -1px;
+      left: 15%;
+      width: 40%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #8b7355 20%, #8b7355 60%, rgba(139, 115, 85, 0.3) 85%, transparent);
+      border-radius: 1px 0 2px 0;
+    }
+
+    [data-theme="light"] .wabi-card-inner::before {
+      background: linear-gradient(90deg, transparent, #6b5a42 20%, #6b5a42 60%, rgba(107, 90, 66, 0.3) 85%, transparent);
+    }
+
+    /* Arabic word — large, imperfect placement */
+    .wabi-kanji {
+      font-family: 'Amiri', serif;
+      font-size: clamp(2.5rem, 6vw, 3.5rem);
+      color: rgba(139, 115, 85, 0.7);
+      direction: rtl;
+      margin-bottom: 0.75rem;
+      line-height: 1.2;
+      letter-spacing: 0.02em;
+      animation: inkFadeIn 1s ease-out 0.3s both;
+    }
+
+    [data-theme="light"] .wabi-kanji {
+      color: rgba(107, 90, 66, 0.8);
+    }
+
+    @keyframes inkFadeIn {
+      0% { opacity: 0; filter: blur(4px); transform: translateY(8px); }
+      100% { opacity: 1; filter: blur(0); transform: translateY(0); }
+    }
+
+    /* English title — understated */
+    .wabi-title {
+      font-family: 'Forum', cursive;
+      font-size: 1rem;
+      color: var(--text-secondary);
+      letter-spacing: 0.15em;
+      text-transform: lowercase;
+      margin-bottom: 1.25rem;
+      animation: inkFadeIn 0.8s ease-out 0.6s both;
+    }
+
+    /* Description — muted, earthy */
+    .wabi-desc {
       font-family: 'Tajawal', sans-serif;
-      font-size: 0.875rem;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      min-height: 48px;
-      min-width: 48px;
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      line-height: 1.8;
+      max-width: 300px;
+      animation: inkFadeIn 0.8s ease-out 0.9s both;
     }
 
-    .onboarding-next:hover {
-      background: rgba(255, 255, 255, 0.05);
+    /* Organic ink drop indicators — irregular shapes */
+    .wabi-drops {
+      position: fixed;
+      bottom: 15%;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 16px;
+      align-items: center;
     }
 
-    [data-theme="light"] .onboarding-next:hover {
-      background: rgba(0, 0, 0, 0.05);
+    .wabi-drop {
+      width: 6px;
+      height: 6px;
+      border-radius: 47% 53% 49% 51% / 52% 48% 52% 48%;
+      background: rgba(139, 115, 85, 0.25);
+      transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     }
 
-    .onboarding-next svg {
-      width: 16px;
-      height: 16px;
+    [data-theme="light"] .wabi-drop {
+      background: rgba(107, 90, 66, 0.3);
+    }
+
+    .wabi-drop.active {
+      width: 10px;
+      height: 10px;
+      background: #8b7355;
+      border-radius: 45% 55% 50% 50% / 48% 52% 48% 52%;
+    }
+
+    [data-theme="light"] .wabi-drop.active {
+      background: #6b5a42;
+    }
+
+    .wabi-drop.past {
+      background: rgba(139, 115, 85, 0.12);
+    }
+
+    /* Hint text */
+    .wabi-hint {
+      position: fixed;
+      bottom: 8%;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Tajawal', sans-serif;
+      font-size: 10px;
+      letter-spacing: 0.25em;
+      text-transform: lowercase;
+      color: rgba(139, 115, 85, 0.4);
+      animation: breathePulse 4s ease-in-out infinite;
+    }
+
+    [data-theme="light"] .wabi-hint {
+      color: rgba(107, 90, 66, 0.4);
     }
 
     /* ============================================
@@ -598,58 +713,38 @@
     </div>
   </section>
 
-  <!-- ========== ONBOARDING ========== -->
+  <!-- ========== ONBOARDING — WABI-SABI ========== -->
   <section class="onboarding" id="onboarding">
-    <div class="onboarding-card active" data-step="0">
-      <i data-lucide="book-open" class="onboarding-icon"></i>
-      <h2 class="onboarding-title">Discover Arabic Poetry</h2>
-      <p class="onboarding-title-ar" lang="ar" dir="rtl">اكتشف الشعر العربي</p>
-      <p class="onboarding-desc">Explore verses from classical and modern Arabic poets, spanning centuries of literary tradition.</p>
-      <p class="onboarding-desc-ar" lang="ar" dir="rtl">استكشف أبيات الشعر العربي من شعراء كلاسيكيين ومعاصرين عبر قرون من التراث الأدبي.</p>
-      <div class="onboarding-dots">
-        <span class="onboarding-dot active"></span>
-        <span class="onboarding-dot"></span>
-        <span class="onboarding-dot"></span>
+    <div class="wabi-card active" data-step="0">
+      <div class="wabi-card-inner">
+        <div class="wabi-kanji" lang="ar" dir="rtl">تأمّل</div>
+        <div class="wabi-title">contemplate</div>
+        <p class="wabi-desc">Poetry weathered by centuries. Each crack in the verse reveals deeper beauty. Imperfection is the path.</p>
       </div>
-      <button class="onboarding-next" data-advance="1">
-        <span>Next</span>
-        <i data-lucide="arrow-right"></i>
-      </button>
     </div>
 
-    <div class="onboarding-card" data-step="1">
-      <i data-lucide="languages" class="onboarding-icon"></i>
-      <h2 class="onboarding-title">Bilingual Experience</h2>
-      <p class="onboarding-title-ar" lang="ar" dir="rtl">تجربة ثنائية اللغة</p>
-      <p class="onboarding-desc">Read poems in their original Arabic with AI-powered English translations and cultural context.</p>
-      <p class="onboarding-desc-ar" lang="ar" dir="rtl">اقرأ القصائد بالعربية الأصلية مع ترجمات إنجليزية وسياق ثقافي مدعوم بالذكاء الاصطناعي.</p>
-      <div class="onboarding-dots">
-        <span class="onboarding-dot"></span>
-        <span class="onboarding-dot active"></span>
-        <span class="onboarding-dot"></span>
+    <div class="wabi-card" data-step="1">
+      <div class="wabi-card-inner">
+        <div class="wabi-kanji" lang="ar" dir="rtl">صَمت</div>
+        <div class="wabi-title">silence</div>
+        <p class="wabi-desc">84,000 poems. The spaces between words matter as much as the ink. Listen to what is not said.</p>
       </div>
-      <button class="onboarding-next" data-advance="2">
-        <span>Next</span>
-        <i data-lucide="arrow-right"></i>
-      </button>
     </div>
 
-    <div class="onboarding-card" data-step="2">
-      <i data-lucide="heart" class="onboarding-icon"></i>
-      <h2 class="onboarding-title">Save Your Favorites</h2>
-      <p class="onboarding-title-ar" lang="ar" dir="rtl">احفظ قصائدك المفضلة</p>
-      <p class="onboarding-desc">Build your personal collection of poems and revisit the verses that move you most.</p>
-      <p class="onboarding-desc-ar" lang="ar" dir="rtl">أنشئ مجموعتك الشخصية من القصائد وأعد زيارة الأبيات التي تحرّك مشاعرك.</p>
-      <div class="onboarding-dots">
-        <span class="onboarding-dot"></span>
-        <span class="onboarding-dot"></span>
-        <span class="onboarding-dot active"></span>
+    <div class="wabi-card" data-step="2">
+      <div class="wabi-card-inner">
+        <div class="wabi-kanji" lang="ar" dir="rtl">عِش</div>
+        <div class="wabi-title">live</div>
+        <p class="wabi-desc">Save verses that mark you. Return to them. Like tea stains on old paper, they become part of you.</p>
       </div>
-      <button class="onboarding-next" id="onboardingFinish">
-        <span>Start Exploring</span>
-        <i data-lucide="arrow-right"></i>
-      </button>
     </div>
+
+    <div class="wabi-drops">
+      <span class="wabi-drop active"></span>
+      <span class="wabi-drop"></span>
+      <span class="wabi-drop"></span>
+    </div>
+    <div class="wabi-hint">tap to continue</div>
   </section>
 
   <!-- ========== MAIN APP ========== -->
@@ -726,22 +821,28 @@
       onboarding.classList.add('active');
     });
 
-    // Onboarding card advance
-    document.querySelectorAll('.onboarding-next[data-advance]').forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        var target = parseInt(this.getAttribute('data-advance'));
-        document.querySelectorAll('.onboarding-card').forEach(function(card) {
-          card.classList.remove('active');
-        });
-        var nextCard = document.querySelector('.onboarding-card[data-step="' + target + '"]');
-        if (nextCard) nextCard.classList.add('active');
-      });
-    });
+    // Wabi-sabi onboarding — tap anywhere to advance
+    var wabiStep = 0;
+    var wabiCards = document.querySelectorAll('.wabi-card');
+    var wabiDrops = document.querySelectorAll('.wabi-drop');
 
-    // Onboarding -> Main App
-    document.getElementById('onboardingFinish').addEventListener('click', function() {
-      onboarding.classList.remove('active');
-      mainApp.classList.add('active');
+    onboarding.addEventListener('click', function(e) {
+      wabiStep++;
+      if (wabiStep >= wabiCards.length) {
+        // Finish onboarding
+        onboarding.classList.remove('active');
+        mainApp.classList.add('active');
+        return;
+      }
+      // Advance cards
+      wabiCards.forEach(function(card) { card.classList.remove('active'); });
+      wabiCards[wabiStep].classList.add('active');
+      // Update drops
+      wabiDrops.forEach(function(drop, i) {
+        drop.classList.remove('active', 'past');
+        if (i < wabiStep) drop.classList.add('past');
+        if (i === wabiStep) drop.classList.add('active');
+      });
     });
 
     // ========== PARTICLE SYSTEM (faster per PM feedback) ==========

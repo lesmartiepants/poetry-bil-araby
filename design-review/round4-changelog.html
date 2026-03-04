@@ -1,0 +1,683 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Round 4: Post-Audit Polish &amp; Fixes — Changelog</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #09090b;
+    --bg-card: #111113;
+    --bg-surface: #18181b;
+    --gold: #d4a84b;
+    --gold-dim: rgba(212,168,75,0.15);
+    --gold-border: rgba(212,168,75,0.25);
+    --text: #e4e4e7;
+    --text-dim: #a1a1aa;
+    --text-muted: #71717a;
+    --border: #27272a;
+    --green: #22c55e;
+    --blue: #3b82f6;
+    --purple: #a78bfa;
+    --red: #f87171;
+    --radius: 10px;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    min-height: 100vh;
+    padding: 0 1rem 4rem;
+  }
+
+  /* Header */
+  .header {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 3rem 0 2rem;
+    text-align: center;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .header h1 {
+    font-size: 2.25rem;
+    font-weight: 700;
+    color: var(--gold);
+    letter-spacing: -0.02em;
+    margin-bottom: 0.5rem;
+  }
+
+  .header .subtitle {
+    font-size: 0.95rem;
+    color: var(--text-dim);
+    font-weight: 400;
+    margin-bottom: 1.5rem;
+  }
+
+  .stats-bar {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+  }
+
+  .stat {
+    display: flex;
+    align-items: baseline;
+    gap: 0.4rem;
+  }
+
+  .stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--gold);
+  }
+
+  .stat-label {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  /* Main */
+  .main {
+    max-width: 960px;
+    margin: 0 auto;
+  }
+
+  /* Sections */
+  .section {
+    margin-top: 3rem;
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .section-number {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: var(--gold-dim);
+    border: 1px solid var(--gold-border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--gold);
+    flex-shrink: 0;
+  }
+
+  .section-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .section-subtitle {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-left: auto;
+  }
+
+  /* Cards */
+  .card-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    transition: border-color 0.2s;
+  }
+
+  .card:hover {
+    border-color: var(--gold-border);
+  }
+
+  .card-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 0.4rem;
+  }
+
+  .card-desc {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    line-height: 1.55;
+  }
+
+  .card-tag {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 500;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    margin-top: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .tag-fix { background: rgba(248,113,113,0.12); color: var(--red); }
+  .tag-feat { background: rgba(59,130,246,0.12); color: var(--blue); }
+  .tag-design { background: rgba(167,139,250,0.12); color: var(--purple); }
+
+  /* VC Grid */
+  .vc-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 0.75rem;
+  }
+
+  .vc-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem 1.15rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    transition: border-color 0.2s, transform 0.15s;
+  }
+
+  .vc-card:hover {
+    border-color: var(--gold-border);
+    transform: translateY(-1px);
+  }
+
+  .vc-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .vc-philosophy {
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    line-height: 1.4;
+  }
+
+  .vc-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--gold);
+    text-decoration: none;
+    margin-top: 0.35rem;
+    transition: color 0.15s;
+  }
+
+  .vc-link:hover { color: #e8c76a; }
+  .vc-link::after { content: '\2192'; }
+
+  .set-label {
+    grid-column: 1 / -1;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 0.75rem 0 0.25rem;
+    border-top: 1px solid var(--border);
+    margin-top: 0.25rem;
+  }
+
+  .set-label:first-child {
+    border-top: none;
+    margin-top: 0;
+    padding-top: 0;
+  }
+
+  /* Commit timeline */
+  .timeline {
+    position: relative;
+    padding-left: 2rem;
+  }
+
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 6px;
+    top: 4px;
+    bottom: 4px;
+    width: 1px;
+    background: var(--border);
+  }
+
+  .commit {
+    position: relative;
+    padding-bottom: 1rem;
+  }
+
+  .commit:last-child { padding-bottom: 0; }
+
+  .commit::before {
+    content: '';
+    position: absolute;
+    left: -2rem;
+    top: 6px;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    border: 2px solid var(--gold-border);
+    background: var(--bg);
+    margin-left: 2px;
+  }
+
+  .commit-hash {
+    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+    font-size: 0.75rem;
+    color: var(--gold);
+    margin-right: 0.5rem;
+  }
+
+  .commit-msg {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+  }
+
+  .commit-stat {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    margin-top: 0.2rem;
+  }
+
+  /* Responsive */
+  @media (min-width: 640px) {
+    .card-grid { grid-template-columns: repeat(2, 1fr); }
+    body { padding: 0 2rem 5rem; }
+  }
+
+  @media (min-width: 768px) {
+    .vc-grid { grid-template-columns: repeat(3, 1fr); }
+  }
+
+  @media (min-width: 960px) {
+    .vc-grid { grid-template-columns: repeat(4, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<!-- =================== HEADER =================== -->
+<div class="header">
+  <h1>Round 4: Post-Audit Polish &amp; Fixes</h1>
+  <p class="subtitle">Design Review Changelog &mdash; feature/design-feedback-round2</p>
+  <div class="stats-bar">
+    <div class="stat"><span class="stat-value">19</span><span class="stat-label">commits</span></div>
+    <div class="stat"><span class="stat-value">145</span><span class="stat-label">files changed</span></div>
+    <div class="stat"><span class="stat-value">23</span><span class="stat-label">new VC files</span></div>
+  </div>
+</div>
+
+<div class="main">
+
+<!-- =================== SECTION 1 =================== -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-number">1</span>
+    <span class="section-title">Bug Fixes</span>
+    <span class="section-subtitle">WS1&ndash;2</span>
+  </div>
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-title">Screenshot Audit: CTA selectors + onboarding advancement</div>
+      <div class="card-desc">Added missing CTA selectors for flow automation across all 23 designs. Fixed onboarding step advancement so the 4-step screenshot pipeline (splash &rarr; onboarding &rarr; main app &rarr; controls) captures each stage correctly.</div>
+      <span class="card-tag tag-fix">fix</span>
+    </div>
+    <div class="card">
+      <div class="card-title">07-Particle-Neumorphic: splash null ref guard</div>
+      <div class="card-desc">Repaired the splash-to-app transition in the particle neumorphic design. A null reference on the splash button element prevented the transition from firing, leaving users stuck on the splash screen.</div>
+      <span class="card-tag tag-fix">fix</span>
+    </div>
+    <div class="card">
+      <div class="card-title">A8-Deco-Discovery: scoped .deco-panel CSS</div>
+      <div class="card-desc">Fixed the empty main app view caused by CSS scoping issues. The <code>.deco-panel</code> styles were not correctly applied, resulting in a blank canvas after the onboarding flow completed.</div>
+      <span class="card-tag tag-fix">fix</span>
+    </div>
+  </div>
+</div>
+
+<!-- =================== SECTION 2 =================== -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-number">2</span>
+    <span class="section-title">Design Improvements</span>
+    <span class="section-subtitle">WS3&ndash;6</span>
+  </div>
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-title">Onboarding: zen1 Wabi-Sabi + zen2 Muji differentiation</div>
+      <div class="card-desc">Zen1-Refined now fully embraces a Wabi-Sabi aesthetic (ink-wash textures, irregular brush-stroke borders, earth tones). Zen2-Haiku adopts a clean Muji-inspired language (geometric precision, monochrome palette, breathing whitespace). The two designs are now visually distinct.</div>
+      <span class="card-tag tag-design">design</span>
+    </div>
+    <div class="card">
+      <div class="card-title">Controls: zen2 circles visible + ls2 beams widened</div>
+      <div class="card-desc">Increased contrast on zen2-haiku Muji circle controls so they are visible against the dark background. Widened ls2-ray-tracing beam hit targets and labels to prevent mis-taps on narrow elements.</div>
+      <span class="card-tag tag-fix">fix</span>
+    </div>
+    <div class="card">
+      <div class="card-title">B10: blob replaced with organic leaf container</div>
+      <div class="card-desc">Replaced the generic blob shape in the b10-signature-blend main app with a biomorphic leaf-shaped container that better fits the organic design philosophy. Onboarding copy updated to match the new theme.</div>
+      <span class="card-tag tag-design">design</span>
+    </div>
+    <div class="card">
+      <div class="card-title">Logos: Arabic text already at correct size</div>
+      <div class="card-desc">Audited all standalone logo variants. The Arabic text was already rendering at the correct size relative to the Latin brand mark &mdash; no change was needed.</div>
+      <span class="card-tag tag-feat">verified</span>
+    </div>
+  </div>
+</div>
+
+<!-- =================== SECTION 3 =================== -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-number">3</span>
+    <span class="section-title">Vertical Toggle Controls</span>
+    <span class="section-subtitle">WS8 &mdash; 23 designs</span>
+  </div>
+  <p style="font-size:0.85rem;color:var(--text-dim);margin-bottom:1.25rem;line-height:1.55;">
+    Each design now has a companion <strong>-vc.html</strong> file featuring a persistent vertical control strip on the left edge. These provide quick-access toggle buttons for theme, audio, font size, and share actions &mdash; styled to match each design's unique aesthetic.
+  </p>
+
+  <div class="vc-grid">
+    <!-- set-new (8) -->
+    <div class="set-label">set-new &mdash; 8 designs</div>
+
+    <div class="vc-card">
+      <span class="vc-name">Codex Spine Story</span>
+      <span class="vc-philosophy">Book-spine narrative with layered scroll reveals</span>
+      <a class="vc-link" href="e2e/set-new/codex-spine-story-vc.html">View</a>
+    </div>
+    <div class="vc-card">
+      <span class="vc-name">LS1 Chiaroscuro</span>
+      <span class="vc-philosophy">Light-and-shadow contrast with dramatic depth</span>
+      <a class="vc-link" href="e2e/set-new/ls1-chiaroscuro-vc.html">View</a>
+    </div>
+    <div class="vc-card">
+      <span class="vc-name">LS2 Ray Tracing</span>
+      <span class="vc-philosophy">Photon beams and luminous path tracing</span>
+      <a class="vc-link" href="e2e/set-new/ls2-ray-tracing-vc.html">View</a>
+    </div>
+    <div class="vc-card">
+      <span class="vc-name">PF1 Calligraphic</span>
+      <span class="vc-philosophy">Classical Arabic calligraphy as the primary UI element</span>
+      <a class="vc-link" href="e2e/set-new/pf1-calligraphic-vc.html">View</a>
+    </div>
+    <div class="vc-card">
+      <span class="vc-name">PF2 Gold Mystical</span>
+      <span class="vc-philosophy">Luxurious gold illumination with mystical atmosphere</span>
+      <a class="vc-link" href="e2e/set-new/pf2-gold-mystical-vc.html">View</a>
+    </div>
+    <div class="vc-card">
+      <span class="vc-name">PF3 Ink Constellation</span>
+      <span class="vc-philosophy">Ink-drop particles forming celestial patterns</span>
+      <a class="vc-link" href="e2e/set-new/pf3-ink-constellation-vc.html">View</a>
+    </div>
+    <div class="vc-card">
+      <span class="vc-name">Zen1 Refined</span>
+      <span class="vc-philosophy">Wabi-Sabi: ink-wash textures, earthy imperfection</span>
+      <a class="vc-link" href="e2e/set-new/zen1-refined-vc.html">View</a>
+    </div>
+    <div class="vc-card">
+      <span class="vc-name">Zen2 Haiku</span>
+      <span class="vc-philosophy">Muji-inspired: geometric precision, breathing space</span>
+      <a class="vc-link" href="e2e/set-new/zen2-haiku-vc.html">View</a>
+    </div>
+
+    <!-- set-78ab (5) -->
+    <div class="set-label">set-78ab &mdash; 5 designs</div>
+
+    <div class="vc-card">
+      <span class="vc-name">A1 Gold Orbit Story</span>
+      <span class="vc-philosophy">Orbital gold arcs with narrative progression</span>
+      <a class="vc-link" href="e2e/set-78ab/e2e-a1-gold-orbit-story-vc.html">View</a>
+    </div>
+    <div class="vc-card">
+      <span class="vc-name">A2 Paper Photon</span>
+      <span class="vc-philosophy">Paper-texture meets photon-burst luminance</span>
+      <a class="vc-link" href="e2e/set-78ab/e2e-a2-paper-photon-vc.html">View</a>
+    </div>
+    <div class="vc-card">
+      <span class="vc-name">A8 Deco Discovery</span>
+      <span class="vc-philosophy">Art-Deco geometric exploration panels</span>
+      <a class="vc-link" href="e2e/set-78ab/e2e-a8-deco-discovery-vc.html">View</a>
+    </div>
+    <div class="vc-card">
+      <span class="vc-name">B10 Signature Blend</span>
+      <span class="vc-philosophy">Biomorphic leaf container with organic flow</span>
+      <a class="vc-link" href="e2e/set-78ab/e2e-b10-signature-blend-vc.html">View</a>
+    </div>
+    <div class="vc-card">
+      <span class="vc-name">B8 Ritual Spotlight</span>
+      <span class="vc-philosophy">Ceremonial spotlight with ambient ritual glow</span>
+      <a class="vc-link" href="e2e/set-78ab/e2e-b8-ritual-spotlight-hybrid-vc.html">View</a>
+    </div>
+
+    <!-- set-c0cf-a (4) -->
+    <div class="set-label">set-c0cf-a &mdash; 4 designs</div>
+
+    <div class="vc-card">
+      <span class="vc-name">02 Zen Manuscript</span>
+      <span class="vc-philosophy">Deep-water calm with moonlight manuscript pages</span>
+      <a class="vc-link" href="e2e/set-c0cf-a/02-zen-manuscript-vc.html">View</a>
+    </div>
+    <div class="vc-card">
+      <span class="vc-name">04 Desert Poet</span>
+      <span class="vc-philosophy">Warm desert tones with sand-drift textures</span>
+      <a class="vc-link" href="e2e/set-c0cf-a/04-desert-poet-vc.html">View</a>
+    </div>
+    <div class="vc-card">
+      <span class="vc-name">07 Scroll Keeper</span>
+      <span class="vc-philosophy">Ancient scroll preservation with layered parchment</span>
+      <a class="vc-link" href="e2e/set-c0cf-a/07-scroll-keeper-vc.html">View</a>
+    </div>
+    <div class="vc-card">
+      <span class="vc-name">09 Mosaic Discovery</span>
+      <span class="vc-philosophy">Geometric mosaic tiles with discovery-based navigation</span>
+      <a class="vc-link" href="e2e/set-c0cf-a/09-mosaic-discovery-vc.html">View</a>
+    </div>
+
+    <!-- set-c0cf-b (6) -->
+    <div class="set-label">set-c0cf-b &mdash; 6 designs</div>
+
+    <div class="vc-card">
+      <span class="vc-name">01 Particle Scroll</span>
+      <span class="vc-philosophy">Floating particle field with infinite scroll depth</span>
+      <a class="vc-link" href="e2e/set-c0cf-b/01-particle-scroll-vc.html">View</a>
+    </div>
+    <div class="vc-card">
+      <span class="vc-name">04 Neumorphic Warmth</span>
+      <span class="vc-philosophy">Soft neumorphic surfaces with warm tactile feel</span>
+      <a class="vc-link" href="e2e/set-c0cf-b/04-neumorphic-warmth-vc.html">View</a>
+    </div>
+    <div class="vc-card">
+      <span class="vc-name">05 Scroll Codex</span>
+      <span class="vc-philosophy">Codex-bound scroll with chapter-based navigation</span>
+      <a class="vc-link" href="e2e/set-c0cf-b/05-scroll-codex-vc.html">View</a>
+    </div>
+    <div class="vc-card">
+      <span class="vc-name">07 Particle Neumorphic</span>
+      <span class="vc-philosophy">Particle effects merged with neumorphic controls</span>
+      <a class="vc-link" href="e2e/set-c0cf-b/07-particle-neumorphic-vc.html">View</a>
+    </div>
+    <div class="vc-card">
+      <span class="vc-name">08 Zen Spotlight</span>
+      <span class="vc-philosophy">Zen minimalism with focused spotlight on verse</span>
+      <a class="vc-link" href="e2e/set-c0cf-b/08-zen-spotlight-vc.html">View</a>
+    </div>
+    <div class="vc-card">
+      <span class="vc-name">09 Scandinavian Scroll</span>
+      <span class="vc-philosophy">Nordic-clean design with hygge-inspired scroll</span>
+      <a class="vc-link" href="e2e/set-c0cf-b/09-scandinavian-scroll-vc.html">View</a>
+    </div>
+  </div>
+</div>
+
+<!-- =================== SECTION 4 =================== -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-number">4</span>
+    <span class="section-title">Design Review App</span>
+    <span class="section-subtitle">WS7</span>
+  </div>
+  <div class="card-grid">
+    <div class="card">
+      <div class="card-title">Two-level chip navigation</div>
+      <div class="card-desc">Replaced flat category list with a two-tier chip system: top row selects the design set, second row shows design names within that set. Reduces visual clutter and supports the growing catalog of 23+ designs.</div>
+      <span class="card-tag tag-feat">feat</span>
+    </div>
+    <div class="card">
+      <div class="card-title">Expand overlay button</div>
+      <div class="card-desc">Added a full-screen expand button on each design preview. Clicking opens the design in an overlay at native resolution for detailed inspection without leaving the review app.</div>
+      <span class="card-tag tag-feat">feat</span>
+    </div>
+    <div class="card">
+      <div class="card-title">VC catalog entries (46 total)</div>
+      <div class="card-desc">The review app catalog now lists all 46 design variants: 23 standard designs and 23 vertical-controls variants. Each entry links directly to its standalone HTML file.</div>
+      <span class="card-tag tag-feat">feat</span>
+    </div>
+    <div class="card">
+      <div class="card-title">Drawer handle removed</div>
+      <div class="card-desc">Removed the bottom-sheet drawer handle that was leftover from an earlier mobile navigation pattern. The two-level chips make the drawer unnecessary.</div>
+      <span class="card-tag tag-feat">feat</span>
+    </div>
+  </div>
+</div>
+
+<!-- =================== SECTION 5 =================== -->
+<div class="section">
+  <div class="section-header">
+    <span class="section-number">5</span>
+    <span class="section-title">Commit Log</span>
+    <span class="section-subtitle">19 commits</span>
+  </div>
+
+  <div class="timeline">
+    <div class="commit">
+      <span class="commit-hash">c925230</span>
+      <span class="commit-msg">feat(design-review): two-level chip navigation + simplified toolbar</span>
+      <div class="commit-stat">1 file, +148 -115</div>
+    </div>
+    <div class="commit">
+      <span class="commit-hash">17930f1</span>
+      <span class="commit-msg">feat(design-review): toolbar detail, expand overlay, remove drawer handle</span>
+      <div class="commit-stat">1 file, +35 -11</div>
+    </div>
+    <div class="commit">
+      <span class="commit-hash">1628138</span>
+      <span class="commit-msg">feat(vertical-controls): add toggle controls for set-78ab designs</span>
+      <div class="commit-stat">5 files, +1486</div>
+    </div>
+    <div class="commit">
+      <span class="commit-hash">b7b3d5b</span>
+      <span class="commit-msg">feat(vertical-controls): complete toggle controls for set-c0cf-b designs</span>
+      <div class="commit-stat">3 files, +850</div>
+    </div>
+    <div class="commit">
+      <span class="commit-hash">5caac50</span>
+      <span class="commit-msg">feat(design-review): improve navigation UX + add vertical controls variants</span>
+      <div class="commit-stat">1 file, +91 -35</div>
+    </div>
+    <div class="commit">
+      <span class="commit-hash">3172c38</span>
+      <span class="commit-msg">feat(vertical-controls): complete toggle controls for set-new designs</span>
+      <div class="commit-stat">5 files, +1507</div>
+    </div>
+    <div class="commit">
+      <span class="commit-hash">7cbf28e</span>
+      <span class="commit-msg">feat(vertical-controls): add toggle controls for set-c0cf-b designs (partial)</span>
+      <div class="commit-stat">3 files, +792</div>
+    </div>
+    <div class="commit">
+      <span class="commit-hash">035b1b8</span>
+      <span class="commit-msg">feat(vertical-controls): add toggle controls for set-new designs (partial)</span>
+      <div class="commit-stat">3 files, +950</div>
+    </div>
+    <div class="commit">
+      <span class="commit-hash">c069b2d</span>
+      <span class="commit-msg">fix(onboarding): polish b10-signature-blend onboarding for biomorphic theme</span>
+      <div class="commit-stat">1 file, +2 -2</div>
+    </div>
+    <div class="commit">
+      <span class="commit-hash">d9516f6</span>
+      <span class="commit-msg">feat(vertical-controls): add toggle controls for set-c0cf-a designs</span>
+      <div class="commit-stat">4 files, +1281</div>
+    </div>
+    <div class="commit">
+      <span class="commit-hash">5e9b618</span>
+      <span class="commit-msg">feat(onboarding): differentiate zen1-refined and zen2-haiku</span>
+      <div class="commit-stat">2 files, +343 -257</div>
+    </div>
+    <div class="commit">
+      <span class="commit-hash">76471bd</span>
+      <span class="commit-msg">feat(e2e): redesign b10-signature-blend main app container</span>
+      <div class="commit-stat">1 file, +33 -15</div>
+    </div>
+    <div class="commit">
+      <span class="commit-hash">2f74ad2</span>
+      <span class="commit-msg">fix(controls): widen ls2-ray-tracing beam targets and labels</span>
+      <div class="commit-stat">1 file, +3 -3</div>
+    </div>
+    <div class="commit">
+      <span class="commit-hash">409b1f4</span>
+      <span class="commit-msg">fix(controls): improve zen2-haiku muji circle visibility</span>
+      <div class="commit-stat">1 file, +2 -2</div>
+    </div>
+    <div class="commit">
+      <span class="commit-hash">6fb0b52</span>
+      <span class="commit-msg">fix(screenshots): improve onboarding advancement and CTA selectors</span>
+      <div class="commit-stat">1 file, +20 -2</div>
+    </div>
+    <div class="commit">
+      <span class="commit-hash">1e149f9</span>
+      <span class="commit-msg">fix(e2e): fix a8-deco-discovery empty main app</span>
+      <div class="commit-stat">1 file, +3 -3</div>
+    </div>
+    <div class="commit">
+      <span class="commit-hash">8d09fb1</span>
+      <span class="commit-msg">fix(e2e): repair 07-particle-neumorphic splash transition</span>
+      <div class="commit-stat">1 file, +3 -1</div>
+    </div>
+    <div class="commit">
+      <span class="commit-hash">a6d1bdc</span>
+      <span class="commit-msg">fix(screenshots): add missing CTA selectors for flow automation</span>
+      <div class="commit-stat">44 files, +10 -4</div>
+    </div>
+    <div class="commit">
+      <span class="commit-hash">1e04e5d</span>
+      <span class="commit-msg">feat(design-review): accordion catalog UI + 4-step screenshot audit</span>
+      <div class="commit-stat">116 files, +338 -82</div>
+    </div>
+  </div>
+</div>
+
+</div><!-- .main -->
+
+<div style="text-align:center;padding:3rem 0 1rem;color:var(--text-muted);font-size:0.75rem;">
+  Generated 2026-03-03 &mdash; Poetry bil Araby Design Review
+</div>
+
+</body>
+</html>

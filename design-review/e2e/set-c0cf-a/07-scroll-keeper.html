@@ -1,26 +1,31 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>E2E #7: Scroll Keeper -- Physical Unroll</title>
-<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Forum&family=Reem+Kufi:wght@400;700&family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 :root {
   --parchment: #e8dcc4;
   --paper: #d4c4a8;
+  --paper-light: #f0e8d5;
   --wood: #3d3428;
   --ink: #1a1512;
   --ink-dim: rgba(26, 21, 18, 0.5);
   --gold: #C5A059;
+  --gold-dim: rgba(197, 160, 89, 0.35);
   --shadow: rgba(0, 0, 0, 0.15);
   --font-ar: 'Amiri', serif;
   --font-ui: 'Tajawal', system-ui, sans-serif;
+  --speed: 0.5s;
 }
 html.dark {
   --parchment: #1a1512;
   --paper: #0c0c0e;
+  --paper-light: #1e1b17;
   --wood: #e8dcc4;
   --ink: #e8dcc4;
   --ink-dim: rgba(232, 220, 196, 0.5);
@@ -30,288 +35,483 @@ html {
   font-family: var(--font-ui);
   background: var(--paper);
   color: var(--ink);
+  transition: background var(--speed), color var(--speed);
 }
-body { min-height: 100vh; }
+body { min-height: 100vh; overflow-x: hidden; }
 
-.theme-toggle {
-  position: fixed;
-  top: 24px;
-  right: 24px;
-  z-index: 100;
-  width: 48px;
-  height: 48px;
-  min-width: 44px;
-  min-height: 44px;
-  border-radius: 8px;
-  border: 2px solid var(--wood);
-  background: var(--parchment);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.3s ease;
-  font-size: 20px;
-  box-shadow: 0 4px 12px var(--shadow);
-  will-change: transform;
+/* ============ Paper Texture ============ */
+body::before {
+  content: '';
+  position: fixed; inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+  opacity: 0.6;
 }
-.theme-toggle:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px var(--shadow);
+
+/* Paper grain noise overlay */
+body::after {
+  content: '';
+  position: fixed; inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(61, 52, 40, 0.015) 2px,
+      rgba(61, 52, 40, 0.015) 4px
+    );
+  opacity: 0.8;
 }
-.theme-toggle:focus-visible {
-  outline: 3px solid var(--gold);
-  outline-offset: 2px;
-}
+html.dark body::after { opacity: 0.3; }
 
 /* Dust particle canvas */
 #dustCanvas {
-  position: fixed;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-  will-change: transform;
+  position: fixed; inset: 0;
+  z-index: 1; pointer-events: none;
 }
 
-/* Paper texture canvas */
-canvas#texture {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  pointer-events: none;
-  opacity: 0.4;
-}
-
-.screen {
-  position: relative;
-  width: 100%;
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+/* ============ Splash ============ */
+#splash {
+  position: fixed; inset: 0;
+  z-index: 100;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  background: var(--paper);
   padding: 24px;
+  transition: opacity 0.8s ease;
+  /* Paper texture for splash */
+  background-image:
+    radial-gradient(ellipse at 30% 20%, rgba(197, 160, 89, 0.08) 0%, transparent 50%),
+    radial-gradient(ellipse at 70% 80%, rgba(197, 160, 89, 0.06) 0%, transparent 50%),
+    linear-gradient(180deg, var(--paper-light) 0%, var(--paper) 100%);
+}
+#splash.done { opacity: 0; pointer-events: none; }
+
+/* Brand Logo on Splash */
+.splash-brand {
+  display: flex; align-items: flex-end; justify-content: center;
+  gap: 0.75rem;
+  margin-bottom: 2rem;
+  opacity: 0;
+  animation: fadeUp 1.2s ease 0.3s forwards;
   z-index: 2;
 }
-
-.label {
-  position: absolute;
-  top: 24px;
-  left: 24px;
-  font-size: 10px;
-  letter-spacing: 0.3em;
-  text-transform: uppercase;
+.splash-brand .en {
+  font-family: 'Forum', serif;
+  font-size: clamp(3rem, 6vw, 4.5rem);
+  letter-spacing: -0.05em;
   color: var(--gold);
-  opacity: 0.7;
+  line-height: 1;
+}
+.splash-brand .ar {
+  font-family: 'Reem Kufi', sans-serif;
+  font-weight: 700;
+  font-size: clamp(1.875rem, 4vw, 3rem);
+  color: var(--ink);
+  line-height: 1;
+  padding-bottom: 0.15em;
+}
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
-/* SPLASH - Dramatic Scroll Unroll from Center */
-#splash {
-  background: var(--paper);
-  overflow: hidden;
-}
-
+/* Scroll Container */
 .scroll-container {
-  max-width: 700px;
-  width: 100%;
+  max-width: 700px; width: 100%;
+  position: relative; z-index: 2;
   background: var(--parchment);
-  border: 8px solid var(--wood);
+  border: 6px solid var(--wood);
   border-radius: 4px;
-  padding: 64px 48px;
-  box-shadow: 0 20px 60px var(--shadow);
-  /* Dramatic unroll from center with elastic easing */
-  animation: scrollDramaticUnroll 1.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
-  will-change: transform, clip-path;
-  transform-origin: center center;
+  padding: 56px 48px;
+  box-shadow:
+    0 20px 60px var(--shadow),
+    inset 0 0 40px rgba(197, 160, 89, 0.06);
+  animation: scrollDramaticUnroll 2.2s cubic-bezier(0.25, 1, 0.5, 1) 0.8s backwards;
+  /* Paper edge effect */
+  background-image:
+    linear-gradient(90deg, rgba(61, 52, 40, 0.06) 0%, transparent 3%, transparent 97%, rgba(61, 52, 40, 0.06) 100%),
+    linear-gradient(180deg, rgba(61, 52, 40, 0.04) 0%, transparent 2%, transparent 98%, rgba(61, 52, 40, 0.04) 100%);
 }
 
 @keyframes scrollDramaticUnroll {
-  0% {
-    opacity: 0;
-    transform: scaleY(0.02) scaleX(0.8);
-    clip-path: inset(49% 5% 49% 5%);
-  }
-  30% {
-    opacity: 1;
-    transform: scaleY(0.4) scaleX(0.95);
-    clip-path: inset(30% 2% 30% 2%);
-  }
-  60% {
-    transform: scaleY(1.06) scaleX(1.01);
-    clip-path: inset(0% 0% 0% 0%);
-  }
-  80% {
-    transform: scaleY(0.98) scaleX(1);
-  }
-  100% {
-    opacity: 1;
-    transform: scaleY(1) scaleX(1);
-    clip-path: inset(0 0 0 0);
-  }
+  0% { opacity: 0; transform: scaleY(0.02) scaleX(0.85); clip-path: inset(49% 5% 49% 5%); }
+  40% { opacity: 1; transform: scaleY(0.5) scaleX(0.96); clip-path: inset(25% 2% 25% 2%); }
+  70% { transform: scaleY(1.02) scaleX(1); clip-path: inset(0% 0% 0% 0%); }
+  100% { opacity: 1; transform: scaleY(1) scaleX(1); clip-path: inset(0 0 0 0); }
 }
 
-.scroll-title {
-  font-family: var(--font-ar);
-  font-size: clamp(3rem, 8vw, 4.5rem);
-  font-weight: 700;
-  color: var(--ink);
-  text-align: center;
-  margin-bottom: 16px;
-  animation: fadeIn 1s 0.8s backwards;
+/* Roller ends - parchment scroll look */
+.scroll-container::before,
+.scroll-container::after {
+  content: '';
+  position: absolute; left: -12px; right: -12px;
+  height: 16px;
+  background: var(--wood);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px var(--shadow);
 }
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
+.scroll-container::before { top: -12px; }
+.scroll-container::after { bottom: -12px; }
 
 .scroll-subtitle {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--ink-dim);
   letter-spacing: 0.3em;
   text-transform: uppercase;
   text-align: center;
-  margin-bottom: 48px;
-  animation: fadeIn 1s 1s backwards;
+  margin-bottom: 2rem;
+  animation: fadeIn 1s 1.5s backwards;
 }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-.scroll-btn {
-  display: block;
+/* CTA Button */
+#enterBtn {
+  display: flex; align-items: center; gap: 0.5rem;
   margin: 0 auto;
-  padding: 16px 48px;
-  min-width: 44px;
-  min-height: 44px;
+  padding: 14px 40px;
+  min-width: 44px; min-height: 44px;
   background: var(--wood);
   color: var(--parchment);
-  border: none;
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.25em;
+  border: none; border-radius: 6px;
+  font-family: var(--font-ui);
+  font-size: 1rem; font-weight: 600;
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 4px 12px var(--shadow);
-  animation: scaleIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) 1.2s backwards;
-  will-change: transform;
+  animation: scaleIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) 2s backwards;
 }
 @keyframes scaleIn {
   from { opacity: 0; transform: scale(0.9); }
   to { opacity: 1; transform: scale(1); }
 }
-.scroll-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px var(--shadow);
+#enterBtn:hover { transform: translateY(-2px); box-shadow: 0 6px 16px var(--shadow); }
+#enterBtn:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+
+/* ============ Onboarding -- Illuminated Manuscript ============ */
+#onboarding {
+  position: fixed; inset: 0; z-index: 90;
+  background: var(--paper);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.6s ease;
+  cursor: pointer;
+  overflow: hidden;
 }
-.scroll-btn:focus-visible {
-  outline: 3px solid var(--gold);
-  outline-offset: 2px;
+html.dark #onboarding { background: var(--paper); }
+#onboarding.active { opacity: 1; pointer-events: auto; }
+
+/* Gilded border frame */
+.gilt-frame {
+  position: absolute; inset: 16px;
+  border: 2px solid var(--gold-dim);
+  pointer-events: none;
+}
+.gilt-frame::before, .gilt-frame::after {
+  content: ''; position: absolute;
+  width: 24px; height: 24px;
+  border: 2px solid var(--gold);
+}
+.gilt-frame::before { top: -2px; left: -2px; border-right: none; border-bottom: none; }
+.gilt-frame::after { bottom: -2px; right: -2px; border-left: none; border-top: none; }
+
+/* Manuscript page */
+.ms-page {
+  position: relative; z-index: 5;
+  max-width: 340px; width: 88%;
+  padding: 2.5rem 2rem;
+  background: var(--parchment);
+  border: 1.5px solid var(--wood);
+  box-shadow: 0 8px 32px var(--shadow);
+  text-align: center;
+  opacity: 0; transform: translateX(20px) rotateY(-3deg);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+  /* Parchment texture edge */
+  background-image:
+    linear-gradient(90deg, rgba(61,52,40,0.05) 0%, transparent 3%, transparent 97%, rgba(61,52,40,0.05) 100%);
+}
+.ms-page.active { opacity: 1; transform: translateX(0) rotateY(0); }
+
+/* Chapter marker */
+.ms-chapter {
+  font-family: 'Forum', serif;
+  font-size: 0.75rem; color: var(--gold);
+  letter-spacing: 0.3em; text-transform: uppercase;
+  margin-bottom: 0.8rem; direction: ltr;
 }
 
-/* MAIN */
+/* Decorative illuminated initial */
+.ms-initial {
+  font-family: var(--font-ar);
+  font-size: clamp(2.4rem, 6vw, 3.2rem);
+  color: var(--gold); line-height: 1.2;
+  margin-bottom: 0.3rem;
+  text-shadow: 0 0 20px rgba(197,160,89,0.2);
+}
+
+.ms-subtitle {
+  font-family: var(--font-ui);
+  font-size: 0.85rem; font-weight: 400;
+  color: var(--ink-dim);
+  margin-bottom: 1rem; direction: ltr;
+}
+
+/* Decorative gold rule */
+.ms-rule {
+  width: 60px; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  margin: 0 auto 1rem;
+}
+
+.ms-text {
+  font-family: var(--font-ui);
+  font-size: 0.86rem; line-height: 1.8;
+  color: var(--ink); opacity: 0.7; direction: ltr;
+}
+
+/* Folio number */
+.ms-folio {
+  position: absolute; bottom: 10px; left: 50%;
+  transform: translateX(-50%);
+  font-family: 'Forum', serif; font-size: 0.7rem;
+  color: var(--ink-dim); opacity: 0.5;
+}
+
+/* Bookmark tabs */
+.ms-tabs {
+  position: relative; z-index: 5;
+  display: flex; gap: 8px; margin-top: 2rem;
+  justify-content: center;
+}
+.ms-tab {
+  width: 20px; height: 4px; border-radius: 2px;
+  background: var(--ink-dim); opacity: 0.3;
+  transition: all 0.6s ease;
+}
+.ms-tab.active {
+  background: var(--gold);
+  opacity: 1; width: 32px;
+}
+.ms-tab.past { opacity: 0.6; background: var(--gold-dim); }
+
+.ms-hint {
+  position: relative; z-index: 5;
+  font-size: 11px; color: var(--ink-dim); opacity: 0.4;
+  margin-top: 1.2rem; letter-spacing: 0.2em;
+}
+
+/* ============ Main App ============ */
 #main {
-  background: var(--paper);
   display: none;
-  padding: 40px 24px;
+  min-height: 100vh;
+  padding: 2rem 1rem;
+  padding-right: 4.5rem;
+  position: relative; z-index: 2;
 }
+#main.show { display: block; }
 .main-layout {
-  max-width: 900px;
-  width: 100%;
-  margin: 0 auto;
+  max-width: 800px; width: 100%; margin: 0 auto;
 }
-.main-nav {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 48px;
-  padding: 16px 24px;
+
+/* ============ Illuminated Margins ============ */
+.illuminated-frame {
+  position: relative;
+  padding: 0 24px;
+}
+/* Gold decorative borders left and right */
+.illuminated-frame::before,
+.illuminated-frame::after {
+  content: '';
+  position: absolute; top: 0; bottom: 0; width: 3px;
+  background:
+    repeating-linear-gradient(
+      180deg,
+      var(--gold) 0px,
+      var(--gold) 8px,
+      transparent 8px,
+      transparent 12px,
+      var(--gold-dim) 12px,
+      var(--gold-dim) 16px,
+      transparent 16px,
+      transparent 20px
+    );
+  opacity: 0.6;
+}
+.illuminated-frame::before { left: 0; }
+.illuminated-frame::after { right: 0; }
+
+/* Margin annotations */
+.margin-note {
+  position: absolute;
+  font-family: var(--font-ar); font-size: 0.7rem;
+  color: var(--ink-dim); font-style: italic;
+  opacity: 0.35; writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}
+.margin-note-left { left: -20px; top: 50%; transform: translateY(-50%) rotate(180deg); }
+
+/* ============ Controls - Vertical (Desktop) ============ */
+.controls-vertical {
+  position: fixed; top: 50%; right: 0.75rem;
+  transform: translateY(-50%);
+  display: flex; flex-direction: column; gap: 0.5rem;
+  z-index: 50;
+}
+.ctrl-btn {
+  width: 44px; height: 44px;
+  border-radius: 10px;
   background: var(--parchment);
-  border: 4px solid var(--wood);
-  border-radius: 8px;
+  border: 1.5px solid var(--wood);
+  color: var(--ink);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background 0.25s, border-color 0.25s, transform 0.2s, box-shadow 0.3s;
+  box-shadow: 0 2px 8px var(--shadow);
+}
+.ctrl-btn:hover, .ctrl-btn:focus-visible {
+  border-color: var(--gold);
+  transform: scale(1.08) translateY(-1px);
   box-shadow: 0 4px 12px var(--shadow);
 }
-.main-brand {
-  font-family: var(--font-ar);
-  font-size: 24px;
-  font-weight: 700;
-  color: var(--ink);
-}
+.ctrl-btn svg { width: 20px; height: 20px; }
 
+/* ============ CONTROLS: Scroll Roller Handles (Mobile) ============ */
+.controls-bottom {
+  display: none;
+  position: fixed; bottom: 0; left: 0; right: 0;
+  z-index: 50;
+  flex-direction: column;
+  align-items: center;
+}
+/* Ornate scroll roller ends */
+.scroll-roller-bar {
+  display: flex; align-items: center; justify-content: center;
+  width: 100%; padding: 0;
+}
+.scroll-roller-end {
+  width: 28px; height: 56px; flex-shrink: 0;
+  background: linear-gradient(180deg, #8b7355, #5a4630, #3d2a14, #5a4630, #8b7355);
+  border: 1px solid rgba(197,160,89,0.3);
+  border-radius: 4px;
+  box-shadow: 2px 0 6px var(--shadow), -2px 0 6px var(--shadow);
+  position: relative;
+}
+/* Ornate gold tips on rollers */
+.scroll-roller-end::before,
+.scroll-roller-end::after {
+  content: '';
+  position: absolute; left: 4px; right: 4px; height: 3px;
+  background: var(--gold);
+  border-radius: 2px;
+}
+.scroll-roller-end::before { top: 6px; }
+.scroll-roller-end::after { bottom: 6px; }
+
+/* Gilded icons between the scroll rollers */
+.scroll-icons-strip {
+  display: flex; align-items: center; justify-content: space-around;
+  flex: 1;
+  padding: 10px 8px 14px;
+  background: var(--parchment);
+  border-top: 2px solid var(--gold-dim);
+  border-bottom: none;
+}
+html.dark .scroll-icons-strip { background: var(--paper-light); }
+
+.scroll-action-btn {
+  width: 44px; height: 44px;
+  display: flex; align-items: center; justify-content: center;
+  background: transparent; border: none;
+  color: var(--gold); cursor: pointer;
+  transition: all 0.2s; border-radius: 8px;
+}
+.scroll-action-btn:hover, .scroll-action-btn:focus-visible {
+  color: var(--ink);
+  background: rgba(197,160,89,0.12);
+}
+.scroll-action-btn svg { width: 20px; height: 20px; }
+
+/* ============ Poem Card - Illuminated Manuscript ============ */
 .poem-scroll {
   background: var(--parchment);
-  border: 4px solid var(--wood);
+  border: 3px solid var(--wood);
   border-radius: 4px;
-  padding: 48px;
-  margin-bottom: 24px;
-  box-shadow: 0 8px 24px var(--shadow);
+  padding: 3rem 2.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow:
+    0 8px 24px var(--shadow),
+    inset 0 0 30px rgba(197, 160, 89, 0.04);
   transition: all 0.3s ease;
+  position: relative;
+  /* Aged paper texture */
+  background-image:
+    linear-gradient(90deg, rgba(61, 52, 40, 0.06) 0%, transparent 3%, transparent 97%, rgba(61, 52, 40, 0.06) 100%),
+    linear-gradient(180deg, rgba(61, 52, 40, 0.04) 0%, transparent 2%, transparent 98%, rgba(61, 52, 40, 0.04) 100%);
 }
+/* Scroll roller ends on card */
+.poem-scroll::before,
+.poem-scroll::after {
+  content: '';
+  position: absolute; left: -8px; right: -8px;
+  height: 12px;
+  background: var(--wood);
+  border-radius: 6px;
+  box-shadow: 0 1px 4px var(--shadow);
+}
+.poem-scroll::before { top: -8px; }
+.poem-scroll::after { bottom: -8px; }
+
 .poem-scroll:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 32px var(--shadow);
+  transform: translateY(-3px);
+  box-shadow: 0 12px 32px var(--shadow), inset 0 0 30px rgba(197, 160, 89, 0.04);
 }
 
+/* Gilded drop cap effect */
 .poem-text {
   font-family: var(--font-ar);
-  font-size: 32px;
-  line-height: 2.2;
+  font-size: 1.75rem;
+  line-height: 2.4;
   color: var(--ink);
-  text-align: right;
+  text-align: center;
   direction: rtl;
-  margin-bottom: 32px;
+  margin-bottom: 1.5rem;
+}
+.poem-text::first-letter {
+  font-size: 2.8rem;
+  color: var(--gold);
+  float: right;
+  margin-left: 8px;
+  line-height: 1;
+  text-shadow: 0 0 8px rgba(197,160,89,0.3);
 }
 .poem-author {
-  font-size: 14px;
+  font-size: 1rem;
   color: var(--gold);
-  text-align: left;
-  font-weight: 600;
+  text-align: center;
+  font-family: var(--font-ar);
+}
+.poem-author::before, .poem-author::after {
+  content: ''; display: inline-block; width: 36px; height: 1px;
+  background: var(--gold-dim); vertical-align: middle; margin: 0 0.8rem;
 }
 
-.scandi-btn {
-  padding: 14px 40px;
-  min-width: 44px;
-  min-height: 44px;
-  background: var(--wood);
-  color: var(--parchment);
-  border: none;
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.25em;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 12px var(--shadow);
-  will-change: transform;
-}
-.scandi-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 16px var(--shadow);
-}
-.scandi-btn:focus-visible {
-  outline: 3px solid var(--gold);
-  outline-offset: 2px;
-}
-
+/* ============ Responsive ============ */
 @media (max-width: 768px) {
-  .scroll-container {
-    padding: 48px 32px;
-    border-width: 4px;
-  }
-  .scroll-title { font-size: 3rem; }
-  .poem-scroll { padding: 32px 24px; }
-  .poem-text {
-    font-size: 24px;
-    line-height: 2;
-  }
-  .theme-toggle {
-    width: 44px;
-    height: 44px;
-    top: 16px;
-    right: 16px;
-  }
-  .label {
-    font-size: 8px;
-    top: 16px;
-    left: 16px;
-  }
+  #main { padding: 2rem 1rem 6rem; padding-right: 1rem; }
+  .controls-vertical { display: none; }
+  .controls-bottom { display: flex; }
+  .scroll-container { padding: 40px 28px; border-width: 4px; }
+  .poem-scroll { padding: 2rem 1.5rem; }
+  .poem-text { font-size: 1.35rem; line-height: 2.1; }
+  .illuminated-frame { padding: 0 12px; }
+}
+@media (max-width: 480px) {
+  .poem-scroll { padding: 1.5rem 1.25rem; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -321,152 +521,248 @@ canvas#texture {
     transition-duration: 0.01ms !important;
   }
   #dustCanvas { display: none; }
-  .scroll-container {
-    opacity: 1 !important;
-    transform: none !important;
-    clip-path: none !important;
-  }
+  #splash { display: none !important; }
+  #onboarding { display: none !important; }
+  #main { display: block !important; opacity: 1 !important; }
+  .scroll-container { opacity: 1 !important; transform: none !important; clip-path: none !important; }
 }
 </style>
 </head>
 <body>
-  <canvas id="texture"></canvas>
   <canvas id="dustCanvas"></canvas>
 
-  <button class="theme-toggle" id="themeBtn" aria-label="Toggle theme">
-    <span id="theme-icon">&#9790;</span>
-  </button>
-
-  <div class="screen" id="splash">
-    <div class="label">Scroll Keeper</div>
+  <!-- ======== Splash ======== -->
+  <div id="splash">
+    <div class="splash-brand">
+      <span class="en">poetry</span>
+      <span class="ar">بالعربي</span>
+    </div>
     <div class="scroll-container">
-      <h1 class="scroll-title">&#1602;&#1575;&#1601;&#1610;&#1577;</h1>
       <p class="scroll-subtitle">Ancient Scrolls, Modern Reading</p>
-      <button class="scroll-btn" onclick="showMain()">Unroll</button>
+      <button id="enterBtn" aria-label="Enter the app">
+        <i data-lucide="scroll" style="width:18px;height:18px;"></i>
+        <span>افتح المخطوط</span>
+      </button>
     </div>
   </div>
 
-  <div class="screen" id="main">
+  <!-- ======== Onboarding ======== -->
+  <div id="onboarding" data-step="0">
+    <div class="gilt-frame"></div>
+
+    <div class="ms-page active" data-ms="0">
+      <div class="ms-chapter">Chapter I</div>
+      <div class="ms-initial" lang="ar" dir="rtl">المخطوط</div>
+      <div class="ms-subtitle">The Manuscript</div>
+      <div class="ms-rule"></div>
+      <div class="ms-text">Ancient scrolls unrolled for modern eyes. Thousands of poems preserved across centuries.</div>
+      <div class="ms-folio">f. 1r</div>
+    </div>
+    <div class="ms-page" data-ms="1">
+      <div class="ms-chapter">Chapter II</div>
+      <div class="ms-initial" lang="ar" dir="rtl">الصوت</div>
+      <div class="ms-subtitle">The Voice</div>
+      <div class="ms-rule"></div>
+      <div class="ms-text">Hear the words as they were meant to be spoken. AI recitation that honours the rhythm of Arabic verse.</div>
+      <div class="ms-folio">f. 2r</div>
+    </div>
+    <div class="ms-page" data-ms="2">
+      <div class="ms-chapter">Chapter III</div>
+      <div class="ms-initial" lang="ar" dir="rtl">الحفظ</div>
+      <div class="ms-subtitle">The Collection</div>
+      <div class="ms-rule"></div>
+      <div class="ms-text">Mark the passages that move you. Build your own library of treasured verses.</div>
+      <div class="ms-folio">f. 3r</div>
+    </div>
+
+    <div class="ms-tabs">
+      <div class="ms-tab active" data-tab="0"></div>
+      <div class="ms-tab" data-tab="1"></div>
+      <div class="ms-tab" data-tab="2"></div>
+    </div>
+    <div class="ms-hint">tap</div>
+  </div>
+
+  <!-- ======== Main App ======== -->
+  <div id="main">
     <div class="main-layout">
-      <nav class="main-nav">
-        <div class="main-brand">&#1602;&#1575;&#1601;&#1610;&#1577;</div>
+      <!-- Vertical Controls (Desktop) -->
+      <nav class="controls-vertical" aria-label="App controls">
+        <button class="ctrl-btn" aria-label="Next poem"><i data-lucide="shuffle"></i></button>
+        <button class="ctrl-btn" aria-label="Save poem"><i data-lucide="heart"></i></button>
+        <button class="ctrl-btn" aria-label="Listen"><i data-lucide="headphones"></i></button>
+        <button class="ctrl-btn" aria-label="Share poem"><i data-lucide="share-2"></i></button>
+        <button class="ctrl-btn" id="themeBtn" aria-label="Toggle theme"><i data-lucide="sun"></i></button>
       </nav>
 
-      <div class="poem-scroll">
-        <div class="poem-text" lang="ar" dir="rtl">
-          &#1571;&#1614;&#1606;&#1575; &#1575;&#1604;&#1576;&#1614;&#1581;&#1585;&#1615; &#1601;&#1610; &#1571;&#1614;&#1581;&#1588;&#1575;&#1574;&#1616;&#1607;&#1616; &#1575;&#1604;&#1583;&#1615;&#1585;&#1615;&#1617; &#1603;&#1575;&#1605;&#1616;&#1606;&#1612;<br>
-          &#1601;&#1614;&#1607;&#1614;&#1604; &#1587;&#1614;&#1571;&#1614;&#1604;&#1608;&#1575; &#1575;&#1604;&#1594;&#1614;&#1608;&#1617;&#1575;&#1589;&#1614; &#1593;&#1614;&#1606; &#1589;&#1614;&#1583;&#1614;&#1601;&#1575;&#1578;&#1610;
+      <!-- Scroll Roller Controls (Mobile) -->
+      <nav class="controls-bottom" aria-label="App controls">
+        <div class="scroll-roller-bar">
+          <div class="scroll-roller-end"></div>
+          <div class="scroll-icons-strip">
+            <button class="scroll-action-btn" aria-label="Next poem"><i data-lucide="shuffle"></i></button>
+            <button class="scroll-action-btn" aria-label="Save poem"><i data-lucide="heart"></i></button>
+            <button class="scroll-action-btn" aria-label="Listen"><i data-lucide="headphones"></i></button>
+            <button class="scroll-action-btn" aria-label="Share poem"><i data-lucide="share-2"></i></button>
+          </div>
+          <div class="scroll-roller-end"></div>
         </div>
-        <div class="poem-author">-- &#1571;&#1581;&#1605;&#1583; &#1588;&#1608;&#1602;&#1610;</div>
-      </div>
+      </nav>
 
-      <button class="scandi-btn">Next Scroll</button>
+      <!-- Illuminated Frame -->
+      <div class="illuminated-frame">
+        <div class="poem-scroll">
+        <div class="poem-text" lang="ar" dir="rtl">
+          أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ<br>
+          فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
+        </div>
+        <div class="poem-author">أحمد شوقي</div>
+      </div>
+      </div><!-- /illuminated-frame -->
     </div>
   </div>
 
 <script>
-var themeBtn = document.getElementById('themeBtn');
-var themeIcon = document.getElementById('theme-icon');
+(function() {
+  'use strict';
 
-themeBtn.addEventListener('click', function() {
-  document.documentElement.classList.toggle('dark');
-  themeIcon.textContent = document.documentElement.classList.contains('dark') ? '\u2606' : '\u263E';
-});
+  /* ---------- Onboarding -- Illuminated Manuscript ---------- */
+  var msPages = document.querySelectorAll('.ms-page');
+  var msTabs = document.querySelectorAll('.ms-tab');
+  var msStep = 0;
+  var totalMs = msPages.length;
 
-function showMain() {
-  document.getElementById('splash').style.display = 'none';
-  document.getElementById('main').style.display = 'flex';
-}
-
-// Paper texture
-var texCanvas = document.getElementById('texture');
-var texCtx = texCanvas.getContext('2d');
-texCanvas.width = window.innerWidth;
-texCanvas.height = window.innerHeight;
-
-for (var i = 0; i < 200; i++) {
-  texCtx.fillStyle = 'rgba(61, 52, 40, ' + (Math.random() * 0.05) + ')';
-  texCtx.fillRect(Math.random() * texCanvas.width, Math.random() * texCanvas.height, 2, 2);
-}
-
-// === Floating Parchment Dust Particles ===
-var dustCanvas = document.getElementById('dustCanvas');
-var dustCtx = dustCanvas.getContext('2d');
-var isMobile = window.innerWidth <= 768;
-var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-var dustParticles = [];
-var dustAnimId;
-
-function resizeDust() {
-  dustCanvas.width = window.innerWidth;
-  dustCanvas.height = window.innerHeight;
-}
-resizeDust();
-window.addEventListener('resize', resizeDust);
-
-var maxDust = isMobile ? 25 : 50;
-var dustColors = ['#C5A059', '#d4c4a8', '#e8dcc4', '#B89B6E'];
-
-function DustMote() {
-  this.x = Math.random() * dustCanvas.width;
-  this.y = Math.random() * dustCanvas.height;
-  this.size = Math.random() * 2 + 0.5;
-  this.speedX = (Math.random() - 0.5) * 0.3;
-  this.speedY = (Math.random() - 0.5) * 0.3 - 0.2;
-  this.opacity = Math.random() * 0.4 + 0.1;
-  this.drift = Math.random() * Math.PI * 2;
-  this.driftSpeed = Math.random() * 0.01 + 0.005;
-  this.color = dustColors[Math.floor(Math.random() * dustColors.length)];
-}
-
-DustMote.prototype.update = function() {
-  this.drift += this.driftSpeed;
-  this.x += this.speedX + Math.sin(this.drift) * 0.3;
-  this.y += this.speedY;
-  this.opacity += (Math.random() - 0.5) * 0.01;
-  if (this.opacity > 0.5) this.opacity = 0.5;
-  if (this.opacity < 0.05) this.opacity = 0.05;
-  if (this.y < -10) { this.y = dustCanvas.height + 10; this.x = Math.random() * dustCanvas.width; }
-  if (this.x < -10) this.x = dustCanvas.width + 10;
-  if (this.x > dustCanvas.width + 10) this.x = -10;
-};
-
-DustMote.prototype.draw = function() {
-  dustCtx.beginPath();
-  dustCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-  dustCtx.fillStyle = this.color;
-  dustCtx.globalAlpha = this.opacity;
-  dustCtx.fill();
-  dustCtx.globalAlpha = 1;
-};
-
-function initDust() {
-  dustParticles = [];
-  for (var i = 0; i < maxDust; i++) {
-    dustParticles.push(new DustMote());
+  function showMsStep() {
+    document.getElementById('onboarding').setAttribute('data-step', msStep);
+    for (var i = 0; i < msPages.length; i++) {
+      msPages[i].classList.remove('active');
+      msTabs[i].classList.remove('active');
+      msTabs[i].classList.remove('past');
+      if (i < msStep) msTabs[i].classList.add('past');
+    }
+    if (msStep < totalMs) {
+      msPages[msStep].classList.add('active');
+      msTabs[msStep].classList.add('active');
+    }
   }
-}
 
-function animateDust() {
-  dustCtx.clearRect(0, 0, dustCanvas.width, dustCanvas.height);
-  dustParticles.forEach(function(p) { p.update(); p.draw(); });
-  dustAnimId = requestAnimationFrame(animateDust);
-}
+  /* ---------- Splash -> Onboarding ---------- */
+  function enterApp() {
+    var splash = document.getElementById('splash');
+    splash.classList.add('done');
+    setTimeout(function() {
+      splash.style.display = 'none';
+      document.getElementById('onboarding').classList.add('active');
+      msStep = 0;
+      showMsStep();
+    }, 800);
+  }
 
-if (!reducedMotion) {
-  initDust();
-  animateDust();
-}
+  /* ---------- init ---------- */
+  var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-window.addEventListener('resize', function() {
-  texCanvas.width = window.innerWidth;
-  texCanvas.height = window.innerHeight;
-  for (var i = 0; i < 200; i++) {
-    texCtx.fillStyle = 'rgba(61, 52, 40, ' + (Math.random() * 0.05) + ')';
-    texCtx.fillRect(Math.random() * texCanvas.width, Math.random() * texCanvas.height, 2, 2);
+  if (reducedMotion) {
+    document.getElementById('splash').style.display = 'none';
+    document.getElementById('main').style.display = 'block';
+  }
+
+  document.getElementById('enterBtn').addEventListener('click', enterApp);
+  document.getElementById('onboarding').addEventListener('click', function(e) {
+    if (e.target.closest('#enterBtn')) return;
+    msStep++;
+    if (msStep >= totalMs) {
+      document.getElementById('onboarding').classList.remove('active');
+      document.getElementById('main').classList.add('show');
+    } else {
+      showMsStep();
+    }
+  });
+
+  /* ---------- Theme Toggle ---------- */
+  var themeBtn = document.getElementById('themeBtn');
+  themeBtn.addEventListener('click', function() {
+    document.documentElement.classList.toggle('dark');
+    var isDark = document.documentElement.classList.contains('dark');
+    var icon = themeBtn.querySelector('i');
+    if (icon) {
+      icon.setAttribute('data-lucide', isDark ? 'moon' : 'sun');
+      lucide.createIcons({ nodes: [themeBtn] });
+    }
+    themeBtn.setAttribute('aria-label',
+      isDark ? 'Switch to light theme' : 'Switch to dark theme');
+  });
+
+  /* ---------- Floating Parchment Dust Particles ---------- */
+  var dustCanvas = document.getElementById('dustCanvas');
+  var dustCtx = dustCanvas.getContext('2d');
+  var isMobile = window.innerWidth <= 768;
+  var dustParticles = [];
+  var dustAnimId;
+
+  function resizeDust() {
+    dustCanvas.width = window.innerWidth;
+    dustCanvas.height = window.innerHeight;
   }
   resizeDust();
-});
+  window.addEventListener('resize', resizeDust);
+
+  var maxDust = isMobile ? 25 : 50;
+  var dustColors = ['#C5A059', '#d4c4a8', '#e8dcc4', '#B89B6E'];
+
+  function DustMote() {
+    this.x = Math.random() * dustCanvas.width;
+    this.y = Math.random() * dustCanvas.height;
+    this.size = Math.random() * 2 + 0.5;
+    this.speedX = (Math.random() - 0.5) * 0.3;
+    this.speedY = (Math.random() - 0.5) * 0.3 - 0.2;
+    this.opacity = Math.random() * 0.4 + 0.1;
+    this.drift = Math.random() * Math.PI * 2;
+    this.driftSpeed = Math.random() * 0.01 + 0.005;
+    this.color = dustColors[Math.floor(Math.random() * dustColors.length)];
+  }
+
+  DustMote.prototype.update = function() {
+    this.drift += this.driftSpeed;
+    this.x += this.speedX + Math.sin(this.drift) * 0.3;
+    this.y += this.speedY;
+    this.opacity += (Math.random() - 0.5) * 0.01;
+    if (this.opacity > 0.5) this.opacity = 0.5;
+    if (this.opacity < 0.05) this.opacity = 0.05;
+    if (this.y < -10) { this.y = dustCanvas.height + 10; this.x = Math.random() * dustCanvas.width; }
+    if (this.x < -10) this.x = dustCanvas.width + 10;
+    if (this.x > dustCanvas.width + 10) this.x = -10;
+  };
+
+  DustMote.prototype.draw = function() {
+    dustCtx.beginPath();
+    dustCtx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    dustCtx.fillStyle = this.color;
+    dustCtx.globalAlpha = this.opacity;
+    dustCtx.fill();
+    dustCtx.globalAlpha = 1;
+  };
+
+  function initDust() {
+    dustParticles = [];
+    for (var i = 0; i < maxDust; i++) {
+      dustParticles.push(new DustMote());
+    }
+  }
+
+  function animateDust() {
+    dustCtx.clearRect(0, 0, dustCanvas.width, dustCanvas.height);
+    dustParticles.forEach(function(p) { p.update(); p.draw(); });
+    dustAnimId = requestAnimationFrame(animateDust);
+  }
+
+  if (!reducedMotion) {
+    initDust();
+    animateDust();
+  }
+
+  /* ---------- Lucide icons init ---------- */
+  lucide.createIcons();
+})();
 </script>
 </body>
 </html>

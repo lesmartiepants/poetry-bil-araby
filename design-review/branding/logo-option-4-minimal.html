@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Logo Option 4 - Ultra-thin | Poetry بالعربي</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=Forum&family=Reem+Kufi:wght@400;700&family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    :root {
+      --bg-primary: #0e0e10;
+      --bg-secondary: #161618;
+      --bg-card: #1c1c1f;
+      --text-primary: #e4e4e7;
+      --text-secondary: #71717a;
+      --border-color: #27272a;
+      --accent: #a1a1aa;
+    }
+
+    [data-theme="light"] {
+      --bg-primary: #ffffff;
+      --bg-secondary: #fafafa;
+      --bg-card: #ffffff;
+      --text-primary: #18181b;
+      --text-secondary: #a1a1aa;
+      --border-color: #e4e4e7;
+      --accent: #71717a;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Tajawal', sans-serif;
+      font-weight: 300;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      min-height: 100vh;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+
+    .brand {
+      display: flex;
+      align-items: flex-end;
+      gap: 0.2em;
+    }
+
+    .brand-en {
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 300;
+      text-transform: lowercase;
+      letter-spacing: 0.08em;
+      line-height: 1;
+      color: var(--text-primary);
+    }
+
+    .brand-ar {
+      font-family: 'Tajawal', sans-serif;
+      font-weight: 300;
+      line-height: 1;
+      color: var(--text-primary);
+      direction: rtl;
+    }
+
+    .brand-separator {
+      width: 1px;
+      background: var(--border-color);
+      align-self: stretch;
+      margin: 0 0.15em;
+      opacity: 0.6;
+    }
+
+    /* Hero context */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-primary);
+    }
+
+    .hero .brand {
+      justify-content: center;
+    }
+
+    .hero .brand-en {
+      font-size: clamp(3rem, 6vw, 4.5rem);
+    }
+
+    .hero .brand-ar {
+      font-size: clamp(2.25rem, 4.5vw, 3.375rem);
+      font-weight: 400;
+    }
+
+    .hero .brand-separator {
+      height: clamp(2rem, 4vw, 3rem);
+    }
+
+    .hero-label {
+      margin-top: 3rem;
+      font-size: 0.75rem;
+      font-weight: 300;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.3em;
+    }
+
+    /* Section layout */
+    .section {
+      padding: 4rem 1.5rem;
+      border-top: 1px solid var(--border-color);
+    }
+
+    /* Nav context */
+    .nav-demo {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: 0;
+      padding: 0.75rem 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .nav-demo .brand-en {
+      font-size: 1.125rem;
+    }
+
+    .nav-demo .brand-ar {
+      font-size: 0.8125rem;
+    }
+
+    .nav-demo .brand-separator {
+      height: 0.875rem;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 1.5rem;
+      align-items: center;
+    }
+
+    .nav-link {
+      font-family: 'Tajawal', sans-serif;
+      font-weight: 300;
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      text-decoration: none;
+      letter-spacing: 0.04em;
+    }
+
+    /* Card context */
+    .card-demo {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 0;
+      padding: 2.5rem 2rem;
+      max-width: 360px;
+      margin: 0 auto;
+    }
+
+    .card-demo .brand {
+      margin-bottom: 2rem;
+    }
+
+    .card-demo .brand-en {
+      font-size: 1.375rem;
+    }
+
+    .card-demo .brand-ar {
+      font-size: 1rem;
+    }
+
+    .card-demo .brand-separator {
+      height: 1rem;
+    }
+
+    .card-poem {
+      font-family: 'Tajawal', sans-serif;
+      font-weight: 300;
+      font-size: 1.0625rem;
+      line-height: 2.2;
+      color: var(--text-primary);
+      direction: rtl;
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .card-divider {
+      width: 24px;
+      height: 1px;
+      background: var(--border-color);
+      margin: 0 auto 1rem auto;
+    }
+
+    .card-poet {
+      font-family: 'Tajawal', sans-serif;
+      font-weight: 300;
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      text-align: center;
+      letter-spacing: 0.05em;
+    }
+
+    /* Theme toggle */
+    .theme-toggle {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      width: 48px;
+      height: 48px;
+      border-radius: 0;
+      border: 1px solid var(--border-color);
+      background: transparent;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 100;
+      transition: color 0.3s ease;
+    }
+
+    .theme-toggle:hover {
+      color: var(--text-primary);
+    }
+
+    .theme-toggle svg {
+      width: 16px;
+      height: 16px;
+      stroke-width: 1;
+    }
+
+    /* Context labels */
+    .context-badge {
+      display: inline-block;
+      font-family: 'Tajawal', sans-serif;
+      font-weight: 300;
+      font-size: 0.625rem;
+      text-transform: uppercase;
+      letter-spacing: 0.2em;
+      color: var(--text-secondary);
+      margin-bottom: 1.5rem;
+    }
+
+    /* Icon visibility for theme toggle */
+    .icon-sun, .icon-moon {
+      display: none;
+    }
+
+    [data-mode="dark"] .icon-sun {
+      display: block;
+    }
+
+    [data-mode="light"] .icon-moon {
+      display: block;
+    }
+  </style>
+</head>
+<body data-mode="dark">
+  <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+    <span class="icon-sun"><i data-lucide="sun"></i></span>
+    <span class="icon-moon"><i data-lucide="moon"></i></span>
+  </button>
+
+  <!-- Hero Context -->
+  <section class="hero">
+    <div class="brand">
+      <span class="brand-en">poetry</span>
+      <span class="brand-separator"></span>
+      <span class="brand-ar" dir="rtl" lang="ar">بالعربي</span>
+    </div>
+    <p class="hero-label">Option 4 -- Ultra-thin</p>
+  </section>
+
+  <!-- Nav Context -->
+  <section class="section">
+    <span class="context-badge">Navigation</span>
+    <div class="nav-demo">
+      <div class="brand">
+        <span class="brand-en">poetry</span>
+        <span class="brand-separator"></span>
+        <span class="brand-ar" dir="rtl" lang="ar">بالعربي</span>
+      </div>
+      <nav class="nav-links">
+        <a href="#" class="nav-link">Discover</a>
+        <a href="#" class="nav-link">Poets</a>
+      </nav>
+    </div>
+  </section>
+
+  <!-- Card Context -->
+  <section class="section">
+    <span class="context-badge">Card</span>
+    <div class="card-demo">
+      <div class="brand">
+        <span class="brand-en">poetry</span>
+        <span class="brand-separator"></span>
+        <span class="brand-ar" dir="rtl" lang="ar">بالعربي</span>
+      </div>
+      <p class="card-poem" lang="ar" dir="rtl">
+        وما نيلُ المطالبِ بالتمنّي<br>
+        ولكنْ تُؤخَذُ الدنيا غِلابا
+      </p>
+      <div class="card-divider"></div>
+      <p class="card-poet" lang="ar" dir="rtl">أحمد شوقي</p>
+    </div>
+  </section>
+
+  <script>
+    lucide.createIcons();
+
+    const toggle = document.getElementById('themeToggle');
+    let isDark = true;
+
+    toggle.addEventListener('click', function() {
+      isDark = !isDark;
+      document.documentElement.setAttribute('data-theme', isDark ? '' : 'light');
+      document.body.setAttribute('data-mode', isDark ? 'dark' : 'light');
+    });
+  </script>
+</body>
+</html>

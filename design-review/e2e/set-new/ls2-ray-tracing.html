@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>E2E: Minimal Ray Tracing - One Perfect Beam</title>
+<link href="https://fonts.googleapis.com/css2?family=Forum&family=Reem+Kufi:wght@400;700&family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+  :root {
+    --gold: #C5A059;
+    --gold-glow: rgba(197, 160, 89, 0.35);
+    --bg: #000000;
+    --text: #e7e5e4;
+    --text-dim: rgba(231, 229, 228, 0.5);
+    --warm: #fbbf24;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html {
+    font-family: 'Tajawal', system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow-x: hidden;
+  }
+  body { min-height: 100vh; }
+
+  .screen {
+    position: relative;
+    width: 100%;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ===== SPLASH ===== */
+  #splash {
+    background: var(--bg);
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    transition: opacity 0.8s ease;
+  }
+  #splash.hidden { opacity: 0; pointer-events: none; }
+
+  /* Pure darkness base */
+  .darkness {
+    position: absolute; inset: 0;
+    background: var(--bg);
+    z-index: 1;
+  }
+
+  /* Light ray - wider sweep */
+  .light-ray {
+    position: absolute;
+    width: 140px;
+    height: 150%;
+    left: calc(var(--light-x, 50%) - 70px);
+    top: -25%;
+    background: linear-gradient(
+      180deg,
+      rgba(255, 245, 220, 0.45) 0%,
+      rgba(255, 235, 200, 0.3) 15%,
+      rgba(255, 225, 180, 0.2) 30%,
+      rgba(255, 215, 160, 0.12) 45%,
+      rgba(255, 205, 140, 0.08) 60%,
+      rgba(255, 195, 120, 0.04) 80%,
+      transparent 100%
+    );
+    filter: blur(30px);
+    z-index: 2;
+    transform-origin: center top;
+    transform: rotate(var(--ray-angle, -8deg)) skewX(-2deg);
+    mix-blend-mode: screen;
+    pointer-events: none;
+    will-change: left, transform;
+  }
+
+  /* Secondary ray for depth */
+  .light-ray-secondary {
+    position: absolute;
+    width: 80px;
+    height: 130%;
+    left: calc(var(--light-x2, 70%) - 40px);
+    top: -15%;
+    background: linear-gradient(
+      180deg,
+      rgba(255, 245, 220, 0.2) 0%,
+      rgba(255, 235, 200, 0.12) 30%,
+      rgba(255, 215, 160, 0.05) 60%,
+      transparent 100%
+    );
+    filter: blur(25px);
+    z-index: 2;
+    transform-origin: center top;
+    transform: rotate(var(--ray-angle2, 6deg));
+    mix-blend-mode: screen;
+    pointer-events: none;
+    opacity: 0.6;
+    will-change: left, transform;
+  }
+
+  /* Dust particle canvas */
+  #dustCanvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 3;
+    pointer-events: none;
+  }
+
+  /* Splash content */
+  .splash-content {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    max-width: 700px;
+    padding: 0 2rem;
+    opacity: 0;
+    animation: fadeUp 2s ease 1s forwards;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(40px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Brand */
+  .brand {
+    display: flex;
+    flex-direction: row-reverse;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 3rem;
+  }
+  .brand-en {
+    font-family: 'Forum', serif;
+    font-size: clamp(3rem, 6vw, 4.5rem);
+    letter-spacing: -0.05em;
+    text-transform: lowercase;
+    color: #a8a29e;
+    text-shadow:
+      0 0 40px rgba(168, 162, 158, 0.2),
+      0 5px 20px rgba(0, 0, 0, 1);
+  }
+  .brand-ar {
+    font-family: 'Reem Kufi', sans-serif;
+    font-size: clamp(1.875rem, 4vw, 3rem);
+    font-weight: 700;
+    color: var(--warm);
+    text-shadow:
+      0 0 60px rgba(251, 191, 36, 0.5),
+      0 0 100px rgba(255, 235, 180, 0.3),
+      0 5px 25px rgba(0, 0, 0, 1);
+  }
+
+  /* Verse */
+  .verse {
+    margin-bottom: 2.5rem;
+  }
+  .verse-ar {
+    font-family: 'Amiri', serif;
+    font-size: clamp(1.5rem, 4vw, 2.5rem);
+    color: var(--text);
+    margin-bottom: 1rem;
+    text-shadow: 0 0 35px rgba(231, 229, 228, 0.3), 0 4px 20px rgba(0, 0, 0, 1);
+  }
+  .verse-en {
+    font-size: clamp(1rem, 2.5vw, 1.5rem);
+    font-weight: 300;
+    font-style: italic;
+    color: #78716c;
+    text-shadow: 0 3px 15px rgba(0, 0, 0, 1);
+  }
+
+  /* Description */
+  .splash-desc {
+    font-size: clamp(0.875rem, 2vw, 1.125rem);
+    line-height: 1.8;
+    color: #57534e;
+    margin-bottom: 3rem;
+    max-width: 550px;
+    margin-left: auto;
+    margin-right: auto;
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 1);
+  }
+
+  /* CTA */
+  .enter-btn {
+    position: relative;
+    display: inline-block;
+    padding: 18px 48px;
+    min-height: 44px;
+    background: rgba(0, 0, 0, 0.6);
+    border: 2px solid rgba(251, 191, 36, 0.3);
+    color: var(--warm);
+    font-size: clamp(0.875rem, 2vw, 1rem);
+    text-transform: uppercase;
+    letter-spacing: 0.25em;
+    font-weight: 400;
+    cursor: pointer;
+    transition: all 0.5s ease;
+    box-shadow: 0 0 40px rgba(251, 191, 36, 0.25);
+    font-family: 'Tajawal', sans-serif;
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .enter-btn:hover {
+    background: rgba(0, 0, 0, 0.8);
+    border-color: rgba(251, 191, 36, 0.6);
+    box-shadow: 0 0 60px rgba(251, 191, 36, 0.4), 0 0 100px rgba(255, 235, 180, 0.2);
+    transform: translateY(-3px);
+  }
+  .enter-btn-ar {
+    font-family: 'Reem Kufi', sans-serif;
+    font-size: 0.875rem;
+    opacity: 0.7;
+    margin-top: 0.25rem;
+    display: block;
+    letter-spacing: normal;
+  }
+
+  /* ===== ONBOARDING (Ray Tracing / Light Architecture) ===== */
+  #onboarding {
+    display: none;
+    background: #000000;
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+    cursor: pointer;
+    overflow: hidden;
+  }
+
+  /* Geometric light lines that frame the text */
+  .ray-frame {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  /* Horizontal converging lines */
+  .ray-line {
+    position: absolute;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 245, 220, 0.3), transparent);
+    transition: all 1s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .ray-line-v {
+    position: absolute;
+    width: 1px;
+    background: linear-gradient(180deg, transparent, rgba(255, 245, 220, 0.25), transparent);
+    transition: all 1s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  /* Step 0: lines converge from edges toward center-top */
+  .ray-frame[data-step="0"] .ray-line:nth-child(1) { top: 30%; left: 0; width: 40%; transform: rotate(3deg); }
+  .ray-frame[data-step="0"] .ray-line:nth-child(2) { top: 35%; right: 0; width: 35%; transform: rotate(-2deg); }
+  .ray-frame[data-step="0"] .ray-line:nth-child(3) { top: 65%; left: 5%; width: 90%; opacity: 0.15; }
+  .ray-frame[data-step="0"] .ray-line-v:nth-child(4) { left: 50%; top: 0; height: 25%; }
+  .ray-frame[data-step="0"] .ray-line-v:nth-child(5) { left: 25%; top: 10%; height: 80%; opacity: 0.08; }
+  .ray-frame[data-step="0"] .ray-line-v:nth-child(6) { left: 75%; top: 10%; height: 80%; opacity: 0.08; }
+
+  /* Step 1: lines refract to center-right */
+  .ray-frame[data-step="1"] .ray-line:nth-child(1) { top: 40%; left: 10%; width: 80%; transform: rotate(-1deg); }
+  .ray-frame[data-step="1"] .ray-line:nth-child(2) { top: 55%; left: 20%; width: 60%; transform: rotate(1deg); }
+  .ray-frame[data-step="1"] .ray-line:nth-child(3) { top: 25%; left: 30%; width: 40%; opacity: 0.2; }
+  .ray-frame[data-step="1"] .ray-line-v:nth-child(4) { left: 65%; top: 15%; height: 70%; }
+  .ray-frame[data-step="1"] .ray-line-v:nth-child(5) { left: 35%; top: 20%; height: 60%; opacity: 0.12; }
+  .ray-frame[data-step="1"] .ray-line-v:nth-child(6) { left: 50%; top: 5%; height: 90%; opacity: 0.06; }
+
+  /* Step 2: lines converge to center, forming a frame */
+  .ray-frame[data-step="2"] .ray-line:nth-child(1) { top: 28%; left: 15%; width: 70%; transform: rotate(0deg); opacity: 0.4; }
+  .ray-frame[data-step="2"] .ray-line:nth-child(2) { top: 72%; left: 15%; width: 70%; transform: rotate(0deg); opacity: 0.4; }
+  .ray-frame[data-step="2"] .ray-line:nth-child(3) { top: 50%; left: 10%; width: 80%; opacity: 0.08; }
+  .ray-frame[data-step="2"] .ray-line-v:nth-child(4) { left: 15%; top: 28%; height: 44%; opacity: 0.35; }
+  .ray-frame[data-step="2"] .ray-line-v:nth-child(5) { left: 85%; top: 28%; height: 44%; opacity: 0.35; }
+  .ray-frame[data-step="2"] .ray-line-v:nth-child(6) { left: 50%; top: 20%; height: 60%; opacity: 0.06; }
+
+  /* Central glow that shifts */
+  .ray-glow {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    transition: background 1s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .ray-glow[data-step="0"] {
+    background: radial-gradient(ellipse 30% 35% at 50% 35%, rgba(255, 245, 220, 0.08), transparent 70%);
+  }
+  .ray-glow[data-step="1"] {
+    background: radial-gradient(ellipse 35% 30% at 55% 48%, rgba(255, 245, 220, 0.10), transparent 70%);
+  }
+  .ray-glow[data-step="2"] {
+    background: radial-gradient(ellipse 40% 40% at 50% 50%, rgba(255, 245, 220, 0.12), transparent 60%);
+  }
+
+  .onboard-cards {
+    position: relative;
+    z-index: 2;
+    text-align: center;
+    max-width: 480px;
+    padding: 2rem;
+  }
+  .onboard-card {
+    display: none;
+  }
+  .onboard-card.active {
+    display: block;
+    animation: rayReveal 0.7s ease-out;
+  }
+  @keyframes rayReveal {
+    from { opacity: 0; transform: scale(0.95); filter: brightness(0.2); }
+    to { opacity: 1; transform: scale(1); filter: brightness(1); }
+  }
+  .onboard-icon {
+    width: 52px; height: 52px;
+    margin: 0 auto 1.5rem;
+    border: 1px solid rgba(255, 245, 220, 0.2);
+    border-radius: 2px;
+    display: flex; align-items: center; justify-content: center;
+    color: rgba(255, 245, 220, 0.6);
+  }
+  .onboard-title {
+    font-size: 1.4rem; font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: rgba(231, 229, 228, 0.95);
+    letter-spacing: 0.02em;
+  }
+  .onboard-title-ar {
+    font-family: 'Reem Kufi', sans-serif;
+    font-size: 1.2rem;
+    color: rgba(251, 191, 36, 0.8);
+    margin-bottom: 1rem;
+    direction: rtl;
+  }
+  .onboard-desc {
+    font-size: 0.95rem; line-height: 1.7;
+    color: rgba(231, 229, 228, 0.5);
+    margin-bottom: 0.5rem;
+  }
+  .onboard-desc-ar {
+    font-size: 0.95rem; line-height: 1.7;
+    color: rgba(231, 229, 228, 0.35);
+    direction: rtl;
+    margin-bottom: 2rem;
+  }
+  .onboard-dots {
+    display: flex; justify-content: center;
+    gap: 12px; margin-bottom: 1.5rem;
+  }
+  .onboard-dot {
+    width: 20px; height: 2px;
+    border-radius: 1px;
+    background: rgba(255, 245, 220, 0.15);
+    transition: all 0.6s ease;
+  }
+  .onboard-dot.active {
+    background: rgba(255, 245, 220, 0.6);
+    width: 32px;
+  }
+  .onboard-tap {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.3em;
+    color: rgba(231, 229, 228, 0.25);
+    cursor: pointer;
+  }
+
+  /* ===== MAIN APP ===== */
+  #main {
+    display: none;
+    background: var(--bg);
+  }
+  .main-layout {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    max-width: 900px;
+    padding: 32px 24px;
+    min-height: 100vh;
+  }
+  .main-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 0;
+    margin-bottom: 24px;
+  }
+  .main-brand {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+  }
+  .main-brand-en {
+    font-family: 'Forum', serif;
+    font-size: 1.4rem;
+    color: var(--text);
+    letter-spacing: -0.03em;
+  }
+  .main-brand-ar {
+    font-family: 'Reem Kufi', sans-serif;
+    font-size: 1rem;
+    color: var(--warm);
+    font-weight: 700;
+  }
+
+  /* Poem card */
+  .poem-card {
+    background: rgba(251, 191, 36, 0.03);
+    border: 1px solid rgba(251, 191, 36, 0.12);
+    border-radius: 16px;
+    padding: 40px;
+    margin-bottom: 24px;
+    transition: all 0.3s ease;
+  }
+  .poem-card:hover {
+    border-color: rgba(251, 191, 36, 0.3);
+    box-shadow: 0 8px 32px rgba(251, 191, 36, 0.15);
+  }
+  .poem-text {
+    font-family: 'Amiri', serif;
+    font-size: 28px;
+    line-height: 2;
+    text-align: right;
+    direction: rtl;
+    margin-bottom: 24px;
+  }
+  .poem-poet {
+    font-size: 14px;
+    color: var(--warm);
+    text-align: left;
+    font-weight: 600;
+  }
+
+  /* ===== CONTROLS ===== */
+  /* Light Architecture — vertical light beams that pulse and expand on tap */
+
+  .beam-controls {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 88px;
+    z-index: 50;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    gap: 56px;
+    padding-bottom: 16px;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, transparent 100%);
+  }
+
+  .beam-btn {
+    position: relative;
+    width: 44px;
+    height: 72px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    padding: 0;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* The light beam line */
+  .beam-line {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 4px;
+    height: 48px;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.15));
+    box-shadow: 0 0 6px rgba(255, 255, 255, 0.2), 0 0 12px rgba(255, 245, 220, 0.1);
+    transition: all 0.25s ease;
+    animation: beamPulse 3s ease-in-out infinite;
+  }
+
+  @keyframes beamPulse {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 0.9; }
+  }
+
+  .beam-btn:nth-child(1) .beam-line { animation-delay: 0s; }
+  .beam-btn:nth-child(2) .beam-line { animation-delay: 0.75s; }
+  .beam-btn:nth-child(3) .beam-line { animation-delay: 1.5s; }
+  .beam-btn:nth-child(4) .beam-line { animation-delay: 2.25s; }
+
+  /* Label below beam */
+  .beam-label {
+    font-family: 'Tajawal', sans-serif;
+    font-size: 9px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, 0.3);
+    margin-top: 6px;
+    transition: color 0.25s ease;
+    white-space: nowrap;
+  }
+
+  /* Active/tap state: beam flashes and expands */
+  .beam-btn:active .beam-line,
+  .beam-btn.flashed .beam-line {
+    width: 12px;
+    opacity: 1;
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 1), rgba(255, 245, 220, 0.6));
+    box-shadow: 0 0 16px rgba(255, 255, 255, 0.5), 0 0 32px rgba(255, 245, 220, 0.3);
+  }
+
+  .beam-btn:active .beam-label,
+  .beam-btn.flashed .beam-label {
+    color: rgba(255, 255, 255, 0.8);
+  }
+
+  /* Hover hint (desktop) */
+  @media (hover: hover) {
+    .beam-btn:hover .beam-line {
+      width: 3px;
+      opacity: 0.8;
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+    }
+    .beam-btn:hover .beam-label {
+      color: rgba(255, 255, 255, 0.4);
+    }
+  }
+
+  @media (max-width: 768px) {
+    .brand-en { font-size: 3rem; }
+    .brand-ar { font-size: 1.875rem; }
+    .splash-content { padding: 24px; }
+    .poem-card { padding: 24px; }
+    .poem-text { font-size: 22px; line-height: 1.8; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+</style>
+</head>
+<body>
+  <!-- ===== SPLASH ===== -->
+  <div class="screen" id="splash">
+    <div class="darkness"></div>
+    <div class="light-ray"></div>
+    <div class="light-ray-secondary"></div>
+    <canvas id="dustCanvas"></canvas>
+
+    <div class="splash-content">
+      <div class="brand">
+        <div class="brand-ar" lang="ar" dir="rtl">بالعربي</div>
+        <div class="brand-en">poetry</div>
+      </div>
+      <div class="verse">
+        <div class="verse-ar" lang="ar" dir="rtl">بين النور والظل تتجلى الحكمة</div>
+        <div class="verse-en">Between light and shadow, wisdom reveals itself</div>
+      </div>
+      <p class="splash-desc">
+        Poetry lives in the tension between illumination and obscurity.
+        A single ray pierces the darkness, revealing truth in stark relief.
+      </p>
+      <button class="enter-btn" id="enterBtn">
+        <span>Step Into Light</span>
+        <span class="enter-btn-ar" lang="ar" dir="rtl">ادخل إلى النور</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ===== ONBOARDING (Light Architecture) ===== -->
+  <div class="screen" id="onboarding">
+    <div class="ray-glow" data-step="0"></div>
+    <div class="ray-frame" data-step="0">
+      <div class="ray-line"></div>
+      <div class="ray-line"></div>
+      <div class="ray-line"></div>
+      <div class="ray-line-v"></div>
+      <div class="ray-line-v"></div>
+      <div class="ray-line-v"></div>
+    </div>
+
+    <div class="onboard-cards">
+      <div class="onboard-card active" data-card="0">
+        <div class="onboard-icon">
+          <i data-lucide="book-open" style="width:22px;height:22px"></i>
+        </div>
+        <div class="onboard-title">Discover Arabic Poetry</div>
+        <div class="onboard-title-ar" lang="ar" dir="rtl">اكتشف الشعر العربي</div>
+        <div class="onboard-desc">Over 84,000 poems traced in light, spanning centuries of tradition.</div>
+        <div class="onboard-desc-ar" lang="ar" dir="rtl">أكثر من 84,000 قصيدة مرسومة بالنور عبر قرون من التراث</div>
+      </div>
+      <div class="onboard-card" data-card="1">
+        <div class="onboard-icon">
+          <i data-lucide="headphones" style="width:22px;height:22px"></i>
+        </div>
+        <div class="onboard-title">Listen & Feel</div>
+        <div class="onboard-title-ar" lang="ar" dir="rtl">استمع واشعر</div>
+        <div class="onboard-desc">AI recitation refracts each verse into sound and emotion.</div>
+        <div class="onboard-desc-ar" lang="ar" dir="rtl">إلقاء صوتي بالذكاء الاصطناعي يحول كل بيت إلى صوت وشعور</div>
+      </div>
+      <div class="onboard-card" data-card="2">
+        <div class="onboard-icon">
+          <i data-lucide="sparkles" style="width:22px;height:22px"></i>
+        </div>
+        <div class="onboard-title">AI Insights</div>
+        <div class="onboard-title-ar" lang="ar" dir="rtl">رؤى ذكية</div>
+        <div class="onboard-desc">Deep analysis converges light on hidden meanings in every verse.</div>
+        <div class="onboard-desc-ar" lang="ar" dir="rtl">تحليل عميق يسلط الضوء على المعاني الكامنة في كل بيت</div>
+      </div>
+      <div class="onboard-dots">
+        <div class="onboard-dot active" data-dot="0"></div>
+        <div class="onboard-dot" data-dot="1"></div>
+        <div class="onboard-dot" data-dot="2"></div>
+      </div>
+      <div class="onboard-tap" id="onboardTap">Tap anywhere to continue</div>
+    </div>
+  </div>
+
+  <!-- ===== MAIN APP ===== -->
+  <div class="screen" id="main">
+    <div class="main-layout">
+      <nav class="main-nav">
+        <div class="main-brand">
+          <span class="main-brand-en">poetry</span>
+          <span class="main-brand-ar" lang="ar" dir="rtl">بالعربي</span>
+        </div>
+      </nav>
+      <div class="poem-card">
+        <div class="poem-text" lang="ar" dir="rtl">
+          أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ<br>
+          فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
+        </div>
+        <div class="poem-poet">Ahmad Shawqi</div>
+      </div>
+    </div>
+
+    <!-- ===== CONTROLS: Light Architecture Beams ===== -->
+    <div class="beam-controls">
+      <button class="beam-btn" aria-label="Next poem" data-action="next">
+        <div class="beam-line"></div>
+        <span class="beam-label">next</span>
+      </button>
+      <button class="beam-btn" aria-label="Save poem" data-action="save">
+        <div class="beam-line"></div>
+        <span class="beam-label">save</span>
+      </button>
+      <button class="beam-btn" aria-label="Listen" data-action="listen">
+        <div class="beam-line"></div>
+        <span class="beam-label">listen</span>
+      </button>
+      <button class="beam-btn" aria-label="Share" data-action="share">
+        <div class="beam-line"></div>
+        <span class="beam-label">share</span>
+      </button>
+    </div>
+  </div>
+
+<script>
+(function () {
+  "use strict";
+  var prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  var animRunning = true;
+
+  /* ===== DUST PARTICLE CANVAS ===== */
+  var dustCanvas = document.getElementById('dustCanvas');
+  var dCtx = dustCanvas.getContext('2d');
+  var particles = [];
+  var maxParticles = 80;
+
+  function resizeDust() {
+    dustCanvas.width = window.innerWidth;
+    dustCanvas.height = window.innerHeight;
+  }
+  resizeDust();
+  window.addEventListener('resize', resizeDust);
+
+  function DustParticle() {
+    this.x = Math.random() * dustCanvas.width;
+    this.y = Math.random() * dustCanvas.height;
+    this.size = 0.5 + Math.random() * 2;
+    this.vx = (Math.random() - 0.5) * 0.3;
+    this.vy = -0.15 - Math.random() * 0.5;
+    this.life = Math.random();
+    this.decay = 0.001 + Math.random() * 0.003;
+    this.brightness = 0.4 + Math.random() * 0.6;
+  }
+
+  /* ===== LIGHT ANIMATION ===== */
+  var startTime = Date.now();
+  var cycleDuration = 12000;
+
+  function animate() {
+    if (!animRunning || prefersReduced) return;
+    var elapsed = Date.now() - startTime;
+    var phase = (elapsed % cycleDuration) / cycleDuration;
+    var twoPI = Math.PI * 2;
+
+    // Wider spotlight sweep (20% - 80%)
+    var lightX = 50 + Math.sin(phase * twoPI) * 30;
+    var rayAngle = -8 + Math.sin(phase * twoPI) * 12;
+
+    // Secondary ray offset
+    var lightX2 = 50 + Math.sin((phase + 0.4) * twoPI) * 25;
+    var rayAngle2 = 6 + Math.cos(phase * twoPI) * 8;
+
+    document.documentElement.style.setProperty('--light-x', lightX + '%');
+    document.documentElement.style.setProperty('--ray-angle', rayAngle + 'deg');
+    document.documentElement.style.setProperty('--light-x2', lightX2 + '%');
+    document.documentElement.style.setProperty('--ray-angle2', rayAngle2 + 'deg');
+
+    // Dust particles
+    dCtx.clearRect(0, 0, dustCanvas.width, dustCanvas.height);
+
+    // Spawn more particles in the light beam area
+    if (particles.length < maxParticles && Math.random() < 0.35) {
+      particles.push(new DustParticle());
+    }
+
+    for (var i = particles.length - 1; i >= 0; i--) {
+      var p = particles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+      p.life -= p.decay;
+
+      if (p.life <= 0 || p.y < -10) {
+        particles.splice(i, 1);
+        continue;
+      }
+
+      // Brightness based on proximity to light beam
+      var distFromLight = Math.abs(p.x / dustCanvas.width * 100 - lightX);
+      var beamBrightness = Math.max(0, 1 - distFromLight / 20);
+
+      dCtx.globalAlpha = p.life * (0.3 + beamBrightness * 0.6) * p.brightness;
+      dCtx.fillStyle = 'rgba(255, 245, 220, 1)';
+      dCtx.shadowColor = 'rgba(255, 245, 220, 0.8)';
+      dCtx.shadowBlur = beamBrightness * 8;
+      dCtx.beginPath();
+      dCtx.arc(p.x, p.y, p.size * p.life, 0, Math.PI * 2);
+      dCtx.fill();
+    }
+    dCtx.globalAlpha = 1;
+    dCtx.shadowBlur = 0;
+
+    requestAnimationFrame(animate);
+  }
+  if (!prefersReduced) animate();
+
+  /* ===== SPLASH -> ONBOARDING ===== */
+  document.getElementById('enterBtn').addEventListener('click', function () {
+    var splash = document.getElementById('splash');
+    splash.classList.add('hidden');
+    animRunning = false;
+    particles.length = 0;
+    setTimeout(function () {
+      splash.style.display = 'none';
+      document.getElementById('onboarding').style.display = 'flex';
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+    }, 800);
+  });
+
+  /* ===== ONBOARDING TAP-TO-ADVANCE (Light Architecture) ===== */
+  var currentCard = 0;
+  var totalCards = 3;
+
+  document.getElementById('onboardTap').addEventListener('click', advanceCard);
+  document.getElementById('onboarding').addEventListener('click', function (e) {
+    if (e.target.id !== 'onboardTap') advanceCard();
+  });
+
+  function advanceCard() {
+    currentCard++;
+    if (currentCard >= totalCards) {
+      var ob = document.getElementById('onboarding');
+      ob.style.opacity = '0';
+      ob.style.transition = 'opacity 0.8s ease';
+      setTimeout(function () {
+        ob.style.display = 'none';
+        document.getElementById('main').style.display = 'flex';
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+      }, 800);
+      return;
+    }
+    var cards = document.querySelectorAll('.onboard-card');
+    var dots = document.querySelectorAll('.onboard-dot');
+    cards.forEach(function (c) { c.classList.remove('active'); });
+    dots.forEach(function (d) { d.classList.remove('active'); });
+    cards[currentCard].classList.add('active');
+    dots[currentCard].classList.add('active');
+
+    /* Refract the geometric light lines to new positions */
+    var rayFrame = document.querySelector('.ray-frame');
+    var rayGlow = document.querySelector('.ray-glow');
+    if (rayFrame) rayFrame.setAttribute('data-step', currentCard);
+    if (rayGlow) rayGlow.setAttribute('data-step', currentCard);
+  }
+
+  /* ===== BEAM CONTROLS ===== */
+  document.querySelectorAll('.beam-btn').forEach(function(btn) {
+    btn.addEventListener('touchstart', function() {
+      this.classList.add('flashed');
+    }, { passive: true });
+    btn.addEventListener('touchend', function() {
+      var el = this;
+      setTimeout(function() { el.classList.remove('flashed'); }, 250);
+    });
+  });
+
+  /* ===== INIT ===== */
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+})();
+</script>
+</body>
+</html>

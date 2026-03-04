@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scandinavian Scroll - Vertical Controls</title>
+<link href="https://fonts.googleapis.com/css2?family=Forum&family=Reem+Kufi:wght@400;700&family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+  :root {
+    --desert-night: #1A1410; --sand: #D4C5A0; --gold: #C5A059;
+    --gold-dim: rgba(197,160,89,0.3); --sienna: #A0522D;
+    --cream: #F5ECD7; --dark-brown: #3B2A1A;
+    --bg: var(--desert-night); --fg: var(--sand);
+    --card-bg: rgba(212,197,160,0.08); --card-border: rgba(197,160,89,0.2);
+  }
+  [data-theme="light"] {
+    --bg: var(--cream); --fg: var(--dark-brown);
+    --card-bg: rgba(160,82,45,0.07); --card-border: rgba(160,82,45,0.2);
+  }
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Tajawal', sans-serif; background: var(--bg); color: var(--fg);
+    overflow-x: hidden; min-height: 100vh; transition: background 0.5s, color 0.5s;
+  }
+
+  /* Main App - Nordic White */
+  #app {
+    display: flex; flex-direction: column; min-height: 100vh;
+    background: #fafaf9; color: #2c2c2b; transition: none;
+  }
+
+  .birch-line-top { width: 100%; height: 1px; background: #d6d3cd; flex-shrink: 0; }
+
+  .content {
+    position: relative; z-index: 1; flex: 1;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 4rem 2rem 6rem; padding-right: 5rem;
+  }
+
+  .poem-section {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    flex: 1; width: 100%; max-width: 600px; margin: 0 auto; padding: 0;
+  }
+  .poem-card {
+    background: transparent; border: none; border-radius: 0;
+    padding: 0; width: 100%; text-align: center; position: relative;
+  }
+
+  .poem-content {
+    font-family: 'Amiri', serif; font-size: 1.6rem; line-height: 3.2;
+    color: #2c2c2b; letter-spacing: 0.01em;
+  }
+  .poem-content .hemistich { display: block; margin-bottom: 2rem; }
+
+  .bayt-sep {
+    display: block; width: 24px; height: 1px; background: #c5c0b8;
+    margin: 0 auto 2rem;
+  }
+
+  .poet-name {
+    font-family: 'Tajawal', sans-serif; font-weight: 300; font-size: 0.8rem;
+    color: #9a9590; margin-top: 3rem; letter-spacing: 0.08em; text-transform: uppercase;
+  }
+
+  /* Translation row */
+  .translation-row {
+    display: none; font-family: 'Tajawal', sans-serif; font-size: 14px;
+    color: #9a9590; text-align: center; padding: 10px 0; direction: ltr;
+    max-width: 500px; margin: 0 auto;
+  }
+  .translation-row.visible { display: block; }
+
+  /* Inline transliteration */
+  .verse-translit {
+    display: none; font-family: 'Tajawal', sans-serif; font-size: 11px; font-weight: 300;
+    color: #b5b0aa; font-style: italic; direction: ltr;
+    text-align: center; margin-top: 2px; letter-spacing: 0.02em;
+  }
+  .verse-translit.visible { display: block; }
+
+  /* ===== BOTTOM ACTION BAR (Ultra-thin dot line style) ===== */
+  .bottom-nav {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: space-around;
+    height: calc(64px + env(safe-area-inset-bottom, 0px));
+    padding: 0 0.5rem; padding-bottom: env(safe-area-inset-bottom, 0px);
+    direction: ltr;
+  }
+  .bottom-nav::before {
+    content: ''; position: absolute;
+    bottom: calc(32px + env(safe-area-inset-bottom, 0px)); left: 8%; right: 8%; height: 1px;
+    background: #e0ddd8;
+  }
+  .dot-nav-action {
+    position: relative; width: 44px; height: 44px;
+    background: transparent; border: none;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 4px; color: #c5c0b8;
+    -webkit-tap-highlight-color: transparent;
+    transition: color 0.3s;
+  }
+  .dot-nav-action::before {
+    content: ''; width: 5px; height: 5px; border-radius: 50%;
+    background: #c5c0b8; position: absolute;
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.3s ease;
+  }
+  .dot-nav-action i { opacity: 0; transition: opacity 0.3s ease; position: relative; z-index: 1; }
+  .dot-nav-action:hover::before { transform: scale(1.8); background: #2c2c2b; }
+  .dot-nav-action:hover i { opacity: 0.6; }
+  .dot-nav-action:hover { color: #2c2c2b; }
+
+  /* Settings panel */
+  .settings-panel {
+    display: none; position: fixed; right: 64px; top: 50%; transform: translateY(-50%);
+    background: #fafaf9; border: 1px solid #e0ddd8; border-radius: 8px;
+    padding: 16px; z-index: 59; box-shadow: 0 4px 16px rgba(0,0,0,0.08); width: 180px;
+    font-size: 13px; color: #2c2c2b;
+  }
+  .settings-panel.visible { display: block; }
+  .settings-panel h4 { margin-bottom: 8px; color: #9a9590; font-weight: 400; letter-spacing: 0.1em; text-transform: uppercase; font-size: 0.7rem; }
+  .settings-panel label { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; cursor: pointer; opacity: 0.7; }
+
+  /* ===== VERTICAL CONTROLS: Ultra-Thin Line with Expanding Dots ===== */
+  .vc-strip {
+    position: fixed; right: 16px; top: 50%; transform: translateY(-50%);
+    z-index: 60; display: flex; flex-direction: column; align-items: center; gap: 0;
+    width: 1px; padding: 0;
+    /* The ultra-thin vertical line */
+    background: #e0ddd8;
+  }
+
+  /* The line extends above and below the toggles */
+  .vc-strip::before, .vc-strip::after {
+    content: ''; width: 1px; height: 24px; background: #e0ddd8;
+  }
+
+  .vc-toggle {
+    width: 44px; height: 44px;
+    display: flex; align-items: center; justify-content: center;
+    background: transparent; border: none;
+    cursor: pointer; color: #c5c0b8;
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* The expanding dot */
+  .vc-toggle::before {
+    content: ''; position: absolute;
+    width: 5px; height: 5px; border-radius: 50%;
+    background: #c5c0b8; transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  /* Hide icon by default, show dot */
+  .vc-toggle i { opacity: 0; transition: opacity 0.3s ease; width: 16px; height: 16px; position: relative; z-index: 1; }
+
+  .vc-toggle:hover::before {
+    transform: scale(2.2);
+    background: #2c2c2b;
+  }
+  .vc-toggle:hover i { opacity: 0.6; }
+  .vc-toggle:hover { color: #2c2c2b; }
+
+  /* Active: dot expands, icon visible */
+  .vc-toggle.active::before {
+    transform: scale(3);
+    background: #2c2c2b;
+    opacity: 0.12;
+  }
+  .vc-toggle.active i { opacity: 1; }
+  .vc-toggle.active { color: #2c2c2b; }
+
+  .vc-badge {
+    position: absolute; top: 6px; right: 6px;
+    font-family: 'Tajawal', sans-serif; font-size: 7px; font-weight: 300;
+    color: #9a9590; line-height: 1; letter-spacing: 0.05em;
+  }
+
+  /* Label on hover */
+  .vc-label {
+    position: absolute; right: 44px;
+    font-family: 'Tajawal', sans-serif; font-weight: 300; font-size: 0.62rem;
+    color: #9a9590; letter-spacing: 0.06em; white-space: nowrap;
+    opacity: 0; transform: translateX(4px);
+    transition: opacity 0.3s ease, transform 0.3s ease; pointer-events: none;
+  }
+  .vc-toggle:hover .vc-label { opacity: 1; transform: translateX(0); }
+
+  @media (max-width: 768px) {
+    .content { padding: 3rem 1.5rem 100px; padding-right: 40px; }
+    .poem-content { font-size: 1.35rem; line-height: 2.8; }
+    .poem-content .hemistich { margin-bottom: 1.5rem; }
+    .bayt-sep { margin-bottom: 1.5rem; }
+    .poet-name { margin-top: 2.5rem; }
+    .vc-strip { right: 6px; }
+    .vc-toggle { width: 40px; height: 40px; }
+    .settings-panel { right: 44px; width: 160px; }
+    .dot-nav-action { margin: 0 2px; }
+    .verse-translit { font-size: 10px; }
+  }
+  @media (max-width: 480px) {
+    .content { padding-right: 36px; }
+    .vc-strip { right: 4px; }
+    .vc-toggle { width: 36px; height: 36px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0s !important; transition-duration: 0s !important; }
+  }
+</style>
+</head>
+<body>
+
+<div id="app" aria-live="polite">
+  <div class="birch-line-top" aria-hidden="true"></div>
+  <div class="content">
+    <section class="poem-section" aria-label="Poem">
+      <article class="poem-card">
+        <div class="poem-content" lang="ar">
+          <span class="hemistich">أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ</span>
+          <div class="verse-translit">Ana al-bahru fi ahsha'ihi al-durru kaminun</div>
+          <span class="bayt-sep" aria-hidden="true"></span>
+          <span class="hemistich">فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي</span>
+          <div class="verse-translit">fa-hal sa'alu al-ghawwasa an sadafati</div>
+        </div>
+        <div class="translation-row" id="translationRow">
+          I am the sea, in whose depths pearls lie hidden / Have they asked the diver about my shells?
+        </div>
+        <div class="poet-name">أحمد شوقي</div>
+      </article>
+    </section>
+  </div>
+
+  <!-- Bottom Action Bar (Dot Line) -->
+  <nav class="bottom-nav">
+    <button class="dot-nav-action" aria-label="Next poem"><i data-lucide="shuffle" style="width:16px;height:16px"></i></button>
+    <button class="dot-nav-action" aria-label="Save poem"><i data-lucide="heart" style="width:16px;height:16px"></i></button>
+    <button class="dot-nav-action" aria-label="Listen"><i data-lucide="headphones" style="width:16px;height:16px"></i></button>
+    <button class="dot-nav-action" aria-label="Share"><i data-lucide="share-2" style="width:16px;height:16px"></i></button>
+  </nav>
+
+  <!-- Vertical Controls: Ultra-Thin Line with Expanding Dots -->
+  <nav class="vc-strip" aria-label="Toggle controls">
+    <button class="vc-toggle" data-action="translation" aria-label="Toggle translation">
+      <span style="font-family:'Tajawal',sans-serif;font-size:12px;font-weight:700;line-height:1;letter-spacing:-0.5px;position:relative;z-index:1">ع<span style="opacity:0.4">|</span>A</span>
+      <span class="vc-label">translate</span>
+    </button>
+    <button class="vc-toggle" data-action="transliteration" aria-label="Toggle transliteration">
+      <i data-lucide="text-cursor-input"></i>
+      <span class="vc-label">romanize</span>
+    </button>
+    <button class="vc-toggle" data-action="textsize" aria-label="Cycle text size">
+      <i data-lucide="type"></i>
+      <span class="vc-badge">M</span>
+      <span class="vc-label">size</span>
+    </button>
+    <button class="vc-toggle" data-action="settings" aria-label="Toggle settings">
+      <i data-lucide="settings"></i>
+      <span class="vc-label">settings</span>
+    </button>
+  </nav>
+
+  <div class="settings-panel" id="settingsPanel">
+    <h4>Settings</h4>
+    <label><input type="checkbox"> Dark mode</label>
+    <label><input type="checkbox"> Tashkeel</label>
+    <label><input type="checkbox" checked> Animations</label>
+  </div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  document.querySelectorAll('.vc-toggle').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var action = btn.dataset.action;
+      if (action === 'textsize') {
+        var sizes = ['S','M','L','XL'];
+        var badge = btn.querySelector('.vc-badge');
+        var idx = sizes.indexOf(badge.textContent);
+        idx = (idx + 1) % sizes.length;
+        badge.textContent = sizes[idx];
+        document.querySelector('.poem-content').style.fontSize =
+          {'S':'1rem','M':'1.25rem','L':'1.5rem','XL':'2rem'}[sizes[idx]];
+      } else if (action === 'translation') {
+        btn.classList.toggle('active');
+        document.getElementById('translationRow').classList.toggle('visible');
+      } else if (action === 'transliteration') {
+        btn.classList.toggle('active');
+        document.querySelectorAll('.verse-translit').forEach(function(el) { el.classList.toggle('visible'); });
+      } else if (action === 'settings') {
+        btn.classList.toggle('active');
+        document.getElementById('settingsPanel').classList.toggle('visible');
+      } else {
+        btn.classList.toggle('active');
+      }
+    });
+  });
+
+  lucide.createIcons();
+})();
+</script>
+</body>
+</html>

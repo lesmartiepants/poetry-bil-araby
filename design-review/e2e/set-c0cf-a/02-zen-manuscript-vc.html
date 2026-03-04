@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zen Manuscript - Vertical Controls</title>
+<link href="https://fonts.googleapis.com/css2?family=Forum&family=Reem+Kufi:wght@400;700&family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --deep-water: #0A1420; --ripple-silver: #B8C8D8; --moonlight: #E8E4F0;
+  --lotus: #C47A8A; --gold: #C5A059; --surface: #0D1A28;
+  --text-primary: #E8E4F0; --text-dim: rgba(232,228,240,0.5);
+  --card-bg: rgba(13,26,40,0.85); --card-border: rgba(184,200,216,0.15);
+  --font-ar: 'Amiri', serif; --font-ui: 'Tajawal', system-ui, sans-serif;
+}
+html.light {
+  --deep-water: #D8E4F0; --ripple-silver: #5A7A94; --moonlight: #1A1428;
+  --lotus: #A0506A; --gold: #8A7030; --surface: #C8D8E8;
+  --text-primary: #1A1428; --text-dim: rgba(26,20,40,0.5);
+  --card-bg: rgba(220,232,244,0.9); --card-border: rgba(90,122,148,0.25);
+}
+html { font-family: var(--font-ui); background: var(--deep-water); color: var(--text-primary); }
+body { min-height: 100vh; overflow-x: hidden; }
+
+canvas#water {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+}
+
+/* ===== MAIN APP ===== */
+.main-app {
+  display: block; min-height: 100vh; padding-bottom: 100px; position: relative; z-index: 1;
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E"),
+    linear-gradient(180deg, #d4c4a0 0%, #c8b892 40%, #bfad84 100%);
+  background-attachment: fixed;
+}
+html.light .main-app {
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E"),
+    linear-gradient(180deg, #e8dcc4 0%, #ddd0b4 40%, #d4c4a0 100%);
+  background-attachment: fixed;
+}
+
+.app-top {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 20px;
+  background: linear-gradient(180deg, rgba(139,115,85,0.9), rgba(101,82,60,0.85));
+  border-bottom: 2px solid #6b5a3e;
+  box-shadow: 0 2px 8px rgba(61,42,20,0.3);
+  direction: ltr;
+}
+html.light .app-top {
+  background: linear-gradient(180deg, rgba(212,196,160,0.95), rgba(191,173,132,0.9));
+  border-bottom-color: #a89470;
+}
+.app-top-brand { display: flex; align-items: flex-end; gap: 6px; }
+.app-top-brand-en {
+  font-family: 'Forum', serif; font-size: 20px;
+  letter-spacing: -0.05em; color: #e8dcc4; line-height: 1;
+}
+html.light .app-top-brand-en { color: #3d2a14; }
+.app-top-brand-ar {
+  font-family: 'Reem Kufi', sans-serif; font-weight: 700;
+  font-size: 14px; color: #e8dcc4; line-height: 1;
+}
+html.light .app-top-brand-ar { color: #3d2a14; }
+.app-top-actions { display: flex; gap: 8px; }
+.app-top-btn {
+  width: 44px; height: 44px; display: flex; align-items: center;
+  justify-content: center; background: transparent;
+  border: 1px solid rgba(232,220,196,0.3); border-radius: 8px;
+  color: rgba(232,220,196,0.7); cursor: pointer; transition: all 0.2s;
+}
+html.light .app-top-btn { border-color: rgba(61,42,20,0.2); color: rgba(61,42,20,0.6); }
+.app-top-btn:hover { color: #e8dcc4; border-color: rgba(232,220,196,0.6); }
+
+/* Poem card - ink on parchment */
+.poem-card {
+  position: relative;
+  background:
+    linear-gradient(90deg, rgba(61,42,20,0.06) 0%, transparent 4%, transparent 96%, rgba(61,42,20,0.06) 100%),
+    linear-gradient(180deg, rgba(61,42,20,0.03) 0%, transparent 3%, transparent 97%, rgba(61,42,20,0.03) 100%),
+    linear-gradient(180deg, #e8dcc4 0%, #ddd0b4 50%, #d4c4a0 100%);
+  padding: 3rem 2.5rem; border-radius: 4px; direction: rtl;
+  box-shadow:
+    4px 4px 12px rgba(61,42,20,0.2),
+    -2px -2px 8px rgba(255,248,235,0.3),
+    inset 0 0 40px rgba(197,160,89,0.05);
+  border: 1px solid rgba(139,115,85,0.3);
+}
+.poem-card::before {
+  content: '';
+  position: absolute; top: -4px; right: 20px;
+  width: 16px; height: 16px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(26,18,10,0.15) 30%, transparent 70%);
+  pointer-events: none;
+}
+
+.poem-meta { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
+.poet-avatar {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: linear-gradient(135deg, rgba(139,115,85,0.2), rgba(197,160,89,0.15));
+  border: 1px solid rgba(139,115,85,0.3);
+  display: flex; align-items: center; justify-content: center;
+  color: #5a4630; font-family: var(--font-ar); font-size: 20px;
+}
+.poet-info h2 { font-family: var(--font-ar); font-size: 16px; font-weight: 700; color: #3d2a14; }
+.poet-info span { font-size: 13px; color: rgba(61,42,20,0.5); font-style: italic; }
+
+.poem-content {
+  font-family: var(--font-ar); font-size: clamp(20px, 3.5vw, 28px);
+  line-height: 2.4; text-align: center; padding: 24px 0;
+  color: #1a120a;
+  text-shadow: 0 0 1px rgba(26,18,10,0.1);
+  border-top: 1px solid rgba(139,115,85,0.2); border-bottom: 1px solid rgba(139,115,85,0.2);
+}
+.hemistich-divider {
+  display: inline-block; width: 40px; height: 1px; background: #8b7355;
+  vertical-align: middle; margin: 0 12px; opacity: 0.4;
+}
+
+.poem-actions { display: flex; gap: 12px; margin-top: 24px; justify-content: center; }
+.poem-action-btn {
+  display: flex; align-items: center; gap: 6px; padding: 10px 16px;
+  background: transparent; border: 1px solid rgba(139,115,85,0.3); border-radius: 6px;
+  color: #5a4630; font-family: var(--font-ui); font-size: 13px;
+  cursor: pointer; transition: all 0.2s;
+}
+.poem-action-btn:hover { color: #3d2a14; border-color: #8b7355; background: rgba(139,115,85,0.08); }
+
+.reader { max-width: 720px; margin: 0 auto; padding: 80px 20px 40px; padding-right: 80px; }
+
+/* ===== VERTICAL CONTROLS: Leather Bookmark Strip ===== */
+.vc-strip {
+  position: fixed;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  /* Leather bookmark strip */
+  width: 52px;
+  padding: 10px 4px;
+  background:
+    linear-gradient(180deg, #5a3a1a 0%, #3d2810 20%, #2a1c0e 50%, #3d2810 80%, #5a3a1a 100%);
+  border-radius: 6px 0 0 6px;
+  border: 1px solid rgba(139,115,85,0.4);
+  border-right: none;
+  box-shadow:
+    -3px 2px 8px rgba(26,18,10,0.4),
+    inset 0 1px 2px rgba(139,115,85,0.2),
+    inset 0 -1px 2px rgba(26,18,10,0.3);
+  /* Leather texture */
+  background-image:
+    repeating-linear-gradient(
+      0deg,
+      rgba(90,58,26,0.08) 0px,
+      transparent 1px,
+      transparent 3px,
+      rgba(90,58,26,0.08) 4px
+    );
+}
+
+/* Embossed bookmark stitching at top and bottom */
+.vc-strip::before,
+.vc-strip::after {
+  content: '';
+  width: 28px;
+  height: 2px;
+  background: repeating-linear-gradient(
+    90deg,
+    rgba(197,160,89,0.4) 0px,
+    rgba(197,160,89,0.4) 3px,
+    transparent 3px,
+    transparent 6px
+  );
+  border-radius: 1px;
+}
+
+.vc-toggle {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: rgba(232,220,196,0.6);
+  transition: all 0.25s ease;
+  position: relative;
+  border-radius: 4px;
+  /* Embossed toggle switch feel */
+}
+
+.vc-toggle:hover {
+  color: #e8dcc4;
+  background: rgba(139,115,85,0.2);
+}
+
+.vc-toggle.active {
+  color: #C5A059;
+  background: rgba(197,160,89,0.15);
+  /* Pressed in embossed effect */
+  box-shadow: inset 1px 1px 3px rgba(26,18,10,0.4), inset -1px -1px 2px rgba(139,115,85,0.1);
+}
+
+.vc-toggle i { width: 20px; height: 20px; }
+
+.vc-badge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  font-family: var(--font-ui);
+  font-size: 9px;
+  font-weight: 700;
+  color: #e8dcc4;
+  background: rgba(139,115,85,0.6);
+  padding: 1px 4px;
+  border-radius: 3px;
+  line-height: 1.2;
+}
+
+/* Translation row */
+.translation-row {
+  display: none;
+  font-family: var(--font-ui);
+  font-size: 15px;
+  color: rgba(61,42,20,0.6);
+  text-align: center;
+  padding: 8px 0;
+  font-style: italic;
+  direction: ltr;
+}
+.translation-row.visible { display: block; }
+
+/* Inline transliteration after each verse */
+.verse-block { margin-bottom: 0.3em; }
+.verse-translit {
+  display: none;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  color: rgba(61,42,20,0.45);
+  font-style: italic;
+  direction: ltr;
+  text-align: center;
+  margin-top: 2px;
+}
+.verse-translit.visible { display: block; }
+
+/* ===== BOTTOM ACTION BAR ===== */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
+  background:
+    repeating-linear-gradient(90deg, rgba(101,82,60,0.04) 0px, transparent 2px, transparent 8px, rgba(101,82,60,0.04) 10px),
+    linear-gradient(180deg, #6b5a3e 0%, #5a4a32 20%, #4a3c28 50%, #3d3020 100%);
+  padding: 10px 12px calc(12px + env(safe-area-inset-bottom, 0px));
+  border-top: 3px solid #8b7355;
+  box-shadow: 0 -4px 16px rgba(26,18,10,0.4), inset 0 2px 4px rgba(139,115,85,0.2);
+  direction: ltr;
+  border-radius: 16px 16px 0 0;
+}
+html.light .bottom-nav {
+  background:
+    repeating-linear-gradient(90deg, rgba(139,115,85,0.06) 0px, transparent 2px, transparent 8px, rgba(139,115,85,0.06) 10px),
+    linear-gradient(180deg, #8b7355 0%, #7a6345 20%, #6b5a3e 50%, #5a4a32 100%);
+  border-top-color: #a89470;
+}
+.bottom-nav .nav-items-wrap {
+  display: flex; align-items: center; justify-content: space-around; gap: 0; width: 100%;
+}
+.nav-item {
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 6px 4px; background: transparent; border: none;
+  color: rgba(232,220,196,0.6); cursor: pointer; font-family: var(--font-ui);
+  font-size: 9px; transition: all 0.2s; min-width: 44px; min-height: 44px;
+  flex: 1;
+}
+.nav-item.active { color: #e8dcc4; }
+.nav-item:hover { color: #e8dcc4; }
+.nav-item i { stroke-width: 1.5; }
+
+/* Settings panel */
+.settings-panel {
+  display: none;
+  position: fixed;
+  right: 60px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: linear-gradient(180deg, #e8dcc4, #d4c4a0);
+  border: 1px solid rgba(139,115,85,0.4);
+  border-radius: 8px;
+  padding: 16px;
+  z-index: 59;
+  box-shadow: 0 4px 16px rgba(26,18,10,0.3);
+  width: 180px;
+  font-size: 13px;
+  color: #3d2a14;
+}
+.settings-panel.visible { display: block; }
+.settings-panel h4 { margin-bottom: 8px; font-family: var(--font-ui); font-weight: 600; }
+.settings-panel label {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 6px; cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .reader { padding: 70px 16px 100px; padding-right: 56px; }
+  .poem-card { padding: 1.5rem 1rem; }
+  .poem-actions { flex-wrap: wrap; gap: 8px; }
+  .poem-action-btn { padding: 8px 12px; font-size: 12px; }
+  .vc-strip { width: 44px; padding: 8px 2px; }
+  .vc-toggle { width: 40px; height: 40px; }
+  .settings-panel { right: 50px; width: 160px; font-size: 12px; }
+  .verse-translit { font-size: 11px; }
+}
+@media (max-width: 480px) {
+  .reader { padding-right: 48px; }
+  .vc-strip { width: 40px; }
+  .vc-toggle { width: 36px; height: 36px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+  canvas#water { display: none; }
+}
+</style>
+</head>
+<body>
+
+<canvas id="water"></canvas>
+
+<!-- MAIN APP -->
+<div class="main-app active" id="mainApp">
+  <header class="app-top">
+    <div class="app-top-brand">
+      <span class="app-top-brand-en">poetry</span>
+      <span class="app-top-brand-ar">بالعربي</span>
+    </div>
+    <div class="app-top-actions">
+      <button class="app-top-btn" id="themeToggle" aria-label="Toggle theme">
+        <i data-lucide="sun" style="width:18px;height:18px"></i>
+      </button>
+    </div>
+  </header>
+
+  <!-- Vertical Controls: Leather Bookmark Strip -->
+  <nav class="vc-strip" aria-label="Toggle controls">
+    <button class="vc-toggle" data-action="translation" aria-label="Toggle translation">
+      <span style="font-family:var(--font-ui);font-size:13px;font-weight:700;line-height:1;letter-spacing:-0.5px">ع<span style="opacity:0.4">|</span>A</span>
+    </button>
+    <button class="vc-toggle" data-action="transliteration" aria-label="Toggle transliteration">
+      <i data-lucide="text-cursor-input" style="width:20px;height:20px"></i>
+    </button>
+    <button class="vc-toggle" data-action="textsize" aria-label="Cycle text size">
+      <i data-lucide="type" style="width:20px;height:20px"></i>
+      <span class="vc-badge">M</span>
+    </button>
+    <button class="vc-toggle" data-action="settings" aria-label="Toggle settings">
+      <i data-lucide="settings" style="width:20px;height:20px"></i>
+    </button>
+  </nav>
+
+  <!-- Settings Panel -->
+  <div class="settings-panel" id="settingsPanel">
+    <h4>Settings</h4>
+    <label><input type="checkbox" checked> Dark mode</label>
+    <label><input type="checkbox"> Tashkeel</label>
+    <label><input type="checkbox" checked> Animations</label>
+  </div>
+
+  <div class="reader">
+    <article class="poem-card">
+      <div class="poem-meta">
+        <div class="poet-avatar">م</div>
+        <div class="poet-info">
+          <h2>المتنبي</h2>
+          <span>Al-Mutanabbi</span>
+        </div>
+      </div>
+      <div class="poem-content" dir="rtl" lang="ar">
+        <div class="verse-block">
+          <div class="verse-ar">عَلَى قَدْرِ أَهْلِ العَزْمِ تَأْتِي العَزَائِمُ</div>
+          <div class="verse-translit" id="translit1">Ala qadri ahli al-azmi ta'ti al-aza'imu</div>
+        </div>
+        <span class="hemistich-divider"></span>
+        <div class="verse-block">
+          <div class="verse-ar">وَتَأْتِي عَلَى قَدْرِ الكِرَامِ المَكَارِمُ</div>
+          <div class="verse-translit" id="translit2">wa ta'ti ala qadri al-kirami al-makarimu</div>
+        </div>
+      </div>
+      <div class="translation-row" id="translationRow">
+        According to the people of resolve come the resolves, and according to the noble come the noble deeds.
+      </div>
+      <div class="poem-actions">
+        <button class="poem-action-btn">
+          <i data-lucide="copy" style="width:16px;height:16px"></i> نسخ
+        </button>
+        <button class="poem-action-btn">
+          <i data-lucide="share-2" style="width:16px;height:16px"></i> مشاركة
+        </button>
+        <button class="poem-action-btn">
+          <i data-lucide="bookmark" style="width:16px;height:16px"></i> حفظ
+        </button>
+      </div>
+    </article>
+  </div>
+
+  <!-- Bottom Action Bar -->
+  <nav class="bottom-nav">
+    <div class="nav-items-wrap">
+      <button class="nav-item active" aria-label="Next poem"><i data-lucide="shuffle" style="width:20px;height:20px"></i>Shuffle</button>
+      <button class="nav-item" aria-label="Save poem"><i data-lucide="heart" style="width:20px;height:20px"></i>Save</button>
+      <button class="nav-item" aria-label="Listen"><i data-lucide="headphones" style="width:20px;height:20px"></i>Listen</button>
+      <button class="nav-item" aria-label="Share poem"><i data-lucide="share-2" style="width:20px;height:20px"></i>Share</button>
+    </div>
+  </nav>
+</div>
+
+<script>
+/* Toggle Controls */
+document.querySelectorAll('.vc-toggle').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    var action = btn.dataset.action;
+    if (action === 'textsize') {
+      var sizes = ['S','M','L','XL'];
+      var badge = btn.querySelector('.vc-badge');
+      var idx = sizes.indexOf(badge.textContent);
+      idx = (idx + 1) % sizes.length;
+      badge.textContent = sizes[idx];
+      document.querySelector('.poem-content').style.fontSize =
+        {'S':'1rem','M':'1.25rem','L':'1.5rem','XL':'2rem'}[sizes[idx]];
+    } else if (action === 'translation') {
+      btn.classList.toggle('active');
+      document.getElementById('translationRow').classList.toggle('visible');
+    } else if (action === 'transliteration') {
+      btn.classList.toggle('active');
+      document.querySelectorAll('.verse-translit').forEach(function(el) { el.classList.toggle('visible'); });
+    } else if (action === 'settings') {
+      btn.classList.toggle('active');
+      document.getElementById('settingsPanel').classList.toggle('visible');
+    } else {
+      btn.classList.toggle('active');
+    }
+  });
+});
+
+/* Theme Toggle */
+document.getElementById('themeToggle').addEventListener('click', function() {
+  document.documentElement.classList.toggle('light');
+});
+
+/* Lucide icons */
+document.addEventListener('DOMContentLoaded', function() {
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+});
+</script>
+</body>
+</html>

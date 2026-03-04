@@ -1,761 +1,639 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>B10: Tessellation Garden - Poetry bil Araby</title>
-  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>B10 Signature Blend - Tessellation Garden</title>
+<link href="https://fonts.googleapis.com/css2?family=Forum&family=Reem+Kufi:wght@400;700&family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --emerald: #0A3D2F; --gold: #C5A059; --ivory: #FDFCF8;
+  --teal: #1A6B5A; --emerald-light: #0E5840;
+  --gold-dim: rgba(197,160,89,0.3);
+  --muted: rgba(253,252,248,0.5);
+}
+body {
+  font-family: 'Tajawal', sans-serif; background: var(--emerald);
+  color: var(--ivory); overflow-x: hidden;
+  transition: background 0.5s ease, color 0.5s ease;
+}
+body.light { background: var(--ivory); color: #1a2a1f; }
 
-    :root {
-      --emerald: #0A3D2F;
-      --gold: #C5A059;
-      --ivory: #FDFCF8;
-      --teal: #1A6B5A;
-      --emerald-light: #0E5840;
-      --gold-dim: rgba(197, 160, 89, 0.3);
-    }
+/* ===== SPLASH ===== */
+.splash {
+  position: fixed; inset: 0; z-index: 9999;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--emerald);
+}
+.splash.fade-out { animation: splashOut 0.8s ease forwards; }
+.splash canvas {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+}
 
-    body {
-      font-family: 'Tajawal', sans-serif;
-      background: var(--emerald);
-      color: var(--ivory);
-      overflow-x: hidden;
-      transition: background 0.5s ease, color 0.5s ease;
-    }
+.splash-content {
+  position: relative; z-index: 2; text-align: center;
+  opacity: 0; animation: fadeInContent 1.5s ease 0.8s forwards;
+}
 
-    body.light {
-      background: var(--ivory);
-      color: #1a2a1f;
-    }
+/* Brand */
+.splash-brand {
+  display: flex; align-items: flex-end; justify-content: center;
+  gap: 0.5rem; margin-bottom: 1rem;
+}
+.splash-brand-en {
+  font-family: 'Forum', serif; font-size: clamp(3rem, 6vw, 4.5rem);
+  letter-spacing: -0.05em; color: var(--gold); line-height: 1;
+  text-shadow: 0 0 40px rgba(197,160,89,0.5);
+}
+.splash-brand-ar {
+  font-family: 'Reem Kufi', sans-serif; font-weight: 700;
+  font-size: clamp(1.875rem, 4vw, 3rem); color: var(--gold); line-height: 1;
+}
 
-    /* ========== SPLASH ========== */
-    .splash {
-      position: fixed;
-      inset: 0;
-      z-index: 9999;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: var(--emerald);
-      will-change: opacity;
-    }
+/* Fixed: high contrast splash subtitle */
+.splash-subtitle {
+  font-size: clamp(14px, 2.5vw, 18px); color: var(--ivory);
+  letter-spacing: 0.15em; direction: ltr; opacity: 0.8;
+}
 
-    .splash.fade-out {
-      animation: splashOut 0.8s ease forwards;
-    }
+.splash-enter {
+  margin-top: 2.5rem; padding: 14px 40px; min-height: 44px;
+  background: transparent; border: 1px solid var(--gold); color: var(--gold);
+  font-family: 'Tajawal', sans-serif; font-size: 15px; border-radius: 8px;
+  cursor: pointer; transition: all 0.3s ease;
+  opacity: 0; animation: fadeInContent 1s ease 2s forwards;
+}
+.splash-enter:hover {
+  background: var(--gold); color: var(--emerald);
+  box-shadow: 0 0 30px rgba(197,160,89,0.4);
+}
 
-    .splash canvas {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      will-change: transform;
-    }
+@keyframes fadeInContent { to { opacity: 1; } }
+@keyframes splashOut { to { opacity: 0; pointer-events: none; } }
 
-    .splash-text {
-      position: relative;
-      z-index: 2;
-      text-align: center;
-      opacity: 0;
-      animation: textIn 1.2s ease 0.8s forwards;
-    }
+/* ===== WALKTHROUGH (Organic Biomorphic) ===== */
+.walkthrough {
+  position: fixed; inset: 0; z-index: 9998;
+  background: var(--emerald); display: none;
+  align-items: center; justify-content: center;
+  cursor: pointer; flex-direction: column;
+  overflow: hidden;
+}
+.walkthrough.active { display: flex; }
 
-    .splash-text h1 {
-      font-family: 'Amiri', serif;
-      font-size: 48px;
-      color: var(--gold);
-      text-shadow: 0 0 40px rgba(197, 160, 89, 0.5);
-      margin-bottom: 12px;
-    }
+/* Animated organic blob background */
+.bio-blob {
+  position: absolute; border-radius: 50%;
+  filter: blur(60px); pointer-events: none;
+  transition: all 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.bio-blob-1 {
+  width: 300px; height: 300px;
+  background: rgba(26, 107, 90, 0.3);
+}
+.bio-blob-2 {
+  width: 250px; height: 250px;
+  background: rgba(197, 160, 89, 0.15);
+}
+/* Blob positions per step */
+.walkthrough[data-step="0"] .bio-blob-1 { top: 10%; left: -5%; transform: scale(1); }
+.walkthrough[data-step="0"] .bio-blob-2 { bottom: 15%; right: -10%; transform: scale(0.8); }
+.walkthrough[data-step="1"] .bio-blob-1 { top: 30%; left: 20%; transform: scale(1.2); }
+.walkthrough[data-step="1"] .bio-blob-2 { bottom: 5%; right: 15%; transform: scale(1.1); }
+.walkthrough[data-step="2"] .bio-blob-1 { top: 15%; left: 40%; transform: scale(0.9); }
+.walkthrough[data-step="2"] .bio-blob-2 { bottom: 20%; right: 30%; transform: scale(1.3); }
 
-    .splash-text p {
-      font-size: 16px;
-      color: var(--teal);
-      letter-spacing: 2px;
-    }
+.bio-card {
+  position: relative; z-index: 2;
+  max-width: 400px; width: 90%; padding: 2.5rem 2rem; text-align: center;
+  background: rgba(10, 61, 47, 0.5);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(197, 160, 89, 0.15);
+  border-radius: 32px;
+  display: none;
+}
+.bio-card.active {
+  display: block;
+  animation: bioReveal 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes bioReveal {
+  from { opacity: 0; transform: scale(0.92) translateY(16px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
 
-    @keyframes textIn {
-      to { opacity: 1; }
-    }
+.bio-icon {
+  width: 52px; height: 52px; margin: 0 auto 1.25rem;
+  border-radius: 16px; background: rgba(197, 160, 89, 0.1);
+  border: 1px solid rgba(197, 160, 89, 0.2);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--gold);
+}
+.bio-card h3 {
+  font-family: 'Tajawal', sans-serif; font-size: 1.25rem;
+  font-weight: 500; color: var(--ivory); direction: ltr; margin-bottom: 4px;
+}
+.bio-card .bio-ar {
+  font-family: 'Tajawal', sans-serif; font-size: 1.05rem;
+  color: var(--gold); direction: rtl; margin-bottom: 1rem;
+}
+.bio-card p {
+  font-size: 0.9rem; line-height: 1.7; color: var(--muted); direction: ltr;
+  margin-bottom: 0.5rem;
+}
+.bio-card .bio-desc-ar {
+  font-family: 'Tajawal', sans-serif; font-size: 0.85rem;
+  line-height: 1.7; color: rgba(197, 160, 89, 0.4); direction: rtl;
+}
+.bio-dots { display: flex; gap: 10px; margin-top: 2rem; z-index: 2; }
+.bio-dot {
+  width: 10px; height: 10px; border-radius: 50%;
+  background: rgba(197, 160, 89, 0.15);
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.bio-dot.active {
+  background: var(--gold);
+  transform: scale(1.3);
+  box-shadow: 0 0 10px rgba(197, 160, 89, 0.4);
+}
+.bio-hint {
+  margin-top: 1rem; font-size: 0.7rem; letter-spacing: 0.25em;
+  text-transform: uppercase; color: rgba(253, 252, 248, 0.25); z-index: 2;
+}
 
-    @keyframes splashOut {
-      to { opacity: 0; pointer-events: none; }
-    }
+/* ===== MAIN APP ===== */
+/* Biomorphic — organic blob shapes contain the poem, flowing borders */
+.app { display: none; min-height: 100vh; position: relative; overflow: hidden; }
+.app.active { display: block; }
 
-    /* ========== WALKTHROUGH (Hexagonal Grid) ========== */
-    .walkthrough {
-      position: fixed;
-      inset: 0;
-      background: rgba(6, 30, 22, 0.97);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 9998;
-      padding: 20px;
-    }
+/* Organic background blobs */
+.bio-bg {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
+}
+.bio-bg-blob {
+  position: absolute; border-radius: 50%; filter: blur(80px);
+  animation: bioPulse 8s ease-in-out infinite alternate;
+}
+.bio-bg-blob-1 {
+  width: 400px; height: 400px;
+  background: rgba(26, 107, 90, 0.2);
+  top: -10%; left: -10%;
+}
+.bio-bg-blob-2 {
+  width: 350px; height: 350px;
+  background: rgba(197, 160, 89, 0.1);
+  bottom: -5%; right: -15%;
+  animation-delay: 3s;
+}
+@keyframes bioPulse {
+  from { transform: scale(1) translate(0, 0); }
+  to { transform: scale(1.15) translate(10px, -10px); }
+}
 
-    .walkthrough.active { display: flex; }
+/* Tessellation Garden poem container — leaf-shaped organic frame */
+.bio-reader {
+  position: relative; z-index: 2;
+  min-height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+  padding: 2rem 20px;
+}
 
-    .hex-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 20px;
-      max-width: 640px;
-      width: 100%;
-      animation: hexEnter 0.8s ease;
-    }
+.bio-poem-container {
+  position: relative;
+  max-width: 400px; width: 100%;
+  padding: 3rem 2.5rem;
+  background: linear-gradient(160deg, rgba(10, 61, 47, 0.65), rgba(14, 88, 64, 0.45));
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  /* Leaf/petal shape: gentle asymmetric curves, not extreme blob */
+  border-radius: 48px 12px 48px 12px;
+  box-shadow:
+    0 20px 50px rgba(0, 0, 0, 0.3),
+    inset 0 0 0 1px rgba(197, 160, 89, 0.12);
+  overflow: hidden;
+}
 
-    @keyframes hexEnter {
-      from { opacity: 0; transform: scale(0.9) translateY(30px); }
-      to { opacity: 1; transform: scale(1) translateY(0); }
-    }
+/* Tessellation accent lines framing the container */
+.bio-poem-container::before {
+  content: '';
+  position: absolute;
+  top: 12px; left: 12px; right: 12px; bottom: 12px;
+  border: 1px solid rgba(197, 160, 89, 0.1);
+  border-radius: 40px 6px 40px 6px;
+  pointer-events: none;
+}
 
-    .hex-cell {
-      background: linear-gradient(135deg, rgba(10, 61, 47, 0.95), rgba(26, 107, 90, 0.4));
-      border: 2px solid var(--gold);
-      clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-      padding: 50px 28px 40px;
-      text-align: center;
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-      aspect-ratio: 1 / 1.15;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
+/* Gold corner ornament — 8-point star motif from tessellation */
+.bio-poem-container::after {
+  content: '';
+  position: absolute;
+  top: -1px; right: -1px;
+  width: 32px; height: 32px;
+  background:
+    linear-gradient(135deg, transparent 48%, rgba(197,160,89,0.25) 48%, rgba(197,160,89,0.25) 52%, transparent 52%),
+    linear-gradient(45deg, transparent 48%, rgba(197,160,89,0.25) 48%, rgba(197,160,89,0.25) 52%, transparent 52%);
+  clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
+  pointer-events: none;
+}
 
-    .hex-cell:hover {
-      transform: scale(1.05);
-    }
+.bio-poet {
+  font-family: 'Tajawal', sans-serif;
+  font-size: 12px; font-weight: 500;
+  letter-spacing: 0.2em; color: var(--gold);
+  text-align: center; direction: ltr;
+  margin-bottom: 0.25rem;
+}
+.bio-poet-ar {
+  font-family: 'Amiri', serif;
+  font-size: 14px; color: var(--muted);
+  text-align: center; direction: rtl;
+  margin-bottom: 1.5rem;
+}
 
-    .hex-cell .hex-icon {
-      font-size: 36px;
-      margin-bottom: 10px;
-    }
+.bio-verses {
+  font-family: 'Amiri', serif;
+  font-size: clamp(1.25rem, 3.5vw, 1.5rem);
+  line-height: 2.2;
+  color: var(--ivory);
+  direction: rtl; text-align: center;
+  margin-bottom: 1rem;
+}
 
-    .hex-cell h3 {
-      font-family: 'Amiri', serif;
-      font-size: 20px;
-      color: var(--gold);
-      margin-bottom: 8px;
-    }
+.bio-translation {
+  font-family: 'Tajawal', sans-serif;
+  font-size: 13px; color: var(--muted);
+  text-align: center; direction: ltr;
+  line-height: 1.6;
+}
 
-    .hex-cell p {
-      font-size: 13px;
-      color: rgba(253, 252, 248, 0.8);
-      line-height: 1.6;
-    }
+/* ===== CONTROLS ===== */
+/* Organic wave pull-up — controls sit on the wave crest */
 
-    .hex-grid-footer {
-      grid-column: 1 / -1;
-      display: flex;
-      justify-content: center;
-      gap: 15px;
-      padding-top: 10px;
-    }
+.wave-trigger {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  z-index: 55; display: flex; justify-content: center;
+  padding: 14px 0 20px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.wave-trigger-bar {
+  width: 40px; height: 4px;
+  background: rgba(197, 160, 89, 0.3);
+  border-radius: 2px;
+  transition: background 0.3s ease;
+}
+.wave-trigger:hover .wave-trigger-bar,
+.wave-trigger:active .wave-trigger-bar {
+  background: var(--gold);
+}
 
-    .btn {
-      padding: 16px 38px;
-      border: none;
-      border-radius: 50px;
-      font-size: 15px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      min-width: 44px;
-      min-height: 44px;
-      font-family: 'Tajawal', sans-serif;
-    }
+.wave-overlay {
+  position: fixed; inset: 0; z-index: 58;
+  background: rgba(10, 61, 47, 0.4);
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.wave-overlay.visible { opacity: 1; pointer-events: auto; }
 
-    .btn-primary {
-      background: var(--gold);
-      color: var(--emerald);
-      box-shadow: 0 0 30px rgba(197, 160, 89, 0.4);
-    }
+.wave-panel {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  z-index: 60;
+  transform: translateY(100%);
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.wave-panel.open { transform: translateY(0); }
 
-    .btn-primary:hover {
-      background: #D4B06A;
-      box-shadow: 0 0 50px rgba(197, 160, 89, 0.6);
-      transform: translateY(-3px);
-    }
+/* SVG wave shape at top */
+.wave-shape {
+  display: block; width: 100%;
+  margin-bottom: -2px;
+}
+.wave-shape path {
+  fill: rgba(10, 61, 47, 0.85);
+}
 
-    .btn-secondary {
-      background: transparent;
-      color: rgba(253, 252, 248, 0.5);
-      border: 2px solid rgba(253, 252, 248, 0.2);
-    }
+.wave-content {
+  background: rgba(10, 61, 47, 0.85);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  padding: 0.5rem 1.5rem 2rem;
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+}
 
-    .btn-secondary:hover {
-      border-color: var(--gold);
-      color: var(--gold);
-    }
+.wave-action {
+  display: flex; flex-direction: column;
+  align-items: center; gap: 6px;
+  padding: 12px 8px;
+  min-height: 52px; min-width: 52px;
+  background: transparent; border: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.2s ease;
+}
+.wave-action:active { transform: scale(0.95); }
 
-    /* ========== MAIN APP ========== */
-    .app {
-      display: none;
-      min-height: 100vh;
-      padding: 95px 20px 40px;
-    }
+.wave-action-icon {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: rgba(197, 160, 89, 0.1);
+  border: 1px solid rgba(197, 160, 89, 0.2);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--gold);
+  transition: all 0.2s ease;
+}
+.wave-action:hover .wave-action-icon,
+.wave-action:active .wave-action-icon {
+  background: rgba(197, 160, 89, 0.2);
+  border-color: var(--gold);
+}
 
-    .app.active { display: block; }
+.wave-action-label {
+  font-family: 'Tajawal', sans-serif;
+  font-size: 10px; letter-spacing: 0.1em;
+  color: var(--muted);
+  direction: ltr;
+}
 
-    .header {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      background: rgba(10, 61, 47, 0.95);
-      backdrop-filter: blur(20px);
-      padding: 20px 35px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 2px solid var(--gold-dim);
-      z-index: 100;
-      transition: background 0.3s ease;
-    }
-
-    .light .header {
-      background: rgba(253, 252, 248, 0.95);
-      border-bottom-color: rgba(197, 160, 89, 0.4);
-    }
-
-    .logo {
-      font-family: 'Amiri', serif;
-      font-size: 26px;
-      font-weight: 700;
-      color: var(--gold);
-    }
-
-    .light .logo { color: var(--emerald); }
-
-    .theme-toggle {
-      background: transparent;
-      border: 2px solid var(--gold);
-      color: var(--gold);
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      cursor: pointer;
-      transition: all 0.3s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 20px;
-    }
-
-    .theme-toggle:hover {
-      background: var(--gold);
-      color: var(--emerald);
-      transform: rotate(180deg);
-    }
-
-    .light .theme-toggle {
-      border-color: var(--emerald);
-      color: var(--emerald);
-    }
-
-    .light .theme-toggle:hover {
-      background: var(--emerald);
-      color: var(--ivory);
-    }
-
-    .container { max-width: 900px; margin: 0 auto; }
-
-    /* Poem card with arabesque SVG border */
-    .poem-card {
-      position: relative;
-      background: linear-gradient(135deg, #072a1f, #0d4434);
-      border-radius: 20px;
-      padding: 80px 60px;
-      margin: 45px 0;
-      transition: all 0.5s ease;
-      overflow: visible;
-    }
-
-    .light .poem-card {
-      background: white;
-      box-shadow: 0 10px 40px rgba(10, 61, 47, 0.1);
-    }
-
-    /* Arabesque SVG border */
-    .arabesque-border {
-      position: absolute;
-      inset: -4px;
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    .arabesque-border rect {
-      fill: none;
-      stroke: var(--gold);
-      stroke-width: 2.5;
-      rx: 20;
-    }
-
-    .arabesque-border .pattern-line {
-      fill: none;
-      stroke: var(--gold);
-      stroke-width: 1.5;
-      stroke-dasharray: 1200;
-      stroke-dashoffset: 1200;
-      animation: drawArabesque 4s ease forwards;
-      will-change: stroke-dashoffset;
-    }
-
-    @keyframes drawArabesque {
-      to { stroke-dashoffset: 0; }
-    }
-
-    .poem-card:hover {
-      transform: translateY(-8px);
-    }
-
-    .poem-content { position: relative; z-index: 1; }
-
-    .poem-title {
-      font-family: 'Amiri', serif;
-      font-size: 36px;
-      color: var(--gold);
-      margin-bottom: 45px;
-      text-align: center;
-    }
-
-    .light .poem-title { color: var(--emerald); }
-
-    .poem-verse {
-      font-family: 'Amiri', serif;
-      font-size: 28px;
-      line-height: 2.4;
-      text-align: center;
-      direction: rtl;
-      margin: 45px 0;
-      color: var(--ivory);
-    }
-
-    .light .poem-verse { color: #1a2a1f; }
-
-    .poet-name {
-      text-align: center;
-      color: var(--teal);
-      font-size: 20px;
-      margin-top: 45px;
-    }
-
-    .light .poet-name { color: var(--emerald); }
-
-    .control-rail {
-      display: flex;
-      gap: 16px;
-      justify-content: center;
-      margin-top: 50px;
-    }
-
-    .control-btn {
-      width: 52px;
-      height: 52px;
-      border-radius: 50%;
-      background: rgba(197, 160, 89, 0.12);
-      border: 2px solid var(--gold);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.3s ease;
-      color: var(--gold);
-      font-size: 18px;
-    }
-
-    .control-btn:hover {
-      background: var(--gold);
-      color: var(--emerald);
-      transform: scale(1.2);
-    }
-
-    .light .control-btn {
-      border-color: var(--emerald);
-      color: var(--emerald);
-      background: rgba(10, 61, 47, 0.06);
-    }
-
-    .light .control-btn:hover {
-      background: var(--emerald);
-      color: var(--ivory);
-    }
-
-    /* ========== Reduced Motion ========== */
-    @media (prefers-reduced-motion: reduce) {
-      *, *::before, *::after {
-        animation: none !important;
-        transition: none !important;
-      }
-      .splash { display: none !important; }
-      .walkthrough { display: none !important; }
-      .app { display: block !important; }
-    }
-
-    /* ========== Mobile ========== */
-    @media (max-width: 768px) {
-      .hex-grid {
-        grid-template-columns: 1fr;
-        max-width: 320px;
-      }
-      .hex-cell { padding: 40px 20px 30px; }
-      .poem-card { padding: 50px 30px; }
-      .poem-verse { font-size: 22px; }
-      .splash-text h1 { font-size: 36px; }
-    }
-  </style>
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important; transition: none !important;
+  }
+  .splash { display: none !important; }
+  .walkthrough { display: none !important; }
+  .app { display: block !important; }
+  .bio-poem-container { border-radius: 24px; }
+}
+@media (max-width: 768px) {
+  .bio-poem-container { padding: 2rem 1.5rem; }
+  .wave-content { gap: 1.5rem; padding: 0.5rem 1rem 1.5rem; }
+}
+</style>
 </head>
 <body>
-  <!-- Splash Screen -->
-  <div class="splash" id="splash">
-    <canvas id="tessCanvas"></canvas>
-    <div class="splash-text">
-      <h1>حديقة الزخرفة</h1>
-      <p>Tessellation Garden</p>
+
+<!-- Splash -->
+<div class="splash" id="splash">
+  <canvas id="tessCanvas"></canvas>
+  <div class="splash-content">
+    <div class="splash-brand">
+      <span class="splash-brand-en">poetry</span>
+      <span class="splash-brand-ar">بالعربي</span>
     </div>
+    <p class="splash-subtitle">Tessellation Garden</p>
+    <button class="splash-enter" id="splashEnter">Enter</button>
+  </div>
+</div>
+
+<!-- Walkthrough (Organic Biomorphic) -->
+<div class="walkthrough" id="walkthrough" data-step="0">
+  <div class="bio-blob bio-blob-1"></div>
+  <div class="bio-blob bio-blob-2"></div>
+
+  <div class="bio-card active" data-card="0">
+    <div class="bio-icon"><i data-lucide="compass" style="width:24px;height:24px"></i></div>
+    <h3>A Living Garden</h3>
+    <div class="bio-ar" lang="ar" dir="rtl">حديقة حيّة</div>
+    <p>Over 84,000 poems growing like a garden of verse across centuries.</p>
+    <div class="bio-desc-ar" lang="ar" dir="rtl">أكثر من 84,000 قصيدة تنمو كحديقة من الشعر عبر القرون</div>
+  </div>
+  <div class="bio-card" data-card="1">
+    <div class="bio-icon"><i data-lucide="headphones" style="width:24px;height:24px"></i></div>
+    <h3>Listen & Feel</h3>
+    <div class="bio-ar" lang="ar" dir="rtl">استمع واشعر</div>
+    <p>AI-powered recitation brings each verse to life, organically flowing.</p>
+    <div class="bio-desc-ar" lang="ar" dir="rtl">إلقاء صوتي يبعث الحياة في كل بيت بانسيابية طبيعية</div>
+  </div>
+  <div class="bio-card" data-card="2">
+    <div class="bio-icon"><i data-lucide="sparkles" style="width:24px;height:24px"></i></div>
+    <h3>AI Insights</h3>
+    <div class="bio-ar" lang="ar" dir="rtl">رؤى ذكية</div>
+    <p>Deep analysis that unfolds meaning layer by layer, like petals opening.</p>
+    <div class="bio-desc-ar" lang="ar" dir="rtl">تحليل عميق يكشف المعاني طبقة بعد طبقة كتفتح البتلات</div>
   </div>
 
-  <!-- Walkthrough - Hexagonal Grid -->
-  <div class="walkthrough" id="walkthrough">
-    <div class="hex-grid">
-      <div class="hex-cell">
-        <div class="hex-icon">&#x2726;</div>
-        <h3>اكتشف الشعر</h3>
-        <p>تصفّح آلاف القصائد من التراث العربي الغني بين يديك</p>
-      </div>
-      <div class="hex-cell">
-        <div class="hex-icon">&#x2728;</div>
-        <h3>زخارف حية</h3>
-        <p>تجربة بصرية مستوحاة من فن الزخرفة الهندسية الإسلامية</p>
-      </div>
-      <div class="hex-cell">
-        <div class="hex-icon">&#x266B;</div>
-        <h3>استمع وتأمّل</h3>
-        <p>اسمع الأبيات بصوت يليق بجمال الكلمة العربية</p>
-      </div>
-      <div class="hex-grid-footer">
-        <button class="btn btn-secondary" onclick="skipWalkthrough()">تخطّي</button>
-        <button class="btn btn-primary" onclick="startApp()">ابدأ الرحلة</button>
-      </div>
-    </div>
+  <div class="bio-dots">
+    <div class="bio-dot active" data-dot="0"></div>
+    <div class="bio-dot" data-dot="1"></div>
+    <div class="bio-dot" data-dot="2"></div>
+  </div>
+  <div class="bio-hint">Tap anywhere to continue</div>
+</div>
+
+<!-- ===== MAIN APP ===== -->
+<div class="app" id="app">
+  <!-- Biomorphic background blobs -->
+  <div class="bio-bg">
+    <div class="bio-bg-blob bio-bg-blob-1"></div>
+    <div class="bio-bg-blob bio-bg-blob-2"></div>
   </div>
 
-  <!-- Main App -->
-  <div class="app" id="app">
-    <header class="header">
-      <div class="logo">ديوان الشعر</div>
-      <button class="theme-toggle" onclick="toggleTheme()" aria-label="تبديل السمة">&#9788;</button>
-    </header>
-
-    <div class="container">
-      <div class="poem-card" id="poemCard">
-        <!-- Arabesque SVG border injected by JS -->
-        <div class="poem-content">
-          <h2 class="poem-title">ديوان الشعر العربي</h2>
-          <div class="poem-verse" dir="rtl" lang="ar">
-            أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ<br>
-            فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
-          </div>
-          <p class="poet-name">— أحمد شوقي</p>
-
-          <div class="control-rail">
-            <button class="control-btn" aria-label="السابق">&#8249;</button>
-            <button class="control-btn" aria-label="تشغيل">&#9654;</button>
-            <button class="control-btn" aria-label="التالي">&#8250;</button>
-            <button class="control-btn" aria-label="حفظ">&#9733;</button>
-          </div>
-        </div>
+  <!-- Tessellation Garden poem container -->
+  <main class="bio-reader">
+    <div class="bio-poem-container">
+      <div class="bio-poet">Al-Mutanabbi</div>
+      <div class="bio-poet-ar" lang="ar" dir="rtl">المتنبي</div>
+      <div class="bio-verses" lang="ar" dir="rtl">
+        عَلَى قَدْرِ أَهْلِ العَزْمِ تَأْتِي العَزَائِمُ<br>
+        وَتَأْتِي عَلَى قَدْرِ الكِرَامِ المَكَارِمُ
+      </div>
+      <div class="bio-translation">
+        Great deeds come to those of great resolve,<br>
+        and noble acts to those of noble character.
       </div>
     </div>
+  </main>
+
+  <!-- ===== CONTROLS ===== -->
+  <!-- Pull-up trigger -->
+  <div class="wave-trigger" id="waveTrigger" aria-label="Open controls">
+    <div class="wave-trigger-bar"></div>
   </div>
 
-  <script>
-    /* ===========================================
-       TESSELLATION CANVAS - 8-Pointed Islamic Stars
-       =========================================== */
-    (function() {
-      const canvas = document.getElementById('tessCanvas');
-      const ctx = canvas.getContext('2d');
-      const isMobile = window.innerWidth < 768;
+  <!-- Overlay -->
+  <div class="wave-overlay" id="waveOverlay"></div>
 
-      let W, H, time = 0, splitProgress = 0, splashing = true;
-      const EMERALD = '#0A3D2F';
-      const GOLD = '#C5A059';
-      const TEAL = '#1A6B5A';
+  <!-- Organic wave pull-up panel -->
+  <div class="wave-panel" id="wavePanel">
+    <svg class="wave-shape" viewBox="0 0 400 30" preserveAspectRatio="none">
+      <path d="M0,30 C50,5 100,25 150,10 C200,-5 250,20 300,8 C350,-2 380,18 400,12 L400,30 Z"/>
+    </svg>
+    <div class="wave-content">
+      <button class="wave-action" data-action="next">
+        <div class="wave-action-icon"><i data-lucide="arrow-right" style="width:16px;height:16px"></i></div>
+        <span class="wave-action-label">Next</span>
+      </button>
+      <button class="wave-action" data-action="save">
+        <div class="wave-action-icon"><i data-lucide="heart" style="width:16px;height:16px"></i></div>
+        <span class="wave-action-label">Save</span>
+      </button>
+      <button class="wave-action" data-action="listen">
+        <div class="wave-action-icon"><i data-lucide="headphones" style="width:16px;height:16px"></i></div>
+        <span class="wave-action-label">Listen</span>
+      </button>
+      <button class="wave-action" data-action="share">
+        <div class="wave-action-icon"><i data-lucide="share-2" style="width:16px;height:16px"></i></div>
+        <span class="wave-action-label">Share</span>
+      </button>
+    </div>
+  </div>
+</div>
 
-      function resize() {
-        W = canvas.width = window.innerWidth;
-        H = canvas.height = window.innerHeight;
-      }
-      resize();
-      window.addEventListener('resize', resize);
+<script>
+/* Tessellation Canvas */
+(function() {
+  var canvas = document.getElementById('tessCanvas');
+  var ctx = canvas.getContext('2d');
+  var isMob = window.innerWidth < 768;
+  var W, H, time = 0, splashing = true;
 
-      // Draw an 8-pointed star at (cx, cy) with given outer radius
-      function drawStar8(cx, cy, outerR, rotation, alpha) {
-        const innerR = outerR * 0.42;
-        ctx.beginPath();
-        for (let i = 0; i < 16; i++) {
-          const angle = rotation + (i * Math.PI / 8);
-          const r = i % 2 === 0 ? outerR : innerR;
-          const x = cx + Math.cos(angle) * r;
-          const y = cy + Math.sin(angle) * r;
-          if (i === 0) ctx.moveTo(x, y);
-          else ctx.lineTo(x, y);
-        }
-        ctx.closePath();
-        ctx.strokeStyle = `rgba(197, 160, 89, ${alpha})`;
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-      }
+  function resize() { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; buildGrid(); }
+  resize();
+  window.addEventListener('resize', resize);
 
-      // Draw connecting hexagonal tessellation lines
-      function drawHexConnect(cx, cy, size, rotation, alpha) {
-        for (let i = 0; i < 6; i++) {
-          const a = rotation + i * Math.PI / 3;
-          const x2 = cx + Math.cos(a) * size;
-          const y2 = cy + Math.sin(a) * size;
-          ctx.beginPath();
-          ctx.moveTo(cx, cy);
-          ctx.lineTo(x2, y2);
-          ctx.strokeStyle = `rgba(26, 107, 90, ${alpha * 0.5})`;
-          ctx.lineWidth = 0.8;
-          ctx.stroke();
-        }
-      }
-
-      // Build grid of star positions
-      const spacing = isMobile ? 100 : 120;
-      let stars = [];
-
-      function buildGrid() {
-        stars = [];
-        const cols = Math.ceil(W / spacing) + 2;
-        const rows = Math.ceil(H / (spacing * 0.866)) + 2;
-        for (let row = -1; row < rows; row++) {
-          for (let col = -1; col < cols; col++) {
-            const offsetX = (row % 2) * (spacing / 2);
-            const x = col * spacing + offsetX;
-            const y = row * spacing * 0.866;
-            stars.push({ x, y, baseX: x, baseY: y });
-          }
-        }
-      }
-      buildGrid();
-
-      function animate() {
-        time += 0.008;
-        ctx.clearRect(0, 0, W, H);
-        ctx.fillStyle = EMERALD;
-        ctx.fillRect(0, 0, W, H);
-
-        const rotation = time * 0.3;
-        const centerX = W / 2;
-        const centerY = H / 2;
-
-        for (let i = 0; i < stars.length; i++) {
-          const s = stars[i];
-          let dx = s.baseX - centerX;
-          let dy = s.baseY - centerY;
-          let dist = Math.sqrt(dx * dx + dy * dy);
-          let maxDist = Math.sqrt(centerX * centerX + centerY * centerY);
-
-          // Split effect: stars push outward from center
-          let pushX = 0, pushY = 0;
-          if (splitProgress > 0 && dist > 1) {
-            let pushDist = splitProgress * (800 + dist * 1.5);
-            pushX = (dx / dist) * pushDist;
-            pushY = (dy / dist) * pushDist;
-          }
-
-          s.x = s.baseX + pushX;
-          s.y = s.baseY + pushY;
-
-          let alpha = Math.max(0, 1 - splitProgress * 2);
-          let distFade = 1 - (dist / maxDist) * 0.3;
-          let finalAlpha = alpha * distFade;
-
-          if (finalAlpha > 0.01) {
-            let starSize = (spacing / 2.5) * (1 + Math.sin(time + i * 0.05) * 0.08);
-            drawHexConnect(s.x, s.y, spacing * 0.5, rotation * 0.5, finalAlpha * 0.6);
-            drawStar8(s.x, s.y, starSize, rotation + i * 0.02, finalAlpha);
-          }
-        }
-
-        if (splashing) {
-          requestAnimationFrame(animate);
-        }
-      }
-
-      animate();
-
-      // After 3s start splitting
-      setTimeout(function() {
-        let start = null;
-        function splitAnim(ts) {
-          if (!start) start = ts;
-          splitProgress = Math.min(1, (ts - start) / 1200);
-          if (splitProgress < 1) {
-            requestAnimationFrame(splitAnim);
-          } else {
-            splashing = false;
-            document.getElementById('splash').classList.add('fade-out');
-            setTimeout(function() {
-              document.getElementById('splash').style.display = 'none';
-              document.getElementById('walkthrough').classList.add('active');
-            }, 800);
-          }
-        }
-        requestAnimationFrame(splitAnim);
-      }, 3000);
-
-      // Halve star count on mobile by skipping every other during draw
-      // (handled by spacing already being larger)
-
-      // Rebuild on resize
-      window.addEventListener('resize', function() {
-        resize();
-        buildGrid();
-      });
-    })();
-
-    /* ===========================================
-       ARABESQUE SVG BORDER
-       =========================================== */
-    (function() {
-      const card = document.getElementById('poemCard');
-
-      function buildArabesque() {
-        const w = card.offsetWidth + 8;
-        const h = card.offsetHeight + 8;
-        const ns = 'http://www.w3.org/2000/svg';
-        const svg = document.createElementNS(ns, 'svg');
-        svg.setAttribute('class', 'arabesque-border');
-        svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
-        svg.setAttribute('width', w);
-        svg.setAttribute('height', h);
-
-        // Outer rect
-        const rect = document.createElementNS(ns, 'rect');
-        rect.setAttribute('x', '2');
-        rect.setAttribute('y', '2');
-        rect.setAttribute('width', w - 4);
-        rect.setAttribute('height', h - 4);
-        rect.setAttribute('rx', '20');
-        svg.appendChild(rect);
-
-        // Arabesque pattern path - flowing vine along border
-        const margin = 14;
-        const cw = w - margin * 2;
-        const ch = h - margin * 2;
-        let d = `M ${margin} ${margin + 30}`;
-
-        // Top edge scallops
-        const scallops = 8;
-        const scW = cw / scallops;
-        for (let i = 0; i < scallops; i++) {
-          const x1 = margin + i * scW + scW * 0.3;
-          const y1 = margin - 6;
-          const x2 = margin + i * scW + scW * 0.7;
-          const y2 = margin - 6;
-          const x3 = margin + (i + 1) * scW;
-          const y3 = margin + 30;
-          d += ` C ${x1} ${y1}, ${x2} ${y2}, ${x3} ${y3}`;
-        }
-
-        // Right edge scallops
-        const rScallops = 6;
-        const rH = ch / rScallops;
-        for (let i = 0; i < rScallops; i++) {
-          const x1 = w - margin + 6;
-          const y1 = margin + 30 + i * rH + rH * 0.3;
-          const x2 = w - margin + 6;
-          const y2 = margin + 30 + i * rH + rH * 0.7;
-          const x3 = w - margin;
-          const y3 = margin + 30 + (i + 1) * rH;
-          d += ` C ${x1} ${y1}, ${x2} ${y2}, ${x3} ${y3}`;
-        }
-
-        // Bottom edge
-        const bScallops = 8;
-        const bW = cw / bScallops;
-        for (let i = 0; i < bScallops; i++) {
-          const x1 = w - margin - i * bW - bW * 0.3;
-          const y1 = h - margin + 6;
-          const x2 = w - margin - i * bW - bW * 0.7;
-          const y2 = h - margin + 6;
-          const x3 = w - margin - (i + 1) * bW;
-          const y3 = h - margin;
-          d += ` C ${x1} ${y1}, ${x2} ${y2}, ${x3} ${y3}`;
-        }
-
-        // Left edge
-        const lScallops = 6;
-        const lH = ch / lScallops;
-        for (let i = 0; i < lScallops; i++) {
-          const x1 = margin - 6;
-          const y1 = h - margin - 30 - i * lH - lH * 0.3;
-          const x2 = margin - 6;
-          const y2 = h - margin - 30 - i * lH - lH * 0.7;
-          const x3 = margin;
-          const y3 = h - margin - 30 - (i + 1) * lH;
-          d += ` C ${x1} ${y1}, ${x2} ${y2}, ${x3} ${y3}`;
-        }
-
-        const path = document.createElementNS(ns, 'path');
-        path.setAttribute('class', 'pattern-line');
-        path.setAttribute('d', d);
-        svg.appendChild(path);
-
-        // Remove old SVG if exists
-        const old = card.querySelector('.arabesque-border');
-        if (old) old.remove();
-        card.insertBefore(svg, card.firstChild);
-
-        // Measure and set dasharray
-        const len = path.getTotalLength();
-        path.style.strokeDasharray = len;
-        path.style.strokeDashoffset = len;
-        // Force reflow then animate
-        path.getBoundingClientRect();
-        path.style.animation = 'none';
-        requestAnimationFrame(function() {
-          path.style.animation = '';
-          path.style.strokeDasharray = len;
-          path.style.strokeDashoffset = len;
-          path.style.transition = 'stroke-dashoffset 3s ease';
-          path.style.strokeDashoffset = '0';
-        });
-      }
-
-      // Build after app is shown
-      const observer = new MutationObserver(function(mutations) {
-        for (const m of mutations) {
-          if (m.target.classList.contains('active')) {
-            setTimeout(buildArabesque, 100);
-            window.addEventListener('resize', buildArabesque);
-          }
-        }
-      });
-      observer.observe(document.getElementById('app'), { attributes: true, attributeFilter: ['class'] });
-    })();
-
-    /* ===========================================
-       APP LOGIC
-       =========================================== */
-    function skipWalkthrough() { startApp(); }
-
-    function startApp() {
-      document.getElementById('walkthrough').classList.remove('active');
-      document.getElementById('app').classList.add('active');
+  function drawStar8(cx, cy, outerR, rotation, alpha) {
+    var innerR = outerR * 0.42;
+    ctx.beginPath();
+    for (var i = 0; i < 16; i++) {
+      var angle = rotation + (i * Math.PI / 8);
+      var r = i % 2 === 0 ? outerR : innerR;
+      var x = cx + Math.cos(angle) * r;
+      var y = cy + Math.sin(angle) * r;
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
     }
+    ctx.closePath();
+    ctx.strokeStyle = 'rgba(197,160,89,' + alpha + ')';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+  }
 
-    function toggleTheme() {
-      document.body.classList.toggle('light');
+  var spacing = isMob ? 100 : 120;
+  var stars = [];
+  function buildGrid() {
+    stars = [];
+    var cols = Math.ceil(W / spacing) + 2;
+    var rows = Math.ceil(H / (spacing * 0.866)) + 2;
+    for (var row = -1; row < rows; row++) {
+      for (var col = -1; col < cols; col++) {
+        var ox = (row % 2) * (spacing / 2);
+        stars.push({ x: col * spacing + ox, y: row * spacing * 0.866 });
+      }
     }
-  </script>
+  }
+  buildGrid();
+
+  function animate() {
+    time += 0.008;
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = '#0A3D2F';
+    ctx.fillRect(0, 0, W, H);
+    var rot = time * 0.3;
+    for (var i = 0; i < stars.length; i++) {
+      var s = stars[i];
+      var starSize = (spacing / 2.5) * (1 + Math.sin(time + i * 0.05) * 0.08);
+      drawStar8(s.x, s.y, starSize, rot + i * 0.02, 0.25);
+    }
+    if (splashing) requestAnimationFrame(animate);
+  }
+  animate();
+
+  // Splash enter
+  document.getElementById('splashEnter').addEventListener('click', function() {
+    splashing = false;
+    var splashEl = document.getElementById('splash');
+    splashEl.classList.add('fade-out');
+    splashEl.style.pointerEvents = 'none';
+    setTimeout(function() {
+      splashEl.style.display = 'none';
+      var wt = document.getElementById('walkthrough');
+      wt.classList.add('active');
+      wt.setAttribute('data-step', '0');
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+    }, 800);
+  });
+})();
+
+/* Walkthrough (Organic Biomorphic) */
+var bioCards = document.querySelectorAll('.bio-card');
+var bioDots = document.querySelectorAll('.bio-dot');
+var currentStep = 0;
+var totalBioSteps = bioCards.length;
+
+function showBioStep() {
+  for (var i = 0; i < bioCards.length; i++) {
+    bioCards[i].classList.remove('active');
+  }
+  for (var j = 0; j < bioDots.length; j++) {
+    bioDots[j].classList.remove('active');
+  }
+  if (currentStep < totalBioSteps) {
+    bioCards[currentStep].classList.add('active');
+    bioDots[currentStep].classList.add('active');
+    document.getElementById('walkthrough').setAttribute('data-step', currentStep);
+  }
+}
+
+function advanceBio() {
+  currentStep++;
+  if (currentStep >= totalBioSteps) {
+    var wt = document.getElementById('walkthrough');
+    wt.classList.remove('active');
+    wt.style.display = 'none';
+    document.getElementById('app').classList.add('active');
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+  } else {
+    showBioStep();
+  }
+}
+
+document.getElementById('walkthrough').addEventListener('click', advanceBio);
+
+/* ===== ORGANIC WAVE CONTROLS ===== */
+var wavePanel = document.getElementById('wavePanel');
+var waveOverlay = document.getElementById('waveOverlay');
+var waveTrigger = document.getElementById('waveTrigger');
+
+function openWave() {
+  wavePanel.classList.add('open');
+  waveOverlay.classList.add('visible');
+  waveTrigger.style.display = 'none';
+}
+function closeWave() {
+  wavePanel.classList.remove('open');
+  waveOverlay.classList.remove('visible');
+  waveTrigger.style.display = '';
+}
+
+waveTrigger.addEventListener('click', openWave);
+waveTrigger.addEventListener('touchstart', function(e) {
+  e.preventDefault(); openWave();
+});
+waveOverlay.addEventListener('click', closeWave);
+
+/* Touch feedback on wave actions */
+document.querySelectorAll('.wave-action').forEach(function(action) {
+  action.addEventListener('touchstart', function() {
+    var icon = action.querySelector('.wave-action-icon');
+    if (icon) {
+      icon.style.background = 'rgba(197, 160, 89, 0.25)';
+      icon.style.borderColor = 'var(--gold)';
+    }
+  }, { passive: true });
+  action.addEventListener('touchend', function() {
+    var icon = action.querySelector('.wave-action-icon');
+    setTimeout(function() {
+      if (icon) { icon.style.background = ''; icon.style.borderColor = ''; }
+    }, 150);
+  }, { passive: true });
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+});
+</script>
 </body>
 </html>

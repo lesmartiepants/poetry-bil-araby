@@ -1,0 +1,824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>E2E #5: Haiku Style - Full Flow</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Forum&family=Reem+Kufi:wght@400;700&family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    :root {
+      --bg-primary: #000000;
+      --bg-secondary: #0a0a0e;
+      --bg-card: #131316;
+      --text-primary: #ffffff;
+      --text-secondary: #a8a8a8;
+      --text-muted: #555;
+      --border-color: #1e1e24;
+      --accent: #a8a8a8;
+      --stroke-color: rgba(255, 255, 255, 0.95);
+    }
+
+    [data-theme="light"] {
+      --bg-primary: #fafaf9;
+      --bg-secondary: #f5f5f0;
+      --bg-card: #ffffff;
+      --text-primary: #000000;
+      --text-secondary: #666666;
+      --text-muted: #999;
+      --border-color: #e0e0d8;
+      --accent: #666;
+      --stroke-color: rgba(0, 0, 0, 0.95);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Tajawal', system-ui, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      transition: background 0.4s ease, color 0.4s ease;
+    }
+
+    /* ============================================
+       SPLASH SCREEN
+       ============================================ */
+    .splash {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1000;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-primary);
+      transition: opacity 0.6s ease, visibility 0.6s ease;
+    }
+
+    .splash.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .particle-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .splash-content {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      max-width: 800px;
+      padding: 40px;
+    }
+
+    /* Zen brush stroke */
+    .stroke {
+      width: 200px;
+      height: 3px;
+      background: var(--stroke-color);
+      margin: 0 auto 3rem;
+      transform-origin: left center;
+      animation: drawLine 0.7s ease-out forwards, breathePulse 4s ease-in-out 1s infinite;
+    }
+
+    @keyframes drawLine {
+      from { transform: scaleX(0); }
+      to { transform: scaleX(1); }
+    }
+
+    @keyframes breathePulse {
+      0%, 100% { opacity: 0.95; transform: scaleX(1); }
+      50% { opacity: 1; transform: scaleX(1.05); }
+    }
+
+    @keyframes fadeIn {
+      to { opacity: 1; }
+    }
+
+    .splash-text {
+      opacity: 0;
+      animation: fadeIn 0.6s ease-out 0.5s forwards;
+    }
+
+    /* Canonical brand in splash */
+    .splash-brand {
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      gap: 0.35em;
+      margin-bottom: 24px;
+    }
+
+    .splash-brand-en {
+      font-family: 'Forum', cursive;
+      font-size: clamp(3rem, 6vw, 4.5rem);
+      text-transform: lowercase;
+      letter-spacing: -0.05em;
+      line-height: 1;
+      color: var(--text-primary);
+    }
+
+    .splash-brand-ar {
+      font-family: 'Reem Kufi', sans-serif;
+      font-weight: 700;
+      font-size: clamp(1.875rem, 4vw, 3rem);
+      line-height: 1;
+      color: var(--text-primary);
+    }
+
+    .splash-subtitle {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.4em;
+      color: var(--text-secondary);
+      font-weight: 500;
+      margin-bottom: 48px;
+      opacity: 0;
+      animation: fadeIn 0.6s ease-out 1s forwards;
+    }
+
+    /* Animated CTA (PM: add entry button) */
+    .splash-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 40px;
+      border: 1px solid var(--border-color);
+      border-radius: 999px;
+      background: transparent;
+      color: var(--text-primary);
+      font-family: 'Tajawal', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      opacity: 0;
+      animation: fadeIn 0.5s ease-out 1.4s forwards, ctaPulse 3s ease-in-out 2s infinite;
+      min-height: 48px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    @keyframes ctaPulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
+      50% { box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.04); }
+    }
+
+    .splash-cta:hover {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: var(--text-secondary);
+      transform: translateY(-2px);
+    }
+
+    [data-theme="light"] .splash-cta:hover {
+      background: rgba(0, 0, 0, 0.04);
+    }
+
+    .splash-cta svg { width: 16px; height: 16px; }
+
+    /* Theme toggle */
+    .theme-toggle {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      border: 1px solid var(--border-color);
+      background: transparent;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 2000;
+      transition: all 0.3s ease;
+    }
+
+    .theme-toggle:hover {
+      color: var(--text-primary);
+      border-color: var(--text-secondary);
+    }
+
+    .theme-toggle svg { width: 18px; height: 18px; }
+
+    .icon-sun, .icon-moon { display: none; }
+    [data-mode="dark"] .icon-sun { display: flex; }
+    [data-mode="light"] .icon-moon { display: flex; }
+
+    /* ============================================
+       ONBOARDING — MUJI MINIMALISM
+       Ultra-clean, single word per step,
+       massive whitespace, barely-there transitions,
+       thin hairline type, no icons
+       ============================================ */
+    .onboarding {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 900;
+      background: var(--bg-primary);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.8s ease, visibility 0.8s ease;
+    }
+
+    .onboarding.active { opacity: 1; visibility: visible; }
+
+    /* Muji step — single word, massive whitespace */
+    .muji-step {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 1.2s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+                  visibility 1.2s ease;
+    }
+
+    .muji-step.active {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    /* Single Arabic word — large, thin, centered */
+    .muji-word {
+      font-family: 'Amiri', serif;
+      font-size: clamp(3rem, 10vw, 6rem);
+      font-weight: 400;
+      color: var(--text-primary);
+      direction: rtl;
+      letter-spacing: 0.05em;
+      line-height: 1;
+      margin-bottom: 2rem;
+      opacity: 0;
+      transform: translateY(4px);
+      transition: opacity 1s ease 0.2s, transform 1s ease 0.2s;
+    }
+
+    .muji-step.active .muji-word {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Hairline English subtitle */
+    .muji-sub {
+      font-family: 'Tajawal', sans-serif;
+      font-size: 10px;
+      font-weight: 300;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      opacity: 0;
+      transition: opacity 1s ease 0.6s;
+    }
+
+    .muji-step.active .muji-sub {
+      opacity: 1;
+    }
+
+    /* Thin hairline progress — barely visible */
+    .muji-progress {
+      position: fixed;
+      bottom: 48%;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 24px;
+      align-items: center;
+    }
+
+    .muji-line {
+      width: 20px;
+      height: 1px;
+      background: var(--border-color);
+      transition: all 0.8s ease;
+    }
+
+    .muji-line.active {
+      width: 32px;
+      background: var(--text-secondary);
+    }
+
+    .muji-line.past {
+      background: rgba(168, 168, 168, 0.2);
+    }
+
+    /* Tap hint — barely visible */
+    .muji-hint {
+      position: fixed;
+      bottom: 10%;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Tajawal', sans-serif;
+      font-size: 9px;
+      font-weight: 300;
+      letter-spacing: 0.3em;
+      text-transform: lowercase;
+      color: var(--text-muted);
+      opacity: 0.4;
+    }
+
+    /* ============================================
+       MAIN APP
+       ============================================ */
+    .main-app {
+      min-height: 100vh;
+      display: none;
+      flex-direction: column;
+      background: var(--bg-primary);
+    }
+
+    .main-app.active { display: flex; }
+
+    .app-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--border-color);
+      background: var(--bg-secondary);
+    }
+
+    .nav-brand {
+      display: flex;
+      align-items: flex-end;
+      gap: 0.25em;
+    }
+
+    .nav-brand-en {
+      font-family: 'Forum', cursive;
+      font-size: 1.25rem;
+      text-transform: lowercase;
+      letter-spacing: -0.05em;
+      line-height: 1;
+      color: var(--text-primary);
+    }
+
+    .nav-brand-ar {
+      font-family: 'Reem Kufi', sans-serif;
+      font-weight: 700;
+      font-size: 0.875rem;
+      line-height: 1;
+      color: var(--text-primary);
+    }
+
+    .nav-actions { display: flex; gap: 0.5rem; }
+
+    .nav-btn {
+      width: 44px;
+      height: 44px;
+      border: none;
+      background: transparent;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border-radius: 8px;
+      transition: color 0.2s ease;
+    }
+
+    .nav-btn:hover { color: var(--text-primary); }
+    .nav-btn svg { width: 20px; height: 20px; }
+
+    .poem-area {
+      flex: 1;
+      display: flex;
+      position: relative;
+    }
+
+    .poem-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+      padding-bottom: 80px;
+    }
+
+    .poem-text {
+      font-family: 'Amiri', serif;
+      font-size: clamp(1.25rem, 3vw, 1.625rem);
+      line-height: 2.2;
+      color: var(--text-primary);
+      direction: rtl;
+      text-align: center;
+      max-width: 600px;
+      margin-bottom: 1.5rem;
+    }
+
+    .poem-poet {
+      font-family: 'Tajawal', sans-serif;
+      font-size: 0.8125rem;
+      color: var(--text-secondary);
+      direction: rtl;
+    }
+
+    /* ===== CONTROLS ===== */
+    /* Muji Minimalism — barely-there thin circles, appear on first touch */
+
+    .muji-controls {
+      position: fixed;
+      bottom: 28px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 64px;
+      z-index: 100;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.8s ease, visibility 0.8s ease;
+    }
+
+    .muji-controls.revealed {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .muji-circle {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: 1px solid #e4e4e7;
+      background: transparent;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      position: relative;
+      padding: 0;
+      outline: none;
+    }
+
+    [data-theme="light"] .muji-circle {
+      border-color: #d4d4d8;
+    }
+
+    .muji-circle svg {
+      width: 16px;
+      height: 16px;
+      color: #e4e4e7;
+      opacity: 0.25;
+      transform: scale(0.8);
+      transition: opacity 0.3s ease, transform 0.3s ease, color 0.3s ease;
+    }
+
+    [data-theme="light"] .muji-circle svg {
+      color: #a1a1aa;
+    }
+
+    .muji-circle:hover svg,
+    .muji-circle:active svg,
+    .muji-circle.touched svg {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    .muji-circle:hover {
+      border-color: var(--text-secondary);
+    }
+
+    .muji-circle:active {
+      transform: scale(1.08);
+      border-color: var(--text-primary);
+    }
+
+    .muji-circle:active svg {
+      color: var(--text-primary);
+    }
+
+    /* Label below circle on tap */
+    .muji-label {
+      position: absolute;
+      bottom: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Tajawal', sans-serif;
+      font-size: 9px;
+      letter-spacing: 0.2em;
+      text-transform: lowercase;
+      color: #e4e4e7;
+      white-space: nowrap;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      pointer-events: none;
+    }
+
+    [data-theme="light"] .muji-label {
+      color: #a1a1aa;
+    }
+
+    .muji-circle:hover .muji-label,
+    .muji-circle:active .muji-label,
+    .muji-circle.touched .muji-label {
+      opacity: 1;
+    }
+
+    @media (max-width: 480px) {
+      .splash-brand-en { font-size: 2.5rem; }
+      .splash-brand-ar { font-size: 1.5rem; }
+      .stroke { width: 150px; }
+    }
+  </style>
+</head>
+<body data-mode="dark">
+
+  <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+    <span class="icon-sun"><i data-lucide="sun"></i></span>
+    <span class="icon-moon"><i data-lucide="moon"></i></span>
+  </button>
+
+  <!-- ========== SPLASH ========== -->
+  <section class="splash" id="splashScreen">
+    <canvas id="particleCanvas" class="particle-canvas"></canvas>
+    <div class="splash-content">
+      <div class="stroke"></div>
+      <div class="splash-text">
+        <div class="splash-brand">
+          <span class="splash-brand-en">poetry</span>
+          <span class="splash-brand-ar" dir="rtl" lang="ar">بالعربي</span>
+        </div>
+        <p class="splash-subtitle">Verses Connecting Across Time and Space</p>
+        <button class="splash-cta" id="splashCta">
+          <span>Enter</span>
+          <i data-lucide="arrow-right"></i>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== ONBOARDING — MUJI MINIMALISM ========== -->
+  <section class="onboarding" id="onboarding">
+    <div class="muji-step active" data-step="0">
+      <div class="muji-word" lang="ar" dir="rtl">اكتشف</div>
+      <div class="muji-sub">discover</div>
+    </div>
+
+    <div class="muji-step" data-step="1">
+      <div class="muji-word" lang="ar" dir="rtl">اقرأ</div>
+      <div class="muji-sub">read</div>
+    </div>
+
+    <div class="muji-step" data-step="2">
+      <div class="muji-word" lang="ar" dir="rtl">عِش</div>
+      <div class="muji-sub">live</div>
+    </div>
+
+    <div class="muji-progress">
+      <span class="muji-line active"></span>
+      <span class="muji-line"></span>
+      <span class="muji-line"></span>
+    </div>
+    <div class="muji-hint">tap</div>
+  </section>
+
+  <!-- ========== MAIN APP ========== -->
+  <main class="main-app" id="mainApp">
+    <nav class="app-nav">
+      <div class="nav-brand">
+        <span class="nav-brand-en">poetry</span>
+        <span class="nav-brand-ar" dir="rtl" lang="ar">بالعربي</span>
+      </div>
+      <div class="nav-actions">
+        <button class="nav-btn" aria-label="Search"><i data-lucide="search"></i></button>
+        <button class="nav-btn" aria-label="Menu"><i data-lucide="menu"></i></button>
+      </div>
+    </nav>
+
+    <div class="poem-area">
+      <div class="poem-content">
+        <div class="poem-text" lang="ar" dir="rtl">
+          وما نيلُ المطالبِ بالتمنّي<br>
+          ولكنْ تُؤخَذُ الدنيا غِلابا<br><br>
+          وما استعصى على قومٍ منالٌ<br>
+          إذا الإقدامُ كان لهم رِكابا
+        </div>
+        <p class="poem-poet" lang="ar" dir="rtl">-- أحمد شوقي</p>
+      </div>
+
+    </div>
+
+    <!-- ===== CONTROLS: Muji Minimalism ===== -->
+    <div class="muji-controls" id="mujiControls">
+      <button class="muji-circle" aria-label="Next poem" data-action="next">
+        <i data-lucide="shuffle"></i>
+        <span class="muji-label">next</span>
+      </button>
+      <button class="muji-circle" aria-label="Save poem" data-action="save">
+        <i data-lucide="heart"></i>
+        <span class="muji-label">save</span>
+      </button>
+      <button class="muji-circle" aria-label="Listen" data-action="listen">
+        <i data-lucide="volume-2"></i>
+        <span class="muji-label">listen</span>
+      </button>
+      <button class="muji-circle" aria-label="Share" data-action="share">
+        <i data-lucide="share"></i>
+        <span class="muji-label">share</span>
+      </button>
+    </div>
+  </main>
+
+  <script>
+    lucide.createIcons();
+
+    // Theme toggle
+    var isDark = true;
+    document.getElementById('themeToggle').addEventListener('click', function(e) {
+      e.stopPropagation();
+      isDark = !isDark;
+      document.documentElement.setAttribute('data-theme', isDark ? '' : 'light');
+      document.body.setAttribute('data-mode', isDark ? 'dark' : 'light');
+    });
+
+    // Flow navigation
+    document.getElementById('splashCta').addEventListener('click', function() {
+      document.getElementById('splashScreen').classList.add('hidden');
+      document.getElementById('onboarding').classList.add('active');
+    });
+
+    // Muji onboarding — tap anywhere to advance, single word per step
+    var mujiStep = 0;
+    var mujiSteps = document.querySelectorAll('.muji-step');
+    var mujiLines = document.querySelectorAll('.muji-line');
+
+    document.getElementById('onboarding').addEventListener('click', function() {
+      mujiStep++;
+      if (mujiStep >= mujiSteps.length) {
+        document.getElementById('onboarding').classList.remove('active');
+        document.getElementById('mainApp').classList.add('active');
+        return;
+      }
+      mujiSteps.forEach(function(s) { s.classList.remove('active'); });
+      mujiSteps[mujiStep].classList.add('active');
+      mujiLines.forEach(function(line, i) {
+        line.classList.remove('active', 'past');
+        if (i < mujiStep) line.classList.add('past');
+        if (i === mujiStep) line.classList.add('active');
+      });
+    });
+
+    // Particle system (faster per PM feedback)
+    var canvas = document.getElementById('particleCanvas');
+    var ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    var particles = [];
+    var particleCount = 400;
+    var mouse = { x: canvas.width / 2, y: canvas.height / 2 };
+
+    for (var i = 0; i < particleCount; i++) {
+      var curve = Math.floor(Math.random() * 3);
+      var curves = [
+        { x: 0.7, y: 0.5, radius: 0.12 },
+        { x: 0.5, y: 0.5, radius: 0.10 },
+        { x: 0.3, y: 0.5, radius: 0.14 }
+      ];
+      var c = curves[curve];
+      var angle = Math.random() * Math.PI * 2;
+      var dist = Math.random() * c.radius;
+
+      particles.push({
+        x: (c.x + Math.cos(angle) * dist) * canvas.width,
+        y: (c.y + Math.sin(angle) * dist) * canvas.height,
+        originX: (c.x + Math.cos(angle) * dist) * canvas.width,
+        originY: (c.y + Math.sin(angle) * dist) * canvas.height,
+        vx: 0, vy: 0,
+        radius: Math.random() * 1.5 + 0.5,
+        opacity: Math.random() * 0.4 + 0.4,
+        twinklePhase: Math.random() * Math.PI * 2,
+        twinkleSpeed: Math.random() * 0.04 + 0.02
+      });
+    }
+
+    window.addEventListener('mousemove', function(e) { mouse.x = e.clientX; mouse.y = e.clientY; });
+
+    function animate() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      var isLight = document.documentElement.getAttribute('data-theme') === 'light';
+
+      particles.forEach(function(p) {
+        var dx = mouse.x - p.x;
+        var dy = mouse.y - p.y;
+        var d = Math.sqrt(dx * dx + dy * dy);
+        if (d < 120) {
+          var f = (120 - d) / 120;
+          p.vx -= (dx / d) * f * 1.0;
+          p.vy -= (dy / d) * f * 1.0;
+        }
+
+        p.vx += (p.originX - p.x) * 0.002;
+        p.vy += (p.originY - p.y) * 0.002;
+        p.vx *= 0.93;
+        p.vy *= 0.93;
+        p.x += p.vx;
+        p.y += p.vy;
+
+        p.twinklePhase += p.twinkleSpeed;
+        var twinkle = Math.sin(p.twinklePhase) * 0.3 + 0.7;
+        var fo = p.opacity * twinkle * 0.5;
+
+        var core = isLight ? 'rgba(100, 120, 140,' : 'rgba(200, 220, 255,';
+        var glow = isLight ? 'rgba(80, 100, 120,' : 'rgba(180, 200, 255,';
+
+        ctx.beginPath();
+        var g1 = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius * 4);
+        g1.addColorStop(0, core + ' ' + (fo * 0.6) + ')');
+        g1.addColorStop(0.3, glow + ' ' + (fo * 0.3) + ')');
+        g1.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        ctx.fillStyle = g1;
+        ctx.arc(p.x, p.y, p.radius * 4, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.beginPath();
+        var b = isLight ? 'rgba(0, 0, 0,' : 'rgba(255, 255, 255,';
+        var g2 = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius);
+        g2.addColorStop(0, b + ' ' + fo + ')');
+        g2.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        ctx.fillStyle = g2;
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      requestAnimationFrame(animate);
+    }
+
+    animate();
+
+    // ========== MUJI CONTROLS ==========
+    // Only appear after first touch on main app area
+    var mujiRevealed = false;
+    var mainAppEl = document.getElementById('mainApp');
+
+    mainAppEl.addEventListener('click', function() {
+      if (!mujiRevealed) {
+        mujiRevealed = true;
+        document.getElementById('mujiControls').classList.add('revealed');
+      }
+    }, { once: true });
+
+    mainAppEl.addEventListener('touchstart', function() {
+      if (!mujiRevealed) {
+        mujiRevealed = true;
+        document.getElementById('mujiControls').classList.add('revealed');
+      }
+    }, { once: true, passive: true });
+
+    // Show icon on tap for mobile (touch feedback)
+    document.querySelectorAll('.muji-circle').forEach(function(circle) {
+      circle.addEventListener('touchstart', function() {
+        this.classList.add('touched');
+      }, { passive: true });
+      circle.addEventListener('touchend', function() {
+        var el = this;
+        setTimeout(function() { el.classList.remove('touched'); }, 300);
+      });
+    });
+
+    window.addEventListener('resize', function() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    });
+  </script>
+</body>
+</html>

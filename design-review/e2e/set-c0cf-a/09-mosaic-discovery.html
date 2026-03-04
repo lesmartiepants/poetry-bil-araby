@@ -23,7 +23,6 @@
     --card-bg: rgba(10, 46, 31, 0.88);
     --card-border: var(--gold);
     --muted: var(--jade);
-    --surface: rgba(10, 46, 31, 0.6);
   }
   [data-theme="light"] {
     --bg: var(--ivory);
@@ -31,7 +30,6 @@
     --card-bg: #ffffff;
     --card-border: var(--gold);
     --muted: #3a6b50;
-    --surface: rgba(255, 255, 255, 0.85);
   }
   *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
   body {
@@ -45,221 +43,334 @@
 
   /* ============ Splash ============ */
   #splash {
-    position: fixed; inset: 0; z-index: 1000;
+    position: fixed; inset: 0; z-index: 100;
     background: var(--emerald);
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
-    transition: opacity 1s ease;
+    transition: opacity 1.2s ease;
   }
   #splash.done { opacity: 0; pointer-events: none; }
-  #splash canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
-
-  .splash-brand {
-    position: relative; z-index: 2;
-    display: flex; align-items: flex-end;
-    justify-content: center; gap: 0.5rem;
-    margin-bottom: 1.5rem;
-    opacity: 0; animation: fadeUp 1s ease 0.5s forwards;
+  #splash canvas {
+    position: absolute; inset: 0;
+    display: block; width: 100%; height: 100%;
   }
-  .splash-brand-en {
+
+  /* Brand Logo on Splash */
+  .splash-brand {
+    position: relative; z-index: 10;
+    display: flex; align-items: flex-end; justify-content: center;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+    opacity: 0;
+    animation: brandFadeIn 1.2s ease 0.5s forwards;
+  }
+  .splash-brand .en {
     font-family: 'Forum', serif;
     font-size: clamp(3rem, 6vw, 4.5rem);
     letter-spacing: -0.05em;
     color: var(--ivory);
     line-height: 1;
   }
-  .splash-brand-ar {
+  .splash-brand .ar {
     font-family: 'Reem Kufi', sans-serif;
     font-weight: 700;
     font-size: clamp(1.875rem, 4vw, 3rem);
     color: var(--ivory);
     line-height: 1;
+    padding-bottom: 0.15em;
   }
-  .splash-tagline {
-    position: relative; z-index: 2;
-    font-size: 0.85rem; color: var(--gold);
-    letter-spacing: 0.15em; text-transform: uppercase;
-    text-align: center; direction: ltr;
-    opacity: 0; animation: fadeUp 1s ease 0.8s forwards;
-    margin-bottom: 2.5rem;
-  }
-  .splash-cta {
-    position: relative; z-index: 2;
-    background: transparent;
-    border: 1.5px solid var(--gold);
-    color: var(--gold);
-    font-family: 'Tajawal', sans-serif;
-    font-size: 1rem; font-weight: 500;
-    padding: 0.85rem 2.5rem;
-    border-radius: 6px;
-    cursor: pointer;
-    min-width: 44px; min-height: 44px;
-    transition: background 0.3s, color 0.3s, transform 0.2s;
-    opacity: 0; animation: fadeUp 1s ease 1.1s forwards;
-  }
-  .splash-cta:hover {
-    background: var(--gold); color: var(--emerald);
-    transform: translateY(-2px);
-  }
-  .splash-cta:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
-
-  @keyframes fadeUp {
+  @keyframes brandFadeIn {
     from { opacity: 0; transform: translateY(12px); }
     to { opacity: 1; transform: translateY(0); }
   }
 
-  /* ============ Onboarding ============ */
-  #onboarding {
-    position: fixed; inset: 0; z-index: 900;
-    display: none; flex-direction: column;
-    align-items: center; justify-content: center;
-    background: var(--bg);
-    padding: 2rem;
-    transition: background var(--speed);
-  }
-  #onboarding.active { display: flex; }
-
-  .onboard-card {
-    display: none; flex-direction: column;
-    align-items: center; text-align: center;
-    max-width: 380px; width: 100%;
-    padding: 2.5rem 2rem;
-    background: var(--card-bg);
-    border: 1px solid var(--gold-dim);
-    border-radius: 12px;
-    transition: background var(--speed);
-  }
-  .onboard-card.active { display: flex; }
-
-  .onboard-icon {
-    width: 48px; height: 48px;
-    color: var(--gold);
-    margin-bottom: 1.5rem;
-  }
-  .onboard-title-en {
-    font-family: 'Forum', serif;
-    font-size: 1.4rem;
-    letter-spacing: -0.03em;
-    margin-bottom: 0.25rem;
-    direction: ltr;
-  }
-  .onboard-title-ar {
-    font-family: 'Reem Kufi', sans-serif;
-    font-weight: 700;
-    font-size: 1.2rem;
-    color: var(--gold);
-    margin-bottom: 1rem;
-  }
-  .onboard-desc-en {
-    font-size: 0.9rem;
-    line-height: 1.6;
-    opacity: 0.8;
-    margin-bottom: 0.35rem;
-    direction: ltr;
-    text-align: center;
-  }
-  .onboard-desc-ar {
+  /* CTA Button */
+  #enterBtn {
+    position: relative; z-index: 10;
+    background: transparent;
+    border: 1.5px solid var(--ivory);
+    color: var(--ivory);
     font-family: 'Tajawal', sans-serif;
-    font-size: 0.85rem;
-    line-height: 1.6;
-    opacity: 0.7;
-    margin-bottom: 1.5rem;
-  }
-
-  .onboard-dots {
-    display: flex; gap: 8px;
-    margin-bottom: 1.5rem;
-  }
-  .onboard-dot {
-    width: 8px; height: 8px;
-    border-radius: 50%;
-    background: var(--gold-dim);
-    transition: background 0.3s, transform 0.3s;
-  }
-  .onboard-dot.active {
-    background: var(--gold);
-    transform: scale(1.3);
-  }
-
-  .onboard-next {
-    background: var(--gold);
-    color: var(--emerald);
-    border: none;
-    font-family: 'Tajawal', sans-serif;
-    font-size: 0.95rem; font-weight: 600;
-    padding: 0.75rem 2rem;
+    font-size: 1.1rem;
+    font-weight: 500;
+    padding: 0.85rem 2.8rem;
     border-radius: 6px;
     cursor: pointer;
     min-width: 44px; min-height: 44px;
-    transition: transform 0.2s, box-shadow 0.3s;
+    transition: background 0.3s, transform 0.2s;
+    opacity: 0;
+    animation: brandFadeIn 1s ease 1.2s forwards;
+    display: flex; align-items: center; gap: 0.5rem;
   }
-  .onboard-next:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(197, 160, 89, 0.3);
+  #enterBtn:hover, #enterBtn:focus-visible {
+    background: rgba(197, 160, 89, 0.15);
+    transform: scale(1.04);
   }
-  .onboard-next:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+
+  #skipBtn {
+    position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%);
+    background: transparent; border: 1px solid var(--gold-dim);
+    color: var(--gold); font-family: 'Tajawal', sans-serif; font-size: 0.85rem;
+    padding: 0.5rem 1.5rem; border-radius: 4px; cursor: pointer;
+    min-width: 44px; min-height: 44px; transition: background 0.3s;
+    z-index: 101; opacity: 0.6;
+  }
+  #skipBtn:hover, #skipBtn:focus-visible { background: rgba(197, 160, 89, 0.12); opacity: 1; }
+
+  /* ============ Onboarding -- Islamic Geometric Tessellation ============ */
+  #onboarding {
+    position: fixed; inset: 0; z-index: 90;
+    background: var(--emerald);
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.6s ease;
+    cursor: pointer; overflow: hidden;
+  }
+  #onboarding.active { opacity: 1; pointer-events: auto; }
+
+  /* Tessellation background pattern */
+  .tess-bg {
+    position: absolute; inset: 0;
+    opacity: 0.04;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Cpath d='M40 0L55 15L80 15L65 40L80 65L55 65L40 80L25 65L0 65L15 40L0 15L25 15Z' fill='none' stroke='%23C5A059' stroke-width='0.6'/%3E%3C/svg%3E");
+    background-size: 80px 80px;
+    transition: transform 1.5s ease, opacity 1s ease;
+  }
+  #onboarding[data-step="1"] .tess-bg { transform: rotate(15deg) scale(1.1); opacity: 0.06; }
+  #onboarding[data-step="2"] .tess-bg { transform: rotate(-10deg) scale(1.2); opacity: 0.05; }
+
+  /* Geometric frame */
+  .geo-frame {
+    position: absolute; inset: 20px;
+    border: 1px solid rgba(197,160,89,0.12);
+    pointer-events: none;
+  }
+  /* 8-pointed star corners */
+  .geo-star {
+    position: absolute; width: 24px; height: 24px;
+    border: 1px solid var(--gold); opacity: 0.3;
+    transform: rotate(22.5deg);
+  }
+  .geo-star::after {
+    content: ''; position: absolute; inset: 0;
+    border: 1px solid var(--gold);
+    transform: rotate(45deg);
+  }
+  .geo-star.tl { top: -12px; left: -12px; }
+  .geo-star.tr { top: -12px; right: -12px; }
+  .geo-star.bl { bottom: -12px; left: -12px; }
+  .geo-star.br { bottom: -12px; right: -12px; }
+
+  /* Tile content panel */
+  .tile-panel {
+    position: relative; z-index: 5;
+    max-width: 340px; width: 88%;
+    padding: 2.5rem 2rem;
+    background: rgba(10,46,31,0.7);
+    border: 1px solid rgba(197,160,89,0.2);
+    text-align: center;
+    opacity: 0; transform: scale(0.95);
+    transition: opacity 0.7s ease, transform 0.7s ease;
+  }
+  .tile-panel.active { opacity: 1; transform: scale(1); }
+
+  /* Geometric rosette ornament */
+  .tile-rosette {
+    width: 40px; height: 40px; margin: 0 auto 1rem;
+    border: 1.5px solid var(--gold); opacity: 0.5;
+    transform: rotate(22.5deg);
+    position: relative;
+  }
+  .tile-rosette::after {
+    content: ''; position: absolute; inset: 0;
+    border: 1.5px solid var(--gold);
+    transform: rotate(45deg);
+  }
+
+  .tile-ar {
+    font-family: 'Amiri', serif;
+    font-size: clamp(2rem, 5vw, 2.6rem);
+    color: var(--gold); line-height: 1.3;
+    margin-bottom: 0.3rem;
+  }
+  .tile-en {
+    font-family: 'Tajawal', sans-serif;
+    font-size: 0.8rem; font-weight: 300;
+    color: var(--ivory); opacity: 0.5;
+    letter-spacing: 0.15em; text-transform: uppercase;
+    margin-bottom: 1rem; direction: ltr;
+  }
+  .tile-rule {
+    width: 50px; height: 1px; margin: 0 auto 1rem;
+    background: linear-gradient(90deg, transparent, var(--gold), transparent);
+    opacity: 0.4;
+  }
+  .tile-desc {
+    font-family: 'Tajawal', sans-serif;
+    font-size: 0.86rem; line-height: 1.8;
+    color: var(--ivory); opacity: 0.65; direction: ltr;
+  }
+
+  /* Diamond indicators */
+  .tile-diamonds {
+    position: relative; z-index: 5;
+    display: flex; gap: 14px; margin-top: 2rem;
+    justify-content: center;
+  }
+  .tile-diamond {
+    width: 8px; height: 8px;
+    border: 1px solid rgba(197,160,89,0.3);
+    transform: rotate(45deg);
+    transition: all 0.6s ease;
+  }
+  .tile-diamond.active {
+    background: var(--gold);
+    border-color: var(--gold);
+    box-shadow: 0 0 8px rgba(197,160,89,0.4);
+  }
+  .tile-diamond.past {
+    background: rgba(197,160,89,0.4);
+    border-color: rgba(197,160,89,0.5);
+  }
+
+  .tile-hint {
+    position: relative; z-index: 5;
+    font-size: 11px; color: var(--gold); opacity: 0.35;
+    margin-top: 1.2rem; letter-spacing: 0.2em;
+  }
 
   /* ============ Main App ============ */
   #app {
-    display: none;
-    min-height: 100vh;
-    padding: 1.5rem 1rem 5rem;
-    transition: background var(--speed);
+    opacity: 0; transition: opacity 0.9s ease 0.3s;
+    min-height: 100vh; padding: 1.5rem 1rem;
+    padding-right: 4.5rem;
+    /* Deep blue/gold Islamic palette background */
+    background:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Cpath d='M40 0L55 15L80 15L65 40L80 65L55 65L40 80L25 65L0 65L15 40L0 15L25 15Z' fill='none' stroke='%23C5A059' stroke-width='0.3'/%3E%3C/svg%3E"),
+      var(--bg);
+    background-size: 80px 80px, auto;
+    background-blend-mode: overlay;
   }
-  #app.active { display: block; }
+  #app.show { opacity: 1; }
+  html.light #app {
+    background:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Cpath d='M40 0L55 15L80 15L65 40L80 65L55 65L40 80L25 65L0 65L15 40L0 15L25 15Z' fill='none' stroke='%23C5A059' stroke-width='0.3'/%3E%3C/svg%3E"),
+      var(--bg);
+    background-size: 80px 80px, auto;
+  }
 
-  /* Theme toggle */
-  .theme-btn {
-    position: fixed; top: 1rem; left: 1rem; z-index: 50;
-    background: var(--card-bg); border: 1px solid var(--card-border);
-    color: var(--text); width: 48px; height: 48px; border-radius: 50%;
-    cursor: pointer; font-size: 1.3rem;
+  /* Star pattern overlay */
+  #app::before {
+    content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Cpath d='M30 5L35 25L55 30L35 35L30 55L25 35L5 30L25 25Z' fill='none' stroke='%23C5A059' stroke-width='0.3'/%3E%3C/svg%3E");
+    background-size: 60px 60px;
+    opacity: 0.04;
+  }
+
+  /* ============ Controls - Vertical (Desktop) ============ */
+  .controls-vertical {
+    position: fixed; top: 50%; right: 0.75rem;
+    transform: translateY(-50%);
+    display: flex; flex-direction: column; gap: 0.5rem;
+    z-index: 50;
+  }
+  .ctrl-btn {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    background: var(--card-bg);
+    border: 1px solid var(--gold-dim);
+    color: var(--text);
+    cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    transition: background var(--speed), color var(--speed), transform 0.25s;
-    will-change: transform;
+    transition: background 0.25s, border-color 0.25s, transform 0.2s;
   }
-  .theme-btn:hover { transform: scale(1.1); }
-  .theme-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
-  .theme-btn .icon-sun { display: none; }
-  .theme-btn .icon-moon { display: block; }
-  [data-theme="light"] .theme-btn .icon-sun { display: block; }
-  [data-theme="light"] .theme-btn .icon-moon { display: none; }
+  .ctrl-btn:hover, .ctrl-btn:focus-visible {
+    border-color: var(--gold);
+    background: rgba(197, 160, 89, 0.1);
+    transform: scale(1.08);
+  }
+  .ctrl-btn svg { width: 20px; height: 20px; }
 
-  /* Brand in header */
-  .app-brand {
-    display: flex; align-items: flex-end;
-    justify-content: center; gap: 0.4rem;
-    margin-bottom: 2rem;
-    direction: ltr;
+  /* ============ CONTROLS: Tessellated Tile Strip (Mobile) ============ */
+  .controls-bottom {
+    display: none;
+    position: fixed; bottom: 0; left: 0; right: 0;
+    z-index: 50;
+    flex-direction: column;
+    align-items: stretch;
   }
-  .app-brand-en {
-    font-family: 'Forum', serif;
-    font-size: clamp(1.6rem, 3vw, 2.2rem);
-    letter-spacing: -0.05em;
-    line-height: 1;
+  /* Geometric border at top */
+  .controls-bottom::before {
+    content: '';
+    display: block; height: 3px;
+    background: repeating-linear-gradient(
+      90deg,
+      var(--gold) 0px, var(--gold) 12px,
+      transparent 12px, transparent 16px,
+      var(--gold-dim) 16px, var(--gold-dim) 28px,
+      transparent 28px, transparent 32px
+    );
   }
-  .app-brand-ar {
-    font-family: 'Reem Kufi', sans-serif;
-    font-weight: 700;
-    font-size: clamp(1.1rem, 2vw, 1.5rem);
+
+  .tessellated-strip {
+    display: flex;
+    justify-content: space-around;
+    align-items: stretch;
+    background: var(--card-bg);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    padding: 0;
+  }
+
+  /* Each tile is a hexagonal/star-shaped control */
+  .tile-btn {
+    flex: 1;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    gap: 3px;
+    min-height: 56px; min-width: 44px;
+    background: transparent;
+    border: none;
     color: var(--gold);
-    line-height: 1;
+    opacity: 0.6;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+    padding: 8px 4px;
+  }
+  /* Tile separator lines */
+  .tile-btn + .tile-btn::before {
+    content: '';
+    position: absolute; left: 0; top: 12px; bottom: 12px; width: 1px;
+    background: var(--gold-dim);
+  }
+  .tile-btn:hover, .tile-btn:focus-visible { opacity: 1; background: rgba(197,160,89,0.08); }
+  .tile-btn svg { width: 20px; height: 20px; }
+  .tile-btn .tile-label {
+    font-size: 9px; font-family: 'Tajawal', sans-serif;
+    letter-spacing: 0.03em;
   }
 
-  /* ============ Poem Card ============ */
-  .poem-wrap { max-width: 720px; margin: 0 auto 2rem; }
+  /* ============ Poem Card - Archway Container ============ */
+  .poem-wrap { max-width: 720px; margin: 2.5rem auto 3rem; position: relative; z-index: 1; }
   .poem-card {
     position: relative; overflow: hidden;
-    background: var(--card-bg); border: 2px solid var(--gold);
-    border-radius: 14px; padding: 3.2rem 2.8rem;
+    background: var(--card-bg);
+    border: 2px solid var(--gold);
+    /* Archway shape */
+    border-radius: 50% 50% 14px 14px / 20% 20% 14px 14px;
+    padding: 3.5rem 2.8rem 3.2rem;
     transition: background var(--speed), border-color var(--speed);
   }
-  /* Tessellation watermark */
+  /* Tessellation watermark - enhanced star pattern */
   .poem-card::before {
     content: ''; position: absolute; inset: 0; pointer-events: none;
-    opacity: 0.05;
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Cpath d='M40 0L55 15L80 15L65 40L80 65L55 65L40 80L25 65L0 65L15 40L0 15L25 15Z' fill='none' stroke='%23C5A059' stroke-width='0.6'/%3E%3C/svg%3E");
-    background-size: 80px 80px;
+    opacity: 0.06;
+    background-image:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Cpath d='M40 0L55 15L80 15L65 40L80 65L55 65L40 80L25 65L0 65L15 40L0 15L25 15Z' fill='none' stroke='%23C5A059' stroke-width='0.6'/%3E%3C/svg%3E"),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Cpath d='M30 5L35 25L55 30L35 35L30 55L25 35L5 30L25 25Z' fill='none' stroke='%23C5A059' stroke-width='0.4'/%3E%3C/svg%3E");
+    background-size: 80px 80px, 60px 60px;
   }
   /* Geometric corner frames */
   .corner {
@@ -285,62 +396,16 @@
     background: var(--gold-dim); vertical-align: middle; margin: 0 0.8rem;
   }
 
-  /* ============ Vertical Controls Rail ============ */
-  .controls-rail {
-    position: fixed; right: 0.75rem; top: 50%;
-    transform: translateY(-50%);
-    display: flex; flex-direction: column;
-    gap: 2px; z-index: 50;
-  }
-  .rail-btn {
-    width: 44px; height: 44px;
-    display: flex; align-items: center; justify-content: center;
-    background: transparent; border: none;
-    color: var(--muted); cursor: pointer;
-    border-radius: 8px;
-    transition: color 0.2s, background 0.2s;
-  }
-  .rail-btn:hover {
-    color: var(--text);
-    background: var(--surface);
-  }
-  .rail-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
-
-  /* ============ Bottom Bar ============ */
-  .bottom-bar {
-    position: fixed; bottom: 0; left: 0; right: 0;
-    z-index: 50;
-    display: flex; align-items: center; justify-content: center;
-    gap: 0; padding: 6px 0;
-    background: var(--bg);
-    border-top: 1px solid var(--gold-dim);
-    transition: background var(--speed);
-  }
-  .bottom-btn {
-    display: flex; flex-direction: column;
-    align-items: center; gap: 2px;
-    padding: 6px 16px;
-    background: transparent; border: none;
-    color: var(--muted); cursor: pointer;
-    font-family: 'Tajawal', sans-serif;
-    font-size: 10px;
-    min-width: 44px; min-height: 44px;
-    transition: color 0.2s;
-  }
-  .bottom-btn:hover { color: var(--text); }
-  .bottom-btn.active { color: var(--gold); }
-  .bottom-btn:focus-visible { outline: 2px solid var(--gold); outline-offset: 2px; }
-
   /* ============ Responsive ============ */
   @media (max-width: 768px) {
+    #app { padding: 1.5rem 1rem; padding-bottom: 6rem; padding-right: 1rem; }
+    .controls-vertical { display: none; }
+    .controls-bottom { display: flex; }
     .poem-text { font-size: 1.25rem; line-height: 2; }
-    .poem-card { padding: 2rem 1.3rem; }
-    .controls-rail { display: none; }
-    .splash-brand-en { font-size: clamp(2.2rem, 8vw, 3rem); }
-    .splash-brand-ar { font-size: clamp(1.4rem, 5vw, 1.875rem); }
+    .poem-card { padding: 2.5rem 1.3rem 2rem; }
   }
   @media (max-width: 480px) {
-    .poem-card { padding: 1.5rem 1rem; }
+    .poem-card { padding: 2rem 1rem 1.5rem; }
   }
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
@@ -349,7 +414,7 @@
     }
     #splash { display: none !important; }
     #onboarding { display: none !important; }
-    #app { display: block !important; }
+    #app { opacity: 1 !important; }
   }
 </style>
 </head>
@@ -359,67 +424,76 @@
 <div id="splash">
   <canvas id="geo"></canvas>
   <div class="splash-brand">
-    <span class="splash-brand-en">poetry</span>
-    <span class="splash-brand-ar" lang="ar" dir="rtl">بالعربي</span>
+    <span class="en">poetry</span>
+    <span class="ar">بالعربي</span>
   </div>
-  <div class="splash-tagline">Living Geometry of Arabic Verse</div>
-  <button class="splash-cta" id="splashCta">ادخل</button>
+  <button id="enterBtn" aria-label="Enter the app">
+    <span>ابدأ الرحلة</span>
+    <i data-lucide="arrow-left" style="width:20px;height:20px;"></i>
+  </button>
+  <button id="skipBtn" aria-label="Skip intro animation">تخطّي</button>
 </div>
 
 <!-- ======== Onboarding ======== -->
-<div id="onboarding">
-  <div class="onboard-card active" data-step="0">
-    <i data-lucide="compass" class="onboard-icon"></i>
-    <div class="onboard-title-en">Discover Poems</div>
-    <div class="onboard-title-ar" lang="ar" dir="rtl">اكتشف القصائد</div>
-    <div class="onboard-desc-en">Browse over 84,000 poems from the Arabic literary tradition</div>
-    <div class="onboard-desc-ar" lang="ar" dir="rtl">تصفّح اكثر من 84,000 قصيدة من التراث الادبي العربي</div>
-    <div class="onboard-dots">
-      <span class="onboard-dot active"></span>
-      <span class="onboard-dot"></span>
-      <span class="onboard-dot"></span>
-    </div>
-    <button class="onboard-next" id="onboardNext">التالي</button>
+<div id="onboarding" data-step="0">
+  <div class="tess-bg"></div>
+  <div class="geo-frame">
+    <div class="geo-star tl"></div>
+    <div class="geo-star tr"></div>
+    <div class="geo-star bl"></div>
+    <div class="geo-star br"></div>
   </div>
-  <div class="onboard-card" data-step="1">
-    <i data-lucide="headphones" class="onboard-icon"></i>
-    <div class="onboard-title-en">Listen and Reflect</div>
-    <div class="onboard-title-ar" lang="ar" dir="rtl">استمع وتامّل</div>
-    <div class="onboard-desc-en">Hear poems recited with AI-powered natural voice synthesis</div>
-    <div class="onboard-desc-ar" lang="ar" dir="rtl">اسمع القصائد بالقاء صوتي طبيعي بالذكاء الاصطناعي</div>
-    <div class="onboard-dots">
-      <span class="onboard-dot"></span>
-      <span class="onboard-dot active"></span>
-      <span class="onboard-dot"></span>
-    </div>
-    <button class="onboard-next">التالي</button>
+
+  <div class="tile-panel active" data-tile="0">
+    <div class="tile-rosette"></div>
+    <div class="tile-ar" lang="ar" dir="rtl">الهندسة</div>
+    <div class="tile-en">Sacred Geometry</div>
+    <div class="tile-rule"></div>
+    <div class="tile-desc">Where mathematics meets beauty. 84,000 poems arranged in patterns of infinite harmony.</div>
   </div>
-  <div class="onboard-card" data-step="2">
-    <i data-lucide="sparkles" class="onboard-icon"></i>
-    <div class="onboard-title-en">AI Insights</div>
-    <div class="onboard-title-ar" lang="ar" dir="rtl">رؤى ذكية</div>
-    <div class="onboard-desc-en">Get meaning analysis and context powered by AI</div>
-    <div class="onboard-desc-ar" lang="ar" dir="rtl">احصل على تحليل المعاني والسياق بالذكاء الاصطناعي</div>
-    <div class="onboard-dots">
-      <span class="onboard-dot"></span>
-      <span class="onboard-dot"></span>
-      <span class="onboard-dot active"></span>
-    </div>
-    <button class="onboard-next">ابدا</button>
+  <div class="tile-panel" data-tile="1">
+    <div class="tile-rosette"></div>
+    <div class="tile-ar" lang="ar" dir="rtl">الإيقاع</div>
+    <div class="tile-en">Rhythm & Voice</div>
+    <div class="tile-rule"></div>
+    <div class="tile-desc">Hear the geometric precision of Arabic meter. AI voices that trace the patterns of sound.</div>
   </div>
+  <div class="tile-panel" data-tile="2">
+    <div class="tile-rosette"></div>
+    <div class="tile-ar" lang="ar" dir="rtl">الزخرفة</div>
+    <div class="tile-en">Ornament & Memory</div>
+    <div class="tile-rule"></div>
+    <div class="tile-desc">Tile by tile, build your mosaic. Save the verses that form your personal pattern.</div>
+  </div>
+
+  <div class="tile-diamonds">
+    <div class="tile-diamond active" data-dia="0"></div>
+    <div class="tile-diamond" data-dia="1"></div>
+    <div class="tile-diamond" data-dia="2"></div>
+  </div>
+  <div class="tile-hint">tap</div>
 </div>
 
 <!-- ======== Main App ======== -->
 <div id="app">
-  <button class="theme-btn" id="toggleTheme" aria-label="Toggle theme">
-    <span class="icon-sun"><i data-lucide="sun" style="width:20px;height:20px"></i></span>
-    <span class="icon-moon"><i data-lucide="moon" style="width:20px;height:20px"></i></span>
-  </button>
+  <!-- Vertical Controls (Desktop) -->
+  <nav class="controls-vertical" aria-label="App controls">
+    <button class="ctrl-btn" aria-label="Next poem"><i data-lucide="shuffle"></i></button>
+    <button class="ctrl-btn" aria-label="Save poem"><i data-lucide="heart"></i></button>
+    <button class="ctrl-btn" aria-label="Listen"><i data-lucide="headphones"></i></button>
+    <button class="ctrl-btn" aria-label="Share poem"><i data-lucide="share-2"></i></button>
+    <button class="ctrl-btn" id="toggleTheme" aria-label="Toggle theme"><i data-lucide="sun"></i></button>
+  </nav>
 
-  <div class="app-brand">
-    <span class="app-brand-en">poetry</span>
-    <span class="app-brand-ar" lang="ar" dir="rtl">بالعربي</span>
-  </div>
+  <!-- Tessellated Tile Strip Controls (Mobile) -->
+  <nav class="controls-bottom" aria-label="App controls">
+    <div class="tessellated-strip">
+      <button class="tile-btn" aria-label="Next poem"><i data-lucide="shuffle"></i><span class="tile-label">Shuffle</span></button>
+      <button class="tile-btn" aria-label="Save poem"><i data-lucide="heart"></i><span class="tile-label">Save</span></button>
+      <button class="tile-btn" aria-label="Listen"><i data-lucide="headphones"></i><span class="tile-label">Listen</span></button>
+      <button class="tile-btn" aria-label="Share poem"><i data-lucide="share-2"></i><span class="tile-label">Share</span></button>
+    </div>
+  </nav>
 
   <section class="poem-wrap">
     <div class="poem-card">
@@ -427,33 +501,13 @@
       <span class="corner tr"></span>
       <span class="corner bl"></span>
       <span class="corner br"></span>
-      <div class="poem-text" lang="ar" dir="rtl">
-        <span class="bayt">انا البَحرُ في احشائِهِ الدُرُّ كامِنٌ</span>
-        <span class="bayt">فَهَل سالوا الغَوّاصَ عَن صَدَفاتي</span>
+      <div class="poem-text">
+        <span class="bayt">أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ</span>
+        <span class="bayt">فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي</span>
       </div>
-      <div class="poet">احمد شوقي</div>
+      <div class="poet">أحمد شوقي</div>
     </div>
   </section>
-
-  <!-- Vertical Controls Rail (right side) -->
-  <nav class="controls-rail" aria-label="Poem controls">
-    <button class="rail-btn" aria-label="Save poem"><i data-lucide="heart" style="width:18px;height:18px"></i></button>
-    <button class="rail-btn" aria-label="Change font"><i data-lucide="type" style="width:18px;height:18px"></i></button>
-    <button class="rail-btn" aria-label="Switch language"><i data-lucide="languages" style="width:18px;height:18px"></i></button>
-    <button class="rail-btn" aria-label="Open reader"><i data-lucide="book-open" style="width:18px;height:18px"></i></button>
-    <button class="rail-btn" aria-label="Poetry analysis"><i data-lucide="italic" style="width:18px;height:18px"></i></button>
-    <button class="rail-btn" aria-label="Sign in"><i data-lucide="log-in" style="width:18px;height:18px"></i></button>
-    <button class="rail-btn" aria-label="Settings"><i data-lucide="settings" style="width:18px;height:18px"></i></button>
-  </nav>
-
-  <!-- Bottom Bar -->
-  <nav class="bottom-bar" aria-label="Navigation">
-    <button class="bottom-btn" aria-label="Audio"><i data-lucide="music" style="width:20px;height:20px"></i><span>Audio</span></button>
-    <button class="bottom-btn active" aria-label="Insights"><i data-lucide="lightbulb" style="width:20px;height:20px"></i><span>Insights</span></button>
-    <button class="bottom-btn" aria-label="New poem"><i data-lucide="refresh-cw" style="width:20px;height:20px"></i><span>New</span></button>
-    <button class="bottom-btn" aria-label="Library"><i data-lucide="library" style="width:20px;height:20px"></i><span>Library</span></button>
-    <button class="bottom-btn" aria-label="Random poem"><i data-lucide="shuffle" style="width:20px;height:20px"></i><span>Random</span></button>
-  </nav>
 </div>
 
 <script>
@@ -576,62 +630,90 @@
       }
     }
 
-    /* keep looping while splash is visible */
-    rafId = requestAnimationFrame(frame);
+    if (p < 1) {
+      rafId = requestAnimationFrame(frame);
+    }
+    /* Animation completes but doesn't auto-dismiss; user clicks Enter */
   }
 
-  /* ---------- splash CTA ---------- */
-  document.getElementById('splashCta').addEventListener('click', function () {
+  /* ---------- Onboarding -- Islamic Geometric Tessellation ---------- */
+  var tilePanels = document.querySelectorAll('.tile-panel');
+  var tileDiamonds = document.querySelectorAll('.tile-diamond');
+  var tileStep = 0;
+  var totalTiles = tilePanels.length;
+
+  function showTileStep() {
+    document.getElementById('onboarding').setAttribute('data-step', tileStep);
+    for (var i = 0; i < tilePanels.length; i++) {
+      tilePanels[i].classList.remove('active');
+      tileDiamonds[i].classList.remove('active');
+      tileDiamonds[i].classList.remove('past');
+      if (i < tileStep) tileDiamonds[i].classList.add('past');
+    }
+    if (tileStep < totalTiles) {
+      tilePanels[tileStep].classList.add('active');
+      tileDiamonds[tileStep].classList.add('active');
+    }
+  }
+
+  /* ---------- splash dismiss -> onboarding ---------- */
+  function enterApp() {
     cancelAnimationFrame(rafId);
     var splash = document.getElementById('splash');
     splash.classList.add('done');
-    setTimeout(function () { splash.style.display = 'none'; }, 1100);
-    document.getElementById('onboarding').classList.add('active');
-    if (typeof lucide !== 'undefined') lucide.createIcons();
-  });
+    setTimeout(function () {
+      splash.style.display = 'none';
+      document.getElementById('onboarding').classList.add('active');
+      tileStep = 0;
+      showTileStep();
+    }, 800);
+  }
 
   /* ---------- init ---------- */
   if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
     document.getElementById('splash').style.display = 'none';
-    document.getElementById('app').classList.add('active');
+    document.getElementById('app').classList.add('show');
   } else {
     rafId = requestAnimationFrame(frame);
   }
 
-  /* ---------- onboarding ---------- */
-  var currentStep = 0;
-  var totalSteps = 3;
+  document.getElementById('enterBtn').addEventListener('click', enterApp);
+  document.getElementById('skipBtn').addEventListener('click', function () {
+    cancelAnimationFrame(rafId);
+    document.getElementById('splash').style.display = 'none';
+    document.getElementById('app').classList.add('show');
+  });
 
-  document.getElementById('onboarding').addEventListener('click', function (e) {
-    if (e.target.classList.contains('onboard-next') || e.target.closest('.onboard-next')) {
-      currentStep++;
-      if (currentStep >= totalSteps) {
-        document.getElementById('onboarding').classList.remove('active');
-        document.getElementById('onboarding').style.display = 'none';
-        document.getElementById('app').classList.add('active');
-        if (typeof lucide !== 'undefined') lucide.createIcons();
-        return;
-      }
-      var cards = document.querySelectorAll('.onboard-card');
-      for (var i = 0; i < cards.length; i++) {
-        cards[i].classList.remove('active');
-      }
-      cards[currentStep].classList.add('active');
-      if (typeof lucide !== 'undefined') lucide.createIcons();
+  /* Onboarding tap to advance */
+  document.getElementById('onboarding').addEventListener('click', function(e) {
+    if (e.target.closest('#enterBtn') || e.target.closest('#skipBtn')) return;
+    tileStep++;
+    if (tileStep >= totalTiles) {
+      document.getElementById('onboarding').classList.remove('active');
+      document.getElementById('app').classList.add('show');
+    } else {
+      showTileStep();
     }
   });
 
   /* ---------- theme toggle ---------- */
-  document.getElementById('toggleTheme').addEventListener('click', function () {
+  var themeBtn = document.getElementById('toggleTheme');
+  themeBtn.addEventListener('click', function () {
     var cur  = document.body.getAttribute('data-theme');
     var next = cur === 'dark' ? 'light' : 'dark';
     document.body.setAttribute('data-theme', next);
+    /* update icon */
+    var icon = themeBtn.querySelector('i');
+    if (icon) {
+      icon.setAttribute('data-lucide', next === 'dark' ? 'sun' : 'moon');
+      lucide.createIcons({ nodes: [themeBtn] });
+    }
+    themeBtn.setAttribute('aria-label',
+      next === 'dark' ? 'Switch to light theme' : 'Switch to dark theme');
   });
 
-  /* ---------- lucide icons ---------- */
-  document.addEventListener('DOMContentLoaded', function () {
-    if (typeof lucide !== 'undefined') lucide.createIcons();
-  });
+  /* ---------- Lucide icons init ---------- */
+  lucide.createIcons();
 })();
 </script>
 </body>

@@ -4,8 +4,8 @@ import { test, expect } from '@playwright/test';
  * Design Review — Production smoke test
  *
  * Tests the design-review static page and the live Render backend.
- * Exercises: page load, keyboard verdicts, Submit modal, "Send to Backend" button,
- * and all design-review API endpoints.
+ * Exercises: page load, keyboard verdicts, Submit flow (name prompt + auto-send),
+ * summary modal, and all design-review API endpoints.
  */
 
 const PROD_API = 'https://poetry-bil-araby-2mb0.onrender.com';
@@ -49,12 +49,12 @@ test.describe('Design Review — Page UI', () => {
 
   test('verdict buttons update progress and active state', async ({ page }) => {
     // Initially 0 reviewed
-    await expect(page.getByText('0 of 58 reviewed')).toBeVisible();
+    await expect(page.getByText(/0 of \d+ reviewed/)).toBeVisible();
 
     // Click Keep
     await page.getByRole('button', { name: /Keep/ }).click();
     await page.waitForTimeout(300);
-    await expect(page.getByText('1 of 58 reviewed')).toBeVisible();
+    await expect(page.getByText(/1 of \d+ reviewed/)).toBeVisible();
     // Keep count should update
     await expect(page.getByText(/1 keep/).first()).toBeVisible();
 
@@ -63,7 +63,7 @@ test.describe('Design Review — Page UI', () => {
     await page.waitForTimeout(300);
     await page.getByRole('button', { name: /Discard/ }).click();
     await page.waitForTimeout(300);
-    await expect(page.getByText('2 of 58 reviewed')).toBeVisible();
+    await expect(page.getByText(/2 of \d+ reviewed/)).toBeVisible();
     await expect(page.getByText(/1 discard/).first()).toBeVisible();
 
     // Navigate to next and click Revisit
@@ -71,23 +71,26 @@ test.describe('Design Review — Page UI', () => {
     await page.waitForTimeout(300);
     await page.getByRole('button', { name: /Revisit/ }).click();
     await page.waitForTimeout(300);
-    await expect(page.getByText('3 of 58 reviewed')).toBeVisible();
+    await expect(page.getByText(/3 of \d+ reviewed/)).toBeVisible();
     await expect(page.getByText(/1 revisit/).first()).toBeVisible();
   });
 
-  test('Submit Review modal shows Send to Backend and export buttons', async ({ page }) => {
+  test('Submit Review auto-sends and shows summary modal with export buttons', async ({ page }) => {
     // Set a verdict first
     await page.keyboard.press('k');
     await page.waitForTimeout(200);
 
-    // Click Submit Review
+    // Click Submit Review — triggers name prompt then auto-send
     await page.getByRole('button', { name: 'Submit Review' }).click();
 
-    // Wait for modal content
-    await expect(page.getByText('Review Summary')).toBeVisible({ timeout: 3000 });
+    // Name prompt appears; type a name and continue
+    const nameInput = page.locator('input[placeholder="Your name"]');
+    await expect(nameInput).toBeVisible({ timeout: 3000 });
+    await nameInput.fill('E2E Tester');
+    await page.getByRole('button', { name: 'Continue' }).click();
 
-    // "Send to Backend" button
-    await expect(page.getByRole('button', { name: /Send to Backend/ })).toBeVisible();
+    // Auto-send runs, then summary modal appears
+    await expect(page.getByText('Review Summary')).toBeVisible({ timeout: 10000 });
 
     // Export buttons
     await expect(page.getByRole('button', { name: 'Copy Markdown' })).toBeVisible();
@@ -100,14 +103,14 @@ test.describe('Design Review — Page UI', () => {
 
   test('review progress updates when verdicts are set', async ({ page }) => {
     // Initially 0 reviewed
-    await expect(page.getByText('0 of 58 reviewed')).toBeVisible();
+    await expect(page.getByText(/0 of \d+ reviewed/)).toBeVisible();
 
     // Set a verdict
     await page.keyboard.press('k');
     await page.waitForTimeout(300);
 
     // Progress should update to 1
-    await expect(page.getByText('1 of 58 reviewed')).toBeVisible();
+    await expect(page.getByText(/1 of \d+ reviewed/)).toBeVisible();
   });
 
   test('side panel shows current design details', async ({ page }) => {

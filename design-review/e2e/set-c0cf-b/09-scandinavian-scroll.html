@@ -4,20 +4,22 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Wind & Sand — رياح الصحراء</title>
-<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Forum&family=Reem+Kufi:wght@400;700&family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
 <style>
   :root {
     --desert-night: #1A1410;
     --sand: #D4C5A0;
     --gold: #C5A059;
+    --gold-dim: rgba(197, 160, 89, 0.3);
     --sienna: #A0522D;
-    --sky-blue: #2A3F5F;
     --cream: #F5ECD7;
     --dark-brown: #3B2A1A;
     --bg: var(--desert-night);
     --fg: var(--sand);
     --card-bg: rgba(212, 197, 160, 0.08);
     --card-border: rgba(197, 160, 89, 0.2);
+    --speed: 0.5s;
   }
   [data-theme="light"] {
     --bg: var(--cream);
@@ -32,323 +34,512 @@
     color: var(--fg);
     overflow-x: hidden;
     min-height: 100vh;
-    transition: background 0.5s, color 0.5s;
+    transition: background var(--speed), color var(--speed);
   }
-  /* ===== Splash Screen ===== */
+
+  /* ============ Splash ============ */
   #splash {
     position: fixed; inset: 0; z-index: 1000;
-    display: flex; align-items: center; justify-content: center;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
     background: radial-gradient(ellipse at 50% 60%, #3B2A1A 0%, #1A1410 70%);
     transition: opacity 0.8s ease;
   }
   #splash.hidden { opacity: 0; pointer-events: none; }
   #splash-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
-  #skip-btn {
-    position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
-    background: transparent; border: 1px solid var(--sand);
-    color: var(--sand); padding: 10px 28px; border-radius: 24px;
-    font-family: 'Tajawal', sans-serif; font-size: 1rem;
-    cursor: pointer; z-index: 1001; transition: background 0.3s;
+
+  /* Brand Logo */
+  .splash-brand {
+    position: relative; z-index: 10;
+    display: flex; align-items: flex-end; justify-content: center;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+    opacity: 0;
+    animation: fadeUp 1.2s ease 0.5s forwards;
+  }
+  .splash-brand .en {
+    font-family: 'Forum', serif;
+    font-size: clamp(3rem, 6vw, 4.5rem);
+    letter-spacing: -0.05em;
+    color: var(--gold);
+    line-height: 1;
+    text-shadow: 0 0 40px rgba(197,160,89,0.3);
+  }
+  .splash-brand .ar {
+    font-family: 'Reem Kufi', sans-serif;
+    font-weight: 700;
+    font-size: clamp(1.875rem, 4vw, 3rem);
+    color: var(--sand);
+    line-height: 1;
+    padding-bottom: 0.15em;
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* CTA Button */
+  #enterBtn {
+    position: relative; z-index: 10;
+    background: transparent;
+    border: 1.5px solid var(--sand);
+    color: var(--sand);
+    font-family: 'Tajawal', sans-serif;
+    font-size: 1.05rem; font-weight: 500;
+    padding: 0.8rem 2.5rem;
+    border-radius: 24px;
+    cursor: pointer;
     min-width: 44px; min-height: 44px;
+    transition: background 0.3s, transform 0.2s;
+    opacity: 0;
+    animation: fadeUp 0.8s ease 1.5s forwards;
+    display: flex; align-items: center; gap: 0.5rem;
   }
-  #skip-btn:hover { background: rgba(212, 197, 160, 0.15); }
-  #skip-btn:focus { outline: 3px solid var(--gold); outline-offset: 2px; }
-  /* ===== Main App ===== */
-  #app { display: none; position: relative; min-height: 100vh; }
-  #app.visible { display: block; }
-  #ambient-canvas {
-    position: fixed; inset: 0; width: 100%; height: 100%;
-    z-index: 0; pointer-events: none;
+  #enterBtn:hover, #enterBtn:focus-visible {
+    background: rgba(212, 197, 160, 0.15);
+    transform: scale(1.04);
   }
-  .content { position: relative; z-index: 1; }
-  /* ===== Header ===== */
-  header {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 20px 32px;
-  }
-  .logo { font-family: 'Amiri', serif; font-size: 1.6rem; color: var(--gold); }
-  #theme-toggle {
-    background: transparent; border: 1px solid var(--gold);
-    color: var(--gold); width: 44px; height: 44px;
-    border-radius: 50%; font-size: 1.2rem; cursor: pointer;
-    transition: box-shadow 0.3s, background 0.3s;
-    will-change: transform;
-  }
-  #theme-toggle:hover { background: rgba(197, 160, 89, 0.15); }
-  #theme-toggle:focus { outline: 3px solid var(--gold); outline-offset: 2px; }
-  /* ===== Poem Card ===== */
-  .poem-section {
+
+  /* ============ Onboarding ============ */
+  #onboarding {
+    position: fixed; inset: 0; z-index: 90;
+    background: rgba(26, 20, 16, 0.95);
     display: flex; align-items: center; justify-content: center;
-    min-height: 60vh; padding: 40px 20px;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.6s ease;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  [data-theme="light"] #onboarding { background: rgba(245, 236, 215, 0.95); }
+  #onboarding.active { opacity: 1; pointer-events: auto; }
+
+  /* Nordic / Scandinavian onboarding */
+  .nord-panel {
+    max-width: 380px; width: 90%;
+    text-align: center;
+    cursor: pointer;
+    padding: 3.5rem 2rem;
+    display: none;
+    position: relative;
+  }
+  .nord-panel.active { display: block; animation: nordFade 0.6s ease; }
+
+  @keyframes nordFade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+
+  /* Ultra-thin horizontal rule -- Nordic minimal line */
+  .nord-rule {
+    width: 48px; height: 1px;
+    background: var(--gold);
+    margin: 0 auto 2rem;
+    opacity: 0.5;
+  }
+
+  .nord-title {
+    font-family: 'Amiri', serif;
+    font-size: 1.4rem;
+    color: var(--sand);
+    margin-bottom: 0.25rem;
+    letter-spacing: 0.02em;
+  }
+  [data-theme="light"] .nord-title { color: var(--dark-brown); }
+
+  .nord-subtitle {
+    font-family: 'Tajawal', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 300;
+    color: var(--gold);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 2rem;
+    direction: ltr;
+  }
+
+  .nord-desc {
+    font-size: 0.92rem;
+    font-weight: 300;
+    opacity: 0.6;
+    line-height: 1.8;
+    margin-bottom: 0.4rem;
+    max-width: 300px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .nord-desc[lang="ar"] { font-family: 'Tajawal', sans-serif; direction: rtl; }
+  .nord-desc.en { direction: ltr; font-size: 0.8rem; opacity: 0.35; }
+
+  /* Dot-line indicator: thin line with dots */
+  .nord-progress {
+    display: flex; align-items: center; justify-content: center;
+    gap: 0; margin-top: 2.5rem;
+  }
+  .nord-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: rgba(212, 197, 160, 0.2);
+    transition: background 0.4s, transform 0.4s;
+    flex-shrink: 0;
+  }
+  .nord-dot.active {
+    background: var(--gold);
+    transform: scale(1.3);
+  }
+  .nord-dot.past {
+    background: var(--sand);
+    opacity: 0.4;
+  }
+  .nord-line {
+    width: 32px; height: 1px;
+    background: rgba(212, 197, 160, 0.15);
+    flex-shrink: 0;
+  }
+
+  .nord-hint {
+    font-size: 0.7rem;
+    font-weight: 300;
+    color: var(--sand);
+    opacity: 0.3;
+    margin-top: 1.5rem;
+    letter-spacing: 0.1em;
+  }
+
+  /* ===== MAIN APP ===== */
+  #app {
+    display: none; position: relative; min-height: 100vh;
+    background: #fafaf9;
+    color: #2c2c2b;
+    transition: none;
+  }
+  #app.visible { display: flex; flex-direction: column; min-height: 100vh; }
+  [data-theme="light"] #app { background: #fafaf9; color: #2c2c2b; }
+
+  /* Birch accent — single 1px line across the top */
+  .birch-line-top {
+    width: 100%;
+    height: 1px;
+    background: #d6d3cd;
+    flex-shrink: 0;
+  }
+
+  .content {
+    position: relative; z-index: 1;
+    flex: 1;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    padding: 4rem 2rem 6rem;
+  }
+
+  /* Poem — extreme whitespace, single-line centered */
+  .poem-section {
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    flex: 1;
+    width: 100%;
+    max-width: 600px;
+    margin: 0 auto;
+    padding: 0;
   }
   .poem-card {
-    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
-    border-radius: 20px; padding: 48px 40px;
-    max-width: 700px; width: 100%; text-align: center;
-    position: relative; overflow: hidden;
-    transition: transform 0.4s ease;
-    will-change: transform;
+    background: transparent;
+    border: none;
+    border-radius: 0;
+    padding: 0;
+    width: 100%;
+    text-align: center;
+    position: relative;
   }
-  .poem-card:hover { transform: skewX(-1deg); }
-  .poem-card::before {
-    content: ''; position: absolute; inset: 0;
-    background:
-      radial-gradient(circle at 20% 30%, rgba(160,82,45,0.04) 1px, transparent 1px),
-      radial-gradient(circle at 60% 70%, rgba(212,197,160,0.05) 1px, transparent 1px),
-      radial-gradient(circle at 80% 20%, rgba(160,82,45,0.03) 1px, transparent 1px);
-    background-size: 11px 11px, 17px 17px, 13px 13px;
-    pointer-events: none;
-  }
+  .poem-card::before { display: none; }
+  .poem-card:hover { transform: none; }
+
   .poem-text {
-    font-family: 'Amiri', serif; font-size: 2rem;
-    line-height: 2.4; color: var(--fg);
-    position: relative; z-index: 1;
+    font-family: 'Amiri', serif;
+    font-size: 1.6rem;
+    line-height: 3.2;
+    color: #2c2c2b;
+    letter-spacing: 0.01em;
   }
-  .poem-text .hemistich { display: block; margin-bottom: 8px; }
+  .poem-text .hemistich {
+    display: block;
+    margin-bottom: 2rem;
+    opacity: 0;
+    animation: nordicFadeIn 1s ease forwards;
+  }
+  .poem-text .hemistich:first-of-type { animation-delay: 0.3s; }
+  .poem-text .hemistich:last-of-type { animation-delay: 0.9s; }
+
+  @keyframes nordicFadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Birch separator between hemistichs */
+  .bayt-sep {
+    display: block;
+    width: 24px;
+    height: 1px;
+    background: #c5c0b8;
+    margin: 0 auto 2rem;
+    opacity: 0;
+    animation: nordicFadeIn 0.6s ease 0.6s forwards;
+  }
+
   .poet-name {
-    font-family: 'Tajawal', sans-serif; font-size: 1rem;
-    color: var(--gold); margin-top: 24px;
-    position: relative; z-index: 1;
-  }
-  /* ===== Controls ===== */
-  .controls {
-    display: flex; gap: 16px; justify-content: center;
-    padding: 24px 20px; flex-wrap: wrap;
-  }
-  .ctrl-btn {
-    width: 54px; height: 54px; border-radius: 50%;
-    background: transparent; border: 1.5px solid var(--sand);
-    color: var(--fg); font-size: 1.2rem; cursor: pointer;
     font-family: 'Tajawal', sans-serif;
-    transition: box-shadow 0.3s, background 0.3s;
-    will-change: transform;
-    display: flex; align-items: center; justify-content: center;
+    font-weight: 300;
+    font-size: 0.8rem;
+    color: #9a9590;
+    margin-top: 3rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    opacity: 0;
+    animation: nordicFadeIn 0.8s ease 1.2s forwards;
   }
-  .ctrl-btn:hover {
-    box-shadow: 0 0 20px 6px rgba(212, 197, 160, 0.3);
-    background: rgba(212, 197, 160, 0.08);
+  .poet-name::before, .poet-name::after { display: none; }
+
+  /* ===== CONTROLS ===== */
+  /* Ultra-thin dot line — nearly invisible until interaction */
+  .controls-dot-line {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 64px;
+    padding: 0 1rem;
   }
-  .ctrl-btn:focus { outline: 3px solid var(--gold); outline-offset: 2px; }
-  /* ===== Walkthrough ===== */
-  .walkthrough {
-    padding: 80px 24px; max-width: 900px; margin: 0 auto;
+  .controls-dot-line::before {
+    content: '';
+    position: absolute;
+    bottom: 32px; left: 10%; right: 10%;
+    height: 1px;
+    background: #e0ddd8;
   }
-  .walk-title {
-    font-family: 'Amiri', serif; font-size: 2rem;
-    color: var(--gold); text-align: center; margin-bottom: 48px;
+
+  .dot-action {
+    position: relative;
+    width: 44px; height: 44px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 0;
+    margin: 0 16px;
+    -webkit-tap-highlight-color: transparent;
   }
-  .bento-grid {
-    display: grid; grid-template-columns: 1fr 1fr;
-    gap: 20px;
+  /* The tiny dot */
+  .dot-action::before {
+    content: '';
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: #c5c0b8;
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+                background 0.3s ease;
   }
-  .step-card {
-    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
-    background: var(--card-bg);
-    border: 1px solid var(--card-border);
-    border-radius: 16px; padding: 32px 24px;
-    position: relative; overflow: hidden;
-    opacity: 0; transform: translateX(40px);
-    transition: opacity 0.6s ease, transform 0.6s ease;
-    will-change: transform, opacity;
+  .dot-action:hover::before,
+  .dot-action:active::before {
+    transform: scale(1.8);
+    background: #2c2c2b;
   }
-  .step-card.revealed { opacity: 1; transform: translateX(0); }
-  .step-card::before {
-    content: ''; position: absolute; inset: 0;
-    background:
-      radial-gradient(circle at 30% 40%, rgba(160,82,45,0.04) 1px, transparent 1px),
-      radial-gradient(circle at 70% 60%, rgba(212,197,160,0.04) 1px, transparent 1px);
-    background-size: 9px 9px, 15px 15px;
+
+  /* Label appears on hover/tap */
+  .dot-label {
+    position: absolute;
+    bottom: 44px;
+    font-family: 'Tajawal', sans-serif;
+    font-weight: 300;
+    font-size: 0.62rem;
+    color: #9a9590;
+    letter-spacing: 0.06em;
+    white-space: nowrap;
+    opacity: 0;
+    transform: translateY(4px);
+    transition: opacity 0.3s ease, transform 0.3s ease;
     pointer-events: none;
   }
-  .step-num {
-    font-family: 'Amiri', serif; font-size: 2.5rem;
-    color: var(--gold); opacity: 0.3; position: relative; z-index: 1;
+  .dot-action:hover .dot-label,
+  .dot-action:active .dot-label {
+    opacity: 1;
+    transform: translateY(0);
   }
-  .step-label {
-    font-family: 'Amiri', serif; font-size: 1.4rem;
-    color: var(--gold); margin: 8px 0 12px; position: relative; z-index: 1;
+
+  /* Hide the old controls */
+  .controls-vertical { display: none; }
+  .controls-bottom { display: none; }
+
+  /* ============ Responsive ============ */
+  @media (max-width: 768px) {
+    .content { padding: 3rem 1.5rem 5rem; }
+    .poem-text { font-size: 1.35rem; line-height: 2.8; }
+    .poem-text .hemistich { margin-bottom: 1.5rem; }
+    .bayt-sep { margin-bottom: 1.5rem; }
+    .poet-name { margin-top: 2.5rem; }
+    .dot-action { margin: 0 10px; }
   }
-  .step-desc {
-    font-size: 1rem; line-height: 1.8;
-    color: var(--fg); opacity: 0.8; position: relative; z-index: 1;
-  }
-  /* ===== Footer ===== */
-  footer {
-    text-align: center; padding: 40px 20px;
-    font-size: 0.9rem; opacity: 0.5;
-  }
-  /* ===== Reduced Motion ===== */
+
+  /* ============ Reduced Motion ============ */
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
       animation-duration: 0s !important;
       transition-duration: 0s !important;
     }
     #splash-canvas, #ambient-canvas { display: none; }
-    .step-card { opacity: 1; transform: none; }
-    .poem-card:hover { transform: none; }
-  }
-  /* ===== Mobile ===== */
-  @media (max-width: 768px) {
-    .poem-text { font-size: 1.5rem; line-height: 2.2; }
-    .poem-card { padding: 32px 24px; }
-    .ctrl-btn { width: 48px; height: 48px; font-size: 1.1rem; }
-    .bento-grid { grid-template-columns: 1fr; }
-    header { padding: 16px 20px; }
-    .walkthrough { padding: 60px 16px; }
-    .walk-title { font-size: 1.6rem; }
+    #splash { display: none !important; }
+    #onboarding { display: none !important; }
+    #app { display: block !important; }
   }
 </style>
 </head>
 <body>
-  <!-- Splash Screen -->
-  <div id="splash" role="dialog" aria-label="شاشة الترحيب">
+  <!-- ======== Splash ======== -->
+  <div id="splash" role="dialog" aria-label="Welcome screen">
     <canvas id="splash-canvas" aria-hidden="true"></canvas>
-    <button id="skip-btn" type="button">تخطي</button>
+    <div class="splash-brand">
+      <span class="en">poetry</span>
+      <span class="ar">بالعربي</span>
+    </div>
+    <button id="enterBtn" aria-label="Enter the app">
+      <i data-lucide="wind" style="width:18px;height:18px;"></i>
+      <span>ابدأ الرحلة</span>
+    </button>
   </div>
 
-  <!-- Main Application -->
+  <!-- ======== Onboarding ======== -->
+  <div id="onboarding">
+      <div class="nord-panel active" data-step="0">
+          <div class="nord-rule"></div>
+          <div class="nord-title" lang="ar">رياح الصحراء</div>
+          <div class="nord-subtitle">Wind & Sand</div>
+          <div class="nord-desc" lang="ar">تصفّح مكتبة شعرية غنية من التراث العربي</div>
+          <div class="nord-desc en">Browse a rich poetry library from Arabic heritage</div>
+          <div class="nord-progress">
+              <div class="nord-dot active"></div>
+              <div class="nord-line"></div>
+              <div class="nord-dot"></div>
+              <div class="nord-line"></div>
+              <div class="nord-dot"></div>
+          </div>
+          <div class="nord-hint">tap to continue</div>
+      </div>
+      <div class="nord-panel" data-step="1">
+          <div class="nord-rule"></div>
+          <div class="nord-title" lang="ar">اكتشف شعراء</div>
+          <div class="nord-subtitle">Discover Poets</div>
+          <div class="nord-desc" lang="ar">اكتشف شعراء من مختلف العصور العربية</div>
+          <div class="nord-desc en">Discover poets from various Arabic eras</div>
+          <div class="nord-progress">
+              <div class="nord-dot past"></div>
+              <div class="nord-line"></div>
+              <div class="nord-dot active"></div>
+              <div class="nord-line"></div>
+              <div class="nord-dot"></div>
+          </div>
+          <div class="nord-hint">tap to continue</div>
+      </div>
+      <div class="nord-panel" data-step="2">
+          <div class="nord-rule"></div>
+          <div class="nord-title" lang="ar">استمع وتأمّل</div>
+          <div class="nord-subtitle">Listen & Reflect</div>
+          <div class="nord-desc" lang="ar">اسمع القصائد بصوت واضح وتدبّر معانيها</div>
+          <div class="nord-desc en">Listen to poems clearly and contemplate their meaning</div>
+          <div class="nord-progress">
+              <div class="nord-dot past"></div>
+              <div class="nord-line"></div>
+              <div class="nord-dot past"></div>
+              <div class="nord-line"></div>
+              <div class="nord-dot active"></div>
+          </div>
+          <div class="nord-hint">tap to begin</div>
+      </div>
+  </div>
+
+  <!-- ======== Main App ======== -->
   <div id="app" aria-live="polite">
-    <canvas id="ambient-canvas" aria-hidden="true"></canvas>
+    <div class="birch-line-top" aria-hidden="true"></div>
     <div class="content">
-      <header>
-        <div class="logo">رياح الصحراء</div>
-        <button id="theme-toggle" type="button" aria-label="تبديل السمة"></button>
-      </header>
-
-      <main>
-        <section class="poem-section" aria-label="القصيدة">
-          <article class="poem-card">
-            <div class="poem-text" lang="ar">
-              <span class="hemistich">أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ</span>
-              <span class="hemistich">فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي</span>
-            </div>
-            <div class="poet-name">-- أحمد شوقي</div>
-          </article>
-        </section>
-
-        <nav class="controls" aria-label="أدوات التحكم">
-          <button class="ctrl-btn" type="button" aria-label="تشغيل" data-action="play"></button>
-          <button class="ctrl-btn" type="button" aria-label="حفظ" data-action="save"></button>
-          <button class="ctrl-btn" type="button" aria-label="التالي" data-action="next"></button>
-          <button class="ctrl-btn" type="button" aria-label="حجم الخط" data-action="font"></button>
-          <button class="ctrl-btn" type="button" aria-label="عربي" data-action="arabic"></button>
-        </nav>
-
-        <section class="walkthrough" aria-label="كيفية الاستخدام">
-          <h2 class="walk-title">كيف تبدأ رحلتك</h2>
-          <div class="bento-grid" id="bento-grid"></div>
-        </section>
-      </main>
-
-      <footer>
-        <p>Wind & Sand — رياح الصحراء</p>
-      </footer>
+      <section class="poem-section" aria-label="Poem">
+        <article class="poem-card">
+          <div class="poem-text" lang="ar">
+            <span class="hemistich">أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ</span>
+            <span class="bayt-sep" aria-hidden="true"></span>
+            <span class="hemistich">فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي</span>
+          </div>
+          <div class="poet-name">أحمد شوقي</div>
+        </article>
+      </section>
     </div>
+
+    <!-- Ultra-thin dot line controls -->
+    <nav class="controls-dot-line" aria-label="Poem actions">
+      <button class="dot-action" aria-label="Next poem">
+        <span class="dot-label">shuffle</span>
+      </button>
+      <button class="dot-action" aria-label="Save poem">
+        <span class="dot-label">save</span>
+      </button>
+      <button class="dot-action" aria-label="Listen to poem">
+        <span class="dot-label">listen</span>
+      </button>
+      <button class="dot-action" aria-label="Share poem">
+        <span class="dot-label">share</span>
+      </button>
+    </nav>
   </div>
 
 <script>
 (function() {
   'use strict';
-  /* ===== Configuration ===== */
   var isMobile = window.innerWidth < 768;
   var prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var SPLASH_PARTICLE_COUNT = isMobile ? 50 : 100;
-  var AMBIENT_PARTICLE_COUNT = isMobile ? 15 : 30;
 
-  /* ===== Utility: safe DOM text ===== */
-  function setText(el, text) { el.textContent = text; }
 
-  /* ===== Theme Toggle ===== */
-  var isDark = true;
-  var themeBtn = document.getElementById('theme-toggle');
-  setText(themeBtn, '\u263D'); // moon
-  themeBtn.addEventListener('click', function() {
-    isDark = !isDark;
-    if (isDark) {
-      document.documentElement.removeAttribute('data-theme');
-      setText(themeBtn, '\u263D');
+  /* ---------- Nordic onboarding ---------- */
+  var nordPanels = document.querySelectorAll('.nord-panel');
+  var currentStep = 0;
+  var totalNordSteps = nordPanels.length;
+
+  function showNordStep() {
+    for (var i = 0; i < nordPanels.length; i++) {
+      nordPanels[i].classList.remove('active');
+    }
+    if (currentStep < totalNordSteps) {
+      nordPanels[currentStep].classList.add('active');
+    }
+  }
+
+  function advanceNord() {
+    currentStep++;
+    if (currentStep >= totalNordSteps) {
+      document.getElementById('onboarding').classList.remove('active');
+      document.getElementById('app').classList.add('visible');
     } else {
-      document.documentElement.setAttribute('data-theme', 'light');
-      setText(themeBtn, '\u2600');
-    }
-  });
-
-  /* ===== Control Buttons ===== */
-  var btnLabels = { play: '\u25B6', save: '\u2665', next: '\u21BB', font: 'Aa', arabic: '\u0639' };
-  var ctrls = document.querySelectorAll('.ctrl-btn');
-  for (var i = 0; i < ctrls.length; i++) {
-    var action = ctrls[i].getAttribute('data-action');
-    if (action && btnLabels[action]) {
-      setText(ctrls[i], btnLabels[action]);
+      showNordStep();
     }
   }
 
-  /* ===== Walkthrough Steps ===== */
-  var steps = [
-    { num: '\u0661', label: '\u0627\u0628\u062F\u0623', desc: '\u062A\u0635\u0641\u062D \u0645\u0643\u062A\u0628\u0629 \u0634\u0639\u0631\u064A\u0629 \u063A\u0646\u064A\u0629' },
-    { num: '\u0662', label: '\u0627\u0633\u062A\u0643\u0634\u0641', desc: '\u0627\u0643\u062A\u0634\u0641 \u0634\u0639\u0631\u0627\u0621 \u0645\u0646 \u0645\u062E\u062A\u0644\u0641 \u0627\u0644\u0639\u0635\u0648\u0631' },
-    { num: '\u0663', label: '\u0627\u0633\u062A\u0645\u0639', desc: '\u0627\u0633\u0645\u0639 \u0627\u0644\u0642\u0635\u0627\u0626\u062F \u0628\u0635\u0648\u062A \u0648\u0627\u0636\u062D' },
-    { num: '\u0664', label: '\u0634\u0627\u0631\u0643', desc: '\u0634\u0627\u0631\u0643 \u0642\u0635\u0627\u0626\u062F\u0643 \u0627\u0644\u0645\u0641\u0636\u0644\u0629' }
-  ];
-  var grid = document.getElementById('bento-grid');
-  steps.forEach(function(step) {
-    var card = document.createElement('div');
-    card.className = 'step-card';
-    var numEl = document.createElement('div');
-    numEl.className = 'step-num';
-    setText(numEl, step.num);
-    var labelEl = document.createElement('h3');
-    labelEl.className = 'step-label';
-    setText(labelEl, step.label);
-    var descEl = document.createElement('p');
-    descEl.className = 'step-desc';
-    setText(descEl, step.desc);
-    card.appendChild(numEl);
-    card.appendChild(labelEl);
-    card.appendChild(descEl);
-    grid.appendChild(card);
-  });
-
-  /* ===== IntersectionObserver for walkthrough ===== */
-  if ('IntersectionObserver' in window && !prefersReducedMotion) {
-    var observer = new IntersectionObserver(function(entries) {
-      entries.forEach(function(entry) {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('revealed');
-          observer.unobserve(entry.target);
-        }
-      });
-    }, { threshold: 0.15 });
-    var cards = document.querySelectorAll('.step-card');
-    for (var c = 0; c < cards.length; c++) observer.observe(cards[c]);
-  } else {
-    var allCards = document.querySelectorAll('.step-card');
-    for (var j = 0; j < allCards.length; j++) allCards[j].classList.add('revealed');
-  }
-
-  /* ===== Particle System ===== */
+  /* ---------- Particle System ---------- */
   function createParticle(w, h) {
     var colors = ['#D4C5A0', '#C5A059', '#A0522D', '#BFB08A', '#C9A96E'];
     return {
-      x: Math.random() * w,
-      y: Math.random() * h,
-      vx: (Math.random() - 0.5) * 0.5,
-      vy: Math.random() * 0.3 + 0.1,
+      x: Math.random() * w, y: Math.random() * h,
+      vx: (Math.random() - 0.5) * 0.5, vy: Math.random() * 0.3 + 0.1,
       size: Math.random() * 3 + 1,
       opacity: Math.random() * 0.6 + 0.2,
       color: colors[Math.floor(Math.random() * colors.length)]
     };
   }
 
-  /* ===== Splash Animation ===== */
+  /* ---------- Splash Animation ---------- */
   var splash = document.getElementById('splash');
   var splashCanvas = document.getElementById('splash-canvas');
   var sCtx = splashCanvas.getContext('2d');
   var splashParticles = [];
-  var splashPhase = 0; // 0=scatter, 1=gather, 2=vortex, 3=settle
-  var splashTimer = 0;
   var splashDone = false;
   var splashRafId = null;
 
@@ -361,76 +552,19 @@
     }
   }
 
-  // Target positions forming the word "رياح"
-  var wordTargets = [];
-  function computeWordTargets(w, h) {
-    wordTargets = [];
-    var cx = w / 2;
-    var cy = h / 2;
-    var count = splashParticles.length;
-    // Arrange in a circular cluster representing the word shape
-    for (var i = 0; i < count; i++) {
-      var angle = (i / count) * Math.PI * 2;
-      var radius = 60 + Math.random() * 40;
-      wordTargets.push({
-        x: cx + Math.cos(angle) * radius * (1 + 0.3 * Math.sin(angle * 3)),
-        y: cy + Math.sin(angle) * radius * 0.6
-      });
-    }
-  }
-
   function animateSplash(time) {
     if (splashDone) return;
     splashRafId = requestAnimationFrame(animateSplash);
     var w = splashCanvas.width;
     var h = splashCanvas.height;
     sCtx.clearRect(0, 0, w, h);
-    splashTimer++;
-
-    // Phase transitions
-    if (splashTimer === 1) computeWordTargets(w, h);
-    if (splashTimer === 90) splashPhase = 1;   // gather
-    if (splashTimer === 220) splashPhase = 2;  // vortex
-    if (splashTimer === 340) splashPhase = 3;  // settle/fade
-    if (splashTimer >= 420) { endSplash(); return; }
-
-    var cx = w / 2;
-    var cy = h / 2;
 
     for (var i = 0; i < splashParticles.length; i++) {
       var p = splashParticles[i];
-      if (splashPhase === 0) {
-        // Free scatter with wind
-        p.vx += Math.sin(time * 0.001 + i) * 0.02 + 0.03;
-        p.vy += 0.01;
-        p.vx *= 0.99; p.vy *= 0.99;
-      } else if (splashPhase === 1) {
-        // Gather toward word shape
-        var t = wordTargets[i];
-        var dx = t.x - p.x;
-        var dy = t.y - p.y;
-        p.vx += dx * 0.008;
-        p.vy += dy * 0.008;
-        p.vx *= 0.94; p.vy *= 0.94;
-      } else if (splashPhase === 2) {
-        // Vortex swirl
-        var ax = p.x - cx;
-        var ay = p.y - cy;
-        var dist = Math.sqrt(ax * ax + ay * ay) || 1;
-        var tangentX = -ay / dist;
-        var tangentY = ax / dist;
-        p.vx += tangentX * 0.4 - ax * 0.002;
-        p.vy += tangentY * 0.4 - ay * 0.002;
-        p.vx *= 0.97; p.vy *= 0.97;
-      } else {
-        // Settle: slow down and fade
-        p.vx *= 0.92; p.vy *= 0.92;
-        p.vy += 0.05;
-        p.opacity *= 0.98;
-      }
-      p.x += p.vx;
-      p.y += p.vy;
-      // Wrap horizontally
+      p.vx += Math.sin(time * 0.001 + i) * 0.02 + 0.03;
+      p.vy += 0.01;
+      p.vx *= 0.99; p.vy *= 0.99;
+      p.x += p.vx; p.y += p.vy;
       if (p.x > w + 10) p.x = -10;
       if (p.x < -10) p.x = w + 10;
       if (p.y > h + 10) { p.y = -10; p.x = Math.random() * w; }
@@ -442,131 +576,39 @@
       sCtx.fill();
     }
     sCtx.globalAlpha = 1;
-
-    // Draw word hint during gather phase
-    if (splashPhase === 1 && splashTimer > 140) {
-      var wordOpacity = Math.min((splashTimer - 140) / 60, 0.6);
-      sCtx.font = '3rem Amiri';
-      sCtx.textAlign = 'center';
-      sCtx.textBaseline = 'middle';
-      sCtx.fillStyle = 'rgba(197, 160, 89, ' + wordOpacity + ')';
-      sCtx.fillText('\u0631\u064A\u0627\u062D', cx, cy);
-    }
   }
 
-  function endSplash() {
+  function enterApp() {
     splashDone = true;
     if (splashRafId) cancelAnimationFrame(splashRafId);
     splash.classList.add('hidden');
-    document.getElementById('app').classList.add('visible');
-    setTimeout(function() { splash.style.display = 'none'; }, 800);
-    startAmbient();
+    setTimeout(function() {
+      splash.style.display = 'none';
+      document.getElementById('onboarding').classList.add('active');
+    }, 800);
   }
 
-  document.getElementById('skip-btn').addEventListener('click', endSplash);
+  document.getElementById('enterBtn').addEventListener('click', enterApp);
+  document.getElementById('onboarding').addEventListener('click', advanceNord);
 
-  /* ===== Ambient Canvas ===== */
-  var ambientCanvas = document.getElementById('ambient-canvas');
-  var aCtx = ambientCanvas.getContext('2d');
-  var ambientParticles = [];
-  var mouseX = 0;
-  var mouseY = 0;
-  var ambientRafId = null;
-
-  function initAmbient() {
-    ambientCanvas.width = window.innerWidth;
-    ambientCanvas.height = window.innerHeight;
-    ambientParticles = [];
-    for (var i = 0; i < AMBIENT_PARTICLE_COUNT; i++) {
-      var p = createParticle(ambientCanvas.width, ambientCanvas.height);
-      p.vx *= 0.3; p.vy *= 0.2;
-      p.size = Math.random() * 2.5 + 0.5;
-      p.opacity = Math.random() * 0.35 + 0.1;
-      ambientParticles.push(p);
-    }
-    mouseX = ambientCanvas.width / 2;
-    mouseY = ambientCanvas.height / 2;
-  }
-
-  function animateAmbient(time) {
-    ambientRafId = requestAnimationFrame(animateAmbient);
-    var w = ambientCanvas.width;
-    var h = ambientCanvas.height;
-    aCtx.clearRect(0, 0, w, h);
-
-    for (var i = 0; i < ambientParticles.length; i++) {
-      var p = ambientParticles[i];
-      // Wind toward mouse
-      var dx = mouseX - p.x;
-      var dy = mouseY - p.y;
-      var dist = Math.sqrt(dx * dx + dy * dy) || 1;
-      var windForce = Math.min(0.02, 50 / dist);
-      p.vx += (dx / dist) * windForce + Math.sin(time * 0.0005 + i * 0.7) * 0.005;
-      p.vy += (dy / dist) * windForce * 0.3 + 0.003;
-      // Turbulence
-      p.vx += Math.sin(time * 0.001 + p.y * 0.01) * 0.008;
-      // Damping
-      p.vx *= 0.985; p.vy *= 0.985;
-      p.x += p.vx;
-      p.y += p.vy;
-      // Wrap
-      if (p.x > w + 5) p.x = -5;
-      if (p.x < -5) p.x = w + 5;
-      if (p.y > h + 5) { p.y = -5; p.x = Math.random() * w; }
-      if (p.y < -5) p.y = h + 5;
-
-      aCtx.beginPath();
-      aCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-      aCtx.fillStyle = p.color;
-      aCtx.globalAlpha = p.opacity;
-      aCtx.fill();
-    }
-    aCtx.globalAlpha = 1;
-  }
-
-  function startAmbient() {
-    if (prefersReducedMotion) return;
-    initAmbient();
-    animateAmbient(0);
-  }
-
-  /* ===== Mouse / Touch Tracking ===== */
-  document.addEventListener('mousemove', function(e) {
-    mouseX = e.clientX; mouseY = e.clientY;
-  });
-  document.addEventListener('touchmove', function(e) {
-    if (e.touches.length > 0) {
-      mouseX = e.touches[0].clientX;
-      mouseY = e.touches[0].clientY;
-    }
-  }, { passive: true });
-
-  /* ===== Resize Handler ===== */
-  var resizeTimeout;
+  /* ---------- Resize ---------- */
   window.addEventListener('resize', function() {
-    clearTimeout(resizeTimeout);
-    resizeTimeout = setTimeout(function() {
-      isMobile = window.innerWidth < 768;
-      if (!splashDone) {
-        splashCanvas.width = window.innerWidth;
-        splashCanvas.height = window.innerHeight;
-      }
-      if (ambientCanvas) {
-        ambientCanvas.width = window.innerWidth;
-        ambientCanvas.height = window.innerHeight;
-      }
-    }, 150);
+    if (!splashDone) {
+      splashCanvas.width = window.innerWidth;
+      splashCanvas.height = window.innerHeight;
+    }
   });
 
-  /* ===== Initialize ===== */
+  /* ---------- Init ---------- */
   if (prefersReducedMotion) {
-    // Skip splash entirely
     splash.style.display = 'none';
     document.getElementById('app').classList.add('visible');
   } else {
     initSplash();
     requestAnimationFrame(animateSplash);
   }
+
+  lucide.createIcons();
 })();
 </script>
 </body>

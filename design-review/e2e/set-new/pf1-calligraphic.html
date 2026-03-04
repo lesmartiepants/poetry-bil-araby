@@ -1,0 +1,742 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>E2E: PF1 Calligraphic Particles - Kinetic Typography</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Forum&family=Reem+Kufi:wght@400;700&family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Tajawal', system-ui, sans-serif;
+      background: #000000;
+      color: #ffffff;
+      overflow-x: hidden;
+    }
+
+    @keyframes fadeIn { to { opacity: 1; } }
+
+    .screen {
+      position: relative;
+      width: 100%;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ===== SPLASH ===== */
+    #splash {
+      background: #000000;
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      transition: opacity 0.6s ease, visibility 0.6s ease;
+    }
+    #splash.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .particle-canvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .splash-content {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      max-width: 800px;
+      padding: 40px;
+      opacity: 0;
+      animation: fadeIn 0.8s ease-out 0.3s forwards;
+    }
+
+    /* Canonical brand */
+    .splash-brand {
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      gap: 0.35em;
+      margin-bottom: 24px;
+    }
+    .splash-brand-en {
+      font-family: 'Forum', cursive;
+      font-size: clamp(3rem, 6vw, 4.5rem);
+      text-transform: lowercase;
+      letter-spacing: -0.05em;
+      line-height: 1;
+      color: #ffffff;
+    }
+    .splash-brand-ar {
+      font-family: 'Reem Kufi', sans-serif;
+      font-weight: 700;
+      font-size: clamp(1.875rem, 4vw, 3rem);
+      line-height: 1;
+      color: #ffffff;
+    }
+
+    .splash-subtitle {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.4em;
+      color: #a8a8a8;
+      margin-bottom: 48px;
+      font-weight: 500;
+      opacity: 0;
+      animation: fadeIn 0.6s ease-out 0.8s forwards;
+    }
+
+    .splash-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 16px 48px;
+      border: 1px solid #333333;
+      border-radius: 999px;
+      background: transparent;
+      color: #ffffff;
+      font-family: 'Tajawal', sans-serif;
+      font-size: 14px;
+      font-weight: 500;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      min-height: 48px;
+      opacity: 0;
+      animation: fadeIn 0.5s ease-out 1.2s forwards;
+    }
+    .splash-cta:hover {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: #666666;
+      transform: translateY(-2px);
+    }
+    .splash-cta svg { width: 16px; height: 16px; }
+
+    .splash-hint {
+      margin-top: 48px;
+      font-size: 9px;
+      letter-spacing: 0.4em;
+      color: #444444;
+      text-transform: uppercase;
+      font-weight: 400;
+      opacity: 0;
+      animation: fadeIn 0.5s ease-out 1.6s forwards;
+    }
+
+    /* Theme toggle */
+    .theme-toggle {
+      position: fixed;
+      top: 1rem; right: 1rem;
+      width: 48px; height: 48px;
+      border: 1px solid #222222;
+      border-radius: 50%;
+      background: transparent;
+      color: #666666;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      z-index: 2000;
+    }
+    .theme-toggle:hover { color: #ffffff; border-color: #444444; }
+    .theme-toggle svg { width: 18px; height: 18px; }
+    .icon-sun, .icon-moon { display: none; }
+    [data-mode="dark"] .icon-sun { display: flex; }
+    [data-mode="light"] .icon-moon { display: flex; }
+
+    /* ===== WALKTHROUGH ===== */
+    #walkthrough {
+      display: none;
+      background: #000000;
+      position: fixed;
+      inset: 0;
+      z-index: 90;
+      cursor: pointer;
+      overflow: hidden;
+    }
+
+    /* Kinetic typography: words only, no containers */
+    .kinetic-stage {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      width: 100%;
+      max-width: 600px;
+      padding: 2rem;
+    }
+
+    .kinetic-step {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 40vh;
+    }
+    .kinetic-step.active {
+      display: flex;
+    }
+
+    /* Step 0: "poetry" letter by letter */
+    .kinetic-word-en {
+      font-family: 'Forum', cursive;
+      font-size: clamp(4rem, 10vw, 7rem);
+      text-transform: lowercase;
+      letter-spacing: -0.05em;
+      color: #ffffff;
+      line-height: 1;
+      margin-bottom: 1.5rem;
+    }
+    .kinetic-word-en .letter {
+      display: inline-block;
+      opacity: 0;
+      transform: translateY(30px);
+      animation: letterReveal 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+    .kinetic-word-en .letter:nth-child(1) { animation-delay: 0.1s; }
+    .kinetic-word-en .letter:nth-child(2) { animation-delay: 0.18s; }
+    .kinetic-word-en .letter:nth-child(3) { animation-delay: 0.26s; }
+    .kinetic-word-en .letter:nth-child(4) { animation-delay: 0.34s; }
+    .kinetic-word-en .letter:nth-child(5) { animation-delay: 0.42s; }
+    .kinetic-word-en .letter:nth-child(6) { animation-delay: 0.50s; }
+
+    @keyframes letterReveal {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .kinetic-sub-en {
+      font-size: 0.8125rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: #555555;
+      opacity: 0;
+      animation: fadeIn 0.6s ease-out 0.8s forwards;
+    }
+
+    /* Step 1: Arabic word reveal */
+    .kinetic-word-ar {
+      font-family: 'Reem Kufi', sans-serif;
+      font-size: clamp(3.5rem, 9vw, 6rem);
+      font-weight: 700;
+      color: #ffffff;
+      direction: rtl;
+      line-height: 1.2;
+      margin-bottom: 1.5rem;
+      opacity: 0;
+      animation: arabicReveal 1s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards;
+    }
+    @keyframes arabicReveal {
+      from { opacity: 0; transform: scale(0.9); filter: blur(8px); }
+      to { opacity: 1; transform: scale(1); filter: blur(0px); }
+    }
+
+    .kinetic-sub-ar {
+      font-family: 'Tajawal', sans-serif;
+      font-size: 0.9375rem;
+      color: #666666;
+      direction: rtl;
+      opacity: 0;
+      animation: fadeIn 0.6s ease-out 0.7s forwards;
+    }
+
+    /* Step 2: count reveal */
+    .kinetic-count {
+      font-family: 'Forum', cursive;
+      font-size: clamp(2.5rem, 7vw, 4.5rem);
+      color: #ffffff;
+      letter-spacing: -0.02em;
+      margin-bottom: 1rem;
+      opacity: 0;
+      animation: countReveal 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards;
+    }
+    @keyframes countReveal {
+      from { opacity: 0; transform: translateY(20px) scale(0.95); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .kinetic-count-ar {
+      font-family: 'Reem Kufi', sans-serif;
+      font-size: clamp(1.5rem, 4vw, 2.5rem);
+      font-weight: 700;
+      color: #888888;
+      direction: rtl;
+      margin-bottom: 2rem;
+      opacity: 0;
+      animation: fadeIn 0.5s ease-out 0.6s forwards;
+    }
+
+    .kinetic-enter {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 40px;
+      border: 1px solid #333333;
+      border-radius: 999px;
+      background: transparent;
+      color: #ffffff;
+      font-family: 'Tajawal', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      min-height: 48px;
+      opacity: 0;
+      animation: fadeIn 0.5s ease-out 1s forwards;
+    }
+    .kinetic-enter:hover {
+      background: rgba(255, 255, 255, 0.06);
+      border-color: #666666;
+    }
+    .kinetic-enter svg { width: 16px; height: 16px; }
+
+    /* Tap hint */
+    .kinetic-tap {
+      position: fixed;
+      bottom: 3rem;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.65rem;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: #333333;
+      z-index: 5;
+    }
+
+    /* Progress: thin line at bottom */
+    .kinetic-progress {
+      position: fixed;
+      bottom: 0; left: 0;
+      height: 2px;
+      background: rgba(255, 255, 255, 0.15);
+      transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+      z-index: 5;
+    }
+
+    /* ===== MAIN APP ===== */
+    #main {
+      display: none;
+      background: #000000;
+    }
+    .main-layout {
+      position: relative;
+      z-index: 2;
+      width: 100%;
+      max-width: 900px;
+      padding: 32px 24px;
+      min-height: 100vh;
+    }
+    .main-nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      margin-bottom: 24px;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    .main-brand {
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+    }
+    .main-brand-en {
+      font-family: 'Forum', cursive;
+      font-size: 1.25rem;
+      color: #ffffff;
+      text-transform: lowercase;
+      letter-spacing: -0.05em;
+    }
+    .main-brand-ar {
+      font-family: 'Reem Kufi', sans-serif;
+      font-size: 0.875rem;
+      color: #ffffff;
+      font-weight: 700;
+    }
+    .nav-actions { display: flex; gap: 0.5rem; }
+    .nav-btn {
+      width: 44px; height: 44px;
+      border: none; background: transparent;
+      color: #666666;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; border-radius: 8px;
+      transition: color 0.2s ease;
+    }
+    .nav-btn:hover { color: #ffffff; }
+    .nav-btn svg { width: 20px; height: 20px; }
+
+    /* Poem display */
+    .poem-area {
+      flex: 1;
+      display: flex;
+      position: relative;
+    }
+    .poem-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 3rem 1rem;
+      padding-right: 56px;
+      min-height: 60vh;
+    }
+    .poem-text {
+      font-family: 'Amiri', serif;
+      font-size: clamp(1.25rem, 3vw, 1.625rem);
+      line-height: 2.2;
+      color: #ffffff;
+      direction: rtl;
+      text-align: center;
+      max-width: 600px;
+      margin-bottom: 1.5rem;
+    }
+    .poem-poet {
+      font-family: 'Tajawal', sans-serif;
+      font-size: 0.8125rem;
+      color: #888888;
+      direction: rtl;
+    }
+
+    /* Vertical controls */
+    .vertical-controls {
+      position: fixed; right: 0; top: 0; bottom: 0;
+      width: 48px;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 4px;
+      border-left: 1px solid #1a1a1a;
+      background: #050505;
+      padding: 8px 0;
+      z-index: 50;
+    }
+    .vc-btn {
+      width: 44px; height: 44px;
+      border: none; background: transparent;
+      color: #555555;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; border-radius: 8px;
+      transition: color 0.2s ease;
+    }
+    .vc-btn:hover { color: #ffffff; }
+    .vc-btn svg { width: 18px; height: 18px; }
+    .vc-divider {
+      width: 24px; height: 1px;
+      background: #1a1a1a;
+      margin: 4px 0;
+    }
+
+    /* Bottom bar */
+    .bottom-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      padding: 0.5rem 1rem;
+      border-top: 1px solid #1a1a1a;
+      background: #050505;
+    }
+    .bb-btn {
+      width: 48px; height: 48px;
+      border: none; background: transparent;
+      color: #555555;
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; border-radius: 8px;
+      transition: color 0.2s ease;
+    }
+    .bb-btn:hover { color: #ffffff; }
+    .bb-btn svg { width: 20px; height: 20px; }
+
+    @media (max-width: 480px) {
+      .splash-brand-en { font-size: 2.5rem; }
+      .splash-brand-ar { font-size: 1.5rem; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body data-mode="dark">
+  <!-- Theme toggle -->
+  <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+    <span class="icon-sun"><i data-lucide="sun"></i></span>
+    <span class="icon-moon"><i data-lucide="moon"></i></span>
+  </button>
+
+  <!-- ===== SPLASH ===== -->
+  <div class="screen" id="splash">
+    <canvas id="particleCanvas" class="particle-canvas"></canvas>
+    <div class="splash-content">
+      <div class="splash-brand">
+        <span class="splash-brand-en">poetry</span>
+        <span class="splash-brand-ar" dir="rtl" lang="ar">بالعربي</span>
+      </div>
+      <p class="splash-subtitle">Verses Connecting Across Time and Space</p>
+      <button class="splash-cta" id="splashCta">
+        <span>Begin</span>
+        <i data-lucide="arrow-right"></i>
+      </button>
+      <p class="splash-hint">Move your cursor to disturb the field</p>
+    </div>
+  </div>
+
+  <!-- ===== WALKTHROUGH ===== -->
+  <div class="screen" id="walkthrough">
+    <div class="kinetic-stage">
+      <!-- Step 0: "poetry" letter by letter -->
+      <div class="kinetic-step active" data-step="0">
+        <div class="kinetic-word-en">
+          <span class="letter">p</span><span class="letter">o</span><span class="letter">e</span><span class="letter">t</span><span class="letter">r</span><span class="letter">y</span>
+        </div>
+        <div class="kinetic-sub-en">Where words become worlds</div>
+      </div>
+
+      <!-- Step 1: Arabic morphs in -->
+      <div class="kinetic-step" data-step="1">
+        <div class="kinetic-word-ar" lang="ar" dir="rtl">بالعربي</div>
+        <div class="kinetic-sub-ar" lang="ar" dir="rtl">الشعر العربي بين يديك</div>
+      </div>
+
+      <!-- Step 2: verse count + enter -->
+      <div class="kinetic-step" data-step="2">
+        <div class="kinetic-count">84,000 verses await</div>
+        <div class="kinetic-count-ar" lang="ar" dir="rtl">أكثر من 84,000 بيت بانتظارك</div>
+        <button class="kinetic-enter" id="walkthroughFinish">
+          <span>Explore</span>
+          <i data-lucide="arrow-right"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="kinetic-tap">Tap anywhere</div>
+    <div class="kinetic-progress" id="kineticProgress" style="width: 33%"></div>
+  </div>
+
+  <!-- ===== MAIN APP ===== -->
+  <div class="screen" id="main">
+    <div class="main-layout">
+      <nav class="main-nav">
+        <div class="main-brand">
+          <span class="main-brand-en">poetry</span>
+          <span class="main-brand-ar" lang="ar" dir="rtl">بالعربي</span>
+        </div>
+        <div class="nav-actions">
+          <button class="nav-btn" aria-label="Search"><i data-lucide="search"></i></button>
+          <button class="nav-btn" aria-label="Menu"><i data-lucide="menu"></i></button>
+        </div>
+      </nav>
+
+      <div class="poem-area">
+        <div class="poem-content">
+          <div class="poem-text" lang="ar" dir="rtl">
+            وما نيلُ المطالبِ بالتمنّي<br>
+            ولكنْ تُؤخَذُ الدنيا غِلابا<br><br>
+            وما استعصى على قومٍ منالٌ<br>
+            إذا الإقدامُ كان لهم رِكابا
+          </div>
+          <p class="poem-poet" lang="ar" dir="rtl">-- أحمد شوقي</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Vertical controls -->
+    <div class="vertical-controls">
+      <button class="vc-btn" aria-label="Save"><i data-lucide="heart" style="width:18px;height:18px"></i></button>
+      <div class="vc-divider"></div>
+      <button class="vc-btn" aria-label="Font size"><i data-lucide="type" style="width:18px;height:18px"></i></button>
+      <div class="vc-divider"></div>
+      <button class="vc-btn" aria-label="Translate"><i data-lucide="languages" style="width:18px;height:18px"></i></button>
+      <div class="vc-divider"></div>
+      <button class="vc-btn" aria-label="Collection"><i data-lucide="book-open" style="width:18px;height:18px"></i></button>
+      <div class="vc-divider"></div>
+      <button class="vc-btn" aria-label="Style"><i data-lucide="italic" style="width:18px;height:18px"></i></button>
+      <div class="vc-divider"></div>
+      <button class="vc-btn" aria-label="Sign in"><i data-lucide="log-in" style="width:18px;height:18px"></i></button>
+      <div class="vc-divider"></div>
+      <button class="vc-btn" aria-label="Settings"><i data-lucide="settings" style="width:18px;height:18px"></i></button>
+    </div>
+
+    <!-- Bottom bar -->
+    <nav class="bottom-bar">
+      <button class="bb-btn" aria-label="Listen"><i data-lucide="music" style="width:20px;height:20px"></i></button>
+      <button class="bb-btn" aria-label="Insights"><i data-lucide="lightbulb" style="width:20px;height:20px"></i></button>
+      <button class="bb-btn" aria-label="New poem"><i data-lucide="refresh-cw" style="width:20px;height:20px"></i></button>
+      <button class="bb-btn" aria-label="Library"><i data-lucide="library" style="width:20px;height:20px"></i></button>
+      <button class="bb-btn" aria-label="Shuffle"><i data-lucide="shuffle" style="width:20px;height:20px"></i></button>
+    </nav>
+  </div>
+
+<script>
+(function () {
+  "use strict";
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+
+  /* ===== PARTICLE SYSTEM ===== */
+  var canvas = document.getElementById('particleCanvas');
+  var ctx = canvas.getContext('2d');
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+
+  var particles = [];
+  var particleCount = 500;
+  var mouse = { x: canvas.width / 2, y: canvas.height / 2 };
+  var animRunning = true;
+
+  for (var i = 0; i < particleCount; i++) {
+    var curve = Math.floor(Math.random() * 3);
+    var curves = [
+      { x: 0.7, y: 0.5, radius: 0.12 },
+      { x: 0.5, y: 0.5, radius: 0.10 },
+      { x: 0.3, y: 0.5, radius: 0.14 }
+    ];
+    var c = curves[curve];
+    var angle = Math.random() * Math.PI * 2;
+    var dist = Math.random() * c.radius;
+
+    particles.push({
+      x: (c.x + Math.cos(angle) * dist) * canvas.width,
+      y: (c.y + Math.sin(angle) * dist) * canvas.height,
+      originX: (c.x + Math.cos(angle) * dist) * canvas.width,
+      originY: (c.y + Math.sin(angle) * dist) * canvas.height,
+      vx: 0, vy: 0,
+      radius: Math.random() * 1.5 + 0.5,
+      opacity: Math.random() * 0.4 + 0.4,
+      twinklePhase: Math.random() * Math.PI * 2,
+      twinkleSpeed: Math.random() * 0.02 + 0.01
+    });
+  }
+
+  window.addEventListener('mousemove', function (e) { mouse.x = e.clientX; mouse.y = e.clientY; });
+
+  function animateParticles() {
+    if (!animRunning) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    particles.forEach(function (p) {
+      var dx = mouse.x - p.x;
+      var dy = mouse.y - p.y;
+      var d = Math.sqrt(dx * dx + dy * dy);
+      if (d < 120) {
+        var f = (120 - d) / 120;
+        p.vx -= (dx / d) * f * 0.8;
+        p.vy -= (dy / d) * f * 0.8;
+      }
+      p.vx += (p.originX - p.x) * 0.001;
+      p.vy += (p.originY - p.y) * 0.001;
+      p.vx *= 0.95;
+      p.vy *= 0.95;
+      p.x += p.vx;
+      p.y += p.vy;
+
+      p.twinklePhase += p.twinkleSpeed;
+      var twinkle = Math.sin(p.twinklePhase) * 0.3 + 0.7;
+      var fo = p.opacity * twinkle;
+
+      ctx.beginPath();
+      var g1 = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius * 4);
+      g1.addColorStop(0, 'rgba(200, 220, 255, ' + (fo * 0.6) + ')');
+      g1.addColorStop(0.3, 'rgba(180, 200, 255, ' + (fo * 0.3) + ')');
+      g1.addColorStop(1, 'rgba(255, 255, 255, 0)');
+      ctx.fillStyle = g1;
+      ctx.arc(p.x, p.y, p.radius * 4, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.beginPath();
+      var g2 = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius);
+      g2.addColorStop(0, 'rgba(255, 255, 255, ' + fo + ')');
+      g2.addColorStop(0.7, 'rgba(240, 245, 255, ' + (fo * 0.5) + ')');
+      g2.addColorStop(1, 'rgba(255, 255, 255, 0)');
+      ctx.fillStyle = g2;
+      ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    requestAnimationFrame(animateParticles);
+  }
+  animateParticles();
+
+  window.addEventListener('resize', function () {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  });
+
+  /* ===== SPLASH -> WALKTHROUGH ===== */
+  document.getElementById('splashCta').addEventListener('click', function () {
+    var splash = document.getElementById('splash');
+    splash.classList.add('hidden');
+    animRunning = false;
+    setTimeout(function () {
+      splash.style.display = 'none';
+      document.getElementById('walkthrough').style.display = 'flex';
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+    }, 600);
+  });
+
+  /* ===== WALKTHROUGH: KINETIC TYPOGRAPHY ===== */
+  var currentStep = 0;
+  var totalSteps = 3;
+  var progressBar = document.getElementById('kineticProgress');
+
+  function advanceKinetic() {
+    currentStep++;
+    if (currentStep >= totalSteps) {
+      /* Walkthrough -> Main App */
+      var wt = document.getElementById('walkthrough');
+      wt.style.opacity = '0';
+      wt.style.transition = 'opacity 0.6s ease';
+      setTimeout(function () {
+        wt.style.display = 'none';
+        document.getElementById('main').style.display = 'flex';
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+      }, 600);
+      return;
+    }
+    var steps = document.querySelectorAll('.kinetic-step');
+    steps.forEach(function (s) { s.classList.remove('active'); });
+    steps[currentStep].classList.add('active');
+    progressBar.style.width = ((currentStep + 1) / totalSteps * 100) + '%';
+  }
+
+  /* Tap anywhere on walkthrough to advance (except on the finish button) */
+  document.getElementById('walkthrough').addEventListener('click', function (e) {
+    if (e.target.closest('#walkthroughFinish')) return;
+    if (currentStep < totalSteps - 1) {
+      advanceKinetic();
+    }
+  });
+
+  /* Finish button on last step */
+  document.getElementById('walkthroughFinish').addEventListener('click', function (e) {
+    e.stopPropagation();
+    advanceKinetic();
+  });
+
+  /* ===== THEME TOGGLE ===== */
+  var isDark = true;
+  document.getElementById('themeToggle').addEventListener('click', function (e) {
+    e.stopPropagation();
+    isDark = !isDark;
+    document.body.setAttribute('data-mode', isDark ? 'dark' : 'light');
+  });
+})();
+</script>
+</body>
+</html>

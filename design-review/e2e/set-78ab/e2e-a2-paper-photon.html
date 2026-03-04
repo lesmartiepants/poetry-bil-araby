@@ -3,8 +3,9 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Constellation Verse - Arabic Poetry</title>
-<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<title>A2 Paper Photon - Constellation Verse</title>
+<link href="https://fonts.googleapis.com/css2?family=Forum&family=Reem+Kufi:wght@400;700&family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
 <style>
 :root {
   --void: #050510; --navy: #0A0F2E; --star: #E8E4F0;
@@ -28,123 +29,303 @@ body {
 /* ---- Splash ---- */
 #splash {
   position: fixed; inset: 0; z-index: 100; display: flex; align-items: center;
-  justify-content: center; background: var(--void); transition: opacity 1s ease;
+  justify-content: center; flex-direction: column; background: var(--void);
+  transition: opacity 1s ease;
 }
 #splash.fade-out { opacity: 0; pointer-events: none; }
 #splash-canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+.splash-brand {
+  position: relative; z-index: 1; display: flex; align-items: flex-end;
+  justify-content: center; gap: 0.5rem; margin-bottom: 1rem;
+}
+.splash-brand-en {
+  font-family: 'Forum', serif; font-size: clamp(3rem, 6vw, 4.5rem);
+  letter-spacing: -0.05em; color: var(--gold); line-height: 1;
+}
+.splash-brand-ar {
+  font-family: 'Reem Kufi', sans-serif; font-weight: 700;
+  font-size: clamp(1.875rem, 4vw, 3rem); color: var(--gold); line-height: 1;
+}
+
 #splash-text {
-  position: relative; z-index: 1; font-family: var(--font-display);
-  font-size: clamp(1.4rem, 4vw, 2.6rem); color: var(--gold);
-  text-shadow: 0 0 20px var(--glow-gold), 0 0 40px var(--glow-gold);
+  position: relative; z-index: 1; font-family: var(--font-ui);
+  font-size: clamp(0.85rem, 2vw, 1.1rem); color: var(--star-dim);
+  letter-spacing: 0.15em; text-transform: uppercase; direction: ltr;
   opacity: 0; animation: textReveal 2s 1.5s forwards;
 }
 @keyframes textReveal { to { opacity: 1; } }
 
-/* ---- Walkthrough ---- */
+.splash-enter {
+  position: relative; z-index: 1; margin-top: 2.5rem;
+  padding: 14px 40px; min-height: 44px; min-width: 44px;
+  background: transparent; border: 1px solid var(--gold); color: var(--gold);
+  font-family: var(--font-ui); font-size: 15px; border-radius: 8px;
+  cursor: pointer; transition: all 0.3s ease;
+  opacity: 0; animation: textReveal 1s 2s forwards;
+}
+.splash-enter:hover {
+  background: var(--gold); color: var(--void);
+  box-shadow: 0 0 30px var(--glow-gold);
+}
+
+/* ---- Walkthrough (Editorial/Magazine) ---- */
 #walkthrough {
   position: fixed; inset: 0; z-index: 90; background: var(--void);
   display: none; flex-direction: column; align-items: center; justify-content: center;
-  transition: opacity 0.6s ease;
+  cursor: pointer; overflow: hidden;
 }
 #walkthrough.active { display: flex; }
-#walkthrough.fade-out { opacity: 0; pointer-events: none; }
-.wt-card {
-  display: none; flex-direction: column; align-items: center; gap: 1.2rem;
-  max-width: 380px; padding: 2.5rem 2rem; text-align: center;
-  border: 1px solid var(--star-dim); border-radius: 16px;
-  background: rgba(10,15,46,0.6); position: relative;
-  will-change: opacity, transform; animation: cardIn 0.5s ease forwards;
-}
-.wt-card.active { display: flex; }
-@keyframes cardIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-.wt-dots { display: flex; gap: 18px; position: relative; margin-bottom: 0.5rem; }
-.wt-dot {
-  width: 8px; height: 8px; border-radius: 50%; background: var(--star);
-  box-shadow: 0 0 6px var(--glow-star);
-}
-.wt-line {
-  position: absolute; top: 50%; left: 14px; right: 14px; height: 1px;
-  background: linear-gradient(90deg, transparent, var(--star-dim), transparent);
-}
-.wt-card h3 { font-family: var(--font-display); font-size: 1.3rem; color: var(--gold); }
-.wt-card p { font-size: 0.95rem; line-height: 1.7; color: var(--star-dim); }
-.wt-nav { display: flex; gap: 1rem; margin-top: 2rem; }
-.wt-btn {
-  min-width: 100px; min-height: 44px; padding: 0.6rem 1.6rem;
-  border: 1px solid var(--gold); border-radius: 24px; background: transparent;
-  color: var(--gold); font-family: var(--font-ui); font-size: 0.95rem;
-  cursor: pointer; transition: background 0.3s, box-shadow 0.3s;
-  touch-action: manipulation;
-}
-.wt-btn:hover, .wt-btn:focus-visible {
-  background: rgba(197,160,89,0.15); box-shadow: 0 0 14px var(--glow-gold);
-  outline: 2px solid var(--gold); outline-offset: 2px;
-}
-.wt-indicators { display: flex; gap: 10px; margin-top: 1.5rem; }
-.wt-ind {
-  width: 10px; height: 10px; border-radius: 50%;
-  background: var(--star-dim); transition: background 0.3s, box-shadow 0.3s;
-}
-.wt-ind.active { background: var(--gold); box-shadow: 0 0 8px var(--glow-gold); }
 
-/* ---- Main App ---- */
-#app {
+/* Editorial spread: text-heavy, magazine typography */
+.editorial-page {
   display: none; flex-direction: column; align-items: center;
-  min-height: 100vh; position: relative; padding: 2rem 1rem;
+  max-width: 480px; width: 90%; padding: 3rem 2rem;
+  position: relative; text-align: left;
+}
+.editorial-page.active {
+  display: flex;
+  animation: pageFlip 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes pageFlip {
+  from { opacity: 0; transform: rotateY(-8deg) translateX(30px); }
+  to { opacity: 1; transform: rotateY(0deg) translateX(0); }
+}
+
+/* Issue number / section header */
+.editorial-section {
+  font-family: var(--font-ui); font-size: 0.65rem;
+  letter-spacing: 0.4em; text-transform: uppercase;
+  color: var(--gold); margin-bottom: 2rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid rgba(197, 160, 89, 0.3);
+  width: 100%;
+}
+
+/* Large editorial headline */
+.editorial-headline {
+  font-family: var(--font-display); font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 700; color: var(--star); line-height: 1.2;
+  margin-bottom: 0.75rem; direction: ltr;
+}
+
+.editorial-headline-ar {
+  font-family: var(--font-display); font-size: clamp(1.5rem, 4vw, 2.25rem);
+  font-weight: 700; color: var(--gold); line-height: 1.4;
+  direction: rtl; margin-bottom: 1.5rem;
+}
+
+/* Body copy: text-heavy editorial style */
+.editorial-body {
+  font-family: var(--font-display); font-size: 1rem;
+  line-height: 1.9; color: var(--star-dim); direction: ltr;
+  margin-bottom: 0.75rem;
+}
+
+.editorial-body-ar {
+  font-family: var(--font-display); font-size: 0.95rem;
+  line-height: 1.9; color: rgba(197, 160, 89, 0.4);
+  direction: rtl; margin-bottom: 1.5rem;
+}
+
+/* Pull quote */
+.editorial-pull {
+  font-family: var(--font-display); font-size: 1.125rem;
+  font-style: italic; color: var(--gold); line-height: 1.6;
+  padding: 1rem 0; margin: 0.5rem 0;
+  border-top: 1px solid rgba(197, 160, 89, 0.2);
+  border-bottom: 1px solid rgba(197, 160, 89, 0.2);
+  text-align: center;
+}
+
+/* Page number at bottom */
+.editorial-page-num {
+  margin-top: auto; padding-top: 1.5rem;
+  font-family: var(--font-ui); font-size: 0.7rem;
+  letter-spacing: 0.3em; color: rgba(232, 228, 240, 0.2);
+  text-transform: uppercase; width: 100%; text-align: right;
+}
+
+.editorial-hint {
+  position: fixed; bottom: 2rem; left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.65rem; letter-spacing: 0.3em;
+  text-transform: uppercase; color: rgba(232, 228, 240, 0.2);
+  z-index: 5;
+}
+
+/* Thin line progress */
+.editorial-progress {
+  position: fixed; bottom: 0; left: 0;
+  height: 2px; background: var(--gold);
+  transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+  z-index: 5; opacity: 0.6;
+}
+
+/* ===== MAIN APP ===== */
+/* Editorial Magazine Spread — full-bleed poem, generous margins, serif typography */
+#app {
+  display: none; flex-direction: column;
+  min-height: 100vh; position: relative;
 }
 #app.active { display: flex; }
 #bg-canvas {
   position: fixed; inset: 0; width: 100%; height: 100%;
   z-index: 0; pointer-events: none;
 }
-.poem-card {
-  position: relative; z-index: 1; max-width: 640px; width: 100%;
-  margin-top: 15vh; padding: 3rem 2.5rem; border-radius: 20px;
-  border: 1px solid rgba(232,228,240,0.1);
-  background: linear-gradient(135deg, rgba(10,15,46,0.7), rgba(58,31,94,0.25));
-  backdrop-filter: blur(12px); will-change: transform;
-  animation: floatCard 8s ease-in-out infinite;
+
+/* Minimal editorial top bar */
+.mag-nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 24px; height: 48px;
+  background: rgba(5, 5, 16, 0.6);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(197, 160, 89, 0.1);
+  direction: ltr;
 }
-@keyframes floatCard {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-8px); }
+.mag-issue {
+  font-family: var(--font-ui); font-size: 10px;
+  letter-spacing: 0.35em; text-transform: uppercase;
+  color: var(--gold); opacity: 0.7;
 }
-.poem-text {
-  font-family: var(--font-display); font-size: clamp(1.3rem, 3.5vw, 1.9rem);
-  line-height: 2.2; text-align: center; color: var(--star);
-  text-shadow: 0 0 12px var(--glow-star);
-}
-.poem-divider {
-  display: block; width: 60px; height: 1px; margin: 1.5rem auto;
-  background: linear-gradient(90deg, transparent, var(--gold), transparent);
-}
-.poem-author {
-  display: block; text-align: center; font-family: var(--font-ui);
-  font-size: 1rem; color: var(--gold); margin-top: 0.5rem;
-  text-shadow: 0 0 10px var(--glow-gold);
+.mag-brand {
+  font-family: 'Forum', serif; font-size: 16px;
+  letter-spacing: -0.03em; color: var(--star-dim);
 }
 
-/* ---- Controls ---- */
-.controls {
-  position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%);
-  z-index: 10; display: flex; gap: 1rem;
+/* Magazine spread reader */
+.mag-spread {
+  position: relative; z-index: 2;
+  min-height: 100vh;
+  display: flex; flex-direction: column;
+  justify-content: center;
+  padding: 80px 10vw 100px;
 }
-.ctrl-btn {
-  width: 50px; height: 50px; border-radius: 50%; border: 1px solid var(--star-dim);
-  background: rgba(10,15,46,0.7); color: var(--star); font-size: 1.2rem;
-  cursor: pointer; display: flex; align-items: center; justify-content: center;
-  transition: box-shadow 0.3s, border-color 0.3s, background 0.3s;
-  backdrop-filter: blur(8px); touch-action: manipulation;
+
+/* Small-caps poet name */
+.mag-poet {
+  font-family: var(--font-ui); font-size: 11px;
+  font-weight: 500; letter-spacing: 0.35em;
+  text-transform: uppercase; color: var(--gold);
+  margin-bottom: 0.5rem; direction: ltr;
 }
-.ctrl-btn:hover, .ctrl-btn:focus-visible {
-  border-color: var(--gold);
-  box-shadow: 0 0 18px var(--glow-gold), 0 0 6px var(--glow-star);
-  outline: 2px solid var(--gold); outline-offset: 2px;
+.mag-poet-ar {
+  font-family: var(--font-display); font-size: 14px;
+  color: var(--star-dim); direction: rtl;
+  margin-bottom: 2rem;
 }
-.ctrl-btn:active { background: rgba(197,160,89,0.2); }
+
+/* Full-bleed large poem text */
+.mag-verses {
+  font-family: var(--font-display);
+  font-size: clamp(1.75rem, 5vw, 3rem);
+  line-height: 2;
+  color: var(--star);
+  direction: rtl;
+  text-align: right;
+  margin-bottom: 1.5rem;
+}
+
+/* Pull quote styling for translation */
+.mag-pull-quote {
+  font-family: var(--font-display);
+  font-size: clamp(1rem, 2.5vw, 1.25rem);
+  font-style: italic;
+  color: var(--star-dim);
+  line-height: 1.7;
+  direction: ltr;
+  padding: 1.25rem 0;
+  border-top: 1px solid rgba(197, 160, 89, 0.15);
+  border-bottom: 1px solid rgba(197, 160, 89, 0.15);
+  max-width: 500px;
+}
+
+/* Page folio */
+.mag-folio {
+  position: fixed; bottom: 20px; left: 24px;
+  font-family: var(--font-ui); font-size: 10px;
+  letter-spacing: 0.25em; text-transform: uppercase;
+  color: rgba(232, 228, 240, 0.2);
+  direction: ltr; z-index: 2;
+}
+
+/* ===== CONTROLS ===== */
+/* Editorial text-menu — swipe-up text links, no icons */
+
+.text-menu-trigger {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  z-index: 55; display: flex; justify-content: center;
+  padding: 16px 0 20px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+.text-menu-trigger-line {
+  width: 32px; height: 2px;
+  background: rgba(197, 160, 89, 0.3);
+  border-radius: 1px;
+  transition: background 0.3s ease;
+}
+.text-menu-trigger:hover .text-menu-trigger-line,
+.text-menu-trigger:active .text-menu-trigger-line {
+  background: var(--gold);
+}
+
+.text-menu-overlay {
+  position: fixed; inset: 0; z-index: 58;
+  background: rgba(5, 5, 16, 0.5);
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+.text-menu-overlay.visible {
+  opacity: 1; pointer-events: auto;
+}
+
+.text-menu {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  z-index: 60;
+  background: rgba(5, 5, 16, 0.7);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-top: 1px solid rgba(197, 160, 89, 0.1);
+  padding: 2rem 10vw 2.5rem;
+  transform: translateY(100%);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex; flex-direction: column; gap: 0;
+}
+.text-menu.open { transform: translateY(0); }
+
+.text-menu-item {
+  display: block;
+  padding: 16px 0;
+  min-height: 48px;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-style: italic;
+  color: var(--star-dim);
+  background: transparent; border: none;
+  border-bottom: 1px solid rgba(232, 228, 240, 0.06);
+  cursor: pointer; text-align: left;
+  direction: ltr;
+  transition: color 0.2s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.text-menu-item:last-child { border-bottom: none; }
+.text-menu-item:hover,
+.text-menu-item:active {
+  color: var(--gold);
+}
+
+.text-menu-close {
+  margin-top: 1rem;
+  font-family: var(--font-ui); font-size: 10px;
+  letter-spacing: 0.3em; text-transform: uppercase;
+  color: rgba(232, 228, 240, 0.2);
+  background: transparent; border: none;
+  cursor: pointer; padding: 10px 0;
+  min-height: 44px;
+  -webkit-tap-highlight-color: transparent;
+}
 
 /* ---- Reduced Motion ---- */
 @media (prefers-reduced-motion: reduce) {
@@ -153,12 +334,11 @@ body {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
-  .poem-card { animation: none; }
 }
 /* ---- Mobile ---- */
 @media (max-width: 768px) {
-  .poem-card { margin-top: 10vh; padding: 2rem 1.5rem; }
-  .controls { bottom: 1.2rem; gap: 0.8rem; }
+  .mag-spread { padding: 80px 24px 100px; }
+  .text-menu { padding: 1.5rem 24px 2rem; }
 }
 </style>
 </head>
@@ -167,95 +347,114 @@ body {
 <!-- Splash -->
 <div id="splash">
   <canvas id="splash-canvas"></canvas>
-  <span id="splash-text">بُرجُ الشِّعر</span>
+  <div class="splash-brand">
+    <span class="splash-brand-en">poetry</span>
+    <span class="splash-brand-ar">بالعربي</span>
+  </div>
+  <span id="splash-text">Constellation Verse</span>
+  <button class="splash-enter" onclick="startWalkthrough()">Enter</button>
 </div>
 
-<!-- Walkthrough -->
+<!-- Walkthrough (Editorial/Magazine) -->
 <div id="walkthrough">
-  <div class="wt-card active" data-step="0">
-    <div class="wt-dots">
-      <div class="wt-dot"></div><div class="wt-dot"></div><div class="wt-dot"></div>
-      <div class="wt-line"></div>
-    </div>
-    <h3>مرحبًا بالشعر</h3>
-    <p>اكتشف روائع الشعر العربي في فضاء من النجوم والأبراج السماوية</p>
+  <div class="editorial-page active" data-page="0">
+    <div class="editorial-section">Issue No. 1 -- The Archive</div>
+    <div class="editorial-headline">Discover Arabic Poetry</div>
+    <div class="editorial-headline-ar" lang="ar" dir="rtl">اكتشف الشعر العربي</div>
+    <div class="editorial-body">Over 84,000 poems from the golden age of Arabic literature through the modern era. A living archive spanning centuries of verse, wisdom, and beauty -- waiting to be read.</div>
+    <div class="editorial-body-ar" lang="ar" dir="rtl">أكثر من 84,000 قصيدة من العصر الذهبي للأدب العربي إلى العصر الحديث في أرشيف حي ينتظر القراءة</div>
+    <div class="editorial-page-num">Page 1 of 3</div>
   </div>
-  <div class="wt-card" data-step="1">
-    <div class="wt-dots">
-      <div class="wt-dot"></div><div class="wt-dot"></div><div class="wt-dot"></div>
-      <div class="wt-line"></div>
-    </div>
-    <h3>أبيات خالدة</h3>
-    <p>كل قصيدة نجمة تتلألأ في سماء الأدب العربي منذ قرون</p>
+
+  <div class="editorial-page" data-page="1">
+    <div class="editorial-section">Issue No. 2 -- The Voice</div>
+    <div class="editorial-headline">Listen & Feel</div>
+    <div class="editorial-headline-ar" lang="ar" dir="rtl">استمع واشعر</div>
+    <div class="editorial-body">AI-powered recitation captures the natural rhythm and melody of Arabic verse. Each poem breathes with the cadence of its original meter.</div>
+    <div class="editorial-pull" lang="ar" dir="rtl">"الشعر ديوان العرب"</div>
+    <div class="editorial-body-ar" lang="ar" dir="rtl">إلقاء صوتي يلتقط الإيقاع الطبيعي ولحن الشعر العربي</div>
+    <div class="editorial-page-num">Page 2 of 3</div>
   </div>
-  <div class="wt-card" data-step="2">
-    <div class="wt-dots">
-      <div class="wt-dot"></div><div class="wt-dot"></div><div class="wt-dot"></div>
-      <div class="wt-line"></div>
-    </div>
-    <h3>تجربة غامرة</h3>
-    <p>اسحب وتنقّل بين الأبيات في عالم بصري يحتفي بجمال الكلمة</p>
+
+  <div class="editorial-page" data-page="2">
+    <div class="editorial-section">Issue No. 3 -- The Insight</div>
+    <div class="editorial-headline">AI Insights</div>
+    <div class="editorial-headline-ar" lang="ar" dir="rtl">رؤى ذكية</div>
+    <div class="editorial-body">Deep analysis illuminates meter, meaning, and historical context. Intelligent annotations guide you through layers of poetic tradition.</div>
+    <div class="editorial-body-ar" lang="ar" dir="rtl">تحليل عميق يكشف الوزن والمعنى والسياق التاريخي لكل قصيدة</div>
+    <div class="editorial-page-num">Page 3 of 3</div>
   </div>
-  <div class="wt-card" data-step="3">
-    <div class="wt-dots">
-      <div class="wt-dot"></div><div class="wt-dot"></div><div class="wt-dot"></div>
-      <div class="wt-line"></div>
-    </div>
-    <h3>لنبدأ الرحلة</h3>
-    <p>انطلق الآن في فضاء الشعر العربي واستمتع بسحر الكلمات</p>
-  </div>
-  <div class="wt-nav">
-    <button class="wt-btn" id="wt-prev" style="visibility:hidden">السابق</button>
-    <button class="wt-btn" id="wt-next">التالي</button>
-  </div>
-  <div class="wt-indicators">
-    <div class="wt-ind active"></div>
-    <div class="wt-ind"></div>
-    <div class="wt-ind"></div>
-    <div class="wt-ind"></div>
-  </div>
+
+  <div class="editorial-hint">Tap to turn page</div>
+  <div class="editorial-progress" id="edProgress" style="width: 33%"></div>
 </div>
 
-<!-- Main App -->
+<!-- ===== MAIN APP ===== -->
 <div id="app">
   <canvas id="bg-canvas"></canvas>
-  <div class="poem-card">
-    <div class="poem-text">
-      أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ
-      <br>
-      فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
+
+  <!-- Minimal editorial nav -->
+  <header class="mag-nav">
+    <span class="mag-issue">Vol. I</span>
+    <span class="mag-brand">poetry بالعربي</span>
+  </header>
+
+  <!-- Magazine spread -->
+  <main class="mag-spread">
+    <div class="mag-poet">Al-Mutanabbi</div>
+    <div class="mag-poet-ar" lang="ar" dir="rtl">المتنبي</div>
+    <div class="mag-verses" lang="ar" dir="rtl">
+      عَلَى قَدْرِ أَهْلِ العَزْمِ تَأْتِي العَزَائِمُ<br>
+      وَتَأْتِي عَلَى قَدْرِ الكِرَامِ المَكَارِمُ
     </div>
-    <span class="poem-divider"></span>
-    <span class="poem-author">— أحمد شوقي</span>
+    <div class="mag-pull-quote">
+      "Great deeds come to those of great resolve,<br>
+      and noble acts to those of noble character."
+    </div>
+  </main>
+
+  <div class="mag-folio">Page 1</div>
+
+  <!-- ===== CONTROLS ===== -->
+  <!-- Swipe-up trigger -->
+  <div class="text-menu-trigger" id="textMenuTrigger" aria-label="Open actions">
+    <div class="text-menu-trigger-line"></div>
   </div>
-  <div class="controls">
-    <button class="ctrl-btn" id="btn-theme" aria-label="تبديل السمة" title="تبديل السمة">&#9788;</button>
-    <button class="ctrl-btn" id="btn-refresh" aria-label="قصيدة جديدة" title="قصيدة جديدة">&#8635;</button>
-    <button class="ctrl-btn" id="btn-share" aria-label="مشاركة" title="مشاركة">&#10022;</button>
+
+  <!-- Overlay -->
+  <div class="text-menu-overlay" id="textMenuOverlay"></div>
+
+  <!-- Editorial text menu -->
+  <div class="text-menu" id="textMenu">
+    <button class="text-menu-item" data-action="next">next</button>
+    <button class="text-menu-item" data-action="save">save</button>
+    <button class="text-menu-item" data-action="listen">listen</button>
+    <button class="text-menu-item" data-action="share">share</button>
+    <button class="text-menu-close" id="textMenuClose">close</button>
   </div>
 </div>
 
 <script>
-(() => {
+(function() {
   /* ---- Helpers ---- */
-  const isMobile = () => window.innerWidth <= 768;
-  const prefersReduced = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const rand = (a, b) => Math.random() * (b - a) + a;
+  var isMobile = function() { return window.innerWidth <= 768; };
+  var prefersReduced = function() { return window.matchMedia('(prefers-reduced-motion: reduce)').matches; };
+  var rand = function(a, b) { return Math.random() * (b - a) + a; };
 
   /* ============================================
      1. SPLASH SCREEN - Star Field + Constellations
      ============================================ */
-  const splashCanvas = document.getElementById('splash-canvas');
-  const sCtx = splashCanvas.getContext('2d');
-  let splashStars = [], splashLines = [], splashNebs = [], splashRAF;
-  const CONST_DIST = 160;
+  var splashCanvas = document.getElementById('splash-canvas');
+  var sCtx = splashCanvas.getContext('2d');
+  var splashStars = [], splashLines = [], splashNebs = [], splashRAF;
+  var CONST_DIST = 160;
 
   function initSplash() {
     splashCanvas.width = window.innerWidth;
     splashCanvas.height = window.innerHeight;
-    const count = isMobile() ? 40 : 80;
+    var count = isMobile() ? 40 : 80;
     splashStars = [];
-    for (let i = 0; i < count; i++) {
+    for (var i = 0; i < count; i++) {
       splashStars.push({
         x: rand(0, splashCanvas.width), y: rand(0, splashCanvas.height),
         r: rand(1, 3), baseAlpha: rand(0.3, 1), alpha: 0,
@@ -263,18 +462,16 @@ body {
         pulsePhase: rand(0, Math.PI * 2)
       });
     }
-    /* Constellation lines between nearby stars */
     splashLines = [];
-    for (let i = 0; i < splashStars.length; i++) {
-      for (let j = i + 1; j < splashStars.length; j++) {
-        const dx = splashStars[i].x - splashStars[j].x;
-        const dy = splashStars[i].y - splashStars[j].y;
+    for (var i2 = 0; i2 < splashStars.length; i2++) {
+      for (var j = i2 + 1; j < splashStars.length; j++) {
+        var dx = splashStars[i2].x - splashStars[j].x;
+        var dy = splashStars[i2].y - splashStars[j].y;
         if (Math.sqrt(dx * dx + dy * dy) < CONST_DIST) {
-          splashLines.push({ a: i, b: j, progress: 0, delay: rand(500, 3000) });
+          splashLines.push({ a: i2, b: j, progress: 0, delay: rand(500, 3000) });
         }
       }
     }
-    /* Nebula blobs */
     splashNebs = [
       { x: splashCanvas.width * 0.2, y: splashCanvas.height * 0.3, r: 300, c: '58,31,94', dx: 0.15, dy: 0.1 },
       { x: splashCanvas.width * 0.8, y: splashCanvas.height * 0.7, r: 250, c: '197,160,89', dx: -0.1, dy: 0.12 },
@@ -286,31 +483,27 @@ body {
     sCtx.clearRect(0, 0, splashCanvas.width, splashCanvas.height);
     sCtx.fillStyle = '#050510';
     sCtx.fillRect(0, 0, splashCanvas.width, splashCanvas.height);
-
-    /* Nebulae */
-    splashNebs.forEach(n => {
+    splashNebs.forEach(function(n) {
       n.x += n.dx; n.y += n.dy;
       if (n.x < -100 || n.x > splashCanvas.width + 100) n.dx *= -1;
       if (n.y < -100 || n.y > splashCanvas.height + 100) n.dy *= -1;
-      const g = sCtx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.r);
+      var g = sCtx.createRadialGradient(n.x, n.y, 0, n.x, n.y, n.r);
       g.addColorStop(0, 'rgba(' + n.c + ',0.05)');
       g.addColorStop(1, 'rgba(0,0,0,0)');
       sCtx.fillStyle = g;
       sCtx.fillRect(0, 0, splashCanvas.width, splashCanvas.height);
     });
-
-    /* Stars with radial glow */
-    splashStars.forEach(s => {
+    splashStars.forEach(function(s) {
       if (ts > s.fadeDelay && s.alpha < s.baseAlpha) {
         s.alpha = Math.min(s.alpha + 0.01, s.baseAlpha);
       }
-      const pulse = Math.sin(ts * s.pulseSpeed + s.pulsePhase) * 0.2 + 0.8;
-      const a = s.alpha * pulse;
-      const g = sCtx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.r * 4);
-      g.addColorStop(0, 'rgba(232,228,240,' + a + ')');
-      g.addColorStop(0.4, 'rgba(232,228,240,' + (a * 0.3) + ')');
-      g.addColorStop(1, 'rgba(232,228,240,0)');
-      sCtx.fillStyle = g;
+      var pulse = Math.sin(ts * s.pulseSpeed + s.pulsePhase) * 0.2 + 0.8;
+      var a = s.alpha * pulse;
+      var g2 = sCtx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.r * 4);
+      g2.addColorStop(0, 'rgba(232,228,240,' + a + ')');
+      g2.addColorStop(0.4, 'rgba(232,228,240,' + (a * 0.3) + ')');
+      g2.addColorStop(1, 'rgba(232,228,240,0)');
+      sCtx.fillStyle = g2;
       sCtx.beginPath();
       sCtx.arc(s.x, s.y, s.r * 4, 0, Math.PI * 2);
       sCtx.fill();
@@ -319,14 +512,12 @@ body {
       sCtx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
       sCtx.fill();
     });
-
-    /* Constellation lines draw slowly */
-    splashLines.forEach(l => {
+    splashLines.forEach(function(l) {
       if (ts > l.delay && l.progress < 1) l.progress = Math.min(l.progress + 0.005, 1);
       if (l.progress > 0) {
-        const sa = splashStars[l.a], sb = splashStars[l.b];
-        const ex = sa.x + (sb.x - sa.x) * l.progress;
-        const ey = sa.y + (sb.y - sa.y) * l.progress;
+        var sa = splashStars[l.a], sb = splashStars[l.b];
+        var ex = sa.x + (sb.x - sa.x) * l.progress;
+        var ey = sa.y + (sb.y - sa.y) * l.progress;
         sCtx.strokeStyle = 'rgba(232,228,240,' + (0.12 * l.progress) + ')';
         sCtx.lineWidth = 0.6;
         sCtx.beginPath();
@@ -340,67 +531,59 @@ body {
 
   initSplash();
   if (!prefersReduced()) splashRAF = requestAnimationFrame(drawSplash);
-
-  window.addEventListener('resize', () => { initSplash(); initBg(); });
-
-  /* Splash -> Walkthrough after 4 seconds */
-  setTimeout(() => {
-    document.getElementById('splash').classList.add('fade-out');
-    setTimeout(() => {
-      document.getElementById('splash').style.display = 'none';
-      cancelAnimationFrame(splashRAF);
-      document.getElementById('walkthrough').classList.add('active');
-    }, 1000);
-  }, 4000);
+  window.addEventListener('resize', function() { initSplash(); initBg(); });
 
   /* ============================================
-     2. WALKTHROUGH - 4 Constellation Cards
+     2. WALKTHROUGH (Editorial Page-Flip)
      ============================================ */
-  let wtStep = 0;
-  const wtCards = document.querySelectorAll('.wt-card');
-  const wtInds = document.querySelectorAll('.wt-ind');
-  const wtPrev = document.getElementById('wt-prev');
-  const wtNext = document.getElementById('wt-next');
+  var edPages = document.querySelectorAll('.editorial-page');
+  var edProgress = document.getElementById('edProgress');
+  var currentEd = 0;
+  var totalEd = 3;
 
-  function showStep(n) {
-    wtCards.forEach(c => c.classList.remove('active'));
-    wtInds.forEach(c => c.classList.remove('active'));
-    wtCards[n].classList.add('active');
-    wtInds[n].classList.add('active');
-    wtPrev.style.visibility = n === 0 ? 'hidden' : 'visible';
-    wtNext.textContent = n === 3 ? 'ابدأ' : 'التالي';
-  }
-
-  wtNext.addEventListener('click', () => {
-    if (wtStep < 3) { wtStep++; showStep(wtStep); }
-    else {
-      document.getElementById('walkthrough').classList.add('fade-out');
-      setTimeout(() => {
-        document.getElementById('walkthrough').style.display = 'none';
+  document.getElementById('walkthrough').addEventListener('click', function() {
+    currentEd++;
+    if (currentEd >= totalEd) {
+      var wt = document.getElementById('walkthrough');
+      wt.style.opacity = '0';
+      wt.style.transition = 'opacity 0.6s ease';
+      setTimeout(function() {
+        wt.style.display = 'none';
         document.getElementById('app').classList.add('active');
         initBg();
         if (!prefersReduced()) bgRAF = requestAnimationFrame(drawBg);
+        if (typeof lucide !== 'undefined') lucide.createIcons();
       }, 600);
+    } else {
+      edPages.forEach(function(p) { p.classList.remove('active'); });
+      edPages[currentEd].classList.add('active');
+      edProgress.style.width = ((currentEd + 1) / totalEd * 100) + '%';
     }
   });
 
-  wtPrev.addEventListener('click', () => {
-    if (wtStep > 0) { wtStep--; showStep(wtStep); }
-  });
+  window.startWalkthrough = function() {
+    document.getElementById('splash').classList.add('fade-out');
+    setTimeout(function() {
+      document.getElementById('splash').style.display = 'none';
+      cancelAnimationFrame(splashRAF);
+      document.getElementById('walkthrough').classList.add('active');
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+    }, 1000);
+  };
 
   /* ============================================
      3. BACKGROUND TWINKLE CANVAS (Main App)
      ============================================ */
-  const bgCanvas = document.getElementById('bg-canvas');
-  const bCtx = bgCanvas.getContext('2d');
-  let bgStars = [], bgRAF;
+  var bgCanvas = document.getElementById('bg-canvas');
+  var bCtx = bgCanvas.getContext('2d');
+  var bgStars = [], bgRAF;
 
   function initBg() {
     bgCanvas.width = window.innerWidth;
     bgCanvas.height = window.innerHeight;
-    const count = isMobile() ? 40 : 80;
+    var count = isMobile() ? 40 : 80;
     bgStars = [];
-    for (let i = 0; i < count; i++) {
+    for (var i = 0; i < count; i++) {
       bgStars.push({
         x: rand(0, bgCanvas.width), y: rand(0, bgCanvas.height),
         r: rand(0.5, 2), alpha: rand(0.2, 0.8),
@@ -410,12 +593,12 @@ body {
   }
 
   function drawBg(ts) {
-    const isDark = document.body.dataset.theme === 'dark';
+    var isDark = document.body.dataset.theme === 'dark';
     bCtx.clearRect(0, 0, bgCanvas.width, bgCanvas.height);
-    bgStars.forEach(s => {
-      const a = s.alpha * (Math.sin(ts * s.speed + s.phase) * 0.3 + 0.7);
-      const c = isDark ? '232,228,240' : '26,16,48';
-      const g = bCtx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.r * 3);
+    bgStars.forEach(function(s) {
+      var a = s.alpha * (Math.sin(ts * s.speed + s.phase) * 0.3 + 0.7);
+      var c = isDark ? '232,228,240' : '26,16,48';
+      var g = bCtx.createRadialGradient(s.x, s.y, 0, s.x, s.y, s.r * 3);
       g.addColorStop(0, 'rgba(' + c + ',' + a + ')');
       g.addColorStop(1, 'rgba(' + c + ',0)');
       bCtx.fillStyle = g;
@@ -431,41 +614,45 @@ body {
   }
 
   /* ============================================
-     4. CONTROLS
+     4. TEXT MENU CONTROLS
      ============================================ */
-  /* Theme toggle */
-  document.getElementById('btn-theme').addEventListener('click', () => {
-    const body = document.body;
-    const btn = document.getElementById('btn-theme');
-    if (body.dataset.theme === 'dark') {
-      body.dataset.theme = 'light';
-      btn.innerHTML = '&#9790;';
-    } else {
-      body.dataset.theme = 'dark';
-      btn.innerHTML = '&#9788;';
-    }
+  var textMenu = document.getElementById('textMenu');
+  var textOverlay = document.getElementById('textMenuOverlay');
+  var textTrigger = document.getElementById('textMenuTrigger');
+  var textClose = document.getElementById('textMenuClose');
+
+  function openTextMenu() {
+    textMenu.classList.add('open');
+    textOverlay.classList.add('visible');
+    textTrigger.style.display = 'none';
+  }
+  function closeTextMenu() {
+    textMenu.classList.remove('open');
+    textOverlay.classList.remove('visible');
+    textTrigger.style.display = '';
+  }
+
+  textTrigger.addEventListener('click', openTextMenu);
+  textTrigger.addEventListener('touchstart', function(e) {
+    e.preventDefault();
+    openTextMenu();
+  });
+  textOverlay.addEventListener('click', closeTextMenu);
+  textClose.addEventListener('click', closeTextMenu);
+
+  /* Touch feedback on menu items */
+  document.querySelectorAll('.text-menu-item').forEach(function(item) {
+    item.addEventListener('touchstart', function() {
+      item.style.color = 'var(--gold)';
+    }, { passive: true });
+    item.addEventListener('touchend', function() {
+      setTimeout(function() { item.style.color = ''; }, 150);
+    }, { passive: true });
   });
 
-  /* Refresh poem animation */
-  document.getElementById('btn-refresh').addEventListener('click', () => {
-    const card = document.querySelector('.poem-card');
-    card.style.transition = 'opacity 0.4s, transform 0.4s';
-    card.style.opacity = '0';
-    card.style.transform = 'translateY(12px)';
-    setTimeout(() => {
-      card.style.opacity = '1';
-      card.style.transform = 'translateY(0)';
-    }, 400);
-  });
-
-  /* Share button */
-  document.getElementById('btn-share').addEventListener('click', () => {
-    const text = '\u0623\u064E\u0646\u0627 \u0627\u0644\u0628\u064E\u062D\u0631\u064F \u0641\u064A \u0623\u064E\u062D\u0634\u0627\u0626\u0650\u0647\u0650 \u0627\u0644\u062F\u064F\u0631\u064F\u0651 \u0643\u0627\u0645\u0650\u0646\u064C / \u0641\u064E\u0647\u064E\u0644 \u0633\u064E\u0623\u064E\u0644\u0648\u0627 \u0627\u0644\u063A\u064E\u0648\u0651\u0627\u0635\u064E \u0639\u064E\u0646 \u0635\u064E\u062F\u064E\u0641\u0627\u062A\u064A \u2014 \u0623\u062D\u0645\u062F \u0634\u0648\u0642\u064A';
-    if (navigator.share) {
-      navigator.share({ title: 'Constellation Verse', text: text });
-    } else if (navigator.clipboard) {
-      navigator.clipboard.writeText(text);
-    }
+  /* Init icons */
+  document.addEventListener('DOMContentLoaded', function() {
+    if (typeof lucide !== 'undefined') lucide.createIcons();
   });
 })();
 </script>

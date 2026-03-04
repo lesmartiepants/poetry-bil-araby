@@ -619,7 +619,9 @@ async function syncVerdictsToAPI() {
 
 async function initAPI() {
   try {
-    const r = await fetch(API_BASE + '/api/design-review/items', { signal: AbortSignal.timeout(5000) });
+    // Ping backend; fall back to /items if /ping not yet deployed
+    let r = await fetch(API_BASE + '/api/design-review/ping', { signal: AbortSignal.timeout(5000) }).catch(() => null);
+    if (!r || !r.ok) r = await fetch(API_BASE + '/api/design-review/items', { signal: AbortSignal.timeout(5000) });
     if (!r.ok) throw 0;
     apiAvailable = true;
 
@@ -649,7 +651,7 @@ async function initAPI() {
     } else {
       const cr = await fetch(API_BASE + '/api/design-review/sessions', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reviewer: 'owner', branch: 'feature/design-review-system', total_designs: flatList.length })
+        body: JSON.stringify({ reviewer: localStorage.getItem('reviewer_name') || 'anonymous', branch: 'feature/design-review-system', total_designs: flatList.length })
       });
       if (cr.ok) currentSession = await cr.json();
     }
@@ -1083,6 +1085,52 @@ function toggleSide() { st.sideOpen = !st.sideOpen; document.getElementById('sid
 // SUBMIT
 // ═══════════════════════════════════════════════════════════════
 async function submitReview() {
+  // Step 1: Name prompt
+  const savedName = localStorage.getItem('reviewer_name') || '';
+  const nameOverlay = document.createElement('div');
+  nameOverlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+  const nameModal = document.createElement('div');
+  nameModal.style.cssText = 'background:var(--surface);border:1px solid var(--border);border-radius:12px;max-width:400px;width:100%;padding:24px;text-align:center';
+  const nameTitle = document.createElement('h3');
+  nameTitle.style.cssText = 'margin-bottom:8px;font-size:16px';
+  nameTitle.textContent = 'Submit Review';
+  nameModal.appendChild(nameTitle);
+  const nameSub = document.createElement('p');
+  nameSub.style.cssText = 'font-size:13px;color:var(--text-2);margin-bottom:16px';
+  nameSub.textContent = 'Enter your name to attach to this review';
+  nameModal.appendChild(nameSub);
+  const nameInput = document.createElement('input');
+  nameInput.type = 'text'; nameInput.value = savedName; nameInput.placeholder = 'Your name';
+  nameInput.style.cssText = 'width:100%;padding:10px 14px;border-radius:var(--r);border:1px solid var(--border);background:var(--surface-2);color:var(--text);font-size:14px;outline:none;font-family:inherit;margin-bottom:16px;transition:border-color .15s';
+  nameInput.addEventListener('focus', () => { nameInput.style.borderColor = 'var(--accent)'; });
+  nameInput.addEventListener('blur', () => { nameInput.style.borderColor = 'var(--border)'; });
+  nameModal.appendChild(nameInput);
+  const nameActions = document.createElement('div');
+  nameActions.style.cssText = 'display:flex;gap:8px;justify-content:center';
+  const cancelBtn = document.createElement('button');
+  cancelBtn.style.cssText = 'padding:10px 24px;border-radius:var(--r);font-size:13px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--surface-2);color:var(--text-2);transition:all .15s';
+  cancelBtn.textContent = 'Cancel';
+  cancelBtn.addEventListener('click', () => nameOverlay.remove());
+  nameActions.appendChild(cancelBtn);
+  const continueBtn = document.createElement('button');
+  continueBtn.style.cssText = 'padding:10px 24px;border-radius:var(--r);font-size:13px;font-weight:700;cursor:pointer;border:none;background:var(--accent);color:var(--bg);transition:all .15s';
+  continueBtn.textContent = 'Continue';
+  nameActions.appendChild(continueBtn);
+  nameModal.appendChild(nameActions);
+  nameOverlay.appendChild(nameModal);
+  document.body.appendChild(nameOverlay);
+  setTimeout(() => { nameInput.focus(); nameInput.select(); }, 50);
+  nameInput.addEventListener('keydown', e => { if (e.key === 'Enter') continueBtn.click(); });
+  const reviewerName = await new Promise(resolve => {
+    continueBtn.addEventListener('click', () => resolve(nameInput.value.trim() || 'anonymous'));
+    cancelBtn.addEventListener('click', () => resolve(null));
+    nameOverlay.addEventListener('click', e => { if (e.target === nameOverlay) resolve(null); });
+  });
+  nameOverlay.remove();
+  if (!reviewerName) return;
+  localStorage.setItem('reviewer_name', reviewerName);
+
+  // Step 2: Auto-send to backend
   const reviewed = flatList.filter(f => reviewData[f.option.id]?.verdict).length;
   const keeps = flatList.filter(f => reviewData[f.option.id]?.verdict === 'keep').length;
   const discards = flatList.filter(f => reviewData[f.option.id]?.verdict === 'discard').length;
@@ -1090,7 +1138,6 @@ async function submitReview() {
     const v = reviewData[f.option.id]?.verdict;
     return v === 'revisit' || v === 'skip';
   }).length;
-
   const decisions = [];
   flatList.forEach(f => {
     const r = reviewData[f.option.id];
@@ -1106,12 +1153,53 @@ async function submitReview() {
     }
   });
 
-  // Build markdown
+  // Loading overlay
+  const loadingOverlay = document.createElement('div');
+  loadingOverlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+  const loadingBox = document.createElement('div');
+  loadingBox.style.cssText = 'background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:32px 48px;text-align:center';
+  const spinner = document.createElement('div');
+  spinner.style.cssText = 'width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 12px';
+  loadingBox.appendChild(spinner);
+  const loadingText = document.createElement('div');
+  loadingText.style.cssText = 'font-size:13px;color:var(--text-2)';
+  loadingText.textContent = 'Sending to backend...';
+  loadingBox.appendChild(loadingText);
+  loadingOverlay.appendChild(loadingBox);
+  document.body.appendChild(loadingOverlay);
+
+  let sendError = null;
+  try {
+    if (!apiAvailable || !currentSession) {
+      loadingText.textContent = 'Waking backend...';
+      await initAPI();
+      if (!apiAvailable || !currentSession) throw new Error('Backend not available');
+    }
+    if (currentSession) {
+      await fetch(API_BASE + '/api/design-review/sessions/' + currentSession.id, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reviewer: reviewerName })
+      });
+    }
+    loadingText.textContent = 'Syncing verdicts...';
+    await syncVerdictsToAPI();
+    loadingText.textContent = 'Completing session...';
+    const res = await fetch(API_BASE + '/api/design-review/sessions/' + currentSession.id, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'completed', reviewed_count: reviewed })
+    });
+    if (!res.ok) throw new Error('API returned ' + res.status);
+  } catch (err) {
+    sendError = err;
+  }
+  loadingOverlay.remove();
+
+  // Step 3: Summary modal
   let md = '## Design Review Feedback\n\n';
+  md += '**Reviewer:** ' + reviewerName + '\n';
   md += '**Date:** ' + new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString() + '\n';
   md += '**Reviewed:** ' + reviewed + ' of ' + flatList.length + ' designs\n';
   md += '**Round:** ' + (currentSession ? currentSession.round_number : 'N/A') + '\n\n';
-
   const byV = { keep: [], discard: [], revisit: [], undecided: [] };
   decisions.forEach(d => { if (byV[d.verdict]) byV[d.verdict].push(d); });
   for (const [v, label] of [['keep','Keep'],['discard','Discard'],['revisit','Revisit'],['undecided','Comment Only']]) {
@@ -1122,15 +1210,11 @@ async function submitReview() {
     }
   }
 
-  // Show modal
   const overlay = document.createElement('div');
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
   overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
-
   const modal = document.createElement('div');
   modal.style.cssText = 'background:var(--surface);border:1px solid var(--border);border-radius:12px;max-width:700px;width:100%;max-height:85vh;overflow-y:auto;padding:24px;position:relative';
-
-  // Close button (✕)
   const closeBtn = document.createElement('button');
   closeBtn.style.cssText = 'position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--surface-2);color:var(--text-2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s';
   closeBtn.textContent = '\u2715';
@@ -1144,37 +1228,50 @@ async function submitReview() {
   h.textContent = 'Review Summary' + (currentSession ? ' \u2014 Round ' + currentSession.round_number : '');
   modal.appendChild(h);
 
+  // Send status banner
+  if (sendError) {
+    const errBanner = document.createElement('div');
+    errBanner.style.cssText = 'background:var(--red-dim);border:1px solid var(--red);border-radius:var(--r-sm);padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--red)';
+    errBanner.textContent = 'Failed to send: ' + (sendError.message || 'Unknown error');
+    const retryBtn = document.createElement('button');
+    retryBtn.style.cssText = 'padding:4px 12px;border-radius:var(--r-sm);font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--red);background:transparent;color:var(--red);margin-left:auto;flex-shrink:0';
+    retryBtn.textContent = 'Retry';
+    retryBtn.addEventListener('click', () => { overlay.remove(); submitReview(); });
+    errBanner.appendChild(retryBtn);
+    modal.appendChild(errBanner);
+  } else {
+    const okBanner = document.createElement('div');
+    okBanner.style.cssText = 'background:var(--green-dim);border:1px solid var(--green);border-radius:var(--r-sm);padding:10px 14px;margin-bottom:12px;font-size:12px;color:var(--green)';
+    okBanner.textContent = 'Review saved to backend successfully';
+    modal.appendChild(okBanner);
+  }
+
   const stats = document.createElement('div');
   stats.style.cssText = 'display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;font-size:13px';
-  [['var(--green)', '\u2713 ' + keeps + ' keep'], ['var(--red)', '\u2717 ' + discards + ' discard'],
-   ['var(--purple)', '\u21BB ' + revisits + ' revisit'],
+  [['var(--green)', keeps + ' keep'], ['var(--red)', discards + ' discard'],
+   ['var(--purple)', revisits + ' revisit'],
    ['var(--text-3)', (flatList.length - reviewed) + ' unreviewed']].forEach(([c, t]) => {
     const s = document.createElement('span'); s.style.color = c; s.textContent = t; stats.appendChild(s);
   });
   modal.appendChild(stats);
 
-  // Visual summary of all reviewed items
   if (decisions.length > 0) {
     const summaryTitle = document.createElement('div');
     summaryTitle.style.cssText = 'font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);margin-bottom:8px';
     summaryTitle.textContent = 'All Reviewed Items (' + decisions.length + ')';
     modal.appendChild(summaryTitle);
-
     const summaryList = document.createElement('div');
     summaryList.style.cssText = 'max-height:200px;overflow-y:auto;margin-bottom:16px;display:flex;flex-direction:column;gap:4px';
-
     const verdictColors = { keep: 'var(--green)', discard: 'var(--red)', revisit: 'var(--purple)', undecided: 'var(--accent)' };
     const verdictIcons = { keep: '\u2713', discard: '\u2717', revisit: '\u21BB', undecided: '\u2709' };
     decisions.forEach(d => {
       const item = document.createElement('div');
       item.style.cssText = 'display:flex;align-items:flex-start;gap:8px;padding:6px 8px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-sm);font-size:12px';
-
       const badge = document.createElement('span');
       const verdictBgColors = { keep: 'var(--green-dim)', discard: 'var(--red-dim)', revisit: 'var(--purple-dim)', undecided: 'var(--accent-dim)' };
       badge.style.cssText = 'flex-shrink:0;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:' + (verdictColors[d.verdict] || 'var(--text-3)') + ';background:' + (verdictBgColors[d.verdict] || 'var(--surface-3)');
       badge.textContent = verdictIcons[d.verdict] || '?';
       item.appendChild(badge);
-
       const info = document.createElement('div');
       info.style.cssText = 'flex:1;min-width:0';
       const nameEl = document.createElement('div');
@@ -1192,47 +1289,13 @@ async function submitReview() {
         info.appendChild(commentEl);
       }
       item.appendChild(info);
-
       summaryList.appendChild(item);
     });
     modal.appendChild(summaryList);
   }
 
-  // Action buttons row
   const btns = document.createElement('div');
   btns.style.cssText = 'display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap';
-
-  // Send to Backend button
-  const sendBtn = document.createElement('button');
-  sendBtn.style.cssText = 'padding:10px 24px;border-radius:var(--r);font-size:13px;font-weight:700;cursor:pointer;border:none;background:var(--accent);color:var(--bg);transition:all .15s;display:flex;align-items:center;gap:6px';
-  sendBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg> Send to Backend';
-  sendBtn.addEventListener('click', async () => {
-    sendBtn.disabled = true;
-    sendBtn.style.opacity = '.7';
-    sendBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="animation:spin .8s linear infinite"><circle cx="12" cy="12" r="10" stroke-dasharray="40" stroke-dashoffset="10"/></svg> Sending\u2026';
-    try {
-      if (apiAvailable && currentSession) {
-        await syncVerdictsToAPI();
-        const res = await fetch(API_BASE + '/api/design-review/sessions/' + currentSession.id, {
-          method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status: 'completed', reviewed_count: reviewed })
-        });
-        if (!res.ok) throw new Error('API returned ' + res.status);
-      } else {
-        throw new Error('Backend not available');
-      }
-      sendBtn.style.background = 'var(--green)';
-      sendBtn.style.opacity = '1';
-      sendBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6L9 17l-5-5"/></svg> Saved Successfully';
-    } catch (err) {
-      sendBtn.style.background = 'var(--red)';
-      sendBtn.style.opacity = '1';
-      sendBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M15 9l-6 6M9 9l6 6"/></svg> Error \u2014 ' + (err.message || 'Failed');
-      sendBtn.disabled = false;
-    }
-  });
-  btns.appendChild(sendBtn);
-
   [['Copy Markdown', 'md'], ['Copy JSON', 'json'], ['Download JSON', 'dl']].forEach(([label, type]) => {
     const b = document.createElement('button');
     b.style.cssText = 'padding:8px 16px;border-radius:var(--r-sm);font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--surface-2);color:var(--text-2);transition:all .15s';
@@ -1247,12 +1310,11 @@ async function submitReview() {
   pre.style.cssText = 'background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-sm);padding:12px;font-size:11px;color:var(--text-2);white-space:pre-wrap;max-height:300px;overflow-y:auto;line-height:1.5';
   pre.textContent = md;
   modal.appendChild(pre);
-
   overlay.appendChild(modal);
   document.body.appendChild(overlay);
 
   window._submitMd = md;
-  window._submitJson = JSON.stringify({ timestamp: new Date().toISOString(), totalDesigns: flatList.length, reviewedCount: reviewed, decisions }, null, 2);
+  window._submitJson = JSON.stringify({ timestamp: new Date().toISOString(), reviewer: reviewerName, totalDesigns: flatList.length, reviewedCount: reviewed, decisions }, null, 2);
 }
 
 function copyToClipboard(type) {

@@ -269,8 +269,8 @@ describe('Design Review API', () => {
       mockTablesExist();
       mockPool.query.mockResolvedValueOnce({
         rows: [
-          { session_id: 1, item_key: 'splash-zen-1', verdict: 'keep', comment: 'Great design' },
-          { session_id: 1, item_key: 'splash-ink-1', verdict: 'revisit', comment: 'Needs work' }
+          { session_id: 1, item_key: 'splash-zen-1', verdict: 'love', comment: 'Great design' },
+          { session_id: 1, item_key: 'splash-ink-1', verdict: 'skip', comment: 'Needs work' }
         ]
       });
 
@@ -279,7 +279,7 @@ describe('Design Review API', () => {
         .expect(200);
 
       expect(response.body).toHaveLength(2);
-      expect(response.body[0].verdict).toBe('keep');
+      expect(response.body[0].verdict).toBe('love');
     });
   });
 
@@ -321,7 +321,7 @@ describe('Design Review API', () => {
         .post('/api/design-review/sessions/1/verdicts')
         .send({
           verdicts: [
-            { item_key: 'splash-zen-1', verdict: 'keep', comment: 'Beautiful' }
+            { item_key: 'splash-zen-1', verdict: 'love', comment: 'Beautiful' }
           ]
         })
         .expect(200);
@@ -353,9 +353,9 @@ describe('Design Review API', () => {
       // Mock verdict counts
       mockPool.query.mockResolvedValueOnce({
         rows: [
-          { verdict: 'keep', count: '20' },
-          { verdict: 'discard', count: '10' },
-          { verdict: 'revisit', count: '5' }
+          { verdict: 'love', count: '20' },
+          { verdict: 'like', count: '10' },
+          { verdict: 'skip', count: '5' }
         ]
       });
 
@@ -365,8 +365,8 @@ describe('Design Review API', () => {
 
       expect(response.body.total_items).toBe(57);
       expect(response.body.sessions).toBe(2);
-      expect(response.body.verdicts.keep).toBe(20);
-      expect(response.body.verdicts.discard).toBe(10);
+      expect(response.body.verdicts.love).toBe(20);
+      expect(response.body.verdicts.like).toBe(10);
       expect(response.body.verdicts.unreviewed).toBe(22);
     });
   });
@@ -394,7 +394,7 @@ describe('Design Review API', () => {
       });
       // Mock verdicts query
       mockPool.query.mockResolvedValueOnce({
-        rows: [{ item_key: 'splash-zen-1', verdict: 'keep', comment: 'Great', round_number: 1 }]
+        rows: [{ item_key: 'splash-zen-1', verdict: 'love', comment: 'Great', round_number: 1 }]
       });
 
       const response = await request(app)

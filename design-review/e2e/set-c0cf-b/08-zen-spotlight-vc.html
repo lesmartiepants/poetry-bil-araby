@@ -101,15 +101,17 @@
     position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
     background: rgba(26, 22, 16, 0.95);
     backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
     border-top: 1px solid rgba(196, 168, 130, 0.15);
-    padding: 8px 1.5rem 12px; direction: ltr;
+    padding: 8px 1rem calc(10px + env(safe-area-inset-bottom, 0px));
+    direction: ltr;
   }
   body.light .bottom-nav {
     background: rgba(245, 240, 230, 0.95);
     border-color: rgba(139, 115, 85, 0.15);
   }
   .bottom-nav .nav-items-wrap {
-    display: flex; justify-content: space-around; align-items: center;
+    display: flex; justify-content: space-around; align-items: center; width: 100%;
   }
   .nav-item {
     width: 44px; height: 44px;
@@ -202,10 +204,18 @@
   }
 
   @media (max-width: 768px) {
-    .main-content { padding: 2rem 1rem; padding-right: 4rem; }
-    .poem-card { padding: 2rem; }
+    .main-content { padding: 2rem 1rem 100px; padding-right: 52px; }
+    .poem-card { padding: 1.5rem; }
     .poem-content { font-size: 1.5rem; line-height: 2; }
-    .vc-strip { width: 48px; }
+    .vc-strip { width: 44px; }
+    .vc-toggle { width: 40px; height: 40px; }
+    .settings-panel { right: 50px; width: 160px; }
+    .verse-translit { font-size: 11px; }
+  }
+  @media (max-width: 480px) {
+    .main-content { padding-right: 48px; }
+    .vc-strip { width: 40px; }
+    .vc-toggle { width: 36px; height: 36px; }
   }
 
   @media (prefers-reduced-motion: reduce) {

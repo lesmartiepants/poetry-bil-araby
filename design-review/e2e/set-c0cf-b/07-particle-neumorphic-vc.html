@@ -82,7 +82,9 @@
   .bottom-nav {
     position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
     display: flex; justify-content: space-around; align-items: center;
-    height: 64px; background: transparent; direction: ltr;
+    height: calc(64px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    background: transparent; direction: ltr;
   }
   .orbit-nav-btn {
     width: 48px; height: 48px;
@@ -188,11 +190,19 @@
   }
 
   @media (max-width: 768px) {
-    #app { padding-right: 4rem; padding-bottom: 5rem; }
-    .poem-card { padding: 2rem 1.5rem; }
-    .bayt { gap: 0.75rem; }
-    .vc-strip { width: 48px; }
-    .vc-toggle { width: 40px; height: 40px; }
+    #app { padding: 2rem 1rem 100px; padding-right: 52px; }
+    .poem-card { padding: 1.5rem 1rem; }
+    .bayt { gap: 0.5rem; }
+    .vc-strip { width: 44px; }
+    .vc-toggle { width: 38px; height: 38px; }
+    .settings-panel { right: 50px; width: 160px; }
+    .orbit-nav-btn { width: 44px; height: 44px; }
+    .verse-translit { font-size: 11px; }
+  }
+  @media (max-width: 480px) {
+    #app { padding-right: 48px; }
+    .vc-strip { width: 40px; }
+    .vc-toggle { width: 36px; height: 36px; }
   }
 
   @media (prefers-reduced-motion: reduce) {

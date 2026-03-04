@@ -84,12 +84,14 @@
   /* ===== BOTTOM ACTION BAR (Ultra-thin dot line style) ===== */
   .bottom-nav {
     position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
-    display: flex; align-items: center; justify-content: center;
-    height: 64px; padding: 0 1rem; direction: ltr;
+    display: flex; align-items: center; justify-content: space-around;
+    height: calc(64px + env(safe-area-inset-bottom, 0px));
+    padding: 0 0.5rem; padding-bottom: env(safe-area-inset-bottom, 0px);
+    direction: ltr;
   }
   .bottom-nav::before {
     content: ''; position: absolute;
-    bottom: 32px; left: 10%; right: 10%; height: 1px;
+    bottom: calc(32px + env(safe-area-inset-bottom, 0px)); left: 8%; right: 8%; height: 1px;
     background: #e0ddd8;
   }
   .dot-nav-action {
@@ -97,7 +99,7 @@
     background: transparent; border: none;
     cursor: pointer;
     display: flex; align-items: center; justify-content: center;
-    margin: 0 16px; color: #c5c0b8;
+    margin: 0 4px; color: #c5c0b8;
     -webkit-tap-highlight-color: transparent;
     transition: color 0.3s;
   }
@@ -189,12 +191,21 @@
   .vc-toggle:hover .vc-label { opacity: 1; transform: translateX(0); }
 
   @media (max-width: 768px) {
-    .content { padding: 3rem 1.5rem 5rem; padding-right: 4rem; }
+    .content { padding: 3rem 1.5rem 100px; padding-right: 40px; }
     .poem-content { font-size: 1.35rem; line-height: 2.8; }
     .poem-content .hemistich { margin-bottom: 1.5rem; }
     .bayt-sep { margin-bottom: 1.5rem; }
     .poet-name { margin-top: 2.5rem; }
-    .vc-strip { right: 8px; }
+    .vc-strip { right: 6px; }
+    .vc-toggle { width: 40px; height: 40px; }
+    .settings-panel { right: 44px; width: 160px; }
+    .dot-nav-action { margin: 0 2px; }
+    .verse-translit { font-size: 10px; }
+  }
+  @media (max-width: 480px) {
+    .content { padding-right: 36px; }
+    .vc-strip { right: 4px; }
+    .vc-toggle { width: 36px; height: 36px; }
   }
 
   @media (prefers-reduced-motion: reduce) {

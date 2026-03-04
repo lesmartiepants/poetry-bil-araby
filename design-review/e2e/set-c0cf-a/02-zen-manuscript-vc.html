@@ -260,7 +260,7 @@ html.light .app-top-btn { border-color: rgba(61,42,20,0.2); color: rgba(61,42,20
   background:
     repeating-linear-gradient(90deg, rgba(101,82,60,0.04) 0px, transparent 2px, transparent 8px, rgba(101,82,60,0.04) 10px),
     linear-gradient(180deg, #6b5a3e 0%, #5a4a32 20%, #4a3c28 50%, #3d3020 100%);
-  padding: 14px 20px 16px;
+  padding: 10px 12px calc(12px + env(safe-area-inset-bottom, 0px));
   border-top: 3px solid #8b7355;
   box-shadow: 0 -4px 16px rgba(26,18,10,0.4), inset 0 2px 4px rgba(139,115,85,0.2);
   direction: ltr;
@@ -272,22 +272,15 @@ html.light .bottom-nav {
     linear-gradient(180deg, #8b7355 0%, #7a6345 20%, #6b5a3e 50%, #5a4a32 100%);
   border-top-color: #a89470;
 }
-.bottom-nav::before {
-  content: '';
-  position: absolute; top: -1px; left: 50%; transform: translateX(-50%);
-  width: 60px; height: 6px;
-  background: linear-gradient(180deg, #5a3a1a, #3d2810, #5a3a1a);
-  border-radius: 0 0 6px 6px;
-  box-shadow: 0 2px 4px rgba(26,18,10,0.3);
-}
 .bottom-nav .nav-items-wrap {
-  display: flex; align-items: center; justify-content: center; gap: 6px;
+  display: flex; align-items: center; justify-content: space-around; gap: 0; width: 100%;
 }
 .nav-item {
-  display: flex; flex-direction: column; align-items: center; gap: 4px;
-  padding: 8px 14px; background: transparent; border: none;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 6px 4px; background: transparent; border: none;
   color: rgba(232,220,196,0.6); cursor: pointer; font-family: var(--font-ui);
-  font-size: 10px; transition: all 0.2s; min-width: 56px; min-height: 44px;
+  font-size: 9px; transition: all 0.2s; min-width: 44px; min-height: 44px;
+  flex: 1;
 }
 .nav-item.active { color: #e8dcc4; }
 .nav-item:hover { color: #e8dcc4; }
@@ -317,10 +310,19 @@ html.light .bottom-nav {
 }
 
 @media (max-width: 768px) {
-  .reader { padding: 70px 16px 40px; padding-right: 70px; }
-  .poem-card { padding: 1.5rem; }
-  .poem-actions { flex-wrap: wrap; }
-  .vc-strip { width: 48px; }
+  .reader { padding: 70px 16px 100px; padding-right: 56px; }
+  .poem-card { padding: 1.5rem 1rem; }
+  .poem-actions { flex-wrap: wrap; gap: 8px; }
+  .poem-action-btn { padding: 8px 12px; font-size: 12px; }
+  .vc-strip { width: 44px; padding: 8px 2px; }
+  .vc-toggle { width: 40px; height: 40px; }
+  .settings-panel { right: 50px; width: 160px; font-size: 12px; }
+  .verse-translit { font-size: 11px; }
+}
+@media (max-width: 480px) {
+  .reader { padding-right: 48px; }
+  .vc-strip { width: 40px; }
+  .vc-toggle { width: 36px; height: 36px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

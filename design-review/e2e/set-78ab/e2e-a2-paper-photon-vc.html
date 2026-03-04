@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>A2 Paper Photon - Vertical Controls</title>
+<link href="https://fonts.googleapis.com/css2?family=Forum&family=Reem+Kufi:wght@400;700&family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+:root {
+  --void: #050510; --navy: #0A0F2E; --star: #E8E4F0;
+  --nebula: #3A1F5E; --gold: #C5A059; --star-dim: rgba(232,228,240,0.5);
+  --glow-gold: rgba(197,160,89,0.4);
+  --font-display: 'Amiri', serif; --font-ui: 'Tajawal', sans-serif;
+}
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: var(--font-ui); background: var(--void); color: var(--star);
+  min-height: 100vh; overflow-x: hidden;
+}
+
+.main-app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--void);
+}
+
+.app-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid rgba(232,228,240,0.1);
+  background: rgba(10,15,46,0.6);
+}
+.nav-brand { display: flex; align-items: flex-end; gap: 0.5rem; }
+.nav-brand-en {
+  font-family: 'Forum', serif;
+  font-size: 1.25rem;
+  letter-spacing: -0.05em;
+  color: var(--gold);
+}
+.nav-brand-ar {
+  font-family: 'Reem Kufi', sans-serif;
+  font-weight: 700;
+  font-size: 0.875rem;
+  color: var(--gold);
+}
+.nav-actions { display: flex; gap: 0.5rem; }
+.nav-btn {
+  width: 44px; height: 44px;
+  border: none; background: transparent;
+  color: var(--star-dim);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; border-radius: 8px;
+  transition: color 0.2s ease;
+}
+.nav-btn:hover { color: var(--star); }
+.nav-btn svg { width: 20px; height: 20px; }
+
+.poem-area {
+  flex: 1;
+  display: flex;
+  position: relative;
+}
+.poem-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  padding-left: 72px;
+}
+.poem-text {
+  font-family: var(--font-display);
+  font-size: clamp(1.25rem, 3vw, 1.625rem);
+  line-height: 2.2;
+  color: var(--star);
+  direction: rtl;
+  text-align: center;
+  max-width: 600px;
+  margin-bottom: 1.5rem;
+}
+.poem-translation {
+  font-family: var(--font-ui);
+  font-size: 0.875rem;
+  color: var(--star-dim);
+  text-align: center;
+  line-height: 1.6;
+  max-width: 500px;
+  margin-bottom: 1rem;
+  display: none;
+  direction: ltr;
+}
+.poem-transliteration {
+  font-family: var(--font-display);
+  font-size: 0.8125rem;
+  color: rgba(232,228,240,0.3);
+  text-align: center;
+  font-style: italic;
+  max-width: 500px;
+  margin-bottom: 1rem;
+  display: none;
+  direction: ltr;
+}
+.poem-poet {
+  font-family: var(--font-ui);
+  font-size: 0.8125rem;
+  color: var(--gold);
+}
+
+/* ===== VERTICAL CONTROLS - Typeset Margin Notes ===== */
+/* Editorial: serif abbreviations "Tr" "Ro" "Aa" in margin */
+.vc-strip {
+  position: fixed;
+  left: 0; top: 0; bottom: 0;
+  width: 52px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  z-index: 50;
+  background: transparent;
+  border-right: 1px solid rgba(232,228,240,0.06);
+}
+
+.vc-toggle {
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: transparent;
+  color: var(--star-dim);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+  font-family: var(--font-display);
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.vc-toggle:hover {
+  color: var(--star);
+}
+
+.vc-toggle.active {
+  color: var(--gold);
+}
+
+/* Underline on active */
+.vc-toggle.active::after {
+  content: '';
+  position: absolute;
+  bottom: 4px;
+  left: 25%; right: 25%;
+  height: 1px;
+  background: var(--gold);
+}
+
+.vc-toggle svg { width: 16px; height: 16px; }
+
+.vc-badge {
+  position: absolute;
+  top: 2px; right: 2px;
+  font-size: 7px; font-weight: 700;
+  color: var(--star-dim);
+}
+
+.vc-divider {
+  width: 20px; height: 1px;
+  background: rgba(232,228,240,0.06);
+}
+
+.vc-settings {
+  display: none;
+  position: fixed;
+  left: 58px; top: 50%;
+  transform: translateY(-50%);
+  background: rgba(5, 5, 16, 0.95);
+  border: 1px solid rgba(232,228,240,0.1);
+  border-radius: 4px;
+  padding: 16px;
+  min-width: 180px;
+  z-index: 49;
+  backdrop-filter: blur(16px);
+}
+.vc-settings.visible { display: block; }
+.vc-settings-title {
+  font-family: var(--font-display);
+  font-size: 11px; letter-spacing: 0.15em;
+  text-transform: uppercase; color: var(--gold);
+  margin-bottom: 12px; opacity: 0.6;
+}
+.vc-settings-item {
+  font-family: var(--font-display);
+  font-size: 13px; color: var(--star-dim);
+  padding: 6px 0;
+}
+</style>
+</head>
+<body>
+  <main class="main-app">
+    <nav class="app-nav">
+      <div class="nav-brand">
+        <span class="nav-brand-en">poetry</span>
+        <span class="nav-brand-ar" dir="rtl" lang="ar">بالعربي</span>
+      </div>
+      <div class="nav-actions">
+        <button class="nav-btn" aria-label="Search"><i data-lucide="search"></i></button>
+        <button class="nav-btn" aria-label="Menu"><i data-lucide="menu"></i></button>
+      </div>
+    </nav>
+
+    <div class="poem-area">
+      <div class="poem-content">
+        <div class="poem-text" lang="ar" dir="rtl">
+          عَلَى قَدْرِ أَهْلِ العَزْمِ تَأْتِي العَزَائِمُ<br>
+          وَتَأْتِي عَلَى قَدْرِ الكِرَامِ المَكَارِمُ
+        </div>
+        <div class="poem-translation" id="translationRow">Determination comes in measure to those who possess it, and noble deeds come in measure to the noble.</div>
+        <div class="poem-transliteration" id="transliterationRow">'ala qadri ahli al-'azmi ta'ti al-'aza'imu / wa ta'ti 'ala qadri al-kirami al-makarimu</div>
+        <p class="poem-poet">Al-Mutanabbi</p>
+      </div>
+    </div>
+
+    <!-- Vertical Controls - Typeset Margin Notes (RTL: left side) -->
+    <div class="vc-strip">
+      <button class="vc-toggle" data-action="translation" aria-label="Toggle translation">
+        <i data-lucide="languages"></i>
+      </button>
+      <div class="vc-divider"></div>
+      <button class="vc-toggle" data-action="transliteration" aria-label="Toggle transliteration">
+        <i data-lucide="text-cursor-input"></i>
+      </button>
+      <div class="vc-divider"></div>
+      <button class="vc-toggle" data-action="textsize" aria-label="Text size">
+        <i data-lucide="type"></i>
+        <span class="vc-badge">M</span>
+      </button>
+      <div class="vc-divider"></div>
+      <button class="vc-toggle" data-action="settings" aria-label="Settings">
+        <i data-lucide="settings"></i>
+      </button>
+    </div>
+
+    <div class="vc-settings" id="settingsPanel">
+      <div class="vc-settings-title">Settings</div>
+      <div class="vc-settings-item">Theme: Dark</div>
+      <div class="vc-settings-item">Font: Amiri</div>
+      <div class="vc-settings-item">Auto-play: Off</div>
+    </div>
+  </main>
+
+<script>
+(function() {
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+  document.querySelectorAll('.vc-toggle').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var action = btn.dataset.action;
+      if (action === 'textsize') {
+        var sizes = ['S','M','L','XL'];
+        var badge = btn.querySelector('.vc-badge');
+        var idx = sizes.indexOf(badge.textContent);
+        idx = (idx + 1) % sizes.length;
+        badge.textContent = sizes[idx];
+        document.querySelector('.poem-content').style.fontSize =
+          {'S':'1rem','M':'1.25rem','L':'1.5rem','XL':'2rem'}[sizes[idx]];
+      } else if (action === 'translation') {
+        btn.classList.toggle('active');
+        document.getElementById('translationRow').style.display = btn.classList.contains('active') ? 'block' : 'none';
+      } else if (action === 'transliteration') {
+        btn.classList.toggle('active');
+        document.getElementById('transliterationRow').style.display = btn.classList.contains('active') ? 'block' : 'none';
+      } else if (action === 'settings') {
+        btn.classList.toggle('active');
+        document.getElementById('settingsPanel').classList.toggle('visible');
+      }
+    });
+  });
+})();
+</script>
+</body>
+</html>

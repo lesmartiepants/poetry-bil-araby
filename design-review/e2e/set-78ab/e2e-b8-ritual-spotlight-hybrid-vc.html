@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>B8 Ritual Spotlight - Vertical Controls</title>
+<link href="https://fonts.googleapis.com/css2?family=Forum&family=Reem+Kufi:wght@400;700&family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+:root {
+  --parchment: #F5ECD7; --leather: #8B4513; --library: #1A0F0A;
+  --gold: #C5A059; --dust: #D4C5A0; --ink: #2A1F14;
+  --bg: var(--library); --text: var(--parchment);
+  --muted: rgba(245,236,215,0.5);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Tajawal', sans-serif; background: var(--bg); color: var(--text);
+  min-height: 100vh; overflow-x: hidden;
+}
+
+.main-app {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+/* The void: nothing but the verse */
+.ma-void {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 15vh 2rem;
+  padding-left: 72px;
+}
+
+.ma-verse {
+  font-family: 'Amiri', serif;
+  font-size: clamp(1.5rem, 4vw, 2.25rem);
+  line-height: 2.4;
+  color: var(--text);
+  direction: rtl;
+  text-align: center;
+  max-width: 600px;
+}
+
+.poem-translation {
+  font-family: 'Tajawal', sans-serif;
+  font-size: 0.875rem;
+  color: var(--muted);
+  text-align: center;
+  line-height: 1.6;
+  max-width: 500px;
+  margin: 1rem auto;
+  display: none;
+  direction: ltr;
+}
+
+.poem-transliteration {
+  font-family: 'Tajawal', sans-serif;
+  font-size: 0.8125rem;
+  color: rgba(245,236,215,0.3);
+  text-align: center;
+  font-style: italic;
+  max-width: 500px;
+  margin: 0.5rem auto;
+  display: none;
+  direction: ltr;
+}
+
+/* Barely visible poet name */
+.ma-poet {
+  position: fixed;
+  bottom: 15vh;
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: 'Tajawal', sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  color: var(--muted);
+  direction: ltr;
+}
+
+/* ===== VERTICAL CONTROLS - Near-Invisible Thin Lines ===== */
+/* Japanese Ma: barely visible thin lines that thicken on activation */
+.vc-strip {
+  position: fixed;
+  left: 0; top: 0; bottom: 0;
+  width: 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  z-index: 50;
+  background: transparent;
+}
+
+.vc-toggle {
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: transparent;
+  color: rgba(245,236,215,0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.6s ease;
+  position: relative;
+}
+
+/* Thin line indicator */
+.vc-toggle::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0;
+  transform: translateX(-50%);
+  width: 1px;
+  height: 100%;
+  background: rgba(197,160,89,0.1);
+  transition: all 0.6s ease;
+}
+
+.vc-toggle:hover {
+  color: rgba(245,236,215,0.5);
+}
+
+.vc-toggle:hover::before {
+  width: 2px;
+  background: rgba(197,160,89,0.25);
+}
+
+.vc-toggle.active {
+  color: var(--gold);
+}
+
+.vc-toggle.active::before {
+  width: 3px;
+  background: rgba(197,160,89,0.5);
+  box-shadow: 0 0 8px rgba(197,160,89,0.2);
+}
+
+.vc-toggle svg {
+  width: 14px; height: 14px;
+  position: relative;
+  z-index: 1;
+  transition: opacity 0.6s ease;
+  opacity: 0.3;
+}
+
+.vc-toggle:hover svg { opacity: 0.6; }
+.vc-toggle.active svg { opacity: 1; }
+
+.vc-badge {
+  position: absolute;
+  bottom: 2px; right: 4px;
+  font-size: 7px; font-weight: 700;
+  color: rgba(197,160,89,0.2);
+  z-index: 1;
+}
+
+.vc-toggle.active .vc-badge { color: var(--gold); }
+
+.vc-settings {
+  display: none;
+  position: fixed;
+  left: 54px; top: 50%;
+  transform: translateY(-50%);
+  background: rgba(26, 15, 10, 0.95);
+  border: 1px solid rgba(197,160,89,0.1);
+  padding: 16px;
+  min-width: 180px;
+  z-index: 49;
+  backdrop-filter: blur(12px);
+}
+.vc-settings.visible { display: block; }
+.vc-settings-title {
+  font-size: 10px; letter-spacing: 0.25em;
+  text-transform: uppercase; color: rgba(197,160,89,0.4);
+  margin-bottom: 12px;
+}
+.vc-settings-item {
+  font-size: 13px; color: var(--muted);
+  padding: 6px 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+</style>
+</head>
+<body>
+  <main class="main-app">
+    <div class="ma-void">
+      <div>
+        <div class="ma-verse" lang="ar" dir="rtl">
+          عَلَى قَدْرِ أَهْلِ العَزْمِ تَأْتِي العَزَائِمُ
+        </div>
+        <div class="poem-translation" id="translationRow">Determination comes in measure to those who possess it.</div>
+        <div class="poem-transliteration" id="transliterationRow">'ala qadri ahli al-'azmi ta'ti al-'aza'imu</div>
+      </div>
+    </div>
+
+    <div class="ma-poet">Al-Mutanabbi</div>
+
+    <!-- Vertical Controls - Near-Invisible Thin Lines (RTL: left side) -->
+    <div class="vc-strip">
+      <button class="vc-toggle" data-action="translation" aria-label="Toggle translation">
+        <i data-lucide="languages"></i>
+      </button>
+      <button class="vc-toggle" data-action="transliteration" aria-label="Toggle transliteration">
+        <i data-lucide="text-cursor-input"></i>
+      </button>
+      <button class="vc-toggle" data-action="textsize" aria-label="Text size">
+        <i data-lucide="type"></i>
+        <span class="vc-badge">M</span>
+      </button>
+      <button class="vc-toggle" data-action="settings" aria-label="Settings">
+        <i data-lucide="settings"></i>
+      </button>
+    </div>
+
+    <div class="vc-settings" id="settingsPanel">
+      <div class="vc-settings-title">Settings</div>
+      <div class="vc-settings-item">Theme: Dark</div>
+      <div class="vc-settings-item">Font: Amiri</div>
+      <div class="vc-settings-item">Auto-play: Off</div>
+    </div>
+  </main>
+
+<script>
+(function() {
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+  document.querySelectorAll('.vc-toggle').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var action = btn.dataset.action;
+      if (action === 'textsize') {
+        var sizes = ['S','M','L','XL'];
+        var badge = btn.querySelector('.vc-badge');
+        var idx = sizes.indexOf(badge.textContent);
+        idx = (idx + 1) % sizes.length;
+        badge.textContent = sizes[idx];
+        var verse = document.querySelector('.ma-verse');
+        if (verse) verse.style.fontSize =
+          {'S':'1.25rem','M':'1.5rem','L':'2rem','XL':'2.5rem'}[sizes[idx]];
+      } else if (action === 'translation') {
+        btn.classList.toggle('active');
+        document.getElementById('translationRow').style.display = btn.classList.contains('active') ? 'block' : 'none';
+      } else if (action === 'transliteration') {
+        btn.classList.toggle('active');
+        document.getElementById('transliterationRow').style.display = btn.classList.contains('active') ? 'block' : 'none';
+      } else if (action === 'settings') {
+        btn.classList.toggle('active');
+        document.getElementById('settingsPanel').classList.toggle('visible');
+      }
+    });
+  });
+})();
+</script>
+</body>
+</html>

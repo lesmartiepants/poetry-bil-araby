@@ -106,9 +106,11 @@ LOG_DEBUG         // Enable verbose database debug logs (defaults to false)
 
 ## Agent System
 
-10 specialized agents live in `.claude/agents/`. Cursor discovers them via `.cursor/rules/agents.mdc`.
+14 specialized agents live in `.claude/agents/`. Cursor discovers them via `.cursor/rules/agents.mdc`.
 
-**Agents:** `test-orchestrator`, `test-suite-maintainer`, `test-coverage-reviewer`, `ci-test-guardian`, `git-workflow-manager`, `worktree-manager`, `github-issue-manager`, `docs-sync-reviewer`, `ui-ux-reviewer`, `design-review-agent`
+**Agents:** `test-orchestrator`, `test-suite-maintainer`, `test-coverage-reviewer`, `ci-test-guardian`, `git-workflow-manager`, `worktree-manager`, `github-issue-manager`, `docs-sync-reviewer`, `ui-ux-reviewer`, `design-review-agent`, `design-sprint-lead`, `design-generator`, `design-reviewer`, `design-review-setup`
+
+**Skills (`.claude/skills/`):** `/design-sprint`, `/screenshot-audit`, `/commit-push`
 
 **Maintenance Rule -- MANDATORY when creating or modifying agents:**
 1. Update `.cursor/rules/agents.mdc` -- keep the Agent Registry table, coordination flow, and file list in sync
@@ -121,7 +123,9 @@ LOG_DEBUG         // Enable verbose database debug logs (defaults to false)
 **Tests:** `src/test/*.test.jsx`, `src/test/auth.test.jsx`, `e2e/*.spec.js`
 **Config:** `vite.config.js`, `vitest.config.js`, `playwright.config.js`, `tailwind.config.js`
 **Migrations:** `supabase/migrations/*.sql` (auth & user features, PostgREST schema grants)
-**Agents:** `.claude/agents/*.md` (9 agent definitions), `.cursor/rules/agents.mdc` (Cursor discovery)
+**Agents:** `.claude/agents/*.md` (14 agent definitions), `.cursor/rules/agents.mdc` (Cursor discovery)
+**Skills:** `.claude/skills/*.md` (3 skill definitions: design-sprint, screenshot-audit, commit-push)
+**Design Spec:** `design-review/DESIGN-SYSTEM-SPEC.md` (project-specific controls/onboarding/mobile spec)
 **Docs:** `README.md`, `DEPLOYMENT.md`, `docs/AUTHENTICATION_SETUP.md`, `.github/TESTING_STRATEGY.md`
 
 ## Common Gotchas

@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scroll Codex - Vertical Controls</title>
+<link href="https://fonts.googleapis.com/css2?family=Forum&family=Reem+Kufi:wght@400;700&family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@latest"></script>
+<style>
+  :root {
+    --bg-dark: #0d1117; --bg-light: #f6f8fa;
+    --text-dark: #c9d1d9; --text-light: #24292f;
+    --gold: #C5A059; --green: #3fb950; --blue: #58a6ff;
+    --comment: #8b949e; --panel-dark: #161b22; --panel-light: #ffffff;
+    --border-dark: #30363d; --border-light: #d0d7de;
+    --speed: 0.4s;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'IBM Plex Mono', 'Tajawal', monospace;
+    background: var(--bg-dark); color: var(--text-dark);
+    transition: background var(--speed), color var(--speed);
+    overflow-x: hidden; min-height: 100vh;
+  }
+  body.light { background: var(--bg-light); color: var(--text-light); }
+
+  /* Main Content - Open Book Layout */
+  #mainContent {
+    opacity: 1; padding: 2rem; padding-right: 5rem;
+    max-width: 900px; margin: 0 auto; padding-bottom: 5rem;
+  }
+
+  /* Open Book Layout */
+  .book-spread {
+    display: flex; gap: 0; min-height: 50vh; position: relative;
+  }
+  .book-spread::before {
+    content: ''; position: absolute; top: 0; bottom: 0;
+    left: 50%; transform: translateX(-50%); width: 3px;
+    background: linear-gradient(180deg, transparent, var(--border-dark) 10%, var(--border-dark) 90%, transparent);
+    z-index: 2;
+  }
+  body.light .book-spread::before {
+    background: linear-gradient(180deg, transparent, var(--border-light) 10%, var(--border-light) 90%, transparent);
+  }
+
+  .page-left {
+    flex: 1; background: var(--panel-dark); border: 1px solid var(--border-dark);
+    border-radius: 4px 0 0 4px; padding: 2rem 1.5rem;
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+  }
+  body.light .page-left { background: var(--panel-light); border-color: var(--border-light); }
+
+  .poet-info { text-align: center; }
+  .poet-info h3 { font-family: 'Amiri', serif; font-size: 1.3rem; color: var(--gold); margin-bottom: 0.5rem; }
+  .poet-info .era { font-size: 0.8rem; color: var(--comment); margin-bottom: 1rem; }
+  .poet-info .desc { font-size: 0.85rem; line-height: 1.8; opacity: 0.6; }
+
+  .page-right {
+    flex: 1; background: var(--panel-dark); border: 1px solid var(--border-dark);
+    border-radius: 0 4px 4px 0; padding: 2.5rem 2rem;
+    display: flex; flex-direction: column; justify-content: center; position: relative;
+  }
+  body.light .page-right { background: var(--panel-light); border-color: var(--border-light); }
+  .page-right::after {
+    content: ''; position: absolute; bottom: 0; right: 0; width: 20px; height: 20px;
+    background: linear-gradient(315deg, var(--panel-dark) 45%, rgba(197,160,89,0.1) 50%, transparent 60%);
+    border-radius: 0 0 4px 0;
+  }
+  body.light .page-right::after {
+    background: linear-gradient(315deg, var(--panel-light) 45%, rgba(197,160,89,0.1) 50%, transparent 60%);
+  }
+
+  .poem-text {
+    font-family: 'Amiri', serif; font-size: 1.65rem; line-height: 2.3;
+    text-align: center; margin-bottom: 1rem;
+  }
+  .poet { text-align: center; font-size: 0.9rem; color: var(--gold); font-family: 'Amiri', serif; }
+
+  /* Translation & Transliteration */
+  .translation-row, .translit-row {
+    display: none; font-family: 'Tajawal', sans-serif; font-size: 14px;
+    color: var(--comment); text-align: center; padding: 10px 0; direction: ltr;
+  }
+  .translation-row.visible, .translit-row.visible { display: block; }
+
+  /* Settings */
+  .settings-panel {
+    display: none; position: fixed; right: 64px; top: 50%; transform: translateY(-50%);
+    background: var(--panel-dark); border: 1px solid var(--border-dark); border-radius: 8px;
+    padding: 16px; z-index: 59; box-shadow: 0 4px 16px rgba(0,0,0,0.3); width: 180px;
+    font-size: 13px; color: var(--text-dark);
+  }
+  body.light .settings-panel { background: var(--panel-light); border-color: var(--border-light); color: var(--text-light); }
+  .settings-panel.visible { display: block; }
+  .settings-panel h4 { margin-bottom: 8px; color: var(--gold); }
+  .settings-panel label { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; cursor: pointer; }
+
+  /* Status bar */
+  .status-bar {
+    position: fixed; bottom: 0; left: 0; right: 0; height: 28px;
+    background: var(--panel-dark); border-top: 1px solid var(--border-dark);
+    display: flex; align-items: center; padding: 0 1rem; gap: 1.5rem;
+    font-size: 0.75rem; color: var(--comment); z-index: 100;
+  }
+  body.light .status-bar { background: var(--panel-light); border-color: var(--border-light); }
+  .status-item { display: flex; align-items: center; gap: 0.3rem; }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); }
+
+  /* ===== VERTICAL CONTROLS: Gilded Margin Strip with Illuminated Toggles ===== */
+  .vc-strip {
+    position: fixed; right: 0; top: 50%; transform: translateY(-50%);
+    z-index: 60; display: flex; flex-direction: column; align-items: center; gap: 4px;
+    width: 52px; padding: 12px 4px;
+    background: var(--panel-dark);
+    border-radius: 8px 0 0 8px;
+    border: 1px solid var(--border-dark);
+    border-right: none;
+    box-shadow: -2px 0 12px rgba(0,0,0,0.2);
+    /* Gold illuminated margin lines */
+    border-left: 3px solid var(--gold);
+  }
+  body.light .vc-strip {
+    background: var(--panel-light); border-color: var(--border-light);
+    border-left-color: var(--gold);
+  }
+
+  /* Decorative gold leaf dots */
+  .vc-strip::before, .vc-strip::after {
+    content: ''; width: 6px; height: 6px; border-radius: 50%;
+    background: var(--gold); opacity: 0.4;
+  }
+
+  .vc-toggle {
+    width: 40px; height: 40px;
+    display: flex; align-items: center; justify-content: center;
+    background: transparent; border: 1px solid var(--border-dark); border-radius: 6px;
+    cursor: pointer; color: var(--comment);
+    transition: all 0.25s ease; position: relative;
+  }
+  body.light .vc-toggle { border-color: var(--border-light); }
+
+  .vc-toggle:hover {
+    border-color: var(--gold); color: var(--gold);
+    background: rgba(197,160,89,0.06);
+  }
+
+  /* Active: illuminated glow */
+  .vc-toggle.active {
+    border-color: var(--gold); color: var(--gold);
+    background: rgba(197,160,89,0.1);
+    box-shadow: 0 0 12px rgba(197,160,89,0.15), inset 0 0 8px rgba(197,160,89,0.08);
+  }
+
+  .vc-toggle i { width: 18px; height: 18px; }
+  .vc-badge {
+    position: absolute; top: 2px; right: 2px;
+    font-family: 'IBM Plex Mono', monospace; font-size: 8px; font-weight: 600;
+    color: var(--panel-dark); background: var(--gold);
+    padding: 1px 3px; border-radius: 2px; line-height: 1.2;
+  }
+
+  @media (max-width: 768px) {
+    #mainContent { padding: 2rem 1rem; padding-right: 4rem; padding-bottom: 6rem; }
+    .book-spread { flex-direction: column; }
+    .book-spread::before { display: none; }
+    .page-left { border-radius: 4px 4px 0 0; padding: 1.5rem; }
+    .page-right { border-radius: 0 0 4px 4px; padding: 1.5rem; }
+    .poem-text { font-size: 1.35rem; line-height: 2.1; }
+    .status-bar { display: none; }
+    .vc-strip { width: 48px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  }
+</style>
+</head>
+<body>
+
+<div id="mainContent">
+  <!-- Vertical Controls: Gilded Margin Strip -->
+  <nav class="vc-strip" aria-label="Toggle controls">
+    <button class="vc-toggle" data-action="translation" aria-label="Toggle translation">
+      <i data-lucide="languages"></i>
+    </button>
+    <button class="vc-toggle" data-action="transliteration" aria-label="Toggle transliteration">
+      <i data-lucide="text-cursor-input"></i>
+    </button>
+    <button class="vc-toggle" data-action="textsize" aria-label="Cycle text size">
+      <i data-lucide="type"></i>
+      <span class="vc-badge">M</span>
+    </button>
+    <button class="vc-toggle" data-action="settings" aria-label="Toggle settings">
+      <i data-lucide="settings"></i>
+    </button>
+  </nav>
+
+  <div class="settings-panel" id="settingsPanel">
+    <h4>Settings</h4>
+    <label><input type="checkbox"> Light mode</label>
+    <label><input type="checkbox"> Tashkeel</label>
+    <label><input type="checkbox" checked> Animations</label>
+  </div>
+
+  <div class="book-spread">
+    <div class="page-left">
+      <div class="poet-info">
+        <h3 lang="ar">أحمد شوقي</h3>
+        <div class="era">العصر الحديث -- Modern Era</div>
+        <div class="desc" lang="ar">
+          أمير الشعراء، من أعظم شعراء العربية في العصر الحديث.
+          ولد في القاهرة ونظم الشعر في مختلف الأغراض.
+        </div>
+      </div>
+    </div>
+    <div class="page-right">
+      <div class="poem-text poem-content" lang="ar" dir="rtl">
+        أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ<br>
+        فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
+      </div>
+      <div class="translation-row" id="translationRow">
+        I am the sea, in whose depths pearls lie hidden / Have they asked the diver about my shells?
+      </div>
+      <div class="translit-row" id="translitRow">
+        Ana al-bahru fi ahsha'ihi al-durru kaminun / fa-hal sa'alu al-ghawwasa an sadafati
+      </div>
+      <div class="poet">-- أحمد شوقي</div>
+    </div>
+  </div>
+</div>
+
+<div class="status-bar">
+  <div class="status-item"><div class="status-dot"></div> Ready</div>
+  <div class="status-item">Poems: 84,329</div>
+  <div class="status-item" style="margin-right:auto">Codex v2.0</div>
+</div>
+
+<script>
+(function() {
+  'use strict';
+
+  document.querySelectorAll('.vc-toggle').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var action = btn.dataset.action;
+      if (action === 'textsize') {
+        var sizes = ['S','M','L','XL'];
+        var badge = btn.querySelector('.vc-badge');
+        var idx = sizes.indexOf(badge.textContent);
+        idx = (idx + 1) % sizes.length;
+        badge.textContent = sizes[idx];
+        document.querySelector('.poem-content').style.fontSize =
+          {'S':'1rem','M':'1.25rem','L':'1.5rem','XL':'2rem'}[sizes[idx]];
+      } else if (action === 'translation') {
+        btn.classList.toggle('active');
+        document.getElementById('translationRow').classList.toggle('visible');
+      } else if (action === 'transliteration') {
+        btn.classList.toggle('active');
+        document.getElementById('translitRow').classList.toggle('visible');
+      } else if (action === 'settings') {
+        btn.classList.toggle('active');
+        document.getElementById('settingsPanel').classList.toggle('visible');
+      } else {
+        btn.classList.toggle('active');
+      }
+    });
+  });
+
+  lucide.createIcons();
+})();
+</script>
+</body>
+</html>

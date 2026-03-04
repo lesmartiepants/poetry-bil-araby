@@ -270,6 +270,16 @@ async function designTablesExist() {
   }
 }
 
+// GET /api/design-review/ping — lightweight liveness check (SELECT 1, no table scan)
+app.get('/api/design-review/ping', async (req, res) => {
+  try {
+    await pool.query('SELECT 1');
+    res.json({ ok: true });
+  } catch (error) {
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
 // GET /api/design-review/items — list all design items
 app.get('/api/design-review/items', async (req, res) => {
   try {
@@ -416,7 +426,7 @@ app.post('/api/design-review/sessions/:id/verdicts', async (req, res) => {
 
     // Resolve all item_keys to item_ids in a single query
     const keys = verdicts.filter(v => v.item_key && !v.item_id).map(v => v.item_key);
-    const keyMap = {};
+    const keyMap = Object.create(null);
     if (keys.length > 0) {
       const keyResult = await pool.query(
         'SELECT id, item_key FROM design_items WHERE item_key = ANY($1)',

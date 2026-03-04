@@ -31,6 +31,9 @@
     .tb-select:hover,.tb-select:focus{border-color:var(--accent)}
     .tb-select option{background:var(--surface-2);color:var(--text)}
     .tb-sep{width:1px;height:20px;background:var(--border);flex-shrink:0}
+    .tb-detail{font-size:11px;color:var(--text-2);display:flex;align-items:center;gap:6px;overflow:hidden;min-width:0}
+    .tb-detail .td-name{color:var(--text);font-size:11px;font-weight:500}
+    .tb-detail .td-phil{color:var(--text-3);font-style:italic;font-size:10px}
     .tb-spacer{flex:1}
 
     /* Nav buttons */
@@ -61,10 +64,11 @@
     .preview-title-btn:hover .open-icon{opacity:1}
     .preview-iframe{width:100%;height:100%;border:none;background:#000}
 
-    /* Open-in-new-tab arrow overlay */
-    .preview-open-overlay{position:absolute;top:8px;right:8px;z-index:15;width:36px;height:36px;border-radius:var(--r-sm);background:rgba(0,0,0,.55);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;opacity:0;transition:opacity .2s;color:var(--text-2);font-size:18px;backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
-    .preview-open-overlay:hover{opacity:1;background:rgba(0,0,0,.75);color:var(--text);border-color:var(--accent)}
-    #previewContent:hover .preview-open-overlay{opacity:.7}
+    /* Open-in-new-tab expand overlay */
+    .preview-open-overlay{position:absolute;top:12px;right:12px;z-index:15;width:54px;height:54px;border-radius:var(--r);background:none;border:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;opacity:0.2;transition:opacity .2s;color:var(--text-2)}
+    .preview-open-overlay:hover{opacity:0.8;color:var(--text)}
+    .preview-open-overlay .expand-icon{font-size:22px;line-height:1}
+    .preview-open-overlay .expand-label{font-size:8px;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
 
     /* ── Accordion catalog ── */
     .acc-toggle{display:inline-flex;align-items:center;gap:5px;padding:7px 14px;border-radius:var(--r);border:1px solid var(--border);background:var(--surface-2);color:var(--text-2);font-size:12px;font-weight:600;transition:all .15s;white-space:nowrap;cursor:pointer}
@@ -242,7 +246,6 @@
       padding-bottom:max(16px,env(safe-area-inset-bottom));
       display:flex;flex-direction:column;gap:10px;
     }
-    .comment-sheet .cs-handle{width:36px;height:4px;border-radius:2px;background:var(--border);margin:0 auto 4px}
     .comment-sheet textarea{
       width:100%;height:100px;
       background:var(--surface-2);border:1px solid var(--border);
@@ -265,6 +268,7 @@
       .toolbar .submit-btn{display:none}
       .toolbar .icon-btn{display:none}
       .toolbar .tb-group{display:none}
+      .tb-detail{display:none}
       .acc-toggle{padding:6px 10px;font-size:11px}
       .acc-item{padding:8px 14px 8px 24px;font-size:13px;min-height:44px}
       .acc-group-head{padding:10px 14px;font-size:12px}
@@ -287,6 +291,7 @@
       <span id="accToggleLabel">Browse Designs</span>
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6l4 4 4-4"/></svg>
     </button>
+    <span class="tb-detail" id="tbDetail"></span>
     <div class="tb-sep"></div>
     <div class="tb-group">
       <button class="nav-btn" id="prevBtn" onclick="goPrev()" title="Previous (Left arrow)"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 3L5 8l5 5"/></svg>Prev</button>
@@ -316,7 +321,7 @@
         </button>
       </div>
       <div id="previewContent" style="flex:1;position:relative">
-        <div class="preview-open-overlay" id="previewOpenOverlay" onclick="openTab()" title="Open in new tab">&#8599;</div>
+        <div class="preview-open-overlay" id="previewOpenOverlay" onclick="openTab()" title="Open in new tab"><span class="expand-icon">&#8599;</span><span class="expand-label">expand</span></div>
         <button class="edge-nav left" id="edgeNavPrev" onclick="goPrev()" title="Previous" aria-label="Previous design"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 3L5 8l5 5"/></svg></button>
         <button class="edge-nav right" id="edgeNavNext" onclick="goNext()" title="Next" aria-label="Next design"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 3l5 5-5 5"/></svg></button>
         <div class="empty-state" id="emptyState">
@@ -369,7 +374,6 @@
     <!-- Mobile comment bottom sheet -->
     <div class="comment-overlay" id="commentOverlay" onclick="if(event.target===this)closeMobileComment()">
       <div class="comment-sheet">
-        <div class="cs-handle"></div>
         <textarea id="mobileCommentBox" placeholder="What do you think about this design?" oninput="saveMobileComment()"></textarea>
         <div class="cs-actions">
           <button class="cs-btn cs-cancel" onclick="closeMobileComment()">Cancel</button>
@@ -785,8 +789,7 @@ function buildAccordion() {
         if (opt.generation >= 5) {
           var badgeTmp = document.createElement('span');
           badgeTmp.className = 'gen-badge gen-' + opt.generation;
-          var badgeLabels = { 6: 'Gen 6', 5: 'Gen 5' };
-          badgeTmp.textContent = badgeLabels[opt.generation] || 'Gen ' + opt.generation;
+          badgeTmp.textContent = 'v' + opt.generation;
           item.appendChild(badgeTmp);
         }
         var openLink = document.createElement('span');
@@ -860,9 +863,30 @@ function render(skipPreview) {
   document.getElementById('prevBtn').disabled = fi <= 0;
   document.getElementById('nextBtn').disabled = fi >= flatList.length - 1;
 
-  // Update accordion toggle label with current design name
+  // Update accordion toggle label with current category
   var accLabel = document.getElementById('accToggleLabel');
-  if (accLabel) accLabel.textContent = opt.name;
+  if (accLabel) accLabel.textContent = cat.name;
+
+  // Update toolbar detail: design name · philosophy [v6]
+  var tbDetail = document.getElementById('tbDetail');
+  if (tbDetail) {
+    tbDetail.textContent = '';
+    var nameSpan = document.createElement('span');
+    nameSpan.className = 'td-name';
+    nameSpan.textContent = opt.name;
+    tbDetail.appendChild(nameSpan);
+    tbDetail.appendChild(document.createTextNode(' \u00B7 '));
+    var philSpan = document.createElement('span');
+    philSpan.className = 'td-phil';
+    philSpan.textContent = opt.philosophy || opt.desc.substring(0, 30);
+    tbDetail.appendChild(philSpan);
+    if (opt.generation >= 3) {
+      var badge = document.createElement('span');
+      badge.className = 'gen-badge gen-' + opt.generation;
+      badge.textContent = 'v' + opt.generation;
+      tbDetail.appendChild(badge);
+    }
+  }
 
   // Bottom nav (desktop)
   const ncb = document.getElementById('navCounterBottom'); if (ncb) ncb.textContent = (fi + 1) + ' of ' + flatList.length;

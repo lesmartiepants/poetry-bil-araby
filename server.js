@@ -1,6 +1,7 @@
 import express from 'express';
 import pg from 'pg';
 import cors from 'cors';
+import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { resolve } from 'path';
@@ -57,6 +58,7 @@ pool.query('SELECT NOW()', (err, res) => {
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use('/api/', rateLimit({ windowMs: 60_000, max: 100, standardHeaders: true, legacyHeaders: false }));
 
 // Request logging middleware
 app.use((req, res, next) => {
@@ -270,6 +272,16 @@ async function designTablesExist() {
   }
 }
 
+// GET /api/design-review/ping — lightweight liveness check (SELECT 1, no table scan)
+app.get('/api/design-review/ping', async (req, res) => {
+  try {
+    await pool.query('SELECT 1');
+    res.json({ ok: true });
+  } catch (error) {
+    res.status(500).json({ ok: false, error: error.message });
+  }
+});
+
 // GET /api/design-review/items — list all design items
 app.get('/api/design-review/items', async (req, res) => {
   try {
@@ -289,49 +301,52 @@ app.get('/api/design-review/items', async (req, res) => {
   }
 });
 
-// POST /api/design-review/items/sync — bulk upsert from CATALOG (idempotent)
+// POST /api/design-review/items/sync — bulk upsert from CATALOG (idempotent, batched)
 app.post('/api/design-review/items/sync', async (req, res) => {
   try {
     if (!(await designTablesExist())) return res.status(503).json({ error: 'Design tables not created yet' });
     const { items } = req.body;
-    if (!Array.isArray(items)) return res.status(400).json({ error: 'items must be an array' });
+    if (!Array.isArray(items) || items.length === 0) return res.status(400).json({ error: 'items must be a non-empty array' });
 
-    let upserted = 0;
-    for (const item of items) {
-      await pool.query(`
-        INSERT INTO design_items (item_key, name, component, category, file_path, description, generation, iteration, source_branch, source_pr)
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
-        ON CONFLICT (item_key) DO UPDATE SET
-          name = EXCLUDED.name,
-          component = EXCLUDED.component,
-          category = EXCLUDED.category,
-          file_path = EXCLUDED.file_path,
-          description = EXCLUDED.description,
-          generation = EXCLUDED.generation,
-          iteration = EXCLUDED.iteration,
-          source_branch = EXCLUDED.source_branch,
-          source_pr = EXCLUDED.source_pr,
-          updated_at = now()
-      `, [
-        item.item_key, item.name, item.component, item.category,
-        item.file_path, item.description || null,
-        item.generation || 1, item.iteration || null,
-        item.source_branch || null, item.source_pr || null
-      ]);
-      upserted++;
+    // Build a single multi-row INSERT...ON CONFLICT (all values parameterized)
+    const params = [];
+    const valueTuples = [];
+    for (let i = 0; i < items.length; i++) {
+      const p = i * 10;
+      params.push(
+        items[i].item_key, items[i].name, items[i].component, items[i].category,
+        items[i].file_path, items[i].description || null,
+        items[i].generation || 1, items[i].iteration || null,
+        items[i].source_branch || null, items[i].source_pr || null
+      );
+      valueTuples.push('($' + (p+1) + ', $' + (p+2) + ', $' + (p+3) + ', $' + (p+4) + ', $' + (p+5) + ', $' + (p+6) + ', $' + (p+7) + ', $' + (p+8) + ', $' + (p+9) + ', $' + (p+10) + ')');
     }
-    res.json({ upserted, total: items.length });
+
+    const sql = 'INSERT INTO design_items (item_key, name, component, category, file_path, description, generation, iteration, source_branch, source_pr) ' +
+      'VALUES ' + valueTuples.join(', ') + ' ' +
+      'ON CONFLICT (item_key) DO UPDATE SET ' +
+      'name = EXCLUDED.name, component = EXCLUDED.component, category = EXCLUDED.category, ' +
+      'file_path = EXCLUDED.file_path, description = EXCLUDED.description, generation = EXCLUDED.generation, ' +
+      'iteration = EXCLUDED.iteration, source_branch = EXCLUDED.source_branch, source_pr = EXCLUDED.source_pr, updated_at = now()';
+    await pool.query(sql, params); // lgtm[js/sql-injection] - valueTuples contain only $N placeholders, all user data is in params
+
+    res.json({ upserted: items.length, total: items.length });
   } catch (error) {
     console.error('Error syncing design items:', error);
     res.status(500).json({ error: error.message });
   }
 });
 
-// GET /api/design-review/sessions — list review sessions
+// GET /api/design-review/sessions — list review sessions (supports ?status= filter)
 app.get('/api/design-review/sessions', async (req, res) => {
   try {
     if (!(await designTablesExist())) return res.json([]);
-    const result = await pool.query('SELECT * FROM design_review_sessions ORDER BY created_at DESC');
+    const { status } = req.query;
+    let query = 'SELECT * FROM design_review_sessions';
+    const params = [];
+    if (status) { params.push(status); query += ` WHERE status = $1`; }
+    query += ' ORDER BY created_at DESC';
+    const result = await pool.query(query, params);
     res.json(result.rows);
   } catch (error) {
     console.error('Error fetching sessions:', error);
@@ -403,7 +418,7 @@ app.get('/api/design-review/sessions/:id/verdicts', async (req, res) => {
   }
 });
 
-// POST /api/design-review/sessions/:id/verdicts — bulk submit/update verdicts
+// POST /api/design-review/sessions/:id/verdicts — bulk submit/update verdicts (batched)
 app.post('/api/design-review/sessions/:id/verdicts', async (req, res) => {
   try {
     if (!(await designTablesExist())) return res.status(503).json({ error: 'Design tables not created yet' });
@@ -411,28 +426,41 @@ app.post('/api/design-review/sessions/:id/verdicts', async (req, res) => {
     const { verdicts } = req.body;
     if (!Array.isArray(verdicts)) return res.status(400).json({ error: 'verdicts must be an array' });
 
-    let saved = 0;
+    // Resolve all item_keys to item_ids in a single query
+    const keys = verdicts.filter(v => v.item_key && !v.item_id).map(v => v.item_key);
+    const keyMap = Object.create(null);
+    if (keys.length > 0) {
+      const keyResult = await pool.query(
+        'SELECT id, item_key FROM design_items WHERE item_key = ANY($1)',
+        [keys]
+      );
+      keyResult.rows.forEach(r => { keyMap[r.item_key] = r.id; });
+    }
+
+    // Build batch of resolved verdicts
+    const resolved = [];
     for (const v of verdicts) {
-      // Resolve item_id from item_key if not provided
-      let item_id = v.item_id;
-      if (!item_id && v.item_key) {
-        const itemResult = await pool.query('SELECT id FROM design_items WHERE item_key = $1', [v.item_key]);
-        if (itemResult.rows.length > 0) item_id = itemResult.rows[0].id;
+      const item_id = v.item_id || keyMap[v.item_key];
+      if (!item_id) continue;
+      resolved.push({ session_id: id, item_id, item_key: v.item_key, verdict: v.verdict, comment: v.comment || null, priority: v.priority || 0, tags: v.tags || null });
+    }
+
+    if (resolved.length > 0) {
+      // Single multi-row INSERT...ON CONFLICT (all values parameterized)
+      const params = [];
+      const valueTuples = [];
+      for (let i = 0; i < resolved.length; i++) {
+        const p = i * 7;
+        const r = resolved[i];
+        params.push(r.session_id, r.item_id, r.item_key, r.verdict, r.comment, r.priority, r.tags);
+        valueTuples.push('($' + (p+1) + ', $' + (p+2) + ', $' + (p+3) + ', $' + (p+4) + ', $' + (p+5) + ', $' + (p+6) + ', $' + (p+7) + ')');
       }
-      if (!item_id) continue; // skip if item not found
 
-      await pool.query(`
-        INSERT INTO design_verdicts (session_id, item_id, item_key, verdict, comment, priority, tags)
-        VALUES ($1, $2, $3, $4, $5, $6, $7)
-        ON CONFLICT (session_id, item_id) DO UPDATE SET
-          verdict = EXCLUDED.verdict,
-          comment = EXCLUDED.comment,
-          priority = EXCLUDED.priority,
-          tags = EXCLUDED.tags,
-          updated_at = now()
-      `, [id, item_id, v.item_key, v.verdict, v.comment || null, v.priority || 0, v.tags || null]);
-
-      saved++;
+      const sql = 'INSERT INTO design_verdicts (session_id, item_id, item_key, verdict, comment, priority, tags) ' +
+        'VALUES ' + valueTuples.join(', ') + ' ' +
+        'ON CONFLICT (session_id, item_id) DO UPDATE SET ' +
+        'verdict = EXCLUDED.verdict, comment = EXCLUDED.comment, priority = EXCLUDED.priority, tags = EXCLUDED.tags, updated_at = now()';
+      await pool.query(sql, params); // lgtm[js/sql-injection] - valueTuples contain only $N placeholders, all user data is in params
     }
 
     // Update session reviewed count
@@ -445,7 +473,7 @@ app.post('/api/design-review/sessions/:id/verdicts', async (req, res) => {
       [parseInt(countResult.rows[0].count), id]
     );
 
-    res.json({ saved, total: verdicts.length });
+    res.json({ saved: resolved.length, total: verdicts.length });
   } catch (error) {
     console.error('Error saving verdicts:', error);
     res.status(500).json({ error: error.message });

@@ -209,6 +209,59 @@
       font-size: 13px; color: var(--text-secondary);
       padding: 6px 0;
     }
+  
+    /* Translation icon text */
+    .vc-translate-icon {
+      font-family: 'Tajawal', sans-serif;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      gap: 2px;
+    }
+    .vc-translate-icon .ar { font-family: 'Amiri', serif; font-size: 14px; }
+    .vc-translate-icon .sep { opacity: 0.4; font-size: 9px; }
+    .vc-translate-icon .en { font-size: 11px; }
+
+    /* Inline transliteration after each verse line */
+    .verse-line { margin-bottom: 0.25rem; }
+    .verse-translit {
+      font-family: 'Tajawal', sans-serif;
+      font-size: 0.75rem;
+      color: var(--dark-muted, #a8a29e);
+      font-style: italic;
+      display: none;
+      margin-bottom: 0.75rem;
+      direction: ltr;
+      opacity: 0.6;
+    }
+    .transliteration-active .verse-translit { display: block; }
+
+    /* Bottom action bar */
+    .bottom-bar {
+      position: fixed;
+      bottom: 0;
+      left: 0; right: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-around;
+      padding: 0.5rem 1rem;
+      border-top: 1px solid rgba(197, 160, 89, 0.15);
+      background: rgba(12, 12, 14, 0.95);
+      z-index: 40;
+      backdrop-filter: blur(12px);
+    }
+    .bb-btn {
+      width: 48px; height: 48px;
+      border: none; background: transparent;
+      color: var(--dark-muted, #a8a29e);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; border-radius: 8px;
+      transition: color 0.2s ease;
+    }
+    .bb-btn:hover { color: var(--gold, #C5A059); }
+    .bb-btn svg { width: 20px; height: 20px; }
   </style>
 </head>
 <body>
@@ -226,19 +279,19 @@
 
     <div class="poem-area">
       <div class="poem-content">
-        <div class="poem-text" lang="ar" dir="rtl">
-          وما نيلُ المطالبِ بالتمنّي<br>
-          ولكنْ تُؤخَذُ الدنيا غِلابا<br><br>
-          وما استعصى على قومٍ منالٌ<br>
-          إذا الإقدامُ كان لهم رِكابا
-        </div>
+        <div class="poem-text" id="poemText" lang="ar" dir="rtl">
+            <div class="verse-line">وما نيلُ المطالبِ بالتمنّي</div>
+            <div class="verse-translit">wa ma naylu al-matalibi bil-tamanni</div>
+            <div class="verse-line">ولكنْ تُؤخَذُ الدنيا غِلابا</div>
+            <div class="verse-translit">wa lakin tu'khadhu ad-dunya ghilaba</div>
+            <div class="verse-line" style="margin-top:0.75rem">وما استعصى على قومٍ منالٌ</div>
+            <div class="verse-translit">wa ma ista'sa 'ala qawmin manalun</div>
+            <div class="verse-line">إذا الإقدامُ كان لهم رِكابا</div>
+            <div class="verse-translit">idha al-iqdamu kana lahum rikaba</div>
+          </div>
         <div class="poem-translation" id="translationRow">
           Wishes alone won't earn you what you seek,<br>
           the world is taken only by the bold.
-        </div>
-        <div class="poem-transliteration" id="transliterationRow">
-          wa ma naylu al-matalibi bil-tamanni<br>
-          wa lakin tu'khadhu ad-dunya ghilaba
         </div>
         <p class="poem-poet" lang="ar" dir="rtl">-- أحمد شوقي</p>
       </div>
@@ -247,7 +300,7 @@
     <!-- Vertical Controls - Gold Orbital -->
     <div class="vc-strip">
       <button class="vc-toggle" data-action="translation" aria-label="Toggle translation">
-        <i data-lucide="languages"></i>
+        <span class="vc-translate-icon"><span class="ar">ع</span><span class="sep">|</span><span class="en">A</span></span>
       </button>
       <div class="vc-divider"></div>
       <button class="vc-toggle" data-action="transliteration" aria-label="Toggle transliteration">
@@ -263,6 +316,16 @@
         <i data-lucide="settings"></i>
       </button>
     </div>
+    <!-- Bottom action bar -->
+    <nav class="bottom-bar">
+      <button class="bb-btn" aria-label="Listen"><i data-lucide="volume-2" style="width:20px;height:20px"></i></button>
+      <button class="bb-btn" aria-label="Insights"><i data-lucide="lightbulb" style="width:20px;height:20px"></i></button>
+      <button class="bb-btn" aria-label="Next poem"><i data-lucide="shuffle" style="width:20px;height:20px"></i></button>
+      <button class="bb-btn" aria-label="Save"><i data-lucide="heart" style="width:20px;height:20px"></i></button>
+      <button class="bb-btn" aria-label="Share"><i data-lucide="share" style="width:20px;height:20px"></i></button>
+    </nav>
+
+
 
     <div class="vc-settings" id="settingsPanel">
       <div class="vc-settings-title">Settings</div>
@@ -291,7 +354,12 @@
         document.getElementById('translationRow').style.display = btn.classList.contains('active') ? 'block' : 'none';
       } else if (action === 'transliteration') {
         btn.classList.toggle('active');
-        document.getElementById('transliterationRow').style.display = btn.classList.contains('active') ? 'block' : 'none';
+        var poemEl = document.getElementById('poemText');
+        if (btn.classList.contains('active')) {
+          poemEl.classList.add('transliteration-active');
+        } else {
+          poemEl.classList.remove('transliteration-active');
+        }
       } else if (action === 'settings') {
         btn.classList.toggle('active');
         document.getElementById('settingsPanel').classList.toggle('visible');

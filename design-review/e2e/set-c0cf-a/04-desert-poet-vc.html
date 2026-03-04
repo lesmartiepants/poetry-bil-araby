@@ -93,8 +93,8 @@
     background: var(--gold-dim); vertical-align: middle; margin: 0 0.8rem;
   }
 
-  /* Translation & Transliteration rows */
-  .translation-row, .translit-row {
+  /* Translation row */
+  .translation-row {
     display: none;
     font-family: 'Tajawal', sans-serif;
     font-size: 14px;
@@ -106,7 +106,44 @@
     position: relative;
     z-index: 1;
   }
-  .translation-row.visible, .translit-row.visible { display: block; }
+  .translation-row.visible { display: block; }
+
+  /* Inline transliteration */
+  .verse-block { margin-bottom: 0.3em; }
+  .verse-translit {
+    display: none;
+    font-family: 'Tajawal', sans-serif;
+    font-size: 12px;
+    color: var(--ash);
+    opacity: 0.5;
+    font-style: italic;
+    direction: ltr;
+    text-align: center;
+    margin-top: 2px;
+  }
+  .verse-translit.visible { display: block; }
+
+  /* ===== BOTTOM ACTION BAR ===== */
+  .bottom-nav {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
+    background: linear-gradient(180deg, rgba(30,25,22,0.95), rgba(26,22,20,0.98));
+    padding: 12px 20px 16px;
+    border-top: 1px solid rgba(197,160,89,0.2);
+    box-shadow: 0 -4px 16px rgba(0,0,0,0.3);
+    direction: ltr;
+    backdrop-filter: blur(12px);
+  }
+  .bottom-nav .nav-items-wrap {
+    display: flex; align-items: center; justify-content: center; gap: 6px;
+  }
+  .nav-item {
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+    padding: 8px 14px; background: transparent; border: none;
+    color: var(--gold); opacity: 0.5; cursor: pointer; font-family: 'Tajawal', sans-serif;
+    font-size: 10px; transition: all 0.2s; min-width: 56px; min-height: 44px;
+  }
+  .nav-item.active { opacity: 1; }
+  .nav-item:hover { opacity: 1; }
 
   /* Settings panel */
   .settings-panel {
@@ -253,7 +290,7 @@
     <!-- Vertical Controls: Sand Column with Desert Trail Markers -->
     <nav class="vc-strip" aria-label="Toggle controls">
       <button class="vc-toggle" data-action="translation" aria-label="Toggle translation">
-        <i data-lucide="languages"></i>
+        <span style="font-family:'Tajawal',sans-serif;font-size:13px;font-weight:700;line-height:1;letter-spacing:-0.5px">ع<span style="opacity:0.4">|</span>A</span>
       </button>
       <button class="vc-toggle" data-action="transliteration" aria-label="Toggle transliteration">
         <i data-lucide="text-cursor-input"></i>
@@ -277,18 +314,31 @@
 
     <div class="poem-card">
       <div class="poem-content">
-        <span class="hemistich">أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ</span>
+        <div class="verse-block">
+          <span class="hemistich">أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ</span>
+          <div class="verse-translit">Ana al-bahru fi ahsha'ihi al-durru kaminun</div>
+        </div>
         <span class="separator"></span>
-        <span class="hemistich">فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي</span>
+        <div class="verse-block">
+          <span class="hemistich">فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي</span>
+          <div class="verse-translit">fa-hal sa'alu al-ghawwasa an sadafati</div>
+        </div>
       </div>
       <div class="translation-row" id="translationRow">
         I am the sea, in whose depths pearls lie hidden / Have they asked the diver about my shells?
       </div>
-      <div class="translit-row" id="translitRow">
-        Ana al-bahru fi ahsha'ihi al-durru kaminun / fa-hal sa'alu al-ghawwasa an sadafati
-      </div>
       <div class="poet-name">أحمد شوقي</div>
     </div>
+
+    <!-- Bottom Action Bar -->
+    <nav class="bottom-nav">
+      <div class="nav-items-wrap">
+        <button class="nav-item active" aria-label="Next poem"><i data-lucide="shuffle" style="width:20px;height:20px"></i>Shuffle</button>
+        <button class="nav-item" aria-label="Save poem"><i data-lucide="heart" style="width:20px;height:20px"></i>Save</button>
+        <button class="nav-item" aria-label="Listen"><i data-lucide="headphones" style="width:20px;height:20px"></i>Listen</button>
+        <button class="nav-item" aria-label="Share poem"><i data-lucide="share-2" style="width:20px;height:20px"></i>Share</button>
+      </div>
+    </nav>
   </main>
 
 <script>
@@ -312,7 +362,7 @@
         document.getElementById('translationRow').classList.toggle('visible');
       } else if (action === 'transliteration') {
         btn.classList.toggle('active');
-        document.getElementById('translitRow').classList.toggle('visible');
+        document.querySelectorAll('.verse-translit').forEach(function(el) { el.classList.toggle('visible'); });
       } else if (action === 'settings') {
         btn.classList.toggle('active');
         document.getElementById('settingsPanel').classList.toggle('visible');

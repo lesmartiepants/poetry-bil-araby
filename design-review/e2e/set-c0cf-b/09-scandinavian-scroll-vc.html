@@ -65,13 +65,51 @@
     color: #9a9590; margin-top: 3rem; letter-spacing: 0.08em; text-transform: uppercase;
   }
 
-  /* Translation & Transliteration */
-  .translation-row, .translit-row {
+  /* Translation row */
+  .translation-row {
     display: none; font-family: 'Tajawal', sans-serif; font-size: 14px;
     color: #9a9590; text-align: center; padding: 10px 0; direction: ltr;
     max-width: 500px; margin: 0 auto;
   }
-  .translation-row.visible, .translit-row.visible { display: block; }
+  .translation-row.visible { display: block; }
+
+  /* Inline transliteration */
+  .verse-translit {
+    display: none; font-family: 'Tajawal', sans-serif; font-size: 11px; font-weight: 300;
+    color: #b5b0aa; font-style: italic; direction: ltr;
+    text-align: center; margin-top: 2px; letter-spacing: 0.02em;
+  }
+  .verse-translit.visible { display: block; }
+
+  /* ===== BOTTOM ACTION BAR (Ultra-thin dot line style) ===== */
+  .bottom-nav {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: center;
+    height: 64px; padding: 0 1rem; direction: ltr;
+  }
+  .bottom-nav::before {
+    content: ''; position: absolute;
+    bottom: 32px; left: 10%; right: 10%; height: 1px;
+    background: #e0ddd8;
+  }
+  .dot-nav-action {
+    position: relative; width: 44px; height: 44px;
+    background: transparent; border: none;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 16px; color: #c5c0b8;
+    -webkit-tap-highlight-color: transparent;
+    transition: color 0.3s;
+  }
+  .dot-nav-action::before {
+    content: ''; width: 5px; height: 5px; border-radius: 50%;
+    background: #c5c0b8; position: absolute;
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.3s ease;
+  }
+  .dot-nav-action i { opacity: 0; transition: opacity 0.3s ease; position: relative; z-index: 1; }
+  .dot-nav-action:hover::before { transform: scale(1.8); background: #2c2c2b; }
+  .dot-nav-action:hover i { opacity: 0.6; }
+  .dot-nav-action:hover { color: #2c2c2b; }
 
   /* Settings panel */
   .settings-panel {
@@ -173,24 +211,31 @@
       <article class="poem-card">
         <div class="poem-content" lang="ar">
           <span class="hemistich">أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ</span>
+          <div class="verse-translit">Ana al-bahru fi ahsha'ihi al-durru kaminun</div>
           <span class="bayt-sep" aria-hidden="true"></span>
           <span class="hemistich">فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي</span>
+          <div class="verse-translit">fa-hal sa'alu al-ghawwasa an sadafati</div>
         </div>
         <div class="translation-row" id="translationRow">
           I am the sea, in whose depths pearls lie hidden / Have they asked the diver about my shells?
-        </div>
-        <div class="translit-row" id="translitRow">
-          Ana al-bahru fi ahsha'ihi al-durru kaminun / fa-hal sa'alu al-ghawwasa an sadafati
         </div>
         <div class="poet-name">أحمد شوقي</div>
       </article>
     </section>
   </div>
 
+  <!-- Bottom Action Bar (Dot Line) -->
+  <nav class="bottom-nav">
+    <button class="dot-nav-action" aria-label="Next poem"><i data-lucide="shuffle" style="width:16px;height:16px"></i></button>
+    <button class="dot-nav-action" aria-label="Save poem"><i data-lucide="heart" style="width:16px;height:16px"></i></button>
+    <button class="dot-nav-action" aria-label="Listen"><i data-lucide="headphones" style="width:16px;height:16px"></i></button>
+    <button class="dot-nav-action" aria-label="Share"><i data-lucide="share-2" style="width:16px;height:16px"></i></button>
+  </nav>
+
   <!-- Vertical Controls: Ultra-Thin Line with Expanding Dots -->
   <nav class="vc-strip" aria-label="Toggle controls">
     <button class="vc-toggle" data-action="translation" aria-label="Toggle translation">
-      <i data-lucide="languages"></i>
+      <span style="font-family:'Tajawal',sans-serif;font-size:12px;font-weight:700;line-height:1;letter-spacing:-0.5px;position:relative;z-index:1">ع<span style="opacity:0.4">|</span>A</span>
       <span class="vc-label">translate</span>
     </button>
     <button class="vc-toggle" data-action="transliteration" aria-label="Toggle transliteration">
@@ -236,7 +281,7 @@
         document.getElementById('translationRow').classList.toggle('visible');
       } else if (action === 'transliteration') {
         btn.classList.toggle('active');
-        document.getElementById('translitRow').classList.toggle('visible');
+        document.querySelectorAll('.verse-translit').forEach(function(el) { el.classList.toggle('visible'); });
       } else if (action === 'settings') {
         btn.classList.toggle('active');
         document.getElementById('settingsPanel').classList.toggle('visible');

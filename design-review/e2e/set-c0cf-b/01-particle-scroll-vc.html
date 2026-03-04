@@ -64,12 +64,41 @@
     border-top: 1px solid var(--card-border);
   }
 
-  /* Translation & Transliteration */
-  .translation-row, .translit-row {
+  /* Translation row */
+  .translation-row {
     display: none; font-family: 'Tajawal', sans-serif; font-size: 14px;
     opacity: 0.6; text-align: center; padding: 8px 0; direction: ltr;
   }
-  .translation-row.visible, .translit-row.visible { display: block; }
+  .translation-row.visible { display: block; }
+
+  /* Inline transliteration */
+  .verse-translit {
+    display: none; font-family: 'Tajawal', sans-serif; font-size: 12px;
+    opacity: 0.4; font-style: italic; direction: ltr;
+    text-align: center; margin-top: 2px;
+  }
+  .verse-translit.visible { display: block; }
+
+  /* ===== BOTTOM ACTION BAR ===== */
+  .bottom-nav {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
+    display: flex; justify-content: space-around; align-items: center;
+    height: 64px; background: transparent; direction: ltr;
+  }
+  .nav-item {
+    width: 56px; height: 56px;
+    display: flex; align-items: center; justify-content: center;
+    background: transparent; border: none;
+    color: rgba(197,160,89,0.3); cursor: pointer;
+    transition: all 0.3s ease; border-radius: 50%; position: relative;
+  }
+  .nav-item::before {
+    content: ''; position: absolute; inset: 0; border-radius: 50%;
+    background: radial-gradient(circle, rgba(197,160,89,0) 0%, rgba(197,160,89,0) 100%);
+    transition: background 0.3s ease;
+  }
+  .nav-item:hover { color: var(--gold); }
+  .nav-item:hover::before { background: radial-gradient(circle, rgba(197,160,89,0.15) 0%, transparent 70%); }
 
   /* Settings */
   .settings-panel {
@@ -179,21 +208,28 @@
           <span class="bayt-sep"></span>
           <span class="hemistich">فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي</span>
         </div>
+        <div class="verse-translit">Ana al-bahru fi ahsha'ihi al-durru kaminun</div>
+        <div class="verse-translit">fa-hal sa'alu al-ghawwasa an sadafati</div>
       </div>
       <div class="translation-row" id="translationRow">
         I am the sea, in whose depths pearls lie hidden / Have they asked the diver about my shells?
-      </div>
-      <div class="translit-row" id="translitRow">
-        Ana al-bahru fi ahsha'ihi al-durru kaminun / fa-hal sa'alu al-ghawwasa an sadafati
       </div>
       <div class="poet-name">احمد شوقي</div>
     </div>
   </div>
 
+  <!-- Bottom Action Bar -->
+  <nav class="bottom-nav">
+    <button class="nav-item" aria-label="Next poem"><i data-lucide="shuffle" style="width:20px;height:20px"></i></button>
+    <button class="nav-item" aria-label="Save poem"><i data-lucide="heart" style="width:20px;height:20px"></i></button>
+    <button class="nav-item" aria-label="Listen"><i data-lucide="headphones" style="width:20px;height:20px"></i></button>
+    <button class="nav-item" aria-label="Share"><i data-lucide="share-2" style="width:20px;height:20px"></i></button>
+  </nav>
+
   <!-- Vertical Controls: Particle Column -->
   <nav class="vc-strip" aria-label="Toggle controls">
     <button class="vc-toggle" data-action="translation" aria-label="Toggle translation">
-      <i data-lucide="languages"></i>
+      <span style="font-family:'Tajawal',sans-serif;font-size:13px;font-weight:700;line-height:1;letter-spacing:-0.5px">ع<span style="opacity:0.4">|</span>A</span>
     </button>
     <button class="vc-toggle" data-action="transliteration" aria-label="Toggle transliteration">
       <i data-lucide="text-cursor-input"></i>
@@ -236,7 +272,7 @@
         document.getElementById('translationRow').classList.toggle('visible');
       } else if (action === 'transliteration') {
         btn.classList.toggle('active');
-        document.getElementById('translitRow').classList.toggle('visible');
+        document.querySelectorAll('.verse-translit').forEach(function(el) { el.classList.toggle('visible'); });
       } else if (action === 'settings') {
         btn.classList.toggle('active');
         document.getElementById('settingsPanel').classList.toggle('visible');

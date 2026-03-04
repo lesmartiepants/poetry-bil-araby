@@ -77,12 +77,38 @@
   }
   .poet { text-align: center; font-size: 0.9rem; color: var(--gold); font-family: 'Amiri', serif; }
 
-  /* Translation & Transliteration */
-  .translation-row, .translit-row {
+  /* Translation row */
+  .translation-row {
     display: none; font-family: 'Tajawal', sans-serif; font-size: 14px;
     color: var(--comment); text-align: center; padding: 10px 0; direction: ltr;
   }
-  .translation-row.visible, .translit-row.visible { display: block; }
+  .translation-row.visible { display: block; }
+
+  /* Inline transliteration */
+  .verse-translit {
+    display: none; font-family: 'IBM Plex Mono', monospace; font-size: 11px;
+    color: var(--comment); font-style: italic; direction: ltr;
+    text-align: center; margin-top: 2px;
+  }
+  .verse-translit.visible { display: block; }
+
+  /* ===== BOTTOM ACTION BAR (Page Tab Style) ===== */
+  .bottom-nav {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
+    display: flex; flex-direction: row; justify-content: center; align-items: flex-end;
+    gap: 0; padding: 0; direction: ltr;
+  }
+  .nav-tab {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 3px; width: 72px; min-height: 52px;
+    background: var(--panel-dark); border: 1px solid var(--border-dark); border-bottom: none;
+    border-radius: 8px 8px 0 0;
+    color: var(--comment); cursor: pointer;
+    font-size: 9px; font-family: 'IBM Plex Mono', monospace;
+    transition: all 0.2s ease; position: relative; padding: 8px 4px 6px;
+  }
+  body.light .nav-tab { background: var(--panel-light); border-color: var(--border-light); }
+  .nav-tab:hover { color: var(--gold); transform: translateY(-4px); }
 
   /* Settings */
   .settings-panel {
@@ -182,7 +208,7 @@
   <!-- Vertical Controls: Gilded Margin Strip -->
   <nav class="vc-strip" aria-label="Toggle controls">
     <button class="vc-toggle" data-action="translation" aria-label="Toggle translation">
-      <i data-lucide="languages"></i>
+      <span style="font-family:'Tajawal',sans-serif;font-size:13px;font-weight:700;line-height:1;letter-spacing:-0.5px">ع<span style="opacity:0.4">|</span>A</span>
     </button>
     <button class="vc-toggle" data-action="transliteration" aria-label="Toggle transliteration">
       <i data-lucide="text-cursor-input"></i>
@@ -216,18 +242,25 @@
     </div>
     <div class="page-right">
       <div class="poem-text poem-content" lang="ar" dir="rtl">
-        أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ<br>
+        أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ
+        <div class="verse-translit">Ana al-bahru fi ahsha'ihi al-durru kaminun</div>
         فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
+        <div class="verse-translit">fa-hal sa'alu al-ghawwasa an sadafati</div>
       </div>
       <div class="translation-row" id="translationRow">
         I am the sea, in whose depths pearls lie hidden / Have they asked the diver about my shells?
       </div>
-      <div class="translit-row" id="translitRow">
-        Ana al-bahru fi ahsha'ihi al-durru kaminun / fa-hal sa'alu al-ghawwasa an sadafati
-      </div>
       <div class="poet">-- أحمد شوقي</div>
     </div>
   </div>
+
+  <!-- Bottom Action Bar -->
+  <nav class="bottom-nav">
+    <button class="nav-tab" aria-label="Next poem"><i data-lucide="shuffle" style="width:18px;height:18px"></i><span>shuffle</span></button>
+    <button class="nav-tab" aria-label="Save poem"><i data-lucide="heart" style="width:18px;height:18px"></i><span>save</span></button>
+    <button class="nav-tab" aria-label="Listen"><i data-lucide="headphones" style="width:18px;height:18px"></i><span>listen</span></button>
+    <button class="nav-tab" aria-label="Share"><i data-lucide="share-2" style="width:18px;height:18px"></i><span>share</span></button>
+  </nav>
 </div>
 
 <div class="status-bar">
@@ -256,7 +289,7 @@
         document.getElementById('translationRow').classList.toggle('visible');
       } else if (action === 'transliteration') {
         btn.classList.toggle('active');
-        document.getElementById('translitRow').classList.toggle('visible');
+        document.querySelectorAll('.verse-translit').forEach(function(el) { el.classList.toggle('visible'); });
       } else if (action === 'settings') {
         btn.classList.toggle('active');
         document.getElementById('settingsPanel').classList.toggle('visible');

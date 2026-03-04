@@ -227,8 +227,8 @@ html.light .app-top-btn { border-color: rgba(61,42,20,0.2); color: rgba(61,42,20
   line-height: 1.2;
 }
 
-/* Translation & Transliteration rows */
-.translation-row, .translit-row {
+/* Translation row */
+.translation-row {
   display: none;
   font-family: var(--font-ui);
   font-size: 15px;
@@ -238,7 +238,60 @@ html.light .app-top-btn { border-color: rgba(61,42,20,0.2); color: rgba(61,42,20
   font-style: italic;
   direction: ltr;
 }
-.translation-row.visible, .translit-row.visible { display: block; }
+.translation-row.visible { display: block; }
+
+/* Inline transliteration after each verse */
+.verse-block { margin-bottom: 0.3em; }
+.verse-translit {
+  display: none;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  color: rgba(61,42,20,0.45);
+  font-style: italic;
+  direction: ltr;
+  text-align: center;
+  margin-top: 2px;
+}
+.verse-translit.visible { display: block; }
+
+/* ===== BOTTOM ACTION BAR ===== */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
+  background:
+    repeating-linear-gradient(90deg, rgba(101,82,60,0.04) 0px, transparent 2px, transparent 8px, rgba(101,82,60,0.04) 10px),
+    linear-gradient(180deg, #6b5a3e 0%, #5a4a32 20%, #4a3c28 50%, #3d3020 100%);
+  padding: 14px 20px 16px;
+  border-top: 3px solid #8b7355;
+  box-shadow: 0 -4px 16px rgba(26,18,10,0.4), inset 0 2px 4px rgba(139,115,85,0.2);
+  direction: ltr;
+  border-radius: 16px 16px 0 0;
+}
+html.light .bottom-nav {
+  background:
+    repeating-linear-gradient(90deg, rgba(139,115,85,0.06) 0px, transparent 2px, transparent 8px, rgba(139,115,85,0.06) 10px),
+    linear-gradient(180deg, #8b7355 0%, #7a6345 20%, #6b5a3e 50%, #5a4a32 100%);
+  border-top-color: #a89470;
+}
+.bottom-nav::before {
+  content: '';
+  position: absolute; top: -1px; left: 50%; transform: translateX(-50%);
+  width: 60px; height: 6px;
+  background: linear-gradient(180deg, #5a3a1a, #3d2810, #5a3a1a);
+  border-radius: 0 0 6px 6px;
+  box-shadow: 0 2px 4px rgba(26,18,10,0.3);
+}
+.bottom-nav .nav-items-wrap {
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+}
+.nav-item {
+  display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 8px 14px; background: transparent; border: none;
+  color: rgba(232,220,196,0.6); cursor: pointer; font-family: var(--font-ui);
+  font-size: 10px; transition: all 0.2s; min-width: 56px; min-height: 44px;
+}
+.nav-item.active { color: #e8dcc4; }
+.nav-item:hover { color: #e8dcc4; }
+.nav-item i { stroke-width: 1.5; }
 
 /* Settings panel */
 .settings-panel {
@@ -297,7 +350,7 @@ html.light .app-top-btn { border-color: rgba(61,42,20,0.2); color: rgba(61,42,20
   <!-- Vertical Controls: Leather Bookmark Strip -->
   <nav class="vc-strip" aria-label="Toggle controls">
     <button class="vc-toggle" data-action="translation" aria-label="Toggle translation">
-      <i data-lucide="languages" style="width:20px;height:20px"></i>
+      <span style="font-family:var(--font-ui);font-size:13px;font-weight:700;line-height:1;letter-spacing:-0.5px">ع<span style="opacity:0.4">|</span>A</span>
     </button>
     <button class="vc-toggle" data-action="transliteration" aria-label="Toggle transliteration">
       <i data-lucide="text-cursor-input" style="width:20px;height:20px"></i>
@@ -329,15 +382,18 @@ html.light .app-top-btn { border-color: rgba(61,42,20,0.2); color: rgba(61,42,20
         </div>
       </div>
       <div class="poem-content" dir="rtl" lang="ar">
-        عَلَى قَدْرِ أَهْلِ العَزْمِ تَأْتِي العَزَائِمُ
+        <div class="verse-block">
+          <div class="verse-ar">عَلَى قَدْرِ أَهْلِ العَزْمِ تَأْتِي العَزَائِمُ</div>
+          <div class="verse-translit" id="translit1">Ala qadri ahli al-azmi ta'ti al-aza'imu</div>
+        </div>
         <span class="hemistich-divider"></span>
-        وَتَأْتِي عَلَى قَدْرِ الكِرَامِ المَكَارِمُ
+        <div class="verse-block">
+          <div class="verse-ar">وَتَأْتِي عَلَى قَدْرِ الكِرَامِ المَكَارِمُ</div>
+          <div class="verse-translit" id="translit2">wa ta'ti ala qadri al-kirami al-makarimu</div>
+        </div>
       </div>
       <div class="translation-row" id="translationRow">
         According to the people of resolve come the resolves, and according to the noble come the noble deeds.
-      </div>
-      <div class="translit-row" id="translitRow">
-        Ala qadri ahli al-azmi ta'ti al-aza'imu / wa ta'ti ala qadri al-kirami al-makarimu
       </div>
       <div class="poem-actions">
         <button class="poem-action-btn">
@@ -352,6 +408,16 @@ html.light .app-top-btn { border-color: rgba(61,42,20,0.2); color: rgba(61,42,20
       </div>
     </article>
   </div>
+
+  <!-- Bottom Action Bar -->
+  <nav class="bottom-nav">
+    <div class="nav-items-wrap">
+      <button class="nav-item active" aria-label="Next poem"><i data-lucide="shuffle" style="width:20px;height:20px"></i>Shuffle</button>
+      <button class="nav-item" aria-label="Save poem"><i data-lucide="heart" style="width:20px;height:20px"></i>Save</button>
+      <button class="nav-item" aria-label="Listen"><i data-lucide="headphones" style="width:20px;height:20px"></i>Listen</button>
+      <button class="nav-item" aria-label="Share poem"><i data-lucide="share-2" style="width:20px;height:20px"></i>Share</button>
+    </div>
+  </nav>
 </div>
 
 <script>
@@ -372,7 +438,7 @@ document.querySelectorAll('.vc-toggle').forEach(function(btn) {
       document.getElementById('translationRow').classList.toggle('visible');
     } else if (action === 'transliteration') {
       btn.classList.toggle('active');
-      document.getElementById('translitRow').classList.toggle('visible');
+      document.querySelectorAll('.verse-translit').forEach(function(el) { el.classList.toggle('visible'); });
     } else if (action === 'settings') {
       btn.classList.toggle('active');
       document.getElementById('settingsPanel').classList.toggle('visible');

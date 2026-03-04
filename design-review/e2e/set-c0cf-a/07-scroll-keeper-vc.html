@@ -83,12 +83,41 @@ body::before {
   background: var(--gold-dim); vertical-align: middle; margin: 0 0.8rem;
 }
 
-/* Translation & Transliteration */
-.translation-row, .translit-row {
+/* Translation row */
+.translation-row {
   display: none; font-family: var(--font-ui); font-size: 14px;
   color: var(--ink-dim); text-align: center; padding: 10px 0; direction: ltr;
 }
-.translation-row.visible, .translit-row.visible { display: block; }
+.translation-row.visible { display: block; }
+
+/* Inline transliteration */
+.verse-block { margin-bottom: 0.2em; }
+.verse-translit {
+  display: none; font-family: var(--font-ui); font-size: 12px;
+  color: var(--ink-dim); font-style: italic; direction: ltr;
+  text-align: center; margin-top: 2px;
+}
+.verse-translit.visible { display: block; }
+
+/* ===== BOTTOM ACTION BAR ===== */
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
+  background: var(--parchment);
+  border-top: 2px solid var(--gold-dim);
+  box-shadow: 0 -4px 12px var(--shadow);
+  direction: ltr; padding: 10px 8px 14px;
+}
+.bottom-nav .nav-items-wrap {
+  display: flex; align-items: center; justify-content: space-around;
+}
+.nav-item {
+  width: 44px; height: 44px;
+  display: flex; align-items: center; justify-content: center;
+  background: transparent; border: none;
+  color: var(--gold); cursor: pointer;
+  transition: all 0.2s; border-radius: 8px;
+}
+.nav-item:hover { color: var(--ink); background: rgba(197,160,89,0.12); }
 
 /* Settings panel */
 .settings-panel {
@@ -199,7 +228,7 @@ body::before {
       <!-- Vertical Controls: Book Spine with Pull-Out Tabs -->
       <nav class="vc-strip" aria-label="Toggle controls">
         <button class="vc-toggle" data-action="translation" aria-label="Toggle translation">
-          <i data-lucide="languages"></i>
+          <span style="font-family:var(--font-ui);font-size:13px;font-weight:700;line-height:1;letter-spacing:-0.5px">ع<span style="opacity:0.4">|</span>A</span>
         </button>
         <button class="vc-toggle" data-action="transliteration" aria-label="Toggle transliteration">
           <i data-lucide="text-cursor-input"></i>
@@ -224,19 +253,32 @@ body::before {
       <div class="illuminated-frame">
         <div class="poem-scroll">
           <div class="poem-content" lang="ar" dir="rtl">
-            أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ<br>
-            فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
+            <div class="verse-block">
+              أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ
+              <div class="verse-translit">Ana al-bahru fi ahsha'ihi al-durru kaminun</div>
+            </div>
+            <div class="verse-block">
+              فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
+              <div class="verse-translit">fa-hal sa'alu al-ghawwasa an sadafati</div>
+            </div>
           </div>
           <div class="translation-row" id="translationRow">
             I am the sea, in whose depths pearls lie hidden / Have they asked the diver about my shells?
-          </div>
-          <div class="translit-row" id="translitRow">
-            Ana al-bahru fi ahsha'ihi al-durru kaminun / fa-hal sa'alu al-ghawwasa an sadafati
           </div>
           <div class="poem-author">أحمد شوقي</div>
         </div>
       </div>
     </div>
+
+    <!-- Bottom Action Bar -->
+    <nav class="bottom-nav">
+      <div class="nav-items-wrap">
+        <button class="nav-item" aria-label="Next poem"><i data-lucide="shuffle" style="width:20px;height:20px"></i></button>
+        <button class="nav-item" aria-label="Save poem"><i data-lucide="heart" style="width:20px;height:20px"></i></button>
+        <button class="nav-item" aria-label="Listen"><i data-lucide="headphones" style="width:20px;height:20px"></i></button>
+        <button class="nav-item" aria-label="Share poem"><i data-lucide="share-2" style="width:20px;height:20px"></i></button>
+      </div>
+    </nav>
   </div>
 
 <script>
@@ -259,7 +301,7 @@ body::before {
         document.getElementById('translationRow').classList.toggle('visible');
       } else if (action === 'transliteration') {
         btn.classList.toggle('active');
-        document.getElementById('translitRow').classList.toggle('visible');
+        document.querySelectorAll('.verse-translit').forEach(function(el) { el.classList.toggle('visible'); });
       } else if (action === 'settings') {
         btn.classList.toggle('active');
         document.getElementById('settingsPanel').classList.toggle('visible');

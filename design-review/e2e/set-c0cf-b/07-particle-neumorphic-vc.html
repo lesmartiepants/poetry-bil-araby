@@ -63,12 +63,40 @@
   }
   body.light .poet-name { border-top-color: var(--border-light); }
 
-  /* Translation & Transliteration */
-  .translation-row, .translit-row {
+  /* Translation row */
+  .translation-row {
     display: none; font-family: 'Tajawal', sans-serif; font-size: 14px;
     opacity: 0.6; text-align: center; padding: 8px 0; direction: ltr;
   }
-  .translation-row.visible, .translit-row.visible { display: block; }
+  .translation-row.visible { display: block; }
+
+  /* Inline transliteration */
+  .verse-translit {
+    display: none; font-family: 'Tajawal', sans-serif; font-size: 12px;
+    opacity: 0.4; font-style: italic; direction: ltr;
+    text-align: center; margin-top: 2px;
+  }
+  .verse-translit.visible { display: block; }
+
+  /* ===== BOTTOM ACTION BAR (Orbiting Particle Style) ===== */
+  .bottom-nav {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
+    display: flex; justify-content: space-around; align-items: center;
+    height: 64px; background: transparent; direction: ltr;
+  }
+  .orbit-nav-btn {
+    width: 48px; height: 48px;
+    display: flex; align-items: center; justify-content: center;
+    background: transparent; border: none;
+    color: rgba(197,160,89,0.3); cursor: pointer;
+    transition: all 0.35s ease; border-radius: 50%; position: relative;
+  }
+  .orbit-nav-btn::before {
+    content: ''; position: absolute; width: 100%; height: 100%; border-radius: 50%;
+    border: 1px solid rgba(197,160,89,0); transition: border-color 0.3s;
+  }
+  .orbit-nav-btn:hover { color: var(--gold); }
+  .orbit-nav-btn:hover::before { border-color: rgba(197,160,89,0.2); }
 
   /* Info Section */
   .info-section {
@@ -191,12 +219,11 @@
           <span class="bayt-sep"></span>
           <span class="hemistich">فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي</span>
         </div>
+        <div class="verse-translit">Ana al-bahru fi ahsha'ihi al-durru kaminun</div>
+        <div class="verse-translit">fa-hal sa'alu al-ghawwasa an sadafati</div>
       </div>
       <div class="translation-row" id="translationRow">
         I am the sea, in whose depths pearls lie hidden / Have they asked the diver about my shells?
-      </div>
-      <div class="translit-row" id="translitRow">
-        Ana al-bahru fi ahsha'ihi al-durru kaminun / fa-hal sa'alu al-ghawwasa an sadafati
       </div>
       <div class="poet-name">احمد شوقي</div>
     </div>
@@ -211,10 +238,18 @@
     </div>
   </div>
 
+  <!-- Bottom Action Bar -->
+  <nav class="bottom-nav">
+    <button class="orbit-nav-btn" aria-label="Next poem"><i data-lucide="shuffle" style="width:20px;height:20px"></i></button>
+    <button class="orbit-nav-btn" aria-label="Save poem"><i data-lucide="heart" style="width:20px;height:20px"></i></button>
+    <button class="orbit-nav-btn" aria-label="Listen"><i data-lucide="headphones" style="width:20px;height:20px"></i></button>
+    <button class="orbit-nav-btn" aria-label="Share"><i data-lucide="share-2" style="width:20px;height:20px"></i></button>
+  </nav>
+
   <!-- Vertical Controls: Orbiting Dots -->
   <nav class="vc-strip" aria-label="Toggle controls">
     <button class="vc-toggle" data-action="translation" aria-label="Toggle translation">
-      <i data-lucide="languages"></i>
+      <span style="font-family:'Tajawal',sans-serif;font-size:13px;font-weight:700;line-height:1;letter-spacing:-0.5px">ع<span style="opacity:0.4">|</span>A</span>
     </button>
     <button class="vc-toggle" data-action="transliteration" aria-label="Toggle transliteration">
       <i data-lucide="text-cursor-input"></i>
@@ -258,7 +293,7 @@
         document.getElementById('translationRow').classList.toggle('visible');
       } else if (action === 'transliteration') {
         btn.classList.toggle('active');
-        document.getElementById('translitRow').classList.toggle('visible');
+        document.querySelectorAll('.verse-translit').forEach(function(el) { el.classList.toggle('visible'); });
       } else if (action === 'settings') {
         btn.classList.toggle('active');
         document.getElementById('settingsPanel').classList.toggle('visible');

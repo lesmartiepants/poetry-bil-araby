@@ -49,3 +49,5 @@ poetry-database/*.dump
 # Database dumps (binary files, should not be in version control)
 poetry-database/
 poetry-splash-ci-fixes/
+.vercel
+.env*.local

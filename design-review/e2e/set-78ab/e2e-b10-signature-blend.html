@@ -544,9 +544,11 @@ body.light { background: var(--ivory); color: #1a2a1f; }
   // Splash enter
   document.getElementById('splashEnter').addEventListener('click', function() {
     splashing = false;
-    document.getElementById('splash').classList.add('fade-out');
+    var splashEl = document.getElementById('splash');
+    splashEl.classList.add('fade-out');
+    splashEl.style.pointerEvents = 'none';
     setTimeout(function() {
-      document.getElementById('splash').style.display = 'none';
+      splashEl.style.display = 'none';
       var wt = document.getElementById('walkthrough');
       wt.classList.add('active');
       wt.setAttribute('data-step', '0');
@@ -559,27 +561,36 @@ body.light { background: var(--ivory); color: #1a2a1f; }
 var bioCards = document.querySelectorAll('.bio-card');
 var bioDots = document.querySelectorAll('.bio-dot');
 var currentStep = 0;
-var totalBioSteps = 3;
+var totalBioSteps = bioCards.length;
 
-document.getElementById('walkthrough').addEventListener('click', function() {
-  currentStep++;
-  if (currentStep >= totalBioSteps) {
-    var wt = document.getElementById('walkthrough');
-    wt.style.opacity = '0';
-    wt.style.transition = 'opacity 0.6s ease';
-    setTimeout(function() {
-      wt.style.display = 'none';
-      document.getElementById('app').classList.add('active');
-      if (typeof lucide !== 'undefined') lucide.createIcons();
-    }, 600);
-  } else {
-    bioCards.forEach(function(c) { c.classList.remove('active'); });
-    bioDots.forEach(function(d) { d.classList.remove('active'); });
+function showBioStep() {
+  for (var i = 0; i < bioCards.length; i++) {
+    bioCards[i].classList.remove('active');
+  }
+  for (var j = 0; j < bioDots.length; j++) {
+    bioDots[j].classList.remove('active');
+  }
+  if (currentStep < totalBioSteps) {
     bioCards[currentStep].classList.add('active');
     bioDots[currentStep].classList.add('active');
     document.getElementById('walkthrough').setAttribute('data-step', currentStep);
   }
-});
+}
+
+function advanceBio() {
+  currentStep++;
+  if (currentStep >= totalBioSteps) {
+    var wt = document.getElementById('walkthrough');
+    wt.classList.remove('active');
+    wt.style.display = 'none';
+    document.getElementById('app').classList.add('active');
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+  } else {
+    showBioStep();
+  }
+}
+
+document.getElementById('walkthrough').addEventListener('click', advanceBio);
 
 /* ===== ORGANIC WAVE CONTROLS ===== */
 var wavePanel = document.getElementById('wavePanel');

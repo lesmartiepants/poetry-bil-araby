@@ -60,10 +60,13 @@ function getFileList() {
 }
 
 const CTA_SELECTORS = [
-  '#splashCta', '#splashEnter', '#enterBtn', '.splash-cta', '.cta-enter', '.enter-btn', '.cta-btn',
+  '#splashCta', '#splashEnter', '#enterBtn', '#ctaEnter',
+  '.splash-cta', '.splash-enter', '.cta-enter', '.enter-btn', '.cta-btn',
   'button:has-text("Begin")', 'button:has-text("Enter")', 'button:has-text("Start")',
   'button:has-text("Open")', 'button:has-text("Step Into")', 'button:has-text("Explore")',
-  'button:has-text("\u0627\u0628\u062F\u0623")'
+  'button:has-text("\u0627\u0628\u062F\u0623")',
+  'button:has-text("\u0627\u062F\u062E\u0644")',
+  'button:has-text("\u0627\u0641\u062A\u062D")',
 ];
 
 async function captureFlowScreenshots(context, file) {
@@ -143,8 +146,11 @@ async function captureFlowScreenshots(context, file) {
     // Try to reveal controls
     try { await page.click('body', { position: { x: 196, y: 800 } }); await page.waitForTimeout(600); } catch {}
     for (const sel of [
-      '#sheetHandle', '#fanTrigger', '.wabi-dot', '.text-menu-trigger',
-      '.glass-sheet-handle', '.deco-fan-trigger', '.ma-touch-zone'
+      '#sheetHandle', '#fanTrigger', '#glassSheet', '#decoFan', '#waveTrigger',
+      '#wabiDot', '#maTouchZone',
+      '.wabi-dot', '.text-menu-trigger', '.ma-touch-zone',
+      '.glass-sheet-handle', '.deco-fan-trigger', '.wave-trigger',
+      '.muji-circle', '.page-tab', '.nord-dot', '.ctrl-btn'
     ]) {
       try {
         const t = page.locator(sel).first();

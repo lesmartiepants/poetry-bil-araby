@@ -32,7 +32,7 @@
     .tb-select option{background:var(--surface-2);color:var(--text)}
     .tb-sep{width:1px;height:20px;background:var(--border);flex-shrink:0}
     .tb-detail{font-size:11px;color:var(--text-2);display:flex;align-items:center;gap:6px;overflow:hidden;min-width:0}
-    .tb-detail .td-phil{color:rgba(212,168,75,.6);font-style:italic;font-size:11px}
+    .tb-detail .td-phil{color:rgba(212,168,75,.55);font-style:italic;font-size:11px}
     .tb-spacer{flex:1}
 
     /* Nav buttons */
@@ -53,14 +53,7 @@
 
     /* Preview */
     .preview{flex:1;display:flex;flex-direction:column;min-width:0}
-    .preview-header{display:flex;align-items:center;justify-content:space-between;padding:0;background:var(--surface);border-bottom:1px solid var(--border);min-height:30px}
-    .preview-title-btn{flex:1;display:flex;align-items:center;gap:8px;padding:4px 14px;min-height:30px;background:none;border:none;cursor:pointer;text-align:left;transition:background .12s;color:inherit}
-    .preview-title-btn:hover{background:var(--surface-2)}
-    .preview-title-btn:active{background:var(--surface-3)}
-    .preview-title{font-size:11px;font-weight:600;color:var(--text-2)}
-    .preview-sub{font-size:10px;color:var(--text-3)}
-    .preview-title-btn .open-icon{color:var(--text-3);font-size:12px;opacity:0;transition:opacity .15s;flex-shrink:0}
-    .preview-title-btn:hover .open-icon{opacity:1}
+    /* preview-header removed — info consolidated into toolbar */
     .preview-iframe{width:100%;height:100%;border:none;background:#000}
 
     /* Open-in-new-tab expand overlay */
@@ -70,30 +63,33 @@
     .preview-open-overlay .expand-label{font-size:8px;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
 
     /* ── Accordion catalog (premium) ── */
-    .acc-toggle{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--r);border:1px solid var(--border);background:linear-gradient(135deg,var(--surface-2),var(--surface));color:var(--text);font-size:13px;font-weight:400;transition:all .2s cubic-bezier(.4,0,.2,1);white-space:nowrap;cursor:pointer;letter-spacing:.01em}
-    .acc-toggle:hover{background:linear-gradient(135deg,var(--surface-3),var(--surface-2));color:var(--text);border-color:var(--border-light);box-shadow:0 2px 8px rgba(0,0,0,.2);transform:translateY(-1px)}
-    .acc-toggle.active{background:linear-gradient(135deg,rgba(212,168,75,.08),rgba(212,168,75,.03));border-color:rgba(212,168,75,.3);color:var(--accent)}
-    .acc-toggle svg{width:11px;height:11px;transition:transform .25s cubic-bezier(.4,0,.2,1);opacity:.5}
+    .acc-toggle{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--r);border:1px solid var(--border);background:linear-gradient(135deg,var(--surface-2) 0%,rgba(28,28,31,.8) 100%);color:var(--text);font-size:13px;font-weight:500;transition:all .2s cubic-bezier(.4,0,.2,1);white-space:nowrap;cursor:pointer;letter-spacing:.01em}
+    .acc-toggle:hover{background:linear-gradient(135deg,var(--surface-3),var(--surface-2));color:var(--text);border-color:var(--border-light);box-shadow:0 2px 12px rgba(0,0,0,.25);transform:translateY(-1px)}
+    .acc-toggle.active{background:linear-gradient(135deg,rgba(212,168,75,.08),rgba(212,168,75,.03));border-color:rgba(212,168,75,.3);color:var(--accent);box-shadow:0 2px 0 0 rgba(212,168,75,.4)}
+    .acc-toggle svg{width:11px;height:11px;transition:transform .3s cubic-bezier(.4,0,.2,1);opacity:.5}
     .acc-toggle:hover svg{opacity:.8}
     .acc-toggle.active svg{transform:rotate(180deg);opacity:.8}
     .acc-panel{position:absolute;top:100%;left:0;right:0;z-index:90;background:var(--surface);border-bottom:1px solid var(--border);max-height:0;overflow:hidden;transition:max-height .35s cubic-bezier(.4,0,.2,1),box-shadow .35s;box-shadow:none}
-    .acc-panel.open{max-height:60vh;overflow-y:auto;box-shadow:0 12px 32px rgba(0,0,0,.5),0 2px 8px rgba(0,0,0,.2)}
-    .acc-panel::before{content:'';position:sticky;top:0;display:block;height:8px;background:linear-gradient(to bottom,var(--surface),transparent);z-index:1;pointer-events:none}
+    .acc-panel.open{max-height:60vh;overflow-y:auto;box-shadow:0 12px 40px rgba(0,0,0,.5),0 0 0 1px rgba(255,255,255,.04)}
+    .acc-panel::before{content:'';position:sticky;top:0;display:block;height:4px;background:linear-gradient(to bottom,var(--surface) 0%,transparent 100%);z-index:1;pointer-events:none}
     .acc-chips{display:flex;flex-wrap:wrap;gap:5px;padding:10px 16px;border-bottom:1px solid var(--border);background:rgba(20,20,22,.5)}
     .acc-chip{padding:6px 14px;border-radius:14px;border:1px solid var(--border);background:var(--surface-2);color:var(--text-3);font-size:10px;font-weight:600;cursor:pointer;transition:all .15s cubic-bezier(.4,0,.2,1);white-space:nowrap}
-    .acc-chip:hover{background:var(--surface-3);color:var(--text);transform:scale(1.02)}
-    .acc-chip.active{background:var(--accent-dim);border-color:rgba(212,168,75,.35);color:var(--accent);box-shadow:inset 0 1px 3px rgba(0,0,0,.15)}
+    .acc-chip:hover{background:var(--surface-3);color:var(--text);transform:scale(1.03)}
+    .acc-chip.active{background:var(--accent-dim);border-color:rgba(212,168,75,.35);color:var(--accent);box-shadow:inset 0 1px 3px rgba(0,0,0,.3)}
     .acc-chip .chip-count{font-size:9px;opacity:.6;margin-left:3px}
     .acc-items{display:flex;flex-direction:column;padding:4px 0}
-    .acc-item{display:flex;align-items:center;gap:8px;padding:10px 16px 10px 16px;cursor:pointer;transition:all .15s cubic-bezier(.4,0,.2,1);border:none;background:none;text-align:left;color:inherit;width:100%;font-family:inherit;font-size:12px;position:relative;border-left:3px solid transparent}
-    .acc-item:hover{background:rgba(255,255,255,.02);border-left-color:var(--accent)}
-    .acc-item.active{background:var(--accent-dim);border-left-color:var(--accent);color:var(--accent)}
-    .acc-item .acc-item-num{font-size:10px;color:var(--text-3);font-variant-numeric:tabular-nums;min-width:20px;text-align:right;flex-shrink:0;opacity:.5}
+    .acc-item{display:flex;align-items:center;gap:8px;padding:10px 16px 10px 16px;cursor:pointer;transition:all .15s cubic-bezier(.4,0,.2,1);border:none;background:none;text-align:left;color:inherit;width:100%;font-family:inherit;font-size:12px;position:relative}
+    .acc-item::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:0;background:var(--accent);border-radius:2px;transition:height .2s cubic-bezier(.4,0,.2,1)}
+    .acc-item:hover{background:rgba(255,255,255,.02)}
+    .acc-item:hover::before{height:60%}
+    .acc-item.active{background:rgba(212,168,75,.06)}
+    .acc-item.active::before{height:80%}
+    .acc-item .acc-item-num{font-size:10px;color:var(--text-3);font-variant-numeric:tabular-nums;min-width:22px;text-align:right;flex-shrink:0;opacity:.4}
     .acc-item .acc-item-name{flex:1;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .acc-item .acc-item-verdict{width:10px;height:10px;border-radius:50%;flex-shrink:0;transition:box-shadow .15s}
-    .acc-item:hover .acc-item-verdict{box-shadow:0 0 6px currentColor}
+    .acc-item .acc-item-verdict{width:10px;height:10px;border-radius:50%;flex-shrink:0;transition:box-shadow .15s;box-shadow:0 0 6px var(--verdict-color,transparent)}
+    .acc-item:hover .acc-item-verdict{box-shadow:0 0 8px var(--verdict-color,transparent)}
     .acc-item .acc-item-sep{color:var(--border);font-size:10px;flex-shrink:0;margin:0 1px}
-    .acc-item .acc-item-open{color:var(--text-3);font-size:12px;opacity:0;transition:all .2s cubic-bezier(.4,0,.2,1);flex-shrink:0;padding:2px 6px;border-radius:4px;transform:translateX(4px)}
+    .acc-item .acc-item-open{color:var(--text-3);font-size:12px;opacity:0;transition:opacity .15s,transform .15s;flex-shrink:0;padding:2px 6px;border-radius:4px;transform:translateX(4px)}
     .acc-item:hover .acc-item-open{opacity:1;transform:translateX(0)}
     .acc-item .acc-item-philosophy{font-size:11px;color:var(--text-3);flex-shrink:0;font-style:italic}
     .acc-item .vc-badge{font-size:8px;font-weight:700;color:var(--accent);background:var(--accent-dim);border:1px solid rgba(212,168,75,.25);padding:0 5px;border-radius:3px;flex-shrink:0;letter-spacing:.04em}
@@ -265,9 +261,7 @@
       .acc-item{padding:10px 14px 10px 14px;font-size:13px;min-height:44px}
       .acc-chips{padding:8px 10px;gap:4px}
       .acc-chip{font-size:9px;padding:5px 10px}
-      .preview-header{padding:0;min-height:28px}
-      .preview-title{font-size:10px}
-      .preview-sub{font-size:9px}
+      /* preview-header removed */
       .bottom-nav{display:none}
       .mobile-dock{display:flex}
       .preview{padding-bottom:180px}
@@ -303,15 +297,7 @@
   <!-- Main -->
   <div class="main">
     <div class="preview" id="previewPane">
-      <div class="preview-header">
-        <button class="preview-title-btn" onclick="openTab()" title="Open in new tab">
-          <div style="flex:1;min-width:0">
-            <div class="preview-title" id="pTitle">Select a design</div>
-            <div class="preview-sub" id="pSub"></div>
-          </div>
-          <span class="open-icon">&#8599;</span>
-        </button>
-      </div>
+      <!-- preview-header removed: info is in toolbar -->
       <div id="previewContent" style="flex:1;position:relative">
         <div class="preview-open-overlay" id="previewOpenOverlay" onclick="openTab()" title="Open in new tab"><span class="expand-icon">&#8599;</span><span class="expand-label">expand</span></div>
         <div class="empty-state" id="emptyState">
@@ -809,6 +795,7 @@ function buildAccordion() {
       dot.className = 'acc-item-verdict';
       var dotColor = { keep: 'var(--green)', discard: 'var(--red)', revisit: 'var(--purple)' }[rev.verdict] || 'var(--text-3)';
       dot.style.background = dotColor;
+      dot.style.setProperty('--verdict-color', dotColor);
       item.appendChild(dot);
     }
     var numSpan = document.createElement('span');
@@ -976,10 +963,7 @@ function loadPreview(opt, cat) {
   iframe.className = 'preview-iframe'; iframe.src = '/design-review/' + opt.file; iframe.title = opt.name;
   container.appendChild(iframe);
 
-  const pTitle = document.getElementById('pTitle');
-  pTitle.textContent = opt.name + (opt.philosophy ? ' \u2014 ' + opt.philosophy : '');
-  if (opt.generation >= 3) { const badge = document.createElement('span'); badge.className = 'gen-badge gen-' + opt.generation; badge.textContent = ' Gen ' + opt.generation; pTitle.appendChild(badge); }
-  document.getElementById('pSub').textContent = cat.name + ' \u2022 ' + opt.desc;
+  // preview-header removed — info shown in toolbar (accToggleLabel + tbDetail)
 }
 
 function renderPrevFeedback(cat, opt) {

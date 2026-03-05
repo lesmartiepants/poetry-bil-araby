@@ -52,7 +52,7 @@
     .main{display:flex;overflow:hidden}
 
     /* Preview */
-    .preview{flex:1;display:flex;flex-direction:column;min-width:0}
+    .preview{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
     /* preview-header removed — info consolidated into toolbar */
     .preview-iframe{width:100%;height:100%;border:none;background:#000}
 
@@ -171,8 +171,8 @@
     /* ── Mobile Action Dock (Option B) ── */
     .mobile-dock{
       display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;
-      background:linear-gradient(to top,rgba(9,9,11,.98) 60%,transparent);
-      padding:28px 14px 14px;padding-bottom:max(14px,env(safe-area-inset-bottom));
+      background:rgba(9,9,11,.99);
+      padding:10px 14px 14px;padding-bottom:max(14px,env(safe-area-inset-bottom));
       flex-direction:column;align-items:center;gap:8px;
     }
     .dock-progress{width:100%;display:flex;align-items:center;gap:8px}
@@ -302,8 +302,10 @@
       .toolbar{display:none}
       .side{display:none}
       .bottom-nav{display:none}
-      .mobile-dock{display:flex}
-      .preview{padding-bottom:220px}
+      .mobile-dock{display:flex;border-top:1px solid var(--border)}
+      .preview{padding-bottom:200px}
+      .preview-open-overlay{opacity:0.55}
+      .preview-open-overlay:hover{opacity:0.9}
     }
     ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
   </style>

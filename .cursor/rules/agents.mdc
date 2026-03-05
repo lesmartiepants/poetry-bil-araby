@@ -5,7 +5,7 @@ alwaysApply: true
 
 # Available Agents (`.claude/agents/`)
 
-This project defines 10 specialized agents that coordinate development workflows. Reference them by name and understand their roles when planning or executing tasks.
+This project defines 14 specialized agents that coordinate development workflows. Reference them by name and understand their roles when planning or executing tasks.
 
 ## Agent Registry
 
@@ -21,6 +21,10 @@ This project defines 10 specialized agents that coordinate development workflows
 | **docs-sync-reviewer** | Syncs documentation with code changes post-commit | After code commits, documentation drift detected |
 | **ui-ux-reviewer** | Identifies ugly components, generates 2-3 visual alternatives | UI changes, design review, visual quality issues |
 | **design-review-agent** | Refines kept designs based on review feedback, applies CSS/animation/layout changes | Refine designs from review, apply verdicts, iterate on kept designs |
+| **design-sprint-lead** | Sprint coordination playbook: team structure, phases, commit cadence, conflict avoidance | `/design-sprint`, batch design generation, multi-agent sprints |
+| **design-generator** | Design quality + diversity principles (philosophy-driven, product-agnostic) | Creating design variants, auditing diversity, design system planning |
+| **design-reviewer** | Spawnable critic: screenshots, evaluates, and fixes design files in parallel | Design review phase, `/screenshot-audit`, post-implementation QA |
+| **design-review-setup** | First-responder that establishes review infrastructure before team starts | Sprint startup, new design round, review infra setup |
 
 ## Agent Coordination Flow
 
@@ -39,6 +43,11 @@ This project defines 10 specialized agents that coordinate development workflows
 
      ui-ux-reviewer (standalone, user-invoked)
      design-review-agent (post-review refinement, works with ui-ux-reviewer)
+
+     Design Sprint Flow:
+     design-review-setup → design-sprint-lead (coordinator)
+                              ├── design-generator (parallel instances)
+                              └── design-reviewer (parallel instances)
 ```
 
 ## Key Coordination Patterns
@@ -49,6 +58,16 @@ This project defines 10 specialized agents that coordinate development workflows
 - **Pre-release**: test-orchestrator coordinates all agents
 - **Design review**: ui-ux-reviewer generates visual alternatives independently
 - **Design refinement**: design-review-agent fetches review feedback, applies changes, syncs to DB
+- **Design sprint**: design-review-setup -> design-sprint-lead -> parallel design-generator + design-reviewer instances
+- **Screenshot audit**: design-reviewer instances spawned in parallel (one per directory batch)
+
+## Skills (`.claude/skills/`)
+
+| Skill | Command | Purpose |
+|-------|---------|---------|
+| design-sprint | `/design-sprint` | Launch multi-agent design sprint with parallel execution |
+| screenshot-audit | `/screenshot-audit` | Run screenshots + spawn parallel design reviewers |
+| commit-push | `/commit-push` | Quick stage, conventional commit, push workflow |
 
 ## Agent Definition Files
 
@@ -64,6 +83,10 @@ All agent definitions with full instructions live in:
 - `.claude/agents/docs-sync-reviewer.md`
 - `.claude/agents/ui-ux-reviewer.md`
 - `.claude/agents/design-review-agent.md`
+- `.claude/agents/design-sprint-lead.md`
+- `.claude/agents/design-generator.md`
+- `.claude/agents/design-reviewer.md`
+- `.claude/agents/design-review-setup.md`
 
 Read the relevant agent file(s) before executing tasks that fall within their domain.
 

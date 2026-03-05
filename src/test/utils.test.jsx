@@ -389,6 +389,21 @@ describe('Utility Functions', () => {
       const uniqueIds = [...new Set(ids)]
       expect(ids.length).toBe(uniqueIds.length)
     })
+
+    it('uses Arabic labelAr for database API poet parameter', () => {
+      // Database stores Arabic names; the API call must use labelAr, not the English id
+      const buildPoetParam = (selectedCategory) => {
+        const categoryObj = CATEGORIES.find(c => c.id === selectedCategory)
+        const poetName = categoryObj?.labelAr || selectedCategory
+        return selectedCategory !== "All" ? `?poet=${encodeURIComponent(poetName)}` : ''
+      }
+
+      expect(buildPoetParam("All")).toBe('')
+      expect(buildPoetParam("Mahmoud Darwish")).toBe(`?poet=${encodeURIComponent('محمود درويش')}`)
+      expect(buildPoetParam("Nizar Qabbani")).toBe(`?poet=${encodeURIComponent('نزار قباني')}`)
+      // Fallback: unknown category uses the id as-is
+      expect(buildPoetParam("Unknown Poet")).toBe(`?poet=${encodeURIComponent('Unknown Poet')}`)
+    })
   })
 
   describe('Log Creation', () => {

@@ -343,6 +343,12 @@ const TTS_CONFIG = {
   responseModalities: ['AUDIO']
 };
 
+const AUDIO_WAIT_CONFIG = {
+  inFlightPollMs: 500,
+  longWaitMs: 120000,
+  finalCheckMs: 15000,
+};
+
 /* =============================================================================
   3. CACHE CONFIGURATION & INDEXEDDB WRAPPER
   =============================================================================
@@ -1884,11 +1890,11 @@ export default function DiwanApp() {
           }
           setIsGeneratingAudio(false);
         }
-      }, 500);
+      }, AUDIO_WAIT_CONFIG.inFlightPollMs);
 
       pollingIntervals.current.push(pollInterval);
 
-      // Safety timeout - clear after 60 seconds (some large poems take 40+ seconds)
+      // Safety timeout - clear after 120 seconds (some large poems take 100+ seconds)
       setTimeout(() => {
         clearInterval(pollInterval);
         pollingIntervals.current = pollingIntervals.current.filter(id => id !== pollInterval);
@@ -1909,13 +1915,12 @@ export default function DiwanApp() {
                 setIsPlaying(true);
               });
             } else {
-              addLog("Audio", `Audio generation timeout - please try again`, "error");
+              addLog("Audio", `Audio is still generating in background - press play again in a few seconds`, "warning");
             }
-            activeAudioRequests.current.delete(current?.id);
             setIsGeneratingAudio(false);
-          }, 10000); // Wait 10 more seconds for slow API
+          }, AUDIO_WAIT_CONFIG.finalCheckMs); // Wait 15 more seconds for very slow API responses
         }
-      }, 60000);
+      }, AUDIO_WAIT_CONFIG.longWaitMs);
 
       return;
     }

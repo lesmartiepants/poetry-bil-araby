@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import DiwanApp from '../app.jsx'
 import { createMockGeminiResponse, mockSuccessfulFetch, createDbPoem, createMockPoem, createStreamingMock } from './utils'
@@ -271,6 +271,70 @@ describe('DiwanApp', () => {
         expect(document.body.textContent).toContain('TTS Model Fallback')
         expect(document.body.textContent).toContain('gemini-2.0-flash-preview-tts')
       })
+    })
+
+    it('keeps waiting on in-flight background audio without starting duplicate generation', async () => {
+      vi.useFakeTimers()
+      try {
+        let ttsRequestCount = 0
+
+        global.fetch.mockImplementation((url) => {
+          const requestUrl = String(url)
+          if (requestUrl.includes('/v1beta/models?key=')) {
+            return Promise.resolve({
+              ok: true,
+              json: async () => ({
+                models: [
+                  { name: 'models/gemini-2.5-flash-preview-tts', supportedGenerationMethods: ['generateContent'] },
+                ],
+              }),
+            })
+          }
+
+          if (requestUrl.includes('gemini-2.5-flash-preview-tts:generateContent')) {
+            ttsRequestCount += 1
+            return new Promise(() => {}) // Keep prefetch request in flight
+          }
+
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({}),
+            text: async () => '',
+          })
+        })
+
+        render(<DiwanApp />)
+
+        await act(async () => {
+          vi.advanceTimersByTime(2500) // Trigger current-poem audio prefetch (2s)
+          await Promise.resolve()
+          await Promise.resolve()
+        })
+
+        fireEvent.click(screen.getByLabelText('Play recitation'))
+        await act(async () => {
+          vi.advanceTimersByTime(10)
+          await Promise.resolve()
+        })
+        expect(document.body.textContent).toContain('Audio generation already in progress')
+
+        await act(async () => {
+          vi.advanceTimersByTime(135000) // 120s + 15s final check
+          await Promise.resolve()
+          await Promise.resolve()
+        })
+
+        expect(document.body.textContent).toContain('Audio is still generating in background')
+
+        fireEvent.click(screen.getByLabelText('Play recitation'))
+        await act(async () => {
+          vi.advanceTimersByTime(10)
+          await Promise.resolve()
+        })
+        expect(ttsRequestCount).toBe(1)
+      } finally {
+        vi.useRealTimers()
+      }
     })
   })
 

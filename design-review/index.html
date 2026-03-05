@@ -171,8 +171,8 @@
     /* ── Mobile Action Dock (Option B) ── */
     .mobile-dock{
       display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;
-      background:rgba(9,9,11,.99);
-      padding:10px 14px 14px;padding-bottom:max(14px,env(safe-area-inset-bottom));
+      background:linear-gradient(to bottom,transparent,rgba(9,9,11,.85) 16px,rgba(9,9,11,.99) 28px);
+      padding:24px 14px 14px;padding-bottom:max(14px,env(safe-area-inset-bottom));
       flex-direction:column;align-items:center;gap:8px;
     }
     .dock-progress{width:100%;display:flex;align-items:center;gap:8px}
@@ -237,8 +237,10 @@
     .comment-trigger-compact:hover{background:var(--surface-3);border-color:var(--border-light)}
     .comment-trigger-compact svg{width:18px;height:18px}
     .comment-trigger-compact.has-text{color:var(--accent);border-color:rgba(212,168,75,.3)}
-    .dock-philosophy{font-size:10px;font-style:italic;color:rgba(212,168,75,.5);width:100%;text-align:center;max-height:0;opacity:0;overflow:hidden;transition:max-height .2s,opacity .2s}
-    .dock-philosophy.visible{max-height:18px;opacity:1}
+    /* Mobile top info bar */
+    .mobile-info-bar{display:none;position:fixed;top:0;left:0;right:0;z-index:150;padding:6px 14px;background:linear-gradient(to bottom,rgba(9,9,11,.92) 60%,transparent);pointer-events:none}
+    .mib-name{font-size:10px;font-weight:600;color:var(--text-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .mib-phil{font-size:9px;font-style:italic;color:rgba(212,168,75,.45);margin-top:1px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
     .dock-sync{margin-left:4px;display:flex;align-items:center}
     /* Mobile accordion overlay */
     .mobile-acc-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:250;display:none;align-items:flex-end}
@@ -302,8 +304,9 @@
       .toolbar{display:none}
       .side{display:none}
       .bottom-nav{display:none}
-      .mobile-dock{display:flex;border-top:1px solid var(--border)}
-      .preview-open-overlay{opacity:0.55}
+      .mobile-dock{display:flex}
+      .mobile-info-bar{display:block}
+      .preview-open-overlay{opacity:0.55;top:36px}
       .preview-open-overlay:hover{opacity:0.9}
     }
     ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
@@ -332,6 +335,12 @@
     <select class="tb-select" id="compSelect" onchange="onCompChange()" style="display:none"></select>
     <select class="tb-select" id="catSelect" onchange="onCatChange()" style="display:none"></select>
     <div class="acc-panel" id="accPanel"></div>
+  </div>
+
+  <!-- Mobile top info bar -->
+  <div class="mobile-info-bar" id="mobileInfoBar">
+    <div class="mib-name" id="mibName"></div>
+    <div class="mib-phil" id="mibPhil"></div>
   </div>
 
   <!-- Main -->
@@ -392,7 +401,6 @@
           <button class="dock-submit" onclick="submitReview()">Submit</button>
         </div>
       </div>
-      <div class="dock-philosophy" id="dockPhilosophy"></div>
     </div>
 
     <!-- Mobile design browser bottom sheet -->
@@ -1134,11 +1142,11 @@ function render(skipPreview) {
   if (dsNum) dsNum.textContent = (fi + 1) + '.';
   var dsName = document.getElementById('dockSelectorName');
   if (dsName) dsName.textContent = opt.name;
-  // Dock philosophy subtitle
-  var dPhi = document.getElementById('dockPhilosophy');
-  if (dPhi) { dPhi.textContent = opt.philosophy || ''; dPhi.classList.toggle('visible', !!opt.philosophy); }
-  // Re-sync preview padding after philosophy line changes dock height
-  if (typeof syncPreviewPadding === 'function') requestAnimationFrame(syncPreviewPadding);
+  // Mobile top info bar
+  var mibName = document.getElementById('mibName');
+  if (mibName) mibName.textContent = (fi + 1) + '. ' + opt.name;
+  var mibPhil = document.getElementById('mibPhil');
+  if (mibPhil) mibPhil.textContent = opt.philosophy || '';
   // Compact comment indicator
   var ctc = document.getElementById('commentTriggerCompact');
   if (ctc) ctc.classList.toggle('has-text', !!(rev.comment));

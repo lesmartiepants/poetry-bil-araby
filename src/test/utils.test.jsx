@@ -389,6 +389,52 @@ describe('Utility Functions', () => {
       const uniqueIds = [...new Set(ids)]
       expect(ids.length).toBe(uniqueIds.length)
     })
+
+    // Helper shared by the poet-param tests below
+    const buildPoetParam = (categories, selectedCategory) => {
+      const categoryObj = categories.find(c => c.id === selectedCategory)
+      const poetName = categoryObj?.labelAr || selectedCategory
+      return selectedCategory !== "All" ? `?poet=${encodeURIComponent(poetName)}` : ''
+    }
+
+    it('uses Arabic labelAr for database API poet parameter', () => {
+      // "All" produces no filter; known poets produce encoded Arabic name; unknown falls back
+      expect(buildPoetParam(CATEGORIES, "All")).toBe('')
+      expect(buildPoetParam(CATEGORIES, "Mahmoud Darwish")).toBe(`?poet=${encodeURIComponent('محمود درويش')}`)
+      expect(buildPoetParam(CATEGORIES, "Nizar Qabbani")).toBe(`?poet=${encodeURIComponent('نزار قباني')}`)
+      // Fallback: unknown category uses the id as-is
+      expect(buildPoetParam(CATEGORIES, "Unknown Poet")).toBe(`?poet=${encodeURIComponent('Unknown Poet')}`)
+    })
+
+    it('sends Arabic labelAr for every non-All poet category', () => {
+      // Exhaustive check across all poet options
+      const expected = {
+        "Nizar Qabbani":   `?poet=${encodeURIComponent('نزار قباني')}`,
+        "Mahmoud Darwish": `?poet=${encodeURIComponent('محمود درويش')}`,
+        "Al-Mutanabbi":    `?poet=${encodeURIComponent('المتنبي')}`,
+        "Antarah":         `?poet=${encodeURIComponent('عنترة بن شداد')}`,
+        "Ibn Arabi":       `?poet=${encodeURIComponent('ابن عربي')}`,
+      }
+
+      Object.entries(expected).forEach(([id, param]) => {
+        expect(buildPoetParam(CATEGORIES, id)).toBe(param)
+      })
+    })
+
+    it('"All" category produces an empty poet parameter', () => {
+      expect(buildPoetParam(CATEGORIES, "All")).toBe('')
+    })
+
+    it('never sends an English poet name to the database API', () => {
+      const poetCategories = CATEGORIES.filter(c => c.id !== "All")
+      poetCategories.forEach(cat => {
+        const param = buildPoetParam(CATEGORIES, cat.id)
+        // Decoded param must equal the Arabic labelAr, never the English id
+        const decoded = decodeURIComponent(param.replace('?poet=', ''))
+        expect(decoded).toBe(cat.labelAr)
+        expect(decoded).not.toBe(cat.id)
+      })
+    })
   })
 
   describe('Log Creation', () => {

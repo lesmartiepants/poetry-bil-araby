@@ -141,6 +141,29 @@ describe('Backend API Server', () => {
       );
     });
 
+    it.each([
+      ['نزار قباني'],
+      ['محمود درويش'],
+      ['المتنبي'],
+      ['عنترة بن شداد'],
+      ['ابن عربي'],
+    ])('should filter by Arabic poet name "%s"', async (arabicName) => {
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ ...mockPoem, poet: arabicName }]
+      });
+
+      const response = await request(app)
+        .get(`/api/poems/random?poet=${encodeURIComponent(arabicName)}`)
+        .expect('Content-Type', /json/)
+        .expect(200);
+
+      expect(response.body.poet).toBe(arabicName);
+      expect(pool.query).toHaveBeenCalledWith(
+        expect.stringContaining('WHERE po.name = $1'),
+        [arabicName]
+      );
+    });
+
     it('should not filter when poet is "All"', async () => {
       mockPool.query.mockResolvedValueOnce({
         rows: [mockPoem]

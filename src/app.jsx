@@ -2218,7 +2218,9 @@ export default function DiwanApp() {
       if (useDatabase) {
         addLog("Discovery DB", `→ Querying database | Category: ${selectedCategory}`, "info");
 
-        const poetParam = selectedCategory !== "All" ? `?poet=${encodeURIComponent(selectedCategory)}` : '';
+        const categoryObj = CATEGORIES.find(c => c.id === selectedCategory);
+        const poetName = categoryObj?.labelAr || selectedCategory;
+        const poetParam = selectedCategory !== "All" ? `?poet=${encodeURIComponent(poetName)}` : '';
         const url = `${apiUrl}/api/poems/random${poetParam}`;
 
         try {

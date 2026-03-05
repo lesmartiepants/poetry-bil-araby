@@ -48,7 +48,7 @@
     "jsdom": "^27.4.0",
     "npm-run-all": "^4.1.5",
     "postcss": "^8.4.49",
-    "supabase": "^2.72.7",
+    "supabase": "^2.76.17",
     "supertest": "^7.2.2",
     "tailwindcss": "^3.4.17",
     "vite": "^6.0.3",

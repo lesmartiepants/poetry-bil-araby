@@ -72,25 +72,25 @@ The app supports two poem sources:
 
 **Environment Variables:**
 ```javascript
-// Frontend (VITE_ prefix)
-const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
-const geminiKey = import.meta.env.VITE_GEMINI_API_KEY || "";
-VITE_SUPABASE_URL      // Supabase project URL (optional, for auth features)
-VITE_SUPABASE_ANON_KEY // Supabase anonymous key (optional, for auth features)
+// Frontend (VITE_ prefix) — set in .env or Vercel
+VITE_API_URL           // Backend URL (default: http://localhost:3001)
+VITE_GEMINI_API_KEY    // Gemini API key for AI mode
+VITE_SUPABASE_URL      // Supabase project URL (optional, for auth)
+VITE_SUPABASE_ANON_KEY // Supabase anon key — MUST be JWT format (starts with eyJ)
 
-// Backend (server.js)
-DATABASE_URL       // Supabase/Render connection string (production)
-PGUSER            // PostgreSQL username (local, defaults to $USER)
-PGHOST            // PostgreSQL host (local, defaults to localhost)
-PGDATABASE        // Database name (local, defaults to qafiyah)
-PGPASSWORD        // Database password (local, defaults to empty)
-PGPORT            // Database port (local, defaults to 5432)
+// Backend (server.js) — set in .env or Render
+DATABASE_URL       // Supabase pooler connection string (use pooler host, not direct)
 PORT              // API server port (defaults to 3001)
 LOG_ENABLED       // Enable HTTP request logging (defaults to true)
 LOG_DEBUG         // Enable verbose database debug logs (defaults to false)
+
+// Local-only tooling tokens (never deployed)
+SUPABASE_PERSONAL_ACCESS_TOKEN  // For Supabase Management API
+RENDER_API_KEY                  // For Render API
+VERCEL_TOKEN                    // For Vercel CLI
 ```
 
-**Important:** Never commit API keys or database credentials.
+**Important:** Never commit API keys or database credentials. The DATABASE_URL must use the Supabase **connection pooler** host (`aws-N-region.pooler.supabase.com:6543`), not the direct host.
 
 **API Interaction Pattern:**
 - Database Mode: Fetch from `/api/poems/random?poet=X`
@@ -140,11 +140,12 @@ LOG_DEBUG         // Enable verbose database debug logs (defaults to false)
 2. **Arabic Typography**: Always test with actual Arabic text. The app uses specialized fonts (Amiri, Tajawal) that may render differently than Latin text.
 
 3. **Environment Variable Management**:
-   - Frontend: `VITE_GEMINI_API_KEY` (AI mode), `VITE_API_URL` (database mode), `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` (auth, optional)
-   - Backend: `DATABASE_URL` (production) or individual PG* vars (local), `LOG_ENABLED` and `LOG_DEBUG` (logging control)
-   - Development: Set in `.env.local` (gitignored)
-   - Production: Set in Vercel (frontend) and Render (backend)
-   - **Important**: Supabase anon keys must be in JWT format (long strings starting with `eyJ`)
+   - Frontend (Vercel): `VITE_GEMINI_API_KEY`, `VITE_API_URL`, `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
+   - Backend (Render): `DATABASE_URL`, `SUPABASE_SECRET_KEY`, `SUPABASE_PROJECT_URL`
+   - CI (GitHub Actions): `DATABASE_URL`, `VITE_API_URL`, `SUPABASE_ACCESS_TOKEN`, `SUPABASE_PROJECT_REF`
+   - Local: all of the above in `.env` (gitignored)
+   - **Important**: Supabase anon keys must be in JWT format (starts with `eyJ`). The `sb_publish...` format keys will not work.
+   - **Important**: `DATABASE_URL` must use the pooler host (`pooler.supabase.com:6543`), not the direct host (`db.*.supabase.co`)
 
 4. **Test Environment Differences**: CI runs with much more aggressive timeouts. If tests pass locally but fail in CI, check timeout values in config files.
 

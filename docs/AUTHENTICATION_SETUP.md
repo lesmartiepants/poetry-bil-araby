@@ -35,11 +35,11 @@ The application supports optional authentication through Supabase, providing:
 1. In your Supabase project, go to **Settings** → **API**
 2. Copy the following values:
    - **Project URL** (e.g., `https://xxxxx.supabase.co`)
-   - **anon public** key (starts with `eyJhbGc...`)
-3. Add to your `.env.local` file:
+   - **anon public** key — this **must** be the JWT-format key (starts with `eyJhbGc...`, ~200 chars). Do NOT use the `sb_publish...` format key.
+3. Add to your `.env` file:
    ```bash
    VITE_SUPABASE_URL=your-project-url
-   VITE_SUPABASE_ANON_KEY=your-anon-key
+   VITE_SUPABASE_ANON_KEY=your-jwt-anon-key
    ```
 
 ## Step 3: Run Database Migrations
@@ -65,6 +65,7 @@ supabase db push
 **Migrations Applied:**
 1. `20260119000000_auth_and_user_features.sql` - Creates auth tables (user_settings, saved_poems, discussions)
 2. `20260219000000_postgrest_schema_grants.sql` - Grants schema access to PostgREST (required for Supabase Data API)
+3. `20260220_create_design_review_tables.sql` - Creates design review tables (design_items, design_review_sessions, design_verdicts, design_review_history)
 
 **Alternative**: Manually run the SQL migrations in Supabase Studio:
 1. Go to **SQL Editor** in your Supabase dashboard

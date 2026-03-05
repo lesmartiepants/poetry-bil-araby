@@ -122,7 +122,7 @@ describe('Design Review API', () => {
         .send({ items: 'not-array' })
         .expect(400);
 
-      expect(response.body.error).toBe('items must be an array');
+      expect(response.body.error).toBe('items must be a non-empty array');
     });
 
     it('should upsert design items', async () => {
@@ -306,15 +306,11 @@ describe('Design Review API', () => {
       expect(response.body.error).toBe('verdicts must be an array');
     });
 
-    it('should save verdicts with history tracking', async () => {
+    it('should save verdicts', async () => {
       mockTablesExist();
-      // Mock item lookup
-      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 10 }] });
-      // Mock existing verdict check (no existing)
-      mockPool.query.mockResolvedValueOnce({ rows: [] });
-      // Mock verdict insert
-      mockPool.query.mockResolvedValueOnce({ rows: [] });
-      // Mock history insert
+      // Mock batch item_key -> id lookup (SELECT ... WHERE item_key = ANY($1))
+      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 10, item_key: 'splash-zen-1' }] });
+      // Mock batch verdict upsert (single INSERT...ON CONFLICT)
       mockPool.query.mockResolvedValueOnce({ rows: [] });
       // Mock count query
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: '1' }] });
@@ -332,35 +328,6 @@ describe('Design Review API', () => {
 
       expect(response.body.saved).toBe(1);
       expect(response.body.total).toBe(1);
-    });
-  });
-
-  describe('GET /api/design-review/items/:itemKey/history', () => {
-    it('should return empty array when tables do not exist', async () => {
-      mockTablesNotExist();
-
-      const response = await request(app)
-        .get('/api/design-review/items/splash-zen-1/history')
-        .expect(200);
-
-      expect(response.body).toEqual([]);
-    });
-
-    it('should return verdict history for an item', async () => {
-      mockTablesExist();
-      mockPool.query.mockResolvedValueOnce({
-        rows: [
-          { item_key: 'splash-zen-1', action: 'create_verdict', round_number: 1, new_value: { verdict: 'keep' } },
-          { item_key: 'splash-zen-1', action: 'update_verdict', round_number: 2, new_value: { verdict: 'revisit' } }
-        ]
-      });
-
-      const response = await request(app)
-        .get('/api/design-review/items/splash-zen-1/history')
-        .expect(200);
-
-      expect(response.body).toHaveLength(2);
-      expect(response.body[0].action).toBe('create_verdict');
     });
   });
 

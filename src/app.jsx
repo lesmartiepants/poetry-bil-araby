@@ -1598,14 +1598,16 @@ export default function DiwanApp() {
   };
 
   const filtered = useMemo(() => {
+    if (selectedCategory === "All") return poems;
     const searchStr = selectedCategory.toLowerCase();
-    return selectedCategory === "All" 
-      ? poems 
-      : poems.filter(p => {
-          const poetMatch = (p?.poet || "").toLowerCase().includes(searchStr);
-          const tagsMatch = Array.isArray(p?.tags) && p.tags.some(t => String(t).toLowerCase() === searchStr);
-          return poetMatch || tagsMatch;
-        });
+    const categoryObj = CATEGORIES.find(c => c.id === selectedCategory);
+    const labelAr = categoryObj?.labelAr || "";
+    return poems.filter(p => {
+      const poet = p?.poet || "";
+      const poetMatch = poet.toLowerCase().includes(searchStr) || (labelAr && poet.toLowerCase() === labelAr.toLowerCase());
+      const tagsMatch = Array.isArray(p?.tags) && p.tags.some(t => String(t).toLowerCase() === searchStr);
+      return poetMatch || tagsMatch;
+    });
   }, [poems, selectedCategory]);
 
   const current = filtered[currentIndex] || filtered[0] || poems[0];
@@ -2251,7 +2253,13 @@ export default function DiwanApp() {
           setPoems(prev => {
             const updated = [...prev, newPoem];
             const searchStr = selectedCategory.toLowerCase();
-            const freshFiltered = selectedCategory === "All" ? updated : updated.filter(p => (p?.poet || "").toLowerCase().includes(searchStr) || (Array.isArray(p?.tags) && p.tags.some(t => String(t).toLowerCase() === searchStr)));
+            const categoryObj = CATEGORIES.find(c => c.id === selectedCategory);
+            const labelAr = categoryObj?.labelAr || "";
+            const freshFiltered = selectedCategory === "All" ? updated : updated.filter(p => {
+              const poet = p?.poet || "";
+              return poet.toLowerCase().includes(searchStr) || (labelAr && poet.toLowerCase() === labelAr.toLowerCase()) ||
+                (Array.isArray(p?.tags) && p.tags.some(t => String(t).toLowerCase() === searchStr));
+            });
             const newIdx = freshFiltered.findIndex(p => p.id === newPoem.id);
             if (newIdx !== -1) setCurrentIndex(newIdx);
             return updated;

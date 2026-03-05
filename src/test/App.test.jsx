@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import DiwanApp from '../app.jsx'
-import { createMockGeminiResponse, mockSuccessfulFetch, createDbPoem, createStreamingMock } from './utils'
+import { createMockGeminiResponse, mockSuccessfulFetch, createDbPoem, createMockPoem, createStreamingMock } from './utils'
 
 describe('DiwanApp', () => {
   beforeEach(() => {
@@ -225,6 +225,53 @@ describe('DiwanApp', () => {
       // Audio functionality exists
       expect(screen.getByText('poetry')).toBeInTheDocument()
     })
+
+    it('falls back to another TTS model after load failure', async () => {
+      const pcmData = new Int16Array(40).fill(1)
+      const base64Audio = Buffer.from(pcmData.buffer).toString('base64')
+
+      global.fetch.mockImplementation((url) => {
+        const requestUrl = String(url)
+        if (requestUrl.includes('/v1beta/models?key=')) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({
+              models: [
+                { name: 'models/gemini-3.1-flash-lite-preview', supportedGenerationMethods: ['generateContent'] },
+                { name: 'models/gemini-2.5-flash-preview-tts', supportedGenerationMethods: ['generateContent'] },
+                { name: 'models/gemini-2.0-flash-preview-tts', supportedGenerationMethods: ['generateContent'] },
+              ],
+            }),
+          })
+        }
+
+        if (requestUrl.includes('gemini-2.5-flash-preview-tts:generateContent')) {
+          return Promise.reject(new Error('Load failed'))
+        }
+
+        if (requestUrl.includes('gemini-2.0-flash-preview-tts:generateContent')) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => createMockGeminiResponse({ inlineData: { data: base64Audio } }),
+          })
+        }
+
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({}),
+          text: async () => '',
+        })
+      })
+
+      render(<DiwanApp />)
+      await userEvent.click(screen.getByLabelText('Play recitation'))
+
+      await waitFor(() => {
+        expect(document.body.textContent).toContain('TTS Model Selection')
+        expect(document.body.textContent).toContain('TTS Model Fallback')
+        expect(document.body.textContent).toContain('gemini-2.0-flash-preview-tts')
+      })
+    })
   })
 
   describe('Poem Discovery Feature', () => {
@@ -242,6 +289,55 @@ describe('DiwanApp', () => {
 
       // Component renders with buttons
       expect(buttons.length).toBeGreaterThan(0)
+    })
+
+    it('logs selected text model when AI discovery runs', async () => {
+      const aiPoem = createMockPoem({
+        id: 987,
+        poet: 'Mahmoud Darwish',
+        poetArabic: 'محمود درويش',
+        title: 'Identity Card',
+        titleArabic: 'بطاقة هوية',
+        arabic: 'سَجِّلْ أَنَا عَرَبِيّ',
+        english: 'Record! I am Arab',
+      })
+
+      global.fetch.mockImplementation((url) => {
+        const requestUrl = String(url)
+        if (requestUrl.includes('/v1beta/models?key=')) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => ({
+              models: [
+                { name: 'models/gemini-3.1-flash-lite-preview', supportedGenerationMethods: ['generateContent'] },
+              ],
+            }),
+          })
+        }
+
+        if (requestUrl.includes('gemini-3.1-flash-lite-preview:generateContent')) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => createMockGeminiResponse({ text: JSON.stringify(aiPoem) }),
+          })
+        }
+
+        return Promise.resolve({
+          ok: true,
+          json: async () => ({}),
+          text: async () => '',
+        })
+      })
+
+      render(<DiwanApp />)
+
+      await userEvent.click(screen.getByLabelText('Switch to AI Mode'))
+      await userEvent.click(screen.getByLabelText('Discover new poem'))
+
+      await waitFor(() => {
+        expect(document.body.textContent).toContain('Model Selection')
+        expect(document.body.textContent).toContain('Using model:')
+      })
     })
   })
 

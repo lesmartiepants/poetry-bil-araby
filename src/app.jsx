@@ -161,7 +161,7 @@ const getTTSInstruction = (poem, poet, mood, era) => {
  * used when the ListModels API is unavailable. Starts with the cheapest Gemini 2.5 model.
  */
 const API_MODELS = {
-  tts: 'gemini-2.5-flash-preview-tts',
+  ttsDefaults: ['gemini-2.5-flash-preview-tts', 'gemini-2.0-flash-preview-tts'],
   textDefaults: ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'],
 };
 
@@ -170,6 +170,7 @@ const API_MODELS = {
  * Populated on first call to discoverTextModels(); shared across all handlers.
  */
 let _discoveredTextModels = null;
+let _discoveredTTSModels = null;
 
 /**
  * Fetch and rank available Gemini text models via the ListModels API.
@@ -223,6 +224,48 @@ const discoverTextModels = async (apiKey, addLog) => {
 };
 
 /**
+ * Fetch and rank available Gemini TTS models via the ListModels API.
+ * Falls back to API_MODELS.ttsDefaults if the API is unreachable or returns no usable models.
+ */
+const discoverTTSModels = async (apiKey, addLog) => {
+  if (_discoveredTTSModels) return _discoveredTTSModels;
+  try {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`,
+      { method: 'GET' }
+    );
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const { models = [] } = await res.json();
+    const ranked = models
+      .filter(m =>
+        Array.isArray(m.supportedGenerationMethods) &&
+        m.supportedGenerationMethods.includes('generateContent') &&
+        typeof m.name === 'string' &&
+        m.name.includes('gemini') &&
+        m.name.includes('tts')
+      )
+      .map(m => {
+        const id = m.name.replace('models/', '');
+        const vm = id.match(/gemini-(\d+)\.(\d+)/);
+        const major = vm ? parseInt(vm[1]) : 0;
+        const minor = vm ? parseInt(vm[2]) : 0;
+        return { id, score: major * 1000 + minor * 100 };
+      })
+      .sort((a, b) => b.score - a.score)
+      .map(m => m.id);
+    if (ranked.length > 0) {
+      _discoveredTTSModels = ranked;
+      if (addLog) addLog('TTS Model Discovery', `${ranked.length} models ranked: ${ranked.slice(0, 3).join(', ')}`, 'info');
+      return _discoveredTTSModels;
+    }
+  } catch (err) {
+    if (addLog) addLog('TTS Model Discovery', `ListModels unavailable: ${err.message} — using defaults`, 'warning');
+  }
+  _discoveredTTSModels = [...API_MODELS.ttsDefaults];
+  return _discoveredTTSModels;
+};
+
+/**
  * Fetch from a Gemini text endpoint with automatic model fallback.
  * Uses the dynamically discovered model list (ranked newest/cheapest first).
  * Retries on HTTP 404/410 (model unavailable/deprecated); throws immediately on other errors.
@@ -238,6 +281,7 @@ const geminiTextFetch = async (endpoint, body, apiKey, label, addLog) => {
   const models = await discoverTextModels(apiKey, addLog);
   for (let i = 0; i < models.length; i++) {
     const model = models[i];
+    if (i === 0 && addLog) addLog("Model Selection", `Using model: ${model}`, "info");
     if (i > 0) addLog("Model Fallback", `Trying fallback: ${model}`, "warning");
     // If endpoint already has a query string (e.g. ?alt=sse) append &key, otherwise ?key
     const sep = endpoint.includes('?') ? '&' : '?';
@@ -256,6 +300,38 @@ const geminiTextFetch = async (endpoint, body, apiKey, label, addLog) => {
       throw new Error(`${label}: ${errMsg}`);
     }
     addLog("Model Fallback", `${model} not available, trying next...`, "warning");
+  }
+};
+
+/**
+ * Fetch Gemini TTS endpoint with model fallback.
+ * Retries on model-unavailable codes (404/410) and network load failures.
+ */
+const geminiTTSFetch = async (body, apiKey, addLog, label = 'Audio API failed') => {
+  const models = await discoverTTSModels(apiKey, addLog);
+  for (let i = 0; i < models.length; i++) {
+    const model = models[i];
+    if (i === 0 && addLog) addLog("TTS Model Selection", `Using model: ${model}`, "info");
+    if (i > 0 && addLog) addLog("TTS Model Fallback", `Trying fallback: ${model}`, "warning");
+    try {
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+        { method: "POST", headers: { "Content-Type": "application/json" }, body }
+      );
+      if (res.ok) {
+        if (i > 0 && addLog) addLog("TTS Model Fallback", `✓ Using fallback model: ${model}`, "success");
+        return res;
+      }
+      const errData = await res.json().catch(() => ({}));
+      const errMsg = errData.error?.message || `HTTP ${res.status}`;
+      if ((res.status !== 404 && res.status !== 410) || i === models.length - 1) {
+        throw new Error(`${label}: ${errMsg}`);
+      }
+      if (addLog) addLog("TTS Model Fallback", `${model} not available, trying next...`, "warning");
+    } catch (err) {
+      if (i === models.length - 1) throw err;
+      if (addLog) addLog("TTS Model Fallback", `${model} failed (${err.message}) — trying next...`, "warning");
+    }
   }
 };
 
@@ -528,22 +604,18 @@ const prefetchManager = {
       }
 
       const apiStart = performance.now();
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${API_MODELS.tts}:generateContent?key=${apiKey}`;
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: ttsInstruction }] }],
-          generationConfig: {
-            responseModalities: TTS_CONFIG.responseModalities,
-            speechConfig: {
-              voiceConfig: {
-                prebuiltVoiceConfig: { voiceName: TTS_CONFIG.voiceName }
-              }
+      const ttsBody = JSON.stringify({
+        contents: [{ parts: [{ text: ttsInstruction }] }],
+        generationConfig: {
+          responseModalities: TTS_CONFIG.responseModalities,
+          speechConfig: {
+            voiceConfig: {
+              prebuiltVoiceConfig: { voiceName: TTS_CONFIG.voiceName }
             }
           }
-        })
+        }
       });
+      const res = await geminiTTSFetch(ttsBody, apiKey, addLog, "Prefetch Audio failed");
 
       if (!res.ok) {
         const errorText = await res.text();
@@ -1899,22 +1971,18 @@ export default function DiwanApp() {
 
     try {
       const apiStart = performance.now();
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${API_MODELS.tts}:generateContent?key=${apiKey}`;
-      const res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: ttsInstruction }] }],
-          generationConfig: {
-            responseModalities: TTS_CONFIG.responseModalities,
-            speechConfig: {
-              voiceConfig: {
-                prebuiltVoiceConfig: { voiceName: TTS_CONFIG.voiceName }
-              }
+      const ttsBody = JSON.stringify({
+        contents: [{ parts: [{ text: ttsInstruction }] }],
+        generationConfig: {
+          responseModalities: TTS_CONFIG.responseModalities,
+          speechConfig: {
+            voiceConfig: {
+              prebuiltVoiceConfig: { voiceName: TTS_CONFIG.voiceName }
             }
           }
-        })
+        }
       });
+      const res = await geminiTTSFetch(ttsBody, apiKey, addLog, "Audio API failed");
 
       if (!res.ok) {
         const errorText = await res.text();

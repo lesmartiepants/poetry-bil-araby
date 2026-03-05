@@ -310,6 +310,7 @@ describe('DiwanApp', () => {
           await Promise.resolve()
           await Promise.resolve()
         })
+        expect(ttsRequestCount).toBe(1)
 
         fireEvent.click(screen.getByLabelText('Play recitation'))
         await act(async () => {
@@ -331,6 +332,7 @@ describe('DiwanApp', () => {
           vi.advanceTimersByTime(10)
           await Promise.resolve()
         })
+        expect(document.body.textContent).toContain('Audio generation already in progress')
         expect(ttsRequestCount).toBe(1)
       } finally {
         vi.useRealTimers()

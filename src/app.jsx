@@ -1894,7 +1894,7 @@ export default function DiwanApp() {
 
       pollingIntervals.current.push(pollInterval);
 
-      // Safety timeout - clear after 120 seconds (some large poems take 100+ seconds)
+      // Safety timeout - stop polling after 120 seconds but keep request alive (some large poems take 100+ seconds)
       setTimeout(() => {
         clearInterval(pollInterval);
         pollingIntervals.current = pollingIntervals.current.filter(id => id !== pollInterval);
@@ -1915,7 +1915,7 @@ export default function DiwanApp() {
                 setIsPlaying(true);
               });
             } else {
-              addLog("Audio", `Audio is still generating in background - press play again in a few seconds`, "warning");
+              addLog("Audio", `Audio is still generating in background - press play again shortly`, "warning");
             }
             setIsGeneratingAudio(false);
           }, AUDIO_WAIT_CONFIG.finalCheckMs); // Wait 15 more seconds for very slow API responses

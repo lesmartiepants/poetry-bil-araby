@@ -52,7 +52,7 @@
     .main{display:flex;overflow:hidden}
 
     /* Preview */
-    .preview{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
+    .preview{flex:1;display:flex;flex-direction:column;min-width:0}
     /* preview-header removed — info consolidated into toolbar */
     .preview-iframe{width:100%;height:100%;border:none;background:#000}
 
@@ -303,7 +303,6 @@
       .side{display:none}
       .bottom-nav{display:none}
       .mobile-dock{display:flex;border-top:1px solid var(--border)}
-      .preview{padding-bottom:200px}
       .preview-open-overlay{opacity:0.55}
       .preview-open-overlay:hover{opacity:0.9}
     }
@@ -1138,6 +1137,8 @@ function render(skipPreview) {
   // Dock philosophy subtitle
   var dPhi = document.getElementById('dockPhilosophy');
   if (dPhi) { dPhi.textContent = opt.philosophy || ''; dPhi.classList.toggle('visible', !!opt.philosophy); }
+  // Re-sync preview padding after philosophy line changes dock height
+  if (typeof syncPreviewPadding === 'function') requestAnimationFrame(syncPreviewPadding);
   // Compact comment indicator
   var ctc = document.getElementById('commentTriggerCompact');
   if (ctc) ctc.classList.toggle('has-text', !!(rev.comment));
@@ -1566,6 +1567,22 @@ document.addEventListener('keydown', e => {
 });
 
 // ═══════════════════════════════════════════════════════════════
+// DOCK-AWARE PREVIEW SIZING
+// ═══════════════════════════════════════════════════════════════
+function syncPreviewPadding() {
+  var dock = document.getElementById('mobileDock');
+  var preview = document.getElementById('previewPane');
+  if (!dock || !preview) return;
+  if (window.innerWidth <= 768) {
+    var h = dock.getBoundingClientRect().height;
+    preview.style.paddingBottom = (h + 4) + 'px';
+  } else {
+    preview.style.paddingBottom = '';
+  }
+}
+window.addEventListener('resize', syncPreviewPadding);
+
+// ═══════════════════════════════════════════════════════════════
 // BOOT
 // ═══════════════════════════════════════════════════════════════
 loadReview();
@@ -1573,6 +1590,7 @@ buildFlatList();
 populateComps();
 populateCats();
 render();
+syncPreviewPadding();
 initAPI();
 </script>
 </body>

@@ -1018,11 +1018,15 @@ function buildMobileAccordion() {
     tab.className = 'mat-tab' + (ci === 0 ? ' active' : '');
     tab.textContent = cat.name.replace(/^⭐\s*/, '').replace(/&|Glass|Organic|Manuscripts|Cultural|Particle|Light|Minimal/i, function(m) { return m.substring(0, 4); });
     tab.dataset.catIdx = ci;
-    (function(targetSection) {
+    (function(targetSection, tabIdx) {
       tab.addEventListener('click', function() {
+        // Immediately highlight this tab (don't wait for IntersectionObserver)
+        tabs.querySelectorAll('.mat-tab').forEach(function(t) {
+          t.classList.toggle('active', t.dataset.catIdx === String(tabIdx));
+        });
         targetSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
       });
-    })(section);
+    })(section, ci);
     tabs.appendChild(tab);
   });
 
@@ -1040,7 +1044,7 @@ function buildMobileAccordion() {
         });
       }
     });
-  }, { root: scroll, rootMargin: '0px 0px -70% 0px', threshold: 0 });
+  }, { root: scroll, rootMargin: '0px 0px -50% 0px', threshold: 0 });
   sectionEls.forEach(function(s) { mobileAccObserver.observe(s); });
 
   // Scroll active card into view

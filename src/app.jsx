@@ -1612,6 +1612,7 @@ export default function DiwanApp() {
   useEffect(() => {
     // Threshold below which overflow mode is always active (prevents oscillation on narrow screens).
     // With Supabase buttons the bar is wider, so use a larger threshold.
+    // Re-runs when user signs in/out so the bar is re-measured after auth state changes.
     const narrowThreshold = isSupabaseConfigured ? 660 : 540;
 
     const scheduleDetect = () => {
@@ -1655,7 +1656,9 @@ export default function DiwanApp() {
       resizeObserver?.disconnect();
       window.removeEventListener('resize', scheduleDetect);
     };
-  }, [isSupabaseConfigured]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- refs (controlBarRef, pendingRafRef)
+  // and the stable setIsOverflow setter are intentionally omitted; only real state values need deps.
+  }, [isSupabaseConfigured, user]);
 
   // Load user settings on mount
   useEffect(() => {

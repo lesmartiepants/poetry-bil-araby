@@ -739,7 +739,7 @@ const CategoryPill = ({ selected, onSelect, darkMode }) => {
       <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">Poets</span>
 
       {isOpen && (
-        <div className="absolute bottom-full right-[-20px] mb-3 min-w-[220px] bg-[rgba(20,18,16,0.98)] backdrop-blur-[48px] border border-[rgba(197,160,89,0.15)] rounded-3xl p-3 shadow-[0_-10px_40px_rgba(0,0,0,0.7)] z-50">
+        <div className={`absolute bottom-full right-[-20px] mb-3 min-w-[220px] ${darkMode ? 'bg-[rgba(20,18,16,0.98)] border-[rgba(197,160,89,0.15)] shadow-[0_-10px_40px_rgba(0,0,0,0.7)]' : 'bg-white/95 border-stone-200 shadow-[0_-10px_40px_rgba(0,0,0,0.15)]'} backdrop-blur-[48px] border rounded-3xl p-3 z-50`}>
           {CATEGORIES.map(cat => (
             <button
               key={cat.id}
@@ -788,7 +788,7 @@ const ThemeDropdown = ({ darkMode, onToggleDarkMode, currentFont, onCycleFont, f
       <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">Theme</span>
 
       {isOpen && (
-        <div className="absolute bottom-full right-[-20px] mb-3 min-w-[200px] bg-[rgba(20,18,16,0.98)] backdrop-blur-[48px] border border-[rgba(197,160,89,0.15)] rounded-3xl p-3 shadow-[0_-10px_40px_rgba(0,0,0,0.7)] z-50">
+        <div className={`absolute bottom-full right-[-20px] mb-3 min-w-[200px] ${darkMode ? 'bg-[rgba(20,18,16,0.98)] border-[rgba(197,160,89,0.15)] shadow-[0_-10px_40px_rgba(0,0,0,0.7)]' : 'bg-white/95 border-stone-200 shadow-[0_-10px_40px_rgba(0,0,0,0.15)]'} backdrop-blur-[48px] border rounded-3xl p-3 z-50`}>
           <button
             onClick={handleCycleFont}
             className="w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex flex-col items-center border-b border-[rgba(197,160,89,0.08)] hover:bg-[rgba(197,160,89,0.08)]"
@@ -1217,7 +1217,7 @@ const AuthButton = ({ user, onSignIn, onSignOut, onOpenSavedPoems, onOpenSetting
       </span>
 
       {showMenu && (
-        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3 min-w-[200px] bg-[rgba(20,18,16,0.98)] backdrop-blur-[48px] border border-[rgba(197,160,89,0.15)] rounded-3xl p-3 shadow-[0_-10px_40px_rgba(0,0,0,0.7)] z-50">
+        <div className={`absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3 min-w-[200px] ${darkMode ? 'bg-[rgba(20,18,16,0.98)] border-[rgba(197,160,89,0.15)] shadow-[0_-10px_40px_rgba(0,0,0,0.7)]' : 'bg-white/95 border-stone-200 shadow-[0_-10px_40px_rgba(0,0,0,0.15)]'} backdrop-blur-[48px] border rounded-3xl p-3 z-50`}>
           <div className="px-4 py-3 border-b border-[rgba(197,160,89,0.08)]">
             <p className="font-brand-en text-xs text-[#C5A059] font-medium truncate">
               {user.email || user.user_metadata?.full_name || 'User'}

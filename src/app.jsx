@@ -1529,6 +1529,7 @@ export default function DiwanApp() {
   const [darkMode, setDarkMode] = useState(true);
   const [currentFont, setCurrentFont] = useState("Amiri");
   const [useDatabase, setUseDatabase] = useState(FEATURES.database);
+  const [apiKeyBannerDismissed, setApiKeyBannerDismissed] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
@@ -1609,7 +1610,12 @@ export default function DiwanApp() {
   // Using the default fetch mock in tests means this never consumes a mockResolvedValueOnce.
   useEffect(() => {
     const key = import.meta.env.VITE_GEMINI_API_KEY || "";
-    if (key) discoverTextModels(key, addLog);
+    if (key) {
+      discoverTextModels(key, addLog);
+    } else if (FEATURES.database) {
+      setUseDatabase(true);
+      addLog("Config", "No Gemini API key found — automatically using Database mode", "info");
+    }
   }, []);
 
   // Auto-load a poem and queue explanation on first mount
@@ -2660,6 +2666,13 @@ export default function DiwanApp() {
 
       <DebugPanel logs={logs} onClear={() => setLogs([])} darkMode={darkMode} />
 
+      {!apiKey && FEATURES.database && !apiKeyBannerDismissed && (
+        <div className={`fixed top-0 left-0 right-0 z-50 px-4 py-2 text-center text-sm ${darkMode ? 'bg-amber-900/90 text-amber-200' : 'bg-amber-100 text-amber-800'} backdrop-blur-sm`}>
+          Running in Database-only mode — add a Gemini API key for AI features
+          <button onClick={() => setApiKeyBannerDismissed(true)} className="ml-3 opacity-60 hover:opacity-100">✕</button>
+        </div>
+      )}
+
       <header style={{ opacity: headerOpacity }} className="fixed top-4 md:top-8 left-0 right-0 z-40 pointer-events-none transition-opacity duration-300 flex flex-row items-center justify-center gap-4 md:gap-8 px-4 md:px-6">
         <div className={`flex flex-row-reverse items-center gap-2 md:gap-4 ${theme.brand} tracking-wide header-luminescence`}>
           <PenTool className="w-8 h-8 md:w-[42px] md:h-[42px] opacity-95" strokeWidth={1.5} />
@@ -2808,7 +2821,7 @@ export default function DiwanApp() {
 
                   <DatabaseToggle
                     useDatabase={useDatabase}
-                    onToggle={() => setUseDatabase(!useDatabase)}
+                    onToggle={apiKey ? () => setUseDatabase(!useDatabase) : undefined}
                   />
 
                   <ThemeDropdown
@@ -2843,7 +2856,7 @@ export default function DiwanApp() {
                   onCopy={handleCopy}
                   showCopySuccess={showCopySuccess}
                   useDatabase={useDatabase}
-                  onToggleDatabase={() => setUseDatabase(!useDatabase)}
+                  onToggleDatabase={apiKey ? () => setUseDatabase(!useDatabase) : undefined}
                   user={user}
                   onOpenSavedPoems={handleOpenSavedPoems}
                   onOpenSettings={handleOpenSettings}

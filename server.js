@@ -1,6 +1,8 @@
 import express from 'express';
 import pg from 'pg';
 import cors from 'cors';
+import helmet from 'helmet';
+import { query, param, validationResult } from 'express-validator';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
@@ -76,7 +78,14 @@ pool.query('SELECT NOW()', (err, res) => {
 });
 
 // Middleware
-app.use(cors());
+app.use(helmet());
+app.use(cors({
+  origin: process.env.NODE_ENV === 'production'
+    ? ['https://poetry-bil-araby.vercel.app']
+    : ['http://localhost:5173', 'http://localhost:3001'],
+  methods: ['GET', 'POST', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key']
+}));
 app.use(express.json());
 // Larger body limit only for AI proxy endpoints
 app.use('/api/ai', express.json({ limit: '10mb' }));
@@ -91,6 +100,15 @@ app.use((req, res, next) => {
   });
   next();
 });
+
+// Validation helper
+const validate = (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ error: 'Invalid request parameters', details: errors.array().map(e => e.msg) });
+  }
+  next();
+};
 
 // Health check endpoint
 app.get('/api/health', async (req, res) => {
@@ -110,7 +128,10 @@ app.get('/api/health', async (req, res) => {
 });
 
 // Get random poem
-app.get('/api/poems/random', async (req, res) => {
+app.get('/api/poems/random', [
+  query('poet').optional().trim().isLength({ max: 100 }).withMessage('Poet name too long'),
+  validate
+], async (req, res) => {
   try {
     const { poet } = req.query;
 
@@ -160,13 +181,18 @@ app.get('/api/poems/random', async (req, res) => {
     log.info('Poems', `Random poem: id=${poem.id}, poet=${poem.poet}, arabic_len=${formattedPoem.arabic?.length || 0}`);
     res.json(formattedPoem);
   } catch (error) {
-    log.error('Poems', `Error fetching random poem: ${error.message}`);
-    res.status(500).json({ error: error.message });
+    log.error('Poems', `Error fetching random poem: ${error.message}`, error.stack);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
 // Get poems by poet
-app.get('/api/poems/by-poet/:poet', async (req, res) => {
+app.get('/api/poems/by-poet/:poet', [
+  param('poet').trim().isLength({ min: 1, max: 100 }).withMessage('Poet name must be 1-100 characters'),
+  query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be 1-100'),
+  query('offset').optional().isInt({ min: 0 }).withMessage('Offset must be >= 0'),
+  validate
+], async (req, res) => {
   try {
     const { poet } = req.params;
     const { limit = 10, offset = 0 } = req.query;
@@ -206,8 +232,8 @@ app.get('/api/poems/by-poet/:poet', async (req, res) => {
     log.info('Poems', `By poet "${poet}": returned ${poems.length} poems`);
     res.json(poems);
   } catch (error) {
-    log.error('Poems', `Error fetching poems by poet: ${error.message}`);
-    res.status(500).json({ error: error.message });
+    log.error('Poems', `Error fetching poems by poet: ${error.message}`, error.stack);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -228,19 +254,19 @@ app.get('/api/poets', async (req, res) => {
     log.info('Poets', `Returned ${result.rows.length} poets`);
     res.json(result.rows);
   } catch (error) {
-    log.error('Poets', `Error fetching poets: ${error.message}`);
-    res.status(500).json({ error: error.message });
+    log.error('Poets', `Error fetching poets: ${error.message}`, error.stack);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
 // Search poems
-app.get('/api/poems/search', async (req, res) => {
+app.get('/api/poems/search', [
+  query('q').trim().notEmpty().withMessage('Search query required').isLength({ max: 200 }).withMessage('Search query too long'),
+  query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be 1-100'),
+  validate
+], async (req, res) => {
   try {
     const { q, limit = 10 } = req.query;
-
-    if (!q) {
-      return res.status(400).json({ error: 'Search query required' });
-    }
 
     // Convert query param to integer for type safety
     const limitNum = parseInt(limit, 10);
@@ -275,8 +301,8 @@ app.get('/api/poems/search', async (req, res) => {
     log.info('Search', `Query "${q}": returned ${poems.length} results`);
     res.json(poems);
   } catch (error) {
-    log.error('Search', `Error searching poems: ${error.message}`);
-    res.status(500).json({ error: error.message });
+    log.error('Search', `Error searching poems: ${error.message}`, error.stack);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 

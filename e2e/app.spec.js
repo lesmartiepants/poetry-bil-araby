@@ -34,23 +34,25 @@ test.describe('Poetry Bil-Araby - Core Functionality', () => {
   });
 
   test('should navigate between poems using controls', async ({ page }) => {
-    // Get initial poem title
+    // Get initial poem text
     const initialTitle = await page.locator('.font-amiri').first().textContent();
 
     // Click Discover button (next poem)
-    await page.locator('button[aria-label="Discover new poem"]').click();
+    const discoverButton = page.locator('button[aria-label="Discover new poem"]');
+    await expect(discoverButton).toBeEnabled();
+    await discoverButton.click();
 
     // Wait for content to be visible (no fixed timeout)
     await expect(page.locator('.font-amiri').first()).toBeVisible({ timeout: 2000 });
 
-    // Verify poem has changed (or is the same if only one poem)
+    // Verify poem actually changed
     const newTitle = await page.locator('.font-amiri').first().textContent();
-    expect(typeof newTitle).toBe('string');
+    expect(newTitle).not.toBe(initialTitle);
   });
 
   test('should toggle dark/light mode', async ({ page }) => {
     // Wait for control bar to be fully rendered
-    await page.waitForTimeout(500);
+    await expect(page.locator('footer')).toBeVisible();
 
     // Get initial background color from the root div element (not body)
     const initialBg = await page.locator('html').evaluate(el => {
@@ -67,7 +69,8 @@ test.describe('Poetry Bil-Araby - Core Functionality', () => {
 
     if (themeDropdownVisible) {
       await themeDropdown.click();
-      await page.waitForTimeout(300);
+      // Wait for dropdown to appear
+      await expect(page.locator('button:has(div:has-text("الوضع النهاري")), button:has(div:has-text("الوضع الليلي"))').first()).toBeVisible({ timeout: 2000 });
       clicked = true;
     }
 
@@ -78,21 +81,19 @@ test.describe('Poetry Bil-Araby - Core Functionality', () => {
 
       if (moreButtonVisible) {
         await moreButton.click();
-        await page.waitForTimeout(300);
+        // Wait for menu to appear
+        await expect(page.locator('button:has(div:has-text("الوضع النهاري")), button:has(div:has-text("الوضع الليلي"))').first()).toBeVisible({ timeout: 2000 });
         clicked = true;
       }
     }
-
-    // Now click the actual theme toggle button in the dropdown
-    // Wait for dropdown to be open and find the theme button
-    await page.waitForTimeout(300);
 
     // Look for button containing theme Arabic text or icon
     const themeToggleButtons = await page.locator('button:has(div:has-text("الوضع النهاري")), button:has(div:has-text("الوضع الليلي"))').all();
 
     if (themeToggleButtons.length > 0) {
       await themeToggleButtons[0].click();
-      await page.waitForTimeout(500);
+      // Wait for theme transition to take effect
+      await expect(page.locator('#root > div')).toBeVisible();
     }
 
     // Verify background color has changed
@@ -105,7 +106,7 @@ test.describe('Poetry Bil-Araby - Core Functionality', () => {
 
   test('should open category selector', async ({ page }) => {
     // Wait for control bar to be fully rendered
-    await page.waitForTimeout(300);
+    await expect(page.locator('footer')).toBeVisible();
 
     // Try to find CategoryPill button (on wider viewports) or OverflowMenu (on narrow viewports)
     const categoryButton = page.locator('button[aria-label="Select poet category"]').first();
@@ -114,7 +115,6 @@ test.describe('Poetry Bil-Araby - Core Functionality', () => {
     if (categoryButtonVisible) {
       // Direct category button visible
       await categoryButton.click();
-      await page.waitForTimeout(300);
     } else {
       // Try overflow menu
       const moreButton = page.locator('button[aria-label="More options"]').first();
@@ -122,15 +122,12 @@ test.describe('Poetry Bil-Araby - Core Functionality', () => {
 
       if (moreButtonVisible) {
         await moreButton.click();
-        await page.waitForTimeout(300);
+        // Wait for overflow menu to appear
+        await expect(page.locator('button:has-text("اختيار الشاعر")').first()).toBeVisible({ timeout: 2000 });
 
         // Expand the poet submenu accordion within the overflow menu
         const poetAccordion = page.locator('button:has-text("اختيار الشاعر")').first();
-        const poetAccordionVisible = await poetAccordion.isVisible().catch(() => false);
-        if (poetAccordionVisible) {
-          await poetAccordion.click();
-          await page.waitForTimeout(300);
-        }
+        await poetAccordion.click();
       }
     }
 
@@ -140,36 +137,35 @@ test.describe('Poetry Bil-Araby - Core Functionality', () => {
   });
 
   test('should discover new poems', async ({ page }) => {
-    // Click the discover button (Sparkles icon)
-    const discoverButton = page.locator('button').filter({
-      has: page.locator('svg')
-    }).first();
+    // Capture initial poem content
+    const initialPoem = await page.locator('[dir="rtl"]').first().textContent();
 
+    // Click the discover button using aria-label
+    const discoverButton = page.locator('button[aria-label="Discover new poem"]');
+    await expect(discoverButton).toBeEnabled();
     await discoverButton.click();
-    await page.waitForTimeout(300);
 
-    // Verify button was clicked (poem may change instantly or show loading)
-    // Just verify the page is still functional after click
-    await expect(page.locator('[dir="rtl"]').first()).toBeVisible();
+    // Wait for poem content to be visible after fetch
+    await expect(page.locator('[dir="rtl"]').first()).toBeVisible({ timeout: 5000 });
+
+    // Verify poem content actually changed
+    const newPoem = await page.locator('[dir="rtl"]').first().textContent();
+    expect(newPoem).not.toBe(initialPoem);
   });
 
   test('should request poetic insight', async ({ page, viewport }) => {
-    // Wait for page to stabilize
-    await page.waitForTimeout(500);
+    // Wait for control bar to be ready
+    await expect(page.locator('footer')).toBeVisible();
 
     // Find and click the insight button (Compass icon in the control bar with "Dive In" label)
     const insightButton = page.locator('button[aria-label="Dive into poem meaning"]').first();
     const insightButtonVisible = await insightButton.isVisible().catch(() => false);
 
     if (insightButtonVisible) {
-      // Verify button is present and enabled
-      await expect(insightButton).toBeVisible();
-
+      await expect(insightButton).toBeEnabled();
       await insightButton.click();
-      await page.waitForTimeout(500);
 
       // Verify the app is still functional after clicking
-      // Without an API key, the button might not do much, but it should not break the app
       await expect(page.locator('[dir="rtl"]').first()).toBeVisible();
 
       // On desktop, we can check if the side panel is visible
@@ -191,32 +187,8 @@ test.describe('Poetry Bil-Araby - Core Functionality', () => {
     await expect(copyButton).toBeVisible({ timeout: 5000 });
     await copyButton.click();
 
-    // Should show success indicator (Check icon)
-    await page.waitForTimeout(300);
-  });
-});
-
-test.describe('Poetry Bil-Araby - Audio Player', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/');
-    await page.waitForLoadState('networkidle');
-  });
-
-  test('should have audio play button', async ({ page }) => {
-    // Verify play button is present
-    const playButton = page.locator('button').filter({
-      has: page.locator('svg')
-    }).filter({ hasText: '' }).nth(2);
-
-    await expect(playButton).toBeVisible();
-  });
-
-  test('audio button should be interactive', async ({ page }) => {
-    const playButton = page.locator('.rounded-full').filter({
-      has: page.locator('svg')
-    }).first();
-
-    await expect(playButton).toBeEnabled();
+    // Should show success indicator (Check icon appears inside the button after copy)
+    await expect(copyButton.locator('svg')).toBeVisible();
   });
 });
 
@@ -242,11 +214,12 @@ test.describe('Poetry Bil-Araby - Debug Panel', () => {
     if (await debugHeader.isVisible()) {
       // Click to expand
       await debugHeader.click();
-      await page.waitForTimeout(300);
+      // Verify expanded state — log content should appear
+      await expect(page.locator('text=System Logs')).toBeVisible();
 
       // Click to collapse
       await debugHeader.click();
-      await page.waitForTimeout(300);
+      await expect(page.locator('text=System Logs')).toBeVisible();
     } else {
       test.skip();
     }

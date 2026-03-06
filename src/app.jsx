@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Play, Pause, BookOpen, RefreshCw, Volume2, ChevronDown, Quote, Globe, Moon, Sun, Loader2, ChevronRight, ChevronLeft, Search, X, Copy, LayoutGrid, Check, Bug, Trash2, Sparkles, PenTool, Library, Compass, Rabbit, MoreHorizontal, Heart, LogIn, LogOut, User, Settings2 } from 'lucide-react';
 import { useAuth, useUserSettings, useSavedPoems } from './hooks/useAuth';
+import { INSIGHTS_SYSTEM_PROMPT, DISCOVERY_SYSTEM_PROMPT, getTTSInstruction } from './prompts';
 
 /* =============================================================================
   1. FEATURE FLAGS & DESIGN SYSTEM
@@ -102,58 +103,6 @@ const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
   2. API PROMPTS & CONFIGURATION
   =============================================================================
 */
-
-/**
- * Insights/Analysis System Prompt
- * Used by: handleAnalyze, prefetchInsights
- */
-const INSIGHTS_SYSTEM_PROMPT = `
-You are an expert scholar and master poet of both Arabic and English literature.
-
-TASK: POETIC INSIGHT
-Provide exactly three sections labeled:
-1. POEM: Provide a faithful, line-by-line English translation matching the Arabic lines exactly. Ensure poetic weight and grammatical elegance.
-2. THE DEPTH: Exactly 3 sentences explaining meaning.
-3. THE AUTHOR: Exactly 2 sentences on the poet.
-
-Strictly adhere to this format:
-POEM:
-[Translation]
-THE DEPTH: [Text]
-THE AUTHOR: [Text]
-`;
-
-/**
- * Discovery/Fetch System Prompt
- * Used by: handleFetch
- */
-const DISCOVERY_SYSTEM_PROMPT = `
-Return JSON with the following fields:
-- poet: The poet's name in English
-- poetArabic: The poet's name in Arabic
-- title: The poem title in English
-- titleArabic: The poem title in Arabic
-- arabic: The complete poem text in Arabic (with FULL tashkeel/diacritics)
-- english: The complete English translation
-- tags: An array of exactly 3 strings [Era, Mood, Type]
-`;
-
-/**
- * Text-to-Speech (TTS) Instruction Generator
- * Used by: togglePlay, prefetchAudio
- *
- * @param {Object} poem - The poem object containing arabic text and metadata
- * @param {string} poet - The poet's name
- * @param {string} mood - The mood tag (e.g., "Romantic", "Mystical")
- * @param {string} era - The era tag (e.g., "Modern", "Classical")
- * @returns {string} The formatted TTS instruction
- */
-const getTTSInstruction = (poem, poet, mood, era) => {
-  return `Act as a master orator and recite this masterpiece by ${poet} in the soulful, ${mood} tone of the ${era} era. ` +
-    `Use high intensity, passionate oratorical power, and majestic strength. ` +
-    `Include natural pauses and audible breaths where appropriate. ` +
-    `Poem: ${poem.arabic}`;
-};
 
 /**
  * API Model Endpoints
@@ -2305,7 +2254,7 @@ export default function DiwanApp() {
         const requestBody = JSON.stringify({
           contents: [{ parts: [{ text: `${prompt} JSON only.` }] }],
           systemInstruction: { parts: [{ text: DISCOVERY_SYSTEM_PROMPT }] },
-          generationConfig: { responseMimeType: "application/json" }
+          generationConfig: { responseMimeType: "application/json", maxOutputTokens: 8192 }
         });
 
         const requestSize = new Blob([requestBody]).size;
@@ -2328,7 +2277,25 @@ export default function DiwanApp() {
 
         const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
         const cleanJson = (rawText || "").replace(/```json|```/g, "").trim();
-        const parsedPoem = JSON.parse(cleanJson);
+        let parsedPoem;
+        try {
+          parsedPoem = JSON.parse(cleanJson);
+        } catch (firstError) {
+          // Attempt to repair truncated JSON (e.g. poem exceeded output token limit)
+          let repaired = cleanJson;
+          const quotes = (repaired.match(/"/g) || []).length;
+          if (quotes % 2 !== 0) repaired += '"';
+          const opens = (repaired.match(/\{/g) || []).length - (repaired.match(/\}/g) || []).length;
+          const openBrackets = (repaired.match(/\[/g) || []).length - (repaired.match(/\]/g) || []).length;
+          for (let i = 0; i < openBrackets; i++) repaired += ']';
+          for (let i = 0; i < opens; i++) repaired += '}';
+          try {
+            parsedPoem = JSON.parse(repaired);
+            addLog("Discovery JSON", "Repaired truncated JSON from AI response", "warn");
+          } catch {
+            throw new Error("AI returned invalid JSON (poem may have been too long). Try again.");
+          }
+        }
 
         // Normalize tags: convert object to array if needed
         if (parsedPoem.tags && typeof parsedPoem.tags === 'object' && !Array.isArray(parsedPoem.tags)) {

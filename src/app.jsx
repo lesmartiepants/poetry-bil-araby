@@ -10,7 +10,7 @@ import { INSIGHTS_SYSTEM_PROMPT, DISCOVERY_SYSTEM_PROMPT, getTTSInstruction } fr
 
 const FEATURES = {
   grounding: false,
-  debug: true,
+  debug: import.meta.env.DEV,
   logging: true,      // Emit structured logs to console (captured by Vercel/browser)
   caching: true,      // Enable IndexedDB caching for audio/insights
   streaming: true,    // Enable streaming insights (progressive rendering)

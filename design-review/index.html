@@ -404,6 +404,7 @@
         <button class="dock-nav" id="nextBtnMobile" onclick="goNext()" aria-label="Next design"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 3l5 5-5 5"/></svg></button>
       </div>
       <div class="dock-bottom">
+        <button class="dock-section-btn" id="dockSectionBtn" onclick="cycleSectionFilter()">All</button>
         <button class="dock-selector" id="dockSelector" onclick="toggleMobileAccordion()">
           <span class="ds-num" id="dockSelectorNum">1.</span>
           <span class="ds-name" id="dockSelectorName">--</span>
@@ -424,6 +425,7 @@
         <div class="mobile-acc-head">
           <span class="mobile-acc-title">Browse Designs</span>
           <button class="mobile-acc-close" onclick="closeMobileAccordion()">&times;</button>
+          <div class="section-filter-row" id="mobileAccSectionFilters" style="padding:6px 12px;margin-top:4px;border-bottom:none;overflow-x:auto;-webkit-overflow-scrolling:touch"></div>
         </div>
         <div class="mobile-acc-scroll" id="mobileAccScroll"></div>
         <nav class="mobile-acc-tabs" id="mobileAccTabs"></nav>
@@ -1051,6 +1053,21 @@ function buildMobileAccordion() {
   var tabs = document.getElementById('mobileAccTabs');
   scroll.textContent = '';
   tabs.textContent = '';
+
+  // Populate mobile section filter pills
+  var msfRow = document.getElementById('mobileAccSectionFilters');
+  if (msfRow) {
+    msfRow.textContent = '';
+    SECTION_FILTERS.forEach(function(sf) {
+      var pill = document.createElement('button');
+      pill.className = 'section-pill' + (sectionFilter === sf.id ? ' active' : '');
+      pill.textContent = sf.label;
+      pill.dataset.filter = sf.id;
+      pill.addEventListener('click', function(e) { e.stopPropagation(); setSectionFilter(sf.id); });
+      msfRow.appendChild(pill);
+    });
+  }
+
   var fi = currentFlatIdx();
   var cats = getAccordionCategories();
   var sectionEls = [];

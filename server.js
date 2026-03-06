@@ -381,12 +381,13 @@ app.patch('/api/design-review/sessions/:id', async (req, res) => {
   try {
     if (!(await designTablesExist())) return res.status(503).json({ error: 'Design tables not created yet' });
     const { id } = req.params;
-    const { status, notes, reviewed_count } = req.body;
+    const { status, notes, reviewed_count, reviewer } = req.body;
     const sets = [];
     const params = [id];
     if (status !== undefined) { params.push(status); sets.push(`status = $${params.length}`); }
     if (notes !== undefined) { params.push(notes); sets.push(`notes = $${params.length}`); }
     if (reviewed_count !== undefined) { params.push(reviewed_count); sets.push(`reviewed_count = $${params.length}`); }
+    if (reviewer !== undefined) { params.push(reviewer); sets.push(`reviewer = $${params.length}`); }
     if (status === 'completed') sets.push('completed_at = now()');
     if (sets.length === 0) return res.status(400).json({ error: 'No fields to update' });
 

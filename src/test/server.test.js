@@ -571,6 +571,15 @@ describe('Backend API Server', () => {
     });
   });
 
+  describe('Security Headers', () => {
+    it('should include helmet security headers', async () => {
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: '10' }] });
+      const response = await request(app).get('/api/health').expect(200);
+      expect(response.headers['x-content-type-options']).toBe('nosniff');
+      expect(response.headers).not.toHaveProperty('x-powered-by');
+    });
+  });
+
   describe('CORS Configuration', () => {
     it('should allow cross-origin requests from allowed origins', async () => {
       mockPool.query.mockResolvedValueOnce({

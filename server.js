@@ -105,6 +105,10 @@ app.use((req, res, next) => {
 const validate = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
+    log.info('Validation', `Invalid request: ${req.path}`, errors.array().map(e => e.msg));
+    if (process.env.NODE_ENV === 'production') {
+      return res.status(400).json({ error: 'Invalid request parameters' });
+    }
     return res.status(400).json({ error: 'Invalid request parameters', details: errors.array().map(e => e.msg) });
   }
   next();
@@ -424,7 +428,8 @@ app.get('/api/design-review/ping', async (req, res) => {
     await pool.query('SELECT 1');
     res.json({ ok: true });
   } catch (error) {
-    res.status(500).json({ ok: false, error: error.message });
+    log.error('DesignReview', `Ping error: ${error.message}`);
+    res.status(500).json({ ok: false, error: 'Internal server error' });
   }
 });
 
@@ -442,8 +447,8 @@ app.get('/api/design-review/items', async (req, res) => {
     const result = await pool.query(query, params);
     res.json(result.rows);
   } catch (error) {
-    console.error('Error fetching design items:', error);
-    res.status(500).json({ error: error.message });
+    log.error('DesignReview', `Error fetching design items: ${error.message}`);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -478,8 +483,8 @@ app.post('/api/design-review/items/sync', async (req, res) => {
 
     res.json({ upserted: items.length, total: items.length });
   } catch (error) {
-    console.error('Error syncing design items:', error);
-    res.status(500).json({ error: error.message });
+    log.error('DesignReview', `Error syncing design items: ${error.message}`);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -501,8 +506,8 @@ app.get('/api/design-review/sessions', async (req, res) => {
     const result = await pool.query(query, params);
     res.json(result.rows);
   } catch (error) {
-    console.error('Error fetching sessions:', error);
-    res.status(500).json({ error: error.message });
+    log.error('DesignReview', `Error fetching sessions: ${error.message}`);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -515,8 +520,8 @@ app.get('/api/design-review/sessions/:id', async (req, res) => {
     if (result.rows.length === 0) return res.status(404).json({ error: 'Session not found' });
     res.json(result.rows[0]);
   } catch (error) {
-    console.error('Error fetching session:', error);
-    res.status(500).json({ error: error.message });
+    log.error('DesignReview', `Error fetching session: ${error.message}`);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -537,8 +542,8 @@ app.post('/api/design-review/sessions', async (req, res) => {
     `, [reviewer || 'owner', branch || null, commit_sha || null, round_number, total_designs || 0]);
     res.status(201).json(result.rows[0]);
   } catch (error) {
-    console.error('Error creating session:', error);
-    res.status(500).json({ error: error.message });
+    log.error('DesignReview', `Error creating session: ${error.message}`);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -564,8 +569,8 @@ app.patch('/api/design-review/sessions/:id', async (req, res) => {
     if (result.rows.length === 0) return res.status(404).json({ error: 'Session not found' });
     res.json(result.rows[0]);
   } catch (error) {
-    console.error('Error updating session:', error);
-    res.status(500).json({ error: error.message });
+    log.error('DesignReview', `Error updating session: ${error.message}`);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -580,8 +585,8 @@ app.get('/api/design-review/sessions/:id/verdicts', async (req, res) => {
     );
     res.json(result.rows);
   } catch (error) {
-    console.error('Error fetching verdicts:', error);
-    res.status(500).json({ error: error.message });
+    log.error('DesignReview', `Error fetching verdicts: ${error.message}`);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -642,8 +647,8 @@ app.post('/api/design-review/sessions/:id/verdicts', async (req, res) => {
 
     res.json({ saved: resolved.length, total: verdicts.length });
   } catch (error) {
-    console.error('Error saving verdicts:', error);
-    res.status(500).json({ error: error.message });
+    log.error('DesignReview', `Error saving verdicts: ${error.message}`);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -677,8 +682,8 @@ app.get('/api/design-review/summary', async (req, res) => {
       verdicts: verdictCounts
     });
   } catch (error) {
-    console.error('Error fetching summary:', error);
-    res.status(500).json({ error: error.message });
+    log.error('DesignReview', `Error fetching summary: ${error.message}`);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -747,8 +752,8 @@ app.get('/api/design-review/claude-context', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error building claude context:', error);
-    res.status(500).json({ error: error.message });
+    log.error('DesignReview', `Error building claude context: ${error.message}`);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 

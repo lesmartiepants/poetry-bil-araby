@@ -460,6 +460,7 @@
           <button class="verdict-btn" data-v="discard" onclick="setVerdict('discard')"><span class="v-icon">&#10007;</span> Discard</button>
           <button class="verdict-btn" data-v="revisit" onclick="setVerdict('revisit')"><span class="v-icon">&#8635;</span> Revisit</button>
         </div>
+        <div class="inherited-label" id="inheritedLabel" style="display:none">Inherited from E2E verdict &mdash; click to override</div>
         <textarea class="comment-box" id="commentBox" placeholder="Add a comment about this design..." oninput="saveComment()"></textarea>
         <input class="tags-input" id="tagsInput" placeholder="Tags (comma-separated, e.g. animation, typography)" oninput="saveTags()" />
       </div>
@@ -814,7 +815,21 @@ function updateSectionFilterUI() {
 function curComp() { return CATALOG[st.compIdx]; }
 function curCat() { return curComp().categories[st.catIdx]; }
 function curOpt() { return curCat().options[st.optIdx]; }
-function getReview(id) { return reviewData[id] || { verdict: null, comment: '', tags: '' }; }
+function getReview(id) {
+  if (sectionFilter === 'onboarding' || sectionFilter === 'main-app') {
+    const sectionKey = id + ':' + sectionFilter;
+    const sectionData = reviewData[sectionKey];
+    if (sectionData && sectionData.verdict) {
+      return { ...sectionData, inherited: false, sectionKey: sectionKey };
+    }
+    const base = reviewData[id];
+    if (base && base.verdict) {
+      return { ...base, inherited: true, sectionKey: sectionKey };
+    }
+    return { verdict: null, comment: '', tags: '', inherited: false, sectionKey: sectionKey };
+  }
+  return { ...(reviewData[id] || { verdict: null, comment: '', tags: '' }), inherited: false, sectionKey: null };
+}
 function escHtml(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
 function genBadge(gen) {
   const l = { 6: 'Gen 6 Round 3', 5: 'Gen 5 Polished', 4: 'Gen 4 Redesign', 3: 'Gen 3 Hardened', 2: 'Gen 2 Draft', 1: 'Gen 1 Explore' };
@@ -1229,12 +1244,19 @@ function render(skipPreview) {
   document.getElementById('infoSrc').textContent = cat.source;
 
   document.querySelectorAll('.verdict-btn').forEach(b => {
-    b.className = 'verdict-btn' + (rev.verdict === b.dataset.v ? ' active-' + b.dataset.v : '');
+    const isActive = rev.verdict === b.dataset.v;
+    b.className = 'verdict-btn' + (isActive ? ' active-' + b.dataset.v : '') + (isActive && rev.inherited ? ' inherited' : '');
   });
   document.querySelectorAll('.verdict-circle').forEach(b => {
     const base = 'verdict-circle' + (b.classList.contains('vc-center') ? ' vc-center' : '');
-    b.className = base + (rev.verdict === b.dataset.v ? ' active-' + b.dataset.v : '');
+    const isActive = rev.verdict === b.dataset.v;
+    b.className = base + (isActive ? ' active-' + b.dataset.v : '') + (isActive && rev.inherited ? ' inherited' : '');
   });
+  // Inherited label
+  const inheritedLabel = document.getElementById('inheritedLabel');
+  if (inheritedLabel) {
+    inheritedLabel.style.display = rev.inherited ? 'block' : 'none';
+  }
 
   document.getElementById('commentBox').value = rev.comment || '';
   const ti = document.getElementById('tagsInput'); if (ti) ti.value = rev.tags || '';
@@ -1335,22 +1357,25 @@ function renderProgress() {
 // ═══════════════════════════════════════════════════════════════
 function setVerdict(v) {
   const opt = curOpt();
-  if (!reviewData[opt.id]) reviewData[opt.id] = { verdict: null, comment: '', tags: '' };
-  reviewData[opt.id].verdict = reviewData[opt.id].verdict === v ? null : v;
+  const key = (sectionFilter === 'onboarding' || sectionFilter === 'main-app') ? opt.id + ':' + sectionFilter : opt.id;
+  if (!reviewData[key]) reviewData[key] = { verdict: null, comment: '', tags: '' };
+  reviewData[key].verdict = reviewData[key].verdict === v ? null : v;
   persistReview(); render(true);
 }
 function saveComment() {
   const opt = curOpt();
-  if (!reviewData[opt.id]) reviewData[opt.id] = { verdict: null, comment: '', tags: '' };
-  reviewData[opt.id].comment = document.getElementById('commentBox').value;
-  const mc = document.getElementById('mobileCommentBox'); if (mc) mc.value = reviewData[opt.id].comment;
+  const key = (sectionFilter === 'onboarding' || sectionFilter === 'main-app') ? opt.id + ':' + sectionFilter : opt.id;
+  if (!reviewData[key]) reviewData[key] = { verdict: null, comment: '', tags: '' };
+  reviewData[key].comment = document.getElementById('commentBox').value;
+  const mc = document.getElementById('mobileCommentBox'); if (mc) mc.value = reviewData[key].comment;
   persistReview(); renderProgress();
 }
 function saveMobileComment() {
   const opt = curOpt();
-  if (!reviewData[opt.id]) reviewData[opt.id] = { verdict: null, comment: '', tags: '' };
-  reviewData[opt.id].comment = document.getElementById('mobileCommentBox').value;
-  document.getElementById('commentBox').value = reviewData[opt.id].comment;
+  const key = (sectionFilter === 'onboarding' || sectionFilter === 'main-app') ? opt.id + ':' + sectionFilter : opt.id;
+  if (!reviewData[key]) reviewData[key] = { verdict: null, comment: '', tags: '' };
+  reviewData[key].comment = document.getElementById('mobileCommentBox').value;
+  document.getElementById('commentBox').value = reviewData[key].comment;
   persistReview(); renderProgress();
 }
 function openMobileComment() {
@@ -1365,8 +1390,9 @@ function closeMobileComment() {
 }
 function saveTags() {
   const opt = curOpt();
-  if (!reviewData[opt.id]) reviewData[opt.id] = { verdict: null, comment: '', tags: '' };
-  reviewData[opt.id].tags = document.getElementById('tagsInput').value;
+  const key = (sectionFilter === 'onboarding' || sectionFilter === 'main-app') ? opt.id + ':' + sectionFilter : opt.id;
+  if (!reviewData[key]) reviewData[key] = { verdict: null, comment: '', tags: '' };
+  reviewData[key].tags = document.getElementById('tagsInput').value;
   persistReview();
 }
 function openTab() { window.open('/design-review/' + curOpt().file, '_blank'); }

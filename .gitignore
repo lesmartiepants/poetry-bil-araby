@@ -61,7 +61,11 @@ poetry-splash-ci-fixes/
 .vercel
 .env*.local
 
+# Curation pipeline intermediate data (Parquet files, cached datasets)
+scripts/curation/data/*.parquet
+scripts/curation/data/*.csv
+!scripts/curation/data/.gitkeep
+
 # Python artifacts
 __pycache__/
 *.pyc
-

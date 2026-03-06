@@ -295,6 +295,21 @@
     .comment-sheet .cs-btn{padding:8px 20px;border-radius:20px;border:none;font-size:12px;font-weight:600;font-family:inherit;cursor:pointer}
     .cs-cancel{background:var(--surface-3);color:var(--text-2)}
     .cs-save{background:var(--accent);color:var(--bg)}
+    /* Section filter row (desktop accordion) */
+    .section-filter-row{display:flex;gap:5px;padding:8px 16px;border-bottom:1px solid var(--border);background:var(--surface)}
+    .section-pill{padding:6px 12px;border-radius:14px;border:1px solid var(--border);background:var(--surface-2);color:var(--text-3);font-size:10px;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap}
+    .section-pill:hover{background:var(--surface-3);color:var(--text)}
+    .section-pill.active{background:rgba(212,168,75,.15);border-color:rgba(212,168,75,.4);color:var(--accent)}
+    /* Toolbar section indicator */
+    .tb-section-label{font-size:10px;font-weight:600;color:var(--accent);padding:3px 8px;border-radius:10px;background:var(--accent-dim);border:1px solid rgba(212,168,75,.25);white-space:nowrap}
+    /* Mobile dock section cycle button */
+    .dock-section-btn{min-width:44px;height:44px;padding:0 12px;border-radius:22px;border:1px solid var(--border);background:var(--surface-2);color:var(--text-3);font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;flex-shrink:0;touch-action:manipulation}
+    .dock-section-btn:active{transform:scale(.92)}
+    .dock-section-btn.filtered{border-color:rgba(212,168,75,.4);color:var(--accent);background:var(--accent-dim)}
+    /* Inherited verdict styling */
+    .verdict-btn.inherited{opacity:.45;border-style:dashed}
+    .verdict-circle.inherited{opacity:.45;border-style:dashed}
+    .inherited-label{font-size:9px;color:var(--text-3);font-style:italic;margin-top:4px}
     @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
     button,select,.dock-selector,.comment-trigger-compact,.mobile-acc-card,.mat-tab{touch-action:manipulation}
 
@@ -610,6 +625,18 @@ let currentSession = null;
 // ═══════════════════════════════════════════════════════════════
 let st = { compIdx: 0, catIdx: 0, optIdx: 0, sideOpen: true };
 
+// Section filter
+let sectionFilter = 'all';
+const SECTION_FILTERS = [
+  { id: 'all', label: 'All', short: 'All' },
+  { id: 'e2e', label: 'E2E Full', short: 'E2E' },
+  { id: 'onboarding', label: 'Onboarding', short: 'Onb' },
+  { id: 'main-app', label: 'Main App', short: 'App' },
+  { id: 'auth', label: 'Auth', short: 'Auth' },
+  { id: 'branding', label: 'Branding', short: 'Brand' }
+];
+try { const sf = localStorage.getItem('design-review-section-filter'); if (sf && SECTION_FILTERS.some(f => f.id === sf)) sectionFilter = sf; } catch {}
+
 // Review feedback: { [optionId]: { verdict, comment, tags } }
 let reviewData = {};
 const STORAGE_KEY = 'design-review-feedback-v3';
@@ -682,13 +709,23 @@ async function initAPI() {
     if (!r.ok) throw 0;
     apiAvailable = true;
 
-    // Sync CATALOG items to DB
+    // Sync CATALOG items to DB (includes virtual section items for E2E)
     const items = [];
     CATALOG.forEach(comp => comp.categories.forEach(cat => cat.options.forEach(opt => {
       items.push({ item_key: opt.id, name: opt.name, component: comp.id, category: cat.id,
         file_path: opt.file, description: opt.desc, generation: opt.generation || 1,
         iteration: opt.iteration || null, source_branch: opt.source_branch || null,
         source_pr: opt.source_pr || cat.source || null });
+      if (comp.id === 'e2e') {
+        ['onboarding', 'main-app'].forEach(section => {
+          items.push({ item_key: opt.id + ':' + section, name: opt.name + ' (' + section + ')',
+            component: comp.id, category: cat.id, file_path: opt.file,
+            description: opt.desc + ' [' + section + ' section]',
+            generation: opt.generation || 1, iteration: opt.iteration || null,
+            source_branch: opt.source_branch || null,
+            source_pr: opt.source_pr || cat.source || null });
+        });
+      }
     })));
     fetch(API_BASE + '/api/design-review/items/sync', {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items })
@@ -722,11 +759,54 @@ async function initAPI() {
 let flatList = [];
 function buildFlatList() {
   flatList = [];
-  CATALOG.forEach((comp, ci) => comp.categories.forEach((cat, cati) =>
-    cat.options.forEach((opt, oi) => flatList.push({ compIdx: ci, catIdx: cati, optIdx: oi, option: opt, category: cat, component: comp }))
-  ));
+  CATALOG.forEach((comp, ci) => {
+    if (sectionFilter === 'auth' && comp.id !== 'auth') return;
+    if (sectionFilter === 'branding' && comp.id !== 'branding') return;
+    if ((sectionFilter === 'e2e' || sectionFilter === 'onboarding' || sectionFilter === 'main-app') && comp.id !== 'e2e') return;
+    comp.categories.forEach((cat, cati) =>
+      cat.options.forEach((opt, oi) => flatList.push({ compIdx: ci, catIdx: cati, optIdx: oi, option: opt, category: cat, component: comp }))
+    );
+  });
 }
 function currentFlatIdx() { return flatList.findIndex(f => f.compIdx === st.compIdx && f.catIdx === st.catIdx && f.optIdx === st.optIdx); }
+
+function setSectionFilter(filter) {
+  sectionFilter = filter;
+  localStorage.setItem('design-review-section-filter', filter);
+  buildFlatList();
+  if (flatList.length) navigateToFlat(0);
+  updateSectionFilterUI();
+}
+
+function cycleSectionFilter() {
+  const ids = SECTION_FILTERS.map(f => f.id);
+  const next = (ids.indexOf(sectionFilter) + 1) % ids.length;
+  setSectionFilter(ids[next]);
+}
+
+function updateSectionFilterUI() {
+  // Desktop: section pills active state
+  document.querySelectorAll('.section-pill').forEach(p => {
+    p.classList.toggle('active', p.dataset.filter === sectionFilter);
+  });
+  // Desktop: toolbar badge
+  const tbBadge = document.getElementById('tbSectionLabel');
+  if (tbBadge) {
+    const info = SECTION_FILTERS.find(f => f.id === sectionFilter);
+    if (sectionFilter === 'all') { tbBadge.style.display = 'none'; }
+    else { tbBadge.style.display = ''; tbBadge.textContent = info ? info.label : sectionFilter; }
+  }
+  // Mobile: dock cycle button
+  const dockBtn = document.getElementById('dockSectionBtn');
+  if (dockBtn) {
+    const info = SECTION_FILTERS.find(f => f.id === sectionFilter);
+    dockBtn.textContent = info ? info.short : 'All';
+    dockBtn.classList.toggle('filtered', sectionFilter !== 'all');
+  }
+  // Rebuild accordion if open
+  if (accOpen) buildAccordion();
+  if (mobileAccOpen) buildMobileAccordion();
+}
 
 // ═══════════════════════════════════════════════════════════════
 // HELPERS

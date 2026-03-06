@@ -666,6 +666,12 @@ function loadReview() {
 
 function persistReview() {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(reviewData)); } catch {}
+  if (feedbackCleared && Object.keys(reviewData).length) {
+    feedbackCleared = false;
+    try { localStorage.removeItem(FEEDBACK_CLEARED_KEY); } catch {}
+    var b = document.getElementById('clearFeedbackBtn'); if (b) b.style.display = '';
+    var bm = document.getElementById('clearFeedbackBtnMobile'); if (bm) bm.style.display = '';
+  }
   scheduleSyncToAPI();
 }
 

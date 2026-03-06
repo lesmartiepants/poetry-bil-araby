@@ -749,15 +749,18 @@ describe('Backend API Server', () => {
   });
 
   describe('API Key Authentication', () => {
-    it('should allow requests when API_SECRET_KEY is not configured', async () => {
-      // When no API_SECRET_KEY is set, auth is bypassed
-      mockPool.query.mockResolvedValueOnce({ rows: [{ count: '42' }] });
+    it('should allow write requests when API_SECRET_KEY is not configured', async () => {
+      // When no API_SECRET_KEY is set, auth is bypassed and the handler is reached.
+      // Simulate a database error that would occur if tables are not created yet.
+      mockPool.query.mockRejectedValueOnce(new Error('relation "design_review_sessions" does not exist'));
 
       const response = await request(app)
-        .get('/api/health')
-        .expect(200);
+        .post('/api/design-review/sessions')
+        .send({}) // minimal payload; structure not relevant for this auth bypass test
+        .expect(503);
 
-      expect(response.body.status).toBe('ok');
+      // Reaching a 503 from the handler (rather than 401) confirms auth was bypassed.
+      expect(response.status).toBe(503);
     });
   });
 

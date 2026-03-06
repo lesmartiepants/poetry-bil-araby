@@ -927,7 +927,10 @@ const OverflowMenu = ({
   onToggleDatabase,
   user,
   onOpenSavedPoems,
-  onOpenSettings
+  onOpenSettings,
+  onSignIn,
+  onSignOut,
+  isSupabaseConfigured
 }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [fontSubmenuOpen, setFontSubmenuOpen] = useState(false);
@@ -1066,6 +1069,19 @@ const OverflowMenu = ({
             )}
           </div>
 
+          {isSupabaseConfigured && !user && (
+            <button
+              onClick={() => { onSignIn(); setIsOpen(false); }}
+              className={itemClass}
+            >
+              <LogIn size={18} style={{ color: gold }} />
+              <div className="flex flex-col items-start">
+                <div className="font-amiri text-base font-medium" style={{ color: gold }}>تسجيل الدخول</div>
+                <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Sign In</div>
+              </div>
+            </button>
+          )}
+
           {user && (
             <>
               <button
@@ -1086,6 +1102,16 @@ const OverflowMenu = ({
                 <div className="flex flex-col items-start">
                   <div className="font-amiri text-base font-medium" style={{ color: gold }}>الإعدادات</div>
                   <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Settings</div>
+                </div>
+              </button>
+              <button
+                onClick={() => { onSignOut(); setIsOpen(false); }}
+                className={itemClass}
+              >
+                <LogOut size={18} style={{ color: gold }} />
+                <div className="flex flex-col items-start">
+                  <div className="font-amiri text-base font-medium" style={{ color: gold }}>تسجيل الخروج</div>
+                  <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Sign Out</div>
                 </div>
               </button>
             </>
@@ -2822,6 +2848,9 @@ export default function DiwanApp() {
                   user={user}
                   onOpenSavedPoems={handleOpenSavedPoems}
                   onOpenSettings={handleOpenSettings}
+                  onSignIn={handleSignIn}
+                  onSignOut={handleSignOut}
+                  isSupabaseConfigured={isSupabaseConfigured}
                 />
               )}
             </div>

@@ -1508,6 +1508,85 @@ const SettingsView = ({ isOpen, onClose, darkMode, onToggleDarkMode, currentFont
 };
 
 /* =============================================================================
+  VERTICAL SIDEBAR (Mobile overflow)
+  =============================================================================
+*/
+
+const VerticalSidebar = ({ onExplain, onCopy, showCopySuccess, onOpenSavedPoems, onOpenSettings, onSignIn, onSignOut, user, useDatabase, onToggleDatabase, isSupabaseConfigured, theme, isInterpreting, interpretation }) => {
+  return (
+    <>
+      <style>{`
+        @keyframes slideInRight {
+          from { transform: translateY(-50%) translateX(100%); opacity: 0; }
+          to { transform: translateY(-50%) translateX(0); opacity: 1; }
+        }
+      `}</style>
+      <div
+        className="fixed right-0 top-1/2 -translate-y-1/2 z-[45] md:hidden rounded-l-2xl bg-gradient-to-b from-black/70 via-black/60 to-black/70 backdrop-blur-xl border-l-2 border-[#C5A059]/40 py-3 px-1.5"
+        style={{ animation: 'slideInRight 0.4s ease-out' }}
+      >
+        <div className="flex flex-col items-center gap-1">
+          <button
+            onClick={onExplain}
+            disabled={isInterpreting || interpretation}
+            title="Explain poem"
+            className="w-11 h-11 rounded-xl flex items-center justify-center hover:bg-[#C5A059]/15 transition-all duration-200 disabled:opacity-50"
+          >
+            {isInterpreting ? <Loader2 className="animate-spin text-[#C5A059]" size={18} /> : <Compass className="text-[#C5A059]" size={18} />}
+          </button>
+
+          <button
+            onClick={onCopy}
+            title="Copy poem"
+            className="w-11 h-11 rounded-xl flex items-center justify-center hover:bg-[#C5A059]/15 transition-all duration-200"
+          >
+            {showCopySuccess ? <Check size={18} className="text-green-500" /> : <Copy className="text-[#C5A059]" size={18} />}
+          </button>
+
+          <div className="w-6 h-px bg-stone-500/30 mx-auto my-1" />
+
+          {isSupabaseConfigured && (
+            <button
+              onClick={onOpenSavedPoems}
+              title="Saved poems"
+              className="w-11 h-11 rounded-xl flex items-center justify-center hover:bg-[#C5A059]/15 transition-all duration-200"
+            >
+              <Heart className="text-[#C5A059]" size={18} />
+            </button>
+          )}
+
+          <button
+            onClick={onToggleDatabase}
+            title={useDatabase ? 'Switch to AI' : 'Switch to Database'}
+            className="w-11 h-11 rounded-xl flex items-center justify-center hover:bg-[#C5A059]/15 transition-all duration-200"
+          >
+            {useDatabase ? <Library className="text-[#C5A059]" size={18} /> : <Sparkles className="text-[#C5A059]" size={18} />}
+          </button>
+
+          <button
+            onClick={onOpenSettings}
+            title="Settings"
+            className="w-11 h-11 rounded-xl flex items-center justify-center hover:bg-[#C5A059]/15 transition-all duration-200"
+          >
+            <Settings2 className="text-[#C5A059]" size={18} />
+          </button>
+
+          {isSupabaseConfigured && (
+            <button
+              onClick={user ? onSignOut : onSignIn}
+              title={user ? 'Sign out' : 'Sign in'}
+              className="w-11 h-11 rounded-xl flex items-center justify-center hover:bg-[#C5A059]/15 transition-all duration-200"
+            >
+              {user ? <LogOut className="text-[#C5A059]" size={18} /> : <LogIn className="text-[#C5A059]" size={18} />}
+            </button>
+          )}
+        </div>
+      </div>
+    </>
+  );
+};
+
+/* =============================================================================
   6. MAIN APPLICATION
   =============================================================================
 */
@@ -2713,7 +2792,7 @@ export default function DiwanApp() {
           <div className={`absolute inset-0 pointer-events-none opacity-[0.04] ${darkMode ? 'invert' : ''}`} style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M40 0l40 40-40 40L0 40z' fill='none' stroke='%234f46e5' stroke-width='1.5'/%3E%3Ccircle cx='40' cy='40' r='18' fill='none' stroke='%234f46e5' stroke-width='1.5'/%3E%3C/svg%3E")`, backgroundSize: '60px 60px' }} />
           <MysticalConsultationEffect active={isInterpreting} theme={theme} />
 
-          <main ref={mainScrollRef} onScroll={handleScroll} className="flex-1 overflow-y-auto custom-scrollbar relative z-10 px-4 md:px-0 pb-28">
+          <main ref={mainScrollRef} onScroll={handleScroll} className={`flex-1 overflow-y-auto custom-scrollbar relative z-10 px-4 md:px-0 pb-28${isOverflow ? ' pr-16' : ''}`}>
             <div className="min-h-full flex flex-col items-center justify-center py-6">
               <div className="w-full max-w-4xl flex flex-col items-center">
                 
@@ -2808,12 +2887,14 @@ export default function DiwanApp() {
                 <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">Listen</span>
               </div>
 
-              <div className="flex flex-col items-center gap-1 min-w-[52px]">
-                <button onClick={handleAnalyze} disabled={isInterpreting || interpretation} aria-label="Explain poem meaning" className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105 disabled:opacity-50">
-                  {isInterpreting ? <Loader2 className="animate-spin text-[#C5A059]" size={21} /> : <Compass className="text-[#C5A059]" size={21} />}
-                </button>
-                <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">Explain</span>
-              </div>
+              {!isOverflow && (
+                <div className="flex flex-col items-center gap-1 min-w-[52px]">
+                  <button onClick={handleAnalyze} disabled={isInterpreting || interpretation} aria-label="Explain poem meaning" className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105 disabled:opacity-50">
+                    {isInterpreting ? <Loader2 className="animate-spin text-[#C5A059]" size={21} /> : <Compass className="text-[#C5A059]" size={21} />}
+                  </button>
+                  <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">Explain</span>
+                </div>
+              )}
 
               <div className="flex flex-col items-center gap-1 min-w-[52px]">
                 <button onClick={handleFetch} disabled={isFetching} aria-label="Discover new poem" className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105">
@@ -2969,12 +3050,48 @@ export default function DiwanApp() {
         user={user}
         theme={theme}
       />
-      <a href="/design-review" style={{ position:'fixed', bottom:16, left:16, padding:'6px 12px',
-        background:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.1)',
-        borderRadius:6, fontSize:11, color:'rgba(255,255,255,0.4)', textDecoration:'none',
-        zIndex:9999, fontFamily:'system-ui' }}>
-        Design Review
+      {/* Design Review - Mobile: left edge vertical strip, Desktop: bottom-left pill */}
+      <style>{`
+        @keyframes slideInLeft {
+          from { transform: translateY(-50%) translateX(-100%); opacity: 0; }
+          to { transform: translateY(-50%) translateX(0); opacity: 1; }
+        }
+      `}</style>
+      <a
+        href="/design-review"
+        className="fixed left-0 top-1/2 -translate-y-1/2 z-[45] md:hidden py-3 px-1.5 rounded-r-2xl bg-gradient-to-b from-black/70 via-black/60 to-black/70 backdrop-blur-xl border-r-2 border-[#C5A059]/40 no-underline flex items-center"
+        style={{ writingMode: 'vertical-rl', animation: 'slideInLeft 0.4s ease-out' }}
+        title="Design Review"
+      >
+        <span className="text-[10px] font-brand-en tracking-widest text-[#C5A059]/60 uppercase">Review</span>
       </a>
+      <a
+        href="/design-review"
+        className="hidden md:block fixed bottom-4 left-4 z-[45] py-1.5 px-3 rounded-lg bg-gradient-to-r from-black/60 to-black/50 backdrop-blur-xl border border-[#C5A059]/20 no-underline"
+        title="Design Review"
+      >
+        <span className="text-[10px] font-brand-en tracking-widest text-[#C5A059]/50 uppercase">Design Review</span>
+      </a>
+
+      {/* Vertical Sidebar - Mobile overflow only */}
+      {isOverflow && (
+        <VerticalSidebar
+          onExplain={handleAnalyze}
+          onCopy={handleCopy}
+          showCopySuccess={showCopySuccess}
+          onOpenSavedPoems={handleOpenSavedPoems}
+          onOpenSettings={handleOpenSettings}
+          onSignIn={handleSignIn}
+          onSignOut={handleSignOut}
+          user={user}
+          useDatabase={useDatabase}
+          onToggleDatabase={() => setUseDatabase(!useDatabase)}
+          isSupabaseConfigured={isSupabaseConfigured}
+          theme={theme}
+          isInterpreting={isInterpreting}
+          interpretation={interpretation}
+        />
+      )}
     </div>
   );
 }

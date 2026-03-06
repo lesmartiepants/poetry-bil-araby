@@ -54,6 +54,13 @@ export default defineConfig({
         '.github/',
         'e2e/',
       ],
+      // Baseline thresholds — prevents silent test deletion
+      thresholds: {
+        statements: 35,
+        branches: 25,
+        functions: 30,
+        lines: 35,
+      },
       // Speed up coverage collection in CI
       reportsDirectory: './coverage',
       clean: true,

@@ -783,9 +783,43 @@
 
     function enterWalkthrough() {
       document.getElementById('splash').classList.add('hidden');
-      document.getElementById('walkthrough').classList.add('active');
+      var wt = document.getElementById('walkthrough');
+      wt.classList.add('active');
       currentWalkStep = 0;
-      renderWalkStep();
+      renderWalkStepImmediate();
+    }
+
+    // First step renders immediately (no fade-in delay) to avoid empty screen
+    function renderWalkStepImmediate() {
+      var step = walkSteps[currentWalkStep];
+      var card = document.getElementById('walkCard');
+      var iconEl = document.getElementById('walkIcon');
+      var titleEl = document.getElementById('walkTitle');
+      var enEl = document.getElementById('walkEn');
+      var descEl = document.getElementById('walkDesc');
+      var progress = document.getElementById('walkProgress');
+
+      while (iconEl.firstChild) iconEl.removeChild(iconEl.firstChild);
+      var iconTag = document.createElement('i');
+      iconTag.setAttribute('data-lucide', step.icon);
+      iconTag.style.width = '24px';
+      iconTag.style.height = '24px';
+      iconEl.appendChild(iconTag);
+
+      titleEl.textContent = step.titleAr;
+      enEl.textContent = step.titleEn;
+      descEl.textContent = step.descAr;
+
+      while (progress.firstChild) progress.removeChild(progress.firstChild);
+      for (var di = 0; di < walkSteps.length; di++) {
+        var dot = document.createElement('div');
+        dot.className = 'walk-dot' + (di === currentWalkStep ? ' active' : '');
+        progress.appendChild(dot);
+      }
+
+      // Show card immediately — no animation for first step
+      card.classList.add('visible');
+      if (typeof lucide !== 'undefined') lucide.createIcons();
     }
 
     // Tap to advance walkthrough

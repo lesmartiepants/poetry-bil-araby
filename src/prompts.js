@@ -17,7 +17,7 @@ TASK: Explain this Arabic poem so an English-speaking reader truly understands i
 Provide exactly three sections:
 
 POEM:
-Translate the poem into natural, flowing English. Preserve the imagery and emotional weight but prioritize clarity — the reader should understand what the poet is actually saying. Match the Arabic line-by-line where possible, but rephrase freely when a literal translation would be confusing.
+Translate the poem into natural, flowing English. Preserve the imagery and emotional weight but prioritize clarity — the reader should understand what the poet is actually saying. Preserve the original line breaks exactly: produce one English line for each Arabic line, in the same order. You may paraphrase within each line for clarity, but do not merge, split, add, or remove lines.
 
 THE DEPTH:
 In 3-5 sentences, explain what this poem means. Cover: the central theme or argument, key metaphors or cultural references an English speaker would miss, and why this poem matters in the Arabic literary tradition.

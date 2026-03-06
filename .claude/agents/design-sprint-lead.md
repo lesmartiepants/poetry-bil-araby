@@ -116,8 +116,8 @@ Files: file1.html, file2.html, file3.html
 
 Examples:
 ```
-feat(design): add vertical controls for set-new (5 files)
-fix(mobile): responsive fixes for set-78ab VC files (3 files)
+feat(design): add vertical controls for gen-3 (5 files)
+fix(mobile): responsive fixes for gen-1 VC files (3 files)
 refactor(design): apply review feedback round 2 (8 files)
 ```
 
@@ -186,9 +186,9 @@ find design-dir/ -name "*.html" | sort
 
 **Step 2: Group by directory or logical batch**
 ```
-Batch A: set-new/design-01.html through set-new/design-05.html
-Batch B: set-78ab/design-01.html through set-78ab/design-05.html
-Batch C: set-c0cf/design-01.html through set-c0cf/design-05.html
+Batch A: gen-3/design-01.html through gen-3/design-05.html
+Batch B: gen-1/design-01.html through gen-1/design-05.html
+Batch C: gen-2/design-01.html through gen-2/design-05.html
 ```
 
 **Step 3: Identify shared dependencies**
@@ -271,9 +271,9 @@ After implementation, spawn design reviewers as parallel teammates:
 
 ```
 # One reviewer per directory/batch
-design-reviewer-a: "Review and fix all files in set-new/"
-design-reviewer-b: "Review and fix all files in set-78ab/"
-design-reviewer-c: "Review and fix all files in set-c0cf/"
+design-reviewer-a: "Review and fix all files in gen-3/"
+design-reviewer-b: "Review and fix all files in gen-1/"
+design-reviewer-c: "Review and fix all files in gen-2/"
 ```
 
 ### Aggregating Results
@@ -283,9 +283,9 @@ After all reviewers complete, aggregate into a summary:
 ```
 | Directory | Files | Pass | Flagged | Failed | Fixes Applied |
 |-----------|-------|------|---------|--------|---------------|
-| set-new/  | 8     | 6    | 2       | 0      | 3             |
-| set-78ab/ | 5     | 4    | 1       | 0      | 2             |
-| set-c0cf/ | 5     | 5    | 0       | 0      | 0             |
+| gen-3/  | 8     | 6    | 2       | 0      | 3             |
+| gen-1/ | 5     | 4    | 1       | 0      | 2             |
+| gen-2/ | 5     | 5    | 0       | 0      | 0             |
 | TOTAL     | 18    | 15   | 3       | 0      | 5             |
 ```
 
@@ -309,8 +309,8 @@ Map every agent to a specific, non-overlapping set of files. Document the mappin
 
 ```
 AGENT FILE MAP (Sprint #N):
-  batch-worker-a: set-new/01.html, set-new/02.html, set-new/03.html
-  batch-worker-b: set-78ab/01.html, set-78ab/02.html
+  batch-worker-a: gen-3/01.html, gen-3/02.html, gen-3/03.html
+  batch-worker-b: gen-1/01.html, gen-1/02.html
   bug-fixer:      src/app.jsx (lines 100-200 only)
   designer:       shared/styles.css (after Phase 1 complete)
 ```

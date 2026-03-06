@@ -274,9 +274,9 @@ Design reviewers are meant to run in parallel, each owning a disjoint set of fil
 
 ```
 Sprint team lead spawns:
-  design-reviewer-a -> assigned: set-new/01.html through set-new/08.html
-  design-reviewer-b -> assigned: set-78ab/01.html through set-78ab/05.html
-  design-reviewer-c -> assigned: set-c0cf/01.html through set-c0cf/05.html
+  design-reviewer-a -> assigned: gen-3/01.html through gen-3/08.html
+  design-reviewer-b -> assigned: gen-1/01.html through gen-1/05.html
+  design-reviewer-c -> assigned: gen-2/01.html through gen-2/05.html
 
 Each reviewer:
   1. Screenshots their assigned files
@@ -307,7 +307,7 @@ Each reviewer:
 ### Per-File Summary Format
 
 ```
-File: set-new/01-calligraphic.html
+File: gen-3/01-calligraphic.html
 Philosophy: Kinetic Calligraphy
 
 | Signal | Score | Notes |

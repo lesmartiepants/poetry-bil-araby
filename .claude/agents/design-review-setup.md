@@ -123,7 +123,7 @@ const path = require('path');
 const DESIGN_DIRS = process.argv.slice(2);
 if (DESIGN_DIRS.length === 0) {
   console.log('Usage: node scripts/capture-screenshots.js <dir1> [dir2] ...');
-  console.log('Example: node scripts/capture-screenshots.js design-review/set-new design-review/set-78ab');
+  console.log('Example: node scripts/capture-screenshots.js design-review/gen-3 design-review/gen-1');
   process.exit(1);
 }
 
@@ -184,7 +184,7 @@ npx playwright install chromium
 #   "screenshots": "node scripts/capture-screenshots.js"
 
 # Run
-node scripts/capture-screenshots.js design-review/set-new design-review/set-78ab
+node scripts/capture-screenshots.js design-review/gen-3 design-review/gen-1
 ```
 
 ---

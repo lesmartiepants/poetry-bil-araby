@@ -89,29 +89,29 @@ Tracks coverage across philosophy axes to prevent duplication in future rounds.
 
 | Design | Set | Cultural Ref | Material Metaphor | Interaction Model | Emotional Register |
 |--------|-----|-------------|-------------------|-------------------|-------------------|
-| PF1 Calligraphic | set-new | Islamic calligraphy | Ink/paper | Kinetic typography | Contemplative |
-| PF2 Gold Mystical | set-new | Middle Eastern mysticism | Gold/jewels | Particle effects | Mystical |
-| PF3 Ink Constellation | set-new | Astronomy/astrology | Starfield/ink | Constellation drawing | Wonder |
-| Zen1 Refined | set-new | Japanese zen | Stone/bamboo | Minimal tap | Serene |
-| Zen2 Haiku | set-new | Japanese haiku | Paper/brush | Circle meditation | Meditative |
-| LS1 Chiaroscuro | set-new | Renaissance art | Light/shadow | Dramatic reveal | Dramatic |
-| LS2 Ray Tracing | set-new | Modern optics | Light beams | Light-as-UI controls | Futuristic |
-| Codex Spine Story | set-new | Medieval codex | Leather/vellum | 3D page turn | Scholarly |
-| A1 Gold Orbit Story | set-78ab | Orbital mechanics | Gold rings | Orbit navigation | Cosmic |
-| A2 Editorial Magazine | set-78ab | Print journalism | Paper/type | Magazine flip | Sophisticated |
-| A8 Deco Discovery | set-78ab | Art Deco | Chrome/glass | Geometric reveal | Glamorous |
-| B10 Signature Blend | set-78ab | Tessellation art | Tile/mosaic | Pattern assembly | Creative |
-| B8 Japanese Ma | set-78ab | Japanese Ma (space) | Void/negative space | Silence-driven | Minimal |
-| 02 Zen Manuscript | set-c0cf-a | Zen Buddhism | Scroll/parchment | Unrolling scroll | Peaceful |
-| 04 Neumorphic Warmth | set-c0cf-a | Modern digital | Soft plastic | Neumorphic press | Warm |
-| 07 Illuminated Manuscript | set-c0cf-a | Medieval illumination | Gold leaf/vellum | Ornamental reveal | Sacred |
-| 09 Scandinavian Scroll | set-c0cf-a | Nordic minimalism | Wood/stone | Gentle scroll | Calm |
-| 01 Particle Scroll | set-c0cf-b | Digital particles | Energy/data | Particle flow | Dynamic |
-| 04 Islamic Geometric | set-c0cf-b | Islamic geometry | Tile/glass | Pattern growth | Intricate |
-| 05 Codex Page Turn | set-c0cf-b | Book binding | Paper/leather | Page turn | Tactile |
-| 07 Particle Neumorphic | set-c0cf-b | Hybrid digital | Soft + particles | Neumorphic + flow | Ethereal |
-| 08 Zen Spotlight | set-c0cf-b | Stage lighting | Spotlight/void | Spotlight reveal | Focused |
-| 09 Kinetic Typography | set-c0cf-b | Typographic art | Pure letterforms | Kinetic text | Expressive |
+| PF1 Calligraphic | gen-3 | Islamic calligraphy | Ink/paper | Kinetic typography | Contemplative |
+| PF2 Gold Mystical | gen-3 | Middle Eastern mysticism | Gold/jewels | Particle effects | Mystical |
+| PF3 Ink Constellation | gen-3 | Astronomy/astrology | Starfield/ink | Constellation drawing | Wonder |
+| Zen1 Refined | gen-3 | Japanese zen | Stone/bamboo | Minimal tap | Serene |
+| Zen2 Haiku | gen-3 | Japanese haiku | Paper/brush | Circle meditation | Meditative |
+| LS1 Chiaroscuro | gen-3 | Renaissance art | Light/shadow | Dramatic reveal | Dramatic |
+| LS2 Ray Tracing | gen-3 | Modern optics | Light beams | Light-as-UI controls | Futuristic |
+| Codex Spine Story | gen-3 | Medieval codex | Leather/vellum | 3D page turn | Scholarly |
+| A1 Gold Orbit Story | gen-1 | Orbital mechanics | Gold rings | Orbit navigation | Cosmic |
+| A2 Editorial Magazine | gen-1 | Print journalism | Paper/type | Magazine flip | Sophisticated |
+| A8 Deco Discovery | gen-1 | Art Deco | Chrome/glass | Geometric reveal | Glamorous |
+| B10 Signature Blend | gen-1 | Tessellation art | Tile/mosaic | Pattern assembly | Creative |
+| B8 Japanese Ma | gen-1 | Japanese Ma (space) | Void/negative space | Silence-driven | Minimal |
+| 02 Zen Manuscript | gen-2a | Zen Buddhism | Scroll/parchment | Unrolling scroll | Peaceful |
+| 04 Neumorphic Warmth | gen-2a | Modern digital | Soft plastic | Neumorphic press | Warm |
+| 07 Illuminated Manuscript | gen-2a | Medieval illumination | Gold leaf/vellum | Ornamental reveal | Sacred |
+| 09 Scandinavian Scroll | gen-2a | Nordic minimalism | Wood/stone | Gentle scroll | Calm |
+| 01 Particle Scroll | gen-2b | Digital particles | Energy/data | Particle flow | Dynamic |
+| 04 Islamic Geometric | gen-2b | Islamic geometry | Tile/glass | Pattern growth | Intricate |
+| 05 Codex Page Turn | gen-2b | Book binding | Paper/leather | Page turn | Tactile |
+| 07 Particle Neumorphic | gen-2b | Hybrid digital | Soft + particles | Neumorphic + flow | Ethereal |
+| 08 Zen Spotlight | gen-2b | Stage lighting | Spotlight/void | Spotlight reveal | Focused |
+| 09 Kinetic Typography | gen-2b | Typographic art | Pure letterforms | Kinetic text | Expressive |
 
 ### Coverage Gaps (for future rounds)
 

@@ -180,10 +180,10 @@ jobs:
                 }
               }
 
-              // E2E Flows (set-78ab, set-c0cf-a, set-c0cf-b)
+              // E2E Flows (gen-1, gen-2a, gen-2b)
               const e2eDir = path.join(root, 'e2e');
               if (fs.existsSync(e2eDir)) {
-                const e2eSets = ['set-78ab', 'set-c0cf-a', 'set-c0cf-b'];
+                const e2eSets = ['gen-1', 'gen-2a', 'gen-2b'];
                 for (const setName of e2eSets) {
                   const setDir = path.join(e2eDir, setName);
                   if (!fs.existsSync(setDir)) continue;

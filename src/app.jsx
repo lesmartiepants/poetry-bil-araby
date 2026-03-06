@@ -1612,7 +1612,9 @@ export default function DiwanApp() {
   useEffect(() => {
     // Threshold below which overflow mode is always active (prevents oscillation on narrow screens).
     // With Supabase buttons the bar is wider, so use a larger threshold.
-    const narrowThreshold = isSupabaseConfigured ? 660 : 540;
+    // When user is logged in the AuthButton renders "Account" (wider than "Sign In"),
+    // so increase the threshold slightly to prevent oscillation on medium-width viewports.
+    const narrowThreshold = isSupabaseConfigured ? (user ? 720 : 660) : 540;
 
     const scheduleDetect = () => {
       // Deduplicate: cancel any pending frame before scheduling a new one
@@ -1655,7 +1657,7 @@ export default function DiwanApp() {
       resizeObserver?.disconnect();
       window.removeEventListener('resize', scheduleDetect);
     };
-  }, [isSupabaseConfigured]);
+  }, [isSupabaseConfigured, user]);
 
   // Load user settings on mount
   useEffect(() => {

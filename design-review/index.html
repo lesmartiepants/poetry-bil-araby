@@ -469,7 +469,7 @@
       </div>
 
       <div class="side-section" id="prevFeedbackSection">
-        <div class="ss-title">Previous Feedback (Round 1)</div>
+        <div class="ss-title" style="display:flex;justify-content:space-between;align-items:center">Previous Feedback (Round 1)<button id="clearFeedbackBtn" onclick="clearPastFeedback()" style="font-size:10px;padding:2px 8px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface-2);color:var(--text-3);cursor:pointer;text-transform:none;letter-spacing:0;font-weight:500">Clear</button></div>
         <div id="prevFeedback"><span style="font-size:12px;color:var(--text-3)">No previous feedback.</span></div>
       </div>
 
@@ -644,6 +644,9 @@ try { const sf = localStorage.getItem('design-review-section-filter'); if (sf &&
 // Review feedback: { [optionId]: { verdict, comment, tags } }
 let reviewData = {};
 const STORAGE_KEY = 'design-review-feedback-v3';
+const FEEDBACK_CLEARED_KEY = 'design-review-feedback-cleared';
+let feedbackCleared = false;
+try { feedbackCleared = localStorage.getItem(FEEDBACK_CLEARED_KEY) === 'true'; } catch {}
 
 function loadReview() {
   try {
@@ -1342,6 +1345,14 @@ function loadPreview(opt, cat) {
 
 function renderPrevFeedback(cat, opt) {
   const container = document.getElementById('prevFeedback');
+  const clearBtn = document.getElementById('clearFeedbackBtn');
+  if (feedbackCleared) {
+    container.textContent = 'Feedback cleared for this session.';
+    container.style.cssText = 'font-size:12px;color:var(--text-3)';
+    if (clearBtn) clearBtn.style.display = 'none';
+    return;
+  }
+  if (clearBtn) clearBtn.style.display = '';
   const fb = cat.feedback && cat.feedback[opt.id];
   if (!fb) {
     if (!Object.keys(cat.feedback || {}).length) {
@@ -1382,6 +1393,16 @@ function renderPrevFeedback(cat, opt) {
   card.appendChild(lbl);
   card.appendChild(document.createTextNode(fb));
   container.appendChild(card);
+}
+
+function clearPastFeedback() {
+  feedbackCleared = true;
+  try { localStorage.setItem(FEEDBACK_CLEARED_KEY, 'true'); } catch {}
+  for (const cat of CATALOG) cat.feedback = {};
+  const container = document.getElementById('prevFeedback');
+  container.textContent = 'Feedback cleared for this session.';
+  container.style.cssText = 'font-size:12px;color:var(--text-3)';
+  document.getElementById('clearFeedbackBtn').style.display = 'none';
 }
 
 function renderProgress() {
@@ -1750,6 +1771,7 @@ window.addEventListener('resize', syncPreviewPadding);
 // BOOT
 // ═══════════════════════════════════════════════════════════════
 loadReview();
+if (feedbackCleared) { for (const cat of CATALOG) cat.feedback = {}; }
 buildFlatList();
 populateComps();
 populateCats();

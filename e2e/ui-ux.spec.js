@@ -61,14 +61,17 @@ test.describe('UI/UX - Visual Design', () => {
   });
 
   test('should have adequate contrast ratios', async ({ page }) => {
-    // Get text color and background color
+    // Get text color and background color as rgb values
     const arabicText = page.locator('[dir="rtl"]').first();
     const color = await arabicText.evaluate(el => getComputedStyle(el).color);
     const bgColor = await page.locator('body').evaluate(el => getComputedStyle(el).backgroundColor);
 
-    // Both should be defined
-    expect(color).toBeTruthy();
-    expect(bgColor).toBeTruthy();
+    // Both should be valid rgb/rgba strings
+    expect(color).toMatch(/^rgba?\(/);
+    expect(bgColor).toMatch(/^rgba?\(/);
+
+    // Text and background must be different (basic contrast check)
+    expect(color).not.toBe(bgColor);
   });
 
   test('should have smooth animations', async ({ page }) => {
@@ -104,12 +107,10 @@ test.describe('UI/UX - Interaction Design', () => {
   test('buttons should have hover states', async ({ page }) => {
     // Get a visible button (filter out hidden ones)
     const button = page.locator('footer button:visible').first();
+    await expect(button).toBeVisible();
 
-    // Get initial state
+    // Hover and verify button is still visible
     await button.hover();
-    await page.waitForTimeout(300);
-
-    // Verify button is still visible after hover
     await expect(button).toBeVisible();
   });
 
@@ -169,7 +170,6 @@ test.describe('UI/UX - Interaction Design', () => {
         main.scrollBy({ top: 500, behavior: 'instant' });
       }
     });
-    await page.waitForTimeout(300);
 
     // Verify scroll position changed in main element
     const scrollY = await page.evaluate(() => {
@@ -230,7 +230,6 @@ test.describe('UI/UX - Content Readability', () => {
 
     // Triple click to select text
     await arabicText.click({ clickCount: 3 });
-    await page.waitForTimeout(200);
 
     // Verify text can be selected (user-select is not 'none')
     const userSelect = await arabicText.evaluate(el => getComputedStyle(el).userSelect);
@@ -271,7 +270,6 @@ test.describe('UI/UX - Accessibility', () => {
 
     // Press Enter or Space
     await page.keyboard.press('Enter');
-    await page.waitForTimeout(300);
 
     // App should still be functional
     await expect(page.locator('body')).toBeVisible();

@@ -132,77 +132,204 @@
       flex-direction: column;
       align-items: center; justify-content: center;
       cursor: pointer;
+      overflow: hidden;
     }
     #onboarding.visible { display: flex; }
 
+    /* Animated floating orbs background */
+    .onboarding-bg {
+      position: absolute; inset: 0;
+      pointer-events: none; overflow: hidden;
+    }
+    .onboarding-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(60px);
+      opacity: 0;
+      animation: orbFloat 8s ease-in-out infinite, orbFadeIn 1.5s ease forwards;
+    }
+    .onboarding-orb:nth-child(1) {
+      width: 200px; height: 200px;
+      background: var(--gold-soft);
+      top: 15%; left: 10%;
+      animation-delay: 0s, 0s;
+    }
+    .onboarding-orb:nth-child(2) {
+      width: 160px; height: 160px;
+      background: var(--gold);
+      bottom: 20%; right: 8%;
+      animation-delay: 2.5s, 0.3s;
+      animation-duration: 10s, 1.5s;
+    }
+    .onboarding-orb:nth-child(3) {
+      width: 120px; height: 120px;
+      background: var(--shadow-light);
+      top: 60%; left: 55%;
+      animation-delay: 5s, 0.6s;
+      animation-duration: 12s, 1.5s;
+    }
+    @keyframes orbFloat {
+      0%, 100% { transform: translate(0, 0) scale(1); }
+      25% { transform: translate(20px, -30px) scale(1.05); }
+      50% { transform: translate(-15px, 15px) scale(0.95); }
+      75% { transform: translate(25px, 20px) scale(1.03); }
+    }
+    @keyframes orbFadeIn {
+      from { opacity: 0; }
+      to { opacity: 0.18; }
+    }
+
+    /* Onboarding inner wrapper for centering */
+    .onboarding-inner {
+      position: relative; z-index: 2;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      width: 100%; max-width: 400px;
+      padding: 2rem;
+    }
+
+    /* Container that reserves space for the absolutely-positioned panels */
+    .neu-panel-container {
+      position: relative;
+      width: 100%;
+      max-width: 340px;
+      /* Reserve vertical space matching panel content height */
+      min-height: 280px;
+    }
+
     /* Neumorphic pressed panel */
     .neu-panel {
-      max-width: 340px; width: 88%;
+      max-width: 340px; width: 100%;
       padding: 2.5rem 2rem;
       background: var(--bg-card);
       border-radius: 24px;
       box-shadow: var(--neu-outset);
       text-align: center;
-      opacity: 0; transform: translateY(12px);
-      transition: opacity 0.6s ease, transform 0.6s ease;
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      opacity: 1;
+      transform: scale(1);
+      pointer-events: none;
+      visibility: hidden;
+      will-change: box-shadow, opacity, transform;
+      transition: box-shadow 500ms cubic-bezier(0.4, 0, 0.2, 1),
+                  opacity 400ms cubic-bezier(0.4, 0, 0.2, 1),
+                  transform 400ms cubic-bezier(0.4, 0, 0.2, 1);
     }
-    .neu-panel.active { opacity: 1; transform: translateY(0); }
+    .neu-panel.active {
+      visibility: visible;
+      opacity: 1;
+      transform: scale(1);
+      box-shadow: var(--neu-outset);
+      pointer-events: auto;
+    }
+    .neu-panel.exit-press {
+      box-shadow:
+        inset 4px 4px 8px var(--shadow-dark),
+        inset -4px -4px 8px var(--shadow-light);
+      opacity: 0;
+      transform: scale(0.97);
+      pointer-events: none;
+    }
+    .neu-panel.enter-rise {
+      visibility: visible;
+      box-shadow:
+        0px 0px 0px rgba(0,0,0,0),
+        0px 0px 0px rgba(255,255,255,0);
+      opacity: 0;
+      transform: scale(0.97);
+      pointer-events: none;
+    }
 
-    /* Neumorphic icon well */
+    /* Neumorphic icon well with breathing glow */
     .neu-icon {
-      width: 56px; height: 56px;
+      width: 64px; height: 64px;
       margin: 0 auto 1.2rem;
-      border-radius: 16px;
+      border-radius: 18px;
       background: var(--bg-card);
       box-shadow: var(--neu-inset);
       display: flex; align-items: center; justify-content: center;
       color: var(--gold);
+      opacity: 0; transform: translateY(12px);
+      transition: opacity 0.5s ease 0.2s, transform 0.5s ease 0.2s;
     }
-    .neu-icon i { width: 24px; height: 24px; }
+    .neu-panel.active .neu-icon {
+      opacity: 1; transform: translateY(0);
+      animation: iconBreath 3s ease-in-out infinite 0.8s;
+    }
+    .neu-icon i { width: 26px; height: 26px; }
 
+    @keyframes iconBreath {
+      0%, 100% { box-shadow: var(--neu-inset); }
+      50% { box-shadow: inset 4px 4px 8px var(--shadow-dark), inset -4px -4px 8px var(--shadow-light), 0 0 18px rgba(184, 146, 58, 0.15); }
+    }
+
+    /* Staggered text entrance animations */
     .neu-ar {
       font-family: 'Amiri', serif;
       font-size: clamp(1.8rem, 4vw, 2.2rem);
       color: var(--gold); line-height: 1.3;
       margin-bottom: 0.3rem;
+      opacity: 0; transform: translateY(10px);
+      transition: opacity 0.5s ease 0.35s, transform 0.5s ease 0.35s;
     }
+    .neu-panel.active .neu-ar { opacity: 1; transform: translateY(0); }
+
     .neu-en {
       font-family: 'Tajawal', sans-serif;
       font-size: 0.82rem; font-weight: 300;
       color: var(--text-muted);
       margin-bottom: 1rem; direction: ltr;
+      opacity: 0; transform: translateY(10px);
+      transition: opacity 0.5s ease 0.45s, transform 0.5s ease 0.45s;
     }
+    .neu-panel.active .neu-en { opacity: 1; transform: translateY(0); }
+
     .neu-desc {
       font-family: 'Tajawal', sans-serif;
       font-size: 0.86rem; line-height: 1.8;
-      color: var(--text-primary); opacity: 0.7; direction: ltr;
+      color: var(--text-primary); opacity: 0; direction: ltr;
+      transform: translateY(10px);
+      transition: opacity 0.5s ease 0.55s, transform 0.5s ease 0.55s;
     }
+    .neu-panel.active .neu-desc { opacity: 0.7; transform: translateY(0); }
 
-    /* Neumorphic pill indicators */
+    /* Neumorphic pill indicators -- tactile pressed/raised */
     .neu-pills {
-      display: flex; gap: 10px; margin-top: 2rem;
+      display: flex; gap: 12px; margin-top: 1.5rem;
       justify-content: center;
+      position: relative;
+      z-index: 10;
     }
     .neu-pill {
-      width: 24px; height: 6px;
-      border-radius: 3px;
+      width: 12px; height: 12px;
+      border-radius: 50%;
       background: var(--bg-card);
       box-shadow: var(--neu-outset-sm);
-      transition: all 0.5s ease;
+      transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     }
     .neu-pill.active {
-      width: 36px;
+      width: 32px;
+      border-radius: 6px;
       box-shadow: var(--neu-inset);
-      background: var(--gold);
+      background: linear-gradient(135deg, var(--gold), var(--gold-soft));
     }
     .neu-pill.past {
       box-shadow: var(--neu-inset);
+      background: var(--bg-card);
     }
 
     .neu-hint {
       font-size: 11px; color: var(--text-muted);
-      opacity: 0.4; margin-top: 1.2rem;
+      opacity: 0; margin-top: 1.4rem;
       letter-spacing: 0.2em;
+      position: relative;
+      z-index: 10;
+      animation: hintPulse 2.5s ease-in-out infinite 1s;
+    }
+    @keyframes hintPulse {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 0.6; }
     }
 
     /* =============================================
@@ -536,8 +663,15 @@
         display: block;
       }
 
-      .onboarding-card {
+      .neu-panel {
         padding: 2rem 1.5rem;
+      }
+      .onboarding-inner {
+        padding: 1.5rem;
+        justify-content: center;
+      }
+      .neu-panel-container {
+        min-height: 260px;
       }
 
       header h1 {
@@ -593,31 +727,42 @@
 
   <!-- ===== 2. ONBOARDING ===== -->
   <div id="onboarding" data-step="0">
-    <div class="neu-panel active" data-neu="0">
-      <div class="neu-icon"><i data-lucide="refresh-cw"></i></div>
-      <div class="neu-ar" lang="ar" dir="rtl">اكتشف القصائد</div>
-      <div class="neu-en">Discover Poems</div>
-      <div class="neu-desc">Tap to explore 84,000 poems. Each refresh reveals a new treasure from Arabic literary heritage.</div>
-    </div>
-    <div class="neu-panel" data-neu="1">
-      <div class="neu-icon"><i data-lucide="music"></i></div>
-      <div class="neu-ar" lang="ar" dir="rtl">استمع للإلقاء</div>
-      <div class="neu-en">Listen to Recitation</div>
-      <div class="neu-desc">AI voices bring each verse to life. Feel the warmth and rhythm of Arabic poetry spoken aloud.</div>
-    </div>
-    <div class="neu-panel" data-neu="2">
-      <div class="neu-icon"><i data-lucide="heart"></i></div>
-      <div class="neu-ar" lang="ar" dir="rtl">احفظ المفضلة</div>
-      <div class="neu-en">Save Favorites</div>
-      <div class="neu-desc">Build your personal collection. Press the verses that move you into your own soft, warm library.</div>
+    <!-- Animated floating warm orbs -->
+    <div class="onboarding-bg">
+      <div class="onboarding-orb"></div>
+      <div class="onboarding-orb"></div>
+      <div class="onboarding-orb"></div>
     </div>
 
-    <div class="neu-pills">
-      <div class="neu-pill active" data-pill="0"></div>
-      <div class="neu-pill" data-pill="1"></div>
-      <div class="neu-pill" data-pill="2"></div>
+    <div class="onboarding-inner">
+      <div class="neu-panel-container">
+        <div class="neu-panel" data-neu="0">
+          <div class="neu-icon"><i data-lucide="refresh-cw"></i></div>
+          <div class="neu-ar" lang="ar" dir="rtl">اكتشف القصائد</div>
+          <div class="neu-en">Discover Poems</div>
+          <div class="neu-desc">Tap to explore 84,000 poems. Each refresh reveals a new treasure from Arabic literary heritage.</div>
+        </div>
+        <div class="neu-panel" data-neu="1">
+          <div class="neu-icon"><i data-lucide="music"></i></div>
+          <div class="neu-ar" lang="ar" dir="rtl">استمع للإلقاء</div>
+          <div class="neu-en">Listen to Recitation</div>
+          <div class="neu-desc">AI voices bring each verse to life. Feel the warmth and rhythm of Arabic poetry spoken aloud.</div>
+        </div>
+        <div class="neu-panel" data-neu="2">
+          <div class="neu-icon"><i data-lucide="heart"></i></div>
+          <div class="neu-ar" lang="ar" dir="rtl">احفظ المفضلة</div>
+          <div class="neu-en">Save Favorites</div>
+          <div class="neu-desc">Build your personal collection. Press the verses that move you into your own soft, warm library.</div>
+        </div>
+      </div>
+
+      <div class="neu-pills">
+        <div class="neu-pill active" data-pill="0"></div>
+        <div class="neu-pill" data-pill="1"></div>
+        <div class="neu-pill" data-pill="2"></div>
+      </div>
+      <div class="neu-hint">tap anywhere</div>
     </div>
-    <div class="neu-hint">tap</div>
   </div>
 
   <!-- ===== 3. MAIN APP ===== -->
@@ -781,19 +926,54 @@
     var neuStep = 0;
     var totalNeu = neuPanels.length;
 
-    function showNeuStep() {
+    var neuTransitioning = false;
+
+    function showNeuStep(prevStep) {
       document.getElementById('onboarding').setAttribute('data-step', neuStep);
-      for (var i = 0; i < neuPanels.length; i++) {
-        neuPanels[i].classList.remove('active');
-        neuPills[i].classList.remove('active');
-        neuPills[i].classList.remove('past');
+
+      /* If there's a previous panel, press it into the surface */
+      if (prevStep !== undefined && prevStep >= 0 && prevStep < totalNeu) {
+        var exitPanel = neuPanels[prevStep];
+        exitPanel.classList.remove('active');
+        exitPanel.classList.add('exit-press');
+
+        /* After exit animation, hide the panel */
+        setTimeout(function() {
+          exitPanel.classList.remove('exit-press');
+          exitPanel.style.visibility = 'hidden';
+        }, 400);
+      }
+
+      /* Show entering panel with rise-from-surface effect */
+      if (neuStep < totalNeu) {
+        var enterPanel = neuPanels[neuStep];
+        /* Prepare: make visible but in flush/flat state */
+        enterPanel.style.visibility = 'visible';
+        enterPanel.classList.remove('active', 'exit-press');
+        enterPanel.classList.add('enter-rise');
+
+        /* After a brief delay (allow reflow + exit overlap), rise to raised state */
+        setTimeout(function() {
+          requestAnimationFrame(function() {
+            enterPanel.classList.remove('enter-rise');
+            enterPanel.classList.add('active');
+            lucide.createIcons();
+          });
+        }, 350);
+      }
+
+      /* Update pill indicators */
+      for (var i = 0; i < neuPills.length; i++) {
+        neuPills[i].classList.remove('active', 'past');
         if (i < neuStep) neuPills[i].classList.add('past');
       }
       if (neuStep < totalNeu) {
-        neuPanels[neuStep].classList.add('active');
         neuPills[neuStep].classList.add('active');
       }
-      lucide.createIcons();
+
+      /* Prevent rapid tapping from breaking transitions */
+      neuTransitioning = true;
+      setTimeout(function() { neuTransitioning = false; }, 550);
     }
 
     document.getElementById('splashCta').addEventListener('click', function() {
@@ -801,21 +981,40 @@
       document.getElementById('splash').classList.add('hidden');
       setTimeout(function() {
         document.getElementById('splash').style.display = 'none';
+        /* Hide all panels before showing onboarding */
+        for (var i = 0; i < neuPanels.length; i++) {
+          neuPanels[i].classList.remove('active', 'exit-press', 'enter-rise');
+          neuPanels[i].style.visibility = 'hidden';
+        }
         document.getElementById('onboarding').classList.add('visible');
         neuStep = 0;
-        showNeuStep();
+        showNeuStep(undefined);
       }, 800);
     });
 
     document.getElementById('onboarding').addEventListener('click', function(e) {
       if (e.target.closest('#splashCta')) return;
+      if (neuTransitioning) return;
+      var prevStep = neuStep;
       neuStep++;
       if (neuStep >= totalNeu) {
-        document.getElementById('onboarding').style.display = 'none';
-        document.getElementById('mainContent').classList.add('visible');
-        lucide.createIcons();
+        /* Press the last card, then fade out onboarding */
+        neuTransitioning = true;
+        var lastPanel = neuPanels[prevStep];
+        lastPanel.classList.remove('active');
+        lastPanel.classList.add('exit-press');
+        setTimeout(function() {
+          var ob = document.getElementById('onboarding');
+          ob.style.opacity = '0';
+          ob.style.transition = 'opacity 0.5s ease';
+          setTimeout(function() {
+            ob.style.display = 'none';
+            document.getElementById('mainContent').classList.add('visible');
+            lucide.createIcons();
+          }, 500);
+        }, 300);
       } else {
-        showNeuStep();
+        showNeuStep(prevStep);
       }
     });
 

@@ -286,24 +286,23 @@
       visibility: visible;
     }
 
-    /* Asymmetric placement per card */
+    /* Consistent centered placement — fixes card jumping between steps */
     .wabi-card[data-step="0"] {
-      top: 28%;
-      left: 8%;
-      transform: rotate(-0.8deg);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(-0.8deg);
     }
 
     .wabi-card[data-step="1"] {
-      top: 32%;
-      right: 6%;
-      left: auto;
-      transform: rotate(0.5deg);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(0.5deg);
     }
 
     .wabi-card[data-step="2"] {
-      top: 25%;
-      left: 12%;
-      transform: rotate(-0.3deg);
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(-0.3deg);
     }
 
     /* Brushstroke reveal animation */

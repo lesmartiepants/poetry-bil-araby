@@ -73,7 +73,14 @@ body.light { background: var(--ivory); color: #1a2a1f; }
 @keyframes fadeInContent { to { opacity: 1; } }
 @keyframes splashOut { to { opacity: 0; pointer-events: none; } }
 
-/* ===== WALKTHROUGH (Organic Biomorphic) ===== */
+/* ===== WALKTHROUGH (Tessellation Unfold) ===== */
+/* Concept: The 8-point tessellation stars from the splash don't disappear —
+   they transform. Stars gather and orbit as living constellations behind a
+   glass card. Each step triggers a different star formation: scattered garden
+   (discovery), rhythmic wave (listening), converging mandala (insight).
+   A strip of 3 tessellation tiles at the bottom illuminates to show progress.
+   The canvas is alive — stars pulse, drift with spring physics, and respond
+   to step transitions with coordinated choreography. */
 .walkthrough {
   position: fixed; inset: 0; z-index: 9998;
   background: var(--emerald); display: none;
@@ -83,83 +90,82 @@ body.light { background: var(--ivory); color: #1a2a1f; }
 }
 .walkthrough.active { display: flex; }
 
-/* Animated organic blob background */
-.bio-blob {
-  position: absolute; border-radius: 50%;
-  filter: blur(60px); pointer-events: none;
-  transition: all 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+/* Live canvas behind cards — continues the tessellation from splash */
+.wt-canvas {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  pointer-events: none; z-index: 1;
 }
-.bio-blob-1 {
-  width: 300px; height: 300px;
-  background: rgba(26, 107, 90, 0.3);
-}
-.bio-blob-2 {
-  width: 250px; height: 250px;
-  background: rgba(197, 160, 89, 0.15);
-}
-/* Blob positions per step */
-.walkthrough[data-step="0"] .bio-blob-1 { top: 10%; left: -5%; transform: scale(1); }
-.walkthrough[data-step="0"] .bio-blob-2 { bottom: 15%; right: -10%; transform: scale(0.8); }
-.walkthrough[data-step="1"] .bio-blob-1 { top: 30%; left: 20%; transform: scale(1.2); }
-.walkthrough[data-step="1"] .bio-blob-2 { bottom: 5%; right: 15%; transform: scale(1.1); }
-.walkthrough[data-step="2"] .bio-blob-1 { top: 15%; left: 40%; transform: scale(0.9); }
-.walkthrough[data-step="2"] .bio-blob-2 { bottom: 20%; right: 30%; transform: scale(1.3); }
 
-.bio-card {
-  position: relative; z-index: 2;
-  max-width: 400px; width: 90%; padding: 2.5rem 2rem; text-align: center;
-  background: rgba(10, 61, 47, 0.5);
-  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(197, 160, 89, 0.15);
-  border-radius: 32px;
+/* Card — vertically centered, glass morphism */
+.wt-card {
+  position: absolute; z-index: 2;
+  top: 50%; left: 50%; transform: translate(-50%, -50%);
+  max-width: 360px; width: 90%; padding: 1.75rem 1.5rem; text-align: center;
+  background: rgba(10, 61, 47, 0.3);
+  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(197, 160, 89, 0.12);
+  border-radius: 28px;
   display: none;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2), 0 0 80px rgba(197,160,89,0.04);
 }
-.bio-card.active {
+.wt-card.active {
   display: block;
-  animation: bioReveal 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: wtCardIn 0.8s cubic-bezier(0.16, 1, 0.3, 1);
 }
-@keyframes bioReveal {
-  from { opacity: 0; transform: scale(0.92) translateY(16px); }
-  to { opacity: 1; transform: scale(1) translateY(0); }
+@keyframes wtCardIn {
+  0% { opacity: 0; transform: translate(-50%, -50%) translateY(20px) scale(0.92); }
+  100% { opacity: 1; transform: translate(-50%, -50%) translateY(0) scale(1); }
 }
 
-.bio-icon {
-  width: 52px; height: 52px; margin: 0 auto 1.25rem;
-  border-radius: 16px; background: rgba(197, 160, 89, 0.1);
-  border: 1px solid rgba(197, 160, 89, 0.2);
+.wt-card-icon {
+  width: 56px; height: 56px; margin: 0 auto 1.25rem;
+  border-radius: 16px;
+  background: transparent;
+  border: none;
   display: flex; align-items: center; justify-content: center;
   color: var(--gold);
 }
-.bio-card h3 {
+
+.wt-card h3 {
   font-family: 'Tajawal', sans-serif; font-size: 1.25rem;
   font-weight: 500; color: var(--ivory); direction: ltr; margin-bottom: 4px;
 }
-.bio-card .bio-ar {
+.wt-card .wt-ar {
   font-family: 'Tajawal', sans-serif; font-size: 1.05rem;
   color: var(--gold); direction: rtl; margin-bottom: 1rem;
 }
-.bio-card p {
+.wt-card p {
   font-size: 0.9rem; line-height: 1.7; color: var(--muted); direction: ltr;
   margin-bottom: 0.5rem;
 }
-.bio-card .bio-desc-ar {
+.wt-card .wt-desc-ar {
   font-family: 'Tajawal', sans-serif; font-size: 0.85rem;
   line-height: 1.7; color: rgba(197, 160, 89, 0.4); direction: rtl;
 }
-.bio-dots { display: flex; gap: 10px; margin-top: 2rem; z-index: 2; }
-.bio-dot {
+
+/* Simple dot progress inside card */
+.wt-dots { display: flex; gap: 10px; margin-top: 1.5rem; justify-content: center; }
+.wt-dot {
   width: 10px; height: 10px; border-radius: 50%;
   background: rgba(197, 160, 89, 0.15);
   transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
 }
-.bio-dot.active {
+.wt-dot.active {
   background: var(--gold);
   transform: scale(1.3);
   box-shadow: 0 0 10px rgba(197, 160, 89, 0.4);
 }
-.bio-hint {
-  margin-top: 1rem; font-size: 0.7rem; letter-spacing: 0.25em;
-  text-transform: uppercase; color: rgba(253, 252, 248, 0.25); z-index: 2;
+
+.wt-hint {
+  position: absolute; bottom: 8%; left: 50%; transform: translateX(-50%);
+  font-size: 0.7rem; letter-spacing: 0.25em;
+  text-transform: uppercase; color: rgba(253, 252, 248, 0.5); z-index: 2;
+  animation: wtHintPulse 3s ease-in-out infinite;
+  white-space: nowrap;
+}
+@keyframes wtHintPulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.7; }
 }
 
 /* ===== MAIN APP ===== */
@@ -389,39 +395,40 @@ body.light { background: var(--ivory); color: #1a2a1f; }
   </div>
 </div>
 
-<!-- Walkthrough (Organic Biomorphic) -->
+<!-- Walkthrough (Tessellation Unfold) -->
 <div class="walkthrough" id="walkthrough" data-step="0">
-  <div class="bio-blob bio-blob-1"></div>
-  <div class="bio-blob bio-blob-2"></div>
+  <!-- Live canvas — stars continue from splash and choreograph per step -->
+  <canvas class="wt-canvas" id="wtCanvas"></canvas>
 
-  <div class="bio-card active" data-card="0">
-    <div class="bio-icon"><i data-lucide="compass" style="width:24px;height:24px"></i></div>
-    <h3>A Living Garden</h3>
-    <div class="bio-ar" lang="ar" dir="rtl">حديقة حيّة</div>
-    <p>Over 84,000 poems growing like a garden of verse across centuries.</p>
-    <div class="bio-desc-ar" lang="ar" dir="rtl">أكثر من 84,000 قصيدة تنمو كحديقة من الشعر عبر القرون</div>
+  <!-- Step 0: Discovery — stars scatter like a garden blooming -->
+  <div class="wt-card active" data-card="0">
+    <div class="wt-card-icon"><i data-lucide="feather" style="width:24px;height:24px"></i></div>
+    <h3>A World of Verse</h3>
+    <div class="wt-ar" lang="ar" dir="rtl">عالم من الشعر</div>
+    <p>Over 84,000 poems — every star a doorway to centuries of Arabic poetry.</p>
+    <div class="wt-desc-ar" lang="ar" dir="rtl">أكثر من 84,000 قصيدة — كل نجمةٍ بابٌ يُفضي إلى قرونٍ من الشعر العربي</div>
+    <div class="wt-dots"><div class="wt-dot active"></div><div class="wt-dot"></div><div class="wt-dot"></div></div>
   </div>
-  <div class="bio-card" data-card="1">
-    <div class="bio-icon"><i data-lucide="headphones" style="width:24px;height:24px"></i></div>
+  <!-- Step 1: Recitation — stars align into rhythmic wave rows -->
+  <div class="wt-card" data-card="1">
+    <div class="wt-card-icon"><i data-lucide="headphones" style="width:24px;height:24px"></i></div>
     <h3>Listen & Feel</h3>
-    <div class="bio-ar" lang="ar" dir="rtl">استمع واشعر</div>
-    <p>AI-powered recitation brings each verse to life, organically flowing.</p>
-    <div class="bio-desc-ar" lang="ar" dir="rtl">إلقاء صوتي يبعث الحياة في كل بيت بانسيابية طبيعية</div>
+    <div class="wt-ar" lang="ar" dir="rtl">استمع واشعر</div>
+    <p>Recitation breathes rhythm into each verse, like stars pulsing in unison.</p>
+    <div class="wt-desc-ar" lang="ar" dir="rtl">الإلقاء يبعث الإيقاع في كل بيتٍ، كالنجوم تنبض معًا</div>
+    <div class="wt-dots"><div class="wt-dot"></div><div class="wt-dot active"></div><div class="wt-dot"></div></div>
   </div>
-  <div class="bio-card" data-card="2">
-    <div class="bio-icon"><i data-lucide="sparkles" style="width:24px;height:24px"></i></div>
-    <h3>AI Insights</h3>
-    <div class="bio-ar" lang="ar" dir="rtl">رؤى ذكية</div>
-    <p>Deep analysis that unfolds meaning layer by layer, like petals opening.</p>
-    <div class="bio-desc-ar" lang="ar" dir="rtl">تحليل عميق يكشف المعاني طبقة بعد طبقة كتفتح البتلات</div>
+  <!-- Step 2: Insight — stars converge into a radiant mandala -->
+  <div class="wt-card" data-card="2">
+    <div class="wt-card-icon"><i data-lucide="lightbulb" style="width:24px;height:24px"></i></div>
+    <h3>Deep Insights</h3>
+    <div class="wt-ar" lang="ar" dir="rtl">رؤى عميقة</div>
+    <p>Layer by layer, meaning converges — the tessellation completes itself.</p>
+    <div class="wt-desc-ar" lang="ar" dir="rtl">طبقة بعد طبقة، تتلاقى المعاني — تكتمل الزخرفة</div>
+    <div class="wt-dots"><div class="wt-dot"></div><div class="wt-dot"></div><div class="wt-dot active"></div></div>
   </div>
 
-  <div class="bio-dots">
-    <div class="bio-dot active" data-dot="0"></div>
-    <div class="bio-dot" data-dot="1"></div>
-    <div class="bio-dot" data-dot="2"></div>
-  </div>
-  <div class="bio-hint">Tap anywhere to continue</div>
+  <div class="wt-hint">Tap anywhere to continue</div>
 </div>
 
 <!-- ===== MAIN APP ===== -->
@@ -541,7 +548,7 @@ body.light { background: var(--ivory); color: #1a2a1f; }
   }
   animate();
 
-  // Splash enter
+  // Splash enter — transition into walkthrough
   document.getElementById('splashEnter').addEventListener('click', function() {
     splashing = false;
     var splashEl = document.getElementById('splash');
@@ -553,44 +560,382 @@ body.light { background: var(--ivory); color: #1a2a1f; }
       wt.classList.add('active');
       wt.setAttribute('data-step', '0');
       if (typeof lucide !== 'undefined') lucide.createIcons();
+      // Launch the tessellation unfold canvas
+      if (typeof window.startWalkthrough === 'function') {
+        window.startWalkthrough();
+      }
     }, 800);
   });
 })();
 
-/* Walkthrough (Organic Biomorphic) */
-var bioCards = document.querySelectorAll('.bio-card');
-var bioDots = document.querySelectorAll('.bio-dot');
-var currentStep = 0;
-var totalBioSteps = bioCards.length;
+/* ====== Walkthrough: Tessellation Unfold ====== */
+(function() {
+  var canvas = document.getElementById('wtCanvas');
+  var ctx = canvas.getContext('2d');
+  var W, H, time = 0, running = false;
+  var currentStep = 0;
+  var totalSteps = 3;
+  var transitionT = 0; // 0..1 progress of step transition
+  var transitioning = false;
+  var stepStartTime = 0;
 
-function showBioStep() {
-  for (var i = 0; i < bioCards.length; i++) {
-    bioCards[i].classList.remove('active');
-  }
-  for (var j = 0; j < bioDots.length; j++) {
-    bioDots[j].classList.remove('active');
-  }
-  if (currentStep < totalBioSteps) {
-    bioCards[currentStep].classList.add('active');
-    bioDots[currentStep].classList.add('active');
-    document.getElementById('walkthrough').setAttribute('data-step', currentStep);
-  }
-}
+  var wtCards = document.querySelectorAll('.wt-card');
 
-function advanceBio() {
-  currentStep++;
-  if (currentStep >= totalBioSteps) {
-    var wt = document.getElementById('walkthrough');
-    wt.classList.remove('active');
-    wt.style.display = 'none';
-    document.getElementById('app').classList.add('active');
-    if (typeof lucide !== 'undefined') lucide.createIcons();
-  } else {
-    showBioStep();
-  }
-}
+  // Star particles — they persist across steps but move to new formations
+  var stars = [];
+  var NUM_STARS = 45;
 
-document.getElementById('walkthrough').addEventListener('click', advanceBio);
+  function resize() {
+    W = canvas.width = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+
+  // Spring physics helper: returns {pos, vel}
+  function springStep(current, target, vel, stiffness, damping, dt) {
+    var force = (target - current) * stiffness;
+    var dampForce = vel * damping;
+    var acc = force - dampForce;
+    var nv = vel + acc * dt;
+    var np = current + nv * dt;
+    return { pos: np, vel: nv };
+  }
+
+  // Draw an 8-point star (same as splash for visual continuity)
+  function drawStar8(cx, cy, outerR, rotation, alpha, glow) {
+    var innerR = outerR * 0.42;
+    ctx.beginPath();
+    for (var i = 0; i < 16; i++) {
+      var angle = rotation + (i * Math.PI / 8);
+      var r = i % 2 === 0 ? outerR : innerR;
+      var x = cx + Math.cos(angle) * r;
+      var y = cy + Math.sin(angle) * r;
+      if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    if (glow > 0) {
+      ctx.shadowColor = 'rgba(197,160,89,' + (glow * 0.5) + ')';
+      ctx.shadowBlur = 12 + glow * 15;
+    }
+    ctx.strokeStyle = 'rgba(197,160,89,' + alpha + ')';
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+    if (glow > 0) {
+      ctx.fillStyle = 'rgba(197,160,89,' + (glow * 0.05) + ')';
+      ctx.fill();
+    }
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
+  }
+
+  // Faint connecting lines between nearby stars
+  function drawConnections(threshold) {
+    for (var i = 0; i < stars.length; i++) {
+      for (var j = i + 1; j < stars.length; j++) {
+        var dx = stars[i].x - stars[j].x;
+        var dy = stars[i].y - stars[j].y;
+        var dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < threshold) {
+          var a = (1 - dist / threshold) * 0.06;
+          ctx.beginPath();
+          ctx.moveTo(stars[i].x, stars[i].y);
+          ctx.lineTo(stars[j].x, stars[j].y);
+          ctx.strokeStyle = 'rgba(197,160,89,' + a + ')';
+          ctx.lineWidth = 0.5;
+          ctx.stroke();
+        }
+      }
+    }
+  }
+
+  // ---- Formation target generators ----
+
+  // Step 0: "Garden bloom" — spiral blooms from top-center downward
+  function gardenTargets() {
+    var targets = [];
+    var centerY = H * 0.35;
+    var phi = (1 + Math.sqrt(5)) / 2;
+    for (var i = 0; i < NUM_STARS; i++) {
+      var angle = i * 2 * Math.PI / (phi * phi);
+      var radius = 80 + Math.sqrt(i / NUM_STARS) * Math.min(W, H) * 0.42;
+      var tx = W / 2 + Math.cos(angle) * radius;
+      var ty = centerY + Math.sin(angle) * radius;
+      targets.push({ x: tx, y: ty, size: 14 + Math.random() * 12, rot: Math.random() * Math.PI, glow: 0.2 + Math.random() * 0.3 });
+    }
+    return targets;
+  }
+
+  // Step 1: "Rhythmic wave" — sine-wave rows across upper half
+  function waveTargets() {
+    var targets = [];
+    var rows = 5;
+    var perRow = Math.ceil(NUM_STARS / rows);
+    var centerY = H * 0.35;
+    var rowSpacing = (H * 0.6) / (rows + 1);
+    for (var i = 0; i < NUM_STARS; i++) {
+      var row = Math.floor(i / perRow);
+      var col = i % perRow;
+      var rowY = rowSpacing * (row + 1);
+      var frac = col / (perRow - 1);
+      var tx = W * 0.08 + frac * W * 0.84;
+      var wave = Math.sin(frac * Math.PI * 2 + row * 0.8) * 30;
+      var ty = rowY + wave;
+      targets.push({ x: tx, y: ty, size: 12 + Math.sin(i * 0.5) * 6, rot: frac * Math.PI * 0.5, glow: 0.15 + Math.abs(Math.sin(frac * Math.PI)) * 0.4 });
+    }
+    return targets;
+  }
+
+  // Step 2: "Mandala converge" — centered at H*0.35, outer ring ~min(W,H)*0.38
+  function mandalaTargets() {
+    var targets = [];
+    var centerY = H * 0.35;
+    var rings = [
+      { count: 8, radius: Math.min(W, H) * 0.38, size: 22, glow: 0.7 },
+      { count: 12, radius: Math.min(W, H) * 0.26, size: 18, glow: 0.55 },
+      { count: 16, radius: Math.min(W, H) * 0.16, size: 14, glow: 0.4 },
+      { count: 9, radius: Math.min(W, H) * 0.08, size: 10, glow: 0.25 }
+    ];
+    var idx = 0;
+    for (var r = 0; r < rings.length && idx < NUM_STARS; r++) {
+      var ring = rings[r];
+      for (var j = 0; j < ring.count && idx < NUM_STARS; j++) {
+        var angle = (j / ring.count) * Math.PI * 2 - Math.PI / 2;
+        var tx = W / 2 + Math.cos(angle) * ring.radius;
+        var ty = centerY + Math.sin(angle) * ring.radius;
+        targets.push({ x: tx, y: ty, size: ring.size, rot: angle, glow: ring.glow });
+        idx++;
+      }
+    }
+    // Fill any remaining
+    while (idx < NUM_STARS) {
+      var a = Math.random() * Math.PI * 2;
+      var rad = Math.min(W, H) * (0.38 + Math.random() * 0.08);
+      targets.push({ x: W / 2 + Math.cos(a) * rad, y: centerY + Math.sin(a) * rad, size: 10, rot: a, glow: 0.15 });
+      idx++;
+    }
+    return targets;
+  }
+
+  var formations = [gardenTargets, waveTargets, mandalaTargets];
+  var currentTargets = [];
+
+  function initStars() {
+    stars = [];
+    currentTargets = formations[0]();
+    for (var i = 0; i < NUM_STARS; i++) {
+      // Start from random edge positions (emerging from splash)
+      var edge = Math.random();
+      var sx, sy;
+      if (edge < 0.25) { sx = -30; sy = Math.random() * H; }
+      else if (edge < 0.5) { sx = W + 30; sy = Math.random() * H; }
+      else if (edge < 0.75) { sx = Math.random() * W; sy = -30; }
+      else { sx = Math.random() * W; sy = H + 30; }
+      stars.push({
+        x: sx, y: sy,
+        vx: 0, vy: 0,
+        tx: currentTargets[i].x, ty: currentTargets[i].y,
+        size: currentTargets[i].size,
+        tSize: currentTargets[i].size,
+        rot: Math.random() * Math.PI * 2,
+        tRot: currentTargets[i].rot,
+        vRot: 0,
+        alpha: 0,
+        tAlpha: 0.3,
+        glow: 0,
+        tGlow: currentTargets[i].glow,
+        // Stagger: each star has a slight delay proportional to index
+        delay: i * 0.03,
+        born: time
+      });
+    }
+  }
+
+  function setFormation(stepIdx) {
+    currentTargets = formations[stepIdx]();
+    for (var i = 0; i < stars.length; i++) {
+      var t = currentTargets[i];
+      stars[i].tx = t.x;
+      stars[i].ty = t.y;
+      stars[i].tSize = t.size;
+      stars[i].tRot = t.rot;
+      stars[i].tGlow = t.glow;
+      stars[i].delay = i * 0.02; // re-stagger
+      stars[i].born = time;
+    }
+  }
+
+  function updateStars(dt) {
+    var stiff = 3.5; // spring stiffness
+    var damp = 5.0;  // damping ratio
+    for (var i = 0; i < stars.length; i++) {
+      var s = stars[i];
+      var elapsed = time - s.born;
+      if (elapsed < s.delay) continue; // stagger
+
+      // Position spring
+      var rx = springStep(s.x, s.tx, s.vx, stiff, damp, dt);
+      s.x = rx.pos; s.vx = rx.vel;
+      var ry = springStep(s.y, s.ty, s.vy, stiff, damp, dt);
+      s.y = ry.pos; s.vy = ry.vel;
+
+      // Rotation spring
+      var rr = springStep(s.rot, s.tRot, s.vRot, 2.5, 4.0, dt);
+      s.rot = rr.pos; s.vRot = rr.vel;
+
+      // Size lerp
+      s.size += (s.tSize - s.size) * 0.05;
+      // Alpha fade in
+      s.tAlpha = 0.3;
+      s.alpha += (s.tAlpha - s.alpha) * 0.06;
+      // Glow
+      s.glow += (s.tGlow - s.glow) * 0.04;
+
+      // Gentle ambient drift (so they're never perfectly still)
+      var drift = Math.sin(time * 0.7 + i * 1.3) * 0.3;
+      s.x += drift * dt;
+      s.y += Math.cos(time * 0.5 + i * 0.9) * 0.3 * dt;
+      // Gentle ambient rotation
+      s.rot += Math.sin(time * 0.3 + i) * 0.002;
+    }
+  }
+
+  function drawFrame() {
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = '#0A3D2F';
+    ctx.fillRect(0, 0, W, H);
+
+    // Ambient radial glow at formation center, intensifies per step
+    var glowIntensity = 0.04 + currentStep * 0.025;
+    var grad = ctx.createRadialGradient(W / 2, H * 0.35, 0, W / 2, H * 0.35, Math.min(W, H) * 0.5);
+    grad.addColorStop(0, 'rgba(197,160,89,' + glowIntensity + ')');
+    grad.addColorStop(1, 'rgba(197,160,89,0)');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+
+    // Connection lines (step 2 only — mandala weaving)
+    if (currentStep === 2) {
+      drawConnections(Math.min(W, H) * 0.18);
+    }
+
+    // Stars
+    for (var i = 0; i < stars.length; i++) {
+      var s = stars[i];
+      if (s.alpha < 0.01) continue;
+      // Pulsing size for rhythm step
+      var pulseSize = s.size;
+      if (currentStep === 1) {
+        pulseSize += Math.sin(time * 3.0 + i * 0.6) * 2;
+      }
+      drawStar8(s.x, s.y, pulseSize, s.rot + time * 0.1, s.alpha, s.glow);
+    }
+
+    // Card geometry for sentinel and halo stars
+    var cardW = Math.min(360, W * 0.9);
+    var cardBottom = H * 0.85;
+    var cardH = 220; // approximate card height
+    var cardTop = cardBottom - cardH;
+    var cardLeft = (W - cardW) / 2;
+    var cardRight = cardLeft + cardW;
+
+    // Step 2 only: Mandala sentinel stars at card top (3 stars bridging mandala to card)
+    if (currentStep === 2) {
+      var sentinelPositions = [
+        { x: cardLeft + 20, y: cardTop - 10 },
+        { x: W / 2, y: cardTop - 16 },
+        { x: cardRight - 20, y: cardTop - 10 }
+      ];
+      for (var si = 0; si < sentinelPositions.length; si++) {
+        var sp = sentinelPositions[si];
+        var sentRot = time * 0.2 + si * 1.2;
+        drawStar8(sp.x, sp.y, 12, sentRot, 0.35, 0.6);
+      }
+    }
+
+    // Peripheral halo stars — gentle orbit near card edges
+    var haloCount = 3;
+    for (var hi = 0; hi < haloCount; hi++) {
+      var hAngle = time * 0.15 + hi * (Math.PI * 2 / haloCount);
+      var haloX = W / 2 + Math.cos(hAngle) * (cardW / 2 + 25);
+      var haloY = (cardTop + cardBottom) / 2 + Math.sin(hAngle * 1.3 + hi) * (cardH / 2 + 15);
+      var haloAlpha = 0.15 + Math.sin(time * 0.5 + hi * 2) * 0.05;
+      drawStar8(haloX, haloY, 9, time * 0.3 + hi, haloAlpha, 0);
+    }
+  }
+
+  var lastT = 0;
+  function animate(ts) {
+    if (!running) return;
+    var dt = Math.min((ts - lastT) / 1000, 0.05); // cap dt
+    lastT = ts;
+    time += dt;
+    updateStars(dt);
+    drawFrame();
+    requestAnimationFrame(animate);
+  }
+
+  // ---- UI bindings ----
+
+  function updateProgressUI() {
+    // Update dots inside the active card
+    for (var c = 0; c < wtCards.length; c++) {
+      var dots = wtCards[c].querySelectorAll('.wt-dot');
+      for (var d = 0; d < dots.length; d++) {
+        if (d === currentStep) {
+          dots[d].classList.add('active');
+        } else {
+          dots[d].classList.remove('active');
+        }
+      }
+    }
+  }
+
+  function showStep() {
+    for (var i = 0; i < wtCards.length; i++) {
+      wtCards[i].classList.remove('active');
+    }
+    if (currentStep < totalSteps) {
+      wtCards[currentStep].classList.add('active');
+      document.getElementById('walkthrough').setAttribute('data-step', currentStep);
+      setFormation(currentStep);
+      updateProgressUI();
+    }
+  }
+
+  function advanceStep() {
+    currentStep++;
+    if (currentStep >= totalSteps) {
+      // Exit walkthrough
+      running = false;
+      var wt = document.getElementById('walkthrough');
+      wt.classList.remove('active');
+      wt.style.display = 'none';
+      document.getElementById('app').classList.add('active');
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+    } else {
+      showStep();
+    }
+  }
+
+  document.getElementById('walkthrough').addEventListener('click', advanceStep);
+
+  // Start walkthrough (called from splash)
+  window.startWalkthrough = function() {
+    resize();
+    initStars();
+    running = true;
+    currentStep = 0;
+    showStep();
+    lastT = performance.now();
+    requestAnimationFrame(animate);
+  };
+
+  window.addEventListener('resize', function() {
+    if (running) {
+      resize();
+      // Recalculate current targets for new viewport
+      setFormation(currentStep);
+    }
+  });
+})();
 
 /* ===== ORGANIC WAVE CONTROLS ===== */
 var wavePanel = document.getElementById('wavePanel');

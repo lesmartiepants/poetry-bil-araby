@@ -1700,14 +1700,51 @@ export default function DiwanApp() {
     }
   }, []);
 
-  // Auto-load a poem and queue explanation on first mount
+  // Auto-load a poem and queue explanation on first mount.
+  // If the user was viewing a poem before an OAuth redirect, restore it instead.
   useEffect(() => {
     if (!hasAutoLoaded.current) {
       hasAutoLoaded.current = true;
-      setAutoExplainPending(true);
-      handleFetch();
+      let restored = false;
+      try {
+        const stashed = sessionStorage.getItem('pendingSavePoem');
+        if (stashed) {
+          const poem = JSON.parse(stashed);
+          if (poem && poem.arabic) {
+            setPoems([poem]);
+            setCurrentIndex(0);
+            restored = true;
+            addLog("Restore", "Restored poem from before sign-in", "info");
+          }
+        }
+      } catch {}
+      if (!restored) {
+        setAutoExplainPending(true);
+        handleFetch();
+      }
     }
   }, []);
+
+  // After OAuth redirect, once the user is signed in, auto-save the stashed poem and clean up
+  useEffect(() => {
+    if (!user) return;
+    let stashed;
+    try { stashed = sessionStorage.getItem('pendingSavePoem'); } catch {}
+    if (!stashed) return;
+    sessionStorage.removeItem('pendingSavePoem');
+    try {
+      const poem = JSON.parse(stashed);
+      if (poem && poem.arabic) {
+        savePoem(poem).then(({ error }) => {
+          if (error) {
+            addLog("Save Error", error.message, "error");
+          } else {
+            addLog("Save", `Auto-saved poem: ${poem.poet} — ${poem.title}`, "success");
+          }
+        });
+      }
+    } catch {}
+  }, [user]);
 
   // Auto-trigger explanation after auto-loaded poem arrives
   useEffect(() => {
@@ -2494,6 +2531,10 @@ export default function DiwanApp() {
   };
 
   const handleSignInWithGoogle = async () => {
+    // Stash current poem so it survives the OAuth page redirect
+    if (current) {
+      try { sessionStorage.setItem('pendingSavePoem', JSON.stringify(current)); } catch {}
+    }
     const { error } = await signInWithGoogle();
     if (error) {
       addLog("Auth Error", error.message, "error");
@@ -2504,6 +2545,10 @@ export default function DiwanApp() {
   };
 
   const handleSignInWithApple = async () => {
+    // Stash current poem so it survives the OAuth page redirect
+    if (current) {
+      try { sessionStorage.setItem('pendingSavePoem', JSON.stringify(current)); } catch {}
+    }
     const { error } = await signInWithApple();
     if (error) {
       addLog("Auth Error", error.message, "error");

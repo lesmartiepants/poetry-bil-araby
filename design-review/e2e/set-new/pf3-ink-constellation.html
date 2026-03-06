@@ -1056,6 +1056,42 @@
       });
     });
 
+    // Tap anywhere on onboarding overlay to advance step
+    document.getElementById('onboarding').addEventListener('click', function(e) {
+      // Ignore clicks on buttons (they have their own handlers)
+      if (e.target.closest('.onboarding-next')) return;
+      if (isTransitioning) return;
+
+      var tapX = e.clientX || canvas.width / 2;
+      var tapY = e.clientY || canvas.height / 2;
+      var totalSteps = 3;
+      var nextStep = currentOnboardingStep + 1;
+
+      if (nextStep >= totalSteps) {
+        // Final step: finish onboarding
+        lastTapX = tapX;
+        lastTapY = tapY;
+        convergeToPoint(lastTapX, lastTapY, function() {
+          appPhase = 'app';
+          clearFormation();
+          document.getElementById('onboarding').classList.remove('active');
+          setTimeout(function() {
+            canvas.style.display = 'none';
+            document.getElementById('mainApp').classList.add('active');
+          }, 500);
+        });
+      } else {
+        // Advance to next step
+        lastTapX = tapX;
+        lastTapY = tapY;
+        currentOnboardingStep = nextStep;
+        document.querySelectorAll('.onboarding-card').forEach(function(c) { c.classList.remove('active'); });
+        var nextCard = document.querySelector('.onboarding-card[data-step="' + nextStep + '"]');
+        if (nextCard) nextCard.classList.add('active');
+        transitionToFormation(nextStep, lastTapX, lastTapY);
+      }
+    });
+
     /* ============================================
        ANIMATION LOOP
        ============================================ */

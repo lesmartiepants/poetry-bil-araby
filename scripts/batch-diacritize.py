@@ -32,30 +32,21 @@ if not DATABASE_URL:
 BATCH_SIZE = 500
 OUT_PATH = "supabase/migrations/20260306000001_populate_diacritics.sql.skip"
 
-def get_connection():
-    """Create a new database connection with keepalive settings."""
-    return psycopg2.connect(
-        DATABASE_URL,
-        keepalives=1,
-        keepalives_idle=30,
-        keepalives_interval=10,
-        keepalives_count=5
-    )
-
 def main():
     print("Initializing Mishkal vocalizer...")
     vocalizer = TashkeelClass()
 
-    print("Connecting to database...")
-    conn = get_connection()
+    print(f"Connecting to database...")
+    conn = psycopg2.connect(DATABASE_URL)
     cur = conn.cursor()
 
     # Count total poems
     cur.execute("SELECT COUNT(*) FROM poems")
     total = cur.fetchone()[0]
-    cur.close()
-    conn.close()
     print(f"Found {total} poems to diacritize")
+
+    # Fetch and process in batches
+    cur.execute("SELECT id, content FROM poems ORDER BY id")
 
     processed = 0
     errors = 0
@@ -67,49 +58,25 @@ def main():
         f.write(f"-- Total poems: {total}\n\n")
         f.write("BEGIN;\n\n")
 
-        offset = 0
-        while offset < total:
-            # Fetch a batch with a fresh short-lived query
+        for row in cur:
+            pid, content = row
             try:
-                conn = get_connection()
-                cur = conn.cursor()
-                cur.execute(
-                    "SELECT id, content FROM poems ORDER BY id LIMIT %s OFFSET %s",
-                    (BATCH_SIZE, offset)
-                )
-                rows = cur.fetchall()
-                cur.close()
-                conn.close()
+                diacritized = vocalizer.tashkeel(content)
+                escaped = diacritized.replace("'", "''")
+                f.write(f"UPDATE poems SET diacritized_content = '{escaped}' WHERE id = {pid};\n")
+                processed += 1
             except Exception as e:
-                print(f"  DB error at offset {offset}: {e}")
-                print("  Retrying in 5 seconds...")
-                time.sleep(5)
-                continue
+                print(f"  Error on poem {pid}: {e}")
+                errors += 1
 
-            if not rows:
-                break
-
-            for pid, content in rows:
-                try:
-                    diacritized = vocalizer.tashkeel(content)
-                    # Use psycopg2's adapt() for proper SQL literal escaping
-                    escaped = psycopg2.extensions.adapt(diacritized)
-                    f.write(f"UPDATE poems SET diacritized_content = {escaped.getquoted().decode('utf-8')} WHERE id = {pid};\n")
-                    processed += 1
-                except Exception as e:
-                    print(f"  Error on poem {pid}: {e}")
-                    errors += 1
-
-            offset += len(rows)
-
-            # Split into smaller transactions every batch to reduce lock time
-            f.write("\nCOMMIT;\n\nBEGIN;\n\n")
-
-            elapsed = time.time() - start_time
-            rate = (processed + errors) / elapsed if elapsed > 0 else 0
-            print(f"  Progress: {processed + errors}/{total} ({rate:.0f} poems/sec)")
+            if (processed + errors) % BATCH_SIZE == 0:
+                elapsed = time.time() - start_time
+                rate = (processed + errors) / elapsed if elapsed > 0 else 0
+                print(f"  Progress: {processed + errors}/{total} ({rate:.0f} poems/sec)")
 
         f.write("\nCOMMIT;\n")
+
+    conn.close()
 
     elapsed = time.time() - start_time
     print(f"\nDone! Processed {processed} poems, {errors} errors in {elapsed:.1f}s")

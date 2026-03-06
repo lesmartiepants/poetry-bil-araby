@@ -1,0 +1,21 @@
+{
+  "name": "Poetry Bil-Araby",
+  "short_name": "بالعربي",
+  "description": "Discover classical and modern Arabic poetry with AI-powered insights",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0c0c0e",
+  "theme_color": "#0c0c0e",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["education", "entertainment", "books"],
+  "lang": "en",
+  "dir": "ltr"
+}

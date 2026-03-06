@@ -335,6 +335,7 @@
       <span id="accToggleLabel">Browse Designs</span>
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6l4 4 4-4"/></svg>
     </button>
+    <span class="tb-section-label" id="tbSectionLabel" style="display:none"></span>
     <span class="tb-detail" id="tbDetail"></span>
     <div class="tb-sep"></div>
     <div class="tb-group">
@@ -368,7 +369,7 @@
           <h2>Poetry Bil-Araby Design Review</h2>
           <p>Select a component and category to start reviewing designs. Use arrow keys or Prev/Next to cycle through options.</p>
           <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:4px">
-            <span style="font-size:10px;color:var(--text-3)"><span class="kbd">&larr;</span><span class="kbd">&rarr;</span> Prev/Next &nbsp; <span class="kbd">K</span> Keep &nbsp; <span class="kbd">D</span> Discard &nbsp; <span class="kbd">R</span> Revisit &nbsp; <span class="kbd">I</span> Panel</span>
+            <span style="font-size:10px;color:var(--text-3)"><span class="kbd">&larr;</span><span class="kbd">&rarr;</span> Prev/Next &nbsp; <span class="kbd">K</span> Keep &nbsp; <span class="kbd">D</span> Discard &nbsp; <span class="kbd">R</span> Revisit &nbsp; <span class="kbd">S</span> Section &nbsp; <span class="kbd">I</span> Panel</span>
           </div>
         </div>
       </div>
@@ -488,7 +489,7 @@
         <div style="display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--text-3)">
           <div><span class="kbd">&larr;</span> <span class="kbd">&rarr;</span> Prev / Next design</div>
           <div><span class="kbd">K</span> Keep &nbsp; <span class="kbd">D</span> Discard &nbsp; <span class="kbd">R</span> Revisit</div>
-          <div><span class="kbd">I</span> Toggle panel &nbsp; <span class="kbd">F</span> Fullscreen</div>
+          <div><span class="kbd">S</span> Cycle section &nbsp; <span class="kbd">I</span> Panel &nbsp; <span class="kbd">F</span> Fullscreen</div>
         </div>
       </div>
     </div>
@@ -944,6 +945,20 @@ function renderAccordionItem(f, currentFi, onSelect) {
 function buildAccordion() {
   var panel = document.getElementById('accPanel');
   panel.textContent = '';
+
+  // Section filter pills row
+  var sfRow = document.createElement('div');
+  sfRow.className = 'section-filter-row';
+  SECTION_FILTERS.forEach(function(sf) {
+    var pill = document.createElement('button');
+    pill.className = 'section-pill' + (sectionFilter === sf.id ? ' active' : '');
+    pill.textContent = sf.label;
+    pill.dataset.filter = sf.id;
+    pill.addEventListener('click', function(e) { e.stopPropagation(); setSectionFilter(sf.id); });
+    sfRow.appendChild(pill);
+  });
+  panel.appendChild(sfRow);
+
   var fi = currentFlatIdx();
   var cats = getAccordionCategories();
 
@@ -1659,7 +1674,7 @@ document.addEventListener('keydown', e => {
     case 'k': case 'K': setVerdict('keep'); break;
     case 'd': case 'D': setVerdict('discard'); break;
     case 'r': case 'R': setVerdict('revisit'); break;
-    case 's': case 'S': setVerdict('revisit'); break;
+    case 's': case 'S': cycleSectionFilter(); break;
     case 'i': case 'I': toggleSide(); break;
     case 'f': case 'F':
       const iframe = document.querySelector('.preview-iframe');
@@ -1698,6 +1713,7 @@ buildFlatList();
 populateComps();
 populateCats();
 render();
+updateSectionFilterUI();
 syncPreviewPadding();
 initAPI();
 </script>

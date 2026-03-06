@@ -1404,9 +1404,12 @@ function renderPrevFeedback(cat, opt) {
 }
 
 function clearPastFeedback() {
+  if (!confirm('Clear all previous feedback and verdicts? This resets your review for a fresh round.')) return;
   feedbackCleared = true;
   try { localStorage.setItem(FEEDBACK_CLEARED_KEY, 'true'); } catch {}
   for (const cat of CATALOG) cat.feedback = {};
+  reviewData = {};
+  persistReview();
   const container = document.getElementById('prevFeedback');
   container.textContent = 'Feedback cleared for this session.';
   container.style.cssText = 'font-size:12px;color:var(--text-3)';
@@ -1414,6 +1417,8 @@ function clearPastFeedback() {
   const btnMobile = document.getElementById('clearFeedbackBtnMobile');
   if (btn) btn.style.display = 'none';
   if (btnMobile) btnMobile.style.display = 'none';
+  render(true);
+  renderProgress();
 }
 
 function renderProgress() {

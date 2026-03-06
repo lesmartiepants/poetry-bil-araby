@@ -81,6 +81,7 @@ VITE_SUPABASE_ANON_KEY // Supabase anon key — MUST be JWT format (starts with 
 // Backend (server.js) — set in .env or Render
 DATABASE_URL       // Supabase pooler connection string (use pooler host, not direct)
 PORT              // API server port (defaults to 3001)
+API_SECRET_KEY    // Protect write endpoints with X-API-Key header (optional; when unset, auth is bypassed)
 LOG_ENABLED       // Enable HTTP request logging (defaults to true)
 LOG_DEBUG         // Enable verbose database debug logs (defaults to false)
 

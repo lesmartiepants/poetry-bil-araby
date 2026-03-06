@@ -28,8 +28,18 @@ vi.mock('pg', () => {
 const { app } = await import('../../server.js');
 
 describe('Design Review API', () => {
+  const originalApiKey = process.env.API_SECRET_KEY;
+
   beforeEach(() => {
     mockPool.query.mockClear();
+    // Clear API_SECRET_KEY so auth middleware is bypassed in these tests
+    delete process.env.API_SECRET_KEY;
+  });
+
+  afterAll(() => {
+    if (originalApiKey !== undefined) {
+      process.env.API_SECRET_KEY = originalApiKey;
+    }
   });
 
   afterAll(() => {

@@ -27,10 +27,15 @@ vi.mock('pg', () => {
 // Import after mocking
 const { app, pool } = await import('../../server.js');
 
+// Save and clear API_SECRET_KEY so auth middleware is bypassed by default in tests
+const savedApiSecretKey = process.env.API_SECRET_KEY;
+delete process.env.API_SECRET_KEY;
+
 describe('Backend API Server', () => {
   beforeEach(() => {
-    // Reset all mock state (calls, instances, and implementations)
+    // Reset all mock state and ensure auth is bypassed by default
     mockPool.query.mockReset();
+    delete process.env.API_SECRET_KEY;
   });
 
   afterAll(() => {
@@ -751,16 +756,72 @@ describe('Backend API Server', () => {
   describe('API Key Authentication', () => {
     it('should allow write requests when API_SECRET_KEY is not configured', async () => {
       // When no API_SECRET_KEY is set, auth is bypassed and the handler is reached.
-      // Simulate a database error that would occur if tables are not created yet.
-      mockPool.query.mockRejectedValueOnce(new Error('relation "design_review_sessions" does not exist'));
+      // designTablesExist() check fails, returning 503 — confirming auth was bypassed.
+      mockPool.query.mockRejectedValueOnce(new Error('relation "design_items" does not exist'));
 
       const response = await request(app)
         .post('/api/design-review/sessions')
-        .send({}) // minimal payload; structure not relevant for this auth bypass test
-        .expect(503);
+        .send({});
 
-      // Reaching a 503 from the handler (rather than 401) confirms auth was bypassed.
-      expect(response.status).toBe(503);
+      // Any non-401 status confirms auth was bypassed (503 = tables don't exist, which is fine)
+      expect(response.status).not.toBe(401);
+    });
+
+    describe('when API_SECRET_KEY is configured', () => {
+      const ORIGINAL_ENV = process.env.API_SECRET_KEY;
+
+      beforeEach(() => {
+        process.env.API_SECRET_KEY = 'test-secret-key-12345';
+      });
+
+      afterEach(() => {
+        if (ORIGINAL_ENV === undefined) {
+          delete process.env.API_SECRET_KEY;
+        } else {
+          process.env.API_SECRET_KEY = ORIGINAL_ENV;
+        }
+      });
+
+      it('should accept write requests with correct API key', async () => {
+        mockPool.query.mockRejectedValueOnce(new Error('relation "design_review_sessions" does not exist'));
+
+        const response = await request(app)
+          .post('/api/design-review/sessions')
+          .set('X-API-Key', 'test-secret-key-12345')
+          .send({});
+
+        // Should NOT be 401 — auth passed, reached the handler
+        expect(response.status).not.toBe(401);
+      });
+
+      it('should return 401 with incorrect API key', async () => {
+        const response = await request(app)
+          .post('/api/design-review/sessions')
+          .set('X-API-Key', 'wrong-key')
+          .send({})
+          .expect(401);
+
+        expect(response.body.error).toContain('Unauthorized');
+      });
+
+      it('should return 401 with no API key header', async () => {
+        const response = await request(app)
+          .post('/api/design-review/sessions')
+          .send({})
+          .expect(401);
+
+        expect(response.body.error).toContain('Unauthorized');
+      });
+
+      it('should not require API key for read endpoints', async () => {
+        mockPool.query.mockResolvedValueOnce({ rows: [{ count: '42' }] });
+
+        const response = await request(app)
+          .get('/api/health')
+          .expect(200);
+
+        expect(response.body.status).toBe('ok');
+      });
     });
   });
 

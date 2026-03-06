@@ -3,6 +3,7 @@ import pg from 'pg';
 import cors from 'cors';
 import helmet from 'helmet';
 import { query, param, validationResult } from 'express-validator';
+import crypto from 'crypto';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
@@ -98,8 +99,14 @@ const requireApiKey = (req, res, next) => {
     // If no API key is configured, skip auth (development mode)
     return next();
   }
-  if (!apiKey || apiKey !== process.env.API_SECRET_KEY) {
-    return res.status(401).json({ error: 'Unauthorized: Invalid or missing API key' });
+  if (!apiKey) {
+    return res.status(401).json({ error: 'Unauthorized: Missing API key' });
+  }
+  // Timing-safe comparison to prevent timing attacks
+  const expected = Buffer.from(process.env.API_SECRET_KEY);
+  const provided = Buffer.from(apiKey);
+  if (expected.length !== provided.length || !crypto.timingSafeEqual(expected, provided)) {
+    return res.status(401).json({ error: 'Unauthorized: Invalid API key' });
   }
   next();
 };

@@ -846,12 +846,13 @@ const ErrorBanner = ({ error, onDismiss, onRetry, theme }) => {
   );
 };
 
-const DatabaseToggle = ({ useDatabase, onToggle }) => {
+const DatabaseToggle = ({ useDatabase, onToggle, disabled }) => {
   return (
     <div className="flex flex-col items-center gap-1 min-w-[56px]">
       <button
         onClick={onToggle}
-        className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105"
+        disabled={disabled}
+        className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none transition-all duration-300 flex items-center justify-center rounded-full ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-[#C5A059]/12 hover:scale-105'}`}
         aria-label={useDatabase ? "Switch to AI Mode" : "Switch to Database Mode"}
       >
         {useDatabase ? <Library size={21} className="text-[#C5A059]" /> : <Sparkles size={21} className="text-[#C5A059]" />}
@@ -2669,7 +2670,7 @@ export default function DiwanApp() {
       {!apiKey && FEATURES.database && !apiKeyBannerDismissed && (
         <div className={`fixed top-0 left-0 right-0 z-50 px-4 py-2 text-center text-sm ${darkMode ? 'bg-amber-900/90 text-amber-200' : 'bg-amber-100 text-amber-800'} backdrop-blur-sm`}>
           Running in Database-only mode — add a Gemini API key for AI features
-          <button onClick={() => setApiKeyBannerDismissed(true)} className="ml-3 opacity-60 hover:opacity-100">✕</button>
+          <button onClick={() => setApiKeyBannerDismissed(true)} className="ml-3 opacity-60 hover:opacity-100" aria-label="Dismiss">✕</button>
         </div>
       )}
 
@@ -2821,7 +2822,8 @@ export default function DiwanApp() {
 
                   <DatabaseToggle
                     useDatabase={useDatabase}
-                    onToggle={apiKey ? () => setUseDatabase(!useDatabase) : undefined}
+                    onToggle={apiKey ? () => setUseDatabase(!useDatabase) : () => {}}
+                    disabled={!apiKey}
                   />
 
                   <ThemeDropdown
@@ -2856,7 +2858,7 @@ export default function DiwanApp() {
                   onCopy={handleCopy}
                   showCopySuccess={showCopySuccess}
                   useDatabase={useDatabase}
-                  onToggleDatabase={apiKey ? () => setUseDatabase(!useDatabase) : undefined}
+                  onToggleDatabase={apiKey ? () => setUseDatabase(!useDatabase) : () => {}}
                   user={user}
                   onOpenSavedPoems={handleOpenSavedPoems}
                   onOpenSettings={handleOpenSettings}

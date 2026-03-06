@@ -1313,6 +1313,30 @@ function loadPreview(opt, cat) {
   iframe.className = 'preview-iframe'; iframe.src = '/design-review/' + opt.file; iframe.title = opt.name;
   container.appendChild(iframe);
 
+  // Section auto-advance: skip to onboarding or main-app within E2E designs
+  if (sectionFilter === 'onboarding' || sectionFilter === 'main-app') {
+    iframe.addEventListener('load', function() {
+      try {
+        const doc = iframe.contentDocument;
+        if (!doc) return;
+        // Hide splash
+        const splash = doc.getElementById('splash') || doc.getElementById('splashScreen');
+        if (splash) { splash.classList.add('hidden'); splash.style.opacity = '0'; splash.style.pointerEvents = 'none'; splash.style.display = 'none'; }
+
+        if (sectionFilter === 'onboarding') {
+          const onb = doc.getElementById('walkthrough') || doc.getElementById('onboarding');
+          if (onb) { onb.classList.add('active'); onb.style.display = 'flex'; onb.style.opacity = '1'; onb.style.visibility = 'visible'; }
+        }
+        if (sectionFilter === 'main-app') {
+          const onb = doc.getElementById('walkthrough') || doc.getElementById('onboarding');
+          if (onb) { onb.style.display = 'none'; onb.classList.remove('active'); }
+          const app = doc.getElementById('app') || doc.getElementById('mainApp');
+          if (app) { app.classList.add('active'); app.style.display = 'flex'; app.style.opacity = '1'; app.style.visibility = 'visible'; }
+        }
+      } catch(e) { /* cross-origin or other error -- fall through to full E2E */ }
+    });
+  }
+
   // preview-header removed — info shown in toolbar (accToggleLabel + tbDetail)
 }
 

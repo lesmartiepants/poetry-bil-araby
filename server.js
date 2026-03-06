@@ -57,7 +57,9 @@ pool.query('SELECT NOW()', (err, res) => {
 
 // Middleware
 app.use(cors());
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json());
+// Larger body limit only for AI proxy endpoints
+app.use('/api/ai', express.json({ limit: '10mb' }));
 app.use('/api/', rateLimit({ windowMs: 60_000, max: 100, standardHeaders: true, legacyHeaders: false }));
 
 // Request logging middleware
@@ -262,7 +264,7 @@ app.get('/api/poems/search', async (req, res) => {
 // GEMINI API PROXY (keeps API key server-side)
 // ═══════════════════════════════════════════════════════════════
 
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || '';
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || '';
 const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta';
 
 // GET /api/ai/models — list available models
@@ -283,13 +285,15 @@ app.get('/api/ai/models', async (req, res) => {
   }
 });
 
-// POST /api/ai/generate — proxy generateContent / streamGenerateContent
+// POST /api/ai/:model/:action — proxy generateContent / streamGenerateContent
 app.post('/api/ai/:model/:action', async (req, res) => {
   try {
-    if (!GEMINI_API_KEY) {
-      return res.status(503).json({ error: 'AI features unavailable: no API key configured' });
-    }
     const { model, action } = req.params;
+
+    // Validate model name to prevent SSRF (before any upstream requests)
+    if (!/^gemini-[\w.-]+$/.test(model)) {
+      return res.status(400).json({ error: 'Invalid model name' });
+    }
 
     // Only allow known actions
     const allowedActions = ['generateContent', 'streamGenerateContent'];
@@ -297,14 +301,21 @@ app.post('/api/ai/:model/:action', async (req, res) => {
       return res.status(400).json({ error: 'Invalid action' });
     }
 
+    if (!GEMINI_API_KEY) {
+      return res.status(503).json({ error: 'AI features unavailable: no API key configured' });
+    }
+
     const url = `${GEMINI_BASE}/models/${model}:${action}?key=${GEMINI_API_KEY}`;
 
     if (action === 'streamGenerateContent') {
-      // Stream the response back
+      const controller = new AbortController();
+      req.on('close', () => controller.abort());
+
       const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(req.body)
+        body: JSON.stringify(req.body),
+        signal: controller.signal
       });
 
       if (!response.ok) {
@@ -316,16 +327,18 @@ app.post('/api/ai/:model/:action', async (req, res) => {
       res.setHeader('Cache-Control', 'no-cache');
       res.setHeader('Connection', 'keep-alive');
 
-      // Pipe the response stream
       const reader = response.body.getReader();
-      const pump = async () => {
+      try {
         while (true) {
           const { done, value } = await reader.read();
-          if (done) { res.end(); break; }
+          if (done || res.writableEnded) break;
           res.write(value);
         }
-      };
-      await pump();
+      } catch (err) {
+        if (err.name !== 'AbortError') throw err;
+      } finally {
+        if (!res.writableEnded) res.end();
+      }
     } else {
       // Non-streaming: forward as normal JSON
       const response = await fetch(url, {

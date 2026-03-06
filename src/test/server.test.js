@@ -652,6 +652,69 @@ describe('Backend API Server', () => {
     });
   });
 
+  describe('AI Proxy Endpoints', () => {
+    describe('GET /api/ai/models', () => {
+      it('should return 503 when no API key configured', async () => {
+        // GEMINI_API_KEY is empty at module load time in test environment
+        const response = await request(app)
+          .get('/api/ai/models')
+          .expect(503);
+
+        expect(response.body.error).toContain('unavailable');
+      });
+    });
+
+    describe('POST /api/ai/:model/:action', () => {
+      it('should return 400 for invalid action', async () => {
+        const response = await request(app)
+          .post('/api/ai/gemini-2.0-flash/invalidAction')
+          .send({ contents: [] })
+          .expect(400);
+
+        expect(response.body.error).toBe('Invalid action');
+      });
+
+      it('should return 400 for invalid model name (path traversal)', async () => {
+        const response = await request(app)
+          .post('/api/ai/../../etc/passwd/generateContent')
+          .send({ contents: [] });
+
+        // Express may resolve path traversal differently, but the model
+        // name should fail validation regardless of how it arrives
+        expect([400, 404]).toContain(response.status);
+      });
+
+      it('should return 400 for model name not matching gemini pattern', async () => {
+        const response = await request(app)
+          .post('/api/ai/gpt-4/generateContent')
+          .send({ contents: [] })
+          .expect(400);
+
+        expect(response.body.error).toBe('Invalid model name');
+      });
+
+      it('should return 503 when no API key configured', async () => {
+        // GEMINI_API_KEY is empty at module load time in test environment
+        const response = await request(app)
+          .post('/api/ai/gemini-2.0-flash/generateContent')
+          .send({ contents: [] })
+          .expect(503);
+
+        expect(response.body.error).toContain('unavailable');
+      });
+
+      it('should accept valid gemini model names', async () => {
+        // With no API key in test env, valid model names still return 503 (not 400)
+        const response = await request(app)
+          .post('/api/ai/gemini-2.0-flash/generateContent')
+          .send({ contents: [] });
+
+        // Should not be 400 (validation error) - the model name is valid
+        expect(response.status).not.toBe(400);
+      });
+    });
+  });
+
   describe('Keep-Alive Mechanism', () => {
     it('should have health endpoint that returns totalPoems for keep-alive pings', async () => {
       // Mock successful database query

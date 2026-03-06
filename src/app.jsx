@@ -1746,6 +1746,9 @@ export default function DiwanApp() {
     };
 
     scheduleDetect();
+    // Re-measure after a short delay to catch DOM updates from auth state changes
+    // (React may not have rendered the new buttons in the first rAF)
+    const delayedRecheck = setTimeout(scheduleDetect, 100);
 
     // ResizeObserver catches font-load changes and dynamic content updates.
     // Guard for environments where ResizeObserver is unavailable (older browsers, some test envs).
@@ -1757,6 +1760,7 @@ export default function DiwanApp() {
 
     window.addEventListener('resize', scheduleDetect);
     return () => {
+      clearTimeout(delayedRecheck);
       if (pendingRafRef.current !== null) {
         cancelAnimationFrame(pendingRafRef.current);
         pendingRafRef.current = null;

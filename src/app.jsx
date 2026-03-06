@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Play, Pause, BookOpen, RefreshCw, Volume2, ChevronDown, Quote, Globe, Moon, Sun, Loader2, ChevronRight, ChevronLeft, Search, X, Copy, LayoutGrid, Check, Bug, Trash2, Sparkles, Feather, Library, Compass, Rabbit, MoreHorizontal, Heart, LogIn, LogOut, User, Settings2 } from 'lucide-react';
 import { useAuth, useUserSettings, useSavedPoems } from './hooks/useAuth';
 import { INSIGHTS_SYSTEM_PROMPT, DISCOVERY_SYSTEM_PROMPT, getTTSInstruction } from './prompts';
+import { parseInsight } from './utils/insightParser';
+import { repairAndParseJSON } from './utils/jsonRepair';
 
 /* =============================================================================
   1. FEATURE FLAGS & DESIGN SYSTEM
@@ -1839,11 +1841,7 @@ export default function DiwanApp() {
     setHeaderOpacity(Math.max(0, 1 - e.target.scrollTop / 30));
   };
 
-  const insightParts = useMemo(() => {
-    if (!interpretation) return null;
-    const parts = interpretation.split(/POEM:|THE DEPTH:|THE AUTHOR:/i).map(p => p.trim()).filter(Boolean);
-    return { poeticTranslation: parts[0] || "", depth: parts[1] || "", author: parts[2] || "" };
-  }, [interpretation]);
+  const insightParts = useMemo(() => parseInsight(interpretation), [interpretation]);
 
   const versePairs = useMemo(() => {
     const arLines = (current?.arabic || "").split('\n').filter(l => l.trim());
@@ -2447,26 +2445,14 @@ export default function DiwanApp() {
         const apiTime = performance.now() - apiStart;
 
         const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        const cleanJson = (rawText || "").replace(/```json|```/g, "").trim();
         let parsedPoem;
         try {
-          parsedPoem = JSON.parse(cleanJson);
-        } catch (firstError) {
-          // Attempt to repair truncated JSON (e.g. poem exceeded output token limit)
-          let repaired = cleanJson;
-          const quotes = (repaired.match(/"/g) || []).length;
-          if (quotes % 2 !== 0) repaired += '"';
-          const opens = (repaired.match(/\{/g) || []).length - (repaired.match(/\}/g) || []).length;
-          const openBrackets = (repaired.match(/\[/g) || []).length - (repaired.match(/\]/g) || []).length;
-          for (let i = 0; i < openBrackets; i++) repaired += ']';
-          for (let i = 0; i < opens; i++) repaired += '}';
-          try {
-            parsedPoem = JSON.parse(repaired);
-            addLog("Discovery JSON", "Repaired truncated JSON from AI response", "warn");
-          } catch {
-            throw new Error("AI returned invalid JSON (poem may have been too long). Try again.");
-          }
+          parsedPoem = repairAndParseJSON(rawText);
+        } catch (e) {
+          throw e;
         }
+        // Log if repair was needed (original raw text had fences or truncation)
+        const cleanJson = (rawText || "").replace(/```json|```/g, "").trim();
 
         // Normalize tags: convert object to array if needed
         if (parsedPoem.tags && typeof parsedPoem.tags === 'object' && !Array.isArray(parsedPoem.tags)) {

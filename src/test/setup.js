@@ -2,9 +2,28 @@ import { expect, afterEach, vi } from 'vitest'
 import { cleanup } from '@testing-library/react'
 import '@testing-library/jest-dom/vitest'
 
-// Cleanup after each test
+// Default fetch implementation — used on init and after each reset
+const defaultFetchImpl = () =>
+  Promise.resolve({
+    ok: true,
+    status: 200,
+    json: () => Promise.resolve({}),
+    text: () => Promise.resolve(''),
+    headers: new Map(),
+    statusText: 'OK',
+  })
+
+// Cleanup after each test — reset mocks so nothing leaks between files
 afterEach(() => {
   cleanup()
+  // Reset fetch to a fresh default mock so per-test mockResolvedValueOnce chains don't leak
+  global.fetch.mockReset()
+  global.fetch.mockImplementation(defaultFetchImpl)
+  // Reset clipboard mocks
+  navigator.clipboard.writeText.mockReset()
+  navigator.clipboard.writeText.mockResolvedValue(undefined)
+  navigator.clipboard.readText.mockReset()
+  navigator.clipboard.readText.mockResolvedValue('')
 })
 
 // Mock environment variables
@@ -35,17 +54,18 @@ global.atob = vi.fn((str) => {
   }
 })
 
-// Mock fetch for API calls
-global.fetch = vi.fn(() =>
-  Promise.resolve({
-    ok: true,
-    status: 200,
-    json: () => Promise.resolve({}),
-    text: () => Promise.resolve(''),
-    headers: new Map(),
-    statusText: 'OK',
-  })
-)
+// Mock fetch for API calls (initial)
+global.fetch = vi.fn(defaultFetchImpl)
+
+// Mock navigator.clipboard for copy tests
+Object.defineProperty(navigator, 'clipboard', {
+  value: {
+    writeText: vi.fn().mockResolvedValue(undefined),
+    readText: vi.fn().mockResolvedValue(''),
+  },
+  writable: true,
+  configurable: true,
+})
 
 // Mock document.execCommand for copy functionality
 document.execCommand = vi.fn(() => true)

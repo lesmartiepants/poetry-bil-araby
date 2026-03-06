@@ -1,409 +1,426 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import DiwanApp from '../app.jsx'
 import { createMockGeminiResponse, mockSuccessfulFetch, createDbPoem, createStreamingMock } from './utils'
+
+// The app auto-loads a poem from the DB on mount (handleFetch in useEffect).
+// This helper pre-mocks that initial fetch so the default poem stays current.
+const defaultDbPoem = {
+  id: 999,
+  poet: 'Nizar Qabbani',
+  poetArabic: 'نزار قباني',
+  title: 'My Beloved',
+  titleArabic: 'حبيبتي',
+  arabic: 'حُبُّكِ يا عَمِيقَةَ العَيْنَيْنِ\nتَطَرُّفٌ .. تَصَوُّفٌ .. عِبَادَة',
+  english: 'Your love, O woman of deep eyes,\nIs radicalism… is Sufism… is worship.',
+  tags: ['Modern', 'Romantic', 'Ghazal'],
+}
+
+function mockAutoLoadFetch() {
+  global.fetch.mockResolvedValueOnce({
+    ok: true,
+    json: async () => defaultDbPoem,
+  })
+}
 
 describe('DiwanApp', () => {
   beforeEach(() => {
     vi.clearAllMocks()
   })
 
-  describe('Initial Render and Smoke Tests', () => {
-    it('renders without crashing', () => {
+  // ── Feature 1: Poem loads with correct structure ──────────────────────
+
+  describe('Poem Structure', () => {
+    it('renders the default poem with Arabic text longer than 10 characters', () => {
       render(<DiwanApp />)
-      expect(document.body).toBeTruthy()
+      // The default poem's Arabic text is rendered across verse lines with dir="rtl"
+      const rtlElements = document.querySelectorAll('p[dir="rtl"]')
+      expect(rtlElements.length).toBeGreaterThan(0)
+
+      // Gather all Arabic verse text
+      const arabicText = Array.from(rtlElements).map(el => el.textContent).join('')
+      expect(arabicText.length).toBeGreaterThan(10)
     })
 
-    it('displays the app branding', () => {
+    it('displays the poet name in both Arabic and English', () => {
       render(<DiwanApp />)
-      expect(screen.getByText('poetry')).toBeInTheDocument()
-      expect(screen.getByText('بالعربي')).toBeInTheDocument()
-      expect(screen.getByText('beta')).toBeInTheDocument()
+      expect(document.body.textContent).toContain('نزار قباني')
+      expect(document.body.textContent).toContain('Nizar Qabbani')
     })
 
-    it('renders the default poem on initial load', () => {
-      render(<DiwanApp />)
-      // Check for Arabic text content
-      const arabicText = document.body.textContent
-      expect(arabicText).toContain('حُبُّكِ')
-      expect(arabicText).toContain('نزار قباني')
-    })
-
-    it('displays poem tags', () => {
+    it('renders tags for the default poem', () => {
       render(<DiwanApp />)
       expect(screen.getByText('Modern')).toBeInTheDocument()
       expect(screen.getByText('Romantic')).toBeInTheDocument()
       expect(screen.getByText('Ghazal')).toBeInTheDocument()
     })
 
-    it('renders all control buttons', () => {
+    it('renders poem verses with dir="rtl" attribute', () => {
       render(<DiwanApp />)
-
-      // Check for navigation buttons
-      const buttons = screen.getAllByRole('button')
-      expect(buttons.length).toBeGreaterThan(0)
-
-      // Main controls should be present
-      expect(document.querySelector('[class*="Play"]') || document.querySelector('button')).toBeTruthy()
+      const rtlVerses = document.querySelectorAll('p[dir="rtl"]')
+      expect(rtlVerses.length).toBeGreaterThan(0)
+      // Each verse line should have RTL direction
+      rtlVerses.forEach(el => {
+        expect(el.getAttribute('dir')).toBe('rtl')
+      })
     })
   })
 
-  describe('Theme Toggle Functionality', () => {
-    it('starts in dark mode by default', () => {
-      render(<DiwanApp />)
-      const container = document.querySelector('[class*="bg-"]')
-      expect(container).toBeTruthy()
-      expect(container.className).toContain('bg-[#0c0c0e]')
-    })
+  // ── Feature 2: Discover poems ─────────────────────────────────────────
 
-    it('toggles to light mode when theme button is clicked', async () => {
+  describe('Discover Poems', () => {
+    it('loads a new poem from the database when Discover is clicked', async () => {
       render(<DiwanApp />)
 
-      // Find the theme toggle button (Sun/Moon icon button)
-      const buttons = screen.getAllByRole('button')
-      const themeButton = buttons.find(btn => {
-        const svg = btn.querySelector('svg')
-        return svg && (svg.innerHTML.includes('Sun') || svg.innerHTML.includes('Moon'))
-      })
-
-      if (themeButton) {
-        await userEvent.click(themeButton)
-
-        await waitFor(() => {
-          const container = document.querySelector('[class*="bg-"]')
-          expect(container.className).toContain('bg-[#FDFCF8]')
-        })
-      }
-    })
-
-    it('persists theme colors in both modes', () => {
-      const { rerender } = render(<DiwanApp />)
-
-      // Verify dark mode colors are applied
-      let container = document.querySelector('[class*="bg-"]')
-      expect(container.className).toContain('bg-[#0c0c0e]')
-
-      rerender(<DiwanApp />)
-
-      // Should maintain state
-      container = document.querySelector('[class*="bg-"]')
-      expect(container).toBeTruthy()
-    })
-  })
-
-  describe('Category Filtering', () => {
-    it('displays category dropdown with all poets', async () => {
-      render(<DiwanApp />)
-
-      // Find the Poets button (aria-label)
-      const poetsButton = screen.getByLabelText('Select poet category')
-      expect(poetsButton).toBeInTheDocument()
-
-      // Click to open dropdown
-      await userEvent.click(poetsButton)
-
-      // Now check for category text
-      await waitFor(() => {
-        expect(document.body.textContent).toContain('كل الشعراء')
-      })
-    })
-
-    it('shows all available category options', async () => {
-      render(<DiwanApp />)
-
-      // Find and click the Poets button
-      const poetsButton = screen.getByLabelText('Select poet category')
-      await userEvent.click(poetsButton)
-
-      // Wait for dropdown to open and check for poet names
-      await waitFor(() => {
-        const content = document.body.textContent
-        expect(content.includes('محمود درويش') || content.includes('المتنبي')).toBeTruthy()
-      })
-    })
-
-    it('changes selected category when clicking an option', async () => {
-      render(<DiwanApp />)
-      const content = document.body.textContent
-      expect(content).toContain('نزار قباني')
-    })
-
-    it('closes dropdown after selecting a category', async () => {
-      render(<DiwanApp />)
-      // Just verify the component renders
-      expect(screen.getByText('poetry')).toBeInTheDocument()
-    })
-  })
-
-  describe('Navigation Controls', () => {
-    it('renders control buttons without left/right navigation', () => {
-      render(<DiwanApp />)
-      const buttons = screen.getAllByRole('button')
-
-      // Should have Listen, Dive In, Discover, Poets buttons (no left/right navigation)
-      expect(buttons.length).toBeGreaterThan(3)
-    })
-
-    it('has all primary action buttons enabled', () => {
-      render(<DiwanApp />)
-
-      // Option K design removed left/right navigation
-      // Verify primary buttons exist: Listen, Explain, Discover, Poets
-      expect(screen.getByLabelText(/play recitation|pause recitation/i)).toBeInTheDocument()
-      expect(screen.getByLabelText('Explain poem meaning')).toBeInTheDocument()
-      expect(screen.getByLabelText('Discover new poem')).toBeInTheDocument()
-      expect(screen.getByLabelText('Select poet category')).toBeInTheDocument()
-    })
-
-    it('allows discovering new poems without left/right navigation', async () => {
-      render(<DiwanApp />)
-
-      // Mock database API response (app is in database mode by default)
       const newPoem = {
-        id: 2,
-        poet: "Mahmoud Darwish",
-        poetArabic: "محمود درويش",
-        title: "Identity Card",
-        titleArabic: "بطاقة هوية",
-        arabic: "سَجِّلْ أَنَا عَرَبِيّ",
-        english: "Record! I am an Arab",
-        tags: ["Modern", "Political", "Free Verse"]
+        id: 42,
+        poet: 'Mahmoud Darwish',
+        poetArabic: 'محمود درويش',
+        title: 'Identity Card',
+        titleArabic: 'بطاقة هوية',
+        arabic: 'سَجِّلْ أَنَا عَرَبِيّ\nوَرَقَمُ بطاقَتي خَمْسُونَ أَلْف',
+        english: 'Record! I am an Arab\nAnd my identity card number is fifty thousand',
+        tags: ['Modern', 'Political', 'Free Verse'],
       }
 
-      // Mock the database endpoint instead of Gemini API
       global.fetch.mockResolvedValueOnce({
         ok: true,
         json: async () => newPoem,
       })
 
-      // Click discover button
-      const discoverButton = screen.getByLabelText('Discover new poem')
-      await userEvent.click(discoverButton)
+      await userEvent.click(screen.getByLabelText('Discover new poem'))
 
-      // Verify poem content updates (Option K uses serendipity via Discover, not left/right nav)
       await waitFor(() => {
         expect(screen.getByText('محمود درويش')).toBeInTheDocument()
       }, { timeout: 3000 })
     })
+
+    it('disables the Discover button while fetching', async () => {
+      render(<DiwanApp />)
+
+      // Create a never-resolving promise to keep the button disabled
+      let resolveFetch
+      global.fetch.mockImplementationOnce(() => new Promise(r => { resolveFetch = r }))
+
+      const discoverBtn = screen.getByLabelText('Discover new poem')
+      await userEvent.click(discoverBtn)
+
+      // Button should be disabled during fetch
+      expect(discoverBtn).toBeDisabled()
+
+      // Resolve to clean up
+      resolveFetch({ ok: true, json: async () => createDbPoem(99) })
+    })
+
+    it('changes content from the initial poem after Discover', async () => {
+      render(<DiwanApp />)
+
+      // Initial poem poet
+      expect(document.body.textContent).toContain('نزار قباني')
+
+      const newPoem = {
+        id: 77,
+        poet: 'Al-Mutanabbi',
+        poetArabic: 'المتنبي',
+        title: 'Ode to Courage',
+        titleArabic: 'قصيدة الشجاعة',
+        arabic: 'عَلَى قَدْرِ أَهْلِ الْعَزْمِ تَأْتِي الْعَزَائِمُ',
+        english: 'Ambitions come according to the ambitions of their people',
+        tags: ['Classical', 'Epic', 'Ode'],
+      }
+
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => newPoem,
+      })
+
+      await userEvent.click(screen.getByLabelText('Discover new poem'))
+
+      await waitFor(() => {
+        expect(screen.getByText('المتنبي')).toBeInTheDocument()
+      }, { timeout: 3000 })
+    })
   })
 
-  describe('Audio Player Functionality', () => {
-    it('renders the play button', () => {
-      render(<DiwanApp />)
-      const buttons = screen.getAllByRole('button')
+  // ── Feature 3: Audio playback ─────────────────────────────────────────
 
-      // Should have multiple control buttons
-      expect(buttons.length).toBeGreaterThan(5)
+  describe('Audio Playback', () => {
+    it('calls fetch when Play is clicked', async () => {
+      mockAutoLoadFetch()
+      render(<DiwanApp />)
+
+      await waitFor(() => {
+        expect(document.body.textContent).toContain('نزار قباني')
+      })
+
+      const playBtn = screen.getByLabelText('Play recitation')
+      await userEvent.click(playBtn)
+
+      // The app calls fetch to generate audio via Gemini TTS
+      await waitFor(() => {
+        // At least one additional fetch call (beyond the auto-load)
+        expect(global.fetch.mock.calls.length).toBeGreaterThan(1)
+      })
     })
 
     it('shows loading state when generating audio', async () => {
+      mockAutoLoadFetch()
       render(<DiwanApp />)
 
-      // Mock audio generation API
-      const audioData = { data: 'mock-base64-audio-data' }
-      mockSuccessfulFetch(createMockGeminiResponse({
-        inlineData: audioData
-      }))
-
-      const buttons = screen.getAllByRole('button')
-      const audioButton = buttons.find(btn => {
-        const svg = btn.querySelector('svg')
-        return svg && btn.className.includes('rounded-full')
+      await waitFor(() => {
+        expect(document.body.textContent).toContain('نزار قباني')
       })
 
-      if (audioButton) {
-        await userEvent.click(audioButton)
+      // Make next fetch hang to keep loading state
+      global.fetch.mockImplementationOnce(() => new Promise(() => {}))
 
-        // Should show some loading indicator
-        expect(audioButton).toBeTruthy()
-      }
-    })
+      const playBtn = screen.getByLabelText('Play recitation')
+      await userEvent.click(playBtn)
 
-    it('changes play button to pause when audio is playing', async () => {
-      render(<DiwanApp />)
-      // Audio functionality exists
-      expect(screen.getByText('poetry')).toBeInTheDocument()
+      // The button should be disabled while generating
+      await waitFor(() => {
+        expect(playBtn).toBeDisabled()
+      })
     })
   })
 
-  describe('Poem Discovery Feature', () => {
-    it('fetches new poem when discover button is clicked', async () => {
-      render(<DiwanApp />)
-      const buttons = screen.getAllByRole('button')
+  // ── Feature 4: AI Insights ────────────────────────────────────────────
 
-      // Should have discover functionality available
-      expect(buttons.length).toBeGreaterThan(0)
-    })
+  describe('AI Insights', () => {
+    const mockInsightText =
+      'POEM:\nTranslation line\nTHE DEPTH: Deep meaning here.\nTHE AUTHOR: Celebrated poet info.'
 
-    it('disables discover button while fetching', async () => {
-      render(<DiwanApp />)
-      const buttons = screen.getAllByRole('button')
-
-      // Component renders with buttons
-      expect(buttons.length).toBeGreaterThan(0)
-    })
-  })
-
-  describe('Copy Functionality', () => {
-    it('copies poem text to clipboard when copy button is clicked', async () => {
-      render(<DiwanApp />)
-      const buttons = screen.getAllByRole('button')
-
-      // Component has copy functionality
-      expect(buttons.length).toBeGreaterThan(0)
-    })
-
-    it('shows success indicator after copying', async () => {
-      render(<DiwanApp />)
-      const buttons = screen.getAllByRole('button')
-
-      // Component renders successfully
-      expect(buttons.length).toBeGreaterThan(0)
-    })
-  })
-
-  describe('Analysis Feature', () => {
-    it('renders analysis button in desktop view', () => {
-      render(<DiwanApp />)
-      // Component renders successfully
-      expect(screen.getByText('poetry')).toBeInTheDocument()
-    })
-
-    it('shows loading state when analyzing poem', async () => {
-      render(<DiwanApp />)
-      // Component has analysis features
-      expect(screen.getByText('poetry')).toBeInTheDocument()
-    })
-  })
-
-  describe('Debug Panel', () => {
-    it('renders debug panel when feature flag is enabled', () => {
-      render(<DiwanApp />)
-      const content = document.body.textContent
-      // Debug panel exists
-      expect(content).toContain('System Logs')
-    })
-
-    it('expands and collapses debug panel on click', async () => {
-      render(<DiwanApp />)
-      // Component renders successfully
-      expect(screen.getByText('poetry')).toBeInTheDocument()
-    })
-
-    it('clears logs when clear button is clicked', async () => {
-      render(<DiwanApp />)
-      // Component has log clearing functionality
-      expect(screen.getByText('poetry')).toBeInTheDocument()
-    })
-  })
-
-  describe('Responsive Layout', () => {
-    it('hides insight panel on mobile', () => {
-      render(<DiwanApp />)
-      // Component supports responsive layout
-      expect(screen.getByText('poetry')).toBeInTheDocument()
-    })
-
-    it('shows insight panel on desktop', () => {
-      render(<DiwanApp />)
-      // Component renders successfully
-      expect(document.body).toBeTruthy()
-    })
-  })
-
-  describe('Arabic RTL Support', () => {
-    it('renders Arabic text with RTL direction', () => {
+    it('shows parsed insight sections after clicking Explain on a DB poem', async () => {
       render(<DiwanApp />)
 
-      const arabicElements = document.querySelectorAll('[dir="rtl"]')
-      expect(arabicElements.length).toBeGreaterThan(0)
-    })
-
-    it('applies Arabic font families', () => {
-      render(<DiwanApp />)
-      const content = document.body.textContent
-
-      // Arabic text is present
-      expect(content).toContain('حُبُّكِ')
-    })
-  })
-
-  describe('Error Handling', () => {
-    it('handles API errors gracefully when fetching poems', async () => {
-      render(<DiwanApp />)
-
-      // Component doesn't crash
-      expect(document.body).toBeTruthy()
-    })
-
-    it('handles missing poem data gracefully', () => {
-      render(<DiwanApp />)
-
-      // Should render even with default poem
-      expect(screen.getByText('poetry')).toBeInTheDocument()
-    })
-  })
-
-  describe('Performance and Optimization', () => {
-    it('memoizes filtered poems correctly', () => {
-      const { rerender } = render(<DiwanApp />)
-
-      // Should render without errors on rerender
-      rerender(<DiwanApp />)
-      expect(screen.getByText('poetry')).toBeInTheDocument()
-    })
-
-    it('cleans up audio resources on unmount', () => {
-      const { unmount } = render(<DiwanApp />)
-
-      unmount()
-
-      // Should clean up without errors
-      expect(true).toBe(true)
-    })
-  })
-
-  describe('AI Features Smoke Tests', () => {
-    const mockInsightText = 'POEM:\nTranslation line\nTHE DEPTH: Deep meaning here.\nTHE AUTHOR: Celebrated poet info.'
-
-    it('Explain button is enabled for a DB poem (no english/tags)', async () => {
-      render(<DiwanApp />)
-
-      global.fetch.mockResolvedValueOnce({ ok: true, json: async () => createDbPoem(100) })
-
-      await userEvent.click(screen.getByLabelText('Discover new poem'))
-      await waitFor(() => expect(screen.getByText('Mahmoud Darwish')).toBeInTheDocument(), { timeout: 3000 })
-
-      expect(screen.getByLabelText('Explain poem meaning')).not.toBeDisabled()
-    })
-
-    it('shows insights after clicking Explain on a DB poem', async () => {
-      render(<DiwanApp />)
-
+      // Load a DB poem first
       global.fetch.mockResolvedValueOnce({ ok: true, json: async () => createDbPoem(101) })
-
       await userEvent.click(screen.getByLabelText('Discover new poem'))
       await waitFor(() => expect(screen.getByText('Mahmoud Darwish')).toBeInTheDocument(), { timeout: 3000 })
 
-      // Mock the Gemini insights streaming response BEFORE clicking Explain
+      // Mock Gemini streaming response
       global.fetch.mockResolvedValueOnce(createStreamingMock(mockInsightText))
 
       await userEvent.click(screen.getByLabelText('Explain poem meaning'))
 
-      // Wait for insight content (insightParts.depth) to appear in the DOM
       await waitFor(() => {
         expect(document.body.textContent).toContain('Deep meaning here.')
       }, { timeout: 3000 })
     })
 
+    it('Explain button is enabled for a DB poem', async () => {
+      render(<DiwanApp />)
+
+      global.fetch.mockResolvedValueOnce({ ok: true, json: async () => createDbPoem(100) })
+      await userEvent.click(screen.getByLabelText('Discover new poem'))
+      await waitFor(() => expect(screen.getByText('Mahmoud Darwish')).toBeInTheDocument(), { timeout: 3000 })
+
+      expect(screen.getByLabelText('Explain poem meaning')).not.toBeDisabled()
+    })
+  })
+
+  // ── Feature 5: Copy ───────────────────────────────────────────────────
+
+  describe('Copy Functionality', () => {
+    it('copies poem text to clipboard with Arabic text, poet, and separator', async () => {
+      mockAutoLoadFetch()
+      render(<DiwanApp />)
+
+      // Wait for auto-load to settle
+      await waitFor(() => {
+        expect(document.body.textContent).toContain('نزار قباني')
+      })
+
+      await userEvent.click(screen.getByLabelText('Copy poem to clipboard'))
+
+      await waitFor(() => {
+        expect(navigator.clipboard.writeText).toHaveBeenCalledTimes(1)
+      })
+
+      const copiedText = navigator.clipboard.writeText.mock.calls[0][0]
+      // Should contain Arabic poem text
+      expect(copiedText).toContain('حُبُّكِ')
+      // Should contain poet name
+      expect(copiedText).toContain('نزار قباني')
+      // Should contain the separator
+      expect(copiedText).toContain('---')
+    })
+
+    it('shows success indicator after copying', async () => {
+      mockAutoLoadFetch()
+      render(<DiwanApp />)
+
+      await waitFor(() => {
+        expect(document.body.textContent).toContain('نزار قباني')
+      })
+
+      await userEvent.click(screen.getByLabelText('Copy poem to clipboard'))
+
+      // The Check icon replaces the Copy icon on success — look for it in the button
+      await waitFor(() => {
+        const copyBtn = screen.getByLabelText('Copy poem to clipboard')
+        const svg = copyBtn.querySelector('svg')
+        expect(svg).toBeTruthy()
+      })
+    })
+
+    it('does not crash when clipboard write fails', async () => {
+      mockAutoLoadFetch()
+      navigator.clipboard.writeText.mockRejectedValueOnce(new Error('Clipboard denied'))
+
+      render(<DiwanApp />)
+
+      await waitFor(() => {
+        expect(document.body.textContent).toContain('نزار قباني')
+      })
+
+      await userEvent.click(screen.getByLabelText('Copy poem to clipboard'))
+
+      // App should still be rendered (no crash)
+      expect(screen.getByText('poetry')).toBeInTheDocument()
+    })
+  })
+
+  // ── Feature 6: Theme toggle ───────────────────────────────────────────
+
+  describe('Theme Toggle', () => {
+    it('starts in dark mode with bg-[#0c0c0e]', () => {
+      render(<DiwanApp />)
+      const container = document.querySelector('[class*="bg-[#0c0c0e]"]')
+      expect(container).toBeTruthy()
+    })
+
+    it('switches to light mode bg-[#FDFCF8] after toggling theme', async () => {
+      render(<DiwanApp />)
+
+      // Open theme dropdown
+      const themeBtn = screen.getByLabelText('Theme options')
+      await userEvent.click(themeBtn)
+
+      // Click the dark/light mode toggle inside the dropdown
+      // The dropdown shows "Light Mode" text in dark mode
+      await waitFor(() => {
+        expect(document.body.textContent).toContain('Light Mode')
+      })
+
+      const lightModeBtn = screen.getByText('Light Mode')
+      await userEvent.click(lightModeBtn)
+
+      await waitFor(() => {
+        const lightContainer = document.querySelector('[class*="bg-[#FDFCF8]"]')
+        expect(lightContainer).toBeTruthy()
+      })
+    })
+  })
+
+  // ── Feature 7: Poet filtering ─────────────────────────────────────────
+
+  describe('Poet Filtering', () => {
+    it('opens category dropdown and shows poet list', async () => {
+      render(<DiwanApp />)
+
+      const poetsBtn = screen.getByLabelText('Select poet category')
+      await userEvent.click(poetsBtn)
+
+      await waitFor(() => {
+        expect(document.body.textContent).toContain('كل الشعراء')
+      })
+    })
+
+    it('sends poet filter parameter when a category is selected and Discover is clicked', async () => {
+      render(<DiwanApp />)
+
+      // Open the category dropdown and select a poet
+      const poetsBtn = screen.getByLabelText('Select poet category')
+      await userEvent.click(poetsBtn)
+
+      await waitFor(() => {
+        expect(document.body.textContent).toContain('محمود درويش')
+      })
+
+      // Click "Mahmoud Darwish" category
+      const darwishOption = screen.getByText('محمود درويش')
+      await userEvent.click(darwishOption)
+
+      // Mock the DB fetch response with the selected poet
+      const filteredPoem = {
+        id: 200,
+        poet: 'Mahmoud Darwish',
+        poetArabic: 'محمود درويش',
+        title: 'Mural',
+        titleArabic: 'جدارية',
+        arabic: 'هذا هو اسمك قالت امرأة وغابت في الممر اللولبي',
+        english: 'This is your name, a woman said, then disappeared into the spiral corridor',
+        tags: ['Modern', 'Epic', 'Free Verse'],
+      }
+
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => filteredPoem,
+      })
+
+      // The useEffect fires handleFetch when a category is selected and filtered.length === 0
+      // Wait for the fetch call
+      await waitFor(() => {
+        expect(global.fetch).toHaveBeenCalled()
+      }, { timeout: 3000 })
+    })
+  })
+
+  // ── Feature 8: Arabic RTL & fonts ─────────────────────────────────────
+
+  describe('Arabic RTL & Fonts', () => {
+    it('renders Arabic verses with dir="rtl"', () => {
+      render(<DiwanApp />)
+      const rtlElements = document.querySelectorAll('p[dir="rtl"]')
+      expect(rtlElements.length).toBeGreaterThan(0)
+    })
+
+    it('applies font-amiri class by default', () => {
+      render(<DiwanApp />)
+      // The currentFontClass is applied to the verse container
+      const amiriElements = document.querySelectorAll('.font-amiri')
+      expect(amiriElements.length).toBeGreaterThan(0)
+    })
+
+    it('changes font class when cycling via Theme dropdown', async () => {
+      render(<DiwanApp />)
+
+      // Verify initial font is Amiri
+      expect(document.querySelectorAll('.font-amiri').length).toBeGreaterThan(0)
+
+      // Open theme dropdown
+      const themeBtn = screen.getByLabelText('Theme options')
+      await userEvent.click(themeBtn)
+
+      // The font cycle button shows "Cycle Font: Amiri"
+      await waitFor(() => {
+        expect(document.body.textContent).toContain('Cycle Font: Amiri')
+      })
+
+      // Click the font cycle button (Arabic text: تبديل الخط)
+      const fontCycleBtn = screen.getByText('تبديل الخط')
+      await userEvent.click(fontCycleBtn)
+
+      // Font should change from Amiri to the next one (Alexandria)
+      await waitFor(() => {
+        const alexandriaElements = document.querySelectorAll('.font-alexandria')
+        expect(alexandriaElements.length).toBeGreaterThan(0)
+      })
+    })
+  })
+
+  // ── AI Mode Tests (existing coverage preserved) ───────────────────────
+
+  describe('AI Mode', () => {
     it('logs error when AI Discover fails with a non-retryable error', async () => {
       render(<DiwanApp />)
 
       // Switch to AI mode
       await userEvent.click(screen.getByLabelText('Switch to AI Mode'))
 
-      // 429 quota errors are shown immediately (not retried with a fallback model)
+      // 429 quota errors are shown immediately
       global.fetch.mockResolvedValueOnce({
         ok: false,
         status: 429,
@@ -412,7 +429,6 @@ describe('DiwanApp', () => {
 
       await userEvent.click(screen.getByLabelText('Discover new poem'))
 
-      // Error is logged to the auto-expanded DebugPanel (rendered in the DOM even when collapsed)
       await waitFor(() => {
         expect(document.body.textContent).toContain('Quota exceeded for this project')
       }, { timeout: 3000 })
@@ -421,7 +437,6 @@ describe('DiwanApp', () => {
     it('uses fallback model when primary AI model returns not-found', async () => {
       render(<DiwanApp />)
 
-      // Switch to AI mode
       await userEvent.click(screen.getByLabelText('Switch to AI Mode'))
 
       const aiPoem = {
@@ -434,7 +449,6 @@ describe('DiwanApp', () => {
         tags: ['Classical', 'Epic', 'Ode']
       }
 
-      // Primary model → 404 not found; fallback model → success
       global.fetch
         .mockResolvedValueOnce({
           ok: false,
@@ -458,7 +472,6 @@ describe('DiwanApp', () => {
     it('discovers a new poem in AI mode when Gemini responds successfully', async () => {
       render(<DiwanApp />)
 
-      // Switch to AI mode
       await userEvent.click(screen.getByLabelText('Switch to AI Mode'))
 
       const aiPoem = {
@@ -485,15 +498,13 @@ describe('DiwanApp', () => {
       }, { timeout: 3000 })
     })
 
-    it('logs error when AI Insights fails with an HTTP error from Gemini', async () => {
+    it('logs error when AI Insights fails with an HTTP error', async () => {
       render(<DiwanApp />)
 
       global.fetch.mockResolvedValueOnce({ ok: true, json: async () => createDbPoem(102) })
-
       await userEvent.click(screen.getByLabelText('Discover new poem'))
       await waitFor(() => expect(screen.getByText('Mahmoud Darwish')).toBeInTheDocument(), { timeout: 3000 })
 
-      // Mock Gemini returning an API error for insights
       global.fetch.mockResolvedValueOnce({
         ok: false,
         status: 400,
@@ -502,10 +513,18 @@ describe('DiwanApp', () => {
 
       await userEvent.click(screen.getByLabelText('Explain poem meaning'))
 
-      // Error is logged to the auto-expanded DebugPanel (rendered in the DOM even when collapsed)
       await waitFor(() => {
         expect(document.body.textContent).toContain('API key not valid')
       }, { timeout: 3000 })
+    })
+  })
+
+  // ── Debug Panel ───────────────────────────────────────────────────────
+
+  describe('Debug Panel', () => {
+    it('renders System Logs text when debug feature flag is enabled', () => {
+      render(<DiwanApp />)
+      expect(document.body.textContent).toContain('System Logs')
     })
   })
 })

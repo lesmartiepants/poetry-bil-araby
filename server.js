@@ -57,7 +57,7 @@ pool.query('SELECT NOW()', (err, res) => {
 
 // Middleware
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' }));
 app.use('/api/', rateLimit({ windowMs: 60_000, max: 100, standardHeaders: true, legacyHeaders: false }));
 
 // Request logging middleware
@@ -255,6 +255,93 @@ app.get('/api/poems/search', async (req, res) => {
   } catch (error) {
     log.error('Search', `Error searching poems: ${error.message}`);
     res.status(500).json({ error: error.message });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════
+// GEMINI API PROXY (keeps API key server-side)
+// ═══════════════════════════════════════════════════════════════
+
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY || process.env.VITE_GEMINI_API_KEY || '';
+const GEMINI_BASE = 'https://generativelanguage.googleapis.com/v1beta';
+
+// GET /api/ai/models — list available models
+app.get('/api/ai/models', async (req, res) => {
+  try {
+    if (!GEMINI_API_KEY) {
+      return res.status(503).json({ error: 'AI features unavailable: no API key configured' });
+    }
+    const response = await fetch(`${GEMINI_BASE}/models?key=${GEMINI_API_KEY}`);
+    const data = await response.json();
+    if (!response.ok) {
+      return res.status(response.status).json(data);
+    }
+    res.json(data);
+  } catch (error) {
+    log.error('AI Proxy', `Model listing failed: ${error.message}`);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/ai/generate — proxy generateContent / streamGenerateContent
+app.post('/api/ai/:model/:action', async (req, res) => {
+  try {
+    if (!GEMINI_API_KEY) {
+      return res.status(503).json({ error: 'AI features unavailable: no API key configured' });
+    }
+    const { model, action } = req.params;
+
+    // Only allow known actions
+    const allowedActions = ['generateContent', 'streamGenerateContent'];
+    if (!allowedActions.includes(action)) {
+      return res.status(400).json({ error: 'Invalid action' });
+    }
+
+    const url = `${GEMINI_BASE}/models/${model}:${action}?key=${GEMINI_API_KEY}`;
+
+    if (action === 'streamGenerateContent') {
+      // Stream the response back
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(req.body)
+      });
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        return res.status(response.status).send(errorData);
+      }
+
+      res.setHeader('Content-Type', 'text/event-stream');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Connection', 'keep-alive');
+
+      // Pipe the response stream
+      const reader = response.body.getReader();
+      const pump = async () => {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) { res.end(); break; }
+          res.write(value);
+        }
+      };
+      await pump();
+    } else {
+      // Non-streaming: forward as normal JSON
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(req.body)
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        return res.status(response.status).json(data);
+      }
+      res.json(data);
+    }
+  } catch (error) {
+    log.error('AI Proxy', `Proxy failed: ${error.message}`);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 

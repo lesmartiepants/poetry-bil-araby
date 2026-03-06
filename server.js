@@ -337,19 +337,39 @@ app.post('/api/design-review/items/sync', async (req, res) => {
   }
 });
 
-// GET /api/design-review/sessions — list review sessions (supports ?status= filter)
+// GET /api/design-review/sessions — list review sessions (supports ?status=, ?reviewer=, ?from=, ?to=, ?commit_sha= filters)
 app.get('/api/design-review/sessions', async (req, res) => {
   try {
     if (!(await designTablesExist())) return res.json([]);
-    const { status } = req.query;
+    const { status, reviewer, from, to, commit_sha } = req.query;
     let query = 'SELECT * FROM design_review_sessions';
     const params = [];
-    if (status) { params.push(status); query += ` WHERE status = $1`; }
+    const clauses = [];
+    if (status) { params.push(status); clauses.push(`status = $${params.length}`); }
+    if (reviewer) { params.push(reviewer); clauses.push(`reviewer = $${params.length}`); }
+    if (from) { params.push(from); clauses.push(`created_at >= $${params.length}`); }
+    if (to) { params.push(to); clauses.push(`created_at <= $${params.length}`); }
+    if (commit_sha) { params.push(commit_sha); clauses.push(`commit_sha = $${params.length}`); }
+    if (clauses.length) query += ' WHERE ' + clauses.join(' AND ');
     query += ' ORDER BY created_at DESC';
     const result = await pool.query(query, params);
     res.json(result.rows);
   } catch (error) {
     console.error('Error fetching sessions:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// GET /api/design-review/sessions/:id — fetch a single session by ID
+app.get('/api/design-review/sessions/:id', async (req, res) => {
+  try {
+    if (!(await designTablesExist())) return res.status(404).json({ error: 'Design tables not created yet' });
+    const { id } = req.params;
+    const result = await pool.query('SELECT * FROM design_review_sessions WHERE id = $1', [id]);
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Session not found' });
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error('Error fetching session:', error);
     res.status(500).json({ error: error.message });
   }
 });

@@ -246,7 +246,7 @@
     .mobile-acc-overlay.open{display:flex}
     .mobile-acc-sheet{width:100%;max-height:70vh;background:var(--surface);border-radius:16px 16px 0 0;display:flex;flex-direction:column;overflow:hidden;animation:slideUpSheet .3s cubic-bezier(.4,0,.2,1)}
     @keyframes slideUpSheet{from{transform:translateY(100%);opacity:.8}to{transform:translateY(0);opacity:1}}
-    .mobile-acc-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 10px;border-bottom:1px solid var(--border);flex-shrink:0}
+    .mobile-acc-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 10px;border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap}
     .mobile-acc-title{font-size:14px;font-weight:600}
     .mobile-acc-close{width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--surface-2);color:var(--text-2);font-size:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s}
     .mobile-acc-close:hover{background:var(--surface-3);color:var(--text)}
@@ -295,6 +295,21 @@
     .comment-sheet .cs-btn{padding:8px 20px;border-radius:20px;border:none;font-size:12px;font-weight:600;font-family:inherit;cursor:pointer}
     .cs-cancel{background:var(--surface-3);color:var(--text-2)}
     .cs-save{background:var(--accent);color:var(--bg)}
+    /* Section filter row (desktop accordion) */
+    .section-filter-row{display:flex;gap:5px;padding:8px 16px;border-bottom:1px solid var(--border);background:var(--surface)}
+    .section-pill{padding:6px 12px;border-radius:14px;border:1px solid var(--border);background:var(--surface-2);color:var(--text-3);font-size:10px;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap}
+    .section-pill:hover{background:var(--surface-3);color:var(--text)}
+    .section-pill.active{background:rgba(212,168,75,.15);border-color:rgba(212,168,75,.4);color:var(--accent)}
+    /* Toolbar section indicator */
+    .tb-section-label{font-size:10px;font-weight:600;color:var(--accent);padding:3px 8px;border-radius:10px;background:var(--accent-dim);border:1px solid rgba(212,168,75,.25);white-space:nowrap}
+    /* Mobile dock section cycle button */
+    .dock-section-btn{min-width:44px;height:44px;padding:0 12px;border-radius:22px;border:1px solid var(--border);background:var(--surface-2);color:var(--text-3);font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;flex-shrink:0;touch-action:manipulation}
+    .dock-section-btn:active{transform:scale(.92)}
+    .dock-section-btn.filtered{border-color:rgba(212,168,75,.4);color:var(--accent);background:var(--accent-dim)}
+    /* Inherited verdict styling */
+    .verdict-btn.inherited{opacity:.45;border-style:dashed}
+    .verdict-circle.inherited{opacity:.45;border-style:dashed}
+    .inherited-label{font-size:9px;color:var(--text-3);font-style:italic;margin-top:4px}
     @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
     button,select,.dock-selector,.comment-trigger-compact,.mobile-acc-card,.mat-tab{touch-action:manipulation}
 
@@ -306,6 +321,7 @@
       .bottom-nav{display:none}
       .mobile-dock{display:flex}
       .mobile-info-bar{display:block}
+      .preview{padding-top:28px}
       .preview-open-overlay{opacity:0.75;top:36px}
       .preview-open-overlay:hover{opacity:1.0}
     }
@@ -320,6 +336,7 @@
       <span id="accToggleLabel">Browse Designs</span>
       <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6l4 4 4-4"/></svg>
     </button>
+    <span class="tb-section-label" id="tbSectionLabel" style="display:none"></span>
     <span class="tb-detail" id="tbDetail"></span>
     <div class="tb-sep"></div>
     <div class="tb-group">
@@ -353,7 +370,7 @@
           <h2>Poetry Bil-Araby Design Review</h2>
           <p>Select a component and category to start reviewing designs. Use arrow keys or Prev/Next to cycle through options.</p>
           <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:4px">
-            <span style="font-size:10px;color:var(--text-3)"><span class="kbd">&larr;</span><span class="kbd">&rarr;</span> Prev/Next &nbsp; <span class="kbd">K</span> Keep &nbsp; <span class="kbd">D</span> Discard &nbsp; <span class="kbd">R</span> Revisit &nbsp; <span class="kbd">I</span> Panel</span>
+            <span style="font-size:10px;color:var(--text-3)"><span class="kbd">&larr;</span><span class="kbd">&rarr;</span> Prev/Next &nbsp; <span class="kbd">K</span> Keep &nbsp; <span class="kbd">D</span> Discard &nbsp; <span class="kbd">R</span> Revisit &nbsp; <span class="kbd">S</span> Section &nbsp; <span class="kbd">I</span> Panel</span>
           </div>
         </div>
       </div>
@@ -388,6 +405,7 @@
         <button class="dock-nav" id="nextBtnMobile" onclick="goNext()" aria-label="Next design"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 3l5 5-5 5"/></svg></button>
       </div>
       <div class="dock-bottom">
+        <button class="dock-section-btn" id="dockSectionBtn" onclick="cycleSectionFilter()">All</button>
         <button class="dock-selector" id="dockSelector" onclick="toggleMobileAccordion()">
           <span class="ds-num" id="dockSelectorNum">1.</span>
           <span class="ds-name" id="dockSelectorName">--</span>
@@ -407,7 +425,9 @@
       <div class="mobile-acc-sheet">
         <div class="mobile-acc-head">
           <span class="mobile-acc-title">Browse Designs</span>
+          <button id="clearFeedbackBtnMobile" onclick="clearPastFeedback()" style="font-size:10px;padding:3px 10px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface-2);color:var(--text-3);cursor:pointer;margin-left:auto;margin-right:8px">Clear Feedback</button>
           <button class="mobile-acc-close" onclick="closeMobileAccordion()">&times;</button>
+          <div class="section-filter-row" id="mobileAccSectionFilters" style="padding:6px 12px;margin-top:4px;border-bottom:none;overflow-x:auto;-webkit-overflow-scrolling:touch"></div>
         </div>
         <div class="mobile-acc-scroll" id="mobileAccScroll"></div>
         <nav class="mobile-acc-tabs" id="mobileAccTabs"></nav>
@@ -445,12 +465,13 @@
           <button class="verdict-btn" data-v="discard" onclick="setVerdict('discard')"><span class="v-icon">&#10007;</span> Discard</button>
           <button class="verdict-btn" data-v="revisit" onclick="setVerdict('revisit')"><span class="v-icon">&#8635;</span> Revisit</button>
         </div>
+        <div class="inherited-label" id="inheritedLabel" style="display:none">Inherited from E2E verdict &mdash; click to override</div>
         <textarea class="comment-box" id="commentBox" placeholder="Add a comment about this design..." oninput="saveComment()"></textarea>
         <input class="tags-input" id="tagsInput" placeholder="Tags (comma-separated, e.g. animation, typography)" oninput="saveTags()" />
       </div>
 
       <div class="side-section" id="prevFeedbackSection">
-        <div class="ss-title">Previous Feedback (Round 1)</div>
+        <div class="ss-title" style="display:flex;justify-content:space-between;align-items:center">Previous Feedback (Round 1)<button id="clearFeedbackBtn" onclick="clearPastFeedback()" style="font-size:10px;padding:2px 8px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface-2);color:var(--text-3);cursor:pointer;text-transform:none;letter-spacing:0;font-weight:500">Clear</button></div>
         <div id="prevFeedback"><span style="font-size:12px;color:var(--text-3)">No previous feedback.</span></div>
       </div>
 
@@ -472,7 +493,7 @@
         <div style="display:flex;flex-direction:column;gap:4px;font-size:11px;color:var(--text-3)">
           <div><span class="kbd">&larr;</span> <span class="kbd">&rarr;</span> Prev / Next design</div>
           <div><span class="kbd">K</span> Keep &nbsp; <span class="kbd">D</span> Discard &nbsp; <span class="kbd">R</span> Revisit</div>
-          <div><span class="kbd">I</span> Toggle panel &nbsp; <span class="kbd">F</span> Fullscreen</div>
+          <div><span class="kbd">S</span> Cycle section &nbsp; <span class="kbd">I</span> Panel &nbsp; <span class="kbd">F</span> Fullscreen</div>
         </div>
       </div>
     </div>
@@ -610,9 +631,25 @@ let currentSession = null;
 // ═══════════════════════════════════════════════════════════════
 let st = { compIdx: 0, catIdx: 0, optIdx: 0, sideOpen: true };
 
+// Section filter
+let sectionFilter = 'all';
+const SECTION_FILTERS = [
+  { id: 'all', label: 'All', short: 'All' },
+  { id: 'e2e', label: 'E2E Full', short: 'E2E' },
+  { id: 'onboarding', label: 'Onboarding', short: 'Onb' },
+  { id: 'main-app', label: 'Main App', short: 'App' },
+  { id: 'vc', label: 'Vertical Controls', short: 'VC' },
+  { id: 'auth', label: 'Auth', short: 'Auth' },
+  { id: 'branding', label: 'Branding', short: 'Brand' }
+];
+try { const sf = localStorage.getItem('design-review-section-filter'); if (sf && SECTION_FILTERS.some(f => f.id === sf)) sectionFilter = sf; } catch {}
+
 // Review feedback: { [optionId]: { verdict, comment, tags } }
 let reviewData = {};
 const STORAGE_KEY = 'design-review-feedback-v3';
+const FEEDBACK_CLEARED_KEY = 'design-review-feedback-cleared';
+let feedbackCleared = false;
+try { feedbackCleared = localStorage.getItem(FEEDBACK_CLEARED_KEY) === 'true'; } catch {}
 
 function loadReview() {
   try {
@@ -682,13 +719,23 @@ async function initAPI() {
     if (!r.ok) throw 0;
     apiAvailable = true;
 
-    // Sync CATALOG items to DB
+    // Sync CATALOG items to DB (includes virtual section items for E2E)
     const items = [];
     CATALOG.forEach(comp => comp.categories.forEach(cat => cat.options.forEach(opt => {
       items.push({ item_key: opt.id, name: opt.name, component: comp.id, category: cat.id,
         file_path: opt.file, description: opt.desc, generation: opt.generation || 1,
         iteration: opt.iteration || null, source_branch: opt.source_branch || null,
         source_pr: opt.source_pr || cat.source || null });
+      if (comp.id === 'e2e') {
+        ['onboarding', 'main-app'].forEach(section => {
+          items.push({ item_key: opt.id + ':' + section, name: opt.name + ' (' + section + ')',
+            component: comp.id, category: cat.id, file_path: opt.file,
+            description: opt.desc + ' [' + section + ' section]',
+            generation: opt.generation || 1, iteration: opt.iteration || null,
+            source_branch: opt.source_branch || null,
+            source_pr: opt.source_pr || cat.source || null });
+        });
+      }
     })));
     fetch(API_BASE + '/api/design-review/items/sync', {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items })
@@ -722,11 +769,59 @@ async function initAPI() {
 let flatList = [];
 function buildFlatList() {
   flatList = [];
-  CATALOG.forEach((comp, ci) => comp.categories.forEach((cat, cati) =>
-    cat.options.forEach((opt, oi) => flatList.push({ compIdx: ci, catIdx: cati, optIdx: oi, option: opt, category: cat, component: comp }))
-  ));
+  CATALOG.forEach((comp, ci) => {
+    if (sectionFilter === 'auth' && comp.id !== 'auth') return;
+    if (sectionFilter === 'branding' && comp.id !== 'branding') return;
+    if (sectionFilter === 'vc' && comp.id !== 'e2e') return;
+    if ((sectionFilter === 'e2e' || sectionFilter === 'onboarding' || sectionFilter === 'main-app') && comp.id !== 'e2e') return;
+    comp.categories.forEach((cat, cati) =>
+      cat.options.forEach((opt, oi) => {
+        if (sectionFilter === 'vc' && !opt.isVC) return;
+        if ((sectionFilter === 'e2e' || sectionFilter === 'onboarding' || sectionFilter === 'main-app') && opt.isVC) return;
+        flatList.push({ compIdx: ci, catIdx: cati, optIdx: oi, option: opt, category: cat, component: comp });
+      })
+    );
+  });
 }
 function currentFlatIdx() { return flatList.findIndex(f => f.compIdx === st.compIdx && f.catIdx === st.catIdx && f.optIdx === st.optIdx); }
+
+function setSectionFilter(filter) {
+  sectionFilter = filter;
+  localStorage.setItem('design-review-section-filter', filter);
+  buildFlatList();
+  if (flatList.length) navigateToFlat(0);
+  updateSectionFilterUI();
+}
+
+function cycleSectionFilter() {
+  const ids = SECTION_FILTERS.map(f => f.id);
+  const next = (ids.indexOf(sectionFilter) + 1) % ids.length;
+  setSectionFilter(ids[next]);
+}
+
+function updateSectionFilterUI() {
+  // Desktop: section pills active state
+  document.querySelectorAll('.section-pill').forEach(p => {
+    p.classList.toggle('active', p.dataset.filter === sectionFilter);
+  });
+  // Desktop: toolbar badge
+  const tbBadge = document.getElementById('tbSectionLabel');
+  if (tbBadge) {
+    const info = SECTION_FILTERS.find(f => f.id === sectionFilter);
+    if (sectionFilter === 'all') { tbBadge.style.display = 'none'; }
+    else { tbBadge.style.display = ''; tbBadge.textContent = info ? info.label : sectionFilter; }
+  }
+  // Mobile: dock cycle button
+  const dockBtn = document.getElementById('dockSectionBtn');
+  if (dockBtn) {
+    const info = SECTION_FILTERS.find(f => f.id === sectionFilter);
+    dockBtn.textContent = info ? info.short : 'All';
+    dockBtn.classList.toggle('filtered', sectionFilter !== 'all');
+  }
+  // Rebuild accordion if open
+  if (accOpen) buildAccordion();
+  if (mobileAccOpen) buildMobileAccordion();
+}
 
 // ═══════════════════════════════════════════════════════════════
 // HELPERS
@@ -734,7 +829,21 @@ function currentFlatIdx() { return flatList.findIndex(f => f.compIdx === st.comp
 function curComp() { return CATALOG[st.compIdx]; }
 function curCat() { return curComp().categories[st.catIdx]; }
 function curOpt() { return curCat().options[st.optIdx]; }
-function getReview(id) { return reviewData[id] || { verdict: null, comment: '', tags: '' }; }
+function getReview(id) {
+  if (sectionFilter === 'onboarding' || sectionFilter === 'main-app') {
+    const sectionKey = id + ':' + sectionFilter;
+    const sectionData = reviewData[sectionKey];
+    if (sectionData && sectionData.verdict) {
+      return { ...sectionData, inherited: false, sectionKey: sectionKey };
+    }
+    const base = reviewData[id];
+    if (base && base.verdict) {
+      return { ...base, inherited: true, sectionKey: sectionKey };
+    }
+    return { verdict: null, comment: '', tags: '', inherited: false, sectionKey: sectionKey };
+  }
+  return { ...(reviewData[id] || { verdict: null, comment: '', tags: '' }), inherited: false, sectionKey: null };
+}
 function escHtml(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
 function genBadge(gen) {
   const l = { 6: 'Gen 6 Round 3', 5: 'Gen 5 Polished', 4: 'Gen 4 Redesign', 3: 'Gen 3 Hardened', 2: 'Gen 2 Draft', 1: 'Gen 1 Explore' };
@@ -849,6 +958,20 @@ function renderAccordionItem(f, currentFi, onSelect) {
 function buildAccordion() {
   var panel = document.getElementById('accPanel');
   panel.textContent = '';
+
+  // Section filter pills row
+  var sfRow = document.createElement('div');
+  sfRow.className = 'section-filter-row';
+  SECTION_FILTERS.forEach(function(sf) {
+    var pill = document.createElement('button');
+    pill.className = 'section-pill' + (sectionFilter === sf.id ? ' active' : '');
+    pill.textContent = sf.label;
+    pill.dataset.filter = sf.id;
+    pill.addEventListener('click', function(e) { e.stopPropagation(); setSectionFilter(sf.id); });
+    sfRow.appendChild(pill);
+  });
+  panel.appendChild(sfRow);
+
   var fi = currentFlatIdx();
   var cats = getAccordionCategories();
 
@@ -941,6 +1064,21 @@ function buildMobileAccordion() {
   var tabs = document.getElementById('mobileAccTabs');
   scroll.textContent = '';
   tabs.textContent = '';
+
+  // Populate mobile section filter pills
+  var msfRow = document.getElementById('mobileAccSectionFilters');
+  if (msfRow) {
+    msfRow.textContent = '';
+    SECTION_FILTERS.forEach(function(sf) {
+      var pill = document.createElement('button');
+      pill.className = 'section-pill' + (sectionFilter === sf.id ? ' active' : '');
+      pill.textContent = sf.label;
+      pill.dataset.filter = sf.id;
+      pill.addEventListener('click', function(e) { e.stopPropagation(); setSectionFilter(sf.id); });
+      msfRow.appendChild(pill);
+    });
+  }
+
   var fi = currentFlatIdx();
   var cats = getAccordionCategories();
   var sectionEls = [];
@@ -1149,12 +1287,19 @@ function render(skipPreview) {
   document.getElementById('infoSrc').textContent = cat.source;
 
   document.querySelectorAll('.verdict-btn').forEach(b => {
-    b.className = 'verdict-btn' + (rev.verdict === b.dataset.v ? ' active-' + b.dataset.v : '');
+    const isActive = rev.verdict === b.dataset.v;
+    b.className = 'verdict-btn' + (isActive ? ' active-' + b.dataset.v : '') + (isActive && rev.inherited ? ' inherited' : '');
   });
   document.querySelectorAll('.verdict-circle').forEach(b => {
     const base = 'verdict-circle' + (b.classList.contains('vc-center') ? ' vc-center' : '');
-    b.className = base + (rev.verdict === b.dataset.v ? ' active-' + b.dataset.v : '');
+    const isActive = rev.verdict === b.dataset.v;
+    b.className = base + (isActive ? ' active-' + b.dataset.v : '') + (isActive && rev.inherited ? ' inherited' : '');
   });
+  // Inherited label
+  const inheritedLabel = document.getElementById('inheritedLabel');
+  if (inheritedLabel) {
+    inheritedLabel.style.display = rev.inherited ? 'block' : 'none';
+  }
 
   document.getElementById('commentBox').value = rev.comment || '';
   const ti = document.getElementById('tagsInput'); if (ti) ti.value = rev.tags || '';
@@ -1179,11 +1324,43 @@ function loadPreview(opt, cat) {
   iframe.className = 'preview-iframe'; iframe.src = '/design-review/' + opt.file; iframe.title = opt.name;
   container.appendChild(iframe);
 
+  // Section auto-advance: skip to onboarding or main-app within E2E designs
+  if (sectionFilter === 'onboarding' || sectionFilter === 'main-app') {
+    iframe.addEventListener('load', function() {
+      try {
+        const doc = iframe.contentDocument;
+        if (!doc) return;
+        // Hide splash
+        const splash = doc.getElementById('splash') || doc.getElementById('splashScreen');
+        if (splash) { splash.classList.add('hidden'); splash.style.opacity = '0'; splash.style.pointerEvents = 'none'; splash.style.display = 'none'; }
+
+        if (sectionFilter === 'onboarding') {
+          const onb = doc.getElementById('walkthrough') || doc.getElementById('onboarding');
+          if (onb) { onb.classList.add('active'); onb.style.display = 'flex'; onb.style.opacity = '1'; onb.style.visibility = 'visible'; }
+        }
+        if (sectionFilter === 'main-app') {
+          const onb = doc.getElementById('walkthrough') || doc.getElementById('onboarding');
+          if (onb) { onb.style.display = 'none'; onb.classList.remove('active'); }
+          const app = doc.getElementById('app') || doc.getElementById('mainApp');
+          if (app) { app.classList.add('active'); app.style.display = 'flex'; app.style.opacity = '1'; app.style.visibility = 'visible'; }
+        }
+      } catch(e) { /* cross-origin or other error -- fall through to full E2E */ }
+    });
+  }
+
   // preview-header removed — info shown in toolbar (accToggleLabel + tbDetail)
 }
 
 function renderPrevFeedback(cat, opt) {
   const container = document.getElementById('prevFeedback');
+  const clearBtn = document.getElementById('clearFeedbackBtn');
+  if (feedbackCleared) {
+    container.textContent = 'Feedback cleared for this session.';
+    container.style.cssText = 'font-size:12px;color:var(--text-3)';
+    if (clearBtn) clearBtn.style.display = 'none';
+    return;
+  }
+  if (clearBtn) clearBtn.style.display = '';
   const fb = cat.feedback && cat.feedback[opt.id];
   if (!fb) {
     if (!Object.keys(cat.feedback || {}).length) {
@@ -1226,6 +1403,19 @@ function renderPrevFeedback(cat, opt) {
   container.appendChild(card);
 }
 
+function clearPastFeedback() {
+  feedbackCleared = true;
+  try { localStorage.setItem(FEEDBACK_CLEARED_KEY, 'true'); } catch {}
+  for (const cat of CATALOG) cat.feedback = {};
+  const container = document.getElementById('prevFeedback');
+  container.textContent = 'Feedback cleared for this session.';
+  container.style.cssText = 'font-size:12px;color:var(--text-3)';
+  const btn = document.getElementById('clearFeedbackBtn');
+  const btnMobile = document.getElementById('clearFeedbackBtnMobile');
+  if (btn) btn.style.display = 'none';
+  if (btnMobile) btnMobile.style.display = 'none';
+}
+
 function renderProgress() {
   const total = flatList.length;
   const reviewed = flatList.filter(f => reviewData[f.option.id]?.verdict).length;
@@ -1255,22 +1445,25 @@ function renderProgress() {
 // ═══════════════════════════════════════════════════════════════
 function setVerdict(v) {
   const opt = curOpt();
-  if (!reviewData[opt.id]) reviewData[opt.id] = { verdict: null, comment: '', tags: '' };
-  reviewData[opt.id].verdict = reviewData[opt.id].verdict === v ? null : v;
+  const key = (sectionFilter === 'onboarding' || sectionFilter === 'main-app') ? opt.id + ':' + sectionFilter : opt.id;
+  if (!reviewData[key]) reviewData[key] = { verdict: null, comment: '', tags: '' };
+  reviewData[key].verdict = reviewData[key].verdict === v ? null : v;
   persistReview(); render(true);
 }
 function saveComment() {
   const opt = curOpt();
-  if (!reviewData[opt.id]) reviewData[opt.id] = { verdict: null, comment: '', tags: '' };
-  reviewData[opt.id].comment = document.getElementById('commentBox').value;
-  const mc = document.getElementById('mobileCommentBox'); if (mc) mc.value = reviewData[opt.id].comment;
+  const key = (sectionFilter === 'onboarding' || sectionFilter === 'main-app') ? opt.id + ':' + sectionFilter : opt.id;
+  if (!reviewData[key]) reviewData[key] = { verdict: null, comment: '', tags: '' };
+  reviewData[key].comment = document.getElementById('commentBox').value;
+  const mc = document.getElementById('mobileCommentBox'); if (mc) mc.value = reviewData[key].comment;
   persistReview(); renderProgress();
 }
 function saveMobileComment() {
   const opt = curOpt();
-  if (!reviewData[opt.id]) reviewData[opt.id] = { verdict: null, comment: '', tags: '' };
-  reviewData[opt.id].comment = document.getElementById('mobileCommentBox').value;
-  document.getElementById('commentBox').value = reviewData[opt.id].comment;
+  const key = (sectionFilter === 'onboarding' || sectionFilter === 'main-app') ? opt.id + ':' + sectionFilter : opt.id;
+  if (!reviewData[key]) reviewData[key] = { verdict: null, comment: '', tags: '' };
+  reviewData[key].comment = document.getElementById('mobileCommentBox').value;
+  document.getElementById('commentBox').value = reviewData[key].comment;
   persistReview(); renderProgress();
 }
 function openMobileComment() {
@@ -1285,8 +1478,9 @@ function closeMobileComment() {
 }
 function saveTags() {
   const opt = curOpt();
-  if (!reviewData[opt.id]) reviewData[opt.id] = { verdict: null, comment: '', tags: '' };
-  reviewData[opt.id].tags = document.getElementById('tagsInput').value;
+  const key = (sectionFilter === 'onboarding' || sectionFilter === 'main-app') ? opt.id + ':' + sectionFilter : opt.id;
+  if (!reviewData[key]) reviewData[key] = { verdict: null, comment: '', tags: '' };
+  reviewData[key].tags = document.getElementById('tagsInput').value;
   persistReview();
 }
 function openTab() { window.open('/design-review/' + curOpt().file, '_blank'); }
@@ -1553,7 +1747,7 @@ document.addEventListener('keydown', e => {
     case 'k': case 'K': setVerdict('keep'); break;
     case 'd': case 'D': setVerdict('discard'); break;
     case 'r': case 'R': setVerdict('revisit'); break;
-    case 's': case 'S': setVerdict('revisit'); break;
+    case 's': case 'S': cycleSectionFilter(); break;
     case 'i': case 'I': toggleSide(); break;
     case 'f': case 'F':
       const iframe = document.querySelector('.preview-iframe');
@@ -1574,7 +1768,7 @@ function syncPreviewPadding() {
     var h = dock.getBoundingClientRect().height;
     preview.style.paddingBottom = h + 'px';
     if (infoBar) {
-      var t = infoBar.getBoundingClientRect().height;
+      var t = infoBar.getBoundingClientRect().height + 4;
       preview.style.paddingTop = t + 'px';
     }
   } else {
@@ -1588,10 +1782,16 @@ window.addEventListener('resize', syncPreviewPadding);
 // BOOT
 // ═══════════════════════════════════════════════════════════════
 loadReview();
+if (feedbackCleared) {
+  for (const cat of CATALOG) cat.feedback = {};
+  var _cb = document.getElementById('clearFeedbackBtn'); if (_cb) _cb.style.display = 'none';
+  var _cbm = document.getElementById('clearFeedbackBtnMobile'); if (_cbm) _cbm.style.display = 'none';
+}
 buildFlatList();
 populateComps();
 populateCats();
 render();
+updateSectionFilterUI();
 syncPreviewPadding();
 initAPI();
 </script>

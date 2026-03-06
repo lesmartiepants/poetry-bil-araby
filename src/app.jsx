@@ -1583,7 +1583,7 @@ export default function DiwanApp() {
         });
   }, [poems, selectedCategory]);
 
-  const current = filtered[currentIndex] || filtered[0] || poems[0];
+  const current = filtered[currentIndex] || filtered[0] || poems[0] || null;
 
   const addLog = (label, msg, type = 'info') => {
     const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -2231,6 +2231,11 @@ export default function DiwanApp() {
             if (newIdx !== -1) setCurrentIndex(newIdx);
             return updated;
           });
+
+          // Ensure newly fetched DB poem is visible by resetting category filter
+          if (selectedCategory !== "All") {
+            setSelectedCategory("All");
+          }
         } catch (dbError) {
           // Handle database-specific errors
           const errorMessage = dbError.message.includes('Failed to fetch')
@@ -2551,6 +2556,17 @@ export default function DiwanApp() {
 
     return () => clearInterval(keepAlivePing);
   }, [useDatabase, apiUrl]);
+
+  if (!current) {
+    return (
+      <div className={`min-h-screen flex items-center justify-center ${theme.bg} ${theme.text}`}>
+        <div className="text-center space-y-4">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto opacity-60" />
+          <p className="text-sm opacity-60">Loading poems...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`h-[100dvh] w-full flex flex-col overflow-hidden ${DESIGN.anim} font-sans ${theme.bg} ${theme.text} selection:bg-indigo-500`}>

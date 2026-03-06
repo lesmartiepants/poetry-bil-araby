@@ -275,7 +275,7 @@ html.dark .roller-bar {
 
 /* --- Scroll Hero --- */
 .scroll-hero {
-  height: 60vh;
+  height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -315,7 +315,7 @@ html.dark .roller-bar {
 
 /* --- Scroll Sections --- */
 .scroll-section {
-  height: 110vh;
+  height: 200vh;
   position: relative;
   overflow: hidden;
 }
@@ -563,7 +563,7 @@ html.dark .roller-bar {
 
 /* ============ Responsive -- Scroll Onboarding ============ */
 @media (max-width: 1024px) {
-  .scroll-section { height: 100vh; }
+  .scroll-section { height: 180vh; }
 }
 @media (max-width: 768px) {
   .scroll-progress-track {
@@ -572,7 +572,7 @@ html.dark .roller-bar {
     height: 30vh;
   }
   .scroll-progress-marker { width: 8px; height: 8px; }
-  .scroll-section { height: 95vh; }
+  .scroll-section { height: 160vh; }
   .section-gilt-frame { inset: 12px; }
   .arabesque-corner { width: 40px; height: 40px; }
   .arabesque-corner.top-left { top: 16px; left: 16px; }
@@ -1018,10 +1018,10 @@ html.dark .scroll-icons-strip { background: var(--paper-light); }
     return { overall: overall, sections: sections };
   }
 
-  /* Compute fade-out multiplier: content stays full until 0.85, then fades 0.85-1.0 */
+  /* Compute fade-out multiplier: content stays full until 0.92, then fades 0.92-1.0 */
   function getFadeOut(reveal) {
-    if (reveal <= 0.85) return 1;
-    return mapRange(reveal, 0.85, 1.0, 1, 0);
+    if (reveal <= 0.92) return 1;
+    return mapRange(reveal, 0.92, 1.0, 1, 0);
   }
 
   /* Animate a section based on its reveal progress */

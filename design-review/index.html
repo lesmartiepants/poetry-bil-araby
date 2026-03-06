@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Design Review - Poetry Bil-Araby</title>
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
@@ -135,7 +135,7 @@
     .gen-badge.gen-1{background:var(--surface-2);color:var(--text-3);border:1px solid var(--border)}
 
     /* Tags input */
-    .tags-input{width:100%;padding:6px 10px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface-2);color:var(--text);font-size:11px;outline:none;font-family:inherit;margin-top:6px;transition:border-color .15s}
+    .tags-input{width:100%;padding:6px 10px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface-2);color:var(--text);font-size:16px;outline:none;font-family:inherit;margin-top:6px;transition:border-color .15s}
     .tags-input:focus{border-color:var(--accent)}
     .tags-input::placeholder{color:var(--text-3)}
 
@@ -146,7 +146,7 @@
     .sync-label.hidden{display:none}
 
     /* Comment box */
-    .comment-box{width:100%;min-height:72px;padding:8px 10px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface-2);color:var(--text);font-size:12px;line-height:1.5;resize:vertical;outline:none;font-family:inherit;transition:border-color .15s}
+    .comment-box{width:100%;min-height:72px;padding:8px 10px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface-2);color:var(--text);font-size:16px;line-height:1.5;resize:vertical;outline:none;font-family:inherit;transition:border-color .15s}
     .comment-box:focus{border-color:var(--accent)}
     .comment-box::placeholder{color:var(--text-3)}
 
@@ -286,7 +286,7 @@
     .comment-sheet textarea{
       width:100%;height:100px;
       background:var(--surface-2);border:1px solid var(--border);
-      border-radius:12px;color:var(--text);font-size:14px;
+      border-radius:12px;color:var(--text);font-size:16px;
       padding:12px;resize:none;outline:none;font-family:inherit;
     }
     .comment-sheet textarea:focus{border-color:var(--accent)}
@@ -543,73 +543,73 @@ const CATALOG = [
     categories: [
       { id: 'e2e-gilded', name: 'The Gilded Page', source: 'PR #64/#65/#129', description: 'Gold ornamentation, geometric patterns, and cultural heritage \u2014 the verse adorned',
         options: [
-          { id: 'e2e-78ab-a8', name: 'A8 Deco Discovery', philosophy: 'Gold geometry frames each verse like a palace archway', file: 'e2e/set-78ab/e2e-a8-deco-discovery.html', desc: 'Art Deco Geometric: gold dividers, geometric panels, fan controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-78ab-a8-vc', name: 'A8 Deco Discovery (VC)', philosophy: 'Gold geometry frames each verse like a palace archway', file: 'e2e/set-78ab/e2e-a8-deco-discovery-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
-          { id: 'e2e-c0cf-a-09', name: '09 Mosaic Discovery', philosophy: 'Tessellated patterns frame each verse like a mosque mihrab', file: 'e2e/set-c0cf-a/09-mosaic-discovery.html', desc: 'Islamic Geometric: tessellated frame, geometric pattern controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-c0cf-a-09-vc', name: '09 Mosaic Discovery (VC)', philosophy: 'Tessellated patterns frame each verse like a mosque mihrab', file: 'e2e/set-c0cf-a/09-mosaic-discovery-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
-          { id: 'e2e-c0cf-a-04', name: '04 Desert Poet', philosophy: 'Dune layers drift behind the verse like a desert mirage', file: 'e2e/set-c0cf-a/04-desert-poet.html', desc: 'Warm Sand/Parallax: parallax dune layers, mirage text, caravan controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-c0cf-a-04-vc', name: '04 Desert Poet (VC)', philosophy: 'Dune layers drift behind the verse like a desert mirage', file: 'e2e/set-c0cf-a/04-desert-poet-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
-          { id: 'e2e-new-pf2', name: 'PF2 Gold Mystical', philosophy: 'Gold constellations orbit the poem in celestial reverence', file: 'e2e/set-new/pf2-gold-mystical.html', desc: 'Gold Orbit: orbiting gold icons, complete E2E from standalone', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-new-pf2-vc', name: 'PF2 Gold Mystical (VC)', philosophy: 'Gold constellations orbit the poem in celestial reverence', file: 'e2e/set-new/pf2-gold-mystical-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true }
+          { id: 'e2e-g1-a8', name: 'A8 Deco Discovery', philosophy: 'Gold geometry frames each verse like a palace archway', file: 'e2e/gen-1/e2e-a8-deco-discovery.html', desc: 'Art Deco Geometric: gold dividers, geometric panels, fan controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
+          { id: 'e2e-g1-a8-vc', name: 'A8 Deco Discovery (VC)', philosophy: 'Gold geometry frames each verse like a palace archway', file: 'e2e/gen-1/e2e-a8-deco-discovery-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
+          { id: 'e2e-g2a-09', name: '09 Mosaic Discovery', philosophy: 'Tessellated patterns frame each verse like a mosque mihrab', file: 'e2e/gen-2a/09-mosaic-discovery.html', desc: 'Islamic Geometric: tessellated frame, geometric pattern controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
+          { id: 'e2e-g2a-09-vc', name: '09 Mosaic Discovery (VC)', philosophy: 'Tessellated patterns frame each verse like a mosque mihrab', file: 'e2e/gen-2a/09-mosaic-discovery-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
+          { id: 'e2e-g2a-04', name: '04 Desert Poet', philosophy: 'Dune layers drift behind the verse like a desert mirage', file: 'e2e/gen-2a/04-desert-poet.html', desc: 'Warm Sand/Parallax: parallax dune layers, mirage text, caravan controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
+          { id: 'e2e-g2a-04-vc', name: '04 Desert Poet (VC)', philosophy: 'Dune layers drift behind the verse like a desert mirage', file: 'e2e/gen-2a/04-desert-poet-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
+          { id: 'e2e-g3-pf2', name: 'PF2 Gold Mystical', philosophy: 'Gold constellations orbit the poem in celestial reverence', file: 'e2e/gen-3/pf2-gold-mystical.html', desc: 'Gold Orbit: orbiting gold icons, complete E2E from standalone', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
+          { id: 'e2e-g3-pf2-vc', name: 'PF2 Gold Mystical (VC)', philosophy: 'Gold constellations orbit the poem in celestial reverence', file: 'e2e/gen-3/pf2-gold-mystical-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true }
         ],
         feedback: {}
       },
       { id: 'e2e-ink', name: 'Ink & Parchment', source: 'PR #65/#129', description: 'Manuscripts, codex, and calligraphy \u2014 the physical act of writing and reading',
         options: [
-          { id: 'e2e-c0cf-a-02', name: '02 Zen Manuscript', philosophy: 'Parchment and ink \u2014 reading poetry the way scribes once wrote it', file: 'e2e/set-c0cf-a/02-zen-manuscript.html', desc: 'Skeuomorphic Revival: parchment texture, ink well, handwritten feel', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-c0cf-a-02-vc', name: '02 Zen Manuscript (VC)', philosophy: 'Parchment and ink \u2014 reading poetry the way scribes once wrote it', file: 'e2e/set-c0cf-a/02-zen-manuscript-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
-          { id: 'e2e-c0cf-a-07', name: '07 Scroll Keeper', philosophy: 'Gilded margins and drop caps honor the manuscript tradition', file: 'e2e/set-c0cf-a/07-scroll-keeper.html', desc: 'Scroll-Animated Manuscript: sticky-centered unroll, easeOutBack spring reveals, parallax arabesques, gold progress line, fade-out transitions', generation: 6, iteration: 10, source_branch: 'feature/preserve-patterns', source_pr: 'walkthrough-upgrade' },
-          { id: 'e2e-c0cf-a-07-vc', name: '07 Scroll Keeper (VC)', philosophy: 'Gilded margins and drop caps honor the manuscript tradition', file: 'e2e/set-c0cf-a/07-scroll-keeper-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
-          { id: 'e2e-c0cf-b-05', name: '05 Scroll Codex', philosophy: 'An open book with visible binding \u2014 poetry held in your hands', file: 'e2e/set-c0cf-b/05-scroll-codex.html', desc: 'Codex/Book: open book pages, visible binding, page tab controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-c0cf-b-05-vc', name: '05 Scroll Codex (VC)', philosophy: 'An open book with visible binding \u2014 poetry held in your hands', file: 'e2e/set-c0cf-b/05-scroll-codex-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
-          { id: 'e2e-new-pf1', name: 'PF1 Calligraphic', philosophy: 'The words themselves become the interface \u2014 kinetic calligraphy', file: 'e2e/set-new/pf1-calligraphic.html', desc: 'Kinetic Typography: words ARE the interface, scrolling text ticker controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-new-pf1-vc', name: 'PF1 Calligraphic (VC)', philosophy: 'The words themselves become the interface \u2014 kinetic calligraphy', file: 'e2e/set-new/pf1-calligraphic-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
-          { id: 'e2e-new-codex', name: 'Codex Spine Story', philosophy: 'Leather spine and ribbon bookmark \u2014 a volume of collected verse', file: 'e2e/set-new/codex-spine-story.html', desc: 'Medieval Codex: leather spine, page turns, bookmark ribbon controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-new-codex-vc', name: 'Codex Spine Story (VC)', philosophy: 'Leather spine and ribbon bookmark \u2014 a volume of collected verse', file: 'e2e/set-new/codex-spine-story-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true }
+          { id: 'e2e-g2a-02', name: '02 Zen Manuscript', philosophy: 'Parchment and ink \u2014 reading poetry the way scribes once wrote it', file: 'e2e/gen-2a/02-zen-manuscript.html', desc: 'Skeuomorphic Revival: parchment texture, ink well, handwritten feel', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
+          { id: 'e2e-g2a-02-vc', name: '02 Zen Manuscript (VC)', philosophy: 'Parchment and ink \u2014 reading poetry the way scribes once wrote it', file: 'e2e/gen-2a/02-zen-manuscript-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
+          { id: 'e2e-g2a-07', name: '07 Scroll Keeper', philosophy: 'Gilded margins and drop caps honor the manuscript tradition', file: 'e2e/gen-2a/07-scroll-keeper.html', desc: 'Scroll-Animated Manuscript: sticky-centered unroll, easeOutBack spring reveals, parallax arabesques, gold progress line, fade-out transitions', generation: 6, iteration: 10, source_branch: 'feature/preserve-patterns', source_pr: 'walkthrough-upgrade' },
+          { id: 'e2e-g2a-07-vc', name: '07 Scroll Keeper (VC)', philosophy: 'Gilded margins and drop caps honor the manuscript tradition', file: 'e2e/gen-2a/07-scroll-keeper-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
+          { id: 'e2e-g2b-05', name: '05 Scroll Codex', philosophy: 'An open book with visible binding \u2014 poetry held in your hands', file: 'e2e/gen-2b/05-scroll-codex.html', desc: 'Codex/Book: open book pages, visible binding, page tab controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
+          { id: 'e2e-g2b-05-vc', name: '05 Scroll Codex (VC)', philosophy: 'An open book with visible binding \u2014 poetry held in your hands', file: 'e2e/gen-2b/05-scroll-codex-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
+          { id: 'e2e-g3-pf1', name: 'PF1 Calligraphic', philosophy: 'The words themselves become the interface \u2014 kinetic calligraphy', file: 'e2e/gen-3/pf1-calligraphic.html', desc: 'Kinetic Typography: words ARE the interface, scrolling text ticker controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
+          { id: 'e2e-g3-pf1-vc', name: 'PF1 Calligraphic (VC)', philosophy: 'The words themselves become the interface \u2014 kinetic calligraphy', file: 'e2e/gen-3/pf1-calligraphic-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
+          { id: 'e2e-g3-codex', name: 'Codex Spine Story', philosophy: 'Leather spine and ribbon bookmark \u2014 a volume of collected verse', file: 'e2e/gen-3/codex-spine-story.html', desc: 'Medieval Codex: leather spine, page turns, bookmark ribbon controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
+          { id: 'e2e-g3-codex-vc', name: 'Codex Spine Story (VC)', philosophy: 'Leather spine and ribbon bookmark \u2014 a volume of collected verse', file: 'e2e/gen-3/codex-spine-story-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true }
         ],
         feedback: {}
       },
       { id: 'e2e-breath', name: 'Breath & Stillness', source: 'PR #64/#65/#129/Round 3', description: 'Zen, emptiness, and Nordic quiet \u2014 contemplation between the lines',
         options: [
-          { id: 'e2e-78ab-b8', name: 'B8 Ritual Spotlight', philosophy: 'Vast emptiness \u2014 the poem floats alone, demanding your full attention', file: 'e2e/set-78ab/e2e-b8-ritual-spotlight-hybrid.html', desc: 'Japanese Ma: vast emptiness, poem floats alone, tap-to-reveal controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-78ab-b8-vc', name: 'B8 Ritual Spotlight (VC)', philosophy: 'Vast emptiness \u2014 the poem floats alone, demanding your full attention', file: 'e2e/set-78ab/e2e-b8-ritual-spotlight-hybrid-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
-          { id: 'e2e-new-zen1', name: 'Zen 1 Refined', philosophy: 'Imperfect beauty \u2014 each verse revealed like a weathered inscription', file: 'e2e/set-new/zen1-refined.html', desc: 'Wabi-Sabi: imperfect beauty, single-dot controls revealing one action at a time', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-new-zen1-vc', name: 'Zen 1 Refined (VC)', philosophy: 'Imperfect beauty \u2014 each verse revealed like a weathered inscription', file: 'e2e/set-new/zen1-refined-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
-          { id: 'e2e-new-zen2', name: 'Zen 2 Haiku', philosophy: 'Almost nothing is visible until you reach for the poem', file: 'e2e/set-new/zen2-haiku.html', desc: 'Muji Minimalism: barely-there thin circles, visible only after first touch', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-new-zen2-vc', name: 'Zen 2 Haiku (VC)', philosophy: 'Almost nothing is visible until you reach for the poem', file: 'e2e/set-new/zen2-haiku-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
-          { id: 'e2e-c0cf-b-09', name: '09 Scandinavian Scroll', philosophy: 'Extreme stillness \u2014 birch-thin lines and the poem, nothing more', file: 'e2e/set-c0cf-b/09-scandinavian-scroll.html', desc: 'Nordic Minimal: extreme whitespace, birch-thin lines, ultra-thin dot controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-c0cf-b-09-vc', name: '09 Scandinavian Scroll (VC)', philosophy: 'Extreme stillness \u2014 birch-thin lines and the poem, nothing more', file: 'e2e/set-c0cf-b/09-scandinavian-scroll-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
-          { id: 'e2e-c0cf-b-08', name: '08 Zen Spotlight', philosophy: 'Sand grains reveal each word \u2014 poetry measured in passing time', file: 'e2e/set-c0cf-b/08-zen-spotlight.html', desc: 'Hourglass/Time: hourglass frame, sand grain text reveal, timeline scrubber controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-c0cf-b-08-vc', name: '08 Zen Spotlight (VC)', philosophy: 'Sand grains reveal each word \u2014 poetry measured in passing time', file: 'e2e/set-c0cf-b/08-zen-spotlight-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true }
+          { id: 'e2e-g1-b8', name: 'B8 Ritual Spotlight', philosophy: 'Vast emptiness \u2014 the poem floats alone, demanding your full attention', file: 'e2e/gen-1/e2e-b8-ritual-spotlight-hybrid.html', desc: 'Japanese Ma: vast emptiness, poem floats alone, tap-to-reveal controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
+          { id: 'e2e-g1-b8-vc', name: 'B8 Ritual Spotlight (VC)', philosophy: 'Vast emptiness \u2014 the poem floats alone, demanding your full attention', file: 'e2e/gen-1/e2e-b8-ritual-spotlight-hybrid-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
+          { id: 'e2e-g3-zen1', name: 'Zen 1 Refined', philosophy: 'Imperfect beauty \u2014 each verse revealed like a weathered inscription', file: 'e2e/gen-3/zen1-refined.html', desc: 'Wabi-Sabi: imperfect beauty, single-dot controls revealing one action at a time', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
+          { id: 'e2e-g3-zen1-vc', name: 'Zen 1 Refined (VC)', philosophy: 'Imperfect beauty \u2014 each verse revealed like a weathered inscription', file: 'e2e/gen-3/zen1-refined-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
+          { id: 'e2e-g3-zen2', name: 'Zen 2 Haiku', philosophy: 'Almost nothing is visible until you reach for the poem', file: 'e2e/gen-3/zen2-haiku.html', desc: 'Muji Minimalism: barely-there thin circles, visible only after first touch', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
+          { id: 'e2e-g3-zen2-vc', name: 'Zen 2 Haiku (VC)', philosophy: 'Almost nothing is visible until you reach for the poem', file: 'e2e/gen-3/zen2-haiku-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
+          { id: 'e2e-g2b-09', name: '09 Scandinavian Scroll', philosophy: 'Extreme stillness \u2014 birch-thin lines and the poem, nothing more', file: 'e2e/gen-2b/09-scandinavian-scroll.html', desc: 'Nordic Minimal: extreme whitespace, birch-thin lines, ultra-thin dot controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
+          { id: 'e2e-g2b-09-vc', name: '09 Scandinavian Scroll (VC)', philosophy: 'Extreme stillness \u2014 birch-thin lines and the poem, nothing more', file: 'e2e/gen-2b/09-scandinavian-scroll-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
+          { id: 'e2e-g2b-08', name: '08 Zen Spotlight', philosophy: 'Sand grains reveal each word \u2014 poetry measured in passing time', file: 'e2e/gen-2b/08-zen-spotlight.html', desc: 'Hourglass/Time: hourglass frame, sand grain text reveal, timeline scrubber controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
+          { id: 'e2e-g2b-08-vc', name: '08 Zen Spotlight (VC)', philosophy: 'Sand grains reveal each word \u2014 poetry measured in passing time', file: 'e2e/gen-2b/08-zen-spotlight-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true }
         ],
         feedback: {}
       },
       { id: 'e2e-light', name: 'Light & Atmosphere', source: 'PR #64/#129/Round 3', description: 'Frosted glass, cinematic shadow, and stark contrast \u2014 mood and luminance',
         options: [
-          { id: 'e2e-78ab-a1', name: 'A1 Gold Orbit', philosophy: 'Verses float behind frosted glass like breath on a cold window', file: 'e2e/set-78ab/e2e-a1-gold-orbit-story.html', desc: 'Glassmorphism: gold orbits, frosted glass onboarding, unique controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-78ab-a1-vc', name: 'A1 Gold Orbit (VC)', philosophy: 'Verses float behind frosted glass like breath on a cold window', file: 'e2e/set-78ab/e2e-a1-gold-orbit-story-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
-          { id: 'e2e-78ab-a2', name: 'A2 Paper Photon', philosophy: 'Poetry laid out like a literary magazine \u2014 full-bleed and unhurried', file: 'e2e/set-78ab/e2e-a2-paper-photon.html', desc: 'Editorial/Magazine: full-bleed typography, magazine spreads, text menu controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-78ab-a2-vc', name: 'A2 Paper Photon (VC)', philosophy: 'Poetry laid out like a literary magazine \u2014 full-bleed and unhurried', file: 'e2e/set-78ab/e2e-a2-paper-photon-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
-          { id: 'e2e-new-ls1', name: 'L&S 1 Chiaroscuro', philosophy: 'Dramatic shadow carves the verse into light \u2014 cinematic intimacy', file: 'e2e/set-new/ls1-chiaroscuro.html', desc: 'Cinematic Chiaroscuro: dramatic light/shadow, shadow-edge illuminating controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-new-ls1-vc', name: 'L&S 1 Chiaroscuro (VC)', philosophy: 'Dramatic shadow carves the verse into light \u2014 cinematic intimacy', file: 'e2e/set-new/ls1-chiaroscuro-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
-          { id: 'e2e-new-ls2', name: 'L&S 2 Ray Tracing', philosophy: 'Converging light rays illuminate the poem like a reading lamp', file: 'e2e/set-new/ls2-ray-tracing.html', desc: 'Light Architecture: converging light rays, vertical beam controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-new-ls2-vc', name: 'L&S 2 Ray Tracing (VC)', philosophy: 'Converging light rays illuminate the poem like a reading lamp', file: 'e2e/set-new/ls2-ray-tracing-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
-          { id: 'e2e-new-pf3', name: 'PF3 Ink Constellation', philosophy: 'Zodiac constellations form in the void as you walk through poetry', file: 'e2e/set-new/pf3-ink-constellation.html', desc: 'Living Constellation: real zodiac formations (Aries/Taurus/Orion), converge-to-tap transitions, constellation lines, dim star-field aesthetic', generation: 6, iteration: 9, source_branch: 'feature/preserve-patterns', source_pr: 'walkthrough-upgrade' },
-          { id: 'e2e-new-pf3-vc', name: 'PF3 Ink Constellation (VC)', philosophy: 'Zodiac constellations form in the void as you walk through poetry', file: 'e2e/set-new/pf3-ink-constellation-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
-          { id: 'e2e-new-pf4', name: 'PF4 Ink Tilt Splash', philosophy: '3D tilt card splash meets living constellation onboarding', file: 'e2e/set-new/pf4-ink-tilt-splash.html', desc: '3D Tilt Card: perspective mouse-tracking splash with glassmorphism, zodiac constellation onboarding, parallax depth', generation: 6, iteration: 1, source_branch: 'feature/preserve-patterns', source_pr: 'walkthrough-upgrade' }
+          { id: 'e2e-g1-a1', name: 'A1 Gold Orbit', philosophy: 'Verses float behind frosted glass like breath on a cold window', file: 'e2e/gen-1/e2e-a1-gold-orbit-story.html', desc: 'Glassmorphism: gold orbits, frosted glass onboarding, unique controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
+          { id: 'e2e-g1-a1-vc', name: 'A1 Gold Orbit (VC)', philosophy: 'Verses float behind frosted glass like breath on a cold window', file: 'e2e/gen-1/e2e-a1-gold-orbit-story-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
+          { id: 'e2e-g1-a2', name: 'A2 Paper Photon', philosophy: 'Poetry laid out like a literary magazine \u2014 full-bleed and unhurried', file: 'e2e/gen-1/e2e-a2-paper-photon.html', desc: 'Editorial/Magazine: full-bleed typography, magazine spreads, text menu controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
+          { id: 'e2e-g1-a2-vc', name: 'A2 Paper Photon (VC)', philosophy: 'Poetry laid out like a literary magazine \u2014 full-bleed and unhurried', file: 'e2e/gen-1/e2e-a2-paper-photon-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
+          { id: 'e2e-g3-ls1', name: 'L&S 1 Chiaroscuro', philosophy: 'Dramatic shadow carves the verse into light \u2014 cinematic intimacy', file: 'e2e/gen-3/ls1-chiaroscuro.html', desc: 'Cinematic Chiaroscuro: dramatic light/shadow, shadow-edge illuminating controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
+          { id: 'e2e-g3-ls1-vc', name: 'L&S 1 Chiaroscuro (VC)', philosophy: 'Dramatic shadow carves the verse into light \u2014 cinematic intimacy', file: 'e2e/gen-3/ls1-chiaroscuro-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
+          { id: 'e2e-g3-ls2', name: 'L&S 2 Ray Tracing', philosophy: 'Converging light rays illuminate the poem like a reading lamp', file: 'e2e/gen-3/ls2-ray-tracing.html', desc: 'Light Architecture: converging light rays, vertical beam controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
+          { id: 'e2e-g3-ls2-vc', name: 'L&S 2 Ray Tracing (VC)', philosophy: 'Converging light rays illuminate the poem like a reading lamp', file: 'e2e/gen-3/ls2-ray-tracing-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
+          { id: 'e2e-g3-pf3', name: 'PF3 Ink Constellation', philosophy: 'Zodiac constellations form in the void as you walk through poetry', file: 'e2e/gen-3/pf3-ink-constellation.html', desc: 'Living Constellation: real zodiac formations (Aries/Taurus/Orion), converge-to-tap transitions, constellation lines, dim star-field aesthetic', generation: 6, iteration: 9, source_branch: 'feature/preserve-patterns', source_pr: 'walkthrough-upgrade' },
+          { id: 'e2e-g3-pf3-vc', name: 'PF3 Ink Constellation (VC)', philosophy: 'Zodiac constellations form in the void as you walk through poetry', file: 'e2e/gen-3/pf3-ink-constellation-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
+          { id: 'e2e-g3-pf4', name: 'PF4 Ink Tilt Splash', philosophy: '3D tilt card splash meets living constellation onboarding', file: 'e2e/gen-3/pf4-ink-tilt-splash.html', desc: '3D Tilt Card: perspective mouse-tracking splash with glassmorphism, zodiac constellation onboarding, parallax depth', generation: 6, iteration: 1, source_branch: 'feature/preserve-patterns', source_pr: 'walkthrough-upgrade' }
         ],
         feedback: {}
       },
       { id: 'e2e-touch', name: 'Touch & Texture', source: 'PR #64/#65/#129', description: 'Organic forms, particles, and pressed surfaces \u2014 poetry you can almost feel',
         options: [
-          { id: 'e2e-78ab-b10', name: 'B10 Signature Blend', philosophy: 'Verses flow through organic shapes like water over river stones', file: 'e2e/set-78ab/e2e-b10-signature-blend.html', desc: 'Organic/Biomorphic: flowing blob containers, organic wave controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-78ab-b10-vc', name: 'B10 Signature Blend (VC)', philosophy: 'Verses flow through organic shapes like water over river stones', file: 'e2e/set-78ab/e2e-b10-signature-blend-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
-          { id: 'e2e-c0cf-b-01', name: '01 Particle Scroll', philosophy: 'Letters dissolve into particles \u2014 poetry as elemental matter', file: 'e2e/set-c0cf-b/01-particle-scroll.html', desc: 'Particle Physics: text made of particles, physics-driven scroll, tap-burst controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-c0cf-b-01-vc', name: '01 Particle Scroll (VC)', philosophy: 'Letters dissolve into particles \u2014 poetry as elemental matter', file: 'e2e/set-c0cf-b/01-particle-scroll-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
-          { id: 'e2e-c0cf-b-04', name: '04 Neumorphic Warmth', philosophy: 'Soft tactile surfaces \u2014 the verse feels pressed into warm clay', file: 'e2e/set-c0cf-b/04-neumorphic-warmth.html', desc: 'Neumorphic Depth: centered onboarding, floating warm orbs, press-in/rise-out shadow transitions, progress dots below card, zero-jitter GPU compositing', generation: 6, iteration: 10, source_branch: 'feature/preserve-patterns', source_pr: 'walkthrough-upgrade' },
-          { id: 'e2e-c0cf-b-04-vc', name: '04 Neumorphic Warmth (VC)', philosophy: 'Soft tactile surfaces \u2014 the verse feels pressed into warm clay', file: 'e2e/set-c0cf-b/04-neumorphic-warmth-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 10, isVC: true },
-          { id: 'e2e-c0cf-b-07', name: '07 Particle Neumorphic', philosophy: 'Particles settle into pressed forms \u2014 physics meets craft', file: 'e2e/set-c0cf-b/07-particle-neumorphic.html', desc: 'Particle Fusion: hybrid particle + soft depth, orbiting particle controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-c0cf-b-07-vc', name: '07 Particle Neumorphic (VC)', philosophy: 'Particles settle into pressed forms \u2014 physics meets craft', file: 'e2e/set-c0cf-b/07-particle-neumorphic-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true }
+          { id: 'e2e-g1-b10', name: 'B10 Signature Blend', philosophy: 'Verses flow through organic shapes like water over river stones', file: 'e2e/gen-1/e2e-b10-signature-blend.html', desc: 'Organic/Biomorphic: flowing blob containers, organic wave controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
+          { id: 'e2e-g1-b10-vc', name: 'B10 Signature Blend (VC)', philosophy: 'Verses flow through organic shapes like water over river stones', file: 'e2e/gen-1/e2e-b10-signature-blend-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
+          { id: 'e2e-g2b-01', name: '01 Particle Scroll', philosophy: 'Letters dissolve into particles \u2014 poetry as elemental matter', file: 'e2e/gen-2b/01-particle-scroll.html', desc: 'Particle Physics: text made of particles, physics-driven scroll, tap-burst controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
+          { id: 'e2e-g2b-01-vc', name: '01 Particle Scroll (VC)', philosophy: 'Letters dissolve into particles \u2014 poetry as elemental matter', file: 'e2e/gen-2b/01-particle-scroll-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
+          { id: 'e2e-g2b-04', name: '04 Neumorphic Warmth', philosophy: 'Soft tactile surfaces \u2014 the verse feels pressed into warm clay', file: 'e2e/gen-2b/04-neumorphic-warmth.html', desc: 'Neumorphic Depth: centered onboarding, floating warm orbs, press-in/rise-out shadow transitions, progress dots below card, zero-jitter GPU compositing', generation: 6, iteration: 10, source_branch: 'feature/preserve-patterns', source_pr: 'walkthrough-upgrade' },
+          { id: 'e2e-g2b-04-vc', name: '04 Neumorphic Warmth (VC)', philosophy: 'Soft tactile surfaces \u2014 the verse feels pressed into warm clay', file: 'e2e/gen-2b/04-neumorphic-warmth-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
+          { id: 'e2e-g2b-07', name: '07 Particle Neumorphic', philosophy: 'Particles settle into pressed forms \u2014 physics meets craft', file: 'e2e/gen-2b/07-particle-neumorphic.html', desc: 'Particle Fusion: hybrid particle + soft depth, orbiting particle controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
+          { id: 'e2e-g2b-07-vc', name: '07 Particle Neumorphic (VC)', philosophy: 'Particles settle into pressed forms \u2014 physics meets craft', file: 'e2e/gen-2b/07-particle-neumorphic-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true }
         ],
         feedback: {}
       }
@@ -1501,53 +1501,7 @@ function toggleSide() { st.sideOpen = !st.sideOpen; document.getElementById('sid
 // ═══════════════════════════════════════════════════════════════
 // SUBMIT
 // ═══════════════════════════════════════════════════════════════
-async function submitReview() {
-  // Step 1: Name prompt
-  const savedName = localStorage.getItem('reviewer_name') || '';
-  const nameOverlay = document.createElement('div');
-  nameOverlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
-  const nameModal = document.createElement('div');
-  nameModal.style.cssText = 'background:var(--surface);border:1px solid var(--border);border-radius:12px;max-width:400px;width:100%;padding:24px;text-align:center';
-  const nameTitle = document.createElement('h3');
-  nameTitle.style.cssText = 'margin-bottom:8px;font-size:16px';
-  nameTitle.textContent = 'Submit Review';
-  nameModal.appendChild(nameTitle);
-  const nameSub = document.createElement('p');
-  nameSub.style.cssText = 'font-size:13px;color:var(--text-2);margin-bottom:16px';
-  nameSub.textContent = 'Enter your name to attach to this review';
-  nameModal.appendChild(nameSub);
-  const nameInput = document.createElement('input');
-  nameInput.type = 'text'; nameInput.value = savedName; nameInput.placeholder = 'Your name';
-  nameInput.style.cssText = 'width:100%;padding:10px 14px;border-radius:var(--r);border:1px solid var(--border);background:var(--surface-2);color:var(--text);font-size:14px;outline:none;font-family:inherit;margin-bottom:16px;transition:border-color .15s';
-  nameInput.addEventListener('focus', () => { nameInput.style.borderColor = 'var(--accent)'; });
-  nameInput.addEventListener('blur', () => { nameInput.style.borderColor = 'var(--border)'; });
-  nameModal.appendChild(nameInput);
-  const nameActions = document.createElement('div');
-  nameActions.style.cssText = 'display:flex;gap:8px;justify-content:center';
-  const cancelBtn = document.createElement('button');
-  cancelBtn.style.cssText = 'padding:10px 24px;border-radius:var(--r);font-size:13px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--surface-2);color:var(--text-2);transition:all .15s';
-  cancelBtn.textContent = 'Cancel';
-  cancelBtn.addEventListener('click', () => nameOverlay.remove());
-  nameActions.appendChild(cancelBtn);
-  const continueBtn = document.createElement('button');
-  continueBtn.style.cssText = 'padding:10px 24px;border-radius:var(--r);font-size:13px;font-weight:700;cursor:pointer;border:none;background:var(--accent);color:var(--bg);transition:all .15s';
-  continueBtn.textContent = 'Continue';
-  nameActions.appendChild(continueBtn);
-  nameModal.appendChild(nameActions);
-  nameOverlay.appendChild(nameModal);
-  document.body.appendChild(nameOverlay);
-  setTimeout(() => { nameInput.focus(); nameInput.select(); }, 50);
-  nameInput.addEventListener('keydown', e => { if (e.key === 'Enter') continueBtn.click(); });
-  const reviewerName = await new Promise(resolve => {
-    continueBtn.addEventListener('click', () => resolve(nameInput.value.trim() || 'anonymous'));
-    cancelBtn.addEventListener('click', () => resolve(null));
-    nameOverlay.addEventListener('click', e => { if (e.target === nameOverlay) resolve(null); });
-  });
-  nameOverlay.remove();
-  if (!reviewerName) return;
-  localStorage.setItem('reviewer_name', reviewerName);
-
-  // Step 2: Auto-send to backend
+function buildReviewSummary(reviewerName) {
   const reviewed = flatList.filter(f => reviewData[f.option.id]?.verdict).length;
   const keeps = flatList.filter(f => reviewData[f.option.id]?.verdict === 'keep').length;
   const discards = flatList.filter(f => reviewData[f.option.id]?.verdict === 'discard').length;
@@ -1569,50 +1523,6 @@ async function submitReview() {
       });
     }
   });
-
-  // Loading overlay
-  const loadingOverlay = document.createElement('div');
-  loadingOverlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
-  const loadingBox = document.createElement('div');
-  loadingBox.style.cssText = 'background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:32px 48px;text-align:center';
-  const spinner = document.createElement('div');
-  spinner.style.cssText = 'width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 12px';
-  loadingBox.appendChild(spinner);
-  const loadingText = document.createElement('div');
-  loadingText.style.cssText = 'font-size:13px;color:var(--text-2)';
-  loadingText.textContent = 'Sending to backend...';
-  loadingBox.appendChild(loadingText);
-  loadingOverlay.appendChild(loadingBox);
-  document.body.appendChild(loadingOverlay);
-
-  let sendError = null;
-  try {
-    if (!apiAvailable || !currentSession) {
-      loadingText.textContent = 'Waking backend...';
-      await initAPI();
-      if (!apiAvailable || !currentSession) throw new Error('Backend not available');
-    }
-    if (currentSession) {
-      const reviewerRes = await fetch(API_BASE + '/api/design-review/sessions/' + currentSession.id, {
-        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reviewer: reviewerName })
-      });
-      if (!reviewerRes.ok) console.warn('Failed to update reviewer name:', reviewerRes.status);
-    }
-    loadingText.textContent = 'Syncing verdicts...';
-    await syncVerdictsToAPI();
-    loadingText.textContent = 'Completing session...';
-    const res = await fetch(API_BASE + '/api/design-review/sessions/' + currentSession.id, {
-      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'completed', reviewed_count: reviewed })
-    });
-    if (!res.ok) throw new Error('API returned ' + res.status);
-  } catch (err) {
-    sendError = err;
-  }
-  loadingOverlay.remove();
-
-  // Step 3: Summary modal
   let md = '## Design Review Feedback\n\n';
   md += '**Reviewer:** ' + reviewerName + '\n';
   md += '**Date:** ' + new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString() + '\n';
@@ -1627,41 +1537,61 @@ async function submitReview() {
       md += '\n';
     }
   }
+  const json = JSON.stringify({ timestamp: new Date().toISOString(), reviewer: reviewerName, totalDesigns: flatList.length, reviewedCount: reviewed, decisions }, null, 2);
+  return { reviewed, keeps, discards, revisits, decisions, md, json };
+}
+
+function showSummaryModal(summary, opts) {
+  const { reviewed, keeps, discards, revisits, decisions, md, json } = summary;
+  const { sendError, isPreview, onBack } = opts || {};
+
+  window._submitMd = md;
+  window._submitJson = json;
 
   const overlay = document.createElement('div');
   overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
-  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+  overlay.addEventListener('click', e => {
+    if (e.target === overlay) {
+      overlay.remove();
+      if (isPreview && onBack) onBack();
+    }
+  });
   const modal = document.createElement('div');
   modal.style.cssText = 'background:var(--surface);border:1px solid var(--border);border-radius:12px;max-width:700px;width:100%;max-height:85vh;overflow-y:auto;padding:24px;position:relative';
   const closeBtn = document.createElement('button');
   closeBtn.style.cssText = 'position:absolute;top:12px;right:12px;width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--surface-2);color:var(--text-2);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s';
   closeBtn.textContent = '\u2715';
-  closeBtn.addEventListener('click', () => overlay.remove());
+  closeBtn.addEventListener('click', () => {
+    overlay.remove();
+    if (isPreview && onBack) onBack();
+  });
   closeBtn.addEventListener('mouseenter', () => { closeBtn.style.background = 'var(--surface-3)'; closeBtn.style.color = 'var(--text)'; });
   closeBtn.addEventListener('mouseleave', () => { closeBtn.style.background = 'var(--surface-2)'; closeBtn.style.color = 'var(--text-2)'; });
   modal.appendChild(closeBtn);
 
   const h = document.createElement('h3');
   h.style.cssText = 'margin-bottom:12px;font-size:16px;padding-right:40px';
-  h.textContent = 'Review Summary' + (currentSession ? ' \u2014 Round ' + currentSession.round_number : '');
+  h.textContent = (isPreview ? 'Preview' : 'Review Summary') + (currentSession ? ' \u2014 Round ' + currentSession.round_number : '');
   modal.appendChild(h);
 
-  // Send status banner
-  if (sendError) {
-    const errBanner = document.createElement('div');
-    errBanner.style.cssText = 'background:var(--red-dim);border:1px solid var(--red);border-radius:var(--r-sm);padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--red)';
-    errBanner.textContent = 'Failed to send: ' + (sendError.message || 'Unknown error');
-    const retryBtn = document.createElement('button');
-    retryBtn.style.cssText = 'padding:4px 12px;border-radius:var(--r-sm);font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--red);background:transparent;color:var(--red);margin-left:auto;flex-shrink:0';
-    retryBtn.textContent = 'Retry';
-    retryBtn.addEventListener('click', () => { overlay.remove(); submitReview(); });
-    errBanner.appendChild(retryBtn);
-    modal.appendChild(errBanner);
-  } else {
-    const okBanner = document.createElement('div');
-    okBanner.style.cssText = 'background:var(--green-dim);border:1px solid var(--green);border-radius:var(--r-sm);padding:10px 14px;margin-bottom:12px;font-size:12px;color:var(--green)';
-    okBanner.textContent = 'Review saved to backend successfully';
-    modal.appendChild(okBanner);
+  // Send status banner (only for non-preview)
+  if (!isPreview) {
+    if (sendError) {
+      const errBanner = document.createElement('div');
+      errBanner.style.cssText = 'background:var(--red-dim);border:1px solid var(--red);border-radius:var(--r-sm);padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:8px;font-size:12px;color:var(--red)';
+      errBanner.textContent = 'Failed to send: ' + (sendError.message || 'Unknown error');
+      const retryBtn = document.createElement('button');
+      retryBtn.style.cssText = 'padding:4px 12px;border-radius:var(--r-sm);font-size:11px;font-weight:600;cursor:pointer;border:1px solid var(--red);background:transparent;color:var(--red);margin-left:auto;flex-shrink:0';
+      retryBtn.textContent = 'Retry';
+      retryBtn.addEventListener('click', () => { overlay.remove(); submitReview(); });
+      errBanner.appendChild(retryBtn);
+      modal.appendChild(errBanner);
+    } else {
+      const okBanner = document.createElement('div');
+      okBanner.style.cssText = 'background:var(--green-dim);border:1px solid var(--green);border-radius:var(--r-sm);padding:10px 14px;margin-bottom:12px;font-size:12px;color:var(--green)';
+      okBanner.textContent = 'Review saved to backend successfully';
+      modal.appendChild(okBanner);
+    }
   }
 
   const stats = document.createElement('div');
@@ -1712,6 +1642,23 @@ async function submitReview() {
     modal.appendChild(summaryList);
   }
 
+  // Preview action buttons (Back + Submit Now)
+  if (isPreview) {
+    const previewActions = document.createElement('div');
+    previewActions.style.cssText = 'display:flex;gap:8px;margin-bottom:16px';
+    const backBtn = document.createElement('button');
+    backBtn.style.cssText = 'padding:10px 24px;border-radius:var(--r);font-size:13px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--surface-2);color:var(--text-2);transition:all .15s';
+    backBtn.textContent = 'Back';
+    backBtn.addEventListener('click', () => { overlay.remove(); if (onBack) onBack(); });
+    previewActions.appendChild(backBtn);
+    const submitNowBtn = document.createElement('button');
+    submitNowBtn.style.cssText = 'padding:10px 24px;border-radius:var(--r);font-size:13px;font-weight:700;cursor:pointer;border:none;background:var(--accent);color:var(--bg);transition:all .15s';
+    submitNowBtn.textContent = 'Submit Now';
+    submitNowBtn.addEventListener('click', () => { overlay.remove(); submitReview(); });
+    previewActions.appendChild(submitNowBtn);
+    modal.appendChild(previewActions);
+  }
+
   const btns = document.createElement('div');
   btns.style.cssText = 'display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap';
   [['Copy Markdown', 'md'], ['Copy JSON', 'json'], ['Download JSON', 'dl']].forEach(([label, type]) => {
@@ -1730,9 +1677,122 @@ async function submitReview() {
   modal.appendChild(pre);
   overlay.appendChild(modal);
   document.body.appendChild(overlay);
+}
 
-  window._submitMd = md;
-  window._submitJson = JSON.stringify({ timestamp: new Date().toISOString(), reviewer: reviewerName, totalDesigns: flatList.length, reviewedCount: reviewed, decisions }, null, 2);
+function showNameModal(prefillName) {
+  return new Promise(resolve => {
+    const savedName = prefillName || localStorage.getItem('reviewer_name') || '';
+    const nameOverlay = document.createElement('div');
+    nameOverlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+    const nameModal = document.createElement('div');
+    nameModal.style.cssText = 'background:var(--surface);border:1px solid var(--border);border-radius:12px;max-width:400px;width:100%;padding:24px;text-align:center';
+    const nameTitle = document.createElement('h3');
+    nameTitle.style.cssText = 'margin-bottom:8px;font-size:16px';
+    nameTitle.textContent = 'Submit Review';
+    nameModal.appendChild(nameTitle);
+    const nameSub = document.createElement('p');
+    nameSub.style.cssText = 'font-size:13px;color:var(--text-2);margin-bottom:16px';
+    nameSub.textContent = 'Enter your name to attach to this review';
+    nameModal.appendChild(nameSub);
+    const nameInput = document.createElement('input');
+    nameInput.type = 'text'; nameInput.value = savedName; nameInput.placeholder = 'Your name';
+    nameInput.style.cssText = 'width:100%;padding:10px 14px;border-radius:var(--r);border:1px solid var(--border);background:var(--surface-2);color:var(--text);font-size:16px;outline:none;font-family:inherit;margin-bottom:16px;transition:border-color .15s';
+    nameInput.addEventListener('focus', () => { nameInput.style.borderColor = 'var(--accent)'; });
+    nameInput.addEventListener('blur', () => { nameInput.style.borderColor = 'var(--border)'; });
+    nameModal.appendChild(nameInput);
+    const nameActions = document.createElement('div');
+    nameActions.style.cssText = 'display:flex;gap:8px;justify-content:center';
+    const cancelBtn = document.createElement('button');
+    cancelBtn.style.cssText = 'padding:10px 24px;border-radius:var(--r);font-size:13px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:var(--surface-2);color:var(--text-2);transition:all .15s';
+    cancelBtn.textContent = 'Cancel';
+    nameActions.appendChild(cancelBtn);
+    const previewBtn = document.createElement('button');
+    previewBtn.style.cssText = 'padding:10px 24px;border-radius:var(--r);font-size:13px;font-weight:600;cursor:pointer;border:1px solid var(--accent);background:transparent;color:var(--accent);transition:all .15s';
+    previewBtn.textContent = 'Preview';
+    nameActions.appendChild(previewBtn);
+    const continueBtn = document.createElement('button');
+    continueBtn.style.cssText = 'padding:10px 24px;border-radius:var(--r);font-size:13px;font-weight:700;cursor:pointer;border:none;background:var(--accent);color:var(--bg);transition:all .15s';
+    continueBtn.textContent = 'Continue';
+    nameActions.appendChild(continueBtn);
+    nameModal.appendChild(nameActions);
+    nameOverlay.appendChild(nameModal);
+    document.body.appendChild(nameOverlay);
+    setTimeout(() => { nameInput.focus(); nameInput.select(); }, 50);
+
+    function done(action) {
+      nameOverlay.remove();
+      const name = nameInput.value.trim() || 'anonymous';
+      resolve({ action, name });
+    }
+    nameInput.addEventListener('keydown', e => { if (e.key === 'Enter') done('submit'); });
+    continueBtn.addEventListener('click', () => done('submit'));
+    previewBtn.addEventListener('click', () => done('preview'));
+    cancelBtn.addEventListener('click', () => done('cancel'));
+    nameOverlay.addEventListener('click', e => { if (e.target === nameOverlay) done('cancel'); });
+  });
+}
+
+async function submitReview(prefillName) {
+  // Step 1: Name prompt
+  const { action, name: reviewerName } = await showNameModal(prefillName);
+  if (action === 'cancel') return;
+
+  const summary = buildReviewSummary(reviewerName);
+
+  if (action === 'preview') {
+    showSummaryModal(summary, {
+      isPreview: true,
+      onBack: () => submitReview(reviewerName)
+    });
+    return;
+  }
+
+  // action === 'submit'
+  localStorage.setItem('reviewer_name', reviewerName);
+
+  // Loading overlay
+  const loadingOverlay = document.createElement('div');
+  loadingOverlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px';
+  const loadingBox = document.createElement('div');
+  loadingBox.style.cssText = 'background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:32px 48px;text-align:center';
+  const spinner = document.createElement('div');
+  spinner.style.cssText = 'width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 12px';
+  loadingBox.appendChild(spinner);
+  const loadingText = document.createElement('div');
+  loadingText.style.cssText = 'font-size:13px;color:var(--text-2)';
+  loadingText.textContent = 'Sending to backend...';
+  loadingBox.appendChild(loadingText);
+  loadingOverlay.appendChild(loadingBox);
+  document.body.appendChild(loadingOverlay);
+
+  let sendError = null;
+  try {
+    if (!apiAvailable || !currentSession) {
+      loadingText.textContent = 'Waking backend...';
+      await initAPI();
+      if (!apiAvailable || !currentSession) throw new Error('Backend not available');
+    }
+    if (currentSession) {
+      const reviewerRes = await fetch(API_BASE + '/api/design-review/sessions/' + currentSession.id, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ reviewer: reviewerName })
+      });
+      if (!reviewerRes.ok) console.warn('Failed to update reviewer name:', reviewerRes.status);
+    }
+    loadingText.textContent = 'Syncing verdicts...';
+    await syncVerdictsToAPI();
+    loadingText.textContent = 'Completing session...';
+    const res = await fetch(API_BASE + '/api/design-review/sessions/' + currentSession.id, {
+      method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: 'completed', reviewed_count: summary.reviewed })
+    });
+    if (!res.ok) throw new Error('API returned ' + res.status);
+  } catch (err) {
+    sendError = err;
+  }
+  loadingOverlay.remove();
+
+  showSummaryModal(summary, { sendError });
 }
 
 function copyToClipboard(type) {

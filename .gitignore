@@ -42,6 +42,10 @@ ui-ux-report/
 # Design exploration artifacts (binary screenshots)
 screenshots/
 
+# Regenerable design review assets
+design-review/screenshots/
+design-review/audit-screenshots/
+
 # Large database files - manage separately
 supabase/migrations/*_import_poetry.sql
 poetry-database/*.dump

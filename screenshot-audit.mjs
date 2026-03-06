@@ -9,32 +9,32 @@ const OUT_DIR = resolve('./design-review/audit-screenshots');
 // 23 E2E flows + 3 logos + 2 auth = 28 total
 const E2E_FILES = [
   // Set New (8)
-  'e2e/set-new/zen1-refined.html',
-  'e2e/set-new/zen2-haiku.html',
-  'e2e/set-new/pf2-gold-mystical.html',
-  'e2e/set-new/ls1-chiaroscuro.html',
-  'e2e/set-new/ls2-ray-tracing.html',
-  'e2e/set-new/pf1-calligraphic.html',
-  'e2e/set-new/pf3-ink-constellation.html',
-  'e2e/set-new/codex-spine-story.html',
+  'e2e/gen-3/zen1-refined.html',
+  'e2e/gen-3/zen2-haiku.html',
+  'e2e/gen-3/pf2-gold-mystical.html',
+  'e2e/gen-3/ls1-chiaroscuro.html',
+  'e2e/gen-3/ls2-ray-tracing.html',
+  'e2e/gen-3/pf1-calligraphic.html',
+  'e2e/gen-3/pf3-ink-constellation.html',
+  'e2e/gen-3/codex-spine-story.html',
   // Set 78ab (5)
-  'e2e/set-78ab/e2e-a1-gold-orbit-story.html',
-  'e2e/set-78ab/e2e-a2-paper-photon.html',
-  'e2e/set-78ab/e2e-a8-deco-discovery.html',
-  'e2e/set-78ab/e2e-b8-ritual-spotlight-hybrid.html',
-  'e2e/set-78ab/e2e-b10-signature-blend.html',
+  'e2e/gen-1/e2e-a1-gold-orbit-story.html',
+  'e2e/gen-1/e2e-a2-paper-photon.html',
+  'e2e/gen-1/e2e-a8-deco-discovery.html',
+  'e2e/gen-1/e2e-b8-ritual-spotlight-hybrid.html',
+  'e2e/gen-1/e2e-b10-signature-blend.html',
   // Set c0cf-A (4)
-  'e2e/set-c0cf-a/02-zen-manuscript.html',
-  'e2e/set-c0cf-a/04-desert-poet.html',
-  'e2e/set-c0cf-a/07-scroll-keeper.html',
-  'e2e/set-c0cf-a/09-mosaic-discovery.html',
+  'e2e/gen-2a/02-zen-manuscript.html',
+  'e2e/gen-2a/04-desert-poet.html',
+  'e2e/gen-2a/07-scroll-keeper.html',
+  'e2e/gen-2a/09-mosaic-discovery.html',
   // Set c0cf-B (6)
-  'e2e/set-c0cf-b/01-particle-scroll.html',
-  'e2e/set-c0cf-b/04-neumorphic-warmth.html',
-  'e2e/set-c0cf-b/05-scroll-codex.html',
-  'e2e/set-c0cf-b/07-particle-neumorphic.html',
-  'e2e/set-c0cf-b/08-zen-spotlight.html',
-  'e2e/set-c0cf-b/09-scandinavian-scroll.html',
+  'e2e/gen-2b/01-particle-scroll.html',
+  'e2e/gen-2b/04-neumorphic-warmth.html',
+  'e2e/gen-2b/05-scroll-codex.html',
+  'e2e/gen-2b/07-particle-neumorphic.html',
+  'e2e/gen-2b/08-zen-spotlight.html',
+  'e2e/gen-2b/09-scandinavian-scroll.html',
 ];
 
 const STATIC_FILES = [
@@ -46,16 +46,16 @@ const STATIC_FILES = [
 ];
 
 // CLI arg for batch selection: node screenshot-audit.mjs [batch]
-// batch: "all" | "set-new" | "set-78ab" | "set-c0cf-a" | "set-c0cf-b" | "static"
+// batch: "all" | "gen-3" | "gen-1" | "gen-2a" | "gen-2b" | "static"
 const batchArg = process.argv[2] || 'all';
 
 function getFileList() {
   if (batchArg === 'all') return [...E2E_FILES, ...STATIC_FILES];
   if (batchArg === 'static') return STATIC_FILES;
-  if (batchArg === 'set-new') return E2E_FILES.filter(f => f.includes('set-new'));
-  if (batchArg === 'set-78ab') return E2E_FILES.filter(f => f.includes('set-78ab'));
-  if (batchArg === 'set-c0cf-a') return E2E_FILES.filter(f => f.includes('set-c0cf-a'));
-  if (batchArg === 'set-c0cf-b') return E2E_FILES.filter(f => f.includes('set-c0cf-b'));
+  if (batchArg === 'gen-3') return E2E_FILES.filter(f => f.includes('gen-3'));
+  if (batchArg === 'gen-1') return E2E_FILES.filter(f => f.includes('gen-1'));
+  if (batchArg === 'gen-2a') return E2E_FILES.filter(f => f.includes('gen-2a'));
+  if (batchArg === 'gen-2b') return E2E_FILES.filter(f => f.includes('gen-2b'));
   return [...E2E_FILES, ...STATIC_FILES];
 }
 

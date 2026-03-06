@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Play, Pause, BookOpen, RefreshCw, Volume2, ChevronDown, Quote, Globe, Moon, Sun, Loader2, ChevronRight, ChevronLeft, Search, X, Copy, LayoutGrid, Check, Bug, Trash2, Sparkles, PenTool, Library, Compass, Rabbit, MoreHorizontal, Heart, LogIn, LogOut, User, Settings2 } from 'lucide-react';
+import { Play, Pause, BookOpen, RefreshCw, Volume2, ChevronDown, Quote, Globe, Moon, Sun, Loader2, ChevronRight, ChevronLeft, Search, X, Copy, LayoutGrid, Check, Bug, Trash2, Sparkles, Feather, Library, Compass, Rabbit, MoreHorizontal, Heart, LogIn, LogOut, User, Settings2 } from 'lucide-react';
 import { useAuth, useUserSettings, useSavedPoems } from './hooks/useAuth';
 import { INSIGHTS_SYSTEM_PROMPT, DISCOVERY_SYSTEM_PROMPT, getTTSInstruction } from './prompts';
 
@@ -739,7 +739,7 @@ const CategoryPill = ({ selected, onSelect, darkMode }) => {
       <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">Poets</span>
 
       {isOpen && (
-        <div className="absolute bottom-full right-[-20px] mb-3 min-w-[220px] bg-[rgba(20,18,16,0.98)] backdrop-blur-[48px] border border-[rgba(197,160,89,0.15)] rounded-3xl p-3 shadow-[0_-10px_40px_rgba(0,0,0,0.7)] z-50">
+        <div className={`absolute bottom-full right-[-20px] mb-3 min-w-[220px] ${darkMode ? 'bg-[rgba(20,18,16,0.98)] border-[rgba(197,160,89,0.15)] shadow-[0_-10px_40px_rgba(0,0,0,0.7)]' : 'bg-white/95 border-stone-200 shadow-[0_-10px_40px_rgba(0,0,0,0.15)]'} backdrop-blur-[48px] border rounded-3xl p-3 z-50`}>
           {CATEGORIES.map(cat => (
             <button
               key={cat.id}
@@ -788,7 +788,7 @@ const ThemeDropdown = ({ darkMode, onToggleDarkMode, currentFont, onCycleFont, f
       <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">Theme</span>
 
       {isOpen && (
-        <div className="absolute bottom-full right-[-20px] mb-3 min-w-[200px] bg-[rgba(20,18,16,0.98)] backdrop-blur-[48px] border border-[rgba(197,160,89,0.15)] rounded-3xl p-3 shadow-[0_-10px_40px_rgba(0,0,0,0.7)] z-50">
+        <div className={`absolute bottom-full right-[-20px] mb-3 min-w-[200px] ${darkMode ? 'bg-[rgba(20,18,16,0.98)] border-[rgba(197,160,89,0.15)] shadow-[0_-10px_40px_rgba(0,0,0,0.7)]' : 'bg-white/95 border-stone-200 shadow-[0_-10px_40px_rgba(0,0,0,0.15)]'} backdrop-blur-[48px] border rounded-3xl p-3 z-50`}>
           <button
             onClick={handleCycleFont}
             className="w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex flex-col items-center border-b border-[rgba(197,160,89,0.08)] hover:bg-[rgba(197,160,89,0.08)]"
@@ -989,7 +989,7 @@ const OverflowMenu = ({
               className={`w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex items-center gap-3 ${fontSubmenuOpen ? '' : goldHoverClass}`}
               aria-expanded={fontSubmenuOpen}
             >
-              <PenTool size={18} style={{ color: gold }} />
+              <Feather size={18} style={{ color: gold }} />
               <div className="flex flex-col items-start flex-1">
                 <div className="font-amiri text-base font-medium" style={{ color: gold }}>اختيار الخط</div>
                 <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Font: {currentFont}</div>
@@ -1217,7 +1217,7 @@ const AuthButton = ({ user, onSignIn, onSignOut, onOpenSavedPoems, onOpenSetting
       </span>
 
       {showMenu && (
-        <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3 min-w-[200px] bg-[rgba(20,18,16,0.98)] backdrop-blur-[48px] border border-[rgba(197,160,89,0.15)] rounded-3xl p-3 shadow-[0_-10px_40px_rgba(0,0,0,0.7)] z-50">
+        <div className={`absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3 min-w-[200px] ${darkMode ? 'bg-[rgba(20,18,16,0.98)] border-[rgba(197,160,89,0.15)] shadow-[0_-10px_40px_rgba(0,0,0,0.7)]' : 'bg-white/95 border-stone-200 shadow-[0_-10px_40px_rgba(0,0,0,0.15)]'} backdrop-blur-[48px] border rounded-3xl p-3 z-50`}>
           <div className="px-4 py-3 border-b border-[rgba(197,160,89,0.08)]">
             <p className="font-brand-en text-xs text-[#C5A059] font-medium truncate">
               {user.email || user.user_metadata?.full_name || 'User'}
@@ -1514,6 +1514,7 @@ const SettingsView = ({ isOpen, onClose, darkMode, onToggleDarkMode, currentFont
 export default function DiwanApp() {
   const mainScrollRef = useRef(null);
   const audioRef = useRef(new Audio());
+  const isTogglingPlay = useRef(false);
   const controlBarRef = useRef(null);
 
   const [headerOpacity, setHeaderOpacity] = useState(1);
@@ -1535,6 +1536,8 @@ export default function DiwanApp() {
   const [interpretation, setInterpretation] = useState(null);
   const [isInterpreting, setIsInterpreting] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
+  const [autoExplainPending, setAutoExplainPending] = useState(false);
+  const hasAutoLoaded = useRef(false);
   const [logs, setLogs] = useState([]);
   const [showCopySuccess, setShowCopySuccess] = useState(false);
   const [isOverflow, setIsOverflow] = useState(() => {
@@ -1583,7 +1586,9 @@ export default function DiwanApp() {
         });
   }, [poems, selectedCategory]);
 
-  const current = filtered[currentIndex] || filtered[0] || poems[0];
+  // Defensive: poems[0] is always truthy (hardcoded initial poem), but guard against
+  // future changes that might empty the array (e.g., setPoems([]) or filter edge cases)
+  const current = filtered[currentIndex] || filtered[0] || poems[0] || null;
 
   const addLog = (label, msg, type = 'info') => {
     const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -1608,6 +1613,23 @@ export default function DiwanApp() {
     const key = import.meta.env.VITE_GEMINI_API_KEY || "";
     if (key) discoverTextModels(key, addLog);
   }, []);
+
+  // Auto-load a poem and queue explanation on first mount
+  useEffect(() => {
+    if (!hasAutoLoaded.current) {
+      hasAutoLoaded.current = true;
+      setAutoExplainPending(true);
+      handleFetch();
+    }
+  }, []);
+
+  // Auto-trigger explanation after auto-loaded poem arrives
+  useEffect(() => {
+    if (autoExplainPending && current?.id && !isFetching && !isInterpreting && !interpretation) {
+      setAutoExplainPending(false);
+      handleAnalyze();
+    }
+  }, [autoExplainPending, current?.id, isFetching, isInterpreting, interpretation]);
 
   useEffect(() => {
     // Threshold below which overflow mode is always active (prevents oscillation on narrow screens).
@@ -1736,21 +1758,30 @@ export default function DiwanApp() {
   }, []);
 
   const togglePlay = async () => {
+    if (isTogglingPlay.current) {
+      addLog("Audio", "Play toggle already in progress — skipping", "info");
+      return;
+    }
+    isTogglingPlay.current = true;
     addLog("UI Event", `🎵 Play button clicked | Poem: ${current?.poet} - ${current?.title} | ID: ${current?.id}`, "info");
 
     if (isPlaying) {
       audioRef.current.pause();
       setIsPlaying(false);
       addLog("UI Event", "⏸️ Pause button clicked", "info");
+      isTogglingPlay.current = false;
       return;
     }
 
     if (audioUrl) {
-      audioRef.current.play().then(() => setIsPlaying(true)).catch((e) => {
-        addLog("Audio", "Retrying playback...", "info");
+      try {
+        await audioRef.current.play();
+        setIsPlaying(true);
+      } catch (e) {
+        addLog("Audio", "Playback failed, resetting audio URL", "info");
         setAudioUrl(null);
-        togglePlay();
-      });
+      }
+      isTogglingPlay.current = false;
       return;
     }
 
@@ -1780,9 +1811,9 @@ export default function DiwanApp() {
               setIsPlaying(true);
             });
           } else {
-            addLog("Audio", `Background audio generation failed - retrying`, "info");
-            // Retry the request
-            setTimeout(() => togglePlay(), 100);
+            addLog("Audio", "Background generation failed — please try again", "info");
+            isTogglingPlay.current = false;
+            setIsGeneratingAudio(false);
             return;
           }
           setIsGeneratingAudio(false);
@@ -1820,6 +1851,7 @@ export default function DiwanApp() {
         }
       }, 60000);
 
+      isTogglingPlay.current = false;
       return;
     }
 
@@ -1843,6 +1875,7 @@ export default function DiwanApp() {
           setIsPlaying(true);
         });
         setIsGeneratingAudio(false); // Clear loading state
+        isTogglingPlay.current = false;
         return;
       } else {
         addLog("Audio Cache", `✗ Cache MISS (${cacheTime.toFixed(0)}ms) | Generating from API...`, "info");
@@ -1957,6 +1990,7 @@ export default function DiwanApp() {
     } finally {
       setIsGeneratingAudio(false);
       activeAudioRequests.current.delete(current?.id); // Clean up in-flight tracking
+      isTogglingPlay.current = false;
     }
   };
 
@@ -2049,7 +2083,11 @@ export default function DiwanApp() {
     try {
       // Guard: AI Insights require a Gemini API key
       if (!apiKey) {
-        throw new Error("AI Insights require a Gemini API key. Add VITE_GEMINI_API_KEY to your environment to enable this feature.");
+        const fallbackMessage = "**AI Insights unavailable**\n\nA Gemini API key is required for poem analysis. You can:\n\n• Add `VITE_GEMINI_API_KEY` to your environment\n• Continue exploring poems in Database mode without insights";
+        setInterpretation(fallbackMessage);
+        setIsInterpreting(false);
+        activeInsightRequests.current.delete(current?.id);
+        return;
       }
 
       // Use streaming if feature flag is enabled
@@ -2191,6 +2229,12 @@ export default function DiwanApp() {
 
       // DATABASE MODE: Fetch from local PostgreSQL API
       if (useDatabase) {
+        // Reset category to "All" before fetching so the new poem will be visible
+        // without racing against the useEffect that resets currentIndex on category change
+        if (selectedCategory !== "All") {
+          setSelectedCategory("All");
+        }
+
         addLog("Discovery DB", `→ Querying database | Category: ${selectedCategory}`, "info");
 
         const categoryObj = CATEGORIES.find(c => c.id === selectedCategory);
@@ -2225,10 +2269,7 @@ export default function DiwanApp() {
 
           setPoems(prev => {
             const updated = [...prev, newPoem];
-            const searchStr = selectedCategory.toLowerCase();
-            const freshFiltered = selectedCategory === "All" ? updated : updated.filter(p => (p?.poet || "").toLowerCase().includes(searchStr) || (Array.isArray(p?.tags) && p.tags.some(t => String(t).toLowerCase() === searchStr)));
-            const newIdx = freshFiltered.findIndex(p => p.id === newPoem.id);
-            if (newIdx !== -1) setCurrentIndex(newIdx);
+            setCurrentIndex(updated.length - 1); // New poem is always last
             return updated;
           });
         } catch (dbError) {
@@ -2552,6 +2593,17 @@ export default function DiwanApp() {
     return () => clearInterval(keepAlivePing);
   }, [useDatabase, apiUrl]);
 
+  if (!current) {
+    return (
+      <div className={`min-h-screen flex items-center justify-center ${theme.bg} ${theme.text}`}>
+        <div className="text-center space-y-4">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto opacity-60" />
+          <p className="text-sm opacity-60">Loading poems...</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className={`h-[100dvh] w-full flex flex-col overflow-hidden ${DESIGN.anim} font-sans ${theme.bg} ${theme.text} selection:bg-indigo-500`}>
       <style>{`
@@ -2630,7 +2682,7 @@ export default function DiwanApp() {
 
       <header style={{ opacity: headerOpacity }} className="fixed top-4 md:top-8 left-0 right-0 z-40 pointer-events-none transition-opacity duration-300 flex flex-row items-center justify-center gap-4 md:gap-8 px-4 md:px-6">
         <div className={`flex flex-row-reverse items-center gap-2 md:gap-4 ${theme.brand} tracking-wide header-luminescence`}>
-          <PenTool className="w-8 h-8 md:w-[42px] md:h-[42px] opacity-95" strokeWidth={1.5} />
+          <Feather className="w-8 h-8 md:w-[42px] md:h-[42px] opacity-95" strokeWidth={1.5} />
           <h1 className="app-branding-rtl flex items-end gap-3 md:gap-6">
             <span className="font-brand-ar text-[clamp(1.875rem,4vw,3rem)] font-bold mb-[clamp(0.25rem,0.5vw,0.5rem)] opacity-80">بالعربي</span>
             <span className="font-brand-en text-[clamp(3rem,6vw,4.5rem)] lowercase tracking-tighter">poetry</span>

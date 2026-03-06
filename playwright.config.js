@@ -15,6 +15,9 @@ import { defineConfig, devices } from '@playwright/test';
 export default defineConfig({
   testDir: './e2e',
 
+  // Exclude production-only tests in CI (they hit live APIs)
+  testIgnore: process.env.CI ? ['**/design-review-prod.spec.js'] : [],
+
   // Run tests in parallel
   fullyParallel: true,
 

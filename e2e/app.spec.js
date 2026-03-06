@@ -37,8 +37,8 @@ test.describe('Poetry Bil-Araby - Core Functionality', () => {
     // Get initial poem title
     const initialTitle = await page.locator('.font-amiri').first().textContent();
 
-    // Click next button
-    await page.locator('button').filter({ has: page.locator('svg') }).nth(2).click();
+    // Click Discover button (next poem)
+    await page.locator('button[aria-label="Discover new poem"]').click();
 
     // Wait for content to be visible (no fixed timeout)
     await expect(page.locator('.font-amiri').first()).toBeVisible({ timeout: 2000 });
@@ -185,13 +185,10 @@ test.describe('Poetry Bil-Araby - Core Functionality', () => {
     // Grant clipboard permissions
     await context.grantPermissions(['clipboard-read', 'clipboard-write']);
 
-    // Click copy button (wait for it to be enabled)
-    const copyButton = page.locator('button').filter({
-      has: page.locator('svg')
-    }).nth(4);
+    // Click copy button using accessible selectors (works on desktop and mobile)
+    const copyButton = page.locator('button[aria-label="Copy poem to clipboard"], button[title="Copy poem"]').first();
 
-    // Wait for button to be enabled before clicking
-    await expect(copyButton).toBeEnabled({ timeout: 5000 });
+    await expect(copyButton).toBeVisible({ timeout: 5000 });
     await copyButton.click();
 
     // Should show success indicator (Check icon)

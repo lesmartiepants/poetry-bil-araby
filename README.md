@@ -113,6 +113,23 @@ When Supabase is configured, the app provides:
 
 **Note**: Authentication features only appear when Supabase environment variables are configured. The app works fully without authentication.
 
+### Arabic Diacritics (Tashkeel)
+
+Database poems can be enriched with Arabic diacritics using [Mishkal](https://github.com/linuxscout/mishkal), a rule-based diacritization engine.
+
+```bash
+# Install Python dependencies
+pip install -r scripts/requirements-diacritize.txt
+
+# Run batch diacritization (generates SQL migration)
+DATABASE_URL="your-connection-string" python scripts/batch-diacritize.py
+
+# Apply the generated migration
+psql "$DATABASE_URL" < supabase/migrations/20260306000001_populate_diacritics.sql.skip
+```
+
+The API automatically serves diacritized content when available, falling back to raw content.
+
 ### Database Mode Benefits
 - Access to 84,329 restored Arabic poems
 - Instant fetching (no API latency)

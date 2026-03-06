@@ -319,6 +319,18 @@ No additional CI configuration needed!
 
 ---
 
+## Diacritics Migration
+
+After deploying, run the batch diacritization script to add tashkeel to poems:
+
+1. Install Python deps: `pip install -r scripts/requirements-diacritize.txt`
+2. Run: `DATABASE_URL="..." python scripts/batch-diacritize.py`
+3. Apply generated migration: `psql "$DATABASE_URL" < supabase/migrations/20260306000001_populate_diacritics.sql.skip`
+
+The `.sql.skip` suffix means it won't auto-run on `supabase db push` (too large for standard migrations).
+
+---
+
 ## Next Steps
 
 After successful deployment:

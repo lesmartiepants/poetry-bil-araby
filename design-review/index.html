@@ -321,6 +321,7 @@
       .bottom-nav{display:none}
       .mobile-dock{display:flex}
       .mobile-info-bar{display:block}
+      .preview{padding-top:28px}
       .preview-open-overlay{opacity:0.75;top:36px}
       .preview-open-overlay:hover{opacity:1.0}
     }
@@ -1766,7 +1767,7 @@ function syncPreviewPadding() {
     var h = dock.getBoundingClientRect().height;
     preview.style.paddingBottom = h + 'px';
     if (infoBar) {
-      var t = infoBar.getBoundingClientRect().height;
+      var t = infoBar.getBoundingClientRect().height + 4;
       preview.style.paddingTop = t + 'px';
     }
   } else {

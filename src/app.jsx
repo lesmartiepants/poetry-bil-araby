@@ -1514,6 +1514,7 @@ const SettingsView = ({ isOpen, onClose, darkMode, onToggleDarkMode, currentFont
 export default function DiwanApp() {
   const mainScrollRef = useRef(null);
   const audioRef = useRef(new Audio());
+  const isTogglingPlay = useRef(false);
   const controlBarRef = useRef(null);
 
   const [headerOpacity, setHeaderOpacity] = useState(1);
@@ -1736,21 +1737,30 @@ export default function DiwanApp() {
   }, []);
 
   const togglePlay = async () => {
+    if (isTogglingPlay.current) {
+      addLog("Audio", "Play toggle already in progress — skipping", "info");
+      return;
+    }
+    isTogglingPlay.current = true;
     addLog("UI Event", `🎵 Play button clicked | Poem: ${current?.poet} - ${current?.title} | ID: ${current?.id}`, "info");
 
     if (isPlaying) {
       audioRef.current.pause();
       setIsPlaying(false);
       addLog("UI Event", "⏸️ Pause button clicked", "info");
+      isTogglingPlay.current = false;
       return;
     }
 
     if (audioUrl) {
-      audioRef.current.play().then(() => setIsPlaying(true)).catch((e) => {
-        addLog("Audio", "Retrying playback...", "info");
+      try {
+        await audioRef.current.play();
+        setIsPlaying(true);
+      } catch (e) {
+        addLog("Audio", "Playback failed, resetting audio URL", "info");
         setAudioUrl(null);
-        togglePlay();
-      });
+      }
+      isTogglingPlay.current = false;
       return;
     }
 
@@ -1780,9 +1790,9 @@ export default function DiwanApp() {
               setIsPlaying(true);
             });
           } else {
-            addLog("Audio", `Background audio generation failed - retrying`, "info");
-            // Retry the request
-            setTimeout(() => togglePlay(), 100);
+            addLog("Audio", "Background generation failed — please try again", "info");
+            isTogglingPlay.current = false;
+            setIsGeneratingAudio(false);
             return;
           }
           setIsGeneratingAudio(false);
@@ -1820,6 +1830,7 @@ export default function DiwanApp() {
         }
       }, 60000);
 
+      isTogglingPlay.current = false;
       return;
     }
 
@@ -1843,6 +1854,7 @@ export default function DiwanApp() {
           setIsPlaying(true);
         });
         setIsGeneratingAudio(false); // Clear loading state
+        isTogglingPlay.current = false;
         return;
       } else {
         addLog("Audio Cache", `✗ Cache MISS (${cacheTime.toFixed(0)}ms) | Generating from API...`, "info");
@@ -1957,6 +1969,7 @@ export default function DiwanApp() {
     } finally {
       setIsGeneratingAudio(false);
       activeAudioRequests.current.delete(current?.id); // Clean up in-flight tracking
+      isTogglingPlay.current = false;
     }
   };
 

@@ -44,10 +44,11 @@ body {
 }
 #walkthrough.active { display: block; }
 
-/* Each Ma step: message positioned differently in vast empty space */
+/* Each Ma step: centered in viewport */
 .ma-step {
   position: absolute; inset: 0;
   display: none; flex-direction: column;
+  align-items: center; justify-content: center;
   padding: 3rem;
 }
 .ma-step.active {
@@ -57,22 +58,6 @@ body {
 @keyframes maFade {
   from { opacity: 0; }
   to { opacity: 1; }
-}
-
-/* Step 0: text at top-left */
-.ma-step[data-ma="0"] {
-  align-items: flex-start; justify-content: flex-start;
-  padding-top: 18vh; padding-left: 8vw;
-}
-/* Step 1: text at center-right */
-.ma-step[data-ma="1"] {
-  align-items: flex-end; justify-content: center;
-  padding-right: 8vw;
-}
-/* Step 2: text at bottom-center */
-.ma-step[data-ma="2"] {
-  align-items: center; justify-content: flex-end;
-  padding-bottom: 18vh;
 }
 
 .ma-title {

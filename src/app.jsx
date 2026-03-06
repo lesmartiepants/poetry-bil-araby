@@ -2081,7 +2081,11 @@ export default function DiwanApp() {
     try {
       // Guard: AI Insights require a Gemini API key
       if (!apiKey) {
-        throw new Error("AI Insights require a Gemini API key. Add VITE_GEMINI_API_KEY to your environment to enable this feature.");
+        const fallbackMessage = "**AI Insights unavailable**\n\nA Gemini API key is required for poem analysis. You can:\n\n• Add `VITE_GEMINI_API_KEY` to your environment\n• Continue exploring poems in Database mode without insights";
+        setInterpretation(fallbackMessage);
+        setIsInterpreting(false);
+        activeInsightRequests.current.delete(current?.id);
+        return;
       }
 
       // Use streaming if feature flag is enabled

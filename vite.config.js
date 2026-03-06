@@ -11,6 +11,8 @@ export default defineConfig({
       manifest: false, // We use our own manifest.json in public/
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,woff2}'],
+        navigateFallback: 'index.html',
+        navigateFallbackDenylist: [/^\/design-review/],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,

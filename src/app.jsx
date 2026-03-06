@@ -1421,8 +1421,8 @@ const SavedPoemsView = ({ isOpen, onClose, savedPoems, onSelectPoem, onUnsavePoe
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
-                        <p className={`font-amiri text-sm ${theme.titleColor} font-medium`}>{sp.poet_name_ar || sp.poet_name || 'Unknown'}</p>
-                        <p className={`font-brand-en text-xs ${theme.text} opacity-50 mt-0.5`}>{sp.poem_title || sp.poem_title_ar || ''}</p>
+                        <p className={`font-amiri text-sm ${theme.titleColor} font-medium`}>{sp.poet || 'Unknown'}</p>
+                        <p className={`font-brand-en text-xs ${theme.text} opacity-50 mt-0.5`}>{sp.title || ''}</p>
                         <p className={`${currentFontClass} text-sm ${theme.text} opacity-70 mt-2 line-clamp-2`} dir="rtl">
                           {(sp.poem_text || '').slice(0, 80)}{(sp.poem_text || '').length > 80 ? '...' : ''}
                         </p>
@@ -2460,13 +2460,13 @@ export default function DiwanApp() {
   const handleSelectSavedPoem = (savedPoem) => {
     const mappedPoem = {
       id: savedPoem.poem_id || savedPoem.id,
-      poet: savedPoem.poet_name || '',
-      poetArabic: savedPoem.poet_name_ar || '',
-      title: savedPoem.poem_title || '',
-      titleArabic: savedPoem.poem_title_ar || '',
+      poet: savedPoem.poet || '',
+      poetArabic: savedPoem.poet || '',
+      title: savedPoem.title || '',
+      titleArabic: savedPoem.title || '',
       arabic: savedPoem.poem_text || '',
-      english: savedPoem.poem_translation || '',
-      tags: savedPoem.tags || [],
+      english: savedPoem.english || '',
+      tags: savedPoem.category ? [savedPoem.category] : [],
     };
     setPoems(prev => {
       const exists = prev.find(p => p.arabic === mappedPoem.arabic);

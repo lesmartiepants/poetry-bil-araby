@@ -246,7 +246,7 @@
     .mobile-acc-overlay.open{display:flex}
     .mobile-acc-sheet{width:100%;max-height:70vh;background:var(--surface);border-radius:16px 16px 0 0;display:flex;flex-direction:column;overflow:hidden;animation:slideUpSheet .3s cubic-bezier(.4,0,.2,1)}
     @keyframes slideUpSheet{from{transform:translateY(100%);opacity:.8}to{transform:translateY(0);opacity:1}}
-    .mobile-acc-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 10px;border-bottom:1px solid var(--border);flex-shrink:0}
+    .mobile-acc-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 10px;border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap}
     .mobile-acc-title{font-size:14px;font-weight:600}
     .mobile-acc-close{width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--surface-2);color:var(--text-2);font-size:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s}
     .mobile-acc-close:hover{background:var(--surface-3);color:var(--text)}
@@ -424,6 +424,7 @@
       <div class="mobile-acc-sheet">
         <div class="mobile-acc-head">
           <span class="mobile-acc-title">Browse Designs</span>
+          <button id="clearFeedbackBtnMobile" onclick="clearPastFeedback()" style="font-size:10px;padding:3px 10px;border-radius:var(--r-sm);border:1px solid var(--border);background:var(--surface-2);color:var(--text-3);cursor:pointer;margin-left:auto;margin-right:8px">Clear Feedback</button>
           <button class="mobile-acc-close" onclick="closeMobileAccordion()">&times;</button>
           <div class="section-filter-row" id="mobileAccSectionFilters" style="padding:6px 12px;margin-top:4px;border-bottom:none;overflow-x:auto;-webkit-overflow-scrolling:touch"></div>
         </div>
@@ -636,6 +637,7 @@ const SECTION_FILTERS = [
   { id: 'e2e', label: 'E2E Full', short: 'E2E' },
   { id: 'onboarding', label: 'Onboarding', short: 'Onb' },
   { id: 'main-app', label: 'Main App', short: 'App' },
+  { id: 'vc', label: 'Vertical Controls', short: 'VC' },
   { id: 'auth', label: 'Auth', short: 'Auth' },
   { id: 'branding', label: 'Branding', short: 'Brand' }
 ];
@@ -769,9 +771,13 @@ function buildFlatList() {
   CATALOG.forEach((comp, ci) => {
     if (sectionFilter === 'auth' && comp.id !== 'auth') return;
     if (sectionFilter === 'branding' && comp.id !== 'branding') return;
+    if (sectionFilter === 'vc' && comp.id !== 'e2e') return;
     if ((sectionFilter === 'e2e' || sectionFilter === 'onboarding' || sectionFilter === 'main-app') && comp.id !== 'e2e') return;
     comp.categories.forEach((cat, cati) =>
-      cat.options.forEach((opt, oi) => flatList.push({ compIdx: ci, catIdx: cati, optIdx: oi, option: opt, category: cat, component: comp }))
+      cat.options.forEach((opt, oi) => {
+        if (sectionFilter === 'vc' && !opt.isVC) return;
+        flatList.push({ compIdx: ci, catIdx: cati, optIdx: oi, option: opt, category: cat, component: comp });
+      })
     );
   });
 }
@@ -1402,7 +1408,10 @@ function clearPastFeedback() {
   const container = document.getElementById('prevFeedback');
   container.textContent = 'Feedback cleared for this session.';
   container.style.cssText = 'font-size:12px;color:var(--text-3)';
-  document.getElementById('clearFeedbackBtn').style.display = 'none';
+  const btn = document.getElementById('clearFeedbackBtn');
+  const btnMobile = document.getElementById('clearFeedbackBtnMobile');
+  if (btn) btn.style.display = 'none';
+  if (btnMobile) btnMobile.style.display = 'none';
 }
 
 function renderProgress() {
@@ -1771,7 +1780,11 @@ window.addEventListener('resize', syncPreviewPadding);
 // BOOT
 // ═══════════════════════════════════════════════════════════════
 loadReview();
-if (feedbackCleared) { for (const cat of CATALOG) cat.feedback = {}; }
+if (feedbackCleared) {
+  for (const cat of CATALOG) cat.feedback = {};
+  var _cb = document.getElementById('clearFeedbackBtn'); if (_cb) _cb.style.display = 'none';
+  var _cbm = document.getElementById('clearFeedbackBtnMobile'); if (_cbm) _cbm.style.display = 'none';
+}
 buildFlatList();
 populateComps();
 populateCats();

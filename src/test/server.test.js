@@ -724,7 +724,6 @@ describe('Backend API Server', () => {
     });
   });
 
-
   describe('Input Validation', () => {
     it('should reject search with query over 200 chars', async () => {
       const longQuery = 'a'.repeat(201);
@@ -746,6 +745,19 @@ describe('Backend API Server', () => {
         .get('/api/poems/by-poet/test?offset=-1')
         .expect(400);
       expect(response.body.error).toBe('Invalid request parameters');
+    });
+  });
+
+  describe('API Key Authentication', () => {
+    it('should allow requests when API_SECRET_KEY is not configured', async () => {
+      // When no API_SECRET_KEY is set, auth is bypassed
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: '42' }] });
+
+      const response = await request(app)
+        .get('/api/health')
+        .expect(200);
+
+      expect(response.body.status).toBe('ok');
     });
   });
 

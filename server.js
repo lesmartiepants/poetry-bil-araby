@@ -91,6 +91,19 @@ app.use(express.json());
 app.use('/api/ai', express.json({ limit: '10mb' }));
 app.use('/api/', rateLimit({ windowMs: 60_000, max: 100, standardHeaders: true, legacyHeaders: false }));
 
+// API key authentication middleware for protected endpoints
+const requireApiKey = (req, res, next) => {
+  const apiKey = req.headers['x-api-key'];
+  if (!process.env.API_SECRET_KEY) {
+    // If no API key is configured, skip auth (development mode)
+    return next();
+  }
+  if (!apiKey || apiKey !== process.env.API_SECRET_KEY) {
+    return res.status(401).json({ error: 'Unauthorized: Invalid or missing API key' });
+  }
+  next();
+};
+
 // Request logging middleware
 app.use((req, res, next) => {
   const start = Date.now();
@@ -453,7 +466,7 @@ app.get('/api/design-review/items', async (req, res) => {
 });
 
 // POST /api/design-review/items/sync — bulk upsert from CATALOG (idempotent, batched)
-app.post('/api/design-review/items/sync', async (req, res) => {
+app.post('/api/design-review/items/sync', requireApiKey, async (req, res) => {
   try {
     if (!(await designTablesExist())) return res.status(503).json({ error: 'Design tables not created yet' });
     const { items } = req.body;
@@ -526,7 +539,7 @@ app.get('/api/design-review/sessions/:id', async (req, res) => {
 });
 
 // POST /api/design-review/sessions — create new review session
-app.post('/api/design-review/sessions', async (req, res) => {
+app.post('/api/design-review/sessions', requireApiKey, async (req, res) => {
   try {
     if (!(await designTablesExist())) return res.status(503).json({ error: 'Design tables not created yet' });
     const { reviewer, branch, commit_sha, total_designs } = req.body;
@@ -548,7 +561,7 @@ app.post('/api/design-review/sessions', async (req, res) => {
 });
 
 // PATCH /api/design-review/sessions/:id — complete session, add notes
-app.patch('/api/design-review/sessions/:id', async (req, res) => {
+app.patch('/api/design-review/sessions/:id', requireApiKey, async (req, res) => {
   try {
     if (!(await designTablesExist())) return res.status(503).json({ error: 'Design tables not created yet' });
     const { id } = req.params;
@@ -591,7 +604,7 @@ app.get('/api/design-review/sessions/:id/verdicts', async (req, res) => {
 });
 
 // POST /api/design-review/sessions/:id/verdicts — bulk submit/update verdicts (batched)
-app.post('/api/design-review/sessions/:id/verdicts', async (req, res) => {
+app.post('/api/design-review/sessions/:id/verdicts', requireApiKey, async (req, res) => {
   try {
     if (!(await designTablesExist())) return res.status(503).json({ error: 'Design tables not created yet' });
     const { id } = req.params;

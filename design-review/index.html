@@ -600,7 +600,7 @@ const CATALOG = [
 // ═══════════════════════════════════════════════════════════════
 const API_BASE = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
   ? 'http://localhost:3001'
-  : 'https://poetry-bil-araby-api.onrender.com';
+  : 'https://poetry-bil-araby-2mb0.onrender.com';
 let apiAvailable = false;
 let syncTimer = null;
 let currentSession = null;
@@ -1387,10 +1387,11 @@ async function submitReview() {
       if (!apiAvailable || !currentSession) throw new Error('Backend not available');
     }
     if (currentSession) {
-      await fetch(API_BASE + '/api/design-review/sessions/' + currentSession.id, {
+      const reviewerRes = await fetch(API_BASE + '/api/design-review/sessions/' + currentSession.id, {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ reviewer: reviewerName })
       });
+      if (!reviewerRes.ok) console.warn('Failed to update reviewer name:', reviewerRes.status);
     }
     loadingText.textContent = 'Syncing verdicts...';
     await syncVerdictsToAPI();

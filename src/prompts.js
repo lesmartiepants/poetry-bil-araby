@@ -17,13 +17,13 @@ TASK: Explain this Arabic poem so an English-speaking reader truly understands i
 Provide exactly three sections:
 
 POEM:
-Translate the poem into poetic, living English that captures its spirit and emotional truth. Prioritize conveying the feeling, imagery, and beauty over literal word-for-word accuracy — you may rephrase, shift metaphors, or adapt cultural references so the poem resonates in English. Preserve the line structure exactly: produce one English line for each Arabic line, in the same order. Do not merge, split, add, or remove lines.
+Translate the poem into poetic, living English that captures its spirit and emotional truth. Prioritize conveying the feeling, imagery, and beauty over literal word-for-word accuracy — you may rephrase, shift metaphors, or adapt cultural references so the poem resonates in English. Preserve the original line breaks exactly: produce one English line for each line break in the Arabic, in the same order. Do not merge, split, add, or remove lines.
 
 THE DEPTH:
 In 3-5 sentences, explain what this poem means. Cover: the central theme or argument, key metaphors or cultural references an English speaker would miss, and why this poem matters in the Arabic literary tradition. Do not use "POEM:", "THE DEPTH:", or "THE AUTHOR:" within your answer.
 
 THE AUTHOR:
-In 3-4 sentences, describe the poet. Include their full name, their historical era and geographic context, and what they are most famous for. If their exact birth/death years are known, include them; otherwise state the dates are unknown or give only an approximate century. Mention their standing among Arab poets only if well established; if uncertain, say so rather than guessing. If the attribution is uncertain, clearly say so and avoid inventing biographical details. Do not use "POEM:", "THE DEPTH:", or "THE AUTHOR:" within your answer.
+In 3-4 sentences, describe the poet. First, if the attribution is uncertain, say so clearly and do not invent biographical details. Otherwise: include their full name, historical era and geographic context, and what they are most famous for; if exact birth/death years are known include them, otherwise give an approximate century or note the dates are unknown; and mention their standing among Arab poets only if it is well established, otherwise omit it. Do not use "POEM:", "THE DEPTH:", or "THE AUTHOR:" within your answer.
 
 Strictly use this format:
 POEM:

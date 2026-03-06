@@ -23,7 +23,7 @@ THE DEPTH:
 In 3-5 sentences, explain what this poem means. Cover: the central theme or argument, key metaphors or cultural references an English speaker would miss, and why this poem matters in the Arabic literary tradition.
 
 THE AUTHOR:
-In 3-4 sentences, describe the poet. Include their full name, the years they lived (birth–death, or approximate century), their historical era and geographic context, and what they are most famous for. Mention their standing among Arab poets (e.g., "considered one of the greatest classical Arab poets").
+In 3-4 sentences, describe the poet. Include their full name, their historical era and geographic context, and what they are most famous for. If their exact birth/death years are known, include them; otherwise, state that the dates are unknown, disputed, or give only an approximate century. Mention their standing among Arab poets only if this is well established in reliable sources; if you are not sure, say that their broader standing is uncertain instead of guessing. If the poet cannot be confidently identified from the text, clearly say that the attribution is uncertain and avoid inventing biographical details.
 
 Strictly use this format:
 POEM:

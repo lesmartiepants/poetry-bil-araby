@@ -29,8 +29,8 @@ const { app, pool } = await import('../../server.js');
 
 describe('Backend API Server', () => {
   beforeEach(() => {
-    // Clear all mock calls
-    mockPool.query.mockClear();
+    // Reset all mock state (calls, instances, and implementations)
+    mockPool.query.mockReset();
   });
 
   afterAll(() => {
@@ -200,7 +200,7 @@ describe('Backend API Server', () => {
         .expect('Content-Type', /json/)
         .expect(500);
 
-      expect(response.body).toEqual({ error: 'Query failed' });
+      expect(response.body).toEqual({ error: 'Internal server error' });
     });
 
     it('should handle Arabic text encoding correctly', async () => {
@@ -312,7 +312,7 @@ describe('Backend API Server', () => {
         .get('/api/poems/by-poet/نزار قباني')
         .expect(500);
 
-      expect(response.body).toEqual({ error: 'Database error' });
+      expect(response.body).toEqual({ error: 'Internal server error' });
     });
 
     it('should handle URL encoded poet names', async () => {
@@ -417,7 +417,7 @@ describe('Backend API Server', () => {
         .get('/api/poets')
         .expect(500);
 
-      expect(response.body).toEqual({ error: 'Query error' });
+      expect(response.body).toEqual({ error: 'Internal server error' });
     });
   });
 
@@ -462,7 +462,7 @@ describe('Backend API Server', () => {
         .expect('Content-Type', /json/)
         .expect(400);
 
-      expect(response.body).toEqual({ error: 'Search query required' });
+      expect(response.body.error).toBe('Invalid request parameters');
     });
 
     it('should support custom limit parameter', async () => {
@@ -546,7 +546,7 @@ describe('Backend API Server', () => {
         .get('/api/poems/search?q=test')
         .expect(500);
 
-      expect(response.body).toEqual({ error: 'Search error' });
+      expect(response.body).toEqual({ error: 'Internal server error' });
     });
 
     it('should format search results correctly', async () => {
@@ -571,8 +571,17 @@ describe('Backend API Server', () => {
     });
   });
 
+  describe('Security Headers', () => {
+    it('should include helmet security headers', async () => {
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: '10' }] });
+      const response = await request(app).get('/api/health').expect(200);
+      expect(response.headers['x-content-type-options']).toBe('nosniff');
+      expect(response.headers).not.toHaveProperty('x-powered-by');
+    });
+  });
+
   describe('CORS Configuration', () => {
-    it('should allow cross-origin requests', async () => {
+    it('should allow cross-origin requests from allowed origins', async () => {
       mockPool.query.mockResolvedValueOnce({
         rows: [{ count: '10' }]
       });
@@ -582,7 +591,7 @@ describe('Backend API Server', () => {
         .set('Origin', 'http://localhost:5173')
         .expect(200);
 
-      expect(response.headers['access-control-allow-origin']).toBeDefined();
+      expect(response.headers['access-control-allow-origin']).toBe('http://localhost:5173');
     });
   });
 
@@ -712,6 +721,31 @@ describe('Backend API Server', () => {
         // Should not be 400 (validation error) - the model name is valid
         expect(response.status).not.toBe(400);
       });
+    });
+  });
+
+
+  describe('Input Validation', () => {
+    it('should reject search with query over 200 chars', async () => {
+      const longQuery = 'a'.repeat(201);
+      const response = await request(app)
+        .get(`/api/poems/search?q=${longQuery}`)
+        .expect(400);
+      expect(response.body.error).toBe('Invalid request parameters');
+    });
+
+    it('should reject invalid limit parameter', async () => {
+      const response = await request(app)
+        .get('/api/poems/search?q=test&limit=999')
+        .expect(400);
+      expect(response.body.error).toBe('Invalid request parameters');
+    });
+
+    it('should reject negative offset', async () => {
+      const response = await request(app)
+        .get('/api/poems/by-poet/test?offset=-1')
+        .expect(400);
+      expect(response.body.error).toBe('Invalid request parameters');
     });
   });
 

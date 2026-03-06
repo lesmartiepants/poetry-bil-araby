@@ -777,6 +777,7 @@ function buildFlatList() {
     comp.categories.forEach((cat, cati) =>
       cat.options.forEach((opt, oi) => {
         if (sectionFilter === 'vc' && !opt.isVC) return;
+        if ((sectionFilter === 'e2e' || sectionFilter === 'onboarding' || sectionFilter === 'main-app') && opt.isVC) return;
         flatList.push({ compIdx: ci, catIdx: cati, optIdx: oi, option: opt, category: cat, component: comp });
       })
     );

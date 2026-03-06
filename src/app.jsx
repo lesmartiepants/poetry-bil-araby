@@ -1586,7 +1586,9 @@ export default function DiwanApp() {
         });
   }, [poems, selectedCategory]);
 
-  const current = filtered[currentIndex] || filtered[0] || poems[0];
+  // Defensive: poems[0] is always truthy (hardcoded initial poem), but guard against
+  // future changes that might empty the array (e.g., setPoems([]) or filter edge cases)
+  const current = filtered[currentIndex] || filtered[0] || poems[0] || null;
 
   const addLog = (label, msg, type = 'info') => {
     const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -2227,6 +2229,12 @@ export default function DiwanApp() {
 
       // DATABASE MODE: Fetch from local PostgreSQL API
       if (useDatabase) {
+        // Reset category to "All" before fetching so the new poem will be visible
+        // without racing against the useEffect that resets currentIndex on category change
+        if (selectedCategory !== "All") {
+          setSelectedCategory("All");
+        }
+
         addLog("Discovery DB", `→ Querying database | Category: ${selectedCategory}`, "info");
 
         const categoryObj = CATEGORIES.find(c => c.id === selectedCategory);
@@ -2261,10 +2269,7 @@ export default function DiwanApp() {
 
           setPoems(prev => {
             const updated = [...prev, newPoem];
-            const searchStr = selectedCategory.toLowerCase();
-            const freshFiltered = selectedCategory === "All" ? updated : updated.filter(p => (p?.poet || "").toLowerCase().includes(searchStr) || (Array.isArray(p?.tags) && p.tags.some(t => String(t).toLowerCase() === searchStr)));
-            const newIdx = freshFiltered.findIndex(p => p.id === newPoem.id);
-            if (newIdx !== -1) setCurrentIndex(newIdx);
+            setCurrentIndex(updated.length - 1); // New poem is always last
             return updated;
           });
         } catch (dbError) {
@@ -2587,6 +2592,17 @@ export default function DiwanApp() {
 
     return () => clearInterval(keepAlivePing);
   }, [useDatabase, apiUrl]);
+
+  if (!current) {
+    return (
+      <div className={`min-h-screen flex items-center justify-center ${theme.bg} ${theme.text}`}>
+        <div className="text-center space-y-4">
+          <Loader2 className="w-8 h-8 animate-spin mx-auto opacity-60" />
+          <p className="text-sm opacity-60">Loading poems...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={`h-[100dvh] w-full flex flex-col overflow-hidden ${DESIGN.anim} font-sans ${theme.bg} ${theme.text} selection:bg-indigo-500`}>

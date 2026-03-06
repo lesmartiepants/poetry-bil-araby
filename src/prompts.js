@@ -17,13 +17,13 @@ TASK: Explain this Arabic poem so an English-speaking reader truly understands i
 Provide exactly three sections:
 
 POEM:
-Translate the poem into natural, flowing English. Preserve the imagery and emotional weight but prioritize clarity — the reader should understand what the poet is actually saying. Match the Arabic line-by-line where possible, but rephrase freely when a literal translation would be confusing.
+Translate the poem into poetic, living English that captures its spirit and emotional truth. Prioritize conveying the feeling, imagery, and beauty over literal word-for-word accuracy — you may rephrase, shift metaphors, or adapt cultural references so the poem resonates in English. Preserve the line structure exactly: produce one English line for each Arabic line, in the same order. Do not merge, split, add, or remove lines.
 
 THE DEPTH:
-In 3-5 sentences, explain what this poem means. Cover: the central theme or argument, key metaphors or cultural references an English speaker would miss, and why this poem matters in the Arabic literary tradition.
+In 3-5 sentences, explain what this poem means. Cover: the central theme or argument, key metaphors or cultural references an English speaker would miss, and why this poem matters in the Arabic literary tradition. Do not use "POEM:", "THE DEPTH:", or "THE AUTHOR:" within your answer.
 
 THE AUTHOR:
-In 3-4 sentences, describe the poet. Include their full name, the years they lived (birth–death, or approximate century), their historical era and geographic context, and what they are most famous for. Mention their standing among Arab poets (e.g., "considered one of the greatest classical Arab poets").
+In 3-4 sentences, describe the poet. Include their full name, their historical era and geographic context, and what they are most famous for. If their exact birth/death years are known, include them; otherwise state the dates are unknown or give only an approximate century. Mention their standing among Arab poets only if well established; if uncertain, say so rather than guessing. If the attribution is uncertain, clearly say so and avoid inventing biographical details. Do not use "POEM:", "THE DEPTH:", or "THE AUTHOR:" within your answer.
 
 Strictly use this format:
 POEM:

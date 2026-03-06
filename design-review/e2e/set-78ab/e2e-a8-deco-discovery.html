@@ -98,7 +98,7 @@
     cursor: pointer; overflow: hidden;
   }
   .walkthrough.active { display: flex; }
-  .deco-frame { position: absolute; inset: 0; pointer-events: none; }
+  .walkthrough > .deco-frame { position: absolute; inset: 0; pointer-events: none; }
   .deco-line-h { position: absolute; height: 1px; left: 5%; right: 5%; background: linear-gradient(90deg, transparent, var(--gold), transparent); opacity: 0.2; }
   .deco-line-h:nth-child(1) { top: 12%; }
   .deco-line-h:nth-child(2) { bottom: 12%; }
@@ -123,10 +123,10 @@
   .deco-title-ar { font-family: 'Tajawal', sans-serif; font-size: 1.2rem; font-weight: 700; color: var(--gold); direction: rtl; margin-bottom: 1rem; }
   .deco-desc { font-size: 0.9rem; line-height: 1.8; color: var(--muted); direction: ltr; margin-bottom: 0.5rem; }
   .deco-desc-ar { font-family: 'Tajawal', sans-serif; font-size: 0.85rem; line-height: 1.8; color: rgba(197,160,89,0.35); direction: rtl; }
-  .deco-progress { display: flex; gap: 16px; margin-top: 2rem; z-index: 2; }
+  .deco-progress { display: flex; gap: 16px; position: absolute; bottom: 48px; left: 50%; transform: translateX(-50%); z-index: 2; }
   .deco-diamond { width: 10px; height: 10px; background: rgba(197,160,89,0.15); transform: rotate(45deg); transition: all 0.4s ease; }
   .deco-diamond.active { background: var(--gold); box-shadow: 0 0 8px rgba(197,160,89,0.4); }
-  .deco-hint { margin-top: 1.5rem; font-size: 0.65rem; letter-spacing: 0.3em; text-transform: uppercase; color: rgba(232,213,183,0.2); z-index: 2; }
+  .deco-hint { position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%); font-size: 0.65rem; letter-spacing: 0.3em; text-transform: uppercase; color: rgba(232,213,183,0.2); z-index: 2; }
 
   /* ===== MAIN APP ===== */
   /* Art Deco Geometric — stepped corners, sunburst motifs, gold dividers */

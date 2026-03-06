@@ -149,9 +149,9 @@ describe('DiwanApp', () => {
       render(<DiwanApp />)
 
       // Option K design removed left/right navigation
-      // Verify primary buttons exist: Listen, Learn, Discover, Poets
+      // Verify primary buttons exist: Listen, Explain, Discover, Poets
       expect(screen.getByLabelText(/play recitation|pause recitation/i)).toBeInTheDocument()
-      expect(screen.getByLabelText('Learn about poem meaning')).toBeInTheDocument()
+      expect(screen.getByLabelText('Explain poem meaning')).toBeInTheDocument()
       expect(screen.getByLabelText('Discover new poem')).toBeInTheDocument()
       expect(screen.getByLabelText('Select poet category')).toBeInTheDocument()
     })
@@ -367,7 +367,7 @@ describe('DiwanApp', () => {
   describe('AI Features Smoke Tests', () => {
     const mockInsightText = 'POEM:\nTranslation line\nTHE DEPTH: Deep meaning here.\nTHE AUTHOR: Celebrated poet info.'
 
-    it('Learn button is enabled for a DB poem (no english/tags)', async () => {
+    it('Explain button is enabled for a DB poem (no english/tags)', async () => {
       render(<DiwanApp />)
 
       global.fetch.mockResolvedValueOnce({ ok: true, json: async () => createDbPoem(100) })
@@ -375,10 +375,10 @@ describe('DiwanApp', () => {
       await userEvent.click(screen.getByLabelText('Discover new poem'))
       await waitFor(() => expect(screen.getByText('Mahmoud Darwish')).toBeInTheDocument(), { timeout: 3000 })
 
-      expect(screen.getByLabelText('Learn about poem meaning')).not.toBeDisabled()
+      expect(screen.getByLabelText('Explain poem meaning')).not.toBeDisabled()
     })
 
-    it('shows insights after clicking Learn on a DB poem', async () => {
+    it('shows insights after clicking Explain on a DB poem', async () => {
       render(<DiwanApp />)
 
       global.fetch.mockResolvedValueOnce({ ok: true, json: async () => createDbPoem(101) })
@@ -386,10 +386,10 @@ describe('DiwanApp', () => {
       await userEvent.click(screen.getByLabelText('Discover new poem'))
       await waitFor(() => expect(screen.getByText('Mahmoud Darwish')).toBeInTheDocument(), { timeout: 3000 })
 
-      // Mock the Gemini insights streaming response BEFORE clicking Learn
+      // Mock the Gemini insights streaming response BEFORE clicking Explain
       global.fetch.mockResolvedValueOnce(createStreamingMock(mockInsightText))
 
-      await userEvent.click(screen.getByLabelText('Learn about poem meaning'))
+      await userEvent.click(screen.getByLabelText('Explain poem meaning'))
 
       // Wait for insight content (insightParts.depth) to appear in the DOM
       await waitFor(() => {
@@ -500,7 +500,7 @@ describe('DiwanApp', () => {
         json: async () => ({ error: { message: 'API key not valid' } })
       })
 
-      await userEvent.click(screen.getByLabelText('Learn about poem meaning'))
+      await userEvent.click(screen.getByLabelText('Explain poem meaning'))
 
       // Error is logged to the auto-expanded DebugPanel (rendered in the DOM even when collapsed)
       await waitFor(() => {

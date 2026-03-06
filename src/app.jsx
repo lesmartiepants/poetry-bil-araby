@@ -1535,6 +1535,8 @@ export default function DiwanApp() {
   const [interpretation, setInterpretation] = useState(null);
   const [isInterpreting, setIsInterpreting] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
+  const [autoExplainPending, setAutoExplainPending] = useState(false);
+  const hasAutoLoaded = useRef(false);
   const [logs, setLogs] = useState([]);
   const [showCopySuccess, setShowCopySuccess] = useState(false);
   const [isOverflow, setIsOverflow] = useState(() => {
@@ -1608,6 +1610,23 @@ export default function DiwanApp() {
     const key = import.meta.env.VITE_GEMINI_API_KEY || "";
     if (key) discoverTextModels(key, addLog);
   }, []);
+
+  // Auto-load a poem and queue explanation on first mount
+  useEffect(() => {
+    if (!hasAutoLoaded.current) {
+      hasAutoLoaded.current = true;
+      setAutoExplainPending(true);
+      handleFetch();
+    }
+  }, []);
+
+  // Auto-trigger explanation after auto-loaded poem arrives
+  useEffect(() => {
+    if (autoExplainPending && current?.id && !isFetching && !isInterpreting && !interpretation) {
+      setAutoExplainPending(false);
+      handleAnalyze();
+    }
+  }, [autoExplainPending, current?.id, isFetching, isInterpreting, interpretation]);
 
   useEffect(() => {
     // Threshold below which overflow mode is always active (prevents oscillation on narrow screens).

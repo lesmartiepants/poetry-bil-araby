@@ -96,7 +96,7 @@ app.get('/api/poems/random', async (req, res) => {
       SELECT
         p.id,
         p.title,
-        p.content as arabic,
+        COALESCE(p.diacritized_content, p.content) as arabic,
         po.name as poet,
         t.name as theme
       FROM poems p
@@ -157,7 +157,7 @@ app.get('/api/poems/by-poet/:poet', async (req, res) => {
       SELECT
         p.id,
         p.title,
-        p.content as arabic,
+        COALESCE(p.diacritized_content, p.content) as arabic,
         po.name as poet,
         t.name as theme
       FROM poems p
@@ -227,7 +227,7 @@ app.get('/api/poems/search', async (req, res) => {
       SELECT
         p.id,
         p.title,
-        p.content as arabic,
+        COALESCE(p.diacritized_content, p.content) as arabic,
         po.name as poet,
         t.name as theme
       FROM poems p

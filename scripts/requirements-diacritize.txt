@@ -1,0 +1,3 @@
+mishkal
+psycopg2-binary
+pyarabic

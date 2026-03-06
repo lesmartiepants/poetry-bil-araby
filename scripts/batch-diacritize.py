@@ -14,6 +14,7 @@ import time
 
 try:
     import psycopg2
+    from psycopg2 import sql
 except ImportError:
     print("Error: psycopg2 not installed. Run: pip install -r scripts/requirements-diacritize.txt")
     sys.exit(1)
@@ -36,16 +37,21 @@ def main():
     print("Initializing Mishkal vocalizer...")
     vocalizer = TashkeelClass()
 
-    print(f"Connecting to database...")
+    print("Connecting to database...")
     conn = psycopg2.connect(DATABASE_URL)
-    cur = conn.cursor()
 
-    # Count total poems
-    cur.execute("SELECT COUNT(*) FROM poems")
-    total = cur.fetchone()[0]
+    # Use a named server-side cursor to stream rows without loading all into memory
+    cur = conn.cursor(name="diacritize_cursor")
+    cur.itersize = BATCH_SIZE
+
+    # Count total poems (separate cursor)
+    count_cur = conn.cursor()
+    count_cur.execute("SELECT COUNT(*) FROM poems")
+    total = count_cur.fetchone()[0]
+    count_cur.close()
     print(f"Found {total} poems to diacritize")
 
-    # Fetch and process in batches
+    # Fetch and process via server-side cursor
     cur.execute("SELECT id, content FROM poems ORDER BY id")
 
     processed = 0
@@ -62,8 +68,10 @@ def main():
             pid, content = row
             try:
                 diacritized = vocalizer.tashkeel(content)
-                escaped = diacritized.replace("'", "''")
-                f.write(f"UPDATE poems SET diacritized_content = '{escaped}' WHERE id = {pid};\n")
+                # Use psycopg2's adapt() for proper SQL literal escaping
+                escaped = psycopg2.extensions.adapt(diacritized)
+                escaped.prepare(conn)
+                f.write(f"UPDATE poems SET diacritized_content = {escaped.getquoted().decode('utf-8')} WHERE id = {pid};\n")
                 processed += 1
             except Exception as e:
                 print(f"  Error on poem {pid}: {e}")
@@ -73,9 +81,12 @@ def main():
                 elapsed = time.time() - start_time
                 rate = (processed + errors) / elapsed if elapsed > 0 else 0
                 print(f"  Progress: {processed + errors}/{total} ({rate:.0f} poems/sec)")
+                # Split into smaller transactions to reduce lock time
+                f.write("\nCOMMIT;\n\nBEGIN;\n\n")
 
         f.write("\nCOMMIT;\n")
 
+    cur.close()
     conn.close()
 
     elapsed = time.time() - start_time

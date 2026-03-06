@@ -46,12 +46,32 @@ const pool = new Pool(
       }
 );
 
+// Check if diacritized_content column exists (graceful pre-migration fallback)
+let hasDiacritizedColumn = false;
+async function checkDiacritizedColumn() {
+  try {
+    const result = await pool.query(
+      "SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'poems' AND column_name = 'diacritized_content' LIMIT 1"
+    );
+    hasDiacritizedColumn = result.rows.length > 0;
+    log.info('DB', `Diacritized column: ${hasDiacritizedColumn ? 'available' : 'not found (using raw content)'}`);
+  } catch {
+    hasDiacritizedColumn = false;
+  }
+}
+
+// Helper: returns the SQL expression for poem content based on column availability
+function poemContentExpr() {
+  return hasDiacritizedColumn ? 'COALESCE(p.diacritized_content, p.content)' : 'p.content';
+}
+
 // Test database connection
 pool.query('SELECT NOW()', (err, res) => {
   if (err) {
     log.error('DB', 'Failed to connect to PostgreSQL', err.message);
   } else {
     log.info('DB', `Connected to PostgreSQL at ${res.rows[0].now}`);
+    checkDiacritizedColumn();
   }
 });
 
@@ -96,7 +116,7 @@ app.get('/api/poems/random', async (req, res) => {
       SELECT
         p.id,
         p.title,
-        COALESCE(p.diacritized_content, p.content) as arabic,
+        ${poemContentExpr()} as arabic,
         po.name as poet,
         t.name as theme
       FROM poems p
@@ -157,7 +177,7 @@ app.get('/api/poems/by-poet/:poet', async (req, res) => {
       SELECT
         p.id,
         p.title,
-        COALESCE(p.diacritized_content, p.content) as arabic,
+        ${poemContentExpr()} as arabic,
         po.name as poet,
         t.name as theme
       FROM poems p
@@ -227,7 +247,7 @@ app.get('/api/poems/search', async (req, res) => {
       SELECT
         p.id,
         p.title,
-        COALESCE(p.diacritized_content, p.content) as arabic,
+        ${poemContentExpr()} as arabic,
         po.name as poet,
         t.name as theme
       FROM poems p

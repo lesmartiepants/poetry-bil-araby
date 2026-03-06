@@ -53,6 +53,10 @@ poetry-database/*.dump
 
 # Database dumps (binary files, should not be in version control)
 poetry-database/
+
+# Diacritization data artifacts (large parquet files, generated locally)
+scripts/diacritize-data/
+scripts/__pycache__/
 poetry-splash-ci-fixes/
 .vercel
 .env*.local

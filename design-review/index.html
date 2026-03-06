@@ -57,7 +57,7 @@
     .preview-iframe{width:100%;height:100%;border:none;background:#000}
 
     /* Open-in-new-tab expand overlay */
-    .preview-open-overlay{position:absolute;top:12px;right:12px;z-index:15;width:54px;height:54px;border-radius:var(--r);background:none;border:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;opacity:0.2;transition:opacity .2s;color:var(--text-2)}
+    .preview-open-overlay{position:absolute;top:12px;right:12px;z-index:15;width:54px;height:54px;border-radius:var(--r);background:none;border:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;opacity:0.45;transition:opacity .2s;color:var(--text-2)}
     .preview-open-overlay:hover{opacity:0.8;color:var(--text)}
     .preview-open-overlay .expand-icon{font-size:22px;line-height:1}
     .preview-open-overlay .expand-label{font-size:8px;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
@@ -171,8 +171,8 @@
     /* ── Mobile Action Dock (Option B) ── */
     .mobile-dock{
       display:none;position:fixed;bottom:0;left:0;right:0;z-index:200;
-      background:linear-gradient(to top,rgba(9,9,11,.98) 60%,transparent);
-      padding:28px 14px 14px;padding-bottom:max(14px,env(safe-area-inset-bottom));
+      background:linear-gradient(to bottom,transparent,rgba(9,9,11,.92) 8px,rgba(9,9,11,.99) 14px);
+      padding:14px 14px 14px;padding-bottom:max(14px,env(safe-area-inset-bottom));
       flex-direction:column;align-items:center;gap:8px;
     }
     .dock-progress{width:100%;display:flex;align-items:center;gap:8px}
@@ -184,7 +184,7 @@
       width:48px;height:48px;border-radius:50%;border:none;
       background:transparent;color:var(--text-3);
       display:flex;align-items:center;justify-content:center;
-      cursor:pointer;transition:all .15s;flex-shrink:0;
+      cursor:pointer;transition:all .15s;flex-shrink:0;touch-action:manipulation;
     }
     .dock-nav:hover{color:var(--text);background:rgba(255,255,255,.06)}
     .dock-nav:active{transform:scale(.9)}
@@ -195,7 +195,7 @@
       background:var(--surface-2);
       display:flex;align-items:center;justify-content:center;
       font-size:22px;color:var(--text-3);
-      cursor:pointer;transition:all .2s;margin:0 2px;
+      cursor:pointer;transition:all .2s;margin:0 2px;touch-action:manipulation;
     }
     .verdict-circle:active{transform:scale(.88)}
     .verdict-circle.vc-center{width:64px;height:64px;font-size:26px;border-color:var(--border-light)}
@@ -225,6 +225,52 @@
     }
     .dock-submit:hover{filter:brightness(1.1)}
     .dock-submit:active{transform:scale(.95)}
+    /* Dock design selector */
+    .dock-selector{display:flex;align-items:center;gap:8px;flex:1;max-width:60%;min-height:44px;padding:8px 14px;border-radius:20px;background:var(--surface-2);border:1px solid var(--border);cursor:pointer;transition:border-color .15s,background .15s;overflow:hidden}
+    .dock-selector.active{border-color:rgba(212,168,75,.3);background:rgba(212,168,75,.06)}
+    .ds-num{font-size:11px;color:var(--accent);font-weight:700;font-variant-numeric:tabular-nums;flex-shrink:0}
+    .ds-name{font-size:12px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+    .ds-chevron{width:12px;height:12px;flex-shrink:0;transition:transform .3s cubic-bezier(.4,0,.2,1);opacity:.5}
+    .dock-selector.active .ds-chevron{transform:rotate(180deg);opacity:.8}
+    .dock-actions{display:flex;align-items:center;gap:8px;flex-shrink:0}
+    .comment-trigger-compact{width:44px;height:44px;border-radius:50%;border:1px solid var(--border);background:var(--surface-2);color:var(--text-3);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s}
+    .comment-trigger-compact:hover{background:var(--surface-3);border-color:var(--border-light)}
+    .comment-trigger-compact svg{width:18px;height:18px}
+    .comment-trigger-compact.has-text{color:var(--accent);border-color:rgba(212,168,75,.3)}
+    /* Mobile top info bar */
+    .mobile-info-bar{display:none;position:fixed;top:0;left:0;right:0;z-index:150;padding:6px 14px;background:linear-gradient(to bottom,rgba(9,9,11,.92) 60%,transparent);pointer-events:none}
+    .mib-phil{font-size:9px;font-style:italic;color:rgba(212,168,75,.45);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .dock-sync{margin-left:4px;display:flex;align-items:center}
+    /* Mobile accordion overlay */
+    .mobile-acc-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:250;display:none;align-items:flex-end}
+    .mobile-acc-overlay.open{display:flex}
+    .mobile-acc-sheet{width:100%;max-height:70vh;background:var(--surface);border-radius:16px 16px 0 0;display:flex;flex-direction:column;overflow:hidden;animation:slideUpSheet .3s cubic-bezier(.4,0,.2,1)}
+    @keyframes slideUpSheet{from{transform:translateY(100%);opacity:.8}to{transform:translateY(0);opacity:1}}
+    .mobile-acc-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 10px;border-bottom:1px solid var(--border);flex-shrink:0}
+    .mobile-acc-title{font-size:14px;font-weight:600}
+    .mobile-acc-close{width:32px;height:32px;border-radius:50%;border:1px solid var(--border);background:var(--surface-2);color:var(--text-2);font-size:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .15s}
+    .mobile-acc-close:hover{background:var(--surface-3);color:var(--text)}
+    .mobile-acc-scroll{flex:1;overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;padding-bottom:56px}
+    .mobile-acc-section{display:flex;align-items:center;gap:12px;padding:20px 16px 10px;position:sticky;top:0;background:var(--surface);z-index:5}
+    .mobile-acc-section .divider{flex:1;height:1px;background:linear-gradient(to right,transparent,var(--border),transparent)}
+    .mobile-acc-section .title{color:var(--accent);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+    .mobile-acc-card{background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin:6px 14px;cursor:pointer;transition:border-color .15s,background .15s}
+    .mobile-acc-card.active{border-color:rgba(212,168,75,.4);background:rgba(212,168,75,.04)}
+    .mobile-acc-card:active{transform:scale(.98)}
+    .mac-top{display:flex;align-items:center;gap:8px}
+    .mac-num{font-size:11px;color:var(--accent);font-weight:700;font-variant-numeric:tabular-nums;min-width:24px}
+    .mac-name{font-size:13px;font-weight:500;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+    .mac-verdict{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+    .mac-verdict.keep{background:var(--green);box-shadow:0 0 8px rgba(34,197,94,.3)}
+    .mac-verdict.discard{background:var(--red);box-shadow:0 0 8px rgba(239,68,68,.3)}
+    .mac-verdict.revisit{background:var(--purple);box-shadow:0 0 8px rgba(168,85,247,.3)}
+    .mac-phil{font-size:11px;font-style:italic;color:rgba(212,168,75,.45);margin-top:4px}
+    /* Mobile accordion tab bar */
+    .mobile-acc-tabs{position:absolute;bottom:0;left:0;right:0;height:52px;background:var(--surface);border-top:1px solid var(--border);display:flex;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;z-index:10}
+    .mobile-acc-tabs::-webkit-scrollbar{display:none}
+    .mat-tab{flex-shrink:0;padding:8px 14px;font-size:11px;font-weight:500;color:var(--text-3);white-space:nowrap;position:relative;min-height:44px;display:flex;align-items:center;cursor:pointer;transition:color .2s;border:none;background:none;font-family:inherit}
+    .mat-tab.active{color:var(--accent)}
+    .mat-tab.active::after{content:'';position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:80%;height:2px;background:var(--accent);border-radius:2px 2px 0 0}
     /* Comment bottom sheet */
     .comment-overlay{
       position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;
@@ -250,24 +296,18 @@
     .cs-cancel{background:var(--surface-3);color:var(--text-2)}
     .cs-save{background:var(--accent);color:var(--bg)}
     @keyframes spin{from{transform:rotate(0deg)}to{transform:rotate(360deg)}}
+    button,select,.dock-selector,.comment-trigger-compact,.mobile-acc-card,.mat-tab{touch-action:manipulation}
 
     /* Responsive */
     @media(max-width:768px){
+      .app{grid-template-rows:1fr}
+      .toolbar{display:none}
       .side{display:none}
-      .tb-sep{display:none}
-      .toolbar{padding:5px 8px;gap:4px}
-      .toolbar .submit-btn{display:none}
-      .toolbar .icon-btn{display:none}
-      .toolbar .tb-group{display:none}
-      .tb-detail{display:none}
-      .acc-toggle{padding:7px 12px;font-size:12px}
-      .acc-item{padding:10px 14px 10px 14px;font-size:13px;min-height:44px}
-      .acc-chips{padding:8px 10px;gap:4px}
-      .acc-chip{font-size:9px;padding:5px 10px}
-      /* preview-header removed */
       .bottom-nav{display:none}
       .mobile-dock{display:flex}
-      .preview{padding-bottom:180px}
+      .mobile-info-bar{display:block}
+      .preview-open-overlay{opacity:0.75;top:36px}
+      .preview-open-overlay:hover{opacity:1.0}
     }
     ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px}
   </style>
@@ -297,6 +337,11 @@
     <div class="acc-panel" id="accPanel"></div>
   </div>
 
+  <!-- Mobile top info bar -->
+  <div class="mobile-info-bar" id="mobileInfoBar">
+    <div class="mib-phil" id="mibPhil"></div>
+  </div>
+
   <!-- Main -->
   <div class="main">
     <div class="preview" id="previewPane">
@@ -324,6 +369,7 @@
       <div class="dock-progress">
         <div class="dock-prog-bar"><div class="dock-prog-fill" id="dockProgFill"></div></div>
         <span class="dock-prog-text" id="dockProgText">--</span>
+        <span id="syncStatusMobile" class="dock-sync"><span class="sync-dot offline"></span></span>
       </div>
       <div class="dock-controls">
         <button class="dock-nav" id="prevBtnMobile" onclick="goPrev()" aria-label="Previous design"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 3L5 8l5 5"/></svg></button>
@@ -342,11 +388,29 @@
         <button class="dock-nav" id="nextBtnMobile" onclick="goNext()" aria-label="Next design"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 3l5 5-5 5"/></svg></button>
       </div>
       <div class="dock-bottom">
-        <div class="comment-trigger" id="commentTrigger" onclick="openMobileComment()">
-          <span class="ct-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
-          <span class="ct-text" id="commentTriggerText">Add comment...</span>
+        <button class="dock-selector" id="dockSelector" onclick="toggleMobileAccordion()">
+          <span class="ds-num" id="dockSelectorNum">1.</span>
+          <span class="ds-name" id="dockSelectorName">--</span>
+          <svg class="ds-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 6l4 4 4-4"/></svg>
+        </button>
+        <div class="dock-actions">
+          <button class="comment-trigger-compact" id="commentTriggerCompact" onclick="openMobileComment()" aria-label="Add comment">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+          </button>
+          <button class="dock-submit" onclick="submitReview()">Submit</button>
         </div>
-        <button class="dock-submit" onclick="submitReview()">Submit</button>
+      </div>
+    </div>
+
+    <!-- Mobile design browser bottom sheet -->
+    <div class="mobile-acc-overlay" id="mobileAccOverlay" onclick="if(event.target===this)closeMobileAccordion()">
+      <div class="mobile-acc-sheet">
+        <div class="mobile-acc-head">
+          <span class="mobile-acc-title">Browse Designs</span>
+          <button class="mobile-acc-close" onclick="closeMobileAccordion()">&times;</button>
+        </div>
+        <div class="mobile-acc-scroll" id="mobileAccScroll"></div>
+        <nav class="mobile-acc-tabs" id="mobileAccTabs"></nav>
       </div>
     </div>
 
@@ -427,9 +491,9 @@ const CATALOG = [
     categories: [
       { id: 'logo', name: 'Logo Options', source: 'PR #129', description: 'Canonical Poetry بالعربي brand treatment — Forum + Reem Kufi baseline-aligned',
         options: [
-          { id: 'logo-canonical', name: 'Canonical Clean', file: 'branding/logo-option-1-canonical.html', desc: 'Clean baseline: Forum + Reem Kufi, white/dark reversible', generation: 5 },
-          { id: 'logo-gold', name: 'Gold Accent', file: 'branding/logo-option-2-gold-accent.html', desc: 'Gold #C5A059 gradient on poetry, white Arabic', generation: 5 },
-          { id: 'logo-minimal', name: 'Ultra-Minimal', file: 'branding/logo-option-4-minimal.html', desc: 'Tajawal Light + system sans, hairline weight', generation: 5 }
+          { id: 'logo-canonical', name: 'Canonical Clean', philosophy: 'The word stands alone \u2014 Forum meets Reem Kufi in quiet authority', file: 'branding/logo-option-1-canonical.html', desc: 'Clean baseline: Forum + Reem Kufi, white/dark reversible', generation: 5 },
+          { id: 'logo-gold', name: 'Gold Accent', philosophy: 'Gold traces the Arabic script like ink catching lamplight', file: 'branding/logo-option-2-gold-accent.html', desc: 'Gold #C5A059 gradient on poetry, white Arabic', generation: 5 },
+          { id: 'logo-minimal', name: 'Ultra-Minimal', philosophy: 'Nothing between you and the letterform \u2014 pure typographic breath', file: 'branding/logo-option-4-minimal.html', desc: 'Tajawal Light + system sans, hairline weight', generation: 5 }
         ],
         feedback: {}
       }
@@ -441,8 +505,8 @@ const CATALOG = [
     categories: [
       { id: 'auth-e2e', name: 'Auth E2E Flows', source: 'PR #129', description: 'Complete sign-in and sign-out guided flows with pulsing glow overlay',
         options: [
-          { id: 'auth-e2e-sso', name: 'SSO Sign-In Flow', file: 'auth/e2e-auth-sso-flow.html', desc: 'Guided tap overlay: heart → tooltip → auth modal (Google/Apple/Email) → signed-in → save poem', generation: 5 },
-          { id: 'auth-e2e-signout', name: 'Sign-Out Flow', file: 'auth/e2e-auth-signout-flow.html', desc: 'Guided tap overlay: sign-out → confirmation → signed-out → re-auth cycle', generation: 5 }
+          { id: 'auth-e2e-sso', name: 'SSO Sign-In Flow', philosophy: 'Heart \u2192 Tooltip \u2192 Auth Modal (Google/Apple/Email) \u2192 Signed In \u2192 Save Poem', file: 'auth/e2e-auth-sso-flow.html', desc: 'Guided tap overlay: heart → tooltip → auth modal (Google/Apple/Email) → signed-in → save poem', generation: 5 },
+          { id: 'auth-e2e-signout', name: 'Sign-Out Flow', philosophy: 'Sign-Out \u2192 Confirmation \u2192 Signed Out \u2192 Re-Auth Cycle', file: 'auth/e2e-auth-signout-flow.html', desc: 'Guided tap overlay: sign-out → confirmation → signed-out → re-auth cycle', generation: 5 }
         ],
         feedback: {}
       }
@@ -456,84 +520,74 @@ const CATALOG = [
     component: 'E2E Flows',
     id: 'e2e',
     categories: [
-      { id: 'e2e-glass-deco', name: 'Glass & Art Deco', source: 'PR #64/#129', description: 'Glassmorphism, editorial/magazine, and art deco geometric approaches.',
+      { id: 'e2e-gilded', name: 'The Gilded Page', source: 'PR #64/#65/#129', description: 'Gold ornamentation, geometric patterns, and cultural heritage \u2014 the verse adorned',
         options: [
-          { id: 'e2e-78ab-a1', name: 'A1 Gold Orbit', philosophy: 'Glassmorphism', file: 'e2e/set-78ab/e2e-a1-gold-orbit-story.html', desc: 'Glassmorphism: gold orbits, frosted glass onboarding, unique controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-78ab-a1-vc', name: 'A1 Gold Orbit (VC)', philosophy: 'Glassmorphism', file: 'e2e/set-78ab/e2e-a1-gold-orbit-story-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
-          { id: 'e2e-78ab-a2', name: 'A2 Paper Photon', philosophy: 'Editorial/Magazine', file: 'e2e/set-78ab/e2e-a2-paper-photon.html', desc: 'Editorial/Magazine: full-bleed typography, magazine spreads, text menu controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-78ab-a2-vc', name: 'A2 Paper Photon (VC)', philosophy: 'Editorial/Magazine', file: 'e2e/set-78ab/e2e-a2-paper-photon-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
-          { id: 'e2e-78ab-a8', name: 'A8 Deco Discovery', philosophy: 'Art Deco', file: 'e2e/set-78ab/e2e-a8-deco-discovery.html', desc: 'Art Deco Geometric: gold dividers, geometric panels, fan controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-78ab-a8-vc', name: 'A8 Deco Discovery (VC)', philosophy: 'Art Deco', file: 'e2e/set-78ab/e2e-a8-deco-discovery-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true }
+          { id: 'e2e-78ab-a8', name: 'A8 Deco Discovery', philosophy: 'Gold geometry frames each verse like a palace archway', file: 'e2e/set-78ab/e2e-a8-deco-discovery.html', desc: 'Art Deco Geometric: gold dividers, geometric panels, fan controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
+          { id: 'e2e-78ab-a8-vc', name: 'A8 Deco Discovery (VC)', philosophy: 'Gold geometry frames each verse like a palace archway', file: 'e2e/set-78ab/e2e-a8-deco-discovery-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
+          { id: 'e2e-c0cf-a-09', name: '09 Mosaic Discovery', philosophy: 'Tessellated patterns frame each verse like a mosque mihrab', file: 'e2e/set-c0cf-a/09-mosaic-discovery.html', desc: 'Islamic Geometric: tessellated frame, geometric pattern controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
+          { id: 'e2e-c0cf-a-09-vc', name: '09 Mosaic Discovery (VC)', philosophy: 'Tessellated patterns frame each verse like a mosque mihrab', file: 'e2e/set-c0cf-a/09-mosaic-discovery-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
+          { id: 'e2e-c0cf-a-04', name: '04 Desert Poet', philosophy: 'Dune layers drift behind the verse like a desert mirage', file: 'e2e/set-c0cf-a/04-desert-poet.html', desc: 'Warm Sand/Parallax: parallax dune layers, mirage text, caravan controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
+          { id: 'e2e-c0cf-a-04-vc', name: '04 Desert Poet (VC)', philosophy: 'Dune layers drift behind the verse like a desert mirage', file: 'e2e/set-c0cf-a/04-desert-poet-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
+          { id: 'e2e-new-pf2', name: 'PF2 Gold Mystical', philosophy: 'Gold constellations orbit the poem in celestial reverence', file: 'e2e/set-new/pf2-gold-mystical.html', desc: 'Gold Orbit: orbiting gold icons, complete E2E from standalone', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
+          { id: 'e2e-new-pf2-vc', name: 'PF2 Gold Mystical (VC)', philosophy: 'Gold constellations orbit the poem in celestial reverence', file: 'e2e/set-new/pf2-gold-mystical-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true }
         ],
         feedback: {}
       },
-      { id: 'e2e-organic-zen', name: 'Organic & Japanese', source: 'PR #64/#129', description: 'Biomorphic shapes, Japanese Ma philosophy, and wabi-sabi aesthetics.',
+      { id: 'e2e-ink', name: 'Ink & Parchment', source: 'PR #65/#129', description: 'Manuscripts, codex, and calligraphy \u2014 the physical act of writing and reading',
         options: [
-          { id: 'e2e-78ab-b10', name: 'B10 Signature Blend', philosophy: 'Organic/Biomorphic', file: 'e2e/set-78ab/e2e-b10-signature-blend.html', desc: 'Organic/Biomorphic: flowing blob containers, organic wave controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-78ab-b10-vc', name: 'B10 Signature Blend (VC)', philosophy: 'Organic/Biomorphic', file: 'e2e/set-78ab/e2e-b10-signature-blend-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
-          { id: 'e2e-78ab-b8', name: 'B8 Ritual Spotlight', philosophy: 'Japanese Ma', file: 'e2e/set-78ab/e2e-b8-ritual-spotlight-hybrid.html', desc: 'Japanese Ma: vast emptiness, poem floats alone, tap-to-reveal controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-78ab-b8-vc', name: 'B8 Ritual Spotlight (VC)', philosophy: 'Japanese Ma', file: 'e2e/set-78ab/e2e-b8-ritual-spotlight-hybrid-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
-          { id: 'e2e-new-zen1', name: 'Zen 1 Refined', philosophy: 'Wabi-Sabi', file: 'e2e/set-new/zen1-refined.html', desc: 'Wabi-Sabi: imperfect beauty, single-dot controls revealing one action at a time', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-new-zen1-vc', name: 'Zen 1 Refined (VC)', philosophy: 'Wabi-Sabi', file: 'e2e/set-new/zen1-refined-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
-          { id: 'e2e-new-zen2', name: 'Zen 2 Haiku', philosophy: 'Muji Minimalism', file: 'e2e/set-new/zen2-haiku.html', desc: 'Muji Minimalism: barely-there thin circles, visible only after first touch', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-new-zen2-vc', name: 'Zen 2 Haiku (VC)', philosophy: 'Muji Minimalism', file: 'e2e/set-new/zen2-haiku-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true }
+          { id: 'e2e-c0cf-a-02', name: '02 Zen Manuscript', philosophy: 'Parchment and ink \u2014 reading poetry the way scribes once wrote it', file: 'e2e/set-c0cf-a/02-zen-manuscript.html', desc: 'Skeuomorphic Revival: parchment texture, ink well, handwritten feel', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
+          { id: 'e2e-c0cf-a-02-vc', name: '02 Zen Manuscript (VC)', philosophy: 'Parchment and ink \u2014 reading poetry the way scribes once wrote it', file: 'e2e/set-c0cf-a/02-zen-manuscript-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
+          { id: 'e2e-c0cf-a-07', name: '07 Scroll Keeper', philosophy: 'Gilded margins and drop caps honor the manuscript tradition', file: 'e2e/set-c0cf-a/07-scroll-keeper.html', desc: 'Illuminated Manuscript: gilded margins, drop caps, scroll roller controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
+          { id: 'e2e-c0cf-a-07-vc', name: '07 Scroll Keeper (VC)', philosophy: 'Gilded margins and drop caps honor the manuscript tradition', file: 'e2e/set-c0cf-a/07-scroll-keeper-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
+          { id: 'e2e-c0cf-b-05', name: '05 Scroll Codex', philosophy: 'An open book with visible binding \u2014 poetry held in your hands', file: 'e2e/set-c0cf-b/05-scroll-codex.html', desc: 'Codex/Book: open book pages, visible binding, page tab controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
+          { id: 'e2e-c0cf-b-05-vc', name: '05 Scroll Codex (VC)', philosophy: 'An open book with visible binding \u2014 poetry held in your hands', file: 'e2e/set-c0cf-b/05-scroll-codex-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
+          { id: 'e2e-new-pf1', name: 'PF1 Calligraphic', philosophy: 'The words themselves become the interface \u2014 kinetic calligraphy', file: 'e2e/set-new/pf1-calligraphic.html', desc: 'Kinetic Typography: words ARE the interface, scrolling text ticker controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
+          { id: 'e2e-new-pf1-vc', name: 'PF1 Calligraphic (VC)', philosophy: 'The words themselves become the interface \u2014 kinetic calligraphy', file: 'e2e/set-new/pf1-calligraphic-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
+          { id: 'e2e-new-codex', name: 'Codex Spine Story', philosophy: 'Leather spine and ribbon bookmark \u2014 a volume of collected verse', file: 'e2e/set-new/codex-spine-story.html', desc: 'Medieval Codex: leather spine, page turns, bookmark ribbon controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
+          { id: 'e2e-new-codex-vc', name: 'Codex Spine Story (VC)', philosophy: 'Leather spine and ribbon bookmark \u2014 a volume of collected verse', file: 'e2e/set-new/codex-spine-story-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true }
         ],
         feedback: {}
       },
-      { id: 'e2e-manuscript-codex', name: 'Manuscripts & Codex', source: 'PR #65/#129', description: 'Illuminated manuscripts, medieval codex, skeuomorphic book metaphors.',
+      { id: 'e2e-breath', name: 'Breath & Stillness', source: 'PR #64/#65/#129/Round 3', description: 'Zen, emptiness, and Nordic quiet \u2014 contemplation between the lines',
         options: [
-          { id: 'e2e-c0cf-a-02', name: '02 Zen Manuscript', philosophy: 'Skeuomorphic', file: 'e2e/set-c0cf-a/02-zen-manuscript.html', desc: 'Skeuomorphic Revival: parchment texture, ink well, handwritten feel', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-c0cf-a-02-vc', name: '02 Zen Manuscript (VC)', philosophy: 'Skeuomorphic', file: 'e2e/set-c0cf-a/02-zen-manuscript-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
-          { id: 'e2e-c0cf-a-07', name: '07 Scroll Keeper', philosophy: 'Codex/Book', file: 'e2e/set-c0cf-a/07-scroll-keeper.html', desc: 'Illuminated Manuscript: gilded margins, drop caps, scroll roller controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-c0cf-a-07-vc', name: '07 Scroll Keeper (VC)', philosophy: 'Codex/Book', file: 'e2e/set-c0cf-a/07-scroll-keeper-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
-          { id: 'e2e-c0cf-b-05', name: '05 Scroll Codex', philosophy: 'Illuminated Manuscript', file: 'e2e/set-c0cf-b/05-scroll-codex.html', desc: 'Codex/Book: open book pages, visible binding, page tab controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-c0cf-b-05-vc', name: '05 Scroll Codex (VC)', philosophy: 'Illuminated Manuscript', file: 'e2e/set-c0cf-b/05-scroll-codex-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
-          { id: 'e2e-new-pf1', name: 'PF1 Calligraphic', philosophy: 'Illuminated Manuscript', file: 'e2e/set-new/pf1-calligraphic.html', desc: 'Kinetic Typography: words ARE the interface, scrolling text ticker controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-new-pf1-vc', name: 'PF1 Calligraphic (VC)', philosophy: 'Illuminated Manuscript', file: 'e2e/set-new/pf1-calligraphic-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
-          { id: 'e2e-new-codex', name: 'Codex Spine Story', philosophy: 'Medieval Codex', file: 'e2e/set-new/codex-spine-story.html', desc: 'Medieval Codex: leather spine, page turns, bookmark ribbon controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-new-codex-vc', name: 'Codex Spine Story (VC)', philosophy: 'Medieval Codex', file: 'e2e/set-new/codex-spine-story-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true }
+          { id: 'e2e-78ab-b8', name: 'B8 Ritual Spotlight', philosophy: 'Vast emptiness \u2014 the poem floats alone, demanding your full attention', file: 'e2e/set-78ab/e2e-b8-ritual-spotlight-hybrid.html', desc: 'Japanese Ma: vast emptiness, poem floats alone, tap-to-reveal controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
+          { id: 'e2e-78ab-b8-vc', name: 'B8 Ritual Spotlight (VC)', philosophy: 'Vast emptiness \u2014 the poem floats alone, demanding your full attention', file: 'e2e/set-78ab/e2e-b8-ritual-spotlight-hybrid-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
+          { id: 'e2e-new-zen1', name: 'Zen 1 Refined', philosophy: 'Imperfect beauty \u2014 each verse revealed like a weathered inscription', file: 'e2e/set-new/zen1-refined.html', desc: 'Wabi-Sabi: imperfect beauty, single-dot controls revealing one action at a time', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
+          { id: 'e2e-new-zen1-vc', name: 'Zen 1 Refined (VC)', philosophy: 'Imperfect beauty \u2014 each verse revealed like a weathered inscription', file: 'e2e/set-new/zen1-refined-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
+          { id: 'e2e-new-zen2', name: 'Zen 2 Haiku', philosophy: 'Almost nothing is visible until you reach for the poem', file: 'e2e/set-new/zen2-haiku.html', desc: 'Muji Minimalism: barely-there thin circles, visible only after first touch', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
+          { id: 'e2e-new-zen2-vc', name: 'Zen 2 Haiku (VC)', philosophy: 'Almost nothing is visible until you reach for the poem', file: 'e2e/set-new/zen2-haiku-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
+          { id: 'e2e-c0cf-b-09', name: '09 Scandinavian Scroll', philosophy: 'Extreme stillness \u2014 birch-thin lines and the poem, nothing more', file: 'e2e/set-c0cf-b/09-scandinavian-scroll.html', desc: 'Nordic Minimal: extreme whitespace, birch-thin lines, ultra-thin dot controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
+          { id: 'e2e-c0cf-b-09-vc', name: '09 Scandinavian Scroll (VC)', philosophy: 'Extreme stillness \u2014 birch-thin lines and the poem, nothing more', file: 'e2e/set-c0cf-b/09-scandinavian-scroll-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
+          { id: 'e2e-c0cf-b-08', name: '08 Zen Spotlight', philosophy: 'Sand grains reveal each word \u2014 poetry measured in passing time', file: 'e2e/set-c0cf-b/08-zen-spotlight.html', desc: 'Hourglass/Time: hourglass frame, sand grain text reveal, timeline scrubber controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
+          { id: 'e2e-c0cf-b-08-vc', name: '08 Zen Spotlight (VC)', philosophy: 'Sand grains reveal each word \u2014 poetry measured in passing time', file: 'e2e/set-c0cf-b/08-zen-spotlight-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true }
         ],
         feedback: {}
       },
-      { id: 'e2e-cultural-patterns', name: 'Cultural & Geometric', source: 'PR #65/#129', description: 'Islamic geometric patterns, desert landscapes, and cultural motifs.',
+      { id: 'e2e-light', name: 'Light & Atmosphere', source: 'PR #64/#129/Round 3', description: 'Frosted glass, cinematic shadow, and stark contrast \u2014 mood and luminance',
         options: [
-          { id: 'e2e-c0cf-a-09', name: '09 Mosaic Discovery', philosophy: 'Islamic Geometric', file: 'e2e/set-c0cf-a/09-mosaic-discovery.html', desc: 'Islamic Geometric: tessellated frame, geometric pattern controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-c0cf-a-09-vc', name: '09 Mosaic Discovery (VC)', philosophy: 'Islamic Geometric', file: 'e2e/set-c0cf-a/09-mosaic-discovery-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
-          { id: 'e2e-c0cf-a-04', name: '04 Desert Poet', philosophy: 'Warm Sand/Parallax', file: 'e2e/set-c0cf-a/04-desert-poet.html', desc: 'Warm Sand/Parallax: parallax dune layers, mirage text, caravan controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-c0cf-a-04-vc', name: '04 Desert Poet (VC)', philosophy: 'Warm Sand/Parallax', file: 'e2e/set-c0cf-a/04-desert-poet-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
-          { id: 'e2e-new-pf2', name: 'PF2 Gold Mystical', philosophy: 'Gold Orbit', file: 'e2e/set-new/pf2-gold-mystical.html', desc: 'Gold Orbit: orbiting gold icons, complete E2E from standalone', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-new-pf2-vc', name: 'PF2 Gold Mystical (VC)', philosophy: 'Gold Orbit', file: 'e2e/set-new/pf2-gold-mystical-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true }
+          { id: 'e2e-78ab-a1', name: 'A1 Gold Orbit', philosophy: 'Verses float behind frosted glass like breath on a cold window', file: 'e2e/set-78ab/e2e-a1-gold-orbit-story.html', desc: 'Glassmorphism: gold orbits, frosted glass onboarding, unique controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
+          { id: 'e2e-78ab-a1-vc', name: 'A1 Gold Orbit (VC)', philosophy: 'Verses float behind frosted glass like breath on a cold window', file: 'e2e/set-78ab/e2e-a1-gold-orbit-story-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
+          { id: 'e2e-78ab-a2', name: 'A2 Paper Photon', philosophy: 'Poetry laid out like a literary magazine \u2014 full-bleed and unhurried', file: 'e2e/set-78ab/e2e-a2-paper-photon.html', desc: 'Editorial/Magazine: full-bleed typography, magazine spreads, text menu controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
+          { id: 'e2e-78ab-a2-vc', name: 'A2 Paper Photon (VC)', philosophy: 'Poetry laid out like a literary magazine \u2014 full-bleed and unhurried', file: 'e2e/set-78ab/e2e-a2-paper-photon-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
+          { id: 'e2e-new-ls1', name: 'L&S 1 Chiaroscuro', philosophy: 'Dramatic shadow carves the verse into light \u2014 cinematic intimacy', file: 'e2e/set-new/ls1-chiaroscuro.html', desc: 'Cinematic Chiaroscuro: dramatic light/shadow, shadow-edge illuminating controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
+          { id: 'e2e-new-ls1-vc', name: 'L&S 1 Chiaroscuro (VC)', philosophy: 'Dramatic shadow carves the verse into light \u2014 cinematic intimacy', file: 'e2e/set-new/ls1-chiaroscuro-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
+          { id: 'e2e-new-ls2', name: 'L&S 2 Ray Tracing', philosophy: 'Converging light rays illuminate the poem like a reading lamp', file: 'e2e/set-new/ls2-ray-tracing.html', desc: 'Light Architecture: converging light rays, vertical beam controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
+          { id: 'e2e-new-ls2-vc', name: 'L&S 2 Ray Tracing (VC)', philosophy: 'Converging light rays illuminate the poem like a reading lamp', file: 'e2e/set-new/ls2-ray-tracing-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
+          { id: 'e2e-new-pf3', name: 'PF3 Ink Constellation', philosophy: 'White text on black void \u2014 poetry as raw signal, no decoration', file: 'e2e/set-new/pf3-ink-constellation.html', desc: 'Monochrome Noir: terminal-style UI, persistent command-line controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
+          { id: 'e2e-new-pf3-vc', name: 'PF3 Ink Constellation (VC)', philosophy: 'White text on black void \u2014 poetry as raw signal, no decoration', file: 'e2e/set-new/pf3-ink-constellation-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true }
         ],
         feedback: {}
       },
-      { id: 'e2e-particle-neumorphic', name: 'Particle & Neumorphic', source: 'PR #65/#129', description: 'Particle physics simulations, neumorphic soft depth, and fusion approaches.',
+      { id: 'e2e-touch', name: 'Touch & Texture', source: 'PR #64/#65/#129', description: 'Organic forms, particles, and pressed surfaces \u2014 poetry you can almost feel',
         options: [
-          { id: 'e2e-c0cf-b-01', name: '01 Particle Scroll', philosophy: 'Particle Physics', file: 'e2e/set-c0cf-b/01-particle-scroll.html', desc: 'Particle Physics: text made of particles, physics-driven scroll, tap-burst controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-c0cf-b-01-vc', name: '01 Particle Scroll (VC)', philosophy: 'Particle Physics', file: 'e2e/set-c0cf-b/01-particle-scroll-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
-          { id: 'e2e-c0cf-b-04', name: '04 Neumorphic Warmth', philosophy: 'Neumorphic', file: 'e2e/set-c0cf-b/04-neumorphic-warmth.html', desc: 'Neumorphic: soft pressed surfaces, tactile card depth, raised platform controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-c0cf-b-04-vc', name: '04 Neumorphic Warmth (VC)', philosophy: 'Neumorphic', file: 'e2e/set-c0cf-b/04-neumorphic-warmth-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
-          { id: 'e2e-c0cf-b-07', name: '07 Particle Neumorphic', philosophy: 'Particle Fusion', file: 'e2e/set-c0cf-b/07-particle-neumorphic.html', desc: 'Particle Fusion: hybrid particle + soft depth, orbiting particle controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-c0cf-b-07-vc', name: '07 Particle Neumorphic (VC)', philosophy: 'Particle Fusion', file: 'e2e/set-c0cf-b/07-particle-neumorphic-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true }
-        ],
-        feedback: {}
-      },
-      { id: 'e2e-light-shadow', name: 'Light & Shadow', source: 'Round 3', description: 'Cinematic lighting, chiaroscuro contrast, and light architecture.',
-        options: [
-          { id: 'e2e-new-ls1', name: 'L&S 1 Chiaroscuro', philosophy: 'Cinematic Chiaroscuro', file: 'e2e/set-new/ls1-chiaroscuro.html', desc: 'Cinematic Chiaroscuro: dramatic light/shadow, shadow-edge illuminating controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-new-ls1-vc', name: 'L&S 1 Chiaroscuro (VC)', philosophy: 'Cinematic Chiaroscuro', file: 'e2e/set-new/ls1-chiaroscuro-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
-          { id: 'e2e-new-ls2', name: 'L&S 2 Ray Tracing', philosophy: 'Light Architecture', file: 'e2e/set-new/ls2-ray-tracing.html', desc: 'Light Architecture: converging light rays, vertical beam controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-new-ls2-vc', name: 'L&S 2 Ray Tracing (VC)', philosophy: 'Light Architecture', file: 'e2e/set-new/ls2-ray-tracing-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true }
-        ],
-        feedback: {}
-      },
-      { id: 'e2e-minimal-temporal', name: 'Minimal & Temporal', source: 'PR #65/Round 3', description: 'Nordic minimalism, hourglass/time metaphors, and monochrome noir.',
-        options: [
-          { id: 'e2e-c0cf-b-09', name: '09 Scandinavian Scroll', philosophy: 'Nordic Minimal', file: 'e2e/set-c0cf-b/09-scandinavian-scroll.html', desc: 'Nordic Minimal: extreme whitespace, birch-thin lines, ultra-thin dot controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-c0cf-b-09-vc', name: '09 Scandinavian Scroll (VC)', philosophy: 'Nordic Minimal', file: 'e2e/set-c0cf-b/09-scandinavian-scroll-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
-          { id: 'e2e-c0cf-b-08', name: '08 Zen Spotlight', philosophy: 'Hourglass/Time', file: 'e2e/set-c0cf-b/08-zen-spotlight.html', desc: 'Hourglass/Time: hourglass frame, sand grain text reveal, timeline scrubber controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-c0cf-b-08-vc', name: '08 Zen Spotlight (VC)', philosophy: 'Hourglass/Time', file: 'e2e/set-c0cf-b/08-zen-spotlight-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
-          { id: 'e2e-new-pf3', name: 'PF3 Ink Constellation', philosophy: 'Monochrome Noir', file: 'e2e/set-new/pf3-ink-constellation.html', desc: 'Monochrome Noir: terminal-style UI, persistent command-line controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-new-pf3-vc', name: 'PF3 Ink Constellation (VC)', philosophy: 'Monochrome Noir', file: 'e2e/set-new/pf3-ink-constellation-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true }
+          { id: 'e2e-78ab-b10', name: 'B10 Signature Blend', philosophy: 'Verses flow through organic shapes like water over river stones', file: 'e2e/set-78ab/e2e-b10-signature-blend.html', desc: 'Organic/Biomorphic: flowing blob containers, organic wave controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
+          { id: 'e2e-78ab-b10-vc', name: 'B10 Signature Blend (VC)', philosophy: 'Verses flow through organic shapes like water over river stones', file: 'e2e/set-78ab/e2e-b10-signature-blend-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
+          { id: 'e2e-c0cf-b-01', name: '01 Particle Scroll', philosophy: 'Letters dissolve into particles \u2014 poetry as elemental matter', file: 'e2e/set-c0cf-b/01-particle-scroll.html', desc: 'Particle Physics: text made of particles, physics-driven scroll, tap-burst controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
+          { id: 'e2e-c0cf-b-01-vc', name: '01 Particle Scroll (VC)', philosophy: 'Letters dissolve into particles \u2014 poetry as elemental matter', file: 'e2e/set-c0cf-b/01-particle-scroll-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
+          { id: 'e2e-c0cf-b-04', name: '04 Neumorphic Warmth', philosophy: 'Soft tactile surfaces \u2014 the verse feels pressed into warm clay', file: 'e2e/set-c0cf-b/04-neumorphic-warmth.html', desc: 'Neumorphic: soft pressed surfaces, tactile card depth, raised platform controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
+          { id: 'e2e-c0cf-b-04-vc', name: '04 Neumorphic Warmth (VC)', philosophy: 'Soft tactile surfaces \u2014 the verse feels pressed into warm clay', file: 'e2e/set-c0cf-b/04-neumorphic-warmth-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
+          { id: 'e2e-c0cf-b-07', name: '07 Particle Neumorphic', philosophy: 'Particles settle into pressed forms \u2014 physics meets craft', file: 'e2e/set-c0cf-b/07-particle-neumorphic.html', desc: 'Particle Fusion: hybrid particle + soft depth, orbiting particle controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
+          { id: 'e2e-c0cf-b-07-vc', name: '07 Particle Neumorphic (VC)', philosophy: 'Particles settle into pressed forms \u2014 physics meets craft', file: 'e2e/set-c0cf-b/07-particle-neumorphic-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true }
         ],
         feedback: {}
       }
@@ -590,6 +644,9 @@ function setSyncStatus(status) {
     label.textContent = text;
     label.className = 'sync-label' + (text ? '' : ' hidden');
   }
+  // Mobile sync dot
+  var mobileDot = document.querySelector('#syncStatusMobile .sync-dot');
+  if (mobileDot) mobileDot.className = 'sync-dot ' + status;
 }
 
 function scheduleSyncToAPI() {
@@ -733,6 +790,62 @@ function getAccordionCategories() {
   return cats;
 }
 
+function renderAccordionItem(f, currentFi, onSelect) {
+  var opt = f.option;
+  var itemFi = flatList.indexOf(f);
+  var isActive = itemFi === currentFi;
+  var rev = getReview(opt.id);
+  var item = document.createElement('button');
+  item.className = 'acc-item' + (isActive ? ' active' : '');
+  if (rev.verdict) {
+    var dot = document.createElement('span');
+    dot.className = 'acc-item-verdict';
+    var dotColor = { keep: 'var(--green)', discard: 'var(--red)', revisit: 'var(--purple)' }[rev.verdict] || 'var(--text-3)';
+    dot.style.background = dotColor;
+    dot.style.setProperty('--verdict-color', dotColor);
+    item.appendChild(dot);
+  }
+  var numSpan = document.createElement('span');
+  numSpan.className = 'acc-item-num';
+  numSpan.textContent = (itemFi + 1);
+  item.appendChild(numSpan);
+  var nameSpan = document.createElement('span');
+  nameSpan.className = 'acc-item-name';
+  nameSpan.textContent = opt.name;
+  item.appendChild(nameSpan);
+  if (opt.isVC) {
+    var vcBadge = document.createElement('span');
+    vcBadge.className = 'vc-badge';
+    vcBadge.textContent = 'VC';
+    item.appendChild(vcBadge);
+  } else if (opt.philosophy) {
+    var sep = document.createElement('span');
+    sep.className = 'acc-item-sep';
+    sep.textContent = '|';
+    item.appendChild(sep);
+    var philSpan = document.createElement('span');
+    philSpan.className = 'acc-item-philosophy';
+    philSpan.textContent = opt.philosophy;
+    item.appendChild(philSpan);
+  }
+  var openLink = document.createElement('span');
+  openLink.className = 'acc-item-open';
+  openLink.title = 'Open in new tab';
+  openLink.textContent = '\u2197';
+  item.appendChild(openLink);
+  (function(targetFi, optFile) {
+    item.addEventListener('click', function(e) {
+      if (e.target.closest('.acc-item-open')) {
+        e.stopPropagation();
+        window.open('/design-review/' + optFile, '_blank');
+        return;
+      }
+      onSelect(targetFi);
+    });
+  })(itemFi, opt.file);
+  return item;
+}
+
 function buildAccordion() {
   var panel = document.getElementById('accPanel');
   panel.textContent = '';
@@ -788,60 +901,10 @@ function buildAccordion() {
   var itemsContainer = document.createElement('div');
   itemsContainer.className = 'acc-items';
   sortedItems.forEach(function(f) {
-    var opt = f.option;
-    var itemFi = flatList.indexOf(f);
-    var isActive = itemFi === fi;
-    var rev = getReview(opt.id);
-    var item = document.createElement('button');
-    item.className = 'acc-item' + (isActive ? ' active' : '');
-    // Verdict dot
-    if (rev.verdict) {
-      var dot = document.createElement('span');
-      dot.className = 'acc-item-verdict';
-      var dotColor = { keep: 'var(--green)', discard: 'var(--red)', revisit: 'var(--purple)' }[rev.verdict] || 'var(--text-3)';
-      dot.style.background = dotColor;
-      dot.style.setProperty('--verdict-color', dotColor);
-      item.appendChild(dot);
-    }
-    var numSpan = document.createElement('span');
-    numSpan.className = 'acc-item-num';
-    numSpan.textContent = (itemFi + 1);
-    item.appendChild(numSpan);
-    var nameSpan = document.createElement('span');
-    nameSpan.className = 'acc-item-name';
-    nameSpan.textContent = opt.name;
-    item.appendChild(nameSpan);
-    if (opt.isVC) {
-      var vcBadge = document.createElement('span');
-      vcBadge.className = 'vc-badge';
-      vcBadge.textContent = 'VC';
-      item.appendChild(vcBadge);
-    } else if (opt.philosophy) {
-      var sep = document.createElement('span');
-      sep.className = 'acc-item-sep';
-      sep.textContent = '|';
-      item.appendChild(sep);
-      var philSpan = document.createElement('span');
-      philSpan.className = 'acc-item-philosophy';
-      philSpan.textContent = opt.philosophy;
-      item.appendChild(philSpan);
-    }
-    var openLink = document.createElement('span');
-    openLink.className = 'acc-item-open';
-    openLink.title = 'Open in new tab';
-    openLink.textContent = '\u2197';
-    item.appendChild(openLink);
-    (function(targetFi, optFile) {
-      item.addEventListener('click', function(e) {
-        if (e.target.closest('.acc-item-open')) {
-          e.stopPropagation();
-          window.open('/design-review/' + optFile, '_blank');
-          return;
-        }
-        navigateToFlat(targetFi);
-        closeAccordion();
-      });
-    })(itemFi, opt.file);
+    var item = renderAccordionItem(f, fi, function(targetFi) {
+      navigateToFlat(targetFi);
+      closeAccordion();
+    });
     itemsContainer.appendChild(item);
   });
   panel.appendChild(itemsContainer);
@@ -850,6 +913,142 @@ function buildAccordion() {
 document.addEventListener('click', function(e) {
   if (accOpen && !e.target.closest('.toolbar') && !e.target.closest('.acc-panel')) closeAccordion();
 });
+
+// ═══════════════════════════════════════════════════════════════
+// MOBILE ACCORDION (Bottom Sheet + Scroll-Spy)
+// ═══════════════════════════════════════════════════════════════
+let mobileAccOpen = false;
+function toggleMobileAccordion() {
+  if (mobileAccOpen) closeMobileAccordion(); else openMobileAccordion();
+}
+function openMobileAccordion() {
+  mobileAccOpen = true;
+  document.getElementById('mobileAccOverlay').classList.add('open');
+  var sel = document.getElementById('dockSelector');
+  if (sel) sel.classList.add('active');
+  buildMobileAccordion();
+}
+function closeMobileAccordion() {
+  mobileAccOpen = false;
+  document.getElementById('mobileAccOverlay').classList.remove('open');
+  var sel = document.getElementById('dockSelector');
+  if (sel) sel.classList.remove('active');
+}
+
+let mobileAccObserver = null;
+function buildMobileAccordion() {
+  var scroll = document.getElementById('mobileAccScroll');
+  var tabs = document.getElementById('mobileAccTabs');
+  scroll.textContent = '';
+  tabs.textContent = '';
+  var fi = currentFlatIdx();
+  var cats = getAccordionCategories();
+  var sectionEls = [];
+  var activeCard = null;
+
+  cats.forEach(function(cat, ci) {
+    // Section header
+    var section = document.createElement('div');
+    section.className = 'mobile-acc-section';
+    section.dataset.catIdx = ci;
+    var divL = document.createElement('span');
+    divL.className = 'divider';
+    var title = document.createElement('span');
+    title.className = 'title';
+    title.textContent = cat.name;
+    var divR = document.createElement('span');
+    divR.className = 'divider';
+    section.appendChild(divL);
+    section.appendChild(title);
+    section.appendChild(divR);
+    scroll.appendChild(section);
+    sectionEls.push(section);
+
+    // Cards
+    cat.items.forEach(function(f) {
+      var opt = f.option;
+      var itemFi = flatList.indexOf(f);
+      var isActive = itemFi === fi;
+      var rev = getReview(opt.id);
+      var card = document.createElement('div');
+      card.className = 'mobile-acc-card' + (isActive ? ' active' : '');
+      // Top row
+      var top = document.createElement('div');
+      top.className = 'mac-top';
+      var num = document.createElement('span');
+      num.className = 'mac-num';
+      num.textContent = (itemFi + 1) + '.';
+      top.appendChild(num);
+      var name = document.createElement('span');
+      name.className = 'mac-name';
+      name.textContent = opt.name;
+      top.appendChild(name);
+      if (opt.isVC) {
+        var vcBadge = document.createElement('span');
+        vcBadge.className = 'vc-badge';
+        vcBadge.textContent = 'VC';
+        top.appendChild(vcBadge);
+      }
+      if (rev.verdict) {
+        var dot = document.createElement('span');
+        dot.className = 'mac-verdict ' + rev.verdict;
+        top.appendChild(dot);
+      }
+      card.appendChild(top);
+      // Philosophy subtitle
+      if (opt.philosophy) {
+        var phil = document.createElement('div');
+        phil.className = 'mac-phil';
+        phil.textContent = opt.philosophy;
+        card.appendChild(phil);
+      }
+      (function(targetFi) {
+        card.addEventListener('click', function() {
+          navigateToFlat(targetFi);
+          closeMobileAccordion();
+        });
+      })(itemFi);
+      scroll.appendChild(card);
+      if (isActive) activeCard = card;
+    });
+
+    // Tab
+    var tab = document.createElement('button');
+    tab.className = 'mat-tab' + (ci === 0 ? ' active' : '');
+    tab.textContent = cat.name.replace(/^⭐\s*/, '').replace(/&|Glass|Organic|Manuscripts|Cultural|Particle|Light|Minimal/i, function(m) { return m.substring(0, 4); });
+    tab.dataset.catIdx = ci;
+    (function(targetSection, tabIdx) {
+      tab.addEventListener('click', function() {
+        // Immediately highlight this tab (don't wait for IntersectionObserver)
+        tabs.querySelectorAll('.mat-tab').forEach(function(t) {
+          t.classList.toggle('active', t.dataset.catIdx === String(tabIdx));
+        });
+        targetSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    })(section, ci);
+    tabs.appendChild(tab);
+  });
+
+  // Scroll-spy with IntersectionObserver
+  if (mobileAccObserver) mobileAccObserver.disconnect();
+  mobileAccObserver = new IntersectionObserver(function(entries) {
+    entries.forEach(function(entry) {
+      if (entry.isIntersecting) {
+        var idx = entry.target.dataset.catIdx;
+        tabs.querySelectorAll('.mat-tab').forEach(function(t) {
+          t.classList.toggle('active', t.dataset.catIdx === idx);
+          if (t.dataset.catIdx === idx) {
+            t.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+          }
+        });
+      }
+    });
+  }, { root: scroll, rootMargin: '0px 0px -50% 0px', threshold: 0 });
+  sectionEls.forEach(function(s) { mobileAccObserver.observe(s); });
+
+  // Scroll active card into view
+  if (activeCard) setTimeout(function() { activeCard.scrollIntoView({ block: 'center' }); }, 100);
+}
 
 // ═══════════════════════════════════════════════════════════════
 // POPULATE
@@ -926,6 +1125,18 @@ function render(skipPreview) {
   // Dock progress bar
   const dpf = document.getElementById('dockProgFill'); if (dpf) dpf.style.width = (flatList.length ? Math.round(((fi + 1) / flatList.length) * 100) : 0) + '%';
   const dpt = document.getElementById('dockProgText'); if (dpt) dpt.textContent = (fi + 1) + ' / ' + flatList.length;
+
+  // Dock selector
+  var dsNum = document.getElementById('dockSelectorNum');
+  if (dsNum) dsNum.textContent = (fi + 1) + '.';
+  var dsName = document.getElementById('dockSelectorName');
+  if (dsName) dsName.textContent = opt.name;
+  // Mobile top info bar
+  var mibPhil = document.getElementById('mibPhil');
+  if (mibPhil) mibPhil.textContent = opt.philosophy || '';
+  // Compact comment indicator
+  var ctc = document.getElementById('commentTriggerCompact');
+  if (ctc) ctc.classList.toggle('has-text', !!(rev.comment));
 
   if (!skipPreview) loadPreview(opt, cat);
 
@@ -1351,6 +1562,28 @@ document.addEventListener('keydown', e => {
 });
 
 // ═══════════════════════════════════════════════════════════════
+// DOCK-AWARE PREVIEW SIZING
+// ═══════════════════════════════════════════════════════════════
+function syncPreviewPadding() {
+  var dock = document.getElementById('mobileDock');
+  var preview = document.getElementById('previewPane');
+  var infoBar = document.getElementById('mobileInfoBar');
+  if (!dock || !preview) return;
+  if (window.innerWidth <= 768) {
+    var h = dock.getBoundingClientRect().height;
+    preview.style.paddingBottom = h + 'px';
+    if (infoBar) {
+      var t = infoBar.getBoundingClientRect().height;
+      preview.style.paddingTop = t + 'px';
+    }
+  } else {
+    preview.style.paddingBottom = '';
+    preview.style.paddingTop = '';
+  }
+}
+window.addEventListener('resize', syncPreviewPadding);
+
+// ═══════════════════════════════════════════════════════════════
 // BOOT
 // ═══════════════════════════════════════════════════════════════
 loadReview();
@@ -1358,6 +1591,7 @@ buildFlatList();
 populateComps();
 populateCats();
 render();
+syncPreviewPadding();
 initAPI();
 </script>
 </body>

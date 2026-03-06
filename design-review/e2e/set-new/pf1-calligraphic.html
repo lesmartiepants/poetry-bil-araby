@@ -39,6 +39,7 @@
       inset: 0;
       z-index: 100;
       transition: opacity 0.6s ease, visibility 0.6s ease;
+      will-change: opacity;
     }
     #splash.hidden {
       opacity: 0;
@@ -52,6 +53,8 @@
       width: 100%; height: 100%;
       pointer-events: none;
       z-index: 1;
+      will-change: transform;
+      transform: translateZ(0);
     }
 
     .splash-content {
@@ -62,6 +65,9 @@
       padding: 40px;
       opacity: 0;
       animation: fadeIn 0.8s ease-out 0.3s forwards;
+      will-change: opacity;
+      transform: translateZ(0);
+      backface-visibility: hidden;
     }
 
     /* Canonical brand */
@@ -97,6 +103,7 @@
       font-weight: 500;
       opacity: 0;
       animation: fadeIn 0.6s ease-out 0.8s forwards;
+      will-change: opacity;
     }
 
     .splash-cta {
@@ -114,10 +121,12 @@
       letter-spacing: 0.15em;
       text-transform: uppercase;
       cursor: pointer;
-      transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      transition: background 0.4s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.4s cubic-bezier(0.16, 1, 0.3, 1), transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
       min-height: 48px;
       opacity: 0;
       animation: fadeIn 0.5s ease-out 1.2s forwards;
+      will-change: transform, opacity;
+      backface-visibility: hidden;
     }
     .splash-cta:hover {
       background: rgba(255, 255, 255, 0.06);
@@ -135,6 +144,7 @@
       font-weight: 400;
       opacity: 0;
       animation: fadeIn 0.5s ease-out 1.6s forwards;
+      will-change: opacity;
     }
 
     /* Theme toggle */
@@ -206,6 +216,8 @@
       opacity: 0;
       transform: translateY(30px);
       animation: letterReveal 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      will-change: transform, opacity;
+      backface-visibility: hidden;
     }
     .kinetic-word-en .letter:nth-child(1) { animation-delay: 0.1s; }
     .kinetic-word-en .letter:nth-child(2) { animation-delay: 0.18s; }
@@ -225,6 +237,7 @@
       color: #555555;
       opacity: 0;
       animation: fadeIn 0.6s ease-out 0.8s forwards;
+      will-change: opacity;
     }
 
     /* Step 1: Arabic word reveal */
@@ -238,6 +251,9 @@
       margin-bottom: 1.5rem;
       opacity: 0;
       animation: arabicReveal 1s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards;
+      will-change: transform, opacity, filter;
+      backface-visibility: hidden;
+      transform: translateZ(0);
     }
     @keyframes arabicReveal {
       from { opacity: 0; transform: scale(0.9); filter: blur(8px); }
@@ -251,6 +267,7 @@
       direction: rtl;
       opacity: 0;
       animation: fadeIn 0.6s ease-out 0.7s forwards;
+      will-change: opacity;
     }
 
     /* Step 2: count reveal */
@@ -262,6 +279,8 @@
       margin-bottom: 1rem;
       opacity: 0;
       animation: countReveal 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards;
+      will-change: transform, opacity;
+      backface-visibility: hidden;
     }
     @keyframes countReveal {
       from { opacity: 0; transform: translateY(20px) scale(0.95); }
@@ -277,6 +296,7 @@
       margin-bottom: 2rem;
       opacity: 0;
       animation: fadeIn 0.5s ease-out 0.6s forwards;
+      will-change: opacity;
     }
 
     .kinetic-enter {
@@ -294,10 +314,12 @@
       letter-spacing: 0.15em;
       text-transform: uppercase;
       cursor: pointer;
-      transition: all 0.3s ease;
+      transition: background 0.3s ease, border-color 0.3s ease;
       min-height: 48px;
       opacity: 0;
       animation: fadeIn 0.5s ease-out 1s forwards;
+      will-change: opacity;
+      backface-visibility: hidden;
     }
     .kinetic-enter:hover {
       background: rgba(255, 255, 255, 0.06);
@@ -326,6 +348,8 @@
       background: rgba(255, 255, 255, 0.15);
       transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1);
       z-index: 5;
+      will-change: width;
+      transform: translateZ(0);
     }
 
     /* ===== MAIN APP ===== */
@@ -465,6 +489,20 @@
       .splash-brand-ar { font-size: 1.5rem; }
     }
 
+    @media (max-width: 768px) {
+      .kinetic-word-ar {
+        animation-name: arabicRevealMobile;
+      }
+      .kinetic-word-en .letter {
+        animation-duration: 0.35s;
+      }
+    }
+
+    @keyframes arabicRevealMobile {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
     @media (prefers-reduced-motion: reduce) {
       *, *::before, *::after {
         animation-duration: 0.01ms !important;
@@ -596,7 +634,8 @@
   canvas.height = window.innerHeight;
 
   var particles = [];
-  var particleCount = 500;
+  var isMobile = window.innerWidth <= 768;
+  var particleCount = isMobile ? 150 : 500;
   var mouse = { x: canvas.width / 2, y: canvas.height / 2 };
   var animRunning = true;
 
@@ -624,7 +663,8 @@
     });
   }
 
-  window.addEventListener('mousemove', function (e) { mouse.x = e.clientX; mouse.y = e.clientY; });
+  window.addEventListener('mousemove', function (e) { mouse.x = e.clientX; mouse.y = e.clientY; }, { passive: true });
+  window.addEventListener('touchmove', function (e) { if (e.touches[0]) { mouse.x = e.touches[0].clientX; mouse.y = e.touches[0].clientY; } }, { passive: true });
 
   function animateParticles() {
     if (!animRunning) return;
@@ -650,21 +690,27 @@
       var twinkle = Math.sin(p.twinklePhase) * 0.3 + 0.7;
       var fo = p.opacity * twinkle;
 
-      ctx.beginPath();
-      var g1 = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius * 4);
-      g1.addColorStop(0, 'rgba(200, 220, 255, ' + (fo * 0.6) + ')');
-      g1.addColorStop(0.3, 'rgba(180, 200, 255, ' + (fo * 0.3) + ')');
-      g1.addColorStop(1, 'rgba(255, 255, 255, 0)');
-      ctx.fillStyle = g1;
-      ctx.arc(p.x, p.y, p.radius * 4, 0, Math.PI * 2);
-      ctx.fill();
+      if (!isMobile) {
+        ctx.beginPath();
+        var g1 = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius * 4);
+        g1.addColorStop(0, 'rgba(200, 220, 255, ' + (fo * 0.6) + ')');
+        g1.addColorStop(0.3, 'rgba(180, 200, 255, ' + (fo * 0.3) + ')');
+        g1.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        ctx.fillStyle = g1;
+        ctx.arc(p.x, p.y, p.radius * 4, 0, Math.PI * 2);
+        ctx.fill();
+      }
 
       ctx.beginPath();
-      var g2 = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius);
-      g2.addColorStop(0, 'rgba(255, 255, 255, ' + fo + ')');
-      g2.addColorStop(0.7, 'rgba(240, 245, 255, ' + (fo * 0.5) + ')');
-      g2.addColorStop(1, 'rgba(255, 255, 255, 0)');
-      ctx.fillStyle = g2;
+      if (isMobile) {
+        ctx.fillStyle = 'rgba(255, 255, 255, ' + fo + ')';
+      } else {
+        var g2 = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius);
+        g2.addColorStop(0, 'rgba(255, 255, 255, ' + fo + ')');
+        g2.addColorStop(0.7, 'rgba(240, 245, 255, ' + (fo * 0.5) + ')');
+        g2.addColorStop(1, 'rgba(255, 255, 255, 0)');
+        ctx.fillStyle = g2;
+      }
       ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
       ctx.fill();
     });
@@ -673,10 +719,18 @@
   }
   animateParticles();
 
+  var resizePending = false;
   window.addEventListener('resize', function () {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-  });
+    if (!resizePending) {
+      resizePending = true;
+      requestAnimationFrame(function () {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        isMobile = window.innerWidth <= 768;
+        resizePending = false;
+      });
+    }
+  }, { passive: true });
 
   /* ===== SPLASH -> WALKTHROUGH ===== */
   document.getElementById('splashCta').addEventListener('click', function () {

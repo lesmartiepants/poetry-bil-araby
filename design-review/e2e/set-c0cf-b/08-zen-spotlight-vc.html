@@ -28,7 +28,7 @@
   }
 
   /* Main Content */
-  .main-content { min-height: 100vh; padding: 2rem; padding-right: 5rem; display: block; position: relative; z-index: 1; }
+  .main-content { min-height: 100vh; padding: 2rem; padding-right: 5rem; position: relative; z-index: 1; }
   .container { max-width: 900px; margin: 0 auto; }
 
   header {
@@ -218,12 +218,253 @@
     .vc-toggle { width: 36px; height: 36px; }
   }
 
+  /* ========== ONBOARDING: Hourglass Structure ========== */
+  /*
+   * CONCEPT: "The Walkthrough IS an Hourglass"
+   * The onboarding overlay is structured as a physical hourglass.
+   * Top bulb holds step content, bottom bulb accumulates sand.
+   * Each tap cascades sand from top to bottom through the waist.
+   * Final tap flips the hourglass and reveals the main app.
+   * Copy uses time/sand metaphors throughout.
+   */
+
+  #onboarding {
+    position: fixed; inset: 0; z-index: 9998;
+    background: rgba(26, 22, 16, 0.97);
+    display: flex; align-items: center; justify-content: center;
+    flex-direction: column;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    cursor: pointer;
+    overflow: hidden;
+  }
+  body.light #onboarding { background: rgba(245, 240, 230, 0.97); }
+  #onboarding.active { opacity: 1; pointer-events: auto; }
+
+  .hourglass-onboard {
+    width: 320px; max-width: 88vw;
+    height: 520px; max-height: 78vh;
+    display: flex; flex-direction: column;
+    position: relative;
+  }
+
+  .hg-top {
+    flex: 1; position: relative; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    padding: 1.5rem;
+    clip-path: polygon(5% 0%, 95% 0%, 95% 5%, 60% 95%, 40% 95%, 5% 5%);
+    background: rgba(196,168,130,0.04);
+  }
+  body.light .hg-top { background: rgba(139,115,85,0.04); }
+
+  .hg-waist {
+    height: 24px;
+    display: flex; align-items: center; justify-content: center;
+    position: relative; z-index: 2;
+  }
+  .hg-waist::before {
+    content: ''; width: 40px; height: 2px;
+    background: var(--gold); border-radius: 1px; opacity: 0.6;
+  }
+  .hg-stream {
+    position: absolute; left: 50%; top: 0;
+    width: 3px; height: 100%;
+    transform: translateX(-50%);
+    background: linear-gradient(to bottom, rgba(196,168,130,0.5), rgba(196,168,130,0.1));
+    opacity: 0; transition: opacity 0.3s;
+  }
+  .hg-stream.flowing { opacity: 1; }
+
+  .hg-bottom {
+    flex: 1; position: relative; overflow: hidden;
+    display: flex; align-items: flex-end; justify-content: center;
+    clip-path: polygon(40% 5%, 60% 5%, 95% 95%, 95% 100%, 5% 100%, 5% 95%);
+    background: rgba(196,168,130,0.04);
+  }
+  body.light .hg-bottom { background: rgba(139,115,85,0.04); }
+
+  .hg-sand-mound {
+    position: absolute; bottom: 0; left: 10%; right: 10%;
+    height: 0%;
+    background: linear-gradient(to top, rgba(196,168,130,0.35), rgba(196,168,130,0.08));
+    border-radius: 40% 40% 0 0;
+    transition: height 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .hg-sand-mound.step-1 { height: 20%; }
+  .hg-sand-mound.step-2 { height: 50%; }
+  .hg-sand-mound.step-3 { height: 85%; }
+
+  .hg-grain-fall {
+    position: absolute; width: 100%; height: 100%; top: 0; left: 0;
+    pointer-events: none; overflow: hidden;
+  }
+  .hg-grain-fall span {
+    position: absolute; width: 3px; height: 3px;
+    border-radius: 50%; background: var(--sand); opacity: 0;
+  }
+  .hg-grain-fall.active span {
+    animation: grainDrop 1.2s cubic-bezier(.4, 0, .8, 1) forwards;
+  }
+  .hg-grain-fall.active span:nth-child(1) { left: 48%; animation-delay: 0s; }
+  .hg-grain-fall.active span:nth-child(2) { left: 51%; animation-delay: 0.1s; }
+  .hg-grain-fall.active span:nth-child(3) { left: 49%; animation-delay: 0.15s; }
+  .hg-grain-fall.active span:nth-child(4) { left: 50%; animation-delay: 0.25s; }
+  .hg-grain-fall.active span:nth-child(5) { left: 47%; animation-delay: 0.35s; }
+  .hg-grain-fall.active span:nth-child(6) { left: 52%; animation-delay: 0.4s; }
+  .hg-grain-fall.active span:nth-child(7) { left: 50%; animation-delay: 0.5s; }
+  .hg-grain-fall.active span:nth-child(8) { left: 48%; animation-delay: 0.6s; }
+
+  @keyframes grainDrop {
+    0% { top: 0%; opacity: 0.8; }
+    80% { opacity: 0.6; }
+    100% { top: 98%; opacity: 0; }
+  }
+
+  .hg-frame-line {
+    position: absolute; pointer-events: none;
+  }
+  .hg-frame-line.top-cap {
+    top: 0; left: 50%; transform: translateX(-50%);
+    width: 80%; height: 2px;
+    background: var(--sand); opacity: 0.25;
+  }
+  .hg-frame-line.bot-cap {
+    bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 80%; height: 2px;
+    background: var(--sand); opacity: 0.25;
+  }
+
+  .hour-panel {
+    text-align: center; position: absolute; width: 85%;
+    opacity: 0; transform: translateY(12px);
+    transition: opacity 0.5s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    pointer-events: none;
+  }
+  .hour-panel.active {
+    opacity: 1; transform: translateY(0); pointer-events: auto;
+  }
+
+  .hour-icon {
+    width: 44px; height: 44px; margin: 0 auto 0.75rem;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--gold); opacity: 0.8;
+  }
+  .hour-icon i { width: 24px; height: 24px; }
+
+  .hour-title {
+    font-family: 'Amiri', serif; font-size: 1.3rem; font-weight: 700;
+    color: var(--sand); margin-bottom: 0.15rem;
+  }
+  body.light .hour-title { color: var(--deep-earth); }
+
+  .hour-subtitle {
+    font-size: 0.78rem; color: var(--stone); margin-bottom: 0.7rem;
+    direction: ltr; letter-spacing: 0.08em; text-transform: uppercase;
+  }
+
+  .hour-desc {
+    font-size: 0.92rem; opacity: 0.75; line-height: 1.7; margin-bottom: 0.25rem;
+  }
+  .hour-desc[lang="ar"] { font-family: 'Tajawal', sans-serif; direction: rtl; }
+  .hour-desc.en { direction: ltr; font-size: 0.8rem; opacity: 0.4; font-style: italic; }
+
+  .hg-indicators {
+    display: flex; justify-content: center; gap: 12px;
+    margin-top: 1.2rem; position: relative; z-index: 2;
+  }
+  .hg-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: rgba(196,168,130,0.2);
+    transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+  .hg-dot.active {
+    background: var(--gold); transform: scale(1.5);
+    box-shadow: 0 0 8px rgba(197,160,89,0.3);
+  }
+  .hg-dot.past { background: var(--sand); opacity: 0.4; }
+
+  .hg-hint {
+    font-size: 0.7rem; color: var(--stone); margin-top: 0.8rem;
+    opacity: 0.4; letter-spacing: 0.1em; text-align: center;
+  }
+
+  .hourglass-onboard.flipping {
+    animation: hourglassFlip 1s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+  @keyframes hourglassFlip {
+    0% { transform: rotateX(0deg) scale(1); opacity: 1; }
+    40% { transform: rotateX(90deg) scale(0.9); opacity: 0.6; }
+    100% { transform: rotateX(180deg) scale(0.7); opacity: 0; }
+  }
+
+  /* Hide main content until onboarding completes */
+  .main-content { display: none; }
+  .main-content.visible { display: block; }
+
+  @media (max-width: 768px) {
+    .hourglass-onboard { width: 280px; height: 440px; }
+    .hg-top { padding: 1rem; }
+    .hour-title { font-size: 1.15rem; }
+    .hour-desc { font-size: 0.85rem; }
+    .hour-desc.en { font-size: 0.75rem; }
+  }
+
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
   }
 </style>
 </head>
 <body>
+
+<!-- ===== ONBOARDING: The Walkthrough IS an Hourglass ===== -->
+<div id="onboarding" class="active">
+    <div class="hourglass-onboard" id="hgOnboard">
+        <div class="hg-frame-line top-cap"></div>
+        <div class="hg-top">
+            <div class="hour-panel active" data-step="0">
+                <div class="hour-icon"><i data-lucide="hourglass"></i></div>
+                <div class="hour-title" lang="ar">كل حبة رمل قصيدة</div>
+                <div class="hour-subtitle">Every grain, a poem</div>
+                <div class="hour-desc" lang="ar">الشعر لا يعرف الزمن -- كلمات قيلت قبل ألف عام تنبض اليوم كأنها ولدت الآن</div>
+                <div class="hour-desc en">Poetry defies time -- words spoken a thousand years ago pulse today as if born this moment</div>
+            </div>
+            <div class="hour-panel" data-step="1">
+                <div class="hour-icon"><i data-lucide="clock"></i></div>
+                <div class="hour-title" lang="ar">لحظة واحدة تكفي</div>
+                <div class="hour-subtitle">One moment is enough</div>
+                <div class="hour-desc" lang="ar">اسحب لتكشف بيتا جديدا -- لا تستعجل، فكل بيت يستحق وقفة تأمل كحبة رمل تمر بين أصابعك</div>
+                <div class="hour-desc en">Swipe to reveal a new verse -- don't rush, each line deserves a pause like a grain slipping through your fingers</div>
+            </div>
+            <div class="hour-panel" data-step="2">
+                <div class="hour-icon"><i data-lucide="infinity"></i></div>
+                <div class="hour-title" lang="ar">اقلب الساعة</div>
+                <div class="hour-subtitle">Flip the hourglass</div>
+                <div class="hour-desc" lang="ar">انتهى الوقت؟ لا -- الشعر يعيد نفسه كالرمال: اقلب الساعة وابدأ من جديد</div>
+                <div class="hour-desc en">Time's up? Never -- poetry renews like sand: flip the hourglass and begin again</div>
+            </div>
+        </div>
+        <div class="hg-waist">
+            <div class="hg-stream" id="hgStream"></div>
+        </div>
+        <div class="hg-bottom">
+            <div class="hg-sand-mound" id="hgMound"></div>
+            <div class="hg-grain-fall" id="hgGrainFall">
+                <span></span><span></span><span></span><span></span>
+                <span></span><span></span><span></span><span></span>
+            </div>
+        </div>
+        <div class="hg-frame-line bot-cap"></div>
+    </div>
+    <div class="hg-indicators">
+        <div class="hg-dot active" data-dot="0"></div>
+        <div class="hg-dot" data-dot="1"></div>
+        <div class="hg-dot" data-dot="2"></div>
+    </div>
+    <div class="hg-hint">tap to let the sand fall</div>
+</div>
 
 <div class="main-content" id="mainApp">
   <header>
@@ -295,6 +536,71 @@
 (function () {
   'use strict';
 
+  /* ===== HOURGLASS ONBOARDING ===== */
+  var hourPanels = document.querySelectorAll('.hour-panel');
+  var hgDots = document.querySelectorAll('.hg-dot');
+  var hgMound = document.getElementById('hgMound');
+  var hgStream = document.getElementById('hgStream');
+  var hgGrainFall = document.getElementById('hgGrainFall');
+  var hgOnboard = document.getElementById('hgOnboard');
+  var currentHourStep = 0;
+  var totalHourSteps = hourPanels.length;
+  var isTransitioning = false;
+
+  function updateHgIndicators() {
+    for (var i = 0; i < hgDots.length; i++) {
+      hgDots[i].classList.remove('active', 'past');
+      if (i < currentHourStep) hgDots[i].classList.add('past');
+      if (i === currentHourStep) hgDots[i].classList.add('active');
+    }
+  }
+
+  function triggerSandCascade() {
+    hgStream.classList.add('flowing');
+    hgGrainFall.classList.remove('active');
+    void hgGrainFall.offsetWidth;
+    hgGrainFall.classList.add('active');
+    hgMound.className = 'hg-sand-mound step-' + (currentHourStep + 1);
+    setTimeout(function() { hgStream.classList.remove('flowing'); }, 800);
+  }
+
+  function showHourStep() {
+    for (var i = 0; i < hourPanels.length; i++) {
+      hourPanels[i].classList.remove('active');
+    }
+    if (currentHourStep < totalHourSteps) {
+      hourPanels[currentHourStep].classList.add('active');
+    }
+    updateHgIndicators();
+  }
+
+  function advanceHour() {
+    if (isTransitioning) return;
+    isTransitioning = true;
+    triggerSandCascade();
+    currentHourStep++;
+    if (currentHourStep >= totalHourSteps) {
+      setTimeout(function() {
+        hgOnboard.classList.add('flipping');
+        setTimeout(function() {
+          document.getElementById('onboarding').classList.remove('active');
+          document.getElementById('mainApp').classList.add('visible');
+          if (typeof lucide !== 'undefined') lucide.createIcons();
+          isTransitioning = false;
+        }, 900);
+      }, 600);
+    } else {
+      setTimeout(function() {
+        showHourStep();
+        isTransitioning = false;
+      }, 400);
+    }
+  }
+
+  document.getElementById('onboarding').addEventListener('click', advanceHour);
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+
+  /* ===== VERTICAL CONTROLS ===== */
   document.querySelectorAll('.vc-toggle').forEach(function(btn) {
     btn.addEventListener('click', function() {
       var action = btn.dataset.action;

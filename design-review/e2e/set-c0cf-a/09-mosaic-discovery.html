@@ -138,7 +138,7 @@
     transition: transform 1.5s ease, opacity 1s ease;
   }
   #onboarding[data-step="1"] .tess-bg { transform: rotate(15deg) scale(1.1); opacity: 0.06; }
-  #onboarding[data-step="2"] .tess-bg { transform: rotate(-10deg) scale(1.2); opacity: 0.05; }
+  #onboarding[data-step="2"] .tess-bg { transform: rotate(30deg) scale(1.2); opacity: 0.08; }
 
   /* Geometric frame */
   .geo-frame {
@@ -164,28 +164,29 @@
 
   /* Tile content panel */
   .tile-panel {
-    position: relative; z-index: 5;
+    position: absolute; z-index: 5;
     max-width: 340px; width: 88%;
+    min-height: 310px;
     padding: 2.5rem 2rem;
     background: rgba(10,46,31,0.7);
     border: 1px solid rgba(197,160,89,0.2);
     text-align: center;
     opacity: 0; transform: scale(0.95);
     transition: opacity 0.7s ease, transform 0.7s ease;
+    pointer-events: none;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
   }
-  .tile-panel.active { opacity: 1; transform: scale(1); }
+  .tile-panel.active { opacity: 1; transform: scale(1); pointer-events: auto; }
 
-  /* Geometric rosette ornament */
-  .tile-rosette {
+  /* Feature icon for onboarding tiles */
+  .tile-icon {
     width: 40px; height: 40px; margin: 0 auto 1rem;
-    border: 1.5px solid var(--gold); opacity: 0.5;
-    transform: rotate(22.5deg);
-    position: relative;
+    color: var(--gold); opacity: 0.5;
   }
-  .tile-rosette::after {
-    content: ''; position: absolute; inset: 0;
-    border: 1.5px solid var(--gold);
-    transform: rotate(45deg);
+  .tile-icon svg {
+    width: 100%; height: 100%;
+    stroke-width: 1.2;
   }
 
   .tile-ar {
@@ -212,32 +213,63 @@
     color: var(--ivory); opacity: 0.65; direction: ltr;
   }
 
-  /* Diamond indicators */
+  /* Mosaic tile indicators — fixed position below card */
   .tile-diamonds {
-    position: relative; z-index: 5;
-    display: flex; gap: 14px; margin-top: 2rem;
+    position: fixed;
+    bottom: 14%;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    display: flex; gap: 18px;
+    align-items: center;
     justify-content: center;
   }
   .tile-diamond {
-    width: 8px; height: 8px;
-    border: 1px solid rgba(197,160,89,0.3);
-    transform: rotate(45deg);
+    width: 10px; height: 10px;
+    border: 1px solid rgba(197,160,89,0.25);
+    transition: all 0.6s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    position: relative;
+  }
+  /* Inner tile detail — small nested square for mosaic feel */
+  .tile-diamond::after {
+    content: '';
+    position: absolute;
+    inset: 2px;
+    border: 1px solid rgba(197,160,89,0.15);
     transition: all 0.6s ease;
   }
   .tile-diamond.active {
     background: var(--gold);
     border-color: var(--gold);
-    box-shadow: 0 0 8px rgba(197,160,89,0.4);
+    box-shadow: 0 0 10px rgba(197,160,89,0.3);
+  }
+  .tile-diamond.active::after {
+    border-color: rgba(253,252,248,0.3);
   }
   .tile-diamond.past {
-    background: rgba(197,160,89,0.4);
-    border-color: rgba(197,160,89,0.5);
+    background: rgba(197,160,89,0.3);
+    border-color: rgba(197,160,89,0.45);
+  }
+  .tile-diamond.past::after {
+    border-color: rgba(197,160,89,0.15);
   }
 
+  /* Tap hint — fixed at bottom, outside card */
   .tile-hint {
-    position: relative; z-index: 5;
-    font-size: 11px; color: var(--gold); opacity: 0.35;
-    margin-top: 1.2rem; letter-spacing: 0.2em;
+    position: fixed;
+    bottom: 8%;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 10;
+    font-family: 'Tajawal', sans-serif;
+    font-size: 10px; color: var(--gold); opacity: 0.35;
+    letter-spacing: 0.25em;
+    text-transform: lowercase;
+    animation: hintBreathe 4s ease-in-out infinite;
+  }
+  @keyframes hintBreathe {
+    0%, 100% { opacity: 0.35; }
+    50% { opacity: 0.2; }
   }
 
   /* ============ Main App ============ */
@@ -445,21 +477,21 @@
   </div>
 
   <div class="tile-panel active" data-tile="0">
-    <div class="tile-rosette"></div>
+    <div class="tile-icon"><i data-lucide="book-open"></i></div>
     <div class="tile-ar" lang="ar" dir="rtl">الهندسة</div>
     <div class="tile-en">Sacred Geometry</div>
     <div class="tile-rule"></div>
     <div class="tile-desc">Where mathematics meets beauty. 84,000 poems arranged in patterns of infinite harmony.</div>
   </div>
   <div class="tile-panel" data-tile="1">
-    <div class="tile-rosette"></div>
+    <div class="tile-icon"><i data-lucide="volume-2"></i></div>
     <div class="tile-ar" lang="ar" dir="rtl">الإيقاع</div>
     <div class="tile-en">Rhythm & Voice</div>
     <div class="tile-rule"></div>
-    <div class="tile-desc">Hear the geometric precision of Arabic meter. AI voices that trace the patterns of sound.</div>
+    <div class="tile-desc">Hear the geometric precision of Arabic meter. Voices that trace the living patterns of sound.</div>
   </div>
   <div class="tile-panel" data-tile="2">
-    <div class="tile-rosette"></div>
+    <div class="tile-icon"><i data-lucide="heart"></i></div>
     <div class="tile-ar" lang="ar" dir="rtl">الزخرفة</div>
     <div class="tile-en">Ornament & Memory</div>
     <div class="tile-rule"></div>
@@ -471,7 +503,7 @@
     <div class="tile-diamond" data-dia="1"></div>
     <div class="tile-diamond" data-dia="2"></div>
   </div>
-  <div class="tile-hint">tap</div>
+  <div class="tile-hint">tap to continue</div>
 </div>
 
 <!-- ======== Main App ======== -->

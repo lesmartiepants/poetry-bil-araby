@@ -112,6 +112,17 @@
     pointer-events: none;
   }
 
+  /* Full-page sparkle canvas -- covers entire viewport at all times */
+  #sparkleCanvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 9999;
+    pointer-events: none;
+  }
+
   /* Splash content */
   .splash-content {
     position: relative;
@@ -223,7 +234,32 @@
     letter-spacing: normal;
   }
 
-  /* ===== ONBOARDING (Ray Tracing / Light Architecture) ===== */
+  /* ===== ONBOARDING (Sparking Ether) ===== */
+  /*
+   * BRAINSTORM (kept for design rationale):
+   *
+   * 1. LUMINOUS MIST FIELD -- Canvas particles like bioluminescent fog.
+   *    Step changes swirl and recoalesce. Risk: too noisy, "particle demo."
+   *
+   * 2. SPARKING ETHER [CHOSEN] -- Two-layer approach: soft CSS luminescence
+   *    that breathes as ambient atmosphere + sparse canvas sparks that
+   *    flicker, trail, and wink out like fireflies made of light. Step
+   *    transitions gather the ether (luminescence tightens, sparks drift
+   *    inward). Between steps, ether drifts lazily. Not beams, not
+   *    spotlights -- ambient phosphorescence with occasional bright sparks.
+   *
+   * 3. AURORA VEIL -- Undulating gradient layers like northern lights.
+   *    Too cold/Nordic for Arabic poetry context.
+   *
+   * 4. PHOSPHORESCENT INK -- Luminous ink drops bloom from center per step.
+   *    Beautiful but overlapping blooms muddy after 3 steps.
+   *
+   * CHOSEN: #2 Sparking Ether
+   * WHY: Directly answers "lightly sparking ether that flows with
+   * onboarding." Feels ethereal and otherworldly. Two layers (CSS glow +
+   * canvas sparks) keep it performant while feeling rich. The gathering
+   * behavior on step change creates narrative flow without literal beams.
+   */
   #onboarding {
     display: none;
     background: #000000;
@@ -234,68 +270,27 @@
     overflow: hidden;
   }
 
-  /* Geometric light lines that frame the text */
-  .ray-frame {
+  /* Ether spark canvas -- full screen behind cards */
+  #etherCanvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 5;
+    pointer-events: none;
+  }
+
+  /* Ambient luminescence -- soft breathing glow behind content */
+  .ether-glow {
     position: absolute;
     inset: 0;
     pointer-events: none;
-    overflow: hidden;
+    z-index: 0;
+    transition: all 1.4s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  /* Horizontal converging lines */
-  .ray-line {
-    position: absolute;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, rgba(255, 245, 220, 0.3), transparent);
-    transition: all 1s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-  .ray-line-v {
-    position: absolute;
-    width: 1px;
-    background: linear-gradient(180deg, transparent, rgba(255, 245, 220, 0.25), transparent);
-    transition: all 1s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-
-  /* Step 0: lines converge from edges toward center-top */
-  .ray-frame[data-step="0"] .ray-line:nth-child(1) { top: 30%; left: 0; width: 40%; transform: rotate(3deg); }
-  .ray-frame[data-step="0"] .ray-line:nth-child(2) { top: 35%; right: 0; width: 35%; transform: rotate(-2deg); }
-  .ray-frame[data-step="0"] .ray-line:nth-child(3) { top: 65%; left: 5%; width: 90%; opacity: 0.15; }
-  .ray-frame[data-step="0"] .ray-line-v:nth-child(4) { left: 50%; top: 0; height: 25%; }
-  .ray-frame[data-step="0"] .ray-line-v:nth-child(5) { left: 25%; top: 10%; height: 80%; opacity: 0.08; }
-  .ray-frame[data-step="0"] .ray-line-v:nth-child(6) { left: 75%; top: 10%; height: 80%; opacity: 0.08; }
-
-  /* Step 1: lines refract to center-right */
-  .ray-frame[data-step="1"] .ray-line:nth-child(1) { top: 40%; left: 10%; width: 80%; transform: rotate(-1deg); }
-  .ray-frame[data-step="1"] .ray-line:nth-child(2) { top: 55%; left: 20%; width: 60%; transform: rotate(1deg); }
-  .ray-frame[data-step="1"] .ray-line:nth-child(3) { top: 25%; left: 30%; width: 40%; opacity: 0.2; }
-  .ray-frame[data-step="1"] .ray-line-v:nth-child(4) { left: 65%; top: 15%; height: 70%; }
-  .ray-frame[data-step="1"] .ray-line-v:nth-child(5) { left: 35%; top: 20%; height: 60%; opacity: 0.12; }
-  .ray-frame[data-step="1"] .ray-line-v:nth-child(6) { left: 50%; top: 5%; height: 90%; opacity: 0.06; }
-
-  /* Step 2: lines converge to center, forming a frame */
-  .ray-frame[data-step="2"] .ray-line:nth-child(1) { top: 28%; left: 15%; width: 70%; transform: rotate(0deg); opacity: 0.4; }
-  .ray-frame[data-step="2"] .ray-line:nth-child(2) { top: 72%; left: 15%; width: 70%; transform: rotate(0deg); opacity: 0.4; }
-  .ray-frame[data-step="2"] .ray-line:nth-child(3) { top: 50%; left: 10%; width: 80%; opacity: 0.08; }
-  .ray-frame[data-step="2"] .ray-line-v:nth-child(4) { left: 15%; top: 28%; height: 44%; opacity: 0.35; }
-  .ray-frame[data-step="2"] .ray-line-v:nth-child(5) { left: 85%; top: 28%; height: 44%; opacity: 0.35; }
-  .ray-frame[data-step="2"] .ray-line-v:nth-child(6) { left: 50%; top: 20%; height: 60%; opacity: 0.06; }
-
-  /* Central glow that shifts */
-  .ray-glow {
-    position: absolute;
-    inset: 0;
-    pointer-events: none;
-    transition: background 1s cubic-bezier(0.4, 0, 0.2, 1);
-  }
-  .ray-glow[data-step="0"] {
-    background: radial-gradient(ellipse 30% 35% at 50% 35%, rgba(255, 245, 220, 0.08), transparent 70%);
-  }
-  .ray-glow[data-step="1"] {
-    background: radial-gradient(ellipse 35% 30% at 55% 48%, rgba(255, 245, 220, 0.10), transparent 70%);
-  }
-  .ray-glow[data-step="2"] {
-    background: radial-gradient(ellipse 40% 40% at 50% 50%, rgba(255, 245, 220, 0.12), transparent 60%);
-  }
+  /* No background glow -- sparkles only, clean readable text */
+  .ether-glow { display: none; }
 
   .onboard-cards {
     position: relative;
@@ -306,6 +301,7 @@
   }
   .onboard-card {
     display: none;
+    min-height: 220px;
   }
   .onboard-card.active {
     display: block;
@@ -576,45 +572,38 @@
     </div>
   </div>
 
-  <!-- ===== ONBOARDING (Light Architecture) ===== -->
+  <!-- ===== ONBOARDING (Sparking Ether) ===== -->
   <div class="screen" id="onboarding">
-    <div class="ray-glow" data-step="0"></div>
-    <div class="ray-frame" data-step="0">
-      <div class="ray-line"></div>
-      <div class="ray-line"></div>
-      <div class="ray-line"></div>
-      <div class="ray-line-v"></div>
-      <div class="ray-line-v"></div>
-      <div class="ray-line-v"></div>
-    </div>
+    <div class="ether-glow" data-step="0"></div>
+    <canvas id="etherCanvas"></canvas>
 
     <div class="onboard-cards">
       <div class="onboard-card active" data-card="0">
         <div class="onboard-icon">
           <i data-lucide="book-open" style="width:22px;height:22px"></i>
         </div>
-        <div class="onboard-title">Discover Arabic Poetry</div>
-        <div class="onboard-title-ar" lang="ar" dir="rtl">اكتشف الشعر العربي</div>
-        <div class="onboard-desc">Over 84,000 poems traced in light, spanning centuries of tradition.</div>
-        <div class="onboard-desc-ar" lang="ar" dir="rtl">أكثر من 84,000 قصيدة مرسومة بالنور عبر قرون من التراث</div>
+        <div class="onboard-title">A Warm Light on Words</div>
+        <div class="onboard-title-ar" lang="ar" dir="rtl">نورٌ دافئ على الكلمات</div>
+        <div class="onboard-desc">Over 84,000 poems, gathered gently from centuries of Arabic tradition. Each one waiting to be held up to the light.</div>
+        <div class="onboard-desc-ar" lang="ar" dir="rtl">أكثر من 84,000 قصيدة، جُمعت برفق من قرون التراث العربي. كلٌّ منها ينتظر أن يُضاء</div>
       </div>
       <div class="onboard-card" data-card="1">
         <div class="onboard-icon">
           <i data-lucide="headphones" style="width:22px;height:22px"></i>
         </div>
-        <div class="onboard-title">Listen & Feel</div>
-        <div class="onboard-title-ar" lang="ar" dir="rtl">استمع واشعر</div>
-        <div class="onboard-desc">AI recitation refracts each verse into sound and emotion.</div>
-        <div class="onboard-desc-ar" lang="ar" dir="rtl">إلقاء صوتي بالذكاء الاصطناعي يحول كل بيت إلى صوت وشعور</div>
+        <div class="onboard-title">Listen Softly</div>
+        <div class="onboard-title-ar" lang="ar" dir="rtl">استمع بهدوء</div>
+        <div class="onboard-desc">Recitation gives each verse a voice -- warm, unhurried, like afternoon light moving across a page.</div>
+        <div class="onboard-desc-ar" lang="ar" dir="rtl">إلقاء صوتي يمنح كل بيت صوتًا دافئًا، كنور العصر يتنقل على صفحة</div>
       </div>
       <div class="onboard-card" data-card="2">
         <div class="onboard-icon">
           <i data-lucide="sparkles" style="width:22px;height:22px"></i>
         </div>
-        <div class="onboard-title">AI Insights</div>
-        <div class="onboard-title-ar" lang="ar" dir="rtl">رؤى ذكية</div>
-        <div class="onboard-desc">Deep analysis converges light on hidden meanings in every verse.</div>
-        <div class="onboard-desc-ar" lang="ar" dir="rtl">تحليل عميق يسلط الضوء على المعاني الكامنة في كل بيت</div>
+        <div class="onboard-title">Illuminate Meaning</div>
+        <div class="onboard-title-ar" lang="ar" dir="rtl">أضِئ المعنى</div>
+        <div class="onboard-desc">Thoughtful analysis that gently illuminates what lies beneath the surface of every verse.</div>
+        <div class="onboard-desc-ar" lang="ar" dir="rtl">تأمّلٌ رقيق يُنير بلطف ما يكمن تحت سطح كل بيت</div>
       </div>
       <div class="onboard-dots">
         <div class="onboard-dot active" data-dot="0"></div>
@@ -664,6 +653,9 @@
     </div>
   </div>
 
+<!-- Full-page sparkle overlay -->
+<canvas id="sparkleCanvas"></canvas>
+
 <script>
 (function () {
   "use strict";
@@ -681,7 +673,6 @@
     dustCanvas.height = window.innerHeight;
   }
   resizeDust();
-  window.addEventListener('resize', resizeDust);
 
   function DustParticle() {
     this.x = Math.random() * dustCanvas.width;
@@ -755,6 +746,115 @@
   }
   if (!prefersReduced) animate();
 
+  /* ===== ETHER SPARK PARTICLE SYSTEM ===== */
+  var etherCanvas = document.getElementById('etherCanvas');
+  var eCtx = etherCanvas ? etherCanvas.getContext('2d') : null;
+  var etherSparks = [];
+  var etherStep = 0;
+  var etherRunning = false;
+  var maxSparks = 50;
+  /* Sparks everywhere -- full screen coverage all steps */
+  var gatherRadii = [1.0, 1.0, 1.0];
+  /* Spark spawn rate */
+  var spawnRates = [0.18, 0.20, 0.22];
+  /* On step change, briefly boost spark emission for a gathering burst */
+  var burstTimer = 0;
+
+  function resizeEther() {
+    if (!etherCanvas) return;
+    etherCanvas.width = window.innerWidth;
+    etherCanvas.height = window.innerHeight;
+  }
+  resizeEther();
+  window.addEventListener('resize', function() { resizeDust(); resizeEther(); });
+
+  function EtherSpark(burst) {
+    var w = etherCanvas.width;
+    var h = etherCanvas.height;
+    var cx = w * 0.5;
+    var cy = h * 0.5;
+    var radius = gatherRadii[etherStep];
+    var angle = Math.random() * Math.PI * 2;
+    var dist = (0.3 + Math.random() * 0.7) * radius * Math.min(w, h) * 0.5;
+    this.x = cx + Math.cos(angle) * dist;
+    this.y = cy + Math.sin(angle) * dist;
+    this.vx = (Math.random() - 0.5) * 0.25;
+    this.vy = (Math.random() - 0.5) * 0.25 - 0.08;
+    this.size = burst ? (1.0 + Math.random() * 2.5) : (0.4 + Math.random() * 1.8);
+    this.life = 0.8 + Math.random() * 0.2;
+    this.decay = 0.003 + Math.random() * 0.006;
+    this.flickerPhase = Math.random() * Math.PI * 2;
+    this.flickerSpeed = 2 + Math.random() * 4;
+    this.warmth = Math.random();
+    if (burst) {
+      /* Burst sparks drift gently in random directions, not inward */
+      this.vx = (Math.random() - 0.5) * 0.4;
+      this.vy = (Math.random() - 0.5) * 0.4 - 0.1;
+      this.decay = 0.004 + Math.random() * 0.006;
+    }
+  }
+
+  function animateEther() {
+    if (!etherRunning || !eCtx || prefersReduced) return;
+    var w = etherCanvas.width;
+    var h = etherCanvas.height;
+    var now = Date.now() * 0.001;
+
+    eCtx.clearRect(0, 0, w, h);
+
+    var rate = burstTimer > 0 ? 0.6 : spawnRates[etherStep];
+    if (etherSparks.length < maxSparks && Math.random() < rate) {
+      etherSparks.push(new EtherSpark(burstTimer > 0));
+    }
+    if (burstTimer > 0) burstTimer--;
+
+    for (var i = etherSparks.length - 1; i >= 0; i--) {
+      var s = etherSparks[i];
+      s.x += s.vx;
+      s.y += s.vy;
+      s.life -= s.decay;
+
+      if (s.life <= 0) {
+        etherSparks.splice(i, 1);
+        continue;
+      }
+
+      var flicker = 0.5 + 0.5 * Math.sin(now * s.flickerSpeed + s.flickerPhase);
+      var alpha = s.life * (0.3 + flicker * 0.7);
+
+      var r = 255;
+      var g = Math.round(245 - s.warmth * 50);
+      var b = Math.round(220 - s.warmth * 120);
+
+      /* Dim sparkles near center to avoid text conflict */
+      var dx = s.x - w * 0.5;
+      var dy = s.y - h * 0.5;
+      var distFromCenter = Math.sqrt(dx * dx + dy * dy);
+      var centerRadius = Math.min(w, h) * 0.22;
+      var dimFactor = distFromCenter < centerRadius ? (distFromCenter / centerRadius) * 0.3 + 0.1 : 1.0;
+
+      eCtx.save();
+      eCtx.globalAlpha = alpha * 0.9 * dimFactor;
+      eCtx.shadowColor = 'rgba(' + r + ',' + g + ',' + b + ', 0.6)';
+      eCtx.shadowBlur = 6 + flicker * 10;
+      eCtx.fillStyle = 'rgba(' + r + ',' + g + ',' + b + ', 1)';
+      eCtx.beginPath();
+      eCtx.arc(s.x, s.y, s.size * (0.6 + s.life * 0.4), 0, Math.PI * 2);
+      eCtx.fill();
+
+      if (flicker > 0.7) {
+        eCtx.globalAlpha = alpha * 0.4 * (flicker - 0.7) / 0.3;
+        eCtx.shadowBlur = 15 + flicker * 8;
+        eCtx.beginPath();
+        eCtx.arc(s.x, s.y, s.size * 0.3, 0, Math.PI * 2);
+        eCtx.fill();
+      }
+      eCtx.restore();
+    }
+
+    requestAnimationFrame(animateEther);
+  }
+
   /* ===== SPLASH -> ONBOARDING ===== */
   document.getElementById('enterBtn').addEventListener('click', function () {
     var splash = document.getElementById('splash');
@@ -764,11 +864,14 @@
     setTimeout(function () {
       splash.style.display = 'none';
       document.getElementById('onboarding').style.display = 'flex';
+      /* Start the ether particle system */
+      etherRunning = true;
+      if (!prefersReduced) animateEther();
       if (typeof lucide !== 'undefined') lucide.createIcons();
     }, 800);
   });
 
-  /* ===== ONBOARDING TAP-TO-ADVANCE (Light Architecture) ===== */
+  /* ===== ONBOARDING TAP-TO-ADVANCE (Sparking Ether) ===== */
   var currentCard = 0;
   var totalCards = 3;
 
@@ -780,6 +883,7 @@
   function advanceCard() {
     currentCard++;
     if (currentCard >= totalCards) {
+      etherRunning = false;
       var ob = document.getElementById('onboarding');
       ob.style.opacity = '0';
       ob.style.transition = 'opacity 0.8s ease';
@@ -797,11 +901,11 @@
     cards[currentCard].classList.add('active');
     dots[currentCard].classList.add('active');
 
-    /* Refract the geometric light lines to new positions */
-    var rayFrame = document.querySelector('.ray-frame');
-    var rayGlow = document.querySelector('.ray-glow');
-    if (rayFrame) rayFrame.setAttribute('data-step', currentCard);
-    if (rayGlow) rayGlow.setAttribute('data-step', currentCard);
+    /* Transition the ether: update step, trigger gathering burst */
+    etherStep = currentCard;
+    burstTimer = 20;
+    var etherGlow = document.querySelector('.ether-glow');
+    if (etherGlow) etherGlow.setAttribute('data-step', currentCard);
   }
 
   /* ===== BEAM CONTROLS ===== */
@@ -814,6 +918,115 @@
       setTimeout(function() { el.classList.remove('flashed'); }, 250);
     });
   });
+
+  /* ===== FULL-PAGE SPARKLE SYSTEM ===== */
+  var sparkleCanvas = document.getElementById('sparkleCanvas');
+  var sCtx = sparkleCanvas ? sparkleCanvas.getContext('2d') : null;
+  var sparkles = [];
+  var maxSparkles = 120;
+  var sparkleRunning = true;
+
+  function resizeSparkle() {
+    if (!sparkleCanvas) return;
+    sparkleCanvas.width = window.innerWidth;
+    sparkleCanvas.height = window.innerHeight;
+  }
+  resizeSparkle();
+  window.addEventListener('resize', resizeSparkle);
+
+  function Sparkle() {
+    var w = sparkleCanvas.width;
+    var h = sparkleCanvas.height;
+    /* Distribute across the ENTIRE viewport uniformly */
+    this.x = Math.random() * w;
+    this.y = Math.random() * h;
+    /* Slow gentle drift */
+    this.vx = (Math.random() - 0.5) * 0.35;
+    this.vy = -0.1 - Math.random() * 0.3;
+    this.size = 0.4 + Math.random() * 1.6;
+    this.life = 0.7 + Math.random() * 0.3;
+    this.decay = 0.001 + Math.random() * 0.004;
+    this.flickerPhase = Math.random() * Math.PI * 2;
+    this.flickerSpeed = 1.5 + Math.random() * 3;
+    this.warmth = Math.random();
+  }
+
+  function animateSparkles() {
+    if (!sparkleRunning || !sCtx || prefersReduced) return;
+    var w = sparkleCanvas.width;
+    var h = sparkleCanvas.height;
+    var now = Date.now() * 0.001;
+    var cx = w * 0.5;
+    var cy = h * 0.5;
+    /* Center dimming zone radius -- larger of 25% viewport dimension */
+    var centerR = Math.min(w, h) * 0.25;
+
+    sCtx.clearRect(0, 0, w, h);
+
+    /* Spawn sparkles distributed across the full viewport */
+    if (sparkles.length < maxSparkles && Math.random() < 0.3) {
+      sparkles.push(new Sparkle());
+    }
+
+    for (var i = sparkles.length - 1; i >= 0; i--) {
+      var s = sparkles[i];
+      s.x += s.vx;
+      s.y += s.vy;
+      s.life -= s.decay;
+
+      /* Wrap horizontally, respawn when drifted off top/bottom */
+      if (s.x < -10) s.x = w + 10;
+      if (s.x > w + 10) s.x = -10;
+      if (s.life <= 0 || s.y < -20 || s.y > h + 20) {
+        sparkles.splice(i, 1);
+        continue;
+      }
+
+      var flicker = 0.4 + 0.6 * Math.sin(now * s.flickerSpeed + s.flickerPhase);
+      var alpha = s.life * (0.25 + flicker * 0.75);
+
+      /* Center dimming: sparkles near the center of the screen are dimmer */
+      var dx = s.x - cx;
+      var dy = s.y - cy;
+      var distFromCenter = Math.sqrt(dx * dx + dy * dy);
+      var dimFactor;
+      if (distFromCenter < centerR) {
+        /* Inside center zone: ramp from 0.08 at dead center to 0.35 at edge of zone */
+        dimFactor = 0.08 + (distFromCenter / centerR) * 0.27;
+      } else {
+        /* Outside center zone: ramp up to full brightness at edges */
+        var edgeDist = Math.min(w, h) * 0.5;
+        dimFactor = 0.35 + Math.min((distFromCenter - centerR) / edgeDist, 1.0) * 0.65;
+      }
+
+      var r = 255;
+      var g = Math.round(245 - s.warmth * 40);
+      var b = Math.round(220 - s.warmth * 100);
+
+      sCtx.save();
+      sCtx.globalAlpha = alpha * dimFactor;
+      sCtx.shadowColor = 'rgba(' + r + ',' + g + ',' + b + ', 0.5)';
+      sCtx.shadowBlur = 4 + flicker * 8;
+      sCtx.fillStyle = 'rgba(' + r + ',' + g + ',' + b + ', 1)';
+      sCtx.beginPath();
+      sCtx.arc(s.x, s.y, s.size * (0.5 + s.life * 0.5), 0, Math.PI * 2);
+      sCtx.fill();
+
+      /* Extra bright core on high-flicker frames */
+      if (flicker > 0.75) {
+        sCtx.globalAlpha = alpha * dimFactor * 0.5 * (flicker - 0.75) / 0.25;
+        sCtx.shadowBlur = 12 + flicker * 6;
+        sCtx.beginPath();
+        sCtx.arc(s.x, s.y, s.size * 0.25, 0, Math.PI * 2);
+        sCtx.fill();
+      }
+      sCtx.restore();
+    }
+
+    requestAnimationFrame(animateSparkles);
+  }
+
+  if (!prefersReduced) animateSparkles();
 
   /* ===== INIT ===== */
   if (typeof lucide !== 'undefined') lucide.createIcons();

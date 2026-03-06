@@ -311,10 +311,26 @@
       opacity: 1;
     }
 
+    /* Supporting description text */
+    .muji-desc {
+      font-family: 'Tajawal', sans-serif;
+      font-size: 12px;
+      font-weight: 300;
+      color: var(--text-muted);
+      margin-top: 1.5rem;
+      letter-spacing: 0.1em;
+      opacity: 0;
+      transition: opacity 1s ease 0.8s;
+    }
+
+    .muji-step.active .muji-desc {
+      opacity: 0.7;
+    }
+
     /* Thin hairline progress — barely visible */
     .muji-progress {
       position: fixed;
-      bottom: 48%;
+      bottom: 16%;
       left: 50%;
       transform: translateX(-50%);
       display: flex;
@@ -591,16 +607,19 @@
     <div class="muji-step active" data-step="0">
       <div class="muji-word" lang="ar" dir="rtl">اكتشف</div>
       <div class="muji-sub">discover</div>
+      <div class="muji-desc">84,000 poems across centuries of Arabic verse</div>
     </div>
 
     <div class="muji-step" data-step="1">
       <div class="muji-word" lang="ar" dir="rtl">اقرأ</div>
       <div class="muji-sub">read</div>
+      <div class="muji-desc">Voice recitation brings each verse to life</div>
     </div>
 
     <div class="muji-step" data-step="2">
       <div class="muji-word" lang="ar" dir="rtl">عِش</div>
       <div class="muji-sub">live</div>
+      <div class="muji-desc">Save the words that move you</div>
     </div>
 
     <div class="muji-progress">

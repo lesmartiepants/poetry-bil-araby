@@ -192,117 +192,395 @@ html.dark body::after { opacity: 0.3; }
 #enterBtn:hover { transform: translateY(-2px); box-shadow: 0 6px 16px var(--shadow); }
 #enterBtn:focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
 
-/* ============ Onboarding -- Illuminated Manuscript ============ */
-#onboarding {
-  position: fixed; inset: 0; z-index: 90;
-  background: var(--paper);
-  display: flex; flex-direction: column;
-  align-items: center; justify-content: center;
-  opacity: 0; pointer-events: none;
+/* ============ Scroll Onboarding -- Manuscript Unroll ============ */
+#scroll-onboarding {
+  position: relative;
+  z-index: 10;
+  display: none;
+}
+#scroll-onboarding.active {
+  display: block;
+}
+
+/* --- Progress Track --- */
+.scroll-progress-track {
+  position: fixed;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 2px;
+  height: 40vh;
+  background: var(--gold-dim);
+  z-index: 60;
+  opacity: 0;
   transition: opacity 0.6s ease;
-  cursor: pointer;
+}
+#scroll-onboarding.active .scroll-progress-track { opacity: 1; }
+
+.scroll-progress-fill {
+  position: absolute;
+  top: 0; left: 0;
+  width: 100%;
+  height: 0%;
+  background: var(--gold);
+  transition: height 0.1s linear;
+}
+.scroll-progress-marker {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  background: var(--paper);
+  border: 2px solid var(--gold-dim);
+  transition: border-color 0.3s, background 0.3s, box-shadow 0.3s;
+}
+.scroll-progress-marker.reached {
+  border-color: var(--gold);
+  background: var(--gold);
+  box-shadow: 0 0 8px rgba(197,160,89,0.4);
+}
+.scroll-progress-marker[data-marker="1"] { top: 16.66%; }
+.scroll-progress-marker[data-marker="2"] { top: 50%; }
+.scroll-progress-marker[data-marker="3"] { top: 83.33%; }
+
+/* --- Roller Bars --- */
+.roller-bar {
+  position: relative;
+  width: calc(100% + 24px);
+  margin-left: -12px;
+  height: 18px;
+  background: linear-gradient(180deg, #8b7355, #5a4630, #3d2a14, #5a4630, #8b7355);
+  border-radius: 9px;
+  box-shadow: 0 3px 10px var(--shadow);
+  z-index: 5;
+  flex-shrink: 0;
+}
+html.dark .roller-bar {
+  background: linear-gradient(180deg, #6b5b45, #4a3a28, #2d1e0e, #4a3a28, #6b5b45);
+}
+.roller-bar::before,
+.roller-bar::after {
+  content: '';
+  position: absolute;
+  top: 50%; transform: translateY(-50%);
+  width: 22px; height: 28px;
+  background: linear-gradient(180deg, #9b8365, #6a5535, #3d2a14, #6a5535, #9b8365);
+  border: 1px solid rgba(197,160,89,0.3);
+  border-radius: 4px;
+  box-shadow: 2px 0 6px var(--shadow);
+}
+.roller-bar::before { left: -6px; }
+.roller-bar::after { right: -6px; }
+
+/* --- Scroll Hero --- */
+.scroll-hero {
+  height: 60vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  position: relative;
+}
+.scroll-hero .roller-bar { position: absolute; top: 0; }
+.hero-bismillah {
+  font-family: var(--font-ar);
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  color: var(--gold);
+  margin-bottom: 1.5rem;
+  text-shadow: 0 0 20px rgba(197,160,89,0.2);
+  opacity: 0;
+  animation: fadeUp 1s ease 0.3s forwards;
+}
+.hero-invitation {
+  font-family: var(--font-ui);
+  font-size: 0.9rem;
+  color: var(--ink-dim);
+  letter-spacing: 0.15em;
+  direction: ltr;
+  opacity: 0;
+  animation: fadeUp 1s ease 0.8s forwards;
+}
+.hero-scroll-arrow {
+  margin-top: 3rem;
+  color: var(--gold);
+  opacity: 0;
+  animation: fadeUp 1s ease 1.2s forwards, gentleBounce 2s ease-in-out 2.2s infinite;
+}
+@keyframes gentleBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(8px); }
+}
+
+/* --- Scroll Sections --- */
+.scroll-section {
+  height: 110vh;
+  position: relative;
   overflow: hidden;
 }
-html.dark #onboarding { background: var(--paper); }
-#onboarding.active { opacity: 1; pointer-events: auto; }
 
-/* Gilded border frame */
-.gilt-frame {
-  position: absolute; inset: 16px;
+.section-sticky-frame {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+/* Gilt frame per section */
+.section-gilt-frame {
+  position: absolute;
+  inset: 24px;
   border: 2px solid var(--gold-dim);
   pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
 }
-.gilt-frame::before, .gilt-frame::after {
+.section-gilt-frame::before,
+.section-gilt-frame::after {
   content: ''; position: absolute;
   width: 24px; height: 24px;
   border: 2px solid var(--gold);
 }
-.gilt-frame::before { top: -2px; left: -2px; border-right: none; border-bottom: none; }
-.gilt-frame::after { bottom: -2px; right: -2px; border-left: none; border-top: none; }
+.section-gilt-frame::before { top: -2px; left: -2px; border-right: none; border-bottom: none; }
+.section-gilt-frame::after { bottom: -2px; right: -2px; border-left: none; border-top: none; }
 
-/* Manuscript page */
-.ms-page {
-  position: relative; z-index: 5;
-  max-width: 340px; width: 88%;
-  padding: 2.5rem 2rem;
-  background: var(--parchment);
-  border: 1.5px solid var(--wood);
-  box-shadow: 0 8px 32px var(--shadow);
-  text-align: center;
-  opacity: 0; transform: translateX(20px) rotateY(-3deg);
-  transition: opacity 0.7s ease, transform 0.7s ease;
-  /* Parchment texture edge */
-  background-image:
-    linear-gradient(90deg, rgba(61,52,40,0.05) 0%, transparent 3%, transparent 97%, rgba(61,52,40,0.05) 100%);
+/* Parchment reveal mask -- simulates scroll unrolling */
+.parchment-reveal-mask {
+  position: absolute;
+  inset: 0;
+  background: var(--paper);
+  z-index: 3;
+  pointer-events: none;
+  transform-origin: top center;
+  will-change: transform, opacity;
 }
-.ms-page.active { opacity: 1; transform: translateX(0) rotateY(0); }
+
+/* Arabesque corner decorations */
+.arabesque-corner {
+  position: absolute;
+  width: 60px; height: 60px;
+  opacity: 0.15;
+  pointer-events: none;
+  z-index: 1;
+}
+.arabesque-corner svg {
+  width: 100%; height: 100%;
+  fill: var(--gold);
+}
+.arabesque-corner.top-left { top: 32px; left: 32px; }
+.arabesque-corner.top-right { top: 32px; right: 32px; transform: scaleX(-1); }
+.arabesque-corner.bottom-left { bottom: 32px; left: 32px; transform: scaleY(-1); }
+.arabesque-corner.bottom-right { bottom: 32px; right: 32px; transform: scale(-1, -1); }
+
+/* Section content */
+.section-content {
+  position: relative;
+  z-index: 5;
+  max-width: 400px;
+  width: 88%;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
 
 /* Chapter marker */
-.ms-chapter {
+.sc-chapter {
   font-family: 'Forum', serif;
-  font-size: 0.75rem; color: var(--gold);
-  letter-spacing: 0.3em; text-transform: uppercase;
-  margin-bottom: 0.8rem; direction: ltr;
+  font-size: 0.75rem;
+  color: var(--gold);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  margin-bottom: 0.5rem;
+  direction: ltr;
+  opacity: 0;
+  transform: translateY(10px);
+  will-change: transform, opacity;
 }
 
-/* Decorative illuminated initial */
-.ms-initial {
+/* Illuminated initial */
+.sc-initial {
   font-family: var(--font-ar);
   font-size: clamp(2.4rem, 6vw, 3.2rem);
-  color: var(--gold); line-height: 1.2;
+  color: var(--gold);
+  line-height: 1.2;
   margin-bottom: 0.3rem;
   text-shadow: 0 0 20px rgba(197,160,89,0.2);
+  opacity: 0;
+  transform: scale(0.8);
+  will-change: transform, opacity;
 }
 
-.ms-subtitle {
+.sc-subtitle {
   font-family: var(--font-ui);
-  font-size: 0.85rem; font-weight: 400;
+  font-size: 0.85rem;
+  font-weight: 400;
   color: var(--ink-dim);
-  margin-bottom: 1rem; direction: ltr;
+  margin-bottom: 1rem;
+  direction: ltr;
+  opacity: 0;
+  transform: translateY(8px);
+  will-change: transform, opacity;
 }
 
 /* Decorative gold rule */
-.ms-rule {
-  width: 60px; height: 1px;
+.sc-rule {
+  width: 0px;
+  height: 1px;
   background: linear-gradient(90deg, transparent, var(--gold), transparent);
   margin: 0 auto 1rem;
+  transition: width 0.3s ease;
 }
 
-.ms-text {
+.sc-text {
   font-family: var(--font-ui);
-  font-size: 0.86rem; line-height: 1.8;
-  color: var(--ink); opacity: 0.7; direction: ltr;
+  font-size: 0.86rem;
+  line-height: 1.8;
+  color: var(--ink);
+  opacity: 0;
+  direction: ltr;
+  transform: translateY(8px);
+  will-change: transform, opacity;
 }
 
-/* Folio number */
-.ms-folio {
-  position: absolute; bottom: 10px; left: 50%;
-  transform: translateX(-50%);
-  font-family: 'Forum', serif; font-size: 0.7rem;
-  color: var(--ink-dim); opacity: 0.5;
+/* Section-specific: floating verse (section 1) */
+.floating-verse {
+  font-family: var(--font-ar);
+  font-size: 1.1rem;
+  color: var(--gold);
+  margin-top: 1.5rem;
+  opacity: 0;
+  transform: translateY(12px);
+  text-shadow: 0 0 12px rgba(197,160,89,0.15);
+  direction: rtl;
+  will-change: transform, opacity;
 }
 
-/* Bookmark tabs */
-.ms-tabs {
-  position: relative; z-index: 5;
-  display: flex; gap: 8px; margin-top: 2rem;
+/* Section-specific: bilingual stagger (section 2) */
+.bilingual-demo {
+  margin-top: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: center;
+}
+.bilingual-line {
+  opacity: 0;
+  transform: translateX(15px);
+  will-change: transform, opacity;
+}
+.bilingual-line.ar-line {
+  font-family: var(--font-ar);
+  font-size: 1.1rem;
+  color: var(--ink);
+  direction: rtl;
+}
+.bilingual-line.en-line {
+  font-family: var(--font-ui);
+  font-size: 0.8rem;
+  color: var(--ink-dim);
+  direction: ltr;
+  font-style: italic;
+}
+
+/* Section-specific: heart icon (section 3) */
+.save-heart {
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
+  width: 56px; height: 56px;
+  margin-top: 1.5rem;
+  color: var(--gold);
+  opacity: 0;
+  transform: scale(0.5);
+  will-change: transform, opacity;
 }
-.ms-tab {
-  width: 20px; height: 4px; border-radius: 2px;
-  background: var(--ink-dim); opacity: 0.3;
-  transition: all 0.6s ease;
+.save-heart svg {
+  width: 32px; height: 32px;
 }
-.ms-tab.active {
-  background: var(--gold);
-  opacity: 1; width: 32px;
-}
-.ms-tab.past { opacity: 0.6; background: var(--gold-dim); }
 
-.ms-hint {
-  position: relative; z-index: 5;
-  font-size: 11px; color: var(--ink-dim); opacity: 0.4;
-  margin-top: 1.2rem; letter-spacing: 0.2em;
+/* --- Scroll Finale --- */
+.scroll-finale {
+  height: 40vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  position: relative;
+}
+.scroll-finale .roller-bar {
+  position: absolute;
+  bottom: 0;
+}
+.finale-text {
+  font-family: 'Forum', serif;
+  font-size: 1.1rem;
+  color: var(--ink-dim);
+  letter-spacing: 0.15em;
+  margin-bottom: 2rem;
+  direction: ltr;
+  opacity: 0;
+  transform: translateY(12px);
+}
+.finale-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 14px 40px;
+  min-width: 44px; min-height: 44px;
+  background: var(--wood);
+  color: var(--parchment);
+  border: none;
+  border-radius: 6px;
+  font-family: var(--font-ar);
+  font-size: 1.1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px var(--shadow);
+  opacity: 0;
+  transform: scale(0.9);
+}
+.finale-btn:hover {
+  transform: translateY(-2px) scale(1);
+  box-shadow: 0 6px 16px var(--shadow);
+}
+.finale-btn:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 2px;
+}
+
+/* Scroll snap (proximity, not mandatory) */
+#scroll-onboarding.active ~ #snap-helper {
+  scroll-snap-type: y proximity;
+}
+
+/* ============ Responsive -- Scroll Onboarding ============ */
+@media (max-width: 1024px) {
+  .scroll-section { height: 100vh; }
+}
+@media (max-width: 768px) {
+  .scroll-progress-track {
+    left: 10px;
+    width: 1.5px;
+    height: 30vh;
+  }
+  .scroll-progress-marker { width: 8px; height: 8px; }
+  .scroll-section { height: 95vh; }
+  .section-gilt-frame { inset: 12px; }
+  .arabesque-corner { width: 40px; height: 40px; }
+  .arabesque-corner.top-left { top: 16px; left: 16px; }
+  .arabesque-corner.top-right { top: 16px; right: 16px; }
+  .arabesque-corner.bottom-left { bottom: 16px; left: 16px; }
+  .arabesque-corner.bottom-right { bottom: 16px; right: 16px; }
+  .section-content { width: 92%; }
+  .roller-bar::before, .roller-bar::after { width: 16px; height: 22px; }
 }
 
 /* ============ Main App ============ */
@@ -522,7 +800,7 @@ html.dark .scroll-icons-strip { background: var(--paper-light); }
   }
   #dustCanvas { display: none; }
   #splash { display: none !important; }
-  #onboarding { display: none !important; }
+  #scroll-onboarding { display: none !important; }
   #main { display: block !important; opacity: 1 !important; }
   .scroll-container { opacity: 1 !important; transform: none !important; clip-path: none !important; }
 }
@@ -546,41 +824,100 @@ html.dark .scroll-icons-strip { background: var(--paper-light); }
     </div>
   </div>
 
-  <!-- ======== Onboarding ======== -->
-  <div id="onboarding" data-step="0">
-    <div class="gilt-frame"></div>
-
-    <div class="ms-page active" data-ms="0">
-      <div class="ms-chapter">Chapter I</div>
-      <div class="ms-initial" lang="ar" dir="rtl">المخطوط</div>
-      <div class="ms-subtitle">The Manuscript</div>
-      <div class="ms-rule"></div>
-      <div class="ms-text">Ancient scrolls unrolled for modern eyes. Thousands of poems preserved across centuries.</div>
-      <div class="ms-folio">f. 1r</div>
-    </div>
-    <div class="ms-page" data-ms="1">
-      <div class="ms-chapter">Chapter II</div>
-      <div class="ms-initial" lang="ar" dir="rtl">الصوت</div>
-      <div class="ms-subtitle">The Voice</div>
-      <div class="ms-rule"></div>
-      <div class="ms-text">Hear the words as they were meant to be spoken. AI recitation that honours the rhythm of Arabic verse.</div>
-      <div class="ms-folio">f. 2r</div>
-    </div>
-    <div class="ms-page" data-ms="2">
-      <div class="ms-chapter">Chapter III</div>
-      <div class="ms-initial" lang="ar" dir="rtl">الحفظ</div>
-      <div class="ms-subtitle">The Collection</div>
-      <div class="ms-rule"></div>
-      <div class="ms-text">Mark the passages that move you. Build your own library of treasured verses.</div>
-      <div class="ms-folio">f. 3r</div>
+  <!-- ======== Scroll Onboarding ======== -->
+  <div id="scroll-onboarding">
+    <!-- Progress Track -->
+    <div class="scroll-progress-track">
+      <div class="scroll-progress-fill"></div>
+      <div class="scroll-progress-marker" data-marker="1"></div>
+      <div class="scroll-progress-marker" data-marker="2"></div>
+      <div class="scroll-progress-marker" data-marker="3"></div>
     </div>
 
-    <div class="ms-tabs">
-      <div class="ms-tab active" data-tab="0"></div>
-      <div class="ms-tab" data-tab="1"></div>
-      <div class="ms-tab" data-tab="2"></div>
+    <!-- Hero -->
+    <div class="scroll-hero">
+      <div class="roller-bar"></div>
+      <div class="hero-bismillah" lang="ar" dir="rtl">بسم الله الرحمن الرحيم</div>
+      <div class="hero-invitation">Scroll to unroll the manuscript</div>
+      <div class="hero-scroll-arrow">
+        <i data-lucide="chevrons-down" style="width:28px;height:28px;"></i>
+      </div>
     </div>
-    <div class="ms-hint">tap</div>
+
+    <!-- Section 1: Discover -->
+    <div class="scroll-section" data-section="1">
+      <div class="section-sticky-frame">
+        <div class="section-gilt-frame"></div>
+        <div class="parchment-reveal-mask"></div>
+        <div class="arabesque-corner top-left"><svg viewBox="0 0 60 60"><path d="M0 0 Q30 0 30 30 Q30 0 60 0 L60 10 Q35 10 30 35 Q25 10 0 10Z" fill="currentColor"/></svg></div>
+        <div class="arabesque-corner top-right"><svg viewBox="0 0 60 60"><path d="M0 0 Q30 0 30 30 Q30 0 60 0 L60 10 Q35 10 30 35 Q25 10 0 10Z" fill="currentColor"/></svg></div>
+        <div class="arabesque-corner bottom-left"><svg viewBox="0 0 60 60"><path d="M0 0 Q30 0 30 30 Q30 0 60 0 L60 10 Q35 10 30 35 Q25 10 0 10Z" fill="currentColor"/></svg></div>
+        <div class="arabesque-corner bottom-right"><svg viewBox="0 0 60 60"><path d="M0 0 Q30 0 30 30 Q30 0 60 0 L60 10 Q35 10 30 35 Q25 10 0 10Z" fill="currentColor"/></svg></div>
+        <div class="section-content">
+          <div class="sc-chapter">Chapter I</div>
+          <div class="sc-initial" lang="ar" dir="rtl">المخطوط</div>
+          <div class="sc-subtitle">Discover Arabic Poetry</div>
+          <div class="sc-rule"></div>
+          <div class="sc-text">Ancient scrolls unrolled for modern eyes. Thousands of poems preserved across centuries.</div>
+          <div class="floating-verse" lang="ar" dir="rtl">أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 2: Bilingual -->
+    <div class="scroll-section" data-section="2">
+      <div class="section-sticky-frame">
+        <div class="section-gilt-frame"></div>
+        <div class="parchment-reveal-mask"></div>
+        <div class="arabesque-corner top-left"><svg viewBox="0 0 60 60"><path d="M0 0 Q30 0 30 30 Q30 0 60 0 L60 10 Q35 10 30 35 Q25 10 0 10Z" fill="currentColor"/></svg></div>
+        <div class="arabesque-corner top-right"><svg viewBox="0 0 60 60"><path d="M0 0 Q30 0 30 30 Q30 0 60 0 L60 10 Q35 10 30 35 Q25 10 0 10Z" fill="currentColor"/></svg></div>
+        <div class="arabesque-corner bottom-left"><svg viewBox="0 0 60 60"><path d="M0 0 Q30 0 30 30 Q30 0 60 0 L60 10 Q35 10 30 35 Q25 10 0 10Z" fill="currentColor"/></svg></div>
+        <div class="arabesque-corner bottom-right"><svg viewBox="0 0 60 60"><path d="M0 0 Q30 0 30 30 Q30 0 60 0 L60 10 Q35 10 30 35 Q25 10 0 10Z" fill="currentColor"/></svg></div>
+        <div class="section-content">
+          <div class="sc-chapter">Chapter II</div>
+          <div class="sc-initial" lang="ar" dir="rtl">الصوت</div>
+          <div class="sc-subtitle">Bilingual Experience</div>
+          <div class="sc-rule"></div>
+          <div class="sc-text">Every verse presented in Arabic with English meaning, bridging centuries and languages.</div>
+          <div class="bilingual-demo">
+            <div class="bilingual-line ar-line" lang="ar" dir="rtl">فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي</div>
+            <div class="bilingual-line en-line">Have they asked the diver about my shells?</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 3: Save -->
+    <div class="scroll-section" data-section="3">
+      <div class="section-sticky-frame">
+        <div class="section-gilt-frame"></div>
+        <div class="parchment-reveal-mask"></div>
+        <div class="arabesque-corner top-left"><svg viewBox="0 0 60 60"><path d="M0 0 Q30 0 30 30 Q30 0 60 0 L60 10 Q35 10 30 35 Q25 10 0 10Z" fill="currentColor"/></svg></div>
+        <div class="arabesque-corner top-right"><svg viewBox="0 0 60 60"><path d="M0 0 Q30 0 30 30 Q30 0 60 0 L60 10 Q35 10 30 35 Q25 10 0 10Z" fill="currentColor"/></svg></div>
+        <div class="arabesque-corner bottom-left"><svg viewBox="0 0 60 60"><path d="M0 0 Q30 0 30 30 Q30 0 60 0 L60 10 Q35 10 30 35 Q25 10 0 10Z" fill="currentColor"/></svg></div>
+        <div class="arabesque-corner bottom-right"><svg viewBox="0 0 60 60"><path d="M0 0 Q30 0 30 30 Q30 0 60 0 L60 10 Q35 10 30 35 Q25 10 0 10Z" fill="currentColor"/></svg></div>
+        <div class="section-content">
+          <div class="sc-chapter">Chapter III</div>
+          <div class="sc-initial" lang="ar" dir="rtl">الحفظ</div>
+          <div class="sc-subtitle">Save Your Favorites</div>
+          <div class="sc-rule"></div>
+          <div class="sc-text">Mark the passages that move you. Build your own library of treasured verses.</div>
+          <div class="save-heart">
+            <i data-lucide="heart"></i>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Finale -->
+    <div class="scroll-finale">
+      <div class="finale-text">The manuscript awaits</div>
+      <button class="finale-btn" id="finaleBtn" aria-label="Enter the app">
+        <i data-lucide="scroll" style="width:18px;height:18px;"></i>
+        <span lang="ar" dir="rtl">ابدأ القراءة</span>
+      </button>
+      <div class="roller-bar"></div>
+    </div>
   </div>
 
   <!-- ======== Main App ======== -->
@@ -626,36 +963,277 @@ html.dark .scroll-icons-strip { background: var(--paper-light); }
 (function() {
   'use strict';
 
-  /* ---------- Onboarding -- Illuminated Manuscript ---------- */
-  var msPages = document.querySelectorAll('.ms-page');
-  var msTabs = document.querySelectorAll('.ms-tab');
-  var msStep = 0;
-  var totalMs = msPages.length;
+  /* ---------- Scroll Onboarding -- Manuscript Unroll Engine ---------- */
+  var scrollOnboarding = document.getElementById('scroll-onboarding');
+  var scrollSections = document.querySelectorAll('.scroll-section');
+  var progressFill = document.querySelector('.scroll-progress-fill');
+  var progressMarkers = document.querySelectorAll('.scroll-progress-marker');
+  var finaleBtn = document.getElementById('finaleBtn');
+  var scrollTicking = false;
 
-  function showMsStep() {
-    document.getElementById('onboarding').setAttribute('data-step', msStep);
-    for (var i = 0; i < msPages.length; i++) {
-      msPages[i].classList.remove('active');
-      msTabs[i].classList.remove('active');
-      msTabs[i].classList.remove('past');
-      if (i < msStep) msTabs[i].classList.add('past');
+  /* Easing functions */
+  function easeOutCubic(t) { return 1 - Math.pow(1 - t, 3); }
+  function easeOutQuart(t) { return 1 - Math.pow(1 - t, 4); }
+  function easeOutBack(t) {
+    var c1 = 1.70158;
+    var c3 = c1 + 1;
+    return 1 + c3 * Math.pow(t - 1, 3) + c1 * Math.pow(t - 1, 2);
+  }
+  /* Elastic overshoot: goes to ~1.05 then settles to 1.0 */
+  function easeOutElastic(t) {
+    if (t <= 0) return 0;
+    if (t >= 1) return 1;
+    return Math.pow(2, -10 * t) * Math.sin((t - 0.075) * (2 * Math.PI) / 0.3) + 1;
+  }
+
+  /* Clamp utility */
+  function clamp(val, min, max) { return Math.max(min, Math.min(max, val)); }
+
+  /* Map a value from one range to another, clamped */
+  function mapRange(val, inMin, inMax, outMin, outMax) {
+    var t = clamp((val - inMin) / (inMax - inMin), 0, 1);
+    return outMin + t * (outMax - outMin);
+  }
+
+  /* Get scroll progress for the onboarding region */
+  function getScrollProgress() {
+    var rect = scrollOnboarding.getBoundingClientRect();
+    var totalHeight = scrollOnboarding.offsetHeight;
+    var scrolled = -rect.top;
+    var viewH = window.innerHeight;
+    var overall = clamp(scrolled / (totalHeight - viewH), 0, 1);
+
+    var sections = [];
+    for (var i = 0; i < scrollSections.length; i++) {
+      var secRect = scrollSections[i].getBoundingClientRect();
+      var secTop = secRect.top;
+      var secHeight = secRect.height;
+      /* progress: 0 when section top hits viewport bottom, 1 when section bottom exits viewport top */
+      var secProgress = clamp((viewH - secTop) / (viewH + secHeight), 0, 1);
+      /* reveal: how far user has scrolled into this section's sticky area */
+      var reveal = clamp(-secTop / (secHeight - viewH), 0, 1);
+      sections.push({ progress: secProgress, reveal: reveal });
     }
-    if (msStep < totalMs) {
-      msPages[msStep].classList.add('active');
-      msTabs[msStep].classList.add('active');
+
+    return { overall: overall, sections: sections };
+  }
+
+  /* Compute fade-out multiplier: content stays full until 0.85, then fades 0.85-1.0 */
+  function getFadeOut(reveal) {
+    if (reveal <= 0.85) return 1;
+    return mapRange(reveal, 0.85, 1.0, 1, 0);
+  }
+
+  /* Animate a section based on its reveal progress */
+  function animateSection(sectionEl, reveal) {
+    var frame = sectionEl.querySelector('.section-gilt-frame');
+    var mask = sectionEl.querySelector('.parchment-reveal-mask');
+    var chapter = sectionEl.querySelector('.sc-chapter');
+    var initial = sectionEl.querySelector('.sc-initial');
+    var subtitle = sectionEl.querySelector('.sc-subtitle');
+    var rule = sectionEl.querySelector('.sc-rule');
+    var text = sectionEl.querySelector('.sc-text');
+    var corners = sectionEl.querySelectorAll('.arabesque-corner');
+
+    /* Global fade-out for this section */
+    var fadeOut = getFadeOut(reveal);
+
+    /* Gilt frame: 0.0 - 0.15 */
+    var frameOpacity = easeOutCubic(mapRange(reveal, 0.0, 0.15, 0, 1));
+    if (frame) frame.style.opacity = frameOpacity * fadeOut;
+
+    /* Parchment mask: 0.0 - 0.25 (shrinks from 100% to 0% -- FASTER reveal) */
+    var maskScale = 1 - easeOutQuart(mapRange(reveal, 0.0, 0.25, 0, 1));
+    if (mask) mask.style.transform = 'scaleY(' + maskScale + ')';
+
+    /* Chapter marker: appears at 0.0 - 0.15 */
+    var chapterT = easeOutCubic(mapRange(reveal, 0.0, 0.15, 0, 1));
+    if (chapter) {
+      chapter.style.opacity = chapterT * fadeOut;
+      chapter.style.transform = 'translateY(' + (10 * (1 - chapterT)) + 'px)';
+    }
+
+    /* Arabic initial: 0.0 - 0.3 (spring overshoot: scales to 1.05 then settles to 1.0) */
+    var initialRaw = mapRange(reveal, 0.0, 0.3, 0, 1);
+    var initialT = easeOutBack(initialRaw);
+    if (initial) {
+      initial.style.opacity = easeOutCubic(initialRaw) * fadeOut;
+      /* Spring: 0.8 base + overshoot via easeOutBack (goes past 1.0) */
+      var initialScale = 0.8 + 0.2 * initialT;
+      initial.style.transform = 'scale(' + initialScale + ')';
+      initial.style.textShadow = '0 0 ' + (20 * easeOutCubic(initialRaw)) + 'px rgba(197,160,89,' + (0.3 * easeOutCubic(initialRaw)) + ')';
+    }
+
+    /* Subtitle: 0.05 - 0.35 (elastic: goes past target by ~3px then settles) */
+    var subtitleRaw = mapRange(reveal, 0.05, 0.35, 0, 1);
+    var subtitleT = easeOutBack(subtitleRaw);
+    if (subtitle) {
+      subtitle.style.opacity = easeOutCubic(subtitleRaw) * fadeOut;
+      /* Elastic translateY: overshoot goes slightly negative (past 0) */
+      var subtitleY = 8 * (1 - subtitleT);
+      subtitle.style.transform = 'translateY(' + subtitleY + 'px)';
+    }
+
+    /* Gold rule: 0.08 - 0.35 (bounce: overshoot width to ~70px then settle to 60px) */
+    var ruleRaw = mapRange(reveal, 0.08, 0.35, 0, 1);
+    var ruleT = easeOutBack(ruleRaw);
+    if (rule) {
+      rule.style.width = (60 * ruleT) + 'px';
+      rule.style.opacity = fadeOut;
+    }
+
+    /* Body text: 0.1 - 0.4 (elastic translateY) */
+    var textRaw = mapRange(reveal, 0.1, 0.4, 0, 1);
+    var textT = easeOutBack(textRaw);
+    if (text) {
+      text.style.opacity = easeOutCubic(textRaw) * 0.7 * fadeOut;
+      var textY = 8 * (1 - textT);
+      text.style.transform = 'translateY(' + textY + 'px)';
+    }
+
+    /* Arabesque corners: parallax at 0.3x of reveal */
+    for (var c = 0; c < corners.length; c++) {
+      var parallax = reveal * 0.3;
+      var cornerOpacity = 0.15 * easeOutCubic(mapRange(reveal, 0.0, 0.2, 0, 1)) * fadeOut;
+      corners[c].style.opacity = cornerOpacity;
+      /* Preserve the base transform (flip) and add parallax */
+      var baseTransform = corners[c].getAttribute('data-base-transform') || '';
+      if (!corners[c].getAttribute('data-base-transform')) {
+        baseTransform = getComputedStyle(corners[c]).transform;
+        if (baseTransform === 'none') baseTransform = '';
+        corners[c].setAttribute('data-base-transform', baseTransform);
+      }
+      corners[c].style.transform = baseTransform + ' translateY(' + (-20 * parallax) + 'px)';
+    }
+
+    /* Section-specific animations */
+    animateSectionSpecific(sectionEl, reveal, fadeOut);
+  }
+
+  /* Section-specific element animations */
+  function animateSectionSpecific(sectionEl, reveal, fadeOut) {
+    var sectionNum = sectionEl.getAttribute('data-section');
+
+    if (sectionNum === '1') {
+      /* Floating verse: 0.15 - 0.5 (earlier, with elastic translateY) */
+      var verse = sectionEl.querySelector('.floating-verse');
+      if (verse) {
+        var verseRaw = mapRange(reveal, 0.15, 0.5, 0, 1);
+        var verseT = easeOutBack(verseRaw);
+        verse.style.opacity = easeOutCubic(verseRaw) * fadeOut;
+        verse.style.transform = 'translateY(' + (12 * (1 - verseT)) + 'px)';
+      }
+    }
+
+    if (sectionNum === '2') {
+      /* Bilingual lines: stagger at 0.15 and 0.25 (earlier, with elastic) */
+      var lines = sectionEl.querySelectorAll('.bilingual-line');
+      for (var l = 0; l < lines.length; l++) {
+        var lineStart = 0.15 + l * 0.10;
+        var lineRaw = mapRange(reveal, lineStart, lineStart + 0.2, 0, 1);
+        var lineT = easeOutBack(lineRaw);
+        lines[l].style.opacity = easeOutCubic(lineRaw) * fadeOut;
+        lines[l].style.transform = 'translateX(' + (15 * (1 - lineT)) + 'px)';
+      }
+    }
+
+    if (sectionNum === '3') {
+      /* Heart: 0.15 - 0.5 (spring scale with overshoot) */
+      var heart = sectionEl.querySelector('.save-heart');
+      if (heart) {
+        var heartRaw = mapRange(reveal, 0.15, 0.5, 0, 1);
+        var heartT = easeOutBack(heartRaw);
+        heart.style.opacity = easeOutCubic(heartRaw) * fadeOut;
+        /* Spring overshoot: scale goes slightly past 1.0 then settles */
+        heart.style.transform = 'scale(' + (0.5 + 0.5 * heartT) + ')';
+      }
     }
   }
 
-  /* ---------- Splash -> Onboarding ---------- */
+  /* Animate finale section */
+  function animateFinale() {
+    var finale = document.querySelector('.scroll-finale');
+    if (!finale) return;
+    var rect = finale.getBoundingClientRect();
+    var viewH = window.innerHeight;
+    var reveal = clamp((viewH - rect.top) / (viewH * 0.6), 0, 1);
+    var finaleText = finale.querySelector('.finale-text');
+    var finaleBtnEl = finale.querySelector('.finale-btn');
+    var textT = easeOutCubic(mapRange(reveal, 0.1, 0.5, 0, 1));
+    var btnT = easeOutCubic(mapRange(reveal, 0.3, 0.7, 0, 1));
+    if (finaleText) {
+      finaleText.style.opacity = textT;
+      finaleText.style.transform = 'translateY(' + (12 * (1 - textT)) + 'px)';
+    }
+    if (finaleBtnEl) {
+      finaleBtnEl.style.opacity = btnT;
+      finaleBtnEl.style.transform = 'scale(' + (0.9 + 0.1 * btnT) + ')';
+    }
+  }
+
+  /* Main scroll handler */
+  function onScroll() {
+    if (!scrollOnboarding.classList.contains('active')) return;
+
+    var progress = getScrollProgress();
+
+    /* Update progress track */
+    if (progressFill) {
+      progressFill.style.height = (progress.overall * 100) + '%';
+    }
+
+    /* Update progress markers */
+    for (var m = 0; m < progressMarkers.length; m++) {
+      var markerThreshold = (m + 1) / (scrollSections.length + 1);
+      if (progress.overall >= markerThreshold) {
+        progressMarkers[m].classList.add('reached');
+      } else {
+        progressMarkers[m].classList.remove('reached');
+      }
+    }
+
+    /* Animate each section */
+    for (var s = 0; s < scrollSections.length; s++) {
+      animateSection(scrollSections[s], progress.sections[s].reveal);
+    }
+
+    /* Animate finale */
+    animateFinale();
+
+    scrollTicking = false;
+  }
+
+  /* Scroll listener with rAF */
+  window.addEventListener('scroll', function() {
+    if (!scrollTicking) {
+      scrollTicking = true;
+      requestAnimationFrame(onScroll);
+    }
+  }, { passive: true });
+
+  /* ---------- Splash -> Scroll Onboarding ---------- */
   function enterApp() {
     var splash = document.getElementById('splash');
     splash.classList.add('done');
     setTimeout(function() {
       splash.style.display = 'none';
-      document.getElementById('onboarding').classList.add('active');
-      msStep = 0;
-      showMsStep();
+      scrollOnboarding.classList.add('active');
+      document.body.style.overflow = 'auto';
+      /* Trigger initial scroll calculation */
+      onScroll();
     }, 800);
+  }
+
+  /* ---------- Finale -> Main App ---------- */
+  function enterMain() {
+    scrollOnboarding.classList.remove('active');
+    scrollOnboarding.style.display = 'none';
+    document.getElementById('main').classList.add('show');
+    window.scrollTo(0, 0);
+  }
+
+  if (finaleBtn) {
+    finaleBtn.addEventListener('click', enterMain);
   }
 
   /* ---------- init ---------- */
@@ -663,20 +1241,14 @@ html.dark .scroll-icons-strip { background: var(--paper-light); }
 
   if (reducedMotion) {
     document.getElementById('splash').style.display = 'none';
+    scrollOnboarding.style.display = 'none';
     document.getElementById('main').style.display = 'block';
+  } else {
+    /* Lock scroll during splash */
+    document.body.style.overflow = 'hidden';
   }
 
   document.getElementById('enterBtn').addEventListener('click', enterApp);
-  document.getElementById('onboarding').addEventListener('click', function(e) {
-    if (e.target.closest('#enterBtn')) return;
-    msStep++;
-    if (msStep >= totalMs) {
-      document.getElementById('onboarding').classList.remove('active');
-      document.getElementById('main').classList.add('show');
-    } else {
-      showMsStep();
-    }
-  });
 
   /* ---------- Theme Toggle ---------- */
   var themeBtn = document.getElementById('themeBtn');

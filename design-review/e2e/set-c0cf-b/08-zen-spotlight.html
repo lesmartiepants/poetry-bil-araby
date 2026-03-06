@@ -134,119 +134,229 @@
             to   { opacity: 1; transform: translateY(0); }
         }
 
-        /* ========== ONBOARDING OVERLAY ========== */
+        /* ========== ONBOARDING: Breath of Light (Simplified) ========== */
+
         #onboarding {
             position: fixed; inset: 0; z-index: 9998;
-            background: rgba(26, 22, 16, 0.95);
+            background: #0d0a07;
             display: flex; align-items: center; justify-content: center;
+            flex-direction: column;
             opacity: 0; pointer-events: none;
-            transition: opacity 0.6s ease;
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
+            transition: opacity 0.8s cubic-bezier(0, 0, 0.2, 1);
             cursor: pointer;
+            overflow: hidden;
         }
-        body.light #onboarding { background: rgba(245, 240, 230, 0.95); }
+        body.light #onboarding { background: #f0ebe0; }
         #onboarding.active { opacity: 1; pointer-events: auto; }
 
-        /* Hourglass-themed onboarding panels */
-        .hour-panel {
-            max-width: 360px; width: 88%;
+        /* Closing: simple opacity fade over 800ms */
+        #onboarding.closing {
+            opacity: 0;
+            transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* === Breathing Spotlight (background glow, unchanged 5s cycle) === */
+        .breath-spotlight {
+            position: absolute;
+            top: 50%; left: 50%;
+            width: 420px; height: 420px;
+            transform: translate(-50%, -55%);
+            border-radius: 50%;
+            background: radial-gradient(
+                circle,
+                rgba(197,160,89,0.12) 0%,
+                rgba(197,160,89,0.04) 40%,
+                transparent 70%
+            );
+            animation: breathe 5s cubic-bezier(0.37, 0, 0.63, 1) infinite;
+            pointer-events: none;
+        }
+        body.light .breath-spotlight {
+            background: radial-gradient(
+                circle,
+                rgba(139,115,85,0.10) 0%,
+                rgba(139,115,85,0.03) 40%,
+                transparent 70%
+            );
+        }
+        @keyframes breathe {
+            0%, 100% { transform: translate(-50%, -55%) scale(1); opacity: 0.6; }
+            50% { transform: translate(-50%, -55%) scale(1.15); opacity: 1; }
+        }
+
+        /* === Card Container (no perspective) === */
+        .zen-card-stage {
+            position: relative;
+            width: 340px; max-width: 88vw;
+            min-height: 320px;
+            z-index: 2;
+        }
+
+        /* === Step Panels (simplified background) === */
+        .zen-panel {
+            position: absolute;
+            top: 0; left: 0; right: 0;
             text-align: center;
-            padding: 2.5rem 2rem;
-            position: relative;
-            display: none;
+            padding: 3rem 2.5rem;
+            background: rgba(45,36,25,0.2);
+            border: 1px solid rgba(197,160,89,0.08);
+            border-radius: 20px;
+            opacity: 0;
+            transition: none;
+            pointer-events: none;
         }
-        .hour-panel.active { display: block; animation: hourReveal 0.5s ease; }
-
-        @keyframes hourReveal {
-            from { opacity: 0; transform: translateY(16px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Hourglass frame around content */
-        .hour-frame {
-            position: relative;
-            padding: 2rem 1.5rem;
-            border-top: 2px solid var(--sand);
-            border-bottom: 2px solid var(--sand);
-        }
-        .hour-frame::before,
-        .hour-frame::after {
-            content: '';
-            position: absolute;
-            left: 50%; transform: translateX(-50%);
-            width: 40px; height: 2px;
-            background: var(--gold);
-        }
-        .hour-frame::before { top: -6px; }
-        .hour-frame::after { bottom: -6px; }
-
-        /* Waist pinch lines */
-        .hour-waist {
-            position: absolute;
-            left: 50%; transform: translateX(-50%);
-            width: 20px; height: 1px;
-            background: rgba(196,168,130,0.3);
-            top: 50%;
+        body.light .zen-panel {
+            background: rgba(255,250,240,0.3);
+            border-color: rgba(139,115,85,0.1);
         }
 
-        .hour-icon {
-            width: 48px; height: 48px;
-            margin: 0 auto 1rem;
+        .zen-panel.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* Panel entrance: pure crossfade with blur clear */
+        .zen-panel.entering {
+            animation: cardEnter 0.6s cubic-bezier(0, 0, 0.2, 1) forwards;
+        }
+        @keyframes cardEnter {
+            0% {
+                opacity: 0;
+                filter: blur(4px);
+            }
+            100% {
+                opacity: 1;
+                filter: blur(0);
+            }
+        }
+
+        /* Panel exit: pure crossfade with subtle blur */
+        .zen-panel.exiting {
+            animation: cardExit 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+        }
+        @keyframes cardExit {
+            0% {
+                opacity: 1;
+                filter: blur(0);
+            }
+            100% {
+                opacity: 0;
+                filter: blur(6px);
+            }
+        }
+
+        /* === Icon Container (no ::after breathing ring) === */
+        .zen-icon {
+            width: 56px; height: 56px;
+            margin: 0 auto 1.2rem;
             display: flex; align-items: center; justify-content: center;
             color: var(--gold);
-            opacity: 0.8;
+            position: relative;
         }
-        .hour-icon i { width: 28px; height: 28px; }
+        .zen-icon i { width: 26px; height: 26px; }
 
-        .hour-title {
+        /* === Typography === */
+        .zen-title {
             font-family: 'Amiri', serif;
-            font-size: 1.3rem; font-weight: 700;
+            font-size: 1.45rem; font-weight: 700;
             color: var(--sand);
-            margin-bottom: 0.2rem;
+            margin-bottom: 0.6rem;
+            line-height: 1.5;
         }
-        body.light .hour-title { color: var(--deep-earth); }
+        body.light .zen-title { color: var(--deep-earth); }
 
-        .hour-subtitle {
-            font-size: 0.82rem;
+        .zen-subtitle {
+            font-size: 0.7rem;
             color: var(--stone);
-            margin-bottom: 0.8rem;
+            margin-top: 0.1rem;
+            margin-bottom: 1rem;
             direction: ltr;
+            letter-spacing: 0.08em;
+            text-transform: lowercase;
+            font-family: 'Tajawal', sans-serif;
+            font-weight: 300;
+            opacity: 0.7;
         }
 
-        .hour-desc {
+        .zen-desc {
             font-size: 0.92rem;
-            opacity: 0.7; line-height: 1.7;
-            margin-bottom: 0.3rem;
+            opacity: 0.7; line-height: 1.75;
+            margin-bottom: 0.5rem;
         }
-        .hour-desc[lang="ar"] { font-family: 'Tajawal', sans-serif; direction: rtl; }
-        .hour-desc.en { direction: ltr; font-size: 0.82rem; opacity: 0.45; }
+        .zen-desc[lang="ar"] { font-family: 'Tajawal', sans-serif; direction: rtl; }
+        .zen-desc.en { direction: ltr; font-size: 0.78rem; opacity: 0.35; font-style: italic; margin-top: 0.5rem; }
 
-        /* Sand grain indicators */
-        .hour-grains {
-            display: flex; justify-content: center; gap: 10px;
-            margin-top: 1.5rem;
-        }
-        .hour-grain {
-            width: 6px; height: 6px;
-            border-radius: 50%;
-            background: rgba(196,168,130,0.2);
-            transition: background 0.4s, transform 0.4s;
-        }
-        .hour-grain.active {
+        /* Simplified divider: 24px line at 15% opacity, no gradient */
+        .zen-divider {
+            width: 24px; height: 1px;
             background: var(--gold);
-            transform: scale(1.4);
-        }
-        .hour-grain.past {
-            background: var(--sand);
-            opacity: 0.5;
+            margin: 1rem auto;
+            opacity: 0.15;
         }
 
-        .hour-hint {
+        /* === Simple Dot Progress Indicator (fixed outside cards) === */
+        .dot-progress {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 12px;
+            position: fixed;
+            bottom: 14%;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10000;
+        }
+        .dot-step {
+            width: 7px; height: 7px;
+            border-radius: 47% 53% 52% 48%;
+            background: rgba(196, 168, 130, 0.3);
+            transition: opacity 0.4s ease, background 0.4s ease;
+        }
+        .dot-step.current {
+            background: var(--gold);
+        }
+        .dot-step.completed {
+            background: rgba(196, 168, 130, 0.45);
+        }
+
+        /* === Sand Canvas === */
+        #sandCanvas {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            z-index: 9999;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.8s ease;
+        }
+        #sandCanvas.active {
+            opacity: 1;
+        }
+        #sandCanvas.fading {
+            opacity: 0;
+            transition: opacity 1s ease;
+        }
+
+        /* === Tap Hint === */
+        .zen-hint {
+            position: fixed;
+            bottom: 8%;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            z-index: 2;
+        }
+        .zen-hint-text {
             font-size: 0.72rem;
             color: var(--stone);
-            margin-top: 1rem;
-            opacity: 0.5;
+            opacity: 0;
+            letter-spacing: 0.12em;
+            text-transform: lowercase;
+            animation: hintPulse 3s cubic-bezier(0.37, 0, 0.63, 1) 1s infinite;
+        }
+        @keyframes hintPulse {
+            0%, 100% { opacity: 0.2; }
+            50% { opacity: 0.55; }
         }
 
         /* ========== ZEN RAKE PATTERN ========== */
@@ -574,6 +684,13 @@
             #hourglassCanvas { width: 120px; height: 200px; }
             .vertical-controls { display: none; }
             .bottom-bar { display: flex; }
+            /* Breath of Light onboarding: tighten for mobile */
+            .zen-card-stage { width: 300px; min-height: 280px; }
+            .zen-panel { padding: 2.5rem 2rem; }
+            .zen-title { font-size: 1.25rem; }
+            .zen-desc { font-size: 0.85rem; }
+            .zen-desc.en { font-size: 0.72rem; }
+            .breath-spotlight { width: 320px; height: 320px; }
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -600,55 +717,52 @@
         <button class="splash-enter" id="enterBtn">Enter / ادخل</button>
     </div>
 
-    <!-- ===== ONBOARDING ===== -->
+    <!-- Sand falling canvas (outside onboarding for independent opacity control) -->
+    <canvas id="sandCanvas"></canvas>
+
+    <!-- ===== ONBOARDING: Breath of Light ===== -->
     <div id="onboarding">
-        <div class="hour-panel active" data-step="0">
-            <div class="hour-frame">
-                <div class="hour-waist"></div>
-                <div class="hour-icon"><i data-lucide="hourglass"></i></div>
-                <div class="hour-title" lang="ar">تأمل</div>
-                <div class="hour-subtitle">Contemplate</div>
-                <div class="hour-desc" lang="ar">حبات الرمل تتساقط كالساعة الرملية، كل لحظة فريدة</div>
-                <div class="hour-desc en">Sand grains fall like an hourglass, each moment unique</div>
+        <!-- Breathing ambient spotlight -->
+        <div class="breath-spotlight"></div>
+
+        <!-- Card stage -->
+        <div class="zen-card-stage" id="zenStage">
+            <div class="zen-panel active" data-step="0">
+                <div class="zen-icon"><i data-lucide="scroll-text"></i></div>
+                <div class="zen-title" lang="ar">خذ نَفَسًا عميقًا</div>
+                <div class="zen-subtitle">take a deep breath</div>
+                <div class="zen-divider"></div>
+                <div class="zen-desc" lang="ar">أكثر من ثمانين ألف قصيدة تنتظرك -- من المعلّقات إلى شعر اليوم</div>
+                <div class="zen-desc en">Over 84,000 poems await you -- from the ancient Mu'allaqat to modern verse</div>
             </div>
-            <div class="hour-grains">
-                <div class="hour-grain active"></div>
-                <div class="hour-grain"></div>
-                <div class="hour-grain"></div>
+            <div class="zen-panel" data-step="1">
+                <div class="zen-icon"><i data-lucide="wind"></i></div>
+                <div class="zen-title" lang="ar">لحظة واحدة تكفي</div>
+                <div class="zen-subtitle">one moment is enough</div>
+                <div class="zen-divider"></div>
+                <div class="zen-desc" lang="ar">اقرأ كل قصيدة بعربيتها الأصلية ومعناها بالإنجليزية -- لغتان، فهمٌ واحد</div>
+                <div class="zen-desc en">Read each poem in its original Arabic with English meaning -- two languages, one understanding</div>
             </div>
-            <div class="hour-hint">tap to continue</div>
+            <div class="zen-panel" data-step="2">
+                <div class="zen-icon"><i data-lucide="flame"></i></div>
+                <div class="zen-title" lang="ar">أوقد الشعلة</div>
+                <div class="zen-subtitle">light the flame</div>
+                <div class="zen-divider"></div>
+                <div class="zen-desc" lang="ar">احفظ الأبيات التي تُشعل شيئًا بداخلك -- مجموعتك الخاصة تنتظر</div>
+                <div class="zen-desc en">Save the verses that kindle something within you -- your own collection awaits</div>
+            </div>
         </div>
-        <div class="hour-panel" data-step="1">
-            <div class="hour-frame">
-                <div class="hour-waist"></div>
-                <div class="hour-icon"><i data-lucide="book-open"></i></div>
-                <div class="hour-title" lang="ar">اقرأ واكتشف</div>
-                <div class="hour-subtitle">Read & Discover</div>
-                <div class="hour-desc" lang="ar">استكشف آلاف القصائد من عصور مختلفة في هدوء</div>
-                <div class="hour-desc en">Explore thousands of poems across eras in tranquility</div>
-            </div>
-            <div class="hour-grains">
-                <div class="hour-grain past"></div>
-                <div class="hour-grain active"></div>
-                <div class="hour-grain"></div>
-            </div>
-            <div class="hour-hint">tap to continue</div>
+
+        <!-- Simple Dot Progress -->
+        <div class="dot-progress" id="dotProgress">
+            <div class="dot-step current" data-dot="0"></div>
+            <div class="dot-step" data-dot="1"></div>
+            <div class="dot-step" data-dot="2"></div>
         </div>
-        <div class="hour-panel" data-step="2">
-            <div class="hour-frame">
-                <div class="hour-waist"></div>
-                <div class="hour-icon"><i data-lucide="wind"></i></div>
-                <div class="hour-title" lang="ar">استرخ وتنفس</div>
-                <div class="hour-subtitle">Relax & Breathe</div>
-                <div class="hour-desc" lang="ar">خطوط المشط الزن في الخلفية الهادئة ترافق قراءتك</div>
-                <div class="hour-desc en">Zen rake lines in the calm background accompany your reading</div>
-            </div>
-            <div class="hour-grains">
-                <div class="hour-grain past"></div>
-                <div class="hour-grain past"></div>
-                <div class="hour-grain active"></div>
-            </div>
-            <div class="hour-hint">tap to begin</div>
+
+        <!-- Tap hint -->
+        <div class="zen-hint">
+            <div class="zen-hint-text">tap to continue</div>
         </div>
     </div>
 
@@ -677,44 +791,44 @@
             </div>
 
             <div class="walkthrough">
-                <h2 lang="ar">كيفية الاستخدام</h2>
-                <div class="walk-sub">How to Use</div>
+                <h2 lang="ar">رحلة عبر الرمال</h2>
+                <div class="walk-sub">A Journey Through Sand</div>
                 <div class="steps">
                     <div class="step">
                         <div class="step-icon">
                             <i data-lucide="hourglass" style="width:28px;height:28px"></i>
                         </div>
-                        <div class="step-title-ar" lang="ar">تأمل</div>
-                        <div class="step-title-en">Contemplate</div>
-                        <div class="step-desc" lang="ar">حبات الرمل تتساقط كالساعة الرملية</div>
-                        <div class="step-desc-en">Sand grains fall like an hourglass</div>
+                        <div class="step-title-ar" lang="ar">حبة رمل</div>
+                        <div class="step-title-en">A Grain of Sand</div>
+                        <div class="step-desc" lang="ar">كل قصيدةٍ حبّةُ رملٍ محفوظة عبر القرون -- تأمّل فيها</div>
+                        <div class="step-desc-en">Each poem is a grain preserved across centuries -- contemplate it</div>
                     </div>
                     <div class="step">
                         <div class="step-icon">
-                            <i data-lucide="book-open" style="width:28px;height:28px"></i>
+                            <i data-lucide="clock" style="width:28px;height:28px"></i>
                         </div>
-                        <div class="step-title-ar" lang="ar">اقرأ</div>
-                        <div class="step-title-en">Read</div>
-                        <div class="step-desc" lang="ar">استكشف آلاف القصائد من عصور مختلفة</div>
-                        <div class="step-desc-en">Explore thousands of poems across eras</div>
+                        <div class="step-title-ar" lang="ar">لحظة صمت</div>
+                        <div class="step-title-en">A Moment of Silence</div>
+                        <div class="step-desc" lang="ar">لا تستعجل -- دع كل بيت يمر ببطء كالرمل بين الأصابع</div>
+                        <div class="step-desc-en">Don't rush -- let each verse pass slowly like sand through fingers</div>
                     </div>
                     <div class="step">
                         <div class="step-icon">
                             <i data-lucide="hand" style="width:28px;height:28px"></i>
                         </div>
-                        <div class="step-title-ar" lang="ar">تفاعل</div>
-                        <div class="step-title-en">Interact</div>
-                        <div class="step-desc" lang="ar">أزرار حجرية بألوان الأرض الدافئة</div>
-                        <div class="step-desc-en">Stone buttons in warm earthy colors</div>
+                        <div class="step-title-ar" lang="ar">المس الزمن</div>
+                        <div class="step-title-en">Touch Time</div>
+                        <div class="step-desc" lang="ar">اسحب واضغط -- كل تفاعلٍ يقلب الساعة ويكشف شعرًا جديدًا</div>
+                        <div class="step-desc-en">Swipe and tap -- each interaction flips the glass and reveals new verse</div>
                     </div>
                     <div class="step">
                         <div class="step-icon">
-                            <i data-lucide="wind" style="width:28px;height:28px"></i>
+                            <i data-lucide="infinity" style="width:28px;height:28px"></i>
                         </div>
-                        <div class="step-title-ar" lang="ar">استرخ</div>
-                        <div class="step-title-en">Relax</div>
-                        <div class="step-desc" lang="ar">خطوط المشط الزن في الخلفية الهادئة</div>
-                        <div class="step-desc-en">Zen rake lines in the calm background</div>
+                        <div class="step-title-ar" lang="ar">بلا نهاية</div>
+                        <div class="step-title-en">Without End</div>
+                        <div class="step-desc" lang="ar">الشعر لا ينفد كالرمال -- اقلب الساعة وعُد من جديد</div>
+                        <div class="step-desc-en">Poetry is inexhaustible like sand -- flip the glass and return</div>
                     </div>
                 </div>
             </div>
@@ -765,32 +879,72 @@
             if (typeof lucide !== 'undefined') lucide.createIcons();
         });
 
-        /* ===== ONBOARDING ===== */
-        var hourPanels = document.querySelectorAll('.hour-panel');
-        var currentHourStep = 0;
-        var totalHourSteps = hourPanels.length;
+        /* ===== BREATH OF LIGHT ONBOARDING (Simplified) ===== */
+        var zenPanels = document.querySelectorAll('.zen-panel');
+        var dotSteps = document.querySelectorAll('.dot-step');
+        var currentZenStep = 0;
+        var totalZenSteps = zenPanels.length;
+        var isTransitioning = false;
 
-        function showHourStep() {
-            for (var i = 0; i < hourPanels.length; i++) {
-                hourPanels[i].classList.remove('active');
-            }
-            if (currentHourStep < totalHourSteps) {
-                hourPanels[currentHourStep].classList.add('active');
+        function updateDots() {
+            for (var i = 0; i < dotSteps.length; i++) {
+                dotSteps[i].classList.remove('current', 'completed');
+                if (i < currentZenStep) dotSteps[i].classList.add('completed');
+                if (i === currentZenStep) dotSteps[i].classList.add('current');
             }
         }
 
-        function advanceHour() {
-            currentHourStep++;
-            if (currentHourStep >= totalHourSteps) {
-                document.getElementById('onboarding').classList.remove('active');
-                document.getElementById('mainApp').classList.add('visible');
-                if (typeof lucide !== 'undefined') lucide.createIcons();
+        function advanceZen() {
+            if (isTransitioning) return;
+            isTransitioning = true;
+
+            var currentPanel = zenPanels[currentZenStep];
+
+            /* Exit current panel with crossfade */
+            currentPanel.classList.remove('active');
+            currentPanel.classList.add('exiting');
+
+            currentZenStep++;
+
+            if (currentZenStep >= totalZenSteps) {
+                /* Final: fade entire onboarding over 800ms */
+                setTimeout(function() {
+                    currentPanel.classList.remove('exiting');
+                    document.getElementById('onboarding').classList.add('closing');
+                    stopSandSystem();
+                    setTimeout(function() {
+                        document.getElementById('onboarding').classList.remove('active');
+                        document.getElementById('onboarding').classList.remove('closing');
+                        document.getElementById('mainApp').classList.add('visible');
+                        if (typeof lucide !== 'undefined') lucide.createIcons();
+                        isTransitioning = false;
+                    }, 800);
+                }, 500);
             } else {
-                showHourStep();
+                /* Next step: crossfade to new panel */
+                setTimeout(function() {
+                    /* Update dots */
+                    updateDots();
+
+                    /* Clean up previous panel */
+                    currentPanel.classList.remove('exiting');
+
+                    /* Bring in new panel */
+                    var nextPanel = zenPanels[currentZenStep];
+                    nextPanel.classList.add('entering');
+                    nextPanel.classList.add('active');
+                    if (typeof lucide !== 'undefined') lucide.createIcons();
+
+                    /* Clean up entering class after animation */
+                    setTimeout(function() {
+                        nextPanel.classList.remove('entering');
+                        isTransitioning = false;
+                    }, 600);
+                }, 500);
             }
         }
 
-        document.getElementById('onboarding').addEventListener('click', advanceHour);
+        document.getElementById('onboarding').addEventListener('click', advanceZen);
 
         /* ===== SPLASH -> ONBOARDING ===== */
         document.getElementById('enterBtn').addEventListener('click', function () {
@@ -801,6 +955,7 @@
                 splash.style.display = 'none';
                 document.getElementById('onboarding').classList.add('active');
                 if (typeof lucide !== 'undefined') lucide.createIcons();
+                startSandSystem();
             }, 800);
         });
 
@@ -962,6 +1117,460 @@
         drawHourglass();
         if (!reducedMotion) {
             hourglassLoop();
+        }
+
+        /* ===== SAND FALLING CANVAS — PHYSICS SIMULATION ===== */
+        var sandCanvas = document.getElementById('sandCanvas');
+        var sandCtx = sandCanvas.getContext('2d');
+        var sandRunning = false;
+
+        // --- Physics constants ---
+        var GRAVITY = 0.03;               // px/frame^2 — gentle zen-like fall
+        var AIR_DRAG = 0.995;             // velocity damping in air (higher drag)
+        var TERMINAL_VY = 1.5;            // max fall speed cap
+        var BOUNCE_DAMPING = 0.2;         // energy retained on bounce (low = sand-like)
+        var BOUNCE_THRESHOLD = 0.8;       // min vy to trigger a bounce vs just settling
+        var REPOSE_SLOPE = 1.2;           // max height difference per pixel — lower = rounder mounds
+        var AVALANCHE_TRANSFER = 0.5;     // fraction of excess height that avalanches per step
+        var MAX_PARTICLES = 1200;
+        var SPAWN_RATE = 2;  // exactly 2 grains per frame, every frame, no randomness
+
+        // --- Spawn concentration zones (create natural mounds) ---
+        var spawnZones = [];
+        var NUM_SPAWN_ZONES = 2;
+
+        // --- Global wind system ---
+        var windForce = 0;
+        var windTarget = 0;
+        var windChangeTimer = 0;
+        var windGustTimer = 0;
+
+        // --- Sand grain colors: warm, opaque sand tones (NO glow) ---
+        var bgSandColors = [
+            '#C4A882',
+            '#C5A059',
+            '#8B7355',
+            '#b89b6a',
+            '#d4bc8e',
+            '#B89B6E',
+            '#a08860'
+        ];
+
+        // --- State ---
+        var sandGrains = [];
+        var sandHeightmap = [];
+        var settleParticles = [];
+        var frameCount = 0;
+
+        function initSandCanvas() {
+            sandCanvas.width = window.innerWidth;
+            sandCanvas.height = window.innerHeight;
+            sandHeightmap = new Float32Array(sandCanvas.width);
+
+            // Create 2-3 spawn concentration zones for natural mound formation
+            spawnZones = [];
+            var cw = sandCanvas.width;
+            for (var z = 0; z < NUM_SPAWN_ZONES; z++) {
+                spawnZones.push({
+                    center: cw * (0.3 + z * 0.4) + (Math.random() - 0.5) * cw * 0.05,
+                    width: cw * (0.06 + Math.random() * 0.06)
+                });
+            }
+
+            windForce = 0;
+            windTarget = 0;
+
+            // Pre-populate 2-3 gentle mounds so the scene isn't empty at start
+            addInitialMounds();
+        }
+
+        function addInitialMounds() {
+            var w = sandCanvas.width;
+            var mounds = [
+                { center: w * 0.3, height: 20, width: w * 0.1 },
+                { center: w * 0.7, height: 25, width: w * 0.12 }
+            ];
+            for (var m = 0; m < mounds.length; m++) {
+                var mound = mounds[m];
+                for (var x = 0; x < w; x++) {
+                    var dx = x - mound.center;
+                    var contribution = mound.height * Math.exp(-(dx * dx) / (2 * mound.width * mound.width));
+                    sandHeightmap[x] += contribution;
+                }
+            }
+        }
+
+        window.addEventListener('resize', function() {
+            if (!sandRunning) return;
+            var oldMap = sandHeightmap;
+            var oldW = oldMap.length;
+            sandCanvas.width = window.innerWidth;
+            sandCanvas.height = window.innerHeight;
+            var newMap = new Float32Array(sandCanvas.width);
+            for (var i = 0; i < sandCanvas.width; i++) {
+                var srcIdx = Math.floor(i * oldW / sandCanvas.width);
+                if (srcIdx < oldW) newMap[i] = oldMap[srcIdx];
+            }
+            sandHeightmap = newMap;
+        });
+
+        // --- Grain constructor: small, solid, opaque sand grains ---
+        function spawnSandGrain() {
+            var cw = sandCanvas.width;
+            var x;
+
+            // 85% of grains spawn near concentration zones for defined mounds
+            if (Math.random() < 0.85 && spawnZones.length > 0) {
+                var zone = spawnZones[Math.floor(Math.random() * spawnZones.length)];
+                x = zone.center + (Math.random() - 0.5) * zone.width * 2;
+            } else {
+                x = Math.random() * cw;
+            }
+
+            var sz = 1 + Math.random() * 2;             // 1-3 px wide
+            var szH = 0.8 + Math.random() * 1.2;        // 0.8-2 px tall
+            return {
+                x: x,
+                y: -2 - Math.random() * 78,              // staggered entry (-2 to -80)
+                vx: (Math.random() - 0.5) * 0.02,
+                vy: 0.02 + Math.random() * 0.58,          // wide range (0.02-0.60)
+                w: sz,
+                h: szH,
+                mass: sz * szH,
+                gravityMult: (0.7 + Math.random() * 0.7) * (0.8 + sz * 0.15),  // per-grain, size-correlated
+                drag: 0.990 + Math.random() * 0.008 - sz * 0.001,              // bigger = less drag
+                terminalVy: 1.0 + sz * 0.25 + Math.random() * 0.5,            // bigger = faster terminal
+                color: bgSandColors[Math.floor(Math.random() * bgSandColors.length)],
+                opacity: 0.35 + (sz / 3.0) * 0.45 + Math.random() * 0.2,     // depth parallax
+                settled: false,
+                bounces: 0
+            };
+        }
+
+        // --- Wind update ---
+        function updateWind() {
+            windChangeTimer++;
+            windGustTimer++;
+
+            if (windChangeTimer > 120 + Math.random() * 120) {
+                windTarget = (Math.random() - 0.5) * 0.04;
+                windChangeTimer = 0;
+            }
+
+            if (windGustTimer > 300 + Math.random() * 200) {
+                windTarget = (Math.random() - 0.5) * 0.08;
+                windGustTimer = 0;
+            }
+
+            windForce += (windTarget - windForce) * 0.008;
+        }
+
+        // --- Angle of repose / avalanche ---
+        function enforceRepose() {
+            var w = sandHeightmap.length;
+            for (var pass = 0; pass < 2; pass++) {
+                var start = pass === 0 ? 1 : w - 2;
+                var end = pass === 0 ? w : -1;
+                var step = pass === 0 ? 1 : -1;
+                for (var i = start; i !== end; i += step) {
+                    var prev = i - step;
+                    if (prev < 0 || prev >= w) continue;
+                    var diff = sandHeightmap[i] - sandHeightmap[prev];
+                    if (diff > REPOSE_SLOPE) {
+                        var excess = (diff - REPOSE_SLOPE) * AVALANCHE_TRANSFER;
+                        sandHeightmap[i] -= excess;
+                        sandHeightmap[prev] += excess;
+                    }
+                }
+            }
+        }
+
+        // --- Settle puff (2-3 tiny scatter particles that spray outward on impact) ---
+        function createSettlePuff(x, y, speed) {
+            var count = 2 + Math.floor(Math.random() * 2); // 2-3 scatter particles
+            for (var p = 0; p < count; p++) {
+                var angle = -Math.PI * (0.15 + Math.random() * 0.7); // arc upward-outward
+                var spd = (0.8 + Math.random() * 1.2) * Math.min(speed, 1.5);
+                settleParticles.push({
+                    x: x + (Math.random() - 0.5) * 3,
+                    y: y,
+                    vx: Math.cos(angle) * spd * (Math.random() < 0.5 ? -1 : 1),
+                    vy: Math.sin(angle) * spd,
+                    life: 1.0,
+                    decay: 1.0 / (15 + Math.floor(Math.random() * 6)), // 15-20 frame lifespan
+                    size: 1,
+                    color: bgSandColors[Math.floor(Math.random() * bgSandColors.length)]
+                });
+            }
+        }
+
+        // --- Main physics update ---
+        function updateSandSystem() {
+            var cw = sandCanvas.width;
+            var ch = sandCanvas.height;
+            frameCount++;
+
+            updateWind();
+
+            // Spawn exactly 2 grains per frame — continuous, no randomness in rate
+            for (var s = 0; s < SPAWN_RATE; s++) {
+                if (sandGrains.length < MAX_PARTICLES) {
+                    sandGrains.push(spawnSandGrain());
+                }
+            }
+
+            // Update each falling grain
+            for (var i = sandGrains.length - 1; i >= 0; i--) {
+                var g = sandGrains[i];
+
+                // Per-grain gravity with size correlation
+                g.vy += GRAVITY * g.gravityMult * (1.0 + g.w * 0.1);
+
+                // Per-grain terminal velocity
+                if (g.vy > g.terminalVy) g.vy = g.terminalVy;
+
+                // Wind: very gentle breeze, smaller grains drift slightly more
+                var airResistFactor = 1.0 / (1.5 + g.mass * 0.2);
+                g.vx += windForce * airResistFactor * 0.3;
+
+                // Slight random horizontal wobble (barely perceptible)
+                g.vx += (Math.random() - 0.5) * 0.015;
+
+                // Micro-turbulence: random air pocket nudge (3% chance per frame)
+                if (Math.random() < 0.03) {
+                    g.vy += (Math.random() - 0.5) * 0.15;
+                    g.vx += (Math.random() - 0.5) * 0.1;
+                }
+
+                // Per-grain air drag
+                g.vx *= g.drag;
+                g.vy *= g.drag;
+
+                // Integrate
+                g.x += g.vx;
+                g.y += g.vy;
+
+                // Wrap horizontally
+                if (g.x < -10) g.x = cw + 5;
+                else if (g.x > cw + 10) g.x = -5;
+
+                // Ground collision
+                var ix = Math.floor(g.x);
+                if (ix < 0) ix = 0;
+                if (ix >= cw) ix = cw - 1;
+
+                // Sample local ground height (smoothed from 3 neighbors)
+                var h0 = sandHeightmap[ix];
+                var hL = ix > 0 ? sandHeightmap[ix - 1] : h0;
+                var hR = ix < cw - 1 ? sandHeightmap[ix + 1] : h0;
+                var localHeight = h0 * 0.5 + (hL + hR) * 0.25;
+                var groundY = ch - localHeight;
+
+                if (g.y >= groundY - g.h * 0.5) {
+                    var impactSpeed = Math.abs(g.vy);
+
+                    if (impactSpeed > BOUNCE_THRESHOLD && g.bounces < 1) {
+                        // Bounce with heavy damping
+                        g.vy = -impactSpeed * BOUNCE_DAMPING;
+                        g.vx += (Math.random() - 0.5) * impactSpeed * 0.25;
+                        g.y = groundY - g.h * 0.5 - 1;
+                        g.bounces++;
+                        createSettlePuff(g.x, groundY, impactSpeed * 0.4);
+                    } else {
+                        // Settle: remove grain and deposit into heightmap
+                        sandGrains.splice(i, 1);
+
+                        // Deposit: gaussian spread so grains build broad mounds, not sharp spikes
+                        var deposit = Math.max(1.0, g.w * 0.6);
+                        var spreadRadius = 8;
+                        for (var sp = -spreadRadius; sp <= spreadRadius; sp++) {
+                            var si = ix + sp;
+                            if (si >= 0 && si < cw) {
+                                var weight = Math.exp(-(sp * sp) / (2 * 4 * 4)); // gaussian, sigma=4
+                                sandHeightmap[si] += deposit * weight * 0.3;
+                            }
+                        }
+                        sandHeightmap[ix] += deposit * 0.4; // extra center weight
+
+                        // Settle puff on impact
+                        if (impactSpeed > 1.0) {
+                            createSettlePuff(g.x, groundY, impactSpeed * 0.3);
+                        }
+
+                        // Immediate local slope check
+                        var slopeL = ix > 0 ? sandHeightmap[ix] - sandHeightmap[ix - 1] : 0;
+                        var slopeR = ix < cw - 1 ? sandHeightmap[ix] - sandHeightmap[ix + 1] : 0;
+                        if (slopeL > REPOSE_SLOPE && slopeL > slopeR) {
+                            var slide = (slopeL - REPOSE_SLOPE) * 0.5;
+                            sandHeightmap[ix] -= slide;
+                            sandHeightmap[ix - 1] += slide;
+                        } else if (slopeR > REPOSE_SLOPE) {
+                            var slide2 = (slopeR - REPOSE_SLOPE) * 0.5;
+                            sandHeightmap[ix] -= slide2;
+                            sandHeightmap[ix + 1] += slide2;
+                        }
+                    }
+                }
+            }
+
+            // Update settle puffs
+            for (var sp = settleParticles.length - 1; sp >= 0; sp--) {
+                var pf = settleParticles[sp];
+                pf.x += pf.vx;
+                pf.y += pf.vy;
+                pf.vy += 0.08; // gravity pulls scatter particles into arc
+                pf.life -= pf.decay;
+                if (pf.life <= 0) {
+                    settleParticles.splice(sp, 1);
+                }
+            }
+
+            // Enforce angle of repose every 3 frames
+            if (frameCount % 3 === 0) {
+                enforceRepose();
+            }
+
+            // Smoothing every 20 frames for rounded dune contours
+            if (frameCount % 20 === 0) {
+                var w = sandHeightmap.length;
+                if (w > 4) {
+                    for (var si = 2; si < w - 2; si++) {
+                        sandHeightmap[si] = sandHeightmap[si] * 0.6
+                            + (sandHeightmap[si - 1] + sandHeightmap[si + 1]) * 0.15
+                            + (sandHeightmap[si - 2] + sandHeightmap[si + 2]) * 0.05;
+                    }
+                }
+            }
+        }
+
+        // --- Rendering ---
+        function drawSandSystem() {
+            var cw = sandCanvas.width;
+            var ch = sandCanvas.height;
+            sandCtx.clearRect(0, 0, cw, ch);
+
+            var isLight = document.body.classList.contains('light');
+
+            // --- Draw accumulated sand pile ---
+            var hasAccumulation = false;
+            for (var c = 0; c < cw; c += 4) {
+                if (sandHeightmap[c] > 0.5) { hasAccumulation = true; break; }
+            }
+
+            if (hasAccumulation) {
+                // Layer 1: Deep base fill (solid, darker)
+                sandCtx.fillStyle = isLight
+                    ? 'rgba(160, 135, 95, 0.7)'
+                    : 'rgba(100, 82, 58, 0.6)';
+                sandCtx.beginPath();
+                sandCtx.moveTo(0, ch);
+                for (var px = 0; px < cw; px += 2) {
+                    sandCtx.lineTo(px, ch - sandHeightmap[px] + 2);
+                }
+                sandCtx.lineTo(cw, ch);
+                sandCtx.closePath();
+                sandCtx.fill();
+
+                // Layer 2: Main surface fill (warm sand)
+                sandCtx.fillStyle = isLight
+                    ? 'rgba(196, 168, 130, 0.85)'
+                    : 'rgba(196, 168, 130, 0.7)';
+                sandCtx.beginPath();
+                sandCtx.moveTo(0, ch);
+                for (var px2 = 0; px2 < cw; px2 += 2) {
+                    sandCtx.lineTo(px2, ch - sandHeightmap[px2]);
+                }
+                sandCtx.lineTo(cw, ch);
+                sandCtx.closePath();
+                sandCtx.fill();
+
+                // Layer 3: Highlighted crest line (subtle ridge highlight)
+                sandCtx.strokeStyle = isLight
+                    ? 'rgba(220, 200, 165, 0.5)'
+                    : 'rgba(210, 190, 155, 0.3)';
+                sandCtx.lineWidth = 1;
+                sandCtx.beginPath();
+                var started = false;
+                for (var tx = 0; tx < cw; tx += 2) {
+                    if (sandHeightmap[tx] > 1) {
+                        if (!started) {
+                            sandCtx.moveTo(tx, ch - sandHeightmap[tx] - 0.5);
+                            started = true;
+                        } else {
+                            sandCtx.lineTo(tx, ch - sandHeightmap[tx] - 0.5);
+                        }
+                    } else {
+                        started = false;
+                    }
+                }
+                sandCtx.stroke();
+
+                // Layer 4: Grain texture on pile surface (tiny opaque rectangles)
+                for (var gt = 0; gt < cw; gt += 2 + Math.floor(Math.random() * 3)) {
+                    if (sandHeightmap[gt] > 1.5) {
+                        var grainY = ch - sandHeightmap[gt] + Math.random() * Math.min(sandHeightmap[gt], 6);
+                        sandCtx.globalAlpha = 0.2 + Math.random() * 0.15;
+                        sandCtx.fillStyle = bgSandColors[Math.floor(Math.random() * bgSandColors.length)];
+                        sandCtx.fillRect(gt, grainY, 1 + Math.random(), 1);
+                    }
+                }
+                sandCtx.globalAlpha = 1;
+            }
+
+            // --- Draw settle puffs (tiny bouncing micro-grains on impact) ---
+            for (var sp = 0; sp < settleParticles.length; sp++) {
+                var pf = settleParticles[sp];
+                sandCtx.globalAlpha = 0.5 + pf.life * 0.4; // min 0.5 opacity, max 0.9
+                sandCtx.fillStyle = pf.color;
+                sandCtx.fillRect(pf.x, pf.y, pf.size, pf.size);
+            }
+            sandCtx.globalAlpha = 1;
+
+            // --- Draw falling grains as small solid rectangles (NOT circles/ellipses) ---
+            for (var j = 0; j < sandGrains.length; j++) {
+                var g = sandGrains[j];
+                sandCtx.globalAlpha = g.opacity;
+                sandCtx.fillStyle = g.color;
+                // Small, solid, opaque rectangle — looks like a grain of sand, not a star
+                sandCtx.fillRect(
+                    Math.round(g.x - g.w * 0.5),
+                    Math.round(g.y - g.h * 0.5),
+                    Math.round(g.w),
+                    Math.round(g.h)
+                );
+            }
+            sandCtx.globalAlpha = 1;
+        }
+
+        function sandLoop() {
+            if (!sandRunning || reducedMotion) return;
+            updateSandSystem();
+            drawSandSystem();
+            requestAnimationFrame(sandLoop);
+        }
+
+        function startSandSystem() {
+            if (reducedMotion) return;
+            initSandCanvas();
+            sandRunning = true;
+            sandGrains = [];
+            settleParticles = [];
+            frameCount = 0;
+            windForce = 0;
+            windTarget = 0;
+            windChangeTimer = 0;
+            windGustTimer = 0;
+            sandCanvas.classList.add('active');
+            sandLoop();
+        }
+
+        function stopSandSystem() {
+            sandCanvas.classList.remove('active');
+            sandCanvas.classList.add('fading');
+            setTimeout(function() {
+                sandRunning = false;
+                sandCanvas.classList.remove('fading');
+            }, 1000);
         }
 
         /* ===== INIT LUCIDE ===== */

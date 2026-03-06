@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>E2E #3: Minimal Constellation - Full Flow</title>
+  <title>E2E #4: 3D Tilt Splash + Constellation - Full Flow</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Forum&family=Reem+Kufi:wght@400;700&family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
@@ -56,6 +56,98 @@
       background: transparent;
       transition: opacity 0.6s ease, visibility 0.6s ease;
       cursor: pointer;
+    }
+
+    .splash-3d-wrapper {
+      perspective: 1000px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .splash-card {
+      position: relative;
+      width: min(420px, 85vw);
+      padding: 3rem 2.5rem;
+      background: rgba(9, 9, 11, 0.6);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 20px;
+      transform-style: preserve-3d;
+      transition: transform 0.15s ease-out;
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.03);
+      z-index: 10;
+    }
+
+    .splash-card::before {
+      content: '';
+      position: absolute;
+      inset: -1px;
+      border-radius: 21px;
+      background: linear-gradient(135deg, rgba(212, 175, 110, 0.3), transparent 40%, transparent 60%, rgba(165, 190, 215, 0.2));
+      opacity: 0;
+      transition: opacity 0.4s ease;
+      pointer-events: none;
+      z-index: -1;
+    }
+
+    .splash-card:hover::before { opacity: 1; }
+
+    .splash-gloss {
+      position: absolute;
+      inset: 0;
+      border-radius: 20px;
+      background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.08), transparent 60%);
+      pointer-events: none;
+      z-index: 20;
+    }
+
+    .splash-card-inner {
+      position: relative;
+      transform: translateZ(30px);
+      text-align: center;
+    }
+
+    .splash-decoration {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin-bottom: 2rem;
+      opacity: 0.4;
+    }
+
+    .splash-decoration .line {
+      width: 40px;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    }
+
+    .splash-decoration .diamond {
+      width: 6px;
+      height: 6px;
+      background: var(--accent);
+      transform: rotate(45deg);
+    }
+
+    .splash-card .splash-brand { margin-bottom: 16px; }
+    .splash-card .splash-subtitle { margin-bottom: 40px; font-size: 9px; }
+    .splash-card .splash-cta { font-size: 13px; padding: 14px 40px; }
+
+    @keyframes splash-card-float {
+      0%, 100% { transform: rotateX(2deg) rotateY(-1deg); }
+      25% { transform: rotateX(-1deg) rotateY(2deg); }
+      50% { transform: rotateX(-2deg) rotateY(1deg); }
+      75% { transform: rotateX(1deg) rotateY(-2deg); }
+    }
+
+    [data-theme="light"] .splash-card {
+      background: rgba(255, 255, 255, 0.5);
+      box-shadow: 0 25px 50px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(0, 0, 0, 0.05);
+    }
+    [data-theme="light"] .splash-gloss {
+      background: radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.03), transparent 60%);
     }
 
     .splash.hidden {
@@ -555,18 +647,28 @@
 
   <!-- ========== SPLASH ========== -->
   <section class="splash" id="splashScreen">
-    <div class="splash-content">
-      <div class="splash-brand">
-        <span class="splash-brand-en">poetry</span>
-        <span class="splash-brand-ar" dir="rtl" lang="ar">بالعربي</span>
+    <div class="splash-3d-wrapper">
+      <div class="splash-card" id="splashCard">
+        <div class="splash-gloss" id="splashGloss"></div>
+        <div class="splash-card-inner" id="splashCardInner">
+          <div class="splash-decoration">
+            <span class="line"></span>
+            <span class="diamond"></span>
+            <span class="line"></span>
+          </div>
+          <div class="splash-brand">
+            <span class="splash-brand-en">poetry</span>
+            <span class="splash-brand-ar" dir="rtl" lang="ar">بالعربي</span>
+          </div>
+          <div class="splash-subtitle">Verses Connecting Across Time and Space</div>
+          <button class="splash-cta" id="splashCta">
+            <span>Enter</span>
+            <i data-lucide="arrow-right"></i>
+          </button>
+        </div>
       </div>
-      <div class="splash-subtitle">Verses Connecting Across Time and Space</div>
-      <button class="splash-cta" id="splashCta">
-        <span>Enter</span>
-        <i data-lucide="arrow-right"></i>
-      </button>
-      <div class="splash-hint">Tap anywhere to animate the constellation</div>
     </div>
+    <div class="splash-hint">Move your cursor to interact</div>
   </section>
 
   <!-- ========== ONBOARDING ========== -->
@@ -681,7 +783,51 @@
       document.body.setAttribute('data-mode', isDark ? 'dark' : 'light');
     });
 
-    // ========== CANVAS SETUP ==========
+    // Flow navigation
+    document.getElementById('splashCta').addEventListener('click', function(e) {
+      e.stopPropagation();
+      appPhase = 'onboarding';
+      document.getElementById('splashScreen').classList.add('hidden');
+      document.getElementById('onboarding').classList.add('active');
+      setTimeout(function() { transitionToFormation(0); }, 500);
+    });
+
+    // Tap anywhere on splash to animate (PM: tap-anywhere interaction)
+    document.getElementById('splashScreen').addEventListener('click', function(e) {
+      // Create a burst of movement from tap point
+      var tapX = e.clientX || (e.touches && e.touches[0].clientX) || canvas.width / 2;
+      var tapY = e.clientY || (e.touches && e.touches[0].clientY) || canvas.height / 2;
+      particles.forEach(function(p) {
+        var dx = p.x - tapX;
+        var dy = p.y - tapY;
+        var dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 300) {
+          var force = (300 - dist) / 300 * 3;
+          p.vx += (dx / (dist || 1)) * force;
+          p.vy += (dy / (dist || 1)) * force;
+        }
+      });
+    });
+
+    document.querySelectorAll('.onboarding-next[data-advance]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var target = parseInt(this.getAttribute('data-advance'));
+        currentOnboardingStep = target;
+        document.querySelectorAll('.onboarding-card').forEach(function(c) { c.classList.remove('active'); });
+        var next = document.querySelector('.onboarding-card[data-step="' + target + '"]');
+        if (next) next.classList.add('active');
+        transitionToFormation(target);
+      });
+    });
+
+    document.getElementById('onboardingFinish').addEventListener('click', function() {
+      appPhase = 'app';
+      clearFormation();
+      document.getElementById('onboarding').classList.remove('active');
+      setTimeout(function() { canvas.style.display = 'none'; document.getElementById('mainApp').classList.add('active'); }, 500);
+    });
+
+    // Minimal constellation (PM: start bigger, slower)
     var canvas = document.getElementById('particleCanvas');
     var ctx = canvas.getContext('2d');
     canvas.width = window.innerWidth;
@@ -691,192 +837,16 @@
     var particleCount = 220;
     var mouse = { x: canvas.width / 2, y: canvas.height / 2 };
     var appPhase = 'splash';
-    var lastTapX = canvas.width / 2;
-    var lastTapY = canvas.height / 2;
-    var isTransitioning = false;
-
-    // Subtler formation colors (dimmer, more star-like)
     var formationColors = [
-      { r: 190, g: 160, b: 100 },   // Aries: warm gold, subdued
-      { r: 140, g: 165, b: 195 },   // Taurus: cool steel blue, subdued
-      { r: 175, g: 130, b: 145 }    // Orion: muted rose
+      { r: 212, g: 175, b: 110 },
+      { r: 165, g: 190, b: 215 },
+      { r: 205, g: 145, b: 158 }
     ];
     var currentFormationColor = null;
     var colorBloom = 0;
     var currentOnboardingStep = 0;
-    var currentConstellationLines = null;
 
-    /* ============================================
-       REAL ZODIAC CONSTELLATION DEFINITIONS
-       ============================================ */
-
-    // Aries (The Ram) — 4 main stars
-    var ariesStars = [
-      { x: 0.70, y: 0.30, name: 'Hamal',     bright: true },    // alpha — brightest
-      { x: 0.55, y: 0.25, name: 'Sheratan',   bright: true },    // beta
-      { x: 0.50, y: 0.22, name: 'Mesarthim',  bright: false },   // gamma
-      { x: 0.35, y: 0.35, name: '41 Ari',     bright: false }    // 41 Arietis
-    ];
-    var ariesLines = [
-      [2, 1],  // Mesarthim -> Sheratan
-      [1, 0],  // Sheratan -> Hamal
-      [1, 3]   // Sheratan -> 41 Ari (branch)
-    ];
-
-    // Taurus (The Bull) — V-shape of the Hyades + horns
-    var taurusStars = [
-      { x: 0.50, y: 0.25, name: 'Aldebaran', bright: true },    // alpha — red giant, brightest
-      { x: 0.55, y: 0.35, name: 'Ain',        bright: false },   // epsilon — upper V
-      { x: 0.60, y: 0.45, name: 'Upper V tip', bright: false },  // tip of upper V horn
-      { x: 0.45, y: 0.35, name: 'Theta Tau',  bright: false },   // theta — lower V
-      { x: 0.38, y: 0.45, name: 'Lower V tip', bright: false },  // tip of lower V horn
-      { x: 0.70, y: 0.20, name: 'Elnath',     bright: true },    // beta — horn tip
-      { x: 0.30, y: 0.18, name: 'Zeta Tau',   bright: true }     // zeta — other horn tip
-    ];
-    var taurusLines = [
-      [0, 1],  // Aldebaran -> Ain (upper V)
-      [1, 2],  // Ain -> upper V tip
-      [0, 3],  // Aldebaran -> Theta (lower V)
-      [3, 4],  // Theta -> lower V tip
-      [2, 5],  // upper V tip -> Elnath (horn)
-      [4, 6]   // lower V tip -> Zeta (horn)
-    ];
-
-    // Orion (The Hunter) — belt + shoulders + feet
-    var orionStars = [
-      { x: 0.45, y: 0.15, name: 'Betelgeuse', bright: true },   // alpha — left shoulder
-      { x: 0.60, y: 0.15, name: 'Bellatrix',  bright: true },   // gamma — right shoulder
-      { x: 0.48, y: 0.35, name: 'Alnitak',    bright: false },  // belt left
-      { x: 0.52, y: 0.35, name: 'Alnilam',    bright: true },   // belt center
-      { x: 0.56, y: 0.35, name: 'Mintaka',    bright: false },  // belt right
-      { x: 0.42, y: 0.55, name: 'Saiph',      bright: false },  // left foot
-      { x: 0.62, y: 0.55, name: 'Rigel',      bright: true }    // beta — right foot, brightest
-    ];
-    var orionLines = [
-      [0, 1],  // Betelgeuse -> Bellatrix (shoulders)
-      [0, 2],  // Betelgeuse -> Alnitak
-      [1, 4],  // Bellatrix -> Mintaka
-      [2, 3],  // Alnitak -> Alnilam (belt)
-      [3, 4],  // Alnilam -> Mintaka (belt)
-      [2, 5],  // Alnitak -> Saiph (left leg)
-      [4, 6]   // Mintaka -> Rigel (right leg)
-    ];
-
-    var constellations = [
-      { stars: ariesStars, lines: ariesLines },
-      { stars: taurusStars, lines: taurusLines },
-      { stars: orionStars, lines: orionLines }
-    ];
-
-    /* ============================================
-       CONSTELLATION FORMATION GENERATOR
-       ============================================
-       Places main star particles at exact positions,
-       distributes remaining particles along constellation
-       lines with some scatter for a natural look.
-    */
-    function generateConstellationFormation(constellationIndex, W, H, count) {
-      var constellation = constellations[constellationIndex];
-      var stars = constellation.stars;
-      var lines = constellation.lines;
-      var targets = [];
-      var cx = W / 2;
-      var cy = H * 0.38;
-      var scale = Math.min(W, H) * 0.7;
-
-      // Calculate the bounding box of the constellation to center it
-      var minX = 1, maxX = 0, minY = 1, maxY = 0;
-      for (var s = 0; s < stars.length; s++) {
-        if (stars[s].x < minX) minX = stars[s].x;
-        if (stars[s].x > maxX) maxX = stars[s].x;
-        if (stars[s].y < minY) minY = stars[s].y;
-        if (stars[s].y > maxY) maxY = stars[s].y;
-      }
-      var conW = maxX - minX;
-      var conH = maxY - minY;
-      var conCX = (minX + maxX) / 2;
-      var conCY = (minY + maxY) / 2;
-
-      // Scale star positions to canvas, centered at (cx, cy)
-      var scaledStars = [];
-      for (var s = 0; s < stars.length; s++) {
-        scaledStars.push({
-          x: cx + (stars[s].x - conCX) * scale,
-          y: cy + (stars[s].y - conCY) * scale,
-          bright: stars[s].bright
-        });
-      }
-
-      // Build the constellation line segments in pixel space for drawing
-      var lineSegments = [];
-      for (var l = 0; l < lines.length; l++) {
-        var a = scaledStars[lines[l][0]];
-        var b = scaledStars[lines[l][1]];
-        lineSegments.push({ x1: a.x, y1: a.y, x2: b.x, y2: b.y });
-      }
-
-      // Calculate total line length for distributing particles proportionally
-      var totalLineLength = 0;
-      var lineLengths = [];
-      for (var l = 0; l < lineSegments.length; l++) {
-        var seg = lineSegments[l];
-        var len = Math.sqrt((seg.x2 - seg.x1) * (seg.x2 - seg.x1) + (seg.y2 - seg.y1) * (seg.y2 - seg.y1));
-        lineLengths.push(len);
-        totalLineLength += len;
-      }
-
-      // First, place particles at main star positions (one per star)
-      for (var s = 0; s < scaledStars.length; s++) {
-        targets.push({
-          x: scaledStars[s].x,
-          y: scaledStars[s].y,
-          isStar: true,
-          bright: scaledStars[s].bright
-        });
-      }
-
-      // Remaining particles distributed along constellation lines with scatter
-      var remaining = count - scaledStars.length;
-      var placed = 0;
-      for (var l = 0; l < lineSegments.length; l++) {
-        var seg = lineSegments[l];
-        var proportion = lineLengths[l] / totalLineLength;
-        var numOnLine = Math.round(remaining * proportion);
-        if (l === lineSegments.length - 1) {
-          numOnLine = remaining - placed; // ensure exact count
-        }
-        for (var p = 0; p < numOnLine; p++) {
-          var t = (p + 0.5) / numOnLine; // evenly spaced along line
-          var baseX = seg.x1 + (seg.x2 - seg.x1) * t;
-          var baseY = seg.y1 + (seg.y2 - seg.y1) * t;
-          // Add scatter perpendicular to line and along it
-          var scatter = (Math.random() - 0.5) * 30;
-          var scatterAlong = (Math.random() - 0.5) * 10;
-          var dx = seg.x2 - seg.x1;
-          var dy = seg.y2 - seg.y1;
-          var lineLen = Math.sqrt(dx * dx + dy * dy) || 1;
-          // Perpendicular direction
-          var perpX = -dy / lineLen;
-          var perpY = dx / lineLen;
-          // Along direction
-          var alongX = dx / lineLen;
-          var alongY = dy / lineLen;
-          targets.push({
-            x: baseX + perpX * scatter + alongX * scatterAlong,
-            y: baseY + perpY * scatter + alongY * scatterAlong,
-            isStar: false,
-            bright: false
-          });
-          placed++;
-        }
-      }
-
-      return { targets: targets, lines: lineSegments };
-    }
-
-    /* ============================================
-       PARTICLE INITIALIZATION
-       ============================================ */
+    // Larger initial spread (PM: start bigger)
     for (var i = 0; i < particleCount; i++) {
       var curve = Math.floor(Math.random() * 3);
       var curves = [
@@ -894,248 +864,132 @@
         originX: (c.x + Math.cos(angle) * dist) * canvas.width,
         originY: (c.y + Math.sin(angle) * dist) * canvas.height,
         vx: 0, vy: 0,
-        radius: Math.random() * 1.6 + 0.8,  // Smaller particles (was 2.2 + 1.2)
-        opacity: Math.random() * 0.2 + 0.25, // Dimmer (was 0.3 + 0.5)
+        radius: Math.random() * 2.2 + 1.2,
+        opacity: Math.random() * 0.3 + 0.5,
         twinklePhase: Math.random() * Math.PI * 2,
         twinkleSpeed: Math.random() * 0.3 + 0.2,
-        formationTarget: null,
-        isStar: false,
-        bright: false
+        formationTarget: null
       });
     }
 
     window.addEventListener('mousemove', function(e) { mouse.x = e.clientX; mouse.y = e.clientY; });
 
-    /* ============================================
-       FORMATION CONTROL
-       ============================================ */
-    function setFormation(formationData) {
-      var targets = formationData.targets;
-      currentConstellationLines = formationData.lines;
-      for (var i = 0; i < particles.length; i++) {
-        if (i < targets.length) {
-          particles[i].formationTarget = { x: targets[i].x, y: targets[i].y };
-          particles[i].isStar = targets[i].isStar || false;
-          particles[i].bright = targets[i].bright || false;
-          // Main constellation stars get slightly larger radius
-          if (targets[i].isStar && targets[i].bright) {
-            particles[i].radius = 2.0;
-            particles[i].opacity = 0.5;
-          } else if (targets[i].isStar) {
-            particles[i].radius = 1.6;
-            particles[i].opacity = 0.4;
-          }
-        } else {
-          particles[i].formationTarget = null;
-          particles[i].isStar = false;
-          particles[i].bright = false;
-        }
+    function generateBookFormation(W, H, count) {
+      var targets = [];
+      var cx = W / 2, cy = H * 0.38;
+      var bookW = Math.min(W * 0.55, 300);
+      var bookH = bookW * 0.7;
+      for (var i = 0; i < count; i++) {
+        var t = i / count; var x, y;
+        if (t < 0.15) { var st = t / 0.15; x = cx; y = cy - bookH/2 + st * bookH; }
+        else if (t < 0.35) { var lt = (t - 0.15) / 0.2; x = cx - lt * bookW/2; y = cy - bookH/2 + Math.sin(lt * Math.PI * 0.5) * 8; }
+        else if (t < 0.5) { var lt = (t - 0.35) / 0.15; x = cx - (1-lt) * bookW/2; y = cy + bookH/2 - Math.sin((1-lt) * Math.PI * 0.5) * 8; }
+        else if (t < 0.55) { var lt = (t - 0.5) / 0.05; x = cx - bookW/2; y = cy - bookH/2 + lt * bookH; }
+        else if (t < 0.75) { var rt = (t - 0.55) / 0.2; x = cx + rt * bookW/2; y = cy - bookH/2 + Math.sin(rt * Math.PI * 0.5) * 8; }
+        else if (t < 0.9) { var rt = (t - 0.75) / 0.15; x = cx + (1-rt) * bookW/2; y = cy + bookH/2 - Math.sin((1-rt) * Math.PI * 0.5) * 8; }
+        else { var rt = (t - 0.9) / 0.1; x = cx + bookW/2; y = cy - bookH/2 + rt * bookH; }
+        targets.push({x: x, y: y});
       }
+      return targets;
     }
 
-    function clearFormation() {
-      currentConstellationLines = null;
-      for (var i = 0; i < particles.length; i++) {
-        particles[i].formationTarget = null;
-        particles[i].isStar = false;
-        particles[i].bright = false;
+    function generateArcsFormation(W, H, count) {
+      var targets = [];
+      var cx = W / 2, cy = H * 0.38;
+      var arcR = Math.min(W * 0.35, 200);
+      var gap = arcR * 0.6;
+      for (var i = 0; i < count; i++) {
+        var t = i / count; var x, y;
+        if (t < 0.5) { var angle = -Math.PI * 0.75 + (t / 0.5) * Math.PI * 1.5; x = cx - gap/2 + Math.cos(angle) * arcR; y = cy + Math.sin(angle) * arcR; }
+        else { var angle = Math.PI * 0.75 - ((t-0.5) / 0.5) * Math.PI * 1.5; x = cx + gap/2 + Math.cos(angle) * arcR; y = cy + Math.sin(angle) * arcR; }
+        targets.push({x: x, y: y});
       }
+      return targets;
     }
 
-    /* ============================================
-       CONVERGE-TO-POINT + EXPAND-TO-CONSTELLATION
-       ============================================
-       Phase 1: All particles converge to a point (tap location).
-       Phase 2: Brief pause (~300ms).
-       Phase 3: Expand to the next constellation shape (slightly slower).
-    */
-    function convergeToPoint(px, py, callback) {
-      isTransitioning = true;
-      // Set all particles to converge to the point
-      for (var i = 0; i < particles.length; i++) {
-        particles[i].formationTarget = { x: px, y: py };
-        particles[i].isStar = false;
-        particles[i].bright = false;
+    function generateHeartFormation(W, H, count) {
+      var targets = [];
+      var cx = W / 2, cy = H * 0.38;
+      var scale = Math.min(W * 0.3, 160);
+      for (var i = 0; i < count; i++) {
+        var t = (i / count) * Math.PI * 2;
+        var x = cx + scale * 16 * Math.pow(Math.sin(t), 3) / 16;
+        var y = cy - scale * (13 * Math.cos(t) - 5 * Math.cos(2*t) - 2 * Math.cos(3*t) - Math.cos(4*t)) / 16;
+        targets.push({x: x, y: y});
       }
-      currentConstellationLines = null;
-      // After particles converge, call callback
-      setTimeout(function() {
-        if (callback) callback();
-      }, 600);
+      return targets;
     }
 
-    function expandToConstellation(constellationIndex) {
-      currentFormationColor = formationColors[constellationIndex];
+    function setFormation(targets) { for (var i = 0; i < particles.length; i++) { particles[i].formationTarget = targets ? targets[i] : null; } }
+    function clearFormation() { for (var i = 0; i < particles.length; i++) { particles[i].formationTarget = null; } }
+    var formationGenerators = [generateBookFormation, generateArcsFormation, generateHeartFormation];
+
+    function transitionToFormation(stepIndex) {
+      clearFormation();
+      currentFormationColor = formationColors[stepIndex];
       colorBloom = 0;
       var colorStart = performance.now();
-      function animateColor() {
-        var elapsed = performance.now() - colorStart;
-        colorBloom = Math.min(elapsed / 1200, 1); // Slower bloom (was 800ms, now 1200ms)
-        if (colorBloom < 1) requestAnimationFrame(animateColor);
-      }
+      function animateColor() { var elapsed = performance.now() - colorStart; colorBloom = Math.min(elapsed / 800, 1); if (colorBloom < 1) requestAnimationFrame(animateColor); }
       animateColor();
-
-      // Clear targets briefly, then set new constellation
-      clearFormation();
-      setTimeout(function() {
-        var formationData = generateConstellationFormation(constellationIndex, canvas.width, canvas.height, particleCount);
-        setFormation(formationData);
-        isTransitioning = false;
-      }, 300);
+      setTimeout(function() { var targets = formationGenerators[stepIndex](canvas.width, canvas.height, particleCount); setFormation(targets); }, 400);
     }
 
-    function transitionToFormation(stepIndex, tapX, tapY) {
-      var px = tapX !== undefined ? tapX : canvas.width / 2;
-      var py = tapY !== undefined ? tapY : canvas.height / 2;
-
-      convergeToPoint(px, py, function() {
-        expandToConstellation(stepIndex);
-      });
-    }
-
-    /* ============================================
-       FLOW NAVIGATION
-       ============================================ */
-
-    // Splash -> Onboarding: converge to center, then expand to Aries
-    document.getElementById('splashCta').addEventListener('click', function(e) {
-      e.stopPropagation();
-      lastTapX = e.clientX || canvas.width / 2;
-      lastTapY = e.clientY || canvas.height / 2;
-      appPhase = 'onboarding';
-      document.getElementById('splashScreen').classList.add('hidden');
-      document.getElementById('onboarding').classList.add('active');
-      setTimeout(function() { transitionToFormation(0, lastTapX, lastTapY); }, 300);
-    });
-
-    // Tap anywhere on splash to animate (burst from tap point)
-    document.getElementById('splashScreen').addEventListener('click', function(e) {
-      var tapX = e.clientX || (e.touches && e.touches[0].clientX) || canvas.width / 2;
-      var tapY = e.clientY || (e.touches && e.touches[0].clientY) || canvas.height / 2;
-      for (var i = 0; i < particles.length; i++) {
-        var p = particles[i];
-        var dx = p.x - tapX;
-        var dy = p.y - tapY;
-        var d = Math.sqrt(dx * dx + dy * dy);
-        if (d < 300) {
-          var force = (300 - d) / 300 * 2;
-          p.vx += (dx / (d || 1)) * force;
-          p.vy += (dy / (d || 1)) * force;
-        }
-      }
-    });
-
-    // Onboarding step advances: converge to tap, then expand to next constellation
-    document.querySelectorAll('.onboarding-next[data-advance]').forEach(function(btn) {
-      btn.addEventListener('click', function(e) {
-        if (isTransitioning) return; // prevent double-clicks during transition
-        var target = parseInt(this.getAttribute('data-advance'));
-        lastTapX = e.clientX || canvas.width / 2;
-        lastTapY = e.clientY || canvas.height / 2;
-        currentOnboardingStep = target;
-        document.querySelectorAll('.onboarding-card').forEach(function(c) { c.classList.remove('active'); });
-        var next = document.querySelector('.onboarding-card[data-step="' + target + '"]');
-        if (next) next.classList.add('active');
-        transitionToFormation(target, lastTapX, lastTapY);
-      });
-    });
-
-    // Finish onboarding: converge to center, then fade out
-    document.getElementById('onboardingFinish').addEventListener('click', function(e) {
-      if (isTransitioning) return;
-      lastTapX = e.clientX || canvas.width / 2;
-      lastTapY = e.clientY || canvas.height / 2;
-      convergeToPoint(lastTapX, lastTapY, function() {
-        appPhase = 'app';
-        clearFormation();
-        document.getElementById('onboarding').classList.remove('active');
-        setTimeout(function() {
-          canvas.style.display = 'none';
-          document.getElementById('mainApp').classList.add('active');
-        }, 500);
-      });
-    });
-
-    /* ============================================
-       ANIMATION LOOP
-       ============================================ */
     var time = 0;
 
     function animate() {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      time += 0.003;
+      time += 0.003; // Slower (PM: slower animation)
 
       var isLight = document.documentElement.getAttribute('data-theme') === 'light';
       var lineColor = isLight ? '0, 0, 0' : '255, 255, 255';
-      var baseDotR = isLight ? 20 : 200;
-      var baseDotG = isLight ? 20 : 200;
-      var baseDotB = isLight ? 20 : 200;
+      var baseDotR = isLight ? 20 : 250;
+      var baseDotG = isLight ? 20 : 250;
+      var baseDotB = isLight ? 20 : 250;
 
-      // Proximity connection lines (ambient, between nearby particles)
-      for (var i = 0; i < particles.length; i++) {
-        var p = particles[i];
-        for (var j = i + 1; j < particles.length && j < i + 15; j++) {
+      // Connection lines
+      particles.forEach(function(p, i) {
+        for (var j = i + 1; j < particles.length && j < i + 20; j++) {
           var p2 = particles[j];
           var dx = p2.x - p.x;
           var dy = p2.y - p.y;
           var d = Math.sqrt(dx * dx + dy * dy);
-          if (d < 120) {
-            var opacity = (1 - d / 120) * 0.06; // Very subtle (was 0.12)
+          if (d < 200) {
+            var opacity = (1 - d / 200) * 0.12;
             ctx.beginPath();
             ctx.strokeStyle = 'rgba(' + lineColor + ', ' + opacity + ')';
-            ctx.lineWidth = 0.3;
+            ctx.lineWidth = 0.5;
             ctx.moveTo(p.x, p.y);
             ctx.lineTo(p2.x, p2.y);
             ctx.stroke();
           }
         }
-      }
-
-      // Draw constellation connection lines (faint golden lines between main stars)
-      if (currentConstellationLines && colorBloom > 0.3) {
-        var lineAlpha = 0.08 * colorBloom;
-        var isLightTheme = document.documentElement.getAttribute('data-theme') === 'light';
-        var conLineColor = isLightTheme ? '120, 100, 60' : '197, 160, 89';
-        ctx.strokeStyle = 'rgba(' + conLineColor + ', ' + lineAlpha + ')';
-        ctx.lineWidth = 0.5;
-        ctx.beginPath();
-        for (var l = 0; l < currentConstellationLines.length; l++) {
-          var seg = currentConstellationLines[l];
-          ctx.moveTo(seg.x1, seg.y1);
-          ctx.lineTo(seg.x2, seg.y2);
-        }
-        ctx.stroke();
-      }
+      });
 
       // Particles
-      for (var i = 0; i < particles.length; i++) {
-        var p = particles[i];
-
-        // Mouse attraction (gentler)
+      particles.forEach(function(p, i) {
         var dx = mouse.x - p.x;
         var dy = mouse.y - p.y;
         var d = Math.sqrt(dx * dx + dy * dy);
-        if (d < 180) {
-          var force = (180 - d) / 180 * 0.15; // Reduced from 0.3
-          p.vx += (dx / (d || 1)) * force;
-          p.vy += (dy / (d || 1)) * force;
+        if (d < 200) {
+          var force = (200 - d) / 200 * 0.3;
+          p.vx += (dx / d) * force;
+          p.vy += (dy / d) * force;
         }
 
-        // Return to home/formation target
         var homeX = p.formationTarget ? p.formationTarget.x : p.originX;
         var homeY = p.formationTarget ? p.formationTarget.y : p.originY;
-        var returnStrengthP = p.formationTarget ? 0.03 : 0.0003;  // Faster settle (was 0.015)
+        var returnStrengthP = p.formationTarget ? 0.015 : 0.0003;
         p.vx += (homeX - p.x) * returnStrengthP;
         p.vy += (homeY - p.y) * returnStrengthP;
-        var damping = p.formationTarget ? 0.92 : 0.98;  // Less bounce (was 0.96)
+        var damping = p.formationTarget ? 0.96 : 0.98;
         p.vx *= damping;
         p.vy *= damping;
         p.x += p.vx;
         p.y += p.vy;
 
-        var twinkle = Math.sin(time * p.twinkleSpeed + p.twinklePhase) * 0.15 + 0.85;
+        var twinkle = Math.sin(time * p.twinkleSpeed + p.twinklePhase) * 0.2 + 0.8;
 
-        // Proximity-based color bloom (reduced intensity)
+        // Proximity-based color bloom
         var distToTarget = 999;
         if (p.formationTarget) {
           var tdx = p.formationTarget.x - p.x;
@@ -1143,7 +997,7 @@
           distToTarget = Math.sqrt(tdx * tdx + tdy * tdy);
         }
         var proximityFactor = Math.max(0, 1 - distToTarget / 200);
-        var colorIntensity = proximityFactor * colorBloom * 0.4; // Reduced from 0.85
+        var colorIntensity = proximityFactor * colorBloom * 0.85;
         var pr, pg, pb;
         if (appPhase === 'onboarding' && currentFormationColor && colorIntensity > 0) {
           pr = Math.round(baseDotR + (currentFormationColor.r - baseDotR) * colorIntensity);
@@ -1154,32 +1008,23 @@
         }
         var dotColorStr = pr + ', ' + pg + ', ' + pb;
 
-        // Glow — much reduced (max ~1.5 instead of 5.5)
-        var glowMult = (colorIntensity > 0.05) ? 1.2 + colorIntensity * 0.8 : 1.0;
-        // Main constellation stars get a slightly larger glow
-        if (p.isStar && p.bright) {
-          glowMult += 0.3;
-        }
+        // Glow
+        var glowMult = (colorIntensity > 0.1) ? 3.0 + colorIntensity * 2.5 : 2.5;
         ctx.beginPath();
         var gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius * glowMult);
-        gradient.addColorStop(0, 'rgba(' + dotColorStr + ', ' + (p.opacity * twinkle * 0.7) + ')');
-        gradient.addColorStop(0.5, 'rgba(' + dotColorStr + ', ' + (p.opacity * twinkle * 0.2) + ')');
+        gradient.addColorStop(0, 'rgba(' + dotColorStr + ', ' + (p.opacity * twinkle) + ')');
+        gradient.addColorStop(0.4, 'rgba(' + dotColorStr + ', ' + (p.opacity * twinkle * 0.4) + ')');
         gradient.addColorStop(1, 'rgba(' + dotColorStr + ', 0)');
         ctx.fillStyle = gradient;
         ctx.arc(p.x, p.y, p.radius * glowMult, 0, Math.PI * 2);
         ctx.fill();
 
-        // Core dot
+        // Core
         ctx.beginPath();
-        var coreOpacity = p.opacity * twinkle * 0.65;
-        // Bright stars get a slightly brighter core
-        if (p.isStar && p.bright) {
-          coreOpacity = Math.min(coreOpacity * 1.5, 0.6);
-        }
-        ctx.fillStyle = 'rgba(' + dotColorStr + ', ' + coreOpacity + ')';
+        ctx.fillStyle = 'rgba(' + dotColorStr + ', ' + (p.opacity * twinkle) + ')';
         ctx.arc(p.x, p.y, p.radius * 0.4, 0, Math.PI * 2);
         ctx.fill();
-      }
+      });
 
       if (appPhase !== 'app') requestAnimationFrame(animate);
     }
@@ -1218,11 +1063,81 @@
     window.addEventListener('resize', function() {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
-      if (appPhase === 'onboarding' && !isTransitioning) {
-        var formationData = generateConstellationFormation(currentOnboardingStep, canvas.width, canvas.height, particleCount);
-        setFormation(formationData);
+      if (appPhase === 'onboarding') {
+        var targets = formationGenerators[currentOnboardingStep](canvas.width, canvas.height, particleCount);
+        setFormation(targets);
       }
     });
+    // ========== 3D TILT CARD ==========
+    (function() {
+      var card = document.getElementById('splashCard');
+      var gloss = document.getElementById('splashGloss');
+      var inner = document.getElementById('splashCardInner');
+      if (!card) return;
+      var splashActive = true;
+      var hasMouseMoved = false;
+      var maxTilt = 15;
+
+      function applyTilt(normX, normY) {
+        if (!splashActive) return;
+        var rotateY = normX * maxTilt;
+        var rotateX = -normY * maxTilt;
+        var skewX = normX * 1.5;
+        var skewY = normY * 0.8;
+        card.style.transition = 'transform 0.15s ease-out';
+        card.style.transform = 'rotateX(' + rotateX + 'deg) rotateY(' + rotateY + 'deg) skew(' + skewX + 'deg, ' + skewY + 'deg)';
+        var glossX = 50 + normX * 30;
+        var glossY = 50 + normY * 30;
+        gloss.style.background = 'radial-gradient(circle at ' + glossX + '% ' + glossY + '%, rgba(255,255,255,0.12), transparent 60%)';
+        inner.style.transform = 'translateZ(30px) translateX(' + (-normX * 6) + 'px) translateY(' + (-normY * 4) + 'px)';
+      }
+
+      function resetTilt() {
+        card.style.transition = 'transform 0.6s cubic-bezier(0.23, 1, 0.32, 1)';
+        card.style.transform = 'rotateX(0deg) rotateY(0deg)';
+        gloss.style.background = 'radial-gradient(circle at 50% 50%, rgba(255,255,255,0.08), transparent 60%)';
+        inner.style.transform = 'translateZ(30px)';
+      }
+
+      document.getElementById('splashScreen').addEventListener('mousemove', function(e) {
+        if (!splashActive) return;
+        hasMouseMoved = true;
+        card.style.animation = 'none';
+        var rect = card.getBoundingClientRect();
+        var cx = rect.left + rect.width / 2;
+        var cy = rect.top + rect.height / 2;
+        var normX = (e.clientX - cx) / (rect.width / 2);
+        var normY = (e.clientY - cy) / (rect.height / 2);
+        normX = Math.max(-1, Math.min(1, normX));
+        normY = Math.max(-1, Math.min(1, normY));
+        applyTilt(normX, normY);
+      });
+
+      document.getElementById('splashScreen').addEventListener('mouseleave', resetTilt);
+
+      document.getElementById('splashScreen').addEventListener('touchmove', function(e) {
+        if (!splashActive || !e.touches[0]) return;
+        card.style.animation = 'none';
+        var rect = card.getBoundingClientRect();
+        var cx = rect.left + rect.width / 2;
+        var cy = rect.top + rect.height / 2;
+        var normX = Math.max(-1, Math.min(1, (e.touches[0].clientX - cx) / (rect.width / 2)));
+        var normY = Math.max(-1, Math.min(1, (e.touches[0].clientY - cy) / (rect.height / 2)));
+        applyTilt(normX, normY);
+      }, { passive: true });
+
+      document.getElementById('splashScreen').addEventListener('touchend', resetTilt);
+
+      // Auto-float fallback for devices without mouse
+      setTimeout(function() {
+        if (!hasMouseMoved && splashActive) {
+          card.style.animation = 'splash-card-float 8s ease-in-out infinite';
+        }
+      }, 2000);
+
+      // Stop tilt after splash dismissed
+      document.getElementById('splashCta').addEventListener('click', function() { splashActive = false; resetTilt(); });
+    })();
   </script>
 </body>
 </html>

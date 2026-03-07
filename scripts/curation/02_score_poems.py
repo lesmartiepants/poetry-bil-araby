@@ -4,16 +4,20 @@ Sends batches of poems to a specified model, parses quality scores across
 five dimensions, and saves results as Parquet checkpoints.
 
 Usage:
-    python -m scripts.curation.02_score_poems --model anthropic/claude-haiku-4-20250414
-    python -m scripts.curation.02_score_poems --model anthropic/claude-haiku-4-20250414 --scope unscored --resume
-    python -m scripts.curation.02_score_poems --model anthropic/claude-haiku-4-20250414 --dry-run
+    python -m scripts.curation.02_score_poems --model openai/bedrock-haiku-45
+    python -m scripts.curation.02_score_poems --model openai/bedrock-haiku-45 --scope unscored --resume
+    python -m scripts.curation.02_score_poems --model openai/bedrock-haiku-45 --dry-run
 """
 import argparse
 import asyncio
 import json
+import os
 import re
 import sys
 from pathlib import Path
+
+from dotenv import load_dotenv
+load_dotenv()
 
 import pandas as pd
 from tqdm import tqdm
@@ -252,7 +256,8 @@ def save_checkpoint(scores: list[dict], output_path: str):
 # Async scoring
 # ---------------------------------------------------------------------------
 
-async def score_batch(batch, model, system_prompt, semaphore, max_tokens):
+async def score_batch(batch, model, system_prompt, semaphore, max_tokens,
+                      api_base=None, api_key=None):
     """Score a single batch of poems via LiteLLM."""
     import litellm
 
@@ -261,7 +266,7 @@ async def score_batch(batch, model, system_prompt, semaphore, max_tokens):
             format_for_scoring(p["id"], p["title"], p["content"], p.get("poet_name", ""))
             for p in batch
         )
-        response = await litellm.acompletion(
+        kwargs = dict(
             model=model,
             messages=[
                 {"role": "system", "content": system_prompt},
@@ -270,12 +275,18 @@ async def score_batch(batch, model, system_prompt, semaphore, max_tokens):
             temperature=0.3,
             max_tokens=max_tokens,
         )
+        if api_base:
+            kwargs["api_base"] = api_base
+        if api_key:
+            kwargs["api_key"] = api_key
+        response = await litellm.acompletion(**kwargs)
         return response
 
 
 async def main_scoring_loop(poems: list[dict], args) -> tuple[list[dict], float]:
     """Run the async scoring loop over all poems."""
     import litellm
+    import os
 
     semaphore = asyncio.Semaphore(args.concurrency)
     system_prompt = (
@@ -287,6 +298,13 @@ async def main_scoring_loop(poems: list[dict], args) -> tuple[list[dict], float]
         else 500 * args.batch_size
     )
 
+    # LiteLLM proxy config: use ANTHROPIC_BASE_URL and ANTHROPIC_AUTH_TOKEN
+    # if ANTHROPIC_API_KEY is not set (supports corporate LiteLLM proxy)
+    api_base = os.environ.get("ANTHROPIC_BASE_URL") or os.environ.get("LITELLM_API_BASE")
+    api_key = (os.environ.get("ANTHROPIC_API_KEY")
+               or os.environ.get("ANTHROPIC_AUTH_TOKEN")
+               or os.environ.get("LITELLM_API_KEY"))
+
     all_scores: list[dict] = []
     total_cost = 0.0
     batches = [poems[i:i + args.batch_size] for i in range(0, len(poems), args.batch_size)]
@@ -297,7 +315,8 @@ async def main_scoring_loop(poems: list[dict], args) -> tuple[list[dict], float]
     for chunk_start in range(0, len(batches), args.concurrency):
         chunk = batches[chunk_start:chunk_start + args.concurrency]
         tasks = [
-            score_batch(b, args.model, system_prompt, semaphore, max_tokens)
+            score_batch(b, args.model, system_prompt, semaphore, max_tokens,
+                        api_base=api_base, api_key=api_key)
             for b in chunk
         ]
         responses = await asyncio.gather(*tasks, return_exceptions=True)

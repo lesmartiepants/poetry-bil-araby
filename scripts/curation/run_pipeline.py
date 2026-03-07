@@ -99,7 +99,7 @@ def run_step(script_name: str, args_list: list[str], dry_run: bool = False) -> b
     print(f"{'=' * 60}")
 
     start = time.time()
-    result = subprocess.run(cmd)
+    result = subprocess.run(cmd, cwd=str(_project_root))
     elapsed = time.time() - start
 
     if result.returncode != 0:

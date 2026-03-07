@@ -691,11 +691,11 @@
       var word = 'enter';
       var el = document.getElementById('enterText');
       if (!el) return;
-      var i = 0;
+      var charIndex = 0;
       function typeNext() {
-        el.textContent = word.slice(0, i);
-        i++;
-        if (i <= word.length) setTimeout(typeNext, 120);
+        el.textContent = word.slice(0, charIndex);
+        charIndex++;
+        if (charIndex <= word.length) setTimeout(typeNext, 120);
       }
       /* Start after button fades in (1.4s delay + small buffer) */
       setTimeout(typeNext, 1600);

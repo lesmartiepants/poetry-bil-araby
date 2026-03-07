@@ -680,7 +680,11 @@ app.get('/api/design-review/summary', async (req, res) => {
     const items = await pool.query('SELECT COUNT(*) FROM design_items WHERE is_active = true');
     const sessions = await pool.query('SELECT COUNT(*) FROM design_review_sessions');
     const latestSession = await pool.query(
-      'SELECT id, round_number, status FROM design_review_sessions ORDER BY created_at DESC LIMIT 1'
+      `SELECT id, round_number, status FROM design_review_sessions ORDER BY
+        CASE WHEN status = 'completed' AND reviewed_count > 0 THEN 0
+             WHEN reviewed_count > 0 THEN 1
+             ELSE 2 END,
+        round_number DESC LIMIT 1`
     );
 
     let verdictCounts = { keep: 0, discard: 0, skip: 0, revisit: 0, unreviewed: 0 };
@@ -717,7 +721,11 @@ app.get('/api/design-review/claude-context', async (req, res) => {
     let sessionQuery = 'SELECT * FROM design_review_sessions';
     const sessionParams = [];
     if (round === 'latest') {
-      sessionQuery += ' ORDER BY created_at DESC LIMIT 1';
+      sessionQuery += ` ORDER BY
+        CASE WHEN status = 'completed' AND reviewed_count > 0 THEN 0
+             WHEN reviewed_count > 0 THEN 1
+             ELSE 2 END,
+        round_number DESC LIMIT 1`;
     } else if (round) {
       sessionParams.push(parseInt(round));
       sessionQuery += ' WHERE round_number = $1';

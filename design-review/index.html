@@ -1697,7 +1697,7 @@ function showSummaryModal(summary, opts) {
   stats.style.cssText = 'display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;font-size:13px';
   [['var(--green)', keeps + ' keep'], ['var(--red)', discards + ' discard'],
    ['var(--purple)', revisits + ' revisit'],
-   ['var(--text-3)', ((totalDesigns || flatList.length) - reviewed) + ' unreviewed']].forEach(([c, t]) => {
+   ['var(--text-3)', (totalDesigns - reviewed) + ' unreviewed']].forEach(([c, t]) => {
     const s = document.createElement('span'); s.style.color = c; s.textContent = t; stats.appendChild(s);
   });
   modal.appendChild(stats);

@@ -577,6 +577,7 @@
           <span class="main-brand-ar" lang="ar" dir="rtl">بالعربي</span>
         </div>
         <div class="nav-actions">
+          <button class="nav-btn" aria-label="Login" id="loginBtn" style="font-size:0.75rem;letter-spacing:0.05em;padding:0 8px;min-width:60px;"><i data-lucide="log-in" style="width:16px;height:16px;vertical-align:middle;"></i> Login</button>
           <button class="nav-btn" aria-label="Search"><i data-lucide="search"></i></button>
           <button class="nav-btn" aria-label="Menu"><i data-lucide="menu"></i></button>
         </div>
@@ -597,19 +598,38 @@
 
     <!-- Vertical controls -->
     <div class="vertical-controls">
-      <button class="vc-btn" aria-label="Save"><i data-lucide="heart" style="width:18px;height:18px"></i></button>
+      <button class="vc-btn" aria-label="Like"><i data-lucide="heart" style="width:18px;height:18px"></i></button>
       <div class="vc-divider"></div>
-      <button class="vc-btn" aria-label="Font size"><i data-lucide="type" style="width:18px;height:18px"></i></button>
+      <button class="vc-btn" aria-label="Listen"><i data-lucide="volume-2" style="width:18px;height:18px"></i></button>
+      <button class="vc-btn" aria-label="Explain"><i data-lucide="brain" style="width:18px;height:18px"></i></button>
       <div class="vc-divider"></div>
-      <button class="vc-btn" aria-label="Translate"><i data-lucide="languages" style="width:18px;height:18px"></i></button>
+      <button class="vc-btn" aria-label="Library"><i data-lucide="library" style="width:18px;height:18px"></i></button>
+      <button class="vc-btn" aria-label="Select Poet"><i data-lucide="user" style="width:18px;height:18px"></i></button>
+      <button class="vc-btn" aria-label="Font" style="font-family:'Amiri',serif;font-size:1.1rem;font-weight:700;color:#555555;">ي</button>
       <div class="vc-divider"></div>
-      <button class="vc-btn" aria-label="Collection"><i data-lucide="book-open" style="width:18px;height:18px"></i></button>
-      <div class="vc-divider"></div>
-      <button class="vc-btn" aria-label="Style"><i data-lucide="italic" style="width:18px;height:18px"></i></button>
-      <div class="vc-divider"></div>
-      <button class="vc-btn" aria-label="Sign in"><i data-lucide="log-in" style="width:18px;height:18px"></i></button>
-      <div class="vc-divider"></div>
-      <button class="vc-btn" aria-label="Settings"><i data-lucide="settings" style="width:18px;height:18px"></i></button>
+      <button class="vc-btn" id="settingsBtnVc" aria-label="Settings"><i data-lucide="settings" style="width:18px;height:18px"></i></button>
+      <button class="vc-btn" aria-label="Copy poem"><i data-lucide="copy" style="width:18px;height:18px"></i></button>
+    </div>
+
+    <!-- Settings panel (hidden by default) -->
+    <div id="settingsPanel" style="display:none;position:fixed;right:52px;top:50%;transform:translateY(-50%);background:#0a0a0a;border:1px solid #1a1a1a;border-radius:12px;padding:1rem;z-index:60;min-width:200px;">
+      <div style="font-size:0.7rem;letter-spacing:0.1em;color:#555;margin-bottom:0.75rem;text-transform:uppercase;">Settings</div>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:0.6rem;font-size:0.8rem;color:#888;cursor:pointer;">
+        Transliterate
+        <input type="checkbox" style="width:16px;height:16px;cursor:pointer;">
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:0.6rem;font-size:0.8rem;color:#888;cursor:pointer;">
+        Translate
+        <input type="checkbox" style="width:16px;height:16px;cursor:pointer;">
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:0.6rem;font-size:0.8rem;color:#888;cursor:pointer;">
+        Database mode
+        <input type="checkbox" style="width:16px;height:16px;cursor:pointer;">
+      </label>
+      <label style="display:flex;align-items:center;justify-content:space-between;gap:1rem;font-size:0.8rem;color:#888;cursor:pointer;">
+        Night mode
+        <input type="checkbox" checked style="width:16px;height:16px;cursor:pointer;">
+      </label>
     </div>
 
     <!-- Bottom bar -->
@@ -626,6 +646,22 @@
 (function () {
   "use strict";
   if (typeof lucide !== 'undefined') lucide.createIcons();
+
+  /* Settings panel toggle */
+  var settingsBtnVc = document.getElementById('settingsBtnVc');
+  var settingsPanel = document.getElementById('settingsPanel');
+  if (settingsBtnVc && settingsPanel) {
+    settingsBtnVc.addEventListener('click', function(e) {
+      e.stopPropagation();
+      var isOpen = settingsPanel.style.display === 'block';
+      settingsPanel.style.display = isOpen ? 'none' : 'block';
+    });
+    settingsPanel.addEventListener('click', function(e) {
+      /* Prevent clicks inside the panel from closing it */
+      e.stopPropagation();
+    });
+    document.addEventListener('click', function() { settingsPanel.style.display = 'none'; });
+  }
 
   /* ===== PARTICLE SYSTEM ===== */
   var canvas = document.getElementById('particleCanvas');

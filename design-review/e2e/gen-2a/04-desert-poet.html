@@ -11,16 +11,16 @@
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
   :root {
-    --charcoal: #1A1614; --ember: #E8611A; --gold: #C5A059;
+    --charcoal: #1A1614; --ember: #C09648; --gold: #C5A059;
     --smoke: #6B6B6B; --ash: #D4D0C8; --bg: #1A1614;
     --text: #D4D0C8; --card-bg: rgba(30, 25, 22, 0.92);
-    --glow: rgba(232, 97, 26, 0.15);
+    --glow: rgba(192, 150, 72, 0.15);
     --gold-dim: rgba(197, 160, 89, 0.35);
     --speed: 0.5s;
   }
   .light {
     --bg: #F5F0E8; --text: #1A1614; --card-bg: rgba(255, 252, 245, 0.95);
-    --glow: rgba(232, 97, 26, 0.1);
+    --glow: rgba(192, 150, 72, 0.1);
   }
   body {
     font-family: 'Tajawal', sans-serif; background: var(--bg);
@@ -33,7 +33,7 @@
     position: fixed; inset: 0; z-index: 100; display: flex;
     flex-direction: column;
     align-items: center; justify-content: center;
-    background: radial-gradient(ellipse 60% 40% at 50% 95%, #5C2800 0%, #2A1508 30%, #0D0A08 70%);
+    background: radial-gradient(ellipse 60% 40% at 50% 95%, #3D2800 0%, #1E140A 30%, #0D0A08 70%);
     transition: opacity 0.8s ease-out;
   }
   #splash.hide { opacity: 0; pointer-events: none; }
@@ -610,7 +610,7 @@
     ctx.save();
     ctx.globalAlpha = e.alpha;
     var grad = ctx.createRadialGradient(e.x, e.y, 0, e.x, e.y, e.size * 2.5);
-    grad.addColorStop(0, e.hue === 25 ? '#E8611A' : '#C5A059');
+    grad.addColorStop(0, e.hue === 25 ? '#C09648' : '#C5A059');
     grad.addColorStop(1, 'transparent');
     ctx.fillStyle = grad;
     ctx.beginPath();

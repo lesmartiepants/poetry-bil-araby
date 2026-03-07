@@ -162,7 +162,9 @@
       align-items: center;
       gap: 8px;
       padding: 14px 40px;
-      border: 1px solid var(--border-color);
+      border: none;
+      outline: none;
+      box-shadow: none;
       border-radius: 999px;
       background: transparent;
       color: var(--text-primary);
@@ -170,32 +172,35 @@
       font-size: 14px;
       font-weight: 500;
       letter-spacing: 0.1em;
-      text-transform: uppercase;
+      text-transform: lowercase;
       cursor: pointer;
       transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
       opacity: 0;
-      animation: fadeIn 0.5s ease-out 1.4s forwards, ctaPulse 3s ease-in-out 2s infinite;
+      animation: fadeIn 0.5s ease-out 1.4s forwards;
       min-height: 48px;
       position: relative;
       overflow: hidden;
     }
 
     @keyframes ctaPulse {
-      0%, 100% { box-shadow: 0 0 0 0 rgba(255, 255, 255, 0); }
-      50% { box-shadow: 0 0 0 6px rgba(255, 255, 255, 0.04); }
+      0%, 100% { box-shadow: none; }
+      50% { box-shadow: none; }
     }
 
     .splash-cta:hover {
-      background: rgba(255, 255, 255, 0.06);
-      border-color: var(--text-secondary);
-      transform: translateY(-2px);
+      background: rgba(255, 255, 255, 0.04);
+      border: none;
+      transform: translateY(-1px);
     }
 
     [data-theme="light"] .splash-cta:hover {
-      background: rgba(0, 0, 0, 0.04);
+      background: rgba(0, 0, 0, 0.03);
     }
 
     .splash-cta svg { width: 16px; height: 16px; }
+
+    /* Typewriter text span */
+    .typewriter-text { display: inline-block; }
 
     /* Theme toggle */
     .theme-toggle {
@@ -596,7 +601,7 @@
         </div>
         <p class="splash-subtitle">Verses Connecting Across Time and Space</p>
         <button class="splash-cta" id="splashCta">
-          <span>Enter</span>
+          <span class="typewriter-text" id="enterText"></span>
           <i data-lucide="arrow-right"></i>
         </button>
       </div>
@@ -680,6 +685,21 @@
 
   <script>
     lucide.createIcons();
+
+    /* Typewriter animation for "enter" button text */
+    (function() {
+      var word = 'enter';
+      var el = document.getElementById('enterText');
+      if (!el) return;
+      var i = 0;
+      function typeNext() {
+        el.textContent = word.slice(0, i);
+        i++;
+        if (i <= word.length) setTimeout(typeNext, 120);
+      }
+      /* Start after button fades in (1.4s delay + small buffer) */
+      setTimeout(typeNext, 1600);
+    })();
 
     // Theme toggle
     var isDark = true;

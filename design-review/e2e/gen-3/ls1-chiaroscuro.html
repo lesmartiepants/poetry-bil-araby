@@ -104,6 +104,7 @@
       filter: blur(18px);
       transform-origin: center top;
       animation: rayMovement 10s ease-in-out infinite alternate;
+      animation-fill-mode: backwards;
     }
     .light-ray:nth-child(1) {
       left: calc(var(--light-x, 30%) - 60px);
@@ -705,8 +706,8 @@
     var direction = 1;
     var lastX = 20;
     var lastY = 15;
-    var targetX = 20 + Math.random() * 60;
-    var targetY = 10 + Math.random() * 15;
+    var targetX = 20; /* Start equal to lastX for smooth first frame */
+    var targetY = 15; /* Start equal to lastY for smooth first frame */
     var transitionStart = Date.now();
     var transitionDuration = 3000 + Math.random() * 4000;
 
@@ -747,6 +748,8 @@
 
       requestAnimationFrame(animateSpotlight);
     }
+    /* Pick first real target before starting so first frame is smooth */
+    setTimeout(function() { pickNewTarget(); }, 50);
     animateSpotlight();
 
     /* ===== SPLASH -> ONBOARDING ===== */

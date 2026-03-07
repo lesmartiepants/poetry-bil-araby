@@ -56,3 +56,16 @@ poetry-database/
 poetry-splash-ci-fixes/
 .vercel
 .env*.local
+
+# Curation pipeline intermediate data (Parquet files, cached datasets, generated reports)
+poetry_quality_and_curation/retriever_and_quality_curator/data/*.parquet
+poetry_quality_and_curation/retriever_and_quality_curator/data/*.csv
+poetry_quality_and_curation/retriever_and_quality_curator/data/*.json
+poetry_quality_and_curation/retriever_and_quality_curator/data/*.rar
+!poetry_quality_and_curation/retriever_and_quality_curator/data/.gitkeep
+# Keep generated HTML reports tracked
+# poetry_quality_and_curation/retriever_and_quality_curator/*.html
+
+# Python
+__pycache__/
+*.pyc

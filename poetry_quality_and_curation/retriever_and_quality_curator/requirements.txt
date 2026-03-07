@@ -1,0 +1,6 @@
+litellm>=1.40.0
+psycopg2-binary
+pyarrow
+pandas
+pyarabic
+tqdm

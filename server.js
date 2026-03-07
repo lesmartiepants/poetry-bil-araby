@@ -63,9 +63,28 @@ async function checkDiacritizedColumn() {
   }
 }
 
+// Check if quality_score column exists (graceful pre-migration fallback)
+let hasQualityScore = false;
+async function checkQualityScoreColumn() {
+  try {
+    const result = await pool.query(
+      "SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'poems' AND column_name = 'quality_score' LIMIT 1"
+    );
+    hasQualityScore = result.rows.length > 0;
+    log.info('DB', `Quality score column: ${hasQualityScore ? 'available' : 'not found (serving all poems)'}`);
+  } catch {
+    hasQualityScore = false;
+  }
+}
+
 // Helper: returns the SQL expression for poem content based on column availability
 function poemContentExpr() {
   return hasDiacritizedColumn ? 'COALESCE(p.diacritized_content, p.content)' : 'p.content';
+}
+
+// Helper: returns SQL WHERE clause fragment for quality filtering (empty string when column doesn't exist)
+function qualityFilter() {
+  return hasQualityScore ? 'AND p.quality_score >= 60' : '';
 }
 
 // Test database connection
@@ -75,6 +94,7 @@ pool.query('SELECT NOW()', (err, res) => {
   } else {
     log.info('DB', `Connected to PostgreSQL at ${res.rows[0].now}`);
     checkDiacritizedColumn();
+    checkQualityScoreColumn();
   }
 });
 
@@ -173,8 +193,11 @@ app.get('/api/poems/random', [
 
     const params = [];
     if (poet && poet !== 'All') {
-      query += ' WHERE po.name = $1';
+      query += ` WHERE po.name = $1 ${qualityFilter()}`;
       params.push(poet);
+    } else {
+      const qf = qualityFilter();
+      if (qf) query += ` WHERE 1=1 ${qf}`;
     }
 
     query += ' ORDER BY RANDOM() LIMIT 1';
@@ -235,7 +258,7 @@ app.get('/api/poems/by-poet/:poet', [
       FROM poems p
       JOIN poets po ON p.poet_id = po.id
       JOIN themes t ON p.theme_id = t.id
-      WHERE po.name = $1
+      WHERE po.name = $1 ${qualityFilter()}
       ORDER BY RANDOM()
       LIMIT $2 OFFSET $3
     `;
@@ -305,7 +328,7 @@ app.get('/api/poems/search', [
       FROM poems p
       JOIN poets po ON p.poet_id = po.id
       JOIN themes t ON p.theme_id = t.id
-      WHERE p.title ILIKE $1 OR p.content ILIKE $1 OR po.name ILIKE $1
+      WHERE (p.title ILIKE $1 OR p.content ILIKE $1 OR po.name ILIKE $1) ${qualityFilter()}
       LIMIT $2
     `;
 

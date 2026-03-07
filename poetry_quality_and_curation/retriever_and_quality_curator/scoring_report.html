@@ -1,0 +1,949 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>تقرير تقييم جودة الشعر العربي</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Tajawal:wght@300;400;500;700;800&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Tajawal', sans-serif;
+    background: #0D0D0D;
+    color: #E8E0D0;
+    line-height: 1.7;
+    direction: rtl;
+    min-height: 100vh;
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 40px 24px;
+  }
+
+  /* ---- Header ---- */
+  .report-header {
+    text-align: center;
+    padding: 60px 20px 40px;
+    border-bottom: 1px solid #2A2520;
+    margin-bottom: 50px;
+    position: relative;
+  }
+  .report-header::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 50%;
+    transform: translateX(-50%);
+    width: 80px; height: 3px;
+    background: linear-gradient(90deg, transparent, #D4AF37, transparent);
+  }
+  .report-header h1 {
+    font-family: 'Amiri', serif;
+    font-size: 2.6rem;
+    color: #D4AF37;
+    font-weight: 700;
+    margin-bottom: 12px;
+    letter-spacing: 0.02em;
+  }
+  .report-header .subtitle {
+    font-size: 1.05rem;
+    color: #8A8070;
+    margin-bottom: 8px;
+  }
+  .report-header .subtitle strong {
+    color: #C0B090;
+  }
+
+  /* Progress bar */
+  .progress-wrapper {
+    max-width: 500px;
+    margin: 20px auto 0;
+  }
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    color: #8A8070;
+    margin-bottom: 6px;
+  }
+  .progress-track {
+    width: 100%;
+    height: 10px;
+    background: #1E1A16;
+    border-radius: 5px;
+    overflow: hidden;
+    border: 1px solid #2A2520;
+  }
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #D4AF37, #B8962A);
+    border-radius: 5px;
+    transition: width 0.5s ease;
+  }
+
+  /* ---- Sections ---- */
+  .section {
+    margin-bottom: 60px;
+  }
+  .section-title {
+    font-family: 'Amiri', serif;
+    font-size: 1.6rem;
+    color: #D4AF37;
+    margin-bottom: 8px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #2A2520;
+  }
+  .section-subtitle {
+    font-size: 0.9rem;
+    color: #6A6050;
+    margin-bottom: 24px;
+  }
+
+  /* ---- Tier Distribution ---- */
+  .tier-row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    margin-bottom: 10px;
+  }
+  .tier-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 180px;
+    justify-content: flex-end;
+  }
+  .tier-badge {
+    display: inline-block;
+    padding: 2px 12px;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #0D0D0D;
+    min-width: 80px;
+    text-align: center;
+  }
+  .tier-range {
+    font-size: 0.8rem;
+    color: #6A6050;
+    min-width: 48px;
+    text-align: center;
+  }
+  .tier-bar-track {
+    flex: 1;
+    height: 26px;
+    background: #1A1714;
+    border-radius: 4px;
+    overflow: hidden;
+    border: 1px solid #2A2520;
+  }
+  .tier-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.4s ease;
+    min-width: 2px;
+  }
+  .tier-count {
+    min-width: 120px;
+    text-align: left;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: #C0B090;
+  }
+  .tier-pct {
+    color: #6A6050;
+    font-size: 0.8rem;
+  }
+
+  /* ---- Stats table ---- */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 12px;
+    margin-top: 30px;
+  }
+  .stat-card {
+    background: #161310;
+    border: 1px solid #2A2520;
+    border-radius: 8px;
+    padding: 16px 14px;
+    text-align: center;
+  }
+  .stat-value {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #D4AF37;
+    display: block;
+    margin-bottom: 4px;
+  }
+  .stat-label {
+    font-size: 0.78rem;
+    color: #6A6050;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  /* ---- Dimension Analysis ---- */
+  .dim-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  .dim-table th {
+    text-align: right;
+    padding: 10px 14px;
+    font-size: 0.8rem;
+    color: #6A6050;
+    border-bottom: 1px solid #2A2520;
+    font-weight: 500;
+  }
+  .dim-table td {
+    padding: 12px 14px;
+    border-bottom: 1px solid #1E1A16;
+    vertical-align: middle;
+  }
+  .dim-name {
+    font-family: 'Amiri', serif;
+    font-size: 1.1rem;
+    color: #E8E0D0;
+    font-weight: 700;
+  }
+  .dim-en {
+    font-size: 0.8rem;
+    color: #5A5040;
+    font-family: 'Tajawal', sans-serif;
+  }
+  .dim-stat {
+    text-align: center;
+    font-size: 0.95rem;
+    color: #C0B090;
+    font-weight: 500;
+  }
+  .dim-visual {
+    min-width: 200px;
+  }
+  .dim-bar-track-table {
+    width: 100%;
+    height: 14px;
+    background: #1A1714;
+    border-radius: 3px;
+    overflow: hidden;
+    border: 1px solid #2A2520;
+  }
+  .dim-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.4s ease;
+  }
+
+  /* ---- Poem Cards ---- */
+  .poems-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+  .poem-card {
+    background: #141210;
+    border: 1px solid #2A2520;
+    border-radius: 12px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .poem-card:hover {
+    border-color: #3A3530;
+  }
+  .poem-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 20px 24px 14px;
+    border-bottom: 1px solid #1E1A16;
+  }
+  .poem-title-block {
+    flex: 1;
+  }
+  .poem-title {
+    font-family: 'Amiri', serif;
+    font-size: 1.3rem;
+    color: #E8E0D0;
+    margin-bottom: 4px;
+    line-height: 1.5;
+  }
+  .poem-poet {
+    font-size: 0.88rem;
+    color: #8A8070;
+  }
+  .poem-score-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-right: 20px;
+  }
+  .score-badge {
+    width: 54px;
+    height: 54px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: #0D0D0D;
+  }
+  .score-tier {
+    font-size: 0.75rem;
+    color: #8A8070;
+    margin-top: 4px;
+  }
+  .poem-body {
+    display: flex;
+    gap: 24px;
+    padding: 20px 24px;
+  }
+  .poem-verses {
+    flex: 1.5;
+    direction: rtl;
+  }
+  .verse {
+    text-align: center;
+    margin-bottom: 10px;
+    font-family: 'Amiri', serif;
+    font-size: 1.15rem;
+    line-height: 2;
+    color: #D8D0C0;
+  }
+  .hemistich {
+    display: inline-block;
+    padding: 0 12px;
+  }
+  .hemistich-sep {
+    color: #D4AF37;
+    margin: 0 6px;
+    font-size: 0.6rem;
+    vertical-align: middle;
+  }
+  .hemistich-full {
+    display: block;
+    text-align: center;
+  }
+  .poem-dims {
+    flex: 1;
+    min-width: 260px;
+  }
+  .dim-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+    font-size: 0.82rem;
+  }
+  .dim-label {
+    min-width: 100px;
+    text-align: right;
+    color: #8A8070;
+    font-size: 0.78rem;
+  }
+  .dim-bar-track {
+    flex: 1;
+    height: 10px;
+    background: #1A1714;
+    border-radius: 3px;
+    overflow: hidden;
+    border: 1px solid #2A2520;
+  }
+  .dim-value {
+    min-width: 28px;
+    text-align: left;
+    color: #C0B090;
+    font-weight: 600;
+    font-size: 0.82rem;
+  }
+  .poem-footer {
+    padding: 10px 24px;
+    border-top: 1px solid #1E1A16;
+    display: flex;
+    justify-content: flex-start;
+  }
+  .model-tag {
+    font-size: 0.72rem;
+    color: #5A5040;
+    background: #1A1714;
+    padding: 2px 10px;
+    border-radius: 3px;
+    border: 1px solid #2A2520;
+    font-family: monospace;
+    direction: ltr;
+  }
+  .no-content {
+    color: #5A5040;
+    font-style: italic;
+    text-align: center;
+    padding: 20px;
+  }
+
+  /* ---- Methodology ---- */
+  .method-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .method-card {
+    background: #141210;
+    border: 1px solid #2A2520;
+    border-radius: 8px;
+    padding: 20px;
+  }
+  .method-card h4 {
+    color: #D4AF37;
+    font-size: 0.95rem;
+    margin-bottom: 10px;
+    font-family: 'Amiri', serif;
+  }
+  .method-card p, .method-card ul {
+    font-size: 0.88rem;
+    color: #8A8070;
+    line-height: 1.8;
+  }
+  .method-card ul {
+    padding-right: 18px;
+  }
+  .method-card li {
+    margin-bottom: 4px;
+  }
+  .method-card code {
+    background: #1A1714;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 0.82rem;
+    color: #C0B090;
+    direction: ltr;
+    display: inline-block;
+  }
+
+  /* ---- Footer ---- */
+  .report-footer {
+    text-align: center;
+    padding: 30px 0;
+    border-top: 1px solid #2A2520;
+    margin-top: 40px;
+    font-size: 0.8rem;
+    color: #4A4030;
+  }
+
+  /* ---- Responsive ---- */
+  @media (max-width: 768px) {
+    .poem-body { flex-direction: column; }
+    .method-grid { grid-template-columns: 1fr; }
+    .tier-label { min-width: 130px; }
+    .report-header h1 { font-size: 1.8rem; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- ============ HEADER ============ -->
+  <div class="report-header">
+    <h1>تقرير تقييم جودة الشعر العربي</h1>
+    <div class="subtitle">Arabic Poetry Quality Scoring Report</div>
+    <div class="subtitle">
+      <strong>51,095</strong> قصيدة تم تقييمها &bull;
+      نموذج التقييم: <strong style="direction:ltr;display:inline-block;">bedrock-haiku-45</strong> &bull;
+      2026-03-06 16:54
+    </div>
+    <div class="progress-wrapper">
+      <div class="progress-label">
+        <span>التقدم الكلي</span>
+        <span>51,095 / 84,329 (60.6%)</span>
+      </div>
+      <div class="progress-track">
+        <div class="progress-fill" style="width:60.6%;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ SECTION 1: SCORE DISTRIBUTION ============ -->
+  <div class="section">
+    <h2 class="section-title">&#x2160;. توزيع الدرجات</h2>
+    <p class="section-subtitle">Score Distribution &mdash; تصنيف القصائد حسب مستوى الجودة</p>
+
+    
+        <div class="tier-row">
+          <div class="tier-label">
+            <span class="tier-badge" style="background:#D4AF37;">نخبة</span>
+            <span class="tier-range">90&ndash;100</span>
+          </div>
+          <div class="tier-bar-track">
+            <div class="tier-bar-fill" style="width:5.4%;background:#D4AF37;"></div>
+          </div>
+          <div class="tier-count">1,338 <span class="tier-pct">(2.6%)</span></div>
+        </div>
+        <div class="tier-row">
+          <div class="tier-label">
+            <span class="tier-badge" style="background:#2ECC71;">ممتاز</span>
+            <span class="tier-range">80&ndash;89</span>
+          </div>
+          <div class="tier-bar-track">
+            <div class="tier-bar-fill" style="width:100.0%;background:#2ECC71;"></div>
+          </div>
+          <div class="tier-count">24,691 <span class="tier-pct">(48.3%)</span></div>
+        </div>
+        <div class="tier-row">
+          <div class="tier-label">
+            <span class="tier-badge" style="background:#3498DB;">جيد</span>
+            <span class="tier-range">70&ndash;79</span>
+          </div>
+          <div class="tier-bar-track">
+            <div class="tier-bar-fill" style="width:77.5%;background:#3498DB;"></div>
+          </div>
+          <div class="tier-count">19,135 <span class="tier-pct">(37.4%)</span></div>
+        </div>
+        <div class="tier-row">
+          <div class="tier-label">
+            <span class="tier-badge" style="background:#95A5A6;">متوسط</span>
+            <span class="tier-range">60&ndash;69</span>
+          </div>
+          <div class="tier-bar-track">
+            <div class="tier-bar-fill" style="width:19.2%;background:#95A5A6;"></div>
+          </div>
+          <div class="tier-count">4,730 <span class="tier-pct">(9.3%)</span></div>
+        </div>
+        <div class="tier-row">
+          <div class="tier-label">
+            <span class="tier-badge" style="background:#E67E22;">دون المتوسط</span>
+            <span class="tier-range">50&ndash;59</span>
+          </div>
+          <div class="tier-bar-track">
+            <div class="tier-bar-fill" style="width:2.3%;background:#E67E22;"></div>
+          </div>
+          <div class="tier-count">570 <span class="tier-pct">(1.1%)</span></div>
+        </div>
+        <div class="tier-row">
+          <div class="tier-label">
+            <span class="tier-badge" style="background:#E74C3C;">ضعيف</span>
+            <span class="tier-range">0&ndash;49</span>
+          </div>
+          <div class="tier-bar-track">
+            <div class="tier-bar-fill" style="width:2.6%;background:#E74C3C;"></div>
+          </div>
+          <div class="tier-count">631 <span class="tier-pct">(1.2%)</span></div>
+        </div>
+
+    <div class="stats-grid">
+      <div class="stat-card"><span class="stat-value">78.1</span><span class="stat-label">المتوسط Mean</span></div>
+      <div class="stat-card"><span class="stat-value">80</span><span class="stat-label">الوسيط Median</span></div>
+      <div class="stat-card"><span class="stat-value">8.5</span><span class="stat-label">الانحراف Std</span></div>
+      <div class="stat-card"><span class="stat-value">68</span><span class="stat-label">P10</span></div>
+      <div class="stat-card"><span class="stat-value">74</span><span class="stat-label">P25</span></div>
+      <div class="stat-card"><span class="stat-value">84</span><span class="stat-label">P75</span></div>
+      <div class="stat-card"><span class="stat-value">87</span><span class="stat-label">P90</span></div>
+      <div class="stat-card"><span class="stat-value">0</span><span class="stat-label">الأدنى Min</span></div>
+      <div class="stat-card"><span class="stat-value">96</span><span class="stat-label">الأعلى Max</span></div>
+    </div>
+  </div>
+
+  <!-- ============ SECTION 2: DIMENSION ANALYSIS ============ -->
+  <div class="section">
+    <h2 class="section-title">&#x2161;. تحليل أبعاد التقييم</h2>
+    <p class="section-subtitle">Dimension Analysis &mdash; مقارنة الأبعاد الخمسة لجودة الشعر</p>
+
+    <table class="dim-table">
+      <thead>
+        <tr>
+          <th>البُعد</th>
+          <th></th>
+          <th>المتوسط</th>
+          <th>الوسيط</th>
+          <th>الانحراف</th>
+          <th>المقارنة البصرية</th>
+        </tr>
+      </thead>
+      <tbody>
+        
+        <tr>
+          <td class="dim-name">الإيقاع والموسيقى</td>
+          <td class="dim-en">(sound)</td>
+          <td class="dim-stat">79.5</td>
+          <td class="dim-stat">80</td>
+          <td class="dim-stat">7.5</td>
+          <td class="dim-visual">
+            <div class="dim-bar-track-table">
+              <div class="dim-bar-fill" style="width:79.52144045405618%;background:#D4AF37;"></div>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td class="dim-name">التصوير</td>
+          <td class="dim-en">(imagery)</td>
+          <td class="dim-stat">76.7</td>
+          <td class="dim-stat">78</td>
+          <td class="dim-stat">10.1</td>
+          <td class="dim-visual">
+            <div class="dim-bar-track-table">
+              <div class="dim-bar-fill" style="width:76.71568646638615%;background:#2ECC71;"></div>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td class="dim-name">العاطفة</td>
+          <td class="dim-en">(emotion)</td>
+          <td class="dim-stat">76.0</td>
+          <td class="dim-stat">78</td>
+          <td class="dim-stat">10.1</td>
+          <td class="dim-visual">
+            <div class="dim-bar-track-table">
+              <div class="dim-bar-fill" style="width:76.0077111263333%;background:#3498DB;"></div>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td class="dim-name">اللغة</td>
+          <td class="dim-en">(language)</td>
+          <td class="dim-stat">81.7</td>
+          <td class="dim-stat">83</td>
+          <td class="dim-stat">7.5</td>
+          <td class="dim-visual">
+            <div class="dim-bar-track-table">
+              <div class="dim-bar-fill" style="width:81.71349447108328%;background:#9B59B6;"></div>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <td class="dim-name">القيمة الثقافية</td>
+          <td class="dim-en">(cultural)</td>
+          <td class="dim-stat">76.5</td>
+          <td class="dim-stat">78</td>
+          <td class="dim-stat">10.7</td>
+          <td class="dim-visual">
+            <div class="dim-bar-track-table">
+              <div class="dim-bar-fill" style="width:76.47638712202759%;background:#E67E22;"></div>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ============ SECTION 3: SELECTED POEMS ============ -->
+  <div class="section">
+    <h2 class="section-title">&#x2162;. نماذج مختارة</h2>
+    <p class="section-subtitle">Selected Poems &mdash; عينة من القصائد من مستويات الجودة المختلفة</p>
+
+    <div class="poems-grid">
+      
+        <div class="poem-card">
+          <div class="poem-header">
+            <div class="poem-title-block">
+              <h3 class="poem-title">أمن أم شداد رسوم المنازل</h3>
+              <span class="poem-poet">كعب بن زهير</span>
+            </div>
+            <div class="poem-score-block">
+              <div class="score-badge" style="background:#D4AF37;">90</div>
+              <span class="score-tier">نخبة</span>
+            </div>
+          </div>
+          <div class="poem-body">
+            <div class="poem-verses">
+              <div class="verse"><span class="hemistich">أَمِن أُمِّ شَدّادٍ رُسومُ المَنازِلِ</span><span class="hemistich-sep">&bull;</span><span class="hemistich">تَوَهَّمتُها مِن بَعدِ سافٍ وَوابِلِ</span></div>
+<div class="verse"><span class="hemistich">وَبَعدَ لَيالٍ قَد خَلونَ وَأَشهُرٍ</span><span class="hemistich-sep">&bull;</span><span class="hemistich">عَلى إِثرِ حَولٍ قَد تَجَرَّمَ كامِلِ</span></div>
+<div class="verse"><span class="hemistich">أَرى أُمَّ شَدّادٍ بِها شِبهُ ظَبيَةٍ</span><span class="hemistich-sep">&bull;</span><span class="hemistich">تُطيفُ بِمَكحولِ المَدامِعِ خاذِلِ</span></div>
+<div class="verse"><span class="hemistich">أَغَنَّ غَضيضِ الطَرفِ رَخصٍ ظُلوفُهُ</span><span class="hemistich-sep">&bull;</span><span class="hemistich">تَرودُ بِمُعتَمٍّ مِنَ الرَملِ هائِلِ</span></div>
+<div class="verse"><span class="hemistich">وَتَرنو بِعَينَي نَعجَةٍ أُمِّ فَرقَدٍ</span><span class="hemistich-sep">&bull;</span><span class="hemistich">تَظَلُّ بِوادي رَوضَةٍ وَخَمائِلِ</span></div>
+<div class="verse"><span class="hemistich">وَتَخطو عَلى بَردِيَّتَينِ غَذاهُما</span><span class="hemistich-sep">&bull;</span><span class="hemistich">أَهاضيبُ رَجّافِ العَشِيّاتِ هاطِلِ</span></div>
+            </div>
+            <div class="poem-dims">
+              <div class="dim-row">  <span class="dim-label">الإيقاع والموسيقى</span>  <div class="dim-bar-track">    <div class="dim-bar-fill" style="width:90%;background:#D4AF37;"></div>  </div>  <span class="dim-value">90</span></div><div class="dim-row">  <span class="dim-label">التصوير</span>  <div class="dim-bar-track">    <div class="dim-bar-fill" style="width:92%;background:#2ECC71;"></div>  </div>  <span class="dim-value">92</span></div><div class="dim-row">  <span class="dim-label">العاطفة</span>  <div class="dim-bar-track">    <div class="dim-bar-fill" style="width:80%;background:#3498DB;"></div>  </div>  <span class="dim-value">80</span></div><div class="dim-row">  <span class="dim-label">اللغة</span>  <div class="dim-bar-track">    <div class="dim-bar-fill" style="width:93%;background:#9B59B6;"></div>  </div>  <span class="dim-value">93</span></div><div class="dim-row">  <span class="dim-label">القيمة الثقافية</span>  <div class="dim-bar-track">    <div class="dim-bar-fill" style="width:95%;background:#E67E22;"></div>  </div>  <span class="dim-value">95</span></div>
+            </div>
+          </div>
+          <div class="poem-footer">
+            <span class="model-tag">openai/bedrock-haiku-45</span>
+          </div>
+        </div>
+        <div class="poem-card">
+          <div class="poem-header">
+            <div class="poem-title-block">
+              <h3 class="poem-title">أصرمت حبلك من لمي</h3>
+              <span class="poem-poet">الأعشى</span>
+            </div>
+            <div class="poem-score-block">
+              <div class="score-badge" style="background:#D4AF37;">90</div>
+              <span class="score-tier">نخبة</span>
+            </div>
+          </div>
+          <div class="poem-body">
+            <div class="poem-verses">
+              <div class="verse"><span class="hemistich">أَصرَمتَ حَبلَكَ مِن لَمي</span><span class="hemistich-sep">&bull;</span><span class="hemistich">سَ اليَومَ أَم طالَ اِجتِبابُه</span></div>
+<div class="verse"><span class="hemistich">وَلَقَد طَرَقتُ الحَيَّ بَع</span><span class="hemistich-sep">&bull;</span><span class="hemistich">دَ النَومِ تَنبَحُني كِلابُه</span></div>
+<div class="verse"><span class="hemistich">بِمُشَذَّبٍ كَالجِذعِ صا</span><span class="hemistich-sep">&bull;</span><span class="hemistich">كَ عَلى تَرائِبِهِ خِضابُه</span></div>
+<div class="verse"><span class="hemistich">سَلِسٍ مُقَلَّدُهُ أَسي</span><span class="hemistich-sep">&bull;</span><span class="hemistich">لٍ خَدُّهُ مَرِعٍ جَنابُه</span></div>
+<div class="verse"><span class="hemistich">في عازِبٍ وَسَميِّ شَه</span><span class="hemistich-sep">&bull;</span><span class="hemistich">رٍ لَن يُعَزِّبَني مَصابُه</span></div>
+<div class="verse"><span class="hemistich">حَطَّت لَهُ ريحٌ كَما</span><span class="hemistich-sep">&bull;</span><span class="hemistich">حُطَّت إِلى مَلِكٍ عِيابُه</span></div>
+            </div>
+            <div class="poem-dims">
+              <div class="dim-row">  <span class="dim-label">الإيقاع والموسيقى</span>  <div class="dim-bar-track">    <div class="dim-bar-fill" style="width:88%;background:#D4AF37;"></div>  </div>  <span class="dim-value">88</span></div><div class="dim-row">  <span class="dim-label">التصوير</span>  <div class="dim-bar-track">    <div class="dim-bar-fill" style="width:92%;background:#2ECC71;"></div>  </div>  <span class="dim-value">92</span></div><div class="dim-row">  <span class="dim-label">العاطفة</span>  <div class="dim-bar-track">    <div class="dim-bar-fill" style="width:85%;background:#3498DB;"></div>  </div>  <span class="dim-value">85</span></div><div class="dim-row">  <span class="dim-label">اللغة</span>  <div class="dim-bar-track">    <div class="dim-bar-fill" style="width:90%;background:#9B59B6;"></div>  </div>  <span class="dim-value">90</span></div><div class="dim-row">  <span class="dim-label">القيمة الثقافية</span>  <div class="dim-bar-track">    <div class="dim-bar-fill" style="width:95%;background:#E67E22;"></div>  </div>  <span class="dim-value">95</span></div>
+            </div>
+          </div>
+          <div class="poem-footer">
+            <span class="model-tag">openai/bedrock-haiku-45</span>
+          </div>
+        </div>
+        <div class="poem-card">
+          <div class="poem-header">
+            <div class="poem-title-block">
+              <h3 class="poem-title">عزاء أبا بكر عزاء أبا عيسى</h3>
+              <span class="poem-poet">الصنوبري</span>
+            </div>
+            <div class="poem-score-block">
+              <div class="score-badge" style="background:#D4AF37;">90</div>
+              <span class="score-tier">نخبة</span>
+            </div>
+          </div>
+          <div class="poem-body">
+            <div class="poem-verses">
+              <div class="verse"><span class="hemistich">عزاءً أبا بكرٍ عزاءً أبا عيسى</span><span class="hemistich-sep">&bull;</span><span class="hemistich">عزاءً فلا نُعْمَى تدومُ ولا بُوسى</span></div>
+<div class="verse"><span class="hemistich">فمثلكما أرضى الإلهَ تعزِّياً</span><span class="hemistich-sep">&bull;</span><span class="hemistich">وصبراً على البلوى وأسْخَطَ إِبليسا</span></div>
+<div class="verse"><span class="hemistich">قصاراكما إن يُعْكَسَ الوجدُ سلوةً</span><span class="hemistich-sep">&bull;</span><span class="hemistich">فعمَّا قليلٍ يوجَدُ الوجدُ معكوسا</span></div>
+<div class="verse"><span class="hemistich">وما لامرئِ من سطوةِ الدهر حارسٌ</span><span class="hemistich-sep">&bull;</span><span class="hemistich">فتلقى امرءاً من سَطْوةِ الدهر محروسا</span></div>
+<div class="verse"><span class="hemistich">فمنْ آبَ منّا صابراً آبَ رابحاً</span><span class="hemistich-sep">&bull;</span><span class="hemistich">ومن آب منّا جازعاً آب منحوسا</span></div>
+<div class="verse"><span class="hemistich">هو الموتُ ما عافى رئيساً كما ترى</span><span class="hemistich-sep">&bull;</span><span class="hemistich">فنرجو مصافاةً ولا عافَ مرؤوسا</span></div>
+            </div>
+            <div class="poem-dims">
+              <div class="dim-row">  <span class="dim-label">الإيقاع والموسيقى</span>  <div class="dim-bar-track">    <div class="dim-bar-fill" style="width:88%;background:#D4AF37;"></div>  </div>  <span class="dim-value">88</span></div><div class="dim-row">  <span class="dim-label">التصوير</span>  <div class="dim-bar-track">    <div class="dim-bar-fill" style="width:85%;background:#2ECC71;"></div>  </div>  <span class="dim-value">85</span></div><div class="dim-row">  <span class="dim-label">العاطفة</span>  <div class="dim-bar-track">    <div class="dim-bar-fill" style="width:92%;background:#3498DB;"></div>  </div>  <span class="dim-value">92</span></div><div class="dim-row">  <span class="dim-label">اللغة</span>  <div class="dim-bar-track">    <div class="dim-bar-fill" style="width:91%;background:#9B59B6;"></div>  </div>  <span class="dim-value">91</span></div><div class="dim-row">  <span class="dim-label">القيمة الثقافية</span>  <div class="dim-bar-track">    <div class="dim-bar-fill" style="width:94%;background:#E67E22;"></div>  </div>  <span class="dim-value">94</span></div>
+            </div>
+          </div>
+          <div class="poem-footer">
+            <span class="model-tag">openai/bedrock-haiku-45</span>
+          </div>
+        </div>
+        <div class="poem-card">
+          <div class="poem-header">
+            <div class="poem-title-block">
+              <h3 class="poem-title">لك لا لغيرك أشتكي</h3>
+              <span class="poem-poet">أحمد الكيواني</span>
+            </div>
+            <div class="poem-score-block">
+              <div class="score-badge" style="background:#3498DB;">75</div>
+              <span class="score-tier">جيد</span>
+            </div>
+          </div>
+          <div class="poem-body">
+            <div class="poem-verses">
+              <div class="verse"><span class="hemistich">لَكَ لا لِغَيرَك أَشتَكي</span><span class="hemistich-sep">&bull;</span><span class="hemistich">جَور الصُدود المُهلك</span></div>
+<div class="verse"><span class="hemistich">فَاِرحَم أَسيرَك إِنَّني</span><span class="hemistich-sep">&bull;</span><span class="hemistich">أَلقى السِلاح أَو أَفتُك</span></div>
+<div class="verse"><span class="hemistich">أَشكو إِلى مَن لا يُجي</span><span class="hemistich-sep">&bull;</span><span class="hemistich">ب وَلا يَرق لِمُشتَكي</span></div>
+<div class="verse"><span class="hemistich">وَأَقول يا عَين اِسفِحي</span><span class="hemistich-sep">&bull;</span><span class="hemistich">فَيَقول يا عَين أسفِكي</span></div>
+<div class="verse"><span class="hemistich">يا مَعرَضاً فَضح اِستِتا</span><span class="hemistich-sep">&bull;</span><span class="hemistich">ري وَاِستَباحَ تَهَتُكي</span></div>
+<div class="verse"><span class="hemistich">إِني فَنيت وَإِنَّما</span><span class="hemistich-sep">&bull;</span><span class="hemistich">أَمل التَلاقي مَمسَكي</span></div>
+            </div>
+            <div class="poem-dims">
+              <div class="dim-row">  <span class="dim-label">الإيقاع والموسيقى</span>  <div class="dim-bar-track">    <div class="dim-bar-fill" style="width:75%;background:#D4AF37;"></div>  </div>  <span class="dim-value">75</span></div><div class="dim-row">  <span class="dim-label">التصوير</span>  <div class="dim-bar-track">    <div class="dim-bar-fill" style="width:72%;background:#2ECC71;"></div>  </div>  <span class="dim-value">72</span></div><div class="dim-row">  <span class="dim-label">العاطفة</span>  <div class="dim-bar-track">    <div class="dim-bar-fill" style="width:82%;background:#3498DB;"></div>  </div>  <span class="dim-value">82</span></div><div class="dim-row">  <span class="dim-label">اللغة</span>  <div class="dim-bar-track">    <div class="dim-bar-fill" style="width:76%;background:#9B59B6;"></div>  </div>  <span class="dim-value">76</span></div><div class="dim-row">  <span class="dim-label">القيمة الثقافية</span>  <div class="dim-bar-track">    <div class="dim-bar-fill" style="width:68%;background:#E67E22;"></div>  </div>  <span class="dim-value">68</span></div>
+            </div>
+          </div>
+          <div class="poem-footer">
+            <span class="model-tag">openai/bedrock-haiku-45</span>
+          </div>
+        </div>
+        <div class="poem-card">
+          <div class="poem-header">
+            <div class="poem-title-block">
+              <h3 class="poem-title">فؤاد عليل وجسم نحيل</h3>
+              <span class="poem-poet">خالد الكاتب</span>
+            </div>
+            <div class="poem-score-block">
+              <div class="score-badge" style="background:#3498DB;">74</div>
+              <span class="score-tier">جيد</span>
+            </div>
+          </div>
+          <div class="poem-body">
+            <div class="poem-verses">
+              <div class="verse"><span class="hemistich">فؤادٌ عليلٌ وجسمٌ نحيلُ</span><span class="hemistich-sep">&bull;</span><span class="hemistich">بذاكَ ضناءٌ بهذا نحولُ</span></div>
+<div class="verse"><span class="hemistich">بطرفٍ يترجِمُ ما ضُمِّنا</span><span class="hemistich-sep">&bull;</span><span class="hemistich">فيفهمُ سائلُهُ ما يقولُ</span></div>
+<div class="verse"><span class="hemistich">بنومٍ غريبٍ عن المُقلتَي</span><span class="hemistich-sep">&bull;</span><span class="hemistich">نِ ودَمعٍ على وجنتيَّ يسيلُ</span></div>
+<div class="verse"><span class="hemistich">فَكيفَ يذوقُ الكَرى مدنفٌ</span><span class="hemistich-sep">&bull;</span><span class="hemistich">رثاهُ العِدا فبكاهُ العذولُ</span></div>
+            </div>
+            <div class="poem-dims">
+              <div class="dim-row">  <span class="dim-label">الإيقاع والموسيقى</span>  <div class="dim-bar-track">    <div class="dim-bar-fill" style="width:75%;background:#D4AF37;"></div>  </div>  <span class="dim-value">75</span></div><div class="dim-row">  <span class="dim-label">التصوير</span>  <div class="dim-bar-track">    <div class="dim-bar-fill" style="width:72%;background:#2ECC71;"></div>  </div>  <span class="dim-value">72</span></div><div class="dim-row">  <span class="dim-label">العاطفة</span>  <div class="dim-bar-track">    <div class="dim-bar-fill" style="width:78%;background:#3498DB;"></div>  </div>  <span class="dim-value">78</span></div><div class="dim-row">  <span class="dim-label">اللغة</span>  <div class="dim-bar-track">    <div class="dim-bar-fill" style="width:76%;background:#9B59B6;"></div>  </div>  <span class="dim-value">76</span></div><div class="dim-row">  <span class="dim-label">القيمة الثقافية</span>  <div class="dim-bar-track">    <div class="dim-bar-fill" style="width:68%;background:#E67E22;"></div>  </div>  <span class="dim-value">68</span></div>
+            </div>
+          </div>
+          <div class="poem-footer">
+            <span class="model-tag">openai/bedrock-haiku-45</span>
+          </div>
+        </div>
+        <div class="poem-card">
+          <div class="poem-header">
+            <div class="poem-title-block">
+              <h3 class="poem-title">إذا ما جيوش القر جاءت فرم لها</h3>
+              <span class="poem-poet">ظافر الحداد</span>
+            </div>
+            <div class="poem-score-block">
+              <div class="score-badge" style="background:#3498DB;">77</div>
+              <span class="score-tier">جيد</span>
+            </div>
+          </div>
+          <div class="poem-body">
+            <div class="poem-verses">
+              <div class="verse"><span class="hemistich">إذا ما جيوشُ القُرِّ جاءتْ فَرُمْ لها</span><span class="hemistich-sep">&bull;</span><span class="hemistich">كمينا بأضعاف اللِّباس المحدَّد</span></div>
+<div class="verse"><span class="hemistich">ولا تُبعِد الكانونَ عنك فإنه</span><span class="hemistich-sep">&bull;</span><span class="hemistich">لأَمْنَعُها دِرْعا وَأَمْضَى مُهَنَّدِ</span></div>
+<div class="verse"><span class="hemistich">فما البرد إلا الليثُ يَلْقَى بعزمِه</span><span class="hemistich-sep">&bull;</span><span class="hemistich">جيوشاً وَيَخْشَى قُرْبَ أَصْغَرِ مَوْقِد</span></div>
+            </div>
+            <div class="poem-dims">
+              <div class="dim-row">  <span class="dim-label">الإيقاع والموسيقى</span>  <div class="dim-bar-track">    <div class="dim-bar-fill" style="width:80%;background:#D4AF37;"></div>  </div>  <span class="dim-value">80</span></div><div class="dim-row">  <span class="dim-label">التصوير</span>  <div class="dim-bar-track">    <div class="dim-bar-fill" style="width:76%;background:#2ECC71;"></div>  </div>  <span class="dim-value">76</span></div><div class="dim-row">  <span class="dim-label">العاطفة</span>  <div class="dim-bar-track">    <div class="dim-bar-fill" style="width:72%;background:#3498DB;"></div>  </div>  <span class="dim-value">72</span></div><div class="dim-row">  <span class="dim-label">اللغة</span>  <div class="dim-bar-track">    <div class="dim-bar-fill" style="width:81%;background:#9B59B6;"></div>  </div>  <span class="dim-value">81</span></div><div class="dim-row">  <span class="dim-label">القيمة الثقافية</span>  <div class="dim-bar-track">    <div class="dim-bar-fill" style="width:74%;background:#E67E22;"></div>  </div>  <span class="dim-value">74</span></div>
+            </div>
+          </div>
+          <div class="poem-footer">
+            <span class="model-tag">openai/bedrock-haiku-45</span>
+          </div>
+        </div>
+        <div class="poem-card">
+          <div class="poem-header">
+            <div class="poem-title-block">
+              <h3 class="poem-title">وردنا عيون الباك نشكو له الظما</h3>
+              <span class="poem-poet">حسن حسني الطويراني</span>
+            </div>
+            <div class="poem-score-block">
+              <div class="score-badge" style="background:#95A5A6;">67</div>
+              <span class="score-tier">متوسط</span>
+            </div>
+          </div>
+          <div class="poem-body">
+            <div class="poem-verses">
+              <div class="verse"><span class="hemistich">وردنا عيون الباك نشكو له الظَما</span><span class="hemistich-sep">&bull;</span><span class="hemistich">لطول السُّرى والحالُ تخفى وتوضحُ</span></div>
+<div class="verse"><span class="hemistich">فصفّى وروّى ماؤه وظلالُه</span><span class="hemistich-sep">&bull;</span><span class="hemistich">وزوّد لكن ساءنا وهو مصلحُ</span></div>
+<div class="verse"><span class="hemistich">وما ذاكَ من عارٍ عليه ولا بهِ</span><span class="hemistich-sep">&bull;</span><span class="hemistich">فكلُّ إناءٍ بالَّذي فيه يَنضحُ</span></div>
+<div class="verse"><span class="hemistich">وماءُ عيونِ الباكِ بالطبع عادةٌ</span><span class="hemistich-sep">&bull;</span><span class="hemistich">على فرحٍ يحلو وبالحزنِ يَملُحُ</span></div>
+            </div>
+            <div class="poem-dims">
+              <div class="dim-row">  <span class="dim-label">الإيقاع والموسيقى</span>  <div class="dim-bar-track">    <div class="dim-bar-fill" style="width:72%;background:#D4AF37;"></div>  </div>  <span class="dim-value">72</span></div><div class="dim-row">  <span class="dim-label">التصوير</span>  <div class="dim-bar-track">    <div class="dim-bar-fill" style="width:68%;background:#2ECC71;"></div>  </div>  <span class="dim-value">68</span></div><div class="dim-row">  <span class="dim-label">العاطفة</span>  <div class="dim-bar-track">    <div class="dim-bar-fill" style="width:65%;background:#3498DB;"></div>  </div>  <span class="dim-value">65</span></div><div class="dim-row">  <span class="dim-label">اللغة</span>  <div class="dim-bar-track">    <div class="dim-bar-fill" style="width:75%;background:#9B59B6;"></div>  </div>  <span class="dim-value">75</span></div><div class="dim-row">  <span class="dim-label">القيمة الثقافية</span>  <div class="dim-bar-track">    <div class="dim-bar-fill" style="width:55%;background:#E67E22;"></div>  </div>  <span class="dim-value">55</span></div>
+            </div>
+          </div>
+          <div class="poem-footer">
+            <span class="model-tag">openai/bedrock-haiku-45</span>
+          </div>
+        </div>
+        <div class="poem-card">
+          <div class="poem-header">
+            <div class="poem-title-block">
+              <h3 class="poem-title">أيها اللائم دعني واسترح</h3>
+              <span class="poem-poet">شهاب الدين الخفاجي</span>
+            </div>
+            <div class="poem-score-block">
+              <div class="score-badge" style="background:#95A5A6;">67</div>
+              <span class="score-tier">متوسط</span>
+            </div>
+          </div>
+          <div class="poem-body">
+            <div class="poem-verses">
+              <div class="verse"><span class="hemistich">أيُّها الَّلائِمُ دَعْنِي واسْتَرِحْ</span><span class="hemistich-sep">&bull;</span><span class="hemistich">مِن خليعٍ هو للنُّصْحِ عَصَى</span></div>
+<div class="verse"><span class="hemistich">لا تلُم في اللَّهْوِ والسِّنُّ عَلاَ</span><span class="hemistich-sep">&bull;</span><span class="hemistich">واقْرَعِ العُودَ ودَعْ قَرْعَ عَصَا</span></div>
+            </div>
+            <div class="poem-dims">
+              <div class="dim-row">  <span class="dim-label">الإيقاع والموسيقى</span>  <div class="dim-bar-track">    <div class="dim-bar-fill" style="width:72%;background:#D4AF37;"></div>  </div>  <span class="dim-value">72</span></div><div class="dim-row">  <span class="dim-label">التصوير</span>  <div class="dim-bar-track">    <div class="dim-bar-fill" style="width:65%;background:#2ECC71;"></div>  </div>  <span class="dim-value">65</span></div><div class="dim-row">  <span class="dim-label">العاطفة</span>  <div class="dim-bar-track">    <div class="dim-bar-fill" style="width:68%;background:#3498DB;"></div>  </div>  <span class="dim-value">68</span></div><div class="dim-row">  <span class="dim-label">اللغة</span>  <div class="dim-bar-track">    <div class="dim-bar-fill" style="width:70%;background:#9B59B6;"></div>  </div>  <span class="dim-value">70</span></div><div class="dim-row">  <span class="dim-label">القيمة الثقافية</span>  <div class="dim-bar-track">    <div class="dim-bar-fill" style="width:62%;background:#E67E22;"></div>  </div>  <span class="dim-value">62</span></div>
+            </div>
+          </div>
+          <div class="poem-footer">
+            <span class="model-tag">openai/bedrock-haiku-45</span>
+          </div>
+        </div>
+        <div class="poem-card">
+          <div class="poem-header">
+            <div class="poem-title-block">
+              <h3 class="poem-title">الناس طرا آمنوا بالله</h3>
+              <span class="poem-poet">جميل صدقي الزهاوي</span>
+            </div>
+            <div class="poem-score-block">
+              <div class="score-badge" style="background:#E67E22;">53</div>
+              <span class="score-tier">دون المتوسط</span>
+            </div>
+          </div>
+          <div class="poem-body">
+            <div class="poem-verses">
+              <div class="verse"><span class="hemistich">الناس طرا آمنوا بالله</span><span class="hemistich-sep">&bull;</span><span class="hemistich">وأراك عنه بالطبيعة لاهى</span></div>
+<div class="verse"><span class="hemistich">آه على أيام دين قد خلت</span><span class="hemistich-sep">&bull;</span><span class="hemistich">آه عليها ثم آه آه</span></div>
+<div class="verse"><span class="hemistich">إني لأسمع قائلاً يدعو إلى</span><span class="hemistich-sep">&bull;</span><span class="hemistich">كفر دعاء أخى ضلال داهي</span></div>
+<div class="verse"><span class="hemistich">يا قوم إن الدين اكبر مانع</span><span class="hemistich-sep">&bull;</span><span class="hemistich">لرقيكم وبه الجميع يباهي</span></div>
+<div class="verse"><span class="hemistich">لكم الطبيعة فاعبدوها أنها</span><span class="hemistich-sep">&bull;</span><span class="hemistich">جلت عن الأمثال والأشباه</span></div>
+<div class="verse"><span class="hemistich">ما للذي عبد الطبيعة مخلصاً</span><span class="hemistich-sep">&bull;</span><span class="hemistich">غير الطبيعة آمر أو ناهي</span></div>
+            </div>
+            <div class="poem-dims">
+              <div class="dim-row">  <span class="dim-label">الإيقاع والموسيقى</span>  <div class="dim-bar-track">    <div class="dim-bar-fill" style="width:58%;background:#D4AF37;"></div>  </div>  <span class="dim-value">58</span></div><div class="dim-row">  <span class="dim-label">التصوير</span>  <div class="dim-bar-track">    <div class="dim-bar-fill" style="width:45%;background:#2ECC71;"></div>  </div>  <span class="dim-value">45</span></div><div class="dim-row">  <span class="dim-label">العاطفة</span>  <div class="dim-bar-track">    <div class="dim-bar-fill" style="width:52%;background:#3498DB;"></div>  </div>  <span class="dim-value">52</span></div><div class="dim-row">  <span class="dim-label">اللغة</span>  <div class="dim-bar-track">    <div class="dim-bar-fill" style="width:62%;background:#9B59B6;"></div>  </div>  <span class="dim-value">62</span></div><div class="dim-row">  <span class="dim-label">القيمة الثقافية</span>  <div class="dim-bar-track">    <div class="dim-bar-fill" style="width:48%;background:#E67E22;"></div>  </div>  <span class="dim-value">48</span></div>
+            </div>
+          </div>
+          <div class="poem-footer">
+            <span class="model-tag">openai/bedrock-haiku-45</span>
+          </div>
+        </div>
+        <div class="poem-card">
+          <div class="poem-header">
+            <div class="poem-title-block">
+              <h3 class="poem-title">جاء الشتاء وعندي من حوائجه</h3>
+              <span class="poem-poet">ابن سكرة</span>
+            </div>
+            <div class="poem-score-block">
+              <div class="score-badge" style="background:#E67E22;">59</div>
+              <span class="score-tier">دون المتوسط</span>
+            </div>
+          </div>
+          <div class="poem-body">
+            <div class="poem-verses">
+              <div class="verse"><span class="hemistich">جاء الشتاء وعندي من حوائجه</span><span class="hemistich-sep">&bull;</span><span class="hemistich">سبع إذا القطر عن حاجاتنا حبسا</span></div>
+<div class="verse"><span class="hemistich">كن وكيس وكانون وكاس طلا</span><span class="hemistich-sep">&bull;</span><span class="hemistich">بعد الكباب وكس ناعم وكسا</span></div>
+            </div>
+            <div class="poem-dims">
+              <div class="dim-row">  <span class="dim-label">الإيقاع والموسيقى</span>  <div class="dim-bar-track">    <div class="dim-bar-fill" style="width:65%;background:#D4AF37;"></div>  </div>  <span class="dim-value">65</span></div><div class="dim-row">  <span class="dim-label">التصوير</span>  <div class="dim-bar-track">    <div class="dim-bar-fill" style="width:58%;background:#2ECC71;"></div>  </div>  <span class="dim-value">58</span></div><div class="dim-row">  <span class="dim-label">العاطفة</span>  <div class="dim-bar-track">    <div class="dim-bar-fill" style="width:55%;background:#3498DB;"></div>  </div>  <span class="dim-value">55</span></div><div class="dim-row">  <span class="dim-label">اللغة</span>  <div class="dim-bar-track">    <div class="dim-bar-fill" style="width:68%;background:#9B59B6;"></div>  </div>  <span class="dim-value">68</span></div><div class="dim-row">  <span class="dim-label">القيمة الثقافية</span>  <div class="dim-bar-track">    <div class="dim-bar-fill" style="width:50%;background:#E67E22;"></div>  </div>  <span class="dim-value">50</span></div>
+            </div>
+          </div>
+          <div class="poem-footer">
+            <span class="model-tag">openai/bedrock-haiku-45</span>
+          </div>
+        </div>
+    </div>
+  </div>
+
+  <!-- ============ SECTION 4: METHODOLOGY ============ -->
+  <div class="section">
+    <h2 class="section-title">&#x2163;. المنهجية</h2>
+    <p class="section-subtitle">Methodology &mdash; كيف تم تقييم القصائد</p>
+
+    <div class="method-grid">
+      <div class="method-card">
+        <h4>النموذج المستخدم</h4>
+        <p>Claude Haiku 4.5 عبر Amazon Bedrock، بوساطة خادم LiteLLM proxy.
+           يُستدعى النموذج بمعرّف <code>openai/bedrock-haiku-45</code>.</p>
+      </div>
+      <div class="method-card">
+        <h4>أبعاد التقييم</h4>
+        <ul>
+          <li><strong>الإيقاع والموسيقى</strong> &mdash; جمال الوزن، تناسق القوافي، الموسيقى الداخلية</li>
+          <li><strong>التصوير</strong> &mdash; قوة الصور الشعرية، الاستعارات، حيوية المشاهد</li>
+          <li><strong>العاطفة</strong> &mdash; صدق المشاعر، عمق الوجدان، التأثير</li>
+          <li><strong>اللغة</strong> &mdash; فصاحة الألفاظ، جزالة التراكيب، البلاغة</li>
+          <li><strong>القيمة الثقافية</strong> &mdash; الأهمية الأدبية، الأصالة، المكانة في التراث</li>
+        </ul>
+      </div>
+      <div class="method-card">
+        <h4>آلية التقييم</h4>
+        <p>كل بُعد يُقيَّم من 0 إلى 100. درجة الجودة الكلية هي متوسط الأبعاد الخمسة.
+           يعمل الذكاء الاصطناعي كناقد أدبي عربي متخصص يقيّم القصائد من منظور أكاديمي وذوق معاصر.</p>
+      </div>
+      <div class="method-card">
+        <h4>إعدادات المعالجة</h4>
+        <ul>
+          <li>حجم الدفعة: <code>5</code> قصائد لكل طلب</li>
+          <li>التزامن: <code>20</code> طلباً متوازياً</li>
+          <li>نقاط حفظ كل <code>1,000</code> قصيدة بصيغة Parquet</li>
+          <li>النتائج مخزنة في: <code>scores_openai_bedrock-haiku-45.parquet</code></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ FOOTER ============ -->
+  <div class="report-footer">
+    تم إنشاء هذا التقرير تلقائياً بواسطة خط أنابيب تنسيق الشعر العربي &bull; 2026-03-06 16:54
+  </div>
+
+</div>
+</body>
+</html>

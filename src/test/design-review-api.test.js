@@ -392,6 +392,36 @@ describe('Design Review API', () => {
       expect(response.body).toEqual({ items: [], sessions: [], verdicts: [] });
     });
 
+    it('should prefer completed sessions with reviews over empty ones for round=latest', async () => {
+      mockTablesExist();
+      // Mock sessions query — should return the completed session, not the empty one
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ id: 'session-369', round_number: 3, status: 'completed', reviewed_count: 45 }]
+      });
+      // Mock items query
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ id: 1, item_key: 'splash-zen-1', component: 'splash', category: 'zen', is_active: true }]
+      });
+      // Mock verdicts query
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ item_key: 'splash-zen-1', verdict: 'keep', comment: 'Great', round_number: 3 }]
+      });
+
+      const response = await request(app)
+        .get('/api/design-review/claude-context?round=latest')
+        .expect(200);
+
+      // Verify the session query uses priority ordering, not just created_at DESC
+      const sessionQueryCall = mockPool.query.mock.calls[1]; // index 1 = session query (0 = table check)
+      const sql = sessionQueryCall[0];
+      expect(sql).toContain('CASE WHEN');
+      expect(sql).toContain('reviewed_count');
+      expect(sql).toContain('round_number DESC');
+
+      expect(response.body.sessions[0].status).toBe('completed');
+      expect(response.body.sessions[0].reviewed_count).toBe(45);
+    });
+
     it('should return structured context for Claude agent', async () => {
       mockTablesExist();
       // Mock sessions query

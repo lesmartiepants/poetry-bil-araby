@@ -244,16 +244,165 @@ SIMPLE_RULES = [
     },
 ]
 
+# ── Learned rule functions (arabic-review-agent) ────────────────────
+
+def fix_impossible_hamza_sukun(text):
+    """Remove impossible kasra+sukun on hamza letters (إِْ -> إِ, أَْ -> أَ).
+
+    Mishkal produces إِْذَا, إِْنَّ, أَْنَّ etc. where a sukun follows a short
+    vowel on a hamza-bearing letter.  This is phonologically impossible.
+    Detected in 22.1% of poems (113 occurrences across 45/204 poems).
+    """
+    # إ with kasra then sukun
+    text = text.replace("\u0625\u0650\u0652", "\u0625\u0650")
+    # أ with fatha then sukun
+    text = text.replace("\u0623\u064E\u0652", "\u0623\u064E")
+    return text
+
+
+# Precompile regex for function-word spurious shadda
+_FUNC_WORD_SHADDA_MAP = {
+    # على: remove shadda on lam (عَلَّى -> عَلَى, عَلَّيْ -> عَلَيْ)
+    re.compile(r"\bعَلَّ([ىي])"): r"عَلَ\1",
+    # لم: remove shadda on meem when standalone (لَمَّ + space -> لَمْ + space)
+    re.compile(r"\bلَمَّ(\s)"): r"لَمْ\1",
+    # قد: remove shadda on dal (قَدٍّ, قَدِّ, قَدَّ, قُدَّ etc.)
+    re.compile(r"\b(قَ|قُ)دّ"): r"\1دْ",
+    # كما: remove shadda/tanween on meem (كَمَّا, كَمًّا -> كَمَا)
+    re.compile(r"\bكَمَّا"): "كَمَا",
+    re.compile(r"\bكَمًّا"): "كَمَا",
+    # حين: remove shadda (حَيَّنَ, حَيِّنَّ, حِيَنَّ -> حِينَ)
+    re.compile(r"\bحَيَّنَ"): "حِينَ",
+    re.compile(r"\bحَيِّنَّ"): "حِينَ",
+    re.compile(r"\bحِيَنَّ"): "حِينَ",
+}
+
+
+def fix_spurious_shadda_function_words(text):
+    """Remove spurious shadda from common function words.
+
+    Mishkal adds shadda to function words that should never have it:
+    على (11.9% of occurrences), لم (9.6%), قد (9.8%), كما (12.8%), حين (20%).
+    Detected in 14.2% of poems (29/204).
+    """
+    for pattern, replacement in _FUNC_WORD_SHADDA_MAP.items():
+        text = pattern.sub(replacement, text)
+    return text
+
+
+# Regex for ya-possessive nisba corruption
+# In Mishkal output, the order is often ya + vowel/tanween + shadda (not ya + shadda + vowel)
+# So we match: ي + optional vowel/tanween + shadda + optional trailing marks
+_YA_NISBA_RE = re.compile(
+    r"([\u0621-\u064A][\u064B-\u0652]*"              # at least one Arabic letter + marks
+    r"(?:[\u0621-\u064A][\u064B-\u0652]*)*)"          # more letters + marks (greedy, captures word)
+    r"(\u064A)"                                        # ya
+    r"([\u064B-\u0650]?)"                              # optional vowel/tanween BEFORE shadda
+    r"\u0651"                                          # shadda
+    r"([\u064B-\u0650]*)"                              # optional trailing marks
+    r"(?=\s|$|\*)"                                     # word boundary
+)
+
+# Words where ya+shadda is LEGITIMATE (nisba adjectives, proper names, etc.)
+_LEGITIMATE_YA_SHADDA = {
+    "النبي", "نبي", "حي", "الحي", "ربي", "الزكي",
+    "عربي", "أعرابي", "قوي", "الصبي", "صبي",
+    "نبوي", "دنيوي", "سماوي", "علي",
+}
+
+
+def fix_ya_possessive_nisba(text):
+    """Fix possessive ya corrupted to nisba (doubled ya with shadda).
+
+    Mishkal converts first-person possessive ي to يّ (with shadda and often
+    tanween).  Examples: قَلْبِيٌّ -> قَلْبِي, مِنِّيُّ -> مِنِّي.
+    Detected in 55.4% of poems (113/204), ~493 word occurrences.
+    """
+    def _replace_ya(match):
+        full = match.group(0)
+        # Check the bare form against legitimacy list
+        bare = TASHKEEL_PATTERN.sub("", full)
+        if bare in _LEGITIMATE_YA_SHADDA:
+            return full
+        # Remove shadda from ya and strip trailing tanween/vowels added by corruption
+        word_part = match.group(1)   # everything before ya
+        return word_part + "\u064A"  # word + ya (no shadda, no tanween)
+
+    return _YA_NISBA_RE.sub(_replace_ya, text)
+
+
+def fix_alif_lam_article(text):
+    """Fix corrupted alif-lam article (اُلْ -> الْ).
+
+    Mishkal sometimes produces اُلْ (with damma on alef and sukun on lam)
+    instead of the proper definite article.  Example: واُلْصُفَا -> والصُّفَا.
+    Detected in 5 poems, 20 occurrences.
+    """
+    # Replace اُلْ with الْ
+    text = text.replace("\u0627\u064F\u0644\u0652", "\u0627\u0644\u0652")
+    return text
+
+
+# Sun letters for assimilation
+_SUN_LETTERS = set("تثدذرزسشصضطظنل")
+_SUN_ASSIMILATION_RE = re.compile(
+    r"\u0627\u0644\u0652"   # alif + lam + sukun
+    r"([\u062A\u062B\u062F\u0630\u0631\u0632\u0633\u0634\u0635\u0636\u0637\u0638\u0646\u0644])"
+    r"(?!\u0651)"           # NOT already followed by shadda
+)
+
+
+def fix_sun_letter_assimilation(text):
+    """Add missing shadda for sun letter assimilation (idgham shamsi).
+
+    When ال is followed by a sun letter, the lam assimilates and the sun letter
+    should carry shadda.  Mishkal sometimes leaves الْ + sun letter without
+    shadda.  Detected: 231 missing out of 1571 sun-letter article occurrences.
+    """
+    # Use a lambda to build the replacement with actual Unicode chars
+    return _SUN_ASSIMILATION_RE.sub(
+        lambda m: "\u0627\u0644" + m.group(1) + "\u0651",
+        text
+    )
+
+
 # Learned rules (populated by Arabic quality review agent)
 LEARNED_RULES = [
-    # Example (to be populated by arabic-review agent):
-    # {
-    #     "name": "tanween_on_proper_nouns",
-    #     "description": "Mishkal adds tanween to well-known proper nouns",
-    #     "apply": lambda text: text,
-    #     "source": "arabic-review-agent",
-    #     "confidence": 0.9,
-    # },
+    {
+        "name": "impossible_hamza_sukun",
+        "description": "Remove impossible kasra+sukun combo on hamza (إِْ->إِ). Affects 22% of poems.",
+        "apply": fix_impossible_hamza_sukun,
+        "source": "arabic-review-agent",
+        "confidence": 0.95,
+    },
+    {
+        "name": "spurious_shadda_function_words",
+        "description": "Remove spurious shadda from على, لم, قد, كما, حين. Affects 14% of poems.",
+        "apply": fix_spurious_shadda_function_words,
+        "source": "arabic-review-agent",
+        "confidence": 0.90,
+    },
+    {
+        "name": "ya_possessive_nisba",
+        "description": "Fix possessive ya corrupted to nisba (قَلْبِيٌّ->قَلْبِي). Affects 55% of poems.",
+        "apply": fix_ya_possessive_nisba,
+        "source": "arabic-review-agent",
+        "confidence": 0.85,
+    },
+    {
+        "name": "alif_lam_article",
+        "description": "Fix corrupted alif-lam article (اُلْ->الْ). Affects ~5 poems.",
+        "apply": fix_alif_lam_article,
+        "source": "arabic-review-agent",
+        "confidence": 0.92,
+    },
+    {
+        "name": "sun_letter_assimilation",
+        "description": "Add missing shadda for sun letter assimilation. 231 missing instances.",
+        "apply": fix_sun_letter_assimilation,
+        "source": "arabic-review-agent",
+        "confidence": 0.88,
+    },
 ]
 
 

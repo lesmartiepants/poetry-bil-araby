@@ -56,3 +56,10 @@ poetry-database/
 poetry-splash-ci-fixes/
 .vercel
 .env*.local
+
+# Python artifacts
+__pycache__/
+*.pyc
+
+# Diacritization pipeline data (large parquets, generated artifacts)
+scripts/diacritize-data/

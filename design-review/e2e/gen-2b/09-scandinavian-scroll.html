@@ -81,8 +81,8 @@
   /* CTA Button */
   #enterBtn {
     position: relative; z-index: 10;
-    background: transparent;
-    border: 1.5px solid var(--sand);
+    background: rgba(212, 197, 160, 0.08);
+    border: none;
     color: var(--sand);
     font-family: 'Tajawal', sans-serif;
     font-size: 1.05rem; font-weight: 500;
@@ -90,14 +90,20 @@
     border-radius: 24px;
     cursor: pointer;
     min-width: 44px; min-height: 44px;
-    transition: background 0.3s, transform 0.2s;
+    transition: background 0.3s, transform 0.2s, box-shadow 0.3s;
     opacity: 0;
     animation: fadeUp 0.8s ease 1.5s forwards;
     display: flex; align-items: center; gap: 0.5rem;
+    box-shadow:
+      4px 4px 10px rgba(0, 0, 0, 0.5),
+      -3px -3px 8px rgba(212, 197, 160, 0.06);
   }
   #enterBtn:hover, #enterBtn:focus-visible {
     background: rgba(212, 197, 160, 0.15);
     transform: scale(1.04);
+    box-shadow:
+      5px 5px 14px rgba(0, 0, 0, 0.6),
+      -4px -4px 10px rgba(212, 197, 160, 0.1);
   }
 
   /* ============ Onboarding ============ */
@@ -321,7 +327,7 @@
   .dot-action {
     position: relative;
     width: 44px; height: 44px;
-    background: transparent;
+    background: rgba(245, 243, 240, 0.6);
     border: none;
     cursor: pointer;
     display: flex;
@@ -330,7 +336,20 @@
     flex-direction: column;
     gap: 0;
     margin: 0 16px;
+    border-radius: 12px;
+    box-shadow:
+      3px 3px 6px rgba(0, 0, 0, 0.06),
+      -2px -2px 5px rgba(255, 255, 255, 0.7);
+    transition: box-shadow 0.3s ease, background 0.3s ease;
     -webkit-tap-highlight-color: transparent;
+  }
+  .dot-action:hover,
+  .dot-action:active {
+    background: rgba(245, 243, 240, 0.8);
+    box-shadow:
+      4px 4px 8px rgba(0, 0, 0, 0.08),
+      -3px -3px 6px rgba(255, 255, 255, 0.8),
+      inset 1px 1px 2px rgba(0, 0, 0, 0.03);
   }
   /* The tiny dot */
   .dot-action::before {

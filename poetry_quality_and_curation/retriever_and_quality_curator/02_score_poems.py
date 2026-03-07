@@ -177,8 +177,55 @@ def load_poems(args) -> list[dict]:
 # Score parsing
 # ---------------------------------------------------------------------------
 
+def _extract_json_objects(text: str) -> list[dict]:
+    """Extract JSON objects from text using a bracket-counting parser.
+
+    Handles arbitrarily nested braces (e.g., notes: {sound: "...", ...}).
+    """
+    results = []
+    i = 0
+    while i < len(text):
+        if text[i] == '{':
+            depth = 0
+            start = i
+            in_string = False
+            escape_next = False
+            while i < len(text):
+                ch = text[i]
+                if escape_next:
+                    escape_next = False
+                elif ch == '\\' and in_string:
+                    escape_next = True
+                elif ch == '"' and not escape_next:
+                    in_string = not in_string
+                elif not in_string:
+                    if ch == '{':
+                        depth += 1
+                    elif ch == '}':
+                        depth -= 1
+                        if depth == 0:
+                            candidate = text[start:i + 1]
+                            try:
+                                results.append(json.loads(candidate))
+                            except json.JSONDecodeError:
+                                # Try lenient repair
+                                cleaned = re.sub(r',\s*}', '}', candidate)
+                                cleaned = re.sub(r',\s*]', ']', cleaned)
+                                try:
+                                    results.append(json.loads(cleaned))
+                                except json.JSONDecodeError:
+                                    pass
+                            break
+                i += 1
+        i += 1
+    return results
+
+
 def parse_scores(text: str, batch: list[dict]) -> list[dict]:
     """Parse scoring response with triple-layer fallback."""
+    # Strip markdown code fences if present
+    text = re.sub(r'```(?:json)?\s*', '', text).strip()
+
     # Layer 1: Direct JSON parse
     try:
         parsed = json.loads(text)
@@ -188,18 +235,10 @@ def parse_scores(text: str, batch: list[dict]) -> list[dict]:
     except json.JSONDecodeError:
         pass
 
-    # Layer 2: Regex extract JSON objects from text
-    json_pattern = r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}'
-    matches = re.findall(json_pattern, text)
-    if matches:
-        parsed = []
-        for m in matches:
-            try:
-                parsed.append(json.loads(m))
-            except json.JSONDecodeError:
-                continue
-        if parsed:
-            return validate_scores(parsed, batch)
+    # Layer 2: Bracket-counting JSON extraction (handles nested objects)
+    extracted = _extract_json_objects(text)
+    if extracted:
+        return validate_scores(extracted, batch)
 
     # Layer 3: Lenient repair (fix trailing commas, missing quotes, etc.)
     cleaned = text.strip()
@@ -247,12 +286,21 @@ def validate_scores(parsed: list[dict], batch: list[dict]) -> list[dict]:
 # ---------------------------------------------------------------------------
 
 def save_checkpoint(scores: list[dict], output_path: str):
-    """Save scores to Parquet file."""
+    """Save scores to Parquet file, merging with existing scores."""
     if not scores:
         return
-    df = pd.DataFrame(scores)
-    df.to_parquet(output_path, index=False)
-    print(f"  Checkpoint: {len(scores)} scores saved to {output_path}")
+    new_df = pd.DataFrame(scores)
+    # Merge with existing file to avoid overwriting previous scores
+    if os.path.exists(output_path):
+        existing_df = pd.read_parquet(output_path)
+        # Keep existing scores that aren't in the new batch (upsert by poem_id)
+        new_ids = set(new_df["poem_id"].astype(str))
+        keep = existing_df[~existing_df["poem_id"].astype(str).isin(new_ids)]
+        merged = pd.concat([keep, new_df], ignore_index=True)
+    else:
+        merged = new_df
+    merged.to_parquet(output_path, index=False)
+    print(f"  Checkpoint: {len(merged)} total scores saved to {output_path} ({len(scores)} new)")
 
 
 # ---------------------------------------------------------------------------
@@ -298,7 +346,7 @@ async def main_scoring_loop(poems: list[dict], args) -> tuple[list[dict], float]
     )
     max_tokens = (
         200 * args.batch_size if args.prompt_mode == "compact"
-        else 500 * args.batch_size
+        else 2000 * args.batch_size
     )
 
     # LiteLLM proxy config: use ANTHROPIC_BASE_URL and ANTHROPIC_AUTH_TOKEN

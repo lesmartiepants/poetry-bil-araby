@@ -313,8 +313,9 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    height: 64px;
+    height: calc(64px + env(safe-area-inset-bottom, 0px));
     padding: 0 1rem;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
   .controls-dot-line::before {
     content: '';

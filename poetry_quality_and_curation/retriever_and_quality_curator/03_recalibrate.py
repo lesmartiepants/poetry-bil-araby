@@ -4,17 +4,50 @@ Takes base scores (e.g. from Haiku) and calibration scores (e.g. from Opus)
 on the overlap set, then applies the learned calibration to all base scores.
 
 Usage:
-    python -m scripts.curation.03_recalibrate \
+    python -m poetry_quality_and_curation.retriever_and_quality_curator.03_recalibrate \
         --base-scores data/scores_anthropic_claude-haiku-4-20250414.parquet \
         --calibration-scores data/scores_anthropic_claude-opus-4-5-20250414.parquet
 """
 import argparse
 import json
 
+from dotenv import load_dotenv
+load_dotenv()
+
 import numpy as np
 import pandas as pd
 
-from scripts.curation import config
+from poetry_quality_and_curation.retriever_and_quality_curator import config
+
+
+def enrich_with_metadata(df: pd.DataFrame) -> pd.DataFrame:
+    """Merge poet_name and poem_form from DB into scores DataFrame."""
+    try:
+        conn = config.get_db_connection()
+    except Exception:
+        print("Warning: Could not connect to DB for metadata enrichment")
+        return df
+    try:
+        import psycopg2
+        cur = conn.cursor()
+        cur.execute("""
+            SELECT p.id AS poem_id, po.name AS poet_name
+            FROM poems p
+            LEFT JOIN poets po ON p.poet_id = po.id
+        """)
+        rows = cur.fetchall()
+        meta = pd.DataFrame(rows, columns=["poem_id", "poet_name"])
+        meta["poem_id"] = meta["poem_id"].astype(str)
+        cur.close()
+
+        if "poet_name" not in df.columns:
+            df = df.merge(meta, on="poem_id", how="left")
+        return df
+    except Exception as e:
+        print(f"Warning: Metadata enrichment failed: {e}")
+        return df
+    finally:
+        conn.close()
 
 
 def parse_args():
@@ -37,6 +70,12 @@ def compute_dimension_calibration(base_df: pd.DataFrame, cal_df: pd.DataFrame) -
         base_std = float(base_vals.std())
         cal_std = float(cal_vals.std())
         scale = cal_std / base_std if base_std > 0 else 1.0
+        # When calibration overlap is on a subset (e.g. top-K), the base std
+        # is artificially narrow. Disable scaling in that case to avoid
+        # distorting scores for the full population. Only apply scaling when
+        # the factor is modest (0.7-1.5).
+        if scale < 0.7 or scale > 1.5:
+            scale = 1.0
 
         calibration[dim] = {"bias": bias, "scale": scale}
     return calibration
@@ -188,6 +227,16 @@ def main():
     # Ensure poem_id is string
     base_all["poem_id"] = base_all["poem_id"].astype(str)
     cal_all["poem_id"] = cal_all["poem_id"].astype(str)
+
+    # Filter out zero/near-zero calibration scores (parse failures)
+    before_filter = len(cal_all)
+    cal_all = cal_all[cal_all["quality_score"] > 10].reset_index(drop=True)
+    if before_filter != len(cal_all):
+        print(f"Filtered {before_filter - len(cal_all)} zero/near-zero calibration scores (parse failures)")
+
+    # Enrich with DB metadata (poet_name for fame discount)
+    base_all = enrich_with_metadata(base_all)
+    cal_all = enrich_with_metadata(cal_all)
 
     # Find overlap
     overlap_ids = set(base_all["poem_id"]) & set(cal_all["poem_id"])

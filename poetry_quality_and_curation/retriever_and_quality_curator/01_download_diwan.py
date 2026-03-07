@@ -2,7 +2,7 @@
 """Download, parse, and pre-filter the NoorBayan/Diwan Arabic poetry dataset.
 
 Usage:
-    python -m scripts.curation.01_download_diwan [--output PATH] [--skip-db-dedup] [--force]
+    python -m poetry_quality_and_curation.retriever_and_quality_curator.01_download_diwan [--output PATH] [--skip-db-dedup] [--force]
 
 The Diwan dataset (~400k poems) is distributed as a RAR/CSV archive.
 This script downloads the dataset, parses the TSV, applies quality filters,
@@ -21,13 +21,13 @@ from pathlib import Path
 
 import pandas as pd
 
-from scripts.curation.config import (
+from poetry_quality_and_curation.retriever_and_quality_curator.config import (
     DATA_DIR,
     METER_MAP,
     POEM_FORM_MAP,
     THEME_MAP,
 )
-from scripts.curation.arabic_utils import (
+from poetry_quality_and_curation.retriever_and_quality_curator.arabic_utils import (
     compute_text_hash,
     count_lines,
     detect_repeated_lines,
@@ -327,7 +327,7 @@ def dedup_against_db(df: pd.DataFrame) -> tuple[pd.DataFrame, int]:
     Requires DATABASE_URL environment variable.
     Returns filtered DataFrame and count of removed duplicates.
     """
-    from scripts.curation.config import get_db_connection
+    from poetry_quality_and_curation.retriever_and_quality_curator.config import get_db_connection
 
     print("[db-dedup] Connecting to database...")
     conn = get_db_connection()
@@ -394,7 +394,7 @@ def main():
         "--output",
         type=Path,
         default=DATA_DIR / "diwan_processed.parquet",
-        help="Output Parquet file path (default: scripts/curation/data/diwan_processed.parquet)",
+        help="Output Parquet file path (default: poetry_quality_and_curation/retriever_and_quality_curator/data/diwan_processed.parquet)",
     )
     parser.add_argument(
         "--skip-db-dedup",

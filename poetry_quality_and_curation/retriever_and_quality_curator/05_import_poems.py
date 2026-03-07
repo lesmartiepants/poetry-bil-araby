@@ -4,10 +4,10 @@
 Updates quality scores for existing (original) poems and inserts new Diwan poems.
 
 Usage:
-    python -m scripts.curation.05_import_poems
-    python -m scripts.curation.05_import_poems --dry-run
-    python -m scripts.curation.05_import_poems --scores-only
-    python -m scripts.curation.05_import_poems --input data/final_selection.parquet --batch-size 250
+    python -m poetry_quality_and_curation.retriever_and_quality_curator.05_import_poems
+    python -m poetry_quality_and_curation.retriever_and_quality_curator.05_import_poems --dry-run
+    python -m poetry_quality_and_curation.retriever_and_quality_curator.05_import_poems --scores-only
+    python -m poetry_quality_and_curation.retriever_and_quality_curator.05_import_poems --input data/final_selection.parquet --batch-size 250
 """
 import argparse
 import json
@@ -15,10 +15,13 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
+from dotenv import load_dotenv
+load_dotenv()
+
 import pandas as pd
 from tqdm import tqdm
 
-from scripts.curation import config
+from poetry_quality_and_curation.retriever_and_quality_curator import config
 
 
 def parse_args():

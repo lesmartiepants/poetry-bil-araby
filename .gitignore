@@ -67,7 +67,8 @@ poetry_quality_and_curation/retriever_and_quality_curator/data/*.csv
 poetry_quality_and_curation/retriever_and_quality_curator/data/*.json
 poetry_quality_and_curation/retriever_and_quality_curator/data/*.rar
 !poetry_quality_and_curation/retriever_and_quality_curator/data/.gitkeep
-poetry_quality_and_curation/retriever_and_quality_curator/*.html
+# Keep generated HTML reports tracked
+# poetry_quality_and_curation/retriever_and_quality_curator/*.html
 
 # Python artifacts
 __pycache__/

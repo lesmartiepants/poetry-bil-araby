@@ -78,12 +78,10 @@
     .fs-next{right:0}
 
     /* ── Accordion catalog (premium) ── */
-    .acc-toggle{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--r);border:1px solid var(--border);background:linear-gradient(135deg,var(--surface-2) 0%,rgba(28,28,31,.8) 100%);color:var(--text);font-size:13px;font-weight:500;transition:all .2s cubic-bezier(.4,0,.2,1);cursor:pointer;letter-spacing:.01em;overflow:hidden;min-width:0;flex-shrink:1}
-    .acc-toggle #accToggleLabel{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-    .acc-toggle #accToggleLabel .toggle-phil{color:rgba(212,168,75,.55);font-style:italic;font-weight:400}
+    .acc-toggle{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--r);border:1px solid var(--border);background:linear-gradient(135deg,var(--surface-2) 0%,rgba(28,28,31,.8) 100%);color:var(--text);font-size:13px;font-weight:500;transition:all .2s cubic-bezier(.4,0,.2,1);white-space:nowrap;cursor:pointer;letter-spacing:.01em}
     .acc-toggle:hover{background:linear-gradient(135deg,var(--surface-3),var(--surface-2));color:var(--text);border-color:var(--border-light);box-shadow:0 2px 12px rgba(0,0,0,.25);transform:translateY(-1px)}
     .acc-toggle.active{background:linear-gradient(135deg,rgba(212,168,75,.08),rgba(212,168,75,.03));border-color:rgba(212,168,75,.3);color:var(--accent);box-shadow:0 2px 0 0 rgba(212,168,75,.4)}
-    .acc-toggle svg{width:11px;height:11px;transition:transform .3s cubic-bezier(.4,0,.2,1);opacity:.5;flex-shrink:0}
+    .acc-toggle svg{width:11px;height:11px;transition:transform .3s cubic-bezier(.4,0,.2,1);opacity:.5}
     .acc-toggle:hover svg{opacity:.8}
     .acc-toggle.active svg{transform:rotate(180deg);opacity:.8}
     .acc-panel{position:absolute;top:100%;left:0;right:0;z-index:90;background:var(--surface);border-bottom:1px solid var(--border);max-height:0;overflow:hidden;transition:max-height .35s cubic-bezier(.4,0,.2,1),box-shadow .35s;box-shadow:none}
@@ -1259,23 +1257,20 @@ function render(skipPreview) {
   document.getElementById('prevBtn').disabled = fi <= 0;
   document.getElementById('nextBtn').disabled = fi >= flatList.length - 1;
 
-  // Update accordion toggle label with design number, name, and philosophy
+  // Update accordion toggle label with design number and name
   var accLabel = document.getElementById('accToggleLabel');
-  if (accLabel) {
-    accLabel.textContent = '';
-    accLabel.appendChild(document.createTextNode((fi + 1) + '. ' + opt.name));
-    if (opt.philosophy) {
-      var philSpan = document.createElement('span');
-      philSpan.className = 'toggle-phil';
-      philSpan.textContent = ' \u2014 ' + opt.philosophy;
-      accLabel.appendChild(philSpan);
-    }
-  }
+  if (accLabel) accLabel.textContent = (fi + 1) + '. ' + opt.name;
 
-  // Update toolbar detail: version badge only
+  // Update toolbar detail: philosophy + version badge
   var tbDetail = document.getElementById('tbDetail');
   if (tbDetail) {
     tbDetail.textContent = '';
+    if (opt.philosophy) {
+      var philSpan = document.createElement('span');
+      philSpan.className = 'td-phil';
+      philSpan.textContent = '\u2014 ' + opt.philosophy;
+      tbDetail.appendChild(philSpan);
+    }
     if (opt.generation >= 3) {
       var badge = document.createElement('span');
       badge.className = 'gen-badge gen-' + opt.generation;

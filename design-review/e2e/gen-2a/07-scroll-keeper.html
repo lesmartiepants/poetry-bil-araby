@@ -131,7 +131,7 @@ html.dark body::after { opacity: 0.3; }
   box-shadow:
     0 20px 60px var(--shadow),
     inset 0 0 40px rgba(197, 160, 89, 0.06);
-  animation: scrollDramaticUnroll 2.2s cubic-bezier(0.25, 1, 0.5, 1) 0.8s backwards;
+  animation: scrollDramaticUnroll 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.3s backwards;
   /* Paper edge effect */
   background-image:
     linear-gradient(90deg, rgba(61, 52, 40, 0.06) 0%, transparent 3%, transparent 97%, rgba(61, 52, 40, 0.06) 100%),
@@ -165,7 +165,7 @@ html.dark body::after { opacity: 0.3; }
   text-transform: uppercase;
   text-align: center;
   margin-bottom: 2rem;
-  animation: fadeIn 1s 1.5s backwards;
+  animation: fadeIn 0.5s 0.6s backwards;
 }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
@@ -183,7 +183,7 @@ html.dark body::after { opacity: 0.3; }
   cursor: pointer;
   transition: all 0.3s ease;
   box-shadow: 0 4px 12px var(--shadow);
-  animation: scaleIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) 2s backwards;
+  animation: scaleIn 0.5s cubic-bezier(0.22, 1, 0.36, 1) 0.8s backwards;
 }
 @keyframes scaleIn {
   from { opacity: 0; transform: scale(0.9); }

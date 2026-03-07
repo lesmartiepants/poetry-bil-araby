@@ -107,15 +107,7 @@
     transform: scale(1.04);
   }
 
-  #skipBtn {
-    position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%);
-    background: transparent; border: 1px solid var(--gold-dim);
-    color: var(--gold); font-family: 'Tajawal', sans-serif; font-size: 0.85rem;
-    padding: 0.5rem 1.5rem; border-radius: 4px; cursor: pointer;
-    min-width: 44px; min-height: 44px; transition: background 0.3s;
-    z-index: 101; opacity: 0.6;
-  }
-  #skipBtn:hover, #skipBtn:focus-visible { background: rgba(197, 160, 89, 0.12); opacity: 1; }
+  /* skipBtn removed */
 
   /* ============ Onboarding -- Islamic Geometric Tessellation ============ */
   #onboarding {
@@ -325,64 +317,53 @@
   .ctrl-btn svg { width: 20px; height: 20px; }
 
   /* ============ CONTROLS: Tessellated Tile Strip (Mobile) ============ */
+  /* ============ CONTROLS: Floating Pill (Mobile) ============ */
   .controls-bottom {
     display: none;
-    position: fixed; bottom: 0; left: 0; right: 0;
+    position: fixed; bottom: 1.5rem; left: 50%;
+    transform: translateX(-50%);
     z-index: 50;
-    flex-direction: column;
-    align-items: stretch;
-  }
-  /* Geometric border at top */
-  .controls-bottom::before {
-    content: '';
-    display: block; height: 3px;
-    background: repeating-linear-gradient(
-      90deg,
-      var(--gold) 0px, var(--gold) 12px,
-      transparent 12px, transparent 16px,
-      var(--gold-dim) 16px, var(--gold-dim) 28px,
-      transparent 28px, transparent 32px
-    );
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
   }
 
   .tessellated-strip {
     display: flex;
-    justify-content: space-around;
-    align-items: stretch;
-    background: var(--card-bg);
+    justify-content: center;
+    align-items: center;
+    gap: 4px;
+    background: rgba(26, 18, 10, 0.75);
     backdrop-filter: blur(16px);
     -webkit-backdrop-filter: blur(16px);
-    padding: 0;
+    border: 1px solid rgba(197, 160, 89, 0.15);
+    border-radius: 999px;
+    padding: 6px 12px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
   }
 
-  /* Each tile is a hexagonal/star-shaped control */
+  /* Each tile is a minimal icon button */
   .tile-btn {
-    flex: 1;
+    width: 44px; height: 44px;
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
-    gap: 3px;
-    min-height: 56px; min-width: 44px;
+    gap: 0;
     background: transparent;
     border: none;
     color: var(--gold);
-    opacity: 0.6;
+    opacity: 0.55;
     cursor: pointer;
+    border-radius: 50%;
     transition: all 0.2s;
-    position: relative;
-    padding: 8px 4px;
+    padding: 0;
   }
-  /* Tile separator lines */
-  .tile-btn + .tile-btn::before {
-    content: '';
-    position: absolute; left: 0; top: 12px; bottom: 12px; width: 1px;
-    background: var(--gold-dim);
+  .tile-btn + .tile-btn { margin-left: 2px; }
+  .tile-btn:hover, .tile-btn:focus-visible {
+    opacity: 1;
+    background: rgba(197,160,89,0.1);
   }
-  .tile-btn:hover, .tile-btn:focus-visible { opacity: 1; background: rgba(197,160,89,0.08); }
   .tile-btn svg { width: 20px; height: 20px; }
-  .tile-btn .tile-label {
-    font-size: 9px; font-family: 'Tajawal', sans-serif;
-    letter-spacing: 0.03em;
-  }
+  .tile-btn .tile-label { display: none; }
 
   /* ============ Poem Card - Archway Container ============ */
   .poem-wrap { max-width: 720px; margin: 2.5rem auto 3rem; position: relative; z-index: 1; }
@@ -463,7 +444,6 @@
     <span>ابدأ الرحلة</span>
     <i data-lucide="arrow-left" style="width:20px;height:20px;"></i>
   </button>
-  <button id="skipBtn" aria-label="Skip intro animation">تخطّي</button>
 </div>
 
 <!-- ======== Onboarding ======== -->
@@ -710,15 +690,11 @@
   }
 
   document.getElementById('enterBtn').addEventListener('click', enterApp);
-  document.getElementById('skipBtn').addEventListener('click', function () {
-    cancelAnimationFrame(rafId);
-    document.getElementById('splash').style.display = 'none';
-    document.getElementById('app').classList.add('show');
-  });
+  /* skipBtn removed */
 
   /* Onboarding tap to advance */
   document.getElementById('onboarding').addEventListener('click', function(e) {
-    if (e.target.closest('#enterBtn') || e.target.closest('#skipBtn')) return;
+    if (e.target.closest('#enterBtn')) return;
     tileStep++;
     if (tileStep >= totalTiles) {
       document.getElementById('onboarding').classList.remove('active');

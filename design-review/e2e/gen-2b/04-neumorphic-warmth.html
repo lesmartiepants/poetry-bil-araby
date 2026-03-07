@@ -356,6 +356,10 @@
     header {
       margin-bottom: 3rem;
       text-align: center;
+      padding: 2rem 1.5rem;
+      background: var(--bg-card);
+      border-radius: 32px;
+      box-shadow: var(--neu-outset);
     }
 
     header h1 {
@@ -367,9 +371,10 @@
     }
 
     .subtitle {
-      font-size: 0.9rem;
-      opacity: 0.6;
+      font-size: 0.85rem;
+      opacity: 0.45;
       font-weight: 300;
+      letter-spacing: 0.05em;
     }
 
     /* Poetry Card -- Soft pressed surface with deep inset poem area */
@@ -378,8 +383,9 @@
       border-radius: 32px;
       padding: 1.5rem;
       margin: 2rem 0;
-      box-shadow: var(--neu-outset);
+      box-shadow: 8px 8px 20px var(--shadow-dark), -8px -8px 20px var(--shadow-light);
       transition: transform 0.3s ease;
+      position: relative;
     }
 
     /* Deeply inset poem area */
@@ -393,7 +399,7 @@
     .verse {
       font-family: 'Amiri', serif;
       font-size: clamp(1.4rem, 3vw, 1.85rem);
-      line-height: 2.3;
+      line-height: 2.4;
       text-align: center;
       margin-bottom: 1.5rem;
       color: var(--text-primary);
@@ -401,9 +407,11 @@
 
     .poet {
       text-align: center;
-      font-size: 1rem;
+      font-size: 0.85rem;
       color: var(--gold);
-      font-weight: 500;
+      font-weight: 400;
+      opacity: 0.7;
+      letter-spacing: 0.06em;
     }
 
     /* Raised edges around card */
@@ -417,7 +425,7 @@
       opacity: 0.3;
     }
 
-    /* Feature walkthrough */
+    /* Feature walkthrough — polished neumorphic grid */
     .walkthrough {
       margin: 4rem 0;
     }
@@ -426,16 +434,18 @@
       font-family: 'Amiri', serif;
       font-size: 1.8rem;
       color: var(--gold);
-      margin-bottom: 0.5rem;
+      margin-bottom: 0.25rem;
       text-align: center;
     }
 
     .walkthrough .en-sub {
       text-align: center;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       color: var(--text-muted);
-      margin-bottom: 2rem;
+      margin-bottom: 2.5rem;
       font-weight: 300;
+      letter-spacing: 0.08em;
+      opacity: 0.6;
     }
 
     .steps {
@@ -446,20 +456,22 @@
 
     .step {
       background: var(--bg-card);
-      border-radius: 20px;
+      border-radius: 24px;
       padding: 1.75rem 1.25rem;
       text-align: center;
-      box-shadow: var(--neu-outset);
-      transition: all 0.2s ease;
+      box-shadow: 6px 6px 14px var(--shadow-dark), -6px -6px 14px var(--shadow-light);
+      transition: all 0.25s ease;
       cursor: pointer;
     }
 
     .step:hover {
-      box-shadow: var(--neu-outset-sm);
+      box-shadow: 4px 4px 10px var(--shadow-dark), -4px -4px 10px var(--shadow-light);
+      transform: translateY(-2px);
     }
 
     .step:active {
       box-shadow: var(--neu-inset);
+      transform: translateY(0);
     }
 
     .step-icon {
@@ -470,7 +482,7 @@
       height: 48px;
       border-radius: 50%;
       background: var(--bg-card);
-      box-shadow: var(--neu-outset-sm);
+      box-shadow: 3px 3px 8px var(--shadow-dark), -3px -3px 8px var(--shadow-light);
       color: var(--gold);
       margin-bottom: 1rem;
     }
@@ -482,15 +494,15 @@
 
     .step h3 {
       font-family: 'Amiri', serif;
-      font-size: 1.15rem;
-      margin-bottom: 0.5rem;
+      font-size: 1.1rem;
+      margin-bottom: 0.4rem;
       color: var(--gold);
     }
 
     .step p {
-      font-size: 0.85rem;
-      opacity: 0.7;
-      line-height: 1.6;
+      font-size: 0.82rem;
+      opacity: 0.6;
+      line-height: 1.7;
     }
 
     /* =============================================

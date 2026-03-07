@@ -197,17 +197,15 @@ canvas#water {
 /* ===== MAIN APP ===== */
 .main-app {
   display: none; min-height: 100vh; padding-bottom: 100px; position: relative; z-index: 1;
-  /* Parchment texture background */
-  background:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E"),
-    linear-gradient(180deg, #d4c4a0 0%, #c8b892 40%, #bfad84 100%);
+  /* Match onboarding background: deep water with subtle radial texture */
+  background: radial-gradient(ellipse at 50% 30%, rgba(184,200,216,0.06) 0%, transparent 60%),
+    var(--deep-water);
   background-attachment: fixed;
 }
 .main-app.active { display: block; }
 html.light .main-app {
-  background:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E"),
-    linear-gradient(180deg, #e8dcc4 0%, #ddd0b4 40%, #d4c4a0 100%);
+  background: radial-gradient(ellipse at 50% 30%, rgba(90,122,148,0.08) 0%, transparent 60%),
+    var(--deep-water);
   background-attachment: fixed;
 }
 
@@ -215,79 +213,71 @@ html.light .main-app {
   position: fixed; top: 0; left: 0; right: 0; z-index: 50;
   display: flex; align-items: center; justify-content: space-between;
   padding: 12px 20px;
-  background: linear-gradient(180deg, rgba(139,115,85,0.9), rgba(101,82,60,0.85));
-  border-bottom: 2px solid #6b5a3e;
-  box-shadow: 0 2px 8px rgba(61,42,20,0.3);
+  background: rgba(13, 26, 40, 0.85);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(184,200,216,0.1);
+  box-shadow: 0 2px 16px rgba(0,0,0,0.3);
   direction: ltr;
 }
 html.light .app-top {
-  background: linear-gradient(180deg, rgba(212,196,160,0.95), rgba(191,173,132,0.9));
-  border-bottom-color: #a89470;
+  background: rgba(200, 216, 232, 0.9);
+  border-bottom-color: rgba(90,122,148,0.2);
 }
 .app-top-brand { display: flex; align-items: flex-end; gap: 6px; }
 .app-top-brand-en {
   font-family: 'Forum', serif; font-size: 20px;
-  letter-spacing: -0.05em; color: #e8dcc4; line-height: 1;
+  letter-spacing: -0.05em; color: var(--gold); line-height: 1;
 }
-html.light .app-top-brand-en { color: #3d2a14; }
 .app-top-brand-ar {
   font-family: 'Reem Kufi', sans-serif; font-weight: 700;
-  font-size: 14px; color: #e8dcc4; line-height: 1;
+  font-size: 14px; color: var(--ripple-silver); line-height: 1;
 }
-html.light .app-top-brand-ar { color: #3d2a14; }
 .app-top-actions { display: flex; gap: 8px; }
 .app-top-btn {
   width: 44px; height: 44px; display: flex; align-items: center;
   justify-content: center; background: transparent;
-  border: 1px solid rgba(232,220,196,0.3); border-radius: 8px;
-  color: rgba(232,220,196,0.7); cursor: pointer; transition: all 0.2s;
+  border: 1px solid rgba(184,200,216,0.2); border-radius: 8px;
+  color: var(--text-dim); cursor: pointer; transition: all 0.2s;
 }
-html.light .app-top-btn { border-color: rgba(61,42,20,0.2); color: rgba(61,42,20,0.6); }
-.app-top-btn:hover { color: #e8dcc4; border-color: rgba(232,220,196,0.6); }
-html.light .app-top-btn:hover { color: #3d2a14; border-color: rgba(61,42,20,0.5); }
+.app-top-btn:hover { color: var(--text-primary); border-color: rgba(184,200,216,0.4); }
 
-/* Poem card - ink on parchment */
+/* Poem card - moonlight on water surface */
 .poem-card {
   position: relative;
-  background:
-    linear-gradient(90deg, rgba(61,42,20,0.06) 0%, transparent 4%, transparent 96%, rgba(61,42,20,0.06) 100%),
-    linear-gradient(180deg, rgba(61,42,20,0.03) 0%, transparent 3%, transparent 97%, rgba(61,42,20,0.03) 100%),
-    linear-gradient(180deg, #e8dcc4 0%, #ddd0b4 50%, #d4c4a0 100%);
-  padding: 3rem 2.5rem; border-radius: 4px; direction: rtl;
+  background: var(--card-bg);
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  padding: 3rem 2.5rem; border-radius: 16px; direction: rtl;
   box-shadow:
-    4px 4px 12px rgba(61,42,20,0.2),
-    -2px -2px 8px rgba(255,248,235,0.3),
-    inset 0 0 40px rgba(197,160,89,0.05);
-  border: 1px solid rgba(139,115,85,0.3);
+    0 8px 32px rgba(0,0,0,0.3),
+    0 0 0 1px var(--card-border),
+    inset 0 1px 0 rgba(184,200,216,0.1);
+  border: none;
 }
 
-/* Ink stain effect */
+/* Subtle shimmer line at top */
 .poem-card::before {
   content: '';
-  position: absolute; top: -4px; right: 20px;
-  width: 16px; height: 16px; border-radius: 50%;
-  background: radial-gradient(circle, rgba(26,18,10,0.15) 30%, transparent 70%);
+  position: absolute; top: 0; left: 10%; right: 10%; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(184,200,216,0.3), transparent);
   pointer-events: none;
 }
 
 .poem-meta { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
 .poet-avatar {
   width: 44px; height: 44px; border-radius: 50%;
-  background: linear-gradient(135deg, rgba(139,115,85,0.2), rgba(197,160,89,0.15));
-  border: 1px solid rgba(139,115,85,0.3);
+  background: linear-gradient(135deg, rgba(184,200,216,0.15), rgba(197,160,89,0.12));
+  border: 1px solid var(--card-border);
   display: flex; align-items: center; justify-content: center;
-  color: #5a4630; font-family: var(--font-ar); font-size: 20px;
+  color: var(--gold); font-family: var(--font-ar); font-size: 20px;
 }
-.poet-info h2 { font-family: var(--font-ar); font-size: 16px; font-weight: 700; color: #3d2a14; }
-.poet-info span { font-size: 13px; color: rgba(61,42,20,0.5); font-style: italic; }
+.poet-info h2 { font-family: var(--font-ar); font-size: 16px; font-weight: 700; color: var(--text-primary); }
+.poet-info span { font-size: 13px; color: var(--text-dim); font-style: italic; }
 
 .poem-verses {
   font-family: var(--font-ar); font-size: clamp(20px, 3.5vw, 28px);
   line-height: 2.4; text-align: center; padding: 24px 0;
-  color: #1a120a;
-  /* Ink-like text rendering */
-  text-shadow: 0 0 1px rgba(26,18,10,0.1);
-  border-top: 1px solid rgba(139,115,85,0.2); border-bottom: 1px solid rgba(139,115,85,0.2);
+  color: var(--text-primary);
+  border-top: 1px solid var(--card-border); border-bottom: 1px solid var(--card-border);
 }
 .verse-line { opacity: 0; animation: inkReveal 0.8s ease forwards; }
 .verse-line:nth-child(1) { animation-delay: 0.3s; }
@@ -297,18 +287,18 @@ html.light .app-top-btn:hover { color: #3d2a14; border-color: rgba(61,42,20,0.5)
   to { opacity: 1; filter: blur(0); }
 }
 .hemistich-divider {
-  display: inline-block; width: 40px; height: 1px; background: #8b7355;
-  vertical-align: middle; margin: 0 12px; opacity: 0.4;
+  display: inline-block; width: 40px; height: 1px; background: var(--ripple-silver);
+  vertical-align: middle; margin: 0 12px; opacity: 0.3;
 }
 
 .poem-actions { display: flex; gap: 12px; margin-top: 24px; justify-content: center; }
 .poem-action-btn {
   display: flex; align-items: center; gap: 6px; padding: 10px 16px;
-  background: transparent; border: 1px solid rgba(139,115,85,0.3); border-radius: 6px;
-  color: #5a4630; font-family: var(--font-ui); font-size: 13px;
+  background: transparent; border: 1px solid var(--card-border); border-radius: 6px;
+  color: var(--text-dim); font-family: var(--font-ui); font-size: 13px;
   cursor: pointer; transition: all 0.2s;
 }
-.poem-action-btn:hover { color: #3d2a14; border-color: #8b7355; background: rgba(139,115,85,0.08); }
+.poem-action-btn:hover { color: var(--text-primary); border-color: var(--ripple-silver); background: rgba(184,200,216,0.08); }
 
 .reader { max-width: 720px; margin: 0 auto; padding: 80px 20px 40px; }
 
@@ -320,66 +310,43 @@ html.light .app-top-btn:hover { color: #3d2a14; border-color: rgba(61,42,20,0.5)
 .rail-btn {
   width: 44px; height: 44px; display: flex; align-items: center;
   justify-content: center;
-  background: linear-gradient(145deg, #c8b892, #b5a37d);
-  border: 1px solid rgba(139,115,85,0.4); border-radius: 8px;
-  color: #5a4630; cursor: pointer; transition: all 0.2s;
-  box-shadow: 2px 2px 6px rgba(61,42,20,0.2), -1px -1px 4px rgba(255,248,235,0.4);
+  background: rgba(13, 26, 40, 0.6);
+  border: 1px solid var(--card-border); border-radius: 8px;
+  color: var(--text-dim); cursor: pointer; transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
   position: relative;
 }
 .rail-btn:hover {
-  color: #3d2a14; transform: scale(1.08);
-  box-shadow: 3px 3px 8px rgba(61,42,20,0.25), -1px -1px 4px rgba(255,248,235,0.5);
+  color: var(--text-primary); transform: scale(1.08);
+  border-color: rgba(184,200,216,0.3);
 }
 .rail-btn .tooltip {
   position: absolute; right: 52px; top: 50%; transform: translateY(-50%);
-  background: #3d2a14; color: #e8dcc4;
+  background: var(--surface); color: var(--text-primary);
   font-family: var(--font-ui); font-size: 12px;
   padding: 4px 10px; border-radius: 4px; white-space: nowrap;
+  border: 1px solid var(--card-border);
   opacity: 0; pointer-events: none; transition: opacity 0.2s;
 }
 .rail-btn:hover .tooltip { opacity: 1; }
 
-/* ===== CONTROLS: Wooden Toolbox Drawer ===== */
+/* ===== CONTROLS: Minimal Glassmorphic Bottom Bar ===== */
 .bottom-nav {
   position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
-  /* Wooden texture gradient */
-  background:
-    repeating-linear-gradient(
-      90deg,
-      rgba(101,82,60,0.04) 0px,
-      transparent 2px,
-      transparent 8px,
-      rgba(101,82,60,0.04) 10px
-    ),
-    linear-gradient(180deg, #6b5a3e 0%, #5a4a32 20%, #4a3c28 50%, #3d3020 100%);
-  padding: 14px 20px 16px;
-  border-top: 3px solid #8b7355;
-  box-shadow: 0 -4px 16px rgba(26,18,10,0.4), inset 0 2px 4px rgba(139,115,85,0.2);
+  background: rgba(10, 20, 32, 0.85);
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  padding: 12px 20px 16px;
+  border-top: 1px solid rgba(184,200,216,0.1);
+  box-shadow: 0 -4px 24px rgba(0,0,0,0.3);
   direction: ltr;
   border-radius: 16px 16px 0 0;
 }
 html.light .bottom-nav {
-  background:
-    repeating-linear-gradient(
-      90deg,
-      rgba(139,115,85,0.06) 0px,
-      transparent 2px,
-      transparent 8px,
-      rgba(139,115,85,0.06) 10px
-    ),
-    linear-gradient(180deg, #8b7355 0%, #7a6345 20%, #6b5a3e 50%, #5a4a32 100%);
-  border-top-color: #a89470;
+  background: rgba(200, 216, 232, 0.9);
+  border-top-color: rgba(90,122,148,0.2);
 }
 
-/* Leather handle */
-.bottom-nav::before {
-  content: '';
-  position: absolute; top: -1px; left: 50%; transform: translateX(-50%);
-  width: 60px; height: 6px;
-  background: linear-gradient(180deg, #5a3a1a, #3d2810, #5a3a1a);
-  border-radius: 0 0 6px 6px;
-  box-shadow: 0 2px 4px rgba(26,18,10,0.3), inset 0 1px 1px rgba(139,115,85,0.3);
-}
+.bottom-nav::before { display: none; }
 
 .bottom-nav .nav-items-wrap {
   display: flex; align-items: center; justify-content: center; gap: 6px;
@@ -388,12 +355,11 @@ html.light .bottom-nav {
 .nav-item {
   display: flex; flex-direction: column; align-items: center; gap: 4px;
   padding: 8px 14px; background: transparent; border: none;
-  color: rgba(232,220,196,0.6); cursor: pointer; font-family: var(--font-ui);
+  color: var(--text-dim); cursor: pointer; font-family: var(--font-ui);
   font-size: 10px; transition: all 0.2s; min-width: 56px; min-height: 44px;
-  /* Hand-drawn thin stroke style icons */
 }
-.nav-item.active { color: #e8dcc4; }
-.nav-item:hover { color: #e8dcc4; }
+.nav-item.active { color: var(--gold); }
+.nav-item:hover { color: var(--text-primary); }
 .nav-item i { stroke-width: 1.5; }
 
 @keyframes fadeInUp {

@@ -22,7 +22,7 @@
             --panel-light: #ffffff;
             --border-dark: #30363d;
             --border-light: #d0d7de;
-            --cursor-color: #58a6ff;
+            --cursor-color: #C5A059;
             --shadow-dark: rgba(0,0,0,0.3);
             --shadow-light: rgba(0,0,0,0.1);
             --speed: 0.4s;
@@ -117,9 +117,9 @@
             border-radius: 50%;
         }
 
-        .terminal-dot.red { background: #ff5f56; }
-        .terminal-dot.yellow { background: #ffbd2e; }
-        .terminal-dot.green { background: #27c93f; }
+        .terminal-dot.red { background: var(--comment); }
+        .terminal-dot.yellow { background: var(--comment); opacity: 0.7; }
+        .terminal-dot.green { background: var(--gold); opacity: 0.8; }
 
         .terminal-title {
             flex: 1; text-align: center;
@@ -151,10 +151,10 @@
             user-select: none;
         }
 
-        .kw { color: var(--blue); }
-        .str { color: var(--green); }
-        .cmt { color: var(--comment); font-style: italic; }
-        .fn { color: #d2a8ff; }
+        .kw { color: var(--gold); }
+        .str { color: var(--comment); }
+        .cmt { color: var(--comment); font-style: italic; opacity: 0.7; }
+        .fn { color: var(--gold); opacity: 0.75; }
         .gold { color: var(--gold); }
 
         .cursor-blink {

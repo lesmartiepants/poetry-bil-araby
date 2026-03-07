@@ -66,9 +66,17 @@
     .fullscreen-overlay{position:fixed;inset:0;z-index:9999;background:#000;display:none;flex-direction:column}
     .fullscreen-overlay.active{display:flex}
     .fullscreen-overlay iframe{width:100%;height:100%;border:none}
-    .fullscreen-collapse-btn{position:fixed;top:12px;right:12px;z-index:10000;width:44px;height:44px;border-radius:var(--r);border:1px solid rgba(255,255,255,.15);background:rgba(0,0,0,.55);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:rgba(255,255,255,.7);display:none;align-items:center;justify-content:center;cursor:pointer;font-size:20px;transition:all .2s}
-    .fullscreen-overlay.active~.fullscreen-collapse-btn{display:flex}
-    .fullscreen-collapse-btn:hover{background:rgba(0,0,0,.75);color:#fff;border-color:rgba(255,255,255,.3);transform:scale(1.05)}
+    .fs-btn{position:fixed;z-index:10000;border-radius:var(--r);border:1px solid rgba(255,255,255,.15);background:rgba(0,0,0,.55);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);color:rgba(255,255,255,.7);display:none;align-items:center;justify-content:center;cursor:pointer;transition:all .2s}
+    .fs-btn:hover{background:rgba(0,0,0,.75);color:#fff;border-color:rgba(255,255,255,.3)}
+    .fullscreen-overlay.active~.fs-btn{display:flex}
+    .fs-collapse{top:12px;right:12px;width:44px;height:44px;font-size:20px}
+    .fs-collapse:hover{transform:scale(1.05)}
+    .fs-nav{top:50%;transform:translateY(-50%);width:44px;height:72px;font-size:22px}
+    .fs-nav:hover{transform:translateY(-50%) scale(1.05)}
+    .fs-nav:disabled{opacity:.2;cursor:default;transform:translateY(-50%)}
+    .fs-nav:disabled:hover{background:rgba(0,0,0,.55);color:rgba(255,255,255,.7);border-color:rgba(255,255,255,.15)}
+    .fs-prev{left:12px}
+    .fs-next{right:64px}
 
     /* ── Accordion catalog (premium) ── */
     .acc-toggle{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--r);border:1px solid var(--border);background:linear-gradient(135deg,var(--surface-2) 0%,rgba(28,28,31,.8) 100%);color:var(--text);font-size:13px;font-weight:500;transition:all .2s cubic-bezier(.4,0,.2,1);white-space:nowrap;cursor:pointer;letter-spacing:.01em}
@@ -510,7 +518,9 @@
 
 <!-- Fullscreen overlay for expanded design view -->
 <div class="fullscreen-overlay" id="fullscreenOverlay"></div>
-<button class="fullscreen-collapse-btn" id="fullscreenCollapseBtn" onclick="collapseFullscreen()" title="Collapse (Esc)">&#8601;</button>
+<button class="fs-btn fs-collapse" id="fullscreenCollapseBtn" onclick="collapseFullscreen()" title="Collapse (Esc)" aria-label="Collapse fullscreen">&#8601;</button>
+<button class="fs-btn fs-nav fs-prev" id="fsPrevBtn" onclick="fsGoPrev()" title="Previous design" aria-label="Previous design">&#8249;</button>
+<button class="fs-btn fs-nav fs-next" id="fsNextBtn" onclick="fsGoNext()" title="Next design" aria-label="Next design">&#8250;</button>
 
 <script>
 // ═══════════════════════════════════════════════════════════════
@@ -1536,16 +1546,46 @@ function expandFullscreen() {
   var opt = curOpt();
   if (!opt) return;
   overlay.innerHTML = '';
-  var iframe = document.createElement('iframe');
-  iframe.src = '/design-review/' + opt.file;
-  iframe.title = opt.name;
+  var iframe = createFsIframe(opt);
   overlay.appendChild(iframe);
   overlay.classList.add('active');
+  updateFsNav();
 }
 function collapseFullscreen() {
   var overlay = document.getElementById('fullscreenOverlay');
   overlay.classList.remove('active');
   overlay.innerHTML = '';
+}
+function createFsIframe(opt) {
+  var iframe = document.createElement('iframe');
+  iframe.src = '/design-review/' + opt.file;
+  iframe.title = opt.name;
+  iframe.addEventListener('load', function() {
+    try { iframe.contentWindow.addEventListener('keydown', fsKeyProxy); } catch(e) { /* cross-origin */ }
+  });
+  return iframe;
+}
+function updateFsNav() {
+  var fi = currentFlatIdx();
+  document.getElementById('fsPrevBtn').disabled = fi <= 0;
+  document.getElementById('fsNextBtn').disabled = fi >= flatList.length - 1;
+}
+function fsGoPrev() { goPrev(); reloadFullscreenIframe(); }
+function fsGoNext() { goNext(); reloadFullscreenIframe(); }
+function reloadFullscreenIframe() {
+  var overlay = document.getElementById('fullscreenOverlay');
+  if (!overlay.classList.contains('active')) return;
+  var opt = curOpt();
+  if (!opt) return;
+  overlay.innerHTML = '';
+  overlay.appendChild(createFsIframe(opt));
+  updateFsNav();
+}
+function fsKeyProxy(e) {
+  if (e.key === 'Escape' || e.key === 'f' || e.key === 'F' || e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+    e.preventDefault();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: e.key, bubbles: true }));
+  }
 }
 function toggleSide() { st.sideOpen = !st.sideOpen; document.getElementById('sidePanel').classList.toggle('collapsed', !st.sideOpen); }
 
@@ -1864,6 +1904,18 @@ function downloadJSON() {
 // ═══════════════════════════════════════════════════════════════
 document.addEventListener('keydown', e => {
   if (['TEXTAREA','INPUT','SELECT'].includes(e.target.tagName)) return;
+  var fsOverlay = document.getElementById('fullscreenOverlay');
+  var fsActive = fsOverlay.classList.contains('active');
+  // When fullscreen overlay is active, only handle Escape, F, and arrow navigation
+  if (fsActive) {
+    switch (e.key) {
+      case 'Escape': e.preventDefault(); collapseFullscreen(); break;
+      case 'f': case 'F': collapseFullscreen(); break;
+      case 'ArrowLeft': e.preventDefault(); fsGoPrev(); break;
+      case 'ArrowRight': e.preventDefault(); fsGoNext(); break;
+    }
+    return;
+  }
   switch (e.key) {
     case 'ArrowLeft': e.preventDefault(); goPrev(); break;
     case 'ArrowRight': e.preventDefault(); goNext(); break;
@@ -1872,15 +1924,7 @@ document.addEventListener('keydown', e => {
     case 'r': case 'R': setVerdict('revisit'); break;
     case 's': case 'S': cycleSectionFilter(); break;
     case 'i': case 'I': toggleSide(); break;
-    case 'f': case 'F':
-    case 'Escape':
-      var fsOverlay = document.getElementById('fullscreenOverlay');
-      if (e.key === 'Escape') {
-        if (fsOverlay.classList.contains('active')) { e.preventDefault(); collapseFullscreen(); }
-      } else {
-        if (fsOverlay.classList.contains('active')) { collapseFullscreen(); } else { expandFullscreen(); }
-      }
-      break;
+    case 'f': case 'F': expandFullscreen(); break;
   }
 });
 

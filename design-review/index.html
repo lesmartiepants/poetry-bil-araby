@@ -1361,6 +1361,11 @@ function render(skipPreview) {
   if (ct) ct.classList.toggle('has-text', !!(rev.comment));
   renderPrevFeedback(cat, opt);
   renderProgress();
+  // Ensure expand button is visible when not in fullscreen (defensive check)
+  if (!document.body.classList.contains('fs-mode')) {
+    document.getElementById('previewContent').classList.remove('fs-active');
+    ensureExpandBtn();
+  }
 }
 
 function loadPreview(opt, cat) {
@@ -1550,6 +1555,11 @@ function expandFullscreen() {
 function collapseFullscreen() {
   document.getElementById('previewContent').classList.remove('fs-active');
   document.body.classList.remove('fs-mode');
+  ensureExpandBtn();
+}
+function ensureExpandBtn() {
+  var el = document.getElementById('previewOpenOverlay');
+  if (el) el.style.display = '';
 }
 function attachFsKeyProxy() {
   var iframe = document.querySelector('#previewContent iframe');

@@ -439,10 +439,10 @@
     /* Vertical controls */
     .vertical-controls {
       position: fixed; right: 0; top: 0; bottom: 0;
-      width: 48px;
+      width: 52px;
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
-      gap: 4px;
+      gap: 2px;
       border-left: 1px solid #1a1a1a;
       background: #050505;
       padding: 8px 0;
@@ -454,35 +454,104 @@
       color: #555555;
       display: flex; align-items: center; justify-content: center;
       cursor: pointer; border-radius: 8px;
-      transition: color 0.2s ease;
+      transition: color 0.2s ease, background 0.2s ease;
+      position: relative;
     }
-    .vc-btn:hover { color: #ffffff; }
+    .vc-btn:hover { color: #ffffff; background: rgba(255,255,255,0.04); }
+    .vc-btn.active { color: #C5A059; }
     .vc-btn svg { width: 18px; height: 18px; }
     .vc-divider {
       width: 24px; height: 1px;
       background: #1a1a1a;
-      margin: 4px 0;
+      margin: 2px 0;
     }
+    /* Font icon using Arabic letter */
+    .vc-font-icon {
+      font-family: 'Amiri', serif;
+      font-size: 20px;
+      font-weight: 700;
+      line-height: 1;
+      color: inherit;
+    }
+
+    /* Settings flyout panel */
+    .vc-settings-flyout {
+      position: fixed;
+      right: 58px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(8, 8, 8, 0.96);
+      border: 1px solid #222;
+      border-radius: 8px;
+      padding: 16px 20px;
+      min-width: 200px;
+      z-index: 55;
+      backdrop-filter: blur(12px);
+      display: none;
+    }
+    .vc-settings-flyout.visible { display: block; animation: settingsFade 0.25s ease-out; }
+    @keyframes settingsFade {
+      from { opacity: 0; transform: translateY(-50%) translateX(8px); }
+      to { opacity: 1; transform: translateY(-50%) translateX(0); }
+    }
+    .vc-settings-flyout h4 {
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #666;
+      margin-bottom: 12px;
+      font-weight: 600;
+    }
+    .vc-setting-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    .vc-setting-row:last-child { border-bottom: none; }
+    .vc-setting-label {
+      font-size: 13px;
+      color: #aaa;
+    }
+    .vc-setting-toggle {
+      width: 36px; height: 20px;
+      border-radius: 10px;
+      background: #222;
+      border: none;
+      cursor: pointer;
+      position: relative;
+      transition: background 0.2s ease;
+    }
+    .vc-setting-toggle::after {
+      content: '';
+      position: absolute;
+      top: 2px; left: 2px;
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: #666;
+      transition: transform 0.2s ease, background 0.2s ease;
+    }
+    .vc-setting-toggle.on { background: rgba(197, 160, 89, 0.3); }
+    .vc-setting-toggle.on::after { transform: translateX(16px); background: #C5A059; }
 
     /* Bottom bar */
     .bottom-bar {
-      display: flex;
-      align-items: center;
-      justify-content: space-around;
-      padding: 0.5rem 1rem;
-      border-top: 1px solid #1a1a1a;
-      background: #050505;
+      display: none;
     }
-    .bb-btn {
-      width: 48px; height: 48px;
-      border: none; background: transparent;
-      color: #555555;
+
+    /* Login button in header */
+    .nav-login {
+      width: 44px; height: 44px;
+      border: 1px solid #222;
+      background: transparent;
+      color: #666;
       display: flex; align-items: center; justify-content: center;
       cursor: pointer; border-radius: 8px;
-      transition: color 0.2s ease;
+      transition: color 0.2s ease, border-color 0.2s ease;
     }
-    .bb-btn:hover { color: #ffffff; }
-    .bb-btn svg { width: 20px; height: 20px; }
+    .nav-login:hover { color: #ffffff; border-color: #444; }
+    .nav-login svg { width: 18px; height: 18px; }
 
     @media (max-width: 480px) {
       .splash-brand-en { font-size: 2.5rem; }
@@ -577,8 +646,9 @@
           <span class="main-brand-ar" lang="ar" dir="rtl">بالعربي</span>
         </div>
         <div class="nav-actions">
-          <button class="nav-btn" aria-label="Search"><i data-lucide="search"></i></button>
-          <button class="nav-btn" aria-label="Menu"><i data-lucide="menu"></i></button>
+          <button class="nav-login" id="loginBtn" aria-label="Sign in">
+            <i data-lucide="log-in"></i>
+          </button>
         </div>
       </nav>
 
@@ -595,31 +665,56 @@
       </div>
     </div>
 
-    <!-- Vertical controls -->
-    <div class="vertical-controls">
-      <button class="vc-btn" aria-label="Save"><i data-lucide="heart" style="width:18px;height:18px"></i></button>
+    <!-- Vertical controls — full VC spec -->
+    <div class="vertical-controls" id="vcStrip">
+      <button class="vc-btn" data-vc="like" aria-label="Like poem">
+        <i data-lucide="heart" style="width:18px;height:18px"></i>
+      </button>
+      <button class="vc-btn" data-vc="listen" aria-label="Listen to poem">
+        <i data-lucide="volume-2" style="width:18px;height:18px"></i>
+      </button>
+      <button class="vc-btn" data-vc="explain" aria-label="Explain poem">
+        <i data-lucide="brain" style="width:18px;height:18px"></i>
+      </button>
+      <button class="vc-btn" data-vc="library" aria-label="Saved poems">
+        <i data-lucide="bookmark" style="width:18px;height:18px"></i>
+      </button>
       <div class="vc-divider"></div>
-      <button class="vc-btn" aria-label="Font size"><i data-lucide="type" style="width:18px;height:18px"></i></button>
+      <button class="vc-btn" data-vc="poet" aria-label="Select a poet">
+        <i data-lucide="user" style="width:18px;height:18px"></i>
+      </button>
+      <button class="vc-btn" data-vc="font" aria-label="Font style">
+        <span class="vc-font-icon">ي</span>
+      </button>
+      <button class="vc-btn" data-vc="settings" id="vcSettingsBtn" aria-label="Settings">
+        <i data-lucide="settings" style="width:18px;height:18px"></i>
+      </button>
       <div class="vc-divider"></div>
-      <button class="vc-btn" aria-label="Translate"><i data-lucide="languages" style="width:18px;height:18px"></i></button>
-      <div class="vc-divider"></div>
-      <button class="vc-btn" aria-label="Collection"><i data-lucide="book-open" style="width:18px;height:18px"></i></button>
-      <div class="vc-divider"></div>
-      <button class="vc-btn" aria-label="Style"><i data-lucide="italic" style="width:18px;height:18px"></i></button>
-      <div class="vc-divider"></div>
-      <button class="vc-btn" aria-label="Sign in"><i data-lucide="log-in" style="width:18px;height:18px"></i></button>
-      <div class="vc-divider"></div>
-      <button class="vc-btn" aria-label="Settings"><i data-lucide="settings" style="width:18px;height:18px"></i></button>
+      <button class="vc-btn" data-vc="copy" aria-label="Copy poem">
+        <i data-lucide="copy" style="width:18px;height:18px"></i>
+      </button>
     </div>
 
-    <!-- Bottom bar -->
-    <nav class="bottom-bar">
-      <button class="bb-btn" aria-label="Listen"><i data-lucide="music" style="width:20px;height:20px"></i></button>
-      <button class="bb-btn" aria-label="Insights"><i data-lucide="lightbulb" style="width:20px;height:20px"></i></button>
-      <button class="bb-btn" aria-label="New poem"><i data-lucide="refresh-cw" style="width:20px;height:20px"></i></button>
-      <button class="bb-btn" aria-label="Library"><i data-lucide="library" style="width:20px;height:20px"></i></button>
-      <button class="bb-btn" aria-label="Shuffle"><i data-lucide="shuffle" style="width:20px;height:20px"></i></button>
-    </nav>
+    <!-- Settings flyout panel -->
+    <div class="vc-settings-flyout" id="settingsFlyout">
+      <h4>Settings</h4>
+      <div class="vc-setting-row">
+        <span class="vc-setting-label">Transliterate</span>
+        <button class="vc-setting-toggle" data-setting="transliterate" aria-label="Toggle transliteration"></button>
+      </div>
+      <div class="vc-setting-row">
+        <span class="vc-setting-label">Translate</span>
+        <button class="vc-setting-toggle" data-setting="translate" aria-label="Toggle translation"></button>
+      </div>
+      <div class="vc-setting-row">
+        <span class="vc-setting-label">Database Mode</span>
+        <button class="vc-setting-toggle on" data-setting="database" aria-label="Toggle database mode"></button>
+      </div>
+      <div class="vc-setting-row">
+        <span class="vc-setting-label">Night Mode</span>
+        <button class="vc-setting-toggle on" data-setting="nightmode" aria-label="Toggle night mode"></button>
+      </div>
+    </div>
   </div>
 
 <script>
@@ -790,6 +885,64 @@
     isDark = !isDark;
     document.body.setAttribute('data-mode', isDark ? 'dark' : 'light');
   });
+
+  /* ===== VERTICAL CONTROLS ===== */
+  // Settings flyout toggle
+  var settingsBtn = document.getElementById('vcSettingsBtn');
+  var settingsFlyout = document.getElementById('settingsFlyout');
+  if (settingsBtn && settingsFlyout) {
+    settingsBtn.addEventListener('click', function() {
+      settingsBtn.classList.toggle('active');
+      settingsFlyout.classList.toggle('visible');
+    });
+    // Close flyout when clicking outside
+    document.addEventListener('click', function(e) {
+      if (!settingsFlyout.contains(e.target) && !settingsBtn.contains(e.target)) {
+        settingsFlyout.classList.remove('visible');
+        settingsBtn.classList.remove('active');
+      }
+    });
+  }
+
+  // Setting toggles
+  document.querySelectorAll('.vc-setting-toggle').forEach(function(toggle) {
+    toggle.addEventListener('click', function() {
+      this.classList.toggle('on');
+    });
+  });
+
+  // VC button active toggle (like, listen, etc.)
+  document.querySelectorAll('.vc-btn[data-vc]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var action = this.dataset.vc;
+      if (action === 'like' || action === 'listen') {
+        this.classList.toggle('active');
+      }
+      if (action === 'copy') {
+        var poemText = document.querySelector('.poem-text');
+        if (poemText && navigator.clipboard) {
+          navigator.clipboard.writeText(poemText.innerText);
+          this.classList.add('active');
+          var self = this;
+          setTimeout(function() { self.classList.remove('active'); }, 1500);
+        }
+      }
+    });
+  });
+
+  // Login button toggle demo
+  var loginBtn = document.getElementById('loginBtn');
+  if (loginBtn) {
+    loginBtn.addEventListener('click', function() {
+      var icon = loginBtn.querySelector('[data-lucide]');
+      var isLoggedIn = icon && icon.getAttribute('data-lucide') === 'log-out';
+      if (icon) {
+        icon.setAttribute('data-lucide', isLoggedIn ? 'log-in' : 'log-out');
+        loginBtn.setAttribute('aria-label', isLoggedIn ? 'Sign in' : 'Sign out');
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+      }
+    });
+  }
 })();
 </script>
 </body>

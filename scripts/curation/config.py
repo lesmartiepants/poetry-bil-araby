@@ -14,8 +14,11 @@ MAX_POEMS_PER_POET = 250
 MIN_QUALITY_SCORE = 60
 
 # -- Scoring defaults ------------------------------------------------------
-DEFAULT_HAIKU_MODEL = "anthropic/claude-haiku-4-20250414"
-DEFAULT_OPUS_MODEL = "anthropic/claude-opus-4-5-20250414"
+# Model names use openai/ prefix to route through LiteLLM proxy.
+# The proxy maps aliases (e.g. bedrock-haiku-45) to actual Bedrock models.
+# When using direct Anthropic API, change to "anthropic/claude-haiku-4-5" etc.
+DEFAULT_HAIKU_MODEL = "openai/bedrock-haiku-45"
+DEFAULT_OPUS_MODEL = "openai/bedrock-opus-46"
 DEFAULT_BATCH_SIZE = 5
 DEFAULT_CONCURRENCY = 20
 DEFAULT_MAX_COST = 100

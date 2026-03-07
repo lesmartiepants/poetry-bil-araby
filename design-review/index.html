@@ -56,11 +56,21 @@
     /* preview-header removed — info consolidated into toolbar */
     .preview-iframe{width:100%;height:100%;border:none;background:#000}
 
-    /* Open-in-new-tab expand overlay */
-    .preview-open-overlay{position:absolute;top:12px;right:12px;z-index:15;width:54px;height:54px;border-radius:var(--r);background:none;border:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;opacity:0.45;transition:opacity .2s;color:var(--text-2)}
+    /* Expand / collapse overlay */
+    .preview-open-overlay{position:absolute;top:12px;right:12px;z-index:15;width:54px;height:54px;border-radius:var(--r);background:none;border:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;opacity:0.45;transition:opacity .2s,background .2s,border-color .2s;color:var(--text-2)}
     .preview-open-overlay:hover{opacity:0.8;color:var(--text)}
     .preview-open-overlay .expand-icon{font-size:22px;line-height:1}
     .preview-open-overlay .expand-label{font-size:8px;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+
+    /* ── Expanded / full-page preview mode ── */
+    body.preview-expanded .toolbar{display:none!important}
+    body.preview-expanded .side{display:none!important}
+    body.preview-expanded .bottom-nav{display:none!important}
+    body.preview-expanded .mobile-dock{display:none!important}
+    body.preview-expanded .mobile-info-bar{display:none!important}
+    body.preview-expanded .app{grid-template-rows:1fr}
+    body.preview-expanded .preview-open-overlay{opacity:.75;background:rgba(0,0,0,.55);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,.12);top:12px;right:12px}
+    body.preview-expanded .preview-open-overlay:hover{opacity:1;background:rgba(0,0,0,.75)}
 
     /* ── Accordion catalog (premium) ── */
     .acc-toggle{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--r);border:1px solid var(--border);background:linear-gradient(135deg,var(--surface-2) 0%,rgba(28,28,31,.8) 100%);color:var(--text);font-size:13px;font-weight:500;transition:all .2s cubic-bezier(.4,0,.2,1);white-space:nowrap;cursor:pointer;letter-spacing:.01em}
@@ -364,7 +374,7 @@
     <div class="preview" id="previewPane">
       <!-- preview-header removed: info is in toolbar -->
       <div id="previewContent" style="flex:1;position:relative">
-        <div class="preview-open-overlay" id="previewOpenOverlay" onclick="openTab()" title="Open in new tab"><span class="expand-icon">&#8599;</span><span class="expand-label">expand</span></div>
+        <div class="preview-open-overlay" id="previewOpenOverlay" onclick="toggleExpand()" title="Expand design (F)"><span class="expand-icon">&#8599;</span><span class="expand-label">expand</span></div>
         <div class="empty-state" id="emptyState">
           <div style="font-size:32px">&#9998;</div>
           <h2>Poetry Bil-Araby Design Review</h2>
@@ -1496,6 +1506,22 @@ function saveTags() {
   persistReview();
 }
 function openTab() { window.open('/design-review/' + curOpt().file, '_blank'); }
+function toggleExpand() {
+  const expanded = document.body.classList.toggle('preview-expanded');
+  const btn = document.getElementById('previewOpenOverlay');
+  if (!btn) return;
+  const icon = btn.querySelector('.expand-icon');
+  const label = btn.querySelector('.expand-label');
+  if (expanded) {
+    icon.textContent = '\u2199';
+    label.textContent = 'collapse';
+    btn.title = 'Collapse design (F)';
+  } else {
+    icon.textContent = '\u2197';
+    label.textContent = 'expand';
+    btn.title = 'Expand design (F)';
+  }
+}
 function toggleSide() { st.sideOpen = !st.sideOpen; document.getElementById('sidePanel').classList.toggle('collapsed', !st.sideOpen); }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1821,10 +1847,7 @@ document.addEventListener('keydown', e => {
     case 'r': case 'R': setVerdict('revisit'); break;
     case 's': case 'S': cycleSectionFilter(); break;
     case 'i': case 'I': toggleSide(); break;
-    case 'f': case 'F':
-      const iframe = document.querySelector('.preview-iframe');
-      if (iframe) { document.fullscreenElement ? document.exitFullscreen() : iframe.requestFullscreen(); }
-      break;
+    case 'f': case 'F': toggleExpand(); break;
   }
 });
 

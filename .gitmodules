@@ -1,0 +1,4 @@
+[submodule "poetry_quality_and_curation/tashkeel-fixer-for-recitation"]
+	path = poetry_quality_and_curation/tashkeel-fixer-for-recitation
+	url = https://github.com/lesmartiepants/mishkal.git
+	branch = fix/tashkeel-bugs

@@ -5,19 +5,19 @@ Chains the pipeline steps: download -> score -> recalibrate -> select -> import.
 
 Usage:
     # Full pipeline
-    python scripts/curation/run_pipeline.py --full
+    python poetry_quality_and_curation/retriever_and_quality_curator/run_pipeline.py --full
 
     # Score only (assumes data already downloaded)
-    python scripts/curation/run_pipeline.py --score-only
+    python poetry_quality_and_curation/retriever_and_quality_curator/run_pipeline.py --score-only
 
     # Re-select and import (assumes scores exist)
-    python scripts/curation/run_pipeline.py --select-only
+    python poetry_quality_and_curation/retriever_and_quality_curator/run_pipeline.py --select-only
 
     # Just import from existing final_selection.parquet
-    python scripts/curation/run_pipeline.py --import-only
+    python poetry_quality_and_curation/retriever_and_quality_curator/run_pipeline.py --import-only
 
     # Dry run (validate data, no API calls or DB writes)
-    python scripts/curation/run_pipeline.py --full --dry-run
+    python poetry_quality_and_curation/retriever_and_quality_curator/run_pipeline.py --full --dry-run
 """
 import argparse
 import subprocess
@@ -25,13 +25,13 @@ import sys
 import time
 from pathlib import Path
 
-# Add project root to path so `scripts.curation.*` imports work
+# Add project root to path so `poetry_quality_and_curation.retriever_and_quality_curator.*` imports work
 # whether this is invoked directly or via `python -m`
 _project_root = Path(__file__).resolve().parent.parent.parent
 if str(_project_root) not in sys.path:
     sys.path.insert(0, str(_project_root))
 
-from scripts.curation.config import (
+from poetry_quality_and_curation.retriever_and_quality_curator.config import (
     DATA_DIR,
     DEFAULT_HAIKU_MODEL,
     DEFAULT_OPUS_MODEL,
@@ -88,7 +88,7 @@ def run_step(script_name: str, args_list: list[str], dry_run: bool = False) -> b
         print(f"ERROR: Script not found: {script_path}")
         return False
 
-    cmd = [sys.executable, "-m", f"scripts.curation.{script_path.stem}"] + args_list
+    cmd = [sys.executable, "-m", f"poetry_quality_and_curation.retriever_and_quality_curator.{script_path.stem}"] + args_list
 
     if dry_run:
         print(f"  [DRY RUN] Would run: {' '.join(cmd)}")

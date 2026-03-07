@@ -4,9 +4,9 @@ Sends batches of poems to a specified model, parses quality scores across
 five dimensions, and saves results as Parquet checkpoints.
 
 Usage:
-    python -m scripts.curation.02_score_poems --model openai/bedrock-haiku-45
-    python -m scripts.curation.02_score_poems --model openai/bedrock-haiku-45 --scope unscored --resume
-    python -m scripts.curation.02_score_poems --model openai/bedrock-haiku-45 --dry-run
+    python -m poetry_quality_and_curation.retriever_and_quality_curator.02_score_poems --model openai/bedrock-haiku-45
+    python -m poetry_quality_and_curation.retriever_and_quality_curator.02_score_poems --model openai/bedrock-haiku-45 --scope unscored --resume
+    python -m poetry_quality_and_curation.retriever_and_quality_curator.02_score_poems --model openai/bedrock-haiku-45 --dry-run
 """
 import argparse
 import asyncio
@@ -22,8 +22,8 @@ load_dotenv()
 import pandas as pd
 from tqdm import tqdm
 
-from scripts.curation import config
-from scripts.curation.arabic_utils import format_for_scoring
+from poetry_quality_and_curation.retriever_and_quality_curator import config
+from poetry_quality_and_curation.retriever_and_quality_curator.arabic_utils import format_for_scoring
 
 
 # ---------------------------------------------------------------------------
@@ -53,6 +53,8 @@ def parse_args():
                         help="Print stats without calling API")
     parser.add_argument("--output", type=str, default=None,
                         help="Output parquet path (default: data/scores_{model_slug}.parquet)")
+    parser.add_argument("--base-scores", type=str, default=None,
+                        help="Base scores parquet for --scope top (default: same as --output)")
     return parser.parse_args()
 
 
@@ -140,8 +142,9 @@ def load_poems(args) -> list[dict]:
 
     # Apply scope filter
     if args.scope == "top":
-        # Use existing scores to pick top-k
-        existing_path = Path(args.output) if args.output else None
+        # Use base-scores (or output) to pick top-k
+        scores_path = Path(args.base_scores) if args.base_scores else (Path(args.output) if args.output else None)
+        existing_path = scores_path
         if existing_path and existing_path.exists():
             existing_df = pd.read_parquet(existing_path)
             top_ids = set(

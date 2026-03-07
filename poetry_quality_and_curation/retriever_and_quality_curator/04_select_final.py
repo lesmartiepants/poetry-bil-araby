@@ -4,18 +4,21 @@ Applies poet caps, modern/classical ratio targets, and theme diversity
 guarantees to produce the final curated collection.
 
 Usage:
-    python -m scripts.curation.04_select_final
-    python -m scripts.curation.04_select_final --input data/scores_calibrated.parquet --target 5000
+    python -m poetry_quality_and_curation.retriever_and_quality_curator.04_select_final
+    python -m poetry_quality_and_curation.retriever_and_quality_curator.04_select_final --input data/scores_calibrated.parquet --target 5000
 """
 import argparse
 import json
 from collections import Counter
 
+from dotenv import load_dotenv
+load_dotenv()
+
 import numpy as np
 import pandas as pd
 
-from scripts.curation import config
-from scripts.curation.arabic_utils import compute_text_hash
+from poetry_quality_and_curation.retriever_and_quality_curator import config
+from poetry_quality_and_curation.retriever_and_quality_curator.arabic_utils import compute_text_hash
 
 
 def parse_args():
@@ -74,7 +77,8 @@ def _load_db_metadata() -> pd.DataFrame | None:
         return None
     try:
         query = """
-            SELECT p.id AS poem_id, p.title, p.content, p.poem_form, p.meter, p.theme,
+            SELECT p.id AS poem_id, p.title, p.content, p.poem_form,
+                   p.meter_id, p.theme_id,
                    po.name AS poet_name
             FROM poems p
             LEFT JOIN poets po ON p.poet_id = po.id

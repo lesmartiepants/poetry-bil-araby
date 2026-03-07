@@ -2,17 +2,21 @@
 """Post-process diacritized poems to fix known Mishkal issues.
 
 Applies built-in fixes and extensible learned rules to improve tashkeel quality.
+Each rule runs as a separate pass with progress output and checkpoint saves.
 Re-runnable: running again after adding new rules applies only new fixes.
 
 Usage:
     python scripts/postprocess-tashkeel.py
     python scripts/postprocess-tashkeel.py --input poems_diacritized_complete.parquet
-    python scripts/postprocess-tashkeel.py --dry-run  # preview changes without saving
+    python scripts/postprocess-tashkeel.py --dry-run
+    python scripts/postprocess-tashkeel.py --workers 4  # parallel line-ending fix
 """
 import json
 import re
 import sys
+import time
 import argparse
+from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
 
 try:
@@ -30,13 +34,27 @@ except ImportError:
 DATA_DIR = Path(__file__).parent / "diacritize-data"
 DEFAULT_INPUT = DATA_DIR / "poems_diacritized_complete.parquet"
 DEFAULT_OUTPUT = DATA_DIR / "poems_diacritized_final.parquet"
+CHECKPOINT_DIR = DATA_DIR / "postprocess-checkpoints"
 FIX_LOG = DATA_DIR / "postprocess-log.json"
 
 # Arabic constants
 TASHKEEL_PATTERN = re.compile("[\u064B-\u0652]")
 DUPLICATE_MARKS = re.compile(r"([\u064B-\u0652])\1+")
 ARABIC_LETTER = re.compile("[\u0621-\u064A]")
+TASHKEEL_CHARS = "\u064B\u064C\u064D\u064E\u064F\u0650\u0651\u0652"
 HEMISTICH_SEP = "*"
+
+
+# ── Progress bar ─────────────────────────────────────────────────────
+
+def progress_bar(current, total, prefix="", width=40):
+    pct = current / total if total > 0 else 0
+    filled = int(width * pct)
+    bar = "█" * filled + "░" * (width - filled)
+    sys.stdout.write(f"\r  {prefix} |{bar}| {current}/{total} ({pct*100:.1f}%)")
+    sys.stdout.flush()
+    if current == total:
+        print()
 
 
 # ── Built-in fixes ───────────────────────────────────────────────────
@@ -53,113 +71,167 @@ def fix_deduplicate_marks(text):
     return DUPLICATE_MARKS.sub(r"\1", text)
 
 
-def fix_line_ending_tashkeel(text):
-    """For hemistichs ending on unmarked consonant, re-diacritize last word.
-
-    Uses Mishkal with enable_last_mark() on just the last word to get
-    the appropriate ending mark.
-    """
-    try:
-        from mishkal.tashkeel import TashkeelClass
-    except ImportError:
-        return text
-
-    lines = text.split("\n")
-    fixed_lines = []
-    vocalizer = None  # lazy init
-
-    for line in lines:
+def _find_unmarked_endings(poem_text):
+    """Extract last words from hemistichs that lack ending tashkeel.
+    Returns list of (line_idx, part_idx, last_word) tuples."""
+    unmarked = []
+    lines = poem_text.split("\n")
+    for li, line in enumerate(lines):
         parts = line.split(HEMISTICH_SEP)
-        fixed_parts = []
-        for part in parts:
+        for pi, part in enumerate(parts):
             stripped_part = part.strip()
             if not stripped_part:
-                fixed_parts.append(part)
                 continue
-
             # Find last Arabic letter
             last_letter_idx = -1
             for i in range(len(stripped_part) - 1, -1, -1):
                 if ARABIC_LETTER.match(stripped_part[i]):
                     last_letter_idx = i
                     break
-
             if last_letter_idx == -1:
-                fixed_parts.append(part)
                 continue
-
             # Check if already marked
             has_mark = False
             if (last_letter_idx + 1 < len(stripped_part)
-                    and stripped_part[last_letter_idx + 1] in "\u064B\u064C\u064D\u064E\u064F\u0650\u0651\u0652"):
+                    and stripped_part[last_letter_idx + 1] in TASHKEEL_CHARS):
                 has_mark = True
             if (last_letter_idx + 2 < len(stripped_part)
                     and stripped_part[last_letter_idx + 1] == "\u0651"
-                    and stripped_part[last_letter_idx + 2] in "\u064B\u064C\u064D\u064E\u064F\u0650\u0652"):
+                    and stripped_part[last_letter_idx + 2] in TASHKEEL_CHARS):
                 has_mark = True
-
             if has_mark:
-                fixed_parts.append(part)
                 continue
-
-            # Extract last word and re-diacritize it
+            # Extract last word
             bare = araby.strip_tashkeel(stripped_part)
             words = bare.split()
-            if not words:
-                fixed_parts.append(part)
-                continue
+            if words and ARABIC_LETTER.search(words[-1]):
+                unmarked.append((li, pi, words[-1]))
+    return unmarked
 
-            last_word = words[-1]
-            if not ARABIC_LETTER.search(last_word):
-                fixed_parts.append(part)
-                continue
 
-            # Lazy init vocalizer
-            if vocalizer is None:
-                vocalizer = TashkeelClass()
-                vocalizer.set_limit(100000)
+def _worker_init_postprocess():
+    """Each worker creates its own Mishkal instance."""
+    import mishkal.tashkeel
+    global _pp_vocalizer
+    _pp_vocalizer = mishkal.tashkeel.TashkeelClass()
+    _pp_vocalizer.set_limit(100000)
 
-            # Diacritize just the last word
-            try:
-                diacritized_word = vocalizer.tashkeel(last_word).strip()
-            except Exception:
-                fixed_parts.append(part)
-                continue
 
-            # Extract the ending mark(s) from the diacritized word
-            if not diacritized_word:
-                fixed_parts.append(part)
-                continue
-
-            # Find the mark(s) at the end of the diacritized word
-            end_marks = ""
-            for ch in reversed(diacritized_word):
-                if ch in "\u064B\u064C\u064D\u064E\u064F\u0650\u0651\u0652":
-                    end_marks = ch + end_marks
-                else:
-                    break
-
-            if end_marks:
-                # Append the ending mark after the last Arabic letter in the original
-                new_part = (stripped_part[:last_letter_idx + 1]
-                           + end_marks
-                           + stripped_part[last_letter_idx + 1:])
-                # Preserve original leading/trailing whitespace
-                leading = len(part) - len(part.lstrip())
-                trailing = len(part) - len(part.rstrip())
-                new_part = part[:leading] + new_part + part[len(part)-trailing:] if trailing else part[:leading] + new_part
-                fixed_parts.append(new_part)
+def _diacritize_word(word):
+    """Diacritize a single word and extract ending marks."""
+    try:
+        result = _pp_vocalizer.tashkeel(word).strip()
+        if not result:
+            return word, ""
+        end_marks = ""
+        for ch in reversed(result):
+            if ch in TASHKEEL_CHARS:
+                end_marks = ch + end_marks
             else:
-                fixed_parts.append(part)
+                break
+        return word, end_marks
+    except Exception:
+        return word, ""
 
-        fixed_lines.append(HEMISTICH_SEP.join(fixed_parts))
 
-    return "\n".join(fixed_lines)
+def fix_line_ending_tashkeel_parallel(df, workers=4):
+    """Fix unmarked hemistich endings using parallel Mishkal workers.
+
+    Instead of processing poem-by-poem (slow), this:
+    1. Extracts all unique unmarked last-words across all poems
+    2. Diacritizes them in parallel via ProcessPoolExecutor
+    3. Applies the results back to the poems
+    """
+    print("  Phase 1: Scanning for unmarked hemistich endings...")
+    # Collect all unmarked endings and build a word -> mark lookup
+    unique_words = set()
+    poem_endings = {}  # poem_idx -> [(line_idx, part_idx, last_word)]
+
+    total = len(df)
+    for idx in range(total):
+        text = df.iloc[idx]["diacritized_content"]
+        endings = _find_unmarked_endings(text)
+        if endings:
+            poem_endings[idx] = endings
+            for _, _, word in endings:
+                unique_words.add(word)
+        if (idx + 1) % 5000 == 0 or idx + 1 == total:
+            progress_bar(idx + 1, total, "Scanning")
+
+    print(f"  Found {len(unique_words)} unique unmarked words across "
+          f"{len(poem_endings)} poems")
+
+    if not unique_words:
+        return df, 0
+
+    # Phase 2: Diacritize unique words in parallel
+    print(f"  Phase 2: Diacritizing {len(unique_words)} unique words with {workers} workers...")
+    word_marks = {}
+    words_list = list(unique_words)
+    completed = 0
+
+    with ProcessPoolExecutor(max_workers=workers, initializer=_worker_init_postprocess) as pool:
+        futures = {pool.submit(_diacritize_word, w): w for w in words_list}
+        for future in as_completed(futures):
+            word, marks = future.result()
+            if marks:
+                word_marks[word] = marks
+            completed += 1
+            if completed % 500 == 0 or completed == len(words_list):
+                progress_bar(completed, len(words_list), "Diacritizing")
+
+    print(f"  Got marks for {len(word_marks)}/{len(unique_words)} words")
+
+    # Phase 3: Apply marks back to poems
+    print("  Phase 3: Applying fixes...")
+    fix_count = 0
+    poem_idxs = list(poem_endings.keys())
+    for progress_i, idx in enumerate(poem_idxs):
+        text = df.iloc[idx]["diacritized_content"]
+        lines = text.split("\n")
+        changed = False
+
+        for li, pi, last_word in poem_endings[idx]:
+            marks = word_marks.get(last_word)
+            if not marks:
+                continue
+            parts = lines[li].split(HEMISTICH_SEP)
+            if pi >= len(parts):
+                continue
+            part = parts[pi]
+            stripped_part = part.strip()
+            # Find last Arabic letter again
+            last_letter_idx = -1
+            for i in range(len(stripped_part) - 1, -1, -1):
+                if ARABIC_LETTER.match(stripped_part[i]):
+                    last_letter_idx = i
+                    break
+            if last_letter_idx == -1:
+                continue
+            # Insert marks
+            new_part = (stripped_part[:last_letter_idx + 1]
+                       + marks
+                       + stripped_part[last_letter_idx + 1:])
+            leading = len(part) - len(part.lstrip())
+            new_part = part[:leading] + new_part
+            parts[pi] = new_part
+            lines[li] = HEMISTICH_SEP.join(parts)
+            changed = True
+
+        if changed:
+            df.at[df.index[idx], "diacritized_content"] = "\n".join(lines)
+            fix_count += 1
+
+        if (progress_i + 1) % 5000 == 0 or progress_i + 1 == len(poem_idxs):
+            progress_bar(progress_i + 1, len(poem_idxs), "Applying")
+
+    return df, fix_count
 
 
-# ── Built-in rule registry ───────────────────────────────────────────
+# ── Rule registry ────────────────────────────────────────────────────
 
-BUILTIN_RULES = [
+# Simple rules (applied per-poem, fast)
+SIMPLE_RULES = [
     {
         "name": "normalize_whitespace",
         "description": "Strip and collapse double spaces",
@@ -170,25 +242,15 @@ BUILTIN_RULES = [
         "description": "Remove consecutive duplicate tashkeel marks",
         "apply": fix_deduplicate_marks,
     },
-    {
-        "name": "line_ending_tashkeel",
-        "description": "Add tashkeel to unmarked hemistich-ending consonants",
-        "apply": fix_line_ending_tashkeel,
-    },
 ]
 
-
-# ── Learned rules (populated by Arabic quality review agent) ─────────
-# Each rule is a dict with: name, description, apply (function), source, confidence
-# The agent adds rules here after reviewing a stratified sample of poems.
-# Rules are applied in order after built-in rules.
-
+# Learned rules (populated by Arabic quality review agent)
 LEARNED_RULES = [
     # Example (to be populated by arabic-review agent):
     # {
     #     "name": "tanween_on_proper_nouns",
     #     "description": "Mishkal adds tanween to well-known proper nouns",
-    #     "apply": lambda text: text,  # actual fix function
+    #     "apply": lambda text: text,
     #     "source": "arabic-review-agent",
     #     "confidence": 0.9,
     # },
@@ -197,43 +259,82 @@ LEARNED_RULES = [
 
 # ── Main post-processing logic ───────────────────────────────────────
 
-def postprocess(input_path, output_path, dry_run=False):
-    """Apply all rules to diacritized poems."""
+def postprocess(input_path, output_path, dry_run=False, workers=4):
+    """Apply all rules to diacritized poems, one pass per rule with checkpoints."""
     df = pd.read_parquet(input_path)
-    print(f"Loaded {len(df)} poems from {input_path}")
+    total = len(df)
+    print(f"Loaded {total} poems from {input_path}")
 
-    all_rules = BUILTIN_RULES + LEARNED_RULES
-    print(f"Applying {len(all_rules)} rules: "
-          + ", ".join(r["name"] for r in all_rules))
+    CHECKPOINT_DIR.mkdir(parents=True, exist_ok=True)
+    fix_counts = {}
+    start_time = time.time()
 
-    fix_counts = {r["name"]: 0 for r in all_rules}
-    total_changed = 0
+    # Pass 1: Simple rules (fast, per-poem)
+    all_simple = SIMPLE_RULES + LEARNED_RULES
+    for rule in all_simple:
+        rule_name = rule["name"]
+        print(f"\n--- Rule: {rule_name} ---")
+        print(f"  {rule['description']}")
+        count = 0
+        rule_start = time.time()
 
-    for idx in range(len(df)):
-        original = df.iloc[idx]["diacritized_content"]
-        current = original
+        for idx in range(total):
+            original = df.iloc[idx]["diacritized_content"]
+            fixed = rule["apply"](original)
+            if fixed != original:
+                count += 1
+                if not dry_run:
+                    df.at[df.index[idx], "diacritized_content"] = fixed
+            if (idx + 1) % 5000 == 0 or idx + 1 == total:
+                progress_bar(idx + 1, total, rule_name[:20])
 
-        for rule in all_rules:
-            before = current
-            current = rule["apply"](current)
-            if current != before:
-                fix_counts[rule["name"]] += 1
+        fix_counts[rule_name] = count
+        elapsed = time.time() - rule_start
+        print(f"  Fixed {count} poems in {elapsed:.1f}s")
 
-        if current != original:
-            total_changed += 1
-            if not dry_run:
-                df.at[df.index[idx], "diacritized_content"] = current
+        # Checkpoint after each rule
+        if not dry_run:
+            ckpt = CHECKPOINT_DIR / f"after_{rule_name}.parquet"
+            df.to_parquet(ckpt, index=False)
+            print(f"  Checkpoint: {ckpt}")
+
+    # Pass 2: Line-ending tashkeel (parallel, heavy)
+    print(f"\n--- Rule: line_ending_tashkeel ---")
+    print(f"  Add tashkeel to unmarked hemistich-ending consonants (parallel)")
+    rule_start = time.time()
+
+    if not dry_run:
+        df, le_count = fix_line_ending_tashkeel_parallel(df, workers=workers)
+    else:
+        # Dry run: just count
+        le_count = 0
+        for idx in range(total):
+            endings = _find_unmarked_endings(df.iloc[idx]["diacritized_content"])
+            if endings:
+                le_count += 1
+            if (idx + 1) % 5000 == 0 or idx + 1 == total:
+                progress_bar(idx + 1, total, "line_ending(dry)")
+
+    fix_counts["line_ending_tashkeel"] = le_count
+    elapsed = time.time() - rule_start
+    print(f"  Fixed {le_count} poems in {elapsed:.1f}s")
+
+    if not dry_run:
+        ckpt = CHECKPOINT_DIR / "after_line_ending_tashkeel.parquet"
+        df.to_parquet(ckpt, index=False)
+        print(f"  Checkpoint: {ckpt}")
 
     # Summary
+    total_changed = sum(fix_counts.values())
+    total_elapsed = time.time() - start_time
     print(f"\n{'='*60}")
     print(f"POST-PROCESSING SUMMARY")
     print(f"{'='*60}")
-    print(f"Total poems: {len(df)}")
-    print(f"Poems changed: {total_changed} ({total_changed/len(df)*100:.1f}%)")
+    print(f"Total poems: {total}")
+    print(f"Total elapsed: {total_elapsed:.1f}s")
     print(f"\nFix counts by rule:")
-    for rule in all_rules:
-        count = fix_counts[rule["name"]]
-        print(f"  {rule['name']}: {count} poems")
+    for name, count in fix_counts.items():
+        print(f"  {name}: {count} poems")
 
     # Write output
     if not dry_run:
@@ -246,10 +347,10 @@ def postprocess(input_path, output_path, dry_run=False):
 
     # Write fix log
     log = {
-        "total_poems": len(df),
-        "poems_changed": total_changed,
+        "total_poems": total,
         "fix_counts": fix_counts,
-        "rules_applied": [r["name"] for r in all_rules],
+        "rules_applied": list(fix_counts.keys()),
+        "elapsed_sec": round(total_elapsed, 1),
         "dry_run": dry_run,
     }
     FIX_LOG.parent.mkdir(parents=True, exist_ok=True)
@@ -269,9 +370,11 @@ def main():
                         help=f"Output parquet (default: {DEFAULT_OUTPUT})")
     parser.add_argument("--dry-run", action="store_true",
                         help="Preview changes without saving")
+    parser.add_argument("--workers", type=int, default=4,
+                        help="Workers for parallel line-ending fix (default: 4)")
     args = parser.parse_args()
 
-    postprocess(args.input, args.output, args.dry_run)
+    postprocess(args.input, args.output, args.dry_run, args.workers)
 
 
 if __name__ == "__main__":

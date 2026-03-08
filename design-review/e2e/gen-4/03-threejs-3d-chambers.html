@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Arabic Poetry — 3D Scroll Journey v3</title>
+<title>Arabic Poetry — 3D Cinematic Journey</title>
 
 <!-- Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -29,6 +29,7 @@
   --color-gold:           #c9a84c;
   --color-gold-bright:    #ffd700;
   --color-burgundy:       #6b2d3e;
+  --color-teal:           #2d7a7a;
   --color-sand:           #d4c5a0;
   --color-parchment:      #f4edd8;
   --color-cream:          #e8d5b0;
@@ -305,27 +306,6 @@ html, body {
   var MAX_SCROLL = 5000;
 
   /* ============================================
-     CAMERA PATH — 6 keyframes
-     ============================================ */
-  var cameraPath = [
-    new THREE.Vector3(0, 0, 50),    // start — looking at origin from afar
-    new THREE.Vector3(0, 0, 20),    // approach poem 1
-    new THREE.Vector3(0, 0, 5),     // inside poem 1 chamber
-    new THREE.Vector3(30, 0, 5),    // slide right to poem 2
-    new THREE.Vector3(30, 0, -20),  // inside poem 2 chamber
-    new THREE.Vector3(60, 10, -20)  // rise to poem 3 chamber
-  ];
-
-  var lookAtTargets = [
-    new THREE.Vector3(0, 0, 0),
-    new THREE.Vector3(0, 0, 0),
-    new THREE.Vector3(0, 0, -2),
-    new THREE.Vector3(30, 0, -10),
-    new THREE.Vector3(30, 0, -10),
-    new THREE.Vector3(60, 5, -20)
-  ];
-
-  /* ============================================
      POEMS
      ============================================ */
   var poems = [
@@ -337,7 +317,7 @@ html, body {
         'وتعظُمُ في عينِ الصغيرِ صغارُها',
         'وتصغُرُ في عينِ العظيمِ العظائمُ'
       ],
-      center: new THREE.Vector3(0, 0, 0)
+      progressPosition: 0.25 // 25% along path
     },
     {
       poet: 'أبو تمام',
@@ -347,7 +327,7 @@ html, body {
         'بيضُ الصفائحِ لا سودُ الصحائفِ في',
         'متونِهِنَّ جلاءُ الشَّكِّ والرِّيَبِ'
       ],
-      center: new THREE.Vector3(30, 0, -10)
+      progressPosition: 0.55 // 55% along path
     },
     {
       poet: 'امرؤ القيس',
@@ -357,9 +337,39 @@ html, body {
         'فَتوضِحَ فَالمِقراةِ لَم يَعفُ رَسمُها',
         'لِما نَسَجَتها مِن جَنوبٍ وَشَمأَلِ'
       ],
-      center: new THREE.Vector3(60, 5, -20)
+      progressPosition: 0.82 // 82% along path
     }
   ];
+
+  /* ============================================
+     CAMERA PATH — gentle S-curve, primarily forward
+     Max x displacement: ±3 units
+     Max y displacement: ±2 units
+     Z-axis is primary direction of travel
+     ============================================ */
+  var cameraPathCurve = new THREE.CatmullRomCurve3([
+    new THREE.Vector3(  0,   0,   80),   // Start — far back
+    new THREE.Vector3(  0,   0,   65),   // Straight approach
+    new THREE.Vector3(  0,   0.5, 50),   // Gentle rise
+    new THREE.Vector3( -1.5, 1,   35),   // Very gentle left curve
+    new THREE.Vector3( -2.5, 0.5, 22),   // Approaching poem 1
+    new THREE.Vector3( -2,   0,   18),   // ★ POEM 1 (25%) — nearly centered
+    new THREE.Vector3( -1,   0.5, 10),   // Exit, straightening
+    new THREE.Vector3(  0,   1,    2),   // Return to center
+    new THREE.Vector3(  1.5, 1.5, -8),   // Gentle right curve
+    new THREE.Vector3(  3,   2,  -18),   // Slow right arc
+    new THREE.Vector3(  2.5, 1.5, -28),  // Approaching poem 2
+    new THREE.Vector3(  2,   1,  -33),   // ★ POEM 2 (55%) — right of center
+    new THREE.Vector3(  1,   0.5, -42),  // Exit, straightening
+    new THREE.Vector3(  0,   0,  -50),   // Return to center
+    new THREE.Vector3( -1,  -0.5, -58),  // Gentle left curve
+    new THREE.Vector3( -2,  -1,  -68),   // Slow left arc
+    new THREE.Vector3( -1.5, -0.5,-78),  // Approaching poem 3
+    new THREE.Vector3( -1,   0,  -82),   // ★ POEM 3 (82%) — left of center
+    new THREE.Vector3(  0,   0.5, -92),  // Gentle exit, straighten
+    new THREE.Vector3(  0,   1,  -102),  // Drift away
+    new THREE.Vector3(  0,   2,  -110)   // End — fade into distance
+  ]);
 
   /* ============================================
      SCENE SETUP
@@ -368,12 +378,12 @@ html, body {
 
   var scene = new THREE.Scene();
   scene.background = new THREE.Color(0x0a1628);
-  scene.fog = new THREE.FogExp2(0x0a1628, 0.012);
+  scene.fog = new THREE.FogExp2(0x0a1628, 0.007);
 
   var camera = new THREE.PerspectiveCamera(
-    60, window.innerWidth / window.innerHeight, 0.1, 200
+    65, window.innerWidth / window.innerHeight, 0.1, 300
   );
-  camera.position.copy(cameraPath[0]);
+  camera.position.copy(cameraPathCurve.getPointAt(0));
 
   var renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setSize(window.innerWidth, window.innerHeight);
@@ -385,30 +395,31 @@ html, body {
      ============================================ */
   scene.add(new THREE.AmbientLight(0x1a2744, 0.6));
 
-  var light1 = new THREE.PointLight(0x4a6fa5, 1.5, 40);
-  light1.position.set(0, 5, 3);
+  var light1 = new THREE.PointLight(0xc9a84c, 1.5, 80); // Gold — poem 1
+  light1.position.set(-2, 3, 18);
   scene.add(light1);
 
-  var light2 = new THREE.PointLight(0xc9a84c, 1.5, 40);
-  light2.position.set(30, 5, -7);
+  var light2 = new THREE.PointLight(0x6b2d3e, 1.5, 80); // Burgundy — poem 2
+  light2.position.set(2, 3, -33);
   scene.add(light2);
 
-  var light3 = new THREE.PointLight(0x8b3a5e, 1.5, 40);
-  light3.position.set(60, 10, -17);
+  var light3 = new THREE.PointLight(0x2d7a7a, 1.5, 80); // Teal — poem 3
+  light3.position.set(-1, 3, -82);
   scene.add(light3);
 
   /* ============================================
      TEXT PLANE GENERATOR (CanvasTexture)
+     High-res 2048x256, font 96px, anisotropic filtering
      ============================================ */
   function makeTextPlane(text, width, height, color) {
-    var w = width || 1024;
-    var h = height || 128;
+    var w = width || 2048;
+    var h = height || 256;
     var canvas = document.createElement('canvas');
     canvas.width = w;
     canvas.height = h;
     var ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, w, h);
-    ctx.font = '48px Amiri';
+    ctx.font = '96px Amiri';
     ctx.fillStyle = color || '#e8d5b0';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
@@ -416,308 +427,338 @@ html, body {
     ctx.fillText(text, w / 2, h / 2);
     var tex = new THREE.CanvasTexture(canvas);
     tex.minFilter = THREE.LinearFilter;
+    tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
     var mat = new THREE.MeshBasicMaterial({
       map: tex,
       transparent: true,
       side: THREE.DoubleSide,
       depthWrite: false
     });
-    var geo = new THREE.PlaneGeometry(10, 1.25);
+    var geo = new THREE.PlaneGeometry(12, 1.5);
     return new THREE.Mesh(geo, mat);
   }
 
   var allTextMeshes = [];
 
   /* ============================================
-     CHAMBER 1: DISTANT THIN RINGS (FAR BEHIND TEXT)
-     Ethereal concentric rings far in the background
+     CREATE POEM TEXT BILLBOARDS AT PATH POSITIONS
+     All lines on same z-plane (no depth offset between lines)
      ============================================ */
-  var poem1Group = new THREE.Group();
-  poem1Group.position.copy(poems[0].center);
+  poems.forEach(function (poem) {
+    var poemPosition = cameraPathCurve.getPointAt(poem.progressPosition);
 
-  // Add poem text planes
-  poems[0].lines.forEach(function (line, i) {
-    var plane = makeTextPlane(line, 1024, 128, '#e8d5b0');
-    var angle = (i - 1.5) * 0.12;
-    plane.position.set(
-      Math.sin(angle) * 2,
-      2 - i * 1.6,
-      Math.cos(angle) * 0.5 - 2
-    );
-    plane.rotation.y = angle * 0.3;
-    poem1Group.add(plane);
-    allTextMeshes.push(plane);
-  });
-
-  // Distant thin rings far behind - very subtle atmosphere
-  var distantRingsGroup = new THREE.Group();
-  for (var r = 0; r < 8; r++) {
-    var ringRadius = 8 + r * 2.5;
-    var ringZ = -25 + r * 3;
-    var ringGeo = new THREE.RingGeometry(ringRadius, ringRadius + 0.02, 48);
-    var ringMat = new THREE.MeshBasicMaterial({
-      color: 0x4a6fa5,
-      transparent: true,
-      opacity: 0.08 - r * 0.008,
-      side: THREE.DoubleSide
+    poem.lines.forEach(function (line, i) {
+      var plane = makeTextPlane(line, 2048, 256, '#e8d5b0');
+      plane.position.copy(poemPosition);
+      // Stack lines vertically, all at same Z (no z-offset)
+      plane.position.y += 2 - i * 1.2;
+      scene.add(plane);
+      allTextMeshes.push(plane);
     });
-    var ring = new THREE.Mesh(ringGeo, ringMat);
-    ring.position.set(0, 0, ringZ);
-    distantRingsGroup.add(ring);
-  }
-  distantRingsGroup.position.set(0, 0, 0);
-  distantRingsGroup.userData.rotSpeed = { x: 0.0005, y: 0.001 };
-  poem1Group.add(distantRingsGroup);
-  scene.add(poem1Group);
+  });
 
   /* ============================================
-     CHAMBER 2: PARTICLE RING HALO
-     Ring of faint particles forming atmospheric halo
+     CONTINUOUS TUNNEL — follows smooth camera path
+     Morphs: circular → hexagonal → arched
      ============================================ */
-  var poem2Group = new THREE.Group();
-  poem2Group.position.copy(poems[1].center);
+  var tunnelGroup = new THREE.Group();
 
-  // Add poem text planes
-  poems[1].lines.forEach(function (line, i) {
-    var plane = makeTextPlane(line, 1024, 128, '#d4c5a0');
-    var angle = (i / 4) * Math.PI * 2;
-    plane.position.set(
-      Math.cos(angle) * 3,
-      Math.sin(angle) * 2.5,
-      0
-    );
-    plane.rotation.z = Math.sin(angle) * 0.05;
-    poem2Group.add(plane);
-    allTextMeshes.push(plane);
-  });
+  // Sample 60 points along the camera path for smooth tunnel
+  var tunnelSampleCount = 60;
 
-  // Particle ring halo - creates atmospheric glow around the text
-  var haloParticleCount = 800;
-  var haloPositions = new Float32Array(haloParticleCount * 3);
-  var haloColors = new Float32Array(haloParticleCount * 3);
+  for (var i = 0; i < tunnelSampleCount; i++) {
+    var t = i / (tunnelSampleCount - 1); // 0 to 1
+    var pathPoint = cameraPathCurve.getPointAt(t);
+    var tangent = cameraPathCurve.getTangentAt(t).normalize();
 
-  for (var hp = 0; hp < haloParticleCount; hp++) {
-    var angle = (hp / haloParticleCount) * Math.PI * 2;
-    var radius = 10 + Math.random() * 5;
-    var height = (Math.random() - 0.5) * 12;
+    // Determine ring shape based on position along path
+    var ringRadius = 10;
+    var ringPoints = [];
 
-    haloPositions[hp * 3] = Math.cos(angle) * radius;
-    haloPositions[hp * 3 + 1] = height;
-    haloPositions[hp * 3 + 2] = Math.sin(angle) * radius - 5;
+    // Section 1: Circular rings (0-33%)
+    if (t < 0.33) {
+      var sides = 24; // Very smooth circle
+      for (var s = 0; s <= sides; s++) {
+        var angle = (s / sides) * Math.PI * 2;
+        var localX = Math.cos(angle) * ringRadius;
+        var localY = Math.sin(angle) * ringRadius;
+        ringPoints.push(new THREE.Vector3(localX, localY, 0));
+      }
+    }
+    // Section 2: Hexagonal rings (33-66%)
+    else if (t < 0.66) {
+      var sides = 6; // Hexagon
+      for (var s = 0; s <= sides; s++) {
+        var angle = (s / sides) * Math.PI * 2;
+        var localX = Math.cos(angle) * ringRadius;
+        var localY = Math.sin(angle) * ringRadius;
+        ringPoints.push(new THREE.Vector3(localX, localY, 0));
+      }
+    }
+    // Section 3: Arched rings (66-100%)
+    else {
+      var sides = 20;
+      for (var s = 0; s <= sides; s++) {
+        var angle = (s / sides) * Math.PI * 2;
+        var localX = Math.cos(angle) * ringRadius;
+        var localY = Math.sin(angle) * ringRadius;
 
-    var goldBrightness = 0.4 + Math.random() * 0.3;
-    haloColors[hp * 3] = goldBrightness * 0.95;
-    haloColors[hp * 3 + 1] = goldBrightness * 0.75;
-    haloColors[hp * 3 + 2] = goldBrightness * 0.4;
+        // Gothic arch: stretch top, flatten bottom
+        if (localY > 0) {
+          localY *= 1.4; // Tall top
+        } else {
+          localY *= 0.8; // Compressed bottom
+        }
+        ringPoints.push(new THREE.Vector3(localX, localY, 0));
+      }
+    }
+
+    // Orient ring perpendicular to path tangent
+    var up = new THREE.Vector3(0, 1, 0);
+    var perpAxis = new THREE.Vector3().crossVectors(tangent, up).normalize();
+    var perpUp = new THREE.Vector3().crossVectors(perpAxis, tangent).normalize();
+
+    // Transform ring points to world space
+    var worldRingPoints = ringPoints.map(function (localPt) {
+      var worldPt = new THREE.Vector3();
+      worldPt.addScaledVector(perpAxis, localPt.x);
+      worldPt.addScaledVector(perpUp, localPt.y);
+      worldPt.add(pathPoint);
+      return worldPt;
+    });
+
+    // Create wireframe ring
+    var ringGeo = new THREE.BufferGeometry().setFromPoints(worldRingPoints);
+
+    // Color changes along path
+    var ringColor;
+    var ringOpacity;
+    if (t < 0.33) {
+      ringColor = 0xc9a84c; // Gold
+      ringOpacity = 0.15;
+    } else if (t < 0.66) {
+      ringColor = 0x6b2d3e; // Burgundy
+      ringOpacity = 0.18;
+    } else {
+      ringColor = 0x2d7a7a; // Teal
+      ringOpacity = 0.2;
+    }
+
+    var ringMat = new THREE.LineBasicMaterial({
+      color: ringColor,
+      transparent: true,
+      opacity: ringOpacity
+    });
+
+    var ringLine = new THREE.Line(ringGeo, ringMat);
+    tunnelGroup.add(ringLine);
+
+    // Connect rings with longitudinal struts (every 4th ring)
+    if (i > 0 && i % 4 === 0) {
+      var prevT = (i - 4) / (tunnelSampleCount - 1);
+      var prevPathPoint = cameraPathCurve.getPointAt(prevT);
+      var prevTangent = cameraPathCurve.getTangentAt(prevT).normalize();
+      var prevPerpAxis = new THREE.Vector3().crossVectors(prevTangent, up).normalize();
+      var prevPerpUp = new THREE.Vector3().crossVectors(prevPerpAxis, prevTangent).normalize();
+
+      // Create 6 longitudinal struts around ring
+      for (var strutIdx = 0; strutIdx < 6; strutIdx++) {
+        var strutAngle = (strutIdx / 6) * Math.PI * 2;
+
+        var prevLocal = new THREE.Vector3(
+          Math.cos(strutAngle) * ringRadius,
+          Math.sin(strutAngle) * ringRadius,
+          0
+        );
+        var currentLocal = new THREE.Vector3(
+          Math.cos(strutAngle) * ringRadius,
+          Math.sin(strutAngle) * ringRadius,
+          0
+        );
+
+        var prevWorld = new THREE.Vector3();
+        prevWorld.addScaledVector(prevPerpAxis, prevLocal.x);
+        prevWorld.addScaledVector(prevPerpUp, prevLocal.y);
+        prevWorld.add(prevPathPoint);
+
+        var currentWorld = new THREE.Vector3();
+        currentWorld.addScaledVector(perpAxis, currentLocal.x);
+        currentWorld.addScaledVector(perpUp, currentLocal.y);
+        currentWorld.add(pathPoint);
+
+        var strutGeo = new THREE.BufferGeometry().setFromPoints([prevWorld, currentWorld]);
+        var strutMat = new THREE.LineBasicMaterial({
+          color: ringColor,
+          transparent: true,
+          opacity: ringOpacity * 0.4
+        });
+        var strutLine = new THREE.Line(strutGeo, strutMat);
+        tunnelGroup.add(strutLine);
+      }
+    }
   }
 
-  var haloGeo = new THREE.BufferGeometry();
-  haloGeo.setAttribute('position', new THREE.BufferAttribute(haloPositions, 3));
-  haloGeo.setAttribute('color', new THREE.BufferAttribute(haloColors, 3));
+  tunnelGroup.userData.rotSpeed = 0.0001;
+  scene.add(tunnelGroup);
 
-  var haloMat = new THREE.PointsMaterial({
+  /* ============================================
+     PARTICLE SYSTEMS (4 systems, 930+ particles total)
+     ============================================ */
+
+  // System 1: Gold particles near poem 1 (250 particles)
+  var particles1Count = 250;
+  var particles1Positions = new Float32Array(particles1Count * 3);
+  var particles1Colors = new Float32Array(particles1Count * 3);
+
+  for (var pi = 0; pi < particles1Count; pi++) {
+    particles1Positions[pi * 3]     = -2 + (Math.random() - 0.5) * 20;
+    particles1Positions[pi * 3 + 1] = (Math.random() - 0.5) * 15;
+    particles1Positions[pi * 3 + 2] = 18 + (Math.random() - 0.5) * 25;
+
+    var brightness = 0.4 + Math.random() * 0.6;
+    particles1Colors[pi * 3]     = brightness * 0.79; // Gold
+    particles1Colors[pi * 3 + 1] = brightness * 0.66;
+    particles1Colors[pi * 3 + 2] = brightness * 0.30;
+  }
+
+  var particles1Geo = new THREE.BufferGeometry();
+  particles1Geo.setAttribute('position', new THREE.BufferAttribute(particles1Positions, 3));
+  particles1Geo.setAttribute('color', new THREE.BufferAttribute(particles1Colors, 3));
+
+  var particles1Mat = new THREE.PointsMaterial({
     size: 0.12,
     vertexColors: true,
     transparent: true,
-    opacity: 0.4,
-    sizeAttenuation: true,
-    blending: THREE.AdditiveBlending
+    opacity: 0.7,
+    sizeAttenuation: true
   });
+  var particles1 = new THREE.Points(particles1Geo, particles1Mat);
+  scene.add(particles1);
 
-  var haloParticles = new THREE.Points(haloGeo, haloMat);
-  haloParticles.userData.rotSpeed = 0.002;
-  poem2Group.add(haloParticles);
-  scene.add(poem2Group);
+  // System 2: Burgundy particles near poem 2 (240 particles)
+  var particles2Count = 240;
+  var particles2Positions = new Float32Array(particles2Count * 3);
+  var particles2Colors = new Float32Array(particles2Count * 3);
 
-  /* ============================================
-     CHAMBER 3: CONVERGING WIREFRAME LINES
-     Thin lines converging to distant vanishing point
-     ============================================ */
-  var poem3Group = new THREE.Group();
-  poem3Group.position.copy(poems[2].center);
+  for (var pi = 0; pi < particles2Count; pi++) {
+    particles2Positions[pi * 3]     = 2 + (Math.random() - 0.5) * 20;
+    particles2Positions[pi * 3 + 1] = (Math.random() - 0.5) * 15;
+    particles2Positions[pi * 3 + 2] = -33 + (Math.random() - 0.5) * 25;
 
-  // Add poem text planes
-  poems[2].lines.forEach(function (line, i) {
-    var plane = makeTextPlane(line, 1024, 128, '#c8b898');
-    plane.position.set(
-      i * 0.5,
-      3 - i * 2,
-      -i * 0.8
-    );
-    plane.rotation.y = i * 0.04;
-    poem3Group.add(plane);
-    allTextMeshes.push(plane);
-  });
-
-  // Converging lines to vanishing point - creates depth perception
-  var convergingGroup = new THREE.Group();
-  var lineCount = 24;
-  var spreadRadius = 12;
-  var vanishingPoint = new THREE.Vector3(0, 2, -30);
-
-  for (var ln = 0; ln < lineCount; ln++) {
-    var angle = (ln / lineCount) * Math.PI * 2;
-    var startX = Math.cos(angle) * spreadRadius;
-    var startY = Math.sin(angle) * spreadRadius;
-    var startZ = 5;
-
-    var lineGeo = new THREE.BufferGeometry();
-    var linePositions = new Float32Array([
-      startX, startY, startZ,
-      vanishingPoint.x, vanishingPoint.y, vanishingPoint.z
-    ]);
-    lineGeo.setAttribute('position', new THREE.BufferAttribute(linePositions, 3));
-
-    var lineMat = new THREE.LineBasicMaterial({
-      color: 0x8b3a5e,
-      transparent: true,
-      opacity: 0.12
-    });
-
-    var line = new THREE.Line(lineGeo, lineMat);
-    convergingGroup.add(line);
+    var brightness = 0.4 + Math.random() * 0.6;
+    particles2Colors[pi * 3]     = brightness * 0.42; // Burgundy
+    particles2Colors[pi * 3 + 1] = brightness * 0.18;
+    particles2Colors[pi * 3 + 2] = brightness * 0.24;
   }
 
-  // Add scattered geometric debris - thin wireframe fragments
-  for (var debris = 0; debris < 6; debris++) {
-    var debrisAngle = (debris / 6) * Math.PI * 2;
-    var debrisRadius = 8 + Math.random() * 4;
-    var debrisGeo = new THREE.OctahedronGeometry(0.3 + Math.random() * 0.4, 0);
-    var debrisMat = new THREE.MeshBasicMaterial({
-      color: 0x8b3a5e,
-      wireframe: true,
-      transparent: true,
-      opacity: 0.1
-    });
-    var debrisMesh = new THREE.Mesh(debrisGeo, debrisMat);
-    debrisMesh.position.set(
-      Math.cos(debrisAngle) * debrisRadius,
-      (Math.random() - 0.5) * 8,
-      Math.sin(debrisAngle) * debrisRadius - 8
-    );
-    debrisMesh.rotation.set(
-      Math.random() * Math.PI,
-      Math.random() * Math.PI,
-      Math.random() * Math.PI
-    );
-    convergingGroup.add(debrisMesh);
+  var particles2Geo = new THREE.BufferGeometry();
+  particles2Geo.setAttribute('position', new THREE.BufferAttribute(particles2Positions, 3));
+  particles2Geo.setAttribute('color', new THREE.BufferAttribute(particles2Colors, 3));
+
+  var particles2Mat = new THREE.PointsMaterial({
+    size: 0.12,
+    vertexColors: true,
+    transparent: true,
+    opacity: 0.7,
+    sizeAttenuation: true
+  });
+  var particles2 = new THREE.Points(particles2Geo, particles2Mat);
+  scene.add(particles2);
+
+  // System 3: Teal particles near poem 3 (240 particles)
+  var particles3Count = 240;
+  var particles3Positions = new Float32Array(particles3Count * 3);
+  var particles3Colors = new Float32Array(particles3Count * 3);
+
+  for (var pi = 0; pi < particles3Count; pi++) {
+    particles3Positions[pi * 3]     = -1 + (Math.random() - 0.5) * 20;
+    particles3Positions[pi * 3 + 1] = (Math.random() - 0.5) * 15;
+    particles3Positions[pi * 3 + 2] = -82 + (Math.random() - 0.5) * 25;
+
+    var brightness = 0.4 + Math.random() * 0.6;
+    particles3Colors[pi * 3]     = brightness * 0.18; // Teal
+    particles3Colors[pi * 3 + 1] = brightness * 0.48;
+    particles3Colors[pi * 3 + 2] = brightness * 0.48;
   }
 
-  convergingGroup.position.set(-1, 0, 0);
-  convergingGroup.userData.rotSpeed = { x: 0.0008, y: 0.0012, z: 0.0005 };
-  poem3Group.add(convergingGroup);
-  scene.add(poem3Group);
+  var particles3Geo = new THREE.BufferGeometry();
+  particles3Geo.setAttribute('position', new THREE.BufferAttribute(particles3Positions, 3));
+  particles3Geo.setAttribute('color', new THREE.BufferAttribute(particles3Colors, 3));
 
-  /* ============================================
-     BACKGROUND PARTICLES (2000 gold-tinted stars)
-     ============================================ */
-  var STAR_COUNT = 2000;
-  var starPositions = new Float32Array(STAR_COUNT * 3);
-  var starColors    = new Float32Array(STAR_COUNT * 3);
+  var particles3Mat = new THREE.PointsMaterial({
+    size: 0.12,
+    vertexColors: true,
+    transparent: true,
+    opacity: 0.7,
+    sizeAttenuation: true
+  });
+  var particles3 = new THREE.Points(particles3Geo, particles3Mat);
+  scene.add(particles3);
 
-  for (var si = 0; si < STAR_COUNT; si++) {
-    starPositions[si * 3]     = (Math.random() - 0.5) * 160;
-    starPositions[si * 3 + 1] = (Math.random() - 0.5) * 80;
-    starPositions[si * 3 + 2] = (Math.random() - 0.5) * 160 - 20;
+  // System 4: Background stars (200 particles)
+  var starsCount = 200;
+  var starsPositions = new Float32Array(starsCount * 3);
+  var starsColors = new Float32Array(starsCount * 3);
+
+  for (var si = 0; si < starsCount; si++) {
+    starsPositions[si * 3]     = (Math.random() - 0.5) * 200;
+    starsPositions[si * 3 + 1] = (Math.random() - 0.5) * 100;
+    starsPositions[si * 3 + 2] = (Math.random() - 0.5) * 200;
 
     var brightness = 0.3 + Math.random() * 0.7;
-    var goldTint   = Math.random();
-    starColors[si * 3]     = brightness * (0.7 + goldTint * 0.3);
-    starColors[si * 3 + 1] = brightness * (0.6 + goldTint * 0.2);
-    starColors[si * 3 + 2] = brightness * (0.5 + goldTint * 0.1);
+    starsColors[si * 3]     = brightness * 0.9;
+    starsColors[si * 3 + 1] = brightness * 0.9;
+    starsColors[si * 3 + 2] = brightness * 1.0;
   }
 
-  var starGeo = new THREE.BufferGeometry();
-  starGeo.setAttribute('position', new THREE.BufferAttribute(starPositions, 3));
-  starGeo.setAttribute('color',    new THREE.BufferAttribute(starColors, 3));
+  var starsGeo = new THREE.BufferGeometry();
+  starsGeo.setAttribute('position', new THREE.BufferAttribute(starsPositions, 3));
+  starsGeo.setAttribute('color', new THREE.BufferAttribute(starsColors, 3));
 
-  var starMat = new THREE.PointsMaterial({
+  var starsMat = new THREE.PointsMaterial({
     size: 0.15,
     vertexColors: true,
     transparent: true,
     opacity: 0.8,
     sizeAttenuation: true
   });
-  var stars = new THREE.Points(starGeo, starMat);
+  var stars = new THREE.Points(starsGeo, starsMat);
   scene.add(stars);
-
-  /* ============================================
-     PARTICLE STREAMS (connectors between poems)
-     ============================================ */
-  function createParticleStream(start, end, count) {
-    var positions = new Float32Array(count * 3);
-    for (var i = 0; i < count; i++) {
-      var t = i / count;
-      positions[i * 3]     = start.x + (end.x - start.x) * t + (Math.random() - 0.5) * 3;
-      positions[i * 3 + 1] = start.y + (end.y - start.y) * t + (Math.random() - 0.5) * 3;
-      positions[i * 3 + 2] = start.z + (end.z - start.z) * t + (Math.random() - 0.5) * 3;
-    }
-    var geo = new THREE.BufferGeometry();
-    geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-    var mat = new THREE.PointsMaterial({
-      color: 0xc9a84c,
-      size: 0.08,
-      transparent: true,
-      opacity: 0.3,
-      sizeAttenuation: true
-    });
-    return new THREE.Points(geo, mat);
-  }
-
-  var stream1 = createParticleStream(poems[0].center, poems[1].center, 200);
-  scene.add(stream1);
-  var stream2 = createParticleStream(poems[1].center, poems[2].center, 200);
-  scene.add(stream2);
 
   /* ============================================
      AMBIENT WIREFRAME DODECAHEDRONS
      ============================================ */
   var dodecahedrons = [];
   var dodecPositions = [
-    new THREE.Vector3(-15,  8, -10),
-    new THREE.Vector3( 15, -6,  15),
-    new THREE.Vector3( 45, 12,  -5),
-    new THREE.Vector3( 70, -4, -30),
-    new THREE.Vector3( 10,-10, -25),
-    new THREE.Vector3( 50, -8,  10)
+    new THREE.Vector3(-8,  6,  40),
+    new THREE.Vector3( 8, -5,  20),
+    new THREE.Vector3(-6,  7,  0),
+    new THREE.Vector3( 7, -6, -20),
+    new THREE.Vector3(-7,  8, -50),
+    new THREE.Vector3( 8, -4, -70),
+    new THREE.Vector3(-5,  6, -90)
   ];
 
   dodecPositions.forEach(function (pos) {
-    var size = 1 + Math.random() * 2;
+    var size = 1.2 + Math.random() * 1.5;
     var geo  = new THREE.DodecahedronGeometry(size, 0);
     var mat  = new THREE.MeshBasicMaterial({
-      color: new THREE.Color().setHSL(0.6 + Math.random() * 0.15, 0.3, 0.25),
+      color: new THREE.Color().setHSL(0.55 + Math.random() * 0.15, 0.35, 0.3),
       wireframe: true,
       transparent: true,
-      opacity: 0.15
+      opacity: 0.12
     });
     var mesh = new THREE.Mesh(geo, mat);
     mesh.position.copy(pos);
     mesh.rotation.set(Math.random() * Math.PI, Math.random() * Math.PI, 0);
     mesh.userData.rotSpeed = {
-      x: (Math.random() - 0.5) * 0.003,
-      y: (Math.random() - 0.5) * 0.003,
-      z: (Math.random() - 0.5) * 0.002
+      x: (Math.random() - 0.5) * 0.002,
+      y: (Math.random() - 0.5) * 0.002,
+      z: (Math.random() - 0.5) * 0.001
     };
     scene.add(mesh);
     dodecahedrons.push(mesh);
   });
-
-  /* ============================================
-     INTERPOLATION HELPERS
-     ============================================ */
-  function interpolatePath(points, t) {
-    var segments = points.length - 1;
-    var segT = t * segments;
-    var idx  = Math.floor(segT);
-    if (idx >= segments) idx = segments - 1;
-    var localT = segT - idx;
-    // Smoothstep for nicer easing
-    localT = localT * localT * (3 - 2 * localT);
-    var p = new THREE.Vector3();
-    p.lerpVectors(points[idx], points[idx + 1], localT);
-    return p;
-  }
 
   /* ============================================
      SCROLL INPUT
@@ -766,36 +807,32 @@ html, body {
      RENDER LOOP
      ============================================ */
   var clock = new THREE.Clock();
-  var currentLookAt = new THREE.Vector3();
-  currentLookAt.copy(lookAtTargets[0]);
 
   function animate() {
     requestAnimationFrame(animate);
 
     var elapsed = clock.getElapsedTime();
 
-    // Lerp scroll
+    // Lerp scroll for smooth, cinematic movement
     scrollCurrent += (scrollTarget - scrollCurrent) * LERP;
     var t = scrollCurrent / MAX_SCROLL; // 0..1
 
     // Camera position along path
-    var camPos = interpolatePath(cameraPath, t);
-    camera.position.lerp(camPos, 0.1);
+    var camPos = cameraPathCurve.getPointAt(t);
+    camera.position.lerp(camPos, 0.08); // Gentle lerp for smoothness
 
-    // Camera look-at along targets
-    var lookTarget = interpolatePath(lookAtTargets, t);
-    currentLookAt.lerp(lookTarget, 0.08);
-    camera.lookAt(currentLookAt);
+    // Camera look-at: look forward along path tangent
+    var tangent = cameraPathCurve.getTangentAt(t).normalize();
+    var lookAtTarget = new THREE.Vector3().copy(camPos).add(tangent.multiplyScalar(12));
+    camera.lookAt(lookAtTarget);
 
-    // Rotate chamber structures
-    distantRingsGroup.rotation.x += distantRingsGroup.userData.rotSpeed.x;
-    distantRingsGroup.rotation.y += distantRingsGroup.userData.rotSpeed.y;
+    // Billboard text planes — always face camera
+    allTextMeshes.forEach(function (mesh) {
+      mesh.quaternion.copy(camera.quaternion);
+    });
 
-    haloParticles.rotation.y += haloParticles.userData.rotSpeed;
-
-    convergingGroup.rotation.x += convergingGroup.userData.rotSpeed.x;
-    convergingGroup.rotation.y += convergingGroup.userData.rotSpeed.y;
-    convergingGroup.rotation.z += convergingGroup.userData.rotSpeed.z;
+    // Very subtle tunnel rotation for visual interest
+    tunnelGroup.rotation.z += tunnelGroup.userData.rotSpeed;
 
     // Ambient dodecahedrons
     dodecahedrons.forEach(function (d) {
@@ -804,55 +841,72 @@ html, body {
       d.rotation.z += d.userData.rotSpeed.z;
     });
 
-    // -- Animate particle streams --
-    var s1Pos = stream1.geometry.attributes.position.array;
-    for (var i = 0; i < s1Pos.length; i += 3) {
-      s1Pos[i + 1] += Math.sin(elapsed * 0.5 + i) * 0.003;
+    // Subtle particle drift
+    var p1Pos = particles1.geometry.attributes.position.array;
+    for (var k = 0; k < p1Pos.length; k += 3) {
+      p1Pos[k + 1] += Math.sin(elapsed * 0.2 + k * 0.03) * 0.003;
     }
-    stream1.geometry.attributes.position.needsUpdate = true;
+    particles1.geometry.attributes.position.needsUpdate = true;
 
-    var s2Pos = stream2.geometry.attributes.position.array;
-    for (var j = 0; j < s2Pos.length; j += 3) {
-      s2Pos[j + 1] += Math.sin(elapsed * 0.4 + j) * 0.003;
+    var p2Pos = particles2.geometry.attributes.position.array;
+    for (var k = 0; k < p2Pos.length; k += 3) {
+      p2Pos[k + 1] += Math.sin(elapsed * 0.18 + k * 0.03) * 0.003;
     }
-    stream2.geometry.attributes.position.needsUpdate = true;
+    particles2.geometry.attributes.position.needsUpdate = true;
 
-    // Subtle star drift
-    var sp = stars.geometry.attributes.position.array;
-    for (var k = 0; k < sp.length; k += 3) {
-      sp[k + 1] += Math.sin(elapsed * 0.1 + k * 0.01) * 0.002;
+    var p3Pos = particles3.geometry.attributes.position.array;
+    for (var k = 0; k < p3Pos.length; k += 3) {
+      p3Pos[k + 1] += Math.sin(elapsed * 0.22 + k * 0.03) * 0.003;
+    }
+    particles3.geometry.attributes.position.needsUpdate = true;
+
+    var starPos = stars.geometry.attributes.position.array;
+    for (var k = 0; k < starPos.length; k += 3) {
+      starPos[k + 1] += Math.sin(elapsed * 0.1 + k * 0.01) * 0.002;
     }
     stars.geometry.attributes.position.needsUpdate = true;
 
-    // -- Text plane distance-based fade --
+    // Text plane distance-based fade
     var worldPos = new THREE.Vector3();
     allTextMeshes.forEach(function (mesh) {
       mesh.getWorldPosition(worldPos);
       var dist = camera.position.distanceTo(worldPos);
       var opacity;
-      if (dist < 5) {
+      if (dist < 6) {
         opacity = 1.0;
-      } else if (dist < 20) {
-        opacity = 1.0 - (dist - 5) / 15;
+      } else if (dist < 25) {
+        opacity = 1.0 - (dist - 6) / 19;
       } else {
         opacity = 0;
       }
       mesh.material.opacity = Math.max(0, Math.min(1, opacity));
     });
 
-    // -- Light pulsing --
-    light1.intensity = 1.5 + Math.sin(elapsed * 0.7) * 0.3;
+    // Light pulsing
+    light1.intensity = 1.5 + Math.sin(elapsed * 0.6) * 0.3;
     light2.intensity = 1.5 + Math.sin(elapsed * 0.5 + 1) * 0.3;
-    light3.intensity = 1.5 + Math.sin(elapsed * 0.6 + 2) * 0.3;
+    light3.intensity = 1.5 + Math.sin(elapsed * 0.55 + 2) * 0.3;
 
-    // -- UI updates --
+    // Dynamic fog color transitions between sections
+    var fogColor = new THREE.Color();
+    if (t < 0.33) {
+      fogColor.setHex(0x0a1628); // Indigo
+    } else if (t < 0.66) {
+      fogColor.setHex(0x1a1620); // Darker purple-gray
+    } else {
+      fogColor.setHex(0x0a1820); // Dark blue-gray
+    }
+    scene.fog.color.lerp(fogColor, 0.015);
+    scene.background.lerp(fogColor, 0.015);
+
+    // UI updates
     var pct = t * 100;
     progressBar.style.width = pct + '%';
 
     // Active section
     var activeSection = 0;
-    if (t > 0.65) activeSection = 2;
-    else if (t > 0.35) activeSection = 1;
+    if (t > 0.68) activeSection = 2;
+    else if (t > 0.40) activeSection = 1;
 
     pips.forEach(function (pip, idx) {
       pip.classList.toggle('active', idx <= activeSection);

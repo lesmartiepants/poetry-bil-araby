@@ -1,8 +1,12 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import { VitePWA } from 'vite-plugin-pwa'
+import { sentryVitePlugin } from '@sentry/vite-plugin'
 
 export default defineConfig({
+  build: {
+    sourcemap: 'hidden',
+  },
   plugins: [
     react(),
     VitePWA({
@@ -34,7 +38,17 @@ export default defineConfig({
           }
         ]
       }
-    })
+    }),
+    // Sentry source map upload — only runs during production build when auth token is present
+    sentryVitePlugin({
+      org: process.env.SENTRY_ORG,
+      project: process.env.SENTRY_PROJECT,
+      authToken: process.env.SENTRY_AUTH_TOKEN,
+      sourcemaps: {
+        filesToDeleteAfterUpload: ['./dist/**/*.map'],
+      },
+      disable: !process.env.SENTRY_AUTH_TOKEN,
+    }),
   ],
   server: {
     watch: {

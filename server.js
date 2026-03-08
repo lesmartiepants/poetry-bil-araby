@@ -1,3 +1,19 @@
+import * as Sentry from '@sentry/node';
+import dotenv from 'dotenv';
+dotenv.config();
+
+// Initialize Sentry BEFORE all other imports per official guidance
+if (process.env.SENTRY_DSN) {
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    environment: process.env.NODE_ENV || 'development',
+    release: process.env.SENTRY_RELEASE || undefined,
+    sendDefaultPii: true,
+    tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.2 : 1.0,
+    includeLocalVariables: true,
+  });
+}
+
 import express from 'express';
 import pg from 'pg';
 import cors from 'cors';
@@ -5,21 +21,8 @@ import helmet from 'helmet';
 import { query, param, validationResult } from 'express-validator';
 import crypto from 'crypto';
 import rateLimit from 'express-rate-limit';
-import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { resolve } from 'path';
-import * as Sentry from '@sentry/node';
-
-dotenv.config();
-
-// Initialize Sentry for backend error tracking (no-op if DSN not configured)
-if (process.env.SENTRY_DSN) {
-  Sentry.init({
-    dsn: process.env.SENTRY_DSN,
-    environment: process.env.NODE_ENV || 'development',
-    tracesSampleRate: 0,
-  });
-}
 
 const { Pool } = pg;
 const app = express();
@@ -87,6 +90,20 @@ async function checkQualityScoreColumn() {
   }
 }
 
+// Check if translation cache columns exist (graceful pre-migration fallback)
+let hasTranslationColumns = false;
+async function checkTranslationColumns() {
+  try {
+    const result = await pool.query(
+      "SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'poems' AND column_name = 'cached_translation' LIMIT 1"
+    );
+    hasTranslationColumns = result.rows.length > 0;
+    log.info('DB', `Translation cache columns: ${hasTranslationColumns ? 'available' : 'not found'}`);
+  } catch {
+    hasTranslationColumns = false;
+  }
+}
+
 // Helper: returns the SQL expression for poem content based on column availability
 function poemContentExpr() {
   return hasDiacritizedColumn ? 'COALESCE(p.diacritized_content, p.content)' : 'p.content';
@@ -105,6 +122,7 @@ pool.query('SELECT NOW()', (err, res) => {
     log.info('DB', `Connected to PostgreSQL at ${res.rows[0].now}`);
     checkDiacritizedColumn();
     checkQualityScoreColumn();
+    checkTranslationColumns();
   }
 });
 
@@ -456,6 +474,52 @@ app.get('/api/poems/:id', [
     res.json(formattedPoem);
   } catch (error) {
     log.error('Poems', `Error fetching poem by ID: ${error.message}`, error.stack);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Save cached translation for a poem (write-once, rate-limited)
+const translationWriteLimit = rateLimit({ windowMs: 60_000, max: 10, standardHeaders: true, legacyHeaders: false });
+
+app.post('/api/poems/:id/translation', translationWriteLimit, [
+  param('id').isInt({ min: 1 }).withMessage('Invalid poem ID'),
+  validate
+], async (req, res) => {
+  if (!hasTranslationColumns) {
+    return res.status(503).json({ error: 'Translation columns not available' });
+  }
+
+  try {
+    const { translation, explanation, authorBio } = req.body;
+
+    // Content validation
+    if (!translation || typeof translation !== 'string') {
+      return res.status(400).json({ error: 'translation is required and must be a string' });
+    }
+    if (translation.length > 10_000 || (explanation?.length || 0) > 10_000 || (authorBio?.length || 0) > 5_000) {
+      return res.status(400).json({ error: 'Content exceeds maximum length' });
+    }
+
+    // Strip HTML tags (XSS prevention)
+    const clean = (s) => s?.replace(/<[^>]*>/g, '') || null;
+
+    // Only write if not already translated (write-once guard)
+    const result = await pool.query(
+      `UPDATE poems SET cached_translation = $1, cached_explanation = $2,
+       cached_author_bio = $3, translated_at = NOW()
+       WHERE id = $4 AND translated_at IS NULL
+       RETURNING id`,
+      [clean(translation), clean(explanation), clean(authorBio), req.params.id]
+    );
+
+    if (result.rowCount === 0) {
+      return res.json({ status: 'already_translated' });
+    }
+
+    log.info('Translation', `Saved translation for poem ${req.params.id}`);
+    res.json({ status: 'saved' });
+  } catch (error) {
+    log.error('Translation', `Error saving translation: ${error.message}`, error.stack);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -1199,11 +1263,12 @@ if (currentFile === mainFile) {
       log.info('Server', 'Keep-alive timeout cleared');
     }
 
-    // Close server first, then database pool
-    server.close(() => {
+    // Close server first, then database pool, then flush Sentry
+    server.close(async () => {
       log.info('Server', 'HTTP server closed');
-      pool.end(() => {
+      pool.end(async () => {
         log.info('Server', 'Database pool closed');
+        await Sentry.close(2000);
         process.exit(0);
       });
     });

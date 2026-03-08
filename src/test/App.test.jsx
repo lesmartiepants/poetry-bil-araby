@@ -166,16 +166,23 @@ describe('DiwanApp', () => {
 
     it('shows loading state when generating audio', async () => {
       mockAutoLoadFetch()
-      // Auto-explain fires after poem loads — provide a mock so it doesn't consume the play mock
-      global.fetch.mockResolvedValueOnce({ ok: true, body: null, json: async () => ({}) })
       render(<DiwanApp />)
 
       await waitFor(() => {
         expect(document.body.textContent).toContain('نزار قباني')
       })
 
-      // Make next fetch hang to keep loading state
-      global.fetch.mockImplementationOnce(() => new Promise(() => {}))
+      // Replace fetch with a version that hangs for audio (TTS) calls
+      // but resolves normally for everything else (auto-explain, streaming, etc.)
+      const originalMock = global.fetch
+      global.fetch = vi.fn((url) => {
+        if (typeof url === 'string' && url.includes('models/gemini')) {
+          // Gemini TTS / audio call — hang forever to keep loading state
+          return new Promise(() => {})
+        }
+        // All other calls resolve immediately
+        return Promise.resolve({ ok: true, body: null, json: async () => ({}) })
+      })
 
       const playBtn = screen.getByLabelText('Play recitation')
       await userEvent.click(playBtn)

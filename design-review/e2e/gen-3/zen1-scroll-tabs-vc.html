@@ -571,10 +571,10 @@
       flex-direction: column;
       align-items: flex-end;
       justify-content: center;
-      gap: 4px;
+      gap: 0px;
       z-index: 50;
       padding: 8px 0;
-      pointer-events: none;
+      pointer-events: auto;
     }
 
     .scroll-tab {
@@ -591,13 +591,14 @@
       cursor: pointer;
       pointer-events: auto;
       transform: translateX(48px);
-      transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
-                  background 0.4s ease,
-                  color 0.4s ease,
-                  box-shadow 0.4s ease;
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+                  background 0.3s ease-out,
+                  color 0.3s ease-out,
+                  box-shadow 0.3s ease-out;
       border-radius: 6px 0 0 6px;
       clip-path: polygon(8px 0%, 100% 0%, 100% 100%, 0% 100%, 0% 4px);
       backdrop-filter: blur(8px);
+      margin: 2px 0;
     }
 
     .scroll-tab:nth-child(1)  { transform: translateX(48px) rotate(-0.8deg); }
@@ -609,19 +610,7 @@
     .scroll-tab:nth-child(8)  { transform: translateX(50px) rotate(-0.6deg); }
     .scroll-tab:nth-child(10) { transform: translateX(48px) rotate(0.3deg); }
 
-    .scroll-tab:hover {
-      transform: translateX(4px) rotate(0deg) !important;
-      background: linear-gradient(135deg, rgba(139, 115, 85, 0.3) 0%, rgba(160, 133, 96, 0.2) 100%);
-      color: #a08560;
-      box-shadow: -4px 0 16px rgba(139, 115, 85, 0.15);
-    }
-
-    /* Cascade: adjacent tabs partially reveal on hover */
-    .scroll-tab:hover + .scroll-tab,
-    .scroll-tab:hover + .tab-divider + .scroll-tab {
-      transform: translateX(28px) rotate(0deg) !important;
-      color: rgba(139, 115, 85, 0.65);
-    }
+    /* Individual tab hover handled by strip:hover rules above */
 
     .scroll-tab.active {
       transform: translateX(4px) rotate(0deg) !important;
@@ -630,7 +619,45 @@
       box-shadow: -4px 0 20px rgba(196, 164, 108, 0.2);
     }
 
+    /* JS-driven unfurl state for mobile two-tap */
+    .scroll-tab.unfurled {
+      transform: translateX(4px) rotate(0deg) !important;
+      background: linear-gradient(135deg, rgba(139, 115, 85, 0.25) 0%, rgba(160, 133, 96, 0.15) 100%);
+      color: #a08560;
+      box-shadow: -4px 0 12px rgba(139, 115, 85, 0.12);
+    }
+
+    /* Desktop: hovered tab gets highlight when strip is unfurled */
+    .scroll-tab.unfurled:hover {
+      background: linear-gradient(135deg, rgba(139, 115, 85, 0.3) 0%, rgba(160, 133, 96, 0.2) 100%);
+      color: #a08560;
+      box-shadow: -4px 0 16px rgba(139, 115, 85, 0.15);
+    }
+
     .scroll-tab svg { width: 18px; height: 18px; }
+
+    /* Icon tap feedback animations */
+    @keyframes tapPulse {
+      0% { transform: scale(1); }
+      40% { transform: scale(1.35); }
+      100% { transform: scale(1); }
+    }
+    @keyframes heartPop {
+      0% { transform: scale(1); }
+      30% { transform: scale(1.5); }
+      50% { transform: scale(0.9); }
+      70% { transform: scale(1.2); }
+      100% { transform: scale(1); }
+    }
+    .scroll-tab.tap-feedback .tab-content {
+      animation: tapPulse 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .scroll-tab[data-vc="like"].tap-feedback .tab-content {
+      animation: heartPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .scroll-tab.tap-feedback {
+      color: #c4a46c !important;
+    }
 
     .tab-content {
       display: flex;
@@ -660,7 +687,10 @@
       background: linear-gradient(135deg, rgba(107, 90, 66, 0.12) 0%, rgba(107, 90, 66, 0.06) 100%);
       color: rgba(107, 90, 66, 0.45);
     }
-    [data-theme="light"] .scroll-tab:hover {
+    [data-theme="light"] .scroll-tab.unfurled {
+      color: rgba(107, 90, 66, 0.65);
+    }
+    [data-theme="light"] .scroll-tab.unfurled:hover {
       background: linear-gradient(135deg, rgba(107, 90, 66, 0.25) 0%, rgba(139, 115, 85, 0.15) 100%);
       color: #6b5a42;
     }
@@ -746,18 +776,27 @@
     }
 
     /* Responsive */
-    @media (max-width: 480px) {
+    @media (max-width: 768px) {
       .splash-brand-en { font-size: 2.5rem; }
       .splash-brand-ar { font-size: 1.5rem; }
 
-      .scroll-tabs-strip { width: 64px; }
+      .scroll-tabs-strip { width: 72px; }
       .scroll-tab {
-        width: 56px;
+        width: 64px;
         min-height: 44px;
-        transform: translateX(36px);
+        /* Wider resting state on mobile: ~32px visible so icons are faintly seen */
+        transform: translateX(32px) !important;
       }
-      .scroll-tab:hover { transform: translateX(2px) rotate(0deg) !important; }
-      .vc-settings-flyout { right: 68px; min-width: 160px; max-width: calc(100vw - 76px); }
+      .scroll-tab.unfurled {
+        transform: translateX(2px) rotate(0deg) !important;
+      }
+      .scroll-tab.active {
+        transform: translateX(2px) rotate(0deg) !important;
+      }
+      .scroll-tab.unfurled {
+        transform: translateX(2px) rotate(0deg) !important;
+      }
+      .vc-settings-flyout { right: 76px; min-width: 160px; max-width: calc(100vw - 84px); }
     }
   </style>
 </head>
@@ -1123,19 +1162,13 @@
     // ========== SCROLL TAB CONTROLS ==========
     var settingsBtn = document.getElementById('vcSettingsBtn');
     var settingsFlyout = document.getElementById('settingsFlyout');
-    if (settingsBtn && settingsFlyout) {
-      settingsBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        settingsBtn.classList.toggle('active');
-        settingsFlyout.classList.toggle('visible');
-      });
-      document.addEventListener('click', function(e) {
-        if (!settingsFlyout.contains(e.target) && !settingsBtn.contains(e.target)) {
-          settingsFlyout.classList.remove('visible');
-          settingsBtn.classList.remove('active');
-        }
-      });
-    }
+    // Settings flyout close-on-outside-click (open is handled by executeAction)
+    document.addEventListener('click', function(e) {
+      if (settingsFlyout && settingsBtn && !settingsFlyout.contains(e.target) && !settingsBtn.contains(e.target)) {
+        settingsFlyout.classList.remove('visible');
+        settingsBtn.classList.remove('active');
+      }
+    });
 
     document.querySelectorAll('.vc-setting-toggle').forEach(function(toggle) {
       toggle.addEventListener('click', function() {
@@ -1143,23 +1176,124 @@
       });
     });
 
-    document.querySelectorAll('.scroll-tab[data-vc]').forEach(function(btn) {
+    // ========== TWO-TAP MOBILE + DOMINO UNFURL ==========
+    var isTouchDevice = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+    var allTabs = document.querySelectorAll('.scroll-tab[data-vc]');
+    var tabsUnfurled = false;
+    var dominoTimers = [];
+
+    function unfurlAllTabs(originIndex) {
+      if (tabsUnfurled) return;
+      tabsUnfurled = true;
+      dominoTimers.forEach(function(t) { clearTimeout(t); });
+      dominoTimers = [];
+      // Ripple outward from tapped tab: closest first, furthest last
+      var origin = typeof originIndex === 'number' ? originIndex : 0;
+      allTabs.forEach(function(tab, i) {
+        var distance = Math.abs(i - origin);
+        var delay = 15 + (distance * 70);
+        dominoTimers.push(setTimeout(function() {
+          tab.classList.add('unfurled');
+          tab.style.transform = '';
+        }, delay));
+      });
+    }
+
+    function collapseAllTabs() {
+      if (!tabsUnfurled) return;
+      tabsUnfurled = false;
+      dominoTimers.forEach(function(t) { clearTimeout(t); });
+      dominoTimers = [];
+      // Reverse domino: last tab first
+      var tabArray = Array.prototype.slice.call(allTabs);
+      tabArray.reverse().forEach(function(tab, i) {
+        var delay = 10 + (i * 40);
+        dominoTimers.push(setTimeout(function() {
+          tab.classList.remove('unfurled');
+          if (tab.classList.contains('active')) {
+            tab.style.transform = '';
+          }
+        }, delay));
+      });
+    }
+
+    function executeAction(btn, shouldCollapse) {
+      var action = btn.dataset.vc;
+
+      // Trigger tap feedback animation
+      btn.classList.remove('tap-feedback');
+      // Force reflow to restart animation
+      void btn.offsetWidth;
+      btn.classList.add('tap-feedback');
+      setTimeout(function() { btn.classList.remove('tap-feedback'); }, 500);
+
+      if (action === 'like' || action === 'listen') {
+        btn.classList.toggle('active');
+      }
+      if (action === 'copy') {
+        var poemText = document.querySelector('.poem-text');
+        if (poemText && navigator.clipboard) {
+          navigator.clipboard.writeText(poemText.innerText);
+          btn.classList.add('active');
+          setTimeout(function() { btn.classList.remove('active'); }, 1500);
+        }
+      }
+      if (action === 'settings') {
+        btn.classList.toggle('active');
+        settingsFlyout.classList.toggle('visible');
+      }
+
+      // Collapse after animation (except settings)
+      if (shouldCollapse && action !== 'settings') {
+        setTimeout(function() { collapseAllTabs(); }, 500);
+      }
+    }
+
+    allTabs.forEach(function(btn, idx) {
       btn.addEventListener('click', function(e) {
         e.stopPropagation();
-        var action = this.dataset.vc;
-        if (action === 'like' || action === 'listen') {
-          this.classList.toggle('active');
-        }
-        if (action === 'copy') {
-          var poemText = document.querySelector('.poem-text');
-          if (poemText && navigator.clipboard) {
-            navigator.clipboard.writeText(poemText.innerText);
-            this.classList.add('active');
-            var self = this;
-            setTimeout(function() { self.classList.remove('active'); }, 1500);
+        if (isTouchDevice) {
+          if (!tabsUnfurled) {
+            unfurlAllTabs(idx);
+          } else {
+            executeAction(btn, true);
           }
+        } else {
+          executeAction(btn, false);
         }
       });
+    });
+
+    // Desktop: mouseenter on each tab triggers ripple from that tab outward
+    if (!isTouchDevice) {
+      var strip = document.getElementById('vcStrip');
+      var leaveTimer = null;
+      allTabs.forEach(function(tab, idx) {
+        tab.addEventListener('mouseenter', function() {
+          if (leaveTimer) { clearTimeout(leaveTimer); leaveTimer = null; }
+          unfurlAllTabs(idx);
+        });
+      });
+      if (strip) {
+        strip.addEventListener('mouseleave', function() {
+          leaveTimer = setTimeout(function() {
+            if (!settingsFlyout.classList.contains('visible')) {
+              collapseAllTabs();
+            }
+          }, 100);
+        });
+      }
+    }
+
+    // Collapse when tapping outside the strip on mobile
+    document.addEventListener('click', function(e) {
+      var strip = document.getElementById('vcStrip');
+      if (isTouchDevice && tabsUnfurled && strip && !strip.contains(e.target) && !settingsFlyout.contains(e.target)) {
+        collapseAllTabs();
+        // Also close settings flyout
+        settingsFlyout.classList.remove('visible');
+        if (settingsBtn) settingsBtn.classList.remove('active');
+      }
     });
 
     // Re-init lucide for new VC icons

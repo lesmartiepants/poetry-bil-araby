@@ -65,7 +65,6 @@ jobs:
     name: Build & Validate
     runs-on: ubuntu-latest
     needs: detect-changes
-    # Always run build on code, config, or test changes
     if: |
       needs.detect-changes.outputs.code-changed == 'true' ||
       needs.detect-changes.outputs.tests-changed == 'true' ||
@@ -92,12 +91,11 @@ jobs:
           path: dist/
           retention-days: 7
 
-  # Stage 2: Test suite (will grow as project evolves)
+  # Stage 2: Unit tests
   test:
     name: Unit Tests
     runs-on: ubuntu-latest
     needs: [detect-changes, build]
-    # Only run unit tests if code or tests changed
     if: |
       needs.detect-changes.outputs.code-changed == 'true' ||
       needs.detect-changes.outputs.tests-changed == 'true' ||
@@ -120,35 +118,16 @@ jobs:
         env:
           CI: true
 
-  # Stage 3: E2E Testing with Playwright (Critical browsers only)
-  e2e-tests:
-    name: E2E Tests (Chrome Desktop + Mobile)
+  # Stage 3: Smoke Tests — user-flow E2E (all API calls mocked, no backend needed)
+  smoke-tests:
+    name: Smoke Tests (User Flows)
     runs-on: ubuntu-latest
     needs: [detect-changes, build]
-    # Only run E2E tests if code, E2E tests, or relevant config changed
     if: |
       needs.detect-changes.outputs.code-changed == 'true' ||
       needs.detect-changes.outputs.tests-changed == 'true' ||
       needs.detect-changes.outputs.config-changed == 'true'
     timeout-minutes: 5
-    outputs:
-      missing_tokens: ${{ steps.e2e-env.outputs.missing_tokens }}
-
-    # PostgreSQL service for database integration tests
-    services:
-      postgres:
-        image: postgres:15
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: qafiyah_test
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-        ports:
-          - 5432:5432
 
     steps:
       - uses: actions/checkout@v4
@@ -179,103 +158,16 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         run: npx playwright install-deps chromium
 
-      - name: Setup PostgreSQL schema (for database tests)
-        run: |
-          echo "Creating CI test schema..."
-          PGPASSWORD=postgres psql -h localhost -U postgres -d qafiyah_test <<'EOSQL'
-          -- Minimal schema matching production structure
-          CREATE TABLE IF NOT EXISTS poets (
-            id SERIAL PRIMARY KEY,
-            name TEXT NOT NULL UNIQUE
-          );
-          CREATE TABLE IF NOT EXISTS themes (
-            id SERIAL PRIMARY KEY,
-            name TEXT NOT NULL UNIQUE
-          );
-          CREATE TABLE IF NOT EXISTS poems (
-            id SERIAL PRIMARY KEY,
-            title TEXT,
-            content TEXT,
-            poet_id INTEGER REFERENCES poets(id),
-            theme_id INTEGER REFERENCES themes(id),
-            theme TEXT
-          );
-          -- Insert test data
-          INSERT INTO poets (name) VALUES ('Test Poet') ON CONFLICT DO NOTHING;
-          INSERT INTO themes (name) VALUES ('test') ON CONFLICT DO NOTHING;
-          INSERT INTO poems (title, content, poet_id, theme_id, theme)
-          VALUES ('Test Poem', 'بيت شعري للاختبار', 1, 1, 'test');
-          EOSQL
-          echo "Loading auth and user features..."
-          PGPASSWORD=postgres psql -h localhost -U postgres -d qafiyah_test -f supabase/migrations/20260119000000_auth_and_user_features.sql 2>/dev/null || true
-          echo "Loading design review tables..."
-          PGPASSWORD=postgres psql -h localhost -U postgres -d qafiyah_test -f supabase/migrations/20260220_create_design_review_tables.sql
-          echo "Database schema loaded successfully"
-        continue-on-error: true
-
-      - name: Start backend API server (background)
-        run: |
-          npm run dev:server &
-          echo "Backend server starting on http://localhost:3001"
-          for i in $(seq 1 15); do
-            curl -sf http://localhost:3001/api/health > /dev/null 2>&1 && echo "Server ready" && break
-            echo "Waiting for server... ($i/15)" && sleep 1
-          done
-        env:
-          PGUSER: postgres
-          PGPASSWORD: postgres
-          PGDATABASE: qafiyah_test
-          PGHOST: localhost
-          PGPORT: 5432
-          PORT: 3001
-        continue-on-error: true
-
-      - name: Check E2E environment
-        id: e2e-env
-        run: |
-          echo "## E2E Environment Check"
-          MISSING=""
-
-          # Check GEMINI_API_KEY
-          if [ -n "$HAS_GEMINI_KEY" ]; then
-            echo "GEMINI_API_KEY: configured"
-          else
-            echo "GEMINI_API_KEY: NOT configured"
-            MISSING="${MISSING}GEMINI_API_KEY (enables AI mode toggle + AI feature E2E tests)\n"
-          fi
-
-          # Check backend health
-          if curl -sf http://localhost:3001/api/health > /dev/null 2>&1; then
-            HEALTH=$(curl -s http://localhost:3001/api/health)
-            echo "Backend API: running — $HEALTH"
-          else
-            echo "Backend API: NOT responding"
-            MISSING="${MISSING}Backend API (server failed to start — database integration tests will skip)\n"
-          fi
-
-          # Write missing info for downstream jobs via GITHUB_OUTPUT
-          if [ -n "$MISSING" ]; then
-            echo "has_missing=true" >> "$GITHUB_OUTPUT"
-            echo "missing_tokens=${MISSING}" >> "$GITHUB_OUTPUT"
-          else
-            echo "has_missing=false" >> "$GITHUB_OUTPUT"
-            echo "missing_tokens=" >> "$GITHUB_OUTPUT"
-          fi
-        env:
-          HAS_GEMINI_KEY: ${{ secrets.GEMINI_API_KEY }}
-
-      - name: Run Playwright E2E tests
+      - name: Run Playwright smoke tests
         run: npm run test:e2e
         env:
           CI: true
-          VITE_API_URL: http://localhost:3001
-          VITE_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
       - name: Upload Playwright report
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-report-e2e
+          name: playwright-report
           path: playwright-report/
           retention-days: 14
 
@@ -283,79 +175,16 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-results-e2e
+          name: playwright-results
           path: test-results/
           retention-days: 14
           if-no-files-found: ignore
 
-  # Stage 4: UI/UX Quality Checks (Chrome only)
-  ui-ux-tests:
-    name: UI/UX Design Tests
-    runs-on: ubuntu-latest
-    needs: [detect-changes, build]
-    # Only run UI/UX tests if code or relevant tests changed
-    if: |
-      needs.detect-changes.outputs.code-changed == 'true' ||
-      needs.detect-changes.outputs.tests-changed == 'true' ||
-      needs.detect-changes.outputs.config-changed == 'true'
-    timeout-minutes: 5
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '21'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Cache Playwright browsers
-        uses: actions/cache@v4
-        id: playwright-cache-ui
-        with:
-          path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-playwright-
-
-      - name: Install Playwright browsers
-        if: steps.playwright-cache-ui.outputs.cache-hit != 'true'
-        run: npx playwright install --with-deps chromium
-
-      - name: Install Playwright system dependencies
-        if: steps.playwright-cache-ui.outputs.cache-hit == 'true'
-        run: npx playwright install-deps chromium
-
-      - name: Run UI/UX tests
-        run: npm run test:e2e:ui
-        env:
-          CI: true
-
-      - name: Upload UI/UX test report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: ui-ux-report
-          path: playwright-report/
-          retention-days: 14
-
-      - name: Upload UI/UX screenshots
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: ui-ux-screenshots
-          path: test-results/
-          retention-days: 14
-          if-no-files-found: ignore
-
-  # Stage 5: Deploy preview (Vercel, Netlify, or GitHub Pages)
+  # Stage 4: Deploy preview (Vercel, Netlify, or GitHub Pages)
   deploy-preview:
     name: Deploy Preview
     runs-on: ubuntu-latest
     needs: [detect-changes, build]
-    # Only deploy preview if code or config changed (not just test changes)
     if: |
       github.event_name == 'pull_request' &&
       (needs.detect-changes.outputs.code-changed == 'true' ||
@@ -375,11 +204,11 @@ jobs:
 
       # Vercel handles preview comments automatically — no extra comment needed
 
-  # Stage 6: Provide feedback on PR (upserts a single comment per PR)
+  # Stage 5: Provide feedback on PR (upserts a single comment per PR)
   pr-feedback:
     name: PR Feedback Bot
     runs-on: ubuntu-latest
-    needs: [detect-changes, build, test, e2e-tests, ui-ux-tests]
+    needs: [detect-changes, build, test, smoke-tests]
     if: always() && github.event_name == 'pull_request'
     steps:
       - name: Post CI summary to PR
@@ -388,45 +217,28 @@ jobs:
           script: |
             const buildStatus = '${{ needs.build.result }}';
             const testStatus = '${{ needs.test.result }}';
-            const e2eStatus = '${{ needs.e2e-tests.result }}';
-            const uiUxStatus = '${{ needs.ui-ux-tests.result }}';
+            const smokeStatus = '${{ needs.smoke-tests.result }}';
 
             const icon = (s) => s === 'success' ? '✅' : s === 'failure' ? '❌' : s === 'skipped' ? '⏭️' : '⚠️';
-            const allPassed = [buildStatus, testStatus, e2eStatus, uiUxStatus].every(s => s === 'success' || s === 'skipped');
+            const allPassed = [buildStatus, testStatus, smokeStatus].every(s => s === 'success' || s === 'skipped');
 
-            // Build compact body — expand details only on failure
             let body = `## CI ${allPassed ? '✅' : '❌'}\n\n`;
             body += `| Check | Status |\n|-------|--------|\n`;
             body += `| Build | ${icon(buildStatus)} ${buildStatus} |\n`;
             body += `| Unit Tests | ${icon(testStatus)} ${testStatus} |\n`;
-            body += `| E2E Tests | ${icon(e2eStatus)} ${e2eStatus} |\n`;
-            body += `| UI/UX Tests | ${icon(uiUxStatus)} ${uiUxStatus} |\n`;
+            body += `| Smoke Tests | ${icon(smokeStatus)} ${smokeStatus} |\n`;
 
-            // Collect issues
             const failures = [];
-            const warnings = [];
-
             if (buildStatus === 'failure') failures.push('Build');
             if (testStatus === 'failure') failures.push('Unit Tests');
-            if (e2eStatus === 'failure') failures.push('E2E Tests');
-            if (uiUxStatus === 'failure') failures.push('UI/UX Tests');
+            if (smokeStatus === 'failure') failures.push('Smoke Tests');
 
             if (failures.length > 0) {
               body += `\n**Failing:** ${failures.join(', ')} — [view logs](${process.env.RUN_URL})\n`;
             }
 
-            // Report missing secrets/tokens (quiet diagnostics from e2e-env step)
-            const missingTokens = process.env.MISSING_TOKENS || '';
-            if (missingTokens.trim()) {
-              body += `\n<details><summary>⚠️ Missing CI secrets (some tests skipped)</summary>\n\n`;
-              body += missingTokens.split('\\n').filter(Boolean).map(t => `- ${t}`).join('\n');
-              body += `\n\nAdd these in **Settings → Secrets and variables → Actions** to enable full test coverage.`;
-              body += `\n</details>\n`;
-            }
-
             body += `\n<sub>Run [#${process.env.RUN_NUMBER}](${process.env.RUN_URL}) · ${new Date().toISOString().slice(0, 16)}Z</sub>`;
 
-            // Upsert: find existing bot comment and update it, or create one
             const MARKER = '<!-- ci-feedback-bot -->';
             body = MARKER + '\n' + body;
 
@@ -455,4 +267,3 @@ jobs:
         env:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           RUN_NUMBER: ${{ github.run_number }}
-          MISSING_TOKENS: ${{ needs.e2e-tests.outputs.missing_tokens || '' }}

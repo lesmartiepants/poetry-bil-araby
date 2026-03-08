@@ -229,7 +229,11 @@ test.describe('User Flows', () => {
     const catVisible = await categoryButton.isVisible().catch(() => false);
 
     if (catVisible) {
+      // Desktop: open dropdown and select a specific poet
       await categoryButton.click();
+      const poetOption = page.locator('text=نزار قباني').first();
+      await expect(poetOption).toBeVisible({ timeout: 3000 });
+      await poetOption.click();
     } else {
       // Mobile: open Settings gear in VerticalSidebar, then click poet cycle button
       const settingsBtn = page.locator('button[title="Settings"]').first();
@@ -237,7 +241,7 @@ test.describe('User Flows', () => {
       await page.waitForTimeout(300);
       const poetBtn = page.locator('button[title="Poet filter"]').first();
       await expect(poetBtn).toBeVisible({ timeout: 2000 });
-      // Click poet filter to cycle from "All" to "Nizar Qabbani"
+      // Click poet filter to cycle from "All" to next poet
       await poetBtn.click();
     }
 

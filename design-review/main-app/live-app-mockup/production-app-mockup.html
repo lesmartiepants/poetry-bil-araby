@@ -1,0 +1,2531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Poetry بالعربي - Production App (Mocked)</title>
+
+<!-- Google Fonts -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Alexandria:wght@400;600&family=El+Messiri:wght@400;600&family=Lalezar&family=Rakkas&family=Fustat:wght@400;600&family=Kufam:wght@400;600&family=Katibeh&family=Forum&family=Reem+Kufi:wght@400;700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+
+<!-- Lucide Icons -->
+<script src="https://unpkg.com/lucide@latest"></script>
+
+<style>
+/* ============================================
+   1. RESET + BASE
+   ============================================ */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: 'Tajawal', system-ui, sans-serif;
+  min-height: 100dvh;
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ============================================
+   2. THEME CUSTOM PROPERTIES
+   ============================================ */
+[data-theme="dark"] {
+  --bg: #0c0c0e;
+  --text: #e7e5e4;
+  --text-muted: rgba(231,229,228,0.6);
+  --accent: #818cf8;
+  --glass: rgba(28,25,23,0.6);
+  --glass-border: #292524;
+  --gold: #C5A059;
+  --gold-light: #C5A059;
+  --brand: #818cf8;
+  --pill-bg: rgba(28,25,23,0.4);
+  --pill-border: rgba(68,64,60,0.5);
+  --glow-from: rgba(99,102,241,0.3);
+  --glow-via: rgba(147,51,234,0.15);
+  --btn-primary: linear-gradient(135deg, #6366f1, #9333ea);
+  --control-icon: #d6d3d1;
+  --control-hover: #ffffff;
+  --surface: rgba(12,12,14,0.95);
+}
+
+[data-theme="light"] {
+  --bg: #FDFCF8;
+  --text: #292524;
+  --text-muted: rgba(41,37,36,0.6);
+  --accent: #4f46e5;
+  --glass: rgba(255,255,255,0.7);
+  --glass-border: rgba(230,228,225,0.8);
+  --gold: #8B7355;
+  --gold-light: #8B7355;
+  --brand: #4f46e5;
+  --pill-bg: rgba(255,255,255,0.4);
+  --pill-border: rgba(255,255,255,0.6);
+  --surface: rgba(253,252,248,0.97);
+  --control-icon: #1c1917;
+  --control-hover: #000000;
+}
+
+/* ============================================
+   3. FONT CLASSES
+   ============================================ */
+.font-amiri { font-family: 'Amiri', serif; }
+.font-alexandria { font-family: 'Alexandria', sans-serif; }
+.font-messiri { font-family: 'El Messiri', sans-serif; }
+.font-lalezar { font-family: 'Lalezar', cursive; }
+.font-rakkas { font-family: 'Rakkas', cursive; }
+.font-fustat { font-family: 'Fustat', serif; }
+.font-kufam { font-family: 'Kufam', sans-serif; }
+.font-katibeh { font-family: 'Katibeh', cursive; }
+.font-brand-en { font-family: 'Forum', serif; }
+.font-brand-ar { font-family: 'Reem Kufi', sans-serif; }
+
+/* ============================================
+   4. APP SHELL LAYOUT
+   ============================================ */
+.app-shell {
+  height: 100dvh;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg);
+  color: var(--text);
+  transition: all 0.3s ease-in-out;
+}
+
+.app-content {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  position: relative;
+}
+
+.main-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow: hidden;
+}
+
+.main-scroll {
+  flex: 1;
+  overflow-y: auto;
+  position: relative;
+  z-index: 10;
+  padding: 0 1rem;
+  padding-bottom: 7rem;
+}
+
+/* ============================================
+   5. SCROLL PROGRESS BAR
+   ============================================ */
+.scroll-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(to right, #6366f1, #9333ea);
+  transform-origin: left;
+  transform: scaleX(0);
+  z-index: 100;
+  opacity: 0.85;
+  transition: transform 0.1s;
+}
+
+/* ============================================
+   6. HEADER / BRANDING
+   ============================================ */
+.header {
+  position: fixed;
+  top: 1rem;
+  left: 0;
+  right: 0;
+  z-index: 40;
+  pointer-events: none;
+  transition: opacity 0.3s;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 1rem;
+  padding: 0 1rem;
+}
+
+.header-luminescence {
+  text-shadow: 0 0 30px rgba(99, 102, 241, 0.6);
+}
+
+[data-theme="light"] .header-luminescence {
+  text-shadow: 0 0 20px rgba(79, 70, 229, 0.2);
+}
+
+.app-branding-rtl {
+  direction: rtl;
+}
+
+/* ============================================
+   7. MINIMAL FRAME (SVG BRACKETS)
+   ============================================ */
+.minimal-frame {
+  position: relative;
+  width: 100%;
+  max-width: 550px;
+  margin: 0 auto 16px;
+  padding: 28px 40px;
+}
+
+.minimal-frame svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.frame-line {
+  fill: none;
+  stroke: var(--gold);
+  stroke-width: 2;
+  opacity: 0.28;
+  stroke-linecap: square;
+}
+
+/* ============================================
+   8. POEM DISPLAY
+   ============================================ */
+.poem-meta {
+  text-align: center;
+  padding-top: 2rem;
+  padding-bottom: 0.25rem;
+}
+
+.poet-name {
+  color: var(--gold);
+  opacity: 0.9;
+  font-size: clamp(1.875rem, 3.5vw, 2.25rem);
+}
+
+.title-arabic {
+  color: var(--gold);
+  font-weight: bold;
+  font-size: clamp(1.875rem, 3.5vw, 2.25rem);
+}
+
+.subtitle-en {
+  opacity: 0.45;
+  font-size: clamp(10px, 1.2vw, 14px);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.tag-pill {
+  padding: 2px 10px;
+  border: 1px solid;
+  border-color: var(--brand);
+  color: var(--brand);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  opacity: 0.7;
+}
+
+.verse-arabic {
+  font-size: clamp(1.25rem, 2vw, 1.5rem);
+  line-height: 2.4;
+  direction: rtl;
+  text-align: center;
+}
+
+.verse-english {
+  font-style: italic;
+  font-size: clamp(1rem, 1.5vw, 1.125rem);
+  opacity: 0.4;
+  line-height: 1.8;
+  text-align: center;
+}
+
+.arabic-shadow {
+  text-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+/* ============================================
+   9. CONTROL BAR (FOOTER)
+   ============================================ */
+.control-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 0.5rem 1rem 0.75rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  z-index: 50;
+  background: linear-gradient(to top, rgba(0,0,0,0.05), transparent);
+  padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
+}
+
+.control-pill {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1.25rem;
+  border-radius: 9999px;
+  border: 1px solid var(--glass-border);
+  background: var(--glass);
+  backdrop-filter: blur(48px);
+  -webkit-backdrop-filter: blur(48px);
+  box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+  max-width: calc(100vw - 2rem);
+  width: fit-content;
+}
+
+.ctrl-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  min-width: 52px;
+}
+
+.ctrl-btn {
+  min-width: 46px;
+  min-height: 46px;
+  padding: 11px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  color: var(--gold);
+}
+
+.ctrl-btn:hover {
+  background: rgba(197,160,89,0.12);
+  transform: scale(1.05);
+}
+
+.ctrl-btn:active:not(:disabled) {
+  transform: scale(0.93);
+  transition-duration: 0.08s;
+}
+
+.ctrl-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.ctrl-btn svg, .ctrl-btn i {
+  width: 21px;
+  height: 21px;
+}
+
+.ctrl-label {
+  font-family: 'Forum', serif;
+  font-size: 8.5px;
+  font-weight: bold;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  opacity: 0.6;
+  white-space: nowrap;
+  color: var(--gold);
+}
+
+.ctrl-separator {
+  width: 1px;
+  height: 2.5rem;
+  background: rgba(120,113,108,0.2);
+  margin: 0 0.25rem;
+  flex-shrink: 0;
+}
+
+/* ============================================
+   10. DROPDOWNS (THEME, POET, USER, OVERFLOW)
+   ============================================ */
+.dropdown {
+  position: absolute;
+  bottom: 100%;
+  margin-bottom: 0.75rem;
+  min-width: 220px;
+  background: var(--surface);
+  backdrop-filter: blur(48px);
+  border: 1px solid rgba(197,160,89,0.15);
+  border-radius: 1.5rem;
+  padding: 0.75rem;
+  z-index: 50;
+  box-shadow: 0 -10px 40px rgba(0,0,0,0.5);
+  display: none;
+}
+
+.dropdown.open {
+  display: block;
+  animation: dropdownFadeIn 0.2s ease-out;
+}
+
+@keyframes dropdownFadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.dropdown-item {
+  width: 100%;
+  padding: 14px 20px;
+  cursor: pointer;
+  border-radius: 1rem;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border: none;
+  background: none;
+  color: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  text-align: left;
+  border-bottom: 1px solid rgba(197,160,89,0.08);
+  min-height: 44px;
+}
+
+.dropdown-item:last-child {
+  border-bottom: none;
+}
+
+.dropdown-item:hover {
+  background: rgba(197,160,89,0.08);
+}
+
+.dropdown-item.active {
+  background: rgba(197,160,89,0.12);
+}
+
+.dropdown-item-label-ar {
+  font-family: 'Amiri', serif;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--gold);
+}
+
+.dropdown-item-label-en {
+  font-family: 'Forum', serif;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  opacity: 0.45;
+  color: #a8a29e;
+}
+
+/* ============================================
+   11. MODALS
+   ============================================ */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s;
+}
+
+.modal-overlay.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.modal {
+  position: relative;
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--glass-border);
+  border-radius: 1rem;
+  padding: 2rem;
+  box-shadow: 0 25px 50px rgba(0,0,0,0.4);
+  backdrop-filter: blur(48px);
+  -webkit-backdrop-filter: blur(48px);
+}
+
+.modal-close {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  padding: 0.5rem;
+  border-radius: 9999px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text);
+  transition: background 0.2s;
+}
+
+.modal-close:hover {
+  background: rgba(255,255,255,0.1);
+}
+
+.auth-modal {
+  max-width: 28rem;
+}
+
+.saved-modal {
+  max-width: 42rem;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.settings-modal {
+  max-width: 32rem;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding-bottom: 1rem;
+}
+
+.settings-scroll {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem;
+}
+
+/* ============================================
+   12. DESKTOP INSIGHT PANE
+   ============================================ */
+.insight-pane {
+  display: none;
+  height: 100%;
+  border-left: 1px solid var(--glass-border);
+  width: 24rem;
+  flex-shrink: 0;
+  background: var(--glass);
+  flex-direction: column;
+}
+
+@media (min-width: 1024px) {
+  .insight-pane {
+    display: flex;
+  }
+  .main-scroll {
+    padding-left: 0;
+    padding-right: 0;
+  }
+}
+
+.insight-header {
+  padding: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid rgba(120,113,108,0.1);
+}
+
+.insight-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 2rem;
+}
+
+.insight-section {
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(99,102,241,0.1);
+  margin-top: 1.5rem;
+}
+
+.insight-section-title {
+  font-family: 'Forum', serif;
+  font-size: 10px;
+  font-weight: 900;
+  color: var(--brand);
+  text-transform: uppercase;
+  letter-spacing: 0.3em;
+  opacity: 0.8;
+  margin-bottom: 0.5rem;
+}
+
+.seek-insight-btn {
+  width: 100%;
+  padding: 1rem;
+  border: 1px solid rgba(99,102,241,0.2);
+  color: var(--brand);
+  border-radius: 9999px;
+  font-family: 'Forum', serif;
+  letter-spacing: 0.1em;
+  font-size: 10px;
+  text-transform: uppercase;
+  background: rgba(99,102,241,0.05);
+  cursor: pointer;
+  transition: all 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  overflow: hidden;
+  position: relative;
+  min-height: 44px;
+}
+
+.seek-insight-btn:hover {
+  background: rgba(99,102,241,0.1);
+  transform: scale(1.02);
+}
+
+/* ============================================
+   13. DEBUG PANEL
+   ============================================ */
+.debug-panel {
+  width: 100%;
+  transition: height 0.3s;
+  overflow: hidden;
+  border-bottom: 1px solid var(--glass-border);
+  backdrop-filter: blur(12px);
+  box-shadow: 0 10px 15px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  z-index: 100;
+  flex-shrink: 0;
+}
+
+.debug-panel.collapsed {
+  height: 28px;
+}
+
+.debug-panel.expanded {
+  height: 192px;
+}
+
+[data-theme="dark"] .debug-panel {
+  background: rgba(0,0,0,0.6);
+  color: #d6d3d1;
+}
+
+[data-theme="light"] .debug-panel {
+  background: rgba(255,255,255,0.6);
+  color: #44403c;
+}
+
+.debug-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.5rem;
+  height: 28px;
+  cursor: pointer;
+}
+
+.debug-logs {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 1.5rem 0.75rem;
+  font-family: monospace;
+  font-size: 10px;
+}
+
+/* ============================================
+   14. API KEY BANNER
+   ============================================ */
+.api-banner {
+  position: fixed;
+  top: 28px;
+  left: 0;
+  right: 0;
+  z-index: 45;
+  padding: 0.5rem 1rem;
+  text-align: center;
+  font-size: 0.75rem;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  transition: transform 0.5s ease-in-out;
+  font-family: 'Forum', serif;
+}
+
+[data-theme="dark"] .api-banner {
+  background: rgba(120,53,15,0.9);
+  color: #fde68a;
+}
+
+[data-theme="light"] .api-banner {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.api-banner.hidden {
+  transform: translateY(-100%);
+}
+
+/* ============================================
+   15. DESIGN REVIEW LINK
+   ============================================ */
+.design-review-link {
+  position: fixed;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 45;
+  padding: 0.75rem 0.375rem;
+  border-radius: 0 1rem 1rem 0;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.7), rgba(0,0,0,0.6), rgba(0,0,0,0.7));
+  backdrop-filter: blur(16px);
+  border-right: 2px solid rgba(197,160,89,0.4);
+  text-decoration: none;
+  writing-mode: vertical-rl;
+  animation: slideInLeft 0.4s ease-out;
+}
+
+.design-review-link span {
+  font-family: 'Forum', serif;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(197,160,89,0.6);
+}
+
+/* ============================================
+   16. VERTICAL SIDEBAR (MOBILE OVERFLOW)
+   ============================================ */
+.vertical-sidebar {
+  position: fixed;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 45;
+  border-radius: 1rem 0 0 1rem;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.7), rgba(0,0,0,0.6), rgba(0,0,0,0.7));
+  backdrop-filter: blur(16px);
+  border-left: 2px solid rgba(197,160,89,0.4);
+  padding: 0.75rem 0.375rem;
+  display: none;
+  animation: slideInRight 0.4s ease-out;
+}
+
+.vsb-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--gold);
+  transition: all 0.2s;
+}
+
+.vsb-btn:hover {
+  background: rgba(197,160,89,0.15);
+}
+
+.vsb-sep {
+  width: 24px;
+  height: 1px;
+  background: rgba(120,113,108,0.3);
+  margin: 0.25rem auto;
+}
+
+/* ============================================
+   17. OVERFLOW MENU + RESPONSIVE
+   ============================================ */
+.overflow-menu {
+  display: none;
+}
+
+.secondary-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+@media (max-width: 659px) {
+  .overflow-menu {
+    display: flex;
+  }
+  .secondary-controls {
+    display: none;
+  }
+  .vertical-sidebar {
+    display: block;
+  }
+  .explain-desktop {
+    display: none;
+  }
+  .main-scroll {
+    padding-right: 4rem;
+  }
+}
+
+@media (min-width: 660px) {
+  .explain-desktop {
+    display: flex;
+  }
+}
+
+/* ============================================
+   18. MOBILE INSIGHT SECTION
+   ============================================ */
+.mobile-insight {
+  display: block;
+  max-width: 42rem;
+  padding: 0 1.5rem;
+  margin-bottom: 1rem;
+}
+
+@media (min-width: 1024px) {
+  .mobile-insight {
+    display: none;
+  }
+}
+
+/* ============================================
+   19. ANIMATIONS
+   ============================================ */
+@keyframes bounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+@keyframes slideInLeft {
+  from { transform: translateY(-50%) translateX(-100%); opacity: 0; }
+  to { transform: translateY(-50%) translateX(0); opacity: 1; }
+}
+
+@keyframes slideInRight {
+  from { transform: translateY(-50%) translateX(100%); opacity: 0; }
+  to { transform: translateY(-50%) translateX(0); opacity: 1; }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.rabbit-bounce {
+  animation: bounce 2s ease-in-out infinite;
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+.animate-pulse {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+/* ============================================
+   20. SAVED POEMS LIST + SETTINGS GRID
+   ============================================ */
+.saved-poem-item {
+  background: var(--glass);
+  border: 1px solid var(--glass-border);
+  border-radius: 1rem;
+  padding: 1rem;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.saved-poem-item:hover {
+  border-color: rgba(197,160,89,0.3);
+}
+
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .font-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.settings-card {
+  padding: 0.75rem;
+  border-radius: 1rem;
+  border: 2px solid var(--glass-border);
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.settings-card.active {
+  border-color: var(--gold);
+  background: rgba(197,160,89,0.1);
+}
+
+.settings-card:hover:not(.active) {
+  border-color: rgba(197,160,89,0.3);
+  transform: scale(1.02);
+}
+
+.settings-card:active {
+  transform: scale(0.97);
+  transition-duration: 0.08s;
+}
+
+/* ============================================
+   21. TOOLTIP
+   ============================================ */
+.tooltip {
+  position: absolute;
+  bottom: 100%;
+  margin-bottom: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: #1c1917;
+  color: white;
+  font-size: 12px;
+  border-radius: 0.5rem;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.tooltip.show {
+  opacity: 1;
+}
+
+/* ============================================
+   22. BACKGROUND PATTERN
+   ============================================ */
+.bg-pattern {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M40 0l40 40-40 40L0 40z' fill='none' stroke='%234f46e5' stroke-width='1.5'/%3E%3Ccircle cx='40' cy='40' r='18' fill='none' stroke='%234f46e5' stroke-width='1.5'/%3E%3C/svg%3E");
+  background-size: 60px 60px;
+  transition: filter 0.3s ease-in-out, opacity 0.3s ease-in-out;
+}
+
+[data-theme="dark"] .bg-pattern {
+  filter: invert(1);
+  opacity: 0.03;
+}
+
+/* ============================================
+   23. SCROLLBAR
+   ============================================ */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(79, 70, 229, 0.2);
+  border-radius: 10px;
+}
+
+/* ============================================
+   24. LIGHT MODE OVERRIDES
+   ============================================ */
+[data-theme="light"] .control-bar {
+  background: linear-gradient(to top, rgba(253,252,248,0.3), transparent);
+}
+
+[data-theme="light"] .control-pill {
+  background: rgba(255,255,255,0.8);
+  border-color: rgba(200,195,188,0.5);
+  box-shadow: 0 10px 40px rgba(0,0,0,0.08);
+}
+
+[data-theme="light"] .ctrl-btn {
+  color: var(--gold);
+}
+
+[data-theme="light"] .ctrl-btn:hover {
+  background: rgba(139,115,85,0.1);
+}
+
+[data-theme="light"] .ctrl-label {
+  color: var(--gold);
+  opacity: 0.7;
+}
+
+[data-theme="light"] .ctrl-separator {
+  background: rgba(139,115,85,0.15);
+}
+
+[data-theme="light"] .dropdown {
+  background: rgba(253,252,248,0.97);
+  border-color: rgba(139,115,85,0.15);
+  box-shadow: 0 -10px 40px rgba(0,0,0,0.12);
+}
+
+[data-theme="light"] .dropdown-item:hover {
+  background: rgba(139,115,85,0.06);
+}
+
+[data-theme="light"] .dropdown-item.active {
+  background: rgba(139,115,85,0.1);
+}
+
+[data-theme="light"] .dropdown-item-label-en {
+  color: #78716c;
+}
+
+[data-theme="light"] .vertical-sidebar {
+  background: linear-gradient(to bottom, rgba(253,252,248,0.85), rgba(253,252,248,0.75), rgba(253,252,248,0.85));
+  border-left-color: rgba(139,115,85,0.3);
+}
+
+[data-theme="light"] .vsb-btn {
+  color: var(--gold);
+}
+
+[data-theme="light"] .vsb-btn:hover {
+  background: rgba(139,115,85,0.1);
+}
+
+[data-theme="light"] .design-review-link {
+  background: linear-gradient(to bottom, rgba(253,252,248,0.85), rgba(253,252,248,0.75), rgba(253,252,248,0.85));
+  border-right-color: rgba(139,115,85,0.3);
+}
+
+[data-theme="light"] .design-review-link span {
+  color: rgba(139,115,85,0.6);
+}
+
+[data-theme="light"] .tag-pill {
+  border-color: var(--brand);
+  color: var(--brand);
+}
+
+[data-theme="light"] .verse-english {
+  opacity: 0.5;
+}
+
+[data-theme="light"] .tooltip {
+  background: #292524;
+}
+
+[data-theme="light"] .saved-poem-item {
+  background: rgba(255,255,255,0.5);
+  border-color: rgba(200,195,188,0.5);
+}
+
+[data-theme="light"] .saved-poem-item:hover {
+  border-color: rgba(139,115,85,0.4);
+}
+
+[data-theme="light"] .settings-card {
+  border-color: rgba(200,195,188,0.5);
+}
+
+[data-theme="light"] .settings-card:hover:not(.active) {
+  border-color: rgba(139,115,85,0.3);
+}
+
+[data-theme="light"] .seek-insight-btn {
+  background: rgba(79,70,229,0.05);
+  border-color: rgba(79,70,229,0.15);
+}
+</style>
+</head>
+<body data-theme="dark">
+
+<div class="app-shell" id="appShell">
+  <!-- Scroll Progress -->
+  <div class="scroll-progress" id="scrollProgress"></div>
+
+  <!-- Debug Panel -->
+  <div class="debug-panel collapsed" id="debugPanel">
+    <div class="debug-header" id="debugToggle">
+      <div style="display:flex;align-items:center;gap:8px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;opacity:0.6;color:#6366f1;line-height:1;height:100%">
+        <i data-lucide="bug" style="width:10px;height:10px"></i>
+        <span>System Logs</span>
+        <span style="margin-left:4px;opacity:0.4" id="logCount">(0)</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;height:100%">
+        <button id="clearLogs" style="padding:4px;background:none;border:none;cursor:pointer;color:inherit;display:flex;align-items:center" title="Clear logs"><i data-lucide="trash-2" style="width:10px;height:10px"></i></button>
+        <i data-lucide="chevron-down" style="width:10px;height:10px;transition:transform 0.3s" id="debugChevron"></i>
+      </div>
+    </div>
+    <div class="debug-logs custom-scrollbar" id="debugLogs"></div>
+  </div>
+
+  <!-- API Key Banner -->
+  <div class="api-banner" id="apiBanner">
+    Running in Database-only mode — add a Gemini API key for AI features
+    <button onclick="document.getElementById('apiBanner').classList.add('hidden')" style="margin-left:12px;opacity:0.6;background:none;border:none;cursor:pointer;color:inherit;font-size:inherit">✕</button>
+  </div>
+
+  <!-- Header -->
+  <header class="header" id="appHeader">
+    <div class="header-luminescence" style="display:flex;flex-direction:row-reverse;align-items:center;gap:0.5rem;color:var(--brand);letter-spacing:0.05em">
+      <i data-lucide="feather" style="width:42px;height:42px;opacity:0.95;stroke-width:1.5"></i>
+      <h1 class="app-branding-rtl" style="display:flex;align-items:flex-end;gap:1.5rem">
+        <span class="font-brand-ar" style="font-size:clamp(1.875rem,4vw,3rem);font-weight:700;margin-bottom:clamp(0.25rem,0.5vw,0.5rem);opacity:0.8">بالعربي</span>
+        <span class="font-brand-en" style="font-size:clamp(3rem,6vw,4.5rem);text-transform:lowercase;letter-spacing:-0.05em">poetry</span>
+        <span class="font-brand-en" style="font-size:clamp(10px,1.2vw,12px);padding:2px clamp(6px,0.8vw,8px);border-radius:4px;border:1px solid rgba(99,102,241,0.3);background:rgba(99,102,241,0.1);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:clamp(0.5rem,1vw,1rem);margin-left:clamp(0.5rem,1vw,0.75rem);opacity:0.6">beta</span>
+      </h1>
+    </div>
+  </header>
+
+  <!-- Main Content Area -->
+  <div class="app-content">
+    <div class="main-area">
+      <div class="bg-pattern"></div>
+
+      <main class="main-scroll custom-scrollbar" id="mainScroll">
+        <div style="min-height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1.5rem 0">
+          <div style="width:100%;max-width:56rem;display:flex;flex-direction:column;align-items:center">
+
+            <!-- Poem Meta (Frame + Title) -->
+            <div class="poem-meta" style="width:100%">
+              <div class="minimal-frame" style="margin-bottom:4px">
+                <svg viewBox="0 0 550 120" preserveAspectRatio="xMidYMid meet">
+                  <line class="frame-line" x1="20" y1="20" x2="70" y2="20"/>
+                  <line class="frame-line" x1="20" y1="20" x2="20" y2="70"/>
+                  <line class="frame-line" x1="530" y1="20" x2="480" y2="20"/>
+                  <line class="frame-line" x1="530" y1="20" x2="530" y2="70"/>
+                  <line class="frame-line" x1="20" y1="100" x2="70" y2="100"/>
+                  <line class="frame-line" x1="20" y1="100" x2="20" y2="50"/>
+                  <line class="frame-line" x1="530" y1="100" x2="480" y2="100"/>
+                  <line class="frame-line" x1="530" y1="100" x2="530" y2="50"/>
+                  <circle class="frame-line" cx="32" cy="32" r="2.5" fill="var(--gold)" opacity="0.35"/>
+                  <circle class="frame-line" cx="518" cy="32" r="2.5" fill="var(--gold)" opacity="0.35"/>
+                  <circle class="frame-line" cx="32" cy="88" r="2.5" fill="var(--gold)" opacity="0.35"/>
+                  <circle class="frame-line" cx="518" cy="88" r="2.5" fill="var(--gold)" opacity="0.35"/>
+                </svg>
+                <div style="position:relative;z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%">
+                  <div id="poemTitle" style="display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:0.5rem">
+                    <span class="poet-name font-amiri" id="poetArabic"></span>
+                    <span style="opacity:0.1;font-size:clamp(0.75rem,1.5vw,1.25rem)">-</span>
+                    <span class="title-arabic font-amiri" id="titleArabic"></span>
+                  </div>
+                  <div style="display:flex;align-items:center;justify-content:center;gap:0.5rem;margin-top:clamp(0.25rem,0.8vw,0.75rem)" class="subtitle-en font-brand-en">
+                    <span style="font-weight:600" id="poetEnglish"></span>
+                    <span style="opacity:0.2">•</span>
+                    <span id="titleEnglish"></span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Tags -->
+              <div style="display:flex;justify-content:center;gap:0.75rem;margin-top:4px" id="tagContainer"></div>
+            </div>
+
+            <!-- Verse Display -->
+            <div style="position:relative;width:100%;padding-top:2rem;padding-bottom:0.5rem;margin-bottom:2rem">
+              <div style="padding:0.5rem 1rem;text-align:center" id="verseContainer">
+                <!-- Verses injected by JS -->
+              </div>
+            </div>
+
+            <!-- Mobile Insight Section -->
+            <div class="mobile-insight" id="mobileInsight">
+              <!-- Populated by JS when insight is available -->
+            </div>
+
+          </div>
+        </div>
+      </main>
+
+      <!-- Control Bar -->
+      <footer class="control-bar">
+        <div class="control-pill" id="controlPill">
+          <!-- Listen -->
+          <div class="ctrl-group">
+            <button class="ctrl-btn" id="btnListen" aria-label="Play recitation">
+              <i data-lucide="volume-2"></i>
+            </button>
+            <span class="ctrl-label">Listen</span>
+          </div>
+
+          <!-- Explain (desktop only) -->
+          <div class="ctrl-group explain-desktop">
+            <button class="ctrl-btn" id="btnExplain" aria-label="Explain poem meaning">
+              <i data-lucide="compass"></i>
+            </button>
+            <span class="ctrl-label">Explain</span>
+          </div>
+
+          <!-- Discover -->
+          <div class="ctrl-group">
+            <button class="ctrl-btn" id="btnDiscover" aria-label="Discover new poem">
+              <i data-lucide="rabbit" class="rabbit-bounce"></i>
+            </button>
+            <span class="ctrl-label">Discover</span>
+          </div>
+
+          <!-- Save -->
+          <div class="ctrl-group" style="position:relative">
+            <button class="ctrl-btn" id="btnSave" aria-label="Save poem">
+              <i data-lucide="heart"></i>
+            </button>
+            <span class="ctrl-label" id="saveLabel">Save</span>
+            <div class="tooltip" id="saveTooltip">Sign in to save poems</div>
+          </div>
+
+          <!-- Separator -->
+          <div class="ctrl-separator"></div>
+
+          <!-- Secondary Controls (hidden on mobile) -->
+          <div class="secondary-controls">
+            <!-- Copy -->
+            <div class="ctrl-group">
+              <button class="ctrl-btn" id="btnCopy" aria-label="Copy poem">
+                <i data-lucide="copy"></i>
+              </button>
+              <span class="ctrl-label" style="color:var(--gold)">Copy</span>
+            </div>
+
+            <!-- DB/AI Toggle -->
+            <div class="ctrl-group">
+              <button class="ctrl-btn" id="btnDbToggle" aria-label="Toggle database mode">
+                <i data-lucide="library" id="dbIcon"></i>
+              </button>
+              <span class="ctrl-label" id="dbLabel">Local</span>
+            </div>
+
+            <!-- Theme -->
+            <div class="ctrl-group" style="position:relative" id="themeGroup">
+              <button class="ctrl-btn" id="btnTheme" aria-label="Theme options">
+                <i data-lucide="sun" id="themeIcon"></i>
+              </button>
+              <span class="ctrl-label">Theme</span>
+              <div class="dropdown" id="themeDropdown">
+                <button class="dropdown-item" id="btnCycleFont">
+                  <i data-lucide="feather" style="width:18px;height:18px;color:var(--gold)"></i>
+                  <div style="display:flex;flex-direction:column;align-items:flex-start">
+                    <div class="dropdown-item-label-ar">تبديل الخط</div>
+                    <div class="dropdown-item-label-en">Cycle Font: <span id="currentFontLabel">Amiri</span></div>
+                  </div>
+                </button>
+                <button class="dropdown-item" id="btnToggleTheme">
+                  <i data-lucide="moon" style="width:18px;height:18px;color:var(--gold)" id="themeToggleIcon"></i>
+                  <div style="display:flex;flex-direction:column;align-items:flex-start">
+                    <div class="dropdown-item-label-ar" id="themeToggleLabelAr">الوضع النهاري</div>
+                    <div class="dropdown-item-label-en" id="themeToggleLabelEn">Light Mode</div>
+                  </div>
+                </button>
+              </div>
+            </div>
+
+            <!-- Poets -->
+            <div class="ctrl-group" style="position:relative" id="poetGroup">
+              <button class="ctrl-btn" id="btnPoets" aria-label="Select poet">
+                <i data-lucide="library"></i>
+              </button>
+              <span class="ctrl-label">Poets</span>
+              <div class="dropdown" id="poetDropdown" style="right:-20px">
+                <!-- Poet options injected by JS -->
+              </div>
+            </div>
+
+            <!-- Auth -->
+            <div class="ctrl-group" style="position:relative" id="authGroup">
+              <button class="ctrl-btn" id="btnAuth" aria-label="Sign In">
+                <i data-lucide="log-in" id="authIcon"></i>
+              </button>
+              <span class="ctrl-label" id="authLabel">Sign In</span>
+              <div class="dropdown" id="authDropdown" style="right:-20px">
+                <div style="padding:12px 16px;border-bottom:1px solid rgba(197,160,89,0.08)">
+                  <p class="font-brand-en" style="font-size:12px;color:var(--gold);font-weight:500" id="userEmail"></p>
+                </div>
+                <button class="dropdown-item" id="btnMyPoems">
+                  <i data-lucide="book-open" style="width:18px;height:18px;color:var(--gold)"></i>
+                  <div style="display:flex;flex-direction:column;align-items:flex-start">
+                    <div class="dropdown-item-label-ar">قصائدي</div>
+                    <div class="dropdown-item-label-en">My Poems</div>
+                  </div>
+                </button>
+                <button class="dropdown-item" id="btnSettings">
+                  <i data-lucide="settings" style="width:18px;height:18px;color:var(--gold)"></i>
+                  <div style="display:flex;flex-direction:column;align-items:flex-start">
+                    <div class="dropdown-item-label-ar">الإعدادات</div>
+                    <div class="dropdown-item-label-en">Settings</div>
+                  </div>
+                </button>
+                <button class="dropdown-item" id="btnSignOut">
+                  <i data-lucide="log-out" style="width:18px;height:18px;color:var(--gold)"></i>
+                  <div style="display:flex;flex-direction:column;align-items:flex-start">
+                    <div class="dropdown-item-label-ar">تسجيل الخروج</div>
+                    <div class="dropdown-item-label-en">Sign Out</div>
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Overflow Menu (mobile only) -->
+          <div class="ctrl-group overflow-menu" style="position:relative">
+            <button class="ctrl-btn" id="btnOverflow" aria-label="More options">
+              <i data-lucide="more-horizontal"></i>
+            </button>
+            <span class="ctrl-label">More</span>
+            <div class="dropdown" id="overflowDropdown" style="right:-20px;max-height:80vh;overflow-y:auto">
+              <!-- Copy -->
+              <button class="dropdown-item" id="overflowCopy">
+                <i data-lucide="copy" style="width:18px;height:18px;color:var(--gold)"></i>
+                <div style="display:flex;flex-direction:column;align-items:flex-start">
+                  <div class="dropdown-item-label-ar">نسخ</div>
+                  <div class="dropdown-item-label-en">Copy</div>
+                </div>
+              </button>
+              <!-- DB Toggle -->
+              <button class="dropdown-item" id="overflowDb">
+                <i data-lucide="library" style="width:18px;height:18px;color:var(--gold)" id="overflowDbIcon"></i>
+                <div style="display:flex;flex-direction:column;align-items:flex-start">
+                  <div class="dropdown-item-label-ar" id="overflowDbLabelAr">قاعدة البيانات</div>
+                  <div class="dropdown-item-label-en" id="overflowDbLabelEn">Local Database</div>
+                </div>
+              </button>
+              <!-- Theme -->
+              <button class="dropdown-item" id="overflowTheme">
+                <i data-lucide="sun" style="width:18px;height:18px;color:var(--gold)" id="overflowThemeIcon"></i>
+                <div style="display:flex;flex-direction:column;align-items:flex-start">
+                  <div class="dropdown-item-label-ar" id="overflowThemeLabelAr">الوضع النهاري</div>
+                  <div class="dropdown-item-label-en">Theme</div>
+                </div>
+              </button>
+              <!-- Font accordion -->
+              <div style="border-bottom:1px solid rgba(197,160,89,0.08)">
+                <button class="dropdown-item" id="overflowFontToggle">
+                  <i data-lucide="feather" style="width:18px;height:18px;color:var(--gold)"></i>
+                  <div style="display:flex;flex-direction:column;align-items:flex-start;flex:1">
+                    <div class="dropdown-item-label-ar">اختيار الخط</div>
+                    <div class="dropdown-item-label-en">Font: <span id="overflowFontName">Amiri</span></div>
+                  </div>
+                  <i data-lucide="chevron-down" style="width:14px;height:14px;color:var(--gold);transition:transform 0.2s" id="fontChevron"></i>
+                </button>
+                <div id="fontSubmenu" style="display:none;padding:4px;margin:0 8px 8px;border-radius:12px;background:rgba(255,255,255,0.05);border:1px solid rgba(197,160,89,0.1)">
+                  <!-- Font options injected by JS -->
+                </div>
+              </div>
+              <!-- Sign In (when logged out) -->
+              <button class="dropdown-item" id="overflowSignIn">
+                <i data-lucide="log-in" style="width:18px;height:18px;color:var(--gold)"></i>
+                <div style="display:flex;flex-direction:column;align-items:flex-start">
+                  <div class="dropdown-item-label-ar">تسجيل الدخول</div>
+                  <div class="dropdown-item-label-en">Sign In</div>
+                </div>
+              </button>
+              <!-- Logged-in items (hidden by default) -->
+              <button class="dropdown-item" id="overflowMyPoems" style="display:none">
+                <i data-lucide="book-open" style="width:18px;height:18px;color:var(--gold)"></i>
+                <div style="display:flex;flex-direction:column;align-items:flex-start">
+                  <div class="dropdown-item-label-ar">قصائدي</div>
+                  <div class="dropdown-item-label-en">My Poems</div>
+                </div>
+              </button>
+              <button class="dropdown-item" id="overflowSettings" style="display:none">
+                <i data-lucide="settings" style="width:18px;height:18px;color:var(--gold)"></i>
+                <div style="display:flex;flex-direction:column;align-items:flex-start">
+                  <div class="dropdown-item-label-ar">الإعدادات</div>
+                  <div class="dropdown-item-label-en">Settings</div>
+                </div>
+              </button>
+              <button class="dropdown-item" id="overflowSignOut" style="display:none">
+                <i data-lucide="log-out" style="width:18px;height:18px;color:var(--gold)"></i>
+                <div style="display:flex;flex-direction:column;align-items:flex-start">
+                  <div class="dropdown-item-label-ar">تسجيل الخروج</div>
+                  <div class="dropdown-item-label-en">Sign Out</div>
+                </div>
+              </button>
+              <!-- Poet accordion -->
+              <div>
+                <button class="dropdown-item" id="overflowPoetToggle">
+                  <i data-lucide="library" style="width:18px;height:18px;color:var(--gold)"></i>
+                  <div style="display:flex;flex-direction:column;align-items:flex-start;flex:1">
+                    <div class="dropdown-item-label-ar">اختيار الشاعر</div>
+                    <div class="dropdown-item-label-en">Poet: <span id="overflowPoetName">All</span></div>
+                  </div>
+                  <i data-lucide="chevron-down" style="width:14px;height:14px;color:var(--gold);transition:transform 0.2s" id="poetChevron"></i>
+                </button>
+                <div id="poetSubmenu" style="display:none;padding:4px;margin:0 8px 8px;border-radius:12px;background:rgba(255,255,255,0.05);border:1px solid rgba(197,160,89,0.1)">
+                  <!-- Poet options injected by JS -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
+
+    <!-- Desktop Insight Pane -->
+    <div class="insight-pane" id="insightPane">
+      <div class="insight-header">
+        <h3 class="font-brand-en" style="font-style:italic;font-weight:600;font-size:clamp(1rem,1.8vw,1.125rem);color:var(--brand);letter-spacing:-0.025em">Poetic Insight</h3>
+        <p class="font-brand-en" style="font-size:10px;opacity:0.3;text-transform:uppercase;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="insightSubtitle"></p>
+      </div>
+      <div class="insight-body custom-scrollbar" id="insightBody">
+        <button class="seek-insight-btn" id="btnSeekInsight">
+          <i data-lucide="sparkles" style="width:12px;height:12px"></i>
+          Seek Insight
+        </button>
+        <p class="font-brand-en" style="font-style:italic;white-space:pre-wrap;font-size:clamp(1rem,1.8vw,1.125rem);margin-top:1rem" id="insightPoetic"></p>
+        <div class="insight-section" id="insightDepthSection" style="display:none">
+          <h4 class="insight-section-title">The Depth</h4>
+          <div style="padding-left:1rem;border-left:1px solid rgba(99,102,241,0.1)">
+            <p class="font-brand-en" style="font-size:clamp(0.875rem,1.5vw,1rem);opacity:0.8;line-height:1.75" id="insightDepth"></p>
+          </div>
+        </div>
+        <div class="insight-section" id="insightAuthorSection" style="display:none">
+          <h4 class="insight-section-title">The Author</h4>
+          <div style="padding-left:1rem;border-left:1px solid rgba(99,102,241,0.1)">
+            <p class="font-brand-en" style="font-size:clamp(0.875rem,1.5vw,1rem);opacity:0.8;line-height:1.75" id="insightAuthor"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Auth Modal -->
+<div class="modal-overlay" id="authModal">
+  <div class="modal auth-modal">
+    <button class="modal-close" id="authModalClose" aria-label="Close">
+      <i data-lucide="x" style="width:20px;height:20px"></i>
+    </button>
+    <div style="text-align:center;margin-bottom:2rem">
+      <h2 class="font-amiri" style="font-size:1.875rem;color:var(--gold);margin-bottom:0.5rem">مرحباً</h2>
+      <p class="font-brand-en" style="font-size:0.875rem;opacity:0.6">Sign in to save poems and preferences</p>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:0.75rem">
+      <button class="font-brand-en" id="btnGoogle" style="width:100%;padding:0.75rem 1rem;background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.2);border-radius:1rem;color:var(--brand);font-size:0.875rem;font-weight:500;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:0.75rem;min-height:44px">
+        <svg width="20" height="20" viewBox="0 0 24 24"><path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        Continue with Google
+      </button>
+      <button class="font-brand-en" id="btnApple" style="width:100%;padding:0.75rem 1rem;background:rgba(99,102,241,0.1);border:1px solid rgba(99,102,241,0.2);border-radius:1rem;color:var(--brand);font-size:0.875rem;font-weight:500;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:0.75rem;min-height:44px">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/></svg>
+        Continue with Apple
+      </button>
+    </div>
+    <p class="font-brand-en" style="margin-top:1.5rem;text-align:center;font-size:0.75rem;opacity:0.4">By signing in, you agree to our Terms of Service and Privacy Policy</p>
+  </div>
+</div>
+
+<!-- Saved Poems Modal -->
+<div class="modal-overlay" id="savedModal">
+  <div class="modal saved-modal">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:1rem;border-bottom:1px solid rgba(120,113,108,0.1);flex-shrink:0">
+      <div>
+        <h2 class="font-amiri" style="font-size:1.5rem;color:var(--gold)">قصائدي المحفوظة</h2>
+        <p class="font-brand-en" style="font-size:0.75rem;opacity:0.5;margin-top:0.25rem">My Saved Poems (<span id="savedCount">0</span>)</p>
+      </div>
+      <button class="modal-close" id="savedModalClose" style="position:static" aria-label="Close">
+        <i data-lucide="x" style="width:20px;height:20px"></i>
+      </button>
+    </div>
+    <div style="flex:1;overflow-y:auto;padding:1.5rem 0" class="custom-scrollbar" id="savedList">
+      <!-- Empty state or saved poems injected by JS -->
+    </div>
+  </div>
+</div>
+
+<!-- Settings Modal -->
+<div class="modal-overlay" id="settingsModal">
+  <div class="modal settings-modal">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding-bottom:1rem;border-bottom:1px solid rgba(120,113,108,0.1);flex-shrink:0">
+      <div>
+        <h2 class="font-amiri" style="font-size:1.5rem;color:var(--gold)">الإعدادات</h2>
+        <p class="font-brand-en" style="font-size:0.75rem;opacity:0.5;margin-top:0.25rem">Preferences</p>
+      </div>
+      <button class="modal-close" id="settingsModalClose" style="position:static" aria-label="Close">
+        <i data-lucide="x" style="width:20px;height:20px"></i>
+      </button>
+    </div>
+    <div class="settings-scroll custom-scrollbar">
+      <!-- Appearance -->
+      <div style="margin-bottom:2rem">
+        <div style="margin-bottom:0.75rem">
+          <h3 class="font-amiri" style="font-size:1.125rem;color:var(--gold)">المظهر</h3>
+          <p class="font-brand-en" style="font-size:10px;text-transform:uppercase;letter-spacing:0.12em;opacity:0.4">Appearance</p>
+        </div>
+        <div class="settings-grid">
+          <button class="settings-card active" id="settingsDark">
+            <i data-lucide="moon" style="width:24px;height:24px;color:var(--gold)"></i>
+            <div style="text-align:center">
+              <p class="font-amiri" style="font-size:0.875rem;color:var(--gold)">ليلي</p>
+              <p class="font-brand-en" style="font-size:9px;text-transform:uppercase;letter-spacing:0.1em;opacity:0.4">Dark</p>
+            </div>
+          </button>
+          <button class="settings-card" id="settingsLight">
+            <i data-lucide="sun" style="width:24px;height:24px;opacity:0.5"></i>
+            <div style="text-align:center">
+              <p class="font-amiri" style="font-size:0.875rem">نهاري</p>
+              <p class="font-brand-en" style="font-size:9px;text-transform:uppercase;letter-spacing:0.1em;opacity:0.4">Light</p>
+            </div>
+          </button>
+        </div>
+      </div>
+      <!-- Typography -->
+      <div style="margin-bottom:2rem">
+        <div style="margin-bottom:0.75rem">
+          <h3 class="font-amiri" style="font-size:1.125rem;color:var(--gold)">الخط</h3>
+          <p class="font-brand-en" style="font-size:10px;text-transform:uppercase;letter-spacing:0.12em;opacity:0.4">Typography</p>
+        </div>
+        <div class="settings-grid font-grid" id="fontGrid">
+          <!-- Font cards injected by JS -->
+        </div>
+      </div>
+      <!-- User Info -->
+      <div id="settingsUserInfo" style="display:none;padding-top:1rem;border-top:1px solid rgba(120,113,108,0.1)">
+        <p class="font-brand-en" style="font-size:0.75rem;opacity:0.3;text-align:center">Signed in as <span id="settingsEmail"></span></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Design Review Link -->
+<a class="design-review-link" href="/design-review" title="Design Review">
+  <span>Review</span>
+</a>
+
+<!-- Vertical Sidebar (mobile) -->
+<div class="vertical-sidebar" id="verticalSidebar">
+  <div style="display:flex;flex-direction:column;align-items:center;gap:4px">
+    <button class="vsb-btn" id="vsbExplain" title="Explain poem"><i data-lucide="compass" style="width:18px;height:18px"></i></button>
+    <button class="vsb-btn" id="vsbCopy" title="Copy poem"><i data-lucide="copy" style="width:18px;height:18px"></i></button>
+    <div class="vsb-sep"></div>
+    <button class="vsb-btn" id="vsbSaved" title="Saved poems"><i data-lucide="heart" style="width:18px;height:18px"></i></button>
+    <button class="vsb-btn" id="vsbDbToggle" title="Toggle source"><i data-lucide="library" style="width:18px;height:18px" id="vsbDbIcon"></i></button>
+    <button class="vsb-btn" id="vsbSettings" title="Settings"><i data-lucide="settings" style="width:18px;height:18px"></i></button>
+    <button class="vsb-btn" id="vsbAuth" title="Sign in"><i data-lucide="log-in" style="width:18px;height:18px" id="vsbAuthIcon"></i></button>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// MOCK DATA
+// ============================================================
+const POEMS = [
+  { id:1, poet:"Nizar Qabbani", poetArabic:"نزار قباني", title:"My Beloved", titleArabic:"حبيبتي",
+    arabic:"حُبُّكِ يا عَمِيقَةَ العَيْنَيْنِ\nتَطَرُّفٌ .. تَصَوُّفٌ .. عِبَادَة\nحُبُّكِ مِثْلَ المَوْتِ وَالوِلَادَة\nصَعْبٌ بِأَنْ يُعَادَ مَرَّتَيْنِ",
+    english:"Your love, O woman of deep eyes,\nIs radicalism… is Sufism… is worship.\nYour love is like Death and like Birth—\nIt is difficult for it to be repeated twice.",
+    tags:["Modern","Romantic","Ghazal"],
+    insight:"POEM: A love so consuming it transcends the mundane — each glance a prayer, each touch a sacrament.\nTHE DEPTH: Qabbani equates romantic love with religious fervor, suggesting that true passion is a form of worship.\nTHE AUTHOR: Nizar Qabbani (1923-1998) was Syria's most celebrated modern poet." },
+  { id:2, poet:"Mahmoud Darwish", poetArabic:"محمود درويش", title:"Identity Card", titleArabic:"بطاقة هوية",
+    arabic:"سَجِّلْ أَنَا عَرَبِيّ\nوَرَقَمُ بِطَاقَتِي خَمْسُونَ أَلْف\nوَأَطْفَالِي ثَمَانِيَة\nوَتَاسِعُهُمْ سَيَأْتِي بَعْدَ صَيْف",
+    english:"Record!\nI am an Arab\nAnd my identity card number is fifty thousand\nI have eight children\nAnd the ninth will come after a summer.",
+    tags:["Resistance","Palestinian","Political"],
+    insight:"POEM: A declaration that rings like a courtroom oath — identity asserted through sheer weight of existence.\nTHE DEPTH: Written in 1964, this poem became an anthem of Palestinian identity.\nTHE AUTHOR: Mahmoud Darwish (1941-2008) was Palestine's national poet." },
+  { id:3, poet:"Al-Mutanabbi", poetArabic:"المتنبي", title:"The Ambitious", titleArabic:"على قدر أهل العزم",
+    arabic:"عَلى قَدرِ أَهلِ العَزمِ تَأتي العَزائِمُ\nوَتَأتي عَلى قَدرِ الكِرامِ المَكارِمُ\nوَتَعظُمُ في عَينِ الصَغيرِ صِغارُها\nوَتَصغُرُ في عَينِ العَظيمِ العَظائِمُ",
+    english:"According to the people of determination come the resolves,\nAnd according to the generous come generous deeds.\nSmall things loom large in the eyes of the small,\nAnd great things diminish in the eyes of the great.",
+    tags:["Classical","Panegyric","Wisdom"],
+    insight:"POEM: A thunderclap of ambition — the universe bends to accommodate the bold.\nTHE DEPTH: Perhaps the most quoted couplet in all of Arabic poetry.\nTHE AUTHOR: Al-Mutanabbi (915-965 CE) is widely considered the greatest Arabic poet." },
+  { id:4, poet:"Antarah", poetArabic:"عنترة بن شداد", title:"Suspended Ode", titleArabic:"المعلقة",
+    arabic:"هَلْ غَادَرَ الشُّعَرَاءُ مِنْ مُتَرَدَّمِ\nأَمْ هَلْ عَرَفْتَ الدَّارَ بَعْدَ تَوَهُّمِ\nيَا دَارَ عَبْلَةَ بِالجِوَاءِ تَكَلَّمِي\nوَعِمِي صَبَاحاً دَارَ عَبْلَةَ وَاسْلَمِي",
+    english:"Have the poets left any theme unsung?\nOr did you recognize the abode after imagining it?\nO abode of Ablah in al-Jiwa, speak!\nAnd good morning, abode of Ablah, and be safe!",
+    tags:["Pre-Islamic","Mu'allaqat","Heroic"],
+    insight:"POEM: A warrior-poet stands before ruins, asking if any verse remains.\nTHE DEPTH: The Mu'allaqat were hung on the walls of the Kaaba in pre-Islamic Mecca.\nTHE AUTHOR: Antarah ibn Shaddad (525-608 CE) was a pre-Islamic knight-poet." },
+  { id:5, poet:"Ibn Arabi", poetArabic:"ابن عربي", title:"Interpreter of Desires", titleArabic:"ترجمان الأشواق",
+    arabic:"لَقَدْ صَارَ قَلْبِي قَابِلاً كُلَّ صُورَةٍ\nفَمَرْعَىً لِغِزْلاَنٍ وَدَيْرٌ لِرُهْبَانِ\nوَبَيْتٌ لِأَوْثَانٍ وَكَعْبَةُ طَائِفٍ\nوَأَلْوَاحُ تَوْرَاةٍ وَمُصْحَفُ قُرْآنِ",
+    english:"My heart has become capable of every form:\nA pasture for gazelles and a convent for monks,\nA temple for idols and the Kaaba of the pilgrim,\nThe tablets of the Torah and the pages of the Quran.",
+    tags:["Sufi","Mystical","Divine Love"],
+    insight:"POEM: The heart as universal vessel — capable of holding every faith.\nTHE DEPTH: Cornerstone of Sufi universalism, divine love transcends all religious forms.\nTHE AUTHOR: Ibn Arabi (1165-1240 CE), the 'Greatest Master' of Sufi mysticism." },
+  { id:6, poet:"Nizar Qabbani", poetArabic:"نزار قباني", title:"Damascene Moon", titleArabic:"قمر دمشقي",
+    arabic:"قَمَرٌ دِمَشْقِيٌّ يُسَافِرُ في دَمِي\nوَيَنَامُ مِثْلَ الطِّفْلِ بَيْنَ ضُلُوعِي\nأَنَا شَاعِرٌ مِنْ دَارِيَا وَمَنَابِعِي\nعَيْنُ الفِرَاتِ وَعَيْنُ بَرْدَى دُمُوعِي",
+    english:"A Damascene moon travels in my blood\nAnd sleeps like a child between my ribs.\nI am a poet from Daraya, and my springs\nAre the source of the Euphrates, and my tears are Barada.",
+    tags:["Modern","Damascus","Nostalgia"],
+    insight:"POEM: Damascus flows through the poet's veins — homeland as bodily experience.\nTHE DEPTH: Qabbani transforms geographic longing into visceral physiology.\nTHE AUTHOR: Nizar Qabbani never recovered from the loss of Damascus to distance." },
+  { id:7, poet:"Mahmoud Darwish", poetArabic:"محمود درويش", title:"On This Earth", titleArabic:"على هذه الأرض",
+    arabic:"عَلَى هَذِهِ الأَرْضِ مَا يَسْتَحِقُّ الْحَيَاةَ\nعَلَى هَذِهِ الأَرْضِ سَيِّدَةُ الأَرْضِ\nأُمُّ الْبِدَايَاتِ أُمُّ النِّهَايَاتِ\nكَانَتْ تُسَمَّى فِلَسْطِين صَارَتْ تُسَمَّى فِلَسْطِين",
+    english:"On this earth is what makes life worth living:\nThe lady of the earth,\nMother of all beginnings, mother of all endings.\nShe was called Palestine. She became Palestine.",
+    tags:["Resistance","Palestinian","Lyrical"],
+    insight:"POEM: An incantation of survival — Palestine as eternal feminine.\nTHE DEPTH: Darwish makes the political deeply personal. Palestine is mother, origin, prophecy.\nTHE AUTHOR: Mahmoud Darwish spent most of his life in exile from his homeland." },
+  { id:8, poet:"Al-Mutanabbi", poetArabic:"المتنبي", title:"The Farewell", titleArabic:"وداع",
+    arabic:"وَاحَرَّ قَلْبَاهُ مِمَّنْ قَلْبُهُ شَبِمُ\nوَمَنْ بِجِسْمِي وَحَالِي عِنْدَهُ سَقَمُ\nمَا لِي أُكَتِّمُ حُبّاً قَدْ بَرَى جَسَدِي\nوَتَدَّعِي حُبَّ سَيْفِ الدَّوْلَةِ الأُمَمُ",
+    english:"Oh, the heat of my heart for one whose heart is cold,\nWhose body thrives while mine wastes in his sight.\nWhy do I hide a love that consumes my frame\nWhile nations falsely claim to love Saif al-Dawla?",
+    tags:["Classical","Panegyric","Longing"],
+    insight:"POEM: A farewell that burns — devotion while the patron remains unmoved.\nTHE DEPTH: Addressed to Saif al-Dawla after their falling out.\nTHE AUTHOR: Al-Mutanabbi's relationship with Saif al-Dawla produced Arabic poetry's greatest works." }
+];
+const CATEGORIES=[{id:"All",label:"All Poets",labelAr:"كل الشعراء"},{id:"Nizar Qabbani",label:"Nizar Qabbani",labelAr:"نزار قباني"},{id:"Mahmoud Darwish",label:"Mahmoud Darwish",labelAr:"محمود درويش"},{id:"Al-Mutanabbi",label:"Al-Mutanabbi",labelAr:"المتنبي"},{id:"Antarah",label:"Antarah",labelAr:"عنترة بن شداد"},{id:"Ibn Arabi",label:"Ibn Arabi",labelAr:"ابن عربي"}];
+const FONTS=[{id:"Amiri",label:"Amiri",labelAr:"أميري",family:"font-amiri"},{id:"Alexandria",label:"Alexandria",labelAr:"الإسكندرية",family:"font-alexandria"},{id:"El Messiri",label:"El Messiri",labelAr:"المسيري",family:"font-messiri"},{id:"Lalezar",label:"Lalezar",labelAr:"لاله‌زار",family:"font-lalezar"},{id:"Rakkas",label:"Rakkas",labelAr:"رقاص",family:"font-rakkas"},{id:"Fustat",label:"Fustat",labelAr:"فسطاط",family:"font-fustat"},{id:"Kufam",label:"Kufam",labelAr:"كوفام",family:"font-kufam"},{id:"Katibeh",label:"Katibeh",labelAr:"كاتبة",family:"font-katibeh"}];
+
+let S={currentIndex:0,darkMode:true,currentFont:'Amiri',selectedCategory:'All',isLoggedIn:false,user:null,savedPoems:[],useDatabase:true,isPlaying:false,isGeneratingAudio:false,isInterpreting:false,interpretation:null,logs:[],debugExpanded:false};
+
+// ============================================================
+// HELPERS
+// ============================================================
+function getFiltered(){return S.selectedCategory==='All'?POEMS:POEMS.filter(p=>p.poet===S.selectedCategory);}
+function getCurrent(){const f=getFiltered();return f[S.currentIndex%f.length]||POEMS[0];}
+function addLog(label,msg,type){const d=new Date(),t=d.toTimeString().slice(0,8);S.logs.push({time:t,label,msg,type});const el=document.getElementById('debugLogs');if(el){el.innerHTML+=`<div style="padding-bottom:4px;border-bottom:1px solid rgba(120,113,108,0.05);${type==='error'?'color:#f87171;':type==='success'?'color:#818cf8;':''}"><span style="opacity:0.4">[${t}]</span> <b>${label}:</b> ${msg}</div>`;el.scrollTop=el.scrollHeight;}document.getElementById('logCount').textContent=`(${S.logs.length})`;}
+function parseInsight(text){if(!text)return null;const parts=text.split(/POEM:|THE DEPTH:|THE AUTHOR:/i).map(p=>p.trim()).filter(Boolean);return{poeticTranslation:parts[0]||'',depth:parts[1]||'',author:parts[2]||''};}
+function formatTime(d){if(!d)return'';const diff=Date.now()-new Date(d).getTime(),m=Math.floor(diff/60000);if(m<1)return'Just now';if(m<60)return m+'m ago';const h=Math.floor(m/60);if(h<24)return h+'h ago';return Math.floor(h/24)+'d ago';}
+function closeAllDropdowns(){document.querySelectorAll('.dropdown.open').forEach(d=>d.classList.remove('open'));}
+function setIcon(el,name){el.setAttribute('data-lucide',name);lucide.createIcons();}
+function applyFont(){const f=FONTS.find(x=>x.id===S.currentFont)||FONTS[0];document.getElementById('verseContainer').className=f.family;document.getElementById('poemTitle').className=f.family;document.querySelectorAll('.poet-name').forEach(e=>{e.className='poet-name '+f.family;});document.querySelectorAll('.title-arabic').forEach(e=>{e.className='title-arabic '+f.family;});}
+
+// ============================================================
+// RENDER FUNCTIONS
+// ============================================================
+function renderPoem() {
+  const poem = getCurrent();
+  if (!poem) return;
+
+  // Verse text (Arabic)
+  var vc = document.getElementById('verseContainer');
+  if (vc) {
+    // Build verse lines as proper RTL blocks
+    while (vc.firstChild) vc.removeChild(vc.firstChild);
+    var lines = poem.arabic.split('\n');
+    lines.forEach(function(line) {
+      var p = document.createElement('p');
+      p.className = 'verse-arabic arabic-shadow';
+      p.setAttribute('dir', 'rtl');
+      p.textContent = line;
+      vc.appendChild(p);
+    });
+    // Add English translation below
+    var enLines = poem.english.split('\n');
+    var enDiv = document.createElement('div');
+    enDiv.style.cssText = 'margin-top:1.5rem;';
+    enLines.forEach(function(line) {
+      var p = document.createElement('p');
+      p.className = 'verse-english';
+      p.textContent = line;
+      enDiv.appendChild(p);
+    });
+    vc.appendChild(enDiv);
+  }
+
+  // Poet and title in the frame (set individual spans, not the container)
+  var poetAr = document.getElementById('poetArabic');
+  var titleAr = document.getElementById('titleArabic');
+  var poetEn = document.getElementById('poetEnglish');
+  var titleEn = document.getElementById('titleEnglish');
+  if (poetAr) poetAr.textContent = poem.poetArabic;
+  if (titleAr) titleAr.textContent = poem.titleArabic;
+  if (poetEn) poetEn.textContent = poem.poet;
+  if (titleEn) titleEn.textContent = poem.title;
+
+  // Tags
+  var tc = document.getElementById('tagContainer');
+  if (tc) {
+    while (tc.firstChild) tc.removeChild(tc.firstChild);
+    poem.tags.forEach(function(tag) {
+      var span = document.createElement('span');
+      span.className = 'tag-pill';
+      span.textContent = tag;
+      tc.appendChild(span);
+    });
+  }
+
+  // Update insight subtitle
+  var insightSub = document.getElementById('insightSubtitle');
+  if (insightSub) insightSub.textContent = poem.poetArabic + ' — ' + poem.titleArabic;
+
+  // Reset insight state
+  S.interpretation = null;
+  S.isInterpreting = false;
+  var insightPoetic = document.getElementById('insightPoetic');
+  if (insightPoetic) insightPoetic.textContent = '';
+  var depthSec = document.getElementById('insightDepthSection');
+  if (depthSec) depthSec.style.display = 'none';
+  var authorSec = document.getElementById('insightAuthorSection');
+  if (authorSec) authorSec.style.display = 'none';
+  var seekBtn = document.getElementById('btnSeekInsight');
+  if (seekBtn) seekBtn.style.display = 'flex';
+
+  applyFont();
+  updateSaveBtn();
+  addLog('Poem', 'Displaying: ' + poem.title, 'info');
+}
+
+function updateSaveBtn() {
+  var btn = document.getElementById('btnSave');
+  if (!btn) return;
+  var poem = getCurrent();
+  var isSaved = S.savedPoems.some(function(sp) { return sp.id === poem.id; });
+  var label = document.getElementById('saveLabel');
+
+  if (isSaved) {
+    btn.style.color = '#ef4444';
+    if (label) label.textContent = 'Saved';
+  } else {
+    btn.style.color = '';
+    if (label) label.textContent = 'Save';
+  }
+}
+
+function renderAuthState() {
+  var authIcon = document.getElementById('authIcon');
+  var authLabel = document.getElementById('authLabel');
+  var userEmail = document.getElementById('userEmail');
+  var vsbAuthIcon = document.getElementById('vsbAuthIcon');
+  var settingsEmail = document.getElementById('settingsEmail');
+  var settingsUserInfo = document.getElementById('settingsUserInfo');
+
+  if (S.isLoggedIn && S.user) {
+    if (authIcon) { authIcon.setAttribute('data-lucide', 'user'); }
+    if (authLabel) authLabel.textContent = 'Account';
+    if (userEmail) userEmail.textContent = S.user.email;
+    if (settingsEmail) settingsEmail.textContent = S.user.email;
+    if (settingsUserInfo) settingsUserInfo.style.display = 'block';
+    if (vsbAuthIcon) { vsbAuthIcon.setAttribute('data-lucide', 'user'); }
+    // Show logged-in overflow items, hide sign-in
+    var overflowSignIn = document.getElementById('overflowSignIn');
+    var overflowMyPoems = document.getElementById('overflowMyPoems');
+    var overflowSettings = document.getElementById('overflowSettings');
+    var overflowSignOut = document.getElementById('overflowSignOut');
+    if (overflowSignIn) overflowSignIn.style.display = 'none';
+    if (overflowMyPoems) overflowMyPoems.style.display = 'flex';
+    if (overflowSettings) overflowSettings.style.display = 'flex';
+    if (overflowSignOut) overflowSignOut.style.display = 'flex';
+    lucide.createIcons();
+  } else {
+    if (authIcon) { authIcon.setAttribute('data-lucide', 'log-in'); }
+    if (authLabel) authLabel.textContent = 'Sign In';
+    if (settingsUserInfo) settingsUserInfo.style.display = 'none';
+    if (vsbAuthIcon) { vsbAuthIcon.setAttribute('data-lucide', 'log-in'); }
+    // Show sign-in overflow item, hide logged-in items
+    var overflowSignIn = document.getElementById('overflowSignIn');
+    var overflowMyPoems = document.getElementById('overflowMyPoems');
+    var overflowSettings = document.getElementById('overflowSettings');
+    var overflowSignOut = document.getElementById('overflowSignOut');
+    if (overflowSignIn) overflowSignIn.style.display = 'flex';
+    if (overflowMyPoems) overflowMyPoems.style.display = 'none';
+    if (overflowSettings) overflowSettings.style.display = 'none';
+    if (overflowSignOut) overflowSignOut.style.display = 'none';
+    lucide.createIcons();
+  }
+}
+
+function renderSavedPoems() {
+  var container = document.getElementById('savedList');
+  var countEl = document.getElementById('savedCount');
+  if (!container) return;
+  if (countEl) countEl.textContent = S.savedPoems.length;
+
+  while (container.firstChild) container.removeChild(container.firstChild);
+
+  if (S.savedPoems.length === 0) {
+    var empty = document.createElement('div');
+    empty.style.cssText = 'display:flex;flex-direction:column;align-items:center;justify-content:center;padding:3rem 1rem;text-align:center;';
+    var heartIcon = document.createElement('i');
+    heartIcon.setAttribute('data-lucide', 'heart');
+    heartIcon.style.cssText = 'width:48px;height:48px;opacity:0.3;';
+    empty.appendChild(heartIcon);
+    var emptyTitle = document.createElement('p');
+    emptyTitle.className = 'font-amiri';
+    emptyTitle.style.cssText = 'font-size:18px;margin-top:16px;color:var(--gold);';
+    emptyTitle.textContent = '\u0644\u0627 \u062A\u0648\u062C\u062F \u0642\u0635\u0627\u0626\u062F \u0645\u062D\u0641\u0648\u0638\u0629';
+    empty.appendChild(emptyTitle);
+    var emptyHint = document.createElement('p');
+    emptyHint.className = 'font-brand-en';
+    emptyHint.style.cssText = 'font-size:13px;opacity:0.5;margin-top:8px;';
+    emptyHint.textContent = 'Tap the heart icon to save poems';
+    empty.appendChild(emptyHint);
+    container.appendChild(empty);
+    lucide.createIcons();
+    return;
+  }
+
+  S.savedPoems.forEach(function(sp) {
+    var item = document.createElement('div');
+    item.className = 'saved-poem-item';
+    item.style.cssText = 'display:flex;justify-content:space-between;align-items:start;margin-bottom:0.75rem;';
+
+    var info = document.createElement('div');
+    info.style.cssText = 'flex:1;cursor:pointer;';
+
+    var poetEl = document.createElement('div');
+    poetEl.className = 'font-amiri';
+    poetEl.style.cssText = 'font-size:14px;font-weight:600;color:var(--gold);';
+    poetEl.textContent = sp.poetArabic;
+    info.appendChild(poetEl);
+
+    var titleEl = document.createElement('div');
+    titleEl.className = 'font-brand-en';
+    titleEl.style.cssText = 'font-size:12px;opacity:0.7;margin-top:2px;';
+    titleEl.textContent = sp.title;
+    info.appendChild(titleEl);
+
+    var preview = document.createElement('div');
+    preview.className = 'font-amiri';
+    preview.style.cssText = 'font-size:11px;opacity:0.4;margin-top:4px;direction:rtl;';
+    preview.textContent = sp.arabic.substring(0, 80) + '...';
+    info.appendChild(preview);
+
+    var timeEl = document.createElement('div');
+    timeEl.className = 'font-brand-en';
+    timeEl.style.cssText = 'font-size:10px;opacity:0.3;margin-top:4px;';
+    timeEl.textContent = formatTime(sp.savedAt);
+    info.appendChild(timeEl);
+
+    item.appendChild(info);
+
+    var unsaveBtn = document.createElement('button');
+    unsaveBtn.style.cssText = 'background:none;border:none;color:#ef4444;cursor:pointer;padding:8px;min-width:44px;min-height:44px;display:flex;align-items:center;justify-content:center;';
+    var unsaveIcon = document.createElement('i');
+    unsaveIcon.setAttribute('data-lucide', 'heart');
+    unsaveIcon.style.cssText = 'width:16px;height:16px;fill:currentColor;';
+    unsaveBtn.appendChild(unsaveIcon);
+    item.appendChild(unsaveBtn);
+
+    info.addEventListener('click', function() {
+      var idx = POEMS.findIndex(function(p){return p.id===sp.id;});
+      if (idx >= 0) { S.currentIndex = idx; renderPoem(); }
+      document.getElementById('savedModal').classList.remove('open');
+    });
+
+    unsaveBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      S.savedPoems = S.savedPoems.filter(function(x){return x.id!==sp.id;});
+      renderSavedPoems();
+      updateSaveBtn();
+      addLog('Saved', 'Removed: ' + sp.title, 'info');
+    });
+
+    container.appendChild(item);
+  });
+  lucide.createIcons();
+}
+
+function renderPoetDropdown() {
+  var list = document.getElementById('poetDropdown');
+  if (!list) return;
+  while (list.firstChild) list.removeChild(list.firstChild);
+
+  CATEGORIES.forEach(function(cat) {
+    var item = document.createElement('button');
+    item.className = 'dropdown-item' + (S.selectedCategory === cat.id ? ' active' : '');
+
+    var labelDiv = document.createElement('div');
+    labelDiv.style.cssText = 'display:flex;flex-direction:column;align-items:flex-start;';
+    var labelAr = document.createElement('div');
+    labelAr.className = 'dropdown-item-label-ar font-amiri';
+    labelAr.textContent = cat.labelAr;
+    labelDiv.appendChild(labelAr);
+    var labelEn = document.createElement('div');
+    labelEn.className = 'dropdown-item-label-en font-brand-en';
+    labelEn.textContent = cat.label;
+    labelDiv.appendChild(labelEn);
+    item.appendChild(labelDiv);
+
+    if (S.selectedCategory === cat.id) {
+      var check = document.createElement('i');
+      check.setAttribute('data-lucide', 'check');
+      check.style.cssText = 'width:14px;height:14px;color:var(--gold);margin-left:auto;';
+      item.appendChild(check);
+    }
+
+    item.addEventListener('click', function() {
+      S.selectedCategory = cat.id;
+      S.currentIndex = 0;
+      renderPoem();
+      renderPoetDropdown();
+      renderPoetSubmenu();
+      closeAllDropdowns();
+      var overflowPoetName = document.getElementById('overflowPoetName');
+      if (overflowPoetName) overflowPoetName.textContent = cat.label;
+      addLog('Filter', 'Poet: ' + cat.label, 'info');
+    });
+
+    list.appendChild(item);
+  });
+  lucide.createIcons();
+}
+
+function renderFontGrid() {
+  var grid = document.getElementById('fontGrid');
+  if (!grid) return;
+  while (grid.firstChild) grid.removeChild(grid.firstChild);
+
+  FONTS.forEach(function(font) {
+    var btn = document.createElement('button');
+    btn.className = 'settings-card' + (S.currentFont === font.id ? ' active' : '');
+
+    var preview = document.createElement('div');
+    preview.className = font.family;
+    preview.style.cssText = 'font-size:20px;line-height:1.2;color:var(--gold);';
+    preview.textContent = '\u0628\u0633\u0645 \u0627\u0644\u0644\u0647';
+    btn.appendChild(preview);
+
+    var nameAr = document.createElement('div');
+    nameAr.className = font.family;
+    nameAr.style.cssText = 'font-size:10px;opacity:0.6;margin-top:4px;';
+    nameAr.textContent = font.labelAr;
+    btn.appendChild(nameAr);
+
+    var nameEn = document.createElement('div');
+    nameEn.className = 'font-brand-en';
+    nameEn.style.cssText = 'font-size:9px;opacity:0.4;text-transform:uppercase;letter-spacing:0.05em;';
+    nameEn.textContent = font.label;
+    btn.appendChild(nameEn);
+
+    btn.addEventListener('click', function() {
+      S.currentFont = font.id;
+      applyFont();
+      renderFontGrid();
+      renderFontSubmenu();
+      var currentFontLabel = document.getElementById('currentFontLabel');
+      if (currentFontLabel) currentFontLabel.textContent = font.label;
+      var overflowFontName = document.getElementById('overflowFontName');
+      if (overflowFontName) overflowFontName.textContent = font.label;
+      addLog('Font', font.label, 'info');
+    });
+
+    grid.appendChild(btn);
+  });
+}
+
+function renderFontSubmenu() {
+  var container = document.getElementById('fontSubmenu');
+  if (!container) return;
+  while (container.firstChild) container.removeChild(container.firstChild);
+
+  FONTS.forEach(function(font) {
+    var item = document.createElement('div');
+    item.className = 'dropdown-item' + (S.currentFont === font.id ? ' active' : '');
+    item.style.cssText = 'padding:6px 12px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;';
+
+    var label = document.createElement('span');
+    label.className = font.family;
+    label.textContent = font.labelAr + ' / ' + font.label;
+    item.appendChild(label);
+
+    if (S.currentFont === font.id) {
+      var check = document.createElement('i');
+      check.setAttribute('data-lucide', 'check');
+      check.style.cssText = 'width:14px;height:14px;color:var(--accent-primary);';
+      item.appendChild(check);
+    }
+
+    item.addEventListener('click', function() {
+      S.currentFont = font.id;
+      applyFont();
+      renderFontGrid();
+      renderFontSubmenu();
+      addLog('Font', font.label, 'info');
+    });
+
+    container.appendChild(item);
+  });
+  lucide.createIcons();
+}
+
+function renderPoetSubmenu() {
+  var container = document.getElementById('poetSubmenu');
+  if (!container) return;
+  while (container.firstChild) container.removeChild(container.firstChild);
+
+  CATEGORIES.forEach(function(cat) {
+    var item = document.createElement('div');
+    item.className = 'dropdown-item' + (S.selectedCategory === cat.id ? ' active' : '');
+    item.style.cssText = 'padding:6px 12px;cursor:pointer;display:flex;justify-content:space-between;align-items:center;';
+
+    var label = document.createElement('span');
+    label.textContent = cat.labelAr;
+    item.appendChild(label);
+
+    if (S.selectedCategory === cat.id) {
+      var check = document.createElement('i');
+      check.setAttribute('data-lucide', 'check');
+      check.style.cssText = 'width:14px;height:14px;color:var(--accent-primary);';
+      item.appendChild(check);
+    }
+
+    item.addEventListener('click', function() {
+      S.selectedCategory = cat.id;
+      S.currentIndex = 0;
+      renderPoem();
+      renderPoetDropdown();
+      renderPoetSubmenu();
+      closeAllDropdowns();
+      document.getElementById('overflowDropdown').classList.remove('open');
+      addLog('Filter', 'Poet: ' + cat.label, 'info');
+    });
+
+    container.appendChild(item);
+  });
+  lucide.createIcons();
+}
+
+function updateThemeUI() {
+  document.body.setAttribute('data-theme', S.darkMode ? 'dark' : 'light');
+  // Update theme icon in control bar
+  var themeIcon = document.getElementById('themeIcon');
+  if (themeIcon) {
+    themeIcon.setAttribute('data-lucide', S.darkMode ? 'sun' : 'moon');
+  }
+  // Update toggle theme icon/labels in dropdown
+  var themeToggleIcon = document.getElementById('themeToggleIcon');
+  var themeToggleLabelAr = document.getElementById('themeToggleLabelAr');
+  var themeToggleLabelEn = document.getElementById('themeToggleLabelEn');
+  if (themeToggleIcon) themeToggleIcon.setAttribute('data-lucide', S.darkMode ? 'moon' : 'sun');
+  if (themeToggleLabelAr) themeToggleLabelAr.textContent = S.darkMode ? '\u0627\u0644\u0648\u0636\u0639 \u0627\u0644\u0646\u0647\u0627\u0631\u064A' : '\u0627\u0644\u0648\u0636\u0639 \u0627\u0644\u0644\u064A\u0644\u064A';
+  if (themeToggleLabelEn) themeToggleLabelEn.textContent = S.darkMode ? 'Light Mode' : 'Dark Mode';
+  // Update overflow theme labels
+  var overflowThemeIcon = document.getElementById('overflowThemeIcon');
+  var overflowThemeLabelAr = document.getElementById('overflowThemeLabelAr');
+  if (overflowThemeIcon) overflowThemeIcon.setAttribute('data-lucide', S.darkMode ? 'sun' : 'moon');
+  if (overflowThemeLabelAr) overflowThemeLabelAr.textContent = S.darkMode ? '\u0627\u0644\u0648\u0636\u0639 \u0627\u0644\u0646\u0647\u0627\u0631\u064A' : '\u0627\u0644\u0648\u0636\u0639 \u0627\u0644\u0644\u064A\u0644\u064A';
+  // Update settings modal cards
+  var settingsDark = document.getElementById('settingsDark');
+  var settingsLight = document.getElementById('settingsLight');
+  if (settingsDark) settingsDark.classList.toggle('active', S.darkMode);
+  if (settingsLight) settingsLight.classList.toggle('active', !S.darkMode);
+  lucide.createIcons();
+}
+
+// ============================================================
+// INSIGHT RENDERING
+// ============================================================
+function renderInsight(parsed) {
+  var sections = [
+    { key: 'poeticTranslation', title: 'The Poem', icon: 'feather' },
+    { key: 'depth', title: 'The Depth', icon: 'layers' },
+    { key: 'author', title: 'The Author', icon: 'user' }
+  ];
+
+  // Render to both desktop pane and mobile section
+  ['insightContent', 'mobileInsightContent'].forEach(function(containerId) {
+    var container = document.getElementById(containerId);
+    if (!container) return;
+    while (container.firstChild) container.removeChild(container.firstChild);
+
+    sections.forEach(function(sec) {
+      if (!parsed[sec.key]) return;
+      var block = document.createElement('div');
+      block.style.cssText = 'margin-bottom:16px;';
+
+      var header = document.createElement('div');
+      header.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:8px;opacity:0.6;font-size:11px;text-transform:uppercase;letter-spacing:1px;';
+      var icon = document.createElement('i');
+      icon.setAttribute('data-lucide', sec.icon);
+      icon.style.cssText = 'width:14px;height:14px;';
+      header.appendChild(icon);
+      var titleSpan = document.createElement('span');
+      titleSpan.textContent = sec.title;
+      header.appendChild(titleSpan);
+      block.appendChild(header);
+
+      var body = document.createElement('div');
+      body.style.cssText = 'font-size:14px;line-height:1.8;opacity:0.85;';
+      body.textContent = parsed[sec.key];
+      block.appendChild(body);
+
+      container.appendChild(block);
+    });
+    lucide.createIcons();
+  });
+}
+
+function renderMobileInsight(parsed) {
+  var container = document.getElementById('mobileInsight');
+  if (!container) return;
+  while (container.firstChild) container.removeChild(container.firstChild);
+
+  var sections = [
+    { key: 'poeticTranslation', title: 'The Poem', icon: 'feather' },
+    { key: 'depth', title: 'The Depth', icon: 'layers' },
+    { key: 'author', title: 'The Author', icon: 'user' }
+  ];
+
+  sections.forEach(function(sec) {
+    if (!parsed[sec.key]) return;
+    var block = document.createElement('div');
+    block.className = 'insight-section';
+
+    var header = document.createElement('h4');
+    header.className = 'insight-section-title';
+    header.textContent = sec.title;
+    block.appendChild(header);
+
+    var body = document.createElement('div');
+    body.style.cssText = 'padding-left:1rem;border-left:1px solid rgba(99,102,241,0.1);';
+    var bodyP = document.createElement('p');
+    bodyP.className = 'font-brand-en';
+    bodyP.style.cssText = 'font-size:0.875rem;opacity:0.8;line-height:1.75;';
+    bodyP.textContent = parsed[sec.key];
+    body.appendChild(bodyP);
+    block.appendChild(body);
+
+    container.appendChild(block);
+  });
+}
+
+// ============================================================
+// INIT & EVENT HANDLERS
+// ============================================================
+function init() {
+  lucide.createIcons();
+  renderPoem();
+  renderPoetDropdown();
+  renderFontGrid();
+  renderFontSubmenu();
+  renderPoetSubmenu();
+  renderAuthState();
+  updateThemeUI();
+  addLog('App', 'Mockup initialized', 'success');
+  addLog('Mode', 'Database (mocked)', 'info');
+
+  // -- Discover --
+  document.getElementById('btnDiscover').addEventListener('click', function() {
+    var btn = this;
+    addLog('Discover', 'Loading next poem...', 'info');
+    setTimeout(function() {
+      var filtered = getFiltered();
+      S.currentIndex = (S.currentIndex + 1) % filtered.length;
+      renderPoem();
+      addLog('Discover', 'Loaded: ' + getCurrent().title, 'success');
+    }, 600);
+  });
+
+  // -- Explain (streaming sim) --
+  function doExplain() {
+    var poem = getCurrent();
+    if (S.isInterpreting) return;
+    S.isInterpreting = true;
+    addLog('Explain', 'Starting insight stream...', 'info');
+
+    // Hide seek button, show streaming text
+    var seekBtn = document.getElementById('btnSeekInsight');
+    if (seekBtn) seekBtn.style.display = 'none';
+
+    var fullText = poem.insight;
+    var charIndex = 0;
+    var insightPoetic = document.getElementById('insightPoetic');
+    var streamInterval = setInterval(function() {
+      charIndex += 3;
+      if (charIndex >= fullText.length) {
+        charIndex = fullText.length;
+        clearInterval(streamInterval);
+        S.isInterpreting = false;
+        S.interpretation = fullText;
+        // Parse and render structured insight
+        var parsed = parseInsight(fullText);
+        if (insightPoetic) insightPoetic.textContent = parsed.poeticTranslation;
+        var depthSec = document.getElementById('insightDepthSection');
+        var depthEl = document.getElementById('insightDepth');
+        if (depthSec && parsed.depth) { depthSec.style.display = 'block'; depthEl.textContent = parsed.depth; }
+        var authorSec = document.getElementById('insightAuthorSection');
+        var authorEl = document.getElementById('insightAuthor');
+        if (authorSec && parsed.author) { authorSec.style.display = 'block'; authorEl.textContent = parsed.author; }
+        // Render mobile insight section
+        renderMobileInsight(parsed);
+        addLog('Explain', 'Insight complete', 'success');
+        return;
+      }
+      var partial = fullText.substring(0, charIndex);
+      if (insightPoetic) insightPoetic.textContent = partial;
+    }, 20);
+  }
+
+  document.getElementById('btnExplain').addEventListener('click', doExplain);
+  document.getElementById('btnSeekInsight').addEventListener('click', doExplain);
+
+  // -- Listen (audio sim) --
+  document.getElementById('btnListen').addEventListener('click', function() {
+    var btn = this;
+    if (S.isPlaying) {
+      S.isPlaying = false;
+      var icon = btn.querySelector('i, svg');
+      if (icon) { icon.setAttribute('data-lucide', 'volume-2'); lucide.createIcons(); }
+      addLog('Listen', 'Stopped', 'info');
+      return;
+    }
+    if (S.isGeneratingAudio) return;
+
+    S.isGeneratingAudio = true;
+    addLog('Listen', 'Generating audio...', 'info');
+
+    setTimeout(function() {
+      S.isGeneratingAudio = false;
+      S.isPlaying = true;
+      var icon = btn.querySelector('i, svg');
+      if (icon) { icon.setAttribute('data-lucide', 'pause'); lucide.createIcons(); }
+      addLog('Listen', 'Playing recitation', 'success');
+
+      setTimeout(function() {
+        S.isPlaying = false;
+        var icon = btn.querySelector('i, svg');
+        if (icon) { icon.setAttribute('data-lucide', 'volume-2'); lucide.createIcons(); }
+        addLog('Listen', 'Playback complete', 'info');
+      }, 8000);
+    }, 1500);
+  });
+
+  // -- Copy --
+  document.getElementById('btnCopy').addEventListener('click', function() {
+    var poem = getCurrent();
+    var text = poem.arabic + '\n\n' + poem.english + '\n\n\u2014 ' + poem.poet;
+    navigator.clipboard.writeText(text).then(function() {
+      var icon = document.querySelector('#btnCopy i, #btnCopy svg');
+      if (icon) {
+        icon.setAttribute('data-lucide', 'check');
+        lucide.createIcons();
+        setTimeout(function() {
+          icon.setAttribute('data-lucide', 'copy');
+          lucide.createIcons();
+        }, 1500);
+      }
+      addLog('Copy', 'Copied to clipboard', 'success');
+    });
+  });
+
+  // -- Save/Heart --
+  document.getElementById('btnSave').addEventListener('click', function() {
+    if (!S.isLoggedIn) {
+      var tooltip = document.getElementById('saveTooltip');
+      if (tooltip) {
+        tooltip.classList.add('show');
+        setTimeout(function() { tooltip.classList.remove('show'); }, 2000);
+      }
+      addLog('Save', 'Not logged in - showing hint', 'info');
+      return;
+    }
+    var poem = getCurrent();
+    var idx = S.savedPoems.findIndex(function(sp) { return sp.id === poem.id; });
+    if (idx >= 0) {
+      S.savedPoems.splice(idx, 1);
+      addLog('Save', 'Unsaved: ' + poem.title, 'info');
+    } else {
+      S.savedPoems.push(Object.assign({}, poem, { savedAt: new Date().toISOString() }));
+      addLog('Save', 'Saved: ' + poem.title, 'success');
+    }
+    updateSaveBtn();
+  });
+
+  // -- Theme dropdown toggle --
+  document.getElementById('btnTheme').addEventListener('click', function(e) {
+    e.stopPropagation();
+    closeAllDropdowns();
+    document.getElementById('themeDropdown').classList.toggle('open');
+  });
+
+  // -- Theme toggle (in dropdown) --
+  document.getElementById('btnToggleTheme').addEventListener('click', function() {
+    S.darkMode = !S.darkMode;
+    updateThemeUI();
+    closeAllDropdowns();
+    addLog('Theme', S.darkMode ? 'Dark' : 'Light', 'info');
+  });
+
+  // -- Font cycling (in dropdown) --
+  document.getElementById('btnCycleFont').addEventListener('click', function() {
+    var idx = FONTS.findIndex(function(f) { return f.id === S.currentFont; });
+    S.currentFont = FONTS[(idx + 1) % FONTS.length].id;
+    applyFont();
+    renderFontGrid();
+    renderFontSubmenu();
+    var currentFontLabel = document.getElementById('currentFontLabel');
+    if (currentFontLabel) currentFontLabel.textContent = S.currentFont;
+    var overflowFontName = document.getElementById('overflowFontName');
+    if (overflowFontName) overflowFontName.textContent = S.currentFont;
+    addLog('Font', S.currentFont, 'info');
+  });
+
+  // -- Poet dropdown --
+  document.getElementById('btnPoets').addEventListener('click', function(e) {
+    e.stopPropagation();
+    closeAllDropdowns();
+    document.getElementById('poetDropdown').classList.toggle('open');
+  });
+
+  // -- DB/AI toggle --
+  document.getElementById('btnDbToggle').addEventListener('click', function() {
+    S.useDatabase = !S.useDatabase;
+    var icon = document.getElementById('dbIcon');
+    var label = document.getElementById('dbLabel');
+    var vsbDbIcon = document.getElementById('vsbDbIcon');
+    var overflowDbIcon = document.getElementById('overflowDbIcon');
+    var overflowDbLabelAr = document.getElementById('overflowDbLabelAr');
+    var overflowDbLabelEn = document.getElementById('overflowDbLabelEn');
+    var newIcon = S.useDatabase ? 'library' : 'sparkles';
+    if (icon) { icon.setAttribute('data-lucide', newIcon); }
+    if (vsbDbIcon) { vsbDbIcon.setAttribute('data-lucide', newIcon); }
+    if (overflowDbIcon) { overflowDbIcon.setAttribute('data-lucide', newIcon); }
+    if (label) label.textContent = S.useDatabase ? 'Local' : 'AI';
+    if (overflowDbLabelAr) overflowDbLabelAr.textContent = S.useDatabase ? '\u0642\u0627\u0639\u062F\u0629 \u0627\u0644\u0628\u064A\u0627\u0646\u0627\u062A' : '\u0630\u0643\u0627\u0621 \u0627\u0635\u0637\u0646\u0627\u0639\u064A';
+    if (overflowDbLabelEn) overflowDbLabelEn.textContent = S.useDatabase ? 'Local Database' : 'AI Generation';
+    lucide.createIcons();
+    addLog('Source', S.useDatabase ? 'Database' : 'AI', 'info');
+  });
+
+  // -- Auth button --
+  document.getElementById('btnAuth').addEventListener('click', function(e) {
+    e.stopPropagation();
+    if (S.isLoggedIn) {
+      closeAllDropdowns();
+      document.getElementById('authDropdown').classList.toggle('open');
+    } else {
+      document.getElementById('authModal').classList.add('open');
+    }
+  });
+
+  // Google sign-in
+  document.getElementById('btnGoogle').addEventListener('click', function() {
+    S.isLoggedIn = true;
+    S.user = { email: 'reviewer@poetry-bil-araby.app', name: 'Design Reviewer' };
+    document.getElementById('authModal').classList.remove('open');
+    renderAuthState();
+    addLog('Auth', 'Signed in with Google (mock)', 'success');
+  });
+
+  // Apple sign-in
+  document.getElementById('btnApple').addEventListener('click', function() {
+    S.isLoggedIn = true;
+    S.user = { email: 'reviewer@poetry-bil-araby.app', name: 'Design Reviewer' };
+    document.getElementById('authModal').classList.remove('open');
+    renderAuthState();
+    addLog('Auth', 'Signed in with Apple (mock)', 'success');
+  });
+
+  // Close auth modal
+  document.getElementById('authModalClose').addEventListener('click', function() {
+    document.getElementById('authModal').classList.remove('open');
+  });
+
+  // Auth dropdown items
+  document.getElementById('btnSignOut').addEventListener('click', function() {
+    S.isLoggedIn = false;
+    S.user = null;
+    S.savedPoems = [];
+    closeAllDropdowns();
+    renderAuthState();
+    updateSaveBtn();
+    addLog('Auth', 'Signed out', 'info');
+  });
+
+  document.getElementById('btnMyPoems').addEventListener('click', function() {
+    closeAllDropdowns();
+    renderSavedPoems();
+    document.getElementById('savedModal').classList.add('open');
+  });
+
+  document.getElementById('btnSettings').addEventListener('click', function() {
+    closeAllDropdowns();
+    renderFontGrid();
+    document.getElementById('settingsModal').classList.add('open');
+  });
+
+  // Close saved modal
+  document.getElementById('savedModalClose').addEventListener('click', function() {
+    document.getElementById('savedModal').classList.remove('open');
+  });
+
+  // Close settings modal
+  document.getElementById('settingsModalClose').addEventListener('click', function() {
+    document.getElementById('settingsModal').classList.remove('open');
+  });
+
+  // Settings: theme cards
+  document.getElementById('settingsDark').addEventListener('click', function() {
+    S.darkMode = true;
+    updateThemeUI();
+    addLog('Theme', 'Dark', 'info');
+  });
+  document.getElementById('settingsLight').addEventListener('click', function() {
+    S.darkMode = false;
+    updateThemeUI();
+    addLog('Theme', 'Light', 'info');
+  });
+
+  // -- Overflow menu (mobile) --
+  document.getElementById('btnOverflow').addEventListener('click', function(e) {
+    e.stopPropagation();
+    closeAllDropdowns();
+    document.getElementById('overflowDropdown').classList.toggle('open');
+  });
+
+  // Overflow: font submenu accordion
+  document.getElementById('overflowFontToggle').addEventListener('click', function() {
+    var submenu = document.getElementById('fontSubmenu');
+    var chevron = document.getElementById('fontChevron');
+    if (submenu.style.display === 'none' || submenu.style.display === '') {
+      submenu.style.display = 'block';
+      if (chevron) chevron.style.transform = 'rotate(180deg)';
+    } else {
+      submenu.style.display = 'none';
+      if (chevron) chevron.style.transform = '';
+    }
+  });
+
+  // Overflow: poet submenu accordion
+  document.getElementById('overflowPoetToggle').addEventListener('click', function() {
+    var submenu = document.getElementById('poetSubmenu');
+    var chevron = document.getElementById('poetChevron');
+    if (submenu.style.display === 'none' || submenu.style.display === '') {
+      submenu.style.display = 'block';
+      if (chevron) chevron.style.transform = 'rotate(180deg)';
+    } else {
+      submenu.style.display = 'none';
+      if (chevron) chevron.style.transform = '';
+    }
+  });
+
+  // Overflow items: theme
+  document.getElementById('overflowTheme').addEventListener('click', function() {
+    S.darkMode = !S.darkMode;
+    updateThemeUI();
+    addLog('Theme', S.darkMode ? 'Dark' : 'Light', 'info');
+  });
+
+  // Overflow items: copy
+  document.getElementById('overflowCopy').addEventListener('click', function() {
+    document.getElementById('btnCopy').click();
+    document.getElementById('overflowDropdown').classList.remove('open');
+  });
+
+  // Overflow items: db toggle
+  document.getElementById('overflowDb').addEventListener('click', function() {
+    document.getElementById('btnDbToggle').click();
+  });
+
+  // Overflow items: sign in
+  document.getElementById('overflowSignIn').addEventListener('click', function() {
+    document.getElementById('overflowDropdown').classList.remove('open');
+    document.getElementById('authModal').classList.add('open');
+  });
+
+  // Overflow items: my poems (logged in)
+  document.getElementById('overflowMyPoems').addEventListener('click', function() {
+    document.getElementById('overflowDropdown').classList.remove('open');
+    renderSavedPoems();
+    document.getElementById('savedModal').classList.add('open');
+  });
+
+  // Overflow items: settings (logged in)
+  document.getElementById('overflowSettings').addEventListener('click', function() {
+    document.getElementById('overflowDropdown').classList.remove('open');
+    renderFontGrid();
+    document.getElementById('settingsModal').classList.add('open');
+  });
+
+  // Overflow items: sign out (logged in)
+  document.getElementById('overflowSignOut').addEventListener('click', function() {
+    document.getElementById('overflowDropdown').classList.remove('open');
+    S.isLoggedIn = false;
+    S.user = null;
+    S.savedPoems = [];
+    renderAuthState();
+    updateSaveBtn();
+    addLog('Auth', 'Signed out', 'info');
+  });
+
+  // -- Vertical sidebar buttons --
+  document.getElementById('vsbExplain').addEventListener('click', doExplain);
+
+  document.getElementById('vsbCopy').addEventListener('click', function() {
+    document.getElementById('btnCopy').click();
+  });
+
+  document.getElementById('vsbSaved').addEventListener('click', function() {
+    if (S.isLoggedIn) {
+      renderSavedPoems();
+      document.getElementById('savedModal').classList.add('open');
+    } else {
+      document.getElementById('authModal').classList.add('open');
+    }
+  });
+
+  document.getElementById('vsbDbToggle').addEventListener('click', function() {
+    document.getElementById('btnDbToggle').click();
+  });
+
+  document.getElementById('vsbSettings').addEventListener('click', function() {
+    renderFontGrid();
+    document.getElementById('settingsModal').classList.add('open');
+  });
+
+  document.getElementById('vsbAuth').addEventListener('click', function() {
+    if (S.isLoggedIn) {
+      closeAllDropdowns();
+      document.getElementById('authDropdown').classList.toggle('open');
+    } else {
+      document.getElementById('authModal').classList.add('open');
+    }
+  });
+
+  // -- Debug panel toggle --
+  document.getElementById('debugToggle').addEventListener('click', function() {
+    var panel = document.getElementById('debugPanel');
+    S.debugExpanded = !S.debugExpanded;
+    if (S.debugExpanded) {
+      panel.classList.remove('collapsed');
+      panel.classList.add('expanded');
+    } else {
+      panel.classList.remove('expanded');
+      panel.classList.add('collapsed');
+    }
+    var chevron = document.getElementById('debugChevron');
+    if (chevron) {
+      chevron.style.transform = S.debugExpanded ? 'rotate(180deg)' : '';
+    }
+  });
+
+  // Clear logs
+  document.getElementById('clearLogs').addEventListener('click', function(e) {
+    e.stopPropagation();
+    S.logs = [];
+    var el = document.getElementById('debugLogs');
+    if (el) el.innerHTML = '';
+    document.getElementById('logCount').textContent = '(0)';
+  });
+
+  // -- Scroll progress bar (on main scroll area, not window) --
+  var mainScroll = document.getElementById('mainScroll');
+  if (mainScroll) {
+    mainScroll.addEventListener('scroll', function() {
+      var scrollTop = mainScroll.scrollTop;
+      var scrollHeight = mainScroll.scrollHeight - mainScroll.clientHeight;
+      var progress = scrollHeight > 0 ? scrollTop / scrollHeight : 0;
+      var bar = document.getElementById('scrollProgress');
+      if (bar) bar.style.transform = 'scaleX(' + progress + ')';
+
+      // Header fade on scroll
+      var header = document.getElementById('appHeader');
+      if (header) {
+        var opacity = Math.max(0, 1 - scrollTop / 200);
+        header.style.opacity = opacity;
+      }
+    });
+  }
+
+  // -- Close dropdowns on outside click --
+  document.addEventListener('click', function(e) {
+    if (!e.target.closest('.dropdown') && !e.target.closest('.ctrl-btn')) {
+      closeAllDropdowns();
+    }
+  });
+
+  // Close modals on backdrop click
+  document.querySelectorAll('.modal-overlay').forEach(function(modal) {
+    modal.addEventListener('click', function(e) {
+      if (e.target === modal) modal.classList.remove('open');
+    });
+  });
+
+  // -- API key banner auto-dismiss --
+  var apiBanner = document.getElementById('apiBanner');
+  if (apiBanner) {
+    setTimeout(function() { apiBanner.classList.add('hidden'); }, 5000);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+
+</body>
+</html>

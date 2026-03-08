@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>E2E #7: Scroll Keeper -- Physical Unroll</title>
+<title>Option C: Snap Points -- Scroll Keeper</title>
 <link href="https://fonts.googleapis.com/css2?family=Forum&family=Reem+Kufi:wght@400;700&family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/lucide@latest"></script>
 <style>
@@ -201,6 +201,9 @@ html.dark body::after { opacity: 0.3; }
 #scroll-onboarding.active {
   display: block;
 }
+/* Snap-point scrolling: proximity snap for smoother experience */
+html { scroll-snap-type: y proximity; }
+
 
 /* --- Progress Track --- */
 .scroll-progress-track {
@@ -275,7 +278,8 @@ html.dark .roller-bar {
 
 /* --- Scroll Hero --- */
 .scroll-hero {
-  height: 85vh;
+  height: 100vh;
+  scroll-snap-align: start;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -288,7 +292,7 @@ html.dark .roller-bar {
   font-family: var(--font-ar);
   font-size: clamp(2rem, 5vw, 3.5rem);
   color: var(--gold);
-  margin-bottom: 1.5rem;
+  margin-bottom: 1rem;
   text-shadow: 0 0 20px rgba(197,160,89,0.2);
   opacity: 0;
   animation: fadeUp 1s ease 0.3s forwards;
@@ -303,7 +307,7 @@ html.dark .roller-bar {
   animation: fadeUp 1s ease 0.8s forwards;
 }
 .hero-scroll-arrow {
-  margin-top: 3rem;
+  margin-top: 2rem;
   color: var(--gold);
   opacity: 0;
   animation: fadeUp 1s ease 1.2s forwards, gentleBounce 2s ease-in-out 2.2s infinite;
@@ -315,9 +319,10 @@ html.dark .roller-bar {
 
 /* --- Scroll Sections --- */
 .scroll-section {
-  height: 110vh;
+  height: 105vh;
   position: relative;
   overflow: hidden;
+  scroll-snap-align: start;
 }
 
 .section-sticky-frame {
@@ -396,7 +401,7 @@ html.dark .roller-bar {
   color: var(--gold);
   letter-spacing: 0.3em;
   text-transform: uppercase;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
   direction: ltr;
   opacity: 0;
   transform: translateY(10px);
@@ -409,7 +414,7 @@ html.dark .roller-bar {
   font-size: clamp(2.4rem, 6vw, 3.2rem);
   color: var(--gold);
   line-height: 1.2;
-  margin-bottom: 0.3rem;
+  margin-bottom: 0.15rem;
   text-shadow: 0 0 20px rgba(197,160,89,0.2);
   opacity: 0;
   transform: scale(0.8);
@@ -418,10 +423,10 @@ html.dark .roller-bar {
 
 .sc-subtitle {
   font-family: var(--font-ui);
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 400;
   color: var(--ink-dim);
-  margin-bottom: 1rem;
+  margin-bottom: 0.5rem;
   direction: ltr;
   opacity: 0;
   transform: translateY(8px);
@@ -433,14 +438,14 @@ html.dark .roller-bar {
   width: 0px;
   height: 1px;
   background: linear-gradient(90deg, transparent, var(--gold), transparent);
-  margin: 0 auto 1rem;
+  margin: 0 auto 0.5rem;
   transition: width 0.3s ease;
 }
 
 .sc-text {
   font-family: var(--font-ui);
-  font-size: 0.86rem;
-  line-height: 1.8;
+  font-size: 0.82rem;
+  line-height: 1.7;
   color: var(--ink);
   opacity: 0;
   direction: ltr;
@@ -451,9 +456,9 @@ html.dark .roller-bar {
 /* Section-specific: floating verse (section 1) */
 .floating-verse {
   font-family: var(--font-ar);
-  font-size: 1.1rem;
+  font-size: 1rem;
   color: var(--gold);
-  margin-top: 1.5rem;
+  margin-top: 0.75rem;
   opacity: 0;
   transform: translateY(12px);
   text-shadow: 0 0 12px rgba(197,160,89,0.15);
@@ -463,7 +468,7 @@ html.dark .roller-bar {
 
 /* Section-specific: bilingual stagger (section 2) */
 .bilingual-demo {
-  margin-top: 1.5rem;
+  margin-top: 0.75rem;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -493,8 +498,8 @@ html.dark .roller-bar {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 56px; height: 56px;
-  margin-top: 1.5rem;
+  width: 48px; height: 48px;
+  margin-top: 0.75rem;
   color: var(--gold);
   opacity: 0;
   transform: scale(0.5);
@@ -506,7 +511,8 @@ html.dark .roller-bar {
 
 /* --- Scroll Finale --- */
 .scroll-finale {
-  height: 40vh;
+  height: 100vh;
+  scroll-snap-align: start;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -556,10 +562,7 @@ html.dark .roller-bar {
   outline-offset: 2px;
 }
 
-/* Scroll snap (proximity, not mandatory) */
-#scroll-onboarding.active ~ #snap-helper {
-  scroll-snap-type: y proximity;
-}
+/* Scroll snap override: mandatory snap handled on html element */
 
 /* ============ Responsive -- Scroll Onboarding ============ */
 @media (max-width: 1024px) {
@@ -572,7 +575,7 @@ html.dark .roller-bar {
     height: 30vh;
   }
   .scroll-progress-marker { width: 8px; height: 8px; }
-  .scroll-section { height: 100vh; }
+  .scroll-section { height: 105vh; }
   .section-gilt-frame { inset: 12px; }
   .arabesque-corner { width: 40px; height: 40px; }
   .arabesque-corner.top-left { top: 16px; left: 16px; }
@@ -1018,10 +1021,19 @@ html.dark .scroll-icons-strip { background: var(--paper-light); }
     return { overall: overall, sections: sections };
   }
 
-  /* Compute fade-out multiplier: content stays full until 0.92, then fades 0.92-1.0 */
+  /* Compute fade-out multiplier: content stays full until 0.7, then gradually fades to 0.3 minimum
+     This ensures text is ALWAYS visible on screen during scrolling */
   function getFadeOut(reveal) {
-    if (reveal <= 0.92) return 1;
-    return mapRange(reveal, 0.92, 1.0, 1, 0);
+    if (reveal <= 0.7) return 1;
+    /* Fade from 1.0 to 0.3 (never fully disappears) */
+    return mapRange(reveal, 0.7, 1.1, 1, 0.3);
+  }
+
+  /* Compute fade-in multiplier for incoming sections: starts at 0.3 when entering viewport */
+  function getFadeIn(reveal) {
+    /* Section starts fading in from 0.3 opacity when it enters */
+    if (reveal < 0) return 0.3;
+    return mapRange(reveal, 0, 0.3, 0.3, 1);
   }
 
   /* Animate a section based on its reveal progress */
@@ -1035,12 +1047,14 @@ html.dark .scroll-icons-strip { background: var(--paper-light); }
     var text = sectionEl.querySelector('.sc-text');
     var corners = sectionEl.querySelectorAll('.arabesque-corner');
 
-    /* Global fade-out for this section */
+    /* Combine fade-in (entering) and fade-out (leaving) for smooth cross-fade */
+    var fadeIn = getFadeIn(reveal);
     var fadeOut = getFadeOut(reveal);
+    var combinedFade = Math.min(fadeIn, fadeOut);
 
     /* Gilt frame: 0.0 - 0.15 */
     var frameOpacity = easeOutCubic(mapRange(reveal, 0.0, 0.15, 0, 1));
-    if (frame) frame.style.opacity = frameOpacity * fadeOut;
+    if (frame) frame.style.opacity = frameOpacity * combinedFade;
 
     /* Parchment mask: 0.0 - 0.25 (shrinks from 100% to 0% -- FASTER reveal) */
     var maskScale = 1 - easeOutQuart(mapRange(reveal, 0.0, 0.25, 0, 1));
@@ -1049,7 +1063,7 @@ html.dark .scroll-icons-strip { background: var(--paper-light); }
     /* Chapter marker: appears at 0.0 - 0.15 */
     var chapterT = easeOutCubic(mapRange(reveal, 0.0, 0.15, 0, 1));
     if (chapter) {
-      chapter.style.opacity = chapterT * fadeOut;
+      chapter.style.opacity = chapterT * combinedFade;
       chapter.style.transform = 'translateY(' + (10 * (1 - chapterT)) + 'px)';
     }
 
@@ -1057,7 +1071,7 @@ html.dark .scroll-icons-strip { background: var(--paper-light); }
     var initialRaw = mapRange(reveal, 0.0, 0.3, 0, 1);
     var initialT = easeOutBack(initialRaw);
     if (initial) {
-      initial.style.opacity = easeOutCubic(initialRaw) * fadeOut;
+      initial.style.opacity = easeOutCubic(initialRaw) * combinedFade;
       /* Spring: 0.8 base + overshoot via easeOutBack (goes past 1.0) */
       var initialScale = 0.8 + 0.2 * initialT;
       initial.style.transform = 'scale(' + initialScale + ')';
@@ -1068,7 +1082,7 @@ html.dark .scroll-icons-strip { background: var(--paper-light); }
     var subtitleRaw = mapRange(reveal, 0.05, 0.35, 0, 1);
     var subtitleT = easeOutBack(subtitleRaw);
     if (subtitle) {
-      subtitle.style.opacity = easeOutCubic(subtitleRaw) * fadeOut;
+      subtitle.style.opacity = easeOutCubic(subtitleRaw) * combinedFade;
       /* Elastic translateY: overshoot goes slightly negative (past 0) */
       var subtitleY = 8 * (1 - subtitleT);
       subtitle.style.transform = 'translateY(' + subtitleY + 'px)';
@@ -1079,14 +1093,15 @@ html.dark .scroll-icons-strip { background: var(--paper-light); }
     var ruleT = easeOutBack(ruleRaw);
     if (rule) {
       rule.style.width = (60 * ruleT) + 'px';
-      rule.style.opacity = fadeOut;
+      rule.style.opacity = combinedFade;
     }
 
     /* Body text: 0.1 - 0.4 (elastic translateY) */
     var textRaw = mapRange(reveal, 0.1, 0.4, 0, 1);
     var textT = easeOutBack(textRaw);
     if (text) {
-      text.style.opacity = easeOutCubic(textRaw) * 0.7 * fadeOut;
+      /* Keep base opacity reasonable, multiply by combinedFade */
+      text.style.opacity = easeOutCubic(textRaw) * combinedFade;
       var textY = 8 * (1 - textT);
       text.style.transform = 'translateY(' + textY + 'px)';
     }
@@ -1094,7 +1109,7 @@ html.dark .scroll-icons-strip { background: var(--paper-light); }
     /* Arabesque corners: parallax at 0.3x of reveal */
     for (var c = 0; c < corners.length; c++) {
       var parallax = reveal * 0.3;
-      var cornerOpacity = 0.15 * easeOutCubic(mapRange(reveal, 0.0, 0.2, 0, 1)) * fadeOut;
+      var cornerOpacity = 0.15 * easeOutCubic(mapRange(reveal, 0.0, 0.2, 0, 1)) * combinedFade;
       corners[c].style.opacity = cornerOpacity;
       /* Preserve the base transform (flip) and add parallax */
       var baseTransform = corners[c].getAttribute('data-base-transform') || '';
@@ -1107,11 +1122,11 @@ html.dark .scroll-icons-strip { background: var(--paper-light); }
     }
 
     /* Section-specific animations */
-    animateSectionSpecific(sectionEl, reveal, fadeOut);
+    animateSectionSpecific(sectionEl, reveal, combinedFade);
   }
 
   /* Section-specific element animations */
-  function animateSectionSpecific(sectionEl, reveal, fadeOut) {
+  function animateSectionSpecific(sectionEl, reveal, combinedFade) {
     var sectionNum = sectionEl.getAttribute('data-section');
 
     if (sectionNum === '1') {
@@ -1120,7 +1135,7 @@ html.dark .scroll-icons-strip { background: var(--paper-light); }
       if (verse) {
         var verseRaw = mapRange(reveal, 0.15, 0.5, 0, 1);
         var verseT = easeOutBack(verseRaw);
-        verse.style.opacity = easeOutCubic(verseRaw) * fadeOut;
+        verse.style.opacity = easeOutCubic(verseRaw) * combinedFade;
         verse.style.transform = 'translateY(' + (12 * (1 - verseT)) + 'px)';
       }
     }
@@ -1132,7 +1147,7 @@ html.dark .scroll-icons-strip { background: var(--paper-light); }
         var lineStart = 0.15 + l * 0.10;
         var lineRaw = mapRange(reveal, lineStart, lineStart + 0.2, 0, 1);
         var lineT = easeOutBack(lineRaw);
-        lines[l].style.opacity = easeOutCubic(lineRaw) * fadeOut;
+        lines[l].style.opacity = easeOutCubic(lineRaw) * combinedFade;
         lines[l].style.transform = 'translateX(' + (15 * (1 - lineT)) + 'px)';
       }
     }
@@ -1143,7 +1158,7 @@ html.dark .scroll-icons-strip { background: var(--paper-light); }
       if (heart) {
         var heartRaw = mapRange(reveal, 0.15, 0.5, 0, 1);
         var heartT = easeOutBack(heartRaw);
-        heart.style.opacity = easeOutCubic(heartRaw) * fadeOut;
+        heart.style.opacity = easeOutCubic(heartRaw) * combinedFade;
         /* Spring overshoot: scale goes slightly past 1.0 then settles */
         heart.style.transform = 'scale(' + (0.5 + 0.5 * heartT) + ')';
       }

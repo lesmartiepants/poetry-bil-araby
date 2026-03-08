@@ -32,14 +32,16 @@ DATA_DIR = Path(__file__).resolve().parent
 # Mapping tables
 # ---------------------------------------------------------------------------
 
+# Map variant poet names -> canonical form (applied after normalize_arabic,
+# which already maps أ->ا, so all أبو variants become ابو).
+# Additional merges found during data inspection:
 POET_DEDUP_MAP = {
     "ابو الطيب المتنبي": "المتنبي",
-    "ابو العلاء المعري": "ابو العلاء المعري",
-    "ابو تمام": "ابو تمام",
-    "ابو نواس": "ابو نواس",
-    "ابو فراس الحمداني": "ابو فراس الحمداني",
-    "ابن الرومي": "ابن الرومي",
-    "الشريف الرضي": "الشريف الرضي",
+    # ابوالعلاء (no space) -> ابو العلاء (with space)
+    "ابوالعلاء المعري": "ابو العلاء المعري",
+    # taa marbuta variants
+    "ابن نباته المصري": "ابن نباتة المصري",
+    "ابن خفاجه": "ابن خفاجة",
 }
 
 THEME_NORM_MAP = {

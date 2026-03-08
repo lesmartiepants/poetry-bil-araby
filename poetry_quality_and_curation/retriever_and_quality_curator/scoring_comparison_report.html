@@ -1,0 +1,1318 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>مقارنة تقييم الشعر العربي | Arabic Poetry Evaluation Comparison</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Tajawal',sans-serif;background:#0d0d0d;color:#e8e0d0;line-height:1.7;direction:rtl}
+body.lang-en{direction:ltr}
+.container{max-width:1100px;margin:0 auto;padding:40px 24px}
+header{text-align:center;padding:50px 0 30px;border-bottom:1px solid #2a2520;margin-bottom:40px}
+header h1{font-family:'Amiri',serif;font-size:2.2rem;color:#d4a574;margin-bottom:8px}
+header .sub{color:#8a8070;font-size:0.95rem}
+header .sub strong{color:#c0b090}
+.section{margin-bottom:50px}
+.section h2{font-family:'Amiri',serif;font-size:1.5rem;color:#d4a574;border-bottom:1px solid #2a2520;padding-bottom:8px;margin-bottom:20px}
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:30px}
+.stat-box{background:#161310;border:1px solid #2a2520;border-radius:8px;padding:20px;text-align:center}
+.stat-box .model{font-size:0.85rem;color:#8a8070;margin-bottom:8px;font-family:monospace;direction:ltr}
+.stat-box .val{font-size:2rem;font-weight:700;color:#d4a574}
+.stat-box .label{font-size:0.8rem;color:#6a6050}
+.token-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.token-box{background:#161310;border:1px solid #2a2520;border-radius:8px;padding:16px}
+.token-box h4{color:#d4a574;font-size:0.9rem;margin-bottom:10px}
+.token-box p{font-size:0.82rem;color:#8a8070;margin-bottom:4px}
+.token-box .cost{font-size:1.1rem;color:#c0b090;font-weight:700;margin-top:8px}
+.bias-row{display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.bias-label{min-width:120px;text-align:left;font-size:0.9rem;color:#8a8070}
+.bias-track{flex:1;height:20px;background:#1a1714;border-radius:4px;overflow:hidden;border:1px solid #2a2520}
+.bias-fill{height:100%;border-radius:4px;transition:width 0.3s}
+.bias-val{min-width:60px;font-weight:700;font-size:0.9rem}
+.model-section{font-family:'Amiri',serif;font-size:1.2rem;color:#d4a574;margin:30px 0 15px;padding-bottom:8px;border-bottom:1px solid #1e1a16}
+.card{background:#141210;border:1px solid #2a2520;border-radius:10px;margin-bottom:20px;overflow:hidden}
+.card-header{display:flex;justify-content:space-between;align-items:center;padding:16px 20px;border-bottom:1px solid #1e1a16;flex-wrap:wrap;gap:10px}
+.poem-info h3{font-family:'Amiri',serif;font-size:1.15rem;color:#e8e0d0;margin-bottom:2px}
+.poet{font-size:0.85rem;color:#8a8070}
+.scores-summary{display:flex;gap:8px;flex-wrap:wrap}
+.score-pill{padding:4px 12px;border-radius:20px;font-size:0.82rem;font-weight:700}
+.card-body{display:flex;gap:20px;padding:16px 20px;flex-wrap:wrap}
+.verses{flex:1.2;min-width:280px}
+.verse{text-align:center;font-family:'Amiri',serif;font-size:1.05rem;line-height:2;color:#d8d0c0;margin-bottom:6px}
+.sep{color:#d4a574;margin:0 6px;font-size:0.6rem}
+.dims-table{flex:1;min-width:300px;border-collapse:collapse}
+.dims-table th{text-align:right;padding:6px 8px;font-size:0.75rem;color:#6a6050;border-bottom:1px solid #2a2520}
+.dims-table td{padding:6px 8px;border-bottom:1px solid #1e1a16}
+.dim-name{font-size:0.85rem;color:#8a8070;min-width:80px}
+.dim-val{min-width:120px}
+.bar{height:18px;border-radius:3px;display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;color:#000;min-width:30px}
+.dim-diff{font-weight:700;font-size:0.85rem;text-align:center;min-width:40px}
+.total-row td{border-top:2px solid #d4a574;padding-top:10px}
+.card-notes{padding:12px 20px;border-top:1px solid #1e1a16;background:#0f0e0c}
+.note{font-size:0.85rem;color:#8a8070;margin-bottom:6px;line-height:1.8}
+.note strong{color:#c0b090}
+.verdict{font-family:'Amiri',serif;font-size:1rem;color:#d4a574;margin-top:10px;padding-top:8px;border-top:1px solid #1e1a16;line-height:1.9}
+footer{text-align:center;padding:30px 0;border-top:1px solid #2a2520;margin-top:30px;font-size:0.8rem;color:#4a4030}
+/* Language toggle */
+.lang-toggle{position:fixed;top:16px;left:16px;z-index:1000;display:flex;gap:0;border-radius:8px;overflow:hidden;border:1px solid #2a2520;background:#161310;box-shadow:0 4px 12px rgba(0,0,0,0.4)}
+.lang-btn{padding:8px 16px;font-size:0.82rem;font-weight:600;border:none;cursor:pointer;background:#161310;color:#8a8070;transition:all 0.2s}
+.lang-btn:hover{background:#1e1a16;color:#c0b090}
+.lang-btn.active{background:#d4a574;color:#0d0d0d}
+/* i18n visibility */
+.i18n-en{display:none}
+body.lang-en .i18n-ar{display:none}
+body.lang-en .i18n-en{display:inline}
+body.lang-both .i18n-ar{display:inline}
+body.lang-both .i18n-en{display:inline;color:#8a8070;font-size:0.85em}
+body.lang-both .i18n-en::before{content:" — "}
+.note .i18n-en,.verdict .i18n-en{display:none}
+body.lang-en .note .i18n-ar,body.lang-en .verdict .i18n-ar{display:none}
+body.lang-en .note .i18n-en,body.lang-en .verdict .i18n-en{display:block}
+body.lang-both .note .i18n-en,body.lang-both .verdict .i18n-en{display:block;font-style:italic;margin-top:2px}
+body.lang-both .note .i18n-en::before,body.lang-both .verdict .i18n-en::before{content:""}
+@media(max-width:768px){.stats-grid,.token-grid{grid-template-columns:1fr}.card-body{flex-direction:column}.lang-toggle{top:auto;bottom:16px;left:50%;transform:translateX(-50%)}}
+</style>
+</head>
+<body>
+<div class="lang-toggle">
+    <button class="lang-btn active" data-lang="ar">عربي</button>
+    <button class="lang-btn" data-lang="en">English</button>
+    <button class="lang-btn" data-lang="both">Both</button>
+</div>
+<div class="container">
+<header>
+    <h1><span class="i18n-ar">مقارنة تقييم الشعر العربي: هايكو ⟷ سونيت ⟷ أوبوس</span><span class="i18n-en">Arabic Poetry Evaluation Comparison: Haiku ⟷ Sonnet ⟷ Opus</span></h1>
+    <div class="sub"><strong>84,324</strong> <span class="i18n-ar">قصيدة (هايكو)</span><span class="i18n-en">poems (Haiku)</span> &bull; <strong>1,857</strong> <span class="i18n-ar">قصيدة (سونيت)</span><span class="i18n-en">poems (Sonnet)</span> &bull; <strong>10</strong> <span class="i18n-ar">قصائد (أوبوس)</span><span class="i18n-en">poems (Opus)</span> &bull; 2026-03-07 02:14</div>
+</header>
+<div class="section">
+    <h2><span class="i18n-ar">١. ملخص النتائج</span><span class="i18n-en">1. Results Summary</span></h2>
+    <div class="stats-grid">
+        <div class="stat-box"><div class="model">bedrock-haiku-45</div><div class="val">77.8</div><div class="label">84,324 <span class="i18n-ar">قصيدة</span><span class="i18n-en">Poem</span> &bull; std 8.8</div></div>
+        <div class="stat-box"><div class="model">bedrock-sonnet-46</div><div class="val">83.0</div><div class="label">1,857 <span class="i18n-ar">قصيدة</span><span class="i18n-en">Poem</span> &bull; std 7.3</div></div>
+        <div class="stat-box"><div class="model">bedrock-opus-46</div><div class="val">70.4</div><div class="label">10 <span class="i18n-ar">قصائد</span><span class="i18n-en">Poems</span> &bull; std 11.3</div></div>
+    </div>
+</div>
+<div class="section">
+    <h2><span class="i18n-ar">٢. تحليل الانحياز (Calibration Bias)</span><span class="i18n-en">2. Calibration Bias Analysis</span></h2>
+    <p style="color:#8a8070;margin-bottom:16px;font-size:0.9rem"><span class="i18n-ar">الفرق بين درجات هايكو وسونيت على 1,797 قصيدة مشتركة. هايكو يبالغ في التقييم بمعدل ~11 نقطة.</span><span class="i18n-en">The difference between Haiku and Sonnet scores across 1,797 shared poems. Haiku overestimates by an average of ~11 points.</span></p>
+    
+        <div class="bias-row">
+            <span class="bias-label"><span class="i18n-ar">الإيقاع</span><span class="i18n-en">Rhythm</span></span>
+            <div class="bias-track"><div class="bias-fill" style="width:17.3272120200334%;background:#4CAF50"></div></div>
+            <span class="bias-val" style="color:#4CAF50">+5.8</span>
+        </div>
+        <div class="bias-row">
+            <span class="bias-label"><span class="i18n-ar">التصوير</span><span class="i18n-en">Imagery</span></span>
+            <div class="bias-track"><div class="bias-fill" style="width:23.609348914858117%;background:#4CAF50"></div></div>
+            <span class="bias-val" style="color:#4CAF50">+7.9</span>
+        </div>
+        <div class="bias-row">
+            <span class="bias-label"><span class="i18n-ar">العاطفة</span><span class="i18n-en">Emotion</span></span>
+            <div class="bias-track"><div class="bias-fill" style="width:27.278797996661112%;background:#4CAF50"></div></div>
+            <span class="bias-val" style="color:#4CAF50">+9.1</span>
+        </div>
+        <div class="bias-row">
+            <span class="bias-label"><span class="i18n-ar">اللغة</span><span class="i18n-en">Language</span></span>
+            <div class="bias-track"><div class="bias-fill" style="width:24.674457429048402%;background:#4CAF50"></div></div>
+            <span class="bias-val" style="color:#4CAF50">+8.2</span>
+        </div>
+        <div class="bias-row">
+            <span class="bias-label"><span class="i18n-ar">القيمة الثقافية</span><span class="i18n-en">Cultural Value</span></span>
+            <div class="bias-track"><div class="bias-fill" style="width:32.7946577629382%;background:#FFC107"></div></div>
+            <span class="bias-val" style="color:#FFC107">+10.9</span>
+        </div>
+        <div class="bias-row">
+            <span class="bias-label"><span class="i18n-ar">الدرجة الكلية</span><span class="i18n-en">Overall Score</span></span>
+            <div class="bias-track"><div class="bias-fill" style="width:25.193656093489167%;background:#4CAF50"></div></div>
+            <span class="bias-val" style="color:#4CAF50">+8.4</span>
+        </div>
+</div>
+<div class="section">
+    <h2><span class="i18n-ar">٣. استهلاك الرموز والتكلفة</span><span class="i18n-en">3. Token Usage & Cost</span></h2>
+    <div class="token-grid">
+        <div class="token-box"><h4><span class="i18n-ar">هايكو (Haiku 4.5)</span><span class="i18n-en">Haiku 4.5</span></h4><p><span class="i18n-ar">الإدخال</span><span class="i18n-en">Input</span>: ~29,513,400 <span class="i18n-ar">رمز</span><span class="i18n-en">tokens</span></p><p><span class="i18n-ar">الإخراج</span><span class="i18n-en">Output</span>: ~4,216,200 <span class="i18n-ar">رمز</span><span class="i18n-en">tokens</span></p><p>84,324 <span class="i18n-ar">قصيدة</span><span class="i18n-en">Poem</span> &bull; <span class="i18n-ar">دفعات من</span><span class="i18n-en">batches of</span> 5</p><div class="cost">~$40.48</div></div>
+        <div class="token-box"><h4><span class="i18n-ar">سونيت (Sonnet 4.6)</span><span class="i18n-en">Sonnet 4.6</span></h4><p><span class="i18n-ar">الإدخال</span><span class="i18n-en">Input</span>: ~742,800 <span class="i18n-ar">رمز</span><span class="i18n-en">tokens</span></p><p><span class="i18n-ar">الإخراج</span><span class="i18n-en">Output</span>: ~557,100 <span class="i18n-ar">رمز</span><span class="i18n-en">tokens</span></p><p>1,857 <span class="i18n-ar">قصيدة</span><span class="i18n-en">Poem</span> &bull; <span class="i18n-ar">دفعات من</span><span class="i18n-en">batches of</span> 5</p><div class="cost">~$10.58</div></div>
+        <div class="token-box"><h4><span class="i18n-ar">أوبوس (Opus 4.6)</span><span class="i18n-en">Opus 4.6</span></h4><p><span class="i18n-ar">الإدخال</span><span class="i18n-en">Input</span>: ~5,000 <span class="i18n-ar">رمز</span><span class="i18n-en">tokens</span></p><p><span class="i18n-ar">الإخراج</span><span class="i18n-en">Output</span>: ~5,000 <span class="i18n-ar">رمز</span><span class="i18n-en">tokens</span></p><p>10 <span class="i18n-ar">قصائد</span><span class="i18n-en">Poems</span> &bull; <span class="i18n-ar">دفعات من</span><span class="i18n-en">batches of</span> 3</p><div class="cost">~$0.4500</div></div>
+    </div>
+    <p style="color:#5a5040;font-size:0.8rem;margin-top:12px"><span class="i18n-ar">* التكلفة تقديرية بأسعار Bedrock المعلنة. التكلفة الفعلية تمر عبر خادم LiteLLM الداخلي.</span><span class="i18n-en">* Cost is estimated based on published Bedrock pricing. Actual cost is routed through the internal LiteLLM server.</span></p>
+</div>
+<div class="section">
+    <h2><span class="i18n-ar">٤. مقارنة تفصيلية للقصائد</span><span class="i18n-en">4. Detailed Poem Comparison</span></h2>
+    <p style="color:#8a8070;margin-bottom:10px;font-size:0.9rem"><span class="i18n-ar">القصائد مرتبة حسب حجم الاختلاف. اللون: <span style="color:#4CAF50">أخضر</span> (≤10) &bull; <span style="color:#FFC107">أصفر</span> (10-20) &bull; <span style="color:#F44336">أحمر</span> (&gt;20)</span><span class="i18n-en">Poems are sorted by difference magnitude. Color: <span style="color:#4CAF50">Green</span> (≤10) &bull; <span style="color:#FFC107">Yellow</span> (10-20) &bull; <span style="color:#F44336">Red</span> (&gt;20)</span></p>
+    <h3 class="model-section"><span class="i18n-ar">مقارنة أوبوس (Opus) — 10 قصائد</span><span class="i18n-en">Opus Comparison — 10 Poems</span></h3>
+    <div class="card" style="border-right:4px solid #F44336">
+        <div class="card-header">
+            <div class="poem-info">
+                <h3>أتطلب رزق الله من عند غيره</h3>
+                <span class="poet">علي بن أبي طالب</span>
+            </div>
+            <div class="scores-summary">
+                <div class="score-pill" style="background:#4CAF50;color:#000"><span class="i18n-ar">هايكو</span><span class="i18n-en">Haiku</span>: 90</div>
+                <div class="score-pill" style="background:#FF9800;color:#000">أوبوس: 56</div>
+                <div class="score-pill diff" style="background:#F44336;color:#000">Δ +34</div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="verses"><div class="verse">أَتَطلُبُ رِزقَ اللَهِ مِن عِندِ غَيرِهِ*وَتُصبِحُ مِن خَوفِ العَواقِبِ آمِنا*وَتَرضى بِصَّرافٍ وَإِن كانَ مُشرِكاً*ضَميناً وَلا تَرضى بِرَبِّكَ ضامِنا*كَأَنَكَ لَم تَقرَأَ بِما في كِتابِهِ*فَأَصبَحتَ مَنحولَ اليَقينِ مُباينا</div></div>
+            <table class="dims-table">
+                <tr><th><span class="i18n-ar">البُعد</span><span class="i18n-en">Dimension</span></th><th><span class="i18n-ar">هايكو</span><span class="i18n-en">Haiku</span></th><th>أوبوس</th><th>Δ</th></tr>
+                
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">الإيقاع</span><span class="i18n-en">Rhythm</span></td>
+            <td class="dim-val"><div class="bar" style="width:88%;background:#4CAF50">88</div></td>
+            <td class="dim-val"><div class="bar" style="width:62%;background:#FFC107">62</div></td>
+            <td class="dim-diff" style="color:#F44336">+26</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">التصوير</span><span class="i18n-en">Imagery</span></td>
+            <td class="dim-val"><div class="bar" style="width:85%;background:#4CAF50">85</div></td>
+            <td class="dim-val"><div class="bar" style="width:40%;background:#F44336">40</div></td>
+            <td class="dim-diff" style="color:#F44336">+45</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">العاطفة</span><span class="i18n-en">Emotion</span></td>
+            <td class="dim-val"><div class="bar" style="width:88%;background:#4CAF50">88</div></td>
+            <td class="dim-val"><div class="bar" style="width:65%;background:#FFC107">65</div></td>
+            <td class="dim-diff" style="color:#F44336">+23</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">اللغة</span><span class="i18n-en">Language</span></td>
+            <td class="dim-val"><div class="bar" style="width:92%;background:#4CAF50">92</div></td>
+            <td class="dim-val"><div class="bar" style="width:60%;background:#FFC107">60</div></td>
+            <td class="dim-diff" style="color:#F44336">+32</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">القيمة الثقافية</span><span class="i18n-en">Cultural Value</span></td>
+            <td class="dim-val"><div class="bar" style="width:95%;background:#4CAF50">95</div></td>
+            <td class="dim-val"><div class="bar" style="width:55%;background:#FF9800">55</div></td>
+            <td class="dim-diff" style="color:#F44336">+40</td>
+        </tr>
+        <tr class="total-row">
+            <td class="dim-name" style="font-weight:700;color:#d4a574"><span class="i18n-ar">المجموع</span><span class="i18n-en">Total</span></td>
+            <td class="dim-val"><div class="bar" style="width:90%;background:#4CAF50">90</div></td>
+            <td class="dim-val"><div class="bar" style="width:56%;background:#FF9800">56</div></td>
+            <td class="dim-diff" style="color:#F44336;font-weight:700">+34</td>
+        </tr>
+            </table>
+        </div>
+        <div class="card-notes"><div class="note"><strong><span class="i18n-ar">الإيقاع</span><span class="i18n-en">Rhythm</span>:</strong> <span class="i18n-ar">الوزن منتظم على البحر الطويل والقافية النونية المطلقة تؤدي غرضها، لكن الموسيقى الداخلية ليست استثنائية وتميل إلى النثرية في بعض المواضع.</span><span class="i18n-en">The meter is regular in the Tawīl form, and the open nūn rhyme serves its purpose, but the internal musicality is not exceptional and tends toward prosiness in certain passages.</span></div><div class="note"><strong><span class="i18n-ar">التصوير</span><span class="i18n-en">Imagery</span>:</strong> <span class="i18n-ar">القصيدة وعظية مباشرة تكاد تخلو من التصوير الشعري الحي، فهي أقرب إلى الخطاب العقلي منها إلى الرسم بالكلمات، والمقارنة بين الصراف والرب ضامناً فكرة ذكية لكنها ليست صورة بصرية.</span><span class="i18n-en">The poem is didactic and direct, nearly devoid of vivid poetic imagery. It is closer to intellectual discourse than to painting with words. The comparison between the money-changer and the Lord as guarantor is a clever idea, but it is not a visual image.</span></div><div class="note"><strong><span class="i18n-ar">العاطفة</span><span class="i18n-en">Emotion</span>:</strong> <span class="i18n-ar">فيها صدق الواعظ المشفق وحرارة المؤمن المتوكل، لكن العاطفة تأتي من قوة الحجة أكثر مما تأتي من وجدان شعري عميق.</span><span class="i18n-en">It carries the sincerity of a compassionate preacher and the warmth of a trusting believer, yet the emotion derives more from the force of argument than from deep poetic feeling.</span></div><div class="note"><strong><span class="i18n-ar">اللغة</span><span class="i18n-en">Language</span>:</strong> <span class="i18n-ar">الألفاظ فصيحة سليمة، لكن تركيب 'بصّراف' فيه ثقل، و'منحول اليقين مباينا' تركيب جيد بلاغياً يجمع بين الدقة والإيجاز.</span><span class="i18n-en">The diction is eloquent and sound, though the construction 'bi-ṣarrāf' carries some heaviness. 'Manḥūl al-yaqīn mubāyinan' is a rhetorically fine construction that combines precision with conciseness.</span></div><div class="note"><strong><span class="i18n-ar">القيمة الثقافية</span><span class="i18n-en">Cultural Value</span>:</strong> <span class="i18n-ar">تنسب للإمام علي وتمثل أدب الحكمة والوعظ الإسلامي، لها قيمة في باب الزهد والتوكل لكنها ليست من عيون الشعر العربي الكبرى.</span><span class="i18n-en">Attributed to Imam Ali, it represents the literature of Islamic wisdom and exhortation. It holds value in the domain of asceticism and trust in God, but it is not among the great masterpieces of Arabic poetry.</span></div><div class="verdict"><span class="i18n-ar">قصيدة وعظية محكمة الحجة، فيها حكمة المؤمن وبصيرته، لكنها أقرب إلى النظم الحكمي منها إلى الشعر الذي يهز الوجدان ويسكن الذاكرة. جيدة في بابها دون أن تكون من الدرر.</span><span class="i18n-en">A didactic poem with a well-constructed argument, carrying the wisdom and insight of a believer, yet it is closer to versified wisdom than to poetry that stirs the soul and lodges in memory. Good in its genre without being a gem.</span></div></div>
+    </div>
+    <div class="card" style="border-right:4px solid #F44336">
+        <div class="card-header">
+            <div class="poem-info">
+                <h3>ذروني أبكي بعد جيرة ثهمد</h3>
+                <span class="poet">البرعي</span>
+            </div>
+            <div class="scores-summary">
+                <div class="score-pill" style="background:#4CAF50;color:#000"><span class="i18n-ar">هايكو</span><span class="i18n-en">Haiku</span>: 88</div>
+                <div class="score-pill" style="background:#FF9800;color:#000">أوبوس: 55</div>
+                <div class="score-pill diff" style="background:#F44336;color:#000">Δ +33</div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="verses"><div class="verse">ذرونيَ أَبكي بعد جيرة ثهمد*واحداث عهد في بقية معهدي*وَأَندب آثار الفَريق بلوعة*وَلا عج وجد بعدهم متجدد*وَمالي لا أَبكي وَقَد عَزَموا النوى*غداة اِفتَرقنا من مغير وَمنجد*فَما ودعوني يوم جد رَحيلهم*وَلا زوّدوني نظرة المتزود*وَلا رحموا قلبا يَحوم عَلى الحمى*وَلا حفظوا ميثاق عهد مؤكد*فَليت الهَوى العذرى أَعقب راحة*لمطلق دمع عَن غَرام مقيد*وَلَيت زمان الوصل ارخى عنانه*فتبلغني الآمال غاية مقصدي*خليليّ من حي ابن خولان أَسعدا*رَفيقكما فالدهر لَيسَ بمسعد*وَلا تسألاني عَن فؤاد مضيع*فان فؤادي في الطراف الممدد*وَيا ممرضي بالغور غور تهامة*أعد مرضي فيهم وعدلي بعوّدي*وَخلّ عيون العين تسترق النهى*وَتَرمي العميد الصب في كل معمد*فَقَد لاحَ لي تحت السَتائر طلعة*أَذابَت بنور الحسن قَلبي وأكبدي*إِذا نزل العشاق في عرصاتها*رأوا عبجبا من نورها المتصعد*فَكَم حولها من هائمين بحبها*وَبين يديها من ركوع وَسجد*رَعى اللَه أَياما مضت بسويقة*ولذة عيش بالاباطح مرغد*يَقولون كَم تحكي وَكَم تذكر الحمى*وَتستنشد الاشعار من كل منشد*فقلت لهم خلوا سَبيلي فأنني*أَروح عَلى حكم الغَرام واِغتدي*وَما شاقني برق بأبرق رامة*وَلا نَغمات من حمام مغرد*وَلا نَسمات الريحتنثر لؤلؤا*من الطل عن زهر كدرّ منضد*بلى شاقَني الوجه السَعيد الَّذي به*تشعشع نور الحق في كل مشهد*أَعاد عَلَينا اللَه من بَرَكاته*وأوردنا من بره خير مورد*فَذلك يَستَسقي الغمام بوجهه*وَيفتح في أَسراره كل مؤصد*اذا ما رأت عيناك بهجة وَجهه*رأت بدرتم في مَنازل أَسعَد*وان لثمت يمناك يمناه فالتزم*بركن سوى ركن من البيت أَسود*له سيرة مرضية وَسَريرة*تضيء بنور السنة المتوقد*امام به الدنيا تجلى ظلامها*وَلاحَ سَبيل الرشد عَن خير مرشد*سما بشعار الصالحين وَهديهم*وأحيا منار الدين بعد محمد*اذا ما ذكرنا الاكرمين فانه*هو الكوثر الفياض وَالعارض الندي*وَمَهما اِمتدحنا الصالحين فمدحه*به تختم الذكر الجَميل وَتَبتَدي*فَللَه من غوث لكل مؤمل*وَسيف عَلى الاعداء لَيسَ بمغمد*وَمعقل عز يلتجأ بجنابه*وَيَروي بجر من عَطاياه مزبد*فَيا سَيدي ان الزَمان معاندي*وَأَنتَنور لنا بك الناس تَهتَدي*وَظلك مَمدود عَلى كل مسلم*وَفضلك مَبذول لِكل موحد*وَلكنَّني أَشكو اليك نوائبا*يعزلها صَبري وَيفني تجلدي*فَلا قر قَلبي بل وَلا كف مدمعي*وَلا لذلي عيشي وَشربي وَمَرقَدي*وَفي بيت رغم اخوَتي واحبتي*مقيمون في ليل من الهم سرمد*وان الفقيه المعجلي ضاق ذرعه*لعتبك يا مصباح غور وانجد*أَتاهم كَلام منك يا با محمد*يهد الرواسي فاِقتصد وَتروّد*فان كان عَن ذنب فَعَفوك واسع*وان لَم يكن ذنب فَلا ترض حسدي*وَحاشاك تحمي الارض شرقا وَمغربا*وَتهمل اخواني وَتظلم مسجدي*فأسبل عليهم ستر صفحك واحمهم*بجاهك يا مَولاي من كل معتدي*وَقم بي فاني وابن عمي وكل من*يلينا نرجى جاه وَجهك سيدي*وَهاكَ من الدر النَضيد غرائبا*مؤلفها عَبد الرَحيم بن أَحمد*وَلَم أَبغ منكم غير صالح دعوة*يَطول بها باعي وَتَعلو بها يدي*وَبعد صلاة اللَه ثم سلامه*عَلى خير فرع طال من خير محتد*محمد السامي الفخر وآله*حماة ثغور الدين من كل ملحد</div></div>
+            <table class="dims-table">
+                <tr><th><span class="i18n-ar">البُعد</span><span class="i18n-en">Dimension</span></th><th><span class="i18n-ar">هايكو</span><span class="i18n-en">Haiku</span></th><th>أوبوس</th><th>Δ</th></tr>
+                
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">الإيقاع</span><span class="i18n-en">Rhythm</span></td>
+            <td class="dim-val"><div class="bar" style="width:85%;background:#4CAF50">85</div></td>
+            <td class="dim-val"><div class="bar" style="width:62%;background:#FFC107">62</div></td>
+            <td class="dim-diff" style="color:#F44336">+23</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">التصوير</span><span class="i18n-en">Imagery</span></td>
+            <td class="dim-val"><div class="bar" style="width:88%;background:#4CAF50">88</div></td>
+            <td class="dim-val"><div class="bar" style="width:55%;background:#FF9800">55</div></td>
+            <td class="dim-diff" style="color:#F44336">+33</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">العاطفة</span><span class="i18n-en">Emotion</span></td>
+            <td class="dim-val"><div class="bar" style="width:90%;background:#4CAF50">90</div></td>
+            <td class="dim-val"><div class="bar" style="width:58%;background:#FF9800">58</div></td>
+            <td class="dim-diff" style="color:#F44336">+32</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">اللغة</span><span class="i18n-en">Language</span></td>
+            <td class="dim-val"><div class="bar" style="width:87%;background:#4CAF50">87</div></td>
+            <td class="dim-val"><div class="bar" style="width:52%;background:#FF9800">52</div></td>
+            <td class="dim-diff" style="color:#F44336">+35</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">القيمة الثقافية</span><span class="i18n-en">Cultural Value</span></td>
+            <td class="dim-val"><div class="bar" style="width:88%;background:#4CAF50">88</div></td>
+            <td class="dim-val"><div class="bar" style="width:50%;background:#FF9800">50</div></td>
+            <td class="dim-diff" style="color:#F44336">+38</td>
+        </tr>
+        <tr class="total-row">
+            <td class="dim-name" style="font-weight:700;color:#d4a574"><span class="i18n-ar">المجموع</span><span class="i18n-en">Total</span></td>
+            <td class="dim-val"><div class="bar" style="width:88%;background:#4CAF50">88</div></td>
+            <td class="dim-val"><div class="bar" style="width:55%;background:#FF9800">55</div></td>
+            <td class="dim-diff" style="color:#F44336;font-weight:700">+33</td>
+        </tr>
+            </table>
+        </div>
+        <div class="card-notes"><div class="note"><strong><span class="i18n-ar">الإيقاع</span><span class="i18n-en">Rhythm</span>:</strong> <span class="i18n-ar">القصيدة على بحر الطويل بقافية الدال المكسورة، والإيقاع يسير في أغلبه بانتظام، لكن طولها المفرط وتكرار الأنماط الإيقاعية يُفقدها حيويتها الموسيقية.</span><span class="i18n-en">The poem is in the Tawīl meter with a broken dāl rhyme. The rhythm proceeds regularly for the most part, but its excessive length and repetitive rhythmic patterns drain its musical vitality.</span></div><div class="note"><strong><span class="i18n-ar">التصوير</span><span class="i18n-en">Imagery</span>:</strong> <span class="i18n-ar">الصور مستهلكة إلى حد بعيد — البرق والحمام والطلل والدمع — وحين ينتقل إلى مدح الشيخ تتحول القصيدة إلى تقريرية شبه خطابية تفتقر إلى التصوير الحي.</span><span class="i18n-en">The images are largely exhausted—lightning, doves, ruins, tears—and when the poem shifts to praising the sheikh, it becomes quasi-rhetorical reportage lacking vivid imagery.</span></div><div class="note"><strong><span class="i18n-ar">العاطفة</span><span class="i18n-en">Emotion</span>:</strong> <span class="i18n-ar">المطلع فيه لوعة صادقة على طريقة الشعر الصوفي اليمني، لكن القصيدة تتشتت بين الغزل المقدسي والمدح والشكوى والاستعطاف، فتضعف وحدة الشعور.</span><span class="i18n-en">The opening carries genuine anguish in the manner of Yemeni Sufi poetry, but the poem scatters itself between sacred love poetry, panegyric, complaint, and supplication, weakening the unity of feeling.</span></div><div class="note"><strong><span class="i18n-ar">اللغة</span><span class="i18n-en">Language</span>:</strong> <span class="i18n-ar">في اللغة تساهل واضح وأخطاء نحوية وصرفية تُشير إلى رواية غير محققة أو ضعف في بعض المواضع، مثل 'عبجبا' و'أنتنور'، والتراكيب أحياناً ركيكة.</span><span class="i18n-en">There is evident laxity in the language, with grammatical and morphological errors suggesting an unedited transmission or weakness in certain passages, such as 'ʿabjabā' and 'antanūr.' The constructions are sometimes feeble.</span></div><div class="note"><strong><span class="i18n-ar">القيمة الثقافية</span><span class="i18n-en">Cultural Value</span>:</strong> <span class="i18n-ar">البرعي شاعر صوفي يمني له مكانة في الوجدان الشعبي، وهذه القصيدة تمثل نمط المديح الصوفي المتأخر، لكنها لا ترقى لأن تكون من عيون الشعر العربي الكبرى.</span><span class="i18n-en">Al-Burʿī is a Yemeni Sufi poet who holds a place in popular consciousness, and this poem represents the pattern of late Sufi panegyric, but it does not rise to the level of the great masterpieces of Arabic poetry.</span></div><div class="verdict"><span class="i18n-ar">قصيدة طويلة تمثل المدرسة الصوفية اليمنية في المديح والتوسل، فيها مطلع جميل على نهج القصيدة العربية الكلاسيكية، لكنها تعاني من الإطالة والتكرار وضعف بعض التراكيب اللغوية. لها قيمة في سياقها الصوفي الشعبي أكثر من قيمتها الفنية المحضة.</span><span class="i18n-en">A long poem representing the Yemeni Sufi school of panegyric and supplication. It has a beautiful opening in the manner of the classical Arabic qaṣīda, but it suffers from prolixity, repetition, and weakness in some linguistic constructions. Its value lies more in its Sufi popular context than in its purely artistic merit.</span></div></div>
+    </div>
+    <div class="card" style="border-right:4px solid #F44336">
+        <div class="card-header">
+            <div class="poem-info">
+                <h3>في ظلمة فرعيك تجلى القمر</h3>
+                <span class="poet">نظام الدين الأصفهاني</span>
+            </div>
+            <div class="scores-summary">
+                <div class="score-pill" style="background:#4CAF50;color:#000"><span class="i18n-ar">هايكو</span><span class="i18n-en">Haiku</span>: 88</div>
+                <div class="score-pill" style="background:#FF9800;color:#000">أوبوس: 57</div>
+                <div class="score-pill diff" style="background:#F44336;color:#000">Δ +31</div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="verses"><div class="verse">في ظلمَة فَرعيك تَجلّى القَمَرُ*وَالأَعينُ دونَكَ اِعتراها السَهَرُ*لا غَروَ مِنَ الفرع عَلى الوَجهِ حَكوا*وَاللَيلُ إِذا أَقمر طابَ السَحَرُ</div></div>
+            <table class="dims-table">
+                <tr><th><span class="i18n-ar">البُعد</span><span class="i18n-en">Dimension</span></th><th><span class="i18n-ar">هايكو</span><span class="i18n-en">Haiku</span></th><th>أوبوس</th><th>Δ</th></tr>
+                
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">الإيقاع</span><span class="i18n-en">Rhythm</span></td>
+            <td class="dim-val"><div class="bar" style="width:88%;background:#4CAF50">88</div></td>
+            <td class="dim-val"><div class="bar" style="width:62%;background:#FFC107">62</div></td>
+            <td class="dim-diff" style="color:#F44336">+26</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">التصوير</span><span class="i18n-en">Imagery</span></td>
+            <td class="dim-val"><div class="bar" style="width:92%;background:#4CAF50">92</div></td>
+            <td class="dim-val"><div class="bar" style="width:65%;background:#FFC107">65</div></td>
+            <td class="dim-diff" style="color:#F44336">+27</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">العاطفة</span><span class="i18n-en">Emotion</span></td>
+            <td class="dim-val"><div class="bar" style="width:85%;background:#4CAF50">85</div></td>
+            <td class="dim-val"><div class="bar" style="width:55%;background:#FF9800">55</div></td>
+            <td class="dim-diff" style="color:#F44336">+30</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">اللغة</span><span class="i18n-en">Language</span></td>
+            <td class="dim-val"><div class="bar" style="width:90%;background:#4CAF50">90</div></td>
+            <td class="dim-val"><div class="bar" style="width:60%;background:#FFC107">60</div></td>
+            <td class="dim-diff" style="color:#F44336">+30</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">القيمة الثقافية</span><span class="i18n-en">Cultural Value</span></td>
+            <td class="dim-val"><div class="bar" style="width:84%;background:#4CAF50">84</div></td>
+            <td class="dim-val"><div class="bar" style="width:45%;background:#F44336">45</div></td>
+            <td class="dim-diff" style="color:#F44336">+39</td>
+        </tr>
+        <tr class="total-row">
+            <td class="dim-name" style="font-weight:700;color:#d4a574"><span class="i18n-ar">المجموع</span><span class="i18n-en">Total</span></td>
+            <td class="dim-val"><div class="bar" style="width:88%;background:#4CAF50">88</div></td>
+            <td class="dim-val"><div class="bar" style="width:57%;background:#FF9800">57</div></td>
+            <td class="dim-diff" style="color:#F44336;font-weight:700">+31</td>
+        </tr>
+            </table>
+        </div>
+        <div class="card-notes"><div class="note"><strong><span class="i18n-ar">الإيقاع</span><span class="i18n-en">Rhythm</span>:</strong> <span class="i18n-ar">المقطوعة قصيرة ذات إيقاع مقبول، والقافية على الراء المفتوحة تمنحها شيئاً من الرنين، لكن الوزن يبدو متذبذباً في بعض المواضع مما يُضعف الموسيقى.</span><span class="i18n-en">A short piece with an acceptable rhythm. The open rāʾ rhyme lends it some resonance, but the meter seems unsteady in certain places, weakening the musicality.</span></div><div class="note"><strong><span class="i18n-ar">التصوير</span><span class="i18n-en">Imagery</span>:</strong> <span class="i18n-ar">صورة القمر المتجلي في ظلمة الشعر صورة مألوفة في الشعر الفارسي-العربي، وتشبيه الليل المقمر بالسحر لطيف لكنه ليس مبتكراً.</span><span class="i18n-en">The image of the moon revealed in the darkness of hair is a familiar one in Persian-Arabic poetry, and likening a moonlit night to sorcery is pleasant but not innovative.</span></div><div class="note"><strong><span class="i18n-ar">العاطفة</span><span class="i18n-en">Emotion</span>:</strong> <span class="i18n-ar">العاطفة حاضرة لكنها سطحية، فالمقطوعة أقرب إلى تمرين بلاغي في وصف الجمال منها إلى انفعال حقيقي يهز الوجدان.</span><span class="i18n-en">Emotion is present but superficial. The piece is closer to a rhetorical exercise in describing beauty than to a genuine feeling that stirs the soul.</span></div><div class="note"><strong><span class="i18n-ar">اللغة</span><span class="i18n-en">Language</span>:</strong> <span class="i18n-ar">الألفاظ فصيحة والتراكيب سليمة في مجملها، لكن 'حكوا' في البيت الثاني تبدو غريبة في سياقها وتحتاج تأملاً.</span><span class="i18n-en">The diction is eloquent and the constructions are generally sound, though 'ḥakaw' in the second line seems odd in its context and requires reflection.</span></div><div class="note"><strong><span class="i18n-ar">القيمة الثقافية</span><span class="i18n-en">Cultural Value</span>:</strong> <span class="i18n-ar">مقطوعة غزلية تقليدية من شاعر فارسي كتب بالعربية، لا تضيف جديداً يُذكر للتراث الشعري العربي.</span><span class="i18n-en">A conventional love lyric by a Persian poet writing in Arabic, adding nothing particularly noteworthy to the Arabic poetic tradition.</span></div><div class="verdict"><span class="i18n-ar">مقطوعة غزلية لطيفة لكنها قصيرة ومألوفة الصور، تصلح للتذوق العابر لا للتدريس أو الاحتفاء، وهي من المتوسط في شعر الغزل العربي.</span><span class="i18n-en">A pleasant but short love lyric with familiar imagery, suitable for passing enjoyment rather than for teaching or celebration. It falls in the middle range of Arabic love poetry.</span></div></div>
+    </div>
+    <div class="card" style="border-right:4px solid #FFC107">
+        <div class="card-header">
+            <div class="poem-info">
+                <h3>أطاع ما قاله الواشي وما هرفا</h3>
+                <span class="poet">أسامة بن منقذ</span>
+            </div>
+            <div class="scores-summary">
+                <div class="score-pill" style="background:#4CAF50;color:#000"><span class="i18n-ar">هايكو</span><span class="i18n-en">Haiku</span>: 90</div>
+                <div class="score-pill" style="background:#8BC34A;color:#000">أوبوس: 72</div>
+                <div class="score-pill diff" style="background:#FFC107;color:#000">Δ +18</div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="verses"><div class="verse">أَطَاعَ ما قالَهُ الواشي وما هَرَفَا*فعادَ يُنْكرُ منِّا كلَّ ما عَرَفَا*وصدَ حتّى استَمرَّ الهجرُ منه فَلَو*أَلمَّ بِي منهُ طيفٌ في الكَرى صَدَفَا*يَجنِي وعندي له العُتْبَى فواعجبَا*من مُعتِبٍ ما جَنَى جُرما ولا اقْتَرفَا*ملَّكْتُهُ طائعاً قلباً تعسّفَهُ*وقَلَّما يملِكُ الأحرارَ مَن عَسفَا*لي منه ما ساءَنِي من هجرهِ ولَه*منّي الرِّضا بقَضَاياهُ وإن جَنَفَا*ألقاهُ بعد التَّصافي مُعرِضاً حَنِقاً*وبعدَ إِقبالهِ بالوُدِّ مُنحرفَا*يَا هاجرينَ لِلاذَنْبٍ سوَى مَللٍ*دَعَا فَهَبُّوا إلى داعيهِ إذ هَتَفَا*مالي أرى بَيْننا والدَّارُ جامِعَةٌ*قريبةٌ من تَجنّيكُم نَوىً قُذُفَا*لا تَعجَلُوا بِفِراقٍ سوف يُدرِكُنا*كَفَى بنا فُرقةً ريبُ المَنونِ كَفَى*صِلُوا فؤاداً إذا سكَّنتُ رَوعَتَهُ*هَفَا ودمعاً إذا نَهنهتُهُ وَكَفَا*لكُم هَوايَ وإن جُرتُم وجَورُكُمُ*مُستحسنٌ منكُمُ لو لم يَكُن سَرَفَا*كذاكَ حَظِّي من الأحْباب من سكنَتْ*نَفسي إليه حَبانِي الهجرَ والشّنَفَا*حتى لقد غيَّرَ الجَدُّ العثورُ فلاَ*لَعاً لَهُ ماجِداً ما كان مُطَّرَفَا</div></div>
+            <table class="dims-table">
+                <tr><th><span class="i18n-ar">البُعد</span><span class="i18n-en">Dimension</span></th><th><span class="i18n-ar">هايكو</span><span class="i18n-en">Haiku</span></th><th>أوبوس</th><th>Δ</th></tr>
+                
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">الإيقاع</span><span class="i18n-en">Rhythm</span></td>
+            <td class="dim-val"><div class="bar" style="width:88%;background:#4CAF50">88</div></td>
+            <td class="dim-val"><div class="bar" style="width:78%;background:#8BC34A">78</div></td>
+            <td class="dim-diff" style="color:#4CAF50">+10</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">التصوير</span><span class="i18n-en">Imagery</span></td>
+            <td class="dim-val"><div class="bar" style="width:85%;background:#4CAF50">85</div></td>
+            <td class="dim-val"><div class="bar" style="width:65%;background:#FFC107">65</div></td>
+            <td class="dim-diff" style="color:#FFC107">+20</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">العاطفة</span><span class="i18n-en">Emotion</span></td>
+            <td class="dim-val"><div class="bar" style="width:90%;background:#4CAF50">90</div></td>
+            <td class="dim-val"><div class="bar" style="width:74%;background:#8BC34A">74</div></td>
+            <td class="dim-diff" style="color:#FFC107">+16</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">اللغة</span><span class="i18n-en">Language</span></td>
+            <td class="dim-val"><div class="bar" style="width:92%;background:#4CAF50">92</div></td>
+            <td class="dim-val"><div class="bar" style="width:80%;background:#4CAF50">80</div></td>
+            <td class="dim-diff" style="color:#FFC107">+12</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">القيمة الثقافية</span><span class="i18n-en">Cultural Value</span></td>
+            <td class="dim-val"><div class="bar" style="width:95%;background:#4CAF50">95</div></td>
+            <td class="dim-val"><div class="bar" style="width:62%;background:#FFC107">62</div></td>
+            <td class="dim-diff" style="color:#F44336">+33</td>
+        </tr>
+        <tr class="total-row">
+            <td class="dim-name" style="font-weight:700;color:#d4a574"><span class="i18n-ar">المجموع</span><span class="i18n-en">Total</span></td>
+            <td class="dim-val"><div class="bar" style="width:90%;background:#4CAF50">90</div></td>
+            <td class="dim-val"><div class="bar" style="width:72%;background:#8BC34A">72</div></td>
+            <td class="dim-diff" style="color:#FFC107;font-weight:700">+18</td>
+        </tr>
+            </table>
+        </div>
+        <div class="card-notes"><div class="note"><strong><span class="i18n-ar">الإيقاع</span><span class="i18n-en">Rhythm</span>:</strong> <span class="i18n-ar">القافية الفائية المفتوحة تجري بسلاسة على بحر البسيط، والإيقاع منتظم دون عثرات تُذكر، لكنه لا يبلغ درجة الطرب الاستثنائي.</span><span class="i18n-en">The open fāʾ rhyme flows smoothly on the Basīṭ meter, and the rhythm is regular without notable stumbles, though it does not reach the level of exceptional melodiousness.</span></div><div class="note"><strong><span class="i18n-ar">التصوير</span><span class="i18n-en">Imagery</span>:</strong> <span class="i18n-ar">الصور تقليدية في باب الغزل والعتاب — الطيف في الكرى، الدمع الواكف، القلب المعسوف — لكنها مصوغة بحرفية دون ابتكار لافت.</span><span class="i18n-en">The images are conventional within the genre of love poetry and reproach—the phantom in slumber, the flowing tears, the tormented heart—crafted with skill but without striking innovation.</span></div><div class="note"><strong><span class="i18n-ar">العاطفة</span><span class="i18n-en">Emotion</span>:</strong> <span class="i18n-ar">صدق العتاب واضح، وبيت 'لا تعجلوا بفراق سوف يدركنا / كفى بنا فرقة ريب المنون كفى' يهز الوجدان حقاً بمزجه الغزل بالفناء.</span><span class="i18n-en">The sincerity of reproach is evident, and the line 'Do not hasten toward a parting that will overtake us / the separation of death's vicissitudes suffices us' truly stirs the soul by blending love with mortality.</span></div><div class="note"><strong><span class="i18n-ar">اللغة</span><span class="i18n-en">Language</span>:</strong> <span class="i18n-ar">لغة أسامة بن منقذ هنا فصيحة رصينة، التراكيب سليمة والبلاغة طبيعية غير متكلفة، مع حسن توظيف الطباق والمقابلة.</span><span class="i18n-en">Usāma ibn Munqidh's language here is eloquent and dignified. The constructions are sound, and the rhetoric is natural and unforced, with skillful use of antithesis and parallelism.</span></div><div class="note"><strong><span class="i18n-ar">القيمة الثقافية</span><span class="i18n-en">Cultural Value</span>:</strong> <span class="i18n-ar">قصيدة جيدة في باب العتاب الغزلي تمثل أسلوب أسامة الأمير الشاعر، لكنها لا تضيف جديداً مدهشاً للتراث الشعري العربي في هذا الغرض.</span><span class="i18n-en">A fine poem in the genre of amorous reproach, representing the style of Usāma the prince-poet, though it does not add anything strikingly new to the Arabic poetic tradition in this theme.</span></div><div class="verdict"><span class="i18n-ar">قصيدة محكمة الصنعة من شاعر فارس أديب، فيها أبيات تستحق الحفظ — خاصة بيت المنون — لكنها في مجملها من الشعر الجيد لا من درره الاستثنائية. تصلح للتدريس كنموذج على شعر الأمراء المحاربين في العصر الصليبي.</span><span class="i18n-en">A well-crafted poem by a warrior-poet, containing lines worthy of memorization—especially the line about death's vicissitudes—but on the whole it belongs to the category of good poetry rather than its exceptional gems. It serves well as a teaching example of poetry by warrior-princes during the Crusader era.</span></div></div>
+    </div>
+    <div class="card" style="border-right:4px solid #FFC107">
+        <div class="card-header">
+            <div class="poem-info">
+                <h3>دمع غريب جرى لغربته</h3>
+                <span class="poet">الوأواء الدمشقي</span>
+            </div>
+            <div class="scores-summary">
+                <div class="score-pill" style="background:#4CAF50;color:#000"><span class="i18n-ar">هايكو</span><span class="i18n-en">Haiku</span>: 88</div>
+                <div class="score-pill" style="background:#8BC34A;color:#000">أوبوس: 70</div>
+                <div class="score-pill diff" style="background:#FFC107;color:#000">Δ +18</div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="verses"><div class="verse">دَمْعُ غَريبٍ جَرى لِغُرْبَتِهِ*أَفْرَدَهُ البَيْنُ عَنْ أَحِبَّتِهِ*وَحُقَّ لِلْمُدنَفِ الغَريبِ بِأَنْ*يَنْدُبَ شَجْواً لِطُولِ وَحدَتِهِ*إِنسانُ عَيْنٍ لَوْلا سِبَاحَتُهُ*ماتَ غَريقاً بِبَحْرِ دَمْعَتِهِ</div></div>
+            <table class="dims-table">
+                <tr><th><span class="i18n-ar">البُعد</span><span class="i18n-en">Dimension</span></th><th><span class="i18n-ar">هايكو</span><span class="i18n-en">Haiku</span></th><th>أوبوس</th><th>Δ</th></tr>
+                
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">الإيقاع</span><span class="i18n-en">Rhythm</span></td>
+            <td class="dim-val"><div class="bar" style="width:88%;background:#4CAF50">88</div></td>
+            <td class="dim-val"><div class="bar" style="width:75%;background:#8BC34A">75</div></td>
+            <td class="dim-diff" style="color:#FFC107">+13</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">التصوير</span><span class="i18n-en">Imagery</span></td>
+            <td class="dim-val"><div class="bar" style="width:87%;background:#4CAF50">87</div></td>
+            <td class="dim-val"><div class="bar" style="width:72%;background:#8BC34A">72</div></td>
+            <td class="dim-diff" style="color:#FFC107">+15</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">العاطفة</span><span class="i18n-en">Emotion</span></td>
+            <td class="dim-val"><div class="bar" style="width:90%;background:#4CAF50">90</div></td>
+            <td class="dim-val"><div class="bar" style="width:70%;background:#8BC34A">70</div></td>
+            <td class="dim-diff" style="color:#FFC107">+20</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">اللغة</span><span class="i18n-en">Language</span></td>
+            <td class="dim-val"><div class="bar" style="width:88%;background:#4CAF50">88</div></td>
+            <td class="dim-val"><div class="bar" style="width:74%;background:#8BC34A">74</div></td>
+            <td class="dim-diff" style="color:#FFC107">+14</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">القيمة الثقافية</span><span class="i18n-en">Cultural Value</span></td>
+            <td class="dim-val"><div class="bar" style="width:85%;background:#4CAF50">85</div></td>
+            <td class="dim-val"><div class="bar" style="width:60%;background:#FFC107">60</div></td>
+            <td class="dim-diff" style="color:#F44336">+25</td>
+        </tr>
+        <tr class="total-row">
+            <td class="dim-name" style="font-weight:700;color:#d4a574"><span class="i18n-ar">المجموع</span><span class="i18n-en">Total</span></td>
+            <td class="dim-val"><div class="bar" style="width:88%;background:#4CAF50">88</div></td>
+            <td class="dim-val"><div class="bar" style="width:70%;background:#8BC34A">70</div></td>
+            <td class="dim-diff" style="color:#FFC107;font-weight:700">+18</td>
+        </tr>
+            </table>
+        </div>
+        <div class="card-notes"><div class="note"><strong><span class="i18n-ar">الإيقاع</span><span class="i18n-en">Rhythm</span>:</strong> <span class="i18n-ar">مقطوعة قصيرة على بحر المنسرح بقافية التاء المكسورة الموصولة بالهاء، إيقاعها سلس ومنساب يناسب نغمة الحزن والشكوى، لكن قصرها يحدّ من تأثيرها الموسيقي.</span><span class="i18n-en">A short piece in the Munsariḥ meter with a broken tāʾ rhyme connected to hāʾ. Its rhythm is smooth and flowing, suited to the tone of grief and complaint, but its brevity limits its musical impact.</span></div><div class="note"><strong><span class="i18n-ar">التصوير</span><span class="i18n-en">Imagery</span>:</strong> <span class="i18n-ar">الصورة المركزية في البيت الأخير — إنسان العين يكاد يغرق في بحر دمعته — صورة بديعة فيها تلاعب ذكي بين الحقيقي والمجازي، لكن صور البيتين الأولين تقليدية.</span><span class="i18n-en">The central image in the final line—the pupil of the eye nearly drowning in the sea of its own tear—is a splendid image with clever play between the literal and the figurative, though the images in the first two lines are conventional.</span></div><div class="note"><strong><span class="i18n-ar">العاطفة</span><span class="i18n-en">Emotion</span>:</strong> <span class="i18n-ar">عاطفة الغربة والوحدة حاضرة لكنها لا تبلغ العمق الذي يهز الوجدان، فالمقطوعة أقرب إلى التمرين البلاغي الرشيق منها إلى الصرخة الوجدانية الحقيقية.</span><span class="i18n-en">The emotion of exile and loneliness is present but does not reach the depth that shakes the soul. The piece is closer to an elegant rhetorical exercise than to a genuine existential cry.</span></div><div class="note"><strong><span class="i18n-ar">اللغة</span><span class="i18n-en">Language</span>:</strong> <span class="i18n-ar">لغة سليمة رشيقة فيها حسن تصرف بالألفاظ، والجناس بين 'غريب' و'غربته' و'غريقاً' يضفي حلاوة، لكنها تبقى في إطار الصنعة المحسوبة.</span><span class="i18n-en">The language is sound and graceful with skillful handling of words. The paronomasia between 'gharīb' (stranger), 'ghurbatihi' (his exile), and 'gharīqan' (drowning) adds sweetness, but it remains within the framework of calculated craft.</span></div><div class="note"><strong><span class="i18n-ar">القيمة الثقافية</span><span class="i18n-en">Cultural Value</span>:</strong> <span class="i18n-ar">مقطوعة لطيفة تمثل أسلوب الوأواء الدمشقي في المقطعات القصيرة المصنوعة بعناية، لكنها لا تضيف جديداً كبيراً لموضوع الغربة في الشعر العربي.</span><span class="i18n-en">A pleasant piece representing the style of al-Waʾwāʾ al-Dimashqī in carefully crafted short fragments, but it does not add anything significantly new to the theme of exile in Arabic poetry.</span></div><div class="verdict"><span class="i18n-ar">مقطوعة أنيقة محكمة الصنعة، فيها ذكاء بلاغي لا سيما في البيت الأخير، لكنها تبقى من شعر المناسبات القصيرة التي تُستحسن ولا تُخلَّد — حلوى أدبية لا وليمة شعرية.</span><span class="i18n-en">An elegant, well-crafted piece with rhetorical cleverness, especially in the final line, but it remains among the short occasional poems that are admired without being immortalized—a literary confection, not a poetic feast.</span></div></div>
+    </div>
+    <div class="card" style="border-right:4px solid #FFC107">
+        <div class="card-header">
+            <div class="poem-info">
+                <h3>هو اجتباني وأدناني وشرفني</h3>
+                <span class="poet">الحلاج</span>
+            </div>
+            <div class="scores-summary">
+                <div class="score-pill" style="background:#4CAF50;color:#000"><span class="i18n-ar">هايكو</span><span class="i18n-en">Haiku</span>: 89</div>
+                <div class="score-pill" style="background:#8BC34A;color:#000">أوبوس: 73</div>
+                <div class="score-pill diff" style="background:#FFC107;color:#000">Δ +16</div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="verses"><div class="verse">هُوَ اِجتِباني وَأَدناني وَشَرَّفَني*وَالكُلّ بِالكُلِّ أَوصاني وَعَرَّفَني*لَم يَبقِ في القَلبِ وَالأَحشاءِ جارِحَةً*إِلّا وَأَعرِفُهُ فيها وَيَعرِفُني</div></div>
+            <table class="dims-table">
+                <tr><th><span class="i18n-ar">البُعد</span><span class="i18n-en">Dimension</span></th><th><span class="i18n-ar">هايكو</span><span class="i18n-en">Haiku</span></th><th>أوبوس</th><th>Δ</th></tr>
+                
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">الإيقاع</span><span class="i18n-en">Rhythm</span></td>
+            <td class="dim-val"><div class="bar" style="width:85%;background:#4CAF50">85</div></td>
+            <td class="dim-val"><div class="bar" style="width:75%;background:#8BC34A">75</div></td>
+            <td class="dim-diff" style="color:#4CAF50">+10</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">التصوير</span><span class="i18n-en">Imagery</span></td>
+            <td class="dim-val"><div class="bar" style="width:88%;background:#4CAF50">88</div></td>
+            <td class="dim-val"><div class="bar" style="width:55%;background:#FF9800">55</div></td>
+            <td class="dim-diff" style="color:#F44336">+33</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">العاطفة</span><span class="i18n-en">Emotion</span></td>
+            <td class="dim-val"><div class="bar" style="width:90%;background:#4CAF50">90</div></td>
+            <td class="dim-val"><div class="bar" style="width:82%;background:#4CAF50">82</div></td>
+            <td class="dim-diff" style="color:#4CAF50">+8</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">اللغة</span><span class="i18n-en">Language</span></td>
+            <td class="dim-val"><div class="bar" style="width:88%;background:#4CAF50">88</div></td>
+            <td class="dim-val"><div class="bar" style="width:72%;background:#8BC34A">72</div></td>
+            <td class="dim-diff" style="color:#FFC107">+16</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">القيمة الثقافية</span><span class="i18n-en">Cultural Value</span></td>
+            <td class="dim-val"><div class="bar" style="width:92%;background:#4CAF50">92</div></td>
+            <td class="dim-val"><div class="bar" style="width:80%;background:#4CAF50">80</div></td>
+            <td class="dim-diff" style="color:#FFC107">+12</td>
+        </tr>
+        <tr class="total-row">
+            <td class="dim-name" style="font-weight:700;color:#d4a574"><span class="i18n-ar">المجموع</span><span class="i18n-en">Total</span></td>
+            <td class="dim-val"><div class="bar" style="width:89%;background:#4CAF50">89</div></td>
+            <td class="dim-val"><div class="bar" style="width:73%;background:#8BC34A">73</div></td>
+            <td class="dim-diff" style="color:#FFC107;font-weight:700">+16</td>
+        </tr>
+            </table>
+        </div>
+        <div class="card-notes"><div class="note"><strong><span class="i18n-ar">الإيقاع</span><span class="i18n-en">Rhythm</span>:</strong> <span class="i18n-ar">البحر البسيط يجري سلساً، والقافية النونية المكسورة (شرّفني، عرّفني، يعرفني) تخلق إيقاعاً حميمياً دافئاً يناسب مقام المناجاة والقرب.</span><span class="i18n-en">The Basīṭ meter flows smoothly, and the broken nūn rhyme (sharrafanī, ʿarrafanī, yaʿrifunī) creates a warm, intimate rhythm suited to the station of intimate supplication and closeness.</span></div><div class="note"><strong><span class="i18n-ar">التصوير</span><span class="i18n-en">Imagery</span>:</strong> <span class="i18n-ar">الصورة المركزية في البيت الثاني بالغة العمق: كل جارحة في القلب والأحشاء تصبح مرآة للمعرفة المتبادلة بين العبد وربه — صورة صوفية تتجاوز الحسي إلى ما وراءه.</span><span class="i18n-en">The central image in the second line is profoundly deep: every limb in the heart and viscera becomes a mirror of mutual knowledge between servant and Lord—a mystical image that transcends the sensory into the metaphysical.</span></div><div class="note"><strong><span class="i18n-ar">العاطفة</span><span class="i18n-en">Emotion</span>:</strong> <span class="i18n-ar">هنا يتكلم الحلاج من أعماق تجربة فنائية حقيقية، تشعر أن كل كلمة مغمسة بدم الروح، والبيت الثاني من أصدق ما قيل في تجربة المعرفة الإلهية المتبادلة.</span><span class="i18n-en">Here al-Ḥallāj speaks from the depths of a genuine experience of annihilation. You feel that every word is dipped in the blood of the soul, and the second line is among the most truthful expressions ever uttered about the experience of mutual divine knowledge.</span></div><div class="note"><strong><span class="i18n-ar">اللغة</span><span class="i18n-en">Language</span>:</strong> <span class="i18n-ar">'الكل بالكل' تركيب فلسفي صوفي مكثف بإعجاز، و'أعرفه فيها ويعرفني' بساطة ظاهرية تخفي عمقاً لا قرار له — هذه لغة من تجاوز التكلف إلى الحقيقة.</span><span class="i18n-en">'Al-kull bi-l-kull' is a mystical-philosophical construction condensed with miraculous economy, and 'aʿrifuhu fīhā wa-yaʿrifunī' is an apparent simplicity concealing fathomless depth—this is the language of one who has transcended affectation to reach truth.</span></div><div class="note"><strong><span class="i18n-ar">القيمة الثقافية</span><span class="i18n-en">Cultural Value</span>:</strong> <span class="i18n-ar">هذه المقطوعة من أيقونات الشعر الصوفي العربي، والبيت الثاني يُدرَّس ويُستشهد به في كل حديث عن المعرفة الذوقية في التصوف الإسلامي.</span><span class="i18n-en">This piece is one of the icons of Arabic Sufi poetry, and the second line is studied and cited in every discussion of experiential knowledge in Islamic mysticism.</span></div><div class="verdict"><span class="i18n-ar">مقطوعة قصيرة لكنها من جواهر الشعر الصوفي العربي. في بيتين فقط يختزل الحلاج تجربة روحية كاملة: الاجتباء ثم المعرفة المتبادلة التي تسري في كل جارحة. البيت الثاني وحده يستحق أن يُحفظ ويُتأمل طويلاً.</span><span class="i18n-en">A short piece, yet one of the jewels of Arabic Sufi poetry. In just two lines, al-Ḥallāj distills an entire spiritual experience: divine election followed by mutual knowledge that courses through every limb. The second line alone deserves to be memorized and contemplated at length.</span></div></div>
+    </div>
+    <div class="card" style="border-right:4px solid #FFC107">
+        <div class="card-header">
+            <div class="poem-info">
+                <h3>أشاب رأسي قبل أترابي</h3>
+                <span class="poet">أبو نواس</span>
+            </div>
+            <div class="scores-summary">
+                <div class="score-pill" style="background:#4CAF50;color:#000"><span class="i18n-ar">هايكو</span><span class="i18n-en">Haiku</span>: 88</div>
+                <div class="score-pill" style="background:#8BC34A;color:#000">أوبوس: 72</div>
+                <div class="score-pill diff" style="background:#FFC107;color:#000">Δ +16</div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="verses"><div class="verse">أَشابَ رَأسي قَبلَ أَترابي*حُبّي لِمَن حُبّيهِ أَزرى بي*عَلِقتُ مِن حَيني وَمِن شِقوَتي*أَخا مُزاحٍ يَتَمَرّى بي*لابِسَ سيما قائِلٍ صادِقٍ*مَخبورُهُ مَخبورُ كَذّابِ*تُخبِرُني عَن قَلبِهِ كُتبُهُ*إِنَّ بِهِ أَعظَمَ مِمّا بي*حَتّى كَأَنّي واجِدٌ حِسُّهُ*أَو مَسَّهُ مِن دونِ أَطرابي</div></div>
+            <table class="dims-table">
+                <tr><th><span class="i18n-ar">البُعد</span><span class="i18n-en">Dimension</span></th><th><span class="i18n-ar">هايكو</span><span class="i18n-en">Haiku</span></th><th>أوبوس</th><th>Δ</th></tr>
+                
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">الإيقاع</span><span class="i18n-en">Rhythm</span></td>
+            <td class="dim-val"><div class="bar" style="width:88%;background:#4CAF50">88</div></td>
+            <td class="dim-val"><div class="bar" style="width:75%;background:#8BC34A">75</div></td>
+            <td class="dim-diff" style="color:#FFC107">+13</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">التصوير</span><span class="i18n-en">Imagery</span></td>
+            <td class="dim-val"><div class="bar" style="width:82%;background:#4CAF50">82</div></td>
+            <td class="dim-val"><div class="bar" style="width:62%;background:#FFC107">62</div></td>
+            <td class="dim-diff" style="color:#FFC107">+20</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">العاطفة</span><span class="i18n-en">Emotion</span></td>
+            <td class="dim-val"><div class="bar" style="width:90%;background:#4CAF50">90</div></td>
+            <td class="dim-val"><div class="bar" style="width:78%;background:#8BC34A">78</div></td>
+            <td class="dim-diff" style="color:#FFC107">+12</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">اللغة</span><span class="i18n-en">Language</span></td>
+            <td class="dim-val"><div class="bar" style="width:89%;background:#4CAF50">89</div></td>
+            <td class="dim-val"><div class="bar" style="width:74%;background:#8BC34A">74</div></td>
+            <td class="dim-diff" style="color:#FFC107">+15</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">القيمة الثقافية</span><span class="i18n-en">Cultural Value</span></td>
+            <td class="dim-val"><div class="bar" style="width:92%;background:#4CAF50">92</div></td>
+            <td class="dim-val"><div class="bar" style="width:70%;background:#8BC34A">70</div></td>
+            <td class="dim-diff" style="color:#F44336">+22</td>
+        </tr>
+        <tr class="total-row">
+            <td class="dim-name" style="font-weight:700;color:#d4a574"><span class="i18n-ar">المجموع</span><span class="i18n-en">Total</span></td>
+            <td class="dim-val"><div class="bar" style="width:88%;background:#4CAF50">88</div></td>
+            <td class="dim-val"><div class="bar" style="width:72%;background:#8BC34A">72</div></td>
+            <td class="dim-diff" style="color:#FFC107;font-weight:700">+16</td>
+        </tr>
+            </table>
+        </div>
+        <div class="card-notes"><div class="note"><strong><span class="i18n-ar">الإيقاع</span><span class="i18n-en">Rhythm</span>:</strong> <span class="i18n-ar">القافية على الباء المكسورة مع الياء تمنح القصيدة إيقاعاً حزيناً منسجماً مع موضوعها، والوزن (المنسرح أو قريب منه) يسير بسلاسة.</span><span class="i18n-en">The broken bāʾ rhyme with yāʾ gives the poem a sorrowful rhythm harmonious with its subject, and the meter (Munsariḥ or close to it) flows smoothly.</span></div><div class="note"><strong><span class="i18n-ar">التصوير</span><span class="i18n-en">Imagery</span>:</strong> <span class="i18n-ar">التصوير هنا نفسي أكثر منه حسي؛ صورة الشيب المبكر والكتب الكاذبة والحس المشترك حاضرة لكنها ليست من أبهى صور أبي نواس.</span><span class="i18n-en">The imagery here is more psychological than sensory; the image of premature graying, deceitful letters, and shared intuition are present but are not among Abū Nuwās's most dazzling images.</span></div><div class="note"><strong><span class="i18n-ar">العاطفة</span><span class="i18n-en">Emotion</span>:</strong> <span class="i18n-ar">هنا صدق أبي نواس في أجلى صوره: الحب الذي يُشيب قبل الأوان، والتعلق بمن يتلاعب به، فيه مرارة حقيقية تصل إلى القارئ.</span><span class="i18n-en">Here is Abū Nuwās's sincerity at its most vivid: a love that causes premature aging, an attachment to one who toys with him—there is genuine bitterness that reaches the reader.</span></div><div class="note"><strong><span class="i18n-ar">اللغة</span><span class="i18n-en">Language</span>:</strong> <span class="i18n-ar">لغة أبي نواس هنا سهلة ممتنعة كعادته، 'علقت من حيني ومن شقوتي' تركيب بديع في بساطته، و'لابس سيما قائل صادق' فيها حذق لغوي.</span><span class="i18n-en">Abū Nuwās's language here is deceptively simple as is his wont. 'ʿAliqtu min ḥaynī wa-min shaqwatī' is a construction exquisite in its simplicity, and 'lābis sīmā qāʾil ṣādiq' displays linguistic deftness.</span></div><div class="note"><strong><span class="i18n-ar">القيمة الثقافية</span><span class="i18n-en">Cultural Value</span>:</strong> <span class="i18n-ar">القصيدة تمثل جانباً مهماً من شعر أبي نواس الغزلي الصادق بعيداً عن المجون، وتستحق الدراسة في سياق تطور الغزل العباسي.</span><span class="i18n-en">The poem represents an important facet of Abū Nuwās's sincere love poetry, far from his libertine verse, and deserves study in the context of the development of Abbasid love poetry.</span></div><div class="verdict"><span class="i18n-ar">قصيدة غزلية عباسية جيدة تحمل بصمة أبي نواس في صدق العاطفة وسهولة اللغة، ليست من درره الكبرى لكنها تستحق القراءة والتأمل كنموذج على الغزل المرّ الصادق.</span><span class="i18n-en">A fine Abbasid love poem bearing Abū Nuwās's hallmark of emotional sincerity and linguistic ease. Not among his greatest gems, but it deserves reading and contemplation as a model of bitter, sincere love poetry.</span></div></div>
+    </div>
+    <div class="card" style="border-right:4px solid #FFC107">
+        <div class="card-header">
+            <div class="poem-info">
+                <h3>يا رب قرن قد تركت مجدلا</h3>
+                <span class="poet">عامر بن الطفيل</span>
+            </div>
+            <div class="scores-summary">
+                <div class="score-pill" style="background:#4CAF50;color:#000"><span class="i18n-ar">هايكو</span><span class="i18n-en">Haiku</span>: 89</div>
+                <div class="score-pill" style="background:#8BC34A;color:#000">أوبوس: 78</div>
+                <div class="score-pill diff" style="background:#FFC107;color:#000">Δ +11</div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="verses"><div class="verse">يا رُبَّ قِرنٍ قَد تَرَكتُ مُجَدَّلاً*ضَخمِ الدَسيعَةِ رَأسِ حَيٍّ جَحفَلِ*وَتَرَكتُ نِسوَتَهُ لَهُنَّ تَفَجُّعٌ*يَندُبنَهُ أُصُلاً بِنوحٍ مُعوِلِ*مِن آلِ عَبسٍ قَد شَفَيتُ حَرارَتي*وَغَنِمتُ كُلَّ غَنيمَةٍ لَم تَضهَلِ*وَنَجا بِعَنتَرَةَ الأَغَرُّ مِنَ الرَدى*يَهوي عَلى عَجَلٍ هُوِيَّ الأَجدَلِ*وَتَرَكتَ عَبلَةَ في السَواءِ لِفِتيَةٍ*باتوا عَلى كُتُفِ الخُيولِ الجُوَّلِ*راحوا بِهِندٍ وَالوَجيهَةِ عَنوَةً*يَومَ الوِقاعِ عَلى نَجائِبَ ذُمَّلِ*</div></div>
+            <table class="dims-table">
+                <tr><th><span class="i18n-ar">البُعد</span><span class="i18n-en">Dimension</span></th><th><span class="i18n-ar">هايكو</span><span class="i18n-en">Haiku</span></th><th>أوبوس</th><th>Δ</th></tr>
+                
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">الإيقاع</span><span class="i18n-en">Rhythm</span></td>
+            <td class="dim-val"><div class="bar" style="width:85%;background:#4CAF50">85</div></td>
+            <td class="dim-val"><div class="bar" style="width:78%;background:#8BC34A">78</div></td>
+            <td class="dim-diff" style="color:#4CAF50">+7</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">التصوير</span><span class="i18n-en">Imagery</span></td>
+            <td class="dim-val"><div class="bar" style="width:90%;background:#4CAF50">90</div></td>
+            <td class="dim-val"><div class="bar" style="width:80%;background:#4CAF50">80</div></td>
+            <td class="dim-diff" style="color:#4CAF50">+10</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">العاطفة</span><span class="i18n-en">Emotion</span></td>
+            <td class="dim-val"><div class="bar" style="width:88%;background:#4CAF50">88</div></td>
+            <td class="dim-val"><div class="bar" style="width:75%;background:#8BC34A">75</div></td>
+            <td class="dim-diff" style="color:#FFC107">+13</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">اللغة</span><span class="i18n-en">Language</span></td>
+            <td class="dim-val"><div class="bar" style="width:88%;background:#4CAF50">88</div></td>
+            <td class="dim-val"><div class="bar" style="width:77%;background:#8BC34A">77</div></td>
+            <td class="dim-diff" style="color:#FFC107">+11</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">القيمة الثقافية</span><span class="i18n-en">Cultural Value</span></td>
+            <td class="dim-val"><div class="bar" style="width:92%;background:#4CAF50">92</div></td>
+            <td class="dim-val"><div class="bar" style="width:82%;background:#4CAF50">82</div></td>
+            <td class="dim-diff" style="color:#4CAF50">+10</td>
+        </tr>
+        <tr class="total-row">
+            <td class="dim-name" style="font-weight:700;color:#d4a574"><span class="i18n-ar">المجموع</span><span class="i18n-en">Total</span></td>
+            <td class="dim-val"><div class="bar" style="width:89%;background:#4CAF50">89</div></td>
+            <td class="dim-val"><div class="bar" style="width:78%;background:#8BC34A">78</div></td>
+            <td class="dim-diff" style="color:#FFC107;font-weight:700">+11</td>
+        </tr>
+            </table>
+        </div>
+        <div class="card-notes"><div class="note"><strong><span class="i18n-ar">الإيقاع</span><span class="i18n-en">Rhythm</span>:</strong> <span class="i18n-ar">القصيدة على بحر الكامل بقافية اللام المكسورة، وإيقاعها حماسي متدفق يناسب الفخر والحرب، لكن بعض الأبيات فيها ثقل طفيف في التركيب.</span><span class="i18n-en">The poem is in the Kāmil meter with a broken lām rhyme. Its rhythm is vigorous and flowing, suited to boasting and battle, though some lines carry slight heaviness in construction.</span></div><div class="note"><strong><span class="i18n-ar">التصوير</span><span class="i18n-en">Imagery</span>:</strong> <span class="i18n-ar">صور حية من ميدان المعركة: القرن المجدّل، النسوة النادبات، عنترة يهوي كالأجدل، والفتية على كتف الخيول — تصوير بصري حركي قوي يليق بشعر الفروسية.</span><span class="i18n-en">Vivid images from the battlefield: the felled adversary, the wailing women, ʿAntara swooping like a falcon, and young warriors on horseback—powerful visual and kinetic imagery befitting the poetry of chivalry.</span></div><div class="note"><strong><span class="i18n-ar">العاطفة</span><span class="i18n-en">Emotion</span>:</strong> <span class="i18n-ar">فخر صادق ينبع من نفس فارس حقيقي عاش المعارك، فيه شماتة بالعدو وزهو بالنصر، لكنه يبقى في إطار الفخر القبلي المعتاد دون أن يبلغ ذروة وجدانية استثنائية.</span><span class="i18n-en">Sincere pride springing from the soul of a true warrior who lived through battles, with gloating over the enemy and exultation in victory, though it remains within the framework of conventional tribal boasting without reaching an exceptional emotional peak.</span></div><div class="note"><strong><span class="i18n-ar">اللغة</span><span class="i18n-en">Language</span>:</strong> <span class="i18n-ar">ألفاظ جزلة أصيلة من معجم الفروسية الجاهلية: الدسيعة، الجحفل، الأجدل، الذمّل — لغة قوية فحلة تناسب المقام، وإن كان بعض التراكيب يحتاج تأملاً لفك معناه.</span><span class="i18n-en">Robust, authentic vocabulary from the lexicon of pre-Islamic chivalry: al-dasīʿa, al-jaḥfal, al-ajdal, al-dhumal—powerful, virile language suited to the occasion, though some constructions require reflection to unpack their meaning.</span></div><div class="note"><strong><span class="i18n-ar">القيمة الثقافية</span><span class="i18n-en">Cultural Value</span>:</strong> <span class="i18n-ar">قصيدة تمثل شعر الفخر الجاهلي في أنقى صوره، وعامر بن الطفيل من فرسان العرب المشهورين، وفيها إشارات تاريخية إلى صراعات عبس وذبيان تجعلها وثيقة أدبية وتاريخية معاً.</span><span class="i18n-en">A poem representing pre-Islamic boasting poetry in its purest form. ʿĀmir ibn al-Ṭufayl is among the famous knights of the Arabs, and the poem contains historical references to the conflicts of ʿAbs and Dhubyān, making it both a literary and historical document.</span></div><div class="verdict"><span class="i18n-ar">قصيدة فخر جاهلية أصيلة من فارس حقيقي، تمثل روح الشعر الجاهلي الحماسي بجزالته وقوته، وإن لم تبلغ مرتبة المعلقات فهي من جيد شعر الفروسية الذي يستحق الدراسة والحفظ.</span><span class="i18n-en">An authentic pre-Islamic boasting poem by a real warrior, embodying the spirit of heroic pre-Islamic poetry in its robustness and power. While it does not reach the rank of the Muʿallaqāt, it is among the fine chivalric poetry that deserves study and memorization.</span></div></div>
+    </div>
+    <div class="card" style="border-right:4px solid #4CAF50">
+        <div class="card-header">
+            <div class="poem-info">
+                <h3>كتبت ولم أكتب إليك وإنما</h3>
+                <span class="poet">الحلاج</span>
+            </div>
+            <div class="scores-summary">
+                <div class="score-pill" style="background:#4CAF50;color:#000"><span class="i18n-ar">هايكو</span><span class="i18n-en">Haiku</span>: 90</div>
+                <div class="score-pill" style="background:#4CAF50;color:#000">أوبوس: 84</div>
+                <div class="score-pill diff" style="background:#4CAF50;color:#000">Δ +6</div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="verses"><div class="verse">كَتَبتُ وَلَم أَكتُب إِلَيكَ وَإِنَّما*كَتَبتُ إِلى روحي بِغَيرِ كِتابِ*وَذَلِكَ أَنَّ الروحَ لا فَرقَ بَينَها*وَبَينَ مُحَبّيها بِفَصلِ خِطابِ*وَكُلُّ كِتابٍ صادِرٍ مِنكَ وارِدٌ*إِلَيكَ بِلا رَدِّ الجَوابِ جَوابي</div></div>
+            <table class="dims-table">
+                <tr><th><span class="i18n-ar">البُعد</span><span class="i18n-en">Dimension</span></th><th><span class="i18n-ar">هايكو</span><span class="i18n-en">Haiku</span></th><th>أوبوس</th><th>Δ</th></tr>
+                
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">الإيقاع</span><span class="i18n-en">Rhythm</span></td>
+            <td class="dim-val"><div class="bar" style="width:86%;background:#4CAF50">86</div></td>
+            <td class="dim-val"><div class="bar" style="width:82%;background:#4CAF50">82</div></td>
+            <td class="dim-diff" style="color:#4CAF50">+4</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">التصوير</span><span class="i18n-en">Imagery</span></td>
+            <td class="dim-val"><div class="bar" style="width:88%;background:#4CAF50">88</div></td>
+            <td class="dim-val"><div class="bar" style="width:70%;background:#8BC34A">70</div></td>
+            <td class="dim-diff" style="color:#FFC107">+18</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">العاطفة</span><span class="i18n-en">Emotion</span></td>
+            <td class="dim-val"><div class="bar" style="width:90%;background:#4CAF50">90</div></td>
+            <td class="dim-val"><div class="bar" style="width:90%;background:#4CAF50">90</div></td>
+            <td class="dim-diff" style="color:#4CAF50">+0</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">اللغة</span><span class="i18n-en">Language</span></td>
+            <td class="dim-val"><div class="bar" style="width:94%;background:#4CAF50">94</div></td>
+            <td class="dim-val"><div class="bar" style="width:85%;background:#4CAF50">85</div></td>
+            <td class="dim-diff" style="color:#4CAF50">+9</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">القيمة الثقافية</span><span class="i18n-en">Cultural Value</span></td>
+            <td class="dim-val"><div class="bar" style="width:92%;background:#4CAF50">92</div></td>
+            <td class="dim-val"><div class="bar" style="width:92%;background:#4CAF50">92</div></td>
+            <td class="dim-diff" style="color:#4CAF50">+0</td>
+        </tr>
+        <tr class="total-row">
+            <td class="dim-name" style="font-weight:700;color:#d4a574"><span class="i18n-ar">المجموع</span><span class="i18n-en">Total</span></td>
+            <td class="dim-val"><div class="bar" style="width:90%;background:#4CAF50">90</div></td>
+            <td class="dim-val"><div class="bar" style="width:84%;background:#4CAF50">84</div></td>
+            <td class="dim-diff" style="color:#4CAF50;font-weight:700">+6</td>
+        </tr>
+            </table>
+        </div>
+        <div class="card-notes"><div class="note"><strong><span class="i18n-ar">الإيقاع</span><span class="i18n-en">Rhythm</span>:</strong> <span class="i18n-ar">الوزن من الطويل يسير بانسياب، والقافية الباءية المكسورة تمنح الأبيات إيقاعاً هادئاً يناسب المناجاة الصوفية، وإن كان البيت الثالث فيه بعض ثقل في التركيب.</span><span class="i18n-en">The Tawīl meter flows with ease, and the broken bāʾ rhyme lends the verses a calm rhythm suited to Sufi supplication, though the third line carries some heaviness in its construction.</span></div><div class="note"><strong><span class="i18n-ar">التصوير</span><span class="i18n-en">Imagery</span>:</strong> <span class="i18n-ar">الصورة هنا ذهنية فلسفية أكثر منها حسية؛ الكتابة التي ليست كتابة، والرسالة التي هي جوابها ذاتها — صور عقلية بارعة لكنها لا ترسم مشهداً بصرياً يأسر العين.</span><span class="i18n-en">The imagery here is more intellectual and philosophical than sensory: writing that is not writing, a letter that is its own reply—brilliant mental images, yet they do not paint a visual scene that captivates the eye.</span></div><div class="note"><strong><span class="i18n-ar">العاطفة</span><span class="i18n-en">Emotion</span>:</strong> <span class="i18n-ar">هنا يكمن سر الحلاج: صدق وجداني مذهل، إحساس بالفناء في المحبوب حتى تذوب المسافة بين الكاتب والمكتوب إليه — هذا ليس كلاماً بل حالة روحية تنبض بالحياة.</span><span class="i18n-en">Here lies al-Ḥallāj's secret: astonishing emotional sincerity, a sense of annihilation in the Beloved until the distance between writer and addressee dissolves—this is not speech but a living spiritual state pulsing with life.</span></div><div class="note"><strong><span class="i18n-ar">اللغة</span><span class="i18n-en">Language</span>:</strong> <span class="i18n-ar">ألفاظ سهلة ممتنعة، والتراكيب فيها من الحكمة الصوفية ما يجعلها تبدو بسيطة وهي عميقة الغور، والطباق بين 'كتبت ولم أكتب' مدخل بلاغي آسر.</span><span class="i18n-en">The words are deceptively simple, and the constructions carry such Sufi wisdom that they appear simple while being profoundly deep. The antithesis between 'I wrote and did not write' is a captivating rhetorical gateway.</span></div><div class="note"><strong><span class="i18n-ar">القيمة الثقافية</span><span class="i18n-en">Cultural Value</span>:</strong> <span class="i18n-ar">هذه من جواهر الشعر الصوفي العربي، تختزل فلسفة الحلول والاتحاد في ثلاثة أبيات، وتُدرَّس في كل مقرر يتناول التصوف الإسلامي وشعره.</span><span class="i18n-en">This is among the jewels of Arabic Sufi poetry, condensing the philosophy of indwelling and union into three lines. It is studied in every curriculum that addresses Islamic mysticism and its poetry.</span></div><div class="verdict"><span class="i18n-ar">قصيدة من درر الشعر الصوفي العربي، تختزل في ثلاثة أبيات ما يعجز عنه كتاب كامل في فلسفة الحب الإلهي. الحلاج هنا لا يكتب شعراً بل يكشف عن حالة وجودية: محو المسافة بين العاشق والمعشوق حتى تصبح الرسالة هي ذاتها الجواب. قصيدة تستحق الخلود.</span><span class="i18n-en">A poem among the gems of Arabic Sufi poetry, condensing in three lines what an entire book on the philosophy of divine love might fail to express. Al-Ḥallāj here does not write poetry but reveals an existential state: the erasure of distance between lover and beloved until the letter itself becomes the reply. A poem that deserves immortality.</span></div></div>
+    </div>
+    <div class="card" style="border-right:4px solid #4CAF50">
+        <div class="card-header">
+            <div class="poem-info">
+                <h3>سقى الله إنسانا لعيني دفنته</h3>
+                <span class="poet">العماد الأصبهاني</span>
+            </div>
+            <div class="scores-summary">
+                <div class="score-pill" style="background:#4CAF50;color:#000"><span class="i18n-ar">هايكو</span><span class="i18n-en">Haiku</span>: 89</div>
+                <div class="score-pill" style="background:#4CAF50;color:#000">أوبوس: 87</div>
+                <div class="score-pill diff" style="background:#4CAF50;color:#000">Δ +2</div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="verses"><div class="verse">سقى اللّهُ إنساناً لعيني دفنتُهُ*على رَغْم أَنْفي جاعلاً قبرَه قلبي*فلا تَحْسَبوا أَنَّ التُّرابَ ضريحُهُ*فمنزلُهُ بين التّرائب لا الترْبِ</div></div>
+            <table class="dims-table">
+                <tr><th><span class="i18n-ar">البُعد</span><span class="i18n-en">Dimension</span></th><th><span class="i18n-ar">هايكو</span><span class="i18n-en">Haiku</span></th><th>أوبوس</th><th>Δ</th></tr>
+                
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">الإيقاع</span><span class="i18n-en">Rhythm</span></td>
+            <td class="dim-val"><div class="bar" style="width:88%;background:#4CAF50">88</div></td>
+            <td class="dim-val"><div class="bar" style="width:80%;background:#4CAF50">80</div></td>
+            <td class="dim-diff" style="color:#4CAF50">+8</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">التصوير</span><span class="i18n-en">Imagery</span></td>
+            <td class="dim-val"><div class="bar" style="width:90%;background:#4CAF50">90</div></td>
+            <td class="dim-val"><div class="bar" style="width:93%;background:#4CAF50">93</div></td>
+            <td class="dim-diff" style="color:#4CAF50">-3</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">العاطفة</span><span class="i18n-en">Emotion</span></td>
+            <td class="dim-val"><div class="bar" style="width:92%;background:#4CAF50">92</div></td>
+            <td class="dim-val"><div class="bar" style="width:88%;background:#4CAF50">88</div></td>
+            <td class="dim-diff" style="color:#4CAF50">+4</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">اللغة</span><span class="i18n-en">Language</span></td>
+            <td class="dim-val"><div class="bar" style="width:89%;background:#4CAF50">89</div></td>
+            <td class="dim-val"><div class="bar" style="width:90%;background:#4CAF50">90</div></td>
+            <td class="dim-diff" style="color:#4CAF50">-1</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">القيمة الثقافية</span><span class="i18n-en">Cultural Value</span></td>
+            <td class="dim-val"><div class="bar" style="width:85%;background:#4CAF50">85</div></td>
+            <td class="dim-val"><div class="bar" style="width:85%;background:#4CAF50">85</div></td>
+            <td class="dim-diff" style="color:#4CAF50">+0</td>
+        </tr>
+        <tr class="total-row">
+            <td class="dim-name" style="font-weight:700;color:#d4a574"><span class="i18n-ar">المجموع</span><span class="i18n-en">Total</span></td>
+            <td class="dim-val"><div class="bar" style="width:89%;background:#4CAF50">89</div></td>
+            <td class="dim-val"><div class="bar" style="width:87%;background:#4CAF50">87</div></td>
+            <td class="dim-diff" style="color:#4CAF50;font-weight:700">+2</td>
+        </tr>
+            </table>
+        </div>
+        <div class="card-notes"><div class="note"><strong><span class="i18n-ar">الإيقاع</span><span class="i18n-en">Rhythm</span>:</strong> <span class="i18n-ar">الطويل يجري بسلاسة، والقافية الباءية الساكنة (قلبي/الترب) تمنح البيتين وقاراً يليق بالرثاء، والإيقاع متزن رغم قصر القصيدة.</span><span class="i18n-en">The Tawīl meter flows smoothly, and the quiescent bāʾ rhyme (qalbī/al-turb) lends the two lines a gravity befitting elegy. The rhythm is balanced despite the poem's brevity.</span></div><div class="note"><strong><span class="i18n-ar">التصوير</span><span class="i18n-en">Imagery</span>:</strong> <span class="i18n-ar">صورة مدهشة حقاً: إنسان العين — وهو البؤبؤ والحبيب معاً — يُدفن في القلب لا في التراب، والقبر بين الترائب لا في الثرى. هذا من أبدع ما رأيت في التصوير الشعري العربي، جناس بين الترائب والترب يزيد الصورة إحكاماً.</span><span class="i18n-en">A truly stunning image: the 'pupil of the eye'—which is both the iris and the beloved—is buried in the heart, not in the earth; the grave lies between the ribs, not in the soil. This is among the most magnificent poetic imagery I have encountered in Arabic poetry. The paronomasia between al-tarāʾib (ribs) and al-turb (earth) tightens the image further.</span></div><div class="note"><strong><span class="i18n-ar">العاطفة</span><span class="i18n-en">Emotion</span>:</strong> <span class="i18n-ar">حزن عميق مكثف في بيتين فقط، فيه من الحب ما يجعل الفقد سكنى لا غياباً — عاطفة صادقة تهز الوجدان.</span><span class="i18n-en">Deep, concentrated grief in just two lines, carrying a love that transforms loss into dwelling rather than absence—a sincere emotion that shakes the soul.</span></div><div class="note"><strong><span class="i18n-ar">اللغة</span><span class="i18n-en">Language</span>:</strong> <span class="i18n-ar">بلاغة طبيعية غير متكلفة، والتورية في 'إنسان العين' والجناس بين 'الترائب' و'الترب' من أرقى ما في البيان العربي، والتركيب محكم كالبنيان.</span><span class="i18n-en">Natural, unaffected eloquence. The double entendre in 'insān al-ʿayn' (pupil/person of the eye) and the paronomasia between 'al-tarāʾib' and 'al-turb' represent the finest of Arabic rhetoric. The construction is as tight as masonry.</span></div><div class="note"><strong><span class="i18n-ar">القيمة الثقافية</span><span class="i18n-en">Cultural Value</span>:</strong> <span class="i18n-ar">مقطوعة تستحق أن تُدرَّس نموذجاً للإيجاز البليغ والتصوير المبتكر، وهي من القطع التي تثبت أن البيتين قد يغنيان عن قصيدة كاملة.</span><span class="i18n-en">A piece that deserves to be taught as a model of eloquent brevity and innovative imagery, and it is among those fragments that prove two lines can suffice for an entire poem.</span></div><div class="verdict"><span class="i18n-ar">جوهرة مكثفة من جواهر الشعر العربي. في بيتين فقط يصنع العماد الأصبهاني صورة لا تُنسى: الحبيب المفقود لا يُدفن في التراب بل بين الأضلاع. هذا الإيجاز المعجز والتصوير الفذ يجعلان هذه المقطوعة من أجمل ما قيل في الحب والفقد، وتستحق أن تُحفظ وتُدرَّس.</span><span class="i18n-en">A concentrated jewel among the gems of Arabic poetry. In just two lines, al-ʿImād al-Iṣfahānī crafts an unforgettable image: the lost beloved is not buried in the earth but between the ribs. This miraculous brevity and superb imagery make this piece one of the most beautiful things ever said about love and loss, deserving to be memorized and taught.</span></div></div>
+    </div><h3 class="model-section"><span class="i18n-ar">مقارنة سونيت (Sonnet) — أكبر 10 اختلافات</span><span class="i18n-en">Sonnet Comparison — Top 10 Differences</span></h3>
+    <div class="card" style="border-right:4px solid #F44336">
+        <div class="card-header">
+            <div class="poem-info">
+                <h3>لعمري لقد بانت بحاجة ذي هوى</h3>
+                <span class="poet">امرؤ القيس</span>
+            </div>
+            <div class="scores-summary">
+                <div class="score-pill" style="background:#4CAF50;color:#000"><span class="i18n-ar">هايكو</span><span class="i18n-en">Haiku</span>: 91</div>
+                <div class="score-pill" style="background:#F44336;color:#000">سونيت: 46</div>
+                <div class="score-pill diff" style="background:#F44336;color:#000">Δ +45</div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="verses"><div class="verse">لَعَمْرِي لَقَدْ بَانَتْ بِحَاجَةِ ذِي هَوًى*سُعَادُ وَرَاعَتْ بالفِرَاقِ مُرَوَّعَا*قَد عَمِرَ الرَّوضاتِ حَوْلِ مُخَطَّطٍ*إلى الُّلجِّ مَرْأَى مِن سُعَادَ وَمْسَمْعَا*مَتى تَرَ دَارًا مِن سُعَادَ تَقَفْ بِهَا*وَتَسْتَجْرِ عَيْنَاكَ الدُّمُوعَ فَتَدْمَعَا</div></div>
+            <table class="dims-table">
+                <tr><th><span class="i18n-ar">البُعد</span><span class="i18n-en">Dimension</span></th><th><span class="i18n-ar">هايكو</span><span class="i18n-en">Haiku</span></th><th>سونيت</th><th>Δ</th></tr>
+                
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">الإيقاع</span><span class="i18n-en">Rhythm</span></td>
+            <td class="dim-val"><div class="bar" style="width:88%;background:#4CAF50">88</div></td>
+            <td class="dim-val"><div class="bar" style="width:55%;background:#FF9800">55</div></td>
+            <td class="dim-diff" style="color:#F44336">+33</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">التصوير</span><span class="i18n-en">Imagery</span></td>
+            <td class="dim-val"><div class="bar" style="width:90%;background:#4CAF50">90</div></td>
+            <td class="dim-val"><div class="bar" style="width:48%;background:#F44336">48</div></td>
+            <td class="dim-diff" style="color:#F44336">+42</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">العاطفة</span><span class="i18n-en">Emotion</span></td>
+            <td class="dim-val"><div class="bar" style="width:92%;background:#4CAF50">92</div></td>
+            <td class="dim-val"><div class="bar" style="width:40%;background:#F44336">40</div></td>
+            <td class="dim-diff" style="color:#F44336">+52</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">اللغة</span><span class="i18n-en">Language</span></td>
+            <td class="dim-val"><div class="bar" style="width:91%;background:#4CAF50">91</div></td>
+            <td class="dim-val"><div class="bar" style="width:52%;background:#FF9800">52</div></td>
+            <td class="dim-diff" style="color:#F44336">+39</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">القيمة الثقافية</span><span class="i18n-en">Cultural Value</span></td>
+            <td class="dim-val"><div class="bar" style="width:95%;background:#4CAF50">95</div></td>
+            <td class="dim-val"><div class="bar" style="width:35%;background:#F44336">35</div></td>
+            <td class="dim-diff" style="color:#F44336">+60</td>
+        </tr>
+        <tr class="total-row">
+            <td class="dim-name" style="font-weight:700;color:#d4a574"><span class="i18n-ar">المجموع</span><span class="i18n-en">Total</span></td>
+            <td class="dim-val"><div class="bar" style="width:91%;background:#4CAF50">91</div></td>
+            <td class="dim-val"><div class="bar" style="width:46%;background:#F44336">46</div></td>
+            <td class="dim-diff" style="color:#F44336;font-weight:700">+45</td>
+        </tr>
+            </table>
+        </div>
+        <div class="card-notes"><div class="note"><strong><span class="i18n-ar">الإيقاع</span><span class="i18n-en">Rhythm</span>:</strong> <span class="i18n-ar">الوزن مضطرب في بعض الأبيات وأشك في صحة نسبة هذه الأبيات إلى امرئ القيس كما وردت، إذ لا تحمل نَفَسه الجاهلي المعهود.</span><span class="i18n-en">The meter is disturbed in some lines, and I doubt the attribution of these verses to Imruʾ al-Qays as presented, for they do not carry his familiar pre-Islamic voice.</span></div><div class="note"><strong><span class="i18n-ar">التصوير</span><span class="i18n-en">Imagery</span>:</strong> <span class="i18n-ar">الصور مألوفة جداً ولا تحمل شيئاً من تلك الجرأة التصويرية التي نعرفها في معلقة امرئ القيس، وكأنها أبيات مقطوعة ناقصة السياق.</span><span class="i18n-en">The images are very familiar and carry none of the bold imagery we know from Imruʾ al-Qays's Muʿallaqa. They read like disconnected lines lacking their original context.</span></div><div class="note"><strong><span class="i18n-ar">العاطفة</span><span class="i18n-en">Emotion</span>:</strong> <span class="i18n-ar">ثلاثة أبيات لا تكفي لبناء عاطفة، وما فيها من وقوف على الأطلال يبدو مجتزأً من سياق أكبر لم يصلنا.</span><span class="i18n-en">Three lines are insufficient to build an emotion, and what they contain of standing at ruins seems excerpted from a larger context that has not reached us.</span></div><div class="note"><strong><span class="i18n-ar">اللغة</span><span class="i18n-en">Language</span>:</strong> <span class="i18n-ar">اللغة مقبولة لكنها لا ترقى إلى مستوى امرئ القيس المعروف، وبعض التراكيب تحتاج إلى تدقيق في الرواية.</span><span class="i18n-en">The language is acceptable but does not rise to the known standard of Imruʾ al-Qays, and some constructions require verification of the transmitted text.</span></div><div class="note"><strong><span class="i18n-ar">القيمة الثقافية</span><span class="i18n-en">Cultural Value</span>:</strong> <span class="i18n-ar">ثلاثة أبيات مجتزأة لا تقدم قيمة ثقافية مستقلة، وأشك في صحة نسبتها أو اكتمالها.</span><span class="i18n-en">Three excerpted lines offer no independent cultural value, and I doubt the accuracy of their attribution or completeness.</span></div><div class="verdict"><span class="i18n-ar">مقطوعة ناقصة لا تعكس عبقرية امرئ القيس التي نعرفها، وأنصح بالتحقق من صحة النسبة والرواية قبل الاحتجاج بها.</span><span class="i18n-en">An incomplete fragment that does not reflect the genius of Imruʾ al-Qays as we know it. I advise verifying the attribution and transmission before citing it as evidence.</span></div></div>
+    </div>
+    <div class="card" style="border-right:4px solid #F44336">
+        <div class="card-header">
+            <div class="poem-info">
+                <h3>لعمرك ما بالموت عار على الفتى</h3>
+                <span class="poet">ليلى الأخليلية</span>
+            </div>
+            <div class="scores-summary">
+                <div class="score-pill" style="background:#4CAF50;color:#000"><span class="i18n-ar">هايكو</span><span class="i18n-en">Haiku</span>: 91</div>
+                <div class="score-pill" style="background:#FF9800;color:#000">سونيت: 50</div>
+                <div class="score-pill diff" style="background:#F44336;color:#000">Δ +41</div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="verses"><div class="verse"><span class="h1">لَعَمْرُكَ ما بالموتِ عارٌ على الفتى</span> <span class="sep">✦</span> <span class="h2">إذا ما الفتى لاقى الحِمام كريما</span></div></div>
+            <table class="dims-table">
+                <tr><th><span class="i18n-ar">البُعد</span><span class="i18n-en">Dimension</span></th><th><span class="i18n-ar">هايكو</span><span class="i18n-en">Haiku</span></th><th>سونيت</th><th>Δ</th></tr>
+                
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">الإيقاع</span><span class="i18n-en">Rhythm</span></td>
+            <td class="dim-val"><div class="bar" style="width:90%;background:#4CAF50">90</div></td>
+            <td class="dim-val"><div class="bar" style="width:55%;background:#FF9800">55</div></td>
+            <td class="dim-diff" style="color:#F44336">+35</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">التصوير</span><span class="i18n-en">Imagery</span></td>
+            <td class="dim-val"><div class="bar" style="width:88%;background:#4CAF50">88</div></td>
+            <td class="dim-val"><div class="bar" style="width:40%;background:#F44336">40</div></td>
+            <td class="dim-diff" style="color:#F44336">+48</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">العاطفة</span><span class="i18n-en">Emotion</span></td>
+            <td class="dim-val"><div class="bar" style="width:92%;background:#4CAF50">92</div></td>
+            <td class="dim-val"><div class="bar" style="width:50%;background:#FF9800">50</div></td>
+            <td class="dim-diff" style="color:#F44336">+42</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">اللغة</span><span class="i18n-en">Language</span></td>
+            <td class="dim-val"><div class="bar" style="width:92%;background:#4CAF50">92</div></td>
+            <td class="dim-val"><div class="bar" style="width:60%;background:#FFC107">60</div></td>
+            <td class="dim-diff" style="color:#F44336">+32</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">القيمة الثقافية</span><span class="i18n-en">Cultural Value</span></td>
+            <td class="dim-val"><div class="bar" style="width:95%;background:#4CAF50">95</div></td>
+            <td class="dim-val"><div class="bar" style="width:45%;background:#F44336">45</div></td>
+            <td class="dim-diff" style="color:#F44336">+50</td>
+        </tr>
+        <tr class="total-row">
+            <td class="dim-name" style="font-weight:700;color:#d4a574"><span class="i18n-ar">المجموع</span><span class="i18n-en">Total</span></td>
+            <td class="dim-val"><div class="bar" style="width:91%;background:#4CAF50">91</div></td>
+            <td class="dim-val"><div class="bar" style="width:50%;background:#FF9800">50</div></td>
+            <td class="dim-diff" style="color:#F44336;font-weight:700">+41</td>
+        </tr>
+            </table>
+        </div>
+        <div class="card-notes"><div class="note"><strong><span class="i18n-ar">الإيقاع</span><span class="i18n-en">Rhythm</span>:</strong> <span class="i18n-ar">بيت واحد لا يكفي لتقييم الإيقاع، وإن كان الوزن سليماً والقافية مقبولة.</span><span class="i18n-en">A single line is insufficient to evaluate the rhythm, though the meter is sound and the rhyme acceptable.</span></div><div class="note"><strong><span class="i18n-ar">التصوير</span><span class="i18n-en">Imagery</span>:</strong> <span class="i18n-ar">لا صورة شعرية حقيقية في هذا البيت الوحيد، وهو بيت حكمي مباشر أكثر منه شعراً مصوِّراً.</span><span class="i18n-en">There is no real poetic image in this single line; it is a direct wisdom verse more than pictorial poetry.</span></div><div class="note"><strong><span class="i18n-ar">العاطفة</span><span class="i18n-en">Emotion</span>:</strong> <span class="i18n-ar">الحكمة التي يحملها البيت صادقة، لكن بيتاً واحداً لا يمنحك الوقت الكافي لتتأثر.</span><span class="i18n-en">The wisdom the line carries is sincere, but a single line does not give you enough time to be moved.</span></div><div class="note"><strong><span class="i18n-ar">اللغة</span><span class="i18n-en">Language</span>:</strong> <span class="i18n-ar">اللغة سليمة وواضحة، وهو ما يميز شعر ليلى الأخيلية في مراثيها.</span><span class="i18n-en">The language is sound and clear, which is characteristic of Laylā al-Akhyaliyya's poetry in her elegies.</span></div><div class="note"><strong><span class="i18n-ar">القيمة الثقافية</span><span class="i18n-en">Cultural Value</span>:</strong> <span class="i18n-ar">بيت واحد لا يكفي لتقييم القيمة الثقافية الحقيقية للقصيدة، وليلى الأخيلية تستحق أن تُقرأ قصيدتها كاملة.</span><span class="i18n-en">A single line is insufficient to assess the true cultural value of the poem. Laylā al-Akhyaliyya deserves to have her poem read in full.</span></div><div class="verdict"><span class="i18n-ar">لا يمكن إصدار حكم عادل على قصيدة من بيت واحد، وليلى الأخيلية شاعرة كبيرة تستحق أن تُعرض قصيدتها كاملة.</span><span class="i18n-en">A fair judgment cannot be rendered on a poem consisting of a single line. Laylā al-Akhyaliyya is a major poet who deserves to have her poem presented in its entirety.</span></div></div>
+    </div>
+    <div class="card" style="border-right:4px solid #F44336">
+        <div class="card-header">
+            <div class="poem-info">
+                <h3>إن الذين يبايعونك إنهم</h3>
+                <span class="poet">محيي الدين بن عربي</span>
+            </div>
+            <div class="scores-summary">
+                <div class="score-pill" style="background:#4CAF50;color:#000"><span class="i18n-ar">هايكو</span><span class="i18n-en">Haiku</span>: 90</div>
+                <div class="score-pill" style="background:#FF9800;color:#000">سونيت: 50</div>
+                <div class="score-pill diff" style="background:#F44336;color:#000">Δ +40</div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="verses"><div class="verse"><span class="h1">إن الذين يبايعونك إنهم</span> <span class="sep">✦</span> <span class="h2">ليبايعون الله دونك فاعتبر</span></div></div>
+            <table class="dims-table">
+                <tr><th><span class="i18n-ar">البُعد</span><span class="i18n-en">Dimension</span></th><th><span class="i18n-ar">هايكو</span><span class="i18n-en">Haiku</span></th><th>سونيت</th><th>Δ</th></tr>
+                
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">الإيقاع</span><span class="i18n-en">Rhythm</span></td>
+            <td class="dim-val"><div class="bar" style="width:85%;background:#4CAF50">85</div></td>
+            <td class="dim-val"><div class="bar" style="width:55%;background:#FF9800">55</div></td>
+            <td class="dim-diff" style="color:#F44336">+30</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">التصوير</span><span class="i18n-en">Imagery</span></td>
+            <td class="dim-val"><div class="bar" style="width:88%;background:#4CAF50">88</div></td>
+            <td class="dim-val"><div class="bar" style="width:40%;background:#F44336">40</div></td>
+            <td class="dim-diff" style="color:#F44336">+48</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">العاطفة</span><span class="i18n-en">Emotion</span></td>
+            <td class="dim-val"><div class="bar" style="width:90%;background:#4CAF50">90</div></td>
+            <td class="dim-val"><div class="bar" style="width:50%;background:#FF9800">50</div></td>
+            <td class="dim-diff" style="color:#F44336">+40</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">اللغة</span><span class="i18n-en">Language</span></td>
+            <td class="dim-val"><div class="bar" style="width:92%;background:#4CAF50">92</div></td>
+            <td class="dim-val"><div class="bar" style="width:60%;background:#FFC107">60</div></td>
+            <td class="dim-diff" style="color:#F44336">+32</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">القيمة الثقافية</span><span class="i18n-en">Cultural Value</span></td>
+            <td class="dim-val"><div class="bar" style="width:95%;background:#4CAF50">95</div></td>
+            <td class="dim-val"><div class="bar" style="width:45%;background:#F44336">45</div></td>
+            <td class="dim-diff" style="color:#F44336">+50</td>
+        </tr>
+        <tr class="total-row">
+            <td class="dim-name" style="font-weight:700;color:#d4a574"><span class="i18n-ar">المجموع</span><span class="i18n-en">Total</span></td>
+            <td class="dim-val"><div class="bar" style="width:90%;background:#4CAF50">90</div></td>
+            <td class="dim-val"><div class="bar" style="width:50%;background:#FF9800">50</div></td>
+            <td class="dim-diff" style="color:#F44336;font-weight:700">+40</td>
+        </tr>
+            </table>
+        </div>
+        <div class="card-notes"><div class="note"><strong><span class="i18n-ar">الإيقاع</span><span class="i18n-en">Rhythm</span>:</strong> <span class="i18n-ar">بيت واحد لا يكفي للحكم على الإيقاع، وما وصلنا منه سليم الوزن لكنه لا يُطرب.</span><span class="i18n-en">A single line is insufficient for judging the rhythm, and what has reached us is metrically sound but not melodious.</span></div><div class="note"><strong><span class="i18n-ar">التصوير</span><span class="i18n-en">Imagery</span>:</strong> <span class="i18n-ar">الفكرة مأخوذة من الآية القرآنية مباشرة دون إضافة صورة شعرية مبتكرة تُذكر.</span><span class="i18n-en">The idea is taken directly from the Quranic verse without any noteworthy addition of innovative poetic imagery.</span></div><div class="note"><strong><span class="i18n-ar">العاطفة</span><span class="i18n-en">Emotion</span>:</strong> <span class="i18n-ar">الفكرة الدينية عميقة في أصلها القرآني، لكن البيت وحده لا يحمل طاقة عاطفية كافية.</span><span class="i18n-en">The religious idea is profound in its Quranic origin, but the line alone does not carry sufficient emotional charge.</span></div><div class="note"><strong><span class="i18n-ar">اللغة</span><span class="i18n-en">Language</span>:</strong> <span class="i18n-ar">اللغة سليمة وفصيحة لكنها تكاد تكون ترديداً للنص القرآني بصياغة شعرية بسيطة.</span><span class="i18n-en">The language is sound and eloquent, but it is almost a reiteration of the Quranic text in simple poetic form.</span></div><div class="note"><strong><span class="i18n-ar">القيمة الثقافية</span><span class="i18n-en">Cultural Value</span>:</strong> <span class="i18n-ar">بيت يتيم لا يمكن تقييم قيمته الثقافية الحقيقية دون سياقه الكامل، وهو في حاجة إلى بقية القصيدة.</span><span class="i18n-en">An orphan line whose true cultural value cannot be assessed without its full context; it needs the rest of the poem.</span></div><div class="verdict"><span class="i18n-ar">بيت واحد لا يكفي للحكم على شاعر بحجم ابن عربي، وما وصلنا لا يعدو كونه شاهداً ناقصاً يحتاج إلى سياقه الكامل لتقييم عادل.</span><span class="i18n-en">A single line is insufficient to judge a poet of Ibn ʿArabī's stature. What has reached us is no more than an incomplete fragment that needs its full context for a fair evaluation.</span></div></div>
+    </div>
+    <div class="card" style="border-right:4px solid #F44336">
+        <div class="card-header">
+            <div class="poem-info">
+                <h3>أيا ليل ما للصبح منك بعيد</h3>
+                <span class="poet">قيس بن الملوح</span>
+            </div>
+            <div class="scores-summary">
+                <div class="score-pill" style="background:#4CAF50;color:#000"><span class="i18n-ar">هايكو</span><span class="i18n-en">Haiku</span>: 93</div>
+                <div class="score-pill" style="background:#FF9800;color:#000">سونيت: 54</div>
+                <div class="score-pill diff" style="background:#F44336;color:#000">Δ +39</div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="verses"><div class="verse">أَيا لَيلَ ما لِلصُبحِ مِنكِ بَعيدُ*وَإِنّي لَمَحزونُ الفُؤادِ عَميدُ*أُراعي نُجومَ اللَيلِ سَهرانَ باكِياً*قَريحَ الحَشا مِنّي الفُؤادُ فَريدُ*بِحُبِّكِ يا لَيلى اِبتُليتُ وَإِنَّني*حَليفُ الأَسى باكي الجُفونِ فَقيدُ*لَقَد طالَ لَيلي وَاِستَهَلَّت مَدامِعي*وَفاضَت جُفوني وَالغَرامُ يَزيدُ*أُكابِدُ أَحزاني وَناري وَحَرقَتي*وَوَصلُكِ يا لَيلى أُراهُ بَعيدُ*لَقَد عيلَ صَبري مِن غَرامي وَوِحدَتي*وَعُظمِ اِشتِياقي هائِمٌ وَوَحيدُ*فَهَل مُسعِدٌ لي في الَّذي قَد أَصابَني*وَفي سَهَري وَالعالِمونَ رُقودُ*عَسى الطَيفُ يَأتيني وَمَن يُغفِ ساعَةً*وَمَن يَلقَ صَبراً وَالعَذابُ شَديدُ*أَلا لَيتَني قَد مِتُّ شَوقاً وَوَحشَةً*فَشَوقي وَحُزني لا يَزالُ جَديدُ*أَلا فَاِذكُري ما قَد بَقي مِن حُشاشَتي*فَقَد حانَ مَوتي وَالمَماتُ أُريدُ</div></div>
+            <table class="dims-table">
+                <tr><th><span class="i18n-ar">البُعد</span><span class="i18n-en">Dimension</span></th><th><span class="i18n-ar">هايكو</span><span class="i18n-en">Haiku</span></th><th>سونيت</th><th>Δ</th></tr>
+                
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">الإيقاع</span><span class="i18n-en">Rhythm</span></td>
+            <td class="dim-val"><div class="bar" style="width:90%;background:#4CAF50">90</div></td>
+            <td class="dim-val"><div class="bar" style="width:62%;background:#FFC107">62</div></td>
+            <td class="dim-diff" style="color:#F44336">+28</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">التصوير</span><span class="i18n-en">Imagery</span></td>
+            <td class="dim-val"><div class="bar" style="width:92%;background:#4CAF50">92</div></td>
+            <td class="dim-val"><div class="bar" style="width:45%;background:#F44336">45</div></td>
+            <td class="dim-diff" style="color:#F44336">+47</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">العاطفة</span><span class="i18n-en">Emotion</span></td>
+            <td class="dim-val"><div class="bar" style="width:95%;background:#4CAF50">95</div></td>
+            <td class="dim-val"><div class="bar" style="width:58%;background:#FF9800">58</div></td>
+            <td class="dim-diff" style="color:#F44336">+37</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">اللغة</span><span class="i18n-en">Language</span></td>
+            <td class="dim-val"><div class="bar" style="width:92%;background:#4CAF50">92</div></td>
+            <td class="dim-val"><div class="bar" style="width:55%;background:#FF9800">55</div></td>
+            <td class="dim-diff" style="color:#F44336">+37</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">القيمة الثقافية</span><span class="i18n-en">Cultural Value</span></td>
+            <td class="dim-val"><div class="bar" style="width:95%;background:#4CAF50">95</div></td>
+            <td class="dim-val"><div class="bar" style="width:50%;background:#FF9800">50</div></td>
+            <td class="dim-diff" style="color:#F44336">+45</td>
+        </tr>
+        <tr class="total-row">
+            <td class="dim-name" style="font-weight:700;color:#d4a574"><span class="i18n-ar">المجموع</span><span class="i18n-en">Total</span></td>
+            <td class="dim-val"><div class="bar" style="width:93%;background:#4CAF50">93</div></td>
+            <td class="dim-val"><div class="bar" style="width:54%;background:#FF9800">54</div></td>
+            <td class="dim-diff" style="color:#F44336;font-weight:700">+39</td>
+        </tr>
+            </table>
+        </div>
+        <div class="card-notes"><div class="note"><strong><span class="i18n-ar">الإيقاع</span><span class="i18n-en">Rhythm</span>:</strong> <span class="i18n-ar">الوزن سليم لكن الإيقاع رتيب ومتكرر، كأن الشاعر يدور في حلقة دون أن يتقدم.</span><span class="i18n-en">The meter is sound but the rhythm is monotonous and repetitive, as though the poet circles without advancing.</span></div><div class="note"><strong><span class="i18n-ar">التصوير</span><span class="i18n-en">Imagery</span>:</strong> <span class="i18n-ar">الصور مستهلكة جداً — السهر والدموع والطيف والشوق — لا جديد يلفت النظر.</span><span class="i18n-en">The images are very worn—sleeplessness, tears, phantoms, longing—nothing new catches the eye.</span></div><div class="note"><strong><span class="i18n-ar">العاطفة</span><span class="i18n-en">Emotion</span>:</strong> <span class="i18n-ar">الحزن صادق لكنه يبقى على السطح، ولا يصلك من وراء الكلمات ذلك الاحتراق الحقيقي.</span><span class="i18n-en">The sadness is sincere but remains on the surface; the true burning does not reach you from behind the words.</span></div><div class="note"><strong><span class="i18n-ar">اللغة</span><span class="i18n-en">Language</span>:</strong> <span class="i18n-ar">اللغة سهلة لكنها تميل إلى الضعف أحياناً، وبعض التراكيب تفتقر إلى الإحكام.</span><span class="i18n-en">The language is easy but tends toward weakness at times, and some constructions lack tightness.</span></div><div class="note"><strong><span class="i18n-ar">القيمة الثقافية</span><span class="i18n-en">Cultural Value</span>:</strong> <span class="i18n-ar">تُنسب لمجنون ليلى وهذا يمنحها قيمة توثيقية، لكن الأصالة الشعرية فيها موضع تساؤل.</span><span class="i18n-en">Attributed to Majnūn Laylā, which gives it documentary value, but its poetic authenticity is questionable.</span></div><div class="verdict"><span class="i18n-ar">قصيدة عاطفية عادية تعيش بظل اسم قائلها لا بقوتها الذاتية، وليست من درر الشعر العربي.</span><span class="i18n-en">An ordinary emotional poem that lives in the shadow of its author's name rather than by its own strength. It is not among the gems of Arabic poetry.</span></div></div>
+    </div>
+    <div class="card" style="border-right:4px solid #F44336">
+        <div class="card-header">
+            <div class="poem-info">
+                <h3>من الشوق والوجد المبرح أنني</h3>
+                <span class="poet">المتنبي</span>
+            </div>
+            <div class="scores-summary">
+                <div class="score-pill" style="background:#4CAF50;color:#000"><span class="i18n-ar">هايكو</span><span class="i18n-en">Haiku</span>: 93</div>
+                <div class="score-pill" style="background:#FF9800;color:#000">سونيت: 54</div>
+                <div class="score-pill diff" style="background:#F44336;color:#000">Δ +39</div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="verses"><div class="verse">منَ الشوقِ والوجدِ المُبَرِّحِ أنَّني*يُمَثَّلُ لي من بعدِ لُقياكَ لُقياكا*سأسلوا لَذيذَ العيشِ بعدك دائماً*وأنسى حياةَ النفسِ من قبلِ أنساكا</div></div>
+            <table class="dims-table">
+                <tr><th><span class="i18n-ar">البُعد</span><span class="i18n-en">Dimension</span></th><th><span class="i18n-ar">هايكو</span><span class="i18n-en">Haiku</span></th><th>سونيت</th><th>Δ</th></tr>
+                
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">الإيقاع</span><span class="i18n-en">Rhythm</span></td>
+            <td class="dim-val"><div class="bar" style="width:90%;background:#4CAF50">90</div></td>
+            <td class="dim-val"><div class="bar" style="width:55%;background:#FF9800">55</div></td>
+            <td class="dim-diff" style="color:#F44336">+35</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">التصوير</span><span class="i18n-en">Imagery</span></td>
+            <td class="dim-val"><div class="bar" style="width:88%;background:#4CAF50">88</div></td>
+            <td class="dim-val"><div class="bar" style="width:50%;background:#FF9800">50</div></td>
+            <td class="dim-diff" style="color:#F44336">+38</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">العاطفة</span><span class="i18n-en">Emotion</span></td>
+            <td class="dim-val"><div class="bar" style="width:92%;background:#4CAF50">92</div></td>
+            <td class="dim-val"><div class="bar" style="width:60%;background:#FFC107">60</div></td>
+            <td class="dim-diff" style="color:#F44336">+32</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">اللغة</span><span class="i18n-en">Language</span></td>
+            <td class="dim-val"><div class="bar" style="width:95%;background:#4CAF50">95</div></td>
+            <td class="dim-val"><div class="bar" style="width:65%;background:#FFC107">65</div></td>
+            <td class="dim-diff" style="color:#F44336">+30</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">القيمة الثقافية</span><span class="i18n-en">Cultural Value</span></td>
+            <td class="dim-val"><div class="bar" style="width:98%;background:#4CAF50">98</div></td>
+            <td class="dim-val"><div class="bar" style="width:40%;background:#F44336">40</div></td>
+            <td class="dim-diff" style="color:#F44336">+58</td>
+        </tr>
+        <tr class="total-row">
+            <td class="dim-name" style="font-weight:700;color:#d4a574"><span class="i18n-ar">المجموع</span><span class="i18n-en">Total</span></td>
+            <td class="dim-val"><div class="bar" style="width:93%;background:#4CAF50">93</div></td>
+            <td class="dim-val"><div class="bar" style="width:54%;background:#FF9800">54</div></td>
+            <td class="dim-diff" style="color:#F44336;font-weight:700">+39</td>
+        </tr>
+            </table>
+        </div>
+        <div class="card-notes"><div class="note"><strong><span class="i18n-ar">الإيقاع</span><span class="i18n-en">Rhythm</span>:</strong> <span class="i18n-ar">بيتان لا يكفيان لتقييم موسيقى حقيقية، والوزن سليم لكن الأثر الإيقاعي لا يتشكل في هذا الحجم الضئيل.</span><span class="i18n-en">Two lines are insufficient to evaluate any real musicality. The meter is sound, but a rhythmic effect cannot form in such a small space.</span></div><div class="note"><strong><span class="i18n-ar">التصوير</span><span class="i18n-en">Imagery</span>:</strong> <span class="i18n-ar">لا صورة مبتكرة تُذكر، والتخيل بعد اللقاء فكرة عاطفية لا تصويرية.</span><span class="i18n-en">No innovative image worth mentioning; imagining the beloved after meeting is an emotional idea, not a pictorial one.</span></div><div class="note"><strong><span class="i18n-ar">العاطفة</span><span class="i18n-en">Emotion</span>:</strong> <span class="i18n-ar">الفكرة مؤثرة في جوهرها، تخيّل الحبيب بعد الفراق، لكن البيتين لا يمنحانها حق التعبير.</span><span class="i18n-en">The idea is touching at its core—imagining the beloved after parting—but two lines do not give it its due expression.</span></div><div class="note"><strong><span class="i18n-ar">اللغة</span><span class="i18n-en">Language</span>:</strong> <span class="i18n-ar">اللغة سليمة والتركيب واضح، لكن لا شيء يوحي بعبقرية المتنبي اللغوية المعهودة.</span><span class="i18n-en">The language is sound and the construction clear, but nothing suggests the linguistic genius for which al-Mutanabbī is known.</span></div><div class="note"><strong><span class="i18n-ar">القيمة الثقافية</span><span class="i18n-en">Cultural Value</span>:</strong> <span class="i18n-ar">قطعة مبتورة لا تمثل المتنبي حق التمثيل، ولا يمكن الحكم على قيمتها الثقافية من بيتين.</span><span class="i18n-en">A truncated fragment that does not represent al-Mutanabbī adequately, and its cultural value cannot be judged from two lines.</span></div><div class="verdict"><span class="i18n-ar">شذرة لا قصيدة، ولا يُنصف المتنبي أن يُحكم عليه من بيتين، فهو أكبر من أن يُختزل.</span><span class="i18n-en">A fragment, not a poem, and it is unjust to judge al-Mutanabbī from two lines—he is too great to be reduced.</span></div></div>
+    </div>
+    <div class="card" style="border-right:4px solid #F44336">
+        <div class="card-header">
+            <div class="poem-info">
+                <h3>قد كنت أسمع بالزمان ولا أرى</h3>
+                <span class="poet">قس بن ساعدة</span>
+            </div>
+            <div class="scores-summary">
+                <div class="score-pill" style="background:#4CAF50;color:#000"><span class="i18n-ar">هايكو</span><span class="i18n-en">Haiku</span>: 93</div>
+                <div class="score-pill" style="background:#FF9800;color:#000">سونيت: 54</div>
+                <div class="score-pill diff" style="background:#F44336;color:#000">Δ +39</div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="verses"><div class="verse">قَد كُنتُ أَسمَعُ بِالزَمانِ وَلا أَرى*أَنَّ الزَمانَ يُطيقُ نَتفَ جَناحي*فَأَراهُ أَسرَعَ فِيَّ حَتّى أَصبَحَت*بيضاً مُتونُ عَوارِضي مِن أَراحي*وَأَنا الكَبيرُ لِنِسبَةٍ في قَومِهِ*هَيهاتَ كَم ناسَمتُ مِن أَرواحي*صافَحتُ ذا جَدَنٍ وَأَدرَكَ مَولِدي*شَمِرُ بنُ عَمرٍو يُتَّقى بِالراحِ*وَالقَيلُ ذو يَزَنٍ رَأَيتُ مَحَلَّهُ*بِالقَهرِ بَنيَ جَنادِلٍ وَصِفاحِ*فَتَكَ الزَمانُ بِمُلكِ حِميَرَ فَتكَةً*تَسعى بِكُلِّ عَشِيَّةٍ وَصَباحِ*أَودى أَبو كَرِبٍ وَعَمرٌو قَبلَهُ*وَأَبادَ مُلكَ أُذَينَةَ الوَضّاحِ*وَأَبادَ أَفريقيسَ بَعدَ مَقامِهِ*في المُلكِ بِالمُستَغرِقِ المُجتاحِ*وَالصَعبُ ذو القَرنَينِ أَصبَحَ ثاوِياً*بِالحِنوِ بَينَ تَلاعُبِ الأَرواحِ*وَغَدا بِأَبرَهَةَ المَنار فَأَصبَحَت*أَيّامُهُ مَسلوبَةَ الإِصباحِ*أَخنى عَلى صَيفي بِحادِثِ صَرفِهِ*مُستَأثِراً بِجَذيمَةَ الوَضّاحِ*آفآيْنَ عَلكَدَةُ الهُمامُ وَمُلكُهُ*أَم أَينَ عِزُّ عَبادَةَ الفَتّاحِ*لا تُمسِ في شَكِّ المُنونِ أَما تَرى*أَيّامُهُ مَشهورَةَ الإيضاحِ*لا تَأمَنَن مَكرَ الزَمانِ فَإِنَّهُ*أَردى الزَمانُ بِشَمَّرَ الوَضّاحِ*بَرَكَ الزَمانُ عَلى اِبنِ هاتِكِ عَرشِهِ*وَعَلى أُذَينَةَ سالِبِ الأَنواحِ*وَعَلى الَّذي كانَت بِموكَلِ دارِهِ*نُهبُ القِيانِ وَكُلِّ أَجرِ وِشاحِ*مِن بَعدِ مُلكِ الصينِ أَصبَحَ هالِكاً*أَكرِم بِهِ مِن هالِكٍ مُجتاحِ*إِنَّ الَّذينَ تَمَلَّكوا وَقَد أُهلِكوا*وَعَلى المُقَنَّعِ حَلَّ بِالأَبراحِ*شَخَصَت عَلى بُعدِ النَوى أَشخاصُهُم*فَراتَهُم الأَوهامُ كَالأَشباحِ*أَفَبَعدَ أَملاكٍ مَضَوا مِن حِميَرِ*يُرجى الفَلاحُ وَلاتَ حينَ فَلاحِ*مَن ذا تَصافَقَ كَفُّهُ كَفَّ الرَدى*يَشري التُقى عَن بَيعَةِ الأَرواحِ</div></div>
+            <table class="dims-table">
+                <tr><th><span class="i18n-ar">البُعد</span><span class="i18n-en">Dimension</span></th><th><span class="i18n-ar">هايكو</span><span class="i18n-en">Haiku</span></th><th>سونيت</th><th>Δ</th></tr>
+                
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">الإيقاع</span><span class="i18n-en">Rhythm</span></td>
+            <td class="dim-val"><div class="bar" style="width:88%;background:#4CAF50">88</div></td>
+            <td class="dim-val"><div class="bar" style="width:62%;background:#FFC107">62</div></td>
+            <td class="dim-diff" style="color:#F44336">+26</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">التصوير</span><span class="i18n-en">Imagery</span></td>
+            <td class="dim-val"><div class="bar" style="width:92%;background:#4CAF50">92</div></td>
+            <td class="dim-val"><div class="bar" style="width:55%;background:#FF9800">55</div></td>
+            <td class="dim-diff" style="color:#F44336">+37</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">العاطفة</span><span class="i18n-en">Emotion</span></td>
+            <td class="dim-val"><div class="bar" style="width:90%;background:#4CAF50">90</div></td>
+            <td class="dim-val"><div class="bar" style="width:50%;background:#FF9800">50</div></td>
+            <td class="dim-diff" style="color:#F44336">+40</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">اللغة</span><span class="i18n-en">Language</span></td>
+            <td class="dim-val"><div class="bar" style="width:95%;background:#4CAF50">95</div></td>
+            <td class="dim-val"><div class="bar" style="width:45%;background:#F44336">45</div></td>
+            <td class="dim-diff" style="color:#F44336">+50</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">القيمة الثقافية</span><span class="i18n-en">Cultural Value</span></td>
+            <td class="dim-val"><div class="bar" style="width:98%;background:#4CAF50">98</div></td>
+            <td class="dim-val"><div class="bar" style="width:58%;background:#FF9800">58</div></td>
+            <td class="dim-diff" style="color:#F44336">+40</td>
+        </tr>
+        <tr class="total-row">
+            <td class="dim-name" style="font-weight:700;color:#d4a574"><span class="i18n-ar">المجموع</span><span class="i18n-en">Total</span></td>
+            <td class="dim-val"><div class="bar" style="width:93%;background:#4CAF50">93</div></td>
+            <td class="dim-val"><div class="bar" style="width:54%;background:#FF9800">54</div></td>
+            <td class="dim-diff" style="color:#F44336;font-weight:700">+39</td>
+        </tr>
+            </table>
+        </div>
+        <div class="card-notes"><div class="note"><strong><span class="i18n-ar">الإيقاع</span><span class="i18n-en">Rhythm</span>:</strong> <span class="i18n-ar">الوزن متقطع في مواضع عدة والقافية مقبولة لكن الإيقاع العام يفتقر إلى الانسياب.</span><span class="i18n-en">The meter is broken in several places, and the rhyme is acceptable, but the overall rhythm lacks fluency.</span></div><div class="note"><strong><span class="i18n-ar">التصوير</span><span class="i18n-en">Imagery</span>:</strong> <span class="i18n-ar">الصور تعتمد على سرد الأسماء التاريخية أكثر من التصوير الحي، وهذا يُضعف الأثر البصري.</span><span class="i18n-en">The images rely on listing historical names more than on vivid depiction, which weakens the visual impact.</span></div><div class="note"><strong><span class="i18n-ar">العاطفة</span><span class="i18n-en">Emotion</span>:</strong> <span class="i18n-ar">الحكمة في زوال الملوك فكرة صحيحة لكنها تُقدَّم بشكل جاف يُبعد القارئ عاطفياً.</span><span class="i18n-en">The wisdom about the passing of kings is a valid idea, but it is presented in a dry manner that distances the reader emotionally.</span></div><div class="note"><strong><span class="i18n-ar">اللغة</span><span class="i18n-en">Language</span>:</strong> <span class="i18n-ar">أسماء غريبة وتراكيب مبهمة تجعل القصيدة أقرب إلى الأحجية منها إلى الشعر، والنسب إلى قس بن ساعدة مشكوك فيه علمياً.</span><span class="i18n-en">Strange names and obscure constructions make the poem closer to a riddle than to poetry. The attribution to Quss ibn Sāʿida is scientifically doubtful.</span></div><div class="note"><strong><span class="i18n-ar">القيمة الثقافية</span><span class="i18n-en">Cultural Value</span>:</strong> <span class="i18n-ar">قيمتها التاريخية في توثيق أسماء ملوك اليمن القديم، لكن قيمتها الشعرية الخالصة محدودة.</span><span class="i18n-en">Its value lies in documenting the names of ancient Yemeni kings, but its purely poetic value is limited.</span></div><div class="verdict"><span class="i18n-ar">قصيدة ذات قيمة تاريخية وأثرية أكثر منها شعرية، تستحق الدراسة في سياق التاريخ الأدبي لا في سياق الإبداع الشعري الرفيع.</span><span class="i18n-en">A poem of historical and antiquarian value more than poetic value. It deserves study in the context of literary history, not in the context of high poetic creativity.</span></div></div>
+    </div>
+    <div class="card" style="border-right:4px solid #F44336">
+        <div class="card-header">
+            <div class="poem-info">
+                <h3>أحن إلى ضرب السيوف القواضب</h3>
+                <span class="poet">عنترة بن شداد</span>
+            </div>
+            <div class="scores-summary">
+                <div class="score-pill" style="background:#4CAF50;color:#000"><span class="i18n-ar">هايكو</span><span class="i18n-en">Haiku</span>: 94</div>
+                <div class="score-pill" style="background:#FF9800;color:#000">سونيت: 56</div>
+                <div class="score-pill diff" style="background:#F44336;color:#000">Δ +38</div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="verses"><div class="verse">أَحِنُّ إِلى ضَربِ السُيوفِ القَواضِبِ*وَأَصبو إِلى طَعنِ الرِماحِ اللَواعِبِ*وَأَشتاقُ كاساتِ المَنونِ إِذا صَفَت*وَدارَت عَلى رَأسي سِهامُ المَصائِبِ*وَيُطرِبُني وَالخَيلُ تَعثُرُ بِالقَنا*حُداةُ المَنايا وَاِرتِعاجُ المَواكِبِ*وَضَربٌ وَطَعنٌ تَحتَ ظِلِّ عَجاجَةٍ*كَجُنحِ الدُجى مِن وَقعِ أَيدي السَلاهِبِ*تَطيرُ رُؤوسُ القَومِ تَحتَ ظَلامِها*وَتَنقَضُّ فيها كَالنُجومُ الثَواقِب*وَتَلمَعُ فيها البيضُ مِن كُلِّ جانِبٍ*كَلَمعِ بُروقٍ في ظَلامِ الغَياهِبِ*لَعَمرُكَ إِنَّ المَجدَ وَالفَخرَ وَالعُلا*وَنَيلَ الأَماني وَاِرتِفاعَ المَراتِبِ*لِمَن يَلتَقي أَبطالَها وَسَراتَها*بِقَلبٍ صَبورٍ عِندَ وَقعِ المَضارِبِ*وَيَبني بِحَدِّ السَيفِ مَجداً مُشَيَّداً*عَلى فَلَكِ العَلياءِ فَوقَ الكَواكِبِ*وَمَن لَم يُرَوِّ رُمحَهُ مِن دَمِ العِدا*إِذا اِشتَبَكَت سُمرُ القَنا بِالقَواضِبِ*وَيُعطي القَنا الخَطِّيَّ في الحَربِ حَقَّهُ*وَيَبري بِحَدِّ السَيفِ عُرضَ المَناكِبِ*يَعيشُ كَما عاشَ الذَليلُ بِغُصَّةٍ*وَإِن ماتَ لا يُجري دُموعَ النَوادِبِ*فَضائِلُ عَزمٍ لا تُباعُ لِضارِعٍ*وَأَسرارُ حَزمٍ لا تُذاعُ لِعائِبِ*بَرَزتُ بِها دَهراً عَلى كُلِّ حادِثٍ*وَلا كُحلَ إِلّا مِن غُبارِ الكَتائِبِ*إِذا كَذَبَ البَرقُ اللَموعُ لِشائِمٍ*فَبَرقُ حُسامي صادِقٌ غَيرُ كاذِبِ</div></div>
+            <table class="dims-table">
+                <tr><th><span class="i18n-ar">البُعد</span><span class="i18n-en">Dimension</span></th><th><span class="i18n-ar">هايكو</span><span class="i18n-en">Haiku</span></th><th>سونيت</th><th>Δ</th></tr>
+                
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">الإيقاع</span><span class="i18n-en">Rhythm</span></td>
+            <td class="dim-val"><div class="bar" style="width:92%;background:#4CAF50">92</div></td>
+            <td class="dim-val"><div class="bar" style="width:62%;background:#FFC107">62</div></td>
+            <td class="dim-diff" style="color:#F44336">+30</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">التصوير</span><span class="i18n-en">Imagery</span></td>
+            <td class="dim-val"><div class="bar" style="width:95%;background:#4CAF50">95</div></td>
+            <td class="dim-val"><div class="bar" style="width:55%;background:#FF9800">55</div></td>
+            <td class="dim-diff" style="color:#F44336">+40</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">العاطفة</span><span class="i18n-en">Emotion</span></td>
+            <td class="dim-val"><div class="bar" style="width:90%;background:#4CAF50">90</div></td>
+            <td class="dim-val"><div class="bar" style="width:58%;background:#FF9800">58</div></td>
+            <td class="dim-diff" style="color:#F44336">+32</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">اللغة</span><span class="i18n-en">Language</span></td>
+            <td class="dim-val"><div class="bar" style="width:94%;background:#4CAF50">94</div></td>
+            <td class="dim-val"><div class="bar" style="width:60%;background:#FFC107">60</div></td>
+            <td class="dim-diff" style="color:#F44336">+34</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">القيمة الثقافية</span><span class="i18n-en">Cultural Value</span></td>
+            <td class="dim-val"><div class="bar" style="width:98%;background:#4CAF50">98</div></td>
+            <td class="dim-val"><div class="bar" style="width:45%;background:#F44336">45</div></td>
+            <td class="dim-diff" style="color:#F44336">+53</td>
+        </tr>
+        <tr class="total-row">
+            <td class="dim-name" style="font-weight:700;color:#d4a574"><span class="i18n-ar">المجموع</span><span class="i18n-en">Total</span></td>
+            <td class="dim-val"><div class="bar" style="width:94%;background:#4CAF50">94</div></td>
+            <td class="dim-val"><div class="bar" style="width:56%;background:#FF9800">56</div></td>
+            <td class="dim-diff" style="color:#F44336;font-weight:700">+38</td>
+        </tr>
+            </table>
+        </div>
+        <div class="card-notes"><div class="note"><strong><span class="i18n-ar">الإيقاع</span><span class="i18n-en">Rhythm</span>:</strong> <span class="i18n-ar">الوزن سليم في معظمه لكنه يفتقر إلى تلك الموسيقى الداخلية التي تميز عنترة الحقيقي، وكأن الإيقاع مصنوع لا متدفق.</span><span class="i18n-en">The meter is sound for the most part, but it lacks the internal musicality that distinguishes the real ʿAntara, as though the rhythm is manufactured rather than flowing.</span></div><div class="note"><strong><span class="i18n-ar">التصوير</span><span class="i18n-en">Imagery</span>:</strong> <span class="i18n-ar">الصور مكررة ومستهلكة: السيوف تلمع، الرؤوس تطير، البرق يلمع — لا جديد هنا يستوقف القارئ.</span><span class="i18n-en">The images are repetitive and exhausted: swords gleaming, heads flying, lightning flashing—nothing new here to arrest the reader.</span></div><div class="note"><strong><span class="i18n-ar">العاطفة</span><span class="i18n-en">Emotion</span>:</strong> <span class="i18n-ar">الحماسة مصطنعة وخطابية، تفتقر إلى الصدق الوجداني الذي يميز عنترة الأصيل في معلقته.</span><span class="i18n-en">The fervor is contrived and rhetorical, lacking the emotional sincerity that distinguishes the authentic ʿAntara in his Muʿallaqa.</span></div><div class="note"><strong><span class="i18n-ar">اللغة</span><span class="i18n-en">Language</span>:</strong> <span class="i18n-ar">اللغة مقبولة لكن فيها ركاكة في مواضع، وبعض التراكيب تبدو متكلفة لا طبيعية.</span><span class="i18n-en">The language is acceptable but shows weakness in places, and some constructions appear forced rather than natural.</span></div><div class="note"><strong><span class="i18n-ar">القيمة الثقافية</span><span class="i18n-en">Cultural Value</span>:</strong> <span class="i18n-ar">أشك جدياً في نسبة هذه القصيدة لعنترة، فهي تفتقر إلى روحه وأسلوبه الفريد المعروف.</span><span class="i18n-en">I seriously doubt the attribution of this poem to ʿAntara, as it lacks his unique spirit and well-known style.</span></div><div class="verdict"><span class="i18n-ar">قصيدة متوسطة تحمل اسم عنترة لكنها لا تحمل روحه، وأرجح أنها منحولة أو متأخرة النظم.</span><span class="i18n-en">A mediocre poem bearing ʿAntara's name but not his spirit. I consider it most likely spurious or of later composition.</span></div></div>
+    </div>
+    <div class="card" style="border-right:4px solid #F44336">
+        <div class="card-header">
+            <div class="poem-info">
+                <h3>شهدت على الزيدي أن نساءه</h3>
+                <span class="poet">بشار بن برد</span>
+            </div>
+            <div class="scores-summary">
+                <div class="score-pill" style="background:#4CAF50;color:#000"><span class="i18n-ar">هايكو</span><span class="i18n-en">Haiku</span>: 90</div>
+                <div class="score-pill" style="background:#FF9800;color:#000">سونيت: 52</div>
+                <div class="score-pill diff" style="background:#F44336;color:#000">Δ +38</div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="verses"><div class="verse">شَهِدتُ عَلى الزَيدِيِّ أَنَّ نِساءَهَ*ضِياعٌ إِلى أَيرِ العُقَيلِيِّ تَزفِرُ*بَلَوتُ بَني زَيدٍ فَما في كِبارِهِم*حُلومٌ ولا في الأَصغَرينَ مُطَهَّرُ*فَأَبلِغ بَني زَيدٍ وَقُل لِسُراتِهِم*وَإِن لَم يَكُن فيهِم سُراةٌ تُوَقَّرُ*لأُمِّكُمُ الوَيلاتُ إِنَّ قَصائِدي*صَواعِقُ مِنها مُنجِدُ وَمُغَوِّرُ*أَجَدَّهُمُ لا يَتَّقون دَنِيَّةً*وَلا يُؤثِرونَ الخَيرَ وَالخَيرُ يُؤثَرُ*يَلُفّونَ أَولادَ الزِنى في عِدادِهِم*فَعِدَّتُهُم مِن عِدَّةِ الناسِ أَكثَرُ*إِذ ما رَأَوا مَن دَأبُهُ مِثلُ دَأبِهِم*أَطافوا بِهِ وَالغَيُّ لِلغَيِّ أَصورُ*وَلو فارَقوا ما فيهِمُ مِن دَعارَةٍ*لَما عَرَفَتهُم أُمُّهُم حينَ تَنظُرُ*لَقَد فَخَروا بِالمُلحَقين عَشِيَّةً*فَقُلتُ اِفخَروا إِن كانَ في اللُؤمِ مَفخَر*يُريدونَ مَسعاتي وَدونَ لِقائِها*قَناديلُ أَبوابِ السَماواتِ تَزهَرُ*فَقُل في بَني زَيدٍ كَما قالَ مُعرِبٌ*قَواريرُ حَجّامٍ غَداً تَتَكَسَّرُ</div></div>
+            <table class="dims-table">
+                <tr><th><span class="i18n-ar">البُعد</span><span class="i18n-en">Dimension</span></th><th><span class="i18n-ar">هايكو</span><span class="i18n-en">Haiku</span></th><th>سونيت</th><th>Δ</th></tr>
+                
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">الإيقاع</span><span class="i18n-en">Rhythm</span></td>
+            <td class="dim-val"><div class="bar" style="width:85%;background:#4CAF50">85</div></td>
+            <td class="dim-val"><div class="bar" style="width:72%;background:#8BC34A">72</div></td>
+            <td class="dim-diff" style="color:#FFC107">+13</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">التصوير</span><span class="i18n-en">Imagery</span></td>
+            <td class="dim-val"><div class="bar" style="width:88%;background:#4CAF50">88</div></td>
+            <td class="dim-val"><div class="bar" style="width:55%;background:#FF9800">55</div></td>
+            <td class="dim-diff" style="color:#F44336">+33</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">العاطفة</span><span class="i18n-en">Emotion</span></td>
+            <td class="dim-val"><div class="bar" style="width:90%;background:#4CAF50">90</div></td>
+            <td class="dim-val"><div class="bar" style="width:40%;background:#F44336">40</div></td>
+            <td class="dim-diff" style="color:#F44336">+50</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">اللغة</span><span class="i18n-en">Language</span></td>
+            <td class="dim-val"><div class="bar" style="width:92%;background:#4CAF50">92</div></td>
+            <td class="dim-val"><div class="bar" style="width:65%;background:#FFC107">65</div></td>
+            <td class="dim-diff" style="color:#F44336">+27</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">القيمة الثقافية</span><span class="i18n-en">Cultural Value</span></td>
+            <td class="dim-val"><div class="bar" style="width:95%;background:#4CAF50">95</div></td>
+            <td class="dim-val"><div class="bar" style="width:30%;background:#F44336">30</div></td>
+            <td class="dim-diff" style="color:#F44336">+65</td>
+        </tr>
+        <tr class="total-row">
+            <td class="dim-name" style="font-weight:700;color:#d4a574"><span class="i18n-ar">المجموع</span><span class="i18n-en">Total</span></td>
+            <td class="dim-val"><div class="bar" style="width:90%;background:#4CAF50">90</div></td>
+            <td class="dim-val"><div class="bar" style="width:52%;background:#FF9800">52</div></td>
+            <td class="dim-diff" style="color:#F44336;font-weight:700">+38</td>
+        </tr>
+            </table>
+        </div>
+        <div class="card-notes"><div class="note"><strong><span class="i18n-ar">الإيقاع</span><span class="i18n-en">Rhythm</span>:</strong> <span class="i18n-ar">الوزن الكامل يجري بقوة، لكن الهجاء الفاحش يُثقل الأذن ويُفسد متعة الإيقاع.</span><span class="i18n-en">The Kāmil meter runs with force, but the obscene invective burdens the ear and spoils the pleasure of the rhythm.</span></div><div class="note"><strong><span class="i18n-ar">التصوير</span><span class="i18n-en">Imagery</span>:</strong> <span class="i18n-ar">الصور شحيحة ومبتذلة، وما فيها من إبداع كصواعق القصائد يغرق في وحل الفحش.</span><span class="i18n-en">The images are sparse and vulgar. Whatever creativity exists, such as 'thunderbolts of poems,' drowns in the mire of obscenity.</span></div><div class="note"><strong><span class="i18n-ar">العاطفة</span><span class="i18n-en">Emotion</span>:</strong> <span class="i18n-ar">الغضب حاضر لكنه غضب مُلوَّث، لا يهز الوجدان بل يُنفِّر منه.</span><span class="i18n-en">Anger is present, but it is a tainted anger that does not stir the soul but rather repels.</span></div><div class="note"><strong><span class="i18n-ar">اللغة</span><span class="i18n-en">Language</span>:</strong> <span class="i18n-ar">بشار أعلم بالعربية من أن يُضعف لغته، لكن الألفاظ الفاحشة تُسقط القصيدة من مقام الفصاحة الشريفة.</span><span class="i18n-en">Bashshār knows Arabic too well to weaken his language, yet the obscene vocabulary strips the poem of the station of noble eloquence.</span></div><div class="note"><strong><span class="i18n-ar">القيمة الثقافية</span><span class="i18n-en">Cultural Value</span>:</strong> <span class="i18n-ar">هجاء فاحش لا يُضيف للتراث الشعري العربي إلا نموذجاً على ما يمكن أن ينحدر إليه الشاعر الكبير.</span><span class="i18n-en">Obscene invective that adds nothing to the Arabic poetic tradition except an example of how low a great poet can sink.</span></div><div class="verdict"><span class="i18n-ar">ليست من درر الشعر بأي معيار، وبشار أكبر من هذا بكثير، فهذه القصيدة تُخجل صاحبها لا تُشرِّفه.</span><span class="i18n-en">Not a gem of poetry by any standard. Bashshār is far greater than this; this poem shames its author rather than honoring him.</span></div></div>
+    </div>
+    <div class="card" style="border-right:4px solid #F44336">
+        <div class="card-header">
+            <div class="poem-info">
+                <h3>عليك دموع العين لا زال تنهل</h3>
+                <span class="poet">عبد الغفار الأخرس</span>
+            </div>
+            <div class="scores-summary">
+                <div class="score-pill" style="background:#4CAF50;color:#000"><span class="i18n-ar">هايكو</span><span class="i18n-en">Haiku</span>: 90</div>
+                <div class="score-pill" style="background:#FF9800;color:#000">سونيت: 54</div>
+                <div class="score-pill diff" style="background:#F44336;color:#000">Δ +36</div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="verses"><div class="verse">عليكَ دُموعُ العَين لا زال تَنْهَلُّ*وَوَجْدي بكم وَجْدَ المفارقِ لا يَسْلو*وها أنا من فقدانكم ما دَجا ليل*أبيتُ ولي وَجْدٌ حرارته تعلو*ودمعٌ لي في عارضي عارض هطلُ*شُغِلْتُ بهذا الوجد قلباً مجدَّدا*ولم أرَ لي من شاغل الدَّمع منقذا*إلامَ أُعاني ما أُعانيه من أذى*وأطوي على جمرٍ وأُغْضي على قذى*وأُشغِلُ أعضائي وقلبي له شغلُ*أُقضِّي نهاري في عسى ولربَّما*وأبكي عليكم كلّ آونةٍ دَما*وإنِّي وعيشٍ فيكم قد تصرَّما*إذا اللَّيل وافى ضِقْتُ ذرعاً إلى الحمى*وفاضت شؤون ليس يعقِلُها عَقْلُ*شَجاني حَديثٌ بالبَوار مُصَرِّحُ*وأوْضَحَ لي حالَ الرُّصافةِ مُوضح*فمن ثَمَّ إنْ يُفضِحْ وللشوقِ مفصح*حَداني إلى الزَّوراء شوق مبرِّح*فلماذا الَّذي حَدَّثَتْ عن حالها سهل*وقالوا نَبَتْ لكنْ بأرباب فضلها*وجارَتْ على أشرافها بعد عدلها*فقلتُ ولا مأوًى إلى غير ظلّها*إذا ما نبت دارُ السلام بأهلها*فلا جبلٌ يؤوي الكرام ولا سهل*على ما أُصيبَت من عظيم مصابها*وما آذَنَتْ أحداثها بخرابها*فلا ظِلَّ إلاَّ في فسيح رحابها*وإنْ قَلُصَ الظلّ الَّذي في جنابها*فأين من الرَّمضاء في غيرها ظلّ*أَيُعْرَفُ خفضُ العيش إلاَّ بخفضها*وفيض النمير العذب إلاَّ بفيضها*لئنْ أجْدَبَتْ يوماً فهل مثل روضها*وإنْ نَضِبَ الماء النمير بأرضها*فأيّ شراب في سواها لنا يحلو*رعى الله ماضي عَهديَ المتقادمِ*ببغدادَ في رغدٍ منَ العَيش ناعمِ*وفي الكرخِ جاد الكرخ صوبُ الغمائمِ*ديارٌ بها نيطَتْ عليَّ تمائمي*قديماً ولي فيها نما الفرع والأَصلُ*يكلِّفُني عنها النَّوى فوقَ طاقتي*فسُكري بتذكاري بها وإفاقتي*منازلُ أحبابي ومنشا علاقتي*بها سَكني في رَبعها الخصب ناقتي*بها جَملي يرغو بها قِيمتي تغلو*تَذكَّرْتُ أحباباً لأيَّامِ جَمعها*ولم يَصْدَعِ البينُ المشتُّ بصَدْعها*فآهاً على وصلي لها بعد قطعها*ألا ليتَ شعري هل أراني بربعها*مقيماً وبالأَحباب يجتمع الشمل*عفا ربعها من رَسْمِه وطلوله*وأضحى هشيماً روضها بمحوله*فيا هلْ يروِّيها الحيا بهموله*وهل روضها يخضرُّ بعد ذبوله*ويهمي على أوراقه الوبل والطّلّ*لقد شاقني منها كرامٌ أماجدُ*مشاهِدُهم للعالمين مقاصِدُ*فهلْ أنا في تلك المقاعد قاعد*وهل أنا في يوم العروبة قاصد*لحضرة بازٍ شأنها الفصلُ والوصلُ*وهل أنا يوماً ظافرٌ بمقاصِدي*فمكرمُ أحبابي ومكبتُ حاسِدي*وأجري مع الإِخوان مجرى عوائدي*وهلْ كلّ يوم لاثم كفَّ والدي*أبي مصطفى ذي همَّة أبداً تعلو*وهلْ علماءٌ طبَّقَ الأرض علمُهُمْ*وحَيَّرَ أفهام البريَّةِ فَهْمُهُمْ*تَقَرّ بهم عيني وينجاب غمّهم*وهل أدباء الجانبين يضمّهم*وإيَّاي طاقٌ نقله الأَدب الجزل*فأَغدو ولا كانَ التفرُّق لاقيا*وجُوهاً عليها قد بَلَلْتُ المآقيا*بطاقٍ رقى فيمن حواه المراقيا*وذلك طاقُ الشّهم لا زال باقيا*له العَقْد في أرجائه وله الحلّ*وهل يُرِيَنِّي مُصبِحاً كلّ منجب*وخوَّاض أغمارِ الخطوب مجرّب*وكلّ فتًى عذب الكلام مهذّب*وهل يرينّي ذاهباً بعد مغرب*لتكيّة شيخِ العصرِ مَن جَوْرُه العَدل*بناها لأشياخٍ قرارة عِزِّهم*وصَدَّرَهم فيها ولاذَ بحرزهم*وإنْ كانَ لم يفقه إشارة رمزهم*ففيها صدورٌ لازموه لعجزهم*وما ظعنوا بالسير عنه وقد كلّوا*بَلَوّنا سراها بعد إصرام حبلها*فكان من البلوى تعذُّرُ مثلها*ديارٌ عَرَفنا بعدها كنه فضلها*سلام على تلك الديار وأهلها*فهم في فؤادي دائماً أينما حلّوا*يَروقُ لعَيْني أنْ تكونَ جلاءها*وتشتاقُ نفسي أرضَها وسماءها*ومن قال أسلو ماءها وهواءها*فوالله لا أسلو هواها وماءها*إذا كانَ قلبي عندها فمتى أسلو*أحبَّتَنا مِنِّي السلامُ عليكمُ*إذا نُشِرَتْ صحفُ الغرام لديكمُ*أحبَّتنا والدهرُ أبعد عنكمُ*أحِبَّتنا هلْ من وُصولٍ إليكمُ*فقد تعبت بيني وبينكم الرسل*تناءيت عنكم والهوى فيكم معي*كأنْ لم أكنْ منكم بمرأىً ومسمع*وقد طالَ بُعدي عن دياري وأربعي*ألا هِمَّةٌ تُرجى ووصلٌ مُرجّعي*لديكم إذا شئتم به اتصل الحبل*أحِبَّتنا أصبو إلى حسن قولكم*وإنْ ذُقْتُ فيه المُرَّ من حُلو عذلكم*أحِنُّ لمغناكم وسامي محلكم*وإنّي بناديكم على سوء فعلكم*أرى أبداً عندي مرارته تحلو*سألتُ إلهاً لم أخِبْ بسؤاله*بلوغَ المنى من فضله ونواله*وأدعو دعاءَ العيد عند ابتهاله*وأسأل ربي بالنبيّ وآله*يسهّل عَودي نحوكم وله الفضل</div></div>
+            <table class="dims-table">
+                <tr><th><span class="i18n-ar">البُعد</span><span class="i18n-en">Dimension</span></th><th><span class="i18n-ar">هايكو</span><span class="i18n-en">Haiku</span></th><th>سونيت</th><th>Δ</th></tr>
+                
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">الإيقاع</span><span class="i18n-en">Rhythm</span></td>
+            <td class="dim-val"><div class="bar" style="width:85%;background:#4CAF50">85</div></td>
+            <td class="dim-val"><div class="bar" style="width:55%;background:#FF9800">55</div></td>
+            <td class="dim-diff" style="color:#F44336">+30</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">التصوير</span><span class="i18n-en">Imagery</span></td>
+            <td class="dim-val"><div class="bar" style="width:88%;background:#4CAF50">88</div></td>
+            <td class="dim-val"><div class="bar" style="width:48%;background:#F44336">48</div></td>
+            <td class="dim-diff" style="color:#F44336">+40</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">العاطفة</span><span class="i18n-en">Emotion</span></td>
+            <td class="dim-val"><div class="bar" style="width:92%;background:#4CAF50">92</div></td>
+            <td class="dim-val"><div class="bar" style="width:70%;background:#8BC34A">70</div></td>
+            <td class="dim-diff" style="color:#F44336">+22</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">اللغة</span><span class="i18n-en">Language</span></td>
+            <td class="dim-val"><div class="bar" style="width:90%;background:#4CAF50">90</div></td>
+            <td class="dim-val"><div class="bar" style="width:52%;background:#FF9800">52</div></td>
+            <td class="dim-diff" style="color:#F44336">+38</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">القيمة الثقافية</span><span class="i18n-en">Cultural Value</span></td>
+            <td class="dim-val"><div class="bar" style="width:95%;background:#4CAF50">95</div></td>
+            <td class="dim-val"><div class="bar" style="width:45%;background:#F44336">45</div></td>
+            <td class="dim-diff" style="color:#F44336">+50</td>
+        </tr>
+        <tr class="total-row">
+            <td class="dim-name" style="font-weight:700;color:#d4a574"><span class="i18n-ar">المجموع</span><span class="i18n-en">Total</span></td>
+            <td class="dim-val"><div class="bar" style="width:90%;background:#4CAF50">90</div></td>
+            <td class="dim-val"><div class="bar" style="width:54%;background:#FF9800">54</div></td>
+            <td class="dim-diff" style="color:#F44336;font-weight:700">+36</td>
+        </tr>
+            </table>
+        </div>
+        <div class="card-notes"><div class="note"><strong><span class="i18n-ar">الإيقاع</span><span class="i18n-en">Rhythm</span>:</strong> <span class="i18n-ar">الوزن مضطرب في أبيات عديدة، والقافية تتكرر بشكل ميكانيكي دون أن تُحدث أثراً موسيقياً حقيقياً.</span><span class="i18n-en">The meter is disturbed in numerous lines, and the rhyme repeats mechanically without producing any real musical effect.</span></div><div class="note"><strong><span class="i18n-ar">التصوير</span><span class="i18n-en">Imagery</span>:</strong> <span class="i18n-ar">الصور شحيحة ومستهلكة، والقصيدة تعتمد على التقرير المباشر أكثر من التصوير الشعري الحي.</span><span class="i18n-en">Images are sparse and exhausted. The poem relies on direct statement more than on vivid poetic depiction.</span></div><div class="note"><strong><span class="i18n-ar">العاطفة</span><span class="i18n-en">Emotion</span>:</strong> <span class="i18n-ar">الحنين إلى بغداد صادق ومؤثر في بعض المقاطع، وهذا ما ينقذ القصيدة من الانهيار الكامل.</span><span class="i18n-en">The longing for Baghdad is sincere and moving in some passages, and this is what saves the poem from complete collapse.</span></div><div class="note"><strong><span class="i18n-ar">اللغة</span><span class="i18n-en">Language</span>:</strong> <span class="i18n-ar">اللغة ركيكة في مواضع عدة، والتراكيب تفتقر إلى الجزالة الشعرية، وبعض الأبيات تقترب من النثر المقفى.</span><span class="i18n-en">The language is weak in several places, the constructions lack poetic robustness, and some lines approach rhymed prose.</span></div><div class="note"><strong><span class="i18n-ar">القيمة الثقافية</span><span class="i18n-en">Cultural Value</span>:</strong> <span class="i18n-ar">تحمل قيمة تاريخية كشهادة على حال بغداد في عصرها، لكنها لا ترقى إلى مستوى الشعر الذي يُدرَّس.</span><span class="i18n-en">It carries historical value as a testimony to Baghdad's condition in its era, but it does not rise to the level of poetry worthy of being taught.</span></div><div class="verdict"><span class="i18n-ar">قصيدة ذات قيمة تاريخية وعاطفية، لكنها تفتقر إلى الصنعة الشعرية الحقيقية، ولا أرى فيها ما يستحق التدريس إلا كوثيقة أدبية.</span><span class="i18n-en">A poem of historical and emotional value, but it lacks true poetic craftsmanship. I see nothing in it that merits teaching except as a literary document.</span></div></div>
+    </div>
+    <div class="card" style="border-right:4px solid #F44336">
+        <div class="card-header">
+            <div class="poem-info">
+                <h3>إنهم عند ربهم في جنات</h3>
+                <span class="poet">عبد الله بن رواحة</span>
+            </div>
+            <div class="scores-summary">
+                <div class="score-pill" style="background:#4CAF50;color:#000"><span class="i18n-ar">هايكو</span><span class="i18n-en">Haiku</span>: 91</div>
+                <div class="score-pill" style="background:#FF9800;color:#000">سونيت: 55</div>
+                <div class="score-pill diff" style="background:#F44336;color:#000">Δ +36</div>
+            </div>
+        </div>
+        <div class="card-body">
+            <div class="verses"><div class="verse"><span class="h1">إِنَّهُم عِندَ رَبِّهِم في جَنّاتٍ</span> <span class="sep">✦</span> <span class="h2">يَشرَبونَ الرَحيقَ وَالسَلسَبيلا</span></div></div>
+            <table class="dims-table">
+                <tr><th><span class="i18n-ar">البُعد</span><span class="i18n-en">Dimension</span></th><th><span class="i18n-ar">هايكو</span><span class="i18n-en">Haiku</span></th><th>سونيت</th><th>Δ</th></tr>
+                
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">الإيقاع</span><span class="i18n-en">Rhythm</span></td>
+            <td class="dim-val"><div class="bar" style="width:88%;background:#4CAF50">88</div></td>
+            <td class="dim-val"><div class="bar" style="width:55%;background:#FF9800">55</div></td>
+            <td class="dim-diff" style="color:#F44336">+33</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">التصوير</span><span class="i18n-en">Imagery</span></td>
+            <td class="dim-val"><div class="bar" style="width:90%;background:#4CAF50">90</div></td>
+            <td class="dim-val"><div class="bar" style="width:50%;background:#FF9800">50</div></td>
+            <td class="dim-diff" style="color:#F44336">+40</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">العاطفة</span><span class="i18n-en">Emotion</span></td>
+            <td class="dim-val"><div class="bar" style="width:92%;background:#4CAF50">92</div></td>
+            <td class="dim-val"><div class="bar" style="width:58%;background:#FF9800">58</div></td>
+            <td class="dim-diff" style="color:#F44336">+34</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">اللغة</span><span class="i18n-en">Language</span></td>
+            <td class="dim-val"><div class="bar" style="width:90%;background:#4CAF50">90</div></td>
+            <td class="dim-val"><div class="bar" style="width:60%;background:#FFC107">60</div></td>
+            <td class="dim-diff" style="color:#F44336">+30</td>
+        </tr>
+        <tr>
+            <td class="dim-name"><span class="i18n-ar">القيمة الثقافية</span><span class="i18n-en">Cultural Value</span></td>
+            <td class="dim-val"><div class="bar" style="width:95%;background:#4CAF50">95</div></td>
+            <td class="dim-val"><div class="bar" style="width:52%;background:#FF9800">52</div></td>
+            <td class="dim-diff" style="color:#F44336">+43</td>
+        </tr>
+        <tr class="total-row">
+            <td class="dim-name" style="font-weight:700;color:#d4a574"><span class="i18n-ar">المجموع</span><span class="i18n-en">Total</span></td>
+            <td class="dim-val"><div class="bar" style="width:91%;background:#4CAF50">91</div></td>
+            <td class="dim-val"><div class="bar" style="width:55%;background:#FF9800">55</div></td>
+            <td class="dim-diff" style="color:#F44336;font-weight:700">+36</td>
+        </tr>
+            </table>
+        </div>
+        <div class="card-notes"><div class="note"><strong><span class="i18n-ar">الإيقاع</span><span class="i18n-en">Rhythm</span>:</strong> <span class="i18n-ar">بيت واحد لا يكفي لتقييم موسيقى حقيقية، وإن كان الإيقاع سليماً.</span><span class="i18n-en">A single line is insufficient to evaluate any real musicality, though the rhythm is sound.</span></div><div class="note"><strong><span class="i18n-ar">التصوير</span><span class="i18n-en">Imagery</span>:</strong> <span class="i18n-ar">الصورة مستعارة من القرآن الكريم مباشرة دون إضافة شعرية تُذكر.</span><span class="i18n-en">The image is borrowed directly from the Holy Quran without any noteworthy poetic addition.</span></div><div class="note"><strong><span class="i18n-ar">العاطفة</span><span class="i18n-en">Emotion</span>:</strong> <span class="i18n-ar">الإيمان الصادق يشعّ من البيت، لكن بيتاً واحداً لا يبني عاطفة شعرية.</span><span class="i18n-en">Sincere faith radiates from the line, but a single line does not build a poetic emotion.</span></div><div class="note"><strong><span class="i18n-ar">اللغة</span><span class="i18n-en">Language</span>:</strong> <span class="i18n-ar">اللغة سليمة وبسيطة، لكنها أقرب إلى النثر الديني منها إلى الشعر المصنوع.</span><span class="i18n-en">The language is sound and simple, but it is closer to religious prose than to crafted poetry.</span></div><div class="note"><strong><span class="i18n-ar">القيمة الثقافية</span><span class="i18n-en">Cultural Value</span>:</strong> <span class="i18n-ar">قيمته التاريخية في نسبته لصحابي جليل، لا في قيمته الشعرية الخالصة.</span><span class="i18n-en">Its value lies in its attribution to a noble Companion, not in its purely poetic merit.</span></div><div class="verdict"><span class="i18n-ar">بيت واحد لا يُقيَّم كقصيدة، وقيمته التاريخية والدينية تفوق قيمته الشعرية.</span><span class="i18n-en">A single line cannot be evaluated as a poem. Its historical and religious value surpasses its poetic value.</span></div></div>
+    </div>
+</div>
+<footer><span class="i18n-ar">تم إنشاء هذا التقرير تلقائياً بواسطة خط أنابيب تنسيق الشعر العربي</span><span class="i18n-en">This report was automatically generated by the Arabic Poetry Orchestration Pipeline</span> &bull; 2026-03-07 02:14</footer>
+</div>
+<script>
+(function(){
+    const btns = document.querySelectorAll('.lang-btn');
+    const body = document.body;
+    btns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            btns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const lang = btn.dataset.lang;
+            body.classList.remove('lang-en', 'lang-both');
+            if (lang === 'en') {
+                body.classList.add('lang-en');
+                body.style.direction = 'ltr';
+                document.documentElement.lang = 'en';
+                document.documentElement.dir = 'ltr';
+            } else if (lang === 'both') {
+                body.classList.add('lang-both');
+                body.style.direction = 'rtl';
+                document.documentElement.lang = 'ar';
+                document.documentElement.dir = 'rtl';
+            } else {
+                body.style.direction = 'rtl';
+                document.documentElement.lang = 'ar';
+                document.documentElement.dir = 'rtl';
+            }
+        });
+    });
+})();
+</script>
+</body>
+</html>

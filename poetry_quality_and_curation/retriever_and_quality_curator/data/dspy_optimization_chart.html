@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DSPy Prompt Optimization -- Model Comparison</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.1.0/dist/chartjs-plugin-annotation.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        h1 { font-size: 1.8rem; margin-bottom: 0.5rem; color: #f1f5f9; }
+        h2 { font-size: 1.3rem; margin-bottom: 1rem; color: #cbd5e1; }
+        h3 { font-size: 1.1rem; margin-bottom: 0.5rem; }
+        .subtitle { color: #94a3b8; margin-bottom: 2rem; }
+        .model-header {
+            font-size: 1.2rem;
+            font-weight: 700;
+            padding: 0.5rem 0;
+            margin-top: 1rem;
+            border-bottom: 2px solid;
+        }
+        .haiku-color { color: #f472b6; border-color: #f472b6; }
+        .sonnet-color { color: #60a5fa; border-color: #60a5fa; }
+        .stats-row {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin: 1rem 0 1.5rem 0;
+        }
+        .stat-card {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 1rem 1.2rem;
+            min-width: 140px;
+            flex: 1;
+        }
+        .stat-label { font-size: 0.8rem; color: #94a3b8; margin-bottom: 0.3rem; }
+        .stat-value { font-size: 1.6rem; font-weight: 700; }
+        .stat-value.good { color: #4ade80; }
+        .stat-value.neutral { color: #fbbf24; }
+        .stat-value.bad { color: #f87171; }
+        .section {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        .chart-container {
+            position: relative;
+            height: 400px;
+            width: 100%;
+        }
+        .chart-container.tall {
+            height: 500px;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        @media (max-width: 900px) {
+            .grid { grid-template-columns: 1fr; }
+        }
+        .instructions {
+            background: #0f172a;
+            padding: 1rem;
+            border-radius: 8px;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            font-size: 0.85rem;
+            line-height: 1.6;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: 'Amiri', 'Noto Sans Arabic', serif;
+        }
+        .prompt-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+        @media (max-width: 900px) {
+            .prompt-grid { grid-template-columns: 1fr; }
+        }
+        .prompt-col { flex: 1; }
+        .prompt-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #94a3b8;
+            margin-bottom: 0.5rem;
+            padding-bottom: 0.25rem;
+            border-bottom: 1px solid #334155;
+        }
+        .prompt-meta {
+            color: #64748b;
+            font-size: 0.8rem;
+            margin-bottom: 1rem;
+        }
+        .finding-card {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 1.2rem;
+            margin-bottom: 1rem;
+        }
+        .finding-good { color: #4ade80; font-weight: 600; margin: 0.3rem 0; }
+        .finding-bad { color: #f87171; font-weight: 600; margin: 0.3rem 0; }
+        .finding-neutral { color: #fbbf24; font-weight: 600; margin: 0.3rem 0; }
+        .finding-detail { color: #cbd5e1; font-size: 0.9rem; margin: 0.3rem 0; line-height: 1.5; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+        th, td { padding: 0.4rem 0.6rem; text-align: center; border-bottom: 1px solid #334155; }
+        th { color: #94a3b8; font-weight: 600; }
+        td.better { color: #4ade80; }
+        td.worse { color: #f87171; }
+    </style>
+</head>
+<body>
+    <h1>DSPy Prompt Optimization -- Dual-Model Comparison</h1>
+    <p class="subtitle">MIPROv2 optimization of Arabic poetry scoring prompts for Haiku & Sonnet, validated against 240-poem Opus ground truth</p>
+
+    
+    <div class="model-header haiku-color">Haiku (192 poems: 135 train / 57 eval, mipro, 15 trials)</div>
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="stat-label">Baseline Eval MAE</div>
+            <div class="stat-value neutral">5.33</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Own Optimized MAE</div>
+            <div class="stat-value good">5.06</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Improvement</div>
+            <div class="stat-value good">+0.27 (+5.1%)</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Few-Shot Demos</div>
+            <div class="stat-value">5</div>
+        </div>
+        <div class="stat-card" style="border-left:3px solid #a78bfa">
+            <div class="stat-label">Sonnet's Prompt MAE</div>
+            <div class="stat-value bad">7.21</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Time</div>
+            <div class="stat-value" style="font-size:1.2rem">34.3m</div>
+        </div>
+    </div>
+    <div class="model-header sonnet-color">Sonnet (192 poems: 135 train / 57 eval, mipro, 15 trials)</div>
+    <div class="stats-row">
+        <div class="stat-card">
+            <div class="stat-label">Baseline Eval MAE</div>
+            <div class="stat-value neutral">4.65</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Own Optimized MAE</div>
+            <div class="stat-value good">3.84</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Improvement</div>
+            <div class="stat-value good">+0.81 (+17.4%)</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Few-Shot Demos</div>
+            <div class="stat-value">5</div>
+        </div>
+        <div class="stat-card" style="border-left:3px solid #a78bfa">
+            <div class="stat-label">Haiku's Prompt MAE</div>
+            <div class="stat-value good">4.12</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">Time</div>
+            <div class="stat-value" style="font-size:1.2rem">54.7m</div>
+        </div>
+    </div>
+
+    <!-- Key Findings -->
+    <div class="section">
+        <h2>Key Findings</h2>
+        <div class="finding-card"><h3 style="color:#f472b6">Haiku</h3><p class="finding-good">Eval MAE improved by 0.27 points (5.1%)</p><p class="finding-detail">Improved dimensions: emotion (+0.3), language (+0.7), cultural (+0.8)</p><p class="finding-detail">Worsened dimensions: imagery (-0.6)</p><p class="finding-detail">Optimized prompt uses 5 few-shot demonstration poems</p></div>
+<div class="finding-card"><h3 style="color:#60a5fa">Sonnet</h3><p class="finding-good">Eval MAE improved by 0.81 points (17.4%)</p><p class="finding-detail">Improved dimensions: sound (+0.7), emotion (+1.8), language (+0.6), cultural (+0.9)</p><p class="finding-detail">Optimized prompt uses 5 few-shot demonstration poems</p></div>
+<div class="finding-card"><h3 style="color:#a78bfa">Cross-Prompt Assessment</h3><p class="finding-detail">Each model was tested with the other model's optimized prompt + few-shot demos to measure prompt transferability.</p><p class="finding-detail"><b>Haiku</b> with Sonnet's prompt: MAE 7.21 <span class="finding-bad">(worse than own prompt 5.06 by 2.15)</span></p><p class="finding-detail"><b>Sonnet</b> with Haiku's prompt: MAE 4.12 <span class="finding-bad">(worse than own prompt 3.84 by 0.28)</span></p></div>
+<div class="finding-card"><h3 style="color:#94a3b8">Overall Analysis</h3><p class="finding-detail">Sonnet baseline MAE (4.65) is lower than Haiku (5.33), confirming Sonnet scores closer to Opus ground truth</p><p class="finding-detail">Both models were optimized with MIPROv2 using the same 240-poem Opus ground truth dataset. The Arabic scoring prompt was crafted specifically for Arabic poetry evaluation across 5 dimensions (sound, imagery, emotion, language, cultural)</p></div>
+    </div>
+
+    <!-- Trial Score Progression (full width) -->
+    <div class="section">
+        <h2>MIPROv2 Trial Score Progression (higher = better)</h2>
+        <p class="prompt-meta">Each trial tests a different instruction + few-shot demo combination. Score = 1 - (MAE/100). Dashed line = running best.</p>
+        <div class="chart-container tall">
+            <canvas id="trialChart"></canvas>
+        </div>
+    </div>
+
+    <div class="grid">
+        <div class="section">
+            <h2>Per-Dimension Eval MAE: Baseline vs Optimized</h2>
+            <div class="chart-container">
+                <canvas id="dimChart"></canvas>
+            </div>
+        </div>
+        <div class="section">
+            <h2>Optimized Eval MAE by Dimension (Head-to-Head)</h2>
+            <div class="chart-container">
+                <canvas id="h2hOptChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cross-eval comparison chart (full width, only shown if cross-eval data exists) -->
+    <div id="crossEvalSection" style="display:none">
+        <div class="section">
+            <h2>Cross-Prompt Assessment: Own vs Other Model's Prompt</h2>
+            <p class="prompt-meta">Each model tested with its own optimized prompt and the other model's optimized prompt + demos. Lower MAE = better.</p>
+            <div class="chart-container tall">
+                <canvas id="crossEvalChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Prompt comparison -->
+    
+        <div class="section">
+            <h2 style="color:#f472b6">Haiku Prompt Evolution</h2>
+            <p class="prompt-meta">Baseline: 662 chars | Optimized: 2415 chars (3.6x longer)</p>
+            <div class="prompt-grid">
+                <div class="prompt-col">
+                    <div class="prompt-label">Baseline Prompt</div>
+                    <pre class="instructions" dir="rtl">أنت ناقد أدبي عربي متخصص في الشعر العربي الكلاسيكي والحديث.
+    قيّم القصيدة المعطاة عبر خمسة أبعاد جودة، كل منها يُقيَّم من 0 إلى 100.
+
+    معايير التقييم:
+    - sound (الإيقاع والموسيقى): جمال الوزن، اتساق القافية، الموسيقى الداخلية
+    - imagery (التصوير): قوة الصور الشعرية، الاستعارات، حيوية المشهد
+    - emotion (العاطفة): صدق المشاعر، العمق العاطفي، القدرة على تحريك القارئ
+    - language (اللغة): الفصاحة، جودة البناء، البلاغة الطبيعية
+    - cultural (القيمة الثقافية): الأهمية الأدبية، الأصالة، المكانة في تراث الشعر العربي
+
+    كن دقيقاً ومميزاً. ليست كل قصيدة تستحق درجات عالية.
+    القصيدة المتوسطة تُقيَّم 40-60. فقط الشعر الاستثنائي حقاً يتجاوز 85.</pre>
+                </div>
+                <div class="prompt-col">
+                    <div class="prompt-label">Optimized Prompt (MIPROv2)</div>
+                    <pre class="instructions" dir="rtl">أنت ناقد أدبي عربي متخصص في الشعر العربي الكلاسيكي والحديث، مُدرَّب على تقييم الأعمال الشعرية ضمن مجموعة مختارة من الروائع الأدبية.
+
+قيّم القصيدة المعطاة عبر خمسة أبعاد جودة متمايزة، كل منها يُقيَّم من 0 إلى 100 على مقياس دقيق ومُعايَر:
+
+**معايير التقييم التفصيلية:**
+
+1. **sound (الإيقاع والموسيقى)**: قيّم جمال الوزن والتناسق الموسيقي. ابحث عن:
+   - اتساق القافية وسلاسة التدفق الصوتي
+   - الموسيقى الداخلية والجناس والسجع
+   - براعة التعامل مع أوزان البحور الشعرية
+   - انسجام الحروف والحركات مع المعنى
+
+2. **imagery (التصوير)**: قيّم قوة وحيوية الصور الشعرية. ابحث عن:
+   - تفرّد الاستعارات والتشبيهات وعمقها
+   - ملموسية المشاهد وحيويتها للقارئ
+   - القدرة على خلق صور ذهنية حية وغير مكررة
+   - تعقيد التصوير والطبقات البصرية والحسية
+
+3. **emotion (العاطفة)**: قيّم الصدق العاطفي والعمق النفسي. ابحث عن:
+   - صدق المشاعر وعدم التصنع
+   - العمق العاطفي والتعقيد النفسي المعروض
+   - القدرة على تحريك القارئ والتأثير به وجدانياً
+   - التوازن بين الحساسية والقوة، والخجل والجرأة
+
+4. **language (اللغة)**: قيّم جودة اللغة والبناء اللغوي. ابحث عن:
+   - الفصاحة والاختيار الدقيق للمفردات
+   - جودة التركيب النحوي والبناء الجملي
+   - البلاغة الطبيعية غير المتكلفة
+   - المرونة اللغوية والقدرة على التعبير عن المعاني الدقيقة
+
+5. **cultural (القيمة الثقافية)**: قيّم الأهمية الأدبية والتراثية. ابحث عن:
+   - الأهمية الأدبية والتأثير على التقليد الشعري
+   - الأصالة والابتكار ضمن السياق التراثي
+   - المكانة في السلسلة التطورية للشعر العربي
+   - الأصداء الثقافية والحضارية والتاريخية في النص
+
+**معايير المعايرة والتمايز:**
+- **0-30**: شعر ضعيف أو هابط، يفتقد للمهارة الحرفية الأساسية
+- **31-50**: شعر متوسط، يُظهر مهارة لكن بدون تميز ملحوظ
+- **51-70**: شعر جيد، يُظهر براعة واضحة في البعد المُقيَّم
+- **71-84**: شعر ممتاز، يُظهر تفوقاً واضحاً وأصالة
+- **85-100**: شعر استثنائي حقاً، يُمثل الذروة في البعد المُقيَّم—لا تُمنح هذه الدرجات إلا للأعمال التي تُظهر تفوقاً نادراً وابتكاراً حقيقياً
+
+**إرشادات التقييم:**
+- تذكّر أن هذه مجموعة مختارة من الروائع، لذا فإن معظم القصائد ستتمتع بمستويات عالية نسبياً، لكن يجب أن تُميز بوضوح بين مستويات التفوق المختلفة
+- لا تمنح درجات عالية جداً (85+) بسهولة؛ احجز هذه للقصائد التي تُظهر براعة استثنائية وتأثيراً عميقاً
+- كن صريحاً في نقد نقاط الضعف النسبية حتى في الأعمال المميزة
+- اعتمد على معرفتك بالتقاليد الشعرية العربية لتقييم الأصالة والابتكار
+- كل بعد يُقيَّم بشكل مستقل؛ قد تحصل القصيدة على درجات مختلفة جداً عبر الأبعاد المختلفة
+
+أعطِ التقييم لكل بعد كرقم صحيح من 0 إلى 100.</pre>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2 style="color:#60a5fa">Sonnet Prompt Evolution</h2>
+            <p class="prompt-meta">Baseline: 662 chars | Optimized: 1717 chars (2.6x longer)</p>
+            <div class="prompt-grid">
+                <div class="prompt-col">
+                    <div class="prompt-label">Baseline Prompt</div>
+                    <pre class="instructions" dir="rtl">أنت ناقد أدبي عربي متخصص في الشعر العربي الكلاسيكي والحديث.
+    قيّم القصيدة المعطاة عبر خمسة أبعاد جودة، كل منها يُقيَّم من 0 إلى 100.
+
+    معايير التقييم:
+    - sound (الإيقاع والموسيقى): جمال الوزن، اتساق القافية، الموسيقى الداخلية
+    - imagery (التصوير): قوة الصور الشعرية، الاستعارات، حيوية المشهد
+    - emotion (العاطفة): صدق المشاعر، العمق العاطفي، القدرة على تحريك القارئ
+    - language (اللغة): الفصاحة، جودة البناء، البلاغة الطبيعية
+    - cultural (القيمة الثقافية): الأهمية الأدبية، الأصالة، المكانة في تراث الشعر العربي
+
+    كن دقيقاً ومميزاً. ليست كل قصيدة تستحق درجات عالية.
+    القصيدة المتوسطة تُقيَّم 40-60. فقط الشعر الاستثنائي حقاً يتجاوز 85.</pre>
+                </div>
+                <div class="prompt-col">
+                    <div class="prompt-label">Optimized Prompt (MIPROv2)</div>
+                    <pre class="instructions" dir="rtl">أنت ناقد أدبي عربي متخصص في الشعر العربي الكلاسيكي، تمتلك إلماماً عميقاً بالموروث الشعري على مدى اثني عشر قرناً — من الجاهلية إلى العصر العباسي وما تلاه. مهمتك تقييم القصيدة المعروضة عليك تقييماً أكاديمياً دقيقاً ومعايَراً عبر خمسة أبعاد، كلٌّ منها يُقاس بمقياس من 0 إلى 100.
+
+**منهجية التقييم:**
+ابدأ بتحديد جنس القصيدة (رثاء، مديح، وصف، غزل، حماسة...) إذ يؤثر الجنس على التوقعات النقدية لكل بُعد:
+- **الرثاء**: يُتوقع فيه تصاعد العاطفة وحضور الصورة الحزينة.
+- **المديح**: يُتوقع فيه رقي اللغة والبلاغة والحضور الثقافي.
+- **الوصف**: يُتوقع فيه ثراء التصوير وحيوية المشهد.
+
+**أبعاد التقييم:**
+- **sound (الإيقاع والموسيقى)**: انسجام الوزن العروضي، صحة القافية واتساقها، الموسيقى الداخلية عبر الجناس والتكرار الصوتي — هل يجعل الشعرَ يُسمَع قبل أن يُقرأ؟
+- **imagery (التصوير)**: حدّة الصور الشعرية وأصالتها، جرأة الاستعارة، قدرة الشاعر على نقل مشهد حي إلى ذهن القارئ — هذا البُعد هو الأكثر تمييزاً وتبايناً بين القصائد.
+- **emotion (العاطفة)**: عمق الصدق العاطفي، هل تلامس القصيدة وجدان القارئ؟ — القصائد القصيرة المكثّفة كثيراً ما تتفوق هنا على الطويلة.
+- **language (اللغة)**: الفصاحة والبناء النحوي، البلاغة غير المتكلفة، انتقاء الألفاظ وتناسبها مع المعنى.
+- **cultural (القيمة الثقافية)**: مكانة القصيدة في التراث العربي، أصالة موضوعاتها ومعالجتها، وثقلها الأدبي والتاريخي.
+
+**معايرة الدرجات:**
+- 0–39: ضعيف أو دون المستوى
+- 40–60: متوسط مقبول
+- 61–74: جيد يعلو على المتوسط
+- 75–84: ممتاز يستحق التأمل
+- 85–94: استثنائي من عيون الشعر العربي
+- 95–100: تحفة فريدة لا تُمنح إلا لأعظم ما أنتجته القريحة العربية
+
+**تحذير التحيز**: قاوم ميل المديح الأعمى للأسماء الكبيرة كالمتنبي وأبي تمام — قيّم القصيدة التي أمامك لا سمعة قائلها. في المقابل، لا تُهين الشعر المعترف بقيمته الكنسية بدرجات أدنى من 58 دون مبرر نقدي حقيقي.</pre>
+                </div>
+            </div>
+        </div>
+
+    <div id="poemTableSection"></div>
+
+    <script>
+    const hasHaiku = true;
+    const hasSonnet = true;
+    const dims = ["sound", "imagery", "emotion", "language", "cultural"];
+
+    const haikuBaselineDims = [4.368421052631579, 5.5964912280701755, 5.245614035087719, 5.456140350877193, 5.982456140350878];
+    const haikuOptimizedDims = [4.315789473684211, 6.157894736842105, 4.947368421052632, 4.719298245614035, 5.157894736842105];
+    const sonnetBaselineDims = [3.736842105263158, 4.385964912280702, 5.508771929824562, 3.9473684210526314, 5.649122807017544];
+    const sonnetOptimizedDims = [3.0, 4.473684210526316, 3.6666666666666665, 3.3508771929824563, 4.701754385964913];
+
+    // Trial scores
+    const haikuTrialScores = [95.06, 93.99, 94.44, 94.91, 94.71, 94.39, 94.63, 94.62, 95.13, 94.87, 94.62, 95.13, 95.13, 95.16, 95.16, 95.1];
+    const sonnetTrialScores = [95.58, 96.14, 96.29, 95.05, 95.59, 96.06, 94.67, 94.98, 96.25, 95.76, 96.29, 96.29, 96.21, 96.1, 95.85, 96.3];
+    const haikuBestSoFar = [95.06, 95.06, 95.06, 95.06, 95.06, 95.06, 95.06, 95.06, 95.13, 95.13, 95.13, 95.13, 95.13, 95.16, 95.16, 95.16];
+    const sonnetBestSoFar = [95.58, 96.14, 96.29, 96.29, 96.29, 96.29, 96.29, 96.29, 96.29, 96.29, 96.29, 96.29, 96.29, 96.29, 96.29, 96.3];
+
+    // Baseline reference scores
+    const haikuBaselineScore = 94.67;
+    const sonnetBaselineScore = 95.35;
+
+    // Cross-eval data (other model's prompt on this model)
+    const hasCrossEval = true;
+    const haikuCrossDims = [6.754385964912281, 8.771929824561404, 7.912280701754386, 6.526315789473684, 6.0701754385964914];
+    const sonnetCrossDims = [3.7719298245614037, 4.421052631578948, 3.824561403508772, 3.9473684210526314, 4.649122807017544];
+
+    const haikuPoemLabels = ["[\u0642\u0635\u064a\u062f\u0629: 13648] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0623\u0646\u062a \u0627\u0644\u062d\u0628\u064a\u0628 \u0648\u0645\u0627 \u0644", "[\u0642\u0635\u064a\u062f\u0629: 27328] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0639\u0648\u0627\u0630\u0644 \u0630\u0627\u062a \u0627\u0644\u062e\u0627\u0644 ", "[\u0642\u0635\u064a\u062f\u0629: 27293] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0637\u0648\u0627\u0644 \u0642\u0646\u0627 \u062a\u0637\u0627\u0639\u0646\u0647\u0627", "[\u0642\u0635\u064a\u062f\u0629: 77711] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0648\u062f\u0627\u0639 \u062f\u0639\u0627 \u0625\u0630 \u0646\u062d\u0646 ", "[\u0642\u0635\u064a\u062f\u0629: 82215] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0623\u0646\u0627 \u0625\u0646 \u0623\u063a\u0645\u0636 \u0627\u0644\u062d\u0645", "[\u0642\u0635\u064a\u062f\u0629: 81223] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0623\u0644\u0627 \u0644\u064a\u062a \u0634\u0639\u0631\u064a \u0647\u0644 ", "[\u0642\u0635\u064a\u062f\u0629: 84162] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0635\u0644\u0629 \u0627\u0644\u062e\u064a\u0627\u0644 \u0639\u0644\u0649 \u0627", "[\u0642\u0635\u064a\u062f\u0629: 63381] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0645\u0627 \u0628\u064a\u0646 \u0645\u0639\u062a\u0631\u0643 \u0627\u0644\u0623", "[\u0642\u0635\u064a\u062f\u0629: 64517] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0623\u0644\u0627 \u062d\u064a \u0627\u0644\u062f\u0627\u0631 \u0642\u0641\u0631", "[\u0642\u0635\u064a\u062f\u0629: 41908] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0645\u0627 \u062c\u0627\u0644 \u0628\u0639\u062f\u0643 \u0644\u062d\u0638\u064a", "[\u0642\u0635\u064a\u062f\u0629: 49035] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u064a\u0627 \u0639\u064a\u0646 \u062c\u0648\u062f\u064a \u0628\u0627\u0644\u062f", "[\u0642\u0635\u064a\u062f\u0629: 84478] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0631\u062f\u064a \u0627\u0644\u0643\u0631\u0649 \u0644\u0623\u0631\u0627\u0643 ", "[\u0642\u0635\u064a\u062f\u0629: 78185] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0648\u0641\u0649 \u0644\u064a \u0641\u064a\u0643 \u0627\u0644\u062f\u0645\u0639", "[\u0642\u0635\u064a\u062f\u0629: 74303] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0623\u0644\u0627 \u0627\u0646\u0639\u0645 \u0635\u0628\u0627\u062d\u0627 \u0623", "[\u0642\u0635\u064a\u062f\u0629: 46] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0625\u0646\u064a \u0646\u0638\u0631\u062a \u0625\u0644\u0649 \u0627\u0644\u0645\u0631\u0622\u0629", "[\u0642\u0635\u064a\u062f\u0629: 48796] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0646\u0627\u0645 \u0627\u0644\u062e\u0644\u064a \u0648\u0628\u062a \u0627\u0644", "[\u0642\u0635\u064a\u062f\u0629: 84576] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0639\u0635\u0627\u0641\u064a\u0631 \u064a\u062d\u0633\u0628\u0646 \u0627\u0644\u0642", "[\u0642\u0635\u064a\u062f\u0629: 65901] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0645\u0627 \u0628\u0627\u0644 \u0639\u064a\u0646\u064a \u0644\u0627 \u062a", "[\u0642\u0635\u064a\u062f\u0629: 27376] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0644\u0627 \u064a\u062d\u0632\u0646 \u0627\u0644\u0644\u0647 \u0627\u0644\u0623", "[\u0642\u0635\u064a\u062f\u0629: 40978] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0628\u0643\u0627\u0624\u0643\u0645\u0627 \u064a\u0634\u0641\u064a \u0648\u0625\u0646", "[\u0642\u0635\u064a\u062f\u0629: 64560] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0623\u0645\u0646\u0632\u0644\u062a\u064a \u0645\u064a \u0633\u0644\u0627\u0645 ", "[\u0642\u0635\u064a\u062f\u0629: 10476] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0642\u062f \u0645\u0631 \u0644\u0644\u0631\u0632\u0621 \u0627\u0644\u0630\u064a", "[\u0642\u0635\u064a\u062f\u0629: 66930] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0642\u062f \u0633\u0627\u0631 \u0628\u064a \u0647\u0630\u0627 \u0627\u0644", "[\u0642\u0635\u064a\u062f\u0629: 61087] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0647\u0630\u064a \u0627\u0644\u0645\u0646\u0627\u0632\u0644 \u0628\u0627\u0644\u063a", "[\u0642\u0635\u064a\u062f\u0629: 80062] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0639\u0634\u064a\u0629 \u0644\u0627 \u062e\u0644\u0641\u064a \u0645\u0643\u0631", "[\u0642\u0635\u064a\u062f\u0629: 27128] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0627\u0644\u0631\u0623\u064a \u0642\u0628\u0644 \u0634\u062c\u0627\u0639\u0629 ", "[\u0642\u0635\u064a\u062f\u0629: 79712] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0642\u0644 \u0644\u0644\u0645\u0644\u064a\u062d\u0629 \u0642\u062f \u0623\u0628", "[\u0642\u0635\u064a\u062f\u0629: 61131] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0648\u0642\u0641 \u0639\u0644\u0649 \u0627\u0644\u0639\u0628\u0631\u0627\u062a ", "[\u0642\u0635\u064a\u062f\u0629: 84230] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0633\u0631\u0649 \u0627\u0644\u0628\u0631\u0642 \u0645\u0635\u0631\u064a\u0627 ", "[\u0642\u0635\u064a\u062f\u0629: 81456] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0633\u0644\u0627\u0645 \u0645\u0646 \u0635\u0628\u0627 \u0628\u0631\u062f\u0649", "[\u0642\u0635\u064a\u062f\u0629: 11046] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0639\u0646 \u0627\u0644\u0639\u0631\u0628 \u0627\u0644\u0635\u064a\u062f \u0627", "[\u0642\u0635\u064a\u062f\u0629: 6821] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0643\u0627\u0646\u062a \u0644\u0642\u0644\u0628\u064a \u0623\u0647\u0648\u0627\u0621 ", "[\u0642\u0635\u064a\u062f\u0629: 60685] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0623\u062a\u0649 \u0646\u0639\u064a \u0645\u0644\u0643 \u0623\u0638\u0644\u0645", "[\u0642\u0635\u064a\u062f\u0629: 44603] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0623\u0642\u0646\u0627\u0639\u0629 \u0645\u0646 \u0628\u0639\u062f \u0637\u0648", "[\u0642\u0635\u064a\u062f\u0629: 48983] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u064a\u0627 \u0639\u064a\u0646 \u062c\u0648\u062f\u064a \u0628\u062f\u0645\u0639", "[\u0642\u0635\u064a\u062f\u0629: 27292] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0638\u0644\u0645 \u0644\u0630\u0627 \u0627\u0644\u064a\u0648\u0645 \u0648\u0635", "[\u0642\u0635\u064a\u062f\u0629: 27146] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0623\u0644\u0627 \u0644\u0627 \u0623\u0631\u0649 \u0627\u0644\u0623\u062d\u062f", "[\u0642\u0635\u064a\u062f\u0629: 79665] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0646\u0639\u0642 \u0627\u0644\u063a\u0631\u0627\u0628 \u0628\u0628\u064a\u0646 ", "[\u0642\u0635\u064a\u062f\u0629: 76557] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0637\u0644\u0644 \u0644\u062e\u0648\u0644\u0629 \u0628\u0627\u0644\u0631\u0633\u064a", "[\u0642\u0635\u064a\u062f\u0629: 81224] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u063a\u0634\u064a\u062a \u062f\u064a\u0627\u0631\u0627 \u0628\u0627\u0644\u0646\u0642", "[\u0642\u0635\u064a\u062f\u0629: 76565] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0644\u0644\u0647 \u0646\u0627\u0641\u0644\u0629 \u0627\u0644\u0623\u062c\u0644 ", "[\u0642\u0635\u064a\u062f\u0629: 49669] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0648\u0644\u0645\u0627 \u0642\u0633\u0627 \u0642\u0644\u0628\u064a \u0648\u0636", "[\u0642\u0635\u064a\u062f\u0629: 78938] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0625\u0630\u0627 \u0627\u0644\u0645\u0631\u0621 \u0644\u0645 \u064a\u062f\u0646", "[\u0642\u0635\u064a\u062f\u0629: 81569] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0642\u0641\u0648\u0627 \u0628\u0627\u0644\u0642\u0628\u0648\u0631 \u0646\u0633\u0627", "[\u0642\u0635\u064a\u062f\u0629: 56123] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0648\u064a\u0628\u0643\u0645 \u0625\u0646 \u0631\u0623\u064a\u062a\u0645\u0648\u0646", "[\u0642\u0635\u064a\u062f\u0629: 61566] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u062f\u0639 \u0645\u0646 \u062f\u0645\u0648\u0639\u0643 \u0628\u0639\u062f ", "[\u0642\u0635\u064a\u062f\u0629: 43378] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0644\u0643\u0644 \u0634\u064a\u0621 \u0625\u0630\u0627 \u0645\u0627 \u062a", "[\u0642\u0635\u064a\u062f\u0629: 48975] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0623\u0639\u064a\u0646\u064a \u0641\u064a\u0636\u064a \u0648\u0644\u0627 \u062a", "[\u0642\u0635\u064a\u062f\u0629: 27245] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0644\u062c\u0646\u064a\u0629 \u0623\u0645 \u063a\u0627\u062f\u0629 \u0631\u0641", "[\u0642\u0635\u064a\u062f\u0629: 72274] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0625\u0630\u0627 \u0627\u0644\u0628\u062f\u0631 \u064a\u0637\u0648\u0649 \u0641", "[\u0642\u0635\u064a\u062f\u0629: 27259] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0623\u0638\u0628\u064a\u0629 \u0627\u0644\u0648\u062d\u0634 \u0644\u0648\u0644\u0627", "[\u0642\u0635\u064a\u062f\u0629: 79717] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0623\u0644\u0645\u0645 \u0628\u0639\u0641\u0631\u0627\u0621 \u0625\u0646 \u0623", "[\u0642\u0635\u064a\u062f\u0629: 27125] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0627\u0644\u062d\u0628 \u0645\u0627 \u0645\u0646\u0639 \u0627\u0644\u0643\u0644", "[\u0642\u0635\u064a\u062f\u0629: 84233] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0631\u0636\u064a\u062a \u0645\u0646 \u0627\u0644\u062f\u0646\u064a\u0627 \u0628", "[\u0642\u0635\u064a\u062f\u0629: 27169] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0625\u0630\u0627 \u0643\u0627\u0646 \u0645\u062f\u062d \u0641\u0627\u0644\u0646", "[\u0642\u0635\u064a\u062f\u0629: 27220] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0631\u0648\u064a\u062f\u0643 \u0623\u064a\u0647\u0627 \u0627\u0644\u0645\u0644\u0643", "[\u0642\u0635\u064a\u062f\u0629: 49000] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0623\u0644\u0627 \u0627\u0628\u0643\u064a \u0639\u0644\u0649 \u0635\u062e\u0631"];
+    const haikuPoemErrors = [{"sound_b": 0, "sound_o": 3, "imagery_b": 13, "imagery_o": 15, "emotion_b": 3, "emotion_o": 4, "language_b": 1, "language_o": 1, "cultural_b": 0, "cultural_o": 2}, {"sound_b": 4, "sound_o": 3, "imagery_b": 2, "imagery_o": 1, "emotion_b": 0, "emotion_o": 0, "language_b": 2, "language_o": 1, "cultural_b": 2, "cultural_o": 1}, {"sound_b": 7, "sound_o": 9, "imagery_b": 6, "imagery_o": 8, "emotion_b": 10, "emotion_o": 7, "language_b": 9, "language_o": 9, "cultural_b": 13, "cultural_o": 13}, {"sound_b": 6, "sound_o": 7, "imagery_b": 0, "imagery_o": 2, "emotion_b": 2, "emotion_o": 4, "language_b": 9, "language_o": 6, "cultural_b": 2, "cultural_o": 4}, {"sound_b": 16, "sound_o": 13, "imagery_b": 14, "imagery_o": 10, "emotion_b": 7, "emotion_o": 6, "language_b": 28, "language_o": 20, "cultural_b": 14, "cultural_o": 5}, {"sound_b": 4, "sound_o": 3, "imagery_b": 3, "imagery_o": 3, "emotion_b": 2, "emotion_o": 0, "language_b": 4, "language_o": 3, "cultural_b": 1, "cultural_o": 3}, {"sound_b": 6, "sound_o": 0, "imagery_b": 10, "imagery_o": 9, "emotion_b": 9, "emotion_o": 8, "language_b": 6, "language_o": 2, "cultural_b": 13, "cultural_o": 1}, {"sound_b": 2, "sound_o": 1, "imagery_b": 6, "imagery_o": 6, "emotion_b": 3, "emotion_o": 4, "language_b": 6, "language_o": 4, "cultural_b": 2, "cultural_o": 1}, {"sound_b": 0, "sound_o": 3, "imagery_b": 0, "imagery_o": 2, "emotion_b": 0, "emotion_o": 4, "language_b": 0, "language_o": 1, "cultural_b": 2, "cultural_o": 1}, {"sound_b": 6, "sound_o": 9, "imagery_b": 5, "imagery_o": 13, "emotion_b": 2, "emotion_o": 9, "language_b": 5, "language_o": 9, "cultural_b": 0, "cultural_o": 2}, {"sound_b": 0, "sound_o": 4, "imagery_b": 0, "imagery_o": 3, "emotion_b": 2, "emotion_o": 2, "language_b": 1, "language_o": 0, "cultural_b": 3, "cultural_o": 3}, {"sound_b": 6, "sound_o": 3, "imagery_b": 12, "imagery_o": 8, "emotion_b": 12, "emotion_o": 8, "language_b": 3, "language_o": 4, "cultural_b": 10, "cultural_o": 1}, {"sound_b": 8, "sound_o": 6, "imagery_b": 10, "imagery_o": 13, "emotion_b": 19, "emotion_o": 24, "language_b": 7, "language_o": 7, "cultural_b": 20, "cultural_o": 21}, {"sound_b": 4, "sound_o": 3, "imagery_b": 3, "imagery_o": 2, "emotion_b": 10, "emotion_o": 2, "language_b": 4, "language_o": 3, "cultural_b": 3, "cultural_o": 1}, {"sound_b": 4, "sound_o": 0, "imagery_b": 6, "imagery_o": 8, "emotion_b": 5, "emotion_o": 2, "language_b": 0, "language_o": 5, "cultural_b": 6, "cultural_o": 3}, {"sound_b": 0, "sound_o": 1, "imagery_b": 2, "imagery_o": 2, "emotion_b": 5, "emotion_o": 1, "language_b": 3, "language_o": 5, "cultural_b": 2, "cultural_o": 3}, {"sound_b": 16, "sound_o": 13, "imagery_b": 22, "imagery_o": 18, "emotion_b": 22, "emotion_o": 16, "language_b": 24, "language_o": 17, "cultural_b": 36, "cultural_o": 17}, {"sound_b": 10, "sound_o": 7, "imagery_b": 10, "imagery_o": 10, "emotion_b": 0, "emotion_o": 2, "language_b": 15, "language_o": 11, "cultural_b": 0, "cultural_o": 1}, {"sound_b": 4, "sound_o": 3, "imagery_b": 6, "imagery_o": 2, "emotion_b": 10, "emotion_o": 11, "language_b": 4, "language_o": 1, "cultural_b": 11, "cultural_o": 5}, {"sound_b": 7, "sound_o": 10, "imagery_b": 4, "imagery_o": 8, "emotion_b": 4, "emotion_o": 2, "language_b": 5, "language_o": 8, "cultural_b": 5, "cultural_o": 6}, {"sound_b": 0, "sound_o": 1, "imagery_b": 1, "imagery_o": 1, "emotion_b": 0, "emotion_o": 1, "language_b": 3, "language_o": 1, "cultural_b": 1, "cultural_o": 2}, {"sound_b": 0, "sound_o": 0, "imagery_b": 7, "imagery_o": 10, "emotion_b": 0, "emotion_o": 0, "language_b": 8, "language_o": 4, "cultural_b": 10, "cultural_o": 10}, {"sound_b": 6, "sound_o": 9, "imagery_b": 5, "imagery_o": 8, "emotion_b": 4, "emotion_o": 7, "language_b": 8, "language_o": 10, "cultural_b": 13, "cultural_o": 15}, {"sound_b": 0, "sound_o": 3, "imagery_b": 7, "imagery_o": 4, "emotion_b": 0, "emotion_o": 7, "language_b": 2, "language_o": 5, "cultural_b": 2, "cultural_o": 4}, {"sound_b": 0, "sound_o": 2, "imagery_b": 0, "imagery_o": 3, "emotion_b": 5, "emotion_o": 2, "language_b": 3, "language_o": 1, "cultural_b": 5, "cultural_o": 4}, {"sound_b": 3, "sound_o": 1, "imagery_b": 1, "imagery_o": 3, "emotion_b": 0, "emotion_o": 3, "language_b": 3, "language_o": 0, "cultural_b": 2, "cultural_o": 0}, {"sound_b": 6, "sound_o": 3, "imagery_b": 0, "imagery_o": 3, "emotion_b": 1, "emotion_o": 8, "language_b": 6, "language_o": 3, "cultural_b": 2, "cultural_o": 10}, {"sound_b": 0, "sound_o": 3, "imagery_b": 0, "imagery_o": 8, "emotion_b": 0, "emotion_o": 7, "language_b": 3, "language_o": 2, "cultural_b": 4, "cultural_o": 4}, {"sound_b": 2, "sound_o": 5, "imagery_b": 2, "imagery_o": 4, "emotion_b": 5, "emotion_o": 1, "language_b": 2, "language_o": 4, "cultural_b": 7, "cultural_o": 6}, {"sound_b": 3, "sound_o": 10, "imagery_b": 2, "imagery_o": 2, "emotion_b": 3, "emotion_o": 3, "language_b": 0, "language_o": 7, "cultural_b": 1, "cultural_o": 5}, {"sound_b": 13, "sound_o": 10, "imagery_b": 23, "imagery_o": 20, "emotion_b": 17, "emotion_o": 10, "language_b": 12, "language_o": 10, "cultural_b": 10, "cultural_o": 8}, {"sound_b": 0, "sound_o": 3, "imagery_b": 10, "imagery_o": 13, "emotion_b": 3, "emotion_o": 3, "language_b": 3, "language_o": 4, "cultural_b": 6, "cultural_o": 8}, {"sound_b": 20, "sound_o": 23, "imagery_b": 13, "imagery_o": 17, "emotion_b": 25, "emotion_o": 20, "language_b": 21, "language_o": 21, "cultural_b": 33, "cultural_o": 33}, {"sound_b": 3, "sound_o": 4, "imagery_b": 8, "imagery_o": 9, "emotion_b": 1, "emotion_o": 2, "language_b": 3, "language_o": 1, "cultural_b": 2, "cultural_o": 2}, {"sound_b": 4, "sound_o": 0, "imagery_b": 3, "imagery_o": 0, "emotion_b": 5, "emotion_o": 2, "language_b": 3, "language_o": 1, "cultural_b": 5, "cultural_o": 3}, {"sound_b": 3, "sound_o": 0, "imagery_b": 7, "imagery_o": 10, "emotion_b": 12, "emotion_o": 6, "language_b": 0, "language_o": 3, "cultural_b": 4, "cultural_o": 3}, {"sound_b": 0, "sound_o": 1, "imagery_b": 4, "imagery_o": 1, "emotion_b": 0, "emotion_o": 2, "language_b": 1, "language_o": 1, "cultural_b": 1, "cultural_o": 3}, {"sound_b": 10, "sound_o": 7, "imagery_b": 5, "imagery_o": 8, "emotion_b": 5, "emotion_o": 3, "language_b": 12, "language_o": 10, "cultural_b": 5, "cultural_o": 0}, {"sound_b": 0, "sound_o": 1, "imagery_b": 4, "imagery_o": 4, "emotion_b": 3, "emotion_o": 1, "language_b": 2, "language_o": 0, "cultural_b": 3, "cultural_o": 1}, {"sound_b": 4, "sound_o": 6, "imagery_b": 4, "imagery_o": 6, "emotion_b": 6, "emotion_o": 3, "language_b": 3, "language_o": 1, "cultural_b": 1, "cultural_o": 3}, {"sound_b": 6, "sound_o": 3, "imagery_b": 0, "imagery_o": 3, "emotion_b": 4, "emotion_o": 0, "language_b": 6, "language_o": 8, "cultural_b": 2, "cultural_o": 6}, {"sound_b": 4, "sound_o": 3, "imagery_b": 13, "imagery_o": 3, "emotion_b": 3, "emotion_o": 2, "language_b": 9, "language_o": 1, "cultural_b": 6, "cultural_o": 2}, {"sound_b": 3, "sound_o": 9, "imagery_b": 0, "imagery_o": 4, "emotion_b": 3, "emotion_o": 13, "language_b": 2, "language_o": 7, "cultural_b": 3, "cultural_o": 7}, {"sound_b": 6, "sound_o": 3, "imagery_b": 10, "imagery_o": 13, "emotion_b": 4, "emotion_o": 5, "language_b": 7, "language_o": 7, "cultural_b": 12, "cultural_o": 10}, {"sound_b": 4, "sound_o": 0, "imagery_b": 6, "imagery_o": 0, "emotion_b": 0, "emotion_o": 0, "language_b": 2, "language_o": 4, "cultural_b": 2, "cultural_o": 8}, {"sound_b": 0, "sound_o": 1, "imagery_b": 0, "imagery_o": 3, "emotion_b": 0, "emotion_o": 3, "language_b": 3, "language_o": 1, "cultural_b": 3, "cultural_o": 2}, {"sound_b": 7, "sound_o": 0, "imagery_b": 6, "imagery_o": 6, "emotion_b": 2, "emotion_o": 3, "language_b": 11, "language_o": 8, "cultural_b": 0, "cultural_o": 0}, {"sound_b": 0, "sound_o": 1, "imagery_b": 0, "imagery_o": 2, "emotion_b": 2, "emotion_o": 1, "language_b": 1, "language_o": 0, "cultural_b": 3, "cultural_o": 3}, {"sound_b": 4, "sound_o": 3, "imagery_b": 3, "imagery_o": 9, "emotion_b": 13, "emotion_o": 13, "language_b": 2, "language_o": 1, "cultural_b": 8, "cultural_o": 6}, {"sound_b": 10, "sound_o": 13, "imagery_b": 5, "imagery_o": 9, "emotion_b": 12, "emotion_o": 12, "language_b": 10, "language_o": 17, "cultural_b": 15, "cultural_o": 18}, {"sound_b": 4, "sound_o": 3, "imagery_b": 4, "imagery_o": 4, "emotion_b": 6, "emotion_o": 3, "language_b": 4, "language_o": 1, "cultural_b": 5, "cultural_o": 1}, {"sound_b": 6, "sound_o": 3, "imagery_b": 12, "imagery_o": 8, "emotion_b": 7, "emotion_o": 2, "language_b": 7, "language_o": 3, "cultural_b": 7, "cultural_o": 0}, {"sound_b": 4, "sound_o": 2, "imagery_b": 9, "imagery_o": 3, "emotion_b": 4, "emotion_o": 1, "language_b": 5, "language_o": 1, "cultural_b": 8, "cultural_o": 4}, {"sound_b": 4, "sound_o": 3, "imagery_b": 3, "imagery_o": 3, "emotion_b": 5, "emotion_o": 0, "language_b": 1, "language_o": 0, "cultural_b": 2, "cultural_o": 3}, {"sound_b": 0, "sound_o": 1, "imagery_b": 2, "imagery_o": 1, "emotion_b": 7, "emotion_o": 2, "language_b": 1, "language_o": 1, "cultural_b": 2, "cultural_o": 2}, {"sound_b": 0, "sound_o": 1, "imagery_b": 0, "imagery_o": 0, "emotion_b": 5, "emotion_o": 11, "language_b": 1, "language_o": 0, "cultural_b": 1, "cultural_o": 3}, {"sound_b": 0, "sound_o": 4, "imagery_b": 6, "imagery_o": 3, "emotion_b": 0, "emotion_o": 4, "language_b": 5, "language_o": 3, "cultural_b": 0, "cultural_o": 1}];
+    const sonnetPoemLabels = ["[\u0642\u0635\u064a\u062f\u0629: 13648] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0623\u0646\u062a \u0627\u0644\u062d\u0628\u064a\u0628 \u0648\u0645\u0627 \u0644", "[\u0642\u0635\u064a\u062f\u0629: 27328] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0639\u0648\u0627\u0630\u0644 \u0630\u0627\u062a \u0627\u0644\u062e\u0627\u0644 ", "[\u0642\u0635\u064a\u062f\u0629: 27293] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0637\u0648\u0627\u0644 \u0642\u0646\u0627 \u062a\u0637\u0627\u0639\u0646\u0647\u0627", "[\u0642\u0635\u064a\u062f\u0629: 77711] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0648\u062f\u0627\u0639 \u062f\u0639\u0627 \u0625\u0630 \u0646\u062d\u0646 ", "[\u0642\u0635\u064a\u062f\u0629: 82215] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0623\u0646\u0627 \u0625\u0646 \u0623\u063a\u0645\u0636 \u0627\u0644\u062d\u0645", "[\u0642\u0635\u064a\u062f\u0629: 81223] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0623\u0644\u0627 \u0644\u064a\u062a \u0634\u0639\u0631\u064a \u0647\u0644 ", "[\u0642\u0635\u064a\u062f\u0629: 84162] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0635\u0644\u0629 \u0627\u0644\u062e\u064a\u0627\u0644 \u0639\u0644\u0649 \u0627", "[\u0642\u0635\u064a\u062f\u0629: 63381] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0645\u0627 \u0628\u064a\u0646 \u0645\u0639\u062a\u0631\u0643 \u0627\u0644\u0623", "[\u0642\u0635\u064a\u062f\u0629: 64517] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0623\u0644\u0627 \u062d\u064a \u0627\u0644\u062f\u0627\u0631 \u0642\u0641\u0631", "[\u0642\u0635\u064a\u062f\u0629: 41908] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0645\u0627 \u062c\u0627\u0644 \u0628\u0639\u062f\u0643 \u0644\u062d\u0638\u064a", "[\u0642\u0635\u064a\u062f\u0629: 49035] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u064a\u0627 \u0639\u064a\u0646 \u062c\u0648\u062f\u064a \u0628\u0627\u0644\u062f", "[\u0642\u0635\u064a\u062f\u0629: 84478] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0631\u062f\u064a \u0627\u0644\u0643\u0631\u0649 \u0644\u0623\u0631\u0627\u0643 ", "[\u0642\u0635\u064a\u062f\u0629: 78185] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0648\u0641\u0649 \u0644\u064a \u0641\u064a\u0643 \u0627\u0644\u062f\u0645\u0639", "[\u0642\u0635\u064a\u062f\u0629: 74303] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0623\u0644\u0627 \u0627\u0646\u0639\u0645 \u0635\u0628\u0627\u062d\u0627 \u0623", "[\u0642\u0635\u064a\u062f\u0629: 46] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0625\u0646\u064a \u0646\u0638\u0631\u062a \u0625\u0644\u0649 \u0627\u0644\u0645\u0631\u0622\u0629", "[\u0642\u0635\u064a\u062f\u0629: 48796] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0646\u0627\u0645 \u0627\u0644\u062e\u0644\u064a \u0648\u0628\u062a \u0627\u0644", "[\u0642\u0635\u064a\u062f\u0629: 84576] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0639\u0635\u0627\u0641\u064a\u0631 \u064a\u062d\u0633\u0628\u0646 \u0627\u0644\u0642", "[\u0642\u0635\u064a\u062f\u0629: 65901] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0645\u0627 \u0628\u0627\u0644 \u0639\u064a\u0646\u064a \u0644\u0627 \u062a", "[\u0642\u0635\u064a\u062f\u0629: 27376] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0644\u0627 \u064a\u062d\u0632\u0646 \u0627\u0644\u0644\u0647 \u0627\u0644\u0623", "[\u0642\u0635\u064a\u062f\u0629: 40978] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0628\u0643\u0627\u0624\u0643\u0645\u0627 \u064a\u0634\u0641\u064a \u0648\u0625\u0646", "[\u0642\u0635\u064a\u062f\u0629: 64560] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0623\u0645\u0646\u0632\u0644\u062a\u064a \u0645\u064a \u0633\u0644\u0627\u0645 ", "[\u0642\u0635\u064a\u062f\u0629: 10476] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0642\u062f \u0645\u0631 \u0644\u0644\u0631\u0632\u0621 \u0627\u0644\u0630\u064a", "[\u0642\u0635\u064a\u062f\u0629: 66930] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0642\u062f \u0633\u0627\u0631 \u0628\u064a \u0647\u0630\u0627 \u0627\u0644", "[\u0642\u0635\u064a\u062f\u0629: 61087] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0647\u0630\u064a \u0627\u0644\u0645\u0646\u0627\u0632\u0644 \u0628\u0627\u0644\u063a", "[\u0642\u0635\u064a\u062f\u0629: 80062] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0639\u0634\u064a\u0629 \u0644\u0627 \u062e\u0644\u0641\u064a \u0645\u0643\u0631", "[\u0642\u0635\u064a\u062f\u0629: 27128] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0627\u0644\u0631\u0623\u064a \u0642\u0628\u0644 \u0634\u062c\u0627\u0639\u0629 ", "[\u0642\u0635\u064a\u062f\u0629: 79712] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0642\u0644 \u0644\u0644\u0645\u0644\u064a\u062d\u0629 \u0642\u062f \u0623\u0628", "[\u0642\u0635\u064a\u062f\u0629: 61131] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0648\u0642\u0641 \u0639\u0644\u0649 \u0627\u0644\u0639\u0628\u0631\u0627\u062a ", "[\u0642\u0635\u064a\u062f\u0629: 84230] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0633\u0631\u0649 \u0627\u0644\u0628\u0631\u0642 \u0645\u0635\u0631\u064a\u0627 ", "[\u0642\u0635\u064a\u062f\u0629: 81456] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0633\u0644\u0627\u0645 \u0645\u0646 \u0635\u0628\u0627 \u0628\u0631\u062f\u0649", "[\u0642\u0635\u064a\u062f\u0629: 11046] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0639\u0646 \u0627\u0644\u0639\u0631\u0628 \u0627\u0644\u0635\u064a\u062f \u0627", "[\u0642\u0635\u064a\u062f\u0629: 6821] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0643\u0627\u0646\u062a \u0644\u0642\u0644\u0628\u064a \u0623\u0647\u0648\u0627\u0621 ", "[\u0642\u0635\u064a\u062f\u0629: 60685] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0623\u062a\u0649 \u0646\u0639\u064a \u0645\u0644\u0643 \u0623\u0638\u0644\u0645", "[\u0642\u0635\u064a\u062f\u0629: 44603] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0623\u0642\u0646\u0627\u0639\u0629 \u0645\u0646 \u0628\u0639\u062f \u0637\u0648", "[\u0642\u0635\u064a\u062f\u0629: 48983] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u064a\u0627 \u0639\u064a\u0646 \u062c\u0648\u062f\u064a \u0628\u062f\u0645\u0639", "[\u0642\u0635\u064a\u062f\u0629: 27292] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0638\u0644\u0645 \u0644\u0630\u0627 \u0627\u0644\u064a\u0648\u0645 \u0648\u0635", "[\u0642\u0635\u064a\u062f\u0629: 27146] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0623\u0644\u0627 \u0644\u0627 \u0623\u0631\u0649 \u0627\u0644\u0623\u062d\u062f", "[\u0642\u0635\u064a\u062f\u0629: 79665] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0646\u0639\u0642 \u0627\u0644\u063a\u0631\u0627\u0628 \u0628\u0628\u064a\u0646 ", "[\u0642\u0635\u064a\u062f\u0629: 76557] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0637\u0644\u0644 \u0644\u062e\u0648\u0644\u0629 \u0628\u0627\u0644\u0631\u0633\u064a", "[\u0642\u0635\u064a\u062f\u0629: 81224] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u063a\u0634\u064a\u062a \u062f\u064a\u0627\u0631\u0627 \u0628\u0627\u0644\u0646\u0642", "[\u0642\u0635\u064a\u062f\u0629: 76565] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0644\u0644\u0647 \u0646\u0627\u0641\u0644\u0629 \u0627\u0644\u0623\u062c\u0644 ", "[\u0642\u0635\u064a\u062f\u0629: 49669] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0648\u0644\u0645\u0627 \u0642\u0633\u0627 \u0642\u0644\u0628\u064a \u0648\u0636", "[\u0642\u0635\u064a\u062f\u0629: 78938] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0625\u0630\u0627 \u0627\u0644\u0645\u0631\u0621 \u0644\u0645 \u064a\u062f\u0646", "[\u0642\u0635\u064a\u062f\u0629: 81569] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0642\u0641\u0648\u0627 \u0628\u0627\u0644\u0642\u0628\u0648\u0631 \u0646\u0633\u0627", "[\u0642\u0635\u064a\u062f\u0629: 56123] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0648\u064a\u0628\u0643\u0645 \u0625\u0646 \u0631\u0623\u064a\u062a\u0645\u0648\u0646", "[\u0642\u0635\u064a\u062f\u0629: 61566] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u062f\u0639 \u0645\u0646 \u062f\u0645\u0648\u0639\u0643 \u0628\u0639\u062f ", "[\u0642\u0635\u064a\u062f\u0629: 43378] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0644\u0643\u0644 \u0634\u064a\u0621 \u0625\u0630\u0627 \u0645\u0627 \u062a", "[\u0642\u0635\u064a\u062f\u0629: 48975] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0623\u0639\u064a\u0646\u064a \u0641\u064a\u0636\u064a \u0648\u0644\u0627 \u062a", "[\u0642\u0635\u064a\u062f\u0629: 27245] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0644\u062c\u0646\u064a\u0629 \u0623\u0645 \u063a\u0627\u062f\u0629 \u0631\u0641", "[\u0642\u0635\u064a\u062f\u0629: 72274] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0625\u0630\u0627 \u0627\u0644\u0628\u062f\u0631 \u064a\u0637\u0648\u0649 \u0641", "[\u0642\u0635\u064a\u062f\u0629: 27259] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0623\u0638\u0628\u064a\u0629 \u0627\u0644\u0648\u062d\u0634 \u0644\u0648\u0644\u0627", "[\u0642\u0635\u064a\u062f\u0629: 79717] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0623\u0644\u0645\u0645 \u0628\u0639\u0641\u0631\u0627\u0621 \u0625\u0646 \u0623", "[\u0642\u0635\u064a\u062f\u0629: 27125] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0627\u0644\u062d\u0628 \u0645\u0627 \u0645\u0646\u0639 \u0627\u0644\u0643\u0644", "[\u0642\u0635\u064a\u062f\u0629: 84233] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0631\u0636\u064a\u062a \u0645\u0646 \u0627\u0644\u062f\u0646\u064a\u0627 \u0628", "[\u0642\u0635\u064a\u062f\u0629: 27169] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0625\u0630\u0627 \u0643\u0627\u0646 \u0645\u062f\u062d \u0641\u0627\u0644\u0646", "[\u0642\u0635\u064a\u062f\u0629: 27220] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0631\u0648\u064a\u062f\u0643 \u0623\u064a\u0647\u0627 \u0627\u0644\u0645\u0644\u0643", "[\u0642\u0635\u064a\u062f\u0629: 49000] \u0627\u0644\u0639\u0646\u0648\u0627\u0646: \u0623\u0644\u0627 \u0627\u0628\u0643\u064a \u0639\u0644\u0649 \u0635\u062e\u0631"];
+    const sonnetPoemErrors = [{"sound_b": 0, "sound_o": 0, "imagery_b": 13, "imagery_o": 13, "emotion_b": 8, "emotion_o": 3, "language_b": 2, "language_o": 2, "cultural_b": 1, "cultural_o": 1}, {"sound_b": 2, "sound_o": 0, "imagery_b": 2, "imagery_o": 3, "emotion_b": 3, "emotion_o": 3, "language_b": 0, "language_o": 1, "cultural_b": 2, "cultural_o": 4}, {"sound_b": 7, "sound_o": 3, "imagery_b": 2, "imagery_o": 3, "emotion_b": 4, "emotion_o": 3, "language_b": 6, "language_o": 5, "cultural_b": 10, "cultural_o": 4}, {"sound_b": 6, "sound_o": 2, "imagery_b": 3, "imagery_o": 1, "emotion_b": 0, "emotion_o": 0, "language_b": 5, "language_o": 3, "cultural_b": 4, "cultural_o": 0}, {"sound_b": 10, "sound_o": 10, "imagery_b": 0, "imagery_o": 7, "emotion_b": 3, "emotion_o": 0, "language_b": 18, "language_o": 18, "cultural_b": 8, "cultural_o": 0}, {"sound_b": 0, "sound_o": 0, "imagery_b": 3, "imagery_o": 3, "emotion_b": 7, "emotion_o": 5, "language_b": 0, "language_o": 0, "cultural_b": 3, "cultural_o": 4}, {"sound_b": 6, "sound_o": 4, "imagery_b": 7, "imagery_o": 9, "emotion_b": 2, "emotion_o": 4, "language_b": 4, "language_o": 4, "cultural_b": 8, "cultural_o": 3}, {"sound_b": 2, "sound_o": 2, "imagery_b": 2, "imagery_o": 4, "emotion_b": 5, "emotion_o": 2, "language_b": 2, "language_o": 1, "cultural_b": 0, "cultural_o": 6}, {"sound_b": 0, "sound_o": 0, "imagery_b": 7, "imagery_o": 0, "emotion_b": 7, "emotion_o": 3, "language_b": 3, "language_o": 0, "cultural_b": 1, "cultural_o": 2}, {"sound_b": 6, "sound_o": 4, "imagery_b": 5, "imagery_o": 8, "emotion_b": 3, "emotion_o": 3, "language_b": 3, "language_o": 5, "cultural_b": 0, "cultural_o": 3}, {"sound_b": 0, "sound_o": 0, "imagery_b": 3, "imagery_o": 0, "emotion_b": 2, "emotion_o": 0, "language_b": 1, "language_o": 1, "cultural_b": 3, "cultural_o": 4}, {"sound_b": 6, "sound_o": 6, "imagery_b": 5, "imagery_o": 7, "emotion_b": 4, "emotion_o": 5, "language_b": 2, "language_o": 1, "cultural_b": 9, "cultural_o": 1}, {"sound_b": 8, "sound_o": 5, "imagery_b": 10, "imagery_o": 8, "emotion_b": 14, "emotion_o": 12, "language_b": 5, "language_o": 4, "cultural_b": 20, "cultural_o": 12}, {"sound_b": 0, "sound_o": 0, "imagery_b": 0, "imagery_o": 3, "emotion_b": 3, "emotion_o": 0, "language_b": 0, "language_o": 2, "cultural_b": 0, "cultural_o": 1}, {"sound_b": 0, "sound_o": 4, "imagery_b": 10, "imagery_o": 6, "emotion_b": 5, "emotion_o": 2, "language_b": 0, "language_o": 0, "cultural_b": 9, "cultural_o": 6}, {"sound_b": 0, "sound_o": 0, "imagery_b": 5, "imagery_o": 1, "emotion_b": 7, "emotion_o": 3, "language_b": 5, "language_o": 3, "cultural_b": 3, "cultural_o": 6}, {"sound_b": 10, "sound_o": 6, "imagery_b": 8, "imagery_o": 12, "emotion_b": 7, "emotion_o": 12, "language_b": 15, "language_o": 14, "cultural_b": 22, "cultural_o": 17}, {"sound_b": 4, "sound_o": 4, "imagery_b": 0, "imagery_o": 6, "emotion_b": 7, "emotion_o": 2, "language_b": 3, "language_o": 6, "cultural_b": 5, "cultural_o": 3}, {"sound_b": 4, "sound_o": 0, "imagery_b": 6, "imagery_o": 3, "emotion_b": 5, "emotion_o": 4, "language_b": 1, "language_o": 0, "cultural_b": 8, "cultural_o": 3}, {"sound_b": 3, "sound_o": 7, "imagery_b": 6, "imagery_o": 4, "emotion_b": 2, "emotion_o": 2, "language_b": 2, "language_o": 4, "cultural_b": 3, "cultural_o": 4}, {"sound_b": 0, "sound_o": 4, "imagery_b": 7, "imagery_o": 3, "emotion_b": 6, "emotion_o": 3, "language_b": 3, "language_o": 3, "cultural_b": 3, "cultural_o": 5}, {"sound_b": 0, "sound_o": 0, "imagery_b": 10, "imagery_o": 15, "emotion_b": 0, "emotion_o": 3, "language_b": 3, "language_o": 5, "cultural_b": 10, "cultural_o": 8}, {"sound_b": 6, "sound_o": 6, "imagery_b": 2, "imagery_o": 5, "emotion_b": 0, "emotion_o": 2, "language_b": 6, "language_o": 8, "cultural_b": 13, "cultural_o": 7}, {"sound_b": 0, "sound_o": 0, "imagery_b": 0, "imagery_o": 2, "emotion_b": 0, "emotion_o": 1, "language_b": 0, "language_o": 2, "cultural_b": 0, "cultural_o": 1}, {"sound_b": 6, "sound_o": 6, "imagery_b": 7, "imagery_o": 1, "emotion_b": 7, "emotion_o": 4, "language_b": 6, "language_o": 3, "cultural_b": 7, "cultural_o": 13}, {"sound_b": 3, "sound_o": 2, "imagery_b": 3, "imagery_o": 1, "emotion_b": 6, "emotion_o": 3, "language_b": 3, "language_o": 1, "cultural_b": 2, "cultural_o": 2}, {"sound_b": 0, "sound_o": 0, "imagery_b": 7, "imagery_o": 5, "emotion_b": 16, "emotion_o": 10, "language_b": 3, "language_o": 0, "cultural_b": 7, "cultural_o": 7}, {"sound_b": 4, "sound_o": 0, "imagery_b": 3, "imagery_o": 2, "emotion_b": 3, "emotion_o": 0, "language_b": 1, "language_o": 1, "cultural_b": 7, "cultural_o": 1}, {"sound_b": 2, "sound_o": 2, "imagery_b": 2, "imagery_o": 0, "emotion_b": 3, "emotion_o": 2, "language_b": 2, "language_o": 0, "cultural_b": 7, "cultural_o": 3}, {"sound_b": 3, "sound_o": 7, "imagery_b": 2, "imagery_o": 3, "emotion_b": 3, "emotion_o": 4, "language_b": 3, "language_o": 4, "cultural_b": 2, "cultural_o": 5}, {"sound_b": 7, "sound_o": 7, "imagery_b": 16, "imagery_o": 16, "emotion_b": 7, "emotion_o": 7, "language_b": 2, "language_o": 5, "cultural_b": 3, "cultural_o": 3}, {"sound_b": 6, "sound_o": 6, "imagery_b": 3, "imagery_o": 13, "emotion_b": 7, "emotion_o": 2, "language_b": 10, "language_o": 5, "cultural_b": 11, "cultural_o": 8}, {"sound_b": 20, "sound_o": 20, "imagery_b": 10, "imagery_o": 15, "emotion_b": 12, "emotion_o": 18, "language_b": 17, "language_o": 18, "cultural_b": 23, "cultural_o": 28}, {"sound_b": 3, "sound_o": 0, "imagery_b": 4, "imagery_o": 6, "emotion_b": 13, "emotion_o": 6, "language_b": 3, "language_o": 1, "cultural_b": 10, "cultural_o": 6}, {"sound_b": 4, "sound_o": 4, "imagery_b": 6, "imagery_o": 2, "emotion_b": 5, "emotion_o": 2, "language_b": 5, "language_o": 3, "cultural_b": 5, "cultural_o": 6}, {"sound_b": 3, "sound_o": 3, "imagery_b": 0, "imagery_o": 2, "emotion_b": 5, "emotion_o": 2, "language_b": 5, "language_o": 5, "cultural_b": 0, "cultural_o": 10}, {"sound_b": 0, "sound_o": 0, "imagery_b": 0, "imagery_o": 1, "emotion_b": 3, "emotion_o": 1, "language_b": 0, "language_o": 0, "cultural_b": 0, "cultural_o": 4}, {"sound_b": 4, "sound_o": 4, "imagery_b": 2, "imagery_o": 5, "emotion_b": 5, "emotion_o": 1, "language_b": 6, "language_o": 6, "cultural_b": 3, "cultural_o": 1}, {"sound_b": 4, "sound_o": 4, "imagery_b": 5, "imagery_o": 2, "emotion_b": 13, "emotion_o": 7, "language_b": 6, "language_o": 3, "cultural_b": 5, "cultural_o": 1}, {"sound_b": 4, "sound_o": 4, "imagery_b": 0, "imagery_o": 3, "emotion_b": 0, "emotion_o": 0, "language_b": 1, "language_o": 2, "cultural_b": 1, "cultural_o": 0}, {"sound_b": 0, "sound_o": 3, "imagery_b": 7, "imagery_o": 3, "emotion_b": 8, "emotion_o": 3, "language_b": 4, "language_o": 6, "cultural_b": 2, "cultural_o": 2}, {"sound_b": 6, "sound_o": 6, "imagery_b": 0, "imagery_o": 3, "emotion_b": 4, "emotion_o": 4, "language_b": 0, "language_o": 0, "cultural_b": 0, "cultural_o": 0}, {"sound_b": 3, "sound_o": 3, "imagery_b": 0, "imagery_o": 0, "emotion_b": 8, "emotion_o": 6, "language_b": 5, "language_o": 3, "cultural_b": 4, "cultural_o": 3}, {"sound_b": 6, "sound_o": 3, "imagery_b": 7, "imagery_o": 7, "emotion_b": 0, "emotion_o": 3, "language_b": 7, "language_o": 6, "cultural_b": 12, "cultural_o": 9}, {"sound_b": 4, "sound_o": 0, "imagery_b": 0, "imagery_o": 0, "emotion_b": 13, "emotion_o": 0, "language_b": 5, "language_o": 0, "cultural_b": 4, "cultural_o": 4}, {"sound_b": 0, "sound_o": 2, "imagery_b": 0, "imagery_o": 1, "emotion_b": 0, "emotion_o": 2, "language_b": 3, "language_o": 2, "cultural_b": 4, "cultural_o": 1}, {"sound_b": 7, "sound_o": 3, "imagery_b": 6, "imagery_o": 7, "emotion_b": 2, "emotion_o": 2, "language_b": 7, "language_o": 4, "cultural_b": 1, "cultural_o": 1}, {"sound_b": 6, "sound_o": 3, "imagery_b": 7, "imagery_o": 2, "emotion_b": 12, "emotion_o": 4, "language_b": 1, "language_o": 2, "cultural_b": 7, "cultural_o": 8}, {"sound_b": 0, "sound_o": 0, "imagery_b": 0, "imagery_o": 2, "emotion_b": 6, "emotion_o": 6, "language_b": 2, "language_o": 1, "cultural_b": 4, "cultural_o": 2}, {"sound_b": 10, "sound_o": 4, "imagery_b": 5, "imagery_o": 5, "emotion_b": 7, "emotion_o": 3, "language_b": 11, "language_o": 7, "cultural_b": 16, "cultural_o": 6}, {"sound_b": 0, "sound_o": 0, "imagery_b": 5, "imagery_o": 3, "emotion_b": 4, "emotion_o": 4, "language_b": 2, "language_o": 1, "cultural_b": 1, "cultural_o": 8}, {"sound_b": 0, "sound_o": 3, "imagery_b": 5, "imagery_o": 8, "emotion_b": 0, "emotion_o": 0, "language_b": 1, "language_o": 3, "cultural_b": 6, "cultural_o": 0}, {"sound_b": 4, "sound_o": 0, "imagery_b": 3, "imagery_o": 2, "emotion_b": 4, "emotion_o": 4, "language_b": 1, "language_o": 1, "cultural_b": 7, "cultural_o": 0}, {"sound_b": 4, "sound_o": 0, "imagery_b": 3, "imagery_o": 0, "emotion_b": 5, "emotion_o": 8, "language_b": 2, "language_o": 1, "cultural_b": 2, "cultural_o": 7}, {"sound_b": 0, "sound_o": 1, "imagery_b": 0, "imagery_o": 1, "emotion_b": 4, "emotion_o": 4, "language_b": 2, "language_o": 0, "cultural_b": 1, "cultural_o": 0}, {"sound_b": 4, "sound_o": 4, "imagery_b": 3, "imagery_o": 4, "emotion_b": 10, "emotion_o": 10, "language_b": 3, "language_o": 4, "cultural_b": 3, "cultural_o": 10}, {"sound_b": 6, "sound_o": 0, "imagery_b": 13, "imagery_o": 4, "emotion_b": 15, "emotion_o": 0, "language_b": 7, "language_o": 1, "cultural_b": 10, "cultural_o": 4}];
+
+    const chartDefaults = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { labels: { color: '#e2e8f0' } } },
+    };
+    const axisStyle = { grid: { color: '#334155' }, ticks: { color: '#94a3b8' } };
+
+    // -- Chart 1: Trial score progression --
+    const trialDatasets = [];
+    const trialAnnotations = {};
+
+    const maxTrials = Math.max(haikuTrialScores.length, sonnetTrialScores.length);
+    const trialLabels = Array.from({length: maxTrials}, (_, i) => 'Trial ' + (i + 1));
+
+    if (hasHaiku && haikuTrialScores.length > 0) {
+        trialDatasets.push({
+            label: 'Haiku Trial Score',
+            data: haikuTrialScores,
+            borderColor: 'rgba(244, 114, 182, 0.5)',
+            backgroundColor: 'rgba(244, 114, 182, 0.15)',
+            pointRadius: 5,
+            pointBackgroundColor: 'rgba(244, 114, 182, 0.8)',
+            borderWidth: 1,
+            fill: false,
+            tension: 0,
+            type: 'line',
+        });
+        trialDatasets.push({
+            label: 'Haiku Best So Far',
+            data: haikuBestSoFar,
+            borderColor: 'rgba(244, 114, 182, 1)',
+            borderWidth: 2.5,
+            borderDash: [6, 3],
+            pointRadius: 0,
+            fill: false,
+            tension: 0.2,
+        });
+        trialAnnotations.haikuBaseline = {
+            type: 'line',
+            yMin: haikuBaselineScore,
+            yMax: haikuBaselineScore,
+            borderColor: 'rgba(244, 114, 182, 0.3)',
+            borderWidth: 2,
+            borderDash: [10, 5],
+            label: {
+                display: true,
+                content: 'Haiku baseline (' + haikuBaselineScore.toFixed(1) + ')',
+                position: 'start',
+                color: 'rgba(244, 114, 182, 0.6)',
+                font: { size: 10 },
+            },
+        };
+    }
+
+    if (hasSonnet && sonnetTrialScores.length > 0) {
+        trialDatasets.push({
+            label: 'Sonnet Trial Score',
+            data: sonnetTrialScores,
+            borderColor: 'rgba(96, 165, 250, 0.5)',
+            backgroundColor: 'rgba(96, 165, 250, 0.15)',
+            pointRadius: 5,
+            pointBackgroundColor: 'rgba(96, 165, 250, 0.8)',
+            borderWidth: 1,
+            fill: false,
+            tension: 0,
+            type: 'line',
+        });
+        trialDatasets.push({
+            label: 'Sonnet Best So Far',
+            data: sonnetBestSoFar,
+            borderColor: 'rgba(96, 165, 250, 1)',
+            borderWidth: 2.5,
+            borderDash: [6, 3],
+            pointRadius: 0,
+            fill: false,
+            tension: 0.2,
+        });
+        trialAnnotations.sonnetBaseline = {
+            type: 'line',
+            yMin: sonnetBaselineScore,
+            yMax: sonnetBaselineScore,
+            borderColor: 'rgba(96, 165, 250, 0.3)',
+            borderWidth: 2,
+            borderDash: [10, 5],
+            label: {
+                display: true,
+                content: 'Sonnet baseline (' + sonnetBaselineScore.toFixed(1) + ')',
+                position: 'end',
+                color: 'rgba(96, 165, 250, 0.6)',
+                font: { size: 10 },
+            },
+        };
+    }
+
+    if (trialDatasets.length > 0) {
+        new Chart(document.getElementById('trialChart'), {
+            type: 'line',
+            data: { labels: trialLabels, datasets: trialDatasets },
+            options: {
+                ...chartDefaults,
+                plugins: {
+                    ...chartDefaults.plugins,
+                    annotation: { annotations: trialAnnotations },
+                    tooltip: {
+                        callbacks: {
+                            afterLabel: function(ctx) {
+                                const mae = ((1 - ctx.parsed.y / 100) * 100).toFixed(2);
+                                return 'MAE: ' + mae;
+                            }
+                        }
+                    },
+                },
+                scales: {
+                    y: {
+                        title: { display: true, text: 'Score (1 - MAE/100) x 100', color: '#94a3b8' },
+                        ...axisStyle,
+                    },
+                    x: {
+                        title: { display: true, text: 'Trial', color: '#94a3b8' },
+                        ...axisStyle,
+                        grid: { display: false },
+                    },
+                },
+            },
+        });
+    } else {
+        const container = document.getElementById('trialChart').parentElement;
+        const msg = document.createElement('p');
+        msg.style.cssText = 'color:#94a3b8;text-align:center;padding:2rem;';
+        msg.textContent = 'No trial progression data available. Run optimization with MIPROv2 first.';
+        container.replaceChildren(msg);
+    }
+
+    // -- Chart 2: Per-dimension grouped bar (baseline + optimized + cross, eval set) --
+    const dimDatasets = [];
+    if (hasHaiku) {
+        dimDatasets.push({
+            label: 'Haiku Baseline',
+            data: haikuBaselineDims,
+            backgroundColor: 'rgba(244, 114, 182, 0.3)',
+            borderColor: 'rgba(244, 114, 182, 0.6)',
+            borderWidth: 1,
+        });
+        dimDatasets.push({
+            label: 'Haiku Optimized',
+            data: haikuOptimizedDims,
+            backgroundColor: 'rgba(244, 114, 182, 0.85)',
+            borderColor: 'rgba(244, 114, 182, 1)',
+            borderWidth: 1,
+        });
+        if (hasCrossEval && haikuCrossDims.length > 0) {
+            dimDatasets.push({
+                label: "Haiku + Sonnet's Prompt",
+                data: haikuCrossDims,
+                backgroundColor: 'rgba(244, 114, 182, 0.55)',
+                borderColor: 'rgba(167, 139, 250, 1)',
+                borderWidth: 2,
+                borderDash: [4, 2],
+            });
+        }
+    }
+    if (hasSonnet) {
+        dimDatasets.push({
+            label: 'Sonnet Baseline',
+            data: sonnetBaselineDims,
+            backgroundColor: 'rgba(96, 165, 250, 0.3)',
+            borderColor: 'rgba(96, 165, 250, 0.6)',
+            borderWidth: 1,
+        });
+        dimDatasets.push({
+            label: 'Sonnet Optimized',
+            data: sonnetOptimizedDims,
+            backgroundColor: 'rgba(96, 165, 250, 0.85)',
+            borderColor: 'rgba(96, 165, 250, 1)',
+            borderWidth: 1,
+        });
+        if (hasCrossEval && sonnetCrossDims.length > 0) {
+            dimDatasets.push({
+                label: "Sonnet + Haiku's Prompt",
+                data: sonnetCrossDims,
+                backgroundColor: 'rgba(96, 165, 250, 0.55)',
+                borderColor: 'rgba(167, 139, 250, 1)',
+                borderWidth: 2,
+                borderDash: [4, 2],
+            });
+        }
+    }
+    new Chart(document.getElementById('dimChart'), {
+        type: 'bar',
+        data: { labels: dims, datasets: dimDatasets },
+        options: {
+            ...chartDefaults,
+            scales: {
+                y: { beginAtZero: true, title: { display: true, text: 'Eval MAE (lower = better)', color: '#94a3b8' }, ...axisStyle },
+                x: { ...axisStyle, grid: { display: false } },
+            },
+        },
+    });
+
+    // -- Chart 3: Head-to-head optimized eval MAE --
+    const h2hOptDatasets = [];
+    if (hasHaiku) {
+        h2hOptDatasets.push({
+            label: 'Haiku',
+            data: haikuOptimizedDims,
+            backgroundColor: 'rgba(244, 114, 182, 0.7)',
+            borderColor: 'rgba(244, 114, 182, 1)',
+            borderWidth: 1,
+        });
+    }
+    if (hasSonnet) {
+        h2hOptDatasets.push({
+            label: 'Sonnet',
+            data: sonnetOptimizedDims,
+            backgroundColor: 'rgba(96, 165, 250, 0.7)',
+            borderColor: 'rgba(96, 165, 250, 1)',
+            borderWidth: 1,
+        });
+    }
+    new Chart(document.getElementById('h2hOptChart'), {
+        type: 'bar',
+        data: { labels: dims, datasets: h2hOptDatasets },
+        options: {
+            ...chartDefaults,
+            scales: {
+                y: { beginAtZero: true, title: { display: true, text: 'Optimized Eval MAE (lower = better)', color: '#94a3b8' }, ...axisStyle },
+                x: { ...axisStyle, grid: { display: false } },
+            },
+        },
+    });
+
+    // -- Chart 4: Cross-eval comparison --
+    if (hasCrossEval) {
+        document.getElementById('crossEvalSection').style.display = 'block';
+        const crossLabels = ['Baseline', 'Own Optimized', "Other's Prompt"];
+        const crossDatasets = [];
+
+        if (hasHaiku && haikuCrossDims.length > 0) {
+            // Haiku: baseline overall, own optimized overall, sonnet's prompt overall
+            const hBase = haikuBaselineDims.reduce((a, b) => a + b, 0) / haikuBaselineDims.length;
+            const hOpt = haikuOptimizedDims.reduce((a, b) => a + b, 0) / haikuOptimizedDims.length;
+            const hCross = haikuCrossDims.reduce((a, b) => a + b, 0) / haikuCrossDims.length;
+            crossDatasets.push({
+                label: 'Haiku',
+                data: [hBase, hOpt, hCross],
+                backgroundColor: ['rgba(244,114,182,0.4)', 'rgba(244,114,182,0.85)', 'rgba(167,139,250,0.7)'],
+                borderColor: ['rgba(244,114,182,0.8)', 'rgba(244,114,182,1)', 'rgba(167,139,250,1)'],
+                borderWidth: 1,
+            });
+        }
+        if (hasSonnet && sonnetCrossDims.length > 0) {
+            const sBase = sonnetBaselineDims.reduce((a, b) => a + b, 0) / sonnetBaselineDims.length;
+            const sOpt = sonnetOptimizedDims.reduce((a, b) => a + b, 0) / sonnetOptimizedDims.length;
+            const sCross = sonnetCrossDims.reduce((a, b) => a + b, 0) / sonnetCrossDims.length;
+            crossDatasets.push({
+                label: 'Sonnet',
+                data: [sBase, sOpt, sCross],
+                backgroundColor: ['rgba(96,165,250,0.4)', 'rgba(96,165,250,0.85)', 'rgba(167,139,250,0.7)'],
+                borderColor: ['rgba(96,165,250,0.8)', 'rgba(96,165,250,1)', 'rgba(167,139,250,1)'],
+                borderWidth: 1,
+            });
+        }
+
+        new Chart(document.getElementById('crossEvalChart'), {
+            type: 'bar',
+            data: { labels: crossLabels, datasets: crossDatasets },
+            options: {
+                ...chartDefaults,
+                scales: {
+                    y: { beginAtZero: true, title: { display: true, text: 'Avg MAE across dimensions (lower = better)', color: '#94a3b8' }, ...axisStyle },
+                    x: { ...axisStyle, grid: { display: false } },
+                },
+            },
+        });
+    }
+
+    // -- Per-poem error table --
+    const section = document.getElementById('poemTableSection');
+    const poemData = [
+        { name: 'Haiku', labels: haikuPoemLabels, errors: haikuPoemErrors, color: '#f472b6' },
+        { name: 'Sonnet', labels: sonnetPoemLabels, errors: sonnetPoemErrors, color: '#60a5fa' },
+    ];
+
+    poemData.forEach(model => {
+        if (model.labels.length === 0) return;
+        const wrapper = document.createElement('div');
+        wrapper.className = 'section';
+
+        const title = document.createElement('h2');
+        title.textContent = model.name + ' Per-Poem Error Breakdown (Eval Set)';
+        wrapper.appendChild(title);
+
+        const table = document.createElement('table');
+        const thead = document.createElement('thead');
+        const headerRow = document.createElement('tr');
+        const headers = ['Poem'];
+        dims.forEach(d => { headers.push(d + ' (B)'); headers.push(d + ' (O)'); });
+        headers.push('Avg B', 'Avg O');
+        headers.forEach(h => {
+            const th = document.createElement('th');
+            th.textContent = h;
+            headerRow.appendChild(th);
+        });
+        thead.appendChild(headerRow);
+        table.appendChild(thead);
+
+        const tbody = document.createElement('tbody');
+        for (let i = 0; i < model.labels.length; i++) {
+            const row = document.createElement('tr');
+            const labelCell = document.createElement('td');
+            labelCell.style.cssText = 'text-align:left;direction:rtl;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;';
+            labelCell.textContent = model.labels[i];
+            row.appendChild(labelCell);
+
+            let baseSum = 0, optSum = 0;
+            const errs = model.errors[i];
+            dims.forEach(d => {
+                const bErr = errs[d + '_b'] || 0;
+                const oErr = errs[d + '_o'] || 0;
+                baseSum += bErr;
+                optSum += oErr;
+
+                const bCell = document.createElement('td');
+                bCell.className = bErr <= oErr ? 'better' : 'worse';
+                bCell.textContent = bErr;
+                row.appendChild(bCell);
+
+                const oCell = document.createElement('td');
+                oCell.className = oErr <= bErr ? 'better' : 'worse';
+                oCell.textContent = oErr;
+                row.appendChild(oCell);
+            });
+
+            const avgBCell = document.createElement('td');
+            avgBCell.textContent = (baseSum / dims.length).toFixed(1);
+            row.appendChild(avgBCell);
+
+            const avgOCell = document.createElement('td');
+            avgOCell.textContent = (optSum / dims.length).toFixed(1);
+            row.appendChild(avgOCell);
+
+            tbody.appendChild(row);
+        }
+        table.appendChild(tbody);
+        wrapper.appendChild(table);
+        section.appendChild(wrapper);
+    });
+    </script>
+</body>
+</html>

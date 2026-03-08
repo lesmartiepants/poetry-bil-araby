@@ -383,6 +383,14 @@ def main():
     # Load data
     df = load_final_selection(args.input)
 
+    # Add default columns if missing (diwan_import_ready.parquet is Diwan-only)
+    if "source" not in df.columns:
+        df["source"] = "diwan"
+    if "scoring_model" not in df.columns:
+        df["scoring_model"] = ""
+    if "scored_at" not in df.columns:
+        df["scored_at"] = None
+
     # Validate expected columns
     required_cols = {"poem_id", "source", "quality_score"}
     missing = required_cols - set(df.columns)
@@ -417,9 +425,18 @@ def main():
                 # Pre-import safety checks
                 if not args.dry_run:
                     cur = conn.cursor()
-                    cur.execute("SELECT setval('poems_id_seq', (SELECT COALESCE(MAX(id), 0) FROM poems))")
-                    seq_val = cur.fetchone()[0]
-                    print(f"[safety] poems_id_seq advanced to {seq_val}")
+
+                    # Advance ALL sequences to avoid ID collisions
+                    for seq_table in [("poems_id_seq", "poems"), ("poets_id_seq", "poets"),
+                                      ("themes_id_seq", "themes"), ("meters_id_seq", "meters")]:
+                        try:
+                            cur.execute(f"SELECT setval('{seq_table[0]}', (SELECT COALESCE(MAX(id), 0) FROM {seq_table[1]}))")
+                            seq_val = cur.fetchone()[0]
+                            print(f"[safety] {seq_table[0]} advanced to {seq_val}")
+                        except Exception as e:
+                            print(f"[safety] {seq_table[0]} skip: {e}")
+                            conn.rollback()
+                    conn.commit()
 
                     # Check for existing Diwan poems (detect partial prior imports)
                     cur.execute("SELECT COUNT(*) FROM poems WHERE source_dataset = 'diwan'")

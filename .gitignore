@@ -73,3 +73,6 @@ poetry_quality_and_curation/retriever_and_quality_curator/data/*.rar
 # Python artifacts
 __pycache__/
 *.pyc
+
+# Sentry Config File
+.env.sentry-build-plugin

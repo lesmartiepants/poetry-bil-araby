@@ -45,6 +45,8 @@ def parse_args():
                         help=f"Dollar cap - stop when reached (default: {config.DEFAULT_MAX_COST})")
     parser.add_argument("--prompt-mode", choices=["compact", "detailed"], default="compact",
                         help="Scoring prompt style (default: compact)")
+    parser.add_argument("--prompt", choices=["optimized", "baseline"], default="optimized",
+                        help="Use DSPy-optimized prompt or legacy baseline (default: optimized)")
     parser.add_argument("--resume", action="store_true",
                         help="Skip poems already scored by this model")
     parser.add_argument("--source", choices=["original", "diwan", "all"], default="all",
@@ -340,10 +342,15 @@ async def main_scoring_loop(poems: list[dict], args) -> tuple[list[dict], float]
     import os
 
     semaphore = asyncio.Semaphore(args.concurrency)
-    system_prompt = (
-        config.COMPACT_SCORING_PROMPT if args.prompt_mode == "compact"
-        else config.DETAILED_SCORING_PROMPT
-    )
+
+    # Prompt selection: optimized (DSPy-tuned) or baseline (legacy)
+    if args.prompt == "optimized":
+        system_prompt = config.get_scoring_prompt(args.model, mode="optimized")
+    elif args.prompt_mode == "compact":
+        system_prompt = config.COMPACT_SCORING_PROMPT
+    else:
+        system_prompt = config.DETAILED_SCORING_PROMPT
+
     max_tokens = (
         200 * args.batch_size if args.prompt_mode == "compact"
         else 2000 * args.batch_size
@@ -426,7 +433,7 @@ def main():
         print(f"  Estimated batches: {est_batches}")
         print(f"  Batch size: {args.batch_size}")
         print(f"  Concurrency: {args.concurrency}")
-        print(f"  Prompt mode: {args.prompt_mode}")
+        print(f"  Prompt: {args.prompt} ({args.prompt_mode})")
         print(f"  Max cost: ${args.max_cost}")
         print(f"  Output: {args.output}")
         return

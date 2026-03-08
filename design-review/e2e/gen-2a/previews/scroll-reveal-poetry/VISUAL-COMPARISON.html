@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scroll Reveal Poetry — Visual Comparison</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: system-ui, -apple-system, sans-serif; background: #0a0a12; color: #e8e0d0; min-height: 100vh; }
+  .header { text-align: center; padding: 3rem 1rem 2rem; }
+  .header h1 { font-size: 2rem; color: #c9a84c; margin-bottom: 0.5rem; }
+  .header p { color: #8a8070; font-size: 0.95rem; max-width: 600px; margin: 0 auto; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 2rem; padding: 1rem 2rem 3rem; max-width: 1400px; margin: 0 auto; }
+  .card { background: #12121e; border: 1px solid #2a2a3a; border-radius: 12px; overflow: hidden; transition: border-color 0.3s; }
+  .card:hover { border-color: #c9a84c; }
+  .card-preview { position: relative; width: 100%; height: 280px; background: #080810; }
+  .card-preview iframe { width: 100%; height: 100%; border: none; pointer-events: none; }
+  .card-body { padding: 1.25rem; }
+  .card-body h2 { font-size: 1.15rem; color: #c9a84c; margin-bottom: 0.5rem; }
+  .card-body .approach { font-size: 0.85rem; color: #aaa; margin-bottom: 0.75rem; line-height: 1.5; }
+  .techniques { display: flex; flex-wrap: wrap; gap: 0.4rem; margin-bottom: 1rem; }
+  .techniques span { background: #1a1a2e; border: 1px solid #2a2a4a; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.75rem; color: #8a8aaa; }
+  .card-actions { display: flex; gap: 0.75rem; }
+  .btn { display: inline-block; padding: 0.5rem 1.25rem; border-radius: 8px; text-decoration: none; font-size: 0.85rem; font-weight: 500; transition: all 0.2s; }
+  .btn-primary { background: #c9a84c; color: #0a0a12; }
+  .btn-primary:hover { background: #ddb85c; }
+  .btn-outline { border: 1px solid #3a3a4a; color: #aaa; }
+  .btn-outline:hover { border-color: #c9a84c; color: #c9a84c; }
+  .footer { text-align: center; padding: 2rem; color: #4a4a5a; font-size: 0.8rem; }
+</style>
+</head>
+<body>
+  <div class="header">
+    <h1>Scroll Reveal Poetry Designs</h1>
+    <p>Three approaches to scroll-driven Arabic poetry experiences, inspired by 45r.jp/ja/indigo-hakusho/. Click "Open Full" to experience each design.</p>
+  </div>
+  <div class="grid">
+    <div class="card">
+      <div class="card-preview">
+        <iframe src="scroll-reveal-v1.html" loading="lazy" title="V1 Preview"></iframe>
+      </div>
+      <div class="card-body">
+        <h2>V1 — Horizontal Scroll</h2>
+        <p class="approach">Vertical scroll input converts to horizontal content movement (RTL). Poems reveal as you traverse a wide horizontal strip, closest to the 45r.jp approach. Each poem section has its own color atmosphere with parallax decoration layers.</p>
+        <div class="techniques">
+          <span>Horizontal Scroll</span>
+          <span>Lerp Engine</span>
+          <span>Multi-layer Parallax</span>
+          <span>Line-by-line Reveal</span>
+          <span>Color Chapters</span>
+        </div>
+        <div class="card-actions">
+          <a href="scroll-reveal-v1.html" target="_blank" class="btn btn-primary">Open Full</a>
+          <a href="scroll-reveal-v1.html" download class="btn btn-outline">Download</a>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-preview">
+        <iframe src="scroll-reveal-v2.html" loading="lazy" title="V2 Preview"></iframe>
+      </div>
+      <div class="card-body">
+        <h2>V2 — Depth Layers + Clip-Path</h2>
+        <p class="approach">Vertical scroll with z-axis depth reveals. Each poem is hidden behind an expanding geometric mask (8-pointed star, Islamic arch, circle) that grows as you scroll. Five parallax depth layers create a "descending through a manuscript" feeling.</p>
+        <div class="techniques">
+          <span>Clip-path Reveals</span>
+          <span>5-Layer Z-Depth</span>
+          <span>Geometric Masks</span>
+          <span>IntersectionObserver</span>
+          <span>Color Transitions</span>
+          <span>CSS Particles</span>
+        </div>
+        <div class="card-actions">
+          <a href="scroll-reveal-v2.html" target="_blank" class="btn btn-primary">Open Full</a>
+          <a href="scroll-reveal-v2.html" download class="btn btn-outline">Download</a>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-preview">
+        <iframe src="scroll-reveal-v3.html" loading="lazy" title="V3 Preview"></iframe>
+      </div>
+      <div class="card-body">
+        <h2>V3 — Three.js 3D WebGL</h2>
+        <p class="approach">Full 3D experience using Three.js. Camera flies along a spline path through geometric chambers, each containing a poem rendered on floating text planes. Wireframe geometry, particle systems, and depth fog create a cinematic journey through a virtual manuscript world.</p>
+        <div class="techniques">
+          <span>Three.js WebGL</span>
+          <span>3D Camera Path</span>
+          <span>Particle Systems</span>
+          <span>CanvasTexture</span>
+          <span>Wireframe Geometry</span>
+          <span>Post-processing</span>
+        </div>
+        <div class="card-actions">
+          <a href="scroll-reveal-v3.html" target="_blank" class="btn btn-primary">Open Full</a>
+          <a href="scroll-reveal-v3.html" download class="btn btn-outline">Download</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="footer">
+    Design Review — Round 6 Scroll Reveal Explorations
+  </div>
+</body>
+</html>

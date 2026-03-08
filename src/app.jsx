@@ -2318,15 +2318,6 @@ export default function DiwanApp() {
   // future changes that might empty the array (e.g., setPoems([]) or filter edge cases)
   const current = filtered[currentIndex] || filtered[0] || poems[0] || null;
 
-  // Track poem view time (emit 'view' event after 3s on same poem)
-  useEffect(() => {
-    if (!current?.id || !user) return;
-    const timer = setTimeout(() => {
-      emitEvent(current.id, 'view', { duration_ms: 3000 });
-    }, 3000);
-    return () => clearTimeout(timer);
-  }, [current?.id, user]);
-
   const addLog = (label, msg, type = 'info') => {
     const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     setLogs(prev => [...prev, { label, msg: String(msg), type, time }]);
@@ -2335,6 +2326,16 @@ export default function DiwanApp() {
       logFn(`[${label}] ${msg}`);
     }
   };
+
+  // Track poem view time (emit 'view' event after 3s on same poem)
+  useEffect(() => {
+    if (!current?.id || !user) return;
+    const timer = setTimeout(() => {
+      emitEvent(current.id, 'view', { duration_ms: 3000 });
+      addLog("Event", `→ view event emitted | poem_id: ${current.id} | duration: 3000ms`, "info");
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [current?.id, user]);
 
   useEffect(() => {
     if (selectedCategory !== "All") {
@@ -3213,6 +3214,7 @@ export default function DiwanApp() {
           addLog("Discovery DB", `Poet: ${newPoem.poet} | Title: ${newPoem.title}`, "success");
           track('poem_discovered', { source: 'database', poet: newPoem.poet });
           emitEvent(newPoem.id, 'serve', { source: 'database' });
+          addLog("Event", `→ serve event emitted | poem_id: ${newPoem.id} | source: database`, "info");
 
           setPoems(prev => {
             const updated = [...prev, newPoem];
@@ -3305,6 +3307,7 @@ export default function DiwanApp() {
         addLog("Discovery Metrics", `${estimatedOutputTokens} tokens | ${tokensPerSecond} tok/s | Arabic: ${arabicPoemChars} chars | English: ${englishPoemChars} chars | Poet: ${newPoem.poet}`, "success");
         track('poem_discovered', { source: 'ai', poet: newPoem.poet });
         emitEvent(newPoem.id, 'serve', { source: 'ai' });
+        addLog("Event", `→ serve event emitted | poem_id: ${newPoem.id} | source: ai`, "info");
         setPoems(prev => {
           const updated = [...prev, newPoem];
           const searchStr = selectedCategory.toLowerCase();
@@ -3348,7 +3351,10 @@ export default function DiwanApp() {
     try {
       await navigator.clipboard.writeText(textToCopy);
       track('poem_copied', { poet: current?.poet });
-      if (current?.id) emitEvent(current.id, 'copy');
+      if (current?.id) {
+        emitEvent(current.id, 'copy');
+        addLog("Event", `→ copy event emitted | poem_id: ${current.id}`, "info");
+      }
       setShowCopySuccess(true);
       addLog("Copy", `✓ Copied to clipboard | ${copyChars} chars total (${arabicChars} Arabic + ${englishChars} English)`, "success");
       setTimeout(() => setShowCopySuccess(false), 2000);
@@ -3399,7 +3405,10 @@ export default function DiwanApp() {
       try {
         await navigator.share({ title: shareTitle, text: shareText, url: shareUrl });
         track('share_method', { method: 'native' });
-        if (current?.id) emitEvent(current.id, 'share', { method: 'native' });
+        if (current?.id) {
+          emitEvent(current.id, 'share', { method: 'native' });
+          addLog("Event", `→ share event emitted | poem_id: ${current.id} | method: native`, "info");
+        }
         addLog("Share", "Shared via Web Share API", "success");
         return;
       } catch (e) {
@@ -3415,7 +3424,10 @@ export default function DiwanApp() {
     try {
       await navigator.clipboard.writeText(shareUrl);
       track('share_method', { method: 'clipboard' });
-      if (current?.id) emitEvent(current.id, 'share', { method: 'clipboard' });
+      if (current?.id) {
+        emitEvent(current.id, 'share', { method: 'clipboard' });
+        addLog("Event", `→ share event emitted | poem_id: ${current.id} | method: clipboard`, "info");
+      }
       setShowShareSuccess(true);
       addLog("Share", `Link copied: ${shareUrl}`, "success");
       setTimeout(() => setShowShareSuccess(false), 2000);
@@ -3488,7 +3500,10 @@ export default function DiwanApp() {
     } else {
       addLog("Save", `Saved poem: ${current?.poet} - ${current?.title}`, "success");
       track('poem_saved', { poet: current?.poet });
-      if (current?.id) emitEvent(current.id, 'save');
+      if (current?.id) {
+        emitEvent(current.id, 'save');
+        addLog("Event", `→ save event emitted (dual-write) | poem_id: ${current.id}`, "info");
+      }
     }
   };
 
@@ -3503,16 +3518,20 @@ export default function DiwanApp() {
   };
 
   const handleDownvote = async () => {
+    addLog("UI Event", `👎 Flag button clicked | Poem: ${current?.poet} - ${current?.title} | ID: ${current?.id}`, "info");
+
     if (!user) {
+      addLog("Downvote", "Not authenticated — opening sign-in", "info");
       handleSignIn();
       return;
     }
 
+    addLog("Downvote", `→ Sending downvote to Supabase | poem_id: ${current?.id}`, "info");
     const { error } = await downvotePoem(current);
     if (error) {
-      addLog("Downvote Error", error.message, "error");
+      addLog("Downvote Error", `✗ Failed: ${error.message}`, "error");
     } else {
-      addLog("Downvote", `Flagged poem: ${current?.poet} - ${current?.title}`, "success");
+      addLog("Downvote", `✓ Flagged poem: ${current?.poet} - ${current?.title} | Auto-advancing in 600ms`, "success");
       track('poem_downvoted', { poet: current?.poet });
       // Auto-advance after 600ms
       setTimeout(() => handleFetch(), 600);
@@ -3520,12 +3539,15 @@ export default function DiwanApp() {
   };
 
   const handleUndownvote = async () => {
+    addLog("UI Event", `👍 Unflag button clicked | Poem: ${current?.poet} - ${current?.title} | ID: ${current?.id}`, "info");
+    addLog("Undownvote", `→ Removing downvote from Supabase | poem_id: ${current?.id}`, "info");
+
     const { error } = await undownvotePoem(current?.id);
     if (error) {
-      addLog("Undownvote Error", error.message, "error");
+      addLog("Undownvote Error", `✗ Failed: ${error.message}`, "error");
     } else {
       track('poem_undownvoted', { poet: current?.poet });
-      addLog("Undownvote", `Unflagged poem: ${current?.poet} - ${current?.title}`, "success");
+      addLog("Undownvote", `✓ Unflagged poem: ${current?.poet} - ${current?.title}`, "success");
     }
   };
 

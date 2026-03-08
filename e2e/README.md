@@ -1,126 +1,41 @@
-# E2E Testing with Playwright
+# E2E Smoke Tests
 
-## Overview
-This directory contains end-to-end tests for Poetry Bil-Araby using Playwright. Tests ensure the app functions correctly and looks great across desktop and mobile devices.
+Single-suite user-flow smoke tests using Playwright. Each test is a complete user journey with all API calls intercepted via `page.route()` for determinism -- no live backend or API key required.
 
-## Test Structure
+## Test Suite
 
-### `app.spec.js`
-Core functionality tests covering:
-- Application loading and initial state
-- Navigation between poems
-- Theme toggling (dark/light mode)
-- Category selection
-- Poem discovery
-- Audio player controls
-- Copy functionality
-- Debug panel interaction
+### `user-flows.spec.js` (11 tests)
 
-### `ui-ux.spec.js`
-UI/UX quality tests covering:
-- **Visual Design**: Layout, typography, spacing, color schemes
-- **Interaction Design**: Hover states, animations, touch targets
-- **Content Readability**: Text spacing, overflow handling, RTL/LTR support
-- **Accessibility**: Keyboard navigation, contrast ratios, viewport configuration
-- **Visual Consistency**: Color scheme, border radius, visual hierarchy
+| # | Test | User Story |
+|---|------|-----------|
+| 1 | Discover a new poem | Click Discover, verify new poem loads |
+| 2 | Audio playback | Click Play, observe loading state |
+| 3 | Poetic insight (desktop) | Click Explain, verify side panel |
+| 4 | Theme toggle | Switch dark/light mode |
+| 5 | Font cycle | Cycle through Arabic fonts |
+| 6 | Poet filter | Select poet, verify API filter param |
+| 7 | Copy poem | Click copy, verify icon change |
+| 8 | DB/AI mode toggle | Switch between Database and AI modes |
+| 9 | Design review navigation | Click review link, verify page loads |
+| 10 | Design review keyboard nav | Arrow keys cycle through designs |
+| 11 | Mobile overflow menu | Verify 402px viewport shows overflow |
 
 ## Running Tests
 
-### Run all E2E tests
 ```bash
-npm run test:e2e
+npm run test:e2e           # CI: Chrome only | Local: full matrix
+npm run test:e2e:headed    # Visible browser
+npm run test:e2e:debug     # Debug mode
+npm run test:e2e:report    # View HTML report
 ```
 
-### Run only UI/UX tests
-```bash
-npm run test:e2e:ui
-```
+## CI
 
-### Run tests in headed mode (see browser)
-```bash
-npm run test:e2e:headed
-```
+The `smoke-tests` job in `.github/workflows/ci.yml` runs Desktop Chrome only with all API calls mocked (no PostgreSQL or backend server needed).
 
-### Debug tests interactively
-```bash
-npm run test:e2e:debug
-```
+## Configuration
 
-### View test report
-```bash
-npm run test:e2e:report
-```
+- **CI**: Desktop Chrome only (mobile coverage via `test.use()` viewport overrides)
+- **Local**: Full 7-project device matrix (Chrome, Firefox, Safari, Pixel 5, iPhone 12, iPhone 16 Pro, iPad Pro)
 
-## Test Configuration
-
-Tests run across multiple viewports:
-- **Desktop**: Chrome, Firefox, Safari (1920x1080)
-- **Mobile**: Pixel 5, iPhone 12
-- **Tablet**: iPad Pro
-
-Configuration: `playwright.config.js`
-
-## CI Integration
-
-E2E tests automatically run:
-- On every pull request
-- Before deployment
-- As part of the CI/CD pipeline
-
-See `.github/workflows/ci.yml` for CI configuration.
-
-## UI/UX Agent
-
-The UI/UX Reviewer Agent (`.claude/agents/ui-ux-reviewer.md`) provides:
-- Professional design review
-- Accessibility auditing
-- Responsive design validation
-- Cross-device testing guidance
-
-## Key Design Principles
-
-1. **Arabic-First Typography**: Amiri and Reem Kufi fonts for authentic Arabic rendering
-2. **Bilingual Harmony**: Equal visual weight for Arabic and English
-3. **Glass-morphism**: Subtle backdrop blur effects
-4. **Responsive Touch Targets**: Minimum 44x44px on mobile
-5. **WCAG AA Compliance**: Proper contrast ratios
-6. **60fps Animations**: Smooth transitions and interactions
-
-## Debugging Failed Tests
-
-1. Check test output for specific failures
-2. View screenshots: `playwright-report/`
-3. Watch failure videos: `test-results/`
-4. Run in debug mode to step through tests
-5. Use `--headed` to see what the browser is doing
-
-## Writing New Tests
-
-Follow these patterns:
-
-```javascript
-test.describe('Feature Name', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/');
-    await page.waitForLoadState('networkidle');
-  });
-
-  test('should do something', async ({ page }) => {
-    // Arrange
-    const element = page.locator('selector');
-
-    // Act
-    await element.click();
-
-    // Assert
-    await expect(element).toBeVisible();
-  });
-});
-```
-
-## Resources
-
-- [Playwright Documentation](https://playwright.dev)
-- [Best Practices](https://playwright.dev/docs/best-practices)
-- [Selectors](https://playwright.dev/docs/selectors)
-- [Assertions](https://playwright.dev/docs/test-assertions)
+See `playwright.config.js` for details.

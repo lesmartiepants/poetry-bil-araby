@@ -3,20 +3,17 @@ import { defineConfig, devices } from '@playwright/test';
 /**
  * Playwright configuration for Poetry Bil-Araby
  *
- * CI Mode: Fast feedback with critical browsers only (Chrome desktop + mobile)
- * Local Mode: Full device matrix for comprehensive testing
+ * CI Mode: Single Desktop Chrome project — mobile tested via viewport overrides in specs
+ * Local Mode: Full device matrix for comprehensive pre-push testing
  *
  * Performance optimizations:
  * - CI uses 2 workers (optimal for GitHub Actions 2-core runners)
  * - Reduced timeouts (10s test, 3s assertions)
  * - 1 retry in both CI and local to reduce flake noise
- * - Minimal device matrix in CI (2 projects vs 6)
+ * - Single CI project (mobile coverage via test.use() overrides)
  */
 export default defineConfig({
   testDir: './e2e',
-
-  // Exclude production-only tests in CI (they hit live APIs)
-  testIgnore: process.env.CI ? ['**/design-review-prod.spec.js'] : [],
 
   // Run tests in parallel
   fullyParallel: true,
@@ -73,30 +70,14 @@ export default defineConfig({
     navigationTimeout: process.env.CI ? 10000 : 30000,
   },
 
-  // Configure projects based on environment
-  // CI: Only critical browsers (Desktop Chrome + Mobile Chrome) for fast feedback
-  // Local: Full device matrix for comprehensive testing
+  // CI: Single Desktop Chrome project — mobile coverage via test.use() viewport overrides.
+  // Local: Full device matrix for comprehensive pre-push testing.
   projects: process.env.CI ? [
-    // CI: Critical browsers only for fast feedback (< 3 minutes)
     {
       name: 'Desktop Chrome',
       use: {
         ...devices['Desktop Chrome'],
         viewport: { width: 1920, height: 1080 }
-      },
-    },
-    {
-      name: 'Mobile Chrome',
-      use: { ...devices['Pixel 5'] },
-    },
-    // Narrow-viewport regression for iOS-class phones (iPhone 16 Pro: 402px CSS width)
-    {
-      name: 'iPhone 16 Pro',
-      use: {
-        ...devices['Desktop Chrome'],
-        viewport: { width: 402, height: 874 },
-        isMobile: true,
-        hasTouch: true,
       },
     },
   ] : [

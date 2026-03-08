@@ -114,6 +114,13 @@ function qualityFilter() {
   return hasQualityScore ? 'AND p.quality_score >= 60' : '';
 }
 
+// Helper: returns extra SELECT columns for translation cache (empty string when columns don't exist)
+function translationSelectExpr() {
+  return hasTranslationColumns
+    ? ', p.cached_translation, p.cached_explanation, p.cached_author_bio'
+    : '';
+}
+
 // Test database connection
 pool.query('SELECT NOW()', (err, res) => {
   if (err) {
@@ -214,6 +221,7 @@ app.get('/api/poems/random', [
         ${poemContentExpr()} as arabic,
         po.name as poet,
         t.name as theme
+        ${translationSelectExpr()}
       FROM poems p
       JOIN poets po ON p.poet_id = po.id
       JOIN themes t ON p.theme_id = t.id
@@ -228,7 +236,12 @@ app.get('/api/poems/random', [
       if (qf) query += ` WHERE 1=1 ${qf}`;
     }
 
-    query += ' ORDER BY RANDOM() LIMIT 1';
+    // Prefer poems with cached translations, then random
+    if (hasTranslationColumns) {
+      query += ' ORDER BY (p.cached_translation IS NOT NULL) DESC, RANDOM() LIMIT 1';
+    } else {
+      query += ' ORDER BY RANDOM() LIMIT 1';
+    }
 
     const result = await pool.query(query, params);
 
@@ -253,7 +266,12 @@ app.get('/api/poems/random', [
       tags: [poem.theme] // Using theme as tag
     };
 
-    log.info('Poems', `Random poem: id=${poem.id}, poet=${poem.poet}, arabic_len=${formattedPoem.arabic?.length || 0}`);
+    // Include cached translations when available
+    if (poem.cached_translation) formattedPoem.cachedTranslation = poem.cached_translation;
+    if (poem.cached_explanation) formattedPoem.cachedExplanation = poem.cached_explanation;
+    if (poem.cached_author_bio) formattedPoem.cachedAuthorBio = poem.cached_author_bio;
+
+    log.info('Poems', `Random poem: id=${poem.id}, poet=${poem.poet}, arabic_len=${formattedPoem.arabic?.length || 0}${poem.cached_translation ? ', has_translation' : ''}`);
     res.json(formattedPoem);
   } catch (error) {
     log.error('Poems', `Error fetching random poem: ${error.message}`, error.stack);

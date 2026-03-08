@@ -325,7 +325,7 @@ describe('DiwanApp', () => {
       await userEvent.click(screen.getByLabelText('Copy poem to clipboard'))
 
       // App should still be rendered (no crash)
-      expect(screen.getByText('poetry')).toBeInTheDocument()
+      expect(screen.getAllByText('poetry').length).toBeGreaterThanOrEqual(1)
     })
   })
 

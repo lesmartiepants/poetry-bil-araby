@@ -5,6 +5,7 @@ import { useAuth, useUserSettings, useSavedPoems } from './hooks/useAuth';
 import { INSIGHTS_SYSTEM_PROMPT, DISCOVERY_SYSTEM_PROMPT, getTTSInstruction } from './prompts';
 import { parseInsight } from './utils/insightParser';
 import { repairAndParseJSON } from './utils/jsonRepair';
+import seedPoems from './data/seed-poems.json';
 
 /* =============================================================================
   1. FEATURE FLAGS & DESIGN SYSTEM
@@ -18,7 +19,8 @@ const FEATURES = {
   caching: true,      // Enable IndexedDB caching for audio/insights
   streaming: true,    // Enable streaming insights (progressive rendering)
   prefetching: true,  // Enable smart prefetching (rate-limited to avoid API issues)
-  database: true      // Enable database poem source (requires backend server running)
+  database: true,     // Enable database poem source (requires backend server running)
+  onboarding: true    // Show kinetic walkthrough (phases 1-3) on first visit
 };
 
 const DESIGN = {
@@ -990,6 +992,12 @@ const OverflowMenu = ({
   isCurrentDaily,
   useDatabase,
   onToggleDatabase,
+  showTranslation,
+  onToggleTranslation,
+  showTransliteration,
+  onToggleTransliteration,
+  textSizeLevel,
+  onCycleTextSize,
   user,
   onOpenSavedPoems,
   onOpenSettings,
@@ -1097,6 +1105,30 @@ const OverflowMenu = ({
             <div className="flex flex-col items-start">
               <div className="font-amiri text-base font-medium" style={{ color: gold }}>مشاركة</div>
               <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Share</div>
+            </div>
+          </button>
+
+          <button onClick={() => { onToggleTranslation(); setIsOpen(false); }} className={`${itemClass} ${!showTranslation ? 'opacity-50' : ''}`}>
+            <Languages size={18} style={{ color: gold }} />
+            <div className="flex flex-col items-start">
+              <div className="font-amiri text-base font-medium" style={{ color: gold }}>{showTranslation ? 'إخفاء الترجمة' : 'إظهار الترجمة'}</div>
+              <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">{showTranslation ? 'Hide Translation' : 'Show Translation'}</div>
+            </div>
+          </button>
+
+          <button onClick={() => { onToggleTransliteration(); setIsOpen(false); }} className={`${itemClass} ${!showTransliteration ? 'opacity-50' : ''}`}>
+            <span className="text-[14px] font-bold leading-none" style={{ color: gold, fontFamily: "'Amiri', serif" }}>عA</span>
+            <div className="flex flex-col items-start">
+              <div className="font-amiri text-base font-medium" style={{ color: gold }}>{showTransliteration ? 'إخفاء النقحرة' : 'إظهار النقحرة'}</div>
+              <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">{showTransliteration ? 'Hide Romanization' : 'Show Romanization'}</div>
+            </div>
+          </button>
+
+          <button onClick={() => { onCycleTextSize(); setIsOpen(false); }} className={itemClass}>
+            <span className="font-brand-en text-[15px] font-bold" style={{ color: gold }}>Aa</span>
+            <div className="flex flex-col items-start">
+              <div className="font-amiri text-base font-medium" style={{ color: gold }}>حجم الخط</div>
+              <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Text Size: {['S', 'M', 'L', 'XL'][textSizeLevel]}</div>
             </div>
           </button>
 
@@ -1321,7 +1353,7 @@ const ShortcutHelp = ({ isOpen, onClose, theme }) => {
 
 const SPLASH_STEPS = []; // Walkthrough steps are handled internally by SplashScreen
 
-const SplashScreen = ({ isOpen, onDismiss, theme }) => {
+const SplashScreen = ({ isOpen, onDismiss, showOnboarding, theme }) => {
   // Phase: 0 = desert splash, 1 = kinetic step 0 (Arabic), 2 = kinetic step 1 (English), 3 = kinetic step 2 (count)
   const [phase, setPhase] = useState(0);
   const [fadeState, setFadeState] = useState('in');
@@ -1505,7 +1537,11 @@ const SplashScreen = ({ isOpen, onDismiss, theme }) => {
 
   const handleSplashEnter = (e) => {
     e.stopPropagation();
-    setPhase(1);
+    if (showOnboarding) {
+      setPhase(1);
+    } else {
+      handleDismiss();
+    }
   };
 
   const handleWalkthroughTap = (e) => {
@@ -1894,7 +1930,7 @@ const AuthModal = ({ isOpen, onClose, onSignInWithGoogle, onSignInWithApple, the
   );
 };
 
-const AuthButton = ({ user, onSignIn, onSignOut, onOpenSavedPoems, onOpenSettings, theme }) => {
+const AuthButton = ({ user, darkMode, onSignIn, onSignOut, onOpenSavedPoems, onOpenSettings, theme }) => {
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef(null);
 
@@ -2335,12 +2371,41 @@ export default function DiwanApp() {
   const controlBarRef = useRef(null);
 
   const [headerOpacity, setHeaderOpacity] = useState(1);
-  const [poems, setPoems] = useState([{
-    id: 1, poet: "Nizar Qabbani", poetArabic: "نزار قباني", title: "My Beloved", titleArabic: "حبيبتي",
-    arabic: "حُبُّكِ يا عَمِيقَةَ العَيْنَيْنِ\nتَطَرُّفٌ .. تَصَوُّفٌ .. عِبَادَة\nحُبُّكِ مِثْلَ المَوْتِ وَالوِلَادَة\nصَعْبٌ بِأَنْ يُعَادَ مَرَّتَيْنِ",
-    english: "Your love, O woman of deep eyes,\nIs radicalism… is Sufism… is worship.\nYour love is like Death and like Birth—\nIt is difficult for it to be repeated twice.",
-    tags: ["Modern", "Romantic", "Ghazal"]
-  }]);
+  const [poems, setPoems] = useState(() => {
+    // 1. Restore from OAuth redirect (avoids flash of seed poem)
+    try {
+      const stashed = sessionStorage.getItem('pendingSavePoem');
+      if (stashed) {
+        const poem = JSON.parse(stashed);
+        if (poem?.arabic) return [poem];
+      }
+    } catch {}
+
+    // 2. Restore pre-fetched poem from last visit (with 7-day TTL)
+    try {
+      const raw = localStorage.getItem('qafiyah_nextPoem');
+      if (raw) {
+        const { poem, storedAt } = JSON.parse(raw);
+        localStorage.removeItem('qafiyah_nextPoem');
+        const age = Date.now() - (storedAt || 0);
+        if (poem?.arabic && age < 7 * 24 * 60 * 60 * 1000) return [poem];
+      }
+    } catch {}
+
+    // 3. First-ever visit: pick from seed pool
+    if (seedPoems?.length > 0) {
+      const idx = Math.floor(Math.random() * seedPoems.length);
+      return [seedPoems[idx]];
+    }
+
+    // 4. Ultimate fallback (same as original default)
+    return [{
+      id: 1, poet: "Nizar Qabbani", poetArabic: "نزار قباني", title: "My Beloved", titleArabic: "حبيبتي",
+      arabic: "حُبُّكِ يا عَمِيقَةَ العَيْنَيْنِ\nتَطَرُّفٌ .. تَصَوُّفٌ .. عِبَادَة\nحُبُّكِ مِثْلَ المَوْتِ وَالوِلَادَة\nصَعْبٌ بِأَنْ يُعَادَ مَرَّتَيْنِ",
+      english: "Your love, O woman of deep eyes,\nIs radicalism… is Sufism… is worship.\nYour love is like Death and like Birth—\nIt is difficult for it to be repeated twice.",
+      tags: ["Modern", "Romantic", "Ghazal"]
+    }];
+  });
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [darkMode, setDarkMode] = useState(true);
@@ -2380,8 +2445,10 @@ export default function DiwanApp() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showSavedPoems, setShowSavedPoems] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [showSplash, setShowSplash] = useState(() => {
-    try { return !localStorage.getItem('hasSeenSplash'); } catch { return false; }
+  const [showSplash, setShowSplash] = useState(true); // Always show splash on every visit
+  const [showOnboarding] = useState(() => {
+    if (!FEATURES.onboarding) return false;
+    try { return !localStorage.getItem('hasSeenOnboarding'); } catch { return false; }
   });
   const [showTranslation, setShowTranslation] = useState(true);
   const [textSizeLevel, setTextSizeLevel] = useState(1); // 0=S, 1=M, 2=L, 3=XL
@@ -2467,11 +2534,10 @@ export default function DiwanApp() {
 
   // Auto-load a poem and queue explanation on first mount.
   // If the URL contains /poem/:id, load that specific poem (deep link).
-  // If the user was viewing a poem before an OAuth redirect, restore it instead.
+  // OAuth restore and prefetch are handled in the useState lazy initializer.
   useEffect(() => {
     if (!hasAutoLoaded.current) {
       hasAutoLoaded.current = true;
-      let restored = false;
 
       // Deep link detection: /poem/:id
       const deepLinkMatch = window.location.pathname.match(/^\/poem\/(\d+)$/);
@@ -2491,7 +2557,6 @@ export default function DiwanApp() {
             setCurrentIndex(0);
             setAutoExplainPending(true);
             addLog("DeepLink", `Loaded: ${poem.poet} — ${poem.title}`, "success");
-            // Clean up URL to root (optional: keep for bookmarkability)
             window.history.replaceState({}, '', '/');
           })
           .catch(err => {
@@ -2499,25 +2564,27 @@ export default function DiwanApp() {
             setAutoExplainPending(true);
             handleFetch();
           });
+        prefetchNextVisitPoem();
         return;
       }
 
-      try {
-        const stashed = sessionStorage.getItem('pendingSavePoem');
-        if (stashed) {
-          const poem = JSON.parse(stashed);
-          if (poem && poem.arabic) {
-            setPoems([poem]);
-            setCurrentIndex(0);
-            restored = true;
-            addLog("Restore", "Restored poem from before sign-in", "info");
-          }
-        }
-      } catch {}
-      if (!restored) {
+      // Clear stashed OAuth poem (already restored by useState lazy initializer)
+      try { sessionStorage.removeItem('pendingSavePoem'); } catch {}
+
+      // If the initial poem already has a cached translation, skip auto-explain
+      const initial = poems[0];
+      if (initial?.cachedTranslation) {
+        addLog("Init", `Loaded with cached translation: ${initial.poet} — ${initial.title}`, "success");
+      } else {
+        // No cached translation — queue auto-explain and fetch from DB
         setAutoExplainPending(true);
-        handleFetch();
+        if (!initial?.isSeedPoem || !initial?.cachedTranslation) {
+          handleFetch();
+        }
       }
+
+      // Background: pre-fetch next visit's poem
+      prefetchNextVisitPoem();
     }
   }, []);
 
@@ -2582,11 +2649,13 @@ export default function DiwanApp() {
     } catch {}
   }, [user]);
 
-  // Auto-trigger explanation after auto-loaded poem arrives
+  // Auto-trigger explanation after auto-loaded poem arrives (skip if cached translation exists)
   useEffect(() => {
     if (autoExplainPending && current?.id && !isFetching && !isInterpreting && !interpretation) {
       setAutoExplainPending(false);
-      handleAnalyze();
+      if (!current?.cachedTranslation) {
+        handleAnalyze();
+      }
     }
   }, [autoExplainPending, current?.id, isFetching, isInterpreting, interpretation]);
 
@@ -2717,7 +2786,22 @@ export default function DiwanApp() {
     setHeaderOpacity(Math.max(0, 1 - e.target.scrollTop / 30));
   };
 
-  const insightParts = useMemo(() => parseInsight(interpretation), [interpretation]);
+  // Extract cached translation fields into stable local variables so useMemo
+  // only re-runs when the actual string values change, not on every `current` reference change.
+  const cachedTranslation = current?.cachedTranslation;
+  const cachedExplanation = current?.cachedExplanation;
+  const cachedAuthorBio = current?.cachedAuthorBio;
+
+  const insightParts = useMemo(() => {
+    if (cachedTranslation) {
+      return {
+        poeticTranslation: cachedTranslation,
+        depth: cachedExplanation || '',
+        author: cachedAuthorBio || ''
+      };
+    }
+    return parseInsight(interpretation);
+  }, [interpretation, cachedTranslation, cachedExplanation, cachedAuthorBio]);
 
   const versePairs = useMemo(() => {
     const arLines = (current?.arabic || "").split('\n').filter(l => l.trim());
@@ -3124,6 +3208,7 @@ export default function DiwanApp() {
         const apiStart = apiStartTime;
         let firstChunkTime = null;
         let chunkCount = 0;
+        let totalTime = 0;
 
         const insightsStreamBody = JSON.stringify({
           contents: [{ parts: [{ text: promptText }] }],
@@ -3173,7 +3258,7 @@ export default function DiwanApp() {
         }
 
         insightText = accumulatedText;
-        const totalTime = performance.now() - apiStart;
+        totalTime = performance.now() - apiStart;
         const charCount = insightText.length;
         const estimatedTokens = Math.ceil(charCount / 4);
         const tokensPerSecond = (estimatedTokens / (totalTime / 1000)).toFixed(1);
@@ -3212,6 +3297,23 @@ export default function DiwanApp() {
         const elapsedTime = apiStartTime ? ((performance.now() - apiStartTime) / 1000).toFixed(1) : "2-8";
         addLog("Insights Cache", `Insights cached for future use (${cacheTime.toFixed(0)}ms) | Saves ${elapsedTime}s on reload`, "success");
       }
+
+      // Save translation back to database for future visitors (fire-and-forget)
+      if (current?.isFromDatabase && current?.id && insightText && apiUrl) {
+        const parts = parseInsight(insightText);
+        if (parts?.poeticTranslation) {
+          fetch(`${apiUrl}/api/poems/${current.id}/translation`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              translation: parts.poeticTranslation.replace(/\n/g, '*'),
+              explanation: parts.depth || null,
+              authorBio: parts.author || null
+            })
+          }).catch(() => {});
+        }
+      }
+
       track('insight_completed', { poet: current?.poet, cached: !!(FEATURES.caching && current?.id && insightText) });
     } catch (e) {
       addLog("Analysis Error", `${e.message} | Poem ID: ${current?.id}`, "error");
@@ -3269,6 +3371,9 @@ export default function DiwanApp() {
           // Process database poems: replace * with newlines
           if (newPoem.arabic) {
             newPoem.arabic = newPoem.arabic.replace(/\*/g, '\n');
+          }
+          if (newPoem.cachedTranslation) {
+            newPoem.cachedTranslation = newPoem.cachedTranslation.replace(/\*/g, '\n');
           }
 
           // Mark as database poem
@@ -3382,6 +3487,22 @@ export default function DiwanApp() {
     }
     setIsFetching(false);
   };
+
+  // Pre-fetch a poem in the background for the next visit (stored in localStorage with TTL)
+  async function prefetchNextVisitPoem() {
+    try {
+      const res = await fetch(`${apiUrl}/api/poems/random`);
+      if (!res.ok) return;
+      const poem = await res.json();
+      if (poem.arabic) poem.arabic = poem.arabic.replace(/\*/g, '\n');
+      if (poem.cachedTranslation) poem.cachedTranslation = poem.cachedTranslation.replace(/\*/g, '\n');
+      poem.isFromDatabase = true;
+      localStorage.setItem('qafiyah_nextPoem', JSON.stringify({
+        poem,
+        storedAt: Date.now()
+      }));
+    } catch {} // silent fail — prefetch is best-effort
+  }
 
   const handleCopy = async () => {
     addLog("UI Event", `📋 Copy button clicked | Poem: ${current?.poet} - ${current?.title}`, "info");
@@ -4052,6 +4173,7 @@ export default function DiwanApp() {
                   {isSupabaseConfigured && (
                     <AuthButton
                       user={user}
+                      darkMode={darkMode}
                       onSignIn={handleSignIn}
                       onSignOut={handleSignOut}
                       onOpenSavedPoems={handleOpenSavedPoems}
@@ -4077,6 +4199,12 @@ export default function DiwanApp() {
                   isCurrentDaily={current?.id === dailyPoem?.id}
                   useDatabase={useDatabase}
                   onToggleDatabase={apiKey ? handleToggleDatabase : () => {}}
+                  showTranslation={showTranslation}
+                  onToggleTranslation={() => setShowTranslation(prev => !prev)}
+                  showTransliteration={showTransliteration}
+                  onToggleTransliteration={() => setShowTransliteration(prev => !prev)}
+                  textSizeLevel={textSizeLevel}
+                  onCycleTextSize={cycleTextSize}
                   user={user}
                   onOpenSavedPoems={handleOpenSavedPoems}
                   onOpenSettings={handleOpenSettings}
@@ -4215,8 +4343,9 @@ export default function DiwanApp() {
         isOpen={showSplash}
         onDismiss={() => {
           setShowSplash(false);
-          try { localStorage.setItem('hasSeenSplash', 'true'); } catch {}
+          try { localStorage.setItem('hasSeenOnboarding', 'true'); } catch {}
         }}
+        showOnboarding={showOnboarding}
         theme={theme}
       />
 

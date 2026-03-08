@@ -677,8 +677,10 @@ const MysticalConsultationEffect = ({ active, theme }) => {
   );
 };
 
-const DebugPanel = ({ logs, onClear, darkMode }) => {
+const DebugPanel = ({ logs, onClear, darkMode, poem, appState }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [bugDescription, setBugDescription] = useState('');
+  const [bugStatus, setBugStatus] = useState(null); // null | 'sending' | 'success' | 'error'
   const scrollRef = useRef(null);
 
   useEffect(() => {
@@ -689,6 +691,32 @@ const DebugPanel = ({ logs, onClear, darkMode }) => {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [logs]);
+
+  const handleSubmitBug = async () => {
+    setBugStatus('sending');
+    try {
+      const payload = {
+        description: bugDescription,
+        logs: logs.slice(-100),
+        timestamp: new Date().toISOString(),
+        userAgent: navigator.userAgent,
+        poem: poem ? { id: poem.id, poet: poem.poet, title: poem.title } : null,
+        appState: appState || null
+      };
+      const res = await fetch(`${apiUrl}/api/bug-reports`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      setBugStatus('success');
+      setBugDescription('');
+      setTimeout(() => setBugStatus(null), 3000);
+    } catch (e) {
+      setBugStatus('error');
+      setTimeout(() => setBugStatus(null), 3000);
+    }
+  };
 
   if (!FEATURES.debug) return null;
 
@@ -711,6 +739,33 @@ const DebugPanel = ({ logs, onClear, darkMode }) => {
             <span className="opacity-40">[{log.time}]</span> <span className="font-bold">{log.label}:</span> {log.msg}
           </div>
         ))}
+        {isExpanded && (
+          <div className={`flex items-center gap-2 pt-2 border-t ${darkMode ? 'border-stone-700' : 'border-stone-300'}`}>
+            <input
+              type="text"
+              value={bugDescription}
+              onChange={(e) => setBugDescription(e.target.value)}
+              placeholder="Describe the bug (optional)"
+              className={`flex-1 px-2 py-1 rounded text-[10px] border ${darkMode ? 'bg-stone-900/80 border-stone-700 text-stone-200 placeholder:text-stone-500' : 'bg-white/80 border-stone-300 text-stone-800 placeholder:text-stone-400'}`}
+              onClick={(e) => e.stopPropagation()}
+            />
+            <button
+              onClick={(e) => { e.stopPropagation(); handleSubmitBug(); }}
+              disabled={bugStatus === 'sending'}
+              className={`px-2 py-1 rounded text-[9px] font-bold uppercase tracking-wider transition-colors ${
+                bugStatus === 'success' ? 'bg-green-600/80 text-white' :
+                bugStatus === 'error' ? 'bg-red-600/80 text-white' :
+                bugStatus === 'sending' ? 'bg-stone-600/80 text-stone-400' :
+                'bg-indigo-600/80 text-white hover:bg-indigo-500/80'
+              }`}
+            >
+              {bugStatus === 'sending' ? 'Sending...' :
+               bugStatus === 'success' ? 'Sent!' :
+               bugStatus === 'error' ? 'Failed' :
+               'Submit Bug'}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -2207,6 +2262,7 @@ export default function DiwanApp() {
     }
 
     let insightText = "";
+    let apiStartTime = null;
 
     try {
       // Guard: AI Insights require a Gemini API key
@@ -2239,7 +2295,8 @@ export default function DiwanApp() {
         );
 
         setInterpretation(""); // Clear previous interpretation
-        const apiStart = performance.now();
+        apiStartTime = performance.now();
+        const apiStart = apiStartTime;
         let firstChunkTime = null;
         let chunkCount = 0;
 
@@ -2327,8 +2384,8 @@ export default function DiwanApp() {
           }
         });
         const cacheTime = performance.now() - cacheStart;
-        const savedTime = FEATURES.streaming ? (totalTime / 1000).toFixed(1) : "2-8";
-        addLog("Insights Cache", `Insights cached for future use (${cacheTime.toFixed(0)}ms) | Saves ${savedTime}s on reload`, "success");
+        const elapsedTime = apiStartTime ? ((performance.now() - apiStartTime) / 1000).toFixed(1) : "2-8";
+        addLog("Insights Cache", `Insights cached for future use (${cacheTime.toFixed(0)}ms) | Saves ${elapsedTime}s on reload`, "success");
       }
     } catch (e) {
       addLog("Analysis Error", `${e.message} | Poem ID: ${current?.id}`, "error");
@@ -2622,6 +2679,7 @@ export default function DiwanApp() {
 
   const handleSelectFont = (fontId) => {
     setCurrentFont(fontId);
+    addLog("Font", `Font selected: ${fontId}`, "info");
   };
 
   const handleUnsavePoemFromList = async (sp) => {
@@ -2632,6 +2690,55 @@ export default function DiwanApp() {
       addLog("Unsave", `Removed poem from saved list`, "success");
     }
   };
+
+  // ── Logging hooks for upcoming v1.0 features ──────────────────────
+  // These wrappers provide logging integration points. Feature branches
+  // should call these instead of directly mutating state.
+
+  const handleToggleTheme = () => {
+    const next = !darkMode;
+    setDarkMode(next);
+    addLog("Theme", `Switched to ${next ? 'dark' : 'light'} mode`, "info");
+  };
+
+  const handleShare = async (method) => {
+    addLog("Share", `Share initiated via ${method} | Poem: ${current?.poet} — ${current?.title}`, "info");
+    try {
+      // Feature branch will implement actual sharing logic here
+      addLog("Share", `Share via ${method} succeeded`, "success");
+    } catch (e) {
+      addLog("Share Error", `Share via ${method} failed: ${e.message}`, "error");
+    }
+  };
+
+  const handleDeepLink = (poemId) => {
+    addLog("DeepLink", `Deep link detected for poem ID: ${poemId}`, "info");
+  };
+
+  const handleToggleTranslation = (showTranslation) => {
+    addLog("Translation", `Translation ${showTranslation ? 'shown' : 'hidden'}`, "info");
+  };
+
+  const handleToggleTransliteration = (showTransliteration) => {
+    addLog("Transliteration", `Transliteration ${showTransliteration ? 'shown' : 'hidden'}`, "info");
+  };
+
+  const handleTextSizeChange = (level) => {
+    addLog("TextSize", `Text size changed to level ${level}`, "info");
+  };
+
+  const handleKeyboardShortcut = (key, action) => {
+    addLog("Keyboard", `Shortcut: ${key} → ${action}`, "info");
+  };
+
+  const handleSplashDismissed = () => {
+    addLog("Splash", "Splash screen dismissed", "info");
+  };
+
+  const handleSplashShown = () => {
+    addLog("Splash", "Splash screen shown", "info");
+  };
+  // ── End logging hooks ─────────────────────────────────────────────
 
   useEffect(() => {
     setInterpretation(null);
@@ -2802,7 +2909,13 @@ export default function DiwanApp() {
 
       <div className="scroll-progress" />
 
-      <DebugPanel logs={logs} onClear={() => setLogs([])} darkMode={darkMode} />
+      <DebugPanel
+        logs={logs}
+        onClear={() => setLogs([])}
+        darkMode={darkMode}
+        poem={current}
+        appState={{ mode: useDatabase ? 'database' : 'ai', theme: darkMode ? 'dark' : 'light', font: currentFont }}
+      />
 
       {!apiKey && FEATURES.database && !apiKeyBannerDismissed && (
         <div className={`fixed top-0 left-0 right-0 z-50 px-4 py-2 text-center text-sm ${darkMode ? 'bg-amber-900/90 text-amber-200' : 'bg-amber-100 text-amber-800'} backdrop-blur-sm`}>
@@ -2967,7 +3080,7 @@ export default function DiwanApp() {
 
                   <ThemeDropdown
                     darkMode={darkMode}
-                    onToggleDarkMode={() => setDarkMode(!darkMode)}
+                    onToggleDarkMode={handleToggleTheme}
                     currentFont={currentFont}
                     onCycleFont={cycleFont}
                     fonts={FONTS}
@@ -2989,7 +3102,7 @@ export default function DiwanApp() {
               ) : (
                 <OverflowMenu
                   darkMode={darkMode}
-                  onToggleDarkMode={() => setDarkMode(!darkMode)}
+                  onToggleDarkMode={handleToggleTheme}
                   currentFont={currentFont}
                   onSelectFont={handleSelectFont}
                   selectedCategory={selectedCategory}
@@ -3079,7 +3192,7 @@ export default function DiwanApp() {
         isOpen={showSettings}
         onClose={() => setShowSettings(false)}
         darkMode={darkMode}
-        onToggleDarkMode={() => setDarkMode(!darkMode)}
+        onToggleDarkMode={handleToggleTheme}
         currentFont={currentFont}
         onSelectFont={handleSelectFont}
         user={user}

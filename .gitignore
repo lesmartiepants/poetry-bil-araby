@@ -65,5 +65,3 @@ poetry-splash-ci-fixes/
 __pycache__/
 *.pyc
 
-# Diacritization pipeline data (large parquets, generated artifacts)
-scripts/diacritize-data/

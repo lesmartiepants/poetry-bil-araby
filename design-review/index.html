@@ -703,11 +703,50 @@ function scheduleSyncToAPI() {
 async function syncVerdictsToAPI() {
   if (!currentSession) return;
   try {
+    // Build unfiltered list for session-wide position tracking
+    const allList = [];
+    CATALOG.forEach((comp, ci) => {
+      comp.categories.forEach((cat, cati) =>
+        cat.options.forEach((opt, oi) => {
+          allList.push({ compIdx: ci, catIdx: cati, optIdx: oi, option: opt, category: cat, component: comp });
+        })
+      );
+    });
+
+    function buildComponentTags(entry, filter) {
+      const tags = [entry.component.id];
+      const catTheme = entry.category.id.startsWith('e2e-') ? entry.category.id.slice(4) : entry.category.id;
+      if (!tags.includes(catTheme)) tags.push(catTheme);
+      if (filter && filter !== 'all' && !tags.includes(filter)) tags.push(filter);
+      return tags;
+    }
+
     const verdicts = [];
     for (const [key, data] of Object.entries(reviewData)) {
-      if (data.verdict) verdicts.push({
-        item_key: key, verdict: data.verdict, comment: data.comment || null,
-        tags: data.tags ? data.tags.split(',').map(t => t.trim()).filter(Boolean) : null
+      if (!data.verdict) continue;
+
+      // Find in filtered flatList for position_in_filter
+      const filtIdx = flatList.findIndex(f => f.option.id === key || f.option.id + ':' + sectionFilter === key);
+      // Find in allList for position_in_session
+      const baseKey = key.includes(':') ? key.split(':')[0] : key;
+      const allIdx = allList.findIndex(f => f.option.id === baseKey);
+
+      const entry = filtIdx >= 0 ? flatList[filtIdx] : (allIdx >= 0 ? allList[allIdx] : null);
+
+      verdicts.push({
+        item_key: key,
+        verdict: data.verdict,
+        comment: data.comment || null,
+        tags: data.tags ? data.tags.split(',').map(t => t.trim()).filter(Boolean) : null,
+        design_name: entry ? entry.option.name : null,
+        component: sectionFilter,
+        category: entry ? entry.category.id : null,
+        generation: entry ? (entry.option.generation || 1) : null,
+        position_in_filter: filtIdx >= 0 ? filtIdx + 1 : null,
+        total_in_filter: flatList.length,
+        position_in_session: allIdx >= 0 ? allIdx + 1 : null,
+        total_in_session: allList.length,
+        component_tags: entry ? buildComponentTags(entry, sectionFilter) : null
       });
     }
     if (!verdicts.length) { setSyncStatus('synced'); return; }

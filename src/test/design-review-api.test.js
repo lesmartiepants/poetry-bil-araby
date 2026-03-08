@@ -316,10 +316,12 @@ describe('Design Review API', () => {
       expect(response.body.error).toBe('verdicts must be an array');
     });
 
-    it('should save verdicts', async () => {
+    it('should save verdicts with enriched metadata', async () => {
       mockTablesExist();
-      // Mock batch item_key -> id lookup (SELECT ... WHERE item_key = ANY($1))
-      mockPool.query.mockResolvedValueOnce({ rows: [{ id: 10, item_key: 'splash-zen-1' }] });
+      // Mock batch item_key -> id lookup (SELECT id, item_key, name, component, category, generation)
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ id: 10, item_key: 'splash-zen-1', name: 'Zen Refined', component: 'splash', category: 'zen', generation: 1 }]
+      });
       // Mock batch verdict upsert (single INSERT...ON CONFLICT)
       mockPool.query.mockResolvedValueOnce({ rows: [] });
       // Mock count query
@@ -330,14 +332,89 @@ describe('Design Review API', () => {
       const response = await request(app)
         .post('/api/design-review/sessions/1/verdicts')
         .send({
-          verdicts: [
-            { item_key: 'splash-zen-1', verdict: 'keep', comment: 'Beautiful' }
-          ]
+          verdicts: [{
+            item_key: 'splash-zen-1', verdict: 'keep', comment: 'Beautiful',
+            design_name: 'Zen Refined', component: 'onboarding', category: 'zen',
+            generation: 1, position_in_filter: 5, total_in_filter: 20,
+            position_in_session: 12, total_in_session: 45,
+            component_tags: ['splash', 'zen', 'onboarding']
+          }]
         })
         .expect(200);
 
       expect(response.body.saved).toBe(1);
       expect(response.body.total).toBe(1);
+
+      // Verify the INSERT SQL contains the new enriched columns and 16 parameters per row
+      const insertCall = mockPool.query.mock.calls[2]; // index 0=table check, 1=keyMap lookup, 2=INSERT
+      const sql = insertCall[0];
+      expect(sql).toContain('design_name');
+      expect(sql).toContain('component');
+      expect(sql).toContain('category');
+      expect(sql).toContain('generation');
+      expect(sql).toContain('position_in_filter');
+      expect(sql).toContain('total_in_filter');
+      expect(sql).toContain('position_in_session');
+      expect(sql).toContain('total_in_session');
+      expect(sql).toContain('component_tags');
+      // 16 parameters per row: $1 through $16
+      expect(sql).toContain('$16');
+      expect(sql).not.toContain('$17');
+
+      // Verify parameter values include enriched metadata
+      const params = insertCall[1];
+      expect(params).toHaveLength(16);
+      expect(params).toContain('Zen Refined');    // design_name
+      expect(params).toContain('onboarding');      // component (from payload, not keyMap)
+      expect(params).toContain(5);                 // position_in_filter
+      expect(params).toContain(20);                // total_in_filter
+      expect(params).toContain(12);                // position_in_session
+      expect(params).toContain(45);                // total_in_session
+      expect(params).toContainEqual(['splash', 'zen', 'onboarding']); // component_tags
+    });
+
+    it('should fallback to design_items metadata when verdict only has item_key', async () => {
+      mockTablesExist();
+      // Mock batch item_key -> id lookup returns full metadata
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ id: 10, item_key: 'splash-zen-1', name: 'Zen Refined', component: 'splash', category: 'zen', generation: 1 }]
+      });
+      // Mock batch verdict upsert
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+      // Mock count query
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: '1' }] });
+      // Mock update reviewed_count
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
+
+      const response = await request(app)
+        .post('/api/design-review/sessions/1/verdicts')
+        .send({
+          verdicts: [
+            { item_key: 'splash-zen-1', verdict: 'keep' }
+          ]
+        })
+        .expect(200);
+
+      expect(response.body.saved).toBe(1);
+
+      // Verify that fallback values from keyMap are used in INSERT params
+      const insertCall = mockPool.query.mock.calls[2];
+      const params = insertCall[1];
+      expect(params).toHaveLength(16);
+      // design_name falls back to lookup.name
+      expect(params[7]).toBe('Zen Refined');
+      // component falls back to lookup.component
+      expect(params[8]).toBe('splash');
+      // category falls back to lookup.category
+      expect(params[9]).toBe('zen');
+      // generation falls back to lookup.generation
+      expect(params[10]).toBe(1);
+      // position fields are null when not provided
+      expect(params[11]).toBeNull(); // position_in_filter
+      expect(params[12]).toBeNull(); // total_in_filter
+      expect(params[13]).toBeNull(); // position_in_session
+      expect(params[14]).toBeNull(); // total_in_session
+      expect(params[15]).toBeNull(); // component_tags
     });
   });
 
@@ -406,6 +483,8 @@ describe('Design Review API', () => {
       mockPool.query.mockResolvedValueOnce({
         rows: [{ item_key: 'splash-zen-1', verdict: 'keep', comment: 'Great', round_number: 3 }]
       });
+      // Mock feedback_actions query
+      mockPool.query.mockResolvedValueOnce({ rows: [] });
 
       const response = await request(app)
         .get('/api/design-review/claude-context?round=latest')
@@ -422,7 +501,7 @@ describe('Design Review API', () => {
       expect(response.body.sessions[0].reviewed_count).toBe(45);
     });
 
-    it('should return structured context for Claude agent', async () => {
+    it('should return structured context for Claude agent with enriched evolution and feedback_actions', async () => {
       mockTablesExist();
       // Mock sessions query
       mockPool.query.mockResolvedValueOnce({
@@ -432,9 +511,23 @@ describe('Design Review API', () => {
       mockPool.query.mockResolvedValueOnce({
         rows: [{ id: 1, item_key: 'splash-zen-1', component: 'splash', category: 'zen', is_active: true }]
       });
-      // Mock verdicts query
+      // Mock verdicts query (with enriched fields)
       mockPool.query.mockResolvedValueOnce({
-        rows: [{ item_key: 'splash-zen-1', verdict: 'keep', comment: 'Great', round_number: 1 }]
+        rows: [{
+          item_key: 'splash-zen-1', verdict: 'keep', comment: 'Great', round_number: 1,
+          created_at: '2026-02-20', tags: null,
+          design_name: 'Zen Refined', component: 'splash', category: 'zen', generation: 1,
+          component_tags: ['splash', 'zen'], position_in_filter: 3, total_in_filter: 15,
+          position_in_session: 8, total_in_session: 40
+        }]
+      });
+      // Mock feedback_actions query
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{
+          id: 1, verdict_id: null, session_id: 1, item_key: 'splash-zen-1',
+          action_type: 'css_change', action_description: 'Adjusted padding', file_path: '/splash/zen.css',
+          commit_sha: null, created_at: '2026-02-21'
+        }]
       });
 
       const response = await request(app)
@@ -445,8 +538,198 @@ describe('Design Review API', () => {
       expect(response.body).toHaveProperty('sessions');
       expect(response.body).toHaveProperty('verdicts');
       expect(response.body).toHaveProperty('evolution');
+      expect(response.body).toHaveProperty('feedback_actions');
       expect(response.body).toHaveProperty('summary');
       expect(response.body.summary.total_items).toBe(1);
+
+      // Verify evolution map includes enriched fields
+      const evo = response.body.evolution['splash-zen-1'];
+      expect(evo).toBeDefined();
+      expect(evo).toHaveLength(1);
+      expect(evo[0].design_name).toBe('Zen Refined');
+      expect(evo[0].component).toBe('splash');
+      expect(evo[0].category).toBe('zen');
+      expect(evo[0].generation).toBe(1);
+      expect(evo[0].component_tags).toEqual(['splash', 'zen']);
+      expect(evo[0].position_in_filter).toBe(3);
+      expect(evo[0].total_in_filter).toBe(15);
+      expect(evo[0].position_in_session).toBe(8);
+      expect(evo[0].total_in_session).toBe(40);
+
+      // Verify feedback_actions are included
+      expect(response.body.feedback_actions).toHaveLength(1);
+      expect(response.body.feedback_actions[0].action_type).toBe('css_change');
+    });
+  });
+
+  describe('Design Review Feedback Actions', () => {
+    describe('POST /api/design-review/feedback-actions', () => {
+      it('should return 503 when design tables do not exist', async () => {
+        mockTablesNotExist();
+
+        const response = await request(app)
+          .post('/api/design-review/feedback-actions')
+          .send({
+            actions: [{ session_id: 1, action_type: 'css_change' }]
+          })
+          .expect(503);
+
+        expect(response.body.error).toContain('Design tables not created yet');
+      });
+
+      it('should return 400 when actions is not an array', async () => {
+        mockTablesExist();
+
+        const response = await request(app)
+          .post('/api/design-review/feedback-actions')
+          .send({ actions: 'not-array' })
+          .expect(400);
+
+        expect(response.body.error).toBe('actions must be a non-empty array');
+      });
+
+      it('should return 400 when actions is an empty array', async () => {
+        mockTablesExist();
+
+        const response = await request(app)
+          .post('/api/design-review/feedback-actions')
+          .send({ actions: [] })
+          .expect(400);
+
+        expect(response.body.error).toBe('actions must be a non-empty array');
+      });
+
+      it('should return 400 for invalid action_type', async () => {
+        mockTablesExist();
+
+        const response = await request(app)
+          .post('/api/design-review/feedback-actions')
+          .send({
+            actions: [{ session_id: 1, action_type: 'invalid_type' }]
+          })
+          .expect(400);
+
+        expect(response.body.error).toContain('Invalid action_type');
+      });
+
+      it('should return 400 when session_id is missing', async () => {
+        mockTablesExist();
+
+        const response = await request(app)
+          .post('/api/design-review/feedback-actions')
+          .send({
+            actions: [{ action_type: 'css_change' }]
+          })
+          .expect(400);
+
+        expect(response.body.error).toContain('session_id is required');
+      });
+
+      it('should save feedback actions successfully', async () => {
+        mockTablesExist();
+        // Mock INSERT ... RETURNING id
+        mockPool.query.mockResolvedValueOnce({
+          rows: [{ id: 1 }, { id: 2 }]
+        });
+
+        const response = await request(app)
+          .post('/api/design-review/feedback-actions')
+          .send({
+            actions: [
+              {
+                session_id: 1, item_key: 'splash-zen-1', action_type: 'css_change',
+                action_description: 'Adjusted padding', file_path: '/splash/zen.css'
+              },
+              {
+                session_id: 1, item_key: 'splash-ink-1', action_type: 'typography_change',
+                action_description: 'Changed font size'
+              }
+            ]
+          })
+          .expect(200);
+
+        expect(response.body.saved).toBe(2);
+
+        // Verify the INSERT SQL has 7 columns per row
+        const insertCall = mockPool.query.mock.calls[1]; // index 0=table check, 1=INSERT
+        const sql = insertCall[0];
+        expect(sql).toContain('design_feedback_actions');
+        expect(sql).toContain('verdict_id');
+        expect(sql).toContain('session_id');
+        expect(sql).toContain('item_key');
+        expect(sql).toContain('action_type');
+        expect(sql).toContain('action_description');
+        expect(sql).toContain('file_path');
+        expect(sql).toContain('commit_sha');
+        expect(sql).toContain('RETURNING id');
+
+        // 2 rows x 7 cols = 14 params
+        const params = insertCall[1];
+        expect(params).toHaveLength(14);
+      });
+    });
+
+    describe('GET /api/design-review/feedback-actions', () => {
+      it('should return empty array when design tables do not exist', async () => {
+        mockTablesNotExist();
+
+        const response = await request(app)
+          .get('/api/design-review/feedback-actions')
+          .expect(200);
+
+        expect(response.body).toEqual([]);
+      });
+
+      it('should return all feedback actions', async () => {
+        mockTablesExist();
+        mockPool.query.mockResolvedValueOnce({
+          rows: [
+            { id: 1, session_id: 1, item_key: 'splash-zen-1', action_type: 'css_change', created_at: '2026-02-21' },
+            { id: 2, session_id: 1, item_key: 'splash-ink-1', action_type: 'typography_change', created_at: '2026-02-21' }
+          ]
+        });
+
+        const response = await request(app)
+          .get('/api/design-review/feedback-actions')
+          .expect(200);
+
+        expect(response.body).toHaveLength(2);
+        expect(response.body[0].action_type).toBe('css_change');
+      });
+
+      it('should filter by session_id', async () => {
+        mockTablesExist();
+        mockPool.query.mockResolvedValueOnce({
+          rows: [{ id: 1, session_id: 5, item_key: 'splash-zen-1', action_type: 'css_change' }]
+        });
+
+        const response = await request(app)
+          .get('/api/design-review/feedback-actions?session_id=5')
+          .expect(200);
+
+        expect(response.body).toHaveLength(1);
+        // Verify the query was called with session_id parameter
+        const queryCall = mockPool.query.mock.calls[1]; // index 0=table check, 1=SELECT
+        expect(queryCall[0]).toContain('session_id = $1');
+        expect(queryCall[1]).toContain('5');
+      });
+
+      it('should filter by multiple criteria', async () => {
+        mockTablesExist();
+        mockPool.query.mockResolvedValueOnce({
+          rows: [{ id: 1, session_id: 5, item_key: 'splash-zen-1', action_type: 'css_change' }]
+        });
+
+        const response = await request(app)
+          .get('/api/design-review/feedback-actions?session_id=5&action_type=css_change')
+          .expect(200);
+
+        expect(response.body).toHaveLength(1);
+        const queryCall = mockPool.query.mock.calls[1];
+        expect(queryCall[0]).toContain('session_id = $1');
+        expect(queryCall[0]).toContain('action_type = $2');
+        expect(queryCall[1]).toEqual(['5', 'css_change']);
+      });
     });
   });
 });

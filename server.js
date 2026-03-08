@@ -618,40 +618,65 @@ app.post('/api/design-review/sessions/:id/verdicts', requireApiKey, async (req, 
     const { verdicts } = req.body;
     if (!Array.isArray(verdicts)) return res.status(400).json({ error: 'verdicts must be an array' });
 
-    // Resolve all item_keys to item_ids in a single query
+    // Resolve all item_keys to item records in a single query
     const keys = verdicts.filter(v => v.item_key && !v.item_id).map(v => v.item_key);
     const keyMap = Object.create(null);
     if (keys.length > 0) {
       const keyResult = await pool.query(
-        'SELECT id, item_key FROM design_items WHERE item_key = ANY($1)',
+        'SELECT id, item_key, name, component, category, generation FROM design_items WHERE item_key = ANY($1)',
         [keys]
       );
-      keyResult.rows.forEach(r => { keyMap[r.item_key] = r.id; });
+      keyResult.rows.forEach(r => { keyMap[r.item_key] = r; });
     }
 
     // Build batch of resolved verdicts
     const resolved = [];
     for (const v of verdicts) {
-      const item_id = v.item_id || keyMap[v.item_key];
+      const item_id = v.item_id || keyMap[v.item_key]?.id;
       if (!item_id) continue;
-      resolved.push({ session_id: id, item_id, item_key: v.item_key, verdict: v.verdict, comment: v.comment || null, priority: v.priority || 0, tags: v.tags || null });
+      const lookup = keyMap[v.item_key];
+      resolved.push({
+        session_id: id, item_id, item_key: v.item_key, verdict: v.verdict,
+        comment: v.comment || null, priority: v.priority || 0, tags: v.tags || null,
+        design_name: v.design_name || lookup?.name || null,
+        component: v.component || lookup?.component || null,
+        category: v.category || lookup?.category || null,
+        generation: v.generation ?? lookup?.generation ?? null,
+        position_in_filter: v.position_in_filter ?? null,
+        total_in_filter: v.total_in_filter ?? null,
+        position_in_session: v.position_in_session ?? null,
+        total_in_session: v.total_in_session ?? null,
+        component_tags: v.component_tags || null
+      });
     }
 
     if (resolved.length > 0) {
       // Single multi-row INSERT...ON CONFLICT (all values parameterized)
+      const COLS_PER_ROW = 16;
       const params = [];
       const valueTuples = [];
       for (let i = 0; i < resolved.length; i++) {
-        const p = i * 7;
+        const p = i * COLS_PER_ROW;
         const r = resolved[i];
-        params.push(r.session_id, r.item_id, r.item_key, r.verdict, r.comment, r.priority, r.tags);
-        valueTuples.push('($' + (p+1) + ', $' + (p+2) + ', $' + (p+3) + ', $' + (p+4) + ', $' + (p+5) + ', $' + (p+6) + ', $' + (p+7) + ')');
+        params.push(
+          r.session_id, r.item_id, r.item_key, r.verdict, r.comment, r.priority, r.tags,
+          r.design_name, r.component, r.category, r.generation,
+          r.position_in_filter, r.total_in_filter, r.position_in_session, r.total_in_session,
+          r.component_tags
+        );
+        const placeholders = Array.from({ length: COLS_PER_ROW }, (_, j) => '$' + (p + j + 1)).join(', ');
+        valueTuples.push('(' + placeholders + ')');
       }
 
-      const sql = 'INSERT INTO design_verdicts (session_id, item_id, item_key, verdict, comment, priority, tags) ' +
+      const sql = 'INSERT INTO design_verdicts (session_id, item_id, item_key, verdict, comment, priority, tags, ' +
+        'design_name, component, category, generation, position_in_filter, total_in_filter, position_in_session, total_in_session, component_tags) ' +
         'VALUES ' + valueTuples.join(', ') + ' ' +
         'ON CONFLICT (session_id, item_id) DO UPDATE SET ' +
-        'verdict = EXCLUDED.verdict, comment = EXCLUDED.comment, priority = EXCLUDED.priority, tags = EXCLUDED.tags, updated_at = now()';
+        'verdict = EXCLUDED.verdict, comment = EXCLUDED.comment, priority = EXCLUDED.priority, tags = EXCLUDED.tags, ' +
+        'design_name = EXCLUDED.design_name, component = EXCLUDED.component, category = EXCLUDED.category, generation = EXCLUDED.generation, ' +
+        'position_in_filter = EXCLUDED.position_in_filter, total_in_filter = EXCLUDED.total_in_filter, ' +
+        'position_in_session = EXCLUDED.position_in_session, total_in_session = EXCLUDED.total_in_session, ' +
+        'component_tags = EXCLUDED.component_tags, updated_at = now()';
       await pool.query(sql, params); // lgtm[js/sql-injection] - valueTuples contain only $N placeholders, all user data is in params
     }
 
@@ -755,7 +780,7 @@ app.get('/api/design-review/claude-context', async (req, res) => {
       verdicts = vResult.rows;
     }
 
-    // Build evolution map (item_key -> [{round, verdict, comment}])
+    // Build evolution map (item_key -> [{round, verdict, comment, ...metadata}])
     const evolution = {};
     verdicts.forEach(v => {
       if (!evolution[v.item_key]) evolution[v.item_key] = [];
@@ -764,15 +789,40 @@ app.get('/api/design-review/claude-context', async (req, res) => {
         verdict: v.verdict,
         comment: v.comment,
         tags: v.tags,
-        date: v.created_at
+        date: v.created_at,
+        design_name: v.design_name,
+        component: v.component,
+        category: v.category,
+        generation: v.generation,
+        component_tags: v.component_tags,
+        position_in_filter: v.position_in_filter,
+        total_in_filter: v.total_in_filter,
+        position_in_session: v.position_in_session,
+        total_in_session: v.total_in_session
       });
     });
+
+    // Fetch feedback actions (wrapped in try/catch for backwards compat)
+    let feedbackActions = [];
+    if (sessions.rows.length > 0) {
+      try {
+        const sessionIds = sessions.rows.map(s => s.id);
+        const faResult = await pool.query(
+          'SELECT * FROM design_feedback_actions WHERE session_id = ANY($1) ORDER BY created_at',
+          [sessionIds]
+        );
+        feedbackActions = faResult.rows;
+      } catch (e) {
+        log.debug('DesignReview', `feedback_actions query skipped: ${e.message}`);
+      }
+    }
 
     res.json({
       items: items.rows,
       sessions: sessions.rows,
       verdicts,
       evolution,
+      feedback_actions: feedbackActions,
       summary: {
         total_items: items.rows.length,
         reviewed: verdicts.length,
@@ -781,6 +831,112 @@ app.get('/api/design-review/claude-context', async (req, res) => {
     });
   } catch (error) {
     log.error('DesignReview', `Error building claude context: ${error.message}`);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/design-review/feedback-actions — bulk save feedback actions
+const VALID_ACTION_TYPES = new Set([
+  'css_change', 'layout_change', 'animation_change', 'component_change',
+  'typography_change', 'color_change', 'responsive_fix', 'accessibility_fix',
+  'new_variant', 'removal', 'no_action', 'deferred'
+]);
+
+app.post('/api/design-review/feedback-actions', requireApiKey, async (req, res) => {
+  try {
+    if (!(await designTablesExist())) return res.status(503).json({ error: 'Design tables not created yet' });
+    const { actions } = req.body;
+    if (!Array.isArray(actions) || actions.length === 0) return res.status(400).json({ error: 'actions must be a non-empty array' });
+
+    // Validate action_type values
+    for (const a of actions) {
+      if (!a.action_type || !VALID_ACTION_TYPES.has(a.action_type)) {
+        return res.status(400).json({ error: `Invalid action_type: ${a.action_type}` });
+      }
+      if (!a.session_id) {
+        return res.status(400).json({ error: 'session_id is required for each action' });
+      }
+    }
+
+    const COLS = 7;
+    const params = [];
+    const valueTuples = [];
+    for (let i = 0; i < actions.length; i++) {
+      const p = i * COLS;
+      const a = actions[i];
+      params.push(
+        a.verdict_id || null, a.session_id, a.item_key || null,
+        a.action_type, a.action_description || null, a.file_path || null, a.commit_sha || null
+      );
+      const placeholders = Array.from({ length: COLS }, (_, j) => '$' + (p + j + 1)).join(', ');
+      valueTuples.push('(' + placeholders + ')');
+    }
+
+    const sql = 'INSERT INTO design_feedback_actions (verdict_id, session_id, item_key, action_type, action_description, file_path, commit_sha) ' +
+      'VALUES ' + valueTuples.join(', ') + ' RETURNING id';
+    const result = await pool.query(sql, params);
+
+    res.json({ saved: result.rows.length });
+  } catch (error) {
+    log.error('DesignReview', `Error saving feedback actions: ${error.message}`);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// GET /api/design-review/feedback-actions — query feedback actions with filters
+app.get('/api/design-review/feedback-actions', async (req, res) => {
+  try {
+    if (!(await designTablesExist())) return res.json([]);
+    const { session_id, verdict_id, item_key, action_type } = req.query;
+
+    let sql = 'SELECT * FROM design_feedback_actions WHERE 1=1';
+    const params = [];
+    if (session_id) { params.push(session_id); sql += ` AND session_id = $${params.length}`; }
+    if (verdict_id) { params.push(verdict_id); sql += ` AND verdict_id = $${params.length}`; }
+    if (item_key) { params.push(item_key); sql += ` AND item_key = $${params.length}`; }
+    if (action_type) { params.push(action_type); sql += ` AND action_type = $${params.length}`; }
+    sql += ' ORDER BY created_at DESC';
+
+    const result = await pool.query(sql, params);
+    res.json(result.rows);
+  } catch (error) {
+    log.error('DesignReview', `Error fetching feedback actions: ${error.message}`);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// PATCH /api/design-review/feedback-actions/:id — update a feedback action (e.g., mark as applied)
+app.patch('/api/design-review/feedback-actions/:id', requireApiKey, async (req, res) => {
+  try {
+    if (!(await designTablesExist())) return res.status(503).json({ error: 'Design tables not created yet' });
+    const { id } = req.params;
+    const { applied, action_type, action_description, file_path, commit_sha } = req.body;
+
+    const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!UUID_RE.test(id)) return res.status(400).json({ error: 'Invalid feedback action id' });
+
+    if (action_type && !VALID_ACTION_TYPES.has(action_type)) {
+      return res.status(400).json({ error: `Invalid action_type: ${action_type}` });
+    }
+
+    const sets = [];
+    const params = [];
+    if (applied !== undefined) { params.push(applied); sets.push(`applied = $${params.length}`); }
+    if (action_type) { params.push(action_type); sets.push(`action_type = $${params.length}`); }
+    if (action_description !== undefined) { params.push(action_description); sets.push(`action_description = $${params.length}`); }
+    if (file_path !== undefined) { params.push(file_path); sets.push(`file_path = $${params.length}`); }
+    if (commit_sha !== undefined) { params.push(commit_sha); sets.push(`commit_sha = $${params.length}`); }
+
+    if (sets.length === 0) return res.status(400).json({ error: 'No fields to update' });
+
+    params.push(id);
+    const sql = `UPDATE design_feedback_actions SET ${sets.join(', ')} WHERE id = $${params.length} RETURNING *`;
+    const result = await pool.query(sql, params);
+
+    if (result.rows.length === 0) return res.status(404).json({ error: 'Feedback action not found' });
+    res.json(result.rows[0]);
+  } catch (error) {
+    log.error('DesignReview', `Error updating feedback action: ${error.message}`);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

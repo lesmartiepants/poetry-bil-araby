@@ -1,3 +1,19 @@
+import * as Sentry from '@sentry/node';
+import dotenv from 'dotenv';
+dotenv.config();
+
+// Initialize Sentry BEFORE all other imports per official guidance
+if (process.env.SENTRY_DSN) {
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    environment: process.env.NODE_ENV || 'development',
+    release: process.env.SENTRY_RELEASE || undefined,
+    sendDefaultPii: true,
+    tracesSampleRate: process.env.NODE_ENV === 'production' ? 0.2 : 1.0,
+    includeLocalVariables: true,
+  });
+}
+
 import express from 'express';
 import pg from 'pg';
 import cors from 'cors';
@@ -5,11 +21,8 @@ import helmet from 'helmet';
 import { query, param, validationResult } from 'express-validator';
 import crypto from 'crypto';
 import rateLimit from 'express-rate-limit';
-import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { resolve } from 'path';
-
-dotenv.config();
 
 const { Pool } = pg;
 const app = express();
@@ -77,6 +90,20 @@ async function checkQualityScoreColumn() {
   }
 }
 
+// Check if translation cache columns exist (graceful pre-migration fallback)
+let hasTranslationColumns = false;
+async function checkTranslationColumns() {
+  try {
+    const result = await pool.query(
+      "SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'poems' AND column_name = 'cached_translation' LIMIT 1"
+    );
+    hasTranslationColumns = result.rows.length > 0;
+    log.info('DB', `Translation cache columns: ${hasTranslationColumns ? 'available' : 'not found'}`);
+  } catch {
+    hasTranslationColumns = false;
+  }
+}
+
 // Helper: returns the SQL expression for poem content based on column availability
 function poemContentExpr() {
   return hasDiacritizedColumn ? 'COALESCE(p.diacritized_content, p.content)' : 'p.content';
@@ -87,6 +114,13 @@ function qualityFilter() {
   return hasQualityScore ? 'AND p.quality_score >= 60' : '';
 }
 
+// Helper: returns extra SELECT columns for translation cache (empty string when columns don't exist)
+function translationSelectExpr() {
+  return hasTranslationColumns
+    ? ', p.cached_translation, p.cached_explanation, p.cached_author_bio'
+    : '';
+}
+
 // Test database connection
 pool.query('SELECT NOW()', (err, res) => {
   if (err) {
@@ -95,6 +129,7 @@ pool.query('SELECT NOW()', (err, res) => {
     log.info('DB', `Connected to PostgreSQL at ${res.rows[0].now}`);
     checkDiacritizedColumn();
     checkQualityScoreColumn();
+    checkTranslationColumns();
   }
 });
 
@@ -186,6 +221,7 @@ app.get('/api/poems/random', [
         ${poemContentExpr()} as arabic,
         po.name as poet,
         t.name as theme
+        ${translationSelectExpr()}
       FROM poems p
       JOIN poets po ON p.poet_id = po.id
       JOIN themes t ON p.theme_id = t.id
@@ -200,7 +236,12 @@ app.get('/api/poems/random', [
       if (qf) query += ` WHERE 1=1 ${qf}`;
     }
 
-    query += ' ORDER BY RANDOM() LIMIT 1';
+    // Prefer poems with cached translations, then random
+    if (hasTranslationColumns) {
+      query += ' ORDER BY (p.cached_translation IS NOT NULL) DESC, RANDOM() LIMIT 1';
+    } else {
+      query += ' ORDER BY RANDOM() LIMIT 1';
+    }
 
     const result = await pool.query(query, params);
 
@@ -225,7 +266,12 @@ app.get('/api/poems/random', [
       tags: [poem.theme] // Using theme as tag
     };
 
-    log.info('Poems', `Random poem: id=${poem.id}, poet=${poem.poet}, arabic_len=${formattedPoem.arabic?.length || 0}`);
+    // Include cached translations when available
+    if (poem.cached_translation) formattedPoem.cachedTranslation = poem.cached_translation;
+    if (poem.cached_explanation) formattedPoem.cachedExplanation = poem.cached_explanation;
+    if (poem.cached_author_bio) formattedPoem.cachedAuthorBio = poem.cached_author_bio;
+
+    log.info('Poems', `Random poem: id=${poem.id}, poet=${poem.poet}, arabic_len=${formattedPoem.arabic?.length || 0}${poem.cached_translation ? ', has_translation' : ''}`);
     res.json(formattedPoem);
   } catch (error) {
     log.error('Poems', `Error fetching random poem: ${error.message}`, error.stack);
@@ -349,6 +395,149 @@ app.get('/api/poems/search', [
     res.json(poems);
   } catch (error) {
     log.error('Search', `Error searching poems: ${error.message}`, error.stack);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get poem of the day (deterministic daily selection, stable across all users)
+app.get('/api/poems/daily', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT
+        p.id,
+        p.title,
+        ${poemContentExpr()} as arabic,
+        po.name as poet,
+        t.name as theme
+      FROM poems p
+      JOIN poets po ON p.poet_id = po.id
+      JOIN themes t ON p.theme_id = t.id
+      ${hasQualityScore ? 'WHERE p.quality_score >= 60' : ''}
+      ORDER BY md5(p.id::text || current_date::text)
+      LIMIT 1
+    `);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'No poems found' });
+    }
+
+    const poem = result.rows[0];
+
+    const formattedPoem = {
+      id: poem.id,
+      poet: poem.poet,
+      poetArabic: poem.poet,
+      title: poem.title,
+      titleArabic: poem.title,
+      arabic: poem.arabic,
+      english: '',
+      tags: [poem.theme]
+    };
+
+    // Cache for the rest of the day (seconds until midnight UTC)
+    const now = new Date();
+    const midnight = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
+    const secondsUntilMidnight = Math.floor((midnight - now) / 1000);
+    res.set('Cache-Control', `public, max-age=${secondsUntilMidnight}`);
+
+    log.info('Poems', `Daily poem: id=${poem.id}, poet=${poem.poet}`);
+    res.json(formattedPoem);
+  } catch (error) {
+    log.error('Poems', `Error fetching daily poem: ${error.message}`, error.stack);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get poem by ID (for deep links / sharing)
+// IMPORTANT: This route uses :id param and must be registered AFTER all /api/poems/<literal> routes
+// (random, by-poet, search, daily) to avoid shadowing them.
+app.get('/api/poems/:id', [
+  param('id').isInt({ min: 1 }).withMessage('Poem ID must be a positive integer'),
+  validate
+], async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await pool.query(`
+      SELECT
+        p.id,
+        p.title,
+        ${poemContentExpr()} as arabic,
+        po.name as poet,
+        t.name as theme
+      FROM poems p
+      JOIN poets po ON p.poet_id = po.id
+      JOIN themes t ON p.theme_id = t.id
+      WHERE p.id = $1
+    `, [id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Poem not found' });
+    }
+
+    const poem = result.rows[0];
+
+    const formattedPoem = {
+      id: poem.id,
+      poet: poem.poet,
+      poetArabic: poem.poet,
+      title: poem.title,
+      titleArabic: poem.title,
+      arabic: poem.arabic,
+      english: '',
+      tags: [poem.theme]
+    };
+
+    log.info('Poems', `By ID: ${id}, poet=${poem.poet}`);
+    res.json(formattedPoem);
+  } catch (error) {
+    log.error('Poems', `Error fetching poem by ID: ${error.message}`, error.stack);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Save cached translation for a poem (write-once, rate-limited)
+const translationWriteLimit = rateLimit({ windowMs: 60_000, max: 10, standardHeaders: true, legacyHeaders: false });
+
+app.post('/api/poems/:id/translation', translationWriteLimit, [
+  param('id').isInt({ min: 1 }).withMessage('Invalid poem ID'),
+  validate
+], async (req, res) => {
+  if (!hasTranslationColumns) {
+    return res.status(503).json({ error: 'Translation columns not available' });
+  }
+
+  try {
+    const { translation, explanation, authorBio } = req.body;
+
+    // Content validation
+    if (!translation || typeof translation !== 'string') {
+      return res.status(400).json({ error: 'translation is required and must be a string' });
+    }
+    if (translation.length > 10_000 || (explanation?.length || 0) > 10_000 || (authorBio?.length || 0) > 5_000) {
+      return res.status(400).json({ error: 'Content exceeds maximum length' });
+    }
+
+    // Strip HTML tags (XSS prevention)
+    const clean = (s) => s?.replace(/<[^>]*>/g, '') || null;
+
+    // Only write if not already translated (write-once guard)
+    const result = await pool.query(
+      `UPDATE poems SET cached_translation = $1, cached_explanation = $2,
+       cached_author_bio = $3, translated_at = NOW()
+       WHERE id = $4 AND translated_at IS NULL
+       RETURNING id`,
+      [clean(translation), clean(explanation), clean(authorBio), req.params.id]
+    );
+
+    if (result.rowCount === 0) {
+      return res.json({ status: 'already_translated' });
+    }
+
+    log.info('Translation', `Saved translation for poem ${req.params.id}`);
+    res.json({ status: 'saved' });
+  } catch (error) {
+    log.error('Translation', `Error saving translation: ${error.message}`, error.stack);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -964,6 +1153,56 @@ app.patch('/api/design-review/feedback-actions/:id', requireApiKey, async (req, 
   }
 });
 
+// ═══════════════════════════════════════════════════════════════
+// BUG REPORTS (structured log only — no DB table needed yet)
+// ═══════════════════════════════════════════════════════════════
+
+app.post('/api/bug-reports', rateLimit({ windowMs: 60_000, max: 10, standardHeaders: true, legacyHeaders: false }), (req, res) => {
+  try {
+    const { description, logs: clientLogs, timestamp, userAgent, poem, appState } = req.body;
+
+    // Basic validation
+    if (!timestamp || !userAgent) {
+      return res.status(400).json({ error: 'Missing required fields: timestamp, userAgent' });
+    }
+
+    // Truncate logs if too large
+    const truncatedLogs = Array.isArray(clientLogs)
+      ? clientLogs.slice(-100)
+      : [];
+
+    const report = {
+      description: typeof description === 'string' ? description.slice(0, 1000) : '',
+      logsCount: truncatedLogs.length,
+      timestamp,
+      userAgent: typeof userAgent === 'string' ? userAgent.slice(0, 500) : '',
+      poem: poem ? { id: poem.id, poet: poem.poet, title: poem.title } : null,
+      appState: appState ? {
+        mode: appState.mode,
+        theme: appState.theme,
+        font: appState.font
+      } : null
+    };
+
+    log.info('BugReport', `New bug report submitted`, report);
+
+    // Log truncated client logs at debug level
+    if (truncatedLogs.length > 0) {
+      log.debug('BugReport', `Client logs (${truncatedLogs.length} entries)`, truncatedLogs);
+    }
+
+    res.status(201).json({ success: true, message: 'Bug report submitted' });
+  } catch (error) {
+    log.error('BugReport', `Error processing bug report: ${error.message}`);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Sentry Express error handler (must be after all routes)
+if (process.env.SENTRY_DSN) {
+  Sentry.setupExpressErrorHandler(app);
+}
+
 // Export app for testing
 export { app, pool };
 
@@ -1042,11 +1281,12 @@ if (currentFile === mainFile) {
       log.info('Server', 'Keep-alive timeout cleared');
     }
 
-    // Close server first, then database pool
-    server.close(() => {
+    // Close server first, then database pool, then flush Sentry
+    server.close(async () => {
       log.info('Server', 'HTTP server closed');
-      pool.end(() => {
+      pool.end(async () => {
         log.info('Server', 'Database pool closed');
+        await Sentry.close(2000);
         process.exit(0);
       });
     });

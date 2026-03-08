@@ -7,6 +7,7 @@
     "dev": "vite",
     "dev:server": "node server.js",
     "dev:all": "npm-run-all --parallel dev dev:server",
+    "prebuild": "node scripts/generate-poem-pool.js || true",
     "build": "vite build",
     "preview": "vite preview",
     "test": "vitest",
@@ -21,6 +22,8 @@
     "screenshots": "node scripts/capture-design-screenshots.js"
   },
   "dependencies": {
+    "@sentry/node": "^10.42.0",
+    "@sentry/react": "^10.42.0",
     "@supabase/supabase-js": "^2.90.1",
     "@vercel/analytics": "^1.6.1",
     "cors": "^2.8.5",
@@ -37,6 +40,7 @@
   },
   "devDependencies": {
     "@playwright/test": "^1.57.0",
+    "@sentry/vite-plugin": "^5.1.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.1",
     "@testing-library/user-event": "^14.6.1",

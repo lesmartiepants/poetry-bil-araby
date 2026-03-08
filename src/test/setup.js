@@ -2,6 +2,22 @@ import { expect, afterEach, vi } from 'vitest'
 import { cleanup } from '@testing-library/react'
 import '@testing-library/jest-dom/vitest'
 
+// Mock seed-poems module so tests use a predictable seed poem
+vi.mock('../data/seed-poems.json', () => ({
+  default: [{
+    id: 999,
+    poet: 'Nizar Qabbani',
+    poetArabic: 'نزار قباني',
+    title: 'My Beloved',
+    titleArabic: 'حبيبتي',
+    arabic: 'حُبُّكِ يا عَمِيقَةَ العَيْنَيْنِ\nتَطَرُّفٌ .. تَصَوُّفٌ .. عِبَادَة',
+    english: 'Your love, O woman of deep eyes,\nIs radicalism... is Sufism... is worship.',
+    tags: ['Modern', 'Romantic', 'Ghazal'],
+    cachedTranslation: 'Your love, O woman of deep eyes,\nIs radicalism... is Sufism... is worship.',
+    isSeedPoem: true
+  }]
+}))
+
 // Default fetch implementation — used on init and after each reset
 const defaultFetchImpl = () =>
   Promise.resolve({
@@ -24,6 +40,9 @@ afterEach(() => {
   navigator.clipboard.writeText.mockResolvedValue(undefined)
   navigator.clipboard.readText.mockReset()
   navigator.clipboard.readText.mockResolvedValue('')
+  // Clear storage between tests (guarded for non-DOM environments like server tests)
+  if (typeof localStorage !== 'undefined' && typeof localStorage.clear === 'function') localStorage.clear()
+  if (typeof sessionStorage !== 'undefined' && typeof sessionStorage.clear === 'function') sessionStorage.clear()
 })
 
 // Mock environment variables

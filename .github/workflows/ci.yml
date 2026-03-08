@@ -128,6 +128,8 @@ jobs:
       needs.detect-changes.outputs.tests-changed == 'true' ||
       needs.detect-changes.outputs.config-changed == 'true'
     timeout-minutes: 5
+    outputs:
+      missing_tokens: ${{ steps.e2e-env.outputs.missing_tokens }}
 
     steps:
       - uses: actions/checkout@v4
@@ -229,12 +231,23 @@ jobs:
             body += `| Smoke Tests | ${icon(smokeStatus)} ${smokeStatus} |\n`;
 
             const failures = [];
+            const warnings = [];
+
             if (buildStatus === 'failure') failures.push('Build');
             if (testStatus === 'failure') failures.push('Unit Tests');
             if (smokeStatus === 'failure') failures.push('Smoke Tests');
 
             if (failures.length > 0) {
               body += `\n**Failing:** ${failures.join(', ')} — [view logs](${process.env.RUN_URL})\n`;
+            }
+
+            // Report missing secrets/tokens (quiet diagnostics from e2e-env step)
+            const missingTokens = process.env.MISSING_TOKENS || '';
+            if (missingTokens.trim()) {
+              body += `\n<details><summary>⚠️ Missing CI secrets (some tests skipped)</summary>\n\n`;
+              body += missingTokens.split('\\n').filter(Boolean).map(t => `- ${t}`).join('\n');
+              body += `\n\nAdd these in **Settings → Secrets and variables → Actions** to enable full test coverage.`;
+              body += `\n</details>\n`;
             }
 
             body += `\n<sub>Run [#${process.env.RUN_NUMBER}](${process.env.RUN_URL}) · ${new Date().toISOString().slice(0, 16)}Z</sub>`;
@@ -267,3 +280,4 @@ jobs:
         env:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           RUN_NUMBER: ${{ github.run_number }}
+          MISSING_TOKENS: ${{ needs.e2e-tests.outputs.missing_tokens || '' }}

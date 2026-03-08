@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Play, Pause, BookOpen, RefreshCw, Volume2, ChevronDown, Quote, Globe, Moon, Sun, Loader2, ChevronRight, ChevronLeft, Search, X, Copy, LayoutGrid, Check, Bug, Trash2, Sparkles, Feather, Library, Compass, Rabbit, MoreHorizontal, Heart, LogIn, LogOut, User, Settings2 } from 'lucide-react';
+import { Play, Pause, BookOpen, RefreshCw, Volume2, ChevronDown, Quote, Globe, Moon, Sun, Loader2, ChevronRight, ChevronLeft, Search, X, Copy, LayoutGrid, Check, Bug, Trash2, Sparkles, Feather, Library, Compass, Rabbit, MoreHorizontal, Heart, LogIn, LogOut, User, Settings2, ArrowRight, Languages, Share2, CalendarDays } from 'lucide-react';
+import { track } from '@vercel/analytics';
 import { useAuth, useUserSettings, useSavedPoems } from './hooks/useAuth';
 import { INSIGHTS_SYSTEM_PROMPT, DISCOVERY_SYSTEM_PROMPT, getTTSInstruction } from './prompts';
 import { parseInsight } from './utils/insightParser';
 import { repairAndParseJSON } from './utils/jsonRepair';
+import seedPoems from './data/seed-poems.json';
 
 /* =============================================================================
   1. FEATURE FLAGS & DESIGN SYSTEM
@@ -17,7 +19,8 @@ const FEATURES = {
   caching: true,      // Enable IndexedDB caching for audio/insights
   streaming: true,    // Enable streaming insights (progressive rendering)
   prefetching: true,  // Enable smart prefetching (rate-limited to avoid API issues)
-  database: true      // Enable database poem source (requires backend server running)
+  database: true,     // Enable database poem source (requires backend server running)
+  onboarding: true    // Show kinetic walkthrough (phases 1-3) on first visit
 };
 
 const DESIGN = {
@@ -654,7 +657,59 @@ const prefetchManager = {
 };
 
 /* =============================================================================
-  5. UTILITY COMPONENTS
+  5. TRANSLITERATION
+  =============================================================================
+*/
+
+const ARABIC_TRANSLIT_MAP = {
+  // Base letters
+  'ا': 'a', 'أ': 'a', 'إ': 'i', 'آ': 'aa', 'ٱ': 'a',
+  'ب': 'b', 'ت': 't', 'ث': 'th', 'ج': 'j', 'ح': 'h', 'خ': 'kh',
+  'د': 'd', 'ذ': 'dh', 'ر': 'r', 'ز': 'z', 'س': 's', 'ش': 'sh',
+  'ص': 's', 'ض': 'd', 'ط': 't', 'ظ': 'z', 'ع': "'", 'غ': 'gh',
+  'ف': 'f', 'ق': 'q', 'ك': 'k', 'ل': 'l', 'م': 'm', 'ن': 'n',
+  'ه': 'h', 'و': 'w', 'ي': 'y', 'ى': 'a', 'ة': 'h',
+  'ء': "'", 'ؤ': "'", 'ئ': "'",
+  // Diacritics
+  '\u064E': 'a',   // fatha
+  '\u064F': 'u',   // damma
+  '\u0650': 'i',   // kasra
+  '\u0651': '',     // shadda (handled by doubling previous consonant)
+  '\u0652': '',     // sukun (no vowel)
+  '\u064B': 'an',   // tanween fatha
+  '\u064C': 'un',   // tanween damma
+  '\u064D': 'in',   // tanween kasra
+  '\u0670': 'a',    // alef superscript
+  // Common punctuation
+  '،': ',', '؛': ';', '؟': '?', '»': '"', '«': '"',
+  '\u200C': '', '\u200D': '', '\u200F': '', '\u200E': '', // zero-width chars
+};
+
+function transliterate(text) {
+  if (!text) return '';
+  let result = '';
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    // Handle shadda: double the previous consonant
+    if (ch === '\u0651') {
+      const lastChar = result[result.length - 1];
+      if (lastChar && lastChar !== ' ') result += lastChar;
+      continue;
+    }
+    if (ch in ARABIC_TRANSLIT_MAP) {
+      result += ARABIC_TRANSLIT_MAP[ch];
+    } else if (/[\s\n]/.test(ch)) {
+      result += ch;
+    } else if (/[a-zA-Z0-9.,!?;:'"()\-–—…]/.test(ch)) {
+      result += ch; // pass through Latin chars and common punctuation
+    }
+    // Skip unrecognized Arabic diacritics/formatting chars
+  }
+  return result;
+}
+
+/* =============================================================================
+  6. UTILITY COMPONENTS
   =============================================================================
 */
 
@@ -677,8 +732,10 @@ const MysticalConsultationEffect = ({ active, theme }) => {
   );
 };
 
-const DebugPanel = ({ logs, onClear, darkMode }) => {
+const DebugPanel = ({ logs, onClear, darkMode, poem, appState }) => {
   const [isExpanded, setIsExpanded] = useState(false);
+  const [bugDescription, setBugDescription] = useState('');
+  const [bugStatus, setBugStatus] = useState(null); // null | 'sending' | 'success' | 'error'
   const scrollRef = useRef(null);
 
   useEffect(() => {
@@ -689,6 +746,32 @@ const DebugPanel = ({ logs, onClear, darkMode }) => {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [logs]);
+
+  const handleSubmitBug = async () => {
+    setBugStatus('sending');
+    try {
+      const payload = {
+        description: bugDescription,
+        logs: logs.slice(-100),
+        timestamp: new Date().toISOString(),
+        userAgent: navigator.userAgent,
+        poem: poem ? { id: poem.id, poet: poem.poet, title: poem.title } : null,
+        appState: appState || null
+      };
+      const res = await fetch(`${apiUrl}/api/bug-reports`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      setBugStatus('success');
+      setBugDescription('');
+      setTimeout(() => setBugStatus(null), 3000);
+    } catch (e) {
+      setBugStatus('error');
+      setTimeout(() => setBugStatus(null), 3000);
+    }
+  };
 
   if (!FEATURES.debug) return null;
 
@@ -711,6 +794,33 @@ const DebugPanel = ({ logs, onClear, darkMode }) => {
             <span className="opacity-40">[{log.time}]</span> <span className="font-bold">{log.label}:</span> {log.msg}
           </div>
         ))}
+        {isExpanded && (
+          <div className={`flex items-center gap-2 pt-2 border-t ${darkMode ? 'border-stone-700' : 'border-stone-300'}`}>
+            <input
+              type="text"
+              value={bugDescription}
+              onChange={(e) => setBugDescription(e.target.value)}
+              placeholder="Describe the bug (optional)"
+              className={`flex-1 px-2 py-1 rounded text-[10px] border ${darkMode ? 'bg-stone-900/80 border-stone-700 text-stone-200 placeholder:text-stone-500' : 'bg-white/80 border-stone-300 text-stone-800 placeholder:text-stone-400'}`}
+              onClick={(e) => e.stopPropagation()}
+            />
+            <button
+              onClick={(e) => { e.stopPropagation(); handleSubmitBug(); }}
+              disabled={bugStatus === 'sending'}
+              className={`px-2 py-1 rounded text-[9px] font-bold uppercase tracking-wider transition-colors ${
+                bugStatus === 'success' ? 'bg-green-600/80 text-white' :
+                bugStatus === 'error' ? 'bg-red-600/80 text-white' :
+                bugStatus === 'sending' ? 'bg-stone-600/80 text-stone-400' :
+                'bg-indigo-600/80 text-white hover:bg-indigo-500/80'
+              }`}
+            >
+              {bugStatus === 'sending' ? 'Sending...' :
+               bugStatus === 'success' ? 'Sent!' :
+               bugStatus === 'error' ? 'Failed' :
+               'Submit Bug'}
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -875,8 +985,19 @@ const OverflowMenu = ({
   onSelectCategory,
   onCopy,
   showCopySuccess,
+  onShare,
+  showShareSuccess,
+  dailyPoem,
+  onDailyPoem,
+  isCurrentDaily,
   useDatabase,
   onToggleDatabase,
+  showTranslation,
+  onToggleTranslation,
+  showTransliteration,
+  onToggleTransliteration,
+  textSizeLevel,
+  onCycleTextSize,
   user,
   onOpenSavedPoems,
   onOpenSettings,
@@ -911,6 +1032,16 @@ const OverflowMenu = ({
 
   const handleCopy = () => {
     onCopy();
+    setIsOpen(false);
+  };
+
+  const handleShare = () => {
+    onShare();
+    setIsOpen(false);
+  };
+
+  const handleDailyPoem = () => {
+    onDailyPoem();
     setIsOpen(false);
   };
 
@@ -968,6 +1099,48 @@ const OverflowMenu = ({
               <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Copy</div>
             </div>
           </button>
+
+          <button onClick={handleShare} className={itemClass}>
+            {showShareSuccess ? <Check size={18} className="text-green-500" /> : <Share2 size={18} style={{ color: gold }} />}
+            <div className="flex flex-col items-start">
+              <div className="font-amiri text-base font-medium" style={{ color: gold }}>مشاركة</div>
+              <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Share</div>
+            </div>
+          </button>
+
+          <button onClick={() => { onToggleTranslation(); setIsOpen(false); }} className={`${itemClass} ${!showTranslation ? 'opacity-50' : ''}`}>
+            <Languages size={18} style={{ color: gold }} />
+            <div className="flex flex-col items-start">
+              <div className="font-amiri text-base font-medium" style={{ color: gold }}>{showTranslation ? 'إخفاء الترجمة' : 'إظهار الترجمة'}</div>
+              <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">{showTranslation ? 'Hide Translation' : 'Show Translation'}</div>
+            </div>
+          </button>
+
+          <button onClick={() => { onToggleTransliteration(); setIsOpen(false); }} className={`${itemClass} ${!showTransliteration ? 'opacity-50' : ''}`}>
+            <span className="text-[14px] font-bold leading-none" style={{ color: gold, fontFamily: "'Amiri', serif" }}>عA</span>
+            <div className="flex flex-col items-start">
+              <div className="font-amiri text-base font-medium" style={{ color: gold }}>{showTransliteration ? 'إخفاء النقحرة' : 'إظهار النقحرة'}</div>
+              <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">{showTransliteration ? 'Hide Romanization' : 'Show Romanization'}</div>
+            </div>
+          </button>
+
+          <button onClick={() => { onCycleTextSize(); setIsOpen(false); }} className={itemClass}>
+            <span className="font-brand-en text-[15px] font-bold" style={{ color: gold }}>Aa</span>
+            <div className="flex flex-col items-start">
+              <div className="font-amiri text-base font-medium" style={{ color: gold }}>حجم الخط</div>
+              <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Text Size: {['S', 'M', 'L', 'XL'][textSizeLevel]}</div>
+            </div>
+          </button>
+
+          {dailyPoem && (
+            <button onClick={handleDailyPoem} className={`${itemClass} ${isCurrentDaily ? goldActiveClass : ''}`}>
+              <CalendarDays size={18} style={{ color: gold }} />
+              <div className="flex flex-col items-start">
+                <div className="font-amiri text-base font-medium" style={{ color: gold }}>قصيدة اليوم</div>
+                <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Poem of the Day</div>
+              </div>
+            </button>
+          )}
 
           <button onClick={handleToggleDatabase} className={itemClass}>
             {useDatabase ? <Library size={18} style={{ color: gold }} /> : <Sparkles size={18} style={{ color: gold }} />}
@@ -1111,6 +1284,596 @@ const OverflowMenu = ({
 };
 
 /* =============================================================================
+  KEYBOARD SHORTCUT HELP
+  =============================================================================
+*/
+
+const SHORTCUTS = [
+  { keys: ['Space'], desc: 'Play / Pause audio' },
+  { keys: ['→'], desc: 'Discover new poem' },
+  { keys: ['E'], desc: 'Explain poem' },
+  { keys: ['T'], desc: 'Toggle English translation' },
+  { keys: ['R'], desc: 'Toggle transliteration' },
+  { keys: ['Esc'], desc: 'Close modal / panel' },
+  { keys: ['?'], desc: 'Show this help' },
+];
+
+const ShortcutHelp = ({ isOpen, onClose, theme }) => {
+  if (!isOpen) return null;
+
+  const isDark = theme === THEME.dark;
+
+  return (
+    <div
+      className="fixed inset-0 z-[55] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+      onClick={onClose}
+      role="dialog"
+      aria-label="Keyboard shortcuts"
+    >
+      <div
+        className={`relative w-full max-w-sm ${theme.glass} ${theme.border} border ${DESIGN.radius} p-8 shadow-2xl`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/10 transition-colors"
+          aria-label="Close"
+        >
+          <X size={20} className={theme.text} />
+        </button>
+
+        <h2 className={`font-brand-en text-lg font-bold mb-6 ${theme.text}`}>Keyboard Shortcuts</h2>
+
+        <div className="space-y-3">
+          {SHORTCUTS.map(({ keys, desc }) => (
+            <div key={desc} className="flex items-center justify-between gap-4">
+              <span className={`font-brand-en text-sm ${theme.text} opacity-70`}>{desc}</span>
+              <div className="flex gap-1">
+                {keys.map(k => (
+                  <kbd
+                    key={k}
+                    className={`px-2 py-1 rounded-md text-xs font-mono font-bold ${isDark ? 'bg-stone-800 text-stone-300 border-stone-700' : 'bg-stone-200 text-stone-700 border-stone-300'} border`}
+                  >
+                    {k}
+                  </kbd>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* =============================================================================
+  SPLASH / ONBOARDING
+  =============================================================================
+*/
+
+const SPLASH_STEPS = []; // Walkthrough steps are handled internally by SplashScreen
+
+const SplashScreen = ({ isOpen, onDismiss, showOnboarding, theme }) => {
+  // Phase: 0 = desert splash, 1 = kinetic step 0 (Arabic), 2 = kinetic step 1 (English), 3 = kinetic step 2 (count)
+  const [phase, setPhase] = useState(0);
+  const [fadeState, setFadeState] = useState('in');
+  const starsRef = useRef(null);
+  const canvasRef = useRef(null);
+  const animFrameRef = useRef(null);
+  const particlesRef = useRef([]);
+  const mouseRef = useRef({ x: 0, y: 0 });
+  const [starsGenerated, setStarsGenerated] = useState(false);
+
+  const isDark = theme === THEME.dark;
+
+  // Generate stars for the splash desert sky
+  useEffect(() => {
+    if (!isOpen || phase !== 0 || starsGenerated) return;
+    const container = starsRef.current;
+    if (!container) return;
+    const stars = [];
+    for (let i = 0; i < 80; i++) {
+      const size = (1 + Math.random() * 2).toFixed(1);
+      stars.push({
+        left: (Math.random() * 100).toFixed(1) + '%',
+        top: (Math.random() * 48).toFixed(1) + '%',
+        width: size + 'px',
+        height: size + 'px',
+        dur: (1.2 + Math.random() * 3.5).toFixed(2) + 's',
+        delay: (Math.random() * 5).toFixed(2) + 's',
+      });
+    }
+    // Build star elements imperatively for performance
+    stars.forEach((s) => {
+      const el = document.createElement('div');
+      el.style.position = 'absolute';
+      el.style.background = '#FFF';
+      el.style.borderRadius = '50%';
+      el.style.left = s.left;
+      el.style.top = s.top;
+      el.style.width = s.width;
+      el.style.height = s.height;
+      el.style.animation = `splashTwinkle ${s.dur} ease-in-out infinite alternate`;
+      el.style.animationDelay = s.delay;
+      container.appendChild(el);
+    });
+    setStarsGenerated(true);
+    return () => {
+      if (container) {
+        while (container.firstChild) {
+          container.removeChild(container.firstChild);
+        }
+      }
+    };
+  }, [isOpen, phase, starsGenerated]);
+
+  // Particle system for kinetic walkthrough phases
+  useEffect(() => {
+    if (!isOpen || phase < 1) return;
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    const isMobile = window.innerWidth <= 768;
+    const particleCount = isMobile ? 150 : 500;
+    const particles = [];
+
+    for (let i = 0; i < particleCount; i++) {
+      const curve = Math.floor(Math.random() * 3);
+      const curves = [
+        { x: 0.7, y: 0.5, radius: 0.12 },
+        { x: 0.5, y: 0.5, radius: 0.10 },
+        { x: 0.3, y: 0.5, radius: 0.14 },
+      ];
+      const c = curves[curve];
+      const angle = Math.random() * Math.PI * 2;
+      const dist = Math.random() * c.radius;
+      const px = (c.x + Math.cos(angle) * dist) * canvas.width;
+      const py = (c.y + Math.sin(angle) * dist) * canvas.height;
+
+      particles.push({
+        x: px, y: py, originX: px, originY: py,
+        vx: 0, vy: 0,
+        radius: Math.random() * 1.5 + 0.5,
+        opacity: Math.random() * 0.4 + 0.4,
+        twinklePhase: Math.random() * Math.PI * 2,
+        twinkleSpeed: Math.random() * 0.02 + 0.01,
+      });
+    }
+    particlesRef.current = particles;
+
+    const handleMouseMove = (e) => { mouseRef.current = { x: e.clientX, y: e.clientY }; };
+    const handleTouchMove = (e) => {
+      if (e.touches[0]) mouseRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    };
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
+    window.addEventListener('touchmove', handleTouchMove, { passive: true });
+
+    let running = true;
+    const animate = () => {
+      if (!running) return;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const mouse = mouseRef.current;
+
+      particles.forEach((p) => {
+        const dx = mouse.x - p.x;
+        const dy = mouse.y - p.y;
+        const d = Math.sqrt(dx * dx + dy * dy);
+        if (d < 120) {
+          const f = (120 - d) / 120;
+          p.vx -= (dx / d) * f * 0.8;
+          p.vy -= (dy / d) * f * 0.8;
+        }
+        p.vx += (p.originX - p.x) * 0.001;
+        p.vy += (p.originY - p.y) * 0.001;
+        p.vx *= 0.95;
+        p.vy *= 0.95;
+        p.x += p.vx;
+        p.y += p.vy;
+
+        p.twinklePhase += p.twinkleSpeed;
+        const twinkle = Math.sin(p.twinklePhase) * 0.3 + 0.7;
+        const fo = p.opacity * twinkle;
+
+        if (!isMobile) {
+          ctx.beginPath();
+          const g1 = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius * 4);
+          g1.addColorStop(0, `rgba(200, 220, 255, ${fo * 0.6})`);
+          g1.addColorStop(0.3, `rgba(180, 200, 255, ${fo * 0.3})`);
+          g1.addColorStop(1, 'rgba(255, 255, 255, 0)');
+          ctx.fillStyle = g1;
+          ctx.arc(p.x, p.y, p.radius * 4, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        ctx.beginPath();
+        if (isMobile) {
+          ctx.fillStyle = `rgba(255, 255, 255, ${fo})`;
+        } else {
+          const g2 = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.radius);
+          g2.addColorStop(0, `rgba(255, 255, 255, ${fo})`);
+          g2.addColorStop(0.7, `rgba(240, 245, 255, ${fo * 0.5})`);
+          g2.addColorStop(1, 'rgba(255, 255, 255, 0)');
+          ctx.fillStyle = g2;
+        }
+        ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+        ctx.fill();
+      });
+
+      animFrameRef.current = requestAnimationFrame(animate);
+    };
+    animate();
+
+    const handleResize = () => {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    };
+    window.addEventListener('resize', handleResize, { passive: true });
+
+    return () => {
+      running = false;
+      if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [isOpen, phase]);
+
+  useEffect(() => {
+    if (isOpen) {
+      setFadeState('in');
+      setPhase(0);
+      setStarsGenerated(false);
+    }
+  }, [isOpen]);
+
+  const handleDismiss = () => {
+    setFadeState('out');
+    setTimeout(() => {
+      onDismiss();
+    }, 600);
+  };
+
+  const handleSplashEnter = (e) => {
+    e.stopPropagation();
+    if (showOnboarding) {
+      setPhase(1);
+    } else {
+      handleDismiss();
+    }
+  };
+
+  const handleWalkthroughTap = (e) => {
+    if (e.target.closest('[data-splash-finish]')) return;
+    if (phase < 3) {
+      setPhase(phase + 1);
+    }
+  };
+
+  const handleFinish = (e) => {
+    e.stopPropagation();
+    handleDismiss();
+  };
+
+  if (!isOpen) return null;
+
+  // Reduced motion check
+  const prefersReducedMotion = typeof window !== 'undefined' &&
+    window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Injected keyframe styles
+  const splashStyles = `
+    @keyframes splashTwinkle { 0% { opacity: 0.1; } 100% { opacity: 0.95; } }
+    @keyframes splashDune1 { to { transform: translateX(18px); } }
+    @keyframes splashDune2 { to { transform: translateX(-22px); } }
+    @keyframes splashDune3 { to { transform: translateX(12px); } }
+    @keyframes splashDune4 { to { transform: translateX(-9px); } }
+    @keyframes splashFadeIn { to { opacity: 1; } }
+    @keyframes splashArabicReveal {
+      from { opacity: 0; transform: scale(0.9); filter: blur(8px); }
+      to { opacity: 1; transform: scale(1); filter: blur(0px); }
+    }
+    @keyframes splashArabicRevealMobile {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+    @keyframes splashLetterReveal {
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes splashCountReveal {
+      from { opacity: 0; transform: translateY(20px) scale(0.95); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .splash-dune { transform: none !important; animation: none !important; }
+    }
+  `;
+
+  // DESERT SPLASH (phase 0)
+  if (phase === 0) {
+    const desertNight = '#1A0F0A';
+    const gold = '#C5A059';
+    const sandMuted = isDark ? 'rgba(232,213,183,0.5)' : 'rgba(26,15,10,0.4)';
+    const dunes = isDark
+      ? [{ h: '25%', bg: '#6B3720', br: '55% 75% 0 0 / 100%', z: 4, anim: 'splashDune1 10s ease-in-out infinite alternate' },
+         { h: '33%', bg: '#5A2E1A', br: '75% 45% 0 0 / 100%', z: 3, anim: 'splashDune2 14s ease-in-out infinite alternate' },
+         { h: '40%', bg: '#4A2516', br: '45% 65% 0 0 / 100%', z: 2, anim: 'splashDune3 18s ease-in-out infinite alternate' },
+         { h: '48%', bg: '#3A1C12', br: '65% 50% 0 0 / 100%', z: 1, anim: 'splashDune4 23s ease-in-out infinite alternate' }]
+      : [{ h: '25%', bg: '#D4B896', br: '55% 75% 0 0 / 100%', z: 4, anim: 'splashDune1 10s ease-in-out infinite alternate' },
+         { h: '33%', bg: '#C8A880', br: '75% 45% 0 0 / 100%', z: 3, anim: 'splashDune2 14s ease-in-out infinite alternate' },
+         { h: '40%', bg: '#BC9A6E', br: '45% 65% 0 0 / 100%', z: 2, anim: 'splashDune3 18s ease-in-out infinite alternate' },
+         { h: '48%', bg: '#B08C5E', br: '65% 50% 0 0 / 100%', z: 1, anim: 'splashDune4 23s ease-in-out infinite alternate' }];
+    const bgGradient = isDark
+      ? 'linear-gradient(180deg, #0D0A14 0%, #1A0F0A 40%, #3A1C12 100%)'
+      : `linear-gradient(180deg, #F5EDE0 0%, #EDE0CC 40%, #B08C5E 100%)`;
+
+    return (
+      <div
+        style={{
+          position: 'fixed', inset: 0, zIndex: 60,
+          background: bgGradient,
+          display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column',
+          transition: 'opacity 1s ease-out',
+          opacity: fadeState === 'out' ? 0 : 1,
+        }}
+        role="dialog"
+        aria-label="Welcome to Poetry Bil-Araby"
+      >
+        <style>{splashStyles}</style>
+
+        {/* Sand texture SVG overlay */}
+        <div style={{
+          position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none', opacity: 0.04,
+          backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='80' height='80' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.55' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.6'/%3E%3C/svg%3E\")",
+        }} />
+
+        {/* Starfield */}
+        <div ref={starsRef} style={{ position: 'absolute', inset: 0, overflow: 'hidden' }} />
+
+        {/* Dunes */}
+        {dunes.map((d, i) => (
+          <div key={i} className="splash-dune" style={{
+            position: 'absolute', bottom: 0, left: '-5%', width: '110%',
+            height: d.h, background: d.bg, borderRadius: d.br, zIndex: d.z,
+            animation: prefersReducedMotion ? 'none' : d.anim,
+          }} />
+        ))}
+
+        {/* Brand — Arabic first */}
+        <div style={{
+          position: 'relative', zIndex: 10,
+          display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+          gap: '0.5rem', marginBottom: '0.75rem',
+        }}>
+          <span style={{
+            fontFamily: "'Reem Kufi', sans-serif", fontWeight: 700,
+            fontSize: 'clamp(1.875rem, 4vw, 3rem)', color: gold, lineHeight: 1,
+          }} dir="rtl" lang="ar">بالعربي</span>
+          <span style={{
+            fontFamily: "'Forum', serif",
+            fontSize: 'clamp(3rem, 6vw, 4.5rem)', letterSpacing: '-0.05em',
+            color: gold, lineHeight: 1,
+            textShadow: '0 0 50px rgba(197,160,89,0.4)',
+          }}>poetry</span>
+        </div>
+
+        {/* Subtitle */}
+        <p style={{
+          position: 'relative', zIndex: 10,
+          fontFamily: "'Tajawal', sans-serif",
+          fontSize: 'clamp(0.9rem, 2.5vw, 1.25rem)',
+          color: sandMuted, marginTop: '0.5rem',
+          letterSpacing: '0.1em', direction: 'ltr',
+        }}>Desert Mirage</p>
+
+        {/* Enter button */}
+        <button
+          onClick={handleSplashEnter}
+          style={{
+            position: 'relative', zIndex: 10, marginTop: '2.5rem',
+            padding: '14px 40px', minHeight: '44px',
+            background: 'transparent', border: `1px solid ${gold}`,
+            color: gold, fontFamily: "'Tajawal', sans-serif",
+            fontSize: '15px', borderRadius: '8px', cursor: 'pointer',
+            transition: 'all 0.3s ease',
+            opacity: 0, animation: 'splashFadeIn 1s 2s forwards',
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = gold;
+            e.currentTarget.style.color = desertNight;
+            e.currentTarget.style.boxShadow = '0 0 30px rgba(197,160,89,0.3)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = 'transparent';
+            e.currentTarget.style.color = gold;
+            e.currentTarget.style.boxShadow = 'none';
+          }}
+          aria-label="Enter the app"
+        >Enter</button>
+      </div>
+    );
+  }
+
+  // KINETIC WALKTHROUGH (phases 1-3)
+  const kineticStep = phase - 1; // 0, 1, or 2
+  const progressWidth = ((kineticStep + 1) / 3 * 100) + '%';
+  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
+
+  return (
+    <div
+      style={{
+        position: 'fixed', inset: 0, zIndex: 60,
+        background: '#000000',
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        cursor: 'pointer', overflow: 'hidden',
+        transition: 'opacity 0.6s ease',
+        opacity: fadeState === 'out' ? 0 : 1,
+      }}
+      onClick={handleWalkthroughTap}
+      role="dialog"
+      aria-label="Onboarding walkthrough"
+    >
+      <style>{splashStyles}</style>
+
+      {/* Particle canvas */}
+      <canvas
+        ref={canvasRef}
+        style={{
+          position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+          pointerEvents: 'none', zIndex: 1,
+          willChange: 'transform', transform: 'translateZ(0)',
+        }}
+      />
+
+      {/* Kinetic stage */}
+      <div style={{
+        position: 'relative', zIndex: 2, textAlign: 'center',
+        width: '100%', maxWidth: '600px', padding: '2rem',
+      }}>
+        {/* Step 0: Arabic reveal — بالعربي */}
+        {kineticStep === 0 && (
+          <div style={{
+            display: 'flex', flexDirection: 'column', alignItems: 'center',
+            justifyContent: 'center', minHeight: '40vh',
+          }} key="kinetic-0">
+            <div style={{
+              fontFamily: "'Reem Kufi', sans-serif", fontWeight: 700,
+              fontSize: 'clamp(3.5rem, 9vw, 6rem)', color: '#ffffff',
+              direction: 'rtl', lineHeight: 1.2, marginBottom: '1.5rem',
+              opacity: 0,
+              animation: prefersReducedMotion ? 'splashFadeIn 0.01ms forwards'
+                : isMobile ? 'splashArabicRevealMobile 1s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards'
+                : 'splashArabicReveal 1s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards',
+              willChange: 'transform, opacity, filter',
+              backfaceVisibility: 'hidden',
+              transform: 'translateZ(0)',
+            }} lang="ar" dir="rtl">بالعربي</div>
+            <div style={{
+              fontFamily: "'Tajawal', sans-serif", fontSize: '0.9375rem',
+              color: '#666666', direction: 'rtl',
+              opacity: 0,
+              animation: prefersReducedMotion ? 'splashFadeIn 0.01ms forwards'
+                : 'splashFadeIn 0.6s ease-out 0.7s forwards',
+              willChange: 'opacity',
+            }} lang="ar" dir="rtl">الشعر العربي بين يديك</div>
+          </div>
+        )}
+
+        {/* Step 1: English letter-by-letter — poetry */}
+        {kineticStep === 1 && (
+          <div style={{
+            display: 'flex', flexDirection: 'column', alignItems: 'center',
+            justifyContent: 'center', minHeight: '40vh',
+          }} key="kinetic-1">
+            <div style={{
+              fontFamily: "'Forum', cursive",
+              fontSize: 'clamp(4rem, 10vw, 7rem)',
+              textTransform: 'lowercase', letterSpacing: '-0.05em',
+              color: '#ffffff', lineHeight: 1, marginBottom: '1.5rem',
+            }}>
+              {'poetry'.split('').map((letter, i) => (
+                <span key={i} style={{
+                  display: 'inline-block', opacity: 0,
+                  transform: 'translateY(30px)',
+                  animation: prefersReducedMotion ? 'splashFadeIn 0.01ms forwards'
+                    : `splashLetterReveal ${isMobile ? '0.35s' : '0.5s'} cubic-bezier(0.16, 1, 0.3, 1) forwards`,
+                  animationDelay: `${0.1 + i * 0.08}s`,
+                  willChange: 'transform, opacity',
+                  backfaceVisibility: 'hidden',
+                }}>{letter}</span>
+              ))}
+            </div>
+            <div style={{
+              fontSize: '0.8125rem', letterSpacing: '0.3em',
+              textTransform: 'uppercase', color: '#555555',
+              opacity: 0,
+              animation: prefersReducedMotion ? 'splashFadeIn 0.01ms forwards'
+                : 'splashFadeIn 0.6s ease-out 0.8s forwards',
+              willChange: 'opacity',
+            }}>Where words become worlds</div>
+          </div>
+        )}
+
+        {/* Step 2: Count + Explore */}
+        {kineticStep === 2 && (
+          <div style={{
+            display: 'flex', flexDirection: 'column', alignItems: 'center',
+            justifyContent: 'center', minHeight: '40vh',
+          }} key="kinetic-2">
+            <div style={{
+              fontFamily: "'Forum', cursive",
+              fontSize: 'clamp(2.5rem, 7vw, 4.5rem)',
+              color: '#ffffff', letterSpacing: '-0.02em', marginBottom: '1rem',
+              opacity: 0,
+              animation: prefersReducedMotion ? 'splashFadeIn 0.01ms forwards'
+                : 'splashCountReveal 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards',
+              willChange: 'transform, opacity',
+              backfaceVisibility: 'hidden',
+            }}>84,000 verses await</div>
+            <div style={{
+              fontFamily: "'Reem Kufi', sans-serif", fontWeight: 700,
+              fontSize: 'clamp(1.5rem, 4vw, 2.5rem)',
+              color: '#888888', direction: 'rtl', marginBottom: '2rem',
+              opacity: 0,
+              animation: prefersReducedMotion ? 'splashFadeIn 0.01ms forwards'
+                : 'splashFadeIn 0.5s ease-out 0.6s forwards',
+              willChange: 'opacity',
+            }} lang="ar" dir="rtl">أكثر من 84,000 بيت بانتظارك</div>
+            <button
+              data-splash-finish="true"
+              onClick={handleFinish}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: '8px',
+                padding: '14px 40px', border: '1px solid #333333',
+                borderRadius: '999px', background: 'transparent',
+                color: '#ffffff', fontFamily: "'Tajawal', sans-serif",
+                fontSize: '13px', fontWeight: 500, letterSpacing: '0.15em',
+                textTransform: 'uppercase', cursor: 'pointer',
+                transition: 'background 0.3s ease, border-color 0.3s ease',
+                minHeight: '48px', opacity: 0,
+                animation: prefersReducedMotion ? 'splashFadeIn 0.01ms forwards'
+                  : 'splashFadeIn 0.5s ease-out 1s forwards',
+                willChange: 'opacity', backfaceVisibility: 'hidden',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)';
+                e.currentTarget.style.borderColor = '#666666';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.borderColor = '#333333';
+              }}
+              aria-label="Start exploring"
+            >
+              <span>Explore</span>
+              <ArrowRight size={16} />
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Tap hint */}
+      <div style={{
+        position: 'fixed', bottom: '3rem', left: '50%',
+        transform: 'translateX(-50%)', fontSize: '0.65rem',
+        letterSpacing: '0.35em', textTransform: 'uppercase',
+        color: '#333333', zIndex: 5,
+      }}>Tap anywhere</div>
+
+      {/* Progress bar */}
+      <div style={{
+        position: 'fixed', bottom: 0, left: 0, height: '2px',
+        background: 'rgba(255, 255, 255, 0.15)',
+        transition: 'width 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
+        zIndex: 5, width: progressWidth,
+        willChange: 'width', transform: 'translateZ(0)',
+      }} />
+    </div>
+  );
+};
+
+/* =============================================================================
   AUTH COMPONENTS
   =============================================================================
 */
@@ -1167,7 +1930,7 @@ const AuthModal = ({ isOpen, onClose, onSignInWithGoogle, onSignInWithApple, the
   );
 };
 
-const AuthButton = ({ user, onSignIn, onSignOut, onOpenSavedPoems, onOpenSettings, theme }) => {
+const AuthButton = ({ user, darkMode, onSignIn, onSignOut, onOpenSavedPoems, onOpenSettings, theme }) => {
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef(null);
 
@@ -1514,7 +2277,7 @@ const SettingsView = ({ isOpen, onClose, darkMode, onToggleDarkMode, currentFont
   =============================================================================
 */
 
-const VerticalSidebar = ({ onExplain, onCopy, showCopySuccess, onOpenSavedPoems, onOpenSettings, onSignIn, onSignOut, user, useDatabase, onToggleDatabase, isSupabaseConfigured, theme, isInterpreting, interpretation }) => {
+const VerticalSidebar = ({ onExplain, onCopy, showCopySuccess, onShare, showShareSuccess, onOpenSavedPoems, onOpenSettings, onSignIn, onSignOut, user, useDatabase, onToggleDatabase, isSupabaseConfigured, theme, isInterpreting, interpretation }) => {
   return (
     <>
       <style>{`
@@ -1543,6 +2306,14 @@ const VerticalSidebar = ({ onExplain, onCopy, showCopySuccess, onOpenSavedPoems,
             className="w-11 h-11 rounded-xl flex items-center justify-center hover:bg-[#C5A059]/15 transition-all duration-200"
           >
             {showCopySuccess ? <Check size={18} className="text-green-500" /> : <Copy className="text-[#C5A059]" size={18} />}
+          </button>
+
+          <button
+            onClick={onShare}
+            title="Share poem"
+            className="w-11 h-11 rounded-xl flex items-center justify-center hover:bg-[#C5A059]/15 transition-all duration-200"
+          >
+            {showShareSuccess ? <Check size={18} className="text-green-500" /> : <Share2 className="text-[#C5A059]" size={18} />}
           </button>
 
           <div className="w-6 h-px bg-stone-500/30 mx-auto my-1" />
@@ -1600,12 +2371,41 @@ export default function DiwanApp() {
   const controlBarRef = useRef(null);
 
   const [headerOpacity, setHeaderOpacity] = useState(1);
-  const [poems, setPoems] = useState([{
-    id: 1, poet: "Nizar Qabbani", poetArabic: "نزار قباني", title: "My Beloved", titleArabic: "حبيبتي",
-    arabic: "حُبُّكِ يا عَمِيقَةَ العَيْنَيْنِ\nتَطَرُّفٌ .. تَصَوُّفٌ .. عِبَادَة\nحُبُّكِ مِثْلَ المَوْتِ وَالوِلَادَة\nصَعْبٌ بِأَنْ يُعَادَ مَرَّتَيْنِ",
-    english: "Your love, O woman of deep eyes,\nIs radicalism… is Sufism… is worship.\nYour love is like Death and like Birth—\nIt is difficult for it to be repeated twice.",
-    tags: ["Modern", "Romantic", "Ghazal"]
-  }]);
+  const [poems, setPoems] = useState(() => {
+    // 1. Restore from OAuth redirect (avoids flash of seed poem)
+    try {
+      const stashed = sessionStorage.getItem('pendingSavePoem');
+      if (stashed) {
+        const poem = JSON.parse(stashed);
+        if (poem?.arabic) return [poem];
+      }
+    } catch {}
+
+    // 2. Restore pre-fetched poem from last visit (with 7-day TTL)
+    try {
+      const raw = localStorage.getItem('qafiyah_nextPoem');
+      if (raw) {
+        const { poem, storedAt } = JSON.parse(raw);
+        localStorage.removeItem('qafiyah_nextPoem');
+        const age = Date.now() - (storedAt || 0);
+        if (poem?.arabic && age < 7 * 24 * 60 * 60 * 1000) return [poem];
+      }
+    } catch {}
+
+    // 3. First-ever visit: pick from seed pool
+    if (seedPoems?.length > 0) {
+      const idx = Math.floor(Math.random() * seedPoems.length);
+      return [seedPoems[idx]];
+    }
+
+    // 4. Ultimate fallback (same as original default)
+    return [{
+      id: 1, poet: "Nizar Qabbani", poetArabic: "نزار قباني", title: "My Beloved", titleArabic: "حبيبتي",
+      arabic: "حُبُّكِ يا عَمِيقَةَ العَيْنَيْنِ\nتَطَرُّفٌ .. تَصَوُّفٌ .. عِبَادَة\nحُبُّكِ مِثْلَ المَوْتِ وَالوِلَادَة\nصَعْبٌ بِأَنْ يُعَادَ مَرَّتَيْنِ",
+      english: "Your love, O woman of deep eyes,\nIs radicalism… is Sufism… is worship.\nYour love is like Death and like Birth—\nIt is difficult for it to be repeated twice.",
+      tags: ["Modern", "Romantic", "Ghazal"]
+    }];
+  });
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState("All");
   const [darkMode, setDarkMode] = useState(true);
@@ -1623,6 +2423,8 @@ export default function DiwanApp() {
   const hasAutoLoaded = useRef(false);
   const [logs, setLogs] = useState([]);
   const [showCopySuccess, setShowCopySuccess] = useState(false);
+  const [showShareSuccess, setShowShareSuccess] = useState(false);
+  const [dailyPoem, setDailyPoem] = useState(null);
   const [isOverflow, setIsOverflow] = useState(() => {
     // Use 660 as the conservative initial threshold (covers both Supabase and non-Supabase button sets).
     // The detectOverflow effect below will refine this after mount.
@@ -1643,6 +2445,15 @@ export default function DiwanApp() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showSavedPoems, setShowSavedPoems] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showSplash, setShowSplash] = useState(true); // Always show splash on every visit
+  const [showOnboarding] = useState(() => {
+    if (!FEATURES.onboarding) return false;
+    try { return !localStorage.getItem('hasSeenOnboarding'); } catch { return false; }
+  });
+  const [showTranslation, setShowTranslation] = useState(true);
+  const [textSizeLevel, setTextSizeLevel] = useState(1); // 0=S, 1=M, 2=L, 3=XL
+  const [showTransliteration, setShowTransliteration] = useState(false);
+  const [showShortcutHelp, setShowShortcutHelp] = useState(false);
 
   const theme = darkMode ? THEME.dark : THEME.light;
 
@@ -1655,8 +2466,22 @@ export default function DiwanApp() {
     const currentIdx = FONTS.findIndex(f => f.id === currentFont);
     const nextIdx = (currentIdx + 1) % FONTS.length;
     setCurrentFont(FONTS[nextIdx].id);
+    track('font_changed', { font: FONTS[nextIdx].id });
     addLog("Font", `Switched to ${FONTS[nextIdx].label}`, "info");
   };
+
+  const TEXT_SIZES = [
+    { label: 'S', multiplier: 0.85 },
+    { label: 'M', multiplier: 1.0 },
+    { label: 'L', multiplier: 1.15 },
+    { label: 'XL', multiplier: 1.3 },
+  ];
+
+  const cycleTextSize = () => {
+    setTextSizeLevel(prev => (prev + 1) % TEXT_SIZES.length);
+  };
+
+  const textScale = TEXT_SIZES[textSizeLevel].multiplier;
 
   const filtered = useMemo(() => {
     const searchStr = selectedCategory.toLowerCase();
@@ -1683,8 +2508,13 @@ export default function DiwanApp() {
   };
 
   useEffect(() => {
-    if (selectedCategory !== "All" && filtered.length === 0) {
-      handleFetch();
+    if (selectedCategory !== "All") {
+      track('poet_filter_changed', { poet: selectedCategory });
+      if (filtered.length === 0) {
+        handleFetch();
+      } else {
+        setCurrentIndex(0);
+      }
     } else {
       setCurrentIndex(0);
     }
@@ -1703,29 +2533,100 @@ export default function DiwanApp() {
   }, []);
 
   // Auto-load a poem and queue explanation on first mount.
-  // If the user was viewing a poem before an OAuth redirect, restore it instead.
+  // If the URL contains /poem/:id, load that specific poem (deep link).
+  // OAuth restore and prefetch are handled in the useState lazy initializer.
   useEffect(() => {
     if (!hasAutoLoaded.current) {
       hasAutoLoaded.current = true;
-      let restored = false;
-      try {
-        const stashed = sessionStorage.getItem('pendingSavePoem');
-        if (stashed) {
-          const poem = JSON.parse(stashed);
-          if (poem && poem.arabic) {
+
+      // Deep link detection: /poem/:id
+      const deepLinkMatch = window.location.pathname.match(/^\/poem\/(\d+)$/);
+      if (deepLinkMatch && useDatabase) {
+        const poemId = deepLinkMatch[1];
+        track('deep_link_loaded', { poemId });
+        addLog("DeepLink", `Loading poem ID ${poemId} from URL`, "info");
+        fetch(`${apiUrl}/api/poems/${poemId}`)
+          .then(res => {
+            if (!res.ok) throw new Error(`Poem ${poemId} not found`);
+            return res.json();
+          })
+          .then(poem => {
+            if (poem.arabic) poem.arabic = poem.arabic.replace(/\*/g, '\n');
+            poem.isFromDatabase = true;
             setPoems([poem]);
             setCurrentIndex(0);
-            restored = true;
-            addLog("Restore", "Restored poem from before sign-in", "info");
-          }
-        }
-      } catch {}
-      if (!restored) {
-        setAutoExplainPending(true);
-        handleFetch();
+            setAutoExplainPending(true);
+            addLog("DeepLink", `Loaded: ${poem.poet} — ${poem.title}`, "success");
+            window.history.replaceState({}, '', '/');
+          })
+          .catch(err => {
+            addLog("DeepLink", `Failed: ${err.message}`, "error");
+            setAutoExplainPending(true);
+            handleFetch();
+          });
+        prefetchNextVisitPoem();
+        return;
       }
+
+      // Clear stashed OAuth poem (already restored by useState lazy initializer)
+      try { sessionStorage.removeItem('pendingSavePoem'); } catch {}
+
+      // If the initial poem already has a cached translation, skip auto-explain
+      const initial = poems[0];
+      if (initial?.cachedTranslation) {
+        addLog("Init", `Loaded with cached translation: ${initial.poet} — ${initial.title}`, "success");
+      } else {
+        // No cached translation — queue auto-explain and fetch from DB
+        setAutoExplainPending(true);
+        if (!initial?.isSeedPoem || !initial?.cachedTranslation) {
+          handleFetch();
+        }
+      }
+
+      // Background: pre-fetch next visit's poem
+      prefetchNextVisitPoem();
     }
   }, []);
+
+  // Fetch poem of the day on mount (cached per date in IndexedDB)
+  useEffect(() => {
+    if (!useDatabase) return;
+    const todayKey = `daily-${new Date().toISOString().slice(0, 10)}`;
+
+    (async () => {
+      // Check IndexedDB cache first
+      if (FEATURES.caching) {
+        try {
+          const cached = await cacheOperations.get(CACHE_CONFIG.stores.poems, todayKey);
+          if (cached?.data) {
+            setDailyPoem(cached.data);
+            addLog("Daily", "Loaded poem of the day from cache", "info");
+            return;
+          }
+        } catch {}
+      }
+
+      // Fetch from API
+      try {
+        const res = await fetch(`${apiUrl}/api/poems/daily`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const poem = await res.json();
+        if (poem.arabic) poem.arabic = poem.arabic.replace(/\*/g, '\n');
+        poem.isFromDatabase = true;
+        setDailyPoem(poem);
+        addLog("Daily", `Poem of the day: ${poem.poet} — ${poem.title}`, "success");
+
+        // Cache for today
+        if (FEATURES.caching) {
+          try {
+            await cacheOperations.set(CACHE_CONFIG.stores.poems, todayKey, { data: poem });
+          } catch {}
+        }
+      } catch (err) {
+        addLog("Daily", `Failed to load: ${err.message}`, "error");
+      }
+    })();
+  }, [useDatabase]);
 
   // After OAuth redirect, once the user is signed in, auto-save the stashed poem and clean up
   useEffect(() => {
@@ -1748,11 +2649,13 @@ export default function DiwanApp() {
     } catch {}
   }, [user]);
 
-  // Auto-trigger explanation after auto-loaded poem arrives
+  // Auto-trigger explanation after auto-loaded poem arrives (skip if cached translation exists)
   useEffect(() => {
     if (autoExplainPending && current?.id && !isFetching && !isInterpreting && !interpretation) {
       setAutoExplainPending(false);
-      handleAnalyze();
+      if (!current?.cachedTranslation) {
+        handleAnalyze();
+      }
     }
   }, [autoExplainPending, current?.id, isFetching, isInterpreting, interpretation]);
 
@@ -1837,11 +2740,68 @@ export default function DiwanApp() {
     return () => clearTimeout(timeoutId);
   }, [darkMode, currentFont, user, isSupabaseConfigured]);
 
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      const tag = document.activeElement?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+      switch (e.key) {
+        case ' ':
+          e.preventDefault();
+          togglePlay();
+          break;
+        case 'ArrowRight':
+          handleFetch();
+          break;
+        case 'e':
+        case 'E':
+          if (!isInterpreting && !interpretation) handleAnalyze();
+          break;
+        case 't':
+        case 'T':
+          setShowTranslation(prev => !prev);
+          break;
+        case 'r':
+        case 'R':
+          setShowTransliteration(prev => !prev);
+          break;
+        case 'Escape':
+          setShowAuthModal(false);
+          setShowSavedPoems(false);
+          setShowSettings(false);
+          setShowShortcutHelp(false);
+          break;
+        case '?':
+          setShowShortcutHelp(prev => !prev);
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isInterpreting, interpretation]);
+
   const handleScroll = (e) => {
     setHeaderOpacity(Math.max(0, 1 - e.target.scrollTop / 30));
   };
 
-  const insightParts = useMemo(() => parseInsight(interpretation), [interpretation]);
+  // Extract cached translation fields into stable local variables so useMemo
+  // only re-runs when the actual string values change, not on every `current` reference change.
+  const cachedTranslation = current?.cachedTranslation;
+  const cachedExplanation = current?.cachedExplanation;
+  const cachedAuthorBio = current?.cachedAuthorBio;
+
+  const insightParts = useMemo(() => {
+    if (cachedTranslation) {
+      return {
+        poeticTranslation: cachedTranslation,
+        depth: cachedExplanation || '',
+        author: cachedAuthorBio || ''
+      };
+    }
+    return parseInsight(interpretation);
+  }, [interpretation, cachedTranslation, cachedExplanation, cachedAuthorBio]);
 
   const versePairs = useMemo(() => {
     const arLines = (current?.arabic || "").split('\n').filter(l => l.trim());
@@ -1892,10 +2852,12 @@ export default function DiwanApp() {
     }
     isTogglingPlay.current = true;
     addLog("UI Event", `🎵 Play button clicked | Poem: ${current?.poet} - ${current?.title} | ID: ${current?.id}`, "info");
+    track('audio_play', { poet: current?.poet });
 
     if (isPlaying) {
       audioRef.current.pause();
       setIsPlaying(false);
+      track('audio_pause', { poet: current?.poet });
       addLog("UI Event", "⏸️ Pause button clicked", "info");
       isTogglingPlay.current = false;
       return;
@@ -2114,6 +3076,7 @@ export default function DiwanApp() {
       }
     } catch (e) {
       addLog("Audio System Error", `${e.message} | Poem ID: ${current?.id}`, "error");
+      track('audio_error', { error: (e.message || '').slice(0, 100) });
       setIsPlaying(false);
     } finally {
       setIsGeneratingAudio(false);
@@ -2126,6 +3089,7 @@ export default function DiwanApp() {
     addLog("UI Event", `🔍 Dive In button clicked | Poem: ${current?.poet} - ${current?.title} | ID: ${current?.id}`, "info");
 
     if (interpretation || isInterpreting) return;
+    track('insight_requested', { poet: current?.poet });
 
     // Set loading state FIRST (before duplicate check) for better UX
     setIsInterpreting(true);
@@ -2207,6 +3171,7 @@ export default function DiwanApp() {
     }
 
     let insightText = "";
+    let apiStartTime = null;
 
     try {
       // Guard: AI Insights require a Gemini API key
@@ -2239,9 +3204,11 @@ export default function DiwanApp() {
         );
 
         setInterpretation(""); // Clear previous interpretation
-        const apiStart = performance.now();
+        apiStartTime = performance.now();
+        const apiStart = apiStartTime;
         let firstChunkTime = null;
         let chunkCount = 0;
+        let totalTime = 0;
 
         const insightsStreamBody = JSON.stringify({
           contents: [{ parts: [{ text: promptText }] }],
@@ -2291,7 +3258,7 @@ export default function DiwanApp() {
         }
 
         insightText = accumulatedText;
-        const totalTime = performance.now() - apiStart;
+        totalTime = performance.now() - apiStart;
         const charCount = insightText.length;
         const estimatedTokens = Math.ceil(charCount / 4);
         const tokensPerSecond = (estimatedTokens / (totalTime / 1000)).toFixed(1);
@@ -2327,11 +3294,30 @@ export default function DiwanApp() {
           }
         });
         const cacheTime = performance.now() - cacheStart;
-        const savedTime = FEATURES.streaming ? (totalTime / 1000).toFixed(1) : "2-8";
-        addLog("Insights Cache", `Insights cached for future use (${cacheTime.toFixed(0)}ms) | Saves ${savedTime}s on reload`, "success");
+        const elapsedTime = apiStartTime ? ((performance.now() - apiStartTime) / 1000).toFixed(1) : "2-8";
+        addLog("Insights Cache", `Insights cached for future use (${cacheTime.toFixed(0)}ms) | Saves ${elapsedTime}s on reload`, "success");
       }
+
+      // Save translation back to database for future visitors (fire-and-forget)
+      if (current?.isFromDatabase && current?.id && insightText && apiUrl) {
+        const parts = parseInsight(insightText);
+        if (parts?.poeticTranslation) {
+          fetch(`${apiUrl}/api/poems/${current.id}/translation`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              translation: parts.poeticTranslation.replace(/\n/g, '*'),
+              explanation: parts.depth || null,
+              authorBio: parts.author || null
+            })
+          }).catch(() => {});
+        }
+      }
+
+      track('insight_completed', { poet: current?.poet, cached: !!(FEATURES.caching && current?.id && insightText) });
     } catch (e) {
       addLog("Analysis Error", `${e.message} | Poem ID: ${current?.id}`, "error");
+      track('insight_error', { error: (e.message || '').slice(0, 100) });
       // Show partial results if streaming was interrupted
       if (FEATURES.streaming && insightText) {
         addLog("Insights", "Showing partial results", "warning");
@@ -2386,6 +3372,9 @@ export default function DiwanApp() {
           if (newPoem.arabic) {
             newPoem.arabic = newPoem.arabic.replace(/\*/g, '\n');
           }
+          if (newPoem.cachedTranslation) {
+            newPoem.cachedTranslation = newPoem.cachedTranslation.replace(/\*/g, '\n');
+          }
 
           // Mark as database poem
           newPoem.isFromDatabase = true;
@@ -2394,6 +3383,7 @@ export default function DiwanApp() {
 
           addLog("Discovery DB", `✓ Poem found | API: ${(apiTime / 1000).toFixed(2)}s | DB ID: ${newPoem.id} | Arabic: ${arabicPoemChars} chars`, "success");
           addLog("Discovery DB", `Poet: ${newPoem.poet} | Title: ${newPoem.title}`, "success");
+          track('poem_discovered', { source: 'database', poet: newPoem.poet });
 
           setPoems(prev => {
             const updated = [...prev, newPoem];
@@ -2482,6 +3472,7 @@ export default function DiwanApp() {
 
         addLog("Discovery API", `✓ Poem found | API: ${(apiTime / 1000).toFixed(2)}s | Response: ${(responseSize / 1024).toFixed(1)}KB | ${jsonChars} chars`, "success");
         addLog("Discovery Metrics", `${estimatedOutputTokens} tokens | ${tokensPerSecond} tok/s | Arabic: ${arabicPoemChars} chars | English: ${englishPoemChars} chars | Poet: ${newPoem.poet}`, "success");
+        track('poem_discovered', { source: 'ai', poet: newPoem.poet });
         setPoems(prev => {
           const updated = [...prev, newPoem];
           const searchStr = selectedCategory.toLowerCase();
@@ -2497,6 +3488,22 @@ export default function DiwanApp() {
     setIsFetching(false);
   };
 
+  // Pre-fetch a poem in the background for the next visit (stored in localStorage with TTL)
+  async function prefetchNextVisitPoem() {
+    try {
+      const res = await fetch(`${apiUrl}/api/poems/random`);
+      if (!res.ok) return;
+      const poem = await res.json();
+      if (poem.arabic) poem.arabic = poem.arabic.replace(/\*/g, '\n');
+      if (poem.cachedTranslation) poem.cachedTranslation = poem.cachedTranslation.replace(/\*/g, '\n');
+      poem.isFromDatabase = true;
+      localStorage.setItem('qafiyah_nextPoem', JSON.stringify({
+        poem,
+        storedAt: Date.now()
+      }));
+    } catch {} // silent fail — prefetch is best-effort
+  }
+
   const handleCopy = async () => {
     addLog("UI Event", `📋 Copy button clicked | Poem: ${current?.poet} - ${current?.title}`, "info");
 
@@ -2507,6 +3514,7 @@ export default function DiwanApp() {
 
     try {
       await navigator.clipboard.writeText(textToCopy);
+      track('poem_copied', { poet: current?.poet });
       setShowCopySuccess(true);
       addLog("Copy", `✓ Copied to clipboard | ${copyChars} chars total (${arabicChars} Arabic + ${englishChars} English)`, "success");
       setTimeout(() => setShowCopySuccess(false), 2000);
@@ -2515,8 +3523,68 @@ export default function DiwanApp() {
     }
   };
 
+  const handleDailyPoem = () => {
+    if (!dailyPoem) return;
+    track('daily_poem_requested');
+    addLog("UI Event", "Daily poem button clicked", "info");
+    setInterpretation(null);
+    setPoems(prev => {
+      const exists = prev.find(p => p.id === dailyPoem.id);
+      if (exists) {
+        setCurrentIndex(prev.indexOf(exists));
+        return prev;
+      }
+      setCurrentIndex(prev.length);
+      return [...prev, dailyPoem];
+    });
+    setAutoExplainPending(true);
+  };
+
+  const handleShare = async () => {
+    addLog("UI Event", "Share button clicked", "info");
+    track('poem_shared', { poet: current?.poet });
+
+    const poemId = current?.id;
+    const isDbPoem = current?.isFromDatabase && typeof poemId === 'number';
+    const shareUrl = isDbPoem
+      ? `${window.location.origin}/poem/${poemId}`
+      : window.location.origin;
+    const shareTitle = `${current?.titleArabic || current?.title || 'Arabic Poetry'} — ${current?.poetArabic || current?.poet || ''}`;
+    const shareText = current?.arabic
+      ? current.arabic.split('\n').slice(0, 2).join('\n')
+      : 'Discover classical and modern Arabic poetry';
+
+    // Try native Web Share API first (mobile + some desktop)
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: shareTitle, text: shareText, url: shareUrl });
+        track('share_method', { method: 'native' });
+        addLog("Share", "Shared via Web Share API", "success");
+        return;
+      } catch (e) {
+        // User cancelled or API failed — fall through to copy
+        if (e.name === 'AbortError') {
+          addLog("Share", "Share cancelled by user", "info");
+          return;
+        }
+      }
+    }
+
+    // Fallback: copy link to clipboard
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      track('share_method', { method: 'clipboard' });
+      setShowShareSuccess(true);
+      addLog("Share", `Link copied: ${shareUrl}`, "success");
+      setTimeout(() => setShowShareSuccess(false), 2000);
+    } catch (e) {
+      addLog("Share Error", e.message, "error");
+    }
+  };
+
   // Auth handlers
   const handleSignIn = () => {
+    track('sign_in_started');
     setShowAuthModal(true);
   };
 
@@ -2528,8 +3596,10 @@ export default function DiwanApp() {
     const { error } = await signInWithGoogle();
     if (error) {
       addLog("Auth Error", error.message, "error");
+      track('sign_in_error', { provider: 'google', error: (error.message || '').slice(0, 100) });
     } else {
       setShowAuthModal(false);
+      track('sign_in_completed', { provider: 'google' });
       addLog("Auth", "Signed in with Google", "success");
     }
   };
@@ -2542,8 +3612,10 @@ export default function DiwanApp() {
     const { error } = await signInWithApple();
     if (error) {
       addLog("Auth Error", error.message, "error");
+      track('sign_in_error', { provider: 'apple', error: (error.message || '').slice(0, 100) });
     } else {
       setShowAuthModal(false);
+      track('sign_in_completed', { provider: 'apple' });
       addLog("Auth", "Signed in with Apple", "success");
     }
   };
@@ -2553,6 +3625,10 @@ export default function DiwanApp() {
     if (error) {
       addLog("Auth Error", error.message, "error");
     } else {
+      setShowSavedPoems(false);
+      setShowSettings(false);
+      setShowAuthModal(false);
+      track('sign_out');
       addLog("Auth", "Signed out successfully", "success");
     }
   };
@@ -2569,6 +3645,7 @@ export default function DiwanApp() {
       addLog("Save Error", error.message, "error");
     } else {
       addLog("Save", `Saved poem: ${current?.poet} - ${current?.title}`, "success");
+      track('poem_saved', { poet: current?.poet });
     }
   };
 
@@ -2577,6 +3654,7 @@ export default function DiwanApp() {
     if (error) {
       addLog("Unsave Error", error.message, "error");
     } else {
+      track('poem_unsaved', { poet: current?.poet });
       addLog("Unsave", `Removed poem: ${current?.poet} - ${current?.title}`, "success");
     }
   };
@@ -2586,10 +3664,12 @@ export default function DiwanApp() {
       handleSignIn();
       return;
     }
+    track('saved_poems_opened');
     setShowSavedPoems(true);
   };
 
   const handleSelectSavedPoem = (savedPoem) => {
+    track('saved_poem_selected', { poet: savedPoem.poet });
     const mappedPoem = {
       id: savedPoem.poem_id || savedPoem.id,
       poet: savedPoem.poet || '',
@@ -2617,11 +3697,28 @@ export default function DiwanApp() {
       handleSignIn();
       return;
     }
+    track('settings_opened');
     setShowSettings(true);
   };
 
   const handleSelectFont = (fontId) => {
+    track('font_changed', { font: fontId });
     setCurrentFont(fontId);
+    addLog("Font", `Font selected: ${fontId}`, "info");
+  };
+
+  const handleToggleDarkMode = () => {
+    const newTheme = darkMode ? 'light' : 'dark';
+    track('theme_changed', { theme: newTheme });
+    setDarkMode(!darkMode);
+    addLog("Theme", `Switched to ${newTheme} mode`, "info");
+  };
+  const handleToggleTheme = handleToggleDarkMode;
+
+  const handleToggleDatabase = () => {
+    const newMode = useDatabase ? 'ai' : 'database';
+    track('mode_switched', { mode: newMode });
+    setUseDatabase(!useDatabase);
   };
 
   const handleUnsavePoemFromList = async (sp) => {
@@ -2632,6 +3729,31 @@ export default function DiwanApp() {
       addLog("Unsave", `Removed poem from saved list`, "success");
     }
   };
+
+  const handleToggleTranslation = (showTranslation) => {
+    addLog("Translation", `Translation ${showTranslation ? 'shown' : 'hidden'}`, "info");
+  };
+
+  const handleToggleTransliteration = (showTransliteration) => {
+    addLog("Transliteration", `Transliteration ${showTransliteration ? 'shown' : 'hidden'}`, "info");
+  };
+
+  const handleTextSizeChange = (level) => {
+    addLog("TextSize", `Text size changed to level ${level}`, "info");
+  };
+
+  const handleKeyboardShortcut = (key, action) => {
+    addLog("Keyboard", `Shortcut: ${key} → ${action}`, "info");
+  };
+
+  const handleSplashDismissed = () => {
+    addLog("Splash", "Splash screen dismissed", "info");
+  };
+
+  const handleSplashShown = () => {
+    addLog("Splash", "Splash screen shown", "info");
+  };
+  // ── End logging hooks ─────────────────────────────────────────────
 
   useEffect(() => {
     setInterpretation(null);
@@ -2751,6 +3873,11 @@ export default function DiwanApp() {
           text-shadow: 0 0 30px rgba(99, 102, 241, 0.6);
         }
 
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
         .minimal-frame {
           position: relative;
           width: 100%;
@@ -2802,7 +3929,13 @@ export default function DiwanApp() {
 
       <div className="scroll-progress" />
 
-      <DebugPanel logs={logs} onClear={() => setLogs([])} darkMode={darkMode} />
+      <DebugPanel
+        logs={logs}
+        onClear={() => setLogs([])}
+        darkMode={darkMode}
+        poem={current}
+        appState={{ mode: useDatabase ? 'database' : 'ai', theme: darkMode ? 'dark' : 'light', font: currentFont }}
+      />
 
       {!apiKey && FEATURES.database && !apiKeyBannerDismissed && (
         <div className={`fixed top-0 left-0 right-0 z-50 px-4 py-2 text-center text-sm ${darkMode ? 'bg-amber-900/90 text-amber-200' : 'bg-amber-100 text-amber-800'} backdrop-blur-sm`}>
@@ -2857,6 +3990,12 @@ export default function DiwanApp() {
                          <div className={`flex items-center justify-center gap-1 sm:gap-2 opacity-45 ${DESIGN.mainSubtitleSize} font-brand-en tracking-[0.08em] uppercase mt-[clamp(0.25rem,0.8vw,0.75rem)]`}>
                            <span className="font-semibold">{current?.poet}</span> <span className="opacity-20">•</span> <span>{current?.title}</span>
                          </div>
+                         {dailyPoem && current?.id === dailyPoem.id && (
+                           <div className="flex items-center gap-1.5 mt-2 px-3 py-1 rounded-full bg-[#C5A059]/10 border border-[#C5A059]/20">
+                             <CalendarDays size={12} className="text-[#C5A059]" />
+                             <span className="font-brand-en text-[9px] font-bold tracking-[0.15em] uppercase text-[#C5A059]">Poem of the Day</span>
+                           </div>
+                         )}
                       </div>
                    </div>
 
@@ -2874,8 +4013,9 @@ export default function DiwanApp() {
                     <div className="flex flex-col gap-5 md:gap-7">
                       {versePairs.map((pair, idx) => (
                         <div key={`${current?.id}-${idx}`} className="flex flex-col gap-0.5">
-                          <p dir="rtl" className={`${currentFontClass} ${DESIGN.mainFontSize} leading-[2.2]  arabic-shadow`}>{pair.ar}</p>
-                          {pair.en && <p dir="ltr" className={`font-brand-en italic ${DESIGN.mainEnglishFontSize} opacity-40 ${DESIGN.anim}`}>{pair.en}</p>}
+                          <p dir="rtl" className={`${currentFontClass} leading-[2.2] arabic-shadow ${DESIGN.anim}`} style={{ fontSize: `calc(clamp(1.25rem, 2vw, 1.5rem) * ${textScale})` }}>{pair.ar}</p>
+                          {showTransliteration && pair.ar && <p dir="ltr" className={`font-brand-en italic opacity-30 ${DESIGN.anim}`} style={{ fontSize: `calc(clamp(0.75rem, 1.2vw, 0.875rem) * ${textScale})` }}>{transliterate(pair.ar)}</p>}
+                          {showTranslation && pair.en && <p dir="ltr" className={`font-brand-en italic opacity-40 ${DESIGN.anim}`} style={{ fontSize: `calc(clamp(1rem, 1.5vw, 1.125rem) * ${textScale})` }}>{pair.en}</p>}
                         </div>
                       ))}
                     </div>
@@ -2959,15 +4099,70 @@ export default function DiwanApp() {
                     <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">Copy</span>
                   </div>
 
+                  <div className="flex flex-col items-center gap-1 min-w-[52px]">
+                    <button onClick={handleShare} aria-label="Share poem" className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105">
+                      {showShareSuccess ? <Check size={21} className="text-green-500" /> : <Share2 size={21} className="text-[#C5A059]" />}
+                    </button>
+                    <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">Share</span>
+                  </div>
+
+                  <div className="flex flex-col items-center gap-1 min-w-[52px]">
+                    <button
+                      onClick={() => setShowTranslation(prev => !prev)}
+                      aria-label={showTranslation ? 'Hide English translation' : 'Show English translation'}
+                      className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105 ${!showTranslation ? 'opacity-40' : ''}`}
+                    >
+                      <Languages size={21} className="text-[#C5A059]" />
+                    </button>
+                    <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">
+                      {showTranslation ? 'English' : 'Arabic'}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-col items-center gap-1 min-w-[52px]">
+                    <button
+                      onClick={() => setShowTransliteration(prev => !prev)}
+                      aria-label={showTransliteration ? 'Hide transliteration' : 'Show transliteration'}
+                      className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105 ${!showTransliteration ? 'opacity-40' : ''}`}
+                    >
+                      <span className="text-[#C5A059] text-[14px] font-bold leading-none" style={{ fontFamily: "'Amiri', serif" }}>عA</span>
+                    </button>
+                    <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">
+                      Romanize
+                    </span>
+                  </div>
+
+                  <div className="flex flex-col items-center gap-1 min-w-[52px]">
+                    <button
+                      onClick={cycleTextSize}
+                      aria-label={`Text size: ${TEXT_SIZES[textSizeLevel].label}`}
+                      className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105"
+                    >
+                      <span className="font-brand-en text-[15px] font-bold text-[#C5A059]">Aa</span>
+                    </button>
+                    <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">
+                      {TEXT_SIZES[textSizeLevel].label}
+                    </span>
+                  </div>
+
+                  {dailyPoem && (
+                    <div className="flex flex-col items-center gap-1 min-w-[52px]">
+                      <button onClick={handleDailyPoem} aria-label="Poem of the day" className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105 ${current?.id === dailyPoem.id ? 'bg-[#C5A059]/15' : ''}`}>
+                        <CalendarDays size={21} className="text-[#C5A059]" />
+                      </button>
+                      <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">Daily</span>
+                    </div>
+                  )}
+
                   <DatabaseToggle
                     useDatabase={useDatabase}
-                    onToggle={apiKey ? () => setUseDatabase(!useDatabase) : () => {}}
+                    onToggle={apiKey ? handleToggleDatabase : () => {}}
                     disabled={!apiKey}
                   />
 
                   <ThemeDropdown
                     darkMode={darkMode}
-                    onToggleDarkMode={() => setDarkMode(!darkMode)}
+                    onToggleDarkMode={handleToggleTheme}
                     currentFont={currentFont}
                     onCycleFont={cycleFont}
                     fonts={FONTS}
@@ -2978,6 +4173,7 @@ export default function DiwanApp() {
                   {isSupabaseConfigured && (
                     <AuthButton
                       user={user}
+                      darkMode={darkMode}
                       onSignIn={handleSignIn}
                       onSignOut={handleSignOut}
                       onOpenSavedPoems={handleOpenSavedPoems}
@@ -2989,15 +4185,26 @@ export default function DiwanApp() {
               ) : (
                 <OverflowMenu
                   darkMode={darkMode}
-                  onToggleDarkMode={() => setDarkMode(!darkMode)}
+                  onToggleDarkMode={handleToggleTheme}
                   currentFont={currentFont}
                   onSelectFont={handleSelectFont}
                   selectedCategory={selectedCategory}
                   onSelectCategory={setSelectedCategory}
                   onCopy={handleCopy}
                   showCopySuccess={showCopySuccess}
+                  onShare={handleShare}
+                  showShareSuccess={showShareSuccess}
+                  dailyPoem={dailyPoem}
+                  onDailyPoem={handleDailyPoem}
+                  isCurrentDaily={current?.id === dailyPoem?.id}
                   useDatabase={useDatabase}
-                  onToggleDatabase={apiKey ? () => setUseDatabase(!useDatabase) : () => {}}
+                  onToggleDatabase={apiKey ? handleToggleDatabase : () => {}}
+                  showTranslation={showTranslation}
+                  onToggleTranslation={() => setShowTranslation(prev => !prev)}
+                  showTransliteration={showTransliteration}
+                  onToggleTransliteration={() => setShowTransliteration(prev => !prev)}
+                  textSizeLevel={textSizeLevel}
+                  onCycleTextSize={cycleTextSize}
                   user={user}
                   onOpenSavedPoems={handleOpenSavedPoems}
                   onOpenSettings={handleOpenSettings}
@@ -3030,7 +4237,7 @@ export default function DiwanApp() {
                        <Sparkles size={12} /> Seek Insight
                     </button>
                   )}
-                  <p className={`font-brand-en italic whitespace-pre-wrap ${DESIGN.paneVerseSize} ${darkMode ? 'text-stone-100' : 'text-stone-800'}`}>{insightParts?.poeticTranslation || current?.english}</p>
+                  {showTranslation && <p className={`font-brand-en italic whitespace-pre-wrap ${DESIGN.paneVerseSize} ${darkMode ? 'text-stone-100' : 'text-stone-800'}`}>{insightParts?.poeticTranslation || current?.english}</p>}
                   {insightParts?.depth && (
                     <div className="pt-6 border-t border-indigo-500/10">
                       <h4 className="text-[10px] font-brand-en font-black text-indigo-600 mb-2 uppercase tracking-widest opacity-80">The Depth</h4>
@@ -3079,7 +4286,7 @@ export default function DiwanApp() {
         isOpen={showSettings}
         onClose={() => setShowSettings(false)}
         darkMode={darkMode}
-        onToggleDarkMode={() => setDarkMode(!darkMode)}
+        onToggleDarkMode={handleToggleTheme}
         currentFont={currentFont}
         onSelectFont={handleSelectFont}
         user={user}
@@ -3115,19 +4322,39 @@ export default function DiwanApp() {
           onExplain={handleAnalyze}
           onCopy={handleCopy}
           showCopySuccess={showCopySuccess}
+          onShare={handleShare}
+          showShareSuccess={showShareSuccess}
           onOpenSavedPoems={handleOpenSavedPoems}
           onOpenSettings={handleOpenSettings}
           onSignIn={handleSignIn}
           onSignOut={handleSignOut}
           user={user}
           useDatabase={useDatabase}
-          onToggleDatabase={() => setUseDatabase(!useDatabase)}
+          onToggleDatabase={handleToggleDatabase}
           isSupabaseConfigured={isSupabaseConfigured}
           theme={theme}
           isInterpreting={isInterpreting}
           interpretation={interpretation}
         />
       )}
+
+      {/* Splash / Onboarding Screen */}
+      <SplashScreen
+        isOpen={showSplash}
+        onDismiss={() => {
+          setShowSplash(false);
+          try { localStorage.setItem('hasSeenOnboarding', 'true'); } catch {}
+        }}
+        showOnboarding={showOnboarding}
+        theme={theme}
+      />
+
+      {/* Keyboard Shortcut Help */}
+      <ShortcutHelp
+        isOpen={showShortcutHelp}
+        onClose={() => setShowShortcutHelp(false)}
+        theme={theme}
+      />
     </div>
   );
 }

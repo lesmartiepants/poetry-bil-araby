@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import * as Sentry from '@sentry/react';
 import { supabase, isSupabaseConfigured } from '../supabaseClient';
 
 // Structured logger for auth/DB events — captured by Vercel and browser console
@@ -29,6 +30,9 @@ export function useAuth() {
       setUser(session?.user ?? null);
       setLoading(false);
       log.info('Session', session ? `Restored session for ${session.user.email}` : 'No existing session');
+      if (session?.user) {
+        Sentry.setUser({ id: session.user.id, email: session.user.email });
+      }
     });
 
     // Listen for auth changes
@@ -39,6 +43,13 @@ export function useAuth() {
       setUser(session?.user ?? null);
       setLoading(false);
       log.info('StateChange', `${event}${session ? ` — ${session.user.email}` : ''}`);
+
+      // Sync Sentry user context with auth state
+      if (session?.user) {
+        Sentry.setUser({ id: session.user.id, email: session.user.email });
+      } else {
+        Sentry.setUser(null);
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -111,6 +122,7 @@ export function useUserSettings(user) {
 
   useEffect(() => {
     if (!user || !isSupabaseConfigured()) {
+      setSettings(null);
       setLoading(false);
       return;
     }
@@ -153,7 +165,7 @@ export function useUserSettings(user) {
         .upsert({
           user_id: user.id,
           ...newSettings,
-        })
+        }, { onConflict: 'user_id' })
         .select()
         .single();
 
@@ -188,6 +200,7 @@ export function useSavedPoems(user) {
 
   useEffect(() => {
     if (!user || !isSupabaseConfigured()) {
+      setSavedPoems([]);
       setLoading(false);
       return;
     }

@@ -133,12 +133,28 @@ describe('useAuth Hook', () => {
 describe('useUserSettings Hook', () => {
   it('should initialize with no settings when no user', async () => {
     render(<TestSettingsComponent user={null} />);
-    
+
     await waitFor(() => {
       expect(screen.getByTestId('loading')).toHaveTextContent('Ready');
     });
-    
+
     expect(screen.getByTestId('theme')).toHaveTextContent('No theme');
+  });
+
+  it('should clear settings when user becomes null (sign-out)', async () => {
+    const mockUser = { id: 'user-123', email: 'test@example.com' };
+    const { rerender } = render(<TestSettingsComponent user={mockUser} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('loading')).toHaveTextContent('Ready');
+    });
+
+    // Simulate sign-out by setting user to null
+    rerender(<TestSettingsComponent user={null} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('theme')).toHaveTextContent('No theme');
+    });
   });
 
   it('should call saveSettings when button clicked', async () => {
@@ -163,13 +179,30 @@ describe('useUserSettings Hook', () => {
 describe('useSavedPoems Hook', () => {
   it('should initialize with empty saved poems when no user', async () => {
     render(<TestSavedPoemsComponent user={null} />);
-    
+
     await waitFor(() => {
       expect(screen.getByTestId('loading')).toHaveTextContent('Ready');
     });
-    
+
     expect(screen.getByTestId('count')).toHaveTextContent('0');
     expect(screen.getByTestId('is-saved')).toHaveTextContent('Not saved');
+  });
+
+  it('should clear saved poems when user becomes null (sign-out)', async () => {
+    const mockUser = { id: 'user-123', email: 'test@example.com' };
+    const { rerender } = render(<TestSavedPoemsComponent user={mockUser} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('loading')).toHaveTextContent('Ready');
+    });
+
+    // Simulate sign-out by setting user to null
+    rerender(<TestSavedPoemsComponent user={null} />);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('count')).toHaveTextContent('0');
+      expect(screen.getByTestId('is-saved')).toHaveTextContent('Not saved');
+    });
   });
 
   it('should call savePoem when save button clicked', async () => {

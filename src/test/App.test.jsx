@@ -17,11 +17,22 @@ const defaultDbPoem = {
   tags: ['Modern', 'Romantic', 'Ghazal'],
 }
 
+// Default mock response for any fetch calls during mount
+const defaultFetchResponse = {
+  ok: true,
+  status: 200,
+  json: async () => defaultDbPoem,
+  text: async () => '',
+  headers: new Map(),
+  statusText: 'OK',
+  body: { getReader: () => ({ read: vi.fn().mockResolvedValue({ done: true, value: undefined }) }) },
+}
+
 function mockAutoLoadFetch() {
-  global.fetch.mockResolvedValueOnce({
-    ok: true,
-    json: async () => defaultDbPoem,
-  })
+  // Use a persistent implementation that returns the default poem for any URL,
+  // handling all mount-time fetches (auto-load, daily poem, health ping, auto-explain).
+  // Tests that need specific fetch behavior should call mockResolvedValueOnce AFTER awaiting mount.
+  global.fetch.mockImplementation(() => Promise.resolve({ ...defaultFetchResponse }))
 }
 
 describe('DiwanApp', () => {
@@ -71,7 +82,13 @@ describe('DiwanApp', () => {
 
   describe('Discover Poems', () => {
     it('loads a new poem from the database when Discover is clicked', async () => {
+      mockAutoLoadFetch()
       render(<DiwanApp />)
+
+      // Wait for mount-time fetches to settle
+      await waitFor(() => {
+        expect(document.body.textContent).toContain('نزار قباني')
+      })
 
       const newPoem = {
         id: 42,
@@ -97,7 +114,13 @@ describe('DiwanApp', () => {
     })
 
     it('disables the Discover button while fetching', async () => {
+      mockAutoLoadFetch()
       render(<DiwanApp />)
+
+      // Wait for mount-time fetches to settle
+      await waitFor(() => {
+        expect(document.body.textContent).toContain('نزار قباني')
+      })
 
       // Create a never-resolving promise to keep the button disabled
       let resolveFetch
@@ -114,10 +137,13 @@ describe('DiwanApp', () => {
     })
 
     it('changes content from the initial poem after Discover', async () => {
+      mockAutoLoadFetch()
       render(<DiwanApp />)
 
-      // Initial poem poet
-      expect(document.body.textContent).toContain('نزار قباني')
+      // Wait for mount-time fetches to settle
+      await waitFor(() => {
+        expect(document.body.textContent).toContain('نزار قباني')
+      })
 
       const newPoem = {
         id: 77,
@@ -201,7 +227,13 @@ describe('DiwanApp', () => {
       'POEM:\nTranslation line\nTHE DEPTH: Deep meaning here.\nTHE AUTHOR: Celebrated poet info.'
 
     it('shows parsed insight sections after clicking Explain on a DB poem', async () => {
+      mockAutoLoadFetch()
       render(<DiwanApp />)
+
+      // Wait for mount-time fetches to settle
+      await waitFor(() => {
+        expect(document.body.textContent).toContain('نزار قباني')
+      })
 
       // Load a DB poem first
       global.fetch.mockResolvedValueOnce({ ok: true, json: async () => createDbPoem(101) })
@@ -219,7 +251,13 @@ describe('DiwanApp', () => {
     })
 
     it('Explain button is enabled for a DB poem', async () => {
+      mockAutoLoadFetch()
       render(<DiwanApp />)
+
+      // Wait for mount-time fetches to settle
+      await waitFor(() => {
+        expect(document.body.textContent).toContain('نزار قباني')
+      })
 
       global.fetch.mockResolvedValueOnce({ ok: true, json: async () => createDbPoem(100) })
       await userEvent.click(screen.getByLabelText('Discover new poem'))
@@ -287,7 +325,7 @@ describe('DiwanApp', () => {
       await userEvent.click(screen.getByLabelText('Copy poem to clipboard'))
 
       // App should still be rendered (no crash)
-      expect(screen.getByText('poetry')).toBeInTheDocument()
+      expect(screen.getAllByText('poetry').length).toBeGreaterThanOrEqual(1)
     })
   })
 
@@ -508,7 +546,13 @@ describe('DiwanApp', () => {
     })
 
     it('logs error when AI Insights fails with an HTTP error', async () => {
+      mockAutoLoadFetch()
       render(<DiwanApp />)
+
+      // Wait for mount-time fetches to settle
+      await waitFor(() => {
+        expect(document.body.textContent).toContain('نزار قباني')
+      })
 
       global.fetch.mockResolvedValueOnce({ ok: true, json: async () => createDbPoem(102) })
       await userEvent.click(screen.getByLabelText('Discover new poem'))

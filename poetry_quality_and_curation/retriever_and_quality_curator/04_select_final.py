@@ -1,7 +1,16 @@
 """Select the final 5,000 poems with diversity constraints.
 
-Applies poet caps, modern/classical ratio targets, and theme diversity
-guarantees to produce the final curated collection.
+Applies poet caps, modern/classical ratio targets, line-length distribution
+buckets, canon poem auto-inclusion, and theme diversity guarantees to produce
+the final curated collection.
+
+Line-length distribution targets (of total selected):
+  - 30% short (1-4 lines)
+  - 30% medium (5-8 lines)
+  - 35% long (9-24 lines)
+  - 5%  epic (25+ lines, only if top-rated)
+
+Canon poems (from canon_poems.json) are always included regardless of score.
 
 Usage:
     python -m poetry_quality_and_curation.retriever_and_quality_curator.04_select_final
@@ -10,6 +19,7 @@ Usage:
 import argparse
 import json
 from collections import Counter
+from pathlib import Path
 
 from dotenv import load_dotenv
 load_dotenv()
@@ -18,7 +28,16 @@ import numpy as np
 import pandas as pd
 
 from poetry_quality_and_curation.retriever_and_quality_curator import config
-from poetry_quality_and_curation.retriever_and_quality_curator.arabic_utils import compute_text_hash
+from poetry_quality_and_curation.retriever_and_quality_curator.arabic_utils import compute_text_hash, count_lines
+
+# -- Line-length bucket configuration ----------------------------------------
+# (min_lines, max_lines, target_fraction_of_total)
+LENGTH_BUCKETS = [
+    ("short",  1,  4,  0.30),   # 30% poems with 1-4 lines
+    ("medium", 5,  8,  0.30),   # 30% poems with 5-8 lines
+    ("long",   9,  24, 0.35),   # 35% poems with 9-24 lines
+    ("epic",   25, 9999, 0.05), # 5% poems with 25+ lines (top-rated only)
+]
 
 
 def parse_args():
@@ -122,6 +141,35 @@ def classify_poem_form(row) -> str:
     return "modern"
 
 
+def load_canon_poems() -> list[dict]:
+    """Load canon poem list from canon_poems.json."""
+    canon_path = config.DATA_DIR / "canon_poems.json"
+    if not canon_path.exists():
+        print(f"Warning: {canon_path} not found, skipping canon auto-inclusion")
+        return []
+    with open(canon_path, 'r', encoding='utf-8') as f:
+        canon = json.load(f)
+    # Only return entries that were matched to actual poems in the dataset
+    matched = [c for c in canon if c.get("found") and c.get("matched_id")]
+    print(f"Loaded {len(matched)} matched canon poems ({len(canon)} total in list)")
+    return matched
+
+
+def compute_line_count(df: pd.DataFrame) -> pd.DataFrame:
+    """Add line_count column to dataframe."""
+    df = df.copy()
+    df["line_count"] = df["content"].apply(lambda x: count_lines(x) if pd.notna(x) else 0)
+    return df
+
+
+def assign_length_bucket(line_count: int) -> str:
+    """Assign a poem to a length bucket based on its line count."""
+    for name, lo, hi, _ in LENGTH_BUCKETS:
+        if lo <= line_count <= hi:
+            return name
+    return "epic"  # fallback
+
+
 def select_with_poet_cap(df: pd.DataFrame, target: int, max_per_poet: int) -> pd.DataFrame:
     """Select top poems by quality_score, respecting per-poet cap."""
     sorted_df = df.sort_values("quality_score", ascending=False)
@@ -137,6 +185,104 @@ def select_with_poet_cap(df: pd.DataFrame, target: int, max_per_poet: int) -> pd
             poet_counts[poet] += 1
         if len(selected_indices) >= target:
             break
+
+    return df.loc[selected_indices]
+
+
+def select_with_length_buckets(df: pd.DataFrame, target: int, max_per_poet: int,
+                                canon_ids: set[str] | None = None) -> pd.DataFrame:
+    """Select poems respecting both poet cap and line-length distribution targets.
+
+    Canon poems (if provided) are always included first, then remaining slots
+    are filled per-bucket by quality score.
+    """
+    if canon_ids is None:
+        canon_ids = set()
+
+    # Ensure line_count and length_bucket columns exist
+    if "line_count" not in df.columns:
+        df = compute_line_count(df)
+    if "length_bucket" not in df.columns:
+        df["length_bucket"] = df["line_count"].apply(assign_length_bucket)
+
+    # Phase 1: Auto-include canon poems
+    canon_mask = df["poem_id"].astype(str).isin(canon_ids)
+    canon_df = df[canon_mask].copy()
+    non_canon_df = df[~canon_mask].copy()
+
+    selected_indices = list(canon_df.index)
+    poet_counts: Counter = Counter()
+    bucket_counts: Counter = Counter()
+
+    for idx in selected_indices:
+        row = df.loc[idx]
+        poet = row.get("poet_name", "unknown")
+        if pd.isna(poet) or poet == "":
+            poet = "unknown"
+        poet_counts[poet] += 1
+        bucket = row.get("length_bucket", "medium")
+        bucket_counts[bucket] += 1
+
+    canon_count = len(selected_indices)
+    remaining = target - canon_count
+    if remaining <= 0:
+        print(f"  Canon poems ({canon_count}) already meet target ({target})")
+        return df.loc[selected_indices]
+
+    print(f"  Auto-included {canon_count} canon poems, filling {remaining} remaining slots")
+
+    # Phase 2: Fill per-bucket quotas
+    bucket_targets = {}
+    for name, _, _, fraction in LENGTH_BUCKETS:
+        bucket_target = round(target * fraction)
+        already = bucket_counts.get(name, 0)
+        bucket_targets[name] = max(0, bucket_target - already)
+
+    selected_set = set(selected_indices)
+
+    for bucket_name, lo, hi, _ in LENGTH_BUCKETS:
+        bucket_quota = bucket_targets.get(bucket_name, 0)
+        if bucket_quota <= 0:
+            continue
+
+        bucket_pool = non_canon_df[
+            (non_canon_df["length_bucket"] == bucket_name) &
+            (~non_canon_df.index.isin(selected_set))
+        ].sort_values("quality_score", ascending=False)
+
+        filled = 0
+        for idx, row in bucket_pool.iterrows():
+            if filled >= bucket_quota:
+                break
+            poet = row.get("poet_name", "unknown")
+            if pd.isna(poet) or poet == "":
+                poet = "unknown"
+            if poet_counts[poet] < max_per_poet:
+                selected_indices.append(idx)
+                selected_set.add(idx)
+                poet_counts[poet] += 1
+                bucket_counts[bucket_name] += 1
+                filled += 1
+
+    # Phase 3: If still short, fill from best remaining regardless of bucket
+    if len(selected_indices) < target:
+        shortfall = target - len(selected_indices)
+        remaining_pool = non_canon_df[
+            ~non_canon_df.index.isin(selected_set)
+        ].sort_values("quality_score", ascending=False)
+
+        filled = 0
+        for idx, row in remaining_pool.iterrows():
+            if filled >= shortfall:
+                break
+            poet = row.get("poet_name", "unknown")
+            if pd.isna(poet) or poet == "":
+                poet = "unknown"
+            if poet_counts[poet] < max_per_poet:
+                selected_indices.append(idx)
+                selected_set.add(idx)
+                poet_counts[poet] += 1
+                filled += 1
 
     return df.loc[selected_indices]
 
@@ -218,7 +364,7 @@ def build_quality_subscores(row) -> str:
     return json.dumps(subscores, ensure_ascii=False)
 
 
-def print_report(selected: pd.DataFrame):
+def print_report(selected: pd.DataFrame, canon_ids: set[str] | None = None):
     """Print selection report."""
     print("\n=== Final Selection Report ===\n")
 
@@ -229,6 +375,28 @@ def print_report(selected: pd.DataFrame):
         print(f"Total: {len(selected)}")
         print(f"  Modern: {len(modern)} ({100 * len(modern) / len(selected):.1f}%)")
         print(f"  Classical: {len(classical)} ({100 * len(classical) / len(selected):.1f}%)")
+
+    # Line-length distribution
+    if "line_count" in selected.columns:
+        print(f"\nLine-length distribution:")
+        for name, lo, hi, target_frac in LENGTH_BUCKETS:
+            count = len(selected[(selected["line_count"] >= lo) & (selected["line_count"] <= hi)])
+            pct = 100 * count / len(selected) if len(selected) > 0 else 0
+            target_pct = 100 * target_frac
+            print(f"  {name} ({lo}-{hi} lines): {count} ({pct:.1f}%, target: {target_pct:.0f}%)")
+        median_lines = selected["line_count"].median()
+        mean_lines = selected["line_count"].mean()
+        p95_lines = selected["line_count"].quantile(0.95)
+        print(f"  Median lines: {median_lines:.0f}, Mean: {mean_lines:.1f}, P95: {p95_lines:.0f}")
+
+    # Canon poem coverage
+    if canon_ids:
+        selected_ids = set(selected["poem_id"].astype(str))
+        canon_in = canon_ids & selected_ids
+        canon_missing = canon_ids - selected_ids
+        print(f"\nCanon coverage: {len(canon_in)}/{len(canon_ids)} poems included")
+        if canon_missing:
+            print(f"  WARNING: {len(canon_missing)} canon poems missing!")
 
     # Top 20 poets by count
     if "poet_name" in selected.columns:
@@ -269,22 +437,44 @@ def main():
     # Load and merge
     df = load_and_merge(args)
 
+    # Add line count and length bucket
+    df = compute_line_count(df)
+    df["length_bucket"] = df["line_count"].apply(assign_length_bucket)
+
     # Classify poems by era
     df["era"] = df.apply(classify_poem_form, axis=1)
+
+    # Load canon poems for auto-inclusion
+    canon_list = load_canon_poems()
+    canon_ids = {c["matched_id"] for c in canon_list if c.get("matched_id")}
+    canon_tier1_ids = {c["matched_id"] for c in canon_list
+                       if c.get("matched_id") and c.get("fame_tier") == 1}
+
+    print(f"\nCanon: {len(canon_ids)} matched poems ({len(canon_tier1_ids)} tier-1)")
 
     # Separate buckets
     modern = df[df["era"] == "modern"].copy()
     classical = df[df["era"] == "classical"].copy()
     print(f"Modern pool: {len(modern)}, Classical pool: {len(classical)}")
 
+    # Print line-length distribution of candidate pool
+    print(f"\nCandidate pool line-length distribution:")
+    for name, lo, hi, frac in LENGTH_BUCKETS:
+        count = len(df[(df["line_count"] >= lo) & (df["line_count"] <= hi)])
+        print(f"  {name} ({lo}-{hi} lines): {count} ({100*count/len(df):.1f}%)")
+
     # Target counts
     modern_target = round(args.target * args.modern_ratio)
     classical_target = args.target - modern_target
-    print(f"Targets: modern={modern_target}, classical={classical_target}")
+    print(f"\nTargets: modern={modern_target}, classical={classical_target}")
 
-    # Select with poet cap
-    modern_selected = select_with_poet_cap(modern, modern_target, args.max_per_poet)
-    classical_selected = select_with_poet_cap(classical, classical_target, args.max_per_poet)
+    # Select with length buckets and canon auto-inclusion
+    modern_selected = select_with_length_buckets(
+        modern, modern_target, args.max_per_poet, canon_ids=canon_ids
+    )
+    classical_selected = select_with_length_buckets(
+        classical, classical_target, args.max_per_poet, canon_ids=canon_ids
+    )
     print(f"Selected: modern={len(modern_selected)}, classical={len(classical_selected)}")
 
     # Backfill if one bucket is short
@@ -292,16 +482,14 @@ def main():
     classical_shortfall = classical_target - len(classical_selected)
 
     if modern_shortfall > 0 and classical_shortfall <= 0:
-        # Backfill modern shortfall from classical
-        extra = select_with_poet_cap(
+        extra = select_with_length_buckets(
             classical[~classical.index.isin(classical_selected.index)],
             modern_shortfall, args.max_per_poet
         )
         classical_selected = pd.concat([classical_selected, extra])
         print(f"Backfilled {len(extra)} classical poems for modern shortfall")
     elif classical_shortfall > 0 and modern_shortfall <= 0:
-        # Backfill classical shortfall from modern
-        extra = select_with_poet_cap(
+        extra = select_with_length_buckets(
             modern[~modern.index.isin(modern_selected.index)],
             classical_shortfall, args.max_per_poet
         )
@@ -310,6 +498,16 @@ def main():
 
     # Combine
     selected = pd.concat([modern_selected, classical_selected], ignore_index=True)
+
+    # Verify all canon poems are included
+    selected_ids = set(selected["poem_id"].astype(str))
+    missing_canon = canon_ids - selected_ids
+    if missing_canon:
+        # Force-add missing canon poems (they may have been in the other era bucket)
+        missing_df = df[df["poem_id"].astype(str).isin(missing_canon)]
+        if not missing_df.empty:
+            selected = pd.concat([selected, missing_df], ignore_index=True)
+            print(f"Force-added {len(missing_df)} canon poems that were in the other era bucket")
 
     # Theme diversity check
     selected = ensure_theme_diversity(selected, df)
@@ -324,11 +522,17 @@ def main():
     if "model_used" in selected.columns:
         selected["scoring_model"] = selected["model_used"]
 
+    # Add fame_tier for canon poems
+    canon_id_to_tier = {c["matched_id"]: c.get("fame_tier", 3) for c in canon_list if c.get("matched_id")}
+    selected["fame_tier"] = selected["poem_id"].astype(str).map(canon_id_to_tier)
+    selected["is_canon"] = selected["poem_id"].astype(str).isin(canon_ids)
+
     # Select final output columns (keep all that exist)
     desired_cols = [
         "poem_id", "source", "title", "content", "poet_name", "meter", "theme",
         "poem_form", "quality_score", "quality_subscores", "content_hash",
-        "scoring_model", "scored_at",
+        "scoring_model", "scored_at", "line_count", "length_bucket",
+        "fame_tier", "is_canon",
     ]
     output_cols = [c for c in desired_cols if c in selected.columns]
     # Include any extra score dimensions for reference
@@ -339,7 +543,7 @@ def main():
     final = selected[output_cols].copy()
 
     # Print report
-    print_report(selected)
+    print_report(selected, canon_ids=canon_ids)
 
     # Save
     final.to_parquet(args.output, index=False)

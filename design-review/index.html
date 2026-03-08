@@ -116,7 +116,7 @@
 
     /* Verdict buttons */
     .verdict-group{display:flex;gap:8px;margin-bottom:10px}
-    .verdict-btn{flex:1;padding:10px 8px;border-radius:var(--r);border:1px solid var(--border);background:var(--surface-2);font-size:13px;font-weight:600;transition:all .18s;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer}
+    .verdict-btn{flex:1;padding:10px 8px;border-radius:var(--r);border:1px solid var(--border);background:var(--surface-2);color:var(--text);font-size:13px;font-weight:600;transition:all .18s;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer}
     .verdict-btn:hover{border-color:var(--border-light);transform:translateY(-1px);box-shadow:0 3px 10px rgba(0,0,0,.2)}
     .verdict-btn:active{transform:translateY(0)}
     .verdict-btn.active-keep{background:var(--green-dim);border-color:var(--green);color:var(--green);box-shadow:0 0 16px rgba(34,197,94,.15)}
@@ -194,7 +194,7 @@
       width:54px;height:54px;border-radius:50%;border:2px solid var(--border);
       background:var(--surface-2);
       display:flex;align-items:center;justify-content:center;
-      font-size:22px;color:var(--text-3);
+      font-size:22px;color:var(--text);
       cursor:pointer;transition:all .2s;margin:0 2px;touch-action:manipulation;
     }
     .verdict-circle:active{transform:scale(.88)}
@@ -546,56 +546,40 @@ const CATALOG = [
           { id: 'e2e-g1-a8', name: 'A8 Deco Discovery', philosophy: 'Gold geometry frames each verse like a palace archway', file: 'e2e/gen-1/e2e-a8-deco-discovery.html', desc: 'Art Deco Geometric: gold dividers, geometric panels, fan controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
           { id: 'e2e-g1-a8-vc', name: 'A8 Deco Discovery (VC)', philosophy: 'Gold geometry frames each verse like a palace archway', file: 'e2e/gen-1/e2e-a8-deco-discovery-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
           { id: 'e2e-g2a-09', name: '09 Mosaic Discovery', philosophy: 'Tessellated patterns frame each verse like a mosque mihrab', file: 'e2e/gen-2a/09-mosaic-discovery.html', desc: 'Islamic Geometric: tessellated frame, geometric pattern controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-g2a-09-vc', name: '09 Mosaic Discovery (VC)', philosophy: 'Tessellated patterns frame each verse like a mosque mihrab', file: 'e2e/gen-2a/09-mosaic-discovery-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
           { id: 'e2e-g2a-04', name: '04 Desert Poet', philosophy: 'Dune layers drift behind the verse like a desert mirage', file: 'e2e/gen-2a/04-desert-poet.html', desc: 'Warm Sand/Parallax: parallax dune layers, mirage text, caravan controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-g2a-04-vc', name: '04 Desert Poet (VC)', philosophy: 'Dune layers drift behind the verse like a desert mirage', file: 'e2e/gen-2a/04-desert-poet-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
           { id: 'e2e-g3-pf2', name: 'PF2 Gold Mystical', philosophy: 'Gold constellations orbit the poem in celestial reverence', file: 'e2e/gen-3/pf2-gold-mystical.html', desc: 'Gold Orbit: orbiting gold icons, complete E2E from standalone', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-g3-pf2-vc', name: 'PF2 Gold Mystical (VC)', philosophy: 'Gold constellations orbit the poem in celestial reverence', file: 'e2e/gen-3/pf2-gold-mystical-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true }
         ],
         feedback: {}
       },
       { id: 'e2e-ink', name: 'Ink & Parchment', source: 'PR #65/#129', description: 'Manuscripts, codex, and calligraphy \u2014 the physical act of writing and reading',
         options: [
           { id: 'e2e-g2a-02', name: '02 Zen Manuscript', philosophy: 'Parchment and ink \u2014 reading poetry the way scribes once wrote it', file: 'e2e/gen-2a/02-zen-manuscript.html', desc: 'Skeuomorphic Revival: parchment texture, ink well, handwritten feel', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-g2a-02-vc', name: '02 Zen Manuscript (VC)', philosophy: 'Parchment and ink \u2014 reading poetry the way scribes once wrote it', file: 'e2e/gen-2a/02-zen-manuscript-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
           { id: 'e2e-g2a-07', name: '07 Scroll Keeper', philosophy: 'Gilded margins and drop caps honor the manuscript tradition', file: 'e2e/gen-2a/07-scroll-keeper.html', desc: 'Scroll-Animated Manuscript: sticky-centered unroll, easeOutBack spring reveals, parallax arabesques, gold progress line, fade-out transitions', generation: 6, iteration: 10, source_branch: 'feature/preserve-patterns', source_pr: 'walkthrough-upgrade' },
-          { id: 'e2e-g2a-07-vc', name: '07 Scroll Keeper (VC)', philosophy: 'Gilded margins and drop caps honor the manuscript tradition', file: 'e2e/gen-2a/07-scroll-keeper-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
           { id: 'e2e-g2b-05', name: '05 Scroll Codex', philosophy: 'An open book with visible binding \u2014 poetry held in your hands', file: 'e2e/gen-2b/05-scroll-codex.html', desc: 'Codex/Book: open book pages, visible binding, page tab controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
           { id: 'e2e-g2b-05-vc', name: '05 Scroll Codex (VC)', philosophy: 'An open book with visible binding \u2014 poetry held in your hands', file: 'e2e/gen-2b/05-scroll-codex-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
           { id: 'e2e-g3-pf1', name: 'PF1 Calligraphic', philosophy: 'The words themselves become the interface \u2014 kinetic calligraphy', file: 'e2e/gen-3/pf1-calligraphic.html', desc: 'Kinetic Typography: words ARE the interface, scrolling text ticker controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-g3-pf1-vc', name: 'PF1 Calligraphic (VC)', philosophy: 'The words themselves become the interface \u2014 kinetic calligraphy', file: 'e2e/gen-3/pf1-calligraphic-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
           { id: 'e2e-g3-codex', name: 'Codex Spine Story', philosophy: 'Leather spine and ribbon bookmark \u2014 a volume of collected verse', file: 'e2e/gen-3/codex-spine-story.html', desc: 'Medieval Codex: leather spine, page turns, bookmark ribbon controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-g3-codex-vc', name: 'Codex Spine Story (VC)', philosophy: 'Leather spine and ribbon bookmark \u2014 a volume of collected verse', file: 'e2e/gen-3/codex-spine-story-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true }
         ],
         feedback: {}
       },
       { id: 'e2e-breath', name: 'Breath & Stillness', source: 'PR #64/#65/#129/Round 3', description: 'Zen, emptiness, and Nordic quiet \u2014 contemplation between the lines',
         options: [
           { id: 'e2e-g1-b8', name: 'B8 Ritual Spotlight', philosophy: 'Vast emptiness \u2014 the poem floats alone, demanding your full attention', file: 'e2e/gen-1/e2e-b8-ritual-spotlight-hybrid.html', desc: 'Japanese Ma: vast emptiness, poem floats alone, tap-to-reveal controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-g1-b8-vc', name: 'B8 Ritual Spotlight (VC)', philosophy: 'Vast emptiness \u2014 the poem floats alone, demanding your full attention', file: 'e2e/gen-1/e2e-b8-ritual-spotlight-hybrid-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
           { id: 'e2e-g3-zen1', name: 'Zen 1 Refined', philosophy: 'Imperfect beauty \u2014 each verse revealed like a weathered inscription', file: 'e2e/gen-3/zen1-refined.html', desc: 'Wabi-Sabi: imperfect beauty, single-dot controls revealing one action at a time', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-g3-zen1-vc', name: 'Zen 1 Refined (VC)', philosophy: 'Imperfect beauty \u2014 each verse revealed like a weathered inscription', file: 'e2e/gen-3/zen1-refined-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
           { id: 'e2e-g3-zen2', name: 'Zen 2 Haiku', philosophy: 'Almost nothing is visible until you reach for the poem', file: 'e2e/gen-3/zen2-haiku.html', desc: 'Muji Minimalism: barely-there thin circles, visible only after first touch', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-g3-zen2-vc', name: 'Zen 2 Haiku (VC)', philosophy: 'Almost nothing is visible until you reach for the poem', file: 'e2e/gen-3/zen2-haiku-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
           { id: 'e2e-g2b-09', name: '09 Scandinavian Scroll', philosophy: 'Extreme stillness \u2014 birch-thin lines and the poem, nothing more', file: 'e2e/gen-2b/09-scandinavian-scroll.html', desc: 'Nordic Minimal: extreme whitespace, birch-thin lines, ultra-thin dot controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-g2b-09-vc', name: '09 Scandinavian Scroll (VC)', philosophy: 'Extreme stillness \u2014 birch-thin lines and the poem, nothing more', file: 'e2e/gen-2b/09-scandinavian-scroll-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
           { id: 'e2e-g2b-08', name: '08 Zen Spotlight', philosophy: 'Sand grains reveal each word \u2014 poetry measured in passing time', file: 'e2e/gen-2b/08-zen-spotlight.html', desc: 'Hourglass/Time: hourglass frame, sand grain text reveal, timeline scrubber controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-g2b-08-vc', name: '08 Zen Spotlight (VC)', philosophy: 'Sand grains reveal each word \u2014 poetry measured in passing time', file: 'e2e/gen-2b/08-zen-spotlight-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true }
         ],
         feedback: {}
       },
       { id: 'e2e-light', name: 'Light & Atmosphere', source: 'PR #64/#129/Round 3', description: 'Frosted glass, cinematic shadow, and stark contrast \u2014 mood and luminance',
         options: [
           { id: 'e2e-g1-a1', name: 'A1 Gold Orbit', philosophy: 'Verses float behind frosted glass like breath on a cold window', file: 'e2e/gen-1/e2e-a1-gold-orbit-story.html', desc: 'Glassmorphism: gold orbits, frosted glass onboarding, unique controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-g1-a1-vc', name: 'A1 Gold Orbit (VC)', philosophy: 'Verses float behind frosted glass like breath on a cold window', file: 'e2e/gen-1/e2e-a1-gold-orbit-story-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
           { id: 'e2e-g1-a2', name: 'A2 Paper Photon', philosophy: 'Poetry laid out like a literary magazine \u2014 full-bleed and unhurried', file: 'e2e/gen-1/e2e-a2-paper-photon.html', desc: 'Editorial/Magazine: full-bleed typography, magazine spreads, text menu controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-g1-a2-vc', name: 'A2 Paper Photon (VC)', philosophy: 'Poetry laid out like a literary magazine \u2014 full-bleed and unhurried', file: 'e2e/gen-1/e2e-a2-paper-photon-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
           { id: 'e2e-g3-ls1', name: 'L&S 1 Chiaroscuro', philosophy: 'Dramatic shadow carves the verse into light \u2014 cinematic intimacy', file: 'e2e/gen-3/ls1-chiaroscuro.html', desc: 'Cinematic Chiaroscuro: dramatic light/shadow, shadow-edge illuminating controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
           { id: 'e2e-g3-ls1-vc', name: 'L&S 1 Chiaroscuro (VC)', philosophy: 'Dramatic shadow carves the verse into light \u2014 cinematic intimacy', file: 'e2e/gen-3/ls1-chiaroscuro-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
           { id: 'e2e-g3-ls2', name: 'L&S 2 Ray Tracing', philosophy: 'Converging light rays illuminate the poem like a reading lamp', file: 'e2e/gen-3/ls2-ray-tracing.html', desc: 'Light Architecture: converging light rays, vertical beam controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-g3-ls2-vc', name: 'L&S 2 Ray Tracing (VC)', philosophy: 'Converging light rays illuminate the poem like a reading lamp', file: 'e2e/gen-3/ls2-ray-tracing-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
           { id: 'e2e-g3-pf3', name: 'PF3 Ink Constellation', philosophy: 'Zodiac constellations form in the void as you walk through poetry', file: 'e2e/gen-3/pf3-ink-constellation.html', desc: 'Living Constellation: real zodiac formations (Aries/Taurus/Orion), converge-to-tap transitions, constellation lines, dim star-field aesthetic', generation: 6, iteration: 9, source_branch: 'feature/preserve-patterns', source_pr: 'walkthrough-upgrade' },
-          { id: 'e2e-g3-pf3-vc', name: 'PF3 Ink Constellation (VC)', philosophy: 'Zodiac constellations form in the void as you walk through poetry', file: 'e2e/gen-3/pf3-ink-constellation-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
           { id: 'e2e-g3-pf4', name: 'PF4 Ink Tilt Splash', philosophy: '3D tilt card splash meets living constellation onboarding', file: 'e2e/gen-3/pf4-ink-tilt-splash.html', desc: '3D Tilt Card: perspective mouse-tracking splash with glassmorphism, zodiac constellation onboarding, parallax depth', generation: 6, iteration: 1, source_branch: 'feature/preserve-patterns', source_pr: 'walkthrough-upgrade' }
         ],
         feedback: {}
@@ -609,7 +593,6 @@ const CATALOG = [
           { id: 'e2e-g2b-04', name: '04 Neumorphic Warmth', philosophy: 'Soft tactile surfaces \u2014 the verse feels pressed into warm clay', file: 'e2e/gen-2b/04-neumorphic-warmth.html', desc: 'Neumorphic Depth: centered onboarding, floating warm orbs, press-in/rise-out shadow transitions, progress dots below card, zero-jitter GPU compositing', generation: 6, iteration: 10, source_branch: 'feature/preserve-patterns', source_pr: 'walkthrough-upgrade' },
           { id: 'e2e-g2b-04-vc', name: '04 Neumorphic Warmth (VC)', philosophy: 'Soft tactile surfaces \u2014 the verse feels pressed into warm clay', file: 'e2e/gen-2b/04-neumorphic-warmth-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
           { id: 'e2e-g2b-07', name: '07 Particle Neumorphic', philosophy: 'Particles settle into pressed forms \u2014 physics meets craft', file: 'e2e/gen-2b/07-particle-neumorphic.html', desc: 'Particle Fusion: hybrid particle + soft depth, orbiting particle controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-g2b-07-vc', name: '07 Particle Neumorphic (VC)', philosophy: 'Particles settle into pressed forms \u2014 physics meets craft', file: 'e2e/gen-2b/07-particle-neumorphic-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true }
         ],
         feedback: {}
       }

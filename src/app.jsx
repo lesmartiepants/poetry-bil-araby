@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Play, Pause, BookOpen, RefreshCw, Volume2, ChevronDown, Quote, Globe, Moon, Sun, Loader2, ChevronRight, ChevronLeft, Search, X, Copy, LayoutGrid, Check, Bug, Trash2, Sparkles, Feather, Library, Compass, Rabbit, MoreHorizontal, Heart, LogIn, LogOut, User, Settings2 } from 'lucide-react';
+import { Play, Pause, BookOpen, RefreshCw, Volume2, ChevronDown, Quote, Globe, Moon, Sun, Loader2, ChevronRight, ChevronLeft, Search, X, Copy, LayoutGrid, Check, Bug, Trash2, Sparkles, Feather, Library, Compass, Rabbit, MoreHorizontal, Heart, LogIn, LogOut, User, Settings2, ArrowRight, Languages } from 'lucide-react';
 import { useAuth, useUserSettings, useSavedPoems } from './hooks/useAuth';
 import { INSIGHTS_SYSTEM_PROMPT, DISCOVERY_SYSTEM_PROMPT, getTTSInstruction } from './prompts';
 import { parseInsight } from './utils/insightParser';
@@ -1111,6 +1111,185 @@ const OverflowMenu = ({
 };
 
 /* =============================================================================
+  SPLASH / ONBOARDING
+  =============================================================================
+*/
+
+const SPLASH_STEPS = [
+  {
+    icon: BookOpen,
+    titleEn: 'Discover Arabic Poetry',
+    titleAr: 'اكتشف الشعر العربي',
+    descEn: 'Explore verses from classical and modern Arabic poets, spanning centuries of literary tradition.',
+    descAr: 'استكشف أبيات الشعر العربي من شعراء كلاسيكيين ومعاصرين عبر قرون من التراث الأدبي.',
+  },
+  {
+    icon: Languages,
+    titleEn: 'Bilingual Experience',
+    titleAr: 'تجربة ثنائية اللغة',
+    descEn: 'Read poems in their original Arabic with English translations and cultural context.',
+    descAr: 'اقرأ القصائد بالعربية الأصلية مع ترجمات إنجليزية وسياق ثقافي.',
+  },
+  {
+    icon: Heart,
+    titleEn: 'Save Your Favorites',
+    titleAr: 'احفظ قصائدك المفضلة',
+    descEn: 'Build your personal collection of poems and revisit the verses that move you most.',
+    descAr: 'أنشئ مجموعتك الشخصية من القصائد وأعد زيارة الأبيات التي تحرّك مشاعرك.',
+  },
+];
+
+const SplashScreen = ({ isOpen, onDismiss, theme }) => {
+  const [step, setStep] = useState(0); // 0 = splash, 1-3 = onboarding steps
+  const [fadeState, setFadeState] = useState('in'); // 'in' | 'out'
+
+  useEffect(() => {
+    if (isOpen) setFadeState('in');
+  }, [isOpen]);
+
+  const handleDismiss = () => {
+    setFadeState('out');
+    setTimeout(() => {
+      onDismiss();
+    }, 500);
+  };
+
+  const handleAdvance = () => {
+    if (step < SPLASH_STEPS.length) {
+      setStep(step + 1);
+    } else {
+      handleDismiss();
+    }
+  };
+
+  if (!isOpen) return null;
+
+  const isDark = theme === THEME.dark;
+
+  // Splash landing (step 0)
+  if (step === 0) {
+    return (
+      <div
+        className={`fixed inset-0 z-[60] flex flex-col items-center justify-center transition-opacity duration-500 ${fadeState === 'out' ? 'opacity-0' : 'opacity-100'} ${isDark ? 'bg-[#0c0c0e]' : 'bg-[#FDFCF8]'}`}
+        onClick={handleAdvance}
+        role="dialog"
+        aria-label="Welcome to Poetry Bil-Araby"
+      >
+        {/* Subtle particle dots (CSS-only, lightweight) */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {[...Array(30)].map((_, i) => (
+            <div
+              key={i}
+              className={`absolute rounded-full animate-pulse ${isDark ? 'bg-indigo-300/20' : 'bg-indigo-600/10'}`}
+              style={{
+                width: Math.random() * 3 + 1 + 'px',
+                height: Math.random() * 3 + 1 + 'px',
+                top: Math.random() * 100 + '%',
+                left: Math.random() * 100 + '%',
+                animationDuration: Math.random() * 2 + 1 + 's',
+                animationDelay: Math.random() * 2 + 's',
+              }}
+            />
+          ))}
+        </div>
+
+        <div className="relative z-10 text-center px-8 animate-[fadeIn_0.8s_ease-out]">
+          {/* Brand */}
+          <div className="flex items-end justify-center gap-[0.35em] mb-6">
+            <span className={`font-brand-en text-[clamp(3rem,6vw,4.5rem)] lowercase tracking-[-0.05em] leading-none ${isDark ? 'text-stone-200' : 'text-stone-800'}`}>
+              poetry
+            </span>
+            <span className={`font-brand-ar text-[clamp(1.875rem,4vw,3rem)] font-bold leading-none ${isDark ? 'text-stone-200' : 'text-stone-800'}`} dir="rtl" lang="ar">
+              بالعربي
+            </span>
+          </div>
+
+          {/* Subtitle */}
+          <p className={`text-[11px] uppercase tracking-[0.4em] font-medium mb-12 animate-[fadeIn_0.8s_ease-out_0.4s_both] ${isDark ? 'text-stone-400' : 'text-stone-500'}`}>
+            Verses Connecting Across Time and Space
+          </p>
+
+          {/* CTA */}
+          <button
+            className={`inline-flex items-center gap-2 px-10 py-3.5 rounded-full border font-brand-en text-sm font-medium tracking-[0.1em] uppercase cursor-pointer ${DESIGN.anim} animate-[fadeIn_0.6s_ease-out_0.8s_both] ${DESIGN.touchTarget} ${isDark ? 'border-stone-700 text-stone-200 hover:bg-white/5 hover:border-stone-500' : 'border-stone-300 text-stone-800 hover:bg-black/5 hover:border-stone-400'}`}
+            onClick={(e) => { e.stopPropagation(); handleAdvance(); }}
+            aria-label="Begin exploring"
+          >
+            <span>Begin</span>
+            <ArrowRight size={16} />
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Onboarding steps (step 1-3)
+  const currentStep = SPLASH_STEPS[step - 1];
+  const StepIcon = currentStep.icon;
+
+  return (
+    <div
+      className={`fixed inset-0 z-[60] flex flex-col items-center justify-center transition-opacity duration-500 ${fadeState === 'out' ? 'opacity-0' : 'opacity-100'} ${isDark ? 'bg-[#0c0c0e]' : 'bg-[#FDFCF8]'}`}
+      onClick={handleDismiss}
+      role="dialog"
+      aria-label={currentStep.titleEn}
+    >
+      <div
+        className="relative z-10 text-center px-8 max-w-[360px] w-full animate-[fadeIn_0.5s_ease-out]"
+        key={step}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Icon */}
+        <StepIcon
+          size={48}
+          className={`mx-auto mb-6 ${isDark ? 'text-stone-400' : 'text-stone-500'}`}
+          strokeWidth={1.5}
+        />
+
+        {/* English title */}
+        <h2 className={`text-xl font-bold mb-1 ${isDark ? 'text-stone-200' : 'text-stone-800'}`}>
+          {currentStep.titleEn}
+        </h2>
+
+        {/* Arabic title */}
+        <p className={`font-brand-ar text-lg font-bold mb-4 ${isDark ? 'text-stone-400' : 'text-stone-500'}`} dir="rtl" lang="ar">
+          {currentStep.titleAr}
+        </p>
+
+        {/* English description */}
+        <p className={`text-[15px] leading-relaxed mb-2 ${isDark ? 'text-stone-400' : 'text-stone-500'}`}>
+          {currentStep.descEn}
+        </p>
+
+        {/* Arabic description */}
+        <p className={`font-amiri text-sm leading-[1.7] mb-8 ${isDark ? 'text-stone-500' : 'text-stone-400'}`} dir="rtl" lang="ar">
+          {currentStep.descAr}
+        </p>
+
+        {/* Dots */}
+        <div className="flex justify-center gap-2 mb-8">
+          {SPLASH_STEPS.map((_, i) => (
+            <span
+              key={i}
+              className={`w-2 h-2 rounded-full ${DESIGN.anim} ${i === step - 1 ? (isDark ? 'bg-stone-200' : 'bg-stone-800') : (isDark ? 'bg-stone-700' : 'bg-stone-300')}`}
+            />
+          ))}
+        </div>
+
+        {/* Next / Start Exploring button */}
+        <button
+          className={`inline-flex items-center gap-2 px-8 py-3 rounded-full border font-brand-en text-sm font-medium cursor-pointer ${DESIGN.anim} ${DESIGN.touchTarget} ${isDark ? 'border-stone-700 text-stone-200 hover:bg-white/5 hover:border-stone-500' : 'border-stone-300 text-stone-800 hover:bg-black/5 hover:border-stone-400'}`}
+          onClick={handleAdvance}
+        >
+          <span>{step === SPLASH_STEPS.length ? 'Start Exploring' : 'Next'}</span>
+          <ArrowRight size={16} />
+        </button>
+      </div>
+    </div>
+  );
+};
+
+/* =============================================================================
   AUTH COMPONENTS
   =============================================================================
 */
@@ -1643,6 +1822,9 @@ export default function DiwanApp() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showSavedPoems, setShowSavedPoems] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showSplash, setShowSplash] = useState(() => {
+    try { return !localStorage.getItem('hasSeenSplash'); } catch { return false; }
+  });
 
   const theme = darkMode ? THEME.dark : THEME.light;
 
@@ -2751,6 +2933,11 @@ export default function DiwanApp() {
           text-shadow: 0 0 30px rgba(99, 102, 241, 0.6);
         }
 
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
         .minimal-frame {
           position: relative;
           width: 100%;
@@ -3128,6 +3315,16 @@ export default function DiwanApp() {
           interpretation={interpretation}
         />
       )}
+
+      {/* Splash / Onboarding Screen */}
+      <SplashScreen
+        isOpen={showSplash}
+        onDismiss={() => {
+          setShowSplash(false);
+          try { localStorage.setItem('hasSeenSplash', 'true'); } catch {}
+        }}
+        theme={theme}
+      />
     </div>
   );
 }

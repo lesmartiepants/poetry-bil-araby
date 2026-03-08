@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Play, Pause, BookOpen, RefreshCw, Volume2, ChevronDown, Quote, Globe, Moon, Sun, Loader2, ChevronRight, ChevronLeft, Search, X, Copy, LayoutGrid, Check, Bug, Trash2, Sparkles, Feather, Library, Compass, Rabbit, MoreHorizontal, Heart, LogIn, LogOut, User, Settings2, Share2, CalendarDays } from 'lucide-react';
+import { track } from '@vercel/analytics';
 import { useAuth, useUserSettings, useSavedPoems } from './hooks/useAuth';
 import { INSIGHTS_SYSTEM_PROMPT, DISCOVERY_SYSTEM_PROMPT, getTTSInstruction } from './prompts';
 import { parseInsight } from './utils/insightParser';
@@ -1726,8 +1727,13 @@ export default function DiwanApp() {
   };
 
   useEffect(() => {
-    if (selectedCategory !== "All" && filtered.length === 0) {
-      handleFetch();
+    if (selectedCategory !== "All") {
+      track('poet_filter_changed', { poet: selectedCategory });
+      if (filtered.length === 0) {
+        handleFetch();
+      } else {
+        setCurrentIndex(0);
+      }
     } else {
       setCurrentIndex(0);
     }
@@ -2005,6 +2011,7 @@ export default function DiwanApp() {
     }
     isTogglingPlay.current = true;
     addLog("UI Event", `🎵 Play button clicked | Poem: ${current?.poet} - ${current?.title} | ID: ${current?.id}`, "info");
+    track('audio_play', { poet: current?.poet });
 
     if (isPlaying) {
       audioRef.current.pause();
@@ -2507,6 +2514,7 @@ export default function DiwanApp() {
 
           addLog("Discovery DB", `✓ Poem found | API: ${(apiTime / 1000).toFixed(2)}s | DB ID: ${newPoem.id} | Arabic: ${arabicPoemChars} chars`, "success");
           addLog("Discovery DB", `Poet: ${newPoem.poet} | Title: ${newPoem.title}`, "success");
+          track('poem_discovered', { source: 'database', poet: newPoem.poet });
 
           setPoems(prev => {
             const updated = [...prev, newPoem];
@@ -2595,6 +2603,7 @@ export default function DiwanApp() {
 
         addLog("Discovery API", `✓ Poem found | API: ${(apiTime / 1000).toFixed(2)}s | Response: ${(responseSize / 1024).toFixed(1)}KB | ${jsonChars} chars`, "success");
         addLog("Discovery Metrics", `${estimatedOutputTokens} tokens | ${tokensPerSecond} tok/s | Arabic: ${arabicPoemChars} chars | English: ${englishPoemChars} chars | Poet: ${newPoem.poet}`, "success");
+        track('poem_discovered', { source: 'ai', poet: newPoem.poet });
         setPoems(prev => {
           const updated = [...prev, newPoem];
           const searchStr = selectedCategory.toLowerCase();
@@ -2646,6 +2655,7 @@ export default function DiwanApp() {
 
   const handleShare = async () => {
     addLog("UI Event", "Share button clicked", "info");
+    track('poem_shared', { poet: current?.poet });
 
     const poemId = current?.id;
     const isDbPoem = current?.isFromDatabase && typeof poemId === 'number';
@@ -2737,6 +2747,7 @@ export default function DiwanApp() {
       addLog("Save Error", error.message, "error");
     } else {
       addLog("Save", `Saved poem: ${current?.poet} - ${current?.title}`, "success");
+      track('poem_saved', { poet: current?.poet });
     }
   };
 

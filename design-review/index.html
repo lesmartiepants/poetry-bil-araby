@@ -31,8 +31,8 @@
     .tb-select:hover,.tb-select:focus{border-color:var(--accent)}
     .tb-select option{background:var(--surface-2);color:var(--text)}
     .tb-sep{width:1px;height:20px;background:var(--border);flex-shrink:0}
-    .tb-detail{font-size:11px;color:var(--text-2);display:flex;align-items:center;gap:6px;overflow:hidden;min-width:0}
-    .tb-detail .td-phil{color:rgba(212,168,75,.55);font-style:italic;font-size:11px}
+    .tb-detail{font-size:11px;color:var(--text-2);display:flex;align-items:center;gap:6px;overflow:hidden;min-width:0;flex-shrink:1}
+    .tb-detail .td-phil{color:rgba(212,168,75,.55);font-style:italic;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .tb-spacer{flex:1}
 
     /* Nav buttons */
@@ -56,11 +56,26 @@
     /* preview-header removed — info consolidated into toolbar */
     .preview-iframe{width:100%;height:100%;border:none;background:#000}
 
-    /* Open-in-new-tab expand overlay */
-    .preview-open-overlay{position:absolute;top:12px;right:12px;z-index:15;width:54px;height:54px;border-radius:var(--r);background:none;border:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;opacity:0.45;transition:opacity .2s;color:var(--text-2)}
-    .preview-open-overlay:hover{opacity:0.8;color:var(--text)}
+    /* Expand overlay button */
+    .preview-open-overlay{position:absolute;top:12px;right:12px;z-index:15;width:54px;height:54px;border-radius:var(--r);background:none;border:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;transition:all .2s;color:rgba(255,255,255,.55);text-shadow:0 0 12px rgba(255,255,255,.4),0 0 24px rgba(255,255,255,.15)}
+    .preview-open-overlay:hover{color:#fff;text-shadow:0 0 16px rgba(255,255,255,.7),0 0 32px rgba(255,255,255,.3);transform:scale(1.1)}
     .preview-open-overlay .expand-icon{font-size:22px;line-height:1}
     .preview-open-overlay .expand-label{font-size:8px;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+
+    /* ── Fullscreen mode (promotes existing preview to viewport) ── */
+    #previewContent.fs-active{position:fixed!important;inset:0;z-index:9999;background:#000}
+    #previewContent.fs-active .preview-open-overlay{display:none!important}
+    .fs-btn{position:fixed;z-index:10000;border-radius:var(--r);border:none;background:none;backdrop-filter:none;-webkit-backdrop-filter:none;color:rgba(255,255,255,.55);display:none;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;text-shadow:0 0 12px rgba(255,255,255,.4),0 0 24px rgba(255,255,255,.15)}
+    .fs-btn:hover{background:none;border:none;color:#fff;text-shadow:0 0 16px rgba(255,255,255,.7),0 0 32px rgba(255,255,255,.3)}
+    body.fs-mode .fs-btn{display:flex!important}
+    .fs-collapse{top:12px;right:12px;width:44px;height:44px;font-size:20px}
+    .fs-collapse:hover{transform:scale(1.1)}
+    .fs-nav{bottom:52px;width:48px;height:64px;font-size:28px}
+    .fs-nav:hover{transform:scale(1.1)}
+    .fs-nav:disabled{opacity:.15;cursor:default;transform:none;text-shadow:none}
+    .fs-nav:disabled:hover{color:rgba(255,255,255,.55);text-shadow:none;transform:none}
+    .fs-prev{left:0}
+    .fs-next{right:0}
 
     /* ── Accordion catalog (premium) ── */
     .acc-toggle{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--r);border:1px solid var(--border);background:linear-gradient(135deg,var(--surface-2) 0%,rgba(28,28,31,.8) 100%);color:var(--text);font-size:13px;font-weight:500;transition:all .2s cubic-bezier(.4,0,.2,1);white-space:nowrap;cursor:pointer;letter-spacing:.01em}
@@ -116,7 +131,7 @@
 
     /* Verdict buttons */
     .verdict-group{display:flex;gap:8px;margin-bottom:10px}
-    .verdict-btn{flex:1;padding:10px 8px;border-radius:var(--r);border:1px solid var(--border);background:var(--surface-2);font-size:13px;font-weight:600;transition:all .18s;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer}
+    .verdict-btn{flex:1;padding:10px 8px;border-radius:var(--r);border:1px solid var(--border);background:var(--surface-2);color:var(--text);font-size:13px;font-weight:600;transition:all .18s;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer}
     .verdict-btn:hover{border-color:var(--border-light);transform:translateY(-1px);box-shadow:0 3px 10px rgba(0,0,0,.2)}
     .verdict-btn:active{transform:translateY(0)}
     .verdict-btn.active-keep{background:var(--green-dim);border-color:var(--green);color:var(--green);box-shadow:0 0 16px rgba(34,197,94,.15)}
@@ -127,6 +142,7 @@
 
     /* Generation badges */
     .gen-badge{display:inline-block;padding:1px 6px;border-radius:3px;font-size:9px;font-weight:700;letter-spacing:.03em;vertical-align:middle;margin-left:4px}
+    .gen-badge.gen-7{background:rgba(236,72,153,.2);color:#ec4899;border:1px solid rgba(236,72,153,.3)}
     .gen-badge.gen-6{background:rgba(168,85,247,.2);color:var(--purple);border:1px solid rgba(168,85,247,.3)}
     .gen-badge.gen-5{background:rgba(34,197,94,.2);color:var(--green);border:1px solid rgba(34,197,94,.3)}
     .gen-badge.gen-4{background:rgba(212,168,75,.2);color:var(--accent);border:1px solid rgba(212,168,75,.3)}
@@ -194,7 +210,7 @@
       width:54px;height:54px;border-radius:50%;border:2px solid var(--border);
       background:var(--surface-2);
       display:flex;align-items:center;justify-content:center;
-      font-size:22px;color:var(--text-3);
+      font-size:22px;color:var(--text);
       cursor:pointer;transition:all .2s;margin:0 2px;touch-action:manipulation;
     }
     .verdict-circle:active{transform:scale(.88)}
@@ -364,7 +380,7 @@
     <div class="preview" id="previewPane">
       <!-- preview-header removed: info is in toolbar -->
       <div id="previewContent" style="flex:1;position:relative">
-        <div class="preview-open-overlay" id="previewOpenOverlay" onclick="openTab()" title="Open in new tab"><span class="expand-icon">&#8599;</span><span class="expand-label">expand</span></div>
+        <div class="preview-open-overlay" id="previewOpenOverlay" onclick="expandFullscreen()" title="Expand fullscreen"><span class="expand-icon">&#8599;</span><span class="expand-label">expand</span></div>
         <div class="empty-state" id="emptyState">
           <div style="font-size:32px">&#9998;</div>
           <h2>Poetry Bil-Araby Design Review</h2>
@@ -500,12 +516,36 @@
   </div>
 </div>
 
+<!-- Fullscreen control buttons (hidden by default, shown via body.fs-mode) -->
+<button class="fs-btn fs-collapse" id="fullscreenCollapseBtn" onclick="collapseFullscreen()" title="Collapse (Esc)" aria-label="Collapse fullscreen" style="display:none">&#8601;</button>
+<button class="fs-btn fs-nav fs-prev" id="fsPrevBtn" onclick="fsGoPrev()" title="Previous design" aria-label="Previous design" style="display:none">&#8249;</button>
+<button class="fs-btn fs-nav fs-next" id="fsNextBtn" onclick="fsGoNext()" title="Next design" aria-label="Next design" style="display:none">&#8250;</button>
+
 <script>
 // ═══════════════════════════════════════════════════════════════
 // CATALOG — component-first hierarchy
 // generation: 1=component exploration, 2=initial E2E, 3=hardened, 4=radical redesign
 // ═══════════════════════════════════════════════════════════════
 const CATALOG = [
+  {
+    component: 'Production App',
+    id: 'production',
+    categories: [{
+      id: 'prod-live', name: 'Live App Mockup',
+      source: 'feature/design-review-live-app-mockup',
+      description: 'Faithful recreation of the production app with mocked API flows — includes auth, saved poems, settings, all controls',
+      options: [{
+        id: 'prod-mockup',
+        name: 'Production App (Mocked)',
+        philosophy: 'The production app as it is today — every control, every modal, every flow — frozen for review without API dependencies',
+        file: 'main-app/live-app-mockup/production-app-mockup.html',
+        desc: '8 poems, streaming insight sim, audio sim, auth modal (Google/Apple), saved poems, settings panel, theme/font/poet controls, overflow menu, desktop insight pane',
+        generation: 8, iteration: 1,
+        source_branch: 'feature/design-review-live-app-mockup'
+      }],
+      feedback: {}
+    }]
+  },
   {
     component: 'Branding',
     id: 'branding',
@@ -544,58 +584,42 @@ const CATALOG = [
       { id: 'e2e-gilded', name: 'The Gilded Page', source: 'PR #64/#65/#129', description: 'Gold ornamentation, geometric patterns, and cultural heritage \u2014 the verse adorned',
         options: [
           { id: 'e2e-g1-a8', name: 'A8 Deco Discovery', philosophy: 'Gold geometry frames each verse like a palace archway', file: 'e2e/gen-1/e2e-a8-deco-discovery.html', desc: 'Art Deco Geometric: gold dividers, geometric panels, fan controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-g1-a8-vc', name: 'A8 Deco Discovery (VC)', philosophy: 'Gold geometry frames each verse like a palace archway', file: 'e2e/gen-1/e2e-a8-deco-discovery-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
           { id: 'e2e-g2a-09', name: '09 Mosaic Discovery', philosophy: 'Tessellated patterns frame each verse like a mosque mihrab', file: 'e2e/gen-2a/09-mosaic-discovery.html', desc: 'Islamic Geometric: tessellated frame, geometric pattern controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-g2a-09-vc', name: '09 Mosaic Discovery (VC)', philosophy: 'Tessellated patterns frame each verse like a mosque mihrab', file: 'e2e/gen-2a/09-mosaic-discovery-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
           { id: 'e2e-g2a-04', name: '04 Desert Poet', philosophy: 'Dune layers drift behind the verse like a desert mirage', file: 'e2e/gen-2a/04-desert-poet.html', desc: 'Warm Sand/Parallax: parallax dune layers, mirage text, caravan controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-g2a-04-vc', name: '04 Desert Poet (VC)', philosophy: 'Dune layers drift behind the verse like a desert mirage', file: 'e2e/gen-2a/04-desert-poet-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
           { id: 'e2e-g3-pf2', name: 'PF2 Gold Mystical', philosophy: 'Gold constellations orbit the poem in celestial reverence', file: 'e2e/gen-3/pf2-gold-mystical.html', desc: 'Gold Orbit: orbiting gold icons, complete E2E from standalone', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-g3-pf2-vc', name: 'PF2 Gold Mystical (VC)', philosophy: 'Gold constellations orbit the poem in celestial reverence', file: 'e2e/gen-3/pf2-gold-mystical-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true }
         ],
         feedback: {}
       },
       { id: 'e2e-ink', name: 'Ink & Parchment', source: 'PR #65/#129', description: 'Manuscripts, codex, and calligraphy \u2014 the physical act of writing and reading',
         options: [
-          { id: 'e2e-g2a-02', name: '02 Zen Manuscript', philosophy: 'Parchment and ink \u2014 reading poetry the way scribes once wrote it', file: 'e2e/gen-2a/02-zen-manuscript.html', desc: 'Skeuomorphic Revival: parchment texture, ink well, handwritten feel', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-g2a-02-vc', name: '02 Zen Manuscript (VC)', philosophy: 'Parchment and ink \u2014 reading poetry the way scribes once wrote it', file: 'e2e/gen-2a/02-zen-manuscript-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
+          { id: 'e2e-g2a-02', name: '02 Zen Manuscript', philosophy: 'Ink drop splash \u2192 zen walkthrough \u2192 water reflection main app', file: 'e2e/gen-2a/02-zen-manuscript.html', desc: 'Full E2E: ink drop splash (auto-advance), zen ink-wash onboarding (3 steps), water reflection main app with floating poem card, ripple canvas, stone controls', generation: 7, iteration: 1, source_branch: 'feature/design-review-round6-fixes', source_pr: '#212' },
           { id: 'e2e-g2a-07', name: '07 Scroll Keeper', philosophy: 'Gilded margins and drop caps honor the manuscript tradition', file: 'e2e/gen-2a/07-scroll-keeper.html', desc: 'Scroll-Animated Manuscript: sticky-centered unroll, easeOutBack spring reveals, parallax arabesques, gold progress line, fade-out transitions', generation: 6, iteration: 10, source_branch: 'feature/preserve-patterns', source_pr: 'walkthrough-upgrade' },
-          { id: 'e2e-g2a-07-vc', name: '07 Scroll Keeper (VC)', philosophy: 'Gilded margins and drop caps honor the manuscript tradition', file: 'e2e/gen-2a/07-scroll-keeper-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
           { id: 'e2e-g2b-05', name: '05 Scroll Codex', philosophy: 'An open book with visible binding \u2014 poetry held in your hands', file: 'e2e/gen-2b/05-scroll-codex.html', desc: 'Codex/Book: open book pages, visible binding, page tab controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
           { id: 'e2e-g2b-05-vc', name: '05 Scroll Codex (VC)', philosophy: 'An open book with visible binding \u2014 poetry held in your hands', file: 'e2e/gen-2b/05-scroll-codex-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
           { id: 'e2e-g3-pf1', name: 'PF1 Calligraphic', philosophy: 'The words themselves become the interface \u2014 kinetic calligraphy', file: 'e2e/gen-3/pf1-calligraphic.html', desc: 'Kinetic Typography: words ARE the interface, scrolling text ticker controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-g3-pf1-vc', name: 'PF1 Calligraphic (VC)', philosophy: 'The words themselves become the interface \u2014 kinetic calligraphy', file: 'e2e/gen-3/pf1-calligraphic-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
           { id: 'e2e-g3-codex', name: 'Codex Spine Story', philosophy: 'Leather spine and ribbon bookmark \u2014 a volume of collected verse', file: 'e2e/gen-3/codex-spine-story.html', desc: 'Medieval Codex: leather spine, page turns, bookmark ribbon controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-g3-codex-vc', name: 'Codex Spine Story (VC)', philosophy: 'Leather spine and ribbon bookmark \u2014 a volume of collected verse', file: 'e2e/gen-3/codex-spine-story-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true }
         ],
         feedback: {}
       },
       { id: 'e2e-breath', name: 'Breath & Stillness', source: 'PR #64/#65/#129/Round 3', description: 'Zen, emptiness, and Nordic quiet \u2014 contemplation between the lines',
         options: [
           { id: 'e2e-g1-b8', name: 'B8 Ritual Spotlight', philosophy: 'Vast emptiness \u2014 the poem floats alone, demanding your full attention', file: 'e2e/gen-1/e2e-b8-ritual-spotlight-hybrid.html', desc: 'Japanese Ma: vast emptiness, poem floats alone, tap-to-reveal controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-g1-b8-vc', name: 'B8 Ritual Spotlight (VC)', philosophy: 'Vast emptiness \u2014 the poem floats alone, demanding your full attention', file: 'e2e/gen-1/e2e-b8-ritual-spotlight-hybrid-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
           { id: 'e2e-g3-zen1', name: 'Zen 1 Refined', philosophy: 'Imperfect beauty \u2014 each verse revealed like a weathered inscription', file: 'e2e/gen-3/zen1-refined.html', desc: 'Wabi-Sabi: imperfect beauty, single-dot controls revealing one action at a time', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-g3-zen1-vc', name: 'Zen 1 Refined (VC)', philosophy: 'Imperfect beauty \u2014 each verse revealed like a weathered inscription', file: 'e2e/gen-3/zen1-refined-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
+          { id: 'e2e-g3-zen1-scroll', name: 'Zen 1 Scroll Tabs VC', philosophy: 'Manuscript bookmarks unfurl to reveal controls \u2014 tactile and organic', file: 'e2e/gen-3/zen1-scroll-tabs-vc.html', desc: 'Scroll Tabs: manuscript bookmark tabs protruding from right edge with cascade reveal', generation: 6, iteration: 8, source_branch: 'feature/design-sprint-refinement-r367', source_pr: '' },
           { id: 'e2e-g3-zen2', name: 'Zen 2 Haiku', philosophy: 'Almost nothing is visible until you reach for the poem', file: 'e2e/gen-3/zen2-haiku.html', desc: 'Muji Minimalism: barely-there thin circles, visible only after first touch', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-g3-zen2-vc', name: 'Zen 2 Haiku (VC)', philosophy: 'Almost nothing is visible until you reach for the poem', file: 'e2e/gen-3/zen2-haiku-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
           { id: 'e2e-g2b-09', name: '09 Scandinavian Scroll', philosophy: 'Extreme stillness \u2014 birch-thin lines and the poem, nothing more', file: 'e2e/gen-2b/09-scandinavian-scroll.html', desc: 'Nordic Minimal: extreme whitespace, birch-thin lines, ultra-thin dot controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-g2b-09-vc', name: '09 Scandinavian Scroll (VC)', philosophy: 'Extreme stillness \u2014 birch-thin lines and the poem, nothing more', file: 'e2e/gen-2b/09-scandinavian-scroll-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
           { id: 'e2e-g2b-08', name: '08 Zen Spotlight', philosophy: 'Sand grains reveal each word \u2014 poetry measured in passing time', file: 'e2e/gen-2b/08-zen-spotlight.html', desc: 'Hourglass/Time: hourglass frame, sand grain text reveal, timeline scrubber controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-g2b-08-vc', name: '08 Zen Spotlight (VC)', philosophy: 'Sand grains reveal each word \u2014 poetry measured in passing time', file: 'e2e/gen-2b/08-zen-spotlight-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true }
         ],
         feedback: {}
       },
       { id: 'e2e-light', name: 'Light & Atmosphere', source: 'PR #64/#129/Round 3', description: 'Frosted glass, cinematic shadow, and stark contrast \u2014 mood and luminance',
         options: [
           { id: 'e2e-g1-a1', name: 'A1 Gold Orbit', philosophy: 'Verses float behind frosted glass like breath on a cold window', file: 'e2e/gen-1/e2e-a1-gold-orbit-story.html', desc: 'Glassmorphism: gold orbits, frosted glass onboarding, unique controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-g1-a1-vc', name: 'A1 Gold Orbit (VC)', philosophy: 'Verses float behind frosted glass like breath on a cold window', file: 'e2e/gen-1/e2e-a1-gold-orbit-story-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
           { id: 'e2e-g1-a2', name: 'A2 Paper Photon', philosophy: 'Poetry laid out like a literary magazine \u2014 full-bleed and unhurried', file: 'e2e/gen-1/e2e-a2-paper-photon.html', desc: 'Editorial/Magazine: full-bleed typography, magazine spreads, text menu controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-g1-a2-vc', name: 'A2 Paper Photon (VC)', philosophy: 'Poetry laid out like a literary magazine \u2014 full-bleed and unhurried', file: 'e2e/gen-1/e2e-a2-paper-photon-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
           { id: 'e2e-g3-ls1', name: 'L&S 1 Chiaroscuro', philosophy: 'Dramatic shadow carves the verse into light \u2014 cinematic intimacy', file: 'e2e/gen-3/ls1-chiaroscuro.html', desc: 'Cinematic Chiaroscuro: dramatic light/shadow, shadow-edge illuminating controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
           { id: 'e2e-g3-ls1-vc', name: 'L&S 1 Chiaroscuro (VC)', philosophy: 'Dramatic shadow carves the verse into light \u2014 cinematic intimacy', file: 'e2e/gen-3/ls1-chiaroscuro-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
           { id: 'e2e-g3-ls2', name: 'L&S 2 Ray Tracing', philosophy: 'Converging light rays illuminate the poem like a reading lamp', file: 'e2e/gen-3/ls2-ray-tracing.html', desc: 'Light Architecture: converging light rays, vertical beam controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-g3-ls2-vc', name: 'L&S 2 Ray Tracing (VC)', philosophy: 'Converging light rays illuminate the poem like a reading lamp', file: 'e2e/gen-3/ls2-ray-tracing-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
           { id: 'e2e-g3-pf3', name: 'PF3 Ink Constellation', philosophy: 'Zodiac constellations form in the void as you walk through poetry', file: 'e2e/gen-3/pf3-ink-constellation.html', desc: 'Living Constellation: real zodiac formations (Aries/Taurus/Orion), converge-to-tap transitions, constellation lines, dim star-field aesthetic', generation: 6, iteration: 9, source_branch: 'feature/preserve-patterns', source_pr: 'walkthrough-upgrade' },
-          { id: 'e2e-g3-pf3-vc', name: 'PF3 Ink Constellation (VC)', philosophy: 'Zodiac constellations form in the void as you walk through poetry', file: 'e2e/gen-3/pf3-ink-constellation-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
           { id: 'e2e-g3-pf4', name: 'PF4 Ink Tilt Splash', philosophy: '3D tilt card splash meets living constellation onboarding', file: 'e2e/gen-3/pf4-ink-tilt-splash.html', desc: '3D Tilt Card: perspective mouse-tracking splash with glassmorphism, zodiac constellation onboarding, parallax depth', generation: 6, iteration: 1, source_branch: 'feature/preserve-patterns', source_pr: 'walkthrough-upgrade' }
         ],
         feedback: {}
@@ -609,7 +633,14 @@ const CATALOG = [
           { id: 'e2e-g2b-04', name: '04 Neumorphic Warmth', philosophy: 'Soft tactile surfaces \u2014 the verse feels pressed into warm clay', file: 'e2e/gen-2b/04-neumorphic-warmth.html', desc: 'Neumorphic Depth: centered onboarding, floating warm orbs, press-in/rise-out shadow transitions, progress dots below card, zero-jitter GPU compositing', generation: 6, iteration: 10, source_branch: 'feature/preserve-patterns', source_pr: 'walkthrough-upgrade' },
           { id: 'e2e-g2b-04-vc', name: '04 Neumorphic Warmth (VC)', philosophy: 'Soft tactile surfaces \u2014 the verse feels pressed into warm clay', file: 'e2e/gen-2b/04-neumorphic-warmth-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
           { id: 'e2e-g2b-07', name: '07 Particle Neumorphic', philosophy: 'Particles settle into pressed forms \u2014 physics meets craft', file: 'e2e/gen-2b/07-particle-neumorphic.html', desc: 'Particle Fusion: hybrid particle + soft depth, orbiting particle controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-g2b-07-vc', name: '07 Particle Neumorphic (VC)', philosophy: 'Particles settle into pressed forms \u2014 physics meets craft', file: 'e2e/gen-2b/07-particle-neumorphic-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true }
+        ],
+        feedback: {}
+      },
+      { id: 'e2e-scroll', name: 'Scroll & Motion', source: 'PR #212', description: 'Scroll-driven animation explorations — horizontal journeys, geometric reveals, and 3D chambers',
+        options: [
+          { id: 'e2e-g4-hscroll', name: '01 Horizontal Scroll Reveal', philosophy: 'Vertical scroll input drives a horizontal poetry journey — inspired by 45r.jp indigo storytelling', file: 'e2e/gen-4/01-horizontal-scroll-reveal.html', desc: 'Horizontal Scroll: lerp scroll engine, multi-layer parallax (0.2x/0.5x/1.5x), line-by-line verse reveal, background color interpolation, nav dots, keyboard navigation', generation: 7, iteration: 1, source_branch: 'feature/design-review-round6-fixes', source_pr: '#212' },
+          { id: 'e2e-g4-clippath', name: '02 Depth Clip-Path Reveal', philosophy: 'Geometric masks expand to reveal each poem — 8-pointed star, Islamic arch, and circle forms', file: 'e2e/gen-4/02-depth-clippath-reveal.html', desc: 'Clip-Path Reveals: CSS clip-path driven by scroll progress, IntersectionObserver, 5-layer z-depth parallax, CSS-only floating particles, color chapter transitions', generation: 7, iteration: 1, source_branch: 'feature/design-review-round6-fixes', source_pr: '#212' },
+          { id: 'e2e-g4-threejs', name: '03 Three.js 3D Chambers', philosophy: 'Fly through geometric chambers where each poem lives in its own architectural space', file: 'e2e/gen-4/03-threejs-3d-chambers.html', desc: 'Three.js r128 WebGL: CatmullRomCurve3 camera path, CanvasTexture Arabic text, wireframe tunnel geometry, 4 particle systems (930+ particles), dynamic fog, vignette + film grain overlays', generation: 7, iteration: 1, source_branch: 'feature/design-review-round6-fixes', source_pr: '#212' }
         ],
         feedback: {}
       }
@@ -751,17 +782,18 @@ async function syncVerdictsToAPI() {
     }
     if (!verdicts.length) { setSyncStatus('synced'); return; }
     const res = await fetch(API_BASE + '/api/design-review/sessions/' + currentSession.id + '/verdicts', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ verdicts })
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ verdicts }),
+      signal: AbortSignal.timeout(15000)
     });
     setSyncStatus(res.ok ? 'synced' : 'offline');
   } catch { setSyncStatus('offline'); }
 }
 
-async function initAPI() {
+async function initAPI({ timeout = 5000 } = {}) {
   try {
     // Ping backend; fall back to /items if /ping not yet deployed
-    let r = await fetch(API_BASE + '/api/design-review/ping', { signal: AbortSignal.timeout(5000) }).catch(() => null);
-    if (!r || !r.ok) r = await fetch(API_BASE + '/api/design-review/items', { signal: AbortSignal.timeout(5000) });
+    let r = await fetch(API_BASE + '/api/design-review/ping', { signal: AbortSignal.timeout(timeout) }).catch(() => null);
+    if (!r || !r.ok) r = await fetch(API_BASE + '/api/design-review/items', { signal: AbortSignal.timeout(timeout) });
     if (!r.ok) throw 0;
     apiAvailable = true;
 
@@ -1276,9 +1308,9 @@ function render(skipPreview) {
   document.getElementById('prevBtn').disabled = fi <= 0;
   document.getElementById('nextBtn').disabled = fi >= flatList.length - 1;
 
-  // Update accordion toggle label with current design name
+  // Update accordion toggle label with design number and name
   var accLabel = document.getElementById('accToggleLabel');
-  if (accLabel) accLabel.textContent = opt.name;
+  if (accLabel) accLabel.textContent = (fi + 1) + '. ' + opt.name;
 
   // Update toolbar detail: philosophy + version badge
   var tbDetail = document.getElementById('tbDetail');
@@ -1287,7 +1319,7 @@ function render(skipPreview) {
     if (opt.philosophy) {
       var philSpan = document.createElement('span');
       philSpan.className = 'td-phil';
-      philSpan.textContent = opt.philosophy;
+      philSpan.textContent = '\u2014 ' + opt.philosophy;
       tbDetail.appendChild(philSpan);
     }
     if (opt.generation >= 3) {
@@ -1357,6 +1389,11 @@ function render(skipPreview) {
   if (ct) ct.classList.toggle('has-text', !!(rev.comment));
   renderPrevFeedback(cat, opt);
   renderProgress();
+  // Ensure expand button is visible when not in fullscreen (defensive check)
+  if (!document.body.classList.contains('fs-mode')) {
+    document.getElementById('previewContent').classList.remove('fs-active');
+    ensureExpandBtn();
+  }
 }
 
 function loadPreview(opt, cat) {
@@ -1535,27 +1572,78 @@ function saveTags() {
   persistReview();
 }
 function openTab() { window.open('/design-review/' + curOpt().file, '_blank'); }
+function expandFullscreen() {
+  var pc = document.getElementById('previewContent');
+  if (!pc.querySelector('iframe')) return;
+  pc.classList.add('fs-active');
+  document.body.classList.add('fs-mode');
+  updateFsNav();
+  attachFsKeyProxy();
+}
+function collapseFullscreen() {
+  document.getElementById('previewContent').classList.remove('fs-active');
+  document.body.classList.remove('fs-mode');
+  ensureExpandBtn();
+}
+function ensureExpandBtn() {
+  var el = document.getElementById('previewOpenOverlay');
+  if (el) el.style.display = '';
+}
+function attachFsKeyProxy() {
+  var iframe = document.querySelector('#previewContent iframe');
+  if (!iframe) return;
+  try { iframe.contentWindow.addEventListener('keydown', fsKeyProxy); } catch(e) { /* cross-origin */ }
+}
+function updateFsNav() {
+  var fi = currentFlatIdx();
+  document.getElementById('fsPrevBtn').disabled = fi <= 0;
+  document.getElementById('fsNextBtn').disabled = fi >= flatList.length - 1;
+}
+function fsGoPrev() { goPrev(); updateFsNav(); attachFsKeyProxyOnLoad(); }
+function fsGoNext() { goNext(); updateFsNav(); attachFsKeyProxyOnLoad(); }
+function attachFsKeyProxyOnLoad() {
+  var iframe = document.querySelector('#previewContent iframe');
+  if (!iframe) return;
+  iframe.addEventListener('load', function() { attachFsKeyProxy(); });
+}
+function fsKeyProxy(e) {
+  if (e.key === 'Escape' || e.key === 'f' || e.key === 'F' || e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+    e.preventDefault();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: e.key, bubbles: true }));
+  }
+}
 function toggleSide() { st.sideOpen = !st.sideOpen; document.getElementById('sidePanel').classList.toggle('collapsed', !st.sideOpen); }
 
 // ═══════════════════════════════════════════════════════════════
 // SUBMIT
 // ═══════════════════════════════════════════════════════════════
 function buildReviewSummary(reviewerName) {
-  const reviewed = flatList.filter(f => reviewData[f.option.id]?.verdict).length;
-  const keeps = flatList.filter(f => reviewData[f.option.id]?.verdict === 'keep').length;
-  const discards = flatList.filter(f => reviewData[f.option.id]?.verdict === 'discard').length;
-  const revisits = flatList.filter(f => {
+  // Build complete (unfiltered) item list so summary includes all components regardless of section filter
+  var allItems = [];
+  CATALOG.forEach(function(comp, ci) {
+    comp.categories.forEach(function(cat, cati) {
+      cat.options.forEach(function(opt, oi) {
+        allItems.push({ compIdx: ci, catIdx: cati, optIdx: oi, option: opt, category: cat, component: comp });
+      });
+    });
+  });
+  const reviewed = allItems.filter(f => reviewData[f.option.id]?.verdict).length;
+  const keeps = allItems.filter(f => reviewData[f.option.id]?.verdict === 'keep').length;
+  const discards = allItems.filter(f => reviewData[f.option.id]?.verdict === 'discard').length;
+  const revisits = allItems.filter(f => {
     const v = reviewData[f.option.id]?.verdict;
     return v === 'revisit' || v === 'skip';
   }).length;
   const decisions = [];
-  flatList.forEach(f => {
+  var itemNum = 0;
+  allItems.forEach(f => {
+    itemNum++;
     const r = reviewData[f.option.id];
     if (r && (r.verdict || r.comment)) {
       let verdict = r.verdict || 'undecided';
       if (verdict === 'skip') verdict = 'revisit';
       decisions.push({
-        component: f.component.id, componentName: f.component.component, category: f.category.id,
+        num: itemNum, component: f.component.id, componentName: f.component.component, category: f.category.id,
         categoryName: f.category.name, optionId: f.option.id, optionName: f.option.name,
         file: f.option.file, generation: f.option.generation || 1,
         verdict: verdict, comment: r.comment || '', tags: r.tags || ''
@@ -1565,23 +1653,23 @@ function buildReviewSummary(reviewerName) {
   let md = '## Design Review Feedback\n\n';
   md += '**Reviewer:** ' + reviewerName + '\n';
   md += '**Date:** ' + new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString() + '\n';
-  md += '**Reviewed:** ' + reviewed + ' of ' + flatList.length + ' designs\n';
+  md += '**Reviewed:** ' + reviewed + ' of ' + allItems.length + ' designs\n';
   md += '**Round:** ' + (currentSession ? currentSession.round_number : 'N/A') + '\n\n';
   const byV = { keep: [], discard: [], revisit: [], undecided: [] };
   decisions.forEach(d => { if (byV[d.verdict]) byV[d.verdict].push(d); });
   for (const [v, label] of [['keep','Keep'],['discard','Discard'],['revisit','Revisit'],['undecided','Comment Only']]) {
     if (byV[v] && byV[v].length) {
-      md += '### ' + label + ' (' + byV[v].length + ')\n\n| Component | Option | Gen | Comment |\n|---|---|---|---|\n';
-      byV[v].forEach(d => { md += '| ' + d.componentName + ' | ' + d.optionName + ' | ' + d.generation + ' | ' + (d.comment || '--') + ' |\n'; });
+      md += '### ' + label + ' (' + byV[v].length + ')\n\n| # | Component | Option | Gen | Comment |\n|---|---|---|---|---|\n';
+      byV[v].forEach(d => { md += '| ' + d.num + ' | ' + d.componentName + ' | ' + d.optionName + ' | ' + d.generation + ' | ' + (d.comment || '--') + ' |\n'; });
       md += '\n';
     }
   }
-  const json = JSON.stringify({ timestamp: new Date().toISOString(), reviewer: reviewerName, totalDesigns: flatList.length, reviewedCount: reviewed, decisions }, null, 2);
-  return { reviewed, keeps, discards, revisits, decisions, md, json };
+  const json = JSON.stringify({ timestamp: new Date().toISOString(), reviewer: reviewerName, totalDesigns: allItems.length, reviewedCount: reviewed, decisions }, null, 2);
+  return { reviewed, keeps, discards, revisits, decisions, md, json, totalDesigns: allItems.length };
 }
 
 function showSummaryModal(summary, opts) {
-  const { reviewed, keeps, discards, revisits, decisions, md, json } = summary;
+  const { reviewed, keeps, discards, revisits, decisions, md, json, totalDesigns } = summary;
   const { sendError, isPreview, onBack } = opts || {};
 
   window._submitMd = md;
@@ -1637,7 +1725,7 @@ function showSummaryModal(summary, opts) {
   stats.style.cssText = 'display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;font-size:13px';
   [['var(--green)', keeps + ' keep'], ['var(--red)', discards + ' discard'],
    ['var(--purple)', revisits + ' revisit'],
-   ['var(--text-3)', (flatList.length - reviewed) + ' unreviewed']].forEach(([c, t]) => {
+   ['var(--text-3)', (totalDesigns - reviewed) + ' unreviewed']].forEach(([c, t]) => {
     const s = document.createElement('span'); s.style.color = c; s.textContent = t; stats.appendChild(s);
   });
   modal.appendChild(stats);
@@ -1654,6 +1742,10 @@ function showSummaryModal(summary, opts) {
     decisions.forEach(d => {
       const item = document.createElement('div');
       item.style.cssText = 'display:flex;align-items:flex-start;gap:8px;padding:6px 8px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-sm);font-size:12px';
+      const numEl = document.createElement('span');
+      numEl.style.cssText = 'flex-shrink:0;font-size:10px;color:var(--text-3);font-variant-numeric:tabular-nums;min-width:20px;text-align:right;padding-top:2px';
+      numEl.textContent = '#' + d.num;
+      item.appendChild(numEl);
       const badge = document.createElement('span');
       const verdictBgColors = { keep: 'var(--green-dim)', discard: 'var(--red-dim)', revisit: 'var(--purple-dim)', undecided: 'var(--accent-dim)' };
       badge.style.cssText = 'flex-shrink:0;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:' + (verdictColors[d.verdict] || 'var(--text-3)') + ';background:' + (verdictBgColors[d.verdict] || 'var(--surface-3)');
@@ -1807,14 +1899,16 @@ async function submitReview(prefillName) {
   let sendError = null;
   try {
     if (!apiAvailable || !currentSession) {
-      loadingText.textContent = 'Waking backend...';
-      await initAPI();
+      loadingText.textContent = 'Waking backend (may take up to 30s)...';
+      await initAPI({ timeout: 30000 });
       if (!apiAvailable || !currentSession) throw new Error('Backend not available');
     }
     if (currentSession) {
+      loadingText.textContent = 'Updating reviewer...';
       const reviewerRes = await fetch(API_BASE + '/api/design-review/sessions/' + currentSession.id, {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reviewer: reviewerName })
+        body: JSON.stringify({ reviewer: reviewerName }),
+        signal: AbortSignal.timeout(15000)
       });
       if (!reviewerRes.ok) console.warn('Failed to update reviewer name:', reviewerRes.status);
     }
@@ -1823,7 +1917,8 @@ async function submitReview(prefillName) {
     loadingText.textContent = 'Completing session...';
     const res = await fetch(API_BASE + '/api/design-review/sessions/' + currentSession.id, {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'completed', reviewed_count: summary.reviewed })
+      body: JSON.stringify({ status: 'completed', reviewed_count: summary.reviewed }),
+      signal: AbortSignal.timeout(15000)
     });
     if (!res.ok) throw new Error('API returned ' + res.status);
   } catch (err) {
@@ -1852,6 +1947,17 @@ function downloadJSON() {
 // ═══════════════════════════════════════════════════════════════
 document.addEventListener('keydown', e => {
   if (['TEXTAREA','INPUT','SELECT'].includes(e.target.tagName)) return;
+  var fsActive = document.body.classList.contains('fs-mode');
+  // When fullscreen is active, only handle Escape, F, and arrow navigation
+  if (fsActive) {
+    switch (e.key) {
+      case 'Escape': e.preventDefault(); collapseFullscreen(); break;
+      case 'f': case 'F': collapseFullscreen(); break;
+      case 'ArrowLeft': e.preventDefault(); fsGoPrev(); break;
+      case 'ArrowRight': e.preventDefault(); fsGoNext(); break;
+    }
+    return;
+  }
   switch (e.key) {
     case 'ArrowLeft': e.preventDefault(); goPrev(); break;
     case 'ArrowRight': e.preventDefault(); goNext(); break;
@@ -1860,10 +1966,7 @@ document.addEventListener('keydown', e => {
     case 'r': case 'R': setVerdict('revisit'); break;
     case 's': case 'S': cycleSectionFilter(); break;
     case 'i': case 'I': toggleSide(); break;
-    case 'f': case 'F':
-      const iframe = document.querySelector('.preview-iframe');
-      if (iframe) { document.fullscreenElement ? document.exitFullscreen() : iframe.requestFullscreen(); }
-      break;
+    case 'f': case 'F': expandFullscreen(); break;
   }
 });
 
@@ -1904,7 +2007,7 @@ populateCats();
 render();
 updateSectionFilterUI();
 syncPreviewPadding();
-initAPI();
+initAPI({ timeout: 15000 });
 </script>
 </body>
 </html>

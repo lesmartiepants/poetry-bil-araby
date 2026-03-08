@@ -487,7 +487,8 @@
       display: none;
       justify-content: space-around;
       align-items: center;
-      height: 64px;
+      height: calc(64px + env(safe-area-inset-bottom, 0px));
+      padding-bottom: env(safe-area-inset-bottom, 0px);
       background: transparent;
       z-index: 1000;
     }

@@ -27,10 +27,15 @@ vi.mock('pg', () => {
 // Import after mocking
 const { app, pool } = await import('../../server.js');
 
+// Save and clear API_SECRET_KEY so auth middleware is bypassed by default in tests
+const savedApiSecretKey = process.env.API_SECRET_KEY;
+delete process.env.API_SECRET_KEY;
+
 describe('Backend API Server', () => {
   beforeEach(() => {
-    // Clear all mock calls
-    mockPool.query.mockClear();
+    // Reset all mock state and ensure auth is bypassed by default
+    mockPool.query.mockReset();
+    delete process.env.API_SECRET_KEY;
   });
 
   afterAll(() => {
@@ -200,7 +205,7 @@ describe('Backend API Server', () => {
         .expect('Content-Type', /json/)
         .expect(500);
 
-      expect(response.body).toEqual({ error: 'Query failed' });
+      expect(response.body).toEqual({ error: 'Internal server error' });
     });
 
     it('should handle Arabic text encoding correctly', async () => {
@@ -312,7 +317,7 @@ describe('Backend API Server', () => {
         .get('/api/poems/by-poet/نزار قباني')
         .expect(500);
 
-      expect(response.body).toEqual({ error: 'Database error' });
+      expect(response.body).toEqual({ error: 'Internal server error' });
     });
 
     it('should handle URL encoded poet names', async () => {
@@ -417,7 +422,7 @@ describe('Backend API Server', () => {
         .get('/api/poets')
         .expect(500);
 
-      expect(response.body).toEqual({ error: 'Query error' });
+      expect(response.body).toEqual({ error: 'Internal server error' });
     });
   });
 
@@ -462,7 +467,7 @@ describe('Backend API Server', () => {
         .expect('Content-Type', /json/)
         .expect(400);
 
-      expect(response.body).toEqual({ error: 'Search query required' });
+      expect(response.body.error).toBe('Invalid request parameters');
     });
 
     it('should support custom limit parameter', async () => {
@@ -546,7 +551,7 @@ describe('Backend API Server', () => {
         .get('/api/poems/search?q=test')
         .expect(500);
 
-      expect(response.body).toEqual({ error: 'Search error' });
+      expect(response.body).toEqual({ error: 'Internal server error' });
     });
 
     it('should format search results correctly', async () => {
@@ -571,8 +576,17 @@ describe('Backend API Server', () => {
     });
   });
 
+  describe('Security Headers', () => {
+    it('should include helmet security headers', async () => {
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: '10' }] });
+      const response = await request(app).get('/api/health').expect(200);
+      expect(response.headers['x-content-type-options']).toBe('nosniff');
+      expect(response.headers).not.toHaveProperty('x-powered-by');
+    });
+  });
+
   describe('CORS Configuration', () => {
-    it('should allow cross-origin requests', async () => {
+    it('should allow cross-origin requests from allowed origins', async () => {
       mockPool.query.mockResolvedValueOnce({
         rows: [{ count: '10' }]
       });
@@ -582,7 +596,7 @@ describe('Backend API Server', () => {
         .set('Origin', 'http://localhost:5173')
         .expect(200);
 
-      expect(response.headers['access-control-allow-origin']).toBeDefined();
+      expect(response.headers['access-control-allow-origin']).toBe('http://localhost:5173');
     });
   });
 
@@ -711,6 +725,102 @@ describe('Backend API Server', () => {
 
         // Should not be 400 (validation error) - the model name is valid
         expect(response.status).not.toBe(400);
+      });
+    });
+  });
+
+  describe('Input Validation', () => {
+    it('should reject search with query over 200 chars', async () => {
+      const longQuery = 'a'.repeat(201);
+      const response = await request(app)
+        .get(`/api/poems/search?q=${longQuery}`)
+        .expect(400);
+      expect(response.body.error).toBe('Invalid request parameters');
+    });
+
+    it('should reject invalid limit parameter', async () => {
+      const response = await request(app)
+        .get('/api/poems/search?q=test&limit=999')
+        .expect(400);
+      expect(response.body.error).toBe('Invalid request parameters');
+    });
+
+    it('should reject negative offset', async () => {
+      const response = await request(app)
+        .get('/api/poems/by-poet/test?offset=-1')
+        .expect(400);
+      expect(response.body.error).toBe('Invalid request parameters');
+    });
+  });
+
+  describe('API Key Authentication', () => {
+    it('should allow write requests when API_SECRET_KEY is not configured', async () => {
+      // When no API_SECRET_KEY is set, auth is bypassed and the handler is reached.
+      // designTablesExist() check fails, returning 503 — confirming auth was bypassed.
+      mockPool.query.mockRejectedValueOnce(new Error('relation "design_items" does not exist'));
+
+      const response = await request(app)
+        .post('/api/design-review/sessions')
+        .send({});
+
+      // Any non-401 status confirms auth was bypassed (503 = tables don't exist, which is fine)
+      expect(response.status).not.toBe(401);
+    });
+
+    describe('when API_SECRET_KEY is configured', () => {
+      const ORIGINAL_ENV = process.env.API_SECRET_KEY;
+
+      beforeEach(() => {
+        process.env.API_SECRET_KEY = 'test-secret-key-12345';
+      });
+
+      afterEach(() => {
+        if (ORIGINAL_ENV === undefined) {
+          delete process.env.API_SECRET_KEY;
+        } else {
+          process.env.API_SECRET_KEY = ORIGINAL_ENV;
+        }
+      });
+
+      it('should accept write requests with correct API key', async () => {
+        mockPool.query.mockRejectedValueOnce(new Error('relation "design_review_sessions" does not exist'));
+
+        const response = await request(app)
+          .post('/api/design-review/sessions')
+          .set('X-API-Key', 'test-secret-key-12345')
+          .send({});
+
+        // Should NOT be 401 — auth passed, reached the handler
+        expect(response.status).not.toBe(401);
+      });
+
+      it('should return 401 with incorrect API key', async () => {
+        const response = await request(app)
+          .post('/api/design-review/sessions')
+          .set('X-API-Key', 'wrong-key')
+          .send({})
+          .expect(401);
+
+        expect(response.body.error).toContain('Unauthorized');
+      });
+
+      it('should return 401 with no API key header', async () => {
+        const response = await request(app)
+          .post('/api/design-review/sessions')
+          .send({})
+          .expect(401);
+
+        expect(response.body.error).toContain('Unauthorized');
+      });
+
+      it('should not require API key for read endpoints', async () => {
+        mockPool.query.mockResolvedValueOnce({ rows: [{ count: '42' }] });
+
+        const response = await request(app)
+          .get('/api/health')
+          .expect(200);
+
+        expect(response.body.status).toBe('ok');
       });
     });
   });

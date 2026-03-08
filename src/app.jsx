@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Play, Pause, BookOpen, RefreshCw, Volume2, ChevronDown, Quote, Globe, Moon, Sun, Loader2, ChevronRight, ChevronLeft, Search, X, Copy, LayoutGrid, Check, Bug, Trash2, Sparkles, Feather, Library, Compass, Rabbit, MoreHorizontal, Heart, LogIn, LogOut, User, Settings2 } from 'lucide-react';
 import { useAuth, useUserSettings, useSavedPoems } from './hooks/useAuth';
 import { INSIGHTS_SYSTEM_PROMPT, DISCOVERY_SYSTEM_PROMPT, getTTSInstruction } from './prompts';
+import { parseInsight } from './utils/insightParser';
+import { repairAndParseJSON } from './utils/jsonRepair';
 
 /* =============================================================================
   1. FEATURE FLAGS & DESIGN SYSTEM
@@ -10,7 +12,7 @@ import { INSIGHTS_SYSTEM_PROMPT, DISCOVERY_SYSTEM_PROMPT, getTTSInstruction } fr
 
 const FEATURES = {
   grounding: false,
-  debug: import.meta.env.DEV,
+  debug: true,        // Debug panel visibility
   logging: true,      // Emit structured logs to console (captured by Vercel/browser)
   caching: true,      // Enable IndexedDB caching for audio/insights
   streaming: true,    // Enable streaming insights (progressive rendering)
@@ -846,12 +848,13 @@ const ErrorBanner = ({ error, onDismiss, onRetry, theme }) => {
   );
 };
 
-const DatabaseToggle = ({ useDatabase, onToggle }) => {
+const DatabaseToggle = ({ useDatabase, onToggle, disabled }) => {
   return (
     <div className="flex flex-col items-center gap-1 min-w-[56px]">
       <button
         onClick={onToggle}
-        className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105"
+        disabled={disabled}
+        className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none transition-all duration-300 flex items-center justify-center rounded-full ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-[#C5A059]/12 hover:scale-105'}`}
         aria-label={useDatabase ? "Switch to AI Mode" : "Switch to Database Mode"}
       >
         {useDatabase ? <Library size={21} className="text-[#C5A059]" /> : <Sparkles size={21} className="text-[#C5A059]" />}
@@ -1507,6 +1510,85 @@ const SettingsView = ({ isOpen, onClose, darkMode, onToggleDarkMode, currentFont
 };
 
 /* =============================================================================
+  VERTICAL SIDEBAR (Mobile overflow)
+  =============================================================================
+*/
+
+const VerticalSidebar = ({ onExplain, onCopy, showCopySuccess, onOpenSavedPoems, onOpenSettings, onSignIn, onSignOut, user, useDatabase, onToggleDatabase, isSupabaseConfigured, theme, isInterpreting, interpretation }) => {
+  return (
+    <>
+      <style>{`
+        @keyframes slideInRight {
+          from { transform: translateY(-50%) translateX(100%); opacity: 0; }
+          to { transform: translateY(-50%) translateX(0); opacity: 1; }
+        }
+      `}</style>
+      <div
+        className="fixed right-0 top-1/2 -translate-y-1/2 z-[45] md:hidden rounded-l-2xl bg-gradient-to-b from-black/70 via-black/60 to-black/70 backdrop-blur-xl border-l-2 border-[#C5A059]/40 py-3 px-1.5"
+        style={{ animation: 'slideInRight 0.4s ease-out' }}
+      >
+        <div className="flex flex-col items-center gap-1">
+          <button
+            onClick={onExplain}
+            disabled={isInterpreting || interpretation}
+            title="Explain poem"
+            className="w-11 h-11 rounded-xl flex items-center justify-center hover:bg-[#C5A059]/15 transition-all duration-200 disabled:opacity-50"
+          >
+            {isInterpreting ? <Loader2 className="animate-spin text-[#C5A059]" size={18} /> : <Compass className="text-[#C5A059]" size={18} />}
+          </button>
+
+          <button
+            onClick={onCopy}
+            title="Copy poem"
+            className="w-11 h-11 rounded-xl flex items-center justify-center hover:bg-[#C5A059]/15 transition-all duration-200"
+          >
+            {showCopySuccess ? <Check size={18} className="text-green-500" /> : <Copy className="text-[#C5A059]" size={18} />}
+          </button>
+
+          <div className="w-6 h-px bg-stone-500/30 mx-auto my-1" />
+
+          {isSupabaseConfigured && (
+            <button
+              onClick={onOpenSavedPoems}
+              title="Saved poems"
+              className="w-11 h-11 rounded-xl flex items-center justify-center hover:bg-[#C5A059]/15 transition-all duration-200"
+            >
+              <Heart className="text-[#C5A059]" size={18} />
+            </button>
+          )}
+
+          <button
+            onClick={onToggleDatabase}
+            title={useDatabase ? 'Switch to AI' : 'Switch to Database'}
+            className="w-11 h-11 rounded-xl flex items-center justify-center hover:bg-[#C5A059]/15 transition-all duration-200"
+          >
+            {useDatabase ? <Library className="text-[#C5A059]" size={18} /> : <Sparkles className="text-[#C5A059]" size={18} />}
+          </button>
+
+          <button
+            onClick={onOpenSettings}
+            title="Settings"
+            className="w-11 h-11 rounded-xl flex items-center justify-center hover:bg-[#C5A059]/15 transition-all duration-200"
+          >
+            <Settings2 className="text-[#C5A059]" size={18} />
+          </button>
+
+          {isSupabaseConfigured && (
+            <button
+              onClick={user ? onSignOut : onSignIn}
+              title={user ? 'Sign out' : 'Sign in'}
+              className="w-11 h-11 rounded-xl flex items-center justify-center hover:bg-[#C5A059]/15 transition-all duration-200"
+            >
+              {user ? <LogOut className="text-[#C5A059]" size={18} /> : <LogIn className="text-[#C5A059]" size={18} />}
+            </button>
+          )}
+        </div>
+      </div>
+    </>
+  );
+};
+
+/* =============================================================================
   6. MAIN APPLICATION
   =============================================================================
 */
@@ -1529,6 +1611,7 @@ export default function DiwanApp() {
   const [darkMode, setDarkMode] = useState(true);
   const [currentFont, setCurrentFont] = useState("Amiri");
   const [useDatabase, setUseDatabase] = useState(FEATURES.database);
+  const [apiKeyBannerDismissed, setApiKeyBannerDismissed] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
@@ -1611,17 +1694,59 @@ export default function DiwanApp() {
   // Using the default fetch mock in tests means this never consumes a mockResolvedValueOnce.
   useEffect(() => {
     const key = import.meta.env.VITE_GEMINI_API_KEY || "";
-    if (key) discoverTextModels(key, addLog);
+    if (key) {
+      discoverTextModels(key, addLog);
+    } else if (FEATURES.database) {
+      setUseDatabase(true);
+      addLog("Config", "No Gemini API key found — automatically using Database mode", "info");
+    }
   }, []);
 
-  // Auto-load a poem and queue explanation on first mount
+  // Auto-load a poem and queue explanation on first mount.
+  // If the user was viewing a poem before an OAuth redirect, restore it instead.
   useEffect(() => {
     if (!hasAutoLoaded.current) {
       hasAutoLoaded.current = true;
-      setAutoExplainPending(true);
-      handleFetch();
+      let restored = false;
+      try {
+        const stashed = sessionStorage.getItem('pendingSavePoem');
+        if (stashed) {
+          const poem = JSON.parse(stashed);
+          if (poem && poem.arabic) {
+            setPoems([poem]);
+            setCurrentIndex(0);
+            restored = true;
+            addLog("Restore", "Restored poem from before sign-in", "info");
+          }
+        }
+      } catch {}
+      if (!restored) {
+        setAutoExplainPending(true);
+        handleFetch();
+      }
     }
   }, []);
+
+  // After OAuth redirect, once the user is signed in, auto-save the stashed poem and clean up
+  useEffect(() => {
+    if (!user) return;
+    let stashed;
+    try { stashed = sessionStorage.getItem('pendingSavePoem'); } catch {}
+    if (!stashed) return;
+    sessionStorage.removeItem('pendingSavePoem');
+    try {
+      const poem = JSON.parse(stashed);
+      if (poem && poem.arabic) {
+        savePoem(poem).then(({ error }) => {
+          if (error) {
+            addLog("Save Error", error.message, "error");
+          } else {
+            addLog("Save", `Auto-saved poem: ${poem.poet} — ${poem.title}`, "success");
+          }
+        });
+      }
+    } catch {}
+  }, [user]);
 
   // Auto-trigger explanation after auto-loaded poem arrives
   useEffect(() => {
@@ -1634,6 +1759,7 @@ export default function DiwanApp() {
   useEffect(() => {
     // Threshold below which overflow mode is always active (prevents oscillation on narrow screens).
     // With Supabase buttons the bar is wider, so use a larger threshold.
+    // Re-runs when user signs in/out so the bar is re-measured after auth state changes.
     const narrowThreshold = isSupabaseConfigured ? 660 : 540;
 
     const scheduleDetect = () => {
@@ -1659,6 +1785,9 @@ export default function DiwanApp() {
     };
 
     scheduleDetect();
+    // Re-measure after a short delay to catch DOM updates from auth state changes
+    // (React may not have rendered the new buttons in the first rAF)
+    const delayedRecheck = setTimeout(scheduleDetect, 100);
 
     // ResizeObserver catches font-load changes and dynamic content updates.
     // Guard for environments where ResizeObserver is unavailable (older browsers, some test envs).
@@ -1670,6 +1799,7 @@ export default function DiwanApp() {
 
     window.addEventListener('resize', scheduleDetect);
     return () => {
+      clearTimeout(delayedRecheck);
       if (pendingRafRef.current !== null) {
         cancelAnimationFrame(pendingRafRef.current);
         pendingRafRef.current = null;
@@ -1677,7 +1807,9 @@ export default function DiwanApp() {
       resizeObserver?.disconnect();
       window.removeEventListener('resize', scheduleDetect);
     };
-  }, [isSupabaseConfigured]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- refs (controlBarRef, pendingRafRef)
+  // and the stable setIsOverflow setter are intentionally omitted; only real state values need deps.
+  }, [isSupabaseConfigured, user]);
 
   // Load user settings on mount
   useEffect(() => {
@@ -1709,11 +1841,7 @@ export default function DiwanApp() {
     setHeaderOpacity(Math.max(0, 1 - e.target.scrollTop / 30));
   };
 
-  const insightParts = useMemo(() => {
-    if (!interpretation) return null;
-    const parts = interpretation.split(/POEM:|THE DEPTH:|THE AUTHOR:/i).map(p => p.trim()).filter(Boolean);
-    return { poeticTranslation: parts[0] || "", depth: parts[1] || "", author: parts[2] || "" };
-  }, [interpretation]);
+  const insightParts = useMemo(() => parseInsight(interpretation), [interpretation]);
 
   const versePairs = useMemo(() => {
     const arLines = (current?.arabic || "").split('\n').filter(l => l.trim());
@@ -2317,26 +2445,14 @@ export default function DiwanApp() {
         const apiTime = performance.now() - apiStart;
 
         const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        const cleanJson = (rawText || "").replace(/```json|```/g, "").trim();
         let parsedPoem;
         try {
-          parsedPoem = JSON.parse(cleanJson);
-        } catch (firstError) {
-          // Attempt to repair truncated JSON (e.g. poem exceeded output token limit)
-          let repaired = cleanJson;
-          const quotes = (repaired.match(/"/g) || []).length;
-          if (quotes % 2 !== 0) repaired += '"';
-          const opens = (repaired.match(/\{/g) || []).length - (repaired.match(/\}/g) || []).length;
-          const openBrackets = (repaired.match(/\[/g) || []).length - (repaired.match(/\]/g) || []).length;
-          for (let i = 0; i < openBrackets; i++) repaired += ']';
-          for (let i = 0; i < opens; i++) repaired += '}';
-          try {
-            parsedPoem = JSON.parse(repaired);
-            addLog("Discovery JSON", "Repaired truncated JSON from AI response", "warn");
-          } catch {
-            throw new Error("AI returned invalid JSON (poem may have been too long). Try again.");
-          }
+          parsedPoem = repairAndParseJSON(rawText);
+        } catch (e) {
+          throw e;
         }
+        // Log if repair was needed (original raw text had fences or truncation)
+        const cleanJson = (rawText || "").replace(/```json|```/g, "").trim();
 
         // Normalize tags: convert object to array if needed
         if (parsedPoem.tags && typeof parsedPoem.tags === 'object' && !Array.isArray(parsedPoem.tags)) {
@@ -2405,6 +2521,10 @@ export default function DiwanApp() {
   };
 
   const handleSignInWithGoogle = async () => {
+    // Stash current poem so it survives the OAuth page redirect
+    if (current) {
+      try { sessionStorage.setItem('pendingSavePoem', JSON.stringify(current)); } catch {}
+    }
     const { error } = await signInWithGoogle();
     if (error) {
       addLog("Auth Error", error.message, "error");
@@ -2415,6 +2535,10 @@ export default function DiwanApp() {
   };
 
   const handleSignInWithApple = async () => {
+    // Stash current poem so it survives the OAuth page redirect
+    if (current) {
+      try { sessionStorage.setItem('pendingSavePoem', JSON.stringify(current)); } catch {}
+    }
     const { error } = await signInWithApple();
     if (error) {
       addLog("Auth Error", error.message, "error");
@@ -2680,6 +2804,13 @@ export default function DiwanApp() {
 
       <DebugPanel logs={logs} onClear={() => setLogs([])} darkMode={darkMode} />
 
+      {!apiKey && FEATURES.database && !apiKeyBannerDismissed && (
+        <div className={`fixed top-0 left-0 right-0 z-50 px-4 py-2 text-center text-sm ${darkMode ? 'bg-amber-900/90 text-amber-200' : 'bg-amber-100 text-amber-800'} backdrop-blur-sm`}>
+          Running in Database-only mode — add a Gemini API key for AI features
+          <button onClick={() => setApiKeyBannerDismissed(true)} className="ml-3 opacity-60 hover:opacity-100" aria-label="Dismiss">✕</button>
+        </div>
+      )}
+
       <header style={{ opacity: headerOpacity }} className="fixed top-4 md:top-8 left-0 right-0 z-40 pointer-events-none transition-opacity duration-300 flex flex-row items-center justify-center gap-4 md:gap-8 px-4 md:px-6">
         <div className={`flex flex-row-reverse items-center gap-2 md:gap-4 ${theme.brand} tracking-wide header-luminescence`}>
           <Feather className="w-8 h-8 md:w-[42px] md:h-[42px] opacity-95" strokeWidth={1.5} />
@@ -2696,7 +2827,7 @@ export default function DiwanApp() {
           <div className={`absolute inset-0 pointer-events-none opacity-[0.04] ${darkMode ? 'invert' : ''}`} style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M40 0l40 40-40 40L0 40z' fill='none' stroke='%234f46e5' stroke-width='1.5'/%3E%3Ccircle cx='40' cy='40' r='18' fill='none' stroke='%234f46e5' stroke-width='1.5'/%3E%3C/svg%3E")`, backgroundSize: '60px 60px' }} />
           <MysticalConsultationEffect active={isInterpreting} theme={theme} />
 
-          <main ref={mainScrollRef} onScroll={handleScroll} className="flex-1 overflow-y-auto custom-scrollbar relative z-10 px-4 md:px-0 pb-28">
+          <main ref={mainScrollRef} onScroll={handleScroll} className={`flex-1 overflow-y-auto custom-scrollbar relative z-10 px-4 md:px-0 pb-28${isOverflow ? ' pr-16' : ''}`}>
             <div className="min-h-full flex flex-col items-center justify-center py-6">
               <div className="w-full max-w-4xl flex flex-col items-center">
                 
@@ -2791,12 +2922,14 @@ export default function DiwanApp() {
                 <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">Listen</span>
               </div>
 
-              <div className="flex flex-col items-center gap-1 min-w-[52px]">
-                <button onClick={handleAnalyze} disabled={isInterpreting || interpretation} aria-label="Explain poem meaning" className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105 disabled:opacity-50">
-                  {isInterpreting ? <Loader2 className="animate-spin text-[#C5A059]" size={21} /> : <Compass className="text-[#C5A059]" size={21} />}
-                </button>
-                <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">Explain</span>
-              </div>
+              {!isOverflow && (
+                <div className="flex flex-col items-center gap-1 min-w-[52px]">
+                  <button onClick={handleAnalyze} disabled={isInterpreting || interpretation} aria-label="Explain poem meaning" className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105 disabled:opacity-50">
+                    {isInterpreting ? <Loader2 className="animate-spin text-[#C5A059]" size={21} /> : <Compass className="text-[#C5A059]" size={21} />}
+                  </button>
+                  <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">Explain</span>
+                </div>
+              )}
 
               <div className="flex flex-col items-center gap-1 min-w-[52px]">
                 <button onClick={handleFetch} disabled={isFetching} aria-label="Discover new poem" className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105">
@@ -2828,7 +2961,8 @@ export default function DiwanApp() {
 
                   <DatabaseToggle
                     useDatabase={useDatabase}
-                    onToggle={() => setUseDatabase(!useDatabase)}
+                    onToggle={apiKey ? () => setUseDatabase(!useDatabase) : () => {}}
+                    disabled={!apiKey}
                   />
 
                   <ThemeDropdown
@@ -2863,7 +2997,7 @@ export default function DiwanApp() {
                   onCopy={handleCopy}
                   showCopySuccess={showCopySuccess}
                   useDatabase={useDatabase}
-                  onToggleDatabase={() => setUseDatabase(!useDatabase)}
+                  onToggleDatabase={apiKey ? () => setUseDatabase(!useDatabase) : () => {}}
                   user={user}
                   onOpenSavedPoems={handleOpenSavedPoems}
                   onOpenSettings={handleOpenSettings}
@@ -2951,12 +3085,48 @@ export default function DiwanApp() {
         user={user}
         theme={theme}
       />
-      <a href="/design-review" style={{ position:'fixed', bottom:16, left:16, padding:'6px 12px',
-        background:'rgba(255,255,255,0.06)', border:'1px solid rgba(255,255,255,0.1)',
-        borderRadius:6, fontSize:11, color:'rgba(255,255,255,0.4)', textDecoration:'none',
-        zIndex:9999, fontFamily:'system-ui' }}>
-        Design Review
+      {/* Design Review - Mobile: left edge vertical strip, Desktop: bottom-left pill */}
+      <style>{`
+        @keyframes slideInLeft {
+          from { transform: translateY(-50%) translateX(-100%); opacity: 0; }
+          to { transform: translateY(-50%) translateX(0); opacity: 1; }
+        }
+      `}</style>
+      <a
+        href="/design-review"
+        className="fixed left-0 top-1/2 -translate-y-1/2 z-[45] md:hidden py-3 px-1.5 rounded-r-2xl bg-gradient-to-b from-black/70 via-black/60 to-black/70 backdrop-blur-xl border-r-2 border-[#C5A059]/40 no-underline flex items-center"
+        style={{ writingMode: 'vertical-rl', animation: 'slideInLeft 0.4s ease-out' }}
+        title="Design Review"
+      >
+        <span className="text-[10px] font-brand-en tracking-widest text-[#C5A059]/60 uppercase">Review</span>
       </a>
+      <a
+        href="/design-review"
+        className="hidden md:block fixed bottom-4 left-4 z-[45] py-1.5 px-3 rounded-lg bg-gradient-to-r from-black/60 to-black/50 backdrop-blur-xl border border-[#C5A059]/20 no-underline"
+        title="Design Review"
+      >
+        <span className="text-[10px] font-brand-en tracking-widest text-[#C5A059]/50 uppercase">Design Review</span>
+      </a>
+
+      {/* Vertical Sidebar - Mobile overflow only */}
+      {isOverflow && (
+        <VerticalSidebar
+          onExplain={handleAnalyze}
+          onCopy={handleCopy}
+          showCopySuccess={showCopySuccess}
+          onOpenSavedPoems={handleOpenSavedPoems}
+          onOpenSettings={handleOpenSettings}
+          onSignIn={handleSignIn}
+          onSignOut={handleSignOut}
+          user={user}
+          useDatabase={useDatabase}
+          onToggleDatabase={() => setUseDatabase(!useDatabase)}
+          isSupabaseConfigured={isSupabaseConfigured}
+          theme={theme}
+          isInterpreting={isInterpreting}
+          interpretation={interpretation}
+        />
+      )}
     </div>
   );
 }

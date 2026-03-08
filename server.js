@@ -1,6 +1,9 @@
 import express from 'express';
 import pg from 'pg';
 import cors from 'cors';
+import helmet from 'helmet';
+import { query, param, validationResult } from 'express-validator';
+import crypto from 'crypto';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
@@ -76,11 +79,37 @@ pool.query('SELECT NOW()', (err, res) => {
 });
 
 // Middleware
-app.use(cors());
+app.use(helmet());
+app.use(cors({
+  origin: process.env.NODE_ENV === 'production'
+    ? ['https://poetry-bil-araby.vercel.app']
+    : ['http://localhost:5173', 'http://localhost:3001'],
+  methods: ['GET', 'POST', 'PATCH'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key']
+}));
 app.use(express.json());
 // Larger body limit only for AI proxy endpoints
 app.use('/api/ai', express.json({ limit: '10mb' }));
 app.use('/api/', rateLimit({ windowMs: 60_000, max: 100, standardHeaders: true, legacyHeaders: false }));
+
+// API key authentication middleware for protected endpoints
+const requireApiKey = (req, res, next) => {
+  const apiKey = req.headers['x-api-key'];
+  if (!process.env.API_SECRET_KEY) {
+    // If no API key is configured, skip auth (development mode)
+    return next();
+  }
+  if (!apiKey) {
+    return res.status(401).json({ error: 'Unauthorized: Missing API key' });
+  }
+  // Timing-safe comparison to prevent timing attacks
+  const expected = Buffer.from(process.env.API_SECRET_KEY);
+  const provided = Buffer.from(apiKey);
+  if (expected.length !== provided.length || !crypto.timingSafeEqual(expected, provided)) {
+    return res.status(401).json({ error: 'Unauthorized: Invalid API key' });
+  }
+  next();
+};
 
 // Request logging middleware
 app.use((req, res, next) => {
@@ -91,6 +120,19 @@ app.use((req, res, next) => {
   });
   next();
 });
+
+// Validation helper
+const validate = (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    log.info('Validation', `Invalid request: ${req.path}`, errors.array().map(e => e.msg));
+    if (process.env.NODE_ENV === 'production') {
+      return res.status(400).json({ error: 'Invalid request parameters' });
+    }
+    return res.status(400).json({ error: 'Invalid request parameters', details: errors.array().map(e => e.msg) });
+  }
+  next();
+};
 
 // Health check endpoint
 app.get('/api/health', async (req, res) => {
@@ -110,7 +152,10 @@ app.get('/api/health', async (req, res) => {
 });
 
 // Get random poem
-app.get('/api/poems/random', async (req, res) => {
+app.get('/api/poems/random', [
+  query('poet').optional().trim().isLength({ max: 100 }).withMessage('Poet name too long'),
+  validate
+], async (req, res) => {
   try {
     const { poet } = req.query;
 
@@ -160,13 +205,18 @@ app.get('/api/poems/random', async (req, res) => {
     log.info('Poems', `Random poem: id=${poem.id}, poet=${poem.poet}, arabic_len=${formattedPoem.arabic?.length || 0}`);
     res.json(formattedPoem);
   } catch (error) {
-    log.error('Poems', `Error fetching random poem: ${error.message}`);
-    res.status(500).json({ error: error.message });
+    log.error('Poems', `Error fetching random poem: ${error.message}`, error.stack);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
 // Get poems by poet
-app.get('/api/poems/by-poet/:poet', async (req, res) => {
+app.get('/api/poems/by-poet/:poet', [
+  param('poet').trim().isLength({ min: 1, max: 100 }).withMessage('Poet name must be 1-100 characters'),
+  query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be 1-100'),
+  query('offset').optional().isInt({ min: 0 }).withMessage('Offset must be >= 0'),
+  validate
+], async (req, res) => {
   try {
     const { poet } = req.params;
     const { limit = 10, offset = 0 } = req.query;
@@ -206,8 +256,8 @@ app.get('/api/poems/by-poet/:poet', async (req, res) => {
     log.info('Poems', `By poet "${poet}": returned ${poems.length} poems`);
     res.json(poems);
   } catch (error) {
-    log.error('Poems', `Error fetching poems by poet: ${error.message}`);
-    res.status(500).json({ error: error.message });
+    log.error('Poems', `Error fetching poems by poet: ${error.message}`, error.stack);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -228,19 +278,19 @@ app.get('/api/poets', async (req, res) => {
     log.info('Poets', `Returned ${result.rows.length} poets`);
     res.json(result.rows);
   } catch (error) {
-    log.error('Poets', `Error fetching poets: ${error.message}`);
-    res.status(500).json({ error: error.message });
+    log.error('Poets', `Error fetching poets: ${error.message}`, error.stack);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
 // Search poems
-app.get('/api/poems/search', async (req, res) => {
+app.get('/api/poems/search', [
+  query('q').trim().notEmpty().withMessage('Search query required').isLength({ max: 200 }).withMessage('Search query too long'),
+  query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be 1-100'),
+  validate
+], async (req, res) => {
   try {
     const { q, limit = 10 } = req.query;
-
-    if (!q) {
-      return res.status(400).json({ error: 'Search query required' });
-    }
 
     // Convert query param to integer for type safety
     const limitNum = parseInt(limit, 10);
@@ -275,8 +325,8 @@ app.get('/api/poems/search', async (req, res) => {
     log.info('Search', `Query "${q}": returned ${poems.length} results`);
     res.json(poems);
   } catch (error) {
-    log.error('Search', `Error searching poems: ${error.message}`);
-    res.status(500).json({ error: error.message });
+    log.error('Search', `Error searching poems: ${error.message}`, error.stack);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -398,7 +448,8 @@ app.get('/api/design-review/ping', async (req, res) => {
     await pool.query('SELECT 1');
     res.json({ ok: true });
   } catch (error) {
-    res.status(500).json({ ok: false, error: error.message });
+    log.error('DesignReview', `Ping error: ${error.message}`);
+    res.status(500).json({ ok: false, error: 'Internal server error' });
   }
 });
 
@@ -416,13 +467,13 @@ app.get('/api/design-review/items', async (req, res) => {
     const result = await pool.query(query, params);
     res.json(result.rows);
   } catch (error) {
-    console.error('Error fetching design items:', error);
-    res.status(500).json({ error: error.message });
+    log.error('DesignReview', `Error fetching design items: ${error.message}`);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
 // POST /api/design-review/items/sync — bulk upsert from CATALOG (idempotent, batched)
-app.post('/api/design-review/items/sync', async (req, res) => {
+app.post('/api/design-review/items/sync', requireApiKey, async (req, res) => {
   try {
     if (!(await designTablesExist())) return res.status(503).json({ error: 'Design tables not created yet' });
     const { items } = req.body;
@@ -452,8 +503,8 @@ app.post('/api/design-review/items/sync', async (req, res) => {
 
     res.json({ upserted: items.length, total: items.length });
   } catch (error) {
-    console.error('Error syncing design items:', error);
-    res.status(500).json({ error: error.message });
+    log.error('DesignReview', `Error syncing design items: ${error.message}`);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -475,8 +526,8 @@ app.get('/api/design-review/sessions', async (req, res) => {
     const result = await pool.query(query, params);
     res.json(result.rows);
   } catch (error) {
-    console.error('Error fetching sessions:', error);
-    res.status(500).json({ error: error.message });
+    log.error('DesignReview', `Error fetching sessions: ${error.message}`);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -489,13 +540,13 @@ app.get('/api/design-review/sessions/:id', async (req, res) => {
     if (result.rows.length === 0) return res.status(404).json({ error: 'Session not found' });
     res.json(result.rows[0]);
   } catch (error) {
-    console.error('Error fetching session:', error);
-    res.status(500).json({ error: error.message });
+    log.error('DesignReview', `Error fetching session: ${error.message}`);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
 // POST /api/design-review/sessions — create new review session
-app.post('/api/design-review/sessions', async (req, res) => {
+app.post('/api/design-review/sessions', requireApiKey, async (req, res) => {
   try {
     if (!(await designTablesExist())) return res.status(503).json({ error: 'Design tables not created yet' });
     const { reviewer, branch, commit_sha, total_designs } = req.body;
@@ -511,13 +562,13 @@ app.post('/api/design-review/sessions', async (req, res) => {
     `, [reviewer || 'owner', branch || null, commit_sha || null, round_number, total_designs || 0]);
     res.status(201).json(result.rows[0]);
   } catch (error) {
-    console.error('Error creating session:', error);
-    res.status(500).json({ error: error.message });
+    log.error('DesignReview', `Error creating session: ${error.message}`);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
 // PATCH /api/design-review/sessions/:id — complete session, add notes
-app.patch('/api/design-review/sessions/:id', async (req, res) => {
+app.patch('/api/design-review/sessions/:id', requireApiKey, async (req, res) => {
   try {
     if (!(await designTablesExist())) return res.status(503).json({ error: 'Design tables not created yet' });
     const { id } = req.params;
@@ -538,8 +589,8 @@ app.patch('/api/design-review/sessions/:id', async (req, res) => {
     if (result.rows.length === 0) return res.status(404).json({ error: 'Session not found' });
     res.json(result.rows[0]);
   } catch (error) {
-    console.error('Error updating session:', error);
-    res.status(500).json({ error: error.message });
+    log.error('DesignReview', `Error updating session: ${error.message}`);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -554,13 +605,13 @@ app.get('/api/design-review/sessions/:id/verdicts', async (req, res) => {
     );
     res.json(result.rows);
   } catch (error) {
-    console.error('Error fetching verdicts:', error);
-    res.status(500).json({ error: error.message });
+    log.error('DesignReview', `Error fetching verdicts: ${error.message}`);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
 // POST /api/design-review/sessions/:id/verdicts — bulk submit/update verdicts (batched)
-app.post('/api/design-review/sessions/:id/verdicts', async (req, res) => {
+app.post('/api/design-review/sessions/:id/verdicts', requireApiKey, async (req, res) => {
   try {
     if (!(await designTablesExist())) return res.status(503).json({ error: 'Design tables not created yet' });
     const { id } = req.params;
@@ -616,8 +667,8 @@ app.post('/api/design-review/sessions/:id/verdicts', async (req, res) => {
 
     res.json({ saved: resolved.length, total: verdicts.length });
   } catch (error) {
-    console.error('Error saving verdicts:', error);
-    res.status(500).json({ error: error.message });
+    log.error('DesignReview', `Error saving verdicts: ${error.message}`);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -629,7 +680,11 @@ app.get('/api/design-review/summary', async (req, res) => {
     const items = await pool.query('SELECT COUNT(*) FROM design_items WHERE is_active = true');
     const sessions = await pool.query('SELECT COUNT(*) FROM design_review_sessions');
     const latestSession = await pool.query(
-      'SELECT id, round_number, status FROM design_review_sessions ORDER BY created_at DESC LIMIT 1'
+      `SELECT id, round_number, status FROM design_review_sessions ORDER BY
+        CASE WHEN status = 'completed' AND reviewed_count > 0 THEN 0
+             WHEN reviewed_count > 0 THEN 1
+             ELSE 2 END,
+        round_number DESC LIMIT 1`
     );
 
     let verdictCounts = { keep: 0, discard: 0, skip: 0, revisit: 0, unreviewed: 0 };
@@ -651,8 +706,8 @@ app.get('/api/design-review/summary', async (req, res) => {
       verdicts: verdictCounts
     });
   } catch (error) {
-    console.error('Error fetching summary:', error);
-    res.status(500).json({ error: error.message });
+    log.error('DesignReview', `Error fetching summary: ${error.message}`);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
@@ -666,7 +721,11 @@ app.get('/api/design-review/claude-context', async (req, res) => {
     let sessionQuery = 'SELECT * FROM design_review_sessions';
     const sessionParams = [];
     if (round === 'latest') {
-      sessionQuery += ' ORDER BY created_at DESC LIMIT 1';
+      sessionQuery += ` ORDER BY
+        CASE WHEN status = 'completed' AND reviewed_count > 0 THEN 0
+             WHEN reviewed_count > 0 THEN 1
+             ELSE 2 END,
+        round_number DESC LIMIT 1`;
     } else if (round) {
       sessionParams.push(parseInt(round));
       sessionQuery += ' WHERE round_number = $1';
@@ -721,8 +780,8 @@ app.get('/api/design-review/claude-context', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Error building claude context:', error);
-    res.status(500).json({ error: error.message });
+    log.error('DesignReview', `Error building claude context: ${error.message}`);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 

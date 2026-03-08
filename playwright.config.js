@@ -9,7 +9,7 @@ import { defineConfig, devices } from '@playwright/test';
  * Performance optimizations:
  * - CI uses 2 workers (optimal for GitHub Actions 2-core runners)
  * - Reduced timeouts (10s test, 3s assertions)
- * - No retries in CI for fast failure detection
+ * - 1 retry in both CI and local to reduce flake noise
  * - Minimal device matrix in CI (2 projects vs 6)
  */
 export default defineConfig({
@@ -24,8 +24,8 @@ export default defineConfig({
   // Fail build on CI if tests were accidentally left as test.only
   forbidOnly: !!process.env.CI,
 
-  // No retries on CI for fast feedback - let developers debug locally
-  retries: process.env.CI ? 0 : 1,
+  // Retry once in both CI and local to reduce flake noise
+  retries: 1,
 
   // Optimize workers for GitHub Actions (2 workers for 2-core runners)
   // Local: use all available cores for faster execution

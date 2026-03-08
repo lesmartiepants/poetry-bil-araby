@@ -62,8 +62,16 @@ IMPORTANT: Choose poems that are at most 40 lines long. If a poem is longer, sel
  * @returns {string} The formatted TTS instruction
  */
 export const getTTSInstruction = (poem, poet, mood, era) => {
-  return `Act as a master orator and recite this masterpiece by ${poet} in the soulful, ${mood} tone of the ${era} era. ` +
-    `Use high intensity, passionate oratorical power, and majestic strength. ` +
-    `Include natural pauses and audible breaths where appropriate. ` +
-    `Poem: ${poem.arabic}`;
+  return `You are a legendary Arabic sha'ir (poet-orator) performing a live inshad recitation of a poem by ${poet} from the ${era} era. ` +
+    `This is a PERFORMANCE, not a reading — deliver it with the full emotional power and artistic craft of classical Arabic oral tradition. ` +
+    `This poem's mood is ${mood}. ` +
+    `DELIVERY RULES: ` +
+    `1. PROJECT your voice with authority and presence from the very first word. ` +
+    `2. EMPHASIZE key words and emotionally charged lines — let them land with weight and resonance. ` +
+    `3. USE dramatic pauses before and after powerful lines to let them breathe and sink in. ` +
+    `4. VARY your tempo dynamically: slow to a commanding halt for profound or painful lines, surge forward with energy for triumphant or passionate ones. ` +
+    `5. STRESS the end-rhyme (qafiya) of each verse with a clear, ringing cadence. ` +
+    `6. Let your voice SWELL and RECEDE with the emotional arc — build intensity toward the poem's peak, then resolve with gravity. ` +
+    `7. Avoid flat, monotone delivery at all costs — every line must feel alive and intentional. ` +
+    `Poem:\n${poem.arabic}`;
 };

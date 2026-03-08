@@ -166,6 +166,8 @@ describe('DiwanApp', () => {
 
     it('shows loading state when generating audio', async () => {
       mockAutoLoadFetch()
+      // Auto-explain fires after poem loads — provide a mock so it doesn't consume the play mock
+      global.fetch.mockResolvedValueOnce({ ok: true, body: null, json: async () => ({}) })
       render(<DiwanApp />)
 
       await waitFor(() => {

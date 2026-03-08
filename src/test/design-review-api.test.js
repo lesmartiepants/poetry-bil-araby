@@ -31,7 +31,7 @@ describe('Design Review API', () => {
   const originalApiKey = process.env.API_SECRET_KEY;
 
   beforeEach(() => {
-    mockPool.query.mockClear();
+    mockPool.query.mockReset();
     // Clear API_SECRET_KEY so auth middleware is bypassed in these tests
     delete process.env.API_SECRET_KEY;
   });

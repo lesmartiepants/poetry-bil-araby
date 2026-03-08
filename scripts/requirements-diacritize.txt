@@ -1,3 +1,5 @@
 mishkal
 psycopg2-binary
 pyarabic
+pyarrow
+pandas

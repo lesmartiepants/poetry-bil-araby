@@ -1,38 +1,246 @@
 #!/usr/bin/env python3
-"""Batch-diacritize all poems using Mishkal with parallel DB writes.
+"""Batch-diacritize poems using Mishkal with parallel processing.
+
+Modes:
+    --parquet-mode (default): Read from raw parquet, write diacritized parquet.
+    --db-mode: Direct parallel DB writes (legacy).
 
 Usage:
-    # Direct parallel writes (default, ~33 min for 84K poems with 8 workers)
-    DATABASE_URL="..." python scripts/batch-diacritize.py
+    # Parquet mode (recommended): process remaining poems from local parquet files
+    python scripts/batch-diacritize.py
 
-    # Resume after interruption (skip already-diacritized poems)
-    DATABASE_URL="..." python scripts/batch-diacritize.py --resume
+    # Resume from existing diacritized parquet (skip already-done poems)
+    python scripts/batch-diacritize.py --resume
 
-    # Generate SQL file instead (legacy mode, no parallelism)
-    DATABASE_URL="..." python scripts/batch-diacritize.py --sql-only
+    # Custom workers and max char limit
+    python scripts/batch-diacritize.py --workers 4 --max-chars 5012
 
-    # Custom parallelism
-    DATABASE_URL="..." python scripts/batch-diacritize.py --workers 4 --chunk-size 250
+    # Legacy DB mode
+    DATABASE_URL="..." python scripts/batch-diacritize.py --db-mode --resume
 """
 import os
 import sys
+import csv
+import json
 import time
 import argparse
 from concurrent.futures import ProcessPoolExecutor, as_completed
-from multiprocessing import Value
+from multiprocessing import Value, Lock
+from pathlib import Path
 
 try:
-    import psycopg2
+    import pandas as pd
 except ImportError:
-    print("Error: psycopg2 not installed. Run: pip install -r scripts/requirements-diacritize.txt")
+    print("Error: pandas not installed. Run: pip install -r scripts/requirements-diacritize.txt")
     sys.exit(1)
 
-# ── Worker function (runs in separate process) ───────────────────────
+DATA_DIR = Path(__file__).parent / "diacritize-data"
+RAW_PARQUET = DATA_DIR / "poems_raw.parquet"
+DIACRITIZED_PARQUET = DATA_DIR / "poems_diacritized.parquet"
+COMPLETE_PARQUET = DATA_DIR / "poems_diacritized_complete.parquet"
+PROGRESS_FILE = DATA_DIR / "progress.json"
+ERRORS_FILE = DATA_DIR / "errors.csv"
 
-def process_chunk(db_url, offset, limit, resume, shared_counter):
+
+# ── Size bucket definitions ──────────────────────────────────────────
+
+SIZE_BUCKETS = [
+    ("tiny",   0,    500),
+    ("small",  500,  1000),
+    ("medium", 1000, 2000),
+    ("large",  2000, 3500),
+    ("xlarge", 3500, 100000),
+]
+
+
+def assign_bucket(length):
+    for name, lo, hi in SIZE_BUCKETS:
+        if lo <= length < hi:
+            return name
+    return "xlarge"
+
+
+# ── Worker initializer and function (runs in separate process) ───────
+
+def _worker_init():
+    """Each worker process creates its own Mishkal instance."""
+    import mishkal.tashkeel
+    import pyarabic.araby as araby
+    global _vocalizer, _araby
+    _vocalizer = mishkal.tashkeel.TashkeelClass()
+    _vocalizer.set_limit(100000)
+    _araby = araby
+
+
+def _process_poem(args):
+    """Process a single poem: strip existing marks, diacritize, validate."""
+    poem_id, content = args
+    try:
+        stripped = _araby.strip_tashkeel(content)
+        result = _vocalizer.tashkeel(stripped)
+        # Validate: result should be non-empty and at least as long as stripped
+        if not result or len(result) < len(stripped):
+            return poem_id, None, f"Result shorter than input ({len(result)} < {len(stripped)})"
+        return poem_id, result, None
+    except Exception as e:
+        return poem_id, None, str(e)
+
+
+# ── Progress reporting ───────────────────────────────────────────────
+
+def write_progress(poems_done, poems_total, current_bucket, start_time, errors):
+    elapsed = time.time() - start_time
+    rate = poems_done / elapsed if elapsed > 0 else 0
+    remaining = (poems_total - poems_done) / rate if rate > 0 else 0
+    progress = {
+        "poems_done": poems_done,
+        "poems_total": poems_total,
+        "current_bucket": current_bucket,
+        "elapsed_sec": round(elapsed, 1),
+        "rate_poems_sec": round(rate, 2),
+        "est_remaining_sec": round(remaining, 1),
+        "errors": errors,
+    }
+    PROGRESS_FILE.write_text(json.dumps(progress, indent=2))
+
+
+# ── Parquet mode ─────────────────────────────────────────────────────
+
+def run_parquet_mode(args):
+    """Read raw parquet, diacritize missing poems, write complete parquet."""
+    if not RAW_PARQUET.exists():
+        print(f"Error: {RAW_PARQUET} not found. Export poems first.")
+        sys.exit(1)
+
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+    raw_df = pd.read_parquet(RAW_PARQUET)
+    print(f"Raw poems: {len(raw_df)}")
+
+    # Drop long poems
+    if args.max_chars > 0:
+        before = len(raw_df)
+        raw_df = raw_df[raw_df["content"].str.len() <= args.max_chars].copy()
+        print(f"Dropped {before - len(raw_df)} poems above {args.max_chars} chars. "
+              f"Remaining: {len(raw_df)}")
+
+    # Load existing diacritized data for resume
+    existing = pd.DataFrame(columns=["id", "diacritized_content"])
+    if args.resume and DIACRITIZED_PARQUET.exists():
+        existing = pd.read_parquet(DIACRITIZED_PARQUET)
+        print(f"Existing diacritized poems: {len(existing)}")
+
+    # Also load any partial complete file
+    if args.resume and COMPLETE_PARQUET.exists():
+        complete_existing = pd.read_parquet(COMPLETE_PARQUET)
+        existing = pd.concat([existing, complete_existing]).drop_duplicates(subset=["id"])
+        print(f"Total existing (after merge): {len(existing)}")
+
+    # Find missing poems
+    done_ids = set(existing["id"]) if len(existing) > 0 else set()
+    todo_df = raw_df[~raw_df["id"].isin(done_ids)].copy()
+
+    if len(todo_df) == 0:
+        print("All poems already diacritized!")
+        # Merge and save complete file
+        result = existing[existing["id"].isin(set(raw_df["id"]))].copy()
+        result.to_parquet(COMPLETE_PARQUET, index=False)
+        print(f"Saved {len(result)} poems to {COMPLETE_PARQUET}")
+        return
+
+    # Assign size buckets and sort shortest-first
+    todo_df["content_len"] = todo_df["content"].str.len()
+    todo_df["bucket"] = todo_df["content_len"].apply(assign_bucket)
+    todo_df = todo_df.sort_values("content_len")
+
+    total = len(todo_df)
+    print(f"\nPoems to process: {total}")
+    for name, lo, hi in SIZE_BUCKETS:
+        count = len(todo_df[todo_df["bucket"] == name])
+        if count > 0:
+            print(f"  {name}: {count} poems")
+
+    # Prepare work items
+    work_items = list(zip(todo_df["id"].tolist(), todo_df["content"].tolist()))
+
+    # Init error log
+    with open(ERRORS_FILE, "w", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(["poem_id", "error"])
+
+    # Process with worker pool
+    results = []
+    error_count = 0
+    start_time = time.time()
+    current_bucket = todo_df.iloc[0]["bucket"] if len(todo_df) > 0 else "unknown"
+
+    print(f"\nStarting {args.workers} workers...")
+    # Process in chunks for better progress tracking
+    chunk_size = 50  # Submit 50 at a time for granular progress
+    completed = 0
+
+    with ProcessPoolExecutor(max_workers=args.workers, initializer=_worker_init) as pool:
+        # Submit all work
+        futures = {pool.submit(_process_poem, item): item[0] for item in work_items}
+
+        for future in as_completed(futures):
+            poem_id, diacritized, error = future.result()
+
+            if error:
+                error_count += 1
+                with open(ERRORS_FILE, "a", newline="") as f:
+                    csv.writer(f).writerow([poem_id, error])
+            else:
+                results.append({"id": poem_id, "diacritized_content": diacritized})
+
+            completed += 1
+
+            # Update current bucket based on what we're processing
+            idx = todo_df.index[todo_df["id"] == poem_id]
+            if len(idx) > 0:
+                current_bucket = todo_df.loc[idx[0], "bucket"]
+
+            # Progress report every 100 poems
+            if completed % 100 == 0 or completed == total:
+                write_progress(completed, total, current_bucket, start_time, error_count)
+                elapsed = time.time() - start_time
+                rate = completed / elapsed if elapsed > 0 else 0
+                eta = (total - completed) / rate if rate > 0 else 0
+                print(f"  [{current_bucket}] {completed}/{total} "
+                      f"({rate:.1f}/sec, errors={error_count}, "
+                      f"elapsed={elapsed:.0f}s, ETA={eta:.0f}s)")
+
+            # Save intermediate results every 2000 poems (crash recovery)
+            if completed % 2000 == 0 and results:
+                new_df = pd.DataFrame(results)
+                merged = pd.concat([existing, new_df]).drop_duplicates(subset=["id"])
+                merged = merged[merged["id"].isin(set(raw_df["id"]))].copy()
+                merged.to_parquet(COMPLETE_PARQUET, index=False)
+
+    # Final merge and save
+    new_df = pd.DataFrame(results)
+    all_diacritized = pd.concat([existing, new_df]).drop_duplicates(subset=["id"])
+    # Only keep poems that are in the raw set (respects drop_percentile)
+    all_diacritized = all_diacritized[all_diacritized["id"].isin(set(raw_df["id"]))].copy()
+    all_diacritized.to_parquet(COMPLETE_PARQUET, index=False)
+
+    elapsed = time.time() - start_time
+    print(f"\nDone! {len(results)} new poems diacritized in {elapsed:.0f}s")
+    print(f"Total in complete parquet: {len(all_diacritized)}")
+    if error_count:
+        print(f"Errors: {error_count} (see {ERRORS_FILE})")
+    print(f"Output: {COMPLETE_PARQUET}")
+
+
+# ── DB mode (legacy) ─────────────────────────────────────────────────
+
+def _db_worker(db_url, offset, limit, resume, shared_counter):
     """Fetch a chunk of poems, diacritize with Mishkal, write back via UNNEST."""
+    import psycopg2
     from mishkal.tashkeel import TashkeelClass
+    import pyarabic.araby as araby
+
     vocalizer = TashkeelClass()
+    vocalizer.set_limit(100000)
 
     conn = psycopg2.connect(db_url, keepalives=1, keepalives_idle=30,
                             keepalives_interval=10, keepalives_count=5)
@@ -52,13 +260,13 @@ def process_chunk(db_url, offset, limit, resume, shared_counter):
     errors = 0
     for pid, content in rows:
         try:
-            result = vocalizer.tashkeel(content)
+            stripped = araby.strip_tashkeel(content)
+            result = vocalizer.tashkeel(stripped)
             ids.append(pid)
             diacritized.append(result)
-        except Exception as e:
+        except Exception:
             errors += 1
 
-    # UNNEST batch write — ~1.6ms/poem amortized at chunk_size=500
     if ids:
         cur.execute("""
             UPDATE poems p SET diacritized_content = v.content
@@ -75,84 +283,15 @@ def process_chunk(db_url, offset, limit, resume, shared_counter):
     return len(ids), errors
 
 
-# ── SQL-only mode (legacy) ────────────────────────────────────────────
-
-def generate_sql(db_url):
-    """Original behavior: generate a SQL migration file."""
-    from mishkal.tashkeel import TashkeelClass
-    vocalizer = TashkeelClass()
-
-    out_path = "supabase/migrations/20260306000001_populate_diacritics.sql.skip"
-
-    conn = psycopg2.connect(db_url)
-    cur = conn.cursor()
-
-    cur.execute("SELECT COUNT(*) FROM poems")
-    total = cur.fetchone()[0]
-    print(f"Found {total} poems to diacritize")
-
-    cur.execute("SELECT id, content FROM poems ORDER BY id")
-
-    processed = 0
-    errors = 0
-    start_time = time.time()
-
-    with open(out_path, "w", encoding="utf-8") as f:
-        f.write("-- Batch diacritization via Mishkal (rule-based, no AI)\n")
-        f.write(f"-- Generated: {time.strftime('%Y-%m-%d %H:%M:%S')}\n")
-        f.write(f"-- Total poems: {total}\n\n")
-        f.write("BEGIN;\n\n")
-
-        for row in cur:
-            pid, content = row
-            try:
-                result = vocalizer.tashkeel(content)
-                escaped = cur.mogrify("%s", (result,)).decode("utf-8")
-                f.write(f"UPDATE poems SET diacritized_content = {escaped} WHERE id = {pid};\n")
-                processed += 1
-            except Exception as e:
-                print(f"  Error on poem {pid}: {e}")
-                errors += 1
-
-            if (processed + errors) % 500 == 0:
-                elapsed = time.time() - start_time
-                rate = (processed + errors) / elapsed if elapsed > 0 else 0
-                print(f"  Progress: {processed + errors}/{total} ({rate:.0f} poems/sec)")
-
-        f.write("\nCOMMIT;\n")
-
-    conn.close()
-    elapsed = time.time() - start_time
-    print(f"\nDone! {processed} poems written to {out_path}")
-    print(f"  Errors: {errors}, Time: {elapsed:.0f}s")
-
-
-# ── Main ──────────────────────────────────────────────────────────────
-
-def main():
-    parser = argparse.ArgumentParser(
-        description="Batch-diacritize poems using Mishkal with parallel DB writes"
-    )
-    parser.add_argument("--sql-only", action="store_true",
-                        help="Generate SQL migration file instead of direct writes")
-    parser.add_argument("--resume", action="store_true",
-                        help="Skip poems that already have diacritized_content")
-    parser.add_argument("--workers", type=int, default=8,
-                        help="Number of parallel workers (default: 8)")
-    parser.add_argument("--chunk-size", type=int, default=500,
-                        help="Poems per worker chunk (default: 500)")
-    args = parser.parse_args()
+def run_db_mode(args):
+    """Direct parallel DB writes (legacy mode)."""
+    import psycopg2
 
     db_url = os.environ.get("DATABASE_URL")
     if not db_url:
-        print("Error: DATABASE_URL environment variable is required")
+        print("Error: DATABASE_URL environment variable is required for --db-mode")
         sys.exit(1)
 
-    if args.sql_only:
-        generate_sql(db_url)
-        return
-
-    # Count work
     conn = psycopg2.connect(db_url)
     cur = conn.cursor()
     where = "WHERE diacritized_content IS NULL" if args.resume else ""
@@ -167,16 +306,14 @@ def main():
 
     print(f"Diacritizing {total} poems with {args.workers} workers, "
           f"chunk size {args.chunk_size}")
-    print(f"Mode: {'resume (skip existing)' if args.resume else 'full (overwrite all)'}")
 
-    # Generate chunk offsets
     offsets = list(range(0, total, args.chunk_size))
     counter = Value('i', 0)
     start = time.time()
 
     with ProcessPoolExecutor(max_workers=args.workers) as pool:
         futures = {
-            pool.submit(process_chunk, db_url, off, args.chunk_size,
+            pool.submit(_db_worker, db_url, off, args.chunk_size,
                         args.resume, counter): off
             for off in offsets
         }
@@ -195,14 +332,37 @@ def main():
             rate = counter.value / elapsed if elapsed > 0 else 0
             eta = (total - counter.value) / rate if rate > 0 else 0
             print(f"  Progress: {counter.value}/{total} ({rate:.0f}/sec, "
-                  f"errors={total_errors}, elapsed={elapsed:.0f}s, "
-                  f"ETA={eta:.0f}s)")
+                  f"errors={total_errors}, elapsed={elapsed:.0f}s, ETA={eta:.0f}s)")
 
     elapsed = time.time() - start
     print(f"\nDone! {total_done} poems diacritized in {elapsed:.0f}s "
           f"({total_done/elapsed:.0f}/sec)")
     if total_errors:
         print(f"  {total_errors} errors encountered")
+
+
+# ── Main ─────────────────────────────────────────────────────────────
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="Batch-diacritize poems using Mishkal with parallel processing"
+    )
+    parser.add_argument("--db-mode", action="store_true",
+                        help="Direct DB writes instead of parquet mode")
+    parser.add_argument("--resume", action="store_true",
+                        help="Skip poems that are already diacritized")
+    parser.add_argument("--workers", type=int, default=4,
+                        help="Number of parallel workers (default: 4)")
+    parser.add_argument("--chunk-size", type=int, default=500,
+                        help="Poems per worker chunk in DB mode (default: 500)")
+    parser.add_argument("--max-chars", type=int, default=5012,
+                        help="Drop poems longer than this many chars (default: 5012)")
+    args = parser.parse_args()
+
+    if args.db_mode:
+        run_db_mode(args)
+    else:
+        run_parquet_mode(args)
 
 
 if __name__ == "__main__":

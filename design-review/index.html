@@ -528,6 +528,25 @@
 // ═══════════════════════════════════════════════════════════════
 const CATALOG = [
   {
+    component: 'Production App',
+    id: 'production',
+    categories: [{
+      id: 'prod-live', name: 'Live App Mockup',
+      source: 'feature/design-review-live-app-mockup',
+      description: 'Faithful recreation of the production app with mocked API flows — includes auth, saved poems, settings, all controls',
+      options: [{
+        id: 'prod-mockup',
+        name: 'Production App (Mocked)',
+        philosophy: 'The production app as it is today — every control, every modal, every flow — frozen for review without API dependencies',
+        file: 'main-app/live-app-mockup/production-app-mockup.html',
+        desc: '8 poems, streaming insight sim, audio sim, auth modal (Google/Apple), saved poems, settings panel, theme/font/poet controls, overflow menu, desktop insight pane',
+        generation: 8, iteration: 1,
+        source_branch: 'feature/design-review-live-app-mockup'
+      }],
+      feedback: {}
+    }]
+  },
+  {
     component: 'Branding',
     id: 'branding',
     categories: [

@@ -283,7 +283,7 @@ def generate_html(haiku: dict | None, sonnet: dict | None) -> str:
         if not h:
             return [], []
         details = h.get("poem_details", [])
-        labels = [p.get("poem_text_prefix", "")[:40] for p in details]
+        labels = [p.get("poem_text_prefix", "")[:40].replace("\n", " ").replace("\r", " ") for p in details]
         errors = []
         for p in details:
             row = {}
@@ -778,7 +778,7 @@ def generate_html(haiku: dict | None, sonnet: dict | None) -> str:
             row.appendChild(avgOCell);
 
             tbody.appendChild(row);
-        }});
+        }}
         table.appendChild(tbody);
         wrapper.appendChild(table);
         section.appendChild(wrapper);

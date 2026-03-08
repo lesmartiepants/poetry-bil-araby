@@ -120,15 +120,6 @@ jobs:
         env:
           CI: true
 
-      - name: Upload coverage reports
-        if: always()
-        uses: codecov/codecov-action@v4
-        continue-on-error: true
-        with:
-          token: ${{ secrets.CODECOV_TOKEN }}
-          files: ./coverage/lcov.info
-          fail_ci_if_error: false
-
   # Stage 3: E2E Testing with Playwright (Critical browsers only)
   e2e-tests:
     name: E2E Tests (Chrome Desktop + Mobile)
@@ -140,6 +131,8 @@ jobs:
       needs.detect-changes.outputs.tests-changed == 'true' ||
       needs.detect-changes.outputs.config-changed == 'true'
     timeout-minutes: 5
+    outputs:
+      missing_tokens: ${{ steps.e2e-env.outputs.missing_tokens }}
 
     # PostgreSQL service for database integration tests
     services:
@@ -188,11 +181,14 @@ jobs:
 
       - name: Setup PostgreSQL schema (for database tests)
         run: |
-          # Create minimal schema for CI tests (full import is 118MB, skipped in CI)
-          echo "Creating minimal CI test schema..."
+          echo "Creating CI test schema..."
           PGPASSWORD=postgres psql -h localhost -U postgres -d qafiyah_test <<'EOSQL'
           -- Minimal schema matching production structure
           CREATE TABLE IF NOT EXISTS poets (
+            id SERIAL PRIMARY KEY,
+            name TEXT NOT NULL UNIQUE
+          );
+          CREATE TABLE IF NOT EXISTS themes (
             id SERIAL PRIMARY KEY,
             name TEXT NOT NULL UNIQUE
           );
@@ -201,12 +197,14 @@ jobs:
             title TEXT,
             content TEXT,
             poet_id INTEGER REFERENCES poets(id),
+            theme_id INTEGER REFERENCES themes(id),
             theme TEXT
           );
-          -- Insert a test poet and poem for E2E tests
+          -- Insert test data
           INSERT INTO poets (name) VALUES ('Test Poet') ON CONFLICT DO NOTHING;
-          INSERT INTO poems (title, content, poet_id, theme)
-          VALUES ('Test Poem', 'بيت شعري للاختبار', 1, 'test');
+          INSERT INTO themes (name) VALUES ('test') ON CONFLICT DO NOTHING;
+          INSERT INTO poems (title, content, poet_id, theme_id, theme)
+          VALUES ('Test Poem', 'بيت شعري للاختبار', 1, 1, 'test');
           EOSQL
           echo "Loading auth and user features..."
           PGPASSWORD=postgres psql -h localhost -U postgres -d qafiyah_test -f supabase/migrations/20260119000000_auth_and_user_features.sql 2>/dev/null || true
@@ -217,7 +215,6 @@ jobs:
 
       - name: Start backend API server (background)
         run: |
-          # Start backend server in background for E2E tests
           npm run dev:server &
           echo "Backend server starting on http://localhost:3001"
           for i in $(seq 1 15); do
@@ -233,11 +230,46 @@ jobs:
           PORT: 3001
         continue-on-error: true
 
+      - name: Check E2E environment
+        id: e2e-env
+        run: |
+          echo "## E2E Environment Check"
+          MISSING=""
+
+          # Check GEMINI_API_KEY
+          if [ -n "$HAS_GEMINI_KEY" ]; then
+            echo "GEMINI_API_KEY: configured"
+          else
+            echo "GEMINI_API_KEY: NOT configured"
+            MISSING="${MISSING}GEMINI_API_KEY (enables AI mode toggle + AI feature E2E tests)\n"
+          fi
+
+          # Check backend health
+          if curl -sf http://localhost:3001/api/health > /dev/null 2>&1; then
+            HEALTH=$(curl -s http://localhost:3001/api/health)
+            echo "Backend API: running — $HEALTH"
+          else
+            echo "Backend API: NOT responding"
+            MISSING="${MISSING}Backend API (server failed to start — database integration tests will skip)\n"
+          fi
+
+          # Write missing info for downstream jobs via GITHUB_OUTPUT
+          if [ -n "$MISSING" ]; then
+            echo "has_missing=true" >> "$GITHUB_OUTPUT"
+            echo "missing_tokens=${MISSING}" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_missing=false" >> "$GITHUB_OUTPUT"
+            echo "missing_tokens=" >> "$GITHUB_OUTPUT"
+          fi
+        env:
+          HAS_GEMINI_KEY: ${{ secrets.GEMINI_API_KEY }}
+
       - name: Run Playwright E2E tests
         run: npm run test:e2e
         env:
           CI: true
           VITE_API_URL: http://localhost:3001
+          VITE_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 
       - name: Upload Playwright report
         if: always()
@@ -370,8 +402,10 @@ jobs:
             body += `| E2E Tests | ${icon(e2eStatus)} ${e2eStatus} |\n`;
             body += `| UI/UX Tests | ${icon(uiUxStatus)} ${uiUxStatus} |\n`;
 
-            // Only show action items when something failed
+            // Collect issues
             const failures = [];
+            const warnings = [];
+
             if (buildStatus === 'failure') failures.push('Build');
             if (testStatus === 'failure') failures.push('Unit Tests');
             if (e2eStatus === 'failure') failures.push('E2E Tests');
@@ -379,6 +413,15 @@ jobs:
 
             if (failures.length > 0) {
               body += `\n**Failing:** ${failures.join(', ')} — [view logs](${process.env.RUN_URL})\n`;
+            }
+
+            // Report missing secrets/tokens (quiet diagnostics from e2e-env step)
+            const missingTokens = process.env.MISSING_TOKENS || '';
+            if (missingTokens.trim()) {
+              body += `\n<details><summary>⚠️ Missing CI secrets (some tests skipped)</summary>\n\n`;
+              body += missingTokens.split('\\n').filter(Boolean).map(t => `- ${t}`).join('\n');
+              body += `\n\nAdd these in **Settings → Secrets and variables → Actions** to enable full test coverage.`;
+              body += `\n</details>\n`;
             }
 
             body += `\n<sub>Run [#${process.env.RUN_NUMBER}](${process.env.RUN_URL}) · ${new Date().toISOString().slice(0, 16)}Z</sub>`;
@@ -412,3 +455,4 @@ jobs:
         env:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           RUN_NUMBER: ${{ github.run_number }}
+          MISSING_TOKENS: ${{ needs.e2e-tests.outputs.missing_tokens || '' }}

@@ -111,6 +111,7 @@ export function useUserSettings(user) {
 
   useEffect(() => {
     if (!user || !isSupabaseConfigured()) {
+      setSettings(null);
       setLoading(false);
       return;
     }
@@ -188,6 +189,7 @@ export function useSavedPoems(user) {
 
   useEffect(() => {
     if (!user || !isSupabaseConfigured()) {
+      setSavedPoems([]);
       setLoading(false);
       return;
     }

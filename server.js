@@ -136,9 +136,20 @@ pool.query('SELECT NOW()', (err, res) => {
 // Middleware
 app.use(helmet());
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production'
-    ? ['https://poetry-bil-araby.vercel.app']
-    : ['http://localhost:5173', 'http://localhost:3001'],
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, curl, server-to-server)
+    if (!origin) return callback(null, true);
+    const allowed = [
+      'http://localhost:5173',
+      'http://localhost:3001',
+      'https://poetry-bil-araby.vercel.app',
+    ];
+    // Allow Vercel preview deployments (poetry-bil-araby-*.vercel.app)
+    if (allowed.includes(origin) || /^https:\/\/poetry-bil-araby[a-z0-9-]*\.vercel\.app$/.test(origin)) {
+      return callback(null, true);
+    }
+    callback(new Error('CORS: origin not allowed'));
+  },
   methods: ['GET', 'POST', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key']
 }));

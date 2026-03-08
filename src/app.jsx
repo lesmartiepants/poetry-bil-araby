@@ -1163,6 +1163,69 @@ const OverflowMenu = ({
 };
 
 /* =============================================================================
+  KEYBOARD SHORTCUT HELP
+  =============================================================================
+*/
+
+const SHORTCUTS = [
+  { keys: ['Space'], desc: 'Play / Pause audio' },
+  { keys: ['→'], desc: 'Discover new poem' },
+  { keys: ['E'], desc: 'Explain poem' },
+  { keys: ['T'], desc: 'Toggle English translation' },
+  { keys: ['R'], desc: 'Toggle transliteration' },
+  { keys: ['Esc'], desc: 'Close modal / panel' },
+  { keys: ['?'], desc: 'Show this help' },
+];
+
+const ShortcutHelp = ({ isOpen, onClose, theme }) => {
+  if (!isOpen) return null;
+
+  const isDark = theme === THEME.dark;
+
+  return (
+    <div
+      className="fixed inset-0 z-[55] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+      onClick={onClose}
+      role="dialog"
+      aria-label="Keyboard shortcuts"
+    >
+      <div
+        className={`relative w-full max-w-sm ${theme.glass} ${theme.border} border ${DESIGN.radius} p-8 shadow-2xl`}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/10 transition-colors"
+          aria-label="Close"
+        >
+          <X size={20} className={theme.text} />
+        </button>
+
+        <h2 className={`font-brand-en text-lg font-bold mb-6 ${theme.text}`}>Keyboard Shortcuts</h2>
+
+        <div className="space-y-3">
+          {SHORTCUTS.map(({ keys, desc }) => (
+            <div key={desc} className="flex items-center justify-between gap-4">
+              <span className={`font-brand-en text-sm ${theme.text} opacity-70`}>{desc}</span>
+              <div className="flex gap-1">
+                {keys.map(k => (
+                  <kbd
+                    key={k}
+                    className={`px-2 py-1 rounded-md text-xs font-mono font-bold ${isDark ? 'bg-stone-800 text-stone-300 border-stone-700' : 'bg-stone-200 text-stone-700 border-stone-300'} border`}
+                  >
+                    {k}
+                  </kbd>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* =============================================================================
   SPLASH / ONBOARDING
   =============================================================================
 */
@@ -1880,6 +1943,7 @@ export default function DiwanApp() {
   const [showTranslation, setShowTranslation] = useState(true);
   const [textSizeLevel, setTextSizeLevel] = useState(1); // 0=S, 1=M, 2=L, 3=XL
   const [showTransliteration, setShowTransliteration] = useState(false);
+  const [showShortcutHelp, setShowShortcutHelp] = useState(false);
 
   const theme = darkMode ? THEME.dark : THEME.light;
 
@@ -2086,6 +2150,48 @@ export default function DiwanApp() {
 
     return () => clearTimeout(timeoutId);
   }, [darkMode, currentFont, user, isSupabaseConfigured]);
+
+  // Keyboard shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      const tag = document.activeElement?.tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+
+      switch (e.key) {
+        case ' ':
+          e.preventDefault();
+          togglePlay();
+          break;
+        case 'ArrowRight':
+          handleFetch();
+          break;
+        case 'e':
+        case 'E':
+          if (!isInterpreting && !interpretation) handleAnalyze();
+          break;
+        case 't':
+        case 'T':
+          setShowTranslation(prev => !prev);
+          break;
+        case 'r':
+        case 'R':
+          setShowTransliteration(prev => !prev);
+          break;
+        case 'Escape':
+          setShowAuthModal(false);
+          setShowSavedPoems(false);
+          setShowSettings(false);
+          setShowShortcutHelp(false);
+          break;
+        case '?':
+          setShowShortcutHelp(prev => !prev);
+          break;
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isInterpreting, interpretation]);
 
   const handleScroll = (e) => {
     setHeaderOpacity(Math.max(0, 1 - e.target.scrollTop / 30));
@@ -3431,6 +3537,13 @@ export default function DiwanApp() {
           setShowSplash(false);
           try { localStorage.setItem('hasSeenSplash', 'true'); } catch {}
         }}
+        theme={theme}
+      />
+
+      {/* Keyboard Shortcut Help */}
+      <ShortcutHelp
+        isOpen={showShortcutHelp}
+        onClose={() => setShowShortcutHelp(false)}
         theme={theme}
       />
     </div>

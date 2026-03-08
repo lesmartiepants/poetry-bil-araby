@@ -1,4 +1,4 @@
-"""Build HTML visualization showing rank movement after tiered re-scoring.
+"""Build HTML visualization showing score evolution across pipeline versions.
 
 Shows:
 1. Before/after score distributions (histograms)
@@ -6,6 +6,8 @@ Shows:
 3. Biggest movers table (gainers and losers)
 4. Canon poem scores highlighted
 5. Example poems from each score band with excerpts
+6. DSPy optimization results (when available)
+7. Three-way comparison: v5 (Haiku) -> v7 (Tiered+Remap) -> v8 (DSPy-Calibrated)
 
 Output: data/poem_rank_movement.html
 """
@@ -18,11 +20,20 @@ import numpy as np
 
 DATA_DIR = Path(__file__).resolve().parent
 
-MERGED_PATH = DATA_DIR / "scores_final_merged_v7.parquet"
+# Try v8 first, fall back to v7
+V8_PATH = DATA_DIR / "scores_final_v8.parquet"
+V7_PATH = DATA_DIR / "scores_final_merged_v7.parquet"
+MERGED_PATH = V8_PATH if V8_PATH.exists() else V7_PATH
 HAIKU_PATH = DATA_DIR / "scores_recalibrated_v5.parquet"  # original baseline for comparison
 CONTENT_PATH = DATA_DIR / "final_selection_v4.parquet"
 CANON_PATH = DATA_DIR / "canon_poems.json"
 OUTPUT_PATH = DATA_DIR / "poem_rank_movement.html"
+
+# DSPy optimization logs (for reporting panel)
+SIMBA_HAIKU_LOG = DATA_DIR / "dspy_simba_haiku_log.json"
+SIMBA_SONNET_LOG = DATA_DIR / "dspy_simba_sonnet_log.json"
+MIPRO_HAIKU_LOG = DATA_DIR / "dspy_haiku_history.json"
+MIPRO_SONNET_LOG = DATA_DIR / "dspy_sonnet_history.json"
 
 
 def escape(text):
@@ -54,8 +65,30 @@ def build_histogram_data(scores, bins=30, lo=0, hi=100):
              "y": int(counts[i])} for i in range(len(counts))]
 
 
+def load_optimization_logs():
+    """Load DSPy optimization logs for reporting."""
+    logs = {}
+    for label, path in [
+        ("simba_haiku", SIMBA_HAIKU_LOG),
+        ("simba_sonnet", SIMBA_SONNET_LOG),
+        ("mipro_haiku", MIPRO_HAIKU_LOG),
+        ("mipro_sonnet", MIPRO_SONNET_LOG),
+    ]:
+        if path.exists():
+            try:
+                with open(path) as f:
+                    logs[label] = json.load(f)
+            except (json.JSONDecodeError, KeyError):
+                pass
+    return logs
+
+
 def main():
-    print("Building rank movement HTML visualization...")
+    version = "v8" if V8_PATH.exists() else "v7"
+    print(f"Building rank movement HTML visualization ({version})...")
+
+    # Load optimization logs
+    opt_logs = load_optimization_logs()
 
     # Load data
     merged = pd.read_parquet(MERGED_PATH)
@@ -64,6 +97,12 @@ def main():
     haiku["poem_id"] = haiku["poem_id"].astype(str)
     content_df = pd.read_parquet(CONTENT_PATH)
     content_df["poem_id"] = content_df["poem_id"].astype(str)
+
+    # Also load v7 for three-way comparison if we're on v8
+    v7_df = None
+    if version == "v8" and V7_PATH.exists():
+        v7_df = pd.read_parquet(V7_PATH)
+        v7_df["poem_id"] = v7_df["poem_id"].astype(str)
 
     with open(CANON_PATH) as f:
         canon = json.load(f)
@@ -199,13 +238,54 @@ def main():
     for tier, count in df.get("scoring_tier", pd.Series(dtype=str)).value_counts().items():
         tier_dist[str(tier)] = int(count)
 
+    # Build optimization panel data
+    opt_panel_data = []
+    for key, label in [("simba_haiku", "SIMBA Haiku"), ("simba_sonnet", "SIMBA Sonnet"),
+                        ("mipro_haiku", "MIPROv2 Haiku"), ("mipro_sonnet", "MIPROv2 Sonnet")]:
+        if key in opt_logs:
+            log = opt_logs[key]
+            baseline = log.get("baseline", log.get("baseline_eval_mae", {}))
+            optimized = log.get("optimized_test", log.get("optimized_full_test", {}))
+            # Handle different log formats
+            b_mae = baseline.get("mae_overall", baseline.get("mae_overall", "?"))
+            o_mae = optimized.get("mae_overall", "?") if optimized else "?"
+            b_r = baseline.get("r_overall", "?")
+            o_r = optimized.get("r_overall", "?") if optimized else "?"
+            opt_panel_data.append({
+                "label": label,
+                "baseline_mae": b_mae,
+                "optimized_mae": o_mae,
+                "baseline_r": b_r,
+                "optimized_r": o_r,
+                "time": log.get("compile_time_sec", "?"),
+            })
+
+    # Build v7 comparison data if available
+    v7_hist = None
+    v7_stats = None
+    if v7_df is not None:
+        v7_map = v7_df.set_index("poem_id")["quality_score"]
+        merged["v7_score"] = merged["poem_id"].map(v7_map)
+        v7_hist = build_histogram_data(v7_df["quality_score"].dropna().values, bins=40)
+        v7_stats = {
+            "mean": float(v7_df["quality_score"].mean()),
+            "std": float(v7_df["quality_score"].std()),
+            "min": float(v7_df["quality_score"].min()),
+            "max": float(v7_df["quality_score"].max()),
+        }
+
+    subtitle_text = {
+        "v8": "DSPy-calibrated scoring: SIMBA-optimized Haiku + Sonnet + Canon boost",
+        "v7": "Tiered re-scoring: Opus (top 500) + Sonnet (top 2000) + Haiku (rest) + Canon boost",
+    }[version]
+
     # Build HTML
     html = f"""<!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Arabic Poetry Score Re-Ranking Results</title>
+<title>Arabic Poetry Score Analysis ({version.upper()})</title>
 <style>
 :root {{
     --bg: #0f172a;
@@ -309,25 +389,36 @@ tr:hover {{ background: rgba(56, 189, 248, 0.05); }}
 </head>
 <body>
 
-<h1>Arabic Poetry Score Re-Ranking Results</h1>
-<p class="subtitle">Tiered re-scoring: Opus (top 500) + Sonnet (top 2000) + Haiku (rest) + Canon boost</p>
+<h1>Arabic Poetry Score Analysis ({version.upper()})</h1>
+<p class="subtitle">{subtitle_text}</p>
+
+<!-- DSPy Optimization Results -->
+{'<h2>DSPy Optimization Results</h2><div class="grid">' + ''.join(f"""<div class="card">
+    <div class="stat-label">{d['label']}</div>
+    <div style="display:flex;gap:1rem;align-items:baseline">
+        <div><span class="stat-label">MAE</span> <span style="color:var(--muted)">{d['baseline_mae']}</span> → <span style="color:var(--green);font-weight:bold">{d['optimized_mae']}</span></div>
+        <div><span class="stat-label">r</span> <span style="color:var(--muted)">{d['baseline_r']}</span> → <span style="color:var(--green);font-weight:bold">{d['optimized_r']}</span></div>
+    </div>
+    <div class="stat-label" style="margin-top:0.3rem">Time: {d['time']}s</div>
+</div>""" for d in opt_panel_data) + '</div>' if opt_panel_data else ''}
 
 <!-- Summary Stats -->
 <div class="grid">
     <div class="card">
-        <div class="stat-label">Before (Haiku only)</div>
+        <div class="stat-label">v5: Haiku Baseline</div>
         <div class="stat">{before_stats['mean']:.1f}</div>
         <div class="stat-label">Mean score (std: {before_stats['std']:.1f}, range: {before_stats['min']:.0f}-{before_stats['max']:.0f})</div>
     </div>
+    {'<div class="card"><div class="stat-label">v7: Tiered + Remap</div><div class="stat">' + f"{v7_stats['mean']:.1f}" + '</div><div class="stat-label">Mean score (std: ' + f"{v7_stats['std']:.1f}" + ', range: ' + f"{v7_stats['min']:.0f}-{v7_stats['max']:.0f}" + ')</div></div>' if v7_stats else ''}
     <div class="card">
-        <div class="stat-label">After (Tiered + Canon)</div>
+        <div class="stat-label">{version.upper()}: Current</div>
         <div class="stat">{after_stats['mean']:.1f}</div>
         <div class="stat-label">Mean score (std: {after_stats['std']:.1f}, range: {after_stats['min']:.0f}-{after_stats['max']:.0f})</div>
     </div>
     <div class="card">
-        <div class="stat-label">Score Spread Improvement</div>
+        <div class="stat-label">Score Spread (v5 → {version})</div>
         <div class="stat">{after_stats['std'] - before_stats['std']:+.1f}</div>
-        <div class="stat-label">Standard deviation increase</div>
+        <div class="stat-label">Standard deviation change</div>
     </div>
     <div class="card">
         <div class="stat-label">Scoring Tiers</div>
@@ -338,14 +429,15 @@ tr:hover {{ background: rgba(56, 189, 248, 0.05); }}
 </div>
 
 <!-- Histograms -->
-<h2>Score Distributions: Before vs After</h2>
+<h2>Score Distributions</h2>
 <div class="grid">
     <div class="card">
-        <h3>Before (Haiku Calibrated)</h3>
+        <h3>v5: Haiku Baseline</h3>
         <canvas id="histBefore" width="500" height="250"></canvas>
     </div>
+    {'<div class="card"><h3>v7: Tiered + Quantile Remap</h3><canvas id="histV7" width="500" height="250"></canvas></div>' if v7_hist else ''}
     <div class="card">
-        <h3>After (Tiered + Canon Boost)</h3>
+        <h3>{version.upper()}: Current Scores</h3>
         <canvas id="histAfter" width="500" height="250"></canvas>
     </div>
 </div>
@@ -425,6 +517,7 @@ tr:hover {{ background: rgba(56, 189, 248, 0.05); }}
 
 <script>
 const beforeHist = {json.dumps(before_hist)};
+const v7Hist = {json.dumps(v7_hist) if v7_hist else 'null'};
 const afterHist = {json.dumps(after_hist)};
 const scatterData = {json.dumps(scatter_data)};
 const canonScatter = {json.dumps(canon_scatter)};
@@ -628,6 +721,7 @@ function buildBandExamples() {{
 
 // Render
 drawHistogram('histBefore', beforeHist, 'rgba(148, 163, 184, 0.6)');
+if (v7Hist && document.getElementById('histV7')) drawHistogram('histV7', v7Hist, 'rgba(167, 139, 250, 0.6)');
 drawHistogram('histAfter', afterHist, 'rgba(56, 189, 248, 0.6)');
 drawScatter();
 buildMoversTable('gainersTable', gainers);

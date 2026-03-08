@@ -2161,6 +2161,82 @@ const VerticalSidebar = ({
 
           <div className="w-6 h-px bg-stone-500/30 mx-auto my-1" />
 
+          <button
+            onClick={() => setSettingsOpen(prev => !prev)}
+            title="Settings"
+            className={`${btnBase} ${btnHover} ${settingsOpen ? (darkMode ? 'bg-[#C5A059]/15' : 'bg-[#8B7355]/15') : ''}`}
+          >
+            <Settings2 style={{ color: gold }} size={18} />
+          </button>
+
+          {settingsOpen && (
+            <div className={`flex flex-col items-center gap-0.5 pl-0.5 border-l-2 ${darkMode ? 'border-[#C5A059]/20' : 'border-[#8B7355]/20'}`}>
+              <button
+                onClick={onToggleTransliteration}
+                title={showTransliteration ? 'Hide romanization' : 'Show romanization'}
+                className={`${subBtnBase} ${subBtnHover} ${!showTransliteration ? 'opacity-40' : ''}`}
+              >
+                <span className="text-[12px] font-bold leading-none" style={{ color: gold, fontFamily: "'Amiri', serif" }}>عA</span>
+              </button>
+
+              <button
+                onClick={onCycleTextSize}
+                title={`Text size: ${textSizeLabel}`}
+                className={`${subBtnBase} ${subBtnHover}`}
+              >
+                <span className="font-brand-en text-[13px] font-bold" style={{ color: gold }}>Aa</span>
+              </button>
+
+              {dailyPoem && (
+                <button
+                  onClick={onDailyPoem}
+                  title="Poem of the Day"
+                  className={`${subBtnBase} ${subBtnHover} ${isCurrentDaily ? (darkMode ? 'bg-[#C5A059]/15' : 'bg-[#8B7355]/15') : ''}`}
+                >
+                  <CalendarDays style={{ color: gold }} size={16} />
+                </button>
+              )}
+
+              <button
+                onClick={onToggleDarkMode}
+                title={darkMode ? 'Light mode' : 'Dark mode'}
+                className={`${subBtnBase} ${subBtnHover}`}
+              >
+                {darkMode ? <Sun style={{ color: gold }} size={16} /> : <Moon style={{ color: gold }} size={16} />}
+              </button>
+
+              <button
+                onClick={onCycleFont}
+                title={`Font: ${currentFont}`}
+                className={`${subBtnBase} ${subBtnHover}`}
+              >
+                <Feather style={{ color: gold }} size={16} />
+              </button>
+
+              <button
+                onClick={() => {
+                  const catIds = CATEGORIES.map(c => c.id);
+                  const idx = catIds.indexOf(selectedCategory);
+                  onSelectCategory(catIds[(idx + 1) % catIds.length]);
+                }}
+                title="Poet filter"
+                className={`${subBtnBase} ${subBtnHover}`}
+              >
+                <Library style={{ color: gold }} size={16} />
+              </button>
+
+              <button
+                onClick={onToggleDatabase}
+                title={useDatabase ? 'Switch to AI' : 'Switch to Database'}
+                className={`${subBtnBase} ${subBtnHover}`}
+              >
+                {useDatabase ? <Library style={{ color: gold }} size={16} /> : <Sparkles style={{ color: gold }} size={16} />}
+              </button>
+            </div>
+          )}
+
+          <div className="w-6 h-px bg-stone-500/30 mx-auto my-1" />
+
           {isSupabaseConfigured && (
             <button
               onClick={user ? onSignOut : onSignIn}
@@ -3997,6 +4073,7 @@ export default function DiwanApp() {
                       disabled={!user}
                     />
                   )}
+
 
                   <div className="w-px h-10 bg-stone-500/20 mx-1 flex-shrink-0" />
 

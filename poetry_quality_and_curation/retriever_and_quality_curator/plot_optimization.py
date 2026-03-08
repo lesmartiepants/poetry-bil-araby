@@ -85,6 +85,19 @@ def _get_eval_optimized(h: dict) -> dict:
     return h.get("optimized_eval_mae", h.get("val_optimized", h.get("optimized", {})))
 
 
+def _get_cross_mae(h: dict) -> dict | None:
+    """Get cross-assessment MAE data if present.
+
+    Haiku history stores cross_eval_sonnet_prompt,
+    Sonnet history stores cross_eval_haiku_prompt.
+    """
+    for key in ("cross_eval_sonnet_prompt", "cross_eval_haiku_prompt"):
+        cross = h.get(key)
+        if cross and "mae" in cross:
+            return cross["mae"]
+    return None
+
+
 def _model_stat_cards(label: str, h: dict, color_class: str) -> str:
     """Generate stat cards for one model."""
     n_poems = h.get("num_examples", 0)
@@ -95,10 +108,10 @@ def _model_stat_cards(label: str, h: dict, color_class: str) -> str:
     optimizer = h.get("optimizer", "?")
     num_trials = h.get("num_trials", 0)
 
-    baseline_eval = _get_eval_baseline(h)
-    optimized_eval = _get_eval_optimized(h)
-    b_mae = baseline_eval.get("mae_overall", 0)
-    o_mae = optimized_eval.get("mae_overall", 0)
+    baseline_mae = _get_eval_baseline(h)
+    optimized_mae = _get_eval_optimized(h)
+    b_mae = baseline_mae.get("mae_overall", 0)
+    o_mae = optimized_mae.get("mae_overall", 0)
     improvement = b_mae - o_mae
     pct = (improvement / b_mae * 100) if b_mae else 0
 
@@ -113,7 +126,7 @@ def _model_stat_cards(label: str, h: dict, color_class: str) -> str:
             <div class="stat-value neutral">{b_mae:.2f}</div>
         </div>
         <div class="stat-card">
-            <div class="stat-label">Optimized Eval MAE</div>
+            <div class="stat-label">Own Optimized MAE</div>
             <div class="stat-value {val_class}">{o_mae:.2f}</div>
         </div>
         <div class="stat-card">
@@ -126,6 +139,20 @@ def _model_stat_cards(label: str, h: dict, color_class: str) -> str:
             <div class="stat-label">Few-Shot Demos</div>
             <div class="stat-value">{num_demos}</div>
         </div>"""
+
+    # Cross-assessment card (other model's prompt run on this model)
+    cross_mae = _get_cross_mae(h)
+    if cross_mae:
+        c_mae = cross_mae.get("mae_overall", 0)
+        c_imp = b_mae - c_mae
+        c_class = "good" if c_imp > 0.05 else ("bad" if c_imp < -0.05 else "neutral")
+        other_model = "Sonnet" if "cross_eval_sonnet_prompt" in h else "Haiku"
+        cards += f"""
+        <div class="stat-card" style="border-left:3px solid #a78bfa">
+            <div class="stat-label">{other_model}'s Prompt MAE</div>
+            <div class="stat-value {c_class}">{c_mae:.2f}</div>
+        </div>"""
+
     cards += f"""
         <div class="stat-card">
             <div class="stat-label">Time</div>
@@ -182,6 +209,42 @@ def _build_findings_html(haiku: dict | None, sonnet: dict | None) -> str:
 
         finding += '</div>'
         findings.append(finding)
+
+    # Cross-eval findings
+    haiku_cross = _get_cross_mae(haiku) if haiku else None
+    sonnet_cross = _get_cross_mae(sonnet) if sonnet else None
+    if haiku_cross or sonnet_cross:
+        cross_finding = '<div class="finding-card"><h3 style="color:#a78bfa">Cross-Prompt Assessment</h3>'
+        cross_finding += '<p class="finding-detail">Each model was tested with the other model\'s optimized prompt + few-shot demos to measure prompt transferability.</p>'
+
+        if haiku and haiku_cross:
+            hb = _get_eval_baseline(haiku).get("mae_overall", 0)
+            ho = _get_eval_optimized(haiku).get("mae_overall", 0)
+            hc = haiku_cross.get("mae_overall", 0)
+            cross_finding += f'<p class="finding-detail"><b>Haiku</b> with Sonnet\'s prompt: MAE {hc:.2f} '
+            if hc < ho:
+                cross_finding += f'<span class="finding-good">(better than own prompt {ho:.2f} by {ho - hc:.2f})</span>'
+            elif hc > ho:
+                cross_finding += f'<span class="finding-bad">(worse than own prompt {ho:.2f} by {hc - ho:.2f})</span>'
+            else:
+                cross_finding += f'(same as own prompt {ho:.2f})'
+            cross_finding += '</p>'
+
+        if sonnet and sonnet_cross:
+            sb = _get_eval_baseline(sonnet).get("mae_overall", 0)
+            so = _get_eval_optimized(sonnet).get("mae_overall", 0)
+            sc = sonnet_cross.get("mae_overall", 0)
+            cross_finding += f'<p class="finding-detail"><b>Sonnet</b> with Haiku\'s prompt: MAE {sc:.2f} '
+            if sc < so:
+                cross_finding += f'<span class="finding-good">(better than own prompt {so:.2f} by {so - sc:.2f})</span>'
+            elif sc > so:
+                cross_finding += f'<span class="finding-bad">(worse than own prompt {so:.2f} by {sc - so:.2f})</span>'
+            else:
+                cross_finding += f'(same as own prompt {so:.2f})'
+            cross_finding += '</p>'
+
+        cross_finding += '</div>'
+        findings.append(cross_finding)
 
     # Overall analysis
     overall = '<div class="finding-card"><h3 style="color:#94a3b8">Overall Analysis</h3>'
@@ -264,6 +327,13 @@ def generate_html(haiku: dict | None, sonnet: dict | None) -> str:
     haiku_optimized_dims = json.dumps([_get_eval_optimized(haiku).get(f"mae_{d}", 0) for d in DIMS] if haiku else [])
     sonnet_baseline_dims = json.dumps([_get_eval_baseline(sonnet).get(f"mae_{d}", 0) for d in DIMS] if sonnet else [])
     sonnet_optimized_dims = json.dumps([_get_eval_optimized(sonnet).get(f"mae_{d}", 0) for d in DIMS] if sonnet else [])
+
+    # Cross-eval per-dim MAE (other model's prompt on this model)
+    haiku_cross_mae = _get_cross_mae(haiku) if haiku else None
+    sonnet_cross_mae = _get_cross_mae(sonnet) if sonnet else None
+    haiku_cross_dims = json.dumps([haiku_cross_mae.get(f"mae_{d}", 0) for d in DIMS] if haiku_cross_mae else [])
+    sonnet_cross_dims = json.dumps([sonnet_cross_mae.get(f"mae_{d}", 0) for d in DIMS] if sonnet_cross_mae else [])
+    has_cross_eval = "true" if (haiku_cross_mae or sonnet_cross_mae) else "false"
 
     # Trial scores for convergence chart
     haiku_trial_scores = json.dumps(_extract_trial_scores(haiku) if haiku else [])
@@ -471,6 +541,17 @@ def generate_html(haiku: dict | None, sonnet: dict | None) -> str:
         </div>
     </div>
 
+    <!-- Cross-eval comparison chart (full width, only shown if cross-eval data exists) -->
+    <div id="crossEvalSection" style="display:none">
+        <div class="section">
+            <h2>Cross-Prompt Assessment: Own vs Other Model's Prompt</h2>
+            <p class="prompt-meta">Each model tested with its own optimized prompt and the other model's optimized prompt + demos. Lower MAE = better.</p>
+            <div class="chart-container tall">
+                <canvas id="crossEvalChart"></canvas>
+            </div>
+        </div>
+    </div>
+
     <!-- Prompt comparison -->
     {prompt_comparison_html}
 
@@ -495,6 +576,11 @@ def generate_html(haiku: dict | None, sonnet: dict | None) -> str:
     // Baseline reference scores
     const haikuBaselineScore = {haiku_baseline_score};
     const sonnetBaselineScore = {sonnet_baseline_score};
+
+    // Cross-eval data (other model's prompt on this model)
+    const hasCrossEval = {has_cross_eval};
+    const haikuCrossDims = {haiku_cross_dims};
+    const sonnetCrossDims = {sonnet_cross_dims};
 
     const haikuPoemLabels = {json.dumps(haiku_poem_labels)};
     const haikuPoemErrors = {json.dumps(haiku_poem_errors)};
@@ -634,14 +720,14 @@ def generate_html(haiku: dict | None, sonnet: dict | None) -> str:
         container.replaceChildren(msg);
     }}
 
-    // -- Chart 2: Per-dimension grouped bar (baseline + optimized, eval set) --
+    // -- Chart 2: Per-dimension grouped bar (baseline + optimized + cross, eval set) --
     const dimDatasets = [];
     if (hasHaiku) {{
         dimDatasets.push({{
             label: 'Haiku Baseline',
             data: haikuBaselineDims,
-            backgroundColor: 'rgba(244, 114, 182, 0.4)',
-            borderColor: 'rgba(244, 114, 182, 0.8)',
+            backgroundColor: 'rgba(244, 114, 182, 0.3)',
+            borderColor: 'rgba(244, 114, 182, 0.6)',
             borderWidth: 1,
         }});
         dimDatasets.push({{
@@ -651,13 +737,23 @@ def generate_html(haiku: dict | None, sonnet: dict | None) -> str:
             borderColor: 'rgba(244, 114, 182, 1)',
             borderWidth: 1,
         }});
+        if (hasCrossEval && haikuCrossDims.length > 0) {{
+            dimDatasets.push({{
+                label: "Haiku + Sonnet's Prompt",
+                data: haikuCrossDims,
+                backgroundColor: 'rgba(244, 114, 182, 0.55)',
+                borderColor: 'rgba(167, 139, 250, 1)',
+                borderWidth: 2,
+                borderDash: [4, 2],
+            }});
+        }}
     }}
     if (hasSonnet) {{
         dimDatasets.push({{
             label: 'Sonnet Baseline',
             data: sonnetBaselineDims,
-            backgroundColor: 'rgba(96, 165, 250, 0.4)',
-            borderColor: 'rgba(96, 165, 250, 0.8)',
+            backgroundColor: 'rgba(96, 165, 250, 0.3)',
+            borderColor: 'rgba(96, 165, 250, 0.6)',
             borderWidth: 1,
         }});
         dimDatasets.push({{
@@ -667,6 +763,16 @@ def generate_html(haiku: dict | None, sonnet: dict | None) -> str:
             borderColor: 'rgba(96, 165, 250, 1)',
             borderWidth: 1,
         }});
+        if (hasCrossEval && sonnetCrossDims.length > 0) {{
+            dimDatasets.push({{
+                label: "Sonnet + Haiku's Prompt",
+                data: sonnetCrossDims,
+                backgroundColor: 'rgba(96, 165, 250, 0.55)',
+                borderColor: 'rgba(167, 139, 250, 1)',
+                borderWidth: 2,
+                borderDash: [4, 2],
+            }});
+        }}
     }}
     new Chart(document.getElementById('dimChart'), {{
         type: 'bar',
@@ -711,6 +817,51 @@ def generate_html(haiku: dict | None, sonnet: dict | None) -> str:
             }},
         }},
     }});
+
+    // -- Chart 4: Cross-eval comparison --
+    if (hasCrossEval) {{
+        document.getElementById('crossEvalSection').style.display = 'block';
+        const crossLabels = ['Baseline', 'Own Optimized', "Other's Prompt"];
+        const crossDatasets = [];
+
+        if (hasHaiku && haikuCrossDims.length > 0) {{
+            // Haiku: baseline overall, own optimized overall, sonnet's prompt overall
+            const hBase = haikuBaselineDims.reduce((a, b) => a + b, 0) / haikuBaselineDims.length;
+            const hOpt = haikuOptimizedDims.reduce((a, b) => a + b, 0) / haikuOptimizedDims.length;
+            const hCross = haikuCrossDims.reduce((a, b) => a + b, 0) / haikuCrossDims.length;
+            crossDatasets.push({{
+                label: 'Haiku',
+                data: [hBase, hOpt, hCross],
+                backgroundColor: ['rgba(244,114,182,0.4)', 'rgba(244,114,182,0.85)', 'rgba(167,139,250,0.7)'],
+                borderColor: ['rgba(244,114,182,0.8)', 'rgba(244,114,182,1)', 'rgba(167,139,250,1)'],
+                borderWidth: 1,
+            }});
+        }}
+        if (hasSonnet && sonnetCrossDims.length > 0) {{
+            const sBase = sonnetBaselineDims.reduce((a, b) => a + b, 0) / sonnetBaselineDims.length;
+            const sOpt = sonnetOptimizedDims.reduce((a, b) => a + b, 0) / sonnetOptimizedDims.length;
+            const sCross = sonnetCrossDims.reduce((a, b) => a + b, 0) / sonnetCrossDims.length;
+            crossDatasets.push({{
+                label: 'Sonnet',
+                data: [sBase, sOpt, sCross],
+                backgroundColor: ['rgba(96,165,250,0.4)', 'rgba(96,165,250,0.85)', 'rgba(167,139,250,0.7)'],
+                borderColor: ['rgba(96,165,250,0.8)', 'rgba(96,165,250,1)', 'rgba(167,139,250,1)'],
+                borderWidth: 1,
+            }});
+        }}
+
+        new Chart(document.getElementById('crossEvalChart'), {{
+            type: 'bar',
+            data: {{ labels: crossLabels, datasets: crossDatasets }},
+            options: {{
+                ...chartDefaults,
+                scales: {{
+                    y: {{ beginAtZero: true, title: {{ display: true, text: 'Avg MAE across dimensions (lower = better)', color: '#94a3b8' }}, ...axisStyle }},
+                    x: {{ ...axisStyle, grid: {{ display: false }} }},
+                }},
+            }},
+        }});
+    }}
 
     // -- Per-poem error table --
     const section = document.getElementById('poemTableSection');

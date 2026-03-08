@@ -2014,7 +2014,7 @@ const SettingsView = ({ isOpen, onClose, darkMode, onToggleDarkMode, currentFont
 
 const VerticalSidebar = ({
   onExplain, onCopy, showCopySuccess, onShare, showShareSuccess,
-  onSignIn, onSignOut, user, isSupabaseConfigured, theme, isInterpreting, interpretation,
+  onSignIn, onSignOut, user, theme, isInterpreting, interpretation,
   showTranslation, onToggleTranslation,
   showTransliteration, onToggleTransliteration,
   textSizeLabel, onCycleTextSize,
@@ -2022,8 +2022,7 @@ const VerticalSidebar = ({
   darkMode, onToggleDarkMode,
   currentFont, onCycleFont,
   selectedCategory, onSelectCategory,
-  useDatabase, onToggleDatabase,
-  onDownvote, isPoemDownvoted, onUndownvote
+  useDatabase, onToggleDatabase
 }) => {
   const [settingsOpen, setSettingsOpen] = useState(false);
 
@@ -2061,18 +2060,6 @@ const VerticalSidebar = ({
 
           <button onClick={onShare} title="Share poem" className={`${btnBase} ${btnHover}`}>
             {showShareSuccess ? <Check size={18} className="text-green-500" /> : <Share2 style={{ color: gold }} size={18} />}
-          </button>
-
-          <button
-            onClick={isPoemDownvoted ? onUndownvote : onDownvote}
-            title={isPoemDownvoted ? "Unflag poem" : "Flag poem"}
-            className={`${btnBase} ${btnHover}`}
-          >
-            <ThumbsDown
-              style={{ color: isPoemDownvoted ? undefined : gold }}
-              className={isPoemDownvoted ? 'fill-red-400 text-red-400' : ''}
-              size={18}
-            />
           </button>
 
           <button
@@ -2237,15 +2224,13 @@ const VerticalSidebar = ({
 
           <div className="w-6 h-px bg-stone-500/30 mx-auto my-1" />
 
-          {isSupabaseConfigured && (
-            <button
-              onClick={user ? onSignOut : onSignIn}
-              title={user ? 'Sign out' : 'Sign in'}
-              className={`${btnBase} ${btnHover}`}
-            >
-              {user ? <LogOut style={{ color: gold }} size={18} /> : <LogIn style={{ color: gold }} size={18} />}
-            </button>
-          )}
+          <button
+            onClick={user ? onSignOut : onSignIn}
+            title={user ? 'Sign out' : 'Sign in'}
+            className={`${btnBase} ${btnHover}`}
+          >
+            {user ? <LogOut style={{ color: gold }} size={18} /> : <LogIn style={{ color: gold }} size={18} />}
+          </button>
         </div>
       </div>
     </>
@@ -2332,7 +2317,7 @@ export default function DiwanApp() {
   const pendingRafRef = useRef(null); // Track pending rAF id for overflow detection deduplication
 
   // Auth state
-  const { user, loading: authLoading, signInWithGoogle, signInWithApple, signOut, isConfigured: isSupabaseConfigured } = useAuth();
+  const { user, loading: authLoading, signInWithGoogle, signInWithApple, signOut } = useAuth();
   const { settings, saveSettings } = useUserSettings(user);
   const { savedPoems, savePoem, unsavePoem, isPoemSaved } = useSavedPoems(user);
   const { downvotedPoemIds, downvotePoem, undownvotePoem, isPoemDownvoted } = useDownvotes(user);
@@ -2566,9 +2551,8 @@ export default function DiwanApp() {
 
   useEffect(() => {
     // Threshold below which overflow mode is always active (prevents oscillation on narrow screens).
-    // With Supabase buttons the bar is wider, so use a larger threshold.
     // Re-runs when user signs in/out so the bar is re-measured after auth state changes.
-    const narrowThreshold = isSupabaseConfigured ? 660 : 540;
+    const narrowThreshold = 660;
 
     const scheduleDetect = () => {
       // Deduplicate: cancel any pending frame before scheduling a new one
@@ -2617,7 +2601,7 @@ export default function DiwanApp() {
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps -- refs (controlBarRef, pendingRafRef)
   // and the stable setIsOverflow setter are intentionally omitted; only real state values need deps.
-  }, [isSupabaseConfigured, user]);
+  }, [user]);
 
   // Load user settings on mount
   useEffect(() => {
@@ -2633,7 +2617,7 @@ export default function DiwanApp() {
 
   // Save settings when theme or font changes (with debounce)
   useEffect(() => {
-    if (!user || !isSupabaseConfigured) return;
+    if (!user) return;
 
     const timeoutId = setTimeout(() => {
       saveSettings({
@@ -2643,7 +2627,7 @@ export default function DiwanApp() {
     }, 1000); // Debounce by 1 second
 
     return () => clearTimeout(timeoutId);
-  }, [darkMode, currentFont, user, isSupabaseConfigured]);
+  }, [darkMode, currentFont, user]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -4052,29 +4036,24 @@ export default function DiwanApp() {
                 <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">Discover</span>
               </div>
 
-              {isSupabaseConfigured && (
-                <SavePoemButton
-                  poem={current}
-                  isSaved={isPoemSaved(current)}
-                  onSave={handleSavePoem}
-                  onUnsave={handleUnsavePoem}
-                  disabled={!user}
-                />
-              )}
+              <SavePoemButton
+                poem={current}
+                isSaved={isPoemSaved(current)}
+                onSave={handleSavePoem}
+                onUnsave={handleUnsavePoem}
+                disabled={!user}
+              />
+
+              <DownvoteButton
+                poem={current}
+                isDownvoted={isPoemDownvoted(current)}
+                onDownvote={handleDownvote}
+                onUndownvote={handleUndownvote}
+                disabled={!user}
+              />
 
               {!isOverflow && (
                 <>
-                  {isSupabaseConfigured && (
-                    <DownvoteButton
-                      poem={current}
-                      isDownvoted={isPoemDownvoted(current)}
-                      onDownvote={handleDownvote}
-                      onUndownvote={handleUndownvote}
-                      disabled={!user}
-                    />
-                  )}
-
-
                   <div className="w-px h-10 bg-stone-500/20 mx-1 flex-shrink-0" />
 
                   <div className="flex flex-col items-center gap-1 min-w-[52px]">
@@ -4155,17 +4134,15 @@ export default function DiwanApp() {
 
                   <CategoryPill selected={selectedCategory} onSelect={setSelectedCategory} darkMode={darkMode} />
 
-                  {isSupabaseConfigured && (
-                    <AuthButton
-                      user={user}
-                      darkMode={darkMode}
-                      onSignIn={handleSignIn}
-                      onSignOut={handleSignOut}
-                      onOpenSavedPoems={handleOpenSavedPoems}
-                      onOpenSettings={handleOpenSettings}
-                      theme={theme}
-                    />
-                  )}
+                  <AuthButton
+                    user={user}
+                    darkMode={darkMode}
+                    onSignIn={handleSignIn}
+                    onSignOut={handleSignOut}
+                    onOpenSavedPoems={handleOpenSavedPoems}
+                    onOpenSettings={handleOpenSettings}
+                    theme={theme}
+                  />
                 </>
               )}
             </div>
@@ -4282,7 +4259,6 @@ export default function DiwanApp() {
           onSignIn={handleSignIn}
           onSignOut={handleSignOut}
           user={user}
-          isSupabaseConfigured={isSupabaseConfigured}
           theme={theme}
           isInterpreting={isInterpreting}
           interpretation={interpretation}
@@ -4303,9 +4279,6 @@ export default function DiwanApp() {
           onSelectCategory={setSelectedCategory}
           useDatabase={useDatabase}
           onToggleDatabase={apiKey ? handleToggleDatabase : () => {}}
-          onDownvote={handleDownvote}
-          isPoemDownvoted={isPoemDownvoted(current)}
-          onUndownvote={handleUndownvote}
         />
       )}
 

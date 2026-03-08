@@ -1699,6 +1699,7 @@ export default function DiwanApp() {
     const currentIdx = FONTS.findIndex(f => f.id === currentFont);
     const nextIdx = (currentIdx + 1) % FONTS.length;
     setCurrentFont(FONTS[nextIdx].id);
+    track('font_changed', { font: FONTS[nextIdx].id });
     addLog("Font", `Switched to ${FONTS[nextIdx].label}`, "info");
   };
 
@@ -1763,6 +1764,7 @@ export default function DiwanApp() {
       const deepLinkMatch = window.location.pathname.match(/^\/poem\/(\d+)$/);
       if (deepLinkMatch && useDatabase) {
         const poemId = deepLinkMatch[1];
+        track('deep_link_loaded', { poemId });
         addLog("DeepLink", `Loading poem ID ${poemId} from URL`, "info");
         fetch(`${apiUrl}/api/poems/${poemId}`)
           .then(res => {
@@ -2016,6 +2018,7 @@ export default function DiwanApp() {
     if (isPlaying) {
       audioRef.current.pause();
       setIsPlaying(false);
+      track('audio_pause', { poet: current?.poet });
       addLog("UI Event", "⏸️ Pause button clicked", "info");
       isTogglingPlay.current = false;
       return;
@@ -2234,6 +2237,7 @@ export default function DiwanApp() {
       }
     } catch (e) {
       addLog("Audio System Error", `${e.message} | Poem ID: ${current?.id}`, "error");
+      track('audio_error', { error: (e.message || '').slice(0, 100) });
       setIsPlaying(false);
     } finally {
       setIsGeneratingAudio(false);
@@ -2246,6 +2250,7 @@ export default function DiwanApp() {
     addLog("UI Event", `🔍 Dive In button clicked | Poem: ${current?.poet} - ${current?.title} | ID: ${current?.id}`, "info");
 
     if (interpretation || isInterpreting) return;
+    track('insight_requested', { poet: current?.poet });
 
     // Set loading state FIRST (before duplicate check) for better UX
     setIsInterpreting(true);
@@ -2450,8 +2455,10 @@ export default function DiwanApp() {
         const savedTime = FEATURES.streaming ? (totalTime / 1000).toFixed(1) : "2-8";
         addLog("Insights Cache", `Insights cached for future use (${cacheTime.toFixed(0)}ms) | Saves ${savedTime}s on reload`, "success");
       }
+      track('insight_completed', { poet: current?.poet, cached: !!(FEATURES.caching && current?.id && insightText) });
     } catch (e) {
       addLog("Analysis Error", `${e.message} | Poem ID: ${current?.id}`, "error");
+      track('insight_error', { error: (e.message || '').slice(0, 100) });
       // Show partial results if streaming was interrupted
       if (FEATURES.streaming && insightText) {
         addLog("Insights", "Showing partial results", "warning");
@@ -2629,6 +2636,7 @@ export default function DiwanApp() {
 
     try {
       await navigator.clipboard.writeText(textToCopy);
+      track('poem_copied', { poet: current?.poet });
       setShowCopySuccess(true);
       addLog("Copy", `✓ Copied to clipboard | ${copyChars} chars total (${arabicChars} Arabic + ${englishChars} English)`, "success");
       setTimeout(() => setShowCopySuccess(false), 2000);
@@ -2639,6 +2647,7 @@ export default function DiwanApp() {
 
   const handleDailyPoem = () => {
     if (!dailyPoem) return;
+    track('daily_poem_requested');
     addLog("UI Event", "Daily poem button clicked", "info");
     setInterpretation(null);
     setPoems(prev => {
@@ -2671,6 +2680,7 @@ export default function DiwanApp() {
     if (navigator.share) {
       try {
         await navigator.share({ title: shareTitle, text: shareText, url: shareUrl });
+        track('share_method', { method: 'native' });
         addLog("Share", "Shared via Web Share API", "success");
         return;
       } catch (e) {
@@ -2685,6 +2695,7 @@ export default function DiwanApp() {
     // Fallback: copy link to clipboard
     try {
       await navigator.clipboard.writeText(shareUrl);
+      track('share_method', { method: 'clipboard' });
       setShowShareSuccess(true);
       addLog("Share", `Link copied: ${shareUrl}`, "success");
       setTimeout(() => setShowShareSuccess(false), 2000);
@@ -2695,6 +2706,7 @@ export default function DiwanApp() {
 
   // Auth handlers
   const handleSignIn = () => {
+    track('sign_in_started');
     setShowAuthModal(true);
   };
 
@@ -2706,8 +2718,10 @@ export default function DiwanApp() {
     const { error } = await signInWithGoogle();
     if (error) {
       addLog("Auth Error", error.message, "error");
+      track('sign_in_error', { provider: 'google', error: (error.message || '').slice(0, 100) });
     } else {
       setShowAuthModal(false);
+      track('sign_in_completed', { provider: 'google' });
       addLog("Auth", "Signed in with Google", "success");
     }
   };
@@ -2720,8 +2734,10 @@ export default function DiwanApp() {
     const { error } = await signInWithApple();
     if (error) {
       addLog("Auth Error", error.message, "error");
+      track('sign_in_error', { provider: 'apple', error: (error.message || '').slice(0, 100) });
     } else {
       setShowAuthModal(false);
+      track('sign_in_completed', { provider: 'apple' });
       addLog("Auth", "Signed in with Apple", "success");
     }
   };
@@ -2731,6 +2747,7 @@ export default function DiwanApp() {
     if (error) {
       addLog("Auth Error", error.message, "error");
     } else {
+      track('sign_out');
       addLog("Auth", "Signed out successfully", "success");
     }
   };
@@ -2756,6 +2773,7 @@ export default function DiwanApp() {
     if (error) {
       addLog("Unsave Error", error.message, "error");
     } else {
+      track('poem_unsaved', { poet: current?.poet });
       addLog("Unsave", `Removed poem: ${current?.poet} - ${current?.title}`, "success");
     }
   };
@@ -2765,10 +2783,12 @@ export default function DiwanApp() {
       handleSignIn();
       return;
     }
+    track('saved_poems_opened');
     setShowSavedPoems(true);
   };
 
   const handleSelectSavedPoem = (savedPoem) => {
+    track('saved_poem_selected', { poet: savedPoem.poet });
     const mappedPoem = {
       id: savedPoem.poem_id || savedPoem.id,
       poet: savedPoem.poet || '',
@@ -2796,11 +2816,25 @@ export default function DiwanApp() {
       handleSignIn();
       return;
     }
+    track('settings_opened');
     setShowSettings(true);
   };
 
   const handleSelectFont = (fontId) => {
+    track('font_changed', { font: fontId });
     setCurrentFont(fontId);
+  };
+
+  const handleToggleDarkMode = () => {
+    const newTheme = darkMode ? 'light' : 'dark';
+    track('theme_changed', { theme: newTheme });
+    setDarkMode(!darkMode);
+  };
+
+  const handleToggleDatabase = () => {
+    const newMode = useDatabase ? 'ai' : 'database';
+    track('mode_switched', { mode: newMode });
+    setUseDatabase(!useDatabase);
   };
 
   const handleUnsavePoemFromList = async (sp) => {
@@ -3162,13 +3196,13 @@ export default function DiwanApp() {
 
                   <DatabaseToggle
                     useDatabase={useDatabase}
-                    onToggle={apiKey ? () => setUseDatabase(!useDatabase) : () => {}}
+                    onToggle={apiKey ? handleToggleDatabase : () => {}}
                     disabled={!apiKey}
                   />
 
                   <ThemeDropdown
                     darkMode={darkMode}
-                    onToggleDarkMode={() => setDarkMode(!darkMode)}
+                    onToggleDarkMode={handleToggleDarkMode}
                     currentFont={currentFont}
                     onCycleFont={cycleFont}
                     fonts={FONTS}
@@ -3190,7 +3224,7 @@ export default function DiwanApp() {
               ) : (
                 <OverflowMenu
                   darkMode={darkMode}
-                  onToggleDarkMode={() => setDarkMode(!darkMode)}
+                  onToggleDarkMode={handleToggleDarkMode}
                   currentFont={currentFont}
                   onSelectFont={handleSelectFont}
                   selectedCategory={selectedCategory}
@@ -3203,7 +3237,7 @@ export default function DiwanApp() {
                   onDailyPoem={handleDailyPoem}
                   isCurrentDaily={current?.id === dailyPoem?.id}
                   useDatabase={useDatabase}
-                  onToggleDatabase={apiKey ? () => setUseDatabase(!useDatabase) : () => {}}
+                  onToggleDatabase={apiKey ? handleToggleDatabase : () => {}}
                   user={user}
                   onOpenSavedPoems={handleOpenSavedPoems}
                   onOpenSettings={handleOpenSettings}
@@ -3285,7 +3319,7 @@ export default function DiwanApp() {
         isOpen={showSettings}
         onClose={() => setShowSettings(false)}
         darkMode={darkMode}
-        onToggleDarkMode={() => setDarkMode(!darkMode)}
+        onToggleDarkMode={handleToggleDarkMode}
         currentFont={currentFont}
         onSelectFont={handleSelectFont}
         user={user}
@@ -3329,7 +3363,7 @@ export default function DiwanApp() {
           onSignOut={handleSignOut}
           user={user}
           useDatabase={useDatabase}
-          onToggleDatabase={() => setUseDatabase(!useDatabase)}
+          onToggleDatabase={handleToggleDatabase}
           isSupabaseConfigured={isSupabaseConfigured}
           theme={theme}
           isInterpreting={isInterpreting}

@@ -142,6 +142,7 @@
 
     /* Generation badges */
     .gen-badge{display:inline-block;padding:1px 6px;border-radius:3px;font-size:9px;font-weight:700;letter-spacing:.03em;vertical-align:middle;margin-left:4px}
+    .gen-badge.gen-7{background:rgba(236,72,153,.2);color:#ec4899;border:1px solid rgba(236,72,153,.3)}
     .gen-badge.gen-6{background:rgba(168,85,247,.2);color:var(--purple);border:1px solid rgba(168,85,247,.3)}
     .gen-badge.gen-5{background:rgba(34,197,94,.2);color:var(--green);border:1px solid rgba(34,197,94,.3)}
     .gen-badge.gen-4{background:rgba(212,168,75,.2);color:var(--accent);border:1px solid rgba(212,168,75,.3)}
@@ -564,7 +565,6 @@ const CATALOG = [
       { id: 'e2e-gilded', name: 'The Gilded Page', source: 'PR #64/#65/#129', description: 'Gold ornamentation, geometric patterns, and cultural heritage \u2014 the verse adorned',
         options: [
           { id: 'e2e-g1-a8', name: 'A8 Deco Discovery', philosophy: 'Gold geometry frames each verse like a palace archway', file: 'e2e/gen-1/e2e-a8-deco-discovery.html', desc: 'Art Deco Geometric: gold dividers, geometric panels, fan controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
-          { id: 'e2e-g1-a8-vc', name: 'A8 Deco Discovery (VC)', philosophy: 'Gold geometry frames each verse like a palace archway', file: 'e2e/gen-1/e2e-a8-deco-discovery-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
           { id: 'e2e-g2a-09', name: '09 Mosaic Discovery', philosophy: 'Tessellated patterns frame each verse like a mosque mihrab', file: 'e2e/gen-2a/09-mosaic-discovery.html', desc: 'Islamic Geometric: tessellated frame, geometric pattern controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
           { id: 'e2e-g2a-04', name: '04 Desert Poet', philosophy: 'Dune layers drift behind the verse like a desert mirage', file: 'e2e/gen-2a/04-desert-poet.html', desc: 'Warm Sand/Parallax: parallax dune layers, mirage text, caravan controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
           { id: 'e2e-g3-pf2', name: 'PF2 Gold Mystical', philosophy: 'Gold constellations orbit the poem in celestial reverence', file: 'e2e/gen-3/pf2-gold-mystical.html', desc: 'Gold Orbit: orbiting gold icons, complete E2E from standalone', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
@@ -614,6 +614,14 @@ const CATALOG = [
           { id: 'e2e-g2b-04', name: '04 Neumorphic Warmth', philosophy: 'Soft tactile surfaces \u2014 the verse feels pressed into warm clay', file: 'e2e/gen-2b/04-neumorphic-warmth.html', desc: 'Neumorphic Depth: centered onboarding, floating warm orbs, press-in/rise-out shadow transitions, progress dots below card, zero-jitter GPU compositing', generation: 6, iteration: 10, source_branch: 'feature/preserve-patterns', source_pr: 'walkthrough-upgrade' },
           { id: 'e2e-g2b-04-vc', name: '04 Neumorphic Warmth (VC)', philosophy: 'Soft tactile surfaces \u2014 the verse feels pressed into warm clay', file: 'e2e/gen-2b/04-neumorphic-warmth-vc.html', desc: 'Vertical controls variant', generation: 6, iteration: 8, isVC: true },
           { id: 'e2e-g2b-07', name: '07 Particle Neumorphic', philosophy: 'Particles settle into pressed forms \u2014 physics meets craft', file: 'e2e/gen-2b/07-particle-neumorphic.html', desc: 'Particle Fusion: hybrid particle + soft depth, orbiting particle controls', generation: 6, iteration: 8, source_branch: 'feature/design-feedback-round2', source_pr: '#129' },
+        ],
+        feedback: {}
+      },
+      { id: 'e2e-scroll', name: 'Scroll & Motion', source: 'PR #212', description: 'Scroll-driven animation explorations — horizontal journeys, geometric reveals, and 3D chambers',
+        options: [
+          { id: 'e2e-g4-hscroll', name: '01 Horizontal Scroll Reveal', philosophy: 'Vertical scroll input drives a horizontal poetry journey — inspired by 45r.jp indigo storytelling', file: 'e2e/gen-4/01-horizontal-scroll-reveal.html', desc: 'Horizontal Scroll: lerp scroll engine, multi-layer parallax (0.2x/0.5x/1.5x), line-by-line verse reveal, background color interpolation, nav dots, keyboard navigation', generation: 7, iteration: 1, source_branch: 'feature/design-review-round6-fixes', source_pr: '#212' },
+          { id: 'e2e-g4-clippath', name: '02 Depth Clip-Path Reveal', philosophy: 'Geometric masks expand to reveal each poem — 8-pointed star, Islamic arch, and circle forms', file: 'e2e/gen-4/02-depth-clippath-reveal.html', desc: 'Clip-Path Reveals: CSS clip-path driven by scroll progress, IntersectionObserver, 5-layer z-depth parallax, CSS-only floating particles, color chapter transitions', generation: 7, iteration: 1, source_branch: 'feature/design-review-round6-fixes', source_pr: '#212' },
+          { id: 'e2e-g4-threejs', name: '03 Three.js 3D Chambers', philosophy: 'Fly through geometric chambers where each poem lives in its own architectural space', file: 'e2e/gen-4/03-threejs-3d-chambers.html', desc: 'Three.js r128 WebGL: CatmullRomCurve3 camera path, CanvasTexture Arabic text, wireframe tunnel geometry, 4 particle systems (930+ particles), dynamic fog, vignette + film grain overlays', generation: 7, iteration: 1, source_branch: 'feature/design-review-round6-fixes', source_pr: '#212' }
         ],
         feedback: {}
       }

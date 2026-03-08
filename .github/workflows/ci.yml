@@ -233,6 +233,26 @@ jobs:
           PORT: 3001
         continue-on-error: true
 
+      - name: Check E2E environment
+        run: |
+          echo "## E2E Environment Check"
+          echo "CI=true"
+          echo "VITE_API_URL=http://localhost:3001"
+          if [ -n "$VITE_GEMINI_API_KEY" ]; then
+            echo "VITE_GEMINI_API_KEY=configured"
+          else
+            echo "::warning::VITE_GEMINI_API_KEY is NOT set — database/AI mode toggle tests will be skipped"
+          fi
+          if curl -sf http://localhost:3001/api/health > /dev/null 2>&1; then
+            echo "Backend API: running"
+            curl -s http://localhost:3001/api/health | head -c 200
+            echo ""
+          else
+            echo "::warning::Backend API is NOT responding — database integration tests may fail or skip"
+          fi
+        env:
+          VITE_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+
       - name: Run Playwright E2E tests
         run: npm run test:e2e
         env:

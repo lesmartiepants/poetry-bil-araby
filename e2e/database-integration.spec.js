@@ -11,6 +11,12 @@ import { test, expect } from '@playwright/test';
 
 const isCI = !!process.env.CI;
 
+// Log a CI-visible warning when a test is skipped for environmental reasons
+function ciWarn(reason) {
+  if (isCI) console.log(`::warning::E2E SKIP: ${reason}`);
+  else console.log(`[E2E SKIP] ${reason}`);
+}
+
 // Helper: wait for the app to be ready after navigation
 async function waitForAppReady(page) {
   await page.goto('/');
@@ -30,11 +36,17 @@ async function enableDatabaseMode(page) {
 
   const toggleButton = page.locator('button[aria-label*="Database Mode"]').first();
   const toggleVisible = await toggleButton.isVisible().catch(() => false);
-  if (!toggleVisible) return false;
+  if (!toggleVisible) {
+    ciWarn('Database toggle button not visible in viewport');
+    return false;
+  }
 
   // Check if the button is disabled (no API key in CI)
   const isDisabled = await toggleButton.evaluate(el => el.classList.contains('opacity-50') || el.classList.contains('cursor-not-allowed'));
-  if (isDisabled) return false;
+  if (isDisabled) {
+    ciWarn('Database toggle is disabled — VITE_GEMINI_API_KEY is likely missing (required to switch modes)');
+    return false;
+  }
 
   await toggleButton.click();
   await expect(page.locator('button[aria-label*="AI Mode"]').first()).toBeVisible({ timeout: 3000 });
@@ -84,6 +96,7 @@ test.describe('Database Integration — UI & Error Handling', () => {
           toggleButton = page.locator('button:has-text("قاعدة البيانات"), button:has-text("الذكاء الاصطناعي")').first();
           const isVisible = await toggleButton.isVisible({ timeout: 2000 }).catch(() => false);
           if (!isVisible) {
+            ciWarn('Toggle mode: mobile toggle button not visible in overflow menu');
             test.skip();
             return;
           }
@@ -93,12 +106,14 @@ test.describe('Database Integration — UI & Error Handling', () => {
       }
 
       if (!toggleButton) {
+        ciWarn('Toggle mode: no toggle button reference found');
         test.skip();
         return;
       }
 
       const isVisible = await toggleButton.isVisible().catch(() => false);
       if (!isVisible) {
+        ciWarn('Toggle mode: toggle button not visible in viewport');
         test.skip();
         return;
       }
@@ -106,6 +121,7 @@ test.describe('Database Integration — UI & Error Handling', () => {
       // Skip if button is disabled (no API key — can't toggle modes)
       const isDisabled = await toggleButton.evaluate(el => el.classList.contains('opacity-50') || el.classList.contains('cursor-not-allowed'));
       if (isDisabled) {
+        ciWarn('Toggle mode: button disabled — VITE_GEMINI_API_KEY missing (required to switch between DB/AI modes)');
         test.skip();
         return;
       }
@@ -135,7 +151,10 @@ test.describe('Database Integration — UI & Error Handling', () => {
   test.describe('Error Handling', () => {
     test('should show error banner when backend is unavailable', async ({ page, context }) => {
       const triggered = await triggerDatabaseFetchError(page, context);
-      if (!triggered) test.skip();
+      if (!triggered) {
+        ciWarn('Error banner: could not enable DB mode (API key missing or toggle disabled)');
+        test.skip();
+      }
     });
 
     test('should show appropriate error message for server down', async ({ page, context }) => {
@@ -145,6 +164,7 @@ test.describe('Database Integration — UI & Error Handling', () => {
 
       const dbEnabled = await enableDatabaseMode(page);
       if (!dbEnabled) {
+        ciWarn('Server down error: could not enable DB mode (API key missing or toggle disabled)');
         test.skip();
         return;
       }
@@ -161,6 +181,7 @@ test.describe('Database Integration — UI & Error Handling', () => {
     test('should allow dismissing error banner', async ({ page, context }) => {
       const triggered = await triggerDatabaseFetchError(page, context);
       if (!triggered) {
+        ciWarn('Dismiss banner: could not enable DB mode (API key missing or toggle disabled)');
         test.skip();
         return;
       }
@@ -180,7 +201,10 @@ test.describe('Database Integration — UI & Error Handling', () => {
 
     test('should show retry button in error banner', async ({ page, context }) => {
       const triggered = await triggerDatabaseFetchError(page, context);
-      if (!triggered) test.skip();
+      if (!triggered) {
+        ciWarn('Retry button: could not enable DB mode (API key missing or toggle disabled)');
+        test.skip();
+      }
 
       // Retry button should be present
       const retryButton = page.locator('button:has-text("Retry")').first();
@@ -215,6 +239,7 @@ test.describe('Database Integration — UI & Error Handling', () => {
 
       const dbEnabled = await enableDatabaseMode(page);
       if (!dbEnabled) {
+        ciWarn('Clear error banner: could not enable DB mode (API key missing or toggle disabled)');
         test.skip();
         return;
       }
@@ -244,6 +269,7 @@ test.describe('Database Integration — UI & Error Handling', () => {
 test.describe('Database Integration — Live Backend', () => {
   test.beforeEach(async ({ page }) => {
     if (isCI) {
+      ciWarn('Live Backend tests skipped in CI — requires real database with production schema');
       test.skip();
     }
     await waitForAppReady(page);

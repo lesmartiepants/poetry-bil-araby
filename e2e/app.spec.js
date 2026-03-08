@@ -10,6 +10,12 @@ import { test, expect } from '@playwright/test';
 
 const isCI = !!process.env.CI;
 
+// Log a CI-visible warning when a test is skipped for environmental reasons
+function ciWarn(reason) {
+  if (isCI) console.log(`::warning::E2E SKIP: ${reason}`);
+  else console.log(`[E2E SKIP] ${reason}`);
+}
+
 // Mock poem data for route-mocked tests
 const mockPoem1 = {
   id: 1,
@@ -106,6 +112,7 @@ test.describe('Poetry Bil-Araby - Core Functionality', () => {
       if (moreButtonVisible) {
         await moreButton.click();
       } else {
+        ciWarn('Theme toggle: neither Theme options button nor More options button found in viewport');
         test.skip();
         return;
       }
@@ -123,6 +130,7 @@ test.describe('Poetry Bil-Araby - Core Functionality', () => {
     } else if (darkVisible) {
       await darkModeBtn.click();
     } else {
+      ciWarn('Theme toggle: theme mode button not found in dropdown/menu');
       test.skip();
       return;
     }

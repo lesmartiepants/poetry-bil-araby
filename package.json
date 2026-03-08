@@ -22,6 +22,8 @@
     "screenshots": "node scripts/capture-design-screenshots.js"
   },
   "dependencies": {
+    "@sentry/node": "^10.42.0",
+    "@sentry/react": "^10.42.0",
     "@supabase/supabase-js": "^2.90.1",
     "@vercel/analytics": "^1.6.1",
     "cors": "^2.8.5",

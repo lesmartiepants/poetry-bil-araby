@@ -8,8 +8,18 @@ import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { resolve } from 'path';
+import * as Sentry from '@sentry/node';
 
 dotenv.config();
+
+// Initialize Sentry for backend error tracking (no-op if DSN not configured)
+if (process.env.SENTRY_DSN) {
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    environment: process.env.NODE_ENV || 'development',
+    tracesSampleRate: 0,
+  });
+}
 
 const { Pool } = pg;
 const app = express();
@@ -349,6 +359,103 @@ app.get('/api/poems/search', [
     res.json(poems);
   } catch (error) {
     log.error('Search', `Error searching poems: ${error.message}`, error.stack);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get poem of the day (deterministic daily selection, stable across all users)
+app.get('/api/poems/daily', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT
+        p.id,
+        p.title,
+        ${poemContentExpr()} as arabic,
+        po.name as poet,
+        t.name as theme
+      FROM poems p
+      JOIN poets po ON p.poet_id = po.id
+      JOIN themes t ON p.theme_id = t.id
+      ${hasQualityScore ? 'WHERE p.quality_score >= 60' : ''}
+      ORDER BY md5(p.id::text || current_date::text)
+      LIMIT 1
+    `);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'No poems found' });
+    }
+
+    const poem = result.rows[0];
+
+    const formattedPoem = {
+      id: poem.id,
+      poet: poem.poet,
+      poetArabic: poem.poet,
+      title: poem.title,
+      titleArabic: poem.title,
+      arabic: poem.arabic,
+      english: '',
+      tags: [poem.theme]
+    };
+
+    // Cache for the rest of the day (seconds until midnight UTC)
+    const now = new Date();
+    const midnight = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
+    const secondsUntilMidnight = Math.floor((midnight - now) / 1000);
+    res.set('Cache-Control', `public, max-age=${secondsUntilMidnight}`);
+
+    log.info('Poems', `Daily poem: id=${poem.id}, poet=${poem.poet}`);
+    res.json(formattedPoem);
+  } catch (error) {
+    log.error('Poems', `Error fetching daily poem: ${error.message}`, error.stack);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get poem by ID (for deep links / sharing)
+// IMPORTANT: This route uses :id param and must be registered AFTER all /api/poems/<literal> routes
+// (random, by-poet, search, daily) to avoid shadowing them.
+app.get('/api/poems/:id', [
+  param('id').isInt({ min: 1 }).withMessage('Poem ID must be a positive integer'),
+  validate
+], async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await pool.query(`
+      SELECT
+        p.id,
+        p.title,
+        ${poemContentExpr()} as arabic,
+        po.name as poet,
+        t.name as theme
+      FROM poems p
+      JOIN poets po ON p.poet_id = po.id
+      JOIN themes t ON p.theme_id = t.id
+      WHERE p.id = $1
+    `, [id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Poem not found' });
+    }
+
+    const poem = result.rows[0];
+
+    const formattedPoem = {
+      id: poem.id,
+      poet: poem.poet,
+      poetArabic: poem.poet,
+      title: poem.title,
+      titleArabic: poem.title,
+      arabic: poem.arabic,
+      english: '',
+      tags: [poem.theme]
+    };
+
+    log.info('Poems', `By ID: ${id}, poet=${poem.poet}`);
+    res.json(formattedPoem);
+  } catch (error) {
+    log.error('Poems', `Error fetching poem by ID: ${error.message}`, error.stack);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
@@ -1008,6 +1115,11 @@ app.post('/api/bug-reports', rateLimit({ windowMs: 60_000, max: 10, standardHead
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+
+// Sentry Express error handler (must be after all routes)
+if (process.env.SENTRY_DSN) {
+  Sentry.setupExpressErrorHandler(app);
+}
 
 // Export app for testing
 export { app, pool };

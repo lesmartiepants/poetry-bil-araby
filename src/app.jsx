@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Play, Pause, BookOpen, RefreshCw, Volume2, ChevronDown, Quote, Globe, Moon, Sun, Loader2, ChevronRight, ChevronLeft, Search, X, Copy, LayoutGrid, Check, Bug, Trash2, Sparkles, Feather, Library, Compass, Rabbit, MoreHorizontal, Heart, LogIn, LogOut, User, Settings2, ArrowRight, Languages } from 'lucide-react';
+import { Play, Pause, BookOpen, RefreshCw, Volume2, ChevronDown, Quote, Globe, Moon, Sun, Loader2, ChevronRight, ChevronLeft, Search, X, Copy, LayoutGrid, Check, Bug, Trash2, Sparkles, Feather, Library, Compass, Rabbit, MoreHorizontal, Heart, LogIn, LogOut, User, Settings2, ArrowRight, Languages, Share2, CalendarDays } from 'lucide-react';
+import { track } from '@vercel/analytics';
 import { useAuth, useUserSettings, useSavedPoems } from './hooks/useAuth';
 import { INSIGHTS_SYSTEM_PROMPT, DISCOVERY_SYSTEM_PROMPT, getTTSInstruction } from './prompts';
 import { parseInsight } from './utils/insightParser';
@@ -982,6 +983,11 @@ const OverflowMenu = ({
   onSelectCategory,
   onCopy,
   showCopySuccess,
+  onShare,
+  showShareSuccess,
+  dailyPoem,
+  onDailyPoem,
+  isCurrentDaily,
   useDatabase,
   onToggleDatabase,
   user,
@@ -1018,6 +1024,16 @@ const OverflowMenu = ({
 
   const handleCopy = () => {
     onCopy();
+    setIsOpen(false);
+  };
+
+  const handleShare = () => {
+    onShare();
+    setIsOpen(false);
+  };
+
+  const handleDailyPoem = () => {
+    onDailyPoem();
     setIsOpen(false);
   };
 
@@ -1075,6 +1091,24 @@ const OverflowMenu = ({
               <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Copy</div>
             </div>
           </button>
+
+          <button onClick={handleShare} className={itemClass}>
+            {showShareSuccess ? <Check size={18} className="text-green-500" /> : <Share2 size={18} style={{ color: gold }} />}
+            <div className="flex flex-col items-start">
+              <div className="font-amiri text-base font-medium" style={{ color: gold }}>مشاركة</div>
+              <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Share</div>
+            </div>
+          </button>
+
+          {dailyPoem && (
+            <button onClick={handleDailyPoem} className={`${itemClass} ${isCurrentDaily ? goldActiveClass : ''}`}>
+              <CalendarDays size={18} style={{ color: gold }} />
+              <div className="flex flex-col items-start">
+                <div className="font-amiri text-base font-medium" style={{ color: gold }}>قصيدة اليوم</div>
+                <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Poem of the Day</div>
+              </div>
+            </button>
+          )}
 
           <button onClick={handleToggleDatabase} className={itemClass}>
             {useDatabase ? <Library size={18} style={{ color: gold }} /> : <Sparkles size={18} style={{ color: gold }} />}
@@ -2207,7 +2241,7 @@ const SettingsView = ({ isOpen, onClose, darkMode, onToggleDarkMode, currentFont
   =============================================================================
 */
 
-const VerticalSidebar = ({ onExplain, onCopy, showCopySuccess, onOpenSavedPoems, onOpenSettings, onSignIn, onSignOut, user, useDatabase, onToggleDatabase, isSupabaseConfigured, theme, isInterpreting, interpretation }) => {
+const VerticalSidebar = ({ onExplain, onCopy, showCopySuccess, onShare, showShareSuccess, onOpenSavedPoems, onOpenSettings, onSignIn, onSignOut, user, useDatabase, onToggleDatabase, isSupabaseConfigured, theme, isInterpreting, interpretation }) => {
   return (
     <>
       <style>{`
@@ -2236,6 +2270,14 @@ const VerticalSidebar = ({ onExplain, onCopy, showCopySuccess, onOpenSavedPoems,
             className="w-11 h-11 rounded-xl flex items-center justify-center hover:bg-[#C5A059]/15 transition-all duration-200"
           >
             {showCopySuccess ? <Check size={18} className="text-green-500" /> : <Copy className="text-[#C5A059]" size={18} />}
+          </button>
+
+          <button
+            onClick={onShare}
+            title="Share poem"
+            className="w-11 h-11 rounded-xl flex items-center justify-center hover:bg-[#C5A059]/15 transition-all duration-200"
+          >
+            {showShareSuccess ? <Check size={18} className="text-green-500" /> : <Share2 className="text-[#C5A059]" size={18} />}
           </button>
 
           <div className="w-6 h-px bg-stone-500/30 mx-auto my-1" />
@@ -2316,6 +2358,8 @@ export default function DiwanApp() {
   const hasAutoLoaded = useRef(false);
   const [logs, setLogs] = useState([]);
   const [showCopySuccess, setShowCopySuccess] = useState(false);
+  const [showShareSuccess, setShowShareSuccess] = useState(false);
+  const [dailyPoem, setDailyPoem] = useState(null);
   const [isOverflow, setIsOverflow] = useState(() => {
     // Use 660 as the conservative initial threshold (covers both Supabase and non-Supabase button sets).
     // The detectOverflow effect below will refine this after mount.
@@ -2355,6 +2399,7 @@ export default function DiwanApp() {
     const currentIdx = FONTS.findIndex(f => f.id === currentFont);
     const nextIdx = (currentIdx + 1) % FONTS.length;
     setCurrentFont(FONTS[nextIdx].id);
+    track('font_changed', { font: FONTS[nextIdx].id });
     addLog("Font", `Switched to ${FONTS[nextIdx].label}`, "info");
   };
 
@@ -2396,8 +2441,13 @@ export default function DiwanApp() {
   };
 
   useEffect(() => {
-    if (selectedCategory !== "All" && filtered.length === 0) {
-      handleFetch();
+    if (selectedCategory !== "All") {
+      track('poet_filter_changed', { poet: selectedCategory });
+      if (filtered.length === 0) {
+        handleFetch();
+      } else {
+        setCurrentIndex(0);
+      }
     } else {
       setCurrentIndex(0);
     }
@@ -2416,11 +2466,42 @@ export default function DiwanApp() {
   }, []);
 
   // Auto-load a poem and queue explanation on first mount.
+  // If the URL contains /poem/:id, load that specific poem (deep link).
   // If the user was viewing a poem before an OAuth redirect, restore it instead.
   useEffect(() => {
     if (!hasAutoLoaded.current) {
       hasAutoLoaded.current = true;
       let restored = false;
+
+      // Deep link detection: /poem/:id
+      const deepLinkMatch = window.location.pathname.match(/^\/poem\/(\d+)$/);
+      if (deepLinkMatch && useDatabase) {
+        const poemId = deepLinkMatch[1];
+        track('deep_link_loaded', { poemId });
+        addLog("DeepLink", `Loading poem ID ${poemId} from URL`, "info");
+        fetch(`${apiUrl}/api/poems/${poemId}`)
+          .then(res => {
+            if (!res.ok) throw new Error(`Poem ${poemId} not found`);
+            return res.json();
+          })
+          .then(poem => {
+            if (poem.arabic) poem.arabic = poem.arabic.replace(/\*/g, '\n');
+            poem.isFromDatabase = true;
+            setPoems([poem]);
+            setCurrentIndex(0);
+            setAutoExplainPending(true);
+            addLog("DeepLink", `Loaded: ${poem.poet} — ${poem.title}`, "success");
+            // Clean up URL to root (optional: keep for bookmarkability)
+            window.history.replaceState({}, '', '/');
+          })
+          .catch(err => {
+            addLog("DeepLink", `Failed: ${err.message}`, "error");
+            setAutoExplainPending(true);
+            handleFetch();
+          });
+        return;
+      }
+
       try {
         const stashed = sessionStorage.getItem('pendingSavePoem');
         if (stashed) {
@@ -2439,6 +2520,46 @@ export default function DiwanApp() {
       }
     }
   }, []);
+
+  // Fetch poem of the day on mount (cached per date in IndexedDB)
+  useEffect(() => {
+    if (!useDatabase) return;
+    const todayKey = `daily-${new Date().toISOString().slice(0, 10)}`;
+
+    (async () => {
+      // Check IndexedDB cache first
+      if (FEATURES.caching) {
+        try {
+          const cached = await cacheOperations.get(CACHE_CONFIG.stores.poems, todayKey);
+          if (cached?.data) {
+            setDailyPoem(cached.data);
+            addLog("Daily", "Loaded poem of the day from cache", "info");
+            return;
+          }
+        } catch {}
+      }
+
+      // Fetch from API
+      try {
+        const res = await fetch(`${apiUrl}/api/poems/daily`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const poem = await res.json();
+        if (poem.arabic) poem.arabic = poem.arabic.replace(/\*/g, '\n');
+        poem.isFromDatabase = true;
+        setDailyPoem(poem);
+        addLog("Daily", `Poem of the day: ${poem.poet} — ${poem.title}`, "success");
+
+        // Cache for today
+        if (FEATURES.caching) {
+          try {
+            await cacheOperations.set(CACHE_CONFIG.stores.poems, todayKey, { data: poem });
+          } catch {}
+        }
+      } catch (err) {
+        addLog("Daily", `Failed to load: ${err.message}`, "error");
+      }
+    })();
+  }, [useDatabase]);
 
   // After OAuth redirect, once the user is signed in, auto-save the stashed poem and clean up
   useEffect(() => {
@@ -2647,10 +2768,12 @@ export default function DiwanApp() {
     }
     isTogglingPlay.current = true;
     addLog("UI Event", `🎵 Play button clicked | Poem: ${current?.poet} - ${current?.title} | ID: ${current?.id}`, "info");
+    track('audio_play', { poet: current?.poet });
 
     if (isPlaying) {
       audioRef.current.pause();
       setIsPlaying(false);
+      track('audio_pause', { poet: current?.poet });
       addLog("UI Event", "⏸️ Pause button clicked", "info");
       isTogglingPlay.current = false;
       return;
@@ -2869,6 +2992,7 @@ export default function DiwanApp() {
       }
     } catch (e) {
       addLog("Audio System Error", `${e.message} | Poem ID: ${current?.id}`, "error");
+      track('audio_error', { error: (e.message || '').slice(0, 100) });
       setIsPlaying(false);
     } finally {
       setIsGeneratingAudio(false);
@@ -2881,6 +3005,7 @@ export default function DiwanApp() {
     addLog("UI Event", `🔍 Dive In button clicked | Poem: ${current?.poet} - ${current?.title} | ID: ${current?.id}`, "info");
 
     if (interpretation || isInterpreting) return;
+    track('insight_requested', { poet: current?.poet });
 
     // Set loading state FIRST (before duplicate check) for better UX
     setIsInterpreting(true);
@@ -3087,8 +3212,10 @@ export default function DiwanApp() {
         const elapsedTime = apiStartTime ? ((performance.now() - apiStartTime) / 1000).toFixed(1) : "2-8";
         addLog("Insights Cache", `Insights cached for future use (${cacheTime.toFixed(0)}ms) | Saves ${elapsedTime}s on reload`, "success");
       }
+      track('insight_completed', { poet: current?.poet, cached: !!(FEATURES.caching && current?.id && insightText) });
     } catch (e) {
       addLog("Analysis Error", `${e.message} | Poem ID: ${current?.id}`, "error");
+      track('insight_error', { error: (e.message || '').slice(0, 100) });
       // Show partial results if streaming was interrupted
       if (FEATURES.streaming && insightText) {
         addLog("Insights", "Showing partial results", "warning");
@@ -3151,6 +3278,7 @@ export default function DiwanApp() {
 
           addLog("Discovery DB", `✓ Poem found | API: ${(apiTime / 1000).toFixed(2)}s | DB ID: ${newPoem.id} | Arabic: ${arabicPoemChars} chars`, "success");
           addLog("Discovery DB", `Poet: ${newPoem.poet} | Title: ${newPoem.title}`, "success");
+          track('poem_discovered', { source: 'database', poet: newPoem.poet });
 
           setPoems(prev => {
             const updated = [...prev, newPoem];
@@ -3239,6 +3367,7 @@ export default function DiwanApp() {
 
         addLog("Discovery API", `✓ Poem found | API: ${(apiTime / 1000).toFixed(2)}s | Response: ${(responseSize / 1024).toFixed(1)}KB | ${jsonChars} chars`, "success");
         addLog("Discovery Metrics", `${estimatedOutputTokens} tokens | ${tokensPerSecond} tok/s | Arabic: ${arabicPoemChars} chars | English: ${englishPoemChars} chars | Poet: ${newPoem.poet}`, "success");
+        track('poem_discovered', { source: 'ai', poet: newPoem.poet });
         setPoems(prev => {
           const updated = [...prev, newPoem];
           const searchStr = selectedCategory.toLowerCase();
@@ -3264,6 +3393,7 @@ export default function DiwanApp() {
 
     try {
       await navigator.clipboard.writeText(textToCopy);
+      track('poem_copied', { poet: current?.poet });
       setShowCopySuccess(true);
       addLog("Copy", `✓ Copied to clipboard | ${copyChars} chars total (${arabicChars} Arabic + ${englishChars} English)`, "success");
       setTimeout(() => setShowCopySuccess(false), 2000);
@@ -3272,8 +3402,68 @@ export default function DiwanApp() {
     }
   };
 
+  const handleDailyPoem = () => {
+    if (!dailyPoem) return;
+    track('daily_poem_requested');
+    addLog("UI Event", "Daily poem button clicked", "info");
+    setInterpretation(null);
+    setPoems(prev => {
+      const exists = prev.find(p => p.id === dailyPoem.id);
+      if (exists) {
+        setCurrentIndex(prev.indexOf(exists));
+        return prev;
+      }
+      setCurrentIndex(prev.length);
+      return [...prev, dailyPoem];
+    });
+    setAutoExplainPending(true);
+  };
+
+  const handleShare = async () => {
+    addLog("UI Event", "Share button clicked", "info");
+    track('poem_shared', { poet: current?.poet });
+
+    const poemId = current?.id;
+    const isDbPoem = current?.isFromDatabase && typeof poemId === 'number';
+    const shareUrl = isDbPoem
+      ? `${window.location.origin}/poem/${poemId}`
+      : window.location.origin;
+    const shareTitle = `${current?.titleArabic || current?.title || 'Arabic Poetry'} — ${current?.poetArabic || current?.poet || ''}`;
+    const shareText = current?.arabic
+      ? current.arabic.split('\n').slice(0, 2).join('\n')
+      : 'Discover classical and modern Arabic poetry';
+
+    // Try native Web Share API first (mobile + some desktop)
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: shareTitle, text: shareText, url: shareUrl });
+        track('share_method', { method: 'native' });
+        addLog("Share", "Shared via Web Share API", "success");
+        return;
+      } catch (e) {
+        // User cancelled or API failed — fall through to copy
+        if (e.name === 'AbortError') {
+          addLog("Share", "Share cancelled by user", "info");
+          return;
+        }
+      }
+    }
+
+    // Fallback: copy link to clipboard
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      track('share_method', { method: 'clipboard' });
+      setShowShareSuccess(true);
+      addLog("Share", `Link copied: ${shareUrl}`, "success");
+      setTimeout(() => setShowShareSuccess(false), 2000);
+    } catch (e) {
+      addLog("Share Error", e.message, "error");
+    }
+  };
+
   // Auth handlers
   const handleSignIn = () => {
+    track('sign_in_started');
     setShowAuthModal(true);
   };
 
@@ -3285,8 +3475,10 @@ export default function DiwanApp() {
     const { error } = await signInWithGoogle();
     if (error) {
       addLog("Auth Error", error.message, "error");
+      track('sign_in_error', { provider: 'google', error: (error.message || '').slice(0, 100) });
     } else {
       setShowAuthModal(false);
+      track('sign_in_completed', { provider: 'google' });
       addLog("Auth", "Signed in with Google", "success");
     }
   };
@@ -3299,8 +3491,10 @@ export default function DiwanApp() {
     const { error } = await signInWithApple();
     if (error) {
       addLog("Auth Error", error.message, "error");
+      track('sign_in_error', { provider: 'apple', error: (error.message || '').slice(0, 100) });
     } else {
       setShowAuthModal(false);
+      track('sign_in_completed', { provider: 'apple' });
       addLog("Auth", "Signed in with Apple", "success");
     }
   };
@@ -3313,6 +3507,7 @@ export default function DiwanApp() {
       setShowSavedPoems(false);
       setShowSettings(false);
       setShowAuthModal(false);
+      track('sign_out');
       addLog("Auth", "Signed out successfully", "success");
     }
   };
@@ -3329,6 +3524,7 @@ export default function DiwanApp() {
       addLog("Save Error", error.message, "error");
     } else {
       addLog("Save", `Saved poem: ${current?.poet} - ${current?.title}`, "success");
+      track('poem_saved', { poet: current?.poet });
     }
   };
 
@@ -3337,6 +3533,7 @@ export default function DiwanApp() {
     if (error) {
       addLog("Unsave Error", error.message, "error");
     } else {
+      track('poem_unsaved', { poet: current?.poet });
       addLog("Unsave", `Removed poem: ${current?.poet} - ${current?.title}`, "success");
     }
   };
@@ -3346,10 +3543,12 @@ export default function DiwanApp() {
       handleSignIn();
       return;
     }
+    track('saved_poems_opened');
     setShowSavedPoems(true);
   };
 
   const handleSelectSavedPoem = (savedPoem) => {
+    track('saved_poem_selected', { poet: savedPoem.poet });
     const mappedPoem = {
       id: savedPoem.poem_id || savedPoem.id,
       poet: savedPoem.poet || '',
@@ -3377,12 +3576,28 @@ export default function DiwanApp() {
       handleSignIn();
       return;
     }
+    track('settings_opened');
     setShowSettings(true);
   };
 
   const handleSelectFont = (fontId) => {
+    track('font_changed', { font: fontId });
     setCurrentFont(fontId);
     addLog("Font", `Font selected: ${fontId}`, "info");
+  };
+
+  const handleToggleDarkMode = () => {
+    const newTheme = darkMode ? 'light' : 'dark';
+    track('theme_changed', { theme: newTheme });
+    setDarkMode(!darkMode);
+    addLog("Theme", `Switched to ${newTheme} mode`, "info");
+  };
+  const handleToggleTheme = handleToggleDarkMode;
+
+  const handleToggleDatabase = () => {
+    const newMode = useDatabase ? 'ai' : 'database';
+    track('mode_switched', { mode: newMode });
+    setUseDatabase(!useDatabase);
   };
 
   const handleUnsavePoemFromList = async (sp) => {
@@ -3392,30 +3607,6 @@ export default function DiwanApp() {
     } else {
       addLog("Unsave", `Removed poem from saved list`, "success");
     }
-  };
-
-  // ── Logging hooks for upcoming v1.0 features ──────────────────────
-  // These wrappers provide logging integration points. Feature branches
-  // should call these instead of directly mutating state.
-
-  const handleToggleTheme = () => {
-    const next = !darkMode;
-    setDarkMode(next);
-    addLog("Theme", `Switched to ${next ? 'dark' : 'light'} mode`, "info");
-  };
-
-  const handleShare = async (method) => {
-    addLog("Share", `Share initiated via ${method} | Poem: ${current?.poet} — ${current?.title}`, "info");
-    try {
-      // Feature branch will implement actual sharing logic here
-      addLog("Share", `Share via ${method} succeeded`, "success");
-    } catch (e) {
-      addLog("Share Error", `Share via ${method} failed: ${e.message}`, "error");
-    }
-  };
-
-  const handleDeepLink = (poemId) => {
-    addLog("DeepLink", `Deep link detected for poem ID: ${poemId}`, "info");
   };
 
   const handleToggleTranslation = (showTranslation) => {
@@ -3678,6 +3869,12 @@ export default function DiwanApp() {
                          <div className={`flex items-center justify-center gap-1 sm:gap-2 opacity-45 ${DESIGN.mainSubtitleSize} font-brand-en tracking-[0.08em] uppercase mt-[clamp(0.25rem,0.8vw,0.75rem)]`}>
                            <span className="font-semibold">{current?.poet}</span> <span className="opacity-20">•</span> <span>{current?.title}</span>
                          </div>
+                         {dailyPoem && current?.id === dailyPoem.id && (
+                           <div className="flex items-center gap-1.5 mt-2 px-3 py-1 rounded-full bg-[#C5A059]/10 border border-[#C5A059]/20">
+                             <CalendarDays size={12} className="text-[#C5A059]" />
+                             <span className="font-brand-en text-[9px] font-bold tracking-[0.15em] uppercase text-[#C5A059]">Poem of the Day</span>
+                           </div>
+                         )}
                       </div>
                    </div>
 
@@ -3782,6 +3979,13 @@ export default function DiwanApp() {
                   </div>
 
                   <div className="flex flex-col items-center gap-1 min-w-[52px]">
+                    <button onClick={handleShare} aria-label="Share poem" className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105">
+                      {showShareSuccess ? <Check size={21} className="text-green-500" /> : <Share2 size={21} className="text-[#C5A059]" />}
+                    </button>
+                    <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">Share</span>
+                  </div>
+
+                  <div className="flex flex-col items-center gap-1 min-w-[52px]">
                     <button
                       onClick={() => setShowTranslation(prev => !prev)}
                       aria-label={showTranslation ? 'Hide English translation' : 'Show English translation'}
@@ -3820,9 +4024,18 @@ export default function DiwanApp() {
                     </span>
                   </div>
 
+                  {dailyPoem && (
+                    <div className="flex flex-col items-center gap-1 min-w-[52px]">
+                      <button onClick={handleDailyPoem} aria-label="Poem of the day" className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105 ${current?.id === dailyPoem.id ? 'bg-[#C5A059]/15' : ''}`}>
+                        <CalendarDays size={21} className="text-[#C5A059]" />
+                      </button>
+                      <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">Daily</span>
+                    </div>
+                  )}
+
                   <DatabaseToggle
                     useDatabase={useDatabase}
-                    onToggle={apiKey ? () => setUseDatabase(!useDatabase) : () => {}}
+                    onToggle={apiKey ? handleToggleDatabase : () => {}}
                     disabled={!apiKey}
                   />
 
@@ -3857,8 +4070,13 @@ export default function DiwanApp() {
                   onSelectCategory={setSelectedCategory}
                   onCopy={handleCopy}
                   showCopySuccess={showCopySuccess}
+                  onShare={handleShare}
+                  showShareSuccess={showShareSuccess}
+                  dailyPoem={dailyPoem}
+                  onDailyPoem={handleDailyPoem}
+                  isCurrentDaily={current?.id === dailyPoem?.id}
                   useDatabase={useDatabase}
-                  onToggleDatabase={apiKey ? () => setUseDatabase(!useDatabase) : () => {}}
+                  onToggleDatabase={apiKey ? handleToggleDatabase : () => {}}
                   user={user}
                   onOpenSavedPoems={handleOpenSavedPoems}
                   onOpenSettings={handleOpenSettings}
@@ -3976,13 +4194,15 @@ export default function DiwanApp() {
           onExplain={handleAnalyze}
           onCopy={handleCopy}
           showCopySuccess={showCopySuccess}
+          onShare={handleShare}
+          showShareSuccess={showShareSuccess}
           onOpenSavedPoems={handleOpenSavedPoems}
           onOpenSettings={handleOpenSettings}
           onSignIn={handleSignIn}
           onSignOut={handleSignOut}
           user={user}
           useDatabase={useDatabase}
-          onToggleDatabase={() => setUseDatabase(!useDatabase)}
+          onToggleDatabase={handleToggleDatabase}
           isSupabaseConfigured={isSupabaseConfigured}
           theme={theme}
           isInterpreting={isInterpreting}

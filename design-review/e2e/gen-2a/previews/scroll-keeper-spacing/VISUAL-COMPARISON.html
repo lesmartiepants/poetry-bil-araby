@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scroll Keeper Spacing -- Design Review</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: #0c0c0e;
+  color: #e7e5e4;
+  font-family: system-ui, -apple-system, sans-serif;
+  padding: 40px;
+  max-width: 1400px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+h1 { color: #C5A059; font-size: 2.5rem; margin-bottom: 0.5rem; }
+h2 { color: #C5A059; font-size: 1.75rem; margin-top: 3rem; border-bottom: 1px solid #292524; padding-bottom: 0.5rem; }
+h3 { color: #a8dadc; font-size: 1.25rem; margin-top: 2rem; }
+p { margin: 0.75rem 0; }
+a { color: #C5A059; }
+
+.subtitle {
+  font-size: 1.125rem;
+  color: #a8a29e;
+  margin-bottom: 2rem;
+}
+
+.feedback-box {
+  background: #1c1917;
+  border-left: 4px solid #fbbf24;
+  padding: 20px;
+  margin: 20px 0;
+  border-radius: 4px;
+}
+.feedback-box h3 { color: #fbbf24; margin-top: 0; }
+
+.issues {
+  background: #1c1917;
+  border-left: 4px solid #ef4444;
+  padding: 20px;
+  margin: 20px 0;
+  border-radius: 4px;
+}
+.issues h3 { color: #fca5a5; margin-top: 0; }
+.issues li, .feedback-box li { margin: 8px 0; }
+
+.changes-applied {
+  background: #1c1917;
+  border-left: 4px solid #86efac;
+  padding: 20px;
+  margin: 20px 0;
+  border-radius: 4px;
+}
+.changes-applied h3 { color: #86efac; margin-top: 0; }
+
+.option {
+  background: #1c1917;
+  border: 1px solid #292524;
+  border-radius: 12px;
+  padding: 30px;
+  margin: 30px 0;
+}
+.option-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.option h2 { margin: 0; border: none; }
+.open-preview-btn {
+  display: inline-block;
+  background: #C5A059;
+  color: #0c0c0e;
+  padding: 12px 24px;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+.open-preview-btn:hover { background: #d4af6a; transform: scale(1.05); }
+
+.design-rationale h3 { color: #86efac; }
+.design-rationale h4 { color: #C5A059; margin-top: 20px; }
+.design-rationale li { margin: 8px 0; }
+
+.comparison-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 30px 0;
+  background: #1c1917;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.comparison-table th {
+  background: #292524;
+  padding: 15px;
+  text-align: left;
+  color: #C5A059;
+}
+.comparison-table td {
+  padding: 12px 15px;
+  border-bottom: 1px solid #292524;
+}
+.comparison-table tr:last-child td { border-bottom: none; }
+
+.recommendations {
+  background: #1c1917;
+  border-left: 4px solid #86efac;
+  padding: 20px;
+  margin: 30px 0;
+  border-radius: 4px;
+}
+.recommendations h3 { color: #86efac; margin-top: 0; }
+
+.previews-section {
+  margin-top: 60px;
+}
+.preview-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-top: 20px;
+}
+.preview-container {
+  border: 1px solid #292524;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #1c1917;
+}
+.preview-container h3 {
+  margin: 0;
+  padding: 15px;
+  background: #292524;
+  font-size: 1rem;
+}
+.preview-container iframe {
+  width: 100%;
+  height: 600px;
+  border: none;
+  display: block;
+}
+
+code {
+  background: #292524;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 0.9em;
+  color: #fbbf24;
+}
+
+.css-change {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  margin: 6px 0;
+  font-family: monospace;
+  font-size: 0.9rem;
+}
+.css-old {
+  color: #f87171;
+  text-decoration: line-through;
+}
+.css-new {
+  color: #86efac;
+}
+.css-arrow {
+  color: #a8a29e;
+}
+
+@media (max-width: 900px) {
+  body { padding: 20px; }
+  .preview-grid { grid-template-columns: 1fr; }
+  .option-header { flex-direction: column; align-items: flex-start; }
+}
+</style>
+</head>
+<body>
+
+<h1>Scroll Keeper -- Spacing Design Review</h1>
+<p class="subtitle">Three scroll-pacing approaches to reduce excess space between onboarding content sections</p>
+
+<!-- Feedback -->
+<div class="feedback-box">
+  <h3>User Feedback</h3>
+  <p>"Less space between content on scroll"</p>
+  <p>The original design used <code>133vh</code> section heights with generous margins between content elements, creating excessive dead space that required too much scrolling to progress through the onboarding.</p>
+</div>
+
+<!-- Issues Identified -->
+<div class="issues">
+  <h3>Identified Issues</h3>
+  <ul>
+    <li>Scroll sections at <code>133vh</code> create ~33% excess vertical space per section</li>
+    <li>Hero section at <code>100vh</code> with large margins feels disconnected from scroll content</li>
+    <li>Content element margins (<code>1.5rem</code> between verse/demo/heart and preceding text) add unnecessary gaps</li>
+    <li>Responsive breakpoints still too tall: <code>125vh</code> at 1024px, <code>120vh</code> at 768px</li>
+    <li>Total scroll distance for 3-section onboarding is ~5.5x viewport height -- could be ~3.5x</li>
+  </ul>
+</div>
+
+<!-- Changes Applied to Original -->
+<div class="changes-applied">
+  <h3>Changes Applied to 07-scroll-keeper.html (Direct Fix)</h3>
+  <ul>
+    <li>
+      <div class="css-change">
+        <span><code>.scroll-section</code> height:</span>
+        <span class="css-old">133vh</span>
+        <span class="css-arrow">-></span>
+        <span class="css-new">110vh</span>
+      </div>
+    </li>
+    <li>
+      <div class="css-change">
+        <span><code>.scroll-hero</code> height:</span>
+        <span class="css-old">100vh</span>
+        <span class="css-arrow">-></span>
+        <span class="css-new">85vh</span>
+      </div>
+    </li>
+    <li>
+      <div class="css-change">
+        <span><code>.hero-bismillah</code> margin-bottom:</span>
+        <span class="css-old">1.5rem</span>
+        <span class="css-arrow">-></span>
+        <span class="css-new">1rem</span>
+      </div>
+    </li>
+    <li>
+      <div class="css-change">
+        <span><code>.hero-scroll-arrow</code> margin-top:</span>
+        <span class="css-old">3rem</span>
+        <span class="css-arrow">-></span>
+        <span class="css-new">2rem</span>
+      </div>
+    </li>
+    <li>
+      <div class="css-change">
+        <span><code>.sc-chapter</code> margin-bottom:</span>
+        <span class="css-old">0.5rem</span>
+        <span class="css-arrow">-></span>
+        <span class="css-new">0.35rem</span>
+      </div>
+    </li>
+    <li>
+      <div class="css-change">
+        <span><code>.sc-initial</code> margin-bottom:</span>
+        <span class="css-old">0.3rem</span>
+        <span class="css-arrow">-></span>
+        <span class="css-new">0.2rem</span>
+      </div>
+    </li>
+    <li>
+      <div class="css-change">
+        <span><code>.sc-subtitle</code> margin-bottom:</span>
+        <span class="css-old">1rem</span>
+        <span class="css-arrow">-></span>
+        <span class="css-new">0.7rem</span>
+      </div>
+    </li>
+    <li>
+      <div class="css-change">
+        <span><code>.sc-rule</code> margin-bottom:</span>
+        <span class="css-old">1rem</span>
+        <span class="css-arrow">-></span>
+        <span class="css-new">0.7rem</span>
+      </div>
+    </li>
+    <li>
+      <div class="css-change">
+        <span><code>.floating-verse</code> margin-top:</span>
+        <span class="css-old">1.5rem</span>
+        <span class="css-arrow">-></span>
+        <span class="css-new">1rem</span>
+      </div>
+    </li>
+    <li>
+      <div class="css-change">
+        <span><code>.bilingual-demo</code> margin-top:</span>
+        <span class="css-old">1.5rem</span>
+        <span class="css-arrow">-></span>
+        <span class="css-new">1rem</span>
+      </div>
+    </li>
+    <li>
+      <div class="css-change">
+        <span><code>.save-heart</code> margin-top:</span>
+        <span class="css-old">1.5rem</span>
+        <span class="css-arrow">-></span>
+        <span class="css-new">1rem</span>
+      </div>
+    </li>
+    <li>
+      <div class="css-change">
+        <span>Responsive 1024px:</span>
+        <span class="css-old">125vh</span>
+        <span class="css-arrow">-></span>
+        <span class="css-new">105vh</span>
+      </div>
+    </li>
+    <li>
+      <div class="css-change">
+        <span>Responsive 768px:</span>
+        <span class="css-old">120vh</span>
+        <span class="css-arrow">-></span>
+        <span class="css-new">100vh</span>
+      </div>
+    </li>
+  </ul>
+  <p style="margin-top: 1rem; color: #86efac;">All JavaScript animations remain untouched.</p>
+</div>
+
+<hr style="border-color: #292524; margin: 40px 0;">
+
+<!-- Option A -->
+<div class="option">
+  <div class="option-header">
+    <h2>Option A: Compact (Direct Fix)</h2>
+    <a href="option-a-compact.html" class="open-preview-btn" target="_blank">Open Preview</a>
+  </div>
+  <div class="design-rationale">
+    <h3>Design Approach</h3>
+    <p>Uniform reduction across all sections. Every section shrunk by the same ratio, content margins tightened by ~30%. Straightforward and predictable.</p>
+
+    <h4>Key Properties</h4>
+    <ul>
+      <li>All sections: <code>110vh</code> (down from <code>133vh</code>)</li>
+      <li>Hero: <code>85vh</code> (down from <code>100vh</code>)</li>
+      <li>Content margins reduced ~25-35% uniformly</li>
+      <li>Responsive breakpoints proportionally reduced</li>
+    </ul>
+
+    <h4>Best For</h4>
+    <p>Preserving the original pacing feel while removing excess dead space. Safe, predictable change.</p>
+  </div>
+</div>
+
+<!-- Option B -->
+<div class="option">
+  <div class="option-header">
+    <h2>Option B: Progressive Density</h2>
+    <a href="option-b-progressive-density.html" class="open-preview-btn" target="_blank">Open Preview</a>
+  </div>
+  <div class="design-rationale">
+    <h3>Design Approach</h3>
+    <p>First section stays spacious at the original <code>133vh</code>, creating a grand entrance. Each subsequent section gets progressively tighter (<code>115vh</code>, <code>100vh</code>), creating a "drawing in" effect that accelerates the user toward the finale. Content margins within each section also progressively tighten.</p>
+
+    <h4>Key Properties</h4>
+    <ul>
+      <li>Section 1: <code>133vh</code> (original -- grand, spacious)</li>
+      <li>Section 2: <code>115vh</code> (moderate tightening)</li>
+      <li>Section 3: <code>100vh</code> (most compact)</li>
+      <li>Hero: <code>100vh</code> (full viewport for dramatic entrance)</li>
+      <li>Internal margins progressively shrink per section</li>
+    </ul>
+
+    <h4>Best For</h4>
+    <p>Creating a narrative arc in the scroll pacing itself. The spacious opening gives the manuscript gravitas, then the accelerating rhythm draws the user in. Feels intentional rather than simply "shorter."</p>
+  </div>
+</div>
+
+<!-- Option C -->
+<div class="option">
+  <div class="option-header">
+    <h2>Option C: Snap Points</h2>
+    <a href="option-c-snap-points.html" class="open-preview-btn" target="_blank">Open Preview</a>
+  </div>
+  <div class="design-rationale">
+    <h3>Design Approach</h3>
+    <p>All sections reduced to <code>105vh</code> with <code>scroll-snap-type: y mandatory</code> on the document. Each section snaps cleanly into the viewport as the user scrolls. The 5vh overshoot provides enough scroll travel for the JS animations to trigger, while the snap behavior ensures each "chapter" feels like turning a page.</p>
+
+    <h4>Key Properties</h4>
+    <ul>
+      <li>All sections: <code>105vh</code> with <code>scroll-snap-align: start</code></li>
+      <li>Hero: <code>100vh</code> with snap alignment</li>
+      <li>Finale: <code>100vh</code> with snap alignment (up from <code>40vh</code>)</li>
+      <li>Document: <code>scroll-snap-type: y mandatory</code></li>
+      <li>Font sizes reduced slightly (<code>0.82rem</code> body text, <code>0.8rem</code> subtitle)</li>
+      <li>Content margins tightened aggressively to fit within viewport</li>
+    </ul>
+
+    <h4>Best For</h4>
+    <p>A "page-turning" manuscript feel. Each section occupies exactly one screen. The snap behavior prevents awkward half-section views. Most dramatic change in interaction model -- may feel jarring if scroll animations are important.</p>
+  </div>
+</div>
+
+<!-- Comparison Table -->
+<h2>Comparison Table</h2>
+<table class="comparison-table">
+  <thead>
+    <tr>
+      <th>Property</th>
+      <th>Original</th>
+      <th>A: Compact</th>
+      <th>B: Progressive</th>
+      <th>C: Snap Points</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Section 1 Height</td>
+      <td>133vh</td>
+      <td>110vh</td>
+      <td>133vh</td>
+      <td>105vh</td>
+    </tr>
+    <tr>
+      <td>Section 2 Height</td>
+      <td>133vh</td>
+      <td>110vh</td>
+      <td>115vh</td>
+      <td>105vh</td>
+    </tr>
+    <tr>
+      <td>Section 3 Height</td>
+      <td>133vh</td>
+      <td>110vh</td>
+      <td>100vh</td>
+      <td>105vh</td>
+    </tr>
+    <tr>
+      <td>Hero Height</td>
+      <td>100vh</td>
+      <td>85vh</td>
+      <td>100vh</td>
+      <td>100vh</td>
+    </tr>
+    <tr>
+      <td>Total Scroll Distance</td>
+      <td>~5.4x viewport</td>
+      <td>~4.2x viewport</td>
+      <td>~4.5x viewport</td>
+      <td>~4.2x viewport</td>
+    </tr>
+    <tr>
+      <td>Scroll Snap</td>
+      <td>Proximity</td>
+      <td>Proximity</td>
+      <td>Proximity</td>
+      <td>Mandatory</td>
+    </tr>
+    <tr>
+      <td>Content Margins</td>
+      <td>Original</td>
+      <td>~30% reduced</td>
+      <td>Progressive (0% to 50%)</td>
+      <td>~50% reduced</td>
+    </tr>
+    <tr>
+      <td>JS Animations</td>
+      <td>Unchanged</td>
+      <td>Unchanged</td>
+      <td>Unchanged</td>
+      <td>Unchanged</td>
+    </tr>
+    <tr>
+      <td>Pacing Feel</td>
+      <td>Leisurely</td>
+      <td>Brisk</td>
+      <td>Accelerating</td>
+      <td>Page-turning</td>
+    </tr>
+    <tr>
+      <td>Risk Level</td>
+      <td>--</td>
+      <td>Low</td>
+      <td>Low</td>
+      <td>Medium</td>
+    </tr>
+  </tbody>
+</table>
+
+<!-- Recommendations -->
+<div class="recommendations">
+  <h3>Recommendations</h3>
+  <p><strong>Best Overall:</strong> Option A (Compact) -- Directly addresses the feedback with minimal risk. Uniform reduction is predictable and preserves the animation timing feel.</p>
+  <p><strong>Best Narrative Experience:</strong> Option B (Progressive Density) -- If the onboarding is meant to tell a story, the accelerating rhythm adds intentionality. The spacious opening gives weight to "Chapter I" while later sections feel more urgent.</p>
+  <p><strong>Most Polished (if animations work well):</strong> Option C (Snap Points) -- The mandatory snap creates a true "manuscript page" experience. However, the animations depend on scroll travel within sections, so this needs careful testing. The 5vh overshoot may not provide enough travel for all animation phases to fully play out.</p>
+</div>
+
+<!-- Interactive Previews -->
+<div class="previews-section">
+  <h2>Interactive Previews</h2>
+  <p style="color: #a8a29e;">Each preview is the full page. Click "Enter" on the splash to begin the scroll onboarding, then scroll to compare pacing.</p>
+  <div class="preview-grid">
+    <div class="preview-container">
+      <h3>Option A: Compact</h3>
+      <iframe src="option-a-compact.html"></iframe>
+    </div>
+    <div class="preview-container">
+      <h3>Option B: Progressive Density</h3>
+      <iframe src="option-b-progressive-density.html"></iframe>
+    </div>
+    <div class="preview-container">
+      <h3>Option C: Snap Points</h3>
+      <iframe src="option-c-snap-points.html"></iframe>
+    </div>
+  </div>
+</div>
+
+<hr style="border-color: #292524; margin: 60px 0 30px;">
+<h2>Next Steps</h2>
+<p style="font-size: 1.125rem;">Which scroll pacing direction? Reply with: <strong>"Option A"</strong>, <strong>"Option B"</strong>, or <strong>"Option C"</strong></p>
+
+</body>
+</html>

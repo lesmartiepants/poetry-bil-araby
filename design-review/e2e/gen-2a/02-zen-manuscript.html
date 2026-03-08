@@ -3,117 +3,162 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Zen Manuscript - Water Ripple</title>
+<title>Poetry بالعربي - Zen Manuscript</title>
 <link href="https://fonts.googleapis.com/css2?family=Forum&family=Reem+Kufi:wght@400;700&family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/lucide@latest"></script>
 <style>
+/* ===== BASE & DESIGN TOKENS ===== */
 *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 :root {
-  --deep-water: #0A1420; --ripple-silver: #B8C8D8; --moonlight: #E8E4F0;
-  --lotus: #C47A8A; --gold: #C5A059; --surface: #0D1A28;
-  --text-primary: #E8E4F0; --text-dim: rgba(232,228,240,0.5);
-  --card-bg: rgba(13,26,40,0.85); --card-border: rgba(184,200,216,0.15);
-  --font-ar: 'Amiri', serif; --font-ui: 'Tajawal', system-ui, sans-serif;
-}
-html.light {
-  --deep-water: #D8E4F0; --ripple-silver: #5A7A94; --moonlight: #1A1428;
-  --lotus: #A0506A; --gold: #8A7030; --surface: #C8D8E8;
-  --text-primary: #1A1428; --text-dim: rgba(26,20,40,0.5);
-  --card-bg: rgba(220,232,244,0.9); --card-border: rgba(90,122,148,0.25);
+  --deep-water: #0A1420;
+  --surface: #0D1A28;
+  --ripple-silver: #B8C8D8;
+  --moonlight: #E8E4F0;
+  --lotus: #C47A8A;
+  --gold: #C5A059;
+  --text-primary: #E8E4F0;
+  --text-dim: rgba(232,228,240,0.5);
+  --card-bg: rgba(13,26,40,0.85);
+  --card-border: rgba(184,200,216,0.15);
+  --font-ar: 'Amiri', serif;
+  --font-ui: 'Tajawal', system-ui, sans-serif;
 }
 html { font-family: var(--font-ui); background: var(--deep-water); color: var(--text-primary); }
 body { min-height: 100vh; overflow-x: hidden; }
 
-canvas#water {
-  position: fixed; inset: 0; z-index: 0; pointer-events: none;
-}
-
-/* ===== SPLASH ===== */
-.splash {
+/* ===== PHASE 1: SPLASH - INK DROP ===== */
+.splash-container {
   position: fixed; inset: 0; z-index: 100;
-  display: flex; flex-direction: column; align-items: center; justify-content: center;
-  overflow: hidden;
-  transition: opacity 0.8s ease;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--deep-water);
+  opacity: 1;
+  transition: opacity 1s ease;
 }
-.splash.hidden { opacity: 0; pointer-events: none; }
+.splash-container.hidden { opacity: 0; pointer-events: none; }
 
-.splash-drop {
-  position: absolute; top: -20px; left: 50%;
-  width: 12px; height: 12px; margin-left: -6px;
-  border-radius: 50% 50% 50% 0; transform: rotate(-45deg);
-  background: radial-gradient(circle at 40% 40%, var(--moonlight), var(--ripple-silver));
-  opacity: 0; animation: dropFall 3s cubic-bezier(0.25,0.1,0.25,1) 0.5s forwards;
+/* Ink ring ripples expanding outward */
+.ink-ring {
+  position: absolute; top: 50%; left: 50%;
+  width: 0; height: 0;
+  border-radius: 50%;
+  border: 1.5px solid var(--ripple-silver);
+  transform: translate(-50%, -50%);
+  opacity: 0;
 }
-@keyframes dropFall {
-  0% { opacity: 0.8; transform: rotate(-45deg) translateY(0); }
-  60% { opacity: 0.6; }
-  100% { opacity: 0; transform: rotate(-45deg) translateY(40vh); }
-}
+.ink-ring:nth-child(1) { animation: ringExpand 4s ease-out 0.8s forwards; }
+.ink-ring:nth-child(2) { animation: ringExpand 4s ease-out 1.4s forwards; border-color: rgba(197,160,89,0.4); }
+.ink-ring:nth-child(3) { animation: ringExpand 4s ease-out 2.0s forwards; border-color: rgba(196,122,138,0.3); }
 
-.splash-ring {
-  position: absolute; top: 50%; left: 50%; width: 0; height: 0;
-  border-radius: 50%; border: 2px solid var(--ripple-silver);
-  opacity: 0; transform: translate(-50%,-50%);
-}
-.splash-ring:nth-child(2) { animation: splashExpand 4.5s ease-out 3s forwards; }
-.splash-ring:nth-child(3) { animation: splashExpand 4.5s ease-out 3.6s forwards; border-color: var(--lotus); }
-.splash-ring:nth-child(4) { animation: splashExpand 4.5s ease-out 4.2s forwards; border-color: var(--gold); }
-@keyframes splashExpand {
-  0% { width: 0; height: 0; opacity: 0.5; }
-  100% { width: 100vmax; height: 100vmax; opacity: 0; }
+@keyframes ringExpand {
+  0% { width: 0; height: 0; opacity: 0.6; }
+  100% { width: 80vmax; height: 80vmax; opacity: 0; }
 }
 
-.splash-content {
-  position: relative; z-index: 5; text-align: center; padding: 40px;
-  max-width: 600px; opacity: 0;
-  animation: revealTitle 2s cubic-bezier(0.16,1,0.3,1) 2.8s forwards;
+/* Ink droplet falling animation */
+.ink-droplet {
+  position: absolute; top: 20%; left: 50%;
+  width: 8px; height: 12px;
+  margin-left: -4px;
+  background: radial-gradient(ellipse at 40% 30%, var(--moonlight), var(--ripple-silver));
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  opacity: 0;
+  animation: dropletFall 1.2s cubic-bezier(0.55, 0, 1, 0.45) 0.2s forwards;
 }
-@keyframes revealTitle {
-  from { opacity: 0; transform: translateY(12px); }
+@keyframes dropletFall {
+  0% { opacity: 0.9; transform: translateY(0) scale(1); }
+  80% { opacity: 0.7; }
+  100% { opacity: 0; transform: translateY(30vh) scale(0.5); }
+}
+
+/* Impact splash effect at center */
+.ink-impact {
+  position: absolute; top: 50%; left: 50%;
+  width: 20px; height: 20px;
+  margin: -10px 0 0 -10px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(184,200,216,0.4), transparent);
+  opacity: 0;
+  animation: impactFlash 0.6s ease-out 1.3s forwards;
+}
+@keyframes impactFlash {
+  0% { opacity: 0; transform: scale(0.5); }
+  30% { opacity: 0.8; }
+  100% { opacity: 0; transform: scale(3); }
+}
+
+/* Brand identity on splash */
+.brand {
+  position: relative; z-index: 10;
+  text-align: center;
+  opacity: 0;
+  animation: brandReveal 2s cubic-bezier(0.16, 1, 0.3, 1) 1.6s forwards;
+}
+@keyframes brandReveal {
+  from { opacity: 0; transform: translateY(10px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
-.splash-brand {
+.brand-name {
   display: flex; align-items: flex-end; justify-content: center;
-  gap: 0.5rem; margin-bottom: 1rem;
+  gap: 0.5rem; margin-bottom: 0.75rem;
 }
-.splash-brand-en {
-  font-family: 'Forum', serif; font-size: clamp(3rem, 6vw, 4.5rem);
-  letter-spacing: -0.05em; color: var(--gold); line-height: 1;
-  text-shadow: 0 0 40px rgba(197,160,89,0.3);
+.brand-en {
+  font-family: 'Forum', serif;
+  font-size: clamp(2.5rem, 5vw, 4rem);
+  letter-spacing: -0.05em;
+  color: var(--gold);
+  line-height: 1;
 }
-.splash-brand-ar {
-  font-family: 'Reem Kufi', sans-serif; font-weight: 700;
-  font-size: clamp(1.875rem, 4vw, 3rem); color: var(--gold); line-height: 1;
+.brand-ar {
+  font-family: 'Reem Kufi', sans-serif;
+  font-weight: 700;
+  font-size: clamp(1.5rem, 3vw, 2.5rem);
+  color: var(--gold);
+  line-height: 1;
 }
-
-.splash-subtitle {
-  font-size: 14px; color: var(--text-dim); letter-spacing: 0.3em;
-  text-transform: uppercase; margin-bottom: 48px; direction: ltr;
-}
-
-.splash-enter {
-  padding: 14px 40px; min-height: 44px; background: transparent;
-  border: 1px solid var(--gold); color: var(--gold);
-  font-family: var(--font-ui); font-size: 15px; border-radius: 8px;
-  cursor: pointer; transition: all 0.3s ease;
-  opacity: 0; animation: revealTitle 1.5s cubic-bezier(0.16,1,0.3,1) 4s forwards;
-}
-.splash-enter:hover {
-  background: var(--gold); color: var(--deep-water);
-  box-shadow: 0 0 30px rgba(197,160,89,0.3);
+.brand-subtitle {
+  font-size: 12px;
+  color: var(--text-dim);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  direction: ltr;
 }
 
-/* ===== WALKTHROUGH -- ZEN INK WASH ===== */
+/* Auto-advance progress indicator */
+.progress-line {
+  position: absolute; bottom: 60px; left: 50%;
+  transform: translateX(-50%);
+  width: 80px; height: 1px;
+  background: rgba(184,200,216,0.15);
+  overflow: hidden;
+  opacity: 0;
+  animation: brandReveal 1s ease 2.5s forwards;
+}
+.progress-line::after {
+  content: '';
+  position: absolute; left: 0; top: 0;
+  width: 0; height: 100%;
+  background: var(--gold);
+  animation: progressFill 3s linear 2.5s forwards;
+}
+@keyframes progressFill {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+/* ===== PHASE 2: WALKTHROUGH - ZEN INK WASH ===== */
 .walkthrough {
   position: fixed; inset: 0; z-index: 90;
-  display: none; flex-direction: column; align-items: center; justify-content: center;
+  display: none; /* Hidden by default, JS reveals after splash */
+  flex-direction: column; align-items: center; justify-content: center;
   padding: 20px; cursor: pointer;
   background: var(--deep-water);
+  opacity: 0;
+  transition: opacity 1.2s ease;
 }
-.walkthrough.active { display: flex; }
+.walkthrough.active { display: flex; opacity: 1; }
 
-/* Ink wash background that shifts per step */
+/* Ink wash background shifting per step */
 .walkthrough::before {
   content: ''; position: absolute; inset: 0;
   background: radial-gradient(ellipse 70% 50% at 50% 60%, rgba(184,200,216,0.06), transparent);
@@ -126,7 +171,7 @@ canvas#water {
   background: radial-gradient(ellipse 50% 70% at 60% 50%, rgba(197,160,89,0.06), transparent);
 }
 
-/* Washi paper panel */
+/* Washi paper panel for each step */
 .zen-panel {
   position: relative; max-width: 360px; width: 88%;
   padding: 2.5rem 2rem;
@@ -139,7 +184,7 @@ canvas#water {
 }
 .zen-panel.active { display: block; opacity: 1; transform: translateY(0); }
 
-/* Brushstroke accent -- horizontal ink line */
+/* Brushstroke accent line */
 .zen-panel::after {
   content: ''; position: absolute; bottom: 0; left: 50%;
   transform: translateX(-50%);
@@ -172,7 +217,7 @@ canvas#water {
   max-width: 280px; margin: 0 auto;
 }
 
-/* Ink drop indicators */
+/* Ink drop step indicators */
 .zen-drops {
   display: flex; gap: 16px; justify-content: center;
   position: absolute; bottom: 48px; left: 50%; transform: translateX(-50%);
@@ -194,247 +239,213 @@ canvas#water {
   opacity: 0.4; letter-spacing: 0.2em;
 }
 
-/* ===== MAIN APP ===== */
-.main-app {
-  display: none; min-height: 100vh; padding-bottom: 100px; position: relative; z-index: 1;
-  /* Parchment texture background */
-  background:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.05'/%3E%3C/svg%3E"),
-    linear-gradient(180deg, #d4c4a0 0%, #c8b892 40%, #bfad84 100%);
-  background-attachment: fixed;
-}
-.main-app.active { display: block; }
-html.light .main-app {
-  background:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E"),
-    linear-gradient(180deg, #e8dcc4 0%, #ddd0b4 40%, #d4c4a0 100%);
-  background-attachment: fixed;
-}
-
-.app-top {
-  position: fixed; top: 0; left: 0; right: 0; z-index: 50;
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 12px 20px;
-  background: linear-gradient(180deg, rgba(139,115,85,0.9), rgba(101,82,60,0.85));
-  border-bottom: 2px solid #6b5a3e;
-  box-shadow: 0 2px 8px rgba(61,42,20,0.3);
-  direction: ltr;
-}
-html.light .app-top {
-  background: linear-gradient(180deg, rgba(212,196,160,0.95), rgba(191,173,132,0.9));
-  border-bottom-color: #a89470;
-}
-.app-top-brand { display: flex; align-items: flex-end; gap: 6px; }
-.app-top-brand-en {
-  font-family: 'Forum', serif; font-size: 20px;
-  letter-spacing: -0.05em; color: #e8dcc4; line-height: 1;
-}
-html.light .app-top-brand-en { color: #3d2a14; }
-.app-top-brand-ar {
-  font-family: 'Reem Kufi', sans-serif; font-weight: 700;
-  font-size: 14px; color: #e8dcc4; line-height: 1;
-}
-html.light .app-top-brand-ar { color: #3d2a14; }
-.app-top-actions { display: flex; gap: 8px; }
-.app-top-btn {
-  width: 44px; height: 44px; display: flex; align-items: center;
-  justify-content: center; background: transparent;
-  border: 1px solid rgba(232,220,196,0.3); border-radius: 8px;
-  color: rgba(232,220,196,0.7); cursor: pointer; transition: all 0.2s;
-}
-html.light .app-top-btn { border-color: rgba(61,42,20,0.2); color: rgba(61,42,20,0.6); }
-.app-top-btn:hover { color: #e8dcc4; border-color: rgba(232,220,196,0.6); }
-html.light .app-top-btn:hover { color: #3d2a14; border-color: rgba(61,42,20,0.5); }
-
-/* Poem card - ink on parchment */
-.poem-card {
-  position: relative;
-  background:
-    linear-gradient(90deg, rgba(61,42,20,0.06) 0%, transparent 4%, transparent 96%, rgba(61,42,20,0.06) 100%),
-    linear-gradient(180deg, rgba(61,42,20,0.03) 0%, transparent 3%, transparent 97%, rgba(61,42,20,0.03) 100%),
-    linear-gradient(180deg, #e8dcc4 0%, #ddd0b4 50%, #d4c4a0 100%);
-  padding: 3rem 2.5rem; border-radius: 4px; direction: rtl;
-  box-shadow:
-    4px 4px 12px rgba(61,42,20,0.2),
-    -2px -2px 8px rgba(255,248,235,0.3),
-    inset 0 0 40px rgba(197,160,89,0.05);
-  border: 1px solid rgba(139,115,85,0.3);
-}
-
-/* Ink stain effect */
-.poem-card::before {
-  content: '';
-  position: absolute; top: -4px; right: 20px;
-  width: 16px; height: 16px; border-radius: 50%;
-  background: radial-gradient(circle, rgba(26,18,10,0.15) 30%, transparent 70%);
+/* Fade-out state for walkthrough completion */
+.walkthrough.fade-out {
+  opacity: 0;
   pointer-events: none;
 }
 
-.poem-meta { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
-.poet-avatar {
-  width: 44px; height: 44px; border-radius: 50%;
-  background: linear-gradient(135deg, rgba(139,115,85,0.2), rgba(197,160,89,0.15));
-  border: 1px solid rgba(139,115,85,0.3);
-  display: flex; align-items: center; justify-content: center;
-  color: #5a4630; font-family: var(--font-ar); font-size: 20px;
+/* ===== PHASE 3: MAIN APP - WATER REFLECTION ===== */
+.main-app {
+  display: none; /* Hidden by default, JS reveals after walkthrough */
+  opacity: 0;
+  transition: opacity 1.2s ease;
 }
-.poet-info h2 { font-family: var(--font-ar); font-size: 16px; font-weight: 700; color: #3d2a14; }
-.poet-info span { font-size: 13px; color: rgba(61,42,20,0.5); font-style: italic; }
+.main-app.active { display: block; opacity: 1; }
 
-.poem-verses {
-  font-family: var(--font-ar); font-size: clamp(20px, 3.5vw, 28px);
-  line-height: 2.4; text-align: center; padding: 24px 0;
-  color: #1a120a;
-  /* Ink-like text rendering */
-  text-shadow: 0 0 1px rgba(26,18,10,0.1);
-  border-top: 1px solid rgba(139,115,85,0.2); border-bottom: 1px solid rgba(139,115,85,0.2);
-}
-.verse-line { opacity: 0; animation: inkReveal 0.8s ease forwards; }
-.verse-line:nth-child(1) { animation-delay: 0.3s; }
-.verse-line:nth-child(2) { animation-delay: 0.7s; }
-@keyframes inkReveal {
-  from { opacity: 0; filter: blur(2px); }
-  to { opacity: 1; filter: blur(0); }
-}
-.hemistich-divider {
-  display: inline-block; width: 40px; height: 1px; background: #8b7355;
-  vertical-align: middle; margin: 0 12px; opacity: 0.4;
+/* Water ripple canvas background */
+canvas#water {
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
 }
 
-.poem-actions { display: flex; gap: 12px; margin-top: 24px; justify-content: center; }
-.poem-action-btn {
-  display: flex; align-items: center; gap: 6px; padding: 10px 16px;
-  background: transparent; border: 1px solid rgba(139,115,85,0.3); border-radius: 6px;
-  color: #5a4630; font-family: var(--font-ui); font-size: 13px;
-  cursor: pointer; transition: all 0.2s;
-}
-.poem-action-btn:hover { color: #3d2a14; border-color: #8b7355; background: rgba(139,115,85,0.08); }
-
-.reader { max-width: 720px; margin: 0 auto; padding: 80px 20px 40px; }
-
-/* Vertical Rail - hidden on this design, toolbox drawer is the control */
-.vertical-rail {
-  position: fixed; right: 16px; top: 50%; transform: translateY(-50%);
-  display: flex; flex-direction: column; gap: 4px; z-index: 40; direction: ltr;
-}
-.rail-btn {
-  width: 44px; height: 44px; display: flex; align-items: center;
-  justify-content: center;
-  background: linear-gradient(145deg, #c8b892, #b5a37d);
-  border: 1px solid rgba(139,115,85,0.4); border-radius: 8px;
-  color: #5a4630; cursor: pointer; transition: all 0.2s;
-  box-shadow: 2px 2px 6px rgba(61,42,20,0.2), -1px -1px 4px rgba(255,248,235,0.4);
-  position: relative;
-}
-.rail-btn:hover {
-  color: #3d2a14; transform: scale(1.08);
-  box-shadow: 3px 3px 8px rgba(61,42,20,0.25), -1px -1px 4px rgba(255,248,235,0.5);
-}
-.rail-btn .tooltip {
-  position: absolute; right: 52px; top: 50%; transform: translateY(-50%);
-  background: #3d2a14; color: #e8dcc4;
-  font-family: var(--font-ui); font-size: 12px;
-  padding: 4px 10px; border-radius: 4px; white-space: nowrap;
-  opacity: 0; pointer-events: none; transition: opacity 0.2s;
-}
-.rail-btn:hover .tooltip { opacity: 1; }
-
-/* ===== CONTROLS: Wooden Toolbox Drawer ===== */
-.bottom-nav {
-  position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
-  /* Wooden texture gradient */
-  background:
-    repeating-linear-gradient(
-      90deg,
-      rgba(101,82,60,0.04) 0px,
-      transparent 2px,
-      transparent 8px,
-      rgba(101,82,60,0.04) 10px
-    ),
-    linear-gradient(180deg, #6b5a3e 0%, #5a4a32 20%, #4a3c28 50%, #3d3020 100%);
-  padding: 14px 20px 16px;
-  border-top: 3px solid #8b7355;
-  box-shadow: 0 -4px 16px rgba(26,18,10,0.4), inset 0 2px 4px rgba(139,115,85,0.2);
+/* Top navigation bar */
+.top-bar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 20px;
+  background: linear-gradient(180deg, rgba(10,20,32,0.9), transparent);
   direction: ltr;
-  border-radius: 16px 16px 0 0;
 }
-html.light .bottom-nav {
-  background:
-    repeating-linear-gradient(
-      90deg,
-      rgba(139,115,85,0.06) 0px,
-      transparent 2px,
-      transparent 8px,
-      rgba(139,115,85,0.06) 10px
-    ),
-    linear-gradient(180deg, #8b7355 0%, #7a6345 20%, #6b5a3e 50%, #5a4a32 100%);
-  border-top-color: #a89470;
+.top-brand {
+  display: flex; align-items: flex-end; gap: 6px;
+}
+.top-brand-en {
+  font-family: 'Forum', serif;
+  font-size: 18px; letter-spacing: -0.04em;
+  color: var(--gold); line-height: 1; opacity: 0.7;
+}
+.top-brand-ar {
+  font-family: 'Reem Kufi', sans-serif;
+  font-weight: 700; font-size: 12px;
+  color: var(--gold); line-height: 1; opacity: 0.7;
+}
+.top-actions { display: flex; gap: 6px; }
+.top-btn {
+  width: 36px; height: 36px;
+  display: flex; align-items: center; justify-content: center;
+  background: transparent; border: 1px solid rgba(184,200,216,0.12);
+  border-radius: 8px; color: var(--text-dim); cursor: pointer;
+  transition: all 0.2s;
+}
+.top-btn:hover { color: var(--moonlight); border-color: rgba(184,200,216,0.3); }
+
+/* Poem card floating on water surface */
+.poem-float {
+  position: relative; z-index: 1;
+  min-height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+  padding: 80px 20px 140px;
 }
 
-/* Leather handle */
-.bottom-nav::before {
-  content: '';
-  position: absolute; top: -1px; left: 50%; transform: translateX(-50%);
-  width: 60px; height: 6px;
-  background: linear-gradient(180deg, #5a3a1a, #3d2810, #5a3a1a);
-  border-radius: 0 0 6px 6px;
-  box-shadow: 0 2px 4px rgba(26,18,10,0.3), inset 0 1px 1px rgba(139,115,85,0.3);
+.poem-card {
+  max-width: 640px; width: 100%;
+  padding: 3rem 2.5rem;
+  background: rgba(13,26,40,0.65);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(184,200,216,0.08);
+  border-radius: 16px;
+  /* Water reflection shadow */
+  box-shadow:
+    0 20px 60px rgba(0,0,0,0.3),
+    0 0 0 1px rgba(184,200,216,0.05),
+    0 40px 80px rgba(10,20,32,0.4);
+  text-align: center;
+  direction: rtl;
+  animation: cardFloat 6s ease-in-out infinite;
+}
+@keyframes cardFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
 }
 
-.bottom-nav .nav-items-wrap {
-  display: flex; align-items: center; justify-content: center; gap: 6px;
+/* Poet info line with stone avatar */
+.poet-line {
+  display: flex; align-items: center; justify-content: center;
+  gap: 10px; margin-bottom: 28px;
+}
+.poet-stone {
+  width: 40px; height: 40px; border-radius: 50%;
+  background: linear-gradient(145deg, rgba(184,200,216,0.12), rgba(13,26,40,0.4));
+  border: 1px solid rgba(184,200,216,0.1);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-ar); font-size: 18px;
+  color: var(--gold);
+}
+.poet-name {
+  font-family: var(--font-ar); font-size: 16px;
+  color: var(--ripple-silver); font-weight: 700;
+}
+.poet-era {
+  font-size: 12px; color: var(--text-dim);
+  font-style: italic; direction: ltr;
 }
 
-.nav-item {
-  display: flex; flex-direction: column; align-items: center; gap: 4px;
-  padding: 8px 14px; background: transparent; border: none;
-  color: rgba(232,220,196,0.6); cursor: pointer; font-family: var(--font-ui);
-  font-size: 10px; transition: all 0.2s; min-width: 56px; min-height: 44px;
-  /* Hand-drawn thin stroke style icons */
+/* Arabic verses with proper RTL rendering */
+.poem-verses {
+  font-family: var(--font-ar);
+  font-size: clamp(20px, 3.5vw, 28px);
+  line-height: 2.4; color: var(--moonlight);
+  padding: 20px 0;
+  border-top: 1px solid rgba(184,200,216,0.08);
+  border-bottom: 1px solid rgba(184,200,216,0.08);
 }
-.nav-item.active { color: #e8dcc4; }
-.nav-item:hover { color: #e8dcc4; }
-.nav-item i { stroke-width: 1.5; }
+.verse-line { margin-bottom: 8px; }
+.hemistich-divider {
+  display: inline-block; width: 36px; height: 1px;
+  background: rgba(184,200,216,0.2);
+  vertical-align: middle; margin: 0 10px;
+}
 
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+/* Stone-inspired control buttons at bottom */
+.stone-controls {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 50;
+  display: flex; align-items: center; justify-content: center;
+  padding: 20px 20px 28px;
+  gap: 12px;
+  background: linear-gradient(0deg, rgba(10,20,32,0.95), transparent);
+  direction: ltr;
 }
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation: none !important; transition: none !important; }
-  .poem-card { transform: none !important; clip-path: none; }
-  canvas#water { display: none; }
+.stone-btn {
+  width: 48px; height: 48px;
+  display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(145deg, rgba(30,45,62,0.8), rgba(13,26,40,0.9));
+  border: 1px solid rgba(184,200,216,0.1);
+  border-radius: 50%;
+  color: var(--text-dim);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
+.stone-btn:hover {
+  color: var(--moonlight);
+  border-color: rgba(184,200,216,0.2);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+}
+.stone-btn.primary {
+  width: 56px; height: 56px;
+  background: linear-gradient(145deg, rgba(197,160,89,0.2), rgba(13,26,40,0.8));
+  border-color: rgba(197,160,89,0.2);
+  color: var(--gold);
+}
+.stone-btn.primary:hover {
+  border-color: rgba(197,160,89,0.4);
+  box-shadow: 0 6px 20px rgba(197,160,89,0.15);
+}
+.stone-label {
+  font-size: 10px; color: var(--text-dim);
+  margin-top: 4px; text-align: center;
+}
+.stone-wrap {
+  display: flex; flex-direction: column; align-items: center;
+}
+
+/* ===== RESPONSIVE & ACCESSIBILITY ===== */
 @media (max-width: 768px) {
-  .vertical-rail { display: none; }
-  .reader { padding: 70px 16px 40px; }
-  .poem-card { padding: 1.5rem; }
-  .poem-actions { flex-wrap: wrap; }
-  .splash-content { padding: 24px; }
+  .poem-card { padding: 2rem 1.5rem; border-radius: 12px; }
+  .stone-controls { gap: 8px; padding: 16px 16px 24px; }
+  .brand-en { font-size: 2rem; }
+  .brand-ar { font-size: 1.25rem; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+  .poem-card { animation: none; }
+}
+
+/* Focus styles for keyboard navigation */
+button:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 2px;
 }
 </style>
 </head>
 <body>
 
-<canvas id="water"></canvas>
+<!-- PHASE 1: SPLASH - INK DROP -->
+<div class="splash-container" id="splash">
+  <div class="ink-droplet"></div>
+  <div class="ink-impact"></div>
+  <div class="ink-ring"></div>
+  <div class="ink-ring"></div>
+  <div class="ink-ring"></div>
 
-<!-- SPLASH -->
-<div class="splash" id="splash">
-  <div class="splash-drop"></div>
-  <div class="splash-ring"></div>
-  <div class="splash-ring"></div>
-  <div class="splash-ring"></div>
-  <div class="splash-content">
-    <div class="splash-brand">
-      <span class="splash-brand-en">poetry</span>
-      <span class="splash-brand-ar">بالعربي</span>
+  <div class="brand">
+    <div class="brand-name">
+      <span class="brand-en">poetry</span>
+      <span class="brand-ar">بالعربي</span>
     </div>
-    <p class="splash-subtitle">Poetry on Still Water</p>
-    <button class="splash-enter" id="splashEnter">Enter</button>
+    <p class="brand-subtitle">Poetry on Still Water</p>
   </div>
+
+  <div class="progress-line"></div>
 </div>
 
-<!-- WALKTHROUGH -->
+<!-- PHASE 2: WALKTHROUGH - ZEN INK WASH -->
 <div class="walkthrough" id="walkthrough" data-step="0">
   <div class="zen-panel active" data-zen="0">
     <div class="zen-kanji" lang="ar" dir="rtl">تأمّل</div>
@@ -459,40 +470,32 @@ html.light .bottom-nav {
   <div class="zen-hint">tap</div>
 </div>
 
-<!-- MAIN APP -->
+<!-- PHASE 3: MAIN APP - WATER REFLECTION -->
 <div class="main-app" id="mainApp">
-  <header class="app-top">
-    <div class="app-top-brand">
-      <span class="app-top-brand-en">poetry</span>
-      <span class="app-top-brand-ar">بالعربي</span>
+  <canvas id="water"></canvas>
+
+  <header class="top-bar">
+    <div class="top-brand">
+      <span class="top-brand-en">poetry</span>
+      <span class="top-brand-ar">بالعربي</span>
     </div>
-    <div class="app-top-actions">
-      <button class="app-top-btn" id="themeToggle" aria-label="Toggle theme">
-        <i data-lucide="sun" style="width:18px;height:18px"></i>
+    <div class="top-actions">
+      <button class="top-btn" aria-label="Theme">
+        <i data-lucide="sun" style="width:16px;height:16px"></i>
       </button>
-      <button class="app-top-btn" aria-label="Settings">
-        <i data-lucide="settings" style="width:18px;height:18px"></i>
+      <button class="top-btn" aria-label="Settings">
+        <i data-lucide="settings" style="width:16px;height:16px"></i>
       </button>
     </div>
   </header>
 
-  <nav class="vertical-rail">
-    <button class="rail-btn"><i data-lucide="heart" style="width:18px;height:18px"></i><span class="tooltip">Save</span></button>
-    <button class="rail-btn"><i data-lucide="type" style="width:18px;height:18px"></i><span class="tooltip">Font size</span></button>
-    <button class="rail-btn"><i data-lucide="languages" style="width:18px;height:18px"></i><span class="tooltip">Transliteration</span></button>
-    <button class="rail-btn"><i data-lucide="book-open" style="width:18px;height:18px"></i><span class="tooltip">Tafsir</span></button>
-    <button class="rail-btn"><i data-lucide="italic" style="width:18px;height:18px"></i><span class="tooltip">Tashkeel</span></button>
-    <button class="rail-btn"><i data-lucide="log-in" style="width:18px;height:18px"></i><span class="tooltip">Sign in</span></button>
-    <button class="rail-btn"><i data-lucide="settings" style="width:18px;height:18px"></i><span class="tooltip">Settings</span></button>
-  </nav>
-
-  <div class="reader">
+  <main class="poem-float">
     <article class="poem-card">
-      <div class="poem-meta">
-        <div class="poet-avatar">م</div>
-        <div class="poet-info">
-          <h2>المتنبي</h2>
-          <span>Al-Mutanabbi</span>
+      <div class="poet-line">
+        <div class="poet-stone">م</div>
+        <div>
+          <div class="poet-name">المتنبي</div>
+          <div class="poet-era">Al-Mutanabbi</div>
         </div>
       </div>
       <div class="poem-verses" dir="rtl" lang="ar">
@@ -501,114 +504,63 @@ html.light .bottom-nav {
           <span class="hemistich-divider"></span>
           وَتَأْتِي عَلَى قَدْرِ الكِرَامِ المَكَارِمُ
         </div>
-      </div>
-      <div class="poem-actions">
-        <button class="poem-action-btn">
-          <i data-lucide="copy" style="width:16px;height:16px"></i> نسخ
-        </button>
-        <button class="poem-action-btn">
-          <i data-lucide="share-2" style="width:16px;height:16px"></i> مشاركة
-        </button>
-        <button class="poem-action-btn">
-          <i data-lucide="bookmark" style="width:16px;height:16px"></i> حفظ
-        </button>
+        <div class="verse-line">
+          وَتَعْظُمُ فِي عَيْنِ الصَّغِيرِ صِغَارُهَا
+          <span class="hemistich-divider"></span>
+          وَتَصْغُرُ فِي عَيْنِ العَظِيمِ العَظَائِمُ
+        </div>
       </div>
     </article>
-  </div>
+  </main>
 
-  <nav class="bottom-nav">
-    <div class="nav-items-wrap">
-      <button class="nav-item active" aria-label="Next poem"><i data-lucide="shuffle" style="width:20px;height:20px"></i>Shuffle</button>
-      <button class="nav-item" aria-label="Save poem"><i data-lucide="heart" style="width:20px;height:20px"></i>Save</button>
-      <button class="nav-item" aria-label="Listen"><i data-lucide="headphones" style="width:20px;height:20px"></i>Listen</button>
-      <button class="nav-item" aria-label="Share poem"><i data-lucide="share-2" style="width:20px;height:20px"></i>Share</button>
+  <nav class="stone-controls">
+    <div class="stone-wrap">
+      <button class="stone-btn" aria-label="Save">
+        <i data-lucide="heart" style="width:18px;height:18px"></i>
+      </button>
+      <span class="stone-label">Save</span>
+    </div>
+    <div class="stone-wrap">
+      <button class="stone-btn" aria-label="Listen">
+        <i data-lucide="headphones" style="width:18px;height:18px"></i>
+      </button>
+      <span class="stone-label">Listen</span>
+    </div>
+    <div class="stone-wrap">
+      <button class="stone-btn primary" aria-label="Shuffle">
+        <i data-lucide="shuffle" style="width:22px;height:22px"></i>
+      </button>
+      <span class="stone-label">Shuffle</span>
+    </div>
+    <div class="stone-wrap">
+      <button class="stone-btn" aria-label="Share">
+        <i data-lucide="share-2" style="width:18px;height:18px"></i>
+      </button>
+      <span class="stone-label">Share</span>
+    </div>
+    <div class="stone-wrap">
+      <button class="stone-btn" aria-label="Copy">
+        <i data-lucide="copy" style="width:18px;height:18px"></i>
+      </button>
+      <span class="stone-label">Copy</span>
     </div>
   </nav>
 </div>
 
 <script>
-/* Water Ripple Canvas */
-var canvas = document.getElementById('water');
-var ctx = canvas.getContext('2d');
-var ripples = [];
-var isMobile = window.innerWidth <= 768;
-var maxRipples = isMobile ? 3 : 5;
-var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+/* ===== FLOW ORCHESTRATION ===== */
+/* Flow: Splash (5.5s) → Walkthrough (3 steps) → Main App */
 
-function resizeCanvas() {
-  canvas.width = window.innerWidth; canvas.height = window.innerHeight;
-  isMobile = window.innerWidth <= 768; maxRipples = isMobile ? 3 : 5;
-}
-resizeCanvas();
-window.addEventListener('resize', resizeCanvas);
+// PHASE 1: Splash auto-advances after animations complete
+setTimeout(function() {
+  document.getElementById('splash').classList.add('hidden');
+  // Reveal walkthrough after splash fades
+  setTimeout(function() {
+    document.getElementById('walkthrough').classList.add('active');
+  }, 400);
+}, 5500);
 
-function Ripple(x, y, speed, maxR) {
-  this.x = x; this.y = y; this.radius = 0;
-  this.speed = speed || (1 + Math.random() * 1.5);
-  this.maxRadius = maxR || (150 + Math.random() * 250);
-  this.opacity = 0.6; this.lineWidth = 1.5;
-  this.rings = 3 + Math.floor(Math.random() * 3);
-  this.ringSpacing = 18 + Math.random() * 12;
-}
-Ripple.prototype.update = function() {
-  this.radius += this.speed;
-  var p = this.radius / this.maxRadius;
-  this.opacity = Math.max(0, 0.6 * (1 - p * p));
-  this.lineWidth = Math.max(0.3, 1.5 * (1 - p));
-  return this.radius < this.maxRadius;
-};
-Ripple.prototype.draw = function(c) {
-  var isLight = document.documentElement.classList.contains('light');
-  for (var r = 0; r < this.rings; r++) {
-    var rr = this.radius - r * this.ringSpacing;
-    if (rr <= 0) continue;
-    var ro = this.opacity * (1 - r * 0.2);
-    if (ro <= 0) continue;
-    c.beginPath(); c.arc(this.x, this.y, rr, 0, Math.PI * 2);
-    c.strokeStyle = isLight ? 'rgba(90,122,148,' + ro + ')' : 'rgba(184,200,216,' + ro + ')';
-    c.lineWidth = this.lineWidth; c.stroke();
-  }
-};
-
-function addRipple(x, y, speed, maxR) {
-  if (reducedMotion) return;
-  if (ripples.length >= maxRipples + 2) ripples.shift();
-  ripples.push(new Ripple(x, y, speed, maxR));
-}
-
-var ambientTimer = 0;
-var ambientInterval = isMobile ? 180 : 100;
-
-function animate() {
-  if (reducedMotion) return;
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ambientTimer++;
-  if (ambientTimer >= ambientInterval && ripples.length < maxRipples) {
-    ambientTimer = 0;
-    ambientInterval = isMobile ? (150 + Math.random() * 120) : (80 + Math.random() * 80);
-    addRipple(Math.random() * canvas.width, Math.random() * canvas.height,
-      0.5 + Math.random(), 100 + Math.random() * 200);
-  }
-  var alive = [];
-  for (var i = 0; i < ripples.length; i++) {
-    if (ripples[i].update()) { ripples[i].draw(ctx); alive.push(ripples[i]); }
-  }
-  ripples = alive;
-  requestAnimationFrame(animate);
-}
-
-if (!reducedMotion) {
-  setTimeout(function() { addRipple(canvas.width / 2, canvas.height * 0.48, 0.8, 350); }, 3000);
-  setTimeout(function() { addRipple(canvas.width / 2, canvas.height * 0.48, 0.6, 450); }, 3800);
-  animate();
-}
-
-document.addEventListener('click', function(e) {
-  if (reducedMotion) return;
-  addRipple(e.clientX, e.clientY, 1.5 + Math.random(), 120 + Math.random() * 100);
-});
-
-/* Walkthrough -- Zen Ink Wash */
+// PHASE 2: Walkthrough interaction
 var zenPanels = document.querySelectorAll('.zen-panel');
 var zenDrops = document.querySelectorAll('.zen-drop');
 var zenStep = 0;
@@ -626,38 +578,93 @@ function showZenStep() {
     zenDrops[zenStep].classList.add('active');
     document.getElementById('walkthrough').setAttribute('data-step', zenStep);
   }
-  addRipple(canvas.width / 2, canvas.height / 2, 0.8);
 }
 
-document.getElementById('splashEnter').addEventListener('click', function() {
-  document.getElementById('splash').classList.add('hidden');
-  setTimeout(function() {
-    document.getElementById('splash').style.display = 'none';
-    document.getElementById('walkthrough').classList.add('active');
-    zenStep = 0;
-    showZenStep();
-  }, 800);
-});
-
-document.getElementById('walkthrough').addEventListener('click', function(e) {
-  if (e.target.closest('.splash-enter')) return;
+document.getElementById('walkthrough').addEventListener('click', function() {
   zenStep++;
   if (zenStep >= totalZen) {
-    document.getElementById('walkthrough').style.display = 'none';
-    document.getElementById('mainApp').classList.add('active');
-    if (typeof lucide !== 'undefined') lucide.createIcons();
+    // Walkthrough complete - transition to main app
+    document.getElementById('walkthrough').classList.add('fade-out');
+    setTimeout(function() {
+      document.getElementById('mainApp').classList.add('active');
+      // Initialize water canvas and Lucide icons
+      initWaterCanvas();
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+    }, 1200);
   } else {
     showZenStep();
   }
 });
 
-document.getElementById('themeToggle').addEventListener('click', function() {
-  document.documentElement.classList.toggle('light');
-});
+// PHASE 3: Main app - Water ripple canvas
+function initWaterCanvas() {
+  var canvas = document.getElementById('water');
+  if (!canvas) return;
 
-document.addEventListener('DOMContentLoaded', function() {
-  if (typeof lucide !== 'undefined') lucide.createIcons();
-});
+  var ctx = canvas.getContext('2d');
+  var ripples = [];
+  var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  function Ripple(x, y) {
+    this.x = x;
+    this.y = y;
+    this.r = 0;
+    this.speed = 0.4 + Math.random() * 0.6;
+    this.maxR = 100 + Math.random() * 200;
+    this.opacity = 0.3;
+  }
+
+  Ripple.prototype.update = function() {
+    this.r += this.speed;
+    var p = this.r / this.maxR;
+    this.opacity = Math.max(0, 0.3 * (1 - p * p));
+    return this.r < this.maxR;
+  };
+
+  Ripple.prototype.draw = function(c) {
+    c.beginPath();
+    c.arc(this.x, this.y, this.r, 0, Math.PI * 2);
+    c.strokeStyle = 'rgba(184,200,216,' + this.opacity + ')';
+    c.lineWidth = 0.8;
+    c.stroke();
+  };
+
+  var timer = 0;
+  function loop() {
+    if (reducedMotion) return;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    timer++;
+    if (timer > 120 && ripples.length < 4) {
+      timer = 0;
+      ripples.push(new Ripple(Math.random() * canvas.width, Math.random() * canvas.height));
+    }
+    var alive = [];
+    for (var i = 0; i < ripples.length; i++) {
+      if (ripples[i].update()) {
+        ripples[i].draw(ctx);
+        alive.push(ripples[i]);
+      }
+    }
+    ripples = alive;
+    requestAnimationFrame(loop);
+  }
+
+  if (!reducedMotion) loop();
+
+  // Interactive ripples on click
+  window.addEventListener('click', function(e) {
+    if (!reducedMotion && ripples.length < 6) {
+      ripples.push(new Ripple(e.clientX, e.clientY));
+    }
+  });
+}
 </script>
 </body>
 </html>

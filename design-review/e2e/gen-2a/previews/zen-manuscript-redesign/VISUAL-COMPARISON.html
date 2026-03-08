@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zen Manuscript Redesign - Visual Comparison</title>
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: #0c0c0e;
+  color: #e7e5e4;
+  font-family: system-ui, -apple-system, sans-serif;
+  padding: 40px;
+  max-width: 1600px;
+  margin: 0 auto;
+}
+h1 { color: #C5A059; font-size: 2.5rem; margin-bottom: 0.5rem; }
+h2 { color: #C5A059; font-size: 1.75rem; margin-top: 3rem; border-bottom: 1px solid #292524; padding-bottom: 0.5rem; }
+h3 { color: #a8dadc; font-size: 1.25rem; margin-top: 1.5rem; }
+p { line-height: 1.7; color: #a8a29e; }
+a { color: #C5A059; }
+
+.subtitle { font-size: 1.125rem; color: #a8a29e; margin-bottom: 2rem; }
+
+/* Section cards */
+.section-card {
+  background: #1c1917;
+  border: 1px solid #292524;
+  border-radius: 12px;
+  padding: 30px;
+  margin: 24px 0;
+}
+
+/* Preview grid */
+.preview-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-top: 20px;
+}
+.preview-cell {
+  border: 1px solid #292524;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #1c1917;
+}
+.preview-cell h4 {
+  margin: 0;
+  padding: 12px 16px;
+  background: #292524;
+  font-size: 0.9rem;
+  color: #C5A059;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.preview-cell iframe {
+  width: 100%;
+  height: 500px;
+  border: none;
+  display: block;
+}
+.open-btn {
+  background: #C5A059;
+  color: #0c0c0e;
+  padding: 6px 14px;
+  border-radius: 6px;
+  text-decoration: none;
+  font-size: 0.75rem;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+.open-btn:hover { background: #d4af6a; transform: scale(1.05); }
+
+/* Description list */
+.desc-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-top: 16px;
+}
+.desc-item {
+  background: #292524;
+  border-radius: 8px;
+  padding: 20px;
+}
+.desc-item h4 {
+  color: #C5A059;
+  font-size: 1rem;
+  margin-bottom: 8px;
+}
+.desc-item p {
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+.desc-item ul {
+  padding-left: 18px;
+  margin-top: 8px;
+}
+.desc-item li {
+  font-size: 0.85rem;
+  color: #a8a29e;
+  margin: 4px 0;
+}
+
+/* Comparison table */
+.comparison-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 24px 0;
+  background: #1c1917;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.comparison-table th {
+  background: #292524;
+  padding: 14px 16px;
+  text-align: left;
+  color: #C5A059;
+  font-size: 0.85rem;
+}
+.comparison-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #292524;
+  font-size: 0.85rem;
+}
+.comparison-table tr:last-child td { border-bottom: none; }
+
+/* Recommendations */
+.recommendations {
+  background: #1c1917;
+  border-left: 4px solid #86efac;
+  padding: 24px;
+  margin: 24px 0;
+  border-radius: 0 8px 8px 0;
+}
+.recommendations h3 { color: #86efac; margin-top: 0; margin-bottom: 12px; }
+.recommendations p { margin: 8px 0; }
+.recommendations strong { color: #e7e5e4; }
+
+/* Context box */
+.context-box {
+  background: #1c1917;
+  border-left: 4px solid #60a5fa;
+  padding: 20px;
+  margin: 20px 0;
+  border-radius: 0 8px 8px 0;
+}
+.context-box h3 { color: #60a5fa; margin-top: 0; }
+
+hr { border-color: #292524; margin: 50px 0 30px; }
+
+@media (max-width: 900px) {
+  body { padding: 20px; }
+  .preview-row, .desc-grid { grid-template-columns: 1fr; }
+  .preview-cell iframe { height: 400px; }
+}
+</style>
+</head>
+<body>
+
+<h1>Zen Manuscript - Redesign Alternatives</h1>
+<p class="subtitle">Replacement splash screens and main app screens for the Zen Manuscript theme</p>
+
+<div class="context-box">
+  <h3>Context</h3>
+  <p>The original Zen Manuscript had a splash screen, walkthrough, and main app. The reviewer kept only the walkthrough/onboarding flow and requested new alternatives for the splash and main app components. Below are 3 splash options and 3 main app options, all matching the Zen Manuscript aesthetic: water ripple, ink wash, washi paper, stillness.</p>
+</div>
+
+<!-- ========== SPLASH OPTIONS ========== -->
+<h2>Splash Screen Replacements</h2>
+
+<div class="desc-grid">
+  <div class="desc-item">
+    <h4>Option A: Ink Drop</h4>
+    <p>Minimal splash with a single ink droplet falling into still water. Concentric rings expand outward from the impact point. Brand name fades in at center. Auto-advances after ~3 seconds.</p>
+    <ul>
+      <li>Droplet + impact animation</li>
+      <li>3 expanding ripple rings</li>
+      <li>Gold progress bar at bottom</li>
+      <li>Auto-advance with no user interaction</li>
+    </ul>
+  </div>
+  <div class="desc-item">
+    <h4>Option B: Calligraphy Brush Stroke</h4>
+    <p>Brand name appears on a parchment background as a horizontal ink brush stroke draws across the page. A small gold seal/chop mark stamps below. Warm, physical, manuscript feel.</p>
+    <ul>
+      <li>Washi paper texture background</li>
+      <li>Animated horizontal brush stroke</li>
+      <li>Gold chop/seal mark animation</li>
+      <li>SVG displacement filter for rough ink edges</li>
+    </ul>
+  </div>
+  <div class="desc-item">
+    <h4>Option C: Zen Garden Rake</h4>
+    <p>Parallel zen garden rake lines animate across a dark sand surface. Brand emerges in a circular void between the lines, surrounded by concentric rake circles. Ultra-minimal, contemplative.</p>
+    <ul>
+      <li>15 parallel rake lines staggered entry</li>
+      <li>Central void with concentric circles</li>
+      <li>Sand grain noise texture overlay</li>
+      <li>Darkest, most meditative feel</li>
+    </ul>
+  </div>
+</div>
+
+<div class="preview-row">
+  <div class="preview-cell">
+    <h4>A: Ink Drop <a href="splash-a-ink-drop.html" class="open-btn" target="_blank">Open Full</a></h4>
+    <iframe src="splash-a-ink-drop.html" loading="lazy"></iframe>
+  </div>
+  <div class="preview-cell">
+    <h4>B: Calligraphy <a href="splash-b-calligraphy.html" class="open-btn" target="_blank">Open Full</a></h4>
+    <iframe src="splash-b-calligraphy.html" loading="lazy"></iframe>
+  </div>
+  <div class="preview-cell">
+    <h4>C: Zen Garden <a href="splash-c-zen-garden.html" class="open-btn" target="_blank">Open Full</a></h4>
+    <iframe src="splash-c-zen-garden.html" loading="lazy"></iframe>
+  </div>
+</div>
+
+<!-- ========== MAIN APP OPTIONS ========== -->
+<h2>Main App Replacements</h2>
+
+<div class="desc-grid">
+  <div class="desc-item">
+    <h4>Option A: Zen Reading Room</h4>
+    <p>Poem centered on an ink-wash gradient background with no visible card container. Controls float as translucent circles at the bottom edge. Ultra-minimal, immersive reading experience.</p>
+    <ul>
+      <li>No card/container -- text breathes freely</li>
+      <li>Floating circular controls with backdrop blur</li>
+      <li>Ghost brand in top-left at low opacity</li>
+      <li>"Swipe for next" text hint on right edge</li>
+    </ul>
+  </div>
+  <div class="desc-item">
+    <h4>Option B: Water Reflection</h4>
+    <p>Poem card floats on a subtle ripple canvas with a gentle bob animation. Bottom controls are styled as rounded pebbles/stones. Maintains the original water theme most directly.</p>
+    <ul>
+      <li>Live ripple canvas (click to add ripples)</li>
+      <li>Glassmorphism card with backdrop blur</li>
+      <li>Gentle floating animation on card</li>
+      <li>Pebble-shaped controls with labels</li>
+    </ul>
+  </div>
+  <div class="desc-item">
+    <h4>Option C: Manuscript Page</h4>
+    <p>Clean parchment page with ink calligraphy styling. Fold line down center, aged corner marks, decorative ornament. Bottom strip uses the wooden toolbox style. Most traditional/physical feel.</p>
+    <ul>
+      <li>Parchment texture with fold shadow</li>
+      <li>Corner marks and paper edge effects</li>
+      <li>Bismillah-style ornament divider</li>
+      <li>Page number and page-turn edge hint</li>
+    </ul>
+  </div>
+</div>
+
+<div class="preview-row">
+  <div class="preview-cell">
+    <h4>A: Zen Reading Room <a href="main-a-zen-reading-room.html" class="open-btn" target="_blank">Open Full</a></h4>
+    <iframe src="main-a-zen-reading-room.html" loading="lazy"></iframe>
+  </div>
+  <div class="preview-cell">
+    <h4>B: Water Reflection <a href="main-b-water-reflection.html" class="open-btn" target="_blank">Open Full</a></h4>
+    <iframe src="main-b-water-reflection.html" loading="lazy"></iframe>
+  </div>
+  <div class="preview-cell">
+    <h4>C: Manuscript Page <a href="main-c-manuscript-page.html" class="open-btn" target="_blank">Open Full</a></h4>
+    <iframe src="main-c-manuscript-page.html" loading="lazy"></iframe>
+  </div>
+</div>
+
+<!-- ========== COMPARISON TABLES ========== -->
+<h2>Splash Comparison</h2>
+<table class="comparison-table">
+  <thead>
+    <tr>
+      <th>Feature</th>
+      <th>A: Ink Drop</th>
+      <th>B: Calligraphy</th>
+      <th>C: Zen Garden</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>Color Palette</td><td>Dark water (deep blue/black)</td><td>Warm parchment (beige/brown)</td><td>Dark sand (near-black)</td></tr>
+    <tr><td>Animation Style</td><td>Ripple rings expanding</td><td>Horizontal brush stroke</td><td>Parallel lines sliding in</td></tr>
+    <tr><td>Brand Reveal</td><td>Fade up from center</td><td>Blur-to-sharp with seal stamp</td><td>Scale + unblur in void</td></tr>
+    <tr><td>Auto-Advance</td><td>Progress bar (3s)</td><td>Dot sequence (3s)</td><td>Progress bar (3s)</td></tr>
+    <tr><td>Texture</td><td>None (clean dark)</td><td>Washi paper noise + SVG filter</td><td>Sand grain noise</td></tr>
+    <tr><td>Mood</td><td>Liquid, flowing, calm</td><td>Physical, warm, traditional</td><td>Sparse, meditative, minimal</td></tr>
+    <tr><td>Reduced Motion</td><td>Respects prefers-reduced-motion</td><td>Respects prefers-reduced-motion</td><td>Respects prefers-reduced-motion</td></tr>
+  </tbody>
+</table>
+
+<h2>Main App Comparison</h2>
+<table class="comparison-table">
+  <thead>
+    <tr>
+      <th>Feature</th>
+      <th>A: Zen Reading Room</th>
+      <th>B: Water Reflection</th>
+      <th>C: Manuscript Page</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr><td>Background</td><td>Ink-wash gradient</td><td>Dark water + live ripple canvas</td><td>Parchment texture</td></tr>
+    <tr><td>Poem Container</td><td>None (free-floating text)</td><td>Glassmorphism card (floating)</td><td>Paper sheet with fold line</td></tr>
+    <tr><td>Controls Style</td><td>Floating translucent circles</td><td>Rounded pebble buttons</td><td>Wooden strip bar</td></tr>
+    <tr><td>Controls Position</td><td>Bottom center, minimal</td><td>Bottom, with labels</td><td>Bottom, fixed strip</td></tr>
+    <tr><td>Interactive Elements</td><td>Hover on brand/controls</td><td>Click for ripples, card float</td><td>Page-turn edge hint</td></tr>
+    <tr><td>Color Palette</td><td>Dark (ink wash blues)</td><td>Dark (water blues)</td><td>Light (parchment/warm)</td></tr>
+    <tr><td>Typography Feel</td><td>Ethereal, floating</td><td>Centered, contained</td><td>Traditional calligraphy</td></tr>
+    <tr><td>Mobile Optimized</td><td>Yes (hidden scroll hint)</td><td>Yes (responsive card/controls)</td><td>Yes (hidden page-turn)</td></tr>
+  </tbody>
+</table>
+
+<!-- ========== RECOMMENDATIONS ========== -->
+<div class="recommendations">
+  <h3>Recommendations</h3>
+  <p><strong>Best Splash + Main Pairing (Cohesive):</strong> Splash A (Ink Drop) + Main B (Water Reflection) -- both share the water/ripple motif and dark palette, creating the most unified experience.</p>
+  <p><strong>Most Immersive Reading:</strong> Main A (Zen Reading Room) -- removes all visual barriers between the reader and the poem. Best for users who want pure poetry focus.</p>
+  <p><strong>Most Unique/Distinctive:</strong> Splash C (Zen Garden) -- the rake-line animation is unlike anything standard. Pairs well with Main A for a fully minimal zen experience.</p>
+  <p><strong>Most Traditional/Warm:</strong> Splash B (Calligraphy) + Main C (Manuscript Page) -- both use the parchment palette and physical metaphors (brush, paper, wood). Feels like opening an actual book.</p>
+  <p><strong>Best for Mobile:</strong> Main A (Zen Reading Room) -- fewest visual elements competing for space. Controls are compact and centered.</p>
+</div>
+
+<hr>
+<h2>Next Steps</h2>
+<p style="font-size: 1.125rem; margin-top: 16px;">
+  Pick your preferred <strong>Splash</strong> (A, B, or C) and <strong>Main App</strong> (A, B, or C) -- they can be mixed and matched.
+  Reply with something like: <strong>"Splash A + Main B"</strong> or <strong>"Splash C + Main A"</strong>
+</p>
+
+</body>
+</html>

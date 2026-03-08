@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>E2E #7: Scroll Keeper -- Physical Unroll</title>
+<title>Option B: Progressive Density -- Scroll Keeper</title>
 <link href="https://fonts.googleapis.com/css2?family=Forum&family=Reem+Kufi:wght@400;700&family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
 <script src="https://unpkg.com/lucide@latest"></script>
 <style>
@@ -275,7 +275,7 @@ html.dark .roller-bar {
 
 /* --- Scroll Hero --- */
 .scroll-hero {
-  height: 85vh;
+  height: 100vh;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -315,10 +315,13 @@ html.dark .roller-bar {
 
 /* --- Scroll Sections --- */
 .scroll-section {
-  height: 110vh;
+  height: 55vh;
   position: relative;
   overflow: hidden;
 }
+/* Progressive Density: each section gets tighter */
+.scroll-section[data-section="2"] { height: 50vh; }
+.scroll-section[data-section="3"] { height: 45vh; }
 
 .section-sticky-frame {
   position: sticky;
@@ -396,7 +399,7 @@ html.dark .roller-bar {
   color: var(--gold);
   letter-spacing: 0.3em;
   text-transform: uppercase;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.3rem;
   direction: ltr;
   opacity: 0;
   transform: translateY(10px);
@@ -409,7 +412,7 @@ html.dark .roller-bar {
   font-size: clamp(2.4rem, 6vw, 3.2rem);
   color: var(--gold);
   line-height: 1.2;
-  margin-bottom: 0.3rem;
+  margin-bottom: 0.2rem;
   text-shadow: 0 0 20px rgba(197,160,89,0.2);
   opacity: 0;
   transform: scale(0.8);
@@ -421,7 +424,7 @@ html.dark .roller-bar {
   font-size: 0.85rem;
   font-weight: 400;
   color: var(--ink-dim);
-  margin-bottom: 1rem;
+  margin-bottom: 0.6rem;
   direction: ltr;
   opacity: 0;
   transform: translateY(8px);
@@ -433,7 +436,7 @@ html.dark .roller-bar {
   width: 0px;
   height: 1px;
   background: linear-gradient(90deg, transparent, var(--gold), transparent);
-  margin: 0 auto 1rem;
+  margin: 0 auto 0.6rem;
   transition: width 0.3s ease;
 }
 
@@ -453,7 +456,7 @@ html.dark .roller-bar {
   font-family: var(--font-ar);
   font-size: 1.1rem;
   color: var(--gold);
-  margin-top: 1.5rem;
+  margin-top: 0.8rem;
   opacity: 0;
   transform: translateY(12px);
   text-shadow: 0 0 12px rgba(197,160,89,0.15);
@@ -463,10 +466,10 @@ html.dark .roller-bar {
 
 /* Section-specific: bilingual stagger (section 2) */
 .bilingual-demo {
-  margin-top: 1.5rem;
+  margin-top: 0.8rem;
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 0.4rem;
   align-items: center;
 }
 .bilingual-line {
@@ -494,7 +497,7 @@ html.dark .roller-bar {
   align-items: center;
   justify-content: center;
   width: 56px; height: 56px;
-  margin-top: 1.5rem;
+  margin-top: 0.8rem;
   color: var(--gold);
   opacity: 0;
   transform: scale(0.5);
@@ -506,7 +509,7 @@ html.dark .roller-bar {
 
 /* --- Scroll Finale --- */
 .scroll-finale {
-  height: 40vh;
+  height: 35vh;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -523,7 +526,7 @@ html.dark .roller-bar {
   font-size: 1.1rem;
   color: var(--ink-dim);
   letter-spacing: 0.15em;
-  margin-bottom: 2rem;
+  margin-bottom: 1.2rem;
   direction: ltr;
   opacity: 0;
   transform: translateY(12px);
@@ -561,9 +564,23 @@ html.dark .roller-bar {
   scroll-snap-type: y proximity;
 }
 
+/* Progressive density: tighten margins in later sections */
+.scroll-section[data-section="2"] .sc-chapter { margin-bottom: 0.25rem; }
+.scroll-section[data-section="2"] .sc-initial { margin-bottom: 0.15rem; }
+.scroll-section[data-section="2"] .sc-subtitle { margin-bottom: 0.5rem; }
+.scroll-section[data-section="2"] .sc-rule { margin-bottom: 0.5rem; }
+
+.scroll-section[data-section="3"] .sc-chapter { margin-bottom: 0.2rem; }
+.scroll-section[data-section="3"] .sc-initial { margin-bottom: 0.1rem; }
+.scroll-section[data-section="3"] .sc-subtitle { margin-bottom: 0.4rem; }
+.scroll-section[data-section="3"] .sc-rule { margin-bottom: 0.4rem; }
+.scroll-section[data-section="3"] .save-heart { margin-top: 0.6rem; }
+
 /* ============ Responsive -- Scroll Onboarding ============ */
 @media (max-width: 1024px) {
-  .scroll-section { height: 105vh; }
+  .scroll-section { height: 52vh; }
+  .scroll-section[data-section="2"] { height: 48vh; }
+  .scroll-section[data-section="3"] { height: 44vh; }
 }
 @media (max-width: 768px) {
   .scroll-progress-track {
@@ -572,7 +589,9 @@ html.dark .roller-bar {
     height: 30vh;
   }
   .scroll-progress-marker { width: 8px; height: 8px; }
-  .scroll-section { height: 100vh; }
+  .scroll-section { height: 50vh; }
+  .scroll-section[data-section="2"] { height: 46vh; }
+  .scroll-section[data-section="3"] { height: 42vh; }
   .section-gilt-frame { inset: 12px; }
   .arabesque-corner { width: 40px; height: 40px; }
   .arabesque-corner.top-left { top: 16px; left: 16px; }

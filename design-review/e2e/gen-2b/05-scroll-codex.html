@@ -317,89 +317,12 @@
             opacity: 0;
             transition: opacity 0.8s ease;
             padding: 2rem;
-            padding-right: 4.5rem;
+            padding-right: 5rem;
             max-width: 900px;
             margin: 0 auto;
             padding-bottom: 5rem;
         }
         #mainContent.show { opacity: 1; }
-
-        /* ========== Controls - Vertical (Desktop) ========== */
-        .controls-vertical {
-            position: fixed; top: 50%; right: 0.75rem;
-            transform: translateY(-50%);
-            display: flex; flex-direction: column; gap: 0.5rem;
-            z-index: 50;
-        }
-        .ctrl-btn {
-            width: 44px; height: 44px;
-            border-radius: 10px;
-            background: var(--panel-dark);
-            border: 1px solid var(--border-dark);
-            color: var(--text-dark);
-            cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            transition: background 0.25s, border-color 0.25s, transform 0.2s;
-        }
-        body.light .ctrl-btn {
-            background: var(--panel-light);
-            border-color: var(--border-light);
-            color: var(--text-light);
-        }
-        .ctrl-btn:hover, .ctrl-btn:focus-visible {
-            border-color: var(--gold);
-            background: rgba(197, 160, 89, 0.08);
-            transform: scale(1.08);
-        }
-        .ctrl-btn svg { width: 20px; height: 20px; }
-
-        /* ========== CONTROLS: Page Tab Bar (Mobile) ========== */
-        .controls-bottom {
-            display: none;
-            position: fixed; bottom: 0; left: 0; right: 0;
-            z-index: 50;
-            flex-direction: row;
-            justify-content: center;
-            align-items: flex-end;
-            gap: 0;
-            padding: 0;
-        }
-
-        /* Each tab looks like a page corner peeking up */
-        .page-tab {
-            display: flex; flex-direction: column;
-            align-items: center; justify-content: center;
-            gap: 3px;
-            width: 72px; min-height: 52px;
-            background: var(--panel-dark);
-            border: 1px solid var(--border-dark);
-            border-bottom: none;
-            border-radius: 8px 8px 0 0;
-            color: var(--comment);
-            cursor: pointer;
-            font-size: 9px;
-            font-family: 'IBM Plex Mono', monospace;
-            transition: all 0.2s ease;
-            /* Page corner effect */
-            position: relative;
-            padding: 8px 4px 6px;
-        }
-        body.light .page-tab {
-            background: var(--panel-light);
-            border-color: var(--border-light);
-        }
-        .page-tab:hover {
-            color: var(--gold);
-            transform: translateY(-4px);
-        }
-        .page-tab:hover::after {
-            content: '';
-            position: absolute; top: 0; right: 0;
-            width: 8px; height: 8px;
-            background: linear-gradient(135deg, var(--gold) 50%, transparent 50%);
-            border-radius: 0 8px 0 0;
-        }
-        .page-tab svg { width: 18px; height: 18px; }
 
         /* Open Book Layout */
         .book-spread {
@@ -501,6 +424,190 @@
             font-family: 'Amiri', serif;
         }
 
+        /* Translation row */
+        .translation-row {
+            display: none;
+            font-family: 'Tajawal', sans-serif;
+            font-size: 14px;
+            color: var(--comment);
+            text-align: center;
+            padding: 10px 0;
+            direction: ltr;
+        }
+        .translation-row.visible { display: block; }
+
+        /* Inline transliteration */
+        .verse-translit {
+            display: none;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 11px;
+            color: var(--comment);
+            font-style: italic;
+            direction: ltr;
+            text-align: center;
+            margin-top: 2px;
+        }
+        .verse-translit.visible { display: block; }
+
+        /* ========== VC Strip: Gilded Margin Strip with Illuminated Toggles ========== */
+        .vc-strip {
+            position: fixed;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 60;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            width: 52px;
+            padding: 12px 4px;
+            background: var(--panel-dark);
+            border-radius: 8px 0 0 8px;
+            border: 1px solid var(--border-dark);
+            border-right: none;
+            box-shadow: -2px 0 12px rgba(0,0,0,0.2);
+            border-left: 3px solid var(--gold);
+        }
+        body.light .vc-strip {
+            background: var(--panel-light);
+            border-color: var(--border-light);
+            border-left-color: var(--gold);
+        }
+
+        /* Decorative gold leaf dots */
+        .vc-strip::before, .vc-strip::after {
+            content: '';
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--gold);
+            opacity: 0.4;
+        }
+
+        .vc-toggle {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: transparent;
+            border: 1px solid var(--border-dark);
+            border-radius: 6px;
+            cursor: pointer;
+            color: var(--comment);
+            transition: all 0.25s ease;
+            position: relative;
+        }
+        body.light .vc-toggle { border-color: var(--border-light); }
+
+        .vc-toggle:hover {
+            border-color: var(--gold);
+            color: var(--gold);
+            background: rgba(197,160,89,0.06);
+        }
+
+        /* Active: illuminated glow */
+        .vc-toggle.active {
+            border-color: var(--gold);
+            color: var(--gold);
+            background: rgba(197,160,89,0.1);
+            box-shadow: 0 0 12px rgba(197,160,89,0.15), inset 0 0 8px rgba(197,160,89,0.08);
+        }
+
+        .vc-toggle i { width: 18px; height: 18px; }
+        .vc-badge {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 8px;
+            font-weight: 600;
+            color: var(--panel-dark);
+            background: var(--gold);
+            padding: 1px 3px;
+            border-radius: 2px;
+            line-height: 1.2;
+        }
+
+        /* ========== Bottom Action Bar (Page Tab Style) ========== */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 50;
+            display: flex;
+            flex-direction: row;
+            justify-content: center;
+            align-items: flex-end;
+            gap: 0;
+            padding: 0;
+            padding-bottom: env(safe-area-inset-bottom, 0px);
+            direction: ltr;
+        }
+        .nav-tab {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 3px;
+            flex: 1;
+            max-width: 80px;
+            min-height: 48px;
+            background: var(--panel-dark);
+            border: 1px solid var(--border-dark);
+            border-bottom: none;
+            border-radius: 8px 8px 0 0;
+            color: var(--comment);
+            cursor: pointer;
+            font-size: 8px;
+            font-family: 'IBM Plex Mono', monospace;
+            transition: all 0.2s ease;
+            position: relative;
+            padding: 6px 2px 4px;
+        }
+        body.light .nav-tab {
+            background: var(--panel-light);
+            border-color: var(--border-light);
+        }
+        .nav-tab:hover {
+            color: var(--gold);
+            transform: translateY(-4px);
+        }
+
+        /* Settings panel */
+        .settings-panel {
+            display: none;
+            position: fixed;
+            right: 64px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: var(--panel-dark);
+            border: 1px solid var(--border-dark);
+            border-radius: 8px;
+            padding: 16px;
+            z-index: 59;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+            width: 180px;
+            font-size: 13px;
+            color: var(--text-dark);
+        }
+        body.light .settings-panel {
+            background: var(--panel-light);
+            border-color: var(--border-light);
+            color: var(--text-light);
+        }
+        .settings-panel.visible { display: block; }
+        .settings-panel h4 { margin-bottom: 8px; color: var(--gold); }
+        .settings-panel label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 6px;
+            cursor: pointer;
+        }
+
         /* Status bar */
         .status-bar {
             position: fixed; bottom: 0; left: 0; right: 0;
@@ -528,15 +635,21 @@
 
         /* ========== MOBILE ========== */
         @media (max-width: 768px) {
-            #mainContent { padding: 2rem 1rem; padding-bottom: 6rem; padding-right: 1rem; }
-            .controls-vertical { display: none; }
-            .controls-bottom { display: flex; }
+            #mainContent { padding: 2rem 1rem 100px; padding-right: 52px; }
             .status-bar { display: none; }
             .book-spread { flex-direction: column; }
             .book-spread::before { display: none; }
-            .page-left { border-radius: 4px 4px 0 0; padding: 1.5rem; }
-            .page-right { border-radius: 0 0 4px 4px; padding: 1.5rem; }
+            .page-left { border-radius: 4px 4px 0 0; padding: 1rem; }
+            .page-right { border-radius: 0 0 4px 4px; padding: 1rem; }
             .poem-text { font-size: 1.35rem; line-height: 2.1; }
+            .vc-strip { width: 44px; }
+            .vc-toggle { width: 36px; height: 36px; }
+            .settings-panel { right: 50px; width: 160px; }
+            .verse-translit { font-size: 10px; }
+        }
+        @media (max-width: 480px) {
+            #mainContent { padding-right: 48px; }
+            .vc-strip { width: 40px; }
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -649,22 +762,30 @@
 
     <!-- ======== Main App - Open Book Layout ======== -->
     <div id="mainContent">
-        <!-- Vertical Controls (Desktop) -->
-        <nav class="controls-vertical" aria-label="App controls">
-            <button class="ctrl-btn" aria-label="Next poem"><i data-lucide="shuffle"></i></button>
-            <button class="ctrl-btn" aria-label="Save poem"><i data-lucide="heart"></i></button>
-            <button class="ctrl-btn" aria-label="Listen"><i data-lucide="headphones"></i></button>
-            <button class="ctrl-btn" aria-label="Share poem"><i data-lucide="share-2"></i></button>
-            <button class="ctrl-btn" id="toggleTheme" aria-label="Toggle theme"><i data-lucide="sun"></i></button>
+        <!-- Vertical Controls: Gilded Margin Strip -->
+        <nav class="vc-strip" aria-label="Toggle controls">
+            <button class="vc-toggle" data-action="translation" aria-label="Toggle translation">
+                <span style="font-family:'Tajawal',sans-serif;font-size:13px;font-weight:700;line-height:1;letter-spacing:-0.5px">ع<span style="opacity:0.4">|</span>A</span>
+            </button>
+            <button class="vc-toggle" data-action="transliteration" aria-label="Toggle transliteration">
+                <i data-lucide="text-cursor-input"></i>
+            </button>
+            <button class="vc-toggle" data-action="textsize" aria-label="Cycle text size">
+                <i data-lucide="type"></i>
+                <span class="vc-badge">M</span>
+            </button>
+            <button class="vc-toggle" data-action="settings" aria-label="Toggle settings">
+                <i data-lucide="settings"></i>
+            </button>
         </nav>
 
-        <!-- Page Tab Bar Controls (Mobile) -->
-        <nav class="controls-bottom" aria-label="App controls">
-            <button class="page-tab" aria-label="Next poem"><i data-lucide="shuffle"></i><span>Shuffle</span></button>
-            <button class="page-tab" aria-label="Save poem"><i data-lucide="heart"></i><span>Save</span></button>
-            <button class="page-tab" aria-label="Listen"><i data-lucide="headphones"></i><span>Listen</span></button>
-            <button class="page-tab" aria-label="Share poem"><i data-lucide="share-2"></i><span>Share</span></button>
-        </nav>
+        <!-- Settings Panel -->
+        <div class="settings-panel" id="settingsPanel">
+            <h4>Settings</h4>
+            <label><input type="checkbox" id="settingTheme"> Light mode</label>
+            <label><input type="checkbox" id="settingTashkeel"> Tashkeel</label>
+            <label><input type="checkbox" id="settingAnimations" checked> Animations</label>
+        </div>
 
         <!-- Open Book Spread -->
         <div class="book-spread">
@@ -682,13 +803,26 @@
 
             <!-- Right page - Poem -->
             <div class="page-right">
-                <div class="poem-text" lang="ar" dir="rtl">
-                    أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ<br>
+                <div class="poem-text poem-content" lang="ar" dir="rtl">
+                    أَنا البَحرُ في أَحشائِهِ الدُرُّ كامِنٌ
+                    <div class="verse-translit">Ana al-bahru fi ahsha'ihi al-durru kaminun</div>
                     فَهَل سَأَلوا الغَوّاصَ عَن صَدَفاتي
+                    <div class="verse-translit">fa-hal sa'alu al-ghawwasa an sadafati</div>
+                </div>
+                <div class="translation-row" id="translationRow">
+                    I am the sea, in whose depths pearls lie hidden / Have they asked the diver about my shells?
                 </div>
                 <div class="poet">-- أحمد شوقي</div>
             </div>
         </div>
+
+        <!-- Bottom Action Bar -->
+        <nav class="bottom-nav" aria-label="App actions">
+            <button class="nav-tab" aria-label="Next poem"><i data-lucide="shuffle" style="width:18px;height:18px"></i><span>shuffle</span></button>
+            <button class="nav-tab" aria-label="Save poem"><i data-lucide="heart" style="width:18px;height:18px"></i><span>save</span></button>
+            <button class="nav-tab" aria-label="Listen"><i data-lucide="headphones" style="width:18px;height:18px"></i><span>listen</span></button>
+            <button class="nav-tab" aria-label="Share"><i data-lucide="share-2" style="width:18px;height:18px"></i><span>share</span></button>
+        </nav>
     </div>
 
     <div class="status-bar">
@@ -754,27 +888,73 @@
 
         document.getElementById('onboarding').addEventListener('click', advanceCodex);
 
-        /* ---------- Tab switching ---------- */
-        document.querySelectorAll('.tab').forEach(function(tab) {
-            tab.addEventListener('click', function() {
-                document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
-                tab.classList.add('active');
+        /* ---------- VC Strip toggle logic ---------- */
+        document.querySelectorAll('.vc-toggle').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var action = btn.dataset.action;
+                if (action === 'textsize') {
+                    var sizes = ['S','M','L','XL'];
+                    var badge = btn.querySelector('.vc-badge');
+                    var idx = sizes.indexOf(badge.textContent);
+                    idx = (idx + 1) % sizes.length;
+                    badge.textContent = sizes[idx];
+                    var poemEl = document.querySelector('.poem-content');
+                    if (poemEl) {
+                        poemEl.style.fontSize = {'S':'1rem','M':'1.25rem','L':'1.5rem','XL':'2rem'}[sizes[idx]];
+                    }
+                } else if (action === 'translation') {
+                    btn.classList.toggle('active');
+                    var translationRow = document.getElementById('translationRow');
+                    if (translationRow) {
+                        translationRow.classList.toggle('visible');
+                    }
+                } else if (action === 'transliteration') {
+                    btn.classList.toggle('active');
+                    document.querySelectorAll('.verse-translit').forEach(function(el) {
+                        el.classList.toggle('visible');
+                    });
+                } else if (action === 'settings') {
+                    btn.classList.toggle('active');
+                    var panel = document.getElementById('settingsPanel');
+                    if (panel) {
+                        panel.classList.toggle('visible');
+                    }
+                } else {
+                    btn.classList.toggle('active');
+                }
             });
         });
 
-        /* ---------- Theme toggle ---------- */
-        var themeBtn = document.getElementById('toggleTheme');
-        themeBtn.addEventListener('click', function() {
-            document.body.classList.toggle('light');
-            var isLight = document.body.classList.contains('light');
-            var icon = themeBtn.querySelector('i');
-            if (icon) {
-                icon.setAttribute('data-lucide', isLight ? 'moon' : 'sun');
-                lucide.createIcons({ nodes: [themeBtn] });
-            }
-            themeBtn.setAttribute('aria-label',
-                isLight ? 'Switch to dark theme' : 'Switch to light theme');
-        });
+        /* ---------- Settings panel checkboxes ---------- */
+        var settingTheme = document.getElementById('settingTheme');
+        var settingTashkeel = document.getElementById('settingTashkeel');
+        var settingAnimations = document.getElementById('settingAnimations');
+
+        if (settingTheme) {
+            settingTheme.addEventListener('change', function() {
+                document.body.classList.toggle('light', settingTheme.checked);
+            });
+        }
+
+        if (settingTashkeel) {
+            settingTashkeel.addEventListener('change', function() {
+                var poemEl = document.querySelector('.poem-content');
+                if (!poemEl) return;
+                // Placeholder: tashkeel toggle would strip/restore diacritics
+                // For now, toggle a class for potential CSS-based handling
+                poemEl.classList.toggle('no-tashkeel', !settingTashkeel.checked);
+            });
+        }
+
+        if (settingAnimations) {
+            settingAnimations.addEventListener('change', function() {
+                if (settingAnimations.checked) {
+                    document.documentElement.style.removeProperty('--speed');
+                } else {
+                    document.documentElement.style.setProperty('--speed', '0s');
+                }
+            });
+        }
 
         /* ---------- Lucide icons init ---------- */
         lucide.createIcons();

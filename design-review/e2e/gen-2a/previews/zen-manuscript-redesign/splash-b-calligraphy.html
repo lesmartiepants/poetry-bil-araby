@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Splash Option B: Calligraphy Brush Stroke</title>
+<link href="https://fonts.googleapis.com/css2?family=Forum&family=Reem+Kufi:wght@400;700&family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --deep-water: #0A1420;
+  --parchment: #d4c4a0;
+  --parchment-dark: #b5a37d;
+  --ink: #1a120a;
+  --ink-light: rgba(26,18,10,0.7);
+  --gold: #C5A059;
+  --text-dim: rgba(26,18,10,0.45);
+  --font-ar: 'Amiri', serif;
+  --font-ui: 'Tajawal', system-ui, sans-serif;
+}
+html { font-family: var(--font-ui); }
+body {
+  min-height: 100vh; overflow: hidden;
+  display: flex; align-items: center; justify-content: center;
+  /* Parchment / washi paper background */
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E"),
+    linear-gradient(170deg, #e8dcc4 0%, #d4c4a0 50%, #c8b892 100%);
+}
+
+.splash-container {
+  position: fixed; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: opacity 1s ease;
+}
+.splash-container.hidden { opacity: 0; pointer-events: none; }
+
+/* Brush stroke line across the page */
+.brush-stroke {
+  position: absolute; top: 50%; left: 0;
+  width: 0; height: 3px;
+  background: linear-gradient(90deg, transparent, var(--ink-light) 10%, var(--ink) 50%, var(--ink-light) 90%, transparent);
+  transform: translateY(-50%);
+  animation: strokeDraw 2s cubic-bezier(0.22, 1, 0.36, 1) 0.5s forwards;
+  /* Ink spatter edges */
+  filter: url(#roughEdge);
+}
+@keyframes strokeDraw {
+  0% { width: 0; left: 50%; opacity: 0.8; }
+  100% { width: 100%; left: 0; opacity: 0.6; }
+}
+
+/* Thinner secondary stroke */
+.brush-stroke-thin {
+  position: absolute; top: calc(50% + 16px); left: 0;
+  width: 0; height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(139,115,85,0.4) 20%, rgba(139,115,85,0.6) 50%, rgba(139,115,85,0.4) 80%, transparent);
+  animation: strokeDraw 1.8s cubic-bezier(0.22, 1, 0.36, 1) 0.8s forwards;
+}
+
+/* Brand text drawn on top */
+.brand {
+  position: relative; z-index: 10;
+  text-align: center;
+  opacity: 0;
+  transform: translateY(6px);
+  animation: brushReveal 2.5s cubic-bezier(0.16, 1, 0.3, 1) 1.5s forwards;
+}
+@keyframes brushReveal {
+  0% { opacity: 0; transform: translateY(6px); filter: blur(2px); }
+  50% { filter: blur(0); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.brand-name {
+  display: flex; align-items: flex-end; justify-content: center;
+  gap: 0.5rem; margin-bottom: 0.5rem;
+}
+.brand-en {
+  font-family: 'Forum', serif;
+  font-size: clamp(2.8rem, 6vw, 4.5rem);
+  letter-spacing: -0.05em;
+  color: var(--ink);
+  line-height: 1;
+  /* Ink texture feel */
+  text-shadow: 0 0 1px rgba(26,18,10,0.15);
+}
+.brand-ar {
+  font-family: 'Reem Kufi', sans-serif;
+  font-weight: 700;
+  font-size: clamp(1.8rem, 4vw, 3rem);
+  color: var(--ink);
+  line-height: 1;
+}
+.brand-subtitle {
+  font-size: 12px;
+  color: var(--text-dim);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  direction: ltr;
+  margin-top: 4px;
+}
+
+/* Small gold seal / chop mark */
+.seal {
+  position: absolute; bottom: -40px; left: 50%;
+  transform: translateX(-50%);
+  width: 32px; height: 32px;
+  border: 2px solid var(--gold);
+  border-radius: 4px;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0;
+  animation: sealStamp 0.4s ease 3s forwards;
+}
+.seal::after {
+  content: 'ش';
+  font-family: var(--font-ar);
+  font-size: 16px;
+  color: var(--gold);
+}
+@keyframes sealStamp {
+  0% { opacity: 0; transform: translateX(-50%) scale(1.5) rotate(-5deg); }
+  60% { transform: translateX(-50%) scale(0.95) rotate(0deg); }
+  100% { opacity: 0.7; transform: translateX(-50%) scale(1) rotate(0deg); }
+}
+
+/* Progress dots */
+.progress-dots {
+  position: absolute; bottom: 50px; left: 50%;
+  transform: translateX(-50%);
+  display: flex; gap: 8px;
+  opacity: 0;
+  animation: brushReveal 1s ease 2.5s forwards;
+}
+.progress-dot {
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: rgba(26,18,10,0.2);
+}
+.progress-dot.filling {
+  animation: dotFill 1s linear forwards;
+}
+.progress-dot:nth-child(1) { animation-delay: 2.5s; }
+.progress-dot:nth-child(2) { animation-delay: 3.5s; }
+.progress-dot:nth-child(3) { animation-delay: 4.5s; }
+@keyframes dotFill {
+  to { background: var(--ink); }
+}
+
+/* SVG filter for rough ink edges */
+svg.filters { position: absolute; width: 0; height: 0; }
+</style>
+</head>
+<body>
+
+<svg class="filters">
+  <filter id="roughEdge">
+    <feTurbulence type="fractalNoise" baseFrequency="0.04" numOctaves="4" result="noise"/>
+    <feDisplacementMap in="SourceGraphic" in2="noise" scale="2" xChannelSelector="R" yChannelSelector="G"/>
+  </filter>
+</svg>
+
+<div class="splash-container" id="splash">
+  <div class="brush-stroke"></div>
+  <div class="brush-stroke-thin"></div>
+
+  <div class="brand">
+    <div class="brand-name">
+      <span class="brand-en">poetry</span>
+      <span class="brand-ar">بالعربي</span>
+    </div>
+    <p class="brand-subtitle">Ink on Parchment</p>
+    <div class="seal"></div>
+  </div>
+
+  <div class="progress-dots">
+    <div class="progress-dot filling"></div>
+    <div class="progress-dot filling"></div>
+    <div class="progress-dot filling"></div>
+  </div>
+</div>
+
+<script>
+setTimeout(function() {
+  document.getElementById('splash').classList.add('hidden');
+}, 5500);
+</script>
+</body>
+</html>

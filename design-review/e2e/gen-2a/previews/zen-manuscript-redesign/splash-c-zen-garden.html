@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Splash Option C: Zen Garden Rake</title>
+<link href="https://fonts.googleapis.com/css2?family=Forum&family=Reem+Kufi:wght@400;700&family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --sand: #1a1810;
+  --sand-light: #2a2620;
+  --rake-line: rgba(184,200,216,0.08);
+  --gold: #C5A059;
+  --moonlight: #E8E4F0;
+  --text-dim: rgba(232,228,240,0.4);
+  --font-ar: 'Amiri', serif;
+  --font-ui: 'Tajawal', system-ui, sans-serif;
+}
+html { font-family: var(--font-ui); background: var(--sand); color: var(--moonlight); }
+body { min-height: 100vh; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+
+.splash-container {
+  position: fixed; inset: 0;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--sand);
+  transition: opacity 1.2s ease;
+}
+.splash-container.hidden { opacity: 0; pointer-events: none; }
+
+/* Zen garden rake lines - horizontal */
+.rake-lines {
+  position: absolute; inset: 0;
+  overflow: hidden;
+}
+.rake-line {
+  position: absolute; left: -100%; width: 200%;
+  height: 1px;
+  background: var(--rake-line);
+  animation: rakeSlide 2.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+/* Generate multiple parallel lines */
+.rake-line:nth-child(1)  { top: 15%; animation-delay: 0.0s; }
+.rake-line:nth-child(2)  { top: 20%; animation-delay: 0.08s; }
+.rake-line:nth-child(3)  { top: 25%; animation-delay: 0.16s; }
+.rake-line:nth-child(4)  { top: 30%; animation-delay: 0.24s; }
+.rake-line:nth-child(5)  { top: 35%; animation-delay: 0.32s; }
+.rake-line:nth-child(6)  { top: 40%; animation-delay: 0.40s; }
+.rake-line:nth-child(7)  { top: 45%; animation-delay: 0.48s; }
+.rake-line:nth-child(8)  { top: 50%; animation-delay: 0.56s; }
+.rake-line:nth-child(9)  { top: 55%; animation-delay: 0.64s; }
+.rake-line:nth-child(10) { top: 60%; animation-delay: 0.72s; }
+.rake-line:nth-child(11) { top: 65%; animation-delay: 0.80s; }
+.rake-line:nth-child(12) { top: 70%; animation-delay: 0.88s; }
+.rake-line:nth-child(13) { top: 75%; animation-delay: 0.96s; }
+.rake-line:nth-child(14) { top: 80%; animation-delay: 1.04s; }
+.rake-line:nth-child(15) { top: 85%; animation-delay: 1.12s; }
+
+@keyframes rakeSlide {
+  0% { left: -100%; opacity: 0; }
+  30% { opacity: 1; }
+  100% { left: 0; opacity: 1; }
+}
+
+/* Center circle void where brand appears - lines curve around it */
+.garden-void {
+  position: absolute; top: 50%; left: 50%;
+  width: 200px; height: 200px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  /* Subtle circular rake pattern around the void */
+  background: radial-gradient(circle, var(--sand) 60%, transparent 100%);
+  z-index: 5;
+}
+
+/* Concentric circles around the void - like stones in a zen garden */
+.void-ring {
+  position: absolute; top: 50%; left: 50%;
+  border-radius: 50%;
+  border: 1px solid rgba(184,200,216,0.06);
+  transform: translate(-50%, -50%);
+  opacity: 0;
+}
+.void-ring:nth-child(1) { width: 220px; height: 220px; animation: voidAppear 1.5s ease 1.5s forwards; }
+.void-ring:nth-child(2) { width: 260px; height: 260px; animation: voidAppear 1.5s ease 1.7s forwards; }
+.void-ring:nth-child(3) { width: 310px; height: 310px; animation: voidAppear 1.5s ease 1.9s forwards; }
+@keyframes voidAppear {
+  from { opacity: 0; } to { opacity: 1; }
+}
+
+/* Brand text */
+.brand {
+  position: relative; z-index: 10;
+  text-align: center;
+  opacity: 0;
+  animation: gardenReveal 2.5s cubic-bezier(0.16, 1, 0.3, 1) 1.8s forwards;
+}
+@keyframes gardenReveal {
+  from { opacity: 0; transform: scale(0.96); filter: blur(3px); }
+  to { opacity: 1; transform: scale(1); filter: blur(0); }
+}
+
+.brand-name {
+  display: flex; align-items: flex-end; justify-content: center;
+  gap: 0.4rem; margin-bottom: 0.5rem;
+}
+.brand-en {
+  font-family: 'Forum', serif;
+  font-size: clamp(2.2rem, 5vw, 3.5rem);
+  letter-spacing: -0.05em;
+  color: var(--gold);
+  line-height: 1;
+}
+.brand-ar {
+  font-family: 'Reem Kufi', sans-serif;
+  font-weight: 700;
+  font-size: clamp(1.4rem, 3vw, 2.2rem);
+  color: var(--gold);
+  line-height: 1;
+}
+.brand-subtitle {
+  font-size: 11px;
+  color: var(--text-dim);
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  direction: ltr;
+}
+
+/* Smooth sand grain texture overlay */
+.sand-texture {
+  position: fixed; inset: 0; z-index: 1; pointer-events: none;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.2' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.03'/%3E%3C/svg%3E");
+}
+
+/* Progress bar */
+.progress {
+  position: absolute; bottom: 50px; left: 50%;
+  transform: translateX(-50%);
+  width: 60px; height: 1px;
+  background: rgba(184,200,216,0.1);
+  overflow: hidden;
+  opacity: 0;
+  animation: gardenReveal 1s ease 2.5s forwards;
+  z-index: 10;
+}
+.progress::after {
+  content: '';
+  position: absolute; left: 0; top: 0;
+  width: 0; height: 100%;
+  background: var(--gold);
+  animation: progressFill 3s linear 2.5s forwards;
+}
+@keyframes progressFill {
+  from { width: 0; } to { width: 100%; }
+}
+</style>
+</head>
+<body>
+
+<div class="splash-container" id="splash">
+  <div class="sand-texture"></div>
+
+  <div class="rake-lines">
+    <div class="rake-line"></div><div class="rake-line"></div>
+    <div class="rake-line"></div><div class="rake-line"></div>
+    <div class="rake-line"></div><div class="rake-line"></div>
+    <div class="rake-line"></div><div class="rake-line"></div>
+    <div class="rake-line"></div><div class="rake-line"></div>
+    <div class="rake-line"></div><div class="rake-line"></div>
+    <div class="rake-line"></div><div class="rake-line"></div>
+    <div class="rake-line"></div>
+  </div>
+
+  <div class="garden-void"></div>
+  <div class="void-ring"></div>
+  <div class="void-ring"></div>
+  <div class="void-ring"></div>
+
+  <div class="brand">
+    <div class="brand-name">
+      <span class="brand-en">poetry</span>
+      <span class="brand-ar">بالعربي</span>
+    </div>
+    <p class="brand-subtitle">Stillness Between Verses</p>
+  </div>
+
+  <div class="progress"></div>
+</div>
+
+<script>
+setTimeout(function() {
+  document.getElementById('splash').classList.add('hidden');
+}, 5500);
+</script>
+</body>
+</html>

@@ -41,8 +41,8 @@ export default defineConfig({
     }),
     // Sentry source map upload — only runs during production build when auth token is present
     sentryVitePlugin({
-      org: process.env.SENTRY_ORG,
-      project: process.env.SENTRY_PROJECT,
+      org: process.env.SENTRY_ORG || 'siraj-aq',
+      project: process.env.SENTRY_PROJECT || 'node',
       authToken: process.env.SENTRY_AUTH_TOKEN,
       sourcemaps: {
         filesToDeleteAfterUpload: ['./dist/**/*.map'],

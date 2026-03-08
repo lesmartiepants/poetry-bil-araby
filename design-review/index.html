@@ -782,17 +782,18 @@ async function syncVerdictsToAPI() {
     }
     if (!verdicts.length) { setSyncStatus('synced'); return; }
     const res = await fetch(API_BASE + '/api/design-review/sessions/' + currentSession.id + '/verdicts', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ verdicts })
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ verdicts }),
+      signal: AbortSignal.timeout(15000)
     });
     setSyncStatus(res.ok ? 'synced' : 'offline');
   } catch { setSyncStatus('offline'); }
 }
 
-async function initAPI() {
+async function initAPI({ timeout = 5000 } = {}) {
   try {
     // Ping backend; fall back to /items if /ping not yet deployed
-    let r = await fetch(API_BASE + '/api/design-review/ping', { signal: AbortSignal.timeout(5000) }).catch(() => null);
-    if (!r || !r.ok) r = await fetch(API_BASE + '/api/design-review/items', { signal: AbortSignal.timeout(5000) });
+    let r = await fetch(API_BASE + '/api/design-review/ping', { signal: AbortSignal.timeout(timeout) }).catch(() => null);
+    if (!r || !r.ok) r = await fetch(API_BASE + '/api/design-review/items', { signal: AbortSignal.timeout(timeout) });
     if (!r.ok) throw 0;
     apiAvailable = true;
 
@@ -1898,14 +1899,16 @@ async function submitReview(prefillName) {
   let sendError = null;
   try {
     if (!apiAvailable || !currentSession) {
-      loadingText.textContent = 'Waking backend...';
-      await initAPI();
+      loadingText.textContent = 'Waking backend (may take up to 30s)...';
+      await initAPI({ timeout: 30000 });
       if (!apiAvailable || !currentSession) throw new Error('Backend not available');
     }
     if (currentSession) {
+      loadingText.textContent = 'Updating reviewer...';
       const reviewerRes = await fetch(API_BASE + '/api/design-review/sessions/' + currentSession.id, {
         method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reviewer: reviewerName })
+        body: JSON.stringify({ reviewer: reviewerName }),
+        signal: AbortSignal.timeout(15000)
       });
       if (!reviewerRes.ok) console.warn('Failed to update reviewer name:', reviewerRes.status);
     }
@@ -1914,7 +1917,8 @@ async function submitReview(prefillName) {
     loadingText.textContent = 'Completing session...';
     const res = await fetch(API_BASE + '/api/design-review/sessions/' + currentSession.id, {
       method: 'PATCH', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ status: 'completed', reviewed_count: summary.reviewed })
+      body: JSON.stringify({ status: 'completed', reviewed_count: summary.reviewed }),
+      signal: AbortSignal.timeout(15000)
     });
     if (!res.ok) throw new Error('API returned ' + res.status);
   } catch (err) {
@@ -2003,7 +2007,7 @@ populateCats();
 render();
 updateSectionFilterUI();
 syncPreviewPadding();
-initAPI();
+initAPI({ timeout: 15000 });
 </script>
 </body>
 </html>

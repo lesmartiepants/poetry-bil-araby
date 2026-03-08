@@ -5,7 +5,7 @@ A beautiful React application for exploring Arabic poetry with AI-powered insigh
 ## Features
 
 - 📖 Browse classic and modern Arabic poetry
-- 🗄️ **NEW:** Database mode with 84K+ restored Arabic poems
+- 🗄️ **NEW:** Database mode with 4,600+ curated Arabic poems (fully diacritized)
 - 🔐 **NEW:** User authentication with Google/Apple SSO (Supabase)
 - ❤️ **NEW:** Save favorite poems to your personal collection
 - ⚙️ **NEW:** Persistent user settings (theme, font preferences)
@@ -89,7 +89,7 @@ npm install
 ## Usage
 
 ### Mode Switching
-- **Database Mode** (Library icon 📚): Fetches poems from local PostgreSQL database (84K+ poems)
+- **Database Mode** (Library icon 📚): Fetches poems from PostgreSQL database (4,600+ curated poems)
 - **AI Mode** (Sparkles icon ✨): Generates poems using Gemini API
 - Toggle between modes using the control bar button or overflow menu (mobile)
 
@@ -115,23 +115,40 @@ When Supabase is configured, the app provides:
 
 ### Arabic Diacritics (Tashkeel)
 
-Database poems can be enriched with Arabic diacritics using [Mishkal](https://github.com/linuxscout/mishkal), a rule-based diacritization engine.
+Every poem in the database is enriched with full Arabic diacritics (tashkeel) — the short vowel marks that make classical poetry readable and recitable. Raw text like `بذات المكارم ذاك الألم` becomes `بِذَاتِ الْمَكَارِمِ ذَاكَ الْأَلَمِ`.
+
+Accurate diacritization matters because a single misplaced mark changes meaning and breaks poetic meter. The pipeline uses [Mishkal](https://github.com/linuxscout/mishkal) (rule-based engine) as a starting point, then applies 8 post-processing rules learned from manual Arabic review to fix systematic errors — things like incorrect line-ending vowels, over-diacritized punctuation, and broken hamza patterns.
+
+**Quality gates:**
+- Automated audit checks coverage, mark density, and regression against known-good samples
+- HTML report with before/after comparisons for human review
+- Upload verification confirms byte-exact match between local output and DB content
+- `COALESCE` fallback in the API means any poem can be safely rolled back to raw text
 
 ```bash
 # Install Python dependencies
 pip install -r scripts/requirements-diacritize.txt
 
-# Run batch diacritization (generates SQL migration)
-DATABASE_URL="your-connection-string" python scripts/batch-diacritize.py
+# Full pipeline (export from DB, diacritize, post-process, audit, report, upload)
+python scripts/tashkeel-pipeline.py run-all --force --verify --open
 
-# Apply the generated migration
-psql "$DATABASE_URL" < supabase/migrations/20260306000001_populate_diacritics.sql.skip
+# Or run individual steps
+python scripts/tashkeel-pipeline.py export             # DB -> local parquet
+python scripts/tashkeel-pipeline.py diacritize          # Mishkal processing
+python scripts/tashkeel-pipeline.py postprocess         # Apply 8 fix rules
+python scripts/tashkeel-pipeline.py audit               # Quality checks
+python scripts/tashkeel-pipeline.py report --open       # HTML report
+python scripts/tashkeel-pipeline.py upload --verify     # Push to DB + verify
+
+# Incremental: only process newly added poems
+python scripts/tashkeel-pipeline.py export --only-missing
+python scripts/tashkeel-pipeline.py run-all --only-missing --verify
 ```
 
-The API automatically serves diacritized content when available, falling back to raw content.
+The API automatically serves diacritized content when available, falling back to raw content (`COALESCE(diacritized_content, content)`).
 
 ### Database Mode Benefits
-- Access to 84,329 restored Arabic poems
+- 4,600+ curated Arabic poems with full diacritics
 - Instant fetching (no API latency)
 - Works offline (after database setup)
 - Filter by poet (50+ poets available)
@@ -195,7 +212,16 @@ poetry-bil-araby/
 │   ├── ui-ux.spec.js       # UI/UX quality tests
 │   ├── design-review-prod.spec.js   # Design review UI + API tests
 │   └── mockup-screenshots.spec.js
-├── server.js                # NEW: Express API server for database mode
+├── server.js                # Express API server for database mode
+├── scripts/                 # Pipeline tooling
+│   ├── tashkeel-pipeline.py          # Master orchestrator (8 subcommands)
+│   ├── batch-diacritize.py           # Mishkal parallel diacritization
+│   ├── postprocess-tashkeel.py       # 8 fix rules from Arabic review
+│   ├── audit-tashkeel.py             # Quality audit
+│   ├── generate-tashkeel-report.py   # HTML quality report
+│   ├── upload-diacritized.py         # Parallel upload with checkpointing
+│   └── requirements-diacritize.txt   # Python deps
+├── supabase/migrations/     # Database schema migrations
 ├── .github/                 # GitHub configuration
 │   ├── workflows/ci.yml    # CI/CD pipeline (PostgreSQL service added)
 │   ├── TESTING_STRATEGY.md # Comprehensive testing guide

@@ -1826,6 +1826,7 @@ export default function DiwanApp() {
     try { return !localStorage.getItem('hasSeenSplash'); } catch { return false; }
   });
   const [showTranslation, setShowTranslation] = useState(true);
+  const [textSizeLevel, setTextSizeLevel] = useState(1); // 0=S, 1=M, 2=L, 3=XL
 
   const theme = darkMode ? THEME.dark : THEME.light;
 
@@ -1840,6 +1841,19 @@ export default function DiwanApp() {
     setCurrentFont(FONTS[nextIdx].id);
     addLog("Font", `Switched to ${FONTS[nextIdx].label}`, "info");
   };
+
+  const TEXT_SIZES = [
+    { label: 'S', multiplier: 0.85 },
+    { label: 'M', multiplier: 1.0 },
+    { label: 'L', multiplier: 1.15 },
+    { label: 'XL', multiplier: 1.3 },
+  ];
+
+  const cycleTextSize = () => {
+    setTextSizeLevel(prev => (prev + 1) % TEXT_SIZES.length);
+  };
+
+  const textScale = TEXT_SIZES[textSizeLevel].multiplier;
 
   const filtered = useMemo(() => {
     const searchStr = selectedCategory.toLowerCase();
@@ -3062,8 +3076,8 @@ export default function DiwanApp() {
                     <div className="flex flex-col gap-5 md:gap-7">
                       {versePairs.map((pair, idx) => (
                         <div key={`${current?.id}-${idx}`} className="flex flex-col gap-0.5">
-                          <p dir="rtl" className={`${currentFontClass} ${DESIGN.mainFontSize} leading-[2.2]  arabic-shadow`}>{pair.ar}</p>
-                          {showTranslation && pair.en && <p dir="ltr" className={`font-brand-en italic ${DESIGN.mainEnglishFontSize} opacity-40 ${DESIGN.anim}`}>{pair.en}</p>}
+                          <p dir="rtl" className={`${currentFontClass} leading-[2.2] arabic-shadow ${DESIGN.anim}`} style={{ fontSize: `calc(clamp(1.25rem, 2vw, 1.5rem) * ${textScale})` }}>{pair.ar}</p>
+                          {showTranslation && pair.en && <p dir="ltr" className={`font-brand-en italic opacity-40 ${DESIGN.anim}`} style={{ fontSize: `calc(clamp(1rem, 1.5vw, 1.125rem) * ${textScale})` }}>{pair.en}</p>}
                         </div>
                       ))}
                     </div>
@@ -3157,6 +3171,19 @@ export default function DiwanApp() {
                     </button>
                     <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">
                       {showTranslation ? 'English' : 'Arabic'}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-col items-center gap-1 min-w-[52px]">
+                    <button
+                      onClick={cycleTextSize}
+                      aria-label={`Text size: ${TEXT_SIZES[textSizeLevel].label}`}
+                      className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105"
+                    >
+                      <span className="font-brand-en text-[15px] font-bold text-[#C5A059]">Aa</span>
+                    </button>
+                    <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">
+                      {TEXT_SIZES[textSizeLevel].label}
                     </span>
                   </div>
 

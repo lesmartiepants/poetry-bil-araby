@@ -136,9 +136,20 @@ pool.query('SELECT NOW()', (err, res) => {
 // Middleware
 app.use(helmet());
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production'
-    ? ['https://poetry-bil-araby.vercel.app']
-    : ['http://localhost:5173', 'http://localhost:3001'],
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, curl, server-to-server)
+    if (!origin) return callback(null, true);
+    const allowed = [
+      'http://localhost:5173',
+      'http://localhost:3001',
+      'https://poetry-bil-araby.vercel.app',
+    ];
+    // Allow Vercel preview deployments (poetry-bil-araby-*.vercel.app)
+    if (allowed.includes(origin) || /^https:\/\/poetry-bil-araby[a-z0-9-]*\.vercel\.app$/.test(origin)) {
+      return callback(null, true);
+    }
+    callback(new Error('CORS: origin not allowed'));
+  },
   methods: ['GET', 'POST', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key']
 }));
@@ -1157,7 +1168,74 @@ app.patch('/api/design-review/feedback-actions/:id', requireApiKey, async (req, 
 // BUG REPORTS (structured log only — no DB table needed yet)
 // ═══════════════════════════════════════════════════════════════
 
-app.post('/api/bug-reports', rateLimit({ windowMs: 60_000, max: 10, standardHeaders: true, legacyHeaders: false }), (req, res) => {
+async function createGitHubIssue(report, truncatedLogs) {
+  const token = process.env.GITHUB_TOKEN;
+  const repo = process.env.GITHUB_REPO || 'lesmartiepants/poetry-bil-araby';
+  if (!token) return null;
+
+  const poemInfo = report.poem
+    ? `**Poem:** ${report.poem.title || 'untitled'} — ${report.poem.poet || 'unknown'} (ID: ${report.poem.id || 'n/a'})`
+    : 'No poem context';
+
+  const stateInfo = report.appState
+    ? `Mode: ${report.appState.mode}, Theme: ${report.appState.theme}, Font: ${report.appState.font}`
+    : 'No app state';
+
+  const logsSection = truncatedLogs.length > 0
+    ? `<details><summary>Client logs (${truncatedLogs.length} entries)</summary>\n\n\`\`\`json\n${JSON.stringify(truncatedLogs.slice(-20), null, 2)}\n\`\`\`\n</details>`
+    : 'No client logs attached';
+
+  const body = [
+    `## User Bug Report`,
+    ``,
+    `**Description:** ${report.description || '_No description provided_'}`,
+    ``,
+    poemInfo,
+    `**App state:** ${stateInfo}`,
+    `**User agent:** \`${report.userAgent}\``,
+    `**Submitted:** ${report.timestamp}`,
+    ``,
+    logsSection,
+    ``,
+    `---`,
+    `_Auto-created from in-app bug report button_`,
+  ].join('\n');
+
+  const title = report.description
+    ? `[Bug Report] ${report.description.slice(0, 80)}`
+    : `[Bug Report] User-submitted from debug console`;
+
+  try {
+    const resp = await fetch(`https://api.github.com/repos/${repo}/issues`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Accept': 'application/vnd.github+json',
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        title,
+        body,
+        labels: ['bug', 'user-reported'],
+      }),
+    });
+
+    if (!resp.ok) {
+      const errText = await resp.text();
+      log.error('BugReport', `GitHub issue creation failed: ${resp.status} ${errText}`);
+      return null;
+    }
+
+    const issue = await resp.json();
+    log.info('BugReport', `GitHub issue created: #${issue.number}`, { url: issue.html_url });
+    return issue.number;
+  } catch (e) {
+    log.error('BugReport', `GitHub issue creation error: ${e.message}`);
+    return null;
+  }
+}
+
+app.post('/api/bug-reports', rateLimit({ windowMs: 60_000, max: 10, standardHeaders: true, legacyHeaders: false }), async (req, res) => {
   try {
     const { description, logs: clientLogs, timestamp, userAgent, poem, appState } = req.body;
 
@@ -1191,7 +1269,39 @@ app.post('/api/bug-reports', rateLimit({ windowMs: 60_000, max: 10, standardHead
       log.debug('BugReport', `Client logs (${truncatedLogs.length} entries)`, truncatedLogs);
     }
 
-    res.status(201).json({ success: true, message: 'Bug report submitted' });
+    // Create GitHub issue (non-blocking — don't fail the request if this errors)
+    const issueNumber = await createGitHubIssue(report, truncatedLogs);
+
+    // Persist to PostgreSQL
+    try {
+      await pool.query(
+        `INSERT INTO bug_reports (description, logs, timestamp, user_agent, poem_id, poem_poet, poem_title, app_mode, app_theme, app_font, github_issue_number)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+        [
+          report.description,
+          JSON.stringify(truncatedLogs),
+          report.timestamp,
+          report.userAgent,
+          report.poem?.id || null,
+          report.poem?.poet || null,
+          report.poem?.title || null,
+          report.appState?.mode || null,
+          report.appState?.theme || null,
+          report.appState?.font || null,
+          issueNumber,
+        ]
+      );
+      log.info('BugReport', `Saved to database${issueNumber ? ` (GitHub #${issueNumber})` : ''}`);
+    } catch (dbErr) {
+      // DB insert failure is non-fatal — report was already logged
+      log.error('BugReport', `DB insert failed (non-fatal): ${dbErr.message}`);
+    }
+
+    res.status(201).json({
+      success: true,
+      message: 'Bug report submitted',
+      ...(issueNumber && { githubIssue: issueNumber }),
+    });
   } catch (error) {
     log.error('BugReport', `Error processing bug report: ${error.message}`);
     res.status(500).json({ error: 'Internal server error' });

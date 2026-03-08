@@ -21,7 +21,7 @@ const FEATURES = {
   prefetching: true,  // Enable smart prefetching (rate-limited to avoid API issues)
   database: true,     // Enable database poem source (requires backend server running)
   onboarding: true,   // Show kinetic walkthrough (phases 1-3) on first visit
-  forceOnboarding: true // Bypass hasSeenOnboarding check (disable for production)
+  forceOnboarding: false // Bypass hasSeenOnboarding check (enable to force onboarding every visit)
 };
 
 const DESIGN = {

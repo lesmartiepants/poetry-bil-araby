@@ -87,8 +87,18 @@ async function setupRouteMocks(page, { poem = MOCK_POEM_DARWISH } = {}) {
 test.describe('User Flows', () => {
   test.beforeEach(async ({ page }) => {
     await setupRouteMocks(page);
+    // Skip splash/onboarding so tests can interact with the main app
+    await page.addInitScript(() => {
+      localStorage.setItem('hasSeenOnboarding', 'true');
+    });
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
+    // Dismiss splash screen if visible (click "Enter" button)
+    const enterBtn = page.locator('button[aria-label="Enter the app"]');
+    if (await enterBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await enterBtn.click();
+      await enterBtn.waitFor({ state: 'hidden', timeout: 5000 });
+    }
     await page.locator('[dir="rtl"]').first().waitFor({ state: 'visible', timeout: 10000 });
   });
 

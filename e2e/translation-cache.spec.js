@@ -132,7 +132,25 @@ async function setupMocks(page, {
 }
 
 
+// ─── Splash Dismissal ────────────────────────────────────────────────
+
+/** Dismiss the splash screen if visible. Call after page.goto('/') + waitForLoadState. */
+async function dismissSplashIfVisible(page) {
+  const enterBtn = page.locator('button[aria-label="Enter the app"]');
+  if (await enterBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+    await enterBtn.click();
+    await enterBtn.waitFor({ state: 'hidden', timeout: 5000 });
+  }
+}
+
 // ─── Tests ──────────────────────────────────────────────────────────
+
+// Skip onboarding walkthrough for all tests
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem('hasSeenOnboarding', 'true');
+  });
+});
 
 test.describe('Translation Cache — Instant Load', () => {
 
@@ -214,6 +232,7 @@ test.describe('Translation Cache — Gemini Skip', () => {
 
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
+    await dismissSplashIfVisible(page);
     await page.locator('[dir="rtl"]').first().waitFor({ state: 'visible', timeout: 5000 });
 
     // Wait a reasonable time for any Gemini call to fire (it shouldn't)
@@ -248,6 +267,7 @@ test.describe('Translation Cache — Gemini Skip', () => {
 
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
+    await dismissSplashIfVisible(page);
     await page.locator('[dir="rtl"]').first().waitFor({ state: 'visible', timeout: 5000 });
 
     // Wait for auto-explain to trigger
@@ -273,6 +293,7 @@ test.describe('Translation Cache — Prefetch', () => {
 
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
+    await dismissSplashIfVisible(page);
     await page.locator('[dir="rtl"]').first().waitFor({ state: 'visible', timeout: 5000 });
 
     // Wait long enough for prefetch to fire
@@ -332,6 +353,7 @@ test.describe('Translation Cache — Prefetch', () => {
     // Now reload — the app should pick up the prefetched poem
     await page.reload();
     await page.waitForLoadState('domcontentloaded');
+    await dismissSplashIfVisible(page);
     await page.locator('[dir="rtl"]').first().waitFor({ state: 'visible', timeout: 5000 });
 
     // The prefetched poem (Nizar Qabbani) should be displayed
@@ -374,6 +396,7 @@ test.describe('Translation Cache — Prefetch', () => {
     // Reload — the expired poem should NOT be used
     await page.reload();
     await page.waitForLoadState('domcontentloaded');
+    await dismissSplashIfVisible(page);
     await page.locator('[dir="rtl"]').first().waitFor({ state: 'visible', timeout: 5000 });
 
     // The expired marker should NOT appear — app should use seed poem instead
@@ -393,6 +416,7 @@ test.describe('Translation Cache — Save-back', () => {
 
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
+    await dismissSplashIfVisible(page);
     await page.locator('[dir="rtl"]').first().waitFor({ state: 'visible', timeout: 5000 });
 
     // Wait for auto-explain → Gemini call → save-back POST
@@ -428,6 +452,7 @@ test.describe('Translation Cache — Poem Variety', () => {
 
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
+    await dismissSplashIfVisible(page);
     await page.locator('[dir="rtl"]').first().waitFor({ state: 'visible', timeout: 5000 });
 
     // After initial load, the app fetches a poem from DB (poemA is served first)
@@ -456,6 +481,7 @@ test.describe('Translation Cache — Poem Variety', () => {
 
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
+    await dismissSplashIfVisible(page);
     await page.locator('[dir="rtl"]').first().waitFor({ state: 'visible', timeout: 5000 });
 
     // The displayed poem should be Arabic text — not empty, not a placeholder

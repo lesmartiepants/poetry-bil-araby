@@ -8,8 +8,18 @@ import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { resolve } from 'path';
+import * as Sentry from '@sentry/node';
 
 dotenv.config();
+
+// Initialize Sentry for backend error tracking (no-op if DSN not configured)
+if (process.env.SENTRY_DSN) {
+  Sentry.init({
+    dsn: process.env.SENTRY_DSN,
+    environment: process.env.NODE_ENV || 'development',
+    tracesSampleRate: 0,
+  });
+}
 
 const { Pool } = pg;
 const app = express();
@@ -1060,6 +1070,11 @@ app.patch('/api/design-review/feedback-actions/:id', requireApiKey, async (req, 
     res.status(500).json({ error: 'Internal server error' });
   }
 });
+
+// Sentry Express error handler (must be after all routes)
+if (process.env.SENTRY_DSN) {
+  Sentry.setupExpressErrorHandler(app);
+}
 
 // Export app for testing
 export { app, pool };

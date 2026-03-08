@@ -2553,6 +2553,9 @@ export default function DiwanApp() {
     if (error) {
       addLog("Auth Error", error.message, "error");
     } else {
+      setShowSavedPoems(false);
+      setShowSettings(false);
+      setShowAuthModal(false);
       addLog("Auth", "Signed out successfully", "success");
     }
   };

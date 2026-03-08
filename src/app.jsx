@@ -654,7 +654,59 @@ const prefetchManager = {
 };
 
 /* =============================================================================
-  5. UTILITY COMPONENTS
+  5. TRANSLITERATION
+  =============================================================================
+*/
+
+const ARABIC_TRANSLIT_MAP = {
+  // Base letters
+  'ا': 'a', 'أ': 'a', 'إ': 'i', 'آ': 'aa', 'ٱ': 'a',
+  'ب': 'b', 'ت': 't', 'ث': 'th', 'ج': 'j', 'ح': 'h', 'خ': 'kh',
+  'د': 'd', 'ذ': 'dh', 'ر': 'r', 'ز': 'z', 'س': 's', 'ش': 'sh',
+  'ص': 's', 'ض': 'd', 'ط': 't', 'ظ': 'z', 'ع': "'", 'غ': 'gh',
+  'ف': 'f', 'ق': 'q', 'ك': 'k', 'ل': 'l', 'م': 'm', 'ن': 'n',
+  'ه': 'h', 'و': 'w', 'ي': 'y', 'ى': 'a', 'ة': 'h',
+  'ء': "'", 'ؤ': "'", 'ئ': "'",
+  // Diacritics
+  '\u064E': 'a',   // fatha
+  '\u064F': 'u',   // damma
+  '\u0650': 'i',   // kasra
+  '\u0651': '',     // shadda (handled by doubling previous consonant)
+  '\u0652': '',     // sukun (no vowel)
+  '\u064B': 'an',   // tanween fatha
+  '\u064C': 'un',   // tanween damma
+  '\u064D': 'in',   // tanween kasra
+  '\u0670': 'a',    // alef superscript
+  // Common punctuation
+  '،': ',', '؛': ';', '؟': '?', '»': '"', '«': '"',
+  '\u200C': '', '\u200D': '', '\u200F': '', '\u200E': '', // zero-width chars
+};
+
+function transliterate(text) {
+  if (!text) return '';
+  let result = '';
+  for (let i = 0; i < text.length; i++) {
+    const ch = text[i];
+    // Handle shadda: double the previous consonant
+    if (ch === '\u0651') {
+      const lastChar = result[result.length - 1];
+      if (lastChar && lastChar !== ' ') result += lastChar;
+      continue;
+    }
+    if (ch in ARABIC_TRANSLIT_MAP) {
+      result += ARABIC_TRANSLIT_MAP[ch];
+    } else if (/[\s\n]/.test(ch)) {
+      result += ch;
+    } else if (/[a-zA-Z0-9.,!?;:'"()\-–—…]/.test(ch)) {
+      result += ch; // pass through Latin chars and common punctuation
+    }
+    // Skip unrecognized Arabic diacritics/formatting chars
+  }
+  return result;
+}
+
+/* =============================================================================
+  6. UTILITY COMPONENTS
   =============================================================================
 */
 
@@ -1827,6 +1879,7 @@ export default function DiwanApp() {
   });
   const [showTranslation, setShowTranslation] = useState(true);
   const [textSizeLevel, setTextSizeLevel] = useState(1); // 0=S, 1=M, 2=L, 3=XL
+  const [showTransliteration, setShowTransliteration] = useState(false);
 
   const theme = darkMode ? THEME.dark : THEME.light;
 
@@ -3077,6 +3130,7 @@ export default function DiwanApp() {
                       {versePairs.map((pair, idx) => (
                         <div key={`${current?.id}-${idx}`} className="flex flex-col gap-0.5">
                           <p dir="rtl" className={`${currentFontClass} leading-[2.2] arabic-shadow ${DESIGN.anim}`} style={{ fontSize: `calc(clamp(1.25rem, 2vw, 1.5rem) * ${textScale})` }}>{pair.ar}</p>
+                          {showTransliteration && pair.ar && <p dir="ltr" className={`font-brand-en italic opacity-30 ${DESIGN.anim}`} style={{ fontSize: `calc(clamp(0.75rem, 1.2vw, 0.875rem) * ${textScale})` }}>{transliterate(pair.ar)}</p>}
                           {showTranslation && pair.en && <p dir="ltr" className={`font-brand-en italic opacity-40 ${DESIGN.anim}`} style={{ fontSize: `calc(clamp(1rem, 1.5vw, 1.125rem) * ${textScale})` }}>{pair.en}</p>}
                         </div>
                       ))}
@@ -3171,6 +3225,19 @@ export default function DiwanApp() {
                     </button>
                     <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">
                       {showTranslation ? 'English' : 'Arabic'}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-col items-center gap-1 min-w-[52px]">
+                    <button
+                      onClick={() => setShowTransliteration(prev => !prev)}
+                      aria-label={showTransliteration ? 'Hide transliteration' : 'Show transliteration'}
+                      className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105 ${!showTransliteration ? 'opacity-40' : ''}`}
+                    >
+                      <span className="text-[#C5A059] text-[14px] font-bold leading-none" style={{ fontFamily: "'Amiri', serif" }}>عA</span>
+                    </button>
+                    <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">
+                      Romanize
                     </span>
                   </div>
 

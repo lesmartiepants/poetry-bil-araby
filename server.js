@@ -964,6 +964,51 @@ app.patch('/api/design-review/feedback-actions/:id', requireApiKey, async (req, 
   }
 });
 
+// ═══════════════════════════════════════════════════════════════
+// BUG REPORTS (structured log only — no DB table needed yet)
+// ═══════════════════════════════════════════════════════════════
+
+app.post('/api/bug-reports', rateLimit({ windowMs: 60_000, max: 10, standardHeaders: true, legacyHeaders: false }), (req, res) => {
+  try {
+    const { description, logs: clientLogs, timestamp, userAgent, poem, appState } = req.body;
+
+    // Basic validation
+    if (!timestamp || !userAgent) {
+      return res.status(400).json({ error: 'Missing required fields: timestamp, userAgent' });
+    }
+
+    // Truncate logs if too large
+    const truncatedLogs = Array.isArray(clientLogs)
+      ? clientLogs.slice(-100)
+      : [];
+
+    const report = {
+      description: typeof description === 'string' ? description.slice(0, 1000) : '',
+      logsCount: truncatedLogs.length,
+      timestamp,
+      userAgent: typeof userAgent === 'string' ? userAgent.slice(0, 500) : '',
+      poem: poem ? { id: poem.id, poet: poem.poet, title: poem.title } : null,
+      appState: appState ? {
+        mode: appState.mode,
+        theme: appState.theme,
+        font: appState.font
+      } : null
+    };
+
+    log.info('BugReport', `New bug report submitted`, report);
+
+    // Log truncated client logs at debug level
+    if (truncatedLogs.length > 0) {
+      log.debug('BugReport', `Client logs (${truncatedLogs.length} entries)`, truncatedLogs);
+    }
+
+    res.status(201).json({ success: true, message: 'Bug report submitted' });
+  } catch (error) {
+    log.error('BugReport', `Error processing bug report: ${error.message}`);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // Export app for testing
 export { app, pool };
 

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Play, Pause, BookOpen, RefreshCw, Volume2, ChevronDown, Quote, Globe, Moon, Sun, Loader2, ChevronRight, ChevronLeft, Search, X, Copy, LayoutGrid, Check, Bug, Trash2, Sparkles, Feather, Library, Compass, Rabbit, Heart, LogIn, LogOut, User, Settings2, ArrowRight, Languages, Share2, CalendarDays } from 'lucide-react';
+import { Play, Pause, BookOpen, RefreshCw, Volume2, ChevronDown, Quote, Globe, Moon, Sun, Loader2, ChevronRight, ChevronLeft, Search, X, Copy, LayoutGrid, Check, Bug, Trash2, Sparkles, Feather, Library, Compass, Rabbit, Heart, LogIn, LogOut, User, Settings2, ArrowRight, Languages, Share2, CalendarDays, ThumbsDown } from 'lucide-react';
 import { track } from '@vercel/analytics';
-import { useAuth, useUserSettings, useSavedPoems } from './hooks/useAuth';
+import { useAuth, useUserSettings, useSavedPoems, useDownvotes, usePoemEvents } from './hooks/useAuth';
 import { INSIGHTS_SYSTEM_PROMPT, DISCOVERY_SYSTEM_PROMPT, getTTSInstruction } from './prompts';
 import { parseInsight } from './utils/insightParser';
 import { repairAndParseJSON } from './utils/jsonRepair';
@@ -1772,6 +1772,48 @@ const SavePoemButton = ({ poem, isSaved, onSave, onUnsave, disabled }) => {
   );
 };
 
+const DownvoteButton = ({ poem, isDownvoted, onDownvote, onUndownvote, disabled }) => {
+  const [showTooltip, setShowTooltip] = useState(false);
+
+  const handleClick = () => {
+    if (disabled) {
+      setShowTooltip(true);
+      setTimeout(() => setShowTooltip(false), 2000);
+      return;
+    }
+
+    if (isDownvoted) {
+      onUndownvote();
+    } else {
+      onDownvote();
+    }
+  };
+
+  return (
+    <div className="relative flex flex-col items-center gap-1 min-w-[52px]">
+      <button
+        onClick={handleClick}
+        className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105"
+        aria-label={isDownvoted ? "Unflag poem" : "Flag poem"}
+      >
+        <ThumbsDown
+          size={21}
+          className={`${isDownvoted ? 'fill-red-400 text-red-400' : 'text-[#C5A059]'} transition-all`}
+        />
+      </button>
+      <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">
+        {isDownvoted ? 'Flagged' : 'Flag'}
+      </span>
+
+      {showTooltip && disabled && (
+        <div className="absolute bottom-full mb-2 px-3 py-2 bg-stone-900 text-white text-xs rounded-lg whitespace-nowrap shadow-lg">
+          Sign in to flag poems
+        </div>
+      )}
+    </div>
+  );
+};
+
 const SavedPoemsView = ({ isOpen, onClose, savedPoems, onSelectPoem, onUnsavePoem, theme, currentFontClass }) => {
   if (!isOpen) return null;
 
@@ -1975,7 +2017,7 @@ const SettingsView = ({ isOpen, onClose, darkMode, onToggleDarkMode, currentFont
 
 const VerticalSidebar = ({
   onExplain, onCopy, showCopySuccess, onShare, showShareSuccess,
-  onSignIn, onSignOut, user, isSupabaseConfigured, theme, isInterpreting, interpretation,
+  onSignIn, onSignOut, user, theme, isInterpreting, interpretation,
   showTranslation, onToggleTranslation,
   showTransliteration, onToggleTransliteration,
   textSizeLabel, onCycleTextSize,
@@ -2109,15 +2151,89 @@ const VerticalSidebar = ({
 
           <div className="w-6 h-px bg-stone-500/30 mx-auto my-1" />
 
-          {isSupabaseConfigured && (
-            <button
-              onClick={user ? onSignOut : onSignIn}
-              title={user ? 'Sign out' : 'Sign in'}
-              className={`${btnBase} ${btnHover}`}
-            >
-              {user ? <LogOut style={{ color: gold }} size={18} /> : <LogIn style={{ color: gold }} size={18} />}
-            </button>
+          <button
+            onClick={() => setSettingsOpen(prev => !prev)}
+            title="Settings"
+            className={`${btnBase} ${btnHover} ${settingsOpen ? (darkMode ? 'bg-[#C5A059]/15' : 'bg-[#8B7355]/15') : ''}`}
+          >
+            <Settings2 style={{ color: gold }} size={18} />
+          </button>
+
+          {settingsOpen && (
+            <div className={`flex flex-col items-center gap-0.5 pl-0.5 border-l-2 ${darkMode ? 'border-[#C5A059]/20' : 'border-[#8B7355]/20'}`}>
+              <button
+                onClick={onToggleTransliteration}
+                title={showTransliteration ? 'Hide romanization' : 'Show romanization'}
+                className={`${subBtnBase} ${subBtnHover} ${!showTransliteration ? 'opacity-40' : ''}`}
+              >
+                <span className="text-[12px] font-bold leading-none" style={{ color: gold, fontFamily: "'Amiri', serif" }}>عA</span>
+              </button>
+
+              <button
+                onClick={onCycleTextSize}
+                title={`Text size: ${textSizeLabel}`}
+                className={`${subBtnBase} ${subBtnHover}`}
+              >
+                <span className="font-brand-en text-[13px] font-bold" style={{ color: gold }}>Aa</span>
+              </button>
+
+              {dailyPoem && (
+                <button
+                  onClick={onDailyPoem}
+                  title="Poem of the Day"
+                  className={`${subBtnBase} ${subBtnHover} ${isCurrentDaily ? (darkMode ? 'bg-[#C5A059]/15' : 'bg-[#8B7355]/15') : ''}`}
+                >
+                  <CalendarDays style={{ color: gold }} size={16} />
+                </button>
+              )}
+
+              <button
+                onClick={onToggleDarkMode}
+                title={darkMode ? 'Light mode' : 'Dark mode'}
+                className={`${subBtnBase} ${subBtnHover}`}
+              >
+                {darkMode ? <Sun style={{ color: gold }} size={16} /> : <Moon style={{ color: gold }} size={16} />}
+              </button>
+
+              <button
+                onClick={onCycleFont}
+                title={`Font: ${currentFont}`}
+                className={`${subBtnBase} ${subBtnHover}`}
+              >
+                <Feather style={{ color: gold }} size={16} />
+              </button>
+
+              <button
+                onClick={() => {
+                  const catIds = CATEGORIES.map(c => c.id);
+                  const idx = catIds.indexOf(selectedCategory);
+                  onSelectCategory(catIds[(idx + 1) % catIds.length]);
+                }}
+                title="Poet filter"
+                className={`${subBtnBase} ${subBtnHover}`}
+              >
+                <Library style={{ color: gold }} size={16} />
+              </button>
+
+              <button
+                onClick={onToggleDatabase}
+                title={useDatabase ? 'Switch to AI' : 'Switch to Database'}
+                className={`${subBtnBase} ${subBtnHover}`}
+              >
+                {useDatabase ? <Library style={{ color: gold }} size={16} /> : <Sparkles style={{ color: gold }} size={16} />}
+              </button>
+            </div>
           )}
+
+          <div className="w-6 h-px bg-stone-500/30 mx-auto my-1" />
+
+          <button
+            onClick={user ? onSignOut : onSignIn}
+            title={user ? 'Sign out' : 'Sign in'}
+            className={`${btnBase} ${btnHover}`}
+          >
+            {user ? <LogOut style={{ color: gold }} size={18} /> : <LogIn style={{ color: gold }} size={18} />}
+          </button>
         </div>
       </div>
     </>
@@ -2204,9 +2320,12 @@ export default function DiwanApp() {
   const pendingRafRef = useRef(null); // Track pending rAF id for overflow detection deduplication
 
   // Auth state
-  const { user, loading: authLoading, signInWithGoogle, signInWithApple, signOut, isConfigured: isSupabaseConfigured } = useAuth();
+  const { user, loading: authLoading, signInWithGoogle, signInWithApple, signOut } = useAuth();
   const { settings, saveSettings } = useUserSettings(user);
   const { savedPoems, savePoem, unsavePoem, isPoemSaved } = useSavedPoems(user);
+  const { downvotedPoemIds, downvotePoem, undownvotePoem, isPoemDownvoted } = useDownvotes(user);
+  const { emitEvent } = usePoemEvents(user);
+
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showSavedPoems, setShowSavedPoems] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -2273,6 +2392,16 @@ export default function DiwanApp() {
     }
   };
 
+  // Track poem view time (emit 'view' event after 3s on same poem)
+  useEffect(() => {
+    if (!current?.id || !user) return;
+    const timer = setTimeout(() => {
+      emitEvent(current.id, 'view', { duration_ms: 3000 });
+      addLog("Event", `→ view event emitted | poem_id: ${current.id} | duration: 3000ms`, "info");
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [current?.id, user]);
+
   useEffect(() => {
     if (selectedCategory !== "All") {
       track('poet_filter_changed', { poet: selectedCategory });
@@ -2323,7 +2452,6 @@ export default function DiwanApp() {
             setCurrentIndex(0);
             setAutoExplainPending(true);
             addLog("DeepLink", `Loaded: ${poem.poet} — ${poem.title}`, "success");
-            window.history.replaceState({}, '', '/');
           })
           .catch(err => {
             addLog("DeepLink", `Failed: ${err.message}`, "error");
@@ -2427,9 +2555,8 @@ export default function DiwanApp() {
 
   useEffect(() => {
     // Threshold below which overflow mode is always active (prevents oscillation on narrow screens).
-    // With Supabase buttons the bar is wider, so use a larger threshold.
     // Re-runs when user signs in/out so the bar is re-measured after auth state changes.
-    const narrowThreshold = isSupabaseConfigured ? 660 : 540;
+    const narrowThreshold = 660;
 
     const scheduleDetect = () => {
       // Deduplicate: cancel any pending frame before scheduling a new one
@@ -2478,7 +2605,7 @@ export default function DiwanApp() {
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps -- refs (controlBarRef, pendingRafRef)
   // and the stable setIsOverflow setter are intentionally omitted; only real state values need deps.
-  }, [isSupabaseConfigured, user]);
+  }, [user]);
 
   // Load user settings on mount
   useEffect(() => {
@@ -2494,7 +2621,7 @@ export default function DiwanApp() {
 
   // Save settings when theme or font changes (with debounce)
   useEffect(() => {
-    if (!user || !isSupabaseConfigured) return;
+    if (!user) return;
 
     const timeoutId = setTimeout(() => {
       saveSettings({
@@ -2504,7 +2631,7 @@ export default function DiwanApp() {
     }, 1000); // Debounce by 1 second
 
     return () => clearTimeout(timeoutId);
-  }, [darkMode, currentFont, user, isSupabaseConfigured]);
+  }, [darkMode, currentFont, user]);
 
   // Keyboard shortcuts
   useEffect(() => {
@@ -3150,12 +3277,16 @@ export default function DiwanApp() {
           addLog("Discovery DB", `✓ Poem found | API: ${(apiTime / 1000).toFixed(2)}s | DB ID: ${newPoem.id} | Arabic: ${arabicPoemChars} chars`, "success");
           addLog("Discovery DB", `Poet: ${newPoem.poet} | Title: ${newPoem.title}`, "success");
           track('poem_discovered', { source: 'database', poet: newPoem.poet });
+          emitEvent(newPoem.id, 'serve', { source: 'database' });
+          addLog("Event", `→ serve event emitted | poem_id: ${newPoem.id} | source: database`, "info");
 
           setPoems(prev => {
             const updated = [...prev, newPoem];
             setCurrentIndex(updated.length - 1); // New poem is always last
             return updated;
           });
+          // Update URL to reflect current poem
+          window.history.replaceState({}, '', '/poem/' + newPoem.id);
         } catch (dbError) {
           // Handle database-specific errors
           const errorMessage = dbError.message.includes('Failed to fetch')
@@ -3239,6 +3370,8 @@ export default function DiwanApp() {
         addLog("Discovery API", `✓ Poem found | API: ${(apiTime / 1000).toFixed(2)}s | Response: ${(responseSize / 1024).toFixed(1)}KB | ${jsonChars} chars`, "success");
         addLog("Discovery Metrics", `${estimatedOutputTokens} tokens | ${tokensPerSecond} tok/s | Arabic: ${arabicPoemChars} chars | English: ${englishPoemChars} chars | Poet: ${newPoem.poet}`, "success");
         track('poem_discovered', { source: 'ai', poet: newPoem.poet });
+        emitEvent(newPoem.id, 'serve', { source: 'ai' });
+        addLog("Event", `→ serve event emitted | poem_id: ${newPoem.id} | source: ai`, "info");
         setPoems(prev => {
           const updated = [...prev, newPoem];
           const searchStr = selectedCategory.toLowerCase();
@@ -3247,6 +3380,7 @@ export default function DiwanApp() {
           if (newIdx !== -1) setCurrentIndex(newIdx);
           return updated;
         });
+        window.history.replaceState({}, '', '/');
       }
     } catch (e) {
       addLog("Discovery Error", `${e.message} | Source: ${useDatabase ? 'Database' : 'Gemini'}`, "error");
@@ -3281,6 +3415,10 @@ export default function DiwanApp() {
     try {
       await navigator.clipboard.writeText(textToCopy);
       track('poem_copied', { poet: current?.poet });
+      if (current?.id) {
+        emitEvent(current.id, 'copy');
+        addLog("Event", `→ copy event emitted | poem_id: ${current.id}`, "info");
+      }
       setShowCopySuccess(true);
       addLog("Copy", `✓ Copied to clipboard | ${copyChars} chars total (${arabicChars} Arabic + ${englishChars} English)`, "success");
       setTimeout(() => setShowCopySuccess(false), 2000);
@@ -3304,6 +3442,12 @@ export default function DiwanApp() {
       return [...prev, dailyPoem];
     });
     setAutoExplainPending(true);
+    // Update URL for DB poems
+    if (dailyPoem.isFromDatabase && typeof dailyPoem.id === 'number') {
+      window.history.replaceState({}, '', '/poem/' + dailyPoem.id);
+    } else {
+      window.history.replaceState({}, '', '/');
+    }
   };
 
   const handleShare = async () => {
@@ -3325,6 +3469,10 @@ export default function DiwanApp() {
       try {
         await navigator.share({ title: shareTitle, text: shareText, url: shareUrl });
         track('share_method', { method: 'native' });
+        if (current?.id) {
+          emitEvent(current.id, 'share', { method: 'native' });
+          addLog("Event", `→ share event emitted | poem_id: ${current.id} | method: native`, "info");
+        }
         addLog("Share", "Shared via Web Share API", "success");
         return;
       } catch (e) {
@@ -3340,6 +3488,10 @@ export default function DiwanApp() {
     try {
       await navigator.clipboard.writeText(shareUrl);
       track('share_method', { method: 'clipboard' });
+      if (current?.id) {
+        emitEvent(current.id, 'share', { method: 'clipboard' });
+        addLog("Event", `→ share event emitted | poem_id: ${current.id} | method: clipboard`, "info");
+      }
       setShowShareSuccess(true);
       addLog("Share", `Link copied: ${shareUrl}`, "success");
       setTimeout(() => setShowShareSuccess(false), 2000);
@@ -3412,6 +3564,10 @@ export default function DiwanApp() {
     } else {
       addLog("Save", `Saved poem: ${current?.poet} - ${current?.title}`, "success");
       track('poem_saved', { poet: current?.poet });
+      if (current?.id) {
+        emitEvent(current.id, 'save');
+        addLog("Event", `→ save event emitted (dual-write) | poem_id: ${current.id}`, "info");
+      }
     }
   };
 
@@ -3422,6 +3578,40 @@ export default function DiwanApp() {
     } else {
       track('poem_unsaved', { poet: current?.poet });
       addLog("Unsave", `Removed poem: ${current?.poet} - ${current?.title}`, "success");
+    }
+  };
+
+  const handleDownvote = async () => {
+    addLog("UI Event", `👎 Flag button clicked | Poem: ${current?.poet} - ${current?.title} | ID: ${current?.id}`, "info");
+
+    if (!user) {
+      addLog("Downvote", "Not authenticated — opening sign-in", "info");
+      handleSignIn();
+      return;
+    }
+
+    addLog("Downvote", `→ Sending downvote to Supabase | poem_id: ${current?.id}`, "info");
+    const { error } = await downvotePoem(current);
+    if (error) {
+      addLog("Downvote Error", `✗ Failed: ${error.message}`, "error");
+    } else {
+      addLog("Downvote", `✓ Flagged poem: ${current?.poet} - ${current?.title} | Auto-advancing in 600ms`, "success");
+      track('poem_downvoted', { poet: current?.poet });
+      // Auto-advance after 600ms
+      setTimeout(() => handleFetch(), 600);
+    }
+  };
+
+  const handleUndownvote = async () => {
+    addLog("UI Event", `👍 Unflag button clicked | Poem: ${current?.poet} - ${current?.title} | ID: ${current?.id}`, "info");
+    addLog("Undownvote", `→ Removing downvote from Supabase | poem_id: ${current?.id}`, "info");
+
+    const { error } = await undownvotePoem(current?.id);
+    if (error) {
+      addLog("Undownvote Error", `✗ Failed: ${error.message}`, "error");
+    } else {
+      track('poem_undownvoted', { poet: current?.poet });
+      addLog("Undownvote", `✓ Unflagged poem: ${current?.poet} - ${current?.title}`, "success");
     }
   };
 
@@ -3456,6 +3646,12 @@ export default function DiwanApp() {
       return [...prev, mappedPoem];
     });
     setShowSavedPoems(false);
+    // Update URL for DB poems
+    if (typeof mappedPoem.id === 'number') {
+      window.history.replaceState({}, '', '/poem/' + mappedPoem.id);
+    } else {
+      window.history.replaceState({}, '', '/');
+    }
   };
 
   const handleOpenSettings = () => {
@@ -3844,15 +4040,21 @@ export default function DiwanApp() {
                 <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">Discover</span>
               </div>
 
-              {isSupabaseConfigured && (
-                <SavePoemButton
-                  poem={current}
-                  isSaved={isPoemSaved(current)}
-                  onSave={handleSavePoem}
-                  onUnsave={handleUnsavePoem}
-                  disabled={!user}
-                />
-              )}
+              <SavePoemButton
+                poem={current}
+                isSaved={isPoemSaved(current)}
+                onSave={handleSavePoem}
+                onUnsave={handleUnsavePoem}
+                disabled={!user}
+              />
+
+              <DownvoteButton
+                poem={current}
+                isDownvoted={isPoemDownvoted(current)}
+                onDownvote={handleDownvote}
+                onUndownvote={handleUndownvote}
+                disabled={!user}
+              />
 
               {!isOverflow && (
                 <>
@@ -3936,17 +4138,15 @@ export default function DiwanApp() {
 
                   <CategoryPill selected={selectedCategory} onSelect={setSelectedCategory} darkMode={darkMode} />
 
-                  {isSupabaseConfigured && (
-                    <AuthButton
-                      user={user}
-                      darkMode={darkMode}
-                      onSignIn={handleSignIn}
-                      onSignOut={handleSignOut}
-                      onOpenSavedPoems={handleOpenSavedPoems}
-                      onOpenSettings={handleOpenSettings}
-                      theme={theme}
-                    />
-                  )}
+                  <AuthButton
+                    user={user}
+                    darkMode={darkMode}
+                    onSignIn={handleSignIn}
+                    onSignOut={handleSignOut}
+                    onOpenSavedPoems={handleOpenSavedPoems}
+                    onOpenSettings={handleOpenSettings}
+                    theme={theme}
+                  />
                 </>
               )}
             </div>
@@ -4063,7 +4263,6 @@ export default function DiwanApp() {
           onSignIn={handleSignIn}
           onSignOut={handleSignOut}
           user={user}
-          isSupabaseConfigured={isSupabaseConfigured}
           theme={theme}
           isInterpreting={isInterpreting}
           interpretation={interpretation}

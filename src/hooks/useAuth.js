@@ -323,3 +323,149 @@ export function useSavedPoems(user) {
     reload: loadSavedPoems,
   };
 }
+
+/**
+ * Custom hook for managing poem downvotes (flags)
+ */
+export function useDownvotes(user) {
+  const [downvotedPoemIds, setDownvotedPoemIds] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!user || !isSupabaseConfigured()) {
+      setDownvotedPoemIds([]);
+      setLoading(false);
+      return;
+    }
+    loadDownvotes();
+  }, [user]);
+
+  const loadDownvotes = async () => {
+    if (!user || !isSupabaseConfigured()) return;
+    try {
+      log.info('Downvotes', `Loading downvotes for user ${user.id}`);
+      const { data, error } = await supabase
+        .from('poem_events')
+        .select('poem_id')
+        .eq('user_id', user.id)
+        .eq('event_type', 'downvote');
+
+      if (error) {
+        log.error('Downvotes', 'Failed to load downvotes', error.message);
+        return;
+      }
+
+      log.info('Downvotes', `Loaded ${(data || []).length} downvoted poems`);
+      setDownvotedPoemIds((data || []).map(d => d.poem_id));
+    } catch (error) {
+      log.error('Downvotes', 'Exception loading downvotes', error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const downvotePoem = async (poem) => {
+    if (!user || !isSupabaseConfigured()) return { error: { message: 'Not authenticated' } };
+    try {
+      log.info('Downvotes', `Downvoting poem: ${poem.poet} — ${poem.title} (id: ${poem.id})`);
+      // Optimistic update
+      setDownvotedPoemIds(prev => [...prev, poem.id]);
+
+      const { error } = await supabase
+        .from('poem_events')
+        .insert({
+          user_id: user.id,
+          poem_id: poem.id,
+          event_type: 'downvote',
+          metadata: { reason: 'low_quality' },
+        });
+
+      if (error) {
+        // Revert optimistic update
+        setDownvotedPoemIds(prev => prev.filter(id => id !== poem.id));
+        log.error('Downvotes', 'Failed to downvote poem', error.message);
+        return { error };
+      }
+
+      log.info('Downvotes', 'Poem downvoted successfully');
+      return { error: null };
+    } catch (error) {
+      setDownvotedPoemIds(prev => prev.filter(id => id !== poem.id));
+      log.error('Downvotes', 'Exception downvoting poem', error.message);
+      return { error };
+    }
+  };
+
+  const undownvotePoem = async (poemId) => {
+    if (!user || !isSupabaseConfigured()) return { error: { message: 'Not authenticated' } };
+    try {
+      log.info('Downvotes', `Removing downvote for poem ${poemId}`);
+      // Optimistic update
+      setDownvotedPoemIds(prev => prev.filter(id => id !== poemId));
+
+      const { error } = await supabase
+        .from('poem_events')
+        .delete()
+        .eq('user_id', user.id)
+        .eq('poem_id', poemId)
+        .eq('event_type', 'downvote');
+
+      if (error) {
+        // Revert optimistic update
+        setDownvotedPoemIds(prev => [...prev, poemId]);
+        log.error('Downvotes', 'Failed to remove downvote', error.message);
+        return { error };
+      }
+
+      log.info('Downvotes', 'Downvote removed successfully');
+      return { error: null };
+    } catch (error) {
+      setDownvotedPoemIds(prev => [...prev, poemId]);
+      log.error('Downvotes', 'Exception removing downvote', error.message);
+      return { error };
+    }
+  };
+
+  const isPoemDownvoted = (poem) => {
+    if (!poem?.id) return false;
+    return downvotedPoemIds.includes(poem.id);
+  };
+
+  return {
+    downvotedPoemIds,
+    loading,
+    downvotePoem,
+    undownvotePoem,
+    isPoemDownvoted,
+  };
+}
+
+/**
+ * Lightweight emit-only hook for poem analytics events
+ * Fire-and-forget: no local state, no loading
+ */
+export function usePoemEvents(user) {
+  const emitEvent = async (poemId, eventType, metadata = {}) => {
+    if (!user || !isSupabaseConfigured()) return;
+    try {
+      log.info('Events', `Emitting ${eventType} for poem ${poemId}`);
+      const { error } = await supabase
+        .from('poem_events')
+        .insert({
+          user_id: user.id,
+          poem_id: poemId,
+          event_type: eventType,
+          metadata,
+        });
+
+      if (error) {
+        log.error('Events', `Failed to emit ${eventType}`, error.message);
+      }
+    } catch (error) {
+      // Fire-and-forget: don't throw
+      log.error('Events', `Exception emitting ${eventType}`, error.message);
+    }
+  };
+
+  return { emitEvent };
+}

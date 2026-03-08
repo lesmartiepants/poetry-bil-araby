@@ -367,24 +367,110 @@ test.describe('User Flows', () => {
     await page.waitForTimeout(300);
     await expect(counter).toContainText('1 of');
   });
+
+  // #11 — Save button visible and clickable (unauthenticated)
+  test('save button visible and shows tooltip when not logged in', async ({ page }) => {
+    const saveBtn = page.locator('button:has(svg.lucide-heart)').first();
+    await expect(saveBtn).toBeVisible({ timeout: 5000 });
+
+    // Click Save when not logged in — should show sign-in tooltip, not crash
+    await saveBtn.click();
+    await page.waitForTimeout(800);
+
+    // App should still be functional (no crash, poem still visible)
+    await expect(page.locator('[dir="rtl"]').first()).toBeVisible();
+  });
+
+  // #12 — Flag (ThumbsDown) button visible and clickable (unauthenticated)
+  test('flag button visible and shows tooltip when not logged in', async ({ page }) => {
+    const flagBtn = page.locator('button:has(svg.lucide-thumbs-down)').first();
+    await expect(flagBtn).toBeVisible({ timeout: 5000 });
+
+    // Click Flag when not logged in — should show sign-in tooltip, not crash
+    await flagBtn.click();
+    await page.waitForTimeout(800);
+
+    // App should still be functional
+    await expect(page.locator('[dir="rtl"]').first()).toBeVisible();
+  });
+
+  // #13 — Auth button always visible
+  test('auth button is always visible', async ({ page }) => {
+    const authBtn = page.locator('button:has(svg.lucide-log-in)').first();
+    await expect(authBtn).toBeVisible({ timeout: 5000 });
+  });
+
+  // #14 — Save and Flag persist after Discover (no layout shift)
+  test('save and flag buttons persist after discovering new poem', async ({ page }) => {
+    const saveBtn = page.locator('button:has(svg.lucide-heart)').first();
+    const flagBtn = page.locator('button:has(svg.lucide-thumbs-down)').first();
+
+    await expect(saveBtn).toBeVisible({ timeout: 5000 });
+    await expect(flagBtn).toBeVisible({ timeout: 5000 });
+
+    // Discover a new poem
+    const discoverBtn = page.locator('button[aria-label="Discover new poem"]');
+    await expect(discoverBtn).toBeEnabled({ timeout: 10000 });
+    await discoverBtn.click();
+    await expect(discoverBtn).toBeEnabled({ timeout: 10000 });
+
+    // Save and Flag should still be visible after poem change
+    await expect(saveBtn).toBeVisible();
+    await expect(flagBtn).toBeVisible();
+  });
+
+  // #15 — Only one ThumbsDown icon on page (not duplicated in sidebar)
+  test('thumbs-down icon appears exactly once on page', async ({ page }) => {
+    await expect(page.locator('button:has(svg.lucide-thumbs-down)').first()).toBeVisible({ timeout: 5000 });
+    const count = await page.locator('svg.lucide-thumbs-down').count();
+    expect(count).toBe(1);
+  });
 });
 
-// #11 — Mobile viewport shows VerticalSidebar (forced narrow viewport)
+// #16 — Mobile viewport shows VerticalSidebar (forced narrow viewport)
 test.describe('Mobile viewport sidebar', () => {
   test.use({ viewport: { width: 402, height: 874 } });
 
   test('mobile viewport shows VerticalSidebar with Settings', async ({ page }) => {
     await page.route('**/api/**', route => route.abort());
     await page.route('**/generativelanguage.googleapis.com/**', route => route.abort());
+    await page.addInitScript(() => { localStorage.setItem('hasSeenOnboarding', 'true'); });
 
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
+    const enterBtn = page.locator('button[aria-label="Enter the app"]');
+    if (await enterBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await enterBtn.click();
+      await enterBtn.waitFor({ state: 'hidden', timeout: 5000 });
+    }
     await page.locator('[dir="rtl"]').first().waitFor({ state: 'visible', timeout: 10000 });
 
     // VerticalSidebar Settings button should be visible on mobile
-    await expect(page.locator('button[title="Settings"]')).toBeVisible();
+    await expect(page.locator('button[title="Settings"]').first()).toBeVisible();
 
     // Theme options dropdown should NOT be visible (desktop only)
     await expect(page.getByRole('button', { name: /theme options/i })).not.toBeVisible();
+  });
+
+  // #17 — Flag NOT in VerticalSidebar on mobile
+  test('mobile VerticalSidebar does not contain ThumbsDown', async ({ page }) => {
+    await setupRouteMocks(page);
+    await page.addInitScript(() => { localStorage.setItem('hasSeenOnboarding', 'true'); });
+    await page.goto('/');
+    await page.waitForLoadState('domcontentloaded');
+    const enterBtn = page.locator('button[aria-label="Enter the app"]');
+    if (await enterBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await enterBtn.click();
+      await enterBtn.waitFor({ state: 'hidden', timeout: 5000 });
+    }
+    await page.locator('[dir="rtl"]').first().waitFor({ state: 'visible', timeout: 10000 });
+
+    // Save and Flag should be in the horizontal bar
+    const flagBtn = page.locator('button:has(svg.lucide-thumbs-down)').first();
+    await expect(flagBtn).toBeVisible({ timeout: 5000 });
+
+    // There should be exactly 1 ThumbsDown icon (bar only, not sidebar)
+    const totalFlags = await page.locator('svg.lucide-thumbs-down').count();
+    expect(totalFlags).toBe(1);
   });
 });

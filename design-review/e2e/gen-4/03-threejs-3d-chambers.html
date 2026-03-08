@@ -429,11 +429,13 @@ html, body {
   var allTextMeshes = [];
 
   /* ============================================
-     POEM 1: Arc arrangement + wireframe octahedron
+     CHAMBER 1: DISTANT THIN RINGS (FAR BEHIND TEXT)
+     Ethereal concentric rings far in the background
      ============================================ */
   var poem1Group = new THREE.Group();
   poem1Group.position.copy(poems[0].center);
 
+  // Add poem text planes
   poems[0].lines.forEach(function (line, i) {
     var plane = makeTextPlane(line, 1024, 128, '#e8d5b0');
     var angle = (i - 1.5) * 0.12;
@@ -447,21 +449,35 @@ html, body {
     allTextMeshes.push(plane);
   });
 
-  var octGeo = new THREE.OctahedronGeometry(3, 0);
-  var octMat = new THREE.MeshBasicMaterial({
-    color: 0xc9a84c, wireframe: true, transparent: true, opacity: 0.25
-  });
-  var octahedron = new THREE.Mesh(octGeo, octMat);
-  octahedron.position.set(0, 0, -4);
-  poem1Group.add(octahedron);
+  // Distant thin rings far behind - very subtle atmosphere
+  var distantRingsGroup = new THREE.Group();
+  for (var r = 0; r < 8; r++) {
+    var ringRadius = 8 + r * 2.5;
+    var ringZ = -25 + r * 3;
+    var ringGeo = new THREE.RingGeometry(ringRadius, ringRadius + 0.02, 48);
+    var ringMat = new THREE.MeshBasicMaterial({
+      color: 0x4a6fa5,
+      transparent: true,
+      opacity: 0.08 - r * 0.008,
+      side: THREE.DoubleSide
+    });
+    var ring = new THREE.Mesh(ringGeo, ringMat);
+    ring.position.set(0, 0, ringZ);
+    distantRingsGroup.add(ring);
+  }
+  distantRingsGroup.position.set(0, 0, 0);
+  distantRingsGroup.userData.rotSpeed = { x: 0.0005, y: 0.001 };
+  poem1Group.add(distantRingsGroup);
   scene.add(poem1Group);
 
   /* ============================================
-     POEM 2: Circular arrangement + torus knot
+     CHAMBER 2: PARTICLE RING HALO
+     Ring of faint particles forming atmospheric halo
      ============================================ */
   var poem2Group = new THREE.Group();
   poem2Group.position.copy(poems[1].center);
 
+  // Add poem text planes
   poems[1].lines.forEach(function (line, i) {
     var plane = makeTextPlane(line, 1024, 128, '#d4c5a0');
     var angle = (i / 4) * Math.PI * 2;
@@ -475,21 +491,52 @@ html, body {
     allTextMeshes.push(plane);
   });
 
-  var tkGeo = new THREE.TorusKnotGeometry(2, 0.4, 80, 12, 2, 3);
-  var tkMat = new THREE.MeshBasicMaterial({
-    color: 0xc9a84c, wireframe: true, transparent: true, opacity: 0.2
+  // Particle ring halo - creates atmospheric glow around the text
+  var haloParticleCount = 800;
+  var haloPositions = new Float32Array(haloParticleCount * 3);
+  var haloColors = new Float32Array(haloParticleCount * 3);
+
+  for (var hp = 0; hp < haloParticleCount; hp++) {
+    var angle = (hp / haloParticleCount) * Math.PI * 2;
+    var radius = 10 + Math.random() * 5;
+    var height = (Math.random() - 0.5) * 12;
+
+    haloPositions[hp * 3] = Math.cos(angle) * radius;
+    haloPositions[hp * 3 + 1] = height;
+    haloPositions[hp * 3 + 2] = Math.sin(angle) * radius - 5;
+
+    var goldBrightness = 0.4 + Math.random() * 0.3;
+    haloColors[hp * 3] = goldBrightness * 0.95;
+    haloColors[hp * 3 + 1] = goldBrightness * 0.75;
+    haloColors[hp * 3 + 2] = goldBrightness * 0.4;
+  }
+
+  var haloGeo = new THREE.BufferGeometry();
+  haloGeo.setAttribute('position', new THREE.BufferAttribute(haloPositions, 3));
+  haloGeo.setAttribute('color', new THREE.BufferAttribute(haloColors, 3));
+
+  var haloMat = new THREE.PointsMaterial({
+    size: 0.12,
+    vertexColors: true,
+    transparent: true,
+    opacity: 0.4,
+    sizeAttenuation: true,
+    blending: THREE.AdditiveBlending
   });
-  var torusKnot = new THREE.Mesh(tkGeo, tkMat);
-  torusKnot.position.set(0, 0, -3);
-  poem2Group.add(torusKnot);
+
+  var haloParticles = new THREE.Points(haloGeo, haloMat);
+  haloParticles.userData.rotSpeed = 0.002;
+  poem2Group.add(haloParticles);
   scene.add(poem2Group);
 
   /* ============================================
-     POEM 3: Cascading vertical + icosahedron
+     CHAMBER 3: CONVERGING WIREFRAME LINES
+     Thin lines converging to distant vanishing point
      ============================================ */
   var poem3Group = new THREE.Group();
   poem3Group.position.copy(poems[2].center);
 
+  // Add poem text planes
   poems[2].lines.forEach(function (line, i) {
     var plane = makeTextPlane(line, 1024, 128, '#c8b898');
     plane.position.set(
@@ -502,13 +549,63 @@ html, body {
     allTextMeshes.push(plane);
   });
 
-  var icoGeo = new THREE.IcosahedronGeometry(2.5, 0);
-  var icoMat = new THREE.MeshBasicMaterial({
-    color: 0x8b3a5e, wireframe: true, transparent: true, opacity: 0.25
-  });
-  var icosahedron = new THREE.Mesh(icoGeo, icoMat);
-  icosahedron.position.set(-2, 0, -4);
-  poem3Group.add(icosahedron);
+  // Converging lines to vanishing point - creates depth perception
+  var convergingGroup = new THREE.Group();
+  var lineCount = 24;
+  var spreadRadius = 12;
+  var vanishingPoint = new THREE.Vector3(0, 2, -30);
+
+  for (var ln = 0; ln < lineCount; ln++) {
+    var angle = (ln / lineCount) * Math.PI * 2;
+    var startX = Math.cos(angle) * spreadRadius;
+    var startY = Math.sin(angle) * spreadRadius;
+    var startZ = 5;
+
+    var lineGeo = new THREE.BufferGeometry();
+    var linePositions = new Float32Array([
+      startX, startY, startZ,
+      vanishingPoint.x, vanishingPoint.y, vanishingPoint.z
+    ]);
+    lineGeo.setAttribute('position', new THREE.BufferAttribute(linePositions, 3));
+
+    var lineMat = new THREE.LineBasicMaterial({
+      color: 0x8b3a5e,
+      transparent: true,
+      opacity: 0.12
+    });
+
+    var line = new THREE.Line(lineGeo, lineMat);
+    convergingGroup.add(line);
+  }
+
+  // Add scattered geometric debris - thin wireframe fragments
+  for (var debris = 0; debris < 6; debris++) {
+    var debrisAngle = (debris / 6) * Math.PI * 2;
+    var debrisRadius = 8 + Math.random() * 4;
+    var debrisGeo = new THREE.OctahedronGeometry(0.3 + Math.random() * 0.4, 0);
+    var debrisMat = new THREE.MeshBasicMaterial({
+      color: 0x8b3a5e,
+      wireframe: true,
+      transparent: true,
+      opacity: 0.1
+    });
+    var debrisMesh = new THREE.Mesh(debrisGeo, debrisMat);
+    debrisMesh.position.set(
+      Math.cos(debrisAngle) * debrisRadius,
+      (Math.random() - 0.5) * 8,
+      Math.sin(debrisAngle) * debrisRadius - 8
+    );
+    debrisMesh.rotation.set(
+      Math.random() * Math.PI,
+      Math.random() * Math.PI,
+      Math.random() * Math.PI
+    );
+    convergingGroup.add(debrisMesh);
+  }
+
+  convergingGroup.position.set(-1, 0, 0);
+  convergingGroup.userData.rotSpeed = { x: 0.0008, y: 0.0012, z: 0.0005 };
+  poem3Group.add(convergingGroup);
   scene.add(poem3Group);
 
   /* ============================================
@@ -690,15 +787,15 @@ html, body {
     currentLookAt.lerp(lookTarget, 0.08);
     camera.lookAt(currentLookAt);
 
-    // -- Rotate poem geometry --
-    octahedron.rotation.x += 0.004;
-    octahedron.rotation.y += 0.006;
+    // Rotate chamber structures
+    distantRingsGroup.rotation.x += distantRingsGroup.userData.rotSpeed.x;
+    distantRingsGroup.rotation.y += distantRingsGroup.userData.rotSpeed.y;
 
-    torusKnot.rotation.x += 0.003;
-    torusKnot.rotation.z += 0.005;
+    haloParticles.rotation.y += haloParticles.userData.rotSpeed;
 
-    icosahedron.rotation.y += 0.005;
-    icosahedron.rotation.z += 0.003;
+    convergingGroup.rotation.x += convergingGroup.userData.rotSpeed.x;
+    convergingGroup.rotation.y += convergingGroup.userData.rotSpeed.y;
+    convergingGroup.rotation.z += convergingGroup.userData.rotSpeed.z;
 
     // Ambient dodecahedrons
     dodecahedrons.forEach(function (d) {

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Play, Pause, BookOpen, RefreshCw, Volume2, ChevronDown, Quote, Globe, Moon, Sun, Loader2, ChevronRight, ChevronLeft, Search, X, Copy, LayoutGrid, Check, Bug, Trash2, Sparkles, Feather, Library, Compass, Rabbit, MoreHorizontal, Heart, LogIn, LogOut, User, Settings2 } from 'lucide-react';
+import { Play, Pause, BookOpen, RefreshCw, Volume2, ChevronDown, Quote, Globe, Moon, Sun, Loader2, ChevronRight, ChevronLeft, Search, X, Copy, LayoutGrid, Check, Bug, Trash2, Sparkles, Feather, Library, Compass, Rabbit, MoreHorizontal, Heart, LogIn, LogOut, User, Settings2, Share2 } from 'lucide-react';
 import { useAuth, useUserSettings, useSavedPoems } from './hooks/useAuth';
 import { INSIGHTS_SYSTEM_PROMPT, DISCOVERY_SYSTEM_PROMPT, getTTSInstruction } from './prompts';
 import { parseInsight } from './utils/insightParser';
@@ -875,6 +875,8 @@ const OverflowMenu = ({
   onSelectCategory,
   onCopy,
   showCopySuccess,
+  onShare,
+  showShareSuccess,
   useDatabase,
   onToggleDatabase,
   user,
@@ -911,6 +913,11 @@ const OverflowMenu = ({
 
   const handleCopy = () => {
     onCopy();
+    setIsOpen(false);
+  };
+
+  const handleShare = () => {
+    onShare();
     setIsOpen(false);
   };
 
@@ -966,6 +973,14 @@ const OverflowMenu = ({
             <div className="flex flex-col items-start">
               <div className="font-amiri text-base font-medium" style={{ color: gold }}>نسخ</div>
               <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Copy</div>
+            </div>
+          </button>
+
+          <button onClick={handleShare} className={itemClass}>
+            {showShareSuccess ? <Check size={18} className="text-green-500" /> : <Share2 size={18} style={{ color: gold }} />}
+            <div className="flex flex-col items-start">
+              <div className="font-amiri text-base font-medium" style={{ color: gold }}>مشاركة</div>
+              <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Share</div>
             </div>
           </button>
 
@@ -1514,7 +1529,7 @@ const SettingsView = ({ isOpen, onClose, darkMode, onToggleDarkMode, currentFont
   =============================================================================
 */
 
-const VerticalSidebar = ({ onExplain, onCopy, showCopySuccess, onOpenSavedPoems, onOpenSettings, onSignIn, onSignOut, user, useDatabase, onToggleDatabase, isSupabaseConfigured, theme, isInterpreting, interpretation }) => {
+const VerticalSidebar = ({ onExplain, onCopy, showCopySuccess, onShare, showShareSuccess, onOpenSavedPoems, onOpenSettings, onSignIn, onSignOut, user, useDatabase, onToggleDatabase, isSupabaseConfigured, theme, isInterpreting, interpretation }) => {
   return (
     <>
       <style>{`
@@ -1543,6 +1558,14 @@ const VerticalSidebar = ({ onExplain, onCopy, showCopySuccess, onOpenSavedPoems,
             className="w-11 h-11 rounded-xl flex items-center justify-center hover:bg-[#C5A059]/15 transition-all duration-200"
           >
             {showCopySuccess ? <Check size={18} className="text-green-500" /> : <Copy className="text-[#C5A059]" size={18} />}
+          </button>
+
+          <button
+            onClick={onShare}
+            title="Share poem"
+            className="w-11 h-11 rounded-xl flex items-center justify-center hover:bg-[#C5A059]/15 transition-all duration-200"
+          >
+            {showShareSuccess ? <Check size={18} className="text-green-500" /> : <Share2 className="text-[#C5A059]" size={18} />}
           </button>
 
           <div className="w-6 h-px bg-stone-500/30 mx-auto my-1" />
@@ -1623,6 +1646,7 @@ export default function DiwanApp() {
   const hasAutoLoaded = useRef(false);
   const [logs, setLogs] = useState([]);
   const [showCopySuccess, setShowCopySuccess] = useState(false);
+  const [showShareSuccess, setShowShareSuccess] = useState(false);
   const [isOverflow, setIsOverflow] = useState(() => {
     // Use 660 as the conservative initial threshold (covers both Supabase and non-Supabase button sets).
     // The detectOverflow effect below will refine this after mount.
@@ -1703,11 +1727,41 @@ export default function DiwanApp() {
   }, []);
 
   // Auto-load a poem and queue explanation on first mount.
+  // If the URL contains /poem/:id, load that specific poem (deep link).
   // If the user was viewing a poem before an OAuth redirect, restore it instead.
   useEffect(() => {
     if (!hasAutoLoaded.current) {
       hasAutoLoaded.current = true;
       let restored = false;
+
+      // Deep link detection: /poem/:id
+      const deepLinkMatch = window.location.pathname.match(/^\/poem\/(\d+)$/);
+      if (deepLinkMatch && useDatabase) {
+        const poemId = deepLinkMatch[1];
+        addLog("DeepLink", `Loading poem ID ${poemId} from URL`, "info");
+        fetch(`${apiUrl}/api/poems/${poemId}`)
+          .then(res => {
+            if (!res.ok) throw new Error(`Poem ${poemId} not found`);
+            return res.json();
+          })
+          .then(poem => {
+            if (poem.arabic) poem.arabic = poem.arabic.replace(/\*/g, '\n');
+            poem.isFromDatabase = true;
+            setPoems([poem]);
+            setCurrentIndex(0);
+            setAutoExplainPending(true);
+            addLog("DeepLink", `Loaded: ${poem.poet} — ${poem.title}`, "success");
+            // Clean up URL to root (optional: keep for bookmarkability)
+            window.history.replaceState({}, '', '/');
+          })
+          .catch(err => {
+            addLog("DeepLink", `Failed: ${err.message}`, "error");
+            setAutoExplainPending(true);
+            handleFetch();
+          });
+        return;
+      }
+
       try {
         const stashed = sessionStorage.getItem('pendingSavePoem');
         if (stashed) {
@@ -2515,6 +2569,45 @@ export default function DiwanApp() {
     }
   };
 
+  const handleShare = async () => {
+    addLog("UI Event", "Share button clicked", "info");
+
+    const poemId = current?.id;
+    const isDbPoem = current?.isFromDatabase && typeof poemId === 'number';
+    const shareUrl = isDbPoem
+      ? `${window.location.origin}/poem/${poemId}`
+      : window.location.origin;
+    const shareTitle = `${current?.titleArabic || current?.title || 'Arabic Poetry'} — ${current?.poetArabic || current?.poet || ''}`;
+    const shareText = current?.arabic
+      ? current.arabic.split('\n').slice(0, 2).join('\n')
+      : 'Discover classical and modern Arabic poetry';
+
+    // Try native Web Share API first (mobile + some desktop)
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: shareTitle, text: shareText, url: shareUrl });
+        addLog("Share", "Shared via Web Share API", "success");
+        return;
+      } catch (e) {
+        // User cancelled or API failed — fall through to copy
+        if (e.name === 'AbortError') {
+          addLog("Share", "Share cancelled by user", "info");
+          return;
+        }
+      }
+    }
+
+    // Fallback: copy link to clipboard
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setShowShareSuccess(true);
+      addLog("Share", `Link copied: ${shareUrl}`, "success");
+      setTimeout(() => setShowShareSuccess(false), 2000);
+    } catch (e) {
+      addLog("Share Error", e.message, "error");
+    }
+  };
+
   // Auth handlers
   const handleSignIn = () => {
     setShowAuthModal(true);
@@ -2959,6 +3052,13 @@ export default function DiwanApp() {
                     <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">Copy</span>
                   </div>
 
+                  <div className="flex flex-col items-center gap-1 min-w-[52px]">
+                    <button onClick={handleShare} aria-label="Share poem" className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105">
+                      {showShareSuccess ? <Check size={21} className="text-green-500" /> : <Share2 size={21} className="text-[#C5A059]" />}
+                    </button>
+                    <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">Share</span>
+                  </div>
+
                   <DatabaseToggle
                     useDatabase={useDatabase}
                     onToggle={apiKey ? () => setUseDatabase(!useDatabase) : () => {}}
@@ -2996,6 +3096,8 @@ export default function DiwanApp() {
                   onSelectCategory={setSelectedCategory}
                   onCopy={handleCopy}
                   showCopySuccess={showCopySuccess}
+                  onShare={handleShare}
+                  showShareSuccess={showShareSuccess}
                   useDatabase={useDatabase}
                   onToggleDatabase={apiKey ? () => setUseDatabase(!useDatabase) : () => {}}
                   user={user}
@@ -3115,6 +3217,8 @@ export default function DiwanApp() {
           onExplain={handleAnalyze}
           onCopy={handleCopy}
           showCopySuccess={showCopySuccess}
+          onShare={handleShare}
+          showShareSuccess={showShareSuccess}
           onOpenSavedPoems={handleOpenSavedPoems}
           onOpenSettings={handleOpenSettings}
           onSignIn={handleSignIn}

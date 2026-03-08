@@ -353,6 +353,54 @@ app.get('/api/poems/search', [
   }
 });
 
+// Get poem by ID (for deep links / sharing)
+// IMPORTANT: This route uses :id param and must be registered AFTER all /api/poems/<literal> routes
+// (random, by-poet, search) to avoid shadowing them.
+app.get('/api/poems/:id', [
+  param('id').isInt({ min: 1 }).withMessage('Poem ID must be a positive integer'),
+  validate
+], async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const result = await pool.query(`
+      SELECT
+        p.id,
+        p.title,
+        ${poemContentExpr()} as arabic,
+        po.name as poet,
+        t.name as theme
+      FROM poems p
+      JOIN poets po ON p.poet_id = po.id
+      JOIN themes t ON p.theme_id = t.id
+      WHERE p.id = $1
+    `, [id]);
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Poem not found' });
+    }
+
+    const poem = result.rows[0];
+
+    const formattedPoem = {
+      id: poem.id,
+      poet: poem.poet,
+      poetArabic: poem.poet,
+      title: poem.title,
+      titleArabic: poem.title,
+      arabic: poem.arabic,
+      english: '',
+      tags: [poem.theme]
+    };
+
+    log.info('Poems', `By ID: ${id}, poet=${poem.poet}`);
+    res.json(formattedPoem);
+  } catch (error) {
+    log.error('Poems', `Error fetching poem by ID: ${error.message}`, error.stack);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // ═══════════════════════════════════════════════════════════════
 // GEMINI API PROXY (keeps API key server-side)
 // ═══════════════════════════════════════════════════════════════

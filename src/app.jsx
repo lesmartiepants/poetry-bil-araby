@@ -20,7 +20,8 @@ const FEATURES = {
   streaming: true,    // Enable streaming insights (progressive rendering)
   prefetching: true,  // Enable smart prefetching (rate-limited to avoid API issues)
   database: true,     // Enable database poem source (requires backend server running)
-  onboarding: true    // Show kinetic walkthrough (phases 1-3) on first visit
+  onboarding: true,   // Show kinetic walkthrough (phases 1-3) on first visit
+  forceOnboarding: true // Bypass hasSeenOnboarding check (disable for production)
 };
 
 const DESIGN = {
@@ -736,12 +737,10 @@ const DebugPanel = ({ logs, onClear, darkMode, poem, appState }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const [bugDescription, setBugDescription] = useState('');
   const [bugStatus, setBugStatus] = useState(null); // null | 'sending' | 'success' | 'error'
+  const [bugError, setBugError] = useState('');
   const scrollRef = useRef(null);
 
   useEffect(() => {
-    if (logs.length > 0 && logs[logs.length - 1].type === 'error') {
-      setIsExpanded(true);
-    }
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
@@ -763,13 +762,17 @@ const DebugPanel = ({ logs, onClear, darkMode, poem, appState }) => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      if (!res.ok) {
+        const text = await res.text().catch(() => '');
+        throw new Error(`HTTP ${res.status}${text ? ': ' + text.slice(0, 100) : ''}`);
+      }
       setBugStatus('success');
       setBugDescription('');
       setTimeout(() => setBugStatus(null), 3000);
     } catch (e) {
       setBugStatus('error');
-      setTimeout(() => setBugStatus(null), 3000);
+      setBugError(e.message || 'Network error');
+      setTimeout(() => setBugStatus(null), 5000);
     }
   };
 
@@ -816,7 +819,7 @@ const DebugPanel = ({ logs, onClear, darkMode, poem, appState }) => {
             >
               {bugStatus === 'sending' ? 'Sending...' :
                bugStatus === 'success' ? 'Sent!' :
-               bugStatus === 'error' ? 'Failed' :
+               bugStatus === 'error' ? `Failed${bugError ? ` (${bugError})` : ''}` :
                'Submit Bug'}
             </button>
           </div>
@@ -2210,6 +2213,7 @@ export default function DiwanApp() {
   const [showSplash, setShowSplash] = useState(true); // Always show splash on every visit
   const [showOnboarding] = useState(() => {
     if (!FEATURES.onboarding) return false;
+    if (FEATURES.forceOnboarding) return true;
     try { return !localStorage.getItem('hasSeenOnboarding'); } catch { return false; }
   });
   const [showTranslation, setShowTranslation] = useState(true);

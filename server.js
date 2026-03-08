@@ -151,7 +151,7 @@ app.use(cors({
     callback(new Error('CORS: origin not allowed'));
   },
   methods: ['GET', 'POST', 'PATCH'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key']
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key', 'sentry-trace', 'baggage']
 }));
 app.use(express.json());
 // Larger body limit only for AI proxy endpoints

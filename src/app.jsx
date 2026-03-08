@@ -3102,10 +3102,11 @@ export default function DiwanApp() {
       </a>
       <a
         href="/design-review"
-        className="hidden md:block fixed bottom-4 left-4 z-[45] py-1.5 px-3 rounded-lg bg-gradient-to-r from-black/60 to-black/50 backdrop-blur-xl border border-[#C5A059]/20 no-underline"
+        className="hidden md:flex fixed left-0 top-1/2 -translate-y-1/2 z-[45] py-4 px-2 rounded-r-2xl bg-gradient-to-b from-black/70 via-black/60 to-black/70 backdrop-blur-xl border-r-2 border-[#C5A059]/40 no-underline items-center hover:px-3 hover:border-[#C5A059]/70 transition-all duration-300 cursor-pointer"
+        style={{ writingMode: 'vertical-rl', animation: 'slideInLeft 0.4s ease-out' }}
         title="Design Review"
       >
-        <span className="text-[10px] font-brand-en tracking-widest text-[#C5A059]/50 uppercase">Design Review</span>
+        <span className="text-[10px] font-brand-en tracking-widest text-[#C5A059]/60 uppercase">Review</span>
       </a>
 
       {/* Vertical Sidebar - Mobile overflow only */}

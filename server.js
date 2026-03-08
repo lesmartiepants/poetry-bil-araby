@@ -30,6 +30,12 @@ const PORT = process.env.PORT || 3001;
 const LOG_ENABLED = process.env.LOG_ENABLED !== 'false'; // on by default
 const LOG_DEBUG = process.env.LOG_DEBUG === 'true';       // verbose DB debug, off by default
 
+// ── Serving filters (tune what poems are returned by API) ──
+const SERVING = {
+  minQualityScore: 75,   // Only serve poems with quality_score >= this value
+  maxVerseLines: 24,     // Only serve poems with <= this many verse lines (delimited by *)
+};
+
 // Structured logger — captured by Render/Vercel logs
 const log = {
   info: (label, msg, data) => LOG_ENABLED && console.log(`[${label}]`, msg, data !== undefined ? data : ''),
@@ -109,9 +115,18 @@ function poemContentExpr() {
   return hasDiacritizedColumn ? 'COALESCE(p.diacritized_content, p.content)' : 'p.content';
 }
 
-// Helper: returns SQL WHERE clause fragment for quality filtering (empty string when column doesn't exist)
-function qualityFilter() {
-  return hasQualityScore ? 'AND p.quality_score >= 60' : '';
+// Helper: returns SQL WHERE clause fragments for serving filters (empty string when quality column doesn't exist)
+function servingFilters() {
+  const clauses = [];
+  if (hasQualityScore && SERVING.minQualityScore) {
+    clauses.push(`p.quality_score >= ${SERVING.minQualityScore}`);
+  }
+  if (SERVING.maxVerseLines) {
+    clauses.push(
+      `array_length(string_to_array(${poemContentExpr()}, '*'), 1) <= ${SERVING.maxVerseLines}`
+    );
+  }
+  return clauses.length ? 'AND ' + clauses.join(' AND ') : '';
 }
 
 // Helper: returns extra SELECT columns for translation cache (empty string when columns don't exist)
@@ -240,10 +255,10 @@ app.get('/api/poems/random', [
 
     const params = [];
     if (poet && poet !== 'All') {
-      query += ` WHERE po.name = $1 ${qualityFilter()}`;
+      query += ` WHERE po.name = $1 ${servingFilters()}`;
       params.push(poet);
     } else {
-      const qf = qualityFilter();
+      const qf = servingFilters();
       if (qf) query += ` WHERE 1=1 ${qf}`;
     }
 
@@ -315,7 +330,7 @@ app.get('/api/poems/by-poet/:poet', [
       FROM poems p
       JOIN poets po ON p.poet_id = po.id
       JOIN themes t ON p.theme_id = t.id
-      WHERE po.name = $1 ${qualityFilter()}
+      WHERE po.name = $1 ${servingFilters()}
       ORDER BY RANDOM()
       LIMIT $2 OFFSET $3
     `;
@@ -385,7 +400,7 @@ app.get('/api/poems/search', [
       FROM poems p
       JOIN poets po ON p.poet_id = po.id
       JOIN themes t ON p.theme_id = t.id
-      WHERE (p.title ILIKE $1 OR p.content ILIKE $1 OR po.name ILIKE $1) ${qualityFilter()}
+      WHERE (p.title ILIKE $1 OR p.content ILIKE $1 OR po.name ILIKE $1) ${servingFilters()}
       LIMIT $2
     `;
 
@@ -423,7 +438,7 @@ app.get('/api/poems/daily', async (req, res) => {
       FROM poems p
       JOIN poets po ON p.poet_id = po.id
       JOIN themes t ON p.theme_id = t.id
-      ${hasQualityScore ? 'WHERE p.quality_score >= 60' : ''}
+      ${servingFilters() ? 'WHERE 1=1 ' + servingFilters() : ''}
       ORDER BY md5(p.id::text || current_date::text)
       LIMIT 1
     `);
@@ -1325,6 +1340,7 @@ if (currentFile === mainFile) {
     log.info('Server', `Poetry API running on http://localhost:${PORT}`);
     log.info('Server', `Health: http://localhost:${PORT}/api/health | Poems: http://localhost:${PORT}/api/poems/random`);
     log.info('Server', `Logging: enabled=${LOG_ENABLED}, debug=${LOG_DEBUG}`);
+    log.info('Server', 'Serving filters', SERVING);
   });
 
   // Keep-alive mechanism to prevent Render free tier from sleeping (15 min idle timeout)

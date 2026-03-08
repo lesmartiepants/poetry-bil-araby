@@ -1825,6 +1825,7 @@ export default function DiwanApp() {
   const [showSplash, setShowSplash] = useState(() => {
     try { return !localStorage.getItem('hasSeenSplash'); } catch { return false; }
   });
+  const [showTranslation, setShowTranslation] = useState(true);
 
   const theme = darkMode ? THEME.dark : THEME.light;
 
@@ -3062,7 +3063,7 @@ export default function DiwanApp() {
                       {versePairs.map((pair, idx) => (
                         <div key={`${current?.id}-${idx}`} className="flex flex-col gap-0.5">
                           <p dir="rtl" className={`${currentFontClass} ${DESIGN.mainFontSize} leading-[2.2]  arabic-shadow`}>{pair.ar}</p>
-                          {pair.en && <p dir="ltr" className={`font-brand-en italic ${DESIGN.mainEnglishFontSize} opacity-40 ${DESIGN.anim}`}>{pair.en}</p>}
+                          {showTranslation && pair.en && <p dir="ltr" className={`font-brand-en italic ${DESIGN.mainEnglishFontSize} opacity-40 ${DESIGN.anim}`}>{pair.en}</p>}
                         </div>
                       ))}
                     </div>
@@ -3146,6 +3147,19 @@ export default function DiwanApp() {
                     <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">Copy</span>
                   </div>
 
+                  <div className="flex flex-col items-center gap-1 min-w-[52px]">
+                    <button
+                      onClick={() => setShowTranslation(prev => !prev)}
+                      aria-label={showTranslation ? 'Hide English translation' : 'Show English translation'}
+                      className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105 ${!showTranslation ? 'opacity-40' : ''}`}
+                    >
+                      <Languages size={21} className="text-[#C5A059]" />
+                    </button>
+                    <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">
+                      {showTranslation ? 'English' : 'Arabic'}
+                    </span>
+                  </div>
+
                   <DatabaseToggle
                     useDatabase={useDatabase}
                     onToggle={apiKey ? () => setUseDatabase(!useDatabase) : () => {}}
@@ -3217,7 +3231,7 @@ export default function DiwanApp() {
                        <Sparkles size={12} /> Seek Insight
                     </button>
                   )}
-                  <p className={`font-brand-en italic whitespace-pre-wrap ${DESIGN.paneVerseSize} ${darkMode ? 'text-stone-100' : 'text-stone-800'}`}>{insightParts?.poeticTranslation || current?.english}</p>
+                  {showTranslation && <p className={`font-brand-en italic whitespace-pre-wrap ${DESIGN.paneVerseSize} ${darkMode ? 'text-stone-100' : 'text-stone-800'}`}>{insightParts?.poeticTranslation || current?.english}</p>}
                   {insightParts?.depth && (
                     <div className="pt-6 border-t border-indigo-500/10">
                       <h4 className="text-[10px] font-brand-en font-black text-indigo-600 mb-2 uppercase tracking-widest opacity-80">The Depth</h4>

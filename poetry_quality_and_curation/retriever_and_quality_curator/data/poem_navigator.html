@@ -1,0 +1,1331 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Poetry Curation Navigator</title>
+<link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f1117;
+  --surface: #1a1d27;
+  --surface2: #252833;
+  --border: #333644;
+  --text: #e8e8ed;
+  --text-dim: #8b8fa3;
+  --accent: #c9a84c;
+  --accent-dim: #8b7633;
+  --green: #4ade80;
+  --red: #f87171;
+  --blue: #60a5fa;
+  --purple: #a78bfa;
+  --orange: #fb923c;
+  --teal: #2dd4bf;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'Tajawal', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+}
+
+/* Tab bar */
+.tab-bar {
+  position: fixed;
+  top: 0;
+  right: 300px;
+  left: 0;
+  height: 44px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  z-index: 50;
+  direction: ltr;
+}
+.tab-btn {
+  padding: 0 24px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-dim);
+  font-family: 'Tajawal', sans-serif;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.tab-btn:hover { color: var(--text); }
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+/* Sidebar */
+.sidebar {
+  width: 300px;
+  min-width: 300px;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow-y: auto;
+}
+.sidebar h1 {
+  font-family: 'Amiri', serif;
+  font-size: 1.3rem;
+  padding: 16px;
+  color: var(--accent);
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-section {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-section h3 {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  margin-bottom: 8px;
+  letter-spacing: 1px;
+  direction: ltr;
+  text-align: left;
+}
+.category-btn {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  padding: 8px 12px;
+  margin: 2px 0;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--text);
+  font-family: 'Tajawal', sans-serif;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-align: right;
+}
+.category-btn:hover { background: var(--surface2); }
+.category-btn.active { background: var(--surface2); border-color: var(--accent-dim); color: var(--accent); }
+.category-btn .count {
+  font-size: 0.75rem;
+  color: var(--text-dim);
+  background: var(--surface2);
+  padding: 2px 6px;
+  border-radius: 10px;
+  min-width: 35px;
+  text-align: center;
+  direction: ltr;
+}
+.category-btn.active .count { background: var(--accent-dim); color: var(--accent); }
+
+.stats {
+  padding: 12px 16px;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  direction: ltr;
+  text-align: left;
+}
+
+.search-box {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--border);
+}
+.search-box input {
+  width: 100%;
+  padding: 8px 12px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: 'Tajawal', sans-serif;
+  font-size: 0.9rem;
+  outline: none;
+  direction: rtl;
+}
+.search-box input:focus { border-color: var(--accent-dim); }
+.search-box input::placeholder { color: var(--text-dim); }
+
+.sort-controls {
+  padding: 8px 16px;
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--border);
+}
+.sort-btn {
+  padding: 4px 10px;
+  font-size: 0.7rem;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-family: 'Tajawal', sans-serif;
+  direction: ltr;
+}
+.sort-btn.active { border-color: var(--accent-dim); color: var(--accent); }
+
+/* Main */
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;
+  padding-top: 44px;
+}
+
+/* Poems tab */
+.tab-content { display: none; flex: 1; overflow-y: auto; padding: 16px; }
+.tab-content.active { display: block; }
+
+/* Poem card */
+.poem-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.poem-card:hover { border-color: var(--accent-dim); }
+.poem-card.expanded { border-color: var(--accent); }
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 10px;
+  gap: 12px;
+}
+.card-title {
+  font-family: 'Amiri', serif;
+  font-size: 1.15rem;
+  color: var(--accent);
+  flex: 1;
+}
+.card-poet { font-size: 0.85rem; color: var(--text-dim); margin-top: 4px; }
+.score-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  font-weight: 700;
+  font-size: 0.95rem;
+  direction: ltr;
+}
+.score-badge.high { background: rgba(74,222,128,0.15); color: var(--green); border: 2px solid rgba(74,222,128,0.3); }
+.score-badge.mid { background: rgba(96,165,250,0.15); color: var(--blue); border: 2px solid rgba(96,165,250,0.3); }
+.score-badge.low { background: rgba(248,113,113,0.15); color: var(--red); border: 2px solid rgba(248,113,113,0.3); }
+.card-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.tag { font-size: 0.7rem; padding: 2px 8px; border-radius: 4px; direction: ltr; }
+.tag.source-original { background: rgba(96,165,250,0.15); color: var(--blue); }
+.tag.source-diwan { background: rgba(167,139,250,0.15); color: var(--purple); }
+.tag.cat-dropped { background: rgba(248,113,113,0.15); color: var(--red); }
+.tag.cat-selected { background: rgba(74,222,128,0.1); color: var(--green); }
+.tag.theme { background: rgba(251,146,60,0.15); color: var(--orange); }
+
+.poem-content { display: none; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+.poem-card.expanded .poem-content { display: block; }
+.poem-text {
+  font-family: 'Amiri', serif;
+  font-size: 1.3rem;
+  line-height: 2.4;
+  color: var(--text);
+  text-align: center;
+  direction: rtl;
+  padding: 16px 8px;
+}
+.poem-text .bayt { margin-bottom: 8px; display: block; }
+.poem-text .hsep { display: inline-block; width: 40px; text-align: center; color: var(--accent-dim); }
+.subscores { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; direction: ltr; }
+.subscore {
+  display: flex; flex-direction: column; align-items: center;
+  min-width: 60px; padding: 6px 10px; background: var(--surface2);
+  border-radius: 6px; font-size: 0.7rem;
+}
+.subscore .label { color: var(--text-dim); margin-bottom: 2px; text-transform: capitalize; }
+.subscore .val { font-weight: 700; font-size: 0.9rem; }
+.translate-area { margin-top: 16px; }
+.translate-btn {
+  padding: 8px 20px; background: var(--accent-dim); color: var(--accent);
+  border: 1px solid var(--accent); border-radius: 6px; cursor: pointer;
+  font-family: 'Tajawal', sans-serif; font-size: 0.85rem; transition: all 0.15s;
+}
+.translate-btn:hover { background: var(--accent); color: var(--bg); }
+.translate-btn:disabled { opacity: 0.5; cursor: wait; }
+.translation-output {
+  margin-top: 12px; padding: 16px; background: var(--surface2);
+  border-radius: 8px; font-size: 1rem; line-height: 1.8;
+  direction: ltr; text-align: left; white-space: pre-wrap; display: none;
+}
+
+/* Dashboard charts */
+.dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.chart-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px;
+}
+.chart-card.full-width { grid-column: 1 / -1; }
+.chart-card h3 {
+  font-size: 0.85rem;
+  color: var(--accent);
+  margin-bottom: 16px;
+  direction: ltr;
+  text-align: left;
+}
+.bar-chart { direction: ltr; text-align: left; }
+.bar-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 6px;
+  font-size: 0.8rem;
+}
+.bar-label {
+  min-width: 140px;
+  color: var(--text-dim);
+  text-align: right;
+  padding-left: 10px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  direction: rtl;
+}
+.bar-track {
+  flex: 1;
+  height: 20px;
+  background: var(--surface2);
+  border-radius: 4px;
+  overflow: hidden;
+  position: relative;
+}
+.bar-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+.bar-value {
+  min-width: 50px;
+  text-align: left;
+  padding-right: 8px;
+  color: var(--text-dim);
+  font-size: 0.75rem;
+}
+.kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+.kpi {
+  background: var(--surface2);
+  border-radius: 8px;
+  padding: 16px;
+  text-align: center;
+  direction: ltr;
+}
+.kpi .value { font-size: 1.6rem; font-weight: 700; color: var(--accent); }
+.kpi .label { font-size: 0.7rem; color: var(--text-dim); margin-top: 4px; }
+
+/* Histogram */
+.histogram { display: flex; align-items: flex-end; gap: 2px; height: 120px; direction: ltr; }
+.hist-bar {
+  flex: 1;
+  background: var(--blue);
+  border-radius: 2px 2px 0 0;
+  position: relative;
+  min-width: 3px;
+  transition: height 0.3s;
+}
+.hist-bar:hover { opacity: 0.8; }
+.hist-bar .tooltip {
+  display: none;
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  white-space: nowrap;
+  z-index: 10;
+}
+.hist-bar:hover .tooltip { display: block; }
+.hist-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  margin-top: 4px;
+  direction: ltr;
+}
+
+/* Scatter plot canvas */
+.scatter-container { position: relative; width: 100%; }
+.scatter-canvas { width: 100%; height: 300px; border-radius: 6px; cursor: crosshair; }
+.scatter-legend { display: flex; gap: 16px; margin-top: 8px; font-size: 0.7rem; flex-wrap: wrap; }
+.scatter-legend span { display: flex; align-items: center; gap: 4px; }
+.scatter-legend .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.scatter-tooltip {
+  position: absolute; display: none; background: var(--surface);
+  border: 1px solid var(--border); padding: 6px 10px; border-radius: 6px;
+  font-size: 0.7rem; pointer-events: none; z-index: 20; direction: rtl;
+  max-width: 250px; white-space: nowrap;
+}
+
+/* Dimension radar as horizontal bars */
+.dim-compare { direction: ltr; text-align: left; }
+.dim-row { display: flex; align-items: center; margin-bottom: 8px; }
+.dim-label { width: 70px; font-size: 0.75rem; color: var(--text-dim); text-transform: capitalize; }
+.dim-bars { flex: 1; display: flex; gap: 4px; align-items: center; }
+.dim-bar-track { flex: 1; height: 14px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+.dim-bar-fill { height: 100%; border-radius: 3px; }
+.dim-val { min-width: 30px; font-size: 0.7rem; color: var(--text-dim); text-align: center; }
+
+/* Modal */
+.modal-overlay {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+  z-index: 100; align-items: center; justify-content: center;
+}
+.modal-overlay.show { display: flex; }
+.modal {
+  background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+  padding: 24px; width: 400px; max-width: 90vw; direction: ltr; text-align: left;
+}
+.modal h2 { color: var(--accent); margin-bottom: 12px; font-size: 1.1rem; }
+.modal p { color: var(--text-dim); font-size: 0.85rem; margin-bottom: 12px; }
+.modal input {
+  width: 100%; padding: 8px 12px; background: var(--surface2);
+  border: 1px solid var(--border); border-radius: 6px; color: var(--text);
+  font-family: monospace; font-size: 0.85rem; margin-bottom: 12px;
+}
+.modal button {
+  padding: 8px 20px; background: var(--accent); color: var(--bg);
+  border: none; border-radius: 6px; cursor: pointer; font-weight: 700;
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<div class="sidebar">
+  <h1>Poetry Curation Navigator</h1>
+  <div class="search-box">
+    <input type="text" id="search" placeholder="بحث بالعنوان أو الشاعر...">
+  </div>
+  <div class="sort-controls">
+    <button class="sort-btn active" data-sort="score">Score &#8595;</button>
+    <button class="sort-btn" data-sort="score-asc">Score &#8593;</button>
+    <button class="sort-btn" data-sort="poet">Poet</button>
+    <button class="sort-btn" data-sort="lines">Lines</button>
+    <button class="sort-btn" data-sort="lines-asc">Lines &#8593;</button>
+  </div>
+  <div class="sidebar-section">
+    <h3>Categories</h3>
+    <button class="category-btn active" data-cat="all">
+      <span>الكل</span><span class="count" id="count-all">0</span>
+    </button>
+    <button class="category-btn" data-cat="selected-classical-well-known">
+      <span>كلاسيكي - مشهور</span><span class="count" id="count-selected-classical-well-known">0</span>
+    </button>
+    <button class="category-btn" data-cat="selected-classical-lesser-known">
+      <span>كلاسيكي - أقل شهرة</span><span class="count" id="count-selected-classical-lesser-known">0</span>
+    </button>
+    <button class="category-btn" data-cat="selected-modern-well-known">
+      <span>حديث - مشهور</span><span class="count" id="count-selected-modern-well-known">0</span>
+    </button>
+    <button class="category-btn" data-cat="selected-modern-lesser-known">
+      <span>حديث - أقل شهرة</span><span class="count" id="count-selected-modern-lesser-known">0</span>
+    </button>
+    <button class="category-btn" data-cat="dropped-high-score" style="border-right:3px solid var(--red);">
+      <span>محذوف - درجة عالية</span><span class="count" id="count-dropped-high-score">0</span>
+    </button>
+  </div>
+  <div class="sidebar-section">
+    <h3>Source</h3>
+    <button class="category-btn" data-source="original">
+      <span>Original (DB)</span><span class="count" id="count-source-original">0</span>
+    </button>
+    <button class="category-btn" data-source="diwan">
+      <span>Diwan (New)</span><span class="count" id="count-source-diwan">0</span>
+    </button>
+  </div>
+  <div class="sidebar-section">
+    <h3>Translation (App Backend)</h3>
+    <button class="sort-btn" id="api-key-btn" style="width:100%;text-align:center;">Configure</button>
+    <div id="api-status" style="font-size:0.7rem;color:var(--text-dim);margin-top:6px;text-align:center;"></div>
+  </div>
+  <div class="stats" id="stats"></div>
+</div>
+
+<div class="main">
+  <div class="tab-bar">
+    <button class="tab-btn active" data-tab="dashboard">Dashboard</button>
+    <button class="tab-btn" data-tab="poems">Browse Poems</button>
+  </div>
+  <div class="tab-content active" id="tab-dashboard"></div>
+  <div class="tab-content" id="tab-poems"></div>
+</div>
+
+<div class="modal-overlay" id="modal">
+  <div class="modal">
+    <h2>Translation Settings</h2>
+    <p>Uses the app's backend proxy (<code>/api/ai/</code>) which has the Gemini key server-side. Set the backend URL below. Falls back to direct Gemini API if a key is provided.</p>
+    <label style="font-size:0.8rem;color:var(--text-dim);display:block;margin-bottom:4px;">Backend URL</label>
+    <input type="text" id="api-url-input" placeholder="http://localhost:3001">
+    <label style="font-size:0.8rem;color:var(--text-dim);display:block;margin-bottom:4px;">Gemini API Key (optional fallback)</label>
+    <input type="password" id="api-key-input" placeholder="AIza... (only if no backend)">
+    <label style="font-size:0.8rem;color:var(--text-dim);display:block;margin-bottom:4px;">Model</label>
+    <input type="text" id="model-input" placeholder="gemini-2.0-flash">
+    <button onclick="saveSettings()">Save</button>
+  </div>
+</div>
+
+<script>
+let allPoems = [];
+let filteredPoems = [];
+let currentCat = 'all';
+let currentSource = null;
+let currentSort = 'score';
+let geminiKey = localStorage.getItem('gemini_api_key') || '';
+let apiUrl = localStorage.getItem('api_url') || 'http://localhost:3001';
+let geminiModel = localStorage.getItem('gemini_model') || 'gemini-2.5-flash';
+
+const INSIGHTS_SYSTEM_PROMPT = 'You are an expert scholar of Arabic poetry and a gifted English prose stylist.\n\nTASK: Explain this Arabic poem so an English-speaking reader truly understands it.\n\nProvide exactly three sections:\n\nPOEM:\nTranslate the poem into natural, flowing English. Preserve the imagery and emotional weight but prioritize clarity. Preserve the original line breaks exactly: produce one English line for each Arabic line, in the same order.\n\nTHE DEPTH:\nIn 3-5 sentences, explain what this poem means. Cover: the central theme or argument, key metaphors or cultural references an English speaker would miss, and why this poem matters in the Arabic literary tradition.\n\nTHE AUTHOR:\nIn 3-4 sentences, describe the poet. Include their full name, their historical era and geographic context, and what they are most famous for.\n\nIMPORTANT: Use the section headers POEM:, THE DEPTH:, and THE AUTHOR: only as labels.';
+
+fetch('poems_navigator.json')
+  .then(r => r.json())
+  .then(data => {
+    allPoems = data;
+    updateCounts();
+    buildDashboard();
+    applyFilters();
+    updateApiStatus();
+  });
+
+function updateCounts() {
+  const cats = {};
+  const sources = { original: 0, diwan: 0 };
+  allPoems.forEach(p => {
+    cats[p.category] = (cats[p.category] || 0) + 1;
+    sources[p.source] = (sources[p.source] || 0) + 1;
+  });
+  document.getElementById('count-all').textContent = allPoems.length;
+  for (const c of Object.keys(cats)) {
+    const el = document.getElementById('count-' + c);
+    if (el) el.textContent = cats[c];
+  }
+  document.getElementById('count-source-original').textContent = sources.original;
+  document.getElementById('count-source-diwan').textContent = sources.diwan;
+}
+
+// ============== HEMISTICH DETECTION ==============
+// Poets known to write free verse / modern poetry
+const FREE_VERSE_POETS = new Set([
+  'محمود درويش', 'نزار قباني', 'أدونيس', 'بدر شاكر السياب',
+  'عبد الوهاب البياتي', 'صلاح عبد الصبور', 'أحمد مطر',
+  'سميح القاسم', 'تميم البرغوثي', 'فدوى طوقان',
+  'قاسم حداد', 'محمد الماغوط', 'سعدي يوسف',
+  'أمل دنقل', 'عبد الرحمن الأبنودي', 'محمد ابراهيم أبو سنة',
+  'نازك الملائكة', 'بلند الحيدري', 'خليل حاوي',
+  'يوسف الخال', 'أنسي الحاج', 'محمد القيسي',
+]);
+
+function isClassicalFormat(parts) {
+  if (parts.length < 4) return false;
+  if (parts.length % 2 !== 0) return false;
+  const lengths = parts.map(p => p.trim().length);
+  const avgLen = lengths.reduce((a, b) => a + b, 0) / lengths.length;
+  const shortSegments = lengths.filter(l => l < 8).length;
+  if (shortSegments / lengths.length > 0.25) return false;
+  if (avgLen < 12) return false;
+  const mean = avgLen;
+  const variance = lengths.reduce((sum, l) => sum + (l - mean) ** 2, 0) / lengths.length;
+  const cv = Math.sqrt(variance) / mean;
+  if (cv > 0.45) return false;
+  let pairRatios = 0, pairCount = 0;
+  for (let i = 0; i < parts.length - 1; i += 2) {
+    const a = lengths[i], b = lengths[i + 1];
+    if (a > 0 && b > 0) {
+      pairRatios += Math.min(a, b) / Math.max(a, b);
+      pairCount++;
+    }
+  }
+  return pairCount > 0 && (pairRatios / pairCount) > 0.5;
+}
+
+// ============== LINE COUNT ==============
+function getLineCount(content, poet) {
+  if (!content) return 0;
+  const parts = content.split('*').filter(p => p.trim());
+  if (parts.length === 0) return 0;
+  const isFV = FREE_VERSE_POETS.has(poet) || !isClassicalFormat(parts);
+  if (isFV) {
+    // Free verse: each segment is a line
+    return parts.length;
+  } else {
+    // Classical: each pair of hemistichs = 1 bayt (verse)
+    return Math.ceil(parts.length / 2);
+  }
+}
+
+// ============== DASHBOARD ==============
+function buildDashboard() {
+  const selected = allPoems.filter(p => p.category !== 'dropped-high-score');
+  const dropped = allPoems.filter(p => p.category === 'dropped-high-score');
+  const el = document.getElementById('tab-dashboard');
+
+  // KPIs
+  const scores = selected.map(p => p.score);
+  const mean = (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1);
+  const srcOriginal = selected.filter(p => p.source === 'original').length;
+  const srcDiwan = selected.filter(p => p.source === 'diwan').length;
+  const uniquePoets = new Set(selected.map(p => p.poet)).size;
+
+  let html = '<div class="dashboard">';
+
+  // KPI row
+  html += '<div class="chart-card full-width"><div class="kpi-grid">';
+  html += kpi(selected.length, 'Selected Poems');
+  html += kpi(dropped.length, 'Dropped (High Score)');
+  html += kpi(srcOriginal, 'From DB');
+  html += kpi(srcDiwan, 'From Diwan');
+  html += kpi(uniquePoets, 'Unique Poets');
+  html += kpi(mean, 'Mean Score');
+  html += kpi(Math.min(...scores) + '-' + Math.max(...scores), 'Score Range');
+  html += '</div></div>';
+
+  // Source distribution
+  html += '<div class="chart-card">';
+  html += '<h3>Source Distribution</h3>';
+  html += horizontalBar([
+    { label: 'Original (DB)', value: srcOriginal, max: selected.length, color: 'var(--blue)' },
+    { label: 'Diwan (New)', value: srcDiwan, max: selected.length, color: 'var(--purple)' },
+  ]);
+  html += '</div>';
+
+  // Category distribution
+  const catCounts = {};
+  selected.forEach(p => { catCounts[p.category] = (catCounts[p.category] || 0) + 1; });
+  const catLabels = {
+    'selected-classical-well-known': 'Classical Well-Known',
+    'selected-classical-lesser-known': 'Classical Lesser-Known',
+    'selected-modern-well-known': 'Modern Well-Known',
+    'selected-modern-lesser-known': 'Modern Lesser-Known',
+  };
+  const catColors = {
+    'selected-classical-well-known': 'var(--accent)',
+    'selected-classical-lesser-known': 'var(--orange)',
+    'selected-modern-well-known': 'var(--green)',
+    'selected-modern-lesser-known': 'var(--teal)',
+  };
+  html += '<div class="chart-card">';
+  html += '<h3>Category Distribution</h3>';
+  html += horizontalBar(Object.entries(catCounts).map(([k, v]) => ({
+    label: catLabels[k] || k, value: v, max: selected.length, color: catColors[k] || 'var(--blue)'
+  })));
+  html += '</div>';
+
+  // Score histogram
+  html += '<div class="chart-card">';
+  html += '<h3>Score Distribution (Selected)</h3>';
+  html += buildHistogram(scores, 60, 95);
+  html += '</div>';
+
+  // Score histogram dropped
+  if (dropped.length > 0) {
+    html += '<div class="chart-card">';
+    html += '<h3>Score Distribution (Dropped High-Score)</h3>';
+    html += buildHistogram(dropped.map(p => p.score), 60, 95);
+    html += '</div>';
+  }
+
+  // --- Poem Length Histogram ---
+  const lineCounts = selected.map(p => getLineCount(p.content, p.poet));
+  html += '<div class="chart-card">';
+  html += '<h3>Poem Length Distribution (by Lines)</h3>';
+  html += buildLengthHistogram(lineCounts);
+  html += '</div>';
+
+  // --- Length Bucket Breakdown ---
+  const bucketDefs = [
+    { label: '1-3 lines', lo: 1, hi: 3 },
+    { label: '4-6 lines', lo: 4, hi: 6 },
+    { label: '7-10 lines', lo: 7, hi: 10 },
+    { label: '11-15 lines', lo: 11, hi: 15 },
+    { label: '16-20 lines', lo: 16, hi: 20 },
+    { label: '21-30 lines', lo: 21, hi: 30 },
+  ];
+  const bucketData = bucketDefs.map(b => {
+    const count = lineCounts.filter(l => l >= b.lo && l <= b.hi).length;
+    return { label: b.label, value: count, max: selected.length, color: 'var(--teal)' };
+  });
+  html += '<div class="chart-card">';
+  html += '<h3>Length Bucket Distribution</h3>';
+  html += horizontalBar(bucketData);
+  const under15 = lineCounts.filter(l => l <= 15).length;
+  html += '<div style="margin-top:8px;font-size:0.7rem;color:var(--text-dim);">' +
+    under15 + ' poems (' + (under15 / selected.length * 100).toFixed(1) + '%) are ≤15 lines</div>';
+  html += '</div>';
+
+  // --- Score vs Length Scatter Plot (canvas-based) ---
+  html += '<div class="chart-card full-width">';
+  html += '<h3>Score vs Poem Length</h3>';
+  html += '<div class="scatter-container" id="scatter-wrap">';
+  html += '<canvas class="scatter-canvas" id="scatter-canvas"></canvas>';
+  html += '<div class="scatter-tooltip" id="scatter-tip"></div>';
+  html += '</div>';
+  html += '<div class="scatter-legend">';
+  html += '<span><span class="dot" style="background:var(--accent);"></span> Classical</span>';
+  html += '<span><span class="dot" style="background:var(--teal);"></span> Modern</span>';
+  html += '<span><span class="dot" style="background:var(--purple);"></span> Unknown Era</span>';
+  html += '<span style="color:var(--text-dim);">Dot size = cultural score</span>';
+  html += '</div></div>';
+
+  // --- Score by Length Bucket (avg scores) ---
+  html += '<div class="chart-card full-width">';
+  html += '<h3>Average Score by Length Bucket</h3>';
+  html += '<div style="display:flex;gap:12px;flex-wrap:wrap;">';
+  for (const b of bucketDefs) {
+    const bucket = selected.filter(p => {
+      const lc = getLineCount(p.content, p.poet);
+      return lc >= b.lo && lc <= b.hi;
+    });
+    if (bucket.length === 0) continue;
+    const avg = (bucket.reduce((a, p) => a + p.score, 0) / bucket.length).toFixed(1);
+    const bgColor = avg >= 83 ? 'rgba(74,222,128,0.15)' : avg >= 80 ? 'rgba(96,165,250,0.15)' : 'rgba(251,146,60,0.15)';
+    const fgColor = avg >= 83 ? 'var(--green)' : avg >= 80 ? 'var(--blue)' : 'var(--orange)';
+    html += '<div style="background:' + bgColor + ';border:1px solid ' + fgColor + ';border-radius:8px;padding:12px 16px;text-align:center;min-width:110px;">';
+    html += '<div style="font-size:1.3rem;font-weight:700;color:' + fgColor + ';">' + avg + '</div>';
+    html += '<div style="font-size:0.7rem;color:var(--text-dim);margin-top:2px;">' + b.label + '</div>';
+    html += '<div style="font-size:0.65rem;color:var(--text-dim);">' + bucket.length + ' poems</div>';
+    html += '</div>';
+  }
+  html += '</div></div>';
+
+  // Dimension comparison: selected vs dropped
+  html += '<div class="chart-card full-width">';
+  html += '<h3>Average Dimension Scores: Selected vs Dropped</h3>';
+  html += '<div class="dim-compare">';
+  const dims = ['sound', 'imagery', 'emotion', 'language', 'cultural'];
+  for (const d of dims) {
+    const selAvg = (selected.reduce((a, p) => a + p[d], 0) / selected.length).toFixed(1);
+    const dropAvg = dropped.length > 0 ? (dropped.reduce((a, p) => a + p[d], 0) / dropped.length).toFixed(1) : 0;
+    html += '<div class="dim-row">';
+    html += '<div class="dim-label">' + d + '</div>';
+    html += '<div class="dim-bars">';
+    html += '<div class="dim-val">' + selAvg + '</div>';
+    html += '<div class="dim-bar-track"><div class="dim-bar-fill" style="width:' + selAvg + '%;background:var(--green);"></div></div>';
+    html += '<div class="dim-bar-track"><div class="dim-bar-fill" style="width:' + dropAvg + '%;background:var(--red);"></div></div>';
+    html += '<div class="dim-val">' + dropAvg + '</div>';
+    html += '</div></div>';
+  }
+  html += '<div style="display:flex;gap:16px;margin-top:8px;font-size:0.7rem;">';
+  html += '<span style="color:var(--green);">&#9632; Selected</span>';
+  html += '<span style="color:var(--red);">&#9632; Dropped</span>';
+  html += '</div></div></div>';
+
+  // Top 20 poets
+  html += '<div class="chart-card full-width">';
+  html += '<h3>Top 20 Poets by Count</h3>';
+  const poetCounts = {};
+  selected.forEach(p => { if (p.poet && p.poet !== '_') poetCounts[p.poet] = (poetCounts[p.poet] || 0) + 1; });
+  const topPoets = Object.entries(poetCounts).sort((a, b) => b[1] - a[1]).slice(0, 20);
+  const maxPoet = topPoets[0]?.[1] || 1;
+  html += horizontalBar(topPoets.map(([name, count]) => ({
+    label: name, value: count, max: maxPoet, color: 'var(--accent)'
+  })));
+  html += '</div>';
+
+  // Theme distribution
+  const themeCounts = {};
+  selected.forEach(p => { if (p.theme) themeCounts[p.theme] = (themeCounts[p.theme] || 0) + 1; });
+  const topThemes = Object.entries(themeCounts).sort((a, b) => b[1] - a[1]).slice(0, 15);
+  if (topThemes.length > 0) {
+    html += '<div class="chart-card">';
+    html += '<h3>Theme Distribution</h3>';
+    const maxTheme = topThemes[0]?.[1] || 1;
+    html += horizontalBar(topThemes.map(([name, count]) => ({
+      label: name, value: count, max: maxTheme, color: 'var(--orange)'
+    })));
+    html += '</div>';
+  }
+
+  // Dimension averages by category
+  html += '<div class="chart-card">';
+  html += '<h3>Dimension Averages by Category</h3>';
+  html += '<div style="overflow-x:auto;">';
+  html += '<table style="width:100%;font-size:0.75rem;direction:ltr;text-align:left;border-collapse:collapse;">';
+  html += '<tr style="border-bottom:1px solid var(--border);">';
+  html += '<th style="padding:6px;">Category</th>';
+  for (const d of dims) html += '<th style="padding:6px;text-transform:capitalize;">' + d + '</th>';
+  html += '<th style="padding:6px;">Overall</th></tr>';
+  for (const [cat, label] of Object.entries(catLabels)) {
+    const catPoems = selected.filter(p => p.category === cat);
+    if (catPoems.length === 0) continue;
+    html += '<tr style="border-bottom:1px solid var(--border);">';
+    html += '<td style="padding:6px;color:' + (catColors[cat] || 'var(--text)') + ';">' + label + '</td>';
+    for (const d of dims) {
+      const avg = (catPoems.reduce((a, p) => a + p[d], 0) / catPoems.length).toFixed(1);
+      html += '<td style="padding:6px;">' + avg + '</td>';
+    }
+    const overall = (catPoems.reduce((a, p) => a + p.score, 0) / catPoems.length).toFixed(1);
+    html += '<td style="padding:6px;font-weight:700;">' + overall + '</td>';
+    html += '</tr>';
+  }
+  html += '</table></div></div>';
+
+  html += '</div>';
+  el.innerHTML = html;
+  // Render canvas-based scatter after DOM update
+  requestAnimationFrame(() => drawScatterPlot());
+}
+
+function kpi(value, label) {
+  return '<div class="kpi"><div class="value">' + value + '</div><div class="label">' + label + '</div></div>';
+}
+
+function horizontalBar(items) {
+  let html = '<div class="bar-chart">';
+  for (const item of items) {
+    const pct = (item.value / item.max * 100).toFixed(1);
+    html += '<div class="bar-row">';
+    html += '<div class="bar-label">' + esc(item.label) + '</div>';
+    html += '<div class="bar-track"><div class="bar-fill" style="width:' + pct + '%;background:' + item.color + ';"></div></div>';
+    html += '<div class="bar-value">' + item.value + '</div>';
+    html += '</div>';
+  }
+  html += '</div>';
+  return html;
+}
+
+function buildHistogram(values, lo, hi) {
+  const buckets = {};
+  for (let i = lo; i <= hi; i++) buckets[i] = 0;
+  values.forEach(v => { const k = Math.min(hi, Math.max(lo, Math.round(v))); buckets[k] = (buckets[k] || 0) + 1; });
+  const maxCount = Math.max(...Object.values(buckets), 1);
+  let html = '<div class="histogram">';
+  for (let i = lo; i <= hi; i++) {
+    const h = (buckets[i] / maxCount * 100).toFixed(1);
+    const color = i >= 85 ? 'var(--green)' : i >= 80 ? 'var(--blue)' : 'var(--orange)';
+    html += '<div class="hist-bar" style="height:' + h + '%;background:' + color + ';">';
+    html += '<div class="tooltip">' + i + ': ' + (buckets[i] || 0) + ' poems</div>';
+    html += '</div>';
+  }
+  html += '</div>';
+  html += '<div class="hist-labels"><span>' + lo + '</span><span>' + Math.round((lo + hi) / 2) + '</span><span>' + hi + '</span></div>';
+  return html;
+}
+
+function buildLengthHistogram(lineCounts) {
+  const maxLines = Math.min(35, Math.max(...lineCounts));
+  const buckets = {};
+  for (let i = 1; i <= maxLines; i++) buckets[i] = 0;
+  lineCounts.forEach(l => { const k = Math.min(maxLines, Math.max(1, l)); buckets[k] = (buckets[k] || 0) + 1; });
+  const maxCount = Math.max(...Object.values(buckets), 1);
+  let html = '<div class="histogram">';
+  for (let i = 1; i <= maxLines; i++) {
+    const h = (buckets[i] / maxCount * 100).toFixed(1);
+    const color = i <= 6 ? 'var(--green)' : i <= 15 ? 'var(--teal)' : i <= 20 ? 'var(--blue)' : 'var(--purple)';
+    html += '<div class="hist-bar" style="height:' + h + '%;background:' + color + ';">';
+    html += '<div class="tooltip">' + i + ' lines: ' + (buckets[i] || 0) + ' poems</div>';
+    html += '</div>';
+  }
+  html += '</div>';
+  html += '<div class="hist-labels"><span>1</span><span>6</span><span>10</span><span>15</span><span>20</span><span>' + maxLines + '</span></div>';
+  return html;
+}
+
+function drawScatterPlot() {
+  const canvas = document.getElementById('scatter-canvas');
+  if (!canvas) return;
+  const wrap = document.getElementById('scatter-wrap');
+  const tip = document.getElementById('scatter-tip');
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = rect.height * dpr;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(dpr, dpr);
+  const W = rect.width, H = rect.height;
+  const pad = { top: 10, right: 20, bottom: 30, left: 40 };
+  const pw = W - pad.left - pad.right, ph = H - pad.top - pad.bottom;
+
+  const selected = allPoems.filter(p => p.category !== 'dropped-high-score');
+  const points = selected.map(p => {
+    const lines = getLineCount(p.content, p.poet);
+    const isFV = FREE_VERSE_POETS.has(p.poet);
+    const isMod = p.category.includes('modern');
+    const era = isMod || isFV ? 'modern' : p.category.includes('classical') ? 'classical' : 'unknown';
+    return { x: lines, y: p.score, era, cultural: p.cultural || p.score, poet: p.poet, title: p.title };
+  });
+
+  const maxX = Math.min(35, Math.max(...points.map(p => p.x)));
+  const minY = Math.max(60, Math.min(...points.map(p => p.y)) - 2);
+  const maxY = Math.max(...points.map(p => p.y)) + 1;
+
+  function toCanvas(x, y) {
+    return [
+      pad.left + (Math.min(x, maxX) / maxX) * pw,
+      pad.top + (1 - (y - minY) / (maxY - minY)) * ph
+    ];
+  }
+
+  // Grid lines
+  ctx.strokeStyle = '#333644';
+  ctx.lineWidth = 0.5;
+  for (let y = Math.ceil(minY); y <= maxY; y += 2) {
+    const [, cy] = toCanvas(0, y);
+    ctx.beginPath(); ctx.moveTo(pad.left, cy); ctx.lineTo(W - pad.right, cy); ctx.stroke();
+  }
+  for (let x = 5; x <= maxX; x += 5) {
+    const [cx] = toCanvas(x, 0);
+    ctx.beginPath(); ctx.moveTo(cx, pad.top); ctx.lineTo(cx, H - pad.bottom); ctx.stroke();
+  }
+
+  // Axes labels
+  ctx.fillStyle = '#8b8fa3';
+  ctx.font = '10px Tajawal, sans-serif';
+  ctx.textAlign = 'center';
+  for (let x = 5; x <= maxX; x += 5) {
+    const [cx] = toCanvas(x, 0);
+    ctx.fillText(x, cx, H - pad.bottom + 14);
+  }
+  ctx.fillText('Lines', pad.left + pw / 2, H - 2);
+  ctx.textAlign = 'right';
+  for (let y = Math.ceil(minY); y <= maxY; y += 5) {
+    const [, cy] = toCanvas(0, y);
+    ctx.fillText(y, pad.left - 4, cy + 3);
+  }
+  ctx.save();
+  ctx.translate(10, pad.top + ph / 2);
+  ctx.rotate(-Math.PI / 2);
+  ctx.textAlign = 'center';
+  ctx.fillText('Score', 0, 0);
+  ctx.restore();
+
+  // Draw points (jitter to reduce overlap)
+  const eraColors = { classical: '#c9a84c', modern: '#2dd4bf', unknown: '#a78bfa' };
+  // Shuffle for random z-order
+  const shuffled = [...points].sort(() => Math.random() - 0.5);
+  const pointData = [];
+  for (const p of shuffled) {
+    const jx = p.x + (Math.random() - 0.5) * 0.6;
+    const jy = p.y + (Math.random() - 0.5) * 0.8;
+    const [cx, cy] = toCanvas(jx, jy);
+    const r = 2 + (p.cultural / 100) * 3;
+    ctx.globalAlpha = 0.55;
+    ctx.fillStyle = eraColors[p.era] || eraColors.unknown;
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fill();
+    pointData.push({ cx, cy, r, ...p });
+  }
+  ctx.globalAlpha = 1;
+
+  // Hover tooltip
+  canvas.addEventListener('mousemove', (e) => {
+    const cr = canvas.getBoundingClientRect();
+    const mx = e.clientX - cr.left, my = e.clientY - cr.top;
+    let closest = null, minDist = 20;
+    for (const pt of pointData) {
+      const d = Math.sqrt((mx - pt.cx) ** 2 + (my - pt.cy) ** 2);
+      if (d < minDist) { minDist = d; closest = pt; }
+    }
+    if (closest) {
+      tip.style.display = 'block';
+      tip.style.left = (closest.cx + 12) + 'px';
+      tip.style.top = (closest.cy - 10) + 'px';
+      tip.innerHTML = '<b>' + esc(closest.title) + '</b><br>' +
+        esc(closest.poet) + '<br>' +
+        'Score: ' + closest.y + ' | Lines: ' + closest.x;
+    } else {
+      tip.style.display = 'none';
+    }
+  });
+  canvas.addEventListener('mouseleave', () => { tip.style.display = 'none'; });
+}
+
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+// ============== POEMS TAB ==============
+function applyFilters() {
+  const search = document.getElementById('search').value.trim().toLowerCase();
+  filteredPoems = allPoems.filter(p => {
+    if (currentCat !== 'all' && p.category !== currentCat) return false;
+    if (currentSource && p.source !== currentSource) return false;
+    if (search) {
+      const haystack = (p.title + ' ' + p.poet + ' ' + p.content).toLowerCase();
+      if (!haystack.includes(search)) return false;
+    }
+    return true;
+  });
+  if (currentSort === 'score') filteredPoems.sort((a, b) => b.score - a.score);
+  else if (currentSort === 'score-asc') filteredPoems.sort((a, b) => a.score - b.score);
+  else if (currentSort === 'poet') filteredPoems.sort((a, b) => a.poet.localeCompare(b.poet, 'ar'));
+  else if (currentSort === 'lines') filteredPoems.sort((a, b) => getLineCount(b.content, b.poet) - getLineCount(a.content, a.poet));
+  else if (currentSort === 'lines-asc') filteredPoems.sort((a, b) => getLineCount(a.content, a.poet) - getLineCount(b.content, b.poet));
+  renderPoems();
+  updateStats();
+}
+
+function updateStats() {
+  if (filteredPoems.length === 0) {
+    document.getElementById('stats').textContent = 'No poems match';
+    return;
+  }
+  const scores = filteredPoems.map(p => p.score);
+  const mean = (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1);
+  document.getElementById('stats').textContent =
+    'Showing ' + filteredPoems.length + ' | Score: ' + Math.min(...scores) + '-' + Math.max(...scores) + ' (mean ' + mean + ')';
+}
+
+let renderLimit = 80;
+function renderPoems() {
+  renderLimit = 80;
+  const list = document.getElementById('tab-poems');
+  list.textContent = '';
+  filteredPoems.slice(0, renderLimit).forEach((p, i) => list.appendChild(createCard(p, i)));
+}
+
+document.getElementById('tab-poems').addEventListener('scroll', function () {
+  if (this.scrollTop + this.clientHeight >= this.scrollHeight - 200 && renderLimit < filteredPoems.length) {
+    const start = renderLimit;
+    renderLimit = Math.min(renderLimit + 50, filteredPoems.length);
+    for (let i = start; i < renderLimit; i++) {
+      this.appendChild(createCard(filteredPoems[i], i));
+    }
+  }
+});
+
+function formatContent(content, poet, poemForm) {
+  if (!content) return '';
+  const parts = content.split('*').filter(p => p.trim());
+  const container = document.createElement('div');
+
+  // Determine if free verse: poem_form=2, known free-verse poet, or heuristic
+  const isFreeVerse = poemForm === 2 || FREE_VERSE_POETS.has(poet) || !isClassicalFormat(parts);
+
+  if (!isFreeVerse) {
+    // Paired hemistich rendering (صدر *** عجز)
+    for (let i = 0; i < parts.length; i += 2) {
+      const h1 = (parts[i] || '').trim();
+      const h2 = (parts[i + 1] || '').trim();
+      const bayt = document.createElement('span');
+      bayt.className = 'bayt';
+      if (h2) {
+        bayt.textContent = h1 + '    ';
+        const sep = document.createElement('span');
+        sep.className = 'hsep';
+        sep.textContent = '***';
+        bayt.appendChild(sep);
+        bayt.appendChild(document.createTextNode('    ' + h2));
+      } else if (h1) {
+        bayt.textContent = h1;
+      }
+      container.appendChild(bayt);
+    }
+  } else {
+    // Free verse: each segment is its own line
+    for (const part of parts) {
+      const line = part.trim();
+      if (!line) continue;
+      const el = document.createElement('span');
+      el.className = 'bayt';
+      el.textContent = line;
+      container.appendChild(el);
+    }
+  }
+  return container;
+}
+
+function scoreClass(s) { return s >= 85 ? 'high' : s >= 80 ? 'mid' : 'low'; }
+
+const catLabelMap = {
+  'selected-classical-well-known': 'Classical / Well-Known',
+  'selected-classical-lesser-known': 'Classical / Lesser-Known',
+  'selected-modern-well-known': 'Modern / Well-Known',
+  'selected-modern-lesser-known': 'Modern / Lesser-Known',
+  'dropped-high-score': 'DROPPED (High Score)',
+};
+
+function createCard(p, idx) {
+  const card = document.createElement('div');
+  card.className = 'poem-card';
+  card.addEventListener('click', () => card.classList.toggle('expanded'));
+
+  const isDropped = p.category === 'dropped-high-score';
+
+  // Header
+  const header = document.createElement('div');
+  header.className = 'card-header';
+  const titleDiv = document.createElement('div');
+  const title = document.createElement('div');
+  title.className = 'card-title';
+  title.textContent = p.title || '(بدون عنوان)';
+  const poet = document.createElement('div');
+  poet.className = 'card-poet';
+  poet.textContent = p.poet || 'شاعر غير معروف';
+  titleDiv.appendChild(title);
+  titleDiv.appendChild(poet);
+  const badge = document.createElement('div');
+  badge.className = 'score-badge ' + scoreClass(p.score);
+  badge.textContent = p.score;
+  header.appendChild(titleDiv);
+  header.appendChild(badge);
+
+  // Tags
+  const tags = document.createElement('div');
+  tags.className = 'card-tags';
+  const srcTag = document.createElement('span');
+  srcTag.className = 'tag source-' + p.source;
+  srcTag.textContent = p.source;
+  tags.appendChild(srcTag);
+  const catTag = document.createElement('span');
+  catTag.className = 'tag ' + (isDropped ? 'cat-dropped' : 'cat-selected');
+  catTag.textContent = catLabelMap[p.category] || p.category;
+  tags.appendChild(catTag);
+  if (p.theme) {
+    const themeTag = document.createElement('span');
+    themeTag.className = 'tag theme';
+    themeTag.textContent = p.theme;
+    tags.appendChild(themeTag);
+  }
+  if (p.meter) {
+    const meterTag = document.createElement('span');
+    meterTag.className = 'tag theme';
+    meterTag.textContent = p.meter;
+    tags.appendChild(meterTag);
+  }
+  const lineTag = document.createElement('span');
+  lineTag.className = 'tag';
+  lineTag.style.cssText = 'background:rgba(45,212,191,0.15);color:var(--teal);';
+  lineTag.textContent = getLineCount(p.content, p.poet) + ' lines';
+  tags.appendChild(lineTag);
+
+  // Content
+  const content = document.createElement('div');
+  content.className = 'poem-content';
+
+  const poemText = document.createElement('div');
+  poemText.className = 'poem-text';
+  poemText.appendChild(formatContent(p.content, p.poet, p.poem_form));
+
+  const subscores = document.createElement('div');
+  subscores.className = 'subscores';
+  for (const d of ['sound', 'imagery', 'emotion', 'language', 'cultural']) {
+    const sub = document.createElement('div');
+    sub.className = 'subscore';
+    const lbl = document.createElement('span');
+    lbl.className = 'label';
+    lbl.textContent = d;
+    const val = document.createElement('span');
+    val.className = 'val';
+    val.textContent = p[d];
+    sub.appendChild(lbl);
+    sub.appendChild(val);
+    subscores.appendChild(sub);
+  }
+
+  const transArea = document.createElement('div');
+  transArea.className = 'translate-area';
+  const transBtn = document.createElement('button');
+  transBtn.className = 'translate-btn';
+  transBtn.textContent = 'Translate to English';
+  transBtn.addEventListener('click', function (e) {
+    e.stopPropagation();
+    translatePoem(this, idx);
+  });
+  const transOut = document.createElement('div');
+  transOut.className = 'translation-output';
+  transOut.id = 'translation-' + idx;
+  transArea.appendChild(transBtn);
+  transArea.appendChild(transOut);
+
+  content.appendChild(poemText);
+  content.appendChild(subscores);
+  content.appendChild(transArea);
+
+  card.appendChild(header);
+  card.appendChild(tags);
+  card.appendChild(content);
+  return card;
+}
+
+// Tabs
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+  });
+});
+
+// Category buttons
+document.querySelectorAll('.category-btn[data-cat]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentCat = btn.dataset.cat;
+    currentSource = null;
+    applyFilters();
+    // Switch to poems tab
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    document.querySelector('.tab-btn[data-tab="poems"]').classList.add('active');
+    document.getElementById('tab-poems').classList.add('active');
+  });
+});
+
+document.querySelectorAll('.category-btn[data-source]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.category-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentCat = 'all';
+    currentSource = btn.dataset.source;
+    applyFilters();
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    document.querySelector('.tab-btn[data-tab="poems"]').classList.add('active');
+    document.getElementById('tab-poems').classList.add('active');
+  });
+});
+
+document.querySelectorAll('.sort-btn[data-sort]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.sort-btn[data-sort]').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentSort = btn.dataset.sort;
+    applyFilters();
+  });
+});
+
+let searchTimeout;
+document.getElementById('search').addEventListener('input', () => {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(applyFilters, 300);
+});
+
+// Settings
+document.getElementById('api-key-btn').addEventListener('click', () => {
+  document.getElementById('modal').classList.add('show');
+  document.getElementById('api-key-input').value = geminiKey;
+  document.getElementById('api-url-input').value = apiUrl;
+  document.getElementById('model-input').value = geminiModel;
+});
+document.getElementById('modal').addEventListener('click', (e) => {
+  if (e.target === document.getElementById('modal')) document.getElementById('modal').classList.remove('show');
+});
+
+function saveSettings() {
+  geminiKey = document.getElementById('api-key-input').value.trim();
+  apiUrl = document.getElementById('api-url-input').value.trim() || 'http://localhost:3001';
+  geminiModel = document.getElementById('model-input').value.trim() || 'gemini-2.0-flash';
+  localStorage.setItem('gemini_api_key', geminiKey);
+  localStorage.setItem('api_url', apiUrl);
+  localStorage.setItem('gemini_model', geminiModel);
+  document.getElementById('modal').classList.remove('show');
+  updateApiStatus();
+}
+
+function updateApiStatus() {
+  const el = document.getElementById('api-status');
+  el.textContent = 'Backend: ' + apiUrl + ' | ' + geminiModel;
+  el.style.color = 'var(--teal)';
+}
+
+async function callGemini(promptText) {
+  const body = JSON.stringify({
+    contents: [{ parts: [{ text: promptText }] }],
+    systemInstruction: { parts: [{ text: INSIGHTS_SYSTEM_PROMPT }] },
+    generationConfig: { temperature: 0.4, maxOutputTokens: 8192 }
+  });
+
+  // Try backend proxy first (same-origin or configured URL)
+  if (apiUrl) {
+    try {
+      const proxyUrl = apiUrl.replace(/\/$/, '') + '/api/ai/' + geminiModel + '/generateContent';
+      const res = await fetch(proxyUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: body
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response';
+      }
+    } catch (e) {
+      // proxy unreachable, fall through
+    }
+  }
+
+  // Direct Gemini API
+  if (!geminiKey) {
+    throw new Error('Backend proxy unreachable. Set your Gemini API key via Configure.');
+  }
+  const directUrl = 'https://generativelanguage.googleapis.com/v1beta/models/' + geminiModel + ':generateContent?key=' + geminiKey;
+  const res = await fetch(directUrl, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: body
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error?.message || 'HTTP ' + res.status);
+  }
+  const data = await res.json();
+  return data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response';
+}
+
+async function translatePoem(btn, idx) {
+  const poem = filteredPoems[idx];
+  if (!poem) return;
+  btn.disabled = true;
+  btn.textContent = 'Translating...';
+  const outputEl = document.getElementById('translation-' + idx);
+  outputEl.style.display = 'block';
+  outputEl.textContent = 'Translating...';
+  outputEl.style.color = '';
+
+  const parts = poem.content.split('*').filter(p => p.trim());
+  const isFreeVerse = poem.poem_form === 2 || FREE_VERSE_POETS.has(poem.poet) || !isClassicalFormat(parts);
+  let poemText = '';
+  if (isFreeVerse) {
+    poemText = parts.map(p => p.trim()).join('\n');
+  } else {
+    for (let i = 0; i < parts.length; i += 2) {
+      const h1 = (parts[i] || '').trim();
+      const h2 = (parts[i + 1] || '').trim();
+      poemText += h2 ? h1 + '    ' + h2 + '\n' : h1 + '\n';
+    }
+  }
+
+  const poetInfo = poem.poet ? ' by ' + poem.poet : '';
+  const promptText = 'Deep Analysis of' + poetInfo + ':\n\n' + poemText;
+
+  try {
+    const result = await callGemini(promptText);
+    outputEl.textContent = result;
+  } catch (err) {
+    outputEl.textContent = 'Translation error: ' + err.message;
+    outputEl.style.color = 'var(--red)';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Translate to English';
+  }
+}
+</script>
+</body>
+</html>

@@ -73,3 +73,8 @@ poetry_quality_and_curation/retriever_and_quality_curator/data/*.rar
 # Python artifacts
 __pycache__/
 *.pyc
+# Data files (large, regeneratable)
+poetry_quality_and_curation/retriever_and_quality_curator/data/*.parquet
+poetry_quality_and_curation/retriever_and_quality_curator/data/*.json
+poetry_quality_and_curation/retriever_and_quality_curator/data/.js_cache/
+poetry_quality_and_curation/retriever_and_quality_curator/data/shard_ids/

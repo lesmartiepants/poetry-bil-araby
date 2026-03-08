@@ -31,8 +31,8 @@
     .tb-select:hover,.tb-select:focus{border-color:var(--accent)}
     .tb-select option{background:var(--surface-2);color:var(--text)}
     .tb-sep{width:1px;height:20px;background:var(--border);flex-shrink:0}
-    .tb-detail{font-size:11px;color:var(--text-2);display:flex;align-items:center;gap:6px;overflow:hidden;min-width:0}
-    .tb-detail .td-phil{color:rgba(212,168,75,.55);font-style:italic;font-size:11px}
+    .tb-detail{font-size:11px;color:var(--text-2);display:flex;align-items:center;gap:6px;overflow:hidden;min-width:0;flex-shrink:1}
+    .tb-detail .td-phil{color:rgba(212,168,75,.55);font-style:italic;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .tb-spacer{flex:1}
 
     /* Nav buttons */
@@ -56,11 +56,26 @@
     /* preview-header removed — info consolidated into toolbar */
     .preview-iframe{width:100%;height:100%;border:none;background:#000}
 
-    /* Open-in-new-tab expand overlay */
-    .preview-open-overlay{position:absolute;top:12px;right:12px;z-index:15;width:54px;height:54px;border-radius:var(--r);background:none;border:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;opacity:0.45;transition:opacity .2s;color:var(--text-2)}
-    .preview-open-overlay:hover{opacity:0.8;color:var(--text)}
+    /* Expand overlay button */
+    .preview-open-overlay{position:absolute;top:12px;right:12px;z-index:15;width:54px;height:54px;border-radius:var(--r);background:none;border:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;transition:all .2s;color:rgba(255,255,255,.55);text-shadow:0 0 12px rgba(255,255,255,.4),0 0 24px rgba(255,255,255,.15)}
+    .preview-open-overlay:hover{color:#fff;text-shadow:0 0 16px rgba(255,255,255,.7),0 0 32px rgba(255,255,255,.3);transform:scale(1.1)}
     .preview-open-overlay .expand-icon{font-size:22px;line-height:1}
     .preview-open-overlay .expand-label{font-size:8px;font-weight:600;letter-spacing:.04em;text-transform:uppercase}
+
+    /* ── Fullscreen mode (promotes existing preview to viewport) ── */
+    #previewContent.fs-active{position:fixed!important;inset:0;z-index:9999;background:#000}
+    #previewContent.fs-active .preview-open-overlay{display:none!important}
+    .fs-btn{position:fixed;z-index:10000;border-radius:var(--r);border:none;background:none;backdrop-filter:none;-webkit-backdrop-filter:none;color:rgba(255,255,255,.55);display:none;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;text-shadow:0 0 12px rgba(255,255,255,.4),0 0 24px rgba(255,255,255,.15)}
+    .fs-btn:hover{background:none;border:none;color:#fff;text-shadow:0 0 16px rgba(255,255,255,.7),0 0 32px rgba(255,255,255,.3)}
+    body.fs-mode .fs-btn{display:flex!important}
+    .fs-collapse{top:12px;right:12px;width:44px;height:44px;font-size:20px}
+    .fs-collapse:hover{transform:scale(1.1)}
+    .fs-nav{bottom:52px;width:48px;height:64px;font-size:28px}
+    .fs-nav:hover{transform:scale(1.1)}
+    .fs-nav:disabled{opacity:.15;cursor:default;transform:none;text-shadow:none}
+    .fs-nav:disabled:hover{color:rgba(255,255,255,.55);text-shadow:none;transform:none}
+    .fs-prev{left:0}
+    .fs-next{right:0}
 
     /* ── Accordion catalog (premium) ── */
     .acc-toggle{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:var(--r);border:1px solid var(--border);background:linear-gradient(135deg,var(--surface-2) 0%,rgba(28,28,31,.8) 100%);color:var(--text);font-size:13px;font-weight:500;transition:all .2s cubic-bezier(.4,0,.2,1);white-space:nowrap;cursor:pointer;letter-spacing:.01em}
@@ -364,7 +379,7 @@
     <div class="preview" id="previewPane">
       <!-- preview-header removed: info is in toolbar -->
       <div id="previewContent" style="flex:1;position:relative">
-        <div class="preview-open-overlay" id="previewOpenOverlay" onclick="openTab()" title="Open in new tab"><span class="expand-icon">&#8599;</span><span class="expand-label">expand</span></div>
+        <div class="preview-open-overlay" id="previewOpenOverlay" onclick="expandFullscreen()" title="Expand fullscreen"><span class="expand-icon">&#8599;</span><span class="expand-label">expand</span></div>
         <div class="empty-state" id="emptyState">
           <div style="font-size:32px">&#9998;</div>
           <h2>Poetry Bil-Araby Design Review</h2>
@@ -499,6 +514,11 @@
     </div>
   </div>
 </div>
+
+<!-- Fullscreen control buttons (hidden by default, shown via body.fs-mode) -->
+<button class="fs-btn fs-collapse" id="fullscreenCollapseBtn" onclick="collapseFullscreen()" title="Collapse (Esc)" aria-label="Collapse fullscreen" style="display:none">&#8601;</button>
+<button class="fs-btn fs-nav fs-prev" id="fsPrevBtn" onclick="fsGoPrev()" title="Previous design" aria-label="Previous design" style="display:none">&#8249;</button>
+<button class="fs-btn fs-nav fs-next" id="fsNextBtn" onclick="fsGoNext()" title="Next design" aria-label="Next design" style="display:none">&#8250;</button>
 
 <script>
 // ═══════════════════════════════════════════════════════════════
@@ -1260,9 +1280,9 @@ function render(skipPreview) {
   document.getElementById('prevBtn').disabled = fi <= 0;
   document.getElementById('nextBtn').disabled = fi >= flatList.length - 1;
 
-  // Update accordion toggle label with current design name
+  // Update accordion toggle label with design number and name
   var accLabel = document.getElementById('accToggleLabel');
-  if (accLabel) accLabel.textContent = opt.name;
+  if (accLabel) accLabel.textContent = (fi + 1) + '. ' + opt.name;
 
   // Update toolbar detail: philosophy + version badge
   var tbDetail = document.getElementById('tbDetail');
@@ -1271,7 +1291,7 @@ function render(skipPreview) {
     if (opt.philosophy) {
       var philSpan = document.createElement('span');
       philSpan.className = 'td-phil';
-      philSpan.textContent = opt.philosophy;
+      philSpan.textContent = '\u2014 ' + opt.philosophy;
       tbDetail.appendChild(philSpan);
     }
     if (opt.generation >= 3) {
@@ -1341,6 +1361,11 @@ function render(skipPreview) {
   if (ct) ct.classList.toggle('has-text', !!(rev.comment));
   renderPrevFeedback(cat, opt);
   renderProgress();
+  // Ensure expand button is visible when not in fullscreen (defensive check)
+  if (!document.body.classList.contains('fs-mode')) {
+    document.getElementById('previewContent').classList.remove('fs-active');
+    ensureExpandBtn();
+  }
 }
 
 function loadPreview(opt, cat) {
@@ -1519,27 +1544,78 @@ function saveTags() {
   persistReview();
 }
 function openTab() { window.open('/design-review/' + curOpt().file, '_blank'); }
+function expandFullscreen() {
+  var pc = document.getElementById('previewContent');
+  if (!pc.querySelector('iframe')) return;
+  pc.classList.add('fs-active');
+  document.body.classList.add('fs-mode');
+  updateFsNav();
+  attachFsKeyProxy();
+}
+function collapseFullscreen() {
+  document.getElementById('previewContent').classList.remove('fs-active');
+  document.body.classList.remove('fs-mode');
+  ensureExpandBtn();
+}
+function ensureExpandBtn() {
+  var el = document.getElementById('previewOpenOverlay');
+  if (el) el.style.display = '';
+}
+function attachFsKeyProxy() {
+  var iframe = document.querySelector('#previewContent iframe');
+  if (!iframe) return;
+  try { iframe.contentWindow.addEventListener('keydown', fsKeyProxy); } catch(e) { /* cross-origin */ }
+}
+function updateFsNav() {
+  var fi = currentFlatIdx();
+  document.getElementById('fsPrevBtn').disabled = fi <= 0;
+  document.getElementById('fsNextBtn').disabled = fi >= flatList.length - 1;
+}
+function fsGoPrev() { goPrev(); updateFsNav(); attachFsKeyProxyOnLoad(); }
+function fsGoNext() { goNext(); updateFsNav(); attachFsKeyProxyOnLoad(); }
+function attachFsKeyProxyOnLoad() {
+  var iframe = document.querySelector('#previewContent iframe');
+  if (!iframe) return;
+  iframe.addEventListener('load', function() { attachFsKeyProxy(); });
+}
+function fsKeyProxy(e) {
+  if (e.key === 'Escape' || e.key === 'f' || e.key === 'F' || e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+    e.preventDefault();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: e.key, bubbles: true }));
+  }
+}
 function toggleSide() { st.sideOpen = !st.sideOpen; document.getElementById('sidePanel').classList.toggle('collapsed', !st.sideOpen); }
 
 // ═══════════════════════════════════════════════════════════════
 // SUBMIT
 // ═══════════════════════════════════════════════════════════════
 function buildReviewSummary(reviewerName) {
-  const reviewed = flatList.filter(f => reviewData[f.option.id]?.verdict).length;
-  const keeps = flatList.filter(f => reviewData[f.option.id]?.verdict === 'keep').length;
-  const discards = flatList.filter(f => reviewData[f.option.id]?.verdict === 'discard').length;
-  const revisits = flatList.filter(f => {
+  // Build complete (unfiltered) item list so summary includes all components regardless of section filter
+  var allItems = [];
+  CATALOG.forEach(function(comp, ci) {
+    comp.categories.forEach(function(cat, cati) {
+      cat.options.forEach(function(opt, oi) {
+        allItems.push({ compIdx: ci, catIdx: cati, optIdx: oi, option: opt, category: cat, component: comp });
+      });
+    });
+  });
+  const reviewed = allItems.filter(f => reviewData[f.option.id]?.verdict).length;
+  const keeps = allItems.filter(f => reviewData[f.option.id]?.verdict === 'keep').length;
+  const discards = allItems.filter(f => reviewData[f.option.id]?.verdict === 'discard').length;
+  const revisits = allItems.filter(f => {
     const v = reviewData[f.option.id]?.verdict;
     return v === 'revisit' || v === 'skip';
   }).length;
   const decisions = [];
-  flatList.forEach(f => {
+  var itemNum = 0;
+  allItems.forEach(f => {
+    itemNum++;
     const r = reviewData[f.option.id];
     if (r && (r.verdict || r.comment)) {
       let verdict = r.verdict || 'undecided';
       if (verdict === 'skip') verdict = 'revisit';
       decisions.push({
-        component: f.component.id, componentName: f.component.component, category: f.category.id,
+        num: itemNum, component: f.component.id, componentName: f.component.component, category: f.category.id,
         categoryName: f.category.name, optionId: f.option.id, optionName: f.option.name,
         file: f.option.file, generation: f.option.generation || 1,
         verdict: verdict, comment: r.comment || '', tags: r.tags || ''
@@ -1549,23 +1625,23 @@ function buildReviewSummary(reviewerName) {
   let md = '## Design Review Feedback\n\n';
   md += '**Reviewer:** ' + reviewerName + '\n';
   md += '**Date:** ' + new Date().toLocaleDateString() + ' ' + new Date().toLocaleTimeString() + '\n';
-  md += '**Reviewed:** ' + reviewed + ' of ' + flatList.length + ' designs\n';
+  md += '**Reviewed:** ' + reviewed + ' of ' + allItems.length + ' designs\n';
   md += '**Round:** ' + (currentSession ? currentSession.round_number : 'N/A') + '\n\n';
   const byV = { keep: [], discard: [], revisit: [], undecided: [] };
   decisions.forEach(d => { if (byV[d.verdict]) byV[d.verdict].push(d); });
   for (const [v, label] of [['keep','Keep'],['discard','Discard'],['revisit','Revisit'],['undecided','Comment Only']]) {
     if (byV[v] && byV[v].length) {
-      md += '### ' + label + ' (' + byV[v].length + ')\n\n| Component | Option | Gen | Comment |\n|---|---|---|---|\n';
-      byV[v].forEach(d => { md += '| ' + d.componentName + ' | ' + d.optionName + ' | ' + d.generation + ' | ' + (d.comment || '--') + ' |\n'; });
+      md += '### ' + label + ' (' + byV[v].length + ')\n\n| # | Component | Option | Gen | Comment |\n|---|---|---|---|---|\n';
+      byV[v].forEach(d => { md += '| ' + d.num + ' | ' + d.componentName + ' | ' + d.optionName + ' | ' + d.generation + ' | ' + (d.comment || '--') + ' |\n'; });
       md += '\n';
     }
   }
-  const json = JSON.stringify({ timestamp: new Date().toISOString(), reviewer: reviewerName, totalDesigns: flatList.length, reviewedCount: reviewed, decisions }, null, 2);
-  return { reviewed, keeps, discards, revisits, decisions, md, json };
+  const json = JSON.stringify({ timestamp: new Date().toISOString(), reviewer: reviewerName, totalDesigns: allItems.length, reviewedCount: reviewed, decisions }, null, 2);
+  return { reviewed, keeps, discards, revisits, decisions, md, json, totalDesigns: allItems.length };
 }
 
 function showSummaryModal(summary, opts) {
-  const { reviewed, keeps, discards, revisits, decisions, md, json } = summary;
+  const { reviewed, keeps, discards, revisits, decisions, md, json, totalDesigns } = summary;
   const { sendError, isPreview, onBack } = opts || {};
 
   window._submitMd = md;
@@ -1621,7 +1697,7 @@ function showSummaryModal(summary, opts) {
   stats.style.cssText = 'display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;font-size:13px';
   [['var(--green)', keeps + ' keep'], ['var(--red)', discards + ' discard'],
    ['var(--purple)', revisits + ' revisit'],
-   ['var(--text-3)', (flatList.length - reviewed) + ' unreviewed']].forEach(([c, t]) => {
+   ['var(--text-3)', (totalDesigns - reviewed) + ' unreviewed']].forEach(([c, t]) => {
     const s = document.createElement('span'); s.style.color = c; s.textContent = t; stats.appendChild(s);
   });
   modal.appendChild(stats);
@@ -1638,6 +1714,10 @@ function showSummaryModal(summary, opts) {
     decisions.forEach(d => {
       const item = document.createElement('div');
       item.style.cssText = 'display:flex;align-items:flex-start;gap:8px;padding:6px 8px;background:var(--surface-2);border:1px solid var(--border);border-radius:var(--r-sm);font-size:12px';
+      const numEl = document.createElement('span');
+      numEl.style.cssText = 'flex-shrink:0;font-size:10px;color:var(--text-3);font-variant-numeric:tabular-nums;min-width:20px;text-align:right;padding-top:2px';
+      numEl.textContent = '#' + d.num;
+      item.appendChild(numEl);
       const badge = document.createElement('span');
       const verdictBgColors = { keep: 'var(--green-dim)', discard: 'var(--red-dim)', revisit: 'var(--purple-dim)', undecided: 'var(--accent-dim)' };
       badge.style.cssText = 'flex-shrink:0;width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:' + (verdictColors[d.verdict] || 'var(--text-3)') + ';background:' + (verdictBgColors[d.verdict] || 'var(--surface-3)');
@@ -1836,6 +1916,17 @@ function downloadJSON() {
 // ═══════════════════════════════════════════════════════════════
 document.addEventListener('keydown', e => {
   if (['TEXTAREA','INPUT','SELECT'].includes(e.target.tagName)) return;
+  var fsActive = document.body.classList.contains('fs-mode');
+  // When fullscreen is active, only handle Escape, F, and arrow navigation
+  if (fsActive) {
+    switch (e.key) {
+      case 'Escape': e.preventDefault(); collapseFullscreen(); break;
+      case 'f': case 'F': collapseFullscreen(); break;
+      case 'ArrowLeft': e.preventDefault(); fsGoPrev(); break;
+      case 'ArrowRight': e.preventDefault(); fsGoNext(); break;
+    }
+    return;
+  }
   switch (e.key) {
     case 'ArrowLeft': e.preventDefault(); goPrev(); break;
     case 'ArrowRight': e.preventDefault(); goNext(); break;
@@ -1844,10 +1935,7 @@ document.addEventListener('keydown', e => {
     case 'r': case 'R': setVerdict('revisit'); break;
     case 's': case 'S': cycleSectionFilter(); break;
     case 'i': case 'I': toggleSide(); break;
-    case 'f': case 'F':
-      const iframe = document.querySelector('.preview-iframe');
-      if (iframe) { document.fullscreenElement ? document.exitFullscreen() : iframe.requestFullscreen(); }
-      break;
+    case 'f': case 'F': expandFullscreen(); break;
   }
 });
 

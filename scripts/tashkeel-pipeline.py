@@ -61,7 +61,11 @@ def cmd_export(args):
         return
 
     conn = psycopg2.connect(db_url)
-    df = pd.read_sql("SELECT id, content FROM poems ORDER BY id", conn)
+    if args.only_missing:
+        query = "SELECT id, content FROM poems WHERE diacritized_content IS NULL ORDER BY id"
+    else:
+        query = "SELECT id, content FROM poems ORDER BY id"
+    df = pd.read_sql(query, conn)
     conn.close()
 
     df.to_parquet(RAW_PARQUET, index=False)
@@ -221,6 +225,8 @@ def main():
     p_export = subparsers.add_parser("export", help="Export poems from DB to parquet")
     p_export.add_argument("--force", action="store_true",
                           help="Re-export even if parquet exists")
+    p_export.add_argument("--only-missing", action="store_true",
+                          help="Only export poems where diacritized_content IS NULL")
 
     # Diacritize
     p_dia = subparsers.add_parser("diacritize", help="Run Mishkal batch diacritization")
@@ -261,6 +267,8 @@ def main():
     # Run-all
     p_all = subparsers.add_parser("run-all", help="Full pipeline: export through upload")
     p_all.add_argument("--force", action="store_true")
+    p_all.add_argument("--only-missing", action="store_true",
+                       help="Only export poems where diacritized_content IS NULL")
     p_all.add_argument("--workers", type=int, default=4)
     p_all.add_argument("--max-chars", type=int, default=5012)
     p_all.add_argument("--batch-size", type=int, default=2000)

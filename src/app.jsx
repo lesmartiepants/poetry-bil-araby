@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Play, Pause, BookOpen, RefreshCw, Volume2, ChevronDown, Quote, Globe, Moon, Sun, Loader2, ChevronRight, ChevronLeft, Search, X, Copy, LayoutGrid, Check, Bug, Trash2, Sparkles, Feather, Library, Compass, Rabbit, MoreHorizontal, Heart, LogIn, LogOut, User, Settings2, ArrowRight, Languages, Share2, CalendarDays } from 'lucide-react';
+import { Play, Pause, BookOpen, RefreshCw, Volume2, ChevronDown, Quote, Globe, Moon, Sun, Loader2, ChevronRight, ChevronLeft, Search, X, Copy, LayoutGrid, Check, Bug, Trash2, Sparkles, Feather, Library, Compass, Rabbit, Heart, LogIn, LogOut, User, Settings2, ArrowRight, Languages, Share2, CalendarDays } from 'lucide-react';
 import { track } from '@vercel/analytics';
 import { useAuth, useUserSettings, useSavedPoems } from './hooks/useAuth';
 import { INSIGHTS_SYSTEM_PROMPT, DISCOVERY_SYSTEM_PROMPT, getTTSInstruction } from './prompts';
@@ -976,312 +976,6 @@ const DatabaseToggle = ({ useDatabase, onToggle, disabled }) => {
   );
 };
 
-const OverflowMenu = ({
-  darkMode,
-  onToggleDarkMode,
-  currentFont,
-  onSelectFont,
-  selectedCategory,
-  onSelectCategory,
-  onCopy,
-  showCopySuccess,
-  onShare,
-  showShareSuccess,
-  dailyPoem,
-  onDailyPoem,
-  isCurrentDaily,
-  useDatabase,
-  onToggleDatabase,
-  showTranslation,
-  onToggleTranslation,
-  showTransliteration,
-  onToggleTransliteration,
-  textSizeLevel,
-  onCycleTextSize,
-  user,
-  onOpenSavedPoems,
-  onOpenSettings,
-  onSignIn,
-  onSignOut,
-  isSupabaseConfigured
-}) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [fontSubmenuOpen, setFontSubmenuOpen] = useState(false);
-  const [poetSubmenuOpen, setPoetSubmenuOpen] = useState(false);
-  const dropdownRef = useRef(null);
-
-  // Theme-aware tokens
-  const gold = darkMode ? '#C5A059' : '#8B7355';
-  const goldHoverClass = darkMode ? 'hover:bg-[rgba(197,160,89,0.08)]' : 'hover:bg-[rgba(139,115,85,0.08)]';
-  const goldActiveClass = darkMode ? 'bg-[rgba(197,160,89,0.15)]' : 'bg-[rgba(139,115,85,0.12)]';
-  const divider = darkMode ? 'border-[rgba(197,160,89,0.08)]' : 'border-[rgba(139,115,85,0.12)]';
-  // Dark: slightly lighter than the near-black menu bg; Light: warm tinted inset
-  const submenuBg = darkMode ? 'rgba(255,255,255,0.05)' : 'rgba(139,115,85,0.07)';
-
-  useEffect(() => {
-    const clickOut = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
-        setIsOpen(false);
-        setFontSubmenuOpen(false);
-        setPoetSubmenuOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", clickOut);
-    return () => document.removeEventListener("mousedown", clickOut);
-  }, []);
-
-  const handleCopy = () => {
-    onCopy();
-    setIsOpen(false);
-  };
-
-  const handleShare = () => {
-    onShare();
-    setIsOpen(false);
-  };
-
-  const handleDailyPoem = () => {
-    onDailyPoem();
-    setIsOpen(false);
-  };
-
-  const handleToggleDarkMode = () => {
-    onToggleDarkMode();
-    setIsOpen(false);
-  };
-
-  const handleSelectCategory = (catId) => {
-    onSelectCategory(catId);
-    setPoetSubmenuOpen(false);
-    setIsOpen(false);
-  };
-
-  const handleSelectFont = (fontId) => {
-    onSelectFont(fontId);
-    setFontSubmenuOpen(false);
-    setIsOpen(false);
-  };
-
-  const handleToggleDatabase = () => {
-    onToggleDatabase();
-    setIsOpen(false);
-  };
-
-  const itemClass = `w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex items-center gap-3 border-b ${divider} ${goldHoverClass}`;
-
-  return (
-    <div className="relative flex flex-col items-center gap-1 min-w-[56px]" ref={dropdownRef}>
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:scale-105 ${goldHoverClass}`}
-        aria-label="More options"
-        aria-expanded={isOpen}
-      >
-        <MoreHorizontal size={21} style={{ color: gold }} />
-      </button>
-      <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap" style={{ color: gold }}>More</span>
-
-      {isOpen && (
-        <div
-          className="absolute bottom-full right-[-20px] mb-3 min-w-[220px] max-h-[80vh] overflow-y-auto custom-scrollbar backdrop-blur-[48px] rounded-3xl p-3 z-50"
-          style={{
-            background: darkMode ? 'rgba(20,18,16,0.98)' : 'rgba(255,252,248,0.98)',
-            border: `1px solid ${darkMode ? 'rgba(197,160,89,0.15)' : 'rgba(139,115,85,0.18)'}`,
-            boxShadow: darkMode
-              ? '0 -10px 40px rgba(0,0,0,0.7)'
-              : '0 -2px 12px rgba(139,115,85,0.10), 0 -6px 24px rgba(139,115,85,0.07), 0 1px 3px rgba(0,0,0,0.04)'
-          }}
-        >
-          <button onClick={handleCopy} className={itemClass}>
-            {showCopySuccess ? <Check size={18} className="text-green-500" /> : <Copy size={18} style={{ color: gold }} />}
-            <div className="flex flex-col items-start">
-              <div className="font-amiri text-base font-medium" style={{ color: gold }}>نسخ</div>
-              <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Copy</div>
-            </div>
-          </button>
-
-          <button onClick={handleShare} className={itemClass}>
-            {showShareSuccess ? <Check size={18} className="text-green-500" /> : <Share2 size={18} style={{ color: gold }} />}
-            <div className="flex flex-col items-start">
-              <div className="font-amiri text-base font-medium" style={{ color: gold }}>مشاركة</div>
-              <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Share</div>
-            </div>
-          </button>
-
-          <button onClick={() => { onToggleTranslation(); setIsOpen(false); }} className={`${itemClass} ${!showTranslation ? 'opacity-50' : ''}`}>
-            <Languages size={18} style={{ color: gold }} />
-            <div className="flex flex-col items-start">
-              <div className="font-amiri text-base font-medium" style={{ color: gold }}>{showTranslation ? 'إخفاء الترجمة' : 'إظهار الترجمة'}</div>
-              <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">{showTranslation ? 'Hide Translation' : 'Show Translation'}</div>
-            </div>
-          </button>
-
-          <button onClick={() => { onToggleTransliteration(); setIsOpen(false); }} className={`${itemClass} ${!showTransliteration ? 'opacity-50' : ''}`}>
-            <span className="text-[14px] font-bold leading-none" style={{ color: gold, fontFamily: "'Amiri', serif" }}>عA</span>
-            <div className="flex flex-col items-start">
-              <div className="font-amiri text-base font-medium" style={{ color: gold }}>{showTransliteration ? 'إخفاء النقحرة' : 'إظهار النقحرة'}</div>
-              <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">{showTransliteration ? 'Hide Romanization' : 'Show Romanization'}</div>
-            </div>
-          </button>
-
-          <button onClick={() => { onCycleTextSize(); setIsOpen(false); }} className={itemClass}>
-            <span className="font-brand-en text-[15px] font-bold" style={{ color: gold }}>Aa</span>
-            <div className="flex flex-col items-start">
-              <div className="font-amiri text-base font-medium" style={{ color: gold }}>حجم الخط</div>
-              <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Text Size: {['S', 'M', 'L', 'XL'][textSizeLevel]}</div>
-            </div>
-          </button>
-
-          {dailyPoem && (
-            <button onClick={handleDailyPoem} className={`${itemClass} ${isCurrentDaily ? goldActiveClass : ''}`}>
-              <CalendarDays size={18} style={{ color: gold }} />
-              <div className="flex flex-col items-start">
-                <div className="font-amiri text-base font-medium" style={{ color: gold }}>قصيدة اليوم</div>
-                <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Poem of the Day</div>
-              </div>
-            </button>
-          )}
-
-          <button onClick={handleToggleDatabase} className={itemClass}>
-            {useDatabase ? <Library size={18} style={{ color: gold }} /> : <Sparkles size={18} style={{ color: gold }} />}
-            <div className="flex flex-col items-start">
-              <div className="font-amiri text-base font-medium" style={{ color: gold }}>{useDatabase ? 'قاعدة البيانات' : 'الذكاء الاصطناعي'}</div>
-              <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">{useDatabase ? 'Local Database' : 'AI Generated'}</div>
-            </div>
-          </button>
-
-          <button onClick={handleToggleDarkMode} className={itemClass}>
-            {darkMode ? <Sun size={18} style={{ color: gold }} /> : <Moon size={18} style={{ color: gold }} />}
-            <div className="flex flex-col items-start">
-              <div className="font-amiri text-base font-medium" style={{ color: gold }}>{darkMode ? 'الوضع النهاري' : 'الوضع الليلي'}</div>
-              <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Theme</div>
-            </div>
-          </button>
-
-          {/* Font accordion */}
-          <div className={`border-b ${divider}`}>
-            <button
-              onClick={() => { setFontSubmenuOpen(!fontSubmenuOpen); setPoetSubmenuOpen(false); }}
-              className={`w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex items-center gap-3 ${fontSubmenuOpen ? '' : goldHoverClass}`}
-              aria-expanded={fontSubmenuOpen}
-            >
-              <Feather size={18} style={{ color: gold }} />
-              <div className="flex flex-col items-start flex-1">
-                <div className="font-amiri text-base font-medium" style={{ color: gold }}>اختيار الخط</div>
-                <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Font: {currentFont}</div>
-              </div>
-              <ChevronDown size={14} style={{ color: gold }} className={`transition-transform duration-200 ${fontSubmenuOpen ? 'rotate-180' : 'opacity-50'}`} />
-            </button>
-            {fontSubmenuOpen && (
-              <div
-                className="pt-1 pb-2 px-1 mx-2 mb-2 mt-0.5 rounded-xl"
-                style={{ background: submenuBg, border: `1px solid ${darkMode ? 'rgba(197,160,89,0.10)' : 'rgba(139,115,85,0.14)'}` }}
-              >
-                {FONTS.map((font) => (
-                  <button
-                    key={font.id}
-                    onClick={() => handleSelectFont(font.id)}
-                    className={`w-full p-[8px_12px] cursor-pointer rounded-lg transition-all duration-200 flex items-center gap-3 mb-0.5 ${currentFont === font.id ? goldActiveClass : goldHoverClass}`}
-                  >
-                    <div className="flex flex-col items-start flex-1">
-                      <div className={`${font.family} text-sm font-medium`} style={{ color: gold }} dir="rtl">{font.labelAr}</div>
-                      <div className="font-brand-en text-[8px] uppercase tracking-[0.12em] opacity-40 text-[#a8a29e]">{font.label}</div>
-                    </div>
-                    {currentFont === font.id && <Check size={13} style={{ color: gold }} />}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {isSupabaseConfigured && !user && (
-            <button
-              onClick={() => { onSignIn(); setIsOpen(false); }}
-              className={itemClass}
-            >
-              <LogIn size={18} style={{ color: gold }} />
-              <div className="flex flex-col items-start">
-                <div className="font-amiri text-base font-medium" style={{ color: gold }}>تسجيل الدخول</div>
-                <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Sign In</div>
-              </div>
-            </button>
-          )}
-
-          {user && (
-            <>
-              <button
-                onClick={() => { onOpenSavedPoems(); setIsOpen(false); }}
-                className={itemClass}
-              >
-                <BookOpen size={18} style={{ color: gold }} />
-                <div className="flex flex-col items-start">
-                  <div className="font-amiri text-base font-medium" style={{ color: gold }}>قصائدي</div>
-                  <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">My Poems</div>
-                </div>
-              </button>
-              <button
-                onClick={() => { onOpenSettings(); setIsOpen(false); }}
-                className={itemClass}
-              >
-                <Settings2 size={18} style={{ color: gold }} />
-                <div className="flex flex-col items-start">
-                  <div className="font-amiri text-base font-medium" style={{ color: gold }}>الإعدادات</div>
-                  <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Settings</div>
-                </div>
-              </button>
-              <button
-                onClick={() => { onSignOut(); setIsOpen(false); }}
-                className={itemClass}
-              >
-                <LogOut size={18} style={{ color: gold }} />
-                <div className="flex flex-col items-start">
-                  <div className="font-amiri text-base font-medium" style={{ color: gold }}>تسجيل الخروج</div>
-                  <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Sign Out</div>
-                </div>
-              </button>
-            </>
-          )}
-
-          {/* Poet accordion */}
-          <div>
-            <button
-              onClick={() => { setPoetSubmenuOpen(!poetSubmenuOpen); setFontSubmenuOpen(false); }}
-              className={`w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex items-center gap-3 ${poetSubmenuOpen ? '' : goldHoverClass}`}
-              aria-expanded={poetSubmenuOpen}
-            >
-              <Library size={18} style={{ color: gold }} />
-              <div className="flex flex-col items-start flex-1">
-                <div className="font-amiri text-base font-medium" style={{ color: gold }}>اختيار الشاعر</div>
-                <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Poet: {CATEGORIES.find(c => c.id === selectedCategory)?.label || 'All'}</div>
-              </div>
-              <ChevronDown size={14} style={{ color: gold }} className={`transition-transform duration-200 ${poetSubmenuOpen ? 'rotate-180' : 'opacity-50'}`} />
-            </button>
-            {poetSubmenuOpen && (
-              <div
-                className="pt-1 pb-2 px-1 mx-2 mb-2 mt-0.5 rounded-xl"
-                style={{ background: submenuBg, border: `1px solid ${darkMode ? 'rgba(197,160,89,0.10)' : 'rgba(139,115,85,0.14)'}` }}
-              >
-                {CATEGORIES.map(cat => (
-                  <button
-                    key={cat.id}
-                    onClick={() => handleSelectCategory(cat.id)}
-                    className={`w-full p-[8px_12px] cursor-pointer rounded-lg transition-all duration-200 flex items-center gap-3 mb-0.5 ${selectedCategory === cat.id ? goldActiveClass : goldHoverClass}`}
-                  >
-                    <div className="flex flex-col items-start flex-1">
-                      <div className="font-amiri text-sm font-medium" style={{ color: gold }}>{cat.labelAr}</div>
-                      <div className="font-brand-en text-[8px] uppercase tracking-[0.12em] opacity-40 text-[#a8a29e]">{cat.label}</div>
-                    </div>
-                    {selectedCategory === cat.id && <Check size={13} style={{ color: gold }} />}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-};
 
 /* =============================================================================
   KEYBOARD SHORTCUT HELP
@@ -2277,7 +1971,26 @@ const SettingsView = ({ isOpen, onClose, darkMode, onToggleDarkMode, currentFont
   =============================================================================
 */
 
-const VerticalSidebar = ({ onExplain, onCopy, showCopySuccess, onShare, showShareSuccess, onOpenSavedPoems, onOpenSettings, onSignIn, onSignOut, user, useDatabase, onToggleDatabase, isSupabaseConfigured, theme, isInterpreting, interpretation }) => {
+const VerticalSidebar = ({
+  onExplain, onCopy, showCopySuccess, onShare, showShareSuccess,
+  onSignIn, onSignOut, user, isSupabaseConfigured, theme, isInterpreting, interpretation,
+  showTranslation, onToggleTranslation,
+  showTransliteration, onToggleTransliteration,
+  textSizeLabel, onCycleTextSize,
+  dailyPoem, onDailyPoem, isCurrentDaily,
+  darkMode, onToggleDarkMode,
+  currentFont, onCycleFont,
+  selectedCategory, onSelectCategory,
+  useDatabase, onToggleDatabase
+}) => {
+  const [settingsOpen, setSettingsOpen] = useState(false);
+
+  const gold = darkMode ? '#C5A059' : '#8B7355';
+  const btnBase = "w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-200";
+  const btnHover = darkMode ? "hover:bg-[#C5A059]/15" : "hover:bg-[#8B7355]/15";
+  const subBtnBase = "w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-200";
+  const subBtnHover = darkMode ? "hover:bg-[#C5A059]/15" : "hover:bg-[#8B7355]/15";
+
   return (
     <>
       <style>{`
@@ -2295,62 +2008,112 @@ const VerticalSidebar = ({ onExplain, onCopy, showCopySuccess, onShare, showShar
             onClick={onExplain}
             disabled={isInterpreting || interpretation}
             title="Explain poem"
-            className="w-11 h-11 rounded-xl flex items-center justify-center hover:bg-[#C5A059]/15 transition-all duration-200 disabled:opacity-50"
+            className={`${btnBase} ${btnHover} disabled:opacity-50`}
           >
-            {isInterpreting ? <Loader2 className="animate-spin text-[#C5A059]" size={18} /> : <Compass className="text-[#C5A059]" size={18} />}
+            {isInterpreting ? <Loader2 className="animate-spin" style={{ color: gold }} size={18} /> : <Compass style={{ color: gold }} size={18} />}
+          </button>
+
+          <button onClick={onCopy} title="Copy poem" className={`${btnBase} ${btnHover}`}>
+            {showCopySuccess ? <Check size={18} className="text-green-500" /> : <Copy style={{ color: gold }} size={18} />}
+          </button>
+
+          <button onClick={onShare} title="Share poem" className={`${btnBase} ${btnHover}`}>
+            {showShareSuccess ? <Check size={18} className="text-green-500" /> : <Share2 style={{ color: gold }} size={18} />}
           </button>
 
           <button
-            onClick={onCopy}
-            title="Copy poem"
-            className="w-11 h-11 rounded-xl flex items-center justify-center hover:bg-[#C5A059]/15 transition-all duration-200"
+            onClick={onToggleTranslation}
+            title={showTranslation ? 'Hide translation' : 'Show translation'}
+            className={`${btnBase} ${btnHover} ${!showTranslation ? 'opacity-40' : ''}`}
           >
-            {showCopySuccess ? <Check size={18} className="text-green-500" /> : <Copy className="text-[#C5A059]" size={18} />}
+            <Languages style={{ color: gold }} size={18} />
           </button>
 
+          <div className="w-6 h-px bg-stone-500/30 mx-auto my-1" />
+
           <button
-            onClick={onShare}
-            title="Share poem"
-            className="w-11 h-11 rounded-xl flex items-center justify-center hover:bg-[#C5A059]/15 transition-all duration-200"
+            onClick={() => setSettingsOpen(prev => !prev)}
+            title="Settings"
+            className={`${btnBase} ${btnHover} ${settingsOpen ? (darkMode ? 'bg-[#C5A059]/15' : 'bg-[#8B7355]/15') : ''}`}
           >
-            {showShareSuccess ? <Check size={18} className="text-green-500" /> : <Share2 className="text-[#C5A059]" size={18} />}
+            <Settings2 style={{ color: gold }} size={18} />
           </button>
+
+          {settingsOpen && (
+            <div className={`flex flex-col items-center gap-0.5 pl-0.5 border-l-2 ${darkMode ? 'border-[#C5A059]/20' : 'border-[#8B7355]/20'}`}>
+              <button
+                onClick={onToggleTransliteration}
+                title={showTransliteration ? 'Hide romanization' : 'Show romanization'}
+                className={`${subBtnBase} ${subBtnHover} ${!showTransliteration ? 'opacity-40' : ''}`}
+              >
+                <span className="text-[12px] font-bold leading-none" style={{ color: gold, fontFamily: "'Amiri', serif" }}>عA</span>
+              </button>
+
+              <button
+                onClick={onCycleTextSize}
+                title={`Text size: ${textSizeLabel}`}
+                className={`${subBtnBase} ${subBtnHover}`}
+              >
+                <span className="font-brand-en text-[13px] font-bold" style={{ color: gold }}>Aa</span>
+              </button>
+
+              {dailyPoem && (
+                <button
+                  onClick={onDailyPoem}
+                  title="Poem of the Day"
+                  className={`${subBtnBase} ${subBtnHover} ${isCurrentDaily ? (darkMode ? 'bg-[#C5A059]/15' : 'bg-[#8B7355]/15') : ''}`}
+                >
+                  <CalendarDays style={{ color: gold }} size={16} />
+                </button>
+              )}
+
+              <button
+                onClick={onToggleDarkMode}
+                title={darkMode ? 'Light mode' : 'Dark mode'}
+                className={`${subBtnBase} ${subBtnHover}`}
+              >
+                {darkMode ? <Sun style={{ color: gold }} size={16} /> : <Moon style={{ color: gold }} size={16} />}
+              </button>
+
+              <button
+                onClick={onCycleFont}
+                title={`Font: ${currentFont}`}
+                className={`${subBtnBase} ${subBtnHover}`}
+              >
+                <Feather style={{ color: gold }} size={16} />
+              </button>
+
+              <button
+                onClick={() => {
+                  const catIds = CATEGORIES.map(c => c.id);
+                  const idx = catIds.indexOf(selectedCategory);
+                  onSelectCategory(catIds[(idx + 1) % catIds.length]);
+                }}
+                title="Poet filter"
+                className={`${subBtnBase} ${subBtnHover}`}
+              >
+                <Library style={{ color: gold }} size={16} />
+              </button>
+
+              <button
+                onClick={onToggleDatabase}
+                title={useDatabase ? 'Switch to AI' : 'Switch to Database'}
+                className={`${subBtnBase} ${subBtnHover}`}
+              >
+                {useDatabase ? <Library style={{ color: gold }} size={16} /> : <Sparkles style={{ color: gold }} size={16} />}
+              </button>
+            </div>
+          )}
 
           <div className="w-6 h-px bg-stone-500/30 mx-auto my-1" />
 
           {isSupabaseConfigured && (
             <button
-              onClick={onOpenSavedPoems}
-              title="Saved poems"
-              className="w-11 h-11 rounded-xl flex items-center justify-center hover:bg-[#C5A059]/15 transition-all duration-200"
-            >
-              <Heart className="text-[#C5A059]" size={18} />
-            </button>
-          )}
-
-          <button
-            onClick={onToggleDatabase}
-            title={useDatabase ? 'Switch to AI' : 'Switch to Database'}
-            className="w-11 h-11 rounded-xl flex items-center justify-center hover:bg-[#C5A059]/15 transition-all duration-200"
-          >
-            {useDatabase ? <Library className="text-[#C5A059]" size={18} /> : <Sparkles className="text-[#C5A059]" size={18} />}
-          </button>
-
-          <button
-            onClick={onOpenSettings}
-            title="Settings"
-            className="w-11 h-11 rounded-xl flex items-center justify-center hover:bg-[#C5A059]/15 transition-all duration-200"
-          >
-            <Settings2 className="text-[#C5A059]" size={18} />
-          </button>
-
-          {isSupabaseConfigured && (
-            <button
               onClick={user ? onSignOut : onSignIn}
               title={user ? 'Sign out' : 'Sign in'}
-              className="w-11 h-11 rounded-xl flex items-center justify-center hover:bg-[#C5A059]/15 transition-all duration-200"
+              className={`${btnBase} ${btnHover}`}
             >
-              {user ? <LogOut className="text-[#C5A059]" size={18} /> : <LogIn className="text-[#C5A059]" size={18} />}
+              {user ? <LogOut style={{ color: gold }} size={18} /> : <LogIn style={{ color: gold }} size={18} />}
             </button>
           )}
         </div>
@@ -2682,7 +2445,7 @@ export default function DiwanApp() {
         bar.style.overflow = savedOverflow;
 
         // Stay in overflow mode on narrow screens regardless of current bar width,
-        // which prevents oscillation when the bar shrinks after switching to OverflowMenu.
+        // which prevents oscillation when the bar shrinks after switching to mobile layout.
         setIsOverflow(hasContentOverflow || vw < narrowThreshold);
       });
     };
@@ -4088,10 +3851,10 @@ export default function DiwanApp() {
                 />
               )}
 
-              <div className="w-px h-10 bg-stone-500/20 mx-1 flex-shrink-0" />
-
-              {!isOverflow ? (
+              {!isOverflow && (
                 <>
+                  <div className="w-px h-10 bg-stone-500/20 mx-1 flex-shrink-0" />
+
                   <div className="flex flex-col items-center gap-1 min-w-[52px]">
                     <button onClick={handleCopy} aria-label="Copy poem to clipboard" className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105">
                       {showCopySuccess ? <Check size={21} className="text-green-500" /> : <Copy size={21} className="text-[#C5A059]" />}
@@ -4182,36 +3945,6 @@ export default function DiwanApp() {
                     />
                   )}
                 </>
-              ) : (
-                <OverflowMenu
-                  darkMode={darkMode}
-                  onToggleDarkMode={handleToggleTheme}
-                  currentFont={currentFont}
-                  onSelectFont={handleSelectFont}
-                  selectedCategory={selectedCategory}
-                  onSelectCategory={setSelectedCategory}
-                  onCopy={handleCopy}
-                  showCopySuccess={showCopySuccess}
-                  onShare={handleShare}
-                  showShareSuccess={showShareSuccess}
-                  dailyPoem={dailyPoem}
-                  onDailyPoem={handleDailyPoem}
-                  isCurrentDaily={current?.id === dailyPoem?.id}
-                  useDatabase={useDatabase}
-                  onToggleDatabase={apiKey ? handleToggleDatabase : () => {}}
-                  showTranslation={showTranslation}
-                  onToggleTranslation={() => setShowTranslation(prev => !prev)}
-                  showTransliteration={showTransliteration}
-                  onToggleTransliteration={() => setShowTransliteration(prev => !prev)}
-                  textSizeLevel={textSizeLevel}
-                  onCycleTextSize={cycleTextSize}
-                  user={user}
-                  onOpenSavedPoems={handleOpenSavedPoems}
-                  onOpenSettings={handleOpenSettings}
-                  onSignIn={handleSignIn}
-                  onSignOut={handleSignOut}
-                  isSupabaseConfigured={isSupabaseConfigured}
-                />
               )}
             </div>
           </footer>
@@ -4324,17 +4057,30 @@ export default function DiwanApp() {
           showCopySuccess={showCopySuccess}
           onShare={handleShare}
           showShareSuccess={showShareSuccess}
-          onOpenSavedPoems={handleOpenSavedPoems}
-          onOpenSettings={handleOpenSettings}
           onSignIn={handleSignIn}
           onSignOut={handleSignOut}
           user={user}
-          useDatabase={useDatabase}
-          onToggleDatabase={handleToggleDatabase}
           isSupabaseConfigured={isSupabaseConfigured}
           theme={theme}
           isInterpreting={isInterpreting}
           interpretation={interpretation}
+          showTranslation={showTranslation}
+          onToggleTranslation={() => setShowTranslation(prev => !prev)}
+          showTransliteration={showTransliteration}
+          onToggleTransliteration={() => setShowTransliteration(prev => !prev)}
+          textSizeLabel={TEXT_SIZES[textSizeLevel].label}
+          onCycleTextSize={cycleTextSize}
+          dailyPoem={dailyPoem}
+          onDailyPoem={handleDailyPoem}
+          isCurrentDaily={current?.id === dailyPoem?.id}
+          darkMode={darkMode}
+          onToggleDarkMode={handleToggleTheme}
+          currentFont={currentFont}
+          onCycleFont={cycleFont}
+          selectedCategory={selectedCategory}
+          onSelectCategory={setSelectedCategory}
+          useDatabase={useDatabase}
+          onToggleDatabase={apiKey ? handleToggleDatabase : () => {}}
         />
       )}
 

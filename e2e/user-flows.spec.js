@@ -161,25 +161,26 @@ test.describe('User Flows', () => {
       return rootDiv ? getComputedStyle(rootDiv).backgroundColor : '';
     });
 
-    // Try ThemeDropdown (desktop) first, then OverflowMenu (mobile)
+    // Try ThemeDropdown (desktop) first, then VerticalSidebar Settings (mobile)
     const themeDropdown = page.locator('button[aria-label="Theme options"]').first();
     const themeVisible = await themeDropdown.isVisible().catch(() => false);
 
     if (themeVisible) {
       await themeDropdown.click();
-      // Wait for dropdown animation
       await page.waitForTimeout(300);
+      // Click the mode toggle button — target via English sub-text
+      const modeButton = page.locator('button:has-text("Light Mode"), button:has-text("Dark Mode")').first();
+      await expect(modeButton).toBeVisible({ timeout: 3000 });
+      await modeButton.click();
     } else {
-      const moreButton = page.locator('button[aria-label="More options"]').first();
-      await moreButton.click();
+      // Mobile: open Settings gear in VerticalSidebar, then click theme toggle
+      const settingsBtn = page.locator('button[title="Settings"]').first();
+      await settingsBtn.click();
       await page.waitForTimeout(300);
+      const themeBtn = page.locator('button[title="Light mode"], button[title="Dark mode"]').first();
+      await expect(themeBtn).toBeVisible({ timeout: 3000 });
+      await themeBtn.click();
     }
-
-    // Click the mode toggle button — target via English sub-text which is unique
-    // In dark mode: button shows "Light Mode", in light mode: shows "Dark Mode"
-    const modeButton = page.locator('button:has-text("Light Mode"), button:has-text("Dark Mode")').first();
-    await expect(modeButton).toBeVisible({ timeout: 3000 });
-    await modeButton.click();
 
     // Wait for theme transition
     await page.waitForTimeout(300);
@@ -197,30 +198,24 @@ test.describe('User Flows', () => {
     // Initial font should be Amiri (default, index 0)
     await expect(page.locator('.font-amiri').first()).toBeVisible();
 
-    // Open theme dropdown or overflow menu
+    // Open theme dropdown (desktop) or VerticalSidebar Settings (mobile)
     const themeDropdown = page.locator('button[aria-label="Theme options"]').first();
     const themeVisible = await themeDropdown.isVisible().catch(() => false);
 
     if (themeVisible) {
       await themeDropdown.click();
-    } else {
-      const moreButton = page.locator('button[aria-label="More options"]').first();
-      await moreButton.click();
-    }
-
-    // Click the font cycle button (Arabic text: "تبديل الخط")
-    const fontButton = page.locator('button:has-text("تبديل الخط")').first();
-    const fontButtonInMenu = page.locator('button:has-text("اختيار الخط")').first();
-    const mainVisible = await fontButton.isVisible().catch(() => false);
-    const menuVisible = await fontButtonInMenu.isVisible().catch(() => false);
-
-    if (mainVisible) {
+      // Click the font cycle button (Arabic text: "تبديل الخط")
+      const fontButton = page.locator('button:has-text("تبديل الخط")').first();
+      await expect(fontButton).toBeVisible({ timeout: 2000 });
       await fontButton.click();
-    } else if (menuVisible) {
-      await fontButtonInMenu.click();
     } else {
-      test.skip();
-      return;
+      // Mobile: open Settings gear, then click font cycle button
+      const settingsBtn = page.locator('button[title="Settings"]').first();
+      await settingsBtn.click();
+      await page.waitForTimeout(300);
+      const fontBtn = page.locator('button[title^="Font:"]').first();
+      await expect(fontBtn).toBeVisible({ timeout: 2000 });
+      await fontBtn.click();
     }
 
     // After cycling, Alexandria should be the active font (Amiri → Alexandria)
@@ -236,22 +231,17 @@ test.describe('User Flows', () => {
     if (catVisible) {
       await categoryButton.click();
     } else {
-      // Mobile: open overflow menu first, then expand poet accordion
-      const moreButton = page.locator('button[aria-label="More options"]').first();
-      await moreButton.click();
-      const poetAccordion = page.locator('button:has-text("اختيار الشاعر")').first();
-      await expect(poetAccordion).toBeVisible({ timeout: 2000 });
-      await poetAccordion.click();
+      // Mobile: open Settings gear in VerticalSidebar, then click poet cycle button
+      const settingsBtn = page.locator('button[title="Settings"]').first();
+      await settingsBtn.click();
+      await page.waitForTimeout(300);
+      const poetBtn = page.locator('button[title="Poet filter"]').first();
+      await expect(poetBtn).toBeVisible({ timeout: 2000 });
+      // Click poet filter to cycle from "All" to "Nizar Qabbani"
+      await poetBtn.click();
     }
 
-    // Select Nizar Qabbani
-    const poetOption = page.locator('text=نزار قباني').first();
-    await expect(poetOption).toBeVisible({ timeout: 3000 });
-    await poetOption.click();
-
-    // Selecting a poet sets the category filter. Now click Discover to trigger a
-    // filtered API request (the app only fetches on Discover, not on category change
-    // when the local pool already has matching poems).
+    // Click Discover to trigger a filtered API request
     const requestPromise = page.waitForRequest(
       (req) => req.url().includes('/api/poems/random') && req.url().includes('poet='),
       { timeout: 10000 }
@@ -293,13 +283,13 @@ test.describe('User Flows', () => {
     const isVisible = await toggleButton.isVisible().catch(() => false);
 
     if (!isVisible) {
-      // Mobile: the toggle should be in the overflow menu
-      const moreButton = page.locator('button[aria-label="More options"]').first();
-      const moreVisible = await moreButton.isVisible().catch(() => false);
-      if (moreVisible) {
-        await moreButton.click();
-        // Verify the DB/AI option is in the overflow menu
-        const dbButton = page.locator('button:has-text("قاعدة البيانات"), button:has-text("الذكاء الاصطناعي")').first();
+      // Mobile: open Settings gear in VerticalSidebar, then find DB/AI toggle
+      const settingsBtn = page.locator('button[title="Settings"]').first();
+      const settingsVisible = await settingsBtn.isVisible().catch(() => false);
+      if (settingsVisible) {
+        await settingsBtn.click();
+        await page.waitForTimeout(300);
+        const dbButton = page.locator('button[title*="Switch to"]').first();
         await expect(dbButton).toBeVisible({ timeout: 2000 });
         return;
       }
@@ -363,11 +353,11 @@ test.describe('User Flows', () => {
   });
 });
 
-// #11 — Mobile overflow menu (forced narrow viewport)
-test.describe('Mobile viewport overflow', () => {
+// #11 — Mobile viewport shows VerticalSidebar (forced narrow viewport)
+test.describe('Mobile viewport sidebar', () => {
   test.use({ viewport: { width: 402, height: 874 } });
 
-  test('mobile viewport shows overflow menu', async ({ page }) => {
+  test('mobile viewport shows VerticalSidebar with Settings', async ({ page }) => {
     await page.route('**/api/**', route => route.abort());
     await page.route('**/generativelanguage.googleapis.com/**', route => route.abort());
 
@@ -375,10 +365,10 @@ test.describe('Mobile viewport overflow', () => {
     await page.waitForLoadState('domcontentloaded');
     await page.locator('[dir="rtl"]').first().waitFor({ state: 'visible', timeout: 10000 });
 
-    // On 402px viewport, "More options" should be visible
-    await expect(page.getByRole('button', { name: /more options/i })).toBeVisible();
+    // VerticalSidebar Settings button should be visible on mobile
+    await expect(page.locator('button[title="Settings"]')).toBeVisible();
 
-    // Theme options should NOT be visible (collapsed into overflow)
+    // Theme options dropdown should NOT be visible (desktop only)
     await expect(page.getByRole('button', { name: /theme options/i })).not.toBeVisible();
   });
 });

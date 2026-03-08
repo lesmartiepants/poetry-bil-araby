@@ -18,7 +18,7 @@ Single-suite user-flow smoke tests using Playwright. Each test is a complete use
 | 8 | DB/AI mode toggle | Switch between Database and AI modes |
 | 9 | Design review navigation | Click review link, verify page loads |
 | 10 | Design review keyboard nav | Arrow keys cycle through designs |
-| 11 | Mobile overflow menu | Verify 402px viewport shows overflow |
+| 11 | Mobile viewport sidebar | Verify 402px viewport shows VerticalSidebar |
 
 ## Running Tests
 

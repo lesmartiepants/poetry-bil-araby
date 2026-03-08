@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Play, Pause, BookOpen, RefreshCw, Volume2, ChevronDown, Quote, Globe, Moon, Sun, Loader2, ChevronRight, ChevronLeft, Search, X, Copy, LayoutGrid, Check, Bug, Trash2, Sparkles, Feather, Library, Compass, Rabbit, MoreHorizontal, Heart, LogIn, LogOut, User, Settings2, Share2 } from 'lucide-react';
+import { Play, Pause, BookOpen, RefreshCw, Volume2, ChevronDown, Quote, Globe, Moon, Sun, Loader2, ChevronRight, ChevronLeft, Search, X, Copy, LayoutGrid, Check, Bug, Trash2, Sparkles, Feather, Library, Compass, Rabbit, MoreHorizontal, Heart, LogIn, LogOut, User, Settings2, Share2, CalendarDays } from 'lucide-react';
 import { useAuth, useUserSettings, useSavedPoems } from './hooks/useAuth';
 import { INSIGHTS_SYSTEM_PROMPT, DISCOVERY_SYSTEM_PROMPT, getTTSInstruction } from './prompts';
 import { parseInsight } from './utils/insightParser';
@@ -877,6 +877,9 @@ const OverflowMenu = ({
   showCopySuccess,
   onShare,
   showShareSuccess,
+  dailyPoem,
+  onDailyPoem,
+  isCurrentDaily,
   useDatabase,
   onToggleDatabase,
   user,
@@ -918,6 +921,11 @@ const OverflowMenu = ({
 
   const handleShare = () => {
     onShare();
+    setIsOpen(false);
+  };
+
+  const handleDailyPoem = () => {
+    onDailyPoem();
     setIsOpen(false);
   };
 
@@ -983,6 +991,16 @@ const OverflowMenu = ({
               <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Share</div>
             </div>
           </button>
+
+          {dailyPoem && (
+            <button onClick={handleDailyPoem} className={`${itemClass} ${isCurrentDaily ? goldActiveClass : ''}`}>
+              <CalendarDays size={18} style={{ color: gold }} />
+              <div className="flex flex-col items-start">
+                <div className="font-amiri text-base font-medium" style={{ color: gold }}>قصيدة اليوم</div>
+                <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Poem of the Day</div>
+              </div>
+            </button>
+          )}
 
           <button onClick={handleToggleDatabase} className={itemClass}>
             {useDatabase ? <Library size={18} style={{ color: gold }} /> : <Sparkles size={18} style={{ color: gold }} />}
@@ -1647,6 +1665,7 @@ export default function DiwanApp() {
   const [logs, setLogs] = useState([]);
   const [showCopySuccess, setShowCopySuccess] = useState(false);
   const [showShareSuccess, setShowShareSuccess] = useState(false);
+  const [dailyPoem, setDailyPoem] = useState(null);
   const [isOverflow, setIsOverflow] = useState(() => {
     // Use 660 as the conservative initial threshold (covers both Supabase and non-Supabase button sets).
     // The detectOverflow effect below will refine this after mount.
@@ -1780,6 +1799,46 @@ export default function DiwanApp() {
       }
     }
   }, []);
+
+  // Fetch poem of the day on mount (cached per date in IndexedDB)
+  useEffect(() => {
+    if (!useDatabase) return;
+    const todayKey = `daily-${new Date().toISOString().slice(0, 10)}`;
+
+    (async () => {
+      // Check IndexedDB cache first
+      if (FEATURES.caching) {
+        try {
+          const cached = await cacheOperations.get(CACHE_CONFIG.stores.poems, todayKey);
+          if (cached?.data) {
+            setDailyPoem(cached.data);
+            addLog("Daily", "Loaded poem of the day from cache", "info");
+            return;
+          }
+        } catch {}
+      }
+
+      // Fetch from API
+      try {
+        const res = await fetch(`${apiUrl}/api/poems/daily`);
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const poem = await res.json();
+        if (poem.arabic) poem.arabic = poem.arabic.replace(/\*/g, '\n');
+        poem.isFromDatabase = true;
+        setDailyPoem(poem);
+        addLog("Daily", `Poem of the day: ${poem.poet} — ${poem.title}`, "success");
+
+        // Cache for today
+        if (FEATURES.caching) {
+          try {
+            await cacheOperations.set(CACHE_CONFIG.stores.poems, todayKey, { data: poem });
+          } catch {}
+        }
+      } catch (err) {
+        addLog("Daily", `Failed to load: ${err.message}`, "error");
+      }
+    })();
+  }, [useDatabase]);
 
   // After OAuth redirect, once the user is signed in, auto-save the stashed poem and clean up
   useEffect(() => {
@@ -2569,6 +2628,22 @@ export default function DiwanApp() {
     }
   };
 
+  const handleDailyPoem = () => {
+    if (!dailyPoem) return;
+    addLog("UI Event", "Daily poem button clicked", "info");
+    setInterpretation(null);
+    setPoems(prev => {
+      const exists = prev.find(p => p.id === dailyPoem.id);
+      if (exists) {
+        setCurrentIndex(prev.indexOf(exists));
+        return prev;
+      }
+      setCurrentIndex(prev.length);
+      return [...prev, dailyPoem];
+    });
+    setAutoExplainPending(true);
+  };
+
   const handleShare = async () => {
     addLog("UI Event", "Share button clicked", "info");
 
@@ -2950,6 +3025,12 @@ export default function DiwanApp() {
                          <div className={`flex items-center justify-center gap-1 sm:gap-2 opacity-45 ${DESIGN.mainSubtitleSize} font-brand-en tracking-[0.08em] uppercase mt-[clamp(0.25rem,0.8vw,0.75rem)]`}>
                            <span className="font-semibold">{current?.poet}</span> <span className="opacity-20">•</span> <span>{current?.title}</span>
                          </div>
+                         {dailyPoem && current?.id === dailyPoem.id && (
+                           <div className="flex items-center gap-1.5 mt-2 px-3 py-1 rounded-full bg-[#C5A059]/10 border border-[#C5A059]/20">
+                             <CalendarDays size={12} className="text-[#C5A059]" />
+                             <span className="font-brand-en text-[9px] font-bold tracking-[0.15em] uppercase text-[#C5A059]">Poem of the Day</span>
+                           </div>
+                         )}
                       </div>
                    </div>
 
@@ -3059,6 +3140,15 @@ export default function DiwanApp() {
                     <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">Share</span>
                   </div>
 
+                  {dailyPoem && (
+                    <div className="flex flex-col items-center gap-1 min-w-[52px]">
+                      <button onClick={handleDailyPoem} aria-label="Poem of the day" className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105 ${current?.id === dailyPoem.id ? 'bg-[#C5A059]/15' : ''}`}>
+                        <CalendarDays size={21} className="text-[#C5A059]" />
+                      </button>
+                      <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">Daily</span>
+                    </div>
+                  )}
+
                   <DatabaseToggle
                     useDatabase={useDatabase}
                     onToggle={apiKey ? () => setUseDatabase(!useDatabase) : () => {}}
@@ -3098,6 +3188,9 @@ export default function DiwanApp() {
                   showCopySuccess={showCopySuccess}
                   onShare={handleShare}
                   showShareSuccess={showShareSuccess}
+                  dailyPoem={dailyPoem}
+                  onDailyPoem={handleDailyPoem}
+                  isCurrentDaily={current?.id === dailyPoem?.id}
                   useDatabase={useDatabase}
                   onToggleDatabase={apiKey ? () => setUseDatabase(!useDatabase) : () => {}}
                   user={user}

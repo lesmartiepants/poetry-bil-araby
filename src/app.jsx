@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Play, Pause, BookOpen, RefreshCw, Volume2, ChevronDown, Quote, Globe, Moon, Sun, Loader2, ChevronRight, ChevronLeft, Search, X, Copy, LayoutGrid, Check, Bug, Trash2, Sparkles, Feather, Library, Compass, Rabbit, Heart, LogIn, LogOut, User, Settings2, ArrowRight, Languages, Share2, CalendarDays } from 'lucide-react';
+import { Play, Pause, BookOpen, RefreshCw, Volume2, ChevronDown, Quote, Globe, Moon, Sun, Loader2, ChevronRight, ChevronLeft, Search, X, Copy, LayoutGrid, Check, Bug, Trash2, Sparkles, Feather, Library, Compass, Rabbit, Heart, LogIn, LogOut, User, Settings2, ArrowRight, Languages, Share2, CalendarDays, ThumbsDown } from 'lucide-react';
 import { track } from '@vercel/analytics';
-import { useAuth, useUserSettings, useSavedPoems } from './hooks/useAuth';
+import { useAuth, useUserSettings, useSavedPoems, useDownvotes, usePoemEvents } from './hooks/useAuth';
 import { INSIGHTS_SYSTEM_PROMPT, DISCOVERY_SYSTEM_PROMPT, getTTSInstruction } from './prompts';
 import { parseInsight } from './utils/insightParser';
 import { repairAndParseJSON } from './utils/jsonRepair';
@@ -1769,6 +1769,48 @@ const SavePoemButton = ({ poem, isSaved, onSave, onUnsave, disabled }) => {
   );
 };
 
+const DownvoteButton = ({ poem, isDownvoted, onDownvote, onUndownvote, disabled }) => {
+  const [showTooltip, setShowTooltip] = useState(false);
+
+  const handleClick = () => {
+    if (disabled) {
+      setShowTooltip(true);
+      setTimeout(() => setShowTooltip(false), 2000);
+      return;
+    }
+
+    if (isDownvoted) {
+      onUndownvote();
+    } else {
+      onDownvote();
+    }
+  };
+
+  return (
+    <div className="relative flex flex-col items-center gap-1 min-w-[52px]">
+      <button
+        onClick={handleClick}
+        className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105"
+        aria-label={isDownvoted ? "Unflag poem" : "Flag poem"}
+      >
+        <ThumbsDown
+          size={21}
+          className={`${isDownvoted ? 'fill-red-400 text-red-400' : 'text-[#C5A059]'} transition-all`}
+        />
+      </button>
+      <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">
+        {isDownvoted ? 'Flagged' : 'Flag'}
+      </span>
+
+      {showTooltip && disabled && (
+        <div className="absolute bottom-full mb-2 px-3 py-2 bg-stone-900 text-white text-xs rounded-lg whitespace-nowrap shadow-lg">
+          Sign in to flag poems
+        </div>
+      )}
+    </div>
+  );
+};
+
 const SavedPoemsView = ({ isOpen, onClose, savedPoems, onSelectPoem, onUnsavePoem, theme, currentFontClass }) => {
   if (!isOpen) return null;
 
@@ -1980,7 +2022,8 @@ const VerticalSidebar = ({
   darkMode, onToggleDarkMode,
   currentFont, onCycleFont,
   selectedCategory, onSelectCategory,
-  useDatabase, onToggleDatabase
+  useDatabase, onToggleDatabase,
+  onDownvote, isPoemDownvoted, onUndownvote
 }) => {
   const [settingsOpen, setSettingsOpen] = useState(false);
 
@@ -2018,6 +2061,18 @@ const VerticalSidebar = ({
 
           <button onClick={onShare} title="Share poem" className={`${btnBase} ${btnHover}`}>
             {showShareSuccess ? <Check size={18} className="text-green-500" /> : <Share2 style={{ color: gold }} size={18} />}
+          </button>
+
+          <button
+            onClick={isPoemDownvoted ? onUndownvote : onDownvote}
+            title={isPoemDownvoted ? "Unflag poem" : "Flag poem"}
+            className={`${btnBase} ${btnHover}`}
+          >
+            <ThumbsDown
+              style={{ color: isPoemDownvoted ? undefined : gold }}
+              className={isPoemDownvoted ? 'fill-red-400 text-red-400' : ''}
+              size={18}
+            />
           </button>
 
           <button
@@ -2204,6 +2259,9 @@ export default function DiwanApp() {
   const { user, loading: authLoading, signInWithGoogle, signInWithApple, signOut, isConfigured: isSupabaseConfigured } = useAuth();
   const { settings, saveSettings } = useUserSettings(user);
   const { savedPoems, savePoem, unsavePoem, isPoemSaved } = useSavedPoems(user);
+  const { downvotedPoemIds, downvotePoem, undownvotePoem, isPoemDownvoted } = useDownvotes(user);
+  const { emitEvent } = usePoemEvents(user);
+
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showSavedPoems, setShowSavedPoems] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
@@ -2259,6 +2317,15 @@ export default function DiwanApp() {
   // Defensive: poems[0] is always truthy (hardcoded initial poem), but guard against
   // future changes that might empty the array (e.g., setPoems([]) or filter edge cases)
   const current = filtered[currentIndex] || filtered[0] || poems[0] || null;
+
+  // Track poem view time (emit 'view' event after 3s on same poem)
+  useEffect(() => {
+    if (!current?.id || !user) return;
+    const timer = setTimeout(() => {
+      emitEvent(current.id, 'view', { duration_ms: 3000 });
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, [current?.id, user]);
 
   const addLog = (label, msg, type = 'info') => {
     const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -2319,7 +2386,6 @@ export default function DiwanApp() {
             setCurrentIndex(0);
             setAutoExplainPending(true);
             addLog("DeepLink", `Loaded: ${poem.poet} — ${poem.title}`, "success");
-            window.history.replaceState({}, '', '/');
           })
           .catch(err => {
             addLog("DeepLink", `Failed: ${err.message}`, "error");
@@ -3146,12 +3212,15 @@ export default function DiwanApp() {
           addLog("Discovery DB", `✓ Poem found | API: ${(apiTime / 1000).toFixed(2)}s | DB ID: ${newPoem.id} | Arabic: ${arabicPoemChars} chars`, "success");
           addLog("Discovery DB", `Poet: ${newPoem.poet} | Title: ${newPoem.title}`, "success");
           track('poem_discovered', { source: 'database', poet: newPoem.poet });
+          emitEvent(newPoem.id, 'serve', { source: 'database' });
 
           setPoems(prev => {
             const updated = [...prev, newPoem];
             setCurrentIndex(updated.length - 1); // New poem is always last
             return updated;
           });
+          // Update URL to reflect current poem
+          window.history.replaceState({}, '', '/poem/' + newPoem.id);
         } catch (dbError) {
           // Handle database-specific errors
           const errorMessage = dbError.message.includes('Failed to fetch')
@@ -3235,6 +3304,7 @@ export default function DiwanApp() {
         addLog("Discovery API", `✓ Poem found | API: ${(apiTime / 1000).toFixed(2)}s | Response: ${(responseSize / 1024).toFixed(1)}KB | ${jsonChars} chars`, "success");
         addLog("Discovery Metrics", `${estimatedOutputTokens} tokens | ${tokensPerSecond} tok/s | Arabic: ${arabicPoemChars} chars | English: ${englishPoemChars} chars | Poet: ${newPoem.poet}`, "success");
         track('poem_discovered', { source: 'ai', poet: newPoem.poet });
+        emitEvent(newPoem.id, 'serve', { source: 'ai' });
         setPoems(prev => {
           const updated = [...prev, newPoem];
           const searchStr = selectedCategory.toLowerCase();
@@ -3243,6 +3313,7 @@ export default function DiwanApp() {
           if (newIdx !== -1) setCurrentIndex(newIdx);
           return updated;
         });
+        window.history.replaceState({}, '', '/');
       }
     } catch (e) {
       addLog("Discovery Error", `${e.message} | Source: ${useDatabase ? 'Database' : 'Gemini'}`, "error");
@@ -3277,6 +3348,7 @@ export default function DiwanApp() {
     try {
       await navigator.clipboard.writeText(textToCopy);
       track('poem_copied', { poet: current?.poet });
+      if (current?.id) emitEvent(current.id, 'copy');
       setShowCopySuccess(true);
       addLog("Copy", `✓ Copied to clipboard | ${copyChars} chars total (${arabicChars} Arabic + ${englishChars} English)`, "success");
       setTimeout(() => setShowCopySuccess(false), 2000);
@@ -3300,6 +3372,12 @@ export default function DiwanApp() {
       return [...prev, dailyPoem];
     });
     setAutoExplainPending(true);
+    // Update URL for DB poems
+    if (dailyPoem.isFromDatabase && typeof dailyPoem.id === 'number') {
+      window.history.replaceState({}, '', '/poem/' + dailyPoem.id);
+    } else {
+      window.history.replaceState({}, '', '/');
+    }
   };
 
   const handleShare = async () => {
@@ -3321,6 +3399,7 @@ export default function DiwanApp() {
       try {
         await navigator.share({ title: shareTitle, text: shareText, url: shareUrl });
         track('share_method', { method: 'native' });
+        if (current?.id) emitEvent(current.id, 'share', { method: 'native' });
         addLog("Share", "Shared via Web Share API", "success");
         return;
       } catch (e) {
@@ -3336,6 +3415,7 @@ export default function DiwanApp() {
     try {
       await navigator.clipboard.writeText(shareUrl);
       track('share_method', { method: 'clipboard' });
+      if (current?.id) emitEvent(current.id, 'share', { method: 'clipboard' });
       setShowShareSuccess(true);
       addLog("Share", `Link copied: ${shareUrl}`, "success");
       setTimeout(() => setShowShareSuccess(false), 2000);
@@ -3408,6 +3488,7 @@ export default function DiwanApp() {
     } else {
       addLog("Save", `Saved poem: ${current?.poet} - ${current?.title}`, "success");
       track('poem_saved', { poet: current?.poet });
+      if (current?.id) emitEvent(current.id, 'save');
     }
   };
 
@@ -3418,6 +3499,33 @@ export default function DiwanApp() {
     } else {
       track('poem_unsaved', { poet: current?.poet });
       addLog("Unsave", `Removed poem: ${current?.poet} - ${current?.title}`, "success");
+    }
+  };
+
+  const handleDownvote = async () => {
+    if (!user) {
+      handleSignIn();
+      return;
+    }
+
+    const { error } = await downvotePoem(current);
+    if (error) {
+      addLog("Downvote Error", error.message, "error");
+    } else {
+      addLog("Downvote", `Flagged poem: ${current?.poet} - ${current?.title}`, "success");
+      track('poem_downvoted', { poet: current?.poet });
+      // Auto-advance after 600ms
+      setTimeout(() => handleFetch(), 600);
+    }
+  };
+
+  const handleUndownvote = async () => {
+    const { error } = await undownvotePoem(current?.id);
+    if (error) {
+      addLog("Undownvote Error", error.message, "error");
+    } else {
+      track('poem_undownvoted', { poet: current?.poet });
+      addLog("Undownvote", `Unflagged poem: ${current?.poet} - ${current?.title}`, "success");
     }
   };
 
@@ -3452,6 +3560,12 @@ export default function DiwanApp() {
       return [...prev, mappedPoem];
     });
     setShowSavedPoems(false);
+    // Update URL for DB poems
+    if (typeof mappedPoem.id === 'number') {
+      window.history.replaceState({}, '', '/poem/' + mappedPoem.id);
+    } else {
+      window.history.replaceState({}, '', '/');
+    }
   };
 
   const handleOpenSettings = () => {
@@ -3852,6 +3966,16 @@ export default function DiwanApp() {
 
               {!isOverflow && (
                 <>
+                  {isSupabaseConfigured && (
+                    <DownvoteButton
+                      poem={current}
+                      isDownvoted={isPoemDownvoted(current)}
+                      onDownvote={handleDownvote}
+                      onUndownvote={handleUndownvote}
+                      disabled={!user}
+                    />
+                  )}
+
                   <div className="w-px h-10 bg-stone-500/20 mx-1 flex-shrink-0" />
 
                   <div className="flex flex-col items-center gap-1 min-w-[52px]">
@@ -4080,6 +4204,9 @@ export default function DiwanApp() {
           onSelectCategory={setSelectedCategory}
           useDatabase={useDatabase}
           onToggleDatabase={apiKey ? handleToggleDatabase : () => {}}
+          onDownvote={handleDownvote}
+          isPoemDownvoted={isPoemDownvoted(current)}
+          onUndownvote={handleUndownvote}
         />
       )}
 

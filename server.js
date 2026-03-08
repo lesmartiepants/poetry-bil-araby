@@ -18,7 +18,7 @@ import express from 'express';
 import pg from 'pg';
 import cors from 'cors';
 import helmet from 'helmet';
-import { query, param, validationResult } from 'express-validator';
+import { query, param, body, validationResult } from 'express-validator';
 import crypto from 'crypto';
 import rateLimit from 'express-rate-limit';
 import { fileURLToPath } from 'url';
@@ -104,6 +104,20 @@ async function checkTranslationColumns() {
   }
 }
 
+// Check if poem_events table exists (graceful pre-migration fallback)
+let hasPoemEventsTable = false;
+async function checkPoemEventsTable() {
+  try {
+    const result = await pool.query(
+      "SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'poem_events' LIMIT 1"
+    );
+    hasPoemEventsTable = result.rows.length > 0;
+    log.info('DB', `Poem events table: ${hasPoemEventsTable ? 'available' : 'not found'}`);
+  } catch {
+    hasPoemEventsTable = false;
+  }
+}
+
 // Helper: returns the SQL expression for poem content based on column availability
 function poemContentExpr() {
   return hasDiacritizedColumn ? 'COALESCE(p.diacritized_content, p.content)' : 'p.content';
@@ -130,6 +144,7 @@ pool.query('SELECT NOW()', (err, res) => {
     checkDiacritizedColumn();
     checkQualityScoreColumn();
     checkTranslationColumns();
+    checkPoemEventsTable();
   }
 });
 
@@ -150,7 +165,7 @@ app.use(cors({
     }
     callback(new Error('CORS: origin not allowed'));
   },
-  methods: ['GET', 'POST', 'PATCH'],
+  methods: ['GET', 'POST', 'PATCH', 'DELETE'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key']
 }));
 app.use(express.json());
@@ -549,6 +564,100 @@ app.post('/api/poems/:id/translation', translationWriteLimit, [
     res.json({ status: 'saved' });
   } catch (error) {
     log.error('Translation', `Error saving translation: ${error.message}`, error.stack);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════
+// POEM EVENTS (downvote + analytics)
+// ═══════════════════════════════════════════════════════════════
+
+const poemEventLimit = rateLimit({ windowMs: 60_000, max: 20, standardHeaders: true, legacyHeaders: false });
+
+// POST /api/poems/:id/downvote — record a downvote
+app.post('/api/poems/:id/downvote', poemEventLimit, [
+  param('id').isInt({ min: 1 }).withMessage('Poem ID must be a positive integer'),
+  body('userId').isString().notEmpty().withMessage('userId is required'),
+  validate
+], async (req, res) => {
+  if (!hasPoemEventsTable) {
+    return res.status(503).json({ error: 'Poem events table not available' });
+  }
+  try {
+    const { userId } = req.body;
+    await pool.query(
+      `INSERT INTO poem_events (user_id, poem_id, event_type, metadata)
+       VALUES ($1, $2, 'downvote', '{"reason":"low_quality"}')
+       ON CONFLICT DO NOTHING`,
+      [userId, req.params.id]
+    );
+    log.info('PoemEvents', `Downvote recorded: poem=${req.params.id}, user=${userId}`);
+    res.json({ status: 'downvoted' });
+  } catch (error) {
+    log.error('PoemEvents', `Error recording downvote: ${error.message}`, error.stack);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// DELETE /api/poems/:id/downvote — remove a downvote
+app.delete('/api/poems/:id/downvote', poemEventLimit, [
+  param('id').isInt({ min: 1 }).withMessage('Poem ID must be a positive integer'),
+  body('userId').isString().notEmpty().withMessage('userId is required'),
+  validate
+], async (req, res) => {
+  if (!hasPoemEventsTable) {
+    return res.status(503).json({ error: 'Poem events table not available' });
+  }
+  try {
+    const { userId } = req.body;
+    await pool.query(
+      `DELETE FROM poem_events WHERE user_id = $1 AND poem_id = $2 AND event_type = 'downvote'`,
+      [userId, req.params.id]
+    );
+    log.info('PoemEvents', `Downvote removed: poem=${req.params.id}, user=${userId}`);
+    res.json({ status: 'removed' });
+  } catch (error) {
+    log.error('PoemEvents', `Error removing downvote: ${error.message}`, error.stack);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// POST /api/poems/:id/event — record a generic poem event
+const VALID_EVENT_TYPES = ['downvote', 'save', 'serve', 'share', 'copy', 'view'];
+const TOGGLE_EVENT_TYPES = ['downvote', 'save'];
+
+app.post('/api/poems/:id/event', poemEventLimit, [
+  param('id').isInt({ min: 1 }).withMessage('Poem ID must be a positive integer'),
+  body('userId').isString().notEmpty().withMessage('userId is required'),
+  body('eventType').isString().isIn(VALID_EVENT_TYPES).withMessage(`eventType must be one of: ${VALID_EVENT_TYPES.join(', ')}`),
+  validate
+], async (req, res) => {
+  if (!hasPoemEventsTable) {
+    return res.status(503).json({ error: 'Poem events table not available' });
+  }
+  try {
+    const { userId, eventType, metadata } = req.body;
+    const metadataJson = metadata && typeof metadata === 'object' ? JSON.stringify(metadata) : '{}';
+
+    if (TOGGLE_EVENT_TYPES.includes(eventType)) {
+      await pool.query(
+        `INSERT INTO poem_events (user_id, poem_id, event_type, metadata)
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT DO NOTHING`,
+        [userId, req.params.id, eventType, metadataJson]
+      );
+    } else {
+      await pool.query(
+        `INSERT INTO poem_events (user_id, poem_id, event_type, metadata)
+         VALUES ($1, $2, $3, $4)`,
+        [userId, req.params.id, eventType, metadataJson]
+      );
+    }
+
+    log.info('PoemEvents', `Event recorded: type=${eventType}, poem=${req.params.id}, user=${userId}`);
+    res.json({ status: 'recorded' });
+  } catch (error) {
+    log.error('PoemEvents', `Error recording event: ${error.message}`, error.stack);
     res.status(500).json({ error: 'Internal server error' });
   }
 });

@@ -123,10 +123,11 @@
   .deco-title-ar { font-family: 'Tajawal', sans-serif; font-size: 1.2rem; font-weight: 700; color: var(--gold); direction: rtl; margin-bottom: 1rem; }
   .deco-desc { font-size: 0.9rem; line-height: 1.8; color: var(--muted); direction: ltr; margin-bottom: 0.5rem; }
   .deco-desc-ar { font-family: 'Tajawal', sans-serif; font-size: 0.85rem; line-height: 1.8; color: rgba(197,160,89,0.35); direction: rtl; }
-  .deco-progress { display: flex; gap: 16px; position: absolute; bottom: 48px; left: 50%; transform: translateX(-50%); z-index: 2; }
+  .deco-progress-wrap { position: absolute; bottom: 28px; left: 50%; transform: translateX(-50%); z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 12px; }
+  .deco-progress { display: flex; gap: 16px; }
   .deco-diamond { width: 10px; height: 10px; background: rgba(197,160,89,0.15); transform: rotate(45deg); transition: all 0.4s ease; }
   .deco-diamond.active { background: var(--gold); box-shadow: 0 0 8px rgba(197,160,89,0.4); }
-  .deco-hint { position: absolute; bottom: 24px; left: 50%; transform: translateX(-50%); font-size: 0.65rem; letter-spacing: 0.3em; text-transform: uppercase; color: rgba(232,213,183,0.2); z-index: 2; }
+  .deco-hint { font-size: 0.65rem; letter-spacing: 0.3em; text-transform: uppercase; color: rgba(232,213,183,0.2); white-space: nowrap; }
 
   /* ===== MAIN APP ===== */
   /* Art Deco Geometric — stepped corners, sunburst motifs, gold dividers */
@@ -418,8 +419,10 @@
       <div class="deco-desc">Deep analysis unveils the geometric patterns of meaning woven into every line of poetry.</div>
       <div class="deco-desc-ar" lang="ar" dir="rtl">تحليل عميق يكشف الأنماط الهندسية للمعنى المنسوجة في كل بيت</div>
     </div>
-    <div class="deco-progress"><div class="deco-diamond active" data-dot="0"></div><div class="deco-diamond" data-dot="1"></div><div class="deco-diamond" data-dot="2"></div></div>
-    <div class="deco-hint">Tap anywhere to continue</div>
+    <div class="deco-progress-wrap">
+      <div class="deco-progress"><div class="deco-diamond active" data-dot="0"></div><div class="deco-diamond" data-dot="1"></div><div class="deco-diamond" data-dot="2"></div></div>
+      <div class="deco-hint">Tap anywhere to continue</div>
+    </div>
   </div>
 
   <!-- ===== MAIN APP ===== -->

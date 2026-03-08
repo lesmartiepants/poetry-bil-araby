@@ -101,9 +101,9 @@ body.light { background: var(--ivory); color: #1a2a1f; }
   position: absolute; z-index: 2;
   top: 50%; left: 50%; transform: translate(-50%, -50%);
   max-width: 360px; width: 90%; padding: 1.75rem 1.5rem; text-align: center;
-  background: rgba(10, 61, 47, 0.3);
-  backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(197, 160, 89, 0.12);
+  background: rgba(10, 61, 47, 0.15);
+  backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(197, 160, 89, 0.08);
   border-radius: 28px;
   display: none;
   box-shadow: 0 8px 32px rgba(0,0,0,0.2), 0 0 80px rgba(197,160,89,0.04);
@@ -361,6 +361,36 @@ body.light { background: var(--ivory); color: #1a2a1f; }
   direction: ltr;
 }
 
+/* ===== VERTICAL CONTROLS ===== */
+.vc-strip {
+  position: fixed; right: 0; top: 50%; transform: translateY(-50%);
+  z-index: 60; display: flex; flex-direction: column; align-items: center; gap: 6px;
+  width: 52px; padding: 12px 4px;
+  background: rgba(10, 61, 47, 0.35);
+  border-radius: 16px 0 0 16px;
+  border: 1px solid rgba(197,160,89,0.12);
+  border-right: none;
+  backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px);
+  box-shadow: -2px 0 16px rgba(0,0,0,0.2);
+}
+.vc-toggle {
+  width: 40px; height: 40px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(10, 61, 47, 0.25); border: 1px solid rgba(197,160,89,0.1);
+  border-radius: 50%; cursor: pointer;
+  color: var(--gold); opacity: 0.6;
+  transition: all 0.3s ease; position: relative;
+}
+.vc-toggle:hover { opacity: 1; border-color: rgba(197,160,89,0.3); background: rgba(197,160,89,0.08); }
+.vc-toggle.active { opacity: 1; border-color: var(--gold); background: rgba(197,160,89,0.12); }
+.vc-toggle i { width: 18px; height: 18px; }
+.vc-badge {
+  position: absolute; top: 0; right: 0;
+  font-family: 'Tajawal', sans-serif; font-size: 8px; font-weight: 700;
+  color: var(--emerald); background: var(--gold);
+  padding: 1px 3px; border-radius: 3px; line-height: 1.2;
+}
+
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
@@ -377,6 +407,8 @@ body.light { background: var(--ivory); color: #1a2a1f; }
 @media (max-width: 768px) {
   .bio-poem-container { padding: 2rem 1.5rem; }
   .wave-content { gap: 1.5rem; padding: 0.5rem 1rem 1.5rem; }
+  .vc-strip { width: 44px; }
+  .vc-toggle { width: 36px; height: 36px; }
 }
 </style>
 </head>
@@ -454,6 +486,23 @@ body.light { background: var(--ivory); color: #1a2a1f; }
       </div>
     </div>
   </main>
+
+  <!-- ===== VERTICAL CONTROLS ===== -->
+  <nav class="vc-strip" aria-label="Toggle controls">
+    <button class="vc-toggle" data-action="translation" aria-label="Toggle translation">
+      <span style="font-family:'Tajawal',sans-serif;font-size:13px;font-weight:700;line-height:1;letter-spacing:-0.5px">ع<span style="opacity:0.4">|</span>A</span>
+    </button>
+    <button class="vc-toggle" data-action="transliteration" aria-label="Toggle transliteration">
+      <i data-lucide="text-cursor-input"></i>
+    </button>
+    <button class="vc-toggle" data-action="textsize" aria-label="Cycle text size">
+      <i data-lucide="type"></i>
+      <span class="vc-badge">M</span>
+    </button>
+    <button class="vc-toggle" data-action="settings" aria-label="Toggle settings">
+      <i data-lucide="settings"></i>
+    </button>
+  </nav>
 
   <!-- ===== CONTROLS ===== -->
   <!-- Pull-up trigger -->
@@ -974,6 +1023,22 @@ document.querySelectorAll('.wave-action').forEach(function(action) {
       if (icon) { icon.style.background = ''; icon.style.borderColor = ''; }
     }, 150);
   }, { passive: true });
+});
+
+/* VC toggle interactivity */
+document.querySelectorAll('.vc-toggle').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    var action = btn.dataset.action;
+    if (action === 'textsize') {
+      var sizes = ['S','M','L','XL'];
+      var badge = btn.querySelector('.vc-badge');
+      var idx = sizes.indexOf(badge.textContent);
+      idx = (idx + 1) % sizes.length;
+      badge.textContent = sizes[idx];
+    } else {
+      btn.classList.toggle('active');
+    }
+  });
 });
 
 document.addEventListener('DOMContentLoaded', function() {

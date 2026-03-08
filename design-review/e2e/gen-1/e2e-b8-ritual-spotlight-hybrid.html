@@ -28,15 +28,6 @@ body {
   min-height: 100vh; overflow-x: hidden; transition: background 0.5s, color 0.5s;
 }
 
-/* ---- SPLASH ---- */
-#splash {
-  position: fixed; inset: 0; z-index: 100; background: var(--library);
-  display: flex; align-items: center; justify-content: center;
-  transition: opacity 0.8s ease;
-}
-#splash.hidden { opacity: 0; pointer-events: none; }
-#splash-canvas { width: 100%; height: 100%; display: block; }
-
 /* ---- WALKTHROUGH (Japanese Ma - Negative Space) ---- */
 #walkthrough {
   position: fixed; inset: 0; z-index: 90; background: var(--bg);
@@ -164,6 +155,7 @@ body {
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.6s ease;
+  padding-bottom: env(safe-area-inset-bottom, 0px);
 }
 .ma-controls.visible {
   opacity: 1;
@@ -203,11 +195,8 @@ body {
 </head>
 <body data-theme="dark">
 
-<!-- SPLASH -->
-<div id="splash"><canvas id="splash-canvas"></canvas></div>
-
 <!-- WALKTHROUGH (Japanese Ma - Negative Space) -->
-<div id="walkthrough">
+<div id="walkthrough" class="active">
   <div class="ma-step active" data-ma="0">
     <div class="ma-title">Discover</div>
     <div class="ma-title-ar" lang="ar" dir="rtl">اكتشف</div>
@@ -257,114 +246,6 @@ body {
 
 <script>
 /* ============================================
-   SPLASH -- FLOATING SCROLLS ON CANVAS
-   ============================================ */
-var canvas = document.getElementById('splash-canvas');
-var ctx = canvas.getContext('2d');
-var isMobile = window.innerWidth < 768;
-var SCROLL_COUNT = isMobile ? 6 : 12;
-var reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-var cW, cH;
-
-function resizeCanvas() { cW = canvas.width = window.innerWidth; cH = canvas.height = window.innerHeight; }
-resizeCanvas();
-window.addEventListener('resize', resizeCanvas);
-
-function createScroll(i, total) {
-  var isCenter = i === Math.floor(total / 2);
-  var s = {
-    w: 60 + Math.random() * 50, h: 28 + Math.random() * 18,
-    x: Math.random() * cW, y: Math.random() * cH,
-    vx: (Math.random() - 0.5) * 0.4, vy: (Math.random() - 0.5) * 0.4,
-    angle: (Math.random() - 0.5) * 0.3, va: (Math.random() - 0.5) * 0.003,
-    wobblePhase: Math.random() * Math.PI * 2, wobbleSpeed: 0.008 + Math.random() * 0.008,
-    wobbleAmp: 0.6 + Math.random() * 0.8, glowAlpha: 0.15 + Math.random() * 0.25,
-    isCenter: isCenter, openProgress: 0
-  };
-  if (isCenter) { s.x = cW / 2; s.y = cH / 2; s.vx = 0; s.vy = 0; s.w = 80; s.h = 36; }
-  return s;
-}
-var scrollObjs = [];
-for (var si = 0; si < SCROLL_COUNT; si++) scrollObjs.push(createScroll(si, SCROLL_COUNT));
-
-function updateScroll(s, t) {
-  if (reducedMotion) return;
-  s.wobblePhase += s.wobbleSpeed;
-  s.x += s.vx + Math.sin(s.wobblePhase * 0.7) * 0.15;
-  s.y += s.vy + Math.sin(s.wobblePhase) * s.wobbleAmp * 0.1;
-  s.angle += s.va;
-  if (s.x < -s.w) s.x = cW + s.w;
-  if (s.x > cW + s.w) s.x = -s.w;
-  if (s.y < -s.h) s.y = cH + s.h;
-  if (s.y > cH + s.h) s.y = -s.h;
-  if (s.isCenter && t > 2000) s.openProgress = Math.min(1, (t - 2000) / 1200);
-}
-
-function drawScroll(s) {
-  ctx.save();
-  ctx.translate(s.x, s.y);
-  ctx.rotate(s.angle);
-  var scale = s.isCenter ? 1 + s.openProgress * 0.8 : 1;
-  var dw = s.w * (1 + s.openProgress * 1.2) * scale;
-  var dh = s.h * scale;
-  ctx.shadowColor = 'rgba(197,160,89,' + (s.glowAlpha + s.openProgress * 0.3) + ')';
-  ctx.shadowBlur = 18 + s.openProgress * 20;
-  ctx.beginPath();
-  ctx.roundRect(-dw / 2, -dh / 2, dw, dh, 8);
-  ctx.fillStyle = '#F5ECD7';
-  ctx.fill();
-  ctx.shadowBlur = 0;
-  ctx.strokeStyle = 'rgba(139,69,19,0.5)';
-  ctx.lineWidth = 1.5;
-  ctx.stroke();
-  if (s.isCenter && s.openProgress > 0.5) {
-    var alpha = Math.min(1, (s.openProgress - 0.5) * 2);
-    ctx.globalAlpha = alpha;
-    ctx.fillStyle = '#2A1F14';
-    ctx.font = '700 ' + (14 * scale) + 'px Amiri, serif';
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('poetry \u0628\u0627\u0644\u0639\u0631\u0628\u064A', 0, 0);
-    ctx.globalAlpha = 1;
-  }
-  ctx.restore();
-}
-
-var splashStart = performance.now();
-var splashDone = false;
-
-function drawDust(t) {
-  for (var p = 0; p < 25; p++) {
-    var px = (Math.sin(t * 0.0003 + p * 1.3) * 0.5 + 0.5) * cW;
-    var py = (Math.cos(t * 0.0004 + p * 0.9) * 0.5 + 0.5) * cH;
-    ctx.beginPath();
-    ctx.arc(px, py, 1.2, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(212,197,160,' + (0.08 + Math.sin(t * 0.001 + p) * 0.07) + ')';
-    ctx.fill();
-  }
-}
-
-function animateSplash(now) {
-  var t = now - splashStart;
-  ctx.clearRect(0, 0, cW, cH);
-  ctx.fillStyle = '#1A0F0A';
-  ctx.fillRect(0, 0, cW, cH);
-  drawDust(t);
-  for (var i = 0; i < scrollObjs.length; i++) { updateScroll(scrollObjs[i], t); drawScroll(scrollObjs[i]); }
-  if (t > 3500 && !splashDone) {
-    splashDone = true;
-    document.getElementById('splash').classList.add('hidden');
-    setTimeout(function() {
-      document.getElementById('splash').style.display = 'none';
-      document.getElementById('walkthrough').classList.add('active');
-      currentStep = 0; showMaStep();
-    }, 800);
-    return;
-  }
-  if (!splashDone) requestAnimationFrame(animateSplash);
-}
-requestAnimationFrame(animateSplash);
-
-/* ============================================
    WALKTHROUGH -- MA NEGATIVE SPACE TAP-TO-ADVANCE
    ============================================ */
 var maSteps = document.querySelectorAll('.ma-step');
@@ -385,8 +266,11 @@ function showMaStep() {
   }
 }
 
+/* Initialize walkthrough on load */
+currentStep = 0;
+showMaStep();
+
 document.getElementById('walkthrough').addEventListener('click', function(e) {
-  if (e.target.closest('.splash-enter')) return;
   currentStep++;
   if (currentStep >= totalMaSteps) {
     document.getElementById('walkthrough').style.display = 'none';

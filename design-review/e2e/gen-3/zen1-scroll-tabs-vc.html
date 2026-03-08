@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>E2E #4: Zen Refined - Full Flow</title>
+  <title>E2E: Zen 1 Scroll Tabs VC</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Forum&family=Reem+Kufi:wght@400;700&family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
@@ -539,7 +539,7 @@
       align-items: center;
       justify-content: center;
       padding: 2rem 1rem;
-      padding-right: 56px;
+      padding-right: 72px;
     }
 
     .poem-text {
@@ -560,197 +560,243 @@
       direction: rtl;
     }
 
-    /* ============================================
-       VERTICAL CONTROLS — brushstroke glyphs
-       ============================================ */
-    .vertical-controls {
+    /* ===== SCROLL TABS — Manuscript Bookmarks ===== */
+    .scroll-tabs-strip {
       position: fixed;
       right: 0;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 52px;
+      top: 0;
+      bottom: 0;
+      width: 72px;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      gap: 2px;
-      padding: 12px 0;
-      z-index: 100;
-      background: transparent;
+      align-items: flex-end;
+      justify-content: center;
+      gap: 0px;
+      z-index: 50;
+      padding: 8px 0;
+      pointer-events: auto;
     }
 
-    .vc-btn {
+    .scroll-tab {
+      position: relative;
+      width: 64px;
+      height: 44px;
+      min-height: 44px;
+      border: none;
+      background: linear-gradient(135deg, rgba(139, 115, 85, 0.15) 0%, rgba(139, 115, 85, 0.08) 100%);
+      color: rgba(139, 115, 85, 0.5);
       display: flex;
       align-items: center;
       justify-content: center;
-      width: 44px;
-      height: 44px;
-      border: none;
-      background: transparent;
       cursor: pointer;
-      color: #8b7355;
-      filter: blur(0.3px);
-      opacity: 0.55;
-      transition: filter 0.6s ease, opacity 0.6s ease, color 0.6s ease, text-shadow 0.6s ease;
-      padding: 0;
-      position: relative;
+      pointer-events: auto;
+      transform: translateX(48px);
+      transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+                  background 0.3s ease-out,
+                  color 0.3s ease-out,
+                  box-shadow 0.3s ease-out;
+      border-radius: 6px 0 0 6px;
+      clip-path: polygon(8px 0%, 100% 0%, 100% 100%, 0% 100%, 0% 4px);
+      backdrop-filter: blur(8px);
+      margin: 2px 0;
     }
 
-    [data-theme="light"] .vc-btn {
-      color: #6b5a42;
-    }
+    .scroll-tab:nth-child(1)  { transform: translateX(48px) rotate(-0.8deg); }
+    .scroll-tab:nth-child(2)  { transform: translateX(50px) rotate(0.5deg); }
+    .scroll-tab:nth-child(3)  { transform: translateX(47px) rotate(-0.3deg); }
+    .scroll-tab:nth-child(4)  { transform: translateX(49px) rotate(0.7deg); }
+    .scroll-tab:nth-child(6)  { transform: translateX(51px) rotate(-0.5deg); }
+    .scroll-tab:nth-child(7)  { transform: translateX(46px) rotate(0.4deg); }
+    .scroll-tab:nth-child(8)  { transform: translateX(50px) rotate(-0.6deg); }
+    .scroll-tab:nth-child(10) { transform: translateX(48px) rotate(0.3deg); }
 
-    .vc-btn:hover {
-      filter: blur(0);
-      opacity: 0.85;
-      color: #a08560;
-    }
+    /* Individual tab hover handled by strip:hover rules above */
 
-    [data-theme="light"] .vc-btn:hover {
-      color: #8b7355;
-    }
-
-    .vc-btn.active {
-      filter: blur(0);
-      opacity: 1;
+    .scroll-tab.active {
+      transform: translateX(4px) rotate(0deg) !important;
+      background: linear-gradient(135deg, rgba(139, 115, 85, 0.35) 0%, rgba(196, 164, 108, 0.2) 100%);
       color: #c4a46c;
-      text-shadow: 0 0 12px rgba(196, 164, 108, 0.4);
+      box-shadow: -4px 0 20px rgba(196, 164, 108, 0.2);
     }
 
-    [data-theme="light"] .vc-btn.active {
-      color: #8b7355;
-      text-shadow: 0 0 12px rgba(139, 115, 85, 0.35);
+    /* JS-driven unfurl state for mobile two-tap */
+    .scroll-tab.unfurled {
+      transform: translateX(4px) rotate(0deg) !important;
+      background: linear-gradient(135deg, rgba(139, 115, 85, 0.25) 0%, rgba(160, 133, 96, 0.15) 100%);
+      color: #a08560;
+      box-shadow: -4px 0 12px rgba(139, 115, 85, 0.12);
     }
 
-    .vc-btn svg {
-      width: 18px;
-      height: 18px;
+    /* Desktop: hovered tab gets highlight when strip is unfurled */
+    .scroll-tab.unfurled:hover {
+      background: linear-gradient(135deg, rgba(139, 115, 85, 0.3) 0%, rgba(160, 133, 96, 0.2) 100%);
+      color: #a08560;
+      box-shadow: -4px 0 16px rgba(139, 115, 85, 0.15);
     }
 
-    .vc-font-icon {
+    .scroll-tab svg { width: 18px; height: 18px; }
+
+    /* Icon tap feedback animations */
+    @keyframes tapPulse {
+      0% { transform: scale(1); }
+      40% { transform: scale(1.35); }
+      100% { transform: scale(1); }
+    }
+    @keyframes heartPop {
+      0% { transform: scale(1); }
+      30% { transform: scale(1.5); }
+      50% { transform: scale(0.9); }
+      70% { transform: scale(1.2); }
+      100% { transform: scale(1); }
+    }
+    .scroll-tab.tap-feedback .tab-content {
+      animation: tapPulse 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .scroll-tab[data-vc="like"].tap-feedback .tab-content {
+      animation: heartPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .scroll-tab.tap-feedback {
+      color: #c4a46c !important;
+    }
+
+    .tab-content {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      height: 100%;
+    }
+
+    .tab-font-icon {
       font-family: 'Amiri', serif;
       font-size: 20px;
+      font-weight: 700;
       line-height: 1;
     }
 
-    .vc-divider {
-      width: 16px;
+    .tab-divider {
+      width: 8px;
       height: 1px;
       background: rgba(139, 115, 85, 0.15);
-      margin: 4px 0;
-      border-radius: 1px;
+      margin: 2px 0;
+      align-self: flex-end;
+      margin-right: 12px;
     }
 
-    [data-theme="light"] .vc-divider {
-      background: rgba(107, 90, 66, 0.18);
+    [data-theme="light"] .scroll-tab {
+      background: linear-gradient(135deg, rgba(107, 90, 66, 0.12) 0%, rgba(107, 90, 66, 0.06) 100%);
+      color: rgba(107, 90, 66, 0.45);
+    }
+    [data-theme="light"] .scroll-tab.unfurled {
+      color: rgba(107, 90, 66, 0.65);
+    }
+    [data-theme="light"] .scroll-tab.unfurled:hover {
+      background: linear-gradient(135deg, rgba(107, 90, 66, 0.25) 0%, rgba(139, 115, 85, 0.15) 100%);
+      color: #6b5a42;
+    }
+    [data-theme="light"] .scroll-tab.active {
+      color: #8b7355;
+      background: linear-gradient(135deg, rgba(107, 90, 66, 0.3) 0%, rgba(139, 115, 85, 0.18) 100%);
+    }
+    [data-theme="light"] .tab-divider {
+      background: rgba(107, 90, 66, 0.2);
     }
 
-    /* ============================================
-       SETTINGS FLYOUT
-       ============================================ */
+    /* Settings flyout */
     .vc-settings-flyout {
       position: fixed;
-      right: 56px;
+      right: 78px;
       top: 50%;
-      transform: translateY(-50%) translateX(8px);
-      width: 220px;
+      transform: translateY(-50%) translateX(12px);
       background: rgba(0, 0, 0, 0.96);
-      border: 1px solid rgba(139, 115, 85, 0.12);
-      border-radius: 3px 6px 4px 5px;
-      padding: 24px 20px;
-      z-index: 101;
+      border: 1px solid rgba(139, 115, 85, 0.15);
+      border-radius: 4px 8px 8px 4px;
+      padding: 16px 20px;
+      min-width: 200px;
+      z-index: 55;
+      backdrop-filter: blur(16px);
       opacity: 0;
       visibility: hidden;
-      pointer-events: none;
-      transition: opacity 0.5s ease, visibility 0.5s ease, transform 0.5s ease;
+      transition: opacity 0.4s ease, transform 0.4s ease, visibility 0.4s ease;
     }
-
     .vc-settings-flyout.visible {
       opacity: 1;
       visibility: visible;
-      pointer-events: auto;
       transform: translateY(-50%) translateX(0);
     }
-
-    [data-theme="light"] .vc-settings-flyout {
-      background: rgba(0, 0, 0, 0.94);
-    }
-
     .vc-settings-flyout h4 {
       font-family: 'Tajawal', sans-serif;
-      font-size: 11px;
-      font-weight: 500;
+      font-size: 10px;
       letter-spacing: 0.2em;
       text-transform: uppercase;
-      color: rgba(196, 164, 108, 0.7);
-      margin-bottom: 20px;
+      color: rgba(139, 115, 85, 0.6);
+      margin-bottom: 12px;
+      font-weight: 600;
     }
-
     .vc-setting-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 10px 0;
+      padding: 8px 0;
       border-bottom: 1px solid rgba(139, 115, 85, 0.08);
     }
-
-    .vc-setting-row:last-child {
-      border-bottom: none;
-    }
-
+    .vc-setting-row:last-child { border-bottom: none; }
     .vc-setting-label {
       font-family: 'Tajawal', sans-serif;
       font-size: 13px;
-      font-weight: 300;
-      color: rgba(255, 255, 255, 0.6);
+      color: rgba(255, 255, 255, 0.55);
     }
-
     .vc-setting-toggle {
       width: 36px;
-      height: 18px;
-      border-radius: 9px;
-      border: 1px solid rgba(139, 115, 85, 0.25);
-      background: rgba(255, 255, 255, 0.06);
+      height: 20px;
+      border-radius: 10px;
+      background: rgba(139, 115, 85, 0.15);
+      border: none;
       cursor: pointer;
       position: relative;
-      transition: background 0.5s ease, border-color 0.5s ease;
-      padding: 0;
+      transition: background 0.4s ease;
     }
-
     .vc-setting-toggle::after {
       content: '';
       position: absolute;
       top: 2px;
       left: 2px;
-      width: 12px;
-      height: 12px;
+      width: 16px;
+      height: 16px;
       border-radius: 50%;
-      background: rgba(139, 115, 85, 0.5);
-      transition: transform 0.5s ease, background 0.5s ease;
+      background: rgba(139, 115, 85, 0.4);
+      transition: transform 0.4s ease, background 0.4s ease;
     }
-
     .vc-setting-toggle.on {
-      background: rgba(139, 115, 85, 0.2);
-      border-color: rgba(196, 164, 108, 0.4);
+      background: rgba(196, 164, 108, 0.25);
     }
-
     .vc-setting-toggle.on::after {
-      transform: translateX(18px);
+      transform: translateX(16px);
       background: #c4a46c;
     }
 
     /* Responsive */
-    @media (max-width: 480px) {
+    @media (max-width: 768px) {
       .splash-brand-en { font-size: 2.5rem; }
       .splash-brand-ar { font-size: 1.5rem; }
 
-      .vertical-controls {
-        width: 48px;
+      .scroll-tabs-strip { width: 72px; }
+      .scroll-tab {
+        width: 64px;
+        min-height: 44px;
+        /* Wider resting state on mobile: ~32px visible so icons are faintly seen */
+        transform: translateX(32px) !important;
       }
-
-      .vc-btn {
-        width: 44px;
-        height: 44px;
+      .scroll-tab.unfurled {
+        transform: translateX(2px) rotate(0deg) !important;
       }
+      .scroll-tab.active {
+        transform: translateX(2px) rotate(0deg) !important;
+      }
+      .scroll-tab.unfurled {
+        transform: translateX(2px) rotate(0deg) !important;
+      }
+      .vc-settings-flyout { right: 76px; min-width: 160px; max-width: calc(100vw - 84px); }
     }
   </style>
 </head>
@@ -841,54 +887,54 @@
 
     </div>
 
-    <!-- ===== CONTROLS: Vertical brushstroke glyphs ===== -->
-    <div class="vertical-controls" id="vcStrip">
-      <button class="vc-btn" data-vc="like" aria-label="Like poem">
-        <i data-lucide="heart" style="width:18px;height:18px"></i>
+    <!-- ===== CONTROLS: Scroll Tabs — Manuscript Bookmarks ===== -->
+    <div class="scroll-tabs-strip" id="vcStrip">
+      <button class="scroll-tab" data-vc="like" aria-label="Like poem">
+        <span class="tab-content"><i data-lucide="heart"></i></span>
       </button>
-      <button class="vc-btn" data-vc="listen" aria-label="Listen to poem">
-        <i data-lucide="volume-2" style="width:18px;height:18px"></i>
+      <button class="scroll-tab" data-vc="listen" aria-label="Listen to poem">
+        <span class="tab-content"><i data-lucide="volume-2"></i></span>
       </button>
-      <button class="vc-btn" data-vc="explain" aria-label="Explain poem">
-        <i data-lucide="brain" style="width:18px;height:18px"></i>
+      <button class="scroll-tab" data-vc="explain" aria-label="Explain poem">
+        <span class="tab-content"><i data-lucide="brain"></i></span>
       </button>
-      <button class="vc-btn" data-vc="library" aria-label="Saved poems">
-        <i data-lucide="bookmark" style="width:18px;height:18px"></i>
+      <button class="scroll-tab" data-vc="library" aria-label="Saved poems">
+        <span class="tab-content"><i data-lucide="bookmark"></i></span>
       </button>
-      <div class="vc-divider"></div>
-      <button class="vc-btn" data-vc="poet" aria-label="Select a poet">
-        <i data-lucide="user" style="width:18px;height:18px"></i>
+      <div class="tab-divider"></div>
+      <button class="scroll-tab" data-vc="poet" aria-label="Select a poet">
+        <span class="tab-content"><i data-lucide="user"></i></span>
       </button>
-      <button class="vc-btn" data-vc="font" aria-label="Font style">
-        <span class="vc-font-icon">ي</span>
+      <button class="scroll-tab" data-vc="font" aria-label="Font style">
+        <span class="tab-content"><span class="tab-font-icon">ي</span></span>
       </button>
-      <button class="vc-btn" data-vc="settings" id="vcSettingsBtn" aria-label="Settings">
-        <i data-lucide="settings" style="width:18px;height:18px"></i>
+      <button class="scroll-tab" data-vc="settings" id="vcSettingsBtn" aria-label="Settings">
+        <span class="tab-content"><i data-lucide="settings"></i></span>
       </button>
-      <div class="vc-divider"></div>
-      <button class="vc-btn" data-vc="copy" aria-label="Copy poem">
-        <i data-lucide="copy" style="width:18px;height:18px"></i>
+      <div class="tab-divider"></div>
+      <button class="scroll-tab" data-vc="copy" aria-label="Copy poem">
+        <span class="tab-content"><i data-lucide="copy"></i></span>
       </button>
     </div>
 
-    <!-- Settings flyout panel -->
+    <!-- Settings flyout -->
     <div class="vc-settings-flyout" id="settingsFlyout">
       <h4>Settings</h4>
       <div class="vc-setting-row">
         <span class="vc-setting-label">Transliterate</span>
-        <button class="vc-setting-toggle" data-setting="transliterate"></button>
+        <button class="vc-setting-toggle" data-setting="transliterate" aria-label="Toggle transliteration"></button>
       </div>
       <div class="vc-setting-row">
         <span class="vc-setting-label">Translate</span>
-        <button class="vc-setting-toggle" data-setting="translate"></button>
+        <button class="vc-setting-toggle" data-setting="translate" aria-label="Toggle translation"></button>
       </div>
       <div class="vc-setting-row">
         <span class="vc-setting-label">Database Mode</span>
-        <button class="vc-setting-toggle on" data-setting="database"></button>
+        <button class="vc-setting-toggle on" data-setting="database" aria-label="Toggle database mode"></button>
       </div>
       <div class="vc-setting-row">
         <span class="vc-setting-label">Night Mode</span>
-        <button class="vc-setting-toggle on" data-setting="nightmode"></button>
+        <button class="vc-setting-toggle on" data-setting="nightmode" aria-label="Toggle night mode"></button>
       </div>
     </div>
   </main>
@@ -1105,49 +1151,6 @@
 
     animateSmoke();
 
-    // ========== VERTICAL CONTROLS ==========
-    // Settings flyout toggle
-    var settingsBtn = document.getElementById('vcSettingsBtn');
-    var settingsFlyout = document.getElementById('settingsFlyout');
-    if (settingsBtn && settingsFlyout) {
-      settingsBtn.addEventListener('click', function() {
-        settingsBtn.classList.toggle('active');
-        settingsFlyout.classList.toggle('visible');
-      });
-      document.addEventListener('click', function(e) {
-        if (!settingsFlyout.contains(e.target) && !settingsBtn.contains(e.target)) {
-          settingsFlyout.classList.remove('visible');
-          settingsBtn.classList.remove('active');
-        }
-      });
-    }
-
-    // Setting toggles
-    document.querySelectorAll('.vc-setting-toggle').forEach(function(toggle) {
-      toggle.addEventListener('click', function() {
-        this.classList.toggle('on');
-      });
-    });
-
-    // VC button active toggle
-    document.querySelectorAll('.vc-btn[data-vc]').forEach(function(btn) {
-      btn.addEventListener('click', function() {
-        var action = this.dataset.vc;
-        if (action === 'like' || action === 'listen') {
-          this.classList.toggle('active');
-        }
-        if (action === 'copy') {
-          var poemText = document.querySelector('.poem-text');
-          if (poemText && navigator.clipboard) {
-            navigator.clipboard.writeText(poemText.innerText);
-            this.classList.add('active');
-            var self = this;
-            setTimeout(function() { self.classList.remove('active'); }, 1500);
-          }
-        }
-      });
-    });
-
     // ========== RESIZE ==========
     window.addEventListener('resize', function() {
       particleCanvas.width = window.innerWidth;
@@ -1155,6 +1158,146 @@
       smokeCanvas.width = window.innerWidth;
       smokeCanvas.height = window.innerHeight;
     });
+
+    // ========== SCROLL TAB CONTROLS ==========
+    var settingsBtn = document.getElementById('vcSettingsBtn');
+    var settingsFlyout = document.getElementById('settingsFlyout');
+    // Settings flyout close-on-outside-click (open is handled by executeAction)
+    document.addEventListener('click', function(e) {
+      if (settingsFlyout && settingsBtn && !settingsFlyout.contains(e.target) && !settingsBtn.contains(e.target)) {
+        settingsFlyout.classList.remove('visible');
+        settingsBtn.classList.remove('active');
+      }
+    });
+
+    document.querySelectorAll('.vc-setting-toggle').forEach(function(toggle) {
+      toggle.addEventListener('click', function() {
+        this.classList.toggle('on');
+      });
+    });
+
+    // ========== TWO-TAP MOBILE + DOMINO UNFURL ==========
+    var isTouchDevice = window.matchMedia('(hover: none) and (pointer: coarse)').matches;
+    var allTabs = document.querySelectorAll('.scroll-tab[data-vc]');
+    var tabsUnfurled = false;
+    var dominoTimers = [];
+
+    function unfurlAllTabs(originIndex) {
+      if (tabsUnfurled) return;
+      tabsUnfurled = true;
+      dominoTimers.forEach(function(t) { clearTimeout(t); });
+      dominoTimers = [];
+      // Ripple outward from tapped tab: closest first, furthest last
+      var origin = typeof originIndex === 'number' ? originIndex : 0;
+      allTabs.forEach(function(tab, i) {
+        var distance = Math.abs(i - origin);
+        var delay = 15 + (distance * 70);
+        dominoTimers.push(setTimeout(function() {
+          tab.classList.add('unfurled');
+          tab.style.transform = '';
+        }, delay));
+      });
+    }
+
+    function collapseAllTabs() {
+      if (!tabsUnfurled) return;
+      tabsUnfurled = false;
+      dominoTimers.forEach(function(t) { clearTimeout(t); });
+      dominoTimers = [];
+      // Reverse domino: last tab first
+      var tabArray = Array.prototype.slice.call(allTabs);
+      tabArray.reverse().forEach(function(tab, i) {
+        var delay = 10 + (i * 40);
+        dominoTimers.push(setTimeout(function() {
+          tab.classList.remove('unfurled');
+          if (tab.classList.contains('active')) {
+            tab.style.transform = '';
+          }
+        }, delay));
+      });
+    }
+
+    function executeAction(btn, shouldCollapse) {
+      var action = btn.dataset.vc;
+
+      // Trigger tap feedback animation
+      btn.classList.remove('tap-feedback');
+      // Force reflow to restart animation
+      void btn.offsetWidth;
+      btn.classList.add('tap-feedback');
+      setTimeout(function() { btn.classList.remove('tap-feedback'); }, 500);
+
+      if (action === 'like' || action === 'listen') {
+        btn.classList.toggle('active');
+      }
+      if (action === 'copy') {
+        var poemText = document.querySelector('.poem-text');
+        if (poemText && navigator.clipboard) {
+          navigator.clipboard.writeText(poemText.innerText);
+          btn.classList.add('active');
+          setTimeout(function() { btn.classList.remove('active'); }, 1500);
+        }
+      }
+      if (action === 'settings') {
+        btn.classList.toggle('active');
+        settingsFlyout.classList.toggle('visible');
+      }
+
+      // Collapse after animation (except settings)
+      if (shouldCollapse && action !== 'settings') {
+        setTimeout(function() { collapseAllTabs(); }, 500);
+      }
+    }
+
+    allTabs.forEach(function(btn, idx) {
+      btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if (isTouchDevice) {
+          if (!tabsUnfurled) {
+            unfurlAllTabs(idx);
+          } else {
+            executeAction(btn, true);
+          }
+        } else {
+          executeAction(btn, false);
+        }
+      });
+    });
+
+    // Desktop: mouseenter on each tab triggers ripple from that tab outward
+    if (!isTouchDevice) {
+      var strip = document.getElementById('vcStrip');
+      var leaveTimer = null;
+      allTabs.forEach(function(tab, idx) {
+        tab.addEventListener('mouseenter', function() {
+          if (leaveTimer) { clearTimeout(leaveTimer); leaveTimer = null; }
+          unfurlAllTabs(idx);
+        });
+      });
+      if (strip) {
+        strip.addEventListener('mouseleave', function() {
+          leaveTimer = setTimeout(function() {
+            if (!settingsFlyout.classList.contains('visible')) {
+              collapseAllTabs();
+            }
+          }, 100);
+        });
+      }
+    }
+
+    // Collapse when tapping outside the strip on mobile
+    document.addEventListener('click', function(e) {
+      var strip = document.getElementById('vcStrip');
+      if (isTouchDevice && tabsUnfurled && strip && !strip.contains(e.target) && !settingsFlyout.contains(e.target)) {
+        collapseAllTabs();
+        // Also close settings flyout
+        settingsFlyout.classList.remove('visible');
+        if (settingsBtn) settingsBtn.classList.remove('active');
+      }
+    });
+
+    // Re-init lucide for new VC icons
+    lucide.createIcons();
   </script>
 </body>
 </html>

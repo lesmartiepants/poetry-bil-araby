@@ -124,7 +124,9 @@ describe('DiwanApp', () => {
 
       // Create a never-resolving promise to keep the button disabled
       let resolveFetch
-      global.fetch.mockImplementationOnce(() => new Promise(r => { resolveFetch = r }))
+      // Clear the persistent mock and set up a one-time hanging fetch
+      global.fetch.mockReset()
+      global.fetch.mockImplementation(() => new Promise(r => { resolveFetch = r }))
 
       const discoverBtn = screen.getByLabelText('Discover new poem')
       await userEvent.click(discoverBtn)

@@ -54,7 +54,8 @@
     /* Preview */
     .preview{flex:1;display:flex;flex-direction:column;min-width:0}
     /* preview-header removed — info consolidated into toolbar */
-    .preview-iframe{width:100%;height:100%;border:none;background:#000}
+    .preview-iframe{width:100%;height:100%;border:none;background:#000;transition:opacity .2s}
+    .preview-iframe-loading{position:absolute;inset:0;opacity:0}
 
     /* Expand overlay button */
     .preview-open-overlay{position:absolute;top:12px;right:12px;z-index:15;width:54px;height:54px;border-radius:var(--r);background:none;border:none;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;transition:all .2s;color:rgba(255,255,255,.55);text-shadow:0 0 12px rgba(255,255,255,.4),0 0 24px rgba(255,255,255,.15)}
@@ -1396,42 +1397,73 @@ function render(skipPreview) {
   }
 }
 
+var _previewLoadId = 0; // monotonic counter to cancel stale loads
 function loadPreview(opt, cat) {
-  const container = document.getElementById('previewContent');
-  const empty = document.getElementById('emptyState');
-  const existing = container.querySelector('iframe');
-  if (existing) existing.remove();
+  var loadId = ++_previewLoadId;
+  var container = document.getElementById('previewContent');
+  var empty = document.getElementById('emptyState');
   if (empty) empty.style.display = 'none';
 
-  const iframe = document.createElement('iframe');
-  iframe.className = 'preview-iframe'; iframe.src = '/design-review/' + opt.file; iframe.title = opt.name;
+  // Show a subtle loading spinner while the new iframe loads
+  var loader = container.querySelector('.preview-loader');
+  if (!loader) {
+    loader = document.createElement('div');
+    loader.className = 'preview-loader';
+    loader.style.cssText = 'position:absolute;inset:0;display:flex;align-items:center;justify-content:center;z-index:5;background:rgba(9,9,11,.6);pointer-events:none;transition:opacity .2s';
+    var dot = document.createElement('div');
+    dot.style.cssText = 'width:28px;height:28px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite';
+    loader.appendChild(dot);
+    container.appendChild(loader);
+  }
+  loader.style.opacity = '1';
+  loader.style.display = 'flex';
+
+  // Keep old iframe visible behind the loader until new one is ready
+  var existing = container.querySelector('iframe.preview-iframe');
+
+  var iframe = document.createElement('iframe');
+  iframe.className = 'preview-iframe preview-iframe-loading';
+  iframe.style.opacity = '0'; // hidden until loaded
+  iframe.src = '/design-review/' + opt.file;
+  iframe.title = opt.name;
   container.appendChild(iframe);
 
-  // Section auto-advance: skip to onboarding or main-app within E2E designs
-  if (sectionFilter === 'onboarding' || sectionFilter === 'main-app') {
-    iframe.addEventListener('load', function() {
+  function onReady() {
+    // Stale load — a newer navigation already started
+    if (loadId !== _previewLoadId) { iframe.remove(); return; }
+    // Remove ALL other iframes (prevents leaks from rapid navigation)
+    container.querySelectorAll('iframe.preview-iframe').forEach(function(f) { if (f !== iframe) f.remove(); });
+    iframe.classList.remove('preview-iframe-loading');
+    iframe.style.opacity = '1';
+    // Hide loader
+    if (loader) { loader.style.opacity = '0'; setTimeout(function() { if (loader.parentNode) loader.style.display = 'none'; }, 200); }
+    // Section auto-advance: skip to onboarding or main-app within E2E designs
+    if (sectionFilter === 'onboarding' || sectionFilter === 'main-app') {
       try {
-        const doc = iframe.contentDocument;
+        var doc = iframe.contentDocument;
         if (!doc) return;
-        // Hide splash
-        const splash = doc.getElementById('splash') || doc.getElementById('splashScreen');
+        var splash = doc.getElementById('splash') || doc.getElementById('splashScreen');
         if (splash) { splash.classList.add('hidden'); splash.style.opacity = '0'; splash.style.pointerEvents = 'none'; splash.style.display = 'none'; }
-
         if (sectionFilter === 'onboarding') {
-          const onb = doc.getElementById('walkthrough') || doc.getElementById('onboarding');
+          var onb = doc.getElementById('walkthrough') || doc.getElementById('onboarding');
           if (onb) { onb.classList.add('active'); onb.style.display = 'flex'; onb.style.opacity = '1'; onb.style.visibility = 'visible'; }
         }
         if (sectionFilter === 'main-app') {
-          const onb = doc.getElementById('walkthrough') || doc.getElementById('onboarding');
-          if (onb) { onb.style.display = 'none'; onb.classList.remove('active'); }
-          const app = doc.getElementById('app') || doc.getElementById('mainApp');
+          var onb2 = doc.getElementById('walkthrough') || doc.getElementById('onboarding');
+          if (onb2) { onb2.style.display = 'none'; onb2.classList.remove('active'); }
+          var app = doc.getElementById('app') || doc.getElementById('mainApp');
           if (app) { app.classList.add('active'); app.style.display = 'flex'; app.style.opacity = '1'; app.style.visibility = 'visible'; }
         }
-      } catch(e) { /* cross-origin or other error -- fall through to full E2E */ }
-    });
+      } catch(e) { /* cross-origin */ }
+    }
   }
 
-  // preview-header removed — info shown in toolbar (accToggleLabel + tbDetail)
+  iframe.addEventListener('load', onReady);
+  // Fallback: if iframe hasn't loaded within 8s, show it anyway (prevents permanent blank)
+  setTimeout(function() {
+    if (loadId !== _previewLoadId) return;
+    if (iframe.classList.contains('preview-iframe-loading')) onReady();
+  }, 8000);
 }
 
 function renderPrevFeedback(cat, opt) {

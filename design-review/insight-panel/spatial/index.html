@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Spatial / Ambient - Insight Panel Prototype</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    /*
+      ==========================================
+      PHILOSOPHY: Spatial / Ambient
+      ==========================================
+
+      Information exists in layers. Context surrounds content. Glass morphism.
+
+      The insight doesn't replace or overlay the poem—it layers behind and
+      around it, creating depth. Glass panels float at different z-depths,
+      creating a sense of space. The insight feels ambient, like atmospheric
+      information that's always present but only visible when you focus on it.
+
+      Inspired by: Apple Vision OS, iOS frosted glass, ambient computing,
+      Google Material 3 depth system, immersive web experiences
+
+      Key Principles:
+      - Insight appears as layered glass panels behind the poem
+      - Each section exists at a different z-depth
+      - Parallax scrolling creates depth perception
+      - Glass morphism with heavy backdrop blur
+      - Insight panels fade in/out based on focus
+      - Motion follows physics (spring easing, momentum)
+      - The poem remains the foreground, insights are background context
+    */
+
+    /* ==========================================
+       DESIGN TOKENS
+       ========================================== */
+    :root {
+      /* Palette */
+      --color-bg: #0c0c0e;
+      --color-glass-1: rgba(255, 255, 255, 0.04);
+      --color-glass-2: rgba(255, 255, 255, 0.06);
+      --color-glass-3: rgba(255, 255, 255, 0.08);
+      --color-glass-border: rgba(255, 255, 255, 0.1);
+      --color-text-primary: #E8DCC8;
+      --color-text-secondary: rgba(232, 220, 200, 0.75);
+      --color-text-muted: rgba(232, 220, 200, 0.45);
+      --color-accent: #C5A059;
+      --color-accent-glow: rgba(197, 160, 89, 0.3);
+      --color-accent-dim: rgba(197, 160, 89, 0.1);
+
+      /* Typography */
+      --font-arabic: 'Amiri', serif;
+      --font-ui: 'Inter', system-ui, sans-serif;
+      --font-size-display: clamp(2.25rem, 1.5rem + 3vw, 3.5rem);
+      --font-size-body: clamp(1.125rem, 1rem + 0.5vw, 1.375rem);
+      --font-size-small: clamp(0.9375rem, 0.875rem + 0.25vw, 1.0625rem);
+      --font-size-label: clamp(0.6875rem, 0.65rem + 0.15vw, 0.75rem);
+      --line-height-poem: 2.2;
+      --line-height-body: 1.8;
+
+      /* Spacing */
+      --space-xs: 0.5rem;
+      --space-sm: 1rem;
+      --space-md: 1.5rem;
+      --space-lg: 2rem;
+      --space-xl: 3rem;
+      --space-2xl: 5rem;
+
+      /* Motion */
+      --duration-hero: 0.8s;
+      --duration-section: 0.6s;
+      --duration-content: 0.4s;
+      --duration-micro: 0.15s;
+      --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-out-quart: cubic-bezier(0.4, 0, 0.2, 1);
+      --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+      /* Layout */
+      --max-width-poem: 680px;
+      --glass-blur: 40px;
+    }
+
+    /* ==========================================
+       BASE STYLES
+       ========================================== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      overflow-x: hidden;
+      max-width: 100vw;
+      height: 100%;
+    }
+
+    body {
+      background: var(--color-bg);
+      color: var(--color-text-primary);
+      font-family: var(--font-ui);
+      font-size: var(--font-size-body);
+      line-height: var(--line-height-body);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overscroll-behavior-y: contain;
+      perspective: 1000px;
+    }
+
+    /* ==========================================
+       SPATIAL LAYOUT
+       ========================================== */
+    .scene {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-xl) var(--space-lg);
+    }
+
+    /* Background layers for depth */
+    .depth-layer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      transition: opacity var(--duration-section) var(--ease-out-quart);
+    }
+
+    .depth-layer-1 {
+      opacity: 0;
+      transform: translateZ(-100px) scale(1.1);
+    }
+
+    .depth-layer-2 {
+      opacity: 0;
+      transform: translateZ(-200px) scale(1.2);
+    }
+
+    .depth-layer-3 {
+      opacity: 0;
+      transform: translateZ(-300px) scale(1.3);
+    }
+
+    .depth-layer.visible {
+      opacity: 1;
+    }
+
+    /* ==========================================
+       POEM SECTION (FOREGROUND)
+       ========================================== */
+    .poem-container {
+      position: relative;
+      z-index: 10;
+      max-width: var(--max-width-poem);
+      width: 100%;
+      text-align: center;
+    }
+
+    .poem-header {
+      margin-bottom: var(--space-2xl);
+    }
+
+    .poem-title {
+      font-family: var(--font-arabic);
+      font-size: var(--font-size-display);
+      font-weight: 700;
+      line-height: 1.3;
+      margin-bottom: var(--space-md);
+      text-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
+      opacity: 0;
+      transform: translateY(20px) translateZ(50px);
+      animation: fadeSlideUp var(--duration-hero) var(--ease-out-expo) forwards;
+    }
+
+    .poem-meta {
+      font-family: var(--font-ui);
+      font-size: var(--font-size-label);
+      color: var(--color-text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-weight: 500;
+      opacity: 0;
+      animation: fadeIn var(--duration-content) var(--ease-out-quart) 0.3s forwards;
+    }
+
+    .poem-text {
+      font-family: var(--font-arabic);
+      font-size: var(--font-size-body);
+      line-height: var(--line-height-poem);
+      margin-bottom: var(--space-2xl);
+      text-shadow: 0 2px 12px rgba(0, 0, 0, 0.5);
+      opacity: 0;
+      animation: fadeIn var(--duration-section) var(--ease-out-quart) 0.5s forwards;
+    }
+
+    .poem-verse {
+      margin-bottom: var(--space-md);
+    }
+
+    /* ==========================================
+       EXPLAIN BUTTON
+       ========================================== */
+    .button-wrapper {
+      display: flex;
+      justify-content: center;
+      opacity: 0;
+      animation: fadeIn var(--duration-content) var(--ease-out-quart) 0.7s forwards;
+    }
+
+    .explain-button {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-xs);
+      padding: 1rem 1.75rem;
+      font-family: var(--font-ui);
+      font-size: var(--font-size-small);
+      font-weight: 500;
+      color: var(--color-text-primary);
+      background: var(--color-glass-2);
+      backdrop-filter: blur(var(--glass-blur));
+      -webkit-backdrop-filter: blur(var(--glass-blur));
+      border: 1px solid var(--color-glass-border);
+      border-radius: 3rem;
+      cursor: pointer;
+      transition: all var(--duration-micro) var(--ease-out-quart);
+      min-height: 44px;
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    }
+
+    .explain-button:hover {
+      background: var(--color-glass-3);
+      border-color: rgba(197, 160, 89, 0.4);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(197, 160, 89, 0.2),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    }
+
+    .explain-button:active {
+      transform: translateY(0);
+    }
+
+    .explain-button.activated {
+      background: var(--color-accent-dim);
+      border-color: var(--color-accent);
+      box-shadow: 0 0 32px var(--color-accent-glow);
+      pointer-events: none;
+    }
+
+    /* ==========================================
+       GLASS INSIGHT PANELS (BACKGROUND LAYERS)
+       ========================================== */
+    .insight-glass-panel {
+      position: fixed;
+      background: var(--color-glass-1);
+      backdrop-filter: blur(var(--glass-blur));
+      -webkit-backdrop-filter: blur(var(--glass-blur));
+      border: 1px solid var(--color-glass-border);
+      border-radius: 24px;
+      padding: var(--space-xl) var(--space-lg);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--duration-section) var(--ease-out-expo),
+                  transform var(--duration-section) var(--ease-out-expo);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3),
+                  inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      will-change: transform, opacity;
+    }
+
+    .insight-glass-panel.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    /* Panel 1: Top right (Poem translation) */
+    .insight-panel-1 {
+      top: 10vh;
+      right: 5vw;
+      width: min(380px, 85vw);
+      transform: translateX(100px) translateZ(-100px);
+    }
+
+    .insight-panel-1.visible {
+      transform: translateX(0) translateZ(-100px);
+    }
+
+    /* Panel 2: Left middle (Literary analysis) */
+    .insight-panel-2 {
+      top: 35vh;
+      left: 5vw;
+      width: min(420px, 85vw);
+      transform: translateX(-100px) translateZ(-200px);
+      transition-delay: 0.2s;
+    }
+
+    .insight-panel-2.visible {
+      transform: translateX(0) translateZ(-200px);
+    }
+
+    /* Panel 3: Bottom right (Author bio) */
+    .insight-panel-3 {
+      bottom: 10vh;
+      right: 8vw;
+      width: min(400px, 85vw);
+      transform: translateX(100px) translateZ(-300px);
+      transition-delay: 0.4s;
+    }
+
+    .insight-panel-3.visible {
+      transform: translateX(0) translateZ(-300px);
+    }
+
+    /* Mobile stacking */
+    @media (max-width: 1024px) {
+      .insight-glass-panel {
+        position: relative;
+        top: auto !important;
+        left: auto !important;
+        right: auto !important;
+        bottom: auto !important;
+        width: 100% !important;
+        margin-bottom: var(--space-xl);
+        transform: translateY(20px) !important;
+      }
+
+      .insight-glass-panel.visible {
+        transform: translateY(0) !important;
+      }
+
+      .insight-panels-container {
+        position: relative;
+        z-index: 5;
+        margin-top: var(--space-2xl);
+        padding: 0 var(--space-lg);
+      }
+
+      .poem-container {
+        margin-bottom: var(--space-2xl);
+      }
+    }
+
+    /* ==========================================
+       INSIGHT CONTENT
+       ========================================== */
+    .insight-label {
+      font-family: var(--font-ui);
+      font-size: var(--font-size-label);
+      font-weight: 600;
+      color: var(--color-accent);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: var(--space-sm);
+      display: flex;
+      align-items: center;
+      gap: var(--space-xs);
+    }
+
+    .insight-label::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      background: var(--color-accent);
+      border-radius: 50%;
+      box-shadow: 0 0 12px var(--color-accent-glow);
+    }
+
+    .insight-content {
+      font-family: var(--font-ui);
+      font-size: var(--font-size-small);
+      line-height: var(--line-height-body);
+      color: var(--color-text-secondary);
+      direction: ltr;
+      text-align: left;
+    }
+
+    .insight-content p {
+      margin-bottom: var(--space-md);
+      opacity: 0;
+    }
+
+    .insight-content p:last-child {
+      margin-bottom: 0;
+    }
+
+    .insight-content p.streaming {
+      animation: fadeIn var(--duration-content) var(--ease-out-quart) forwards;
+    }
+
+    /* Special styling for poem translation */
+    .insight-panel-1 .insight-content {
+      font-family: var(--font-arabic);
+      font-size: var(--font-size-body);
+      line-height: 1.9;
+      font-style: italic;
+      color: var(--color-text-primary);
+    }
+
+    /* ==========================================
+       CURSOR EFFECT (STREAMING)
+       ========================================== */
+    .cursor {
+      display: inline-block;
+      width: 2px;
+      height: 1.2em;
+      background: var(--color-accent);
+      margin-left: 2px;
+      animation: blink 1s step-end infinite;
+      vertical-align: text-bottom;
+    }
+
+    @keyframes blink {
+      0%, 50% { opacity: 1; }
+      51%, 100% { opacity: 0; }
+    }
+
+    /* ==========================================
+       ANIMATIONS
+       ========================================== */
+    @keyframes fadeSlideUp {
+      to {
+        opacity: 1;
+        transform: translateY(0) translateZ(50px);
+      }
+    }
+
+    @keyframes fadeIn {
+      to {
+        opacity: 1;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+
+      .poem-title {
+        transform: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- ==========================================
+       SPATIAL SCENE
+       ========================================== -->
+  <div class="scene">
+    <!-- Poem (Foreground) -->
+    <div class="poem-container">
+      <header class="poem-header">
+        <h1 class="poem-title">أحبُّكِ جِدّاً</h1>
+        <p class="poem-meta">Nizar Qabbani · I Love You Intensely</p>
+      </header>
+
+      <div class="poem-text">
+        <p class="poem-verse">أُحِبُّكِ جِدًّا</p>
+        <p class="poem-verse">أُحِبُّكِ جِدًّا</p>
+        <p class="poem-verse">وَأَعْرِفُ أَنَّ الطَّرِيقَ إِلَى الْمُسْتَحِيلِ طَوِيلٌ</p>
+        <p class="poem-verse">وَلٰكِنْ أُحِبُّكِ جِدًّا</p>
+        <p class="poem-verse">فَمَاذَا أَفْعَلُ؟</p>
+      </div>
+
+      <div class="button-wrapper">
+        <button class="explain-button" id="explainButton">
+          <span>✨</span>
+          <span>Explain</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       GLASS INSIGHT PANELS (BACKGROUND LAYERS)
+       Desktop: Fixed positioned
+       Mobile: Stacked in container
+       ========================================== -->
+  <div class="insight-panels-container">
+    <!-- Panel 1: POEM Translation -->
+    <div class="insight-glass-panel insight-panel-1" id="panel1">
+      <h2 class="insight-label">POEM</h2>
+      <div class="insight-content" id="poemInsight">
+        <p>I love you so much<br>
+        I love you so much<br>
+        And I know that the road to the impossible is long<br>
+        But I love you so much<br>
+        So what can I do?</p>
+      </div>
+    </div>
+
+    <!-- Panel 2: THE DEPTH -->
+    <div class="insight-glass-panel insight-panel-2" id="panel2">
+      <h2 class="insight-label">THE DEPTH</h2>
+      <div class="insight-content" id="depthInsight">
+        <p>Nizar Qabbani's brevity here is disarming. The repetition of "أُحِبُّكِ جِدًّا" (I love you so much) creates a hypnotic rhythm, emphasizing both certainty and helplessness. The phrase "الطَّرِيقَ إِلَى الْمُسْتَحِيلِ" (the road to the impossible) reveals the poem's central tension: love as simultaneously inevitable and unattainable.</p>
+        <p>The final question—"فَمَاذَا أَفْعَلُ؟" (So what can I do?)—is rhetorical yet devastating. It's not a plea for advice but a surrender to the overwhelming force of desire. Qabbani strips away metaphor, leaving only the raw vulnerability of a lover who knows they're pursuing the impossible but cannot stop themselves.</p>
+      </div>
+    </div>
+
+    <!-- Panel 3: THE AUTHOR -->
+    <div class="insight-glass-panel insight-panel-3" id="panel3">
+      <h2 class="insight-label">THE AUTHOR</h2>
+      <div class="insight-content" id="authorInsight">
+        <p>Nizar Qabbani (1923–1998) is often called the poet of love and revolution. Born in Damascus, he scandalized Arab society with his frank treatment of romantic and erotic themes, breaking centuries of poetic convention. His work challenged patriarchal norms while celebrating feminine beauty and agency.</p>
+        <p>Qabbani's directness—evident in this poem—was revolutionary. He wrote in accessible, conversational Arabic rather than ornate classical forms, making poetry a vehicle for everyday emotion. His later work grew more political after the death of his wife in the 1981 Iraqi embassy bombing in Beirut, but his love poems remain his most enduring legacy.</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ==========================================
+    // SPATIAL INSIGHT SYSTEM
+    // ==========================================
+
+    const explainButton = document.getElementById('explainButton');
+    const panels = [
+      { element: document.getElementById('panel1'), content: document.getElementById('poemInsight') },
+      { element: document.getElementById('panel2'), content: document.getElementById('depthInsight') },
+      { element: document.getElementById('panel3'), content: document.getElementById('authorInsight') }
+    ];
+
+    explainButton.addEventListener('click', () => {
+      explainButton.classList.add('activated');
+
+      // Reveal panels with staggered timing
+      setTimeout(() => revealPanels(), 300);
+    });
+
+    async function revealPanels() {
+      for (let i = 0; i < panels.length; i++) {
+        const { element, content } = panels[i];
+
+        // Show panel
+        element.classList.add('visible');
+        await wait(200);
+
+        // Stream content
+        await streamContent(content);
+        await wait(300); // Pause between panels
+      }
+    }
+
+    async function streamContent(container) {
+      const paragraphs = container.querySelectorAll('p');
+
+      for (let i = 0; i < paragraphs.length; i++) {
+        const p = paragraphs[i];
+        const text = p.textContent;
+        p.textContent = '';
+        p.classList.add('streaming');
+
+        // Create cursor
+        const cursor = document.createElement('span');
+        cursor.className = 'cursor';
+        p.appendChild(cursor);
+
+        // Stream text
+        for (let j = 0; j < text.length; j++) {
+          p.textContent = text.substring(0, j + 1);
+          p.appendChild(cursor);
+          await wait(12); // Fast streaming for ambient feel
+        }
+
+        // Remove cursor
+        cursor.remove();
+        await wait(80); // Brief pause between paragraphs
+      }
+    }
+
+    function wait(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    // Parallax effect on mouse move (desktop only)
+    if (window.innerWidth > 1024) {
+      document.addEventListener('mousemove', (e) => {
+        const { clientX, clientY } = e;
+        const centerX = window.innerWidth / 2;
+        const centerY = window.innerHeight / 2;
+        const offsetX = (clientX - centerX) / centerX;
+        const offsetY = (clientY - centerY) / centerY;
+
+        panels.forEach((panel, index) => {
+          const depth = (index + 1) * 10;
+          const moveX = offsetX * depth;
+          const moveY = offsetY * depth;
+
+          if (panel.element.classList.contains('visible')) {
+            panel.element.style.transform = `translate(${moveX}px, ${moveY}px)`;
+          }
+        });
+      });
+    }
+  </script>
+</body>
+</html>

@@ -233,11 +233,16 @@ const validate = (req, res, next) => {
 // Health check endpoint
 app.get('/api/health', async (req, res) => {
   try {
-    const result = await pool.query('SELECT COUNT(*) FROM poems');
+    const totalResult = await pool.query('SELECT COUNT(*) FROM poems');
+    const qf = servingFilters();
+    const servedResult = qf
+      ? await pool.query(`SELECT COUNT(*) FROM poems p WHERE 1=1 ${qf}`)
+      : totalResult;
     res.json({
       status: 'ok',
       database: 'connected',
-      totalPoems: parseInt(result.rows[0].count)
+      totalPoems: parseInt(totalResult.rows[0].count),
+      servedPoems: parseInt(servedResult.rows[0].count)
     });
   } catch (error) {
     res.status(500).json({
@@ -277,12 +282,7 @@ app.get('/api/poems/random', [
       if (qf) query += ` WHERE 1=1 ${qf}`;
     }
 
-    // Prefer poems with cached translations, then random
-    if (hasTranslationColumns) {
-      query += ' ORDER BY (p.cached_translation IS NOT NULL) DESC, RANDOM() LIMIT 1';
-    } else {
-      query += ' ORDER BY RANDOM() LIMIT 1';
-    }
+    query += ' ORDER BY RANDOM() LIMIT 1';
 
     const result = await pool.query(query, params);
 
@@ -374,10 +374,12 @@ app.get('/api/poems/by-poet/:poet', [
 // Get list of available poets
 app.get('/api/poets', async (req, res) => {
   try {
+    const qf = servingFilters();
     const query = `
       SELECT DISTINCT po.name, COUNT(p.id) as poem_count
       FROM poets po
       JOIN poems p ON po.id = p.poet_id
+      ${qf ? 'WHERE 1=1 ' + qf : ''}
       GROUP BY po.name
       HAVING COUNT(p.id) > 0
       ORDER BY poem_count DESC

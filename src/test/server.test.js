@@ -45,9 +45,12 @@ describe('Backend API Server', () => {
 
   describe('GET /api/health', () => {
     it('should return health status when database is connected', async () => {
-      // Mock successful database query
+      // Mock successful database queries (total + served count)
       mockPool.query.mockResolvedValueOnce({
         rows: [{ count: '42' }]
+      });
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ count: '30' }]
       });
 
       const response = await request(app)
@@ -58,7 +61,8 @@ describe('Backend API Server', () => {
       expect(response.body).toEqual({
         status: 'ok',
         database: 'connected',
-        totalPoems: 42
+        totalPoems: 42,
+        servedPoems: 30
       });
 
       expect(mockPool.query).toHaveBeenCalledWith('SELECT COUNT(*) FROM poems');
@@ -169,7 +173,7 @@ describe('Backend API Server', () => {
       );
     });
 
-    it('should not filter when poet is "All"', async () => {
+    it('should not filter by poet when poet is "All"', async () => {
       mockPool.query.mockResolvedValueOnce({
         rows: [mockPoem]
       });
@@ -178,8 +182,9 @@ describe('Backend API Server', () => {
         .get('/api/poems/random?poet=All')
         .expect(200);
 
+      // Should not filter by poet name (no po.name = $1), but serving filters may still apply
       expect(pool.query).toHaveBeenCalledWith(
-        expect.not.stringContaining('WHERE'),
+        expect.not.stringContaining('po.name ='),
         []
       );
     });
@@ -579,6 +584,7 @@ describe('Backend API Server', () => {
   describe('Security Headers', () => {
     it('should include helmet security headers', async () => {
       mockPool.query.mockResolvedValueOnce({ rows: [{ count: '10' }] });
+      mockPool.query.mockResolvedValueOnce({ rows: [{ count: '8' }] });
       const response = await request(app).get('/api/health').expect(200);
       expect(response.headers['x-content-type-options']).toBe('nosniff');
       expect(response.headers).not.toHaveProperty('x-powered-by');
@@ -589,6 +595,9 @@ describe('Backend API Server', () => {
     it('should allow cross-origin requests from allowed origins', async () => {
       mockPool.query.mockResolvedValueOnce({
         rows: [{ count: '10' }]
+      });
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ count: '8' }]
       });
 
       const response = await request(app)
@@ -815,6 +824,7 @@ describe('Backend API Server', () => {
 
       it('should not require API key for read endpoints', async () => {
         mockPool.query.mockResolvedValueOnce({ rows: [{ count: '42' }] });
+        mockPool.query.mockResolvedValueOnce({ rows: [{ count: '30' }] });
 
         const response = await request(app)
           .get('/api/health')
@@ -826,10 +836,13 @@ describe('Backend API Server', () => {
   });
 
   describe('Keep-Alive Mechanism', () => {
-    it('should have health endpoint that returns totalPoems for keep-alive pings', async () => {
-      // Mock successful database query
+    it('should have health endpoint that returns totalPoems and servedPoems for keep-alive pings', async () => {
+      // Mock successful database queries (total + served count)
       mockPool.query.mockResolvedValueOnce({
         rows: [{ count: '84329' }]
+      });
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ count: '4767' }]
       });
 
       const response = await request(app)
@@ -841,11 +854,16 @@ describe('Backend API Server', () => {
       expect(response.body).toHaveProperty('database', 'connected');
       expect(response.body).toHaveProperty('totalPoems');
       expect(response.body.totalPoems).toBe(84329);
+      expect(response.body).toHaveProperty('servedPoems');
+      expect(response.body.servedPoems).toBe(4767);
     });
 
     it('should respond quickly to health checks (< 100ms)', async () => {
       mockPool.query.mockResolvedValueOnce({
         rows: [{ count: '84329' }]
+      });
+      mockPool.query.mockResolvedValueOnce({
+        rows: [{ count: '4767' }]
       });
 
       const startTime = Date.now();

@@ -244,20 +244,24 @@ def main():
                         ("mipro_haiku", "MIPROv2 Haiku"), ("mipro_sonnet", "MIPROv2 Sonnet")]:
         if key in opt_logs:
             log = opt_logs[key]
-            baseline = log.get("baseline", log.get("baseline_eval_mae", {}))
-            optimized = log.get("optimized_test", log.get("optimized_full_test", {}))
-            # Handle different log formats
-            b_mae = baseline.get("mae_overall", baseline.get("mae_overall", "?"))
-            o_mae = optimized.get("mae_overall", "?") if optimized else "?"
-            b_r = baseline.get("r_overall", "?")
-            o_r = optimized.get("r_overall", "?") if optimized else "?"
+            # SIMBA format: baseline.mae_overall, optimized_full_test.mae_overall
+            # MIPROv2 format: baseline_eval_mae.mae_overall, optimized_eval_mae.mae_overall
+            baseline = log.get("baseline") or log.get("baseline_eval_mae") or {}
+            optimized = log.get("optimized_full_test") or log.get("optimized_test") or log.get("optimized_eval_mae") or {}
+            b_mae = baseline.get("mae_overall")
+            o_mae = optimized.get("mae_overall")
+            b_r = baseline.get("r_overall")
+            o_r = optimized.get("r_overall")
+            # Format numbers
+            fmt = lambda v: f"{v:.2f}" if isinstance(v, (int, float)) else "—"
+            time_val = log.get("compile_time_sec") or log.get("elapsed_seconds")
             opt_panel_data.append({
                 "label": label,
-                "baseline_mae": b_mae,
-                "optimized_mae": o_mae,
-                "baseline_r": b_r,
-                "optimized_r": o_r,
-                "time": log.get("compile_time_sec", "?"),
+                "baseline_mae": fmt(b_mae),
+                "optimized_mae": fmt(o_mae),
+                "baseline_r": fmt(b_r),
+                "optimized_r": fmt(o_r),
+                "time": f"{time_val:.0f}" if isinstance(time_val, (int, float)) else "—",
             })
 
     # Build v7 comparison data if available
@@ -397,7 +401,7 @@ tr:hover {{ background: rgba(56, 189, 248, 0.05); }}
     <div class="stat-label">{d['label']}</div>
     <div style="display:flex;gap:1rem;align-items:baseline">
         <div><span class="stat-label">MAE</span> <span style="color:var(--muted)">{d['baseline_mae']}</span> → <span style="color:var(--green);font-weight:bold">{d['optimized_mae']}</span></div>
-        <div><span class="stat-label">r</span> <span style="color:var(--muted)">{d['baseline_r']}</span> → <span style="color:var(--green);font-weight:bold">{d['optimized_r']}</span></div>
+        {'<div><span class="stat-label">r</span> <span style="color:var(--muted)">' + d['baseline_r'] + '</span> → <span style="color:var(--green);font-weight:bold">' + d['optimized_r'] + '</span></div>' if d['baseline_r'] != '—' else ''}
     </div>
     <div class="stat-label" style="margin-top:0.3rem">Time: {d['time']}s</div>
 </div>""" for d in opt_panel_data) + '</div>' if opt_panel_data else ''}

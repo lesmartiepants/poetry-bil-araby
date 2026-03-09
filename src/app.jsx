@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { Play, Pause, BookOpen, RefreshCw, Volume2, ChevronDown, Quote, Globe, Moon, Sun, Loader2, ChevronRight, ChevronLeft, Search, X, Copy, LayoutGrid, Check, Bug, Trash2, Sparkles, Feather, Library, Compass, Rabbit, Heart, LogIn, LogOut, User, Settings2, ArrowRight, Languages, Share2, CalendarDays, ThumbsDown } from 'lucide-react';
+import { Play, Pause, BookOpen, RefreshCw, Volume2, ChevronDown, Quote, Globe, Moon, Sun, Loader2, ChevronRight, ChevronLeft, Search, X, Copy, LayoutGrid, Check, Bug, Trash2, Sparkles, Feather, Compass, Rabbit, Heart, LogIn, LogOut, User, Settings2, ArrowRight, Languages, Share2, ThumbsDown } from 'lucide-react';
 import { track } from '@vercel/analytics';
 import { useAuth, useUserSettings, useSavedPoems, useDownvotes, usePoemEvents } from './hooks/useAuth';
 import { INSIGHTS_SYSTEM_PROMPT, DISCOVERY_SYSTEM_PROMPT, getTTSInstruction } from './prompts';
@@ -2030,7 +2030,6 @@ const VerticalSidebar = ({
   showTranslation, onToggleTranslation,
   showTransliteration, onToggleTransliteration,
   textSizeLabel, onCycleTextSize,
-  dailyPoem, onDailyPoem, isCurrentDaily,
   darkMode, onToggleDarkMode,
   currentFont, onCycleFont,
   selectedCategory, onSelectCategory,
@@ -2041,7 +2040,7 @@ const VerticalSidebar = ({
   const gold = darkMode ? '#C5A059' : '#8B7355';
   const btnBase = "w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-200";
   const btnHover = darkMode ? "hover:bg-[#C5A059]/15" : "hover:bg-[#8B7355]/15";
-  const subBtnBase = "w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-200";
+  const subBtnBase = "w-11 h-11 rounded-lg flex items-center justify-center transition-all duration-200";
   const subBtnHover = darkMode ? "hover:bg-[#C5A059]/15" : "hover:bg-[#8B7355]/15";
 
   return (
@@ -2053,7 +2052,7 @@ const VerticalSidebar = ({
         }
       `}</style>
       <div
-        className="fixed right-0 top-1/2 -translate-y-1/2 z-[45] md:hidden rounded-l-2xl bg-gradient-to-b from-black/70 via-black/60 to-black/70 backdrop-blur-xl border-l-2 border-[#C5A059]/40 py-3 px-1.5"
+        className="fixed right-0 top-1/2 -translate-y-1/2 z-[45] rounded-l-2xl bg-gradient-to-b from-black/70 via-black/60 to-black/70 backdrop-blur-xl border-l-2 border-[#C5A059]/40 py-3 px-1.5"
         style={{ animation: 'slideInRight 0.4s ease-out' }}
       >
         <div className="flex flex-col items-center gap-1">
@@ -2061,12 +2060,13 @@ const VerticalSidebar = ({
             onClick={onExplain}
             disabled={isInterpreting || interpretation}
             title="Explain poem"
+            aria-label="Explain poem meaning"
             className={`${btnBase} ${btnHover} disabled:opacity-50`}
           >
             {isInterpreting ? <Loader2 className="animate-spin" style={{ color: gold }} size={18} /> : <Compass style={{ color: gold }} size={18} />}
           </button>
 
-          <button onClick={onCopy} title="Copy poem" className={`${btnBase} ${btnHover}`}>
+          <button onClick={onCopy} title="Copy poem" aria-label="Copy poem to clipboard" className={`${btnBase} ${btnHover}`}>
             {showCopySuccess ? <Check size={18} className="text-green-500" /> : <Copy style={{ color: gold }} size={18} />}
           </button>
 
@@ -2109,92 +2109,6 @@ const VerticalSidebar = ({
               >
                 <span className="font-brand-en text-[13px] font-bold" style={{ color: gold }}>Aa</span>
               </button>
-
-              {dailyPoem && (
-                <button
-                  onClick={onDailyPoem}
-                  title="Poem of the Day"
-                  className={`${subBtnBase} ${subBtnHover} ${isCurrentDaily ? (darkMode ? 'bg-[#C5A059]/15' : 'bg-[#8B7355]/15') : ''}`}
-                >
-                  <CalendarDays style={{ color: gold }} size={16} />
-                </button>
-              )}
-
-              <button
-                onClick={onToggleDarkMode}
-                title={darkMode ? 'Light mode' : 'Dark mode'}
-                className={`${subBtnBase} ${subBtnHover}`}
-              >
-                {darkMode ? <Sun style={{ color: gold }} size={16} /> : <Moon style={{ color: gold }} size={16} />}
-              </button>
-
-              <button
-                onClick={onCycleFont}
-                title={`Font: ${currentFont}`}
-                className={`${subBtnBase} ${subBtnHover}`}
-              >
-                <Feather style={{ color: gold }} size={16} />
-              </button>
-
-              <button
-                onClick={() => {
-                  const catIds = CATEGORIES.map(c => c.id);
-                  const idx = catIds.indexOf(selectedCategory);
-                  onSelectCategory(catIds[(idx + 1) % catIds.length]);
-                }}
-                title="Poet filter"
-                className={`${subBtnBase} ${subBtnHover}`}
-              >
-                <Library style={{ color: gold }} size={16} />
-              </button>
-
-              <button
-                onClick={onToggleDatabase}
-                title={useDatabase ? 'Switch to AI' : 'Switch to Database'}
-                className={`${subBtnBase} ${subBtnHover}`}
-              >
-                {useDatabase ? <Library style={{ color: gold }} size={16} /> : <Sparkles style={{ color: gold }} size={16} />}
-              </button>
-            </div>
-          )}
-
-          <div className="w-6 h-px bg-stone-500/30 mx-auto my-1" />
-
-          <button
-            onClick={() => setSettingsOpen(prev => !prev)}
-            title="Settings"
-            className={`${btnBase} ${btnHover} ${settingsOpen ? (darkMode ? 'bg-[#C5A059]/15' : 'bg-[#8B7355]/15') : ''}`}
-          >
-            <Settings2 style={{ color: gold }} size={18} />
-          </button>
-
-          {settingsOpen && (
-            <div className={`flex flex-col items-center gap-0.5 pl-0.5 border-l-2 ${darkMode ? 'border-[#C5A059]/20' : 'border-[#8B7355]/20'}`}>
-              <button
-                onClick={onToggleTransliteration}
-                title={showTransliteration ? 'Hide romanization' : 'Show romanization'}
-                className={`${subBtnBase} ${subBtnHover} ${!showTransliteration ? 'opacity-40' : ''}`}
-              >
-                <span className="text-[12px] font-bold leading-none" style={{ color: gold, fontFamily: "'Amiri', serif" }}>عA</span>
-              </button>
-
-              <button
-                onClick={onCycleTextSize}
-                title={`Text size: ${textSizeLabel}`}
-                className={`${subBtnBase} ${subBtnHover}`}
-              >
-                <span className="font-brand-en text-[13px] font-bold" style={{ color: gold }}>Aa</span>
-              </button>
-
-              {dailyPoem && (
-                <button
-                  onClick={onDailyPoem}
-                  title="Poem of the Day"
-                  className={`${subBtnBase} ${subBtnHover} ${isCurrentDaily ? (darkMode ? 'bg-[#C5A059]/15' : 'bg-[#8B7355]/15') : ''}`}
-                >
-                  <CalendarDays style={{ color: gold }} size={16} />
-                </button>
-              )}
 
               <button
                 onClick={onToggleDarkMode}
@@ -2314,19 +2228,11 @@ export default function DiwanApp() {
   const [logs, setLogs] = useState([]);
   const [showCopySuccess, setShowCopySuccess] = useState(false);
   const [showShareSuccess, setShowShareSuccess] = useState(false);
-  const [dailyPoem, setDailyPoem] = useState(null);
-  const [isOverflow, setIsOverflow] = useState(() => {
-    // Use 660 as the conservative initial threshold (covers both Supabase and non-Supabase button sets).
-    // The detectOverflow effect below will refine this after mount.
-    const vw = window.visualViewport?.width ?? window.innerWidth;
-    return vw < 660;
-  });
   const [cacheStats, setCacheStats] = useState({ audioHits: 0, audioMisses: 0, insightsHits: 0, insightsMisses: 0 });
   const [isPrefetching, setIsPrefetching] = useState(false);
   const activeAudioRequests = useRef(new Set()); // Track in-flight audio generation requests
   const activeInsightRequests = useRef(new Set()); // Track in-flight insight generation requests
   const pollingIntervals = useRef([]); // Track all polling intervals for cleanup
-  const pendingRafRef = useRef(null); // Track pending rAF id for overflow detection deduplication
 
   // Auth state
   const { user, loading: authLoading, signInWithGoogle, signInWithApple, signOut } = useAuth();
@@ -2486,46 +2392,6 @@ export default function DiwanApp() {
     }
   }, []);
 
-  // Fetch poem of the day on mount (cached per date in IndexedDB)
-  useEffect(() => {
-    if (!useDatabase) return;
-    const todayKey = `daily-${new Date().toISOString().slice(0, 10)}`;
-
-    (async () => {
-      // Check IndexedDB cache first
-      if (FEATURES.caching) {
-        try {
-          const cached = await cacheOperations.get(CACHE_CONFIG.stores.poems, todayKey);
-          if (cached?.data) {
-            setDailyPoem(cached.data);
-            addLog("Daily", "Loaded poem of the day from cache", "info");
-            return;
-          }
-        } catch {}
-      }
-
-      // Fetch from API
-      try {
-        const res = await fetch(`${apiUrl}/api/poems/daily`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const poem = await res.json();
-        if (poem.arabic) poem.arabic = poem.arabic.replace(/\*/g, '\n');
-        poem.isFromDatabase = true;
-        setDailyPoem(poem);
-        addLog("Daily", `Poem of the day: ${poem.poet} — ${poem.title}`, "success");
-
-        // Cache for today
-        if (FEATURES.caching) {
-          try {
-            await cacheOperations.set(CACHE_CONFIG.stores.poems, todayKey, { data: poem });
-          } catch {}
-        }
-      } catch (err) {
-        addLog("Daily", `Failed to load: ${err.message}`, "error");
-      }
-    })();
-  }, [useDatabase]);
-
   // After OAuth redirect, once the user is signed in, auto-save the stashed poem and clean up
   useEffect(() => {
     if (!user) return;
@@ -2556,60 +2422,6 @@ export default function DiwanApp() {
       }
     }
   }, [autoExplainPending, current?.id, isFetching, isInterpreting, interpretation]);
-
-  useEffect(() => {
-    // Threshold below which overflow mode is always active (prevents oscillation on narrow screens).
-    // Re-runs when user signs in/out so the bar is re-measured after auth state changes.
-    const narrowThreshold = 660;
-
-    const scheduleDetect = () => {
-      // Deduplicate: cancel any pending frame before scheduling a new one
-      if (pendingRafRef.current !== null) cancelAnimationFrame(pendingRafRef.current);
-      pendingRafRef.current = requestAnimationFrame(() => {
-        pendingRafRef.current = null;
-        if (!controlBarRef.current) return;
-        const bar = controlBarRef.current;
-        const vw = window.visualViewport?.width ?? window.innerWidth;
-
-        // Temporarily clip overflow so scrollWidth accurately reflects content width on iOS Safari,
-        // where scrollWidth may equal clientWidth for flex containers with overflow:visible.
-        const savedOverflow = bar.style.overflow;
-        bar.style.overflow = 'hidden';
-        const hasContentOverflow = bar.scrollWidth > bar.clientWidth;
-        bar.style.overflow = savedOverflow;
-
-        // Stay in overflow mode on narrow screens regardless of current bar width,
-        // which prevents oscillation when the bar shrinks after switching to mobile layout.
-        setIsOverflow(hasContentOverflow || vw < narrowThreshold);
-      });
-    };
-
-    scheduleDetect();
-    // Re-measure after a short delay to catch DOM updates from auth state changes
-    // (React may not have rendered the new buttons in the first rAF)
-    const delayedRecheck = setTimeout(scheduleDetect, 100);
-
-    // ResizeObserver catches font-load changes and dynamic content updates.
-    // Guard for environments where ResizeObserver is unavailable (older browsers, some test envs).
-    let resizeObserver = null;
-    if (typeof ResizeObserver !== 'undefined') {
-      resizeObserver = new ResizeObserver(scheduleDetect);
-      if (controlBarRef.current) resizeObserver.observe(controlBarRef.current);
-    }
-
-    window.addEventListener('resize', scheduleDetect);
-    return () => {
-      clearTimeout(delayedRecheck);
-      if (pendingRafRef.current !== null) {
-        cancelAnimationFrame(pendingRafRef.current);
-        pendingRafRef.current = null;
-      }
-      resizeObserver?.disconnect();
-      window.removeEventListener('resize', scheduleDetect);
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- refs (controlBarRef, pendingRafRef)
-  // and the stable setIsOverflow setter are intentionally omitted; only real state values need deps.
-  }, [user]);
 
   // Load user settings on mount
   useEffect(() => {
@@ -3425,28 +3237,6 @@ export default function DiwanApp() {
     }
   };
 
-  const handleDailyPoem = () => {
-    if (!dailyPoem) return;
-    track('daily_poem_requested');
-    addLog("UI Event", "Daily poem button clicked", "info");
-    setInterpretation(null);
-    setPoems(prev => {
-      const exists = prev.find(p => p.id === dailyPoem.id);
-      if (exists) {
-        setCurrentIndex(prev.indexOf(exists));
-        return prev;
-      }
-      setCurrentIndex(prev.length);
-      return [...prev, dailyPoem];
-    });
-    setAutoExplainPending(true);
-    // Update URL for DB poems
-    if (dailyPoem.isFromDatabase && typeof dailyPoem.id === 'number') {
-      window.history.replaceState({}, '', '/poem/' + dailyPoem.id);
-    } else {
-      window.history.replaceState({}, '', '/');
-    }
-  };
 
   const handleShare = async () => {
     addLog("UI Event", "Share button clicked", "info");
@@ -3901,7 +3691,7 @@ export default function DiwanApp() {
           <div className={`absolute inset-0 pointer-events-none opacity-[0.04] ${darkMode ? 'invert' : ''}`} style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M40 0l40 40-40 40L0 40z' fill='none' stroke='%234f46e5' stroke-width='1.5'/%3E%3Ccircle cx='40' cy='40' r='18' fill='none' stroke='%234f46e5' stroke-width='1.5'/%3E%3C/svg%3E")`, backgroundSize: '60px 60px' }} />
           <MysticalConsultationEffect active={isInterpreting} theme={theme} />
 
-          <main ref={mainScrollRef} onScroll={handleScroll} className={`flex-1 overflow-y-auto custom-scrollbar relative z-10 px-4 md:px-0 pb-28${isOverflow ? ' pr-16' : ''}`}>
+          <main ref={mainScrollRef} onScroll={handleScroll} className="flex-1 overflow-y-auto custom-scrollbar relative z-10 px-4 md:px-0 pb-28 pr-14">
             <div className="min-h-full flex flex-col items-center justify-center py-6">
               <div className="w-full max-w-4xl flex flex-col items-center">
                 
@@ -3931,12 +3721,6 @@ export default function DiwanApp() {
                          <div className={`flex items-center justify-center gap-1 sm:gap-2 opacity-45 ${DESIGN.mainSubtitleSize} font-brand-en tracking-[0.08em] uppercase mt-[clamp(0.25rem,0.8vw,0.75rem)]`}>
                            <span className="font-semibold">{current?.poet}</span> <span className="opacity-20">•</span> <span>{current?.title}</span>
                          </div>
-                         {dailyPoem && current?.id === dailyPoem.id && (
-                           <div className="flex items-center gap-1.5 mt-2 px-3 py-1 rounded-full bg-[#C5A059]/10 border border-[#C5A059]/20">
-                             <CalendarDays size={12} className="text-[#C5A059]" />
-                             <span className="font-brand-en text-[9px] font-bold tracking-[0.15em] uppercase text-[#C5A059]">Poem of the Day</span>
-                           </div>
-                         )}
                       </div>
                    </div>
 
@@ -4009,15 +3793,6 @@ export default function DiwanApp() {
                 <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">Listen</span>
               </div>
 
-              {!isOverflow && (
-                <div className="flex flex-col items-center gap-1 min-w-[52px]">
-                  <button onClick={handleAnalyze} disabled={isInterpreting || interpretation} aria-label="Explain poem meaning" className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105 disabled:opacity-50">
-                    {isInterpreting ? <Loader2 className="animate-spin text-[#C5A059]" size={21} /> : <Compass className="text-[#C5A059]" size={21} />}
-                  </button>
-                  <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">Explain</span>
-                </div>
-              )}
-
               <div className="flex flex-col items-center gap-1 min-w-[52px]">
                 <button onClick={handleFetch} disabled={isFetching} aria-label="Discover new poem" className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105">
                   {isFetching ? <Loader2 className="animate-spin text-[#C5A059]" size={21} /> : <Rabbit className="text-[#C5A059] rabbit-bounce" size={21} />}
@@ -4041,99 +3816,6 @@ export default function DiwanApp() {
                 disabled={!user}
               />
 
-              {!isOverflow && (
-                <>
-                  <div className="w-px h-10 bg-stone-500/20 mx-1 flex-shrink-0" />
-
-                  <div className="flex flex-col items-center gap-1 min-w-[52px]">
-                    <button onClick={handleCopy} aria-label="Copy poem to clipboard" className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105">
-                      {showCopySuccess ? <Check size={21} className="text-green-500" /> : <Copy size={21} className="text-[#C5A059]" />}
-                    </button>
-                    <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">Copy</span>
-                  </div>
-
-                  <div className="flex flex-col items-center gap-1 min-w-[52px]">
-                    <button onClick={handleShare} aria-label="Share poem" className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105">
-                      {showShareSuccess ? <Check size={21} className="text-green-500" /> : <Share2 size={21} className="text-[#C5A059]" />}
-                    </button>
-                    <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">Share</span>
-                  </div>
-
-                  <div className="flex flex-col items-center gap-1 min-w-[52px]">
-                    <button
-                      onClick={() => setShowTranslation(prev => !prev)}
-                      aria-label={showTranslation ? 'Hide English translation' : 'Show English translation'}
-                      className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105 ${!showTranslation ? 'opacity-40' : ''}`}
-                    >
-                      <Languages size={21} className="text-[#C5A059]" />
-                    </button>
-                    <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">
-                      {showTranslation ? 'English' : 'Arabic'}
-                    </span>
-                  </div>
-
-                  <div className="flex flex-col items-center gap-1 min-w-[52px]">
-                    <button
-                      onClick={() => setShowTransliteration(prev => !prev)}
-                      aria-label={showTransliteration ? 'Hide transliteration' : 'Show transliteration'}
-                      className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105 ${!showTransliteration ? 'opacity-40' : ''}`}
-                    >
-                      <span className="text-[#C5A059] text-[14px] font-bold leading-none" style={{ fontFamily: "'Amiri', serif" }}>عA</span>
-                    </button>
-                    <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">
-                      Romanize
-                    </span>
-                  </div>
-
-                  <div className="flex flex-col items-center gap-1 min-w-[52px]">
-                    <button
-                      onClick={cycleTextSize}
-                      aria-label={`Text size: ${TEXT_SIZES[textSizeLevel].label}`}
-                      className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105"
-                    >
-                      <span className="font-brand-en text-[15px] font-bold text-[#C5A059]">Aa</span>
-                    </button>
-                    <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">
-                      {TEXT_SIZES[textSizeLevel].label}
-                    </span>
-                  </div>
-
-                  {dailyPoem && (
-                    <div className="flex flex-col items-center gap-1 min-w-[52px]">
-                      <button onClick={handleDailyPoem} aria-label="Poem of the day" className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105 ${current?.id === dailyPoem.id ? 'bg-[#C5A059]/15' : ''}`}>
-                        <CalendarDays size={21} className="text-[#C5A059]" />
-                      </button>
-                      <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">Daily</span>
-                    </div>
-                  )}
-
-                  <DatabaseToggle
-                    useDatabase={useDatabase}
-                    onToggle={handleToggleDatabase}
-                    disabled={false}
-                  />
-
-                  <ThemeDropdown
-                    darkMode={darkMode}
-                    onToggleDarkMode={handleToggleTheme}
-                    currentFont={currentFont}
-                    onCycleFont={cycleFont}
-                    fonts={FONTS}
-                  />
-
-                  <CategoryPill selected={selectedCategory} onSelect={setSelectedCategory} darkMode={darkMode} />
-
-                  <AuthButton
-                    user={user}
-                    darkMode={darkMode}
-                    onSignIn={handleSignIn}
-                    onSignOut={handleSignOut}
-                    onOpenSavedPoems={handleOpenSavedPoems}
-                    onOpenSettings={handleOpenSettings}
-                    theme={theme}
-                  />
-                </>
-              )}
             </div>
           </footer>
         </div>
@@ -4237,39 +3919,32 @@ export default function DiwanApp() {
         <span className="text-[10px] font-brand-en tracking-widest text-[#C5A059]/60 uppercase">Review</span>
       </a>
 
-      {/* Vertical Sidebar - Mobile overflow only */}
-      {isOverflow && (
-        <VerticalSidebar
-          onExplain={handleAnalyze}
-          onCopy={handleCopy}
-          showCopySuccess={showCopySuccess}
-          onShare={handleShare}
-          showShareSuccess={showShareSuccess}
-          onSignIn={handleSignIn}
-          onSignOut={handleSignOut}
-          user={user}
-          theme={theme}
-          isInterpreting={isInterpreting}
-          interpretation={interpretation}
-          showTranslation={showTranslation}
-          onToggleTranslation={() => setShowTranslation(prev => !prev)}
-          showTransliteration={showTransliteration}
-          onToggleTransliteration={() => setShowTransliteration(prev => !prev)}
-          textSizeLabel={TEXT_SIZES[textSizeLevel].label}
-          onCycleTextSize={cycleTextSize}
-          dailyPoem={dailyPoem}
-          onDailyPoem={handleDailyPoem}
-          isCurrentDaily={current?.id === dailyPoem?.id}
-          darkMode={darkMode}
-          onToggleDarkMode={handleToggleTheme}
-          currentFont={currentFont}
-          onCycleFont={cycleFont}
-          selectedCategory={selectedCategory}
-          onSelectCategory={setSelectedCategory}
-          useDatabase={useDatabase}
-          onToggleDatabase={handleToggleDatabase}
-        />
-      )}
+      {/* Vertical Sidebar - always visible */}
+      <VerticalSidebar
+        onExplain={handleAnalyze}
+        onCopy={handleCopy}
+        showCopySuccess={showCopySuccess}
+        onShare={handleShare}
+        showShareSuccess={showShareSuccess}
+        onSignIn={handleSignIn}
+        onSignOut={handleSignOut}
+        user={user}
+        theme={theme}
+        isInterpreting={isInterpreting}
+        interpretation={interpretation}
+        showTranslation={showTranslation}
+        onToggleTranslation={() => setShowTranslation(prev => !prev)}
+        showTransliteration={showTransliteration}
+        onToggleTransliteration={() => setShowTransliteration(prev => !prev)}
+        textSizeLabel={TEXT_SIZES[textSizeLevel].label}
+        onCycleTextSize={cycleTextSize}
+        darkMode={darkMode}
+        onToggleDarkMode={handleToggleTheme}
+        currentFont={currentFont}
+        onCycleFont={cycleFont}
+        selectedCategory={selectedCategory}
+        onSelectCategory={setSelectedCategory}
+      />
 
       {/* Splash / Onboarding Screen */}
       <SplashScreen

@@ -30,7 +30,7 @@ const defaultFetchResponse = {
 
 function mockAutoLoadFetch() {
   // Use a persistent implementation that returns the default poem for any URL,
-  // handling all mount-time fetches (auto-load, daily poem, health ping, auto-explain).
+  // handling all mount-time fetches (auto-load, health ping, auto-explain).
   // Tests that need specific fetch behavior should call mockResolvedValueOnce AFTER awaiting mount.
   global.fetch.mockImplementation(() => Promise.resolve({ ...defaultFetchResponse }))
 }
@@ -341,17 +341,12 @@ describe('DiwanApp', () => {
     it('switches to light mode bg-[#FDFCF8] after toggling theme', async () => {
       render(<DiwanApp />)
 
-      // Open theme dropdown
-      const themeBtn = screen.getByLabelText('Theme options')
-      await userEvent.click(themeBtn)
+      // Open sidebar settings sub-menu
+      const settingsBtn = screen.getByTitle('Settings')
+      await userEvent.click(settingsBtn)
 
-      // Click the dark/light mode toggle inside the dropdown
-      // The dropdown shows "Light Mode" text in dark mode
-      await waitFor(() => {
-        expect(document.body.textContent).toContain('Light Mode')
-      })
-
-      const lightModeBtn = screen.getByText('Light Mode')
+      // Click the dark/light mode toggle in the sidebar
+      const lightModeBtn = screen.getByTitle('Light mode')
       await userEvent.click(lightModeBtn)
 
       await waitFor(() => {
@@ -367,7 +362,11 @@ describe('DiwanApp', () => {
     it('opens category dropdown and shows poet list', async () => {
       render(<DiwanApp />)
 
-      const poetsBtn = screen.getByLabelText('Select poet category')
+      // Open sidebar settings sub-menu, then open poet picker
+      const settingsBtn = screen.getByTitle('Settings')
+      await userEvent.click(settingsBtn)
+
+      const poetsBtn = screen.getByTitle('Poet filter')
       await userEvent.click(poetsBtn)
 
       await waitFor(() => {
@@ -378,8 +377,11 @@ describe('DiwanApp', () => {
     it('sends poet filter parameter when a category is selected and Discover is clicked', async () => {
       render(<DiwanApp />)
 
-      // Open the category dropdown and select a poet
-      const poetsBtn = screen.getByLabelText('Select poet category')
+      // Open sidebar settings sub-menu, then open poet picker
+      const settingsBtn = screen.getByTitle('Settings')
+      await userEvent.click(settingsBtn)
+
+      const poetsBtn = screen.getByTitle('Poet filter')
       await userEvent.click(poetsBtn)
 
       await waitFor(() => {
@@ -431,24 +433,19 @@ describe('DiwanApp', () => {
       expect(amiriElements.length).toBeGreaterThan(0)
     })
 
-    it('changes font class when cycling via Theme dropdown', async () => {
+    it('changes font class when cycling via sidebar settings', async () => {
       render(<DiwanApp />)
 
       // Verify initial font is Amiri
       expect(document.querySelectorAll('.font-amiri').length).toBeGreaterThan(0)
 
-      // Open theme dropdown
-      const themeBtn = screen.getByLabelText('Theme options')
-      await userEvent.click(themeBtn)
+      // Open sidebar settings sub-menu
+      const settingsBtn = screen.getByTitle('Settings')
+      await userEvent.click(settingsBtn)
 
-      // The font cycle button shows "Cycle Font: Amiri"
-      await waitFor(() => {
-        expect(document.body.textContent).toContain('Cycle Font: Amiri')
-      })
-
-      // Click the font cycle button (Arabic text: تبديل الخط)
-      const fontCycleBtn = screen.getByText('تبديل الخط')
-      await userEvent.click(fontCycleBtn)
+      // Click the font cycle button in sidebar
+      const fontBtn = screen.getByTitle('Font: Amiri')
+      await userEvent.click(fontBtn)
 
       // Font should change from Amiri to the next one (Alexandria)
       await waitFor(() => {
@@ -465,7 +462,9 @@ describe('DiwanApp', () => {
       render(<DiwanApp />)
 
       // Switch to AI mode
-      await userEvent.click(screen.getByLabelText('Switch to AI Mode'))
+      // Open sidebar settings, then toggle to AI mode
+      await userEvent.click(screen.getByTitle('Settings'))
+      await userEvent.click(screen.getByTitle('Switch to AI'))
 
       // 429 quota errors are shown immediately
       global.fetch.mockResolvedValueOnce({
@@ -484,7 +483,9 @@ describe('DiwanApp', () => {
     it('uses fallback model when primary AI model returns not-found', async () => {
       render(<DiwanApp />)
 
-      await userEvent.click(screen.getByLabelText('Switch to AI Mode'))
+      // Open sidebar settings, then toggle to AI mode
+      await userEvent.click(screen.getByTitle('Settings'))
+      await userEvent.click(screen.getByTitle('Switch to AI'))
 
       const aiPoem = {
         poet: 'Al-Mutanabbi',
@@ -519,7 +520,9 @@ describe('DiwanApp', () => {
     it('discovers a new poem in AI mode when Gemini responds successfully', async () => {
       render(<DiwanApp />)
 
-      await userEvent.click(screen.getByLabelText('Switch to AI Mode'))
+      // Open sidebar settings, then toggle to AI mode
+      await userEvent.click(screen.getByTitle('Settings'))
+      await userEvent.click(screen.getByTitle('Switch to AI'))
 
       const aiPoem = {
         poet: 'Al-Mutanabbi',

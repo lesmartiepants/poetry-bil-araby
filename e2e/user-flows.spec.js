@@ -177,26 +177,13 @@ test.describe('User Flows', () => {
       return rootDiv ? getComputedStyle(rootDiv).backgroundColor : '';
     });
 
-    // Try ThemeDropdown (desktop) first, then VerticalSidebar Settings (mobile)
-    const themeDropdown = page.locator('button[aria-label="Theme options"]').first();
-    const themeVisible = await themeDropdown.isVisible().catch(() => false);
-
-    if (themeVisible) {
-      await themeDropdown.click();
-      await page.waitForTimeout(300);
-      // Click the mode toggle button — target via English sub-text
-      const modeButton = page.locator('button:has-text("Light Mode"), button:has-text("Dark Mode")').first();
-      await expect(modeButton).toBeVisible({ timeout: 3000 });
-      await modeButton.click();
-    } else {
-      // Mobile: open Settings gear in VerticalSidebar, then click theme toggle
-      const settingsBtn = page.locator('button[title="Settings"]').first();
-      await settingsBtn.click();
-      await page.waitForTimeout(300);
-      const themeBtn = page.locator('button[title="Light mode"], button[title="Dark mode"]').first();
-      await expect(themeBtn).toBeVisible({ timeout: 3000 });
-      await themeBtn.click();
-    }
+    // Open sidebar Settings, then click theme toggle
+    const settingsBtn = page.locator('button[title="Settings"]').first();
+    await settingsBtn.click();
+    await page.waitForTimeout(300);
+    const themeBtn = page.locator('button[title="Light mode"], button[title="Dark mode"]').first();
+    await expect(themeBtn).toBeVisible({ timeout: 3000 });
+    await themeBtn.click();
 
     // Wait for theme transition
     await page.waitForTimeout(300);

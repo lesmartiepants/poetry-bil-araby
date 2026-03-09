@@ -231,9 +231,10 @@ test.describe('User Flows', () => {
 
     // Select a specific poet from the picker dropdown
     // The dropdown opens to the left of the sidebar, so ensure it's in viewport
+    // Use force:true because main content area may intercept pointer events
     const poetOption = page.locator('text=نزار قباني').first();
     await expect(poetOption).toBeVisible({ timeout: 3000 });
-    await poetOption.click();
+    await poetOption.click({ force: true });
 
     // Click Discover to trigger a filtered API request
     const requestPromise = page.waitForRequest(

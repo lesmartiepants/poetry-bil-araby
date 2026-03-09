@@ -127,16 +127,12 @@ describe('DiwanApp', () => {
       global.fetch.mockImplementationOnce(() => new Promise(r => { resolveFetch = r }))
 
       const discoverBtn = screen.getByLabelText('Discover new poem')
+      await userEvent.click(discoverBtn)
 
-      // Click and wait for React to process the state update
-      await act(async () => {
-        await userEvent.click(discoverBtn)
-        // Give React a moment to process the setIsFetching(true) state update
-        await new Promise(resolve => setTimeout(resolve, 50))
-      })
-
-      // Button should now be disabled
-      expect(discoverBtn).toBeDisabled()
+      // Wait for the button to become disabled after async state update
+      await waitFor(() => {
+        expect(discoverBtn).toBeDisabled()
+      }, { timeout: 2000 })
 
       // Resolve to clean up
       resolveFetch({ ok: true, json: async () => createDbPoem(99) })

@@ -219,7 +219,25 @@ const geminiTextFetch = async (endpoint, body, apiKey, label, addLog) => {
  */
 const TTS_CONFIG = {
   voiceName: 'Fenrir',
-  responseModalities: ['AUDIO']
+  responseModalities: ['AUDIO'],
+  retryMaxAttempts: 3,
+  retryBaseDelayMs: 1500,  // 1.5s, 3s, 6s exponential backoff
+};
+
+/**
+ * Fetch with exponential backoff retry on 429 (rate limit) responses.
+ * Returns the successful Response, or throws on final failure.
+ */
+const fetchWithRetry = async (url, options, { maxAttempts = TTS_CONFIG.retryMaxAttempts, baseDelay = TTS_CONFIG.retryBaseDelayMs, addLog, label = "TTS" } = {}) => {
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const res = await fetch(url, options);
+    if (res.status !== 429) return res;
+    const delay = baseDelay * Math.pow(2, attempt);
+    if (addLog) addLog(label, `Rate limited (429) — retrying in ${(delay / 1000).toFixed(1)}s (attempt ${attempt + 1}/${maxAttempts})`, "warning");
+    await new Promise(r => setTimeout(r, delay));
+  }
+  // Final attempt — return whatever we get
+  return fetch(url, options);
 };
 
 /* =============================================================================
@@ -484,7 +502,7 @@ const prefetchManager = {
 
       const apiStart = performance.now();
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${API_MODELS.tts}:generateContent?key=${apiKey}`;
-      const res = await fetch(url, {
+      const fetchOptions = {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -498,7 +516,8 @@ const prefetchManager = {
             }
           }
         })
-      });
+      };
+      const res = await fetchWithRetry(url, fetchOptions, { addLog, label: "Prefetch Audio" });
 
       if (!res.ok) {
         const errorText = await res.text();
@@ -2297,6 +2316,7 @@ export default function DiwanApp() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
   const [audioUrl, setAudioUrl] = useState(null);
+  const [audioError, setAudioError] = useState(null);
   const [interpretation, setInterpretation] = useState(null);
   const [isInterpreting, setIsInterpreting] = useState(false);
   const [isFetching, setIsFetching] = useState(false);
@@ -2888,10 +2908,12 @@ export default function DiwanApp() {
       "info"
     );
 
+    setAudioError(null);
+
     try {
       const apiStart = performance.now();
       const url = `https://generativelanguage.googleapis.com/v1beta/models/${API_MODELS.tts}:generateContent?key=${apiKey}`;
-      const res = await fetch(url, {
+      const fetchOptions = {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -2905,11 +2927,16 @@ export default function DiwanApp() {
             }
           }
         })
-      });
+      };
+      const res = await fetchWithRetry(url, fetchOptions, { addLog, label: "Audio API" });
 
       if (!res.ok) {
         const errorText = await res.text();
         addLog("Audio API Error", `HTTP ${res.status}: ${errorText.substring(0, 200)}`, "error");
+        if (res.status === 429) {
+          setAudioError("Recitation temporarily unavailable — too many requests. Please wait a moment and try again.");
+          throw new Error("Rate limited (429)");
+        }
         throw new Error(`API returned ${res.status}: ${res.statusText}`);
       }
 
@@ -3727,6 +3754,7 @@ export default function DiwanApp() {
     // Clear any stuck loading states when poem changes
     setIsGeneratingAudio(false);
     setIsInterpreting(false);
+    setAudioError(null);
 
     // Clear all polling intervals to prevent stale requests
     pollingIntervals.current.forEach(interval => clearInterval(interval));
@@ -3741,37 +3769,24 @@ export default function DiwanApp() {
   }, [current?.id]);
 
   // Prefetch triggers - run background prefetching when poem changes
-  // Rate-limited to avoid hitting API limits
+  // Only prefetch current poem; next-poem audio prefetch removed to conserve TTS quota (100 RPD free tier)
   useEffect(() => {
     if (!FEATURES.prefetching || !current?.id) return;
 
-    // Priority 1: Prefetch current poem audio after 2s (only if user stays)
+    // Prefetch current poem audio after 5s (only if user lingers on this poem)
     const prefetchCurrentAudio = setTimeout(() => {
       prefetchManager.prefetchAudio(current.id, current, addLog, activeAudioRequests);
-    }, 2000);
+    }, 5000);
 
-    // Priority 1: Prefetch current poem insights after 5s (only if user stays)
+    // Prefetch current poem insights after 5s (only if user stays)
     const prefetchCurrentInsights = setTimeout(() => {
       prefetchManager.prefetchInsights(current.id, current, addLog, activeInsightRequests);
     }, 5000);
-
-    // Priority 2: Prefetch ONLY next poem audio after 10s (if user lingers)
-    const prefetchNext = setTimeout(() => {
-      if (filtered.length > 1) {
-        const nextIndex = (currentIndex + 1) % filtered.length;
-        if (filtered[nextIndex]) {
-          setTimeout(() => {
-            prefetchManager.prefetchAudio(filtered[nextIndex].id, filtered[nextIndex], addLog, activeAudioRequests);
-          }, 500); // Stagger by 500ms to avoid burst
-        }
-      }
-    }, 10000);
 
     // Cleanup timeouts on unmount or when dependencies change
     return () => {
       clearTimeout(prefetchCurrentAudio);
       clearTimeout(prefetchCurrentInsights);
-      clearTimeout(prefetchNext);
     };
   }, [current?.id, currentIndex, filtered]);
 
@@ -4015,11 +4030,17 @@ export default function DiwanApp() {
           </main>
 
           <footer className="fixed bottom-0 left-0 right-0 py-2 pb-3 md:pb-2 px-4 flex flex-col items-center z-50 bg-gradient-to-t from-black/5 to-transparent safe-bottom">
+            {audioError && (
+              <div className={`mb-2 px-4 py-2 rounded-full text-xs font-medium ${DESIGN.glass} ${theme.glass} border ${theme.border} shadow-lg ${DESIGN.anim} max-w-[calc(100vw-2rem)] text-center`}>
+                <span className="text-red-400">{audioError}</span>
+                <button onClick={() => setAudioError(null)} className="ml-2 opacity-60 hover:opacity-100" aria-label="Dismiss"><X size={12} className="inline" /></button>
+              </div>
+            )}
             <div ref={controlBarRef} className={`flex items-center gap-2 px-5 py-2 rounded-full shadow-2xl border ${DESIGN.glass} ${theme.border} ${theme.shadow} ${DESIGN.anim} max-w-[calc(100vw-2rem)] w-fit`}>
 
               <div className="flex flex-col items-center gap-1 min-w-[52px]">
                 <button onClick={togglePlay} disabled={isGeneratingAudio} aria-label={isPlaying ? "Pause recitation" : "Play recitation"} className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105">
-                  {isGeneratingAudio ? <Loader2 className="animate-spin text-[#C5A059]" size={21} /> : isPlaying ? <Pause fill="#C5A059" size={21} /> : <Volume2 className="text-[#C5A059]" size={21} />}
+                  {isGeneratingAudio ? <Loader2 className="animate-spin text-[#C5A059]" size={21} /> : audioError ? <Volume2 className="text-red-400" size={21} /> : isPlaying ? <Pause fill="#C5A059" size={21} /> : <Volume2 className="text-[#C5A059]" size={21} />}
                 </button>
                 <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">Listen</span>
               </div>

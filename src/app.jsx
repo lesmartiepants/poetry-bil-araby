@@ -2036,12 +2036,14 @@ const VerticalSidebar = ({
   useDatabase, onToggleDatabase
 }) => {
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [poetPickerOpen, setPoetPickerOpen] = useState(false);
 
   const gold = darkMode ? '#C5A059' : '#8B7355';
   const btnBase = "w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-200";
   const btnHover = darkMode ? "hover:bg-[#C5A059]/15" : "hover:bg-[#8B7355]/15";
   const subBtnBase = "w-11 h-11 rounded-lg flex items-center justify-center transition-all duration-200";
   const subBtnHover = darkMode ? "hover:bg-[#C5A059]/15" : "hover:bg-[#8B7355]/15";
+  const labelCls = "text-[7px] leading-none mt-0.5 font-brand-en tracking-wide opacity-60";
 
   return (
     <>
@@ -2052,7 +2054,7 @@ const VerticalSidebar = ({
         }
       `}</style>
       <div
-        className="fixed right-0 top-1/2 -translate-y-1/2 z-[45] rounded-l-2xl bg-gradient-to-b from-black/70 via-black/60 to-black/70 backdrop-blur-xl border-l-2 border-[#C5A059]/40 py-3 px-1.5"
+        className="fixed right-0 top-1/2 -translate-y-1/2 z-[45] rounded-l-2xl bg-gradient-to-b from-black/70 via-black/60 to-black/70 backdrop-blur-xl border-l-2 border-[#C5A059]/40 py-3 px-1.5 max-h-[calc(100dvh-6rem)] overflow-y-auto"
         style={{ animation: 'slideInRight 0.4s ease-out' }}
       >
         <div className="flex flex-col items-center gap-1">
@@ -2065,14 +2067,17 @@ const VerticalSidebar = ({
           >
             {isInterpreting ? <Loader2 className="animate-spin" style={{ color: gold }} size={18} /> : <Compass style={{ color: gold }} size={18} />}
           </button>
+          <span className={labelCls} style={{ color: gold }}>Explain</span>
 
           <button onClick={onCopy} title="Copy poem" aria-label="Copy poem to clipboard" className={`${btnBase} ${btnHover}`}>
             {showCopySuccess ? <Check size={18} className="text-green-500" /> : <Copy style={{ color: gold }} size={18} />}
           </button>
+          <span className={labelCls} style={{ color: gold }}>Copy</span>
 
           <button onClick={onShare} title="Share poem" className={`${btnBase} ${btnHover}`}>
             {showShareSuccess ? <Check size={18} className="text-green-500" /> : <Share2 style={{ color: gold }} size={18} />}
           </button>
+          <span className={labelCls} style={{ color: gold }}>Share</span>
 
           <button
             onClick={onToggleTranslation}
@@ -2081,6 +2086,7 @@ const VerticalSidebar = ({
           >
             <Languages style={{ color: gold }} size={18} />
           </button>
+          <span className={labelCls} style={{ color: gold }}>ترجمة</span>
 
           <div className="w-6 h-px bg-stone-500/30 mx-auto my-1" />
 
@@ -2091,6 +2097,7 @@ const VerticalSidebar = ({
           >
             <Settings2 style={{ color: gold }} size={18} />
           </button>
+          <span className={labelCls} style={{ color: gold }}>Settings</span>
 
           {settingsOpen && (
             <div className={`flex flex-col items-center gap-0.5 pl-0.5 border-l-2 ${darkMode ? 'border-[#C5A059]/20' : 'border-[#8B7355]/20'}`}>
@@ -2126,17 +2133,29 @@ const VerticalSidebar = ({
                 <Feather style={{ color: gold }} size={16} />
               </button>
 
-              <button
-                onClick={() => {
-                  const catIds = CATEGORIES.map(c => c.id);
-                  const idx = catIds.indexOf(selectedCategory);
-                  onSelectCategory(catIds[(idx + 1) % catIds.length]);
-                }}
-                title="Poet filter"
-                className={`${subBtnBase} ${subBtnHover}`}
-              >
-                <Library style={{ color: gold }} size={16} />
-              </button>
+              <div className="relative">
+                <button
+                  onClick={() => setPoetPickerOpen(prev => !prev)}
+                  title="Poet filter"
+                  className={`${subBtnBase} ${subBtnHover} ${poetPickerOpen ? (darkMode ? 'bg-[#C5A059]/15' : 'bg-[#8B7355]/15') : ''}`}
+                >
+                  <Library style={{ color: gold }} size={16} />
+                </button>
+                {poetPickerOpen && (
+                  <div className="absolute right-full top-0 mr-2 w-48 rounded-xl border border-[#C5A059]/30 bg-black/90 backdrop-blur-xl shadow-xl py-1 max-h-60 overflow-y-auto" style={{ animation: 'slideInRight 0.2s ease-out' }}>
+                    {CATEGORIES.map(cat => (
+                      <button
+                        key={cat.id}
+                        onClick={() => { onSelectCategory(cat.id); setPoetPickerOpen(false); }}
+                        className={`w-full text-left px-3 py-2 text-sm transition-colors ${selectedCategory === cat.id ? 'bg-[#C5A059]/20 text-[#C5A059]' : 'text-stone-300 hover:bg-[#C5A059]/10 hover:text-[#C5A059]'}`}
+                      >
+                        <span className="block font-amiri text-right" dir="rtl">{cat.labelAr}</span>
+                        <span className="block text-[10px] opacity-60 font-brand-en">{cat.label}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
 
               <button
                 onClick={onToggleDatabase}
@@ -2157,6 +2176,7 @@ const VerticalSidebar = ({
           >
             {user ? <LogOut style={{ color: gold }} size={18} /> : <LogIn style={{ color: gold }} size={18} />}
           </button>
+          <span className={labelCls} style={{ color: gold }}>{user ? 'Out' : 'In'}</span>
         </div>
       </div>
     </>

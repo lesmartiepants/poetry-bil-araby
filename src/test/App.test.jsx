@@ -202,7 +202,7 @@ describe('DiwanApp', () => {
       // but resolves normally for everything else (auto-explain, streaming, etc.)
       const originalMock = global.fetch
       global.fetch = vi.fn((url) => {
-        if (typeof url === 'string' && url.includes('models/gemini')) {
+        if (typeof url === 'string' && url.includes('/api/ai/gemini')) {
           // Gemini TTS / audio call — hang forever to keep loading state
           return new Promise(() => {})
         }

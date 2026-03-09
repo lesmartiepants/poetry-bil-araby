@@ -27,6 +27,9 @@ dist-ssr
 .env
 .env.local
 
+# GCP service account key files
+gen-lang-client-*.json
+
 # Test artifacts and reports
 coverage/
 ci-artifacts/

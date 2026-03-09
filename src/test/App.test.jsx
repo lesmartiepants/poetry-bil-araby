@@ -136,13 +136,12 @@ describe('DiwanApp', () => {
         expect(discoverBtn).toBeDisabled()
       }, { timeout: 2000 })
 
-      // Resolve and wait for React to process, then restore default mock
+      // Resolve and wait for React to finish processing
       resolveFetch({ ok: true, json: async () => createDbPoem(99) })
       await waitFor(() => {
         expect(discoverBtn).not.toBeDisabled()
       }, { timeout: 1000 })
-      // Restore the default mock for subsequent tests
-      mockAutoLoadFetch()
+      // beforeEach() will clear mocks for the next test
     })
 
     it('changes content from the initial poem after Discover', async () => {

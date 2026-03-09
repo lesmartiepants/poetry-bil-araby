@@ -116,7 +116,7 @@ const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
  * used when the ListModels API is unavailable. Starts with the cheapest Gemini 2.5 model.
  */
 const API_MODELS = {
-  tts: 'gemini-2.5-flash-preview-tts',
+  tts: ['gemini-2.5-pro-preview-tts', 'gemini-2.5-flash-preview-tts'],
   textDefaults: ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'],
 };
 
@@ -225,19 +225,37 @@ const TTS_CONFIG = {
 };
 
 /**
- * Fetch with exponential backoff retry on 429 (rate limit) responses.
- * Returns the successful Response, or throws on final failure.
+ * TTS fetch with model fallback and exponential backoff on 429.
+ * Tries each model in API_MODELS.tts, retrying on rate limits before falling back.
+ * Returns { res, model } on success, or the last failed response.
  */
-const fetchWithRetry = async (url, options, { maxAttempts = TTS_CONFIG.retryMaxAttempts, baseDelay = TTS_CONFIG.retryBaseDelayMs, addLog, label = "TTS" } = {}) => {
-  for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    const res = await fetch(url, options);
-    if (res.status !== 429) return res;
-    const delay = baseDelay * Math.pow(2, attempt);
-    if (addLog) addLog(label, `Rate limited (429) — retrying in ${(delay / 1000).toFixed(1)}s (attempt ${attempt + 1}/${maxAttempts})`, "warning");
-    await new Promise(r => setTimeout(r, delay));
+const ttsFetchWithFallback = async (body, apiKey, { addLog, label = "TTS" } = {}) => {
+  const models = API_MODELS.tts;
+  const { retryMaxAttempts: maxAttempts, retryBaseDelayMs: baseDelay } = TTS_CONFIG;
+
+  for (let m = 0; m < models.length; m++) {
+    const model = models[m];
+    if (m > 0 && addLog) addLog(label, `Falling back to ${model}`, "warning");
+
+    for (let attempt = 0; attempt <= maxAttempts; attempt++) {
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+      const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body });
+
+      if (res.status !== 429) return { res, model };
+
+      // On last retry for this model, try next model instead of waiting
+      if (attempt === maxAttempts) break;
+
+      const delay = baseDelay * Math.pow(2, attempt);
+      if (addLog) addLog(label, `${model} rate limited (429) — retrying in ${(delay / 1000).toFixed(1)}s (attempt ${attempt + 1}/${maxAttempts})`, "warning");
+      await new Promise(r => setTimeout(r, delay));
+    }
   }
-  // Final attempt — return whatever we get
-  return fetch(url, options);
+
+  // All models exhausted — final attempt on last model
+  const lastModel = models[models.length - 1];
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${lastModel}:generateContent?key=${apiKey}`;
+  return { res: await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body }), model: lastModel };
 };
 
 /* =============================================================================
@@ -501,23 +519,18 @@ const prefetchManager = {
       }
 
       const apiStart = performance.now();
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${API_MODELS.tts}:generateContent?key=${apiKey}`;
-      const fetchOptions = {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: ttsInstruction }] }],
-          generationConfig: {
-            responseModalities: TTS_CONFIG.responseModalities,
-            speechConfig: {
-              voiceConfig: {
-                prebuiltVoiceConfig: { voiceName: TTS_CONFIG.voiceName }
-              }
+      const ttsBody = JSON.stringify({
+        contents: [{ parts: [{ text: ttsInstruction }] }],
+        generationConfig: {
+          responseModalities: TTS_CONFIG.responseModalities,
+          speechConfig: {
+            voiceConfig: {
+              prebuiltVoiceConfig: { voiceName: TTS_CONFIG.voiceName }
             }
           }
-        })
-      };
-      const res = await fetchWithRetry(url, fetchOptions, { addLog, label: "Prefetch Audio" });
+        }
+      });
+      const { res } = await ttsFetchWithFallback(ttsBody, apiKey, { addLog, label: "Prefetch Audio" });
 
       if (!res.ok) {
         const errorText = await res.text();
@@ -2912,23 +2925,19 @@ export default function DiwanApp() {
 
     try {
       const apiStart = performance.now();
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${API_MODELS.tts}:generateContent?key=${apiKey}`;
-      const fetchOptions = {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: ttsInstruction }] }],
-          generationConfig: {
-            responseModalities: TTS_CONFIG.responseModalities,
-            speechConfig: {
-              voiceConfig: {
-                prebuiltVoiceConfig: { voiceName: TTS_CONFIG.voiceName }
-              }
+      const ttsBody = JSON.stringify({
+        contents: [{ parts: [{ text: ttsInstruction }] }],
+        generationConfig: {
+          responseModalities: TTS_CONFIG.responseModalities,
+          speechConfig: {
+            voiceConfig: {
+              prebuiltVoiceConfig: { voiceName: TTS_CONFIG.voiceName }
             }
           }
-        })
-      };
-      const res = await fetchWithRetry(url, fetchOptions, { addLog, label: "Audio API" });
+        }
+      });
+      const { res, model: usedModel } = await ttsFetchWithFallback(ttsBody, apiKey, { addLog, label: "Audio API" });
+      if (usedModel !== API_MODELS.tts[0]) addLog("Audio API", `Using fallback model: ${usedModel}`, "warning");
 
       if (!res.ok) {
         const errorText = await res.text();

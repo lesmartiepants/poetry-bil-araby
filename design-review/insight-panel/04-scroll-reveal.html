@@ -1,0 +1,1404 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Scroll Reveal - Insight Panel Prototype</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+  <!--
+    ==========================================
+    DESIGN 04: Cinematic Scroll Reveal
+    ==========================================
+
+    Philosophy: The poem is the hero. Tapping "Explain" transforms
+    the page into a scroll-driven cinematic experience — a vertical
+    magazine where each insight section is a full-viewport "scene"
+    that reveals with parallax depth, clip-path wipes, and scale
+    transforms.
+
+    References: Apple product pages (sticky scroll-reveal), Stripe's
+    scroll animations, NYT Snowfall longform, horizontal scroll
+    magazines, CSS Design Awards winners.
+
+    Architecture:
+    - Initial state: poem centered with floating "Explain" button
+    - Tap Explain: poem shrinks to a compact header, scroll container
+      expands below with 3 cinematic scenes
+    - Each scene uses Intersection Observer for scroll-triggered
+      clip-path circle-expand, opacity fade, and translateY parallax
+    - Gold progress bar at top tracks scroll position
+    - Dot nav on the left (desktop) for section jumping
+    - "Close" via scroll-back-to-top or fixed X button snaps back
+      to the poem-only view
+
+    Motion hierarchy:
+    - Hero transitions: 0.6-0.8s (page transform)
+    - Section reveals: 0.4-0.6s (clip-path, scale)
+    - Content items: 0.3-0.4s (text lines, stagger)
+
+    Performance: Only animate transform and opacity. will-change
+    on animated layers. prefers-reduced-motion disables all motion.
+  -->
+
+  <style>
+    /* ==========================================
+       DESIGN TOKENS
+       ========================================== */
+    :root {
+      /* Palette — matches production app */
+      --bg: #0c0c0e;
+      --text: #e7e5e4;
+      --text-muted: rgba(231, 229, 228, 0.6);
+      --text-dim: rgba(231, 229, 228, 0.35);
+      --gold: #C5A059;
+      --gold-glow: rgba(197, 160, 89, 0.3);
+      --gold-dim: rgba(197, 160, 89, 0.12);
+      --glass: rgba(28, 25, 23, 0.6);
+      --glass-border: #292524;
+      --surface: rgba(255, 255, 255, 0.03);
+      --surface-hover: rgba(255, 255, 255, 0.06);
+
+      /* Typography */
+      --font-arabic: 'Amiri', serif;
+      --font-ui: 'Inter', system-ui, sans-serif;
+      --font-ui-ar: 'Tajawal', sans-serif;
+      --font-size-display: clamp(2.25rem, 1.5rem + 3vw, 3.5rem);
+      --font-size-scene-title: clamp(0.6875rem, 0.625rem + 0.25vw, 0.8125rem);
+      --font-size-body: clamp(1.125rem, 1rem + 0.5vw, 1.375rem);
+      --font-size-body-ar: clamp(1.25rem, 1.125rem + 0.5vw, 1.5rem);
+      --font-size-small: clamp(0.9375rem, 0.875rem + 0.25vw, 1.0625rem);
+      --font-size-label: clamp(0.6875rem, 0.65rem + 0.15vw, 0.75rem);
+      --line-height-poem: 2.4;
+      --line-height-body: 1.85;
+
+      /* Spacing */
+      --space-xs: 0.5rem;
+      --space-sm: 1rem;
+      --space-md: 1.5rem;
+      --space-lg: 2.5rem;
+      --space-xl: 4rem;
+      --space-2xl: 6rem;
+
+      /* Motion */
+      --dur-hero: 0.7s;
+      --dur-section: 0.5s;
+      --dur-content: 0.35s;
+      --dur-micro: 0.15s;
+      --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-out-quart: cubic-bezier(0.4, 0, 0.2, 1);
+      --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+      /* Layout */
+      --max-width: 720px;
+      --scene-padding: clamp(1.5rem, 4vw, 4rem);
+    }
+
+    /* ==========================================
+       RESET & BASE
+       ========================================== */
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      overflow-x: hidden;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-ui);
+      font-size: var(--font-size-body);
+      line-height: var(--line-height-body);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overscroll-behavior-y: contain;
+      overflow-x: hidden;
+    }
+
+    /* ==========================================
+       VIGNETTE OVERLAY
+       ========================================== */
+    .vignette {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 100;
+      background: radial-gradient(
+        ellipse 80% 80% at 50% 50%,
+        transparent 50%,
+        rgba(0, 0, 0, 0.4) 100%
+      );
+    }
+
+    /* ==========================================
+       PROGRESS BAR
+       ========================================== */
+    .progress-bar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      z-index: 200;
+      background: rgba(255, 255, 255, 0.05);
+      opacity: 0;
+      transition: opacity var(--dur-section) var(--ease-out-quart);
+    }
+
+    .progress-bar.visible {
+      opacity: 1;
+    }
+
+    .progress-bar__fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--gold), var(--gold-glow));
+      transition: width 0.1s linear;
+      will-change: width;
+    }
+
+    /* ==========================================
+       DOT NAV (desktop)
+       ========================================== */
+    .dot-nav {
+      position: fixed;
+      left: 1.5rem;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 150;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      opacity: 0;
+      transition: opacity var(--dur-section) var(--ease-out-quart);
+    }
+
+    .dot-nav.visible {
+      opacity: 1;
+    }
+
+    .dot-nav__item {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.15);
+      border: 1.5px solid rgba(255, 255, 255, 0.2);
+      cursor: pointer;
+      transition: all var(--dur-content) var(--ease-out-quart);
+      position: relative;
+      /* 44px touch target via padding */
+      padding: 0;
+      margin: 0;
+      outline: none;
+    }
+
+    .dot-nav__item::before {
+      content: '';
+      position: absolute;
+      inset: -17px;
+    }
+
+    .dot-nav__item:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: scale(1.3);
+    }
+
+    .dot-nav__item.active {
+      background: var(--gold);
+      border-color: var(--gold);
+      box-shadow: 0 0 8px var(--gold-glow);
+      transform: scale(1.2);
+    }
+
+    .dot-nav__item::after {
+      content: attr(data-label);
+      position: absolute;
+      left: calc(100% + 12px);
+      top: 50%;
+      transform: translateY(-50%);
+      white-space: nowrap;
+      font-size: 0.6875rem;
+      font-family: var(--font-ui);
+      color: var(--text-muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      opacity: 0;
+      transition: opacity var(--dur-micro) ease;
+      pointer-events: none;
+      direction: ltr;
+    }
+
+    .dot-nav__item:hover::after {
+      opacity: 1;
+    }
+
+    @media (max-width: 768px) {
+      .dot-nav { display: none; }
+    }
+
+    /* ==========================================
+       CLOSE BUTTON
+       ========================================== */
+    .close-btn {
+      position: fixed;
+      top: 1.25rem;
+      left: 1.25rem;
+      z-index: 200;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--glass);
+      border: 1px solid var(--glass-border);
+      color: var(--text-muted);
+      font-size: 1.25rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: all var(--dur-section) var(--ease-out-quart);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+
+    .close-btn.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .close-btn:hover {
+      background: var(--surface-hover);
+      color: var(--text);
+      transform: scale(1.05);
+    }
+
+    @media (max-width: 768px) {
+      .close-btn {
+        top: auto;
+        bottom: 1.25rem;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+      .close-btn.visible {
+        transform: translateX(-50%);
+      }
+      .close-btn:hover {
+        transform: translateX(-50%) scale(1.05);
+      }
+    }
+
+    /* ==========================================
+       POEM VIEW (Initial State)
+       ========================================== */
+    .poem-view {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: var(--scene-padding);
+      transition: all var(--dur-hero) var(--ease-out-expo);
+      position: relative;
+    }
+
+    .poem-view.compact {
+      min-height: auto;
+      padding-top: 3rem;
+      padding-bottom: 2rem;
+      justify-content: flex-start;
+    }
+
+    .poem-container {
+      max-width: var(--max-width);
+      width: 100%;
+      text-align: center;
+    }
+
+    .poem-meta {
+      margin-bottom: var(--space-lg);
+    }
+
+    .poet-name {
+      font-family: var(--font-ui-ar);
+      font-size: var(--font-size-small);
+      font-weight: 500;
+      color: var(--gold);
+      letter-spacing: 0.05em;
+      margin-bottom: var(--space-xs);
+    }
+
+    .poem-title-label {
+      font-family: var(--font-ui);
+      font-size: var(--font-size-label);
+      color: var(--text-dim);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      direction: ltr;
+    }
+
+    .poem-text {
+      font-family: var(--font-arabic);
+      font-size: var(--font-size-display);
+      line-height: var(--line-height-poem);
+      color: var(--text);
+      margin-bottom: var(--space-xl);
+      direction: rtl;
+    }
+
+    .poem-text .verse {
+      display: block;
+      margin-bottom: 0.25em;
+      transition: opacity var(--dur-hero) var(--ease-out-quart),
+                  transform var(--dur-hero) var(--ease-out-quart);
+    }
+
+    .poem-view.compact .poem-text {
+      font-size: clamp(1.5rem, 1rem + 2vw, 2.25rem);
+      line-height: 2.0;
+    }
+
+    .poem-view.compact .poem-text .verse {
+      opacity: 0.7;
+    }
+
+    .hemistich-separator {
+      display: inline-block;
+      width: 3em;
+    }
+
+    /* ==========================================
+       EXPLAIN BUTTON
+       ========================================== */
+    .explain-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.875rem 2rem;
+      background: linear-gradient(135deg, var(--gold-dim), rgba(197, 160, 89, 0.06));
+      border: 1px solid rgba(197, 160, 89, 0.25);
+      border-radius: 100px;
+      color: var(--gold);
+      font-family: var(--font-ui-ar);
+      font-size: var(--font-size-small);
+      font-weight: 500;
+      cursor: pointer;
+      transition: all var(--dur-content) var(--ease-out-quart);
+      min-height: 44px;
+      min-width: 44px;
+      direction: ltr;
+    }
+
+    .explain-btn:hover {
+      background: linear-gradient(135deg, rgba(197, 160, 89, 0.2), rgba(197, 160, 89, 0.1));
+      border-color: rgba(197, 160, 89, 0.4);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 20px var(--gold-glow);
+    }
+
+    .explain-btn:active {
+      transform: translateY(0);
+    }
+
+    .explain-btn.hidden {
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(10px) scale(0.95);
+    }
+
+    .explain-btn__icon {
+      font-size: 1.1em;
+    }
+
+    /* ==========================================
+       SCROLL CONTAINER (insight scenes)
+       ========================================== */
+    .scroll-container {
+      opacity: 0;
+      max-height: 0;
+      overflow: hidden;
+      transition: opacity var(--dur-hero) var(--ease-out-expo),
+                  max-height var(--dur-hero) var(--ease-out-expo);
+    }
+
+    .scroll-container.active {
+      opacity: 1;
+      max-height: none;
+      overflow: visible;
+    }
+
+    /* ==========================================
+       SCENE (each insight section)
+       ========================================== */
+    .scene {
+      min-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: var(--space-2xl) var(--scene-padding);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .scene__inner {
+      max-width: var(--max-width);
+      width: 100%;
+      position: relative;
+    }
+
+    /* Clip-path reveal */
+    .scene__reveal {
+      clip-path: circle(0% at 50% 50%);
+      transition: clip-path 0.8s var(--ease-out-expo);
+      will-change: clip-path;
+    }
+
+    .scene__reveal.revealed {
+      clip-path: circle(150% at 50% 50%);
+    }
+
+    /* Parallax wrapper */
+    .scene__parallax {
+      will-change: transform;
+      transition: transform 0.1s linear;
+    }
+
+    /* Scene divider line */
+    .scene__divider {
+      width: 1px;
+      height: 0;
+      background: linear-gradient(to bottom, transparent, var(--gold), transparent);
+      margin: 0 auto;
+      transition: height 0.6s var(--ease-out-expo);
+    }
+
+    .scene__divider.visible {
+      height: 80px;
+    }
+
+    /* Scene label */
+    .scene__label {
+      font-family: var(--font-ui);
+      font-size: var(--font-size-scene-title);
+      font-weight: 600;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--gold);
+      text-align: center;
+      margin-bottom: var(--space-lg);
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity var(--dur-section) var(--ease-out-quart),
+                  transform var(--dur-section) var(--ease-out-quart);
+      direction: ltr;
+    }
+
+    .scene__label.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .scene__label::before,
+    .scene__label::after {
+      content: '';
+      display: inline-block;
+      width: 24px;
+      height: 1px;
+      background: var(--gold);
+      vertical-align: middle;
+      margin: 0 0.75rem;
+      opacity: 0.5;
+    }
+
+    /* Scene content blocks */
+    .scene__content {
+      direction: rtl;
+    }
+
+    .content-block {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity var(--dur-content) var(--ease-out-quart),
+                  transform var(--dur-content) var(--ease-out-quart);
+    }
+
+    .content-block.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .content-block + .content-block {
+      margin-top: var(--space-lg);
+    }
+
+    /* ==========================================
+       SCENE 1: POEM (Translation)
+       ========================================== */
+    .scene--poem {
+      background: linear-gradient(180deg, transparent, rgba(197, 160, 89, 0.02) 50%, transparent);
+    }
+
+    .translation-text {
+      font-family: var(--font-ui);
+      font-size: clamp(1.25rem, 1rem + 1vw, 1.75rem);
+      line-height: 1.9;
+      color: var(--text);
+      text-align: center;
+      font-style: italic;
+      direction: ltr;
+    }
+
+    .translation-text .line {
+      display: block;
+      opacity: 0;
+      transform: translateY(15px);
+      transition: opacity 0.5s var(--ease-out-quart),
+                  transform 0.5s var(--ease-out-quart);
+    }
+
+    .translation-text .line.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .original-echo {
+      font-family: var(--font-arabic);
+      font-size: var(--font-size-small);
+      color: var(--text-dim);
+      text-align: center;
+      margin-top: var(--space-md);
+      line-height: 2.0;
+      direction: rtl;
+    }
+
+    /* ==========================================
+       SCENE 2: THE DEPTH (Analysis)
+       ========================================== */
+    .scene--depth {
+      background: linear-gradient(180deg, transparent, rgba(42, 74, 127, 0.03) 50%, transparent);
+    }
+
+    .analysis-paragraph {
+      font-family: var(--font-ui-ar);
+      font-size: var(--font-size-body-ar);
+      line-height: var(--line-height-body);
+      color: var(--text);
+      direction: rtl;
+    }
+
+    .analysis-paragraph + .analysis-paragraph {
+      margin-top: var(--space-md);
+    }
+
+    .highlight-quote {
+      font-family: var(--font-arabic);
+      font-size: clamp(1.375rem, 1rem + 1.5vw, 2rem);
+      line-height: 2.2;
+      color: var(--gold);
+      text-align: center;
+      padding: var(--space-xl) 0;
+      position: relative;
+      direction: rtl;
+    }
+
+    .highlight-quote::before {
+      content: '\201C';
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 3rem;
+      color: var(--gold-dim);
+      font-family: var(--font-ui);
+      line-height: 1;
+    }
+
+    .technique-tag {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      background: var(--gold-dim);
+      border: 1px solid rgba(197, 160, 89, 0.2);
+      border-radius: 100px;
+      font-family: var(--font-ui-ar);
+      font-size: var(--font-size-label);
+      color: var(--gold);
+      margin: 0.25rem;
+      direction: rtl;
+    }
+
+    /* ==========================================
+       SCENE 3: THE AUTHOR (Biography)
+       ========================================== */
+    .scene--author {
+      background: linear-gradient(180deg, transparent, rgba(197, 160, 89, 0.02) 50%, transparent);
+    }
+
+    .author-name-large {
+      font-family: var(--font-arabic);
+      font-size: clamp(2rem, 1.5rem + 2vw, 3rem);
+      color: var(--text);
+      text-align: center;
+      margin-bottom: var(--space-xs);
+      direction: rtl;
+    }
+
+    .author-dates {
+      font-family: var(--font-ui);
+      font-size: var(--font-size-label);
+      color: var(--text-dim);
+      text-align: center;
+      letter-spacing: 0.1em;
+      margin-bottom: var(--space-xl);
+      direction: ltr;
+    }
+
+    .bio-text {
+      font-family: var(--font-ui-ar);
+      font-size: var(--font-size-body-ar);
+      line-height: var(--line-height-body);
+      color: var(--text);
+      direction: rtl;
+    }
+
+    .bio-text + .bio-text {
+      margin-top: var(--space-md);
+    }
+
+    .era-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: var(--surface);
+      border: 1px solid var(--glass-border);
+      border-radius: 8px;
+      font-family: var(--font-ui-ar);
+      font-size: var(--font-size-small);
+      color: var(--text-muted);
+      margin-top: var(--space-md);
+      direction: rtl;
+    }
+
+    .era-badge__dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--gold);
+    }
+
+    /* ==========================================
+       END CARD
+       ========================================== */
+    .end-card {
+      min-height: 40vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-2xl) var(--scene-padding);
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity var(--dur-section) var(--ease-out-quart),
+                  transform var(--dur-section) var(--ease-out-quart);
+    }
+
+    .end-card.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .end-card__ornament {
+      width: 40px;
+      height: 1px;
+      background: var(--gold);
+      margin-bottom: var(--space-md);
+      opacity: 0.5;
+    }
+
+    .end-card__text {
+      font-family: var(--font-ui-ar);
+      font-size: var(--font-size-small);
+      color: var(--text-muted);
+      direction: rtl;
+    }
+
+    .back-to-top {
+      margin-top: var(--space-lg);
+      padding: 0.75rem 1.5rem;
+      background: transparent;
+      border: 1px solid var(--glass-border);
+      border-radius: 100px;
+      color: var(--text-muted);
+      font-family: var(--font-ui-ar);
+      font-size: var(--font-size-small);
+      cursor: pointer;
+      transition: all var(--dur-content) var(--ease-out-quart);
+      min-height: 44px;
+      min-width: 44px;
+      direction: rtl;
+    }
+
+    .back-to-top:hover {
+      border-color: var(--gold);
+      color: var(--gold);
+    }
+
+    /* ==========================================
+       STREAMING CURSOR
+       ========================================== */
+    .stream-cursor {
+      display: inline-block;
+      width: 2px;
+      height: 1.1em;
+      background: var(--gold);
+      vertical-align: text-bottom;
+      margin-right: 2px;
+      animation: cursor-blink 0.8s ease-in-out infinite;
+    }
+
+    @keyframes cursor-blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    .stream-cursor.done {
+      animation: cursor-fade 0.3s ease forwards;
+    }
+
+    @keyframes cursor-fade {
+      to { opacity: 0; width: 0; margin: 0; }
+    }
+
+    /* ==========================================
+       AMBIENT PARTICLES
+       ========================================== */
+    .particles {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 50;
+      overflow: hidden;
+      opacity: 0;
+      transition: opacity 1s ease;
+    }
+
+    .particles.visible {
+      opacity: 1;
+    }
+
+    .particle {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      background: rgba(197, 160, 89, 0.25);
+      border-radius: 50%;
+      animation: particle-float var(--dur) infinite alternate ease-in-out;
+      animation-delay: var(--delay);
+    }
+
+    @keyframes particle-float {
+      0% { transform: translate(0, 0) scale(1); opacity: 0.2; }
+      100% { transform: translate(var(--dx), var(--dy)) scale(var(--scale)); opacity: 0.5; }
+    }
+
+    /* ==========================================
+       REDUCED MOTION
+       ========================================== */
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+
+      .scene__reveal {
+        clip-path: circle(150% at 50% 50%) !important;
+      }
+
+      .content-block,
+      .scene__label,
+      .scene__divider,
+      .translation-text .line,
+      .end-card {
+        opacity: 1 !important;
+        transform: none !important;
+      }
+
+      .scene__divider {
+        height: 80px !important;
+      }
+
+      .particles { display: none !important; }
+    }
+
+    /* ==========================================
+       RESPONSIVE
+       ========================================== */
+    @media (max-width: 768px) {
+      .scene {
+        min-height: 75vh;
+        padding: var(--space-xl) var(--scene-padding);
+      }
+
+      .highlight-quote {
+        padding: var(--space-lg) 0;
+      }
+    }
+
+    @media (min-width: 1440px) {
+      :root {
+        --scene-padding: 6rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Vignette overlay -->
+  <div class="vignette"></div>
+
+  <!-- Ambient particles -->
+  <div class="particles" id="particles"></div>
+
+  <!-- Progress bar -->
+  <div class="progress-bar" id="progressBar">
+    <div class="progress-bar__fill" id="progressFill"></div>
+  </div>
+
+  <!-- Dot navigation -->
+  <nav class="dot-nav" id="dotNav">
+    <button class="dot-nav__item active" data-target="poemView" data-label="Poem" aria-label="Go to poem"></button>
+    <button class="dot-nav__item" data-target="scenePoem" data-label="Translation" aria-label="Go to translation"></button>
+    <button class="dot-nav__item" data-target="sceneDepth" data-label="Analysis" aria-label="Go to analysis"></button>
+    <button class="dot-nav__item" data-target="sceneAuthor" data-label="Author" aria-label="Go to author"></button>
+  </nav>
+
+  <!-- Close button -->
+  <button class="close-btn" id="closeBtn" aria-label="Close insight view">&times;</button>
+
+  <!-- Poem View -->
+  <section class="poem-view" id="poemView">
+    <div class="poem-container">
+      <div class="poem-meta">
+        <div class="poet-name">نزار قباني</div>
+        <div class="poem-title-label">Selected Verse</div>
+      </div>
+
+      <div class="poem-text" id="poemText">
+        <span class="verse">أَنا بِالحُبِّ تَنَفَّسْتُ هَواءً عَرَبِيّا</span>
+        <span class="verse">وَغَسَلْتُ القَلْبَ فِي نَهْرِ الهَوى غَسْلاً نَقِيّا</span>
+        <span class="verse">وَعَرَفْتُ الحُبَّ مُذْ كُنْتُ صَغِيراً أُمَوِيّا</span>
+        <span class="verse">وَحَمَلْتُ الشِّعْرَ عَنْ أَهْلِ دِمَشْقَ الطَّيِّبِينَ</span>
+      </div>
+
+      <button class="explain-btn" id="explainBtn">
+        <span class="explain-btn__icon">&#10024;</span>
+        <span>Explain</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- Scroll Container (Insight Scenes) -->
+  <div class="scroll-container" id="scrollContainer">
+
+    <!-- Divider -->
+    <div class="scene__divider" id="divider1"></div>
+
+    <!-- Scene 1: POEM (Translation) -->
+    <section class="scene scene--poem" id="scenePoem">
+      <div class="scene__inner">
+        <div class="scene__label" data-observe="label">THE POEM</div>
+        <div class="scene__reveal" data-observe="reveal">
+          <div class="content-block" data-observe="content" data-delay="0">
+            <div class="translation-text" id="translationText">
+              <!-- Streamed in via JS -->
+            </div>
+          </div>
+          <div class="content-block" data-observe="content" data-delay="200">
+            <div class="original-echo">
+              أَنا بِالحُبِّ تَنَفَّسْتُ هَواءً عَرَبِيّا
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Divider -->
+    <div class="scene__divider" id="divider2"></div>
+
+    <!-- Scene 2: THE DEPTH (Analysis) -->
+    <section class="scene scene--depth" id="sceneDepth">
+      <div class="scene__inner">
+        <div class="scene__label" data-observe="label">THE DEPTH</div>
+        <div class="scene__reveal" data-observe="reveal">
+          <div class="content-block" data-observe="content" data-delay="0">
+            <div class="analysis-paragraph" id="analysisText1">
+              <!-- Streamed in via JS -->
+            </div>
+          </div>
+          <div class="content-block" data-observe="content" data-delay="150">
+            <div class="highlight-quote" id="highlightQuote">
+              <!-- Streamed in via JS -->
+            </div>
+          </div>
+          <div class="content-block" data-observe="content" data-delay="300">
+            <div class="analysis-paragraph" id="analysisText2">
+              <!-- Streamed in via JS -->
+            </div>
+          </div>
+          <div class="content-block" data-observe="content" data-delay="400">
+            <div id="techniqueTags">
+              <!-- Inserted via JS -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Divider -->
+    <div class="scene__divider" id="divider3"></div>
+
+    <!-- Scene 3: THE AUTHOR (Biography) -->
+    <section class="scene scene--author" id="sceneAuthor">
+      <div class="scene__inner">
+        <div class="scene__label" data-observe="label">THE AUTHOR</div>
+        <div class="scene__reveal" data-observe="reveal">
+          <div class="content-block" data-observe="content" data-delay="0">
+            <div class="author-name-large">نزار قباني</div>
+            <div class="author-dates">1923 &mdash; 1998</div>
+          </div>
+          <div class="content-block" data-observe="content" data-delay="150">
+            <div class="bio-text" id="bioText1">
+              <!-- Streamed in via JS -->
+            </div>
+          </div>
+          <div class="content-block" data-observe="content" data-delay="300">
+            <div class="bio-text" id="bioText2">
+              <!-- Streamed in via JS -->
+            </div>
+          </div>
+          <div class="content-block" data-observe="content" data-delay="400">
+            <div class="era-badge">
+              <span class="era-badge__dot"></span>
+              <span>الشعر العربي الحديث &mdash; Modern Arabic Poetry</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- End Card -->
+    <div class="end-card" id="endCard" data-observe="content">
+      <div class="end-card__ornament"></div>
+      <div class="end-card__text">انتهى التحليل</div>
+      <button class="back-to-top" id="backToTop">العودة إلى القصيدة</button>
+    </div>
+  </div>
+
+  <script>
+    /* ==========================================
+       STATE
+       ========================================== */
+    let insightActive = false;
+    let streamingComplete = false;
+
+    /* ==========================================
+       ELEMENTS
+       ========================================== */
+    const poemView = document.getElementById('poemView');
+    const explainBtn = document.getElementById('explainBtn');
+    const scrollContainer = document.getElementById('scrollContainer');
+    const progressBar = document.getElementById('progressBar');
+    const progressFill = document.getElementById('progressFill');
+    const dotNav = document.getElementById('dotNav');
+    const closeBtn = document.getElementById('closeBtn');
+    const backToTop = document.getElementById('backToTop');
+    const particlesEl = document.getElementById('particles');
+
+    /* ==========================================
+       MOCK CONTENT (simulates AI response)
+       ========================================== */
+    const content = {
+      translation: [
+        'Through love, I breathed an Arab air,',
+        'And washed my heart in the river of passion \u2014 a pure washing,',
+        'I have known love since I was a young Umayyad boy,',
+        'And I carried poetry from the good people of Damascus.'
+      ],
+      analysis1: '\u064A\u0628\u062F\u0623 \u0646\u0632\u0627\u0631 \u0642\u0628\u0627\u0646\u064A \u0647\u0630\u0647 \u0627\u0644\u0623\u0628\u064A\u0627\u062A \u0628\u0625\u0639\u0644\u0627\u0646 \u0647\u0648\u064A\u0629 \u0634\u0639\u0631\u064A\u0629 \u0645\u062A\u062C\u0630\u0631\u0629 \u0641\u064A \u0627\u0644\u062D\u0628 \u0648\u0627\u0644\u0639\u0631\u0648\u0628\u0629. \u0641\u0639\u0644 \u201C\u062A\u0646\u0641\u0651\u0633\u062A\u201D \u064A\u062D\u0648\u0651\u0644 \u0627\u0644\u062D\u0628 \u0645\u0646 \u0634\u0639\u0648\u0631 \u0645\u062C\u0631\u062F \u0625\u0644\u0649 \u0639\u0646\u0635\u0631 \u062D\u064A\u0627\u0629 \u2014 \u0647\u0648\u0627\u0621 \u064A\u0633\u062A\u0646\u0634\u0642\u0647 \u0627\u0644\u0634\u0627\u0639\u0631. \u0648\u0635\u0641 \u0627\u0644\u0647\u0648\u0627\u0621 \u0628\u0640\u201C\u0639\u0631\u0628\u064A\u0651\u0627\u201D \u064A\u0631\u0628\u0637 \u0627\u0644\u062D\u0628 \u0628\u0627\u0644\u0647\u0648\u064A\u0629 \u0627\u0644\u062B\u0642\u0627\u0641\u064A\u0629\u060C \u0641\u0643\u0623\u0646\u0651 \u0627\u0644\u062D\u0628 \u0639\u0646\u062F \u0642\u0628\u0627\u0646\u064A \u0644\u064A\u0633 \u062A\u062C\u0631\u0628\u0629 \u0641\u0631\u062F\u064A\u0629 \u0628\u0644 \u062A\u0631\u0627\u062B \u062D\u0636\u0627\u0631\u064A.',
+      quote: '\u0648\u063A\u0633\u0644\u062A\u064F \u0627\u0644\u0642\u0644\u0628\u064E \u0641\u0650\u064A \u0646\u0647\u0631\u0650 \u0627\u0644\u0647\u0648\u0649 \u063A\u0633\u0644\u0627\u064B \u0646\u0642\u064A\u0651\u0627',
+      analysis2: '\u0627\u0633\u062A\u0639\u0627\u0631\u0629 \u201C\u063A\u0633\u0644 \u0627\u0644\u0642\u0644\u0628 \u0641\u064A \u0646\u0647\u0631 \u0627\u0644\u0647\u0648\u0649\u201D \u062A\u062D\u0645\u0644 \u0628\u0639\u062F\u0627\u064B \u0635\u0648\u0641\u064A\u0627\u064B \u0648\u0637\u0642\u0648\u0633\u064A\u0627\u064B. \u0627\u0644\u0646\u0647\u0631 \u0631\u0645\u0632 \u0644\u0644\u062A\u062C\u062F\u062F \u0648\u0627\u0644\u062A\u0637\u0647\u0631\u060C \u0648\u0627\u0644\u063A\u0633\u0644 \u0627\u0644\u0646\u0642\u064A \u064A\u0634\u064A\u0631 \u0625\u0644\u0649 \u062D\u0628 \u062E\u0627\u0644\u0635 \u0645\u0646 \u0627\u0644\u0634\u0648\u0627\u0626\u0628. \u0623\u0645\u0627 \u0648\u0635\u0641 \u0646\u0641\u0633\u0647 \u0628\u0640\u201C\u0623\u0645\u0648\u064A\u0651\u0627\u201D \u0641\u064A\u0624\u0633\u0633 \u0644\u0631\u0627\u0628\u0637 \u0632\u0645\u0646\u064A \u0628\u064A\u0646 \u0627\u0644\u0634\u0627\u0639\u0631 \u0648\u062F\u0645\u0634\u0642 \u0627\u0644\u0623\u0645\u0648\u064A\u0629 \u2014 \u062D\u0627\u0636\u0631\u0629 \u0627\u0644\u0634\u0639\u0631 \u0648\u0627\u0644\u062C\u0645\u0627\u0644.',
+      techniques: ['\u0627\u0633\u062A\u0639\u0627\u0631\u0629 \u0645\u0643\u0646\u064A\u0629', '\u062A\u0634\u0628\u064A\u0647 \u0628\u0644\u064A\u063A', '\u062C\u0646\u0627\u0633', '\u062A\u0648\u0638\u064A\u0641 \u0627\u0644\u062A\u0627\u0631\u064A\u062E', '\u0631\u0645\u0632\u064A\u0629 \u0635\u0648\u0641\u064A\u0629'],
+      bio1: '\u0646\u0632\u0627\u0631 \u062A\u0648\u0641\u064A\u0642 \u0642\u0628\u0627\u0646\u064A (1923-1998) \u0634\u0627\u0639\u0631 \u0648\u062F\u0628\u0644\u0648\u0645\u0627\u0633\u064A \u0633\u0648\u0631\u064A\u060C \u064A\u064F\u0639\u062F\u0651 \u0645\u0646 \u0623\u0647\u0645 \u0634\u0639\u0631\u0627\u0621 \u0627\u0644\u0639\u0631\u0628\u064A\u0629 \u0627\u0644\u0645\u0639\u0627\u0635\u0631\u064A\u0646. \u0648\u064F\u0644\u062F \u0641\u064A \u062D\u064A \u201C\u0645\u0626\u0630\u0646\u0629 \u0627\u0644\u0634\u062D\u0645\u201D \u0628\u062F\u0645\u0634\u0642 \u0627\u0644\u0642\u062F\u064A\u0645\u0629 \u0641\u064A \u0628\u064A\u062A \u062F\u0645\u0634\u0642\u064A \u062A\u0642\u0644\u064A\u062F\u064A. \u0628\u062F\u0623 \u0643\u062A\u0627\u0628\u0629 \u0627\u0644\u0634\u0639\u0631 \u0641\u064A \u0633\u0646 \u0627\u0644\u0645\u0631\u0627\u0647\u0642\u0629\u060C \u0648\u0646\u0634\u0631 \u062F\u064A\u0648\u0627\u0646\u0647 \u0627\u0644\u0623\u0648\u0644 \u201C\u0642\u0627\u0644\u062A \u0644\u064A \u0627\u0644\u0633\u0645\u0631\u0627\u0621\u201D \u0639\u0627\u0645 1944 \u0648\u0647\u0648 \u0644\u0627 \u064A\u0632\u0627\u0644 \u0637\u0627\u0644\u0628\u0627\u064B \u0641\u064A \u0643\u0644\u064A\u0629 \u0627\u0644\u062D\u0642\u0648\u0642.',
+      bio2: '\u062A\u0645\u064A\u0651\u0632 \u0634\u0639\u0631 \u0642\u0628\u0627\u0646\u064A \u0628\u062C\u0631\u0623\u062A\u0647 \u0641\u064A \u062A\u0646\u0627\u0648\u0644 \u0645\u0648\u0636\u0648\u0639\u0627\u062A \u0627\u0644\u062D\u0628 \u0648\u0627\u0644\u0645\u0631\u0623\u0629 \u0648\u0627\u0644\u0633\u064A\u0627\u0633\u0629. \u0643\u0633\u0631 \u0642\u0628\u0627\u0646\u064A \u0627\u0644\u0642\u0648\u0627\u0644\u0628 \u0627\u0644\u062A\u0642\u0644\u064A\u062F\u064A\u0629 \u0644\u0644\u0642\u0635\u064A\u062F\u0629 \u0627\u0644\u0639\u0631\u0628\u064A\u0629\u060C \u0648\u0627\u0633\u062A\u062E\u062F\u0645 \u0644\u063A\u0629 \u0642\u0631\u064A\u0628\u0629 \u0645\u0646 \u0627\u0644\u0646\u0627\u0633. \u0646\u064F\u0634\u0631 \u0644\u0647 \u0623\u0643\u062B\u0631 \u0645\u0646 35 \u062F\u064A\u0648\u0627\u0646\u0627\u064B \u0634\u0639\u0631\u064A\u0627\u064B\u060C \u0648\u062A\u064F\u0631\u062C\u0645\u062A \u0623\u0639\u0645\u0627\u0644\u0647 \u0625\u0644\u0649 \u0645\u0639\u0638\u0645 \u0627\u0644\u0644\u063A\u0627\u062A \u0627\u0644\u062D\u064A\u0629.'
+    };
+
+    /* ==========================================
+       PARTICLE GENERATION
+       ========================================== */
+    (function generateParticles() {
+      const count = 30;
+      for (let i = 0; i < count; i++) {
+        const p = document.createElement('div');
+        p.className = 'particle';
+        const styles = [
+          'left:' + (Math.random() * 100) + '%',
+          'top:' + (Math.random() * 100) + '%',
+          '--dur:' + (15 + Math.random() * 20) + 's',
+          '--delay:' + (-Math.random() * 20) + 's',
+          '--dx:' + ((Math.random() - 0.5) * 60) + 'px',
+          '--dy:' + ((Math.random() - 0.5) * 60) + 'px',
+          '--scale:' + (0.5 + Math.random() * 1.5),
+          'width:' + (1 + Math.random() * 2) + 'px',
+          'height:' + (1 + Math.random() * 2) + 'px'
+        ];
+        p.style.cssText = styles.join(';');
+        particlesEl.appendChild(p);
+      }
+    })();
+
+    /* ==========================================
+       STREAMING TEXT SIMULATION
+       ========================================== */
+    function streamText(element, text, charDelay) {
+      charDelay = charDelay || 18;
+      return new Promise(function(resolve) {
+        var prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (prefersReduced) {
+          element.textContent = text;
+          resolve();
+          return;
+        }
+
+        var cursor = document.createElement('span');
+        cursor.className = 'stream-cursor';
+        element.textContent = '';
+        element.appendChild(cursor);
+
+        var i = 0;
+        function addChar() {
+          if (i < text.length) {
+            var textNode = document.createTextNode(text[i]);
+            element.insertBefore(textNode, cursor);
+            i++;
+            setTimeout(addChar, charDelay + Math.random() * 10);
+          } else {
+            cursor.classList.add('done');
+            setTimeout(function() {
+              if (cursor.parentNode) cursor.parentNode.removeChild(cursor);
+              resolve();
+            }, 400);
+          }
+        }
+        addChar();
+      });
+    }
+
+    function streamTranslationLines(container, lines) {
+      return new Promise(function(resolve) {
+        var prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        var idx = 0;
+
+        function processLine() {
+          if (idx >= lines.length) {
+            resolve();
+            return;
+          }
+
+          var lineEl = document.createElement('span');
+          lineEl.className = 'line';
+          container.appendChild(lineEl);
+
+          if (prefersReduced) {
+            lineEl.textContent = lines[idx];
+            lineEl.classList.add('visible');
+            idx++;
+            processLine();
+          } else {
+            streamText(lineEl, lines[idx], 20).then(function() {
+              lineEl.classList.add('visible');
+              idx++;
+              if (idx < lines.length) {
+                setTimeout(processLine, 200);
+              } else {
+                resolve();
+              }
+            });
+          }
+        }
+        processLine();
+      });
+    }
+
+    /* ==========================================
+       INTERSECTION OBSERVER SETUP
+       ========================================== */
+    var revealObserver = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting && entry.intersectionRatio >= 0.15) {
+          entry.target.classList.add('revealed');
+        }
+      });
+    }, { root: null, rootMargin: '0px 0px -10% 0px', threshold: [0, 0.15] });
+
+    var contentObserver = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting && entry.intersectionRatio >= 0.15) {
+          var delay = parseInt(entry.target.dataset.delay || '0', 10);
+          setTimeout(function() {
+            entry.target.classList.add('visible');
+          }, delay);
+        }
+      });
+    }, { root: null, rootMargin: '0px 0px -10% 0px', threshold: [0, 0.15] });
+
+    var labelObserver = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { root: null, rootMargin: '0px 0px -5% 0px', threshold: 0.1 });
+
+    var dividerObserver = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { root: null, threshold: 0.5 });
+
+    /* ==========================================
+       REGISTER OBSERVERS
+       ========================================== */
+    function registerObservers() {
+      document.querySelectorAll('[data-observe="reveal"]').forEach(function(el) {
+        revealObserver.observe(el);
+      });
+      document.querySelectorAll('[data-observe="content"]').forEach(function(el) {
+        contentObserver.observe(el);
+      });
+      document.querySelectorAll('[data-observe="label"]').forEach(function(el) {
+        labelObserver.observe(el);
+      });
+      document.querySelectorAll('.scene__divider').forEach(function(el) {
+        dividerObserver.observe(el);
+      });
+    }
+
+    /* ==========================================
+       SCROLL PROGRESS & DOT NAV TRACKING
+       ========================================== */
+    var sectionIds = ['poemView', 'scenePoem', 'sceneDepth', 'sceneAuthor'];
+    var dotItems = dotNav.querySelectorAll('.dot-nav__item');
+
+    function updateProgress() {
+      if (!insightActive) return;
+
+      var scrollTop = window.scrollY;
+      var docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      var progress = docHeight > 0 ? Math.min(scrollTop / docHeight, 1) : 0;
+      progressFill.style.width = (progress * 100) + '%';
+
+      // Update active dot
+      var activeIdx = 0;
+      sectionIds.forEach(function(id, i) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        var rect = el.getBoundingClientRect();
+        if (rect.top <= window.innerHeight * 0.5) {
+          activeIdx = i;
+        }
+      });
+
+      dotItems.forEach(function(dot, i) {
+        dot.classList.toggle('active', i === activeIdx);
+      });
+    }
+
+    window.addEventListener('scroll', updateProgress, { passive: true });
+
+    /* ==========================================
+       DOT NAV CLICK HANDLING
+       ========================================== */
+    dotItems.forEach(function(dot) {
+      dot.addEventListener('click', function() {
+        var targetId = dot.dataset.target;
+        var targetEl = document.getElementById(targetId);
+        if (targetEl) {
+          targetEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
+    });
+
+    /* ==========================================
+       EXPLAIN BUTTON — ACTIVATE SCROLL VIEW
+       ========================================== */
+    explainBtn.addEventListener('click', function() {
+      if (insightActive) return;
+      insightActive = true;
+
+      // Transform poem view to compact
+      poemView.classList.add('compact');
+      explainBtn.classList.add('hidden');
+
+      // Show chrome
+      setTimeout(function() {
+        progressBar.classList.add('visible');
+        dotNav.classList.add('visible');
+        closeBtn.classList.add('visible');
+        particlesEl.classList.add('visible');
+      }, 300);
+
+      // Activate scroll container
+      setTimeout(function() {
+        scrollContainer.classList.add('active');
+        registerObservers();
+      }, 400);
+
+      // Start streaming content with stagger
+      setTimeout(function() { startStreaming(); }, 800);
+    });
+
+    /* ==========================================
+       STREAMING ORCHESTRATION
+       ========================================== */
+    function startStreaming() {
+      var translationEl = document.getElementById('translationText');
+
+      streamTranslationLines(translationEl, content.translation)
+        .then(function() {
+          var analysis1 = document.getElementById('analysisText1');
+          return streamText(analysis1, content.analysis1, 12);
+        })
+        .then(function() {
+          var quoteEl = document.getElementById('highlightQuote');
+          return streamText(quoteEl, content.quote, 25);
+        })
+        .then(function() {
+          var analysis2 = document.getElementById('analysisText2');
+          return streamText(analysis2, content.analysis2, 12);
+        })
+        .then(function() {
+          // Technique tags
+          var tagsContainer = document.getElementById('techniqueTags');
+          content.techniques.forEach(function(tag, i) {
+            setTimeout(function() {
+              var span = document.createElement('span');
+              span.className = 'technique-tag';
+              span.textContent = tag;
+              span.style.opacity = '0';
+              span.style.transform = 'translateY(8px)';
+              span.style.transition = 'opacity 0.3s ease, transform 0.3s ease';
+              tagsContainer.appendChild(span);
+              requestAnimationFrame(function() {
+                span.style.opacity = '1';
+                span.style.transform = 'translateY(0)';
+              });
+            }, i * 100);
+          });
+
+          return new Promise(function(r) {
+            setTimeout(r, content.techniques.length * 100 + 200);
+          });
+        })
+        .then(function() {
+          var bio1 = document.getElementById('bioText1');
+          return streamText(bio1, content.bio1, 10);
+        })
+        .then(function() {
+          var bio2 = document.getElementById('bioText2');
+          return streamText(bio2, content.bio2, 10);
+        })
+        .then(function() {
+          streamingComplete = true;
+        });
+    }
+
+    /* ==========================================
+       CLOSE / BACK TO TOP
+       ========================================== */
+    function clearStreamedContent() {
+      var ids = [
+        'translationText', 'analysisText1', 'highlightQuote',
+        'analysisText2', 'techniqueTags', 'bioText1', 'bioText2'
+      ];
+      ids.forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) {
+          while (el.firstChild) {
+            el.removeChild(el.firstChild);
+          }
+        }
+      });
+    }
+
+    function closeInsight() {
+      // Scroll to top
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      setTimeout(function() {
+        insightActive = false;
+
+        // Hide chrome
+        progressBar.classList.remove('visible');
+        dotNav.classList.remove('visible');
+        closeBtn.classList.remove('visible');
+        particlesEl.classList.remove('visible');
+
+        // Collapse scroll container
+        scrollContainer.classList.remove('active');
+
+        // Restore poem view
+        poemView.classList.remove('compact');
+        explainBtn.classList.remove('hidden');
+
+        // Reset all revealed states
+        document.querySelectorAll('.revealed').forEach(function(el) { el.classList.remove('revealed'); });
+        document.querySelectorAll('.visible[data-observe]').forEach(function(el) { el.classList.remove('visible'); });
+        document.querySelectorAll('.scene__divider.visible').forEach(function(el) { el.classList.remove('visible'); });
+        document.querySelectorAll('.scene__label.visible').forEach(function(el) { el.classList.remove('visible'); });
+        document.querySelectorAll('.end-card.visible').forEach(function(el) { el.classList.remove('visible'); });
+
+        // Clear streamed content safely
+        clearStreamedContent();
+
+        streamingComplete = false;
+      }, 600);
+    }
+
+    closeBtn.addEventListener('click', closeInsight);
+    backToTop.addEventListener('click', closeInsight);
+
+    /* ==========================================
+       END CARD OBSERVER
+       ========================================== */
+    var endCardObserver = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.3 });
+
+    endCardObserver.observe(document.getElementById('endCard'));
+
+    /* ==========================================
+       KEYBOARD NAVIGATION
+       ========================================== */
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && insightActive) {
+        closeInsight();
+      }
+    });
+  </script>
+</body>
+</html>

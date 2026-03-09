@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { Play, Pause, BookOpen, RefreshCw, Volume2, ChevronDown, Quote, Globe, Moon, Sun, Loader2, ChevronRight, ChevronLeft, Search, X, Copy, LayoutGrid, Check, Bug, Trash2, Sparkles, Feather, Library, Compass, Rabbit, Heart, LogIn, LogOut, User, Settings2, ArrowRight, Languages, Share2, CalendarDays, ThumbsDown } from 'lucide-react';
 import { track } from '@vercel/analytics';
 import { useAuth, useUserSettings, useSavedPoems, useDownvotes, usePoemEvents } from './hooks/useAuth';
@@ -2809,9 +2809,9 @@ export default function DiwanApp() {
             setAudioUrl(u);
             audioRef.current.src = u;
             audioRef.current.load();
-            audioRef.current.play().then(() => setIsPlaying(true)).catch(e => {
-              addLog("Audio", "Starting playback...", "info");
-              setIsPlaying(true);
+            audioRef.current.play().then(() => setIsPlaying(true)).catch(err => {
+              if (FEATURES.logging) console.warn('[Audio] Playback failed:', err.message);
+              addLog("Audio", `Playback failed: ${err.message}`, "error");
             });
           } else {
             addLog("Audio", "Background generation failed — please try again", "info");
@@ -2841,9 +2841,9 @@ export default function DiwanApp() {
               setAudioUrl(u);
               audioRef.current.src = u;
               audioRef.current.load();
-              audioRef.current.play().then(() => setIsPlaying(true)).catch(e => {
-                addLog("Audio", "Starting playback...", "info");
-                setIsPlaying(true);
+              audioRef.current.play().then(() => setIsPlaying(true)).catch(err => {
+                if (FEATURES.logging) console.warn('[Audio] Playback failed:', err.message);
+                addLog("Audio", `Playback failed: ${err.message}`, "error");
               });
             } else {
               addLog("Audio", `Audio generation timeout - please try again`, "error");
@@ -2873,9 +2873,9 @@ export default function DiwanApp() {
         setAudioUrl(u);
         audioRef.current.src = u;
         audioRef.current.load();
-        audioRef.current.play().then(() => setIsPlaying(true)).catch(e => {
-          addLog("Audio", "Starting cached playback...", "info");
-          setIsPlaying(true);
+        audioRef.current.play().then(() => setIsPlaying(true)).catch(err => {
+          if (FEATURES.logging) console.warn('[Audio] Playback failed:', err.message);
+          addLog("Audio", `Cached playback failed: ${err.message}`, "error");
         });
         setIsGeneratingAudio(false); // Clear loading state
         isTogglingPlay.current = false;
@@ -2972,9 +2972,9 @@ export default function DiwanApp() {
           setAudioUrl(u);
           audioRef.current.src = u;
           audioRef.current.load();
-          audioRef.current.play().then(() => setIsPlaying(true)).catch(e => {
-             addLog("Audio", "Starting playback...", "info");
-             setIsPlaying(true);
+          audioRef.current.play().then(() => setIsPlaying(true)).catch(err => {
+             if (FEATURES.logging) console.warn('[Audio] Playback failed:', err.message);
+             addLog("Audio", `Playback failed: ${err.message}`, "error");
           });
 
           // CACHE THE AUDIO BLOB

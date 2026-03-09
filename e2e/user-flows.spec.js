@@ -219,11 +219,18 @@ test.describe('User Flows', () => {
     const settingsBtn = page.locator('button[title="Settings"]').first();
     await settingsBtn.click();
     await page.waitForTimeout(300);
+
+    // Wait for Settings sub-menu to be visible
+    await expect(page.locator('button[title="Poet filter"]').first()).toBeVisible({ timeout: 2000 });
+
     const poetBtn = page.locator('button[title="Poet filter"]').first();
-    await expect(poetBtn).toBeVisible({ timeout: 2000 });
     await poetBtn.click();
 
+    // Wait for dropdown to open and stabilize
+    await page.waitForTimeout(300);
+
     // Select a specific poet from the picker dropdown
+    // The dropdown opens to the left of the sidebar, so ensure it's in viewport
     const poetOption = page.locator('text=نزار قباني').first();
     await expect(poetOption).toBeVisible({ timeout: 3000 });
     await poetOption.click();

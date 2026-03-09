@@ -50,6 +50,7 @@ design-review/audit-screenshots/
 supabase/migrations/*_import_poetry.sql
 supabase/migrations/*.sql.skip
 poetry-database/*.dump
+*.dump
 
 # Database dumps (binary files, should not be in version control)
 poetry-database/
@@ -65,6 +66,7 @@ poetry-splash-ci-fixes/
 poetry_quality_and_curation/retriever_and_quality_curator/data/*.parquet
 poetry_quality_and_curation/retriever_and_quality_curator/data/*.csv
 poetry_quality_and_curation/retriever_and_quality_curator/data/*.json
+poetry_quality_and_curation/retriever_and_quality_curator/data/*.json.*
 poetry_quality_and_curation/retriever_and_quality_curator/data/*.rar
 !poetry_quality_and_curation/retriever_and_quality_curator/data/.gitkeep
 # Keep generated HTML reports tracked

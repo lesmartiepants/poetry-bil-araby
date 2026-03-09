@@ -58,10 +58,31 @@ const THEME = {
     brand: 'text-indigo-400',
     brandBg: 'bg-indigo-500/10',
     brandBorder: 'border-indigo-500/20',
-    btnPrimary: 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-indigo-500/40', 
+    btnPrimary: 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-indigo-500/40',
     titleColor: 'text-[#C5A059]', // Antique Gold
     poetColor: 'text-[#C5A059]', // Unified Gold
-    controlIcon: 'text-stone-300 hover:text-white'
+    controlIcon: 'text-stone-300 hover:text-white',
+    gold: '#C5A059',              // Raw gold hex for inline styles & template literals
+    goldText: 'text-[#C5A059]',   // Tailwind gold text
+    goldHoverBg: 'hover:bg-[#C5A059]/12',  // Gold hover background (buttons)
+    goldHoverBg15: 'hover:bg-[#C5A059]/15', // Gold hover background (sidebar)
+    goldActiveBg: 'bg-[#C5A059]/15',        // Gold active/selected background
+    goldBorder: 'border-[#C5A059]',          // Gold solid border (selected state)
+    goldBorderMuted: 'border-[#C5A059]/20',  // Gold muted border (dividers)
+    goldBorderSubtle: 'border-[#C5A059]/30', // Gold subtle border (hover)
+    goldHoverBorderSubtle: 'hover:border-[#C5A059]/30', // Gold hover border
+    goldBorderAccent: 'border-[#C5A059]/40', // Gold border accent (sidebar edges)
+    goldBorderStrong: 'border-[#C5A059]/70', // Gold border strong (hover state)
+    goldHoverBorderStrong: 'hover:border-[#C5A059]/70', // Gold hover border strong
+    goldBg10: 'bg-[#C5A059]/10',             // Gold background 10% (selected items)
+    goldBg20: 'border-[#C5A059]/20',         // Gold background 20% (badge border)
+    goldTextMuted: 'text-[#C5A059]/60',      // Gold muted text
+    error: 'text-red-400',         // Error text
+    errorBg: 'bg-red-600/80',     // Error background (bug report button)
+    debug: 'bg-black/60 border-stone-800 text-stone-300', // Debug panel
+    debugInput: 'bg-stone-900/80 border-stone-700 text-stone-200 placeholder:text-stone-500', // Debug input
+    debugDivider: 'border-stone-700', // Debug panel divider
+    kbd: 'bg-stone-800 text-stone-300 border-stone-700' // Keyboard shortcut keys
   },
   light: {
     bg: 'bg-[#FDFCF8]',
@@ -78,9 +99,35 @@ const THEME = {
     btnPrimary: 'bg-gradient-to-br from-indigo-600 to-purple-700 text-white shadow-indigo-200',
     titleColor: 'text-[#8B7355]', // Antique Gold (rich, warm tone - 5.2:1 contrast)
     poetColor: 'text-[#8B7355]', // Antique Gold (rich, warm tone - 5.2:1 contrast)
-    controlIcon: 'text-indigo-950/90 hover:text-black'
+    controlIcon: 'text-indigo-950/90 hover:text-black',
+    gold: '#8B7355',              // Raw gold hex for inline styles & template literals
+    goldText: 'text-[#8B7355]',   // Tailwind gold text
+    goldHoverBg: 'hover:bg-[#8B7355]/12',  // Gold hover background (buttons)
+    goldHoverBg15: 'hover:bg-[#8B7355]/15', // Gold hover background (sidebar)
+    goldActiveBg: 'bg-[#8B7355]/15',        // Gold active/selected background
+    goldBorder: 'border-[#8B7355]',          // Gold solid border (selected state)
+    goldBorderMuted: 'border-[#8B7355]/20',  // Gold muted border (dividers)
+    goldBorderSubtle: 'border-[#8B7355]/30', // Gold subtle border (hover)
+    goldHoverBorderSubtle: 'hover:border-[#8B7355]/30', // Gold hover border
+    goldBorderAccent: 'border-[#8B7355]/40', // Gold border accent (sidebar edges)
+    goldBorderStrong: 'border-[#8B7355]/70', // Gold border strong (hover state)
+    goldHoverBorderStrong: 'hover:border-[#8B7355]/70', // Gold hover border strong
+    goldBg10: 'bg-[#8B7355]/10',             // Gold background 10% (selected items)
+    goldBg20: 'border-[#8B7355]/20',         // Gold background 20% (badge border)
+    goldTextMuted: 'text-[#8B7355]/60',      // Gold muted text
+    error: 'text-red-400',         // Error text (same in light for visibility)
+    errorBg: 'bg-red-600/80',     // Error background (bug report button)
+    debug: 'bg-white/60 border-stone-200 text-stone-700', // Debug panel
+    debugInput: 'bg-white/80 border-stone-300 text-stone-800 placeholder:text-stone-400', // Debug input
+    debugDivider: 'border-stone-300', // Debug panel divider
+    kbd: 'bg-stone-200 text-stone-700 border-stone-300' // Keyboard shortcut keys
   }
 };
+
+// Convenience alias: many UI elements (control bar, dropdowns, badges) always use
+// the dark-mode gold regardless of current theme.  Destructuring avoids verbose
+// `THEME.dark.*` references throughout the JSX.
+const GOLD = THEME.dark;
 
 const CATEGORIES = [
   { id: "All", label: "All Poets", labelAr: "كل الشعراء" },
@@ -753,6 +800,7 @@ const MysticalConsultationEffect = ({ active, theme }) => {
 };
 
 const DebugPanel = ({ logs, onClear, darkMode, poem, appState }) => {
+  const theme = darkMode ? THEME.dark : THEME.light;
   const [isExpanded, setIsExpanded] = useState(false);
   const [bugDescription, setBugDescription] = useState('');
   const [bugStatus, setBugStatus] = useState(null); // null | 'sending' | 'success' | 'error'
@@ -799,7 +847,7 @@ const DebugPanel = ({ logs, onClear, darkMode, poem, appState }) => {
 
   return (
     <div className={`w-full max-w-full transition-all duration-300 ${isExpanded ? 'h-48 md:h-64' : 'h-7'} overflow-hidden border-b ${
-      darkMode ? 'bg-black/60 border-stone-800 text-stone-300' : 'bg-white/60 border-stone-200 text-stone-700'
+      theme.debug
     } backdrop-blur-md shadow-lg flex flex-col relative z-[100] flex-none`}>
       <div className="flex items-center justify-between px-6 h-7 cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}>
         <div className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-widest opacity-60 text-indigo-500 leading-none h-full">
@@ -812,18 +860,18 @@ const DebugPanel = ({ logs, onClear, darkMode, poem, appState }) => {
       </div>
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 pb-3 font-mono text-[10px] space-y-1 custom-scrollbar">
         {logs.map((log, idx) => (
-          <div key={idx} className={`pb-1 border-b border-stone-500/5 ${log.type === 'error' ? 'text-red-400' : log.type === 'success' ? 'text-indigo-400' : ''}`}>
+          <div key={idx} className={`pb-1 border-b border-stone-500/5 ${log.type === 'error' ? theme.error : log.type === 'success' ? 'text-indigo-400' : ''}`}>
             <span className="opacity-40">[{log.time}]</span> <span className="font-bold">{log.label}:</span> {log.msg}
           </div>
         ))}
         {isExpanded && (
-          <div className={`flex items-center gap-2 pt-2 border-t ${darkMode ? 'border-stone-700' : 'border-stone-300'}`}>
+          <div className={`flex items-center gap-2 pt-2 border-t ${theme.debugDivider}`}>
             <input
               type="text"
               value={bugDescription}
               onChange={(e) => setBugDescription(e.target.value)}
               placeholder="Describe the bug (optional)"
-              className={`flex-1 px-2 py-1 rounded text-[10px] border ${darkMode ? 'bg-stone-900/80 border-stone-700 text-stone-200 placeholder:text-stone-500' : 'bg-white/80 border-stone-300 text-stone-800 placeholder:text-stone-400'}`}
+              className={`flex-1 px-2 py-1 rounded text-[10px] border ${theme.debugInput}`}
               onClick={(e) => e.stopPropagation()}
             />
             <button
@@ -831,7 +879,7 @@ const DebugPanel = ({ logs, onClear, darkMode, poem, appState }) => {
               disabled={bugStatus === 'sending'}
               className={`px-2 py-1 rounded text-[9px] font-bold uppercase tracking-wider transition-colors ${
                 bugStatus === 'success' ? 'bg-green-600/80 text-white' :
-                bugStatus === 'error' ? 'bg-red-600/80 text-white' :
+                bugStatus === 'error' ? `${theme.errorBg} text-white` :
                 bugStatus === 'sending' ? 'bg-stone-600/80 text-stone-400' :
                 'bg-indigo-600/80 text-white hover:bg-indigo-500/80'
               }`}
@@ -865,12 +913,12 @@ const CategoryPill = ({ selected, onSelect, darkMode }) => {
     <div className="relative flex flex-col items-center gap-1 min-w-[56px]" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105"
+        className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
         aria-label="Select poet category"
       >
-        <Library size={21} className="text-[#C5A059]" />
+        <Library size={21} className={GOLD.goldText} />
       </button>
-      <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">Poets</span>
+      <span className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}>Poets</span>
 
       {isOpen && (
         <div className={`absolute bottom-full right-[-20px] mb-3 min-w-[220px] ${darkMode ? 'bg-[rgba(20,18,16,0.98)] border-[rgba(197,160,89,0.15)] shadow-[0_-10px_40px_rgba(0,0,0,0.7)]' : 'bg-white/95 border-stone-200 shadow-[0_-10px_40px_rgba(0,0,0,0.15)]'} backdrop-blur-[48px] border rounded-3xl p-3 z-50`}>
@@ -880,7 +928,7 @@ const CategoryPill = ({ selected, onSelect, darkMode }) => {
               onClick={() => { onSelect(cat.id); setIsOpen(false); }}
               className={`w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex flex-col items-center border-b border-[rgba(197,160,89,0.08)] last:border-b-0 hover:bg-[rgba(197,160,89,0.08)] ${selected === cat.id ? 'bg-[rgba(197,160,89,0.12)]' : ''}`}
             >
-              <div className="font-amiri text-[clamp(1rem,1.8vw,1.125rem)] text-[#C5A059] mb-[3px] font-medium">{cat.labelAr}</div>
+              <div className={`font-amiri text-[clamp(1rem,1.8vw,1.125rem)] ${GOLD.goldText} mb-[3px] font-medium`}>{cat.labelAr}</div>
               <div className="font-brand-en text-[clamp(8px,1vw,9px)] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">{cat.label}</div>
             </button>
           ))}
@@ -914,12 +962,12 @@ const ThemeDropdown = ({ darkMode, onToggleDarkMode, currentFont, onCycleFont, f
     <div className="relative flex flex-col items-center gap-1 min-w-[56px]" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105"
+        className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
         aria-label="Theme options"
       >
-        {darkMode ? <Sun size={21} className="text-[#C5A059]" /> : <Moon size={21} className="text-[#C5A059]" />}
+        {darkMode ? <Sun size={21} className={GOLD.goldText} /> : <Moon size={21} className={GOLD.goldText} />}
       </button>
-      <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">Theme</span>
+      <span className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}>Theme</span>
 
       {isOpen && (
         <div className={`absolute bottom-full right-[-20px] mb-3 min-w-[200px] ${darkMode ? 'bg-[rgba(20,18,16,0.98)] border-[rgba(197,160,89,0.15)] shadow-[0_-10px_40px_rgba(0,0,0,0.7)]' : 'bg-white/95 border-stone-200 shadow-[0_-10px_40px_rgba(0,0,0,0.15)]'} backdrop-blur-[48px] border rounded-3xl p-3 z-50`}>
@@ -927,14 +975,14 @@ const ThemeDropdown = ({ darkMode, onToggleDarkMode, currentFont, onCycleFont, f
             onClick={handleCycleFont}
             className="w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex flex-col items-center border-b border-[rgba(197,160,89,0.08)] hover:bg-[rgba(197,160,89,0.08)]"
           >
-            <div className="font-amiri text-[clamp(1rem,1.8vw,1.125rem)] text-[#C5A059] mb-[3px] font-medium">تبديل الخط</div>
+            <div className={`font-amiri text-[clamp(1rem,1.8vw,1.125rem)] ${GOLD.goldText} mb-[3px] font-medium`}>تبديل الخط</div>
             <div className="font-brand-en text-[clamp(8px,1vw,9px)] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Cycle Font: {currentFont}</div>
           </button>
           <button
             onClick={handleToggleDarkMode}
             className="w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex flex-col items-center hover:bg-[rgba(197,160,89,0.08)]"
           >
-            <div className="font-amiri text-[clamp(1rem,1.8vw,1.125rem)] text-[#C5A059] mb-[3px] font-medium">{darkMode ? 'الوضع النهاري' : 'الوضع الليلي'}</div>
+            <div className={`font-amiri text-[clamp(1rem,1.8vw,1.125rem)] ${GOLD.goldText} mb-[3px] font-medium`}>{darkMode ? 'الوضع النهاري' : 'الوضع الليلي'}</div>
             <div className="font-brand-en text-[clamp(8px,1vw,9px)] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">{darkMode ? 'Light Mode' : 'Dark Mode'}</div>
           </button>
         </div>
@@ -986,12 +1034,12 @@ const DatabaseToggle = ({ useDatabase, onToggle, disabled }) => {
       <button
         onClick={onToggle}
         disabled={disabled}
-        className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none transition-all duration-300 flex items-center justify-center rounded-full ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-[#C5A059]/12 hover:scale-105'}`}
+        className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none transition-all duration-300 flex items-center justify-center rounded-full ${disabled ? 'opacity-50 cursor-not-allowed' : `cursor-pointer ${GOLD.goldHoverBg} hover:scale-105`}`}
         aria-label={useDatabase ? "Switch to AI Mode" : "Switch to Database Mode"}
       >
-        {useDatabase ? <Library size={21} className="text-[#C5A059]" /> : <Sparkles size={21} className="text-[#C5A059]" />}
+        {useDatabase ? <Library size={21} className={GOLD.goldText} /> : <Sparkles size={21} className={GOLD.goldText} />}
       </button>
-      <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">
+      <span className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}>
         {useDatabase ? 'Local' : 'Web'}
       </span>
     </div>
@@ -1048,7 +1096,7 @@ const ShortcutHelp = ({ isOpen, onClose, theme }) => {
                 {keys.map(k => (
                   <kbd
                     key={k}
-                    className={`px-2 py-1 rounded-md text-xs font-mono font-bold ${isDark ? 'bg-stone-800 text-stone-300 border-stone-700' : 'bg-stone-200 text-stone-700 border-stone-300'} border`}
+                    className={`px-2 py-1 rounded-md text-xs font-mono font-bold ${theme.kbd} border`}
                   >
                     {k}
                   </kbd>
@@ -1306,7 +1354,7 @@ const SplashScreen = ({ isOpen, onDismiss, showOnboarding, theme }) => {
 
   // Computed values needed by both phases
   const desertNight = '#1A0F0A';
-  const gold = '#C5A059';
+  const gold = GOLD.gold;
   const sandMuted = isDark ? 'rgba(232,213,183,0.5)' : 'rgba(26,15,10,0.4)';
   const dunes = isDark
     ? [{ h: '25%', bg: '#6B3720', br: '55% 75% 0 0 / 100%', z: 4, anim: 'splashDune1 10s ease-in-out infinite alternate' },
@@ -1664,12 +1712,12 @@ const AuthButton = ({ user, darkMode, onSignIn, onSignOut, onOpenSavedPoems, onO
       <div className="flex flex-col items-center gap-1 min-w-[56px]">
         <button
           onClick={onSignIn}
-          className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105"
+          className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
           aria-label="Sign In"
         >
-          <LogIn size={21} className="text-[#C5A059]" />
+          <LogIn size={21} className={GOLD.goldText} />
         </button>
-        <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">
+        <span className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}>
           Sign In
         </span>
       </div>
@@ -1680,7 +1728,7 @@ const AuthButton = ({ user, darkMode, onSignIn, onSignOut, onOpenSavedPoems, onO
     <div className="relative flex flex-col items-center gap-1 min-w-[56px]" ref={menuRef}>
       <button
         onClick={() => setShowMenu(!showMenu)}
-        className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105"
+        className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
         aria-label="User Menu"
       >
         {user.user_metadata?.avatar_url ? (
@@ -1690,17 +1738,17 @@ const AuthButton = ({ user, darkMode, onSignIn, onSignOut, onOpenSavedPoems, onO
             className="w-[21px] h-[21px] rounded-full object-cover"
           />
         ) : (
-          <User size={21} className="text-[#C5A059]" />
+          <User size={21} className={GOLD.goldText} />
         )}
       </button>
-      <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">
+      <span className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}>
         Account
       </span>
 
       {showMenu && (
         <div className={`absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3 min-w-[200px] ${darkMode ? 'bg-[rgba(20,18,16,0.98)] border-[rgba(197,160,89,0.15)] shadow-[0_-10px_40px_rgba(0,0,0,0.7)]' : 'bg-white/95 border-stone-200 shadow-[0_-10px_40px_rgba(0,0,0,0.15)]'} backdrop-blur-[48px] border rounded-3xl p-3 z-50`}>
           <div className="px-4 py-3 border-b border-[rgba(197,160,89,0.08)]">
-            <p className="font-brand-en text-xs text-[#C5A059] font-medium truncate">
+            <p className={`font-brand-en text-xs ${GOLD.goldText} font-medium truncate`}>
               {user.email || user.user_metadata?.full_name || 'User'}
             </p>
           </div>
@@ -1711,9 +1759,9 @@ const AuthButton = ({ user, darkMode, onSignIn, onSignOut, onOpenSavedPoems, onO
             }}
             className="w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex items-center gap-3 border-b border-[rgba(197,160,89,0.08)] hover:bg-[rgba(197,160,89,0.08)]"
           >
-            <BookOpen size={18} className="text-[#C5A059]" />
+            <BookOpen size={18} className={GOLD.goldText} />
             <div className="flex flex-col items-start">
-              <div className="font-amiri text-base text-[#C5A059] font-medium">قصائدي</div>
+              <div className={`font-amiri text-base ${GOLD.goldText} font-medium`}>قصائدي</div>
               <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">My Poems</div>
             </div>
           </button>
@@ -1724,9 +1772,9 @@ const AuthButton = ({ user, darkMode, onSignIn, onSignOut, onOpenSavedPoems, onO
             }}
             className="w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex items-center gap-3 border-b border-[rgba(197,160,89,0.08)] hover:bg-[rgba(197,160,89,0.08)]"
           >
-            <Settings2 size={18} className="text-[#C5A059]" />
+            <Settings2 size={18} className={GOLD.goldText} />
             <div className="flex flex-col items-start">
-              <div className="font-amiri text-base text-[#C5A059] font-medium">الإعدادات</div>
+              <div className={`font-amiri text-base ${GOLD.goldText} font-medium`}>الإعدادات</div>
               <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Settings</div>
             </div>
           </button>
@@ -1737,9 +1785,9 @@ const AuthButton = ({ user, darkMode, onSignIn, onSignOut, onOpenSavedPoems, onO
             }}
             className="w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex items-center gap-3 hover:bg-[rgba(197,160,89,0.08)]"
           >
-            <LogOut size={18} className="text-[#C5A059]" />
+            <LogOut size={18} className={GOLD.goldText} />
             <div className="flex flex-col items-start">
-              <div className="font-amiri text-base text-[#C5A059] font-medium">تسجيل الخروج</div>
+              <div className={`font-amiri text-base ${GOLD.goldText} font-medium`}>تسجيل الخروج</div>
               <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Sign Out</div>
             </div>
           </button>
@@ -1770,15 +1818,15 @@ const SavePoemButton = ({ poem, isSaved, onSave, onUnsave, disabled }) => {
     <div className="relative flex flex-col items-center gap-1 min-w-[52px]">
       <button
         onClick={handleClick}
-        className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105"
+        className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
         aria-label={isSaved ? "Unsave poem" : "Save poem"}
       >
         <Heart
           size={21}
-          className={`${isSaved ? 'fill-red-500 text-red-500' : 'text-[#C5A059]'} transition-all`}
+          className={`${isSaved ? 'fill-red-500 text-red-500' : GOLD.goldText} transition-all`}
         />
       </button>
-      <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">
+      <span className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}>
         {isSaved ? 'Saved' : 'Save'}
       </span>
 
@@ -1812,15 +1860,15 @@ const DownvoteButton = ({ poem, isDownvoted, onDownvote, onUndownvote, disabled 
     <div className="relative flex flex-col items-center gap-1 min-w-[52px]">
       <button
         onClick={handleClick}
-        className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105"
+        className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
         aria-label={isDownvoted ? "Unflag poem" : "Flag poem"}
       >
         <ThumbsDown
           size={21}
-          className={`${isDownvoted ? 'fill-red-400 text-red-400' : 'text-[#C5A059]'} transition-all`}
+          className={`${isDownvoted ? 'fill-red-400 text-red-400' : GOLD.goldText} transition-all`}
         />
       </button>
-      <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">
+      <span className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}>
         {isDownvoted ? 'Flagged' : 'Flag'}
       </span>
 
@@ -1885,7 +1933,7 @@ const SavedPoemsView = ({ isOpen, onClose, savedPoems, onSelectPoem, onUnsavePoe
               {savedPoems.map((sp) => (
                 <div
                   key={sp.id}
-                  className={`group ${theme.glass} ${theme.border} border ${DESIGN.radius} p-4 transition-all hover:border-[#C5A059]/30`}
+                  className={`group ${theme.glass} ${theme.border} border ${DESIGN.radius} p-4 transition-all ${GOLD.goldHoverBorderSubtle}`}
                 >
                   <button
                     onClick={() => onSelectPoem(sp)}
@@ -1959,13 +2007,13 @@ const SettingsView = ({ isOpen, onClose, darkMode, onToggleDarkMode, currentFont
                 onClick={() => { if (!darkMode) onToggleDarkMode(); }}
                 className={`p-4 ${DESIGN.radius} border-2 transition-all flex flex-col items-center gap-2 cursor-pointer ${
                   darkMode
-                    ? 'border-[#C5A059] bg-[#C5A059]/10'
-                    : `${theme.border} bg-transparent hover:border-[#C5A059]/30`
+                    ? `${THEME.dark.goldBorder} ${THEME.dark.goldBg10}`
+                    : `${theme.border} bg-transparent ${GOLD.goldHoverBorderSubtle}`
                 }`}
               >
-                <Moon size={24} className={darkMode ? 'text-[#C5A059]' : `${theme.text} opacity-50`} />
+                <Moon size={24} className={darkMode ? GOLD.goldText : `${theme.text} opacity-50`} />
                 <div className="text-center">
-                  <p className={`font-amiri text-sm ${darkMode ? 'text-[#C5A059]' : theme.text}`}>ليلي</p>
+                  <p className={`font-amiri text-sm ${darkMode ? GOLD.goldText : theme.text}`}>ليلي</p>
                   <p className={`font-brand-en text-[9px] uppercase tracking-[0.1em] ${theme.text} opacity-40`}>Dark</p>
                 </div>
               </button>
@@ -1973,13 +2021,13 @@ const SettingsView = ({ isOpen, onClose, darkMode, onToggleDarkMode, currentFont
                 onClick={() => { if (darkMode) onToggleDarkMode(); }}
                 className={`p-4 ${DESIGN.radius} border-2 transition-all flex flex-col items-center gap-2 cursor-pointer ${
                   !darkMode
-                    ? 'border-[#C5A059] bg-[#C5A059]/10'
-                    : `${theme.border} bg-transparent hover:border-[#C5A059]/30`
+                    ? `${THEME.dark.goldBorder} ${THEME.dark.goldBg10}`
+                    : `${theme.border} bg-transparent ${GOLD.goldHoverBorderSubtle}`
                 }`}
               >
-                <Sun size={24} className={!darkMode ? 'text-[#C5A059]' : `${theme.text} opacity-50`} />
+                <Sun size={24} className={!darkMode ? GOLD.goldText : `${theme.text} opacity-50`} />
                 <div className="text-center">
-                  <p className={`font-amiri text-sm ${!darkMode ? 'text-[#C5A059]' : theme.text}`}>نهاري</p>
+                  <p className={`font-amiri text-sm ${!darkMode ? GOLD.goldText : theme.text}`}>نهاري</p>
                   <p className={`font-brand-en text-[9px] uppercase tracking-[0.1em] ${theme.text} opacity-40`}>Light</p>
                 </div>
               </button>
@@ -1999,11 +2047,11 @@ const SettingsView = ({ isOpen, onClose, darkMode, onToggleDarkMode, currentFont
                   onClick={() => onSelectFont(font.id)}
                   className={`p-3 ${DESIGN.radius} border-2 transition-all flex flex-col items-center gap-1.5 cursor-pointer ${
                     currentFont === font.id
-                      ? 'border-[#C5A059] bg-[#C5A059]/10'
-                      : `${theme.border} bg-transparent hover:border-[#C5A059]/30`
+                      ? `${THEME.dark.goldBorder} ${THEME.dark.goldBg10}`
+                      : `${theme.border} bg-transparent ${GOLD.goldHoverBorderSubtle}`
                   }`}
                 >
-                  <p className={`${font.family} text-lg ${currentFont === font.id ? 'text-[#C5A059]' : theme.text}`} dir="rtl">
+                  <p className={`${font.family} text-lg ${currentFont === font.id ? GOLD.goldText : theme.text}`} dir="rtl">
                     بسم الله
                   </p>
                   <div className="text-center">
@@ -2048,11 +2096,11 @@ const VerticalSidebar = ({
 }) => {
   const [settingsOpen, setSettingsOpen] = useState(false);
 
-  const gold = darkMode ? '#C5A059' : '#8B7355';
+  const gold = theme.gold;
   const btnBase = "w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-200";
-  const btnHover = darkMode ? "hover:bg-[#C5A059]/15" : "hover:bg-[#8B7355]/15";
+  const btnHover = theme.goldHoverBg15;
   const subBtnBase = "w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-200";
-  const subBtnHover = darkMode ? "hover:bg-[#C5A059]/15" : "hover:bg-[#8B7355]/15";
+  const subBtnHover = theme.goldHoverBg15;
 
   return (
     <>
@@ -2063,7 +2111,7 @@ const VerticalSidebar = ({
         }
       `}</style>
       <div
-        className="fixed right-0 top-1/2 -translate-y-1/2 z-[45] md:hidden rounded-l-2xl bg-gradient-to-b from-black/70 via-black/60 to-black/70 backdrop-blur-xl border-l-2 border-[#C5A059]/40 py-3 px-1.5"
+        className={`fixed right-0 top-1/2 -translate-y-1/2 z-[45] md:hidden rounded-l-2xl bg-gradient-to-b from-black/70 via-black/60 to-black/70 backdrop-blur-xl border-l-2 ${theme.goldBorderAccent} py-3 px-1.5`}
         style={{ animation: 'slideInRight 0.4s ease-out' }}
       >
         <div className="flex flex-col items-center gap-1">
@@ -2097,13 +2145,13 @@ const VerticalSidebar = ({
           <button
             onClick={() => setSettingsOpen(prev => !prev)}
             title="Settings"
-            className={`${btnBase} ${btnHover} ${settingsOpen ? (darkMode ? 'bg-[#C5A059]/15' : 'bg-[#8B7355]/15') : ''}`}
+            className={`${btnBase} ${btnHover} ${settingsOpen ? (theme.goldActiveBg) : ''}`}
           >
             <Settings2 style={{ color: gold }} size={18} />
           </button>
 
           {settingsOpen && (
-            <div className={`flex flex-col items-center gap-0.5 pl-0.5 border-l-2 ${darkMode ? 'border-[#C5A059]/20' : 'border-[#8B7355]/20'}`}>
+            <div className={`flex flex-col items-center gap-0.5 pl-0.5 border-l-2 ${theme.goldBorderMuted}`}>
               <button
                 onClick={onToggleTransliteration}
                 title={showTransliteration ? 'Hide romanization' : 'Show romanization'}
@@ -2124,7 +2172,7 @@ const VerticalSidebar = ({
                 <button
                   onClick={onDailyPoem}
                   title="Poem of the Day"
-                  className={`${subBtnBase} ${subBtnHover} ${isCurrentDaily ? (darkMode ? 'bg-[#C5A059]/15' : 'bg-[#8B7355]/15') : ''}`}
+                  className={`${subBtnBase} ${subBtnHover} ${isCurrentDaily ? (theme.goldActiveBg) : ''}`}
                 >
                   <CalendarDays style={{ color: gold }} size={16} />
                 </button>
@@ -2173,13 +2221,13 @@ const VerticalSidebar = ({
           <button
             onClick={() => setSettingsOpen(prev => !prev)}
             title="Settings"
-            className={`${btnBase} ${btnHover} ${settingsOpen ? (darkMode ? 'bg-[#C5A059]/15' : 'bg-[#8B7355]/15') : ''}`}
+            className={`${btnBase} ${btnHover} ${settingsOpen ? (theme.goldActiveBg) : ''}`}
           >
             <Settings2 style={{ color: gold }} size={18} />
           </button>
 
           {settingsOpen && (
-            <div className={`flex flex-col items-center gap-0.5 pl-0.5 border-l-2 ${darkMode ? 'border-[#C5A059]/20' : 'border-[#8B7355]/20'}`}>
+            <div className={`flex flex-col items-center gap-0.5 pl-0.5 border-l-2 ${theme.goldBorderMuted}`}>
               <button
                 onClick={onToggleTransliteration}
                 title={showTransliteration ? 'Hide romanization' : 'Show romanization'}
@@ -2200,7 +2248,7 @@ const VerticalSidebar = ({
                 <button
                   onClick={onDailyPoem}
                   title="Poem of the Day"
-                  className={`${subBtnBase} ${subBtnHover} ${isCurrentDaily ? (darkMode ? 'bg-[#C5A059]/15' : 'bg-[#8B7355]/15') : ''}`}
+                  className={`${subBtnBase} ${subBtnHover} ${isCurrentDaily ? (theme.goldActiveBg) : ''}`}
                 >
                   <CalendarDays style={{ color: gold }} size={16} />
                 </button>
@@ -3875,7 +3923,7 @@ export default function DiwanApp() {
 
         .frame-line {
           fill: none;
-          stroke: #C5A059;
+          stroke: ${GOLD.gold};
           stroke-width: 2;
           opacity: 0.28;
           stroke-linecap: square;
@@ -3952,10 +4000,10 @@ export default function DiwanApp() {
                         <line className="frame-line" x1="20" y1="100" x2="20" y2="50" />
                         <line className="frame-line" x1="530" y1="100" x2="480" y2="100" />
                         <line className="frame-line" x1="530" y1="100" x2="530" y2="50" />
-                        <circle className="frame-line" cx="32" cy="32" r="2.5" fill="#C5A059" opacity="0.35" />
-                        <circle className="frame-line" cx="518" cy="32" r="2.5" fill="#C5A059" opacity="0.35" />
-                        <circle className="frame-line" cx="32" cy="88" r="2.5" fill="#C5A059" opacity="0.35" />
-                        <circle className="frame-line" cx="518" cy="88" r="2.5" fill="#C5A059" opacity="0.35" />
+                        <circle className="frame-line" cx="32" cy="32" r="2.5" fill={GOLD.gold} opacity="0.35" />
+                        <circle className="frame-line" cx="518" cy="32" r="2.5" fill={GOLD.gold} opacity="0.35" />
+                        <circle className="frame-line" cx="32" cy="88" r="2.5" fill={GOLD.gold} opacity="0.35" />
+                        <circle className="frame-line" cx="518" cy="88" r="2.5" fill={GOLD.gold} opacity="0.35" />
                       </svg>
 
                       <div className="relative z-10 flex flex-col items-center justify-center w-full">
@@ -3968,9 +4016,9 @@ export default function DiwanApp() {
                            <span className="font-semibold">{current?.poet}</span> <span className="opacity-20">•</span> <span>{current?.title}</span>
                          </div>
                          {dailyPoem && current?.id === dailyPoem.id && (
-                           <div className="flex items-center gap-1.5 mt-2 px-3 py-1 rounded-full bg-[#C5A059]/10 border border-[#C5A059]/20">
-                             <CalendarDays size={12} className="text-[#C5A059]" />
-                             <span className="font-brand-en text-[9px] font-bold tracking-[0.15em] uppercase text-[#C5A059]">Poem of the Day</span>
+                           <div className={`flex items-center gap-1.5 mt-2 px-3 py-1 rounded-full ${GOLD.goldBg10} border ${GOLD.goldBg20}`}>
+                             <CalendarDays size={12} className={GOLD.goldText} />
+                             <span className={`font-brand-en text-[9px] font-bold tracking-[0.15em] uppercase ${GOLD.goldText}`}>Poem of the Day</span>
                            </div>
                          )}
                       </div>
@@ -4032,31 +4080,31 @@ export default function DiwanApp() {
           <footer className="fixed bottom-0 left-0 right-0 py-2 pb-3 md:pb-2 px-4 flex flex-col items-center z-50 bg-gradient-to-t from-black/5 to-transparent safe-bottom">
             {audioError && (
               <div className={`mb-2 px-4 py-2 rounded-full text-xs font-medium ${DESIGN.glass} ${theme.glass} border ${theme.border} shadow-lg ${DESIGN.anim} max-w-[calc(100vw-2rem)] text-center`}>
-                <span className="text-red-400">{audioError}</span>
+                <span className={theme.error}>{audioError}</span>
                 <button onClick={() => setAudioError(null)} className="ml-2 opacity-60 hover:opacity-100" aria-label="Dismiss"><X size={12} className="inline" /></button>
               </div>
             )}
             <div ref={controlBarRef} className={`flex items-center gap-2 px-5 py-2 rounded-full shadow-2xl border ${DESIGN.glass} ${theme.border} ${theme.shadow} ${DESIGN.anim} max-w-[calc(100vw-2rem)] w-fit`}>
 
               <div className="flex flex-col items-center gap-1 min-w-[52px]">
-                <button onClick={togglePlay} disabled={isGeneratingAudio} aria-label={isPlaying ? "Pause recitation" : "Play recitation"} className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105">
-                  {isGeneratingAudio ? <Loader2 className="animate-spin text-[#C5A059]" size={21} /> : audioError ? <Volume2 className="text-red-400" size={21} /> : isPlaying ? <Pause fill="#C5A059" size={21} /> : <Volume2 className="text-[#C5A059]" size={21} />}
+                <button onClick={togglePlay} disabled={isGeneratingAudio} aria-label={isPlaying ? "Pause recitation" : "Play recitation"} className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}>
+                  {isGeneratingAudio ? <Loader2 className={`animate-spin ${GOLD.goldText}`} size={21} /> : audioError ? <Volume2 className={theme.error} size={21} /> : isPlaying ? <Pause fill={GOLD.gold} size={21} /> : <Volume2 className={GOLD.goldText} size={21} />}
                 </button>
                 <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">Listen</span>
               </div>
 
               {!isOverflow && (
                 <div className="flex flex-col items-center gap-1 min-w-[52px]">
-                  <button onClick={handleAnalyze} disabled={isInterpreting || interpretation} aria-label="Explain poem meaning" className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105 disabled:opacity-50">
-                    {isInterpreting ? <Loader2 className="animate-spin text-[#C5A059]" size={21} /> : <Compass className="text-[#C5A059]" size={21} />}
+                  <button onClick={handleAnalyze} disabled={isInterpreting || interpretation} aria-label="Explain poem meaning" className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105 disabled:opacity-50`}>
+                    {isInterpreting ? <Loader2 className={`animate-spin ${GOLD.goldText}`} size={21} /> : <Compass className={GOLD.goldText} size={21} />}
                   </button>
                   <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">Explain</span>
                 </div>
               )}
 
               <div className="flex flex-col items-center gap-1 min-w-[52px]">
-                <button onClick={handleFetch} disabled={isFetching} aria-label="Discover new poem" className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105">
-                  {isFetching ? <Loader2 className="animate-spin text-[#C5A059]" size={21} /> : <Rabbit className="text-[#C5A059] rabbit-bounce" size={21} />}
+                <button onClick={handleFetch} disabled={isFetching} aria-label="Discover new poem" className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}>
+                  {isFetching ? <Loader2 className={`animate-spin ${GOLD.goldText}`} size={21} /> : <Rabbit className={`${GOLD.goldText} rabbit-bounce`} size={21} />}
                 </button>
                 <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">Discover</span>
               </div>
@@ -4082,28 +4130,28 @@ export default function DiwanApp() {
                   <div className="w-px h-10 bg-stone-500/20 mx-1 flex-shrink-0" />
 
                   <div className="flex flex-col items-center gap-1 min-w-[52px]">
-                    <button onClick={handleCopy} aria-label="Copy poem to clipboard" className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105">
-                      {showCopySuccess ? <Check size={21} className="text-green-500" /> : <Copy size={21} className="text-[#C5A059]" />}
+                    <button onClick={handleCopy} aria-label="Copy poem to clipboard" className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}>
+                      {showCopySuccess ? <Check size={21} className="text-green-500" /> : <Copy size={21} className={GOLD.goldText} />}
                     </button>
-                    <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">Copy</span>
+                    <span className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}>Copy</span>
                   </div>
 
                   <div className="flex flex-col items-center gap-1 min-w-[52px]">
-                    <button onClick={handleShare} aria-label="Share poem" className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105">
-                      {showShareSuccess ? <Check size={21} className="text-green-500" /> : <Share2 size={21} className="text-[#C5A059]" />}
+                    <button onClick={handleShare} aria-label="Share poem" className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}>
+                      {showShareSuccess ? <Check size={21} className="text-green-500" /> : <Share2 size={21} className={GOLD.goldText} />}
                     </button>
-                    <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">Share</span>
+                    <span className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}>Share</span>
                   </div>
 
                   <div className="flex flex-col items-center gap-1 min-w-[52px]">
                     <button
                       onClick={() => setShowTranslation(prev => !prev)}
                       aria-label={showTranslation ? 'Hide English translation' : 'Show English translation'}
-                      className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105 ${!showTranslation ? 'opacity-40' : ''}`}
+                      className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105 ${!showTranslation ? 'opacity-40' : ''}`}
                     >
-                      <Languages size={21} className="text-[#C5A059]" />
+                      <Languages size={21} className={GOLD.goldText} />
                     </button>
-                    <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">
+                    <span className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}>
                       {showTranslation ? 'English' : 'Arabic'}
                     </span>
                   </div>
@@ -4112,11 +4160,11 @@ export default function DiwanApp() {
                     <button
                       onClick={() => setShowTransliteration(prev => !prev)}
                       aria-label={showTransliteration ? 'Hide transliteration' : 'Show transliteration'}
-                      className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105 ${!showTransliteration ? 'opacity-40' : ''}`}
+                      className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105 ${!showTransliteration ? 'opacity-40' : ''}`}
                     >
-                      <span className="text-[#C5A059] text-[14px] font-bold leading-none" style={{ fontFamily: "'Amiri', serif" }}>عA</span>
+                      <span className={`${GOLD.goldText} text-[14px] font-bold leading-none`} style={{ fontFamily: "'Amiri', serif" }}>عA</span>
                     </button>
-                    <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">
+                    <span className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}>
                       Romanize
                     </span>
                   </div>
@@ -4125,21 +4173,21 @@ export default function DiwanApp() {
                     <button
                       onClick={cycleTextSize}
                       aria-label={`Text size: ${TEXT_SIZES[textSizeLevel].label}`}
-                      className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105"
+                      className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
                     >
-                      <span className="font-brand-en text-[15px] font-bold text-[#C5A059]">Aa</span>
+                      <span className={`font-brand-en text-[15px] font-bold ${GOLD.goldText}`}>Aa</span>
                     </button>
-                    <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">
+                    <span className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}>
                       {TEXT_SIZES[textSizeLevel].label}
                     </span>
                   </div>
 
                   {dailyPoem && (
                     <div className="flex flex-col items-center gap-1 min-w-[52px]">
-                      <button onClick={handleDailyPoem} aria-label="Poem of the day" className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105 ${current?.id === dailyPoem.id ? 'bg-[#C5A059]/15' : ''}`}>
-                        <CalendarDays size={21} className="text-[#C5A059]" />
+                      <button onClick={handleDailyPoem} aria-label="Poem of the day" className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105 ${current?.id === dailyPoem.id ? GOLD.goldActiveBg : ''}`}>
+                        <CalendarDays size={21} className={GOLD.goldText} />
                       </button>
-                      <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">Daily</span>
+                      <span className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}>Daily</span>
                     </div>
                   )}
 
@@ -4258,19 +4306,19 @@ export default function DiwanApp() {
       `}</style>
       <a
         href="/design-review"
-        className="fixed left-0 top-1/2 -translate-y-1/2 z-[45] md:hidden py-3 px-1.5 rounded-r-2xl bg-gradient-to-b from-black/70 via-black/60 to-black/70 backdrop-blur-xl border-r-2 border-[#C5A059]/40 no-underline flex items-center"
+        className={`fixed left-0 top-1/2 -translate-y-1/2 z-[45] md:hidden py-3 px-1.5 rounded-r-2xl bg-gradient-to-b from-black/70 via-black/60 to-black/70 backdrop-blur-xl border-r-2 ${GOLD.goldBorderAccent} no-underline flex items-center`}
         style={{ writingMode: 'vertical-rl', animation: 'slideInLeft 0.4s ease-out' }}
         title="Design Review"
       >
-        <span className="text-[10px] font-brand-en tracking-widest text-[#C5A059]/60 uppercase">Review</span>
+        <span className={`text-[10px] font-brand-en tracking-widest ${GOLD.goldTextMuted} uppercase`}>Review</span>
       </a>
       <a
         href="/design-review"
-        className="hidden md:flex fixed left-0 top-1/2 -translate-y-1/2 z-[45] py-4 px-2 rounded-r-2xl bg-gradient-to-b from-black/70 via-black/60 to-black/70 backdrop-blur-xl border-r-2 border-[#C5A059]/40 no-underline items-center hover:px-3 hover:border-[#C5A059]/70 transition-all duration-300 cursor-pointer"
+        className={`hidden md:flex fixed left-0 top-1/2 -translate-y-1/2 z-[45] py-4 px-2 rounded-r-2xl bg-gradient-to-b from-black/70 via-black/60 to-black/70 backdrop-blur-xl border-r-2 ${GOLD.goldBorderAccent} no-underline items-center hover:px-3 ${GOLD.goldHoverBorderStrong} transition-all duration-300 cursor-pointer`}
         style={{ writingMode: 'vertical-rl', animation: 'slideInLeft 0.4s ease-out' }}
         title="Design Review"
       >
-        <span className="text-[10px] font-brand-en tracking-widest text-[#C5A059]/60 uppercase">Review</span>
+        <span className={`text-[10px] font-brand-en tracking-widest ${GOLD.goldTextMuted} uppercase`}>Review</span>
       </a>
 
       {/* Vertical Sidebar - Mobile overflow only */}

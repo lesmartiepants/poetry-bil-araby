@@ -2142,7 +2142,7 @@ const VerticalSidebar = ({
                   <Library style={{ color: gold }} size={16} />
                 </button>
                 {poetPickerOpen && (
-                  <div className="absolute right-full top-0 mr-2 w-48 rounded-xl border border-[#C5A059]/30 bg-black/90 backdrop-blur-xl shadow-xl py-1 max-h-60 overflow-y-auto" style={{ animation: 'slideInRight 0.2s ease-out' }}>
+                  <div className="absolute right-full top-0 mr-2 w-48 rounded-xl border border-[#C5A059]/30 bg-black/90 backdrop-blur-xl shadow-xl py-1 max-h-60 overflow-y-auto z-[200]" style={{ animation: 'slideInRight 0.2s ease-out' }}>
                     {CATEGORIES.map(cat => (
                       <button
                         key={cat.id}

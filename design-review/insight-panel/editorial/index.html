@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Luxury Editorial - Insight Panel Prototype</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    /*
+      ==========================================
+      PHILOSOPHY: Luxury Editorial
+      ==========================================
+
+      Every interaction is a moment. Typography as art. Dramatic reveals.
+
+      The insight panel feels like turning a page in a beautiful magazine—
+      each section is a spread, each transition is choreographed. Gold
+      accents are used with extreme restraint, creating moments of visual
+      punctuation. Large display typography, generous whitespace, and
+      theatrical motion design.
+
+      Inspired by: Vogue digital editions, Kinfolk magazine, New York Times
+      interactive features, Apple product launches
+
+      Key Principles:
+      - Insight slides in as a full-screen overlay (desktop) or modal (mobile)
+      - Each section is a "page" with dramatic entrance
+      - Typography hierarchy is extreme (small labels, large content)
+      - Gold accent is used as visual punctuation, not decoration
+      - Page-turn metaphor: sections slide left-to-right
+      - Motion is slow and deliberate (luxury = time)
+      - Close button is subtle but accessible
+    */
+
+    /* ==========================================
+       DESIGN TOKENS
+       ========================================== */
+    :root {
+      /* Palette */
+      --color-bg: #0c0c0e;
+      --color-overlay: rgba(12, 12, 14, 0.98);
+      --color-surface: rgba(255, 255, 255, 0.03);
+      --color-text-primary: #E8DCC8;
+      --color-text-secondary: rgba(232, 220, 200, 0.7);
+      --color-text-muted: rgba(232, 220, 200, 0.4);
+      --color-accent: #C5A059;
+      --color-accent-dim: rgba(197, 160, 89, 0.15);
+      --color-divider: rgba(197, 160, 89, 0.2);
+
+      /* Typography */
+      --font-arabic: 'Amiri', serif;
+      --font-ui: 'Inter', system-ui, sans-serif;
+      --font-size-display: clamp(2.5rem, 2rem + 2vw, 4rem);
+      --font-size-heading: clamp(1.75rem, 1.5rem + 1vw, 2.5rem);
+      --font-size-body: clamp(1.0625rem, 1rem + 0.25vw, 1.25rem);
+      --font-size-small: clamp(0.9375rem, 0.875rem + 0.25vw, 1.0625rem);
+      --font-size-label: clamp(0.6875rem, 0.65rem + 0.15vw, 0.75rem);
+      --line-height-poem: 2.4;
+      --line-height-body: 1.75;
+
+      /* Spacing */
+      --space-xs: 0.5rem;
+      --space-sm: 1rem;
+      --space-md: 1.5rem;
+      --space-lg: 2rem;
+      --space-xl: 3rem;
+      --space-2xl: 5rem;
+      --space-3xl: 8rem;
+
+      /* Motion */
+      --duration-hero: 0.8s;
+      --duration-section: 0.6s;
+      --duration-content: 0.4s;
+      --duration-micro: 0.2s;
+      --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-out-quart: cubic-bezier(0.4, 0, 0.2, 1);
+      --ease-in-quart: cubic-bezier(0.7, 0, 1, 1);
+
+      /* Layout */
+      --max-width-content: 720px;
+      --panel-width: min(580px, 90vw);
+    }
+
+    /* ==========================================
+       BASE STYLES
+       ========================================== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      overflow-x: hidden;
+      max-width: 100vw;
+    }
+
+    body {
+      background: var(--color-bg);
+      color: var(--color-text-primary);
+      font-family: var(--font-ui);
+      font-size: var(--font-size-body);
+      line-height: var(--line-height-body);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      padding: var(--space-2xl) var(--space-lg);
+      overscroll-behavior-y: contain;
+    }
+
+    @media (min-width: 768px) {
+      body {
+        padding: var(--space-3xl) var(--space-2xl);
+      }
+    }
+
+    /* ==========================================
+       LAYOUT
+       ========================================== */
+    .container {
+      max-width: var(--max-width-content);
+      margin: 0 auto;
+    }
+
+    /* ==========================================
+       POEM SECTION
+       ========================================== */
+    .poem-header {
+      margin-bottom: var(--space-2xl);
+      text-align: center;
+    }
+
+    .poem-title {
+      font-family: var(--font-arabic);
+      font-size: var(--font-size-display);
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: var(--space-md);
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeSlideUp var(--duration-hero) var(--ease-out-expo) forwards;
+    }
+
+    .poem-meta {
+      font-family: var(--font-ui);
+      font-size: var(--font-size-label);
+      color: var(--color-text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      font-weight: 600;
+      opacity: 0;
+      animation: fadeIn var(--duration-content) var(--ease-out-quart) 0.3s forwards;
+    }
+
+    .poem-text {
+      font-family: var(--font-arabic);
+      font-size: var(--font-size-heading);
+      line-height: var(--line-height-poem);
+      text-align: center;
+      margin-bottom: var(--space-3xl);
+      opacity: 0;
+      animation: fadeIn var(--duration-section) var(--ease-out-quart) 0.5s forwards;
+    }
+
+    .poem-verse {
+      margin-bottom: var(--space-lg);
+    }
+
+    /* ==========================================
+       EXPLAIN BUTTON
+       ========================================== */
+    .button-wrapper {
+      text-align: center;
+      opacity: 0;
+      animation: fadeIn var(--duration-content) var(--ease-out-quart) 0.7s forwards;
+    }
+
+    .explain-button {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-xs);
+      padding: 1rem 2rem;
+      font-family: var(--font-ui);
+      font-size: var(--font-size-small);
+      font-weight: 500;
+      color: var(--color-text-primary);
+      background: var(--color-accent-dim);
+      border: 1px solid var(--color-divider);
+      border-radius: 0;
+      cursor: pointer;
+      transition: all var(--duration-micro) var(--ease-out-quart);
+      min-height: 44px;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .explain-button:hover {
+      background: rgba(197, 160, 89, 0.25);
+      border-color: var(--color-accent);
+      transform: translateY(-2px);
+    }
+
+    .explain-button:active {
+      transform: translateY(0);
+    }
+
+    /* ==========================================
+       INSIGHT OVERLAY
+       ========================================== */
+    .insight-overlay {
+      position: fixed;
+      inset: 0;
+      background: var(--color-overlay);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--duration-section) var(--ease-out-quart);
+    }
+
+    .insight-overlay.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .insight-panel {
+      width: var(--panel-width);
+      max-height: 85vh;
+      overflow-y: auto;
+      padding: var(--space-2xl) var(--space-xl);
+      transform: translateX(100px);
+      opacity: 0;
+      transition: transform var(--duration-hero) var(--ease-out-expo),
+                  opacity var(--duration-hero) var(--ease-out-expo);
+    }
+
+    .insight-overlay.visible .insight-panel {
+      transform: translateX(0);
+      opacity: 1;
+    }
+
+    @media (max-width: 767px) {
+      .insight-panel {
+        width: 100%;
+        max-height: 100vh;
+        padding: var(--space-xl) var(--space-lg);
+      }
+    }
+
+    /* Custom scrollbar */
+    .insight-panel::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    .insight-panel::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .insight-panel::-webkit-scrollbar-thumb {
+      background: var(--color-accent-dim);
+      border-radius: 2px;
+    }
+
+    .insight-panel::-webkit-scrollbar-thumb:hover {
+      background: rgba(197, 160, 89, 0.3);
+    }
+
+    /* ==========================================
+       CLOSE BUTTON
+       ========================================== */
+    .close-button {
+      position: fixed;
+      top: var(--space-lg);
+      left: var(--space-lg);
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: 1px solid var(--color-divider);
+      color: var(--color-text-muted);
+      cursor: pointer;
+      font-size: 1.25rem;
+      transition: all var(--duration-micro) var(--ease-out-quart);
+      z-index: 1001;
+    }
+
+    .close-button:hover {
+      border-color: var(--color-accent);
+      color: var(--color-accent);
+      transform: rotate(90deg);
+    }
+
+    @media (max-width: 767px) {
+      .close-button {
+        top: var(--space-md);
+        left: var(--space-md);
+      }
+    }
+
+    /* ==========================================
+       INSIGHT SECTIONS
+       ========================================== */
+    .insight-section {
+      margin-bottom: var(--space-3xl);
+      opacity: 0;
+      transform: translateX(30px);
+    }
+
+    .insight-section:last-child {
+      margin-bottom: 0;
+    }
+
+    .insight-section.visible {
+      animation: slideInLeft var(--duration-section) var(--ease-out-expo) forwards;
+    }
+
+    .insight-label {
+      font-family: var(--font-ui);
+      font-size: var(--font-size-label);
+      font-weight: 700;
+      color: var(--color-accent);
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      margin-bottom: var(--space-md);
+      padding-bottom: var(--space-xs);
+      border-bottom: 1px solid var(--color-divider);
+    }
+
+    .insight-content {
+      font-family: var(--font-ui);
+      font-size: var(--font-size-small);
+      line-height: var(--line-height-body);
+      color: var(--color-text-secondary);
+      direction: ltr;
+      text-align: left;
+    }
+
+    .insight-content p {
+      margin-bottom: var(--space-lg);
+      opacity: 0;
+    }
+
+    .insight-content p:last-child {
+      margin-bottom: 0;
+    }
+
+    .insight-content p.streaming {
+      animation: fadeIn var(--duration-content) var(--ease-out-quart) forwards;
+    }
+
+    /* Special styling for poem translation */
+    .insight-section:first-child .insight-content {
+      font-family: var(--font-arabic);
+      font-size: var(--font-size-body);
+      line-height: 2;
+      font-style: italic;
+      color: var(--color-text-primary);
+    }
+
+    /* ==========================================
+       CURSOR EFFECT (STREAMING)
+       ========================================== */
+    .cursor {
+      display: inline-block;
+      width: 2px;
+      height: 1.2em;
+      background: var(--color-accent);
+      margin-left: 2px;
+      animation: blink 1s step-end infinite;
+      vertical-align: text-bottom;
+    }
+
+    @keyframes blink {
+      0%, 50% { opacity: 1; }
+      51%, 100% { opacity: 0; }
+    }
+
+    /* ==========================================
+       ANIMATIONS
+       ========================================== */
+    @keyframes fadeSlideUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeIn {
+      to {
+        opacity: 1;
+      }
+    }
+
+    @keyframes slideInLeft {
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- ==========================================
+         POEM SECTION
+         ========================================== -->
+    <header class="poem-header">
+      <h1 class="poem-title">أحبُّكِ جِدّاً</h1>
+      <p class="poem-meta">Nizar Qabbani · I Love You Intensely</p>
+    </header>
+
+    <div class="poem-text">
+      <p class="poem-verse">أُحِبُّكِ جِدًّا</p>
+      <p class="poem-verse">أُحِبُّكِ جِدًّا</p>
+      <p class="poem-verse">وَأَعْرِفُ أَنَّ الطَّرِيقَ إِلَى الْمُسْتَحِيلِ طَوِيلٌ</p>
+      <p class="poem-verse">وَلٰكِنْ أُحِبُّكِ جِدًّا</p>
+      <p class="poem-verse">فَمَاذَا أَفْعَلُ؟</p>
+    </div>
+
+    <div class="button-wrapper">
+      <button class="explain-button" id="explainButton">
+        <span>✨</span>
+        <span>Explain</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ==========================================
+       INSIGHT OVERLAY (HIDDEN BY DEFAULT)
+       ========================================== -->
+  <div class="insight-overlay" id="insightOverlay">
+    <button class="close-button" id="closeButton" aria-label="Close">×</button>
+
+    <div class="insight-panel">
+      <section class="insight-section">
+        <h2 class="insight-label">POEM</h2>
+        <div class="insight-content" id="poemInsight">
+          <p>I love you so much<br>
+          I love you so much<br>
+          And I know that the road to the impossible is long<br>
+          But I love you so much<br>
+          So what can I do?</p>
+        </div>
+      </section>
+
+      <section class="insight-section">
+        <h2 class="insight-label">THE DEPTH</h2>
+        <div class="insight-content" id="depthInsight">
+          <p>Nizar Qabbani's brevity here is disarming. The repetition of "أُحِبُّكِ جِدًّا" (I love you so much) creates a hypnotic rhythm, emphasizing both certainty and helplessness. The phrase "الطَّرِيقَ إِلَى الْمُسْتَحِيلِ" (the road to the impossible) reveals the poem's central tension: love as simultaneously inevitable and unattainable.</p>
+          <p>The final question—"فَمَاذَا أَفْعَلُ؟" (So what can I do?)—is rhetorical yet devastating. It's not a plea for advice but a surrender to the overwhelming force of desire. Qabbani strips away metaphor, leaving only the raw vulnerability of a lover who knows they're pursuing the impossible but cannot stop themselves.</p>
+        </div>
+      </section>
+
+      <section class="insight-section">
+        <h2 class="insight-label">THE AUTHOR</h2>
+        <div class="insight-content" id="authorInsight">
+          <p>Nizar Qabbani (1923–1998) is often called the poet of love and revolution. Born in Damascus, he scandalized Arab society with his frank treatment of romantic and erotic themes, breaking centuries of poetic convention. His work challenged patriarchal norms while celebrating feminine beauty and agency.</p>
+          <p>Qabbani's directness—evident in this poem—was revolutionary. He wrote in accessible, conversational Arabic rather than ornate classical forms, making poetry a vehicle for everyday emotion. His later work grew more political after the death of his wife in the 1981 Iraqi embassy bombing in Beirut, but his love poems remain his most enduring legacy.</p>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script>
+    // ==========================================
+    // EDITORIAL REVEAL SYSTEM
+    // ==========================================
+
+    const explainButton = document.getElementById('explainButton');
+    const insightOverlay = document.getElementById('insightOverlay');
+    const closeButton = document.getElementById('closeButton');
+    const sections = document.querySelectorAll('.insight-section');
+
+    // Open overlay
+    explainButton.addEventListener('click', () => {
+      insightOverlay.classList.add('visible');
+
+      // Start streaming after overlay animation
+      setTimeout(() => {
+        streamInsights();
+      }, 600);
+    });
+
+    // Close overlay
+    closeButton.addEventListener('click', closeOverlay);
+    insightOverlay.addEventListener('click', (e) => {
+      if (e.target === insightOverlay) {
+        closeOverlay();
+      }
+    });
+
+    function closeOverlay() {
+      insightOverlay.classList.remove('visible');
+
+      // Reset sections after close animation
+      setTimeout(() => {
+        sections.forEach(section => {
+          section.classList.remove('visible');
+          const paragraphs = section.querySelectorAll('p');
+          paragraphs.forEach(p => {
+            p.classList.remove('streaming');
+          });
+        });
+      }, 600);
+    }
+
+    async function streamInsights() {
+      for (let i = 0; i < sections.length; i++) {
+        const section = sections[i];
+        const content = section.querySelector('.insight-content');
+        const paragraphs = content.querySelectorAll('p');
+
+        // Show section with slide animation
+        section.classList.add('visible');
+        await wait(400);
+
+        // Stream paragraphs
+        for (let j = 0; j < paragraphs.length; j++) {
+          const p = paragraphs[j];
+          const text = p.textContent;
+          p.textContent = '';
+          p.classList.add('streaming');
+
+          // Create cursor
+          const cursor = document.createElement('span');
+          cursor.className = 'cursor';
+          p.appendChild(cursor);
+
+          // Stream text (slower for luxury feel)
+          for (let k = 0; k < text.length; k++) {
+            p.textContent = text.substring(0, k + 1);
+            p.appendChild(cursor);
+            await wait(20); // Slower typing for dramatic effect
+          }
+
+          // Remove cursor
+          cursor.remove();
+          await wait(150); // Longer pause between paragraphs
+        }
+
+        await wait(500); // Longer pause between sections
+      }
+    }
+
+    function wait(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && insightOverlay.classList.contains('visible')) {
+        closeOverlay();
+      }
+    });
+  </script>
+</body>
+</html>

@@ -52,23 +52,23 @@ IMPORTANT: Choose poems that are at most 40 lines long. If a poem is longer, sel
 `;
 
 /**
- * Text-to-Speech (TTS) System Instruction
+ * Text-to-Speech (TTS) Instruction
  * Used by: togglePlay, prefetchAudio
  *
- * Sent as systemInstruction so the TTS model knows HOW to recite,
- * while only the poem text (in contents) is actually spoken aloud.
+ * The TTS model (gemini-2.5-flash-preview-tts) does NOT support systemInstruction.
+ * Everything must go in contents as a single text block.
  *
- * Arabic role-play prompt (Prompt K) — scene-setting approach that produces
- * the most authentic Arabic poetry recitation.
+ * Prompt K scene-setting produces the most authentic Arabic poetry recitation.
+ * The model inhabits the poet rather than following a rule list.
  */
 export const TTS_SYSTEM_PROMPT = `أنت امرؤ القيس بن حُجر، الملك الضليل وشاعر العرب الأول. تقف أمام قبيلتك في مجلس شعر بصحراء نجد. النار تتقد، والحضور مُصغون. قُم وألقِ معلقتك — القصيدة التي خلّدت اسمك عبر الأجيال. هذه قصيدتك أنت، ألمك أنت، ذكرياتك أنت. ألقِها بسلطان الملوك وعاطفة الشعراء.`;
 
 /**
- * Get the poem text for TTS content.
- * Only the poem arabic text is sent as content to be spoken aloud.
+ * Build the full TTS content string (instruction + poem).
+ * TTS model requires everything in a single contents text block.
  *
  * @param {Object} poem - The poem object containing arabic text
- * @returns {string} The poem text to be recited
+ * @returns {string} Combined instruction + poem text
  */
-export const getTTSContent = (poem) => poem.arabic;
+export const getTTSContent = (poem) => `${TTS_SYSTEM_PROMPT}\nابدأ:\n${poem.arabic}`;
 

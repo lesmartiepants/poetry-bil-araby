@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Audio Playing State - Design Options</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0c0c0e;
+      color: #e7e5e4;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      padding: 60px 40px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      color: #C5A059;
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    h2 {
+      color: #C5A059;
+      font-size: 1.75rem;
+      margin-top: 3rem;
+      border-bottom: 1px solid #292524;
+      padding-bottom: 0.5rem;
+    }
+
+    h3 {
+      color: #a8dadc;
+      font-size: 1.25rem;
+      margin-top: 2rem;
+    }
+
+    p {
+      font-size: 1.125rem;
+      color: #a8a29e;
+      line-height: 1.8;
+      margin: 1rem 0;
+    }
+
+    .subtitle {
+      font-size: 1.125rem;
+      color: #a8a29e;
+      margin-bottom: 3rem;
+    }
+
+    .context-box {
+      background: #1c1917;
+      border-left: 4px solid #C5A059;
+      padding: 20px;
+      margin: 30px 0;
+      border-radius: 4px;
+    }
+
+    .context-box h3 {
+      color: #C5A059;
+      margin-top: 0;
+    }
+
+    .context-box ul {
+      margin: 15px 0;
+      padding-left: 20px;
+    }
+
+    .context-box li {
+      margin: 8px 0;
+      line-height: 1.6;
+    }
+
+    .requirements {
+      background: #1c1917;
+      border-left: 4px solid #86efac;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 4px;
+    }
+
+    .requirements h3 {
+      color: #86efac;
+      margin-top: 0;
+    }
+
+    .requirements ol {
+      margin: 15px 0;
+      padding-left: 20px;
+    }
+
+    .requirements li {
+      margin: 12px 0;
+      line-height: 1.6;
+    }
+
+    .option {
+      background: #1c1917;
+      border: 1px solid #292524;
+      border-radius: 12px;
+      padding: 30px;
+      margin: 30px 0;
+    }
+
+    .option-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+
+    .option h2 {
+      margin: 0;
+      border: none;
+    }
+
+    .open-preview-btn {
+      background: #C5A059;
+      color: #0c0c0e;
+      padding: 12px 24px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.2s;
+      display: inline-block;
+    }
+
+    .open-preview-btn:hover {
+      background: #d4af6a;
+      transform: scale(1.05);
+    }
+
+    .option-content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      margin-top: 20px;
+    }
+
+    @media (max-width: 900px) {
+      .option-content {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .preview-embed {
+      width: 100%;
+      height: 400px;
+      border: 1px solid #292524;
+      border-radius: 8px;
+      background: #0c0c0e;
+    }
+
+    .design-rationale h3 {
+      color: #86efac;
+      font-size: 1rem;
+      margin-bottom: 10px;
+    }
+
+    .design-rationale h4 {
+      color: #C5A059;
+      margin-top: 20px;
+      font-size: 0.95rem;
+    }
+
+    .design-rationale ul {
+      margin: 10px 0;
+      padding-left: 20px;
+    }
+
+    .design-rationale li {
+      margin: 8px 0;
+      line-height: 1.6;
+    }
+
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 30px 0;
+      background: #1c1917;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .comparison-table th {
+      background: #292524;
+      padding: 15px;
+      text-align: left;
+      color: #C5A059;
+      font-weight: 600;
+    }
+
+    .comparison-table td {
+      padding: 12px 15px;
+      border-bottom: 1px solid #292524;
+      line-height: 1.6;
+    }
+
+    .comparison-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .recommendations {
+      background: #1c1917;
+      border-left: 4px solid #86efac;
+      padding: 20px;
+      margin: 30px 0;
+      border-radius: 4px;
+    }
+
+    .recommendations h3 {
+      color: #86efac;
+      margin-top: 0;
+    }
+
+    .recommendations p {
+      margin: 12px 0;
+    }
+
+    .recommendations strong {
+      color: #C5A059;
+    }
+
+    .previews-section {
+      margin-top: 60px;
+    }
+
+    .preview-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    @media (max-width: 1200px) {
+      .preview-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .preview-container {
+      border: 1px solid #292524;
+      border-radius: 8px;
+      overflow: hidden;
+      background: #1c1917;
+    }
+
+    .preview-container h3 {
+      margin: 0;
+      padding: 15px;
+      background: #292524;
+      font-size: 1rem;
+      color: #C5A059;
+    }
+
+    .preview-container iframe {
+      width: 100%;
+      height: 600px;
+      border: none;
+      display: block;
+    }
+
+    hr {
+      border: none;
+      border-top: 1px solid #292524;
+      margin: 60px 0 30px;
+    }
+
+    .next-steps {
+      text-align: center;
+      margin-top: 40px;
+    }
+
+    .next-steps h2 {
+      border: none;
+      margin-bottom: 20px;
+    }
+
+    .next-steps p {
+      font-size: 1.25rem;
+    }
+
+    code {
+      background: #292524;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-family: 'Courier New', monospace;
+      color: #C5A059;
+    }
+  </style>
+</head>
+<body>
+  <h1>Audio Playing State Design Options</h1>
+  <p class="subtitle">Three visual alternatives for the play button's active state</p>
+
+  <div class="context-box">
+    <h3>Context</h3>
+    <ul>
+      <li><strong>App:</strong> Arabic poetry reader with dark theme (#0c0c0e) and gold accents (#C5A059)</li>
+      <li><strong>Current State:</strong> Loading state uses 5 gold bars with uniform wave animation</li>
+      <li><strong>Goal:</strong> Design a playing state that feels like the loading bars "came alive" when audio starts</li>
+      <li><strong>Location:</strong> Play button in footer control bar (src/app.jsx lines 4366-4372)</li>
+    </ul>
+  </div>
+
+  <div class="requirements">
+    <h3>Design Requirements</h3>
+    <ol>
+      <li><strong>Visual Continuity:</strong> Must feel like a natural evolution from the loading state (5 bars → 5 animated bars)</li>
+      <li><strong>Responsive Animation:</strong> Bars should feel organic and alive, not mechanical</li>
+      <li><strong>Pause Affordance:</strong> User should understand they can tap to pause</li>
+      <li><strong>Performance:</strong> Must run smoothly on mobile devices</li>
+      <li><strong>Accessibility:</strong> 46x46px touch target, proper ARIA labels</li>
+    </ol>
+  </div>
+
+  <!-- Option 1 -->
+  <div class="option">
+    <div class="option-header">
+      <h2>Option 1: Frequency-Responsive Bars</h2>
+      <a href="previews/option-1-frequency-responsive.html" class="open-preview-btn" target="_blank">Open Full Preview →</a>
+    </div>
+    <div class="option-content">
+      <iframe src="previews/option-1-frequency-responsive.html" class="preview-embed"></iframe>
+      <div class="design-rationale">
+        <h3>Design Choice:</h3>
+        <p>Bars react to actual audio frequency data via Web Audio API's AnalyserNode. Each bar represents a different frequency band (bass to treble), creating a true audio visualizer.</p>
+
+        <h4>Key Features:</h4>
+        <ul>
+          <li><strong>Real Audio Sync:</strong> Bars move in response to actual sound frequencies</li>
+          <li><strong>Natural Transition:</strong> Loading wave "wakes up" into responsive movement</li>
+          <li><strong>Visual Feedback:</strong> User sees the audio playing in real-time</li>
+          <li><strong>Smooth Animation:</strong> Interpolated values prevent jittery movement</li>
+        </ul>
+
+        <h4>Technical Implementation:</h4>
+        <ul>
+          <li>Uses Web Audio API's <code>AnalyserNode</code></li>
+          <li>5 frequency bands mapped to 5 bars</li>
+          <li>Smooth interpolation for fluid motion</li>
+          <li>Pause icon overlay on hover</li>
+        </ul>
+
+        <h4>Pros:</h4>
+        <ul>
+          <li>Most immersive and engaging</li>
+          <li>Direct connection to audio content</li>
+          <li>Feels premium and polished</li>
+        </ul>
+
+        <h4>Cons:</h4>
+        <ul>
+          <li>Requires Web Audio API setup</li>
+          <li>Slightly higher CPU usage (minimal impact)</li>
+          <li>More complex implementation</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Option 2 -->
+  <div class="option">
+    <div class="option-header">
+      <h2>Option 2: Organic Wave Animation</h2>
+      <a href="previews/option-2-organic-wave.html" class="open-preview-btn" target="_blank">Open Full Preview →</a>
+    </div>
+    <div class="option-content">
+      <iframe src="previews/option-2-organic-wave.html" class="preview-embed"></iframe>
+      <div class="design-rationale">
+        <h3>Design Choice:</h3>
+        <p>Pure CSS solution with varied animation durations and delays. Each bar moves independently with natural, flowing timing that feels organic and alive.</p>
+
+        <h4>Key Features:</h4>
+        <ul>
+          <li><strong>Zero JavaScript:</strong> Pure CSS animations for maximum performance</li>
+          <li><strong>Independent Movement:</strong> Each bar has unique timing creating complex patterns</li>
+          <li><strong>Battery Efficient:</strong> Hardware-accelerated CSS animations</li>
+          <li><strong>Natural Feel:</strong> Varied durations (0.8s-1.15s) create organic flow</li>
+        </ul>
+
+        <h4>Technical Implementation:</h4>
+        <ul>
+          <li>5 bars with different <code>animation-duration</code> values</li>
+          <li>Staggered delays for complexity</li>
+          <li>CSS keyframes with non-linear heights</li>
+          <li>No JavaScript needed once playing starts</li>
+        </ul>
+
+        <h4>Pros:</h4>
+        <ul>
+          <li>Simplest implementation</li>
+          <li>Best performance and battery life</li>
+          <li>No API dependencies</li>
+          <li>Works everywhere (no browser compatibility issues)</li>
+        </ul>
+
+        <h4>Cons:</h4>
+        <ul>
+          <li>Not synced to actual audio</li>
+          <li>Fixed animation pattern (not truly responsive)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Option 3 -->
+  <div class="option">
+    <div class="option-header">
+      <h2>Option 3: Pulse & Glow (Hybrid)</h2>
+      <a href="previews/option-3-pulse-glow.html" class="open-preview-btn" target="_blank">Open Full Preview →</a>
+    </div>
+    <div class="option-content">
+      <iframe src="previews/option-3-pulse-glow.html" class="preview-embed"></iframe>
+      <div class="design-rationale">
+        <h3>Design Choice:</h3>
+        <p>Combines organic CSS wave animation with subtle gold glow that pulses in sync with audio volume. Best of both worlds: smooth performance + real audio feedback.</p>
+
+        <h4>Key Features:</h4>
+        <ul>
+          <li><strong>Hybrid Approach:</strong> CSS handles bar animation, JS adds glow pulses</li>
+          <li><strong>Volume-Reactive Glow:</strong> Gold shadow pulses on high volume peaks</li>
+          <li><strong>Subtle Enhancement:</strong> Base animation always smooth, glow adds magic</li>
+          <li><strong>Performant:</strong> Only updates glow effect, not bar heights</li>
+        </ul>
+
+        <h4>Technical Implementation:</h4>
+        <ul>
+          <li>CSS animations for bar wave movement</li>
+          <li>Web Audio API for volume detection only</li>
+          <li>Dynamic <code>box-shadow</code> applied on volume peaks</li>
+          <li>Glow bursts last ~150ms for subtle effect</li>
+        </ul>
+
+        <h4>Pros:</h4>
+        <ul>
+          <li>Balance of performance and audio sync</li>
+          <li>Smooth CSS animation with audio feedback</li>
+          <li>Less complex than full frequency analysis</li>
+          <li>Mystical, ethereal aesthetic fits poetry theme</li>
+        </ul>
+
+        <h4>Cons:</h4>
+        <ul>
+          <li>Slightly more complex than pure CSS</li>
+          <li>Requires Web Audio API (but minimal usage)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <h2>Comparison Table</h2>
+  <table class="comparison-table">
+    <thead>
+      <tr>
+        <th>Feature</th>
+        <th>Option 1: Frequency-Responsive</th>
+        <th>Option 2: Organic Wave</th>
+        <th>Option 3: Pulse & Glow</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><strong>Audio Sync</strong></td>
+        <td>✅ Full frequency analysis</td>
+        <td>❌ No audio sync</td>
+        <td>✅ Volume-based pulses</td>
+      </tr>
+      <tr>
+        <td><strong>Performance</strong></td>
+        <td>Good (requires FFT analysis)</td>
+        <td>✅ Excellent (pure CSS)</td>
+        <td>✅ Very Good (minimal JS)</td>
+      </tr>
+      <tr>
+        <td><strong>Implementation Complexity</strong></td>
+        <td>High (Web Audio API setup)</td>
+        <td>✅ Low (CSS only)</td>
+        <td>Medium (simple API usage)</td>
+      </tr>
+      <tr>
+        <td><strong>Battery Impact</strong></td>
+        <td>Low-Medium</td>
+        <td>✅ Minimal</td>
+        <td>✅ Very Low</td>
+      </tr>
+      <tr>
+        <td><strong>Visual Feedback</strong></td>
+        <td>✅ Direct audio representation</td>
+        <td>Decorative only</td>
+        <td>✅ Volume peaks visible</td>
+      </tr>
+      <tr>
+        <td><strong>Browser Compatibility</strong></td>
+        <td>Modern browsers (95%+)</td>
+        <td>✅ Universal</td>
+        <td>Modern browsers (95%+)</td>
+      </tr>
+      <tr>
+        <td><strong>Aesthetic Match</strong></td>
+        <td>Technical, precise</td>
+        <td>Organic, flowing</td>
+        <td>✅ Mystical, ethereal</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <div class="recommendations">
+    <h3>Recommendations</h3>
+    <p><strong>Best Overall:</strong> Option 3 (Pulse & Glow) - Strikes the perfect balance between performance, audio feedback, and aesthetic match. The gold glow pulses align beautifully with the mystical poetry theme while keeping CPU usage low.</p>
+
+    <p><strong>Best for Performance:</strong> Option 2 (Organic Wave) - If battery life and simplicity are paramount, this pure CSS solution is unbeatable. Still feels alive and organic without any JavaScript.</p>
+
+    <p><strong>Best for Engagement:</strong> Option 1 (Frequency-Responsive) - Most immersive experience with direct audio visualization. Worth the extra complexity if you want a premium, app-like feel.</p>
+
+    <p><strong>Recommended:</strong> Start with <strong>Option 3</strong> for the launch. The hybrid approach gives you audio feedback without the complexity of full frequency analysis, and the gold glow fits the mystical aesthetic perfectly. You can always upgrade to Option 1 later if user testing shows demand for more detailed visualization.</p>
+  </div>
+
+  <div class="previews-section">
+    <h2>Interactive Previews</h2>
+    <p style="color: #a8a29e;">All three options shown side-by-side. Click the "Watch Transition" button in each to see the loading → playing transition.</p>
+    <div class="preview-grid">
+      <div class="preview-container">
+        <h3>Option 1: Frequency-Responsive</h3>
+        <iframe src="previews/option-1-frequency-responsive.html"></iframe>
+      </div>
+      <div class="preview-container">
+        <h3>Option 2: Organic Wave</h3>
+        <iframe src="previews/option-2-organic-wave.html"></iframe>
+      </div>
+      <div class="preview-container">
+        <h3>Option 3: Pulse & Glow</h3>
+        <iframe src="previews/option-3-pulse-glow.html"></iframe>
+      </div>
+    </div>
+  </div>
+
+  <hr>
+  <div class="next-steps">
+    <h2>Next Steps</h2>
+    <p>Which direction works best? Reply with: <strong>"Option 1"</strong>, <strong>"Option 2"</strong>, or <strong>"Option 3"</strong></p>
+    <p style="font-size: 1rem; margin-top: 20px;">I'll provide production-ready JSX + CSS code for implementation in <code>src/app.jsx</code></p>
+  </div>
+</body>
+</html>

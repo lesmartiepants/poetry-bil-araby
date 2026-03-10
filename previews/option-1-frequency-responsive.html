@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Option 1: Frequency-Responsive Bars</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #0c0c0e;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      padding: 40px 20px;
+      gap: 40px;
+    }
+
+    .demo-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .demo-label {
+      color: #C5A059;
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    .button-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      min-width: 52px;
+    }
+
+    button {
+      min-width: 46px;
+      min-height: 46px;
+      padding: 11px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      position: relative;
+    }
+
+    button:hover {
+      background: rgba(197, 160, 89, 0.12);
+      transform: scale(1.05);
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+
+    .label {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-size: 8.5px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      opacity: 0.6;
+      white-space: nowrap;
+      color: #e7e5e4;
+    }
+
+    /* Wave bars container */
+    .wave-bars {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      height: 24px;
+    }
+
+    .bar {
+      width: 3px;
+      border-radius: 2px;
+      background: #C5A059;
+      transition: height 0.1s ease-out;
+    }
+
+    /* Loading state - uniform wave animation */
+    .loading .bar {
+      animation: wave-loading 1.2s ease-in-out infinite;
+    }
+
+    .loading .bar:nth-child(1) { animation-delay: 0s; }
+    .loading .bar:nth-child(2) { animation-delay: 0.15s; }
+    .loading .bar:nth-child(3) { animation-delay: 0.3s; }
+    .loading .bar:nth-child(4) { animation-delay: 0.15s; }
+    .loading .bar:nth-child(5) { animation-delay: 0s; }
+
+    @keyframes wave-loading {
+      0%, 100% { height: 8px; }
+      50% { height: 24px; }
+    }
+
+    /* Playing state - frequency-responsive (simulated) */
+    .playing .bar {
+      /* Heights will be controlled by JavaScript */
+    }
+
+    /* Pause icon overlay */
+    .pause-overlay {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      opacity: 0;
+      transition: opacity 0.2s ease;
+      pointer-events: none;
+    }
+
+    button:hover .pause-overlay {
+      opacity: 0.3;
+    }
+
+    .pause-icon {
+      width: 14px;
+      height: 14px;
+      display: flex;
+      gap: 3px;
+    }
+
+    .pause-icon span {
+      width: 4px;
+      height: 100%;
+      background: #C5A059;
+      border-radius: 1px;
+    }
+
+    /* Transition button */
+    .transition-btn {
+      margin-top: 20px;
+      padding: 12px 24px;
+      background: rgba(197, 160, 89, 0.1);
+      border: 1px solid rgba(197, 160, 89, 0.3);
+      color: #C5A059;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      font-size: 14px;
+      transition: all 0.2s ease;
+    }
+
+    .transition-btn:hover {
+      background: rgba(197, 160, 89, 0.15);
+      border-color: rgba(197, 160, 89, 0.5);
+      transform: scale(1.05);
+    }
+
+    .description {
+      max-width: 500px;
+      text-align: center;
+      color: #a8a29e;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .description strong {
+      color: #C5A059;
+    }
+  </style>
+</head>
+<body>
+  <div class="demo-section">
+    <div class="demo-label">Loading State</div>
+    <div class="button-container">
+      <button disabled>
+        <div class="wave-bars loading">
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+          <div class="bar"></div>
+        </div>
+      </button>
+      <span class="label">Crafting</span>
+    </div>
+  </div>
+
+  <div class="demo-section">
+    <div class="demo-label">Playing State (Hover to see pause)</div>
+    <div class="button-container">
+      <button id="playingBtn">
+        <div class="wave-bars playing" id="waveBars">
+          <div class="bar" data-index="0"></div>
+          <div class="bar" data-index="1"></div>
+          <div class="bar" data-index="2"></div>
+          <div class="bar" data-index="3"></div>
+          <div class="bar" data-index="4"></div>
+        </div>
+        <div class="pause-overlay">
+          <div class="pause-icon">
+            <span></span>
+            <span></span>
+          </div>
+        </div>
+      </button>
+      <span class="label">Pause</span>
+    </div>
+  </div>
+
+  <button class="transition-btn" id="transitionBtn">▶ Watch Loading → Playing Transition</button>
+
+  <div class="description">
+    <strong>Option 1: Frequency-Responsive Bars</strong><br>
+    Bars react to audio frequency data via Web Audio API's AnalyserNode. Each bar represents a frequency band (bass to treble). The loading animation "wakes up" into organic, responsive movement that follows the actual audio.
+  </div>
+
+  <script>
+    // Simulate frequency-responsive animation
+    const bars = document.querySelectorAll('.playing .bar');
+    const frequencies = [0, 0, 0, 0, 0];
+    const targetFrequencies = [0, 0, 0, 0, 0];
+
+    function updateBars() {
+      bars.forEach((bar, i) => {
+        // Smooth interpolation
+        frequencies[i] += (targetFrequencies[i] - frequencies[i]) * 0.2;
+
+        // Map to height (8px to 24px)
+        const height = 8 + frequencies[i] * 16;
+        bar.style.height = `${height}px`;
+      });
+
+      requestAnimationFrame(updateBars);
+    }
+
+    // Generate random frequency data (simulating real audio analysis)
+    function generateFrequencies() {
+      targetFrequencies[0] = Math.random() * 0.8 + 0.2; // Bass - more movement
+      targetFrequencies[1] = Math.random() * 0.6 + 0.3; // Low-mid
+      targetFrequencies[2] = Math.random() * 0.9 + 0.1; // Mid - most dynamic
+      targetFrequencies[3] = Math.random() * 0.6 + 0.3; // High-mid
+      targetFrequencies[4] = Math.random() * 0.5 + 0.2; // Treble - subtle
+
+      setTimeout(generateFrequencies, 100);
+    }
+
+    updateBars();
+    generateFrequencies();
+
+    // Transition demo
+    const transitionBtn = document.getElementById('transitionBtn');
+    let isTransitioning = false;
+
+    transitionBtn.addEventListener('click', () => {
+      if (isTransitioning) return;
+      isTransitioning = true;
+      transitionBtn.textContent = 'Transitioning...';
+      transitionBtn.disabled = true;
+
+      // Show loading state
+      const loadingSection = document.querySelector('.demo-section:first-child');
+      const playingSection = document.querySelector('.demo-section:nth-child(2)');
+
+      loadingSection.style.opacity = '1';
+      playingSection.style.opacity = '0.3';
+
+      // After 2 seconds, switch to playing
+      setTimeout(() => {
+        loadingSection.style.opacity = '0.3';
+        playingSection.style.opacity = '1';
+
+        transitionBtn.textContent = '▶ Watch Loading → Playing Transition';
+        transitionBtn.disabled = false;
+        isTransitioning = false;
+      }, 2000);
+    });
+  </script>
+</body>
+</html>

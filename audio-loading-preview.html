@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Audio Loading States - Arabic Poetry App</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background: #0c0c0e;
+      color: #e7e5e4;
+      font-family: 'Tajawal', sans-serif;
+    }
+    .font-amiri { font-family: 'Amiri', serif; }
+    .font-tajawal { font-family: 'Tajawal', sans-serif; }
+
+    /* Option 1: Pulsing Gold Ring */
+    @keyframes pulse-ring {
+      0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+      50% {
+        transform: scale(1.15);
+        opacity: 0.5;
+      }
+    }
+    .pulse-ring {
+      animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    /* Option 2: Sound Wave Bars */
+    @keyframes wave {
+      0%, 100% {
+        transform: scaleY(0.3);
+      }
+      50% {
+        transform: scaleY(1);
+      }
+    }
+    .wave-bar-1 {
+      animation: wave 1.2s ease-in-out infinite;
+      animation-delay: 0s;
+    }
+    .wave-bar-2 {
+      animation: wave 1.2s ease-in-out infinite;
+      animation-delay: 0.15s;
+    }
+    .wave-bar-3 {
+      animation: wave 1.2s ease-in-out infinite;
+      animation-delay: 0.3s;
+    }
+    .wave-bar-4 {
+      animation: wave 1.2s ease-in-out infinite;
+      animation-delay: 0.45s;
+    }
+    .wave-bar-5 {
+      animation: wave 1.2s ease-in-out infinite;
+      animation-delay: 0.6s;
+    }
+
+    /* Option 3: Circular Progress Arc */
+    @keyframes rotate {
+      0% {
+        transform: rotate(0deg);
+      }
+      100% {
+        transform: rotate(360deg);
+      }
+    }
+    .rotate-arc {
+      animation: rotate 1.5s linear infinite;
+    }
+
+    /* Shimmer effect for labels */
+    @keyframes shimmer {
+      0%, 100% {
+        opacity: 0.6;
+      }
+      50% {
+        opacity: 1;
+      }
+    }
+    .shimmer {
+      animation: shimmer 2s ease-in-out infinite;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col items-center justify-center p-8">
+
+  <div class="max-w-7xl w-full">
+    <h1 class="text-4xl font-bold text-[#C5A059] mb-2 text-center font-amiri">
+      Audio Loading States
+    </h1>
+    <p class="text-center text-stone-400 mb-12 font-tajawal">
+      Premium loading experiences for Arabic poetry audio generation
+    </p>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-16">
+
+      <!-- Option 1: Pulsing Gold Ring -->
+      <div class="bg-stone-900/60 backdrop-blur-2xl border border-stone-800 rounded-2xl p-8">
+        <h2 class="text-2xl font-bold text-[#C5A059] mb-4 font-tajawal">Option 1</h2>
+        <h3 class="text-lg text-stone-300 mb-6 font-tajawal">Pulsing Gold Ring</h3>
+
+        <div class="flex flex-col items-center gap-8 py-8">
+          <!-- Loading State -->
+          <div class="flex flex-col items-center gap-3">
+            <div class="relative">
+              <!-- Pulsing outer ring -->
+              <div class="absolute inset-0 rounded-full border-2 border-[#C5A059]/40 pulse-ring"></div>
+              <!-- Main button -->
+              <button
+                disabled
+                aria-label="Preparing audio"
+                class="relative min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-2 border-[#C5A059] cursor-wait transition-all duration-300 flex items-center justify-center rounded-full"
+              >
+                <svg width="21" height="21" viewBox="0 0 24 24" fill="none" class="text-[#C5A059]">
+                  <path d="M11 5L6 9H2v6h4l5 4V5z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M15.54 8.46a5 5 0 0 1 0 7.07" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="shimmer"/>
+                </svg>
+              </button>
+            </div>
+            <div class="flex flex-col items-center gap-0.5">
+              <span class="font-tajawal text-[8.5px] font-bold tracking-[0.08em] uppercase text-stone-400 whitespace-nowrap shimmer">
+                Preparing
+              </span>
+              <span class="font-amiri text-[9px] text-[#C5A059]/80 shimmer" dir="rtl">
+                جاري التحضير
+              </span>
+            </div>
+          </div>
+
+          <!-- Normal State (for comparison) -->
+          <div class="pt-8 border-t border-stone-800 w-full flex justify-center">
+            <div class="flex flex-col items-center gap-3">
+              <button
+                aria-label="Play recitation"
+                class="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105"
+              >
+                <svg width="21" height="21" viewBox="0 0 24 24" fill="none" class="text-[#C5A059]">
+                  <path d="M11 5L6 9H2v6h4l5 4V5z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M15.54 8.46a5 5 0 0 1 0 7.07" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+              <span class="font-tajawal text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">
+                Listen
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-6 pt-6 border-t border-stone-800">
+          <h4 class="text-sm font-bold text-[#C5A059] mb-3 font-tajawal">Design Choice:</h4>
+          <p class="text-sm text-stone-400 mb-4 leading-relaxed font-tajawal">
+            Elegant pulsing ring animation that expands and fades, creating a breathing effect. The gold border maintains brand consistency while the animated sound wave icon inside provides clear audio context.
+          </p>
+          <h4 class="text-sm font-bold text-[#C5A059] mb-2 font-tajawal">Key Features:</h4>
+          <ul class="text-sm text-stone-400 space-y-1 font-tajawal">
+            <li>• Smooth 2s pulse cycle</li>
+            <li>• Bilingual labels (EN/AR)</li>
+            <li>• Shimmer effect on text</li>
+            <li>• Maintains button size</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Option 2: Sound Wave Bars -->
+      <div class="bg-stone-900/60 backdrop-blur-2xl border border-stone-800 rounded-2xl p-8">
+        <h2 class="text-2xl font-bold text-[#C5A059] mb-4 font-tajawal">Option 2</h2>
+        <h3 class="text-lg text-stone-300 mb-6 font-tajawal">Sound Wave Bars</h3>
+
+        <div class="flex flex-col items-center gap-8 py-8">
+          <!-- Loading State -->
+          <div class="flex flex-col items-center gap-3">
+            <button
+              disabled
+              aria-label="Preparing audio"
+              class="min-w-[46px] min-h-[46px] p-[11px] bg-[#C5A059]/8 border border-[#C5A059]/30 cursor-wait transition-all duration-300 flex items-center justify-center rounded-full"
+            >
+              <div class="flex items-center justify-center gap-0.5 h-[21px]">
+                <div class="w-[2px] h-[6px] bg-[#C5A059] rounded-full wave-bar-1"></div>
+                <div class="w-[2px] h-[10px] bg-[#C5A059] rounded-full wave-bar-2"></div>
+                <div class="w-[2px] h-[14px] bg-[#C5A059] rounded-full wave-bar-3"></div>
+                <div class="w-[2px] h-[10px] bg-[#C5A059] rounded-full wave-bar-4"></div>
+                <div class="w-[2px] h-[6px] bg-[#C5A059] rounded-full wave-bar-5"></div>
+              </div>
+            </button>
+            <div class="flex flex-col items-center gap-0.5">
+              <span class="font-tajawal text-[8.5px] font-bold tracking-[0.08em] uppercase text-stone-400 whitespace-nowrap shimmer">
+                Crafting
+              </span>
+              <span class="font-amiri text-[9px] text-[#C5A059]/80 shimmer" dir="rtl">
+                إعداد الصوت
+              </span>
+            </div>
+          </div>
+
+          <!-- Normal State (for comparison) -->
+          <div class="pt-8 border-t border-stone-800 w-full flex justify-center">
+            <div class="flex flex-col items-center gap-3">
+              <button
+                aria-label="Play recitation"
+                class="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105"
+              >
+                <svg width="21" height="21" viewBox="0 0 24 24" fill="none" class="text-[#C5A059]">
+                  <path d="M11 5L6 9H2v6h4l5 4V5z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M15.54 8.46a5 5 0 0 1 0 7.07" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+              <span class="font-tajawal text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">
+                Listen
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-6 pt-6 border-t border-stone-800">
+          <h4 class="text-sm font-bold text-[#C5A059] mb-3 font-tajawal">Design Choice:</h4>
+          <p class="text-sm text-stone-400 mb-4 leading-relaxed font-tajawal">
+            Dynamic sound wave visualization with 5 bars that animate in sequence, creating a mesmerizing audio waveform effect. The subtle gold background glow indicates active processing.
+          </p>
+          <h4 class="text-sm font-bold text-[#C5A059] mb-2 font-tajawal">Key Features:</h4>
+          <ul class="text-sm text-stone-400 space-y-1 font-tajawal">
+            <li>• Staggered wave animation</li>
+            <li>• Clear audio metaphor</li>
+            <li>• Subtle background glow</li>
+            <li>• Premium "Crafting" label</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Option 3: Circular Progress Arc -->
+      <div class="bg-stone-900/60 backdrop-blur-2xl border border-stone-800 rounded-2xl p-8">
+        <h2 class="text-2xl font-bold text-[#C5A059] mb-4 font-tajawal">Option 3</h2>
+        <h3 class="text-lg text-stone-300 mb-6 font-tajawal">Circular Progress Arc</h3>
+
+        <div class="flex flex-col items-center gap-8 py-8">
+          <!-- Loading State -->
+          <div class="flex flex-col items-center gap-3">
+            <button
+              disabled
+              aria-label="Preparing audio"
+              class="relative min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-wait transition-all duration-300 flex items-center justify-center rounded-full"
+            >
+              <!-- Rotating arc -->
+              <svg class="absolute inset-0 w-full h-full rotate-arc" viewBox="0 0 50 50">
+                <circle
+                  cx="25"
+                  cy="25"
+                  r="20"
+                  fill="none"
+                  stroke="#C5A059"
+                  stroke-width="2"
+                  stroke-dasharray="90 125"
+                  stroke-linecap="round"
+                />
+              </svg>
+              <!-- Icon -->
+              <svg width="21" height="21" viewBox="0 0 24 24" fill="none" class="text-[#C5A059] relative z-10">
+                <path d="M11 5L6 9H2v6h4l5 4V5z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </button>
+            <div class="flex flex-col items-center gap-0.5">
+              <span class="font-tajawal text-[8.5px] font-bold tracking-[0.08em] uppercase text-stone-400 whitespace-nowrap shimmer">
+                Weaving
+              </span>
+              <span class="font-amiri text-[9px] text-[#C5A059]/80 shimmer" dir="rtl">
+                النسج الصوتي
+              </span>
+            </div>
+          </div>
+
+          <!-- Normal State (for comparison) -->
+          <div class="pt-8 border-t border-stone-800 w-full flex justify-center">
+            <div class="flex flex-col items-center gap-3">
+              <button
+                aria-label="Play recitation"
+                class="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105"
+              >
+                <svg width="21" height="21" viewBox="0 0 24 24" fill="none" class="text-[#C5A059]">
+                  <path d="M11 5L6 9H2v6h4l5 4V5z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M15.54 8.46a5 5 0 0 1 0 7.07" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </button>
+              <span class="font-tajawal text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">
+                Listen
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-6 pt-6 border-t border-stone-800">
+          <h4 class="text-sm font-bold text-[#C5A059] mb-3 font-tajawal">Design Choice:</h4>
+          <p class="text-sm text-stone-400 mb-4 leading-relaxed font-tajawal">
+            Smooth rotating arc that creates a continuous circular progress indicator. The poetic "Weaving" metaphor elevates the technical process into something artisanal and intentional.
+          </p>
+          <h4 class="text-sm font-bold text-[#C5A059] mb-2 font-tajawal">Key Features:</h4>
+          <ul class="text-sm text-stone-400 space-y-1 font-tajawal">
+            <li>• Continuous rotation (1.5s)</li>
+            <li>• Minimal, clean design</li>
+            <li>• Poetic "weaving" metaphor</li>
+            <li>• Clear progress indicator</li>
+          </ul>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Comparison Table -->
+    <div class="bg-stone-900/60 backdrop-blur-2xl border border-stone-800 rounded-2xl p-8 mb-12">
+      <h2 class="text-2xl font-bold text-[#C5A059] mb-6 font-tajawal">Comparison</h2>
+      <table class="w-full text-sm font-tajawal">
+        <thead>
+          <tr class="border-b border-stone-800">
+            <th class="text-left py-3 text-stone-300 font-bold">Feature</th>
+            <th class="text-center py-3 text-[#C5A059] font-bold">Option 1</th>
+            <th class="text-center py-3 text-[#C5A059] font-bold">Option 2</th>
+            <th class="text-center py-3 text-[#C5A059] font-bold">Option 3</th>
+          </tr>
+        </thead>
+        <tbody class="text-stone-400">
+          <tr class="border-b border-stone-800/50">
+            <td class="py-3">Visual Impact</td>
+            <td class="text-center">⭐⭐⭐⭐⭐</td>
+            <td class="text-center">⭐⭐⭐⭐</td>
+            <td class="text-center">⭐⭐⭐⭐</td>
+          </tr>
+          <tr class="border-b border-stone-800/50">
+            <td class="py-3">Audio Context</td>
+            <td class="text-center">⭐⭐⭐⭐</td>
+            <td class="text-center">⭐⭐⭐⭐⭐</td>
+            <td class="text-center">⭐⭐⭐</td>
+          </tr>
+          <tr class="border-b border-stone-800/50">
+            <td class="py-3">Premium Feel</td>
+            <td class="text-center">⭐⭐⭐⭐⭐</td>
+            <td class="text-center">⭐⭐⭐⭐</td>
+            <td class="text-center">⭐⭐⭐⭐⭐</td>
+          </tr>
+          <tr class="border-b border-stone-800/50">
+            <td class="py-3">Simplicity</td>
+            <td class="text-center">⭐⭐⭐⭐</td>
+            <td class="text-center">⭐⭐⭐</td>
+            <td class="text-center">⭐⭐⭐⭐⭐</td>
+          </tr>
+          <tr class="border-b border-stone-800/50">
+            <td class="py-3">Performance</td>
+            <td class="text-center">Excellent</td>
+            <td class="text-center">Excellent</td>
+            <td class="text-center">Excellent</td>
+          </tr>
+          <tr class="border-b border-stone-800/50">
+            <td class="py-3">Arabic Context</td>
+            <td class="text-center">Good</td>
+            <td class="text-center">Excellent</td>
+            <td class="text-center">Excellent</td>
+          </tr>
+          <tr>
+            <td class="py-3 font-bold text-stone-300">Best For</td>
+            <td class="text-center text-xs">Elegant<br/>breathing effect</td>
+            <td class="text-center text-xs">Clear audio<br/>metaphor</td>
+            <td class="text-center text-xs">Minimal<br/>sophistication</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Recommendations -->
+    <div class="bg-stone-900/60 backdrop-blur-2xl border-l-4 border-[#C5A059] rounded-2xl p-8">
+      <h2 class="text-2xl font-bold text-[#C5A059] mb-6 font-tajawal">Recommendations</h2>
+
+      <div class="space-y-6 font-tajawal">
+        <div>
+          <h3 class="text-lg font-bold text-stone-200 mb-2">🏆 Best Overall: Option 1 (Pulsing Gold Ring)</h3>
+          <p class="text-stone-400 leading-relaxed">
+            The pulsing ring creates a sophisticated "breathing" effect that feels premium and intentional. The bilingual labels and shimmer animation provide clear feedback without being distracting. The expanding ring metaphor suggests something is growing/being prepared.
+          </p>
+        </div>
+
+        <div>
+          <h3 class="text-lg font-bold text-stone-200 mb-2">🎵 Best for Audio Context: Option 2 (Sound Wave Bars)</h3>
+          <p class="text-stone-400 leading-relaxed">
+            If you want users to immediately understand this is audio-related processing, the wave bars provide the clearest metaphor. The staggered animation is mesmerizing and feels like actual sound being generated. The "Crafting" label elevates the technical process.
+          </p>
+        </div>
+
+        <div>
+          <h3 class="text-lg font-bold text-stone-200 mb-2">✨ Best for Minimalism: Option 3 (Circular Progress)</h3>
+          <p class="text-stone-400 leading-relaxed">
+            The rotating arc is the most minimal and clean option. The "Weaving" metaphor (النسج الصوتي - "sonic weaving") is deeply poetic and culturally resonant for an Arabic poetry app. Perfect if you want sophistication over clarity.
+          </p>
+        </div>
+
+        <div class="mt-8 pt-6 border-t border-stone-800">
+          <h3 class="text-lg font-bold text-stone-200 mb-3">Implementation Notes</h3>
+          <ul class="space-y-2 text-stone-400">
+            <li class="flex gap-2">
+              <span class="text-[#C5A059]">•</span>
+              <span>All three options use only CSS animations (no JS) for optimal performance</span>
+            </li>
+            <li class="flex gap-2">
+              <span class="text-[#C5A059]">•</span>
+              <span>Bilingual labels work with RTL (Arabic) and LTR (English) layouts</span>
+            </li>
+            <li class="flex gap-2">
+              <span class="text-[#C5A059]">•</span>
+              <span>All buttons maintain 46x46px min touch target (WCAG compliant)</span>
+            </li>
+            <li class="flex gap-2">
+              <span class="text-[#C5A059]">•</span>
+              <span>Disabled state uses cursor-wait to indicate processing</span>
+            </li>
+            <li class="flex gap-2">
+              <span class="text-[#C5A059]">•</span>
+              <span>Shimmer effect on labels provides subtle feedback that something is happening</span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="text-center mt-12 text-stone-500 text-sm font-tajawal">
+      <p>Created for Poetry bil-Araby • Premium Arabic Poetry Experience</p>
+    </div>
+
+  </div>
+
+</body>
+</html>

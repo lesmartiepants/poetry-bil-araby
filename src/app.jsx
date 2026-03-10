@@ -1,7 +1,49 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { Play, Pause, BookOpen, RefreshCw, Volume2, ChevronDown, Quote, Globe, Moon, Sun, Loader2, ChevronRight, ChevronLeft, Search, X, Copy, LayoutGrid, Check, Bug, Trash2, Sparkles, Feather, Library, Compass, Rabbit, Heart, LogIn, LogOut, User, Settings2, ArrowRight, Languages, Share2, CalendarDays, ThumbsDown } from 'lucide-react';
+import { useState, useEffect, useRef, useMemo } from 'react';
+import {
+  Play,
+  Pause,
+  BookOpen,
+  RefreshCw,
+  Volume2,
+  ChevronDown,
+  Quote,
+  Globe,
+  Moon,
+  Sun,
+  Loader2,
+  ChevronRight,
+  ChevronLeft,
+  Search,
+  X,
+  Copy,
+  LayoutGrid,
+  Check,
+  Bug,
+  Trash2,
+  Sparkles,
+  Feather,
+  Library,
+  Compass,
+  Rabbit,
+  Heart,
+  LogIn,
+  LogOut,
+  User,
+  Settings2,
+  ArrowRight,
+  Languages,
+  Share2,
+  CalendarDays,
+  ThumbsDown,
+} from 'lucide-react';
 import { track } from '@vercel/analytics';
-import { useAuth, useUserSettings, useSavedPoems, useDownvotes, usePoemEvents } from './hooks/useAuth';
+import {
+  useAuth,
+  useUserSettings,
+  useSavedPoems,
+  useDownvotes,
+  usePoemEvents,
+} from './hooks/useAuth';
 import { INSIGHTS_SYSTEM_PROMPT, DISCOVERY_SYSTEM_PROMPT, getTTSInstruction } from './prompts';
 import { parseInsight } from './utils/insightParser';
 import { repairAndParseJSON } from './utils/jsonRepair';
@@ -14,14 +56,14 @@ import seedPoems from './data/seed-poems.json';
 
 const FEATURES = {
   grounding: false,
-  debug: true,        // Debug panel visibility
-  logging: true,      // Emit structured logs to console (captured by Vercel/browser)
-  caching: true,      // Enable IndexedDB caching for audio/insights
-  streaming: true,    // Enable streaming insights (progressive rendering)
-  prefetching: true,  // Enable smart prefetching (rate-limited to avoid API issues)
-  database: true,     // Enable database poem source (requires backend server running)
-  onboarding: true,   // Show kinetic walkthrough (phases 1-3) on first visit
-  forceOnboarding: false // Bypass hasSeenOnboarding check (enable to force onboarding every visit)
+  debug: true, // Debug panel visibility
+  logging: true, // Emit structured logs to console (captured by Vercel/browser)
+  caching: true, // Enable IndexedDB caching for audio/insights
+  streaming: true, // Enable streaming insights (progressive rendering)
+  prefetching: true, // Enable smart prefetching (rate-limited to avoid API issues)
+  database: true, // Enable database poem source (requires backend server running)
+  onboarding: true, // Show kinetic walkthrough (phases 1-3) on first visit
+  forceOnboarding: false, // Bypass hasSeenOnboarding check (enable to force onboarding every visit)
 };
 
 const DESIGN = {
@@ -83,45 +125,6 @@ const THEME = {
     debugInput: 'bg-stone-900/80 border-stone-700 text-stone-200 placeholder:text-stone-500', // Debug input
     debugDivider: 'border-stone-700', // Debug panel divider
     kbd: 'bg-stone-800 text-stone-300 border-stone-700' // Keyboard shortcut keys
-  },
-  light: {
-    bg: 'bg-[#FDFCF8]',
-    text: 'text-stone-800',
-    accent: 'text-indigo-600',
-    glass: 'bg-white/70',
-    border: 'border-white/80',
-    shadow: 'shadow-indigo-100/50',
-    pill: 'bg-white/40 border-white/60',
-    glow: 'from-indigo-500/15 via-purple-500/10 to-transparent',
-    brand: 'text-indigo-600',
-    brandBg: 'bg-indigo-500/5',
-    brandBorder: 'border-indigo-500/10',
-    btnPrimary: 'bg-gradient-to-br from-indigo-600 to-purple-700 text-white shadow-indigo-200',
-    titleColor: 'text-[#8B7355]', // Antique Gold (rich, warm tone - 5.2:1 contrast)
-    poetColor: 'text-[#8B7355]', // Antique Gold (rich, warm tone - 5.2:1 contrast)
-    controlIcon: 'text-indigo-950/90 hover:text-black',
-    gold: '#8B7355',              // Raw gold hex for inline styles & template literals
-    goldText: 'text-[#8B7355]',   // Tailwind gold text
-    goldHoverBg: 'hover:bg-[#8B7355]/12',  // Gold hover background (buttons)
-    goldHoverBg15: 'hover:bg-[#8B7355]/15', // Gold hover background (sidebar)
-    goldActiveBg: 'bg-[#8B7355]/15',        // Gold active/selected background
-    goldBorder: 'border-[#8B7355]',          // Gold solid border (selected state)
-    goldBorderMuted: 'border-[#8B7355]/20',  // Gold muted border (dividers)
-    goldBorderSubtle: 'border-[#8B7355]/30', // Gold subtle border (hover)
-    goldHoverBorderSubtle: 'hover:border-[#8B7355]/30', // Gold hover border
-    goldBorderAccent: 'border-[#8B7355]/40', // Gold border accent (sidebar edges)
-    goldBorderStrong: 'border-[#8B7355]/70', // Gold border strong (hover state)
-    goldHoverBorderStrong: 'hover:border-[#8B7355]/70', // Gold hover border strong
-    goldBg10: 'bg-[#8B7355]/10',             // Gold background 10% (selected items)
-    goldBg20: 'border-[#8B7355]/20',         // Gold background 20% (badge border)
-    goldTextMuted: 'text-[#8B7355]/60',      // Gold muted text
-    error: 'text-red-400',         // Error text (same in light for visibility)
-    errorBg: 'bg-red-600/80',     // Error background (bug report button)
-    debug: 'bg-white/60 border-stone-200 text-stone-700', // Debug panel
-    debugInput: 'bg-white/80 border-stone-300 text-stone-800 placeholder:text-stone-400', // Debug input
-    debugDivider: 'border-stone-300', // Debug panel divider
-    kbd: 'bg-stone-200 text-stone-700 border-stone-300' // Keyboard shortcut keys
-  }
 };
 
 // Convenience alias: many UI elements (control bar, dropdowns, badges) always use
@@ -130,27 +133,26 @@ const THEME = {
 const GOLD = THEME.dark;
 
 const CATEGORIES = [
-  { id: "All", label: "All Poets", labelAr: "كل الشعراء" },
-  { id: "Nizar Qabbani", label: "Nizar Qabbani", labelAr: "نزار قباني" },
-  { id: "Mahmoud Darwish", label: "Mahmoud Darwish", labelAr: "محمود درويش" },
-  { id: "Al-Mutanabbi", label: "Al-Mutanabbi", labelAr: "المتنبي" },
-  { id: "Antarah", label: "Antarah", labelAr: "عنترة بن شداد" },
-  { id: "Ibn Arabi", label: "Ibn Arabi", labelAr: "ابن عربي" }
+  { id: 'All', label: 'All Poets', labelAr: 'كل الشعراء' },
+  { id: 'Nizar Qabbani', label: 'Nizar Qabbani', labelAr: 'نزار قباني' },
+  { id: 'Mahmoud Darwish', label: 'Mahmoud Darwish', labelAr: 'محمود درويش' },
+  { id: 'Al-Mutanabbi', label: 'Al-Mutanabbi', labelAr: 'المتنبي' },
+  { id: 'Antarah', label: 'Antarah', labelAr: 'عنترة بن شداد' },
+  { id: 'Ibn Arabi', label: 'Ibn Arabi', labelAr: 'ابن عربي' },
 ];
 
 const FONTS = [
-  { id: "Amiri", label: "Amiri", labelAr: "أميري", family: "font-amiri" },
-  { id: "Alexandria", label: "Alexandria", labelAr: "الإسكندرية", family: "font-alexandria" },
-  { id: "El Messiri", label: "El Messiri", labelAr: "المسيري", family: "font-messiri" },
-  { id: "Lalezar", label: "Lalezar", labelAr: "لاله‌زار", family: "font-lalezar" },
-  { id: "Rakkas", label: "Rakkas", labelAr: "رقاص", family: "font-rakkas" },
-  { id: "Fustat", label: "Fustat", labelAr: "فسطاط", family: "font-fustat" },
-  { id: "Kufam", label: "Kufam", labelAr: "كوفام", family: "font-kufam" },
-  { id: "Katibeh", label: "Katibeh", labelAr: "كاتبة", family: "font-katibeh" }
+  { id: 'Amiri', label: 'Amiri', labelAr: 'أميري', family: 'font-amiri' },
+  { id: 'Alexandria', label: 'Alexandria', labelAr: 'الإسكندرية', family: 'font-alexandria' },
+  { id: 'El Messiri', label: 'El Messiri', labelAr: 'المسيري', family: 'font-messiri' },
+  { id: 'Lalezar', label: 'Lalezar', labelAr: 'لاله‌زار', family: 'font-lalezar' },
+  { id: 'Rakkas', label: 'Rakkas', labelAr: 'رقاص', family: 'font-rakkas' },
+  { id: 'Fustat', label: 'Fustat', labelAr: 'فسطاط', family: 'font-fustat' },
+  { id: 'Kufam', label: 'Kufam', labelAr: 'كوفام', family: 'font-kufam' },
+  { id: 'Katibeh', label: 'Katibeh', labelAr: 'كاتبة', family: 'font-katibeh' },
 ];
 
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY || "";
-const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
+const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 /* =============================================================================
   2. API PROMPTS & CONFIGURATION
@@ -179,25 +181,26 @@ let _discoveredTextModels = null;
  * Falls back to API_MODELS.textDefaults if the API is unreachable or returns no usable models.
  * Result is cached for the lifetime of the page.
  */
-const discoverTextModels = async (apiKey, addLog) => {
+const discoverTextModels = async (addLog) => {
   if (_discoveredTextModels) return _discoveredTextModels;
   try {
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`,
+      `${apiUrl}/api/ai/models`,
       { method: 'GET' }
     );
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const { models = [] } = await res.json();
     const ranked = models
-      .filter(m =>
-        Array.isArray(m.supportedGenerationMethods) &&
-        m.supportedGenerationMethods.includes('generateContent') &&
-        typeof m.name === 'string' &&
-        m.name.includes('gemini') &&
-        !m.name.includes('embedding') &&
-        !m.name.includes('tts')
+      .filter(
+        (m) =>
+          Array.isArray(m.supportedGenerationMethods) &&
+          m.supportedGenerationMethods.includes('generateContent') &&
+          typeof m.name === 'string' &&
+          m.name.includes('gemini') &&
+          !m.name.includes('embedding') &&
+          !m.name.includes('tts')
       )
-      .map(m => {
+      .map((m) => {
         const id = m.name.replace('models/', '');
         const vm = id.match(/gemini-(\d+)\.(\d+)/);
         const major = vm ? parseInt(vm[1]) : 0;
@@ -211,14 +214,24 @@ const discoverTextModels = async (apiKey, addLog) => {
         return { id, score };
       })
       .sort((a, b) => b.score - a.score)
-      .map(m => m.id);
+      .map((m) => m.id);
     if (ranked.length > 0) {
       _discoveredTextModels = ranked;
-      if (addLog) addLog('Model Discovery', `${ranked.length} models ranked: ${ranked.slice(0, 3).join(', ')}`, 'info');
+      if (addLog)
+        addLog(
+          'Model Discovery',
+          `${ranked.length} models ranked: ${ranked.slice(0, 3).join(', ')}`,
+          'info'
+        );
       return _discoveredTextModels;
     }
   } catch (err) {
-    if (addLog) addLog('Model Discovery', `ListModels unavailable: ${err.message} — using defaults`, 'warning');
+    if (addLog)
+      addLog(
+        'Model Discovery',
+        `ListModels unavailable: ${err.message} — using defaults`,
+        'warning'
+      );
   }
   _discoveredTextModels = [...API_MODELS.textDefaults];
   return _discoveredTextModels;
@@ -229,26 +242,23 @@ const discoverTextModels = async (apiKey, addLog) => {
  * Uses the dynamically discovered model list (ranked newest/cheapest first).
  * Retries on HTTP 404/410 (model unavailable/deprecated); throws immediately on other errors.
  *
- * @param {string}   endpoint - Gemini method segment, e.g. 'generateContent' or 'streamGenerateContent?alt=sse'
+ * @param {string}   endpoint - Gemini method segment, e.g. 'generateContent' or 'streamGenerateContent'
  * @param {string}   body     - Pre-serialised JSON request body
- * @param {string}   apiKey
  * @param {string}   label    - Human-readable prefix for the thrown error message
  * @param {Function} addLog   - Component logging helper
  * @returns {Promise<Response>} Resolved Response with ok === true
  */
-const geminiTextFetch = async (endpoint, body, apiKey, label, addLog) => {
-  const models = await discoverTextModels(apiKey, addLog);
+const geminiTextFetch = async (endpoint, body, label, addLog) => {
+  const models = await discoverTextModels(addLog);
   for (let i = 0; i < models.length; i++) {
     const model = models[i];
-    if (i > 0) addLog("Model Fallback", `Trying fallback: ${model}`, "warning");
-    // If endpoint already has a query string (e.g. ?alt=sse) append &key, otherwise ?key
-    const sep = endpoint.includes('?') ? '&' : '?';
+    if (i > 0) addLog('Model Fallback', `Trying fallback: ${model}`, 'warning');
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:${endpoint}${sep}key=${apiKey}`,
-      { method: "POST", headers: { "Content-Type": "application/json" }, body }
+      `${apiUrl}/api/ai/${model}/${endpoint}`,
+      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body }
     );
     if (res.ok) {
-      if (i > 0) addLog("Model Fallback", `✓ Using fallback model: ${model}`, "success");
+      if (i > 0) addLog('Model Fallback', `✓ Using fallback model: ${model}`, 'success');
       return res;
     }
     const errData = await res.json().catch(() => ({}));
@@ -257,7 +267,7 @@ const geminiTextFetch = async (endpoint, body, apiKey, label, addLog) => {
     if ((res.status !== 404 && res.status !== 410) || i === models.length - 1) {
       throw new Error(`${label}: ${errMsg}`);
     }
-    addLog("Model Fallback", `${model} not available, trying next...`, "warning");
+    addLog('Model Fallback', `${model} not available, trying next...`, 'warning');
   }
 };
 
@@ -268,20 +278,34 @@ const TTS_CONFIG = {
   voiceName: 'Fenrir',
   responseModalities: ['AUDIO'],
   retryMaxAttempts: 3,
-  retryBaseDelayMs: 1500,  // 1.5s, 3s, 6s exponential backoff
+  retryBaseDelayMs: 1500, // 1.5s, 3s, 6s exponential backoff
 };
 
 /**
  * Fetch with exponential backoff retry on 429 (rate limit) responses.
  * Returns the successful Response, or throws on final failure.
  */
-const fetchWithRetry = async (url, options, { maxAttempts = TTS_CONFIG.retryMaxAttempts, baseDelay = TTS_CONFIG.retryBaseDelayMs, addLog, label = "TTS" } = {}) => {
+const fetchWithRetry = async (
+  url,
+  options,
+  {
+    maxAttempts = TTS_CONFIG.retryMaxAttempts,
+    baseDelay = TTS_CONFIG.retryBaseDelayMs,
+    addLog,
+    label = 'TTS',
+  } = {}
+) => {
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     const res = await fetch(url, options);
     if (res.status !== 429) return res;
     const delay = baseDelay * Math.pow(2, attempt);
-    if (addLog) addLog(label, `Rate limited (429) — retrying in ${(delay / 1000).toFixed(1)}s (attempt ${attempt + 1}/${maxAttempts})`, "warning");
-    await new Promise(r => setTimeout(r, delay));
+    if (addLog)
+      addLog(
+        label,
+        `Rate limited (429) — retrying in ${(delay / 1000).toFixed(1)}s (attempt ${attempt + 1}/${maxAttempts})`,
+        'warning'
+      );
+    await new Promise((r) => setTimeout(r, delay));
   }
   // Final attempt — return whatever we get
   return fetch(url, options);
@@ -298,14 +322,14 @@ const CACHE_CONFIG = {
   stores: {
     audio: 'audio-cache',
     insights: 'insights-cache',
-    poems: 'poems-cache'
+    poems: 'poems-cache',
   },
   expiry: {
-    audio: 7 * 24 * 60 * 60 * 1000,      // 7 days
-    insights: 30 * 24 * 60 * 60 * 1000,  // 30 days
-    poems: null                           // Never expire
+    audio: 7 * 24 * 60 * 60 * 1000, // 7 days
+    insights: 30 * 24 * 60 * 60 * 1000, // 30 days
+    poems: null, // Never expire
   },
-  maxSize: 500 * 1024 * 1024 // 500MB
+  maxSize: 500 * 1024 * 1024, // 500MB
 };
 
 /**
@@ -372,11 +396,12 @@ const cacheOperations = {
           }
 
           // Check expiry
-          const expiryTime = storeName === CACHE_CONFIG.stores.audio
-            ? CACHE_CONFIG.expiry.audio
-            : storeName === CACHE_CONFIG.stores.insights
-            ? CACHE_CONFIG.expiry.insights
-            : CACHE_CONFIG.expiry.poems;
+          const expiryTime =
+            storeName === CACHE_CONFIG.stores.audio
+              ? CACHE_CONFIG.expiry.audio
+              : storeName === CACHE_CONFIG.stores.insights
+                ? CACHE_CONFIG.expiry.insights
+                : CACHE_CONFIG.expiry.poems;
 
           if (expiryTime && result.timestamp) {
             const age = Date.now() - result.timestamp;
@@ -419,7 +444,7 @@ const cacheOperations = {
         const record = {
           poemId,
           timestamp: Date.now(),
-          ...data
+          ...data,
         };
         const request = store.put(record);
 
@@ -483,7 +508,7 @@ const cacheOperations = {
       console.error('Cache clear error:', error);
       return false;
     }
-  }
+  },
 };
 
 /* =============================================================================
@@ -511,14 +536,20 @@ const prefetchManager = {
     try {
       // Check if already generating - silently skip
       if (activeRequests && activeRequests.current.has(poemId)) {
-        if (addLog) addLog("Prefetch Audio", `Already generating audio for poem ${poemId} - skipping`, "info");
+        if (addLog)
+          addLog(
+            'Prefetch Audio',
+            `Already generating audio for poem ${poemId} - skipping`,
+            'info'
+          );
         return;
       }
 
       // Check cache first - don't prefetch if already cached
       const cached = await cacheOperations.get(CACHE_CONFIG.stores.audio, poemId);
       if (cached?.blob) {
-        if (addLog) addLog("Prefetch Audio", `Audio already cached for poem ${poemId} - skipping`, "info");
+        if (addLog)
+          addLog('Prefetch Audio', `Audio already cached for poem ${poemId} - skipping`, 'info');
         return;
       }
 
@@ -526,56 +557,63 @@ const prefetchManager = {
       if (activeRequests) activeRequests.current.add(poemId);
 
       // Generate audio using same logic as togglePlay
-      const mood = poem?.tags?.[1] || "Poetic";
-      const era = poem?.tags?.[0] || "Classical";
-      const poet = poem?.poet || "the Master Poet";
+      const mood = poem?.tags?.[1] || 'Poetic';
+      const era = poem?.tags?.[0] || 'Classical';
+      const poet = poem?.poet || 'the Master Poet';
       const ttsInstruction = getTTSInstruction(poem, poet, mood, era);
 
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY || "";
-      if (!apiKey) return;
-
       const requestSize = new Blob([
-        JSON.stringify({ contents: [{ parts: [{ text: ttsInstruction }] }] })
+        JSON.stringify({ contents: [{ parts: [{ text: ttsInstruction }] }] }),
       ]).size;
       const estimatedTokens = Math.ceil(ttsInstruction.length / 4);
 
       if (addLog) {
         addLog(
-          "Prefetch Audio",
+          'Prefetch Audio',
           `→ Background audio generation (poem ${poemId}) | ${(requestSize / 1024).toFixed(1)}KB | ${estimatedTokens} tokens`,
-          "info"
+          'info'
         );
       }
 
       const apiStart = performance.now();
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${API_MODELS.tts}:generateContent?key=${apiKey}`;
+      const url = `${apiUrl}/api/ai/${API_MODELS.tts}/generateContent`;
       const fetchOptions = {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{ parts: [{ text: ttsInstruction }] }],
           generationConfig: {
             responseModalities: TTS_CONFIG.responseModalities,
             speechConfig: {
               voiceConfig: {
-                prebuiltVoiceConfig: { voiceName: TTS_CONFIG.voiceName }
-              }
-            }
-          }
-        })
+                prebuiltVoiceConfig: { voiceName: TTS_CONFIG.voiceName },
+              },
+            },
+          },
+        }),
       };
-      const res = await fetchWithRetry(url, fetchOptions, { addLog, label: "Prefetch Audio" });
+      const res = await fetchWithRetry(url, fetchOptions, { addLog, label: 'Prefetch Audio' });
 
       if (!res.ok) {
         const errorText = await res.text();
-        if (addLog) addLog("Prefetch Audio", `❌ Audio generation HTTP ${res.status}: ${errorText.substring(0, 150)}`, "error");
+        if (addLog)
+          addLog(
+            'Prefetch Audio',
+            `❌ Audio generation HTTP ${res.status}: ${errorText.substring(0, 150)}`,
+            'error'
+          );
         return;
       }
 
       const data = await res.json();
       const apiTime = performance.now() - apiStart;
       if (!data.candidates || data.candidates.length === 0) {
-        if (addLog) addLog("Prefetch Audio", `❌ Audio generation failed for poem ${poemId}. Response: ${JSON.stringify(data).substring(0, 200)}`, "error");
+        if (addLog)
+          addLog(
+            'Prefetch Audio',
+            `❌ Audio generation failed for poem ${poemId}. Response: ${JSON.stringify(data).substring(0, 200)}`,
+            'error'
+          );
         return;
       }
 
@@ -592,11 +630,22 @@ const prefetchManager = {
             const samples = new Int16Array(buf);
             const wavBuf = new ArrayBuffer(44 + samples.length * 2);
             const wavView = new DataView(wavBuf);
-            const s = (o, str) => { for (let i = 0; i < str.length; i++) wavView.setUint8(o + i, str.charCodeAt(i)); };
-            s(0, 'RIFF'); wavView.setUint32(4, 36 + samples.length * 2, true); s(8, 'WAVE'); s(12, 'fmt ');
-            wavView.setUint32(16, 16, true); wavView.setUint16(20, 1, true); wavView.setUint16(22, 1, true);
-            wavView.setUint32(24, rate, true); wavView.setUint32(28, rate * 2, true); wavView.setUint16(32, 2, true);
-            wavView.setUint16(34, 16, true); s(36, 'data'); wavView.setUint32(40, samples.length * 2, true);
+            const s = (o, str) => {
+              for (let i = 0; i < str.length; i++) wavView.setUint8(o + i, str.charCodeAt(i));
+            };
+            s(0, 'RIFF');
+            wavView.setUint32(4, 36 + samples.length * 2, true);
+            s(8, 'WAVE');
+            s(12, 'fmt ');
+            wavView.setUint32(16, 16, true);
+            wavView.setUint16(20, 1, true);
+            wavView.setUint16(22, 1, true);
+            wavView.setUint32(24, rate, true);
+            wavView.setUint32(28, rate * 2, true);
+            wavView.setUint16(32, 2, true);
+            wavView.setUint16(34, 16, true);
+            s(36, 'data');
+            wavView.setUint32(40, samples.length * 2, true);
             new Int16Array(wavBuf, 44).set(samples);
             return new Blob([wavBuf], { type: 'audio/wav' });
           } catch (e) {
@@ -615,15 +664,30 @@ const prefetchManager = {
           // Cache the blob
           await cacheOperations.set(CACHE_CONFIG.stores.audio, poemId, {
             blob,
-            metadata: { poet: poem.poet, title: poem.title, size: blob.size, duration: audioDuration }
+            metadata: {
+              poet: poem.poet,
+              title: poem.title,
+              size: blob.size,
+              duration: audioDuration,
+            },
           });
 
-          if (addLog) addLog("Prefetch Audio", `✓ Audio cached (poem ${poemId}) | ${(apiTime / 1000).toFixed(1)}s | ${(blob.size / 1024).toFixed(1)}KB | ${audioDuration.toFixed(1)}s audio | ${tokensPerSecond} tok/s`, "success");
+          if (addLog)
+            addLog(
+              'Prefetch Audio',
+              `✓ Audio cached (poem ${poemId}) | ${(apiTime / 1000).toFixed(1)}s | ${(blob.size / 1024).toFixed(1)}KB | ${audioDuration.toFixed(1)}s audio | ${tokensPerSecond} tok/s`,
+              'success'
+            );
         }
       }
     } catch (error) {
       // Silently handle errors - don't disrupt user experience
-      if (addLog) addLog("Prefetch Audio", `❌ Audio generation error for poem ${poemId}: ${error.message}`, "error");
+      if (addLog)
+        addLog(
+          'Prefetch Audio',
+          `❌ Audio generation error for poem ${poemId}: ${error.message}`,
+          'error'
+        );
     } finally {
       // Clean up in-flight tracking
       if (activeRequests) activeRequests.current.delete(poemId);
@@ -640,26 +704,33 @@ const prefetchManager = {
     try {
       // Check if already generating - silently skip
       if (activeRequests && activeRequests.current.has(poemId)) {
-        if (addLog) addLog("Prefetch Insights", `Already generating insights for poem ${poemId} - skipping`, "info");
+        if (addLog)
+          addLog(
+            'Prefetch Insights',
+            `Already generating insights for poem ${poemId} - skipping`,
+            'info'
+          );
         return;
       }
 
       // Check cache first - don't prefetch if already cached
       const cached = await cacheOperations.get(CACHE_CONFIG.stores.insights, poemId);
       if (cached?.interpretation) {
-        if (addLog) addLog("Prefetch Insights", `Insights already cached for poem ${poemId} - skipping`, "info");
+        if (addLog)
+          addLog(
+            'Prefetch Insights',
+            `Insights already cached for poem ${poemId} - skipping`,
+            'info'
+          );
         return;
       }
 
       // Mark as in-flight
       if (activeRequests) activeRequests.current.add(poemId);
 
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY || "";
-      if (!apiKey) return;
-
       const promptText = `Deep Analysis of: ${poem.arabic}`;
       const requestSize = new Blob([
-        JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
+        JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] }),
       ]).size;
       const estimatedInputTokens = Math.ceil(
         (promptText.length + INSIGHTS_SYSTEM_PROMPT.length) / 4
@@ -667,18 +738,23 @@ const prefetchManager = {
 
       if (addLog) {
         addLog(
-          "Prefetch Insights",
+          'Prefetch Insights',
           `→ Background insights generation (poem ${poemId}) | ${(requestSize / 1024).toFixed(1)}KB | ${estimatedInputTokens} tokens`,
-          "info"
+          'info'
         );
       }
 
       const apiStart = performance.now();
       const prefetchBody = JSON.stringify({
         contents: [{ parts: [{ text: promptText }] }],
-        systemInstruction: { parts: [{ text: INSIGHTS_SYSTEM_PROMPT }] }
+        systemInstruction: { parts: [{ text: INSIGHTS_SYSTEM_PROMPT }] },
       });
-      const res = await geminiTextFetch('generateContent', prefetchBody, apiKey, 'Prefetch Insights', addLog);
+      const res = await geminiTextFetch(
+        'generateContent',
+        prefetchBody,
+        'Prefetch Insights',
+        addLog
+      );
 
       const data = await res.json();
       const apiTime = performance.now() - apiStart;
@@ -693,14 +769,24 @@ const prefetchManager = {
         // Cache the insights
         await cacheOperations.set(CACHE_CONFIG.stores.insights, poemId, {
           interpretation,
-          metadata: { poet: poem.poet, title: poem.title, charCount, tokens: estimatedTokens }
+          metadata: { poet: poem.poet, title: poem.title, charCount, tokens: estimatedTokens },
         });
 
-        if (addLog) addLog("Prefetch Insights", `✓ Insights cached (poem ${poemId}) | ${(apiTime / 1000).toFixed(1)}s | ${charCount} chars (≈${estimatedTokens} tokens) | ${tokensPerSecond} tok/s`, "success");
+        if (addLog)
+          addLog(
+            'Prefetch Insights',
+            `✓ Insights cached (poem ${poemId}) | ${(apiTime / 1000).toFixed(1)}s | ${charCount} chars (≈${estimatedTokens} tokens) | ${tokensPerSecond} tok/s`,
+            'success'
+          );
       }
     } catch (error) {
       // Silently handle errors - don't disrupt user experience
-      if (addLog) addLog("Prefetch Insights", `❌ Insights generation error for poem ${poemId}: ${error.message}`, "error");
+      if (addLog)
+        addLog(
+          'Prefetch Insights',
+          `❌ Insights generation error for poem ${poemId}: ${error.message}`,
+          'error'
+        );
     } finally {
       // Clean up in-flight tracking
       if (activeRequests) activeRequests.current.delete(poemId);
@@ -712,15 +798,15 @@ const prefetchManager = {
    */
   prefetchDiscover: async (category, count = 2, addLog) => {
     if (!FEATURES.prefetching || !FEATURES.caching) return;
-    if (!category || category === "All") return;
+    if (!category || category === 'All') return;
 
     try {
-      if (addLog) addLog("Prefetch", `Pre-fetching ${count} poems from ${category}...`, "info");
+      if (addLog) addLog('Prefetch', `Pre-fetching ${count} poems from ${category}...`, 'info');
       // Placeholder - would fetch poems from discover API and cache
     } catch (error) {
-      if (addLog) addLog("Prefetch", `Discover prefetch error: ${error.message}`, "error");
+      if (addLog) addLog('Prefetch', `Discover prefetch error: ${error.message}`, 'error');
     }
-  }
+  },
 };
 
 /* =============================================================================
@@ -730,26 +816,63 @@ const prefetchManager = {
 
 const ARABIC_TRANSLIT_MAP = {
   // Base letters
-  'ا': 'a', 'أ': 'a', 'إ': 'i', 'آ': 'aa', 'ٱ': 'a',
-  'ب': 'b', 'ت': 't', 'ث': 'th', 'ج': 'j', 'ح': 'h', 'خ': 'kh',
-  'د': 'd', 'ذ': 'dh', 'ر': 'r', 'ز': 'z', 'س': 's', 'ش': 'sh',
-  'ص': 's', 'ض': 'd', 'ط': 't', 'ظ': 'z', 'ع': "'", 'غ': 'gh',
-  'ف': 'f', 'ق': 'q', 'ك': 'k', 'ل': 'l', 'م': 'm', 'ن': 'n',
-  'ه': 'h', 'و': 'w', 'ي': 'y', 'ى': 'a', 'ة': 'h',
-  'ء': "'", 'ؤ': "'", 'ئ': "'",
+  ا: 'a',
+  أ: 'a',
+  إ: 'i',
+  آ: 'aa',
+  ٱ: 'a',
+  ب: 'b',
+  ت: 't',
+  ث: 'th',
+  ج: 'j',
+  ح: 'h',
+  خ: 'kh',
+  د: 'd',
+  ذ: 'dh',
+  ر: 'r',
+  ز: 'z',
+  س: 's',
+  ش: 'sh',
+  ص: 's',
+  ض: 'd',
+  ط: 't',
+  ظ: 'z',
+  ع: "'",
+  غ: 'gh',
+  ف: 'f',
+  ق: 'q',
+  ك: 'k',
+  ل: 'l',
+  م: 'm',
+  ن: 'n',
+  ه: 'h',
+  و: 'w',
+  ي: 'y',
+  ى: 'a',
+  ة: 'h',
+  ء: "'",
+  ؤ: "'",
+  ئ: "'",
   // Diacritics
-  '\u064E': 'a',   // fatha
-  '\u064F': 'u',   // damma
-  '\u0650': 'i',   // kasra
-  '\u0651': '',     // shadda (handled by doubling previous consonant)
-  '\u0652': '',     // sukun (no vowel)
-  '\u064B': 'an',   // tanween fatha
-  '\u064C': 'un',   // tanween damma
-  '\u064D': 'in',   // tanween kasra
-  '\u0670': 'a',    // alef superscript
+  '\u064E': 'a', // fatha
+  '\u064F': 'u', // damma
+  '\u0650': 'i', // kasra
+  '\u0651': '', // shadda (handled by doubling previous consonant)
+  '\u0652': '', // sukun (no vowel)
+  '\u064B': 'an', // tanween fatha
+  '\u064C': 'un', // tanween damma
+  '\u064D': 'in', // tanween kasra
+  '\u0670': 'a', // alef superscript
   // Common punctuation
-  '،': ',', '؛': ';', '؟': '?', '»': '"', '«': '"',
-  '\u200C': '', '\u200D': '', '\u200F': '', '\u200E': '', // zero-width chars
+  '،': ',',
+  '؛': ';',
+  '؟': '?',
+  '»': '"',
+  '«': '"',
+  '\u200C': '',
+  '\u200D': '',
+  '\u200F': '',
+  '\u200E': '', // zero-width chars
 };
 
 function transliterate(text) {
@@ -784,15 +907,27 @@ const MysticalConsultationEffect = ({ active, theme }) => {
   if (!active) return null;
   return (
     <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden animate-in fade-in duration-1000">
-      <div className={`absolute inset-0 bg-radial-gradient ${theme.glow} animate-pulse scale-125 opacity-80`} />
-      <div className={`absolute inset-0 bg-radial-gradient from-purple-500/20 to-transparent animate-ping scale-150 opacity-30`} style={{ animationDuration: '3s' }} />
+      <div
+        className={`absolute inset-0 bg-radial-gradient ${theme.glow} animate-pulse scale-125 opacity-80`}
+      />
+      <div
+        className={`absolute inset-0 bg-radial-gradient from-purple-500/20 to-transparent animate-ping scale-150 opacity-30`}
+        style={{ animationDuration: '3s' }}
+      />
       <div className="absolute inset-0">
         {[...Array(45)].map((_, i) => (
-          <div key={i} className="absolute bg-indigo-200 rounded-full animate-pulse" style={{
-              width: Math.random() * 3 + 1 + 'px', height: Math.random() * 3 + 1 + 'px',
-              top: Math.random() * 100 + '%', left: Math.random() * 100 + '%',
-              opacity: Math.random() * 0.6 + 0.2, animationDuration: Math.random() * 1 + 0.5 + 's'
-          }} />
+          <div
+            key={i}
+            className="absolute bg-indigo-200 rounded-full animate-pulse"
+            style={{
+              width: Math.random() * 3 + 1 + 'px',
+              height: Math.random() * 3 + 1 + 'px',
+              top: Math.random() * 100 + '%',
+              left: Math.random() * 100 + '%',
+              opacity: Math.random() * 0.6 + 0.2,
+              animationDuration: Math.random() * 1 + 0.5 + 's',
+            }}
+          />
         ))}
       </div>
     </div>
@@ -822,12 +957,18 @@ const DebugPanel = ({ logs, onClear, darkMode, poem, appState }) => {
         timestamp: new Date().toISOString(),
         userAgent: navigator.userAgent,
         poem: poem ? { id: poem.id, poet: poem.poet, title: poem.title } : null,
-        appState: appState || null
+        appState: appState || null,
+        url: window.location.href,
+        screenSize: `${window.innerWidth}x${window.innerHeight}`,
+        language: navigator.language,
+        online: navigator.onLine,
+        referrer: document.referrer,
+        featureFlags: { ...FEATURES },
       };
       const res = await fetch(`${apiUrl}/api/bug-reports`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(payload),
       });
       if (!res.ok) {
         const text = await res.text().catch(() => '');
@@ -851,14 +992,29 @@ const DebugPanel = ({ logs, onClear, darkMode, poem, appState }) => {
     } backdrop-blur-md shadow-lg flex flex-col relative z-[100] flex-none`}>
       <div className="flex items-center justify-between px-6 h-7 cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}>
         <div className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-widest opacity-60 text-indigo-500 leading-none h-full">
-          <Bug size={10} className="mb-0" /> <span>System Logs</span> <span className="ml-1 opacity-40">({logs.length})</span>
+          <Bug size={10} className="mb-0" /> <span>System Logs</span>{' '}
+          <span className="ml-1 opacity-40">({logs.length})</span>
         </div>
         <div className="flex items-center gap-3 h-full">
-          <button onClick={(e) => { e.stopPropagation(); onClear(); }} className="p-1 hover:text-red-500 transition-colors flex items-center"><Trash2 size={10} /></button>
-          <ChevronDown size={10} className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`} />
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              onClear();
+            }}
+            className="p-1 hover:text-red-500 transition-colors flex items-center"
+          >
+            <Trash2 size={10} />
+          </button>
+          <ChevronDown
+            size={10}
+            className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}
+          />
         </div>
       </div>
-      <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 pb-3 font-mono text-[10px] space-y-1 custom-scrollbar">
+      <div
+        ref={scrollRef}
+        className="flex-1 overflow-y-auto px-6 pb-3 font-mono text-[10px] space-y-1 custom-scrollbar"
+      >
         {logs.map((log, idx) => (
           <div key={idx} className={`pb-1 border-b border-stone-500/5 ${log.type === 'error' ? theme.error : log.type === 'success' ? 'text-indigo-400' : ''}`}>
             <span className="opacity-40">[{log.time}]</span> <span className="font-bold">{log.label}:</span> {log.msg}
@@ -875,7 +1031,10 @@ const DebugPanel = ({ logs, onClear, darkMode, poem, appState }) => {
               onClick={(e) => e.stopPropagation()}
             />
             <button
-              onClick={(e) => { e.stopPropagation(); handleSubmitBug(); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                handleSubmitBug();
+              }}
               disabled={bugStatus === 'sending'}
               className={`px-2 py-1 rounded text-[9px] font-bold uppercase tracking-wider transition-colors ${
                 bugStatus === 'success' ? 'bg-green-600/80 text-white' :
@@ -884,10 +1043,13 @@ const DebugPanel = ({ logs, onClear, darkMode, poem, appState }) => {
                 'bg-indigo-600/80 text-white hover:bg-indigo-500/80'
               }`}
             >
-              {bugStatus === 'sending' ? 'Sending...' :
-               bugStatus === 'success' ? 'Sent!' :
-               bugStatus === 'error' ? `Failed${bugError ? ` (${bugError})` : ''}` :
-               'Submit Bug'}
+              {bugStatus === 'sending'
+                ? 'Sending...'
+                : bugStatus === 'success'
+                  ? 'Sent!'
+                  : bugStatus === 'error'
+                    ? `Failed${bugError ? ` (${bugError})` : ''}`
+                    : 'Submit Bug'}
             </button>
           </div>
         )}
@@ -898,13 +1060,15 @@ const DebugPanel = ({ logs, onClear, darkMode, poem, appState }) => {
 
 const CategoryPill = ({ selected, onSelect, darkMode }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const currentCat = CATEGORIES.find(c => c.id === selected) || CATEGORIES[0];
+  const currentCat = CATEGORIES.find((c) => c.id === selected) || CATEGORIES[0];
   const dropdownRef = useRef(null);
 
   useEffect(() => {
-    const clickOut = (e) => { if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setIsOpen(false); };
-    document.addEventListener("mousedown", clickOut);
-    return () => document.removeEventListener("mousedown", clickOut);
+    const clickOut = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setIsOpen(false);
+    };
+    document.addEventListener('mousedown', clickOut);
+    return () => document.removeEventListener('mousedown', clickOut);
   }, []);
 
   const theme = darkMode ? THEME.dark : THEME.light;
@@ -921,11 +1085,16 @@ const CategoryPill = ({ selected, onSelect, darkMode }) => {
       <span className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}>Poets</span>
 
       {isOpen && (
-        <div className={`absolute bottom-full right-[-20px] mb-3 min-w-[220px] ${darkMode ? 'bg-[rgba(20,18,16,0.98)] border-[rgba(197,160,89,0.15)] shadow-[0_-10px_40px_rgba(0,0,0,0.7)]' : 'bg-white/95 border-stone-200 shadow-[0_-10px_40px_rgba(0,0,0,0.15)]'} backdrop-blur-[48px] border rounded-3xl p-3 z-50`}>
-          {CATEGORIES.map(cat => (
+        <div
+          className={`absolute bottom-full right-[-20px] mb-3 min-w-[220px] ${darkMode ? 'bg-[rgba(20,18,16,0.98)] border-[rgba(197,160,89,0.15)] shadow-[0_-10px_40px_rgba(0,0,0,0.7)]' : 'bg-white/95 border-stone-200 shadow-[0_-10px_40px_rgba(0,0,0,0.15)]'} backdrop-blur-[48px] border rounded-3xl p-3 z-50`}
+        >
+          {CATEGORIES.map((cat) => (
             <button
               key={cat.id}
-              onClick={() => { onSelect(cat.id); setIsOpen(false); }}
+              onClick={() => {
+                onSelect(cat.id);
+                setIsOpen(false);
+              }}
               className={`w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex flex-col items-center border-b border-[rgba(197,160,89,0.08)] last:border-b-0 hover:bg-[rgba(197,160,89,0.08)] ${selected === cat.id ? 'bg-[rgba(197,160,89,0.12)]' : ''}`}
             >
               <div className={`font-amiri text-[clamp(1rem,1.8vw,1.125rem)] ${GOLD.goldText} mb-[3px] font-medium`}>{cat.labelAr}</div>
@@ -943,9 +1112,11 @@ const ThemeDropdown = ({ darkMode, onToggleDarkMode, currentFont, onCycleFont, f
   const dropdownRef = useRef(null);
 
   useEffect(() => {
-    const clickOut = (e) => { if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setIsOpen(false); };
-    document.addEventListener("mousedown", clickOut);
-    return () => document.removeEventListener("mousedown", clickOut);
+    const clickOut = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setIsOpen(false);
+    };
+    document.addEventListener('mousedown', clickOut);
+    return () => document.removeEventListener('mousedown', clickOut);
   }, []);
 
   const handleCycleFont = () => {
@@ -970,7 +1141,9 @@ const ThemeDropdown = ({ darkMode, onToggleDarkMode, currentFont, onCycleFont, f
       <span className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}>Theme</span>
 
       {isOpen && (
-        <div className={`absolute bottom-full right-[-20px] mb-3 min-w-[200px] ${darkMode ? 'bg-[rgba(20,18,16,0.98)] border-[rgba(197,160,89,0.15)] shadow-[0_-10px_40px_rgba(0,0,0,0.7)]' : 'bg-white/95 border-stone-200 shadow-[0_-10px_40px_rgba(0,0,0,0.15)]'} backdrop-blur-[48px] border rounded-3xl p-3 z-50`}>
+        <div
+          className={`absolute bottom-full right-[-20px] mb-3 min-w-[200px] ${darkMode ? 'bg-[rgba(20,18,16,0.98)] border-[rgba(197,160,89,0.15)] shadow-[0_-10px_40px_rgba(0,0,0,0.7)]' : 'bg-white/95 border-stone-200 shadow-[0_-10px_40px_rgba(0,0,0,0.15)]'} backdrop-blur-[48px] border rounded-3xl p-3 z-50`}
+        >
           <button
             onClick={handleCycleFont}
             className="w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex flex-col items-center border-b border-[rgba(197,160,89,0.08)] hover:bg-[rgba(197,160,89,0.08)]"
@@ -995,8 +1168,12 @@ const ErrorBanner = ({ error, onDismiss, onRetry, theme }) => {
   if (!error) return null;
 
   return (
-    <div className={`fixed top-20 left-1/2 -translate-x-1/2 z-50 max-w-lg w-[calc(100%-2rem)] ${DESIGN.anim}`}>
-      <div className={`${DESIGN.glass} ${theme.glass} ${theme.border} border ${DESIGN.radius} p-4 shadow-2xl`}>
+    <div
+      className={`fixed top-20 left-1/2 -translate-x-1/2 z-50 max-w-lg w-[calc(100%-2rem)] ${DESIGN.anim}`}
+    >
+      <div
+        className={`${DESIGN.glass} ${theme.glass} ${theme.border} border ${DESIGN.radius} p-4 shadow-2xl`}
+      >
         <div className="flex items-start gap-3">
           <div className="flex-shrink-0 mt-0.5">
             <X size={20} className="text-red-500" />
@@ -1046,7 +1223,6 @@ const DatabaseToggle = ({ useDatabase, onToggle, disabled }) => {
   );
 };
 
-
 /* =============================================================================
   KEYBOARD SHORTCUT HELP
   =============================================================================
@@ -1093,7 +1269,7 @@ const ShortcutHelp = ({ isOpen, onClose, theme }) => {
             <div key={desc} className="flex items-center justify-between gap-4">
               <span className={`font-brand-en text-sm ${theme.text} opacity-70`}>{desc}</span>
               <div className="flex gap-1">
-                {keys.map(k => (
+                {keys.map((k) => (
                   <kbd
                     key={k}
                     className={`px-2 py-1 rounded-md text-xs font-mono font-bold ${theme.kbd} border`}
@@ -1185,7 +1361,7 @@ const SplashScreen = ({ isOpen, onDismiss, showOnboarding, theme }) => {
       const curve = Math.floor(Math.random() * 3);
       const curves = [
         { x: 0.7, y: 0.5, radius: 0.12 },
-        { x: 0.5, y: 0.5, radius: 0.10 },
+        { x: 0.5, y: 0.5, radius: 0.1 },
         { x: 0.3, y: 0.5, radius: 0.14 },
       ];
       const c = curves[curve];
@@ -1195,8 +1371,12 @@ const SplashScreen = ({ isOpen, onDismiss, showOnboarding, theme }) => {
       const py = (c.y + Math.sin(angle) * dist) * canvas.height;
 
       particles.push({
-        x: px, y: py, originX: px, originY: py,
-        vx: 0, vy: 0,
+        x: px,
+        y: py,
+        originX: px,
+        originY: py,
+        vx: 0,
+        vy: 0,
         radius: Math.random() * 1.5 + 0.5,
         opacity: Math.random() * 0.4 + 0.4,
         twinklePhase: Math.random() * Math.PI * 2,
@@ -1205,7 +1385,9 @@ const SplashScreen = ({ isOpen, onDismiss, showOnboarding, theme }) => {
     }
     particlesRef.current = particles;
 
-    const handleMouseMove = (e) => { mouseRef.current = { x: e.clientX, y: e.clientY }; };
+    const handleMouseMove = (e) => {
+      mouseRef.current = { x: e.clientX, y: e.clientY };
+    };
     const handleTouchMove = (e) => {
       if (e.touches[0]) mouseRef.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
     };
@@ -1321,8 +1503,10 @@ const SplashScreen = ({ isOpen, onDismiss, showOnboarding, theme }) => {
   if (!isOpen) return null;
 
   // Reduced motion check
-  const prefersReducedMotion = typeof window !== 'undefined' &&
-    window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const prefersReducedMotion =
+    typeof window !== 'undefined' &&
+    window.matchMedia &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   // Injected keyframe styles
   const splashStyles = `
@@ -1357,19 +1541,71 @@ const SplashScreen = ({ isOpen, onDismiss, showOnboarding, theme }) => {
   const gold = GOLD.gold;
   const sandMuted = isDark ? 'rgba(232,213,183,0.5)' : 'rgba(26,15,10,0.4)';
   const dunes = isDark
-    ? [{ h: '25%', bg: '#6B3720', br: '55% 75% 0 0 / 100%', z: 4, anim: 'splashDune1 10s ease-in-out infinite alternate' },
-       { h: '33%', bg: '#5A2E1A', br: '75% 45% 0 0 / 100%', z: 3, anim: 'splashDune2 14s ease-in-out infinite alternate' },
-       { h: '40%', bg: '#4A2516', br: '45% 65% 0 0 / 100%', z: 2, anim: 'splashDune3 18s ease-in-out infinite alternate' },
-       { h: '48%', bg: '#3A1C12', br: '65% 50% 0 0 / 100%', z: 1, anim: 'splashDune4 23s ease-in-out infinite alternate' }]
-    : [{ h: '25%', bg: '#D4B896', br: '55% 75% 0 0 / 100%', z: 4, anim: 'splashDune1 10s ease-in-out infinite alternate' },
-       { h: '33%', bg: '#C8A880', br: '75% 45% 0 0 / 100%', z: 3, anim: 'splashDune2 14s ease-in-out infinite alternate' },
-       { h: '40%', bg: '#BC9A6E', br: '45% 65% 0 0 / 100%', z: 2, anim: 'splashDune3 18s ease-in-out infinite alternate' },
-       { h: '48%', bg: '#B08C5E', br: '65% 50% 0 0 / 100%', z: 1, anim: 'splashDune4 23s ease-in-out infinite alternate' }];
+    ? [
+        {
+          h: '25%',
+          bg: '#6B3720',
+          br: '55% 75% 0 0 / 100%',
+          z: 4,
+          anim: 'splashDune1 10s ease-in-out infinite alternate',
+        },
+        {
+          h: '33%',
+          bg: '#5A2E1A',
+          br: '75% 45% 0 0 / 100%',
+          z: 3,
+          anim: 'splashDune2 14s ease-in-out infinite alternate',
+        },
+        {
+          h: '40%',
+          bg: '#4A2516',
+          br: '45% 65% 0 0 / 100%',
+          z: 2,
+          anim: 'splashDune3 18s ease-in-out infinite alternate',
+        },
+        {
+          h: '48%',
+          bg: '#3A1C12',
+          br: '65% 50% 0 0 / 100%',
+          z: 1,
+          anim: 'splashDune4 23s ease-in-out infinite alternate',
+        },
+      ]
+    : [
+        {
+          h: '25%',
+          bg: '#D4B896',
+          br: '55% 75% 0 0 / 100%',
+          z: 4,
+          anim: 'splashDune1 10s ease-in-out infinite alternate',
+        },
+        {
+          h: '33%',
+          bg: '#C8A880',
+          br: '75% 45% 0 0 / 100%',
+          z: 3,
+          anim: 'splashDune2 14s ease-in-out infinite alternate',
+        },
+        {
+          h: '40%',
+          bg: '#BC9A6E',
+          br: '45% 65% 0 0 / 100%',
+          z: 2,
+          anim: 'splashDune3 18s ease-in-out infinite alternate',
+        },
+        {
+          h: '48%',
+          bg: '#B08C5E',
+          br: '65% 50% 0 0 / 100%',
+          z: 1,
+          anim: 'splashDune4 23s ease-in-out infinite alternate',
+        },
+      ];
   const bgGradient = isDark
     ? 'linear-gradient(180deg, #0D0A14 0%, #1A0F0A 40%, #3A1C12 100%)'
     : `linear-gradient(180deg, #F5EDE0 0%, #EDE0CC 40%, #B08C5E 100%)`;
   const kineticStep = phase - 1; // 0, 1, or 2
-  const progressWidth = ((Math.max(kineticStep, 0) + 1) / 3 * 100) + '%';
+  const progressWidth = ((Math.max(kineticStep, 0) + 1) / 3) * 100 + '%';
   const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
 
   // Single return — both phases always in the DOM, toggled by display.
@@ -1382,10 +1618,14 @@ const SplashScreen = ({ isOpen, onDismiss, showOnboarding, theme }) => {
       {/* DESERT SPLASH (phase 0) — hidden via display:none when phase >= 1 */}
       <div
         style={{
-          position: 'fixed', inset: 0, zIndex: 60,
+          position: 'fixed',
+          inset: 0,
+          zIndex: 60,
           background: bgGradient,
           display: phase === 0 ? 'flex' : 'none',
-          alignItems: 'center', justifyContent: 'center', flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexDirection: 'column',
           transition: 'opacity 1s ease-out',
           opacity: fadeState === 'out' ? 0 : 1,
         }}
@@ -1393,61 +1633,118 @@ const SplashScreen = ({ isOpen, onDismiss, showOnboarding, theme }) => {
         aria-label="Welcome to Poetry Bil-Araby"
       >
         {/* Sand texture SVG overlay */}
-        <div style={{
-          position: 'absolute', inset: 0, zIndex: 0, pointerEvents: 'none', opacity: 0.04,
-          backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='80' height='80' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.55' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.6'/%3E%3C/svg%3E\")",
-        }} />
+        <div
+          style={{
+            position: 'absolute',
+            inset: 0,
+            zIndex: 0,
+            pointerEvents: 'none',
+            opacity: 0.04,
+            backgroundImage:
+              "url(\"data:image/svg+xml,%3Csvg width='80' height='80' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.55' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.6'/%3E%3C/svg%3E\")",
+          }}
+        />
 
         {/* Starfield — dangerouslySetInnerHTML tells React these children are externally managed */}
-        <div ref={starsRef} style={{ position: 'absolute', inset: 0, overflow: 'hidden' }} dangerouslySetInnerHTML={{ __html: '' }} />
+        <div
+          ref={starsRef}
+          style={{ position: 'absolute', inset: 0, overflow: 'hidden' }}
+          dangerouslySetInnerHTML={{ __html: '' }}
+        />
 
         {/* Dunes */}
         {dunes.map((d, i) => (
-          <div key={i} className="splash-dune" style={{
-            position: 'absolute', bottom: 0, left: '-5%', width: '110%',
-            height: d.h, background: d.bg, borderRadius: d.br, zIndex: d.z,
-            animation: prefersReducedMotion ? 'none' : d.anim,
-          }} />
+          <div
+            key={i}
+            className="splash-dune"
+            style={{
+              position: 'absolute',
+              bottom: 0,
+              left: '-5%',
+              width: '110%',
+              height: d.h,
+              background: d.bg,
+              borderRadius: d.br,
+              zIndex: d.z,
+              animation: prefersReducedMotion ? 'none' : d.anim,
+            }}
+          />
         ))}
 
         {/* Brand — Arabic first */}
-        <div style={{
-          position: 'relative', zIndex: 10,
-          display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
-          gap: '0.5rem', marginBottom: '0.75rem',
-        }}>
-          <span style={{
-            fontFamily: "'Reem Kufi', sans-serif", fontWeight: 700,
-            fontSize: 'clamp(1.875rem, 4vw, 3rem)', color: gold, lineHeight: 1,
-          }} dir="rtl" lang="ar">بالعربي</span>
-          <span style={{
-            fontFamily: "'Forum', serif",
-            fontSize: 'clamp(3rem, 6vw, 4.5rem)', letterSpacing: '-0.05em',
-            color: gold, lineHeight: 1,
-            textShadow: '0 0 50px rgba(197,160,89,0.4)',
-          }}>poetry</span>
+        <div
+          style={{
+            position: 'relative',
+            zIndex: 10,
+            display: 'flex',
+            alignItems: 'flex-end',
+            justifyContent: 'center',
+            gap: '0.5rem',
+            marginBottom: '0.75rem',
+          }}
+        >
+          <span
+            style={{
+              fontFamily: "'Reem Kufi', sans-serif",
+              fontWeight: 700,
+              fontSize: 'clamp(1.875rem, 4vw, 3rem)',
+              color: gold,
+              lineHeight: 1,
+            }}
+            dir="rtl"
+            lang="ar"
+          >
+            بالعربي
+          </span>
+          <span
+            style={{
+              fontFamily: "'Forum', serif",
+              fontSize: 'clamp(3rem, 6vw, 4.5rem)',
+              letterSpacing: '-0.05em',
+              color: gold,
+              lineHeight: 1,
+              textShadow: '0 0 50px rgba(197,160,89,0.4)',
+            }}
+          >
+            poetry
+          </span>
         </div>
 
         {/* Subtitle */}
-        <p style={{
-          position: 'relative', zIndex: 10,
-          fontFamily: "'Tajawal', sans-serif",
-          fontSize: 'clamp(0.9rem, 2.5vw, 1.25rem)',
-          color: sandMuted, marginTop: '0.5rem',
-          letterSpacing: '0.1em', direction: 'ltr',
-        }}>Desert Mirage</p>
+        <p
+          style={{
+            position: 'relative',
+            zIndex: 10,
+            fontFamily: "'Tajawal', sans-serif",
+            fontSize: 'clamp(0.9rem, 2.5vw, 1.25rem)',
+            color: sandMuted,
+            marginTop: '0.5rem',
+            letterSpacing: '0.1em',
+            direction: 'ltr',
+          }}
+        >
+          Desert Mirage
+        </p>
 
         {/* Enter button */}
         <button
           onClick={handleSplashEnter}
           style={{
-            position: 'relative', zIndex: 10, marginTop: '2.5rem',
-            padding: '14px 40px', minHeight: '44px',
-            background: 'transparent', border: `1px solid ${gold}`,
-            color: gold, fontFamily: "'Tajawal', sans-serif",
-            fontSize: '15px', borderRadius: '8px', cursor: 'pointer',
+            position: 'relative',
+            zIndex: 10,
+            marginTop: '2.5rem',
+            padding: '14px 40px',
+            minHeight: '44px',
+            background: 'transparent',
+            border: `1px solid ${gold}`,
+            color: gold,
+            fontFamily: "'Tajawal', sans-serif",
+            fontSize: '15px',
+            borderRadius: '8px',
+            cursor: 'pointer',
             transition: 'all 0.3s ease',
-            opacity: 0, animation: 'splashFadeIn 1s 2s forwards',
+            opacity: 0,
+            animation: 'splashFadeIn 1s 2s forwards',
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.background = gold;
@@ -1460,17 +1757,24 @@ const SplashScreen = ({ isOpen, onDismiss, showOnboarding, theme }) => {
             e.currentTarget.style.boxShadow = 'none';
           }}
           aria-label="Enter the app"
-        >Enter</button>
+        >
+          Enter
+        </button>
       </div>
 
       {/* KINETIC WALKTHROUGH (phases 1-3) — hidden via display:none until phase >= 1 */}
       <div
         style={{
-          position: 'fixed', inset: 0, zIndex: 60,
+          position: 'fixed',
+          inset: 0,
+          zIndex: 60,
           background: '#000000',
           display: phase >= 1 ? 'flex' : 'none',
-          flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-          cursor: 'pointer', overflow: 'hidden',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+          overflow: 'hidden',
           transition: 'opacity 0.6s ease',
           opacity: fadeState === 'out' ? 0 : 1,
         }}
@@ -1482,121 +1786,219 @@ const SplashScreen = ({ isOpen, onDismiss, showOnboarding, theme }) => {
         <canvas
           ref={canvasRef}
           style={{
-            position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
-            pointerEvents: 'none', zIndex: 1,
-            willChange: 'transform', transform: 'translateZ(0)',
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            pointerEvents: 'none',
+            zIndex: 1,
+            willChange: 'transform',
+            transform: 'translateZ(0)',
           }}
         />
 
         {/* Kinetic stage */}
-        <div style={{
-          position: 'relative', zIndex: 2, textAlign: 'center',
-          width: '100%', maxWidth: '600px', padding: '2rem',
-        }}>
+        <div
+          style={{
+            position: 'relative',
+            zIndex: 2,
+            textAlign: 'center',
+            width: '100%',
+            maxWidth: '600px',
+            padding: '2rem',
+          }}
+        >
           {/* Step 0: Arabic reveal — بالعربي */}
           {kineticStep === 0 && (
-            <div style={{
-              display: 'flex', flexDirection: 'column', alignItems: 'center',
-              justifyContent: 'center', minHeight: '40vh',
-            }} key="kinetic-0">
-              <div style={{
-                fontFamily: "'Reem Kufi', sans-serif", fontWeight: 700,
-                fontSize: 'clamp(3.5rem, 9vw, 6rem)', color: '#ffffff',
-                direction: 'rtl', lineHeight: 1.2, marginBottom: '1.5rem',
-                opacity: 0,
-                animation: prefersReducedMotion ? 'splashFadeIn 0.01ms forwards'
-                  : isMobile ? 'splashArabicRevealMobile 1s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards'
-                  : 'splashArabicReveal 1s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards',
-                willChange: 'transform, opacity, filter',
-                backfaceVisibility: 'hidden',
-                transform: 'translateZ(0)',
-              }} lang="ar" dir="rtl">بالعربي</div>
-              <div style={{
-                fontFamily: "'Tajawal', sans-serif", fontSize: '0.9375rem',
-                color: '#666666', direction: 'rtl',
-                opacity: 0,
-                animation: prefersReducedMotion ? 'splashFadeIn 0.01ms forwards'
-                  : 'splashFadeIn 0.6s ease-out 0.7s forwards',
-                willChange: 'opacity',
-              }} lang="ar" dir="rtl">الشعر العربي بين يديك</div>
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minHeight: '40vh',
+              }}
+              key="kinetic-0"
+            >
+              <div
+                style={{
+                  fontFamily: "'Reem Kufi', sans-serif",
+                  fontWeight: 700,
+                  fontSize: 'clamp(3.5rem, 9vw, 6rem)',
+                  color: '#ffffff',
+                  direction: 'rtl',
+                  lineHeight: 1.2,
+                  marginBottom: '1.5rem',
+                  opacity: 0,
+                  animation: prefersReducedMotion
+                    ? 'splashFadeIn 0.01ms forwards'
+                    : isMobile
+                      ? 'splashArabicRevealMobile 1s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards'
+                      : 'splashArabicReveal 1s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards',
+                  willChange: 'transform, opacity, filter',
+                  backfaceVisibility: 'hidden',
+                  transform: 'translateZ(0)',
+                }}
+                lang="ar"
+                dir="rtl"
+              >
+                بالعربي
+              </div>
+              <div
+                style={{
+                  fontFamily: "'Tajawal', sans-serif",
+                  fontSize: '0.9375rem',
+                  color: '#666666',
+                  direction: 'rtl',
+                  opacity: 0,
+                  animation: prefersReducedMotion
+                    ? 'splashFadeIn 0.01ms forwards'
+                    : 'splashFadeIn 0.6s ease-out 0.7s forwards',
+                  willChange: 'opacity',
+                }}
+                lang="ar"
+                dir="rtl"
+              >
+                الشعر العربي بين يديك
+              </div>
             </div>
           )}
 
           {/* Step 1: English letter-by-letter — poetry */}
           {kineticStep === 1 && (
-            <div style={{
-              display: 'flex', flexDirection: 'column', alignItems: 'center',
-              justifyContent: 'center', minHeight: '40vh',
-            }} key="kinetic-1">
-              <div style={{
-                fontFamily: "'Forum', cursive",
-                fontSize: 'clamp(4rem, 10vw, 7rem)',
-                textTransform: 'lowercase', letterSpacing: '-0.05em',
-                color: '#ffffff', lineHeight: 1, marginBottom: '1.5rem',
-              }}>
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minHeight: '40vh',
+              }}
+              key="kinetic-1"
+            >
+              <div
+                style={{
+                  fontFamily: "'Forum', cursive",
+                  fontSize: 'clamp(4rem, 10vw, 7rem)',
+                  textTransform: 'lowercase',
+                  letterSpacing: '-0.05em',
+                  color: '#ffffff',
+                  lineHeight: 1,
+                  marginBottom: '1.5rem',
+                }}
+              >
                 {'poetry'.split('').map((letter, i) => (
-                  <span key={i} style={{
-                    display: 'inline-block', opacity: 0,
-                    transform: 'translateY(30px)',
-                    animation: prefersReducedMotion ? 'splashFadeIn 0.01ms forwards'
-                      : `splashLetterReveal ${isMobile ? '0.35s' : '0.5s'} cubic-bezier(0.16, 1, 0.3, 1) forwards`,
-                    animationDelay: `${0.1 + i * 0.08}s`,
-                    willChange: 'transform, opacity',
-                    backfaceVisibility: 'hidden',
-                  }}>{letter}</span>
+                  <span
+                    key={i}
+                    style={{
+                      display: 'inline-block',
+                      opacity: 0,
+                      transform: 'translateY(30px)',
+                      animation: prefersReducedMotion
+                        ? 'splashFadeIn 0.01ms forwards'
+                        : `splashLetterReveal ${isMobile ? '0.35s' : '0.5s'} cubic-bezier(0.16, 1, 0.3, 1) forwards`,
+                      animationDelay: `${0.1 + i * 0.08}s`,
+                      willChange: 'transform, opacity',
+                      backfaceVisibility: 'hidden',
+                    }}
+                  >
+                    {letter}
+                  </span>
                 ))}
               </div>
-              <div style={{
-                fontSize: '0.8125rem', letterSpacing: '0.3em',
-                textTransform: 'uppercase', color: '#555555',
-                opacity: 0,
-                animation: prefersReducedMotion ? 'splashFadeIn 0.01ms forwards'
-                  : 'splashFadeIn 0.6s ease-out 0.8s forwards',
-                willChange: 'opacity',
-              }}>Where words become worlds</div>
+              <div
+                style={{
+                  fontSize: '0.8125rem',
+                  letterSpacing: '0.3em',
+                  textTransform: 'uppercase',
+                  color: '#555555',
+                  opacity: 0,
+                  animation: prefersReducedMotion
+                    ? 'splashFadeIn 0.01ms forwards'
+                    : 'splashFadeIn 0.6s ease-out 0.8s forwards',
+                  willChange: 'opacity',
+                }}
+              >
+                Where words become worlds
+              </div>
             </div>
           )}
 
           {/* Step 2: Count + Explore */}
           {kineticStep === 2 && (
-            <div style={{
-              display: 'flex', flexDirection: 'column', alignItems: 'center',
-              justifyContent: 'center', minHeight: '40vh',
-            }} key="kinetic-2">
-              <div style={{
-                fontFamily: "'Forum', cursive",
-                fontSize: 'clamp(2.5rem, 7vw, 4.5rem)',
-                color: '#ffffff', letterSpacing: '-0.02em', marginBottom: '1rem',
-                opacity: 0,
-                animation: prefersReducedMotion ? 'splashFadeIn 0.01ms forwards'
-                  : 'splashCountReveal 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards',
-                willChange: 'transform, opacity',
-                backfaceVisibility: 'hidden',
-              }}>84,000 verses await</div>
-              <div style={{
-                fontFamily: "'Reem Kufi', sans-serif", fontWeight: 700,
-                fontSize: 'clamp(1.5rem, 4vw, 2.5rem)',
-                color: '#888888', direction: 'rtl', marginBottom: '2rem',
-                opacity: 0,
-                animation: prefersReducedMotion ? 'splashFadeIn 0.01ms forwards'
-                  : 'splashFadeIn 0.5s ease-out 0.6s forwards',
-                willChange: 'opacity',
-              }} lang="ar" dir="rtl">أكثر من 84,000 بيت بانتظارك</div>
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                minHeight: '40vh',
+              }}
+              key="kinetic-2"
+            >
+              <div
+                style={{
+                  fontFamily: "'Forum', cursive",
+                  fontSize: 'clamp(2.5rem, 7vw, 4.5rem)',
+                  color: '#ffffff',
+                  letterSpacing: '-0.02em',
+                  marginBottom: '1rem',
+                  opacity: 0,
+                  animation: prefersReducedMotion
+                    ? 'splashFadeIn 0.01ms forwards'
+                    : 'splashCountReveal 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.1s forwards',
+                  willChange: 'transform, opacity',
+                  backfaceVisibility: 'hidden',
+                }}
+              >
+                84,000 verses await
+              </div>
+              <div
+                style={{
+                  fontFamily: "'Reem Kufi', sans-serif",
+                  fontWeight: 700,
+                  fontSize: 'clamp(1.5rem, 4vw, 2.5rem)',
+                  color: '#888888',
+                  direction: 'rtl',
+                  marginBottom: '2rem',
+                  opacity: 0,
+                  animation: prefersReducedMotion
+                    ? 'splashFadeIn 0.01ms forwards'
+                    : 'splashFadeIn 0.5s ease-out 0.6s forwards',
+                  willChange: 'opacity',
+                }}
+                lang="ar"
+                dir="rtl"
+              >
+                أكثر من 84,000 بيت بانتظارك
+              </div>
               <button
                 data-splash-finish="true"
                 onClick={handleFinish}
                 style={{
-                  display: 'inline-flex', alignItems: 'center', gap: '8px',
-                  padding: '14px 40px', border: '1px solid #333333',
-                  borderRadius: '999px', background: 'transparent',
-                  color: '#ffffff', fontFamily: "'Tajawal', sans-serif",
-                  fontSize: '13px', fontWeight: 500, letterSpacing: '0.15em',
-                  textTransform: 'uppercase', cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  padding: '14px 40px',
+                  border: '1px solid #333333',
+                  borderRadius: '999px',
+                  background: 'transparent',
+                  color: '#ffffff',
+                  fontFamily: "'Tajawal', sans-serif",
+                  fontSize: '13px',
+                  fontWeight: 500,
+                  letterSpacing: '0.15em',
+                  textTransform: 'uppercase',
+                  cursor: 'pointer',
                   transition: 'background 0.3s ease, border-color 0.3s ease',
-                  minHeight: '48px', opacity: 0,
-                  animation: prefersReducedMotion ? 'splashFadeIn 0.01ms forwards'
+                  minHeight: '48px',
+                  opacity: 0,
+                  animation: prefersReducedMotion
+                    ? 'splashFadeIn 0.01ms forwards'
                     : 'splashFadeIn 0.5s ease-out 1s forwards',
-                  willChange: 'opacity', backfaceVisibility: 'hidden',
+                  willChange: 'opacity',
+                  backfaceVisibility: 'hidden',
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)';
@@ -1616,21 +2018,37 @@ const SplashScreen = ({ isOpen, onDismiss, showOnboarding, theme }) => {
         </div>
 
         {/* Tap hint */}
-        <div style={{
-          position: 'fixed', bottom: '3rem', left: '50%',
-          transform: 'translateX(-50%)', fontSize: '0.65rem',
-          letterSpacing: '0.35em', textTransform: 'uppercase',
-          color: '#333333', zIndex: 5,
-        }}>Tap anywhere</div>
+        <div
+          style={{
+            position: 'fixed',
+            bottom: '3rem',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            fontSize: '0.65rem',
+            letterSpacing: '0.35em',
+            textTransform: 'uppercase',
+            color: '#333333',
+            zIndex: 5,
+          }}
+        >
+          Tap anywhere
+        </div>
 
         {/* Progress bar */}
-        <div style={{
-          position: 'fixed', bottom: 0, left: 0, height: '2px',
-          background: 'rgba(255, 255, 255, 0.15)',
-          transition: 'width 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
-          zIndex: 5, width: progressWidth,
-          willChange: 'width', transform: 'translateZ(0)',
-        }} />
+        <div
+          style={{
+            position: 'fixed',
+            bottom: 0,
+            left: 0,
+            height: '2px',
+            background: 'rgba(255, 255, 255, 0.15)',
+            transition: 'width 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
+            zIndex: 5,
+            width: progressWidth,
+            willChange: 'width',
+            transform: 'translateZ(0)',
+          }}
+        />
       </div>
     </>
   );
@@ -1646,7 +2064,9 @@ const AuthModal = ({ isOpen, onClose, onSignInWithGoogle, onSignInWithApple, the
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className={`relative w-full max-w-md ${theme.glass} ${theme.border} border ${DESIGN.radius} p-8 shadow-2xl`}>
+      <div
+        className={`relative w-full max-w-md ${theme.glass} ${theme.border} border ${DESIGN.radius} p-8 shadow-2xl`}
+      >
         <button
           onClick={onClose}
           className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/10 transition-colors"
@@ -1657,7 +2077,9 @@ const AuthModal = ({ isOpen, onClose, onSignInWithGoogle, onSignInWithApple, the
 
         <div className="text-center mb-8">
           <h2 className={`font-amiri text-3xl ${theme.titleColor} mb-2`}>مرحباً</h2>
-          <p className={`font-brand-en text-sm ${theme.text} opacity-60`}>Sign in to save poems and preferences</p>
+          <p className={`font-brand-en text-sm ${theme.text} opacity-60`}>
+            Sign in to save poems and preferences
+          </p>
         </div>
 
         <div className="space-y-3">
@@ -1666,10 +2088,22 @@ const AuthModal = ({ isOpen, onClose, onSignInWithGoogle, onSignInWithApple, the
             className={`w-full py-3 px-4 ${theme.brandBg} ${theme.brandBorder} border ${DESIGN.radius} ${theme.brand} font-brand-en text-sm font-medium hover:bg-opacity-80 transition-all flex items-center justify-center gap-3`}
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
-              <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-              <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-              <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-              <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+              <path
+                fill="currentColor"
+                d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+              />
+              <path
+                fill="currentColor"
+                d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
+              />
+              <path
+                fill="currentColor"
+                d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+              />
+              <path
+                fill="currentColor"
+                d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+              />
             </svg>
             Continue with Google
           </button>
@@ -1679,7 +2113,7 @@ const AuthModal = ({ isOpen, onClose, onSignInWithGoogle, onSignInWithApple, the
             className={`w-full py-3 px-4 ${theme.brandBg} ${theme.brandBorder} border ${DESIGN.radius} ${theme.brand} font-brand-en text-sm font-medium hover:bg-opacity-80 transition-all flex items-center justify-center gap-3`}
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z"/>
+              <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
             </svg>
             Continue with Apple
           </button>
@@ -1693,7 +2127,15 @@ const AuthModal = ({ isOpen, onClose, onSignInWithGoogle, onSignInWithApple, the
   );
 };
 
-const AuthButton = ({ user, darkMode, onSignIn, onSignOut, onOpenSavedPoems, onOpenSettings, theme }) => {
+const AuthButton = ({
+  user,
+  darkMode,
+  onSignIn,
+  onSignOut,
+  onOpenSavedPoems,
+  onOpenSettings,
+  theme,
+}) => {
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef(null);
 
@@ -1732,9 +2174,9 @@ const AuthButton = ({ user, darkMode, onSignIn, onSignOut, onOpenSavedPoems, onO
         aria-label="User Menu"
       >
         {user.user_metadata?.avatar_url ? (
-          <img 
-            src={user.user_metadata.avatar_url} 
-            alt="User avatar" 
+          <img
+            src={user.user_metadata.avatar_url}
+            alt="User avatar"
             className="w-[21px] h-[21px] rounded-full object-cover"
           />
         ) : (
@@ -1746,7 +2188,9 @@ const AuthButton = ({ user, darkMode, onSignIn, onSignOut, onOpenSavedPoems, onO
       </span>
 
       {showMenu && (
-        <div className={`absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3 min-w-[200px] ${darkMode ? 'bg-[rgba(20,18,16,0.98)] border-[rgba(197,160,89,0.15)] shadow-[0_-10px_40px_rgba(0,0,0,0.7)]' : 'bg-white/95 border-stone-200 shadow-[0_-10px_40px_rgba(0,0,0,0.15)]'} backdrop-blur-[48px] border rounded-3xl p-3 z-50`}>
+        <div
+          className={`absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3 min-w-[200px] ${darkMode ? 'bg-[rgba(20,18,16,0.98)] border-[rgba(197,160,89,0.15)] shadow-[0_-10px_40px_rgba(0,0,0,0.7)]' : 'bg-white/95 border-stone-200 shadow-[0_-10px_40px_rgba(0,0,0,0.15)]'} backdrop-blur-[48px] border rounded-3xl p-3 z-50`}
+        >
           <div className="px-4 py-3 border-b border-[rgba(197,160,89,0.08)]">
             <p className={`font-brand-en text-xs ${GOLD.goldText} font-medium truncate`}>
               {user.email || user.user_metadata?.full_name || 'User'}
@@ -1881,7 +2325,15 @@ const DownvoteButton = ({ poem, isDownvoted, onDownvote, onUndownvote, disabled 
   );
 };
 
-const SavedPoemsView = ({ isOpen, onClose, savedPoems, onSelectPoem, onUnsavePoem, theme, currentFontClass }) => {
+const SavedPoemsView = ({
+  isOpen,
+  onClose,
+  savedPoems,
+  onSelectPoem,
+  onUnsavePoem,
+  theme,
+  currentFontClass,
+}) => {
   if (!isOpen) return null;
 
   const formatDate = (dateStr) => {
@@ -1900,14 +2352,22 @@ const SavedPoemsView = ({ isOpen, onClose, savedPoems, onSelectPoem, onUnsavePoe
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-      onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') onClose();
+      }}
     >
-      <div className={`relative w-full max-w-2xl max-h-[85vh] flex flex-col ${theme.glass} ${theme.border} border ${DESIGN.radius} shadow-2xl`}>
+      <div
+        className={`relative w-full max-w-2xl max-h-[85vh] flex flex-col ${theme.glass} ${theme.border} border ${DESIGN.radius} shadow-2xl`}
+      >
         <div className="flex items-center justify-between p-6 pb-4 border-b border-stone-500/10 flex-shrink-0">
           <div>
             <h2 className={`font-amiri text-2xl ${theme.titleColor}`}>قصائدي المحفوظة</h2>
-            <p className={`font-brand-en text-xs ${theme.text} opacity-50 mt-1`}>My Saved Poems ({savedPoems.length})</p>
+            <p className={`font-brand-en text-xs ${theme.text} opacity-50 mt-1`}>
+              My Saved Poems ({savedPoems.length})
+            </p>
           </div>
           <button
             onClick={onClose}
@@ -1923,9 +2383,15 @@ const SavedPoemsView = ({ isOpen, onClose, savedPoems, onSelectPoem, onUnsavePoe
             <div className="flex flex-col items-center justify-center py-16 gap-4">
               <Heart size={48} className={`${theme.text} opacity-20`} />
               <div className="text-center">
-                <p className={`font-amiri text-xl ${theme.text} opacity-40`}>لا توجد قصائد محفوظة</p>
-                <p className={`font-brand-en text-sm ${theme.text} opacity-30 mt-1`}>No saved poems yet</p>
-                <p className={`font-brand-en text-xs ${theme.text} opacity-20 mt-3`}>Tap the heart icon on any poem to save it</p>
+                <p className={`font-amiri text-xl ${theme.text} opacity-40`}>
+                  لا توجد قصائد محفوظة
+                </p>
+                <p className={`font-brand-en text-sm ${theme.text} opacity-30 mt-1`}>
+                  No saved poems yet
+                </p>
+                <p className={`font-brand-en text-xs ${theme.text} opacity-20 mt-3`}>
+                  Tap the heart icon on any poem to save it
+                </p>
               </div>
             </div>
           ) : (
@@ -1941,15 +2407,25 @@ const SavedPoemsView = ({ isOpen, onClose, savedPoems, onSelectPoem, onUnsavePoe
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex-1 min-w-0">
-                        <p className={`font-amiri text-sm ${theme.titleColor} font-medium`}>{sp.poet || 'Unknown'}</p>
-                        <p className={`font-brand-en text-xs ${theme.text} opacity-50 mt-0.5`}>{sp.title || ''}</p>
-                        <p className={`${currentFontClass} text-sm ${theme.text} opacity-70 mt-2 line-clamp-2`} dir="rtl">
-                          {(sp.poem_text || '').slice(0, 80)}{(sp.poem_text || '').length > 80 ? '...' : ''}
+                        <p className={`font-amiri text-sm ${theme.titleColor} font-medium`}>
+                          {sp.poet || 'Unknown'}
+                        </p>
+                        <p className={`font-brand-en text-xs ${theme.text} opacity-50 mt-0.5`}>
+                          {sp.title || ''}
+                        </p>
+                        <p
+                          className={`${currentFontClass} text-sm ${theme.text} opacity-70 mt-2 line-clamp-2`}
+                          dir="rtl"
+                        >
+                          {(sp.poem_text || '').slice(0, 80)}
+                          {(sp.poem_text || '').length > 80 ? '...' : ''}
                         </p>
                       </div>
                     </div>
                     {sp.saved_at && (
-                      <p className={`font-brand-en text-[10px] ${theme.text} opacity-30 mt-2`}>{formatDate(sp.saved_at)}</p>
+                      <p className={`font-brand-en text-[10px] ${theme.text} opacity-30 mt-2`}>
+                        {formatDate(sp.saved_at)}
+                      </p>
                     )}
                   </button>
                   <div className="flex justify-end mt-2">
@@ -1971,16 +2447,31 @@ const SavedPoemsView = ({ isOpen, onClose, savedPoems, onSelectPoem, onUnsavePoe
   );
 };
 
-const SettingsView = ({ isOpen, onClose, darkMode, onToggleDarkMode, currentFont, onSelectFont, user, theme }) => {
+const SettingsView = ({
+  isOpen,
+  onClose,
+  darkMode,
+  onToggleDarkMode,
+  currentFont,
+  onSelectFont,
+  user,
+  theme,
+}) => {
   if (!isOpen) return null;
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-      onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') onClose();
+      }}
     >
-      <div className={`relative w-full max-w-lg max-h-[85vh] flex flex-col ${theme.glass} ${theme.border} border ${DESIGN.radius} shadow-2xl`}>
+      <div
+        className={`relative w-full max-w-lg max-h-[85vh] flex flex-col ${theme.glass} ${theme.border} border ${DESIGN.radius} shadow-2xl`}
+      >
         <div className="flex items-center justify-between p-6 pb-4 border-b border-stone-500/10 flex-shrink-0">
           <div>
             <h2 className={`font-amiri text-2xl ${theme.titleColor}`}>الإعدادات</h2>
@@ -2000,11 +2491,17 @@ const SettingsView = ({ isOpen, onClose, darkMode, onToggleDarkMode, currentFont
           <div>
             <div className="mb-3">
               <h3 className={`font-amiri text-lg ${theme.titleColor}`}>المظهر</h3>
-              <p className={`font-brand-en text-[10px] uppercase tracking-[0.12em] ${theme.text} opacity-40`}>Appearance</p>
+              <p
+                className={`font-brand-en text-[10px] uppercase tracking-[0.12em] ${theme.text} opacity-40`}
+              >
+                Appearance
+              </p>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <button
-                onClick={() => { if (!darkMode) onToggleDarkMode(); }}
+                onClick={() => {
+                  if (!darkMode) onToggleDarkMode();
+                }}
                 className={`p-4 ${DESIGN.radius} border-2 transition-all flex flex-col items-center gap-2 cursor-pointer ${
                   darkMode
                     ? `${THEME.dark.goldBorder} ${THEME.dark.goldBg10}`
@@ -2018,7 +2515,9 @@ const SettingsView = ({ isOpen, onClose, darkMode, onToggleDarkMode, currentFont
                 </div>
               </button>
               <button
-                onClick={() => { if (darkMode) onToggleDarkMode(); }}
+                onClick={() => {
+                  if (darkMode) onToggleDarkMode();
+                }}
                 className={`p-4 ${DESIGN.radius} border-2 transition-all flex flex-col items-center gap-2 cursor-pointer ${
                   !darkMode
                     ? `${THEME.dark.goldBorder} ${THEME.dark.goldBg10}`
@@ -2038,7 +2537,11 @@ const SettingsView = ({ isOpen, onClose, darkMode, onToggleDarkMode, currentFont
           <div>
             <div className="mb-3">
               <h3 className={`font-amiri text-lg ${theme.titleColor}`}>الخط</h3>
-              <p className={`font-brand-en text-[10px] uppercase tracking-[0.12em] ${theme.text} opacity-40`}>Typography</p>
+              <p
+                className={`font-brand-en text-[10px] uppercase tracking-[0.12em] ${theme.text} opacity-40`}
+              >
+                Typography
+              </p>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {FONTS.map((font) => (
@@ -2056,7 +2559,11 @@ const SettingsView = ({ isOpen, onClose, darkMode, onToggleDarkMode, currentFont
                   </p>
                   <div className="text-center">
                     <p className={`font-amiri text-xs ${theme.text} opacity-60`}>{font.labelAr}</p>
-                    <p className={`font-brand-en text-[8px] uppercase tracking-[0.1em] ${theme.text} opacity-30`}>{font.label}</p>
+                    <p
+                      className={`font-brand-en text-[8px] uppercase tracking-[0.1em] ${theme.text} opacity-30`}
+                    >
+                      {font.label}
+                    </p>
                   </div>
                 </button>
               ))}
@@ -2083,16 +2590,34 @@ const SettingsView = ({ isOpen, onClose, darkMode, onToggleDarkMode, currentFont
 */
 
 const VerticalSidebar = ({
-  onExplain, onCopy, showCopySuccess, onShare, showShareSuccess,
-  onSignIn, onSignOut, user, theme, isInterpreting, interpretation,
-  showTranslation, onToggleTranslation,
-  showTransliteration, onToggleTransliteration,
-  textSizeLabel, onCycleTextSize,
-  dailyPoem, onDailyPoem, isCurrentDaily,
-  darkMode, onToggleDarkMode,
-  currentFont, onCycleFont,
-  selectedCategory, onSelectCategory,
-  useDatabase, onToggleDatabase
+  onExplain,
+  onCopy,
+  showCopySuccess,
+  onShare,
+  showShareSuccess,
+  onSignIn,
+  onSignOut,
+  user,
+  theme,
+  isInterpreting,
+  interpretation,
+  showTranslation,
+  onToggleTranslation,
+  showTransliteration,
+  onToggleTransliteration,
+  textSizeLabel,
+  onCycleTextSize,
+  dailyPoem,
+  onDailyPoem,
+  isCurrentDaily,
+  darkMode,
+  onToggleDarkMode,
+  currentFont,
+  onCycleFont,
+  selectedCategory,
+  onSelectCategory,
+  useDatabase,
+  onToggleDatabase,
 }) => {
   const [settingsOpen, setSettingsOpen] = useState(false);
 
@@ -2121,15 +2646,27 @@ const VerticalSidebar = ({
             title="Explain poem"
             className={`${btnBase} ${btnHover} disabled:opacity-50`}
           >
-            {isInterpreting ? <Loader2 className="animate-spin" style={{ color: gold }} size={18} /> : <Compass style={{ color: gold }} size={18} />}
+            {isInterpreting ? (
+              <Loader2 className="animate-spin" style={{ color: gold }} size={18} />
+            ) : (
+              <Compass style={{ color: gold }} size={18} />
+            )}
           </button>
 
           <button onClick={onCopy} title="Copy poem" className={`${btnBase} ${btnHover}`}>
-            {showCopySuccess ? <Check size={18} className="text-green-500" /> : <Copy style={{ color: gold }} size={18} />}
+            {showCopySuccess ? (
+              <Check size={18} className="text-green-500" />
+            ) : (
+              <Copy style={{ color: gold }} size={18} />
+            )}
           </button>
 
           <button onClick={onShare} title="Share poem" className={`${btnBase} ${btnHover}`}>
-            {showShareSuccess ? <Check size={18} className="text-green-500" /> : <Share2 style={{ color: gold }} size={18} />}
+            {showShareSuccess ? (
+              <Check size={18} className="text-green-500" />
+            ) : (
+              <Share2 style={{ color: gold }} size={18} />
+            )}
           </button>
 
           <button
@@ -2143,7 +2680,7 @@ const VerticalSidebar = ({
           <div className="w-6 h-px bg-stone-500/30 mx-auto my-1" />
 
           <button
-            onClick={() => setSettingsOpen(prev => !prev)}
+            onClick={() => setSettingsOpen((prev) => !prev)}
             title="Settings"
             className={`${btnBase} ${btnHover} ${settingsOpen ? (theme.goldActiveBg) : ''}`}
           >
@@ -2157,7 +2694,12 @@ const VerticalSidebar = ({
                 title={showTransliteration ? 'Hide romanization' : 'Show romanization'}
                 className={`${subBtnBase} ${subBtnHover} ${!showTransliteration ? 'opacity-40' : ''}`}
               >
-                <span className="text-[12px] font-bold leading-none" style={{ color: gold, fontFamily: "'Amiri', serif" }}>عA</span>
+                <span
+                  className="text-[12px] font-bold leading-none"
+                  style={{ color: gold, fontFamily: "'Amiri', serif" }}
+                >
+                  عA
+                </span>
               </button>
 
               <button
@@ -2165,7 +2707,9 @@ const VerticalSidebar = ({
                 title={`Text size: ${textSizeLabel}`}
                 className={`${subBtnBase} ${subBtnHover}`}
               >
-                <span className="font-brand-en text-[13px] font-bold" style={{ color: gold }}>Aa</span>
+                <span className="font-brand-en text-[13px] font-bold" style={{ color: gold }}>
+                  Aa
+                </span>
               </button>
 
               {dailyPoem && (
@@ -2183,7 +2727,11 @@ const VerticalSidebar = ({
                 title={darkMode ? 'Light mode' : 'Dark mode'}
                 className={`${subBtnBase} ${subBtnHover}`}
               >
-                {darkMode ? <Sun style={{ color: gold }} size={16} /> : <Moon style={{ color: gold }} size={16} />}
+                {darkMode ? (
+                  <Sun style={{ color: gold }} size={16} />
+                ) : (
+                  <Moon style={{ color: gold }} size={16} />
+                )}
               </button>
 
               <button
@@ -2196,7 +2744,7 @@ const VerticalSidebar = ({
 
               <button
                 onClick={() => {
-                  const catIds = CATEGORIES.map(c => c.id);
+                  const catIds = CATEGORIES.map((c) => c.id);
                   const idx = catIds.indexOf(selectedCategory);
                   onSelectCategory(catIds[(idx + 1) % catIds.length]);
                 }}
@@ -2211,7 +2759,11 @@ const VerticalSidebar = ({
                 title={useDatabase ? 'Switch to AI' : 'Switch to Database'}
                 className={`${subBtnBase} ${subBtnHover}`}
               >
-                {useDatabase ? <Library style={{ color: gold }} size={16} /> : <Sparkles style={{ color: gold }} size={16} />}
+                {useDatabase ? (
+                  <Library style={{ color: gold }} size={16} />
+                ) : (
+                  <Sparkles style={{ color: gold }} size={16} />
+                )}
               </button>
             </div>
           )}
@@ -2219,7 +2771,7 @@ const VerticalSidebar = ({
           <div className="w-6 h-px bg-stone-500/30 mx-auto my-1" />
 
           <button
-            onClick={() => setSettingsOpen(prev => !prev)}
+            onClick={() => setSettingsOpen((prev) => !prev)}
             title="Settings"
             className={`${btnBase} ${btnHover} ${settingsOpen ? (theme.goldActiveBg) : ''}`}
           >
@@ -2233,7 +2785,12 @@ const VerticalSidebar = ({
                 title={showTransliteration ? 'Hide romanization' : 'Show romanization'}
                 className={`${subBtnBase} ${subBtnHover} ${!showTransliteration ? 'opacity-40' : ''}`}
               >
-                <span className="text-[12px] font-bold leading-none" style={{ color: gold, fontFamily: "'Amiri', serif" }}>عA</span>
+                <span
+                  className="text-[12px] font-bold leading-none"
+                  style={{ color: gold, fontFamily: "'Amiri', serif" }}
+                >
+                  عA
+                </span>
               </button>
 
               <button
@@ -2241,7 +2798,9 @@ const VerticalSidebar = ({
                 title={`Text size: ${textSizeLabel}`}
                 className={`${subBtnBase} ${subBtnHover}`}
               >
-                <span className="font-brand-en text-[13px] font-bold" style={{ color: gold }}>Aa</span>
+                <span className="font-brand-en text-[13px] font-bold" style={{ color: gold }}>
+                  Aa
+                </span>
               </button>
 
               {dailyPoem && (
@@ -2259,7 +2818,11 @@ const VerticalSidebar = ({
                 title={darkMode ? 'Light mode' : 'Dark mode'}
                 className={`${subBtnBase} ${subBtnHover}`}
               >
-                {darkMode ? <Sun style={{ color: gold }} size={16} /> : <Moon style={{ color: gold }} size={16} />}
+                {darkMode ? (
+                  <Sun style={{ color: gold }} size={16} />
+                ) : (
+                  <Moon style={{ color: gold }} size={16} />
+                )}
               </button>
 
               <button
@@ -2272,7 +2835,7 @@ const VerticalSidebar = ({
 
               <button
                 onClick={() => {
-                  const catIds = CATEGORIES.map(c => c.id);
+                  const catIds = CATEGORIES.map((c) => c.id);
                   const idx = catIds.indexOf(selectedCategory);
                   onSelectCategory(catIds[(idx + 1) % catIds.length]);
                 }}
@@ -2287,7 +2850,11 @@ const VerticalSidebar = ({
                 title={useDatabase ? 'Switch to AI' : 'Switch to Database'}
                 className={`${subBtnBase} ${subBtnHover}`}
               >
-                {useDatabase ? <Library style={{ color: gold }} size={16} /> : <Sparkles style={{ color: gold }} size={16} />}
+                {useDatabase ? (
+                  <Library style={{ color: gold }} size={16} />
+                ) : (
+                  <Sparkles style={{ color: gold }} size={16} />
+                )}
               </button>
             </div>
           )}
@@ -2299,7 +2866,11 @@ const VerticalSidebar = ({
             title={user ? 'Sign out' : 'Sign in'}
             className={`${btnBase} ${btnHover}`}
           >
-            {user ? <LogOut style={{ color: gold }} size={18} /> : <LogIn style={{ color: gold }} size={18} />}
+            {user ? (
+              <LogOut style={{ color: gold }} size={18} />
+            ) : (
+              <LogIn style={{ color: gold }} size={18} />
+            )}
           </button>
         </div>
       </div>
@@ -2347,19 +2918,26 @@ export default function DiwanApp() {
     }
 
     // 4. Ultimate fallback (same as original default)
-    return [{
-      id: 1, poet: "Nizar Qabbani", poetArabic: "نزار قباني", title: "My Beloved", titleArabic: "حبيبتي",
-      arabic: "حُبُّكِ يا عَمِيقَةَ العَيْنَيْنِ\nتَطَرُّفٌ .. تَصَوُّفٌ .. عِبَادَة\nحُبُّكِ مِثْلَ المَوْتِ وَالوِلَادَة\nصَعْبٌ بِأَنْ يُعَادَ مَرَّتَيْنِ",
-      english: "Your love, O woman of deep eyes,\nIs radicalism… is Sufism… is worship.\nYour love is like Death and like Birth—\nIt is difficult for it to be repeated twice.",
-      tags: ["Modern", "Romantic", "Ghazal"]
-    }];
+    return [
+      {
+        id: 1,
+        poet: 'Nizar Qabbani',
+        poetArabic: 'نزار قباني',
+        title: 'My Beloved',
+        titleArabic: 'حبيبتي',
+        arabic:
+          'حُبُّكِ يا عَمِيقَةَ العَيْنَيْنِ\nتَطَرُّفٌ .. تَصَوُّفٌ .. عِبَادَة\nحُبُّكِ مِثْلَ المَوْتِ وَالوِلَادَة\nصَعْبٌ بِأَنْ يُعَادَ مَرَّتَيْنِ',
+        english:
+          'Your love, O woman of deep eyes,\nIs radicalism… is Sufism… is worship.\nYour love is like Death and like Birth—\nIt is difficult for it to be repeated twice.',
+        tags: ['Modern', 'Romantic', 'Ghazal'],
+      },
+    ];
   });
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [selectedCategory, setSelectedCategory] = useState('All');
   const [darkMode, setDarkMode] = useState(true);
-  const [currentFont, setCurrentFont] = useState("Amiri");
+  const [currentFont, setCurrentFont] = useState('Amiri');
   const [useDatabase, setUseDatabase] = useState(FEATURES.database);
-  const [apiKeyBannerDismissed, setApiKeyBannerDismissed] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
@@ -2380,7 +2958,12 @@ export default function DiwanApp() {
     const vw = window.visualViewport?.width ?? window.innerWidth;
     return vw < 660;
   });
-  const [cacheStats, setCacheStats] = useState({ audioHits: 0, audioMisses: 0, insightsHits: 0, insightsMisses: 0 });
+  const [cacheStats, setCacheStats] = useState({
+    audioHits: 0,
+    audioMisses: 0,
+    insightsHits: 0,
+    insightsMisses: 0,
+  });
   const [isPrefetching, setIsPrefetching] = useState(false);
   const activeAudioRequests = useRef(new Set()); // Track in-flight audio generation requests
   const activeInsightRequests = useRef(new Set()); // Track in-flight insight generation requests
@@ -2401,7 +2984,11 @@ export default function DiwanApp() {
   const [showOnboarding] = useState(() => {
     if (!FEATURES.onboarding) return false;
     if (FEATURES.forceOnboarding) return true;
-    try { return !localStorage.getItem('hasSeenOnboarding'); } catch { return false; }
+    try {
+      return !localStorage.getItem('hasSeenOnboarding');
+    } catch {
+      return false;
+    }
   });
   const [showTranslation, setShowTranslation] = useState(true);
   const [textSizeLevel, setTextSizeLevel] = useState(1); // 0=S, 1=M, 2=L, 3=XL
@@ -2411,16 +2998,16 @@ export default function DiwanApp() {
   const theme = darkMode ? THEME.dark : THEME.light;
 
   const currentFontClass = useMemo(() => {
-    const font = FONTS.find(f => f.id === currentFont);
+    const font = FONTS.find((f) => f.id === currentFont);
     return font ? font.family : FONTS[0].family;
   }, [currentFont]);
 
   const cycleFont = () => {
-    const currentIdx = FONTS.findIndex(f => f.id === currentFont);
+    const currentIdx = FONTS.findIndex((f) => f.id === currentFont);
     const nextIdx = (currentIdx + 1) % FONTS.length;
     setCurrentFont(FONTS[nextIdx].id);
     track('font_changed', { font: FONTS[nextIdx].id });
-    addLog("Font", `Switched to ${FONTS[nextIdx].label}`, "info");
+    addLog('Font', `Switched to ${FONTS[nextIdx].label}`, 'info');
   };
 
   const TEXT_SIZES = [
@@ -2431,18 +3018,19 @@ export default function DiwanApp() {
   ];
 
   const cycleTextSize = () => {
-    setTextSizeLevel(prev => (prev + 1) % TEXT_SIZES.length);
+    setTextSizeLevel((prev) => (prev + 1) % TEXT_SIZES.length);
   };
 
   const textScale = TEXT_SIZES[textSizeLevel].multiplier;
 
   const filtered = useMemo(() => {
     const searchStr = selectedCategory.toLowerCase();
-    return selectedCategory === "All" 
-      ? poems 
-      : poems.filter(p => {
-          const poetMatch = (p?.poet || "").toLowerCase().includes(searchStr);
-          const tagsMatch = Array.isArray(p?.tags) && p.tags.some(t => String(t).toLowerCase() === searchStr);
+    return selectedCategory === 'All'
+      ? poems
+      : poems.filter((p) => {
+          const poetMatch = (p?.poet || '').toLowerCase().includes(searchStr);
+          const tagsMatch =
+            Array.isArray(p?.tags) && p.tags.some((t) => String(t).toLowerCase() === searchStr);
           return poetMatch || tagsMatch;
         });
   }, [poems, selectedCategory]);
@@ -2452,10 +3040,15 @@ export default function DiwanApp() {
   const current = filtered[currentIndex] || filtered[0] || poems[0] || null;
 
   const addLog = (label, msg, type = 'info') => {
-    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-    setLogs(prev => [...prev, { label, msg: String(msg), type, time }]);
+    const time = new Date().toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
+    setLogs((prev) => [...prev, { label, msg: String(msg), type, time }]);
     if (FEATURES.logging) {
-      const logFn = type === 'error' ? console.error : type === 'success' ? console.info : console.log;
+      const logFn =
+        type === 'error' ? console.error : type === 'success' ? console.info : console.log;
       logFn(`[${label}] ${msg}`);
     }
   };
@@ -2465,13 +3058,13 @@ export default function DiwanApp() {
     if (!current?.id || !user) return;
     const timer = setTimeout(() => {
       emitEvent(current.id, 'view', { duration_ms: 3000 });
-      addLog("Event", `→ view event emitted | poem_id: ${current.id} | duration: 3000ms`, "info");
+      addLog('Event', `→ view event emitted | poem_id: ${current.id} | duration: 3000ms`, 'info');
     }, 3000);
     return () => clearTimeout(timer);
   }, [current?.id, user]);
 
   useEffect(() => {
-    if (selectedCategory !== "All") {
+    if (selectedCategory !== 'All') {
       track('poet_filter_changed', { poet: selectedCategory });
       if (filtered.length === 0) {
         handleFetch();
@@ -2485,14 +3078,9 @@ export default function DiwanApp() {
 
   // Eagerly populate the discovered model list so it's ready before any user action.
   // Using the default fetch mock in tests means this never consumes a mockResolvedValueOnce.
+  // Eagerly discover available AI models via the backend proxy.
   useEffect(() => {
-    const key = import.meta.env.VITE_GEMINI_API_KEY || "";
-    if (key) {
-      discoverTextModels(key, addLog);
-    } else if (FEATURES.database) {
-      setUseDatabase(true);
-      addLog("Config", "No Gemini API key found — automatically using Database mode", "info");
-    }
+    discoverTextModels(addLog);
   }, []);
 
   // Auto-load a poem and queue explanation on first mount.
@@ -2507,22 +3095,22 @@ export default function DiwanApp() {
       if (deepLinkMatch && useDatabase) {
         const poemId = deepLinkMatch[1];
         track('deep_link_loaded', { poemId });
-        addLog("DeepLink", `Loading poem ID ${poemId} from URL`, "info");
+        addLog('DeepLink', `Loading poem ID ${poemId} from URL`, 'info');
         fetch(`${apiUrl}/api/poems/${poemId}`)
-          .then(res => {
+          .then((res) => {
             if (!res.ok) throw new Error(`Poem ${poemId} not found`);
             return res.json();
           })
-          .then(poem => {
+          .then((poem) => {
             if (poem.arabic) poem.arabic = poem.arabic.replace(/\*/g, '\n');
             poem.isFromDatabase = true;
             setPoems([poem]);
             setCurrentIndex(0);
             setAutoExplainPending(true);
-            addLog("DeepLink", `Loaded: ${poem.poet} — ${poem.title}`, "success");
+            addLog('DeepLink', `Loaded: ${poem.poet} — ${poem.title}`, 'success');
           })
-          .catch(err => {
-            addLog("DeepLink", `Failed: ${err.message}`, "error");
+          .catch((err) => {
+            addLog('DeepLink', `Failed: ${err.message}`, 'error');
             setAutoExplainPending(true);
             handleFetch();
           });
@@ -2531,12 +3119,18 @@ export default function DiwanApp() {
       }
 
       // Clear stashed OAuth poem (already restored by useState lazy initializer)
-      try { sessionStorage.removeItem('pendingSavePoem'); } catch {}
+      try {
+        sessionStorage.removeItem('pendingSavePoem');
+      } catch {}
 
       // If the initial poem already has a cached translation, skip auto-explain
       const initial = poems[0];
       if (initial?.cachedTranslation) {
-        addLog("Init", `Loaded with cached translation: ${initial.poet} — ${initial.title}`, "success");
+        addLog(
+          'Init',
+          `Loaded with cached translation: ${initial.poet} — ${initial.title}`,
+          'success'
+        );
       } else {
         // No cached translation — queue auto-explain and fetch from DB
         setAutoExplainPending(true);
@@ -2562,7 +3156,7 @@ export default function DiwanApp() {
           const cached = await cacheOperations.get(CACHE_CONFIG.stores.poems, todayKey);
           if (cached?.data) {
             setDailyPoem(cached.data);
-            addLog("Daily", "Loaded poem of the day from cache", "info");
+            addLog('Daily', 'Loaded poem of the day from cache', 'info');
             return;
           }
         } catch {}
@@ -2576,7 +3170,7 @@ export default function DiwanApp() {
         if (poem.arabic) poem.arabic = poem.arabic.replace(/\*/g, '\n');
         poem.isFromDatabase = true;
         setDailyPoem(poem);
-        addLog("Daily", `Poem of the day: ${poem.poet} — ${poem.title}`, "success");
+        addLog('Daily', `Poem of the day: ${poem.poet} — ${poem.title}`, 'success');
 
         // Cache for today
         if (FEATURES.caching) {
@@ -2585,7 +3179,7 @@ export default function DiwanApp() {
           } catch {}
         }
       } catch (err) {
-        addLog("Daily", `Failed to load: ${err.message}`, "error");
+        addLog('Daily', `Failed to load: ${err.message}`, 'error');
       }
     })();
   }, [useDatabase]);
@@ -2594,7 +3188,9 @@ export default function DiwanApp() {
   useEffect(() => {
     if (!user) return;
     let stashed;
-    try { stashed = sessionStorage.getItem('pendingSavePoem'); } catch {}
+    try {
+      stashed = sessionStorage.getItem('pendingSavePoem');
+    } catch {}
     if (!stashed) return;
     sessionStorage.removeItem('pendingSavePoem');
     try {
@@ -2602,9 +3198,9 @@ export default function DiwanApp() {
       if (poem && poem.arabic) {
         savePoem(poem).then(({ error }) => {
           if (error) {
-            addLog("Save Error", error.message, "error");
+            addLog('Save Error', error.message, 'error');
           } else {
-            addLog("Save", `Auto-saved poem: ${poem.poet} — ${poem.title}`, "success");
+            addLog('Save', `Auto-saved poem: ${poem.poet} — ${poem.title}`, 'success');
           }
         });
       }
@@ -2671,8 +3267,8 @@ export default function DiwanApp() {
       resizeObserver?.disconnect();
       window.removeEventListener('resize', scheduleDetect);
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps -- refs (controlBarRef, pendingRafRef)
-  // and the stable setIsOverflow setter are intentionally omitted; only real state values need deps.
+
+    // and the stable setIsOverflow setter are intentionally omitted; only real state values need deps.
   }, [user]);
 
   // Load user settings on mount
@@ -2721,11 +3317,11 @@ export default function DiwanApp() {
           break;
         case 't':
         case 'T':
-          setShowTranslation(prev => !prev);
+          setShowTranslation((prev) => !prev);
           break;
         case 'r':
         case 'R':
-          setShowTransliteration(prev => !prev);
+          setShowTransliteration((prev) => !prev);
           break;
         case 'Escape':
           setShowAuthModal(false);
@@ -2734,7 +3330,7 @@ export default function DiwanApp() {
           setShowShortcutHelp(false);
           break;
         case '?':
-          setShowShortcutHelp(prev => !prev);
+          setShowShortcutHelp((prev) => !prev);
           break;
       }
     };
@@ -2758,20 +3354,20 @@ export default function DiwanApp() {
       return {
         poeticTranslation: cachedTranslation,
         depth: cachedExplanation || '',
-        author: cachedAuthorBio || ''
+        author: cachedAuthorBio || '',
       };
     }
     return parseInsight(interpretation);
   }, [interpretation, cachedTranslation, cachedExplanation, cachedAuthorBio]);
 
   const versePairs = useMemo(() => {
-    const arLines = (current?.arabic || "").split('\n').filter(l => l.trim());
-    const enSource = insightParts?.poeticTranslation || current?.english || "";
-    const enLines = enSource.split('\n').filter(l => l.trim());
+    const arLines = (current?.arabic || '').split('\n').filter((l) => l.trim());
+    const enSource = insightParts?.poeticTranslation || current?.english || '';
+    const enLines = enSource.split('\n').filter((l) => l.trim());
     const pairs = [];
     const max = Math.max(arLines.length, enLines.length);
     for (let i = 0; i < max; i++) {
-      pairs.push({ ar: arLines[i] || "", en: enLines[i] || "" });
+      pairs.push({ ar: arLines[i] || '', en: enLines[i] || '' });
     }
     return pairs;
   }, [current, insightParts]);
@@ -2786,15 +3382,26 @@ export default function DiwanApp() {
       const samples = new Int16Array(buf);
       const wavBuf = new ArrayBuffer(44 + samples.length * 2);
       const wavView = new DataView(wavBuf);
-      const s = (o, str) => { for (let i = 0; i < str.length; i++) wavView.setUint8(o + i, str.charCodeAt(i)); };
-      s(0, 'RIFF'); wavView.setUint32(4, 36 + samples.length * 2, true); s(8, 'WAVE'); s(12, 'fmt ');
-      wavView.setUint32(16, 16, true); wavView.setUint16(20, 1, true); wavView.setUint16(22, 1, true);
-      wavView.setUint32(24, rate, true); wavView.setUint32(28, rate * 2, true); wavView.setUint16(32, 2, true);
-      wavView.setUint16(34, 16, true); s(36, 'data'); wavView.setUint32(40, samples.length * 2, true);
+      const s = (o, str) => {
+        for (let i = 0; i < str.length; i++) wavView.setUint8(o + i, str.charCodeAt(i));
+      };
+      s(0, 'RIFF');
+      wavView.setUint32(4, 36 + samples.length * 2, true);
+      s(8, 'WAVE');
+      s(12, 'fmt ');
+      wavView.setUint32(16, 16, true);
+      wavView.setUint16(20, 1, true);
+      wavView.setUint16(22, 1, true);
+      wavView.setUint32(24, rate, true);
+      wavView.setUint32(28, rate * 2, true);
+      wavView.setUint16(32, 2, true);
+      wavView.setUint16(34, 16, true);
+      s(36, 'data');
+      wavView.setUint32(40, samples.length * 2, true);
       new Int16Array(wavBuf, 44).set(samples);
       return new Blob([wavBuf], { type: 'audio/wav' });
     } catch (e) {
-      addLog("Audio Error", e.message, "error");
+      addLog('Audio Error', e.message, 'error');
       return null;
     }
   };
@@ -2808,18 +3415,22 @@ export default function DiwanApp() {
 
   const togglePlay = async () => {
     if (isTogglingPlay.current) {
-      addLog("Audio", "Play toggle already in progress — skipping", "info");
+      addLog('Audio', 'Play toggle already in progress — skipping', 'info');
       return;
     }
     isTogglingPlay.current = true;
-    addLog("UI Event", `🎵 Play button clicked | Poem: ${current?.poet} - ${current?.title} | ID: ${current?.id}`, "info");
+    addLog(
+      'UI Event',
+      `🎵 Play button clicked | Poem: ${current?.poet} - ${current?.title} | ID: ${current?.id}`,
+      'info'
+    );
     track('audio_play', { poet: current?.poet });
 
     if (isPlaying) {
       audioRef.current.pause();
       setIsPlaying(false);
       track('audio_pause', { poet: current?.poet });
-      addLog("UI Event", "⏸️ Pause button clicked", "info");
+      addLog('UI Event', '⏸️ Pause button clicked', 'info');
       isTogglingPlay.current = false;
       return;
     }
@@ -2829,7 +3440,7 @@ export default function DiwanApp() {
         await audioRef.current.play();
         setIsPlaying(true);
       } catch (e) {
-        addLog("Audio", "Playback failed, resetting audio URL", "info");
+        addLog('Audio', 'Playback failed, resetting audio URL', 'info');
         setAudioUrl(null);
       }
       isTogglingPlay.current = false;
@@ -2841,28 +3452,35 @@ export default function DiwanApp() {
 
     // Check if request already in flight - poll until it completes
     if (activeAudioRequests.current.has(current?.id)) {
-      addLog("Audio", `Audio generation already in progress - waiting for completion`, "info");
+      addLog('Audio', `Audio generation already in progress - waiting for completion`, 'info');
 
       // Poll every 500ms to check if the request completed
       const pollInterval = setInterval(async () => {
         if (!activeAudioRequests.current.has(current?.id)) {
           clearInterval(pollInterval);
-          pollingIntervals.current = pollingIntervals.current.filter(id => id !== pollInterval);
+          pollingIntervals.current = pollingIntervals.current.filter((id) => id !== pollInterval);
 
           // Request completed - check cache and play
           const cached = await cacheOperations.get(CACHE_CONFIG.stores.audio, current.id);
           if (cached?.blob) {
-            addLog("Audio", `✓ Background audio generation completed - playing from cache`, "success");
+            addLog(
+              'Audio',
+              `✓ Background audio generation completed - playing from cache`,
+              'success'
+            );
             const u = URL.createObjectURL(cached.blob);
             setAudioUrl(u);
             audioRef.current.src = u;
             audioRef.current.load();
-            audioRef.current.play().then(() => setIsPlaying(true)).catch(e => {
-              addLog("Audio", "Starting playback...", "info");
-              setIsPlaying(true);
-            });
+            audioRef.current
+              .play()
+              .then(() => setIsPlaying(true))
+              .catch((err) => {
+                if (FEATURES.logging) console.warn('[Audio] Playback failed:', err.message);
+                addLog('Audio', `Playback failed: ${err.message}`, 'error');
+              });
           } else {
-            addLog("Audio", "Background generation failed — please try again", "info");
+            addLog('Audio', 'Background generation failed — please try again', 'info');
             isTogglingPlay.current = false;
             setIsGeneratingAudio(false);
             return;
@@ -2876,25 +3494,32 @@ export default function DiwanApp() {
       // Safety timeout - clear after 60 seconds (some large poems take 40+ seconds)
       setTimeout(() => {
         clearInterval(pollInterval);
-        pollingIntervals.current = pollingIntervals.current.filter(id => id !== pollInterval);
+        pollingIntervals.current = pollingIntervals.current.filter((id) => id !== pollInterval);
         if (activeAudioRequests.current.has(current?.id)) {
-          addLog("Audio", `Audio generation taking longer than expected - checking one more time...`, "info");
+          addLog(
+            'Audio',
+            `Audio generation taking longer than expected - checking one more time...`,
+            'info'
+          );
 
           // Final check before giving up
           setTimeout(async () => {
             const finalCheck = await cacheOperations.get(CACHE_CONFIG.stores.audio, current.id);
             if (finalCheck?.blob) {
-              addLog("Audio", `✓ Audio completed after extended wait - playing now`, "success");
+              addLog('Audio', `✓ Audio completed after extended wait - playing now`, 'success');
               const u = URL.createObjectURL(finalCheck.blob);
               setAudioUrl(u);
               audioRef.current.src = u;
               audioRef.current.load();
-              audioRef.current.play().then(() => setIsPlaying(true)).catch(e => {
-                addLog("Audio", "Starting playback...", "info");
-                setIsPlaying(true);
-              });
+              audioRef.current
+                .play()
+                .then(() => setIsPlaying(true))
+                .catch((err) => {
+                  if (FEATURES.logging) console.warn('[Audio] Playback failed:', err.message);
+                  addLog('Audio', `Playback failed: ${err.message}`, 'error');
+                });
             } else {
-              addLog("Audio", `Audio generation timeout - please try again`, "error");
+              addLog('Audio', `Audio generation timeout - please try again`, 'error');
             }
             activeAudioRequests.current.delete(current?.id);
             setIsGeneratingAudio(false);
@@ -2914,76 +3539,89 @@ export default function DiwanApp() {
 
       if (cached?.blob) {
         const sizeMB = (cached.blob.size / (1024 * 1024)).toFixed(2);
-        addLog("Audio Cache", `✓ Cache HIT (${cacheTime.toFixed(0)}ms) | Size: ${sizeMB}MB | Instant playback`, "success");
-        setCacheStats(prev => ({ ...prev, audioHits: prev.audioHits + 1 }));
+        addLog(
+          'Audio Cache',
+          `✓ Cache HIT (${cacheTime.toFixed(0)}ms) | Size: ${sizeMB}MB | Instant playback`,
+          'success'
+        );
+        setCacheStats((prev) => ({ ...prev, audioHits: prev.audioHits + 1 }));
 
         const u = URL.createObjectURL(cached.blob);
         setAudioUrl(u);
         audioRef.current.src = u;
         audioRef.current.load();
-        audioRef.current.play().then(() => setIsPlaying(true)).catch(e => {
-          addLog("Audio", "Starting cached playback...", "info");
-          setIsPlaying(true);
-        });
+        audioRef.current
+          .play()
+          .then(() => setIsPlaying(true))
+          .catch((err) => {
+            if (FEATURES.logging) console.warn('[Audio] Playback failed:', err.message);
+            addLog('Audio', `Cached playback failed: ${err.message}`, 'error');
+          });
         setIsGeneratingAudio(false); // Clear loading state
         isTogglingPlay.current = false;
         return;
       } else {
-        addLog("Audio Cache", `✗ Cache MISS (${cacheTime.toFixed(0)}ms) | Generating from API...`, "info");
-        setCacheStats(prev => ({ ...prev, audioMisses: prev.audioMisses + 1 }));
+        addLog(
+          'Audio Cache',
+          `✗ Cache MISS (${cacheTime.toFixed(0)}ms) | Generating from API...`,
+          'info'
+        );
+        setCacheStats((prev) => ({ ...prev, audioMisses: prev.audioMisses + 1 }));
       }
     }
 
     // Mark request as in-flight
     activeAudioRequests.current.add(current?.id);
 
-    const mood = current?.tags?.[1] || "Poetic";
-    const era = current?.tags?.[0] || "Classical";
-    const poet = current?.poet || "the Master Poet";
+    const mood = current?.tags?.[1] || 'Poetic';
+    const era = current?.tags?.[0] || 'Classical';
+    const poet = current?.poet || 'the Master Poet';
     const ttsInstruction = getTTSInstruction(current, poet, mood, era);
 
     // Calculate request metrics
     const requestSize = new Blob([
-      JSON.stringify({ contents: [{ parts: [{ text: ttsInstruction }] }] })
+      JSON.stringify({ contents: [{ parts: [{ text: ttsInstruction }] }] }),
     ]).size;
     const estimatedTokens = Math.ceil(ttsInstruction.length / 4);
     const instructionChars = ttsInstruction.length;
     const arabicTextChars = current?.arabic?.length || 0;
 
     addLog(
-      "Audio API",
+      'Audio API',
       `→ Starting generation | Request: ${(requestSize / 1024).toFixed(1)}KB | ${instructionChars} chars (${arabicTextChars} Arabic) | Est. ${estimatedTokens} tokens`,
-      "info"
+      'info'
     );
 
     setAudioError(null);
 
     try {
       const apiStart = performance.now();
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${API_MODELS.tts}:generateContent?key=${apiKey}`;
+      const url = `${apiUrl}/api/ai/${API_MODELS.tts}/generateContent`;
       const fetchOptions = {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contents: [{ parts: [{ text: ttsInstruction }] }],
           generationConfig: {
             responseModalities: TTS_CONFIG.responseModalities,
             speechConfig: {
               voiceConfig: {
-                prebuiltVoiceConfig: { voiceName: TTS_CONFIG.voiceName }
-              }
-            }
-          }
-        })
+                prebuiltVoiceConfig: { voiceName: TTS_CONFIG.voiceName },
+              },
+            },
+          },
+        }),
       };
-      const res = await fetchWithRetry(url, fetchOptions, { addLog, label: "Audio API" });
+      const res = await fetchWithRetry(url, fetchOptions, { addLog, label: 'Audio API' });
 
       if (!res.ok) {
         const errorText = await res.text();
-        addLog("Audio API Error", `HTTP ${res.status}: ${errorText.substring(0, 200)}`, "error");
+        addLog('Audio API Error', `HTTP ${res.status}: ${errorText.substring(0, 200)}`, 'error');
         if (res.status === 429) {
-          setAudioError("Recitation temporarily unavailable — too many requests. Please wait a moment and try again.");
-          throw new Error("Rate limited (429)");
+          setAudioError(
+            'Recitation temporarily unavailable — too many requests. Please wait a moment and try again.'
+          );
+          throw new Error('Rate limited (429)');
         }
         throw new Error(`API returned ${res.status}: ${res.statusText}`);
       }
@@ -2992,8 +3630,12 @@ export default function DiwanApp() {
       const apiTime = performance.now() - apiStart;
 
       if (!data.candidates || data.candidates.length === 0) {
-        addLog("Audio API Error", `No candidates in response. Full response: ${JSON.stringify(data).substring(0, 300)}`, "error");
-        throw new Error("Recitation failed - no audio candidates returned");
+        addLog(
+          'Audio API Error',
+          `No candidates in response. Full response: ${JSON.stringify(data).substring(0, 300)}`,
+          'error'
+        );
+        throw new Error('Recitation failed - no audio candidates returned');
       }
 
       const b64 = data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
@@ -3013,17 +3655,28 @@ export default function DiwanApp() {
           const tokensPerSecond = (estimatedTokens / (apiTime / 1000)).toFixed(1);
           const totalTime = apiTime + conversionTime;
 
-          addLog("Audio API", `✓ Complete | API: ${(apiTime / 1000).toFixed(2)}s | Convert: ${conversionTime.toFixed(0)}ms | Total: ${(totalTime / 1000).toFixed(2)}s`, "success");
-          addLog("Audio Metrics", `Audio: ${audioDuration.toFixed(1)}s | Size: ${audioSizeKB}KB (${audioSizeMB}MB) | Speed: ${tokensPerSecond} tok/s`, "success");
+          addLog(
+            'Audio API',
+            `✓ Complete | API: ${(apiTime / 1000).toFixed(2)}s | Convert: ${conversionTime.toFixed(0)}ms | Total: ${(totalTime / 1000).toFixed(2)}s`,
+            'success'
+          );
+          addLog(
+            'Audio Metrics',
+            `Audio: ${audioDuration.toFixed(1)}s | Size: ${audioSizeKB}KB (${audioSizeMB}MB) | Speed: ${tokensPerSecond} tok/s`,
+            'success'
+          );
 
           const u = URL.createObjectURL(blob);
           setAudioUrl(u);
           audioRef.current.src = u;
           audioRef.current.load();
-          audioRef.current.play().then(() => setIsPlaying(true)).catch(e => {
-             addLog("Audio", "Starting playback...", "info");
-             setIsPlaying(true);
-          });
+          audioRef.current
+            .play()
+            .then(() => setIsPlaying(true))
+            .catch((err) => {
+              if (FEATURES.logging) console.warn('[Audio] Playback failed:', err.message);
+              addLog('Audio', `Playback failed: ${err.message}`, 'error');
+            });
 
           // CACHE THE AUDIO BLOB
           if (FEATURES.caching && current?.id) {
@@ -3034,16 +3687,20 @@ export default function DiwanApp() {
                 poet: current.poet,
                 title: current.title,
                 size: blob.size,
-                duration: audioDuration
-              }
+                duration: audioDuration,
+              },
             });
             const cacheTime = performance.now() - cacheStart;
-            addLog("Audio Cache", `Audio cached for future playback (${cacheTime.toFixed(0)}ms) | Saves ${(apiTime / 1000).toFixed(1)}s on replay`, "success");
+            addLog(
+              'Audio Cache',
+              `Audio cached for future playback (${cacheTime.toFixed(0)}ms) | Saves ${(apiTime / 1000).toFixed(1)}s on replay`,
+              'success'
+            );
           }
         }
       }
     } catch (e) {
-      addLog("Audio System Error", `${e.message} | Poem ID: ${current?.id}`, "error");
+      addLog('Audio System Error', `${e.message} | Poem ID: ${current?.id}`, 'error');
       track('audio_error', { error: (e.message || '').slice(0, 100) });
       setIsPlaying(false);
     } finally {
@@ -3054,7 +3711,11 @@ export default function DiwanApp() {
   };
 
   const handleAnalyze = async () => {
-    addLog("UI Event", `🔍 Dive In button clicked | Poem: ${current?.poet} - ${current?.title} | ID: ${current?.id}`, "info");
+    addLog(
+      'UI Event',
+      `🔍 Dive In button clicked | Poem: ${current?.poet} - ${current?.title} | ID: ${current?.id}`,
+      'info'
+    );
 
     if (interpretation || isInterpreting) return;
     track('insight_requested', { poet: current?.poet });
@@ -3064,21 +3725,29 @@ export default function DiwanApp() {
 
     // Check if request already in flight - poll until it completes
     if (activeInsightRequests.current.has(current?.id)) {
-      addLog("Insights", `Insights generation already in progress - waiting for completion`, "info");
+      addLog(
+        'Insights',
+        `Insights generation already in progress - waiting for completion`,
+        'info'
+      );
 
       // Poll every 500ms to check if the request completed
       const pollInterval = setInterval(async () => {
         if (!activeInsightRequests.current.has(current?.id)) {
           clearInterval(pollInterval);
-          pollingIntervals.current = pollingIntervals.current.filter(id => id !== pollInterval);
+          pollingIntervals.current = pollingIntervals.current.filter((id) => id !== pollInterval);
 
           // Request completed - check cache and display
           const cached = await cacheOperations.get(CACHE_CONFIG.stores.insights, current.id);
           if (cached?.interpretation) {
-            addLog("Insights", `✓ Background insights generation completed - displaying results`, "success");
+            addLog(
+              'Insights',
+              `✓ Background insights generation completed - displaying results`,
+              'success'
+            );
             setInterpretation(cached.interpretation);
           } else {
-            addLog("Insights", `Background insights generation failed - retrying`, "info");
+            addLog('Insights', `Background insights generation failed - retrying`, 'info');
             // Retry the request
             setTimeout(() => handleAnalyze(), 100);
             return;
@@ -3092,18 +3761,26 @@ export default function DiwanApp() {
       // Safety timeout - clear after 60 seconds (some insights take time)
       setTimeout(() => {
         clearInterval(pollInterval);
-        pollingIntervals.current = pollingIntervals.current.filter(id => id !== pollInterval);
+        pollingIntervals.current = pollingIntervals.current.filter((id) => id !== pollInterval);
         if (activeInsightRequests.current.has(current?.id)) {
-          addLog("Insights", `Insights generation taking longer than expected - checking one more time...`, "info");
+          addLog(
+            'Insights',
+            `Insights generation taking longer than expected - checking one more time...`,
+            'info'
+          );
 
           // Final check before giving up
           setTimeout(async () => {
             const finalCheck = await cacheOperations.get(CACHE_CONFIG.stores.insights, current.id);
             if (finalCheck?.interpretation) {
-              addLog("Insights", `✓ Insights completed after extended wait - displaying now`, "success");
+              addLog(
+                'Insights',
+                `✓ Insights completed after extended wait - displaying now`,
+                'success'
+              );
               setInterpretation(finalCheck.interpretation);
             } else {
-              addLog("Insights", `Insights generation timeout - please try again`, "error");
+              addLog('Insights', `Insights generation timeout - please try again`, 'error');
             }
             activeInsightRequests.current.delete(current?.id);
             setIsInterpreting(false);
@@ -3126,37 +3803,36 @@ export default function DiwanApp() {
       if (cached?.interpretation) {
         const charCount = cached.interpretation.length;
         const estTokens = Math.ceil(charCount / 4);
-        addLog("Insights Cache", `✓ Cache HIT (${cacheTime.toFixed(0)}ms) | ${charCount} chars (≈${estTokens} tokens) | Instant load`, "success");
-        setCacheStats(prev => ({ ...prev, insightsHits: prev.insightsHits + 1 }));
+        addLog(
+          'Insights Cache',
+          `✓ Cache HIT (${cacheTime.toFixed(0)}ms) | ${charCount} chars (≈${estTokens} tokens) | Instant load`,
+          'success'
+        );
+        setCacheStats((prev) => ({ ...prev, insightsHits: prev.insightsHits + 1 }));
         setInterpretation(cached.interpretation);
         setIsInterpreting(false); // Clear loading state
         activeInsightRequests.current.delete(current?.id); // Clean up tracking
         return;
       } else {
-        addLog("Insights Cache", `✗ Cache MISS (${cacheTime.toFixed(0)}ms) | Generating from API...`, "info");
-        setCacheStats(prev => ({ ...prev, insightsMisses: prev.insightsMisses + 1 }));
+        addLog(
+          'Insights Cache',
+          `✗ Cache MISS (${cacheTime.toFixed(0)}ms) | Generating from API...`,
+          'info'
+        );
+        setCacheStats((prev) => ({ ...prev, insightsMisses: prev.insightsMisses + 1 }));
       }
     }
 
-    let insightText = "";
+    let insightText = '';
     let apiStartTime = null;
 
     try {
-      // Guard: AI Insights require a Gemini API key
-      if (!apiKey) {
-        const fallbackMessage = "**AI Insights unavailable**\n\nA Gemini API key is required for poem analysis. You can:\n\n• Add `VITE_GEMINI_API_KEY` to your environment\n• Continue exploring poems in Database mode without insights";
-        setInterpretation(fallbackMessage);
-        setIsInterpreting(false);
-        activeInsightRequests.current.delete(current?.id);
-        return;
-      }
-
       // Use streaming if feature flag is enabled
       if (FEATURES.streaming) {
         const poetInfo = current?.poet ? ` by ${current.poet}` : '';
         const promptText = `Deep Analysis of${poetInfo}:\n\n${current?.arabic}`;
         const requestSize = new Blob([
-          JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] })
+          JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] }),
         ]).size;
         const estimatedInputTokens = Math.ceil(
           (promptText.length + INSIGHTS_SYSTEM_PROMPT.length) / 4
@@ -3166,12 +3842,12 @@ export default function DiwanApp() {
         const systemPromptChars = INSIGHTS_SYSTEM_PROMPT.length;
 
         addLog(
-          "Insights API",
+          'Insights API',
           `→ Starting streaming | Request: ${(requestSize / 1024).toFixed(1)}KB | ${promptChars} chars (${arabicTextChars} Arabic + ${systemPromptChars} system) | Est. ${estimatedInputTokens} tokens`,
-          "info"
+          'info'
         );
 
-        setInterpretation(""); // Clear previous interpretation
+        setInterpretation(''); // Clear previous interpretation
         apiStartTime = performance.now();
         const apiStart = apiStartTime;
         let firstChunkTime = null;
@@ -3180,14 +3856,19 @@ export default function DiwanApp() {
 
         const insightsStreamBody = JSON.stringify({
           contents: [{ parts: [{ text: promptText }] }],
-          systemInstruction: { parts: [{ text: INSIGHTS_SYSTEM_PROMPT }] }
+          systemInstruction: { parts: [{ text: INSIGHTS_SYSTEM_PROMPT }] },
         });
-        const res = await geminiTextFetch('streamGenerateContent?alt=sse', insightsStreamBody, apiKey, 'AI Insights failed', addLog);
+        const res = await geminiTextFetch(
+          'streamGenerateContent',
+          insightsStreamBody,
+          'AI Insights failed',
+          addLog
+        );
 
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
-        let accumulatedText = "";
-        let buffer = "";
+        let accumulatedText = '';
+        let buffer = '';
 
         while (true) {
           const { done, value } = await reader.read();
@@ -3198,7 +3879,7 @@ export default function DiwanApp() {
 
           // Process complete lines from buffer
           const lines = buffer.split('\n');
-          buffer = lines.pop() || ""; // Keep incomplete line in buffer
+          buffer = lines.pop() || ''; // Keep incomplete line in buffer
 
           for (const line of lines) {
             if (line.startsWith('data: ')) {
@@ -3207,11 +3888,15 @@ export default function DiwanApp() {
 
               try {
                 const data = JSON.parse(jsonStr);
-                const text = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+                const text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
                 if (text) {
                   if (!firstChunkTime) {
                     firstChunkTime = performance.now() - apiStart;
-                    addLog("Insights API", `← First chunk received (${firstChunkTime.toFixed(0)}ms) | Streaming...`, "info");
+                    addLog(
+                      'Insights API',
+                      `← First chunk received (${firstChunkTime.toFixed(0)}ms) | Streaming...`,
+                      'info'
+                    );
                   }
                   chunkCount++;
                   accumulatedText += text;
@@ -3219,7 +3904,7 @@ export default function DiwanApp() {
                 }
               } catch (parseError) {
                 // Skip malformed JSON chunks
-                console.debug("Skipping malformed chunk:", jsonStr);
+                console.debug('Skipping malformed chunk:', jsonStr);
               }
             }
           }
@@ -3232,21 +3917,36 @@ export default function DiwanApp() {
         const tokensPerSecond = (estimatedTokens / (totalTime / 1000)).toFixed(1);
         const avgChunkSize = charCount / chunkCount;
 
-        addLog("Insights API", `✓ Streaming complete | Total: ${(totalTime / 1000).toFixed(2)}s | TTFT: ${(firstChunkTime / 1000).toFixed(2)}s | ${chunkCount} chunks`, "success");
-        addLog("Insights Metrics", `${charCount} chars (≈${estimatedTokens} tokens) | ${tokensPerSecond} tok/s | Avg chunk: ${avgChunkSize.toFixed(0)} chars`, "success");
+        addLog(
+          'Insights API',
+          `✓ Streaming complete | Total: ${(totalTime / 1000).toFixed(2)}s | TTFT: ${(firstChunkTime / 1000).toFixed(2)}s | ${chunkCount} chunks`,
+          'success'
+        );
+        addLog(
+          'Insights Metrics',
+          `${charCount} chars (≈${estimatedTokens} tokens) | ${tokensPerSecond} tok/s | Avg chunk: ${avgChunkSize.toFixed(0)} chars`,
+          'success'
+        );
       } else {
         // Non-streaming fallback (original implementation)
-        addLog("Insights", "Analyzing poem...", "info");
+        addLog('Insights', 'Analyzing poem...', 'info');
         const poetInfoFallback = current?.poet ? ` by ${current.poet}` : '';
         const insightsFallbackBody = JSON.stringify({
-          contents: [{ parts: [{ text: `Deep Analysis of${poetInfoFallback}:\n\n${current?.arabic}` }] }],
-          systemInstruction: { parts: [{ text: INSIGHTS_SYSTEM_PROMPT }] }
+          contents: [
+            { parts: [{ text: `Deep Analysis of${poetInfoFallback}:\n\n${current?.arabic}` }] },
+          ],
+          systemInstruction: { parts: [{ text: INSIGHTS_SYSTEM_PROMPT }] },
         });
-        const res = await geminiTextFetch('generateContent', insightsFallbackBody, apiKey, 'AI Insights failed', addLog);
+        const res = await geminiTextFetch(
+          'generateContent',
+          insightsFallbackBody,
+          'AI Insights failed',
+          addLog
+        );
         const data = await res.json();
         insightText = data.candidates?.[0]?.content?.parts?.[0]?.text;
         setInterpretation(insightText);
-        addLog("Insights", "Analysis complete", "success");
+        addLog('Insights', 'Analysis complete', 'success');
       }
 
       // CACHE THE INSIGHTS
@@ -3258,12 +3958,18 @@ export default function DiwanApp() {
             poet: current.poet,
             title: current.title,
             charCount: insightText.length,
-            tokens: Math.ceil(insightText.length / 4)
-          }
+            tokens: Math.ceil(insightText.length / 4),
+          },
         });
         const cacheTime = performance.now() - cacheStart;
-        const elapsedTime = apiStartTime ? ((performance.now() - apiStartTime) / 1000).toFixed(1) : "2-8";
-        addLog("Insights Cache", `Insights cached for future use (${cacheTime.toFixed(0)}ms) | Saves ${elapsedTime}s on reload`, "success");
+        const elapsedTime = apiStartTime
+          ? ((performance.now() - apiStartTime) / 1000).toFixed(1)
+          : '2-8';
+        addLog(
+          'Insights Cache',
+          `Insights cached for future use (${cacheTime.toFixed(0)}ms) | Saves ${elapsedTime}s on reload`,
+          'success'
+        );
       }
 
       // Save translation back to database for future visitors (fire-and-forget)
@@ -3276,19 +3982,22 @@ export default function DiwanApp() {
             body: JSON.stringify({
               translation: parts.poeticTranslation.replace(/\n/g, '*'),
               explanation: parts.depth || null,
-              authorBio: parts.author || null
-            })
+              authorBio: parts.author || null,
+            }),
           }).catch(() => {});
         }
       }
 
-      track('insight_completed', { poet: current?.poet, cached: !!(FEATURES.caching && current?.id && insightText) });
+      track('insight_completed', {
+        poet: current?.poet,
+        cached: !!(FEATURES.caching && current?.id && insightText),
+      });
     } catch (e) {
-      addLog("Analysis Error", `${e.message} | Poem ID: ${current?.id}`, "error");
+      addLog('Analysis Error', `${e.message} | Poem ID: ${current?.id}`, 'error');
       track('insight_error', { error: (e.message || '').slice(0, 100) });
       // Show partial results if streaming was interrupted
       if (FEATURES.streaming && insightText) {
-        addLog("Insights", "Showing partial results", "warning");
+        addLog('Insights', 'Showing partial results', 'warning');
       }
     } finally {
       setIsInterpreting(false);
@@ -3297,10 +4006,14 @@ export default function DiwanApp() {
   };
 
   const handleFetch = async () => {
-    addLog("UI Event", `🐰 Discover button clicked | Category: ${selectedCategory} | Source: ${useDatabase ? 'Database' : 'Gemini AI'}`, "info");
+    addLog(
+      'UI Event',
+      `🐰 Discover button clicked | Category: ${selectedCategory} | Source: ${useDatabase ? 'Database' : 'Gemini AI'}`,
+      'info'
+    );
 
     if (isFetching) {
-      addLog("Discovery", `Discovery already in progress - please wait`, "info");
+      addLog('Discovery', `Discovery already in progress - please wait`, 'info');
       return;
     }
 
@@ -3313,15 +4026,15 @@ export default function DiwanApp() {
       if (useDatabase) {
         // Reset category to "All" before fetching so the new poem will be visible
         // without racing against the useEffect that resets currentIndex on category change
-        if (selectedCategory !== "All") {
-          setSelectedCategory("All");
+        if (selectedCategory !== 'All') {
+          setSelectedCategory('All');
         }
 
-        addLog("Discovery DB", `→ Querying database | Category: ${selectedCategory}`, "info");
+        addLog('Discovery DB', `→ Querying database | Category: ${selectedCategory}`, 'info');
 
-        const categoryObj = CATEGORIES.find(c => c.id === selectedCategory);
+        const categoryObj = CATEGORIES.find((c) => c.id === selectedCategory);
         const poetName = categoryObj?.labelAr || selectedCategory;
-        const poetParam = selectedCategory !== "All" ? `?poet=${encodeURIComponent(poetName)}` : '';
+        const poetParam = selectedCategory !== 'All' ? `?poet=${encodeURIComponent(poetName)}` : '';
         const url = `${apiUrl}/api/poems/random${poetParam}`;
 
         try {
@@ -3349,13 +4062,21 @@ export default function DiwanApp() {
 
           const arabicPoemChars = newPoem?.arabic?.length || 0;
 
-          addLog("Discovery DB", `✓ Poem found | API: ${(apiTime / 1000).toFixed(2)}s | DB ID: ${newPoem.id} | Arabic: ${arabicPoemChars} chars`, "success");
-          addLog("Discovery DB", `Poet: ${newPoem.poet} | Title: ${newPoem.title}`, "success");
+          addLog(
+            'Discovery DB',
+            `✓ Poem found | API: ${(apiTime / 1000).toFixed(2)}s | DB ID: ${newPoem.id} | Arabic: ${arabicPoemChars} chars`,
+            'success'
+          );
+          addLog('Discovery DB', `Poet: ${newPoem.poet} | Title: ${newPoem.title}`, 'success');
           track('poem_discovered', { source: 'database', poet: newPoem.poet });
           emitEvent(newPoem.id, 'serve', { source: 'database' });
-          addLog("Event", `→ serve event emitted | poem_id: ${newPoem.id} | source: database`, "info");
+          addLog(
+            'Event',
+            `→ serve event emitted | poem_id: ${newPoem.id} | source: database`,
+            'info'
+          );
 
-          setPoems(prev => {
+          setPoems((prev) => {
             const updated = [...prev, newPoem];
             setCurrentIndex(updated.length - 1); // New poem is always last
             return updated;
@@ -3368,24 +4089,20 @@ export default function DiwanApp() {
             ? 'Backend server is not running. Please start it with: npm run dev:server'
             : dbError.message;
 
-          addLog("Discovery DB Error", errorMessage, "error");
+          addLog('Discovery DB Error', errorMessage, 'error');
           throw dbError; // Re-throw to be caught by outer catch
         }
-
       } else {
         // GEMINI AI MODE: Original implementation
-        if (!apiKey) {
-          throw new Error("AI Discovery requires a Gemini API key. Add VITE_GEMINI_API_KEY to your environment, or switch to Local Database mode.");
-        }
-
-        const prompt = selectedCategory === "All"
-          ? "Find a masterpiece Arabic poem. COMPLETE text."
-          : `Find a famous poem by ${selectedCategory}. COMPLETE text.`;
+        const prompt =
+          selectedCategory === 'All'
+            ? 'Find a masterpiece Arabic poem. COMPLETE text.'
+            : `Find a famous poem by ${selectedCategory}. COMPLETE text.`;
 
         const requestBody = JSON.stringify({
           contents: [{ parts: [{ text: `${prompt} JSON only.` }] }],
           systemInstruction: { parts: [{ text: DISCOVERY_SYSTEM_PROMPT }] },
-          generationConfig: { responseMimeType: "application/json", maxOutputTokens: 8192 }
+          generationConfig: { responseMimeType: 'application/json', maxOutputTokens: 8192 },
         });
 
         const requestSize = new Blob([requestBody]).size;
@@ -3396,33 +4113,41 @@ export default function DiwanApp() {
         const systemPromptChars = DISCOVERY_SYSTEM_PROMPT.length;
 
         addLog(
-          "Discovery API",
+          'Discovery API',
           `→ Searching ${selectedCategory} | Request: ${(requestSize / 1024).toFixed(1)}KB | ${promptChars + systemPromptChars} chars (${promptChars} prompt + ${systemPromptChars} system) | Est. ${estimatedInputTokens} tokens`,
-          "info"
+          'info'
         );
 
-        const res = await geminiTextFetch('generateContent', requestBody, apiKey, 'AI Discovery failed', addLog);
+        const res = await geminiTextFetch(
+          'generateContent',
+          requestBody,
+          'AI Discovery failed',
+          addLog
+        );
 
         const data = await res.json();
         const apiTime = performance.now() - apiStart;
 
         const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        let parsedPoem;
-        try {
-          parsedPoem = repairAndParseJSON(rawText);
-        } catch (e) {
-          throw e;
-        }
+        const parsedPoem = repairAndParseJSON(rawText);
         // Log if repair was needed (original raw text had fences or truncation)
-        const cleanJson = (rawText || "").replace(/```json|```/g, "").trim();
+        const cleanJson = (rawText || '').replace(/```json|```/g, '').trim();
 
         // Normalize tags: convert object to array if needed
-        if (parsedPoem.tags && typeof parsedPoem.tags === 'object' && !Array.isArray(parsedPoem.tags)) {
-          addLog("Discovery Tags", `Converting tags from object to array | Original: ${JSON.stringify(parsedPoem.tags)}`, "info");
+        if (
+          parsedPoem.tags &&
+          typeof parsedPoem.tags === 'object' &&
+          !Array.isArray(parsedPoem.tags)
+        ) {
+          addLog(
+            'Discovery Tags',
+            `Converting tags from object to array | Original: ${JSON.stringify(parsedPoem.tags)}`,
+            'info'
+          );
           parsedPoem.tags = [
-            parsedPoem.tags.Era || parsedPoem.tags.era || "Unknown",
-            parsedPoem.tags.Mood || parsedPoem.tags.mood || "Unknown",
-            parsedPoem.tags.Type || parsedPoem.tags.type || "Unknown"
+            parsedPoem.tags.Era || parsedPoem.tags.era || 'Unknown',
+            parsedPoem.tags.Mood || parsedPoem.tags.mood || 'Unknown',
+            parsedPoem.tags.Type || parsedPoem.tags.type || 'Unknown',
           ];
         }
 
@@ -3438,27 +4163,51 @@ export default function DiwanApp() {
         // Log tags for debugging
         const tagsType = Array.isArray(newPoem?.tags) ? 'array' : typeof newPoem?.tags;
         const tagsContent = Array.isArray(newPoem?.tags)
-          ? `[${newPoem.tags.join(", ")}]`
+          ? `[${newPoem.tags.join(', ')}]`
           : JSON.stringify(newPoem?.tags);
-        addLog("Discovery Tags", `Type: ${tagsType} | Count: ${Array.isArray(newPoem?.tags) ? newPoem.tags.length : 'N/A'} | Content: ${tagsContent}`, "info");
+        addLog(
+          'Discovery Tags',
+          `Type: ${tagsType} | Count: ${Array.isArray(newPoem?.tags) ? newPoem.tags.length : 'N/A'} | Content: ${tagsContent}`,
+          'info'
+        );
 
-        addLog("Discovery API", `✓ Poem found | API: ${(apiTime / 1000).toFixed(2)}s | Response: ${(responseSize / 1024).toFixed(1)}KB | ${jsonChars} chars`, "success");
-        addLog("Discovery Metrics", `${estimatedOutputTokens} tokens | ${tokensPerSecond} tok/s | Arabic: ${arabicPoemChars} chars | English: ${englishPoemChars} chars | Poet: ${newPoem.poet}`, "success");
+        addLog(
+          'Discovery API',
+          `✓ Poem found | API: ${(apiTime / 1000).toFixed(2)}s | Response: ${(responseSize / 1024).toFixed(1)}KB | ${jsonChars} chars`,
+          'success'
+        );
+        addLog(
+          'Discovery Metrics',
+          `${estimatedOutputTokens} tokens | ${tokensPerSecond} tok/s | Arabic: ${arabicPoemChars} chars | English: ${englishPoemChars} chars | Poet: ${newPoem.poet}`,
+          'success'
+        );
         track('poem_discovered', { source: 'ai', poet: newPoem.poet });
         emitEvent(newPoem.id, 'serve', { source: 'ai' });
-        addLog("Event", `→ serve event emitted | poem_id: ${newPoem.id} | source: ai`, "info");
-        setPoems(prev => {
+        addLog('Event', `→ serve event emitted | poem_id: ${newPoem.id} | source: ai`, 'info');
+        setPoems((prev) => {
           const updated = [...prev, newPoem];
           const searchStr = selectedCategory.toLowerCase();
-          const freshFiltered = selectedCategory === "All" ? updated : updated.filter(p => (p?.poet || "").toLowerCase().includes(searchStr) || (Array.isArray(p?.tags) && p.tags.some(t => String(t).toLowerCase() === searchStr)));
-          const newIdx = freshFiltered.findIndex(p => p.id === newPoem.id);
+          const freshFiltered =
+            selectedCategory === 'All'
+              ? updated
+              : updated.filter(
+                  (p) =>
+                    (p?.poet || '').toLowerCase().includes(searchStr) ||
+                    (Array.isArray(p?.tags) &&
+                      p.tags.some((t) => String(t).toLowerCase() === searchStr))
+                );
+          const newIdx = freshFiltered.findIndex((p) => p.id === newPoem.id);
           if (newIdx !== -1) setCurrentIndex(newIdx);
           return updated;
         });
         window.history.replaceState({}, '', '/');
       }
     } catch (e) {
-      addLog("Discovery Error", `${e.message} | Source: ${useDatabase ? 'Database' : 'Gemini'}`, "error");
+      addLog(
+        'Discovery Error',
+        `${e.message} | Source: ${useDatabase ? 'Database' : 'Gemini'}`,
+        'error'
+      );
     }
     setIsFetching(false);
   };
@@ -3470,19 +4219,27 @@ export default function DiwanApp() {
       if (!res.ok) return;
       const poem = await res.json();
       if (poem.arabic) poem.arabic = poem.arabic.replace(/\*/g, '\n');
-      if (poem.cachedTranslation) poem.cachedTranslation = poem.cachedTranslation.replace(/\*/g, '\n');
+      if (poem.cachedTranslation)
+        poem.cachedTranslation = poem.cachedTranslation.replace(/\*/g, '\n');
       poem.isFromDatabase = true;
-      localStorage.setItem('qafiyah_nextPoem', JSON.stringify({
-        poem,
-        storedAt: Date.now()
-      }));
+      localStorage.setItem(
+        'qafiyah_nextPoem',
+        JSON.stringify({
+          poem,
+          storedAt: Date.now(),
+        })
+      );
     } catch {} // silent fail — prefetch is best-effort
   }
 
   const handleCopy = async () => {
-    addLog("UI Event", `📋 Copy button clicked | Poem: ${current?.poet} - ${current?.title}`, "info");
+    addLog(
+      'UI Event',
+      `📋 Copy button clicked | Poem: ${current?.poet} - ${current?.title}`,
+      'info'
+    );
 
-    const textToCopy = `${current?.titleArabic || ""}\n${current?.poetArabic || ""}\n\n${current?.arabic || ""}\n\n---\n\n${current?.title || ""}\n${current?.poet || ""}\n\n${current?.english || ""}`;
+    const textToCopy = `${current?.titleArabic || ''}\n${current?.poetArabic || ''}\n\n${current?.arabic || ''}\n\n---\n\n${current?.title || ''}\n${current?.poet || ''}\n\n${current?.english || ''}`;
     const copyChars = textToCopy.length;
     const arabicChars = current?.arabic?.length || 0;
     const englishChars = current?.english?.length || 0;
@@ -3492,23 +4249,27 @@ export default function DiwanApp() {
       track('poem_copied', { poet: current?.poet });
       if (current?.id) {
         emitEvent(current.id, 'copy');
-        addLog("Event", `→ copy event emitted | poem_id: ${current.id}`, "info");
+        addLog('Event', `→ copy event emitted | poem_id: ${current.id}`, 'info');
       }
       setShowCopySuccess(true);
-      addLog("Copy", `✓ Copied to clipboard | ${copyChars} chars total (${arabicChars} Arabic + ${englishChars} English)`, "success");
+      addLog(
+        'Copy',
+        `✓ Copied to clipboard | ${copyChars} chars total (${arabicChars} Arabic + ${englishChars} English)`,
+        'success'
+      );
       setTimeout(() => setShowCopySuccess(false), 2000);
     } catch (e) {
-      addLog("Copy Error", e.message, "error");
+      addLog('Copy Error', e.message, 'error');
     }
   };
 
   const handleDailyPoem = () => {
     if (!dailyPoem) return;
     track('daily_poem_requested');
-    addLog("UI Event", "Daily poem button clicked", "info");
+    addLog('UI Event', 'Daily poem button clicked', 'info');
     setInterpretation(null);
-    setPoems(prev => {
-      const exists = prev.find(p => p.id === dailyPoem.id);
+    setPoems((prev) => {
+      const exists = prev.find((p) => p.id === dailyPoem.id);
       if (exists) {
         setCurrentIndex(prev.indexOf(exists));
         return prev;
@@ -3526,14 +4287,12 @@ export default function DiwanApp() {
   };
 
   const handleShare = async () => {
-    addLog("UI Event", "Share button clicked", "info");
+    addLog('UI Event', 'Share button clicked', 'info');
     track('poem_shared', { poet: current?.poet });
 
     const poemId = current?.id;
     const isDbPoem = current?.isFromDatabase && typeof poemId === 'number';
-    const shareUrl = isDbPoem
-      ? `${window.location.origin}/poem/${poemId}`
-      : window.location.origin;
+    const shareUrl = isDbPoem ? `${window.location.origin}/poem/${poemId}` : window.location.origin;
     const shareTitle = `${current?.titleArabic || current?.title || 'Arabic Poetry'} — ${current?.poetArabic || current?.poet || ''}`;
     const shareText = current?.arabic
       ? current.arabic.split('\n').slice(0, 2).join('\n')
@@ -3546,14 +4305,18 @@ export default function DiwanApp() {
         track('share_method', { method: 'native' });
         if (current?.id) {
           emitEvent(current.id, 'share', { method: 'native' });
-          addLog("Event", `→ share event emitted | poem_id: ${current.id} | method: native`, "info");
+          addLog(
+            'Event',
+            `→ share event emitted | poem_id: ${current.id} | method: native`,
+            'info'
+          );
         }
-        addLog("Share", "Shared via Web Share API", "success");
+        addLog('Share', 'Shared via Web Share API', 'success');
         return;
       } catch (e) {
         // User cancelled or API failed — fall through to copy
         if (e.name === 'AbortError') {
-          addLog("Share", "Share cancelled by user", "info");
+          addLog('Share', 'Share cancelled by user', 'info');
           return;
         }
       }
@@ -3565,13 +4328,17 @@ export default function DiwanApp() {
       track('share_method', { method: 'clipboard' });
       if (current?.id) {
         emitEvent(current.id, 'share', { method: 'clipboard' });
-        addLog("Event", `→ share event emitted | poem_id: ${current.id} | method: clipboard`, "info");
+        addLog(
+          'Event',
+          `→ share event emitted | poem_id: ${current.id} | method: clipboard`,
+          'info'
+        );
       }
       setShowShareSuccess(true);
-      addLog("Share", `Link copied: ${shareUrl}`, "success");
+      addLog('Share', `Link copied: ${shareUrl}`, 'success');
       setTimeout(() => setShowShareSuccess(false), 2000);
     } catch (e) {
-      addLog("Share Error", e.message, "error");
+      addLog('Share Error', e.message, 'error');
     }
   };
 
@@ -3584,45 +4351,49 @@ export default function DiwanApp() {
   const handleSignInWithGoogle = async () => {
     // Stash current poem so it survives the OAuth page redirect
     if (current) {
-      try { sessionStorage.setItem('pendingSavePoem', JSON.stringify(current)); } catch {}
+      try {
+        sessionStorage.setItem('pendingSavePoem', JSON.stringify(current));
+      } catch {}
     }
     const { error } = await signInWithGoogle();
     if (error) {
-      addLog("Auth Error", error.message, "error");
+      addLog('Auth Error', error.message, 'error');
       track('sign_in_error', { provider: 'google', error: (error.message || '').slice(0, 100) });
     } else {
       setShowAuthModal(false);
       track('sign_in_completed', { provider: 'google' });
-      addLog("Auth", "Signed in with Google", "success");
+      addLog('Auth', 'Signed in with Google', 'success');
     }
   };
 
   const handleSignInWithApple = async () => {
     // Stash current poem so it survives the OAuth page redirect
     if (current) {
-      try { sessionStorage.setItem('pendingSavePoem', JSON.stringify(current)); } catch {}
+      try {
+        sessionStorage.setItem('pendingSavePoem', JSON.stringify(current));
+      } catch {}
     }
     const { error } = await signInWithApple();
     if (error) {
-      addLog("Auth Error", error.message, "error");
+      addLog('Auth Error', error.message, 'error');
       track('sign_in_error', { provider: 'apple', error: (error.message || '').slice(0, 100) });
     } else {
       setShowAuthModal(false);
       track('sign_in_completed', { provider: 'apple' });
-      addLog("Auth", "Signed in with Apple", "success");
+      addLog('Auth', 'Signed in with Apple', 'success');
     }
   };
 
   const handleSignOut = async () => {
     const { error } = await signOut();
     if (error) {
-      addLog("Auth Error", error.message, "error");
+      addLog('Auth Error', error.message, 'error');
     } else {
       setShowSavedPoems(false);
       setShowSettings(false);
       setShowAuthModal(false);
       track('sign_out');
-      addLog("Auth", "Signed out successfully", "success");
+      addLog('Auth', 'Signed out successfully', 'success');
     }
   };
 
@@ -3635,13 +4406,13 @@ export default function DiwanApp() {
 
     const { error } = await savePoem(current);
     if (error) {
-      addLog("Save Error", error.message, "error");
+      addLog('Save Error', error.message, 'error');
     } else {
-      addLog("Save", `Saved poem: ${current?.poet} - ${current?.title}`, "success");
+      addLog('Save', `Saved poem: ${current?.poet} - ${current?.title}`, 'success');
       track('poem_saved', { poet: current?.poet });
       if (current?.id) {
         emitEvent(current.id, 'save');
-        addLog("Event", `→ save event emitted (dual-write) | poem_id: ${current.id}`, "info");
+        addLog('Event', `→ save event emitted (dual-write) | poem_id: ${current.id}`, 'info');
       }
     }
   };
@@ -3649,28 +4420,36 @@ export default function DiwanApp() {
   const handleUnsavePoem = async () => {
     const { error } = await unsavePoem(current?.id, current?.arabic);
     if (error) {
-      addLog("Unsave Error", error.message, "error");
+      addLog('Unsave Error', error.message, 'error');
     } else {
       track('poem_unsaved', { poet: current?.poet });
-      addLog("Unsave", `Removed poem: ${current?.poet} - ${current?.title}`, "success");
+      addLog('Unsave', `Removed poem: ${current?.poet} - ${current?.title}`, 'success');
     }
   };
 
   const handleDownvote = async () => {
-    addLog("UI Event", `👎 Flag button clicked | Poem: ${current?.poet} - ${current?.title} | ID: ${current?.id}`, "info");
+    addLog(
+      'UI Event',
+      `👎 Flag button clicked | Poem: ${current?.poet} - ${current?.title} | ID: ${current?.id}`,
+      'info'
+    );
 
     if (!user) {
-      addLog("Downvote", "Not authenticated — opening sign-in", "info");
+      addLog('Downvote', 'Not authenticated — opening sign-in', 'info');
       handleSignIn();
       return;
     }
 
-    addLog("Downvote", `→ Sending downvote to Supabase | poem_id: ${current?.id}`, "info");
+    addLog('Downvote', `→ Sending downvote to Supabase | poem_id: ${current?.id}`, 'info');
     const { error } = await downvotePoem(current);
     if (error) {
-      addLog("Downvote Error", `✗ Failed: ${error.message}`, "error");
+      addLog('Downvote Error', `✗ Failed: ${error.message}`, 'error');
     } else {
-      addLog("Downvote", `✓ Flagged poem: ${current?.poet} - ${current?.title} | Auto-advancing in 600ms`, "success");
+      addLog(
+        'Downvote',
+        `✓ Flagged poem: ${current?.poet} - ${current?.title} | Auto-advancing in 600ms`,
+        'success'
+      );
       track('poem_downvoted', { poet: current?.poet });
       // Auto-advance after 600ms
       setTimeout(() => handleFetch(), 600);
@@ -3678,15 +4457,19 @@ export default function DiwanApp() {
   };
 
   const handleUndownvote = async () => {
-    addLog("UI Event", `👍 Unflag button clicked | Poem: ${current?.poet} - ${current?.title} | ID: ${current?.id}`, "info");
-    addLog("Undownvote", `→ Removing downvote from Supabase | poem_id: ${current?.id}`, "info");
+    addLog(
+      'UI Event',
+      `👍 Unflag button clicked | Poem: ${current?.poet} - ${current?.title} | ID: ${current?.id}`,
+      'info'
+    );
+    addLog('Undownvote', `→ Removing downvote from Supabase | poem_id: ${current?.id}`, 'info');
 
     const { error } = await undownvotePoem(current?.id);
     if (error) {
-      addLog("Undownvote Error", `✗ Failed: ${error.message}`, "error");
+      addLog('Undownvote Error', `✗ Failed: ${error.message}`, 'error');
     } else {
       track('poem_undownvoted', { poet: current?.poet });
-      addLog("Undownvote", `✓ Unflagged poem: ${current?.poet} - ${current?.title}`, "success");
+      addLog('Undownvote', `✓ Unflagged poem: ${current?.poet} - ${current?.title}`, 'success');
     }
   };
 
@@ -3711,8 +4494,8 @@ export default function DiwanApp() {
       english: savedPoem.english || '',
       tags: savedPoem.category ? [savedPoem.category] : [],
     };
-    setPoems(prev => {
-      const exists = prev.find(p => p.arabic === mappedPoem.arabic);
+    setPoems((prev) => {
+      const exists = prev.find((p) => p.arabic === mappedPoem.arabic);
       if (exists) {
         setCurrentIndex(prev.indexOf(exists));
         return prev;
@@ -3741,14 +4524,14 @@ export default function DiwanApp() {
   const handleSelectFont = (fontId) => {
     track('font_changed', { font: fontId });
     setCurrentFont(fontId);
-    addLog("Font", `Font selected: ${fontId}`, "info");
+    addLog('Font', `Font selected: ${fontId}`, 'info');
   };
 
   const handleToggleDarkMode = () => {
     const newTheme = darkMode ? 'light' : 'dark';
     track('theme_changed', { theme: newTheme });
     setDarkMode(!darkMode);
-    addLog("Theme", `Switched to ${newTheme} mode`, "info");
+    addLog('Theme', `Switched to ${newTheme} mode`, 'info');
   };
   const handleToggleTheme = handleToggleDarkMode;
 
@@ -3761,34 +4544,38 @@ export default function DiwanApp() {
   const handleUnsavePoemFromList = async (sp) => {
     const { error } = await unsavePoem(sp.poem_id || sp.id, sp.poem_text);
     if (error) {
-      addLog("Unsave Error", error.message, "error");
+      addLog('Unsave Error', error.message, 'error');
     } else {
-      addLog("Unsave", `Removed poem from saved list`, "success");
+      addLog('Unsave', `Removed poem from saved list`, 'success');
     }
   };
 
   const handleToggleTranslation = (showTranslation) => {
-    addLog("Translation", `Translation ${showTranslation ? 'shown' : 'hidden'}`, "info");
+    addLog('Translation', `Translation ${showTranslation ? 'shown' : 'hidden'}`, 'info');
   };
 
   const handleToggleTransliteration = (showTransliteration) => {
-    addLog("Transliteration", `Transliteration ${showTransliteration ? 'shown' : 'hidden'}`, "info");
+    addLog(
+      'Transliteration',
+      `Transliteration ${showTransliteration ? 'shown' : 'hidden'}`,
+      'info'
+    );
   };
 
   const handleTextSizeChange = (level) => {
-    addLog("TextSize", `Text size changed to level ${level}`, "info");
+    addLog('TextSize', `Text size changed to level ${level}`, 'info');
   };
 
   const handleKeyboardShortcut = (key, action) => {
-    addLog("Keyboard", `Shortcut: ${key} → ${action}`, "info");
+    addLog('Keyboard', `Shortcut: ${key} → ${action}`, 'info');
   };
 
   const handleSplashDismissed = () => {
-    addLog("Splash", "Splash screen dismissed", "info");
+    addLog('Splash', 'Splash screen dismissed', 'info');
   };
 
   const handleSplashShown = () => {
-    addLog("Splash", "Splash screen shown", "info");
+    addLog('Splash', 'Splash screen shown', 'info');
   };
   // ── End logging hooks ─────────────────────────────────────────────
 
@@ -3805,15 +4592,19 @@ export default function DiwanApp() {
     setAudioError(null);
 
     // Clear all polling intervals to prevent stale requests
-    pollingIntervals.current.forEach(interval => clearInterval(interval));
+    pollingIntervals.current.forEach((interval) => clearInterval(interval));
     pollingIntervals.current = [];
 
     // Log current poem tags for debugging
     const tagsType = Array.isArray(current?.tags) ? 'array' : typeof current?.tags;
     const tagsContent = Array.isArray(current?.tags)
-      ? `[${current.tags.join(", ")}]`
+      ? `[${current.tags.join(', ')}]`
       : JSON.stringify(current?.tags);
-    addLog("Navigation", `Switched to poem: ${current?.poet} - ${current?.title} | ID: ${current?.id} | Tags: ${tagsType} - ${tagsContent}`, "info");
+    addLog(
+      'Navigation',
+      `Switched to poem: ${current?.poet} - ${current?.title} | ID: ${current?.id} | Tags: ${tagsType} - ${tagsContent}`,
+      'info'
+    );
   }, [current?.id]);
 
   // Prefetch triggers - run background prefetching when poem changes
@@ -3843,20 +4634,23 @@ export default function DiwanApp() {
   useEffect(() => {
     if (!useDatabase || !apiUrl) return; // Only ping if database mode is enabled
 
-    const keepAlivePing = setInterval(() => {
-      fetch(`${apiUrl}/api/health`)
-        .then(() => {
-          if (FEATURES.debug) {
-            addLog("Keep-Alive", "Backend pinged successfully", "info");
-          }
-        })
-        .catch((err) => {
-          // Silently fail - don't disrupt user experience
-          if (FEATURES.debug) {
-            addLog("Keep-Alive", `Ping failed: ${err.message}`, "error");
-          }
-        });
-    }, 10 * 60 * 1000); // 10 minutes
+    const keepAlivePing = setInterval(
+      () => {
+        fetch(`${apiUrl}/api/health`)
+          .then(() => {
+            if (FEATURES.debug) {
+              addLog('Keep-Alive', 'Backend pinged successfully', 'info');
+            }
+          })
+          .catch((err) => {
+            // Silently fail - don't disrupt user experience
+            if (FEATURES.debug) {
+              addLog('Keep-Alive', `Ping failed: ${err.message}`, 'error');
+            }
+          });
+      },
+      10 * 60 * 1000
+    ); // 10 minutes
 
     // Initial ping on mount
     fetch(`${apiUrl}/api/health`).catch(() => {});
@@ -3876,7 +4670,9 @@ export default function DiwanApp() {
   }
 
   return (
-    <div className={`h-[100dvh] w-full flex flex-col overflow-hidden ${DESIGN.anim} font-sans ${theme.bg} ${theme.text} selection:bg-indigo-500`}>
+    <div
+      className={`h-[100dvh] w-full flex flex-col overflow-hidden ${DESIGN.anim} font-sans ${theme.bg} ${theme.text} selection:bg-indigo-500`}
+    >
       <style>{`
         .arabic-shadow { text-shadow: 0 4px 12px rgba(0,0,0,0.1); }
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
@@ -3959,33 +4755,51 @@ export default function DiwanApp() {
         onClear={() => setLogs([])}
         darkMode={darkMode}
         poem={current}
-        appState={{ mode: useDatabase ? 'database' : 'ai', theme: darkMode ? 'dark' : 'light', font: currentFont }}
+        appState={{
+          mode: useDatabase ? 'database' : 'ai',
+          theme: darkMode ? 'dark' : 'light',
+          font: currentFont,
+        }}
       />
 
-      {!apiKey && FEATURES.database && !apiKeyBannerDismissed && (
-        <div className={`fixed top-0 left-0 right-0 z-50 px-4 py-2 text-center text-sm ${darkMode ? 'bg-amber-900/90 text-amber-200' : 'bg-amber-100 text-amber-800'} backdrop-blur-sm`}>
-          Running in Database-only mode — add a Gemini API key for AI features
-          <button onClick={() => setApiKeyBannerDismissed(true)} className="ml-3 opacity-60 hover:opacity-100" aria-label="Dismiss">✕</button>
-        </div>
-      )}
-
-      <header style={{ opacity: headerOpacity }} className="fixed top-4 md:top-8 left-0 right-0 z-40 pointer-events-none transition-opacity duration-300 flex flex-row items-center justify-center gap-4 md:gap-8 px-4 md:px-6">
-        <div className={`flex flex-row-reverse items-center gap-2 md:gap-4 ${theme.brand} tracking-wide header-luminescence`}>
+      <header
+        style={{ opacity: headerOpacity }}
+        className="fixed top-4 md:top-8 left-0 right-0 z-40 pointer-events-none transition-opacity duration-300 flex flex-row items-center justify-center gap-4 md:gap-8 px-4 md:px-6"
+      >
+        <div
+          className={`flex flex-row-reverse items-center gap-2 md:gap-4 ${theme.brand} tracking-wide header-luminescence`}
+        >
           <Feather className="w-8 h-8 md:w-[42px] md:h-[42px] opacity-95" strokeWidth={1.5} />
           <h1 className="app-branding-rtl flex items-end gap-3 md:gap-6">
-            <span className="font-brand-ar text-[clamp(1.875rem,4vw,3rem)] font-bold mb-[clamp(0.25rem,0.5vw,0.5rem)] opacity-80">بالعربي</span>
-            <span className="font-brand-en text-[clamp(3rem,6vw,4.5rem)] lowercase tracking-tighter">poetry</span>
-            <span className="font-brand-en text-[clamp(10px,1.2vw,12px)] px-[clamp(0.375rem,0.8vw,0.5rem)] py-0.5 rounded border border-indigo-500/30 bg-indigo-500/10 uppercase tracking-wider mb-[clamp(0.5rem,1vw,1rem)] ml-[clamp(0.5rem,1vw,0.75rem)] opacity-60">beta</span>
+            <span className="font-brand-ar text-[clamp(1.875rem,4vw,3rem)] font-bold mb-[clamp(0.25rem,0.5vw,0.5rem)] opacity-80">
+              بالعربي
+            </span>
+            <span className="font-brand-en text-[clamp(3rem,6vw,4.5rem)] lowercase tracking-tighter">
+              poetry
+            </span>
+            <span className="font-brand-en text-[clamp(10px,1.2vw,12px)] px-[clamp(0.375rem,0.8vw,0.5rem)] py-0.5 rounded border border-indigo-500/30 bg-indigo-500/10 uppercase tracking-wider mb-[clamp(0.5rem,1vw,1rem)] ml-[clamp(0.5rem,1vw,0.75rem)] opacity-60">
+              beta
+            </span>
           </h1>
         </div>
       </header>
 
       <div className="flex flex-row w-full relative flex-1 min-h-0">
         <div className="flex-1 flex flex-col relative h-full overflow-hidden">
-          <div className={`absolute inset-0 pointer-events-none opacity-[0.04] ${darkMode ? 'invert' : ''}`} style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M40 0l40 40-40 40L0 40z' fill='none' stroke='%234f46e5' stroke-width='1.5'/%3E%3Ccircle cx='40' cy='40' r='18' fill='none' stroke='%234f46e5' stroke-width='1.5'/%3E%3C/svg%3E")`, backgroundSize: '60px 60px' }} />
+          <div
+            className={`absolute inset-0 pointer-events-none opacity-[0.04] ${darkMode ? 'invert' : ''}`}
+            style={{
+              backgroundImage: `url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M40 0l40 40-40 40L0 40z' fill='none' stroke='%234f46e5' stroke-width='1.5'/%3E%3Ccircle cx='40' cy='40' r='18' fill='none' stroke='%234f46e5' stroke-width='1.5'/%3E%3C/svg%3E")`,
+              backgroundSize: '60px 60px',
+            }}
+          />
           <MysticalConsultationEffect active={isInterpreting} theme={theme} />
 
-          <main ref={mainScrollRef} onScroll={handleScroll} className={`flex-1 overflow-y-auto custom-scrollbar relative z-10 px-4 md:px-0 pb-28${isOverflow ? ' pr-16' : ''}`}>
+          <main
+            ref={mainScrollRef}
+            onScroll={handleScroll}
+            className={`flex-1 overflow-y-auto custom-scrollbar relative z-10 px-4 md:px-0 pb-28${isOverflow ? ' pr-16' : ''}`}
+          >
             <div className="min-h-full flex flex-col items-center justify-center py-6">
               <div className="w-full max-w-4xl flex flex-col items-center">
                 
@@ -4022,15 +4836,34 @@ export default function DiwanApp() {
                            </div>
                          )}
                       </div>
-                   </div>
+                      <div
+                        className={`flex items-center justify-center gap-1 sm:gap-2 opacity-45 ${DESIGN.mainSubtitleSize} font-brand-en tracking-[0.08em] uppercase mt-[clamp(0.25rem,0.8vw,0.75rem)]`}
+                      >
+                        <span className="font-semibold">{current?.poet}</span>{' '}
+                        <span className="opacity-20">•</span> <span>{current?.title}</span>
+                      </div>
+                      {dailyPoem && current?.id === dailyPoem.id && (
+                        <div className="flex items-center gap-1.5 mt-2 px-3 py-1 rounded-full bg-[#C5A059]/10 border border-[#C5A059]/20">
+                          <CalendarDays size={12} className="text-[#C5A059]" />
+                          <span className="font-brand-en text-[9px] font-bold tracking-[0.15em] uppercase text-[#C5A059]">
+                            Poem of the Day
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
 
-                   <div className="flex justify-center gap-3 mt-1">
-                     {Array.isArray(current?.tags) && current.tags.slice(0, 3).map(tag => (
-                       <span key={tag} className={`px-2.5 py-0.5 border ${theme.brandBorder} ${theme.brand} ${DESIGN.mainTagSize} font-brand-en tracking-[0.15em] uppercase opacity-70`}>
-                         {tag}
-                       </span>
-                     ))}
-                   </div>
+                  <div className="flex justify-center gap-3 mt-1">
+                    {Array.isArray(current?.tags) &&
+                      current.tags.slice(0, 3).map((tag) => (
+                        <span
+                          key={tag}
+                          className={`px-2.5 py-0.5 border ${theme.brandBorder} ${theme.brand} ${DESIGN.mainTagSize} font-brand-en tracking-[0.15em] uppercase opacity-70`}
+                        >
+                          {tag}
+                        </span>
+                      ))}
+                  </div>
                 </div>
 
                 <div className={`relative w-full group pt-8 pb-2 ${DESIGN.mainMarginBottom}`}>
@@ -4038,9 +4871,35 @@ export default function DiwanApp() {
                     <div className="flex flex-col gap-5 md:gap-7">
                       {versePairs.map((pair, idx) => (
                         <div key={`${current?.id}-${idx}`} className="flex flex-col gap-0.5">
-                          <p dir="rtl" className={`${currentFontClass} leading-[2.2] arabic-shadow ${DESIGN.anim}`} style={{ fontSize: `calc(clamp(1.25rem, 2vw, 1.5rem) * ${textScale})` }}>{pair.ar}</p>
-                          {showTransliteration && pair.ar && <p dir="ltr" className={`font-brand-en italic opacity-30 ${DESIGN.anim}`} style={{ fontSize: `calc(clamp(0.75rem, 1.2vw, 0.875rem) * ${textScale})` }}>{transliterate(pair.ar)}</p>}
-                          {showTranslation && pair.en && <p dir="ltr" className={`font-brand-en italic opacity-40 ${DESIGN.anim}`} style={{ fontSize: `calc(clamp(1rem, 1.5vw, 1.125rem) * ${textScale})` }}>{pair.en}</p>}
+                          <p
+                            dir="rtl"
+                            className={`${currentFontClass} leading-[2.2] arabic-shadow ${DESIGN.anim}`}
+                            style={{ fontSize: `calc(clamp(1.25rem, 2vw, 1.5rem) * ${textScale})` }}
+                          >
+                            {pair.ar}
+                          </p>
+                          {showTransliteration && pair.ar && (
+                            <p
+                              dir="ltr"
+                              className={`font-brand-en italic opacity-30 ${DESIGN.anim}`}
+                              style={{
+                                fontSize: `calc(clamp(0.75rem, 1.2vw, 0.875rem) * ${textScale})`,
+                              }}
+                            >
+                              {transliterate(pair.ar)}
+                            </p>
+                          )}
+                          {showTranslation && pair.en && (
+                            <p
+                              dir="ltr"
+                              className={`font-brand-en italic opacity-40 ${DESIGN.anim}`}
+                              style={{
+                                fontSize: `calc(clamp(1rem, 1.5vw, 1.125rem) * ${textScale})`,
+                              }}
+                            >
+                              {pair.en}
+                            </p>
+                          )}
                         </div>
                       ))}
                     </div>
@@ -4048,30 +4907,45 @@ export default function DiwanApp() {
                 </div>
 
                 <div className="w-full max-w-2xl px-6 md:px-0 mb-4 md:hidden">
-                   {isInterpreting ? (
-                     <div className="flex flex-col items-center py-8 gap-4">
-                       <div className="relative">
-                         <Loader2 className="animate-spin text-indigo-500" size={32} />
-                         <Sparkles className="absolute inset-0 m-auto animate-pulse text-indigo-400" size={16} />
-                       </div>
-                       <p className="text-xs italic font-brand-en opacity-60 tracking-widest uppercase">Consulting the Diwan...</p>
-                     </div>
-                   ) : interpretation ? (
-                     <div className={`flex flex-col gap-10 animate-in slide-in-from-bottom-10 duration-1000`}>
-                        <div className="pt-6 border-t border-indigo-500/10">
-                          <h4 className="text-[10px] font-brand-en font-black text-indigo-600 mb-3 uppercase tracking-[0.3em] opacity-80">The Depth</h4>
-                          <div className="pl-4 border-l border-indigo-500/10">
-                            <p className="text-[clamp(0.9375rem,1.6vw,1rem)] font-brand-en font-normal leading-relaxed italic opacity-90">{insightParts?.depth}</p>
-                          </div>
+                  {isInterpreting ? (
+                    <div className="flex flex-col items-center py-8 gap-4">
+                      <div className="relative">
+                        <Loader2 className="animate-spin text-indigo-500" size={32} />
+                        <Sparkles
+                          className="absolute inset-0 m-auto animate-pulse text-indigo-400"
+                          size={16}
+                        />
+                      </div>
+                      <p className="text-xs italic font-brand-en opacity-60 tracking-widest uppercase">
+                        Consulting the Diwan...
+                      </p>
+                    </div>
+                  ) : interpretation ? (
+                    <div
+                      className={`flex flex-col gap-10 animate-in slide-in-from-bottom-10 duration-1000`}
+                    >
+                      <div className="pt-6 border-t border-indigo-500/10">
+                        <h4 className="text-[10px] font-brand-en font-black text-indigo-600 mb-3 uppercase tracking-[0.3em] opacity-80">
+                          The Depth
+                        </h4>
+                        <div className="pl-4 border-l border-indigo-500/10">
+                          <p className="text-[clamp(0.9375rem,1.6vw,1rem)] font-brand-en font-normal leading-relaxed italic opacity-90">
+                            {insightParts?.depth}
+                          </p>
                         </div>
-                        <div className="pt-6 border-t border-indigo-500/10">
-                          <h4 className="text-[10px] font-brand-en font-black text-indigo-600 mb-3 uppercase tracking-[0.3em] opacity-80">The Author</h4>
-                          <div className="pl-4 border-l border-indigo-500/10">
-                            <p className="text-[clamp(0.9375rem,1.6vw,1rem)] font-brand-en font-normal leading-relaxed italic opacity-90">{insightParts?.author}</p>
-                          </div>
+                      </div>
+                      <div className="pt-6 border-t border-indigo-500/10">
+                        <h4 className="text-[10px] font-brand-en font-black text-indigo-600 mb-3 uppercase tracking-[0.3em] opacity-80">
+                          The Author
+                        </h4>
+                        <div className="pl-4 border-l border-indigo-500/10">
+                          <p className="text-[clamp(0.9375rem,1.6vw,1rem)] font-brand-en font-normal leading-relaxed italic opacity-90">
+                            {insightParts?.author}
+                          </p>
                         </div>
-                     </div>
-                   ) : null}
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
               </div>
             </div>
@@ -4084,13 +4958,17 @@ export default function DiwanApp() {
                 <button onClick={() => setAudioError(null)} className="ml-2 opacity-60 hover:opacity-100" aria-label="Dismiss"><X size={12} className="inline" /></button>
               </div>
             )}
-            <div ref={controlBarRef} className={`flex items-center gap-2 px-5 py-2 rounded-full shadow-2xl border ${DESIGN.glass} ${theme.border} ${theme.shadow} ${DESIGN.anim} max-w-[calc(100vw-2rem)] w-fit`}>
-
+            <div
+              ref={controlBarRef}
+              className={`flex items-center gap-2 px-5 py-2 rounded-full shadow-2xl border ${DESIGN.glass} ${theme.border} ${theme.shadow} ${DESIGN.anim} max-w-[calc(100vw-2rem)] w-fit`}
+            >
               <div className="flex flex-col items-center gap-1 min-w-[52px]">
                 <button onClick={togglePlay} disabled={isGeneratingAudio} aria-label={isPlaying ? "Pause recitation" : "Play recitation"} className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}>
                   {isGeneratingAudio ? <Loader2 className={`animate-spin ${GOLD.goldText}`} size={21} /> : audioError ? <Volume2 className={theme.error} size={21} /> : isPlaying ? <Pause fill={GOLD.gold} size={21} /> : <Volume2 className={GOLD.goldText} size={21} />}
                 </button>
-                <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">Listen</span>
+                <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">
+                  Listen
+                </span>
               </div>
 
               {!isOverflow && (
@@ -4098,7 +4976,9 @@ export default function DiwanApp() {
                   <button onClick={handleAnalyze} disabled={isInterpreting || interpretation} aria-label="Explain poem meaning" className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105 disabled:opacity-50`}>
                     {isInterpreting ? <Loader2 className={`animate-spin ${GOLD.goldText}`} size={21} /> : <Compass className={GOLD.goldText} size={21} />}
                   </button>
-                  <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">Explain</span>
+                  <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">
+                    Explain
+                  </span>
                 </div>
               )}
 
@@ -4106,7 +4986,9 @@ export default function DiwanApp() {
                 <button onClick={handleFetch} disabled={isFetching} aria-label="Discover new poem" className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}>
                   {isFetching ? <Loader2 className={`animate-spin ${GOLD.goldText}`} size={21} /> : <Rabbit className={`${GOLD.goldText} rabbit-bounce`} size={21} />}
                 </button>
-                <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">Discover</span>
+                <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">
+                  Discover
+                </span>
               </div>
 
               <SavePoemButton
@@ -4193,8 +5075,8 @@ export default function DiwanApp() {
 
                   <DatabaseToggle
                     useDatabase={useDatabase}
-                    onToggle={apiKey ? handleToggleDatabase : () => {}}
-                    disabled={!apiKey}
+                    onToggle={handleToggleDatabase}
+                    disabled={false}
                   />
 
                   <ThemeDropdown
@@ -4205,7 +5087,11 @@ export default function DiwanApp() {
                     fonts={FONTS}
                   />
 
-                  <CategoryPill selected={selectedCategory} onSelect={setSelectedCategory} darkMode={darkMode} />
+                  <CategoryPill
+                    selected={selectedCategory}
+                    onSelect={setSelectedCategory}
+                    darkMode={darkMode}
+                  />
 
                   <AuthButton
                     user={user}
@@ -4223,39 +5109,64 @@ export default function DiwanApp() {
         </div>
 
         <div className="hidden md:block h-full border-l">
-          <div className={`${DESIGN.paneWidth} h-full flex flex-col z-30 ${DESIGN.anim} ${theme.glass} ${theme.border}`}>
+          <div
+            className={`${DESIGN.paneWidth} h-full flex flex-col z-30 ${DESIGN.anim} ${theme.glass} ${theme.border}`}
+          >
             <div className="p-6 pb-4 border-b border-stone-500/10">
-              <h3 className="font-brand-en italic font-semibold text-[clamp(1rem,1.8vw,1.125rem)] text-indigo-600 tracking-tight">Poetic Insight</h3>
-              <p className="text-[10px] opacity-30 uppercase font-brand-en truncate">{current?.poet} • {current?.title}</p>
+              <h3 className="font-brand-en italic font-semibold text-[clamp(1rem,1.8vw,1.125rem)] text-indigo-600 tracking-tight">
+                Poetic Insight
+              </h3>
+              <p className="text-[10px] opacity-30 uppercase font-brand-en truncate">
+                {current?.poet} • {current?.title}
+              </p>
             </div>
             <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
               {isInterpreting ? (
-                <div className="h-full flex flex-col items-center justify-center gap-4 opacity-30 animate-pulse"><Sparkles className="animate-spin text-indigo-500" size={32} /><p className="font-brand-en italic text-[clamp(0.875rem,1.5vw,1rem)]">Consulting Diwan...</p></div>
+                <div className="h-full flex flex-col items-center justify-center gap-4 opacity-30 animate-pulse">
+                  <Sparkles className="animate-spin text-indigo-500" size={32} />
+                  <p className="font-brand-en italic text-[clamp(0.875rem,1.5vw,1rem)]">
+                    Consulting Diwan...
+                  </p>
+                </div>
               ) : (
                 <div className={DESIGN.paneSpacing}>
                   {!interpretation && (
-                    <button 
-                      onClick={handleAnalyze} 
+                    <button
+                      onClick={handleAnalyze}
                       className={`group relative w-full py-4 border ${theme.brandBorder} ${theme.brand} rounded-full font-brand-en tracking-widest text-[10px] uppercase hover:bg-indigo-500/5 transition-all flex items-center justify-center gap-3 overflow-hidden bg-indigo-500/5`}
                     >
-                       <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-indigo-500/10 to-transparent animate-[spin_8s_linear_infinite]" />
-                       <Sparkles size={12} /> Seek Insight
+                      <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-indigo-500/10 to-transparent animate-[spin_8s_linear_infinite]" />
+                      <Sparkles size={12} /> Seek Insight
                     </button>
                   )}
-                  {showTranslation && <p className={`font-brand-en italic whitespace-pre-wrap ${DESIGN.paneVerseSize} ${darkMode ? 'text-stone-100' : 'text-stone-800'}`}>{insightParts?.poeticTranslation || current?.english}</p>}
+                  {showTranslation && (
+                    <p
+                      className={`font-brand-en italic whitespace-pre-wrap ${DESIGN.paneVerseSize} ${darkMode ? 'text-stone-100' : 'text-stone-800'}`}
+                    >
+                      {insightParts?.poeticTranslation || current?.english}
+                    </p>
+                  )}
                   {insightParts?.depth && (
                     <div className="pt-6 border-t border-indigo-500/10">
-                      <h4 className="text-[10px] font-brand-en font-black text-indigo-600 mb-2 uppercase tracking-widest opacity-80">The Depth</h4>
+                      <h4 className="text-[10px] font-brand-en font-black text-indigo-600 mb-2 uppercase tracking-widest opacity-80">
+                        The Depth
+                      </h4>
                       <div className="pl-4 border-l border-indigo-500/10">
-                        <p className="text-[clamp(0.875rem,1.5vw,1rem)] font-brand-en font-normal opacity-80 leading-relaxed">{insightParts.depth}</p>
+                        <p className="text-[clamp(0.875rem,1.5vw,1rem)] font-brand-en font-normal opacity-80 leading-relaxed">
+                          {insightParts.depth}
+                        </p>
                       </div>
                     </div>
                   )}
                   {insightParts?.author && (
                     <div className="pt-6 border-t border-indigo-500/10">
-                      <h4 className="text-[10px] font-brand-en font-black text-indigo-600 mb-2 uppercase tracking-widest opacity-80">The Author</h4>
+                      <h4 className="text-[10px] font-brand-en font-black text-indigo-600 mb-2 uppercase tracking-widest opacity-80">
+                        The Author
+                      </h4>
                       <div className="pl-4 border-l border-indigo-500/10">
-                        <p className="text-[clamp(0.875rem,1.5vw,1rem)] font-brand-en font-normal opacity-80 leading-relaxed">{insightParts.author}</p>
+                        <p className="text-[clamp(0.875rem,1.5vw,1rem)] font-brand-en font-normal opacity-80 leading-relaxed">
+                          {insightParts.author}
+                        </p>
                       </div>
                     </div>
                   )}
@@ -4336,9 +5247,9 @@ export default function DiwanApp() {
           isInterpreting={isInterpreting}
           interpretation={interpretation}
           showTranslation={showTranslation}
-          onToggleTranslation={() => setShowTranslation(prev => !prev)}
+          onToggleTranslation={() => setShowTranslation((prev) => !prev)}
           showTransliteration={showTransliteration}
-          onToggleTransliteration={() => setShowTransliteration(prev => !prev)}
+          onToggleTransliteration={() => setShowTransliteration((prev) => !prev)}
           textSizeLabel={TEXT_SIZES[textSizeLevel].label}
           onCycleTextSize={cycleTextSize}
           dailyPoem={dailyPoem}
@@ -4351,7 +5262,7 @@ export default function DiwanApp() {
           selectedCategory={selectedCategory}
           onSelectCategory={setSelectedCategory}
           useDatabase={useDatabase}
-          onToggleDatabase={apiKey ? handleToggleDatabase : () => {}}
+          onToggleDatabase={handleToggleDatabase}
         />
       )}
 
@@ -4360,7 +5271,9 @@ export default function DiwanApp() {
         isOpen={showSplash}
         onDismiss={() => {
           setShowSplash(false);
-          try { localStorage.setItem('hasSeenOnboarding', 'true'); } catch {}
+          try {
+            localStorage.setItem('hasSeenOnboarding', 'true');
+          } catch {}
         }}
         showOnboarding={showOnboarding}
         theme={theme}

@@ -5080,26 +5080,25 @@ export default function DiwanApp() {
         <div
           className="flex flex-row items-baseline gap-3 header-luminescence"
         >
-          <h1 className="flex items-baseline gap-3">
-            <span
-              className="font-brand-en leading-none tracking-[-0.05em]"
-              style={{
-                fontSize: 'clamp(3rem, 6vw, 4.5rem)',
-                color: '#C5A059',
-                textShadow: '0 0 40px rgba(197,160,89,0.3)',
-                paddingBottom: '0.15em',
-              }}
-            >
+          <h1 style={{ display: 'flex', alignItems: 'baseline', gap: '0.75rem', margin: 0 }}>
+            <span style={{
+              fontFamily: "'Forum', serif",
+              fontSize: 'clamp(3rem, 6vw, 4.5rem)',
+              letterSpacing: '-0.05em',
+              lineHeight: 1,
+              color: '#C5A059',
+              textShadow: '0 0 40px rgba(197,160,89,0.3)',
+            }}>
               poetry
             </span>
-            <span
-              className="font-brand-ar font-bold leading-none"
-              style={{
-                fontSize: 'clamp(1.875rem, 4vw, 3rem)',
-                color: darkMode ? '#D4D0C8' : '#1A1614',
-                paddingBottom: '0.15em',
-              }}
-            >
+            <span style={{
+              fontFamily: "'Reem Kufi', sans-serif",
+              fontWeight: 700,
+              fontSize: 'clamp(1.875rem, 4vw, 3rem)',
+              lineHeight: 1,
+              color: darkMode ? '#D4D0C8' : '#1A1614',
+              paddingBottom: '0.15em',
+            }}>
               بالعربي
             </span>
           </h1>

@@ -45,11 +45,7 @@ import {
   useDownvotes,
   usePoemEvents,
 } from './hooks/useAuth';
-import {
-  INSIGHTS_SYSTEM_PROMPT,
-  DISCOVERY_SYSTEM_PROMPT,
-  getTTSInstruction,
-} from './prompts';
+import { INSIGHTS_SYSTEM_PROMPT, DISCOVERY_SYSTEM_PROMPT, getTTSInstruction } from './prompts';
 import { parseInsight } from './utils/insightParser';
 import { repairAndParseJSON } from './utils/jsonRepair';
 import seedPoems from './data/seed-poems.json';
@@ -1797,13 +1793,16 @@ const SplashScreen = ({ isOpen, onDismiss, showOnboarding, theme }) => {
           >
             poetry
           </span>
-          <Feather style={{
-            width: 'clamp(24px, 4vw, 36px)',
-            height: 'clamp(24px, 4vw, 36px)',
-            color: gold,
-            opacity: 0.8,
-            marginBottom: '0.15em',
-          }} strokeWidth={1.5} />
+          <Feather
+            style={{
+              width: 'clamp(24px, 4vw, 36px)',
+              height: 'clamp(24px, 4vw, 36px)',
+              color: gold,
+              opacity: 0.8,
+              marginBottom: '0.15em',
+            }}
+            strokeWidth={1.5}
+          />
         </div>
 
         {/* Subtitle */}
@@ -3026,6 +3025,7 @@ export default function DiwanApp() {
   const audioContextRef = useRef(null);
   const analyserRef = useRef(null);
   const dataArrayRef = useRef(null);
+  const sourceNodeRef = useRef(null);
   const animationFrameRef = useRef(null);
   const volumePulseRef = useRef(null);
 
@@ -3556,23 +3556,41 @@ export default function DiwanApp() {
 
   // Volume detection for pulse & glow effect
   useEffect(() => {
-    if (isPlaying && audioRef.current && !audioContextRef.current) {
+    if (isPlaying && audioRef.current) {
       try {
-        const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        const audioContext = new AudioCtx();
-        const analyser = audioContext.createAnalyser();
-        const source = audioContext.createMediaElementSource(audioRef.current);
+        // Initialize AudioContext and source node if not already created.
+        // A MediaElement can only be connected to one MediaElementSourceNode ever,
+        // so we must reuse the source node across play/pause cycles.
+        if (!audioContextRef.current) {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          const audioContext = new AudioCtx();
+          const analyser = audioContext.createAnalyser();
 
-        analyser.fftSize = 32;
-        const bufferLength = analyser.frequencyBinCount;
-        const dataArray = new Uint8Array(bufferLength);
+          analyser.fftSize = 32;
+          const bufferLength = analyser.frequencyBinCount;
+          const dataArray = new Uint8Array(bufferLength);
 
-        source.connect(analyser);
-        analyser.connect(audioContext.destination);
+          // Reuse existing source node or create a new one
+          const source =
+            sourceNodeRef.current || audioContext.createMediaElementSource(audioRef.current);
+          sourceNodeRef.current = source;
 
-        audioContextRef.current = audioContext;
-        analyserRef.current = analyser;
-        dataArrayRef.current = dataArray;
+          source.connect(analyser);
+          analyser.connect(audioContext.destination);
+
+          audioContextRef.current = audioContext;
+          analyserRef.current = analyser;
+          dataArrayRef.current = dataArray;
+
+          if (FEATURES.logging) {
+            addLog('Audio Context', 'Initialized volume detection for glow effect', 'info');
+          }
+        }
+
+        // Resume context if it was suspended (e.g., by browser autoplay policy)
+        if (audioContextRef.current.state === 'suspended') {
+          audioContextRef.current.resume();
+        }
 
         const detectVolume = () => {
           if (!analyserRef.current || !dataArrayRef.current) return;
@@ -3599,10 +3617,6 @@ export default function DiwanApp() {
         };
 
         detectVolume();
-
-        if (FEATURES.logging) {
-          addLog('Audio Context', 'Initialized volume detection for glow effect', 'info');
-        }
       } catch (error) {
         // Gracefully degrade to CSS-only animation
         if (FEATURES.logging) {
@@ -3614,12 +3628,6 @@ export default function DiwanApp() {
     return () => {
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
-      }
-      if (audioContextRef.current) {
-        audioContextRef.current.close();
-        audioContextRef.current = null;
-        analyserRef.current = null;
-        dataArrayRef.current = null;
       }
     };
   }, [isPlaying]);
@@ -5076,9 +5084,7 @@ export default function DiwanApp() {
         style={{ opacity: headerOpacity }}
         className="fixed top-4 md:top-8 left-0 right-0 z-40 pointer-events-none transition-opacity duration-300 flex flex-row items-center justify-center gap-4 md:gap-8 px-4 md:px-6"
       >
-        <div
-          className="flex flex-row items-baseline gap-3 header-luminescence"
-        >
+        <div className="flex flex-row items-baseline gap-3 header-luminescence">
           <h1 className="flex items-baseline gap-3">
             <span
               className="font-brand-ar font-bold leading-none"

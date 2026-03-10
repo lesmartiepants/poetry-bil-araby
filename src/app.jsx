@@ -104,23 +104,23 @@ const THEME = {
     titleColor: 'text-[#C5A059]', // Antique Gold
     poetColor: 'text-[#C5A059]', // Unified Gold
     controlIcon: 'text-stone-300 hover:text-white',
-    gold: '#C5A059',              // Raw gold hex for inline styles & template literals
-    goldText: 'text-[#C5A059]',   // Tailwind gold text
-    goldHoverBg: 'hover:bg-[#C5A059]/12',  // Gold hover background (buttons)
+    gold: '#C5A059', // Raw gold hex for inline styles & template literals
+    goldText: 'text-[#C5A059]', // Tailwind gold text
+    goldHoverBg: 'hover:bg-[#C5A059]/12', // Gold hover background (buttons)
     goldHoverBg15: 'hover:bg-[#C5A059]/15', // Gold hover background (sidebar)
-    goldActiveBg: 'bg-[#C5A059]/15',        // Gold active/selected background
-    goldBorder: 'border-[#C5A059]',          // Gold solid border (selected state)
-    goldBorderMuted: 'border-[#C5A059]/20',  // Gold muted border (dividers)
+    goldActiveBg: 'bg-[#C5A059]/15', // Gold active/selected background
+    goldBorder: 'border-[#C5A059]', // Gold solid border (selected state)
+    goldBorderMuted: 'border-[#C5A059]/20', // Gold muted border (dividers)
     goldBorderSubtle: 'border-[#C5A059]/30', // Gold subtle border (hover)
     goldHoverBorderSubtle: 'hover:border-[#C5A059]/30', // Gold hover border
     goldBorderAccent: 'border-[#C5A059]/40', // Gold border accent (sidebar edges)
     goldBorderStrong: 'border-[#C5A059]/70', // Gold border strong (hover state)
     goldHoverBorderStrong: 'hover:border-[#C5A059]/70', // Gold hover border strong
-    goldBg10: 'bg-[#C5A059]/10',             // Gold background 10% (selected items)
-    goldBg20: 'border-[#C5A059]/20',         // Gold background 20% (badge border)
-    goldTextMuted: 'text-[#C5A059]/60',      // Gold muted text
-    error: 'text-red-400',         // Error text
-    errorBg: 'bg-red-600/80',     // Error background (bug report button)
+    goldBg10: 'bg-[#C5A059]/10', // Gold background 10% (selected items)
+    goldBg20: 'border-[#C5A059]/20', // Gold background 20% (badge border)
+    goldTextMuted: 'text-[#C5A059]/60', // Gold muted text
+    error: 'text-red-400', // Error text
+    errorBg: 'bg-red-600/80', // Error background (bug report button)
     debug: 'bg-black/60 border-stone-800 text-stone-300', // Debug panel
     debugInput: 'bg-stone-900/80 border-stone-700 text-stone-200 placeholder:text-stone-500', // Debug input
     debugDivider: 'border-stone-700', // Debug panel divider
@@ -142,23 +142,23 @@ const THEME = {
     titleColor: 'text-[#8B7355]', // Antique Gold (rich, warm tone - 5.2:1 contrast)
     poetColor: 'text-[#8B7355]', // Antique Gold (rich, warm tone - 5.2:1 contrast)
     controlIcon: 'text-indigo-950/90 hover:text-black',
-    gold: '#8B7355',              // Raw gold hex for inline styles & template literals
-    goldText: 'text-[#8B7355]',   // Tailwind gold text
-    goldHoverBg: 'hover:bg-[#8B7355]/12',  // Gold hover background (buttons)
+    gold: '#8B7355', // Raw gold hex for inline styles & template literals
+    goldText: 'text-[#8B7355]', // Tailwind gold text
+    goldHoverBg: 'hover:bg-[#8B7355]/12', // Gold hover background (buttons)
     goldHoverBg15: 'hover:bg-[#8B7355]/15', // Gold hover background (sidebar)
-    goldActiveBg: 'bg-[#8B7355]/15',        // Gold active/selected background
-    goldBorder: 'border-[#8B7355]',          // Gold solid border (selected state)
-    goldBorderMuted: 'border-[#8B7355]/20',  // Gold muted border (dividers)
+    goldActiveBg: 'bg-[#8B7355]/15', // Gold active/selected background
+    goldBorder: 'border-[#8B7355]', // Gold solid border (selected state)
+    goldBorderMuted: 'border-[#8B7355]/20', // Gold muted border (dividers)
     goldBorderSubtle: 'border-[#8B7355]/30', // Gold subtle border (hover)
     goldHoverBorderSubtle: 'hover:border-[#8B7355]/30', // Gold hover border
     goldBorderAccent: 'border-[#8B7355]/40', // Gold border accent (sidebar edges)
     goldBorderStrong: 'border-[#8B7355]/70', // Gold border strong (hover state)
     goldHoverBorderStrong: 'hover:border-[#8B7355]/70', // Gold hover border strong
-    goldBg10: 'bg-[#8B7355]/10',             // Gold background 10% (selected items)
-    goldBg20: 'border-[#8B7355]/20',         // Gold background 20% (badge border)
-    goldTextMuted: 'text-[#8B7355]/60',      // Gold muted text
-    error: 'text-red-400',         // Error text (same in light for visibility)
-    errorBg: 'bg-red-600/80',     // Error background (bug report button)
+    goldBg10: 'bg-[#8B7355]/10', // Gold background 10% (selected items)
+    goldBg20: 'border-[#8B7355]/20', // Gold background 20% (badge border)
+    goldTextMuted: 'text-[#8B7355]/60', // Gold muted text
+    error: 'text-red-400', // Error text (same in light for visibility)
+    errorBg: 'bg-red-600/80', // Error background (bug report button)
     debug: 'bg-white/60 border-stone-200 text-stone-700', // Debug panel
     debugInput: 'bg-white/80 border-stone-300 text-stone-800 placeholder:text-stone-400', // Debug input
     debugDivider: 'border-stone-300', // Debug panel divider
@@ -223,10 +223,7 @@ let _discoveredTextModels = null;
 const discoverTextModels = async (addLog) => {
   if (_discoveredTextModels) return _discoveredTextModels;
   try {
-    const res = await fetch(
-      `${apiUrl}/api/ai/models`,
-      { method: 'GET' }
-    );
+    const res = await fetch(`${apiUrl}/api/ai/models`, { method: 'GET' });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const { models = [] } = await res.json();
     const ranked = models
@@ -292,10 +289,11 @@ const geminiTextFetch = async (endpoint, body, label, addLog) => {
   for (let i = 0; i < models.length; i++) {
     const model = models[i];
     if (i > 0) addLog('Model Fallback', `Trying fallback: ${model}`, 'warning');
-    const res = await fetch(
-      `${apiUrl}/api/ai/${model}/${endpoint}`,
-      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body }
-    );
+    const res = await fetch(`${apiUrl}/api/ai/${model}/${endpoint}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body,
+    });
     if (res.ok) {
       if (i > 0) addLog('Model Fallback', `✓ Using fallback model: ${model}`, 'success');
       return res;
@@ -1026,10 +1024,15 @@ const DebugPanel = ({ logs, onClear, darkMode, poem, appState }) => {
   if (!FEATURES.debug) return null;
 
   return (
-    <div className={`w-full max-w-full transition-all duration-300 ${isExpanded ? 'h-48 md:h-64' : 'h-7'} overflow-hidden border-b ${
-      theme.debug
-    } backdrop-blur-md shadow-lg flex flex-col relative z-[100] flex-none`}>
-      <div className="flex items-center justify-between px-6 h-7 cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}>
+    <div
+      className={`w-full max-w-full transition-all duration-300 ${isExpanded ? 'h-48 md:h-64' : 'h-7'} overflow-hidden border-b ${
+        theme.debug
+      } backdrop-blur-md shadow-lg flex flex-col relative z-[100] flex-none`}
+    >
+      <div
+        className="flex items-center justify-between px-6 h-7 cursor-pointer"
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
         <div className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-widest opacity-60 text-indigo-500 leading-none h-full">
           <Bug size={10} className="mb-0" /> <span>System Logs</span>{' '}
           <span className="ml-1 opacity-40">({logs.length})</span>
@@ -1055,8 +1058,12 @@ const DebugPanel = ({ logs, onClear, darkMode, poem, appState }) => {
         className="flex-1 overflow-y-auto px-6 pb-3 font-mono text-[10px] space-y-1 custom-scrollbar"
       >
         {logs.map((log, idx) => (
-          <div key={idx} className={`pb-1 border-b border-stone-500/5 ${log.type === 'error' ? theme.error : log.type === 'success' ? 'text-indigo-400' : ''}`}>
-            <span className="opacity-40">[{log.time}]</span> <span className="font-bold">{log.label}:</span> {log.msg}
+          <div
+            key={idx}
+            className={`pb-1 border-b border-stone-500/5 ${log.type === 'error' ? theme.error : log.type === 'success' ? 'text-indigo-400' : ''}`}
+          >
+            <span className="opacity-40">[{log.time}]</span>{' '}
+            <span className="font-bold">{log.label}:</span> {log.msg}
           </div>
         ))}
         {isExpanded && (
@@ -1076,10 +1083,13 @@ const DebugPanel = ({ logs, onClear, darkMode, poem, appState }) => {
               }}
               disabled={bugStatus === 'sending'}
               className={`px-2 py-1 rounded text-[9px] font-bold uppercase tracking-wider transition-colors ${
-                bugStatus === 'success' ? 'bg-green-600/80 text-white' :
-                bugStatus === 'error' ? `${theme.errorBg} text-white` :
-                bugStatus === 'sending' ? 'bg-stone-600/80 text-stone-400' :
-                'bg-indigo-600/80 text-white hover:bg-indigo-500/80'
+                bugStatus === 'success'
+                  ? 'bg-green-600/80 text-white'
+                  : bugStatus === 'error'
+                    ? `${theme.errorBg} text-white`
+                    : bugStatus === 'sending'
+                      ? 'bg-stone-600/80 text-stone-400'
+                      : 'bg-indigo-600/80 text-white hover:bg-indigo-500/80'
               }`}
             >
               {bugStatus === 'sending'
@@ -1121,7 +1131,11 @@ const CategoryPill = ({ selected, onSelect, darkMode }) => {
       >
         <Library size={21} className={GOLD.goldText} />
       </button>
-      <span className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}>Poets</span>
+      <span
+        className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
+      >
+        Poets
+      </span>
 
       {isOpen && (
         <div
@@ -1136,8 +1150,14 @@ const CategoryPill = ({ selected, onSelect, darkMode }) => {
               }}
               className={`w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex flex-col items-center border-b border-[rgba(197,160,89,0.08)] last:border-b-0 hover:bg-[rgba(197,160,89,0.08)] ${selected === cat.id ? 'bg-[rgba(197,160,89,0.12)]' : ''}`}
             >
-              <div className={`font-amiri text-[clamp(1rem,1.8vw,1.125rem)] ${GOLD.goldText} mb-[3px] font-medium`}>{cat.labelAr}</div>
-              <div className="font-brand-en text-[clamp(8px,1vw,9px)] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">{cat.label}</div>
+              <div
+                className={`font-amiri text-[clamp(1rem,1.8vw,1.125rem)] ${GOLD.goldText} mb-[3px] font-medium`}
+              >
+                {cat.labelAr}
+              </div>
+              <div className="font-brand-en text-[clamp(8px,1vw,9px)] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">
+                {cat.label}
+              </div>
             </button>
           ))}
         </div>
@@ -1175,9 +1195,17 @@ const ThemeDropdown = ({ darkMode, onToggleDarkMode, currentFont, onCycleFont, f
         className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
         aria-label="Theme options"
       >
-        {darkMode ? <Sun size={21} className={GOLD.goldText} /> : <Moon size={21} className={GOLD.goldText} />}
+        {darkMode ? (
+          <Sun size={21} className={GOLD.goldText} />
+        ) : (
+          <Moon size={21} className={GOLD.goldText} />
+        )}
       </button>
-      <span className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}>Theme</span>
+      <span
+        className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
+      >
+        Theme
+      </span>
 
       {isOpen && (
         <div
@@ -1187,15 +1215,27 @@ const ThemeDropdown = ({ darkMode, onToggleDarkMode, currentFont, onCycleFont, f
             onClick={handleCycleFont}
             className="w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex flex-col items-center border-b border-[rgba(197,160,89,0.08)] hover:bg-[rgba(197,160,89,0.08)]"
           >
-            <div className={`font-amiri text-[clamp(1rem,1.8vw,1.125rem)] ${GOLD.goldText} mb-[3px] font-medium`}>تبديل الخط</div>
-            <div className="font-brand-en text-[clamp(8px,1vw,9px)] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Cycle Font: {currentFont}</div>
+            <div
+              className={`font-amiri text-[clamp(1rem,1.8vw,1.125rem)] ${GOLD.goldText} mb-[3px] font-medium`}
+            >
+              تبديل الخط
+            </div>
+            <div className="font-brand-en text-[clamp(8px,1vw,9px)] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">
+              Cycle Font: {currentFont}
+            </div>
           </button>
           <button
             onClick={handleToggleDarkMode}
             className="w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex flex-col items-center hover:bg-[rgba(197,160,89,0.08)]"
           >
-            <div className={`font-amiri text-[clamp(1rem,1.8vw,1.125rem)] ${GOLD.goldText} mb-[3px] font-medium`}>{darkMode ? 'الوضع النهاري' : 'الوضع الليلي'}</div>
-            <div className="font-brand-en text-[clamp(8px,1vw,9px)] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">{darkMode ? 'Light Mode' : 'Dark Mode'}</div>
+            <div
+              className={`font-amiri text-[clamp(1rem,1.8vw,1.125rem)] ${GOLD.goldText} mb-[3px] font-medium`}
+            >
+              {darkMode ? 'الوضع النهاري' : 'الوضع الليلي'}
+            </div>
+            <div className="font-brand-en text-[clamp(8px,1vw,9px)] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">
+              {darkMode ? 'Light Mode' : 'Dark Mode'}
+            </div>
           </button>
         </div>
       )}
@@ -1251,11 +1291,17 @@ const DatabaseToggle = ({ useDatabase, onToggle, disabled }) => {
         onClick={onToggle}
         disabled={disabled}
         className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none transition-all duration-300 flex items-center justify-center rounded-full ${disabled ? 'opacity-50 cursor-not-allowed' : `cursor-pointer ${GOLD.goldHoverBg} hover:scale-105`}`}
-        aria-label={useDatabase ? "Switch to AI Mode" : "Switch to Database Mode"}
+        aria-label={useDatabase ? 'Switch to AI Mode' : 'Switch to Database Mode'}
       >
-        {useDatabase ? <Library size={21} className={GOLD.goldText} /> : <Sparkles size={21} className={GOLD.goldText} />}
+        {useDatabase ? (
+          <Library size={21} className={GOLD.goldText} />
+        ) : (
+          <Sparkles size={21} className={GOLD.goldText} />
+        )}
       </button>
-      <span className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}>
+      <span
+        className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
+      >
         {useDatabase ? 'Local' : 'Web'}
       </span>
     </div>
@@ -2198,7 +2244,9 @@ const AuthButton = ({
         >
           <LogIn size={21} className={GOLD.goldText} />
         </button>
-        <span className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}>
+        <span
+          className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
+        >
           Sign In
         </span>
       </div>
@@ -2222,7 +2270,9 @@ const AuthButton = ({
           <User size={21} className={GOLD.goldText} />
         )}
       </button>
-      <span className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}>
+      <span
+        className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
+      >
         Account
       </span>
 
@@ -2245,7 +2295,9 @@ const AuthButton = ({
             <BookOpen size={18} className={GOLD.goldText} />
             <div className="flex flex-col items-start">
               <div className={`font-amiri text-base ${GOLD.goldText} font-medium`}>قصائدي</div>
-              <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">My Poems</div>
+              <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">
+                My Poems
+              </div>
             </div>
           </button>
           <button
@@ -2258,7 +2310,9 @@ const AuthButton = ({
             <Settings2 size={18} className={GOLD.goldText} />
             <div className="flex flex-col items-start">
               <div className={`font-amiri text-base ${GOLD.goldText} font-medium`}>الإعدادات</div>
-              <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Settings</div>
+              <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">
+                Settings
+              </div>
             </div>
           </button>
           <button
@@ -2270,8 +2324,12 @@ const AuthButton = ({
           >
             <LogOut size={18} className={GOLD.goldText} />
             <div className="flex flex-col items-start">
-              <div className={`font-amiri text-base ${GOLD.goldText} font-medium`}>تسجيل الخروج</div>
-              <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Sign Out</div>
+              <div className={`font-amiri text-base ${GOLD.goldText} font-medium`}>
+                تسجيل الخروج
+              </div>
+              <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">
+                Sign Out
+              </div>
             </div>
           </button>
         </div>
@@ -2302,14 +2360,16 @@ const SavePoemButton = ({ poem, isSaved, onSave, onUnsave, disabled }) => {
       <button
         onClick={handleClick}
         className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
-        aria-label={isSaved ? "Unsave poem" : "Save poem"}
+        aria-label={isSaved ? 'Unsave poem' : 'Save poem'}
       >
         <Heart
           size={21}
           className={`${isSaved ? 'fill-red-500 text-red-500' : GOLD.goldText} transition-all`}
         />
       </button>
-      <span className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}>
+      <span
+        className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
+      >
         {isSaved ? 'Saved' : 'Save'}
       </span>
 
@@ -2344,14 +2404,16 @@ const DownvoteButton = ({ poem, isDownvoted, onDownvote, onUndownvote, disabled 
       <button
         onClick={handleClick}
         className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
-        aria-label={isDownvoted ? "Unflag poem" : "Flag poem"}
+        aria-label={isDownvoted ? 'Unflag poem' : 'Flag poem'}
       >
         <ThumbsDown
           size={21}
           className={`${isDownvoted ? 'fill-red-400 text-red-400' : GOLD.goldText} transition-all`}
         />
       </button>
-      <span className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}>
+      <span
+        className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
+      >
         {isDownvoted ? 'Flagged' : 'Flag'}
       </span>
 
@@ -2549,8 +2611,14 @@ const SettingsView = ({
               >
                 <Moon size={24} className={darkMode ? GOLD.goldText : `${theme.text} opacity-50`} />
                 <div className="text-center">
-                  <p className={`font-amiri text-sm ${darkMode ? GOLD.goldText : theme.text}`}>ليلي</p>
-                  <p className={`font-brand-en text-[9px] uppercase tracking-[0.1em] ${theme.text} opacity-40`}>Dark</p>
+                  <p className={`font-amiri text-sm ${darkMode ? GOLD.goldText : theme.text}`}>
+                    ليلي
+                  </p>
+                  <p
+                    className={`font-brand-en text-[9px] uppercase tracking-[0.1em] ${theme.text} opacity-40`}
+                  >
+                    Dark
+                  </p>
                 </div>
               </button>
               <button
@@ -2565,8 +2633,14 @@ const SettingsView = ({
               >
                 <Sun size={24} className={!darkMode ? GOLD.goldText : `${theme.text} opacity-50`} />
                 <div className="text-center">
-                  <p className={`font-amiri text-sm ${!darkMode ? GOLD.goldText : theme.text}`}>نهاري</p>
-                  <p className={`font-brand-en text-[9px] uppercase tracking-[0.1em] ${theme.text} opacity-40`}>Light</p>
+                  <p className={`font-amiri text-sm ${!darkMode ? GOLD.goldText : theme.text}`}>
+                    نهاري
+                  </p>
+                  <p
+                    className={`font-brand-en text-[9px] uppercase tracking-[0.1em] ${theme.text} opacity-40`}
+                  >
+                    Light
+                  </p>
                 </div>
               </button>
             </div>
@@ -2593,7 +2667,10 @@ const SettingsView = ({
                       : `${theme.border} bg-transparent ${GOLD.goldHoverBorderSubtle}`
                   }`}
                 >
-                  <p className={`${font.family} text-lg ${currentFont === font.id ? GOLD.goldText : theme.text}`} dir="rtl">
+                  <p
+                    className={`${font.family} text-lg ${currentFont === font.id ? GOLD.goldText : theme.text}`}
+                    dir="rtl"
+                  >
                     بسم الله
                   </p>
                   <div className="text-center">
@@ -2661,9 +2738,11 @@ const VerticalSidebar = ({
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   const gold = theme.gold;
-  const btnBase = "w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-200";
+  const btnBase =
+    'w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-200';
   const btnHover = theme.goldHoverBg15;
-  const subBtnBase = "w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-200";
+  const subBtnBase =
+    'w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-200';
   const subBtnHover = theme.goldHoverBg15;
 
   return (
@@ -2721,13 +2800,15 @@ const VerticalSidebar = ({
           <button
             onClick={() => setSettingsOpen((prev) => !prev)}
             title="Settings"
-            className={`${btnBase} ${btnHover} ${settingsOpen ? (theme.goldActiveBg) : ''}`}
+            className={`${btnBase} ${btnHover} ${settingsOpen ? theme.goldActiveBg : ''}`}
           >
             <Settings2 style={{ color: gold }} size={18} />
           </button>
 
           {settingsOpen && (
-            <div className={`flex flex-col items-center gap-0.5 pl-0.5 border-l-2 ${theme.goldBorderMuted}`}>
+            <div
+              className={`flex flex-col items-center gap-0.5 pl-0.5 border-l-2 ${theme.goldBorderMuted}`}
+            >
               <button
                 onClick={onToggleTransliteration}
                 title={showTransliteration ? 'Hide romanization' : 'Show romanization'}
@@ -2755,7 +2836,7 @@ const VerticalSidebar = ({
                 <button
                   onClick={onDailyPoem}
                   title="Poem of the Day"
-                  className={`${subBtnBase} ${subBtnHover} ${isCurrentDaily ? (theme.goldActiveBg) : ''}`}
+                  className={`${subBtnBase} ${subBtnHover} ${isCurrentDaily ? theme.goldActiveBg : ''}`}
                 >
                   <CalendarDays style={{ color: gold }} size={16} />
                 </button>
@@ -2812,13 +2893,15 @@ const VerticalSidebar = ({
           <button
             onClick={() => setSettingsOpen((prev) => !prev)}
             title="Settings"
-            className={`${btnBase} ${btnHover} ${settingsOpen ? (theme.goldActiveBg) : ''}`}
+            className={`${btnBase} ${btnHover} ${settingsOpen ? theme.goldActiveBg : ''}`}
           >
             <Settings2 style={{ color: gold }} size={18} />
           </button>
 
           {settingsOpen && (
-            <div className={`flex flex-col items-center gap-0.5 pl-0.5 border-l-2 ${theme.goldBorderMuted}`}>
+            <div
+              className={`flex flex-col items-center gap-0.5 pl-0.5 border-l-2 ${theme.goldBorderMuted}`}
+            >
               <button
                 onClick={onToggleTransliteration}
                 title={showTransliteration ? 'Hide romanization' : 'Show romanization'}
@@ -2846,7 +2929,7 @@ const VerticalSidebar = ({
                 <button
                   onClick={onDailyPoem}
                   title="Poem of the Day"
-                  className={`${subBtnBase} ${subBtnHover} ${isCurrentDaily ? (theme.goldActiveBg) : ''}`}
+                  className={`${subBtnBase} ${subBtnHover} ${isCurrentDaily ? theme.goldActiveBg : ''}`}
                 >
                   <CalendarDays style={{ color: gold }} size={16} />
                 </button>
@@ -4630,6 +4713,9 @@ export default function DiwanApp() {
     setIsInterpreting(false);
     setAudioError(null);
 
+    // Reset translation visibility so every new poem shows the translation by default
+    setShowTranslation(true);
+
     // Clear all polling intervals to prevent stale requests
     pollingIntervals.current.forEach((interval) => clearInterval(interval));
     pollingIntervals.current = [];
@@ -4841,41 +4927,85 @@ export default function DiwanApp() {
           >
             <div className="min-h-full flex flex-col items-center justify-center py-6">
               <div className="w-full max-w-4xl flex flex-col items-center">
-                
-                <div className={`text-center ${DESIGN.mainMetaPadding} animate-in slide-in-from-bottom-8 duration-1000 z-20 w-full`}>
-                   <div className="minimal-frame mb-1">
-                      <svg viewBox="0 0 550 120" preserveAspectRatio="xMidYMid meet">
-                        <line className="frame-line" x1="20" y1="20" x2="70" y2="20" />
-                        <line className="frame-line" x1="20" y1="20" x2="20" y2="70" />
-                        <line className="frame-line" x1="530" y1="20" x2="480" y2="20" />
-                        <line className="frame-line" x1="530" y1="20" x2="530" y2="70" />
-                        <line className="frame-line" x1="20" y1="100" x2="70" y2="100" />
-                        <line className="frame-line" x1="20" y1="100" x2="20" y2="50" />
-                        <line className="frame-line" x1="530" y1="100" x2="480" y2="100" />
-                        <line className="frame-line" x1="530" y1="100" x2="530" y2="50" />
-                        <circle className="frame-line" cx="32" cy="32" r="2.5" fill={GOLD.gold} opacity="0.35" />
-                        <circle className="frame-line" cx="518" cy="32" r="2.5" fill={GOLD.gold} opacity="0.35" />
-                        <circle className="frame-line" cx="32" cy="88" r="2.5" fill={GOLD.gold} opacity="0.35" />
-                        <circle className="frame-line" cx="518" cy="88" r="2.5" fill={GOLD.gold} opacity="0.35" />
-                      </svg>
+                <div
+                  className={`text-center ${DESIGN.mainMetaPadding} animate-in slide-in-from-bottom-8 duration-1000 z-20 w-full`}
+                >
+                  <div className="minimal-frame mb-1">
+                    <svg viewBox="0 0 550 120" preserveAspectRatio="xMidYMid meet">
+                      <line className="frame-line" x1="20" y1="20" x2="70" y2="20" />
+                      <line className="frame-line" x1="20" y1="20" x2="20" y2="70" />
+                      <line className="frame-line" x1="530" y1="20" x2="480" y2="20" />
+                      <line className="frame-line" x1="530" y1="20" x2="530" y2="70" />
+                      <line className="frame-line" x1="20" y1="100" x2="70" y2="100" />
+                      <line className="frame-line" x1="20" y1="100" x2="20" y2="50" />
+                      <line className="frame-line" x1="530" y1="100" x2="480" y2="100" />
+                      <line className="frame-line" x1="530" y1="100" x2="530" y2="50" />
+                      <circle
+                        className="frame-line"
+                        cx="32"
+                        cy="32"
+                        r="2.5"
+                        fill={GOLD.gold}
+                        opacity="0.35"
+                      />
+                      <circle
+                        className="frame-line"
+                        cx="518"
+                        cy="32"
+                        r="2.5"
+                        fill={GOLD.gold}
+                        opacity="0.35"
+                      />
+                      <circle
+                        className="frame-line"
+                        cx="32"
+                        cy="88"
+                        r="2.5"
+                        fill={GOLD.gold}
+                        opacity="0.35"
+                      />
+                      <circle
+                        className="frame-line"
+                        cx="518"
+                        cy="88"
+                        r="2.5"
+                        fill={GOLD.gold}
+                        opacity="0.35"
+                      />
+                    </svg>
 
-                      <div className="relative z-10 flex flex-col items-center justify-center w-full">
-                         <div className={`flex flex-wrap items-center justify-center gap-1 sm:gap-2 md:gap-4 ${currentFontClass} ${DESIGN.mainTitleSize}`}>
-                           <span className={`${theme.poetColor} opacity-90`}>{current?.poetArabic}</span>
-                           <span className="opacity-10 text-[clamp(0.75rem,1.5vw,1.25rem)]">-</span>
-                           <span className={`${theme.titleColor} font-bold`}>{current?.titleArabic}</span>
-                         </div>
-                         <div className={`flex items-center justify-center gap-1 sm:gap-2 opacity-45 ${DESIGN.mainSubtitleSize} font-brand-en tracking-[0.08em] uppercase mt-[clamp(0.25rem,0.8vw,0.75rem)]`}>
-                           <span className="font-semibold">{current?.poet}</span> <span className="opacity-20">•</span> <span>{current?.title}</span>
-                         </div>
-                         {dailyPoem && current?.id === dailyPoem.id && (
-                           <div className={`flex items-center gap-1.5 mt-2 px-3 py-1 rounded-full ${GOLD.goldBg10} border ${GOLD.goldBg20}`}>
-                             <CalendarDays size={12} className={GOLD.goldText} />
-                             <span className={`font-brand-en text-[9px] font-bold tracking-[0.15em] uppercase ${GOLD.goldText}`}>Poem of the Day</span>
-                           </div>
-                         )}
+                    <div className="relative z-10 flex flex-col items-center justify-center w-full">
+                      <div
+                        className={`flex flex-wrap items-center justify-center gap-1 sm:gap-2 md:gap-4 ${currentFontClass} ${DESIGN.mainTitleSize}`}
+                      >
+                        <span className={`${theme.poetColor} opacity-90`}>
+                          {current?.poetArabic}
+                        </span>
+                        <span className="opacity-10 text-[clamp(0.75rem,1.5vw,1.25rem)]">-</span>
+                        <span className={`${theme.titleColor} font-bold`}>
+                          {current?.titleArabic}
+                        </span>
                       </div>
+                      <div
+                        className={`flex items-center justify-center gap-1 sm:gap-2 opacity-45 ${DESIGN.mainSubtitleSize} font-brand-en tracking-[0.08em] uppercase mt-[clamp(0.25rem,0.8vw,0.75rem)]`}
+                      >
+                        <span className="font-semibold">{current?.poet}</span>{' '}
+                        <span className="opacity-20">•</span> <span>{current?.title}</span>
+                      </div>
+                      {dailyPoem && current?.id === dailyPoem.id && (
+                        <div
+                          className={`flex items-center gap-1.5 mt-2 px-3 py-1 rounded-full ${GOLD.goldBg10} border ${GOLD.goldBg20}`}
+                        >
+                          <CalendarDays size={12} className={GOLD.goldText} />
+                          <span
+                            className={`font-brand-en text-[9px] font-bold tracking-[0.15em] uppercase ${GOLD.goldText}`}
+                          >
+                            Poem of the Day
+                          </span>
+                        </div>
+                      )}
                     </div>
+                  </div>
 
                   <div className="flex justify-center gap-3 mt-1">
                     {Array.isArray(current?.tags) &&
@@ -4977,9 +5107,17 @@ export default function DiwanApp() {
 
           <footer className="fixed bottom-0 left-0 right-0 py-2 pb-3 md:pb-2 px-4 flex flex-col items-center z-50 bg-gradient-to-t from-black/5 to-transparent safe-bottom">
             {audioError && (
-              <div className={`mb-2 px-4 py-2 rounded-full text-xs font-medium ${DESIGN.glass} ${theme.glass} border ${theme.border} shadow-lg ${DESIGN.anim} max-w-[calc(100vw-2rem)] text-center`}>
+              <div
+                className={`mb-2 px-4 py-2 rounded-full text-xs font-medium ${DESIGN.glass} ${theme.glass} border ${theme.border} shadow-lg ${DESIGN.anim} max-w-[calc(100vw-2rem)] text-center`}
+              >
                 <span className={theme.error}>{audioError}</span>
-                <button onClick={() => setAudioError(null)} className="ml-2 opacity-60 hover:opacity-100" aria-label="Dismiss"><X size={12} className="inline" /></button>
+                <button
+                  onClick={() => setAudioError(null)}
+                  className="ml-2 opacity-60 hover:opacity-100"
+                  aria-label="Dismiss"
+                >
+                  <X size={12} className="inline" />
+                </button>
               </div>
             )}
             <div
@@ -4987,8 +5125,21 @@ export default function DiwanApp() {
               className={`flex items-center gap-2 px-5 py-2 rounded-full shadow-2xl border ${DESIGN.glass} ${theme.border} ${theme.shadow} ${DESIGN.anim} max-w-[calc(100vw-2rem)] w-fit`}
             >
               <div className="flex flex-col items-center gap-1 min-w-[52px]">
-                <button onClick={togglePlay} disabled={isGeneratingAudio} aria-label={isPlaying ? "Pause recitation" : "Play recitation"} className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}>
-                  {isGeneratingAudio ? <Loader2 className={`animate-spin ${GOLD.goldText}`} size={21} /> : audioError ? <Volume2 className={theme.error} size={21} /> : isPlaying ? <Pause fill={GOLD.gold} size={21} /> : <Volume2 className={GOLD.goldText} size={21} />}
+                <button
+                  onClick={togglePlay}
+                  disabled={isGeneratingAudio}
+                  aria-label={isPlaying ? 'Pause recitation' : 'Play recitation'}
+                  className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
+                >
+                  {isGeneratingAudio ? (
+                    <Loader2 className={`animate-spin ${GOLD.goldText}`} size={21} />
+                  ) : audioError ? (
+                    <Volume2 className={theme.error} size={21} />
+                  ) : isPlaying ? (
+                    <Pause fill={GOLD.gold} size={21} />
+                  ) : (
+                    <Volume2 className={GOLD.goldText} size={21} />
+                  )}
                 </button>
                 <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">
                   Listen
@@ -4997,8 +5148,17 @@ export default function DiwanApp() {
 
               {!isOverflow && (
                 <div className="flex flex-col items-center gap-1 min-w-[52px]">
-                  <button onClick={handleAnalyze} disabled={isInterpreting || interpretation} aria-label="Explain poem meaning" className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105 disabled:opacity-50`}>
-                    {isInterpreting ? <Loader2 className={`animate-spin ${GOLD.goldText}`} size={21} /> : <Compass className={GOLD.goldText} size={21} />}
+                  <button
+                    onClick={handleAnalyze}
+                    disabled={isInterpreting || interpretation}
+                    aria-label="Explain poem meaning"
+                    className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105 disabled:opacity-50`}
+                  >
+                    {isInterpreting ? (
+                      <Loader2 className={`animate-spin ${GOLD.goldText}`} size={21} />
+                    ) : (
+                      <Compass className={GOLD.goldText} size={21} />
+                    )}
                   </button>
                   <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">
                     Explain
@@ -5007,8 +5167,17 @@ export default function DiwanApp() {
               )}
 
               <div className="flex flex-col items-center gap-1 min-w-[52px]">
-                <button onClick={handleFetch} disabled={isFetching} aria-label="Discover new poem" className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}>
-                  {isFetching ? <Loader2 className={`animate-spin ${GOLD.goldText}`} size={21} /> : <Rabbit className={`${GOLD.goldText} rabbit-bounce`} size={21} />}
+                <button
+                  onClick={handleFetch}
+                  disabled={isFetching}
+                  aria-label="Discover new poem"
+                  className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
+                >
+                  {isFetching ? (
+                    <Loader2 className={`animate-spin ${GOLD.goldText}`} size={21} />
+                  ) : (
+                    <Rabbit className={`${GOLD.goldText} rabbit-bounce`} size={21} />
+                  )}
                 </button>
                 <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">
                   Discover
@@ -5036,41 +5205,78 @@ export default function DiwanApp() {
                   <div className="w-px h-10 bg-stone-500/20 mx-1 flex-shrink-0" />
 
                   <div className="flex flex-col items-center gap-1 min-w-[52px]">
-                    <button onClick={handleCopy} aria-label="Copy poem to clipboard" className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}>
-                      {showCopySuccess ? <Check size={21} className="text-green-500" /> : <Copy size={21} className={GOLD.goldText} />}
+                    <button
+                      onClick={handleCopy}
+                      aria-label="Copy poem to clipboard"
+                      className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
+                    >
+                      {showCopySuccess ? (
+                        <Check size={21} className="text-green-500" />
+                      ) : (
+                        <Copy size={21} className={GOLD.goldText} />
+                      )}
                     </button>
-                    <span className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}>Copy</span>
-                  </div>
-
-                  <div className="flex flex-col items-center gap-1 min-w-[52px]">
-                    <button onClick={handleShare} aria-label="Share poem" className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}>
-                      {showShareSuccess ? <Check size={21} className="text-green-500" /> : <Share2 size={21} className={GOLD.goldText} />}
-                    </button>
-                    <span className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}>Share</span>
+                    <span
+                      className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
+                    >
+                      Copy
+                    </span>
                   </div>
 
                   <div className="flex flex-col items-center gap-1 min-w-[52px]">
                     <button
-                      onClick={() => setShowTranslation(prev => !prev)}
-                      aria-label={showTranslation ? 'Hide English translation' : 'Show English translation'}
+                      onClick={handleShare}
+                      aria-label="Share poem"
+                      className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
+                    >
+                      {showShareSuccess ? (
+                        <Check size={21} className="text-green-500" />
+                      ) : (
+                        <Share2 size={21} className={GOLD.goldText} />
+                      )}
+                    </button>
+                    <span
+                      className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
+                    >
+                      Share
+                    </span>
+                  </div>
+
+                  <div className="flex flex-col items-center gap-1 min-w-[52px]">
+                    <button
+                      onClick={() => setShowTranslation((prev) => !prev)}
+                      aria-label={
+                        showTranslation ? 'Hide English translation' : 'Show English translation'
+                      }
                       className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105 ${!showTranslation ? 'opacity-40' : ''}`}
                     >
                       <Languages size={21} className={GOLD.goldText} />
                     </button>
-                    <span className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}>
+                    <span
+                      className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
+                    >
                       {showTranslation ? 'English' : 'Arabic'}
                     </span>
                   </div>
 
                   <div className="flex flex-col items-center gap-1 min-w-[52px]">
                     <button
-                      onClick={() => setShowTransliteration(prev => !prev)}
-                      aria-label={showTransliteration ? 'Hide transliteration' : 'Show transliteration'}
+                      onClick={() => setShowTransliteration((prev) => !prev)}
+                      aria-label={
+                        showTransliteration ? 'Hide transliteration' : 'Show transliteration'
+                      }
                       className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105 ${!showTransliteration ? 'opacity-40' : ''}`}
                     >
-                      <span className={`${GOLD.goldText} text-[14px] font-bold leading-none`} style={{ fontFamily: "'Amiri', serif" }}>عA</span>
+                      <span
+                        className={`${GOLD.goldText} text-[14px] font-bold leading-none`}
+                        style={{ fontFamily: "'Amiri', serif" }}
+                      >
+                        عA
+                      </span>
                     </button>
-                    <span className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}>
+                    <span
+                      className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
+                    >
                       Romanize
                     </span>
                   </div>
@@ -5081,19 +5287,31 @@ export default function DiwanApp() {
                       aria-label={`Text size: ${TEXT_SIZES[textSizeLevel].label}`}
                       className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
                     >
-                      <span className={`font-brand-en text-[15px] font-bold ${GOLD.goldText}`}>Aa</span>
+                      <span className={`font-brand-en text-[15px] font-bold ${GOLD.goldText}`}>
+                        Aa
+                      </span>
                     </button>
-                    <span className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}>
+                    <span
+                      className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
+                    >
                       {TEXT_SIZES[textSizeLevel].label}
                     </span>
                   </div>
 
                   {dailyPoem && (
                     <div className="flex flex-col items-center gap-1 min-w-[52px]">
-                      <button onClick={handleDailyPoem} aria-label="Poem of the day" className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105 ${current?.id === dailyPoem.id ? GOLD.goldActiveBg : ''}`}>
+                      <button
+                        onClick={handleDailyPoem}
+                        aria-label="Poem of the day"
+                        className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105 ${current?.id === dailyPoem.id ? GOLD.goldActiveBg : ''}`}
+                      >
                         <CalendarDays size={21} className={GOLD.goldText} />
                       </button>
-                      <span className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}>Daily</span>
+                      <span
+                        className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
+                      >
+                        Daily
+                      </span>
                     </div>
                   )}
 
@@ -5245,7 +5463,11 @@ export default function DiwanApp() {
         style={{ writingMode: 'vertical-rl', animation: 'slideInLeft 0.4s ease-out' }}
         title="Design Review"
       >
-        <span className={`text-[10px] font-brand-en tracking-widest ${GOLD.goldTextMuted} uppercase`}>Review</span>
+        <span
+          className={`text-[10px] font-brand-en tracking-widest ${GOLD.goldTextMuted} uppercase`}
+        >
+          Review
+        </span>
       </a>
       <a
         href="/design-review"
@@ -5253,7 +5475,11 @@ export default function DiwanApp() {
         style={{ writingMode: 'vertical-rl', animation: 'slideInLeft 0.4s ease-out' }}
         title="Design Review"
       >
-        <span className={`text-[10px] font-brand-en tracking-widest ${GOLD.goldTextMuted} uppercase`}>Review</span>
+        <span
+          className={`text-[10px] font-brand-en tracking-widest ${GOLD.goldTextMuted} uppercase`}
+        >
+          Review
+        </span>
       </a>
 
       {/* Vertical Sidebar - Mobile overflow only */}

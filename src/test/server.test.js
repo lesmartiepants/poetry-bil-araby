@@ -44,7 +44,26 @@ describe('Backend API Server', () => {
   });
 
   describe('GET /api/health', () => {
-    it('should return health status when database is connected', async () => {
+    it('should return lightweight health status without DB query', async () => {
+      const response = await request(app)
+        .get('/api/health')
+        .expect('Content-Type', /json/)
+        .expect(200);
+
+      expect(response.body).toHaveProperty('status', 'ok');
+      expect(response.body).toHaveProperty('uptime');
+      expect(typeof response.body.uptime).toBe('number');
+      // Lightweight endpoint should NOT have database fields
+      expect(response.body).not.toHaveProperty('database');
+      expect(response.body).not.toHaveProperty('totalPoems');
+      expect(response.body).not.toHaveProperty('servedPoems');
+      // Should not trigger any DB queries
+      expect(mockPool.query).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('GET /api/health/full', () => {
+    it('should return full health status when database is connected', async () => {
       // Mock successful database queries (total + served count)
       mockPool.query.mockResolvedValueOnce({
         rows: [{ count: '42' }]
@@ -54,16 +73,15 @@ describe('Backend API Server', () => {
       });
 
       const response = await request(app)
-        .get('/api/health')
+        .get('/api/health/full')
         .expect('Content-Type', /json/)
         .expect(200);
 
-      expect(response.body).toEqual({
-        status: 'ok',
-        database: 'connected',
-        totalPoems: 42,
-        servedPoems: 30
-      });
+      expect(response.body).toHaveProperty('status', 'ok');
+      expect(response.body).toHaveProperty('database', 'connected');
+      expect(response.body).toHaveProperty('totalPoems', 42);
+      expect(response.body).toHaveProperty('servedPoems', 30);
+      expect(response.body).toHaveProperty('uptime');
 
       expect(mockPool.query).toHaveBeenCalledWith('SELECT COUNT(*) FROM poems');
     });
@@ -73,12 +91,13 @@ describe('Backend API Server', () => {
       mockPool.query.mockRejectedValueOnce(new Error('Database connection failed'));
 
       const response = await request(app)
-        .get('/api/health')
+        .get('/api/health/full')
         .expect('Content-Type', /json/)
         .expect(500);
 
       expect(response.body).toEqual({
         status: 'error',
+        database: 'disconnected',
         message: 'Database connection failed'
       });
     });
@@ -88,10 +107,11 @@ describe('Backend API Server', () => {
       mockPool.query.mockRejectedValueOnce(new Error('Connection timeout'));
 
       const response = await request(app)
-        .get('/api/health')
+        .get('/api/health/full')
         .expect(500);
 
       expect(response.body.status).toBe('error');
+      expect(response.body.database).toBe('disconnected');
       expect(response.body.message).toContain('timeout');
     });
   });
@@ -583,8 +603,6 @@ describe('Backend API Server', () => {
 
   describe('Security Headers', () => {
     it('should include helmet security headers', async () => {
-      mockPool.query.mockResolvedValueOnce({ rows: [{ count: '10' }] });
-      mockPool.query.mockResolvedValueOnce({ rows: [{ count: '8' }] });
       const response = await request(app).get('/api/health').expect(200);
       expect(response.headers['x-content-type-options']).toBe('nosniff');
       expect(response.headers).not.toHaveProperty('x-powered-by');
@@ -593,13 +611,6 @@ describe('Backend API Server', () => {
 
   describe('CORS Configuration', () => {
     it('should allow cross-origin requests from allowed origins', async () => {
-      mockPool.query.mockResolvedValueOnce({
-        rows: [{ count: '10' }]
-      });
-      mockPool.query.mockResolvedValueOnce({
-        rows: [{ count: '8' }]
-      });
-
       const response = await request(app)
         .get('/api/health')
         .set('Origin', 'http://localhost:5173')
@@ -836,7 +847,7 @@ describe('Backend API Server', () => {
   });
 
   describe('Keep-Alive Mechanism', () => {
-    it('should have health endpoint that returns totalPoems and servedPoems for keep-alive pings', async () => {
+    it('should have full health endpoint that returns totalPoems and servedPoems for keep-alive pings', async () => {
       // Mock successful database queries (total + served count)
       mockPool.query.mockResolvedValueOnce({
         rows: [{ count: '84329' }]
@@ -846,7 +857,7 @@ describe('Backend API Server', () => {
       });
 
       const response = await request(app)
-        .get('/api/health')
+        .get('/api/health/full')
         .expect('Content-Type', /json/)
         .expect(200);
 
@@ -858,21 +869,14 @@ describe('Backend API Server', () => {
       expect(response.body.servedPoems).toBe(4767);
     });
 
-    it('should respond quickly to health checks (< 100ms)', async () => {
-      mockPool.query.mockResolvedValueOnce({
-        rows: [{ count: '84329' }]
-      });
-      mockPool.query.mockResolvedValueOnce({
-        rows: [{ count: '4767' }]
-      });
-
+    it('should respond quickly to lightweight health checks (< 100ms)', async () => {
       const startTime = Date.now();
       await request(app)
         .get('/api/health')
         .expect(200);
       const duration = Date.now() - startTime;
 
-      // Health check should be very fast for keep-alive pings
+      // Lightweight health check should be very fast (no DB query)
       expect(duration).toBeLessThan(100);
     });
   });

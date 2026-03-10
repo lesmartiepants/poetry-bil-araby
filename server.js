@@ -230,8 +230,13 @@ const validate = (req, res, next) => {
   next();
 };
 
-// Health check endpoint
-app.get('/api/health', async (req, res) => {
+// Lightweight health check (no DB query — fast enough for Render's deploy probe)
+app.get('/api/health', (req, res) => {
+  res.json({ status: 'ok', uptime: process.uptime() });
+});
+
+// Full health check with database connectivity
+app.get('/api/health/full', async (req, res) => {
   try {
     const totalResult = await pool.query('SELECT COUNT(*) FROM poems');
     const qf = servingFilters();
@@ -242,11 +247,13 @@ app.get('/api/health', async (req, res) => {
       status: 'ok',
       database: 'connected',
       totalPoems: parseInt(totalResult.rows[0].count),
-      servedPoems: parseInt(servedResult.rows[0].count)
+      servedPoems: parseInt(servedResult.rows[0].count),
+      uptime: process.uptime(),
     });
   } catch (error) {
     res.status(500).json({
       status: 'error',
+      database: 'disconnected',
       message: error.message
     });
   }
@@ -1493,9 +1500,9 @@ if (currentFile === mainFile) {
       };
       
       const pingHealth = () => {
-        const url = process.env.RENDER_EXTERNAL_URL 
-          ? `${process.env.RENDER_EXTERNAL_URL}/api/health`
-          : `http://localhost:${PORT}/api/health`;
+        const url = process.env.RENDER_EXTERNAL_URL
+          ? `${process.env.RENDER_EXTERNAL_URL}/api/health/full`
+          : `http://localhost:${PORT}/api/health/full`;
         
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 10000);
@@ -1508,7 +1515,7 @@ if (currentFile === mainFile) {
             return res.json();
           })
           .then(data => {
-            console.log(`✓ Keep-alive ping successful - ${data.totalPoems} poems in database`);
+            console.log(`✓ Keep-alive ping successful - ${data.totalPoems ?? '?'} poems in database`);
 
             // Schedule next ping with new random interval
             keepAliveTimeout = setTimeout(() => {

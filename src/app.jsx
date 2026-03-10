@@ -1759,7 +1759,7 @@ const SplashScreen = ({ isOpen, onDismiss, showOnboarding, theme }) => {
           />
         ))}
 
-        {/* Brand — Arabic first */}
+        {/* Brand — poetry + بالعربي + feather */}
         <div
           style={{
             position: 'relative',
@@ -1767,23 +1767,10 @@ const SplashScreen = ({ isOpen, onDismiss, showOnboarding, theme }) => {
             display: 'flex',
             alignItems: 'flex-end',
             justifyContent: 'center',
-            gap: '0.5rem',
+            gap: '0.75rem',
             marginBottom: '0.75rem',
           }}
         >
-          <span
-            style={{
-              fontFamily: "'Reem Kufi', sans-serif",
-              fontWeight: 700,
-              fontSize: 'clamp(1.875rem, 4vw, 3rem)',
-              color: gold,
-              lineHeight: 1,
-            }}
-            dir="rtl"
-            lang="ar"
-          >
-            بالعربي
-          </span>
           <span
             style={{
               fontFamily: "'Forum', serif",
@@ -1796,6 +1783,27 @@ const SplashScreen = ({ isOpen, onDismiss, showOnboarding, theme }) => {
           >
             poetry
           </span>
+          <span
+            style={{
+              fontFamily: "'Reem Kufi', sans-serif",
+              fontWeight: 700,
+              fontSize: 'clamp(1.875rem, 4vw, 3rem)',
+              color: isDark ? '#D4D0C8' : '#1A1614',
+              lineHeight: 1,
+              paddingBottom: '0.15em',
+            }}
+            dir="rtl"
+            lang="ar"
+          >
+            بالعربي
+          </span>
+          <Feather style={{
+            width: 'clamp(24px, 4vw, 36px)',
+            height: 'clamp(24px, 4vw, 36px)',
+            color: gold,
+            opacity: 0.8,
+            marginBottom: '0.15em',
+          }} strokeWidth={1.5} />
         </div>
 
         {/* Subtitle */}
@@ -5069,17 +5077,33 @@ export default function DiwanApp() {
         className="fixed top-4 md:top-8 left-0 right-0 z-40 pointer-events-none transition-opacity duration-300 flex flex-row items-center justify-center gap-4 md:gap-8 px-4 md:px-6"
       >
         <div
-          className="flex flex-row items-center gap-3 md:gap-5 tracking-wide header-luminescence"
+          className="flex flex-row items-baseline gap-3 header-luminescence"
         >
-          <h1 className="flex items-baseline gap-2 md:gap-3">
-            <span className={`font-brand-ar text-[clamp(2.5rem,6vw,4.5rem)] font-bold leading-none ${darkMode ? 'text-stone-100' : 'text-stone-800'}`}>
-              بالعربي
-            </span>
-            <span className={`font-brand-en text-[clamp(1rem,2vw,1.5rem)] lowercase tracking-[0.15em] ${theme.goldText}`}>
+          <h1 className="flex items-baseline gap-3">
+            <span
+              className="font-brand-en text-[clamp(3rem,6vw,4.5rem)] leading-none tracking-[-0.05em]"
+              style={{
+                color: '#C5A059',
+                textShadow: '0 0 40px rgba(197,160,89,0.3)'
+              }}
+            >
               poetry
             </span>
+            <span
+              className="font-brand-ar text-[clamp(1.875rem,4vw,3rem)] font-bold leading-none"
+              style={{
+                color: darkMode ? '#D4D0C8' : '#1A1614',
+                paddingBottom: '0.15em'
+              }}
+            >
+              بالعربي
+            </span>
           </h1>
-          <Feather className={`w-6 h-6 md:w-8 md:h-8 opacity-80 ${theme.goldText}`} strokeWidth={1.5} />
+          <Feather
+            style={{ color: '#C5A059', opacity: 0.8 }}
+            className="w-[clamp(24px,4vw,36px)] h-[clamp(24px,4vw,36px)]"
+            strokeWidth={1.5}
+          />
         </div>
       </header>
 

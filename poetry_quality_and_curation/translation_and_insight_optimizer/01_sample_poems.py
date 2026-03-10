@@ -62,9 +62,8 @@ def load_scored_poems() -> pd.DataFrame:
                 po.name AS poet_name,
                 p.quality_score,
                 p.poem_form,
-                p.theme,
-                p.meter,
-                p.line_count
+                p.theme_id,
+                p.meter_id
             FROM poems p
             LEFT JOIN poets po ON p.poet_id = po.id
             WHERE p.quality_score >= 60
@@ -72,6 +71,10 @@ def load_scored_poems() -> pd.DataFrame:
               AND p.content != ''
         """
         df = pd.read_sql(query, conn)
+        # Compute line count from content
+        df["line_count"] = df["content"].apply(compute_line_count)
+        # Rename for compatibility
+        df.rename(columns={"theme_id": "theme", "meter_id": "meter"}, inplace=True)
         return df
     finally:
         conn.close()

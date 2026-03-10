@@ -251,6 +251,7 @@ app.get('/api/health/full', async (req, res) => {
       uptime: process.uptime(),
     });
   } catch (error) {
+    Sentry.captureException(error);
     res.status(500).json({
       status: 'error',
       database: 'disconnected',
@@ -322,6 +323,7 @@ app.get('/api/poems/random', [
     log.info('Poems', `Random poem: id=${poem.id}, poet=${poem.poet}, arabic_len=${formattedPoem.arabic?.length || 0}${poem.cached_translation ? ', has_translation' : ''}`);
     res.json(formattedPoem);
   } catch (error) {
+    Sentry.captureException(error);
     log.error('Poems', `Error fetching random poem: ${error.message}`, error.stack);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -731,7 +733,8 @@ app.post('/api/ai/:model/:action', async (req, res) => {
       return res.status(503).json({ error: 'AI features unavailable: no API key configured' });
     }
 
-    const url = `${GEMINI_BASE}/models/${model}:${action}?key=${GEMINI_API_KEY}`;
+    const sseParam = action === 'streamGenerateContent' ? '&alt=sse' : '';
+    const url = `${GEMINI_BASE}/models/${model}:${action}?key=${GEMINI_API_KEY}${sseParam}`;
 
     if (action === 'streamGenerateContent') {
       const controller = new AbortController();

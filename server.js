@@ -1473,7 +1473,10 @@ if (currentFile === mainFile) {
           ? `${process.env.RENDER_EXTERNAL_URL}/api/health`
           : `http://localhost:${PORT}/api/health`;
         
-        fetch(url)
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+        fetch(url, { signal: controller.signal })
           .then(res => {
             if (!res.ok) {
               throw new Error(`HTTP ${res.status}: ${res.statusText}`);
@@ -1482,7 +1485,7 @@ if (currentFile === mainFile) {
           })
           .then(data => {
             console.log(`✓ Keep-alive ping successful - ${data.totalPoems} poems in database`);
-            
+
             // Schedule next ping with new random interval
             keepAliveTimeout = setTimeout(() => {
               pingHealth();
@@ -1490,11 +1493,14 @@ if (currentFile === mainFile) {
           })
           .catch(err => {
             console.error(`⚠ Keep-alive ping failed (${url}):`, err.message);
-            
+
             // Retry with new random interval even on failure
             keepAliveTimeout = setTimeout(() => {
               pingHealth();
             }, getRandomInterval());
+          })
+          .finally(() => {
+            clearTimeout(timeoutId);
           });
       };
       

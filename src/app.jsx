@@ -1776,10 +1776,9 @@ const SplashScreen = ({ isOpen, onDismiss, showOnboarding, theme }) => {
             style={{
               fontFamily: "'Reem Kufi', sans-serif",
               fontWeight: 700,
-              fontSize: 'clamp(1.875rem, 4vw, 3rem)',
+              fontSize: 'clamp(3rem, 6vw, 4.5rem)',
               color: isDark ? '#D4D0C8' : '#1A1614',
               lineHeight: 1,
-              paddingBottom: '0.15em',
             }}
             dir="rtl"
             lang="ar"
@@ -1789,7 +1788,7 @@ const SplashScreen = ({ isOpen, onDismiss, showOnboarding, theme }) => {
           <span
             style={{
               fontFamily: "'Forum', serif",
-              fontSize: 'clamp(3rem, 6vw, 4.5rem)',
+              fontSize: 'clamp(1.25rem, 2.5vw, 1.75rem)',
               letterSpacing: '-0.05em',
               color: gold,
               lineHeight: 1,
@@ -5084,20 +5083,20 @@ export default function DiwanApp() {
             <span style={{
               fontFamily: "'Reem Kufi', sans-serif",
               fontWeight: 700,
-              fontSize: 'clamp(1.875rem, 4vw, 3rem)',
+              fontSize: 'clamp(3rem, 6vw, 4.5rem)',
               lineHeight: 1,
               color: darkMode ? '#D4D0C8' : '#1A1614',
-              paddingBottom: '0.15em',
             }}>
               بالعربي
             </span>
             <span style={{
               fontFamily: "'Forum', serif",
-              fontSize: 'clamp(3rem, 6vw, 4.5rem)',
+              fontSize: 'clamp(1.25rem, 2.5vw, 1.75rem)',
               letterSpacing: '-0.05em',
               lineHeight: 1,
               color: '#C5A059',
               textShadow: '0 0 40px rgba(197,160,89,0.3)',
+              paddingBottom: '0.15em',
             }}>
               poetry
             </span>

@@ -62,7 +62,8 @@ IMPORTANT: Choose poems that are at most 40 lines long. If a poem is longer, sel
  * @returns {string} The formatted TTS instruction
  */
 export const getTTSInstruction = (poem, poet, mood, era) => {
-  return `You are a legendary Arabic sha'ir (poet-orator) performing a live inshad recitation of a poem by ${poet} from the ${era} era. ` +
+  return (
+    `You are a legendary Arabic sha'ir (poet-orator) performing a live inshad recitation of a poem by ${poet} from the ${era} era. ` +
     `This is a PERFORMANCE, not a reading — deliver it with the full emotional power and artistic craft of classical Arabic oral tradition. ` +
     `This poem's mood is ${mood}. ` +
     `DELIVERY RULES: ` +
@@ -73,5 +74,14 @@ export const getTTSInstruction = (poem, poet, mood, era) => {
     `5. STRESS the end-rhyme (qafiya) of each verse with a clear, ringing cadence. ` +
     `6. Let your voice SWELL and RECEDE with the emotional arc — build intensity toward the poem's peak, then resolve with gravity. ` +
     `7. Avoid flat, monotone delivery at all costs — every line must feel alive and intentional. ` +
-    `Poem:\n${poem.arabic}`;
+    `Poem:\n${poem.arabic}`
+  );
+};
+
+/**
+ * Shortened TTS Instruction (~200 chars prompt) for faster TTFB.
+ * Used when FEATURES.ttsFastPrompt is true.
+ */
+export const getTTSInstructionShort = (poem, poet, mood, era) => {
+  return `Recite this ${mood} Arabic poem by ${poet} (${era}) with expressive inshad style. Project emotion, vary pace, stress the qafiya.\nPoem:\n${poem.arabic}`;
 };

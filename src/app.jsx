@@ -598,10 +598,7 @@ const prefetchManager = {
       if (activeRequests) activeRequests.current.add(poemId);
 
       // Generate audio using same logic as togglePlay
-      const mood = poem?.tags?.[1] || 'Poetic';
-      const era = poem?.tags?.[0] || 'Classical';
-      const poet = poem?.poet || 'the Master Poet';
-      const ttsInstruction = getTTSInstruction(poem, poet, mood, era);
+      const ttsInstruction = getTTSInstruction(poem);
 
       const requestSize = new Blob([
         JSON.stringify({ contents: [{ parts: [{ text: ttsInstruction }] }] }),
@@ -3813,10 +3810,7 @@ export default function DiwanApp() {
     // Mark request as in-flight
     activeAudioRequests.current.add(current?.id);
 
-    const mood = current?.tags?.[1] || 'Poetic';
-    const era = current?.tags?.[0] || 'Classical';
-    const poet = current?.poet || 'the Master Poet';
-    const ttsInstruction = getTTSInstruction(current, poet, mood, era);
+    const ttsInstruction = getTTSInstruction(current);
 
     // Calculate request metrics
     const requestSize = new Blob([

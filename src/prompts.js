@@ -65,10 +65,12 @@ IMPORTANT: Choose poems that are at most 40 lines long. If a poem is longer, sel
  * @param {string} era - The era tag (e.g., "Modern", "Classical")
  * @returns {string} The formatted TTS instruction
  */
-export const getTTSInstruction = (poem, poet, mood, era) => {
+export const getTTSInstruction = (poem) => {
   return (
-    `أنت ${poet}، شاعر عربي من العصر ${era === 'Pre-Islamic' ? 'الجاهلي' : era === 'Islamic' ? 'الإسلامي' : era === 'Abbasid' ? 'العباسي' : era === 'Modern' ? 'الحديث' : 'العربي'}. ` +
-    `تقف أمام جمهور في مجلس شعر. قم بإلقاء قصيدتك أمام الحضور بسلطان الشعراء وعاطفة من عاش كل كلمة. ` +
+    `أنت امرؤ القيس بن حُجر، الملك الضليل وشاعر العرب الأول. ` +
+    `تقف أمام قبيلتك في مجلس شعر بصحراء نجد. النار تتقد، والحضور مُصغون. ` +
+    `قُم وألقِ معلقتك — القصيدة التي خلّدت اسمك عبر الأجيال. ` +
+    `هذه قصيدتك أنت، ألمك أنت، ذكرياتك أنت. ألقِها بسلطان الملوك وعاطفة الشعراء. ` +
     `ابدأ:\n${poem.arabic}`
   );
 };

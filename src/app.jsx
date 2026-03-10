@@ -48,7 +48,8 @@ import {
 import {
   INSIGHTS_SYSTEM_PROMPT,
   DISCOVERY_SYSTEM_PROMPT,
-  getTTSInstruction,
+  TTS_SYSTEM_PROMPT,
+  getTTSContent,
 } from './prompts';
 import { parseInsight } from './utils/insightParser';
 import { repairAndParseJSON } from './utils/jsonRepair';
@@ -599,12 +600,22 @@ const prefetchManager = {
       if (activeRequests) activeRequests.current.add(poemId);
 
       // Generate audio using same logic as togglePlay
-      const ttsInstruction = getTTSInstruction(poem);
+      const ttsContent = getTTSContent(poem);
 
-      const requestSize = new Blob([
-        JSON.stringify({ contents: [{ parts: [{ text: ttsInstruction }] }] }),
-      ]).size;
-      const estimatedTokens = Math.ceil(ttsInstruction.length / 4);
+      const requestBody = JSON.stringify({
+        contents: [{ parts: [{ text: ttsContent }] }],
+        systemInstruction: { parts: [{ text: TTS_SYSTEM_PROMPT }] },
+        generationConfig: {
+          responseModalities: TTS_CONFIG.responseModalities,
+          speechConfig: {
+            voiceConfig: {
+              prebuiltVoiceConfig: { voiceName: TTS_CONFIG.voiceName },
+            },
+          },
+        },
+      });
+      const requestSize = new Blob([requestBody]).size;
+      const estimatedTokens = Math.ceil(ttsContent.length / 4);
 
       if (addLog) {
         addLog(
@@ -619,17 +630,7 @@ const prefetchManager = {
       const fetchOptions = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: ttsInstruction }] }],
-          generationConfig: {
-            responseModalities: TTS_CONFIG.responseModalities,
-            speechConfig: {
-              voiceConfig: {
-                prebuiltVoiceConfig: { voiceName: TTS_CONFIG.voiceName },
-              },
-            },
-          },
-        }),
+        body: requestBody,
       };
       const res = await fetchWithRetry(url, fetchOptions, { addLog, label: 'Prefetch Audio' });
 
@@ -1759,7 +1760,7 @@ const SplashScreen = ({ isOpen, onDismiss, showOnboarding, theme }) => {
           />
         ))}
 
-        {/* Brand — poetry + بالعربي + feather */}
+        {/* Brand — بالعربي + poetry + feather */}
         <div
           style={{
             position: 'relative',
@@ -1773,19 +1774,6 @@ const SplashScreen = ({ isOpen, onDismiss, showOnboarding, theme }) => {
         >
           <span
             style={{
-              fontFamily: "'Forum', serif",
-              fontSize: 'clamp(3rem, 6vw, 4.5rem)',
-              letterSpacing: '-0.05em',
-              color: gold,
-              lineHeight: 1,
-              textShadow: '0 0 40px rgba(197,160,89,0.3)',
-              paddingBottom: '0.15em',
-            }}
-          >
-            poetry
-          </span>
-          <span
-            style={{
               fontFamily: "'Reem Kufi', sans-serif",
               fontWeight: 700,
               fontSize: 'clamp(1.875rem, 4vw, 3rem)',
@@ -1797,6 +1785,19 @@ const SplashScreen = ({ isOpen, onDismiss, showOnboarding, theme }) => {
             lang="ar"
           >
             بالعربي
+          </span>
+          <span
+            style={{
+              fontFamily: "'Forum', serif",
+              fontSize: 'clamp(3rem, 6vw, 4.5rem)',
+              letterSpacing: '-0.05em',
+              color: gold,
+              lineHeight: 1,
+              textShadow: '0 0 40px rgba(197,160,89,0.3)',
+              paddingBottom: '0.15em',
+            }}
+          >
+            poetry
           </span>
           <Feather style={{
             width: 'clamp(24px, 4vw, 36px)',
@@ -3822,19 +3823,28 @@ export default function DiwanApp() {
     // Mark request as in-flight
     activeAudioRequests.current.add(current?.id);
 
-    const ttsInstruction = getTTSInstruction(current);
+    const ttsContent = getTTSContent(current);
 
     // Calculate request metrics
-    const requestSize = new Blob([
-      JSON.stringify({ contents: [{ parts: [{ text: ttsInstruction }] }] }),
-    ]).size;
-    const estimatedTokens = Math.ceil(ttsInstruction.length / 4);
-    const instructionChars = ttsInstruction.length;
+    const requestBody = JSON.stringify({
+      contents: [{ parts: [{ text: ttsContent }] }],
+      systemInstruction: { parts: [{ text: TTS_SYSTEM_PROMPT }] },
+      generationConfig: {
+        responseModalities: TTS_CONFIG.responseModalities,
+        speechConfig: {
+          voiceConfig: {
+            prebuiltVoiceConfig: { voiceName: TTS_CONFIG.voiceName },
+          },
+        },
+      },
+    });
+    const requestSize = new Blob([requestBody]).size;
+    const estimatedTokens = Math.ceil(ttsContent.length / 4);
     const arabicTextChars = current?.arabic?.length || 0;
 
     addLog(
       'Audio API',
-      `→ Starting generation | Request: ${(requestSize / 1024).toFixed(1)}KB | ${instructionChars} chars (${arabicTextChars} Arabic) | Est. ${estimatedTokens} tokens`,
+      `→ Starting generation | Request: ${(requestSize / 1024).toFixed(1)}KB | ${arabicTextChars} chars Arabic | Est. ${estimatedTokens} tokens`,
       'info'
     );
 
@@ -3846,17 +3856,7 @@ export default function DiwanApp() {
       const fetchOptions = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: ttsInstruction }] }],
-          generationConfig: {
-            responseModalities: TTS_CONFIG.responseModalities,
-            speechConfig: {
-              voiceConfig: {
-                prebuiltVoiceConfig: { voiceName: TTS_CONFIG.voiceName },
-              },
-            },
-          },
-        }),
+        body: requestBody,
       };
       const res = await fetchWithRetry(url, fetchOptions, { addLog, label: 'Audio API' });
 
@@ -5082,16 +5082,6 @@ export default function DiwanApp() {
         >
           <h1 style={{ display: 'flex', alignItems: 'baseline', gap: '0.75rem', margin: 0 }}>
             <span style={{
-              fontFamily: "'Forum', serif",
-              fontSize: 'clamp(3rem, 6vw, 4.5rem)',
-              letterSpacing: '-0.05em',
-              lineHeight: 1,
-              color: '#C5A059',
-              textShadow: '0 0 40px rgba(197,160,89,0.3)',
-            }}>
-              poetry
-            </span>
-            <span style={{
               fontFamily: "'Reem Kufi', sans-serif",
               fontWeight: 700,
               fontSize: 'clamp(1.875rem, 4vw, 3rem)',
@@ -5100,6 +5090,16 @@ export default function DiwanApp() {
               paddingBottom: '0.15em',
             }}>
               بالعربي
+            </span>
+            <span style={{
+              fontFamily: "'Forum', serif",
+              fontSize: 'clamp(3rem, 6vw, 4.5rem)',
+              letterSpacing: '-0.05em',
+              lineHeight: 1,
+              color: '#C5A059',
+              textShadow: '0 0 40px rgba(197,160,89,0.3)',
+            }}>
+              poetry
             </span>
           </h1>
           <Feather

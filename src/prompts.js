@@ -55,26 +55,21 @@ IMPORTANT: Choose poems that are at most 40 lines long. If a poem is longer, sel
  * Text-to-Speech (TTS) Instruction Generator
  * Used by: togglePlay, prefetchAudio
  *
+ * Arabic role-play prompt (Prompt K) — scene-setting approach that produces
+ * the most authentic Arabic poetry recitation. The model inhabits the poet
+ * rather than following a rule list.
+ *
  * @param {Object} poem - The poem object containing arabic text and metadata
- * @param {string} poet - The poet's name
+ * @param {string} poet - The poet's name (Arabic)
  * @param {string} mood - The mood tag (e.g., "Romantic", "Mystical")
  * @param {string} era - The era tag (e.g., "Modern", "Classical")
  * @returns {string} The formatted TTS instruction
  */
 export const getTTSInstruction = (poem, poet, mood, era) => {
   return (
-    `You are a legendary Arabic sha'ir (poet-orator) performing a live inshad recitation of a poem by ${poet} from the ${era} era. ` +
-    `This is a PERFORMANCE, not a reading — deliver it with the full emotional power and artistic craft of classical Arabic oral tradition. ` +
-    `This poem's mood is ${mood}. ` +
-    `DELIVERY RULES: ` +
-    `1. PROJECT your voice with authority and presence from the very first word. ` +
-    `2. EMPHASIZE key words and emotionally charged lines — let them land with weight and resonance. ` +
-    `3. USE dramatic pauses before and after powerful lines to let them breathe and sink in. ` +
-    `4. VARY your tempo dynamically: slow to a commanding halt for profound or painful lines, surge forward with energy for triumphant or passionate ones. ` +
-    `5. STRESS the end-rhyme (qafiya) of each verse with a clear, ringing cadence. ` +
-    `6. Let your voice SWELL and RECEDE with the emotional arc — build intensity toward the poem's peak, then resolve with gravity. ` +
-    `7. Avoid flat, monotone delivery at all costs — every line must feel alive and intentional. ` +
-    `Poem:\n${poem.arabic}`
+    `أنت ${poet}، شاعر عربي من العصر ${era === 'Pre-Islamic' ? 'الجاهلي' : era === 'Islamic' ? 'الإسلامي' : era === 'Abbasid' ? 'العباسي' : era === 'Modern' ? 'الحديث' : 'العربي'}. ` +
+    `تقف أمام جمهور في مجلس شعر. قم بإلقاء قصيدتك أمام الحضور بسلطان الشعراء وعاطفة من عاش كل كلمة. ` +
+    `ابدأ:\n${poem.arabic}`
   );
 };
 

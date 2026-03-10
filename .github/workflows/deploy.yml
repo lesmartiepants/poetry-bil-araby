@@ -72,8 +72,10 @@ jobs:
       - name: Build for production
         run: npm run build
         env:
-          # Add production env vars here or use secrets
           NODE_ENV: production
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: siraj-aq
+          SENTRY_PROJECT: poetry-bil-araby
 
       # Placeholder for deployment target (Vercel, Netlify, GitHub Pages)
       - name: Deploy to production

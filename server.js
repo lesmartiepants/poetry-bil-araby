@@ -375,6 +375,7 @@ app.get('/api/poems/by-poet/:poet', [
     log.info('Poems', `By poet "${poet}": returned ${poems.length} poems`);
     res.json(poems);
   } catch (error) {
+    Sentry.captureException(error);
     log.error('Poems', `Error fetching poems by poet: ${error.message}`, error.stack);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -399,6 +400,7 @@ app.get('/api/poets', async (req, res) => {
     log.info('Poets', `Returned ${result.rows.length} poets`);
     res.json(result.rows);
   } catch (error) {
+    Sentry.captureException(error);
     log.error('Poets', `Error fetching poets: ${error.message}`, error.stack);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -446,6 +448,7 @@ app.get('/api/poems/search', [
     log.info('Search', `Query "${q}": returned ${poems.length} results`);
     res.json(poems);
   } catch (error) {
+    Sentry.captureException(error);
     log.error('Search', `Error searching poems: ${error.message}`, error.stack);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -543,6 +546,7 @@ app.get('/api/poems/:id', [
     log.info('Poems', `By ID: ${id}, poet=${poem.poet}`);
     res.json(formattedPoem);
   } catch (error) {
+    Sentry.captureException(error);
     log.error('Poems', `Error fetching poem by ID: ${error.message}`, error.stack);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -589,6 +593,7 @@ app.post('/api/poems/:id/translation', translationWriteLimit, [
     log.info('Translation', `Saved translation for poem ${req.params.id}`);
     res.json({ status: 'saved' });
   } catch (error) {
+    Sentry.captureException(error);
     log.error('Translation', `Error saving translation: ${error.message}`, error.stack);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -620,6 +625,7 @@ app.post('/api/poems/:id/downvote', poemEventLimit, [
     log.info('PoemEvents', `Downvote recorded: poem=${req.params.id}, user=${userId}`);
     res.json({ status: 'downvoted' });
   } catch (error) {
+    Sentry.captureException(error);
     log.error('PoemEvents', `Error recording downvote: ${error.message}`, error.stack);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -643,6 +649,7 @@ app.delete('/api/poems/:id/downvote', poemEventLimit, [
     log.info('PoemEvents', `Downvote removed: poem=${req.params.id}, user=${userId}`);
     res.json({ status: 'removed' });
   } catch (error) {
+    Sentry.captureException(error);
     log.error('PoemEvents', `Error removing downvote: ${error.message}`, error.stack);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -683,6 +690,7 @@ app.post('/api/poems/:id/event', poemEventLimit, [
     log.info('PoemEvents', `Event recorded: type=${eventType}, poem=${req.params.id}, user=${userId}`);
     res.json({ status: 'recorded' });
   } catch (error) {
+    Sentry.captureException(error);
     log.error('PoemEvents', `Error recording event: ${error.message}`, error.stack);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -708,6 +716,7 @@ app.get('/api/ai/models', async (req, res) => {
     }
     res.json(data);
   } catch (error) {
+    Sentry.captureException(error);
     log.error('AI Proxy', `Model listing failed: ${error.message}`);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -782,6 +791,7 @@ app.post('/api/ai/:model/:action', async (req, res) => {
       res.json(data);
     }
   } catch (error) {
+    Sentry.captureException(error);
     log.error('AI Proxy', `Proxy failed: ${error.message}`);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -807,6 +817,7 @@ app.get('/api/design-review/ping', async (req, res) => {
     await pool.query('SELECT 1');
     res.json({ ok: true });
   } catch (error) {
+    Sentry.captureException(error);
     log.error('DesignReview', `Ping error: ${error.message}`);
     res.status(500).json({ ok: false, error: 'Internal server error' });
   }
@@ -826,6 +837,7 @@ app.get('/api/design-review/items', async (req, res) => {
     const result = await pool.query(query, params);
     res.json(result.rows);
   } catch (error) {
+    Sentry.captureException(error);
     log.error('DesignReview', `Error fetching design items: ${error.message}`);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -862,6 +874,7 @@ app.post('/api/design-review/items/sync', requireApiKey, async (req, res) => {
 
     res.json({ upserted: items.length, total: items.length });
   } catch (error) {
+    Sentry.captureException(error);
     log.error('DesignReview', `Error syncing design items: ${error.message}`);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -885,6 +898,7 @@ app.get('/api/design-review/sessions', async (req, res) => {
     const result = await pool.query(query, params);
     res.json(result.rows);
   } catch (error) {
+    Sentry.captureException(error);
     log.error('DesignReview', `Error fetching sessions: ${error.message}`);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -899,6 +913,7 @@ app.get('/api/design-review/sessions/:id', async (req, res) => {
     if (result.rows.length === 0) return res.status(404).json({ error: 'Session not found' });
     res.json(result.rows[0]);
   } catch (error) {
+    Sentry.captureException(error);
     log.error('DesignReview', `Error fetching session: ${error.message}`);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -921,6 +936,7 @@ app.post('/api/design-review/sessions', requireApiKey, async (req, res) => {
     `, [reviewer || 'owner', branch || null, commit_sha || null, round_number, total_designs || 0]);
     res.status(201).json(result.rows[0]);
   } catch (error) {
+    Sentry.captureException(error);
     log.error('DesignReview', `Error creating session: ${error.message}`);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -948,6 +964,7 @@ app.patch('/api/design-review/sessions/:id', requireApiKey, async (req, res) => 
     if (result.rows.length === 0) return res.status(404).json({ error: 'Session not found' });
     res.json(result.rows[0]);
   } catch (error) {
+    Sentry.captureException(error);
     log.error('DesignReview', `Error updating session: ${error.message}`);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -964,6 +981,7 @@ app.get('/api/design-review/sessions/:id/verdicts', async (req, res) => {
     );
     res.json(result.rows);
   } catch (error) {
+    Sentry.captureException(error);
     log.error('DesignReview', `Error fetching verdicts: ${error.message}`);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -1051,6 +1069,7 @@ app.post('/api/design-review/sessions/:id/verdicts', requireApiKey, async (req, 
 
     res.json({ saved: resolved.length, total: verdicts.length });
   } catch (error) {
+    Sentry.captureException(error);
     log.error('DesignReview', `Error saving verdicts: ${error.message}`);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -1090,6 +1109,7 @@ app.get('/api/design-review/summary', async (req, res) => {
       verdicts: verdictCounts
     });
   } catch (error) {
+    Sentry.captureException(error);
     log.error('DesignReview', `Error fetching summary: ${error.message}`);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -1189,6 +1209,7 @@ app.get('/api/design-review/claude-context', async (req, res) => {
       }
     });
   } catch (error) {
+    Sentry.captureException(error);
     log.error('DesignReview', `Error building claude context: ${error.message}`);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -1237,6 +1258,7 @@ app.post('/api/design-review/feedback-actions', requireApiKey, async (req, res) 
 
     res.json({ saved: result.rows.length });
   } catch (error) {
+    Sentry.captureException(error);
     log.error('DesignReview', `Error saving feedback actions: ${error.message}`);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -1259,6 +1281,7 @@ app.get('/api/design-review/feedback-actions', async (req, res) => {
     const result = await pool.query(sql, params);
     res.json(result.rows);
   } catch (error) {
+    Sentry.captureException(error);
     log.error('DesignReview', `Error fetching feedback actions: ${error.message}`);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -1295,6 +1318,7 @@ app.patch('/api/design-review/feedback-actions/:id', requireApiKey, async (req, 
     if (result.rows.length === 0) return res.status(404).json({ error: 'Feedback action not found' });
     res.json(result.rows[0]);
   } catch (error) {
+    Sentry.captureException(error);
     log.error('DesignReview', `Error updating feedback action: ${error.message}`);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -1378,6 +1402,7 @@ async function createGitHubIssue(report, truncatedLogs) {
     log.info('BugReport', `GitHub issue created: #${issue.number}`, { url: issue.html_url });
     return issue.number;
   } catch (e) {
+    Sentry.captureException(e);
     log.error('BugReport', `GitHub issue creation error: ${e.message}`);
     return null;
   }
@@ -1463,6 +1488,7 @@ app.post('/api/bug-reports', rateLimit({ windowMs: 60_000, max: 10, standardHead
       ...(issueNumber && { githubIssue: issueNumber }),
     });
   } catch (error) {
+    Sentry.captureException(error);
     log.error('BugReport', `Error processing bug report: ${error.message}`);
     res.status(500).json({ error: 'Internal server error' });
   }

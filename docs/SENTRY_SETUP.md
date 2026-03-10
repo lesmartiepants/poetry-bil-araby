@@ -2,58 +2,75 @@
 
 This guide walks through configuring Sentry for Poetry Bil-Araby. The integration is already wired into both the frontend and backend -- you just need to provide a DSN.
 
+## Architecture
+
+| Layer | File | What it does |
+|-------|------|-------------|
+| Frontend init | `src/sentry.js` | Calls `Sentry.init()` with browser tracing + session replay when `VITE_SENTRY_DSN` is set |
+| React errors | `src/main.jsx` | Wraps app in `Sentry.ErrorBoundary` to catch render errors |
+| Frontend capture | `src/app.jsx` | `Sentry.captureException()` in catch blocks for discovery, insights, audio, bug reports |
+| Backend init | `server.js:1-15` | Calls `Sentry.init()` when `SENTRY_DSN` is set |
+| Express handler | `server.js:~1483` | `Sentry.setupExpressErrorHandler(app)` catches unhandled route errors |
+| Backend capture | `server.js` | `Sentry.captureException()` in all API route catch blocks |
+| Source maps | `vite.config.js` | `@sentry/vite-plugin` uploads source maps during production builds |
+
 ## Step 1: Create a Sentry Project
 
 1. Go to [sentry.io](https://sentry.io) and sign up or log in
 2. Click **Create Project**
 3. Select platform: **React** (for frontend) or **Node.js Express** (for backend)
-   - You can use a single project for both, or separate projects for independent dashboards
-4. Name it (e.g., `poetry-bil-araby`) and click **Create Project**
-5. Copy the **DSN** from **Project Settings > Client Keys (DSN)**
-   - It looks like: `https://abc123@o456.ingest.sentry.io/789`
+   - You can use a single project for both (we use `poetry-bil-araby`)
+4. Copy the **DSN** from **Project Settings > Client Keys (DSN)**
+   - It looks like: `https://abc123@o456.ingest.us.sentry.io/789`
 
 ## Step 2: Configure Environment Variables
 
 ### Vercel (frontend)
 
-1. Go to [vercel.com](https://vercel.com) > your project > **Settings** > **Environment Variables**
-2. Add:
-   - **Name**: `VITE_SENTRY_DSN`
-   - **Value**: your frontend DSN
-3. Redeploy for the change to take effect
+Add these in **Settings > Environment Variables**:
+
+| Variable | Description |
+|----------|-------------|
+| `VITE_SENTRY_DSN` | Frontend DSN |
+| `SENTRY_AUTH_TOKEN` | Auth token for source map uploads (generate at sentry.io > Settings > Auth Tokens) |
+| `SENTRY_ORG` | `siraj-aq` |
+| `SENTRY_PROJECT` | `poetry-bil-araby` |
+
+**Auth token scopes required:** `project:releases`, `org:read`, `project:write`
 
 ### Render (backend)
 
-1. Go to [render.com](https://render.com) > your service > **Environment**
-2. Add:
-   - **Key**: `SENTRY_DSN`
-   - **Value**: your backend DSN
+Add in **Environment**:
+
+| Variable | Description |
+|----------|-------------|
+| `SENTRY_DSN` | Backend DSN |
+
+### GitHub Actions (CI/CD)
+
+Add as repository secrets:
+
+| Secret | Description |
+|--------|-------------|
+| `SENTRY_AUTH_TOKEN` | For source map upload during production builds |
+
+The org and project are hardcoded in `.github/workflows/deploy.yml`.
 
 ### Local development
 
-Add both to your `.env` file:
+Add to your `.env` file:
 
 ```bash
-VITE_SENTRY_DSN=https://xxx@xxx.ingest.sentry.io/xxx
-SENTRY_DSN=https://xxx@xxx.ingest.sentry.io/xxx
+VITE_SENTRY_DSN=https://xxx@xxx.ingest.us.sentry.io/xxx
+SENTRY_DSN=https://xxx@xxx.ingest.us.sentry.io/xxx
+SENTRY_ORG=siraj-aq
+SENTRY_PROJECT=poetry-bil-araby
+SENTRY_AUTH_TOKEN=sntrys_...  # Only needed for source map uploads during local builds
 ```
 
-If you use the same Sentry project for both, these can be the same DSN.
+If you use the same Sentry project for both frontend and backend, the DSNs can be the same.
 
-## Step 3: Verify -- Nothing Else to Code
-
-The integration is already in place:
-
-| Layer | File | What it does |
-|-------|------|-------------|
-| Frontend init | `src/sentry.js` | Calls `Sentry.init()` when `VITE_SENTRY_DSN` is set |
-| React errors | `src/ErrorBoundary.jsx` | Catches render errors and calls `Sentry.captureException()` |
-| Backend init | `server.js:16-22` | Calls `Sentry.init()` when `SENTRY_DSN` is set |
-| Express errors | `server.js:1076` | `Sentry.setupExpressErrorHandler(app)` captures unhandled route errors |
-
-Both frontend and backend set `tracesSampleRate: 0` (performance monitoring disabled, planned for v1.2).
-
-## Step 4: Verify It Works
+## Step 3: Verify It Works
 
 ### Frontend
 
@@ -73,32 +90,41 @@ Both frontend and backend set `tracesSampleRate: 0` (performance monitoring disa
    ```
 3. Check Sentry dashboard > **Issues** for the unhandled error
 
-## Step 5 (Optional): Source Maps
+## Configuration Details
 
-For readable stack traces in production, upload source maps during the Vite build:
+### Sample Rates
 
-1. Install the plugin:
-   ```bash
-   npm install @sentry/vite-plugin --save-dev
-   ```
+| Feature | Production | Development |
+|---------|-----------|-------------|
+| `tracesSampleRate` | 0.2 (20%) | 1.0 (100%) |
+| `replaysSessionSampleRate` | 0.1 (10%) | 0.1 (10%) |
+| `replaysOnErrorSampleRate` | 1.0 (100%) | 1.0 (100%) |
 
-2. Add to `vite.config.js`:
-   ```js
-   import { sentryVitePlugin } from '@sentry/vite-plugin';
+### Distributed Tracing
 
-   export default defineConfig({
-     build: { sourcemap: true },
-     plugins: [
-       // ... existing plugins
-       sentryVitePlugin({
-         org: 'your-sentry-org',
-         project: 'your-sentry-project',
-         authToken: process.env.SENTRY_AUTH_TOKEN,
-       }),
-     ],
-   });
-   ```
+Frontend traces are propagated to the backend via the `sentry-trace` and `baggage` headers. The CORS config in `server.js` already allows these headers. Trace propagation targets:
+- `localhost` (development)
+- `*.onrender.com` (production backend)
 
-3. Add `SENTRY_AUTH_TOKEN` to your Vercel environment variables (generate at sentry.io > Settings > Auth Tokens)
+### Session Replay
 
-This uploads source maps on every build so Sentry can show original file names and line numbers in error reports.
+Session Replay is enabled on the frontend (`src/sentry.js`):
+- 10% of normal sessions are recorded
+- 100% of sessions with errors are recorded
+
+This provides full DOM replay for debugging user-reported issues.
+
+### Source Maps
+
+Source maps are uploaded during production builds via `@sentry/vite-plugin` in `vite.config.js`. The plugin:
+- Uploads maps to Sentry for readable stack traces
+- Deletes `.map` files from the build output (`filesToDeleteAfterUpload`)
+- Is disabled when `SENTRY_AUTH_TOKEN` is not set (local dev without token)
+
+### Explicit Error Capture
+
+Both frontend and backend use `Sentry.captureException(error)` in catch blocks to ensure errors that are handled (and would otherwise be swallowed) still get reported to Sentry. This covers:
+
+**Backend (`server.js`):** All API route errors including health check, poems, poets, search, translation, events, AI proxy, design review, and bug reports.
+
+**Frontend (`src/app.jsx`):** Discovery errors, analysis/insight errors, audio system errors, bug report submission errors, and daily poem loading errors.

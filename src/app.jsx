@@ -37,6 +37,7 @@ import {
   ThumbsDown,
 } from 'lucide-react';
 import { track } from '@vercel/analytics';
+import Sentry from './sentry.js';
 import {
   useAuth,
   useUserSettings,
@@ -1019,6 +1020,7 @@ const DebugPanel = ({ logs, onClear, darkMode, poem, appState }) => {
       setBugDescription('');
       setTimeout(() => setBugStatus(null), 3000);
     } catch (e) {
+      Sentry.captureException(e);
       setBugStatus('error');
       setBugError(e.message || 'Network error');
       setTimeout(() => setBugStatus(null), 5000);
@@ -3312,6 +3314,7 @@ export default function DiwanApp() {
           } catch {}
         }
       } catch (err) {
+        Sentry.captureException(err);
         addLog('Daily', `Failed to load: ${err.message}`, 'error');
       }
     })();
@@ -3940,6 +3943,7 @@ export default function DiwanApp() {
         }
       }
     } catch (e) {
+      Sentry.captureException(e);
       addLog('Audio System Error', `${e.message} | Poem ID: ${current?.id}`, 'error');
       track('audio_error', { error: (e.message || '').slice(0, 100) });
       setIsPlaying(false);
@@ -4233,6 +4237,7 @@ export default function DiwanApp() {
         cached: !!(FEATURES.caching && current?.id && insightText),
       });
     } catch (e) {
+      Sentry.captureException(e);
       addLog('Analysis Error', `${e.message} | Poem ID: ${current?.id}`, 'error');
       track('insight_error', { error: (e.message || '').slice(0, 100) });
       // Show partial results if streaming was interrupted
@@ -4443,6 +4448,7 @@ export default function DiwanApp() {
         window.history.replaceState({}, '', '/');
       }
     } catch (e) {
+      Sentry.captureException(e);
       addLog(
         'Discovery Error',
         `${e.message} | Source: ${useDatabase ? 'Database' : 'Gemini'}`,

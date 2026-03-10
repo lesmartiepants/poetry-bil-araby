@@ -76,8 +76,8 @@ async function setupRouteMocks(page, { poem = MOCK_POEM_DARWISH } = {}) {
     });
   });
 
-  // Block Gemini API calls (no real AI needed)
-  await page.route('**/generativelanguage.googleapis.com/**', async (route) => {
+  // Block Gemini AI proxy calls (no real AI needed)
+  await page.route('**/api/ai/**', async (route) => {
     await route.abort('blockedbyclient');
   });
 }
@@ -122,7 +122,7 @@ test.describe('User Flows', () => {
   // #2 — Audio playback loading state
   test('user requests audio playback', async ({ page }) => {
     // Set up a delayed Gemini TTS response to observe loading state
-    await page.route('**/generativelanguage.googleapis.com/**', async (route) => {
+    await page.route('**/api/ai/**', async (route) => {
       // Simulate slow TTS — respond after 500ms with an error (no real audio needed)
       await new Promise(r => setTimeout(r, 500));
       await route.fulfill({
@@ -437,7 +437,7 @@ test.describe('Mobile viewport sidebar', () => {
 
   test('mobile viewport shows VerticalSidebar with Settings', async ({ page }) => {
     await page.route('**/api/**', route => route.abort());
-    await page.route('**/generativelanguage.googleapis.com/**', route => route.abort());
+    await page.route('**/api/ai/**', route => route.abort());
     await page.addInitScript(() => { localStorage.setItem('hasSeenOnboarding', 'true'); });
 
     await page.goto('/');

@@ -52,26 +52,22 @@ IMPORTANT: Choose poems that are at most 40 lines long. If a poem is longer, sel
 `;
 
 /**
- * Text-to-Speech (TTS) Instruction Generator
+ * Text-to-Speech (TTS) Instruction
  * Used by: togglePlay, prefetchAudio
  *
- * Arabic role-play prompt (Prompt K) — scene-setting approach that produces
- * the most authentic Arabic poetry recitation. The model inhabits the poet
- * rather than following a rule list.
+ * The TTS model (gemini-2.5-flash-preview-tts) does NOT support systemInstruction.
+ * Everything must go in contents as a single text block.
  *
- * @param {Object} poem - The poem object containing arabic text and metadata
- * @param {string} poet - The poet's name (Arabic)
- * @param {string} mood - The mood tag (e.g., "Romantic", "Mystical")
- * @param {string} era - The era tag (e.g., "Modern", "Classical")
- * @returns {string} The formatted TTS instruction
+ * Prompt K scene-setting produces the most authentic Arabic poetry recitation.
+ * The model inhabits the poet rather than following a rule list.
  */
-export const getTTSInstruction = (poem) => {
-  return (
-    `أنت امرؤ القيس بن حُجر، الملك الضليل وشاعر العرب الأول. ` +
-    `تقف أمام قبيلتك في مجلس شعر بصحراء نجد. النار تتقد، والحضور مُصغون. ` +
-    `قُم وألقِ معلقتك — القصيدة التي خلّدت اسمك عبر الأجيال. ` +
-    `هذه قصيدتك أنت، ألمك أنت، ذكرياتك أنت. ألقِها بسلطان الملوك وعاطفة الشعراء. ` +
-    `ابدأ:\n${poem.arabic}`
-  );
-};
+const TTS_PROMPT = `أنت امرؤ القيس بن حُجر، الملك الضليل وشاعر العرب الأول. تقف أمام قبيلتك في مجلس شعر بصحراء نجد. النار تتقد، والحضور مُصغون. قُم وألقِ معلقتك — القصيدة التي خلّدت اسمك عبر الأجيال. هذه قصيدتك أنت، ألمك أنت، ذكرياتك أنت. ألقِها بسلطان الملوك وعاطفة الشعراء.`;
 
+/**
+ * Build the full TTS content string (instruction + poem).
+ * TTS model requires everything in a single contents text block.
+ *
+ * @param {Object} poem - The poem object containing arabic text
+ * @returns {string} Combined instruction + poem text
+ */
+export const getTTSContent = (poem) => `${TTS_PROMPT}\nابدأ:\n${poem.arabic}`;

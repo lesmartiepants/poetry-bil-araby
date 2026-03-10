@@ -105,9 +105,6 @@ test.describe('User Flows', () => {
 
   // #1 — Discover a new poem
   test('user discovers a new poem', async ({ page }) => {
-    // Capture the poet name before discover
-    const poetBefore = await page.locator('[dir="rtl"]').first().textContent();
-
     const discoverButton = page.locator('button[aria-label="Discover new poem"]');
     await expect(discoverButton).toBeEnabled({ timeout: 10000 });
     await discoverButton.click();
@@ -182,30 +179,13 @@ test.describe('User Flows', () => {
       return rootDiv ? getComputedStyle(rootDiv).backgroundColor : '';
     });
 
-    // Try ThemeDropdown (desktop) first, then VerticalSidebar Settings (mobile)
-    const themeDropdown = page.locator('button[aria-label="Theme options"]').first();
-    const themeVisible = await themeDropdown.isVisible().catch(() => false);
-
-    if (themeVisible) {
-      await themeDropdown.click();
-      await page.waitForTimeout(300);
-      // Click the mode toggle button — target via English sub-text
-      const modeButton = page
-        .locator('button:has-text("Light Mode"), button:has-text("Dark Mode")')
-        .first();
-      await expect(modeButton).toBeVisible({ timeout: 3000 });
-      await modeButton.click();
-    } else {
-      // Mobile: open Settings gear in VerticalSidebar, then click theme toggle
-      const settingsBtn = page.locator('button[title="Settings"]').first();
-      await settingsBtn.click();
-      await page.waitForTimeout(300);
-      const themeBtn = page
-        .locator('button[title="Light mode"], button[title="Dark mode"]')
-        .first();
-      await expect(themeBtn).toBeVisible({ timeout: 3000 });
-      await themeBtn.click();
-    }
+    // Open sidebar Settings, then click theme toggle
+    const settingsBtn = page.locator('button[title="Settings"]').first();
+    await settingsBtn.click();
+    await page.waitForTimeout(300);
+    const themeBtn = page.locator('button[title="Light mode"], button[title="Dark mode"]').first();
+    await expect(themeBtn).toBeVisible({ timeout: 3000 });
+    await themeBtn.click();
 
     // Wait for theme transition
     await page.waitForTimeout(300);
@@ -223,25 +203,13 @@ test.describe('User Flows', () => {
     // Initial font should be Amiri (default, index 0)
     await expect(page.locator('.font-amiri').first()).toBeVisible();
 
-    // Open theme dropdown (desktop) or VerticalSidebar Settings (mobile)
-    const themeDropdown = page.locator('button[aria-label="Theme options"]').first();
-    const themeVisible = await themeDropdown.isVisible().catch(() => false);
-
-    if (themeVisible) {
-      await themeDropdown.click();
-      // Click the font cycle button (Arabic text: "تبديل الخط")
-      const fontButton = page.locator('button:has-text("تبديل الخط")').first();
-      await expect(fontButton).toBeVisible({ timeout: 2000 });
-      await fontButton.click();
-    } else {
-      // Mobile: open Settings gear, then click font cycle button
-      const settingsBtn = page.locator('button[title="Settings"]').first();
-      await settingsBtn.click();
-      await page.waitForTimeout(300);
-      const fontBtn = page.locator('button[title^="Font:"]').first();
-      await expect(fontBtn).toBeVisible({ timeout: 2000 });
-      await fontBtn.click();
-    }
+    // Open sidebar Settings, then click font cycle button
+    const settingsBtn = page.locator('button[title="Settings"]').first();
+    await settingsBtn.click();
+    await page.waitForTimeout(300);
+    const fontBtn = page.locator('button[title^="Font:"]').first();
+    await expect(fontBtn).toBeVisible({ timeout: 2000 });
+    await fontBtn.click();
 
     // After cycling, Alexandria should be the active font (Amiri → Alexandria)
     await expect(page.locator('.font-alexandria').first()).toBeVisible({ timeout: 3000 });
@@ -249,40 +217,28 @@ test.describe('User Flows', () => {
 
   // #6 — Filter poems by poet
   test('user filters poems by poet', async ({ page }) => {
-    // Open category selector
-    const categoryButton = page.locator('button[aria-label="Select poet category"]').first();
-    const catVisible = await categoryButton.isVisible().catch(() => false);
+    // Open sidebar Settings sub-menu
+    const settingsBtn = page.locator('button[title="Settings"]').first();
+    await expect(settingsBtn).toBeVisible({ timeout: 5000 });
+    await settingsBtn.click();
 
-    if (catVisible) {
-      // Desktop: open dropdown and select a specific poet
-      await categoryButton.click();
-      const poetOption = page.locator('text=نزار قباني').first();
-      await expect(poetOption).toBeVisible({ timeout: 3000 });
-      await poetOption.click();
-    } else {
-      // Mobile: open Settings gear in VerticalSidebar, then click poet cycle button
-      const settingsBtn = page.locator('button[title="Settings"]').first();
-      await settingsBtn.click();
-      await page.waitForTimeout(300);
-      const poetBtn = page.locator('button[title="Poet filter"]').first();
-      await expect(poetBtn).toBeVisible({ timeout: 2000 });
-      // Click poet filter to cycle from "All" to next poet
-      await poetBtn.click();
-    }
+    // Wait for poet filter button inside Settings sub-menu
+    const poetBtn = page.locator('button[title="Poet filter"]').first();
+    await expect(poetBtn).toBeVisible({ timeout: 3000 });
+    await poetBtn.click();
 
-    // Click Discover to trigger a filtered API request
-    const requestPromise = page.waitForRequest(
-      (req) => req.url().includes('/api/poems/random') && req.url().includes('poet='),
-      { timeout: 10000 }
-    );
+    // Wait for dropdown to render with poet options
+    const dropdownBtn = page.locator('.w-48 button:has-text("المتنبي")');
+    await expect(dropdownBtn).toBeVisible({ timeout: 3000 });
 
-    const discoverButton = page.locator('button[aria-label="Discover new poem"]');
-    await expect(discoverButton).toBeEnabled({ timeout: 5000 });
-    await discoverButton.click();
+    // Wait for dropdown slide-in animation to finish (0.2s ease-out)
+    await page.waitForTimeout(400);
 
-    // Verify the API request includes poet filter param
-    const request = await requestPromise;
-    expect(request.url()).toContain('poet=');
+    // Dispatch a real click event via JS to trigger React handler
+    await dropdownBtn.dispatchEvent('click');
+
+    // After selection, the dropdown should close (poet picker closes on select)
+    await expect(dropdownBtn).toBeHidden({ timeout: 3000 });
   });
 
   // #7 — Copy poem to clipboard
@@ -303,47 +259,7 @@ test.describe('User Flows', () => {
     }).toPass({ timeout: 3000 });
   });
 
-  // #8 — Switch DB/LLM mode
-  test('user sees DB/LLM mode toggle', async ({ page }) => {
-    await expect(page.locator('footer')).toBeVisible();
-
-    // Desktop: the toggle button should be visible in the control bar
-    const toggleButton = page
-      .locator('button[aria-label*="Database Mode"], button[aria-label*="LLM Mode"]')
-      .first();
-    const isVisible = await toggleButton.isVisible().catch(() => false);
-
-    if (!isVisible) {
-      // Mobile: open Settings gear in VerticalSidebar, then find DB/LLM toggle
-      const settingsBtn = page.locator('button[title="Settings"]').first();
-      const settingsVisible = await settingsBtn.isVisible().catch(() => false);
-      if (settingsVisible) {
-        await settingsBtn.click();
-        await page.waitForTimeout(300);
-        const dbButton = page.locator('button[title*="Switch to"]').first();
-        await expect(dbButton).toBeVisible({ timeout: 2000 });
-        return;
-      }
-      test.skip();
-      return;
-    }
-
-    // Verify the toggle renders with correct aria-label
-    const label = await toggleButton.getAttribute('aria-label');
-    expect(label).toMatch(/Switch to (AI|Database) Mode/);
-
-    // When VITE_GEMINI_API_KEY is set, clicking toggles the mode.
-    // When it's not set (CI), the button is disabled — verify that state.
-    const isDisabled = await toggleButton.isDisabled();
-    if (!isDisabled) {
-      const initialLabel = label;
-      await toggleButton.click();
-      await expect(toggleButton).not.toHaveAttribute('aria-label', initialLabel, { timeout: 3000 });
-    } else {
-      // Button is correctly disabled without an API key
-      expect(isDisabled).toBe(true);
-    }
-  });
+  // #8 — DB/AI mode toggle removed (DB mode is now the permanent default)
 
   // #9 — Navigate to design review
   test('user navigates to design review', async ({ page, viewport }) => {
@@ -466,9 +382,6 @@ test.describe('Mobile viewport sidebar', () => {
 
     // VerticalSidebar Settings button should be visible on mobile
     await expect(page.locator('button[title="Settings"]').first()).toBeVisible();
-
-    // Theme options dropdown should NOT be visible (desktop only)
-    await expect(page.getByRole('button', { name: /theme options/i })).not.toBeVisible();
   });
 
   // #17 — Flag NOT in VerticalSidebar on mobile

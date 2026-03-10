@@ -635,6 +635,11 @@
     const starCtx = starCanvas.getContext('2d');
     const particleCanvas = document.getElementById('particleCanvas');
     const particleCtx = particleCanvas.getContext('2d');
+
+    if (!starCtx || !particleCtx) {
+      console.warn('Canvas 2D context not available');
+    }
+
     let canvasW, canvasH, dpr;
 
     function resizeCanvases() {
@@ -790,9 +795,9 @@
         ctx.rotate(this.rotation);
 
         // Twinkle effect when in constellation state
-        var drawAlpha = this.alpha;
+        let drawAlpha = this.alpha;
         if (animationState === 'constellation') {
-          var twinkle = Math.sin(time * 0.003 + this.twinkleOffset);
+          let twinkle = Math.sin(time * 0.003 + this.twinkleOffset);
           drawAlpha *= 0.7 + twinkle * 0.3;
         }
 
@@ -840,7 +845,7 @@
         var text = verse.textContent;
         var range = document.createRange();
         var textNode = verse.firstChild;
-        if (!textNode) return;
+        if (!textNode || textNode.nodeType !== Node.TEXT_NODE) return;
 
         for (var i = 0; i < text.length; i++) {
           var char = text[i];
@@ -952,6 +957,7 @@
     // ANIMATION LOOP
     // ==========================================
     var rafId = null;
+    var animationRunning = false;
 
     function animate(time) {
       rafId = requestAnimationFrame(animate);
@@ -991,9 +997,15 @@
       }
     }
 
-    // Start the animation loop
-    if (!prefersReducedMotion) {
+    // Guard against double RAF execution
+    function startAnimation() {
+      if (animationRunning) return;
+      animationRunning = true;
       rafId = requestAnimationFrame(animate);
+    }
+
+    if (!prefersReducedMotion) {
+      startAnimation();
     }
 
     // ==========================================

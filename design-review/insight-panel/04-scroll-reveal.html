@@ -1145,6 +1145,8 @@
       entries.forEach(function(entry) {
         if (entry.isIntersecting && entry.intersectionRatio >= 0.15) {
           entry.target.classList.add('revealed');
+        } else if (!entry.isIntersecting) {
+          entry.target.classList.remove('revealed');
         }
       });
     }, { root: null, rootMargin: '0px 0px -10% 0px', threshold: [0, 0.15] });
@@ -1201,23 +1203,22 @@
     var dotItems = dotNav.querySelectorAll('.dot-nav__item');
 
     function updateProgress() {
-      if (!insightActive) return;
-
       var scrollTop = window.scrollY;
       var docHeight = document.documentElement.scrollHeight - window.innerHeight;
       var progress = docHeight > 0 ? Math.min(scrollTop / docHeight, 1) : 0;
       progressFill.style.width = (progress * 100) + '%';
 
-      // Update active dot
+      // Update active dot — find the last section whose top has scrolled past the viewport midpoint
       var activeIdx = 0;
-      sectionIds.forEach(function(id, i) {
-        var el = document.getElementById(id);
-        if (!el) return;
+      for (var i = sectionIds.length - 1; i >= 0; i--) {
+        var el = document.getElementById(sectionIds[i]);
+        if (!el) continue;
         var rect = el.getBoundingClientRect();
         if (rect.top <= window.innerHeight * 0.5) {
           activeIdx = i;
+          break;
         }
-      });
+      }
 
       dotItems.forEach(function(dot, i) {
         dot.classList.toggle('active', i === activeIdx);
@@ -1258,11 +1259,9 @@
         particlesEl.classList.add('visible');
       }, 300);
 
-      // Activate scroll container
-      setTimeout(function() {
-        scrollContainer.classList.add('active');
-        registerObservers();
-      }, 400);
+      // Activate scroll container and register observers immediately
+      scrollContainer.classList.add('active');
+      registerObservers();
 
       // Start streaming content with stagger
       setTimeout(function() { startStreaming(); }, 800);

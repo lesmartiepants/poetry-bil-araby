@@ -1774,11 +1774,11 @@ const SplashScreen = ({ isOpen, onDismiss, showOnboarding, theme }) => {
           <span
             style={{
               fontFamily: "'Forum', serif",
-              fontSize: 'clamp(1.25rem, 2.5vw, 1.75rem)',
+              fontSize: 'clamp(3rem, 6vw, 4.5rem)',
               letterSpacing: '-0.05em',
               color: gold,
               lineHeight: 1,
-              textShadow: '0 0 50px rgba(197,160,89,0.4)',
+              textShadow: '0 0 40px rgba(197,160,89,0.3)',
               paddingBottom: '0.15em',
             }}
           >
@@ -1788,9 +1788,10 @@ const SplashScreen = ({ isOpen, onDismiss, showOnboarding, theme }) => {
             style={{
               fontFamily: "'Reem Kufi', sans-serif",
               fontWeight: 700,
-              fontSize: 'clamp(3rem, 6vw, 4.5rem)',
+              fontSize: 'clamp(1.875rem, 4vw, 3rem)',
               color: isDark ? '#D4D0C8' : '#1A1614',
               lineHeight: 1,
+              paddingBottom: '0.15em',
             }}
             dir="rtl"
             lang="ar"
@@ -5083,7 +5084,7 @@ export default function DiwanApp() {
             <span
               className="font-brand-en leading-none tracking-[-0.05em]"
               style={{
-                fontSize: 'clamp(1.25rem, 2.5vw, 1.75rem)',
+                fontSize: 'clamp(3rem, 6vw, 4.5rem)',
                 color: '#C5A059',
                 textShadow: '0 0 40px rgba(197,160,89,0.3)',
                 paddingBottom: '0.15em',
@@ -5094,8 +5095,9 @@ export default function DiwanApp() {
             <span
               className="font-brand-ar font-bold leading-none"
               style={{
-                fontSize: 'clamp(3rem, 6vw, 4.5rem)',
+                fontSize: 'clamp(1.875rem, 4vw, 3rem)',
                 color: darkMode ? '#D4D0C8' : '#1A1614',
+                paddingBottom: '0.15em',
               }}
             >
               بالعربي

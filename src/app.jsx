@@ -105,6 +105,62 @@ const FONTS = [
 const apiUrl = import.meta.env.VITE_API_URL || "http://localhost:3001";
 
 /* =============================================================================
+  1b. SEEN POEMS DEDUP (localStorage)
+  =============================================================================
+  Tracks recently seen poem IDs to avoid repeats during discovery.
+  Entries older than 30 days are pruned automatically.
+*/
+
+const SEEN_POEMS_KEY = 'seenPoems';
+const SEEN_POEMS_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+const SEEN_POEMS_MAX_EXCLUDE = 200;
+
+/** Read seen poems from localStorage. Returns Array<{id: number, seenAt: number}>. */
+const getSeenPoems = () => {
+  try {
+    const raw = localStorage.getItem(SEEN_POEMS_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+};
+
+/** Record a poem as seen. */
+const markPoemSeen = (poemId) => {
+  try {
+    const seen = getSeenPoems();
+    // Avoid duplicate entries for the same poem
+    if (seen.some(entry => entry.id === poemId)) return;
+    seen.push({ id: poemId, seenAt: Date.now() });
+    localStorage.setItem(SEEN_POEMS_KEY, JSON.stringify(seen));
+  } catch {
+    // localStorage full or unavailable — silently ignore
+  }
+};
+
+/** Remove entries older than 30 days. */
+const pruneSeenPoems = () => {
+  try {
+    const seen = getSeenPoems();
+    const cutoff = Date.now() - SEEN_POEMS_MAX_AGE_MS;
+    const pruned = seen.filter(entry => entry.seenAt > cutoff);
+    if (pruned.length !== seen.length) {
+      localStorage.setItem(SEEN_POEMS_KEY, JSON.stringify(pruned));
+    }
+  } catch {
+    // silently ignore
+  }
+};
+
+/** Get recent seen IDs for the exclude param (max 200). */
+const getRecentSeenIds = () => {
+  const seen = getSeenPoems();
+  return seen.slice(-SEEN_POEMS_MAX_EXCLUDE).map(entry => entry.id);
+};
+
+/* =============================================================================
   2. API PROMPTS & CONFIGURATION
   =============================================================================
 */
@@ -858,7 +914,7 @@ const CategoryPill = ({ selected, onSelect, darkMode }) => {
         className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105"
         aria-label="Select poet category"
       >
-        <Library size={21} className="text-[#C5A059]" />
+        <Feather size={21} className="text-[#C5A059]" />
       </button>
       <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">Poets</span>
 
@@ -970,23 +1026,6 @@ const ErrorBanner = ({ error, onDismiss, onRetry, theme }) => {
   );
 };
 
-const DatabaseToggle = ({ useDatabase, onToggle, disabled }) => {
-  return (
-    <div className="flex flex-col items-center gap-1 min-w-[56px]">
-      <button
-        onClick={onToggle}
-        disabled={disabled}
-        className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none transition-all duration-300 flex items-center justify-center rounded-full ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-[#C5A059]/12 hover:scale-105'}`}
-        aria-label={useDatabase ? "Switch to AI Mode" : "Switch to Database Mode"}
-      >
-        {useDatabase ? <Library size={21} className="text-[#C5A059]" /> : <Sparkles size={21} className="text-[#C5A059]" />}
-      </button>
-      <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">
-        {useDatabase ? 'Local' : 'Web'}
-      </span>
-    </div>
-  );
-};
 
 
 /* =============================================================================
@@ -1654,7 +1693,7 @@ const AuthButton = ({ user, darkMode, onSignIn, onSignOut, onOpenSavedPoems, onO
       <div className="flex flex-col items-center gap-1 min-w-[56px]">
         <button
           onClick={onSignIn}
-          className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105"
+          className="w-11 h-11 bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105"
           aria-label="Sign In"
         >
           <LogIn size={21} className="text-[#C5A059]" />
@@ -1670,7 +1709,7 @@ const AuthButton = ({ user, darkMode, onSignIn, onSignOut, onOpenSavedPoems, onO
     <div className="relative flex flex-col items-center gap-1 min-w-[56px]" ref={menuRef}>
       <button
         onClick={() => setShowMenu(!showMenu)}
-        className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105"
+        className="w-11 h-11 bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105"
         aria-label="User Menu"
       >
         {user.user_metadata?.avatar_url ? (
@@ -2032,8 +2071,7 @@ const VerticalSidebar = ({
   textSizeLabel, onCycleTextSize,
   darkMode, onToggleDarkMode,
   currentFont, onCycleFont,
-  selectedCategory, onSelectCategory,
-  useDatabase, onToggleDatabase
+  selectedCategory, onSelectCategory
 }) => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [poetPickerOpen, setPoetPickerOpen] = useState(false);
@@ -2139,7 +2177,7 @@ const VerticalSidebar = ({
                   title="Poet filter"
                   className={`${subBtnBase} ${subBtnHover} ${poetPickerOpen ? (darkMode ? 'bg-[#C5A059]/15' : 'bg-[#8B7355]/15') : ''}`}
                 >
-                  <Library style={{ color: gold }} size={16} />
+                  <Feather style={{ color: gold }} size={16} />
                 </button>
                 {poetPickerOpen && (
                   <div className="absolute right-full top-0 mr-2 w-48 rounded-xl border border-[#C5A059]/30 bg-black/90 backdrop-blur-xl shadow-xl py-1 max-h-60 overflow-y-auto z-[200]" style={{ animation: 'slideInRight 0.2s ease-out' }}>
@@ -2157,13 +2195,6 @@ const VerticalSidebar = ({
                 )}
               </div>
 
-              <button
-                onClick={onToggleDatabase}
-                title={useDatabase ? 'Switch to AI' : 'Switch to Database'}
-                className={`${subBtnBase} ${subBtnHover}`}
-              >
-                {useDatabase ? <Library style={{ color: gold }} size={16} /> : <Sparkles style={{ color: gold }} size={16} />}
-              </button>
             </div>
           )}
 
@@ -3078,10 +3109,21 @@ export default function DiwanApp() {
 
         addLog("Discovery DB", `→ Querying database | Category: ${selectedCategory}`, "info");
 
+        // Dedup: prune stale entries and build exclude list
+        pruneSeenPoems();
+        const seenIds = getRecentSeenIds();
+
         const categoryObj = CATEGORIES.find(c => c.id === selectedCategory);
         const poetName = categoryObj?.labelAr || selectedCategory;
-        const poetParam = selectedCategory !== "All" ? `?poet=${encodeURIComponent(poetName)}` : '';
-        const url = `${apiUrl}/api/poems/random${poetParam}`;
+        const queryParams = new URLSearchParams();
+        if (selectedCategory !== "All") queryParams.set('poet', poetName);
+        if (seenIds.length > 0) queryParams.set('exclude', seenIds.join(','));
+        const qs = queryParams.toString();
+        const url = `${apiUrl}/api/poems/random${qs ? '?' + qs : ''}`;
+
+        if (seenIds.length > 0) {
+          addLog("Discovery DB", `Excluding ${seenIds.length} recently seen poems`, "info");
+        }
 
         try {
           const res = await fetch(url);
@@ -3105,6 +3147,9 @@ export default function DiwanApp() {
 
           // Mark as database poem
           newPoem.isFromDatabase = true;
+
+          // Track this poem as seen for dedup
+          markPoemSeen(newPoem.id);
 
           const arabicPoemChars = newPoem?.arabic?.length || 0;
 
@@ -3485,12 +3530,6 @@ export default function DiwanApp() {
   };
   const handleToggleTheme = handleToggleDarkMode;
 
-  const handleToggleDatabase = () => {
-    const newMode = useDatabase ? 'ai' : 'database';
-    track('mode_switched', { mode: newMode });
-    setUseDatabase(!useDatabase);
-  };
-
   const handleUnsavePoemFromList = async (sp) => {
     const { error } = await unsavePoem(sp.poem_id || sp.id, sp.poem_text);
     if (error) {
@@ -3699,8 +3738,8 @@ export default function DiwanApp() {
         <div className={`flex flex-row-reverse items-center gap-2 md:gap-4 ${theme.brand} tracking-wide header-luminescence`}>
           <Feather className="w-8 h-8 md:w-[42px] md:h-[42px] opacity-95" strokeWidth={1.5} />
           <h1 className="app-branding-rtl flex items-end gap-3 md:gap-6">
-            <span className="font-brand-ar text-[clamp(1.875rem,4vw,3rem)] font-bold mb-[clamp(0.25rem,0.5vw,0.5rem)] opacity-80">بالعربي</span>
-            <span className="font-brand-en text-[clamp(3rem,6vw,4.5rem)] lowercase tracking-tighter">poetry</span>
+            <span className="font-brand-ar text-[clamp(3rem,6vw,4.5rem)] font-bold mb-[clamp(0.25rem,0.5vw,0.5rem)] opacity-80">بالعربي</span>
+            <span className="font-brand-en text-[clamp(1.875rem,4vw,3rem)] lowercase tracking-tighter">poetry</span>
             <span className="font-brand-en text-[clamp(10px,1.2vw,12px)] px-[clamp(0.375rem,0.8vw,0.5rem)] py-0.5 rounded border border-indigo-500/30 bg-indigo-500/10 uppercase tracking-wider mb-[clamp(0.5rem,1vw,1rem)] ml-[clamp(0.5rem,1vw,0.75rem)] opacity-60">beta</span>
           </h1>
         </div>

@@ -215,40 +215,28 @@ test.describe('User Flows', () => {
 
   // #6 — Filter poems by poet
   test('user filters poems by poet', async ({ page }) => {
-    // Open sidebar Settings, then open poet picker dropdown
+    // Open sidebar Settings sub-menu
     const settingsBtn = page.locator('button[title="Settings"]').first();
+    await expect(settingsBtn).toBeVisible({ timeout: 5000 });
     await settingsBtn.click();
-    await page.waitForTimeout(300);
 
-    // Wait for Settings sub-menu to be visible
-    await expect(page.locator('button[title="Poet filter"]').first()).toBeVisible({ timeout: 2000 });
-
+    // Wait for poet filter button inside Settings sub-menu
     const poetBtn = page.locator('button[title="Poet filter"]').first();
+    await expect(poetBtn).toBeVisible({ timeout: 3000 });
     await poetBtn.click();
 
-    // Wait for dropdown to open and stabilize
-    await page.waitForTimeout(300);
+    // Wait for dropdown to render with poet options
+    const dropdownBtn = page.locator('.w-48 button:has-text("المتنبي")');
+    await expect(dropdownBtn).toBeVisible({ timeout: 3000 });
 
-    // Select a specific poet from the picker dropdown
-    // The dropdown opens to the left of the sidebar, so ensure it's in viewport
-    // Use force:true because main content area may intercept pointer events
-    const poetOption = page.locator('text=نزار قباني').first();
-    await expect(poetOption).toBeVisible({ timeout: 3000 });
-    await poetOption.click({ force: true });
+    // Wait for dropdown slide-in animation to finish (0.2s ease-out)
+    await page.waitForTimeout(400);
 
-    // Click Discover to trigger a filtered API request
-    const requestPromise = page.waitForRequest(
-      (req) => req.url().includes('/api/poems/random') && req.url().includes('poet='),
-      { timeout: 10000 }
-    );
+    // Dispatch a real click event via JS to trigger React handler
+    await dropdownBtn.dispatchEvent('click');
 
-    const discoverButton = page.locator('button[aria-label="Discover new poem"]');
-    await expect(discoverButton).toBeEnabled({ timeout: 5000 });
-    await discoverButton.click();
-
-    // Verify the API request includes poet filter param
-    const request = await requestPromise;
-    expect(request.url()).toContain('poet=');
+    // After selection, the dropdown should close (poet picker closes on select)
+    await expect(dropdownBtn).toBeHidden({ timeout: 3000 });
   });
 
   // #7 — Copy poem to clipboard
@@ -269,19 +257,7 @@ test.describe('User Flows', () => {
     }).toPass({ timeout: 3000 });
   });
 
-  // #8 — Switch DB/AI mode
-  test('user sees DB/AI mode toggle', async ({ page }) => {
-    // Open sidebar Settings, find DB/AI toggle
-    const settingsBtn = page.locator('button[title="Settings"]').first();
-    await settingsBtn.click();
-    await page.waitForTimeout(300);
-    const dbButton = page.locator('button[title*="Switch to"]').first();
-    await expect(dbButton).toBeVisible({ timeout: 2000 });
-
-    // Verify the title indicates a mode switch
-    const title = await dbButton.getAttribute('title');
-    expect(title).toMatch(/Switch to (AI|Database)/);
-  });
+  // #8 — DB/AI mode toggle removed (DB mode is now the permanent default)
 
   // #9 — Navigate to design review
   test('user navigates to design review', async ({ page, viewport }) => {

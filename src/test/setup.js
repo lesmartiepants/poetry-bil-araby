@@ -45,9 +45,6 @@ afterEach(() => {
   if (typeof sessionStorage !== 'undefined' && typeof sessionStorage.clear === 'function') sessionStorage.clear()
 })
 
-// Mock environment variables
-vi.stubEnv('VITE_GEMINI_API_KEY', 'test-api-key')
-
 // Mock Web Audio API
 global.Audio = class MockAudio {
   constructor() {

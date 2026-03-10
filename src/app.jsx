@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import {
   Play,
   Pause,
@@ -144,7 +144,6 @@ const FONTS = [
   { id: 'Katibeh', label: 'Katibeh', labelAr: 'كاتبة', family: 'font-katibeh' },
 ];
 
-const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 /* =============================================================================
@@ -174,11 +173,11 @@ let _discoveredTextModels = null;
  * Falls back to API_MODELS.textDefaults if the API is unreachable or returns no usable models.
  * Result is cached for the lifetime of the page.
  */
-const discoverTextModels = async (apiKey, addLog) => {
+const discoverTextModels = async (addLog) => {
   if (_discoveredTextModels) return _discoveredTextModels;
   try {
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`,
+      `${apiUrl}/api/ai/models`,
       { method: 'GET' }
     );
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -235,22 +234,19 @@ const discoverTextModels = async (apiKey, addLog) => {
  * Uses the dynamically discovered model list (ranked newest/cheapest first).
  * Retries on HTTP 404/410 (model unavailable/deprecated); throws immediately on other errors.
  *
- * @param {string}   endpoint - Gemini method segment, e.g. 'generateContent' or 'streamGenerateContent?alt=sse'
+ * @param {string}   endpoint - Gemini method segment, e.g. 'generateContent' or 'streamGenerateContent'
  * @param {string}   body     - Pre-serialised JSON request body
- * @param {string}   apiKey
  * @param {string}   label    - Human-readable prefix for the thrown error message
  * @param {Function} addLog   - Component logging helper
  * @returns {Promise<Response>} Resolved Response with ok === true
  */
-const geminiTextFetch = async (endpoint, body, apiKey, label, addLog) => {
-  const models = await discoverTextModels(apiKey, addLog);
+const geminiTextFetch = async (endpoint, body, label, addLog) => {
+  const models = await discoverTextModels(addLog);
   for (let i = 0; i < models.length; i++) {
     const model = models[i];
     if (i > 0) addLog('Model Fallback', `Trying fallback: ${model}`, 'warning');
-    // If endpoint already has a query string (e.g. ?alt=sse) append &key, otherwise ?key
-    const sep = endpoint.includes('?') ? '&' : '?';
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/${model}:${endpoint}${sep}key=${apiKey}`,
+      `${apiUrl}/api/ai/${model}/${endpoint}`,
       { method: 'POST', headers: { 'Content-Type': 'application/json' }, body }
     );
     if (res.ok) {
@@ -558,9 +554,6 @@ const prefetchManager = {
       const poet = poem?.poet || 'the Master Poet';
       const ttsInstruction = getTTSInstruction(poem, poet, mood, era);
 
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
-      if (!apiKey) return;
-
       const requestSize = new Blob([
         JSON.stringify({ contents: [{ parts: [{ text: ttsInstruction }] }] }),
       ]).size;
@@ -575,7 +568,7 @@ const prefetchManager = {
       }
 
       const apiStart = performance.now();
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${API_MODELS.tts}:generateContent?key=${apiKey}`;
+      const url = `${apiUrl}/api/ai/${API_MODELS.tts}/generateContent`;
       const fetchOptions = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -727,9 +720,6 @@ const prefetchManager = {
       // Mark as in-flight
       if (activeRequests) activeRequests.current.add(poemId);
 
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
-      if (!apiKey) return;
-
       const promptText = `Deep Analysis of: ${poem.arabic}`;
       const requestSize = new Blob([
         JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] }),
@@ -754,7 +744,6 @@ const prefetchManager = {
       const res = await geminiTextFetch(
         'generateContent',
         prefetchBody,
-        apiKey,
         'Prefetch Insights',
         addLog
       );
@@ -960,6 +949,12 @@ const DebugPanel = ({ logs, onClear, darkMode, poem, appState }) => {
         userAgent: navigator.userAgent,
         poem: poem ? { id: poem.id, poet: poem.poet, title: poem.title } : null,
         appState: appState || null,
+        url: window.location.href,
+        screenSize: `${window.innerWidth}x${window.innerHeight}`,
+        language: navigator.language,
+        online: navigator.onLine,
+        referrer: document.referrer,
+        featureFlags: { ...FEATURES },
       };
       const res = await fetch(`${apiUrl}/api/bug-reports`, {
         method: 'POST',
@@ -3007,7 +3002,6 @@ export default function DiwanApp() {
   const [darkMode, setDarkMode] = useState(true);
   const [currentFont, setCurrentFont] = useState('Amiri');
   const [useDatabase, setUseDatabase] = useState(FEATURES.database);
-  const [apiKeyBannerDismissed, setApiKeyBannerDismissed] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
@@ -3148,14 +3142,9 @@ export default function DiwanApp() {
 
   // Eagerly populate the discovered model list so it's ready before any user action.
   // Using the default fetch mock in tests means this never consumes a mockResolvedValueOnce.
+  // Eagerly discover available AI models via the backend proxy.
   useEffect(() => {
-    const key = import.meta.env.VITE_GEMINI_API_KEY || '';
-    if (key) {
-      discoverTextModels(key, addLog);
-    } else if (FEATURES.database) {
-      setUseDatabase(true);
-      addLog('Config', 'No Gemini API key found — automatically using Database mode', 'info');
-    }
+    discoverTextModels(addLog);
   }, []);
 
   // Auto-load a poem and queue explanation on first mount.
@@ -3550,9 +3539,9 @@ export default function DiwanApp() {
             audioRef.current
               .play()
               .then(() => setIsPlaying(true))
-              .catch((e) => {
-                addLog('Audio', 'Starting playback...', 'info');
-                setIsPlaying(true);
+              .catch((err) => {
+                if (FEATURES.logging) console.warn('[Audio] Playback failed:', err.message);
+                addLog('Audio', `Playback failed: ${err.message}`, 'error');
               });
           } else {
             addLog('Audio', 'Background generation failed — please try again', 'info');
@@ -3589,9 +3578,9 @@ export default function DiwanApp() {
               audioRef.current
                 .play()
                 .then(() => setIsPlaying(true))
-                .catch((e) => {
-                  addLog('Audio', 'Starting playback...', 'info');
-                  setIsPlaying(true);
+                .catch((err) => {
+                  if (FEATURES.logging) console.warn('[Audio] Playback failed:', err.message);
+                  addLog('Audio', `Playback failed: ${err.message}`, 'error');
                 });
             } else {
               addLog('Audio', `Audio generation timeout - please try again`, 'error');
@@ -3628,9 +3617,9 @@ export default function DiwanApp() {
         audioRef.current
           .play()
           .then(() => setIsPlaying(true))
-          .catch((e) => {
-            addLog('Audio', 'Starting cached playback...', 'info');
-            setIsPlaying(true);
+          .catch((err) => {
+            if (FEATURES.logging) console.warn('[Audio] Playback failed:', err.message);
+            addLog('Audio', `Cached playback failed: ${err.message}`, 'error');
           });
         setIsGeneratingAudio(false); // Clear loading state
         isTogglingPlay.current = false;
@@ -3671,7 +3660,7 @@ export default function DiwanApp() {
 
     try {
       const apiStart = performance.now();
-      const url = `https://generativelanguage.googleapis.com/v1beta/models/${API_MODELS.tts}:generateContent?key=${apiKey}`;
+      const url = `${apiUrl}/api/ai/${API_MODELS.tts}/generateContent`;
       const fetchOptions = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -3748,9 +3737,9 @@ export default function DiwanApp() {
           audioRef.current
             .play()
             .then(() => setIsPlaying(true))
-            .catch((e) => {
-              addLog('Audio', 'Starting playback...', 'info');
-              setIsPlaying(true);
+            .catch((err) => {
+              if (FEATURES.logging) console.warn('[Audio] Playback failed:', err.message);
+              addLog('Audio', `Playback failed: ${err.message}`, 'error');
             });
 
           // CACHE THE AUDIO BLOB
@@ -3902,16 +3891,6 @@ export default function DiwanApp() {
     let apiStartTime = null;
 
     try {
-      // Guard: AI Insights require a Gemini API key
-      if (!apiKey) {
-        const fallbackMessage =
-          '**AI Insights unavailable**\n\nA Gemini API key is required for poem analysis. You can:\n\n• Add `VITE_GEMINI_API_KEY` to your environment\n• Continue exploring poems in Database mode without insights';
-        setInterpretation(fallbackMessage);
-        setIsInterpreting(false);
-        activeInsightRequests.current.delete(current?.id);
-        return;
-      }
-
       // Use streaming if feature flag is enabled
       if (FEATURES.streaming) {
         const poetInfo = current?.poet ? ` by ${current.poet}` : '';
@@ -3944,9 +3923,8 @@ export default function DiwanApp() {
           systemInstruction: { parts: [{ text: INSIGHTS_SYSTEM_PROMPT }] },
         });
         const res = await geminiTextFetch(
-          'streamGenerateContent?alt=sse',
+          'streamGenerateContent',
           insightsStreamBody,
-          apiKey,
           'AI Insights failed',
           addLog
         );
@@ -4026,7 +4004,6 @@ export default function DiwanApp() {
         const res = await geminiTextFetch(
           'generateContent',
           insightsFallbackBody,
-          apiKey,
           'AI Insights failed',
           addLog
         );
@@ -4181,12 +4158,6 @@ export default function DiwanApp() {
         }
       } else {
         // GEMINI AI MODE: Original implementation
-        if (!apiKey) {
-          throw new Error(
-            'AI Discovery requires a Gemini API key. Add VITE_GEMINI_API_KEY to your environment, or switch to Local Database mode.'
-          );
-        }
-
         const prompt =
           selectedCategory === 'All'
             ? 'Find a masterpiece Arabic poem. COMPLETE text.'
@@ -4214,7 +4185,6 @@ export default function DiwanApp() {
         const res = await geminiTextFetch(
           'generateContent',
           requestBody,
-          apiKey,
           'AI Discovery failed',
           addLog
         );
@@ -4856,21 +4826,6 @@ export default function DiwanApp() {
         }}
       />
 
-      {!apiKey && FEATURES.database && !apiKeyBannerDismissed && (
-        <div
-          className={`fixed top-0 left-0 right-0 z-50 px-4 py-2 text-center text-sm ${darkMode ? 'bg-amber-900/90 text-amber-200' : 'bg-amber-100 text-amber-800'} backdrop-blur-sm`}
-        >
-          Running in Database-only mode — add a Gemini API key for AI features
-          <button
-            onClick={() => setApiKeyBannerDismissed(true)}
-            className="ml-3 opacity-60 hover:opacity-100"
-            aria-label="Dismiss"
-          >
-            ✕
-          </button>
-        </div>
-      )}
-
       <header
         style={{ opacity: headerOpacity }}
         className="fixed top-4 md:top-8 left-0 right-0 z-40 pointer-events-none transition-opacity duration-300 flex flex-row items-center justify-center gap-4 md:gap-8 px-4 md:px-6"
@@ -5283,8 +5238,8 @@ export default function DiwanApp() {
 
                   <DatabaseToggle
                     useDatabase={useDatabase}
-                    onToggle={apiKey ? handleToggleDatabase : () => {}}
-                    disabled={!apiKey}
+                    onToggle={handleToggleDatabase}
+                    disabled={false}
                   />
 
                   <ThemeDropdown
@@ -5474,7 +5429,7 @@ export default function DiwanApp() {
           selectedCategory={selectedCategory}
           onSelectCategory={setSelectedCategory}
           useDatabase={useDatabase}
-          onToggleDatabase={apiKey ? handleToggleDatabase : () => {}}
+          onToggleDatabase={handleToggleDatabase}
         />
       )}
 

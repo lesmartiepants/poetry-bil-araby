@@ -129,8 +129,12 @@ describe('DiwanApp', () => {
       const discoverBtn = screen.getByLabelText('Discover new poem')
       await userEvent.click(discoverBtn)
 
-      // Button should be disabled during fetch
-      expect(discoverBtn).toBeDisabled()
+      // Button should be disabled during fetch — use waitFor because
+      // setIsFetching(true) is a React state update that may not have
+      // flushed to the DOM by the time userEvent.click resolves
+      await waitFor(() => {
+        expect(discoverBtn).toBeDisabled()
+      })
 
       // Resolve to clean up
       resolveFetch({ ok: true, json: async () => createDbPoem(99) })

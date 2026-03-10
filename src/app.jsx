@@ -894,101 +894,6 @@ const DebugPanel = ({ logs, onClear, darkMode, poem, appState }) => {
   );
 };
 
-const CategoryPill = ({ selected, onSelect, darkMode }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const currentCat = CATEGORIES.find(c => c.id === selected) || CATEGORIES[0];
-  const dropdownRef = useRef(null);
-
-  useEffect(() => {
-    const clickOut = (e) => { if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setIsOpen(false); };
-    document.addEventListener("mousedown", clickOut);
-    return () => document.removeEventListener("mousedown", clickOut);
-  }, []);
-
-  const theme = darkMode ? THEME.dark : THEME.light;
-
-  return (
-    <div className="relative flex flex-col items-center gap-1 min-w-[56px]" ref={dropdownRef}>
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105"
-        aria-label="Select poet category"
-      >
-        <Feather size={21} className="text-[#C5A059]" />
-      </button>
-      <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">Poets</span>
-
-      {isOpen && (
-        <div className={`absolute bottom-full right-[-20px] mb-3 min-w-[220px] ${darkMode ? 'bg-[rgba(20,18,16,0.98)] border-[rgba(197,160,89,0.15)] shadow-[0_-10px_40px_rgba(0,0,0,0.7)]' : 'bg-white/95 border-stone-200 shadow-[0_-10px_40px_rgba(0,0,0,0.15)]'} backdrop-blur-[48px] border rounded-3xl p-3 z-50`}>
-          {CATEGORIES.map(cat => (
-            <button
-              key={cat.id}
-              onClick={() => { onSelect(cat.id); setIsOpen(false); }}
-              className={`w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex flex-col items-center border-b border-[rgba(197,160,89,0.08)] last:border-b-0 hover:bg-[rgba(197,160,89,0.08)] ${selected === cat.id ? 'bg-[rgba(197,160,89,0.12)]' : ''}`}
-            >
-              <div className="font-amiri text-[clamp(1rem,1.8vw,1.125rem)] text-[#C5A059] mb-[3px] font-medium">{cat.labelAr}</div>
-              <div className="font-brand-en text-[clamp(8px,1vw,9px)] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">{cat.label}</div>
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
-
-const ThemeDropdown = ({ darkMode, onToggleDarkMode, currentFont, onCycleFont, fonts }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef(null);
-
-  useEffect(() => {
-    const clickOut = (e) => { if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setIsOpen(false); };
-    document.addEventListener("mousedown", clickOut);
-    return () => document.removeEventListener("mousedown", clickOut);
-  }, []);
-
-  const handleCycleFont = () => {
-    onCycleFont();
-    setIsOpen(false);
-  };
-
-  const handleToggleDarkMode = () => {
-    onToggleDarkMode();
-    setIsOpen(false);
-  };
-
-  return (
-    <div className="relative flex flex-col items-center gap-1 min-w-[56px]" ref={dropdownRef}>
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105"
-        aria-label="Theme options"
-      >
-        {darkMode ? <Sun size={21} className="text-[#C5A059]" /> : <Moon size={21} className="text-[#C5A059]" />}
-      </button>
-      <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">Theme</span>
-
-      {isOpen && (
-        <div className={`absolute bottom-full right-[-20px] mb-3 min-w-[200px] ${darkMode ? 'bg-[rgba(20,18,16,0.98)] border-[rgba(197,160,89,0.15)] shadow-[0_-10px_40px_rgba(0,0,0,0.7)]' : 'bg-white/95 border-stone-200 shadow-[0_-10px_40px_rgba(0,0,0,0.15)]'} backdrop-blur-[48px] border rounded-3xl p-3 z-50`}>
-          <button
-            onClick={handleCycleFont}
-            className="w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex flex-col items-center border-b border-[rgba(197,160,89,0.08)] hover:bg-[rgba(197,160,89,0.08)]"
-          >
-            <div className="font-amiri text-[clamp(1rem,1.8vw,1.125rem)] text-[#C5A059] mb-[3px] font-medium">تبديل الخط</div>
-            <div className="font-brand-en text-[clamp(8px,1vw,9px)] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Cycle Font: {currentFont}</div>
-          </button>
-          <button
-            onClick={handleToggleDarkMode}
-            className="w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex flex-col items-center hover:bg-[rgba(197,160,89,0.08)]"
-          >
-            <div className="font-amiri text-[clamp(1rem,1.8vw,1.125rem)] text-[#C5A059] mb-[3px] font-medium">{darkMode ? 'الوضع النهاري' : 'الوضع الليلي'}</div>
-            <div className="font-brand-en text-[clamp(8px,1vw,9px)] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">{darkMode ? 'Light Mode' : 'Dark Mode'}</div>
-          </button>
-        </div>
-      )}
-    </div>
-  );
-};
-
 const ErrorBanner = ({ error, onDismiss, onRetry, theme }) => {
   if (!error) return null;
 
@@ -1674,110 +1579,6 @@ const AuthModal = ({ isOpen, onClose, onSignInWithGoogle, onSignInWithApple, the
   );
 };
 
-const AuthButton = ({ user, darkMode, onSignIn, onSignOut, onOpenSavedPoems, onOpenSettings, theme }) => {
-  const [showMenu, setShowMenu] = useState(false);
-  const menuRef = useRef(null);
-
-  useEffect(() => {
-    const clickOut = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) {
-        setShowMenu(false);
-      }
-    };
-    document.addEventListener('mousedown', clickOut);
-    return () => document.removeEventListener('mousedown', clickOut);
-  }, []);
-
-  if (!user) {
-    return (
-      <div className="flex flex-col items-center gap-1 min-w-[56px]">
-        <button
-          onClick={onSignIn}
-          className="w-11 h-11 bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105"
-          aria-label="Sign In"
-        >
-          <LogIn size={21} className="text-[#C5A059]" />
-        </button>
-        <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">
-          Sign In
-        </span>
-      </div>
-    );
-  }
-
-  return (
-    <div className="relative flex flex-col items-center gap-1 min-w-[56px]" ref={menuRef}>
-      <button
-        onClick={() => setShowMenu(!showMenu)}
-        className="w-11 h-11 bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105"
-        aria-label="User Menu"
-      >
-        {user.user_metadata?.avatar_url ? (
-          <img 
-            src={user.user_metadata.avatar_url} 
-            alt="User avatar" 
-            className="w-[21px] h-[21px] rounded-full object-cover"
-          />
-        ) : (
-          <User size={21} className="text-[#C5A059]" />
-        )}
-      </button>
-      <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]">
-        Account
-      </span>
-
-      {showMenu && (
-        <div className={`absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3 min-w-[200px] ${darkMode ? 'bg-[rgba(20,18,16,0.98)] border-[rgba(197,160,89,0.15)] shadow-[0_-10px_40px_rgba(0,0,0,0.7)]' : 'bg-white/95 border-stone-200 shadow-[0_-10px_40px_rgba(0,0,0,0.15)]'} backdrop-blur-[48px] border rounded-3xl p-3 z-50`}>
-          <div className="px-4 py-3 border-b border-[rgba(197,160,89,0.08)]">
-            <p className="font-brand-en text-xs text-[#C5A059] font-medium truncate">
-              {user.email || user.user_metadata?.full_name || 'User'}
-            </p>
-          </div>
-          <button
-            onClick={() => {
-              onOpenSavedPoems();
-              setShowMenu(false);
-            }}
-            className="w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex items-center gap-3 border-b border-[rgba(197,160,89,0.08)] hover:bg-[rgba(197,160,89,0.08)]"
-          >
-            <BookOpen size={18} className="text-[#C5A059]" />
-            <div className="flex flex-col items-start">
-              <div className="font-amiri text-base text-[#C5A059] font-medium">قصائدي</div>
-              <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">My Poems</div>
-            </div>
-          </button>
-          <button
-            onClick={() => {
-              onOpenSettings();
-              setShowMenu(false);
-            }}
-            className="w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex items-center gap-3 border-b border-[rgba(197,160,89,0.08)] hover:bg-[rgba(197,160,89,0.08)]"
-          >
-            <Settings2 size={18} className="text-[#C5A059]" />
-            <div className="flex flex-col items-start">
-              <div className="font-amiri text-base text-[#C5A059] font-medium">الإعدادات</div>
-              <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Settings</div>
-            </div>
-          </button>
-          <button
-            onClick={() => {
-              onSignOut();
-              setShowMenu(false);
-            }}
-            className="w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex items-center gap-3 hover:bg-[rgba(197,160,89,0.08)]"
-          >
-            <LogOut size={18} className="text-[#C5A059]" />
-            <div className="flex flex-col items-start">
-              <div className="font-amiri text-base text-[#C5A059] font-medium">تسجيل الخروج</div>
-              <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">Sign Out</div>
-            </div>
-          </button>
-        </div>
-      )}
-    </div>
-  );
-};
-
 const SavePoemButton = ({ poem, isSaved, onSave, onUnsave, disabled }) => {
   const [showTooltip, setShowTooltip] = useState(false);
 
@@ -1952,112 +1753,6 @@ const SavedPoemsView = ({ isOpen, onClose, savedPoems, onSelectPoem, onUnsavePoe
   );
 };
 
-const SettingsView = ({ isOpen, onClose, darkMode, onToggleDarkMode, currentFont, onSelectFont, user, theme }) => {
-  if (!isOpen) return null;
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
-      onKeyDown={(e) => { if (e.key === 'Escape') onClose(); }}
-    >
-      <div className={`relative w-full max-w-lg max-h-[85vh] flex flex-col ${theme.glass} ${theme.border} border ${DESIGN.radius} shadow-2xl`}>
-        <div className="flex items-center justify-between p-6 pb-4 border-b border-stone-500/10 flex-shrink-0">
-          <div>
-            <h2 className={`font-amiri text-2xl ${theme.titleColor}`}>الإعدادات</h2>
-            <p className={`font-brand-en text-xs ${theme.text} opacity-50 mt-1`}>Preferences</p>
-          </div>
-          <button
-            onClick={onClose}
-            className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full hover:bg-white/10 transition-colors"
-            aria-label="Close"
-          >
-            <X size={20} className={theme.text} />
-          </button>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-6 custom-scrollbar space-y-8">
-          {/* Theme Section */}
-          <div>
-            <div className="mb-3">
-              <h3 className={`font-amiri text-lg ${theme.titleColor}`}>المظهر</h3>
-              <p className={`font-brand-en text-[10px] uppercase tracking-[0.12em] ${theme.text} opacity-40`}>Appearance</p>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={() => { if (!darkMode) onToggleDarkMode(); }}
-                className={`p-4 ${DESIGN.radius} border-2 transition-all flex flex-col items-center gap-2 cursor-pointer ${
-                  darkMode
-                    ? 'border-[#C5A059] bg-[#C5A059]/10'
-                    : `${theme.border} bg-transparent hover:border-[#C5A059]/30`
-                }`}
-              >
-                <Moon size={24} className={darkMode ? 'text-[#C5A059]' : `${theme.text} opacity-50`} />
-                <div className="text-center">
-                  <p className={`font-amiri text-sm ${darkMode ? 'text-[#C5A059]' : theme.text}`}>ليلي</p>
-                  <p className={`font-brand-en text-[9px] uppercase tracking-[0.1em] ${theme.text} opacity-40`}>Dark</p>
-                </div>
-              </button>
-              <button
-                onClick={() => { if (darkMode) onToggleDarkMode(); }}
-                className={`p-4 ${DESIGN.radius} border-2 transition-all flex flex-col items-center gap-2 cursor-pointer ${
-                  !darkMode
-                    ? 'border-[#C5A059] bg-[#C5A059]/10'
-                    : `${theme.border} bg-transparent hover:border-[#C5A059]/30`
-                }`}
-              >
-                <Sun size={24} className={!darkMode ? 'text-[#C5A059]' : `${theme.text} opacity-50`} />
-                <div className="text-center">
-                  <p className={`font-amiri text-sm ${!darkMode ? 'text-[#C5A059]' : theme.text}`}>نهاري</p>
-                  <p className={`font-brand-en text-[9px] uppercase tracking-[0.1em] ${theme.text} opacity-40`}>Light</p>
-                </div>
-              </button>
-            </div>
-          </div>
-
-          {/* Font Section */}
-          <div>
-            <div className="mb-3">
-              <h3 className={`font-amiri text-lg ${theme.titleColor}`}>الخط</h3>
-              <p className={`font-brand-en text-[10px] uppercase tracking-[0.12em] ${theme.text} opacity-40`}>Typography</p>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {FONTS.map((font) => (
-                <button
-                  key={font.id}
-                  onClick={() => onSelectFont(font.id)}
-                  className={`p-3 ${DESIGN.radius} border-2 transition-all flex flex-col items-center gap-1.5 cursor-pointer ${
-                    currentFont === font.id
-                      ? 'border-[#C5A059] bg-[#C5A059]/10'
-                      : `${theme.border} bg-transparent hover:border-[#C5A059]/30`
-                  }`}
-                >
-                  <p className={`${font.family} text-lg ${currentFont === font.id ? 'text-[#C5A059]' : theme.text}`} dir="rtl">
-                    بسم الله
-                  </p>
-                  <div className="text-center">
-                    <p className={`font-amiri text-xs ${theme.text} opacity-60`}>{font.labelAr}</p>
-                    <p className={`font-brand-en text-[8px] uppercase tracking-[0.1em] ${theme.text} opacity-30`}>{font.label}</p>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* User Info */}
-          {user && (
-            <div className={`pt-4 border-t border-stone-500/10`}>
-              <p className={`font-brand-en text-xs ${theme.text} opacity-30 text-center`}>
-                Signed in as {user.email || user.user_metadata?.full_name || 'User'}
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
-
 /* =============================================================================
   VERTICAL SIDEBAR (Mobile overflow)
   =============================================================================
@@ -2168,7 +1863,7 @@ const VerticalSidebar = ({
                 title={`Font: ${currentFont}`}
                 className={`${subBtnBase} ${subBtnHover}`}
               >
-                <Feather style={{ color: gold }} size={16} />
+                <span className="text-[15px] font-bold leading-none" style={{ color: gold, fontFamily: "'Amiri', serif" }}>ي</span>
               </button>
 
               <div className="relative">
@@ -2294,7 +1989,6 @@ export default function DiwanApp() {
 
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showSavedPoems, setShowSavedPoems] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
   const [showSplash, setShowSplash] = useState(true); // Always show splash on every visit
   const [showOnboarding] = useState(() => {
     if (!FEATURES.onboarding) return false;
@@ -2529,7 +2223,6 @@ export default function DiwanApp() {
         case 'Escape':
           setShowAuthModal(false);
           setShowSavedPoems(false);
-          setShowSettings(false);
           setShowShortcutHelp(false);
           break;
         case '?':
@@ -3397,7 +3090,6 @@ export default function DiwanApp() {
       addLog("Auth Error", error.message, "error");
     } else {
       setShowSavedPoems(false);
-      setShowSettings(false);
       setShowAuthModal(false);
       track('sign_out');
       addLog("Auth", "Signed out successfully", "success");
@@ -3505,21 +3197,6 @@ export default function DiwanApp() {
     } else {
       window.history.replaceState({}, '', '/');
     }
-  };
-
-  const handleOpenSettings = () => {
-    if (!user) {
-      handleSignIn();
-      return;
-    }
-    track('settings_opened');
-    setShowSettings(true);
-  };
-
-  const handleSelectFont = (fontId) => {
-    track('font_changed', { font: fontId });
-    setCurrentFont(fontId);
-    addLog("Font", `Font selected: ${fontId}`, "info");
   };
 
   const handleToggleDarkMode = () => {
@@ -3943,17 +3620,6 @@ export default function DiwanApp() {
         currentFontClass={currentFontClass}
       />
 
-      {/* Settings View */}
-      <SettingsView
-        isOpen={showSettings}
-        onClose={() => setShowSettings(false)}
-        darkMode={darkMode}
-        onToggleDarkMode={handleToggleTheme}
-        currentFont={currentFont}
-        onSelectFont={handleSelectFont}
-        user={user}
-        theme={theme}
-      />
       {/* Design Review - Mobile: left edge vertical strip, Desktop: bottom-left pill */}
       <style>{`
         @keyframes slideInLeft {

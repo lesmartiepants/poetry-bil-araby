@@ -48,7 +48,6 @@ import {
 import {
   INSIGHTS_SYSTEM_PROMPT,
   DISCOVERY_SYSTEM_PROMPT,
-  TTS_SYSTEM_PROMPT,
   getTTSContent,
 } from './prompts';
 import { parseInsight } from './utils/insightParser';
@@ -604,7 +603,6 @@ const prefetchManager = {
 
       const requestBody = JSON.stringify({
         contents: [{ parts: [{ text: ttsContent }] }],
-        systemInstruction: { parts: [{ text: TTS_SYSTEM_PROMPT }] },
         generationConfig: {
           responseModalities: TTS_CONFIG.responseModalities,
           speechConfig: {
@@ -3827,7 +3825,6 @@ export default function DiwanApp() {
     // Calculate request metrics
     const requestBody = JSON.stringify({
       contents: [{ parts: [{ text: ttsContent }] }],
-      systemInstruction: { parts: [{ text: TTS_SYSTEM_PROMPT }] },
       generationConfig: {
         responseModalities: TTS_CONFIG.responseModalities,
         speechConfig: {

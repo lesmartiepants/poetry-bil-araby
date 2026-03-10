@@ -40,7 +40,7 @@ import {
   useDownvotes,
   usePoemEvents,
 } from './hooks/useAuth';
-import { INSIGHTS_SYSTEM_PROMPT, DISCOVERY_SYSTEM_PROMPT, getTTSContent } from './prompts';
+import { INSIGHTS_SYSTEM_PROMPT, DISCOVERY_SYSTEM_PROMPT, getTTSInstruction } from './prompts';
 import { parseInsight } from './utils/insightParser';
 import { repairAndParseJSON } from './utils/jsonRepair';
 import seedPoems from './data/seed-poems.json';
@@ -646,7 +646,7 @@ const prefetchManager = {
       if (activeRequests) activeRequests.current.add(poemId);
 
       // Generate audio using same logic as togglePlay
-      const ttsInstruction = getTTSContent(poem);
+      const ttsInstruction = getTTSInstruction(poem);
 
       const requestSize = new Blob([
         JSON.stringify({ contents: [{ parts: [{ text: ttsInstruction }] }] }),
@@ -1682,6 +1682,16 @@ const SplashScreen = ({ isOpen, onDismiss, showOnboarding, theme }) => {
           >
             poetry
           </span>
+          <Feather
+            style={{
+              width: 'clamp(24px, 4vw, 36px)',
+              height: 'clamp(24px, 4vw, 36px)',
+              color: gold,
+              opacity: 0.8,
+              marginBottom: '0.15em',
+            }}
+            strokeWidth={1.5}
+          />
         </div>
 
         {/* Subtitle */}
@@ -2555,6 +2565,14 @@ export default function DiwanApp() {
   const isTogglingPlay = useRef(false);
   const controlBarRef = useRef(null);
 
+  // Volume-based glow effect refs
+  const audioContextRef = useRef(null);
+  const analyserRef = useRef(null);
+  const dataArrayRef = useRef(null);
+  const sourceNodeRef = useRef(null);
+  const animationFrameRef = useRef(null);
+  const volumePulseRef = useRef(null);
+
   const [headerOpacity, setHeaderOpacity] = useState(1);
   const [poems, setPoems] = useState(() => {
     // 1. Restore from OAuth redirect (avoids flash of seed poem)
@@ -2975,6 +2993,121 @@ export default function DiwanApp() {
     return () => audio.removeEventListener('ended', handleEnded);
   }, []);
 
+  // Volume detection for pulse & glow effect
+  useEffect(() => {
+    if (isPlaying && audioRef.current) {
+      try {
+        // Initialize AudioContext and source node if not already created.
+        // A MediaElement can only be connected to one MediaElementSourceNode ever,
+        // so we must reuse the source node across play/pause cycles.
+        if (!audioContextRef.current) {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          const audioContext = new AudioCtx();
+          const analyser = audioContext.createAnalyser();
+
+          analyser.fftSize = 32;
+          const bufferLength = analyser.frequencyBinCount;
+          const dataArray = new Uint8Array(bufferLength);
+
+          // Reuse existing source node or create a new one
+          const source =
+            sourceNodeRef.current || audioContext.createMediaElementSource(audioRef.current);
+          sourceNodeRef.current = source;
+
+          source.connect(analyser);
+          analyser.connect(audioContext.destination);
+
+          audioContextRef.current = audioContext;
+          analyserRef.current = analyser;
+          dataArrayRef.current = dataArray;
+
+          if (FEATURES.logging) {
+            addLog('Audio Context', 'Initialized volume detection for glow effect', 'info');
+          }
+        }
+
+        // Resume context if it was suspended (e.g., by browser autoplay policy)
+        if (audioContextRef.current.state === 'suspended') {
+          audioContextRef.current.resume();
+        }
+
+        const detectVolume = () => {
+          if (!analyserRef.current || !dataArrayRef.current) return;
+
+          analyserRef.current.getByteFrequencyData(dataArrayRef.current);
+
+          let sum = 0;
+          for (let i = 0; i < dataArrayRef.current.length; i++) {
+            sum += dataArrayRef.current[i];
+          }
+          const average = sum / dataArrayRef.current.length;
+          const normalizedVolume = average / 255;
+
+          if (normalizedVolume > 0.7 && volumePulseRef.current) {
+            volumePulseRef.current.classList.add('volume-pulse-active');
+            setTimeout(() => {
+              if (volumePulseRef.current) {
+                volumePulseRef.current.classList.remove('volume-pulse-active');
+              }
+            }, 150);
+          }
+
+          animationFrameRef.current = requestAnimationFrame(detectVolume);
+        };
+
+        detectVolume();
+      } catch (error) {
+        // Gracefully degrade to CSS-only animation
+        if (FEATURES.logging) {
+          console.error('Failed to initialize Web Audio API:', error);
+        }
+      }
+    }
+
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, [isPlaying]);
+
+  const PulseGlowBars = () => (
+    <div ref={volumePulseRef} className="flex items-center justify-center gap-[3px] h-6">
+      <div
+        className="w-[3px] rounded-[2px] bar-with-glow"
+        style={{ background: GOLD.gold, animation: 'wave-organic-1 0.9s ease-in-out infinite' }}
+      />
+      <div
+        className="w-[3px] rounded-[2px] bar-with-glow"
+        style={{
+          background: GOLD.gold,
+          animation: 'wave-organic-2 1.15s ease-in-out infinite 0.1s',
+        }}
+      />
+      <div
+        className="w-[3px] rounded-[2px] bar-with-glow"
+        style={{
+          background: GOLD.gold,
+          animation: 'wave-organic-3 0.95s ease-in-out infinite 0.2s',
+        }}
+      />
+      <div
+        className="w-[3px] rounded-[2px] bar-with-glow"
+        style={{
+          background: GOLD.gold,
+          animation: 'wave-organic-4 1.1s ease-in-out infinite 0.15s',
+        }}
+      />
+      <div
+        className="w-[3px] rounded-[2px] bar-with-glow"
+        style={{
+          background: GOLD.gold,
+          animation: 'wave-organic-5 0.88s ease-in-out infinite 0.05s',
+        }}
+      />
+    </div>
+  );
+
   const togglePlay = async () => {
     if (isTogglingPlay.current) {
       addLog('Audio', 'Play toggle already in progress — skipping', 'info');
@@ -3135,7 +3268,7 @@ export default function DiwanApp() {
     // Mark request as in-flight
     activeAudioRequests.current.add(current?.id);
 
-    const ttsInstruction = getTTSContent(current);
+    const ttsInstruction = getTTSInstruction(current);
 
     // Calculate request metrics
     const requestSize = new Blob([

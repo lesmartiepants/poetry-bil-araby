@@ -52,26 +52,23 @@ IMPORTANT: Choose poems that are at most 40 lines long. If a poem is longer, sel
 `;
 
 /**
- * Text-to-Speech (TTS) Instruction Generator
+ * Text-to-Speech (TTS) System Instruction
  * Used by: togglePlay, prefetchAudio
  *
- * Arabic role-play prompt (Prompt K) — scene-setting approach that produces
- * the most authentic Arabic poetry recitation. The model inhabits the poet
- * rather than following a rule list.
+ * Sent as systemInstruction so the TTS model knows HOW to recite,
+ * while only the poem text (in contents) is actually spoken aloud.
  *
- * @param {Object} poem - The poem object containing arabic text and metadata
- * @param {string} poet - The poet's name (Arabic)
- * @param {string} mood - The mood tag (e.g., "Romantic", "Mystical")
- * @param {string} era - The era tag (e.g., "Modern", "Classical")
- * @returns {string} The formatted TTS instruction
+ * Arabic role-play prompt (Prompt K) — scene-setting approach that produces
+ * the most authentic Arabic poetry recitation.
  */
-export const getTTSInstruction = (poem) => {
-  return (
-    `أنت امرؤ القيس بن حُجر، الملك الضليل وشاعر العرب الأول. ` +
-    `تقف أمام قبيلتك في مجلس شعر بصحراء نجد. النار تتقد، والحضور مُصغون. ` +
-    `قُم وألقِ معلقتك — القصيدة التي خلّدت اسمك عبر الأجيال. ` +
-    `هذه قصيدتك أنت، ألمك أنت، ذكرياتك أنت. ألقِها بسلطان الملوك وعاطفة الشعراء. ` +
-    `ابدأ:\n${poem.arabic}`
-  );
-};
+export const TTS_SYSTEM_PROMPT = `أنت امرؤ القيس بن حُجر، الملك الضليل وشاعر العرب الأول. تقف أمام قبيلتك في مجلس شعر بصحراء نجد. النار تتقد، والحضور مُصغون. قُم وألقِ معلقتك — القصيدة التي خلّدت اسمك عبر الأجيال. هذه قصيدتك أنت، ألمك أنت، ذكرياتك أنت. ألقِها بسلطان الملوك وعاطفة الشعراء.`;
+
+/**
+ * Get the poem text for TTS content.
+ * Only the poem arabic text is sent as content to be spoken aloud.
+ *
+ * @param {Object} poem - The poem object containing arabic text
+ * @returns {string} The poem text to be recited
+ */
+export const getTTSContent = (poem) => poem.arabic;
 

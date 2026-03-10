@@ -1071,7 +1071,7 @@ body {
 
   <!-- API Key Banner -->
   <div class="api-banner" id="apiBanner">
-    Running in Database-only mode — add a Gemini API key for AI features
+    Running in Database-only mode — add a Gemini API key for LLM features
     <button onclick="document.getElementById('apiBanner').classList.add('hidden')" style="margin-left:12px;opacity:0.6;background:none;border:none;cursor:pointer;color:inherit;font-size:inherit">✕</button>
   </div>
 
@@ -1196,7 +1196,7 @@ body {
               <span class="ctrl-label" style="color:var(--gold)">Copy</span>
             </div>
 
-            <!-- DB/AI Toggle -->
+            <!-- DB/LLM Toggle -->
             <div class="ctrl-group">
               <button class="ctrl-btn" id="btnDbToggle" aria-label="Toggle database mode">
                 <i data-lucide="library" id="dbIcon"></i>
@@ -2243,7 +2243,7 @@ function init() {
     document.getElementById('poetDropdown').classList.toggle('open');
   });
 
-  // -- DB/AI toggle --
+  // -- DB/LLM toggle --
   document.getElementById('btnDbToggle').addEventListener('click', function() {
     S.useDatabase = !S.useDatabase;
     var icon = document.getElementById('dbIcon');
@@ -2256,11 +2256,11 @@ function init() {
     if (icon) { icon.setAttribute('data-lucide', newIcon); }
     if (vsbDbIcon) { vsbDbIcon.setAttribute('data-lucide', newIcon); }
     if (overflowDbIcon) { overflowDbIcon.setAttribute('data-lucide', newIcon); }
-    if (label) label.textContent = S.useDatabase ? 'Local' : 'AI';
-    if (overflowDbLabelAr) overflowDbLabelAr.textContent = S.useDatabase ? '\u0642\u0627\u0639\u062F\u0629 \u0627\u0644\u0628\u064A\u0627\u0646\u0627\u062A' : '\u0630\u0643\u0627\u0621 \u0627\u0635\u0637\u0646\u0627\u0639\u064A';
-    if (overflowDbLabelEn) overflowDbLabelEn.textContent = S.useDatabase ? 'Local Database' : 'AI Generation';
+    if (label) label.textContent = S.useDatabase ? 'Local' : 'Web';
+    if (overflowDbLabelAr) overflowDbLabelAr.textContent = S.useDatabase ? '\u0642\u0627\u0639\u062F\u0629 \u0627\u0644\u0628\u064A\u0627\u0646\u0627\u062A' : '\u062A\u0648\u0644\u064A\u062F\u064A';
+    if (overflowDbLabelEn) overflowDbLabelEn.textContent = S.useDatabase ? 'Local Database' : 'LLM';
     lucide.createIcons();
-    addLog('Source', S.useDatabase ? 'Database' : 'AI', 'info');
+    addLog('Source', S.useDatabase ? 'Database' : 'LLM', 'info');
   });
 
   // -- Auth button --

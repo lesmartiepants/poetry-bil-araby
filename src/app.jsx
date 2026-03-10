@@ -1298,7 +1298,7 @@ const DatabaseToggle = ({ useDatabase, onToggle, disabled }) => {
         onClick={onToggle}
         disabled={disabled}
         className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none transition-all duration-300 flex items-center justify-center rounded-full ${disabled ? 'opacity-50 cursor-not-allowed' : `cursor-pointer ${GOLD.goldHoverBg} hover:scale-105`}`}
-        aria-label={useDatabase ? 'Switch to AI Mode' : 'Switch to Database Mode'}
+        aria-label={useDatabase ? 'Switch to LLM Mode' : 'Switch to Database Mode'}
       >
         {useDatabase ? (
           <Library size={21} className={GOLD.goldText} />
@@ -2883,7 +2883,7 @@ const VerticalSidebar = ({
 
               <button
                 onClick={onToggleDatabase}
-                title={useDatabase ? 'Switch to AI' : 'Switch to Database'}
+                title={useDatabase ? 'Switch to LLM' : 'Switch to Database'}
                 className={`${subBtnBase} ${subBtnHover}`}
               >
                 {useDatabase ? (
@@ -2976,7 +2976,7 @@ const VerticalSidebar = ({
 
               <button
                 onClick={onToggleDatabase}
-                title={useDatabase ? 'Switch to AI' : 'Switch to Database'}
+                title={useDatabase ? 'Switch to LLM' : 'Switch to Database'}
                 className={`${subBtnBase} ${subBtnHover}`}
               >
                 {useDatabase ? (
@@ -4105,7 +4105,7 @@ export default function DiwanApp() {
         const res = await geminiTextFetch(
           'streamGenerateContent',
           insightsStreamBody,
-          'AI Insights failed',
+          'Insights failed',
           addLog
         );
 
@@ -4184,7 +4184,7 @@ export default function DiwanApp() {
         const res = await geminiTextFetch(
           'generateContent',
           insightsFallbackBody,
-          'AI Insights failed',
+          'Insights failed',
           addLog
         );
         const data = await res.json();
@@ -4252,7 +4252,7 @@ export default function DiwanApp() {
   const handleFetch = async () => {
     addLog(
       'UI Event',
-      `🐰 Discover button clicked | Category: ${selectedCategory} | Source: ${useDatabase ? 'Database' : 'Gemini AI'}`,
+      `🐰 Discover button clicked | Category: ${selectedCategory} | Source: ${useDatabase ? 'Database' : 'LLM'}`,
       'info'
     );
 
@@ -4337,7 +4337,7 @@ export default function DiwanApp() {
           throw dbError; // Re-throw to be caught by outer catch
         }
       } else {
-        // GEMINI AI MODE: Original implementation
+        // LLM MODE: Original implementation
         const prompt =
           selectedCategory === 'All'
             ? 'Find a masterpiece Arabic poem. COMPLETE text.'
@@ -4365,7 +4365,7 @@ export default function DiwanApp() {
         const res = await geminiTextFetch(
           'generateContent',
           requestBody,
-          'AI Discovery failed',
+          'Discovery failed',
           addLog
         );
 

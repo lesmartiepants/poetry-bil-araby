@@ -4737,10 +4737,10 @@ export default function DiwanApp() {
   useEffect(() => {
     if (!FEATURES.prefetching || !current?.id) return;
 
-    // Prefetch current poem audio after 5s (only if user lingers on this poem)
+    // Prefetch current poem audio after 2s (only if user lingers on this poem)
     const prefetchCurrentAudio = setTimeout(() => {
       prefetchManager.prefetchAudio(current.id, current, addLog, activeAudioRequests);
-    }, 5000);
+    }, 2000);
 
     // Prefetch current poem insights after 5s (only if user stays)
     const prefetchCurrentInsights = setTimeout(() => {
@@ -4857,6 +4857,16 @@ export default function DiwanApp() {
 
         .rabbit-bounce {
           animation: bounce 2s ease-in-out infinite;
+        }
+
+        @keyframes wave {
+          0%, 100% { transform: scaleY(0.3); }
+          50% { transform: scaleY(1); }
+        }
+
+        @keyframes shimmer {
+          0%, 100% { opacity: 0.6; }
+          50% { opacity: 1; }
         }
 
         .scroll-progress {
@@ -5125,25 +5135,87 @@ export default function DiwanApp() {
               className={`flex items-center gap-2 px-5 py-2 rounded-full shadow-2xl border ${DESIGN.glass} ${theme.border} ${theme.shadow} ${DESIGN.anim} max-w-[calc(100vw-2rem)] w-fit`}
             >
               <div className="flex flex-col items-center gap-1 min-w-[52px]">
-                <button
-                  onClick={togglePlay}
-                  disabled={isGeneratingAudio}
-                  aria-label={isPlaying ? 'Pause recitation' : 'Play recitation'}
-                  className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
-                >
-                  {isGeneratingAudio ? (
-                    <Loader2 className={`animate-spin ${GOLD.goldText}`} size={21} />
-                  ) : audioError ? (
-                    <Volume2 className={theme.error} size={21} />
-                  ) : isPlaying ? (
-                    <Pause fill={GOLD.gold} size={21} />
-                  ) : (
-                    <Volume2 className={GOLD.goldText} size={21} />
-                  )}
-                </button>
-                <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">
-                  Listen
-                </span>
+                {isGeneratingAudio ? (
+                  <>
+                    <button
+                      disabled
+                      aria-label="Preparing audio"
+                      className="min-w-[46px] min-h-[46px] p-[11px] bg-[#C5A059]/8 border border-[#C5A059]/30 cursor-wait transition-all duration-300 flex items-center justify-center rounded-full"
+                    >
+                      <div className="flex items-center justify-center gap-0.5 h-[21px]">
+                        <div
+                          className="w-[2px] h-[6px] bg-[#C5A059] rounded-full"
+                          style={{
+                            animation: 'wave 1.2s ease-in-out infinite',
+                            animationDelay: '0s',
+                          }}
+                        />
+                        <div
+                          className="w-[2px] h-[10px] bg-[#C5A059] rounded-full"
+                          style={{
+                            animation: 'wave 1.2s ease-in-out infinite',
+                            animationDelay: '0.15s',
+                          }}
+                        />
+                        <div
+                          className="w-[2px] h-[14px] bg-[#C5A059] rounded-full"
+                          style={{
+                            animation: 'wave 1.2s ease-in-out infinite',
+                            animationDelay: '0.3s',
+                          }}
+                        />
+                        <div
+                          className="w-[2px] h-[10px] bg-[#C5A059] rounded-full"
+                          style={{
+                            animation: 'wave 1.2s ease-in-out infinite',
+                            animationDelay: '0.45s',
+                          }}
+                        />
+                        <div
+                          className="w-[2px] h-[6px] bg-[#C5A059] rounded-full"
+                          style={{
+                            animation: 'wave 1.2s ease-in-out infinite',
+                            animationDelay: '0.6s',
+                          }}
+                        />
+                      </div>
+                    </button>
+                    <div className="flex flex-col items-center gap-0.5">
+                      <span
+                        className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase text-stone-400 whitespace-nowrap"
+                        style={{ animation: 'shimmer 2s ease-in-out infinite' }}
+                      >
+                        Crafting
+                      </span>
+                      <span
+                        className="font-amiri text-[9px] text-[#C5A059]/80"
+                        dir="rtl"
+                        style={{ animation: 'shimmer 2s ease-in-out infinite' }}
+                      >
+                        إعداد الصوت
+                      </span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={togglePlay}
+                      aria-label={isPlaying ? 'Pause recitation' : 'Play recitation'}
+                      className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
+                    >
+                      {audioError ? (
+                        <Volume2 className={theme.error} size={21} />
+                      ) : isPlaying ? (
+                        <Pause fill={GOLD.gold} size={21} />
+                      ) : (
+                        <Volume2 className={GOLD.goldText} size={21} />
+                      )}
+                    </button>
+                    <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">
+                      Listen
+                    </span>
+                  </>
+                )}
               </div>
 
               {!isOverflow && (

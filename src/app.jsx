@@ -48,7 +48,6 @@ import {
   INSIGHTS_SYSTEM_PROMPT,
   DISCOVERY_SYSTEM_PROMPT,
   getTTSInstruction,
-  getTTSInstructionShort,
 } from './prompts';
 import { parseInsight } from './utils/insightParser';
 import { repairAndParseJSON } from './utils/jsonRepair';
@@ -69,7 +68,6 @@ const FEATURES = {
   database: true, // Enable database poem source (requires backend server running)
   onboarding: true, // Show kinetic walkthrough (phases 1-3) on first visit
   forceOnboarding: false, // Bypass hasSeenOnboarding check (enable to force onboarding every visit)
-  ttsFastPrompt: true, // Use shortened TTS prompt (~200 chars) for faster TTFB vs full prompt (~750 chars)
 };
 
 const DESIGN = {
@@ -603,8 +601,7 @@ const prefetchManager = {
       const mood = poem?.tags?.[1] || 'Poetic';
       const era = poem?.tags?.[0] || 'Classical';
       const poet = poem?.poet || 'the Master Poet';
-      const ttsPromptFn = FEATURES.ttsFastPrompt ? getTTSInstructionShort : getTTSInstruction;
-      const ttsInstruction = ttsPromptFn(poem, poet, mood, era);
+      const ttsInstruction = getTTSInstruction(poem, poet, mood, era);
 
       const requestSize = new Blob([
         JSON.stringify({ contents: [{ parts: [{ text: ttsInstruction }] }] }),
@@ -3819,8 +3816,7 @@ export default function DiwanApp() {
     const mood = current?.tags?.[1] || 'Poetic';
     const era = current?.tags?.[0] || 'Classical';
     const poet = current?.poet || 'the Master Poet';
-    const ttsPromptFn = FEATURES.ttsFastPrompt ? getTTSInstructionShort : getTTSInstruction;
-    const ttsInstruction = ttsPromptFn(current, poet, mood, era);
+    const ttsInstruction = getTTSInstruction(current, poet, mood, era);
 
     // Calculate request metrics
     const requestSize = new Blob([

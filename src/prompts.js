@@ -78,10 +78,3 @@ export const getTTSInstruction = (poem, poet, mood, era) => {
   );
 };
 
-/**
- * Shortened TTS Instruction (~200 chars prompt) for faster TTFB.
- * Used when FEATURES.ttsFastPrompt is true.
- */
-export const getTTSInstructionShort = (poem, poet, mood, era) => {
-  return `Recite this ${mood} Arabic poem by ${poet} (${era}) with expressive inshad style. Project emotion, vary pace, stress the qafiya.\nPoem:\n${poem.arabic}`;
-};

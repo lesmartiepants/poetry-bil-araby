@@ -164,9 +164,12 @@ describe('DiwanApp', () => {
         tags: ['Classical', 'Epic', 'Ode'],
       }
 
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => newPoem,
+      // URL-aware mock: return new poem only for DB endpoint, default for everything else
+      global.fetch.mockImplementation((url) => {
+        if (typeof url === 'string' && url.includes('/api/poems/random')) {
+          return Promise.resolve({ ok: true, json: async () => newPoem, text: async () => '' })
+        }
+        return Promise.resolve({ ...defaultFetchResponse })
       })
 
       await userEvent.click(screen.getByLabelText('Discover new poem'))

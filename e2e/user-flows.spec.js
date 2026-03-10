@@ -16,7 +16,8 @@ const MOCK_POEM_DARWISH = {
   poetArabic: 'محمود درويش',
   title: 'On This Earth',
   titleArabic: 'على هذه الأرض',
-  arabic: 'على هذه الأرضِ ما يستحقُّ الحياةْ\nتردُّدُ أبريلَ، رائحةُ الخبزِ في الفجرِ\nآراءُ امرأةٍ في الرجالِ',
+  arabic:
+    'على هذه الأرضِ ما يستحقُّ الحياةْ\nتردُّدُ أبريلَ، رائحةُ الخبزِ في الفجرِ\nآراءُ امرأةٍ في الرجالِ',
   english: '',
   tags: ['وطنية'],
   isFromDatabase: true,
@@ -114,8 +115,14 @@ test.describe('User Flows', () => {
     // After click, the mock route serves a different poem
     await expect(discoverButton).toBeEnabled({ timeout: 10000 });
     // Verify that either poet from our mock data is displayed
-    const darwishVisible = await page.locator('text=محمود درويش').isVisible().catch(() => false);
-    const mutanabbiVisible = await page.locator('text=المتنبي').isVisible().catch(() => false);
+    const darwishVisible = await page
+      .locator('text=محمود درويش')
+      .isVisible()
+      .catch(() => false);
+    const mutanabbiVisible = await page
+      .locator('text=المتنبي')
+      .isVisible()
+      .catch(() => false);
     expect(darwishVisible || mutanabbiVisible).toBe(true);
   });
 
@@ -124,7 +131,7 @@ test.describe('User Flows', () => {
     // Set up a delayed Gemini TTS response to observe loading state
     await page.route('**/api/ai/**', async (route) => {
       // Simulate slow TTS — respond after 500ms with an error (no real audio needed)
-      await new Promise(r => setTimeout(r, 500));
+      await new Promise((r) => setTimeout(r, 500));
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -165,9 +172,7 @@ test.describe('User Flows', () => {
     }
 
     // "Poetic Insight" heading should appear in the side panel
-    await expect(
-      page.locator('text=Poetic Insight').first()
-    ).toBeVisible({ timeout: 10000 });
+    await expect(page.locator('text=Poetic Insight').first()).toBeVisible({ timeout: 10000 });
   });
 
   // #4 — Toggle dark/light theme
@@ -185,7 +190,9 @@ test.describe('User Flows', () => {
       await themeDropdown.click();
       await page.waitForTimeout(300);
       // Click the mode toggle button — target via English sub-text
-      const modeButton = page.locator('button:has-text("Light Mode"), button:has-text("Dark Mode")').first();
+      const modeButton = page
+        .locator('button:has-text("Light Mode"), button:has-text("Dark Mode")')
+        .first();
       await expect(modeButton).toBeVisible({ timeout: 3000 });
       await modeButton.click();
     } else {
@@ -193,7 +200,9 @@ test.describe('User Flows', () => {
       const settingsBtn = page.locator('button[title="Settings"]').first();
       await settingsBtn.click();
       await page.waitForTimeout(300);
-      const themeBtn = page.locator('button[title="Light mode"], button[title="Dark mode"]').first();
+      const themeBtn = page
+        .locator('button[title="Light mode"], button[title="Dark mode"]')
+        .first();
       await expect(themeBtn).toBeVisible({ timeout: 3000 });
       await themeBtn.click();
     }
@@ -294,16 +303,18 @@ test.describe('User Flows', () => {
     }).toPass({ timeout: 3000 });
   });
 
-  // #8 — Switch DB/AI mode
-  test('user sees DB/AI mode toggle', async ({ page }) => {
+  // #8 — Switch DB/LLM mode
+  test('user sees DB/LLM mode toggle', async ({ page }) => {
     await expect(page.locator('footer')).toBeVisible();
 
     // Desktop: the toggle button should be visible in the control bar
-    const toggleButton = page.locator('button[aria-label*="Database Mode"], button[aria-label*="AI Mode"]').first();
+    const toggleButton = page
+      .locator('button[aria-label*="Database Mode"], button[aria-label*="LLM Mode"]')
+      .first();
     const isVisible = await toggleButton.isVisible().catch(() => false);
 
     if (!isVisible) {
-      // Mobile: open Settings gear in VerticalSidebar, then find DB/AI toggle
+      // Mobile: open Settings gear in VerticalSidebar, then find DB/LLM toggle
       const settingsBtn = page.locator('button[title="Settings"]').first();
       const settingsVisible = await settingsBtn.isVisible().catch(() => false);
       if (settingsVisible) {
@@ -339,7 +350,7 @@ test.describe('User Flows', () => {
     // There are two design-review links: mobile (md:hidden) and desktop (hidden md:flex).
     // On desktop viewport the second link is visible; on mobile the first.
     const links = page.locator('a[href="/design-review"]');
-    const link = (viewport && viewport.width >= 768) ? links.nth(1) : links.nth(0);
+    const link = viewport && viewport.width >= 768 ? links.nth(1) : links.nth(0);
     await expect(link).toBeVisible({ timeout: 5000 });
 
     // The link href is "/design-review" but Vite serves the static page at "/design-review/"
@@ -425,7 +436,9 @@ test.describe('User Flows', () => {
 
   // #15 — Only one ThumbsDown icon on page (not duplicated in sidebar)
   test('thumbs-down icon appears exactly once on page', async ({ page }) => {
-    await expect(page.locator('button:has(svg.lucide-thumbs-down)').first()).toBeVisible({ timeout: 5000 });
+    await expect(page.locator('button:has(svg.lucide-thumbs-down)').first()).toBeVisible({
+      timeout: 5000,
+    });
     const count = await page.locator('svg.lucide-thumbs-down').count();
     expect(count).toBe(1);
   });
@@ -436,9 +449,11 @@ test.describe('Mobile viewport sidebar', () => {
   test.use({ viewport: { width: 402, height: 874 } });
 
   test('mobile viewport shows VerticalSidebar with Settings', async ({ page }) => {
-    await page.route('**/api/**', route => route.abort());
-    await page.route('**/api/ai/**', route => route.abort());
-    await page.addInitScript(() => { localStorage.setItem('hasSeenOnboarding', 'true'); });
+    await page.route('**/api/**', (route) => route.abort());
+    await page.route('**/api/ai/**', (route) => route.abort());
+    await page.addInitScript(() => {
+      localStorage.setItem('hasSeenOnboarding', 'true');
+    });
 
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
@@ -459,7 +474,9 @@ test.describe('Mobile viewport sidebar', () => {
   // #17 — Flag NOT in VerticalSidebar on mobile
   test('mobile VerticalSidebar does not contain ThumbsDown', async ({ page }) => {
     await setupRouteMocks(page);
-    await page.addInitScript(() => { localStorage.setItem('hasSeenOnboarding', 'true'); });
+    await page.addInitScript(() => {
+      localStorage.setItem('hasSeenOnboarding', 'true');
+    });
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
     const enterBtn = page.locator('button[aria-label="Enter the app"]');

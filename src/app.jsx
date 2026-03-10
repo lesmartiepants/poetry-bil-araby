@@ -44,7 +44,12 @@ import {
   useDownvotes,
   usePoemEvents,
 } from './hooks/useAuth';
-import { INSIGHTS_SYSTEM_PROMPT, DISCOVERY_SYSTEM_PROMPT, getTTSInstruction } from './prompts';
+import {
+  INSIGHTS_SYSTEM_PROMPT,
+  DISCOVERY_SYSTEM_PROMPT,
+  getTTSInstruction,
+  getTTSInstructionShort,
+} from './prompts';
 import { parseInsight } from './utils/insightParser';
 import { repairAndParseJSON } from './utils/jsonRepair';
 import seedPoems from './data/seed-poems.json';
@@ -64,6 +69,7 @@ const FEATURES = {
   database: true, // Enable database poem source (requires backend server running)
   onboarding: true, // Show kinetic walkthrough (phases 1-3) on first visit
   forceOnboarding: false, // Bypass hasSeenOnboarding check (enable to force onboarding every visit)
+  ttsFastPrompt: true, // Use shortened TTS prompt (~200 chars) for faster TTFB vs full prompt (~750 chars)
 };
 
 const DESIGN = {
@@ -597,7 +603,8 @@ const prefetchManager = {
       const mood = poem?.tags?.[1] || 'Poetic';
       const era = poem?.tags?.[0] || 'Classical';
       const poet = poem?.poet || 'the Master Poet';
-      const ttsInstruction = getTTSInstruction(poem, poet, mood, era);
+      const ttsPromptFn = FEATURES.ttsFastPrompt ? getTTSInstructionShort : getTTSInstruction;
+      const ttsInstruction = ttsPromptFn(poem, poet, mood, era);
 
       const requestSize = new Blob([
         JSON.stringify({ contents: [{ parts: [{ text: ttsInstruction }] }] }),
@@ -3011,6 +3018,13 @@ export default function DiwanApp() {
   const isTogglingPlay = useRef(false);
   const controlBarRef = useRef(null);
 
+  // Volume-based glow effect refs
+  const audioContextRef = useRef(null);
+  const analyserRef = useRef(null);
+  const dataArrayRef = useRef(null);
+  const animationFrameRef = useRef(null);
+  const volumePulseRef = useRef(null);
+
   const [headerOpacity, setHeaderOpacity] = useState(1);
   const [poems, setPoems] = useState(() => {
     // 1. Restore from OAuth redirect (avoids flash of seed poem)
@@ -3535,6 +3549,113 @@ export default function DiwanApp() {
     return () => audio.removeEventListener('ended', handleEnded);
   }, []);
 
+  // Volume detection for pulse & glow effect
+  useEffect(() => {
+    if (isPlaying && audioRef.current && !audioContextRef.current) {
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        const audioContext = new AudioCtx();
+        const analyser = audioContext.createAnalyser();
+        const source = audioContext.createMediaElementSource(audioRef.current);
+
+        analyser.fftSize = 32;
+        const bufferLength = analyser.frequencyBinCount;
+        const dataArray = new Uint8Array(bufferLength);
+
+        source.connect(analyser);
+        analyser.connect(audioContext.destination);
+
+        audioContextRef.current = audioContext;
+        analyserRef.current = analyser;
+        dataArrayRef.current = dataArray;
+
+        const detectVolume = () => {
+          if (!analyserRef.current || !dataArrayRef.current) return;
+
+          analyserRef.current.getByteFrequencyData(dataArrayRef.current);
+
+          let sum = 0;
+          for (let i = 0; i < dataArrayRef.current.length; i++) {
+            sum += dataArrayRef.current[i];
+          }
+          const average = sum / dataArrayRef.current.length;
+          const normalizedVolume = average / 255;
+
+          if (normalizedVolume > 0.7 && volumePulseRef.current) {
+            volumePulseRef.current.classList.add('volume-pulse-active');
+            setTimeout(() => {
+              if (volumePulseRef.current) {
+                volumePulseRef.current.classList.remove('volume-pulse-active');
+              }
+            }, 150);
+          }
+
+          animationFrameRef.current = requestAnimationFrame(detectVolume);
+        };
+
+        detectVolume();
+
+        if (FEATURES.logging) {
+          addLog('Audio Context', 'Initialized volume detection for glow effect', 'info');
+        }
+      } catch (error) {
+        // Gracefully degrade to CSS-only animation
+        if (FEATURES.logging) {
+          console.error('Failed to initialize Web Audio API:', error);
+        }
+      }
+    }
+
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+      if (audioContextRef.current) {
+        audioContextRef.current.close();
+        audioContextRef.current = null;
+        analyserRef.current = null;
+        dataArrayRef.current = null;
+      }
+    };
+  }, [isPlaying]);
+
+  const PulseGlowBars = () => (
+    <div ref={volumePulseRef} className="flex items-center justify-center gap-[3px] h-6">
+      <div
+        className="w-[3px] rounded-[2px] bar-with-glow"
+        style={{ background: GOLD.gold, animation: 'wave-organic-1 0.9s ease-in-out infinite' }}
+      />
+      <div
+        className="w-[3px] rounded-[2px] bar-with-glow"
+        style={{
+          background: GOLD.gold,
+          animation: 'wave-organic-2 1.15s ease-in-out infinite 0.1s',
+        }}
+      />
+      <div
+        className="w-[3px] rounded-[2px] bar-with-glow"
+        style={{
+          background: GOLD.gold,
+          animation: 'wave-organic-3 0.95s ease-in-out infinite 0.2s',
+        }}
+      />
+      <div
+        className="w-[3px] rounded-[2px] bar-with-glow"
+        style={{
+          background: GOLD.gold,
+          animation: 'wave-organic-4 1.1s ease-in-out infinite 0.15s',
+        }}
+      />
+      <div
+        className="w-[3px] rounded-[2px] bar-with-glow"
+        style={{
+          background: GOLD.gold,
+          animation: 'wave-organic-5 0.88s ease-in-out infinite 0.05s',
+        }}
+      />
+    </div>
+  );
+
   const togglePlay = async () => {
     if (isTogglingPlay.current) {
       addLog('Audio', 'Play toggle already in progress — skipping', 'info');
@@ -3698,7 +3819,8 @@ export default function DiwanApp() {
     const mood = current?.tags?.[1] || 'Poetic';
     const era = current?.tags?.[0] || 'Classical';
     const poet = current?.poet || 'the Master Poet';
-    const ttsInstruction = getTTSInstruction(current, poet, mood, era);
+    const ttsPromptFn = FEATURES.ttsFastPrompt ? getTTSInstructionShort : getTTSInstruction;
+    const ttsInstruction = ttsPromptFn(current, poet, mood, era);
 
     // Calculate request metrics
     const requestSize = new Blob([
@@ -4869,6 +4991,55 @@ export default function DiwanApp() {
           50% { opacity: 1; }
         }
 
+        @keyframes wave-organic-1 {
+          0% { height: 10px; }
+          25% { height: 18px; }
+          50% { height: 24px; }
+          75% { height: 14px; }
+          100% { height: 10px; }
+        }
+
+        @keyframes wave-organic-2 {
+          0% { height: 12px; }
+          30% { height: 20px; }
+          60% { height: 22px; }
+          80% { height: 16px; }
+          100% { height: 12px; }
+        }
+
+        @keyframes wave-organic-3 {
+          0% { height: 14px; }
+          20% { height: 24px; }
+          55% { height: 18px; }
+          85% { height: 20px; }
+          100% { height: 14px; }
+        }
+
+        @keyframes wave-organic-4 {
+          0% { height: 11px; }
+          35% { height: 19px; }
+          65% { height: 23px; }
+          90% { height: 15px; }
+          100% { height: 11px; }
+        }
+
+        @keyframes wave-organic-5 {
+          0% { height: 10px; }
+          28% { height: 17px; }
+          58% { height: 21px; }
+          88% { height: 13px; }
+          100% { height: 10px; }
+        }
+
+        .volume-pulse-active .bar-with-glow {
+          box-shadow: 0 0 8px rgba(197, 160, 89, 0.6),
+                      0 0 4px rgba(197, 160, 89, 0.4);
+        }
+
+        .bar-with-glow {
+          transition: box-shadow 0.15s ease;
+        }
+
         .scroll-progress {
           position: fixed;
           top: 0;
@@ -5201,19 +5372,35 @@ export default function DiwanApp() {
                     <button
                       onClick={togglePlay}
                       aria-label={isPlaying ? 'Pause recitation' : 'Play recitation'}
-                      className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
+                      className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105 relative group`}
                     >
                       {audioError ? (
                         <Volume2 className={theme.error} size={21} />
                       ) : isPlaying ? (
-                        <Pause fill={GOLD.gold} size={21} />
+                        <>
+                          <PulseGlowBars />
+                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-30 transition-opacity duration-200 pointer-events-none">
+                            <Pause fill={GOLD.gold} size={14} />
+                          </div>
+                        </>
                       ) : (
                         <Volume2 className={GOLD.goldText} size={21} />
                       )}
                     </button>
-                    <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">
-                      Listen
-                    </span>
+                    {isPlaying ? (
+                      <div className="flex flex-col items-center gap-0.5">
+                        <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase text-stone-400 whitespace-nowrap">
+                          Playing
+                        </span>
+                        <span className="font-amiri text-[9px] text-[#C5A059]/80" dir="rtl">
+                          يُسمع الآن
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">
+                        Listen
+                      </span>
+                    )}
                   </>
                 )}
               </div>

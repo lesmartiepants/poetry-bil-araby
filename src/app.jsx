@@ -205,7 +205,8 @@ const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
  * used when the ListModels API is unavailable. Starts with the cheapest Gemini 2.5 model.
  */
 const API_MODELS = {
-  tts: 'gemini-2.5-flash-preview-tts',
+  tts: 'gemini-2.5-pro-preview-tts',
+  ttsFallback: 'gemini-2.5-flash-preview-tts',
   textDefaults: ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'],
 };
 
@@ -315,38 +316,31 @@ const geminiTextFetch = async (endpoint, body, label, addLog) => {
 const TTS_CONFIG = {
   voiceName: 'Fenrir',
   responseModalities: ['AUDIO'],
-  retryMaxAttempts: 3,
-  retryBaseDelayMs: 1500, // 1.5s, 3s, 6s exponential backoff
 };
 
 /**
- * Fetch with exponential backoff retry on 429 (rate limit) responses.
- * Returns the successful Response, or throws on final failure.
+ * Fetch TTS with model fallback on 429 (rate limit) responses.
+ * Tries the primary TTS model first; on 429 (daily quota exhausted),
+ * switches to the fallback model instead of retrying the same one.
+ * Quotas are per-model-per-day, so the fallback has its own quota.
  */
-const fetchWithRetry = async (
-  url,
-  options,
-  {
-    maxAttempts = TTS_CONFIG.retryMaxAttempts,
-    baseDelay = TTS_CONFIG.retryBaseDelayMs,
-    addLog,
-    label = 'TTS',
-  } = {}
-) => {
-  for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    const res = await fetch(url, options);
-    if (res.status !== 429) return res;
-    const delay = baseDelay * Math.pow(2, attempt);
+const fetchTTSWithFallback = async (url, options, { addLog, label = 'TTS' } = {}) => {
+  const res = await fetch(url, options);
+  if (res.status !== 429) return res;
+
+  // Primary model rate-limited — try fallback model (separate daily quota)
+  if (API_MODELS.ttsFallback) {
+    const fallbackUrl = url.replace(API_MODELS.tts, API_MODELS.ttsFallback);
     if (addLog)
       addLog(
         label,
-        `Rate limited (429) — retrying in ${(delay / 1000).toFixed(1)}s (attempt ${attempt + 1}/${maxAttempts})`,
+        `Rate limited (429) on ${API_MODELS.tts} — falling back to ${API_MODELS.ttsFallback}`,
         'warning'
       );
-    await new Promise((r) => setTimeout(r, delay));
+    return fetch(fallbackUrl, options);
   }
-  // Final attempt — return whatever we get
-  return fetch(url, options);
+
+  return res;
 };
 
 /* =============================================================================
@@ -626,7 +620,10 @@ const prefetchManager = {
         headers: { 'Content-Type': 'application/json' },
         body: requestBody,
       };
-      const res = await fetchWithRetry(url, fetchOptions, { addLog, label: 'Prefetch Audio' });
+      const res = await fetchTTSWithFallback(url, fetchOptions, {
+        addLog,
+        label: 'Prefetch Audio',
+      });
 
       if (!res.ok) {
         const errorText = await res.text();
@@ -3862,7 +3859,7 @@ export default function DiwanApp() {
         headers: { 'Content-Type': 'application/json' },
         body: requestBody,
       };
-      const res = await fetchWithRetry(url, fetchOptions, { addLog, label: 'Audio API' });
+      const res = await fetchTTSWithFallback(url, fetchOptions, { addLog, label: 'Audio API' });
 
       if (!res.ok) {
         const errorText = await res.text();
@@ -4864,7 +4861,7 @@ export default function DiwanApp() {
   }, [current?.id]);
 
   // Prefetch triggers - run background prefetching when poem changes
-  // Only prefetch current poem; next-poem audio prefetch removed to conserve TTS quota (100 RPD free tier)
+  // Only prefetch current poem; next-poem audio prefetch removed to conserve TTS quota (100 RPD per model, free tier)
   useEffect(() => {
     if (!FEATURES.prefetching || !current?.id) return;
 

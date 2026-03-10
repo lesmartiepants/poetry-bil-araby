@@ -764,7 +764,13 @@ const DebugPanel = ({ logs, onClear, darkMode, poem, appState }) => {
         timestamp: new Date().toISOString(),
         userAgent: navigator.userAgent,
         poem: poem ? { id: poem.id, poet: poem.poet, title: poem.title } : null,
-        appState: appState || null
+        appState: appState || null,
+        url: window.location.href,
+        screenSize: `${window.innerWidth}x${window.innerHeight}`,
+        language: navigator.language,
+        online: navigator.onLine,
+        referrer: document.referrer,
+        featureFlags: { ...FEATURES }
       };
       const res = await fetch(`${apiUrl}/api/bug-reports`, {
         method: 'POST',

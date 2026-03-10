@@ -73,6 +73,24 @@ File: src/prompts.js → getTTSInstruction(poem)
 | O | 4/4 | 4/4 | REST: 22s, Live: 27s | Consistent, reliable |
 | A | 4/4 | 4/4 | REST: 29s, Live: 36s | Reliable but slower |
 
+### Round 4 — K-quality + O-reliability hybrids (5 poems × 2 APIs)
+| ID | Style | Lang | REST | Live | Avg dur (REST) | Avg dur (Live) |
+|----|-------|------|------|------|---------------|---------------|
+| P  | K + guard rails | AR | 4/5 | 5/5 | 21.3s | 25.7s |
+| **Q** | **K + O hybrid** | **AR+EN** | **5/5** | **5/5** | **20.2s** | **23.4s** |
+| R  | K simplified (generic poet) | AR | 2/5* | 5/5 | 27.2s | 26.2s |
+| S  | K generic poet | AR | 0/5* | 5/5 | - | 27.5s |
+| T  | K atmosphere + O structure | AR+EN | 0/5* | 5/5 | - | 26.6s |
+
+*S/T/R REST failures were API quota (429), not prompt failures.
+
+**Round 4 winner: Prompt Q** — 100% reliable, fastest on both APIs, generalizes across all poets.
+
+### Architecture Fix: systemInstruction separation
+**Problem discovered:** TTS model was reciting the instruction text aloud (the scene-setting intro), not just the poem.
+**Fix:** Split prompt into `systemInstruction` (delivery directions) + `contents` (poem text only).
+This means the model gets the scene-setting context but only speaks the actual poem.
+
 ---
 
 ## Prompt Texts (Reference)
@@ -133,25 +151,31 @@ Poem:
 ```
                     ┌─ Quality: K-static ★★★★★
                     │  (hardcoded Imru' al-Qais)
-                    │  Problem: breaks for other poets
+                    │  Problem: breaks for other poets, recites intro
                     │
-User's favorites ───┤
-                    │  ┌─ Quality: K-dynamic ★★★★
-                    ├──┤  (actual poet name)
-                    │  │  Problem: 75% reliable REST, runaway Live
+User's favorites ───┤  ┌─ Quality: R ★★★★ (rest-R-27161, live-R-imru)
+                    ├──┤  K simplified, generic poet
+                    │  │  Live: 5/5 reliable, REST: needs more data
                     │  │
-                    │  └─ Quality: O ★★★☆
-                    │     (Director's cue)
-                    │     Reliable, fast, generalizes
+                    │  ├─ Quality: Q ★★★★ (K+O hybrid)
+                    │  │  100% reliable both APIs, fastest (20.2s REST)
+                    │  │  RECOMMENDED for production
+                    │  │
+                    │  └─ Quality: K-dynamic ★★★★
+                    │     Problem: 75% reliable REST, runaway Live
                     │
-                    └─ Quality: A ★★★☆
-                       (original English)
-                       Reliable but slowest
+                    └─ Quality: A/O ★★★☆
+                       Reliable baselines
+
+ARCHITECTURE FIX (CRITICAL):
+→ Use systemInstruction for delivery directions
+→ Send ONLY poem text in contents
+→ Prevents model from reciting the prompt itself
 
 NEXT STEPS:
-→ Iterate on K-dynamic to improve reliability
-→ Test hybrid K+O (Arabic scene-setting + "NOT slow" guard rails)
-→ Listen to O samples to see if quality gap is real
+→ Deploy systemInstruction fix to production
+→ Re-test K-static with systemInstruction (may sound different)
+→ Evaluate Q with systemInstruction (best candidate for prod)
 ```
 
 ---
@@ -169,3 +193,5 @@ All files: `/Users/sfarage/Github/personal/poetry-audio-ux/prompt-samples/`
 | `sample-live-O-{id}.wav` | O generalization test (4 poems) |
 | `sample-rest-A-{id}.wav` | A generalization test (4 poems) |
 | `sample-live-A-{id}.wav` | A generalization test (4 poems) |
+| `sample-rest-{P-T}-{id}.wav` | Round 4 hybrids (5 poems, REST — partial due to quota) |
+| `sample-live-{P-T}-{id}.wav` | Round 4 hybrids (5 poems, Live — all succeeded) |

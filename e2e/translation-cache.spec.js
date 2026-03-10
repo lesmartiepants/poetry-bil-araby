@@ -112,7 +112,7 @@ async function setupMocks(page, {
     });
   });
 
-  await page.route('**/generativelanguage.googleapis.com/**', async (route) => {
+  await page.route('**/api/ai/**', async (route) => {
     geminiCalls.push(route.request().url());
     // Return a mock streaming response so the app doesn't hang
     await route.fulfill({
@@ -205,7 +205,7 @@ test.describe('Translation Cache — Instant Load', () => {
       });
     });
 
-    await page.route('**/generativelanguage.googleapis.com/**', route => route.abort());
+    await page.route('**/api/ai/**', route => route.abort());
 
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');

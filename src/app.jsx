@@ -4921,7 +4921,7 @@ export default function DiwanApp() {
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(79, 70, 229, 0.2); border-radius: 10px; }
         .bg-radial-gradient { background: radial-gradient(circle, var(--tw-gradient-from) 0%, var(--tw-gradient-via) 50%, var(--tw-gradient-to) 100%); }
-        .app-branding-rtl { direction: rtl; }
+
         .safe-bottom { padding-bottom: max(1.5rem, env(safe-area-inset-bottom)); }
 
         .font-amiri { font-family: 'Amiri', serif; }
@@ -4934,7 +4934,7 @@ export default function DiwanApp() {
         .font-katibeh { font-family: 'Katibeh', cursive; }
 
         .header-luminescence {
-          text-shadow: 0 0 30px rgba(99, 102, 241, 0.6);
+          text-shadow: 0 0 30px rgba(197, 160, 89, 0.3);
         }
 
         @keyframes fadeIn {
@@ -5069,20 +5069,17 @@ export default function DiwanApp() {
         className="fixed top-4 md:top-8 left-0 right-0 z-40 pointer-events-none transition-opacity duration-300 flex flex-row items-center justify-center gap-4 md:gap-8 px-4 md:px-6"
       >
         <div
-          className={`flex flex-row-reverse items-center gap-2 md:gap-4 ${theme.brand} tracking-wide header-luminescence`}
+          className="flex flex-row items-center gap-3 md:gap-5 tracking-wide header-luminescence"
         >
-          <Feather className="w-8 h-8 md:w-[42px] md:h-[42px] opacity-95" strokeWidth={1.5} />
-          <h1 className="app-branding-rtl flex items-end gap-3 md:gap-6">
-            <span className="font-brand-ar text-[clamp(1.875rem,4vw,3rem)] font-bold mb-[clamp(0.25rem,0.5vw,0.5rem)] opacity-80">
+          <h1 className="flex items-baseline gap-2 md:gap-3">
+            <span className={`font-brand-ar text-[clamp(2.5rem,6vw,4.5rem)] font-bold leading-none ${darkMode ? 'text-stone-100' : 'text-stone-800'}`}>
               بالعربي
             </span>
-            <span className="font-brand-en text-[clamp(3rem,6vw,4.5rem)] lowercase tracking-tighter">
+            <span className={`font-brand-en text-[clamp(1rem,2vw,1.5rem)] lowercase tracking-[0.15em] ${theme.goldText}`}>
               poetry
             </span>
-            <span className="font-brand-en text-[clamp(10px,1.2vw,12px)] px-[clamp(0.375rem,0.8vw,0.5rem)] py-0.5 rounded border border-indigo-500/30 bg-indigo-500/10 uppercase tracking-wider mb-[clamp(0.5rem,1vw,1rem)] ml-[clamp(0.5rem,1vw,0.75rem)] opacity-60">
-              beta
-            </span>
           </h1>
+          <Feather className={`w-6 h-6 md:w-8 md:h-8 opacity-80 ${theme.goldText}`} strokeWidth={1.5} />
         </div>
       </header>
 

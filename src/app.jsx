@@ -1759,7 +1759,7 @@ const SplashScreen = ({ isOpen, onDismiss, showOnboarding, theme }) => {
           />
         ))}
 
-        {/* Brand — بالعربي + poetry + feather */}
+        {/* Brand — poetry + بالعربي + feather */}
         <div
           style={{
             position: 'relative',
@@ -1773,19 +1773,6 @@ const SplashScreen = ({ isOpen, onDismiss, showOnboarding, theme }) => {
         >
           <span
             style={{
-              fontFamily: "'Reem Kufi', sans-serif",
-              fontWeight: 700,
-              fontSize: 'clamp(3rem, 6vw, 4.5rem)',
-              color: isDark ? '#D4D0C8' : '#1A1614',
-              lineHeight: 1,
-            }}
-            dir="rtl"
-            lang="ar"
-          >
-            بالعربي
-          </span>
-          <span
-            style={{
               fontFamily: "'Forum', serif",
               fontSize: 'clamp(1.25rem, 2.5vw, 1.75rem)',
               letterSpacing: '-0.05em',
@@ -1796,6 +1783,19 @@ const SplashScreen = ({ isOpen, onDismiss, showOnboarding, theme }) => {
             }}
           >
             poetry
+          </span>
+          <span
+            style={{
+              fontFamily: "'Reem Kufi', sans-serif",
+              fontWeight: 700,
+              fontSize: 'clamp(3rem, 6vw, 4.5rem)',
+              color: isDark ? '#D4D0C8' : '#1A1614',
+              lineHeight: 1,
+            }}
+            dir="rtl"
+            lang="ar"
+          >
+            بالعربي
           </span>
           <Feather style={{
             width: 'clamp(24px, 4vw, 36px)',
@@ -5081,15 +5081,6 @@ export default function DiwanApp() {
         >
           <h1 className="flex items-baseline gap-3">
             <span
-              className="font-brand-ar font-bold leading-none"
-              style={{
-                fontSize: 'clamp(3rem, 6vw, 4.5rem)',
-                color: darkMode ? '#D4D0C8' : '#1A1614',
-              }}
-            >
-              بالعربي
-            </span>
-            <span
               className="font-brand-en leading-none tracking-[-0.05em]"
               style={{
                 fontSize: 'clamp(1.25rem, 2.5vw, 1.75rem)',
@@ -5099,6 +5090,15 @@ export default function DiwanApp() {
               }}
             >
               poetry
+            </span>
+            <span
+              className="font-brand-ar font-bold leading-none"
+              style={{
+                fontSize: 'clamp(3rem, 6vw, 4.5rem)',
+                color: darkMode ? '#D4D0C8' : '#1A1614',
+              }}
+            >
+              بالعربي
             </span>
           </h1>
           <Feather

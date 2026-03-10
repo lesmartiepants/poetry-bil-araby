@@ -84,6 +84,7 @@ PORT              // API server port (defaults to 3001)
 API_SECRET_KEY    // Protect write endpoints with X-API-Key header (optional; when unset, auth is bypassed)
 LOG_ENABLED       // Enable HTTP request logging (defaults to true)
 LOG_DEBUG         // Enable verbose database debug logs (defaults to false)
+GITHUB_TOKEN_SUBMIT_BUG  // GitHub PAT for creating issues from bug reports (repo scope)
 
 // Local-only tooling tokens (never deployed)
 SUPABASE_PERSONAL_ACCESS_TOKEN  // For Supabase Management API

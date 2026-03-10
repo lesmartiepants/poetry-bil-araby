@@ -1295,7 +1295,7 @@ app.patch('/api/design-review/feedback-actions/:id', requireApiKey, async (req, 
 // ═══════════════════════════════════════════════════════════════
 
 async function createGitHubIssue(report, truncatedLogs) {
-  const token = process.env.GITHUB_TOKEN;
+  const token = process.env.GITHUB_TOKEN_SUBMIT_BUG;
   const repo = process.env.GITHUB_REPO || 'lesmartiepants/poetry-bil-araby';
   if (!token) return null;
 
@@ -1311,21 +1311,33 @@ async function createGitHubIssue(report, truncatedLogs) {
     ? `<details><summary>Client logs (${truncatedLogs.length} entries)</summary>\n\n\`\`\`json\n${JSON.stringify(truncatedLogs.slice(-20), null, 2)}\n\`\`\`\n</details>`
     : 'No client logs attached';
 
+  const envSection = [
+    report.screenSize && `Screen: ${report.screenSize}`,
+    report.language && `Language: ${report.language}`,
+    report.online !== undefined && `Online: ${report.online}`,
+    report.referrer && `Referrer: ${report.referrer}`,
+    report.featureFlags && `Feature flags: \`${JSON.stringify(report.featureFlags)}\``,
+  ].filter(Boolean).join(' | ');
+
   const body = [
     `## User Bug Report`,
     ``,
+    report.url && `**URL:** ${report.url}`,
     `**Description:** ${report.description || '_No description provided_'}`,
     ``,
     poemInfo,
     `**App state:** ${stateInfo}`,
     `**User agent:** \`${report.userAgent}\``,
     `**Submitted:** ${report.timestamp}`,
+    envSection && ``,
+    envSection && `### Environment`,
+    envSection && envSection,
     ``,
     logsSection,
     ``,
     `---`,
     `_Auto-created from in-app bug report button_`,
-  ].join('\n');
+  ].filter(line => line !== false && line !== null).join('\n');
 
   const title = report.description
     ? `[Bug Report] ${report.description.slice(0, 80)}`
@@ -1363,7 +1375,7 @@ async function createGitHubIssue(report, truncatedLogs) {
 
 app.post('/api/bug-reports', rateLimit({ windowMs: 60_000, max: 10, standardHeaders: true, legacyHeaders: false }), async (req, res) => {
   try {
-    const { description, logs: clientLogs, timestamp, userAgent, poem, appState } = req.body;
+    const { description, logs: clientLogs, timestamp, userAgent, poem, appState, url, screenSize, language, online, referrer, featureFlags } = req.body;
 
     // Basic validation
     if (!timestamp || !userAgent) {
@@ -1385,7 +1397,13 @@ app.post('/api/bug-reports', rateLimit({ windowMs: 60_000, max: 10, standardHead
         mode: appState.mode,
         theme: appState.theme,
         font: appState.font
-      } : null
+      } : null,
+      url: typeof url === 'string' ? url.slice(0, 2000) : null,
+      screenSize: typeof screenSize === 'string' ? screenSize.slice(0, 20) : null,
+      language: typeof language === 'string' ? language.slice(0, 20) : null,
+      online: typeof online === 'boolean' ? online : null,
+      referrer: typeof referrer === 'string' ? referrer.slice(0, 2000) : null,
+      featureFlags: featureFlags && typeof featureFlags === 'object' ? featureFlags : null
     };
 
     log.info('BugReport', `New bug report submitted`, report);
@@ -1401,8 +1419,8 @@ app.post('/api/bug-reports', rateLimit({ windowMs: 60_000, max: 10, standardHead
     // Persist to PostgreSQL
     try {
       await pool.query(
-        `INSERT INTO bug_reports (description, logs, timestamp, user_agent, poem_id, poem_poet, poem_title, app_mode, app_theme, app_font, github_issue_number)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+        `INSERT INTO bug_reports (description, logs, timestamp, user_agent, poem_id, poem_poet, poem_title, app_mode, app_theme, app_font, github_issue_number, url, screen_size, language, online, referrer, feature_flags)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)`,
         [
           report.description,
           JSON.stringify(truncatedLogs),
@@ -1415,6 +1433,12 @@ app.post('/api/bug-reports', rateLimit({ windowMs: 60_000, max: 10, standardHead
           report.appState?.theme || null,
           report.appState?.font || null,
           issueNumber,
+          report.url,
+          report.screenSize,
+          report.language,
+          report.online,
+          report.referrer,
+          report.featureFlags ? JSON.stringify(report.featureFlags) : null,
         ]
       );
       log.info('BugReport', `Saved to database${issueNumber ? ` (GitHub #${issueNumber})` : ''}`);

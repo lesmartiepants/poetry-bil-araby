@@ -87,6 +87,7 @@ const DESIGN = {
   paneVerseSize: 'text-[clamp(1rem,1.8vw,1.125rem)]', // 16px-18px for insight panel
   glass: 'backdrop-blur-2xl',
   radius: 'rounded-2xl',
+  goldFoil: 'bg-gradient-to-br from-[#B8922E] via-[#E2C67A] to-[#A07D38] bg-clip-text text-transparent',
   anim: 'transition-all duration-300 ease-in-out',
   buttonHover: 'hover:scale-105 hover:shadow-lg transition-all duration-300',
   touchTarget: 'min-w-[44px] min-h-[44px]',
@@ -130,6 +131,7 @@ const THEME = {
     debugInput: 'bg-stone-900/80 border-stone-700 text-stone-200 placeholder:text-stone-500', // Debug input
     debugDivider: 'border-stone-700', // Debug panel divider
     kbd: 'bg-stone-800 text-stone-300 border-stone-700', // Keyboard shortcut keys
+    goldFoilGradient: 'linear-gradient(135deg, #B8922E 0%, #C5A059 30%, #E2C67A 55%, #C5A059 75%, #A07D38 100%)',
   },
   light: {
     bg: 'bg-[#FDFCF8]',
@@ -168,6 +170,7 @@ const THEME = {
     debugInput: 'bg-white/80 border-stone-300 text-stone-800 placeholder:text-stone-400', // Debug input
     debugDivider: 'border-stone-300', // Debug panel divider
     kbd: 'bg-stone-200 text-stone-700 border-stone-300', // Keyboard shortcut keys
+    goldFoilGradient: 'linear-gradient(135deg, #6B5B3E 0%, #8B7355 30%, #A8956A 55%, #8B7355 75%, #6B5B3E 100%)',
   },
 };
 
@@ -1776,8 +1779,11 @@ const SplashScreen = ({ isOpen, onDismiss, showOnboarding, theme }) => {
               fontFamily: "'Reem Kufi', sans-serif",
               fontWeight: 700,
               fontSize: 'clamp(3rem, 6vw, 4.5rem)',
-              color: isDark ? '#D4D0C8' : '#1A1614',
               lineHeight: 1,
+              background: theme.goldFoilGradient,
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
             }}
             dir="rtl"
             lang="ar"
@@ -5083,7 +5089,10 @@ export default function DiwanApp() {
               fontWeight: 700,
               fontSize: 'clamp(3rem, 6vw, 4.5rem)',
               lineHeight: 1,
-              color: darkMode ? '#D4D0C8' : '#1A1614',
+              background: theme.goldFoilGradient,
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
             }}>
               بالعربي
             </span>

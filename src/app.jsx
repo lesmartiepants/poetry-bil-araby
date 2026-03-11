@@ -2451,64 +2451,68 @@ const VerticalSidebar = ({
         className="fixed right-0 md:right-[24.5rem] top-1/2 -translate-y-1/2 z-[45] rounded-l-2xl md:rounded-2xl bg-gradient-to-b from-black/70 via-black/60 to-black/70 backdrop-blur-xl border-l-2 md:border-2 border-[#C5A059]/40 py-2 px-1.5 transition-all duration-300"
         style={{
           animation: 'slideInRight 0.4s ease-out',
-          maxHeight: 'calc(100dvh - 10rem)',
+          maxHeight: 'calc(100dvh - 14rem)',
         }}
       >
-        {/* Collapsed: icon hints — tap anywhere to expand */}
-        {!expanded && (
-          <button
-            onClick={() => setExpanded(true)}
-            className="flex flex-col items-center gap-1.5 py-1 px-0.5 group"
-            title="Open controls"
-            aria-label="Open sidebar controls"
-          >
-            <ChevronLeft
+        {/* Toggle handle — always visible, icon hints when collapsed */}
+        <button
+          onClick={() => {
+            if (expanded) {
+              setSettingsOpen(false);
+              setExpanded(false);
+            } else {
+              setExpanded(true);
+            }
+          }}
+          className="flex flex-col items-center gap-1.5 py-1 px-0.5 group w-full"
+          title={expanded ? 'Collapse controls' : 'Open controls'}
+          aria-label={expanded ? 'Collapse sidebar controls' : 'Open sidebar controls'}
+        >
+          {expanded ? (
+            <ChevronRight
               style={{ color: gold, opacity: 0.5 }}
               size={14}
               className="group-hover:opacity-80 transition-opacity"
             />
-            <Brain
-              style={{ color: gold, opacity: 0.6 }}
-              size={16}
-              className="group-hover:opacity-90 transition-opacity"
-            />
-            <Copy
-              style={{ color: gold, opacity: 0.6 }}
-              size={16}
-              className="group-hover:opacity-90 transition-opacity"
-            />
-            <Settings2
-              style={{ color: gold, opacity: 0.6 }}
-              size={16}
-              className="group-hover:opacity-90 transition-opacity"
-            />
-            <ChevronLeft
-              style={{ color: gold, opacity: 0.5 }}
-              size={14}
-              className="group-hover:opacity-80 transition-opacity"
-            />
-          </button>
-        )}
+          ) : (
+            <>
+              <ChevronLeft
+                style={{ color: gold, opacity: 0.5 }}
+                size={14}
+                className="group-hover:opacity-80 transition-opacity"
+              />
+              <Brain
+                style={{ color: gold, opacity: 0.6 }}
+                size={16}
+                className="group-hover:opacity-90 transition-opacity"
+              />
+              <Copy
+                style={{ color: gold, opacity: 0.6 }}
+                size={16}
+                className="group-hover:opacity-90 transition-opacity"
+              />
+              <Settings2
+                style={{ color: gold, opacity: 0.6 }}
+                size={16}
+                className="group-hover:opacity-90 transition-opacity"
+              />
+              <ChevronLeft
+                style={{ color: gold, opacity: 0.5 }}
+                size={14}
+                className="group-hover:opacity-80 transition-opacity"
+              />
+            </>
+          )}
+        </button>
 
-        {/* Expanded controls — scrollable container */}
-        {expanded && (
-          <div
-            ref={scrollRef}
-            className="overflow-y-auto overflow-x-hidden"
-            style={{ maxHeight: 'calc(100dvh - 12rem)' }}
-          >
-            <div className="flex flex-col items-center gap-1">
-              {/* Collapse handle */}
-              <button
-                onClick={() => {
-                  setSettingsOpen(false);
-                  setExpanded(false);
-                }}
-                className="w-full flex justify-center py-0.5 opacity-40 hover:opacity-80 transition-opacity"
-                title="Collapse controls"
-              >
-                <ChevronRight style={{ color: gold }} size={14} />
-              </button>
+        {/* Expanded controls — animated grid drawer */}
+        <div className={`sidebar-drawer ${expanded ? 'open' : ''}`}>
+          <div className="sidebar-drawer-inner">
+            <div
+              ref={scrollRef}
+              className="overflow-y-auto overflow-x-hidden flex flex-col items-center gap-1"
+              style={{ maxHeight: 'calc(100dvh - 16rem)' }}
+            >
               <button
                 onClick={onExplain}
                 disabled={isInterpreting}
@@ -2588,7 +2592,7 @@ const VerticalSidebar = ({
               <button
                 onClick={() => {
                   setSettingsOpen((prev) => !prev);
-                  // Scroll sidebar to top so settings are visible
+                  // Scroll sidebar all the way down so settings drawer is visible
                   if (!settingsOpen && scrollRef.current) {
                     setTimeout(
                       () =>
@@ -2596,7 +2600,7 @@ const VerticalSidebar = ({
                           top: scrollRef.current.scrollHeight,
                           behavior: 'smooth',
                         }),
-                      50
+                      350
                     );
                   }
                 }}
@@ -2701,7 +2705,7 @@ const VerticalSidebar = ({
               </span>
             </div>
           </div>
-        )}
+        </div>
       </div>
     </>
   );

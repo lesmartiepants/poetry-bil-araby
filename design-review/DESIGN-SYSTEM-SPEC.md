@@ -31,7 +31,7 @@ Bottom bar with action buttons. Present in the main app view.
 |--------|------|----------|
 | Listen | Speaker/Audio | Play audio synthesis of the poem (Gemini multimodal) |
 | Save | Bookmark/Heart | Save current poem to favorites |
-| Explain/Insights | Lightbulb/Star | Show AI-generated explanation of the poem |
+| Explain/Insights | Lightbulb/Star | Show in-depth explanation of the poem |
 | Next | Arrow right | Load next poem |
 | Shuffle/Random | Dice/Shuffle | Load random poem |
 | Poet | Person/Quill | Show poet info or filter by poet |

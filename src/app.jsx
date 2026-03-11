@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { Play, Pause, BookOpen, RefreshCw, Volume2, ChevronDown, Quote, Globe, Moon, Sun, Loader2, ChevronRight, ChevronLeft, Search, X, Copy, LayoutGrid, Check, Bug, Trash2, Sparkles, Feather, Compass, Rabbit, Heart, LogIn, LogOut, User, Settings2, ArrowRight, Languages, Share2, ThumbsDown } from 'lucide-react';
 import { track } from '@vercel/analytics';
+import Sentry from './sentry.js';
 import {
   useAuth,
   useUserSettings,
@@ -8,7 +9,7 @@ import {
   useDownvotes,
   usePoemEvents,
 } from './hooks/useAuth';
-import { INSIGHTS_SYSTEM_PROMPT, DISCOVERY_SYSTEM_PROMPT, getTTSInstruction } from './prompts';
+import { INSIGHTS_SYSTEM_PROMPT, DISCOVERY_SYSTEM_PROMPT, getTTSContent } from './prompts';
 import { parseInsight } from './utils/insightParser';
 import { repairAndParseJSON } from './utils/jsonRepair';
 import seedPoems from './data/seed-poems.json';
@@ -68,23 +69,23 @@ const THEME = {
     titleColor: 'text-[#C5A059]', // Antique Gold
     poetColor: 'text-[#C5A059]', // Unified Gold
     controlIcon: 'text-stone-300 hover:text-white',
-    gold: '#C5A059',              // Raw gold hex for inline styles & template literals
-    goldText: 'text-[#C5A059]',   // Tailwind gold text
-    goldHoverBg: 'hover:bg-[#C5A059]/12',  // Gold hover background (buttons)
+    gold: '#C5A059', // Raw gold hex for inline styles & template literals
+    goldText: 'text-[#C5A059]', // Tailwind gold text
+    goldHoverBg: 'hover:bg-[#C5A059]/12', // Gold hover background (buttons)
     goldHoverBg15: 'hover:bg-[#C5A059]/15', // Gold hover background (sidebar)
-    goldActiveBg: 'bg-[#C5A059]/15',        // Gold active/selected background
-    goldBorder: 'border-[#C5A059]',          // Gold solid border (selected state)
-    goldBorderMuted: 'border-[#C5A059]/20',  // Gold muted border (dividers)
+    goldActiveBg: 'bg-[#C5A059]/15', // Gold active/selected background
+    goldBorder: 'border-[#C5A059]', // Gold solid border (selected state)
+    goldBorderMuted: 'border-[#C5A059]/20', // Gold muted border (dividers)
     goldBorderSubtle: 'border-[#C5A059]/30', // Gold subtle border (hover)
     goldHoverBorderSubtle: 'hover:border-[#C5A059]/30', // Gold hover border
     goldBorderAccent: 'border-[#C5A059]/40', // Gold border accent (sidebar edges)
     goldBorderStrong: 'border-[#C5A059]/70', // Gold border strong (hover state)
     goldHoverBorderStrong: 'hover:border-[#C5A059]/70', // Gold hover border strong
-    goldBg10: 'bg-[#C5A059]/10',             // Gold background 10% (selected items)
-    goldBg20: 'border-[#C5A059]/20',         // Gold background 20% (badge border)
-    goldTextMuted: 'text-[#C5A059]/60',      // Gold muted text
-    error: 'text-red-400',         // Error text
-    errorBg: 'bg-red-600/80',     // Error background (bug report button)
+    goldBg10: 'bg-[#C5A059]/10', // Gold background 10% (selected items)
+    goldBg20: 'border-[#C5A059]/20', // Gold background 20% (badge border)
+    goldTextMuted: 'text-[#C5A059]/60', // Gold muted text
+    error: 'text-red-400', // Error text
+    errorBg: 'bg-red-600/80', // Error background (bug report button)
     debug: 'bg-black/60 border-stone-800 text-stone-300', // Debug panel
     debugInput: 'bg-stone-900/80 border-stone-700 text-stone-200 placeholder:text-stone-500', // Debug input
     debugDivider: 'border-stone-700', // Debug panel divider
@@ -106,23 +107,23 @@ const THEME = {
     titleColor: 'text-[#8B7355]', // Antique Gold (rich, warm tone - 5.2:1 contrast)
     poetColor: 'text-[#8B7355]', // Antique Gold (rich, warm tone - 5.2:1 contrast)
     controlIcon: 'text-indigo-950/90 hover:text-black',
-    gold: '#8B7355',              // Raw gold hex for inline styles & template literals
-    goldText: 'text-[#8B7355]',   // Tailwind gold text
-    goldHoverBg: 'hover:bg-[#8B7355]/12',  // Gold hover background (buttons)
+    gold: '#8B7355', // Raw gold hex for inline styles & template literals
+    goldText: 'text-[#8B7355]', // Tailwind gold text
+    goldHoverBg: 'hover:bg-[#8B7355]/12', // Gold hover background (buttons)
     goldHoverBg15: 'hover:bg-[#8B7355]/15', // Gold hover background (sidebar)
-    goldActiveBg: 'bg-[#8B7355]/15',        // Gold active/selected background
-    goldBorder: 'border-[#8B7355]',          // Gold solid border (selected state)
-    goldBorderMuted: 'border-[#8B7355]/20',  // Gold muted border (dividers)
+    goldActiveBg: 'bg-[#8B7355]/15', // Gold active/selected background
+    goldBorder: 'border-[#8B7355]', // Gold solid border (selected state)
+    goldBorderMuted: 'border-[#8B7355]/20', // Gold muted border (dividers)
     goldBorderSubtle: 'border-[#8B7355]/30', // Gold subtle border (hover)
     goldHoverBorderSubtle: 'hover:border-[#8B7355]/30', // Gold hover border
     goldBorderAccent: 'border-[#8B7355]/40', // Gold border accent (sidebar edges)
     goldBorderStrong: 'border-[#8B7355]/70', // Gold border strong (hover state)
     goldHoverBorderStrong: 'hover:border-[#8B7355]/70', // Gold hover border strong
-    goldBg10: 'bg-[#8B7355]/10',             // Gold background 10% (selected items)
-    goldBg20: 'border-[#8B7355]/20',         // Gold background 20% (badge border)
-    goldTextMuted: 'text-[#8B7355]/60',      // Gold muted text
-    error: 'text-red-400',         // Error text (same in light for visibility)
-    errorBg: 'bg-red-600/80',     // Error background (bug report button)
+    goldBg10: 'bg-[#8B7355]/10', // Gold background 10% (selected items)
+    goldBg20: 'border-[#8B7355]/20', // Gold background 20% (badge border)
+    goldTextMuted: 'text-[#8B7355]/60', // Gold muted text
+    error: 'text-red-400', // Error text (same in light for visibility)
+    errorBg: 'bg-red-600/80', // Error background (bug report button)
     debug: 'bg-white/60 border-stone-200 text-stone-700', // Debug panel
     debugInput: 'bg-white/80 border-stone-300 text-stone-800 placeholder:text-stone-400', // Debug input
     debugDivider: 'border-stone-300', // Debug panel divider
@@ -224,7 +225,8 @@ const getRecentSeenIds = () => {
  * used when the ListModels API is unavailable. Starts with the cheapest Gemini 2.5 model.
  */
 const API_MODELS = {
-  tts: 'gemini-2.5-flash-preview-tts',
+  tts: 'gemini-2.5-pro-preview-tts',
+  ttsFallback: 'gemini-2.5-flash-preview-tts',
   textDefaults: ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'],
 };
 
@@ -243,10 +245,7 @@ let _discoveredTextModels = null;
 const discoverTextModels = async (addLog) => {
   if (_discoveredTextModels) return _discoveredTextModels;
   try {
-    const res = await fetch(
-      `${apiUrl}/api/ai/models`,
-      { method: 'GET' }
-    );
+    const res = await fetch(`${apiUrl}/api/ai/models`, { method: 'GET' });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const { models = [] } = await res.json();
     const ranked = models
@@ -312,10 +311,11 @@ const geminiTextFetch = async (endpoint, body, label, addLog) => {
   for (let i = 0; i < models.length; i++) {
     const model = models[i];
     if (i > 0) addLog('Model Fallback', `Trying fallback: ${model}`, 'warning');
-    const res = await fetch(
-      `${apiUrl}/api/ai/${model}/${endpoint}`,
-      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body }
-    );
+    const res = await fetch(`${apiUrl}/api/ai/${model}/${endpoint}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body,
+    });
     if (res.ok) {
       if (i > 0) addLog('Model Fallback', `✓ Using fallback model: ${model}`, 'success');
       return res;
@@ -336,38 +336,31 @@ const geminiTextFetch = async (endpoint, body, label, addLog) => {
 const TTS_CONFIG = {
   voiceName: 'Fenrir',
   responseModalities: ['AUDIO'],
-  retryMaxAttempts: 3,
-  retryBaseDelayMs: 1500, // 1.5s, 3s, 6s exponential backoff
 };
 
 /**
- * Fetch with exponential backoff retry on 429 (rate limit) responses.
- * Returns the successful Response, or throws on final failure.
+ * Fetch TTS with model fallback on 429 (rate limit) responses.
+ * Tries the primary TTS model first; on 429 (daily quota exhausted),
+ * switches to the fallback model instead of retrying the same one.
+ * Quotas are per-model-per-day, so the fallback has its own quota.
  */
-const fetchWithRetry = async (
-  url,
-  options,
-  {
-    maxAttempts = TTS_CONFIG.retryMaxAttempts,
-    baseDelay = TTS_CONFIG.retryBaseDelayMs,
-    addLog,
-    label = 'TTS',
-  } = {}
-) => {
-  for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    const res = await fetch(url, options);
-    if (res.status !== 429) return res;
-    const delay = baseDelay * Math.pow(2, attempt);
+const fetchTTSWithFallback = async (url, options, { addLog, label = 'TTS' } = {}) => {
+  const res = await fetch(url, options);
+  if (res.status !== 429) return res;
+
+  // Primary model rate-limited — try fallback model (separate daily quota)
+  if (API_MODELS.ttsFallback) {
+    const fallbackUrl = url.replace(API_MODELS.tts, API_MODELS.ttsFallback);
     if (addLog)
       addLog(
         label,
-        `Rate limited (429) — retrying in ${(delay / 1000).toFixed(1)}s (attempt ${attempt + 1}/${maxAttempts})`,
+        `Rate limited (429) on ${API_MODELS.tts} — falling back to ${API_MODELS.ttsFallback}`,
         'warning'
       );
-    await new Promise((r) => setTimeout(r, delay));
+    return fetch(fallbackUrl, options);
   }
-  // Final attempt — return whatever we get
-  return fetch(url, options);
+
+  return res;
 };
 
 /* =============================================================================
@@ -616,15 +609,21 @@ const prefetchManager = {
       if (activeRequests) activeRequests.current.add(poemId);
 
       // Generate audio using same logic as togglePlay
-      const mood = poem?.tags?.[1] || 'Poetic';
-      const era = poem?.tags?.[0] || 'Classical';
-      const poet = poem?.poet || 'the Master Poet';
-      const ttsInstruction = getTTSInstruction(poem, poet, mood, era);
+      const ttsContent = getTTSContent(poem);
 
-      const requestSize = new Blob([
-        JSON.stringify({ contents: [{ parts: [{ text: ttsInstruction }] }] }),
-      ]).size;
-      const estimatedTokens = Math.ceil(ttsInstruction.length / 4);
+      const requestBody = JSON.stringify({
+        contents: [{ parts: [{ text: ttsContent }] }],
+        generationConfig: {
+          responseModalities: TTS_CONFIG.responseModalities,
+          speechConfig: {
+            voiceConfig: {
+              prebuiltVoiceConfig: { voiceName: TTS_CONFIG.voiceName },
+            },
+          },
+        },
+      });
+      const requestSize = new Blob([requestBody]).size;
+      const estimatedTokens = Math.ceil(ttsContent.length / 4);
 
       if (addLog) {
         addLog(
@@ -639,19 +638,12 @@ const prefetchManager = {
       const fetchOptions = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: ttsInstruction }] }],
-          generationConfig: {
-            responseModalities: TTS_CONFIG.responseModalities,
-            speechConfig: {
-              voiceConfig: {
-                prebuiltVoiceConfig: { voiceName: TTS_CONFIG.voiceName },
-              },
-            },
-          },
-        }),
+        body: requestBody,
       };
-      const res = await fetchWithRetry(url, fetchOptions, { addLog, label: 'Prefetch Audio' });
+      const res = await fetchTTSWithFallback(url, fetchOptions, {
+        addLog,
+        label: 'Prefetch Audio',
+      });
 
       if (!res.ok) {
         const errorText = await res.text();
@@ -787,7 +779,8 @@ const prefetchManager = {
       // Mark as in-flight
       if (activeRequests) activeRequests.current.add(poemId);
 
-      const promptText = `Deep Analysis of: ${poem.arabic}`;
+      const poetInfo = poem?.poet ? ` by ${poem.poet}` : '';
+      const promptText = `Deep Analysis of${poetInfo}:\n\n${poem.arabic}`;
       const requestSize = new Blob([
         JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] }),
       ]).size;
@@ -1037,6 +1030,7 @@ const DebugPanel = ({ logs, onClear, darkMode, poem, appState }) => {
       setBugDescription('');
       setTimeout(() => setBugStatus(null), 3000);
     } catch (e) {
+      Sentry.captureException(e);
       setBugStatus('error');
       setBugError(e.message || 'Network error');
       setTimeout(() => setBugStatus(null), 5000);
@@ -1046,10 +1040,15 @@ const DebugPanel = ({ logs, onClear, darkMode, poem, appState }) => {
   if (!FEATURES.debug) return null;
 
   return (
-    <div className={`w-full max-w-full transition-all duration-300 ${isExpanded ? 'h-48 md:h-64' : 'h-7'} overflow-hidden border-b ${
-      theme.debug
-    } backdrop-blur-md shadow-lg flex flex-col relative z-[100] flex-none`}>
-      <div className="flex items-center justify-between px-6 h-7 cursor-pointer" onClick={() => setIsExpanded(!isExpanded)}>
+    <div
+      className={`w-full max-w-full transition-all duration-300 ${isExpanded ? 'h-48 md:h-64' : 'h-7'} overflow-hidden border-b ${
+        theme.debug
+      } backdrop-blur-md shadow-lg flex flex-col relative z-[100] flex-none`}
+    >
+      <div
+        className="flex items-center justify-between px-6 h-7 cursor-pointer"
+        onClick={() => setIsExpanded(!isExpanded)}
+      >
         <div className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-widest opacity-60 text-indigo-500 leading-none h-full">
           <Bug size={10} className="mb-0" /> <span>System Logs</span>{' '}
           <span className="ml-1 opacity-40">({logs.length})</span>
@@ -1075,8 +1074,12 @@ const DebugPanel = ({ logs, onClear, darkMode, poem, appState }) => {
         className="flex-1 overflow-y-auto px-6 pb-3 font-mono text-[10px] space-y-1 custom-scrollbar"
       >
         {logs.map((log, idx) => (
-          <div key={idx} className={`pb-1 border-b border-stone-500/5 ${log.type === 'error' ? theme.error : log.type === 'success' ? 'text-indigo-400' : ''}`}>
-            <span className="opacity-40">[{log.time}]</span> <span className="font-bold">{log.label}:</span> {log.msg}
+          <div
+            key={idx}
+            className={`pb-1 border-b border-stone-500/5 ${log.type === 'error' ? theme.error : log.type === 'success' ? 'text-indigo-400' : ''}`}
+          >
+            <span className="opacity-40">[{log.time}]</span>{' '}
+            <span className="font-bold">{log.label}:</span> {log.msg}
           </div>
         ))}
         {isExpanded && (
@@ -1096,10 +1099,13 @@ const DebugPanel = ({ logs, onClear, darkMode, poem, appState }) => {
               }}
               disabled={bugStatus === 'sending'}
               className={`px-2 py-1 rounded text-[9px] font-bold uppercase tracking-wider transition-colors ${
-                bugStatus === 'success' ? 'bg-green-600/80 text-white' :
-                bugStatus === 'error' ? `${theme.errorBg} text-white` :
-                bugStatus === 'sending' ? 'bg-stone-600/80 text-stone-400' :
-                'bg-indigo-600/80 text-white hover:bg-indigo-500/80'
+                bugStatus === 'success'
+                  ? 'bg-green-600/80 text-white'
+                  : bugStatus === 'error'
+                    ? `${theme.errorBg} text-white`
+                    : bugStatus === 'sending'
+                      ? 'bg-stone-600/80 text-stone-400'
+                      : 'bg-indigo-600/80 text-white hover:bg-indigo-500/80'
               }`}
             >
               {bugStatus === 'sending'
@@ -1607,7 +1613,7 @@ const SplashScreen = ({ isOpen, onDismiss, showOnboarding, theme }) => {
           />
         ))}
 
-        {/* Brand — Arabic first */}
+        {/* Brand — بالعربي + poetry + feather */}
         <div
           style={{
             position: 'relative',
@@ -1615,7 +1621,7 @@ const SplashScreen = ({ isOpen, onDismiss, showOnboarding, theme }) => {
             display: 'flex',
             alignItems: 'flex-end',
             justifyContent: 'center',
-            gap: '0.5rem',
+            gap: '0.75rem',
             marginBottom: '0.75rem',
           }}
         >
@@ -1623,8 +1629,8 @@ const SplashScreen = ({ isOpen, onDismiss, showOnboarding, theme }) => {
             style={{
               fontFamily: "'Reem Kufi', sans-serif",
               fontWeight: 700,
-              fontSize: 'clamp(1.875rem, 4vw, 3rem)',
-              color: gold,
+              fontSize: 'clamp(3rem, 6vw, 4.5rem)',
+              color: isDark ? '#D4D0C8' : '#1A1614',
               lineHeight: 1,
             }}
             dir="rtl"
@@ -1635,15 +1641,26 @@ const SplashScreen = ({ isOpen, onDismiss, showOnboarding, theme }) => {
           <span
             style={{
               fontFamily: "'Forum', serif",
-              fontSize: 'clamp(3rem, 6vw, 4.5rem)',
+              fontSize: 'clamp(1.25rem, 2.5vw, 1.75rem)',
               letterSpacing: '-0.05em',
               color: gold,
               lineHeight: 1,
-              textShadow: '0 0 50px rgba(197,160,89,0.4)',
+              textShadow: '0 0 40px rgba(197,160,89,0.3)',
+              paddingBottom: '0.15em',
             }}
           >
             poetry
           </span>
+          <Feather
+            style={{
+              width: 'clamp(24px, 4vw, 36px)',
+              height: 'clamp(24px, 4vw, 36px)',
+              color: gold,
+              opacity: 0.8,
+              marginBottom: '0.15em',
+            }}
+            strokeWidth={1.5}
+          />
         </div>
 
         {/* Subtitle */}
@@ -2085,14 +2102,16 @@ const SavePoemButton = ({ poem, isSaved, onSave, onUnsave, disabled }) => {
       <button
         onClick={handleClick}
         className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
-        aria-label={isSaved ? "Unsave poem" : "Save poem"}
+        aria-label={isSaved ? 'Unsave poem' : 'Save poem'}
       >
         <Heart
           size={21}
           className={`${isSaved ? 'fill-red-500 text-red-500' : GOLD.goldText} transition-all`}
         />
       </button>
-      <span className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}>
+      <span
+        className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
+      >
         {isSaved ? 'Saved' : 'Save'}
       </span>
 
@@ -2127,14 +2146,16 @@ const DownvoteButton = ({ poem, isDownvoted, onDownvote, onUndownvote, disabled 
       <button
         onClick={handleClick}
         className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
-        aria-label={isDownvoted ? "Unflag poem" : "Flag poem"}
+        aria-label={isDownvoted ? 'Unflag poem' : 'Flag poem'}
       >
         <ThumbsDown
           size={21}
           className={`${isDownvoted ? 'fill-red-400 text-red-400' : GOLD.goldText} transition-all`}
         />
       </button>
-      <span className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}>
+      <span
+        className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
+      >
         {isDownvoted ? 'Flagged' : 'Flag'}
       </span>
 
@@ -2288,7 +2309,8 @@ const VerticalSidebar = ({
   const [poetPickerOpen, setPoetPickerOpen] = useState(false);
 
   const gold = theme.gold;
-  const btnBase = "w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-200";
+  const btnBase =
+    'w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-200';
   const btnHover = theme.goldHoverBg15;
   const subBtnBase = "w-11 h-11 rounded-lg flex items-center justify-center transition-all duration-200";
   const subBtnHover = theme.goldHoverBg15;
@@ -2350,14 +2372,16 @@ const VerticalSidebar = ({
           <button
             onClick={() => setSettingsOpen((prev) => !prev)}
             title="Settings"
-            className={`${btnBase} ${btnHover} ${settingsOpen ? (theme.goldActiveBg) : ''}`}
+            className={`${btnBase} ${btnHover} ${settingsOpen ? theme.goldActiveBg : ''}`}
           >
             <Settings2 style={{ color: gold }} size={18} />
           </button>
           <span className={labelCls} style={{ color: gold }}>Settings</span>
 
           {settingsOpen && (
-            <div className={`flex flex-col items-center gap-0.5 pl-0.5 border-l-2 ${theme.goldBorderMuted}`}>
+            <div
+              className={`flex flex-col items-center gap-0.5 pl-0.5 border-l-2 ${theme.goldBorderMuted}`}
+            >
               <button
                 onClick={onToggleTransliteration}
                 title={showTransliteration ? 'Hide romanization' : 'Show romanization'}
@@ -2458,6 +2482,14 @@ export default function DiwanApp() {
   const audioRef = useRef(new Audio());
   const isTogglingPlay = useRef(false);
   const controlBarRef = useRef(null);
+
+  // Volume-based glow effect refs
+  const audioContextRef = useRef(null);
+  const analyserRef = useRef(null);
+  const dataArrayRef = useRef(null);
+  const animationFrameRef = useRef(null);
+  const sourceNodeRef = useRef(null);
+  const volumePulseRef = useRef(null);
 
   const [headerOpacity, setHeaderOpacity] = useState(1);
   const [poems, setPoems] = useState(() => {
@@ -2874,6 +2906,121 @@ export default function DiwanApp() {
     return () => audio.removeEventListener('ended', handleEnded);
   }, []);
 
+  // Volume detection for pulse & glow effect
+  useEffect(() => {
+    if (isPlaying && audioRef.current) {
+      try {
+        // Initialize AudioContext and source node if not already created.
+        // A MediaElement can only be connected to one MediaElementSourceNode ever,
+        // so we must reuse the source node across play/pause cycles.
+        if (!audioContextRef.current) {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          const audioContext = new AudioCtx();
+          const analyser = audioContext.createAnalyser();
+
+          analyser.fftSize = 32;
+          const bufferLength = analyser.frequencyBinCount;
+          const dataArray = new Uint8Array(bufferLength);
+
+          // Reuse existing source node or create a new one
+          const source =
+            sourceNodeRef.current || audioContext.createMediaElementSource(audioRef.current);
+          sourceNodeRef.current = source;
+
+          source.connect(analyser);
+          analyser.connect(audioContext.destination);
+
+          audioContextRef.current = audioContext;
+          analyserRef.current = analyser;
+          dataArrayRef.current = dataArray;
+
+          if (FEATURES.logging) {
+            addLog('Audio Context', 'Initialized volume detection for glow effect', 'info');
+          }
+        }
+
+        // Resume context if it was suspended (e.g., by browser autoplay policy)
+        if (audioContextRef.current.state === 'suspended') {
+          audioContextRef.current.resume();
+        }
+
+        const detectVolume = () => {
+          if (!analyserRef.current || !dataArrayRef.current) return;
+
+          analyserRef.current.getByteFrequencyData(dataArrayRef.current);
+
+          let sum = 0;
+          for (let i = 0; i < dataArrayRef.current.length; i++) {
+            sum += dataArrayRef.current[i];
+          }
+          const average = sum / dataArrayRef.current.length;
+          const normalizedVolume = average / 255;
+
+          if (normalizedVolume > 0.7 && volumePulseRef.current) {
+            volumePulseRef.current.classList.add('volume-pulse-active');
+            setTimeout(() => {
+              if (volumePulseRef.current) {
+                volumePulseRef.current.classList.remove('volume-pulse-active');
+              }
+            }, 150);
+          }
+
+          animationFrameRef.current = requestAnimationFrame(detectVolume);
+        };
+
+        detectVolume();
+      } catch (error) {
+        // Gracefully degrade to CSS-only animation
+        if (FEATURES.logging) {
+          console.error('Failed to initialize Web Audio API:', error);
+        }
+      }
+    }
+
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, [isPlaying]);
+
+  const PulseGlowBars = () => (
+    <div ref={volumePulseRef} className="flex items-center justify-center gap-[3px] h-6">
+      <div
+        className="w-[3px] rounded-[2px] bar-with-glow"
+        style={{ background: GOLD.gold, animation: 'wave-organic-1 0.9s ease-in-out infinite' }}
+      />
+      <div
+        className="w-[3px] rounded-[2px] bar-with-glow"
+        style={{
+          background: GOLD.gold,
+          animation: 'wave-organic-2 1.15s ease-in-out infinite 0.1s',
+        }}
+      />
+      <div
+        className="w-[3px] rounded-[2px] bar-with-glow"
+        style={{
+          background: GOLD.gold,
+          animation: 'wave-organic-3 0.95s ease-in-out infinite 0.2s',
+        }}
+      />
+      <div
+        className="w-[3px] rounded-[2px] bar-with-glow"
+        style={{
+          background: GOLD.gold,
+          animation: 'wave-organic-4 1.1s ease-in-out infinite 0.15s',
+        }}
+      />
+      <div
+        className="w-[3px] rounded-[2px] bar-with-glow"
+        style={{
+          background: GOLD.gold,
+          animation: 'wave-organic-5 0.88s ease-in-out infinite 0.05s',
+        }}
+      />
+    </div>
+  );
+
   const togglePlay = async () => {
     if (isTogglingPlay.current) {
       addLog('Audio', 'Play toggle already in progress — skipping', 'info');
@@ -3034,22 +3181,27 @@ export default function DiwanApp() {
     // Mark request as in-flight
     activeAudioRequests.current.add(current?.id);
 
-    const mood = current?.tags?.[1] || 'Poetic';
-    const era = current?.tags?.[0] || 'Classical';
-    const poet = current?.poet || 'the Master Poet';
-    const ttsInstruction = getTTSInstruction(current, poet, mood, era);
+    const ttsContent = getTTSContent(current);
 
     // Calculate request metrics
-    const requestSize = new Blob([
-      JSON.stringify({ contents: [{ parts: [{ text: ttsInstruction }] }] }),
-    ]).size;
-    const estimatedTokens = Math.ceil(ttsInstruction.length / 4);
-    const instructionChars = ttsInstruction.length;
+    const requestBody = JSON.stringify({
+      contents: [{ parts: [{ text: ttsContent }] }],
+      generationConfig: {
+        responseModalities: TTS_CONFIG.responseModalities,
+        speechConfig: {
+          voiceConfig: {
+            prebuiltVoiceConfig: { voiceName: TTS_CONFIG.voiceName },
+          },
+        },
+      },
+    });
+    const requestSize = new Blob([requestBody]).size;
+    const estimatedTokens = Math.ceil(ttsContent.length / 4);
     const arabicTextChars = current?.arabic?.length || 0;
 
     addLog(
       'Audio API',
-      `→ Starting generation | Request: ${(requestSize / 1024).toFixed(1)}KB | ${instructionChars} chars (${arabicTextChars} Arabic) | Est. ${estimatedTokens} tokens`,
+      `→ Starting generation | Request: ${(requestSize / 1024).toFixed(1)}KB | ${arabicTextChars} chars Arabic | Est. ${estimatedTokens} tokens`,
       'info'
     );
 
@@ -3061,19 +3213,9 @@ export default function DiwanApp() {
       const fetchOptions = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: ttsInstruction }] }],
-          generationConfig: {
-            responseModalities: TTS_CONFIG.responseModalities,
-            speechConfig: {
-              voiceConfig: {
-                prebuiltVoiceConfig: { voiceName: TTS_CONFIG.voiceName },
-              },
-            },
-          },
-        }),
+        body: requestBody,
       };
-      const res = await fetchWithRetry(url, fetchOptions, { addLog, label: 'Audio API' });
+      const res = await fetchTTSWithFallback(url, fetchOptions, { addLog, label: 'Audio API' });
 
       if (!res.ok) {
         const errorText = await res.text();
@@ -3161,6 +3303,7 @@ export default function DiwanApp() {
         }
       }
     } catch (e) {
+      Sentry.captureException(e);
       addLog('Audio System Error', `${e.message} | Poem ID: ${current?.id}`, 'error');
       track('audio_error', { error: (e.message || '').slice(0, 100) });
       setIsPlaying(false);
@@ -3322,7 +3465,7 @@ export default function DiwanApp() {
         const res = await geminiTextFetch(
           'streamGenerateContent',
           insightsStreamBody,
-          'AI Insights failed',
+          'Insights failed',
           addLog
         );
 
@@ -3401,7 +3544,7 @@ export default function DiwanApp() {
         const res = await geminiTextFetch(
           'generateContent',
           insightsFallbackBody,
-          'AI Insights failed',
+          'Insights failed',
           addLog
         );
         const data = await res.json();
@@ -3454,6 +3597,7 @@ export default function DiwanApp() {
         cached: !!(FEATURES.caching && current?.id && insightText),
       });
     } catch (e) {
+      Sentry.captureException(e);
       addLog('Analysis Error', `${e.message} | Poem ID: ${current?.id}`, 'error');
       track('insight_error', { error: (e.message || '').slice(0, 100) });
       // Show partial results if streaming was interrupted
@@ -3469,7 +3613,7 @@ export default function DiwanApp() {
   const handleFetch = async () => {
     addLog(
       'UI Event',
-      `🐰 Discover button clicked | Category: ${selectedCategory} | Source: ${useDatabase ? 'Database' : 'Gemini AI'}`,
+      `🐰 Discover button clicked | Category: ${selectedCategory} | Source: ${useDatabase ? 'Database' : 'LLM'}`,
       'info'
     );
 
@@ -3568,7 +3712,7 @@ export default function DiwanApp() {
           throw dbError; // Re-throw to be caught by outer catch
         }
       } else {
-        // GEMINI AI MODE: Original implementation
+        // LLM MODE: Original implementation
         const prompt =
           selectedCategory === 'All'
             ? 'Find a masterpiece Arabic poem. COMPLETE text.'
@@ -3596,7 +3740,7 @@ export default function DiwanApp() {
         const res = await geminiTextFetch(
           'generateContent',
           requestBody,
-          'AI Discovery failed',
+          'Discovery failed',
           addLog
         );
 
@@ -3678,6 +3822,7 @@ export default function DiwanApp() {
         window.history.replaceState({}, '', '/');
       }
     } catch (e) {
+      Sentry.captureException(e);
       addLog(
         'Discovery Error',
         `${e.message} | Source: ${useDatabase ? 'Database' : 'Gemini'}`,
@@ -4022,6 +4167,9 @@ export default function DiwanApp() {
     setIsInterpreting(false);
     setAudioError(null);
 
+    // Reset translation visibility so every new poem shows the translation by default
+    setShowTranslation(true);
+
     // Clear all polling intervals to prevent stale requests
     pollingIntervals.current.forEach((interval) => clearInterval(interval));
     pollingIntervals.current = [];
@@ -4039,14 +4187,14 @@ export default function DiwanApp() {
   }, [current?.id]);
 
   // Prefetch triggers - run background prefetching when poem changes
-  // Only prefetch current poem; next-poem audio prefetch removed to conserve TTS quota (100 RPD free tier)
+  // Only prefetch current poem; next-poem audio prefetch removed to conserve TTS quota (100 RPD per model, free tier)
   useEffect(() => {
     if (!FEATURES.prefetching || !current?.id) return;
 
-    // Prefetch current poem audio after 5s (only if user lingers on this poem)
+    // Prefetch current poem audio after 2s (only if user lingers on this poem)
     const prefetchCurrentAudio = setTimeout(() => {
       prefetchManager.prefetchAudio(current.id, current, addLog, activeAudioRequests);
-    }, 5000);
+    }, 2000);
 
     // Prefetch current poem insights after 5s (only if user stays)
     const prefetchCurrentInsights = setTimeout(() => {
@@ -4109,7 +4257,7 @@ export default function DiwanApp() {
         .custom-scrollbar::-webkit-scrollbar { width: 4px; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(79, 70, 229, 0.2); border-radius: 10px; }
         .bg-radial-gradient { background: radial-gradient(circle, var(--tw-gradient-from) 0%, var(--tw-gradient-via) 50%, var(--tw-gradient-to) 100%); }
-        .app-branding-rtl { direction: rtl; }
+
         .safe-bottom { padding-bottom: max(1.5rem, env(safe-area-inset-bottom)); }
 
         .font-amiri { font-family: 'Amiri', serif; }
@@ -4122,7 +4270,7 @@ export default function DiwanApp() {
         .font-katibeh { font-family: 'Katibeh', cursive; }
 
         .header-luminescence {
-          text-shadow: 0 0 30px rgba(99, 102, 241, 0.6);
+          text-shadow: 0 0 30px rgba(197, 160, 89, 0.3);
         }
 
         @keyframes fadeIn {
@@ -4165,6 +4313,65 @@ export default function DiwanApp() {
           animation: bounce 2s ease-in-out infinite;
         }
 
+        @keyframes wave {
+          0%, 100% { transform: scaleY(0.3); }
+          50% { transform: scaleY(1); }
+        }
+
+        @keyframes shimmer {
+          0%, 100% { opacity: 0.6; }
+          50% { opacity: 1; }
+        }
+
+        @keyframes wave-organic-1 {
+          0% { height: 10px; }
+          25% { height: 18px; }
+          50% { height: 24px; }
+          75% { height: 14px; }
+          100% { height: 10px; }
+        }
+
+        @keyframes wave-organic-2 {
+          0% { height: 12px; }
+          30% { height: 20px; }
+          60% { height: 22px; }
+          80% { height: 16px; }
+          100% { height: 12px; }
+        }
+
+        @keyframes wave-organic-3 {
+          0% { height: 14px; }
+          20% { height: 24px; }
+          55% { height: 18px; }
+          85% { height: 20px; }
+          100% { height: 14px; }
+        }
+
+        @keyframes wave-organic-4 {
+          0% { height: 11px; }
+          35% { height: 19px; }
+          65% { height: 23px; }
+          90% { height: 15px; }
+          100% { height: 11px; }
+        }
+
+        @keyframes wave-organic-5 {
+          0% { height: 10px; }
+          28% { height: 17px; }
+          58% { height: 21px; }
+          88% { height: 13px; }
+          100% { height: 10px; }
+        }
+
+        .volume-pulse-active .bar-with-glow {
+          box-shadow: 0 0 8px rgba(197, 160, 89, 0.6),
+                      0 0 4px rgba(197, 160, 89, 0.4);
+        }
+
+        .bar-with-glow {
+          transition: box-shadow 0.15s ease;
+        }
+
         .scroll-progress {
           position: fixed;
           top: 0;
@@ -4197,15 +4404,38 @@ export default function DiwanApp() {
         style={{ opacity: headerOpacity }}
         className="fixed top-4 md:top-8 left-0 right-0 z-40 pointer-events-none transition-opacity duration-300 flex flex-row items-center justify-center gap-4 md:gap-8 px-4 md:px-6"
       >
-        <div
-          className={`flex flex-row-reverse items-center gap-2 md:gap-4 ${theme.brand} tracking-wide header-luminescence`}
-        >
-          <Feather className="w-8 h-8 md:w-[42px] md:h-[42px] opacity-95" strokeWidth={1.5} />
-          <h1 className="app-branding-rtl flex items-end gap-3 md:gap-6">
-            <span className="font-brand-ar text-[clamp(3rem,6vw,4.5rem)] font-bold mb-[clamp(0.25rem,0.5vw,0.5rem)] opacity-80">بالعربي</span>
-            <span className="font-brand-en text-[clamp(1.875rem,4vw,3rem)] lowercase tracking-tighter">poetry</span>
-            <span className="font-brand-en text-[clamp(10px,1.2vw,12px)] px-[clamp(0.375rem,0.8vw,0.5rem)] py-0.5 rounded border border-indigo-500/30 bg-indigo-500/10 uppercase tracking-wider mb-[clamp(0.5rem,1vw,1rem)] ml-[clamp(0.5rem,1vw,0.75rem)] opacity-60">beta</span>
+        <div className="flex flex-row items-baseline gap-3 header-luminescence">
+          <h1 style={{ display: 'flex', alignItems: 'baseline', gap: '0.75rem', margin: 0 }}>
+            <span
+              style={{
+                fontFamily: "'Reem Kufi', sans-serif",
+                fontWeight: 700,
+                fontSize: 'clamp(3rem, 6vw, 4.5rem)',
+                lineHeight: 1,
+                color: darkMode ? '#D4D0C8' : '#1A1614',
+              }}
+            >
+              بالعربي
+            </span>
+            <span
+              style={{
+                fontFamily: "'Forum', serif",
+                fontSize: 'clamp(1.25rem, 2.5vw, 1.75rem)',
+                letterSpacing: '-0.05em',
+                lineHeight: 1,
+                color: '#C5A059',
+                textShadow: '0 0 40px rgba(197,160,89,0.3)',
+                paddingBottom: '0.15em',
+              }}
+            >
+              poetry
+            </span>
           </h1>
+          <Feather
+            style={{ color: '#C5A059', opacity: 0.8 }}
+            className="w-[clamp(24px,4vw,36px)] h-[clamp(24px,4vw,36px)]"
+            strokeWidth={1.5}
+          />
         </div>
       </header>
 
@@ -4223,35 +4453,73 @@ export default function DiwanApp() {
           <main ref={mainScrollRef} onScroll={handleScroll} className="flex-1 overflow-y-auto custom-scrollbar relative z-10 px-4 md:px-0 pb-28 pr-14">
             <div className="min-h-full flex flex-col items-center justify-center py-6">
               <div className="w-full max-w-4xl flex flex-col items-center">
-                
-                <div className={`text-center ${DESIGN.mainMetaPadding} animate-in slide-in-from-bottom-8 duration-1000 z-20 w-full`}>
-                   <div className="minimal-frame mb-1">
-                      <svg viewBox="0 0 550 120" preserveAspectRatio="xMidYMid meet">
-                        <line className="frame-line" x1="20" y1="20" x2="70" y2="20" />
-                        <line className="frame-line" x1="20" y1="20" x2="20" y2="70" />
-                        <line className="frame-line" x1="530" y1="20" x2="480" y2="20" />
-                        <line className="frame-line" x1="530" y1="20" x2="530" y2="70" />
-                        <line className="frame-line" x1="20" y1="100" x2="70" y2="100" />
-                        <line className="frame-line" x1="20" y1="100" x2="20" y2="50" />
-                        <line className="frame-line" x1="530" y1="100" x2="480" y2="100" />
-                        <line className="frame-line" x1="530" y1="100" x2="530" y2="50" />
-                        <circle className="frame-line" cx="32" cy="32" r="2.5" fill={GOLD.gold} opacity="0.35" />
-                        <circle className="frame-line" cx="518" cy="32" r="2.5" fill={GOLD.gold} opacity="0.35" />
-                        <circle className="frame-line" cx="32" cy="88" r="2.5" fill={GOLD.gold} opacity="0.35" />
-                        <circle className="frame-line" cx="518" cy="88" r="2.5" fill={GOLD.gold} opacity="0.35" />
-                      </svg>
+                <div
+                  className={`text-center ${DESIGN.mainMetaPadding} animate-in slide-in-from-bottom-8 duration-1000 z-20 w-full`}
+                >
+                  <div className="minimal-frame mb-1">
+                    <svg viewBox="0 0 550 120" preserveAspectRatio="xMidYMid meet">
+                      <line className="frame-line" x1="20" y1="20" x2="70" y2="20" />
+                      <line className="frame-line" x1="20" y1="20" x2="20" y2="70" />
+                      <line className="frame-line" x1="530" y1="20" x2="480" y2="20" />
+                      <line className="frame-line" x1="530" y1="20" x2="530" y2="70" />
+                      <line className="frame-line" x1="20" y1="100" x2="70" y2="100" />
+                      <line className="frame-line" x1="20" y1="100" x2="20" y2="50" />
+                      <line className="frame-line" x1="530" y1="100" x2="480" y2="100" />
+                      <line className="frame-line" x1="530" y1="100" x2="530" y2="50" />
+                      <circle
+                        className="frame-line"
+                        cx="32"
+                        cy="32"
+                        r="2.5"
+                        fill={GOLD.gold}
+                        opacity="0.35"
+                      />
+                      <circle
+                        className="frame-line"
+                        cx="518"
+                        cy="32"
+                        r="2.5"
+                        fill={GOLD.gold}
+                        opacity="0.35"
+                      />
+                      <circle
+                        className="frame-line"
+                        cx="32"
+                        cy="88"
+                        r="2.5"
+                        fill={GOLD.gold}
+                        opacity="0.35"
+                      />
+                      <circle
+                        className="frame-line"
+                        cx="518"
+                        cy="88"
+                        r="2.5"
+                        fill={GOLD.gold}
+                        opacity="0.35"
+                      />
+                    </svg>
 
-                      <div className="relative z-10 flex flex-col items-center justify-center w-full">
-                         <div className={`flex flex-wrap items-center justify-center gap-1 sm:gap-2 md:gap-4 ${currentFontClass} ${DESIGN.mainTitleSize}`}>
-                           <span className={`${theme.poetColor} opacity-90`}>{current?.poetArabic}</span>
-                           <span className="opacity-10 text-[clamp(0.75rem,1.5vw,1.25rem)]">-</span>
-                           <span className={`${theme.titleColor} font-bold`}>{current?.titleArabic}</span>
-                         </div>
-                         <div className={`flex items-center justify-center gap-1 sm:gap-2 opacity-45 ${DESIGN.mainSubtitleSize} font-brand-en tracking-[0.08em] uppercase mt-[clamp(0.25rem,0.8vw,0.75rem)]`}>
-                           <span className="font-semibold">{current?.poet}</span> <span className="opacity-20">•</span> <span>{current?.title}</span>
-                         </div>
+                    <div className="relative z-10 flex flex-col items-center justify-center w-full">
+                      <div
+                        className={`flex flex-wrap items-center justify-center gap-1 sm:gap-2 md:gap-4 ${currentFontClass} ${DESIGN.mainTitleSize}`}
+                      >
+                        <span className={`${theme.poetColor} opacity-90`}>
+                          {current?.poetArabic}
+                        </span>
+                        <span className="opacity-10 text-[clamp(0.75rem,1.5vw,1.25rem)]">-</span>
+                        <span className={`${theme.titleColor} font-bold`}>
+                          {current?.titleArabic}
+                        </span>
+                      </div>
+                      <div
+                        className={`flex items-center justify-center gap-1 sm:gap-2 opacity-45 ${DESIGN.mainSubtitleSize} font-brand-en tracking-[0.08em] uppercase mt-[clamp(0.25rem,0.8vw,0.75rem)]`}
+                      >
+                        <span className="font-semibold">{current?.poet}</span>{' '}
+                        <span className="opacity-20">•</span> <span>{current?.title}</span>
                       </div>
                     </div>
+                  </div>
 
                   <div className="flex justify-center gap-3 mt-1">
                     {Array.isArray(current?.tags) &&
@@ -4353,9 +4621,17 @@ export default function DiwanApp() {
 
           <footer className="fixed bottom-0 left-0 right-0 py-2 pb-3 md:pb-2 px-4 flex flex-col items-center z-50 bg-gradient-to-t from-black/5 to-transparent safe-bottom">
             {audioError && (
-              <div className={`mb-2 px-4 py-2 rounded-full text-xs font-medium ${DESIGN.glass} ${theme.glass} border ${theme.border} shadow-lg ${DESIGN.anim} max-w-[calc(100vw-2rem)] text-center`}>
+              <div
+                className={`mb-2 px-4 py-2 rounded-full text-xs font-medium ${DESIGN.glass} ${theme.glass} border ${theme.border} shadow-lg ${DESIGN.anim} max-w-[calc(100vw-2rem)] text-center`}
+              >
                 <span className={theme.error}>{audioError}</span>
-                <button onClick={() => setAudioError(null)} className="ml-2 opacity-60 hover:opacity-100" aria-label="Dismiss"><X size={12} className="inline" /></button>
+                <button
+                  onClick={() => setAudioError(null)}
+                  className="ml-2 opacity-60 hover:opacity-100"
+                  aria-label="Dismiss"
+                >
+                  <X size={12} className="inline" />
+                </button>
               </div>
             )}
             <div
@@ -4363,17 +4639,117 @@ export default function DiwanApp() {
               className={`flex items-center gap-2 px-5 py-2 rounded-full shadow-2xl border ${DESIGN.glass} ${theme.border} ${theme.shadow} ${DESIGN.anim} max-w-[calc(100vw-2rem)] w-fit`}
             >
               <div className="flex flex-col items-center gap-1 min-w-[52px]">
-                <button onClick={togglePlay} disabled={isGeneratingAudio} aria-label={isPlaying ? "Pause recitation" : "Play recitation"} className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}>
-                  {isGeneratingAudio ? <Loader2 className={`animate-spin ${GOLD.goldText}`} size={21} /> : audioError ? <Volume2 className={theme.error} size={21} /> : isPlaying ? <Pause fill={GOLD.gold} size={21} /> : <Volume2 className={GOLD.goldText} size={21} />}
-                </button>
-                <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">
-                  Listen
-                </span>
+                {isGeneratingAudio ? (
+                  <>
+                    <button
+                      disabled
+                      aria-label="Preparing audio"
+                      className="min-w-[46px] min-h-[46px] p-[11px] bg-[#C5A059]/8 border border-[#C5A059]/30 cursor-wait transition-all duration-300 flex items-center justify-center rounded-full"
+                    >
+                      <div className="flex items-center justify-center gap-0.5 h-[21px]">
+                        <div
+                          className="w-[2px] h-[6px] bg-[#C5A059] rounded-full"
+                          style={{
+                            animation: 'wave 1.2s ease-in-out infinite',
+                            animationDelay: '0s',
+                          }}
+                        />
+                        <div
+                          className="w-[2px] h-[10px] bg-[#C5A059] rounded-full"
+                          style={{
+                            animation: 'wave 1.2s ease-in-out infinite',
+                            animationDelay: '0.15s',
+                          }}
+                        />
+                        <div
+                          className="w-[2px] h-[14px] bg-[#C5A059] rounded-full"
+                          style={{
+                            animation: 'wave 1.2s ease-in-out infinite',
+                            animationDelay: '0.3s',
+                          }}
+                        />
+                        <div
+                          className="w-[2px] h-[10px] bg-[#C5A059] rounded-full"
+                          style={{
+                            animation: 'wave 1.2s ease-in-out infinite',
+                            animationDelay: '0.45s',
+                          }}
+                        />
+                        <div
+                          className="w-[2px] h-[6px] bg-[#C5A059] rounded-full"
+                          style={{
+                            animation: 'wave 1.2s ease-in-out infinite',
+                            animationDelay: '0.6s',
+                          }}
+                        />
+                      </div>
+                    </button>
+                    <div className="flex flex-col items-center gap-0.5">
+                      <span
+                        className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase text-stone-400 whitespace-nowrap"
+                        style={{ animation: 'shimmer 2s ease-in-out infinite' }}
+                      >
+                        Crafting
+                      </span>
+                      <span
+                        className="font-amiri text-[9px] text-[#C5A059]/80"
+                        dir="rtl"
+                        style={{ animation: 'shimmer 2s ease-in-out infinite' }}
+                      >
+                        إعداد الصوت
+                      </span>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      onClick={togglePlay}
+                      aria-label={isPlaying ? 'Pause recitation' : 'Play recitation'}
+                      className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105 relative group`}
+                    >
+                      {audioError ? (
+                        <Volume2 className={theme.error} size={21} />
+                      ) : isPlaying ? (
+                        <>
+                          <PulseGlowBars />
+                          <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-30 transition-opacity duration-200 pointer-events-none">
+                            <Pause fill={GOLD.gold} size={14} />
+                          </div>
+                        </>
+                      ) : (
+                        <Volume2 className={GOLD.goldText} size={21} />
+                      )}
+                    </button>
+                    {isPlaying ? (
+                      <div className="flex flex-col items-center gap-0.5">
+                        <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase text-stone-400 whitespace-nowrap">
+                          Playing
+                        </span>
+                        <span className="font-amiri text-[9px] text-[#C5A059]/80" dir="rtl">
+                          يُسمع الآن
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">
+                        Listen
+                      </span>
+                    )}
+                  </>
+                )}
               </div>
 
               <div className="flex flex-col items-center gap-1 min-w-[52px]">
-                <button onClick={handleFetch} disabled={isFetching} aria-label="Discover new poem" className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}>
-                  {isFetching ? <Loader2 className={`animate-spin ${GOLD.goldText}`} size={21} /> : <Rabbit className={`${GOLD.goldText} rabbit-bounce`} size={21} />}
+                <button
+                  onClick={handleFetch}
+                  disabled={isFetching}
+                  aria-label="Discover new poem"
+                  className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
+                >
+                  {isFetching ? (
+                    <Loader2 className={`animate-spin ${GOLD.goldText}`} size={21} />
+                  ) : (
+                    <Rabbit className={`${GOLD.goldText} rabbit-bounce`} size={21} />
+                  )}
                 </button>
                 <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">
                   Discover
@@ -4502,7 +4878,11 @@ export default function DiwanApp() {
         style={{ writingMode: 'vertical-rl', animation: 'slideInLeft 0.4s ease-out' }}
         title="Design Review"
       >
-        <span className={`text-[10px] font-brand-en tracking-widest ${GOLD.goldTextMuted} uppercase`}>Review</span>
+        <span
+          className={`text-[10px] font-brand-en tracking-widest ${GOLD.goldTextMuted} uppercase`}
+        >
+          Review
+        </span>
       </a>
       <a
         href="/design-review"
@@ -4510,7 +4890,11 @@ export default function DiwanApp() {
         style={{ writingMode: 'vertical-rl', animation: 'slideInLeft 0.4s ease-out' }}
         title="Design Review"
       >
-        <span className={`text-[10px] font-brand-en tracking-widest ${GOLD.goldTextMuted} uppercase`}>Review</span>
+        <span
+          className={`text-[10px] font-brand-en tracking-widest ${GOLD.goldTextMuted} uppercase`}
+        >
+          Review
+        </span>
       </a>
 
       {/* Vertical Sidebar - always visible */}

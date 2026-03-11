@@ -94,8 +94,8 @@ const DESIGN = {
 
 const THEME = {
   dark: {
-    bg: 'bg-[#0c0c0e]',
-    text: 'text-stone-200',
+    bg: 'bg-[#0e0c08]',
+    text: 'text-[#e8e0d4]',
     accent: 'text-indigo-400',
     glass: 'bg-stone-900/60',
     border: 'border-stone-800',

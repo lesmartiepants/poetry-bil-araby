@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gen-5 #04: Gold Luminance Hierarchy — Three-Tier Gold</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Forum&family=Reem+Kufi:wght@400;700&family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    /* ============================================
+       DESIGN TOKENS
+       ============================================ */
+    :root {
+      --bg-primary: #0c0c0e;
+      --bg-secondary: #141416;
+      --bg-card: rgba(28, 25, 23, 0.6);
+      --text-primary: #e7e5e4;
+      --text-secondary: #a8a29e;
+      --text-muted: #78716c;
+      --border-color: #292524;
+      --gold: #C5A059;
+      --gold-light: #D4B463;
+      --gold-dim: rgba(197, 160, 89, 0.4);
+      --gold-border: rgba(197, 160, 89, 0.2);
+      --indigo: #818cf8;
+
+      /* THREE-TIER GOLD SYSTEM (Core Feature) */
+      --gold-bright: #D4B463;     /* Interactive / action elements */
+      --gold-standard: #C5A059;   /* Informational elements */
+      --gold-structural: rgba(160, 128, 64, 0.4); /* Structural: borders, dividers */
+
+      --font-arabic: 'Amiri', serif;
+      --font-ui: 'Tajawal', sans-serif;
+      --font-brand-ar: 'Reem Kufi', sans-serif;
+      --font-brand-en: 'Forum', cursive;
+
+      --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-out-quart: cubic-bezier(.4, 0, .2, 1);
+
+      --font-heading: clamp(1.5rem, 1rem + 2vw, 3rem);
+      --font-body: clamp(1rem, 0.9rem + 0.5vw, 1.25rem);
+      --font-small: clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
+    }
+
+    [data-theme="light"] {
+      --bg-primary: #FDFCF8;
+      --bg-secondary: #f5f0e8;
+      --bg-card: rgba(255, 255, 255, 0.7);
+      --text-primary: #292524;
+      --text-secondary: #57534e;
+      --text-muted: #a8a29e;
+      --border-color: rgba(255, 255, 255, 0.8);
+      --gold: #8B7355;
+      --gold-light: #A08A6A;
+      --gold-dim: rgba(139, 115, 85, 0.4);
+      --gold-border: rgba(139, 115, 85, 0.2);
+
+      --gold-bright: #7A6545;
+      --gold-standard: #8B7355;
+      --gold-structural: rgba(139, 115, 85, 0.35);
+    }
+
+    /* ============================================
+       RESET & BASE
+       ============================================ */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+    html, body { overflow-x: hidden; max-width: 100vw; }
+
+    body {
+      font-family: var(--font-ui);
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      overscroll-behavior-y: contain;
+      transition: background 0.4s var(--ease-out-quart), color 0.4s var(--ease-out-quart);
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      html { scroll-behavior: smooth; }
+    }
+
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes fadeSlideUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ============================================
+       THEME TOGGLE
+       ============================================ */
+    .theme-toggle {
+      position: fixed;
+      top: 1rem; left: 1rem;
+      width: 52px; height: 52px;
+      min-height: 44px; min-width: 44px;
+      border: 1px solid var(--gold-structural);
+      border-radius: 50%;
+      background: rgba(197, 160, 89, 0.05);
+      color: var(--gold-bright);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.3s var(--ease-out-quart);
+      backdrop-filter: blur(10px);
+      z-index: 2000;
+    }
+    .theme-toggle:hover {
+      background: rgba(197, 160, 89, 0.15);
+      border-color: var(--gold-bright);
+      box-shadow: 0 0 24px rgba(212, 180, 99, 0.3);
+    }
+    .theme-toggle svg { width: 20px; height: 20px; }
+    .icon-sun, .icon-moon { display: none; }
+    [data-mode="dark"] .icon-sun { display: flex; }
+    [data-mode="light"] .icon-moon { display: flex; }
+
+    /* ============================================
+       SPLASH SCREEN
+       ============================================ */
+    .splash {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      z-index: 1000;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      background: var(--bg-primary);
+      transition: opacity 0.6s var(--ease-out-expo), visibility 0.6s var(--ease-out-expo);
+    }
+    .splash.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+
+    .splash-content {
+      position: relative; z-index: 10;
+      text-align: center; max-width: 900px; padding: 40px;
+    }
+    .splash-brand {
+      display: flex; align-items: flex-end; justify-content: center;
+      gap: 0.35em; margin-bottom: 24px;
+    }
+    .splash-brand-ar {
+      font-family: var(--font-brand-ar); font-weight: 700;
+      font-size: clamp(3rem, 6vw, 4.5rem); line-height: 1;
+      color: var(--gold-standard);
+      padding-bottom: 0.05em;
+    }
+    .splash-brand-en {
+      font-family: var(--font-brand-en);
+      font-size: clamp(1.875rem, 4vw, 3rem);
+      text-transform: lowercase; letter-spacing: -0.05em; line-height: 1;
+      color: var(--text-primary);
+    }
+
+    .splash-subtitle {
+      font-size: 12px; text-transform: uppercase; letter-spacing: 0.5em;
+      color: var(--gold-structural);
+      margin-bottom: 16px; font-weight: 600;
+    }
+
+    /* Hierarchy demo in splash */
+    .hierarchy-demo {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 12px; margin-bottom: 48px;
+      font-family: var(--font-ui); font-size: 0.8125rem;
+    }
+    .hierarchy-row {
+      display: flex; align-items: center; gap: 12px;
+    }
+    .hierarchy-swatch {
+      width: 24px; height: 24px; border-radius: 4px;
+    }
+    .hierarchy-label { color: var(--text-secondary); font-size: 0.75rem; }
+
+    .splash-cta {
+      display: inline-block; padding: 18px 56px;
+      min-height: 48px; min-width: 44px;
+      border: 2px solid var(--gold-bright);
+      background: linear-gradient(135deg, rgba(212,180,99,0.15), rgba(212,180,99,0.05));
+      color: var(--gold-bright);
+      font-family: var(--font-ui); font-size: 14px;
+      text-transform: uppercase; letter-spacing: 0.4em; font-weight: 700;
+      cursor: pointer;
+      transition: all 0.5s var(--ease-out-expo);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 0 30px rgba(212,180,99,0.2);
+    }
+    .splash-cta:hover {
+      background: linear-gradient(135deg, rgba(212,180,99,0.3), rgba(212,180,99,0.15));
+      box-shadow: 0 0 50px rgba(212,180,99,0.5);
+      transform: translateY(-4px);
+    }
+
+    .splash-hint {
+      margin-top: 48px; font-size: 10px; letter-spacing: 0.4em;
+      color: var(--text-muted); text-transform: uppercase; font-weight: 500;
+    }
+
+    /* ============================================
+       ONBOARDING
+       ============================================ */
+    .onboarding {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      z-index: 900; background: var(--bg-primary);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 2rem;
+      opacity: 0; visibility: hidden;
+      transition: opacity 0.5s var(--ease-out-quart), visibility 0.5s var(--ease-out-quart);
+    }
+    .onboarding.active { opacity: 1; visibility: visible; }
+
+    .onboarding-card {
+      max-width: 360px; width: 100%;
+      text-align: center;
+      display: none; flex-direction: column;
+      align-items: center; min-height: 420px;
+    }
+    .onboarding-card.active { display: flex; animation: fadeSlideUp 0.5s var(--ease-out-expo); }
+    .onboarding-card .onboarding-dots { margin-top: auto; padding-top: 1rem; }
+
+    .onboarding-icon { width: 48px; height: 48px; color: var(--gold-standard); margin: 0 auto 1.5rem; }
+    .onboarding-title {
+      font-family: var(--font-ui); font-size: 1.25rem; font-weight: 700;
+      margin-bottom: 0.5rem; color: var(--text-primary);
+    }
+    .onboarding-title-ar {
+      font-family: var(--font-brand-ar); font-size: 1.125rem; font-weight: 700;
+      color: var(--gold-standard); margin-bottom: 1rem; direction: rtl;
+    }
+    .onboarding-desc {
+      font-size: 0.9375rem; color: var(--text-secondary);
+      line-height: 1.6; margin-bottom: 0.5rem;
+    }
+    .onboarding-desc-ar {
+      font-family: var(--font-ui); font-size: 0.875rem; color: var(--text-muted);
+      line-height: 1.7; direction: rtl; margin-bottom: 2rem;
+    }
+
+    .onboarding-dots { display: flex; justify-content: center; gap: 8px; margin-bottom: 2rem; }
+    .onboarding-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--gold-structural);
+      transition: background 0.3s var(--ease-out-quart);
+    }
+    .onboarding-dot.active { background: var(--gold-bright); }
+
+    .onboarding-next {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 12px 32px; min-height: 48px; min-width: 44px;
+      border: 1px solid var(--gold-bright); border-radius: 0;
+      background: transparent; color: var(--gold-bright);
+      font-family: var(--font-ui); font-size: 0.875rem; font-weight: 600;
+      letter-spacing: 0.1em; text-transform: uppercase; cursor: pointer;
+      transition: all 0.3s var(--ease-out-quart);
+    }
+    .onboarding-next:hover {
+      background: rgba(212,180,99,0.1); box-shadow: 0 0 20px rgba(212,180,99,0.2);
+    }
+    .onboarding-next svg { width: 16px; height: 16px; }
+
+    /* ============================================
+       MAIN APP
+       ============================================ */
+    .main-app {
+      min-height: 100vh; display: none; flex-direction: column;
+      background: var(--bg-primary);
+    }
+    .main-app.active { display: flex; }
+
+    .app-nav {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--gold-structural);
+      background: var(--bg-secondary);
+    }
+    .nav-brand { display: flex; align-items: flex-end; gap: 0.25em; }
+    .nav-brand-ar {
+      font-family: var(--font-brand-ar); font-weight: 700;
+      font-size: 1.25rem; line-height: 1;
+      color: var(--gold-standard);
+      padding-bottom: 0.05em;
+    }
+    .nav-brand-en {
+      font-family: var(--font-brand-en);
+      font-size: 0.875rem; text-transform: lowercase;
+      letter-spacing: -0.05em; line-height: 1;
+      color: var(--text-primary);
+    }
+    .nav-actions { display: flex; gap: 0.5rem; }
+    .nav-btn {
+      width: 44px; height: 44px; min-height: 44px; min-width: 44px;
+      border: none; background: transparent;
+      color: var(--text-secondary);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; border-radius: 8px;
+      transition: color 0.2s var(--ease-out-quart);
+    }
+    .nav-btn:hover { color: var(--gold-bright); }
+    .nav-btn svg { width: 20px; height: 20px; }
+
+    /* --- POEM AREA --- */
+    .poem-area { flex: 1; display: flex; position: relative; }
+
+    .poem-content {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      padding: 2rem 1rem; padding-bottom: 120px;
+    }
+
+    .poem-meta { text-align: center; margin-bottom: 2rem; }
+    .poem-title {
+      font-family: var(--font-brand-ar); font-size: var(--font-heading);
+      color: var(--gold-standard);
+      direction: rtl; margin-bottom: 0.25rem;
+    }
+    .poem-poet {
+      font-family: var(--font-ui); font-size: var(--font-small);
+      color: var(--gold-standard);
+      direction: rtl;
+    }
+    .poem-meta-en {
+      font-family: var(--font-brand-en); font-size: var(--font-small);
+      color: var(--text-muted); margin-top: 0.25rem; display: none;
+    }
+    .poem-meta-en.visible { display: block; }
+
+    .poem-divider {
+      width: 80px; height: 1px;
+      background: var(--gold-structural);
+      border: none;
+      margin: 0 auto 1.5rem;
+    }
+
+    .poem-text {
+      font-family: var(--font-arabic);
+      font-size: clamp(1.25rem, 3vw, 1.625rem);
+      line-height: 2.2; color: var(--text-primary);
+      direction: rtl; text-align: center;
+      max-width: 640px;
+    }
+    .poem-text .bayt { display: block; margin-bottom: 0.75em; }
+    .poem-text .shatr { display: block; }
+
+    .poem-transliteration {
+      font-family: var(--font-brand-en); font-size: var(--font-small);
+      color: var(--text-muted); line-height: 2;
+      text-align: center; direction: ltr;
+      max-width: 640px; margin-top: 1.5rem; display: none;
+    }
+    .poem-transliteration.visible { display: block; }
+
+    /* --- SIDE CONTROLS (Gold Bright = interactive) --- */
+    .side-controls {
+      position: fixed; top: 50%; left: 0;
+      transform: translateY(-50%);
+      display: flex; flex-direction: column;
+      gap: 8px; padding: 8px; z-index: 50;
+    }
+    .side-btn {
+      width: 44px; height: 44px; min-height: 44px; min-width: 44px;
+      border: 1px solid var(--gold-structural); border-radius: 8px;
+      background: var(--bg-card);
+      color: var(--text-secondary);
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s var(--ease-out-quart);
+      backdrop-filter: blur(8px);
+      font-family: var(--font-ui); font-size: 0.75rem; font-weight: 600;
+    }
+    .side-btn:hover {
+      color: var(--gold-bright);
+      border-color: var(--gold-bright);
+      box-shadow: 0 0 12px rgba(212,180,99,0.15);
+    }
+    .side-btn.active {
+      color: var(--gold-bright);
+      border-color: var(--gold-bright);
+      background: rgba(212,180,99,0.1);
+    }
+    .side-btn svg { width: 18px; height: 18px; }
+
+    /* --- BOTTOM BAR (Gold Bright = interactive) --- */
+    .bottom-bar {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      display: flex; justify-content: center; gap: 1rem;
+      padding: 1rem;
+      padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0px));
+      background: linear-gradient(to top, var(--bg-primary) 60%, transparent);
+      z-index: 100;
+    }
+    .action-btn {
+      display: flex; flex-direction: column;
+      align-items: center; gap: 4px;
+      min-height: 44px; min-width: 44px;
+      padding: 8px 16px;
+      border: 1px solid var(--gold-structural); border-radius: 12px;
+      background: var(--bg-card);
+      color: var(--text-secondary); cursor: pointer;
+      transition: all 0.2s var(--ease-out-quart);
+      backdrop-filter: blur(8px);
+      font-family: var(--font-ui); font-size: 0.625rem;
+      letter-spacing: 0.05em; text-transform: uppercase;
+    }
+    .action-btn:hover {
+      color: var(--gold-bright);
+      border-color: var(--gold-bright);
+      box-shadow: 0 0 16px rgba(212,180,99,0.2);
+    }
+    .action-btn svg { width: 20px; height: 20px; }
+
+    /* ============================================
+       RESPONSIVE
+       ============================================ */
+    @media (max-width: 480px) {
+      .splash-brand-ar { font-size: 2.5rem; }
+      .splash-brand-en { font-size: 1.5rem; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body data-mode="dark">
+
+  <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+    <span class="icon-sun"><i data-lucide="sun"></i></span>
+    <span class="icon-moon"><i data-lucide="moon"></i></span>
+  </button>
+
+  <!-- ==========================================
+       SECTION 1: SPLASH SCREEN
+       Philosophy: Gold Hierarchy
+       ========================================== -->
+  <section class="splash" id="splashScreen">
+    <div class="splash-content">
+      <div class="splash-brand">
+        <span class="splash-brand-ar" style="font-family:'Reem Kufi';font-weight:700" dir="rtl" lang="ar">بالعربي</span>
+        <span class="splash-brand-en" style="font-family:'Forum'">poetry</span>
+      </div>
+      <div class="splash-subtitle">Three Tiers of Gold</div>
+
+      <div class="hierarchy-demo">
+        <div class="hierarchy-row">
+          <div class="hierarchy-swatch" style="background: var(--gold-bright);"></div>
+          <span class="hierarchy-label" style="color: var(--gold-bright);">Bright — Interactive / Action</span>
+        </div>
+        <div class="hierarchy-row">
+          <div class="hierarchy-swatch" style="background: var(--gold-standard);"></div>
+          <span class="hierarchy-label" style="color: var(--gold-standard);">Standard — Informational</span>
+        </div>
+        <div class="hierarchy-row">
+          <div class="hierarchy-swatch" style="background: var(--gold-structural);"></div>
+          <span class="hierarchy-label" style="color: var(--gold-structural);">Structural — Borders / Dividers</span>
+        </div>
+      </div>
+
+      <button class="splash-cta" id="splashCta">ادخل</button>
+      <div class="splash-hint">Importance encoded in luminance</div>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       SECTION 2: ONBOARDING
+       ========================================== -->
+  <section class="onboarding" id="onboarding">
+    <div class="onboarding-card active" data-step="0">
+      <i data-lucide="sun" class="onboarding-icon"></i>
+      <h2 class="onboarding-title">Gold Luminance Hierarchy</h2>
+      <p class="onboarding-title-ar" lang="ar" dir="rtl">تدرّج الذهب اللوني</p>
+      <p class="onboarding-desc">Three tiers of gold encode importance: bright for actions, standard for information, dim for structure.</p>
+      <p class="onboarding-desc-ar" lang="ar" dir="rtl">ثلاث درجات من الذهب تُرمّز الأهمية: ساطع للأفعال، معياري للمعلومات، خافت للبنية.</p>
+      <div class="onboarding-dots">
+        <span class="onboarding-dot active"></span>
+        <span class="onboarding-dot"></span>
+        <span class="onboarding-dot"></span>
+      </div>
+      <button class="onboarding-next" data-advance="1">
+        <span>التالي</span>
+        <i data-lucide="arrow-left"></i>
+      </button>
+    </div>
+
+    <div class="onboarding-card" data-step="1">
+      <i data-lucide="languages" class="onboarding-icon"></i>
+      <h2 class="onboarding-title">Bilingual Experience</h2>
+      <p class="onboarding-title-ar" lang="ar" dir="rtl">لغتان، روحٌ واحدة</p>
+      <p class="onboarding-desc">Toggle translations and transliterations to explore Arabic poetry across languages.</p>
+      <p class="onboarding-desc-ar" lang="ar" dir="rtl">تنقّل بين العربية والإنجليزية لاستكشاف الشعر العربي.</p>
+      <div class="onboarding-dots">
+        <span class="onboarding-dot"></span>
+        <span class="onboarding-dot active"></span>
+        <span class="onboarding-dot"></span>
+      </div>
+      <button class="onboarding-next" data-advance="2">
+        <span>التالي</span>
+        <i data-lucide="arrow-left"></i>
+      </button>
+    </div>
+
+    <div class="onboarding-card" data-step="2">
+      <i data-lucide="heart" class="onboarding-icon"></i>
+      <h2 class="onboarding-title">Save Your Favorites</h2>
+      <p class="onboarding-title-ar" lang="ar" dir="rtl">احفظ قصائدك المفضلة</p>
+      <p class="onboarding-desc">Build your personal collection of verses that move you.</p>
+      <p class="onboarding-desc-ar" lang="ar" dir="rtl">اجمع الأبيات التي تلامس روحك.</p>
+      <div class="onboarding-dots">
+        <span class="onboarding-dot"></span>
+        <span class="onboarding-dot"></span>
+        <span class="onboarding-dot active"></span>
+      </div>
+      <button class="onboarding-next" id="onboardingFinish">
+        <span>ابدأ الاستكشاف</span>
+        <i data-lucide="arrow-left"></i>
+      </button>
+    </div>
+  </section>
+
+  <!-- ==========================================
+       SECTION 3: MAIN APP
+       ========================================== -->
+  <main class="main-app" id="mainApp">
+    <nav class="app-nav">
+      <div class="nav-brand">
+        <span class="nav-brand-ar" style="font-family:'Reem Kufi';font-weight:700;color:var(--gold-standard)" dir="rtl" lang="ar">بالعربي</span>
+        <span class="nav-brand-en" style="font-family:'Forum'">poetry</span>
+      </div>
+      <div class="nav-actions">
+        <button class="nav-btn" aria-label="Search"><i data-lucide="search"></i></button>
+        <button class="nav-btn" aria-label="Menu"><i data-lucide="menu"></i></button>
+      </div>
+    </nav>
+
+    <div class="poem-area">
+      <div class="side-controls">
+        <button class="side-btn" id="btnTranslate" aria-label="Toggle translation">ع|A</button>
+        <button class="side-btn" id="btnTranslit" aria-label="Toggle transliteration"><i data-lucide="languages"></i></button>
+        <button class="side-btn" id="btnTextSize" aria-label="Text size">Aa</button>
+        <button class="side-btn" aria-label="Settings"><i data-lucide="settings"></i></button>
+      </div>
+
+      <div class="poem-content">
+        <div class="poem-meta">
+          <div class="poem-title" lang="ar" dir="rtl">المعلقة</div>
+          <div class="poem-poet" lang="ar" dir="rtl">امرؤ القيس</div>
+          <div class="poem-meta-en" id="poemMetaEn">Imru' al-Qays — The Mu'allaqah</div>
+        </div>
+
+        <hr class="poem-divider">
+
+        <div class="poem-text" lang="ar" dir="rtl">
+          <span class="bayt"><span class="shatr">قِفا نَبكِ مِن ذِكرى حَبيبٍ وَمَنزِلِ</span><span class="shatr">بِسِقطِ اللِوى بَينَ الدَخولِ فَحَومَلِ</span></span>
+          <span class="bayt"><span class="shatr">فَتوضِحَ فَالمِقراةِ لَم يَعفُ رَسمُها</span><span class="shatr">لِما نَسَجَتها مِن جَنوبٍ وَشَمأَلِ</span></span>
+          <span class="bayt"><span class="shatr">تَرى بَعَرَ الأَرآمِ في عَرَصاتِها</span><span class="shatr">وَقيعانِها كَأَنَّهُ حَبُّ فُلفُلِ</span></span>
+        </div>
+
+        <div class="poem-transliteration" id="poemTranslit">
+          qifā nabki min dhikrā ḥabībin wa-manzili<br>
+          bisiqṭi l-liwā bayna d-dukhūli fa-ḥawmali
+        </div>
+      </div>
+    </div>
+
+    <div class="bottom-bar">
+      <button class="action-btn" aria-label="Listen">
+        <i data-lucide="volume-2"></i>
+        <span>Listen</span>
+      </button>
+      <button class="action-btn" aria-label="Save">
+        <i data-lucide="heart"></i>
+        <span>Save</span>
+      </button>
+      <button class="action-btn" aria-label="Explain">
+        <i data-lucide="message-circle"></i>
+        <span>Explain</span>
+      </button>
+      <button class="action-btn" aria-label="Next poem">
+        <i data-lucide="shuffle"></i>
+        <span>Next</span>
+      </button>
+    </div>
+  </main>
+
+  <script>
+    lucide.createIcons();
+
+    var isDark = true;
+    document.getElementById('themeToggle').addEventListener('click', function(e) {
+      e.stopPropagation();
+      isDark = !isDark;
+      document.documentElement.setAttribute('data-theme', isDark ? '' : 'light');
+      document.body.setAttribute('data-mode', isDark ? 'dark' : 'light');
+    });
+
+    document.getElementById('splashCta').addEventListener('click', function() {
+      document.getElementById('splashScreen').classList.add('hidden');
+      document.getElementById('onboarding').classList.add('active');
+    });
+
+    document.querySelectorAll('.onboarding-next[data-advance]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var target = parseInt(this.getAttribute('data-advance'));
+        document.querySelectorAll('.onboarding-card').forEach(function(c) { c.classList.remove('active'); });
+        var next = document.querySelector('.onboarding-card[data-step="' + target + '"]');
+        if (next) next.classList.add('active');
+      });
+    });
+
+    document.getElementById('onboardingFinish').addEventListener('click', function() {
+      document.getElementById('onboarding').classList.remove('active');
+      document.getElementById('mainApp').classList.add('active');
+    });
+
+    document.getElementById('btnTranslate').addEventListener('click', function() {
+      this.classList.toggle('active');
+      document.getElementById('poemMetaEn').classList.toggle('visible');
+    });
+
+    document.getElementById('btnTranslit').addEventListener('click', function() {
+      this.classList.toggle('active');
+      document.getElementById('poemTranslit').classList.toggle('visible');
+    });
+
+    var textSizes = [1, 1.15, 1.3, 0.85];
+    var currentSize = 0;
+    document.getElementById('btnTextSize').addEventListener('click', function() {
+      currentSize = (currentSize + 1) % textSizes.length;
+      document.querySelector('.poem-text').style.fontSize =
+        'calc(' + textSizes[currentSize] + ' * clamp(1.25rem, 3vw, 1.625rem))';
+    });
+  </script>
+</body>
+</html>

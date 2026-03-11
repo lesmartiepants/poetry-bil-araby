@@ -1082,7 +1082,12 @@ const DebugPanel = ({ logs, onClear, darkMode, poem, appState, visible }) => {
     if (panelOpen) setLastViewedCount(logs.length);
   }, [panelOpen, logs.length]);
 
-  const unreadCount = logs.length - lastViewedCount;
+  const errorCount = logs.filter((l) => l.type === 'error').length;
+  const lastViewedErrors = useRef(0);
+  useEffect(() => {
+    if (panelOpen) lastViewedErrors.current = errorCount;
+  }, [panelOpen, errorCount]);
+  const unreadErrors = errorCount - lastViewedErrors.current;
 
   const handleSubmitBug = async () => {
     setBugStatus('sending');
@@ -1136,58 +1141,64 @@ const DebugPanel = ({ logs, onClear, darkMode, poem, appState, visible }) => {
     }
   };
 
-  const labelColor = darkMode ? 'text-indigo-400' : 'text-indigo-600';
+  const gold = darkMode ? '#C5A059' : '#8B7355';
+  const labelColor = darkMode ? 'text-[#C5A059]/70' : 'text-[#8B7355]/70';
 
   return (
     <>
-      {/* Floating trigger button — bottom-left */}
+      {/* Floating trigger — small visual dot, 44px touch target */}
       <button
         onClick={() => setPanelOpen((prev) => !prev)}
-        className={`fixed bottom-4 left-4 z-[200] w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200 ${
-          darkMode
-            ? 'bg-stone-900/70 hover:bg-stone-800/90 border border-stone-700/50 text-stone-400 hover:text-stone-200'
-            : 'bg-white/60 hover:bg-white/80 border border-stone-300/60 text-stone-500 hover:text-stone-700'
-        } backdrop-blur-md shadow-lg`}
+        className="fixed bottom-3 left-3 z-[200] w-[44px] h-[44px] flex items-center justify-center"
         title="Toggle dev logs"
         aria-label="Toggle developer log panel"
       >
-        <Bug size={14} />
-        {unreadCount > 0 && !panelOpen && (
-          <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center leading-none">
-            {unreadCount > 99 ? '99+' : unreadCount}
-          </span>
-        )}
+        <span
+          className={`relative w-5 h-5 rounded-full flex items-center justify-center transition-all duration-200 ${
+            darkMode
+              ? 'bg-stone-900/60 border border-[#C5A059]/20 text-stone-500 hover:text-[#C5A059] hover:border-[#C5A059]/40'
+              : 'bg-white/50 border border-[#8B7355]/20 text-stone-400 hover:text-[#8B7355] hover:border-[#8B7355]/40'
+          } backdrop-blur-md`}
+        >
+          <Bug size={9} />
+          {unreadErrors > 0 && !panelOpen && (
+            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-red-500 border border-black/30" />
+          )}
+        </span>
       </button>
 
-      {/* Floating log panel overlay — always in DOM for accessibility; visually hidden when closed */}
+      {/* Floating log panel — matches poet picker styling */}
       <div
-        className={`fixed bottom-16 left-4 z-[200] w-80 max-w-[calc(100vw-2rem)] flex flex-col ${DESIGN.radius} border shadow-2xl transition-all duration-200 ${
+        className={`fixed bottom-14 left-3 z-[200] w-80 max-w-[calc(100vw-2rem)] flex flex-col rounded-2xl shadow-2xl transition-all duration-200 ${
           darkMode
-            ? 'bg-stone-950/80 border-stone-700/40 text-stone-300'
-            : 'bg-white/80 border-stone-200/60 text-stone-700'
-        } ${DESIGN.glass} ${panelOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}
+            ? 'bg-black/95 border border-[#C5A059]/25 text-stone-300'
+            : 'bg-white/95 border border-[#8B7355]/20 text-stone-700'
+        } backdrop-blur-2xl ${panelOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}
         style={{ height: '50vh', maxHeight: '480px', minHeight: '240px' }}
         aria-hidden={!panelOpen}
       >
         {/* Panel header */}
         <div
-          className={`flex items-center justify-between px-3 py-2 border-b ${darkMode ? 'border-stone-700/40' : 'border-stone-200/60'} flex-none`}
+          className={`flex items-center justify-between px-4 py-2.5 border-b ${darkMode ? 'border-[#C5A059]/15' : 'border-[#8B7355]/15'} flex-none`}
         >
-          <div className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-widest opacity-70 text-indigo-500 leading-none">
-            <Bug size={10} /> <span>Dev Logs</span>
-            <span className="ml-1 opacity-50">({logs.length})</span>
-          </div>
+          <span
+            className="text-[10px] font-brand-en uppercase tracking-widest font-bold"
+            style={{ color: gold, opacity: 0.5 }}
+          >
+            Dev Logs
+            <span className="ml-1.5 opacity-60">({logs.length})</span>
+          </span>
           <div className="flex items-center gap-1.5">
             <button
               onClick={onClear}
-              className="p-1 hover:text-red-500 transition-colors"
+              className={`p-1 transition-colors ${darkMode ? 'text-stone-600 hover:text-stone-300' : 'text-stone-400 hover:text-stone-600'}`}
               title="Clear logs"
             >
               <Trash2 size={11} />
             </button>
             <button
               onClick={() => setPanelOpen(false)}
-              className="p-1 hover:text-red-500 transition-colors"
+              className={`p-1 transition-colors ${darkMode ? 'text-stone-600 hover:text-stone-300' : 'text-stone-400 hover:text-stone-600'}`}
               title="Close panel"
             >
               <X size={12} />
@@ -1198,14 +1209,14 @@ const DebugPanel = ({ logs, onClear, darkMode, poem, appState, visible }) => {
         {/* Log entries */}
         <div
           ref={scrollRef}
-          className="flex-1 overflow-y-auto px-3 py-1.5 font-mono text-[10px] space-y-0.5 custom-scrollbar"
+          className="flex-1 overflow-y-auto px-4 py-1.5 font-mono text-[10px] space-y-0.5 custom-scrollbar"
         >
           {logs.map((log, idx) => (
             <div
               key={idx}
-              className={`py-0.5 border-b border-stone-500/5 ${logTypeColor(log.type)}`}
+              className={`py-0.5 border-b ${darkMode ? 'border-stone-800/40' : 'border-stone-200/40'} ${logTypeColor(log.type)}`}
             >
-              <span className={`opacity-50 ${darkMode ? 'text-stone-500' : 'text-stone-400'}`}>
+              <span className={`opacity-40 ${darkMode ? 'text-stone-500' : 'text-stone-400'}`}>
                 {log.rel || log.time}
               </span>{' '}
               <span className={`font-semibold ${labelColor}`}>[{log.label}]</span>{' '}
@@ -1216,7 +1227,7 @@ const DebugPanel = ({ logs, onClear, darkMode, poem, appState, visible }) => {
 
         {/* Bug report input */}
         <div
-          className={`flex items-center gap-1.5 px-3 py-2 border-t ${darkMode ? 'border-stone-700/40' : 'border-stone-200/60'} flex-none`}
+          className={`flex items-center gap-1.5 px-4 py-2 border-t ${darkMode ? 'border-[#C5A059]/15' : 'border-[#8B7355]/15'} flex-none`}
         >
           <input
             type="text"
@@ -1238,7 +1249,9 @@ const DebugPanel = ({ logs, onClear, darkMode, poem, appState, visible }) => {
                   ? `${theme.errorBg} text-white`
                   : bugStatus === 'sending'
                     ? 'bg-stone-600/80 text-stone-400'
-                    : 'bg-indigo-600/80 text-white hover:bg-indigo-500/80'
+                    : darkMode
+                      ? 'bg-[#C5A059]/20 text-[#C5A059] hover:bg-[#C5A059]/30'
+                      : 'bg-[#8B7355]/15 text-[#8B7355] hover:bg-[#8B7355]/25'
             }`}
           >
             {bugStatus === 'sending'

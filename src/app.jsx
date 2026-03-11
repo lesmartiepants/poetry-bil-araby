@@ -95,7 +95,7 @@ const THEME = {
     bg: 'bg-[#0c0c0e]',
     text: 'text-stone-200',
     accent: 'text-indigo-400',
-    glass: 'bg-stone-950/20',
+    glass: 'bg-stone-950/10',
     border: 'border-white/[0.06]',
     shadow: 'shadow-black/60',
     pill: 'bg-stone-900/40 border-stone-700/50',
@@ -4766,12 +4766,13 @@ export default function DiwanApp() {
         }
 
         @keyframes poetPickerIn {
-          from { opacity: 0; transform: translate(-50%, 8px) scale(0.95); }
-          to   { opacity: 1; transform: translate(-50%, 0) scale(1); }
+          0%   { opacity: 0; transform: translate(-50%, 16px) scale(0.9); }
+          60%  { opacity: 1; transform: translate(-50%, -4px) scale(1.02); }
+          100% { opacity: 1; transform: translate(-50%, 0) scale(1); }
         }
         @keyframes poetPickerOut {
-          from { opacity: 1; transform: translate(-50%, 0) scale(1); }
-          to   { opacity: 0; transform: translate(-50%, 8px) scale(0.95); }
+          0%   { opacity: 1; transform: translate(-50%, 0) scale(1); }
+          100% { opacity: 0; transform: translate(-50%, 12px) scale(0.92); }
         }
 
         @keyframes wave {
@@ -5206,7 +5207,11 @@ export default function DiwanApp() {
                   className={`discover-btn min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
                 >
                   {isFetching ? (
-                    <Loader2 className={`animate-spin ${GOLD.goldText}`} size={21} />
+                    <Shuffle
+                      className={`${GOLD.goldText}`}
+                      size={21}
+                      style={{ animation: 'discoverShuffle 0.4s ease-in-out infinite' }}
+                    />
                   ) : (
                     <Shuffle className={`discover-icon ${GOLD.goldText}`} size={21} />
                   )}
@@ -5244,11 +5249,11 @@ export default function DiwanApp() {
                 </span>
                 {(poetPickerOpen || poetPickerClosing) && (
                   <div
-                    className="absolute bottom-full mb-2 left-1/2 w-56 rounded-2xl border border-[#C5A059]/25 bg-black/95 backdrop-blur-2xl shadow-2xl py-2.5 z-[200]"
+                    className="absolute bottom-full mb-2 left-1/2 w-auto min-w-[10rem] rounded-2xl border border-[#C5A059]/25 bg-black/95 backdrop-blur-2xl shadow-2xl py-2.5 z-[200]"
                     style={{
                       animation: poetPickerClosing
-                        ? 'poetPickerOut 0.2s ease-in forwards'
-                        : 'poetPickerIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                        ? 'poetPickerOut 0.15s ease-in forwards'
+                        : 'poetPickerIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
                     }}
                   >
                     <div className="px-4 pb-2 mb-1 border-b border-[#C5A059]/15">

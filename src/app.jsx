@@ -5025,10 +5025,21 @@ export default function DiwanApp() {
             className={`${DESIGN.paneWidth} h-full flex flex-col z-30 ${DESIGN.anim} ${theme.glass} ${theme.border}`}
           >
             <div className="p-6 pb-4 border-b border-stone-500/10">
-              <h3 className="font-brand-en italic font-semibold text-[clamp(1rem,1.8vw,1.125rem)] text-indigo-600 tracking-tight">
-                Poetic Insight
-              </h3>
-              <p className="text-[10px] opacity-30 uppercase font-brand-en truncate">
+              <div className="flex items-center justify-between">
+                <h3 className="font-brand-en italic font-semibold text-[clamp(1rem,1.8vw,1.125rem)] text-indigo-600 tracking-tight">
+                  Poetic Insight
+                </h3>
+                {selectedCategory !== 'All' && (
+                  <span
+                    key={selectedCategory}
+                    className="font-amiri text-[11px] px-2.5 py-0.5 rounded-full border border-[#C5A059]/25 text-[#C5A059]/80 bg-[#C5A059]/5"
+                    style={{ animation: 'fadeIn 0.3s ease-out' }}
+                  >
+                    {CATEGORIES.find((c) => c.id === selectedCategory)?.labelAr}
+                  </span>
+                )}
+              </div>
+              <p className="text-[10px] opacity-30 uppercase font-brand-en truncate mt-1">
                 {current?.poet} • {current?.title}
               </p>
             </div>

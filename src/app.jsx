@@ -3069,7 +3069,7 @@ export default function DiwanApp() {
   const animationFrameRef = useRef(null);
   const volumePulseRef = useRef(null);
 
-  const [headerOpacity, setHeaderOpacity] = useState(1);
+  const [headerCompact, setHeaderCompact] = useState(false);
   const [poems, setPoems] = useState(() => {
     // 1. Restore from OAuth redirect (avoids flash of seed poem)
     try {
@@ -3522,7 +3522,7 @@ export default function DiwanApp() {
   }, [isInterpreting, interpretation]);
 
   const handleScroll = (e) => {
-    setHeaderOpacity(Math.max(0, 1 - e.target.scrollTop / 30));
+    setHeaderCompact(e.target.scrollTop > 40);
   };
 
   // After the first poem reveal, switch to simpler fade for subsequent poems
@@ -5142,8 +5142,7 @@ export default function DiwanApp() {
       />
 
       <header
-        style={{ opacity: headerOpacity }}
-        className="fixed top-4 md:top-8 left-0 right-0 z-40 pointer-events-none transition-opacity duration-300 flex flex-row items-center justify-center gap-4 md:gap-8 px-4 md:px-6"
+        className="fixed top-4 md:top-8 left-0 right-0 z-40 pointer-events-none flex flex-col items-center justify-center px-4 md:px-6"
       >
         <div
           className="flex flex-row items-baseline gap-3 header-luminescence"
@@ -5152,33 +5151,63 @@ export default function DiwanApp() {
             <span style={{
               fontFamily: "'Reem Kufi', sans-serif",
               fontWeight: 700,
-              fontSize: 'clamp(3rem, 6vw, 4.5rem)',
+              fontSize: headerCompact ? 'clamp(1.25rem, 3vw, 1.75rem)' : 'clamp(3rem, 6vw, 4.5rem)',
               lineHeight: 1,
               background: theme.goldFoilGradient,
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text',
+              textShadow: '0 0 30px rgba(197,160,89,0.25)',
+              transition: 'all 400ms cubic-bezier(0.34, 1.56, 0.64, 1)',
             }}>
               بالعربي
             </span>
             <span style={{
               fontFamily: "'Forum', serif",
-              fontSize: 'clamp(1.25rem, 2.5vw, 1.75rem)',
+              fontSize: headerCompact ? 'clamp(0.75rem, 1.5vw, 1rem)' : 'clamp(1.25rem, 2.5vw, 1.75rem)',
               letterSpacing: '-0.05em',
               lineHeight: 1,
               color: '#C5A059',
               textShadow: '0 0 40px rgba(197,160,89,0.3)',
               paddingBottom: '0.15em',
+              transition: 'all 400ms cubic-bezier(0.34, 1.56, 0.64, 1)',
             }}>
               poetry
             </span>
           </h1>
           <Feather
-            style={{ color: '#C5A059', opacity: 0.8 }}
+            style={{
+              color: '#C5A059',
+              opacity: headerCompact ? 0 : 0.8,
+              transform: headerCompact ? 'scale(0.5)' : 'scale(1)',
+              transition: 'all 400ms cubic-bezier(0.34, 1.56, 0.64, 1)',
+            }}
             className="w-[clamp(24px,4vw,36px)] h-[clamp(24px,4vw,36px)]"
             strokeWidth={1.5}
           />
         </div>
+        {/* Book ornament decorative element */}
+        <svg
+          width="60"
+          height="16"
+          viewBox="0 0 60 16"
+          style={{
+            opacity: headerCompact ? 0 : 0.4,
+            transition: 'all 400ms cubic-bezier(0.34, 1.56, 0.64, 1)',
+            marginTop: '4px',
+          }}
+        >
+          <path
+            d="M5 8 Q15 2 30 8 Q45 14 55 8"
+            fill="none"
+            stroke="#C5A059"
+            strokeWidth="1"
+            strokeLinecap="round"
+          />
+          <circle cx="30" cy="8" r="2" fill="#C5A059" opacity="0.5" />
+          <line x1="0" y1="8" x2="10" y2="8" stroke="#C5A059" strokeWidth="0.5" opacity="0.3" />
+          <line x1="50" y1="8" x2="60" y2="8" stroke="#C5A059" strokeWidth="0.5" opacity="0.3" />
+        </svg>
       </header>
 
       <div className="flex flex-row w-full relative flex-1 min-h-0">

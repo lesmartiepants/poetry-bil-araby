@@ -33,7 +33,12 @@ const defaultFetchImpl = () =>
 afterEach(() => {
   cleanup()
   // Reset fetch to a fresh default mock so per-test mockResolvedValueOnce chains don't leak
-  global.fetch.mockReset()
+  // Guard: if fetch was replaced by a non-mock (e.g. native module import), re-create the mock
+  if (typeof global.fetch?.mockReset === 'function') {
+    global.fetch.mockReset()
+  } else {
+    global.fetch = vi.fn()
+  }
   global.fetch.mockImplementation(defaultFetchImpl)
   // Reset clipboard mocks
   navigator.clipboard.writeText.mockReset()

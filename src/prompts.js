@@ -78,3 +78,54 @@ const TTS_PROMPT = `أنت امرؤ القيس بن حُجر، الملك الض
  * @returns {string} Combined instruction + poem text
  */
 export const getTTSContent = (poem) => `${TTS_PROMPT}\nابدأ:\n${poem.arabic}`;
+
+/**
+ * Chunked TTS Content Builder
+ * Used by: generateChunkedAudio (app.jsx)
+ *
+ * Builds positional context for each chunk so the TTS model maintains
+ * consistent pacing and tone across sequential audio segments.
+ *
+ * @param {Object} poem - The poem object
+ * @param {number} chunkIndex - Zero-based index of this chunk
+ * @param {number} totalChunks - Total number of chunks
+ * @param {string[]} chunkLines - The lines in this chunk
+ * @param {string[]} allLines - All lines of the poem
+ * @returns {string} The formatted TTS content for this chunk
+ */
+export const getChunkedTTSContent = (poem, chunkIndex, totalChunks, chunkLines, allLines) => {
+  const isFirst = chunkIndex === 0;
+  const isLast = chunkIndex === totalChunks - 1;
+
+  // Find the boundary lines for context
+  const chunkStartIdx = allLines.indexOf(chunkLines[0]);
+  const prevLastLine = chunkStartIdx > 0 ? allLines[chunkStartIdx - 1] : null;
+  const nextFirstLine = !isLast ? allLines[chunkStartIdx + chunkLines.length] : null;
+
+  let prompt = TTS_PROMPT + '\n\n';
+
+  if (isFirst) {
+    prompt += `هذه بداية القصيدة. ألقِ هذا المقطع الأول بافتتاحية قوية:\n`;
+    prompt += `[ابدأ الإلقاء]:\n${chunkLines.join('\n')}`;
+    if (nextFirstLine) {
+      prompt += `\n[سياق — لا تقرأ]:\n${nextFirstLine}`;
+    }
+  } else if (isLast) {
+    prompt += `هذه خاتمة القصيدة. اختم بقوة:\n`;
+    if (prevLastLine) {
+      prompt += `[سياق — لا تقرأ]:\n${prevLastLine}\n`;
+    }
+    prompt += `[ابدأ الإلقاء]:\n${chunkLines.join('\n')}`;
+  } else {
+    prompt += `أنت في منتصف القصيدة. تابع الإلقاء بنفس الإيقاع:\n`;
+    if (prevLastLine) {
+      prompt += `[سياق — لا تقرأ]:\n${prevLastLine}\n`;
+    }
+    prompt += `[ابدأ الإلقاء]:\n${chunkLines.join('\n')}`;
+    if (nextFirstLine) {
+      prompt += `\n[سياق — لا تقرأ]:\n${nextFirstLine}`;
+    }
+  }
+
+  return prompt;
+};

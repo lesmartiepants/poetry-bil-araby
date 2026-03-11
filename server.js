@@ -21,6 +21,7 @@ import helmet from 'helmet';
 import { query, param, body, validationResult } from 'express-validator';
 import crypto from 'crypto';
 import rateLimit from 'express-rate-limit';
+import WebSocket from 'ws';
 import { fileURLToPath } from 'url';
 import { resolve } from 'path';
 
@@ -794,6 +795,135 @@ app.post('/api/ai/:model/:action', async (req, res) => {
     Sentry.captureException(error);
     log.error('AI Proxy', `Proxy failed: ${error.message}`);
     res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════
+// GEMINI LIVE API — WebSocket TTS (fallback for rate-limited REST TTS)
+// ═══════════════════════════════════════════════════════════════
+
+app.post('/api/ai/live-tts', async (req, res) => {
+  const WS_TIMEOUT = 60000; // 60s safety timeout (Render responses take ~20s)
+
+  try {
+    if (!GEMINI_API_KEY) {
+      return res.status(503).json({ error: 'AI features unavailable: no API key configured' });
+    }
+
+    const { text } = req.body || {};
+    if (!text || typeof text !== 'string' || !text.trim()) {
+      return res.status(400).json({ error: 'Missing or empty "text" field' });
+    }
+
+    log.info('Live TTS', `Starting WebSocket TTS | text length: ${text.length} chars`);
+
+    const wsUrl = `wss://generativelanguage.googleapis.com/ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent?key=${GEMINI_API_KEY}`;
+
+    const audioChunks = await new Promise((resolve, reject) => {
+      const chunks = [];
+      let settled = false;
+
+      const timeout = setTimeout(() => {
+        if (!settled) {
+          settled = true;
+          ws.close();
+          reject(new Error('Live TTS WebSocket timed out after 60s'));
+        }
+      }, WS_TIMEOUT);
+
+      const ws = new WebSocket(wsUrl);
+
+      ws.on('open', () => {
+        // Send setup message
+        ws.send(JSON.stringify({
+          setup: {
+            model: 'models/gemini-2.5-flash-native-audio-latest',
+            generationConfig: {
+              responseModalities: ['AUDIO'],
+              speechConfig: {
+                voiceConfig: {
+                  prebuiltVoiceConfig: { voiceName: 'Fenrir' }
+                }
+              }
+            }
+          }
+        }));
+      });
+
+      ws.on('message', (raw) => {
+        try {
+          const msg = JSON.parse(raw.toString());
+
+          // Wait for setup to complete before sending content
+          if (msg.setupComplete) {
+            log.info('Live TTS', 'Setup complete, sending poem text');
+            ws.send(JSON.stringify({
+              clientContent: {
+                turns: [{ role: 'user', parts: [{ text }] }],
+                turnComplete: true
+              }
+            }));
+            return;
+          }
+
+          // Collect audio chunks from server
+          if (msg.serverContent?.modelTurn?.parts) {
+            for (const part of msg.serverContent.modelTurn.parts) {
+              if (part.inlineData?.data) {
+                chunks.push(part.inlineData.data);
+              }
+            }
+          }
+
+          // Turn complete — resolve with collected chunks
+          if (msg.serverContent?.turnComplete) {
+            if (!settled) {
+              settled = true;
+              clearTimeout(timeout);
+              ws.close();
+              resolve(chunks);
+            }
+          }
+        } catch (parseErr) {
+          log.error('Live TTS', `Failed to parse WebSocket message: ${parseErr.message}`);
+        }
+      });
+
+      ws.on('error', (err) => {
+        if (!settled) {
+          settled = true;
+          clearTimeout(timeout);
+          reject(err);
+        }
+      });
+
+      ws.on('close', (code, reason) => {
+        if (!settled) {
+          settled = true;
+          clearTimeout(timeout);
+          if (chunks.length > 0) {
+            resolve(chunks);
+          } else {
+            reject(new Error(`WebSocket closed unexpectedly: code=${code} reason=${reason}`));
+          }
+        }
+      });
+    });
+
+    if (!audioChunks.length) {
+      log.error('Live TTS', 'No audio chunks received from WebSocket');
+      return res.status(500).json({ error: 'No audio data received from Live API' });
+    }
+
+    // Concatenate all base64 chunks into one continuous PCM16 stream
+    const combinedBase64 = audioChunks.join('');
+
+    log.info('Live TTS', `Complete | ${audioChunks.length} chunks | ${combinedBase64.length} base64 chars`);
+    res.json({ audioData: combinedBase64 });
+  } catch (error) {
+    Sentry.captureException(error);
+    log.error('Live TTS', `Failed: ${error.message}`);
+    res.status(500).json({ error: 'Live TTS generation failed' });
   }
 });
 

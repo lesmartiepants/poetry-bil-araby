@@ -45,7 +45,12 @@ import {
   useDownvotes,
   usePoemEvents,
 } from './hooks/useAuth';
-import { INSIGHTS_SYSTEM_PROMPT, DISCOVERY_SYSTEM_PROMPT, getTTSContent } from './prompts';
+import {
+  INSIGHTS_SYSTEM_PROMPT,
+  DISCOVERY_SYSTEM_PROMPT,
+  getTTSContent,
+  getChunkedTTSContent,
+} from './prompts';
 import { parseInsight } from './utils/insightParser';
 import { repairAndParseJSON } from './utils/jsonRepair';
 import seedPoems from './data/seed-poems.json';
@@ -207,6 +212,7 @@ const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 const API_MODELS = {
   tts: 'gemini-2.5-pro-preview-tts',
   ttsFallback: 'gemini-2.5-flash-preview-tts',
+  ttsLiveApi: 'live-tts', // Backend WebSocket endpoint (not a Gemini model name)
   textDefaults: ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'],
 };
 
@@ -544,7 +550,149 @@ const cacheOperations = {
 };
 
 /* =============================================================================
-  4. PREFETCH MANAGER
+  4a. CHUNKED TTS
+  =============================================================================
+*/
+
+const CHUNK_LINE_THRESHOLD = 6;
+const CHUNK_SIZE = 4;
+
+/**
+ * Generate audio for long poems by splitting into chunks and concatenating.
+ * Returns null for short poems (caller should use single-request path).
+ *
+ * Uses fetchTTSWithFallback for each chunk (Pro→Flash on 429).
+ * No systemInstruction — TTS model requires everything in contents.
+ *
+ * @param {Object} poem - The poem object with .arabic text
+ * @param {Function} addLog - Logging function
+ * @returns {Promise<{audioData: string, chunksUsed: number}|null>}
+ */
+const generateChunkedAudio = async (poem, addLog) => {
+  const allLines = poem.arabic.split('\n').filter((l) => l.trim());
+
+  if (allLines.length <= CHUNK_LINE_THRESHOLD) return null;
+
+  // Split into chunks of CHUNK_SIZE lines
+  const chunks = [];
+  for (let i = 0; i < allLines.length; i += CHUNK_SIZE) {
+    chunks.push(allLines.slice(i, i + CHUNK_SIZE));
+  }
+  const totalChunks = chunks.length;
+
+  addLog(
+    'Chunked Audio',
+    `Poem has ${allLines.length} lines — splitting into ${totalChunks} chunks of ~${CHUNK_SIZE} lines`,
+    'info'
+  );
+
+  const pcmArrays = [];
+  const overallStart = performance.now();
+
+  for (let i = 0; i < totalChunks; i++) {
+    const chunkLines = chunks[i];
+    const ttsContent = getChunkedTTSContent(poem, i, totalChunks, chunkLines, allLines);
+
+    const requestBody = JSON.stringify({
+      contents: [{ parts: [{ text: ttsContent }] }],
+      generationConfig: {
+        responseModalities: TTS_CONFIG.responseModalities,
+        speechConfig: {
+          voiceConfig: {
+            prebuiltVoiceConfig: { voiceName: TTS_CONFIG.voiceName },
+          },
+        },
+      },
+    });
+
+    const chunkStart = performance.now();
+    addLog(
+      'Chunked Audio',
+      `Generating chunk ${i + 1}/${totalChunks} (${chunkLines.length} lines)...`,
+      'info'
+    );
+
+    const url = `${apiUrl}/api/ai/${API_MODELS.tts}/generateContent`;
+    const res = await fetchTTSWithFallback(
+      url,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: requestBody,
+      },
+      { addLog, label: `Chunk ${i + 1}/${totalChunks}` }
+    );
+
+    if (!res.ok) {
+      const errorText = await res.text();
+      addLog(
+        'Chunked Audio',
+        `Chunk ${i + 1} failed: HTTP ${res.status} — ${errorText.substring(0, 150)}`,
+        'error'
+      );
+      throw new Error(`Chunk ${i + 1}/${totalChunks} failed: HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+    const chunkTime = performance.now() - chunkStart;
+
+    if (!data.candidates || data.candidates.length === 0) {
+      addLog('Chunked Audio', `Chunk ${i + 1} returned no candidates`, 'error');
+      throw new Error(`Chunk ${i + 1}/${totalChunks} returned no audio candidates`);
+    }
+
+    const b64 = data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+    if (!b64) {
+      addLog('Chunked Audio', `Chunk ${i + 1} has no audio data`, 'error');
+      throw new Error(`Chunk ${i + 1}/${totalChunks} has no audio data`);
+    }
+
+    // Decode base64 to Int16Array
+    const cleanedBase64 = b64.replace(/\s/g, '');
+    const bin = atob(cleanedBase64);
+    const buf = new ArrayBuffer(bin.length);
+    const view = new DataView(buf);
+    for (let j = 0; j < bin.length; j++) view.setUint8(j, bin.charCodeAt(j));
+    const samples = new Int16Array(buf);
+
+    pcmArrays.push(samples);
+    addLog(
+      'Chunked Audio',
+      `Chunk ${i + 1}/${totalChunks} done | ${(chunkTime / 1000).toFixed(1)}s | ${samples.length} samples`,
+      'success'
+    );
+  }
+
+  // Concatenate all PCM chunks
+  const totalSamples = pcmArrays.reduce((sum, arr) => sum + arr.length, 0);
+  const combined = new Int16Array(totalSamples);
+  let offset = 0;
+  for (const arr of pcmArrays) {
+    combined.set(arr, offset);
+    offset += arr.length;
+  }
+
+  // Convert combined Int16Array back to base64
+  const combinedBytes = new Uint8Array(combined.buffer);
+  let binaryStr = '';
+  for (let i = 0; i < combinedBytes.length; i++) {
+    binaryStr += String.fromCharCode(combinedBytes[i]);
+  }
+  const combinedBase64 = btoa(binaryStr);
+
+  const totalTime = performance.now() - overallStart;
+  const audioDuration = totalSamples / 24000;
+  addLog(
+    'Chunked Audio',
+    `All ${totalChunks} chunks complete | Total: ${(totalTime / 1000).toFixed(1)}s | ${audioDuration.toFixed(1)}s audio | ${totalSamples} samples`,
+    'success'
+  );
+
+  return { audioData: combinedBase64, chunksUsed: totalChunks };
+};
+
+/* =============================================================================
+  4b. PREFETCH MANAGER
   =============================================================================
 */
 
@@ -588,67 +736,107 @@ const prefetchManager = {
       // Mark as in-flight
       if (activeRequests) activeRequests.current.add(poemId);
 
-      // Generate audio using same logic as togglePlay
-      const ttsContent = getTTSContent(poem);
+      // Try chunked path for long poems
+      let chunkedResult = null;
+      try {
+        chunkedResult = await generateChunkedAudio(poem, addLog);
+      } catch (chunkErr) {
+        if (addLog)
+          addLog(
+            'Prefetch Audio',
+            `Chunked generation failed: ${chunkErr.message} — falling back to single request`,
+            'warning'
+          );
+      }
 
-      const requestBody = JSON.stringify({
-        contents: [{ parts: [{ text: ttsContent }] }],
-        generationConfig: {
-          responseModalities: TTS_CONFIG.responseModalities,
-          speechConfig: {
-            voiceConfig: {
-              prebuiltVoiceConfig: { voiceName: TTS_CONFIG.voiceName },
+      let b64;
+      let apiTime;
+
+      if (chunkedResult) {
+        b64 = chunkedResult.audioData;
+        apiTime = 0;
+      }
+
+      if (!b64) {
+        // Single-request path (Tier 1: Pro REST → Flash REST on 429)
+        const ttsContent = getTTSContent(poem);
+
+        const requestBody = JSON.stringify({
+          contents: [{ parts: [{ text: ttsContent }] }],
+          generationConfig: {
+            responseModalities: TTS_CONFIG.responseModalities,
+            speechConfig: {
+              voiceConfig: {
+                prebuiltVoiceConfig: { voiceName: TTS_CONFIG.voiceName },
+              },
             },
           },
-        },
-      });
-      const requestSize = new Blob([requestBody]).size;
-      const estimatedTokens = Math.ceil(ttsContent.length / 4);
+        });
+        const requestSize = new Blob([requestBody]).size;
+        const estimatedTokens = Math.ceil(ttsContent.length / 4);
 
-      if (addLog) {
-        addLog(
-          'Prefetch Audio',
-          `→ Background audio generation (poem ${poemId}) | ${(requestSize / 1024).toFixed(1)}KB | ${estimatedTokens} tokens`,
-          'info'
-        );
-      }
-
-      const apiStart = performance.now();
-      const url = `${apiUrl}/api/ai/${API_MODELS.tts}/generateContent`;
-      const fetchOptions = {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: requestBody,
-      };
-      const res = await fetchTTSWithFallback(url, fetchOptions, {
-        addLog,
-        label: 'Prefetch Audio',
-      });
-
-      if (!res.ok) {
-        const errorText = await res.text();
-        if (addLog)
+        if (addLog) {
           addLog(
             'Prefetch Audio',
-            `❌ Audio generation HTTP ${res.status}: ${errorText.substring(0, 150)}`,
-            'error'
+            `→ Background audio generation (poem ${poemId}) | ${(requestSize / 1024).toFixed(1)}KB | ${estimatedTokens} tokens`,
+            'info'
           );
-        return;
-      }
+        }
 
-      const data = await res.json();
-      const apiTime = performance.now() - apiStart;
-      if (!data.candidates || data.candidates.length === 0) {
-        if (addLog)
+        const apiStart = performance.now();
+        const url = `${apiUrl}/api/ai/${API_MODELS.tts}/generateContent`;
+        const fetchOptions = {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: requestBody,
+        };
+        const res = await fetchTTSWithFallback(url, fetchOptions, {
+          addLog,
+          label: 'Prefetch Audio',
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          apiTime = performance.now() - apiStart;
+          if (data.candidates?.length > 0) {
+            b64 = data.candidates[0]?.content?.parts?.[0]?.inlineData?.data;
+          }
+        } else if (addLog) {
+          const errorText = await res.text();
           addLog(
             'Prefetch Audio',
-            `❌ Audio generation failed for poem ${poemId}. Response: ${JSON.stringify(data).substring(0, 200)}`,
-            'error'
+            `REST TTS failed HTTP ${res.status}: ${errorText.substring(0, 150)} — trying Live API`,
+            'warning'
           );
-        return;
+        }
+
+        // Tier 2: Live API WebSocket TTS (fallback)
+        if (!b64) {
+          try {
+            if (addLog)
+              addLog('Prefetch Audio', `→ Live API fallback for poem ${poemId}`, 'info');
+            const liveRes = await fetch(`${apiUrl}/api/ai/${API_MODELS.ttsLiveApi}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ text: ttsContent }),
+            });
+            if (liveRes.ok) {
+              const liveData = await liveRes.json();
+              b64 = liveData.audioData || null;
+              if (b64 && addLog)
+                addLog('Prefetch Audio', `✓ Live API fallback succeeded for poem ${poemId}`, 'success');
+            } else if (addLog) {
+              addLog('Prefetch Audio', `Live API fallback failed HTTP ${liveRes.status}`, 'error');
+            }
+          } catch (liveErr) {
+            if (addLog)
+              addLog('Prefetch Audio', `Live API fallback error: ${liveErr.message}`, 'error');
+          }
+        }
+
+        if (!apiTime) apiTime = performance.now() - apiStart;
       }
 
-      const b64 = data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
       if (b64) {
         // Convert PCM to WAV (inline to avoid dependency)
         const pcm16ToWav = (base64, rate = 24000) => {
@@ -3826,67 +4014,129 @@ export default function DiwanApp() {
     // Mark request as in-flight
     activeAudioRequests.current.add(current?.id);
 
-    const ttsContent = getTTSContent(current);
-
-    // Calculate request metrics
-    const requestBody = JSON.stringify({
-      contents: [{ parts: [{ text: ttsContent }] }],
-      generationConfig: {
-        responseModalities: TTS_CONFIG.responseModalities,
-        speechConfig: {
-          voiceConfig: {
-            prebuiltVoiceConfig: { voiceName: TTS_CONFIG.voiceName },
-          },
-        },
-      },
-    });
-    const requestSize = new Blob([requestBody]).size;
-    const estimatedTokens = Math.ceil(ttsContent.length / 4);
-    const arabicTextChars = current?.arabic?.length || 0;
-
-    addLog(
-      'Audio API',
-      `→ Starting generation | Request: ${(requestSize / 1024).toFixed(1)}KB | ${arabicTextChars} chars Arabic | Est. ${estimatedTokens} tokens`,
-      'info'
-    );
-
     setAudioError(null);
 
     try {
-      const apiStart = performance.now();
-      const url = `${apiUrl}/api/ai/${API_MODELS.tts}/generateContent`;
-      const fetchOptions = {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: requestBody,
-      };
-      const res = await fetchTTSWithFallback(url, fetchOptions, { addLog, label: 'Audio API' });
-
-      if (!res.ok) {
-        const errorText = await res.text();
-        addLog('Audio API Error', `HTTP ${res.status}: ${errorText.substring(0, 200)}`, 'error');
-        if (res.status === 429) {
-          setAudioError(
-            'Recitation temporarily unavailable — too many requests. Please wait a moment and try again.'
-          );
-          throw new Error('Rate limited (429)');
-        }
-        throw new Error(`API returned ${res.status}: ${res.statusText}`);
-      }
-
-      const data = await res.json();
-      const apiTime = performance.now() - apiStart;
-
-      if (!data.candidates || data.candidates.length === 0) {
+      // Try chunked path for long poems first
+      let chunkedResult = null;
+      try {
+        chunkedResult = await generateChunkedAudio(current, addLog);
+      } catch (chunkErr) {
         addLog(
-          'Audio API Error',
-          `No candidates in response. Full response: ${JSON.stringify(data).substring(0, 300)}`,
-          'error'
+          'Chunked Audio',
+          `Chunked generation failed: ${chunkErr.message} — falling back to single request`,
+          'warning'
         );
-        throw new Error('Recitation failed - no audio candidates returned');
       }
 
-      const b64 = data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+      let b64;
+      let apiTime = 0;
+      let estimatedTokens = 0;
+
+      if (chunkedResult) {
+        b64 = chunkedResult.audioData;
+        addLog(
+          'Audio API',
+          `Chunked generation complete (${chunkedResult.chunksUsed} chunks)`,
+          'success'
+        );
+      }
+
+      if (!b64) {
+        // Single-request path (Tier 1: Pro REST → Flash REST on 429)
+        const ttsContent = getTTSContent(current);
+
+        const requestBody = JSON.stringify({
+          contents: [{ parts: [{ text: ttsContent }] }],
+          generationConfig: {
+            responseModalities: TTS_CONFIG.responseModalities,
+            speechConfig: {
+              voiceConfig: {
+                prebuiltVoiceConfig: { voiceName: TTS_CONFIG.voiceName },
+              },
+            },
+          },
+        });
+        const requestSize = new Blob([requestBody]).size;
+        estimatedTokens = Math.ceil(ttsContent.length / 4);
+        const arabicTextChars = current?.arabic?.length || 0;
+
+        addLog(
+          'Audio API',
+          `→ Starting generation | Request: ${(requestSize / 1024).toFixed(1)}KB | ${arabicTextChars} chars Arabic | Est. ${estimatedTokens} tokens`,
+          'info'
+        );
+
+        const apiStart = performance.now();
+        const url = `${apiUrl}/api/ai/${API_MODELS.tts}/generateContent`;
+        const fetchOptions = {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: requestBody,
+        };
+
+        // Tier 1: Pro REST → Flash REST (via fetchTTSWithFallback)
+        try {
+          const res = await fetchTTSWithFallback(url, fetchOptions, { addLog, label: 'Audio API' });
+
+          if (!res.ok) {
+            const errorText = await res.text();
+            addLog('Audio API Error', `HTTP ${res.status}: ${errorText.substring(0, 200)}`, 'error');
+            throw new Error(res.status === 429 ? 'Rate limited (429)' : `API returned ${res.status}: ${res.statusText}`);
+          }
+
+          const data = await res.json();
+          apiTime = performance.now() - apiStart;
+
+          if (!data.candidates || data.candidates.length === 0) {
+            addLog(
+              'Audio API Error',
+              `No candidates in response. Full response: ${JSON.stringify(data).substring(0, 300)}`,
+              'error'
+            );
+            throw new Error('Recitation failed - no audio candidates returned');
+          }
+
+          b64 = data.candidates[0]?.content?.parts?.[0]?.inlineData?.data;
+        } catch (restErr) {
+          addLog('Audio API', `REST TTS failed: ${restErr.message} — trying Live API fallback`, 'warning');
+        }
+
+        // Tier 2: Live API WebSocket TTS (fallback)
+        if (!b64) {
+          try {
+            addLog('Live API', `→ Fallback: requesting audio via Live API WebSocket`, 'info');
+            const liveRes = await fetch(`${apiUrl}/api/ai/${API_MODELS.ttsLiveApi}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ text: ttsContent }),
+            });
+            if (!liveRes.ok) {
+              const liveError = await liveRes.text();
+              addLog('Live API Error', `HTTP ${liveRes.status}: ${liveError.substring(0, 200)}`, 'error');
+              throw new Error(`Live API returned ${liveRes.status}`);
+            }
+            const liveData = await liveRes.json();
+            b64 = liveData.audioData || null;
+            if (b64) {
+              addLog('Live API', `✓ Live API fallback succeeded`, 'success');
+            }
+          } catch (liveErr) {
+            addLog('Live API Error', `Live API fallback failed: ${liveErr.message}`, 'error');
+          }
+        }
+
+        // If all tiers failed, surface the error
+        if (!b64) {
+          setAudioError(
+            'Recitation temporarily unavailable — please wait a moment and try again.'
+          );
+          throw new Error('All TTS methods failed');
+        }
+
+        if (!apiTime) apiTime = performance.now() - apiStart;
+      }
+
       if (b64) {
         const conversionStart = performance.now();
         const blob = pcm16ToWav(b64);

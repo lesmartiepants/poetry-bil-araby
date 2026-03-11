@@ -45,11 +45,7 @@ import {
   useDownvotes,
   usePoemEvents,
 } from './hooks/useAuth';
-import {
-  INSIGHTS_SYSTEM_PROMPT,
-  DISCOVERY_SYSTEM_PROMPT,
-  getTTSContent,
-} from './prompts';
+import { INSIGHTS_SYSTEM_PROMPT, DISCOVERY_SYSTEM_PROMPT, getTTSContent } from './prompts';
 import { parseInsight } from './utils/insightParser';
 import { repairAndParseJSON } from './utils/jsonRepair';
 import seedPoems from './data/seed-poems.json';
@@ -87,11 +83,15 @@ const DESIGN = {
   paneVerseSize: 'text-[clamp(1rem,1.8vw,1.125rem)]', // 16px-18px for insight panel
   glass: 'backdrop-blur-2xl',
   radius: 'rounded-2xl',
-  goldFoil: 'bg-gradient-to-br from-[#B8922E] via-[#E2C67A] to-[#A07D38] bg-clip-text text-transparent',
+  goldFoil:
+    'bg-gradient-to-br from-[#B8922E] via-[#E2C67A] to-[#A07D38] bg-clip-text text-transparent',
   anim: 'transition-all duration-300 ease-in-out',
-  buttonHover: 'transition-all duration-200 hover:shadow-[0_0_12px_rgba(197,160,89,0.3)] active:scale-[0.96] active:transition-[transform_150ms_cubic-bezier(0.34,1.56,0.64,1)]',
-  focusRing: 'focus-visible:ring-2 focus-visible:ring-[#C5A059] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0e0c08]',
-  loadingSkeleton: 'animate-pulse bg-gradient-to-r from-[#C5A059]/10 via-[#C5A059]/20 to-[#C5A059]/10 bg-[length:200%_100%]',
+  buttonHover:
+    'transition-all duration-200 hover:shadow-[0_0_12px_rgba(197,160,89,0.3)] active:scale-[0.96] active:transition-[transform_150ms_cubic-bezier(0.34,1.56,0.64,1)]',
+  focusRing:
+    'focus-visible:ring-2 focus-visible:ring-[#C5A059] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0e0c08]',
+  loadingSkeleton:
+    'animate-pulse bg-gradient-to-r from-[#C5A059]/10 via-[#C5A059]/20 to-[#C5A059]/10 bg-[length:200%_100%]',
   touchTarget: 'min-w-[44px] min-h-[44px]',
 };
 
@@ -133,9 +133,10 @@ const THEME = {
     debugInput: 'bg-stone-900/80 border-stone-700 text-stone-200 placeholder:text-stone-500', // Debug input
     debugDivider: 'border-stone-700', // Debug panel divider
     kbd: 'bg-stone-800 text-stone-300 border-stone-700', // Keyboard shortcut keys
-    goldFoilGradient: 'linear-gradient(135deg, #B8922E 0%, #C5A059 30%, #E2C67A 55%, #C5A059 75%, #A07D38 100%)',
-    goldBright: '#D4B463',       // Interactive/action elements
-    goldStandard: '#C5A059',     // Informational (existing gold)
+    goldFoilGradient:
+      'linear-gradient(135deg, #B8922E 0%, #C5A059 30%, #E2C67A 55%, #C5A059 75%, #A07D38 100%)',
+    goldBright: '#D4B463', // Interactive/action elements
+    goldStandard: '#C5A059', // Informational (existing gold)
     goldStructural: 'rgba(160, 128, 64, 0.4)', // Borders, dividers
     goldBrightText: 'text-[#D4B463]',
     goldStructuralBorder: 'border-[rgba(160,128,64,0.4)]',
@@ -177,7 +178,8 @@ const THEME = {
     debugInput: 'bg-white/80 border-stone-300 text-stone-800 placeholder:text-stone-400', // Debug input
     debugDivider: 'border-stone-300', // Debug panel divider
     kbd: 'bg-stone-200 text-stone-700 border-stone-300', // Keyboard shortcut keys
-    goldFoilGradient: 'linear-gradient(135deg, #6B5B3E 0%, #8B7355 30%, #A8956A 55%, #8B7355 75%, #6B5B3E 100%)',
+    goldFoilGradient:
+      'linear-gradient(135deg, #6B5B3E 0%, #8B7355 30%, #A8956A 55%, #8B7355 75%, #6B5B3E 100%)',
     goldBright: '#7A6545',
     goldStandard: '#8B7355',
     goldStructural: 'rgba(139, 115, 85, 0.3)',
@@ -989,20 +991,22 @@ const MysticalConsultationEffect = ({ active, theme }) => {
 };
 
 const GlassNoise = () => (
-  <div style={{
-    position: 'absolute',
-    inset: 0,
-    pointerEvents: 'none',
-    opacity: 0.025,
-    borderRadius: 'inherit',
-    overflow: 'hidden',
-    zIndex: 1,
-  }}>
+  <div
+    style={{
+      position: 'absolute',
+      inset: 0,
+      pointerEvents: 'none',
+      opacity: 0.025,
+      borderRadius: 'inherit',
+      overflow: 'hidden',
+      zIndex: 1,
+    }}
+  >
     <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
       <filter id="glassNoise">
-        <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="4" stitchTiles="stitch"/>
+        <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="4" stitchTiles="stitch" />
       </filter>
-      <rect width="100%" height="100%" filter="url(#glassNoise)" opacity="1"/>
+      <rect width="100%" height="100%" filter="url(#glassNoise)" opacity="1" />
     </svg>
   </div>
 );
@@ -1836,13 +1840,16 @@ const SplashScreen = ({ isOpen, onDismiss, showOnboarding, theme }) => {
           >
             poetry
           </span>
-          <Feather style={{
-            width: 'clamp(24px, 4vw, 36px)',
-            height: 'clamp(24px, 4vw, 36px)',
-            color: gold,
-            opacity: 0.8,
-            marginBottom: '0.15em',
-          }} strokeWidth={1.5} />
+          <Feather
+            style={{
+              width: 'clamp(24px, 4vw, 36px)',
+              height: 'clamp(24px, 4vw, 36px)',
+              color: gold,
+              opacity: 0.8,
+              marginBottom: '0.15em',
+            }}
+            strokeWidth={1.5}
+          />
         </div>
 
         {/* Subtitle */}
@@ -3062,6 +3069,11 @@ export default function DiwanApp() {
   const isTogglingPlay = useRef(false);
   const controlBarRef = useRef(null);
 
+  // Mobile swipe navigation refs
+  const touchStartX = useRef(0);
+  const touchStartY = useRef(0);
+  const isSwiping = useRef(false);
+
   // Volume-based glow effect refs
   const audioContextRef = useRef(null);
   const analyserRef = useRef(null);
@@ -3528,7 +3540,8 @@ export default function DiwanApp() {
   };
 
   // After the first poem reveal, switch to simpler fade for subsequent poems
-  const prefersReducedMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const prefersReducedMotion =
+    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   useEffect(() => {
     if (current?.id && isFirstReveal.current) {
@@ -4308,6 +4321,43 @@ export default function DiwanApp() {
       setIsInterpreting(false);
       activeInsightRequests.current.delete(current?.id); // Clean up in-flight tracking
     }
+  };
+
+  // ── Mobile swipe poem navigation (mobile only) ──────────────────────
+  const handleSwipeTouchStart = (e) => {
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+    isSwiping.current = false;
+  };
+
+  const handleSwipeTouchMove = (e) => {
+    const deltaX = e.touches[0].clientX - touchStartX.current;
+    const deltaY = e.touches[0].clientY - touchStartY.current;
+    // Only count as swipe if horizontal movement exceeds vertical (prevent interfering with scroll)
+    if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 30) {
+      isSwiping.current = true;
+    }
+  };
+
+  const handleSwipeTouchEnd = (e) => {
+    if (!isSwiping.current) return;
+    // Only on mobile
+    if (window.innerWidth > 768) return;
+
+    const deltaX = e.changedTouches[0].clientX - touchStartX.current;
+    const threshold = 80; // minimum px for a swipe
+
+    if (deltaX < -threshold) {
+      // Swipe LEFT = go back to previous poem
+      if (currentIndex > 0) {
+        setCurrentIndex((prev) => prev - 1);
+        setInterpretation(null);
+      }
+    } else if (deltaX > threshold) {
+      // Swipe RIGHT = discover new poem
+      handleFetch();
+    }
+    isSwiping.current = false;
   };
 
   const handleFetch = async () => {
@@ -5148,37 +5198,41 @@ export default function DiwanApp() {
         }}
       />
 
-      <header
-        className="fixed top-4 md:top-8 left-0 right-0 z-40 pointer-events-none flex flex-col items-center justify-center px-4 md:px-6"
-      >
-        <div
-          className="flex flex-row items-baseline gap-3 header-luminescence"
-        >
+      <header className="fixed top-4 md:top-8 left-0 right-0 z-40 pointer-events-none flex flex-col items-center justify-center px-4 md:px-6">
+        <div className="flex flex-row items-baseline gap-3 header-luminescence">
           <h1 style={{ display: 'flex', alignItems: 'baseline', gap: '0.75rem', margin: 0 }}>
-            <span style={{
-              fontFamily: "'Reem Kufi', sans-serif",
-              fontWeight: 700,
-              fontSize: headerCompact ? 'clamp(1.25rem, 3vw, 1.75rem)' : 'clamp(3rem, 6vw, 4.5rem)',
-              lineHeight: 1,
-              background: theme.goldFoilGradient,
-              WebkitBackgroundClip: 'text',
-              WebkitTextFillColor: 'transparent',
-              backgroundClip: 'text',
-              textShadow: '0 0 30px rgba(197,160,89,0.25)',
-              transition: 'all 400ms cubic-bezier(0.34, 1.56, 0.64, 1)',
-            }}>
+            <span
+              style={{
+                fontFamily: "'Reem Kufi', sans-serif",
+                fontWeight: 700,
+                fontSize: headerCompact
+                  ? 'clamp(1.25rem, 3vw, 1.75rem)'
+                  : 'clamp(3rem, 6vw, 4.5rem)',
+                lineHeight: 1,
+                background: theme.goldFoilGradient,
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+                textShadow: '0 0 30px rgba(197,160,89,0.25)',
+                transition: 'all 400ms cubic-bezier(0.34, 1.56, 0.64, 1)',
+              }}
+            >
               بالعربي
             </span>
-            <span style={{
-              fontFamily: "'Forum', serif",
-              fontSize: headerCompact ? 'clamp(0.75rem, 1.5vw, 1rem)' : 'clamp(1.25rem, 2.5vw, 1.75rem)',
-              letterSpacing: '-0.05em',
-              lineHeight: 1,
-              color: '#C5A059',
-              textShadow: '0 0 40px rgba(197,160,89,0.3)',
-              paddingBottom: '0.15em',
-              transition: 'all 400ms cubic-bezier(0.34, 1.56, 0.64, 1)',
-            }}>
+            <span
+              style={{
+                fontFamily: "'Forum', serif",
+                fontSize: headerCompact
+                  ? 'clamp(0.75rem, 1.5vw, 1rem)'
+                  : 'clamp(1.25rem, 2.5vw, 1.75rem)',
+                letterSpacing: '-0.05em',
+                lineHeight: 1,
+                color: '#C5A059',
+                textShadow: '0 0 40px rgba(197,160,89,0.3)',
+                paddingBottom: '0.15em',
+                transition: 'all 400ms cubic-bezier(0.34, 1.56, 0.64, 1)',
+              }}
+            >
               poetry
             </span>
           </h1>
@@ -5231,6 +5285,9 @@ export default function DiwanApp() {
           <main
             ref={mainScrollRef}
             onScroll={handleScroll}
+            onTouchStart={handleSwipeTouchStart}
+            onTouchMove={handleSwipeTouchMove}
+            onTouchEnd={handleSwipeTouchEnd}
             className={`flex-1 overflow-y-auto custom-scrollbar relative z-10 px-4 md:px-0 pb-28${isOverflow ? ' pr-16' : ''}`}
           >
             <div className="min-h-full flex flex-col items-center justify-center py-6">
@@ -5238,12 +5295,16 @@ export default function DiwanApp() {
                 <div
                   key={`meta-${current?.id}`}
                   className={`text-center ${DESIGN.mainMetaPadding} z-20 w-full poem-reveal-animate`}
-                  style={prefersReducedMotion ? {} : {
-                    animation: isFirstReveal.current
-                      ? 'poemRevealLine 500ms cubic-bezier(0.16,1,0.3,1) forwards'
-                      : 'poemRevealFade 300ms ease forwards',
-                    opacity: 0,
-                  }}
+                  style={
+                    prefersReducedMotion
+                      ? {}
+                      : {
+                          animation: isFirstReveal.current
+                            ? 'poemRevealLine 500ms cubic-bezier(0.16,1,0.3,1) forwards'
+                            : 'poemRevealFade 300ms ease forwards',
+                          opacity: 0,
+                        }
+                  }
                 >
                   <div className="minimal-frame mb-1">
                     <svg viewBox="0 0 550 120" preserveAspectRatio="xMidYMid meet">
@@ -5342,12 +5403,16 @@ export default function DiwanApp() {
                         <div
                           key={`${current?.id}-${idx}`}
                           className="flex flex-col gap-0.5 poem-reveal-animate"
-                          style={prefersReducedMotion ? {} : {
-                            animation: isFirstReveal.current
-                              ? `poemRevealLine 400ms cubic-bezier(0.16,1,0.3,1) ${200 + idx * 100}ms forwards`
-                              : `poemRevealFade 300ms ease ${idx * 50}ms forwards`,
-                            opacity: 0,
-                          }}
+                          style={
+                            prefersReducedMotion
+                              ? {}
+                              : {
+                                  animation: isFirstReveal.current
+                                    ? `poemRevealLine 400ms cubic-bezier(0.16,1,0.3,1) ${200 + idx * 100}ms forwards`
+                                    : `poemRevealFade 300ms ease ${idx * 50}ms forwards`,
+                                  opacity: 0,
+                                }
+                          }
                         >
                           <p
                             dir="rtl"
@@ -5385,6 +5450,15 @@ export default function DiwanApp() {
                 </div>
 
                 {/* Mobile insight moved to bottom sheet overlay */}
+
+                {/* Mobile swipe navigation dots */}
+                <div className="md:hidden flex justify-center gap-2 pb-2 pt-4">
+                  <div
+                    className={`w-1.5 h-1.5 rounded-full ${currentIndex > 0 ? 'bg-[#C5A059]/60' : 'bg-stone-600/30'}`}
+                  />
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#C5A059]" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#C5A059]/60" />
+                </div>
               </div>
             </div>
           </main>
@@ -5714,91 +5788,104 @@ export default function DiwanApp() {
         </div>
 
         {showInsightPanel && (
-        <div className="hidden md:block h-full border-l" style={{ animation: 'bottomSheetSlideUp 300ms cubic-bezier(0.32, 0.72, 0, 1)' }}>
-          <style>{`
+          <div
+            className="hidden md:block h-full border-l"
+            style={{ animation: 'bottomSheetSlideUp 300ms cubic-bezier(0.32, 0.72, 0, 1)' }}
+          >
+            <style>{`
             @keyframes desktopPaneSlideIn {
               from { transform: translateX(100%); opacity: 0; }
               to { transform: translateX(0); opacity: 1; }
             }
           `}</style>
-          <div
-            className={`${DESIGN.paneWidth} h-full flex flex-col z-30 ${DESIGN.anim} ${theme.glass} ${theme.border} relative`}
-            style={{ animation: 'desktopPaneSlideIn 300ms cubic-bezier(0.32, 0.72, 0, 1)' }}
-          >
-            <GlassNoise />
-            <div className="p-6 pb-4 border-b border-stone-500/10">
-              <div className="flex items-center justify-between">
-                <h3 className="font-brand-en italic font-semibold text-[clamp(1rem,1.8vw,1.125rem)] text-indigo-600 tracking-tight">
-                  Poetic Insight
-                </h3>
-                <button
-                  onClick={() => setShowInsightPanel(false)}
-                  aria-label="Close insight panel"
-                  className={`${DESIGN.focusRing} ${DESIGN.touchTarget}`}
-                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', cursor: 'pointer' }}
-                >
-                  <X size={16} className="opacity-40 hover:opacity-80 transition-opacity" />
-                </button>
+            <div
+              className={`${DESIGN.paneWidth} h-full flex flex-col z-30 ${DESIGN.anim} ${theme.glass} ${theme.border} relative`}
+              style={{ animation: 'desktopPaneSlideIn 300ms cubic-bezier(0.32, 0.72, 0, 1)' }}
+            >
+              <GlassNoise />
+              <div className="p-6 pb-4 border-b border-stone-500/10">
+                <div className="flex items-center justify-between">
+                  <h3 className="font-brand-en italic font-semibold text-[clamp(1rem,1.8vw,1.125rem)] text-indigo-600 tracking-tight">
+                    Poetic Insight
+                  </h3>
+                  <button
+                    onClick={() => setShowInsightPanel(false)}
+                    aria-label="Close insight panel"
+                    className={`${DESIGN.focusRing} ${DESIGN.touchTarget}`}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      background: 'transparent',
+                      border: 'none',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    <X size={16} className="opacity-40 hover:opacity-80 transition-opacity" />
+                  </button>
+                </div>
+                <p className="text-[10px] opacity-30 uppercase font-brand-en truncate">
+                  {current?.poet} • {current?.title}
+                </p>
               </div>
-              <p className="text-[10px] opacity-30 uppercase font-brand-en truncate">
-                {current?.poet} • {current?.title}
-              </p>
-            </div>
-            <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-              {isInterpreting ? (
-                <div className={`h-full flex flex-col items-center justify-center gap-4 opacity-30 ${DESIGN.loadingSkeleton}`}>
-                  <Sparkles className="animate-spin text-[#C5A059]" size={32} />
-                  <p className="font-brand-en italic text-[clamp(0.875rem,1.5vw,1rem)]">
-                    Consulting Diwan...
-                  </p>
-                </div>
-              ) : (
-                <div className={DESIGN.paneSpacing}>
-                  {!interpretation && (
-                    <button
-                      onClick={handleAnalyze}
-                      className={`group relative w-full py-4 border ${theme.brandBorder} ${theme.brand} rounded-full font-brand-en tracking-widest text-[10px] uppercase hover:bg-indigo-500/5 transition-all flex items-center justify-center gap-3 overflow-hidden bg-indigo-500/5`}
-                    >
-                      <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-indigo-500/10 to-transparent animate-[spin_8s_linear_infinite]" />
-                      <Sparkles size={12} /> Seek Insight
-                    </button>
-                  )}
-                  {showTranslation && (
-                    <p
-                      className={`font-brand-en italic whitespace-pre-wrap ${DESIGN.paneVerseSize} ${darkMode ? 'text-stone-100' : 'text-stone-800'}`}
-                    >
-                      {insightParts?.poeticTranslation || current?.english}
+              <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+                {isInterpreting ? (
+                  <div
+                    className={`h-full flex flex-col items-center justify-center gap-4 opacity-30 ${DESIGN.loadingSkeleton}`}
+                  >
+                    <Sparkles className="animate-spin text-[#C5A059]" size={32} />
+                    <p className="font-brand-en italic text-[clamp(0.875rem,1.5vw,1rem)]">
+                      Consulting Diwan...
                     </p>
-                  )}
-                  {insightParts?.depth && (
-                    <div className="pt-6 border-t border-indigo-500/10">
-                      <h4 className="text-[10px] font-brand-en font-black text-indigo-600 mb-2 uppercase tracking-widest opacity-80">
-                        The Depth
-                      </h4>
-                      <div className="pl-4 border-l border-indigo-500/10">
-                        <p className="text-[clamp(0.875rem,1.5vw,1rem)] font-brand-en font-normal opacity-80 leading-relaxed">
-                          {insightParts.depth}
-                        </p>
+                  </div>
+                ) : (
+                  <div className={DESIGN.paneSpacing}>
+                    {!interpretation && (
+                      <button
+                        onClick={handleAnalyze}
+                        className={`group relative w-full py-4 border ${theme.brandBorder} ${theme.brand} rounded-full font-brand-en tracking-widest text-[10px] uppercase hover:bg-indigo-500/5 transition-all flex items-center justify-center gap-3 overflow-hidden bg-indigo-500/5`}
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-indigo-500/10 to-transparent animate-[spin_8s_linear_infinite]" />
+                        <Sparkles size={12} /> Seek Insight
+                      </button>
+                    )}
+                    {showTranslation && (
+                      <p
+                        className={`font-brand-en italic whitespace-pre-wrap ${DESIGN.paneVerseSize} ${darkMode ? 'text-stone-100' : 'text-stone-800'}`}
+                      >
+                        {insightParts?.poeticTranslation || current?.english}
+                      </p>
+                    )}
+                    {insightParts?.depth && (
+                      <div className="pt-6 border-t border-indigo-500/10">
+                        <h4 className="text-[10px] font-brand-en font-black text-indigo-600 mb-2 uppercase tracking-widest opacity-80">
+                          The Depth
+                        </h4>
+                        <div className="pl-4 border-l border-indigo-500/10">
+                          <p className="text-[clamp(0.875rem,1.5vw,1rem)] font-brand-en font-normal opacity-80 leading-relaxed">
+                            {insightParts.depth}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  )}
-                  {insightParts?.author && (
-                    <div className="pt-6 border-t border-indigo-500/10">
-                      <h4 className="text-[10px] font-brand-en font-black text-indigo-600 mb-2 uppercase tracking-widest opacity-80">
-                        The Author
-                      </h4>
-                      <div className="pl-4 border-l border-indigo-500/10">
-                        <p className="text-[clamp(0.875rem,1.5vw,1rem)] font-brand-en font-normal opacity-80 leading-relaxed">
-                          {insightParts.author}
-                        </p>
+                    )}
+                    {insightParts?.author && (
+                      <div className="pt-6 border-t border-indigo-500/10">
+                        <h4 className="text-[10px] font-brand-en font-black text-indigo-600 mb-2 uppercase tracking-widest opacity-80">
+                          The Author
+                        </h4>
+                        <div className="pl-4 border-l border-indigo-500/10">
+                          <p className="text-[clamp(0.875rem,1.5vw,1rem)] font-brand-en font-normal opacity-80 leading-relaxed">
+                            {insightParts.author}
+                          </p>
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </div>
-              )}
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
 
       {/* Mobile Bottom Sheet for Insights */}
@@ -5852,7 +5939,7 @@ export default function DiwanApp() {
             <GlassNoise />
             {/* Drag handle */}
             <button
-              onClick={() => setBottomSheetHeight(prev => prev === '50vh' ? '90vh' : '50vh')}
+              onClick={() => setBottomSheetHeight((prev) => (prev === '50vh' ? '90vh' : '50vh'))}
               aria-label="Toggle sheet height"
               style={{
                 display: 'flex',
@@ -5876,8 +5963,15 @@ export default function DiwanApp() {
               />
             </button>
             {/* Header */}
-            <div style={{ padding: '4px 24px 12px', borderBottom: `1px solid ${darkMode ? 'rgba(197,160,89,0.1)' : 'rgba(197,160,89,0.15)'}` }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div
+              style={{
+                padding: '4px 24px 12px',
+                borderBottom: `1px solid ${darkMode ? 'rgba(197,160,89,0.1)' : 'rgba(197,160,89,0.15)'}`,
+              }}
+            >
+              <div
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+              >
                 <h3 className="font-brand-en italic font-semibold text-[clamp(1rem,1.8vw,1.125rem)] text-indigo-600 tracking-tight">
                   Poetic Insight
                 </h3>
@@ -5885,7 +5979,16 @@ export default function DiwanApp() {
                   onClick={() => setShowInsightPanel(false)}
                   aria-label="Close insight panel"
                   className={`${DESIGN.focusRing}`}
-                  style={{ minWidth: '44px', minHeight: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', cursor: 'pointer' }}
+                  style={{
+                    minWidth: '44px',
+                    minHeight: '44px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                  }}
                 >
                   <X size={18} className="opacity-40 hover:opacity-80" />
                 </button>
@@ -5895,7 +5998,10 @@ export default function DiwanApp() {
               </p>
             </div>
             {/* Content */}
-            <div style={{ flex: 1, overflowY: 'auto', padding: '24px' }} className="custom-scrollbar">
+            <div
+              style={{ flex: 1, overflowY: 'auto', padding: '24px' }}
+              className="custom-scrollbar"
+            >
               {isInterpreting ? (
                 <div className="h-full flex flex-col items-center justify-center gap-4 opacity-30">
                   <Sparkles className="animate-spin text-[#C5A059]" size={32} />
@@ -5904,7 +6010,9 @@ export default function DiwanApp() {
               ) : interpretation ? (
                 <div className="flex flex-col gap-8">
                   {showTranslation && (
-                    <p className={`font-brand-en italic whitespace-pre-wrap text-[clamp(0.9375rem,1.6vw,1rem)] ${darkMode ? 'text-stone-100' : 'text-stone-800'}`}>
+                    <p
+                      className={`font-brand-en italic whitespace-pre-wrap text-[clamp(0.9375rem,1.6vw,1rem)] ${darkMode ? 'text-stone-100' : 'text-stone-800'}`}
+                    >
                       {insightParts?.poeticTranslation || current?.english}
                     </p>
                   )}

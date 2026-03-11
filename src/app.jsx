@@ -2448,10 +2448,13 @@ const VerticalSidebar = ({
       `}</style>
       <div
         ref={sidebarRef}
-        className="fixed right-0 md:right-[24.5rem] top-1/2 -translate-y-1/2 z-[45] rounded-l-2xl md:rounded-2xl bg-gradient-to-b from-black/70 via-black/60 to-black/70 backdrop-blur-xl border-l-2 md:border-2 border-[#C5A059]/40 py-2 px-1.5 transition-all duration-300"
+        className="fixed right-0 md:right-[24.5rem] top-1/2 -translate-y-1/2 z-[45] rounded-l-2xl md:rounded-2xl bg-gradient-to-b from-black/70 via-black/60 to-black/70 backdrop-blur-xl border-l-2 md:border-2 border-[#C5A059]/40 py-2 transition-all duration-300"
         style={{
           animation: 'slideInRight 0.4s ease-out',
           maxHeight: 'calc(100dvh - 14rem)',
+          width: expanded ? '3.75rem' : '2.5rem',
+          paddingLeft: expanded ? '0.375rem' : '0.25rem',
+          paddingRight: expanded ? '0.375rem' : '0.25rem',
         }}
       >
         {/* Toggle handle — always visible, icon hints when collapsed */}
@@ -2624,7 +2627,7 @@ const VerticalSidebar = ({
               <div className={`sidebar-drawer ${settingsOpen ? 'open' : ''}`}>
                 <div className="sidebar-drawer-inner">
                   <div
-                    className={`flex flex-col items-center gap-0.5 pl-0.5 border-l-2 ${theme.goldBorderMuted}`}
+                    className={`flex flex-col items-center gap-1 pl-0.5 border-l-2 ${theme.goldBorderMuted}`}
                   >
                     <button
                       onClick={onToggleTranslation}
@@ -2897,7 +2900,7 @@ export default function DiwanApp() {
   const sourceNodeRef = useRef(null);
   const volumePulseRef = useRef(null);
 
-  const [headerOpacity, setHeaderOpacity] = useState(1);
+  const [headerOpacity, setHeaderOpacity] = useState(0);
   const [poems, setPoems] = useState(() => {
     // 1. Restore from OAuth redirect (avoids flash of seed poem)
     try {
@@ -3249,8 +3252,9 @@ export default function DiwanApp() {
   }, [isInterpreting, interpretation]);
 
   // headerProgress: 0 = full size center, 1 = compact right corner
+  // Slower ramp: full transition over 200px of scroll instead of 60
   const handleScroll = (e) => {
-    const progress = Math.min(1, e.target.scrollTop / 60);
+    const progress = Math.min(1, e.target.scrollTop / 200);
     setHeaderOpacity(progress);
   };
 
@@ -3271,7 +3275,7 @@ export default function DiwanApp() {
     setTimeout(() => {
       setPoetPickerOpen(false);
       setPoetPickerClosing(false);
-    }, 200);
+    }, 250);
   };
 
   // Extract cached translation fields into stable local variables so useMemo
@@ -4772,7 +4776,8 @@ export default function DiwanApp() {
         }
         @keyframes poetPickerOut {
           0%   { opacity: 1; transform: translate(-50%, 0) scale(1); }
-          100% { opacity: 0; transform: translate(-50%, 12px) scale(0.92); }
+          40%  { opacity: 0.8; transform: translate(-50%, -3px) scale(1.01); }
+          100% { opacity: 0; transform: translate(-50%, 20px) scale(0.9); }
         }
 
         @keyframes wave {
@@ -4879,8 +4884,8 @@ export default function DiwanApp() {
         <div
           className="flex flex-row items-center gap-1.5 header-luminescence"
           style={{
-            transform: `scale(${1 - headerOpacity * 0.55})`,
-            opacity: 1 - headerOpacity * 0.3,
+            transform: `scale(${1 - headerOpacity * 0.4})`,
+            opacity: 1 - headerOpacity * 0.15,
             transformOrigin: 'top right',
             transition: 'transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s',
           }}
@@ -5252,7 +5257,7 @@ export default function DiwanApp() {
                     className="absolute bottom-full mb-2 left-1/2 w-auto min-w-[10rem] rounded-2xl border border-[#C5A059]/25 bg-black/95 backdrop-blur-2xl shadow-2xl py-2.5 z-[200]"
                     style={{
                       animation: poetPickerClosing
-                        ? 'poetPickerOut 0.15s ease-in forwards'
+                        ? 'poetPickerOut 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards'
                         : 'poetPickerIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
                     }}
                   >

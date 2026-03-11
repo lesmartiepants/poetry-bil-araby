@@ -3244,8 +3244,10 @@ export default function DiwanApp() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isInterpreting, interpretation]);
 
+  // headerProgress: 0 = full size center, 1 = compact right corner
   const handleScroll = (e) => {
-    setHeaderOpacity(Math.max(0, 1 - e.target.scrollTop / 30));
+    const progress = Math.min(1, e.target.scrollTop / 60);
+    setHeaderOpacity(progress);
   };
 
   // Close poet picker on outside click
@@ -4857,15 +4859,28 @@ export default function DiwanApp() {
 
       <header
         style={{
-          opacity: headerOpacity,
-          transform: headerOpacity < 1 ? `scale(${0.85 + headerOpacity * 0.15})` : 'none',
-          transformOrigin: 'top center',
-          transition: 'opacity 0.3s, transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1)',
+          position: 'fixed',
+          top: 0,
+          right: 0,
+          left: headerOpacity > 0 ? 'auto' : 0,
+          zIndex: 40,
+          pointerEvents: 'none',
+          padding: headerOpacity > 0 ? '0.75rem 1rem' : '1rem 1.5rem',
+          display: 'flex',
+          justifyContent: headerOpacity > 0 ? 'flex-end' : 'center',
+          transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
         }}
-        className="w-full flex flex-row items-center justify-center gap-2 px-4 md:px-6 pt-4 md:pt-6 pb-2 z-40 pointer-events-none"
       >
-        <div className="flex flex-row items-center gap-2 header-luminescence">
-          <h1 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
+        <div
+          className="flex flex-row items-center gap-1.5 header-luminescence"
+          style={{
+            transform: `scale(${1 - headerOpacity * 0.55})`,
+            opacity: 1 - headerOpacity * 0.3,
+            transformOrigin: 'top right',
+            transition: 'transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s',
+          }}
+        >
+          <h1 style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', margin: 0 }}>
             <span
               style={{
                 ...BRAND.arabic,
@@ -4902,7 +4917,7 @@ export default function DiwanApp() {
           <main
             ref={mainScrollRef}
             onScroll={handleScroll}
-            className="flex-1 overflow-y-auto custom-scrollbar relative z-10 px-4 md:px-0 pb-28 pr-14 md:pr-0"
+            className="flex-1 overflow-y-auto custom-scrollbar relative z-10 px-4 md:px-0 pb-28 pt-16 md:pt-20 pr-14 md:pr-0"
           >
             <div className="min-h-full flex flex-col items-center justify-center py-6">
               <div className="w-full max-w-4xl flex flex-col items-center">

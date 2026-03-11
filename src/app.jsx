@@ -95,7 +95,7 @@ const THEME = {
     bg: 'bg-[#0c0c0e]',
     text: 'text-stone-200',
     accent: 'text-indigo-400',
-    glass: 'bg-stone-950/25',
+    glass: 'bg-stone-950/35',
     border: 'border-white/[0.06]',
     shadow: 'shadow-black/60',
     pill: 'bg-stone-900/40 border-stone-700/50',
@@ -2389,7 +2389,8 @@ const VerticalSidebar = ({
   const subBtnBase =
     'w-11 h-11 rounded-lg flex items-center justify-center transition-all duration-200';
   const subBtnHover = theme.goldHoverBg15;
-  const labelCls = 'text-[7px] leading-none -mt-0.5 font-brand-en tracking-wide opacity-60';
+  const labelCls =
+    'text-[7px] leading-none -mt-0.5 font-brand-en tracking-[0.12em] uppercase opacity-60';
 
   return (
     <>
@@ -2539,7 +2540,7 @@ const VerticalSidebar = ({
               </span>
             </button>
             <span className={labelCls} style={{ color: gold }}>
-              Translit
+              Romanize
             </span>
 
             <div className="w-6 h-px bg-stone-500/30 mx-auto my-1" />
@@ -2584,7 +2585,12 @@ const VerticalSidebar = ({
                     title={`Text size: ${textSizeLabel}`}
                     className={`${subBtnBase} ${subBtnHover}`}
                   >
-                    <ALargeSmall style={{ color: gold }} size={16} />
+                    <span
+                      className="text-[13px] font-bold leading-none"
+                      style={{ color: gold, fontFamily: "'Forum', serif" }}
+                    >
+                      T±
+                    </span>
                   </button>
                   <span className={labelCls} style={{ color: gold }}>
                     Size
@@ -4497,8 +4503,14 @@ export default function DiwanApp() {
           50% { transform: translateY(-3px); }
         }
 
-        .rabbit-bounce {
-          /* removed — no animated discover icon */
+        @keyframes discoverShuffle {
+          0% { transform: rotate(0deg); }
+          25% { transform: rotate(-15deg); }
+          75% { transform: rotate(15deg); }
+          100% { transform: rotate(0deg); }
+        }
+        .discover-btn:hover .discover-icon {
+          animation: discoverShuffle 0.5s ease-in-out;
         }
 
         @keyframes wave {
@@ -4922,12 +4934,12 @@ export default function DiwanApp() {
                   onClick={handleFetch}
                   disabled={isFetching}
                   aria-label="Discover new poem"
-                  className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
+                  className={`discover-btn min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
                 >
                   {isFetching ? (
                     <Loader2 className={`animate-spin ${GOLD.goldText}`} size={21} />
                   ) : (
-                    <Shuffle className={GOLD.goldText} size={21} />
+                    <Shuffle className={`discover-icon ${GOLD.goldText}`} size={21} />
                   )}
                 </button>
                 <span

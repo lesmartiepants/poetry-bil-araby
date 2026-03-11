@@ -174,6 +174,29 @@ const THEME = {
 // `THEME.dark.*` references throughout the JSX.
 const GOLD = THEME.dark;
 
+// ── Shared Brand Styles ──────────────────────────────────────────────────
+// Single source of truth for بالعربي + poetry + feather rendering.
+// Used by: main header, splash desert phase. (Kinetic splash has its own animations.)
+const BRAND = {
+  arabic: {
+    fontFamily: "'Reem Kufi', sans-serif",
+    fontWeight: 700,
+    fontSize: 'clamp(3rem, 6vw, 4.5rem)',
+    lineHeight: 1,
+  },
+  english: {
+    fontFamily: "'Forum', serif",
+    fontSize: 'clamp(2.86rem, 5.72vw, 4.4rem)', // 10% larger than previous 2.6/5.2/4
+    letterSpacing: '-0.04em',
+    lineHeight: 1,
+  },
+  feather: {
+    width: 'clamp(24px, 4vw, 36px)',
+    height: 'clamp(24px, 4vw, 36px)',
+    opacity: 0.8,
+  },
+};
+
 const CATEGORIES = [
   { id: 'All', label: 'All Poets', labelAr: 'كل الشعراء' },
   { id: 'المتنبي', label: 'Al-Mutanabbi', labelAr: 'المتنبي' },
@@ -1650,25 +1673,23 @@ const SplashScreen = ({ isOpen, onDismiss, showOnboarding, theme }) => {
           />
         ))}
 
-        {/* Brand — بالعربي + poetry + feather */}
+        {/* Brand — بالعربي + poetry + feather (uses BRAND constants) */}
         <div
           style={{
             position: 'relative',
             zIndex: 10,
             display: 'flex',
-            alignItems: 'flex-end',
+            alignItems: 'center',
             justifyContent: 'center',
-            gap: '0.75rem',
+            gap: '0.5rem',
             marginBottom: '0.75rem',
           }}
         >
           <span
             style={{
-              fontFamily: "'Reem Kufi', sans-serif",
-              fontWeight: 700,
-              fontSize: 'clamp(3rem, 6vw, 4.5rem)',
-              color: isDark ? '#D4D0C8' : '#1A1614',
-              lineHeight: 1,
+              ...BRAND.arabic,
+              color: gold,
+              textShadow: '0 0 40px rgba(197,160,89,0.3)',
             }}
             dir="rtl"
             lang="ar"
@@ -1677,27 +1698,13 @@ const SplashScreen = ({ isOpen, onDismiss, showOnboarding, theme }) => {
           </span>
           <span
             style={{
-              fontFamily: "'Forum', serif",
-              fontSize: 'clamp(1.25rem, 2.5vw, 1.75rem)',
-              letterSpacing: '-0.05em',
-              color: gold,
-              lineHeight: 1,
-              textShadow: '0 0 40px rgba(197,160,89,0.3)',
-              paddingBottom: '0.15em',
+              ...BRAND.english,
+              color: isDark ? '#D4D0C8' : '#1A1614',
             }}
           >
             poetry
           </span>
-          <Feather
-            style={{
-              width: 'clamp(24px, 4vw, 36px)',
-              height: 'clamp(24px, 4vw, 36px)',
-              color: gold,
-              opacity: 0.8,
-              marginBottom: '0.15em',
-            }}
-            strokeWidth={1.5}
-          />
+          <Feather style={{ ...BRAND.feather, color: gold }} strokeWidth={1.5} />
         </div>
 
         {/* Subtitle */}
@@ -4576,17 +4583,19 @@ export default function DiwanApp() {
       />
 
       <header
-        style={{ opacity: headerOpacity }}
-        className="fixed top-4 md:top-8 left-0 right-0 z-40 pointer-events-none transition-opacity duration-300 flex flex-row items-center justify-center gap-4 md:gap-8 px-4 md:px-6"
+        style={{
+          opacity: headerOpacity,
+          transform: headerOpacity < 1 ? `scale(${0.85 + headerOpacity * 0.15})` : 'none',
+          transformOrigin: 'top center',
+          transition: 'opacity 0.3s, transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1)',
+        }}
+        className="w-full flex flex-row items-center justify-center gap-2 px-4 md:px-6 pt-4 md:pt-6 pb-2 z-40 pointer-events-none"
       >
         <div className="flex flex-row items-center gap-2 header-luminescence">
           <h1 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
             <span
               style={{
-                fontFamily: "'Reem Kufi', sans-serif",
-                fontWeight: 700,
-                fontSize: 'clamp(3rem, 6vw, 4.5rem)',
-                lineHeight: 1,
+                ...BRAND.arabic,
                 color: '#C5A059',
                 textShadow: '0 0 40px rgba(197,160,89,0.3)',
               }}
@@ -4595,21 +4604,14 @@ export default function DiwanApp() {
             </span>
             <span
               style={{
-                fontFamily: "'Forum', serif",
-                fontSize: 'clamp(2.6rem, 5.2vw, 4rem)',
-                letterSpacing: '-0.04em',
-                lineHeight: 1,
+                ...BRAND.english,
                 color: darkMode ? '#D4D0C8' : '#1A1614',
               }}
             >
               poetry
             </span>
           </h1>
-          <Feather
-            style={{ color: '#C5A059', opacity: 0.8 }}
-            className="w-[clamp(24px,4vw,36px)] h-[clamp(24px,4vw,36px)]"
-            strokeWidth={1.5}
-          />
+          <Feather style={{ ...BRAND.feather, color: '#C5A059' }} strokeWidth={1.5} />
         </div>
       </header>
 

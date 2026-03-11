@@ -2107,12 +2107,16 @@ const AuthModal = ({ isOpen, onClose, onSignInWithGoogle, theme, message }) => {
           {/* Google sign-in button */}
           <button
             onClick={onSignInWithGoogle}
-            className="w-full py-3.5 px-5 rounded-xl font-brand-en text-sm font-medium transition-all duration-200 flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98]"
+            className="w-full py-3.5 px-5 rounded-xl transition-all duration-200 flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98]"
             style={{
               background:
                 'linear-gradient(135deg, rgba(197,160,89,0.12) 0%, rgba(197,160,89,0.06) 100%)',
               border: '1px solid rgba(197,160,89,0.3)',
               color: '#D4C8B0',
+              fontFamily: "'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif",
+              fontSize: '14px',
+              fontWeight: 500,
+              letterSpacing: '0.01em',
             }}
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -2136,7 +2140,10 @@ const AuthModal = ({ isOpen, onClose, onSignInWithGoogle, theme, message }) => {
             Continue with Google
           </button>
 
-          <p className="mt-5 text-center text-[10px] text-stone-600 font-brand-en">
+          <p
+            className="mt-5 text-center text-[10px] text-stone-600"
+            style={{ fontFamily: "'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif" }}
+          >
             By signing in, you agree to our Terms of Service
           </p>
         </div>
@@ -5158,7 +5165,10 @@ export default function DiwanApp() {
         isInterpreting={isInterpreting}
         interpretation={interpretation}
         showTranslation={showTranslation}
-        onToggleTranslation={() => setShowTranslation((prev) => !prev)}
+        onToggleTranslation={() => {
+          setShowTranslation((prev) => !prev);
+          if (!interpretation && !isInterpreting) handleAnalyze();
+        }}
         showTransliteration={showTransliteration}
         onToggleTransliteration={() => setShowTransliteration((prev) => !prev)}
         textSizeLabel={TEXT_SIZES[textSizeLevel].label}

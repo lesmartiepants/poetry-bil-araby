@@ -3128,6 +3128,7 @@ export default function DiwanApp() {
   const [isFetching, setIsFetching] = useState(false);
   const [autoExplainPending, setAutoExplainPending] = useState(false);
   const hasAutoLoaded = useRef(false);
+  const isFirstReveal = useRef(true);
   const [logs, setLogs] = useState([]);
   const [showCopySuccess, setShowCopySuccess] = useState(false);
   const [showShareSuccess, setShowShareSuccess] = useState(false);
@@ -3523,6 +3524,19 @@ export default function DiwanApp() {
   const handleScroll = (e) => {
     setHeaderOpacity(Math.max(0, 1 - e.target.scrollTop / 30));
   };
+
+  // After the first poem reveal, switch to simpler fade for subsequent poems
+  const prefersReducedMotion = typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  useEffect(() => {
+    if (current?.id && isFirstReveal.current) {
+      // Set a small timeout so the first reveal animations have time to play
+      const timer = setTimeout(() => {
+        isFirstReveal.current = false;
+      }, 1200);
+      return () => clearTimeout(timer);
+    }
+  }, [current?.id]);
 
   // Extract cached translation fields into stable local variables so useMemo
   // only re-runs when the actual string values change, not on every `current` reference change.
@@ -4988,6 +5002,23 @@ export default function DiwanApp() {
           to { opacity: 1; }
         }
 
+        @keyframes poemRevealLine {
+          from { opacity: 0; transform: translateY(12px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes poemRevealFade {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .poem-reveal-animate {
+            animation: none !important;
+            opacity: 1 !important;
+          }
+        }
+
         .minimal-frame {
           position: relative;
           width: 100%;
@@ -5169,7 +5200,14 @@ export default function DiwanApp() {
             <div className="min-h-full flex flex-col items-center justify-center py-6">
               <div className="w-full max-w-4xl flex flex-col items-center">
                 <div
-                  className={`text-center ${DESIGN.mainMetaPadding} animate-in slide-in-from-bottom-8 duration-1000 z-20 w-full`}
+                  key={`meta-${current?.id}`}
+                  className={`text-center ${DESIGN.mainMetaPadding} z-20 w-full poem-reveal-animate`}
+                  style={prefersReducedMotion ? {} : {
+                    animation: isFirstReveal.current
+                      ? 'poemRevealLine 500ms cubic-bezier(0.16,1,0.3,1) forwards'
+                      : 'poemRevealFade 300ms ease forwards',
+                    opacity: 0,
+                  }}
                 >
                   <div className="minimal-frame mb-1">
                     <svg viewBox="0 0 550 120" preserveAspectRatio="xMidYMid meet">
@@ -5265,7 +5303,16 @@ export default function DiwanApp() {
                   <div className="px-4 md:px-20 py-2 text-center">
                     <div className="flex flex-col gap-5 md:gap-7">
                       {versePairs.map((pair, idx) => (
-                        <div key={`${current?.id}-${idx}`} className="flex flex-col gap-0.5">
+                        <div
+                          key={`${current?.id}-${idx}`}
+                          className="flex flex-col gap-0.5 poem-reveal-animate"
+                          style={prefersReducedMotion ? {} : {
+                            animation: isFirstReveal.current
+                              ? `poemRevealLine 400ms cubic-bezier(0.16,1,0.3,1) ${200 + idx * 100}ms forwards`
+                              : `poemRevealFade 300ms ease ${idx * 50}ms forwards`,
+                            opacity: 0,
+                          }}
+                        >
                           <p
                             dir="rtl"
                             className={`${currentFontClass} leading-[2.2] arabic-shadow ${DESIGN.anim}`}

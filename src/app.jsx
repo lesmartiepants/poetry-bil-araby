@@ -766,7 +766,8 @@ const prefetchManager = {
       // Mark as in-flight
       if (activeRequests) activeRequests.current.add(poemId);
 
-      const promptText = `Deep Analysis of: ${poem.arabic}`;
+      const poetInfo = poem?.poet ? ` by ${poem.poet}` : '';
+      const promptText = `Deep Analysis of${poetInfo}:\n\n${poem.arabic}`;
       const requestSize = new Blob([
         JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] }),
       ]).size;

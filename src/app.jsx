@@ -1,5 +1,43 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
-import { Play, Pause, BookOpen, RefreshCw, Volume2, ChevronDown, Quote, Globe, Moon, Sun, Loader2, ChevronRight, ChevronLeft, Search, X, Copy, LayoutGrid, Check, Bug, Trash2, Sparkles, Feather, Compass, Rabbit, Heart, LogIn, LogOut, User, Settings2, ArrowRight, Languages, Share2, ThumbsDown } from 'lucide-react';
+import {
+  Play,
+  Pause,
+  BookOpen,
+  RefreshCw,
+  Volume2,
+  ChevronDown,
+  Quote,
+  Globe,
+  Moon,
+  Sun,
+  Loader2,
+  ChevronRight,
+  ChevronLeft,
+  Search,
+  X,
+  Copy,
+  LayoutGrid,
+  Check,
+  Bug,
+  Trash2,
+  Sparkles,
+  Feather,
+  Compass,
+  Heart,
+  LogIn,
+  LogOut,
+  User,
+  Settings2,
+  ArrowRight,
+  Languages,
+  Share2,
+  ThumbsDown,
+  Brain,
+  ALargeSmall,
+  UserRound,
+  ScrollText,
+  Shuffle,
+} from 'lucide-react';
 import { track } from '@vercel/analytics';
 import Sentry from './sentry.js';
 import {
@@ -186,7 +224,7 @@ const markPoemSeen = (poemId) => {
   try {
     const seen = getSeenPoems();
     // Avoid duplicate entries for the same poem
-    if (seen.some(entry => entry.id === poemId)) return;
+    if (seen.some((entry) => entry.id === poemId)) return;
     seen.push({ id: poemId, seenAt: Date.now() });
     localStorage.setItem(SEEN_POEMS_KEY, JSON.stringify(seen));
   } catch {
@@ -199,7 +237,7 @@ const pruneSeenPoems = () => {
   try {
     const seen = getSeenPoems();
     const cutoff = Date.now() - SEEN_POEMS_MAX_AGE_MS;
-    const pruned = seen.filter(entry => entry.seenAt > cutoff);
+    const pruned = seen.filter((entry) => entry.seenAt > cutoff);
     if (pruned.length !== seen.length) {
       localStorage.setItem(SEEN_POEMS_KEY, JSON.stringify(pruned));
     }
@@ -211,7 +249,7 @@ const pruneSeenPoems = () => {
 /** Get recent seen IDs for the exclude param (max 200). */
 const getRecentSeenIds = () => {
   const seen = getSeenPoems();
-  return seen.slice(-SEEN_POEMS_MAX_EXCLUDE).map(entry => entry.id);
+  return seen.slice(-SEEN_POEMS_MAX_EXCLUDE).map((entry) => entry.id);
 };
 
 /* =============================================================================
@@ -1163,7 +1201,6 @@ const ErrorBanner = ({ error, onDismiss, onRetry, theme }) => {
     </div>
   );
 };
-
 
 /* =============================================================================
   KEYBOARD SHORTCUT HELP
@@ -2296,14 +2333,29 @@ const SavedPoemsView = ({
 */
 
 const VerticalSidebar = ({
-  onExplain, onCopy, showCopySuccess, onShare, showShareSuccess,
-  onSignIn, onSignOut, user, theme, isInterpreting, interpretation,
-  showTranslation, onToggleTranslation,
-  showTransliteration, onToggleTransliteration,
-  textSizeLabel, onCycleTextSize,
-  darkMode, onToggleDarkMode,
-  currentFont, onCycleFont,
-  selectedCategory, onSelectCategory
+  onExplain,
+  onCopy,
+  showCopySuccess,
+  onShare,
+  showShareSuccess,
+  onSignIn,
+  onSignOut,
+  user,
+  theme,
+  isInterpreting,
+  interpretation,
+  showTranslation,
+  onToggleTranslation,
+  showTransliteration,
+  onToggleTransliteration,
+  textSizeLabel,
+  onCycleTextSize,
+  darkMode,
+  onToggleDarkMode,
+  currentFont,
+  onCycleFont,
+  selectedCategory,
+  onSelectCategory,
 }) => {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [poetPickerOpen, setPoetPickerOpen] = useState(false);
@@ -2312,9 +2364,10 @@ const VerticalSidebar = ({
   const btnBase =
     'w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-200';
   const btnHover = theme.goldHoverBg15;
-  const subBtnBase = "w-11 h-11 rounded-lg flex items-center justify-center transition-all duration-200";
+  const subBtnBase =
+    'w-11 h-11 rounded-lg flex items-center justify-center transition-all duration-200';
   const subBtnHover = theme.goldHoverBg15;
-  const labelCls = "text-[7px] leading-none mt-0.5 font-brand-en tracking-wide opacity-60";
+  const labelCls = 'text-[7px] leading-none -mt-0.5 font-brand-en tracking-wide opacity-60';
 
   return (
     <>
@@ -2331,23 +2384,38 @@ const VerticalSidebar = ({
         <div className="flex flex-col items-center gap-1">
           <button
             onClick={onExplain}
-            disabled={isInterpreting || interpretation}
-            title="Explain poem"
+            disabled={isInterpreting || !!interpretation}
+            title={interpretation ? 'Insight available — scroll to read' : 'Explain poem'}
             aria-label="Explain poem meaning"
-            className={`${btnBase} ${btnHover} disabled:opacity-50`}
+            className={`${btnBase} ${btnHover} ${interpretation ? 'opacity-70' : ''} ${isInterpreting ? 'opacity-50' : ''}`}
           >
             {isInterpreting ? (
               <Loader2 className="animate-spin" style={{ color: gold }} size={18} />
+            ) : interpretation ? (
+              <Check style={{ color: '#4ade80' }} size={18} />
             ) : (
-              <Compass style={{ color: gold }} size={18} />
+              <Brain style={{ color: gold }} size={18} />
             )}
           </button>
-          <span className={labelCls} style={{ color: gold }}>Explain</span>
+          <span className={labelCls} style={{ color: interpretation ? '#4ade80' : gold }}>
+            {interpretation ? 'Done' : 'Explain'}
+          </span>
 
-          <button onClick={onCopy} title="Copy poem" aria-label="Copy poem to clipboard" className={`${btnBase} ${btnHover}`}>
-            {showCopySuccess ? <Check size={18} className="text-green-500" /> : <Copy style={{ color: gold }} size={18} />}
+          <button
+            onClick={onCopy}
+            title="Copy poem"
+            aria-label="Copy poem to clipboard"
+            className={`${btnBase} ${btnHover}`}
+          >
+            {showCopySuccess ? (
+              <Check size={18} className="text-green-500" />
+            ) : (
+              <Copy style={{ color: gold }} size={18} />
+            )}
           </button>
-          <span className={labelCls} style={{ color: gold }}>Copy</span>
+          <span className={labelCls} style={{ color: gold }}>
+            Copy
+          </span>
 
           <button onClick={onShare} title="Share poem" className={`${btnBase} ${btnHover}`}>
             {showShareSuccess ? (
@@ -2356,16 +2424,23 @@ const VerticalSidebar = ({
               <Share2 style={{ color: gold }} size={18} />
             )}
           </button>
-          <span className={labelCls} style={{ color: gold }}>Share</span>
+          <span className={labelCls} style={{ color: gold }}>
+            Share
+          </span>
 
           <button
             onClick={onToggleTranslation}
             title={showTranslation ? 'Hide translation' : 'Show translation'}
-            className={`${btnBase} ${btnHover} ${!showTranslation ? 'opacity-40' : ''}`}
+            className={`${btnBase} ${btnHover} relative ${!showTranslation ? 'opacity-40' : ''}`}
           >
             <Languages style={{ color: gold }} size={18} />
+            {showTranslation && (
+              <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#C5A059] shadow-[0_0_6px_rgba(197,160,89,0.6)]" />
+            )}
           </button>
-          <span className={labelCls} style={{ color: gold }}>ترجمة</span>
+          <span className={labelCls} style={{ color: gold }}>
+            ترجمة
+          </span>
 
           <div className="w-6 h-px bg-stone-500/30 mx-auto my-1" />
 
@@ -2376,7 +2451,9 @@ const VerticalSidebar = ({
           >
             <Settings2 style={{ color: gold }} size={18} />
           </button>
-          <span className={labelCls} style={{ color: gold }}>Settings</span>
+          <span className={labelCls} style={{ color: gold }}>
+            Settings
+          </span>
 
           {settingsOpen && (
             <div
@@ -2385,7 +2462,7 @@ const VerticalSidebar = ({
               <button
                 onClick={onToggleTransliteration}
                 title={showTransliteration ? 'Hide romanization' : 'Show romanization'}
-                className={`${subBtnBase} ${subBtnHover} ${!showTransliteration ? 'opacity-40' : ''}`}
+                className={`${subBtnBase} ${subBtnHover} relative ${!showTransliteration ? 'opacity-40' : ''}`}
               >
                 <span
                   className="text-[12px] font-bold leading-none"
@@ -2393,6 +2470,9 @@ const VerticalSidebar = ({
                 >
                   عA
                 </span>
+                {showTransliteration && (
+                  <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#C5A059] shadow-[0_0_6px_rgba(197,160,89,0.6)]" />
+                )}
               </button>
 
               <button
@@ -2400,9 +2480,7 @@ const VerticalSidebar = ({
                 title={`Text size: ${textSizeLabel}`}
                 className={`${subBtnBase} ${subBtnHover}`}
               >
-                <span className="font-brand-en text-[13px] font-bold" style={{ color: gold }}>
-                  Aa
-                </span>
+                <ALargeSmall style={{ color: gold }} size={16} />
               </button>
 
               <button
@@ -2422,33 +2500,47 @@ const VerticalSidebar = ({
                 title={`Font: ${currentFont}`}
                 className={`${subBtnBase} ${subBtnHover}`}
               >
-                <span className="text-[15px] font-bold leading-none" style={{ color: gold, fontFamily: "'Amiri', serif" }}>ي</span>
+                <span
+                  className="text-[15px] font-bold leading-none"
+                  style={{ color: gold, fontFamily: "'Amiri', serif" }}
+                >
+                  ي
+                </span>
               </button>
 
               <div className="relative">
                 <button
-                  onClick={() => setPoetPickerOpen(prev => !prev)}
+                  onClick={() => setPoetPickerOpen((prev) => !prev)}
                   title="Poet filter"
                   className={`${subBtnBase} ${subBtnHover} ${poetPickerOpen ? (darkMode ? 'bg-[#C5A059]/15' : 'bg-[#8B7355]/15') : ''}`}
                 >
-                  <Feather style={{ color: gold }} size={16} />
+                  <ScrollText style={{ color: gold }} size={16} />
                 </button>
                 {poetPickerOpen && (
-                  <div className="absolute right-full top-0 mr-2 w-48 rounded-xl border border-[#C5A059]/30 bg-black/90 backdrop-blur-xl shadow-xl py-1 max-h-60 overflow-y-auto z-[200]" style={{ animation: 'slideInRight 0.2s ease-out' }}>
-                    {CATEGORIES.map(cat => (
+                  <div
+                    className="absolute right-full top-0 mr-2 w-48 rounded-xl border border-[#C5A059]/30 bg-black/90 backdrop-blur-xl shadow-xl py-1 max-h-60 overflow-y-auto z-[200]"
+                    style={{ animation: 'slideInRight 0.2s ease-out' }}
+                  >
+                    {CATEGORIES.map((cat) => (
                       <button
                         key={cat.id}
-                        onClick={() => { onSelectCategory(cat.id); setPoetPickerOpen(false); }}
+                        onClick={() => {
+                          onSelectCategory(cat.id);
+                          setPoetPickerOpen(false);
+                        }}
                         className={`w-full text-left px-3 py-2 text-sm transition-colors ${selectedCategory === cat.id ? 'bg-[#C5A059]/20 text-[#C5A059]' : 'text-stone-300 hover:bg-[#C5A059]/10 hover:text-[#C5A059]'}`}
                       >
-                        <span className="block font-amiri text-right" dir="rtl">{cat.labelAr}</span>
-                        <span className="block text-[10px] opacity-60 font-brand-en">{cat.label}</span>
+                        <span className="block font-amiri text-right" dir="rtl">
+                          {cat.labelAr}
+                        </span>
+                        <span className="block text-[10px] opacity-60 font-brand-en">
+                          {cat.label}
+                        </span>
                       </button>
                     ))}
                   </div>
                 )}
               </div>
-
             </div>
           )}
 
@@ -2462,10 +2554,12 @@ const VerticalSidebar = ({
             {user ? (
               <LogOut style={{ color: gold }} size={18} />
             ) : (
-              <LogIn style={{ color: gold }} size={18} />
+              <UserRound style={{ color: gold }} size={18} />
             )}
           </button>
-          <span className={labelCls} style={{ color: gold }}>{user ? 'Out' : 'In'}</span>
+          <span className={labelCls} style={{ color: gold }}>
+            {user ? 'Sign Out' : 'Sign In'}
+          </span>
         </div>
       </div>
     </>
@@ -2553,7 +2647,12 @@ export default function DiwanApp() {
   const [logs, setLogs] = useState([]);
   const [showCopySuccess, setShowCopySuccess] = useState(false);
   const [showShareSuccess, setShowShareSuccess] = useState(false);
-  const [cacheStats, setCacheStats] = useState({ audioHits: 0, audioMisses: 0, insightsHits: 0, insightsMisses: 0 });
+  const [cacheStats, setCacheStats] = useState({
+    audioHits: 0,
+    audioMisses: 0,
+    insightsHits: 0,
+    insightsMisses: 0,
+  });
   const [isPrefetching, setIsPrefetching] = useState(false);
   const activeAudioRequests = useRef(new Set()); // Track in-flight audio generation requests
   const activeInsightRequests = useRef(new Set()); // Track in-flight insight generation requests
@@ -3641,16 +3740,16 @@ export default function DiwanApp() {
         pruneSeenPoems();
         const seenIds = getRecentSeenIds();
 
-        const categoryObj = CATEGORIES.find(c => c.id === selectedCategory);
+        const categoryObj = CATEGORIES.find((c) => c.id === selectedCategory);
         const poetName = categoryObj?.labelAr || selectedCategory;
         const queryParams = new URLSearchParams();
-        if (selectedCategory !== "All") queryParams.set('poet', poetName);
+        if (selectedCategory !== 'All') queryParams.set('poet', poetName);
         if (seenIds.length > 0) queryParams.set('exclude', seenIds.join(','));
         const qs = queryParams.toString();
         const url = `${apiUrl}/api/poems/random${qs ? '?' + qs : ''}`;
 
         if (seenIds.length > 0) {
-          addLog("Discovery DB", `Excluding ${seenIds.length} recently seen poems`, "info");
+          addLog('Discovery DB', `Excluding ${seenIds.length} recently seen poems`, 'info');
         }
 
         try {
@@ -3882,7 +3981,6 @@ export default function DiwanApp() {
       addLog('Copy Error', e.message, 'error');
     }
   };
-
 
   const handleShare = async () => {
     addLog('UI Event', 'Share button clicked', 'info');
@@ -4310,7 +4408,7 @@ export default function DiwanApp() {
         }
 
         .rabbit-bounce {
-          animation: bounce 2s ease-in-out infinite;
+          /* removed — no animated discover icon */
         }
 
         @keyframes wave {
@@ -4450,7 +4548,11 @@ export default function DiwanApp() {
           />
           <MysticalConsultationEffect active={isInterpreting} theme={theme} />
 
-          <main ref={mainScrollRef} onScroll={handleScroll} className="flex-1 overflow-y-auto custom-scrollbar relative z-10 px-4 md:px-0 pb-28 pr-14">
+          <main
+            ref={mainScrollRef}
+            onScroll={handleScroll}
+            className="flex-1 overflow-y-auto custom-scrollbar relative z-10 px-4 md:px-0 pb-28 pr-14"
+          >
             <div className="min-h-full flex flex-col items-center justify-center py-6">
               <div className="w-full max-w-4xl flex flex-col items-center">
                 <div
@@ -4705,7 +4807,8 @@ export default function DiwanApp() {
                     <button
                       onClick={togglePlay}
                       aria-label={isPlaying ? 'Pause recitation' : 'Play recitation'}
-                      className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105 relative group`}
+                      style={{ willChange: 'transform' }}
+                      className={`min-w-[46px] min-h-[46px] w-[46px] h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-transform duration-200 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105 relative group`}
                     >
                       {audioError ? (
                         <Volume2 className={theme.error} size={21} />
@@ -4748,7 +4851,7 @@ export default function DiwanApp() {
                   {isFetching ? (
                     <Loader2 className={`animate-spin ${GOLD.goldText}`} size={21} />
                   ) : (
-                    <Rabbit className={`${GOLD.goldText} rabbit-bounce`} size={21} />
+                    <Shuffle className={GOLD.goldText} size={21} />
                   )}
                 </button>
                 <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">
@@ -4771,7 +4874,6 @@ export default function DiwanApp() {
                 onUndownvote={handleUndownvote}
                 disabled={!user}
               />
-
             </div>
           </footer>
         </div>
@@ -4911,9 +5013,9 @@ export default function DiwanApp() {
         isInterpreting={isInterpreting}
         interpretation={interpretation}
         showTranslation={showTranslation}
-        onToggleTranslation={() => setShowTranslation(prev => !prev)}
+        onToggleTranslation={() => setShowTranslation((prev) => !prev)}
         showTransliteration={showTransliteration}
-        onToggleTransliteration={() => setShowTransliteration(prev => !prev)}
+        onToggleTransliteration={() => setShowTransliteration((prev) => !prev)}
         textSizeLabel={TEXT_SIZES[textSizeLevel].label}
         onCycleTextSize={cycleTextSize}
         darkMode={darkMode}

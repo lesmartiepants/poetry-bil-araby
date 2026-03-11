@@ -4529,15 +4529,16 @@ export default function DiwanApp() {
         style={{ opacity: headerOpacity }}
         className="fixed top-4 md:top-8 left-0 right-0 z-40 pointer-events-none transition-opacity duration-300 flex flex-row items-center justify-center gap-4 md:gap-8 px-4 md:px-6"
       >
-        <div className="flex flex-row items-baseline gap-3 header-luminescence">
-          <h1 style={{ display: 'flex', alignItems: 'baseline', gap: '0.75rem', margin: 0 }}>
+        <div className="flex flex-row items-center gap-2 header-luminescence">
+          <h1 style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', margin: 0 }}>
             <span
               style={{
                 fontFamily: "'Reem Kufi', sans-serif",
                 fontWeight: 700,
                 fontSize: 'clamp(3rem, 6vw, 4.5rem)',
                 lineHeight: 1,
-                color: darkMode ? '#D4D0C8' : '#1A1614',
+                color: '#C5A059',
+                textShadow: '0 0 40px rgba(197,160,89,0.3)',
               }}
             >
               بالعربي
@@ -4545,12 +4546,10 @@ export default function DiwanApp() {
             <span
               style={{
                 fontFamily: "'Forum', serif",
-                fontSize: 'clamp(2.2rem, 4.8vw, 3.6rem)',
+                fontSize: 'clamp(2.6rem, 5.2vw, 4rem)',
                 letterSpacing: '-0.04em',
                 lineHeight: 1,
-                color: '#C5A059',
-                textShadow: '0 0 40px rgba(197,160,89,0.3)',
-                paddingBottom: '0.1em',
+                color: darkMode ? '#D4D0C8' : '#1A1614',
               }}
             >
               poetry

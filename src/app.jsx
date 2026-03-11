@@ -2395,6 +2395,21 @@ const VerticalSidebar = ({
   const [expanded, setExpanded] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [poetPickerOpen, setPoetPickerOpen] = useState(false);
+  const sidebarRef = useRef(null);
+  const scrollRef = useRef(null);
+
+  // Collapse settings when tapping outside the sidebar
+  useEffect(() => {
+    if (!settingsOpen && !expanded) return;
+    const handleOutsideClick = (e) => {
+      if (sidebarRef.current && !sidebarRef.current.contains(e.target)) {
+        if (settingsOpen) setSettingsOpen(false);
+        if (expanded) setExpanded(false);
+      }
+    };
+    document.addEventListener('pointerdown', handleOutsideClick);
+    return () => document.removeEventListener('pointerdown', handleOutsideClick);
+  }, [settingsOpen, expanded]);
 
   const gold = theme.gold;
   const btnBase =
@@ -2432,30 +2447,68 @@ const VerticalSidebar = ({
         }
       `}</style>
       <div
-        className="fixed right-0 md:right-[24.5rem] top-1/2 -translate-y-1/2 z-[45] rounded-l-2xl md:rounded-2xl bg-gradient-to-b from-black/70 via-black/60 to-black/70 backdrop-blur-xl border-l-2 md:border-2 border-[#C5A059]/40 py-2 px-1.5 max-h-[calc(100dvh-6rem)] overflow-y-auto transition-all duration-300"
-        style={{ animation: 'slideInRight 0.4s ease-out' }}
+        ref={sidebarRef}
+        className="fixed right-0 md:right-[24.5rem] top-1/2 -translate-y-1/2 z-[45] rounded-l-2xl md:rounded-2xl bg-gradient-to-b from-black/70 via-black/60 to-black/70 backdrop-blur-xl border-l-2 md:border-2 border-[#C5A059]/40 py-2 px-1.5 transition-all duration-300"
+        style={{
+          animation: 'slideInRight 0.4s ease-out',
+          maxHeight: 'calc(100dvh - 10rem)',
+        }}
       >
-        {/* Toggle handle */}
-        <button
-          onClick={() => {
-            if (expanded) setSettingsOpen(false);
-            setExpanded((prev) => !prev);
-          }}
-          className="w-full flex justify-center py-1 opacity-50 hover:opacity-90 transition-all duration-200"
-          title={expanded ? 'Collapse controls' : 'Open controls'}
-          aria-label={expanded ? 'Collapse sidebar controls' : 'Open sidebar controls'}
-        >
-          {expanded ? (
-            <ChevronRight style={{ color: gold }} size={14} />
-          ) : (
-            <ChevronLeft style={{ color: gold }} size={14} />
-          )}
-        </button>
+        {/* Collapsed: icon hints — tap anywhere to expand */}
+        {!expanded && (
+          <button
+            onClick={() => setExpanded(true)}
+            className="flex flex-col items-center gap-1.5 py-1 px-0.5 group"
+            title="Open controls"
+            aria-label="Open sidebar controls"
+          >
+            <ChevronLeft
+              style={{ color: gold, opacity: 0.5 }}
+              size={14}
+              className="group-hover:opacity-80 transition-opacity"
+            />
+            <Brain
+              style={{ color: gold, opacity: 0.6 }}
+              size={16}
+              className="group-hover:opacity-90 transition-opacity"
+            />
+            <Copy
+              style={{ color: gold, opacity: 0.6 }}
+              size={16}
+              className="group-hover:opacity-90 transition-opacity"
+            />
+            <Settings2
+              style={{ color: gold, opacity: 0.6 }}
+              size={16}
+              className="group-hover:opacity-90 transition-opacity"
+            />
+            <ChevronLeft
+              style={{ color: gold, opacity: 0.5 }}
+              size={14}
+              className="group-hover:opacity-80 transition-opacity"
+            />
+          </button>
+        )}
 
-        {/* Controls drawer — smooth grid transition */}
-        <div className={`sidebar-drawer ${expanded ? 'open' : ''}`}>
-          <div className="sidebar-drawer-inner">
+        {/* Expanded controls — scrollable container */}
+        {expanded && (
+          <div
+            ref={scrollRef}
+            className="overflow-y-auto overflow-x-hidden"
+            style={{ maxHeight: 'calc(100dvh - 12rem)' }}
+          >
             <div className="flex flex-col items-center gap-1">
+              {/* Collapse handle */}
+              <button
+                onClick={() => {
+                  setSettingsOpen(false);
+                  setExpanded(false);
+                }}
+                className="w-full flex justify-center py-0.5 opacity-40 hover:opacity-80 transition-opacity"
+                title="Collapse controls"
+              >
+                <ChevronRight style={{ color: gold }} size={14} />
+              </button>
               <button
                 onClick={onExplain}
                 disabled={isInterpreting}
@@ -2533,7 +2586,20 @@ const VerticalSidebar = ({
               <div className="w-6 h-px bg-stone-500/30 mx-auto my-1" />
 
               <button
-                onClick={() => setSettingsOpen((prev) => !prev)}
+                onClick={() => {
+                  setSettingsOpen((prev) => !prev);
+                  // Scroll sidebar to top so settings are visible
+                  if (!settingsOpen && scrollRef.current) {
+                    setTimeout(
+                      () =>
+                        scrollRef.current.scrollTo({
+                          top: scrollRef.current.scrollHeight,
+                          behavior: 'smooth',
+                        }),
+                      50
+                    );
+                  }
+                }}
                 title="Settings"
                 className={`${btnBase} ${btnHover} ${settingsOpen ? theme.goldActiveBg : ''}`}
               >
@@ -2635,7 +2701,7 @@ const VerticalSidebar = ({
               </span>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </>
   );

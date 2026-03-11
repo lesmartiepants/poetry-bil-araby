@@ -535,9 +535,10 @@ describe('DiwanApp', () => {
   // ── Debug Panel ───────────────────────────────────────────────────────
 
   describe('Debug Panel', () => {
-    it('renders System Logs text when debug feature flag is enabled', () => {
+    it('renders debug log toggle button when debug feature flag is enabled', () => {
       render(<DiwanApp />);
-      expect(document.body.textContent).toContain('System Logs');
+      const btn = document.querySelector('[aria-label="Toggle developer log panel"]');
+      expect(btn).toBeTruthy();
     });
   });
 });

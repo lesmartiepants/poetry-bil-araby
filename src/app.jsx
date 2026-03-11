@@ -406,22 +406,36 @@ const TTS_CONFIG = {
  * Quotas are per-model-per-day, so the fallback has its own quota.
  */
 const fetchTTSWithFallback = async (url, options, { addLog, label = 'TTS' } = {}) => {
+  const primaryModel = API_MODELS.tts;
+  const t0 = performance.now();
   const res = await fetch(url, options);
-  if (res.status !== 429) return res;
+  const primaryMs = performance.now() - t0;
+
+  if (res.status !== 429) return { res, model: primaryModel };
 
   // Primary model rate-limited — try fallback model (separate daily quota)
   if (API_MODELS.ttsFallback) {
-    const fallbackUrl = url.replace(API_MODELS.tts, API_MODELS.ttsFallback);
+    const fallbackModel = API_MODELS.ttsFallback;
+    const fallbackUrl = url.replace(primaryModel, fallbackModel);
     if (addLog)
       addLog(
         label,
-        `Rate limited (429) on ${API_MODELS.tts} — falling back to ${API_MODELS.ttsFallback}`,
+        `${primaryModel}: 429 (${(primaryMs / 1000).toFixed(1)}s) → falling back to ${fallbackModel}`,
         'warning'
       );
-    return fetch(fallbackUrl, options);
+    const t1 = performance.now();
+    const fallbackRes = await fetch(fallbackUrl, options);
+    const fallbackMs = performance.now() - t1;
+    if (addLog)
+      addLog(
+        label,
+        `${primaryModel}: 429 (${(primaryMs / 1000).toFixed(1)}s) → ${fallbackModel}: ${fallbackRes.status} (${(fallbackMs / 1000).toFixed(1)}s)`,
+        fallbackRes.ok ? 'success' : 'warning'
+      );
+    return { res: fallbackRes, model: fallbackModel };
   }
 
-  return res;
+  return { res, model: primaryModel };
 };
 
 /* =============================================================================
@@ -701,7 +715,7 @@ const prefetchManager = {
         headers: { 'Content-Type': 'application/json' },
         body: requestBody,
       };
-      const res = await fetchTTSWithFallback(url, fetchOptions, {
+      const { res, model: ttsModel } = await fetchTTSWithFallback(url, fetchOptions, {
         addLog,
         label: 'Prefetch Audio',
       });
@@ -711,7 +725,7 @@ const prefetchManager = {
         if (addLog)
           addLog(
             'Prefetch Audio',
-            `❌ Audio generation HTTP ${res.status}: ${errorText.substring(0, 150)}`,
+            `❌ [${ttsModel}] Audio generation HTTP ${res.status}: ${errorText.substring(0, 150)}`,
             'error'
           );
         return;
@@ -787,7 +801,7 @@ const prefetchManager = {
           if (addLog)
             addLog(
               'Prefetch Audio',
-              `✓ Audio cached (poem ${poemId}) | ${(apiTime / 1000).toFixed(1)}s | ${(blob.size / 1024).toFixed(1)}KB | ${audioDuration.toFixed(1)}s audio | ${tokensPerSecond} tok/s`,
+              `✓ [${ttsModel}] Audio cached (poem ${poemId}) | ${(apiTime / 1000).toFixed(1)}s | ${(blob.size / 1024).toFixed(1)}KB | ${audioDuration.toFixed(1)}s audio | ${tokensPerSecond} tok/s`,
               'success'
             );
         }
@@ -1047,19 +1061,28 @@ const MysticalConsultationEffect = ({ active, theme }) => {
   );
 };
 
-const DebugPanel = ({ logs, onClear, darkMode, poem, appState }) => {
+const DebugPanel = ({ logs, onClear, darkMode, poem, appState, visible }) => {
   const theme = darkMode ? THEME.dark : THEME.light;
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [panelOpen, setPanelOpen] = useState(false);
   const [bugDescription, setBugDescription] = useState('');
   const [bugStatus, setBugStatus] = useState(null); // null | 'sending' | 'success' | 'error'
   const [bugError, setBugError] = useState('');
+  const [lastViewedCount, setLastViewedCount] = useState(0);
   const scrollRef = useRef(null);
 
+  // Auto-scroll to bottom on new logs when panel is open
   useEffect(() => {
-    if (scrollRef.current) {
+    if (panelOpen && scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [logs]);
+  }, [logs, panelOpen]);
+
+  // Track viewed count when panel opens
+  useEffect(() => {
+    if (panelOpen) setLastViewedCount(logs.length);
+  }, [panelOpen, logs.length]);
+
+  const unreadCount = logs.length - lastViewedCount;
 
   const handleSubmitBug = async () => {
     setBugStatus('sending');
@@ -1098,89 +1121,137 @@ const DebugPanel = ({ logs, onClear, darkMode, poem, appState }) => {
     }
   };
 
-  if (!FEATURES.debug) return null;
+  if (!visible) return null;
+
+  const logTypeColor = (type) => {
+    switch (type) {
+      case 'error':
+        return 'text-red-400';
+      case 'success':
+        return 'text-emerald-400';
+      case 'warning':
+        return 'text-amber-400';
+      default:
+        return darkMode ? 'text-stone-400' : 'text-stone-500';
+    }
+  };
+
+  const labelColor = darkMode ? 'text-indigo-400' : 'text-indigo-600';
 
   return (
-    <div
-      className={`w-full max-w-full transition-all duration-300 ${isExpanded ? 'h-48 md:h-64' : 'h-7'} overflow-hidden border-b ${
-        theme.debug
-      } backdrop-blur-md shadow-lg flex flex-col relative z-[100] flex-none`}
-    >
-      <div
-        className="flex items-center justify-between px-6 h-7 cursor-pointer"
-        onClick={() => setIsExpanded(!isExpanded)}
+    <>
+      {/* Floating trigger button — bottom-left */}
+      <button
+        onClick={() => setPanelOpen((prev) => !prev)}
+        className={`fixed bottom-4 left-4 z-[200] w-9 h-9 rounded-full flex items-center justify-center transition-all duration-200 ${
+          darkMode
+            ? 'bg-stone-900/70 hover:bg-stone-800/90 border border-stone-700/50 text-stone-400 hover:text-stone-200'
+            : 'bg-white/60 hover:bg-white/80 border border-stone-300/60 text-stone-500 hover:text-stone-700'
+        } backdrop-blur-md shadow-lg`}
+        title="Toggle dev logs"
+        aria-label="Toggle developer log panel"
       >
-        <div className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-widest opacity-60 text-indigo-500 leading-none h-full">
-          <Bug size={10} className="mb-0" /> <span>System Logs</span>{' '}
-          <span className="ml-1 opacity-40">({logs.length})</span>
-        </div>
-        <div className="flex items-center gap-3 h-full">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onClear();
-            }}
-            className="p-1 hover:text-red-500 transition-colors flex items-center"
-          >
-            <Trash2 size={10} />
-          </button>
-          <ChevronDown
-            size={10}
-            className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}
-          />
-        </div>
-      </div>
+        <Bug size={14} />
+        {unreadCount > 0 && !panelOpen && (
+          <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center leading-none">
+            {unreadCount > 99 ? '99+' : unreadCount}
+          </span>
+        )}
+      </button>
+
+      {/* Floating log panel overlay — always in DOM for accessibility; visually hidden when closed */}
       <div
-        ref={scrollRef}
-        className="flex-1 overflow-y-auto px-6 pb-3 font-mono text-[10px] space-y-1 custom-scrollbar"
+        className={`fixed bottom-16 left-4 z-[200] w-80 max-w-[calc(100vw-2rem)] flex flex-col ${DESIGN.radius} border shadow-2xl transition-all duration-200 ${
+          darkMode
+            ? 'bg-stone-950/80 border-stone-700/40 text-stone-300'
+            : 'bg-white/80 border-stone-200/60 text-stone-700'
+        } ${DESIGN.glass} ${panelOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}
+        style={{ height: '50vh', maxHeight: '480px', minHeight: '240px' }}
+        aria-hidden={!panelOpen}
       >
-        {logs.map((log, idx) => (
-          <div
-            key={idx}
-            className={`pb-1 border-b border-stone-500/5 ${log.type === 'error' ? theme.error : log.type === 'success' ? 'text-indigo-400' : ''}`}
-          >
-            <span className="opacity-40">[{log.time}]</span>{' '}
-            <span className="font-bold">{log.label}:</span> {log.msg}
+        {/* Panel header */}
+        <div
+          className={`flex items-center justify-between px-3 py-2 border-b ${darkMode ? 'border-stone-700/40' : 'border-stone-200/60'} flex-none`}
+        >
+          <div className="flex items-center gap-1.5 text-[9px] font-bold uppercase tracking-widest opacity-70 text-indigo-500 leading-none">
+            <Bug size={10} /> <span>Dev Logs</span>
+            <span className="ml-1 opacity-50">({logs.length})</span>
           </div>
-        ))}
-        {isExpanded && (
-          <div className={`flex items-center gap-2 pt-2 border-t ${theme.debugDivider}`}>
-            <input
-              type="text"
-              value={bugDescription}
-              onChange={(e) => setBugDescription(e.target.value)}
-              placeholder="Describe the bug (optional)"
-              className={`flex-1 px-2 py-1 rounded text-[10px] border ${theme.debugInput}`}
-              onClick={(e) => e.stopPropagation()}
-            />
+          <div className="flex items-center gap-1.5">
             <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleSubmitBug();
-              }}
-              disabled={bugStatus === 'sending'}
-              className={`px-2 py-1 rounded text-[9px] font-bold uppercase tracking-wider transition-colors ${
-                bugStatus === 'success'
-                  ? 'bg-green-600/80 text-white'
-                  : bugStatus === 'error'
-                    ? `${theme.errorBg} text-white`
-                    : bugStatus === 'sending'
-                      ? 'bg-stone-600/80 text-stone-400'
-                      : 'bg-indigo-600/80 text-white hover:bg-indigo-500/80'
-              }`}
+              onClick={onClear}
+              className="p-1 hover:text-red-500 transition-colors"
+              title="Clear logs"
             >
-              {bugStatus === 'sending'
-                ? 'Sending...'
-                : bugStatus === 'success'
-                  ? 'Sent!'
-                  : bugStatus === 'error'
-                    ? `Failed${bugError ? ` (${bugError})` : ''}`
-                    : 'Submit Bug'}
+              <Trash2 size={11} />
+            </button>
+            <button
+              onClick={() => setPanelOpen(false)}
+              className="p-1 hover:text-red-500 transition-colors"
+              title="Close panel"
+            >
+              <X size={12} />
             </button>
           </div>
-        )}
+        </div>
+
+        {/* Log entries */}
+        <div
+          ref={scrollRef}
+          className="flex-1 overflow-y-auto px-3 py-1.5 font-mono text-[10px] space-y-0.5 custom-scrollbar"
+        >
+          {logs.map((log, idx) => (
+            <div
+              key={idx}
+              className={`py-0.5 border-b border-stone-500/5 ${logTypeColor(log.type)}`}
+            >
+              <span className={`opacity-50 ${darkMode ? 'text-stone-500' : 'text-stone-400'}`}>
+                {log.rel || log.time}
+              </span>{' '}
+              <span className={`font-semibold ${labelColor}`}>[{log.label}]</span>{' '}
+              <span>{log.msg}</span>
+            </div>
+          ))}
+        </div>
+
+        {/* Bug report input */}
+        <div
+          className={`flex items-center gap-1.5 px-3 py-2 border-t ${darkMode ? 'border-stone-700/40' : 'border-stone-200/60'} flex-none`}
+        >
+          <input
+            type="text"
+            value={bugDescription}
+            onChange={(e) => setBugDescription(e.target.value)}
+            placeholder="Describe the bug..."
+            className={`flex-1 px-2 py-1 rounded text-[10px] border ${darkMode ? 'bg-stone-900/80 border-stone-700 text-stone-200 placeholder:text-stone-500' : 'bg-white/80 border-stone-300 text-stone-800 placeholder:text-stone-400'}`}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleSubmitBug();
+            }}
+          />
+          <button
+            onClick={handleSubmitBug}
+            disabled={bugStatus === 'sending'}
+            className={`px-2 py-1 rounded text-[9px] font-bold uppercase tracking-wider transition-colors ${
+              bugStatus === 'success'
+                ? 'bg-green-600/80 text-white'
+                : bugStatus === 'error'
+                  ? `${theme.errorBg} text-white`
+                  : bugStatus === 'sending'
+                    ? 'bg-stone-600/80 text-stone-400'
+                    : 'bg-indigo-600/80 text-white hover:bg-indigo-500/80'
+            }`}
+          >
+            {bugStatus === 'sending'
+              ? '...'
+              : bugStatus === 'success'
+                ? 'Sent!'
+                : bugStatus === 'error'
+                  ? 'Fail'
+                  : 'Report'}
+          </button>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 
@@ -2391,6 +2462,8 @@ const VerticalSidebar = ({
   onCycleFont,
   selectedCategory,
   onSelectCategory,
+  showDebugLogs,
+  onToggleDebugLogs,
 }) => {
   const [expanded, setExpanded] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -2686,6 +2759,17 @@ const VerticalSidebar = ({
                     <span className={labelCls} style={{ color: gold }}>
                       Font
                     </span>
+
+                    <button
+                      onClick={onToggleDebugLogs}
+                      title={showDebugLogs ? 'Hide dev logs' : 'Show dev logs'}
+                      className={`${subBtnBase} ${subBtnHover} ${showDebugLogs ? theme.goldActiveBg + ' border ' + theme.goldBorderSubtle : 'opacity-40'}`}
+                    >
+                      <Bug style={{ color: gold }} size={16} />
+                    </button>
+                    <span className={labelCls} style={{ color: gold }}>
+                      Logs
+                    </span>
                   </div>
                 </div>
               </div>
@@ -2962,6 +3046,7 @@ export default function DiwanApp() {
   const [autoExplainPending, setAutoExplainPending] = useState(false);
   const hasAutoLoaded = useRef(false);
   const [logs, setLogs] = useState([]);
+  const [showDebugLogs, setShowDebugLogs] = useState(FEATURES.debug);
   const [showCopySuccess, setShowCopySuccess] = useState(false);
   const [showShareSuccess, setShowShareSuccess] = useState(false);
   const [showInsightSuccess, setShowInsightSuccess] = useState(false);
@@ -3047,12 +3132,17 @@ export default function DiwanApp() {
   const current = filtered[currentIndex] || filtered[0] || poems[0] || null;
 
   const addLog = (label, msg, type = 'info') => {
+    const now = performance.now();
     const time = new Date().toLocaleTimeString([], {
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
     });
-    setLogs((prev) => [...prev, { label, msg: String(msg), type, time }]);
+    setLogs((prev) => {
+      const t0 = prev.length > 0 ? prev[0].ts : now;
+      const relSec = ((now - t0) / 1000).toFixed(1);
+      return [...prev, { label, msg: String(msg), type, time, ts: now, rel: `+${relSec}s` }];
+    });
     if (FEATURES.logging) {
       const logFn =
         type === 'error' ? console.error : type === 'success' ? console.info : console.log;
@@ -3657,11 +3747,18 @@ export default function DiwanApp() {
         headers: { 'Content-Type': 'application/json' },
         body: requestBody,
       };
-      const res = await fetchTTSWithFallback(url, fetchOptions, { addLog, label: 'Audio API' });
+      const { res, model: ttsModel } = await fetchTTSWithFallback(url, fetchOptions, {
+        addLog,
+        label: 'Audio API',
+      });
 
       if (!res.ok) {
         const errorText = await res.text();
-        addLog('Audio API Error', `HTTP ${res.status}: ${errorText.substring(0, 200)}`, 'error');
+        addLog(
+          'Audio API Error',
+          `[${ttsModel}] HTTP ${res.status}: ${errorText.substring(0, 200)}`,
+          'error'
+        );
         if (res.status === 429) {
           setAudioError(
             'Recitation temporarily unavailable — too many requests. Please wait a moment and try again.'
@@ -3677,7 +3774,7 @@ export default function DiwanApp() {
       if (!data.candidates || data.candidates.length === 0) {
         addLog(
           'Audio API Error',
-          `No candidates in response. Full response: ${JSON.stringify(data).substring(0, 300)}`,
+          `[${ttsModel}] No candidates in response. Full response: ${JSON.stringify(data).substring(0, 300)}`,
           'error'
         );
         throw new Error('Recitation failed - no audio candidates returned');
@@ -3702,12 +3799,12 @@ export default function DiwanApp() {
 
           addLog(
             'Audio API',
-            `✓ Complete | API: ${(apiTime / 1000).toFixed(2)}s | Convert: ${conversionTime.toFixed(0)}ms | Total: ${(totalTime / 1000).toFixed(2)}s`,
+            `✓ [${ttsModel}] Complete | API: ${(apiTime / 1000).toFixed(2)}s | Convert: ${conversionTime.toFixed(0)}ms | Total: ${(totalTime / 1000).toFixed(2)}s`,
             'success'
           );
           addLog(
             'Audio Metrics',
-            `Audio: ${audioDuration.toFixed(1)}s | Size: ${audioSizeKB}KB (${audioSizeMB}MB) | Speed: ${tokensPerSecond} tok/s`,
+            `[${ttsModel}] Audio: ${audioDuration.toFixed(1)}s | Size: ${audioSizeKB}KB (${audioSizeMB}MB) | Speed: ${tokensPerSecond} tok/s`,
             'success'
           );
 
@@ -4860,6 +4957,7 @@ export default function DiwanApp() {
         onClear={() => setLogs([])}
         darkMode={darkMode}
         poem={current}
+        visible={showDebugLogs}
         appState={{
           mode: useDatabase ? 'database' : 'ai',
           theme: darkMode ? 'dark' : 'light',
@@ -5513,6 +5611,8 @@ export default function DiwanApp() {
         onCycleFont={cycleFont}
         selectedCategory={selectedCategory}
         onSelectCategory={setSelectedCategory}
+        showDebugLogs={showDebugLogs}
+        onToggleDebugLogs={() => setShowDebugLogs((prev) => !prev)}
       />
 
       {/* Splash / Onboarding Screen */}

@@ -1,0 +1,1204 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ink Constellation - Insight Panel Prototype</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+  <!--
+    ==========================================
+    PHILOSOPHY: Ink Constellation
+    ==========================================
+
+    Letters are stars. Meaning hides in the space between them.
+
+    When the reader asks for insight, the Arabic poem dissolves --
+    each letter lifts off the page and drifts upward like embers rising
+    from a manuscript set ablaze by curiosity. These letter-particles
+    scatter across a dark sky and settle into constellation patterns,
+    connected by thin golden threads reminiscent of astrolabe engravings.
+
+    The constellations then coalesce and reform into insight section
+    headers, as if the meaning was always encoded in the stars, waiting
+    to be read by someone who knew how to look.
+
+    Cultural roots: Islamic golden age astronomy, Arabic calligraphy as
+    living art, observatory domes, astrolabe navigation charts, the
+    tradition of reading fate in the heavens.
+
+    Key Principles:
+    - Letters ARE particles -- each character has mass and trajectory
+    - Constellation lines connect related letters with golden threads
+    - The night sky is not decoration; it is the medium of understanding
+    - Insight headers form FROM the scattered letters, not beside them
+    - Closing reverses the process: stars collapse back into words
+    - Idle state: gentle twinkling keeps the sky alive
+    - Canvas renders particles; CSS renders text content below
+  -->
+
+  <style>
+    /* ==========================================
+       DESIGN TOKENS
+       ========================================== */
+    :root {
+      /* Palette -- production app theme */
+      --color-bg: #0c0c0e;
+      --color-sky-deep: #080810;
+      --color-text-primary: #e7e5e4;
+      --color-text-secondary: rgba(231, 229, 228, 0.75);
+      --color-text-muted: rgba(231, 229, 228, 0.6);
+      --color-gold: #C5A059;
+      --color-gold-bright: #d4b06a;
+      --color-gold-dim: rgba(197, 160, 89, 0.25);
+      --color-gold-glow: rgba(197, 160, 89, 0.4);
+      --color-gold-thread: rgba(197, 160, 89, 0.18);
+      --color-glass: rgba(28, 25, 23, 0.6);
+      --color-glass-border: #292524;
+      --color-star-white: rgba(255, 255, 255, 0.9);
+      --color-star-dim: rgba(255, 255, 255, 0.3);
+
+      /* Typography */
+      --font-arabic: 'Amiri', serif;
+      --font-ui: 'Tajawal', system-ui, sans-serif;
+      --font-size-display: clamp(2rem, 1.25rem + 3.5vw, 3.25rem);
+      --font-size-poem: clamp(1.25rem, 1.1rem + 0.75vw, 1.625rem);
+      --font-size-body: clamp(1rem, 0.925rem + 0.4vw, 1.25rem);
+      --font-size-small: clamp(0.875rem, 0.825rem + 0.25vw, 1rem);
+      --font-size-label: clamp(0.6875rem, 0.65rem + 0.15vw, 0.75rem);
+      --line-height-poem: 2.4;
+      --line-height-body: 1.8;
+
+      /* Spacing */
+      --space-xs: 0.5rem;
+      --space-sm: 1rem;
+      --space-md: 1.5rem;
+      --space-lg: 2rem;
+      --space-xl: 3rem;
+      --space-2xl: 5rem;
+
+      /* Motion */
+      --duration-constellation: 0.8s;
+      --duration-section: 0.5s;
+      --duration-content: 0.3s;
+      --duration-micro: 0.15s;
+      --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-out-quart: cubic-bezier(0.4, 0, 0.2, 1);
+      --ease-in-quart: cubic-bezier(0.7, 0, 1, 1);
+      --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+      /* Layout */
+      --max-width-content: 720px;
+    }
+
+    /* ==========================================
+       BASE STYLES
+       ========================================== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      overflow-x: hidden;
+      max-width: 100vw;
+      height: 100%;
+    }
+
+    body {
+      background: var(--color-sky-deep);
+      color: var(--color-text-primary);
+      font-family: var(--font-ui);
+      font-size: var(--font-size-body);
+      line-height: var(--line-height-body);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+      overscroll-behavior-y: contain;
+      position: relative;
+    }
+
+    /* ==========================================
+       STAR FIELD CANVAS (FULL VIEWPORT)
+       ========================================== */
+    #starCanvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    /* ==========================================
+       PARTICLE CANVAS (LETTER ANIMATION)
+       ========================================== */
+    #particleCanvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 5;
+      pointer-events: none;
+    }
+
+    /* ==========================================
+       MAIN SCENE
+       ========================================== */
+    .scene {
+      position: relative;
+      z-index: 10;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: var(--space-xl) var(--space-lg);
+      padding-bottom: calc(var(--space-xl) + env(safe-area-inset-bottom, 0px));
+    }
+
+    /* ==========================================
+       POEM SECTION
+       ========================================== */
+    .poem-container {
+      max-width: var(--max-width-content);
+      width: 100%;
+      text-align: center;
+      transition: opacity 0.6s var(--ease-out-quart);
+    }
+
+    .poem-container.dissolving {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .poem-header {
+      margin-bottom: var(--space-2xl);
+    }
+
+    .poem-title {
+      font-family: var(--font-arabic);
+      font-size: var(--font-size-display);
+      font-weight: 700;
+      line-height: 1.3;
+      margin-bottom: var(--space-md);
+      opacity: 0;
+      transform: translateY(12px);
+      animation: fadeSlideUp var(--duration-constellation) var(--ease-out-expo) forwards;
+    }
+
+    .poem-meta {
+      font-family: var(--font-ui);
+      font-size: var(--font-size-label);
+      color: var(--color-text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-weight: 500;
+      opacity: 0;
+      animation: fadeIn var(--duration-content) var(--ease-out-quart) 0.3s forwards;
+    }
+
+    .poem-text {
+      font-family: var(--font-arabic);
+      font-size: var(--font-size-poem);
+      line-height: var(--line-height-poem);
+      margin-bottom: var(--space-2xl);
+      opacity: 0;
+      animation: fadeIn var(--duration-section) var(--ease-out-quart) 0.5s forwards;
+    }
+
+    .poem-verse {
+      margin-bottom: var(--space-md);
+      position: relative;
+    }
+
+    /* ==========================================
+       EXPLAIN BUTTON
+       ========================================== */
+    .button-wrapper {
+      display: flex;
+      justify-content: center;
+      opacity: 0;
+      animation: fadeIn var(--duration-content) var(--ease-out-quart) 0.8s forwards;
+    }
+
+    .explain-button {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-xs);
+      padding: 0.875rem 1.75rem;
+      font-family: var(--font-ui);
+      font-size: var(--font-size-small);
+      font-weight: 500;
+      color: var(--color-text-primary);
+      background: var(--color-gold-dim);
+      border: 1px solid rgba(197, 160, 89, 0.35);
+      border-radius: 3rem;
+      cursor: pointer;
+      transition: all var(--duration-micro) var(--ease-out-quart);
+      min-height: 44px;
+      min-width: 44px;
+      box-shadow: 0 0 24px rgba(197, 160, 89, 0.1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .explain-button::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at center, rgba(197, 160, 89, 0.15), transparent 70%);
+      opacity: 0;
+      transition: opacity var(--duration-micro) var(--ease-out-quart);
+    }
+
+    .explain-button:hover {
+      background: rgba(197, 160, 89, 0.35);
+      border-color: rgba(197, 160, 89, 0.6);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 32px rgba(197, 160, 89, 0.25);
+    }
+
+    .explain-button:hover::before {
+      opacity: 1;
+    }
+
+    .explain-button:active {
+      transform: translateY(0) scale(0.98);
+    }
+
+    .explain-button.hidden {
+      opacity: 0;
+      pointer-events: none;
+      transform: scale(0.9);
+      transition: all var(--duration-section) var(--ease-in-quart);
+    }
+
+    /* ==========================================
+       INSIGHT PANELS (BELOW CANVAS)
+       ========================================== */
+    .insight-container {
+      position: relative;
+      z-index: 10;
+      max-width: var(--max-width-content);
+      width: 100%;
+      margin-top: var(--space-xl);
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(20px);
+      transition: opacity var(--duration-section) var(--ease-out-expo),
+                  transform var(--duration-section) var(--ease-out-expo);
+    }
+
+    .insight-container.visible {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+
+    .insight-section {
+      margin-bottom: var(--space-xl);
+      padding: var(--space-lg);
+      background: var(--color-glass);
+      border: 1px solid var(--color-glass-border);
+      border-radius: 16px;
+      position: relative;
+      overflow: hidden;
+      opacity: 0;
+      transform: translateY(16px);
+      transition: opacity var(--duration-section) var(--ease-out-expo),
+                  transform var(--duration-section) var(--ease-out-expo);
+    }
+
+    .insight-section.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .insight-section:last-child {
+      margin-bottom: 0;
+    }
+
+    /* Constellation glow accent at top of each panel */
+    .insight-section::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      inset-inline-start: 0;
+      inset-inline-end: 0;
+      height: 1px;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        var(--color-gold) 30%,
+        var(--color-gold-bright) 50%,
+        var(--color-gold) 70%,
+        transparent
+      );
+      opacity: 0.6;
+    }
+
+    .insight-label {
+      font-family: var(--font-ui);
+      font-size: var(--font-size-label);
+      font-weight: 700;
+      color: var(--color-gold);
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: var(--space-sm);
+      display: flex;
+      align-items: center;
+      gap: var(--space-xs);
+    }
+
+    .insight-label .star-icon {
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      background: var(--color-gold);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--color-gold-glow), 0 0 16px rgba(197, 160, 89, 0.15);
+      animation: twinkle 3s ease-in-out infinite alternate;
+    }
+
+    .insight-content {
+      font-family: var(--font-ui);
+      font-size: var(--font-size-small);
+      line-height: var(--line-height-body);
+      color: var(--color-text-secondary);
+      direction: ltr;
+      text-align: left;
+    }
+
+    .insight-content p {
+      margin-bottom: var(--space-md);
+      opacity: 0;
+    }
+
+    .insight-content p:last-child {
+      margin-bottom: 0;
+    }
+
+    .insight-content p.streaming {
+      animation: fadeIn var(--duration-content) var(--ease-out-quart) forwards;
+    }
+
+    /* First section (poem translation) uses Arabic font */
+    .insight-section:first-child .insight-content {
+      font-family: var(--font-arabic);
+      font-size: var(--font-size-body);
+      line-height: 2;
+      font-style: italic;
+      color: var(--color-text-primary);
+      direction: ltr;
+    }
+
+    /* ==========================================
+       CLOSE BUTTON
+       ========================================== */
+    .close-button {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-xs);
+      padding: 0.875rem 1.5rem;
+      font-family: var(--font-ui);
+      font-size: var(--font-size-small);
+      font-weight: 500;
+      color: var(--color-text-muted);
+      background: transparent;
+      border: 1px solid var(--color-glass-border);
+      border-radius: 3rem;
+      cursor: pointer;
+      transition: all var(--duration-micro) var(--ease-out-quart);
+      min-height: 44px;
+      min-width: 44px;
+      margin-top: var(--space-lg);
+      opacity: 0;
+      transform: translateY(8px);
+    }
+
+    .close-button.visible {
+      opacity: 1;
+      transform: translateY(0);
+      transition: opacity var(--duration-content) var(--ease-out-expo),
+                  transform var(--duration-content) var(--ease-out-expo);
+    }
+
+    .close-button:hover {
+      color: var(--color-text-primary);
+      border-color: var(--color-gold-dim);
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .close-button:active {
+      transform: translateY(0) scale(0.97);
+    }
+
+    /* ==========================================
+       CURSOR EFFECT (STREAMING)
+       ========================================== */
+    .cursor {
+      display: inline-block;
+      width: 2px;
+      height: 1.2em;
+      background: var(--color-gold);
+      margin-left: 2px;
+      animation: blink 1s step-end infinite;
+      vertical-align: text-bottom;
+    }
+
+    /* ==========================================
+       KEYFRAME ANIMATIONS
+       ========================================== */
+    @keyframes fadeSlideUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeIn {
+      to {
+        opacity: 1;
+      }
+    }
+
+    @keyframes blink {
+      0%, 50% { opacity: 1; }
+      51%, 100% { opacity: 0; }
+    }
+
+    @keyframes twinkle {
+      0% { opacity: 0.5; transform: scale(0.8); }
+      100% { opacity: 1; transform: scale(1.2); }
+    }
+
+    /* ==========================================
+       REDUCED MOTION
+       ========================================== */
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+
+      #particleCanvas,
+      #starCanvas {
+        display: none;
+      }
+
+      .poem-title {
+        opacity: 1;
+        transform: none;
+      }
+
+      .poem-text,
+      .poem-meta,
+      .button-wrapper {
+        opacity: 1;
+      }
+    }
+
+    /* ==========================================
+       MOBILE ADJUSTMENTS
+       ========================================== */
+    @media (max-width: 767px) {
+      .scene {
+        padding: var(--space-lg) var(--space-md);
+        padding-bottom: calc(var(--space-lg) + env(safe-area-inset-bottom, 0px));
+        justify-content: flex-start;
+        padding-top: var(--space-2xl);
+      }
+
+      .poem-header {
+        margin-bottom: var(--space-xl);
+      }
+
+      .poem-text {
+        margin-bottom: var(--space-xl);
+      }
+
+      .insight-section {
+        padding: var(--space-md);
+        margin-bottom: var(--space-lg);
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ==========================================
+       BACKGROUND: STATIC STAR FIELD
+       ========================================== -->
+  <canvas id="starCanvas" aria-hidden="true"></canvas>
+
+  <!-- ==========================================
+       FOREGROUND: PARTICLE / CONSTELLATION CANVAS
+       ========================================== -->
+  <canvas id="particleCanvas" aria-hidden="true"></canvas>
+
+  <!-- ==========================================
+       MAIN SCENE
+       ========================================== -->
+  <main class="scene">
+
+    <!-- ==========================================
+         POEM SECTION
+         ========================================== -->
+    <div class="poem-container" id="poemContainer">
+      <header class="poem-header">
+        <h1 class="poem-title">أحبُّكِ جِدّاً</h1>
+        <p class="poem-meta">Nizar Qabbani · I Love You Intensely</p>
+      </header>
+
+      <div class="poem-text" id="poemText">
+        <p class="poem-verse">أُحِبُّكِ جِدًّا</p>
+        <p class="poem-verse">أُحِبُّكِ جِدًّا</p>
+        <p class="poem-verse">وَأَعْرِفُ أَنَّ الطَّرِيقَ إِلَى الْمُسْتَحِيلِ طَوِيلٌ</p>
+        <p class="poem-verse">وَلٰكِنْ أُحِبُّكِ جِدًّا</p>
+        <p class="poem-verse">فَمَاذَا أَفْعَلُ؟</p>
+      </div>
+
+      <div class="button-wrapper">
+        <button class="explain-button" id="explainButton">
+          <span>✨</span>
+          <span>Explain</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- ==========================================
+         INSIGHT PANELS (HIDDEN UNTIL CONSTELLATION COMPLETES)
+         ========================================== -->
+    <div class="insight-container" id="insightContainer">
+      <section class="insight-section" data-section="poem">
+        <h2 class="insight-label">
+          <span class="star-icon"></span>
+          POEM
+        </h2>
+        <div class="insight-content" id="poemInsight">
+          <p>I love you so much<br>
+          I love you so much<br>
+          And I know that the road to the impossible is long<br>
+          But I love you so much<br>
+          So what can I do?</p>
+        </div>
+      </section>
+
+      <section class="insight-section" data-section="depth">
+        <h2 class="insight-label">
+          <span class="star-icon"></span>
+          THE DEPTH
+        </h2>
+        <div class="insight-content" id="depthInsight">
+          <p>Nizar Qabbani's brevity here is disarming. The repetition of "\u0623\u064F\u062D\u0650\u0628\u064F\u0651\u0643\u0650 \u062C\u0650\u062F\u064B\u0651\u0627" (I love you so much) creates a hypnotic rhythm, emphasizing both certainty and helplessness. The phrase "\u0627\u0644\u0637\u064E\u0651\u0631\u0650\u064A\u0642\u064E \u0625\u0650\u0644\u0649 \u0627\u0644\u0645\u064F\u0633\u0652\u062A\u064E\u062D\u0650\u064A\u0644\u0650" (the road to the impossible) reveals the poem's central tension: love as simultaneously inevitable and unattainable.</p>
+          <p>The final question — "\u0641\u064E\u0645\u064E\u0627\u0630\u064E\u0627 \u0623\u064E\u0641\u0652\u0639\u064E\u0644\u064F\u061F" (So what can I do?) — is rhetorical yet devastating. It is not a plea for advice but a surrender to the overwhelming force of desire. Qabbani strips away metaphor, leaving only the raw vulnerability of a lover who knows they are pursuing the impossible but cannot stop themselves.</p>
+        </div>
+      </section>
+
+      <section class="insight-section" data-section="author">
+        <h2 class="insight-label">
+          <span class="star-icon"></span>
+          THE AUTHOR
+        </h2>
+        <div class="insight-content" id="authorInsight">
+          <p>Nizar Qabbani (1923 – 1998) is often called the poet of love and revolution. Born in Damascus, he scandalized Arab society with his frank treatment of romantic and erotic themes, breaking centuries of poetic convention. His work challenged patriarchal norms while celebrating feminine beauty and agency.</p>
+          <p>Qabbani's directness — evident in this poem — was revolutionary. He wrote in accessible, conversational Arabic rather than ornate classical forms, making poetry a vehicle for everyday emotion. His later work grew more political after the death of his wife in the 1981 Iraqi embassy bombing in Beirut, but his love poems remain his most enduring legacy.</p>
+        </div>
+      </section>
+
+      <div style="display: flex; justify-content: center;">
+        <button class="close-button" id="closeButton">
+          <span>Close</span>
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // ==========================================
+    // INK CONSTELLATION — CORE ENGINE
+    // ==========================================
+
+    // --- Detect reduced motion preference ---
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    // --- Canvas setup ---
+    const starCanvas = document.getElementById('starCanvas');
+    const starCtx = starCanvas.getContext('2d');
+    const particleCanvas = document.getElementById('particleCanvas');
+    const particleCtx = particleCanvas.getContext('2d');
+
+    if (!starCtx || !particleCtx) {
+      console.warn('Canvas 2D context not available');
+    }
+
+    let canvasW, canvasH, dpr;
+
+    function resizeCanvases() {
+      dpr = window.devicePixelRatio || 1;
+      canvasW = window.innerWidth;
+      canvasH = window.innerHeight;
+
+      starCanvas.width = canvasW * dpr;
+      starCanvas.height = canvasH * dpr;
+      starCanvas.style.width = canvasW + 'px';
+      starCanvas.style.height = canvasH + 'px';
+      starCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      particleCanvas.width = canvasW * dpr;
+      particleCanvas.height = canvasH * dpr;
+      particleCanvas.style.width = canvasW + 'px';
+      particleCanvas.style.height = canvasH + 'px';
+      particleCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+      generateStarField();
+    }
+
+    window.addEventListener('resize', resizeCanvases);
+    resizeCanvases();
+
+    // ==========================================
+    // STATIC STAR FIELD (BACKGROUND AMBIANCE)
+    // ==========================================
+    const bgStars = [];
+
+    function generateStarField() {
+      bgStars.length = 0;
+      const count = Math.floor((canvasW * canvasH) / 3000);
+      for (let i = 0; i < count; i++) {
+        bgStars.push({
+          x: Math.random() * canvasW,
+          y: Math.random() * canvasH,
+          radius: Math.random() * 1.2 + 0.2,
+          baseAlpha: Math.random() * 0.5 + 0.1,
+          twinkleSpeed: Math.random() * 0.02 + 0.005,
+          twinkleOffset: Math.random() * Math.PI * 2
+        });
+      }
+    }
+
+    function drawStarField(time) {
+      starCtx.clearRect(0, 0, canvasW, canvasH);
+
+      // Subtle radial gradient for depth
+      const grad = starCtx.createRadialGradient(
+        canvasW / 2, canvasH * 0.3, 0,
+        canvasW / 2, canvasH * 0.3, canvasW * 0.8
+      );
+      grad.addColorStop(0, 'rgba(20, 18, 30, 0.3)');
+      grad.addColorStop(1, 'transparent');
+      starCtx.fillStyle = grad;
+      starCtx.fillRect(0, 0, canvasW, canvasH);
+
+      for (const star of bgStars) {
+        const twinkle = Math.sin(time * star.twinkleSpeed + star.twinkleOffset);
+        const alpha = star.baseAlpha + twinkle * 0.2;
+        starCtx.beginPath();
+        starCtx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+        starCtx.fillStyle = 'rgba(255, 255, 255, ' + Math.max(0.05, alpha) + ')';
+        starCtx.fill();
+      }
+    }
+
+    // ==========================================
+    // LETTER PARTICLE SYSTEM
+    // ==========================================
+    const particles = [];
+    const constellationLines = [];
+    let animationState = 'idle'; // idle | scattering | constellation | reforming
+    let animationStartTime = 0;
+
+    // Spring physics constants
+    const SPRING_STIFFNESS = 0.04;
+    const SPRING_DAMPING = 0.85;
+    const SCATTER_FORCE = 8;
+
+    class Particle {
+      constructor(char, originX, originY) {
+        this.char = char;
+        this.originX = originX;
+        this.originY = originY;
+        this.x = originX;
+        this.y = originY;
+        this.vx = 0;
+        this.vy = 0;
+        this.targetX = originX;
+        this.targetY = originY;
+        this.alpha = 1;
+        this.targetAlpha = 1;
+        this.scale = 1;
+        this.rotation = 0;
+        this.rotationVel = (Math.random() - 0.5) * 0.02;
+        this.twinkleOffset = Math.random() * Math.PI * 2;
+        this.color = '#C5A059';
+        this.settled = false;
+      }
+
+      setTarget(x, y) {
+        this.targetX = x;
+        this.targetY = y;
+        this.settled = false;
+      }
+
+      scatter() {
+        const angle = Math.random() * Math.PI * 2;
+        const force = SCATTER_FORCE * (0.5 + Math.random());
+        this.vx = Math.cos(angle) * force;
+        this.vy = Math.sin(angle) * force - Math.random() * 4; // slight upward bias
+        this.rotationVel = (Math.random() - 0.5) * 0.08;
+
+        // Target: random position in upper 60% of viewport
+        this.targetX = Math.random() * (canvasW * 0.7) + canvasW * 0.15;
+        this.targetY = Math.random() * (canvasH * 0.5) + canvasH * 0.05;
+      }
+
+      update() {
+        // Spring toward target
+        const dx = this.targetX - this.x;
+        const dy = this.targetY - this.y;
+
+        this.vx += dx * SPRING_STIFFNESS;
+        this.vy += dy * SPRING_STIFFNESS;
+
+        this.vx *= SPRING_DAMPING;
+        this.vy *= SPRING_DAMPING;
+
+        this.x += this.vx;
+        this.y += this.vy;
+
+        // Rotation decays
+        this.rotation += this.rotationVel;
+        this.rotationVel *= 0.98;
+
+        // Alpha spring
+        this.alpha += (this.targetAlpha - this.alpha) * 0.08;
+
+        // Settled check
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const speed = Math.sqrt(this.vx * this.vx + this.vy * this.vy);
+        this.settled = dist < 1 && speed < 0.1;
+      }
+
+      draw(ctx, time) {
+        if (this.alpha < 0.01) return;
+
+        ctx.save();
+        ctx.translate(this.x, this.y);
+        ctx.rotate(this.rotation);
+
+        // Twinkle effect when in constellation state
+        let drawAlpha = this.alpha;
+        if (animationState === 'constellation') {
+          let twinkle = Math.sin(time * 0.003 + this.twinkleOffset);
+          drawAlpha *= 0.7 + twinkle * 0.3;
+        }
+
+        // Glow
+        ctx.shadowColor = this.color;
+        ctx.shadowBlur = 8;
+
+        // Star-point shape when scattered
+        if (animationState === 'scattering' || animationState === 'constellation') {
+          // Draw a small star/dot
+          ctx.beginPath();
+          ctx.arc(0, 0, 2.5, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(197, 160, 89, ' + drawAlpha + ')';
+          ctx.fill();
+
+          // Faint character inside
+          ctx.shadowBlur = 0;
+          ctx.font = '10px Amiri';
+          ctx.fillStyle = 'rgba(197, 160, 89, ' + (drawAlpha * 0.3) + ')';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(this.char, 0, 0);
+        } else {
+          // During reforming, show character more prominently
+          ctx.font = '16px Amiri';
+          ctx.fillStyle = 'rgba(197, 160, 89, ' + drawAlpha + ')';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillText(this.char, 0, 0);
+        }
+
+        ctx.restore();
+      }
+    }
+
+    // ==========================================
+    // EXTRACT LETTER POSITIONS FROM POEM
+    // ==========================================
+    function extractLetterPositions() {
+      var poemText = document.getElementById('poemText');
+      var verses = poemText.querySelectorAll('.poem-verse');
+      var letterData = [];
+
+      verses.forEach(function(verse) {
+        var text = verse.textContent;
+        var range = document.createRange();
+        var textNode = verse.firstChild;
+        if (!textNode || textNode.nodeType !== Node.TEXT_NODE) return;
+
+        for (var i = 0; i < text.length; i++) {
+          var char = text[i];
+          // Skip spaces and whitespace
+          if (char === ' ' || char === '\n' || char === '\t') continue;
+
+          try {
+            range.setStart(textNode, i);
+            range.setEnd(textNode, i + 1);
+            var rect = range.getBoundingClientRect();
+
+            if (rect.width > 0 && rect.height > 0) {
+              letterData.push({
+                char: char,
+                x: rect.left + rect.width / 2,
+                y: rect.top + rect.height / 2
+              });
+            }
+          } catch (e) {
+            // Skip characters that cannot be measured
+          }
+        }
+      });
+
+      return letterData;
+    }
+
+    // ==========================================
+    // CONSTELLATION PATTERN GENERATION
+    // ==========================================
+    function generateConstellationPattern() {
+      constellationLines.length = 0;
+      if (particles.length < 2) return;
+
+      // Create 3 constellation clusters (one per insight section)
+      var clusterCount = 3;
+      var clusterSize = Math.floor(particles.length / clusterCount);
+
+      for (var c = 0; c < clusterCount; c++) {
+        var start = c * clusterSize;
+        var end = c === clusterCount - 1 ? particles.length : (c + 1) * clusterSize;
+        var cluster = particles.slice(start, end);
+
+        // Connect nearby particles within each cluster
+        for (var i = 0; i < cluster.length; i++) {
+          var connections = Math.min(2, cluster.length - 1);
+          var distances = [];
+
+          for (var j = 0; j < cluster.length; j++) {
+            if (i === j) continue;
+            var dx = cluster[j].targetX - cluster[i].targetX;
+            var dy = cluster[j].targetY - cluster[i].targetY;
+            distances.push({ index: j, dist: Math.sqrt(dx * dx + dy * dy) });
+          }
+
+          distances.sort(function(a, b) { return a.dist - b.dist; });
+
+          for (var k = 0; k < connections; k++) {
+            if (k < distances.length && distances[k].dist < canvasW * 0.25) {
+              var a = start + i;
+              var b = start + distances[k].index;
+              var exists = constellationLines.some(function(line) {
+                return (line.a === a && line.b === b) || (line.a === b && line.b === a);
+              });
+              if (!exists) {
+                constellationLines.push({
+                  a: a,
+                  b: b,
+                  alpha: 0,
+                  targetAlpha: 0.2 + Math.random() * 0.15
+                });
+              }
+            }
+          }
+        }
+      }
+    }
+
+    // ==========================================
+    // DRAW CONSTELLATION LINES
+    // ==========================================
+    function drawConstellationLines(ctx) {
+      for (var i = 0; i < constellationLines.length; i++) {
+        var line = constellationLines[i];
+
+        // Animate alpha
+        if (animationState === 'constellation') {
+          line.alpha += (line.targetAlpha - line.alpha) * 0.03;
+        } else if (animationState === 'reforming') {
+          line.alpha *= 0.92;
+        }
+
+        if (line.alpha < 0.005) continue;
+
+        var pa = particles[line.a];
+        var pb = particles[line.b];
+        if (!pa || !pb) continue;
+
+        ctx.beginPath();
+        ctx.moveTo(pa.x, pa.y);
+        ctx.lineTo(pb.x, pb.y);
+        ctx.strokeStyle = 'rgba(197, 160, 89, ' + line.alpha + ')';
+        ctx.lineWidth = 0.5;
+        ctx.stroke();
+      }
+    }
+
+    // ==========================================
+    // ANIMATION LOOP
+    // ==========================================
+    var rafId = null;
+    var animationRunning = false;
+
+    function animate(time) {
+      rafId = requestAnimationFrame(animate);
+
+      // Background star field (always running)
+      drawStarField(time);
+
+      // Particle canvas
+      particleCtx.clearRect(0, 0, canvasW, canvasH);
+
+      if (particles.length > 0) {
+        // Update particles
+        for (var i = 0; i < particles.length; i++) {
+          particles[i].update();
+        }
+
+        // Draw constellation lines behind particles
+        if (animationState === 'constellation' || animationState === 'reforming') {
+          drawConstellationLines(particleCtx);
+        }
+
+        // Draw particles
+        for (var i = 0; i < particles.length; i++) {
+          particles[i].draw(particleCtx, time);
+        }
+
+        // State transitions
+        if (animationState === 'scattering') {
+          var allSettled = particles.every(function(p) { return p.settled; });
+          if (allSettled || (time - animationStartTime > 1500)) {
+            animationState = 'constellation';
+            generateConstellationPattern();
+            // After constellation forms, show insight panels
+            setTimeout(showInsightPanels, 800);
+          }
+        }
+      }
+    }
+
+    // Guard against double RAF execution
+    function startAnimation() {
+      if (animationRunning) return;
+      animationRunning = true;
+      rafId = requestAnimationFrame(animate);
+    }
+
+    if (!prefersReducedMotion) {
+      startAnimation();
+    }
+
+    // ==========================================
+    // STORE ORIGINAL CONTENT FOR RESET
+    // ==========================================
+    var originalInsightContent = {};
+    (function captureOriginals() {
+      var ids = ['poemInsight', 'depthInsight', 'authorInsight'];
+      for (var i = 0; i < ids.length; i++) {
+        var el = document.getElementById(ids[i]);
+        if (el) {
+          // Clone children for safe restoration
+          originalInsightContent[ids[i]] = [];
+          for (var j = 0; j < el.children.length; j++) {
+            originalInsightContent[ids[i]].push(el.children[j].cloneNode(true));
+          }
+        }
+      }
+    })();
+
+    // ==========================================
+    // INTERACTION: EXPLAIN
+    // ==========================================
+    var explainButton = document.getElementById('explainButton');
+    var closeButton = document.getElementById('closeButton');
+    var poemContainer = document.getElementById('poemContainer');
+    var insightContainer = document.getElementById('insightContainer');
+
+    explainButton.addEventListener('click', function() {
+      if (prefersReducedMotion) {
+        // Reduced motion: just fade poem out, show insights
+        poemContainer.classList.add('dissolving');
+        setTimeout(function() {
+          insightContainer.classList.add('visible');
+          revealInsightSections();
+        }, 100);
+        return;
+      }
+
+      // 1. Extract letter positions before hiding
+      var letterData = extractLetterPositions();
+
+      // 2. Create particles from letters
+      particles.length = 0;
+      for (var i = 0; i < letterData.length; i++) {
+        var ld = letterData[i];
+        particles.push(new Particle(ld.char, ld.x, ld.y));
+      }
+
+      // 3. Hide the poem text (particles take over visually)
+      explainButton.classList.add('hidden');
+      poemContainer.classList.add('dissolving');
+
+      // 4. Start scatter animation after a brief beat
+      setTimeout(function() {
+        animationState = 'scattering';
+        animationStartTime = performance.now();
+        for (var i = 0; i < particles.length; i++) {
+          particles[i].scatter();
+        }
+      }, 300);
+    });
+
+    // ==========================================
+    // SHOW INSIGHT PANELS WITH STREAMING
+    // ==========================================
+    function showInsightPanels() {
+      insightContainer.classList.add('visible');
+      revealInsightSections();
+    }
+
+    async function revealInsightSections() {
+      var sections = insightContainer.querySelectorAll('.insight-section');
+
+      for (var i = 0; i < sections.length; i++) {
+        await wait(200 + i * 150);
+        sections[i].classList.add('visible');
+
+        // Stream the content
+        var contentDiv = sections[i].querySelector('.insight-content');
+        var paragraphs = contentDiv.querySelectorAll('p');
+
+        for (var j = 0; j < paragraphs.length; j++) {
+          var p = paragraphs[j];
+          var fullText = p.textContent;
+          // Reset
+          while (p.firstChild) p.removeChild(p.firstChild);
+          p.classList.add('streaming');
+
+          // Create streaming cursor
+          var cursor = document.createElement('span');
+          cursor.className = 'cursor';
+          p.appendChild(cursor);
+
+          // Stream text character by character
+          for (var k = 0; k < fullText.length; k++) {
+            p.insertBefore(document.createTextNode(fullText[k]), cursor);
+            // Variable speed: faster for spaces, slower for punctuation
+            var ch = fullText[k];
+            var delay = ch === ' ' ? 8 : (ch === '.' || ch === ',' || ch === '\u2014') ? 40 : 12;
+            await wait(delay);
+          }
+
+          cursor.remove();
+          await wait(80);
+        }
+
+        await wait(200);
+      }
+
+      // Show close button after all sections streamed
+      await wait(300);
+      closeButton.classList.add('visible');
+    }
+
+    // ==========================================
+    // INTERACTION: CLOSE (REVERSE CONSTELLATION)
+    // ==========================================
+    closeButton.addEventListener('click', function() {
+      closeButton.classList.remove('visible');
+
+      if (prefersReducedMotion) {
+        insightContainer.classList.remove('visible');
+        insightContainer.querySelectorAll('.insight-section').forEach(function(s) {
+          s.classList.remove('visible');
+        });
+        poemContainer.classList.remove('dissolving');
+        explainButton.classList.remove('hidden');
+        resetInsightContent();
+        return;
+      }
+
+      // Hide insight panels
+      insightContainer.classList.remove('visible');
+      insightContainer.querySelectorAll('.insight-section').forEach(function(s) {
+        s.classList.remove('visible');
+      });
+
+      // Reverse: particles reform back to letter origins
+      animationState = 'reforming';
+      for (var i = 0; i < particles.length; i++) {
+        particles[i].setTarget(particles[i].originX, particles[i].originY);
+        particles[i].targetAlpha = 1;
+        // Small scatter impulse for organic feel
+        particles[i].vx += (Math.random() - 0.5) * 2;
+        particles[i].vy += (Math.random() - 0.5) * 2;
+      }
+
+      // After particles return, show poem again
+      setTimeout(function() {
+        poemContainer.classList.remove('dissolving');
+        explainButton.classList.remove('hidden');
+
+        // Fade out particles
+        for (var i = 0; i < particles.length; i++) {
+          particles[i].targetAlpha = 0;
+        }
+
+        setTimeout(function() {
+          particles.length = 0;
+          constellationLines.length = 0;
+          animationState = 'idle';
+          resetInsightContent();
+        }, 600);
+      }, 1200);
+    });
+
+    // ==========================================
+    // RESET INSIGHT CONTENT FOR RE-PLAY
+    // ==========================================
+    function resetInsightContent() {
+      var ids = ['poemInsight', 'depthInsight', 'authorInsight'];
+      for (var i = 0; i < ids.length; i++) {
+        var el = document.getElementById(ids[i]);
+        if (!el || !originalInsightContent[ids[i]]) continue;
+
+        // Clear current children
+        while (el.firstChild) el.removeChild(el.firstChild);
+
+        // Restore cloned originals
+        var originals = originalInsightContent[ids[i]];
+        for (var j = 0; j < originals.length; j++) {
+          el.appendChild(originals[j].cloneNode(true));
+        }
+      }
+    }
+
+    // ==========================================
+    // UTILITY
+    // ==========================================
+    function wait(ms) {
+      return new Promise(function(resolve) { setTimeout(resolve, ms); });
+    }
+  </script>
+</body>
+</html>

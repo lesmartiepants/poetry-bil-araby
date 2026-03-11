@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Minimalist Modernist - Insight Panel Prototype</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Tajawal:wght@300;400;500;700&display=swap" rel="stylesheet">
+
+  <style>
+    /*
+      ==========================================
+      PHILOSOPHY: Minimalist Modernist
+      ==========================================
+
+      Content is king. Chrome disappears. Progressive disclosure.
+
+      The insight doesn't live in a separate panel -- it flows inline with
+      the content, appearing as a natural continuation of the reading
+      experience. No borders, no containers, no visual separation.
+
+      Inspired by: Linear app (content-first), Apple Notes (zero chrome),
+      Medium (reading flow), Rauno Freiberg's work (craft in restraint)
+
+      Key Principles:
+      - Insight appears inline, not in a sidebar or overlay
+      - Typography creates hierarchy, not boxes
+      - Whitespace is the primary design element
+      - Motion is subtle, almost invisible
+      - The "Explain" button dissolves after use
+      - Content streams in with gentle word-group opacity
+      - Arabic text is the hero; English insight is quiet annotation
+    */
+
+    /* ==========================================
+       DESIGN TOKENS
+       ========================================== */
+    :root {
+      /* Palette — matches production app theme */
+      --color-bg: #0c0c0e;
+      --color-surface: rgba(255, 255, 255, 0.02);
+      --color-text-primary: #e7e5e4;
+      --color-text-secondary: rgba(231, 229, 228, 0.6);
+      --color-text-muted: rgba(231, 229, 228, 0.32);
+      --color-accent: #C5A059;
+      --color-accent-dim: rgba(197, 160, 89, 0.12);
+      --color-accent-subtle: rgba(197, 160, 89, 0.06);
+      --color-glass: rgba(28, 25, 23, 0.6);
+      --color-divider: rgba(197, 160, 89, 0.1);
+
+      /* Typography */
+      --font-arabic: 'Amiri', serif;
+      --font-ui: 'Tajawal', system-ui, sans-serif;
+      --font-size-display: clamp(1.875rem, 1.2rem + 3.2vw, 3rem);
+      --font-size-poem: clamp(1.25rem, 1.1rem + 0.75vw, 1.625rem);
+      --font-size-body: clamp(0.9375rem, 0.875rem + 0.3vw, 1.125rem);
+      --font-size-small: clamp(0.8125rem, 0.775rem + 0.2vw, 0.9375rem);
+      --font-size-label: clamp(0.6875rem, 0.65rem + 0.15vw, 0.75rem);
+      --line-height-display: 1.4;
+      --line-height-poem: 2.4;
+      --line-height-body: 1.75;
+
+      /* Spacing */
+      --space-2xs: 0.25rem;
+      --space-xs: 0.5rem;
+      --space-sm: 1rem;
+      --space-md: 1.5rem;
+      --space-lg: 2.5rem;
+      --space-xl: 4rem;
+      --space-2xl: 6rem;
+
+      /* Motion */
+      --duration-hero: 0.7s;
+      --duration-section: 0.5s;
+      --duration-content: 0.35s;
+      --duration-hover: 0.18s;
+      --duration-micro: 0.12s;
+      --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-out-quart: cubic-bezier(0.4, 0, 0.2, 1);
+      --ease-in-quart: cubic-bezier(0.7, 0, 1, 1);
+
+      /* Layout */
+      --max-width-content: 640px;
+      --inline-pad: var(--space-lg);
+    }
+
+    /* ==========================================
+       BASE STYLES
+       ========================================== */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+    }
+
+    html, body {
+      overflow-x: hidden;
+      max-width: 100vw;
+    }
+
+    body {
+      background: var(--color-bg);
+      color: var(--color-text-primary);
+      font-family: var(--font-ui);
+      font-size: var(--font-size-body);
+      line-height: var(--line-height-body);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      padding: var(--space-xl) var(--inline-pad);
+      overscroll-behavior-y: contain;
+      min-height: 100dvh;
+    }
+
+    @media (prefers-reduced-motion: no-preference) {
+      html { scroll-behavior: smooth; }
+    }
+
+    /* ==========================================
+       LAYOUT
+       ========================================== */
+    .container {
+      max-width: var(--max-width-content);
+      margin: 0 auto;
+    }
+
+    /* ==========================================
+       POEM SECTION
+       ========================================== */
+    .poem-header {
+      margin-bottom: var(--space-xl);
+    }
+
+    .poem-title {
+      font-family: var(--font-arabic);
+      font-size: var(--font-size-display);
+      font-weight: 700;
+      line-height: var(--line-height-display);
+      margin-bottom: var(--space-xs);
+      opacity: 0;
+      transform: translateY(8px);
+      animation: fadeSlideUp var(--duration-hero) var(--ease-out-expo) forwards;
+    }
+
+    .poem-meta {
+      font-family: var(--font-ui);
+      font-size: var(--font-size-label);
+      color: var(--color-text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-weight: 500;
+      opacity: 0;
+      animation: fadeIn var(--duration-content) var(--ease-out-quart) 0.25s forwards;
+    }
+
+    .poem-body {
+      font-family: var(--font-arabic);
+      font-size: var(--font-size-poem);
+      line-height: var(--line-height-poem);
+      margin-bottom: var(--space-lg);
+      opacity: 0;
+      animation: fadeIn var(--duration-section) var(--ease-out-quart) 0.45s forwards;
+    }
+
+    .poem-verse {
+      margin-bottom: var(--space-sm);
+    }
+
+    .poem-verse:last-child {
+      margin-bottom: 0;
+    }
+
+    /* ==========================================
+       EXPLAIN TRIGGER
+       ========================================== */
+    .explain-trigger {
+      display: inline-flex;
+      align-items: center;
+      gap: var(--space-xs);
+      padding: 0;
+      margin-top: var(--space-lg);
+      font-family: var(--font-ui);
+      font-size: var(--font-size-small);
+      font-weight: 400;
+      color: var(--color-text-secondary);
+      background: none;
+      border: none;
+      cursor: pointer;
+      min-height: 44px;
+      min-width: 44px;
+      position: relative;
+      opacity: 0;
+      animation: fadeIn var(--duration-content) var(--ease-out-quart) 0.7s forwards;
+      transition: color var(--duration-hover) var(--ease-out-quart);
+    }
+
+    .explain-trigger::before {
+      content: '';
+      position: absolute;
+      inset: -8px -12px;
+      border-radius: 8px;
+      background: var(--color-accent-subtle);
+      opacity: 0;
+      transition: opacity var(--duration-hover) var(--ease-out-quart);
+    }
+
+    .explain-trigger:hover {
+      color: var(--color-text-primary);
+    }
+
+    .explain-trigger:hover::before {
+      opacity: 1;
+    }
+
+    .explain-trigger:active {
+      transform: scale(0.98);
+      transition: transform var(--duration-micro) var(--ease-out-quart);
+    }
+
+    .explain-trigger .trigger-icon {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 1.5px solid var(--color-accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      color: var(--color-accent);
+      position: relative;
+      z-index: 1;
+      transition: border-color var(--duration-hover) var(--ease-out-quart),
+                  background var(--duration-hover) var(--ease-out-quart);
+    }
+
+    .explain-trigger:hover .trigger-icon {
+      background: var(--color-accent-dim);
+    }
+
+    .explain-trigger .trigger-label {
+      position: relative;
+      z-index: 1;
+    }
+
+    .explain-trigger.dissolving {
+      opacity: 0;
+      transform: translateY(-4px);
+      pointer-events: none;
+      transition: opacity var(--duration-content) var(--ease-out-quart),
+                  transform var(--duration-content) var(--ease-out-quart);
+    }
+
+    /* ==========================================
+       INSIGHT DIVIDER
+       ========================================== */
+    .insight-divider {
+      width: 32px;
+      height: 1px;
+      background: var(--color-divider);
+      margin: var(--space-xl) 0;
+      opacity: 0;
+      transform: scaleX(0);
+      transform-origin: right center;
+      transition: opacity var(--duration-section) var(--ease-out-expo),
+                  transform var(--duration-section) var(--ease-out-expo);
+    }
+
+    .insight-divider.visible {
+      opacity: 1;
+      transform: scaleX(1);
+    }
+
+    /* ==========================================
+       INSIGHT CONTENT (INLINE)
+       ========================================== */
+    .insight-flow {
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity var(--duration-section) var(--ease-out-quart);
+    }
+
+    .insight-flow.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .insight-section {
+      margin-bottom: var(--space-xl);
+    }
+
+    .insight-section:last-child {
+      margin-bottom: var(--space-lg);
+    }
+
+    .insight-label {
+      font-family: var(--font-ui);
+      font-size: var(--font-size-label);
+      font-weight: 700;
+      color: var(--color-accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: var(--space-sm);
+      opacity: 0;
+      transform: translateY(4px);
+    }
+
+    .insight-label.revealed {
+      animation: fadeSlideUp var(--duration-content) var(--ease-out-expo) forwards;
+    }
+
+    .insight-body {
+      font-family: var(--font-ui);
+      font-size: var(--font-size-small);
+      font-weight: 300;
+      line-height: var(--line-height-body);
+      color: var(--color-text-secondary);
+      direction: ltr;
+      text-align: left;
+    }
+
+    /* Translation section stays in Arabic context */
+    .insight-body.translation {
+      font-family: var(--font-ui);
+      font-weight: 400;
+      direction: ltr;
+      text-align: left;
+      color: var(--color-text-secondary);
+      line-height: 1.9;
+    }
+
+    .insight-body p {
+      margin-bottom: var(--space-md);
+    }
+
+    .insight-body p:last-child {
+      margin-bottom: 0;
+    }
+
+    /* Word-group streaming tokens */
+    .word-group {
+      display: inline;
+      opacity: 0;
+      transition: opacity var(--duration-content) var(--ease-out-quart);
+    }
+
+    .word-group.streamed {
+      opacity: 1;
+    }
+
+    /* Cursor indicator — minimal bar */
+    .stream-cursor {
+      display: inline-block;
+      width: 1.5px;
+      height: 1em;
+      background: var(--color-accent);
+      margin-inline-start: 3px;
+      vertical-align: text-bottom;
+      opacity: 0;
+      transition: opacity var(--duration-micro) var(--ease-out-quart);
+    }
+
+    .stream-cursor.active {
+      opacity: 1;
+      animation: cursorPulse 1.2s ease-in-out infinite;
+    }
+
+    @keyframes cursorPulse {
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 1; }
+    }
+
+    /* ==========================================
+       ANIMATIONS
+       ========================================== */
+    @keyframes fadeSlideUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeIn {
+      to {
+        opacity: 1;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+
+      .word-group {
+        opacity: 1 !important;
+      }
+    }
+
+    /* ==========================================
+       MOBILE — 375px polish
+       ========================================== */
+    @media (max-width: 767px) {
+      :root {
+        --inline-pad: var(--space-md);
+      }
+
+      body {
+        padding: var(--space-lg) var(--inline-pad);
+        padding-bottom: calc(var(--space-lg) + env(safe-area-inset-bottom));
+      }
+
+      .poem-header {
+        margin-bottom: var(--space-lg);
+      }
+
+      .poem-body {
+        margin-bottom: var(--space-md);
+      }
+
+      .insight-section {
+        margin-bottom: var(--space-lg);
+      }
+
+      .insight-divider {
+        margin: var(--space-lg) 0;
+      }
+    }
+
+    @media (max-width: 374px) {
+      :root {
+        --inline-pad: var(--space-sm);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- ==========================================
+         SECTION 1: POEM
+         Philosophy: Content is the only element.
+         ========================================== -->
+    <header class="poem-header">
+      <h1 class="poem-title" dir="rtl" lang="ar">أحبُّكِ جِدّاً</h1>
+      <p class="poem-meta" dir="ltr">Nizar Qabbani · I Love You Intensely</p>
+    </header>
+
+    <div class="poem-body" dir="rtl" lang="ar">
+      <p class="poem-verse">أُحِبُّكِ جِدًّا</p>
+      <p class="poem-verse">أُحِبُّكِ جِدًّا</p>
+      <p class="poem-verse">وَأَعْرِفُ أَنَّ الطَّرِيقَ إِلَى الْمُسْتَحِيلِ طَوِيلٌ</p>
+      <p class="poem-verse">وَلٰكِنْ أُحِبُّكِ جِدًّا</p>
+      <p class="poem-verse">فَمَاذَا أَفْعَلُ؟</p>
+    </div>
+
+    <!-- ==========================================
+         SECTION 2: EXPLAIN TRIGGER
+         Minimal: text link with subtle icon, not a button.
+         ========================================== -->
+    <button class="explain-trigger" id="explainTrigger" type="button">
+      <span class="trigger-icon" aria-hidden="true">?</span>
+      <span class="trigger-label">Explain this poem</span>
+    </button>
+
+    <!-- ==========================================
+         SECTION 3: INSIGHT FLOW (INLINE, HIDDEN)
+         Content streams in as word-groups, not characters.
+         ========================================== -->
+    <div class="insight-divider" id="insightDivider" aria-hidden="true"></div>
+
+    <div class="insight-flow" id="insightFlow" aria-label="Poem insight">
+
+      <section class="insight-section" data-section="translation">
+        <h2 class="insight-label">Translation</h2>
+        <div class="insight-body translation" dir="ltr">
+          <p data-stream>I love you so much / I love you so much / And I know that the road to the impossible is long / But I love you so much / So what can I do?</p>
+        </div>
+      </section>
+
+      <section class="insight-section" data-section="depth">
+        <h2 class="insight-label">The Depth</h2>
+        <div class="insight-body" dir="ltr">
+          <p data-stream>Nizar Qabbani's brevity here is disarming. The repetition of "I love you so much" creates a hypnotic rhythm, emphasizing both certainty and helplessness. The phrase "the road to the impossible" reveals the poem's central tension -- love as simultaneously inevitable and unattainable.</p>
+          <p data-stream>The final question -- "So what can I do?" -- is rhetorical yet devastating. It is not a plea for advice but a surrender to the overwhelming force of desire. Qabbani strips away metaphor, leaving only the raw vulnerability of a lover who knows they are pursuing the impossible but cannot stop.</p>
+        </div>
+      </section>
+
+      <section class="insight-section" data-section="author">
+        <h2 class="insight-label">The Author</h2>
+        <div class="insight-body" dir="ltr">
+          <p data-stream>Nizar Qabbani (1923-1998) is often called the poet of love and revolution. Born in Damascus, he scandalized Arab society with his frank treatment of romantic and erotic themes, breaking centuries of poetic convention. His work challenged patriarchal norms while celebrating feminine beauty and agency.</p>
+          <p data-stream>Qabbani's directness -- evident in this poem -- was revolutionary. He wrote in accessible, conversational Arabic rather than ornate classical forms, making poetry a vehicle for everyday emotion. His later work grew more political, but his love poems remain his most enduring legacy.</p>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <script>
+    // ==========================================
+    // WORD-GROUP STREAMING ENGINE
+    // ==========================================
+    //
+    // Instead of character-by-character typing (which feels mechanical),
+    // this streams in word-groups with opacity transitions. Each group
+    // fades in smoothly, giving a sense of thought forming rather than
+    // a typewriter. This is more aligned with the minimalist philosophy:
+    // motion should be "almost invisible."
+
+    const trigger = document.getElementById('explainTrigger');
+    const divider = document.getElementById('insightDivider');
+    const flow = document.getElementById('insightFlow');
+
+    const WORDS_PER_GROUP = 4;
+    const GROUP_DELAY_MS = 60;
+    const SECTION_PAUSE_MS = 350;
+    const LABEL_PAUSE_MS = 200;
+
+    trigger.addEventListener('click', startInsight);
+
+    async function startInsight() {
+      // Dissolve the trigger
+      trigger.classList.add('dissolving');
+
+      await wait(280);
+
+      // Show divider
+      divider.classList.add('visible');
+
+      await wait(200);
+
+      // Show flow container
+      flow.classList.add('visible');
+
+      // Stream each section
+      const sections = flow.querySelectorAll('.insight-section');
+      for (let i = 0; i < sections.length; i++) {
+        const section = sections[i];
+        const label = section.querySelector('.insight-label');
+        const paragraphs = section.querySelectorAll('[data-stream]');
+
+        // Reveal label
+        label.classList.add('revealed');
+        await wait(LABEL_PAUSE_MS);
+
+        // Stream each paragraph
+        for (let j = 0; j < paragraphs.length; j++) {
+          await streamParagraph(paragraphs[j]);
+          if (j < paragraphs.length - 1) {
+            await wait(120);
+          }
+        }
+
+        // Pause between sections
+        if (i < sections.length - 1) {
+          await wait(SECTION_PAUSE_MS);
+        }
+      }
+    }
+
+    async function streamParagraph(el) {
+      const fullText = el.textContent.trim();
+      const words = fullText.split(/\s+/);
+      el.textContent = '';
+
+      // Create cursor
+      const cursor = document.createElement('span');
+      cursor.className = 'stream-cursor active';
+      el.appendChild(cursor);
+
+      // Split words into groups
+      const groups = [];
+      for (let i = 0; i < words.length; i += WORDS_PER_GROUP) {
+        groups.push(words.slice(i, i + WORDS_PER_GROUP).join(' '));
+      }
+
+      // Stream each group
+      for (let i = 0; i < groups.length; i++) {
+        const span = document.createElement('span');
+        span.className = 'word-group';
+        span.textContent = (i > 0 ? ' ' : '') + groups[i];
+        el.insertBefore(span, cursor);
+
+        // Trigger reflow, then animate
+        void span.offsetWidth;
+        span.classList.add('streamed');
+
+        await wait(GROUP_DELAY_MS);
+      }
+
+      // Fade out cursor
+      cursor.classList.remove('active');
+      await wait(150);
+      cursor.remove();
+    }
+
+    function wait(ms) {
+      return new Promise(resolve => setTimeout(resolve, ms));
+    }
+  </script>
+</body>
+</html>

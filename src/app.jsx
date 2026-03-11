@@ -1061,7 +1061,7 @@ const MysticalConsultationEffect = ({ active, theme }) => {
   );
 };
 
-const DebugPanel = ({ logs, onClear, darkMode, poem, appState, visible }) => {
+const DebugPanel = ({ logs, onClear, darkMode, poem, appState, visible, controlBarRef }) => {
   const theme = darkMode ? THEME.dark : THEME.light;
   const [panelOpen, setPanelOpen] = useState(false);
   const [bugDescription, setBugDescription] = useState('');
@@ -1069,6 +1069,33 @@ const DebugPanel = ({ logs, onClear, darkMode, poem, appState, visible }) => {
   const [bugError, setBugError] = useState('');
   const [lastViewedCount, setLastViewedCount] = useState(0);
   const scrollRef = useRef(null);
+  // Position bug button centered in the gap between screen edge and control bar
+  const [btnPos, setBtnPos] = useState({ left: 16, bottom: 16 });
+  useEffect(() => {
+    const update = () => {
+      const el = controlBarRef?.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const vh = window.innerHeight;
+      // X: center of gap between left screen edge and bar left edge (minus half button width)
+      const left = Math.max(8, rect.left / 2 - 10);
+      // Y: center of gap between bar bottom edge and screen bottom (minus half button height)
+      const gapBelow = vh - rect.bottom;
+      const bottom = Math.max(8, gapBelow / 2 - 10);
+      setBtnPos({ left, bottom });
+    };
+    update();
+    window.addEventListener('resize', update);
+    const ro =
+      typeof ResizeObserver !== 'undefined' && controlBarRef?.current
+        ? new ResizeObserver(update)
+        : null;
+    if (ro && controlBarRef?.current) ro.observe(controlBarRef.current);
+    return () => {
+      window.removeEventListener('resize', update);
+      ro?.disconnect();
+    };
+  }, [controlBarRef]);
 
   // Auto-scroll to bottom on new logs when panel is open
   useEffect(() => {
@@ -1146,10 +1173,11 @@ const DebugPanel = ({ logs, onClear, darkMode, poem, appState, visible }) => {
 
   return (
     <>
-      {/* Floating trigger — small visual dot, 44px touch target */}
+      {/* Floating trigger — small visual dot, 44px touch target, centered in gap */}
       <button
         onClick={() => setPanelOpen((prev) => !prev)}
-        className="fixed bottom-3 left-3 z-[200] w-[44px] h-[44px] flex items-center justify-center"
+        className="fixed z-[200] w-[44px] h-[44px] flex items-center justify-center"
+        style={{ left: btnPos.left, bottom: btnPos.bottom }}
         title="Toggle dev logs"
         aria-label="Toggle developer log panel"
       >
@@ -1169,12 +1197,18 @@ const DebugPanel = ({ logs, onClear, darkMode, poem, appState, visible }) => {
 
       {/* Floating log panel — matches poet picker styling */}
       <div
-        className={`fixed bottom-14 left-3 z-[200] w-80 max-w-[calc(100vw-2rem)] flex flex-col rounded-2xl shadow-2xl transition-all duration-200 ${
+        className={`fixed z-[200] w-80 max-w-[calc(100vw-2rem)] flex flex-col rounded-2xl shadow-2xl transition-all duration-200 ${
           darkMode
             ? 'bg-black/95 border border-[#C5A059]/25 text-stone-300'
             : 'bg-white/95 border border-[#8B7355]/20 text-stone-700'
         } backdrop-blur-2xl ${panelOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}
-        style={{ height: '50vh', maxHeight: '480px', minHeight: '240px' }}
+        style={{
+          left: btnPos.left,
+          bottom: btnPos.bottom + 48,
+          height: '50vh',
+          maxHeight: '480px',
+          minHeight: '240px',
+        }}
         aria-hidden={!panelOpen}
       >
         {/* Panel header */}
@@ -1216,8 +1250,8 @@ const DebugPanel = ({ logs, onClear, darkMode, poem, appState, visible }) => {
               key={idx}
               className={`py-0.5 border-b ${darkMode ? 'border-stone-800/40' : 'border-stone-200/40'} ${logTypeColor(log.type)}`}
             >
-              <span className={`opacity-40 ${darkMode ? 'text-stone-500' : 'text-stone-400'}`}>
-                {log.rel || log.time}
+              <span className={darkMode ? 'text-stone-400' : 'text-stone-500'}>
+                {idx === 0 ? log.time : log.rel}
               </span>{' '}
               <span className={`font-semibold ${labelColor}`}>[{log.label}]</span>{' '}
               <span>{log.msg}</span>
@@ -4971,6 +5005,7 @@ export default function DiwanApp() {
         darkMode={darkMode}
         poem={current}
         visible={showDebugLogs}
+        controlBarRef={controlBarRef}
         appState={{
           mode: useDatabase ? 'database' : 'ai',
           theme: darkMode ? 'dark' : 'light',

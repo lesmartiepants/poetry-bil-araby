@@ -21,10 +21,11 @@
       --text-secondary: #b0a48e;
       --text-muted: #7a6f5e;
       --border-color: #2e2818;
-      --gold: #C9A855;
+      --gold: #C5A059;
+      --gold-warm: #C9A855;
       --gold-light: #D4B463;
-      --gold-dim: rgba(201, 168, 85, 0.4);
-      --gold-border: rgba(201, 168, 85, 0.2);
+      --gold-dim: rgba(197, 160, 89, 0.4);
+      --gold-border: rgba(197, 160, 89, 0.2);
       --indigo: #7B6EC9;
 
       --font-arabic: 'Amiri', serif;
@@ -103,7 +104,7 @@
     .star {
       position: absolute;
       border-radius: 50%;
-      background: #e8dcc4;
+      background: var(--gold-warm, #C9A855);
     }
 
     /* Star pulse animations with varying durations */
@@ -123,7 +124,7 @@
       min-height: 44px; min-width: 44px;
       border: 1px solid var(--gold-border);
       border-radius: 50%;
-      background: rgba(201, 168, 85, 0.05);
+      background: rgba(197, 160, 89, 0.05);
       color: var(--gold); cursor: pointer;
       display: flex; align-items: center; justify-content: center;
       transition: all 0.3s var(--ease-out-quart);
@@ -132,9 +133,9 @@
     }
 
     .theme-toggle:hover {
-      background: rgba(201, 168, 85, 0.15);
-      border-color: rgba(201, 168, 85, 0.6);
-      box-shadow: 0 0 30px rgba(201, 168, 85, 0.3);
+      background: rgba(197, 160, 89, 0.15);
+      border-color: rgba(197, 160, 89, 0.6);
+      box-shadow: 0 0 30px rgba(197, 160, 89, 0.3);
     }
 
     .theme-toggle svg { width: 20px; height: 20px; }
@@ -158,7 +159,7 @@
     .splash::before {
       content: '';
       position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-      background: radial-gradient(ellipse at 50% 60%, rgba(201, 168, 85, 0.08) 0%, transparent 50%);
+      background: radial-gradient(ellipse at 50% 60%, rgba(197, 160, 89, 0.08) 0%, transparent 50%);
     }
 
     .splash.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
@@ -178,7 +179,7 @@
       font-family: var(--font-brand-ar); font-weight: 700;
       font-size: clamp(3rem, 8vw, 5rem); line-height: 1;
       color: var(--gold);
-      text-shadow: 0 0 40px rgba(201, 168, 85, 0.35);
+      text-shadow: 0 0 40px rgba(197, 160, 89, 0.35);
       padding-bottom: 0.05em;
     }
 
@@ -209,8 +210,8 @@
     }
 
     .splash-cta:hover {
-      background: rgba(201, 168, 85, 0.1);
-      box-shadow: 0 0 50px rgba(201, 168, 85, 0.3);
+      background: rgba(197, 160, 89, 0.1);
+      box-shadow: 0 0 50px rgba(197, 160, 89, 0.3);
       transform: translateY(-3px);
     }
 
@@ -269,7 +270,7 @@
       transition: all 0.3s var(--ease-out-quart);
     }
 
-    .onboarding-next:hover { background: rgba(201, 168, 85, 0.1); }
+    .onboarding-next:hover { background: rgba(197, 160, 89, 0.1); }
     .onboarding-next svg { width: 16px; height: 16px; }
 
     /* ============================================
@@ -305,7 +306,7 @@
       font-family: var(--font-brand-ar); font-weight: 700;
       font-size: 1.25rem; line-height: 1;
       color: var(--gold);
-      text-shadow: 0 0 15px rgba(201, 168, 85, 0.25);
+      text-shadow: 0 0 15px rgba(197, 160, 89, 0.25);
       padding-bottom: 0.06em;
     }
 
@@ -391,7 +392,7 @@
     }
 
     .v-ctrl-btn:hover { color: var(--gold); border-color: var(--gold-dim); }
-    .v-ctrl-btn.active { color: var(--gold); border-color: var(--gold); background: rgba(201, 168, 85, 0.1); }
+    .v-ctrl-btn.active { color: var(--gold); border-color: var(--gold); background: rgba(197, 160, 89, 0.1); }
     .v-ctrl-btn svg { width: 18px; height: 18px; }
 
     /* ============================================

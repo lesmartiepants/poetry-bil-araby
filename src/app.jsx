@@ -3125,6 +3125,8 @@ export default function DiwanApp() {
   const [audioError, setAudioError] = useState(null);
   const [interpretation, setInterpretation] = useState(null);
   const [isInterpreting, setIsInterpreting] = useState(false);
+  const [showInsightPanel, setShowInsightPanel] = useState(false);
+  const [bottomSheetHeight, setBottomSheetHeight] = useState('50vh');
   const [isFetching, setIsFetching] = useState(false);
   const [autoExplainPending, setAutoExplainPending] = useState(false);
   const hasAutoLoaded = useRef(false);
@@ -4015,6 +4017,10 @@ export default function DiwanApp() {
       'info'
     );
 
+    // Open insight panel (mobile bottom sheet / desktop side panel)
+    setShowInsightPanel(true);
+    setBottomSheetHeight('50vh');
+
     if (interpretation || isInterpreting) return;
     track('insight_requested', { poet: current?.poet });
 
@@ -4881,6 +4887,7 @@ export default function DiwanApp() {
 
   useEffect(() => {
     setInterpretation(null);
+    setShowInsightPanel(false);
     audioRef.current.pause();
     setIsPlaying(false);
     if (audioUrl) URL.revokeObjectURL(audioUrl);
@@ -5377,47 +5384,7 @@ export default function DiwanApp() {
                   </div>
                 </div>
 
-                <div className="w-full max-w-2xl px-6 md:px-0 mb-4 md:hidden">
-                  {isInterpreting ? (
-                    <div className="flex flex-col items-center py-8 gap-4">
-                      <div className="relative">
-                        <Loader2 className="animate-spin text-indigo-500" size={32} />
-                        <Sparkles
-                          className="absolute inset-0 m-auto animate-pulse text-indigo-400"
-                          size={16}
-                        />
-                      </div>
-                      <p className="text-xs italic font-brand-en opacity-60 tracking-widest uppercase">
-                        Consulting the Diwan...
-                      </p>
-                    </div>
-                  ) : interpretation ? (
-                    <div
-                      className={`flex flex-col gap-10 animate-in slide-in-from-bottom-10 duration-1000`}
-                    >
-                      <div className="pt-6 border-t border-indigo-500/10">
-                        <h4 className="text-[10px] font-brand-en font-black text-indigo-600 mb-3 uppercase tracking-[0.3em] opacity-80">
-                          The Depth
-                        </h4>
-                        <div className="pl-4 border-l border-indigo-500/10">
-                          <p className="text-[clamp(0.9375rem,1.6vw,1rem)] font-brand-en font-normal leading-relaxed italic opacity-90">
-                            {insightParts?.depth}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="pt-6 border-t border-indigo-500/10">
-                        <h4 className="text-[10px] font-brand-en font-black text-indigo-600 mb-3 uppercase tracking-[0.3em] opacity-80">
-                          The Author
-                        </h4>
-                        <div className="pl-4 border-l border-indigo-500/10">
-                          <p className="text-[clamp(0.9375rem,1.6vw,1rem)] font-brand-en font-normal leading-relaxed italic opacity-90">
-                            {insightParts?.author}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
+                {/* Mobile insight moved to bottom sheet overlay */}
               </div>
             </div>
           </main>
@@ -5746,15 +5713,33 @@ export default function DiwanApp() {
           </footer>
         </div>
 
-        <div className="hidden md:block h-full border-l">
+        {showInsightPanel && (
+        <div className="hidden md:block h-full border-l" style={{ animation: 'bottomSheetSlideUp 300ms cubic-bezier(0.32, 0.72, 0, 1)' }}>
+          <style>{`
+            @keyframes desktopPaneSlideIn {
+              from { transform: translateX(100%); opacity: 0; }
+              to { transform: translateX(0); opacity: 1; }
+            }
+          `}</style>
           <div
             className={`${DESIGN.paneWidth} h-full flex flex-col z-30 ${DESIGN.anim} ${theme.glass} ${theme.border} relative`}
+            style={{ animation: 'desktopPaneSlideIn 300ms cubic-bezier(0.32, 0.72, 0, 1)' }}
           >
             <GlassNoise />
             <div className="p-6 pb-4 border-b border-stone-500/10">
-              <h3 className="font-brand-en italic font-semibold text-[clamp(1rem,1.8vw,1.125rem)] text-indigo-600 tracking-tight">
-                Poetic Insight
-              </h3>
+              <div className="flex items-center justify-between">
+                <h3 className="font-brand-en italic font-semibold text-[clamp(1rem,1.8vw,1.125rem)] text-indigo-600 tracking-tight">
+                  Poetic Insight
+                </h3>
+                <button
+                  onClick={() => setShowInsightPanel(false)}
+                  aria-label="Close insight panel"
+                  className={`${DESIGN.focusRing} ${DESIGN.touchTarget}`}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', cursor: 'pointer' }}
+                >
+                  <X size={16} className="opacity-40 hover:opacity-80 transition-opacity" />
+                </button>
+              </div>
               <p className="text-[10px] opacity-30 uppercase font-brand-en truncate">
                 {current?.poet} • {current?.title}
               </p>
@@ -5815,6 +5800,149 @@ export default function DiwanApp() {
           </div>
         </div>
       </div>
+
+      {/* Mobile Bottom Sheet for Insights */}
+      {showInsightPanel && (
+        <>
+          <style>{`
+            @keyframes bottomSheetSlideUp {
+              from { transform: translateY(100%); }
+              to { transform: translateY(0); }
+            }
+            @keyframes bottomSheetBackdropIn {
+              from { opacity: 0; }
+              to { opacity: 1; }
+            }
+          `}</style>
+          {/* Backdrop */}
+          <div
+            className="md:hidden"
+            onClick={() => setShowInsightPanel(false)}
+            style={{
+              position: 'fixed',
+              inset: 0,
+              backgroundColor: 'rgba(0,0,0,0.4)',
+              zIndex: 59,
+              animation: 'bottomSheetBackdropIn 300ms ease-out',
+            }}
+          />
+          {/* Bottom Sheet */}
+          <div
+            className="md:hidden"
+            style={{
+              position: 'fixed',
+              bottom: 0,
+              left: 0,
+              right: 0,
+              height: bottomSheetHeight,
+              zIndex: 60,
+              borderTopLeftRadius: '1rem',
+              borderTopRightRadius: '1rem',
+              backdropFilter: 'blur(40px)',
+              WebkitBackdropFilter: 'blur(40px)',
+              backgroundColor: darkMode ? 'rgba(14,12,8,0.92)' : 'rgba(255,255,255,0.92)',
+              borderTop: `1px solid ${darkMode ? 'rgba(197,160,89,0.15)' : 'rgba(197,160,89,0.25)'}`,
+              animation: 'bottomSheetSlideUp 300ms cubic-bezier(0.32, 0.72, 0, 1)',
+              display: 'flex',
+              flexDirection: 'column',
+              paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+              transition: 'height 300ms cubic-bezier(0.32, 0.72, 0, 1)',
+            }}
+          >
+            <GlassNoise />
+            {/* Drag handle */}
+            <button
+              onClick={() => setBottomSheetHeight(prev => prev === '50vh' ? '90vh' : '50vh')}
+              aria-label="Toggle sheet height"
+              style={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                padding: '12px 0 4px 0',
+                background: 'transparent',
+                border: 'none',
+                cursor: 'pointer',
+                minHeight: '44px',
+                minWidth: '44px',
+              }}
+            >
+              <div
+                style={{
+                  width: '40px',
+                  height: '4px',
+                  borderRadius: '2px',
+                  background: 'linear-gradient(to right, #B8922E, #E2C67A, #A07D38)',
+                }}
+              />
+            </button>
+            {/* Header */}
+            <div style={{ padding: '4px 24px 12px', borderBottom: `1px solid ${darkMode ? 'rgba(197,160,89,0.1)' : 'rgba(197,160,89,0.15)'}` }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <h3 className="font-brand-en italic font-semibold text-[clamp(1rem,1.8vw,1.125rem)] text-indigo-600 tracking-tight">
+                  Poetic Insight
+                </h3>
+                <button
+                  onClick={() => setShowInsightPanel(false)}
+                  aria-label="Close insight panel"
+                  className={`${DESIGN.focusRing}`}
+                  style={{ minWidth: '44px', minHeight: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: 'none', cursor: 'pointer' }}
+                >
+                  <X size={18} className="opacity-40 hover:opacity-80" />
+                </button>
+              </div>
+              <p className="text-[10px] opacity-30 uppercase font-brand-en truncate">
+                {current?.poet} • {current?.title}
+              </p>
+            </div>
+            {/* Content */}
+            <div style={{ flex: 1, overflowY: 'auto', padding: '24px' }} className="custom-scrollbar">
+              {isInterpreting ? (
+                <div className="h-full flex flex-col items-center justify-center gap-4 opacity-30">
+                  <Sparkles className="animate-spin text-[#C5A059]" size={32} />
+                  <p className="font-brand-en italic text-sm">Consulting Diwan...</p>
+                </div>
+              ) : interpretation ? (
+                <div className="flex flex-col gap-8">
+                  {showTranslation && (
+                    <p className={`font-brand-en italic whitespace-pre-wrap text-[clamp(0.9375rem,1.6vw,1rem)] ${darkMode ? 'text-stone-100' : 'text-stone-800'}`}>
+                      {insightParts?.poeticTranslation || current?.english}
+                    </p>
+                  )}
+                  {insightParts?.depth && (
+                    <div className="pt-6 border-t border-indigo-500/10">
+                      <h4 className="text-[10px] font-brand-en font-black text-indigo-600 mb-3 uppercase tracking-[0.3em] opacity-80">
+                        The Depth
+                      </h4>
+                      <div className="pl-4 border-l border-indigo-500/10">
+                        <p className="text-[clamp(0.9375rem,1.6vw,1rem)] font-brand-en font-normal leading-relaxed italic opacity-90">
+                          {insightParts.depth}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                  {insightParts?.author && (
+                    <div className="pt-6 border-t border-indigo-500/10">
+                      <h4 className="text-[10px] font-brand-en font-black text-indigo-600 mb-3 uppercase tracking-[0.3em] opacity-80">
+                        The Author
+                      </h4>
+                      <div className="pl-4 border-l border-indigo-500/10">
+                        <p className="text-[clamp(0.9375rem,1.6vw,1rem)] font-brand-en font-normal leading-relaxed italic opacity-90">
+                          {insightParts.author}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="h-full flex flex-col items-center justify-center gap-4 opacity-30">
+                  <Sparkles size={24} className="text-[#C5A059]" />
+                  <p className="font-brand-en italic text-sm">Tap Explain to seek insight</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </>
+      )}
 
       {/* Auth Modal */}
       <AuthModal

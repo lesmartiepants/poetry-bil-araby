@@ -5370,66 +5370,45 @@ export default function DiwanApp() {
                 >
                   <div className="minimal-frame mb-1">
                     <svg viewBox="0 0 550 120" preserveAspectRatio="xMidYMid meet">
-                      <line className="frame-line" x1="20" y1="20" x2="70" y2="20" />
-                      <line className="frame-line" x1="20" y1="20" x2="20" y2="70" />
-                      <line className="frame-line" x1="530" y1="20" x2="480" y2="20" />
-                      <line className="frame-line" x1="530" y1="20" x2="530" y2="70" />
-                      <line className="frame-line" x1="20" y1="100" x2="70" y2="100" />
-                      <line className="frame-line" x1="20" y1="100" x2="20" y2="50" />
-                      <line className="frame-line" x1="530" y1="100" x2="480" y2="100" />
-                      <line className="frame-line" x1="530" y1="100" x2="530" y2="50" />
-                      <circle
-                        className="frame-line"
-                        cx="32"
-                        cy="32"
-                        r="2.5"
-                        fill={GOLD.gold}
-                        opacity="0.35"
-                      />
-                      <circle
-                        className="frame-line"
-                        cx="518"
-                        cy="32"
-                        r="2.5"
-                        fill={GOLD.gold}
-                        opacity="0.35"
-                      />
-                      <circle
-                        className="frame-line"
-                        cx="32"
-                        cy="88"
-                        r="2.5"
-                        fill={GOLD.gold}
-                        opacity="0.35"
-                      />
-                      <circle
-                        className="frame-line"
-                        cx="518"
-                        cy="88"
-                        r="2.5"
-                        fill={GOLD.gold}
-                        opacity="0.35"
-                      />
+                      {/* Simplified frame — subtle corner dots only */}
+                      <circle cx="24" cy="24" r="1.5" fill={GOLD.gold} opacity="0.3" />
+                      <circle cx="526" cy="24" r="1.5" fill={GOLD.gold} opacity="0.3" />
+                      <circle cx="24" cy="96" r="1.5" fill={GOLD.gold} opacity="0.3" />
+                      <circle cx="526" cy="96" r="1.5" fill={GOLD.gold} opacity="0.3" />
                     </svg>
 
                     <div className="relative z-10 flex flex-col items-center justify-center w-full">
-                      <div
-                        className={`flex flex-wrap items-center justify-center gap-1 sm:gap-2 md:gap-4 ${currentFontClass} ${DESIGN.mainTitleSize}`}
+                      {/* Poet name — smaller attribution */}
+                      <span
+                        className={`${currentFontClass} text-[clamp(1.25rem,2.5vw,1.5rem)] ${theme.poetColor} opacity-70`}
                       >
-                        <span className={`${theme.poetColor} opacity-90`}>
-                          {current?.poetArabic}
-                        </span>
-                        <span className="opacity-10 text-[clamp(0.75rem,1.5vw,1.25rem)]">-</span>
-                        <span className={`${theme.titleColor} font-bold`}>
-                          {current?.titleArabic}
-                        </span>
-                      </div>
+                        {current?.poetArabic}
+                      </span>
+                      {/* Gold divider */}
                       <div
-                        className={`flex items-center justify-center gap-1 sm:gap-2 opacity-45 ${DESIGN.mainSubtitleSize} font-brand-en tracking-[0.08em] uppercase mt-[clamp(0.25rem,0.8vw,0.75rem)]`}
+                        style={{
+                          width: '32px',
+                          height: '1px',
+                          background: `linear-gradient(90deg, transparent, ${GOLD.gold}, transparent)`,
+                          opacity: 0.4,
+                          margin: '8px 0',
+                        }}
+                      />
+                      {/* Poem title — hero element */}
+                      <span
+                        className={`${currentFontClass} text-[clamp(2rem,4vw,2.75rem)] ${theme.titleColor} font-bold`}
                       >
-                        <span className="font-semibold">{current?.poet}</span>{' '}
-                        <span className="opacity-20">•</span> <span>{current?.title}</span>
-                      </div>
+                        {current?.titleArabic}
+                      </span>
+                      {/* English subtitle — hidden by default, shown when translation is on */}
+                      {showTranslation && (
+                        <div
+                          className={`flex items-center justify-center gap-1 sm:gap-2 opacity-45 ${DESIGN.mainSubtitleSize} font-brand-en tracking-[0.08em] uppercase mt-[clamp(0.25rem,0.8vw,0.75rem)]`}
+                        >
+                          <span className="font-semibold">{current?.poet}</span>{' '}
+                          <span className="opacity-20">&bull;</span> <span>{current?.title}</span>
+                        </div>
+                      )}
                       {dailyPoem && current?.id === dailyPoem.id && (
                         <div
                           className={`flex items-center gap-1.5 mt-2 px-3 py-1 rounded-full ${GOLD.goldBg10} border ${GOLD.goldBg20}`}

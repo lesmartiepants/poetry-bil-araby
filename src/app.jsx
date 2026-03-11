@@ -2471,7 +2471,7 @@ const VerticalSidebar = ({
           <button
             onClick={onToggleTransliteration}
             title={showTransliteration ? 'Hide romanization' : 'Show romanization'}
-            className={`${btnBase} ${btnHover} relative ${!showTransliteration ? 'opacity-40' : ''}`}
+            className={`${btnBase} ${btnHover} ${showTransliteration ? theme.goldActiveBg + ' border ' + theme.goldBorderSubtle : 'opacity-40'}`}
           >
             <span
               className="text-[12px] font-bold leading-none"
@@ -2479,9 +2479,6 @@ const VerticalSidebar = ({
             >
               عA
             </span>
-            {showTransliteration && (
-              <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#C5A059] shadow-[0_0_6px_rgba(197,160,89,0.6)]" />
-            )}
           </button>
           <span className={labelCls} style={{ color: gold }}>
             Translit
@@ -2507,12 +2504,9 @@ const VerticalSidebar = ({
               <button
                 onClick={onToggleTranslation}
                 title={showTranslation ? 'Hide translation' : 'Show translation'}
-                className={`${subBtnBase} ${subBtnHover} relative ${!showTranslation ? 'opacity-40' : ''}`}
+                className={`${subBtnBase} ${subBtnHover} ${showTranslation ? theme.goldActiveBg + ' border ' + theme.goldBorderSubtle : 'opacity-40'}`}
               >
                 <Languages style={{ color: gold }} size={16} />
-                {showTranslation && (
-                  <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-[#C5A059]" />
-                )}
               </button>
               <span className={labelCls} style={{ color: gold }}>
                 Translate
@@ -4766,7 +4760,7 @@ export default function DiwanApp() {
               ref={controlBarRef}
               className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full shadow-2xl border ${DESIGN.glass} ${theme.border} ${theme.shadow} ${DESIGN.anim} max-w-[calc(100vw-2rem)] w-fit`}
             >
-              <div className="flex flex-col items-center gap-1 min-w-[52px]">
+              <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
                 {isGeneratingAudio ? (
                   <>
                     <button
@@ -4813,8 +4807,8 @@ export default function DiwanApp() {
                       </div>
                     </button>
                     <span
-                      className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase text-stone-400 whitespace-nowrap"
-                      style={{ animation: 'shimmer 2s ease-in-out infinite' }}
+                      className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase whitespace-nowrap ${GOLD.goldText}`}
+                      style={{ opacity: 0.6, animation: 'shimmer 2s ease-in-out infinite' }}
                     >
                       Crafting
                     </span>
@@ -4840,20 +4834,17 @@ export default function DiwanApp() {
                         <Volume2 className={GOLD.goldText} size={21} />
                       )}
                     </button>
-                    {isPlaying ? (
-                      <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase text-stone-400 whitespace-nowrap">
-                        Playing
-                      </span>
-                    ) : (
-                      <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">
-                        Listen
-                      </span>
-                    )}
+                    <span
+                      className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase whitespace-nowrap ${GOLD.goldText}`}
+                      style={{ opacity: isPlaying ? 0.9 : 0.6 }}
+                    >
+                      {isPlaying ? 'Playing' : 'Listen'}
+                    </span>
                   </>
                 )}
               </div>
 
-              <div className="flex flex-col items-center gap-1 min-w-[52px]">
+              <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
                 <button
                   onClick={handleFetch}
                   disabled={isFetching}
@@ -4866,7 +4857,10 @@ export default function DiwanApp() {
                     <Shuffle className={GOLD.goldText} size={21} />
                   )}
                 </button>
-                <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">
+                <span
+                  className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase whitespace-nowrap ${GOLD.goldText}`}
+                  style={{ opacity: 0.6 }}
+                >
                   Discover
                 </span>
               </div>
@@ -4879,7 +4873,10 @@ export default function DiwanApp() {
                 >
                   <ScrollText className={GOLD.goldText} size={21} />
                 </button>
-                <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">
+                <span
+                  className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase whitespace-nowrap ${GOLD.goldText}`}
+                  style={{ opacity: 0.6 }}
+                >
                   Poets
                 </span>
                 {poetPickerOpen && (

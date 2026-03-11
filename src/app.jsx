@@ -45,11 +45,7 @@ import {
   useDownvotes,
   usePoemEvents,
 } from './hooks/useAuth';
-import {
-  INSIGHTS_SYSTEM_PROMPT,
-  DISCOVERY_SYSTEM_PROMPT,
-  getTTSContent,
-} from './prompts';
+import { INSIGHTS_SYSTEM_PROMPT, DISCOVERY_SYSTEM_PROMPT, getTTSContent } from './prompts';
 import { parseInsight } from './utils/insightParser';
 import { repairAndParseJSON } from './utils/jsonRepair';
 import seedPoems from './data/seed-poems.json';
@@ -209,7 +205,8 @@ const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
  * used when the ListModels API is unavailable. Starts with the cheapest Gemini 2.5 model.
  */
 const API_MODELS = {
-  tts: 'gemini-2.5-flash-preview-tts',
+  tts: 'gemini-2.5-pro-preview-tts',
+  ttsFallback: 'gemini-2.5-flash-preview-tts',
   textDefaults: ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'],
 };
 
@@ -319,38 +316,31 @@ const geminiTextFetch = async (endpoint, body, label, addLog) => {
 const TTS_CONFIG = {
   voiceName: 'Fenrir',
   responseModalities: ['AUDIO'],
-  retryMaxAttempts: 3,
-  retryBaseDelayMs: 1500, // 1.5s, 3s, 6s exponential backoff
 };
 
 /**
- * Fetch with exponential backoff retry on 429 (rate limit) responses.
- * Returns the successful Response, or throws on final failure.
+ * Fetch TTS with model fallback on 429 (rate limit) responses.
+ * Tries the primary TTS model first; on 429 (daily quota exhausted),
+ * switches to the fallback model instead of retrying the same one.
+ * Quotas are per-model-per-day, so the fallback has its own quota.
  */
-const fetchWithRetry = async (
-  url,
-  options,
-  {
-    maxAttempts = TTS_CONFIG.retryMaxAttempts,
-    baseDelay = TTS_CONFIG.retryBaseDelayMs,
-    addLog,
-    label = 'TTS',
-  } = {}
-) => {
-  for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    const res = await fetch(url, options);
-    if (res.status !== 429) return res;
-    const delay = baseDelay * Math.pow(2, attempt);
+const fetchTTSWithFallback = async (url, options, { addLog, label = 'TTS' } = {}) => {
+  const res = await fetch(url, options);
+  if (res.status !== 429) return res;
+
+  // Primary model rate-limited — try fallback model (separate daily quota)
+  if (API_MODELS.ttsFallback) {
+    const fallbackUrl = url.replace(API_MODELS.tts, API_MODELS.ttsFallback);
     if (addLog)
       addLog(
         label,
-        `Rate limited (429) — retrying in ${(delay / 1000).toFixed(1)}s (attempt ${attempt + 1}/${maxAttempts})`,
+        `Rate limited (429) on ${API_MODELS.tts} — falling back to ${API_MODELS.ttsFallback}`,
         'warning'
       );
-    await new Promise((r) => setTimeout(r, delay));
+    return fetch(fallbackUrl, options);
   }
-  // Final attempt — return whatever we get
-  return fetch(url, options);
+
+  return res;
 };
 
 /* =============================================================================
@@ -630,7 +620,10 @@ const prefetchManager = {
         headers: { 'Content-Type': 'application/json' },
         body: requestBody,
       };
-      const res = await fetchWithRetry(url, fetchOptions, { addLog, label: 'Prefetch Audio' });
+      const res = await fetchTTSWithFallback(url, fetchOptions, {
+        addLog,
+        label: 'Prefetch Audio',
+      });
 
       if (!res.ok) {
         const errorText = await res.text();
@@ -1797,13 +1790,16 @@ const SplashScreen = ({ isOpen, onDismiss, showOnboarding, theme }) => {
           >
             poetry
           </span>
-          <Feather style={{
-            width: 'clamp(24px, 4vw, 36px)',
-            height: 'clamp(24px, 4vw, 36px)',
-            color: gold,
-            opacity: 0.8,
-            marginBottom: '0.15em',
-          }} strokeWidth={1.5} />
+          <Feather
+            style={{
+              width: 'clamp(24px, 4vw, 36px)',
+              height: 'clamp(24px, 4vw, 36px)',
+              color: gold,
+              opacity: 0.8,
+              marginBottom: '0.15em',
+            }}
+            strokeWidth={1.5}
+          />
         </div>
 
         {/* Subtitle */}
@@ -3027,6 +3023,7 @@ export default function DiwanApp() {
   const analyserRef = useRef(null);
   const dataArrayRef = useRef(null);
   const animationFrameRef = useRef(null);
+  const sourceNodeRef = useRef(null);
   const volumePulseRef = useRef(null);
 
   const [headerOpacity, setHeaderOpacity] = useState(1);
@@ -3556,23 +3553,41 @@ export default function DiwanApp() {
 
   // Volume detection for pulse & glow effect
   useEffect(() => {
-    if (isPlaying && audioRef.current && !audioContextRef.current) {
+    if (isPlaying && audioRef.current) {
       try {
-        const AudioCtx = window.AudioContext || window.webkitAudioContext;
-        const audioContext = new AudioCtx();
-        const analyser = audioContext.createAnalyser();
-        const source = audioContext.createMediaElementSource(audioRef.current);
+        // Initialize AudioContext and source node if not already created.
+        // A MediaElement can only be connected to one MediaElementSourceNode ever,
+        // so we must reuse the source node across play/pause cycles.
+        if (!audioContextRef.current) {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          const audioContext = new AudioCtx();
+          const analyser = audioContext.createAnalyser();
 
-        analyser.fftSize = 32;
-        const bufferLength = analyser.frequencyBinCount;
-        const dataArray = new Uint8Array(bufferLength);
+          analyser.fftSize = 32;
+          const bufferLength = analyser.frequencyBinCount;
+          const dataArray = new Uint8Array(bufferLength);
 
-        source.connect(analyser);
-        analyser.connect(audioContext.destination);
+          // Reuse existing source node or create a new one
+          const source =
+            sourceNodeRef.current || audioContext.createMediaElementSource(audioRef.current);
+          sourceNodeRef.current = source;
 
-        audioContextRef.current = audioContext;
-        analyserRef.current = analyser;
-        dataArrayRef.current = dataArray;
+          source.connect(analyser);
+          analyser.connect(audioContext.destination);
+
+          audioContextRef.current = audioContext;
+          analyserRef.current = analyser;
+          dataArrayRef.current = dataArray;
+
+          if (FEATURES.logging) {
+            addLog('Audio Context', 'Initialized volume detection for glow effect', 'info');
+          }
+        }
+
+        // Resume context if it was suspended (e.g., by browser autoplay policy)
+        if (audioContextRef.current.state === 'suspended') {
+          audioContextRef.current.resume();
+        }
 
         const detectVolume = () => {
           if (!analyserRef.current || !dataArrayRef.current) return;
@@ -3599,10 +3614,6 @@ export default function DiwanApp() {
         };
 
         detectVolume();
-
-        if (FEATURES.logging) {
-          addLog('Audio Context', 'Initialized volume detection for glow effect', 'info');
-        }
       } catch (error) {
         // Gracefully degrade to CSS-only animation
         if (FEATURES.logging) {
@@ -3614,12 +3625,6 @@ export default function DiwanApp() {
     return () => {
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
-      }
-      if (audioContextRef.current) {
-        audioContextRef.current.close();
-        audioContextRef.current = null;
-        analyserRef.current = null;
-        dataArrayRef.current = null;
       }
     };
   }, [isPlaying]);
@@ -3855,7 +3860,7 @@ export default function DiwanApp() {
         headers: { 'Content-Type': 'application/json' },
         body: requestBody,
       };
-      const res = await fetchWithRetry(url, fetchOptions, { addLog, label: 'Audio API' });
+      const res = await fetchTTSWithFallback(url, fetchOptions, { addLog, label: 'Audio API' });
 
       if (!res.ok) {
         const errorText = await res.text();
@@ -4857,7 +4862,7 @@ export default function DiwanApp() {
   }, [current?.id]);
 
   // Prefetch triggers - run background prefetching when poem changes
-  // Only prefetch current poem; next-poem audio prefetch removed to conserve TTS quota (100 RPD free tier)
+  // Only prefetch current poem; next-poem audio prefetch removed to conserve TTS quota (100 RPD per model, free tier)
   useEffect(() => {
     if (!FEATURES.prefetching || !current?.id) return;
 
@@ -5074,28 +5079,30 @@ export default function DiwanApp() {
         style={{ opacity: headerOpacity }}
         className="fixed top-4 md:top-8 left-0 right-0 z-40 pointer-events-none transition-opacity duration-300 flex flex-row items-center justify-center gap-4 md:gap-8 px-4 md:px-6"
       >
-        <div
-          className="flex flex-row items-baseline gap-3 header-luminescence"
-        >
+        <div className="flex flex-row items-baseline gap-3 header-luminescence">
           <h1 style={{ display: 'flex', alignItems: 'baseline', gap: '0.75rem', margin: 0 }}>
-            <span style={{
-              fontFamily: "'Reem Kufi', sans-serif",
-              fontWeight: 700,
-              fontSize: 'clamp(3rem, 6vw, 4.5rem)',
-              lineHeight: 1,
-              color: darkMode ? '#D4D0C8' : '#1A1614',
-            }}>
+            <span
+              style={{
+                fontFamily: "'Reem Kufi', sans-serif",
+                fontWeight: 700,
+                fontSize: 'clamp(3rem, 6vw, 4.5rem)',
+                lineHeight: 1,
+                color: darkMode ? '#D4D0C8' : '#1A1614',
+              }}
+            >
               بالعربي
             </span>
-            <span style={{
-              fontFamily: "'Forum', serif",
-              fontSize: 'clamp(1.25rem, 2.5vw, 1.75rem)',
-              letterSpacing: '-0.05em',
-              lineHeight: 1,
-              color: '#C5A059',
-              textShadow: '0 0 40px rgba(197,160,89,0.3)',
-              paddingBottom: '0.15em',
-            }}>
+            <span
+              style={{
+                fontFamily: "'Forum', serif",
+                fontSize: 'clamp(1.25rem, 2.5vw, 1.75rem)',
+                letterSpacing: '-0.05em',
+                lineHeight: 1,
+                color: '#C5A059',
+                textShadow: '0 0 40px rgba(197,160,89,0.3)',
+                paddingBottom: '0.15em',
+              }}
+            >
               poetry
             </span>
           </h1>

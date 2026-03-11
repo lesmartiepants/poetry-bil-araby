@@ -1163,7 +1163,7 @@ const CategoryPill = ({ selected, onSelect, darkMode }) => {
     <div className="relative flex flex-col items-center gap-1 min-w-[56px]" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
+        className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer ${DESIGN.buttonHover} flex items-center justify-center rounded-full ${GOLD.goldHoverBg} ${DESIGN.focusRing}`}
         aria-label="Select poet category"
       >
         <Library size={21} className={GOLD.goldText} />
@@ -1230,7 +1230,7 @@ const ThemeDropdown = ({ darkMode, onToggleDarkMode, currentFont, onCycleFont, f
     <div className="relative flex flex-col items-center gap-1 min-w-[56px]" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
+        className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer ${DESIGN.buttonHover} flex items-center justify-center rounded-full ${GOLD.goldHoverBg} ${DESIGN.focusRing}`}
         aria-label="Theme options"
       >
         {darkMode ? (
@@ -1303,7 +1303,7 @@ const ErrorBanner = ({ error, onDismiss, onRetry, theme }) => {
               {onRetry && (
                 <button
                   onClick={onRetry}
-                  className={`${DESIGN.btnPrimary} ${theme.btnPrimary} px-3 py-1.5 ${DESIGN.radius} text-xs font-medium ${DESIGN.buttonHover}`}
+                  className={`${DESIGN.btnPrimary} ${theme.btnPrimary} px-3 py-1.5 ${DESIGN.radius} text-xs font-medium ${DESIGN.buttonHover} ${DESIGN.focusRing}`}
                 >
                   <RefreshCw size={14} className="inline mr-1" />
                   Retry
@@ -1311,7 +1311,7 @@ const ErrorBanner = ({ error, onDismiss, onRetry, theme }) => {
               )}
               <button
                 onClick={onDismiss}
-                className={`${theme.pill} border px-3 py-1.5 ${DESIGN.radius} text-xs font-medium ${theme.text} ${DESIGN.buttonHover}`}
+                className={`${theme.pill} border px-3 py-1.5 ${DESIGN.radius} text-xs font-medium ${theme.text} ${DESIGN.buttonHover} ${DESIGN.focusRing}`}
               >
                 Dismiss
               </button>
@@ -1329,7 +1329,7 @@ const DatabaseToggle = ({ useDatabase, onToggle, disabled }) => {
       <button
         onClick={onToggle}
         disabled={disabled}
-        className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none transition-all duration-300 flex items-center justify-center rounded-full ${disabled ? 'opacity-50 cursor-not-allowed' : `cursor-pointer ${GOLD.goldHoverBg} hover:scale-105`}`}
+        className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none ${DESIGN.buttonHover} flex items-center justify-center rounded-full ${DESIGN.focusRing} ${disabled ? 'opacity-50 cursor-not-allowed' : `cursor-pointer ${GOLD.goldHoverBg}`}`}
         aria-label={useDatabase ? 'Switch to LLM Mode' : 'Switch to Database Mode'}
       >
         {useDatabase ? (
@@ -2289,7 +2289,7 @@ const AuthButton = ({
       <div className="flex flex-col items-center gap-1 min-w-[56px]">
         <button
           onClick={onSignIn}
-          className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
+          className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer ${DESIGN.buttonHover} flex items-center justify-center rounded-full ${GOLD.goldHoverBg} ${DESIGN.focusRing}`}
           aria-label="Sign In"
         >
           <LogIn size={21} className={GOLD.goldText} />
@@ -2307,7 +2307,7 @@ const AuthButton = ({
     <div className="relative flex flex-col items-center gap-1 min-w-[56px]" ref={menuRef}>
       <button
         onClick={() => setShowMenu(!showMenu)}
-        className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
+        className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer ${DESIGN.buttonHover} flex items-center justify-center rounded-full ${GOLD.goldHoverBg} ${DESIGN.focusRing}`}
         aria-label="User Menu"
       >
         {user.user_metadata?.avatar_url ? (
@@ -2410,7 +2410,7 @@ const SavePoemButton = ({ poem, isSaved, onSave, onUnsave, disabled }) => {
     <div className="relative flex flex-col items-center gap-1 min-w-[52px]">
       <button
         onClick={handleClick}
-        className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
+        className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer ${DESIGN.buttonHover} flex items-center justify-center rounded-full ${GOLD.goldHoverBg} ${DESIGN.focusRing}`}
         aria-label={isSaved ? 'Unsave poem' : 'Save poem'}
       >
         <Heart
@@ -2454,7 +2454,7 @@ const DownvoteButton = ({ poem, isDownvoted, onDownvote, onUndownvote, disabled 
     <div className="relative flex flex-col items-center gap-1 min-w-[52px]">
       <button
         onClick={handleClick}
-        className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
+        className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer ${DESIGN.buttonHover} flex items-center justify-center rounded-full ${GOLD.goldHoverBg} ${DESIGN.focusRing}`}
         aria-label={isDownvoted ? 'Unflag poem' : 'Flag poem'}
       >
         <ThumbsDown
@@ -5433,7 +5433,7 @@ export default function DiwanApp() {
                     <button
                       onClick={togglePlay}
                       aria-label={isPlaying ? 'Pause recitation' : 'Play recitation'}
-                      className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105 relative group`}
+                      className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer ${DESIGN.buttonHover} flex items-center justify-center rounded-full ${GOLD.goldHoverBg} ${DESIGN.focusRing} relative group`}
                     >
                       {audioError ? (
                         <Volume2 className={theme.error} size={21} />
@@ -5472,7 +5472,7 @@ export default function DiwanApp() {
                     onClick={handleAnalyze}
                     disabled={isInterpreting || interpretation}
                     aria-label="Explain poem meaning"
-                    className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105 disabled:opacity-50`}
+                    className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer ${DESIGN.buttonHover} flex items-center justify-center rounded-full ${GOLD.goldHoverBg} ${DESIGN.focusRing} disabled:opacity-50`}
                   >
                     {isInterpreting ? (
                       <Loader2 className={`animate-spin ${GOLD.goldText}`} size={21} />
@@ -5491,7 +5491,7 @@ export default function DiwanApp() {
                   onClick={handleFetch}
                   disabled={isFetching}
                   aria-label="Discover new poem"
-                  className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
+                  className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer ${DESIGN.buttonHover} flex items-center justify-center rounded-full ${GOLD.goldHoverBg} ${DESIGN.focusRing}`}
                 >
                   {isFetching ? (
                     <Loader2 className={`animate-spin ${GOLD.goldText}`} size={21} />
@@ -5528,7 +5528,7 @@ export default function DiwanApp() {
                     <button
                       onClick={handleCopy}
                       aria-label="Copy poem to clipboard"
-                      className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
+                      className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer ${DESIGN.buttonHover} flex items-center justify-center rounded-full ${GOLD.goldHoverBg} ${DESIGN.focusRing}`}
                     >
                       {showCopySuccess ? (
                         <Check size={21} className="text-green-500" />
@@ -5547,7 +5547,7 @@ export default function DiwanApp() {
                     <button
                       onClick={handleShare}
                       aria-label="Share poem"
-                      className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
+                      className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer ${DESIGN.buttonHover} flex items-center justify-center rounded-full ${GOLD.goldHoverBg} ${DESIGN.focusRing}`}
                     >
                       {showShareSuccess ? (
                         <Check size={21} className="text-green-500" />
@@ -5568,7 +5568,7 @@ export default function DiwanApp() {
                       aria-label={
                         showTranslation ? 'Hide English translation' : 'Show English translation'
                       }
-                      className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105 ${!showTranslation ? 'opacity-40' : ''}`}
+                      className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer ${DESIGN.buttonHover} flex items-center justify-center rounded-full ${GOLD.goldHoverBg} ${DESIGN.focusRing} ${!showTranslation ? 'opacity-40' : ''}`}
                     >
                       <Languages size={21} className={GOLD.goldText} />
                     </button>
@@ -5585,7 +5585,7 @@ export default function DiwanApp() {
                       aria-label={
                         showTransliteration ? 'Hide transliteration' : 'Show transliteration'
                       }
-                      className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105 ${!showTransliteration ? 'opacity-40' : ''}`}
+                      className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer ${DESIGN.buttonHover} flex items-center justify-center rounded-full ${GOLD.goldHoverBg} ${DESIGN.focusRing} ${!showTransliteration ? 'opacity-40' : ''}`}
                     >
                       <span
                         className={`${GOLD.goldText} text-[14px] font-bold leading-none`}
@@ -5605,7 +5605,7 @@ export default function DiwanApp() {
                     <button
                       onClick={cycleTextSize}
                       aria-label={`Text size: ${TEXT_SIZES[textSizeLevel].label}`}
-                      className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
+                      className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer ${DESIGN.buttonHover} flex items-center justify-center rounded-full ${GOLD.goldHoverBg} ${DESIGN.focusRing}`}
                     >
                       <span className={`font-brand-en text-[15px] font-bold ${GOLD.goldText}`}>
                         Aa
@@ -5623,7 +5623,7 @@ export default function DiwanApp() {
                       <button
                         onClick={handleDailyPoem}
                         aria-label="Poem of the day"
-                        className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105 ${current?.id === dailyPoem.id ? GOLD.goldActiveBg : ''}`}
+                        className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer ${DESIGN.buttonHover} flex items-center justify-center rounded-full ${GOLD.goldHoverBg} ${DESIGN.focusRing} ${current?.id === dailyPoem.id ? GOLD.goldActiveBg : ''}`}
                       >
                         <CalendarDays size={21} className={GOLD.goldText} />
                       </button>
@@ -5685,8 +5685,8 @@ export default function DiwanApp() {
             </div>
             <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
               {isInterpreting ? (
-                <div className="h-full flex flex-col items-center justify-center gap-4 opacity-30 animate-pulse">
-                  <Sparkles className="animate-spin text-indigo-500" size={32} />
+                <div className={`h-full flex flex-col items-center justify-center gap-4 opacity-30 ${DESIGN.loadingSkeleton}`}>
+                  <Sparkles className="animate-spin text-[#C5A059]" size={32} />
                   <p className="font-brand-en italic text-[clamp(0.875rem,1.5vw,1rem)]">
                     Consulting Diwan...
                   </p>

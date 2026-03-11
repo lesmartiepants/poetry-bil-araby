@@ -95,7 +95,7 @@ const THEME = {
     bg: 'bg-[#0c0c0e]',
     text: 'text-stone-200',
     accent: 'text-indigo-400',
-    glass: 'bg-stone-950/35',
+    glass: 'bg-stone-950/20',
     border: 'border-white/[0.06]',
     shadow: 'shadow-black/60',
     pill: 'bg-stone-900/40 border-stone-700/50',
@@ -2717,6 +2717,7 @@ export default function DiwanApp() {
   const audioRef = useRef(new Audio());
   const isTogglingPlay = useRef(false);
   const controlBarRef = useRef(null);
+  const poetPickerRef = useRef(null);
 
   // Volume-based glow effect refs
   const audioContextRef = useRef(null);
@@ -2773,6 +2774,7 @@ export default function DiwanApp() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [poetPickerOpen, setPoetPickerOpen] = useState(false);
+  const [poetPickerClosing, setPoetPickerClosing] = useState(false);
   const [darkMode, setDarkMode] = useState(true);
   const [currentFont, setCurrentFont] = useState('Amiri');
   const [useDatabase, setUseDatabase] = useState(FEATURES.database);
@@ -3077,6 +3079,26 @@ export default function DiwanApp() {
 
   const handleScroll = (e) => {
     setHeaderOpacity(Math.max(0, 1 - e.target.scrollTop / 30));
+  };
+
+  // Close poet picker on outside click
+  useEffect(() => {
+    if (!poetPickerOpen) return;
+    const handleOutsideClick = (e) => {
+      if (poetPickerRef.current && !poetPickerRef.current.contains(e.target)) {
+        closePoetPicker();
+      }
+    };
+    document.addEventListener('pointerdown', handleOutsideClick);
+    return () => document.removeEventListener('pointerdown', handleOutsideClick);
+  }, [poetPickerOpen]);
+
+  const closePoetPicker = () => {
+    setPoetPickerClosing(true);
+    setTimeout(() => {
+      setPoetPickerOpen(false);
+      setPoetPickerClosing(false);
+    }, 200);
   };
 
   // Extract cached translation fields into stable local variables so useMemo
@@ -4561,6 +4583,15 @@ export default function DiwanApp() {
           animation: discoverShuffle 0.5s ease-in-out;
         }
 
+        @keyframes poetPickerIn {
+          from { opacity: 0; transform: translate(-50%, 8px) scale(0.95); }
+          to   { opacity: 1; transform: translate(-50%, 0) scale(1); }
+        }
+        @keyframes poetPickerOut {
+          from { opacity: 1; transform: translate(-50%, 0) scale(1); }
+          to   { opacity: 0; transform: translate(-50%, 8px) scale(0.95); }
+        }
+
         @keyframes wave {
           0%, 100% { transform: scaleY(0.3); }
           50% { transform: scaleY(1); }
@@ -4993,9 +5024,18 @@ export default function DiwanApp() {
                 </span>
               </div>
 
-              <div className="relative flex flex-col items-center gap-0.5 min-w-[52px]">
+              <div
+                ref={poetPickerRef}
+                className="relative flex flex-col items-center gap-0.5 min-w-[52px]"
+              >
                 <button
-                  onClick={() => setPoetPickerOpen((prev) => !prev)}
+                  onClick={() => {
+                    if (poetPickerOpen) {
+                      closePoetPicker();
+                    } else {
+                      setPoetPickerOpen(true);
+                    }
+                  }}
                   aria-label="Filter by poet"
                   className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-200 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105 ${poetPickerOpen ? 'bg-[#C5A059]/10' : ''}`}
                 >
@@ -5007,13 +5047,17 @@ export default function DiwanApp() {
                 >
                   Poets
                 </span>
-                {poetPickerOpen && (
+                {(poetPickerOpen || poetPickerClosing) && (
                   <div
-                    className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-52 rounded-2xl border border-[#C5A059]/25 bg-black/95 backdrop-blur-2xl shadow-2xl py-2 z-[200]"
-                    style={{ animation: 'authFadeIn 0.2s ease-out' }}
+                    className="absolute bottom-full mb-2 left-1/2 w-56 rounded-2xl border border-[#C5A059]/25 bg-black/95 backdrop-blur-2xl shadow-2xl py-2.5 z-[200]"
+                    style={{
+                      animation: poetPickerClosing
+                        ? 'poetPickerOut 0.2s ease-in forwards'
+                        : 'poetPickerIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                    }}
                   >
-                    <div className="px-3 pb-2 mb-1 border-b border-[#C5A059]/15">
-                      <span className="text-[9px] font-brand-en uppercase tracking-widest text-[#C5A059]/50 font-bold">
+                    <div className="px-4 pb-2 mb-1 border-b border-[#C5A059]/15">
+                      <span className="text-[10px] font-brand-en uppercase tracking-widest text-[#C5A059]/50 font-bold">
                         Filter by Poet
                       </span>
                     </div>
@@ -5022,24 +5066,25 @@ export default function DiwanApp() {
                         key={cat.id}
                         onClick={() => {
                           setSelectedCategory(cat.id);
-                          setPoetPickerOpen(false);
+                          closePoetPicker();
                         }}
-                        className={`w-full text-right px-4 py-2 transition-all duration-150 ${selectedCategory === cat.id ? 'bg-[#C5A059]/15 border-r-2 border-[#C5A059]' : 'hover:bg-[#C5A059]/8 border-r-2 border-transparent'}`}
+                        className={`w-full text-right px-5 py-2.5 transition-all duration-150 ${selectedCategory === cat.id ? 'bg-[#C5A059]/15 border-r-2 border-[#C5A059]' : 'hover:bg-[#C5A059]/8 border-r-2 border-transparent'}`}
                       >
                         <span
-                          className={`block font-amiri text-[14px] ${selectedCategory === cat.id ? 'text-[#C5A059]' : 'text-stone-300'}`}
+                          className={`block text-[17px] ${selectedCategory === cat.id ? 'text-[#C5A059]' : 'text-stone-300'}`}
                           dir="rtl"
+                          style={{ fontFamily: "'Reem Kufi', sans-serif", fontWeight: 500 }}
                         >
                           {cat.labelAr}
                         </span>
                         <span
-                          className={`block text-[9px] font-brand-en ${selectedCategory === cat.id ? 'text-[#C5A059]/70' : 'opacity-40'}`}
+                          className={`block text-[10px] font-brand-en mt-0.5 ${selectedCategory === cat.id ? 'text-[#C5A059]/70' : 'opacity-40'}`}
                         >
                           {cat.label}
                         </span>
                       </button>
                     ))}
-                    <div className="mt-1 pt-1 border-t border-[#C5A059]/10 px-4 py-2">
+                    <div className="mt-1 pt-1 border-t border-[#C5A059]/10 px-5 py-2">
                       <span className="block text-[10px] font-brand-en text-stone-600 italic">
                         Poet Explorer — coming soon
                       </span>

@@ -1,0 +1,10 @@
+litellm>=1.40.0
+psycopg2-binary
+pyarrow
+pandas
+pyarabic
+tqdm
+python-dotenv
+dspy>=2.5.0
+numpy
+scipy

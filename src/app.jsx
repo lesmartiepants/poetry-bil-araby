@@ -132,6 +132,11 @@ const THEME = {
     debugDivider: 'border-stone-700', // Debug panel divider
     kbd: 'bg-stone-800 text-stone-300 border-stone-700', // Keyboard shortcut keys
     goldFoilGradient: 'linear-gradient(135deg, #B8922E 0%, #C5A059 30%, #E2C67A 55%, #C5A059 75%, #A07D38 100%)',
+    goldBright: '#D4B463',       // Interactive/action elements
+    goldStandard: '#C5A059',     // Informational (existing gold)
+    goldStructural: 'rgba(160, 128, 64, 0.4)', // Borders, dividers
+    goldBrightText: 'text-[#D4B463]',
+    goldStructuralBorder: 'border-[rgba(160,128,64,0.4)]',
   },
   light: {
     bg: 'bg-[#FDFCF8]',
@@ -171,6 +176,11 @@ const THEME = {
     debugDivider: 'border-stone-300', // Debug panel divider
     kbd: 'bg-stone-200 text-stone-700 border-stone-300', // Keyboard shortcut keys
     goldFoilGradient: 'linear-gradient(135deg, #6B5B3E 0%, #8B7355 30%, #A8956A 55%, #8B7355 75%, #6B5B3E 100%)',
+    goldBright: '#7A6545',
+    goldStandard: '#8B7355',
+    goldStructural: 'rgba(139, 115, 85, 0.3)',
+    goldBrightText: 'text-[#7A6545]',
+    goldStructuralBorder: 'border-[rgba(139,115,85,0.3)]',
   },
 };
 

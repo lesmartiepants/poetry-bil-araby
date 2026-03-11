@@ -3082,6 +3082,7 @@ export default function DiwanApp() {
   const volumePulseRef = useRef(null);
 
   const [headerCompact, setHeaderCompact] = useState(false);
+  const [scrollY, setScrollY] = useState(0);
   const [poems, setPoems] = useState(() => {
     // 1. Restore from OAuth redirect (avoids flash of seed poem)
     try {
@@ -3537,6 +3538,7 @@ export default function DiwanApp() {
 
   const handleScroll = (e) => {
     setHeaderCompact(e.target.scrollTop > 40);
+    setScrollY(e.target.scrollTop);
   };
 
   // After the first poem reveal, switch to simpler fade for subsequent poems
@@ -5069,10 +5071,28 @@ export default function DiwanApp() {
           to { opacity: 1; }
         }
 
+        @keyframes dustDrift {
+          0%, 100% { transform: translate(0, 0) rotate(45deg); }
+          25% { transform: translate(6px, -3px) rotate(45deg); }
+          50% { transform: translate(-4px, 2px) rotate(45deg); }
+          75% { transform: translate(3px, 5px) rotate(45deg); }
+        }
+
+        @keyframes dustPulse {
+          0%, 100% { opacity: 0.15; }
+          50% { opacity: 0.25; }
+        }
+
         @media (prefers-reduced-motion: reduce) {
           .poem-reveal-animate {
             animation: none !important;
             opacity: 1 !important;
+          }
+          .parallax-layer {
+            transform: none !important;
+          }
+          .dust-particle {
+            animation: none !important;
           }
         }
 
@@ -5273,13 +5293,55 @@ export default function DiwanApp() {
 
       <div className="flex flex-row w-full relative flex-1 min-h-0">
         <div className="flex-1 flex flex-col relative h-full overflow-hidden">
+          {/* Far parallax layer — arabesque pattern (0.2x scroll speed) */}
           <div
-            className={`absolute inset-0 pointer-events-none opacity-[0.04] ${darkMode ? 'invert' : ''}`}
+            className={`absolute inset-0 pointer-events-none opacity-[0.06] parallax-layer ${darkMode ? 'invert' : ''}`}
             style={{
               backgroundImage: `url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M40 0l40 40-40 40L0 40z' fill='none' stroke='%234f46e5' stroke-width='1.5'/%3E%3Ccircle cx='40' cy='40' r='18' fill='none' stroke='%234f46e5' stroke-width='1.5'/%3E%3C/svg%3E")`,
               backgroundSize: '60px 60px',
+              height: '120%',
+              transform: prefersReducedMotion ? 'none' : `translateY(${scrollY * -0.2}px)`,
+              willChange: 'transform',
             }}
           />
+          {/* Near parallax layer — magical dust particles (1.5x scroll speed) */}
+          <div
+            className="absolute inset-0 pointer-events-none parallax-layer"
+            style={{
+              height: '150%',
+              transform: prefersReducedMotion ? 'none' : `translateY(${scrollY * -1.5}px)`,
+              willChange: 'transform',
+              filter: 'blur(0.5px)',
+            }}
+          >
+            {Array.from({ length: 35 }, (_, i) => {
+              const seed = ((i * 7 + 13) * 17) % 100;
+              const x = (i * 31 + 7) % 97;
+              const y = (i * 43 + 11) % 89;
+              const size = 2 + (seed % 3);
+              const driftDelay = (seed * 0.12).toFixed(1);
+              const pulseDelay = (seed * 0.06).toFixed(1);
+              const driftDuration = 8 + (seed % 5);
+              const pulseDuration = 3 + (seed % 4);
+              return (
+                <div
+                  key={`dust-${i}`}
+                  className="dust-particle"
+                  style={{
+                    position: 'absolute',
+                    left: `${x}%`,
+                    top: `${y}%`,
+                    width: `${size}px`,
+                    height: `${size}px`,
+                    background: '#C5A059',
+                    opacity: 0.2,
+                    clipPath: 'polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)',
+                    animation: `dustDrift ${driftDuration}s ease-in-out ${driftDelay}s infinite, dustPulse ${pulseDuration}s ease-in-out ${pulseDelay}s infinite`,
+                  }}
+                />
+              );
+            })}
+          </div>
           <MysticalConsultationEffect active={isInterpreting} theme={theme} />
 
           <main

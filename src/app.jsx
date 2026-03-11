@@ -95,8 +95,8 @@ const THEME = {
     bg: 'bg-[#0c0c0e]',
     text: 'text-stone-200',
     accent: 'text-indigo-400',
-    glass: 'bg-stone-950/40',
-    border: 'border-white/[0.08]',
+    glass: 'bg-stone-950/25',
+    border: 'border-white/[0.06]',
     shadow: 'shadow-black/60',
     pill: 'bg-stone-900/40 border-stone-700/50',
     glow: 'from-indigo-600/30 via-purple-600/15 to-transparent',
@@ -133,8 +133,8 @@ const THEME = {
     bg: 'bg-[#FDFCF8]',
     text: 'text-stone-800',
     accent: 'text-indigo-600',
-    glass: 'bg-white/60',
-    border: 'border-white/60',
+    glass: 'bg-white/40',
+    border: 'border-white/50',
     shadow: 'shadow-indigo-100/50',
     pill: 'bg-white/40 border-white/60',
     glow: 'from-indigo-500/15 via-purple-500/10 to-transparent',
@@ -4758,7 +4758,11 @@ export default function DiwanApp() {
             )}
             <div
               ref={controlBarRef}
-              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full shadow-2xl border ${DESIGN.glass} ${theme.border} ${theme.shadow} ${DESIGN.anim} max-w-[calc(100vw-2rem)] w-fit`}
+              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full border ${DESIGN.glass} ${theme.border} ${DESIGN.anim} max-w-[calc(100vw-2rem)] w-fit`}
+              style={{
+                boxShadow:
+                  'inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(0,0,0,0.15), 0 8px 32px rgba(0,0,0,0.4), 0 2px 8px rgba(0,0,0,0.3)',
+              }}
             >
               <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
                 {isGeneratingAudio ? (

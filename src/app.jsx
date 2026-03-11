@@ -2358,6 +2358,7 @@ const VerticalSidebar = ({
   showCopySuccess,
   onShare,
   showShareSuccess,
+  showInsightSuccess,
   onSignIn,
   onSignOut,
   user,
@@ -2400,6 +2401,12 @@ const VerticalSidebar = ({
           from { transform: translateY(-50%) translateX(-12px); opacity: 0; }
           to { transform: translateY(-50%) translateX(0); opacity: 1; }
         }
+        @keyframes goldCheckSparkle {
+          0% { transform: scale(0.5) rotate(-10deg); opacity: 0; filter: drop-shadow(0 0 0px rgba(197,160,89,0)); }
+          30% { transform: scale(1.2) rotate(0deg); opacity: 1; filter: drop-shadow(0 0 8px rgba(197,160,89,0.8)); }
+          60% { transform: scale(1) rotate(0deg); opacity: 1; filter: drop-shadow(0 0 4px rgba(197,160,89,0.5)); }
+          100% { transform: scale(1) rotate(0deg); opacity: 1; filter: drop-shadow(0 0 2px rgba(197,160,89,0.3)); }
+        }
       `}</style>
       <div
         className="fixed right-0 md:right-[24.5rem] top-1/2 -translate-y-1/2 z-[45] rounded-l-2xl md:rounded-2xl bg-gradient-to-b from-black/70 via-black/60 to-black/70 backdrop-blur-xl border-l-2 md:border-2 border-[#C5A059]/40 py-3 px-1.5 max-h-[calc(100dvh-6rem)] overflow-y-auto"
@@ -2415,15 +2422,13 @@ const VerticalSidebar = ({
           >
             {isInterpreting ? (
               <Loader2 className="animate-spin" style={{ color: gold }} size={18} />
-            ) : (
-              <Brain
-                style={{
-                  color: gold,
-                  fill: interpretation ? gold : 'none',
-                  opacity: interpretation ? 0.9 : 1,
-                }}
+            ) : showInsightSuccess ? (
+              <Check
+                style={{ color: gold, animation: 'goldCheckSparkle 0.5s ease-out forwards' }}
                 size={18}
               />
+            ) : (
+              <Brain style={{ color: gold }} size={18} />
             )}
           </button>
           <span className={labelCls} style={{ color: gold, opacity: interpretation ? 0.9 : 0.6 }}>
@@ -2437,7 +2442,10 @@ const VerticalSidebar = ({
             className={`${btnBase} ${btnHover}`}
           >
             {showCopySuccess ? (
-              <Check size={18} className="text-green-500" />
+              <Check
+                style={{ color: gold, animation: 'goldCheckSparkle 0.5s ease-out forwards' }}
+                size={18}
+              />
             ) : (
               <Copy style={{ color: gold }} size={18} />
             )}
@@ -2448,7 +2456,10 @@ const VerticalSidebar = ({
 
           <button onClick={onShare} title="Share poem" className={`${btnBase} ${btnHover}`}>
             {showShareSuccess ? (
-              <Check size={18} className="text-green-500" />
+              <Check
+                style={{ color: gold, animation: 'goldCheckSparkle 0.5s ease-out forwards' }}
+                size={18}
+              />
             ) : (
               <Share2 style={{ color: gold }} size={18} />
             )}
@@ -2655,6 +2666,7 @@ export default function DiwanApp() {
   const [logs, setLogs] = useState([]);
   const [showCopySuccess, setShowCopySuccess] = useState(false);
   const [showShareSuccess, setShowShareSuccess] = useState(false);
+  const [showInsightSuccess, setShowInsightSuccess] = useState(false);
   const [cacheStats, setCacheStats] = useState({
     audioHits: 0,
     audioMisses: 0,
@@ -3704,6 +3716,12 @@ export default function DiwanApp() {
         poet: current?.poet,
         cached: !!(FEATURES.caching && current?.id && insightText),
       });
+
+      // Flash gold check sparkle on the sidebar icon
+      if (insightText) {
+        setShowInsightSuccess(true);
+        setTimeout(() => setShowInsightSuccess(false), 1500);
+      }
     } catch (e) {
       Sentry.captureException(e);
       addLog('Analysis Error', `${e.message} | Poem ID: ${current?.id}`, 'error');
@@ -5064,6 +5082,7 @@ export default function DiwanApp() {
         showCopySuccess={showCopySuccess}
         onShare={handleShare}
         showShareSuccess={showShareSuccess}
+        showInsightSuccess={showInsightSuccess}
         onSignIn={handleSignIn}
         onSignOut={handleSignOut}
         user={user}

@@ -83,7 +83,7 @@ const DESIGN = {
   panePadding: 'p-8',
   paneSpacing: 'space-y-8',
   paneVerseSize: 'text-[clamp(1rem,1.8vw,1.125rem)]', // 16px-18px for insight panel
-  glass: 'backdrop-blur-2xl',
+  glass: 'backdrop-blur-3xl backdrop-saturate-150',
   radius: 'rounded-2xl',
   anim: 'transition-all duration-300 ease-in-out',
   buttonHover: 'hover:scale-105 hover:shadow-lg transition-all duration-300',
@@ -95,8 +95,8 @@ const THEME = {
     bg: 'bg-[#0c0c0e]',
     text: 'text-stone-200',
     accent: 'text-indigo-400',
-    glass: 'bg-stone-900/60',
-    border: 'border-stone-800',
+    glass: 'bg-stone-950/40',
+    border: 'border-white/[0.08]',
     shadow: 'shadow-black/60',
     pill: 'bg-stone-900/40 border-stone-700/50',
     glow: 'from-indigo-600/30 via-purple-600/15 to-transparent',
@@ -133,8 +133,8 @@ const THEME = {
     bg: 'bg-[#FDFCF8]',
     text: 'text-stone-800',
     accent: 'text-indigo-600',
-    glass: 'bg-white/70',
-    border: 'border-white/80',
+    glass: 'bg-white/60',
+    border: 'border-white/60',
     shadow: 'shadow-indigo-100/50',
     pill: 'bg-white/40 border-white/60',
     glow: 'from-indigo-500/15 via-purple-500/10 to-transparent',
@@ -176,11 +176,11 @@ const GOLD = THEME.dark;
 
 const CATEGORIES = [
   { id: 'All', label: 'All Poets', labelAr: 'كل الشعراء' },
-  { id: 'Nizar Qabbani', label: 'Nizar Qabbani', labelAr: 'نزار قباني' },
-  { id: 'Mahmoud Darwish', label: 'Mahmoud Darwish', labelAr: 'محمود درويش' },
-  { id: 'Al-Mutanabbi', label: 'Al-Mutanabbi', labelAr: 'المتنبي' },
-  { id: 'Antarah', label: 'Antarah', labelAr: 'عنترة بن شداد' },
-  { id: 'Ibn Arabi', label: 'Ibn Arabi', labelAr: 'ابن عربي' },
+  { id: 'المتنبي', label: 'Al-Mutanabbi', labelAr: 'المتنبي' },
+  { id: 'محمود درويش', label: 'Mahmoud Darwish', labelAr: 'محمود درويش' },
+  { id: 'نزار قباني', label: 'Nizar Qabbani', labelAr: 'نزار قباني' },
+  { id: 'أبو العلاء المعري', label: "Al-Ma'arri", labelAr: 'أبو العلاء المعري' },
+  { id: 'عنترة بن شداد', label: 'Antarah', labelAr: 'عنترة بن شداد' },
 ];
 
 const FONTS = [
@@ -2049,7 +2049,7 @@ const SplashScreen = ({ isOpen, onDismiss, showOnboarding, theme }) => {
   =============================================================================
 */
 
-const AuthModal = ({ isOpen, onClose, onSignInWithGoogle, theme, message }) => {
+const AuthModal = ({ isOpen, onClose, onSignInWithGoogle, theme, message, icon: Icon }) => {
   if (!isOpen) return null;
 
   return (
@@ -2101,12 +2101,14 @@ const AuthModal = ({ isOpen, onClose, onSignInWithGoogle, theme, message }) => {
               <X size={18} style={{ color: 'rgba(197,160,89,0.6)' }} />
             </button>
 
-            {/* Arabic greeting */}
+            {/* Icon + greeting */}
             <div className="text-center mb-6">
-              <h2
-                className="font-amiri text-4xl mb-3"
-                style={{ color: '#C5A059', textShadow: '0 0 30px rgba(197,160,89,0.2)' }}
-              >
+              {Icon && (
+                <div className="mb-3 flex justify-center">
+                  <Icon size={28} style={{ color: '#C5A059', opacity: 0.7 }} />
+                </div>
+              )}
+              <h2 className="font-amiri text-3xl mb-2" style={{ color: '#C5A059' }}>
                 مرحباً
               </h2>
               <p className="font-brand-en text-sm text-stone-400 leading-relaxed">
@@ -2209,15 +2211,13 @@ const SavePoemButton = ({ poem, isSaved, onSave, onUnsave, disabled, onSignIn })
   );
 };
 
-const DownvoteButton = ({ poem, isDownvoted, onDownvote, onUndownvote, disabled }) => {
-  const [showTooltip, setShowTooltip] = useState(false);
-
+const DownvoteButton = ({ poem, isDownvoted, onDownvote, onUndownvote, disabled, onSignIn }) => {
   const handleClick = () => {
-    if (disabled) {
-      setShowTooltip(true);
-      setTimeout(() => setShowTooltip(false), 2000);
+    if (disabled && onSignIn) {
+      onSignIn('Sign in to flag poems');
       return;
     }
+    if (disabled) return;
 
     if (isDownvoted) {
       onUndownvote();
@@ -2243,12 +2243,6 @@ const DownvoteButton = ({ poem, isDownvoted, onDownvote, onUndownvote, disabled 
       >
         {isDownvoted ? 'Flagged' : 'Flag'}
       </span>
-
-      {showTooltip && disabled && (
-        <div className="absolute bottom-full mb-2 px-3 py-2 bg-stone-900 text-white text-xs rounded-lg whitespace-nowrap shadow-lg">
-          Sign in to flag poems
-        </div>
-      )}
     </div>
   );
 };
@@ -2439,18 +2433,23 @@ const VerticalSidebar = ({
             disabled={isInterpreting || !!interpretation}
             title={interpretation ? 'Insight available — scroll to read' : 'Explain poem'}
             aria-label="Explain poem meaning"
-            className={`${btnBase} ${btnHover} ${interpretation ? 'opacity-70' : ''} ${isInterpreting ? 'opacity-50' : ''}`}
+            className={`${btnBase} ${btnHover} ${isInterpreting ? 'opacity-50' : ''}`}
           >
             {isInterpreting ? (
               <Loader2 className="animate-spin" style={{ color: gold }} size={18} />
-            ) : interpretation ? (
-              <Check style={{ color: '#4ade80' }} size={18} />
             ) : (
-              <Brain style={{ color: gold }} size={18} />
+              <Brain
+                style={{
+                  color: gold,
+                  fill: interpretation ? gold : 'none',
+                  opacity: interpretation ? 0.9 : 1,
+                }}
+                size={18}
+              />
             )}
           </button>
-          <span className={labelCls} style={{ color: interpretation ? '#4ade80' : gold }}>
-            {interpretation ? 'Done' : 'Explain'}
+          <span className={labelCls} style={{ color: gold, opacity: interpretation ? 0.9 : 0.6 }}>
+            {interpretation ? 'Insight' : 'Explain'}
           </span>
 
           <button
@@ -2481,17 +2480,22 @@ const VerticalSidebar = ({
           </span>
 
           <button
-            onClick={onToggleTranslation}
-            title={showTranslation ? 'Hide translation' : 'Show translation'}
-            className={`${btnBase} ${btnHover} relative ${!showTranslation ? 'opacity-40' : ''}`}
+            onClick={onToggleTransliteration}
+            title={showTransliteration ? 'Hide romanization' : 'Show romanization'}
+            className={`${btnBase} ${btnHover} relative ${!showTransliteration ? 'opacity-40' : ''}`}
           >
-            <Languages style={{ color: gold }} size={18} />
-            {showTranslation && (
+            <span
+              className="text-[12px] font-bold leading-none"
+              style={{ color: gold, fontFamily: "'Amiri', serif" }}
+            >
+              عA
+            </span>
+            {showTransliteration && (
               <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#C5A059] shadow-[0_0_6px_rgba(197,160,89,0.6)]" />
             )}
           </button>
           <span className={labelCls} style={{ color: gold }}>
-            ترجمة
+            Translit
           </span>
 
           <div className="w-6 h-px bg-stone-500/30 mx-auto my-1" />
@@ -2512,20 +2516,18 @@ const VerticalSidebar = ({
               className={`flex flex-col items-center gap-0.5 pl-0.5 border-l-2 ${theme.goldBorderMuted}`}
             >
               <button
-                onClick={onToggleTransliteration}
-                title={showTransliteration ? 'Hide romanization' : 'Show romanization'}
-                className={`${subBtnBase} ${subBtnHover} relative ${!showTransliteration ? 'opacity-40' : ''}`}
+                onClick={onToggleTranslation}
+                title={showTranslation ? 'Hide translation' : 'Show translation'}
+                className={`${subBtnBase} ${subBtnHover} relative ${!showTranslation ? 'opacity-40' : ''}`}
               >
-                <span
-                  className="text-[12px] font-bold leading-none"
-                  style={{ color: gold, fontFamily: "'Amiri', serif" }}
-                >
-                  عA
-                </span>
-                {showTransliteration && (
-                  <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#C5A059] shadow-[0_0_6px_rgba(197,160,89,0.6)]" />
+                <Languages style={{ color: gold }} size={16} />
+                {showTranslation && (
+                  <span className="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-[#C5A059]" />
                 )}
               </button>
+              <span className={labelCls} style={{ color: gold }}>
+                Translate
+              </span>
 
               <button
                 onClick={onCycleTextSize}
@@ -2534,6 +2536,9 @@ const VerticalSidebar = ({
               >
                 <ALargeSmall style={{ color: gold }} size={16} />
               </button>
+              <span className={labelCls} style={{ color: gold }}>
+                Size
+              </span>
 
               <button
                 onClick={onToggleDarkMode}
@@ -2546,6 +2551,9 @@ const VerticalSidebar = ({
                   <Moon style={{ color: gold }} size={16} />
                 )}
               </button>
+              <span className={labelCls} style={{ color: gold }}>
+                {darkMode ? 'Light' : 'Dark'}
+              </span>
 
               <button
                 onClick={onCycleFont}
@@ -2559,50 +2567,9 @@ const VerticalSidebar = ({
                   ي
                 </span>
               </button>
-
-              <div className="relative">
-                <button
-                  onClick={() => setPoetPickerOpen((prev) => !prev)}
-                  title="Poet filter"
-                  className={`${subBtnBase} ${subBtnHover} ${poetPickerOpen ? (darkMode ? 'bg-[#C5A059]/15' : 'bg-[#8B7355]/15') : ''}`}
-                >
-                  <ScrollText style={{ color: gold }} size={16} />
-                </button>
-                {poetPickerOpen && (
-                  <div
-                    className="absolute right-full top-1/2 -translate-y-1/2 mr-3 w-52 rounded-2xl border border-[#C5A059]/30 bg-black/95 backdrop-blur-2xl shadow-2xl py-2 max-h-72 overflow-y-auto z-[200]"
-                    style={{ animation: 'slideInLeft 0.25s ease-out' }}
-                  >
-                    <div className="px-3 pb-2 mb-1 border-b border-[#C5A059]/15">
-                      <span className="text-[9px] font-brand-en uppercase tracking-widest text-[#C5A059]/50 font-bold">
-                        Filter by Poet
-                      </span>
-                    </div>
-                    {CATEGORIES.map((cat) => (
-                      <button
-                        key={cat.id}
-                        onClick={() => {
-                          onSelectCategory(cat.id);
-                          setPoetPickerOpen(false);
-                        }}
-                        className={`w-full text-right px-4 py-2.5 transition-all duration-150 ${selectedCategory === cat.id ? 'bg-[#C5A059]/15 border-r-2 border-[#C5A059]' : 'hover:bg-[#C5A059]/8 border-r-2 border-transparent'}`}
-                      >
-                        <span
-                          className={`block font-amiri text-[15px] ${selectedCategory === cat.id ? 'text-[#C5A059]' : 'text-stone-300'}`}
-                          dir="rtl"
-                        >
-                          {cat.labelAr}
-                        </span>
-                        <span
-                          className={`block text-[10px] font-brand-en ${selectedCategory === cat.id ? 'text-[#C5A059]/70' : 'opacity-40'}`}
-                        >
-                          {cat.label}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
+              <span className={labelCls} style={{ color: gold }}>
+                Font
+              </span>
             </div>
           )}
 
@@ -2693,6 +2660,7 @@ export default function DiwanApp() {
   });
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [poetPickerOpen, setPoetPickerOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(true);
   const [currentFont, setCurrentFont] = useState('Amiri');
   const [useDatabase, setUseDatabase] = useState(FEATURES.database);
@@ -4801,7 +4769,7 @@ export default function DiwanApp() {
             )}
             <div
               ref={controlBarRef}
-              className={`flex items-center gap-2 px-5 py-2 rounded-full shadow-2xl border ${DESIGN.glass} ${theme.border} ${theme.shadow} ${DESIGN.anim} max-w-[calc(100vw-2rem)] w-fit`}
+              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full shadow-2xl border ${DESIGN.glass} ${theme.border} ${theme.shadow} ${DESIGN.anim} max-w-[calc(100vw-2rem)] w-fit`}
             >
               <div className="flex flex-col items-center gap-1 min-w-[52px]">
                 {isGeneratingAudio ? (
@@ -4922,6 +4890,58 @@ export default function DiwanApp() {
                 </span>
               </div>
 
+              <div className="relative flex flex-col items-center gap-0.5 min-w-[52px]">
+                <button
+                  onClick={() => setPoetPickerOpen((prev) => !prev)}
+                  aria-label="Filter by poet"
+                  className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-200 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105 ${poetPickerOpen ? 'bg-[#C5A059]/10' : ''}`}
+                >
+                  <ScrollText className={GOLD.goldText} size={21} />
+                </button>
+                <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">
+                  Poets
+                </span>
+                {poetPickerOpen && (
+                  <div
+                    className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 w-52 rounded-2xl border border-[#C5A059]/25 bg-black/95 backdrop-blur-2xl shadow-2xl py-2 z-[200]"
+                    style={{ animation: 'authFadeIn 0.2s ease-out' }}
+                  >
+                    <div className="px-3 pb-2 mb-1 border-b border-[#C5A059]/15">
+                      <span className="text-[9px] font-brand-en uppercase tracking-widest text-[#C5A059]/50 font-bold">
+                        Filter by Poet
+                      </span>
+                    </div>
+                    {CATEGORIES.map((cat) => (
+                      <button
+                        key={cat.id}
+                        onClick={() => {
+                          setSelectedCategory(cat.id);
+                          setPoetPickerOpen(false);
+                        }}
+                        className={`w-full text-right px-4 py-2 transition-all duration-150 ${selectedCategory === cat.id ? 'bg-[#C5A059]/15 border-r-2 border-[#C5A059]' : 'hover:bg-[#C5A059]/8 border-r-2 border-transparent'}`}
+                      >
+                        <span
+                          className={`block font-amiri text-[14px] ${selectedCategory === cat.id ? 'text-[#C5A059]' : 'text-stone-300'}`}
+                          dir="rtl"
+                        >
+                          {cat.labelAr}
+                        </span>
+                        <span
+                          className={`block text-[9px] font-brand-en ${selectedCategory === cat.id ? 'text-[#C5A059]/70' : 'opacity-40'}`}
+                        >
+                          {cat.label}
+                        </span>
+                      </button>
+                    ))}
+                    <div className="mt-1 pt-1 border-t border-[#C5A059]/10 px-4 py-2">
+                      <span className="block text-[10px] font-brand-en text-stone-600 italic">
+                        Poet Explorer — coming soon
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <SavePoemButton
                 poem={current}
                 isSaved={isPoemSaved(current)}
@@ -4940,6 +4960,10 @@ export default function DiwanApp() {
                 onDownvote={handleDownvote}
                 onUndownvote={handleUndownvote}
                 disabled={!user}
+                onSignIn={(msg) => {
+                  setAuthModalMessage(msg);
+                  setShowAuthModal(true);
+                }}
               />
             </div>
           </footer>
@@ -5024,6 +5048,13 @@ export default function DiwanApp() {
         onSignInWithGoogle={handleSignInWithGoogle}
         theme={theme}
         message={authModalMessage}
+        icon={
+          authModalMessage?.includes('flag')
+            ? ThumbsDown
+            : authModalMessage?.includes('favourites')
+              ? Heart
+              : null
+        }
       />
 
       {/* Saved Poems View */}

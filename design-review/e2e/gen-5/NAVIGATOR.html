@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Gen-5 Design Navigator</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: -apple-system, system-ui, 'Segoe UI', Roboto, Helvetica, sans-serif;
+    background: #0c0c0e;
+    color: #e0ddd5;
+    min-height: 100vh;
+    padding: 2rem 1.5rem 4rem;
+    line-height: 1.6;
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid rgba(197, 160, 89, 0.25);
+  }
+
+  header h1 {
+    font-size: 2rem;
+    font-weight: 600;
+    color: #C5A059;
+    letter-spacing: 0.02em;
+    margin-bottom: 0.5rem;
+  }
+
+  header p {
+    font-size: 0.95rem;
+    color: #8a8780;
+    max-width: 700px;
+    margin: 0 auto;
+  }
+
+  /* Table of Contents */
+  .toc {
+    max-width: 900px;
+    margin: 0 auto 2.5rem;
+    padding: 1.5rem 2rem;
+    background: rgba(197, 160, 89, 0.04);
+    border: 1px solid rgba(197, 160, 89, 0.15);
+    border-radius: 10px;
+  }
+
+  .toc h2 {
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #C5A059;
+    margin-bottom: 1rem;
+  }
+
+  .toc-batch {
+    margin-bottom: 1rem;
+  }
+
+  .toc-batch:last-child {
+    margin-bottom: 0;
+  }
+
+  .toc-batch-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #7a7770;
+    margin-bottom: 0.4rem;
+  }
+
+  .toc-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .toc-links a {
+    font-size: 0.82rem;
+    color: #c0bdb5;
+    text-decoration: none;
+    padding: 0.3rem 0.65rem;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 5px;
+    transition: border-color 0.2s, color 0.2s, background 0.2s;
+  }
+
+  .toc-links a:hover {
+    color: #C5A059;
+    border-color: rgba(197, 160, 89, 0.4);
+    background: rgba(197, 160, 89, 0.08);
+  }
+
+  .toc-links a .toc-num {
+    color: #C5A059;
+    font-weight: 600;
+    margin-right: 0.3em;
+  }
+
+  /* Cross-cutting note */
+  .note {
+    max-width: 900px;
+    margin: 0 auto 2.5rem;
+    padding: 1rem 1.25rem;
+    background: rgba(197, 160, 89, 0.06);
+    border: 1px solid rgba(197, 160, 89, 0.18);
+    border-radius: 8px;
+    font-size: 0.88rem;
+    color: #b0ac9f;
+  }
+
+  .note strong {
+    color: #C5A059;
+  }
+
+  /* Batch labels */
+  .batch-label {
+    max-width: 900px;
+    margin: 3rem auto 1.5rem;
+    padding-left: 0.25rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #C5A059;
+    border-bottom: 1px solid rgba(197, 160, 89, 0.15);
+    padding-bottom: 0.75rem;
+  }
+
+  /* Cards */
+  .card {
+    max-width: 900px;
+    margin: 0 auto 2.5rem;
+    background: rgba(255, 255, 255, 0.025);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    padding: 2rem;
+    transition: border-color 0.25s ease;
+  }
+
+  .card:hover {
+    border-color: rgba(197, 160, 89, 0.25);
+  }
+
+  .card-header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .card-header-left {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+  }
+
+  .card-number {
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: #C5A059;
+    background: rgba(197, 160, 89, 0.1);
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+  }
+
+  .card-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #f0ece3;
+  }
+
+  .btn-fullscreen {
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: #C5A059;
+    text-decoration: none;
+    padding: 0.35rem 0.75rem;
+    border: 1px solid rgba(197, 160, 89, 0.3);
+    border-radius: 5px;
+    transition: background 0.2s ease, border-color 0.2s ease;
+    white-space: nowrap;
+  }
+
+  .btn-fullscreen:hover {
+    background: rgba(197, 160, 89, 0.12);
+    border-color: rgba(197, 160, 89, 0.5);
+  }
+
+  .card-description {
+    font-size: 0.9rem;
+    color: #b0ac9f;
+    line-height: 1.6;
+    margin-bottom: 1.25rem;
+  }
+
+  .card-description strong {
+    color: #c0bdb5;
+  }
+
+  /* Iframe preview */
+  .iframe-wrapper {
+    margin-bottom: 1.25rem;
+    border: 1px solid rgba(197, 160, 89, 0.3);
+    border-radius: 8px;
+    overflow: hidden;
+    background: #0a0a0c;
+  }
+
+  .iframe-wrapper iframe {
+    display: block;
+    width: 100%;
+    height: 500px;
+    border: none;
+    background: #0c0c0e;
+  }
+
+  /* Callouts */
+  .callouts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+  }
+
+  .callout {
+    font-size: 0.78rem;
+    color: #b0ac9f;
+    padding: 0.35rem 0.75rem;
+    background: rgba(197, 160, 89, 0.06);
+    border: 1px solid rgba(197, 160, 89, 0.12);
+    border-radius: 5px;
+    line-height: 1.4;
+  }
+
+  .callout::before {
+    content: "\25C6";
+    color: #C5A059;
+    margin-right: 0.4em;
+    font-size: 0.65rem;
+    vertical-align: middle;
+  }
+
+  /* Mobile responsive */
+  @media (max-width: 680px) {
+    body {
+      padding: 1.25rem 0.75rem 3rem;
+    }
+
+    header h1 {
+      font-size: 1.5rem;
+    }
+
+    .card {
+      padding: 1.25rem;
+    }
+
+    .card-title {
+      font-size: 1.1rem;
+    }
+
+    .iframe-wrapper iframe {
+      height: 350px;
+    }
+
+    .toc {
+      padding: 1rem 1.25rem;
+    }
+
+    .toc-links {
+      gap: 0.35rem;
+    }
+
+    .callouts {
+      flex-direction: column;
+    }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Gen-5 Design Navigator</h1>
+  <p>12 refinement designs for Poetry Bil-Araby. Each card shows an inline preview of the design with callouts highlighting what to look for.</p>
+</header>
+
+<!-- Table of Contents -->
+<nav class="toc">
+  <h2>Table of Contents</h2>
+  <div class="toc-batch">
+    <div class="toc-batch-label">Batch A &mdash; Surfaces, Accents &amp; Motion</div>
+    <div class="toc-links">
+      <a href="#design-01"><span class="toc-num">01</span>Typography Polish</a>
+      <a href="#design-02"><span class="toc-num">02</span>Glass Noise Texture</a>
+      <a href="#design-03"><span class="toc-num">03</span>Gold Gradient Foil</a>
+      <a href="#design-04"><span class="toc-num">04</span>Gold Luminance Hierarchy</a>
+      <a href="#design-05"><span class="toc-num">05</span>Spring Transitions</a>
+      <a href="#design-06"><span class="toc-num">06</span>Micro-Interactions</a>
+    </div>
+  </div>
+  <div class="toc-batch">
+    <div class="toc-batch-label">Batch B &mdash; Layout, Mobile, Atmosphere &amp; Metadata</div>
+    <div class="toc-links">
+      <a href="#design-07"><span class="toc-num">07</span>Header Calligraphic</a>
+      <a href="#design-08"><span class="toc-num">08</span>Mobile Bottom Sheet</a>
+      <a href="#design-09"><span class="toc-num">09</span>Mobile Swipe Poems</a>
+      <a href="#design-10"><span class="toc-num">10</span>Warm Starfield</a>
+      <a href="#design-11"><span class="toc-num">11</span>Parallax Depth</a>
+      <a href="#design-12"><span class="toc-num">12</span>Poet/Poem Metadata</a>
+    </div>
+  </div>
+</nav>
+
+<div class="note">
+  <strong>Cross-cutting note:</strong> In all 12 designs, the English subtitle is hidden by default and only appears when the translation toggle (&#1593;|A) is activated.
+</div>
+
+<!-- ============================================
+     BATCH A — Surfaces, Accents & Motion
+     ============================================ -->
+
+<div class="batch-label">Batch A &mdash; Surfaces, Accents &amp; Motion (01&ndash;06)</div>
+
+<!-- 01 Typography Polish -->
+<div class="card" id="design-01">
+  <div class="card-header">
+    <div class="card-header-left">
+      <span class="card-number">01</span>
+      <span class="card-title">Typography Polish</span>
+    </div>
+    <a class="btn-fullscreen" href="01-typography-polish.html" target="_blank">Fullscreen &rarr;</a>
+  </div>
+  <p class="card-description">Arabic text spacing. Line-height 2.6 (vs normal 2.4), kashida justification, refined word-spacing. The Arabic text should feel more spacious.</p>
+  <div class="iframe-wrapper">
+    <iframe src="01-typography-polish.html" loading="lazy" title="01 Typography Polish preview"></iframe>
+  </div>
+  <div class="callouts">
+    <span class="callout">Line-height 2.6 vs 2.4 &mdash; more vertical breathing room</span>
+    <span class="callout">Kashida justification &mdash; elegant Arabic text alignment</span>
+    <span class="callout">Refined word-spacing for spacious feel</span>
+  </div>
+</div>
+
+<!-- 02 Glass Noise Texture -->
+<div class="card" id="design-02">
+  <div class="card-header">
+    <div class="card-header-left">
+      <span class="card-number">02</span>
+      <span class="card-title">Glass Noise Texture</span>
+    </div>
+    <a class="btn-fullscreen" href="02-glass-noise-texture.html" target="_blank">Fullscreen &rarr;</a>
+  </div>
+  <p class="card-description">Subtle grain on glass panels. SVG noise at 2&ndash;3% opacity. Glass panels should feel slightly more "real."</p>
+  <div class="iframe-wrapper">
+    <iframe src="02-glass-noise-texture.html" loading="lazy" title="02 Glass Noise Texture preview"></iframe>
+  </div>
+  <div class="callouts">
+    <span class="callout">SVG noise overlay at 2&ndash;3% opacity</span>
+    <span class="callout">Glass panels feel more tactile and physical</span>
+    <span class="callout">Look closely &mdash; subtle grain texture</span>
+  </div>
+</div>
+
+<!-- 03 Gold Gradient Foil -->
+<div class="card" id="design-03">
+  <div class="card-header">
+    <div class="card-header-left">
+      <span class="card-number">03</span>
+      <span class="card-title">Gold Gradient Foil</span>
+    </div>
+    <a class="btn-fullscreen" href="03-gold-gradient-foil.html" target="_blank">Fullscreen &rarr;</a>
+  </div>
+  <p class="card-description">Gold text has multi-stop gradient instead of flat color. Gold should look like hammered gold leaf.</p>
+  <div class="iframe-wrapper">
+    <iframe src="03-gold-gradient-foil.html" loading="lazy" title="03 Gold Gradient Foil preview"></iframe>
+  </div>
+  <div class="callouts">
+    <span class="callout">Multi-stop gradient on all gold text</span>
+    <span class="callout">Simulates hammered gold leaf catching light</span>
+    <span class="callout">Compare title, poet name, dividers, controls</span>
+  </div>
+</div>
+
+<!-- 04 Gold Luminance Hierarchy -->
+<div class="card" id="design-04">
+  <div class="card-header">
+    <div class="card-header-left">
+      <span class="card-number">04</span>
+      <span class="card-title">Gold Luminance Hierarchy</span>
+    </div>
+    <a class="btn-fullscreen" href="04-gold-luminance-hierarchy.html" target="_blank">Fullscreen &rarr;</a>
+  </div>
+  <p class="card-description">Three tiers: bright gold buttons, standard gold titles, dim gold borders. Importance maps to brightness.</p>
+  <div class="iframe-wrapper">
+    <iframe src="04-gold-luminance-hierarchy.html" loading="lazy" title="04 Gold Luminance Hierarchy preview"></iframe>
+  </div>
+  <div class="callouts">
+    <span class="callout">Bright gold (#D4B463) on actions/buttons</span>
+    <span class="callout">Standard gold (#C5A059) on titles/text</span>
+    <span class="callout">Dim gold (40% opacity) on borders/dividers</span>
+  </div>
+</div>
+
+<!-- 05 Spring Transitions -->
+<div class="card" id="design-05">
+  <div class="card-header">
+    <div class="card-header-left">
+      <span class="card-number">05</span>
+      <span class="card-title">Spring Transitions</span>
+    </div>
+    <a class="btn-fullscreen" href="05-spring-transitions.html" target="_blank">Fullscreen &rarr;</a>
+  </div>
+  <p class="card-description">Spring physics. First load = center-out stagger. Navigation = slide-up with spring overshoot (bouncy).</p>
+  <div class="iframe-wrapper">
+    <iframe src="05-spring-transitions.html" loading="lazy" title="05 Spring Transitions preview"></iframe>
+  </div>
+  <div class="callouts">
+    <span class="callout">First-load: center-out stagger animation</span>
+    <span class="callout">Navigation: slide-up with spring overshoot</span>
+    <span class="callout">Bouncy feel vs standard ease-in-out</span>
+  </div>
+</div>
+
+<!-- 06 Micro-Interactions -->
+<div class="card" id="design-06">
+  <div class="card-header">
+    <div class="card-header-left">
+      <span class="card-number">06</span>
+      <span class="card-title">Micro-Interactions</span>
+    </div>
+    <a class="btn-fullscreen" href="06-micro-interactions.html" target="_blank">Fullscreen &rarr;</a>
+  </div>
+  <p class="card-description">Different feedback per type: hover = glow ring, click = scale snap-back, focus = pulsing ring, loading = shimmer.</p>
+  <div class="iframe-wrapper">
+    <iframe src="06-micro-interactions.html" loading="lazy" title="06 Micro-Interactions preview"></iframe>
+  </div>
+  <div class="callouts">
+    <span class="callout">Hover over controls &mdash; gold glow ring</span>
+    <span class="callout">Click buttons &mdash; scale-down snap-back</span>
+    <span class="callout">Tab through controls &mdash; pulsing gold ring</span>
+    <span class="callout">Loading state &mdash; skeleton shimmer</span>
+  </div>
+</div>
+
+<!-- ============================================
+     BATCH B — Layout, Mobile, Atmosphere & Metadata
+     ============================================ -->
+
+<div class="batch-label">Batch B &mdash; Layout, Mobile, Atmosphere &amp; Metadata (07&ndash;12)</div>
+
+<!-- 07 Header Calligraphic -->
+<div class="card" id="design-07">
+  <div class="card-header">
+    <div class="card-header-left">
+      <span class="card-number">07</span>
+      <span class="card-title">Header Calligraphic</span>
+    </div>
+    <a class="btn-fullscreen" href="07-header-calligraphic.html" target="_blank">Fullscreen &rarr;</a>
+  </div>
+  <p class="card-description">Shrinking header 120px to 56px on scroll. SVG ornament fades. Arabic brand has gold text-shadow.</p>
+  <div class="iframe-wrapper">
+    <iframe src="07-header-calligraphic.html" loading="lazy" title="07 Header Calligraphic preview"></iframe>
+  </div>
+  <div class="callouts">
+    <span class="callout">Scroll inside to see header shrink 120px &rarr; 56px</span>
+    <span class="callout">SVG ornament below brand fades on scroll</span>
+    <span class="callout">Arabic brand text has gold text-shadow</span>
+  </div>
+</div>
+
+<!-- 08 Mobile Bottom Sheet -->
+<div class="card" id="design-08">
+  <div class="card-header">
+    <div class="card-header-left">
+      <span class="card-number">08</span>
+      <span class="card-title">Mobile Bottom Sheet</span>
+    </div>
+    <a class="btn-fullscreen" href="08-mobile-bottom-sheet.html" target="_blank">Fullscreen &rarr;</a>
+  </div>
+  <p class="card-description">iOS-style bottom sheet drags up (50%/90% snap). Gold handle bar. Backdrop dim. Best tested at mobile width.</p>
+  <div class="iframe-wrapper">
+    <iframe src="08-mobile-bottom-sheet.html" loading="lazy" title="08 Mobile Bottom Sheet preview"></iframe>
+  </div>
+  <div class="callouts">
+    <span class="callout">Gold drag handle at top of sheet</span>
+    <span class="callout">Two snap points: 50% and 90%</span>
+    <span class="callout">Backdrop dims behind sheet</span>
+    <span class="callout">Best tested at mobile viewport width</span>
+  </div>
+</div>
+
+<!-- 09 Mobile Swipe Poems -->
+<div class="card" id="design-09">
+  <div class="card-header">
+    <div class="card-header-left">
+      <span class="card-number">09</span>
+      <span class="card-title">Mobile Swipe Poems</span>
+    </div>
+    <a class="btn-fullscreen" href="09-mobile-swipe-poems.html" target="_blank">Fullscreen &rarr;</a>
+  </div>
+  <p class="card-description">Horizontal swipe between 3 poems. Gold dot indicators. Best tested at mobile width.</p>
+  <div class="iframe-wrapper">
+    <iframe src="09-mobile-swipe-poems.html" loading="lazy" title="09 Mobile Swipe Poems preview"></iframe>
+  </div>
+  <div class="callouts">
+    <span class="callout">Swipe left/right between 3 poems</span>
+    <span class="callout">Gold dot indicators show position</span>
+    <span class="callout">Best tested at mobile viewport width</span>
+  </div>
+</div>
+
+<!-- 10 Warm Starfield -->
+<div class="card" id="design-10">
+  <div class="card-header">
+    <div class="card-header-left">
+      <span class="card-number">10</span>
+      <span class="card-title">Warm Starfield</span>
+    </div>
+    <a class="btn-fullscreen" href="10-warm-starfield.html" target="_blank">Fullscreen &rarr;</a>
+  </div>
+  <p class="card-description">Warm charcoal (#0e0c08) background + twinkling stars. Warm text (#e8e0d4).</p>
+  <div class="iframe-wrapper">
+    <iframe src="10-warm-starfield.html" loading="lazy" title="10 Warm Starfield preview"></iframe>
+  </div>
+  <div class="callouts">
+    <span class="callout">Warm charcoal #0e0c08 vs neutral #0c0c0e</span>
+    <span class="callout">80&ndash;120 tiny twinkling stars in background</span>
+    <span class="callout">Warm text tint (#e8e0d4)</span>
+  </div>
+</div>
+
+<!-- 11 Parallax Depth -->
+<div class="card" id="design-11">
+  <div class="card-header">
+    <div class="card-header-left">
+      <span class="card-number">11</span>
+      <span class="card-title">Parallax Depth</span>
+    </div>
+    <a class="btn-fullscreen" href="11-parallax-depth.html" target="_blank">Fullscreen &rarr;</a>
+  </div>
+  <p class="card-description">Three layers: far arabesque (blur, slow), mid content (normal), near gold particles (blur, fast). Scroll to see.</p>
+  <div class="iframe-wrapper">
+    <iframe src="11-parallax-depth.html" loading="lazy" title="11 Parallax Depth preview"></iframe>
+  </div>
+  <div class="callouts">
+    <span class="callout">Far layer: arabesque pattern at 6&ndash;8% opacity, slow</span>
+    <span class="callout">Mid layer: content scrolls normally</span>
+    <span class="callout">Near layer: gold particles, blurred, fast</span>
+    <span class="callout">Scroll inside iframe to see parallax effect</span>
+  </div>
+</div>
+
+<!-- 12 Poet/Poem Metadata -->
+<div class="card" id="design-12">
+  <div class="card-header">
+    <div class="card-header-left">
+      <span class="card-number">12</span>
+      <span class="card-title">Poet/Poem Metadata</span>
+    </div>
+    <a class="btn-fullscreen" href="12-poet-poem-metadata.html" target="_blank">Fullscreen &rarr;</a>
+  </div>
+  <p class="card-description">Stacked metadata: poem title (larger, gold) over poet name (smaller, muted). Gold separator. No SVG frame.</p>
+  <div class="iframe-wrapper">
+    <iframe src="12-poet-poem-metadata.html" loading="lazy" title="12 Poet/Poem Metadata preview"></iframe>
+  </div>
+  <div class="callouts">
+    <span class="callout">Poem title larger, in gold</span>
+    <span class="callout">Poet name smaller, muted color</span>
+    <span class="callout">Thin gold separator line between them</span>
+    <span class="callout">No SVG bracket frame</span>
+  </div>
+</div>
+
+</body>
+</html>

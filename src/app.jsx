@@ -2405,15 +2405,15 @@ const VerticalSidebar = ({
           60% { transform: scale(1) rotate(0deg); opacity: 1; filter: drop-shadow(0 0 4px rgba(197,160,89,0.5)); }
           100% { transform: scale(1) rotate(0deg); opacity: 1; filter: drop-shadow(0 0 2px rgba(197,160,89,0.3)); }
         }
-        .sidebar-settings-drawer {
+        .sidebar-drawer {
           display: grid;
           grid-template-rows: 0fr;
-          transition: grid-template-rows 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+          transition: grid-template-rows 0.35s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .sidebar-settings-drawer.open {
+        .sidebar-drawer.open {
           grid-template-rows: 1fr;
         }
-        .sidebar-settings-inner {
+        .sidebar-drawer-inner {
           overflow: hidden;
         }
       `}</style>
@@ -2421,233 +2421,207 @@ const VerticalSidebar = ({
         className="fixed right-0 md:right-[24.5rem] top-1/2 -translate-y-1/2 z-[45] rounded-l-2xl md:rounded-2xl bg-gradient-to-b from-black/70 via-black/60 to-black/70 backdrop-blur-xl border-l-2 md:border-2 border-[#C5A059]/40 py-2 px-1.5 max-h-[calc(100dvh-6rem)] overflow-y-auto transition-all duration-300"
         style={{ animation: 'slideInRight 0.4s ease-out' }}
       >
-        {/* Collapsed handle — tap to expand */}
-        {!expanded && (
-          <button
-            onClick={() => setExpanded(true)}
-            className="flex flex-col items-center gap-1.5 py-1 px-0.5 group"
-            title="Open controls"
-            aria-label="Open sidebar controls"
-          >
-            <ChevronLeft
-              style={{ color: gold, opacity: 0.5 }}
-              size={14}
-              className="group-hover:opacity-80 transition-opacity"
-            />
-            <Brain
-              style={{ color: gold, opacity: 0.6 }}
-              size={16}
-              className="group-hover:opacity-90 transition-opacity"
-            />
-            <Copy
-              style={{ color: gold, opacity: 0.6 }}
-              size={16}
-              className="group-hover:opacity-90 transition-opacity"
-            />
-            <Settings2
-              style={{ color: gold, opacity: 0.6 }}
-              size={16}
-              className="group-hover:opacity-90 transition-opacity"
-            />
-            <ChevronLeft
-              style={{ color: gold, opacity: 0.5 }}
-              size={14}
-              className="group-hover:opacity-80 transition-opacity"
-            />
-          </button>
-        )}
+        {/* Toggle handle */}
+        <button
+          onClick={() => {
+            if (expanded) setSettingsOpen(false);
+            setExpanded((prev) => !prev);
+          }}
+          className="w-full flex justify-center py-1 opacity-50 hover:opacity-90 transition-all duration-200"
+          title={expanded ? 'Collapse controls' : 'Open controls'}
+          aria-label={expanded ? 'Collapse sidebar controls' : 'Open sidebar controls'}
+        >
+          {expanded ? (
+            <ChevronRight style={{ color: gold }} size={14} />
+          ) : (
+            <ChevronLeft style={{ color: gold }} size={14} />
+          )}
+        </button>
 
-        {/* Expanded controls */}
-        {expanded && (
-          <div className="flex flex-col items-center gap-1">
-            {/* Collapse handle */}
-            <button
-              onClick={() => {
-                setExpanded(false);
-                setSettingsOpen(false);
-              }}
-              className={`w-full flex justify-center py-0.5 opacity-40 hover:opacity-80 transition-opacity`}
-              title="Collapse controls"
-            >
-              <ChevronRight style={{ color: gold }} size={14} />
-            </button>
-
-            <button
-              onClick={onExplain}
-              disabled={isInterpreting || !!interpretation}
-              title={interpretation ? 'Insight available — scroll to read' : 'Explain poem'}
-              aria-label="Explain poem meaning"
-              className={`${btnBase} ${btnHover} ${isInterpreting ? 'opacity-50' : ''}`}
-            >
-              {isInterpreting ? (
-                <Loader2 className="animate-spin" style={{ color: gold }} size={18} />
-              ) : showInsightSuccess ? (
-                <Check
-                  style={{ color: gold, animation: 'goldCheckSparkle 0.5s ease-out forwards' }}
-                  size={18}
-                />
-              ) : (
-                <Brain style={{ color: gold }} size={18} />
-              )}
-            </button>
-            <span className={labelCls} style={{ color: gold, opacity: interpretation ? 0.9 : 0.6 }}>
-              {interpretation ? 'Insight' : 'Explain'}
-            </span>
-
-            <button
-              onClick={onCopy}
-              title="Copy poem"
-              aria-label="Copy poem to clipboard"
-              className={`${btnBase} ${btnHover}`}
-            >
-              {showCopySuccess ? (
-                <Check
-                  style={{ color: gold, animation: 'goldCheckSparkle 0.5s ease-out forwards' }}
-                  size={18}
-                />
-              ) : (
-                <Copy style={{ color: gold }} size={18} />
-              )}
-            </button>
-            <span className={labelCls} style={{ color: gold }}>
-              Copy
-            </span>
-
-            <button onClick={onShare} title="Share poem" className={`${btnBase} ${btnHover}`}>
-              {showShareSuccess ? (
-                <Check
-                  style={{ color: gold, animation: 'goldCheckSparkle 0.5s ease-out forwards' }}
-                  size={18}
-                />
-              ) : (
-                <Share2 style={{ color: gold }} size={18} />
-              )}
-            </button>
-            <span className={labelCls} style={{ color: gold }}>
-              Share
-            </span>
-
-            <button
-              onClick={onToggleTransliteration}
-              title={showTransliteration ? 'Hide romanization' : 'Show romanization'}
-              className={`${btnBase} ${btnHover} ${showTransliteration ? theme.goldActiveBg + ' border ' + theme.goldBorderSubtle : 'opacity-40'}`}
-            >
-              <span
-                className="text-[12px] font-bold leading-none"
-                style={{ color: gold, fontFamily: "'Amiri', serif" }}
+        {/* Controls drawer — smooth grid transition */}
+        <div className={`sidebar-drawer ${expanded ? 'open' : ''}`}>
+          <div className="sidebar-drawer-inner">
+            <div className="flex flex-col items-center gap-1">
+              <button
+                onClick={onExplain}
+                disabled={isInterpreting}
+                title={interpretation ? 'Insight available — tap to confirm' : 'Explain poem'}
+                aria-label="Explain poem meaning"
+                className={`${btnBase} ${btnHover} ${isInterpreting ? 'opacity-50' : ''}`}
               >
-                عA
+                {isInterpreting ? (
+                  <Loader2 className="animate-spin" style={{ color: gold }} size={18} />
+                ) : showInsightSuccess ? (
+                  <Check
+                    style={{ color: gold, animation: 'goldCheckSparkle 0.5s ease-out forwards' }}
+                    size={18}
+                  />
+                ) : (
+                  <Brain style={{ color: gold }} size={18} />
+                )}
+              </button>
+              <span
+                className={labelCls}
+                style={{ color: gold, opacity: interpretation ? 0.9 : 0.6 }}
+              >
+                {interpretation ? 'Insight' : 'Explain'}
               </span>
-            </button>
-            <span className={labelCls} style={{ color: gold }}>
-              Romanize
-            </span>
 
-            <div className="w-6 h-px bg-stone-500/30 mx-auto my-1" />
+              <button
+                onClick={onCopy}
+                title="Copy poem"
+                aria-label="Copy poem to clipboard"
+                className={`${btnBase} ${btnHover}`}
+              >
+                {showCopySuccess ? (
+                  <Check
+                    style={{ color: gold, animation: 'goldCheckSparkle 0.5s ease-out forwards' }}
+                    size={18}
+                  />
+                ) : (
+                  <Copy style={{ color: gold }} size={18} />
+                )}
+              </button>
+              <span className={labelCls} style={{ color: gold }}>
+                Copy
+              </span>
 
-            <button
-              onClick={() => setSettingsOpen((prev) => !prev)}
-              title="Settings"
-              className={`${btnBase} ${btnHover} ${settingsOpen ? theme.goldActiveBg : ''}`}
-            >
-              <Settings2
-                style={{
-                  color: gold,
-                  transition: 'transform 0.3s',
-                  transform: settingsOpen ? 'rotate(60deg)' : 'none',
-                }}
-                size={18}
-              />
-            </button>
-            <span className={labelCls} style={{ color: gold }}>
-              Settings
-            </span>
+              <button onClick={onShare} title="Share poem" className={`${btnBase} ${btnHover}`}>
+                {showShareSuccess ? (
+                  <Check
+                    style={{ color: gold, animation: 'goldCheckSparkle 0.5s ease-out forwards' }}
+                    size={18}
+                  />
+                ) : (
+                  <Share2 style={{ color: gold }} size={18} />
+                )}
+              </button>
+              <span className={labelCls} style={{ color: gold }}>
+                Share
+              </span>
 
-            {/* Smooth animated settings drawer */}
-            <div className={`sidebar-settings-drawer ${settingsOpen ? 'open' : ''}`}>
-              <div className="sidebar-settings-inner">
-                <div
-                  className={`flex flex-col items-center gap-0.5 pl-0.5 border-l-2 ${theme.goldBorderMuted}`}
+              <button
+                onClick={onToggleTransliteration}
+                title={showTransliteration ? 'Hide romanization' : 'Show romanization'}
+                className={`${btnBase} ${btnHover} ${showTransliteration ? theme.goldActiveBg + ' border ' + theme.goldBorderSubtle : 'opacity-40'}`}
+              >
+                <span
+                  className="text-[12px] font-bold leading-none"
+                  style={{ color: gold, fontFamily: "'Amiri', serif" }}
                 >
-                  <button
-                    onClick={onToggleTranslation}
-                    title={showTranslation ? 'Hide translation' : 'Show translation'}
-                    className={`${subBtnBase} ${subBtnHover} ${showTranslation ? theme.goldActiveBg + ' border ' + theme.goldBorderSubtle : 'opacity-40'}`}
-                  >
-                    <Languages style={{ color: gold }} size={16} />
-                  </button>
-                  <span className={labelCls} style={{ color: gold }}>
-                    Translate
-                  </span>
+                  عA
+                </span>
+              </button>
+              <span className={labelCls} style={{ color: gold }}>
+                Romanize
+              </span>
 
-                  <button
-                    onClick={onCycleTextSize}
-                    title={`Text size: ${textSizeLabel}`}
-                    className={`${subBtnBase} ${subBtnHover}`}
+              <div className="w-6 h-px bg-stone-500/30 mx-auto my-1" />
+
+              <button
+                onClick={() => setSettingsOpen((prev) => !prev)}
+                title="Settings"
+                className={`${btnBase} ${btnHover} ${settingsOpen ? theme.goldActiveBg : ''}`}
+              >
+                <Settings2
+                  style={{
+                    color: gold,
+                    transition: 'transform 0.3s',
+                    transform: settingsOpen ? 'rotate(60deg)' : 'none',
+                  }}
+                  size={18}
+                />
+              </button>
+              <span className={labelCls} style={{ color: gold }}>
+                Settings
+              </span>
+
+              {/* Smooth animated settings drawer */}
+              <div className={`sidebar-drawer ${settingsOpen ? 'open' : ''}`}>
+                <div className="sidebar-drawer-inner">
+                  <div
+                    className={`flex flex-col items-center gap-0.5 pl-0.5 border-l-2 ${theme.goldBorderMuted}`}
                   >
-                    <span
-                      className="text-[13px] font-bold leading-none"
-                      style={{ color: gold, fontFamily: "'Forum', serif" }}
+                    <button
+                      onClick={onToggleTranslation}
+                      title={showTranslation ? 'Hide translation' : 'Show translation'}
+                      className={`${subBtnBase} ${subBtnHover} ${showTranslation ? theme.goldActiveBg + ' border ' + theme.goldBorderSubtle : 'opacity-40'}`}
                     >
-                      T±
+                      <Languages style={{ color: gold }} size={16} />
+                    </button>
+                    <span className={labelCls} style={{ color: gold }}>
+                      Translate
                     </span>
-                  </button>
-                  <span className={labelCls} style={{ color: gold }}>
-                    Size
-                  </span>
 
-                  <button
-                    onClick={onToggleDarkMode}
-                    title={darkMode ? 'Light mode' : 'Dark mode'}
-                    className={`${subBtnBase} ${subBtnHover}`}
-                  >
-                    {darkMode ? (
-                      <Sun style={{ color: gold }} size={16} />
-                    ) : (
-                      <Moon style={{ color: gold }} size={16} />
-                    )}
-                  </button>
-                  <span className={labelCls} style={{ color: gold }}>
-                    {darkMode ? 'Light' : 'Dark'}
-                  </span>
-
-                  <button
-                    onClick={onCycleFont}
-                    title={`Font: ${currentFont}`}
-                    className={`${subBtnBase} ${subBtnHover}`}
-                  >
-                    <span
-                      className="text-[15px] font-bold leading-none"
-                      style={{ color: gold, fontFamily: "'Amiri', serif" }}
+                    <button
+                      onClick={onCycleTextSize}
+                      title={`Text size: ${textSizeLabel}`}
+                      className={`${subBtnBase} ${subBtnHover}`}
                     >
-                      ي
+                      <span
+                        className="text-[13px] font-bold leading-none"
+                        style={{ color: gold, fontFamily: "'Forum', serif" }}
+                      >
+                        T±
+                      </span>
+                    </button>
+                    <span className={labelCls} style={{ color: gold }}>
+                      Size
                     </span>
-                  </button>
-                  <span className={labelCls} style={{ color: gold }}>
-                    Font
-                  </span>
+
+                    <button
+                      onClick={onToggleDarkMode}
+                      title={darkMode ? 'Light mode' : 'Dark mode'}
+                      className={`${subBtnBase} ${subBtnHover}`}
+                    >
+                      {darkMode ? (
+                        <Sun style={{ color: gold }} size={16} />
+                      ) : (
+                        <Moon style={{ color: gold }} size={16} />
+                      )}
+                    </button>
+                    <span className={labelCls} style={{ color: gold }}>
+                      {darkMode ? 'Light' : 'Dark'}
+                    </span>
+
+                    <button
+                      onClick={onCycleFont}
+                      title={`Font: ${currentFont}`}
+                      className={`${subBtnBase} ${subBtnHover}`}
+                    >
+                      <span
+                        className="text-[15px] font-bold leading-none"
+                        style={{ color: gold, fontFamily: "'Amiri', serif" }}
+                      >
+                        ي
+                      </span>
+                    </button>
+                    <span className={labelCls} style={{ color: gold }}>
+                      Font
+                    </span>
+                  </div>
                 </div>
               </div>
+
+              <div className="w-6 h-px bg-stone-500/30 mx-auto my-1" />
+
+              <button
+                onClick={user ? onSignOut : onSignIn}
+                title={user ? 'Sign out' : 'Sign in'}
+                className={`${btnBase} ${btnHover}`}
+              >
+                {user ? (
+                  <LogOut style={{ color: gold }} size={18} />
+                ) : (
+                  <UserRound style={{ color: gold }} size={18} />
+                )}
+              </button>
+              <span className={labelCls} style={{ color: gold }}>
+                {user ? 'Sign Out' : 'Sign In'}
+              </span>
             </div>
-
-            <div className="w-6 h-px bg-stone-500/30 mx-auto my-1" />
-
-            <button
-              onClick={user ? onSignOut : onSignIn}
-              title={user ? 'Sign out' : 'Sign in'}
-              className={`${btnBase} ${btnHover}`}
-            >
-              {user ? (
-                <LogOut style={{ color: gold }} size={18} />
-              ) : (
-                <UserRound style={{ color: gold }} size={18} />
-              )}
-            </button>
-            <span className={labelCls} style={{ color: gold }}>
-              {user ? 'Sign Out' : 'Sign In'}
-            </span>
           </div>
-        )}
+        </div>
       </div>
     </>
   );
@@ -3824,12 +3798,6 @@ export default function DiwanApp() {
 
       // DATABASE MODE: Fetch from local PostgreSQL API
       if (useDatabase) {
-        // Reset category to "All" before fetching so the new poem will be visible
-        // without racing against the useEffect that resets currentIndex on category change
-        if (selectedCategory !== 'All') {
-          setSelectedCategory('All');
-        }
-
         addLog('Discovery DB', `→ Querying database | Category: ${selectedCategory}`, 'info');
 
         // Dedup: prune stale entries and build exclude list
@@ -5169,7 +5137,15 @@ export default function DiwanApp() {
 
       {/* Vertical Sidebar - always visible */}
       <VerticalSidebar
-        onExplain={handleAnalyze}
+        onExplain={() => {
+          if (interpretation) {
+            // Already have insight — flash gold check to confirm
+            setShowInsightSuccess(true);
+            setTimeout(() => setShowInsightSuccess(false), 1500);
+          } else {
+            handleAnalyze();
+          }
+        }}
         onCopy={handleCopy}
         showCopySuccess={showCopySuccess}
         onShare={handleShare}

@@ -89,7 +89,9 @@ const DESIGN = {
   radius: 'rounded-2xl',
   goldFoil: 'bg-gradient-to-br from-[#B8922E] via-[#E2C67A] to-[#A07D38] bg-clip-text text-transparent',
   anim: 'transition-all duration-300 ease-in-out',
-  buttonHover: 'hover:scale-105 hover:shadow-lg transition-all duration-300',
+  buttonHover: 'transition-all duration-200 hover:shadow-[0_0_12px_rgba(197,160,89,0.3)] active:scale-[0.96] active:transition-[transform_150ms_cubic-bezier(0.34,1.56,0.64,1)]',
+  focusRing: 'focus-visible:ring-2 focus-visible:ring-[#C5A059] focus-visible:ring-offset-2 focus-visible:ring-offset-[#0e0c08]',
+  loadingSkeleton: 'animate-pulse bg-gradient-to-r from-[#C5A059]/10 via-[#C5A059]/20 to-[#C5A059]/10 bg-[length:200%_100%]',
   touchTarget: 'min-w-[44px] min-h-[44px]',
 };
 
@@ -986,6 +988,25 @@ const MysticalConsultationEffect = ({ active, theme }) => {
   );
 };
 
+const GlassNoise = () => (
+  <div style={{
+    position: 'absolute',
+    inset: 0,
+    pointerEvents: 'none',
+    opacity: 0.025,
+    borderRadius: 'inherit',
+    overflow: 'hidden',
+    zIndex: 1,
+  }}>
+    <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
+      <filter id="glassNoise">
+        <feTurbulence type="fractalNoise" baseFrequency="0.8" numOctaves="4" stitchTiles="stitch"/>
+      </filter>
+      <rect width="100%" height="100%" filter="url(#glassNoise)" opacity="1"/>
+    </svg>
+  </div>
+);
+
 const DebugPanel = ({ logs, onClear, darkMode, poem, appState }) => {
   const theme = darkMode ? THEME.dark : THEME.light;
   const [isExpanded, setIsExpanded] = useState(false);
@@ -1155,8 +1176,9 @@ const CategoryPill = ({ selected, onSelect, darkMode }) => {
 
       {isOpen && (
         <div
-          className={`absolute bottom-full right-[-20px] mb-3 min-w-[220px] ${darkMode ? 'bg-[rgba(20,18,16,0.98)] border-[rgba(197,160,89,0.15)] shadow-[0_-10px_40px_rgba(0,0,0,0.7)]' : 'bg-white/95 border-stone-200 shadow-[0_-10px_40px_rgba(0,0,0,0.15)]'} backdrop-blur-[48px] border rounded-3xl p-3 z-50`}
+          className={`absolute bottom-full right-[-20px] mb-3 min-w-[220px] ${darkMode ? 'bg-[rgba(20,18,16,0.98)] border-[rgba(197,160,89,0.15)] shadow-[0_-10px_40px_rgba(0,0,0,0.7)]' : 'bg-white/95 border-stone-200 shadow-[0_-10px_40px_rgba(0,0,0,0.15)]'} backdrop-blur-[48px] border rounded-3xl p-3 z-50 relative`}
         >
+          <GlassNoise />
           {CATEGORIES.map((cat) => (
             <button
               key={cat.id}
@@ -1225,8 +1247,9 @@ const ThemeDropdown = ({ darkMode, onToggleDarkMode, currentFont, onCycleFont, f
 
       {isOpen && (
         <div
-          className={`absolute bottom-full right-[-20px] mb-3 min-w-[200px] ${darkMode ? 'bg-[rgba(20,18,16,0.98)] border-[rgba(197,160,89,0.15)] shadow-[0_-10px_40px_rgba(0,0,0,0.7)]' : 'bg-white/95 border-stone-200 shadow-[0_-10px_40px_rgba(0,0,0,0.15)]'} backdrop-blur-[48px] border rounded-3xl p-3 z-50`}
+          className={`absolute bottom-full right-[-20px] mb-3 min-w-[200px] ${darkMode ? 'bg-[rgba(20,18,16,0.98)] border-[rgba(197,160,89,0.15)] shadow-[0_-10px_40px_rgba(0,0,0,0.7)]' : 'bg-white/95 border-stone-200 shadow-[0_-10px_40px_rgba(0,0,0,0.15)]'} backdrop-blur-[48px] border rounded-3xl p-3 z-50 relative`}
         >
+          <GlassNoise />
           <button
             onClick={handleCycleFont}
             className="w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex flex-col items-center border-b border-[rgba(197,160,89,0.08)] hover:bg-[rgba(197,160,89,0.08)]"
@@ -2305,8 +2328,9 @@ const AuthButton = ({
 
       {showMenu && (
         <div
-          className={`absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3 min-w-[200px] ${darkMode ? 'bg-[rgba(20,18,16,0.98)] border-[rgba(197,160,89,0.15)] shadow-[0_-10px_40px_rgba(0,0,0,0.7)]' : 'bg-white/95 border-stone-200 shadow-[0_-10px_40px_rgba(0,0,0,0.15)]'} backdrop-blur-[48px] border rounded-3xl p-3 z-50`}
+          className={`absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3 min-w-[200px] ${darkMode ? 'bg-[rgba(20,18,16,0.98)] border-[rgba(197,160,89,0.15)] shadow-[0_-10px_40px_rgba(0,0,0,0.7)]' : 'bg-white/95 border-stone-200 shadow-[0_-10px_40px_rgba(0,0,0,0.15)]'} backdrop-blur-[48px] border rounded-3xl p-3 z-50 relative`}
         >
+          <GlassNoise />
           <div className="px-4 py-3 border-b border-[rgba(197,160,89,0.08)]">
             <p className={`font-brand-en text-xs ${GOLD.goldText} font-medium truncate`}>
               {user.email || user.user_metadata?.full_name || 'User'}
@@ -5339,8 +5363,9 @@ export default function DiwanApp() {
             )}
             <div
               ref={controlBarRef}
-              className={`flex items-center gap-2 px-5 py-2 rounded-full shadow-2xl border ${DESIGN.glass} ${theme.border} ${theme.shadow} ${DESIGN.anim} max-w-[calc(100vw-2rem)] w-fit`}
+              className={`relative flex items-center gap-2 px-5 py-2 rounded-full shadow-2xl border ${DESIGN.glass} ${theme.border} ${theme.shadow} ${DESIGN.anim} max-w-[calc(100vw-2rem)] w-fit`}
             >
+              <GlassNoise />
               <div className="flex flex-col items-center gap-1 min-w-[52px]">
                 {isGeneratingAudio ? (
                   <>
@@ -5647,8 +5672,9 @@ export default function DiwanApp() {
 
         <div className="hidden md:block h-full border-l">
           <div
-            className={`${DESIGN.paneWidth} h-full flex flex-col z-30 ${DESIGN.anim} ${theme.glass} ${theme.border}`}
+            className={`${DESIGN.paneWidth} h-full flex flex-col z-30 ${DESIGN.anim} ${theme.glass} ${theme.border} relative`}
           >
+            <GlassNoise />
             <div className="p-6 pb-4 border-b border-stone-500/10">
               <h3 className="font-brand-en italic font-semibold text-[clamp(1rem,1.8vw,1.125rem)] text-indigo-600 tracking-tight">
                 Poetic Insight

@@ -5152,7 +5152,8 @@ export default function DiwanApp() {
                       >
                         {current?.poetArabic || current?.poet}
                       </div>
-                      {current?.poet && current?.poet !== current?.poetArabic && (
+                      {(current?.poet !== current?.poetArabic ||
+                        current?.title !== current?.titleArabic) && (
                         <div
                           className="font-brand-en text-center italic"
                           dir="ltr"
@@ -5162,7 +5163,12 @@ export default function DiwanApp() {
                             marginTop: '0.5rem',
                           }}
                         >
-                          <span>{current.poet}</span>
+                          {current?.title !== current?.titleArabic && <span>{current.title}</span>}
+                          {current?.title !== current?.titleArabic &&
+                            current?.poet !== current?.poetArabic && (
+                              <span className="opacity-40"> — </span>
+                            )}
+                          {current?.poet !== current?.poetArabic && <span>{current.poet}</span>}
                         </div>
                       )}
                     </div>

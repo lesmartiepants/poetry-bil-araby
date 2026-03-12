@@ -153,19 +153,38 @@ async function checkPoetNameEnColumn() {
   }
 }
 
+// Check if poems.title_en column exists (graceful pre-migration fallback)
+let hasTitleEn = false;
+async function checkTitleEnColumn() {
+  try {
+    const result = await pool.query(
+      "SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'poems' AND column_name = 'title_en' LIMIT 1"
+    );
+    hasTitleEn = result.rows.length > 0;
+    log.info('DB', `Poem title_en column: ${hasTitleEn ? 'available' : 'not found'}`);
+  } catch {
+    hasTitleEn = false;
+  }
+}
+
 // Helper: returns extra SELECT for English poet name (empty string when column doesn't exist)
 function poetNameEnExpr() {
   return hasPoetNameEn ? ', po.name_en as poet_en' : '';
+}
+
+// Helper: returns extra SELECT for English title (empty string when column doesn't exist)
+function titleEnExpr() {
+  return hasTitleEn ? ', p.title_en' : '';
 }
 
 // Helper: formats a raw DB poem row into the frontend response structure
 function formatPoem(poem) {
   return {
     id: poem.id,
-    poet: poem.poet_en || poem.poet, // English name (falls back to Arabic)
+    poet: poem.poet_en || poem.poet, // English name (falls back to Arabic if name_en missing)
     poetArabic: poem.poet, // Always Arabic
-    title: poem.title, // Arabic (no English titles in DB)
-    titleArabic: poem.title, // Arabic
+    title: poem.title_en || poem.title, // English title (falls back to Arabic if title_en missing)
+    titleArabic: poem.title, // Always Arabic
     arabic: poem.arabic,
     english: '',
     tags: [poem.theme],
@@ -208,6 +227,7 @@ pool.query('SELECT NOW()', (err, res) => {
     checkQualityScoreColumn();
     checkTranslationColumns();
     checkPoetNameEnColumn();
+    checkTitleEnColumn();
     checkPoemEventsTable();
   }
 });
@@ -353,6 +373,7 @@ app.get(
         po.name as poet,
         t.name as theme
         ${poetNameEnExpr()}
+        ${titleEnExpr()}
         ${translationSelectExpr()}
       FROM poems p
       JOIN poets po ON p.poet_id = po.id
@@ -476,6 +497,7 @@ app.get(
         po.name as poet,
         t.name as theme
         ${poetNameEnExpr()}
+        ${titleEnExpr()}
       FROM poems p
       JOIN poets po ON p.poet_id = po.id
       JOIN themes t ON p.theme_id = t.id
@@ -551,6 +573,7 @@ app.get(
         po.name as poet,
         t.name as theme
         ${poetNameEnExpr()}
+        ${titleEnExpr()}
       FROM poems p
       JOIN poets po ON p.poet_id = po.id
       JOIN themes t ON p.theme_id = t.id
@@ -591,6 +614,7 @@ app.get(
         po.name as poet,
         t.name as theme
         ${poetNameEnExpr()}
+        ${titleEnExpr()}
       FROM poems p
       JOIN poets po ON p.poet_id = po.id
       JOIN themes t ON p.theme_id = t.id

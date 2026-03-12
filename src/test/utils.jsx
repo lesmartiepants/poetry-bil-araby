@@ -79,7 +79,7 @@ export function createDbPoem(id, overrides = {}) {
     id,
     poet: 'Mahmoud Darwish',
     poetArabic: 'محمود درويش',
-    title: 'بطاقة هوية',
+    title: 'Identity Card',
     titleArabic: 'بطاقة هوية',
     arabic: 'سَجِّلْ أَنَا عَرَبِيّ',
     ...overrides,

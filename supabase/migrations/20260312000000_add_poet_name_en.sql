@@ -68,9 +68,66 @@ UPDATE public.poets SET name_en = CASE name
   WHEN 'نازك الملائكة' THEN 'Nazik al-Mala''ika'
   WHEN 'توفيق زياد' THEN 'Tawfiq Zayyad'
   WHEN 'مظفر النواب' THEN 'Muzaffar al-Nawab'
-  ELSE name
+  -- Additional classical poets
+  WHEN 'الشنفرى' THEN 'Al-Shanfara'
+  WHEN 'تأبط شرا' THEN 'Ta''abbata Sharran'
+  WHEN 'الأصمعي' THEN 'Al-Asma''i'
+  WHEN 'ابن خلدون' THEN 'Ibn Khaldun'
+  WHEN 'ابن حزم' THEN 'Ibn Hazm'
+  WHEN 'ابن سينا' THEN 'Ibn Sina'
+  WHEN 'الحلاج' THEN 'Al-Hallaj'
+  WHEN 'ابن الخطيب' THEN 'Ibn al-Khatib'
+  WHEN 'لسان الدين بن الخطيب' THEN 'Lisan al-Din ibn al-Khatib'
+  WHEN 'ابن خفاجة' THEN 'Ibn Khafaja'
+  WHEN 'أبو الفرج الأصفهاني' THEN 'Abu al-Faraj al-Isfahani'
+  WHEN 'ابن هانئ الأندلسي' THEN 'Ibn Hani al-Andalusi'
+  WHEN 'ابن دريد' THEN 'Ibn Duraid'
+  WHEN 'أبو العلاء المعري' THEN 'Al-Ma''arri'
+  WHEN 'الثعالبي' THEN 'Al-Tha''alibi'
+  WHEN 'الطغرائي' THEN 'Al-Tughra''i'
+  WHEN 'ابن نباتة المصري' THEN 'Ibn Nubata al-Misri'
+  WHEN 'البوصيري' THEN 'Al-Busiri'
+  WHEN 'الإمام الشافعي' THEN 'Imam al-Shafi''i'
+  WHEN 'علي بن أبي طالب' THEN 'Ali ibn Abi Talib'
+  WHEN 'الصمة القشيري' THEN 'Al-Samma al-Qushayri'
+  WHEN 'عروة بن الورد' THEN 'Urwa ibn al-Ward'
+  WHEN 'الحطيئة' THEN 'Al-Hutay''a'
+  WHEN 'جميل بثينة' THEN 'Jamil Buthayna'
+  WHEN 'قيس بن الملوح' THEN 'Qays ibn al-Mulawwah'
+  WHEN 'مجنون ليلى' THEN 'Majnun Layla'
+  WHEN 'عمر بن أبي ربيعة' THEN 'Umar ibn Abi Rabi''a'
+  WHEN 'الفرزدق' THEN 'Al-Farazdaq'
+  WHEN 'ذو القرنين' THEN 'Dhu al-Qarnayn'
+  WHEN 'السموأل' THEN 'Al-Samaw''al'
+  WHEN 'الأحنف بن قيس' THEN 'Al-Ahnaf ibn Qays'
+  -- Modern/contemporary poets
+  WHEN 'عبد المعطي حجازي' THEN 'Ahmad Abd al-Mu''ti Hijazi'
+  WHEN 'سعدي يوسف' THEN 'Saadi Youssef'
+  WHEN 'محمد مهدي الجواهري' THEN 'Muhammad Mahdi al-Jawahiri'
+  WHEN 'أحمد فؤاد نجم' THEN 'Ahmad Fuad Negm'
+  WHEN 'عبد الرحمن شكري' THEN 'Abd al-Rahman Shukri'
+  WHEN 'خليل مطران' THEN 'Khalil Mutran'
+  WHEN 'إبراهيم طوقان' THEN 'Ibrahim Tuqan'
+  WHEN 'أبو ريشة' THEN 'Abu Risha'
+  WHEN 'محمد إقبال' THEN 'Muhammad Iqbal'
+  WHEN 'بابلو نيرودا' THEN 'Pablo Neruda'
+  WHEN 'طاهر بن جلون' THEN 'Tahar Ben Jelloun'
+  WHEN 'يوسف الخال' THEN 'Yusuf al-Khal'
+  WHEN 'أنسي الحاج' THEN 'Unsi al-Hajj'
+  WHEN 'شوقي بزيع' THEN 'Shawqi Bazigh'
+  WHEN 'عباس بن الأحنف' THEN 'Abbas ibn al-Ahnaf'
+  WHEN 'ابن الأبار' THEN 'Ibn al-Abbar'
+  WHEN 'الوليد بن يزيد' THEN 'Al-Walid ibn Yazid'
+  WHEN 'عبيد بن الأبرص' THEN 'Ubayd ibn al-Abras'
+  WHEN 'سلمى الجيوسي' THEN 'Salma Khadra Jayyusi'
 END
 WHERE name_en IS NULL;
 
+-- Flag any poets still without English names (for monitoring)
+-- SELECT name FROM public.poets WHERE name_en IS NULL;
+
 -- Index for quick lookups
 CREATE INDEX IF NOT EXISTS idx_poets_name_en ON public.poets (name_en) WHERE name_en IS NOT NULL;
+
+-- Add English title column to poems table for bilingual display
+ALTER TABLE public.poems ADD COLUMN IF NOT EXISTS title_en TEXT;

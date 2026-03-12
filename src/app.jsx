@@ -5062,12 +5062,12 @@ export default function DiwanApp() {
             <div
               className="pointer-events-none sticky top-0 z-30"
               style={{
-                height: '72px',
+                height: '40px',
                 marginLeft: '-2rem',
                 marginRight: '-2rem',
-                marginBottom: '-72px',
+                marginBottom: '-40px',
                 opacity: headerOpacity,
-                background: `linear-gradient(to bottom, ${darkMode ? '#0c0c0e' : '#FDFCF8'} 0%, ${darkMode ? '#0c0c0e' : '#FDFCF8'} 45%, ${darkMode ? 'rgba(12,12,14,0.7)' : 'rgba(253,252,248,0.7)'} 70%, ${darkMode ? 'rgba(12,12,14,0.3)' : 'rgba(253,252,248,0.3)'} 85%, transparent 100%)`,
+                background: `linear-gradient(to bottom, ${darkMode ? 'rgba(12,12,14,0.6)' : 'rgba(253,252,248,0.6)'} 0%, ${darkMode ? 'rgba(12,12,14,0.3)' : 'rgba(253,252,248,0.3)'} 40%, transparent 100%)`,
                 transition: 'opacity 0.3s ease-out',
               }}
             />

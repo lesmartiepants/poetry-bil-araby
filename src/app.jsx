@@ -52,150 +52,21 @@ import {
 } from './prompts';
 import { parseInsight } from './utils/insightParser';
 import { repairAndParseJSON } from './utils/jsonRepair';
+import { pcm16ToWav } from './utils/audio';
+import { transliterate } from './utils/transliterate';
 import { useLogger } from './LogContext.jsx';
+import { FEATURES } from './constants/features';
+import { DESIGN, TEXT_SIZES } from './constants/design';
+import { THEME, GOLD } from './constants/theme';
+import { CATEGORIES } from './constants/categories';
+import { FONTS } from './constants/fonts';
 import seedPoems from './data/seed-poems.json';
 
-/* =============================================================================
-  1. FEATURE FLAGS & DESIGN SYSTEM
-  =============================================================================
+/* Constants, design tokens, and utilities are imported from:
+   - constants/features.js, constants/design.js, constants/theme.js,
+     constants/categories.js, constants/fonts.js
+   - utils/transliterate.js, utils/audio.js
 */
-
-const FEATURES = {
-  grounding: false,
-  debug: true, // Debug panel visibility
-  logging: true, // Emit structured logs to console (captured by Vercel/browser)
-  caching: true, // Enable IndexedDB caching for audio/insights
-  streaming: true, // Enable streaming insights (progressive rendering)
-  prefetching: true, // Enable smart prefetching (rate-limited to avoid API issues)
-  database: true, // Enable database poem source (requires backend server running)
-  onboarding: true, // Show kinetic walkthrough (phases 1-3) on first visit
-  forceOnboarding: false, // Bypass hasSeenOnboarding check (enable to force onboarding every visit)
-};
-
-const DESIGN = {
-  // Main Poem Display - with fluid responsive scaling using clamp()
-  mainFontSize: 'text-[clamp(1.25rem,2vw,1.5rem)]', // 20px-24px (updated from text-xl md:text-2xl)
-  mainEnglishFontSize: 'text-[clamp(1rem,1.5vw,1.125rem)]', // 16px-18px
-  mainLineHeight: 'leading-[2.4]',
-  mainMetaPadding: 'pt-8 pb-1',
-  mainTagSize: 'text-[11px]',
-  mainTitleSize: 'text-[clamp(1.875rem,3.5vw,2.25rem)]', // 30px-36px (updated from text-3xl md:text-4xl)
-  mainSubtitleSize: 'text-[clamp(10px,1.2vw,14px)]', // 10px-14px (updated from text-sm)
-  mainMarginBottom: 'mb-8',
-  paneWidth: 'w-full md:w-96',
-  panePadding: 'p-8',
-  paneSpacing: 'space-y-8',
-  paneVerseSize: 'text-[clamp(1rem,1.8vw,1.125rem)]', // 16px-18px for insight panel
-  glass: 'backdrop-blur-2xl',
-  radius: 'rounded-2xl',
-  anim: 'transition-all duration-300 ease-in-out',
-  buttonHover: 'hover:scale-105 hover:shadow-lg transition-all duration-300',
-  touchTarget: 'min-w-[44px] min-h-[44px]',
-};
-
-const THEME = {
-  dark: {
-    bg: 'bg-[#0c0c0e]',
-    text: 'text-stone-200',
-    accent: 'text-indigo-400',
-    glass: 'bg-stone-900/60',
-    border: 'border-stone-800',
-    shadow: 'shadow-black/60',
-    pill: 'bg-stone-900/40 border-stone-700/50',
-    glow: 'from-indigo-600/30 via-purple-600/15 to-transparent',
-    brand: 'text-indigo-400',
-    brandBg: 'bg-indigo-500/10',
-    brandBorder: 'border-indigo-500/20',
-    btnPrimary: 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-indigo-500/40',
-    titleColor: 'text-[#C5A059]', // Antique Gold
-    poetColor: 'text-[#C5A059]', // Unified Gold
-    controlIcon: 'text-stone-300 hover:text-white',
-    gold: '#C5A059', // Raw gold hex for inline styles & template literals
-    goldText: 'text-[#C5A059]', // Tailwind gold text
-    goldHoverBg: 'hover:bg-[#C5A059]/12', // Gold hover background (buttons)
-    goldHoverBg15: 'hover:bg-[#C5A059]/15', // Gold hover background (sidebar)
-    goldActiveBg: 'bg-[#C5A059]/15', // Gold active/selected background
-    goldBorder: 'border-[#C5A059]', // Gold solid border (selected state)
-    goldBorderMuted: 'border-[#C5A059]/20', // Gold muted border (dividers)
-    goldBorderSubtle: 'border-[#C5A059]/30', // Gold subtle border (hover)
-    goldHoverBorderSubtle: 'hover:border-[#C5A059]/30', // Gold hover border
-    goldBorderAccent: 'border-[#C5A059]/40', // Gold border accent (sidebar edges)
-    goldBorderStrong: 'border-[#C5A059]/70', // Gold border strong (hover state)
-    goldHoverBorderStrong: 'hover:border-[#C5A059]/70', // Gold hover border strong
-    goldBg10: 'bg-[#C5A059]/10', // Gold background 10% (selected items)
-    goldBg20: 'border-[#C5A059]/20', // Gold background 20% (badge border)
-    goldTextMuted: 'text-[#C5A059]/60', // Gold muted text
-    error: 'text-red-400', // Error text
-    errorBg: 'bg-red-600/80', // Error background (bug report button)
-    debug: 'bg-black/60 border-stone-800 text-stone-300', // Debug panel
-    debugInput: 'bg-stone-900/80 border-stone-700 text-stone-200 placeholder:text-stone-500', // Debug input
-    debugDivider: 'border-stone-700', // Debug panel divider
-    kbd: 'bg-stone-800 text-stone-300 border-stone-700', // Keyboard shortcut keys
-  },
-  light: {
-    bg: 'bg-[#FDFCF8]',
-    text: 'text-stone-800',
-    accent: 'text-indigo-600',
-    glass: 'bg-white/70',
-    border: 'border-white/80',
-    shadow: 'shadow-indigo-100/50',
-    pill: 'bg-white/40 border-white/60',
-    glow: 'from-indigo-500/15 via-purple-500/10 to-transparent',
-    brand: 'text-indigo-600',
-    brandBg: 'bg-indigo-500/5',
-    brandBorder: 'border-indigo-500/10',
-    btnPrimary: 'bg-gradient-to-br from-indigo-600 to-purple-700 text-white shadow-indigo-200',
-    titleColor: 'text-[#8B7355]', // Antique Gold (rich, warm tone - 5.2:1 contrast)
-    poetColor: 'text-[#8B7355]', // Antique Gold (rich, warm tone - 5.2:1 contrast)
-    controlIcon: 'text-indigo-950/90 hover:text-black',
-    gold: '#8B7355', // Raw gold hex for inline styles & template literals
-    goldText: 'text-[#8B7355]', // Tailwind gold text
-    goldHoverBg: 'hover:bg-[#8B7355]/12', // Gold hover background (buttons)
-    goldHoverBg15: 'hover:bg-[#8B7355]/15', // Gold hover background (sidebar)
-    goldActiveBg: 'bg-[#8B7355]/15', // Gold active/selected background
-    goldBorder: 'border-[#8B7355]', // Gold solid border (selected state)
-    goldBorderMuted: 'border-[#8B7355]/20', // Gold muted border (dividers)
-    goldBorderSubtle: 'border-[#8B7355]/30', // Gold subtle border (hover)
-    goldHoverBorderSubtle: 'hover:border-[#8B7355]/30', // Gold hover border
-    goldBorderAccent: 'border-[#8B7355]/40', // Gold border accent (sidebar edges)
-    goldBorderStrong: 'border-[#8B7355]/70', // Gold border strong (hover state)
-    goldHoverBorderStrong: 'hover:border-[#8B7355]/70', // Gold hover border strong
-    goldBg10: 'bg-[#8B7355]/10', // Gold background 10% (selected items)
-    goldBg20: 'border-[#8B7355]/20', // Gold background 20% (badge border)
-    goldTextMuted: 'text-[#8B7355]/60', // Gold muted text
-    error: 'text-red-400', // Error text (same in light for visibility)
-    errorBg: 'bg-red-600/80', // Error background (bug report button)
-    debug: 'bg-white/60 border-stone-200 text-stone-700', // Debug panel
-    debugInput: 'bg-white/80 border-stone-300 text-stone-800 placeholder:text-stone-400', // Debug input
-    debugDivider: 'border-stone-300', // Debug panel divider
-    kbd: 'bg-stone-200 text-stone-700 border-stone-300', // Keyboard shortcut keys
-  },
-};
-
-// Convenience alias: many UI elements (control bar, dropdowns, badges) always use
-// the dark-mode gold regardless of current theme.  Destructuring avoids verbose
-// `THEME.dark.*` references throughout the JSX.
-const GOLD = THEME.dark;
-
-const CATEGORIES = [
-  { id: 'All', label: 'All Poets', labelAr: 'كل الشعراء' },
-  { id: 'Nizar Qabbani', label: 'Nizar Qabbani', labelAr: 'نزار قباني' },
-  { id: 'Mahmoud Darwish', label: 'Mahmoud Darwish', labelAr: 'محمود درويش' },
-  { id: 'Al-Mutanabbi', label: 'Al-Mutanabbi', labelAr: 'المتنبي' },
-  { id: 'Antarah', label: 'Antarah', labelAr: 'عنترة بن شداد' },
-  { id: 'Ibn Arabi', label: 'Ibn Arabi', labelAr: 'ابن عربي' },
-];
-
-const FONTS = [
-  { id: 'Amiri', label: 'Amiri', labelAr: 'أميري', family: 'font-amiri' },
-  { id: 'Alexandria', label: 'Alexandria', labelAr: 'الإسكندرية', family: 'font-alexandria' },
-  { id: 'El Messiri', label: 'El Messiri', labelAr: 'المسيري', family: 'font-messiri' },
-  { id: 'Lalezar', label: 'Lalezar', labelAr: 'لاله‌زار', family: 'font-lalezar' },
-  { id: 'Rakkas', label: 'Rakkas', labelAr: 'رقاص', family: 'font-rakkas' },
-  { id: 'Fustat', label: 'Fustat', labelAr: 'فسطاط', family: 'font-fustat' },
-  { id: 'Kufam', label: 'Kufam', labelAr: 'كوفام', family: 'font-kufam' },
-  { id: 'Katibeh', label: 'Katibeh', labelAr: 'كاتبة', family: 'font-katibeh' },
-];
 
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
@@ -849,94 +720,7 @@ const prefetchManager = {
   },
 };
 
-/* =============================================================================
-  5. TRANSLITERATION
-  =============================================================================
-*/
-
-const ARABIC_TRANSLIT_MAP = {
-  // Base letters
-  ا: 'a',
-  أ: 'a',
-  إ: 'i',
-  آ: 'aa',
-  ٱ: 'a',
-  ب: 'b',
-  ت: 't',
-  ث: 'th',
-  ج: 'j',
-  ح: 'h',
-  خ: 'kh',
-  د: 'd',
-  ذ: 'dh',
-  ر: 'r',
-  ز: 'z',
-  س: 's',
-  ش: 'sh',
-  ص: 's',
-  ض: 'd',
-  ط: 't',
-  ظ: 'z',
-  ع: "'",
-  غ: 'gh',
-  ف: 'f',
-  ق: 'q',
-  ك: 'k',
-  ل: 'l',
-  م: 'm',
-  ن: 'n',
-  ه: 'h',
-  و: 'w',
-  ي: 'y',
-  ى: 'a',
-  ة: 'h',
-  ء: "'",
-  ؤ: "'",
-  ئ: "'",
-  // Diacritics
-  '\u064E': 'a', // fatha
-  '\u064F': 'u', // damma
-  '\u0650': 'i', // kasra
-  '\u0651': '', // shadda (handled by doubling previous consonant)
-  '\u0652': '', // sukun (no vowel)
-  '\u064B': 'an', // tanween fatha
-  '\u064C': 'un', // tanween damma
-  '\u064D': 'in', // tanween kasra
-  '\u0670': 'a', // alef superscript
-  // Common punctuation
-  '،': ',',
-  '؛': ';',
-  '؟': '?',
-  '»': '"',
-  '«': '"',
-  '\u200C': '',
-  '\u200D': '',
-  '\u200F': '',
-  '\u200E': '', // zero-width chars
-};
-
-function transliterate(text) {
-  if (!text) return '';
-  let result = '';
-  for (let i = 0; i < text.length; i++) {
-    const ch = text[i];
-    // Handle shadda: double the previous consonant
-    if (ch === '\u0651') {
-      const lastChar = result[result.length - 1];
-      if (lastChar && lastChar !== ' ') result += lastChar;
-      continue;
-    }
-    if (ch in ARABIC_TRANSLIT_MAP) {
-      result += ARABIC_TRANSLIT_MAP[ch];
-    } else if (/[\s\n]/.test(ch)) {
-      result += ch;
-    } else if (/[a-zA-Z0-9.,!?;:'"()\-–—…]/.test(ch)) {
-      result += ch; // pass through Latin chars and common punctuation
-    }
-    // Skip unrecognized Arabic diacritics/formatting chars
-  }
-  return result;
-}
+/* Transliteration: imported from utils/transliterate.js */
 
 /* =============================================================================
   6. UTILITY COMPONENTS
@@ -3151,13 +2935,6 @@ export default function DiwanApp() {
     addLog('Font', `Switched to ${FONTS[nextIdx].label}`, 'info');
   };
 
-  const TEXT_SIZES = [
-    { label: 'S', multiplier: 0.85 },
-    { label: 'M', multiplier: 1.0 },
-    { label: 'L', multiplier: 1.15 },
-    { label: 'XL', multiplier: 1.3 },
-  ];
-
   const cycleTextSize = () => {
     setTextSizeLevel((prev) => (prev + 1) % TEXT_SIZES.length);
   };
@@ -3502,39 +3279,7 @@ export default function DiwanApp() {
     return pairs;
   }, [current, insightParts]);
 
-  const pcm16ToWav = (base64, rate = 24000) => {
-    try {
-      const cleanedBase64 = base64.replace(/\s/g, '');
-      const bin = atob(cleanedBase64);
-      const buf = new ArrayBuffer(bin.length);
-      const view = new DataView(buf);
-      for (let i = 0; i < bin.length; i++) view.setUint8(i, bin.charCodeAt(i));
-      const samples = new Int16Array(buf);
-      const wavBuf = new ArrayBuffer(44 + samples.length * 2);
-      const wavView = new DataView(wavBuf);
-      const s = (o, str) => {
-        for (let i = 0; i < str.length; i++) wavView.setUint8(o + i, str.charCodeAt(i));
-      };
-      s(0, 'RIFF');
-      wavView.setUint32(4, 36 + samples.length * 2, true);
-      s(8, 'WAVE');
-      s(12, 'fmt ');
-      wavView.setUint32(16, 16, true);
-      wavView.setUint16(20, 1, true);
-      wavView.setUint16(22, 1, true);
-      wavView.setUint32(24, rate, true);
-      wavView.setUint32(28, rate * 2, true);
-      wavView.setUint16(32, 2, true);
-      wavView.setUint16(34, 16, true);
-      s(36, 'data');
-      wavView.setUint32(40, samples.length * 2, true);
-      new Int16Array(wavBuf, 44).set(samples);
-      return new Blob([wavBuf], { type: 'audio/wav' });
-    } catch (e) {
-      addLog('Audio Error', e.message, 'error');
-      return null;
-    }
-  };
+  // pcm16ToWav imported from utils/audio.js
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -3873,7 +3618,7 @@ export default function DiwanApp() {
       const b64 = data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
       if (b64) {
         const conversionStart = performance.now();
-        const blob = pcm16ToWav(b64);
+        const blob = pcm16ToWav(b64, 24000, (err) => addLog('Audio Error', err, 'error'));
         const conversionTime = performance.now() - conversionStart;
 
         if (blob) {

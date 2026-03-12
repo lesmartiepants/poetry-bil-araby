@@ -51,11 +51,9 @@ import { useDailyPoem } from './hooks/useDailyPoem';
 import { useDiscovery } from './hooks/useDiscovery';
 import {
   INSIGHTS_SYSTEM_PROMPT,
-  DISCOVERY_SYSTEM_PROMPT,
   getTTSContent,
 } from './prompts';
 import { parseInsight } from './utils/insightParser';
-import { repairAndParseJSON } from './utils/jsonRepair';
 import { pcm16ToWav } from './utils/audio';
 import { transliterate } from './utils/transliterate';
 import { useLogger } from './LogContext.jsx';
@@ -64,10 +62,9 @@ import { DESIGN, TEXT_SIZES } from './constants/design';
 import { THEME, GOLD } from './constants/theme';
 import { CATEGORIES } from './constants/categories';
 import { FONTS } from './constants/fonts';
-import { getApiUrl, API_MODELS, discoverTextModels, geminiTextFetch, TTS_CONFIG, fetchWithRetry } from './services/api';
+import { getApiUrl, API_MODELS, geminiTextFetch, TTS_CONFIG, fetchWithRetry } from './services/api';
 import { CACHE_CONFIG, initCache, cacheOperations } from './services/cache';
 import { prefetchManager } from './services/prefetch';
-import seedPoems from './data/seed-poems.json';
 
 /* Constants, design tokens, utilities, and services are imported from:
    - constants/ (features, design, theme, categories, fonts)
@@ -2181,8 +2178,6 @@ export default function DiwanApp() {
   const [audioError, setAudioError] = useState(null);
   const [interpretation, setInterpretation] = useState(null);
   const [isInterpreting, setIsInterpreting] = useState(false);
-  const [autoExplainPending, setAutoExplainPending] = useState(false);
-  const hasAutoLoaded = useRef(false);
   const { logs, addLog, clearLogs } = useLogger();
   const [showCopySuccess, setShowCopySuccess] = useState(false);
   const [showShareSuccess, setShowShareSuccess] = useState(false);
@@ -2213,11 +2208,14 @@ export default function DiwanApp() {
     isFetching,
     filtered,
     current,
+    autoExplainPending,
     setPoems,
     setCurrentIndex,
     setSelectedCategory,
     setUseDatabase,
+    setAutoExplainPending,
     handleFetch,
+    handleToggleDatabase,
   } = useDiscovery(emitEvent);
 
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -2268,74 +2266,6 @@ export default function DiwanApp() {
     }, 3000);
     return () => clearTimeout(timer);
   }, [current?.id, user]);
-
-  // Eagerly populate the discovered model list so it's ready before any user action.
-  // Using the default fetch mock in tests means this never consumes a mockResolvedValueOnce.
-  // Eagerly discover available AI models via the backend proxy.
-  useEffect(() => {
-    discoverTextModels(addLog);
-  }, []);
-
-  // Auto-load a poem and queue explanation on first mount.
-  // If the URL contains /poem/:id, load that specific poem (deep link).
-  // OAuth restore and prefetch are handled in the useState lazy initializer.
-  useEffect(() => {
-    if (!hasAutoLoaded.current) {
-      hasAutoLoaded.current = true;
-
-      // Deep link detection: /poem/:id
-      const deepLinkMatch = window.location.pathname.match(/^\/poem\/(\d+)$/);
-      if (deepLinkMatch && useDatabase) {
-        const poemId = deepLinkMatch[1];
-        track('deep_link_loaded', { poemId });
-        addLog('DeepLink', `Loading poem ID ${poemId} from URL`, 'info');
-        fetch(`${getApiUrl()}/api/poems/${poemId}`)
-          .then((res) => {
-            if (!res.ok) throw new Error(`Poem ${poemId} not found`);
-            return res.json();
-          })
-          .then((poem) => {
-            if (poem.arabic) poem.arabic = poem.arabic.replace(/\*/g, '\n');
-            poem.isFromDatabase = true;
-            setPoems([poem]);
-            setCurrentIndex(0);
-            setAutoExplainPending(true);
-            addLog('DeepLink', `Loaded: ${poem.poet} — ${poem.title}`, 'success');
-          })
-          .catch((err) => {
-            addLog('DeepLink', `Failed: ${err.message}`, 'error');
-            setAutoExplainPending(true);
-            handleFetch();
-          });
-        prefetchNextVisitPoem();
-        return;
-      }
-
-      // Clear stashed OAuth poem (already restored by useState lazy initializer)
-      try {
-        sessionStorage.removeItem('pendingSavePoem');
-      } catch {}
-
-      // If the initial poem already has a cached translation, skip auto-explain
-      const initial = poems[0];
-      if (initial?.cachedTranslation) {
-        addLog(
-          'Init',
-          `Loaded with cached translation: ${initial.poet} — ${initial.title}`,
-          'success'
-        );
-      } else {
-        // No cached translation — queue auto-explain and fetch from DB
-        setAutoExplainPending(true);
-        if (!initial?.isSeedPoem || !initial?.cachedTranslation) {
-          handleFetch();
-        }
-      }
-
-      // Background: pre-fetch next visit's poem
-      prefetchNextVisitPoem();
-    }
-  }, []);
 
   // Fetch poem of the day
   const dailyPoem = useDailyPoem(useDatabase);
@@ -3161,26 +3091,6 @@ export default function DiwanApp() {
     }
   };
 
-  // Pre-fetch a poem in the background for the next visit (stored in localStorage with TTL)
-  async function prefetchNextVisitPoem() {
-    try {
-      const res = await fetch(`${getApiUrl()}/api/poems/random`);
-      if (!res.ok) return;
-      const poem = await res.json();
-      if (poem.arabic) poem.arabic = poem.arabic.replace(/\*/g, '\n');
-      if (poem.cachedTranslation)
-        poem.cachedTranslation = poem.cachedTranslation.replace(/\*/g, '\n');
-      poem.isFromDatabase = true;
-      localStorage.setItem(
-        'qafiyah_nextPoem',
-        JSON.stringify({
-          poem,
-          storedAt: Date.now(),
-        })
-      );
-    } catch {} // silent fail — prefetch is best-effort
-  }
-
   const handleCopy = async () => {
     addLog(
       'UI Event',
@@ -3483,12 +3393,6 @@ export default function DiwanApp() {
     addLog('Theme', `Switched to ${newTheme} mode`, 'info');
   };
   const handleToggleTheme = handleToggleDarkMode;
-
-  const handleToggleDatabase = () => {
-    const newMode = useDatabase ? 'ai' : 'database';
-    track('mode_switched', { mode: newMode });
-    setUseDatabase(!useDatabase);
-  };
 
   const handleUnsavePoemFromList = async (sp) => {
     const { error } = await unsavePoem(sp.poem_id || sp.id, sp.poem_text);

@@ -74,7 +74,7 @@ const DESIGN = {
   mainFontSize: 'text-[clamp(1.25rem,2vw,1.5rem)]', // 20px-24px (updated from text-xl md:text-2xl)
   mainEnglishFontSize: 'text-[clamp(1rem,1.5vw,1.125rem)]', // 16px-18px
   mainLineHeight: 'leading-[2.4]',
-  mainMetaPadding: 'pt-8 pb-1',
+  mainMetaPadding: 'pt-2 pb-1',
   mainTagSize: 'text-[11px]',
   mainTitleSize: 'text-[clamp(1.875rem,3.5vw,2.25rem)]', // 30px-36px (updated from text-3xl md:text-4xl)
   mainSubtitleSize: 'text-[clamp(10px,1.2vw,14px)]', // 10px-14px (updated from text-sm)
@@ -5076,11 +5076,11 @@ export default function DiwanApp() {
             <div
               className="pointer-events-none sticky top-0 left-0 right-0 z-30"
               style={{
-                height: '48px',
+                height: '32px',
                 background: `linear-gradient(to bottom, ${darkMode ? '#0c0c0e' : '#FDFCF8'} 0%, ${darkMode ? 'rgba(12,12,14,0.6)' : 'rgba(253,252,248,0.6)'} 50%, transparent 100%)`,
               }}
             />
-            <div className="flex flex-col items-center py-6 mt-8">
+            <div className="flex flex-col items-center py-2 mt-2">
               <div className="w-full max-w-4xl flex flex-col items-center">
                 <div
                   className={`text-center ${DESIGN.mainMetaPadding} animate-in slide-in-from-bottom-8 duration-1000 z-20 w-full`}
@@ -5129,40 +5129,32 @@ export default function DiwanApp() {
                       />
                     </svg>
 
-                    <div className="relative z-10 flex flex-col items-center justify-center w-full gap-1">
+                    <div className="relative z-10 flex flex-col items-center justify-center w-full gap-0.5">
                       <div
-                        className="font-brand-en font-bold text-center tracking-wide"
+                        className="font-brand-en font-semibold text-center tracking-wide"
                         style={{
-                          fontSize: 'clamp(1.4rem, 3vw, 1.85rem)',
-                          color: '#C5A059',
-                          textShadow: '0 0 30px rgba(197,160,89,0.2)',
+                          fontSize: 'clamp(1.3rem, 2.8vw, 1.7rem)',
+                          color: darkMode ? '#B8A088' : '#6B5744',
+                          letterSpacing: '0.03em',
                         }}
                       >
                         {current?.title}
                       </div>
                       <div
-                        className="font-brand-en text-center tracking-wide"
+                        className="font-brand-en text-center tracking-widest uppercase"
                         style={{
-                          fontSize: 'clamp(0.95rem, 2vw, 1.15rem)',
-                          color: '#C5A059',
-                          opacity: 0.7,
+                          fontSize: 'clamp(0.7rem, 1.4vw, 0.85rem)',
+                          color: darkMode ? '#8A7D6F' : '#9B8B78',
+                          letterSpacing: '0.15em',
                         }}
                       >
                         {current?.poet}
-                      </div>
-                      <div
-                        className={`flex items-center justify-center gap-2 opacity-50 ${currentFontClass} mt-[clamp(0.15rem,0.5vw,0.5rem)]`}
-                        style={{ fontSize: 'clamp(0.85rem, 1.5vw, 1rem)' }}
-                      >
-                        <span>{current?.titleArabic}</span>
-                        <span className="opacity-20">&middot;</span>
-                        <span>{current?.poetArabic}</span>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div className={`relative w-full group pt-8 pb-2 ${DESIGN.mainMarginBottom}`}>
+                <div className={`relative w-full group pt-3 pb-2 ${DESIGN.mainMarginBottom}`}>
                   <div className="px-4 md:px-20 py-2 text-center">
                     <div className="flex flex-col gap-5 md:gap-7">
                       {versePairs.map((pair, idx) => (

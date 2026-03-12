@@ -5124,30 +5124,32 @@ export default function DiwanApp() {
 
                     <div className="relative z-10 flex flex-col items-center justify-center w-full gap-1">
                       <div
-                        className={`${currentFontClass} font-bold text-center`}
+                        className="font-brand-en font-bold text-center tracking-wide"
                         style={{
-                          fontSize: 'clamp(1.5rem, 3vw, 2rem)',
+                          fontSize: 'clamp(1.4rem, 3vw, 1.85rem)',
                           color: '#C5A059',
                           textShadow: '0 0 30px rgba(197,160,89,0.2)',
                         }}
                       >
-                        {current?.titleArabic}
+                        {current?.title}
                       </div>
                       <div
-                        className={`${currentFontClass} text-center`}
+                        className="font-brand-en text-center tracking-wide"
                         style={{
-                          fontSize: 'clamp(1rem, 2vw, 1.25rem)',
+                          fontSize: 'clamp(0.95rem, 2vw, 1.15rem)',
                           color: '#C5A059',
-                          opacity: 0.75,
+                          opacity: 0.7,
                         }}
                       >
-                        {current?.poetArabic}
+                        {current?.poet}
                       </div>
                       <div
-                        className={`flex items-center justify-center gap-1 sm:gap-2 opacity-50 ${DESIGN.mainSubtitleSize} font-brand-en tracking-[0.08em] uppercase mt-[clamp(0.25rem,0.8vw,0.75rem)]`}
+                        className={`flex items-center justify-center gap-2 opacity-50 ${currentFontClass} mt-[clamp(0.15rem,0.5vw,0.5rem)]`}
+                        style={{ fontSize: 'clamp(0.85rem, 1.5vw, 1rem)' }}
                       >
-                        <span className="font-semibold">{current?.poet}</span>{' '}
-                        <span className="opacity-20">•</span> <span>{current?.title}</span>
+                        <span>{current?.titleArabic}</span>
+                        <span className="opacity-20">&middot;</span>
+                        <span>{current?.poetArabic}</span>
                       </div>
                     </div>
                   </div>

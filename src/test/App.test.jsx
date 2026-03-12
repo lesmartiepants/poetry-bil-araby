@@ -118,7 +118,7 @@ describe('DiwanApp', () => {
 
       await waitFor(
         () => {
-          expect(screen.getByText('محمود درويش')).toBeInTheDocument();
+          expect(screen.getByText('Mahmoud Darwish')).toBeInTheDocument();
         },
         { timeout: 3000 }
       );
@@ -197,7 +197,7 @@ describe('DiwanApp', () => {
 
       await waitFor(
         () => {
-          expect(screen.getByText('المتنبي')).toBeInTheDocument();
+          expect(screen.getByText('Al-Mutanabbi')).toBeInTheDocument();
         },
         { timeout: 3000 }
       );

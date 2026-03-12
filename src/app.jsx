@@ -5131,21 +5131,36 @@ export default function DiwanApp() {
                       />
                     </svg>
 
-                    <div className="relative z-10 flex flex-col items-center justify-center w-full gap-0.5">
+                    <div
+                      className="relative z-10 flex flex-col items-center justify-center w-full"
+                      dir="rtl"
+                    >
                       <div
-                        className={`${currentFontClass} font-bold text-center`}
+                        className="font-amiri font-bold text-center"
                         style={{
-                          fontSize: 'clamp(1.2rem, 2.5vw, 1.6rem)',
-                          color: darkMode ? '#B8A088' : '#6B5744',
+                          fontSize: 'clamp(1.4rem, 4vw, 2.25rem)',
+                          color: '#C5A059',
+                          lineHeight: 1.4,
+                          textShadow: darkMode ? '0 0 30px rgba(197,160,89,0.15)' : 'none',
                         }}
                       >
                         {current?.titleArabic || current?.title}
                       </div>
                       <div
-                        className={`${currentFontClass} text-center`}
                         style={{
-                          fontSize: 'clamp(0.85rem, 1.8vw, 1.05rem)',
-                          color: darkMode ? '#8A7D6F' : '#9B8B78',
+                          width: '40px',
+                          height: '1px',
+                          background: '#C5A059',
+                          opacity: 0.5,
+                          margin: '0.5rem auto',
+                        }}
+                      />
+                      <div
+                        className="font-tajawal text-center"
+                        style={{
+                          fontSize: 'clamp(0.8rem, 2vw, 1rem)',
+                          color: darkMode ? '#a8a29e' : '#57534e',
+                          lineHeight: 1.4,
                         }}
                       >
                         {current?.poetArabic || current?.poet}
@@ -5164,15 +5179,16 @@ export default function DiwanApp() {
                           : null;
                         return englishPoet || englishTitle ? (
                           <div
-                            className="font-brand-en text-center tracking-wide"
+                            className="font-brand-en text-center italic"
+                            dir="ltr"
                             style={{
-                              fontSize: 'clamp(0.65rem, 1.2vw, 0.8rem)',
-                              color: darkMode ? '#6B6360' : '#A89B8E',
-                              marginTop: '2px',
+                              fontSize: 'clamp(0.7rem, 1.3vw, 0.8rem)',
+                              color: darkMode ? '#78716c' : '#a8a29e',
+                              marginTop: '0.5rem',
                             }}
                           >
                             {englishTitle && <span>{englishTitle}</span>}
-                            {englishTitle && englishPoet && <span className="opacity-40"> · </span>}
+                            {englishTitle && englishPoet && <span className="opacity-40"> — </span>}
                             {englishPoet && <span>{englishPoet}</span>}
                           </div>
                         ) : null;

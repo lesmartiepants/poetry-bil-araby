@@ -4870,7 +4870,7 @@ export default function DiwanApp() {
           width: 100%;
           max-width: 550px;
           margin: 0 auto 16px;
-          padding: 28px 40px;
+          padding: 16px 24px;
         }
 
         .minimal-frame svg {
@@ -4881,6 +4881,12 @@ export default function DiwanApp() {
           bottom: 0;
           width: 100%;
           height: 100%;
+        }
+
+        @media (min-width: 768px) {
+          .minimal-frame {
+            padding: 28px 40px;
+          }
         }
 
         .frame-line {
@@ -5013,6 +5019,10 @@ export default function DiwanApp() {
           display: 'flex',
           justifyContent: headerOpacity > 0 ? 'flex-end' : 'center',
           transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          backgroundColor: headerOpacity > 0 ? 'rgba(0,0,0,0.15)' : 'transparent',
+          borderRadius: headerOpacity > 0 ? '12px' : '0',
         }}
       >
         <div
@@ -5063,7 +5073,7 @@ export default function DiwanApp() {
             onScroll={handleScroll}
             className="flex-1 overflow-y-auto custom-scrollbar relative z-10 px-4 md:px-0 pb-28 pt-16 md:pt-20 pr-14 md:pr-0"
           >
-            <div className="min-h-full flex flex-col items-center justify-center py-6">
+            <div className="flex flex-col items-center py-6 mt-8">
               <div className="w-full max-w-4xl flex flex-col items-center">
                 <div
                   className={`text-center ${DESIGN.mainMetaPadding} animate-in slide-in-from-bottom-8 duration-1000 z-20 w-full`}
@@ -5112,20 +5122,29 @@ export default function DiwanApp() {
                       />
                     </svg>
 
-                    <div className="relative z-10 flex flex-col items-center justify-center w-full">
+                    <div className="relative z-10 flex flex-col items-center justify-center w-full gap-1">
                       <div
-                        className={`flex flex-wrap items-center justify-center gap-1 sm:gap-2 md:gap-4 ${currentFontClass} ${DESIGN.mainTitleSize}`}
+                        className={`${currentFontClass} font-bold text-center`}
+                        style={{
+                          fontSize: 'clamp(1.5rem, 3vw, 2rem)',
+                          color: '#C5A059',
+                          textShadow: '0 0 30px rgba(197,160,89,0.2)',
+                        }}
                       >
-                        <span className={`${theme.poetColor} opacity-90`}>
-                          {current?.poetArabic}
-                        </span>
-                        <span className="opacity-10 text-[clamp(0.75rem,1.5vw,1.25rem)]">-</span>
-                        <span className={`${theme.titleColor} font-bold`}>
-                          {current?.titleArabic}
-                        </span>
+                        {current?.titleArabic}
                       </div>
                       <div
-                        className={`flex items-center justify-center gap-1 sm:gap-2 opacity-45 ${DESIGN.mainSubtitleSize} font-brand-en tracking-[0.08em] uppercase mt-[clamp(0.25rem,0.8vw,0.75rem)]`}
+                        className={`${currentFontClass} text-center`}
+                        style={{
+                          fontSize: 'clamp(1rem, 2vw, 1.25rem)',
+                          color: '#C5A059',
+                          opacity: 0.75,
+                        }}
+                      >
+                        {current?.poetArabic}
+                      </div>
+                      <div
+                        className={`flex items-center justify-center gap-1 sm:gap-2 opacity-50 ${DESIGN.mainSubtitleSize} font-brand-en tracking-[0.08em] uppercase mt-[clamp(0.25rem,0.8vw,0.75rem)]`}
                       >
                         <span className="font-semibold">{current?.poet}</span>{' '}
                         <span className="opacity-20">•</span> <span>{current?.title}</span>
@@ -5172,7 +5191,7 @@ export default function DiwanApp() {
                           {showTranslation && pair.en && (
                             <p
                               dir="ltr"
-                              className={`font-brand-en italic opacity-40 ${DESIGN.anim}`}
+                              className={`font-brand-en italic opacity-40 ${DESIGN.anim} border-l-2 border-current/10 pl-3`}
                               style={{
                                 fontSize: `calc(clamp(1rem, 1.5vw, 1.125rem) * ${textScale})`,
                               }}

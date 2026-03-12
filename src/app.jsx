@@ -5153,18 +5153,6 @@ export default function DiwanApp() {
                       </div>
                     </div>
                   </div>
-
-                  <div className="flex justify-center gap-3 mt-1">
-                    {Array.isArray(current?.tags) &&
-                      current.tags.slice(0, 3).map((tag) => (
-                        <span
-                          key={tag}
-                          className={`px-2.5 py-0.5 border ${theme.brandBorder} ${theme.brand} ${DESIGN.mainTagSize} font-brand-en tracking-[0.15em] uppercase opacity-70`}
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                  </div>
                 </div>
 
                 <div className={`relative w-full group pt-8 pb-2 ${DESIGN.mainMarginBottom}`}>
@@ -5193,7 +5181,7 @@ export default function DiwanApp() {
                           {showTranslation && pair.en && (
                             <p
                               dir="ltr"
-                              className={`font-brand-en italic opacity-40 ${DESIGN.anim} border-l-2 border-current/10 pl-3`}
+                              className={`font-brand-en italic opacity-40 ${DESIGN.anim}`}
                               style={{
                                 fontSize: `calc(clamp(1rem, 1.5vw, 1.125rem) * ${textScale})`,
                               }}
@@ -5205,6 +5193,18 @@ export default function DiwanApp() {
                       ))}
                     </div>
                   </div>
+                </div>
+
+                <div className="flex justify-center gap-3 mt-2 mb-4">
+                  {Array.isArray(current?.tags) &&
+                    current.tags.slice(0, 3).map((tag) => (
+                      <span
+                        key={tag}
+                        className={`px-2.5 py-0.5 border ${theme.brandBorder} ${theme.brand} ${DESIGN.mainTagSize} font-brand-en tracking-[0.15em] uppercase opacity-70`}
+                      >
+                        {tag}
+                      </span>
+                    ))}
                 </div>
 
                 <div className="w-full max-w-2xl px-6 md:px-0 mb-4 md:hidden">

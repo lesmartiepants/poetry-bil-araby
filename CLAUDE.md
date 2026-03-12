@@ -31,10 +31,19 @@ npm run test:e2e:debug   # Debug mode
 
 ## Architecture
 
-### Single-File Component Design
-The entire application lives in `src/app.jsx` (~2700+ lines). This is intentional for simplicity but creates specific patterns you must understand:
+### Modular Component Architecture
+The app was decomposed from a single monolith into a modular structure. Key modules:
 
-**Feature Flags** (app.jsx:9-18)
+- **`src/app.jsx`** (~1,842 lines) -- DiwanApp orchestration, JSX layout, small inline components, global styles
+- **`src/LogContext.jsx`** -- Cross-cutting logging provider (React context consumed by hooks and components)
+- **`src/constants/`** -- Feature flags (`features.js`), design tokens (`design.js`), theme (`theme.js`), categories (`categories.js`), fonts (`fonts.js`)
+- **`src/services/`** -- API client (`api.js`), IndexedDB cache (`cache.js`), prefetch manager (`prefetch.js`)
+- **`src/utils/`** -- Transliteration (`transliterate.js`), audio conversion (`audio.js`), insight parser (`insightParser.js`), JSON repair (`jsonRepair.js`)
+- **`src/hooks/`** -- 7 custom hooks: `useAuth`, `useDiscovery`, `useAudio`, `useInsights`, `useDailyPoem`, `useKeyboardShortcuts`, `useOverflowDetect`
+- **`src/components/`** -- 9 extracted components: `SplashScreen`, `VerticalSidebar`, `DebugPanel`, `SettingsView`, `SavedPoemsView`, `AuthButton`, `AuthModal`, `CategoryPill`, `ThemeDropdown`
+- **`server/routes/designReview.js`** -- 12+ design-review API endpoints (extracted from server.js)
+
+**Feature Flags** (`src/constants/features.js`)
 ```javascript
 const FEATURES = {
   grounding: false,   // Experimental: Google Search grounding
@@ -48,9 +57,9 @@ const FEATURES = {
 ```
 Toggle features here rather than conditionally importing code.
 
-**Design Constants** (app.jsx:14-68): `DESIGN` (layout/typography), `THEME` (colors). Never hardcode styles.
+**Design Constants** (`src/constants/design.js`, `src/constants/theme.js`): `DESIGN` (layout/typography), `THEME` (colors). Never hardcode styles.
 
-**Architecture:** Single-file React app with dual-mode system (Database/AI), Express backend, React hooks state management.
+**Architecture:** Modular React app with dual-mode system (Database/AI), Express backend, React hooks state management.
 
 ### Backend Integration
 
@@ -121,7 +130,13 @@ VERCEL_TOKEN                    // For Vercel CLI
 
 ## Key Files (Absolute Paths)
 
-**Core:** `src/app.jsx` (main app), `src/hooks/useAuth.js` (auth hooks), `src/supabaseClient.js` (Supabase config), `server.js` (API), `package.json` (scripts)
+**Core:** `src/app.jsx` (orchestration & layout), `src/LogContext.jsx` (logging provider), `src/supabaseClient.js` (Supabase config), `server.js` (API), `package.json` (scripts)
+**Constants:** `src/constants/features.js`, `src/constants/design.js`, `src/constants/theme.js`, `src/constants/categories.js`, `src/constants/fonts.js`
+**Services:** `src/services/api.js`, `src/services/cache.js`, `src/services/prefetch.js`
+**Utils:** `src/utils/transliterate.js`, `src/utils/audio.js`, `src/utils/insightParser.js`, `src/utils/jsonRepair.js`
+**Hooks:** `src/hooks/useAuth.js`, `src/hooks/useDiscovery.js`, `src/hooks/useAudio.jsx`, `src/hooks/useInsights.js`, `src/hooks/useDailyPoem.js`, `src/hooks/useKeyboardShortcuts.js`, `src/hooks/useOverflowDetect.js`
+**Components:** `src/components/SplashScreen.jsx`, `src/components/VerticalSidebar.jsx`, `src/components/DebugPanel.jsx`, `src/components/SettingsView.jsx`, `src/components/SavedPoemsView.jsx`, `src/components/AuthButton.jsx`, `src/components/AuthModal.jsx`, `src/components/CategoryPill.jsx`, `src/components/ThemeDropdown.jsx`
+**Server Routes:** `server/routes/designReview.js` (design-review API endpoints)
 **Tests:** `src/test/*.test.jsx`, `src/test/auth.test.jsx`, `e2e/*.spec.js`
 **Config:** `vite.config.js`, `vitest.config.js`, `playwright.config.js`, `tailwind.config.js`
 **Migrations:** `supabase/migrations/*.sql` (auth & user features, PostgREST schema grants)
@@ -132,12 +147,7 @@ VERCEL_TOKEN                    // For Vercel CLI
 
 ## Common Gotchas
 
-1. **Single File Complexity**: Since everything is in `app.jsx`, search carefully for the section you need. The file is organized with comment headers like:
-   ```javascript
-   /* ============================================
-      1. FEATURE FLAGS & DESIGN SYSTEM
-      ============================================ */
-   ```
+1. **App.jsx is Still Large**: Although the monolith has been decomposed, `app.jsx` (~1,842 lines) still contains orchestration logic, JSX layout, and small inline components. Constants, services, utils, hooks, and major components have been extracted into their own modules under `src/`. When looking for logic, check the extracted modules first before searching `app.jsx`.
 
 2. **Arabic Typography**: Always test with actual Arabic text. The app uses specialized fonts (Amiri, Tajawal) that may render differently than Latin text.
 

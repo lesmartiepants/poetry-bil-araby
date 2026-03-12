@@ -46,6 +46,7 @@ import {
   usePoemEvents,
 } from './hooks/useAuth';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
+import { useOverflowDetect } from './hooks/useOverflowDetect';
 import {
   INSIGHTS_SYSTEM_PROMPT,
   DISCOVERY_SYSTEM_PROMPT,
@@ -2231,12 +2232,6 @@ export default function DiwanApp() {
   const [showCopySuccess, setShowCopySuccess] = useState(false);
   const [showShareSuccess, setShowShareSuccess] = useState(false);
   const [dailyPoem, setDailyPoem] = useState(null);
-  const [isOverflow, setIsOverflow] = useState(() => {
-    // Use 660 as the conservative initial threshold (covers both Supabase and non-Supabase button sets).
-    // The detectOverflow effect below will refine this after mount.
-    const vw = window.visualViewport?.width ?? window.innerWidth;
-    return vw < 660;
-  });
   const [cacheStats, setCacheStats] = useState({
     audioHits: 0,
     audioMisses: 0,
@@ -2247,7 +2242,6 @@ export default function DiwanApp() {
   const activeAudioRequests = useRef(new Set()); // Track in-flight audio generation requests
   const activeInsightRequests = useRef(new Set()); // Track in-flight insight generation requests
   const pollingIntervals = useRef([]); // Track all polling intervals for cleanup
-  const pendingRafRef = useRef(null); // Track pending rAF id for overflow detection deduplication
 
   // Auth state
   const { user, loading: authLoading, signInWithGoogle, signInWithApple, signOut } = useAuth();
@@ -2478,59 +2472,8 @@ export default function DiwanApp() {
     }
   }, [autoExplainPending, current?.id, isFetching, isInterpreting, interpretation]);
 
-  useEffect(() => {
-    // Threshold below which overflow mode is always active (prevents oscillation on narrow screens).
-    // Re-runs when user signs in/out so the bar is re-measured after auth state changes.
-    const narrowThreshold = 660;
-
-    const scheduleDetect = () => {
-      // Deduplicate: cancel any pending frame before scheduling a new one
-      if (pendingRafRef.current !== null) cancelAnimationFrame(pendingRafRef.current);
-      pendingRafRef.current = requestAnimationFrame(() => {
-        pendingRafRef.current = null;
-        if (!controlBarRef.current) return;
-        const bar = controlBarRef.current;
-        const vw = window.visualViewport?.width ?? window.innerWidth;
-
-        // Temporarily clip overflow so scrollWidth accurately reflects content width on iOS Safari,
-        // where scrollWidth may equal clientWidth for flex containers with overflow:visible.
-        const savedOverflow = bar.style.overflow;
-        bar.style.overflow = 'hidden';
-        const hasContentOverflow = bar.scrollWidth > bar.clientWidth;
-        bar.style.overflow = savedOverflow;
-
-        // Stay in overflow mode on narrow screens regardless of current bar width,
-        // which prevents oscillation when the bar shrinks after switching to mobile layout.
-        setIsOverflow(hasContentOverflow || vw < narrowThreshold);
-      });
-    };
-
-    scheduleDetect();
-    // Re-measure after a short delay to catch DOM updates from auth state changes
-    // (React may not have rendered the new buttons in the first rAF)
-    const delayedRecheck = setTimeout(scheduleDetect, 100);
-
-    // ResizeObserver catches font-load changes and dynamic content updates.
-    // Guard for environments where ResizeObserver is unavailable (older browsers, some test envs).
-    let resizeObserver = null;
-    if (typeof ResizeObserver !== 'undefined') {
-      resizeObserver = new ResizeObserver(scheduleDetect);
-      if (controlBarRef.current) resizeObserver.observe(controlBarRef.current);
-    }
-
-    window.addEventListener('resize', scheduleDetect);
-    return () => {
-      clearTimeout(delayedRecheck);
-      if (pendingRafRef.current !== null) {
-        cancelAnimationFrame(pendingRafRef.current);
-        pendingRafRef.current = null;
-      }
-      resizeObserver?.disconnect();
-      window.removeEventListener('resize', scheduleDetect);
-    };
-
-    // and the stable setIsOverflow setter are intentionally omitted; only real state values need deps.
-  }, [user]);
+  // Overflow detection for control bar
+  const isOverflow = useOverflowDetect(controlBarRef, [user]);
 
   // Load user settings on mount
   useEffect(() => {

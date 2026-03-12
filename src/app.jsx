@@ -37,6 +37,7 @@ import {
   UserRound,
   ScrollText,
   Shuffle,
+  Paintbrush,
 } from 'lucide-react';
 import { track } from '@vercel/analytics';
 import Sentry from './sentry.js';
@@ -74,7 +75,7 @@ const DESIGN = {
   mainFontSize: 'text-[clamp(1.25rem,2vw,1.5rem)]', // 20px-24px (updated from text-xl md:text-2xl)
   mainEnglishFontSize: 'text-[clamp(1rem,1.5vw,1.125rem)]', // 16px-18px
   mainLineHeight: 'leading-[2.4]',
-  mainMetaPadding: 'pt-8 pb-1',
+  mainMetaPadding: 'pt-2 pb-1',
   mainTagSize: 'text-[11px]',
   mainTitleSize: 'text-[clamp(1.875rem,3.5vw,2.25rem)]', // 30px-36px (updated from text-3xl md:text-4xl)
   mainSubtitleSize: 'text-[clamp(10px,1.2vw,14px)]', // 10px-14px (updated from text-sm)
@@ -1070,33 +1071,8 @@ const DebugPanel = ({ logs, onClear, darkMode, poem, appState, visible, controlB
   const [bugError, setBugError] = useState('');
   const [lastViewedCount, setLastViewedCount] = useState(0);
   const scrollRef = useRef(null);
-  // Position bug button centered in the gap between screen edge and control bar
-  const [btnPos, setBtnPos] = useState({ left: 16, bottom: 16 });
-  useEffect(() => {
-    const update = () => {
-      const el = controlBarRef?.current;
-      if (!el) return;
-      const rect = el.getBoundingClientRect();
-      const vh = window.innerHeight;
-      // X: center of gap between left screen edge and bar left edge (minus half button width)
-      const left = Math.max(8, rect.left / 2 - 10);
-      // Y: center of gap between bar bottom edge and screen bottom (minus half button height)
-      const gapBelow = vh - rect.bottom;
-      const bottom = Math.max(8, gapBelow / 2 - 10);
-      setBtnPos({ left, bottom });
-    };
-    update();
-    window.addEventListener('resize', update);
-    const ro =
-      typeof ResizeObserver !== 'undefined' && controlBarRef?.current
-        ? new ResizeObserver(update)
-        : null;
-    if (ro && controlBarRef?.current) ro.observe(controlBarRef.current);
-    return () => {
-      window.removeEventListener('resize', update);
-      ro?.disconnect();
-    };
-  }, [controlBarRef]);
+  // Fixed position for bug button — aligned with paintbrush button at bottom-left
+  const btnPos = { left: 8, bottom: 52 };
 
   // Auto-scroll to bottom on new logs when panel is open
   useEffect(() => {
@@ -4837,7 +4813,8 @@ export default function DiwanApp() {
 
   return (
     <div
-      className={`h-[100dvh] w-full flex flex-col overflow-hidden ${DESIGN.anim} font-sans ${theme.bg} ${theme.text} selection:bg-indigo-500`}
+      className={`h-[100dvh] w-full flex flex-col overflow-hidden overscroll-none ${DESIGN.anim} font-sans ${theme.bg} ${theme.text} selection:bg-indigo-500`}
+      style={{ touchAction: 'pan-y', overflowX: 'hidden' }}
     >
       <style>{`
         .arabic-shadow { text-shadow: 0 4px 12px rgba(0,0,0,0.1); }
@@ -4870,7 +4847,7 @@ export default function DiwanApp() {
           width: 100%;
           max-width: 550px;
           margin: 0 auto 16px;
-          padding: 28px 40px;
+          padding: 16px 24px;
         }
 
         .minimal-frame svg {
@@ -4881,6 +4858,12 @@ export default function DiwanApp() {
           bottom: 0;
           width: 100%;
           height: 100%;
+        }
+
+        @media (min-width: 768px) {
+          .minimal-frame {
+            padding: 28px 40px;
+          }
         }
 
         .frame-line {
@@ -5005,23 +4988,32 @@ export default function DiwanApp() {
         style={{
           position: 'fixed',
           top: 0,
+          left: 0,
           right: 0,
-          left: headerOpacity > 0 ? 'auto' : 0,
           zIndex: 40,
           pointerEvents: 'none',
-          padding: headerOpacity > 0 ? '0.75rem 1rem' : '1rem 1.5rem',
+          padding: `${0.13 - headerOpacity * 0.13}rem 1rem ${0.2 - headerOpacity * 0.2}rem`,
+          height: headerOpacity > 0 ? `${64 - headerOpacity * 32}px` : 'auto',
+          overflow: headerOpacity > 0 ? 'hidden' : 'visible',
           display: 'flex',
-          justifyContent: headerOpacity > 0 ? 'flex-end' : 'center',
-          transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: darkMode
+            ? `rgba(12,12,14,${0.85 - headerOpacity * 0.45})`
+            : `rgba(253,252,248,${0.85 - headerOpacity * 0.45})`,
+          backdropFilter: `blur(${12 - headerOpacity * 8}px)`,
+          WebkitBackdropFilter: `blur(${12 - headerOpacity * 8}px)`,
+          borderBottom: `1px solid ${darkMode ? `rgba(197,160,89,${0.1 - headerOpacity * 0.1})` : `rgba(107,87,68,${0.1 - headerOpacity * 0.1})`}`,
+          transition: 'padding 0.4s ease-out, height 0.4s ease-out, background-color 0.3s, backdrop-filter 0.3s',
         }}
       >
         <div
           className="flex flex-row items-center gap-1.5 header-luminescence"
           style={{
-            transform: `scale(${1 - headerOpacity * 0.4})`,
-            opacity: 1 - headerOpacity * 0.15,
-            transformOrigin: 'top right',
-            transition: 'transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s',
+            transform: `scale(${1 - headerOpacity * 0.5})`,
+            opacity: 1 - headerOpacity * 0.3,
+            transformOrigin: 'center',
+            transition: 'transform 0.4s ease-out, opacity 0.3s',
           }}
         >
           <h1 style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', margin: 0 }}>
@@ -5043,7 +5035,10 @@ export default function DiwanApp() {
               poetry
             </span>
           </h1>
-          <Feather style={{ ...BRAND.feather, color: '#C5A059' }} strokeWidth={1.5} />
+          <Feather
+            style={{ ...BRAND.feather, color: '#C5A059', alignSelf: 'center' }}
+            strokeWidth={1.5}
+          />
         </div>
       </header>
 
@@ -5061,9 +5056,22 @@ export default function DiwanApp() {
           <main
             ref={mainScrollRef}
             onScroll={handleScroll}
-            className="flex-1 overflow-y-auto custom-scrollbar relative z-10 px-4 md:px-0 pb-28 pt-16 md:pt-20 pr-14 md:pr-0"
+            className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar relative z-10 px-4 md:px-0 pb-28 pt-10 md:pt-12"
+            style={{ overscrollBehaviorX: 'none' }}
           >
-            <div className="min-h-full flex flex-col items-center justify-center py-6">
+            <div
+              className="pointer-events-none sticky top-0 z-30"
+              style={{
+                height: '40px',
+                marginLeft: '-2rem',
+                marginRight: '-2rem',
+                marginBottom: '-40px',
+                opacity: headerOpacity,
+                background: `linear-gradient(to bottom, ${darkMode ? 'rgba(12,12,14,0.6)' : 'rgba(253,252,248,0.6)'} 0%, ${darkMode ? 'rgba(12,12,14,0.3)' : 'rgba(253,252,248,0.3)'} 40%, transparent 100%)`,
+                transition: 'opacity 0.3s ease-out',
+              }}
+            />
+            <div className="flex flex-col items-center pt-2">
               <div className="w-full max-w-4xl flex flex-col items-center">
                 <div
                   className={`text-center ${DESIGN.mainMetaPadding} animate-in slide-in-from-bottom-8 duration-1000 z-20 w-full`}
@@ -5112,41 +5120,64 @@ export default function DiwanApp() {
                       />
                     </svg>
 
-                    <div className="relative z-10 flex flex-col items-center justify-center w-full">
+                    <div
+                      className="relative z-10 flex flex-col items-center justify-center w-full"
+                      dir="rtl"
+                    >
                       <div
-                        className={`flex flex-wrap items-center justify-center gap-1 sm:gap-2 md:gap-4 ${currentFontClass} ${DESIGN.mainTitleSize}`}
+                        className="font-amiri font-bold text-center"
+                        style={{
+                          fontSize: 'clamp(1.4rem, 4vw, 2.25rem)',
+                          color: '#C5A059',
+                          lineHeight: 1.4,
+                          textShadow: darkMode ? '0 0 30px rgba(197,160,89,0.15)' : 'none',
+                        }}
                       >
-                        <span className={`${theme.poetColor} opacity-90`}>
-                          {current?.poetArabic}
-                        </span>
-                        <span className="opacity-10 text-[clamp(0.75rem,1.5vw,1.25rem)]">-</span>
-                        <span className={`${theme.titleColor} font-bold`}>
-                          {current?.titleArabic}
-                        </span>
+                        {current?.titleArabic || current?.title}
                       </div>
                       <div
-                        className={`flex items-center justify-center gap-1 sm:gap-2 opacity-45 ${DESIGN.mainSubtitleSize} font-brand-en tracking-[0.08em] uppercase mt-[clamp(0.25rem,0.8vw,0.75rem)]`}
+                        style={{
+                          width: '40px',
+                          height: '1px',
+                          background: '#C5A059',
+                          opacity: 0.5,
+                          margin: '0.5rem auto',
+                        }}
+                      />
+                      <div
+                        className="font-tajawal text-center"
+                        style={{
+                          fontSize: 'clamp(0.8rem, 2vw, 1rem)',
+                          color: darkMode ? '#a8a29e' : '#57534e',
+                          lineHeight: 1.4,
+                        }}
                       >
-                        <span className="font-semibold">{current?.poet}</span>{' '}
-                        <span className="opacity-20">•</span> <span>{current?.title}</span>
+                        {current?.poetArabic || current?.poet}
                       </div>
-                    </div>
-                  </div>
-
-                  <div className="flex justify-center gap-3 mt-1">
-                    {Array.isArray(current?.tags) &&
-                      current.tags.slice(0, 3).map((tag) => (
-                        <span
-                          key={tag}
-                          className={`px-2.5 py-0.5 border ${theme.brandBorder} ${theme.brand} ${DESIGN.mainTagSize} font-brand-en tracking-[0.15em] uppercase opacity-70`}
+                      {(current?.poet !== current?.poetArabic ||
+                        current?.title !== current?.titleArabic) && (
+                        <div
+                          className="font-brand-en text-center italic"
+                          dir="ltr"
+                          style={{
+                            fontSize: 'clamp(0.7rem, 1.3vw, 0.8rem)',
+                            color: darkMode ? '#78716c' : '#a8a29e',
+                            marginTop: '0.5rem',
+                          }}
                         >
-                          {tag}
-                        </span>
-                      ))}
+                          {current?.title !== current?.titleArabic && <span>{current.title}</span>}
+                          {current?.title !== current?.titleArabic &&
+                            current?.poet !== current?.poetArabic && (
+                              <span className="opacity-40"> — </span>
+                            )}
+                          {current?.poet !== current?.poetArabic && <span>{current.poet}</span>}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
 
-                <div className={`relative w-full group pt-8 pb-2 ${DESIGN.mainMarginBottom}`}>
+                <div className={`relative w-full group pt-1 pb-2 ${DESIGN.mainMarginBottom}`}>
                   <div className="px-4 md:px-20 py-2 text-center">
                     <div className="flex flex-col gap-5 md:gap-7">
                       {versePairs.map((pair, idx) => (
@@ -5172,9 +5203,10 @@ export default function DiwanApp() {
                           {showTranslation && pair.en && (
                             <p
                               dir="ltr"
-                              className={`font-brand-en italic opacity-40 ${DESIGN.anim}`}
+                              className={`font-brand-en italic opacity-40 ${DESIGN.anim} mx-auto`}
                               style={{
                                 fontSize: `calc(clamp(1rem, 1.5vw, 1.125rem) * ${textScale})`,
+                                maxWidth: '90%',
                               }}
                             >
                               {pair.en}
@@ -5184,6 +5216,18 @@ export default function DiwanApp() {
                       ))}
                     </div>
                   </div>
+                </div>
+
+                <div className="flex justify-center gap-3 mt-2 mb-4">
+                  {Array.isArray(current?.tags) &&
+                    current.tags.slice(0, 3).map((tag) => (
+                      <span
+                        key={tag}
+                        className={`px-2.5 py-0.5 border ${theme.brandBorder} ${theme.brand} ${DESIGN.mainTagSize} font-brand-en tracking-[0.15em] uppercase opacity-70`}
+                      >
+                        {tag}
+                      </span>
+                    ))}
                 </div>
 
                 <div className="w-full max-w-2xl px-6 md:px-0 mb-4 md:hidden">
@@ -5231,7 +5275,16 @@ export default function DiwanApp() {
             </div>
           </main>
 
-          <footer className="fixed bottom-0 left-0 right-0 py-2 pb-3 md:pb-2 px-4 flex flex-col items-center z-50 bg-gradient-to-t from-black/5 to-transparent safe-bottom">
+          {/* Bottom fade — content fades out above the control bar */}
+          <div
+            className="pointer-events-none fixed bottom-0 left-0 right-0 z-40"
+            style={{
+              height: '100px',
+              background: `linear-gradient(to top, ${darkMode ? '#0c0c0e' : '#FDFCF8'} 0%, ${darkMode ? 'rgba(12,12,14,0.85)' : 'rgba(253,252,248,0.85)'} 30%, ${darkMode ? 'rgba(12,12,14,0.4)' : 'rgba(253,252,248,0.4)'} 60%, transparent 100%)`,
+            }}
+          />
+
+          <footer className="fixed bottom-0 left-0 right-0 py-2 pb-3 md:pb-2 px-4 flex flex-col items-center z-50 safe-bottom">
             {audioError && (
               <div
                 className={`mb-2 px-4 py-2 rounded-full text-xs font-medium ${DESIGN.glass} ${theme.glass} border ${theme.border} shadow-lg ${DESIGN.anim} max-w-[calc(100vw-2rem)] text-center`}
@@ -5575,37 +5628,28 @@ export default function DiwanApp() {
         currentFontClass={currentFontClass}
       />
 
-      {/* Design Review - Mobile: left edge vertical strip, Desktop: bottom-left pill */}
-      <style>{`
-        @keyframes slideInLeft {
-          from { transform: translateY(-50%) translateX(-100%); opacity: 0; }
-          to { transform: translateY(-50%) translateX(0); opacity: 1; }
-        }
-      `}</style>
-      <a
-        href="/design-review"
-        className={`fixed left-0 top-1/2 -translate-y-1/2 z-[45] md:hidden py-3 px-1.5 rounded-r-2xl bg-gradient-to-b from-black/70 via-black/60 to-black/70 backdrop-blur-xl border-r-2 ${GOLD.goldBorderAccent} no-underline flex items-center`}
-        style={{ writingMode: 'vertical-rl', animation: 'slideInLeft 0.4s ease-out' }}
-        title="Design Review"
+      {/* Design Review + Bug — stacked bottom-left utility buttons */}
+      <div
+        className="fixed z-[200] flex flex-col items-center gap-1"
+        style={{ left: 8, bottom: 8 }}
       >
-        <span
-          className={`text-[10px] font-brand-en tracking-widest ${GOLD.goldTextMuted} uppercase`}
+        <a
+          href="/design-review"
+          className="w-[44px] h-[44px] flex items-center justify-center no-underline"
+          title="Design Review"
+          aria-label="Open design review"
         >
-          Review
-        </span>
-      </a>
-      <a
-        href="/design-review"
-        className={`hidden md:flex fixed left-0 top-1/2 -translate-y-1/2 z-[45] py-4 px-2 rounded-r-2xl bg-gradient-to-b from-black/70 via-black/60 to-black/70 backdrop-blur-xl border-r-2 ${GOLD.goldBorderAccent} no-underline items-center hover:px-3 ${GOLD.goldHoverBorderStrong} transition-all duration-300 cursor-pointer`}
-        style={{ writingMode: 'vertical-rl', animation: 'slideInLeft 0.4s ease-out' }}
-        title="Design Review"
-      >
-        <span
-          className={`text-[10px] font-brand-en tracking-widest ${GOLD.goldTextMuted} uppercase`}
-        >
-          Review
-        </span>
-      </a>
+          <span
+            className={`relative w-5 h-5 rounded-full flex items-center justify-center transition-all duration-200 ${
+              darkMode
+                ? 'bg-stone-900/60 border border-[#C5A059]/20 text-stone-500 hover:text-[#C5A059] hover:border-[#C5A059]/40'
+                : 'bg-white/50 border border-[#8B7355]/20 text-stone-400 hover:text-[#8B7355] hover:border-[#8B7355]/40'
+            } backdrop-blur-md`}
+          >
+            <Paintbrush size={9} />
+          </span>
+        </a>
+      </div>
 
       {/* Vertical Sidebar - always visible */}
       <VerticalSidebar

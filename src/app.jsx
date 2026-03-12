@@ -4993,6 +4993,8 @@ export default function DiwanApp() {
           zIndex: 40,
           pointerEvents: 'none',
           padding: `${0.13 - headerOpacity * 0.13}rem 1rem ${0.2 - headerOpacity * 0.2}rem`,
+          height: headerOpacity > 0 ? `${64 - headerOpacity * 32}px` : 'auto',
+          overflow: headerOpacity > 0 ? 'hidden' : 'visible',
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
@@ -5002,7 +5004,7 @@ export default function DiwanApp() {
           backdropFilter: `blur(${12 - headerOpacity * 8}px)`,
           WebkitBackdropFilter: `blur(${12 - headerOpacity * 8}px)`,
           borderBottom: `1px solid ${darkMode ? `rgba(197,160,89,${0.1 - headerOpacity * 0.1})` : `rgba(107,87,68,${0.1 - headerOpacity * 0.1})`}`,
-          transition: 'padding 0.4s ease-out, background-color 0.3s, backdrop-filter 0.3s',
+          transition: 'padding 0.4s ease-out, height 0.4s ease-out, background-color 0.3s, backdrop-filter 0.3s',
         }}
       >
         <div

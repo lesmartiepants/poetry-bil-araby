@@ -5011,27 +5011,26 @@ export default function DiwanApp() {
         style={{
           position: 'fixed',
           top: 0,
+          left: 0,
           right: 0,
-          left: headerOpacity > 0 ? 'auto' : 0,
           zIndex: 40,
           pointerEvents: 'none',
-          padding: headerOpacity > 0 ? '0.75rem 1rem' : '1rem 1.5rem',
+          padding: '0.5rem 1rem',
           display: 'flex',
-          justifyContent: headerOpacity > 0 ? 'flex-end' : 'center',
-          transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
+          justifyContent: 'center',
+          backgroundColor: darkMode ? 'rgba(12,12,14,0.85)' : 'rgba(253,252,248,0.85)',
           backdropFilter: 'blur(12px)',
           WebkitBackdropFilter: 'blur(12px)',
-          backgroundColor: headerOpacity > 0 ? 'rgba(0,0,0,0.15)' : 'transparent',
-          borderRadius: headerOpacity > 0 ? '12px' : '0',
+          borderBottom: `1px solid ${darkMode ? 'rgba(197,160,89,0.1)' : 'rgba(107,87,68,0.1)'}`,
         }}
       >
         <div
           className="flex flex-row items-center gap-1.5 header-luminescence"
           style={{
-            transform: `scale(${1 - headerOpacity * 0.4})`,
-            opacity: 1 - headerOpacity * 0.15,
-            transformOrigin: 'top right',
-            transition: 'transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s',
+            transform: `scale(${1 - headerOpacity * 0.25})`,
+            opacity: 1 - headerOpacity * 0.1,
+            transformOrigin: 'center',
+            transition: 'transform 0.4s ease-out, opacity 0.3s',
           }}
         >
           <h1 style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', margin: 0 }}>

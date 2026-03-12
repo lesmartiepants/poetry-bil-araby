@@ -48,6 +48,7 @@ import {
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useOverflowDetect } from './hooks/useOverflowDetect';
 import { useDailyPoem } from './hooks/useDailyPoem';
+import { useDiscovery } from './hooks/useDiscovery';
 import {
   INSIGHTS_SYSTEM_PROMPT,
   DISCOVERY_SYSTEM_PROMPT,
@@ -2171,54 +2172,8 @@ export default function DiwanApp() {
   const volumePulseRef = useRef(null);
 
   const [headerOpacity, setHeaderOpacity] = useState(1);
-  const [poems, setPoems] = useState(() => {
-    // 1. Restore from OAuth redirect (avoids flash of seed poem)
-    try {
-      const stashed = sessionStorage.getItem('pendingSavePoem');
-      if (stashed) {
-        const poem = JSON.parse(stashed);
-        if (poem?.arabic) return [poem];
-      }
-    } catch {}
-
-    // 2. Restore pre-fetched poem from last visit (with 7-day TTL)
-    try {
-      const raw = localStorage.getItem('qafiyah_nextPoem');
-      if (raw) {
-        const { poem, storedAt } = JSON.parse(raw);
-        localStorage.removeItem('qafiyah_nextPoem');
-        const age = Date.now() - (storedAt || 0);
-        if (poem?.arabic && age < 7 * 24 * 60 * 60 * 1000) return [poem];
-      }
-    } catch {}
-
-    // 3. First-ever visit: pick from seed pool
-    if (seedPoems?.length > 0) {
-      const idx = Math.floor(Math.random() * seedPoems.length);
-      return [seedPoems[idx]];
-    }
-
-    // 4. Ultimate fallback (same as original default)
-    return [
-      {
-        id: 1,
-        poet: 'Nizar Qabbani',
-        poetArabic: 'نزار قباني',
-        title: 'My Beloved',
-        titleArabic: 'حبيبتي',
-        arabic:
-          'حُبُّكِ يا عَمِيقَةَ العَيْنَيْنِ\nتَطَرُّفٌ .. تَصَوُّفٌ .. عِبَادَة\nحُبُّكِ مِثْلَ المَوْتِ وَالوِلَادَة\nصَعْبٌ بِأَنْ يُعَادَ مَرَّتَيْنِ',
-        english:
-          'Your love, O woman of deep eyes,\nIs radicalism… is Sufism… is worship.\nYour love is like Death and like Birth—\nIt is difficult for it to be repeated twice.',
-        tags: ['Modern', 'Romantic', 'Ghazal'],
-      },
-    ];
-  });
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [selectedCategory, setSelectedCategory] = useState('All');
   const [darkMode, setDarkMode] = useState(true);
   const [currentFont, setCurrentFont] = useState('Amiri');
-  const [useDatabase, setUseDatabase] = useState(FEATURES.database);
   const [copySuccess, setCopySuccess] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
@@ -2226,7 +2181,6 @@ export default function DiwanApp() {
   const [audioError, setAudioError] = useState(null);
   const [interpretation, setInterpretation] = useState(null);
   const [isInterpreting, setIsInterpreting] = useState(false);
-  const [isFetching, setIsFetching] = useState(false);
   const [autoExplainPending, setAutoExplainPending] = useState(false);
   const hasAutoLoaded = useRef(false);
   const { logs, addLog, clearLogs } = useLogger();
@@ -2249,6 +2203,22 @@ export default function DiwanApp() {
   const { savedPoems, savePoem, unsavePoem, isPoemSaved } = useSavedPoems(user);
   const { downvotedPoemIds, downvotePoem, undownvotePoem, isPoemDownvoted } = useDownvotes(user);
   const { emitEvent } = usePoemEvents(user);
+
+  // Discovery state and logic
+  const {
+    poems,
+    currentIndex,
+    selectedCategory,
+    useDatabase,
+    isFetching,
+    filtered,
+    current,
+    setPoems,
+    setCurrentIndex,
+    setSelectedCategory,
+    setUseDatabase,
+    handleFetch,
+  } = useDiscovery(emitEvent);
 
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [showSavedPoems, setShowSavedPoems] = useState(false);
@@ -2289,24 +2259,6 @@ export default function DiwanApp() {
 
   const textScale = TEXT_SIZES[textSizeLevel].multiplier;
 
-  const filtered = useMemo(() => {
-    const searchStr = selectedCategory.toLowerCase();
-    return selectedCategory === 'All'
-      ? poems
-      : poems.filter((p) => {
-          const poetMatch = (p?.poet || '').toLowerCase().includes(searchStr);
-          const tagsMatch =
-            Array.isArray(p?.tags) && p.tags.some((t) => String(t).toLowerCase() === searchStr);
-          return poetMatch || tagsMatch;
-        });
-  }, [poems, selectedCategory]);
-
-  // Defensive: poems[0] is always truthy (hardcoded initial poem), but guard against
-  // future changes that might empty the array (e.g., setPoems([]) or filter edge cases)
-  const current = filtered[currentIndex] || filtered[0] || poems[0] || null;
-
-  // addLog and clearLogs are provided by useLogger() from LogContext
-
   // Track poem view time (emit 'view' event after 3s on same poem)
   useEffect(() => {
     if (!current?.id || !user) return;
@@ -2316,19 +2268,6 @@ export default function DiwanApp() {
     }, 3000);
     return () => clearTimeout(timer);
   }, [current?.id, user]);
-
-  useEffect(() => {
-    if (selectedCategory !== 'All') {
-      track('poet_filter_changed', { poet: selectedCategory });
-      if (filtered.length === 0) {
-        handleFetch();
-      } else {
-        setCurrentIndex(0);
-      }
-    } else {
-      setCurrentIndex(0);
-    }
-  }, [selectedCategory]);
 
   // Eagerly populate the discovered model list so it's ready before any user action.
   // Using the default fetch mock in tests means this never consumes a mockResolvedValueOnce.
@@ -3220,214 +3159,6 @@ export default function DiwanApp() {
       setIsInterpreting(false);
       activeInsightRequests.current.delete(current?.id); // Clean up in-flight tracking
     }
-  };
-
-  const handleFetch = async () => {
-    addLog(
-      'UI Event',
-      `🐰 Discover button clicked | Category: ${selectedCategory} | Source: ${useDatabase ? 'Database' : 'LLM'}`,
-      'info'
-    );
-
-    if (isFetching) {
-      addLog('Discovery', `Discovery already in progress - please wait`, 'info');
-      return;
-    }
-
-    setIsFetching(true);
-
-    try {
-      const apiStart = performance.now();
-
-      // DATABASE MODE: Fetch from local PostgreSQL API
-      if (useDatabase) {
-        // Reset category to "All" before fetching so the new poem will be visible
-        // without racing against the useEffect that resets currentIndex on category change
-        if (selectedCategory !== 'All') {
-          setSelectedCategory('All');
-        }
-
-        addLog('Discovery DB', `→ Querying database | Category: ${selectedCategory}`, 'info');
-
-        const categoryObj = CATEGORIES.find((c) => c.id === selectedCategory);
-        const poetName = categoryObj?.labelAr || selectedCategory;
-        const poetParam = selectedCategory !== 'All' ? `?poet=${encodeURIComponent(poetName)}` : '';
-        const url = `${getApiUrl()}/api/poems/random${poetParam}`;
-
-        try {
-          const res = await fetch(url);
-
-          if (!res.ok) {
-            throw new Error(`Database API returned ${res.status} ${res.statusText}`);
-          }
-
-          // Clear any previous backend errors on success
-
-          const newPoem = await res.json();
-          const apiTime = performance.now() - apiStart;
-
-          // Process database poems: replace * with newlines
-          if (newPoem.arabic) {
-            newPoem.arabic = newPoem.arabic.replace(/\*/g, '\n');
-          }
-          if (newPoem.cachedTranslation) {
-            newPoem.cachedTranslation = newPoem.cachedTranslation.replace(/\*/g, '\n');
-          }
-
-          // Mark as database poem
-          newPoem.isFromDatabase = true;
-
-          const arabicPoemChars = newPoem?.arabic?.length || 0;
-
-          addLog(
-            'Discovery DB',
-            `✓ Poem found | API: ${(apiTime / 1000).toFixed(2)}s | DB ID: ${newPoem.id} | Arabic: ${arabicPoemChars} chars`,
-            'success'
-          );
-          addLog('Discovery DB', `Poet: ${newPoem.poet} | Title: ${newPoem.title}`, 'success');
-          track('poem_discovered', { source: 'database', poet: newPoem.poet });
-          emitEvent(newPoem.id, 'serve', { source: 'database' });
-          addLog(
-            'Event',
-            `→ serve event emitted | poem_id: ${newPoem.id} | source: database`,
-            'info'
-          );
-
-          setPoems((prev) => {
-            const updated = [...prev, newPoem];
-            setCurrentIndex(updated.length - 1); // New poem is always last
-            return updated;
-          });
-          // Update URL to reflect current poem
-          window.history.replaceState({}, '', '/poem/' + newPoem.id);
-        } catch (dbError) {
-          // Handle database-specific errors
-          const errorMessage = dbError.message.includes('Failed to fetch')
-            ? 'Backend server is not running. Please start it with: npm run dev:server'
-            : dbError.message;
-
-          addLog('Discovery DB Error', errorMessage, 'error');
-          throw dbError; // Re-throw to be caught by outer catch
-        }
-      } else {
-        // LLM MODE: Original implementation
-        const prompt =
-          selectedCategory === 'All'
-            ? 'Find a masterpiece Arabic poem. COMPLETE text.'
-            : `Find a famous poem by ${selectedCategory}. COMPLETE text.`;
-
-        const requestBody = JSON.stringify({
-          contents: [{ parts: [{ text: `${prompt} JSON only.` }] }],
-          systemInstruction: { parts: [{ text: DISCOVERY_SYSTEM_PROMPT }] },
-          generationConfig: { responseMimeType: 'application/json', maxOutputTokens: 8192 },
-        });
-
-        const requestSize = new Blob([requestBody]).size;
-        const estimatedInputTokens = Math.ceil(
-          (prompt.length + DISCOVERY_SYSTEM_PROMPT.length) / 4
-        );
-        const promptChars = prompt.length;
-        const systemPromptChars = DISCOVERY_SYSTEM_PROMPT.length;
-
-        addLog(
-          'Discovery API',
-          `→ Searching ${selectedCategory} | Request: ${(requestSize / 1024).toFixed(1)}KB | ${promptChars + systemPromptChars} chars (${promptChars} prompt + ${systemPromptChars} system) | Est. ${estimatedInputTokens} tokens`,
-          'info'
-        );
-
-        const res = await geminiTextFetch(
-          'generateContent',
-          requestBody,
-          'Discovery failed',
-          addLog
-        );
-
-        const data = await res.json();
-        const apiTime = performance.now() - apiStart;
-
-        const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-        const parsedPoem = repairAndParseJSON(rawText);
-        // Log if repair was needed (original raw text had fences or truncation)
-        const cleanJson = (rawText || '').replace(/```json|```/g, '').trim();
-
-        // Normalize tags: convert object to array if needed
-        if (
-          parsedPoem.tags &&
-          typeof parsedPoem.tags === 'object' &&
-          !Array.isArray(parsedPoem.tags)
-        ) {
-          addLog(
-            'Discovery Tags',
-            `Converting tags from object to array | Original: ${JSON.stringify(parsedPoem.tags)}`,
-            'info'
-          );
-          parsedPoem.tags = [
-            parsedPoem.tags.Era || parsedPoem.tags.era || 'Unknown',
-            parsedPoem.tags.Mood || parsedPoem.tags.mood || 'Unknown',
-            parsedPoem.tags.Type || parsedPoem.tags.type || 'Unknown',
-          ];
-        }
-
-        const newPoem = { ...parsedPoem, id: Date.now() };
-
-        const responseSize = new Blob([cleanJson]).size;
-        const estimatedOutputTokens = Math.ceil(cleanJson.length / 4);
-        const tokensPerSecond = (estimatedOutputTokens / (apiTime / 1000)).toFixed(1);
-        const jsonChars = cleanJson.length;
-        const arabicPoemChars = newPoem?.arabic?.length || 0;
-        const englishPoemChars = newPoem?.english?.length || 0;
-
-        // Log tags for debugging
-        const tagsType = Array.isArray(newPoem?.tags) ? 'array' : typeof newPoem?.tags;
-        const tagsContent = Array.isArray(newPoem?.tags)
-          ? `[${newPoem.tags.join(', ')}]`
-          : JSON.stringify(newPoem?.tags);
-        addLog(
-          'Discovery Tags',
-          `Type: ${tagsType} | Count: ${Array.isArray(newPoem?.tags) ? newPoem.tags.length : 'N/A'} | Content: ${tagsContent}`,
-          'info'
-        );
-
-        addLog(
-          'Discovery API',
-          `✓ Poem found | API: ${(apiTime / 1000).toFixed(2)}s | Response: ${(responseSize / 1024).toFixed(1)}KB | ${jsonChars} chars`,
-          'success'
-        );
-        addLog(
-          'Discovery Metrics',
-          `${estimatedOutputTokens} tokens | ${tokensPerSecond} tok/s | Arabic: ${arabicPoemChars} chars | English: ${englishPoemChars} chars | Poet: ${newPoem.poet}`,
-          'success'
-        );
-        track('poem_discovered', { source: 'ai', poet: newPoem.poet });
-        emitEvent(newPoem.id, 'serve', { source: 'ai' });
-        addLog('Event', `→ serve event emitted | poem_id: ${newPoem.id} | source: ai`, 'info');
-        setPoems((prev) => {
-          const updated = [...prev, newPoem];
-          const searchStr = selectedCategory.toLowerCase();
-          const freshFiltered =
-            selectedCategory === 'All'
-              ? updated
-              : updated.filter(
-                  (p) =>
-                    (p?.poet || '').toLowerCase().includes(searchStr) ||
-                    (Array.isArray(p?.tags) &&
-                      p.tags.some((t) => String(t).toLowerCase() === searchStr))
-                );
-          const newIdx = freshFiltered.findIndex((p) => p.id === newPoem.id);
-          if (newIdx !== -1) setCurrentIndex(newIdx);
-          return updated;
-        });
-        window.history.replaceState({}, '', '/');
-      }
-    } catch (e) {
-      Sentry.captureException(e);
-      addLog(
-        'Discovery Error',
-        `${e.message} | Source: ${useDatabase ? 'Database' : 'Gemini'}`,
-        'error'
-      );
-    }
-    setIsFetching(false);
   };
 
   // Pre-fetch a poem in the background for the next visit (stored in localStorage with TTL)

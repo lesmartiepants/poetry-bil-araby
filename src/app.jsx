@@ -5016,20 +5016,22 @@ export default function DiwanApp() {
           right: 0,
           zIndex: 40,
           pointerEvents: 'none',
-          padding: '0.5rem 1rem',
+          padding: `${0.5 - headerOpacity * 0.25}rem 1rem`,
           display: 'flex',
           justifyContent: 'center',
+          alignItems: 'center',
           backgroundColor: darkMode ? 'rgba(12,12,14,0.85)' : 'rgba(253,252,248,0.85)',
           backdropFilter: 'blur(12px)',
           WebkitBackdropFilter: 'blur(12px)',
           borderBottom: `1px solid ${darkMode ? 'rgba(197,160,89,0.1)' : 'rgba(107,87,68,0.1)'}`,
+          transition: 'padding 0.4s ease-out',
         }}
       >
         <div
           className="flex flex-row items-center gap-1.5 header-luminescence"
           style={{
-            transform: `scale(${1 - headerOpacity * 0.25})`,
-            opacity: 1 - headerOpacity * 0.1,
+            transform: `scale(${1 - headerOpacity * 0.3})`,
+            opacity: 1 - headerOpacity * 0.15,
             transformOrigin: 'center',
             transition: 'transform 0.4s ease-out, opacity 0.3s',
           }}
@@ -5073,7 +5075,14 @@ export default function DiwanApp() {
             onScroll={handleScroll}
             className="flex-1 overflow-y-auto custom-scrollbar relative z-10 px-4 md:px-0 pb-28 pt-10 md:pt-12 pr-14 md:pr-0"
           >
-            <div className="flex flex-col items-center pt-1">
+            <div
+              className="pointer-events-none sticky top-0 left-0 right-0 z-30"
+              style={{
+                height: '24px',
+                background: `linear-gradient(to bottom, ${darkMode ? '#0c0c0e' : '#FDFCF8'}, transparent)`,
+              }}
+            />
+            <div className="flex flex-col items-center pt-2">
               <div className="w-full max-w-4xl flex flex-col items-center">
                 <div
                   className={`text-center ${DESIGN.mainMetaPadding} animate-in slide-in-from-bottom-8 duration-1000 z-20 w-full`}

@@ -4992,7 +4992,7 @@ export default function DiwanApp() {
           right: 0,
           zIndex: 40,
           pointerEvents: 'none',
-          padding: `${0.13 - headerOpacity * 0.1}rem 1rem ${0.35 - headerOpacity * 0.3}rem`,
+          padding: `${0.13 - headerOpacity * 0.13}rem 1rem ${0.2 - headerOpacity * 0.2}rem`,
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
@@ -5008,8 +5008,8 @@ export default function DiwanApp() {
         <div
           className="flex flex-row items-center gap-1.5 header-luminescence"
           style={{
-            transform: `scale(${1 - headerOpacity * 0.3})`,
-            opacity: 1 - headerOpacity * 0.15,
+            transform: `scale(${1 - headerOpacity * 0.5})`,
+            opacity: 1 - headerOpacity * 0.3,
             transformOrigin: 'center',
             transition: 'transform 0.4s ease-out, opacity 0.3s',
           }}
@@ -5210,9 +5210,10 @@ export default function DiwanApp() {
                           {showTranslation && pair.en && (
                             <p
                               dir="ltr"
-                              className={`font-brand-en italic opacity-40 ${DESIGN.anim}`}
+                              className={`font-brand-en italic opacity-40 ${DESIGN.anim} mx-auto`}
                               style={{
                                 fontSize: `calc(clamp(1rem, 1.5vw, 1.125rem) * ${textScale})`,
+                                maxWidth: '90%',
                               }}
                             >
                               {pair.en}
@@ -5281,7 +5282,16 @@ export default function DiwanApp() {
             </div>
           </main>
 
-          <footer className="fixed bottom-0 left-0 right-0 py-2 pb-3 md:pb-2 px-4 flex flex-col items-center z-50 bg-gradient-to-t from-black/5 to-transparent safe-bottom">
+          {/* Bottom fade — content fades out above the control bar */}
+          <div
+            className="pointer-events-none fixed bottom-0 left-0 right-0 z-40"
+            style={{
+              height: '100px',
+              background: `linear-gradient(to top, ${darkMode ? '#0c0c0e' : '#FDFCF8'} 0%, ${darkMode ? 'rgba(12,12,14,0.85)' : 'rgba(253,252,248,0.85)'} 30%, ${darkMode ? 'rgba(12,12,14,0.4)' : 'rgba(253,252,248,0.4)'} 60%, transparent 100%)`,
+            }}
+          />
+
+          <footer className="fixed bottom-0 left-0 right-0 py-2 pb-3 md:pb-2 px-4 flex flex-col items-center z-50 safe-bottom">
             {audioError && (
               <div
                 className={`mb-2 px-4 py-2 rounded-full text-xs font-medium ${DESIGN.glass} ${theme.glass} border ${theme.border} shadow-lg ${DESIGN.anim} max-w-[calc(100vw-2rem)] text-center`}

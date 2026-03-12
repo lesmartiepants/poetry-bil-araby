@@ -1,3 +1,4 @@
+/* global process, Buffer */
 import * as Sentry from '@sentry/node';
 import dotenv from 'dotenv';
 dotenv.config();
@@ -28,19 +29,21 @@ const { Pool } = pg;
 const app = express();
 const PORT = process.env.PORT || 3001;
 const LOG_ENABLED = process.env.LOG_ENABLED !== 'false'; // on by default
-const LOG_DEBUG = process.env.LOG_DEBUG === 'true';       // verbose DB debug, off by default
+const LOG_DEBUG = process.env.LOG_DEBUG === 'true'; // verbose DB debug, off by default
 
 // ── Serving filters (tune what poems are returned by API) ──
 const SERVING = {
-  minQualityScore: 75,   // Only serve poems with quality_score >= this value
-  maxVerseLines: 24,     // Only serve poems with <= this many verse lines (delimited by *)
+  minQualityScore: 75, // Only serve poems with quality_score >= this value
+  maxVerseLines: 24, // Only serve poems with <= this many verse lines (delimited by *)
 };
 
 // Structured logger — captured by Render/Vercel logs
 const log = {
-  info: (label, msg, data) => LOG_ENABLED && console.log(`[${label}]`, msg, data !== undefined ? data : ''),
+  info: (label, msg, data) =>
+    LOG_ENABLED && console.log(`[${label}]`, msg, data !== undefined ? data : ''),
   error: (label, msg, data) => console.error(`[${label}]`, msg, data !== undefined ? data : ''),
-  debug: (label, msg, data) => LOG_DEBUG && console.log(`[${label}:debug]`, msg, data !== undefined ? data : ''),
+  debug: (label, msg, data) =>
+    LOG_DEBUG && console.log(`[${label}:debug]`, msg, data !== undefined ? data : ''),
 };
 
 // PostgreSQL connection pool
@@ -50,11 +53,11 @@ const pool = new Pool(
     ? {
         connectionString: process.env.DATABASE_URL,
         ssl: {
-          rejectUnauthorized: false // Required for Supabase/Render
+          rejectUnauthorized: false, // Required for Supabase/Render
         },
         query_timeout: 5000, // 5 seconds
         connectionTimeoutMillis: 5000,
-        idleTimeoutMillis: 30000
+        idleTimeoutMillis: 30000,
       }
     : {
         user: process.env.PGUSER || process.env.USER,
@@ -64,7 +67,7 @@ const pool = new Pool(
         port: process.env.PGPORT || 5432,
         query_timeout: 5000, // 5 seconds
         connectionTimeoutMillis: 5000,
-        idleTimeoutMillis: 30000
+        idleTimeoutMillis: 30000,
       }
 );
 
@@ -76,7 +79,10 @@ async function checkDiacritizedColumn() {
       "SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'poems' AND column_name = 'diacritized_content' LIMIT 1"
     );
     hasDiacritizedColumn = result.rows.length > 0;
-    log.info('DB', `Diacritized column: ${hasDiacritizedColumn ? 'available' : 'not found (using raw content)'}`);
+    log.info(
+      'DB',
+      `Diacritized column: ${hasDiacritizedColumn ? 'available' : 'not found (using raw content)'}`
+    );
   } catch {
     hasDiacritizedColumn = false;
   }
@@ -90,7 +96,10 @@ async function checkQualityScoreColumn() {
       "SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'poems' AND column_name = 'quality_score' LIMIT 1"
     );
     hasQualityScore = result.rows.length > 0;
-    log.info('DB', `Quality score column: ${hasQualityScore ? 'available' : 'not found (serving all poems)'}`);
+    log.info(
+      'DB',
+      `Quality score column: ${hasQualityScore ? 'available' : 'not found (serving all poems)'}`
+    );
   } catch {
     hasQualityScore = false;
   }
@@ -104,7 +113,10 @@ async function checkTranslationColumns() {
       "SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'poems' AND column_name = 'cached_translation' LIMIT 1"
     );
     hasTranslationColumns = result.rows.length > 0;
-    log.info('DB', `Translation cache columns: ${hasTranslationColumns ? 'available' : 'not found'}`);
+    log.info(
+      'DB',
+      `Translation cache columns: ${hasTranslationColumns ? 'available' : 'not found'}`
+    );
   } catch {
     hasTranslationColumns = false;
   }
@@ -122,6 +134,42 @@ async function checkPoemEventsTable() {
   } catch {
     hasPoemEventsTable = false;
   }
+}
+
+// Check if poets.name_en column exists (graceful pre-migration fallback)
+let hasPoetNameEn = false;
+async function checkPoetNameEnColumn() {
+  try {
+    const result = await pool.query(
+      "SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'poets' AND column_name = 'name_en' LIMIT 1"
+    );
+    hasPoetNameEn = result.rows.length > 0;
+    log.info(
+      'DB',
+      `Poet name_en column: ${hasPoetNameEn ? 'available' : 'not found (using Arabic only)'}`
+    );
+  } catch {
+    hasPoetNameEn = false;
+  }
+}
+
+// Helper: returns extra SELECT for English poet name (empty string when column doesn't exist)
+function poetNameEnExpr() {
+  return hasPoetNameEn ? ', po.name_en as poet_en' : '';
+}
+
+// Helper: formats a raw DB poem row into the frontend response structure
+function formatPoem(poem) {
+  return {
+    id: poem.id,
+    poet: poem.poet_en || poem.poet, // English name (falls back to Arabic)
+    poetArabic: poem.poet, // Always Arabic
+    title: poem.title, // Arabic (no English titles in DB)
+    titleArabic: poem.title, // Arabic
+    arabic: poem.arabic,
+    english: '',
+    tags: [poem.theme],
+  };
 }
 
 // Helper: returns the SQL expression for poem content based on column availability
@@ -159,34 +207,43 @@ pool.query('SELECT NOW()', (err, res) => {
     checkDiacritizedColumn();
     checkQualityScoreColumn();
     checkTranslationColumns();
+    checkPoetNameEnColumn();
     checkPoemEventsTable();
   }
 });
 
 // Middleware
 app.use(helmet());
-app.use(cors({
-  origin: function (origin, callback) {
-    // Allow requests with no origin (mobile apps, curl, server-to-server)
-    if (!origin) return callback(null, true);
-    const allowed = [
-      'http://localhost:5173',
-      'http://localhost:3001',
-      'https://poetry-bil-araby.vercel.app',
-    ];
-    // Allow Vercel preview deployments (poetry-bil-araby-*.vercel.app)
-    if (allowed.includes(origin) || /^https:\/\/poetry-bil-araby[a-z0-9-]*\.vercel\.app$/.test(origin)) {
-      return callback(null, true);
-    }
-    callback(new Error('CORS: origin not allowed'));
-  },
-  methods: ['GET', 'POST', 'PATCH', 'DELETE'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key', 'sentry-trace', 'baggage']
-}));
+app.use(
+  cors({
+    origin: function (origin, callback) {
+      // Allow requests with no origin (mobile apps, curl, server-to-server)
+      if (!origin) return callback(null, true);
+      const allowed = [
+        'http://localhost:5173',
+        'http://localhost:3001',
+        'https://poetry-bil-araby.vercel.app',
+      ];
+      // Allow Vercel preview deployments (poetry-bil-araby-*.vercel.app)
+      if (
+        allowed.includes(origin) ||
+        /^https:\/\/poetry-bil-araby[a-z0-9-]*\.vercel\.app$/.test(origin)
+      ) {
+        return callback(null, true);
+      }
+      callback(new Error('CORS: origin not allowed'));
+    },
+    methods: ['GET', 'POST', 'PATCH', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key', 'sentry-trace', 'baggage'],
+  })
+);
 app.use(express.json());
 // Larger body limit only for AI proxy endpoints
 app.use('/api/ai', express.json({ limit: '10mb' }));
-app.use('/api/', rateLimit({ windowMs: 60_000, max: 100, standardHeaders: true, legacyHeaders: false }));
+app.use(
+  '/api/',
+  rateLimit({ windowMs: 60_000, max: 100, standardHeaders: true, legacyHeaders: false })
+);
 
 // API key authentication middleware for protected endpoints
 const requireApiKey = (req, res, next) => {
@@ -221,11 +278,17 @@ app.use((req, res, next) => {
 const validate = (req, res, next) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    log.info('Validation', `Invalid request: ${req.path}`, errors.array().map(e => e.msg));
+    log.info(
+      'Validation',
+      `Invalid request: ${req.path}`,
+      errors.array().map((e) => e.msg)
+    );
     if (process.env.NODE_ENV === 'production') {
       return res.status(400).json({ error: 'Invalid request parameters' });
     }
-    return res.status(400).json({ error: 'Invalid request parameters', details: errors.array().map(e => e.msg) });
+    return res
+      .status(400)
+      .json({ error: 'Invalid request parameters', details: errors.array().map((e) => e.msg) });
   }
   next();
 };
@@ -255,154 +318,164 @@ app.get('/api/health/full', async (req, res) => {
     res.status(500).json({
       status: 'error',
       database: 'disconnected',
-      message: error.message
+      message: error.message,
     });
   }
 });
 
 // Get random poem
-app.get('/api/poems/random', [
-  query('poet').optional().trim().isLength({ max: 100 }).withMessage('Poet name too long'),
-  query('exclude').optional().trim().isLength({ max: 2000 }).withMessage('Exclude list too long'),
-  validate
-], async (req, res) => {
-  try {
-    const { poet, exclude } = req.query;
+app.get(
+  '/api/poems/random',
+  [
+    query('poet').optional().trim().isLength({ max: 100 }).withMessage('Poet name too long'),
+    query('exclude').optional().trim().isLength({ max: 2000 }).withMessage('Exclude list too long'),
+    validate,
+  ],
+  async (req, res) => {
+    try {
+      const { poet, exclude } = req.query;
 
-    // Parse and validate exclude param (comma-separated integer IDs, max 200)
-    let excludeIds = [];
-    if (exclude) {
-      excludeIds = exclude
-        .split(',')
-        .map(s => parseInt(s.trim(), 10))
-        .filter(n => Number.isInteger(n) && n > 0)
-        .slice(0, 200);
-    }
+      // Parse and validate exclude param (comma-separated integer IDs, max 200)
+      let excludeIds = [];
+      if (exclude) {
+        excludeIds = exclude
+          .split(',')
+          .map((s) => parseInt(s.trim(), 10))
+          .filter((n) => Number.isInteger(n) && n > 0)
+          .slice(0, 200);
+      }
 
-    let query = `
+      let query = `
       SELECT
         p.id,
         p.title,
         ${poemContentExpr()} as arabic,
         po.name as poet,
         t.name as theme
+        ${poetNameEnExpr()}
         ${translationSelectExpr()}
       FROM poems p
       JOIN poets po ON p.poet_id = po.id
       JOIN themes t ON p.theme_id = t.id
     `;
 
-    const params = [];
-    let paramIndex = 1;
+      const params = [];
+      let paramIndex = 1;
 
-    if (poet && poet !== 'All') {
-      query += ` WHERE po.name = $${paramIndex} ${servingFilters()}`;
-      params.push(poet);
-      paramIndex++;
-    } else {
-      const qf = servingFilters();
-      if (qf) query += ` WHERE 1=1 ${qf}`;
-    }
+      if (poet && poet !== 'All') {
+        query += ` WHERE po.name = $${paramIndex} ${servingFilters()}`;
+        params.push(poet);
+        paramIndex++;
+      } else {
+        const qf = servingFilters();
+        if (qf) query += ` WHERE 1=1 ${qf}`;
+      }
 
-    // Add exclude clause using parameterized ANY() to prevent SQL injection
-    if (excludeIds.length > 0) {
-      const hasWhere = query.includes('WHERE');
-      query += hasWhere
-        ? ` AND p.id != ALL($${paramIndex})`
-        : ` WHERE p.id != ALL($${paramIndex})`;
-      params.push(excludeIds);
-      paramIndex++;
-    }
+      // Add exclude clause using parameterized ANY() to prevent SQL injection
+      if (excludeIds.length > 0) {
+        const hasWhere = query.includes('WHERE');
+        query += hasWhere
+          ? ` AND p.id != ALL($${paramIndex})`
+          : ` WHERE p.id != ALL($${paramIndex})`;
+        params.push(excludeIds);
+        paramIndex++;
+      }
 
-    query += ' ORDER BY RANDOM() LIMIT 1';
+      query += ' ORDER BY RANDOM() LIMIT 1';
 
-    let result = await pool.query(query, params);
+      let result = await pool.query(query, params);
 
-    // Fallback: if no unseen poems remain, return any random poem (ignore exclude)
-    if (result.rows.length === 0 && excludeIds.length > 0) {
-      log.info('Poems', `All ${excludeIds.length} excluded poems exhausted, falling back to unrestricted random`);
-      // Re-run without the exclude clause
-      let fallbackQuery = `
+      // Fallback: if no unseen poems remain, return any random poem (ignore exclude)
+      if (result.rows.length === 0 && excludeIds.length > 0) {
+        log.info(
+          'Poems',
+          `All ${excludeIds.length} excluded poems exhausted, falling back to unrestricted random`
+        );
+        // Re-run without the exclude clause
+        let fallbackQuery = `
         SELECT
           p.id,
           p.title,
           ${poemContentExpr()} as arabic,
           po.name as poet,
           t.name as theme
+          ${poetNameEnExpr()}
           ${translationSelectExpr()}
         FROM poems p
         JOIN poets po ON p.poet_id = po.id
         JOIN themes t ON p.theme_id = t.id
       `;
-      const fallbackParams = [];
-      if (poet && poet !== 'All') {
-        fallbackQuery += ` WHERE po.name = $1 ${servingFilters()}`;
-        fallbackParams.push(poet);
-      } else {
-        const qf = servingFilters();
-        if (qf) fallbackQuery += ` WHERE 1=1 ${qf}`;
+        const fallbackParams = [];
+        if (poet && poet !== 'All') {
+          fallbackQuery += ` WHERE po.name = $1 ${servingFilters()}`;
+          fallbackParams.push(poet);
+        } else {
+          const qf = servingFilters();
+          if (qf) fallbackQuery += ` WHERE 1=1 ${qf}`;
+        }
+        fallbackQuery += ' ORDER BY RANDOM() LIMIT 1';
+        result = await pool.query(fallbackQuery, fallbackParams);
       }
-      fallbackQuery += ' ORDER BY RANDOM() LIMIT 1';
-      result = await pool.query(fallbackQuery, fallbackParams);
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'No poems found' });
+      }
+
+      const poem = result.rows[0];
+
+      log.debug('DB', 'Raw poem keys', Object.keys(poem));
+      log.debug('DB', `Arabic field: exists=${'arabic' in poem}, type=${typeof poem.arabic}`);
+
+      // Format the response to match the frontend structure
+      const formattedPoem = formatPoem(poem);
+
+      // Include cached translations when available
+      if (poem.cached_translation) formattedPoem.cachedTranslation = poem.cached_translation;
+      if (poem.cached_explanation) formattedPoem.cachedExplanation = poem.cached_explanation;
+      if (poem.cached_author_bio) formattedPoem.cachedAuthorBio = poem.cached_author_bio;
+
+      log.info(
+        'Poems',
+        `Random poem: id=${poem.id}, poet=${poem.poet}, arabic_len=${formattedPoem.arabic?.length || 0}${poem.cached_translation ? ', has_translation' : ''}`
+      );
+      res.json(formattedPoem);
+    } catch (error) {
+      Sentry.captureException(error);
+      log.error('Poems', `Error fetching random poem: ${error.message}`, error.stack);
+      res.status(500).json({ error: 'Internal server error' });
     }
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'No poems found' });
-    }
-
-    const poem = result.rows[0];
-
-    log.debug('DB', 'Raw poem keys', Object.keys(poem));
-    log.debug('DB', `Arabic field: exists=${('arabic' in poem)}, type=${typeof poem.arabic}`);
-
-    // Format the response to match the frontend structure
-    const formattedPoem = {
-      id: poem.id,
-      poet: poem.poet,
-      poetArabic: poem.poet, // We don't have English names in DB
-      title: poem.title,
-      titleArabic: poem.title, // DB only has Arabic
-      arabic: poem.arabic,
-      english: '', // No English translations in DB
-      tags: [poem.theme] // Using theme as tag
-    };
-
-    // Include cached translations when available
-    if (poem.cached_translation) formattedPoem.cachedTranslation = poem.cached_translation;
-    if (poem.cached_explanation) formattedPoem.cachedExplanation = poem.cached_explanation;
-    if (poem.cached_author_bio) formattedPoem.cachedAuthorBio = poem.cached_author_bio;
-
-    log.info('Poems', `Random poem: id=${poem.id}, poet=${poem.poet}, arabic_len=${formattedPoem.arabic?.length || 0}${poem.cached_translation ? ', has_translation' : ''}`);
-    res.json(formattedPoem);
-  } catch (error) {
-    Sentry.captureException(error);
-    log.error('Poems', `Error fetching random poem: ${error.message}`, error.stack);
-    res.status(500).json({ error: 'Internal server error' });
   }
-});
+);
 
 // Get poems by poet
-app.get('/api/poems/by-poet/:poet', [
-  param('poet').trim().isLength({ min: 1, max: 100 }).withMessage('Poet name must be 1-100 characters'),
-  query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be 1-100'),
-  query('offset').optional().isInt({ min: 0 }).withMessage('Offset must be >= 0'),
-  validate
-], async (req, res) => {
-  try {
-    const { poet } = req.params;
-    const { limit = 10, offset = 0 } = req.query;
+app.get(
+  '/api/poems/by-poet/:poet',
+  [
+    param('poet')
+      .trim()
+      .isLength({ min: 1, max: 100 })
+      .withMessage('Poet name must be 1-100 characters'),
+    query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be 1-100'),
+    query('offset').optional().isInt({ min: 0 }).withMessage('Offset must be >= 0'),
+    validate,
+  ],
+  async (req, res) => {
+    try {
+      const { poet } = req.params;
+      const { limit = 10, offset = 0 } = req.query;
 
-    // Convert query params to integers for type safety
-    const limitNum = parseInt(limit, 10);
-    const offsetNum = parseInt(offset, 10);
+      // Convert query params to integers for type safety
+      const limitNum = parseInt(limit, 10);
+      const offsetNum = parseInt(offset, 10);
 
-    const query = `
+      const query = `
       SELECT
         p.id,
         p.title,
         ${poemContentExpr()} as arabic,
         po.name as poet,
         t.name as theme
+        ${poetNameEnExpr()}
       FROM poems p
       JOIN poets po ON p.poet_id = po.id
       JOIN themes t ON p.theme_id = t.id
@@ -411,38 +484,30 @@ app.get('/api/poems/by-poet/:poet', [
       LIMIT $2 OFFSET $3
     `;
 
-    const result = await pool.query(query, [poet, limitNum, offsetNum]);
+      const result = await pool.query(query, [poet, limitNum, offsetNum]);
 
-    const poems = result.rows.map(poem => ({
-      id: poem.id,
-      poet: poem.poet,
-      poetArabic: poem.poet,
-      title: poem.title,
-      titleArabic: poem.title,
-      arabic: poem.arabic,
-      english: '',
-      tags: [poem.theme]
-    }));
+      const poems = result.rows.map(formatPoem);
 
-    log.info('Poems', `By poet "${poet}": returned ${poems.length} poems`);
-    res.json(poems);
-  } catch (error) {
-    Sentry.captureException(error);
-    log.error('Poems', `Error fetching poems by poet: ${error.message}`, error.stack);
-    res.status(500).json({ error: 'Internal server error' });
+      log.info('Poems', `By poet "${poet}": returned ${poems.length} poems`);
+      res.json(poems);
+    } catch (error) {
+      Sentry.captureException(error);
+      log.error('Poems', `Error fetching poems by poet: ${error.message}`, error.stack);
+      res.status(500).json({ error: 'Internal server error' });
+    }
   }
-});
+);
 
 // Get list of available poets
 app.get('/api/poets', async (req, res) => {
   try {
     const qf = servingFilters();
     const query = `
-      SELECT DISTINCT po.name, COUNT(p.id) as poem_count
+      SELECT DISTINCT po.name${hasPoetNameEn ? ', po.name_en' : ''}, COUNT(p.id) as poem_count
       FROM poets po
       JOIN poems p ON po.id = p.poet_id
       ${qf ? 'WHERE 1=1 ' + qf : ''}
-      GROUP BY po.name
+      GROUP BY po.name${hasPoetNameEn ? ', po.name_en' : ''}
       HAVING COUNT(p.id) > 0
       ORDER BY poem_count DESC
       LIMIT 50
@@ -459,24 +524,33 @@ app.get('/api/poets', async (req, res) => {
 });
 
 // Search poems
-app.get('/api/poems/search', [
-  query('q').trim().notEmpty().withMessage('Search query required').isLength({ max: 200 }).withMessage('Search query too long'),
-  query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be 1-100'),
-  validate
-], async (req, res) => {
-  try {
-    const { q, limit = 10 } = req.query;
+app.get(
+  '/api/poems/search',
+  [
+    query('q')
+      .trim()
+      .notEmpty()
+      .withMessage('Search query required')
+      .isLength({ max: 200 })
+      .withMessage('Search query too long'),
+    query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be 1-100'),
+    validate,
+  ],
+  async (req, res) => {
+    try {
+      const { q, limit = 10 } = req.query;
 
-    // Convert query param to integer for type safety
-    const limitNum = parseInt(limit, 10);
+      // Convert query param to integer for type safety
+      const limitNum = parseInt(limit, 10);
 
-    const query = `
+      const query = `
       SELECT
         p.id,
         p.title,
         ${poemContentExpr()} as arabic,
         po.name as poet,
         t.name as theme
+        ${poetNameEnExpr()}
       FROM poems p
       JOIN poets po ON p.poet_id = po.id
       JOIN themes t ON p.theme_id = t.id
@@ -484,220 +558,246 @@ app.get('/api/poems/search', [
       LIMIT $2
     `;
 
-    const result = await pool.query(query, [`%${q}%`, limitNum]);
+      const result = await pool.query(query, [`%${q}%`, limitNum]);
 
-    const poems = result.rows.map(poem => ({
-      id: poem.id,
-      poet: poem.poet,
-      poetArabic: poem.poet,
-      title: poem.title,
-      titleArabic: poem.title,
-      arabic: poem.arabic,
-      english: '',
-      tags: [poem.theme]
-    }));
+      const poems = result.rows.map(formatPoem);
 
-    log.info('Search', `Query "${q}": returned ${poems.length} results`);
-    res.json(poems);
-  } catch (error) {
-    Sentry.captureException(error);
-    log.error('Search', `Error searching poems: ${error.message}`, error.stack);
-    res.status(500).json({ error: 'Internal server error' });
+      log.info('Search', `Query "${q}": returned ${poems.length} results`);
+      res.json(poems);
+    } catch (error) {
+      Sentry.captureException(error);
+      log.error('Search', `Error searching poems: ${error.message}`, error.stack);
+      res.status(500).json({ error: 'Internal server error' });
+    }
   }
-});
+);
 
 // Get poem by ID (for deep links / sharing)
 // IMPORTANT: This route uses :id param and must be registered AFTER all /api/poems/<literal> routes
 // (random, by-poet, search) to avoid shadowing them.
-app.get('/api/poems/:id', [
-  param('id').isInt({ min: 1 }).withMessage('Poem ID must be a positive integer'),
-  validate
-], async (req, res) => {
-  try {
-    const { id } = req.params;
+app.get(
+  '/api/poems/:id',
+  [param('id').isInt({ min: 1 }).withMessage('Poem ID must be a positive integer'), validate],
+  async (req, res) => {
+    try {
+      const { id } = req.params;
 
-    const result = await pool.query(`
+      const result = await pool.query(
+        `
       SELECT
         p.id,
         p.title,
         ${poemContentExpr()} as arabic,
         po.name as poet,
         t.name as theme
+        ${poetNameEnExpr()}
       FROM poems p
       JOIN poets po ON p.poet_id = po.id
       JOIN themes t ON p.theme_id = t.id
       WHERE p.id = $1
-    `, [id]);
+    `,
+        [id]
+      );
 
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Poem not found' });
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'Poem not found' });
+      }
+
+      const poem = result.rows[0];
+
+      const formattedPoem = formatPoem(poem);
+
+      log.info('Poems', `By ID: ${id}, poet=${poem.poet}`);
+      res.json(formattedPoem);
+    } catch (error) {
+      Sentry.captureException(error);
+      log.error('Poems', `Error fetching poem by ID: ${error.message}`, error.stack);
+      res.status(500).json({ error: 'Internal server error' });
     }
-
-    const poem = result.rows[0];
-
-    const formattedPoem = {
-      id: poem.id,
-      poet: poem.poet,
-      poetArabic: poem.poet,
-      title: poem.title,
-      titleArabic: poem.title,
-      arabic: poem.arabic,
-      english: '',
-      tags: [poem.theme]
-    };
-
-    log.info('Poems', `By ID: ${id}, poet=${poem.poet}`);
-    res.json(formattedPoem);
-  } catch (error) {
-    Sentry.captureException(error);
-    log.error('Poems', `Error fetching poem by ID: ${error.message}`, error.stack);
-    res.status(500).json({ error: 'Internal server error' });
   }
-});
+);
 
 // Save cached translation for a poem (write-once, rate-limited)
-const translationWriteLimit = rateLimit({ windowMs: 60_000, max: 10, standardHeaders: true, legacyHeaders: false });
+const translationWriteLimit = rateLimit({
+  windowMs: 60_000,
+  max: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
-app.post('/api/poems/:id/translation', translationWriteLimit, [
-  param('id').isInt({ min: 1 }).withMessage('Invalid poem ID'),
-  validate
-], async (req, res) => {
-  if (!hasTranslationColumns) {
-    return res.status(503).json({ error: 'Translation columns not available' });
-  }
-
-  try {
-    const { translation, explanation, authorBio } = req.body;
-
-    // Content validation
-    if (!translation || typeof translation !== 'string') {
-      return res.status(400).json({ error: 'translation is required and must be a string' });
-    }
-    if (translation.length > 10_000 || (explanation?.length || 0) > 10_000 || (authorBio?.length || 0) > 5_000) {
-      return res.status(400).json({ error: 'Content exceeds maximum length' });
+app.post(
+  '/api/poems/:id/translation',
+  translationWriteLimit,
+  [param('id').isInt({ min: 1 }).withMessage('Invalid poem ID'), validate],
+  async (req, res) => {
+    if (!hasTranslationColumns) {
+      return res.status(503).json({ error: 'Translation columns not available' });
     }
 
-    // Strip HTML tags (XSS prevention)
-    const clean = (s) => s?.replace(/<[^>]*>/g, '') || null;
+    try {
+      const { translation, explanation, authorBio } = req.body;
 
-    // Only write if not already translated (write-once guard)
-    const result = await pool.query(
-      `UPDATE poems SET cached_translation = $1, cached_explanation = $2,
+      // Content validation
+      if (!translation || typeof translation !== 'string') {
+        return res.status(400).json({ error: 'translation is required and must be a string' });
+      }
+      if (
+        translation.length > 10_000 ||
+        (explanation?.length || 0) > 10_000 ||
+        (authorBio?.length || 0) > 5_000
+      ) {
+        return res.status(400).json({ error: 'Content exceeds maximum length' });
+      }
+
+      // Strip HTML tags (XSS prevention)
+      const clean = (s) => s?.replace(/<[^>]*>/g, '') || null;
+
+      // Only write if not already translated (write-once guard)
+      const result = await pool.query(
+        `UPDATE poems SET cached_translation = $1, cached_explanation = $2,
        cached_author_bio = $3, translated_at = NOW()
        WHERE id = $4 AND translated_at IS NULL
        RETURNING id`,
-      [clean(translation), clean(explanation), clean(authorBio), req.params.id]
-    );
+        [clean(translation), clean(explanation), clean(authorBio), req.params.id]
+      );
 
-    if (result.rowCount === 0) {
-      return res.json({ status: 'already_translated' });
+      if (result.rowCount === 0) {
+        return res.json({ status: 'already_translated' });
+      }
+
+      log.info('Translation', `Saved translation for poem ${req.params.id}`);
+      res.json({ status: 'saved' });
+    } catch (error) {
+      Sentry.captureException(error);
+      log.error('Translation', `Error saving translation: ${error.message}`, error.stack);
+      res.status(500).json({ error: 'Internal server error' });
     }
-
-    log.info('Translation', `Saved translation for poem ${req.params.id}`);
-    res.json({ status: 'saved' });
-  } catch (error) {
-    Sentry.captureException(error);
-    log.error('Translation', `Error saving translation: ${error.message}`, error.stack);
-    res.status(500).json({ error: 'Internal server error' });
   }
-});
+);
 
 // ═══════════════════════════════════════════════════════════════
 // POEM EVENTS (downvote + analytics)
 // ═══════════════════════════════════════════════════════════════
 
-const poemEventLimit = rateLimit({ windowMs: 60_000, max: 20, standardHeaders: true, legacyHeaders: false });
+const poemEventLimit = rateLimit({
+  windowMs: 60_000,
+  max: 20,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 // POST /api/poems/:id/downvote — record a downvote
-app.post('/api/poems/:id/downvote', poemEventLimit, [
-  param('id').isInt({ min: 1 }).withMessage('Poem ID must be a positive integer'),
-  body('userId').isString().notEmpty().withMessage('userId is required'),
-  validate
-], async (req, res) => {
-  if (!hasPoemEventsTable) {
-    return res.status(503).json({ error: 'Poem events table not available' });
-  }
-  try {
-    const { userId } = req.body;
-    await pool.query(
-      `INSERT INTO poem_events (user_id, poem_id, event_type, metadata)
+app.post(
+  '/api/poems/:id/downvote',
+  poemEventLimit,
+  [
+    param('id').isInt({ min: 1 }).withMessage('Poem ID must be a positive integer'),
+    body('userId').isString().notEmpty().withMessage('userId is required'),
+    validate,
+  ],
+  async (req, res) => {
+    if (!hasPoemEventsTable) {
+      return res.status(503).json({ error: 'Poem events table not available' });
+    }
+    try {
+      const { userId } = req.body;
+      await pool.query(
+        `INSERT INTO poem_events (user_id, poem_id, event_type, metadata)
        VALUES ($1, $2, 'downvote', '{"reason":"low_quality"}')
        ON CONFLICT DO NOTHING`,
-      [userId, req.params.id]
-    );
-    log.info('PoemEvents', `Downvote recorded: poem=${req.params.id}, user=${userId}`);
-    res.json({ status: 'downvoted' });
-  } catch (error) {
-    Sentry.captureException(error);
-    log.error('PoemEvents', `Error recording downvote: ${error.message}`, error.stack);
-    res.status(500).json({ error: 'Internal server error' });
+        [userId, req.params.id]
+      );
+      log.info('PoemEvents', `Downvote recorded: poem=${req.params.id}, user=${userId}`);
+      res.json({ status: 'downvoted' });
+    } catch (error) {
+      Sentry.captureException(error);
+      log.error('PoemEvents', `Error recording downvote: ${error.message}`, error.stack);
+      res.status(500).json({ error: 'Internal server error' });
+    }
   }
-});
+);
 
 // DELETE /api/poems/:id/downvote — remove a downvote
-app.delete('/api/poems/:id/downvote', poemEventLimit, [
-  param('id').isInt({ min: 1 }).withMessage('Poem ID must be a positive integer'),
-  body('userId').isString().notEmpty().withMessage('userId is required'),
-  validate
-], async (req, res) => {
-  if (!hasPoemEventsTable) {
-    return res.status(503).json({ error: 'Poem events table not available' });
+app.delete(
+  '/api/poems/:id/downvote',
+  poemEventLimit,
+  [
+    param('id').isInt({ min: 1 }).withMessage('Poem ID must be a positive integer'),
+    body('userId').isString().notEmpty().withMessage('userId is required'),
+    validate,
+  ],
+  async (req, res) => {
+    if (!hasPoemEventsTable) {
+      return res.status(503).json({ error: 'Poem events table not available' });
+    }
+    try {
+      const { userId } = req.body;
+      await pool.query(
+        `DELETE FROM poem_events WHERE user_id = $1 AND poem_id = $2 AND event_type = 'downvote'`,
+        [userId, req.params.id]
+      );
+      log.info('PoemEvents', `Downvote removed: poem=${req.params.id}, user=${userId}`);
+      res.json({ status: 'removed' });
+    } catch (error) {
+      Sentry.captureException(error);
+      log.error('PoemEvents', `Error removing downvote: ${error.message}`, error.stack);
+      res.status(500).json({ error: 'Internal server error' });
+    }
   }
-  try {
-    const { userId } = req.body;
-    await pool.query(
-      `DELETE FROM poem_events WHERE user_id = $1 AND poem_id = $2 AND event_type = 'downvote'`,
-      [userId, req.params.id]
-    );
-    log.info('PoemEvents', `Downvote removed: poem=${req.params.id}, user=${userId}`);
-    res.json({ status: 'removed' });
-  } catch (error) {
-    Sentry.captureException(error);
-    log.error('PoemEvents', `Error removing downvote: ${error.message}`, error.stack);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
+);
 
 // POST /api/poems/:id/event — record a generic poem event
 const VALID_EVENT_TYPES = ['downvote', 'save', 'serve', 'share', 'copy', 'view'];
 const TOGGLE_EVENT_TYPES = ['downvote', 'save'];
 
-app.post('/api/poems/:id/event', poemEventLimit, [
-  param('id').isInt({ min: 1 }).withMessage('Poem ID must be a positive integer'),
-  body('userId').isString().notEmpty().withMessage('userId is required'),
-  body('eventType').isString().isIn(VALID_EVENT_TYPES).withMessage(`eventType must be one of: ${VALID_EVENT_TYPES.join(', ')}`),
-  validate
-], async (req, res) => {
-  if (!hasPoemEventsTable) {
-    return res.status(503).json({ error: 'Poem events table not available' });
-  }
-  try {
-    const { userId, eventType, metadata } = req.body;
-    const metadataJson = metadata && typeof metadata === 'object' ? JSON.stringify(metadata) : '{}';
+app.post(
+  '/api/poems/:id/event',
+  poemEventLimit,
+  [
+    param('id').isInt({ min: 1 }).withMessage('Poem ID must be a positive integer'),
+    body('userId').isString().notEmpty().withMessage('userId is required'),
+    body('eventType')
+      .isString()
+      .isIn(VALID_EVENT_TYPES)
+      .withMessage(`eventType must be one of: ${VALID_EVENT_TYPES.join(', ')}`),
+    validate,
+  ],
+  async (req, res) => {
+    if (!hasPoemEventsTable) {
+      return res.status(503).json({ error: 'Poem events table not available' });
+    }
+    try {
+      const { userId, eventType, metadata } = req.body;
+      const metadataJson =
+        metadata && typeof metadata === 'object' ? JSON.stringify(metadata) : '{}';
 
-    if (TOGGLE_EVENT_TYPES.includes(eventType)) {
-      await pool.query(
-        `INSERT INTO poem_events (user_id, poem_id, event_type, metadata)
+      if (TOGGLE_EVENT_TYPES.includes(eventType)) {
+        await pool.query(
+          `INSERT INTO poem_events (user_id, poem_id, event_type, metadata)
          VALUES ($1, $2, $3, $4)
          ON CONFLICT DO NOTHING`,
-        [userId, req.params.id, eventType, metadataJson]
-      );
-    } else {
-      await pool.query(
-        `INSERT INTO poem_events (user_id, poem_id, event_type, metadata)
+          [userId, req.params.id, eventType, metadataJson]
+        );
+      } else {
+        await pool.query(
+          `INSERT INTO poem_events (user_id, poem_id, event_type, metadata)
          VALUES ($1, $2, $3, $4)`,
-        [userId, req.params.id, eventType, metadataJson]
-      );
-    }
+          [userId, req.params.id, eventType, metadataJson]
+        );
+      }
 
-    log.info('PoemEvents', `Event recorded: type=${eventType}, poem=${req.params.id}, user=${userId}`);
-    res.json({ status: 'recorded' });
-  } catch (error) {
-    Sentry.captureException(error);
-    log.error('PoemEvents', `Error recording event: ${error.message}`, error.stack);
-    res.status(500).json({ error: 'Internal server error' });
+      log.info(
+        'PoemEvents',
+        `Event recorded: type=${eventType}, poem=${req.params.id}, user=${userId}`
+      );
+      res.json({ status: 'recorded' });
+    } catch (error) {
+      Sentry.captureException(error);
+      log.error('PoemEvents', `Error recording event: ${error.message}`, error.stack);
+      res.status(500).json({ error: 'Internal server error' });
+    }
   }
-});
+);
 
 // ═══════════════════════════════════════════════════════════════
 // GEMINI API PROXY (keeps API key server-side)
@@ -756,7 +856,7 @@ app.post('/api/ai/:model/:action', async (req, res) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(req.body),
-        signal: controller.signal
+        signal: controller.signal,
       });
 
       if (!response.ok) {
@@ -785,7 +885,7 @@ app.post('/api/ai/:model/:action', async (req, res) => {
       const response = await fetch(url, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(req.body)
+        body: JSON.stringify(req.body),
       });
       const data = await response.json();
       if (!response.ok) {
@@ -807,7 +907,7 @@ app.post('/api/ai/:model/:action', async (req, res) => {
 // Helper: check if design_items table exists (graceful fallback if migration hasn't run)
 async function designTablesExist() {
   try {
-    await pool.query("SELECT 1 FROM design_items LIMIT 0");
+    await pool.query('SELECT 1 FROM design_items LIMIT 0');
     return true;
   } catch {
     return false;
@@ -833,9 +933,18 @@ app.get('/api/design-review/items', async (req, res) => {
     const { component, category, active } = req.query;
     let query = 'SELECT * FROM design_items WHERE 1=1';
     const params = [];
-    if (component) { params.push(component); query += ` AND component = $${params.length}`; }
-    if (category) { params.push(category); query += ` AND category = $${params.length}`; }
-    if (active !== undefined) { params.push(active === 'true'); query += ` AND is_active = $${params.length}`; }
+    if (component) {
+      params.push(component);
+      query += ` AND component = $${params.length}`;
+    }
+    if (category) {
+      params.push(category);
+      query += ` AND category = $${params.length}`;
+    }
+    if (active !== undefined) {
+      params.push(active === 'true');
+      query += ` AND is_active = $${params.length}`;
+    }
     query += ' ORDER BY component, category, item_key';
     const result = await pool.query(query, params);
     res.json(result.rows);
@@ -849,9 +958,11 @@ app.get('/api/design-review/items', async (req, res) => {
 // POST /api/design-review/items/sync — bulk upsert from CATALOG (idempotent, batched)
 app.post('/api/design-review/items/sync', requireApiKey, async (req, res) => {
   try {
-    if (!(await designTablesExist())) return res.status(503).json({ error: 'Design tables not created yet' });
+    if (!(await designTablesExist()))
+      return res.status(503).json({ error: 'Design tables not created yet' });
     const { items } = req.body;
-    if (!Array.isArray(items) || items.length === 0) return res.status(400).json({ error: 'items must be a non-empty array' });
+    if (!Array.isArray(items) || items.length === 0)
+      return res.status(400).json({ error: 'items must be a non-empty array' });
 
     // Build a single multi-row INSERT...ON CONFLICT (all values parameterized)
     const params = [];
@@ -859,16 +970,47 @@ app.post('/api/design-review/items/sync', requireApiKey, async (req, res) => {
     for (let i = 0; i < items.length; i++) {
       const p = i * 10;
       params.push(
-        items[i].item_key, items[i].name, items[i].component, items[i].category,
-        items[i].file_path, items[i].description || null,
-        items[i].generation || 1, items[i].iteration || null,
-        items[i].source_branch || null, items[i].source_pr || null
+        items[i].item_key,
+        items[i].name,
+        items[i].component,
+        items[i].category,
+        items[i].file_path,
+        items[i].description || null,
+        items[i].generation || 1,
+        items[i].iteration || null,
+        items[i].source_branch || null,
+        items[i].source_pr || null
       );
-      valueTuples.push('($' + (p+1) + ', $' + (p+2) + ', $' + (p+3) + ', $' + (p+4) + ', $' + (p+5) + ', $' + (p+6) + ', $' + (p+7) + ', $' + (p+8) + ', $' + (p+9) + ', $' + (p+10) + ')');
+      valueTuples.push(
+        '($' +
+          (p + 1) +
+          ', $' +
+          (p + 2) +
+          ', $' +
+          (p + 3) +
+          ', $' +
+          (p + 4) +
+          ', $' +
+          (p + 5) +
+          ', $' +
+          (p + 6) +
+          ', $' +
+          (p + 7) +
+          ', $' +
+          (p + 8) +
+          ', $' +
+          (p + 9) +
+          ', $' +
+          (p + 10) +
+          ')'
+      );
     }
 
-    const sql = 'INSERT INTO design_items (item_key, name, component, category, file_path, description, generation, iteration, source_branch, source_pr) ' +
-      'VALUES ' + valueTuples.join(', ') + ' ' +
+    const sql =
+      'INSERT INTO design_items (item_key, name, component, category, file_path, description, generation, iteration, source_branch, source_pr) ' +
+      'VALUES ' +
+      valueTuples.join(', ') +
+      ' ' +
       'ON CONFLICT (item_key) DO UPDATE SET ' +
       'name = EXCLUDED.name, component = EXCLUDED.component, category = EXCLUDED.category, ' +
       'file_path = EXCLUDED.file_path, description = EXCLUDED.description, generation = EXCLUDED.generation, ' +
@@ -891,11 +1033,26 @@ app.get('/api/design-review/sessions', async (req, res) => {
     let query = 'SELECT * FROM design_review_sessions';
     const params = [];
     const clauses = [];
-    if (status) { params.push(status); clauses.push(`status = $${params.length}`); }
-    if (reviewer) { params.push(reviewer); clauses.push(`reviewer = $${params.length}`); }
-    if (from) { params.push(from); clauses.push(`created_at >= $${params.length}`); }
-    if (to) { params.push(to); clauses.push(`created_at <= $${params.length}`); }
-    if (commit_sha) { params.push(commit_sha); clauses.push(`commit_sha = $${params.length}`); }
+    if (status) {
+      params.push(status);
+      clauses.push(`status = $${params.length}`);
+    }
+    if (reviewer) {
+      params.push(reviewer);
+      clauses.push(`reviewer = $${params.length}`);
+    }
+    if (from) {
+      params.push(from);
+      clauses.push(`created_at >= $${params.length}`);
+    }
+    if (to) {
+      params.push(to);
+      clauses.push(`created_at <= $${params.length}`);
+    }
+    if (commit_sha) {
+      params.push(commit_sha);
+      clauses.push(`commit_sha = $${params.length}`);
+    }
     if (clauses.length) query += ' WHERE ' + clauses.join(' AND ');
     query += ' ORDER BY created_at DESC';
     const result = await pool.query(query, params);
@@ -910,7 +1067,8 @@ app.get('/api/design-review/sessions', async (req, res) => {
 // GET /api/design-review/sessions/:id — fetch a single session by ID
 app.get('/api/design-review/sessions/:id', async (req, res) => {
   try {
-    if (!(await designTablesExist())) return res.status(404).json({ error: 'Design tables not created yet' });
+    if (!(await designTablesExist()))
+      return res.status(404).json({ error: 'Design tables not created yet' });
     const { id } = req.params;
     const result = await pool.query('SELECT * FROM design_review_sessions WHERE id = $1', [id]);
     if (result.rows.length === 0) return res.status(404).json({ error: 'Session not found' });
@@ -925,18 +1083,24 @@ app.get('/api/design-review/sessions/:id', async (req, res) => {
 // POST /api/design-review/sessions — create new review session
 app.post('/api/design-review/sessions', requireApiKey, async (req, res) => {
   try {
-    if (!(await designTablesExist())) return res.status(503).json({ error: 'Design tables not created yet' });
+    if (!(await designTablesExist()))
+      return res.status(503).json({ error: 'Design tables not created yet' });
     const { reviewer, branch, commit_sha, total_designs } = req.body;
 
     // Calculate next round number
-    const roundResult = await pool.query('SELECT COALESCE(MAX(round_number), 0) + 1 as next_round FROM design_review_sessions');
+    const roundResult = await pool.query(
+      'SELECT COALESCE(MAX(round_number), 0) + 1 as next_round FROM design_review_sessions'
+    );
     const round_number = roundResult.rows[0].next_round;
 
-    const result = await pool.query(`
+    const result = await pool.query(
+      `
       INSERT INTO design_review_sessions (reviewer, branch, commit_sha, round_number, total_designs)
       VALUES ($1, $2, $3, $4, $5)
       RETURNING *
-    `, [reviewer || 'owner', branch || null, commit_sha || null, round_number, total_designs || 0]);
+    `,
+      [reviewer || 'owner', branch || null, commit_sha || null, round_number, total_designs || 0]
+    );
     res.status(201).json(result.rows[0]);
   } catch (error) {
     Sentry.captureException(error);
@@ -948,15 +1112,28 @@ app.post('/api/design-review/sessions', requireApiKey, async (req, res) => {
 // PATCH /api/design-review/sessions/:id — complete session, add notes
 app.patch('/api/design-review/sessions/:id', requireApiKey, async (req, res) => {
   try {
-    if (!(await designTablesExist())) return res.status(503).json({ error: 'Design tables not created yet' });
+    if (!(await designTablesExist()))
+      return res.status(503).json({ error: 'Design tables not created yet' });
     const { id } = req.params;
     const { status, notes, reviewed_count, reviewer } = req.body;
     const sets = [];
     const params = [id];
-    if (status !== undefined) { params.push(status); sets.push(`status = $${params.length}`); }
-    if (notes !== undefined) { params.push(notes); sets.push(`notes = $${params.length}`); }
-    if (reviewed_count !== undefined) { params.push(reviewed_count); sets.push(`reviewed_count = $${params.length}`); }
-    if (reviewer !== undefined) { params.push(reviewer); sets.push(`reviewer = $${params.length}`); }
+    if (status !== undefined) {
+      params.push(status);
+      sets.push(`status = $${params.length}`);
+    }
+    if (notes !== undefined) {
+      params.push(notes);
+      sets.push(`notes = $${params.length}`);
+    }
+    if (reviewed_count !== undefined) {
+      params.push(reviewed_count);
+      sets.push(`reviewed_count = $${params.length}`);
+    }
+    if (reviewer !== undefined) {
+      params.push(reviewer);
+      sets.push(`reviewer = $${params.length}`);
+    }
     if (status === 'completed') sets.push('completed_at = now()');
     if (sets.length === 0) return res.status(400).json({ error: 'No fields to update' });
 
@@ -993,20 +1170,24 @@ app.get('/api/design-review/sessions/:id/verdicts', async (req, res) => {
 // POST /api/design-review/sessions/:id/verdicts — bulk submit/update verdicts (batched)
 app.post('/api/design-review/sessions/:id/verdicts', requireApiKey, async (req, res) => {
   try {
-    if (!(await designTablesExist())) return res.status(503).json({ error: 'Design tables not created yet' });
+    if (!(await designTablesExist()))
+      return res.status(503).json({ error: 'Design tables not created yet' });
     const { id } = req.params;
     const { verdicts } = req.body;
-    if (!Array.isArray(verdicts)) return res.status(400).json({ error: 'verdicts must be an array' });
+    if (!Array.isArray(verdicts))
+      return res.status(400).json({ error: 'verdicts must be an array' });
 
     // Resolve all item_keys to item records in a single query
-    const keys = verdicts.filter(v => v.item_key && !v.item_id).map(v => v.item_key);
+    const keys = verdicts.filter((v) => v.item_key && !v.item_id).map((v) => v.item_key);
     const keyMap = Object.create(null);
     if (keys.length > 0) {
       const keyResult = await pool.query(
         'SELECT id, item_key, name, component, category, generation FROM design_items WHERE item_key = ANY($1)',
         [keys]
       );
-      keyResult.rows.forEach(r => { keyMap[r.item_key] = r; });
+      keyResult.rows.forEach((r) => {
+        keyMap[r.item_key] = r;
+      });
     }
 
     // Build batch of resolved verdicts
@@ -1016,8 +1197,13 @@ app.post('/api/design-review/sessions/:id/verdicts', requireApiKey, async (req, 
       if (!item_id) continue;
       const lookup = keyMap[v.item_key];
       resolved.push({
-        session_id: id, item_id, item_key: v.item_key, verdict: v.verdict,
-        comment: v.comment || null, priority: v.priority || 0, tags: v.tags || null,
+        session_id: id,
+        item_id,
+        item_key: v.item_key,
+        verdict: v.verdict,
+        comment: v.comment || null,
+        priority: v.priority || 0,
+        tags: v.tags || null,
         design_name: v.design_name || lookup?.name || null,
         component: v.component || lookup?.component || null,
         category: v.category || lookup?.category || null,
@@ -1026,7 +1212,7 @@ app.post('/api/design-review/sessions/:id/verdicts', requireApiKey, async (req, 
         total_in_filter: v.total_in_filter ?? null,
         position_in_session: v.position_in_session ?? null,
         total_in_session: v.total_in_session ?? null,
-        component_tags: v.component_tags || null
+        component_tags: v.component_tags || null,
       });
     }
 
@@ -1039,18 +1225,35 @@ app.post('/api/design-review/sessions/:id/verdicts', requireApiKey, async (req, 
         const p = i * COLS_PER_ROW;
         const r = resolved[i];
         params.push(
-          r.session_id, r.item_id, r.item_key, r.verdict, r.comment, r.priority, r.tags,
-          r.design_name, r.component, r.category, r.generation,
-          r.position_in_filter, r.total_in_filter, r.position_in_session, r.total_in_session,
+          r.session_id,
+          r.item_id,
+          r.item_key,
+          r.verdict,
+          r.comment,
+          r.priority,
+          r.tags,
+          r.design_name,
+          r.component,
+          r.category,
+          r.generation,
+          r.position_in_filter,
+          r.total_in_filter,
+          r.position_in_session,
+          r.total_in_session,
           r.component_tags
         );
-        const placeholders = Array.from({ length: COLS_PER_ROW }, (_, j) => '$' + (p + j + 1)).join(', ');
+        const placeholders = Array.from({ length: COLS_PER_ROW }, (_, j) => '$' + (p + j + 1)).join(
+          ', '
+        );
         valueTuples.push('(' + placeholders + ')');
       }
 
-      const sql = 'INSERT INTO design_verdicts (session_id, item_id, item_key, verdict, comment, priority, tags, ' +
+      const sql =
+        'INSERT INTO design_verdicts (session_id, item_id, item_key, verdict, comment, priority, tags, ' +
         'design_name, component, category, generation, position_in_filter, total_in_filter, position_in_session, total_in_session, component_tags) ' +
-        'VALUES ' + valueTuples.join(', ') + ' ' +
+        'VALUES ' +
+        valueTuples.join(', ') +
+        ' ' +
         'ON CONFLICT (session_id, item_id) DO UPDATE SET ' +
         'verdict = EXCLUDED.verdict, comment = EXCLUDED.comment, priority = EXCLUDED.priority, tags = EXCLUDED.tags, ' +
         'design_name = EXCLUDED.design_name, component = EXCLUDED.component, category = EXCLUDED.category, generation = EXCLUDED.generation, ' +
@@ -1065,10 +1268,10 @@ app.post('/api/design-review/sessions/:id/verdicts', requireApiKey, async (req, 
       'SELECT COUNT(*) FROM design_verdicts WHERE session_id = $1',
       [id]
     );
-    await pool.query(
-      'UPDATE design_review_sessions SET reviewed_count = $1 WHERE id = $2',
-      [parseInt(countResult.rows[0].count), id]
-    );
+    await pool.query('UPDATE design_review_sessions SET reviewed_count = $1 WHERE id = $2', [
+      parseInt(countResult.rows[0].count),
+      id,
+    ]);
 
     res.json({ saved: resolved.length, total: verdicts.length });
   } catch (error) {
@@ -1081,7 +1284,8 @@ app.post('/api/design-review/sessions/:id/verdicts', requireApiKey, async (req, 
 // GET /api/design-review/summary — aggregated stats
 app.get('/api/design-review/summary', async (req, res) => {
   try {
-    if (!(await designTablesExist())) return res.json({ total_items: 0, sessions: 0, verdicts: {} });
+    if (!(await designTablesExist()))
+      return res.json({ total_items: 0, sessions: 0, verdicts: {} });
 
     const items = await pool.query('SELECT COUNT(*) FROM design_items WHERE is_active = true');
     const sessions = await pool.query('SELECT COUNT(*) FROM design_review_sessions');
@@ -1099,8 +1303,11 @@ app.get('/api/design-review/summary', async (req, res) => {
         `SELECT verdict, COUNT(*) as count FROM design_verdicts WHERE session_id = $1 GROUP BY verdict`,
         [latestSession.rows[0].id]
       );
-      vc.rows.forEach(r => { verdictCounts[r.verdict] = parseInt(r.count); });
-      verdictCounts.unreviewed = parseInt(items.rows[0].count) - vc.rows.reduce((s, r) => s + parseInt(r.count), 0);
+      vc.rows.forEach((r) => {
+        verdictCounts[r.verdict] = parseInt(r.count);
+      });
+      verdictCounts.unreviewed =
+        parseInt(items.rows[0].count) - vc.rows.reduce((s, r) => s + parseInt(r.count), 0);
     } else {
       verdictCounts.unreviewed = parseInt(items.rows[0].count);
     }
@@ -1109,7 +1316,7 @@ app.get('/api/design-review/summary', async (req, res) => {
       total_items: parseInt(items.rows[0].count),
       sessions: parseInt(sessions.rows[0].count),
       latest_session: latestSession.rows[0] || null,
-      verdicts: verdictCounts
+      verdicts: verdictCounts,
     });
   } catch (error) {
     Sentry.captureException(error);
@@ -1144,19 +1351,25 @@ app.get('/api/design-review/claude-context', async (req, res) => {
     // Get items
     let itemQuery = 'SELECT * FROM design_items WHERE is_active = true';
     const itemParams = [];
-    if (component) { itemParams.push(component); itemQuery += ` AND component = $${itemParams.length}`; }
+    if (component) {
+      itemParams.push(component);
+      itemQuery += ` AND component = $${itemParams.length}`;
+    }
     itemQuery += ' ORDER BY component, category, item_key';
     const items = await pool.query(itemQuery, itemParams);
 
     // Get verdicts for relevant sessions
     let verdicts = [];
     if (sessions.rows.length > 0) {
-      const sessionIds = sessions.rows.map(s => s.id);
+      const sessionIds = sessions.rows.map((s) => s.id);
       let vQuery = `SELECT v.*, s.round_number FROM design_verdicts v
         JOIN design_review_sessions s ON v.session_id = s.id
         WHERE v.session_id = ANY($1)`;
       const vParams = [sessionIds];
-      if (verdict) { vParams.push(verdict); vQuery += ` AND v.verdict = $${vParams.length}`; }
+      if (verdict) {
+        vParams.push(verdict);
+        vQuery += ` AND v.verdict = $${vParams.length}`;
+      }
       vQuery += ' ORDER BY s.round_number, v.item_key';
       const vResult = await pool.query(vQuery, vParams);
       verdicts = vResult.rows;
@@ -1164,7 +1377,7 @@ app.get('/api/design-review/claude-context', async (req, res) => {
 
     // Build evolution map (item_key -> [{round, verdict, comment, ...metadata}])
     const evolution = {};
-    verdicts.forEach(v => {
+    verdicts.forEach((v) => {
       if (!evolution[v.item_key]) evolution[v.item_key] = [];
       evolution[v.item_key].push({
         round: v.round_number,
@@ -1180,7 +1393,7 @@ app.get('/api/design-review/claude-context', async (req, res) => {
         position_in_filter: v.position_in_filter,
         total_in_filter: v.total_in_filter,
         position_in_session: v.position_in_session,
-        total_in_session: v.total_in_session
+        total_in_session: v.total_in_session,
       });
     });
 
@@ -1188,7 +1401,7 @@ app.get('/api/design-review/claude-context', async (req, res) => {
     let feedbackActions = [];
     if (sessions.rows.length > 0) {
       try {
-        const sessionIds = sessions.rows.map(s => s.id);
+        const sessionIds = sessions.rows.map((s) => s.id);
         const faResult = await pool.query(
           'SELECT * FROM design_feedback_actions WHERE session_id = ANY($1) ORDER BY created_at',
           [sessionIds]
@@ -1208,8 +1421,11 @@ app.get('/api/design-review/claude-context', async (req, res) => {
       summary: {
         total_items: items.rows.length,
         reviewed: verdicts.length,
-        by_verdict: verdicts.reduce((acc, v) => { acc[v.verdict] = (acc[v.verdict] || 0) + 1; return acc; }, {})
-      }
+        by_verdict: verdicts.reduce((acc, v) => {
+          acc[v.verdict] = (acc[v.verdict] || 0) + 1;
+          return acc;
+        }, {}),
+      },
     });
   } catch (error) {
     Sentry.captureException(error);
@@ -1220,16 +1436,27 @@ app.get('/api/design-review/claude-context', async (req, res) => {
 
 // POST /api/design-review/feedback-actions — bulk save feedback actions
 const VALID_ACTION_TYPES = new Set([
-  'css_change', 'layout_change', 'animation_change', 'component_change',
-  'typography_change', 'color_change', 'responsive_fix', 'accessibility_fix',
-  'new_variant', 'removal', 'no_action', 'deferred'
+  'css_change',
+  'layout_change',
+  'animation_change',
+  'component_change',
+  'typography_change',
+  'color_change',
+  'responsive_fix',
+  'accessibility_fix',
+  'new_variant',
+  'removal',
+  'no_action',
+  'deferred',
 ]);
 
 app.post('/api/design-review/feedback-actions', requireApiKey, async (req, res) => {
   try {
-    if (!(await designTablesExist())) return res.status(503).json({ error: 'Design tables not created yet' });
+    if (!(await designTablesExist()))
+      return res.status(503).json({ error: 'Design tables not created yet' });
     const { actions } = req.body;
-    if (!Array.isArray(actions) || actions.length === 0) return res.status(400).json({ error: 'actions must be a non-empty array' });
+    if (!Array.isArray(actions) || actions.length === 0)
+      return res.status(400).json({ error: 'actions must be a non-empty array' });
 
     // Validate action_type values
     for (const a of actions) {
@@ -1248,15 +1475,23 @@ app.post('/api/design-review/feedback-actions', requireApiKey, async (req, res) 
       const p = i * COLS;
       const a = actions[i];
       params.push(
-        a.verdict_id || null, a.session_id, a.item_key || null,
-        a.action_type, a.action_description || null, a.file_path || null, a.commit_sha || null
+        a.verdict_id || null,
+        a.session_id,
+        a.item_key || null,
+        a.action_type,
+        a.action_description || null,
+        a.file_path || null,
+        a.commit_sha || null
       );
       const placeholders = Array.from({ length: COLS }, (_, j) => '$' + (p + j + 1)).join(', ');
       valueTuples.push('(' + placeholders + ')');
     }
 
-    const sql = 'INSERT INTO design_feedback_actions (verdict_id, session_id, item_key, action_type, action_description, file_path, commit_sha) ' +
-      'VALUES ' + valueTuples.join(', ') + ' RETURNING id';
+    const sql =
+      'INSERT INTO design_feedback_actions (verdict_id, session_id, item_key, action_type, action_description, file_path, commit_sha) ' +
+      'VALUES ' +
+      valueTuples.join(', ') +
+      ' RETURNING id';
     const result = await pool.query(sql, params);
 
     res.json({ saved: result.rows.length });
@@ -1275,10 +1510,22 @@ app.get('/api/design-review/feedback-actions', async (req, res) => {
 
     let sql = 'SELECT * FROM design_feedback_actions WHERE 1=1';
     const params = [];
-    if (session_id) { params.push(session_id); sql += ` AND session_id = $${params.length}`; }
-    if (verdict_id) { params.push(verdict_id); sql += ` AND verdict_id = $${params.length}`; }
-    if (item_key) { params.push(item_key); sql += ` AND item_key = $${params.length}`; }
-    if (action_type) { params.push(action_type); sql += ` AND action_type = $${params.length}`; }
+    if (session_id) {
+      params.push(session_id);
+      sql += ` AND session_id = $${params.length}`;
+    }
+    if (verdict_id) {
+      params.push(verdict_id);
+      sql += ` AND verdict_id = $${params.length}`;
+    }
+    if (item_key) {
+      params.push(item_key);
+      sql += ` AND item_key = $${params.length}`;
+    }
+    if (action_type) {
+      params.push(action_type);
+      sql += ` AND action_type = $${params.length}`;
+    }
     sql += ' ORDER BY created_at DESC';
 
     const result = await pool.query(sql, params);
@@ -1293,7 +1540,8 @@ app.get('/api/design-review/feedback-actions', async (req, res) => {
 // PATCH /api/design-review/feedback-actions/:id — update a feedback action (e.g., mark as applied)
 app.patch('/api/design-review/feedback-actions/:id', requireApiKey, async (req, res) => {
   try {
-    if (!(await designTablesExist())) return res.status(503).json({ error: 'Design tables not created yet' });
+    if (!(await designTablesExist()))
+      return res.status(503).json({ error: 'Design tables not created yet' });
     const { id } = req.params;
     const { applied, action_type, action_description, file_path, commit_sha } = req.body;
 
@@ -1306,11 +1554,26 @@ app.patch('/api/design-review/feedback-actions/:id', requireApiKey, async (req, 
 
     const sets = [];
     const params = [];
-    if (applied !== undefined) { params.push(applied); sets.push(`applied = $${params.length}`); }
-    if (action_type) { params.push(action_type); sets.push(`action_type = $${params.length}`); }
-    if (action_description !== undefined) { params.push(action_description); sets.push(`action_description = $${params.length}`); }
-    if (file_path !== undefined) { params.push(file_path); sets.push(`file_path = $${params.length}`); }
-    if (commit_sha !== undefined) { params.push(commit_sha); sets.push(`commit_sha = $${params.length}`); }
+    if (applied !== undefined) {
+      params.push(applied);
+      sets.push(`applied = $${params.length}`);
+    }
+    if (action_type) {
+      params.push(action_type);
+      sets.push(`action_type = $${params.length}`);
+    }
+    if (action_description !== undefined) {
+      params.push(action_description);
+      sets.push(`action_description = $${params.length}`);
+    }
+    if (file_path !== undefined) {
+      params.push(file_path);
+      sets.push(`file_path = $${params.length}`);
+    }
+    if (commit_sha !== undefined) {
+      params.push(commit_sha);
+      sets.push(`commit_sha = $${params.length}`);
+    }
 
     if (sets.length === 0) return res.status(400).json({ error: 'No fields to update' });
 
@@ -1318,7 +1581,8 @@ app.patch('/api/design-review/feedback-actions/:id', requireApiKey, async (req, 
     const sql = `UPDATE design_feedback_actions SET ${sets.join(', ')} WHERE id = $${params.length} RETURNING *`;
     const result = await pool.query(sql, params);
 
-    if (result.rows.length === 0) return res.status(404).json({ error: 'Feedback action not found' });
+    if (result.rows.length === 0)
+      return res.status(404).json({ error: 'Feedback action not found' });
     res.json(result.rows[0]);
   } catch (error) {
     Sentry.captureException(error);
@@ -1344,9 +1608,10 @@ async function createGitHubIssue(report, truncatedLogs) {
     ? `Mode: ${report.appState.mode}, Theme: ${report.appState.theme}, Font: ${report.appState.font}`
     : 'No app state';
 
-  const logsSection = truncatedLogs.length > 0
-    ? `<details><summary>Client logs (${truncatedLogs.length} entries)</summary>\n\n\`\`\`json\n${JSON.stringify(truncatedLogs.slice(-20), null, 2)}\n\`\`\`\n</details>`
-    : 'No client logs attached';
+  const logsSection =
+    truncatedLogs.length > 0
+      ? `<details><summary>Client logs (${truncatedLogs.length} entries)</summary>\n\n\`\`\`json\n${JSON.stringify(truncatedLogs.slice(-20), null, 2)}\n\`\`\`\n</details>`
+      : 'No client logs attached';
 
   const envSection = [
     report.screenSize && `Screen: ${report.screenSize}`,
@@ -1354,7 +1619,9 @@ async function createGitHubIssue(report, truncatedLogs) {
     report.online !== undefined && `Online: ${report.online}`,
     report.referrer && `Referrer: ${report.referrer}`,
     report.featureFlags && `Feature flags: \`${JSON.stringify(report.featureFlags)}\``,
-  ].filter(Boolean).join(' | ');
+  ]
+    .filter(Boolean)
+    .join(' | ');
 
   const body = [
     `## User Bug Report`,
@@ -1374,7 +1641,9 @@ async function createGitHubIssue(report, truncatedLogs) {
     ``,
     `---`,
     `_Auto-created from in-app bug report button_`,
-  ].filter(line => line !== false && line !== null).join('\n');
+  ]
+    .filter((line) => line !== false && line !== null)
+    .join('\n');
 
   const title = report.description
     ? `[Bug Report] ${report.description.slice(0, 80)}`
@@ -1384,8 +1653,8 @@ async function createGitHubIssue(report, truncatedLogs) {
     const resp = await fetch(`https://api.github.com/repos/${repo}/issues`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/vnd.github+json',
+        Authorization: `Bearer ${token}`,
+        Accept: 'application/vnd.github+json',
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -1411,91 +1680,108 @@ async function createGitHubIssue(report, truncatedLogs) {
   }
 }
 
-app.post('/api/bug-reports', rateLimit({ windowMs: 60_000, max: 10, standardHeaders: true, legacyHeaders: false }), async (req, res) => {
-  try {
-    const { description, logs: clientLogs, timestamp, userAgent, poem, appState, url, screenSize, language, online, referrer, featureFlags } = req.body;
-
-    // Basic validation
-    if (!timestamp || !userAgent) {
-      return res.status(400).json({ error: 'Missing required fields: timestamp, userAgent' });
-    }
-
-    // Truncate logs if too large
-    const truncatedLogs = Array.isArray(clientLogs)
-      ? clientLogs.slice(-100)
-      : [];
-
-    const report = {
-      description: typeof description === 'string' ? description.slice(0, 1000) : '',
-      logsCount: truncatedLogs.length,
-      timestamp,
-      userAgent: typeof userAgent === 'string' ? userAgent.slice(0, 500) : '',
-      poem: poem ? { id: poem.id, poet: poem.poet, title: poem.title } : null,
-      appState: appState ? {
-        mode: appState.mode,
-        theme: appState.theme,
-        font: appState.font
-      } : null,
-      url: typeof url === 'string' ? url.slice(0, 2000) : null,
-      screenSize: typeof screenSize === 'string' ? screenSize.slice(0, 20) : null,
-      language: typeof language === 'string' ? language.slice(0, 20) : null,
-      online: typeof online === 'boolean' ? online : null,
-      referrer: typeof referrer === 'string' ? referrer.slice(0, 2000) : null,
-      featureFlags: featureFlags && typeof featureFlags === 'object' ? featureFlags : null
-    };
-
-    log.info('BugReport', `New bug report submitted`, report);
-
-    // Log truncated client logs at debug level
-    if (truncatedLogs.length > 0) {
-      log.debug('BugReport', `Client logs (${truncatedLogs.length} entries)`, truncatedLogs);
-    }
-
-    // Create GitHub issue (non-blocking — don't fail the request if this errors)
-    const issueNumber = await createGitHubIssue(report, truncatedLogs);
-
-    // Persist to PostgreSQL
+app.post(
+  '/api/bug-reports',
+  rateLimit({ windowMs: 60_000, max: 10, standardHeaders: true, legacyHeaders: false }),
+  async (req, res) => {
     try {
-      await pool.query(
-        `INSERT INTO bug_reports (description, logs, timestamp, user_agent, poem_id, poem_poet, poem_title, app_mode, app_theme, app_font, github_issue_number, url, screen_size, language, online, referrer, feature_flags)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)`,
-        [
-          report.description,
-          JSON.stringify(truncatedLogs),
-          report.timestamp,
-          report.userAgent,
-          report.poem?.id || null,
-          report.poem?.poet || null,
-          report.poem?.title || null,
-          report.appState?.mode || null,
-          report.appState?.theme || null,
-          report.appState?.font || null,
-          issueNumber,
-          report.url,
-          report.screenSize,
-          report.language,
-          report.online,
-          report.referrer,
-          report.featureFlags ? JSON.stringify(report.featureFlags) : null,
-        ]
-      );
-      log.info('BugReport', `Saved to database${issueNumber ? ` (GitHub #${issueNumber})` : ''}`);
-    } catch (dbErr) {
-      // DB insert failure is non-fatal — report was already logged
-      log.error('BugReport', `DB insert failed (non-fatal): ${dbErr.message}`);
-    }
+      const {
+        description,
+        logs: clientLogs,
+        timestamp,
+        userAgent,
+        poem,
+        appState,
+        url,
+        screenSize,
+        language,
+        online,
+        referrer,
+        featureFlags,
+      } = req.body;
 
-    res.status(201).json({
-      success: true,
-      message: 'Bug report submitted',
-      ...(issueNumber && { githubIssue: issueNumber }),
-    });
-  } catch (error) {
-    Sentry.captureException(error);
-    log.error('BugReport', `Error processing bug report: ${error.message}`);
-    res.status(500).json({ error: 'Internal server error' });
+      // Basic validation
+      if (!timestamp || !userAgent) {
+        return res.status(400).json({ error: 'Missing required fields: timestamp, userAgent' });
+      }
+
+      // Truncate logs if too large
+      const truncatedLogs = Array.isArray(clientLogs) ? clientLogs.slice(-100) : [];
+
+      const report = {
+        description: typeof description === 'string' ? description.slice(0, 1000) : '',
+        logsCount: truncatedLogs.length,
+        timestamp,
+        userAgent: typeof userAgent === 'string' ? userAgent.slice(0, 500) : '',
+        poem: poem ? { id: poem.id, poet: poem.poet, title: poem.title } : null,
+        appState: appState
+          ? {
+              mode: appState.mode,
+              theme: appState.theme,
+              font: appState.font,
+            }
+          : null,
+        url: typeof url === 'string' ? url.slice(0, 2000) : null,
+        screenSize: typeof screenSize === 'string' ? screenSize.slice(0, 20) : null,
+        language: typeof language === 'string' ? language.slice(0, 20) : null,
+        online: typeof online === 'boolean' ? online : null,
+        referrer: typeof referrer === 'string' ? referrer.slice(0, 2000) : null,
+        featureFlags: featureFlags && typeof featureFlags === 'object' ? featureFlags : null,
+      };
+
+      log.info('BugReport', `New bug report submitted`, report);
+
+      // Log truncated client logs at debug level
+      if (truncatedLogs.length > 0) {
+        log.debug('BugReport', `Client logs (${truncatedLogs.length} entries)`, truncatedLogs);
+      }
+
+      // Create GitHub issue (non-blocking — don't fail the request if this errors)
+      const issueNumber = await createGitHubIssue(report, truncatedLogs);
+
+      // Persist to PostgreSQL
+      try {
+        await pool.query(
+          `INSERT INTO bug_reports (description, logs, timestamp, user_agent, poem_id, poem_poet, poem_title, app_mode, app_theme, app_font, github_issue_number, url, screen_size, language, online, referrer, feature_flags)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)`,
+          [
+            report.description,
+            JSON.stringify(truncatedLogs),
+            report.timestamp,
+            report.userAgent,
+            report.poem?.id || null,
+            report.poem?.poet || null,
+            report.poem?.title || null,
+            report.appState?.mode || null,
+            report.appState?.theme || null,
+            report.appState?.font || null,
+            issueNumber,
+            report.url,
+            report.screenSize,
+            report.language,
+            report.online,
+            report.referrer,
+            report.featureFlags ? JSON.stringify(report.featureFlags) : null,
+          ]
+        );
+        log.info('BugReport', `Saved to database${issueNumber ? ` (GitHub #${issueNumber})` : ''}`);
+      } catch (dbErr) {
+        // DB insert failure is non-fatal — report was already logged
+        log.error('BugReport', `DB insert failed (non-fatal): ${dbErr.message}`);
+      }
+
+      res.status(201).json({
+        success: true,
+        message: 'Bug report submitted',
+        ...(issueNumber && { githubIssue: issueNumber }),
+      });
+    } catch (error) {
+      Sentry.captureException(error);
+      log.error('BugReport', `Error processing bug report: ${error.message}`);
+      res.status(500).json({ error: 'Internal server error' });
+    }
   }
-});
+);
 
 // Sentry Express error handler (must be after all routes)
 if (process.env.SENTRY_DSN) {
@@ -1512,7 +1798,10 @@ const mainFile = resolve(process.argv[1]);
 if (currentFile === mainFile) {
   const server = app.listen(PORT, () => {
     log.info('Server', `Poetry API running on http://localhost:${PORT}`);
-    log.info('Server', `Health: http://localhost:${PORT}/api/health | Poems: http://localhost:${PORT}/api/poems/random`);
+    log.info(
+      'Server',
+      `Health: http://localhost:${PORT}/api/health | Poems: http://localhost:${PORT}/api/poems/random`
+    );
     log.info('Server', `Logging: enabled=${LOG_ENABLED}, debug=${LOG_DEBUG}`);
     log.info('Server', 'Serving filters', SERVING);
   });
@@ -1520,41 +1809,43 @@ if (currentFile === mainFile) {
   // Keep-alive mechanism to prevent Render free tier from sleeping (15 min idle timeout)
   // Self-ping with randomized interval (9-13 min) to prevent synchronized load
   let keepAliveTimeout = null;
-  
+
   if (process.env.NODE_ENV === 'production') {
     // Wait 30 seconds after startup before starting keep-alive pings
     keepAliveTimeout = setTimeout(() => {
       // Randomize interval between 9-13 minutes to prevent synchronized pings
       const getRandomInterval = () => {
-        const min = 9 * 60 * 1000;  // 9 minutes
+        const min = 9 * 60 * 1000; // 9 minutes
         const max = 13 * 60 * 1000; // 13 minutes
         return Math.floor(Math.random() * (max - min + 1)) + min;
       };
-      
+
       const pingHealth = () => {
         const url = process.env.RENDER_EXTERNAL_URL
           ? `${process.env.RENDER_EXTERNAL_URL}/api/health/full`
           : `http://localhost:${PORT}/api/health/full`;
-        
+
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 10000);
 
         fetch(url, { signal: controller.signal })
-          .then(res => {
+          .then((res) => {
             if (!res.ok) {
               throw new Error(`HTTP ${res.status}: ${res.statusText}`);
             }
             return res.json();
           })
-          .then(data => {
-            console.log(`✓ Keep-alive ping successful - ${data.totalPoems ?? '?'} poems in database`);
+          .then((data) => {
+            console.log(
+              `✓ Keep-alive ping successful - ${data.totalPoems ?? '?'} poems in database`
+            );
 
             // Schedule next ping with new random interval
             keepAliveTimeout = setTimeout(() => {
               pingHealth();
             }, getRandomInterval());
           })
-          .catch(err => {
+          .catch((err) => {
             console.error(`⚠ Keep-alive ping failed (${url}):`, err.message);
 
             // Retry with new random interval even on failure
@@ -1566,10 +1857,12 @@ if (currentFile === mainFile) {
             clearTimeout(timeoutId);
           });
       };
-      
+
       const initialInterval = getRandomInterval();
-      console.log(`🔄 Starting keep-alive self-ping (every 9-13 minutes, initial: ${Math.round(initialInterval / 60000)} min)`);
-      
+      console.log(
+        `🔄 Starting keep-alive self-ping (every 9-13 minutes, initial: ${Math.round(initialInterval / 60000)} min)`
+      );
+
       // Start first ping after random interval
       keepAliveTimeout = setTimeout(() => {
         pingHealth();

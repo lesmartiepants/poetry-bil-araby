@@ -5152,34 +5152,19 @@ export default function DiwanApp() {
                       >
                         {current?.poetArabic || current?.poet}
                       </div>
-                      {(() => {
-                        const hasArabicFields = current?.poetArabic && current?.titleArabic;
-                        const englishPoet = hasArabicFields
-                          ? current?.poet !== current?.poetArabic
-                            ? current?.poet
-                            : CATEGORIES.find((c) => c.id === current?.poet)?.label
-                          : null;
-                        const englishTitle = hasArabicFields
-                          ? current?.title !== current?.titleArabic
-                            ? current?.title
-                            : null
-                          : null;
-                        return englishPoet || englishTitle ? (
-                          <div
-                            className="font-brand-en text-center italic"
-                            dir="ltr"
-                            style={{
-                              fontSize: 'clamp(0.7rem, 1.3vw, 0.8rem)',
-                              color: darkMode ? '#78716c' : '#a8a29e',
-                              marginTop: '0.5rem',
-                            }}
-                          >
-                            {englishTitle && <span>{englishTitle}</span>}
-                            {englishTitle && englishPoet && <span className="opacity-40"> — </span>}
-                            {englishPoet && <span>{englishPoet}</span>}
-                          </div>
-                        ) : null;
-                      })()}
+                      {current?.poet && current?.poet !== current?.poetArabic && (
+                        <div
+                          className="font-brand-en text-center italic"
+                          dir="ltr"
+                          style={{
+                            fontSize: 'clamp(0.7rem, 1.3vw, 0.8rem)',
+                            color: darkMode ? '#78716c' : '#a8a29e',
+                            marginTop: '0.5rem',
+                          }}
+                        >
+                          <span>{current.poet}</span>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

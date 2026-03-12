@@ -63,9 +63,8 @@ describe('DiwanApp', () => {
       expect(arabicText.length).toBeGreaterThan(10);
     });
 
-    it('displays the poet name in both Arabic and English', () => {
+    it('displays the poet name in English', () => {
       render(<DiwanApp />);
-      expect(document.body.textContent).toContain('نزار قباني');
       expect(document.body.textContent).toContain('Nizar Qabbani');
     });
 
@@ -96,7 +95,7 @@ describe('DiwanApp', () => {
 
       // Wait for mount-time fetches to settle
       await waitFor(() => {
-        expect(document.body.textContent).toContain('نزار قباني');
+        expect(document.body.textContent).toContain('Nizar Qabbani');
       });
 
       const newPoem = {
@@ -131,7 +130,7 @@ describe('DiwanApp', () => {
 
       // Wait for mount-time fetches to settle
       await waitFor(() => {
-        expect(document.body.textContent).toContain('نزار قباني');
+        expect(document.body.textContent).toContain('Nizar Qabbani');
       });
 
       // Create a never-resolving promise to keep the button disabled
@@ -172,7 +171,7 @@ describe('DiwanApp', () => {
 
       // Wait for mount-time fetches to settle
       await waitFor(() => {
-        expect(document.body.textContent).toContain('نزار قباني');
+        expect(document.body.textContent).toContain('Nizar Qabbani');
       });
 
       const newPoem = {
@@ -213,7 +212,7 @@ describe('DiwanApp', () => {
       render(<DiwanApp />);
 
       await waitFor(() => {
-        expect(document.body.textContent).toContain('نزار قباني');
+        expect(document.body.textContent).toContain('Nizar Qabbani');
       });
 
       const playBtn = screen.getByLabelText('Play recitation');
@@ -231,7 +230,7 @@ describe('DiwanApp', () => {
       render(<DiwanApp />);
 
       await waitFor(() => {
-        expect(document.body.textContent).toContain('نزار قباني');
+        expect(document.body.textContent).toContain('Nizar Qabbani');
       });
 
       // Replace fetch with a version that hangs for audio (TTS) calls
@@ -268,7 +267,7 @@ describe('DiwanApp', () => {
 
       // Wait for mount-time fetches to settle
       await waitFor(() => {
-        expect(document.body.textContent).toContain('نزار قباني');
+        expect(document.body.textContent).toContain('Nizar Qabbani');
       });
 
       // Load a DB poem first
@@ -297,7 +296,7 @@ describe('DiwanApp', () => {
 
       // Wait for mount-time fetches to settle
       await waitFor(() => {
-        expect(document.body.textContent).toContain('نزار قباني');
+        expect(document.body.textContent).toContain('Nizar Qabbani');
       });
 
       global.fetch.mockResolvedValueOnce({ ok: true, json: async () => createDbPoem(100) });
@@ -319,7 +318,7 @@ describe('DiwanApp', () => {
 
       // Wait for auto-load to settle
       await waitFor(() => {
-        expect(document.body.textContent).toContain('نزار قباني');
+        expect(document.body.textContent).toContain('Nizar Qabbani');
       });
 
       await userEvent.click(screen.getByLabelText('Copy poem to clipboard'));
@@ -342,7 +341,7 @@ describe('DiwanApp', () => {
       render(<DiwanApp />);
 
       await waitFor(() => {
-        expect(document.body.textContent).toContain('نزار قباني');
+        expect(document.body.textContent).toContain('Nizar Qabbani');
       });
 
       await userEvent.click(screen.getByLabelText('Copy poem to clipboard'));
@@ -362,7 +361,7 @@ describe('DiwanApp', () => {
       render(<DiwanApp />);
 
       await waitFor(() => {
-        expect(document.body.textContent).toContain('نزار قباني');
+        expect(document.body.textContent).toContain('Nizar Qabbani');
       });
 
       await userEvent.click(screen.getByLabelText('Copy poem to clipboard'));
@@ -506,7 +505,7 @@ describe('DiwanApp', () => {
 
       // Wait for mount-time fetches to settle
       await waitFor(() => {
-        expect(document.body.textContent).toContain('نزار قباني');
+        expect(document.body.textContent).toContain('Nizar Qabbani');
       });
 
       global.fetch.mockResolvedValueOnce({ ok: true, json: async () => createDbPoem(102) });

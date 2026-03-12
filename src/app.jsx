@@ -60,667 +60,20 @@ import { DESIGN, TEXT_SIZES } from './constants/design';
 import { THEME, GOLD } from './constants/theme';
 import { CATEGORIES } from './constants/categories';
 import { FONTS } from './constants/fonts';
+import { getApiUrl, API_MODELS, discoverTextModels, geminiTextFetch, TTS_CONFIG, fetchWithRetry } from './services/api';
+import { CACHE_CONFIG, initCache, cacheOperations } from './services/cache';
+import { prefetchManager } from './services/prefetch';
 import seedPoems from './data/seed-poems.json';
 
-/* Constants, design tokens, and utilities are imported from:
-   - constants/features.js, constants/design.js, constants/theme.js,
-     constants/categories.js, constants/fonts.js
-   - utils/transliterate.js, utils/audio.js
+/* Constants, design tokens, utilities, and services are imported from:
+   - constants/ (features, design, theme, categories, fonts)
+   - utils/ (transliterate, audio, insightParser, jsonRepair)
+   - services/ (api, cache, prefetch)
 */
 
-const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+/* API, cache, and prefetch services are imported from services/ */
 
-/* =============================================================================
-  2. API PROMPTS & CONFIGURATION
-  =============================================================================
-*/
 
-/**
- * API Model Endpoints
- * Text model list is built dynamically by discoverTextModels(); textDefaults is the fallback
- * used when the ListModels API is unavailable. Starts with the cheapest Gemini 2.5 model.
- */
-const API_MODELS = {
-  tts: 'gemini-2.5-flash-preview-tts',
-  textDefaults: ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'],
-};
-
-/**
- * Module-level cache for the ranked list of available Gemini text models.
- * Populated on first call to discoverTextModels(); shared across all handlers.
- */
-let _discoveredTextModels = null;
-
-/**
- * Fetch and rank available Gemini text models via the ListModels API.
- * Prefers newer versions and cheaper (flash) models over pro.
- * Falls back to API_MODELS.textDefaults if the API is unreachable or returns no usable models.
- * Result is cached for the lifetime of the page.
- */
-const discoverTextModels = async (addLog) => {
-  if (_discoveredTextModels) return _discoveredTextModels;
-  try {
-    const res = await fetch(`${apiUrl}/api/ai/models`, { method: 'GET' });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const { models = [] } = await res.json();
-    const ranked = models
-      .filter(
-        (m) =>
-          Array.isArray(m.supportedGenerationMethods) &&
-          m.supportedGenerationMethods.includes('generateContent') &&
-          typeof m.name === 'string' &&
-          m.name.includes('gemini') &&
-          !m.name.includes('embedding') &&
-          !m.name.includes('tts')
-      )
-      .map((m) => {
-        const id = m.name.replace('models/', '');
-        const vm = id.match(/gemini-(\d+)\.(\d+)/);
-        const major = vm ? parseInt(vm[1]) : 0;
-        const minor = vm ? parseInt(vm[2]) : 0;
-        const isFlash = id.includes('flash');
-        // '8b' identifies Google's 8-billion-parameter lite variants (e.g. gemini-1.5-flash-8b)
-        const isLite = id.includes('lite') || id.includes('8b');
-        // Scoring: major version (×1000) > minor version (×100) > flash bonus (+10) > lite penalty (−5)
-        // Higher score = try first; prefers newest model, then flash (cheaper) over pro, avoids lite.
-        const score = major * 1000 + minor * 100 + (isFlash ? 10 : 0) - (isLite ? 5 : 0);
-        return { id, score };
-      })
-      .sort((a, b) => b.score - a.score)
-      .map((m) => m.id);
-    if (ranked.length > 0) {
-      _discoveredTextModels = ranked;
-      if (addLog)
-        addLog(
-          'Model Discovery',
-          `${ranked.length} models ranked: ${ranked.slice(0, 3).join(', ')}`,
-          'info'
-        );
-      return _discoveredTextModels;
-    }
-  } catch (err) {
-    if (addLog)
-      addLog(
-        'Model Discovery',
-        `ListModels unavailable: ${err.message} — using defaults`,
-        'warning'
-      );
-  }
-  _discoveredTextModels = [...API_MODELS.textDefaults];
-  return _discoveredTextModels;
-};
-
-/**
- * Fetch from a Gemini text endpoint with automatic model fallback.
- * Uses the dynamically discovered model list (ranked newest/cheapest first).
- * Retries on HTTP 404/410 (model unavailable/deprecated); throws immediately on other errors.
- *
- * @param {string}   endpoint - Gemini method segment, e.g. 'generateContent' or 'streamGenerateContent'
- * @param {string}   body     - Pre-serialised JSON request body
- * @param {string}   label    - Human-readable prefix for the thrown error message
- * @param {Function} addLog   - Component logging helper
- * @returns {Promise<Response>} Resolved Response with ok === true
- */
-const geminiTextFetch = async (endpoint, body, label, addLog) => {
-  const models = await discoverTextModels(addLog);
-  for (let i = 0; i < models.length; i++) {
-    const model = models[i];
-    if (i > 0) addLog('Model Fallback', `Trying fallback: ${model}`, 'warning');
-    const res = await fetch(`${apiUrl}/api/ai/${model}/${endpoint}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body,
-    });
-    if (res.ok) {
-      if (i > 0) addLog('Model Fallback', `✓ Using fallback model: ${model}`, 'success');
-      return res;
-    }
-    const errData = await res.json().catch(() => ({}));
-    const errMsg = errData.error?.message || `HTTP ${res.status}`;
-    // Only retry on model-unavailable HTTP codes: 404 Not Found, 410 Gone (deprecated)
-    if ((res.status !== 404 && res.status !== 410) || i === models.length - 1) {
-      throw new Error(`${label}: ${errMsg}`);
-    }
-    addLog('Model Fallback', `${model} not available, trying next...`, 'warning');
-  }
-};
-
-/**
- * TTS Voice Configuration
- */
-const TTS_CONFIG = {
-  voiceName: 'Fenrir',
-  responseModalities: ['AUDIO'],
-  retryMaxAttempts: 3,
-  retryBaseDelayMs: 1500, // 1.5s, 3s, 6s exponential backoff
-};
-
-/**
- * Fetch with exponential backoff retry on 429 (rate limit) responses.
- * Returns the successful Response, or throws on final failure.
- */
-const fetchWithRetry = async (
-  url,
-  options,
-  {
-    maxAttempts = TTS_CONFIG.retryMaxAttempts,
-    baseDelay = TTS_CONFIG.retryBaseDelayMs,
-    addLog,
-    label = 'TTS',
-  } = {}
-) => {
-  for (let attempt = 0; attempt < maxAttempts; attempt++) {
-    const res = await fetch(url, options);
-    if (res.status !== 429) return res;
-    const delay = baseDelay * Math.pow(2, attempt);
-    if (addLog)
-      addLog(
-        label,
-        `Rate limited (429) — retrying in ${(delay / 1000).toFixed(1)}s (attempt ${attempt + 1}/${maxAttempts})`,
-        'warning'
-      );
-    await new Promise((r) => setTimeout(r, delay));
-  }
-  // Final attempt — return whatever we get
-  return fetch(url, options);
-};
-
-/* =============================================================================
-  3. CACHE CONFIGURATION & INDEXEDDB WRAPPER
-  =============================================================================
-*/
-
-const CACHE_CONFIG = {
-  dbName: 'poetry-cache-v1',
-  version: 1,
-  stores: {
-    audio: 'audio-cache',
-    insights: 'insights-cache',
-    poems: 'poems-cache',
-  },
-  expiry: {
-    audio: 7 * 24 * 60 * 60 * 1000, // 7 days
-    insights: 30 * 24 * 60 * 60 * 1000, // 30 days
-    poems: null, // Never expire
-  },
-  maxSize: 500 * 1024 * 1024, // 500MB
-};
-
-/**
- * Initialize IndexedDB cache database
- * Creates object stores for audio, insights, and poems if they don't exist
- */
-const initCache = () => {
-  return new Promise((resolve, reject) => {
-    if (!FEATURES.caching) {
-      resolve(null);
-      return;
-    }
-
-    const request = indexedDB.open(CACHE_CONFIG.dbName, CACHE_CONFIG.version);
-
-    request.onerror = () => reject(request.error);
-    request.onsuccess = () => resolve(request.result);
-
-    request.onupgradeneeded = (event) => {
-      const db = event.target.result;
-
-      // Create object stores if they don't exist
-      if (!db.objectStoreNames.contains(CACHE_CONFIG.stores.audio)) {
-        db.createObjectStore(CACHE_CONFIG.stores.audio, { keyPath: 'poemId' });
-      }
-      if (!db.objectStoreNames.contains(CACHE_CONFIG.stores.insights)) {
-        db.createObjectStore(CACHE_CONFIG.stores.insights, { keyPath: 'poemId' });
-      }
-      if (!db.objectStoreNames.contains(CACHE_CONFIG.stores.poems)) {
-        db.createObjectStore(CACHE_CONFIG.stores.poems, { keyPath: 'poemId' });
-      }
-    };
-  });
-};
-
-/**
- * Cache operations for IndexedDB
- * Provides get, set, delete, and clear operations with expiry checking
- */
-const cacheOperations = {
-  /**
-   * Get an item from cache with expiry check
-   * @param {string} storeName - Name of the object store
-   * @param {string|number} poemId - ID of the poem
-   * @returns {Promise<Object|null>} Cached data or null if expired/missing
-   */
-  async get(storeName, poemId) {
-    if (!FEATURES.caching) return null;
-
-    try {
-      const db = await initCache();
-      if (!db) return null;
-
-      return new Promise((resolve, reject) => {
-        const transaction = db.transaction([storeName], 'readonly');
-        const store = transaction.objectStore(storeName);
-        const request = store.get(poemId);
-
-        request.onsuccess = () => {
-          const result = request.result;
-          if (!result) {
-            resolve(null);
-            return;
-          }
-
-          // Check expiry
-          const expiryTime =
-            storeName === CACHE_CONFIG.stores.audio
-              ? CACHE_CONFIG.expiry.audio
-              : storeName === CACHE_CONFIG.stores.insights
-                ? CACHE_CONFIG.expiry.insights
-                : CACHE_CONFIG.expiry.poems;
-
-          if (expiryTime && result.timestamp) {
-            const age = Date.now() - result.timestamp;
-            if (age > expiryTime) {
-              // Expired - delete and return null
-              cacheOperations.delete(storeName, poemId);
-              resolve(null);
-              return;
-            }
-          }
-
-          resolve(result);
-        };
-
-        request.onerror = () => reject(request.error);
-      });
-    } catch (error) {
-      console.error('Cache get error:', error);
-      return null;
-    }
-  },
-
-  /**
-   * Set an item in cache with timestamp
-   * @param {string} storeName - Name of the object store
-   * @param {string|number} poemId - ID of the poem
-   * @param {Object} data - Data to cache (will be wrapped with poemId and timestamp)
-   * @returns {Promise<boolean>} Success status
-   */
-  async set(storeName, poemId, data) {
-    if (!FEATURES.caching) return false;
-
-    try {
-      const db = await initCache();
-      if (!db) return false;
-
-      return new Promise((resolve, reject) => {
-        const transaction = db.transaction([storeName], 'readwrite');
-        const store = transaction.objectStore(storeName);
-        const record = {
-          poemId,
-          timestamp: Date.now(),
-          ...data,
-        };
-        const request = store.put(record);
-
-        request.onsuccess = () => resolve(true);
-        request.onerror = () => reject(request.error);
-      });
-    } catch (error) {
-      console.error('Cache set error:', error);
-      return false;
-    }
-  },
-
-  /**
-   * Delete an item from cache
-   * @param {string} storeName - Name of the object store
-   * @param {string|number} poemId - ID of the poem
-   * @returns {Promise<boolean>} Success status
-   */
-  async delete(storeName, poemId) {
-    if (!FEATURES.caching) return false;
-
-    try {
-      const db = await initCache();
-      if (!db) return false;
-
-      return new Promise((resolve, reject) => {
-        const transaction = db.transaction([storeName], 'readwrite');
-        const store = transaction.objectStore(storeName);
-        const request = store.delete(poemId);
-
-        request.onsuccess = () => resolve(true);
-        request.onerror = () => reject(request.error);
-      });
-    } catch (error) {
-      console.error('Cache delete error:', error);
-      return false;
-    }
-  },
-
-  /**
-   * Clear all items from a store
-   * @param {string} storeName - Name of the object store
-   * @returns {Promise<boolean>} Success status
-   */
-  async clear(storeName) {
-    if (!FEATURES.caching) return false;
-
-    try {
-      const db = await initCache();
-      if (!db) return false;
-
-      return new Promise((resolve, reject) => {
-        const transaction = db.transaction([storeName], 'readwrite');
-        const store = transaction.objectStore(storeName);
-        const request = store.clear();
-
-        request.onsuccess = () => resolve(true);
-        request.onerror = () => reject(request.error);
-      });
-    } catch (error) {
-      console.error('Cache clear error:', error);
-      return false;
-    }
-  },
-};
-
-/* =============================================================================
-  4. PREFETCH MANAGER
-  =============================================================================
-*/
-
-/**
- * Prefetch Manager - Aggressive prefetching for audio and insights
- * Runs in background to pre-generate content before user requests it
- *
- * Strategy:
- * - Priority 1: Current poem audio + insights (immediately on poem change)
- * - Priority 2: Adjacent poems audio (3s delay)
- * - Priority 3: Discover poems (5s delay)
- */
-const prefetchManager = {
-  /**
-   * Prefetch audio for a poem (generate and cache in background)
-   */
-  prefetchAudio: async (poemId, poem, addLog, activeRequests) => {
-    if (!FEATURES.prefetching || !FEATURES.caching) return;
-    if (!poemId || !poem?.arabic) return;
-
-    try {
-      // Check if already generating - silently skip
-      if (activeRequests && activeRequests.current.has(poemId)) {
-        if (addLog)
-          addLog(
-            'Prefetch Audio',
-            `Already generating audio for poem ${poemId} - skipping`,
-            'info'
-          );
-        return;
-      }
-
-      // Check cache first - don't prefetch if already cached
-      const cached = await cacheOperations.get(CACHE_CONFIG.stores.audio, poemId);
-      if (cached?.blob) {
-        if (addLog)
-          addLog('Prefetch Audio', `Audio already cached for poem ${poemId} - skipping`, 'info');
-        return;
-      }
-
-      // Mark as in-flight
-      if (activeRequests) activeRequests.current.add(poemId);
-
-      // Generate audio using same logic as togglePlay
-      const ttsContent = getTTSContent(poem);
-
-      const requestBody = JSON.stringify({
-        contents: [{ parts: [{ text: ttsContent }] }],
-        generationConfig: {
-          responseModalities: TTS_CONFIG.responseModalities,
-          speechConfig: {
-            voiceConfig: {
-              prebuiltVoiceConfig: { voiceName: TTS_CONFIG.voiceName },
-            },
-          },
-        },
-      });
-      const requestSize = new Blob([requestBody]).size;
-      const estimatedTokens = Math.ceil(ttsContent.length / 4);
-
-      if (addLog) {
-        addLog(
-          'Prefetch Audio',
-          `→ Background audio generation (poem ${poemId}) | ${(requestSize / 1024).toFixed(1)}KB | ${estimatedTokens} tokens`,
-          'info'
-        );
-      }
-
-      const apiStart = performance.now();
-      const url = `${apiUrl}/api/ai/${API_MODELS.tts}/generateContent`;
-      const fetchOptions = {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: requestBody,
-      };
-      const res = await fetchWithRetry(url, fetchOptions, { addLog, label: 'Prefetch Audio' });
-
-      if (!res.ok) {
-        const errorText = await res.text();
-        if (addLog)
-          addLog(
-            'Prefetch Audio',
-            `❌ Audio generation HTTP ${res.status}: ${errorText.substring(0, 150)}`,
-            'error'
-          );
-        return;
-      }
-
-      const data = await res.json();
-      const apiTime = performance.now() - apiStart;
-      if (!data.candidates || data.candidates.length === 0) {
-        if (addLog)
-          addLog(
-            'Prefetch Audio',
-            `❌ Audio generation failed for poem ${poemId}. Response: ${JSON.stringify(data).substring(0, 200)}`,
-            'error'
-          );
-        return;
-      }
-
-      const b64 = data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-      if (b64) {
-        // Convert PCM to WAV (inline to avoid dependency)
-        const pcm16ToWav = (base64, rate = 24000) => {
-          try {
-            const cleanedBase64 = base64.replace(/\s/g, '');
-            const bin = atob(cleanedBase64);
-            const buf = new ArrayBuffer(bin.length);
-            const view = new DataView(buf);
-            for (let i = 0; i < bin.length; i++) view.setUint8(i, bin.charCodeAt(i));
-            const samples = new Int16Array(buf);
-            const wavBuf = new ArrayBuffer(44 + samples.length * 2);
-            const wavView = new DataView(wavBuf);
-            const s = (o, str) => {
-              for (let i = 0; i < str.length; i++) wavView.setUint8(o + i, str.charCodeAt(i));
-            };
-            s(0, 'RIFF');
-            wavView.setUint32(4, 36 + samples.length * 2, true);
-            s(8, 'WAVE');
-            s(12, 'fmt ');
-            wavView.setUint32(16, 16, true);
-            wavView.setUint16(20, 1, true);
-            wavView.setUint16(22, 1, true);
-            wavView.setUint32(24, rate, true);
-            wavView.setUint32(28, rate * 2, true);
-            wavView.setUint16(32, 2, true);
-            wavView.setUint16(34, 16, true);
-            s(36, 'data');
-            wavView.setUint32(40, samples.length * 2, true);
-            new Int16Array(wavBuf, 44).set(samples);
-            return new Blob([wavBuf], { type: 'audio/wav' });
-          } catch (e) {
-            return null;
-          }
-        };
-
-        const blob = pcm16ToWav(b64);
-        if (blob) {
-          // Calculate metrics
-          const pcmBytes = atob(b64.replace(/\s/g, '')).length;
-          const samples = pcmBytes / 2;
-          const audioDuration = samples / 24000;
-          const tokensPerSecond = (estimatedTokens / (apiTime / 1000)).toFixed(1);
-
-          // Cache the blob
-          await cacheOperations.set(CACHE_CONFIG.stores.audio, poemId, {
-            blob,
-            metadata: {
-              poet: poem.poet,
-              title: poem.title,
-              size: blob.size,
-              duration: audioDuration,
-            },
-          });
-
-          if (addLog)
-            addLog(
-              'Prefetch Audio',
-              `✓ Audio cached (poem ${poemId}) | ${(apiTime / 1000).toFixed(1)}s | ${(blob.size / 1024).toFixed(1)}KB | ${audioDuration.toFixed(1)}s audio | ${tokensPerSecond} tok/s`,
-              'success'
-            );
-        }
-      }
-    } catch (error) {
-      // Silently handle errors - don't disrupt user experience
-      if (addLog)
-        addLog(
-          'Prefetch Audio',
-          `❌ Audio generation error for poem ${poemId}: ${error.message}`,
-          'error'
-        );
-    } finally {
-      // Clean up in-flight tracking
-      if (activeRequests) activeRequests.current.delete(poemId);
-    }
-  },
-
-  /**
-   * Prefetch insights for a poem (generate and cache in background)
-   */
-  prefetchInsights: async (poemId, poem, addLog, activeRequests) => {
-    if (!FEATURES.prefetching || !FEATURES.caching) return;
-    if (!poemId || !poem?.arabic) return;
-
-    try {
-      // Check if already generating - silently skip
-      if (activeRequests && activeRequests.current.has(poemId)) {
-        if (addLog)
-          addLog(
-            'Prefetch Insights',
-            `Already generating insights for poem ${poemId} - skipping`,
-            'info'
-          );
-        return;
-      }
-
-      // Check cache first - don't prefetch if already cached
-      const cached = await cacheOperations.get(CACHE_CONFIG.stores.insights, poemId);
-      if (cached?.interpretation) {
-        if (addLog)
-          addLog(
-            'Prefetch Insights',
-            `Insights already cached for poem ${poemId} - skipping`,
-            'info'
-          );
-        return;
-      }
-
-      // Mark as in-flight
-      if (activeRequests) activeRequests.current.add(poemId);
-
-      const poetInfo = poem?.poet ? ` by ${poem.poet}` : '';
-      const promptText = `Deep Analysis of${poetInfo}:\n\n${poem.arabic}`;
-      const requestSize = new Blob([
-        JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] }),
-      ]).size;
-      const estimatedInputTokens = Math.ceil(
-        (promptText.length + INSIGHTS_SYSTEM_PROMPT.length) / 4
-      );
-
-      if (addLog) {
-        addLog(
-          'Prefetch Insights',
-          `→ Background insights generation (poem ${poemId}) | ${(requestSize / 1024).toFixed(1)}KB | ${estimatedInputTokens} tokens`,
-          'info'
-        );
-      }
-
-      const apiStart = performance.now();
-      const prefetchBody = JSON.stringify({
-        contents: [{ parts: [{ text: promptText }] }],
-        systemInstruction: { parts: [{ text: INSIGHTS_SYSTEM_PROMPT }] },
-      });
-      const res = await geminiTextFetch(
-        'generateContent',
-        prefetchBody,
-        'Prefetch Insights',
-        addLog
-      );
-
-      const data = await res.json();
-      const apiTime = performance.now() - apiStart;
-      const interpretation = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-      if (interpretation) {
-        // Calculate metrics
-        const charCount = interpretation.length;
-        const estimatedTokens = Math.ceil(charCount / 4);
-        const tokensPerSecond = (estimatedTokens / (apiTime / 1000)).toFixed(1);
-
-        // Cache the insights
-        await cacheOperations.set(CACHE_CONFIG.stores.insights, poemId, {
-          interpretation,
-          metadata: { poet: poem.poet, title: poem.title, charCount, tokens: estimatedTokens },
-        });
-
-        if (addLog)
-          addLog(
-            'Prefetch Insights',
-            `✓ Insights cached (poem ${poemId}) | ${(apiTime / 1000).toFixed(1)}s | ${charCount} chars (≈${estimatedTokens} tokens) | ${tokensPerSecond} tok/s`,
-            'success'
-          );
-      }
-    } catch (error) {
-      // Silently handle errors - don't disrupt user experience
-      if (addLog)
-        addLog(
-          'Prefetch Insights',
-          `❌ Insights generation error for poem ${poemId}: ${error.message}`,
-          'error'
-        );
-    } finally {
-      // Clean up in-flight tracking
-      if (activeRequests) activeRequests.current.delete(poemId);
-    }
-  },
-
-  /**
-   * Prefetch poems from discover (pre-fetch poems from category)
-   */
-  prefetchDiscover: async (category, count = 2, addLog) => {
-    if (!FEATURES.prefetching || !FEATURES.caching) return;
-    if (!category || category === 'All') return;
-
-    try {
-      if (addLog) addLog('Prefetch', `Pre-fetching ${count} poems from ${category}...`, 'info');
-      // Placeholder - would fetch poems from discover API and cache
-    } catch (error) {
-      if (addLog) addLog('Prefetch', `Discover prefetch error: ${error.message}`, 'error');
-    }
-  },
-};
-
-/* Transliteration: imported from utils/transliterate.js */
 
 /* =============================================================================
   6. UTILITY COMPONENTS
@@ -789,7 +142,7 @@ const DebugPanel = ({ logs, onClear, darkMode, poem, appState }) => {
         referrer: document.referrer,
         featureFlags: { ...FEATURES },
       };
-      const res = await fetch(`${apiUrl}/api/bug-reports`, {
+      const res = await fetch(`${getApiUrl()}/api/bug-reports`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -3002,7 +2355,7 @@ export default function DiwanApp() {
         const poemId = deepLinkMatch[1];
         track('deep_link_loaded', { poemId });
         addLog('DeepLink', `Loading poem ID ${poemId} from URL`, 'info');
-        fetch(`${apiUrl}/api/poems/${poemId}`)
+        fetch(`${getApiUrl()}/api/poems/${poemId}`)
           .then((res) => {
             if (!res.ok) throw new Error(`Poem ${poemId} not found`);
             return res.json();
@@ -3070,7 +2423,7 @@ export default function DiwanApp() {
 
       // Fetch from API
       try {
-        const res = await fetch(`${apiUrl}/api/poems/daily`);
+        const res = await fetch(`${getApiUrl()}/api/poems/daily`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const poem = await res.json();
         if (poem.arabic) poem.arabic = poem.arabic.replace(/\*/g, '\n');
@@ -3583,7 +2936,7 @@ export default function DiwanApp() {
 
     try {
       const apiStart = performance.now();
-      const url = `${apiUrl}/api/ai/${API_MODELS.tts}/generateContent`;
+      const url = `${getApiUrl()}/api/ai/${API_MODELS.tts}/generateContent`;
       const fetchOptions = {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -3951,10 +3304,10 @@ export default function DiwanApp() {
       }
 
       // Save translation back to database for future visitors (fire-and-forget)
-      if (current?.isFromDatabase && current?.id && insightText && apiUrl) {
+      if (current?.isFromDatabase && current?.id && insightText && getApiUrl()) {
         const parts = parseInsight(insightText);
         if (parts?.poeticTranslation) {
-          fetch(`${apiUrl}/api/poems/${current.id}/translation`, {
+          fetch(`${getApiUrl()}/api/poems/${current.id}/translation`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -4014,7 +3367,7 @@ export default function DiwanApp() {
         const categoryObj = CATEGORIES.find((c) => c.id === selectedCategory);
         const poetName = categoryObj?.labelAr || selectedCategory;
         const poetParam = selectedCategory !== 'All' ? `?poet=${encodeURIComponent(poetName)}` : '';
-        const url = `${apiUrl}/api/poems/random${poetParam}`;
+        const url = `${getApiUrl()}/api/poems/random${poetParam}`;
 
         try {
           const res = await fetch(url);
@@ -4195,7 +3548,7 @@ export default function DiwanApp() {
   // Pre-fetch a poem in the background for the next visit (stored in localStorage with TTL)
   async function prefetchNextVisitPoem() {
     try {
-      const res = await fetch(`${apiUrl}/api/poems/random`);
+      const res = await fetch(`${getApiUrl()}/api/poems/random`);
       if (!res.ok) return;
       const poem = await res.json();
       if (poem.arabic) poem.arabic = poem.arabic.replace(/\*/g, '\n');
@@ -4615,11 +3968,11 @@ export default function DiwanApp() {
   // Keep-alive ping to prevent Render free tier from sleeping (15 min idle timeout)
   // Pings every 10 minutes to keep backend awake
   useEffect(() => {
-    if (!useDatabase || !apiUrl) return; // Only ping if database mode is enabled
+    if (!useDatabase) return; // Only ping if database mode is enabled
 
     const keepAlivePing = setInterval(
       () => {
-        fetch(`${apiUrl}/api/health`)
+        fetch(`${getApiUrl()}/api/health`)
           .then(() => {
             if (FEATURES.debug) {
               addLog('Keep-Alive', 'Backend pinged successfully', 'info');
@@ -4636,10 +3989,10 @@ export default function DiwanApp() {
     ); // 10 minutes
 
     // Initial ping on mount
-    fetch(`${apiUrl}/api/health`).catch(() => {});
+    fetch(`${getApiUrl()}/api/health`).catch(() => {});
 
     return () => clearInterval(keepAlivePing);
-  }, [useDatabase, apiUrl]);
+  }, [useDatabase]);
 
   if (!current) {
     return (

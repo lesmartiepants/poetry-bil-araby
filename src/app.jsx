@@ -5016,7 +5016,7 @@ export default function DiwanApp() {
           right: 0,
           zIndex: 40,
           pointerEvents: 'none',
-          padding: `${0.5 - headerOpacity * 0.25}rem 1rem`,
+          padding: `${0.2 - headerOpacity * 0.1}rem 1rem ${0.35 - headerOpacity * 0.15}rem`,
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
@@ -5055,7 +5055,10 @@ export default function DiwanApp() {
               poetry
             </span>
           </h1>
-          <Feather style={{ ...BRAND.feather, color: '#C5A059' }} strokeWidth={1.5} />
+          <Feather
+            style={{ ...BRAND.feather, color: '#C5A059', alignSelf: 'center' }}
+            strokeWidth={1.5}
+          />
         </div>
       </header>
 
@@ -5078,10 +5081,11 @@ export default function DiwanApp() {
             <div
               className="pointer-events-none sticky top-0 z-30"
               style={{
-                height: '40px',
-                marginLeft: '-1rem',
-                marginRight: '-3.5rem',
-                background: `linear-gradient(to bottom, ${darkMode ? '#0c0c0e' : '#FDFCF8'} 30%, ${darkMode ? 'rgba(12,12,14,0.5)' : 'rgba(253,252,248,0.5)'} 70%, transparent)`,
+                height: '72px',
+                marginLeft: '-2rem',
+                marginRight: '-4rem',
+                marginBottom: '-72px',
+                background: `linear-gradient(to bottom, ${darkMode ? '#0c0c0e' : '#FDFCF8'} 0%, ${darkMode ? '#0c0c0e' : '#FDFCF8'} 45%, ${darkMode ? 'rgba(12,12,14,0.7)' : 'rgba(253,252,248,0.7)'} 70%, ${darkMode ? 'rgba(12,12,14,0.3)' : 'rgba(253,252,248,0.3)'} 85%, transparent 100%)`,
               }}
             />
             <div className="flex flex-col items-center pt-2">

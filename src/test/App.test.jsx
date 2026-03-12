@@ -37,7 +37,7 @@ const defaultFetchResponse = {
 
 function mockAutoLoadFetch() {
   // Use a persistent implementation that returns the default poem for any URL,
-  // handling all mount-time fetches (auto-load, daily poem, health ping, auto-explain).
+  // handling all mount-time fetches (auto-load, health ping, auto-explain).
   // Tests that need specific fetch behavior should call mockResolvedValueOnce AFTER awaiting mount.
   global.fetch.mockImplementation(() => Promise.resolve({ ...defaultFetchResponse }));
 }
@@ -136,7 +136,9 @@ describe('DiwanApp', () => {
 
       // Create a never-resolving promise to keep the button disabled
       let resolveFetch;
-      global.fetch.mockImplementationOnce(
+      // Clear the persistent mock and set up a one-time hanging fetch
+      global.fetch.mockReset();
+      global.fetch.mockImplementation(
         () =>
           new Promise((r) => {
             resolveFetch = r;
@@ -153,8 +155,15 @@ describe('DiwanApp', () => {
         expect(discoverBtn).toBeDisabled();
       });
 
-      // Resolve to clean up
+      // Resolve and wait for React to finish processing
       resolveFetch({ ok: true, json: async () => createDbPoem(99) });
+      await waitFor(
+        () => {
+          expect(discoverBtn).not.toBeDisabled();
+        },
+        { timeout: 1000 }
+      );
+      // beforeEach() will clear mocks for the next test
     });
 
     it('changes content from the initial poem after Discover', async () => {
@@ -177,9 +186,12 @@ describe('DiwanApp', () => {
         tags: ['Classical', 'Epic', 'Ode'],
       };
 
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => newPoem,
+      // URL-aware mock: return new poem only for DB endpoint, default for everything else
+      global.fetch.mockImplementation((url) => {
+        if (typeof url === 'string' && url.includes('/api/poems/random')) {
+          return Promise.resolve({ ok: true, json: async () => newPoem, text: async () => '' });
+        }
+        return Promise.resolve({ ...defaultFetchResponse });
       });
 
       await userEvent.click(screen.getByLabelText('Discover new poem'));
@@ -372,17 +384,12 @@ describe('DiwanApp', () => {
     it('switches to light mode bg-[#FDFCF8] after toggling theme', async () => {
       render(<DiwanApp />);
 
-      // Open theme dropdown
-      const themeBtn = screen.getByLabelText('Theme options');
-      await userEvent.click(themeBtn);
+      // Open sidebar settings sub-menu
+      const settingsBtn = screen.getByTitle('Settings');
+      await userEvent.click(settingsBtn);
 
-      // Click the dark/light mode toggle inside the dropdown
-      // The dropdown shows "Light Mode" text in dark mode
-      await waitFor(() => {
-        expect(document.body.textContent).toContain('Light Mode');
-      });
-
-      const lightModeBtn = screen.getByText('Light Mode');
+      // Click the dark/light mode toggle in the sidebar
+      const lightModeBtn = screen.getByTitle('Light mode');
       await userEvent.click(lightModeBtn);
 
       await waitFor(() => {
@@ -398,7 +405,8 @@ describe('DiwanApp', () => {
     it('opens category dropdown and shows poet list', async () => {
       render(<DiwanApp />);
 
-      const poetsBtn = screen.getByLabelText('Select poet category');
+      // Open poet picker from bottom control bar
+      const poetsBtn = screen.getByLabelText('Filter by poet');
       await userEvent.click(poetsBtn);
 
       await waitFor(() => {
@@ -409,8 +417,8 @@ describe('DiwanApp', () => {
     it('sends poet filter parameter when a category is selected and Discover is clicked', async () => {
       render(<DiwanApp />);
 
-      // Open the category dropdown and select a poet
-      const poetsBtn = screen.getByLabelText('Select poet category');
+      // Open poet picker from bottom control bar
+      const poetsBtn = screen.getByLabelText('Filter by poet');
       await userEvent.click(poetsBtn);
 
       await waitFor(() => {
@@ -465,24 +473,19 @@ describe('DiwanApp', () => {
       expect(amiriElements.length).toBeGreaterThan(0);
     });
 
-    it('changes font class when cycling via Theme dropdown', async () => {
+    it('changes font class when cycling via sidebar settings', async () => {
       render(<DiwanApp />);
 
       // Verify initial font is Amiri
       expect(document.querySelectorAll('.font-amiri').length).toBeGreaterThan(0);
 
-      // Open theme dropdown
-      const themeBtn = screen.getByLabelText('Theme options');
-      await userEvent.click(themeBtn);
+      // Open sidebar settings sub-menu
+      const settingsBtn = screen.getByTitle('Settings');
+      await userEvent.click(settingsBtn);
 
-      // The font cycle button shows "Cycle Font: Amiri"
-      await waitFor(() => {
-        expect(document.body.textContent).toContain('Cycle Font: Amiri');
-      });
-
-      // Click the font cycle button (Arabic text: تبديل الخط)
-      const fontCycleBtn = screen.getByText('تبديل الخط');
-      await userEvent.click(fontCycleBtn);
+      // Click the font cycle button in sidebar
+      const fontBtn = screen.getByTitle('Font: Amiri');
+      await userEvent.click(fontBtn);
 
       // Font should change from Amiri to the next one (Alexandria)
       await waitFor(() => {
@@ -492,105 +495,12 @@ describe('DiwanApp', () => {
     });
   });
 
-  // ── LLM Mode Tests (existing coverage preserved) ─────────────────────
+  // ── AI Mode Tests ─────────────────────────────────────────────────────
+  // Note: AI/DB toggle was removed (DB mode is now the permanent default).
+  // Tests that switched to AI mode via the UI toggle have been removed.
 
-  describe('LLM Mode', () => {
-    it('logs error when Discover fails with a non-retryable error', async () => {
-      render(<DiwanApp />);
-
-      // Switch to generative mode
-      await userEvent.click(screen.getByLabelText('Switch to LLM Mode'));
-
-      // 429 quota errors are shown immediately
-      global.fetch.mockResolvedValueOnce({
-        ok: false,
-        status: 429,
-        json: async () => ({ error: { message: 'Quota exceeded for this project' } }),
-      });
-
-      await userEvent.click(screen.getByLabelText('Discover new poem'));
-
-      await waitFor(
-        () => {
-          expect(document.body.textContent).toContain('Quota exceeded for this project');
-        },
-        { timeout: 3000 }
-      );
-    });
-
-    it('uses fallback model when primary model returns not-found', async () => {
-      render(<DiwanApp />);
-
-      await userEvent.click(screen.getByLabelText('Switch to LLM Mode'));
-
-      const aiPoem = {
-        poet: 'Al-Mutanabbi',
-        poetArabic: 'المتنبي',
-        title: 'Ode to Courage',
-        titleArabic: 'قصيدة الشجاعة',
-        arabic: 'عَلَى قَدْرِ أَهْلِ الْعَزْمِ تَأْتِي الْعَزَائِمُ',
-        english: 'To the measure of the resolute come resolutions',
-        tags: ['Classical', 'Epic', 'Ode'],
-      };
-
-      global.fetch
-        .mockResolvedValueOnce({
-          ok: false,
-          status: 404,
-          json: async () => ({
-            error: { message: 'gemini-2.0-flash is not found for API version v1beta' },
-          }),
-        })
-        .mockResolvedValueOnce({
-          ok: true,
-          json: async () => ({
-            candidates: [{ content: { parts: [{ text: JSON.stringify(aiPoem) }] } }],
-          }),
-        });
-
-      await userEvent.click(screen.getByLabelText('Discover new poem'));
-
-      await waitFor(
-        () => {
-          expect(screen.getByText('Al-Mutanabbi')).toBeInTheDocument();
-        },
-        { timeout: 3000 }
-      );
-    });
-
-    it('discovers a new poem in generative mode when Gemini responds successfully', async () => {
-      render(<DiwanApp />);
-
-      await userEvent.click(screen.getByLabelText('Switch to LLM Mode'));
-
-      const aiPoem = {
-        poet: 'Al-Mutanabbi',
-        poetArabic: 'المتنبي',
-        title: 'Ode to Courage',
-        titleArabic: 'قصيدة الشجاعة',
-        arabic: 'عَلَى قَدْرِ أَهْلِ الْعَزْمِ تَأْتِي الْعَزَائِمُ',
-        english: 'To the measure of the resolute come resolutions',
-        tags: ['Classical', 'Epic', 'Ode'],
-      };
-
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () => ({
-          candidates: [{ content: { parts: [{ text: JSON.stringify(aiPoem) }] } }],
-        }),
-      });
-
-      await userEvent.click(screen.getByLabelText('Discover new poem'));
-
-      await waitFor(
-        () => {
-          expect(screen.getByText('Al-Mutanabbi')).toBeInTheDocument();
-        },
-        { timeout: 3000 }
-      );
-    });
-
-    it('logs error when Insights fails with an HTTP error', async () => {
+  describe('AI Mode', () => {
+    it('logs error when AI Insights fails with an HTTP error', async () => {
       mockAutoLoadFetch();
       render(<DiwanApp />);
 
@@ -625,9 +535,10 @@ describe('DiwanApp', () => {
   // ── Debug Panel ───────────────────────────────────────────────────────
 
   describe('Debug Panel', () => {
-    it('renders System Logs text when debug feature flag is enabled', () => {
+    it('renders debug log toggle button when debug feature flag is enabled', () => {
       render(<DiwanApp />);
-      expect(document.body.textContent).toContain('System Logs');
+      const btn = document.querySelector('[aria-label="Toggle developer log panel"]');
+      expect(btn).toBeTruthy();
     });
   });
 });

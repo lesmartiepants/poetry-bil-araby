@@ -22,9 +22,7 @@ import {
   Trash2,
   Sparkles,
   Feather,
-  Library,
   Compass,
-  Rabbit,
   Heart,
   LogIn,
   LogOut,
@@ -33,8 +31,12 @@ import {
   ArrowRight,
   Languages,
   Share2,
-  CalendarDays,
   ThumbsDown,
+  Brain,
+  ALargeSmall,
+  UserRound,
+  ScrollText,
+  Shuffle,
 } from 'lucide-react';
 import { track } from '@vercel/analytics';
 import Sentry from './sentry.js';
@@ -81,7 +83,7 @@ const DESIGN = {
   panePadding: 'p-8',
   paneSpacing: 'space-y-8',
   paneVerseSize: 'text-[clamp(1rem,1.8vw,1.125rem)]', // 16px-18px for insight panel
-  glass: 'backdrop-blur-2xl',
+  glass: 'backdrop-blur-3xl backdrop-saturate-150',
   radius: 'rounded-2xl',
   anim: 'transition-all duration-300 ease-in-out',
   buttonHover: 'hover:scale-105 hover:shadow-lg transition-all duration-300',
@@ -93,8 +95,8 @@ const THEME = {
     bg: 'bg-[#0c0c0e]',
     text: 'text-stone-200',
     accent: 'text-indigo-400',
-    glass: 'bg-stone-900/60',
-    border: 'border-stone-800',
+    glass: 'bg-stone-950/10',
+    border: 'border-white/[0.06]',
     shadow: 'shadow-black/60',
     pill: 'bg-stone-900/40 border-stone-700/50',
     glow: 'from-indigo-600/30 via-purple-600/15 to-transparent',
@@ -131,8 +133,8 @@ const THEME = {
     bg: 'bg-[#FDFCF8]',
     text: 'text-stone-800',
     accent: 'text-indigo-600',
-    glass: 'bg-white/70',
-    border: 'border-white/80',
+    glass: 'bg-white/40',
+    border: 'border-white/50',
     shadow: 'shadow-indigo-100/50',
     pill: 'bg-white/40 border-white/60',
     glow: 'from-indigo-500/15 via-purple-500/10 to-transparent',
@@ -172,13 +174,36 @@ const THEME = {
 // `THEME.dark.*` references throughout the JSX.
 const GOLD = THEME.dark;
 
+// ── Shared Brand Styles ──────────────────────────────────────────────────
+// Single source of truth for بالعربي + poetry + feather rendering.
+// Used by: main header, splash desert phase. (Kinetic splash has its own animations.)
+const BRAND = {
+  arabic: {
+    fontFamily: "'Reem Kufi', sans-serif",
+    fontWeight: 700,
+    fontSize: 'clamp(3rem, 6vw, 4.5rem)',
+    lineHeight: 1,
+  },
+  english: {
+    fontFamily: "'Forum', serif",
+    fontSize: 'clamp(2.86rem, 5.72vw, 4.4rem)', // 10% larger than previous 2.6/5.2/4
+    letterSpacing: '-0.04em',
+    lineHeight: 1,
+  },
+  feather: {
+    width: 'clamp(24px, 4vw, 36px)',
+    height: 'clamp(24px, 4vw, 36px)',
+    opacity: 0.8,
+  },
+};
+
 const CATEGORIES = [
   { id: 'All', label: 'All Poets', labelAr: 'كل الشعراء' },
-  { id: 'Nizar Qabbani', label: 'Nizar Qabbani', labelAr: 'نزار قباني' },
-  { id: 'Mahmoud Darwish', label: 'Mahmoud Darwish', labelAr: 'محمود درويش' },
-  { id: 'Al-Mutanabbi', label: 'Al-Mutanabbi', labelAr: 'المتنبي' },
-  { id: 'Antarah', label: 'Antarah', labelAr: 'عنترة بن شداد' },
-  { id: 'Ibn Arabi', label: 'Ibn Arabi', labelAr: 'ابن عربي' },
+  { id: 'المتنبي', label: 'Al-Mutanabbi', labelAr: 'المتنبي' },
+  { id: 'محمود درويش', label: 'Mahmoud Darwish', labelAr: 'محمود درويش' },
+  { id: 'نزار قباني', label: 'Nizar Qabbani', labelAr: 'نزار قباني' },
+  { id: 'أبو العلاء المعري', label: "Al-Ma'arri", labelAr: 'أبو العلاء المعري' },
+  { id: 'عنترة بن شداد', label: 'Antarah', labelAr: 'عنترة بن شداد' },
 ];
 
 const FONTS = [
@@ -193,6 +218,62 @@ const FONTS = [
 ];
 
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+
+/* =============================================================================
+  1b. SEEN POEMS DEDUP (localStorage)
+  =============================================================================
+  Tracks recently seen poem IDs to avoid repeats during discovery.
+  Entries older than 30 days are pruned automatically.
+*/
+
+const SEEN_POEMS_KEY = 'seenPoems';
+const SEEN_POEMS_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+const SEEN_POEMS_MAX_EXCLUDE = 200;
+
+/** Read seen poems from localStorage. Returns Array<{id: number, seenAt: number}>. */
+const getSeenPoems = () => {
+  try {
+    const raw = localStorage.getItem(SEEN_POEMS_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+};
+
+/** Record a poem as seen. */
+const markPoemSeen = (poemId) => {
+  try {
+    const seen = getSeenPoems();
+    // Avoid duplicate entries for the same poem
+    if (seen.some((entry) => entry.id === poemId)) return;
+    seen.push({ id: poemId, seenAt: Date.now() });
+    localStorage.setItem(SEEN_POEMS_KEY, JSON.stringify(seen));
+  } catch {
+    // localStorage full or unavailable — silently ignore
+  }
+};
+
+/** Remove entries older than 30 days. */
+const pruneSeenPoems = () => {
+  try {
+    const seen = getSeenPoems();
+    const cutoff = Date.now() - SEEN_POEMS_MAX_AGE_MS;
+    const pruned = seen.filter((entry) => entry.seenAt > cutoff);
+    if (pruned.length !== seen.length) {
+      localStorage.setItem(SEEN_POEMS_KEY, JSON.stringify(pruned));
+    }
+  } catch {
+    // silently ignore
+  }
+};
+
+/** Get recent seen IDs for the exclude param (max 200). */
+const getRecentSeenIds = () => {
+  const seen = getSeenPoems();
+  return seen.slice(-SEEN_POEMS_MAX_EXCLUDE).map((entry) => entry.id);
+};
 
 /* =============================================================================
   2. API PROMPTS & CONFIGURATION
@@ -325,22 +406,36 @@ const TTS_CONFIG = {
  * Quotas are per-model-per-day, so the fallback has its own quota.
  */
 const fetchTTSWithFallback = async (url, options, { addLog, label = 'TTS' } = {}) => {
+  const primaryModel = API_MODELS.tts;
+  const t0 = performance.now();
   const res = await fetch(url, options);
-  if (res.status !== 429) return res;
+  const primaryMs = performance.now() - t0;
+
+  if (res.status !== 429) return { res, model: primaryModel };
 
   // Primary model rate-limited — try fallback model (separate daily quota)
   if (API_MODELS.ttsFallback) {
-    const fallbackUrl = url.replace(API_MODELS.tts, API_MODELS.ttsFallback);
+    const fallbackModel = API_MODELS.ttsFallback;
+    const fallbackUrl = url.replace(primaryModel, fallbackModel);
     if (addLog)
       addLog(
         label,
-        `Rate limited (429) on ${API_MODELS.tts} — falling back to ${API_MODELS.ttsFallback}`,
+        `${primaryModel}: 429 (${(primaryMs / 1000).toFixed(1)}s) → falling back to ${fallbackModel}`,
         'warning'
       );
-    return fetch(fallbackUrl, options);
+    const t1 = performance.now();
+    const fallbackRes = await fetch(fallbackUrl, options);
+    const fallbackMs = performance.now() - t1;
+    if (addLog)
+      addLog(
+        label,
+        `${primaryModel}: 429 (${(primaryMs / 1000).toFixed(1)}s) → ${fallbackModel}: ${fallbackRes.status} (${(fallbackMs / 1000).toFixed(1)}s)`,
+        fallbackRes.ok ? 'success' : 'warning'
+      );
+    return { res: fallbackRes, model: fallbackModel };
   }
 
-  return res;
+  return { res, model: primaryModel };
 };
 
 /* =============================================================================
@@ -608,7 +703,7 @@ const prefetchManager = {
       if (addLog) {
         addLog(
           'Prefetch Audio',
-          `→ Background audio generation (poem ${poemId}) | ${(requestSize / 1024).toFixed(1)}KB | ${estimatedTokens} tokens`,
+          `→ Background audio generation (poem ${poemId}) | Model: ${API_MODELS.tts} | ${(requestSize / 1024).toFixed(1)}KB | ${estimatedTokens} tokens`,
           'info'
         );
       }
@@ -620,7 +715,7 @@ const prefetchManager = {
         headers: { 'Content-Type': 'application/json' },
         body: requestBody,
       };
-      const res = await fetchTTSWithFallback(url, fetchOptions, {
+      const { res, model: ttsModel } = await fetchTTSWithFallback(url, fetchOptions, {
         addLog,
         label: 'Prefetch Audio',
       });
@@ -630,7 +725,7 @@ const prefetchManager = {
         if (addLog)
           addLog(
             'Prefetch Audio',
-            `❌ Audio generation HTTP ${res.status}: ${errorText.substring(0, 150)}`,
+            `❌ [${ttsModel}] Audio generation HTTP ${res.status}: ${errorText.substring(0, 150)}`,
             'error'
           );
         return;
@@ -642,7 +737,7 @@ const prefetchManager = {
         if (addLog)
           addLog(
             'Prefetch Audio',
-            `❌ Audio generation failed for poem ${poemId}. Response: ${JSON.stringify(data).substring(0, 200)}`,
+            `❌ [${ttsModel}] Audio generation failed for poem ${poemId}. Response: ${JSON.stringify(data).substring(0, 200)}`,
             'error'
           );
         return;
@@ -700,13 +795,14 @@ const prefetchManager = {
               title: poem.title,
               size: blob.size,
               duration: audioDuration,
+              model: ttsModel,
             },
           });
 
           if (addLog)
             addLog(
               'Prefetch Audio',
-              `✓ Audio cached (poem ${poemId}) | ${(apiTime / 1000).toFixed(1)}s | ${(blob.size / 1024).toFixed(1)}KB | ${audioDuration.toFixed(1)}s audio | ${tokensPerSecond} tok/s`,
+              `✓ [${ttsModel}] Audio cached (poem ${poemId}) | ${(apiTime / 1000).toFixed(1)}s | ${(blob.size / 1024).toFixed(1)}KB | ${audioDuration.toFixed(1)}s audio | ${tokensPerSecond} tok/s`,
               'success'
             );
         }
@@ -966,19 +1062,60 @@ const MysticalConsultationEffect = ({ active, theme }) => {
   );
 };
 
-const DebugPanel = ({ logs, onClear, darkMode, poem, appState }) => {
+const DebugPanel = ({ logs, onClear, darkMode, poem, appState, visible, controlBarRef }) => {
   const theme = darkMode ? THEME.dark : THEME.light;
-  const [isExpanded, setIsExpanded] = useState(false);
+  const [panelOpen, setPanelOpen] = useState(false);
   const [bugDescription, setBugDescription] = useState('');
   const [bugStatus, setBugStatus] = useState(null); // null | 'sending' | 'success' | 'error'
   const [bugError, setBugError] = useState('');
+  const [lastViewedCount, setLastViewedCount] = useState(0);
   const scrollRef = useRef(null);
-
+  // Position bug button centered in the gap between screen edge and control bar
+  const [btnPos, setBtnPos] = useState({ left: 16, bottom: 16 });
   useEffect(() => {
-    if (scrollRef.current) {
+    const update = () => {
+      const el = controlBarRef?.current;
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const vh = window.innerHeight;
+      // X: center of gap between left screen edge and bar left edge (minus half button width)
+      const left = Math.max(8, rect.left / 2 - 10);
+      // Y: center of gap between bar bottom edge and screen bottom (minus half button height)
+      const gapBelow = vh - rect.bottom;
+      const bottom = Math.max(8, gapBelow / 2 - 10);
+      setBtnPos({ left, bottom });
+    };
+    update();
+    window.addEventListener('resize', update);
+    const ro =
+      typeof ResizeObserver !== 'undefined' && controlBarRef?.current
+        ? new ResizeObserver(update)
+        : null;
+    if (ro && controlBarRef?.current) ro.observe(controlBarRef.current);
+    return () => {
+      window.removeEventListener('resize', update);
+      ro?.disconnect();
+    };
+  }, [controlBarRef]);
+
+  // Auto-scroll to bottom on new logs when panel is open
+  useEffect(() => {
+    if (panelOpen && scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
-  }, [logs]);
+  }, [logs, panelOpen]);
+
+  // Track viewed count when panel opens
+  useEffect(() => {
+    if (panelOpen) setLastViewedCount(logs.length);
+  }, [panelOpen, logs.length]);
+
+  const errorCount = logs.filter((l) => l.type === 'error').length;
+  const lastViewedErrors = useRef(0);
+  useEffect(() => {
+    if (panelOpen) lastViewedErrors.current = errorCount;
+  }, [panelOpen, errorCount]);
+  const unreadErrors = errorCount - lastViewedErrors.current;
 
   const handleSubmitBug = async () => {
     setBugStatus('sending');
@@ -1017,225 +1154,152 @@ const DebugPanel = ({ logs, onClear, darkMode, poem, appState }) => {
     }
   };
 
-  if (!FEATURES.debug) return null;
+  if (!visible) return null;
+
+  const logTypeColor = (type) => {
+    switch (type) {
+      case 'error':
+        return 'text-red-400';
+      case 'success':
+        return 'text-emerald-400';
+      case 'warning':
+        return 'text-amber-400';
+      default:
+        return darkMode ? 'text-stone-400' : 'text-stone-500';
+    }
+  };
+
+  const gold = darkMode ? '#C5A059' : '#8B7355';
+  const labelColor = darkMode ? 'text-[#C5A059]/70' : 'text-[#8B7355]/70';
 
   return (
-    <div
-      className={`w-full max-w-full transition-all duration-300 ${isExpanded ? 'h-48 md:h-64' : 'h-7'} overflow-hidden border-b ${
-        theme.debug
-      } backdrop-blur-md shadow-lg flex flex-col relative z-[100] flex-none`}
-    >
-      <div
-        className="flex items-center justify-between px-6 h-7 cursor-pointer"
-        onClick={() => setIsExpanded(!isExpanded)}
-      >
-        <div className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-widest opacity-60 text-indigo-500 leading-none h-full">
-          <Bug size={10} className="mb-0" /> <span>System Logs</span>{' '}
-          <span className="ml-1 opacity-40">({logs.length})</span>
-        </div>
-        <div className="flex items-center gap-3 h-full">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onClear();
-            }}
-            className="p-1 hover:text-red-500 transition-colors flex items-center"
-          >
-            <Trash2 size={10} />
-          </button>
-          <ChevronDown
-            size={10}
-            className={`transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}`}
-          />
-        </div>
-      </div>
-      <div
-        ref={scrollRef}
-        className="flex-1 overflow-y-auto px-6 pb-3 font-mono text-[10px] space-y-1 custom-scrollbar"
-      >
-        {logs.map((log, idx) => (
-          <div
-            key={idx}
-            className={`pb-1 border-b border-stone-500/5 ${log.type === 'error' ? theme.error : log.type === 'success' ? 'text-indigo-400' : ''}`}
-          >
-            <span className="opacity-40">[{log.time}]</span>{' '}
-            <span className="font-bold">{log.label}:</span> {log.msg}
-          </div>
-        ))}
-        {isExpanded && (
-          <div className={`flex items-center gap-2 pt-2 border-t ${theme.debugDivider}`}>
-            <input
-              type="text"
-              value={bugDescription}
-              onChange={(e) => setBugDescription(e.target.value)}
-              placeholder="Describe the bug (optional)"
-              className={`flex-1 px-2 py-1 rounded text-[10px] border ${theme.debugInput}`}
-              onClick={(e) => e.stopPropagation()}
-            />
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleSubmitBug();
-              }}
-              disabled={bugStatus === 'sending'}
-              className={`px-2 py-1 rounded text-[9px] font-bold uppercase tracking-wider transition-colors ${
-                bugStatus === 'success'
-                  ? 'bg-green-600/80 text-white'
-                  : bugStatus === 'error'
-                    ? `${theme.errorBg} text-white`
-                    : bugStatus === 'sending'
-                      ? 'bg-stone-600/80 text-stone-400'
-                      : 'bg-indigo-600/80 text-white hover:bg-indigo-500/80'
-              }`}
-            >
-              {bugStatus === 'sending'
-                ? 'Sending...'
-                : bugStatus === 'success'
-                  ? 'Sent!'
-                  : bugStatus === 'error'
-                    ? `Failed${bugError ? ` (${bugError})` : ''}`
-                    : 'Submit Bug'}
-            </button>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
-const CategoryPill = ({ selected, onSelect, darkMode }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const currentCat = CATEGORIES.find((c) => c.id === selected) || CATEGORIES[0];
-  const dropdownRef = useRef(null);
-
-  useEffect(() => {
-    const clickOut = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setIsOpen(false);
-    };
-    document.addEventListener('mousedown', clickOut);
-    return () => document.removeEventListener('mousedown', clickOut);
-  }, []);
-
-  const theme = darkMode ? THEME.dark : THEME.light;
-
-  return (
-    <div className="relative flex flex-col items-center gap-1 min-w-[56px]" ref={dropdownRef}>
+    <>
+      {/* Floating trigger — small visual dot, 44px touch target, centered in gap */}
       <button
-        onClick={() => setIsOpen(!isOpen)}
-        className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
-        aria-label="Select poet category"
+        onClick={() => setPanelOpen((prev) => !prev)}
+        className="fixed z-[200] w-[44px] h-[44px] flex items-center justify-center"
+        style={{ left: btnPos.left, bottom: btnPos.bottom }}
+        title="Toggle dev logs"
+        aria-label="Toggle developer log panel"
       >
-        <Library size={21} className={GOLD.goldText} />
-      </button>
-      <span
-        className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
-      >
-        Poets
-      </span>
-
-      {isOpen && (
-        <div
-          className={`absolute bottom-full right-[-20px] mb-3 min-w-[220px] ${darkMode ? 'bg-[rgba(20,18,16,0.98)] border-[rgba(197,160,89,0.15)] shadow-[0_-10px_40px_rgba(0,0,0,0.7)]' : 'bg-white/95 border-stone-200 shadow-[0_-10px_40px_rgba(0,0,0,0.15)]'} backdrop-blur-[48px] border rounded-3xl p-3 z-50`}
+        <span
+          className={`relative w-5 h-5 rounded-full flex items-center justify-center transition-all duration-200 ${
+            darkMode
+              ? 'bg-stone-900/60 border border-[#C5A059]/20 text-stone-500 hover:text-[#C5A059] hover:border-[#C5A059]/40'
+              : 'bg-white/50 border border-[#8B7355]/20 text-stone-400 hover:text-[#8B7355] hover:border-[#8B7355]/40'
+          } backdrop-blur-md`}
         >
-          {CATEGORIES.map((cat) => (
+          <Bug size={9} />
+          {unreadErrors > 0 && !panelOpen && (
+            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-red-500 border border-black/30" />
+          )}
+        </span>
+      </button>
+
+      {/* Floating log panel — matches poet picker styling */}
+      <div
+        className={`fixed z-[200] w-80 max-w-[calc(100vw-2rem)] flex flex-col rounded-2xl shadow-2xl transition-all duration-200 ${
+          darkMode
+            ? 'bg-black/95 border border-[#C5A059]/25 text-stone-300'
+            : 'bg-white/95 border border-[#8B7355]/20 text-stone-700'
+        } backdrop-blur-2xl ${panelOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}
+        style={{
+          left: btnPos.left,
+          bottom: btnPos.bottom + 48,
+          height: '50vh',
+          maxHeight: '480px',
+          minHeight: '240px',
+        }}
+        aria-hidden={!panelOpen}
+      >
+        {/* Panel header */}
+        <div
+          className={`flex items-center justify-between px-4 py-2.5 border-b ${darkMode ? 'border-[#C5A059]/15' : 'border-[#8B7355]/15'} flex-none`}
+        >
+          <span
+            className="text-[10px] font-brand-en uppercase tracking-widest font-bold"
+            style={{ color: gold, opacity: 0.5 }}
+          >
+            Dev Logs
+            <span className="ml-1.5 opacity-60">({logs.length})</span>
+          </span>
+          <div className="flex items-center gap-1.5">
             <button
-              key={cat.id}
-              onClick={() => {
-                onSelect(cat.id);
-                setIsOpen(false);
-              }}
-              className={`w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex flex-col items-center border-b border-[rgba(197,160,89,0.08)] last:border-b-0 hover:bg-[rgba(197,160,89,0.08)] ${selected === cat.id ? 'bg-[rgba(197,160,89,0.12)]' : ''}`}
+              onClick={onClear}
+              className={`p-1 transition-colors ${darkMode ? 'text-stone-600 hover:text-stone-300' : 'text-stone-400 hover:text-stone-600'}`}
+              title="Clear logs"
             >
-              <div
-                className={`font-amiri text-[clamp(1rem,1.8vw,1.125rem)] ${GOLD.goldText} mb-[3px] font-medium`}
-              >
-                {cat.labelAr}
-              </div>
-              <div className="font-brand-en text-[clamp(8px,1vw,9px)] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">
-                {cat.label}
-              </div>
+              <Trash2 size={11} />
             </button>
+            <button
+              onClick={() => setPanelOpen(false)}
+              className={`p-1 transition-colors ${darkMode ? 'text-stone-600 hover:text-stone-300' : 'text-stone-400 hover:text-stone-600'}`}
+              title="Close panel"
+            >
+              <X size={12} />
+            </button>
+          </div>
+        </div>
+
+        {/* Log entries */}
+        <div
+          ref={scrollRef}
+          className="flex-1 overflow-y-auto px-4 py-1.5 font-mono text-[10px] space-y-0.5 custom-scrollbar"
+        >
+          {logs.map((log, idx) => (
+            <div
+              key={idx}
+              className={`py-0.5 border-b ${darkMode ? 'border-stone-800/40' : 'border-stone-200/40'} ${logTypeColor(log.type)}`}
+            >
+              <span className={darkMode ? 'text-stone-400' : 'text-stone-500'}>
+                {idx === 0 ? log.time : log.rel}
+              </span>{' '}
+              <span className={`font-semibold ${labelColor}`}>[{log.label}]</span>{' '}
+              <span>{log.msg}</span>
+            </div>
           ))}
         </div>
-      )}
-    </div>
-  );
-};
 
-const ThemeDropdown = ({ darkMode, onToggleDarkMode, currentFont, onCycleFont, fonts }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef(null);
-
-  useEffect(() => {
-    const clickOut = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setIsOpen(false);
-    };
-    document.addEventListener('mousedown', clickOut);
-    return () => document.removeEventListener('mousedown', clickOut);
-  }, []);
-
-  const handleCycleFont = () => {
-    onCycleFont();
-    setIsOpen(false);
-  };
-
-  const handleToggleDarkMode = () => {
-    onToggleDarkMode();
-    setIsOpen(false);
-  };
-
-  return (
-    <div className="relative flex flex-col items-center gap-1 min-w-[56px]" ref={dropdownRef}>
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
-        aria-label="Theme options"
-      >
-        {darkMode ? (
-          <Sun size={21} className={GOLD.goldText} />
-        ) : (
-          <Moon size={21} className={GOLD.goldText} />
-        )}
-      </button>
-      <span
-        className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
-      >
-        Theme
-      </span>
-
-      {isOpen && (
+        {/* Bug report input */}
         <div
-          className={`absolute bottom-full right-[-20px] mb-3 min-w-[200px] ${darkMode ? 'bg-[rgba(20,18,16,0.98)] border-[rgba(197,160,89,0.15)] shadow-[0_-10px_40px_rgba(0,0,0,0.7)]' : 'bg-white/95 border-stone-200 shadow-[0_-10px_40px_rgba(0,0,0,0.15)]'} backdrop-blur-[48px] border rounded-3xl p-3 z-50`}
+          className={`flex items-center gap-1.5 px-4 py-2 border-t ${darkMode ? 'border-[#C5A059]/15' : 'border-[#8B7355]/15'} flex-none`}
         >
+          <input
+            type="text"
+            value={bugDescription}
+            onChange={(e) => setBugDescription(e.target.value)}
+            placeholder="Describe the bug..."
+            className={`flex-1 px-2 py-1 rounded text-[10px] border ${darkMode ? 'bg-stone-900/80 border-stone-700 text-stone-200 placeholder:text-stone-500' : 'bg-white/80 border-stone-300 text-stone-800 placeholder:text-stone-400'}`}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleSubmitBug();
+            }}
+          />
           <button
-            onClick={handleCycleFont}
-            className="w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex flex-col items-center border-b border-[rgba(197,160,89,0.08)] hover:bg-[rgba(197,160,89,0.08)]"
+            onClick={handleSubmitBug}
+            disabled={bugStatus === 'sending'}
+            className={`px-2 py-1 rounded text-[9px] font-bold uppercase tracking-wider transition-colors ${
+              bugStatus === 'success'
+                ? 'bg-green-600/80 text-white'
+                : bugStatus === 'error'
+                  ? `${theme.errorBg} text-white`
+                  : bugStatus === 'sending'
+                    ? 'bg-stone-600/80 text-stone-400'
+                    : darkMode
+                      ? 'bg-[#C5A059]/20 text-[#C5A059] hover:bg-[#C5A059]/30'
+                      : 'bg-[#8B7355]/15 text-[#8B7355] hover:bg-[#8B7355]/25'
+            }`}
           >
-            <div
-              className={`font-amiri text-[clamp(1rem,1.8vw,1.125rem)] ${GOLD.goldText} mb-[3px] font-medium`}
-            >
-              تبديل الخط
-            </div>
-            <div className="font-brand-en text-[clamp(8px,1vw,9px)] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">
-              Cycle Font: {currentFont}
-            </div>
-          </button>
-          <button
-            onClick={handleToggleDarkMode}
-            className="w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex flex-col items-center hover:bg-[rgba(197,160,89,0.08)]"
-          >
-            <div
-              className={`font-amiri text-[clamp(1rem,1.8vw,1.125rem)] ${GOLD.goldText} mb-[3px] font-medium`}
-            >
-              {darkMode ? 'الوضع النهاري' : 'الوضع الليلي'}
-            </div>
-            <div className="font-brand-en text-[clamp(8px,1vw,9px)] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">
-              {darkMode ? 'Light Mode' : 'Dark Mode'}
-            </div>
+            {bugStatus === 'sending'
+              ? '...'
+              : bugStatus === 'success'
+                ? 'Sent!'
+                : bugStatus === 'error'
+                  ? 'Fail'
+                  : 'Report'}
           </button>
         </div>
-      )}
-    </div>
+      </div>
+    </>
   );
 };
 
@@ -1276,30 +1340,6 @@ const ErrorBanner = ({ error, onDismiss, onRetry, theme }) => {
           </div>
         </div>
       </div>
-    </div>
-  );
-};
-
-const DatabaseToggle = ({ useDatabase, onToggle, disabled }) => {
-  return (
-    <div className="flex flex-col items-center gap-1 min-w-[56px]">
-      <button
-        onClick={onToggle}
-        disabled={disabled}
-        className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none transition-all duration-300 flex items-center justify-center rounded-full ${disabled ? 'opacity-50 cursor-not-allowed' : `cursor-pointer ${GOLD.goldHoverBg} hover:scale-105`}`}
-        aria-label={useDatabase ? 'Switch to LLM Mode' : 'Switch to Database Mode'}
-      >
-        {useDatabase ? (
-          <Library size={21} className={GOLD.goldText} />
-        ) : (
-          <Sparkles size={21} className={GOLD.goldText} />
-        )}
-      </button>
-      <span
-        className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
-      >
-        {useDatabase ? 'Local' : 'Web'}
-      </span>
     </div>
   );
 };
@@ -1752,25 +1792,23 @@ const SplashScreen = ({ isOpen, onDismiss, showOnboarding, theme }) => {
           />
         ))}
 
-        {/* Brand — بالعربي + poetry + feather */}
+        {/* Brand — بالعربي + poetry + feather (uses BRAND constants) */}
         <div
           style={{
             position: 'relative',
             zIndex: 10,
             display: 'flex',
-            alignItems: 'flex-end',
+            alignItems: 'center',
             justifyContent: 'center',
-            gap: '0.75rem',
+            gap: '0.5rem',
             marginBottom: '0.75rem',
           }}
         >
           <span
             style={{
-              fontFamily: "'Reem Kufi', sans-serif",
-              fontWeight: 700,
-              fontSize: 'clamp(3rem, 6vw, 4.5rem)',
-              color: isDark ? '#D4D0C8' : '#1A1614',
-              lineHeight: 1,
+              ...BRAND.arabic,
+              color: gold,
+              textShadow: '0 0 40px rgba(197,160,89,0.3)',
             }}
             dir="rtl"
             lang="ar"
@@ -1779,27 +1817,13 @@ const SplashScreen = ({ isOpen, onDismiss, showOnboarding, theme }) => {
           </span>
           <span
             style={{
-              fontFamily: "'Forum', serif",
-              fontSize: 'clamp(1.25rem, 2.5vw, 1.75rem)',
-              letterSpacing: '-0.05em',
-              color: gold,
-              lineHeight: 1,
-              textShadow: '0 0 40px rgba(197,160,89,0.3)',
-              paddingBottom: '0.15em',
+              ...BRAND.english,
+              color: isDark ? '#D4D0C8' : '#1A1614',
             }}
           >
             poetry
           </span>
-          <Feather
-            style={{
-              width: 'clamp(24px, 4vw, 36px)',
-              height: 'clamp(24px, 4vw, 36px)',
-              color: gold,
-              opacity: 0.8,
-              marginBottom: '0.15em',
-            }}
-            strokeWidth={1.5}
-          />
+          <Feather style={{ ...BRAND.feather, color: gold }} strokeWidth={1.5} />
         </div>
 
         {/* Subtitle */}
@@ -2151,209 +2175,124 @@ const SplashScreen = ({ isOpen, onDismiss, showOnboarding, theme }) => {
   =============================================================================
 */
 
-const AuthModal = ({ isOpen, onClose, onSignInWithGoogle, onSignInWithApple, theme }) => {
+const AuthModal = ({ isOpen, onClose, onSignInWithGoogle, theme, message }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{
+        background:
+          'radial-gradient(ellipse at center, rgba(197,160,89,0.08) 0%, rgba(0,0,0,0.7) 100%)',
+      }}
+      onClick={onClose}
+    >
       <div
-        className={`relative w-full max-w-md ${theme.glass} ${theme.border} border ${DESIGN.radius} p-8 shadow-2xl`}
+        className="relative w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl"
+        style={{
+          background: 'linear-gradient(145deg, rgba(20,18,15,0.97) 0%, rgba(12,12,14,0.98) 100%)',
+          border: '1px solid rgba(197,160,89,0.25)',
+        }}
+        onClick={(e) => e.stopPropagation()}
       >
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/10 transition-colors"
-          aria-label="Close"
-        >
-          <X size={20} className={theme.text} />
-        </button>
+        {/* Gold accent line */}
+        <div
+          style={{
+            height: '2px',
+            background:
+              'linear-gradient(90deg, transparent, rgba(197,160,89,0.6), rgba(212,180,120,0.8), rgba(197,160,89,0.6), transparent)',
+          }}
+        />
 
-        <div className="text-center mb-8">
-          <h2 className={`font-amiri text-3xl ${theme.titleColor} mb-2`}>مرحباً</h2>
-          <p className={`font-brand-en text-sm ${theme.text} opacity-60`}>
-            Sign in to save poems and preferences
-          </p>
-        </div>
+        <div className="px-8 pt-8 pb-6">
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/10 transition-colors"
+            aria-label="Close"
+          >
+            <X size={18} style={{ color: 'rgba(197,160,89,0.6)' }} />
+          </button>
 
-        <div className="space-y-3">
+          {/* Greeting */}
+          <div className="text-center mb-6">
+            <h2 className="font-amiri text-3xl mb-2" style={{ color: '#C5A059' }}>
+              مرحباً
+            </h2>
+            <p className="font-brand-en text-sm text-stone-400 leading-relaxed">
+              {message || 'Sign in to save poems and preferences'}
+            </p>
+          </div>
+
+          {/* Decorative divider */}
+          <div className="flex items-center gap-3 mb-6">
+            <div className="flex-1 h-px bg-gradient-to-r from-transparent to-[#C5A059]/30" />
+            <Feather size={12} style={{ color: 'rgba(197,160,89,0.4)' }} />
+            <div className="flex-1 h-px bg-gradient-to-l from-transparent to-[#C5A059]/30" />
+          </div>
+
+          {/* Google sign-in button */}
           <button
             onClick={onSignInWithGoogle}
-            className={`w-full py-3 px-4 ${theme.brandBg} ${theme.brandBorder} border ${DESIGN.radius} ${theme.brand} font-brand-en text-sm font-medium hover:bg-opacity-80 transition-all flex items-center justify-center gap-3`}
+            className="w-full py-3.5 px-5 rounded-xl transition-all duration-200 flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98]"
+            style={{
+              background:
+                'linear-gradient(135deg, rgba(197,160,89,0.12) 0%, rgba(197,160,89,0.06) 100%)',
+              border: '1px solid rgba(197,160,89,0.3)',
+              color: '#D4C8B0',
+              fontFamily: "'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif",
+              fontSize: '14px',
+              fontWeight: 500,
+              letterSpacing: '0.01em',
+            }}
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path
-                fill="currentColor"
+                fill="#4285F4"
                 d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
               />
               <path
-                fill="currentColor"
+                fill="#34A853"
                 d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
               />
               <path
-                fill="currentColor"
+                fill="#FBBC05"
                 d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
               />
               <path
-                fill="currentColor"
+                fill="#EA4335"
                 d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
               />
             </svg>
             Continue with Google
           </button>
 
-          <button
-            onClick={onSignInWithApple}
-            className={`w-full py-3 px-4 ${theme.brandBg} ${theme.brandBorder} border ${DESIGN.radius} ${theme.brand} font-brand-en text-sm font-medium hover:bg-opacity-80 transition-all flex items-center justify-center gap-3`}
+          <p
+            className="mt-5 text-center text-[10px] text-stone-600"
+            style={{ fontFamily: "'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif" }}
           >
-            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M17.05 20.28c-.98.95-2.05.8-3.08.35-1.09-.46-2.09-.48-3.24 0-1.44.62-2.2.44-3.06-.35C2.79 15.25 3.51 7.59 9.05 7.31c1.35.07 2.29.74 3.08.8 1.18-.24 2.31-.93 3.57-.84 1.51.12 2.65.72 3.4 1.8-3.12 1.87-2.38 5.98.48 7.13-.57 1.5-1.31 2.99-2.54 4.09l.01-.01zM12.03 7.25c-.15-2.23 1.66-4.07 3.74-4.25.29 2.58-2.34 4.5-3.74 4.25z" />
-            </svg>
-            Continue with Apple
-          </button>
+            By signing in, you agree to our Terms of Service
+          </p>
         </div>
 
-        <p className={`mt-6 text-center text-xs ${theme.text} opacity-40 font-brand-en`}>
-          By signing in, you agree to our Terms of Service and Privacy Policy
-        </p>
-      </div>
-    </div>
-  );
-};
-
-const AuthButton = ({
-  user,
-  darkMode,
-  onSignIn,
-  onSignOut,
-  onOpenSavedPoems,
-  onOpenSettings,
-  theme,
-}) => {
-  const [showMenu, setShowMenu] = useState(false);
-  const menuRef = useRef(null);
-
-  useEffect(() => {
-    const clickOut = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) {
-        setShowMenu(false);
-      }
-    };
-    document.addEventListener('mousedown', clickOut);
-    return () => document.removeEventListener('mousedown', clickOut);
-  }, []);
-
-  if (!user) {
-    return (
-      <div className="flex flex-col items-center gap-1 min-w-[56px]">
-        <button
-          onClick={onSignIn}
-          className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
-          aria-label="Sign In"
-        >
-          <LogIn size={21} className={GOLD.goldText} />
-        </button>
-        <span
-          className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
-        >
-          Sign In
-        </span>
-      </div>
-    );
-  }
-
-  return (
-    <div className="relative flex flex-col items-center gap-1 min-w-[56px]" ref={menuRef}>
-      <button
-        onClick={() => setShowMenu(!showMenu)}
-        className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
-        aria-label="User Menu"
-      >
-        {user.user_metadata?.avatar_url ? (
-          <img
-            src={user.user_metadata.avatar_url}
-            alt="User avatar"
-            className="w-[21px] h-[21px] rounded-full object-cover"
-          />
-        ) : (
-          <User size={21} className={GOLD.goldText} />
-        )}
-      </button>
-      <span
-        className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
-      >
-        Account
-      </span>
-
-      {showMenu && (
+        {/* Gold accent bottom */}
         <div
-          className={`absolute bottom-full left-1/2 transform -translate-x-1/2 mb-3 min-w-[200px] ${darkMode ? 'bg-[rgba(20,18,16,0.98)] border-[rgba(197,160,89,0.15)] shadow-[0_-10px_40px_rgba(0,0,0,0.7)]' : 'bg-white/95 border-stone-200 shadow-[0_-10px_40px_rgba(0,0,0,0.15)]'} backdrop-blur-[48px] border rounded-3xl p-3 z-50`}
-        >
-          <div className="px-4 py-3 border-b border-[rgba(197,160,89,0.08)]">
-            <p className={`font-brand-en text-xs ${GOLD.goldText} font-medium truncate`}>
-              {user.email || user.user_metadata?.full_name || 'User'}
-            </p>
-          </div>
-          <button
-            onClick={() => {
-              onOpenSavedPoems();
-              setShowMenu(false);
-            }}
-            className="w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex items-center gap-3 border-b border-[rgba(197,160,89,0.08)] hover:bg-[rgba(197,160,89,0.08)]"
-          >
-            <BookOpen size={18} className={GOLD.goldText} />
-            <div className="flex flex-col items-start">
-              <div className={`font-amiri text-base ${GOLD.goldText} font-medium`}>قصائدي</div>
-              <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">
-                My Poems
-              </div>
-            </div>
-          </button>
-          <button
-            onClick={() => {
-              onOpenSettings();
-              setShowMenu(false);
-            }}
-            className="w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex items-center gap-3 border-b border-[rgba(197,160,89,0.08)] hover:bg-[rgba(197,160,89,0.08)]"
-          >
-            <Settings2 size={18} className={GOLD.goldText} />
-            <div className="flex flex-col items-start">
-              <div className={`font-amiri text-base ${GOLD.goldText} font-medium`}>الإعدادات</div>
-              <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">
-                Settings
-              </div>
-            </div>
-          </button>
-          <button
-            onClick={() => {
-              onSignOut();
-              setShowMenu(false);
-            }}
-            className="w-full p-[14px_20px] cursor-pointer rounded-2xl transition-all duration-200 flex items-center gap-3 hover:bg-[rgba(197,160,89,0.08)]"
-          >
-            <LogOut size={18} className={GOLD.goldText} />
-            <div className="flex flex-col items-start">
-              <div className={`font-amiri text-base ${GOLD.goldText} font-medium`}>
-                تسجيل الخروج
-              </div>
-              <div className="font-brand-en text-[9px] uppercase tracking-[0.12em] opacity-45 text-[#a8a29e]">
-                Sign Out
-              </div>
-            </div>
-          </button>
-        </div>
-      )}
+          style={{
+            height: '1px',
+            background: 'linear-gradient(90deg, transparent, rgba(197,160,89,0.3), transparent)',
+          }}
+        />
+      </div>
     </div>
   );
 };
 
-const SavePoemButton = ({ poem, isSaved, onSave, onUnsave, disabled }) => {
-  const [showTooltip, setShowTooltip] = useState(false);
-
+const SavePoemButton = ({ poem, isSaved, onSave, onUnsave, disabled, onSignIn }) => {
   const handleClick = () => {
-    if (disabled) {
-      setShowTooltip(true);
-      setTimeout(() => setShowTooltip(false), 2000);
+    if (disabled && onSignIn) {
+      onSignIn('Sign in to save your favourites');
       return;
     }
+    if (disabled) return;
 
     if (isSaved) {
       onUnsave();
@@ -2379,25 +2318,17 @@ const SavePoemButton = ({ poem, isSaved, onSave, onUnsave, disabled }) => {
       >
         {isSaved ? 'Saved' : 'Save'}
       </span>
-
-      {showTooltip && disabled && (
-        <div className="absolute bottom-full mb-2 px-3 py-2 bg-stone-900 text-white text-xs rounded-lg whitespace-nowrap shadow-lg">
-          Sign in to save poems
-        </div>
-      )}
     </div>
   );
 };
 
-const DownvoteButton = ({ poem, isDownvoted, onDownvote, onUndownvote, disabled }) => {
-  const [showTooltip, setShowTooltip] = useState(false);
-
+const DownvoteButton = ({ poem, isDownvoted, onDownvote, onUndownvote, disabled, onSignIn }) => {
   const handleClick = () => {
-    if (disabled) {
-      setShowTooltip(true);
-      setTimeout(() => setShowTooltip(false), 2000);
+    if (disabled && onSignIn) {
+      onSignIn('Sign in to flag poems');
       return;
     }
+    if (disabled) return;
 
     if (isDownvoted) {
       onUndownvote();
@@ -2423,12 +2354,6 @@ const DownvoteButton = ({ poem, isDownvoted, onDownvote, onUndownvote, disabled 
       >
         {isDownvoted ? 'Flagged' : 'Flag'}
       </span>
-
-      {showTooltip && disabled && (
-        <div className="absolute bottom-full mb-2 px-3 py-2 bg-stone-900 text-white text-xs rounded-lg whitespace-nowrap shadow-lg">
-          Sign in to flag poems
-        </div>
-      )}
     </div>
   );
 };
@@ -2555,158 +2480,6 @@ const SavedPoemsView = ({
   );
 };
 
-const SettingsView = ({
-  isOpen,
-  onClose,
-  darkMode,
-  onToggleDarkMode,
-  currentFont,
-  onSelectFont,
-  user,
-  theme,
-}) => {
-  if (!isOpen) return null;
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-      onKeyDown={(e) => {
-        if (e.key === 'Escape') onClose();
-      }}
-    >
-      <div
-        className={`relative w-full max-w-lg max-h-[85vh] flex flex-col ${theme.glass} ${theme.border} border ${DESIGN.radius} shadow-2xl`}
-      >
-        <div className="flex items-center justify-between p-6 pb-4 border-b border-stone-500/10 flex-shrink-0">
-          <div>
-            <h2 className={`font-amiri text-2xl ${theme.titleColor}`}>الإعدادات</h2>
-            <p className={`font-brand-en text-xs ${theme.text} opacity-50 mt-1`}>Preferences</p>
-          </div>
-          <button
-            onClick={onClose}
-            className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full hover:bg-white/10 transition-colors"
-            aria-label="Close"
-          >
-            <X size={20} className={theme.text} />
-          </button>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-6 custom-scrollbar space-y-8">
-          {/* Theme Section */}
-          <div>
-            <div className="mb-3">
-              <h3 className={`font-amiri text-lg ${theme.titleColor}`}>المظهر</h3>
-              <p
-                className={`font-brand-en text-[10px] uppercase tracking-[0.12em] ${theme.text} opacity-40`}
-              >
-                Appearance
-              </p>
-            </div>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                onClick={() => {
-                  if (!darkMode) onToggleDarkMode();
-                }}
-                className={`p-4 ${DESIGN.radius} border-2 transition-all flex flex-col items-center gap-2 cursor-pointer ${
-                  darkMode
-                    ? `${THEME.dark.goldBorder} ${THEME.dark.goldBg10}`
-                    : `${theme.border} bg-transparent ${GOLD.goldHoverBorderSubtle}`
-                }`}
-              >
-                <Moon size={24} className={darkMode ? GOLD.goldText : `${theme.text} opacity-50`} />
-                <div className="text-center">
-                  <p className={`font-amiri text-sm ${darkMode ? GOLD.goldText : theme.text}`}>
-                    ليلي
-                  </p>
-                  <p
-                    className={`font-brand-en text-[9px] uppercase tracking-[0.1em] ${theme.text} opacity-40`}
-                  >
-                    Dark
-                  </p>
-                </div>
-              </button>
-              <button
-                onClick={() => {
-                  if (darkMode) onToggleDarkMode();
-                }}
-                className={`p-4 ${DESIGN.radius} border-2 transition-all flex flex-col items-center gap-2 cursor-pointer ${
-                  !darkMode
-                    ? `${THEME.dark.goldBorder} ${THEME.dark.goldBg10}`
-                    : `${theme.border} bg-transparent ${GOLD.goldHoverBorderSubtle}`
-                }`}
-              >
-                <Sun size={24} className={!darkMode ? GOLD.goldText : `${theme.text} opacity-50`} />
-                <div className="text-center">
-                  <p className={`font-amiri text-sm ${!darkMode ? GOLD.goldText : theme.text}`}>
-                    نهاري
-                  </p>
-                  <p
-                    className={`font-brand-en text-[9px] uppercase tracking-[0.1em] ${theme.text} opacity-40`}
-                  >
-                    Light
-                  </p>
-                </div>
-              </button>
-            </div>
-          </div>
-
-          {/* Font Section */}
-          <div>
-            <div className="mb-3">
-              <h3 className={`font-amiri text-lg ${theme.titleColor}`}>الخط</h3>
-              <p
-                className={`font-brand-en text-[10px] uppercase tracking-[0.12em] ${theme.text} opacity-40`}
-              >
-                Typography
-              </p>
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              {FONTS.map((font) => (
-                <button
-                  key={font.id}
-                  onClick={() => onSelectFont(font.id)}
-                  className={`p-3 ${DESIGN.radius} border-2 transition-all flex flex-col items-center gap-1.5 cursor-pointer ${
-                    currentFont === font.id
-                      ? `${THEME.dark.goldBorder} ${THEME.dark.goldBg10}`
-                      : `${theme.border} bg-transparent ${GOLD.goldHoverBorderSubtle}`
-                  }`}
-                >
-                  <p
-                    className={`${font.family} text-lg ${currentFont === font.id ? GOLD.goldText : theme.text}`}
-                    dir="rtl"
-                  >
-                    بسم الله
-                  </p>
-                  <div className="text-center">
-                    <p className={`font-amiri text-xs ${theme.text} opacity-60`}>{font.labelAr}</p>
-                    <p
-                      className={`font-brand-en text-[8px] uppercase tracking-[0.1em] ${theme.text} opacity-30`}
-                    >
-                      {font.label}
-                    </p>
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* User Info */}
-          {user && (
-            <div className={`pt-4 border-t border-stone-500/10`}>
-              <p className={`font-brand-en text-xs ${theme.text} opacity-30 text-center`}>
-                Signed in as {user.email || user.user_metadata?.full_name || 'User'}
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-};
-
 /* =============================================================================
   VERTICAL SIDEBAR (Mobile overflow)
   =============================================================================
@@ -2718,6 +2491,7 @@ const VerticalSidebar = ({
   showCopySuccess,
   onShare,
   showShareSuccess,
+  showInsightSuccess,
   onSignIn,
   onSignOut,
   user,
@@ -2730,27 +2504,43 @@ const VerticalSidebar = ({
   onToggleTransliteration,
   textSizeLabel,
   onCycleTextSize,
-  dailyPoem,
-  onDailyPoem,
-  isCurrentDaily,
   darkMode,
   onToggleDarkMode,
   currentFont,
   onCycleFont,
   selectedCategory,
   onSelectCategory,
-  useDatabase,
-  onToggleDatabase,
+  showDebugLogs,
+  onToggleDebugLogs,
 }) => {
+  const [expanded, setExpanded] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [poetPickerOpen, setPoetPickerOpen] = useState(false);
+  const sidebarRef = useRef(null);
+  const scrollRef = useRef(null);
+
+  // Collapse settings when tapping outside the sidebar
+  useEffect(() => {
+    if (!settingsOpen && !expanded) return;
+    const handleOutsideClick = (e) => {
+      if (sidebarRef.current && !sidebarRef.current.contains(e.target)) {
+        if (settingsOpen) setSettingsOpen(false);
+        if (expanded) setExpanded(false);
+      }
+    };
+    document.addEventListener('pointerdown', handleOutsideClick);
+    return () => document.removeEventListener('pointerdown', handleOutsideClick);
+  }, [settingsOpen, expanded]);
 
   const gold = theme.gold;
   const btnBase =
     'w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-200';
   const btnHover = theme.goldHoverBg15;
   const subBtnBase =
-    'w-9 h-9 rounded-lg flex items-center justify-center transition-all duration-200';
+    'w-11 h-11 rounded-lg flex items-center justify-center transition-all duration-200';
   const subBtnHover = theme.goldHoverBg15;
+  const labelCls =
+    'text-[7px] leading-none -mt-0.5 font-brand-en tracking-[0.12em] uppercase opacity-60';
 
   return (
     <>
@@ -2759,67 +2549,156 @@ const VerticalSidebar = ({
           from { transform: translateY(-50%) translateX(100%); opacity: 0; }
           to { transform: translateY(-50%) translateX(0); opacity: 1; }
         }
+        @keyframes goldCheckSparkle {
+          0% { transform: scale(0.5) rotate(-10deg); opacity: 0; filter: drop-shadow(0 0 0px rgba(197,160,89,0)); }
+          30% { transform: scale(1.2) rotate(0deg); opacity: 1; filter: drop-shadow(0 0 8px rgba(197,160,89,0.8)); }
+          60% { transform: scale(1) rotate(0deg); opacity: 1; filter: drop-shadow(0 0 4px rgba(197,160,89,0.5)); }
+          100% { transform: scale(1) rotate(0deg); opacity: 1; filter: drop-shadow(0 0 2px rgba(197,160,89,0.3)); }
+        }
+        .sidebar-drawer {
+          display: grid;
+          grid-template-rows: 0fr;
+          transition: grid-template-rows 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .sidebar-drawer.open {
+          grid-template-rows: 1fr;
+        }
+        .sidebar-drawer-inner {
+          overflow: hidden;
+        }
       `}</style>
       <div
-        className={`fixed right-0 top-1/2 -translate-y-1/2 z-[45] md:hidden rounded-l-2xl bg-gradient-to-b from-black/70 via-black/60 to-black/70 backdrop-blur-xl border-l-2 ${theme.goldBorderAccent} py-3 px-1.5`}
-        style={{ animation: 'slideInRight 0.4s ease-out' }}
+        ref={sidebarRef}
+        className="fixed right-0 md:right-[24.5rem] top-1/2 -translate-y-1/2 z-[45] rounded-l-2xl md:rounded-2xl bg-gradient-to-b from-black/70 via-black/60 to-black/70 backdrop-blur-xl border-l-2 md:border-2 border-[#C5A059]/40 py-2 transition-all duration-300"
+        style={{
+          animation: 'slideInRight 0.4s ease-out',
+          maxHeight: 'calc(100dvh - 14rem)',
+          width: expanded ? '3.75rem' : '2.5rem',
+          paddingLeft: expanded ? '0.375rem' : '0.25rem',
+          paddingRight: expanded ? '0.375rem' : '0.25rem',
+        }}
       >
-        <div className="flex flex-col items-center gap-1">
-          <button
-            onClick={onExplain}
-            disabled={isInterpreting || interpretation}
-            title="Explain poem"
-            className={`${btnBase} ${btnHover} disabled:opacity-50`}
-          >
-            {isInterpreting ? (
-              <Loader2 className="animate-spin" style={{ color: gold }} size={18} />
-            ) : (
-              <Compass style={{ color: gold }} size={18} />
-            )}
-          </button>
+        {/* Toggle handle — always visible, icon hints when collapsed */}
+        <button
+          onClick={() => {
+            if (expanded) {
+              setSettingsOpen(false);
+              setExpanded(false);
+            } else {
+              setExpanded(true);
+            }
+          }}
+          className="flex flex-col items-center gap-1.5 py-1 px-0.5 group w-full"
+          title={expanded ? 'Collapse controls' : 'Open controls'}
+          aria-label={expanded ? 'Collapse sidebar controls' : 'Open sidebar controls'}
+        >
+          {expanded ? (
+            <ChevronRight
+              style={{ color: gold, opacity: 0.5 }}
+              size={14}
+              className="group-hover:opacity-80 transition-opacity"
+            />
+          ) : (
+            <>
+              <ChevronLeft
+                style={{ color: gold, opacity: 0.5 }}
+                size={14}
+                className="group-hover:opacity-80 transition-opacity"
+              />
+              <Brain
+                style={{ color: gold, opacity: 0.6 }}
+                size={16}
+                className="group-hover:opacity-90 transition-opacity"
+              />
+              <Copy
+                style={{ color: gold, opacity: 0.6 }}
+                size={16}
+                className="group-hover:opacity-90 transition-opacity"
+              />
+              <Settings2
+                style={{ color: gold, opacity: 0.6 }}
+                size={16}
+                className="group-hover:opacity-90 transition-opacity"
+              />
+              <ChevronLeft
+                style={{ color: gold, opacity: 0.5 }}
+                size={14}
+                className="group-hover:opacity-80 transition-opacity"
+              />
+            </>
+          )}
+        </button>
 
-          <button onClick={onCopy} title="Copy poem" className={`${btnBase} ${btnHover}`}>
-            {showCopySuccess ? (
-              <Check size={18} className="text-green-500" />
-            ) : (
-              <Copy style={{ color: gold }} size={18} />
-            )}
-          </button>
-
-          <button onClick={onShare} title="Share poem" className={`${btnBase} ${btnHover}`}>
-            {showShareSuccess ? (
-              <Check size={18} className="text-green-500" />
-            ) : (
-              <Share2 style={{ color: gold }} size={18} />
-            )}
-          </button>
-
-          <button
-            onClick={onToggleTranslation}
-            title={showTranslation ? 'Hide translation' : 'Show translation'}
-            className={`${btnBase} ${btnHover} ${!showTranslation ? 'opacity-40' : ''}`}
-          >
-            <Languages style={{ color: gold }} size={18} />
-          </button>
-
-          <div className="w-6 h-px bg-stone-500/30 mx-auto my-1" />
-
-          <button
-            onClick={() => setSettingsOpen((prev) => !prev)}
-            title="Settings"
-            className={`${btnBase} ${btnHover} ${settingsOpen ? theme.goldActiveBg : ''}`}
-          >
-            <Settings2 style={{ color: gold }} size={18} />
-          </button>
-
-          {settingsOpen && (
+        {/* Expanded controls — animated grid drawer */}
+        <div className={`sidebar-drawer ${expanded ? 'open' : ''}`}>
+          <div className="sidebar-drawer-inner">
             <div
-              className={`flex flex-col items-center gap-0.5 pl-0.5 border-l-2 ${theme.goldBorderMuted}`}
+              ref={scrollRef}
+              className="overflow-y-auto overflow-x-hidden flex flex-col items-center gap-1"
+              style={{ maxHeight: 'calc(100dvh - 16rem)' }}
             >
+              <button
+                onClick={onExplain}
+                disabled={isInterpreting}
+                title={interpretation ? 'Insight available — tap to confirm' : 'Explain poem'}
+                aria-label="Explain poem meaning"
+                className={`${btnBase} ${btnHover} ${isInterpreting ? 'opacity-50' : ''}`}
+              >
+                {isInterpreting ? (
+                  <Loader2 className="animate-spin" style={{ color: gold }} size={18} />
+                ) : showInsightSuccess ? (
+                  <Check
+                    style={{ color: gold, animation: 'goldCheckSparkle 0.5s ease-out forwards' }}
+                    size={18}
+                  />
+                ) : (
+                  <Brain style={{ color: gold }} size={18} />
+                )}
+              </button>
+              <span
+                className={labelCls}
+                style={{ color: gold, opacity: interpretation ? 0.9 : 0.6 }}
+              >
+                Explain
+              </span>
+
+              <button
+                onClick={onCopy}
+                title="Copy poem"
+                aria-label="Copy poem to clipboard"
+                className={`${btnBase} ${btnHover}`}
+              >
+                {showCopySuccess ? (
+                  <Check
+                    style={{ color: gold, animation: 'goldCheckSparkle 0.5s ease-out forwards' }}
+                    size={18}
+                  />
+                ) : (
+                  <Copy style={{ color: gold }} size={18} />
+                )}
+              </button>
+              <span className={labelCls} style={{ color: gold }}>
+                Copy
+              </span>
+
+              <button onClick={onShare} title="Share poem" className={`${btnBase} ${btnHover}`}>
+                {showShareSuccess ? (
+                  <Check
+                    style={{ color: gold, animation: 'goldCheckSparkle 0.5s ease-out forwards' }}
+                    size={18}
+                  />
+                ) : (
+                  <Share2 style={{ color: gold }} size={18} />
+                )}
+              </button>
+              <span className={labelCls} style={{ color: gold }}>
+                Share
+              </span>
+
               <button
                 onClick={onToggleTransliteration}
                 title={showTransliteration ? 'Hide romanization' : 'Show romanization'}
-                className={`${subBtnBase} ${subBtnHover} ${!showTransliteration ? 'opacity-40' : ''}`}
+                className={`${btnBase} ${btnHover} ${showTransliteration ? theme.goldActiveBg + ' border ' + theme.goldBorderSubtle : 'opacity-40'}`}
               >
                 <span
                   className="text-[12px] font-bold leading-none"
@@ -2828,179 +2707,305 @@ const VerticalSidebar = ({
                   عA
                 </span>
               </button>
+              <span className={labelCls} style={{ color: gold }}>
+                Romanize
+              </span>
 
-              <button
-                onClick={onCycleTextSize}
-                title={`Text size: ${textSizeLabel}`}
-                className={`${subBtnBase} ${subBtnHover}`}
-              >
-                <span className="font-brand-en text-[13px] font-bold" style={{ color: gold }}>
-                  Aa
-                </span>
-              </button>
-
-              {dailyPoem && (
-                <button
-                  onClick={onDailyPoem}
-                  title="Poem of the Day"
-                  className={`${subBtnBase} ${subBtnHover} ${isCurrentDaily ? theme.goldActiveBg : ''}`}
-                >
-                  <CalendarDays style={{ color: gold }} size={16} />
-                </button>
-              )}
-
-              <button
-                onClick={onToggleDarkMode}
-                title={darkMode ? 'Light mode' : 'Dark mode'}
-                className={`${subBtnBase} ${subBtnHover}`}
-              >
-                {darkMode ? (
-                  <Sun style={{ color: gold }} size={16} />
-                ) : (
-                  <Moon style={{ color: gold }} size={16} />
-                )}
-              </button>
-
-              <button
-                onClick={onCycleFont}
-                title={`Font: ${currentFont}`}
-                className={`${subBtnBase} ${subBtnHover}`}
-              >
-                <Feather style={{ color: gold }} size={16} />
-              </button>
+              <div className="w-6 h-px bg-stone-500/30 mx-auto my-1" />
 
               <button
                 onClick={() => {
-                  const catIds = CATEGORIES.map((c) => c.id);
-                  const idx = catIds.indexOf(selectedCategory);
-                  onSelectCategory(catIds[(idx + 1) % catIds.length]);
+                  setSettingsOpen((prev) => !prev);
+                  // Scroll sidebar all the way down so settings drawer is visible
+                  if (!settingsOpen && scrollRef.current) {
+                    setTimeout(
+                      () =>
+                        scrollRef.current.scrollTo({
+                          top: scrollRef.current.scrollHeight,
+                          behavior: 'smooth',
+                        }),
+                      350
+                    );
+                  }
                 }}
-                title="Poet filter"
-                className={`${subBtnBase} ${subBtnHover}`}
+                title="Settings"
+                className={`${btnBase} ${btnHover} ${settingsOpen ? theme.goldActiveBg : ''}`}
               >
-                <Library style={{ color: gold }} size={16} />
+                <Settings2
+                  style={{
+                    color: gold,
+                    transition: 'transform 0.3s',
+                    transform: settingsOpen ? 'rotate(60deg)' : 'none',
+                  }}
+                  size={18}
+                />
               </button>
+              <span className={labelCls} style={{ color: gold }}>
+                Settings
+              </span>
+
+              {/* Smooth animated settings drawer */}
+              <div className={`sidebar-drawer ${settingsOpen ? 'open' : ''}`}>
+                <div className="sidebar-drawer-inner">
+                  <div
+                    className={`flex flex-col items-center gap-1 pl-0.5 border-l-2 ${theme.goldBorderMuted}`}
+                  >
+                    <button
+                      onClick={onToggleTranslation}
+                      title={showTranslation ? 'Hide translation' : 'Show translation'}
+                      className={`${subBtnBase} ${subBtnHover} ${showTranslation ? theme.goldActiveBg + ' border ' + theme.goldBorderSubtle : 'opacity-40'}`}
+                    >
+                      <Languages style={{ color: gold }} size={16} />
+                    </button>
+                    <span className={labelCls} style={{ color: gold }}>
+                      Translate
+                    </span>
+
+                    <button
+                      onClick={onCycleTextSize}
+                      title={`Text size: ${textSizeLabel}`}
+                      className={`${subBtnBase} ${subBtnHover}`}
+                    >
+                      <span
+                        className="text-[13px] font-bold leading-none"
+                        style={{ color: gold, fontFamily: "'Forum', serif" }}
+                      >
+                        T±
+                      </span>
+                    </button>
+                    <span className={labelCls} style={{ color: gold }}>
+                      Size
+                    </span>
+
+                    <button
+                      onClick={onToggleDarkMode}
+                      title={darkMode ? 'Light mode' : 'Dark mode'}
+                      className={`${subBtnBase} ${subBtnHover}`}
+                    >
+                      {darkMode ? (
+                        <Sun style={{ color: gold }} size={16} />
+                      ) : (
+                        <Moon style={{ color: gold }} size={16} />
+                      )}
+                    </button>
+                    <span className={labelCls} style={{ color: gold }}>
+                      {darkMode ? 'Light' : 'Dark'}
+                    </span>
+
+                    <button
+                      onClick={onCycleFont}
+                      title={`Font: ${currentFont}`}
+                      className={`${subBtnBase} ${subBtnHover}`}
+                    >
+                      <span
+                        className="text-[15px] font-bold leading-none"
+                        style={{ color: gold, fontFamily: "'Amiri', serif" }}
+                      >
+                        ي
+                      </span>
+                    </button>
+                    <span className={labelCls} style={{ color: gold }}>
+                      Font
+                    </span>
+
+                    <button
+                      onClick={onToggleDebugLogs}
+                      title={showDebugLogs ? 'Hide dev logs' : 'Show dev logs'}
+                      className={`${subBtnBase} ${subBtnHover} ${showDebugLogs ? theme.goldActiveBg + ' border ' + theme.goldBorderSubtle : 'opacity-40'}`}
+                    >
+                      <Bug style={{ color: gold }} size={16} />
+                    </button>
+                    <span className={labelCls} style={{ color: gold }}>
+                      Logs
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              <div className="w-6 h-px bg-stone-500/30 mx-auto my-1" />
 
               <button
-                onClick={onToggleDatabase}
-                title={useDatabase ? 'Switch to LLM' : 'Switch to Database'}
-                className={`${subBtnBase} ${subBtnHover}`}
+                onClick={user ? onSignOut : onSignIn}
+                title={user ? 'Sign out' : 'Sign in'}
+                className={`${btnBase} ${btnHover}`}
               >
-                {useDatabase ? (
-                  <Library style={{ color: gold }} size={16} />
+                {user ? (
+                  <LogOut style={{ color: gold }} size={18} />
                 ) : (
-                  <Sparkles style={{ color: gold }} size={16} />
+                  <UserRound style={{ color: gold }} size={18} />
                 )}
               </button>
+              <span className={labelCls} style={{ color: gold }}>
+                {user ? 'Sign Out' : 'Sign In'}
+              </span>
             </div>
-          )}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
 
-          <div className="w-6 h-px bg-stone-500/30 mx-auto my-1" />
+/* =============================================================================
+  INSIGHTS DRAWER (Mobile bottom sheet)
+  =============================================================================
+*/
 
+const InsightsDrawer = ({
+  isOpen,
+  onClose,
+  isInterpreting,
+  insightParts,
+  interpretation,
+  showTranslation,
+  current,
+  theme,
+  darkMode,
+}) => {
+  const [expanded, setExpanded] = useState(false);
+  const [dragY, setDragY] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+  const dragStartY = useRef(0);
+  const drawerRef = useRef(null);
+
+  // Reset expanded state when drawer closes
+  useEffect(() => {
+    if (!isOpen) {
+      setExpanded(false);
+      setDragY(0);
+    }
+  }, [isOpen]);
+
+  const handleDragStart = (e) => {
+    setIsDragging(true);
+    dragStartY.current = e.touches ? e.touches[0].clientY : e.clientY;
+  };
+
+  const handleDragMove = (e) => {
+    if (!isDragging) return;
+    const currentY = e.touches ? e.touches[0].clientY : e.clientY;
+    const delta = currentY - dragStartY.current;
+    // Only allow dragging down (positive delta) or limited up
+    setDragY(Math.max(-40, delta));
+  };
+
+  const handleDragEnd = () => {
+    setIsDragging(false);
+    if (dragY > 80) {
+      // Dragged down enough — close
+      onClose();
+    } else if (dragY < -20) {
+      // Dragged up — expand
+      setExpanded(true);
+    }
+    setDragY(0);
+  };
+
+  if (!isOpen) return null;
+
+  const height = expanded ? '75dvh' : '40dvh';
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        className="fixed inset-0 z-[60] bg-black/30 backdrop-blur-sm"
+        style={{ animation: 'fadeIn 0.2s ease-out' }}
+        onClick={onClose}
+      />
+      {/* Drawer */}
+      <div
+        ref={drawerRef}
+        className="fixed bottom-0 left-0 right-0 z-[61] rounded-t-3xl border-t border-[#C5A059]/20 overflow-hidden"
+        style={{
+          height,
+          transform: `translateY(${Math.max(0, dragY)}px)`,
+          transition: isDragging
+            ? 'none'
+            : 'height 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
+          animation: 'insightsDrawerIn 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+          background: darkMode
+            ? 'linear-gradient(180deg, rgba(18,16,14,0.98) 0%, rgba(12,12,14,0.99) 100%)'
+            : 'linear-gradient(180deg, rgba(253,252,248,0.98) 0%, rgba(245,243,238,0.99) 100%)',
+        }}
+      >
+        {/* Drag handle */}
+        <div
+          className="flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing touch-none"
+          onTouchStart={handleDragStart}
+          onTouchMove={handleDragMove}
+          onTouchEnd={handleDragEnd}
+          onMouseDown={handleDragStart}
+          onMouseMove={handleDragMove}
+          onMouseUp={handleDragEnd}
+          onClick={() => setExpanded((prev) => !prev)}
+        >
+          <div className="w-10 h-1 rounded-full bg-[#C5A059]/30" />
+        </div>
+
+        {/* Header */}
+        <div className="px-6 pb-3 flex items-center justify-between">
+          <h3 className="font-brand-en italic font-semibold text-base text-indigo-600 tracking-tight">
+            Poetic Insight
+          </h3>
           <button
-            onClick={() => setSettingsOpen((prev) => !prev)}
-            title="Settings"
-            className={`${btnBase} ${btnHover} ${settingsOpen ? theme.goldActiveBg : ''}`}
+            onClick={onClose}
+            className="p-1.5 rounded-full hover:bg-white/10 transition-colors"
           >
-            <Settings2 style={{ color: gold }} size={18} />
+            <X size={16} style={{ color: theme.gold, opacity: 0.6 }} />
           </button>
+        </div>
 
-          {settingsOpen && (
-            <div
-              className={`flex flex-col items-center gap-0.5 pl-0.5 border-l-2 ${theme.goldBorderMuted}`}
-            >
-              <button
-                onClick={onToggleTransliteration}
-                title={showTransliteration ? 'Hide romanization' : 'Show romanization'}
-                className={`${subBtnBase} ${subBtnHover} ${!showTransliteration ? 'opacity-40' : ''}`}
-              >
-                <span
-                  className="text-[12px] font-bold leading-none"
-                  style={{ color: gold, fontFamily: "'Amiri', serif" }}
+        {/* Content */}
+        <div
+          className="flex-1 overflow-y-auto px-6 pb-8"
+          style={{ maxHeight: 'calc(100% - 3.5rem)' }}
+        >
+          {isInterpreting ? (
+            <div className="flex flex-col items-center justify-center gap-4 opacity-30 animate-pulse py-12">
+              <Sparkles className="animate-spin text-indigo-500" size={28} />
+              <p className="font-brand-en italic text-sm">Consulting Diwan...</p>
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {showTranslation && (
+                <p
+                  className={`font-brand-en italic whitespace-pre-wrap text-sm leading-relaxed ${darkMode ? 'text-stone-100' : 'text-stone-800'}`}
                 >
-                  عA
-                </span>
-              </button>
-
-              <button
-                onClick={onCycleTextSize}
-                title={`Text size: ${textSizeLabel}`}
-                className={`${subBtnBase} ${subBtnHover}`}
-              >
-                <span className="font-brand-en text-[13px] font-bold" style={{ color: gold }}>
-                  Aa
-                </span>
-              </button>
-
-              {dailyPoem && (
-                <button
-                  onClick={onDailyPoem}
-                  title="Poem of the Day"
-                  className={`${subBtnBase} ${subBtnHover} ${isCurrentDaily ? theme.goldActiveBg : ''}`}
-                >
-                  <CalendarDays style={{ color: gold }} size={16} />
-                </button>
+                  {insightParts?.poeticTranslation || current?.english}
+                </p>
               )}
-
-              <button
-                onClick={onToggleDarkMode}
-                title={darkMode ? 'Light mode' : 'Dark mode'}
-                className={`${subBtnBase} ${subBtnHover}`}
-              >
-                {darkMode ? (
-                  <Sun style={{ color: gold }} size={16} />
-                ) : (
-                  <Moon style={{ color: gold }} size={16} />
-                )}
-              </button>
-
-              <button
-                onClick={onCycleFont}
-                title={`Font: ${currentFont}`}
-                className={`${subBtnBase} ${subBtnHover}`}
-              >
-                <Feather style={{ color: gold }} size={16} />
-              </button>
-
-              <button
-                onClick={() => {
-                  const catIds = CATEGORIES.map((c) => c.id);
-                  const idx = catIds.indexOf(selectedCategory);
-                  onSelectCategory(catIds[(idx + 1) % catIds.length]);
-                }}
-                title="Poet filter"
-                className={`${subBtnBase} ${subBtnHover}`}
-              >
-                <Library style={{ color: gold }} size={16} />
-              </button>
-
-              <button
-                onClick={onToggleDatabase}
-                title={useDatabase ? 'Switch to LLM' : 'Switch to Database'}
-                className={`${subBtnBase} ${subBtnHover}`}
-              >
-                {useDatabase ? (
-                  <Library style={{ color: gold }} size={16} />
-                ) : (
-                  <Sparkles style={{ color: gold }} size={16} />
-                )}
-              </button>
+              {insightParts?.depth && (
+                <div className="pt-4 border-t border-indigo-500/10">
+                  <h4 className="text-[10px] font-brand-en font-black text-indigo-600 mb-2 uppercase tracking-widest opacity-80">
+                    The Depth
+                  </h4>
+                  <div className="pl-4 border-l border-indigo-500/10">
+                    <p className="text-sm font-brand-en font-normal opacity-80 leading-relaxed">
+                      {insightParts.depth}
+                    </p>
+                  </div>
+                </div>
+              )}
+              {insightParts?.author && (
+                <div className="pt-4 border-t border-indigo-500/10">
+                  <h4 className="text-[10px] font-brand-en font-black text-indigo-600 mb-2 uppercase tracking-widest opacity-80">
+                    The Author
+                  </h4>
+                  <div className="pl-4 border-l border-indigo-500/10">
+                    <p className="text-sm font-brand-en font-normal opacity-80 leading-relaxed">
+                      {insightParts.author}
+                    </p>
+                  </div>
+                </div>
+              )}
+              {!interpretation && !isInterpreting && (
+                <p className="text-center text-sm opacity-40 font-brand-en italic py-8">
+                  Tap Explain to discover this poem's story
+                </p>
+              )}
             </div>
           )}
-
-          <div className="w-6 h-px bg-stone-500/30 mx-auto my-1" />
-
-          <button
-            onClick={user ? onSignOut : onSignIn}
-            title={user ? 'Sign out' : 'Sign in'}
-            className={`${btnBase} ${btnHover}`}
-          >
-            {user ? (
-              <LogOut style={{ color: gold }} size={18} />
-            ) : (
-              <LogIn style={{ color: gold }} size={18} />
-            )}
-          </button>
         </div>
       </div>
     </>
@@ -3017,6 +3022,7 @@ export default function DiwanApp() {
   const audioRef = useRef(new Audio());
   const isTogglingPlay = useRef(false);
   const controlBarRef = useRef(null);
+  const poetPickerRef = useRef(null);
 
   // Volume-based glow effect refs
   const audioContextRef = useRef(null);
@@ -3026,7 +3032,7 @@ export default function DiwanApp() {
   const sourceNodeRef = useRef(null);
   const volumePulseRef = useRef(null);
 
-  const [headerOpacity, setHeaderOpacity] = useState(1);
+  const [headerOpacity, setHeaderOpacity] = useState(0);
   const [poems, setPoems] = useState(() => {
     // 1. Restore from OAuth redirect (avoids flash of seed poem)
     try {
@@ -3072,6 +3078,8 @@ export default function DiwanApp() {
   });
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [poetPickerOpen, setPoetPickerOpen] = useState(false);
+  const [poetPickerClosing, setPoetPickerClosing] = useState(false);
   const [darkMode, setDarkMode] = useState(true);
   const [currentFont, setCurrentFont] = useState('Amiri');
   const [useDatabase, setUseDatabase] = useState(FEATURES.database);
@@ -3086,15 +3094,11 @@ export default function DiwanApp() {
   const [autoExplainPending, setAutoExplainPending] = useState(false);
   const hasAutoLoaded = useRef(false);
   const [logs, setLogs] = useState([]);
+  const [showDebugLogs, setShowDebugLogs] = useState(FEATURES.debug);
   const [showCopySuccess, setShowCopySuccess] = useState(false);
   const [showShareSuccess, setShowShareSuccess] = useState(false);
-  const [dailyPoem, setDailyPoem] = useState(null);
-  const [isOverflow, setIsOverflow] = useState(() => {
-    // Use 660 as the conservative initial threshold (covers both Supabase and non-Supabase button sets).
-    // The detectOverflow effect below will refine this after mount.
-    const vw = window.visualViewport?.width ?? window.innerWidth;
-    return vw < 660;
-  });
+  const [showInsightSuccess, setShowInsightSuccess] = useState(false);
+  const [insightsDrawerOpen, setInsightsDrawerOpen] = useState(false);
   const [cacheStats, setCacheStats] = useState({
     audioHits: 0,
     audioMisses: 0,
@@ -3105,7 +3109,6 @@ export default function DiwanApp() {
   const activeAudioRequests = useRef(new Set()); // Track in-flight audio generation requests
   const activeInsightRequests = useRef(new Set()); // Track in-flight insight generation requests
   const pollingIntervals = useRef([]); // Track all polling intervals for cleanup
-  const pendingRafRef = useRef(null); // Track pending rAF id for overflow detection deduplication
 
   // Auth state
   const { user, loading: authLoading, signInWithGoogle, signInWithApple, signOut } = useAuth();
@@ -3115,8 +3118,8 @@ export default function DiwanApp() {
   const { emitEvent } = usePoemEvents(user);
 
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authModalMessage, setAuthModalMessage] = useState('');
   const [showSavedPoems, setShowSavedPoems] = useState(false);
-  const [showSettings, setShowSettings] = useState(false);
   const [showSplash, setShowSplash] = useState(true); // Always show splash on every visit
   const [showOnboarding] = useState(() => {
     if (!FEATURES.onboarding) return false;
@@ -3177,12 +3180,17 @@ export default function DiwanApp() {
   const current = filtered[currentIndex] || filtered[0] || poems[0] || null;
 
   const addLog = (label, msg, type = 'info') => {
+    const now = performance.now();
     const time = new Date().toLocaleTimeString([], {
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
     });
-    setLogs((prev) => [...prev, { label, msg: String(msg), type, time }]);
+    setLogs((prev) => {
+      const t0 = prev.length > 0 ? prev[0].ts : now;
+      const relSec = ((now - t0) / 1000).toFixed(1);
+      return [...prev, { label, msg: String(msg), type, time, ts: now, rel: `+${relSec}s` }];
+    });
     if (FEATURES.logging) {
       const logFn =
         type === 'error' ? console.error : type === 'success' ? console.info : console.log;
@@ -3281,47 +3289,6 @@ export default function DiwanApp() {
     }
   }, []);
 
-  // Fetch poem of the day on mount (cached per date in IndexedDB)
-  useEffect(() => {
-    if (!useDatabase) return;
-    const todayKey = `daily-${new Date().toISOString().slice(0, 10)}`;
-
-    (async () => {
-      // Check IndexedDB cache first
-      if (FEATURES.caching) {
-        try {
-          const cached = await cacheOperations.get(CACHE_CONFIG.stores.poems, todayKey);
-          if (cached?.data) {
-            setDailyPoem(cached.data);
-            addLog('Daily', 'Loaded poem of the day from cache', 'info');
-            return;
-          }
-        } catch {}
-      }
-
-      // Fetch from API
-      try {
-        const res = await fetch(`${apiUrl}/api/poems/daily`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const poem = await res.json();
-        if (poem.arabic) poem.arabic = poem.arabic.replace(/\*/g, '\n');
-        poem.isFromDatabase = true;
-        setDailyPoem(poem);
-        addLog('Daily', `Poem of the day: ${poem.poet} — ${poem.title}`, 'success');
-
-        // Cache for today
-        if (FEATURES.caching) {
-          try {
-            await cacheOperations.set(CACHE_CONFIG.stores.poems, todayKey, { data: poem });
-          } catch {}
-        }
-      } catch (err) {
-        Sentry.captureException(err);
-        addLog('Daily', `Failed to load: ${err.message}`, 'error');
-      }
-    })();
-  }, [useDatabase]);
-
   // After OAuth redirect, once the user is signed in, auto-save the stashed poem and clean up
   useEffect(() => {
     if (!user) return;
@@ -3354,60 +3321,6 @@ export default function DiwanApp() {
       }
     }
   }, [autoExplainPending, current?.id, isFetching, isInterpreting, interpretation]);
-
-  useEffect(() => {
-    // Threshold below which overflow mode is always active (prevents oscillation on narrow screens).
-    // Re-runs when user signs in/out so the bar is re-measured after auth state changes.
-    const narrowThreshold = 660;
-
-    const scheduleDetect = () => {
-      // Deduplicate: cancel any pending frame before scheduling a new one
-      if (pendingRafRef.current !== null) cancelAnimationFrame(pendingRafRef.current);
-      pendingRafRef.current = requestAnimationFrame(() => {
-        pendingRafRef.current = null;
-        if (!controlBarRef.current) return;
-        const bar = controlBarRef.current;
-        const vw = window.visualViewport?.width ?? window.innerWidth;
-
-        // Temporarily clip overflow so scrollWidth accurately reflects content width on iOS Safari,
-        // where scrollWidth may equal clientWidth for flex containers with overflow:visible.
-        const savedOverflow = bar.style.overflow;
-        bar.style.overflow = 'hidden';
-        const hasContentOverflow = bar.scrollWidth > bar.clientWidth;
-        bar.style.overflow = savedOverflow;
-
-        // Stay in overflow mode on narrow screens regardless of current bar width,
-        // which prevents oscillation when the bar shrinks after switching to mobile layout.
-        setIsOverflow(hasContentOverflow || vw < narrowThreshold);
-      });
-    };
-
-    scheduleDetect();
-    // Re-measure after a short delay to catch DOM updates from auth state changes
-    // (React may not have rendered the new buttons in the first rAF)
-    const delayedRecheck = setTimeout(scheduleDetect, 100);
-
-    // ResizeObserver catches font-load changes and dynamic content updates.
-    // Guard for environments where ResizeObserver is unavailable (older browsers, some test envs).
-    let resizeObserver = null;
-    if (typeof ResizeObserver !== 'undefined') {
-      resizeObserver = new ResizeObserver(scheduleDetect);
-      if (controlBarRef.current) resizeObserver.observe(controlBarRef.current);
-    }
-
-    window.addEventListener('resize', scheduleDetect);
-    return () => {
-      clearTimeout(delayedRecheck);
-      if (pendingRafRef.current !== null) {
-        cancelAnimationFrame(pendingRafRef.current);
-        pendingRafRef.current = null;
-      }
-      resizeObserver?.disconnect();
-      window.removeEventListener('resize', scheduleDetect);
-    };
-
-    // and the stable setIsOverflow setter are intentionally omitted; only real state values need deps.
-  }, [user]);
 
   // Load user settings on mount
   useEffect(() => {
@@ -3464,7 +3377,6 @@ export default function DiwanApp() {
         case 'Escape':
           setShowAuthModal(false);
           setShowSavedPoems(false);
-          setShowSettings(false);
           setShowShortcutHelp(false);
           break;
         case '?':
@@ -3477,8 +3389,31 @@ export default function DiwanApp() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isInterpreting, interpretation]);
 
+  // headerProgress: 0 = full size center, 1 = compact right corner
+  // Slower ramp: full transition over 200px of scroll instead of 60
   const handleScroll = (e) => {
-    setHeaderOpacity(Math.max(0, 1 - e.target.scrollTop / 30));
+    const progress = Math.min(1, e.target.scrollTop / 200);
+    setHeaderOpacity(progress);
+  };
+
+  // Close poet picker on outside click
+  useEffect(() => {
+    if (!poetPickerOpen) return;
+    const handleOutsideClick = (e) => {
+      if (poetPickerRef.current && !poetPickerRef.current.contains(e.target)) {
+        closePoetPicker();
+      }
+    };
+    document.addEventListener('pointerdown', handleOutsideClick);
+    return () => document.removeEventListener('pointerdown', handleOutsideClick);
+  }, [poetPickerOpen]);
+
+  const closePoetPicker = () => {
+    setPoetPickerClosing(true);
+    setTimeout(() => {
+      setPoetPickerOpen(false);
+      setPoetPickerClosing(false);
+    }, 250);
   };
 
   // Extract cached translation fields into stable local variables so useMemo
@@ -3718,7 +3653,7 @@ export default function DiwanApp() {
           if (cached?.blob) {
             addLog(
               'Audio',
-              `✓ Background audio generation completed - playing from cache`,
+              `✓ Background audio generation completed${cached.metadata?.model ? ` [${cached.metadata.model}]` : ''} - playing from cache`,
               'success'
             );
             const u = URL.createObjectURL(cached.blob);
@@ -3794,7 +3729,7 @@ export default function DiwanApp() {
         const sizeMB = (cached.blob.size / (1024 * 1024)).toFixed(2);
         addLog(
           'Audio Cache',
-          `✓ Cache HIT (${cacheTime.toFixed(0)}ms) | Size: ${sizeMB}MB | Instant playback`,
+          `✓ Cache HIT (${cacheTime.toFixed(0)}ms)${cached.metadata?.model ? ` | Model: ${cached.metadata.model}` : ''} | Size: ${sizeMB}MB | Instant playback`,
           'success'
         );
         setCacheStats((prev) => ({ ...prev, audioHits: prev.audioHits + 1 }));
@@ -3846,7 +3781,7 @@ export default function DiwanApp() {
 
     addLog(
       'Audio API',
-      `→ Starting generation | Request: ${(requestSize / 1024).toFixed(1)}KB | ${arabicTextChars} chars Arabic | Est. ${estimatedTokens} tokens`,
+      `→ Starting generation | Model: ${API_MODELS.tts} | Request: ${(requestSize / 1024).toFixed(1)}KB | ${arabicTextChars} chars Arabic | Est. ${estimatedTokens} tokens`,
       'info'
     );
 
@@ -3860,11 +3795,18 @@ export default function DiwanApp() {
         headers: { 'Content-Type': 'application/json' },
         body: requestBody,
       };
-      const res = await fetchTTSWithFallback(url, fetchOptions, { addLog, label: 'Audio API' });
+      const { res, model: ttsModel } = await fetchTTSWithFallback(url, fetchOptions, {
+        addLog,
+        label: 'Audio API',
+      });
 
       if (!res.ok) {
         const errorText = await res.text();
-        addLog('Audio API Error', `HTTP ${res.status}: ${errorText.substring(0, 200)}`, 'error');
+        addLog(
+          'Audio API Error',
+          `[${ttsModel}] HTTP ${res.status}: ${errorText.substring(0, 200)}`,
+          'error'
+        );
         if (res.status === 429) {
           setAudioError(
             'Recitation temporarily unavailable — too many requests. Please wait a moment and try again.'
@@ -3880,7 +3822,7 @@ export default function DiwanApp() {
       if (!data.candidates || data.candidates.length === 0) {
         addLog(
           'Audio API Error',
-          `No candidates in response. Full response: ${JSON.stringify(data).substring(0, 300)}`,
+          `[${ttsModel}] No candidates in response. Full response: ${JSON.stringify(data).substring(0, 300)}`,
           'error'
         );
         throw new Error('Recitation failed - no audio candidates returned');
@@ -3905,12 +3847,12 @@ export default function DiwanApp() {
 
           addLog(
             'Audio API',
-            `✓ Complete | API: ${(apiTime / 1000).toFixed(2)}s | Convert: ${conversionTime.toFixed(0)}ms | Total: ${(totalTime / 1000).toFixed(2)}s`,
+            `✓ [${ttsModel}] Complete | API: ${(apiTime / 1000).toFixed(2)}s | Convert: ${conversionTime.toFixed(0)}ms | Total: ${(totalTime / 1000).toFixed(2)}s`,
             'success'
           );
           addLog(
             'Audio Metrics',
-            `Audio: ${audioDuration.toFixed(1)}s | Size: ${audioSizeKB}KB (${audioSizeMB}MB) | Speed: ${tokensPerSecond} tok/s`,
+            `[${ttsModel}] Audio: ${audioDuration.toFixed(1)}s | Size: ${audioSizeKB}KB (${audioSizeMB}MB) | Speed: ${tokensPerSecond} tok/s`,
             'success'
           );
 
@@ -3936,6 +3878,7 @@ export default function DiwanApp() {
                 title: current.title,
                 size: blob.size,
                 duration: audioDuration,
+                model: ttsModel,
               },
             });
             const cacheTime = performance.now() - cacheStart;
@@ -4241,6 +4184,12 @@ export default function DiwanApp() {
         poet: current?.poet,
         cached: !!(FEATURES.caching && current?.id && insightText),
       });
+
+      // Flash gold check sparkle on the sidebar icon
+      if (insightText) {
+        setShowInsightSuccess(true);
+        setTimeout(() => setShowInsightSuccess(false), 1500);
+      }
     } catch (e) {
       Sentry.captureException(e);
       addLog('Analysis Error', `${e.message} | Poem ID: ${current?.id}`, 'error');
@@ -4274,18 +4223,23 @@ export default function DiwanApp() {
 
       // DATABASE MODE: Fetch from local PostgreSQL API
       if (useDatabase) {
-        // Reset category to "All" before fetching so the new poem will be visible
-        // without racing against the useEffect that resets currentIndex on category change
-        if (selectedCategory !== 'All') {
-          setSelectedCategory('All');
-        }
-
         addLog('Discovery DB', `→ Querying database | Category: ${selectedCategory}`, 'info');
+
+        // Dedup: prune stale entries and build exclude list
+        pruneSeenPoems();
+        const seenIds = getRecentSeenIds();
 
         const categoryObj = CATEGORIES.find((c) => c.id === selectedCategory);
         const poetName = categoryObj?.labelAr || selectedCategory;
-        const poetParam = selectedCategory !== 'All' ? `?poet=${encodeURIComponent(poetName)}` : '';
-        const url = `${apiUrl}/api/poems/random${poetParam}`;
+        const queryParams = new URLSearchParams();
+        if (selectedCategory !== 'All') queryParams.set('poet', poetName);
+        if (seenIds.length > 0) queryParams.set('exclude', seenIds.join(','));
+        const qs = queryParams.toString();
+        const url = `${apiUrl}/api/poems/random${qs ? '?' + qs : ''}`;
+
+        if (seenIds.length > 0) {
+          addLog('Discovery DB', `Excluding ${seenIds.length} recently seen poems`, 'info');
+        }
 
         try {
           const res = await fetch(url);
@@ -4309,6 +4263,9 @@ export default function DiwanApp() {
 
           // Mark as database poem
           newPoem.isFromDatabase = true;
+
+          // Track this poem as seen for dedup
+          markPoemSeen(newPoem.id);
 
           const arabicPoemChars = newPoem?.arabic?.length || 0;
 
@@ -4514,29 +4471,6 @@ export default function DiwanApp() {
     }
   };
 
-  const handleDailyPoem = () => {
-    if (!dailyPoem) return;
-    track('daily_poem_requested');
-    addLog('UI Event', 'Daily poem button clicked', 'info');
-    setInterpretation(null);
-    setPoems((prev) => {
-      const exists = prev.find((p) => p.id === dailyPoem.id);
-      if (exists) {
-        setCurrentIndex(prev.indexOf(exists));
-        return prev;
-      }
-      setCurrentIndex(prev.length);
-      return [...prev, dailyPoem];
-    });
-    setAutoExplainPending(true);
-    // Update URL for DB poems
-    if (dailyPoem.isFromDatabase && typeof dailyPoem.id === 'number') {
-      window.history.replaceState({}, '', '/poem/' + dailyPoem.id);
-    } else {
-      window.history.replaceState({}, '', '/');
-    }
-  };
-
   const handleShare = async () => {
     addLog('UI Event', 'Share button clicked', 'info');
     track('poem_shared', { poet: current?.poet });
@@ -4641,7 +4575,6 @@ export default function DiwanApp() {
       addLog('Auth Error', error.message, 'error');
     } else {
       setShowSavedPoems(false);
-      setShowSettings(false);
       setShowAuthModal(false);
       track('sign_out');
       addLog('Auth', 'Signed out successfully', 'success');
@@ -4763,21 +4696,6 @@ export default function DiwanApp() {
     }
   };
 
-  const handleOpenSettings = () => {
-    if (!user) {
-      handleSignIn();
-      return;
-    }
-    track('settings_opened');
-    setShowSettings(true);
-  };
-
-  const handleSelectFont = (fontId) => {
-    track('font_changed', { font: fontId });
-    setCurrentFont(fontId);
-    addLog('Font', `Font selected: ${fontId}`, 'info');
-  };
-
   const handleToggleDarkMode = () => {
     const newTheme = darkMode ? 'light' : 'dark';
     track('theme_changed', { theme: newTheme });
@@ -4785,12 +4703,6 @@ export default function DiwanApp() {
     addLog('Theme', `Switched to ${newTheme} mode`, 'info');
   };
   const handleToggleTheme = handleToggleDarkMode;
-
-  const handleToggleDatabase = () => {
-    const newMode = useDatabase ? 'ai' : 'database';
-    track('mode_switched', { mode: newMode });
-    setUseDatabase(!useDatabase);
-  };
 
   const handleUnsavePoemFromList = async (sp) => {
     const { error } = await unsavePoem(sp.poem_id || sp.id, sp.poem_text);
@@ -4984,8 +4896,34 @@ export default function DiwanApp() {
           50% { transform: translateY(-3px); }
         }
 
-        .rabbit-bounce {
-          animation: bounce 2s ease-in-out infinite;
+        @keyframes discoverShuffle {
+          0% { transform: rotate(0deg); }
+          25% { transform: rotate(-15deg); }
+          75% { transform: rotate(15deg); }
+          100% { transform: rotate(0deg); }
+        }
+        .discover-btn:hover .discover-icon {
+          animation: discoverShuffle 0.5s ease-in-out;
+        }
+
+        @keyframes insightsDrawerIn {
+          from { transform: translateY(100%); }
+          to   { transform: translateY(0); }
+        }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to   { opacity: 1; }
+        }
+
+        @keyframes poetPickerIn {
+          0%   { opacity: 0; transform: translate(-50%, 16px) scale(0.9); }
+          60%  { opacity: 1; transform: translate(-50%, -4px) scale(1.02); }
+          100% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+        }
+        @keyframes poetPickerOut {
+          0%   { opacity: 1; transform: translate(-50%, 0) scale(1); }
+          40%  { opacity: 0.8; transform: translate(-50%, -3px) scale(1.01); }
+          100% { opacity: 0; transform: translate(-50%, 20px) scale(0.9); }
         }
 
         @keyframes wave {
@@ -5068,6 +5006,8 @@ export default function DiwanApp() {
         onClear={() => setLogs([])}
         darkMode={darkMode}
         poem={current}
+        visible={showDebugLogs}
+        controlBarRef={controlBarRef}
         appState={{
           mode: useDatabase ? 'database' : 'ai',
           theme: darkMode ? 'dark' : 'light',
@@ -5076,50 +5016,57 @@ export default function DiwanApp() {
       />
 
       <header
-        style={{ opacity: headerOpacity }}
-        className="fixed top-4 md:top-8 left-0 right-0 z-40 pointer-events-none transition-opacity duration-300 flex flex-row items-center justify-center gap-4 md:gap-8 px-4 md:px-6"
+        style={{
+          position: 'fixed',
+          top: 0,
+          right: 0,
+          left: headerOpacity > 0 ? 'auto' : 0,
+          zIndex: 40,
+          pointerEvents: 'none',
+          padding: headerOpacity > 0 ? '0.75rem 1rem' : '1rem 1.5rem',
+          display: 'flex',
+          justifyContent: headerOpacity > 0 ? 'flex-end' : 'center',
+          transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
+        }}
       >
-        <div className="flex flex-row items-baseline gap-3 header-luminescence">
-          <h1 style={{ display: 'flex', alignItems: 'baseline', gap: '0.75rem', margin: 0 }}>
+        <div
+          className="flex flex-row items-center gap-1.5 header-luminescence"
+          style={{
+            transform: `scale(${1 - headerOpacity * 0.4})`,
+            opacity: 1 - headerOpacity * 0.15,
+            transformOrigin: 'top right',
+            transition: 'transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.3s',
+          }}
+        >
+          <h1 style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', margin: 0 }}>
             <span
               style={{
-                fontFamily: "'Reem Kufi', sans-serif",
-                fontWeight: 700,
-                fontSize: 'clamp(3rem, 6vw, 4.5rem)',
-                lineHeight: 1,
-                color: darkMode ? '#D4D0C8' : '#1A1614',
+                ...BRAND.arabic,
+                color: '#C5A059',
+                textShadow: '0 0 40px rgba(197,160,89,0.3)',
               }}
             >
               بالعربي
             </span>
             <span
               style={{
-                fontFamily: "'Forum', serif",
-                fontSize: 'clamp(1.25rem, 2.5vw, 1.75rem)',
-                letterSpacing: '-0.05em',
-                lineHeight: 1,
-                color: '#C5A059',
-                textShadow: '0 0 40px rgba(197,160,89,0.3)',
-                paddingBottom: '0.15em',
+                ...BRAND.english,
+                color: darkMode ? '#D4D0C8' : '#1A1614',
               }}
             >
               poetry
             </span>
           </h1>
-          <Feather
-            style={{ color: '#C5A059', opacity: 0.8 }}
-            className="w-[clamp(24px,4vw,36px)] h-[clamp(24px,4vw,36px)]"
-            strokeWidth={1.5}
-          />
+          <Feather style={{ ...BRAND.feather, color: '#C5A059' }} strokeWidth={1.5} />
         </div>
       </header>
 
       <div className="flex flex-row w-full relative flex-1 min-h-0">
         <div className="flex-1 flex flex-col relative h-full overflow-hidden">
           <div
-            className={`absolute inset-0 pointer-events-none opacity-[0.04] ${darkMode ? 'invert' : ''}`}
+            className="absolute inset-0 pointer-events-none opacity-[0.03]"
             style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M40 0l40 40-40 40L0 40z' fill='none' stroke='%234f46e5' stroke-width='1.5'/%3E%3Ccircle cx='40' cy='40' r='18' fill='none' stroke='%234f46e5' stroke-width='1.5'/%3E%3C/svg%3E")`,
+              backgroundImage: `url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M40 0l40 40-40 40L0 40z' fill='none' stroke='%23C5A059' stroke-width='1'/%3E%3Ccircle cx='40' cy='40' r='18' fill='none' stroke='%23C5A059' stroke-width='1'/%3E%3C/svg%3E")`,
               backgroundSize: '60px 60px',
             }}
           />
@@ -5128,7 +5075,7 @@ export default function DiwanApp() {
           <main
             ref={mainScrollRef}
             onScroll={handleScroll}
-            className={`flex-1 overflow-y-auto custom-scrollbar relative z-10 px-4 md:px-0 pb-28${isOverflow ? ' pr-16' : ''}`}
+            className="flex-1 overflow-y-auto custom-scrollbar relative z-10 px-4 md:px-0 pb-28 pt-16 md:pt-20 pr-14 md:pr-0"
           >
             <div className="min-h-full flex flex-col items-center justify-center py-6">
               <div className="w-full max-w-4xl flex flex-col items-center">
@@ -5197,18 +5144,6 @@ export default function DiwanApp() {
                         <span className="font-semibold">{current?.poet}</span>{' '}
                         <span className="opacity-20">•</span> <span>{current?.title}</span>
                       </div>
-                      {dailyPoem && current?.id === dailyPoem.id && (
-                        <div
-                          className={`flex items-center gap-1.5 mt-2 px-3 py-1 rounded-full ${GOLD.goldBg10} border ${GOLD.goldBg20}`}
-                        >
-                          <CalendarDays size={12} className={GOLD.goldText} />
-                          <span
-                            className={`font-brand-en text-[9px] font-bold tracking-[0.15em] uppercase ${GOLD.goldText}`}
-                          >
-                            Poem of the Day
-                          </span>
-                        </div>
-                      )}
                     </div>
                   </div>
 
@@ -5327,9 +5262,13 @@ export default function DiwanApp() {
             )}
             <div
               ref={controlBarRef}
-              className={`flex items-center gap-2 px-5 py-2 rounded-full shadow-2xl border ${DESIGN.glass} ${theme.border} ${theme.shadow} ${DESIGN.anim} max-w-[calc(100vw-2rem)] w-fit`}
+              className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full border ${DESIGN.glass} ${theme.border} ${DESIGN.anim} max-w-[calc(100vw-2rem)] w-fit`}
+              style={{
+                boxShadow:
+                  'inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(0,0,0,0.15), 0 8px 32px rgba(0,0,0,0.4), 0 2px 8px rgba(0,0,0,0.3)',
+              }}
             >
-              <div className="flex flex-col items-center gap-1 min-w-[52px]">
+              <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
                 {isGeneratingAudio ? (
                   <>
                     <button
@@ -5375,28 +5314,20 @@ export default function DiwanApp() {
                         />
                       </div>
                     </button>
-                    <div className="flex flex-col items-center gap-0.5">
-                      <span
-                        className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase text-stone-400 whitespace-nowrap"
-                        style={{ animation: 'shimmer 2s ease-in-out infinite' }}
-                      >
-                        Crafting
-                      </span>
-                      <span
-                        className="font-amiri text-[9px] text-[#C5A059]/80"
-                        dir="rtl"
-                        style={{ animation: 'shimmer 2s ease-in-out infinite' }}
-                      >
-                        إعداد الصوت
-                      </span>
-                    </div>
+                    <span
+                      className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase whitespace-nowrap ${GOLD.goldText}`}
+                      style={{ opacity: 0.6, animation: 'shimmer 2s ease-in-out infinite' }}
+                    >
+                      Crafting
+                    </span>
                   </>
                 ) : (
                   <>
                     <button
                       onClick={togglePlay}
                       aria-label={isPlaying ? 'Pause recitation' : 'Play recitation'}
-                      className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105 relative group`}
+                      style={{ willChange: 'transform' }}
+                      className={`min-w-[46px] min-h-[46px] w-[46px] h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-transform duration-200 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105 relative group`}
                     >
                       {audioError ? (
                         <Volume2 className={theme.error} size={21} />
@@ -5411,60 +5342,108 @@ export default function DiwanApp() {
                         <Volume2 className={GOLD.goldText} size={21} />
                       )}
                     </button>
-                    {isPlaying ? (
-                      <div className="flex flex-col items-center gap-0.5">
-                        <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase text-stone-400 whitespace-nowrap">
-                          Playing
-                        </span>
-                        <span className="font-amiri text-[9px] text-[#C5A059]/80" dir="rtl">
-                          يُسمع الآن
-                        </span>
-                      </div>
-                    ) : (
-                      <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">
-                        Listen
-                      </span>
-                    )}
+                    <span
+                      className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase whitespace-nowrap ${GOLD.goldText}`}
+                      style={{ opacity: isPlaying ? 0.9 : 0.6 }}
+                    >
+                      {isPlaying ? 'Playing' : 'Listen'}
+                    </span>
                   </>
                 )}
               </div>
 
-              {!isOverflow && (
-                <div className="flex flex-col items-center gap-1 min-w-[52px]">
-                  <button
-                    onClick={handleAnalyze}
-                    disabled={isInterpreting || interpretation}
-                    aria-label="Explain poem meaning"
-                    className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105 disabled:opacity-50`}
-                  >
-                    {isInterpreting ? (
-                      <Loader2 className={`animate-spin ${GOLD.goldText}`} size={21} />
-                    ) : (
-                      <Compass className={GOLD.goldText} size={21} />
-                    )}
-                  </button>
-                  <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">
-                    Explain
-                  </span>
-                </div>
-              )}
-
-              <div className="flex flex-col items-center gap-1 min-w-[52px]">
+              <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
                 <button
                   onClick={handleFetch}
                   disabled={isFetching}
                   aria-label="Discover new poem"
-                  className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
+                  className={`discover-btn min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
                 >
                   {isFetching ? (
-                    <Loader2 className={`animate-spin ${GOLD.goldText}`} size={21} />
+                    <Shuffle
+                      className={`${GOLD.goldText}`}
+                      size={21}
+                      style={{ animation: 'discoverShuffle 0.4s ease-in-out infinite' }}
+                    />
                   ) : (
-                    <Rabbit className={`${GOLD.goldText} rabbit-bounce`} size={21} />
+                    <Shuffle className={`discover-icon ${GOLD.goldText}`} size={21} />
                   )}
                 </button>
-                <span className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap">
+                <span
+                  className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase whitespace-nowrap ${GOLD.goldText}`}
+                  style={{ opacity: 0.6 }}
+                >
                   Discover
                 </span>
+              </div>
+
+              <div
+                ref={poetPickerRef}
+                className="relative flex flex-col items-center gap-0.5 min-w-[52px]"
+              >
+                <button
+                  onClick={() => {
+                    if (poetPickerOpen) {
+                      closePoetPicker();
+                    } else {
+                      setPoetPickerOpen(true);
+                    }
+                  }}
+                  aria-label="Filter by poet"
+                  className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-200 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105 ${poetPickerOpen ? 'bg-[#C5A059]/10' : ''}`}
+                >
+                  <ScrollText className={GOLD.goldText} size={21} />
+                </button>
+                <span
+                  className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase whitespace-nowrap ${GOLD.goldText}`}
+                  style={{ opacity: 0.6 }}
+                >
+                  Poets
+                </span>
+                {(poetPickerOpen || poetPickerClosing) && (
+                  <div
+                    className="absolute bottom-full mb-2 left-1/2 w-auto min-w-[10rem] rounded-2xl border border-[#C5A059]/25 bg-black/95 backdrop-blur-2xl shadow-2xl py-2.5 z-[200]"
+                    style={{
+                      animation: poetPickerClosing
+                        ? 'poetPickerOut 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards'
+                        : 'poetPickerIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
+                    }}
+                  >
+                    <div className="px-4 pb-2 mb-1 border-b border-[#C5A059]/15">
+                      <span className="text-[10px] font-brand-en uppercase tracking-widest text-[#C5A059]/50 font-bold">
+                        Filter by Poet
+                      </span>
+                    </div>
+                    {CATEGORIES.map((cat) => (
+                      <button
+                        key={cat.id}
+                        onClick={() => {
+                          setSelectedCategory(cat.id);
+                          closePoetPicker();
+                        }}
+                        className={`w-full text-right px-5 py-2.5 transition-all duration-150 ${selectedCategory === cat.id ? 'bg-[#C5A059]/15 border-r-2 border-[#C5A059]' : 'hover:bg-[#C5A059]/8 border-r-2 border-transparent'}`}
+                      >
+                        <span
+                          className={`block text-[17px] ${selectedCategory === cat.id ? 'text-[#C5A059]' : 'text-stone-300'}`}
+                          dir="rtl"
+                          style={{ fontFamily: "'Reem Kufi', sans-serif", fontWeight: 500 }}
+                        >
+                          {cat.labelAr}
+                        </span>
+                        <span
+                          className={`block text-[10px] font-brand-en mt-0.5 ${selectedCategory === cat.id ? 'text-[#C5A059]/70' : 'opacity-40'}`}
+                        >
+                          {cat.label}
+                        </span>
+                      </button>
+                    ))}
+                    <div className="mt-1 pt-1 border-t border-[#C5A059]/10 px-5 py-2">
+                      <span className="block text-[10px] font-brand-en text-stone-600 italic">
+                        Poet Explorer — coming soon
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <SavePoemButton
@@ -5473,6 +5452,10 @@ export default function DiwanApp() {
                 onSave={handleSavePoem}
                 onUnsave={handleUnsavePoem}
                 disabled={!user}
+                onSignIn={(msg) => {
+                  setAuthModalMessage(msg);
+                  setShowAuthModal(true);
+                }}
               />
 
               <DownvoteButton
@@ -5481,154 +5464,11 @@ export default function DiwanApp() {
                 onDownvote={handleDownvote}
                 onUndownvote={handleUndownvote}
                 disabled={!user}
+                onSignIn={(msg) => {
+                  setAuthModalMessage(msg);
+                  setShowAuthModal(true);
+                }}
               />
-
-              {!isOverflow && (
-                <>
-                  <div className="w-px h-10 bg-stone-500/20 mx-1 flex-shrink-0" />
-
-                  <div className="flex flex-col items-center gap-1 min-w-[52px]">
-                    <button
-                      onClick={handleCopy}
-                      aria-label="Copy poem to clipboard"
-                      className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
-                    >
-                      {showCopySuccess ? (
-                        <Check size={21} className="text-green-500" />
-                      ) : (
-                        <Copy size={21} className={GOLD.goldText} />
-                      )}
-                    </button>
-                    <span
-                      className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
-                    >
-                      Copy
-                    </span>
-                  </div>
-
-                  <div className="flex flex-col items-center gap-1 min-w-[52px]">
-                    <button
-                      onClick={handleShare}
-                      aria-label="Share poem"
-                      className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
-                    >
-                      {showShareSuccess ? (
-                        <Check size={21} className="text-green-500" />
-                      ) : (
-                        <Share2 size={21} className={GOLD.goldText} />
-                      )}
-                    </button>
-                    <span
-                      className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
-                    >
-                      Share
-                    </span>
-                  </div>
-
-                  <div className="flex flex-col items-center gap-1 min-w-[52px]">
-                    <button
-                      onClick={() => setShowTranslation((prev) => !prev)}
-                      aria-label={
-                        showTranslation ? 'Hide English translation' : 'Show English translation'
-                      }
-                      className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105 ${!showTranslation ? 'opacity-40' : ''}`}
-                    >
-                      <Languages size={21} className={GOLD.goldText} />
-                    </button>
-                    <span
-                      className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
-                    >
-                      {showTranslation ? 'English' : 'Arabic'}
-                    </span>
-                  </div>
-
-                  <div className="flex flex-col items-center gap-1 min-w-[52px]">
-                    <button
-                      onClick={() => setShowTransliteration((prev) => !prev)}
-                      aria-label={
-                        showTransliteration ? 'Hide transliteration' : 'Show transliteration'
-                      }
-                      className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105 ${!showTransliteration ? 'opacity-40' : ''}`}
-                    >
-                      <span
-                        className={`${GOLD.goldText} text-[14px] font-bold leading-none`}
-                        style={{ fontFamily: "'Amiri', serif" }}
-                      >
-                        عA
-                      </span>
-                    </button>
-                    <span
-                      className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
-                    >
-                      Romanize
-                    </span>
-                  </div>
-
-                  <div className="flex flex-col items-center gap-1 min-w-[52px]">
-                    <button
-                      onClick={cycleTextSize}
-                      aria-label={`Text size: ${TEXT_SIZES[textSizeLevel].label}`}
-                      className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
-                    >
-                      <span className={`font-brand-en text-[15px] font-bold ${GOLD.goldText}`}>
-                        Aa
-                      </span>
-                    </button>
-                    <span
-                      className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
-                    >
-                      {TEXT_SIZES[textSizeLevel].label}
-                    </span>
-                  </div>
-
-                  {dailyPoem && (
-                    <div className="flex flex-col items-center gap-1 min-w-[52px]">
-                      <button
-                        onClick={handleDailyPoem}
-                        aria-label="Poem of the day"
-                        className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105 ${current?.id === dailyPoem.id ? GOLD.goldActiveBg : ''}`}
-                      >
-                        <CalendarDays size={21} className={GOLD.goldText} />
-                      </button>
-                      <span
-                        className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
-                      >
-                        Daily
-                      </span>
-                    </div>
-                  )}
-
-                  <DatabaseToggle
-                    useDatabase={useDatabase}
-                    onToggle={handleToggleDatabase}
-                    disabled={false}
-                  />
-
-                  <ThemeDropdown
-                    darkMode={darkMode}
-                    onToggleDarkMode={handleToggleTheme}
-                    currentFont={currentFont}
-                    onCycleFont={cycleFont}
-                    fonts={FONTS}
-                  />
-
-                  <CategoryPill
-                    selected={selectedCategory}
-                    onSelect={setSelectedCategory}
-                    darkMode={darkMode}
-                  />
-
-                  <AuthButton
-                    user={user}
-                    darkMode={darkMode}
-                    onSignIn={handleSignIn}
-                    onSignOut={handleSignOut}
-                    onOpenSavedPoems={handleOpenSavedPoems}
-                    onOpenSettings={handleOpenSettings}
-                    theme={theme}
-                  />
-                </>
-              )}
             </div>
           </footer>
         </div>
@@ -5638,10 +5478,21 @@ export default function DiwanApp() {
             className={`${DESIGN.paneWidth} h-full flex flex-col z-30 ${DESIGN.anim} ${theme.glass} ${theme.border}`}
           >
             <div className="p-6 pb-4 border-b border-stone-500/10">
-              <h3 className="font-brand-en italic font-semibold text-[clamp(1rem,1.8vw,1.125rem)] text-indigo-600 tracking-tight">
-                Poetic Insight
-              </h3>
-              <p className="text-[10px] opacity-30 uppercase font-brand-en truncate">
+              <div className="flex items-center justify-between">
+                <h3 className="font-brand-en italic font-semibold text-[clamp(1rem,1.8vw,1.125rem)] text-indigo-600 tracking-tight">
+                  Poetic Insight
+                </h3>
+                {selectedCategory !== 'All' && (
+                  <span
+                    key={selectedCategory}
+                    className="font-amiri text-[11px] px-2.5 py-0.5 rounded-full border border-[#C5A059]/25 text-[#C5A059]/80 bg-[#C5A059]/5"
+                    style={{ animation: 'fadeIn 0.3s ease-out' }}
+                  >
+                    {CATEGORIES.find((c) => c.id === selectedCategory)?.labelAr}
+                  </span>
+                )}
+              </div>
+              <p className="text-[10px] opacity-30 uppercase font-brand-en truncate mt-1">
                 {current?.poet} • {current?.title}
               </p>
             </div>
@@ -5702,13 +5553,29 @@ export default function DiwanApp() {
         </div>
       </div>
 
+      {/* Insights Drawer (Mobile bottom sheet) */}
+      <InsightsDrawer
+        isOpen={insightsDrawerOpen}
+        onClose={() => setInsightsDrawerOpen(false)}
+        isInterpreting={isInterpreting}
+        insightParts={insightParts}
+        interpretation={interpretation}
+        showTranslation={showTranslation}
+        current={current}
+        theme={theme}
+        darkMode={darkMode}
+      />
+
       {/* Auth Modal */}
       <AuthModal
         isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
+        onClose={() => {
+          setShowAuthModal(false);
+          setAuthModalMessage('');
+        }}
         onSignInWithGoogle={handleSignInWithGoogle}
-        onSignInWithApple={handleSignInWithApple}
         theme={theme}
+        message={authModalMessage}
       />
 
       {/* Saved Poems View */}
@@ -5722,17 +5589,6 @@ export default function DiwanApp() {
         currentFontClass={currentFontClass}
       />
 
-      {/* Settings View */}
-      <SettingsView
-        isOpen={showSettings}
-        onClose={() => setShowSettings(false)}
-        darkMode={darkMode}
-        onToggleDarkMode={handleToggleTheme}
-        currentFont={currentFont}
-        onSelectFont={handleSelectFont}
-        user={user}
-        theme={theme}
-      />
       {/* Design Review - Mobile: left edge vertical strip, Desktop: bottom-left pill */}
       <style>{`
         @keyframes slideInLeft {
@@ -5765,39 +5621,49 @@ export default function DiwanApp() {
         </span>
       </a>
 
-      {/* Vertical Sidebar - Mobile overflow only */}
-      {isOverflow && (
-        <VerticalSidebar
-          onExplain={handleAnalyze}
-          onCopy={handleCopy}
-          showCopySuccess={showCopySuccess}
-          onShare={handleShare}
-          showShareSuccess={showShareSuccess}
-          onSignIn={handleSignIn}
-          onSignOut={handleSignOut}
-          user={user}
-          theme={theme}
-          isInterpreting={isInterpreting}
-          interpretation={interpretation}
-          showTranslation={showTranslation}
-          onToggleTranslation={() => setShowTranslation((prev) => !prev)}
-          showTransliteration={showTransliteration}
-          onToggleTransliteration={() => setShowTransliteration((prev) => !prev)}
-          textSizeLabel={TEXT_SIZES[textSizeLevel].label}
-          onCycleTextSize={cycleTextSize}
-          dailyPoem={dailyPoem}
-          onDailyPoem={handleDailyPoem}
-          isCurrentDaily={current?.id === dailyPoem?.id}
-          darkMode={darkMode}
-          onToggleDarkMode={handleToggleTheme}
-          currentFont={currentFont}
-          onCycleFont={cycleFont}
-          selectedCategory={selectedCategory}
-          onSelectCategory={setSelectedCategory}
-          useDatabase={useDatabase}
-          onToggleDatabase={handleToggleDatabase}
-        />
-      )}
+      {/* Vertical Sidebar - always visible */}
+      <VerticalSidebar
+        onExplain={() => {
+          if (interpretation) {
+            // Already have insight — toggle drawer open/closed
+            setInsightsDrawerOpen((prev) => !prev);
+            setShowInsightSuccess(true);
+            setTimeout(() => setShowInsightSuccess(false), 1500);
+          } else {
+            // No insight yet — fetch and open drawer
+            handleAnalyze();
+            setInsightsDrawerOpen(true);
+          }
+        }}
+        onCopy={handleCopy}
+        showCopySuccess={showCopySuccess}
+        onShare={handleShare}
+        showShareSuccess={showShareSuccess}
+        showInsightSuccess={showInsightSuccess}
+        onSignIn={handleSignIn}
+        onSignOut={handleSignOut}
+        user={user}
+        theme={theme}
+        isInterpreting={isInterpreting}
+        interpretation={interpretation}
+        showTranslation={showTranslation}
+        onToggleTranslation={() => {
+          setShowTranslation((prev) => !prev);
+          if (!interpretation && !isInterpreting) handleAnalyze();
+        }}
+        showTransliteration={showTransliteration}
+        onToggleTransliteration={() => setShowTransliteration((prev) => !prev)}
+        textSizeLabel={TEXT_SIZES[textSizeLevel].label}
+        onCycleTextSize={cycleTextSize}
+        darkMode={darkMode}
+        onToggleDarkMode={handleToggleTheme}
+        currentFont={currentFont}
+        onCycleFont={cycleFont}
+        selectedCategory={selectedCategory}
+        onSelectCategory={setSelectedCategory}
+        showDebugLogs={showDebugLogs}
+        onToggleDebugLogs={() => setShowDebugLogs((prev) => !prev)}
+      />
 
       {/* Splash / Onboarding Screen */}
       <SplashScreen

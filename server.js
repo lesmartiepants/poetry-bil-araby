@@ -263,10 +263,21 @@ app.get('/api/health/full', async (req, res) => {
 // Get random poem
 app.get('/api/poems/random', [
   query('poet').optional().trim().isLength({ max: 100 }).withMessage('Poet name too long'),
+  query('exclude').optional().trim().isLength({ max: 2000 }).withMessage('Exclude list too long'),
   validate
 ], async (req, res) => {
   try {
-    const { poet } = req.query;
+    const { poet, exclude } = req.query;
+
+    // Parse and validate exclude param (comma-separated integer IDs, max 200)
+    let excludeIds = [];
+    if (exclude) {
+      excludeIds = exclude
+        .split(',')
+        .map(s => parseInt(s.trim(), 10))
+        .filter(n => Number.isInteger(n) && n > 0)
+        .slice(0, 200);
+    }
 
     let query = `
       SELECT
@@ -282,17 +293,58 @@ app.get('/api/poems/random', [
     `;
 
     const params = [];
+    let paramIndex = 1;
+
     if (poet && poet !== 'All') {
-      query += ` WHERE po.name = $1 ${servingFilters()}`;
+      query += ` WHERE po.name = $${paramIndex} ${servingFilters()}`;
       params.push(poet);
+      paramIndex++;
     } else {
       const qf = servingFilters();
       if (qf) query += ` WHERE 1=1 ${qf}`;
     }
 
+    // Add exclude clause using parameterized ANY() to prevent SQL injection
+    if (excludeIds.length > 0) {
+      const hasWhere = query.includes('WHERE');
+      query += hasWhere
+        ? ` AND p.id != ALL($${paramIndex})`
+        : ` WHERE p.id != ALL($${paramIndex})`;
+      params.push(excludeIds);
+      paramIndex++;
+    }
+
     query += ' ORDER BY RANDOM() LIMIT 1';
 
-    const result = await pool.query(query, params);
+    let result = await pool.query(query, params);
+
+    // Fallback: if no unseen poems remain, return any random poem (ignore exclude)
+    if (result.rows.length === 0 && excludeIds.length > 0) {
+      log.info('Poems', `All ${excludeIds.length} excluded poems exhausted, falling back to unrestricted random`);
+      // Re-run without the exclude clause
+      let fallbackQuery = `
+        SELECT
+          p.id,
+          p.title,
+          ${poemContentExpr()} as arabic,
+          po.name as poet,
+          t.name as theme
+          ${translationSelectExpr()}
+        FROM poems p
+        JOIN poets po ON p.poet_id = po.id
+        JOIN themes t ON p.theme_id = t.id
+      `;
+      const fallbackParams = [];
+      if (poet && poet !== 'All') {
+        fallbackQuery += ` WHERE po.name = $1 ${servingFilters()}`;
+        fallbackParams.push(poet);
+      } else {
+        const qf = servingFilters();
+        if (qf) fallbackQuery += ` WHERE 1=1 ${qf}`;
+      }
+      fallbackQuery += ' ORDER BY RANDOM() LIMIT 1';
+      result = await pool.query(fallbackQuery, fallbackParams);
+    }
 
     if (result.rows.length === 0) {
       return res.status(404).json({ error: 'No poems found' });
@@ -454,58 +506,9 @@ app.get('/api/poems/search', [
   }
 });
 
-// Get poem of the day (deterministic daily selection, stable across all users)
-app.get('/api/poems/daily', async (req, res) => {
-  try {
-    const result = await pool.query(`
-      SELECT
-        p.id,
-        p.title,
-        ${poemContentExpr()} as arabic,
-        po.name as poet,
-        t.name as theme
-      FROM poems p
-      JOIN poets po ON p.poet_id = po.id
-      JOIN themes t ON p.theme_id = t.id
-      ${servingFilters() ? 'WHERE 1=1 ' + servingFilters() : ''}
-      ORDER BY md5(p.id::text || current_date::text)
-      LIMIT 1
-    `);
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'No poems found' });
-    }
-
-    const poem = result.rows[0];
-
-    const formattedPoem = {
-      id: poem.id,
-      poet: poem.poet,
-      poetArabic: poem.poet,
-      title: poem.title,
-      titleArabic: poem.title,
-      arabic: poem.arabic,
-      english: '',
-      tags: [poem.theme]
-    };
-
-    // Cache for the rest of the day (seconds until midnight UTC)
-    const now = new Date();
-    const midnight = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
-    const secondsUntilMidnight = Math.floor((midnight - now) / 1000);
-    res.set('Cache-Control', `public, max-age=${secondsUntilMidnight}`);
-
-    log.info('Poems', `Daily poem: id=${poem.id}, poet=${poem.poet}`);
-    res.json(formattedPoem);
-  } catch (error) {
-    log.error('Poems', `Error fetching daily poem: ${error.message}`, error.stack);
-    res.status(500).json({ error: 'Internal server error' });
-  }
-});
-
 // Get poem by ID (for deep links / sharing)
 // IMPORTANT: This route uses :id param and must be registered AFTER all /api/poems/<literal> routes
-// (random, by-poet, search, daily) to avoid shadowing them.
+// (random, by-poet, search) to avoid shadowing them.
 app.get('/api/poems/:id', [
   param('id').isInt({ min: 1 }).withMessage('Poem ID must be a positive integer'),
   validate

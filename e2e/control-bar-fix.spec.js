@@ -220,7 +220,7 @@ test.describe('Control Bar — Vercel Preview User Flows', () => {
 
       console.log('✓ Sidebar visible with 0 ThumbsDown — auth not gated');
     } else {
-      console.log('  Sidebar not visible at this state (overflow not triggered)');
+      console.log('  Sidebar not visible at this state');
     }
   });
 

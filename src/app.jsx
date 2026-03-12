@@ -4838,7 +4838,8 @@ export default function DiwanApp() {
 
   return (
     <div
-      className={`h-[100dvh] w-full flex flex-col overflow-hidden ${DESIGN.anim} font-sans ${theme.bg} ${theme.text} selection:bg-indigo-500`}
+      className={`h-[100dvh] w-full flex flex-col overflow-hidden overscroll-none ${DESIGN.anim} font-sans ${theme.bg} ${theme.text} selection:bg-indigo-500`}
+      style={{ touchAction: 'pan-y', overflowX: 'hidden' }}
     >
       <style>{`
         .arabic-shadow { text-shadow: 0 4px 12px rgba(0,0,0,0.1); }
@@ -5016,15 +5017,17 @@ export default function DiwanApp() {
           right: 0,
           zIndex: 40,
           pointerEvents: 'none',
-          padding: `${0.2 - headerOpacity * 0.1}rem 1rem ${0.35 - headerOpacity * 0.15}rem`,
+          padding: `${0.13 - headerOpacity * 0.1}rem 1rem ${0.35 - headerOpacity * 0.3}rem`,
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
-          backgroundColor: darkMode ? 'rgba(12,12,14,0.85)' : 'rgba(253,252,248,0.85)',
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
-          borderBottom: `1px solid ${darkMode ? 'rgba(197,160,89,0.1)' : 'rgba(107,87,68,0.1)'}`,
-          transition: 'padding 0.4s ease-out',
+          backgroundColor: darkMode
+            ? `rgba(12,12,14,${0.85 - headerOpacity * 0.45})`
+            : `rgba(253,252,248,${0.85 - headerOpacity * 0.45})`,
+          backdropFilter: `blur(${12 - headerOpacity * 8}px)`,
+          WebkitBackdropFilter: `blur(${12 - headerOpacity * 8}px)`,
+          borderBottom: `1px solid ${darkMode ? `rgba(197,160,89,${0.1 - headerOpacity * 0.1})` : `rgba(107,87,68,${0.1 - headerOpacity * 0.1})`}`,
+          transition: 'padding 0.4s ease-out, background-color 0.3s, backdrop-filter 0.3s',
         }}
       >
         <div
@@ -5076,7 +5079,8 @@ export default function DiwanApp() {
           <main
             ref={mainScrollRef}
             onScroll={handleScroll}
-            className="flex-1 overflow-y-auto custom-scrollbar relative z-10 px-4 md:px-0 pb-28 pt-10 md:pt-12 pr-14 md:pr-0"
+            className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar relative z-10 px-4 md:px-0 pb-28 pt-10 md:pt-12 pr-14 md:pr-0"
+            style={{ overscrollBehaviorX: 'none' }}
           >
             <div
               className="pointer-events-none sticky top-0 z-30"
@@ -5085,7 +5089,9 @@ export default function DiwanApp() {
                 marginLeft: '-2rem',
                 marginRight: '-4rem',
                 marginBottom: '-72px',
+                opacity: headerOpacity,
                 background: `linear-gradient(to bottom, ${darkMode ? '#0c0c0e' : '#FDFCF8'} 0%, ${darkMode ? '#0c0c0e' : '#FDFCF8'} 45%, ${darkMode ? 'rgba(12,12,14,0.7)' : 'rgba(253,252,248,0.7)'} 70%, ${darkMode ? 'rgba(12,12,14,0.3)' : 'rgba(253,252,248,0.3)'} 85%, transparent 100%)`,
+                transition: 'opacity 0.3s ease-out',
               }}
             />
             <div className="flex flex-col items-center pt-2">

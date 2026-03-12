@@ -5010,9 +5010,11 @@ export default function DiwanApp() {
           zIndex: 40,
           pointerEvents: 'none',
           padding: headerOpacity > 0 ? '0.75rem 1rem' : '1rem 1.5rem',
+          height: headerOpacity > 0 ? `${64 - headerOpacity * 32}px` : 'auto',
+          overflow: headerOpacity > 0 ? 'hidden' : 'visible',
           display: 'flex',
           justifyContent: headerOpacity > 0 ? 'flex-end' : 'center',
-          transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
+          transition: 'all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), height 0.4s ease-out',
         }}
       >
         <div

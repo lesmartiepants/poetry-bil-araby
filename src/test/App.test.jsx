@@ -135,10 +135,15 @@ describe('DiwanApp', () => {
       });
 
       // Create a never-resolving promise to keep the button disabled
-      let resolveFetch
+      let resolveFetch;
       // Clear the persistent mock and set up a one-time hanging fetch
-      global.fetch.mockReset()
-      global.fetch.mockImplementation(() => new Promise(r => { resolveFetch = r }))
+      global.fetch.mockReset();
+      global.fetch.mockImplementation(
+        () =>
+          new Promise((r) => {
+            resolveFetch = r;
+          })
+      );
 
       const discoverBtn = screen.getByLabelText('Discover new poem');
       await userEvent.click(discoverBtn);
@@ -151,12 +156,15 @@ describe('DiwanApp', () => {
       });
 
       // Resolve and wait for React to finish processing
-      resolveFetch({ ok: true, json: async () => createDbPoem(99) })
-      await waitFor(() => {
-        expect(discoverBtn).not.toBeDisabled()
-      }, { timeout: 1000 })
+      resolveFetch({ ok: true, json: async () => createDbPoem(99) });
+      await waitFor(
+        () => {
+          expect(discoverBtn).not.toBeDisabled();
+        },
+        { timeout: 1000 }
+      );
       // beforeEach() will clear mocks for the next test
-    })
+    });
 
     it('changes content from the initial poem after Discover', async () => {
       mockAutoLoadFetch();
@@ -181,10 +189,10 @@ describe('DiwanApp', () => {
       // URL-aware mock: return new poem only for DB endpoint, default for everything else
       global.fetch.mockImplementation((url) => {
         if (typeof url === 'string' && url.includes('/api/poems/random')) {
-          return Promise.resolve({ ok: true, json: async () => newPoem, text: async () => '' })
+          return Promise.resolve({ ok: true, json: async () => newPoem, text: async () => '' });
         }
-        return Promise.resolve({ ...defaultFetchResponse })
-      })
+        return Promise.resolve({ ...defaultFetchResponse });
+      });
 
       await userEvent.click(screen.getByLabelText('Discover new poem'));
 
@@ -377,12 +385,12 @@ describe('DiwanApp', () => {
       render(<DiwanApp />);
 
       // Open sidebar settings sub-menu
-      const settingsBtn = screen.getByTitle('Settings')
-      await userEvent.click(settingsBtn)
+      const settingsBtn = screen.getByTitle('Settings');
+      await userEvent.click(settingsBtn);
 
       // Click the dark/light mode toggle in the sidebar
-      const lightModeBtn = screen.getByTitle('Light mode')
-      await userEvent.click(lightModeBtn)
+      const lightModeBtn = screen.getByTitle('Light mode');
+      await userEvent.click(lightModeBtn);
 
       await waitFor(() => {
         const lightContainer = document.querySelector('[class*="bg-[#FDFCF8]"]');
@@ -397,12 +405,9 @@ describe('DiwanApp', () => {
     it('opens category dropdown and shows poet list', async () => {
       render(<DiwanApp />);
 
-      // Open sidebar settings sub-menu, then open poet picker
-      const settingsBtn = screen.getByTitle('Settings')
-      await userEvent.click(settingsBtn)
-
-      const poetsBtn = screen.getByTitle('Poet filter')
-      await userEvent.click(poetsBtn)
+      // Open poet picker from bottom control bar
+      const poetsBtn = screen.getByLabelText('Filter by poet');
+      await userEvent.click(poetsBtn);
 
       await waitFor(() => {
         expect(document.body.textContent).toContain('كل الشعراء');
@@ -412,12 +417,9 @@ describe('DiwanApp', () => {
     it('sends poet filter parameter when a category is selected and Discover is clicked', async () => {
       render(<DiwanApp />);
 
-      // Open sidebar settings sub-menu, then open poet picker
-      const settingsBtn = screen.getByTitle('Settings')
-      await userEvent.click(settingsBtn)
-
-      const poetsBtn = screen.getByTitle('Poet filter')
-      await userEvent.click(poetsBtn)
+      // Open poet picker from bottom control bar
+      const poetsBtn = screen.getByLabelText('Filter by poet');
+      await userEvent.click(poetsBtn);
 
       await waitFor(() => {
         expect(document.body.textContent).toContain('محمود درويش');
@@ -472,18 +474,18 @@ describe('DiwanApp', () => {
     });
 
     it('changes font class when cycling via sidebar settings', async () => {
-      render(<DiwanApp />)
+      render(<DiwanApp />);
 
       // Verify initial font is Amiri
       expect(document.querySelectorAll('.font-amiri').length).toBeGreaterThan(0);
 
       // Open sidebar settings sub-menu
-      const settingsBtn = screen.getByTitle('Settings')
-      await userEvent.click(settingsBtn)
+      const settingsBtn = screen.getByTitle('Settings');
+      await userEvent.click(settingsBtn);
 
       // Click the font cycle button in sidebar
-      const fontBtn = screen.getByTitle('Font: Amiri')
-      await userEvent.click(fontBtn)
+      const fontBtn = screen.getByTitle('Font: Amiri');
+      await userEvent.click(fontBtn);
 
       // Font should change from Amiri to the next one (Alexandria)
       await waitFor(() => {
@@ -499,8 +501,8 @@ describe('DiwanApp', () => {
 
   describe('AI Mode', () => {
     it('logs error when AI Insights fails with an HTTP error', async () => {
-      mockAutoLoadFetch()
-      render(<DiwanApp />)
+      mockAutoLoadFetch();
+      render(<DiwanApp />);
 
       // Wait for mount-time fetches to settle
       await waitFor(() => {

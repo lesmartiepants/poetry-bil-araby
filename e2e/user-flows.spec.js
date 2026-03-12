@@ -158,6 +158,11 @@ test.describe('User Flows', () => {
       test.skip();
     }
 
+    // Expand the sidebar to reveal action buttons
+    const expandBtn = page.locator('button[aria-label="Open sidebar controls"]').first();
+    await expandBtn.click();
+    await page.waitForTimeout(400);
+
     // The app auto-triggers handleAnalyze on load. With an API key it streams
     // real insights from Gemini; without one (CI) it shows a fallback message.
     // Either way the "Poetic Insight" panel should appear.
@@ -181,6 +186,11 @@ test.describe('User Flows', () => {
       const rootDiv = document.querySelector('#root > div');
       return rootDiv ? getComputedStyle(rootDiv).backgroundColor : '';
     });
+
+    // Expand the sidebar to reveal action buttons
+    const expandBtn = page.locator('button[aria-label="Open sidebar controls"]').first();
+    await expandBtn.click();
+    await page.waitForTimeout(400);
 
     // Open sidebar Settings, then click theme toggle
     const settingsBtn = page.locator('button[title="Settings"]').first();
@@ -206,6 +216,11 @@ test.describe('User Flows', () => {
     // Initial font should be Amiri (default, index 0)
     await expect(page.locator('.font-amiri').first()).toBeVisible();
 
+    // Expand the sidebar to reveal action buttons
+    const expandBtn = page.locator('button[aria-label="Open sidebar controls"]').first();
+    await expandBtn.click();
+    await page.waitForTimeout(400);
+
     // Open sidebar Settings, then click font cycle button
     const settingsBtn = page.locator('button[title="Settings"]').first();
     await settingsBtn.click();
@@ -220,21 +235,16 @@ test.describe('User Flows', () => {
 
   // #6 — Filter poems by poet
   test('user filters poems by poet', async ({ page }) => {
-    // Open sidebar Settings sub-menu
-    const settingsBtn = page.locator('button[title="Settings"]').first();
-    await expect(settingsBtn).toBeVisible({ timeout: 5000 });
-    await settingsBtn.click();
-
-    // Wait for poet filter button inside Settings sub-menu
-    const poetBtn = page.locator('button[title="Poet filter"]').first();
-    await expect(poetBtn).toBeVisible({ timeout: 3000 });
+    // Open poet picker from bottom control bar
+    const poetBtn = page.locator('button[aria-label="Filter by poet"]').first();
+    await expect(poetBtn).toBeVisible({ timeout: 5000 });
     await poetBtn.click();
 
     // Wait for dropdown to render with poet options
-    const dropdownBtn = page.locator('.w-48 button:has-text("المتنبي")');
+    const dropdownBtn = page.locator('button:has-text("المتنبي")').first();
     await expect(dropdownBtn).toBeVisible({ timeout: 3000 });
 
-    // Wait for dropdown slide-in animation to finish (0.2s ease-out)
+    // Wait for dropdown slide-in animation to finish
     await page.waitForTimeout(400);
 
     // Dispatch a real click event via JS to trigger React handler
@@ -247,6 +257,11 @@ test.describe('User Flows', () => {
   // #7 — Copy poem to clipboard
   test('user copies poem to clipboard', async ({ page, context }) => {
     await context.grantPermissions(['clipboard-read', 'clipboard-write']);
+
+    // Expand the sidebar to reveal action buttons
+    const expandBtn = page.locator('button[aria-label="Open sidebar controls"]').first();
+    await expandBtn.click();
+    await page.waitForTimeout(400);
 
     const copyButton = page.locator('button[aria-label="Copy poem to clipboard"]').first();
     await expect(copyButton).toBeVisible({ timeout: 5000 });
@@ -330,7 +345,12 @@ test.describe('User Flows', () => {
 
   // #13 — Auth button always visible
   test('auth button is always visible', async ({ page }) => {
-    const authBtn = page.locator('button:has(svg.lucide-log-in)').first();
+    // Expand the sidebar to reveal the sign-in button
+    const expandBtn = page.locator('button[aria-label="Open sidebar controls"]').first();
+    await expandBtn.click();
+    await page.waitForTimeout(400);
+
+    const authBtn = page.locator('button:has(svg.lucide-user-round)').first();
     await expect(authBtn).toBeVisible({ timeout: 5000 });
   });
 

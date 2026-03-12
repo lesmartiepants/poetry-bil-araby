@@ -37,6 +37,7 @@ import {
   UserRound,
   ScrollText,
   Shuffle,
+  Paintbrush,
 } from 'lucide-react';
 import { track } from '@vercel/analytics';
 import Sentry from './sentry.js';
@@ -5594,35 +5595,22 @@ export default function DiwanApp() {
         currentFontClass={currentFontClass}
       />
 
-      {/* Design Review - Mobile: left edge vertical strip, Desktop: bottom-left pill */}
-      <style>{`
-        @keyframes slideInLeft {
-          from { transform: translateY(-50%) translateX(-100%); opacity: 0; }
-          to { transform: translateY(-50%) translateX(0); opacity: 1; }
-        }
-      `}</style>
+      {/* Design Review - small button above bug button */}
       <a
         href="/design-review"
-        className={`fixed left-0 top-1/2 -translate-y-1/2 z-[45] md:hidden py-3 px-1.5 rounded-r-2xl bg-gradient-to-b from-black/70 via-black/60 to-black/70 backdrop-blur-xl border-r-2 ${GOLD.goldBorderAccent} no-underline flex items-center`}
-        style={{ writingMode: 'vertical-rl', animation: 'slideInLeft 0.4s ease-out' }}
+        className="fixed z-[200] w-[44px] h-[44px] flex items-center justify-center no-underline"
+        style={{ left: 16, bottom: 60 }}
         title="Design Review"
+        aria-label="Open design review"
       >
         <span
-          className={`text-[10px] font-brand-en tracking-widest ${GOLD.goldTextMuted} uppercase`}
+          className={`relative w-5 h-5 rounded-full flex items-center justify-center transition-all duration-200 ${
+            darkMode
+              ? 'bg-stone-900/60 border border-[#C5A059]/20 text-stone-500 hover:text-[#C5A059] hover:border-[#C5A059]/40'
+              : 'bg-white/50 border border-[#8B7355]/20 text-stone-400 hover:text-[#8B7355] hover:border-[#8B7355]/40'
+          } backdrop-blur-md`}
         >
-          Review
-        </span>
-      </a>
-      <a
-        href="/design-review"
-        className={`hidden md:flex fixed left-0 top-1/2 -translate-y-1/2 z-[45] py-4 px-2 rounded-r-2xl bg-gradient-to-b from-black/70 via-black/60 to-black/70 backdrop-blur-xl border-r-2 ${GOLD.goldBorderAccent} no-underline items-center hover:px-3 ${GOLD.goldHoverBorderStrong} transition-all duration-300 cursor-pointer`}
-        style={{ writingMode: 'vertical-rl', animation: 'slideInLeft 0.4s ease-out' }}
-        title="Design Review"
-      >
-        <span
-          className={`text-[10px] font-brand-en tracking-widest ${GOLD.goldTextMuted} uppercase`}
-        >
-          Review
+          <Paintbrush size={9} />
         </span>
       </a>
 

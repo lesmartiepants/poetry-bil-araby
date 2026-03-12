@@ -1071,33 +1071,8 @@ const DebugPanel = ({ logs, onClear, darkMode, poem, appState, visible, controlB
   const [bugError, setBugError] = useState('');
   const [lastViewedCount, setLastViewedCount] = useState(0);
   const scrollRef = useRef(null);
-  // Position bug button centered in the gap between screen edge and control bar
-  const [btnPos, setBtnPos] = useState({ left: 16, bottom: 16 });
-  useEffect(() => {
-    const update = () => {
-      const el = controlBarRef?.current;
-      if (!el) return;
-      const rect = el.getBoundingClientRect();
-      const vh = window.innerHeight;
-      // X: center of gap between left screen edge and bar left edge (minus half button width)
-      const left = Math.max(8, rect.left / 2 - 10);
-      // Y: center of gap between bar bottom edge and screen bottom (minus half button height)
-      const gapBelow = vh - rect.bottom;
-      const bottom = Math.max(8, gapBelow / 2 - 10);
-      setBtnPos({ left, bottom });
-    };
-    update();
-    window.addEventListener('resize', update);
-    const ro =
-      typeof ResizeObserver !== 'undefined' && controlBarRef?.current
-        ? new ResizeObserver(update)
-        : null;
-    if (ro && controlBarRef?.current) ro.observe(controlBarRef.current);
-    return () => {
-      window.removeEventListener('resize', update);
-      ro?.disconnect();
-    };
-  }, [controlBarRef]);
+  // Fixed position for bug button — aligned with paintbrush button at bottom-left
+  const btnPos = { left: 8, bottom: 52 };
 
   // Auto-scroll to bottom on new logs when panel is open
   useEffect(() => {
@@ -5079,7 +5054,7 @@ export default function DiwanApp() {
           <main
             ref={mainScrollRef}
             onScroll={handleScroll}
-            className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar relative z-10 px-4 md:px-0 pb-28 pt-10 md:pt-12 pr-14 md:pr-0"
+            className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar relative z-10 px-4 md:px-0 pb-28 pt-10 md:pt-12"
             style={{ overscrollBehaviorX: 'none' }}
           >
             <div
@@ -5087,7 +5062,7 @@ export default function DiwanApp() {
               style={{
                 height: '72px',
                 marginLeft: '-2rem',
-                marginRight: '-4rem',
+                marginRight: '-2rem',
                 marginBottom: '-72px',
                 opacity: headerOpacity,
                 background: `linear-gradient(to bottom, ${darkMode ? '#0c0c0e' : '#FDFCF8'} 0%, ${darkMode ? '#0c0c0e' : '#FDFCF8'} 45%, ${darkMode ? 'rgba(12,12,14,0.7)' : 'rgba(253,252,248,0.7)'} 70%, ${darkMode ? 'rgba(12,12,14,0.3)' : 'rgba(253,252,248,0.3)'} 85%, transparent 100%)`,
@@ -5650,24 +5625,28 @@ export default function DiwanApp() {
         currentFontClass={currentFontClass}
       />
 
-      {/* Design Review - small button above bug button */}
-      <a
-        href="/design-review"
-        className="fixed z-[200] w-[44px] h-[44px] flex items-center justify-center no-underline"
-        style={{ left: 16, bottom: 60 }}
-        title="Design Review"
-        aria-label="Open design review"
+      {/* Design Review + Bug — stacked bottom-left utility buttons */}
+      <div
+        className="fixed z-[200] flex flex-col items-center gap-1"
+        style={{ left: 8, bottom: 8 }}
       >
-        <span
-          className={`relative w-5 h-5 rounded-full flex items-center justify-center transition-all duration-200 ${
-            darkMode
-              ? 'bg-stone-900/60 border border-[#C5A059]/20 text-stone-500 hover:text-[#C5A059] hover:border-[#C5A059]/40'
-              : 'bg-white/50 border border-[#8B7355]/20 text-stone-400 hover:text-[#8B7355] hover:border-[#8B7355]/40'
-          } backdrop-blur-md`}
+        <a
+          href="/design-review"
+          className="w-[44px] h-[44px] flex items-center justify-center no-underline"
+          title="Design Review"
+          aria-label="Open design review"
         >
-          <Paintbrush size={9} />
-        </span>
-      </a>
+          <span
+            className={`relative w-5 h-5 rounded-full flex items-center justify-center transition-all duration-200 ${
+              darkMode
+                ? 'bg-stone-900/60 border border-[#C5A059]/20 text-stone-500 hover:text-[#C5A059] hover:border-[#C5A059]/40'
+                : 'bg-white/50 border border-[#8B7355]/20 text-stone-400 hover:text-[#8B7355] hover:border-[#8B7355]/40'
+            } backdrop-blur-md`}
+          >
+            <Paintbrush size={9} />
+          </span>
+        </a>
+      </div>
 
       {/* Vertical Sidebar - always visible */}
       <VerticalSidebar

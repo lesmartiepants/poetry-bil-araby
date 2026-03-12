@@ -5142,12 +5142,17 @@ export default function DiwanApp() {
                         {current?.poetArabic || current?.poet}
                       </div>
                       {(() => {
-                        const englishPoet =
-                          current?.poet !== current?.poetArabic
+                        const hasArabicFields = current?.poetArabic && current?.titleArabic;
+                        const englishPoet = hasArabicFields
+                          ? current?.poet !== current?.poetArabic
                             ? current?.poet
-                            : CATEGORIES.find((c) => c.id === current?.poet)?.label;
-                        const englishTitle =
-                          current?.title !== current?.titleArabic ? current?.title : null;
+                            : CATEGORIES.find((c) => c.id === current?.poet)?.label
+                          : null;
+                        const englishTitle = hasArabicFields
+                          ? current?.title !== current?.titleArabic
+                            ? current?.title
+                            : null
+                          : null;
                         return englishPoet || englishTitle ? (
                           <div
                             className="font-brand-en text-center tracking-wide"

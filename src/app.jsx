@@ -47,6 +47,7 @@ import {
 } from './hooks/useAuth';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import { useOverflowDetect } from './hooks/useOverflowDetect';
+import { useDailyPoem } from './hooks/useDailyPoem';
 import {
   INSIGHTS_SYSTEM_PROMPT,
   DISCOVERY_SYSTEM_PROMPT,
@@ -2231,7 +2232,6 @@ export default function DiwanApp() {
   const { logs, addLog, clearLogs } = useLogger();
   const [showCopySuccess, setShowCopySuccess] = useState(false);
   const [showShareSuccess, setShowShareSuccess] = useState(false);
-  const [dailyPoem, setDailyPoem] = useState(null);
   const [cacheStats, setCacheStats] = useState({
     audioHits: 0,
     audioMisses: 0,
@@ -2398,46 +2398,8 @@ export default function DiwanApp() {
     }
   }, []);
 
-  // Fetch poem of the day on mount (cached per date in IndexedDB)
-  useEffect(() => {
-    if (!useDatabase) return;
-    const todayKey = `daily-${new Date().toISOString().slice(0, 10)}`;
-
-    (async () => {
-      // Check IndexedDB cache first
-      if (FEATURES.caching) {
-        try {
-          const cached = await cacheOperations.get(CACHE_CONFIG.stores.poems, todayKey);
-          if (cached?.data) {
-            setDailyPoem(cached.data);
-            addLog('Daily', 'Loaded poem of the day from cache', 'info');
-            return;
-          }
-        } catch {}
-      }
-
-      // Fetch from API
-      try {
-        const res = await fetch(`${getApiUrl()}/api/poems/daily`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const poem = await res.json();
-        if (poem.arabic) poem.arabic = poem.arabic.replace(/\*/g, '\n');
-        poem.isFromDatabase = true;
-        setDailyPoem(poem);
-        addLog('Daily', `Poem of the day: ${poem.poet} — ${poem.title}`, 'success');
-
-        // Cache for today
-        if (FEATURES.caching) {
-          try {
-            await cacheOperations.set(CACHE_CONFIG.stores.poems, todayKey, { data: poem });
-          } catch {}
-        }
-      } catch (err) {
-        Sentry.captureException(err);
-        addLog('Daily', `Failed to load: ${err.message}`, 'error');
-      }
-    })();
-  }, [useDatabase]);
+  // Fetch poem of the day
+  const dailyPoem = useDailyPoem(useDatabase);
 
   // After OAuth redirect, once the user is signed in, auto-save the stashed poem and clean up
   useEffect(() => {

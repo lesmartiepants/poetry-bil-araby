@@ -703,7 +703,7 @@ const prefetchManager = {
       if (addLog) {
         addLog(
           'Prefetch Audio',
-          `→ Background audio generation (poem ${poemId}) | ${(requestSize / 1024).toFixed(1)}KB | ${estimatedTokens} tokens`,
+          `→ Background audio generation (poem ${poemId}) | Model: ${API_MODELS.tts} | ${(requestSize / 1024).toFixed(1)}KB | ${estimatedTokens} tokens`,
           'info'
         );
       }
@@ -737,7 +737,7 @@ const prefetchManager = {
         if (addLog)
           addLog(
             'Prefetch Audio',
-            `❌ Audio generation failed for poem ${poemId}. Response: ${JSON.stringify(data).substring(0, 200)}`,
+            `❌ [${ttsModel}] Audio generation failed for poem ${poemId}. Response: ${JSON.stringify(data).substring(0, 200)}`,
             'error'
           );
         return;
@@ -795,6 +795,7 @@ const prefetchManager = {
               title: poem.title,
               size: blob.size,
               duration: audioDuration,
+              model: ttsModel,
             },
           });
 
@@ -3652,7 +3653,7 @@ export default function DiwanApp() {
           if (cached?.blob) {
             addLog(
               'Audio',
-              `✓ Background audio generation completed - playing from cache`,
+              `✓ Background audio generation completed${cached.metadata?.model ? ` [${cached.metadata.model}]` : ''} - playing from cache`,
               'success'
             );
             const u = URL.createObjectURL(cached.blob);
@@ -3728,7 +3729,7 @@ export default function DiwanApp() {
         const sizeMB = (cached.blob.size / (1024 * 1024)).toFixed(2);
         addLog(
           'Audio Cache',
-          `✓ Cache HIT (${cacheTime.toFixed(0)}ms) | Size: ${sizeMB}MB | Instant playback`,
+          `✓ Cache HIT (${cacheTime.toFixed(0)}ms)${cached.metadata?.model ? ` | Model: ${cached.metadata.model}` : ''} | Size: ${sizeMB}MB | Instant playback`,
           'success'
         );
         setCacheStats((prev) => ({ ...prev, audioHits: prev.audioHits + 1 }));
@@ -3780,7 +3781,7 @@ export default function DiwanApp() {
 
     addLog(
       'Audio API',
-      `→ Starting generation | Request: ${(requestSize / 1024).toFixed(1)}KB | ${arabicTextChars} chars Arabic | Est. ${estimatedTokens} tokens`,
+      `→ Starting generation | Model: ${API_MODELS.tts} | Request: ${(requestSize / 1024).toFixed(1)}KB | ${arabicTextChars} chars Arabic | Est. ${estimatedTokens} tokens`,
       'info'
     );
 
@@ -3877,6 +3878,7 @@ export default function DiwanApp() {
                 title: current.title,
                 size: blob.size,
                 duration: audioDuration,
+                model: ttsModel,
               },
             });
             const cacheTime = performance.now() - cacheStart;

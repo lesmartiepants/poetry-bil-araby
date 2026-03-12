@@ -45,6 +45,7 @@ import {
   useDownvotes,
   usePoemEvents,
 } from './hooks/useAuth';
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
 import {
   INSIGHTS_SYSTEM_PROMPT,
   DISCOVERY_SYSTEM_PROMPT,
@@ -2558,46 +2559,25 @@ export default function DiwanApp() {
   }, [darkMode, currentFont, user]);
 
   // Keyboard shortcuts
-  useEffect(() => {
-    const handleKeyDown = (e) => {
-      const tag = document.activeElement?.tagName;
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
-
-      switch (e.key) {
-        case ' ':
-          e.preventDefault();
-          togglePlay();
-          break;
-        case 'ArrowRight':
-          handleFetch();
-          break;
-        case 'e':
-        case 'E':
-          if (!isInterpreting && !interpretation) handleAnalyze();
-          break;
-        case 't':
-        case 'T':
-          setShowTranslation((prev) => !prev);
-          break;
-        case 'r':
-        case 'R':
-          setShowTransliteration((prev) => !prev);
-          break;
-        case 'Escape':
-          setShowAuthModal(false);
-          setShowSavedPoems(false);
-          setShowSettings(false);
-          setShowShortcutHelp(false);
-          break;
-        case '?':
-          setShowShortcutHelp((prev) => !prev);
-          break;
-      }
-    };
-
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isInterpreting, interpretation]);
+  useKeyboardShortcuts(
+    {
+      onSpace: togglePlay,
+      onArrowRight: handleFetch,
+      onExplain: () => {
+        if (!isInterpreting && !interpretation) handleAnalyze();
+      },
+      onToggleTranslation: () => setShowTranslation((prev) => !prev),
+      onToggleTransliteration: () => setShowTransliteration((prev) => !prev),
+      onEscape: () => {
+        setShowAuthModal(false);
+        setShowSavedPoems(false);
+        setShowSettings(false);
+        setShowShortcutHelp(false);
+      },
+      onHelp: () => setShowShortcutHelp((prev) => !prev),
+    },
+    [isInterpreting, interpretation]
+  );
 
   const handleScroll = (e) => {
     setHeaderOpacity(Math.max(0, 1 - e.target.scrollTop / 30));

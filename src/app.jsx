@@ -4985,21 +4985,7 @@ export default function DiwanApp() {
           transition: box-shadow 0.15s ease;
         }
 
-        .scroll-progress {
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          height: 3px;
-          background: linear-gradient(to right, #6366f1, #9333ea);
-          transform: scaleX(0.36);
-          transform-origin: left;
-          z-index: 100;
-          opacity: 0.85;
-        }
       `}</style>
-
-      <div className="scroll-progress" />
 
       <DebugPanel
         logs={logs}

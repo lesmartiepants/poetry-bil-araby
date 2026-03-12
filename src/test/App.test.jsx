@@ -2,12 +2,21 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import DiwanApp from '../app.jsx';
+import { LogProvider } from '../LogContext.jsx';
 import {
   createMockGeminiResponse,
   mockSuccessfulFetch,
   createDbPoem,
   createStreamingMock,
 } from './utils';
+
+function renderApp() {
+  return render(
+    <LogProvider consoleLogging={false}>
+      <DiwanApp />
+    </LogProvider>
+  );
+}
 
 // The app auto-loads a poem from the DB on mount (handleFetch in useEffect).
 // This helper pre-mocks that initial fetch so the default poem stays current.
@@ -51,7 +60,7 @@ describe('DiwanApp', () => {
 
   describe('Poem Structure', () => {
     it('renders the default poem with Arabic text longer than 10 characters', () => {
-      render(<DiwanApp />);
+      renderApp();
       // The default poem's Arabic text is rendered across verse lines with dir="rtl"
       const rtlElements = document.querySelectorAll('p[dir="rtl"]');
       expect(rtlElements.length).toBeGreaterThan(0);
@@ -64,20 +73,20 @@ describe('DiwanApp', () => {
     });
 
     it('displays the poet name in both Arabic and English', () => {
-      render(<DiwanApp />);
+      renderApp();
       expect(document.body.textContent).toContain('نزار قباني');
       expect(document.body.textContent).toContain('Nizar Qabbani');
     });
 
     it('renders tags for the default poem', () => {
-      render(<DiwanApp />);
+      renderApp();
       expect(screen.getByText('Modern')).toBeInTheDocument();
       expect(screen.getByText('Romantic')).toBeInTheDocument();
       expect(screen.getByText('Ghazal')).toBeInTheDocument();
     });
 
     it('renders poem verses with dir="rtl" attribute', () => {
-      render(<DiwanApp />);
+      renderApp();
       const rtlVerses = document.querySelectorAll('p[dir="rtl"]');
       expect(rtlVerses.length).toBeGreaterThan(0);
       // Each verse line should have RTL direction
@@ -92,7 +101,7 @@ describe('DiwanApp', () => {
   describe('Discover Poems', () => {
     it('loads a new poem from the database when Discover is clicked', async () => {
       mockAutoLoadFetch();
-      render(<DiwanApp />);
+      renderApp();
 
       // Wait for mount-time fetches to settle
       await waitFor(() => {
@@ -127,7 +136,7 @@ describe('DiwanApp', () => {
 
     it('disables the Discover button while fetching', async () => {
       mockAutoLoadFetch();
-      render(<DiwanApp />);
+      renderApp();
 
       // Wait for mount-time fetches to settle
       await waitFor(() => {
@@ -159,7 +168,7 @@ describe('DiwanApp', () => {
 
     it('changes content from the initial poem after Discover', async () => {
       mockAutoLoadFetch();
-      render(<DiwanApp />);
+      renderApp();
 
       // Wait for mount-time fetches to settle
       await waitFor(() => {
@@ -198,7 +207,7 @@ describe('DiwanApp', () => {
   describe('Audio Playback', () => {
     it('calls fetch when Play is clicked', async () => {
       mockAutoLoadFetch();
-      render(<DiwanApp />);
+      renderApp();
 
       await waitFor(() => {
         expect(document.body.textContent).toContain('نزار قباني');
@@ -216,7 +225,7 @@ describe('DiwanApp', () => {
 
     it('shows loading state when generating audio', async () => {
       mockAutoLoadFetch();
-      render(<DiwanApp />);
+      renderApp();
 
       await waitFor(() => {
         expect(document.body.textContent).toContain('نزار قباني');
@@ -252,7 +261,7 @@ describe('DiwanApp', () => {
 
     it('shows parsed insight sections after clicking Explain on a DB poem', async () => {
       mockAutoLoadFetch();
-      render(<DiwanApp />);
+      renderApp();
 
       // Wait for mount-time fetches to settle
       await waitFor(() => {
@@ -281,7 +290,7 @@ describe('DiwanApp', () => {
 
     it('Explain button is enabled for a DB poem', async () => {
       mockAutoLoadFetch();
-      render(<DiwanApp />);
+      renderApp();
 
       // Wait for mount-time fetches to settle
       await waitFor(() => {
@@ -303,7 +312,7 @@ describe('DiwanApp', () => {
   describe('Copy Functionality', () => {
     it('copies poem text to clipboard with Arabic text, poet, and separator', async () => {
       mockAutoLoadFetch();
-      render(<DiwanApp />);
+      renderApp();
 
       // Wait for auto-load to settle
       await waitFor(() => {
@@ -327,7 +336,7 @@ describe('DiwanApp', () => {
 
     it('shows success indicator after copying', async () => {
       mockAutoLoadFetch();
-      render(<DiwanApp />);
+      renderApp();
 
       await waitFor(() => {
         expect(document.body.textContent).toContain('نزار قباني');
@@ -347,7 +356,7 @@ describe('DiwanApp', () => {
       mockAutoLoadFetch();
       navigator.clipboard.writeText.mockRejectedValueOnce(new Error('Clipboard denied'));
 
-      render(<DiwanApp />);
+      renderApp();
 
       await waitFor(() => {
         expect(document.body.textContent).toContain('نزار قباني');
@@ -364,13 +373,13 @@ describe('DiwanApp', () => {
 
   describe('Theme Toggle', () => {
     it('starts in dark mode with bg-[#0c0c0e]', () => {
-      render(<DiwanApp />);
+      renderApp();
       const container = document.querySelector('[class*="bg-[#0c0c0e]"]');
       expect(container).toBeTruthy();
     });
 
     it('switches to light mode bg-[#FDFCF8] after toggling theme', async () => {
-      render(<DiwanApp />);
+      renderApp();
 
       // Open theme dropdown
       const themeBtn = screen.getByLabelText('Theme options');
@@ -396,7 +405,7 @@ describe('DiwanApp', () => {
 
   describe('Poet Filtering', () => {
     it('opens category dropdown and shows poet list', async () => {
-      render(<DiwanApp />);
+      renderApp();
 
       const poetsBtn = screen.getByLabelText('Select poet category');
       await userEvent.click(poetsBtn);
@@ -407,7 +416,7 @@ describe('DiwanApp', () => {
     });
 
     it('sends poet filter parameter when a category is selected and Discover is clicked', async () => {
-      render(<DiwanApp />);
+      renderApp();
 
       // Open the category dropdown and select a poet
       const poetsBtn = screen.getByLabelText('Select poet category');
@@ -453,20 +462,20 @@ describe('DiwanApp', () => {
 
   describe('Arabic RTL & Fonts', () => {
     it('renders Arabic verses with dir="rtl"', () => {
-      render(<DiwanApp />);
+      renderApp();
       const rtlElements = document.querySelectorAll('p[dir="rtl"]');
       expect(rtlElements.length).toBeGreaterThan(0);
     });
 
     it('applies font-amiri class by default', () => {
-      render(<DiwanApp />);
+      renderApp();
       // The currentFontClass is applied to the verse container
       const amiriElements = document.querySelectorAll('.font-amiri');
       expect(amiriElements.length).toBeGreaterThan(0);
     });
 
     it('changes font class when cycling via Theme dropdown', async () => {
-      render(<DiwanApp />);
+      renderApp();
 
       // Verify initial font is Amiri
       expect(document.querySelectorAll('.font-amiri').length).toBeGreaterThan(0);
@@ -496,7 +505,7 @@ describe('DiwanApp', () => {
 
   describe('LLM Mode', () => {
     it('logs error when Discover fails with a non-retryable error', async () => {
-      render(<DiwanApp />);
+      renderApp();
 
       // Switch to generative mode
       await userEvent.click(screen.getByLabelText('Switch to LLM Mode'));
@@ -519,7 +528,7 @@ describe('DiwanApp', () => {
     });
 
     it('uses fallback model when primary model returns not-found', async () => {
-      render(<DiwanApp />);
+      renderApp();
 
       await userEvent.click(screen.getByLabelText('Switch to LLM Mode'));
 
@@ -559,7 +568,7 @@ describe('DiwanApp', () => {
     });
 
     it('discovers a new poem in generative mode when Gemini responds successfully', async () => {
-      render(<DiwanApp />);
+      renderApp();
 
       await userEvent.click(screen.getByLabelText('Switch to LLM Mode'));
 
@@ -592,7 +601,7 @@ describe('DiwanApp', () => {
 
     it('logs error when Insights fails with an HTTP error', async () => {
       mockAutoLoadFetch();
-      render(<DiwanApp />);
+      renderApp();
 
       // Wait for mount-time fetches to settle
       await waitFor(() => {
@@ -626,7 +635,7 @@ describe('DiwanApp', () => {
 
   describe('Debug Panel', () => {
     it('renders System Logs text when debug feature flag is enabled', () => {
-      render(<DiwanApp />);
+      renderApp();
       expect(document.body.textContent).toContain('System Logs');
     });
   });

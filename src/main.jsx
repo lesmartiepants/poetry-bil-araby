@@ -4,6 +4,7 @@ import ReactDOM from 'react-dom/client'
 import * as Sentry from '@sentry/react'
 import { Analytics } from '@vercel/analytics/react'
 import DiwanApp from './app.jsx'
+import { LogProvider } from './LogContext.jsx'
 import './index.css'
 
 const SentryErrorBoundary = Sentry.ErrorBoundary;
@@ -51,7 +52,9 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       )}
       showDialog
     >
-      <DiwanApp />
+      <LogProvider>
+        <DiwanApp />
+      </LogProvider>
       <Analytics />
     </SentryErrorBoundary>
   </React.StrictMode>,

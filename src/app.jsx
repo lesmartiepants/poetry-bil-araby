@@ -52,6 +52,7 @@ import {
 } from './prompts';
 import { parseInsight } from './utils/insightParser';
 import { repairAndParseJSON } from './utils/jsonRepair';
+import { useLogger } from './LogContext.jsx';
 import seedPoems from './data/seed-poems.json';
 
 /* =============================================================================
@@ -3088,7 +3089,7 @@ export default function DiwanApp() {
   const [isFetching, setIsFetching] = useState(false);
   const [autoExplainPending, setAutoExplainPending] = useState(false);
   const hasAutoLoaded = useRef(false);
-  const [logs, setLogs] = useState([]);
+  const { logs, addLog, clearLogs } = useLogger();
   const [showCopySuccess, setShowCopySuccess] = useState(false);
   const [showShareSuccess, setShowShareSuccess] = useState(false);
   const [dailyPoem, setDailyPoem] = useState(null);
@@ -3179,19 +3180,7 @@ export default function DiwanApp() {
   // future changes that might empty the array (e.g., setPoems([]) or filter edge cases)
   const current = filtered[currentIndex] || filtered[0] || poems[0] || null;
 
-  const addLog = (label, msg, type = 'info') => {
-    const time = new Date().toLocaleTimeString([], {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-    });
-    setLogs((prev) => [...prev, { label, msg: String(msg), type, time }]);
-    if (FEATURES.logging) {
-      const logFn =
-        type === 'error' ? console.error : type === 'success' ? console.info : console.log;
-      logFn(`[${label}] ${msg}`);
-    }
-  };
+  // addLog and clearLogs are provided by useLogger() from LogContext
 
   // Track poem view time (emit 'view' event after 3s on same poem)
   useEffect(() => {
@@ -5060,7 +5049,7 @@ export default function DiwanApp() {
 
       <DebugPanel
         logs={logs}
-        onClear={() => setLogs([])}
+        onClear={clearLogs}
         darkMode={darkMode}
         poem={current}
         appState={{

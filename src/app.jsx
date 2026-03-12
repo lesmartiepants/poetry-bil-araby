@@ -5071,16 +5071,9 @@ export default function DiwanApp() {
           <main
             ref={mainScrollRef}
             onScroll={handleScroll}
-            className="flex-1 overflow-y-auto custom-scrollbar relative z-10 px-4 md:px-0 pb-28 pt-16 md:pt-20 pr-14 md:pr-0"
+            className="flex-1 overflow-y-auto custom-scrollbar relative z-10 px-4 md:px-0 pb-28 pt-10 md:pt-12 pr-14 md:pr-0"
           >
-            <div
-              className="pointer-events-none sticky top-0 left-0 right-0 z-30"
-              style={{
-                height: '32px',
-                background: `linear-gradient(to bottom, ${darkMode ? '#0c0c0e' : '#FDFCF8'} 0%, ${darkMode ? 'rgba(12,12,14,0.6)' : 'rgba(253,252,248,0.6)'} 50%, transparent 100%)`,
-              }}
-            />
-            <div className="flex flex-col items-center py-2 mt-2">
+            <div className="flex flex-col items-center pt-1">
               <div className="w-full max-w-4xl flex flex-col items-center">
                 <div
                   className={`text-center ${DESIGN.mainMetaPadding} animate-in slide-in-from-bottom-8 duration-1000 z-20 w-full`}
@@ -5131,30 +5124,50 @@ export default function DiwanApp() {
 
                     <div className="relative z-10 flex flex-col items-center justify-center w-full gap-0.5">
                       <div
-                        className="font-brand-en font-semibold text-center tracking-wide"
+                        className={`${currentFontClass} font-bold text-center`}
                         style={{
-                          fontSize: 'clamp(1.3rem, 2.8vw, 1.7rem)',
+                          fontSize: 'clamp(1.2rem, 2.5vw, 1.6rem)',
                           color: darkMode ? '#B8A088' : '#6B5744',
-                          letterSpacing: '0.03em',
                         }}
                       >
-                        {current?.title}
+                        {current?.titleArabic || current?.title}
                       </div>
                       <div
-                        className="font-brand-en text-center tracking-widest uppercase"
+                        className={`${currentFontClass} text-center`}
                         style={{
-                          fontSize: 'clamp(0.7rem, 1.4vw, 0.85rem)',
+                          fontSize: 'clamp(0.85rem, 1.8vw, 1.05rem)',
                           color: darkMode ? '#8A7D6F' : '#9B8B78',
-                          letterSpacing: '0.15em',
                         }}
                       >
-                        {current?.poet}
+                        {current?.poetArabic || current?.poet}
                       </div>
+                      {(() => {
+                        const englishPoet =
+                          current?.poet !== current?.poetArabic
+                            ? current?.poet
+                            : CATEGORIES.find((c) => c.id === current?.poet)?.label;
+                        const englishTitle =
+                          current?.title !== current?.titleArabic ? current?.title : null;
+                        return englishPoet || englishTitle ? (
+                          <div
+                            className="font-brand-en text-center tracking-wide"
+                            style={{
+                              fontSize: 'clamp(0.65rem, 1.2vw, 0.8rem)',
+                              color: darkMode ? '#6B6360' : '#A89B8E',
+                              marginTop: '2px',
+                            }}
+                          >
+                            {englishTitle && <span>{englishTitle}</span>}
+                            {englishTitle && englishPoet && <span className="opacity-40"> · </span>}
+                            {englishPoet && <span>{englishPoet}</span>}
+                          </div>
+                        ) : null;
+                      })()}
                     </div>
                   </div>
                 </div>
 
-                <div className={`relative w-full group pt-3 pb-2 ${DESIGN.mainMarginBottom}`}>
+                <div className={`relative w-full group pt-1 pb-2 ${DESIGN.mainMarginBottom}`}>
                   <div className="px-4 md:px-20 py-2 text-center">
                     <div className="flex flex-col gap-5 md:gap-7">
                       {versePairs.map((pair, idx) => (

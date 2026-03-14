@@ -253,6 +253,63 @@ describe('DiwanApp', () => {
         expect(playBtn).toBeDisabled();
       });
     });
+
+    it('mutes and pauses audio element immediately on Play to prevent audible blip during iOS Safari unlock', async () => {
+      // Capture the Audio instance the component creates so we can assert on it.
+      // The component uses `useRef(new Audio())` — React re-evaluates `new Audio()` on
+      // every render, but useRef only stores the FIRST value. We capture the first
+      // instance created (which is the one stored in audioRef.current) by checking
+      // whether audioInstance is still null before setting it.
+      let audioInstance = null;
+      const OriginalAudio = global.Audio;
+      global.Audio = class extends OriginalAudio {
+        constructor(...args) {
+          super(...args);
+          if (audioInstance === null) audioInstance = this; // first instance = audioRef.current
+        }
+      };
+
+      try {
+        // Keep TTS fetch hanging so audioUrl never resolves — this ensures the
+        // unlock code path (deferred-play branch) is what we're exercising.
+        global.fetch = vi.fn((url) => {
+          if (typeof url === 'string' && url.includes('/api/ai/')) {
+            return new Promise(() => {});
+          }
+          return Promise.resolve({
+            ok: true,
+            json: async () => defaultDbPoem,
+            text: async () => '',
+            body: {
+              getReader: () => ({
+                read: vi.fn().mockResolvedValue({ done: true, value: undefined }),
+              }),
+            },
+          });
+        });
+
+        render(<DiwanApp />);
+
+        await waitFor(() => {
+          expect(document.body.textContent).toContain('Nizar Qabbani');
+        });
+
+        const playCallsBefore = audioInstance.play.mock.calls.length;
+        const pauseCallsBefore = audioInstance.pause.mock.calls.length;
+
+        await userEvent.click(screen.getByLabelText('Play recitation'));
+
+        // The iOS unlock block must call play() then pause() synchronously within the
+        // tap handler — before any async work starts — so the gesture context is held.
+        expect(audioInstance.play.mock.calls.length).toBeGreaterThan(playCallsBefore);
+        expect(audioInstance.pause.mock.calls.length).toBeGreaterThan(pauseCallsBefore);
+
+        // muted must be restored to its original value (false) after the unlock sequence.
+        expect(audioInstance.muted).toBe(false);
+      } finally {
+        global.Audio = OriginalAudio;
+      }
+    });
   });
 
   // ── Feature 4: Insights ──────────────────────────────────────────────
@@ -261,34 +318,41 @@ describe('DiwanApp', () => {
     const mockInsightText =
       'POEM:\nTranslation line\nTHE DEPTH: Deep meaning here.\nTHE AUTHOR: Celebrated poet info.';
 
-    it('shows parsed insight sections after clicking Explain on a DB poem', async () => {
-      mockAutoLoadFetch();
-      render(<DiwanApp />);
+    // Timeout is set above the CI global limit (3000ms) because this test has two sequential
+    // async phases each with a 3000ms waitFor: Discover → "Mahmoud Darwish", then Explain →
+    // "Deep meaning here.". On slow CI runners the combined wall-time can exceed 3000ms.
+    it(
+      'shows parsed insight sections after clicking Explain on a DB poem',
+      { timeout: 7000 },
+      async () => {
+        mockAutoLoadFetch();
+        render(<DiwanApp />);
 
-      // Wait for mount-time fetches to settle
-      await waitFor(() => {
-        expect(document.body.textContent).toContain('Nizar Qabbani');
-      });
+        // Wait for mount-time fetches to settle
+        await waitFor(() => {
+          expect(document.body.textContent).toContain('Nizar Qabbani');
+        });
 
-      // Load a DB poem first
-      global.fetch.mockResolvedValueOnce({ ok: true, json: async () => createDbPoem(101) });
-      await userEvent.click(screen.getByLabelText('Discover new poem'));
-      await waitFor(() => expect(screen.getByText('Mahmoud Darwish')).toBeInTheDocument(), {
-        timeout: 3000,
-      });
+        // Load a DB poem first
+        global.fetch.mockResolvedValueOnce({ ok: true, json: async () => createDbPoem(101) });
+        await userEvent.click(screen.getByLabelText('Discover new poem'));
+        await waitFor(() => expect(screen.getByText('Mahmoud Darwish')).toBeInTheDocument(), {
+          timeout: 3000,
+        });
 
-      // Mock Gemini streaming response
-      global.fetch.mockResolvedValueOnce(createStreamingMock(mockInsightText));
+        // Mock Gemini streaming response
+        global.fetch.mockResolvedValueOnce(createStreamingMock(mockInsightText));
 
-      await userEvent.click(screen.getByLabelText('Explain poem meaning'));
+        await userEvent.click(screen.getByLabelText('Explain poem meaning'));
 
-      await waitFor(
-        () => {
-          expect(document.body.textContent).toContain('Deep meaning here.');
-        },
-        { timeout: 3000 }
-      );
-    });
+        await waitFor(
+          () => {
+            expect(document.body.textContent).toContain('Deep meaning here.');
+          },
+          { timeout: 3000 }
+        );
+      }
+    );
 
     it('Explain button is enabled for a DB poem', async () => {
       mockAutoLoadFetch();

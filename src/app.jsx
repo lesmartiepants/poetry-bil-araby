@@ -3614,14 +3614,17 @@ export default function DiwanApp() {
     // iOS Safari autoplay policy: audio.play() must be called synchronously within a user
     // gesture handler. Calling it here (before any await/setTimeout) "unlocks" the audio
     // element so that deferred playback — after prefetch polling or API generation — is not
-    // blocked by the browser's autoplay restrictions. We immediately pause to avoid audible
-    // playback of any previously loaded audio.
+    // blocked by the browser's autoplay restrictions. We mute first to prevent a brief audible
+    // blip if a previous src is still loaded on the element, then immediately pause and restore.
     if (audioRef.current) {
+      const wasMuted = audioRef.current.muted;
+      audioRef.current.muted = true;
       const unlockPlay = audioRef.current.play();
       if (unlockPlay !== undefined) {
         unlockPlay.catch(() => {}); // silence errors from empty/invalid src
       }
       audioRef.current.pause();
+      audioRef.current.muted = wasMuted;
     }
 
     // Set loading state FIRST (before duplicate check) for better UX

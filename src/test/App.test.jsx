@@ -428,11 +428,9 @@ describe('DiwanApp', () => {
         expect(document.body.textContent).toContain('محمود درويش');
       });
 
-      // Click "Mahmoud Darwish" category
-      const darwishOption = screen.getByText('محمود درويش');
-      await userEvent.click(darwishOption);
-
-      // Mock the DB fetch response with the selected poet
+      // Queue the DB fetch response BEFORE clicking the category.
+      // The selectedCategory useEffect fires handleFetch() synchronously during the click,
+      // so the mock must be ready before userEvent.click resolves.
       const filteredPoem = {
         id: 200,
         poet: 'Mahmoud Darwish',
@@ -445,17 +443,23 @@ describe('DiwanApp', () => {
           'This is your name, a woman said, then disappeared into the spiral corridor',
         tags: ['Modern', 'Epic', 'Free Verse'],
       };
-
       global.fetch.mockResolvedValueOnce({
         ok: true,
         json: async () => filteredPoem,
       });
 
-      // The useEffect fires handleFetch when a category is selected and filtered.length === 0
-      // Wait for the fetch call
+      // Click "Mahmoud Darwish" category — triggers handleFetch via selectedCategory effect
+      const darwishOption = screen.getByText('محمود درويش');
+      await userEvent.click(darwishOption);
+
+      // The useEffect fires handleFetch when a category is selected and filtered.length === 0.
+      // Verify the discovered poem is actually displayed (filter now checks poetArabic too).
       await waitFor(
         () => {
-          expect(global.fetch).toHaveBeenCalled();
+          // Poet name visible (Arabic category ID matched via poetArabic → English display name)
+          expect(screen.getByText('Mahmoud Darwish')).toBeInTheDocument();
+          // Poem title also shown, confirming the full poem card is rendered
+          expect(screen.getByText('Mural')).toBeInTheDocument();
         },
         { timeout: 3000 }
       );

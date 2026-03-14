@@ -3144,7 +3144,9 @@ export default function DiwanApp() {
     return selectedCategory === 'All'
       ? poems
       : poems.filter((p) => {
-          const poetMatch = (p?.poet || '').toLowerCase().includes(searchStr);
+          const poetMatch =
+            (p?.poet || '').toLowerCase().includes(searchStr) ||
+            (p?.poetArabic || '').toLowerCase().includes(searchStr);
           const tagsMatch =
             Array.isArray(p?.tags) && p.tags.some((t) => String(t).toLowerCase() === searchStr);
           return poetMatch || tagsMatch;
@@ -4268,6 +4270,7 @@ export default function DiwanApp() {
                 : updated.filter(
                     (p) =>
                       (p?.poet || '').toLowerCase().includes(searchStr) ||
+                      (p?.poetArabic || '').toLowerCase().includes(searchStr) ||
                       (Array.isArray(p?.tags) &&
                         p.tags.some((t) => String(t).toLowerCase() === searchStr))
                   );
@@ -4391,6 +4394,7 @@ export default function DiwanApp() {
               : updated.filter(
                   (p) =>
                     (p?.poet || '').toLowerCase().includes(searchStr) ||
+                    (p?.poetArabic || '').toLowerCase().includes(searchStr) ||
                     (Array.isArray(p?.tags) &&
                       p.tags.some((t) => String(t).toLowerCase() === searchStr))
                 );

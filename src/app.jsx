@@ -3611,6 +3611,19 @@ export default function DiwanApp() {
       return;
     }
 
+    // iOS Safari autoplay policy: audio.play() must be called synchronously within a user
+    // gesture handler. Calling it here (before any await/setTimeout) "unlocks" the audio
+    // element so that deferred playback — after prefetch polling or API generation — is not
+    // blocked by the browser's autoplay restrictions. We immediately pause to avoid audible
+    // playback of any previously loaded audio.
+    if (audioRef.current) {
+      const unlockPlay = audioRef.current.play();
+      if (unlockPlay !== undefined) {
+        unlockPlay.catch(() => {}); // silence errors from empty/invalid src
+      }
+      audioRef.current.pause();
+    }
+
     // Set loading state FIRST (before duplicate check) for better UX
     setIsGeneratingAudio(true);
 
@@ -5004,7 +5017,8 @@ export default function DiwanApp() {
           backdropFilter: `blur(${12 - headerOpacity * 8}px)`,
           WebkitBackdropFilter: `blur(${12 - headerOpacity * 8}px)`,
           borderBottom: `1px solid ${darkMode ? `rgba(197,160,89,${0.1 - headerOpacity * 0.1})` : `rgba(107,87,68,${0.1 - headerOpacity * 0.1})`}`,
-          transition: 'padding 0.4s ease-out, height 0.4s ease-out, background-color 0.3s, backdrop-filter 0.3s',
+          transition:
+            'padding 0.4s ease-out, height 0.4s ease-out, background-color 0.3s, backdrop-filter 0.3s',
         }}
       >
         <div

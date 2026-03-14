@@ -2470,6 +2470,8 @@ const VerticalSidebar = ({
   showInsightSuccess,
   onSignIn,
   onSignOut,
+  onOpenSavedPoems,
+  savedPoemsCount,
   user,
   theme,
   isInterpreting,
@@ -2491,22 +2493,24 @@ const VerticalSidebar = ({
 }) => {
   const [expanded, setExpanded] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const [poetPickerOpen, setPoetPickerOpen] = useState(false);
   const sidebarRef = useRef(null);
   const scrollRef = useRef(null);
 
-  // Collapse settings when tapping outside the sidebar
+  // Collapse settings/account menu when tapping outside the sidebar
   useEffect(() => {
-    if (!settingsOpen && !expanded) return;
+    if (!settingsOpen && !accountMenuOpen && !expanded) return;
     const handleOutsideClick = (e) => {
       if (sidebarRef.current && !sidebarRef.current.contains(e.target)) {
         if (settingsOpen) setSettingsOpen(false);
+        if (accountMenuOpen) setAccountMenuOpen(false);
         if (expanded) setExpanded(false);
       }
     };
     document.addEventListener('pointerdown', handleOutsideClick);
     return () => document.removeEventListener('pointerdown', handleOutsideClick);
-  }, [settingsOpen, expanded]);
+  }, [settingsOpen, accountMenuOpen, expanded]);
 
   const gold = theme.gold;
   const btnBase =
@@ -2696,7 +2700,7 @@ const VerticalSidebar = ({
                   if (!settingsOpen && scrollRef.current) {
                     setTimeout(
                       () =>
-                        scrollRef.current.scrollTo({
+                        scrollRef.current?.scrollTo({
                           top: scrollRef.current.scrollHeight,
                           behavior: 'smooth',
                         }),
@@ -2800,20 +2804,103 @@ const VerticalSidebar = ({
 
               <div className="w-6 h-px bg-stone-500/30 mx-auto my-1" />
 
-              <button
-                onClick={user ? onSignOut : onSignIn}
-                title={user ? 'Sign out' : 'Sign in'}
-                className={`${btnBase} ${btnHover}`}
-              >
-                {user ? (
-                  <LogOut style={{ color: gold }} size={18} />
-                ) : (
-                  <UserRound style={{ color: gold }} size={18} />
-                )}
-              </button>
-              <span className={labelCls} style={{ color: gold }}>
-                {user ? 'Sign Out' : 'Sign In'}
-              </span>
+              {user ? (
+                <>
+                  <button
+                    onClick={() => {
+                      setAccountMenuOpen((prev) => !prev);
+                      if (!accountMenuOpen && scrollRef.current) {
+                        setTimeout(
+                          () =>
+                            scrollRef.current?.scrollTo({
+                              top: scrollRef.current.scrollHeight,
+                              behavior: 'smooth',
+                            }),
+                          350
+                        );
+                      }
+                    }}
+                    title="Account"
+                    aria-label="Account menu"
+                    className={`${btnBase} ${btnHover} ${accountMenuOpen ? theme.goldActiveBg : ''} relative`}
+                  >
+                    <div
+                      className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold font-brand-en"
+                      style={{
+                        background:
+                          'linear-gradient(135deg, rgba(197,160,89,0.25), rgba(197,160,89,0.15))',
+                        border: '1.5px solid rgba(197,160,89,0.5)',
+                        color: gold,
+                      }}
+                    >
+                      {(user.email || user.user_metadata?.full_name || 'U').charAt(0).toUpperCase()}
+                    </div>
+                    {savedPoemsCount > 0 && (
+                      <span
+                        className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 rounded-full flex items-center justify-center text-[9px] font-bold font-brand-en"
+                        style={{
+                          background: 'linear-gradient(135deg, #C5A059, #B8943E)',
+                          color: '#000',
+                          padding: '0 3px',
+                        }}
+                      >
+                        {savedPoemsCount > 99 ? '99+' : savedPoemsCount}
+                      </span>
+                    )}
+                  </button>
+                  <span className={labelCls} style={{ color: gold }}>
+                    Account
+                  </span>
+
+                  {/* Account submenu drawer */}
+                  <div className={`sidebar-drawer ${accountMenuOpen ? 'open' : ''}`}>
+                    <div className="sidebar-drawer-inner">
+                      <div
+                        className={`flex flex-col items-center gap-1 pl-0.5 border-l-2 ${theme.goldBorderMuted}`}
+                      >
+                        <button
+                          onClick={() => {
+                            onOpenSavedPoems();
+                            setAccountMenuOpen(false);
+                          }}
+                          title="My saved poems"
+                          aria-label="View saved poems"
+                          className={`${subBtnBase} ${subBtnHover}`}
+                        >
+                          <ScrollText style={{ color: gold }} size={16} />
+                        </button>
+                        <span className={labelCls} style={{ color: gold }}>
+                          My Poems
+                        </span>
+
+                        <button
+                          onClick={() => {
+                            onSignOut();
+                            setAccountMenuOpen(false);
+                          }}
+                          title="Sign out"
+                          aria-label="Sign out"
+                          className={`${subBtnBase} ${subBtnHover}`}
+                        >
+                          <LogOut style={{ color: gold }} size={16} />
+                        </button>
+                        <span className={labelCls} style={{ color: gold }}>
+                          Sign Out
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <button onClick={onSignIn} title="Sign in" className={`${btnBase} ${btnHover}`}>
+                    <UserRound style={{ color: gold }} size={18} />
+                  </button>
+                  <span className={labelCls} style={{ color: gold }}>
+                    Sign In
+                  </span>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -5004,7 +5091,8 @@ export default function DiwanApp() {
           backdropFilter: `blur(${12 - headerOpacity * 8}px)`,
           WebkitBackdropFilter: `blur(${12 - headerOpacity * 8}px)`,
           borderBottom: `1px solid ${darkMode ? `rgba(197,160,89,${0.1 - headerOpacity * 0.1})` : `rgba(107,87,68,${0.1 - headerOpacity * 0.1})`}`,
-          transition: 'padding 0.4s ease-out, height 0.4s ease-out, background-color 0.3s, backdrop-filter 0.3s',
+          transition:
+            'padding 0.4s ease-out, height 0.4s ease-out, background-color 0.3s, backdrop-filter 0.3s',
         }}
       >
         <div
@@ -5672,6 +5760,8 @@ export default function DiwanApp() {
         showInsightSuccess={showInsightSuccess}
         onSignIn={handleSignIn}
         onSignOut={handleSignOut}
+        onOpenSavedPoems={handleOpenSavedPoems}
+        savedPoemsCount={savedPoems.length}
         user={user}
         theme={theme}
         isInterpreting={isInterpreting}

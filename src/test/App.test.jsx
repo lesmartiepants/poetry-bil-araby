@@ -182,6 +182,7 @@ describe('DiwanApp', () => {
         titleArabic: 'قصيدة الشجاعة',
         arabic: 'عَلَى قَدْرِ أَهْلِ الْعَزْمِ تَأْتِي الْعَزَائِمُ',
         english: 'Ambitions come according to the ambitions of their people',
+        cachedTranslation: 'Ambitions come according to the ambitions of their people',
         tags: ['Classical', 'Epic', 'Ode'],
       };
 
@@ -261,7 +262,7 @@ describe('DiwanApp', () => {
     const mockInsightText =
       'POEM:\nTranslation line\nTHE DEPTH: Deep meaning here.\nTHE AUTHOR: Celebrated poet info.';
 
-    it('shows parsed insight sections after clicking Explain on a DB poem', async () => {
+    it('shows cached insight sections for a DB poem with pre-existing analysis', async () => {
       mockAutoLoadFetch();
       render(<DiwanApp />);
 
@@ -270,18 +271,21 @@ describe('DiwanApp', () => {
         expect(document.body.textContent).toContain('Nizar Qabbani');
       });
 
-      // Load a DB poem first
-      global.fetch.mockResolvedValueOnce({ ok: true, json: async () => createDbPoem(101) });
+      // Load a DB poem with all cached insight fields (translation + depth + author)
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () =>
+          createDbPoem(101, {
+            cachedExplanation: 'Deep meaning here.',
+            cachedAuthorBio: 'Celebrated poet info.',
+          }),
+      });
       await userEvent.click(screen.getByLabelText('Discover new poem'));
       await waitFor(() => expect(screen.getByText('Mahmoud Darwish')).toBeInTheDocument(), {
         timeout: 3000,
       });
 
-      // Mock Gemini streaming response
-      global.fetch.mockResolvedValueOnce(createStreamingMock(mockInsightText));
-
-      await userEvent.click(screen.getByLabelText('Explain poem meaning'));
-
+      // Depth section is shown automatically from cached DB analysis (no Explain click needed)
       await waitFor(
         () => {
           expect(document.body.textContent).toContain('Deep meaning here.');
@@ -437,6 +441,8 @@ describe('DiwanApp', () => {
         titleArabic: 'جدارية',
         arabic: 'هذا هو اسمك قالت امرأة وغابت في الممر اللولبي',
         english: 'This is your name, a woman said, then disappeared into the spiral corridor',
+        cachedTranslation:
+          'This is your name, a woman said, then disappeared into the spiral corridor',
         tags: ['Modern', 'Epic', 'Free Verse'],
       };
 

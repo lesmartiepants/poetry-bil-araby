@@ -4261,11 +4261,26 @@ export default function DiwanApp() {
 
           setPoems((prev) => {
             const updated = [...prev, newPoem];
-            setCurrentIndex(updated.length - 1); // New poem is always last
+            const searchStr = selectedCategory.toLowerCase();
+            const freshFiltered =
+              selectedCategory === 'All'
+                ? updated
+                : updated.filter(
+                    (p) =>
+                      (p?.poet || '').toLowerCase().includes(searchStr) ||
+                      (Array.isArray(p?.tags) &&
+                        p.tags.some((t) => String(t).toLowerCase() === searchStr))
+                  );
+            const newIdx = freshFiltered.findIndex((p) => p.id === newPoem.id);
+            if (newIdx !== -1) setCurrentIndex(newIdx);
             return updated;
           });
           // Update URL to reflect current poem
           window.history.replaceState({}, '', '/poem/' + newPoem.id);
+          // Auto-analyze to fetch English translation if no cached translation is available
+          if (!newPoem.cachedTranslation) {
+            setAutoExplainPending(true);
+          }
         } catch (dbError) {
           // Handle database-specific errors
           const errorMessage = dbError.message.includes('Failed to fetch')
@@ -4423,10 +4438,11 @@ export default function DiwanApp() {
       'info'
     );
 
-    const textToCopy = `${current?.titleArabic || ''}\n${current?.poetArabic || ''}\n\n${current?.arabic || ''}\n\n---\n\n${current?.title || ''}\n${current?.poet || ''}\n\n${current?.english || ''}`;
+    const englishText = insightParts?.poeticTranslation || current?.english || '';
+    const textToCopy = `${current?.titleArabic || ''}\n${current?.poetArabic || ''}\n\n${current?.arabic || ''}\n\n---\n\n${current?.title || ''}\n${current?.poet || ''}\n\n${englishText}`;
     const copyChars = textToCopy.length;
     const arabicChars = current?.arabic?.length || 0;
-    const englishChars = current?.english?.length || 0;
+    const englishChars = englishText.length;
 
     try {
       await navigator.clipboard.writeText(textToCopy);
@@ -5004,7 +5020,8 @@ export default function DiwanApp() {
           backdropFilter: `blur(${12 - headerOpacity * 8}px)`,
           WebkitBackdropFilter: `blur(${12 - headerOpacity * 8}px)`,
           borderBottom: `1px solid ${darkMode ? `rgba(197,160,89,${0.1 - headerOpacity * 0.1})` : `rgba(107,87,68,${0.1 - headerOpacity * 0.1})`}`,
-          transition: 'padding 0.4s ease-out, height 0.4s ease-out, background-color 0.3s, backdrop-filter 0.3s',
+          transition:
+            'padding 0.4s ease-out, height 0.4s ease-out, background-color 0.3s, backdrop-filter 0.3s',
         }}
       >
         <div

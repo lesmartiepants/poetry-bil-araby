@@ -82,6 +82,8 @@ export function createDbPoem(id, overrides = {}) {
     title: 'Identity Card',
     titleArabic: 'بطاقة هوية',
     arabic: 'سَجِّلْ أَنَا عَرَبِيّ',
+    // Include a cached translation by default so tests don't trigger auto-analyze
+    cachedTranslation: 'Record! I am an Arab.',
     ...overrides,
   };
 }

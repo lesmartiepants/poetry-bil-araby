@@ -220,6 +220,23 @@ const FONTS = [
 
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
+/**
+ * Returns the subset of `poems` that match the given `category` filter.
+ * Category is compared case-insensitively against both the English `poet` field
+ * and the Arabic `poetArabic` field, as well as each poem's tags.
+ * Returns `poems` unchanged when `category` is 'All'.
+ */
+export function filterPoemsByCategory(poems, category) {
+  if (category === 'All') return poems;
+  const searchStr = category.toLowerCase();
+  return poems.filter(
+    (p) =>
+      (p?.poet || '').toLowerCase().includes(searchStr) ||
+      (p?.poetArabic || '').toLowerCase().includes(searchStr) ||
+      (Array.isArray(p?.tags) && p.tags.some((t) => String(t).toLowerCase() === searchStr))
+  );
+}
+
 /* =============================================================================
   1b. SEEN POEMS DEDUP (localStorage)
   =============================================================================
@@ -3069,6 +3086,9 @@ export default function DiwanApp() {
   const [isFetching, setIsFetching] = useState(false);
   const [autoExplainPending, setAutoExplainPending] = useState(false);
   const hasAutoLoaded = useRef(false);
+  // When the selectedCategory effect wants to fetch but isFetching is already true,
+  // it stores the category here. A retry effect fires once isFetching drops to false.
+  const pendingCategoryFetchRef = useRef(null);
   const [logs, setLogs] = useState([]);
   const [showDebugLogs, setShowDebugLogs] = useState(FEATURES.debug);
   const [showCopySuccess, setShowCopySuccess] = useState(false);
@@ -3139,19 +3159,10 @@ export default function DiwanApp() {
 
   const textScale = TEXT_SIZES[textSizeLevel].multiplier;
 
-  const filtered = useMemo(() => {
-    const searchStr = selectedCategory.toLowerCase();
-    return selectedCategory === 'All'
-      ? poems
-      : poems.filter((p) => {
-          const poetMatch =
-            (p?.poet || '').toLowerCase().includes(searchStr) ||
-            (p?.poetArabic || '').toLowerCase().includes(searchStr);
-          const tagsMatch =
-            Array.isArray(p?.tags) && p.tags.some((t) => String(t).toLowerCase() === searchStr);
-          return poetMatch || tagsMatch;
-        });
-  }, [poems, selectedCategory]);
+  const filtered = useMemo(
+    () => filterPoemsByCategory(poems, selectedCategory),
+    [poems, selectedCategory]
+  );
 
   // Defensive: poems[0] is always truthy (hardcoded initial poem), but guard against
   // future changes that might empty the array (e.g., setPoems([]) or filter edge cases)
@@ -3190,14 +3201,38 @@ export default function DiwanApp() {
     if (selectedCategory !== 'All') {
       track('poet_filter_changed', { poet: selectedCategory });
       if (filtered.length === 0) {
-        handleFetch();
+        if (isFetching) {
+          // Another fetch is already in progress; queue a retry for when it completes.
+          pendingCategoryFetchRef.current = selectedCategory;
+        } else {
+          handleFetch();
+        }
       } else {
         setCurrentIndex(0);
       }
     } else {
+      pendingCategoryFetchRef.current = null; // Clear any pending poet fetch on "All"
       setCurrentIndex(0);
     }
   }, [selectedCategory]);
+
+  // Retry a blocked poet-selection fetch once the current fetch completes.
+  // The equality check guards against stale refs: if the user changed category after
+  // the block, we only retry for the CURRENT category (matching ref). Without it, a
+  // ref left over from a previous category could trigger a spurious extra fetch.
+  // handleFetch intentionally omitted from deps — it re-creates on every render and
+  // is always current at the time this effect fires (after isFetching → false).
+  useEffect(() => {
+    if (
+      !isFetching &&
+      pendingCategoryFetchRef.current &&
+      pendingCategoryFetchRef.current === selectedCategory
+    ) {
+      pendingCategoryFetchRef.current = null;
+      handleFetch();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isFetching]);
 
   // Eagerly populate the discovered model list so it's ready before any user action.
   // Using the default fetch mock in tests means this never consumes a mockResolvedValueOnce.
@@ -4263,17 +4298,7 @@ export default function DiwanApp() {
 
           setPoems((prev) => {
             const updated = [...prev, newPoem];
-            const searchStr = selectedCategory.toLowerCase();
-            const freshFiltered =
-              selectedCategory === 'All'
-                ? updated
-                : updated.filter(
-                    (p) =>
-                      (p?.poet || '').toLowerCase().includes(searchStr) ||
-                      (p?.poetArabic || '').toLowerCase().includes(searchStr) ||
-                      (Array.isArray(p?.tags) &&
-                        p.tags.some((t) => String(t).toLowerCase() === searchStr))
-                  );
+            const freshFiltered = filterPoemsByCategory(updated, selectedCategory);
             const newIdx = freshFiltered.findIndex((p) => p.id === newPoem.id);
             if (newIdx !== -1) setCurrentIndex(newIdx);
             return updated;
@@ -4387,17 +4412,7 @@ export default function DiwanApp() {
         addLog('Event', `→ serve event emitted | poem_id: ${newPoem.id} | source: ai`, 'info');
         setPoems((prev) => {
           const updated = [...prev, newPoem];
-          const searchStr = selectedCategory.toLowerCase();
-          const freshFiltered =
-            selectedCategory === 'All'
-              ? updated
-              : updated.filter(
-                  (p) =>
-                    (p?.poet || '').toLowerCase().includes(searchStr) ||
-                    (p?.poetArabic || '').toLowerCase().includes(searchStr) ||
-                    (Array.isArray(p?.tags) &&
-                      p.tags.some((t) => String(t).toLowerCase() === searchStr))
-                );
+          const freshFiltered = filterPoemsByCategory(updated, selectedCategory);
           const newIdx = freshFiltered.findIndex((p) => p.id === newPoem.id);
           if (newIdx !== -1) setCurrentIndex(newIdx);
           return updated;

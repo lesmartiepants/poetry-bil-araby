@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
+import { filterPoemsByCategory } from '../app.jsx';
 
 describe('Utility Functions', () => {
   beforeEach(() => {
@@ -138,27 +139,12 @@ describe('Utility Functions', () => {
       },
     ];
 
-    const filterPoems = (poems, selectedCategory) => {
-      const searchStr = selectedCategory.toLowerCase();
-      return selectedCategory === 'All'
-        ? poems
-        : poems.filter((p) => {
-            const poetMatch =
-              (p?.poet || '').toLowerCase().includes(searchStr) ||
-              (p?.poetArabic || '').toLowerCase().includes(searchStr);
-            const tagsMatch =
-              Array.isArray(p?.tags) && p.tags.some((t) => String(t).toLowerCase() === searchStr);
-            return poetMatch || tagsMatch;
-          });
-    };
-
     it('returns all poems when category is "All"', () => {
-      const filtered = filterPoems(poems, 'All');
-      expect(filtered).toHaveLength(3);
+      expect(filterPoemsByCategory(poems, 'All')).toHaveLength(3);
     });
 
     it('filters poems by English poet name', () => {
-      const filtered = filterPoems(poems, 'Nizar Qabbani');
+      const filtered = filterPoemsByCategory(poems, 'Nizar Qabbani');
       expect(filtered).toHaveLength(1);
       expect(filtered[0].poet).toBe('Nizar Qabbani');
     });
@@ -166,37 +152,33 @@ describe('Utility Functions', () => {
     it('filters poems by Arabic poet name (matches poetArabic, not poet)', () => {
       // In production, selectedCategory is always the Arabic name (CATEGORIES id).
       // poet field may be English (from DB name_en), so poetArabic must also be checked.
-      const filtered = filterPoems(poems, 'محمود درويش');
+      const filtered = filterPoemsByCategory(poems, 'محمود درويش');
       expect(filtered).toHaveLength(1);
       expect(filtered[0].poet).toBe('Mahmoud Darwish');
       expect(filtered[0].poetArabic).toBe('محمود درويش');
     });
 
     it('filters poems by partial poet name match', () => {
-      const filtered = filterPoems(poems, 'Darwish');
+      const filtered = filterPoemsByCategory(poems, 'Darwish');
       expect(filtered).toHaveLength(1);
       expect(filtered[0].poet).toBe('Mahmoud Darwish');
     });
 
     it('filters poems by tag', () => {
-      const filtered = filterPoems(poems, 'modern');
-      expect(filtered).toHaveLength(2);
+      expect(filterPoemsByCategory(poems, 'modern')).toHaveLength(2);
     });
 
     it('is case insensitive', () => {
-      const filtered = filterPoems(poems, 'NIZAR');
-      expect(filtered).toHaveLength(1);
+      expect(filterPoemsByCategory(poems, 'NIZAR')).toHaveLength(1);
     });
 
     it('returns empty array for non-matching category', () => {
-      const filtered = filterPoems(poems, 'NonExistent');
-      expect(filtered).toHaveLength(0);
+      expect(filterPoemsByCategory(poems, 'NonExistent')).toHaveLength(0);
     });
 
     it('handles poems with missing tags', () => {
       const poemsWithMissing = [...poems, { id: 4, poet: 'Unknown', tags: undefined }];
-      const filtered = filterPoems(poemsWithMissing, 'All');
-      expect(filtered).toHaveLength(4);
+      expect(filterPoemsByCategory(poemsWithMissing, 'All')).toHaveLength(4);
     });
   });
 

@@ -464,6 +464,71 @@ describe('DiwanApp', () => {
         { timeout: 3000 }
       );
     });
+
+    it('clicking Discover after poet selection fetches and shows a poem from that poet', async () => {
+      mockAutoLoadFetch();
+      render(<DiwanApp />);
+
+      // Wait for the mount-time auto-load to settle
+      await waitFor(() => expect(screen.getByText('Nizar Qabbani')).toBeInTheDocument(), {
+        timeout: 3000,
+      });
+
+      // Open poet picker and select Mahmoud Darwish
+      await userEvent.click(screen.getByLabelText('Filter by poet'));
+      await waitFor(() => expect(document.body.textContent).toContain('محمود درويش'));
+
+      // Queue a mock for the auto-fetch triggered by the selectedCategory effect
+      const darwishPoem = {
+        id: 201,
+        poet: 'Mahmoud Darwish',
+        poetArabic: 'محمود درويش',
+        title: 'On This Earth',
+        titleArabic: 'على هذه الأرض',
+        arabic: 'على هذه الأرض ما يستحق الحياة',
+        cachedTranslation: 'On this earth is what makes life worth living',
+        tags: ['Modern', 'Political', 'Free Verse'],
+      };
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => darwishPoem,
+      });
+      await userEvent.click(screen.getByText('محمود درويش'));
+
+      // Wait for auto-fetch to complete and show the Darwish poem
+      await waitFor(() => expect(screen.getByText('Mahmoud Darwish')).toBeInTheDocument(), {
+        timeout: 3000,
+      });
+
+      // Queue a second poem for when the user manually clicks Discover
+      const darwishPoem2 = {
+        id: 202,
+        poet: 'Mahmoud Darwish',
+        poetArabic: 'محمود درويش',
+        title: 'Identity Card',
+        titleArabic: 'بطاقة هوية',
+        arabic: 'سجّل أنا عربي',
+        cachedTranslation: 'Record: I am an Arab',
+        tags: ['Modern', 'Political', 'Free Verse'],
+      };
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => darwishPoem2,
+      });
+
+      // Click Discover — should fetch the next Darwish poem while filter remains active
+      const discoverBtn = screen.getByLabelText('Discover new poem');
+      await userEvent.click(discoverBtn);
+
+      // The new poem is shown and still matches the poet filter (correct filtered index)
+      await waitFor(
+        () => {
+          expect(screen.getByText('Identity Card')).toBeInTheDocument();
+          expect(screen.getByText('Mahmoud Darwish')).toBeInTheDocument();
+        },
+        { timeout: 3000 }
+      );
+    });
   });
 
   // ── Feature 8: Arabic RTL & fonts ─────────────────────────────────────

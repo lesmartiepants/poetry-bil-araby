@@ -2701,7 +2701,7 @@ const VerticalSidebar = ({
                     setTimeout(
                       () =>
                         scrollRef.current?.scrollTo({
-                          top: scrollRef.current.scrollHeight,
+                          top: scrollRef.current?.scrollHeight,
                           behavior: 'smooth',
                         }),
                       350
@@ -2813,7 +2813,7 @@ const VerticalSidebar = ({
                         setTimeout(
                           () =>
                             scrollRef.current?.scrollTo({
-                              top: scrollRef.current.scrollHeight,
+                              top: scrollRef.current?.scrollHeight,
                               behavior: 'smooth',
                             }),
                           350
@@ -2833,7 +2833,7 @@ const VerticalSidebar = ({
                         color: gold,
                       }}
                     >
-                      {(user.email || user.user_metadata?.full_name || 'U').charAt(0).toUpperCase()}
+                      {(user.email ?? user.user_metadata?.full_name ?? 'U').charAt(0).toUpperCase()}
                     </div>
                     {savedPoemsCount > 0 && (
                       <span

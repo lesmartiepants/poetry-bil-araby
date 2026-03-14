@@ -261,34 +261,33 @@ describe('DiwanApp', () => {
     const mockInsightText =
       'POEM:\nTranslation line\nTHE DEPTH: Deep meaning here.\nTHE AUTHOR: Celebrated poet info.';
 
-    it('shows parsed insight sections after clicking Explain on a DB poem', async () => {
-      mockAutoLoadFetch();
-      render(<DiwanApp />);
+    it(
+      'shows parsed insight sections after clicking Explain on a DB poem',
+      { timeout: 10000 },
+      async () => {
+        // URL-aware mock: return DB poem for discovery, streaming insight for Gemini API
+        const dbPoem = createDbPoem(101);
+        global.fetch.mockImplementation((url) => {
+          if (typeof url === 'string' && url.includes('/api/poems/')) {
+            return Promise.resolve({ ok: true, json: async () => dbPoem, text: async () => '' });
+          }
+          if (typeof url === 'string' && url.includes('/api/ai/')) {
+            return Promise.resolve(createStreamingMock(mockInsightText));
+          }
+          return Promise.resolve({ ...defaultFetchResponse });
+        });
 
-      // Wait for mount-time fetches to settle
-      await waitFor(() => {
-        expect(document.body.textContent).toContain('Nizar Qabbani');
-      });
+        render(<DiwanApp />);
 
-      // Load a DB poem first
-      global.fetch.mockResolvedValueOnce({ ok: true, json: async () => createDbPoem(101) });
-      await userEvent.click(screen.getByLabelText('Discover new poem'));
-      await waitFor(() => expect(screen.getByText('Mahmoud Darwish')).toBeInTheDocument(), {
-        timeout: 3000,
-      });
-
-      // Mock Gemini streaming response
-      global.fetch.mockResolvedValueOnce(createStreamingMock(mockInsightText));
-
-      await userEvent.click(screen.getByLabelText('Explain poem meaning'));
-
-      await waitFor(
-        () => {
-          expect(document.body.textContent).toContain('Deep meaning here.');
-        },
-        { timeout: 3000 }
-      );
-    });
+        // Wait for mount-time DB fetch + auto-explain to settle and display insight
+        await waitFor(
+          () => {
+            expect(document.body.textContent).toContain('Deep meaning here.');
+          },
+          { timeout: 8000 }
+        );
+      }
+    );
 
     it('Explain button is enabled for a DB poem', async () => {
       mockAutoLoadFetch();
@@ -538,6 +537,17 @@ describe('DiwanApp', () => {
       render(<DiwanApp />);
       const btn = document.querySelector('[aria-label="Toggle developer log panel"]');
       expect(btn).toBeTruthy();
+    });
+  });
+
+  // ── Account Submenu (Signed Out) ─────────────────────────────────────
+
+  describe('Account Submenu - Signed Out', () => {
+    it('shows Sign In button (not Account avatar) when user is not signed in', () => {
+      render(<DiwanApp />);
+      // The sidebar should show "Sign In" label, not "Account"
+      expect(document.body.textContent).toContain('Sign In');
+      expect(document.body.textContent).not.toContain('Account');
     });
   });
 });

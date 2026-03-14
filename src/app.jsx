@@ -2522,6 +2522,19 @@ const VerticalSidebar = ({
   const labelCls =
     'text-[7px] leading-none -mt-0.5 font-brand-en tracking-[0.12em] uppercase opacity-60';
 
+  const scrollSidebarToBottom = () => {
+    if (scrollRef.current) {
+      setTimeout(
+        () =>
+          scrollRef.current?.scrollTo({
+            top: scrollRef.current?.scrollHeight,
+            behavior: 'smooth',
+          }),
+        350
+      );
+    }
+  };
+
   return (
     <>
       <style>{`
@@ -2696,17 +2709,7 @@ const VerticalSidebar = ({
               <button
                 onClick={() => {
                   setSettingsOpen((prev) => !prev);
-                  // Scroll sidebar all the way down so settings drawer is visible
-                  if (!settingsOpen && scrollRef.current) {
-                    setTimeout(
-                      () =>
-                        scrollRef.current?.scrollTo({
-                          top: scrollRef.current?.scrollHeight,
-                          behavior: 'smooth',
-                        }),
-                      350
-                    );
-                  }
+                  if (!settingsOpen) scrollSidebarToBottom();
                 }}
                 title="Settings"
                 className={`${btnBase} ${btnHover} ${settingsOpen ? theme.goldActiveBg : ''}`}
@@ -2809,19 +2812,14 @@ const VerticalSidebar = ({
                   <button
                     onClick={() => {
                       setAccountMenuOpen((prev) => !prev);
-                      if (!accountMenuOpen && scrollRef.current) {
-                        setTimeout(
-                          () =>
-                            scrollRef.current?.scrollTo({
-                              top: scrollRef.current?.scrollHeight,
-                              behavior: 'smooth',
-                            }),
-                          350
-                        );
-                      }
+                      if (!accountMenuOpen) scrollSidebarToBottom();
                     }}
                     title="Account"
-                    aria-label="Account menu"
+                    aria-label={
+                      savedPoemsCount > 0
+                        ? `Account menu — ${savedPoemsCount} saved poem${savedPoemsCount === 1 ? '' : 's'}`
+                        : 'Account menu'
+                    }
                     className={`${btnBase} ${btnHover} ${accountMenuOpen ? theme.goldActiveBg : ''} relative`}
                   >
                     <div

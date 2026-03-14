@@ -2817,7 +2817,7 @@ const VerticalSidebar = ({
                     title="Account"
                     aria-label={
                       savedPoemsCount > 0
-                        ? `Account menu — ${savedPoemsCount} saved poem${savedPoemsCount === 1 ? '' : 's'}`
+                        ? `Account menu, ${savedPoemsCount} saved poem${savedPoemsCount === 1 ? '' : 's'}`
                         : 'Account menu'
                     }
                     className={`${btnBase} ${btnHover} ${accountMenuOpen ? theme.goldActiveBg : ''} relative`}

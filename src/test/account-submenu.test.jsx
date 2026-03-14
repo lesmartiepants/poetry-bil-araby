@@ -112,7 +112,7 @@ describe('Account Submenu - Signed In', () => {
       expect(document.body.textContent).toContain('Nizar Qabbani');
     });
 
-    // The avatar should display the first letter of the email ('S' for sara@example.com)
+    // The avatar should display the first letter of the email ('s' from 'sara@example.com')
     const accountBtn = screen.getByLabelText(/Account menu/);
     expect(accountBtn.textContent).toContain('S');
   });

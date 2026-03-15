@@ -3517,11 +3517,13 @@ export default function DiwanApp() {
     const fetchPoets = async () => {
       try {
         const res = await fetch(`${apiUrl}/api/poets`);
-        if (res.ok) {
-          const poets = await res.json();
-          setDynamicPoets(Array.isArray(poets) ? poets : []);
-          addLog('Poets', `Loaded ${poets.length} poets from API`, 'info');
+        if (!res.ok) {
+          addLog('Poets', `API error: ${res.status}`, 'warn');
+          return;
         }
+        const poets = await res.json();
+        setDynamicPoets(Array.isArray(poets) ? poets : []);
+        addLog('Poets', `Loaded ${poets.length} poets from API`, 'info');
       } catch {
         addLog('Poets', 'Failed to fetch poets from API', 'warn');
       } finally {
@@ -3531,7 +3533,7 @@ export default function DiwanApp() {
     fetchPoets();
   }, [poetPickerOpen, poetsFetched]);
 
-  // Focus search input when poet picker opens
+  // Focus search input when poet picker opens (delay allows CSS enter animation to complete)
   useEffect(() => {
     if (poetPickerOpen && poetSearchRef.current) {
       setTimeout(() => poetSearchRef.current?.focus(), 100);
@@ -5750,7 +5752,7 @@ export default function DiwanApp() {
                                     {cat.label}
                                   </span>
                                 </div>
-                                {cat.poemCount != null && (
+                                {cat.poemCount !== null && cat.poemCount !== undefined && (
                                   <span className="text-[9px] font-brand-en text-[#C5A059]/40 bg-[#C5A059]/8 px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
                                     {cat.poemCount.toLocaleString()}
                                   </span>

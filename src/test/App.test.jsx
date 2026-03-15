@@ -639,7 +639,7 @@ describe('DiwanApp', () => {
       render(<DiwanApp />);
       await userEvent.click(screen.getByLabelText('Filter by poet'));
       await waitFor(() => {
-        expect(document.body.textContent).toContain('Featured');
+        expect(screen.getByText('Featured')).toBeInTheDocument();
       });
     });
 
@@ -656,7 +656,7 @@ describe('DiwanApp', () => {
         expect(document.body.textContent).toContain('نزار قباني');
       });
 
-      // Al-Mutanabbi should be filtered out
+      // Al-Mutanabbi should be filtered out (textContent check needed for absence)
       expect(document.body.textContent).not.toContain('المتنبي');
     });
 
@@ -668,7 +668,7 @@ describe('DiwanApp', () => {
       await userEvent.type(searchInput, 'xyznonexistent');
 
       await waitFor(() => {
-        expect(document.body.textContent).toContain('No matching poets');
+        expect(screen.getByText('No matching poets')).toBeInTheDocument();
       });
     });
 
@@ -693,8 +693,8 @@ describe('DiwanApp', () => {
       // Should show dynamic poets under "More Poets"
       await waitFor(
         () => {
-          expect(document.body.textContent).toContain('أحمد شوقي');
-          expect(document.body.textContent).toContain('More Poets');
+          expect(screen.getByText('أحمد شوقي')).toBeInTheDocument();
+          expect(screen.getByText('More Poets')).toBeInTheDocument();
         },
         { timeout: 3000 }
       );
@@ -710,7 +710,7 @@ describe('DiwanApp', () => {
 
       // Open poet picker and select a poet
       await userEvent.click(screen.getByLabelText('Filter by poet'));
-      await waitFor(() => expect(document.body.textContent).toContain('المتنبي'));
+      await waitFor(() => expect(screen.getByText('المتنبي')).toBeInTheDocument());
 
       global.fetch.mockResolvedValueOnce({
         ok: true,
@@ -728,7 +728,7 @@ describe('DiwanApp', () => {
       // Re-open picker to check for clear filter
       await userEvent.click(screen.getByLabelText('Filter by poet'));
       await waitFor(() => {
-        expect(document.body.textContent).toContain('Clear filter');
+        expect(screen.getByText('Clear filter')).toBeInTheDocument();
       });
     });
   });

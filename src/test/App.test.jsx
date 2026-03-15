@@ -182,6 +182,7 @@ describe('DiwanApp', () => {
         titleArabic: 'قصيدة الشجاعة',
         arabic: 'عَلَى قَدْرِ أَهْلِ الْعَزْمِ تَأْتِي الْعَزَائِمُ',
         english: 'Ambitions come according to the ambitions of their people',
+        cachedTranslation: 'Ambitions come according to the ambitions of their people',
         tags: ['Classical', 'Epic', 'Ode'],
       };
 
@@ -253,6 +254,62 @@ describe('DiwanApp', () => {
         expect(playBtn).toBeDisabled();
       });
     });
+    it('mutes and pauses audio element immediately on Play to prevent audible blip during iOS Safari unlock', async () => {
+      // Capture the Audio instance the component creates so we can assert on it.
+      // The component uses `useRef(new Audio())` — React re-evaluates `new Audio()` on
+      // every render, but useRef only stores the FIRST value. We capture the first
+      // instance created (which is the one stored in audioRef.current) by checking
+      // whether audioInstance is still null before setting it.
+      let audioInstance = null;
+      const OriginalAudio = global.Audio;
+      global.Audio = class extends OriginalAudio {
+        constructor(...args) {
+          super(...args);
+          if (audioInstance === null) audioInstance = this; // first instance = audioRef.current
+        }
+      };
+
+      try {
+        // Keep TTS fetch hanging so audioUrl never resolves — this ensures the
+        // unlock code path (deferred-play branch) is what we're exercising.
+        global.fetch = vi.fn((url) => {
+          if (typeof url === 'string' && url.includes('/api/ai/')) {
+            return new Promise(() => {});
+          }
+          return Promise.resolve({
+            ok: true,
+            json: async () => defaultDbPoem,
+            text: async () => '',
+            body: {
+              getReader: () => ({
+                read: vi.fn().mockResolvedValue({ done: true, value: undefined }),
+              }),
+            },
+          });
+        });
+
+        render(<DiwanApp />);
+
+        await waitFor(() => {
+          expect(document.body.textContent).toContain('Nizar Qabbani');
+        });
+
+        const playCallsBefore = audioInstance.play.mock.calls.length;
+        const pauseCallsBefore = audioInstance.pause.mock.calls.length;
+
+        await userEvent.click(screen.getByLabelText('Play recitation'));
+
+        // The iOS unlock block must call play() then pause() synchronously within the
+        // tap handler — before any async work starts — so the gesture context is held.
+        expect(audioInstance.play.mock.calls.length).toBeGreaterThan(playCallsBefore);
+        expect(audioInstance.pause.mock.calls.length).toBeGreaterThan(pauseCallsBefore);
+
+        // muted must be restored to its original value (false) after the unlock sequence.
+        expect(audioInstance.muted).toBe(false);
+      } finally {
+        global.Audio = OriginalAudio;
+      }
+    });
   });
 
   // ── Feature 4: Insights ──────────────────────────────────────────────
@@ -262,14 +319,26 @@ describe('DiwanApp', () => {
       'POEM:\nTranslation line\nTHE DEPTH: Deep meaning here.\nTHE AUTHOR: Celebrated poet info.';
 
     it(
-      'shows parsed insight sections after clicking Explain on a DB poem',
+      'shows parsed insight sections after auto-explain on a DB poem without cached translation',
       { timeout: 10000 },
       async () => {
-        // URL-aware mock: return DB poem for discovery, streaming insight for Gemini API
-        const dbPoem = createDbPoem(101);
+        // Mount with seed poem (has cachedTranslation — no auto-explain fires on init)
+        mockAutoLoadFetch();
+        render(<DiwanApp />);
+
+        await waitFor(() => {
+          expect(document.body.textContent).toContain('Nizar Qabbani');
+        });
+
+        // Set URL-aware mock: DB poem without cachedTranslation triggers auto-explain;
+        // streaming insight mock answers the Gemini call fired by auto-explain.
         global.fetch.mockImplementation((url) => {
           if (typeof url === 'string' && url.includes('/api/poems/')) {
-            return Promise.resolve({ ok: true, json: async () => dbPoem, text: async () => '' });
+            return Promise.resolve({
+              ok: true,
+              json: async () => createDbPoem(101, { cachedTranslation: undefined }),
+              text: async () => '',
+            });
           }
           if (typeof url === 'string' && url.includes('/api/ai/')) {
             return Promise.resolve(createStreamingMock(mockInsightText));
@@ -277,9 +346,10 @@ describe('DiwanApp', () => {
           return Promise.resolve({ ...defaultFetchResponse });
         });
 
-        render(<DiwanApp />);
+        // Discover a poem with no cachedTranslation → auto-explain fires automatically
+        await userEvent.click(screen.getByLabelText('Discover new poem'));
 
-        // Wait for mount-time DB fetch + auto-explain to settle and display insight
+        // Auto-explain fires without a manual Explain click (PR 307 feature)
         await waitFor(
           () => {
             expect(document.body.textContent).toContain('Deep meaning here.');
@@ -305,6 +375,38 @@ describe('DiwanApp', () => {
       });
 
       expect(screen.getByLabelText('Explain poem meaning')).not.toBeDisabled();
+    });
+
+    it('shows cached insight sections for a DB poem with pre-existing analysis', async () => {
+      mockAutoLoadFetch();
+      render(<DiwanApp />);
+
+      // Wait for mount-time fetches to settle
+      await waitFor(() => {
+        expect(document.body.textContent).toContain('Nizar Qabbani');
+      });
+
+      // Load a DB poem with all cached insight fields (translation + depth + author)
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () =>
+          createDbPoem(101, {
+            cachedExplanation: 'Deep meaning here.',
+            cachedAuthorBio: 'Celebrated poet info.',
+          }),
+      });
+      await userEvent.click(screen.getByLabelText('Discover new poem'));
+      await waitFor(() => expect(screen.getByText('Mahmoud Darwish')).toBeInTheDocument(), {
+        timeout: 3000,
+      });
+
+      // Depth section is shown automatically from cached DB analysis (no Explain click needed)
+      await waitFor(
+        () => {
+          expect(document.body.textContent).toContain('Deep meaning here.');
+        },
+        { timeout: 3000 }
+      );
     });
   });
 
@@ -423,11 +525,9 @@ describe('DiwanApp', () => {
         expect(document.body.textContent).toContain('محمود درويش');
       });
 
-      // Click "Mahmoud Darwish" category
-      const darwishOption = screen.getByText('محمود درويش');
-      await userEvent.click(darwishOption);
-
-      // Mock the DB fetch response with the selected poet
+      // Queue the DB fetch response BEFORE clicking the category.
+      // The selectedCategory useEffect fires handleFetch() synchronously during the click,
+      // so the mock must be ready before userEvent.click resolves.
       const filteredPoem = {
         id: 200,
         poet: 'Mahmoud Darwish',
@@ -436,19 +536,92 @@ describe('DiwanApp', () => {
         titleArabic: 'جدارية',
         arabic: 'هذا هو اسمك قالت امرأة وغابت في الممر اللولبي',
         english: 'This is your name, a woman said, then disappeared into the spiral corridor',
+        cachedTranslation:
+          'This is your name, a woman said, then disappeared into the spiral corridor',
         tags: ['Modern', 'Epic', 'Free Verse'],
       };
-
       global.fetch.mockResolvedValueOnce({
         ok: true,
         json: async () => filteredPoem,
       });
 
-      // The useEffect fires handleFetch when a category is selected and filtered.length === 0
-      // Wait for the fetch call
+      // Click "Mahmoud Darwish" category — triggers handleFetch via selectedCategory effect
+      const darwishOption = screen.getByText('محمود درويش');
+      await userEvent.click(darwishOption);
+
+      // The useEffect fires handleFetch when a category is selected and filtered.length === 0.
+      // Verify the discovered poem is actually displayed (filter now checks poetArabic too).
       await waitFor(
         () => {
-          expect(global.fetch).toHaveBeenCalled();
+          // Poet name visible (Arabic category ID matched via poetArabic → English display name)
+          expect(screen.getByText('Mahmoud Darwish')).toBeInTheDocument();
+          // Poem title also shown, confirming the full poem card is rendered
+          expect(screen.getByText('Mural')).toBeInTheDocument();
+        },
+        { timeout: 3000 }
+      );
+    });
+
+    it('clicking Discover after poet selection fetches and shows a poem from that poet', async () => {
+      mockAutoLoadFetch();
+      render(<DiwanApp />);
+
+      // Wait for the mount-time auto-load to settle
+      await waitFor(() => expect(screen.getByText('Nizar Qabbani')).toBeInTheDocument(), {
+        timeout: 3000,
+      });
+
+      // Open poet picker and select Mahmoud Darwish
+      await userEvent.click(screen.getByLabelText('Filter by poet'));
+      await waitFor(() => expect(document.body.textContent).toContain('محمود درويش'));
+
+      // Queue a mock for the auto-fetch triggered by the selectedCategory effect
+      const darwishPoem = {
+        id: 201,
+        poet: 'Mahmoud Darwish',
+        poetArabic: 'محمود درويش',
+        title: 'On This Earth',
+        titleArabic: 'على هذه الأرض',
+        arabic: 'على هذه الأرض ما يستحق الحياة',
+        cachedTranslation: 'On this earth is what makes life worth living',
+        tags: ['Modern', 'Political', 'Free Verse'],
+      };
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => darwishPoem,
+      });
+      await userEvent.click(screen.getByText('محمود درويش'));
+
+      // Wait for auto-fetch to complete and show the Darwish poem
+      await waitFor(() => expect(screen.getByText('Mahmoud Darwish')).toBeInTheDocument(), {
+        timeout: 3000,
+      });
+
+      // Queue a second poem for when the user manually clicks Discover
+      const darwishPoem2 = {
+        id: 202,
+        poet: 'Mahmoud Darwish',
+        poetArabic: 'محمود درويش',
+        title: 'Identity Card',
+        titleArabic: 'بطاقة هوية',
+        arabic: 'سجّل أنا عربي',
+        cachedTranslation: 'Record: I am an Arab',
+        tags: ['Modern', 'Political', 'Free Verse'],
+      };
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => darwishPoem2,
+      });
+
+      // Click Discover — should fetch the next Darwish poem while filter remains active
+      const discoverBtn = screen.getByLabelText('Discover new poem');
+      await userEvent.click(discoverBtn);
+
+      // The new poem is shown and still matches the poet filter (correct filtered index)
+      await waitFor(
+        () => {
+          expect(screen.getByText('Identity Card')).toBeInTheDocument();
+          expect(screen.getByText('Mahmoud Darwish')).toBeInTheDocument();
         },
         { timeout: 3000 }
       );

@@ -5597,7 +5597,14 @@ export default function DiwanApp() {
                       <button
                         key={cat.id}
                         onClick={() => {
-                          setSelectedCategory(cat.id);
+                          // Re-selecting the same specific poet: selectedCategory won't change so
+                          // the selectedCategory effect won't fire. Call handleFetch() directly
+                          // so the user always gets a fresh poem on each explicit selection.
+                          if (cat.id === selectedCategory && cat.id !== 'All') {
+                            handleFetch();
+                          } else {
+                            setSelectedCategory(cat.id);
+                          }
                           closePoetPicker();
                         }}
                         className={`w-full text-right px-5 py-2.5 transition-all duration-150 ${selectedCategory === cat.id ? 'bg-[#C5A059]/15 border-r-2 border-[#C5A059]' : 'hover:bg-[#C5A059]/8 border-r-2 border-transparent'}`}

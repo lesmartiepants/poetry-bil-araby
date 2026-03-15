@@ -626,6 +626,243 @@ describe('DiwanApp', () => {
         { timeout: 3000 }
       );
     });
+
+    it('switching from one poet to another fetches and shows the new poet poem', async () => {
+      mockAutoLoadFetch();
+      render(<DiwanApp />);
+
+      // Wait for the mount-time auto-load to settle
+      await waitFor(() => expect(screen.getByText('Nizar Qabbani')).toBeInTheDocument(), {
+        timeout: 3000,
+      });
+
+      // ── Step 1: select Mahmoud Darwish ──────────────────────────────────
+      await userEvent.click(screen.getByLabelText('Filter by poet'));
+      await waitFor(() => expect(document.body.textContent).toContain('محمود درويش'));
+
+      const darwishPoem = {
+        id: 201,
+        poet: 'Mahmoud Darwish',
+        poetArabic: 'محمود درويش',
+        title: 'On This Earth',
+        titleArabic: 'على هذه الأرض',
+        arabic: 'على هذه الأرض ما يستحق الحياة',
+        cachedTranslation: 'On this earth is what makes life worth living',
+        tags: ['Modern', 'Political', 'Free Verse'],
+      };
+      global.fetch.mockResolvedValueOnce({ ok: true, json: async () => darwishPoem });
+      await userEvent.click(screen.getByText('محمود درويش'));
+
+      await waitFor(() => expect(screen.getByText('Mahmoud Darwish')).toBeInTheDocument(), {
+        timeout: 3000,
+      });
+
+      // ── Step 2: open picker and switch to Al-Mutanabbi ──────────────────
+      await userEvent.click(screen.getByLabelText('Filter by poet'));
+      await waitFor(() => expect(document.body.textContent).toContain('المتنبي'));
+
+      const mutanabbiPoem = {
+        id: 301,
+        poet: 'Al-Mutanabbi',
+        poetArabic: 'المتنبي',
+        title: 'To the King',
+        titleArabic: 'إلى الملك',
+        arabic: 'على قدر أهل العزم تأتي العزائم',
+        cachedTranslation: 'Great deeds come to those with great resolve',
+        tags: ['Classical', 'Heroic', 'Qasida'],
+      };
+      global.fetch.mockResolvedValueOnce({ ok: true, json: async () => mutanabbiPoem });
+      await userEvent.click(screen.getByText('المتنبي'));
+
+      // The Mutanabbi poem should now be displayed
+      await waitFor(() => expect(screen.getByText('Al-Mutanabbi')).toBeInTheDocument(), {
+        timeout: 3000,
+      });
+      expect(screen.getByText('To the King')).toBeInTheDocument();
+    });
+
+    it('re-selecting the same poet fetches and shows a new poem', async () => {
+      mockAutoLoadFetch();
+      render(<DiwanApp />);
+
+      await waitFor(() => expect(screen.getByText('Nizar Qabbani')).toBeInTheDocument(), {
+        timeout: 3000,
+      });
+
+      // ── First selection: Mahmoud Darwish ────────────────────────────────
+      await userEvent.click(screen.getByLabelText('Filter by poet'));
+      await waitFor(() => expect(document.body.textContent).toContain('محمود درويش'));
+
+      const darwishPoem1 = {
+        id: 201,
+        poet: 'Mahmoud Darwish',
+        poetArabic: 'محمود درويش',
+        title: 'On This Earth',
+        titleArabic: 'على هذه الأرض',
+        arabic: 'على هذه الأرض ما يستحق الحياة',
+        cachedTranslation: 'On this earth is what makes life worth living',
+        tags: ['Modern', 'Political', 'Free Verse'],
+      };
+      global.fetch.mockResolvedValueOnce({ ok: true, json: async () => darwishPoem1 });
+      await userEvent.click(screen.getByText('محمود درويش'));
+
+      await waitFor(() => expect(screen.getByText('On This Earth')).toBeInTheDocument(), {
+        timeout: 3000,
+      });
+
+      // ── Re-select the same poet: should fetch a new poem ─────────────────
+      await userEvent.click(screen.getByLabelText('Filter by poet'));
+      await waitFor(() => expect(document.body.textContent).toContain('محمود درويش'));
+
+      const darwishPoem2 = {
+        id: 202,
+        poet: 'Mahmoud Darwish',
+        poetArabic: 'محمود درويش',
+        title: 'Identity Card',
+        titleArabic: 'بطاقة هوية',
+        arabic: 'سجّل أنا عربي',
+        cachedTranslation: 'Record: I am an Arab',
+        tags: ['Modern', 'Political', 'Free Verse'],
+      };
+      global.fetch.mockResolvedValueOnce({ ok: true, json: async () => darwishPoem2 });
+      // Re-click the same poet — should trigger a new fetch.
+      // When the picker is open after a Darwish selection, both the poem card and the
+      // picker dropdown show "محمود درويش". Target the picker button specifically by its
+      // "w-full" class (only picker buttons have that class, the poem card does not).
+      const pickerDarwishBtn = screen
+        .getAllByRole('button')
+        .find((btn) => btn.textContent.includes('محمود درويش') && btn.className.includes('w-full'));
+      await userEvent.click(pickerDarwishBtn);
+
+      await waitFor(() => expect(screen.getByText('Identity Card')).toBeInTheDocument(), {
+        timeout: 3000,
+      });
+    });
+
+    it('selecting "All" after a poet and then a different poet fetches the new poet poem', async () => {
+      mockAutoLoadFetch();
+      render(<DiwanApp />);
+
+      await waitFor(() => expect(screen.getByText('Nizar Qabbani')).toBeInTheDocument(), {
+        timeout: 3000,
+      });
+
+      // Select Darwish
+      await userEvent.click(screen.getByLabelText('Filter by poet'));
+      await waitFor(() => expect(document.body.textContent).toContain('محمود درويش'));
+      const darwishPoem = {
+        id: 201,
+        poet: 'Mahmoud Darwish',
+        poetArabic: 'محمود درويش',
+        title: 'On This Earth',
+        titleArabic: 'على هذه الأرض',
+        arabic: 'على هذه الأرض ما يستحق الحياة',
+        cachedTranslation: 'On this earth is what makes life worth living',
+        tags: ['Modern', 'Political', 'Free Verse'],
+      };
+      global.fetch.mockResolvedValueOnce({ ok: true, json: async () => darwishPoem });
+      await userEvent.click(screen.getByText('محمود درويش'));
+      await waitFor(() => expect(screen.getByText('Mahmoud Darwish')).toBeInTheDocument(), {
+        timeout: 3000,
+      });
+
+      // Switch to "All"
+      await userEvent.click(screen.getByLabelText('Filter by poet'));
+      await waitFor(() => expect(document.body.textContent).toContain('كل الشعراء'));
+      await userEvent.click(screen.getByText('كل الشعراء'));
+
+      // Switch to Mutanabbi — should fetch a new poem (no Mutanabbi poems cached)
+      await userEvent.click(screen.getByLabelText('Filter by poet'));
+      await waitFor(() => expect(document.body.textContent).toContain('المتنبي'));
+      const mutanabbiPoem = {
+        id: 301,
+        poet: 'Al-Mutanabbi',
+        poetArabic: 'المتنبي',
+        title: 'To the King',
+        titleArabic: 'إلى الملك',
+        arabic: 'على قدر أهل العزم تأتي العزائم',
+        cachedTranslation: 'Great deeds come to those with great resolve',
+        tags: ['Classical', 'Heroic', 'Qasida'],
+      };
+      global.fetch.mockResolvedValueOnce({ ok: true, json: async () => mutanabbiPoem });
+      await userEvent.click(screen.getByText('المتنبي'));
+
+      await waitFor(() => expect(screen.getByText('Al-Mutanabbi')).toBeInTheDocument(), {
+        timeout: 3000,
+      });
+      expect(screen.getByText('To the King')).toBeInTheDocument();
+    });
+
+    it('picker closes after poet selection and can be reopened', async () => {
+      render(<DiwanApp />);
+
+      // Open picker
+      await userEvent.click(screen.getByLabelText('Filter by poet'));
+      await waitFor(() => expect(document.body.textContent).toContain('كل الشعراء'));
+
+      // Select a poet — closes the picker
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          id: 201,
+          poet: 'Mahmoud Darwish',
+          poetArabic: 'محمود درويش',
+          title: 'On This Earth',
+          arabic: 'على هذه الأرض ما يستحق الحياة',
+          cachedTranslation: 'On this earth is what makes life worth living',
+          tags: ['Modern', 'Political', 'Free Verse'],
+        }),
+      });
+      await userEvent.click(screen.getByText('محمود درويش'));
+
+      // Picker should close (no longer visible after animation completes)
+      await waitFor(() => {
+        // The dropdown should not be visible — the button "Filter by poet" still exists but not the dropdown
+        expect(document.body.textContent).not.toContain('كل الشعراء');
+      });
+
+      // User can reopen the picker
+      await userEvent.click(screen.getByLabelText('Filter by poet'));
+      await waitFor(() => expect(document.body.textContent).toContain('كل الشعراء'));
+    });
+
+    it('currently selected poet is visually indicated in the picker', async () => {
+      mockAutoLoadFetch();
+      render(<DiwanApp />);
+
+      await waitFor(() => expect(screen.getByText('Nizar Qabbani')).toBeInTheDocument(), {
+        timeout: 3000,
+      });
+
+      // Select Darwish
+      await userEvent.click(screen.getByLabelText('Filter by poet'));
+      const darwishPoem = {
+        id: 201,
+        poet: 'Mahmoud Darwish',
+        poetArabic: 'محمود درويش',
+        title: 'On This Earth',
+        arabic: 'على هذه الأرض ما يستحق الحياة',
+        cachedTranslation: 'On this earth is what makes life worth living',
+        tags: ['Modern', 'Political', 'Free Verse'],
+      };
+      global.fetch.mockResolvedValueOnce({ ok: true, json: async () => darwishPoem });
+      await userEvent.click(screen.getByText('محمود درويش'));
+      await waitFor(() => expect(screen.getByText('Mahmoud Darwish')).toBeInTheDocument(), {
+        timeout: 3000,
+      });
+
+      // Reopen picker — the Darwish entry should be highlighted (selected styling)
+      await userEvent.click(screen.getByLabelText('Filter by poet'));
+      await waitFor(() => expect(document.body.textContent).toContain('محمود درويش'));
+
+      // The selected button should have the active styling class
+      const darwishButtons = screen.getAllByText('محمود درويش');
+      // At least one should be in the picker with the selected style
+      const pickerBtn = darwishButtons.find((el) => el.closest('button'));
+      expect(pickerBtn).toBeTruthy();
+      const btn = pickerBtn.closest('button');
+      expect(btn.className).toContain('bg-[#C5A059]/15');
+    });
   });
 
   // ── Feature 8: Arabic RTL & fonts ─────────────────────────────────────

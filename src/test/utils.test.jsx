@@ -150,8 +150,9 @@ describe('Utility Functions', () => {
     });
 
     it('filters poems by Arabic poet name (matches poetArabic, not poet)', () => {
-      // In production, selectedCategory is always the Arabic name (CATEGORIES id).
-      // poet field may be English (from DB name_en), so poetArabic must also be checked.
+      // In production, the API sends arabic poet names (from CATEGORIES.labelAr) as the
+      // filter value. The poet field may be English (from DB name_en), so poetArabic must
+      // also be checked so Arabic-named filters still match English-stored poet fields.
       const filtered = filterPoemsByCategory(poems, 'محمود درويش');
       expect(filtered).toHaveLength(1);
       expect(filtered[0].poet).toBe('Mahmoud Darwish');

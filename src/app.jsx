@@ -3305,8 +3305,9 @@ export default function DiwanApp() {
   // The equality check guards against stale refs: if the user changed category after
   // the block, we only retry for the CURRENT category (matching ref). Without it, a
   // ref left over from a previous category could trigger a spurious extra fetch.
-  // handleFetch intentionally omitted from deps — it re-creates on every render and
-  // is always current at the time this effect fires (after isFetching → false).
+  // This effect intentionally depends only on `isFetching`. `selectedCategory` is read
+  // from closure and is always current when this fires. `handleFetch` is omitted because
+  // it re-creates on every render and is always in scope at the time the effect runs.
   useEffect(() => {
     if (
       !isFetching &&
@@ -3736,8 +3737,10 @@ export default function DiwanApp() {
     // iOS Safari autoplay policy: audio.play() must be called synchronously within a user
     // gesture handler. Calling it here (before any await/setTimeout) "unlocks" the audio
     // element so that deferred playback — after prefetch polling or API generation — is not
-    // blocked by the browser's autoplay restrictions. We mute first to prevent a brief audible
-    // blip if a previous src is still loaded on the element, then immediately pause and restore.
+    // blocked by the browser's autoplay restrictions. Without this unlock, audio silently
+    // fails to play after a TTS prefetch or Gemini generation completes asynchronously.
+    // We mute first to prevent a brief audible blip if a previous src is still loaded on
+    // the element, then immediately pause and restore muted to its original value.
     if (audioRef.current) {
       const wasMuted = audioRef.current.muted;
       audioRef.current.muted = true;

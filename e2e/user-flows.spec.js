@@ -280,11 +280,9 @@ test.describe('User Flows', () => {
   // #8 — DB/AI mode toggle removed (DB mode is now the permanent default)
 
   // #9 — Navigate to design review
-  test('user navigates to design review', async ({ page, viewport }) => {
-    // There are two design-review links: mobile (md:hidden) and desktop (hidden md:flex).
-    // On desktop viewport the second link is visible; on mobile the first.
-    const links = page.locator('a[href="/design-review"]');
-    const link = viewport && viewport.width >= 768 ? links.nth(1) : links.nth(0);
+  test('user navigates to design review', async ({ page }) => {
+    // The app has a single fixed-position design-review link (bottom-left utility button).
+    const link = page.locator('a[href="/design-review"]').first();
     await expect(link).toBeVisible({ timeout: 5000 });
 
     // The link href is "/design-review" but Vite serves the static page at "/design-review/"

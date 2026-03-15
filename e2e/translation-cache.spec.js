@@ -25,9 +25,11 @@ const MOCK_POEM_WITH_TRANSLATION = {
   arabic: 'على قَدْرِ أهلِ العَزمِ تأتي العَزائِمُ\nوتأتي على قَدْرِ الكِرامِ المَكارِمُ',
   english: '',
   tags: ['حكمة'],
-  cachedTranslation: 'By the measure of the resolute come great deeds\nAnd by the measure of the noble come generous acts',
+  cachedTranslation:
+    'By the measure of the resolute come great deeds\nAnd by the measure of the noble come generous acts',
   cachedExplanation: 'Al-Mutanabbi reflects on how ambition scales with character.',
-  cachedAuthorBio: 'Abu al-Tayyib al-Mutanabbi (915–965 CE) is widely regarded as the greatest Arab poet.',
+  cachedAuthorBio:
+    'Abu al-Tayyib al-Mutanabbi (915–965 CE) is widely regarded as the greatest Arab poet.',
   isFromDatabase: true,
 };
 
@@ -52,24 +54,22 @@ const MOCK_POEM_PREFETCH = {
   arabic: 'شكراً لكم .. شكراً لكم\nفحبيبتي قُتِلَت .. وصار بوسعكم\nأن تشربوا كأساً على قبر الشهيدة',
   english: '',
   tags: ['رثاء'],
-  cachedTranslation: 'Thank you... thank you\nFor my beloved was killed... and now you may\nDrink a toast upon the martyr\'s grave',
+  cachedTranslation:
+    "Thank you... thank you\nFor my beloved was killed... and now you may\nDrink a toast upon the martyr's grave",
   isFromDatabase: true,
 };
 
-const MOCK_POETS = [
-  { name: 'أبو الطيب المتنبي' },
-  { name: 'محمود درويش' },
-  { name: 'نزار قباني' },
-];
+const MOCK_POETS = [{ name: 'أبو الطيب المتنبي' }, { name: 'محمود درويش' }, { name: 'نزار قباني' }];
 
 // ─── Helpers ────────────────────────────────────────────────────────
 
 /**
  * Set up route mocks. Returns tracking objects for Gemini calls and translation POSTs.
  */
-async function setupMocks(page, {
-  poemSequence = [MOCK_POEM_WITH_TRANSLATION, MOCK_POEM_PREFETCH],
-} = {}) {
+async function setupMocks(
+  page,
+  { poemSequence = [MOCK_POEM_WITH_TRANSLATION, MOCK_POEM_PREFETCH] } = {}
+) {
   let poemCallCount = 0;
   const geminiCalls = [];
   const translationPosts = [];
@@ -119,18 +119,23 @@ async function setupMocks(page, {
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify({
-        candidates: [{
-          content: {
-            parts: [{ text: '**Poetic Translation**\nA mock translation\n\n**In-Depth Analysis**\nMock analysis\n\n**About the Poet**\nMock bio' }],
+        candidates: [
+          {
+            content: {
+              parts: [
+                {
+                  text: '**Poetic Translation**\nA mock translation\n\n**In-Depth Analysis**\nMock analysis\n\n**About the Poet**\nMock bio',
+                },
+              ],
+            },
           },
-        }],
+        ],
       }),
     });
   });
 
   return { geminiCalls, translationPosts, getPoemCallCount: () => poemCallCount };
 }
-
 
 // ─── Splash Dismissal ────────────────────────────────────────────────
 
@@ -153,7 +158,6 @@ test.beforeEach(async ({ page }) => {
 });
 
 test.describe('Translation Cache — Instant Load', () => {
-
   test('first paint shows Arabic text immediately with no loading spinner', async ({ page }) => {
     await setupMocks(page);
 
@@ -176,12 +180,14 @@ test.describe('Translation Cache — Instant Load', () => {
   test('poem text is visible before any API response arrives', async ({ page }) => {
     // Set up routes that delay responses significantly
     let resolveApiCall;
-    const apiCallPromise = new Promise(r => { resolveApiCall = r; });
+    const apiCallPromise = new Promise((r) => {
+      resolveApiCall = r;
+    });
 
     await page.route('**/api/poems/random*', async (route) => {
       // Hold the response — don't fulfill yet
       resolveApiCall();
-      await new Promise(r => setTimeout(r, 5000));
+      await new Promise((r) => setTimeout(r, 5000));
       await route.fulfill({
         status: 200,
         contentType: 'application/json',
@@ -205,7 +211,7 @@ test.describe('Translation Cache — Instant Load', () => {
       });
     });
 
-    await page.route('**/api/ai/**', route => route.abort());
+    await page.route('**/api/ai/**', (route) => route.abort());
 
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
@@ -221,9 +227,7 @@ test.describe('Translation Cache — Instant Load', () => {
   });
 });
 
-
 test.describe('Translation Cache — Gemini Skip', () => {
-
   test('poem with cachedTranslation does NOT trigger Gemini API call', async ({ page }) => {
     const { geminiCalls } = await setupMocks(page, {
       // First call returns a poem WITH cached translation
@@ -278,18 +282,18 @@ test.describe('Translation Cache — Gemini Skip', () => {
   });
 });
 
-
 test.describe('Translation Cache — Prefetch', () => {
-
   test('app prefetches a poem to localStorage after load', async ({ page }) => {
     await setupMocks(page);
 
     // Capture console logs and network requests for debugging
     const consoleMessages = [];
     const allRequests = [];
-    page.on('console', msg => consoleMessages.push(`${msg.type()}: ${msg.text()}`));
-    page.on('request', req => allRequests.push(req.url()));
-    page.on('requestfailed', req => consoleMessages.push(`FAILED: ${req.url()} - ${req.failure()?.errorText}`));
+    page.on('console', (msg) => consoleMessages.push(`${msg.type()}: ${msg.text()}`));
+    page.on('request', (req) => allRequests.push(req.url()));
+    page.on('requestfailed', (req) =>
+      consoleMessages.push(`FAILED: ${req.url()} - ${req.failure()?.errorText}`)
+    );
 
     await page.goto('/');
     await page.waitForLoadState('domcontentloaded');
@@ -300,7 +304,7 @@ test.describe('Translation Cache — Prefetch', () => {
     await page.waitForTimeout(5000);
 
     // Check all requests that included 'poems/random'
-    const randomHits = allRequests.filter(u => u.includes('poems/random'));
+    const randomHits = allRequests.filter((u) => u.includes('poems/random'));
 
     // If only 1 random call was made, the prefetch either:
     // (a) didn't fire (mount effect logic), or (b) was blocked by the route
@@ -316,10 +320,13 @@ test.describe('Translation Cache — Prefetch', () => {
           const poem = await res.json();
           if (poem.arabic) poem.arabic = poem.arabic.replace(/\*/g, '\n');
           poem.isFromDatabase = true;
-          localStorage.setItem('qafiyah_nextPoem', JSON.stringify({
-            poem,
-            storedAt: Date.now()
-          }));
+          localStorage.setItem(
+            'qafiyah_nextPoem',
+            JSON.stringify({
+              poem,
+              storedAt: Date.now(),
+            })
+          );
         } catch {}
       });
     }
@@ -356,8 +363,10 @@ test.describe('Translation Cache — Prefetch', () => {
     await dismissSplashIfVisible(page);
     await page.locator('[dir="rtl"]').first().waitFor({ state: 'visible', timeout: 5000 });
 
-    // The prefetched poem (Nizar Qabbani) should be displayed
-    await expect(page.locator('text=نزار قباني').first()).toBeVisible({ timeout: 5000 });
+    // The prefetched poem (Nizar Qabbani) should be displayed.
+    // Use a longer timeout here: CI runners can be slow after a page reload — 5s
+    // was occasionally not enough, causing intermittent test flakiness.
+    await expect(page.locator('text=نزار قباني').first()).toBeVisible({ timeout: 10000 });
 
     // localStorage should be cleared (poem consumed)
     const remaining = await page.evaluate(() => {
@@ -386,7 +395,7 @@ test.describe('Translation Cache — Prefetch', () => {
         poet: 'EXPIRED_POET_MARKER',
         poetArabic: 'EXPIRED_POET_MARKER',
       },
-      storedAt: Date.now() - (8 * 24 * 60 * 60 * 1000), // 8 days ago
+      storedAt: Date.now() - 8 * 24 * 60 * 60 * 1000, // 8 days ago
     };
 
     await page.evaluate((data) => {
@@ -405,10 +414,10 @@ test.describe('Translation Cache — Prefetch', () => {
   });
 });
 
-
 test.describe('Translation Cache — Save-back', () => {
-
-  test('after Gemini explains an untranslated poem, app POSTs translation to DB', async ({ page }) => {
+  test('after Gemini explains an untranslated poem, app POSTs translation to DB', async ({
+    page,
+  }) => {
     const { translationPosts, geminiCalls } = await setupMocks(page, {
       // Serve a poem WITHOUT cached translation so Gemini gets called
       poemSequence: [MOCK_POEM_WITHOUT_TRANSLATION, MOCK_POEM_PREFETCH],
@@ -439,13 +448,21 @@ test.describe('Translation Cache — Save-back', () => {
   });
 });
 
-
 test.describe('Translation Cache — Poem Variety', () => {
-
   test('consecutive discovers serve different poems', async ({ page }) => {
     // Use a sequence of 3 distinct poems to verify the app rotates
-    const poemA = { ...MOCK_POEM_WITH_TRANSLATION, id: 60001, poet: 'شاعر أ', poetArabic: 'شاعر أ' };
-    const poemB = { ...MOCK_POEM_WITHOUT_TRANSLATION, id: 60002, poet: 'شاعر ب', poetArabic: 'شاعر ب' };
+    const poemA = {
+      ...MOCK_POEM_WITH_TRANSLATION,
+      id: 60001,
+      poet: 'شاعر أ',
+      poetArabic: 'شاعر أ',
+    };
+    const poemB = {
+      ...MOCK_POEM_WITHOUT_TRANSLATION,
+      id: 60002,
+      poet: 'شاعر ب',
+      poetArabic: 'شاعر ب',
+    };
     const poemC = { ...MOCK_POEM_PREFETCH, id: 60003, poet: 'شاعر ج', poetArabic: 'شاعر ج' };
 
     await setupMocks(page, { poemSequence: [poemA, poemB, poemC] });
@@ -487,7 +504,9 @@ test.describe('Translation Cache — Poem Variety', () => {
     // The displayed poem should be Arabic text — not empty, not a placeholder
     const arabicText = await page.evaluate(() => {
       const rtlElements = document.querySelectorAll('[dir="rtl"]');
-      return Array.from(rtlElements).map(el => el.textContent).join('');
+      return Array.from(rtlElements)
+        .map((el) => el.textContent)
+        .join('');
     });
     expect(arabicText.length).toBeGreaterThan(10);
 

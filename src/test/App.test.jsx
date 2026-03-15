@@ -727,11 +727,10 @@ describe('DiwanApp', () => {
       global.fetch.mockResolvedValueOnce({ ok: true, json: async () => darwishPoem2 });
       // Re-click the same poet — should trigger a new fetch.
       // When the picker is open after a Darwish selection, both the poem card and the
-      // picker dropdown show "محمود درويش". Target the picker button specifically by its
-      // "w-full" class (only picker buttons have that class, the poem card does not).
+      // picker dropdown show "محمود درويش". Target the picker button using data-testid.
       const pickerDarwishBtn = screen
-        .getAllByRole('button')
-        .find((btn) => btn.textContent.includes('محمود درويش') && btn.className.includes('w-full'));
+        .getAllByTestId('poet-picker-button')
+        .find((btn) => btn.textContent.includes('محمود درويش'));
       await userEvent.click(pickerDarwishBtn);
 
       await waitFor(() => expect(screen.getByText('Identity Card')).toBeInTheDocument(), {
@@ -855,13 +854,12 @@ describe('DiwanApp', () => {
       await userEvent.click(screen.getByLabelText('Filter by poet'));
       await waitFor(() => expect(document.body.textContent).toContain('محمود درويش'));
 
-      // The selected button should have the active styling class
-      const darwishButtons = screen.getAllByText('محمود درويش');
-      // At least one should be in the picker with the selected style
-      const pickerBtn = darwishButtons.find((el) => el.closest('button'));
-      expect(pickerBtn).toBeTruthy();
-      const btn = pickerBtn.closest('button');
-      expect(btn.className).toContain('bg-[#C5A059]/15');
+      // The selected picker button should have the active styling class
+      const darwishPickerBtn = screen
+        .getAllByTestId('poet-picker-button')
+        .find((btn) => btn.textContent.includes('محمود درويش'));
+      expect(darwishPickerBtn).toBeDefined();
+      expect(darwishPickerBtn.className).toContain('bg-[#C5A059]/15');
     });
   });
 

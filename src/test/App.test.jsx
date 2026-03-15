@@ -626,6 +626,111 @@ describe('DiwanApp', () => {
         { timeout: 3000 }
       );
     });
+
+    it('shows search input when poet picker opens', async () => {
+      render(<DiwanApp />);
+      await userEvent.click(screen.getByLabelText('Filter by poet'));
+      await waitFor(() => {
+        expect(screen.getByLabelText('Search poets')).toBeInTheDocument();
+      });
+    });
+
+    it('shows Featured section header in poet picker', async () => {
+      render(<DiwanApp />);
+      await userEvent.click(screen.getByLabelText('Filter by poet'));
+      await waitFor(() => {
+        expect(document.body.textContent).toContain('Featured');
+      });
+    });
+
+    it('filters poets by search query', async () => {
+      render(<DiwanApp />);
+      await userEvent.click(screen.getByLabelText('Filter by poet'));
+
+      // Type in the search input to filter
+      const searchInput = screen.getByLabelText('Search poets');
+      await userEvent.type(searchInput, 'نزار');
+
+      // Nizar Qabbani should still be visible
+      await waitFor(() => {
+        expect(document.body.textContent).toContain('نزار قباني');
+      });
+
+      // Al-Mutanabbi should be filtered out
+      expect(document.body.textContent).not.toContain('المتنبي');
+    });
+
+    it('shows no results message for non-matching search', async () => {
+      render(<DiwanApp />);
+      await userEvent.click(screen.getByLabelText('Filter by poet'));
+
+      const searchInput = screen.getByLabelText('Search poets');
+      await userEvent.type(searchInput, 'xyznonexistent');
+
+      await waitFor(() => {
+        expect(document.body.textContent).toContain('No matching poets');
+      });
+    });
+
+    it('fetches dynamic poets from API when picker opens', async () => {
+      const mockPoets = [
+        { name: 'أحمد شوقي', name_en: 'Ahmed Shawqi', poem_count: '5000' },
+        { name: 'إيليا أبو ماضي', name_en: 'Elia Abu Madi', poem_count: '2000' },
+      ];
+      global.fetch.mockImplementation((url) => {
+        if (typeof url === 'string' && url.includes('/api/poets')) {
+          return Promise.resolve({
+            ok: true,
+            json: async () => mockPoets,
+          });
+        }
+        return Promise.resolve({ ...defaultFetchResponse });
+      });
+
+      render(<DiwanApp />);
+      await userEvent.click(screen.getByLabelText('Filter by poet'));
+
+      // Should show dynamic poets under "More Poets"
+      await waitFor(
+        () => {
+          expect(document.body.textContent).toContain('أحمد شوقي');
+          expect(document.body.textContent).toContain('More Poets');
+        },
+        { timeout: 3000 }
+      );
+    });
+
+    it('shows clear filter button when a poet is selected', async () => {
+      mockAutoLoadFetch();
+      render(<DiwanApp />);
+
+      await waitFor(() => expect(screen.getByText('Nizar Qabbani')).toBeInTheDocument(), {
+        timeout: 3000,
+      });
+
+      // Open poet picker and select a poet
+      await userEvent.click(screen.getByLabelText('Filter by poet'));
+      await waitFor(() => expect(document.body.textContent).toContain('المتنبي'));
+
+      global.fetch.mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({
+          id: 300,
+          poet: 'Al-Mutanabbi',
+          poetArabic: 'المتنبي',
+          title: 'Test',
+          arabic: 'على قدر أهل العزم',
+          tags: [],
+        }),
+      });
+      await userEvent.click(screen.getByText('المتنبي'));
+
+      // Re-open picker to check for clear filter
+      await userEvent.click(screen.getByLabelText('Filter by poet'));
+      await waitFor(() => {
+        expect(document.body.textContent).toContain('Clear filter');
+      });
+    });
   });
 
   // ── Feature 8: Arabic RTL & fonts ─────────────────────────────────────

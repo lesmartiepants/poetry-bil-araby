@@ -1262,7 +1262,7 @@ const DebugPanel = ({ logs, onClear, darkMode, poem, appState, visible, controlB
             value={bugDescription}
             onChange={(e) => setBugDescription(e.target.value)}
             placeholder="Describe the bug..."
-            className={`flex-1 px-2 py-1 rounded text-[10px] border ${darkMode ? 'bg-stone-900/80 border-stone-700 text-stone-200 placeholder:text-stone-500' : 'bg-white/80 border-stone-300 text-stone-800 placeholder:text-stone-400'}`}
+            className={`flex-1 px-2 py-1 rounded text-[16px] border ${darkMode ? 'bg-stone-900/80 border-stone-700 text-stone-200 placeholder:text-stone-500' : 'bg-white/80 border-stone-300 text-stone-800 placeholder:text-stone-400'}`}
             onKeyDown={(e) => {
               if (e.key === 'Enter') handleSubmitBug();
             }}
@@ -3551,7 +3551,16 @@ export default function DiwanApp() {
 
   // Build combined poet list: featured (from CATEGORIES) + dynamic (from API)
   const filteredPoetList = useMemo(() => {
-    const search = poetSearch.trim().toLowerCase();
+    // Normalize Arabic text: strip tashkeel (diacritics), zero-width joiners, and normalize Unicode
+    const normalizeAr = (s) =>
+      s
+        .normalize('NFC')
+        .replace(
+          /[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06DC\u06DF-\u06E4\u06E7\u06E8\u06EA-\u06ED]/g,
+          ''
+        )
+        .replace(/[\u200B-\u200F\u202A-\u202E\uFEFF]/g, '');
+    const search = normalizeAr(poetSearch.trim().toLowerCase());
     const featuredIds = new Set(CATEGORIES.filter((c) => c.id !== 'All').map((c) => c.id));
 
     // Build dynamic entries not already in featured
@@ -3572,12 +3581,10 @@ export default function DiwanApp() {
 
     if (!search) return { featured, all: apiPoets };
 
-    const matchFeatured = featured.filter(
-      (p) => p.labelAr.includes(search) || p.label.toLowerCase().includes(search)
-    );
-    const matchAll = apiPoets.filter(
-      (p) => p.labelAr.includes(search) || p.label.toLowerCase().includes(search)
-    );
+    const matchesSearch = (p) =>
+      normalizeAr(p.labelAr).includes(search) || p.label.toLowerCase().includes(search);
+    const matchFeatured = featured.filter(matchesSearch);
+    const matchAll = apiPoets.filter(matchesSearch);
     return { featured: matchFeatured, all: matchAll };
   }, [poetSearch, dynamicPoets]);
 
@@ -5666,10 +5673,9 @@ export default function DiwanApp() {
                           type="text"
                           value={poetSearch}
                           onChange={(e) => setPoetSearch(e.target.value)}
-                          placeholder="ابحث عن شاعر..."
-                          dir="rtl"
+                          placeholder="Search poets..."
                           aria-label="Search poets"
-                          className="w-full bg-white/5 border border-[#C5A059]/15 rounded-lg pl-7 pr-3 py-1.5 text-[13px] text-stone-200 placeholder-stone-600 focus:outline-none focus:border-[#C5A059]/40 font-tajawal transition-colors"
+                          className="w-full bg-white/5 border border-[#C5A059]/15 rounded-lg pl-7 pr-3 py-1.5 text-[16px] text-stone-200 placeholder-stone-600 focus:outline-none focus:border-[#C5A059]/40 font-tajawal transition-colors"
                         />
                         {poetSearch && (
                           <button

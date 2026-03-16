@@ -3551,7 +3551,7 @@ export default function DiwanApp() {
 
   // Build combined poet list: featured (from CATEGORIES) + dynamic (from API)
   const filteredPoetList = useMemo(() => {
-    // Normalize Arabic text: strip tashkeel (diacritics), zero-width joiners, and normalize Unicode
+    // Normalize Arabic text: strip tashkeel, normalize letter variants, remove invisible chars
     const normalizeAr = (s) =>
       s
         .normalize('NFC')
@@ -3559,7 +3559,10 @@ export default function DiwanApp() {
           /[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06DC\u06DF-\u06E4\u06E7\u06E8\u06EA-\u06ED]/g,
           ''
         )
-        .replace(/[\u200B-\u200F\u202A-\u202E\uFEFF]/g, '');
+        .replace(/[\u200B-\u200F\u202A-\u202E\uFEFF]/g, '')
+        .replace(/[\u0622\u0623\u0625\u0671]/g, '\u0627') // أ إ آ ٱ → ا
+        .replace(/\u0649/g, '\u064A') // alef maksura ى → ya ي
+        .replace(/\u0629/g, '\u0647'); // taa marbuta ة → ha ه
     const search = normalizeAr(poetSearch.trim().toLowerCase());
     const featuredNormIds = new Set(
       CATEGORIES.filter((c) => c.id !== 'All').map((c) => normalizeAr(c.id))

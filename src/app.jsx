@@ -3561,11 +3561,13 @@ export default function DiwanApp() {
         )
         .replace(/[\u200B-\u200F\u202A-\u202E\uFEFF]/g, '');
     const search = normalizeAr(poetSearch.trim().toLowerCase());
-    const featuredIds = new Set(CATEGORIES.filter((c) => c.id !== 'All').map((c) => c.id));
+    const featuredNormIds = new Set(
+      CATEGORIES.filter((c) => c.id !== 'All').map((c) => normalizeAr(c.id))
+    );
 
-    // Build dynamic entries not already in featured
+    // Build dynamic entries not already in featured (normalized comparison)
     const apiPoets = dynamicPoets
-      .filter((p) => !featuredIds.has(p.name))
+      .filter((p) => !featuredNormIds.has(normalizeAr(p.name)))
       .map((p) => ({
         id: p.name,
         label: p.name_en || p.name,
@@ -3573,9 +3575,10 @@ export default function DiwanApp() {
         poemCount: parseInt(p.poem_count, 10) || 0,
       }));
 
-    // Enrich featured poets with poem counts from API
+    // Enrich featured poets with poem counts from API (normalized comparison)
     const featured = CATEGORIES.filter((c) => c.id !== 'All').map((cat) => {
-      const apiMatch = dynamicPoets.find((p) => p.name === cat.id);
+      const catNorm = normalizeAr(cat.id);
+      const apiMatch = dynamicPoets.find((p) => normalizeAr(p.name) === catNorm);
       return { ...cat, poemCount: apiMatch ? parseInt(apiMatch.poem_count, 10) : null };
     });
 

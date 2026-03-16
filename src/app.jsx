@@ -3174,6 +3174,11 @@ export default function DiwanApp() {
   // When the selectedCategory effect wants to fetch but isFetching is already true,
   // it stores the category here. A retry effect fires once isFetching drops to false.
   const pendingCategoryFetchRef = useRef(null);
+  // Always-current mirror of selectedCategory for use inside async callbacks where
+  // the closure value would otherwise be stale (e.g. the setPoems functional updater
+  // called after an awaited fetch that outlasts the render that started it).
+  // Initialized with the mount-time value; kept in sync by the selectedCategory effect.
+  const selectedCategoryRef = useRef(selectedCategory);
   const [logs, setLogs] = useState([]);
   const [showDebugLogs, setShowDebugLogs] = useState(FEATURES.debug);
   const [showCopySuccess, setShowCopySuccess] = useState(false);
@@ -3299,6 +3304,9 @@ export default function DiwanApp() {
       pendingCategoryFetchRef.current = null; // Clear any pending poet fetch on "All"
       setCurrentIndex(0);
     }
+    // Keep the always-current ref in sync so async callbacks inside handleFetch
+    // (e.g. the setPoems functional updater) can read the latest value.
+    selectedCategoryRef.current = selectedCategory;
   }, [selectedCategory]);
 
   // Retry a blocked poet-selection fetch once the current fetch completes.
@@ -4402,7 +4410,9 @@ export default function DiwanApp() {
 
           setPoems((prev) => {
             const updated = [...prev, newPoem];
-            const freshFiltered = filterPoemsByCategory(updated, selectedCategory);
+            // Use the always-current ref so a user who switched poets while this
+            // fetch was in flight doesn't see a poem from the wrong poet.
+            const freshFiltered = filterPoemsByCategory(updated, selectedCategoryRef.current);
             const newIdx = freshFiltered.findIndex((p) => p.id === newPoem.id);
             if (newIdx !== -1) setCurrentIndex(newIdx);
             return updated;
@@ -4516,7 +4526,9 @@ export default function DiwanApp() {
         addLog('Event', `→ serve event emitted | poem_id: ${newPoem.id} | source: ai`, 'info');
         setPoems((prev) => {
           const updated = [...prev, newPoem];
-          const freshFiltered = filterPoemsByCategory(updated, selectedCategory);
+          // Use the always-current ref so a user who switched poets while this
+          // fetch was in flight doesn't see a poem from the wrong poet.
+          const freshFiltered = filterPoemsByCategory(updated, selectedCategoryRef.current);
           const newIdx = freshFiltered.findIndex((p) => p.id === newPoem.id);
           if (newIdx !== -1) setCurrentIndex(newIdx);
           return updated;
@@ -5596,8 +5608,16 @@ export default function DiwanApp() {
                     {CATEGORIES.map((cat) => (
                       <button
                         key={cat.id}
+                        data-testid="poet-picker-button"
                         onClick={() => {
-                          setSelectedCategory(cat.id);
+                          // Re-selecting the same specific poet: selectedCategory won't change so
+                          // the selectedCategory effect won't fire. Call handleFetch() directly
+                          // so the user always gets a fresh poem on each explicit selection.
+                          if (cat.id === selectedCategory && cat.id !== 'All') {
+                            handleFetch();
+                          } else {
+                            setSelectedCategory(cat.id);
+                          }
                           closePoetPicker();
                         }}
                         className={`w-full text-right px-5 py-2.5 transition-all duration-150 ${selectedCategory === cat.id ? 'bg-[#C5A059]/15 border-r-2 border-[#C5A059]' : 'hover:bg-[#C5A059]/8 border-r-2 border-transparent'}`}

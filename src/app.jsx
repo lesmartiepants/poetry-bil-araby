@@ -3539,14 +3539,19 @@ export default function DiwanApp() {
       }
     };
     fetchPoets();
-  }, [poetPickerOpen, poetsFetched]);
+    // apiUrl is a module-level constant; addLog is functionally stable (uses
+    // only setLogs and module constants) even though its reference changes per
+    // render — poetsFetched gate prevents repeated fetches regardless.
+  }, [poetPickerOpen, poetsFetched, addLog]);
 
   // Focus search input when poet picker opens (delay allows CSS enter animation to complete)
   useEffect(() => {
+    let timerId;
     if (poetPickerOpen && poetSearchRef.current) {
-      setTimeout(() => poetSearchRef.current?.focus(), 100);
+      timerId = setTimeout(() => poetSearchRef.current?.focus(), 100);
     }
     if (!poetPickerOpen) setPoetSearch('');
+    return () => clearTimeout(timerId);
   }, [poetPickerOpen]);
 
   const closePoetPicker = () => {
@@ -5716,7 +5721,7 @@ export default function DiwanApp() {
                         scrollbarColor: 'rgba(197,160,89,0.2) transparent',
                       }}
                     >
-                      {/* "All Poets" option — always visible */}
+                      {/* "All Poets" option — shown when there is no active search */}
                       {!poetSearch && (
                         <button
                           data-testid="poet-picker-button"

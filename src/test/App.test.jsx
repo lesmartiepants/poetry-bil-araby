@@ -731,6 +731,7 @@ describe('DiwanApp', () => {
         { name: 'أحمد شوقي', name_en: 'Ahmed Shawqi', poem_count: '5000' },
         { name: 'إيليا أبو ماضي', name_en: 'Elia Abu Madi', poem_count: '2000' },
       ];
+      const originalImpl = global.fetch.getMockImplementation();
       global.fetch.mockImplementation((url) => {
         if (typeof url === 'string' && url.includes('/api/poets')) {
           return Promise.resolve({
@@ -741,17 +742,26 @@ describe('DiwanApp', () => {
         return Promise.resolve({ ...defaultFetchResponse });
       });
 
-      render(<DiwanApp />);
-      await userEvent.click(screen.getByLabelText('Filter by poet'));
+      try {
+        render(<DiwanApp />);
+        await userEvent.click(screen.getByLabelText('Filter by poet'));
 
-      // Should show dynamic poets under "More Poets"
-      await waitFor(
-        () => {
-          expect(screen.getByText('أحمد شوقي')).toBeInTheDocument();
-          expect(screen.getByText('More Poets')).toBeInTheDocument();
-        },
-        { timeout: 3000 }
-      );
+        // Should show dynamic poets under "More Poets"
+        await waitFor(
+          () => {
+            expect(screen.getByText('أحمد شوقي')).toBeInTheDocument();
+            expect(screen.getByText('More Poets')).toBeInTheDocument();
+          },
+          { timeout: 3000 }
+        );
+      } finally {
+        // Restore original mock so subsequent tests aren't affected
+        if (originalImpl) {
+          global.fetch.mockImplementation(originalImpl);
+        } else {
+          global.fetch.mockReset();
+        }
+      }
     });
 
     it('shows clear filter button when a poet is selected', async () => {

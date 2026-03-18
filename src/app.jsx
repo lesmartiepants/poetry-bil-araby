@@ -53,81 +53,14 @@ import { parseInsight } from './utils/insightParser';
 import { repairAndParseJSON } from './utils/jsonRepair';
 import seedPoems from './data/seed-poems.json';
 import { FEATURES, DESIGN, BRAND, THEME, GOLD, CATEGORIES, FONTS } from './constants/index.js';
+import { getRecentSeenIds, markPoemSeen, pruneSeenPoems } from './utils/seenPoems.js';
+import { transliterate } from './utils/transliterate.js';
+import { filterPoemsByCategory } from './utils/filterPoems.js';
 
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
-/**
- * Returns the subset of `poems` that match the given `category` filter.
- * Category is compared case-insensitively against both the English `poet` field
- * and the Arabic `poetArabic` field, as well as each poem's tags.
- * Returns `poems` unchanged when `category` is 'All'.
- */
-export function filterPoemsByCategory(poems, category) {
-  if (category === 'All') return poems;
-  const searchStr = category.toLowerCase();
-  return poems.filter(
-    (p) =>
-      (p?.poet || '').toLowerCase().includes(searchStr) ||
-      (p?.poetArabic || '').toLowerCase().includes(searchStr) ||
-      (Array.isArray(p?.tags) && p.tags.some((t) => String(t).toLowerCase() === searchStr))
-  );
-}
-
-/* =============================================================================
-  1b. SEEN POEMS DEDUP (localStorage)
-  =============================================================================
-  Tracks recently seen poem IDs to avoid repeats during discovery.
-  Entries older than 30 days are pruned automatically.
-*/
-
-const SEEN_POEMS_KEY = 'seenPoems';
-const SEEN_POEMS_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
-const SEEN_POEMS_MAX_EXCLUDE = 200;
-
-/** Read seen poems from localStorage. Returns Array<{id: number, seenAt: number}>. */
-const getSeenPoems = () => {
-  try {
-    const raw = localStorage.getItem(SEEN_POEMS_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-};
-
-/** Record a poem as seen. */
-const markPoemSeen = (poemId) => {
-  try {
-    const seen = getSeenPoems();
-    // Avoid duplicate entries for the same poem
-    if (seen.some((entry) => entry.id === poemId)) return;
-    seen.push({ id: poemId, seenAt: Date.now() });
-    localStorage.setItem(SEEN_POEMS_KEY, JSON.stringify(seen));
-  } catch {
-    // localStorage full or unavailable — silently ignore
-  }
-};
-
-/** Remove entries older than 30 days. */
-const pruneSeenPoems = () => {
-  try {
-    const seen = getSeenPoems();
-    const cutoff = Date.now() - SEEN_POEMS_MAX_AGE_MS;
-    const pruned = seen.filter((entry) => entry.seenAt > cutoff);
-    if (pruned.length !== seen.length) {
-      localStorage.setItem(SEEN_POEMS_KEY, JSON.stringify(pruned));
-    }
-  } catch {
-    // silently ignore
-  }
-};
-
-/** Get recent seen IDs for the exclude param (max 200). */
-const getRecentSeenIds = () => {
-  const seen = getSeenPoems();
-  return seen.slice(-SEEN_POEMS_MAX_EXCLUDE).map((entry) => entry.id);
-};
+// Re-export filterPoemsByCategory for backwards compatibility with existing tests
+export { filterPoemsByCategory } from './utils/filterPoems.js';
 
 /* =============================================================================
   2. API PROMPTS & CONFIGURATION
@@ -796,89 +729,7 @@ const prefetchManager = {
   =============================================================================
 */
 
-const ARABIC_TRANSLIT_MAP = {
-  // Base letters
-  ا: 'a',
-  أ: 'a',
-  إ: 'i',
-  آ: 'aa',
-  ٱ: 'a',
-  ب: 'b',
-  ت: 't',
-  ث: 'th',
-  ج: 'j',
-  ح: 'h',
-  خ: 'kh',
-  د: 'd',
-  ذ: 'dh',
-  ر: 'r',
-  ز: 'z',
-  س: 's',
-  ش: 'sh',
-  ص: 's',
-  ض: 'd',
-  ط: 't',
-  ظ: 'z',
-  ع: "'",
-  غ: 'gh',
-  ف: 'f',
-  ق: 'q',
-  ك: 'k',
-  ل: 'l',
-  م: 'm',
-  ن: 'n',
-  ه: 'h',
-  و: 'w',
-  ي: 'y',
-  ى: 'a',
-  ة: 'h',
-  ء: "'",
-  ؤ: "'",
-  ئ: "'",
-  // Diacritics
-  '\u064E': 'a', // fatha
-  '\u064F': 'u', // damma
-  '\u0650': 'i', // kasra
-  '\u0651': '', // shadda (handled by doubling previous consonant)
-  '\u0652': '', // sukun (no vowel)
-  '\u064B': 'an', // tanween fatha
-  '\u064C': 'un', // tanween damma
-  '\u064D': 'in', // tanween kasra
-  '\u0670': 'a', // alef superscript
-  // Common punctuation
-  '،': ',',
-  '؛': ';',
-  '؟': '?',
-  '»': '"',
-  '«': '"',
-  '\u200C': '',
-  '\u200D': '',
-  '\u200F': '',
-  '\u200E': '', // zero-width chars
-};
-
-function transliterate(text) {
-  if (!text) return '';
-  let result = '';
-  for (let i = 0; i < text.length; i++) {
-    const ch = text[i];
-    // Handle shadda: double the previous consonant
-    if (ch === '\u0651') {
-      const lastChar = result[result.length - 1];
-      if (lastChar && lastChar !== ' ') result += lastChar;
-      continue;
-    }
-    if (ch in ARABIC_TRANSLIT_MAP) {
-      result += ARABIC_TRANSLIT_MAP[ch];
-    } else if (/[\s\n]/.test(ch)) {
-      result += ch;
-    } else if (/[a-zA-Z0-9.,!?;:'"()\-–—…]/.test(ch)) {
-      result += ch; // pass through Latin chars and common punctuation
-    }
-    // Skip unrecognized Arabic diacritics/formatting chars
-  }
-  return result;
-}
+// transliterate imported from ./utils/transliterate.js
 
 /* =============================================================================
   6. UTILITY COMPONENTS

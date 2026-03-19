@@ -39,6 +39,7 @@
     "@sentry/node": "^10.42.0",
     "@sentry/react": "^10.42.0",
     "@supabase/supabase-js": "^2.90.1",
+    "@use-gesture/react": "^10.3.1",
     "@vercel/analytics": "^1.6.1",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
@@ -47,7 +48,6 @@
     "express-validator": "^7.3.1",
     "helmet": "^8.1.0",
     "lucide-react": "^0.460.0",
-
     "pg": "^8.16.3",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"

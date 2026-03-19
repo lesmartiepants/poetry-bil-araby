@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { X, Sparkles } from 'lucide-react';
+import { useDrag } from '@use-gesture/react';
 
 const InsightsDrawer = ({
   isOpen,
@@ -15,7 +16,6 @@ const InsightsDrawer = ({
   const [expanded, setExpanded] = useState(false);
   const [dragY, setDragY] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
-  const dragStartY = useRef(0);
   const drawerRef = useRef(null);
 
   // Reset expanded state when drawer closes
@@ -26,30 +26,31 @@ const InsightsDrawer = ({
     }
   }, [isOpen]);
 
-  const handleDragStart = (e) => {
-    setIsDragging(true);
-    dragStartY.current = e.touches ? e.touches[0].clientY : e.clientY;
-  };
+  const bind = useDrag(
+    ({ down, movement: [, my], velocity: [, vy], direction: [, dy], cancel }) => {
+      setIsDragging(down);
 
-  const handleDragMove = (e) => {
-    if (!isDragging) return;
-    const currentY = e.touches ? e.touches[0].clientY : e.clientY;
-    const delta = currentY - dragStartY.current;
-    // Only allow dragging down (positive delta) or limited up
-    setDragY(Math.max(-40, delta));
-  };
-
-  const handleDragEnd = () => {
-    setIsDragging(false);
-    if (dragY > 80) {
-      // Dragged down enough — close
-      onClose();
-    } else if (dragY < -20) {
-      // Dragged up — expand
-      setExpanded(true);
+      if (down) {
+        // Clamp: allow limited upward drag (-40px) and free downward
+        setDragY(Math.max(-40, my));
+      } else {
+        // Release — check velocity and distance for dismiss/expand
+        if (my > 80 || (vy > 0.5 && dy > 0)) {
+          // Dragged or flicked down — close
+          onClose();
+        } else if (my < -20 || (vy > 0.5 && dy < 0)) {
+          // Dragged or flicked up — expand
+          setExpanded(true);
+        }
+        setDragY(0);
+      }
+    },
+    {
+      axis: 'y',
+      filterTaps: true,
+      pointer: { touch: true },
     }
-    setDragY(0);
-  };
+  );
 
   if (!isOpen) return null;
 
@@ -81,13 +82,8 @@ const InsightsDrawer = ({
       >
         {/* Drag handle */}
         <div
+          {...bind()}
           className="flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing touch-none"
-          onTouchStart={handleDragStart}
-          onTouchMove={handleDragMove}
-          onTouchEnd={handleDragEnd}
-          onMouseDown={handleDragStart}
-          onMouseMove={handleDragMove}
-          onMouseUp={handleDragEnd}
           onClick={() => setExpanded((prev) => !prev)}
         >
           <div className="w-10 h-1 rounded-full bg-[#C5A059]/30" />

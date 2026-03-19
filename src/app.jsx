@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useLocation, useRoute } from 'wouter';
 import {
   Play,
   Pause,
@@ -69,6 +70,9 @@ export { filterPoemsByCategory } from './utils/filterPoems.js';
 */
 
 export default function DiwanApp() {
+  const [, navigate] = useLocation();
+  const [, routeParams] = useRoute('/poem/:id');
+
   const mainScrollRef = useRef(null);
   const audioRef = useRef(new Audio());
   const isTogglingPlay = useRef(false);
@@ -319,10 +323,9 @@ export default function DiwanApp() {
     if (!hasAutoLoaded.current) {
       hasAutoLoaded.current = true;
 
-      // Deep link detection: /poem/:id
-      const deepLinkMatch = window.location.pathname.match(/^\/poem\/(\d+)$/);
-      if (deepLinkMatch && useDatabase) {
-        const poemId = deepLinkMatch[1];
+      // Deep link detection via wouter route match: /poem/:id
+      if (routeParams?.id && useDatabase) {
+        const poemId = routeParams.id;
         track('deep_link_loaded', { poemId });
         addLog('DeepLink', `Loading poem ID ${poemId} from URL`, 'info');
         fetch(`${apiUrl}/api/poems/${poemId}`)
@@ -1454,7 +1457,7 @@ export default function DiwanApp() {
             return updated;
           });
           // Update URL to reflect current poem
-          window.history.replaceState({}, '', '/poem/' + newPoem.id);
+          navigate('/poem/' + newPoem.id, { replace: true });
           // Auto-analyze to fetch English translation if no cached translation is available
           if (!newPoem.cachedTranslation) {
             setAutoExplainPending(true);
@@ -1569,7 +1572,7 @@ export default function DiwanApp() {
           if (newIdx !== -1) setCurrentIndex(newIdx);
           return updated;
         });
-        window.history.replaceState({}, '', '/');
+        navigate('/', { replace: true });
       }
     } catch (e) {
       Sentry.captureException(e);
@@ -1853,9 +1856,9 @@ export default function DiwanApp() {
     setShowSavedPoems(false);
     // Update URL for DB poems
     if (typeof mappedPoem.id === 'number') {
-      window.history.replaceState({}, '', '/poem/' + mappedPoem.id);
+      navigate('/poem/' + mappedPoem.id, { replace: true });
     } else {
-      window.history.replaceState({}, '', '/');
+      navigate('/', { replace: true });
     }
   };
 

@@ -3857,6 +3857,190 @@ export default function DiwanApp() {
     // Set loading state FIRST (before duplicate check) for better UX
     setIsGeneratingAudio(true);
 
+    const doGenerate = async () => {
+      // CHECK CACHE FIRST
+      if (FEATURES.caching && current?.id) {
+        const cacheStart = performance.now();
+        const cached = await cacheOperations.get(CACHE_CONFIG.stores.audio, current.id);
+        const cacheTime = performance.now() - cacheStart;
+
+        if (cached?.blob) {
+          const sizeMB = (cached.blob.size / (1024 * 1024)).toFixed(2);
+          addLog(
+            'Audio Cache',
+            `✓ Cache HIT (${cacheTime.toFixed(0)}ms)${cached.metadata?.model ? ` | Model: ${cached.metadata.model}` : ''} | Size: ${sizeMB}MB | Instant playback`,
+            'success'
+          );
+          setCacheStats((prev) => ({ ...prev, audioHits: prev.audioHits + 1 }));
+
+          const u = URL.createObjectURL(cached.blob);
+          setAudioUrl(u);
+          audioRef.current.src = u;
+          audioRef.current.load();
+          audioRef.current
+            .play()
+            .then(() => setIsPlaying(true))
+            .catch((err) => {
+              if (FEATURES.logging) console.warn('[Audio] Playback failed:', err.message);
+              addLog('Audio', `Cached playback failed: ${err.message}`, 'error');
+            });
+          setIsGeneratingAudio(false); // Clear loading state
+          isTogglingPlay.current = false;
+          return;
+        } else {
+          addLog(
+            'Audio Cache',
+            `✗ Cache MISS (${cacheTime.toFixed(0)}ms) | Generating from API...`,
+            'info'
+          );
+          setCacheStats((prev) => ({ ...prev, audioMisses: prev.audioMisses + 1 }));
+        }
+      }
+
+      // Mark request as in-flight
+      activeAudioRequests.current.add(current?.id);
+
+      const ttsContent = getTTSContent(current);
+
+      // Calculate request metrics
+      const requestBody = JSON.stringify({
+        contents: [{ parts: [{ text: ttsContent }] }],
+        generationConfig: {
+          responseModalities: TTS_CONFIG.responseModalities,
+          speechConfig: {
+            voiceConfig: {
+              prebuiltVoiceConfig: { voiceName: TTS_CONFIG.voiceName },
+            },
+          },
+        },
+      });
+      const requestSize = new Blob([requestBody]).size;
+      const estimatedTokens = Math.ceil(ttsContent.length / 4);
+      const arabicTextChars = current?.arabic?.length || 0;
+
+      addLog(
+        'Audio API',
+        `→ Starting generation | Model: ${API_MODELS.tts} | Request: ${(requestSize / 1024).toFixed(1)}KB | ${arabicTextChars} chars Arabic | Est. ${estimatedTokens} tokens`,
+        'info'
+      );
+
+      setAudioError(null);
+
+      try {
+        const apiStart = performance.now();
+        const url = `${apiUrl}/api/ai/${API_MODELS.tts}/generateContent`;
+        const fetchOptions = {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: requestBody,
+        };
+        const { res, model: ttsModel } = await fetchTTSWithFallback(url, fetchOptions, {
+          addLog,
+          label: 'Audio API',
+        });
+
+        if (!res.ok) {
+          const errorText = await res.text();
+          addLog(
+            'Audio API Error',
+            `[${ttsModel}] HTTP ${res.status}: ${errorText.substring(0, 200)}`,
+            'error'
+          );
+          if (res.status === 429) {
+            setAudioError(
+              'Recitation temporarily unavailable — too many requests. Please wait a moment and try again.'
+            );
+            throw new Error('Rate limited (429)');
+          }
+          throw new Error(`API returned ${res.status}: ${res.statusText}`);
+        }
+
+        const data = await res.json();
+        const apiTime = performance.now() - apiStart;
+
+        if (!data.candidates || data.candidates.length === 0) {
+          addLog(
+            'Audio API Error',
+            `[${ttsModel}] No candidates in response. Full response: ${JSON.stringify(data).substring(0, 300)}`,
+            'error'
+          );
+          throw new Error('Recitation failed - no audio candidates returned');
+        }
+
+        const b64 = data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+        if (b64) {
+          const conversionStart = performance.now();
+          const blob = pcm16ToWav(b64);
+          const conversionTime = performance.now() - conversionStart;
+
+          if (blob) {
+            // Calculate audio metrics
+            const audioSizeMB = (blob.size / (1024 * 1024)).toFixed(2);
+            const audioSizeKB = (blob.size / 1024).toFixed(1);
+            // Estimate audio duration from PCM samples (24kHz, 16-bit, mono)
+            const pcmBytes = atob(b64.replace(/\s/g, '')).length;
+            const samples = pcmBytes / 2; // 16-bit = 2 bytes per sample
+            const audioDuration = samples / 24000; // 24kHz sample rate
+            const tokensPerSecond = (estimatedTokens / (apiTime / 1000)).toFixed(1);
+            const totalTime = apiTime + conversionTime;
+
+            addLog(
+              'Audio API',
+              `✓ [${ttsModel}] Complete | API: ${(apiTime / 1000).toFixed(2)}s | Convert: ${conversionTime.toFixed(0)}ms | Total: ${(totalTime / 1000).toFixed(2)}s`,
+              'success'
+            );
+            addLog(
+              'Audio Metrics',
+              `[${ttsModel}] Audio: ${audioDuration.toFixed(1)}s | Size: ${audioSizeKB}KB (${audioSizeMB}MB) | Speed: ${tokensPerSecond} tok/s`,
+              'success'
+            );
+
+            const u = URL.createObjectURL(blob);
+            setAudioUrl(u);
+            audioRef.current.src = u;
+            audioRef.current.load();
+            audioRef.current
+              .play()
+              .then(() => setIsPlaying(true))
+              .catch((err) => {
+                if (FEATURES.logging) console.warn('[Audio] Playback failed:', err.message);
+                addLog('Audio', `Playback failed: ${err.message}`, 'error');
+              });
+
+            // CACHE THE AUDIO BLOB
+            if (FEATURES.caching && current?.id) {
+              const cacheStart = performance.now();
+              await cacheOperations.set(CACHE_CONFIG.stores.audio, current.id, {
+                blob,
+                metadata: {
+                  poet: current.poet,
+                  title: current.title,
+                  size: blob.size,
+                  duration: audioDuration,
+                  model: ttsModel,
+                },
+              });
+              const cacheTime = performance.now() - cacheStart;
+              addLog(
+                'Audio Cache',
+                `Audio cached for future playback (${cacheTime.toFixed(0)}ms) | Saves ${(apiTime / 1000).toFixed(1)}s on replay`,
+                'success'
+              );
+            }
+          }
+        }
+      } catch (e) {
+        Sentry.captureException(e);
+        addLog('Audio System Error', `${e.message} | Poem ID: ${current?.id}`, 'error');
+        track('audio_error', { error: (e.message || '').slice(0, 100) });
+        setIsPlaying(false);
+      } finally {
+        setIsGeneratingAudio(false);
+        activeAudioRequests.current.delete(current?.id); // Clean up in-flight tracking
+        isTogglingPlay.current = false;
+      }
+    };
+
     // Check if request already in flight - poll until it completes
     if (activeAudioRequests.current.has(current?.id)) {
       addLog('Audio', `Audio generation already in progress - waiting for completion`, 'info');
@@ -3887,9 +4071,15 @@ export default function DiwanApp() {
                 addLog('Audio', `Playback failed: ${err.message}`, 'error');
               });
           } else {
-            addLog('Audio', 'Background generation failed — please try again', 'info');
-            isTogglingPlay.current = false;
-            setIsGeneratingAudio(false);
+            addLog(
+              'Audio',
+              'Prefetch failed — retrying audio generation automatically...',
+              'error'
+            );
+            if (!isTogglingPlay.current) {
+              isTogglingPlay.current = true;
+              await doGenerate();
+            }
             return;
           }
           setIsGeneratingAudio(false);
@@ -3938,187 +4128,7 @@ export default function DiwanApp() {
       return;
     }
 
-    // CHECK CACHE FIRST
-    if (FEATURES.caching && current?.id) {
-      const cacheStart = performance.now();
-      const cached = await cacheOperations.get(CACHE_CONFIG.stores.audio, current.id);
-      const cacheTime = performance.now() - cacheStart;
-
-      if (cached?.blob) {
-        const sizeMB = (cached.blob.size / (1024 * 1024)).toFixed(2);
-        addLog(
-          'Audio Cache',
-          `✓ Cache HIT (${cacheTime.toFixed(0)}ms)${cached.metadata?.model ? ` | Model: ${cached.metadata.model}` : ''} | Size: ${sizeMB}MB | Instant playback`,
-          'success'
-        );
-        setCacheStats((prev) => ({ ...prev, audioHits: prev.audioHits + 1 }));
-
-        const u = URL.createObjectURL(cached.blob);
-        setAudioUrl(u);
-        audioRef.current.src = u;
-        audioRef.current.load();
-        audioRef.current
-          .play()
-          .then(() => setIsPlaying(true))
-          .catch((err) => {
-            if (FEATURES.logging) console.warn('[Audio] Playback failed:', err.message);
-            addLog('Audio', `Cached playback failed: ${err.message}`, 'error');
-          });
-        setIsGeneratingAudio(false); // Clear loading state
-        isTogglingPlay.current = false;
-        return;
-      } else {
-        addLog(
-          'Audio Cache',
-          `✗ Cache MISS (${cacheTime.toFixed(0)}ms) | Generating from API...`,
-          'info'
-        );
-        setCacheStats((prev) => ({ ...prev, audioMisses: prev.audioMisses + 1 }));
-      }
-    }
-
-    // Mark request as in-flight
-    activeAudioRequests.current.add(current?.id);
-
-    const ttsContent = getTTSContent(current);
-
-    // Calculate request metrics
-    const requestBody = JSON.stringify({
-      contents: [{ parts: [{ text: ttsContent }] }],
-      generationConfig: {
-        responseModalities: TTS_CONFIG.responseModalities,
-        speechConfig: {
-          voiceConfig: {
-            prebuiltVoiceConfig: { voiceName: TTS_CONFIG.voiceName },
-          },
-        },
-      },
-    });
-    const requestSize = new Blob([requestBody]).size;
-    const estimatedTokens = Math.ceil(ttsContent.length / 4);
-    const arabicTextChars = current?.arabic?.length || 0;
-
-    addLog(
-      'Audio API',
-      `→ Starting generation | Model: ${API_MODELS.tts} | Request: ${(requestSize / 1024).toFixed(1)}KB | ${arabicTextChars} chars Arabic | Est. ${estimatedTokens} tokens`,
-      'info'
-    );
-
-    setAudioError(null);
-
-    try {
-      const apiStart = performance.now();
-      const url = `${apiUrl}/api/ai/${API_MODELS.tts}/generateContent`;
-      const fetchOptions = {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: requestBody,
-      };
-      const { res, model: ttsModel } = await fetchTTSWithFallback(url, fetchOptions, {
-        addLog,
-        label: 'Audio API',
-      });
-
-      if (!res.ok) {
-        const errorText = await res.text();
-        addLog(
-          'Audio API Error',
-          `[${ttsModel}] HTTP ${res.status}: ${errorText.substring(0, 200)}`,
-          'error'
-        );
-        if (res.status === 429) {
-          setAudioError(
-            'Recitation temporarily unavailable — too many requests. Please wait a moment and try again.'
-          );
-          throw new Error('Rate limited (429)');
-        }
-        throw new Error(`API returned ${res.status}: ${res.statusText}`);
-      }
-
-      const data = await res.json();
-      const apiTime = performance.now() - apiStart;
-
-      if (!data.candidates || data.candidates.length === 0) {
-        addLog(
-          'Audio API Error',
-          `[${ttsModel}] No candidates in response. Full response: ${JSON.stringify(data).substring(0, 300)}`,
-          'error'
-        );
-        throw new Error('Recitation failed - no audio candidates returned');
-      }
-
-      const b64 = data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-      if (b64) {
-        const conversionStart = performance.now();
-        const blob = pcm16ToWav(b64);
-        const conversionTime = performance.now() - conversionStart;
-
-        if (blob) {
-          // Calculate audio metrics
-          const audioSizeMB = (blob.size / (1024 * 1024)).toFixed(2);
-          const audioSizeKB = (blob.size / 1024).toFixed(1);
-          // Estimate audio duration from PCM samples (24kHz, 16-bit, mono)
-          const pcmBytes = atob(b64.replace(/\s/g, '')).length;
-          const samples = pcmBytes / 2; // 16-bit = 2 bytes per sample
-          const audioDuration = samples / 24000; // 24kHz sample rate
-          const tokensPerSecond = (estimatedTokens / (apiTime / 1000)).toFixed(1);
-          const totalTime = apiTime + conversionTime;
-
-          addLog(
-            'Audio API',
-            `✓ [${ttsModel}] Complete | API: ${(apiTime / 1000).toFixed(2)}s | Convert: ${conversionTime.toFixed(0)}ms | Total: ${(totalTime / 1000).toFixed(2)}s`,
-            'success'
-          );
-          addLog(
-            'Audio Metrics',
-            `[${ttsModel}] Audio: ${audioDuration.toFixed(1)}s | Size: ${audioSizeKB}KB (${audioSizeMB}MB) | Speed: ${tokensPerSecond} tok/s`,
-            'success'
-          );
-
-          const u = URL.createObjectURL(blob);
-          setAudioUrl(u);
-          audioRef.current.src = u;
-          audioRef.current.load();
-          audioRef.current
-            .play()
-            .then(() => setIsPlaying(true))
-            .catch((err) => {
-              if (FEATURES.logging) console.warn('[Audio] Playback failed:', err.message);
-              addLog('Audio', `Playback failed: ${err.message}`, 'error');
-            });
-
-          // CACHE THE AUDIO BLOB
-          if (FEATURES.caching && current?.id) {
-            const cacheStart = performance.now();
-            await cacheOperations.set(CACHE_CONFIG.stores.audio, current.id, {
-              blob,
-              metadata: {
-                poet: current.poet,
-                title: current.title,
-                size: blob.size,
-                duration: audioDuration,
-                model: ttsModel,
-              },
-            });
-            const cacheTime = performance.now() - cacheStart;
-            addLog(
-              'Audio Cache',
-              `Audio cached for future playback (${cacheTime.toFixed(0)}ms) | Saves ${(apiTime / 1000).toFixed(1)}s on replay`,
-              'success'
-            );
-          }
-        }
-      }
-    } catch (e) {
-      Sentry.captureException(e);
-      addLog('Audio System Error', `${e.message} | Poem ID: ${current?.id}`, 'error');
-      track('audio_error', { error: (e.message || '').slice(0, 100) });
-      setIsPlaying(false);
-    } finally {
-      setIsGeneratingAudio(false);
-      activeAudioRequests.current.delete(current?.id); // Clean up in-flight tracking
-      isTogglingPlay.current = false;
-    }
+    await doGenerate();
   };
 
   const handleAnalyze = async () => {

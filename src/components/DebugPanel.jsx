@@ -115,6 +115,15 @@ const DebugPanel = ({ logs, onClear, darkMode, poem, appState, visible, controlB
         </span>
       </button>
 
+      {/* Backdrop — dismisses panel on outside tap */}
+      {panelOpen && (
+        <div
+          className="fixed inset-0 z-[199]"
+          onClick={() => setPanelOpen(false)}
+          aria-hidden="true"
+        />
+      )}
+
       {/* Floating log panel — matches poet picker styling */}
       <div
         className={`fixed z-[200] w-80 max-w-[calc(100vw-2rem)] flex flex-col rounded-2xl shadow-2xl transition-all duration-200 ${

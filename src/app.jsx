@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback, lazy, Suspense } from 'react';
 import { useLocation, useRoute } from 'wouter';
 import { AnimatePresence } from 'framer-motion';
 import {
@@ -46,7 +46,7 @@ import DebugPanel from './components/DebugPanel.jsx';
 import MysticalConsultationEffect from './components/MysticalConsultationEffect.jsx';
 import ErrorBanner from './components/ErrorBanner.jsx';
 import ShortcutHelp from './components/ShortcutHelp.jsx';
-import SplashScreen from './components/SplashScreen.jsx';
+const SplashScreen = lazy(() => import('./components/SplashScreen.jsx'));
 import InsightsDrawer from './components/InsightsDrawer.jsx';
 import VerticalSidebar from './components/VerticalSidebar.jsx';
 import AuthModal from './components/auth/AuthModal.jsx';
@@ -3077,21 +3077,23 @@ export default function DiwanApp() {
         onToggleDebugLogs={() => setShowDebugLogs((prev) => !prev)}
       />
 
-      {/* Splash / Onboarding Screen */}
+      {/* Splash / Onboarding Screen (lazy-loaded, deferred from initial bundle) */}
       <AnimatePresence>
         {showSplash && (
-          <SplashScreen
-            key="splash-screen"
-            isOpen={showSplash}
-            onDismiss={() => {
-              setShowSplash(false);
-              try {
-                localStorage.setItem('hasSeenOnboarding', 'true');
-              } catch {}
-            }}
-            showOnboarding={showOnboarding}
-            theme={theme}
-          />
+          <Suspense fallback={null}>
+            <SplashScreen
+              key="splash-screen"
+              isOpen={showSplash}
+              onDismiss={() => {
+                setShowSplash(false);
+                try {
+                  localStorage.setItem('hasSeenOnboarding', 'true');
+                } catch {}
+              }}
+              showOnboarding={showOnboarding}
+              theme={theme}
+            />
+          </Suspense>
         )}
       </AnimatePresence>
 

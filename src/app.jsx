@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { useLocation, useRoute } from 'wouter';
+import { AnimatePresence } from 'framer-motion';
 import {
   Play,
   Pause,
@@ -2965,29 +2966,39 @@ export default function DiwanApp() {
       </div>
 
       {/* Insights Drawer (Mobile bottom sheet) */}
-      <InsightsDrawer
-        isOpen={insightsDrawerOpen}
-        onClose={() => setInsightsDrawerOpen(false)}
-        isInterpreting={isInterpreting}
-        insightParts={insightParts}
-        interpretation={interpretation}
-        showTranslation={showTranslation}
-        current={current}
-        theme={theme}
-        darkMode={darkMode}
-      />
+      <AnimatePresence>
+        {insightsDrawerOpen && (
+          <InsightsDrawer
+            key="insights-drawer"
+            isOpen={insightsDrawerOpen}
+            onClose={() => setInsightsDrawerOpen(false)}
+            isInterpreting={isInterpreting}
+            insightParts={insightParts}
+            interpretation={interpretation}
+            showTranslation={showTranslation}
+            current={current}
+            theme={theme}
+            darkMode={darkMode}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Auth Modal */}
-      <AuthModal
-        isOpen={showAuthModal}
-        onClose={() => {
-          setShowAuthModal(false);
-          setAuthModalMessage('');
-        }}
-        onSignInWithGoogle={handleSignInWithGoogle}
-        theme={theme}
-        message={authModalMessage}
-      />
+      <AnimatePresence>
+        {showAuthModal && (
+          <AuthModal
+            key="auth-modal"
+            isOpen={showAuthModal}
+            onClose={() => {
+              setShowAuthModal(false);
+              setAuthModalMessage('');
+            }}
+            onSignInWithGoogle={handleSignInWithGoogle}
+            theme={theme}
+            message={authModalMessage}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Saved Poems View */}
       <SavedPoemsView
@@ -3070,24 +3081,34 @@ export default function DiwanApp() {
       />
 
       {/* Splash / Onboarding Screen */}
-      <SplashScreen
-        isOpen={showSplash}
-        onDismiss={() => {
-          setShowSplash(false);
-          try {
-            localStorage.setItem('hasSeenOnboarding', 'true');
-          } catch {}
-        }}
-        showOnboarding={showOnboarding}
-        theme={theme}
-      />
+      <AnimatePresence>
+        {showSplash && (
+          <SplashScreen
+            key="splash-screen"
+            isOpen={showSplash}
+            onDismiss={() => {
+              setShowSplash(false);
+              try {
+                localStorage.setItem('hasSeenOnboarding', 'true');
+              } catch {}
+            }}
+            showOnboarding={showOnboarding}
+            theme={theme}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Keyboard Shortcut Help */}
-      <ShortcutHelp
-        isOpen={showShortcutHelp}
-        onClose={() => setShowShortcutHelp(false)}
-        theme={theme}
-      />
+      <AnimatePresence>
+        {showShortcutHelp && (
+          <ShortcutHelp
+            key="shortcut-help"
+            isOpen={showShortcutHelp}
+            onClose={() => setShowShortcutHelp(false)}
+            theme={theme}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

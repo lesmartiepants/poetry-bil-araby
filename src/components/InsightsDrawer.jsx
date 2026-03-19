@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { X, Sparkles } from 'lucide-react';
 import { useDrag } from '@use-gesture/react';
+import { motion } from 'framer-motion';
 
 const InsightsDrawer = ({
   isOpen,
@@ -59,22 +60,28 @@ const InsightsDrawer = ({
   return (
     <>
       {/* Backdrop */}
-      <div
+      <motion.div
         className="fixed inset-0 z-[60] bg-black/30 backdrop-blur-sm"
-        style={{ animation: 'fadeIn 0.2s ease-out' }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
         onClick={onClose}
       />
       {/* Drawer */}
-      <div
+      <motion.div
         ref={drawerRef}
         className="fixed bottom-0 left-0 right-0 z-[61] rounded-t-3xl border-t border-[#C5A059]/20 overflow-hidden"
+        initial={{ y: '100%' }}
+        animate={{ y: Math.max(0, dragY) }}
+        exit={{ y: '100%' }}
+        transition={
+          isDragging
+            ? { type: 'tween', duration: 0 }
+            : { type: 'spring', damping: 30, stiffness: 300 }
+        }
         style={{
           height,
-          transform: `translateY(${Math.max(0, dragY)}px)`,
-          transition: isDragging
-            ? 'none'
-            : 'height 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
-          animation: 'insightsDrawerIn 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
           background: darkMode
             ? 'linear-gradient(180deg, rgba(18,16,14,0.98) 0%, rgba(12,12,14,0.99) 100%)'
             : 'linear-gradient(180deg, rgba(253,252,248,0.98) 0%, rgba(245,243,238,0.99) 100%)',
@@ -153,7 +160,7 @@ const InsightsDrawer = ({
             </div>
           )}
         </div>
-      </div>
+      </motion.div>
     </>
   );
 };

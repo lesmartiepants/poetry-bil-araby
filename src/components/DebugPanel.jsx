@@ -88,8 +88,8 @@ const DebugPanel = ({ logs, onClear, darkMode, poem, appState, visible, controlB
     }
   };
 
-  const gold = darkMode ? '#C5A059' : '#8B7355';
-  const labelColor = darkMode ? 'text-[#C5A059]/70' : 'text-[#8B7355]/70';
+  const gold = 'var(--gold)';
+  const labelColor = 'text-gold/70';
 
   return (
     <>
@@ -104,8 +104,8 @@ const DebugPanel = ({ logs, onClear, darkMode, poem, appState, visible, controlB
         <span
           className={`relative w-5 h-5 rounded-full flex items-center justify-center transition-all duration-200 ${
             darkMode
-              ? 'bg-stone-900/60 border border-[#C5A059]/20 text-stone-500 hover:text-[#C5A059] hover:border-[#C5A059]/40'
-              : 'bg-white/50 border border-[#8B7355]/20 text-stone-400 hover:text-[#8B7355] hover:border-[#8B7355]/40'
+              ? 'bg-stone-900/60 border border-gold/20 text-stone-500 hover:text-gold hover:border-gold/40'
+              : 'bg-white/50 border border-gold/20 text-stone-400 hover:text-gold hover:border-gold/40'
           } backdrop-blur-md`}
         >
           <Bug size={9} />
@@ -128,8 +128,8 @@ const DebugPanel = ({ logs, onClear, darkMode, poem, appState, visible, controlB
       <div
         className={`fixed z-[200] w-80 max-w-[calc(100vw-2rem)] flex flex-col rounded-2xl shadow-2xl transition-all duration-200 ${
           darkMode
-            ? 'bg-black/95 border border-[#C5A059]/25 text-stone-300'
-            : 'bg-white/95 border border-[#8B7355]/20 text-stone-700'
+            ? 'bg-black/95 border border-gold/25 text-stone-300'
+            : 'bg-white/95 border border-gold/20 text-stone-700'
         } backdrop-blur-2xl ${panelOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}
         style={{
           left: btnPos.left,
@@ -142,7 +142,7 @@ const DebugPanel = ({ logs, onClear, darkMode, poem, appState, visible, controlB
       >
         {/* Panel header */}
         <div
-          className={`flex items-center justify-between px-4 py-2.5 border-b ${darkMode ? 'border-[#C5A059]/15' : 'border-[#8B7355]/15'} flex-none`}
+          className={`flex items-center justify-between px-4 py-2.5 border-b ${darkMode ? 'border-gold/15' : 'border-gold/15'} flex-none`}
         >
           <span
             className="text-[10px] font-brand-en uppercase tracking-widest font-bold"
@@ -190,7 +190,7 @@ const DebugPanel = ({ logs, onClear, darkMode, poem, appState, visible, controlB
 
         {/* Bug report input */}
         <div
-          className={`flex items-center gap-1.5 px-4 py-2 border-t ${darkMode ? 'border-[#C5A059]/15' : 'border-[#8B7355]/15'} flex-none`}
+          className={`flex items-center gap-1.5 px-4 py-2 border-t ${darkMode ? 'border-gold/15' : 'border-gold/15'} flex-none`}
         >
           <input
             type="text"
@@ -213,8 +213,8 @@ const DebugPanel = ({ logs, onClear, darkMode, poem, appState, visible, controlB
                   : bugStatus === 'sending'
                     ? 'bg-stone-600/80 text-stone-400'
                     : darkMode
-                      ? 'bg-[#C5A059]/20 text-[#C5A059] hover:bg-[#C5A059]/30'
-                      : 'bg-[#8B7355]/15 text-[#8B7355] hover:bg-[#8B7355]/25'
+                      ? 'bg-gold/20 text-gold hover:bg-gold/30'
+                      : 'bg-gold/15 text-gold hover:bg-gold/25'
             }`}
           >
             {bugStatus === 'sending'

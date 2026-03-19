@@ -71,7 +71,7 @@ const InsightsDrawer = ({
       {/* Drawer */}
       <motion.div
         ref={drawerRef}
-        className="fixed bottom-0 left-0 right-0 z-[61] rounded-t-3xl border-t border-[#C5A059]/20 overflow-hidden"
+        className="fixed bottom-0 left-0 right-0 z-[61] rounded-t-3xl border-t border-gold/20 overflow-hidden"
         initial={{ y: '100%' }}
         animate={{ y: Math.max(0, dragY) }}
         exit={{ y: '100%' }}

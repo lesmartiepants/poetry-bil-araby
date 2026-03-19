@@ -39,12 +39,12 @@ describe('Constants', () => {
       expect(THEME.light).toHaveProperty('gold');
     });
 
-    it('dark theme has gold hex value', () => {
-      expect(THEME.dark.gold).toBe('#C5A059');
+    it('dark theme has gold CSS var', () => {
+      expect(THEME.dark.gold).toBe('var(--gold)');
     });
 
-    it('light theme has gold hex value', () => {
-      expect(THEME.light.gold).toBe('#8B7355');
+    it('light theme has gold CSS var', () => {
+      expect(THEME.light.gold).toBe('var(--gold)');
     });
   });
 

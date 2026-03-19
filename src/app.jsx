@@ -3,7 +3,6 @@ import {
   Play,
   Pause,
   BookOpen,
-  RefreshCw,
   Volume2,
   ChevronDown,
   Quote,
@@ -56,6 +55,9 @@ import { getRecentSeenIds, markPoemSeen, pruneSeenPoems } from './utils/seenPoem
 import { transliterate } from './utils/transliterate.js';
 import { filterPoemsByCategory } from './utils/filterPoems.js';
 import DebugPanel from './components/DebugPanel.jsx';
+import MysticalConsultationEffect from './components/MysticalConsultationEffect.jsx';
+import ErrorBanner from './components/ErrorBanner.jsx';
+import ShortcutHelp from './components/ShortcutHelp.jsx';
 
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
@@ -736,142 +738,7 @@ const prefetchManager = {
   =============================================================================
 */
 
-const MysticalConsultationEffect = ({ active, theme }) => {
-  if (!active) return null;
-  return (
-    <div className="absolute inset-0 z-0 pointer-events-none overflow-hidden animate-in fade-in duration-1000">
-      <div
-        className={`absolute inset-0 bg-radial-gradient ${theme.glow} animate-pulse scale-125 opacity-80`}
-      />
-      <div
-        className={`absolute inset-0 bg-radial-gradient from-purple-500/20 to-transparent animate-ping scale-150 opacity-30`}
-        style={{ animationDuration: '3s' }}
-      />
-      <div className="absolute inset-0">
-        {[...Array(45)].map((_, i) => (
-          <div
-            key={i}
-            className="absolute bg-indigo-200 rounded-full animate-pulse"
-            style={{
-              width: Math.random() * 3 + 1 + 'px',
-              height: Math.random() * 3 + 1 + 'px',
-              top: Math.random() * 100 + '%',
-              left: Math.random() * 100 + '%',
-              opacity: Math.random() * 0.6 + 0.2,
-              animationDuration: Math.random() * 1 + 0.5 + 's',
-            }}
-          />
-        ))}
-      </div>
-    </div>
-  );
-};
-
-// DebugPanel imported from ./components/DebugPanel.jsx
-
-const ErrorBanner = ({ error, onDismiss, onRetry, theme }) => {
-  if (!error) return null;
-
-  return (
-    <div
-      className={`fixed top-20 left-1/2 -translate-x-1/2 z-50 max-w-lg w-[calc(100%-2rem)] ${DESIGN.anim}`}
-    >
-      <div
-        className={`${DESIGN.glass} ${theme.glass} ${theme.border} border ${DESIGN.radius} p-4 shadow-2xl`}
-      >
-        <div className="flex items-start gap-3">
-          <div className="flex-shrink-0 mt-0.5">
-            <X size={20} className="text-red-500" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className={`${theme.text} text-sm font-medium mb-2`}>Error</p>
-            <p className={`${theme.text} text-xs opacity-70 mb-3`}>{error}</p>
-            <div className="flex gap-2">
-              {onRetry && (
-                <button
-                  onClick={onRetry}
-                  className={`${DESIGN.btnPrimary} ${theme.btnPrimary} px-3 py-1.5 ${DESIGN.radius} text-xs font-medium ${DESIGN.buttonHover}`}
-                >
-                  <RefreshCw size={14} className="inline mr-1" />
-                  Retry
-                </button>
-              )}
-              <button
-                onClick={onDismiss}
-                className={`${theme.pill} border px-3 py-1.5 ${DESIGN.radius} text-xs font-medium ${theme.text} ${DESIGN.buttonHover}`}
-              >
-                Dismiss
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-/* =============================================================================
-  KEYBOARD SHORTCUT HELP
-  =============================================================================
-*/
-
-const SHORTCUTS = [
-  { keys: ['Space'], desc: 'Play / Pause audio' },
-  { keys: ['→'], desc: 'Discover new poem' },
-  { keys: ['E'], desc: 'Explain poem' },
-  { keys: ['T'], desc: 'Toggle English translation' },
-  { keys: ['R'], desc: 'Toggle transliteration' },
-  { keys: ['Esc'], desc: 'Close modal / panel' },
-  { keys: ['?'], desc: 'Show this help' },
-];
-
-const ShortcutHelp = ({ isOpen, onClose, theme }) => {
-  if (!isOpen) return null;
-
-  const isDark = theme === THEME.dark;
-
-  return (
-    <div
-      className="fixed inset-0 z-[55] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
-      onClick={onClose}
-      role="dialog"
-      aria-label="Keyboard shortcuts"
-    >
-      <div
-        className={`relative w-full max-w-sm ${theme.glass} ${theme.border} border ${DESIGN.radius} p-8 shadow-2xl`}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/10 transition-colors"
-          aria-label="Close"
-        >
-          <X size={20} className={theme.text} />
-        </button>
-
-        <h2 className={`font-brand-en text-lg font-bold mb-6 ${theme.text}`}>Keyboard Shortcuts</h2>
-
-        <div className="space-y-3">
-          {SHORTCUTS.map(({ keys, desc }) => (
-            <div key={desc} className="flex items-center justify-between gap-4">
-              <span className={`font-brand-en text-sm ${theme.text} opacity-70`}>{desc}</span>
-              <div className="flex gap-1">
-                {keys.map((k) => (
-                  <kbd
-                    key={k}
-                    className={`px-2 py-1 rounded-md text-xs font-mono font-bold ${theme.kbd} border`}
-                  >
-                    {k}
-                  </kbd>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-};
+// MysticalConsultationEffect, DebugPanel, ErrorBanner, ShortcutHelp imported from ./components/
 
 /* =============================================================================
   SPLASH / ONBOARDING

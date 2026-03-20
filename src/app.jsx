@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo, useCallback, lazy, Suspense } from 'react';
+import { useState, useEffect, useRef, useMemo, lazy, Suspense } from 'react';
 import { useLocation, useRoute } from 'wouter';
 import { AnimatePresence } from 'framer-motion';
 import {
@@ -421,6 +421,11 @@ export default function DiwanApp() {
       }
     }
   }, [user, settings]);
+
+  // Sync `light` class on <html> so CSS vars (--bg-app, --gold) apply to html/body
+  useEffect(() => {
+    document.documentElement.classList.toggle('light', !darkMode);
+  }, [darkMode]);
 
   // Save settings when theme or font changes (with debounce)
   useEffect(() => {
@@ -2004,7 +2009,7 @@ export default function DiwanApp() {
 
   return (
     <div
-      className={`h-[100dvh] w-full flex flex-col overflow-hidden overscroll-none ${DESIGN.anim} font-sans ${theme.bg} ${theme.text} selection:bg-indigo-500 ${darkMode ? '' : 'light'}`}
+      className={`h-[100dvh] w-full flex flex-col overflow-hidden overscroll-none ${DESIGN.anim} font-sans ${theme.bg} ${theme.text} selection:bg-indigo-500`}
       style={{ touchAction: 'pan-y', overflowX: 'hidden' }}
     >
       <style>{`

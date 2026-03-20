@@ -100,17 +100,18 @@ export const discoverTextModels = async (addLog) => {
  * @returns {Promise<Response>} Resolved Response with ok === true
  */
 export const geminiTextFetch = async (endpoint, body, label, addLog) => {
-  const models = await discoverTextModels(addLog);
+  const log = typeof addLog === 'function' ? addLog : () => {};
+  const models = await discoverTextModels(log);
   for (let i = 0; i < models.length; i++) {
     const model = models[i];
-    if (i > 0) addLog('Model Fallback', `Trying fallback: ${model}`, 'warning');
+    if (i > 0) log('Model Fallback', `Trying fallback: ${model}`, 'warning');
     const res = await fetch(`${apiUrl}/api/ai/${model}/${endpoint}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body,
     });
     if (res.ok) {
-      if (i > 0) addLog('Model Fallback', `✓ Using fallback model: ${model}`, 'success');
+      if (i > 0) log('Model Fallback', `✓ Using fallback model: ${model}`, 'success');
       return res;
     }
     const errData = await res.json().catch(() => ({}));
@@ -119,7 +120,7 @@ export const geminiTextFetch = async (endpoint, body, label, addLog) => {
     if ((res.status !== 404 && res.status !== 410) || i === models.length - 1) {
       throw new Error(`${label}: ${errMsg}`);
     }
-    addLog('Model Fallback', `${model} not available, trying next...`, 'warning');
+    log('Model Fallback', `${model} not available, trying next...`, 'warning');
   }
 };
 

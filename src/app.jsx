@@ -804,7 +804,6 @@ export default function DiwanApp() {
   const [darkMode, setDarkMode] = useState(true);
   const [currentFont, setCurrentFont] = useState('Amiri');
   const [useDatabase, setUseDatabase] = useState(FEATURES.database);
-  const [copySuccess, setCopySuccess] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
   const [audioUrl, setAudioUrl] = useState(null);
@@ -834,7 +833,6 @@ export default function DiwanApp() {
     insightsHits: 0,
     insightsMisses: 0,
   });
-  const [isPrefetching, setIsPrefetching] = useState(false);
   const activeAudioRequests = useRef(new Set()); // Track in-flight audio generation requests
   const activeInsightRequests = useRef(new Set()); // Track in-flight insight generation requests
   const pollingIntervals = useRef([]); // Track all polling intervals for cleanup

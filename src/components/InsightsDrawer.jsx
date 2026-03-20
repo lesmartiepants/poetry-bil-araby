@@ -93,7 +93,7 @@ const InsightsDrawer = ({
           className="flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing touch-none"
           onClick={() => setExpanded((prev) => !prev)}
         >
-          <div className="w-10 h-1 rounded-full bg-[#C5A059]/30" />
+          <div className="w-10 h-1 rounded-full bg-gold/30" />
         </div>
 
         {/* Header */}

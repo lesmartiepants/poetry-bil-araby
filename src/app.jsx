@@ -215,14 +215,8 @@ export default function DiwanApp() {
 
   const textScale = TEXT_SIZES[textSizeLevel].multiplier;
 
-  const filtered = useMemo(
-    () => filterPoemsByCategory(poems, selectedCategory),
-    [poems, selectedCategory]
-  );
-
-  // Defensive: poems[0] is always truthy (hardcoded initial poem), but guard against
-  // future changes that might empty the array (e.g., setPoems([]) or filter edge cases)
-  const current = filtered[currentIndex] || filtered[0] || poems[0] || null;
+  const filtered = usePoemStore.getState().filteredPoems();
+  const current = usePoemStore.getState().currentPoem();
 
   const addLog = useUIStore.getState().addLog;
 

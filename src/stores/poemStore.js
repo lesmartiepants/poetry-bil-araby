@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { FEATURES } from '../constants/features';
+import { filterPoemsByCategory } from '../utils/filterPoems.js';
 import seedPoems from '../data/seed-poems.json';
 
 const FALLBACK_POEM = {
@@ -57,7 +58,7 @@ const initialState = {
   isInterpreting: false,
 };
 
-export const usePoemStore = create((set) => ({
+export const usePoemStore = create((set, get) => ({
   ...initialState,
 
   addPoem: (poem) =>
@@ -82,6 +83,17 @@ export const usePoemStore = create((set) => ({
   setInterpreting: (isInterpreting) => set({ isInterpreting }),
 
   resetInterpretation: () => set({ interpretation: null, isInterpreting: false }),
+
+  // Computed selectors
+  filteredPoems: () => {
+    const { poems, selectedCategory } = get();
+    return filterPoemsByCategory(poems, selectedCategory);
+  },
+  currentPoem: () => {
+    const { poems, currentIndex, selectedCategory } = get();
+    const filtered = filterPoemsByCategory(poems, selectedCategory);
+    return filtered[currentIndex] || filtered[0] || poems[0] || null;
+  },
 
   reset: () => set({ ...initialState, poems: getInitialPoems() }),
 }));

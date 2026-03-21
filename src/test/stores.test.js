@@ -175,6 +175,48 @@ describe('poemStore', () => {
       expect(state.interpretation).toBeNull();
     });
   });
+
+  describe('computed selectors', () => {
+    it('filteredPoems returns all poems when category is All', () => {
+      const poems = [
+        { id: 1, tags: ['Ghazal'] },
+        { id: 2, tags: ['Qasida'] },
+      ];
+      usePoemStore.getState().setPoems(poems);
+      expect(usePoemStore.getState().filteredPoems()).toEqual(poems);
+    });
+
+    it('filteredPoems filters by poet category', () => {
+      const poems = [
+        { id: 1, poetArabic: 'نزار قباني', tags: [] },
+        { id: 2, poetArabic: 'محمود درويش', tags: [] },
+      ];
+      usePoemStore.getState().setPoems(poems);
+      usePoemStore.getState().setCategory('نزار قباني');
+      const filtered = usePoemStore.getState().filteredPoems();
+      expect(filtered).toHaveLength(1);
+      expect(filtered[0].id).toBe(1);
+    });
+
+    it('currentPoem returns poem at currentIndex', () => {
+      const poems = [{ id: 1 }, { id: 2 }];
+      usePoemStore.getState().setPoems(poems);
+      usePoemStore.getState().setCurrentIndex(1);
+      expect(usePoemStore.getState().currentPoem()).toEqual({ id: 2 });
+    });
+
+    it('currentPoem falls back to first poem when index out of range', () => {
+      const poems = [{ id: 1 }];
+      usePoemStore.getState().setPoems(poems);
+      usePoemStore.getState().setCurrentIndex(99);
+      expect(usePoemStore.getState().currentPoem()).toEqual({ id: 1 });
+    });
+
+    it('currentPoem returns null when no poems', () => {
+      usePoemStore.getState().setPoems([]);
+      expect(usePoemStore.getState().currentPoem()).toBeNull();
+    });
+  });
 });
 
 // ============================================================================

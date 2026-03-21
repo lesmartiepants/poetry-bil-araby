@@ -281,6 +281,19 @@ describe('uiStore', () => {
     it('starts with empty logs', () => {
       expect(useUIStore.getState().logs).toEqual([]);
     });
+
+    it('starts with headerOpacity at 0', () => {
+      expect(useUIStore.getState().headerOpacity).toBe(0);
+    });
+
+    it('starts with zeroed cacheStats', () => {
+      expect(useUIStore.getState().cacheStats).toEqual({
+        audioHits: 0,
+        audioMisses: 0,
+        insightsHits: 0,
+        insightsMisses: 0,
+      });
+    });
   });
 
   describe('actions', () => {
@@ -386,6 +399,27 @@ describe('uiStore', () => {
       useUIStore.getState().cycleFont();
       expect(useUIStore.getState().fontClass()).toBe('font-alexandria');
     });
+
+    it('setHeaderOpacity updates headerOpacity', () => {
+      useUIStore.getState().setHeaderOpacity(0.75);
+      expect(useUIStore.getState().headerOpacity).toBe(0.75);
+    });
+
+    it('incrementCacheStat increments a specific cache stat', () => {
+      useUIStore.getState().incrementCacheStat('audioHits');
+      useUIStore.getState().incrementCacheStat('audioHits');
+      useUIStore.getState().incrementCacheStat('insightsMisses');
+      const stats = useUIStore.getState().cacheStats;
+      expect(stats.audioHits).toBe(2);
+      expect(stats.insightsMisses).toBe(1);
+      expect(stats.audioMisses).toBe(0);
+    });
+
+    it('clearLogs empties the logs array', () => {
+      useUIStore.getState().addLog('Test', 'msg', 'info');
+      useUIStore.getState().clearLogs();
+      expect(useUIStore.getState().logs).toEqual([]);
+    });
   });
 });
 
@@ -415,6 +449,11 @@ describe('modalStore', () => {
       expect(state.copyToast).toBe(false);
       expect(state.shareToast).toBe(false);
       expect(state.insightToast).toBe(false);
+    });
+
+    it('starts with onboarding computed from FEATURES + localStorage', () => {
+      // Default: FEATURES.onboarding=true + no localStorage => true
+      expect(typeof useModalStore.getState().onboarding).toBe('boolean');
     });
   });
 

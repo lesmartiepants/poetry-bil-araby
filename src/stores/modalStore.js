@@ -1,4 +1,15 @@
 import { create } from 'zustand';
+import { FEATURES } from '../constants/features';
+
+function computeOnboarding() {
+  if (!FEATURES.onboarding) return false;
+  if (FEATURES.forceOnboarding) return true;
+  try {
+    return !localStorage.getItem('hasSeenOnboarding');
+  } catch {
+    return false;
+  }
+}
 
 const initialState = {
   authModal: false,
@@ -12,6 +23,7 @@ const initialState = {
   copyToast: false,
   shareToast: false,
   insightToast: false,
+  onboarding: computeOnboarding(),
 };
 
 const TOAST_MAP = {
@@ -54,5 +66,5 @@ export const useModalStore = create((set) => ({
       poetPicker: false,
     }),
 
-  reset: () => set(initialState),
+  reset: () => set({ ...initialState, onboarding: computeOnboarding() }),
 }));

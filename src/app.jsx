@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo, lazy, Suspense } from 'react';
+import { useEffect, useRef, useMemo, lazy, Suspense } from 'react';
 import { useLocation, useRoute } from 'wouter';
 import { AnimatePresence } from 'framer-motion';
 import {
@@ -98,7 +98,8 @@ export default function DiwanApp() {
   const sourceNodeRef = useRef(null);
   const volumePulseRef = useRef(null);
 
-  const [headerOpacity, setHeaderOpacity] = useState(0);
+  const headerOpacity = useUIStore((s) => s.headerOpacity);
+  const setHeaderOpacity = useUIStore((s) => s.setHeaderOpacity);
   // ── Poem store (Zustand) ──
   const poems = usePoemStore((s) => s.poems);
   const setPoems = usePoemStore((s) => s.setPoems);
@@ -153,7 +154,7 @@ export default function DiwanApp() {
   // called after an awaited fetch that outlasts the render that started it).
   // Initialized with the mount-time value; kept in sync by the selectedCategory effect.
   const selectedCategoryRef = useRef(selectedCategory);
-  const [logs, setLogs] = useState([]);
+  const logs = useUIStore((s) => s.logs);
   const showDebugLogs = useUIStore((s) => s.showDebugLogs);
   const showCopySuccess = useModalStore((s) => s.copyToast);
   const setShowCopySuccess = (v) =>
@@ -168,12 +169,7 @@ export default function DiwanApp() {
       : useModalStore.getState().hideToast('insight');
   const insightsDrawerOpen = useModalStore((s) => s.insightsDrawer);
   const setInsightsDrawerOpen = useModalStore((s) => s.setInsightsDrawer);
-  const [cacheStats, setCacheStats] = useState({
-    audioHits: 0,
-    audioMisses: 0,
-    insightsHits: 0,
-    insightsMisses: 0,
-  });
+  const cacheStats = useUIStore((s) => s.cacheStats);
   const activeAudioRequests = useRef(new Set()); // Track in-flight audio generation requests
   const activeInsightRequests = useRef(new Set()); // Track in-flight insight generation requests
   const pollingIntervals = useRef([]); // Track all polling intervals for cleanup
@@ -194,15 +190,7 @@ export default function DiwanApp() {
   const setShowSavedPoems = (v) =>
     v ? useModalStore.getState().openSavedPoems() : useModalStore.getState().closeSavedPoems();
   const showSplash = useModalStore((s) => s.splash);
-  const [showOnboarding] = useState(() => {
-    if (!FEATURES.onboarding) return false;
-    if (FEATURES.forceOnboarding) return true;
-    try {
-      return !localStorage.getItem('hasSeenOnboarding');
-    } catch {
-      return false;
-    }
-  });
+  const showOnboarding = useModalStore((s) => s.onboarding);
   const showTranslation = useUIStore((s) => s.showTranslation);
   const setShowTranslation = useUIStore((s) => s.setShowTranslation);
   const textSizeLevel = useUIStore((s) => s.textSize);
@@ -255,11 +243,12 @@ export default function DiwanApp() {
       minute: '2-digit',
       second: '2-digit',
     });
-    setLogs((prev) => {
-      const t0 = prev.length > 0 ? prev[0].ts : now;
-      const relSec = ((now - t0) / 1000).toFixed(1);
-      return [...prev, { label, msg: String(msg), type, time, ts: now, rel: `+${relSec}s` }];
-    });
+    const currentLogs = useUIStore.getState().logs;
+    const t0 = currentLogs.length > 0 ? currentLogs[0].ts : now;
+    const relSec = ((now - t0) / 1000).toFixed(1);
+    useUIStore.setState((s) => ({
+      logs: [...s.logs, { label, msg: String(msg), type, time, ts: now, rel: `+${relSec}s` }],
+    }));
     if (FEATURES.logging) {
       const logFn =
         type === 'error' ? console.error : type === 'success' ? console.info : console.log;
@@ -518,7 +507,7 @@ export default function DiwanApp() {
       }
     };
     loadPoets();
-    // addLog is functionally stable (uses only setLogs and module constants)
+    // addLog is functionally stable (uses only useUIStore and module constants)
     // even though its reference changes per render — poetsFetched gate prevents
     // repeated fetches regardless.
   }, [poetPickerOpen, poetsFetched, addLog]);
@@ -809,7 +798,7 @@ export default function DiwanApp() {
             `✓ Cache HIT (${cacheTime.toFixed(0)}ms)${cached.metadata?.model ? ` | Model: ${cached.metadata.model}` : ''} | Size: ${sizeMB}MB | Instant playback`,
             'success'
           );
-          setCacheStats((prev) => ({ ...prev, audioHits: prev.audioHits + 1 }));
+          useUIStore.getState().incrementCacheStat('audioHits');
 
           const u = URL.createObjectURL(cached.blob);
           setAudioUrl(u);
@@ -831,7 +820,7 @@ export default function DiwanApp() {
             `✗ Cache MISS (${cacheTime.toFixed(0)}ms) | Generating from API...`,
             'info'
           );
-          setCacheStats((prev) => ({ ...prev, audioMisses: prev.audioMisses + 1 }));
+          useUIStore.getState().incrementCacheStat('audioMisses');
         }
       }
 
@@ -1167,7 +1156,7 @@ export default function DiwanApp() {
           `✓ Cache HIT (${cacheTime.toFixed(0)}ms) | ${charCount} chars (≈${estTokens} tokens) | Instant load`,
           'success'
         );
-        setCacheStats((prev) => ({ ...prev, insightsHits: prev.insightsHits + 1 }));
+        useUIStore.getState().incrementCacheStat('insightsHits');
         setInterpretation(cached.interpretation);
         setIsInterpreting(false); // Clear loading state
         activeInsightRequests.current.delete(current?.id); // Clean up tracking
@@ -1178,7 +1167,7 @@ export default function DiwanApp() {
           `✗ Cache MISS (${cacheTime.toFixed(0)}ms) | Generating from API...`,
           'info'
         );
-        setCacheStats((prev) => ({ ...prev, insightsMisses: prev.insightsMisses + 1 }));
+        useUIStore.getState().incrementCacheStat('insightsMisses');
       }
     }
 
@@ -2132,7 +2121,7 @@ export default function DiwanApp() {
 
       <DebugPanel
         logs={logs}
-        onClear={() => setLogs([])}
+        onClear={() => useUIStore.getState().clearLogs()}
         darkMode={darkMode}
         poem={current}
         visible={showDebugLogs}

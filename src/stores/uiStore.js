@@ -13,6 +13,13 @@ const initialState = {
   showTransliteration: false,
   showDebugLogs: FEATURES.debug,
   logs: [],
+  headerOpacity: 0,
+  cacheStats: {
+    audioHits: 0,
+    audioMisses: 0,
+    insightsHits: 0,
+    insightsMisses: 0,
+  },
 };
 
 export const useUIStore = create((set, get) => ({
@@ -24,6 +31,7 @@ export const useUIStore = create((set, get) => ({
   setTextSize: (textSize) => set({ textSize }),
   setShowTranslation: (showTranslation) => set({ showTranslation }),
   setShowTransliteration: (showTransliteration) => set({ showTransliteration }),
+  setHeaderOpacity: (headerOpacity) => set({ headerOpacity }),
 
   cycleFont: () =>
     set((s) => {
@@ -44,6 +52,13 @@ export const useUIStore = create((set, get) => ({
       const next = [...s.logs, entry];
       return { logs: next.length > MAX_LOGS ? next.slice(-MAX_LOGS) : next };
     }),
+
+  clearLogs: () => set({ logs: [] }),
+
+  incrementCacheStat: (key) =>
+    set((s) => ({
+      cacheStats: { ...s.cacheStats, [key]: (s.cacheStats[key] || 0) + 1 },
+    })),
 
   loadSettings: ({ darkMode, font }) => set({ darkMode, font }),
 

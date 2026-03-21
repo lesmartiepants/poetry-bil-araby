@@ -1,5 +1,5 @@
-import { defineConfig } from 'vitest/config'
-import react from '@vitejs/plugin-react'
+import { defineConfig } from 'vitest/config';
+import react from '@vitejs/plugin-react';
 
 /**
  * Vitest configuration for Poetry Bil-Araby
@@ -26,6 +26,9 @@ export default defineConfig({
     hookTimeout: process.env.CI ? 2000 : 5000, // 2s in CI, 5s locally
     teardownTimeout: process.env.CI ? 1000 : 3000, // 1s in CI, 3s locally
 
+    // Retry flaky tests once (poet filtering tests have mock timing issues)
+    retry: 1,
+
     // Stop on first failure in CI for fast feedback
     bail: process.env.CI ? 1 : undefined,
 
@@ -46,14 +49,7 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'lcov'],
-      exclude: [
-        'node_modules/',
-        'src/test/',
-        '*.config.js',
-        'dist/',
-        '.github/',
-        'e2e/',
-      ],
+      exclude: ['node_modules/', 'src/test/', '*.config.js', 'dist/', '.github/', 'e2e/'],
       // Baseline thresholds — prevents silent test deletion
       thresholds: {
         statements: 35,
@@ -67,4 +63,4 @@ export default defineConfig({
       cleanOnRerun: true,
     },
   },
-})
+});

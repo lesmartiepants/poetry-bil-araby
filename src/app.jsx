@@ -2080,19 +2080,7 @@ export default function DiwanApp() {
 
       `}</style>
 
-      <DebugPanel
-        logs={logs}
-        onClear={() => useUIStore.getState().clearLogs()}
-        darkMode={darkMode}
-        poem={current}
-        visible={showDebugLogs}
-        controlBarRef={controlBarRef}
-        appState={{
-          mode: useDatabase ? 'database' : 'ai',
-          theme: darkMode ? 'dark' : 'light',
-          font: currentFont,
-        }}
-      />
+      <DebugPanel controlBarRef={controlBarRef} />
 
       <header
         style={{
@@ -2882,18 +2870,7 @@ export default function DiwanApp() {
       {/* Insights Drawer (Mobile bottom sheet) */}
       <AnimatePresence>
         {insightsDrawerOpen && (
-          <InsightsDrawer
-            key="insights-drawer"
-            isOpen={insightsDrawerOpen}
-            onClose={() => setInsightsDrawerOpen(false)}
-            isInterpreting={isInterpreting}
-            insightParts={insightParts}
-            interpretation={interpretation}
-            showTranslation={showTranslation}
-            current={current}
-            theme={theme}
-            darkMode={darkMode}
-          />
+          <InsightsDrawer key="insights-drawer" insightParts={insightParts} current={current} />
         )}
       </AnimatePresence>
 

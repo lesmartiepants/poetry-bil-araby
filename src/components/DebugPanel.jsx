@@ -3,10 +3,24 @@ import { Bug, X, Trash2 } from 'lucide-react';
 import Sentry from '../sentry.js';
 import { FEATURES } from '../constants/features.js';
 import { THEME } from '../constants/theme.js';
+import { useUIStore } from '../stores/uiStore';
+import { usePoemStore } from '../stores/poemStore';
 
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
-const DebugPanel = ({ logs, onClear, darkMode, poem, appState, visible, controlBarRef }) => {
+const DebugPanel = ({ controlBarRef }) => {
+  const logs = useUIStore((s) => s.logs);
+  const onClear = () => useUIStore.getState().clearLogs();
+  const darkMode = useUIStore((s) => s.darkMode);
+  const visible = useUIStore((s) => s.showDebugLogs);
+  const currentFont = useUIStore((s) => s.font);
+  const poem = usePoemStore.getState().currentPoem();
+  const useDatabase = usePoemStore((s) => s.useDatabase);
+  const appState = {
+    mode: useDatabase ? 'database' : 'ai',
+    theme: darkMode ? 'dark' : 'light',
+    font: currentFont,
+  };
   const theme = darkMode ? THEME.dark : THEME.light;
   const [panelOpen, setPanelOpen] = useState(false);
   const [bugDescription, setBugDescription] = useState('');

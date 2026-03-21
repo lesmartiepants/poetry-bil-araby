@@ -2,18 +2,20 @@ import { useState, useEffect, useRef } from 'react';
 import { X, Sparkles } from 'lucide-react';
 import { useDrag } from '@use-gesture/react';
 import { motion } from 'framer-motion';
+import { THEME } from '../constants/theme.js';
+import { useUIStore } from '../stores/uiStore';
+import { useModalStore } from '../stores/modalStore';
+import { usePoemStore } from '../stores/poemStore';
 
-const InsightsDrawer = ({
-  isOpen,
-  onClose,
-  isInterpreting,
-  insightParts,
-  interpretation,
-  showTranslation,
-  current,
-  theme,
-  darkMode,
-}) => {
+const InsightsDrawer = ({ insightParts, current }) => {
+  const isOpen = useModalStore((s) => s.insightsDrawer);
+  const onClose = () => useModalStore.getState().setInsightsDrawer(false);
+  const isInterpreting = usePoemStore((s) => s.isInterpreting);
+  const interpretation = usePoemStore((s) => s.interpretation);
+  const showTranslation = useUIStore((s) => s.showTranslation);
+  const storeDarkMode = useUIStore((s) => s.darkMode);
+  const darkMode = storeDarkMode;
+  const theme = storeDarkMode ? THEME.dark : THEME.light;
   const [expanded, setExpanded] = useState(false);
   const [dragY, setDragY] = useState(0);
   const [isDragging, setIsDragging] = useState(false);

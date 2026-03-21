@@ -118,7 +118,7 @@ const VerticalSidebar = ({
       `}</style>
       <div
         ref={sidebarRef}
-        className="fixed right-0 md:right-[24.5rem] top-1/2 -translate-y-1/2 z-[45] rounded-l-2xl md:rounded-2xl bg-gradient-to-b from-black/70 via-black/60 to-black/70 backdrop-blur-xl border-l-2 md:border-2 border-[#C5A059]/40 py-2 transition-all duration-300"
+        className="fixed right-0 md:right-[24.5rem] top-1/2 -translate-y-1/2 z-[45] rounded-l-2xl md:rounded-2xl bg-gradient-to-b from-black/70 via-black/60 to-black/70 backdrop-blur-xl border-l-2 md:border-2 border-gold/40 py-2 transition-all duration-300"
         style={{
           animation: 'slideInRight 0.4s ease-out',
           maxHeight: 'calc(100dvh - 14rem)',
@@ -393,7 +393,7 @@ const VerticalSidebar = ({
                       <span
                         className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 rounded-full flex items-center justify-center text-[9px] font-bold font-brand-en"
                         style={{
-                          background: 'linear-gradient(135deg, #C5A059, #B8943E)',
+                          background: 'linear-gradient(135deg, var(--gold), #B8943E)',
                           color: '#000',
                           padding: '0 3px',
                         }}

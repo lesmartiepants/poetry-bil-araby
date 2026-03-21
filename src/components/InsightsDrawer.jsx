@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { X, Sparkles } from 'lucide-react';
+import { useDrag } from '@use-gesture/react';
+import { motion } from 'framer-motion';
 
 const InsightsDrawer = ({
   isOpen,
@@ -15,7 +17,6 @@ const InsightsDrawer = ({
   const [expanded, setExpanded] = useState(false);
   const [dragY, setDragY] = useState(0);
   const [isDragging, setIsDragging] = useState(false);
-  const dragStartY = useRef(0);
   const drawerRef = useRef(null);
 
   // Reset expanded state when drawer closes
@@ -26,30 +27,31 @@ const InsightsDrawer = ({
     }
   }, [isOpen]);
 
-  const handleDragStart = (e) => {
-    setIsDragging(true);
-    dragStartY.current = e.touches ? e.touches[0].clientY : e.clientY;
-  };
+  const bind = useDrag(
+    ({ down, movement: [, my], velocity: [, vy], direction: [, dy], cancel }) => {
+      setIsDragging(down);
 
-  const handleDragMove = (e) => {
-    if (!isDragging) return;
-    const currentY = e.touches ? e.touches[0].clientY : e.clientY;
-    const delta = currentY - dragStartY.current;
-    // Only allow dragging down (positive delta) or limited up
-    setDragY(Math.max(-40, delta));
-  };
-
-  const handleDragEnd = () => {
-    setIsDragging(false);
-    if (dragY > 80) {
-      // Dragged down enough — close
-      onClose();
-    } else if (dragY < -20) {
-      // Dragged up — expand
-      setExpanded(true);
+      if (down) {
+        // Clamp: allow limited upward drag (-40px) and free downward
+        setDragY(Math.max(-40, my));
+      } else {
+        // Release — check velocity and distance for dismiss/expand
+        if (my > 80 || (vy > 0.5 && dy > 0)) {
+          // Dragged or flicked down — close
+          onClose();
+        } else if (my < -20 || (vy > 0.5 && dy < 0)) {
+          // Dragged or flicked up — expand
+          setExpanded(true);
+        }
+        setDragY(0);
+      }
+    },
+    {
+      axis: 'y',
+      filterTaps: true,
+      pointer: { touch: true },
     }
-    setDragY(0);
-  };
+  );
 
   if (!isOpen) return null;
 
@@ -58,22 +60,28 @@ const InsightsDrawer = ({
   return (
     <>
       {/* Backdrop */}
-      <div
+      <motion.div
         className="fixed inset-0 z-[60] bg-black/30 backdrop-blur-sm"
-        style={{ animation: 'fadeIn 0.2s ease-out' }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        transition={{ duration: 0.2 }}
         onClick={onClose}
       />
       {/* Drawer */}
-      <div
+      <motion.div
         ref={drawerRef}
-        className="fixed bottom-0 left-0 right-0 z-[61] rounded-t-3xl border-t border-[#C5A059]/20 overflow-hidden"
+        className="fixed bottom-0 left-0 right-0 z-[61] rounded-t-3xl border-t border-gold/20 overflow-hidden"
+        initial={{ y: '100%' }}
+        animate={{ y: Math.max(0, dragY) }}
+        exit={{ y: '100%' }}
+        transition={
+          isDragging
+            ? { type: 'tween', duration: 0 }
+            : { type: 'spring', damping: 30, stiffness: 300 }
+        }
         style={{
           height,
-          transform: `translateY(${Math.max(0, dragY)}px)`,
-          transition: isDragging
-            ? 'none'
-            : 'height 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
-          animation: 'insightsDrawerIn 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
           background: darkMode
             ? 'linear-gradient(180deg, rgba(18,16,14,0.98) 0%, rgba(12,12,14,0.99) 100%)'
             : 'linear-gradient(180deg, rgba(253,252,248,0.98) 0%, rgba(245,243,238,0.99) 100%)',
@@ -81,16 +89,11 @@ const InsightsDrawer = ({
       >
         {/* Drag handle */}
         <div
+          {...bind()}
           className="flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing touch-none"
-          onTouchStart={handleDragStart}
-          onTouchMove={handleDragMove}
-          onTouchEnd={handleDragEnd}
-          onMouseDown={handleDragStart}
-          onMouseMove={handleDragMove}
-          onMouseUp={handleDragEnd}
           onClick={() => setExpanded((prev) => !prev)}
         >
-          <div className="w-10 h-1 rounded-full bg-[#C5A059]/30" />
+          <div className="w-10 h-1 rounded-full bg-gold/30" />
         </div>
 
         {/* Header */}
@@ -157,7 +160,7 @@ const InsightsDrawer = ({
             </div>
           )}
         </div>
-      </div>
+      </motion.div>
     </>
   );
 };

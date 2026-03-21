@@ -983,7 +983,7 @@ describe('DiwanApp', () => {
         .getAllByTestId('poet-picker-button')
         .find((btn) => btn.textContent.includes('محمود درويش'));
       expect(darwishPickerBtn).toBeDefined();
-      expect(darwishPickerBtn.className).toContain('bg-[#C5A059]/15');
+      expect(darwishPickerBtn.className).toContain('bg-gold/15');
     });
   });
 

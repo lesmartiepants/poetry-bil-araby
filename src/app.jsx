@@ -1,4 +1,6 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, lazy, Suspense } from 'react';
+import { useLocation, useRoute } from 'wouter';
+import { AnimatePresence } from 'framer-motion';
 import {
   Play,
   Pause,
@@ -33,11 +35,28 @@ import { useModalStore } from './stores/modalStore';
 import { getRecentSeenIds, markPoemSeen, pruneSeenPoems } from './utils/seenPoems.js';
 import { transliterate } from './utils/transliterate.js';
 import { filterPoemsByCategory } from './utils/filterPoems.js';
+import { pcm16ToWav } from './utils/audio.js';
+import {
+  API_MODELS,
+  TTS_CONFIG,
+  discoverTextModels,
+  geminiTextFetch,
+  fetchTTSWithFallback,
+} from './services/gemini.js';
+import { CACHE_CONFIG, cacheOperations } from './services/cache.js';
+import { prefetchManager } from './services/prefetch.js';
+import {
+  fetchPoemById,
+  fetchRandomPoem,
+  fetchPoets,
+  saveTranslation,
+  pingHealth,
+} from './services/database.js';
 import DebugPanel from './components/DebugPanel.jsx';
 import MysticalConsultationEffect from './components/MysticalConsultationEffect.jsx';
 import ErrorBanner from './components/ErrorBanner.jsx';
 import ShortcutHelp from './components/ShortcutHelp.jsx';
-import SplashScreen from './components/SplashScreen.jsx';
+const SplashScreen = lazy(() => import('./components/SplashScreen.jsx'));
 import InsightsDrawer from './components/InsightsDrawer.jsx';
 import VerticalSidebar from './components/VerticalSidebar.jsx';
 import AuthModal from './components/auth/AuthModal.jsx';
@@ -51,693 +70,20 @@ const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 export { filterPoemsByCategory } from './utils/filterPoems.js';
 
 /* =============================================================================
-  2. API PROMPTS & CONFIGURATION
+  API, Cache, Prefetch — imported from src/services/
+  Audio utility (pcm16ToWav) — imported from src/utils/audio.js
   =============================================================================
 */
 
-/**
- * API Model Endpoints
- * Text model list is built dynamically by discoverTextModels(); textDefaults is the fallback
- * used when the ListModels API is unavailable. Starts with the cheapest Gemini 2.5 model.
- */
-const API_MODELS = {
-  tts: 'gemini-2.5-pro-preview-tts',
-  ttsFallback: 'gemini-2.5-flash-preview-tts',
-  textDefaults: ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'],
-};
-
-/**
- * Module-level cache for the ranked list of available Gemini text models.
- * Populated on first call to discoverTextModels(); shared across all handlers.
- */
-let _discoveredTextModels = null;
-
-/**
- * Fetch and rank available Gemini text models via the ListModels API.
- * Prefers newer versions and cheaper (flash) models over pro.
- * Falls back to API_MODELS.textDefaults if the API is unreachable or returns no usable models.
- * Result is cached for the lifetime of the page.
- */
-const discoverTextModels = async (addLog) => {
-  if (_discoveredTextModels) return _discoveredTextModels;
-  try {
-    const res = await fetch(`${apiUrl}/api/ai/models`, { method: 'GET' });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const { models = [] } = await res.json();
-    const ranked = models
-      .filter(
-        (m) =>
-          Array.isArray(m.supportedGenerationMethods) &&
-          m.supportedGenerationMethods.includes('generateContent') &&
-          typeof m.name === 'string' &&
-          m.name.includes('gemini') &&
-          !m.name.includes('embedding') &&
-          !m.name.includes('tts')
-      )
-      .map((m) => {
-        const id = m.name.replace('models/', '');
-        const vm = id.match(/gemini-(\d+)\.(\d+)/);
-        const major = vm ? parseInt(vm[1]) : 0;
-        const minor = vm ? parseInt(vm[2]) : 0;
-        const isFlash = id.includes('flash');
-        // '8b' identifies Google's 8-billion-parameter lite variants (e.g. gemini-1.5-flash-8b)
-        const isLite = id.includes('lite') || id.includes('8b');
-        // Scoring: major version (×1000) > minor version (×100) > flash bonus (+10) > lite penalty (−5)
-        // Higher score = try first; prefers newest model, then flash (cheaper) over pro, avoids lite.
-        const score = major * 1000 + minor * 100 + (isFlash ? 10 : 0) - (isLite ? 5 : 0);
-        return { id, score };
-      })
-      .sort((a, b) => b.score - a.score)
-      .map((m) => m.id);
-    if (ranked.length > 0) {
-      _discoveredTextModels = ranked;
-      if (addLog)
-        addLog(
-          'Model Discovery',
-          `${ranked.length} models ranked: ${ranked.slice(0, 3).join(', ')}`,
-          'info'
-        );
-      return _discoveredTextModels;
-    }
-  } catch (err) {
-    if (addLog)
-      addLog(
-        'Model Discovery',
-        `ListModels unavailable: ${err.message} — using defaults`,
-        'warning'
-      );
-  }
-  _discoveredTextModels = [...API_MODELS.textDefaults];
-  return _discoveredTextModels;
-};
-
-/**
- * Fetch from a Gemini text endpoint with automatic model fallback.
- * Uses the dynamically discovered model list (ranked newest/cheapest first).
- * Retries on HTTP 404/410 (model unavailable/deprecated); throws immediately on other errors.
- *
- * @param {string}   endpoint - Gemini method segment, e.g. 'generateContent' or 'streamGenerateContent'
- * @param {string}   body     - Pre-serialised JSON request body
- * @param {string}   label    - Human-readable prefix for the thrown error message
- * @param {Function} addLog   - Component logging helper
- * @returns {Promise<Response>} Resolved Response with ok === true
- */
-const geminiTextFetch = async (endpoint, body, label, addLog) => {
-  const models = await discoverTextModels(addLog);
-  for (let i = 0; i < models.length; i++) {
-    const model = models[i];
-    if (i > 0) addLog('Model Fallback', `Trying fallback: ${model}`, 'warning');
-    const res = await fetch(`${apiUrl}/api/ai/${model}/${endpoint}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body,
-    });
-    if (res.ok) {
-      if (i > 0) addLog('Model Fallback', `✓ Using fallback model: ${model}`, 'success');
-      return res;
-    }
-    const errData = await res.json().catch(() => ({}));
-    const errMsg = errData.error?.message || `HTTP ${res.status}`;
-    // Only retry on model-unavailable HTTP codes: 404 Not Found, 410 Gone (deprecated)
-    if ((res.status !== 404 && res.status !== 410) || i === models.length - 1) {
-      throw new Error(`${label}: ${errMsg}`);
-    }
-    addLog('Model Fallback', `${model} not available, trying next...`, 'warning');
-  }
-};
-
-/**
- * TTS Voice Configuration
- */
-const TTS_CONFIG = {
-  voiceName: 'Fenrir',
-  responseModalities: ['AUDIO'],
-};
-
-/**
- * Fetch TTS with model fallback on 429 (rate limit) responses.
- * Tries the primary TTS model first; on 429 (daily quota exhausted),
- * switches to the fallback model instead of retrying the same one.
- * Quotas are per-model-per-day, so the fallback has its own quota.
- */
-const fetchTTSWithFallback = async (url, options, { addLog, label = 'TTS' } = {}) => {
-  const primaryModel = API_MODELS.tts;
-  const t0 = performance.now();
-  const res = await fetch(url, options);
-  const primaryMs = performance.now() - t0;
-
-  if (res.status !== 429) return { res, model: primaryModel };
-
-  // Primary model rate-limited — try fallback model (separate daily quota)
-  if (API_MODELS.ttsFallback) {
-    const fallbackModel = API_MODELS.ttsFallback;
-    const fallbackUrl = url.replace(primaryModel, fallbackModel);
-    if (addLog)
-      addLog(
-        label,
-        `${primaryModel}: 429 (${(primaryMs / 1000).toFixed(1)}s) → falling back to ${fallbackModel}`,
-        'warning'
-      );
-    const t1 = performance.now();
-    const fallbackRes = await fetch(fallbackUrl, options);
-    const fallbackMs = performance.now() - t1;
-    if (addLog)
-      addLog(
-        label,
-        `${primaryModel}: 429 (${(primaryMs / 1000).toFixed(1)}s) → ${fallbackModel}: ${fallbackRes.status} (${(fallbackMs / 1000).toFixed(1)}s)`,
-        fallbackRes.ok ? 'success' : 'warning'
-      );
-    return { res: fallbackRes, model: fallbackModel };
-  }
-
-  return { res, model: primaryModel };
-};
-
 /* =============================================================================
-  3. CACHE CONFIGURATION & INDEXEDDB WRAPPER
-  =============================================================================
-*/
-
-const CACHE_CONFIG = {
-  dbName: 'poetry-cache-v1',
-  version: 1,
-  stores: {
-    audio: 'audio-cache',
-    insights: 'insights-cache',
-    poems: 'poems-cache',
-  },
-  expiry: {
-    audio: 7 * 24 * 60 * 60 * 1000, // 7 days
-    insights: 30 * 24 * 60 * 60 * 1000, // 30 days
-    poems: null, // Never expire
-  },
-  maxSize: 500 * 1024 * 1024, // 500MB
-};
-
-/**
- * Initialize IndexedDB cache database
- * Creates object stores for audio, insights, and poems if they don't exist
- */
-const initCache = () => {
-  return new Promise((resolve, reject) => {
-    if (!FEATURES.caching) {
-      resolve(null);
-      return;
-    }
-
-    const request = indexedDB.open(CACHE_CONFIG.dbName, CACHE_CONFIG.version);
-
-    request.onerror = () => reject(request.error);
-    request.onsuccess = () => resolve(request.result);
-
-    request.onupgradeneeded = (event) => {
-      const db = event.target.result;
-
-      // Create object stores if they don't exist
-      if (!db.objectStoreNames.contains(CACHE_CONFIG.stores.audio)) {
-        db.createObjectStore(CACHE_CONFIG.stores.audio, { keyPath: 'poemId' });
-      }
-      if (!db.objectStoreNames.contains(CACHE_CONFIG.stores.insights)) {
-        db.createObjectStore(CACHE_CONFIG.stores.insights, { keyPath: 'poemId' });
-      }
-      if (!db.objectStoreNames.contains(CACHE_CONFIG.stores.poems)) {
-        db.createObjectStore(CACHE_CONFIG.stores.poems, { keyPath: 'poemId' });
-      }
-    };
-  });
-};
-
-/**
- * Cache operations for IndexedDB
- * Provides get, set, delete, and clear operations with expiry checking
- */
-const cacheOperations = {
-  /**
-   * Get an item from cache with expiry check
-   * @param {string} storeName - Name of the object store
-   * @param {string|number} poemId - ID of the poem
-   * @returns {Promise<Object|null>} Cached data or null if expired/missing
-   */
-  async get(storeName, poemId) {
-    if (!FEATURES.caching) return null;
-
-    try {
-      const db = await initCache();
-      if (!db) return null;
-
-      return new Promise((resolve, reject) => {
-        const transaction = db.transaction([storeName], 'readonly');
-        const store = transaction.objectStore(storeName);
-        const request = store.get(poemId);
-
-        request.onsuccess = () => {
-          const result = request.result;
-          if (!result) {
-            resolve(null);
-            return;
-          }
-
-          // Check expiry
-          const expiryTime =
-            storeName === CACHE_CONFIG.stores.audio
-              ? CACHE_CONFIG.expiry.audio
-              : storeName === CACHE_CONFIG.stores.insights
-                ? CACHE_CONFIG.expiry.insights
-                : CACHE_CONFIG.expiry.poems;
-
-          if (expiryTime && result.timestamp) {
-            const age = Date.now() - result.timestamp;
-            if (age > expiryTime) {
-              // Expired - delete and return null
-              cacheOperations.delete(storeName, poemId);
-              resolve(null);
-              return;
-            }
-          }
-
-          resolve(result);
-        };
-
-        request.onerror = () => reject(request.error);
-      });
-    } catch (error) {
-      console.error('Cache get error:', error);
-      return null;
-    }
-  },
-
-  /**
-   * Set an item in cache with timestamp
-   * @param {string} storeName - Name of the object store
-   * @param {string|number} poemId - ID of the poem
-   * @param {Object} data - Data to cache (will be wrapped with poemId and timestamp)
-   * @returns {Promise<boolean>} Success status
-   */
-  async set(storeName, poemId, data) {
-    if (!FEATURES.caching) return false;
-
-    try {
-      const db = await initCache();
-      if (!db) return false;
-
-      return new Promise((resolve, reject) => {
-        const transaction = db.transaction([storeName], 'readwrite');
-        const store = transaction.objectStore(storeName);
-        const record = {
-          poemId,
-          timestamp: Date.now(),
-          ...data,
-        };
-        const request = store.put(record);
-
-        request.onsuccess = () => resolve(true);
-        request.onerror = () => reject(request.error);
-      });
-    } catch (error) {
-      console.error('Cache set error:', error);
-      return false;
-    }
-  },
-
-  /**
-   * Delete an item from cache
-   * @param {string} storeName - Name of the object store
-   * @param {string|number} poemId - ID of the poem
-   * @returns {Promise<boolean>} Success status
-   */
-  async delete(storeName, poemId) {
-    if (!FEATURES.caching) return false;
-
-    try {
-      const db = await initCache();
-      if (!db) return false;
-
-      return new Promise((resolve, reject) => {
-        const transaction = db.transaction([storeName], 'readwrite');
-        const store = transaction.objectStore(storeName);
-        const request = store.delete(poemId);
-
-        request.onsuccess = () => resolve(true);
-        request.onerror = () => reject(request.error);
-      });
-    } catch (error) {
-      console.error('Cache delete error:', error);
-      return false;
-    }
-  },
-
-  /**
-   * Clear all items from a store
-   * @param {string} storeName - Name of the object store
-   * @returns {Promise<boolean>} Success status
-   */
-  async clear(storeName) {
-    if (!FEATURES.caching) return false;
-
-    try {
-      const db = await initCache();
-      if (!db) return false;
-
-      return new Promise((resolve, reject) => {
-        const transaction = db.transaction([storeName], 'readwrite');
-        const store = transaction.objectStore(storeName);
-        const request = store.clear();
-
-        request.onsuccess = () => resolve(true);
-        request.onerror = () => reject(request.error);
-      });
-    } catch (error) {
-      console.error('Cache clear error:', error);
-      return false;
-    }
-  },
-};
-
-/* =============================================================================
-  4. PREFETCH MANAGER
-  =============================================================================
-*/
-
-/**
- * Prefetch Manager - Aggressive prefetching for audio and insights
- * Runs in background to pre-generate content before user requests it
- *
- * Strategy:
- * - Priority 1: Current poem audio + insights (immediately on poem change)
- * - Priority 2: Adjacent poems audio (3s delay)
- * - Priority 3: Discover poems (5s delay)
- */
-const prefetchManager = {
-  /**
-   * Prefetch audio for a poem (generate and cache in background)
-   */
-  prefetchAudio: async (poemId, poem, addLog, activeRequests) => {
-    if (!FEATURES.prefetching || !FEATURES.caching) return;
-    if (!poemId || !poem?.arabic) return;
-
-    try {
-      // Check if already generating - silently skip
-      if (activeRequests && activeRequests.current.has(poemId)) {
-        if (addLog)
-          addLog(
-            'Prefetch Audio',
-            `Already generating audio for poem ${poemId} - skipping`,
-            'info'
-          );
-        return;
-      }
-
-      // Check cache first - don't prefetch if already cached
-      const cached = await cacheOperations.get(CACHE_CONFIG.stores.audio, poemId);
-      if (cached?.blob) {
-        if (addLog)
-          addLog('Prefetch Audio', `Audio already cached for poem ${poemId} - skipping`, 'info');
-        return;
-      }
-
-      // Mark as in-flight
-      if (activeRequests) activeRequests.current.add(poemId);
-
-      // Generate audio using same logic as togglePlay
-      const ttsContent = getTTSContent(poem);
-
-      const requestBody = JSON.stringify({
-        contents: [{ parts: [{ text: ttsContent }] }],
-        generationConfig: {
-          responseModalities: TTS_CONFIG.responseModalities,
-          speechConfig: {
-            voiceConfig: {
-              prebuiltVoiceConfig: { voiceName: TTS_CONFIG.voiceName },
-            },
-          },
-        },
-      });
-      const requestSize = new Blob([requestBody]).size;
-      const estimatedTokens = Math.ceil(ttsContent.length / 4);
-
-      if (addLog) {
-        addLog(
-          'Prefetch Audio',
-          `→ Background audio generation (poem ${poemId}) | Model: ${API_MODELS.tts} | ${(requestSize / 1024).toFixed(1)}KB | ${estimatedTokens} tokens`,
-          'info'
-        );
-      }
-
-      const apiStart = performance.now();
-      const url = `${apiUrl}/api/ai/${API_MODELS.tts}/generateContent`;
-      const fetchOptions = {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: requestBody,
-      };
-      const { res, model: ttsModel } = await fetchTTSWithFallback(url, fetchOptions, {
-        addLog,
-        label: 'Prefetch Audio',
-      });
-
-      if (!res.ok) {
-        const errorText = await res.text();
-        if (addLog)
-          addLog(
-            'Prefetch Audio',
-            `❌ [${ttsModel}] Audio generation HTTP ${res.status}: ${errorText.substring(0, 150)}`,
-            'error'
-          );
-        return;
-      }
-
-      const data = await res.json();
-      const apiTime = performance.now() - apiStart;
-      if (!data.candidates || data.candidates.length === 0) {
-        if (addLog)
-          addLog(
-            'Prefetch Audio',
-            `❌ [${ttsModel}] Audio generation failed for poem ${poemId}. Response: ${JSON.stringify(data).substring(0, 200)}`,
-            'error'
-          );
-        return;
-      }
-
-      const b64 = data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-      if (b64) {
-        // Convert PCM to WAV (inline to avoid dependency)
-        const pcm16ToWav = (base64, rate = 24000) => {
-          try {
-            const cleanedBase64 = base64.replace(/\s/g, '');
-            const bin = atob(cleanedBase64);
-            const buf = new ArrayBuffer(bin.length);
-            const view = new DataView(buf);
-            for (let i = 0; i < bin.length; i++) view.setUint8(i, bin.charCodeAt(i));
-            const samples = new Int16Array(buf);
-            const wavBuf = new ArrayBuffer(44 + samples.length * 2);
-            const wavView = new DataView(wavBuf);
-            const s = (o, str) => {
-              for (let i = 0; i < str.length; i++) wavView.setUint8(o + i, str.charCodeAt(i));
-            };
-            s(0, 'RIFF');
-            wavView.setUint32(4, 36 + samples.length * 2, true);
-            s(8, 'WAVE');
-            s(12, 'fmt ');
-            wavView.setUint32(16, 16, true);
-            wavView.setUint16(20, 1, true);
-            wavView.setUint16(22, 1, true);
-            wavView.setUint32(24, rate, true);
-            wavView.setUint32(28, rate * 2, true);
-            wavView.setUint16(32, 2, true);
-            wavView.setUint16(34, 16, true);
-            s(36, 'data');
-            wavView.setUint32(40, samples.length * 2, true);
-            new Int16Array(wavBuf, 44).set(samples);
-            return new Blob([wavBuf], { type: 'audio/wav' });
-          } catch (e) {
-            return null;
-          }
-        };
-
-        const blob = pcm16ToWav(b64);
-        if (blob) {
-          // Calculate metrics
-          const pcmBytes = atob(b64.replace(/\s/g, '')).length;
-          const samples = pcmBytes / 2;
-          const audioDuration = samples / 24000;
-          const tokensPerSecond = (estimatedTokens / (apiTime / 1000)).toFixed(1);
-
-          // Cache the blob
-          await cacheOperations.set(CACHE_CONFIG.stores.audio, poemId, {
-            blob,
-            metadata: {
-              poet: poem.poet,
-              title: poem.title,
-              size: blob.size,
-              duration: audioDuration,
-              model: ttsModel,
-            },
-          });
-
-          if (addLog)
-            addLog(
-              'Prefetch Audio',
-              `✓ [${ttsModel}] Audio cached (poem ${poemId}) | ${(apiTime / 1000).toFixed(1)}s | ${(blob.size / 1024).toFixed(1)}KB | ${audioDuration.toFixed(1)}s audio | ${tokensPerSecond} tok/s`,
-              'success'
-            );
-        }
-      }
-    } catch (error) {
-      // Silently handle errors - don't disrupt user experience
-      if (addLog)
-        addLog(
-          'Prefetch Audio',
-          `❌ Audio generation error for poem ${poemId}: ${error.message}`,
-          'error'
-        );
-    } finally {
-      // Clean up in-flight tracking
-      if (activeRequests) activeRequests.current.delete(poemId);
-    }
-  },
-
-  /**
-   * Prefetch insights for a poem (generate and cache in background)
-   */
-  prefetchInsights: async (poemId, poem, addLog, activeRequests) => {
-    if (!FEATURES.prefetching || !FEATURES.caching) return;
-    if (!poemId || !poem?.arabic) return;
-
-    try {
-      // Check if already generating - silently skip
-      if (activeRequests && activeRequests.current.has(poemId)) {
-        if (addLog)
-          addLog(
-            'Prefetch Insights',
-            `Already generating insights for poem ${poemId} - skipping`,
-            'info'
-          );
-        return;
-      }
-
-      // Check cache first - don't prefetch if already cached
-      const cached = await cacheOperations.get(CACHE_CONFIG.stores.insights, poemId);
-      if (cached?.interpretation) {
-        if (addLog)
-          addLog(
-            'Prefetch Insights',
-            `Insights already cached for poem ${poemId} - skipping`,
-            'info'
-          );
-        return;
-      }
-
-      // Mark as in-flight
-      if (activeRequests) activeRequests.current.add(poemId);
-
-      const poetInfo = poem?.poet ? ` by ${poem.poet}` : '';
-      const promptText = `Deep Analysis of${poetInfo}:\n\n${poem.arabic}`;
-      const requestSize = new Blob([
-        JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] }),
-      ]).size;
-      const estimatedInputTokens = Math.ceil(
-        (promptText.length + INSIGHTS_SYSTEM_PROMPT.length) / 4
-      );
-
-      if (addLog) {
-        addLog(
-          'Prefetch Insights',
-          `→ Background insights generation (poem ${poemId}) | ${(requestSize / 1024).toFixed(1)}KB | ${estimatedInputTokens} tokens`,
-          'info'
-        );
-      }
-
-      const apiStart = performance.now();
-      const prefetchBody = JSON.stringify({
-        contents: [{ parts: [{ text: promptText }] }],
-        systemInstruction: { parts: [{ text: INSIGHTS_SYSTEM_PROMPT }] },
-      });
-      const res = await geminiTextFetch(
-        'generateContent',
-        prefetchBody,
-        'Prefetch Insights',
-        addLog
-      );
-
-      const data = await res.json();
-      const apiTime = performance.now() - apiStart;
-      const interpretation = data.candidates?.[0]?.content?.parts?.[0]?.text;
-
-      if (interpretation) {
-        // Calculate metrics
-        const charCount = interpretation.length;
-        const estimatedTokens = Math.ceil(charCount / 4);
-        const tokensPerSecond = (estimatedTokens / (apiTime / 1000)).toFixed(1);
-
-        // Cache the insights
-        await cacheOperations.set(CACHE_CONFIG.stores.insights, poemId, {
-          interpretation,
-          metadata: { poet: poem.poet, title: poem.title, charCount, tokens: estimatedTokens },
-        });
-
-        if (addLog)
-          addLog(
-            'Prefetch Insights',
-            `✓ Insights cached (poem ${poemId}) | ${(apiTime / 1000).toFixed(1)}s | ${charCount} chars (≈${estimatedTokens} tokens) | ${tokensPerSecond} tok/s`,
-            'success'
-          );
-      }
-    } catch (error) {
-      // Silently handle errors - don't disrupt user experience
-      if (addLog)
-        addLog(
-          'Prefetch Insights',
-          `❌ Insights generation error for poem ${poemId}: ${error.message}`,
-          'error'
-        );
-    } finally {
-      // Clean up in-flight tracking
-      if (activeRequests) activeRequests.current.delete(poemId);
-    }
-  },
-
-  /**
-   * Prefetch poems from discover (pre-fetch poems from category)
-   */
-  prefetchDiscover: async (category, count = 2, addLog) => {
-    if (!FEATURES.prefetching || !FEATURES.caching) return;
-    if (!category || category === 'All') return;
-
-    try {
-      if (addLog) addLog('Prefetch', `Pre-fetching ${count} poems from ${category}...`, 'info');
-      // Placeholder - would fetch poems from discover API and cache
-    } catch (error) {
-      if (addLog) addLog('Prefetch', `Discover prefetch error: ${error.message}`, 'error');
-    }
-  },
-};
-
-/* =============================================================================
-  5. TRANSLITERATION
-  =============================================================================
-*/
-
-// transliterate imported from ./utils/transliterate.js
-
-/* =============================================================================
-  6. UTILITY COMPONENTS
-  =============================================================================
-*/
-
-// MysticalConsultationEffect, DebugPanel, ErrorBanner, ShortcutHelp imported from ./components/
-
-// SplashScreen imported from ./components/SplashScreen.jsx
-// (SplashScreen body removed — component now in separate file)
-
-// Auth components imported from ./components/auth/
-// VerticalSidebar imported from ./components/VerticalSidebar.jsx
-// InsightsDrawer imported from ./components/InsightsDrawer.jsx
-/* =============================================================================
-  6. MAIN APPLICATION
+  MAIN APPLICATION
   =============================================================================
 */
 
 export default function DiwanApp() {
+  const [, navigate] = useLocation();
+  const [, routeParams] = useRoute('/poem/:id');
+
   const mainScrollRef = useRef(null);
   const audioRef = useRef(new Audio());
   const isTogglingPlay = useRef(false);
@@ -986,20 +332,13 @@ export default function DiwanApp() {
     if (!hasAutoLoaded.current) {
       hasAutoLoaded.current = true;
 
-      // Deep link detection: /poem/:id
-      const deepLinkMatch = window.location.pathname.match(/^\/poem\/(\d+)$/);
-      if (deepLinkMatch && useDatabase) {
-        const poemId = deepLinkMatch[1];
+      // Deep link detection via wouter route match: /poem/:id
+      if (routeParams?.id && useDatabase) {
+        const poemId = routeParams.id;
         track('deep_link_loaded', { poemId });
         addLog('DeepLink', `Loading poem ID ${poemId} from URL`, 'info');
-        fetch(`${apiUrl}/api/poems/${poemId}`)
-          .then((res) => {
-            if (!res.ok) throw new Error(`Poem ${poemId} not found`);
-            return res.json();
-          })
+        fetchPoemById(poemId)
           .then((poem) => {
-            if (poem.arabic) poem.arabic = poem.arabic.replace(/\*/g, '\n');
-            poem.isFromDatabase = true;
             setPoems([poem]);
             setCurrentIndex(0);
             setAutoExplainPending(true);
@@ -1085,6 +424,11 @@ export default function DiwanApp() {
     }
   }, [user, settings]);
 
+  // Sync `light` class on <html> so CSS vars (--bg-app, --gold) apply to html/body
+  useEffect(() => {
+    document.documentElement.classList.toggle('light', !darkMode);
+  }, [darkMode]);
+
   // Save settings when theme or font changes (with debounce)
   useEffect(() => {
     if (!user) return;
@@ -1162,15 +506,10 @@ export default function DiwanApp() {
   // Fetch dynamic poet list from API when picker first opens
   useEffect(() => {
     if (!poetPickerOpen || poetsFetched) return;
-    const fetchPoets = async () => {
+    const loadPoets = async () => {
       try {
-        const res = await fetch(`${apiUrl}/api/poets`);
-        if (!res.ok) {
-          addLog('Poets', `API error: ${res.status}`, 'warn');
-          return;
-        }
-        const poets = await res.json();
-        setDynamicPoets(Array.isArray(poets) ? poets : []);
+        const poets = await fetchPoets();
+        setDynamicPoets(poets);
         addLog('Poets', `Loaded ${poets.length} poets from API`, 'info');
       } catch {
         addLog('Poets', 'Failed to fetch poets from API', 'warn');
@@ -1178,10 +517,10 @@ export default function DiwanApp() {
         setPoetsFetched(true);
       }
     };
-    fetchPoets();
-    // apiUrl is a module-level constant; addLog is functionally stable (uses
-    // only setLogs and module constants) even though its reference changes per
-    // render — poetsFetched gate prevents repeated fetches regardless.
+    loadPoets();
+    // addLog is functionally stable (uses only setLogs and module constants)
+    // even though its reference changes per render — poetsFetched gate prevents
+    // repeated fetches regardless.
   }, [poetPickerOpen, poetsFetched, addLog]);
 
   // Focus search input when poet picker opens (delay allows CSS enter animation to complete)
@@ -1277,39 +616,7 @@ export default function DiwanApp() {
     return pairs;
   }, [current, insightParts]);
 
-  const pcm16ToWav = (base64, rate = 24000) => {
-    try {
-      const cleanedBase64 = base64.replace(/\s/g, '');
-      const bin = atob(cleanedBase64);
-      const buf = new ArrayBuffer(bin.length);
-      const view = new DataView(buf);
-      for (let i = 0; i < bin.length; i++) view.setUint8(i, bin.charCodeAt(i));
-      const samples = new Int16Array(buf);
-      const wavBuf = new ArrayBuffer(44 + samples.length * 2);
-      const wavView = new DataView(wavBuf);
-      const s = (o, str) => {
-        for (let i = 0; i < str.length; i++) wavView.setUint8(o + i, str.charCodeAt(i));
-      };
-      s(0, 'RIFF');
-      wavView.setUint32(4, 36 + samples.length * 2, true);
-      s(8, 'WAVE');
-      s(12, 'fmt ');
-      wavView.setUint32(16, 16, true);
-      wavView.setUint16(20, 1, true);
-      wavView.setUint16(22, 1, true);
-      wavView.setUint32(24, rate, true);
-      wavView.setUint32(28, rate * 2, true);
-      wavView.setUint16(32, 2, true);
-      wavView.setUint16(34, 16, true);
-      s(36, 'data');
-      wavView.setUint32(40, samples.length * 2, true);
-      new Int16Array(wavBuf, 44).set(samples);
-      return new Blob([wavBuf], { type: 'audio/wav' });
-    } catch (e) {
-      addLog('Audio Error', e.message, 'error');
-      return null;
-    }
-  };
+  // pcm16ToWav imported from ./utils/audio.js (used directly below)
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -1488,6 +795,190 @@ export default function DiwanApp() {
     // Set loading state FIRST (before duplicate check) for better UX
     setIsGeneratingAudio(true);
 
+    const doGenerate = async () => {
+      // CHECK CACHE FIRST
+      if (FEATURES.caching && current?.id) {
+        const cacheStart = performance.now();
+        const cached = await cacheOperations.get(CACHE_CONFIG.stores.audio, current.id);
+        const cacheTime = performance.now() - cacheStart;
+
+        if (cached?.blob) {
+          const sizeMB = (cached.blob.size / (1024 * 1024)).toFixed(2);
+          addLog(
+            'Audio Cache',
+            `✓ Cache HIT (${cacheTime.toFixed(0)}ms)${cached.metadata?.model ? ` | Model: ${cached.metadata.model}` : ''} | Size: ${sizeMB}MB | Instant playback`,
+            'success'
+          );
+          setCacheStats((prev) => ({ ...prev, audioHits: prev.audioHits + 1 }));
+
+          const u = URL.createObjectURL(cached.blob);
+          setAudioUrl(u);
+          audioRef.current.src = u;
+          audioRef.current.load();
+          audioRef.current
+            .play()
+            .then(() => setIsPlaying(true))
+            .catch((err) => {
+              if (FEATURES.logging) console.warn('[Audio] Playback failed:', err.message);
+              addLog('Audio', `Cached playback failed: ${err.message}`, 'error');
+            });
+          setIsGeneratingAudio(false); // Clear loading state
+          isTogglingPlay.current = false;
+          return;
+        } else {
+          addLog(
+            'Audio Cache',
+            `✗ Cache MISS (${cacheTime.toFixed(0)}ms) | Generating from API...`,
+            'info'
+          );
+          setCacheStats((prev) => ({ ...prev, audioMisses: prev.audioMisses + 1 }));
+        }
+      }
+
+      // Mark request as in-flight
+      activeAudioRequests.current.add(current?.id);
+
+      const ttsContent = getTTSContent(current);
+
+      // Calculate request metrics
+      const requestBody = JSON.stringify({
+        contents: [{ parts: [{ text: ttsContent }] }],
+        generationConfig: {
+          responseModalities: TTS_CONFIG.responseModalities,
+          speechConfig: {
+            voiceConfig: {
+              prebuiltVoiceConfig: { voiceName: TTS_CONFIG.voiceName },
+            },
+          },
+        },
+      });
+      const requestSize = new Blob([requestBody]).size;
+      const estimatedTokens = Math.ceil(ttsContent.length / 4);
+      const arabicTextChars = current?.arabic?.length || 0;
+
+      addLog(
+        'Audio API',
+        `→ Starting generation | Model: ${API_MODELS.tts} | Request: ${(requestSize / 1024).toFixed(1)}KB | ${arabicTextChars} chars Arabic | Est. ${estimatedTokens} tokens`,
+        'info'
+      );
+
+      setAudioError(null);
+
+      try {
+        const apiStart = performance.now();
+        const url = `${apiUrl}/api/ai/${API_MODELS.tts}/generateContent`;
+        const fetchOptions = {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: requestBody,
+        };
+        const { res, model: ttsModel } = await fetchTTSWithFallback(url, fetchOptions, {
+          addLog,
+          label: 'Audio API',
+        });
+
+        if (!res.ok) {
+          const errorText = await res.text();
+          addLog(
+            'Audio API Error',
+            `[${ttsModel}] HTTP ${res.status}: ${errorText.substring(0, 200)}`,
+            'error'
+          );
+          if (res.status === 429) {
+            setAudioError(
+              'Recitation temporarily unavailable — too many requests. Please wait a moment and try again.'
+            );
+            throw new Error('Rate limited (429)');
+          }
+          throw new Error(`API returned ${res.status}: ${res.statusText}`);
+        }
+
+        const data = await res.json();
+        const apiTime = performance.now() - apiStart;
+
+        if (!data.candidates || data.candidates.length === 0) {
+          addLog(
+            'Audio API Error',
+            `[${ttsModel}] No candidates in response. Full response: ${JSON.stringify(data).substring(0, 300)}`,
+            'error'
+          );
+          throw new Error('Recitation failed - no audio candidates returned');
+        }
+
+        const b64 = data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+        if (b64) {
+          const conversionStart = performance.now();
+          const blob = pcm16ToWav(b64);
+          const conversionTime = performance.now() - conversionStart;
+
+          if (blob) {
+            // Calculate audio metrics
+            const audioSizeMB = (blob.size / (1024 * 1024)).toFixed(2);
+            const audioSizeKB = (blob.size / 1024).toFixed(1);
+            // Estimate audio duration from PCM samples (24kHz, 16-bit, mono)
+            const pcmBytes = atob(b64.replace(/\s/g, '')).length;
+            const samples = pcmBytes / 2; // 16-bit = 2 bytes per sample
+            const audioDuration = samples / 24000; // 24kHz sample rate
+            const tokensPerSecond = (estimatedTokens / (apiTime / 1000)).toFixed(1);
+            const totalTime = apiTime + conversionTime;
+
+            addLog(
+              'Audio API',
+              `✓ [${ttsModel}] Complete | API: ${(apiTime / 1000).toFixed(2)}s | Convert: ${conversionTime.toFixed(0)}ms | Total: ${(totalTime / 1000).toFixed(2)}s`,
+              'success'
+            );
+            addLog(
+              'Audio Metrics',
+              `[${ttsModel}] Audio: ${audioDuration.toFixed(1)}s | Size: ${audioSizeKB}KB (${audioSizeMB}MB) | Speed: ${tokensPerSecond} tok/s`,
+              'success'
+            );
+
+            const u = URL.createObjectURL(blob);
+            setAudioUrl(u);
+            audioRef.current.src = u;
+            audioRef.current.load();
+            audioRef.current
+              .play()
+              .then(() => setIsPlaying(true))
+              .catch((err) => {
+                if (FEATURES.logging) console.warn('[Audio] Playback failed:', err.message);
+                addLog('Audio', `Playback failed: ${err.message}`, 'error');
+              });
+
+            // CACHE THE AUDIO BLOB
+            if (FEATURES.caching && current?.id) {
+              const cacheStart = performance.now();
+              await cacheOperations.set(CACHE_CONFIG.stores.audio, current.id, {
+                blob,
+                metadata: {
+                  poet: current.poet,
+                  title: current.title,
+                  size: blob.size,
+                  duration: audioDuration,
+                  model: ttsModel,
+                },
+              });
+              const cacheTime = performance.now() - cacheStart;
+              addLog(
+                'Audio Cache',
+                `Audio cached for future playback (${cacheTime.toFixed(0)}ms) | Saves ${(apiTime / 1000).toFixed(1)}s on replay`,
+                'success'
+              );
+            }
+          }
+        }
+      } catch (e) {
+        Sentry.captureException(e);
+        addLog('Audio System Error', `${e.message} | Poem ID: ${current?.id}`, 'error');
+        track('audio_error', { error: (e.message || '').slice(0, 100) });
+        setIsPlaying(false);
+      } finally {
+        setIsGeneratingAudio(false);
+        activeAudioRequests.current.delete(current?.id); // Clean up in-flight tracking
+        isTogglingPlay.current = false;
+      }
+    };
+
     // Check if request already in flight - poll until it completes
     if (activeAudioRequests.current.has(current?.id)) {
       addLog('Audio', `Audio generation already in progress - waiting for completion`, 'info');
@@ -1518,9 +1009,15 @@ export default function DiwanApp() {
                 addLog('Audio', `Playback failed: ${err.message}`, 'error');
               });
           } else {
-            addLog('Audio', 'Background generation failed — please try again', 'info');
-            isTogglingPlay.current = false;
-            setIsGeneratingAudio(false);
+            addLog(
+              'Audio',
+              'Prefetch failed — retrying audio generation automatically...',
+              'error'
+            );
+            if (!isTogglingPlay.current) {
+              isTogglingPlay.current = true;
+              await doGenerate();
+            }
             return;
           }
           setIsGeneratingAudio(false);
@@ -1569,187 +1066,7 @@ export default function DiwanApp() {
       return;
     }
 
-    // CHECK CACHE FIRST
-    if (FEATURES.caching && current?.id) {
-      const cacheStart = performance.now();
-      const cached = await cacheOperations.get(CACHE_CONFIG.stores.audio, current.id);
-      const cacheTime = performance.now() - cacheStart;
-
-      if (cached?.blob) {
-        const sizeMB = (cached.blob.size / (1024 * 1024)).toFixed(2);
-        addLog(
-          'Audio Cache',
-          `✓ Cache HIT (${cacheTime.toFixed(0)}ms)${cached.metadata?.model ? ` | Model: ${cached.metadata.model}` : ''} | Size: ${sizeMB}MB | Instant playback`,
-          'success'
-        );
-        setCacheStats((prev) => ({ ...prev, audioHits: prev.audioHits + 1 }));
-
-        const u = URL.createObjectURL(cached.blob);
-        setAudioUrl(u);
-        audioRef.current.src = u;
-        audioRef.current.load();
-        audioRef.current
-          .play()
-          .then(() => setIsPlaying(true))
-          .catch((err) => {
-            if (FEATURES.logging) console.warn('[Audio] Playback failed:', err.message);
-            addLog('Audio', `Cached playback failed: ${err.message}`, 'error');
-          });
-        setIsGeneratingAudio(false); // Clear loading state
-        isTogglingPlay.current = false;
-        return;
-      } else {
-        addLog(
-          'Audio Cache',
-          `✗ Cache MISS (${cacheTime.toFixed(0)}ms) | Generating from API...`,
-          'info'
-        );
-        setCacheStats((prev) => ({ ...prev, audioMisses: prev.audioMisses + 1 }));
-      }
-    }
-
-    // Mark request as in-flight
-    activeAudioRequests.current.add(current?.id);
-
-    const ttsContent = getTTSContent(current);
-
-    // Calculate request metrics
-    const requestBody = JSON.stringify({
-      contents: [{ parts: [{ text: ttsContent }] }],
-      generationConfig: {
-        responseModalities: TTS_CONFIG.responseModalities,
-        speechConfig: {
-          voiceConfig: {
-            prebuiltVoiceConfig: { voiceName: TTS_CONFIG.voiceName },
-          },
-        },
-      },
-    });
-    const requestSize = new Blob([requestBody]).size;
-    const estimatedTokens = Math.ceil(ttsContent.length / 4);
-    const arabicTextChars = current?.arabic?.length || 0;
-
-    addLog(
-      'Audio API',
-      `→ Starting generation | Model: ${API_MODELS.tts} | Request: ${(requestSize / 1024).toFixed(1)}KB | ${arabicTextChars} chars Arabic | Est. ${estimatedTokens} tokens`,
-      'info'
-    );
-
-    setAudioError(null);
-
-    try {
-      const apiStart = performance.now();
-      const url = `${apiUrl}/api/ai/${API_MODELS.tts}/generateContent`;
-      const fetchOptions = {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: requestBody,
-      };
-      const { res, model: ttsModel } = await fetchTTSWithFallback(url, fetchOptions, {
-        addLog,
-        label: 'Audio API',
-      });
-
-      if (!res.ok) {
-        const errorText = await res.text();
-        addLog(
-          'Audio API Error',
-          `[${ttsModel}] HTTP ${res.status}: ${errorText.substring(0, 200)}`,
-          'error'
-        );
-        if (res.status === 429) {
-          setAudioError(
-            'Recitation temporarily unavailable — too many requests. Please wait a moment and try again.'
-          );
-          throw new Error('Rate limited (429)');
-        }
-        throw new Error(`API returned ${res.status}: ${res.statusText}`);
-      }
-
-      const data = await res.json();
-      const apiTime = performance.now() - apiStart;
-
-      if (!data.candidates || data.candidates.length === 0) {
-        addLog(
-          'Audio API Error',
-          `[${ttsModel}] No candidates in response. Full response: ${JSON.stringify(data).substring(0, 300)}`,
-          'error'
-        );
-        throw new Error('Recitation failed - no audio candidates returned');
-      }
-
-      const b64 = data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-      if (b64) {
-        const conversionStart = performance.now();
-        const blob = pcm16ToWav(b64);
-        const conversionTime = performance.now() - conversionStart;
-
-        if (blob) {
-          // Calculate audio metrics
-          const audioSizeMB = (blob.size / (1024 * 1024)).toFixed(2);
-          const audioSizeKB = (blob.size / 1024).toFixed(1);
-          // Estimate audio duration from PCM samples (24kHz, 16-bit, mono)
-          const pcmBytes = atob(b64.replace(/\s/g, '')).length;
-          const samples = pcmBytes / 2; // 16-bit = 2 bytes per sample
-          const audioDuration = samples / 24000; // 24kHz sample rate
-          const tokensPerSecond = (estimatedTokens / (apiTime / 1000)).toFixed(1);
-          const totalTime = apiTime + conversionTime;
-
-          addLog(
-            'Audio API',
-            `✓ [${ttsModel}] Complete | API: ${(apiTime / 1000).toFixed(2)}s | Convert: ${conversionTime.toFixed(0)}ms | Total: ${(totalTime / 1000).toFixed(2)}s`,
-            'success'
-          );
-          addLog(
-            'Audio Metrics',
-            `[${ttsModel}] Audio: ${audioDuration.toFixed(1)}s | Size: ${audioSizeKB}KB (${audioSizeMB}MB) | Speed: ${tokensPerSecond} tok/s`,
-            'success'
-          );
-
-          const u = URL.createObjectURL(blob);
-          setAudioUrl(u);
-          audioRef.current.src = u;
-          audioRef.current.load();
-          audioRef.current
-            .play()
-            .then(() => setIsPlaying(true))
-            .catch((err) => {
-              if (FEATURES.logging) console.warn('[Audio] Playback failed:', err.message);
-              addLog('Audio', `Playback failed: ${err.message}`, 'error');
-            });
-
-          // CACHE THE AUDIO BLOB
-          if (FEATURES.caching && current?.id) {
-            const cacheStart = performance.now();
-            await cacheOperations.set(CACHE_CONFIG.stores.audio, current.id, {
-              blob,
-              metadata: {
-                poet: current.poet,
-                title: current.title,
-                size: blob.size,
-                duration: audioDuration,
-                model: ttsModel,
-              },
-            });
-            const cacheTime = performance.now() - cacheStart;
-            addLog(
-              'Audio Cache',
-              `Audio cached for future playback (${cacheTime.toFixed(0)}ms) | Saves ${(apiTime / 1000).toFixed(1)}s on replay`,
-              'success'
-            );
-          }
-        }
-      }
-    } catch (e) {
-      Sentry.captureException(e);
-      addLog('Audio System Error', `${e.message} | Poem ID: ${current?.id}`, 'error');
-      track('audio_error', { error: (e.message || '').slice(0, 100) });
-      setIsPlaying(false);
-    } finally {
-      setIsGeneratingAudio(false);
-      activeAudioRequests.current.delete(current?.id); // Clean up in-flight tracking
-      isTogglingPlay.current = false;
-    }
+    await doGenerate();
   };
 
   const handleAnalyze = async () => {
@@ -2015,18 +1332,14 @@ export default function DiwanApp() {
       }
 
       // Save translation back to database for future visitors (fire-and-forget)
-      if (current?.isFromDatabase && current?.id && insightText && apiUrl) {
+      if (current?.isFromDatabase && current?.id && insightText) {
         const parts = parseInsight(insightText);
         if (parts?.poeticTranslation) {
-          fetch(`${apiUrl}/api/poems/${current.id}/translation`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              translation: parts.poeticTranslation.replace(/\n/g, '*'),
-              explanation: parts.depth || null,
-              authorBio: parts.author || null,
-            }),
-          }).catch(() => {});
+          saveTranslation(current.id, {
+            translation: parts.poeticTranslation.replace(/\n/g, '*'),
+            explanation: parts.depth || null,
+            authorBio: parts.author || null,
+          });
         }
       }
 
@@ -2081,38 +1394,15 @@ export default function DiwanApp() {
 
         const categoryObj = CATEGORIES.find((c) => c.id === selectedCategory);
         const poetName = categoryObj?.labelAr || selectedCategory;
-        const queryParams = new URLSearchParams();
-        if (selectedCategory !== 'All') queryParams.set('poet', poetName);
-        if (seenIds.length > 0) queryParams.set('exclude', seenIds.join(','));
-        const qs = queryParams.toString();
-        const url = `${apiUrl}/api/poems/random${qs ? '?' + qs : ''}`;
+        const poet = selectedCategory !== 'All' ? poetName : undefined;
 
         if (seenIds.length > 0) {
           addLog('Discovery DB', `Excluding ${seenIds.length} recently seen poems`, 'info');
         }
 
         try {
-          const res = await fetch(url);
-
-          if (!res.ok) {
-            throw new Error(`Database API returned ${res.status} ${res.statusText}`);
-          }
-
-          // Clear any previous backend errors on success
-
-          const newPoem = await res.json();
+          const newPoem = await fetchRandomPoem({ poet, excludeIds: seenIds });
           const apiTime = performance.now() - apiStart;
-
-          // Process database poems: replace * with newlines
-          if (newPoem.arabic) {
-            newPoem.arabic = newPoem.arabic.replace(/\*/g, '\n');
-          }
-          if (newPoem.cachedTranslation) {
-            newPoem.cachedTranslation = newPoem.cachedTranslation.replace(/\*/g, '\n');
-          }
-
-          // Mark as database poem
-          newPoem.isFromDatabase = true;
 
           // Track this poem as seen for dedup
           markPoemSeen(newPoem.id);
@@ -2143,7 +1433,7 @@ export default function DiwanApp() {
             return updated;
           });
           // Update URL to reflect current poem
-          window.history.replaceState({}, '', '/poem/' + newPoem.id);
+          navigate('/poem/' + newPoem.id, { replace: true });
           // Auto-analyze to fetch English translation if no cached translation is available
           if (!newPoem.cachedTranslation) {
             setAutoExplainPending(true);
@@ -2258,7 +1548,7 @@ export default function DiwanApp() {
           if (newIdx !== -1) setCurrentIndex(newIdx);
           return updated;
         });
-        window.history.replaceState({}, '', '/');
+        navigate('/', { replace: true });
       }
     } catch (e) {
       Sentry.captureException(e);
@@ -2274,13 +1564,7 @@ export default function DiwanApp() {
   // Pre-fetch a poem in the background for the next visit (stored in localStorage with TTL)
   async function prefetchNextVisitPoem() {
     try {
-      const res = await fetch(`${apiUrl}/api/poems/random`);
-      if (!res.ok) return;
-      const poem = await res.json();
-      if (poem.arabic) poem.arabic = poem.arabic.replace(/\*/g, '\n');
-      if (poem.cachedTranslation)
-        poem.cachedTranslation = poem.cachedTranslation.replace(/\*/g, '\n');
-      poem.isFromDatabase = true;
+      const poem = await fetchRandomPoem();
       localStorage.setItem(
         'qafiyah_nextPoem',
         JSON.stringify({
@@ -2542,9 +1826,9 @@ export default function DiwanApp() {
     setShowSavedPoems(false);
     // Update URL for DB poems
     if (typeof mappedPoem.id === 'number') {
-      window.history.replaceState({}, '', '/poem/' + mappedPoem.id);
+      navigate('/poem/' + mappedPoem.id, { replace: true });
     } else {
-      window.history.replaceState({}, '', '/');
+      navigate('/', { replace: true });
     }
   };
 
@@ -2650,11 +1934,11 @@ export default function DiwanApp() {
   // Keep-alive ping to prevent Render free tier from sleeping (15 min idle timeout)
   // Pings every 10 minutes to keep backend awake
   useEffect(() => {
-    if (!useDatabase || !apiUrl) return; // Only ping if database mode is enabled
+    if (!useDatabase) return; // Only ping if database mode is enabled
 
     const keepAlivePing = setInterval(
       () => {
-        fetch(`${apiUrl}/api/health`)
+        pingHealth()
           .then(() => {
             if (FEATURES.debug) {
               addLog('Keep-Alive', 'Backend pinged successfully', 'info');
@@ -2671,10 +1955,10 @@ export default function DiwanApp() {
     ); // 10 minutes
 
     // Initial ping on mount
-    fetch(`${apiUrl}/api/health`).catch(() => {});
+    pingHealth().catch(() => {});
 
     return () => clearInterval(keepAlivePing);
-  }, [useDatabase, apiUrl]);
+  }, [useDatabase]);
 
   if (!current) {
     return (
@@ -2897,7 +2181,7 @@ export default function DiwanApp() {
             <span
               style={{
                 ...BRAND.arabic,
-                color: '#C5A059',
+                color: 'var(--gold)',
                 textShadow: '0 0 40px rgba(197,160,89,0.3)',
               }}
             >
@@ -2913,7 +2197,7 @@ export default function DiwanApp() {
             </span>
           </h1>
           <Feather
-            style={{ ...BRAND.feather, color: '#C5A059', alignSelf: 'center' }}
+            style={{ ...BRAND.feather, color: 'var(--gold)', alignSelf: 'center' }}
             strokeWidth={1.5}
           />
         </div>
@@ -3005,7 +2289,7 @@ export default function DiwanApp() {
                         className="font-amiri font-bold text-center"
                         style={{
                           fontSize: 'clamp(1.4rem, 4vw, 2.25rem)',
-                          color: '#C5A059',
+                          color: 'var(--gold)',
                           lineHeight: 1.4,
                           textShadow: darkMode ? '0 0 30px rgba(197,160,89,0.15)' : 'none',
                         }}
@@ -3016,7 +2300,7 @@ export default function DiwanApp() {
                         style={{
                           width: '40px',
                           height: '1px',
-                          background: '#C5A059',
+                          background: 'var(--gold)',
                           opacity: 0.5,
                           margin: '0.5rem auto',
                         }}
@@ -3190,39 +2474,39 @@ export default function DiwanApp() {
                     <button
                       disabled
                       aria-label="Preparing audio"
-                      className="min-w-[46px] min-h-[46px] p-[11px] bg-[#C5A059]/8 border border-[#C5A059]/30 cursor-wait transition-all duration-300 flex items-center justify-center rounded-full"
+                      className="min-w-[46px] min-h-[46px] p-[11px] bg-gold/8 border border-gold/30 cursor-wait transition-all duration-300 flex items-center justify-center rounded-full"
                     >
                       <div className="flex items-center justify-center gap-0.5 h-[21px]">
                         <div
-                          className="w-[2px] h-[6px] bg-[#C5A059] rounded-full"
+                          className="w-[2px] h-[6px] bg-gold rounded-full"
                           style={{
                             animation: 'wave 1.2s ease-in-out infinite',
                             animationDelay: '0s',
                           }}
                         />
                         <div
-                          className="w-[2px] h-[10px] bg-[#C5A059] rounded-full"
+                          className="w-[2px] h-[10px] bg-gold rounded-full"
                           style={{
                             animation: 'wave 1.2s ease-in-out infinite',
                             animationDelay: '0.15s',
                           }}
                         />
                         <div
-                          className="w-[2px] h-[14px] bg-[#C5A059] rounded-full"
+                          className="w-[2px] h-[14px] bg-gold rounded-full"
                           style={{
                             animation: 'wave 1.2s ease-in-out infinite',
                             animationDelay: '0.3s',
                           }}
                         />
                         <div
-                          className="w-[2px] h-[10px] bg-[#C5A059] rounded-full"
+                          className="w-[2px] h-[10px] bg-gold rounded-full"
                           style={{
                             animation: 'wave 1.2s ease-in-out infinite',
                             animationDelay: '0.45s',
                           }}
                         />
                         <div
-                          className="w-[2px] h-[6px] bg-[#C5A059] rounded-full"
+                          className="w-[2px] h-[6px] bg-gold rounded-full"
                           style={{
                             animation: 'wave 1.2s ease-in-out infinite',
                             animationDelay: '0.6s',
@@ -3306,11 +2590,11 @@ export default function DiwanApp() {
                     }
                   }}
                   aria-label="Filter by poet"
-                  className={`relative min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-200 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105 ${poetPickerOpen ? 'bg-[#C5A059]/10' : ''}`}
+                  className={`relative min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-200 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105 ${poetPickerOpen ? 'bg-gold/10' : ''}`}
                 >
                   <ScrollText className={GOLD.goldText} size={21} />
                   {selectedCategory !== 'All' && (
-                    <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#C5A059] shadow-[0_0_6px_rgba(197,160,89,0.5)]" />
+                    <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-gold shadow-[0_0_6px_rgba(197,160,89,0.5)]" />
                   )}
                 </button>
                 <span
@@ -3321,7 +2605,7 @@ export default function DiwanApp() {
                 </span>
                 {(poetPickerOpen || poetPickerClosing) && (
                   <div
-                    className="absolute bottom-full mb-2 left-1/2 w-auto min-w-[14rem] max-w-[18rem] rounded-2xl border border-[#C5A059]/25 bg-black/95 backdrop-blur-2xl shadow-2xl py-2.5 z-[200]"
+                    className="absolute bottom-full mb-2 left-1/2 w-auto min-w-[14rem] max-w-[18rem] rounded-2xl border border-gold/25 bg-black/95 backdrop-blur-2xl shadow-2xl py-2.5 z-[200]"
                     style={{
                       animation: poetPickerClosing
                         ? 'poetPickerOut 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards'
@@ -3329,9 +2613,9 @@ export default function DiwanApp() {
                     }}
                   >
                     {/* Search input */}
-                    <div className="px-3 pb-2 mb-1 border-b border-[#C5A059]/15">
+                    <div className="px-3 pb-2 mb-1 border-b border-gold/15">
                       <div className="relative flex items-center">
-                        <Search className="absolute left-2 text-[#C5A059]/40" size={13} />
+                        <Search className="absolute left-2 text-gold/40" size={13} />
                         <input
                           ref={poetSearchRef}
                           type="text"
@@ -3339,7 +2623,7 @@ export default function DiwanApp() {
                           onChange={(e) => setPoetSearch(e.target.value)}
                           placeholder="Search poets..."
                           aria-label="Search poets"
-                          className="w-full bg-white/5 border border-[#C5A059]/15 rounded-lg pl-7 pr-3 py-1.5 text-[16px] text-stone-200 placeholder-stone-600 focus:outline-none focus:border-[#C5A059]/40 font-tajawal transition-colors"
+                          className="w-full bg-white/5 border border-gold/15 rounded-lg pl-7 pr-3 py-1.5 text-[16px] text-stone-200 placeholder-stone-600 focus:outline-none focus:border-gold/40 font-tajawal transition-colors"
                         />
                         {poetSearch && (
                           <button
@@ -3369,17 +2653,17 @@ export default function DiwanApp() {
                             setSelectedCategory('All');
                             closePoetPicker();
                           }}
-                          className={`w-full text-right px-5 py-2.5 transition-all duration-150 ${selectedCategory === 'All' ? 'bg-[#C5A059]/15 border-r-2 border-[#C5A059]' : 'hover:bg-[#C5A059]/8 border-r-2 border-transparent'}`}
+                          className={`w-full text-right px-5 py-2.5 transition-all duration-150 ${selectedCategory === 'All' ? 'bg-gold/15 border-r-2 border-gold' : 'hover:bg-gold/8 border-r-2 border-transparent'}`}
                         >
                           <span
-                            className={`block text-[17px] ${selectedCategory === 'All' ? 'text-[#C5A059]' : 'text-stone-300'}`}
+                            className={`block text-[17px] ${selectedCategory === 'All' ? 'text-gold' : 'text-stone-300'}`}
                             dir="rtl"
                             style={{ fontFamily: "'Reem Kufi', sans-serif", fontWeight: 500 }}
                           >
                             كل الشعراء
                           </span>
                           <span
-                            className={`block text-[10px] font-brand-en mt-0.5 ${selectedCategory === 'All' ? 'text-[#C5A059]/70' : 'opacity-40'}`}
+                            className={`block text-[10px] font-brand-en mt-0.5 ${selectedCategory === 'All' ? 'text-gold/70' : 'opacity-40'}`}
                           >
                             All Poets
                           </span>
@@ -3391,7 +2675,7 @@ export default function DiwanApp() {
                         <>
                           {!poetSearch && (
                             <div className="px-4 pt-2 pb-1">
-                              <span className="text-[9px] font-brand-en uppercase tracking-widest text-[#C5A059]/35 font-bold">
+                              <span className="text-[9px] font-brand-en uppercase tracking-widest text-gold/35 font-bold">
                                 Featured
                               </span>
                             </div>
@@ -3411,12 +2695,12 @@ export default function DiwanApp() {
                                 }
                                 closePoetPicker();
                               }}
-                              className={`w-full text-right px-5 py-2 transition-all duration-150 ${selectedCategory === cat.id ? 'bg-[#C5A059]/15 border-r-2 border-[#C5A059]' : 'hover:bg-[#C5A059]/8 border-r-2 border-transparent'}`}
+                              className={`w-full text-right px-5 py-2 transition-all duration-150 ${selectedCategory === cat.id ? 'bg-gold/15 border-r-2 border-gold' : 'hover:bg-gold/8 border-r-2 border-transparent'}`}
                             >
                               <div className="flex items-center justify-between gap-2">
                                 <div className="flex-1 min-w-0">
                                   <span
-                                    className={`block text-[16px] truncate ${selectedCategory === cat.id ? 'text-[#C5A059]' : 'text-stone-300'}`}
+                                    className={`block text-[16px] truncate ${selectedCategory === cat.id ? 'text-gold' : 'text-stone-300'}`}
                                     dir="rtl"
                                     style={{
                                       fontFamily: "'Reem Kufi', sans-serif",
@@ -3426,13 +2710,13 @@ export default function DiwanApp() {
                                     {cat.labelAr}
                                   </span>
                                   <span
-                                    className={`block text-[10px] font-brand-en mt-0.5 ${selectedCategory === cat.id ? 'text-[#C5A059]/70' : 'opacity-40'}`}
+                                    className={`block text-[10px] font-brand-en mt-0.5 ${selectedCategory === cat.id ? 'text-gold/70' : 'opacity-40'}`}
                                   >
                                     {cat.label}
                                   </span>
                                 </div>
                                 {cat.poemCount !== null && cat.poemCount !== undefined && (
-                                  <span className="text-[9px] font-brand-en text-[#C5A059]/40 bg-[#C5A059]/8 px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
+                                  <span className="text-[9px] font-brand-en text-gold/40 bg-gold/8 px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
                                     {cat.poemCount.toLocaleString()}
                                   </span>
                                 )}
@@ -3446,7 +2730,7 @@ export default function DiwanApp() {
                       {filteredPoetList.all.length > 0 && (
                         <>
                           <div className="px-4 pt-2 pb-1">
-                            <span className="text-[9px] font-brand-en uppercase tracking-widest text-[#C5A059]/35 font-bold">
+                            <span className="text-[9px] font-brand-en uppercase tracking-widest text-gold/35 font-bold">
                               {poetSearch ? 'Results' : 'More Poets'}
                             </span>
                           </div>
@@ -3462,12 +2746,12 @@ export default function DiwanApp() {
                                 }
                                 closePoetPicker();
                               }}
-                              className={`w-full text-right px-5 py-2 transition-all duration-150 ${selectedCategory === p.id ? 'bg-[#C5A059]/15 border-r-2 border-[#C5A059]' : 'hover:bg-[#C5A059]/8 border-r-2 border-transparent'}`}
+                              className={`w-full text-right px-5 py-2 transition-all duration-150 ${selectedCategory === p.id ? 'bg-gold/15 border-r-2 border-gold' : 'hover:bg-gold/8 border-r-2 border-transparent'}`}
                             >
                               <div className="flex items-center justify-between gap-2">
                                 <div className="flex-1 min-w-0">
                                   <span
-                                    className={`block text-[16px] truncate ${selectedCategory === p.id ? 'text-[#C5A059]' : 'text-stone-300'}`}
+                                    className={`block text-[16px] truncate ${selectedCategory === p.id ? 'text-gold' : 'text-stone-300'}`}
                                     dir="rtl"
                                     style={{
                                       fontFamily: "'Reem Kufi', sans-serif",
@@ -3477,13 +2761,13 @@ export default function DiwanApp() {
                                     {p.labelAr}
                                   </span>
                                   <span
-                                    className={`block text-[10px] font-brand-en mt-0.5 ${selectedCategory === p.id ? 'text-[#C5A059]/70' : 'opacity-40'}`}
+                                    className={`block text-[10px] font-brand-en mt-0.5 ${selectedCategory === p.id ? 'text-gold/70' : 'opacity-40'}`}
                                   >
                                     {p.label}
                                   </span>
                                 </div>
                                 {p.poemCount > 0 && (
-                                  <span className="text-[9px] font-brand-en text-[#C5A059]/40 bg-[#C5A059]/8 px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
+                                  <span className="text-[9px] font-brand-en text-gold/40 bg-gold/8 px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
                                     {p.poemCount.toLocaleString()}
                                   </span>
                                 )}
@@ -3496,10 +2780,7 @@ export default function DiwanApp() {
                       {/* Loading state */}
                       {!poetsFetched && dynamicPoets.length === 0 && (
                         <div className="px-5 py-3 text-center">
-                          <Loader2
-                            className="inline-block text-[#C5A059]/40 animate-spin"
-                            size={16}
-                          />
+                          <Loader2 className="inline-block text-gold/40 animate-spin" size={16} />
                           <span className="block text-[10px] font-brand-en text-stone-600 mt-1">
                             Loading poets...
                           </span>
@@ -3526,13 +2807,13 @@ export default function DiwanApp() {
 
                     {/* Active filter indicator */}
                     {selectedCategory !== 'All' && !poetSearch && (
-                      <div className="mt-1 pt-1.5 border-t border-[#C5A059]/10 px-4 pb-0.5">
+                      <div className="mt-1 pt-1.5 border-t border-gold/10 px-4 pb-0.5">
                         <button
                           onClick={() => {
                             setSelectedCategory('All');
                             closePoetPicker();
                           }}
-                          className="flex items-center gap-1.5 text-[10px] font-brand-en text-[#C5A059]/50 hover:text-[#C5A059]/80 transition-colors"
+                          className="flex items-center gap-1.5 text-[10px] font-brand-en text-gold/50 hover:text-gold/80 transition-colors"
                         >
                           <X size={10} />
                           Clear filter
@@ -3582,7 +2863,7 @@ export default function DiwanApp() {
                 {selectedCategory !== 'All' && (
                   <span
                     key={selectedCategory}
-                    className="font-amiri text-[11px] px-2.5 py-0.5 rounded-full border border-[#C5A059]/25 text-[#C5A059]/80 bg-[#C5A059]/5"
+                    className="font-amiri text-[11px] px-2.5 py-0.5 rounded-full border border-gold/25 text-gold/80 bg-gold/5"
                     style={{ animation: 'fadeIn 0.3s ease-out' }}
                   >
                     {CATEGORIES.find((c) => c.id === selectedCategory)?.labelAr}
@@ -3651,26 +2932,36 @@ export default function DiwanApp() {
       </div>
 
       {/* Insights Drawer (Mobile bottom sheet) */}
-      <InsightsDrawer
-        isOpen={insightsDrawerOpen}
-        onClose={() => setInsightsDrawerOpen(false)}
-        isInterpreting={isInterpreting}
-        insightParts={insightParts}
-        interpretation={interpretation}
-        showTranslation={showTranslation}
-        current={current}
-        theme={theme}
-        darkMode={darkMode}
-      />
+      <AnimatePresence>
+        {insightsDrawerOpen && (
+          <InsightsDrawer
+            key="insights-drawer"
+            isOpen={insightsDrawerOpen}
+            onClose={() => setInsightsDrawerOpen(false)}
+            isInterpreting={isInterpreting}
+            insightParts={insightParts}
+            interpretation={interpretation}
+            showTranslation={showTranslation}
+            current={current}
+            theme={theme}
+            darkMode={darkMode}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Auth Modal */}
-      <AuthModal
-        isOpen={showAuthModal}
-        onClose={() => useModalStore.getState().closeAuth()}
-        onSignInWithGoogle={handleSignInWithGoogle}
-        theme={theme}
-        message={authModalMessage}
-      />
+      <AnimatePresence>
+        {showAuthModal && (
+          <AuthModal
+            key="auth-modal"
+            isOpen={showAuthModal}
+            onClose={() => useModalStore.getState().closeAuth()}
+            onSignInWithGoogle={handleSignInWithGoogle}
+            theme={theme}
+            message={authModalMessage}
+          />
+        )}
+      </AnimatePresence>
 
       {/* Saved Poems View */}
       <SavedPoemsView
@@ -3697,8 +2988,8 @@ export default function DiwanApp() {
           <span
             className={`relative w-5 h-5 rounded-full flex items-center justify-center transition-all duration-200 ${
               darkMode
-                ? 'bg-stone-900/60 border border-[#C5A059]/20 text-stone-500 hover:text-[#C5A059] hover:border-[#C5A059]/40'
-                : 'bg-white/50 border border-[#8B7355]/20 text-stone-400 hover:text-[#8B7355] hover:border-[#8B7355]/40'
+                ? 'bg-stone-900/60 border border-gold/20 text-stone-500 hover:text-gold hover:border-gold/40'
+                : 'bg-white/50 border border-gold/20 text-stone-400 hover:text-gold hover:border-gold/40'
             } backdrop-blur-md`}
           >
             <Paintbrush size={9} />
@@ -3752,25 +3043,37 @@ export default function DiwanApp() {
         onToggleDebugLogs={() => useUIStore.getState().toggleDebugLogs()}
       />
 
-      {/* Splash / Onboarding Screen */}
-      <SplashScreen
-        isOpen={showSplash}
-        onDismiss={() => {
-          useModalStore.getState().dismissSplash();
-          try {
-            localStorage.setItem('hasSeenOnboarding', 'true');
-          } catch {}
-        }}
-        showOnboarding={showOnboarding}
-        theme={theme}
-      />
+      {/* Splash / Onboarding Screen (lazy-loaded, deferred from initial bundle) */}
+      <AnimatePresence>
+        {showSplash && (
+          <Suspense fallback={null}>
+            <SplashScreen
+              key="splash-screen"
+              isOpen={showSplash}
+              onDismiss={() => {
+                useModalStore.getState().dismissSplash();
+                try {
+                  localStorage.setItem('hasSeenOnboarding', 'true');
+                } catch {}
+              }}
+              showOnboarding={showOnboarding}
+              theme={theme}
+            />
+          </Suspense>
+        )}
+      </AnimatePresence>
 
       {/* Keyboard Shortcut Help */}
-      <ShortcutHelp
-        isOpen={showShortcutHelp}
-        onClose={() => useModalStore.getState().closeShortcutHelp()}
-        theme={theme}
-      />
+      <AnimatePresence>
+        {showShortcutHelp && (
+          <ShortcutHelp
+            key="shortcut-help"
+            isOpen={showShortcutHelp}
+            onClose={() => useModalStore.getState().closeShortcutHelp()}
+            theme={theme}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

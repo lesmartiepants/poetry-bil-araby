@@ -9,18 +9,18 @@ const DatabaseToggle = ({ useDatabase, onToggle }) => {
     <div className="flex flex-col items-center gap-1 min-w-[56px]" data-testid="database-toggle">
       <button
         onClick={onToggle}
-        className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-[#C5A059]/12 hover:scale-105"
+        className="min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:bg-gold/12 hover:scale-105"
         aria-label={useDatabase ? 'Switch to LLM Mode' : 'Switch to Database Mode'}
         data-testid="database-toggle-button"
       >
         {useDatabase ? (
-          <Library size={21} className="text-[#C5A059]" data-testid="library-icon" />
+          <Library size={21} className="text-gold" data-testid="library-icon" />
         ) : (
-          <Sparkles size={21} className="text-[#C5A059]" data-testid="sparkles-icon" />
+          <Sparkles size={21} className="text-gold" data-testid="sparkles-icon" />
         )}
       </button>
       <span
-        className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-[#C5A059]"
+        className="font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap text-gold"
         data-testid="mode-label"
       >
         {useDatabase ? 'Local' : 'Web'}

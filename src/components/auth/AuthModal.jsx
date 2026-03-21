@@ -1,19 +1,28 @@
 import { X, Feather } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 const AuthModal = ({ isOpen, onClose, onSignInWithGoogle, theme, message }) => {
   if (!isOpen) return null;
 
   return (
-    <div
+    <motion.div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       style={{
         background:
           'radial-gradient(ellipse at center, rgba(197,160,89,0.08) 0%, rgba(0,0,0,0.7) 100%)',
       }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
       onClick={onClose}
     >
-      <div
+      <motion.div
         className="relative w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl"
+        initial={{ scale: 0.95, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.95, opacity: 0 }}
+        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
         style={{
           background: 'linear-gradient(145deg, rgba(20,18,15,0.97) 0%, rgba(12,12,14,0.98) 100%)',
           border: '1px solid rgba(197,160,89,0.25)',
@@ -40,7 +49,7 @@ const AuthModal = ({ isOpen, onClose, onSignInWithGoogle, theme, message }) => {
 
           {/* Greeting */}
           <div className="text-center mb-6">
-            <h2 className="font-amiri text-3xl mb-2" style={{ color: '#C5A059' }}>
+            <h2 className="font-amiri text-3xl mb-2" style={{ color: 'var(--gold)' }}>
               مرحباً
             </h2>
             <p className="font-brand-en text-sm text-stone-400 leading-relaxed">
@@ -50,9 +59,9 @@ const AuthModal = ({ isOpen, onClose, onSignInWithGoogle, theme, message }) => {
 
           {/* Decorative divider */}
           <div className="flex items-center gap-3 mb-6">
-            <div className="flex-1 h-px bg-gradient-to-r from-transparent to-[#C5A059]/30" />
+            <div className="flex-1 h-px bg-gradient-to-r from-transparent to-gold/30" />
             <Feather size={12} style={{ color: 'rgba(197,160,89,0.4)' }} />
-            <div className="flex-1 h-px bg-gradient-to-l from-transparent to-[#C5A059]/30" />
+            <div className="flex-1 h-px bg-gradient-to-l from-transparent to-gold/30" />
           </div>
 
           {/* Google sign-in button */}
@@ -106,8 +115,8 @@ const AuthModal = ({ isOpen, onClose, onSignInWithGoogle, theme, message }) => {
             background: 'linear-gradient(90deg, transparent, rgba(197,160,89,0.3), transparent)',
           }}
         />
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 };
 

@@ -12,30 +12,30 @@ export const THEME = {
     brandBg: 'bg-indigo-500/10',
     brandBorder: 'border-indigo-500/20',
     btnPrimary: 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-indigo-500/40',
-    titleColor: 'text-[#C5A059]', // Antique Gold
-    poetColor: 'text-[#C5A059]', // Unified Gold
+    titleColor: 'text-gold',
+    poetColor: 'text-gold',
     controlIcon: 'text-stone-300 hover:text-white',
-    gold: '#C5A059', // Raw gold hex for inline styles & template literals
-    goldText: 'text-[#C5A059]', // Tailwind gold text
-    goldHoverBg: 'hover:bg-[#C5A059]/12', // Gold hover background (buttons)
-    goldHoverBg15: 'hover:bg-[#C5A059]/15', // Gold hover background (sidebar)
-    goldActiveBg: 'bg-[#C5A059]/15', // Gold active/selected background
-    goldBorder: 'border-[#C5A059]', // Gold solid border (selected state)
-    goldBorderMuted: 'border-[#C5A059]/20', // Gold muted border (dividers)
-    goldBorderSubtle: 'border-[#C5A059]/30', // Gold subtle border (hover)
-    goldHoverBorderSubtle: 'hover:border-[#C5A059]/30', // Gold hover border
-    goldBorderAccent: 'border-[#C5A059]/40', // Gold border accent (sidebar edges)
-    goldBorderStrong: 'border-[#C5A059]/70', // Gold border strong (hover state)
-    goldHoverBorderStrong: 'hover:border-[#C5A059]/70', // Gold hover border strong
-    goldBg10: 'bg-[#C5A059]/10', // Gold background 10% (selected items)
-    goldBg20: 'border-[#C5A059]/20', // Gold background 20% (badge border)
-    goldTextMuted: 'text-[#C5A059]/60', // Gold muted text
-    error: 'text-red-400', // Error text
-    errorBg: 'bg-red-600/80', // Error background (bug report button)
-    debug: 'bg-black/60 border-stone-800 text-stone-300', // Debug panel
-    debugInput: 'bg-stone-900/80 border-stone-700 text-stone-200 placeholder:text-stone-500', // Debug input
-    debugDivider: 'border-stone-700', // Debug panel divider
-    kbd: 'bg-stone-800 text-stone-300 border-stone-700', // Keyboard shortcut keys
+    gold: 'var(--gold)',
+    goldText: 'text-gold',
+    goldHoverBg: 'hover:bg-gold/12',
+    goldHoverBg15: 'hover:bg-gold/15',
+    goldActiveBg: 'bg-gold/15',
+    goldBorder: 'border-gold',
+    goldBorderMuted: 'border-gold/20',
+    goldBorderSubtle: 'border-gold/30',
+    goldHoverBorderSubtle: 'hover:border-gold/30',
+    goldBorderAccent: 'border-gold/40',
+    goldBorderStrong: 'border-gold/70',
+    goldHoverBorderStrong: 'hover:border-gold/70',
+    goldBg10: 'bg-gold/10',
+    goldBg20: 'border-gold/20',
+    goldTextMuted: 'text-gold/60',
+    error: 'text-red-400',
+    errorBg: 'bg-red-600/80',
+    debug: 'bg-black/60 border-stone-800 text-stone-300',
+    debugInput: 'bg-stone-900/80 border-stone-700 text-stone-200 placeholder:text-stone-500',
+    debugDivider: 'border-stone-700',
+    kbd: 'bg-stone-800 text-stone-300 border-stone-700',
   },
   light: {
     bg: 'bg-[#FDFCF8]',
@@ -50,30 +50,30 @@ export const THEME = {
     brandBg: 'bg-indigo-500/5',
     brandBorder: 'border-indigo-500/10',
     btnPrimary: 'bg-gradient-to-br from-indigo-600 to-purple-700 text-white shadow-indigo-200',
-    titleColor: 'text-[#8B7355]', // Antique Gold (rich, warm tone - 5.2:1 contrast)
-    poetColor: 'text-[#8B7355]', // Antique Gold (rich, warm tone - 5.2:1 contrast)
+    titleColor: 'text-gold',
+    poetColor: 'text-gold',
     controlIcon: 'text-indigo-950/90 hover:text-black',
-    gold: '#8B7355', // Raw gold hex for inline styles & template literals
-    goldText: 'text-[#8B7355]', // Tailwind gold text
-    goldHoverBg: 'hover:bg-[#8B7355]/12', // Gold hover background (buttons)
-    goldHoverBg15: 'hover:bg-[#8B7355]/15', // Gold hover background (sidebar)
-    goldActiveBg: 'bg-[#8B7355]/15', // Gold active/selected background
-    goldBorder: 'border-[#8B7355]', // Gold solid border (selected state)
-    goldBorderMuted: 'border-[#8B7355]/20', // Gold muted border (dividers)
-    goldBorderSubtle: 'border-[#8B7355]/30', // Gold subtle border (hover)
-    goldHoverBorderSubtle: 'hover:border-[#8B7355]/30', // Gold hover border
-    goldBorderAccent: 'border-[#8B7355]/40', // Gold border accent (sidebar edges)
-    goldBorderStrong: 'border-[#8B7355]/70', // Gold border strong (hover state)
-    goldHoverBorderStrong: 'hover:border-[#8B7355]/70', // Gold hover border strong
-    goldBg10: 'bg-[#8B7355]/10', // Gold background 10% (selected items)
-    goldBg20: 'border-[#8B7355]/20', // Gold background 20% (badge border)
-    goldTextMuted: 'text-[#8B7355]/60', // Gold muted text
-    error: 'text-red-400', // Error text (same in light for visibility)
-    errorBg: 'bg-red-600/80', // Error background (bug report button)
-    debug: 'bg-white/60 border-stone-200 text-stone-700', // Debug panel
-    debugInput: 'bg-white/80 border-stone-300 text-stone-800 placeholder:text-stone-400', // Debug input
-    debugDivider: 'border-stone-300', // Debug panel divider
-    kbd: 'bg-stone-200 text-stone-700 border-stone-300', // Keyboard shortcut keys
+    gold: 'var(--gold)',
+    goldText: 'text-gold',
+    goldHoverBg: 'hover:bg-gold/12',
+    goldHoverBg15: 'hover:bg-gold/15',
+    goldActiveBg: 'bg-gold/15',
+    goldBorder: 'border-gold',
+    goldBorderMuted: 'border-gold/20',
+    goldBorderSubtle: 'border-gold/30',
+    goldHoverBorderSubtle: 'hover:border-gold/30',
+    goldBorderAccent: 'border-gold/40',
+    goldBorderStrong: 'border-gold/70',
+    goldHoverBorderStrong: 'hover:border-gold/70',
+    goldBg10: 'bg-gold/10',
+    goldBg20: 'border-gold/20',
+    goldTextMuted: 'text-gold/60',
+    error: 'text-red-400',
+    errorBg: 'bg-red-600/80',
+    debug: 'bg-white/60 border-stone-200 text-stone-700',
+    debugInput: 'bg-white/80 border-stone-300 text-stone-800 placeholder:text-stone-400',
+    debugDivider: 'border-stone-300',
+    kbd: 'bg-stone-200 text-stone-700 border-stone-300',
   },
 };
 

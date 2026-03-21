@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Feather, ArrowRight } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { BRAND } from '../constants/design.js';
 import { THEME, GOLD } from '../constants/theme.js';
 
@@ -322,7 +323,12 @@ const SplashScreen = ({ isOpen, onDismiss, showOnboarding, theme }) => {
   // This prevents React from unmounting/remounting the tree when phase changes,
   // which avoids removeChild errors from imperatively-added star DOM nodes.
   return (
-    <>
+    <motion.div
+      initial={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.6 }}
+      style={{ display: 'contents' }}
+    >
       <style>{splashStyles}</style>
 
       {/* DESERT SPLASH (phase 0) — hidden via display:none when phase >= 1 */}
@@ -755,7 +761,7 @@ const SplashScreen = ({ isOpen, onDismiss, showOnboarding, theme }) => {
           }}
         />
       </div>
-    </>
+    </motion.div>
   );
 };
 

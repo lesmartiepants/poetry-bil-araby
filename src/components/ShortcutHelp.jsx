@@ -1,4 +1,5 @@
 import { X } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { DESIGN } from '../constants/design.js';
 import { THEME } from '../constants/theme.js';
 
@@ -18,14 +19,22 @@ const ShortcutHelp = ({ isOpen, onClose, theme }) => {
   const isDark = theme === THEME.dark;
 
   return (
-    <div
+    <motion.div
       className="fixed inset-0 z-[55] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.2 }}
       onClick={onClose}
       role="dialog"
       aria-label="Keyboard shortcuts"
     >
-      <div
+      <motion.div
         className={`relative w-full max-w-sm ${theme.glass} ${theme.border} border ${DESIGN.radius} p-8 shadow-2xl`}
+        initial={{ scale: 0.95, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.95, opacity: 0 }}
+        transition={{ type: 'spring', damping: 25, stiffness: 300 }}
         onClick={(e) => e.stopPropagation()}
       >
         <button
@@ -55,8 +64,8 @@ const ShortcutHelp = ({ isOpen, onClose, theme }) => {
             </div>
           ))}
         </div>
-      </div>
-    </div>
+      </motion.div>
+    </motion.div>
   );
 };
 

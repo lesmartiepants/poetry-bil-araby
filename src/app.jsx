@@ -28,6 +28,7 @@ import { repairAndParseJSON } from './utils/jsonRepair';
 import seedPoems from './data/seed-poems.json';
 import { FEATURES, DESIGN, BRAND, THEME, GOLD, CATEGORIES, FONTS } from './constants/index.js';
 import { usePoemStore } from './stores/poemStore';
+import { useAudioStore } from './stores/audioStore';
 import { getRecentSeenIds, markPoemSeen, pruneSeenPoems } from './utils/seenPoems.js';
 import { transliterate } from './utils/transliterate.js';
 import { filterPoemsByCategory } from './utils/filterPoems.js';
@@ -830,10 +831,15 @@ export default function DiwanApp() {
   const poetSearchRef = useRef(null);
   const [darkMode, setDarkMode] = useState(true);
   const [currentFont, setCurrentFont] = useState('Amiri');
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
-  const [audioUrl, setAudioUrl] = useState(null);
-  const [audioError, setAudioError] = useState(null);
+  // ── Audio store (Zustand) ──
+  const isPlaying = useAudioStore((s) => s.isPlaying);
+  const setIsPlaying = useAudioStore((s) => s.setPlaying);
+  const isGeneratingAudio = useAudioStore((s) => s.isGenerating);
+  const setIsGeneratingAudio = useAudioStore((s) => s.setGenerating);
+  const audioUrl = useAudioStore((s) => s.url);
+  const setAudioUrl = useAudioStore((s) => s.setUrl);
+  const audioError = useAudioStore((s) => s.error);
+  const setAudioError = useAudioStore((s) => s.setError);
   const hasAutoLoaded = useRef(false);
   // When the selectedCategory effect wants to fetch but isFetching is already true,
   // it stores the category here. A retry effect fires once isFetching drops to false.

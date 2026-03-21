@@ -224,25 +224,7 @@ export default function DiwanApp() {
   // future changes that might empty the array (e.g., setPoems([]) or filter edge cases)
   const current = filtered[currentIndex] || filtered[0] || poems[0] || null;
 
-  const addLog = (label, msg, type = 'info') => {
-    const now = performance.now();
-    const time = new Date().toLocaleTimeString([], {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-    });
-    const currentLogs = useUIStore.getState().logs;
-    const t0 = currentLogs.length > 0 ? currentLogs[0].ts : now;
-    const relSec = ((now - t0) / 1000).toFixed(1);
-    useUIStore.setState((s) => ({
-      logs: [...s.logs, { label, msg: String(msg), type, time, ts: now, rel: `+${relSec}s` }],
-    }));
-    if (FEATURES.logging) {
-      const logFn =
-        type === 'error' ? console.error : type === 'success' ? console.info : console.log;
-      logFn(`[${label}] ${msg}`);
-    }
-  };
+  const addLog = useUIStore.getState().addLog;
 
   // Track poem view time (emit 'view' event after 3s on same poem)
   useEffect(() => {
@@ -495,7 +477,7 @@ export default function DiwanApp() {
       }
     };
     loadPoets();
-    // addLog is functionally stable (uses only useUIStore and module constants)
+    // addLog is a stable reference from useUIStore.getState()
     // even though its reference changes per render — poetsFetched gate prevents
     // repeated fetches regardless.
   }, [poetPickerOpen, poetsFetched, addLog]);

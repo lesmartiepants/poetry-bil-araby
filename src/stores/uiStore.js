@@ -46,12 +46,26 @@ export const useUIStore = create((set, get) => ({
   toggleTransliteration: () => set((s) => ({ showTransliteration: !s.showTransliteration })),
   toggleDebugLogs: () => set((s) => ({ showDebugLogs: !s.showDebugLogs })),
 
-  addLog: (label, message, level) =>
+  addLog: (label, msg, type = 'info') => {
+    const now = performance.now();
+    const time = new Date().toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    });
     set((s) => {
-      const entry = { label, message, level, timestamp: Date.now() };
+      const t0 = s.logs.length > 0 ? s.logs[0].ts : now;
+      const relSec = ((now - t0) / 1000).toFixed(1);
+      const entry = { label, msg: String(msg), type, time, ts: now, rel: `+${relSec}s` };
       const next = [...s.logs, entry];
       return { logs: next.length > MAX_LOGS ? next.slice(-MAX_LOGS) : next };
-    }),
+    });
+    if (FEATURES.logging) {
+      const logFn =
+        type === 'error' ? console.error : type === 'success' ? console.info : console.log;
+      logFn(`[${label}] ${msg}`);
+    }
+  },
 
   clearLogs: () => set({ logs: [] }),
 

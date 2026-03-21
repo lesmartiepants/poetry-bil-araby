@@ -366,12 +366,14 @@ describe('uiStore', () => {
       expect(useUIStore.getState().showTransliteration).toBe(true);
     });
 
-    it('addLog appends a log entry', () => {
+    it('addLog appends a log entry with rich format', () => {
       useUIStore.getState().addLog('Test', 'message', 'info');
       const logs = useUIStore.getState().logs;
       expect(logs).toHaveLength(1);
-      expect(logs[0]).toMatchObject({ label: 'Test', message: 'message', level: 'info' });
-      expect(logs[0].timestamp).toBeDefined();
+      expect(logs[0]).toMatchObject({ label: 'Test', msg: 'message', type: 'info' });
+      expect(logs[0].ts).toBeDefined();
+      expect(logs[0].time).toBeDefined();
+      expect(logs[0].rel).toBeDefined();
     });
 
     it('addLog caps at 200 entries', () => {

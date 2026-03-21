@@ -27,6 +27,7 @@ import { parseInsight } from './utils/insightParser';
 import { repairAndParseJSON } from './utils/jsonRepair';
 import seedPoems from './data/seed-poems.json';
 import { FEATURES, DESIGN, BRAND, THEME, GOLD, CATEGORIES, FONTS } from './constants/index.js';
+import { usePoemStore } from './stores/poemStore';
 import { getRecentSeenIds, markPoemSeen, pruneSeenPoems } from './utils/seenPoems.js';
 import { transliterate } from './utils/transliterate.js';
 import { filterPoemsByCategory } from './utils/filterPoems.js';
@@ -750,68 +751,89 @@ export default function DiwanApp() {
   const volumePulseRef = useRef(null);
 
   const [headerOpacity, setHeaderOpacity] = useState(0);
-  const [poems, setPoems] = useState(() => {
+  // ── Poem store (Zustand) ──
+  const poems = usePoemStore((s) => s.poems);
+  const setPoems = usePoemStore((s) => s.setPoems);
+  const currentIndex = usePoemStore((s) => s.currentIndex);
+  const setCurrentIndex = usePoemStore((s) => s.setCurrentIndex);
+  const selectedCategory = usePoemStore((s) => s.selectedCategory);
+  const setSelectedCategory = usePoemStore((s) => s.setCategory);
+  const dynamicPoets = usePoemStore((s) => s.dynamicPoets);
+  const setDynamicPoets = usePoemStore((s) => s.setDynamicPoets);
+  const poetSearch = usePoemStore((s) => s.poetSearch);
+  const setPoetSearch = usePoemStore((s) => s.setPoetSearch);
+  const poetsFetched = usePoemStore((s) => s.poetsFetched);
+  const setPoetsFetched = usePoemStore((s) => s.setPoetsFetched);
+  const useDatabase = usePoemStore((s) => s.useDatabase);
+  const setUseDatabase = usePoemStore((s) => s.setUseDatabase);
+  const isFetching = usePoemStore((s) => s.isFetching);
+  const setIsFetching = usePoemStore((s) => s.setFetching);
+  const autoExplainPending = usePoemStore((s) => s.autoExplainPending);
+  const setAutoExplainPending = usePoemStore((s) => s.setAutoExplain);
+  const interpretation = usePoemStore((s) => s.interpretation);
+  const setInterpretation = usePoemStore((s) => s.setInterpretation);
+  const isInterpreting = usePoemStore((s) => s.isInterpreting);
+  const setIsInterpreting = usePoemStore((s) => s.setInterpreting);
+
+  // Initialize poems once (replaces useState lazy initializer)
+  const poemStoreInit = useRef(false);
+  if (!poemStoreInit.current) {
+    poemStoreInit.current = true;
+    let initialPoems = null;
     // 1. Restore from OAuth redirect (avoids flash of seed poem)
     try {
       const stashed = sessionStorage.getItem('pendingSavePoem');
       if (stashed) {
         const poem = JSON.parse(stashed);
-        if (poem?.arabic) return [poem];
+        if (poem?.arabic) initialPoems = [poem];
       }
     } catch {}
-
     // 2. Restore pre-fetched poem from last visit (with 7-day TTL)
-    try {
-      const raw = localStorage.getItem('qafiyah_nextPoem');
-      if (raw) {
-        const { poem, storedAt } = JSON.parse(raw);
-        localStorage.removeItem('qafiyah_nextPoem');
-        const age = Date.now() - (storedAt || 0);
-        if (poem?.arabic && age < 7 * 24 * 60 * 60 * 1000) return [poem];
-      }
-    } catch {}
-
-    // 3. First-ever visit: pick from seed pool
-    if (seedPoems?.length > 0) {
-      const idx = Math.floor(Math.random() * seedPoems.length);
-      return [seedPoems[idx]];
+    if (!initialPoems) {
+      try {
+        const raw = localStorage.getItem('qafiyah_nextPoem');
+        if (raw) {
+          const { poem, storedAt } = JSON.parse(raw);
+          localStorage.removeItem('qafiyah_nextPoem');
+          const age = Date.now() - (storedAt || 0);
+          if (poem?.arabic && age < 7 * 24 * 60 * 60 * 1000) initialPoems = [poem];
+        }
+      } catch {}
     }
+    // 3. First-ever visit: pick from seed pool
+    if (!initialPoems && seedPoems?.length > 0) {
+      const idx = Math.floor(Math.random() * seedPoems.length);
+      initialPoems = [seedPoems[idx]];
+    }
+    // 4. Ultimate fallback
+    if (!initialPoems) {
+      initialPoems = [
+        {
+          id: 1,
+          poet: 'Nizar Qabbani',
+          poetArabic: 'نزار قباني',
+          title: 'My Beloved',
+          titleArabic: 'حبيبتي',
+          arabic:
+            'حُبُّكِ يا عَمِيقَةَ العَيْنَيْنِ\nتَطَرُّفٌ .. تَصَوُّفٌ .. عِبَادَة\nحُبُّكِ مِثْلَ المَوْتِ وَالوِلَادَة\nصَعْبٌ بِأَنْ يُعَادَ مَرَّتَيْنِ',
+          english:
+            'Your love, O woman of deep eyes,\nIs radicalism… is Sufism… is worship.\nYour love is like Death and like Birth—\nIt is difficult for it to be repeated twice.',
+          tags: ['Modern', 'Romantic', 'Ghazal'],
+        },
+      ];
+    }
+    usePoemStore.getState().setPoems(initialPoems);
+  }
 
-    // 4. Ultimate fallback (same as original default)
-    return [
-      {
-        id: 1,
-        poet: 'Nizar Qabbani',
-        poetArabic: 'نزار قباني',
-        title: 'My Beloved',
-        titleArabic: 'حبيبتي',
-        arabic:
-          'حُبُّكِ يا عَمِيقَةَ العَيْنَيْنِ\nتَطَرُّفٌ .. تَصَوُّفٌ .. عِبَادَة\nحُبُّكِ مِثْلَ المَوْتِ وَالوِلَادَة\nصَعْبٌ بِأَنْ يُعَادَ مَرَّتَيْنِ',
-        english:
-          'Your love, O woman of deep eyes,\nIs radicalism… is Sufism… is worship.\nYour love is like Death and like Birth—\nIt is difficult for it to be repeated twice.',
-        tags: ['Modern', 'Romantic', 'Ghazal'],
-      },
-    ];
-  });
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [selectedCategory, setSelectedCategory] = useState('All');
   const [poetPickerOpen, setPoetPickerOpen] = useState(false);
   const [poetPickerClosing, setPoetPickerClosing] = useState(false);
-  const [dynamicPoets, setDynamicPoets] = useState([]);
-  const [poetSearch, setPoetSearch] = useState('');
-  const [poetsFetched, setPoetsFetched] = useState(false);
   const poetSearchRef = useRef(null);
   const [darkMode, setDarkMode] = useState(true);
   const [currentFont, setCurrentFont] = useState('Amiri');
-  const [useDatabase, setUseDatabase] = useState(FEATURES.database);
   const [isPlaying, setIsPlaying] = useState(false);
   const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
   const [audioUrl, setAudioUrl] = useState(null);
   const [audioError, setAudioError] = useState(null);
-  const [interpretation, setInterpretation] = useState(null);
-  const [isInterpreting, setIsInterpreting] = useState(false);
-  const [isFetching, setIsFetching] = useState(false);
-  const [autoExplainPending, setAutoExplainPending] = useState(false);
   const hasAutoLoaded = useRef(false);
   // When the selectedCategory effect wants to fetch but isFetching is already true,
   // it stores the category here. A retry effect fires once isFetching drops to false.

@@ -51,6 +51,14 @@ describe('poemStore', () => {
     it('starts with poetsFetched false', () => {
       expect(usePoemStore.getState().poetsFetched).toBe(false);
     });
+
+    it('starts with empty dynamicPoets', () => {
+      expect(usePoemStore.getState().dynamicPoets).toEqual([]);
+    });
+
+    it('starts with empty poetSearch', () => {
+      expect(usePoemStore.getState().poetSearch).toBe('');
+    });
   });
 
   describe('actions', () => {
@@ -115,10 +123,38 @@ describe('poemStore', () => {
       expect(state.isInterpreting).toBe(false);
     });
 
+    it('setDynamicPoets updates dynamicPoets', () => {
+      const poets = ['Nizar Qabbani', 'Mahmoud Darwish'];
+      usePoemStore.getState().setDynamicPoets(poets);
+      expect(usePoemStore.getState().dynamicPoets).toEqual(poets);
+    });
+
+    it('setPoetSearch updates poetSearch', () => {
+      usePoemStore.getState().setPoetSearch('نزار');
+      expect(usePoemStore.getState().poetSearch).toBe('نزار');
+    });
+
+    it('setPoetsFetched updates poetsFetched', () => {
+      usePoemStore.getState().setPoetsFetched(true);
+      expect(usePoemStore.getState().poetsFetched).toBe(true);
+    });
+
+    it('setUseDatabase updates useDatabase', () => {
+      usePoemStore.getState().setUseDatabase(false);
+      expect(usePoemStore.getState().useDatabase).toBe(false);
+    });
+
     it('setPoems replaces the poems array', () => {
       const poems = [{ id: 1 }, { id: 2 }];
       usePoemStore.getState().setPoems(poems);
       expect(usePoemStore.getState().poems).toBe(poems);
+    });
+
+    it('setPoems accepts a functional updater', () => {
+      usePoemStore.getState().setPoems([{ id: 1 }]);
+      usePoemStore.getState().setPoems((prev) => [...prev, { id: 2 }]);
+      expect(usePoemStore.getState().poems).toHaveLength(2);
+      expect(usePoemStore.getState().poems[1].id).toBe(2);
     });
 
     it('reset restores all defaults', () => {

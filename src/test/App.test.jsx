@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import DiwanApp from '../app.jsx';
+import { usePoemStore } from '../stores/poemStore';
 import {
   createMockGeminiResponse,
   mockSuccessfulFetch,
@@ -45,6 +46,15 @@ function mockAutoLoadFetch() {
 describe('DiwanApp', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Reset selection state between tests (poems are re-initialized by each component mount)
+    const s = usePoemStore.getState();
+    s.setCategory('All');
+    s.setFetching(false);
+    s.setAutoExplain(false);
+    s.setDynamicPoets([]);
+    s.setPoetSearch('');
+    s.setPoetsFetched(false);
+    s.resetInterpretation();
   });
 
   // ── Feature 1: Poem loads with correct structure ──────────────────────

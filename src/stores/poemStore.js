@@ -9,6 +9,8 @@ const initialState = {
   autoExplainPending: false,
   useDatabase: FEATURES.database,
   poetsFetched: false,
+  dynamicPoets: [],
+  poetSearch: '',
   interpretation: null,
   isInterpreting: false,
 };
@@ -22,11 +24,18 @@ export const usePoemStore = create((set) => ({
       currentIndex: state.poems.length,
     })),
 
-  setPoems: (poems) => set({ poems }),
+  setPoems: (poemsOrFn) =>
+    set((state) => ({
+      poems: typeof poemsOrFn === 'function' ? poemsOrFn(state.poems) : poemsOrFn,
+    })),
   setCurrentIndex: (currentIndex) => set({ currentIndex }),
   setCategory: (selectedCategory) => set({ selectedCategory }),
   setFetching: (isFetching) => set({ isFetching }),
+  setUseDatabase: (useDatabase) => set({ useDatabase }),
   setAutoExplain: (autoExplainPending) => set({ autoExplainPending }),
+  setDynamicPoets: (dynamicPoets) => set({ dynamicPoets }),
+  setPoetSearch: (poetSearch) => set({ poetSearch }),
+  setPoetsFetched: (poetsFetched) => set({ poetsFetched }),
   setInterpretation: (interpretation) => set({ interpretation }),
   setInterpreting: (isInterpreting) => set({ isInterpreting }),
 

@@ -11,11 +11,19 @@ function computeOnboarding() {
   }
 }
 
+function computeSplash() {
+  try {
+    return !localStorage.getItem('hasSeenOnboarding');
+  } catch {
+    return true;
+  }
+}
+
 const initialState = {
   authModal: false,
   authMessage: '',
   savedPoems: false,
-  splash: true,
+  splash: computeSplash(),
   insightsDrawer: false,
   shortcutHelp: false,
   poetPicker: false,
@@ -66,5 +74,5 @@ export const useModalStore = create((set) => ({
       poetPicker: false,
     }),
 
-  reset: () => set({ ...initialState, onboarding: computeOnboarding() }),
+  reset: () => set({ ...initialState, splash: computeSplash(), onboarding: computeOnboarding() }),
 }));

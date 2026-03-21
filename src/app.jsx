@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo, lazy, Suspense } from 'react';
+import { useEffect, useRef, useMemo, lazy, Suspense } from 'react';
 import { useLocation, useRoute } from 'wouter';
 import { AnimatePresence } from 'framer-motion';
 import {
@@ -27,8 +27,11 @@ import {
 import { INSIGHTS_SYSTEM_PROMPT, DISCOVERY_SYSTEM_PROMPT, getTTSContent } from './prompts';
 import { parseInsight } from './utils/insightParser';
 import { repairAndParseJSON } from './utils/jsonRepair';
-import seedPoems from './data/seed-poems.json';
 import { FEATURES, DESIGN, BRAND, THEME, GOLD, CATEGORIES, FONTS } from './constants/index.js';
+import { usePoemStore } from './stores/poemStore';
+import { useAudioStore } from './stores/audioStore';
+import { useUIStore } from './stores/uiStore';
+import { useModalStore } from './stores/modalStore';
 import { getRecentSeenIds, markPoemSeen, pruneSeenPoems } from './utils/seenPoems.js';
 import { transliterate } from './utils/transliterate.js';
 import { filterPoemsByCategory } from './utils/filterPoems.js';
@@ -95,70 +98,53 @@ export default function DiwanApp() {
   const sourceNodeRef = useRef(null);
   const volumePulseRef = useRef(null);
 
-  const [headerOpacity, setHeaderOpacity] = useState(0);
-  const [poems, setPoems] = useState(() => {
-    // 1. Restore from OAuth redirect (avoids flash of seed poem)
-    try {
-      const stashed = sessionStorage.getItem('pendingSavePoem');
-      if (stashed) {
-        const poem = JSON.parse(stashed);
-        if (poem?.arabic) return [poem];
-      }
-    } catch {}
+  const headerOpacity = useUIStore((s) => s.headerOpacity);
+  const setHeaderOpacity = useUIStore((s) => s.setHeaderOpacity);
+  // ── Poem store (Zustand) ──
+  const poems = usePoemStore((s) => s.poems);
+  const setPoems = usePoemStore((s) => s.setPoems);
+  const currentIndex = usePoemStore((s) => s.currentIndex);
+  const setCurrentIndex = usePoemStore((s) => s.setCurrentIndex);
+  const selectedCategory = usePoemStore((s) => s.selectedCategory);
+  const setSelectedCategory = usePoemStore((s) => s.setCategory);
+  const dynamicPoets = usePoemStore((s) => s.dynamicPoets);
+  const setDynamicPoets = usePoemStore((s) => s.setDynamicPoets);
+  const poetSearch = usePoemStore((s) => s.poetSearch);
+  const setPoetSearch = usePoemStore((s) => s.setPoetSearch);
+  const poetsFetched = usePoemStore((s) => s.poetsFetched);
+  const setPoetsFetched = usePoemStore((s) => s.setPoetsFetched);
+  const useDatabase = usePoemStore((s) => s.useDatabase);
+  const setUseDatabase = usePoemStore((s) => s.setUseDatabase);
+  const isFetching = usePoemStore((s) => s.isFetching);
+  const setIsFetching = usePoemStore((s) => s.setFetching);
+  const autoExplainPending = usePoemStore((s) => s.autoExplainPending);
+  const setAutoExplainPending = usePoemStore((s) => s.setAutoExplain);
+  const interpretation = usePoemStore((s) => s.interpretation);
+  const setInterpretation = usePoemStore((s) => s.setInterpretation);
+  const isInterpreting = usePoemStore((s) => s.isInterpreting);
+  const setIsInterpreting = usePoemStore((s) => s.setInterpreting);
 
-    // 2. Restore pre-fetched poem from last visit (with 7-day TTL)
-    try {
-      const raw = localStorage.getItem('qafiyah_nextPoem');
-      if (raw) {
-        const { poem, storedAt } = JSON.parse(raw);
-        localStorage.removeItem('qafiyah_nextPoem');
-        const age = Date.now() - (storedAt || 0);
-        if (poem?.arabic && age < 7 * 24 * 60 * 60 * 1000) return [poem];
-      }
-    } catch {}
-
-    // 3. First-ever visit: pick from seed pool
-    if (seedPoems?.length > 0) {
-      const idx = Math.floor(Math.random() * seedPoems.length);
-      return [seedPoems[idx]];
-    }
-
-    // 4. Ultimate fallback (same as original default)
-    return [
-      {
-        id: 1,
-        poet: 'Nizar Qabbani',
-        poetArabic: 'نزار قباني',
-        title: 'My Beloved',
-        titleArabic: 'حبيبتي',
-        arabic:
-          'حُبُّكِ يا عَمِيقَةَ العَيْنَيْنِ\nتَطَرُّفٌ .. تَصَوُّفٌ .. عِبَادَة\nحُبُّكِ مِثْلَ المَوْتِ وَالوِلَادَة\nصَعْبٌ بِأَنْ يُعَادَ مَرَّتَيْنِ',
-        english:
-          'Your love, O woman of deep eyes,\nIs radicalism… is Sufism… is worship.\nYour love is like Death and like Birth—\nIt is difficult for it to be repeated twice.',
-        tags: ['Modern', 'Romantic', 'Ghazal'],
-      },
-    ];
-  });
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [selectedCategory, setSelectedCategory] = useState('All');
-  const [poetPickerOpen, setPoetPickerOpen] = useState(false);
-  const [poetPickerClosing, setPoetPickerClosing] = useState(false);
-  const [dynamicPoets, setDynamicPoets] = useState([]);
-  const [poetSearch, setPoetSearch] = useState('');
-  const [poetsFetched, setPoetsFetched] = useState(false);
+  // ── Modal store (Zustand) ──
+  const poetPickerOpen = useModalStore((s) => s.poetPicker);
+  const setPoetPickerOpen = (open) =>
+    open ? useModalStore.getState().openPoetPicker() : useModalStore.getState().closePoetPicker();
+  const poetPickerClosing = useModalStore((s) => s.poetPickerClosing);
+  const setPoetPickerClosing = useModalStore((s) => s.setPoetPickerClosing);
   const poetSearchRef = useRef(null);
-  const [darkMode, setDarkMode] = useState(true);
-  const [currentFont, setCurrentFont] = useState('Amiri');
-  const [useDatabase, setUseDatabase] = useState(FEATURES.database);
-  const [copySuccess, setCopySuccess] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isGeneratingAudio, setIsGeneratingAudio] = useState(false);
-  const [audioUrl, setAudioUrl] = useState(null);
-  const [audioError, setAudioError] = useState(null);
-  const [interpretation, setInterpretation] = useState(null);
-  const [isInterpreting, setIsInterpreting] = useState(false);
-  const [isFetching, setIsFetching] = useState(false);
-  const [autoExplainPending, setAutoExplainPending] = useState(false);
+  // ── UI store (Zustand) ──
+  const darkMode = useUIStore((s) => s.darkMode);
+  const setDarkMode = useUIStore((s) => s.setDarkMode);
+  const currentFont = useUIStore((s) => s.font);
+  const setCurrentFont = useUIStore((s) => s.setFont);
+  // ── Audio store (Zustand) ──
+  const isPlaying = useAudioStore((s) => s.isPlaying);
+  const setIsPlaying = useAudioStore((s) => s.setPlaying);
+  const isGeneratingAudio = useAudioStore((s) => s.isGenerating);
+  const setIsGeneratingAudio = useAudioStore((s) => s.setGenerating);
+  const audioUrl = useAudioStore((s) => s.url);
+  const setAudioUrl = useAudioStore((s) => s.setUrl);
+  const audioError = useAudioStore((s) => s.error);
+  const setAudioError = useAudioStore((s) => s.setError);
   const hasAutoLoaded = useRef(false);
   // When the selectedCategory effect wants to fetch but isFetching is already true,
   // it stores the category here. A retry effect fires once isFetching drops to false.
@@ -168,19 +154,22 @@ export default function DiwanApp() {
   // called after an awaited fetch that outlasts the render that started it).
   // Initialized with the mount-time value; kept in sync by the selectedCategory effect.
   const selectedCategoryRef = useRef(selectedCategory);
-  const [logs, setLogs] = useState([]);
-  const [showDebugLogs, setShowDebugLogs] = useState(FEATURES.debug);
-  const [showCopySuccess, setShowCopySuccess] = useState(false);
-  const [showShareSuccess, setShowShareSuccess] = useState(false);
-  const [showInsightSuccess, setShowInsightSuccess] = useState(false);
-  const [insightsDrawerOpen, setInsightsDrawerOpen] = useState(false);
-  const [cacheStats, setCacheStats] = useState({
-    audioHits: 0,
-    audioMisses: 0,
-    insightsHits: 0,
-    insightsMisses: 0,
-  });
-  const [isPrefetching, setIsPrefetching] = useState(false);
+  const logs = useUIStore((s) => s.logs);
+  const showDebugLogs = useUIStore((s) => s.showDebugLogs);
+  const showCopySuccess = useModalStore((s) => s.copyToast);
+  const setShowCopySuccess = (v) =>
+    v ? useModalStore.getState().showToast('copy') : useModalStore.getState().hideToast('copy');
+  const showShareSuccess = useModalStore((s) => s.shareToast);
+  const setShowShareSuccess = (v) =>
+    v ? useModalStore.getState().showToast('share') : useModalStore.getState().hideToast('share');
+  const showInsightSuccess = useModalStore((s) => s.insightToast);
+  const setShowInsightSuccess = (v) =>
+    v
+      ? useModalStore.getState().showToast('insight')
+      : useModalStore.getState().hideToast('insight');
+  const insightsDrawerOpen = useModalStore((s) => s.insightsDrawer);
+  const setInsightsDrawerOpen = useModalStore((s) => s.setInsightsDrawer);
+  const cacheStats = useUIStore((s) => s.cacheStats);
   const activeAudioRequests = useRef(new Set()); // Track in-flight audio generation requests
   const activeInsightRequests = useRef(new Set()); // Track in-flight insight generation requests
   const pollingIntervals = useRef([]); // Track all polling intervals for cleanup
@@ -192,23 +181,23 @@ export default function DiwanApp() {
   const { downvotedPoemIds, downvotePoem, undownvotePoem, isPoemDownvoted } = useDownvotes(user);
   const { emitEvent } = usePoemEvents(user);
 
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [authModalMessage, setAuthModalMessage] = useState('');
-  const [showSavedPoems, setShowSavedPoems] = useState(false);
-  const [showSplash, setShowSplash] = useState(true); // Always show splash on every visit
-  const [showOnboarding] = useState(() => {
-    if (!FEATURES.onboarding) return false;
-    if (FEATURES.forceOnboarding) return true;
-    try {
-      return !localStorage.getItem('hasSeenOnboarding');
-    } catch {
-      return false;
-    }
-  });
-  const [showTranslation, setShowTranslation] = useState(true);
-  const [textSizeLevel, setTextSizeLevel] = useState(1); // 0=S, 1=M, 2=L, 3=XL
-  const [showTransliteration, setShowTransliteration] = useState(false);
-  const [showShortcutHelp, setShowShortcutHelp] = useState(false);
+  const showAuthModal = useModalStore((s) => s.authModal);
+  const setShowAuthModal = (v) =>
+    v ? useModalStore.getState().openAuth() : useModalStore.getState().closeAuth();
+  const authModalMessage = useModalStore((s) => s.authMessage);
+  const setAuthModalMessage = (msg) => useModalStore.setState({ authMessage: msg });
+  const showSavedPoems = useModalStore((s) => s.savedPoems);
+  const setShowSavedPoems = (v) =>
+    v ? useModalStore.getState().openSavedPoems() : useModalStore.getState().closeSavedPoems();
+  const showSplash = useModalStore((s) => s.splash);
+  const showOnboarding = useModalStore((s) => s.onboarding);
+  const showTranslation = useUIStore((s) => s.showTranslation);
+  const setShowTranslation = useUIStore((s) => s.setShowTranslation);
+  const textSizeLevel = useUIStore((s) => s.textSize);
+  const setTextSizeLevel = useUIStore((s) => s.setTextSize);
+  const showTransliteration = useUIStore((s) => s.showTransliteration);
+  const setShowTransliteration = useUIStore((s) => s.setShowTransliteration);
+  const showShortcutHelp = useModalStore((s) => s.shortcutHelp);
 
   const theme = darkMode ? THEME.dark : THEME.light;
 
@@ -233,7 +222,7 @@ export default function DiwanApp() {
   ];
 
   const cycleTextSize = () => {
-    setTextSizeLevel((prev) => (prev + 1) % TEXT_SIZES.length);
+    useUIStore.getState().cycleTextSize();
   };
 
   const textScale = TEXT_SIZES[textSizeLevel].multiplier;
@@ -254,11 +243,12 @@ export default function DiwanApp() {
       minute: '2-digit',
       second: '2-digit',
     });
-    setLogs((prev) => {
-      const t0 = prev.length > 0 ? prev[0].ts : now;
-      const relSec = ((now - t0) / 1000).toFixed(1);
-      return [...prev, { label, msg: String(msg), type, time, ts: now, rel: `+${relSec}s` }];
-    });
+    const currentLogs = useUIStore.getState().logs;
+    const t0 = currentLogs.length > 0 ? currentLogs[0].ts : now;
+    const relSec = ((now - t0) / 1000).toFixed(1);
+    useUIStore.setState((s) => ({
+      logs: [...s.logs, { label, msg: String(msg), type, time, ts: now, rel: `+${relSec}s` }],
+    }));
     if (FEATURES.logging) {
       const logFn =
         type === 'error' ? console.error : type === 'success' ? console.info : console.log;
@@ -326,7 +316,7 @@ export default function DiwanApp() {
 
   // Auto-load a poem and queue explanation on first mount.
   // If the URL contains /poem/:id, load that specific poem (deep link).
-  // OAuth restore and prefetch are handled in the useState lazy initializer.
+  // OAuth restore and prefetch are handled in poemStore's getInitialPoems().
   useEffect(() => {
     if (!hasAutoLoaded.current) {
       hasAutoLoaded.current = true;
@@ -352,7 +342,7 @@ export default function DiwanApp() {
         return;
       }
 
-      // Clear stashed OAuth poem (already restored by useState lazy initializer)
+      // Clear stashed OAuth poem (already restored by poemStore's getInitialPoems)
       try {
         sessionStorage.removeItem('pendingSavePoem');
       } catch {}
@@ -462,19 +452,19 @@ export default function DiwanApp() {
           break;
         case 't':
         case 'T':
-          setShowTranslation((prev) => !prev);
+          useUIStore.getState().toggleTranslation();
           break;
         case 'r':
         case 'R':
-          setShowTransliteration((prev) => !prev);
+          useUIStore.getState().toggleTransliteration();
           break;
         case 'Escape':
           setShowAuthModal(false);
           setShowSavedPoems(false);
-          setShowShortcutHelp(false);
+          useModalStore.getState().closeShortcutHelp();
           break;
         case '?':
-          setShowShortcutHelp((prev) => !prev);
+          useModalStore.getState().toggleShortcutHelp();
           break;
       }
     };
@@ -517,7 +507,7 @@ export default function DiwanApp() {
       }
     };
     loadPoets();
-    // addLog is functionally stable (uses only setLogs and module constants)
+    // addLog is functionally stable (uses only useUIStore and module constants)
     // even though its reference changes per render — poetsFetched gate prevents
     // repeated fetches regardless.
   }, [poetPickerOpen, poetsFetched, addLog]);
@@ -808,7 +798,7 @@ export default function DiwanApp() {
             `✓ Cache HIT (${cacheTime.toFixed(0)}ms)${cached.metadata?.model ? ` | Model: ${cached.metadata.model}` : ''} | Size: ${sizeMB}MB | Instant playback`,
             'success'
           );
-          setCacheStats((prev) => ({ ...prev, audioHits: prev.audioHits + 1 }));
+          useUIStore.getState().incrementCacheStat('audioHits');
 
           const u = URL.createObjectURL(cached.blob);
           setAudioUrl(u);
@@ -830,7 +820,7 @@ export default function DiwanApp() {
             `✗ Cache MISS (${cacheTime.toFixed(0)}ms) | Generating from API...`,
             'info'
           );
-          setCacheStats((prev) => ({ ...prev, audioMisses: prev.audioMisses + 1 }));
+          useUIStore.getState().incrementCacheStat('audioMisses');
         }
       }
 
@@ -1166,7 +1156,7 @@ export default function DiwanApp() {
           `✓ Cache HIT (${cacheTime.toFixed(0)}ms) | ${charCount} chars (≈${estTokens} tokens) | Instant load`,
           'success'
         );
-        setCacheStats((prev) => ({ ...prev, insightsHits: prev.insightsHits + 1 }));
+        useUIStore.getState().incrementCacheStat('insightsHits');
         setInterpretation(cached.interpretation);
         setIsInterpreting(false); // Clear loading state
         activeInsightRequests.current.delete(current?.id); // Clean up tracking
@@ -1177,7 +1167,7 @@ export default function DiwanApp() {
           `✗ Cache MISS (${cacheTime.toFixed(0)}ms) | Generating from API...`,
           'info'
         );
-        setCacheStats((prev) => ({ ...prev, insightsMisses: prev.insightsMisses + 1 }));
+        useUIStore.getState().incrementCacheStat('insightsMisses');
       }
     }
 
@@ -2131,7 +2121,7 @@ export default function DiwanApp() {
 
       <DebugPanel
         logs={logs}
-        onClear={() => setLogs([])}
+        onClear={() => useUIStore.getState().clearLogs()}
         darkMode={darkMode}
         poem={current}
         visible={showDebugLogs}
@@ -2954,10 +2944,7 @@ export default function DiwanApp() {
           <AuthModal
             key="auth-modal"
             isOpen={showAuthModal}
-            onClose={() => {
-              setShowAuthModal(false);
-              setAuthModalMessage('');
-            }}
+            onClose={() => useModalStore.getState().closeAuth()}
             onSignInWithGoogle={handleSignInWithGoogle}
             theme={theme}
             message={authModalMessage}
@@ -3004,7 +2991,7 @@ export default function DiwanApp() {
         onExplain={() => {
           if (interpretation) {
             // Already have insight — toggle drawer open/closed
-            setInsightsDrawerOpen((prev) => !prev);
+            useModalStore.getState().toggleInsightsDrawer();
             setShowInsightSuccess(true);
             setTimeout(() => setShowInsightSuccess(false), 1500);
           } else {
@@ -3028,11 +3015,11 @@ export default function DiwanApp() {
         interpretation={interpretation}
         showTranslation={showTranslation}
         onToggleTranslation={() => {
-          setShowTranslation((prev) => !prev);
+          useUIStore.getState().toggleTranslation();
           if (!interpretation && !isInterpreting) handleAnalyze();
         }}
         showTransliteration={showTransliteration}
-        onToggleTransliteration={() => setShowTransliteration((prev) => !prev)}
+        onToggleTransliteration={() => useUIStore.getState().toggleTransliteration()}
         textSizeLabel={TEXT_SIZES[textSizeLevel].label}
         onCycleTextSize={cycleTextSize}
         darkMode={darkMode}
@@ -3042,7 +3029,7 @@ export default function DiwanApp() {
         selectedCategory={selectedCategory}
         onSelectCategory={setSelectedCategory}
         showDebugLogs={showDebugLogs}
-        onToggleDebugLogs={() => setShowDebugLogs((prev) => !prev)}
+        onToggleDebugLogs={() => useUIStore.getState().toggleDebugLogs()}
       />
 
       {/* Splash / Onboarding Screen (lazy-loaded, deferred from initial bundle) */}
@@ -3053,7 +3040,7 @@ export default function DiwanApp() {
               key="splash-screen"
               isOpen={showSplash}
               onDismiss={() => {
-                setShowSplash(false);
+                useModalStore.getState().dismissSplash();
                 try {
                   localStorage.setItem('hasSeenOnboarding', 'true');
                 } catch {}
@@ -3071,7 +3058,7 @@ export default function DiwanApp() {
           <ShortcutHelp
             key="shortcut-help"
             isOpen={showShortcutHelp}
-            onClose={() => setShowShortcutHelp(false)}
+            onClose={() => useModalStore.getState().closeShortcutHelp()}
             theme={theme}
           />
         )}

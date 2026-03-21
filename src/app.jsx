@@ -29,6 +29,7 @@ import seedPoems from './data/seed-poems.json';
 import { FEATURES, DESIGN, BRAND, THEME, GOLD, CATEGORIES, FONTS } from './constants/index.js';
 import { usePoemStore } from './stores/poemStore';
 import { useAudioStore } from './stores/audioStore';
+import { useUIStore } from './stores/uiStore';
 import { getRecentSeenIds, markPoemSeen, pruneSeenPoems } from './utils/seenPoems.js';
 import { transliterate } from './utils/transliterate.js';
 import { filterPoemsByCategory } from './utils/filterPoems.js';
@@ -829,8 +830,11 @@ export default function DiwanApp() {
   const [poetPickerOpen, setPoetPickerOpen] = useState(false);
   const [poetPickerClosing, setPoetPickerClosing] = useState(false);
   const poetSearchRef = useRef(null);
-  const [darkMode, setDarkMode] = useState(true);
-  const [currentFont, setCurrentFont] = useState('Amiri');
+  // ── UI store (Zustand) ──
+  const darkMode = useUIStore((s) => s.darkMode);
+  const setDarkMode = useUIStore((s) => s.setDarkMode);
+  const currentFont = useUIStore((s) => s.font);
+  const setCurrentFont = useUIStore((s) => s.setFont);
   // ── Audio store (Zustand) ──
   const isPlaying = useAudioStore((s) => s.isPlaying);
   const setIsPlaying = useAudioStore((s) => s.setPlaying);
@@ -850,7 +854,7 @@ export default function DiwanApp() {
   // Initialized with the mount-time value; kept in sync by the selectedCategory effect.
   const selectedCategoryRef = useRef(selectedCategory);
   const [logs, setLogs] = useState([]);
-  const [showDebugLogs, setShowDebugLogs] = useState(FEATURES.debug);
+  const showDebugLogs = useUIStore((s) => s.showDebugLogs);
   const [showCopySuccess, setShowCopySuccess] = useState(false);
   const [showShareSuccess, setShowShareSuccess] = useState(false);
   const [showInsightSuccess, setShowInsightSuccess] = useState(false);
@@ -885,9 +889,12 @@ export default function DiwanApp() {
       return false;
     }
   });
-  const [showTranslation, setShowTranslation] = useState(true);
-  const [textSizeLevel, setTextSizeLevel] = useState(1); // 0=S, 1=M, 2=L, 3=XL
-  const [showTransliteration, setShowTransliteration] = useState(false);
+  const showTranslation = useUIStore((s) => s.showTranslation);
+  const setShowTranslation = useUIStore((s) => s.setShowTranslation);
+  const textSizeLevel = useUIStore((s) => s.textSize);
+  const setTextSizeLevel = useUIStore((s) => s.setTextSize);
+  const showTransliteration = useUIStore((s) => s.showTransliteration);
+  const setShowTransliteration = useUIStore((s) => s.setShowTransliteration);
   const [showShortcutHelp, setShowShortcutHelp] = useState(false);
 
   const theme = darkMode ? THEME.dark : THEME.light;
@@ -913,7 +920,7 @@ export default function DiwanApp() {
   ];
 
   const cycleTextSize = () => {
-    setTextSizeLevel((prev) => (prev + 1) % TEXT_SIZES.length);
+    useUIStore.getState().cycleTextSize();
   };
 
   const textScale = TEXT_SIZES[textSizeLevel].multiplier;
@@ -1144,11 +1151,11 @@ export default function DiwanApp() {
           break;
         case 't':
         case 'T':
-          setShowTranslation((prev) => !prev);
+          useUIStore.getState().toggleTranslation();
           break;
         case 'r':
         case 'R':
-          setShowTransliteration((prev) => !prev);
+          useUIStore.getState().toggleTransliteration();
           break;
         case 'Escape':
           setShowAuthModal(false);
@@ -3763,11 +3770,11 @@ export default function DiwanApp() {
         interpretation={interpretation}
         showTranslation={showTranslation}
         onToggleTranslation={() => {
-          setShowTranslation((prev) => !prev);
+          useUIStore.getState().toggleTranslation();
           if (!interpretation && !isInterpreting) handleAnalyze();
         }}
         showTransliteration={showTransliteration}
-        onToggleTransliteration={() => setShowTransliteration((prev) => !prev)}
+        onToggleTransliteration={() => useUIStore.getState().toggleTransliteration()}
         textSizeLabel={TEXT_SIZES[textSizeLevel].label}
         onCycleTextSize={cycleTextSize}
         darkMode={darkMode}
@@ -3777,7 +3784,7 @@ export default function DiwanApp() {
         selectedCategory={selectedCategory}
         onSelectCategory={setSelectedCategory}
         showDebugLogs={showDebugLogs}
-        onToggleDebugLogs={() => setShowDebugLogs((prev) => !prev)}
+        onToggleDebugLogs={() => useUIStore.getState().toggleDebugLogs()}
       />
 
       {/* Splash / Onboarding Screen */}

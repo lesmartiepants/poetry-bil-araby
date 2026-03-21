@@ -280,6 +280,33 @@ describe('uiStore', () => {
   });
 
   describe('actions', () => {
+    it('setDarkMode sets dark mode to a specific value', () => {
+      useUIStore.getState().setDarkMode(false);
+      expect(useUIStore.getState().darkMode).toBe(false);
+      useUIStore.getState().setDarkMode(true);
+      expect(useUIStore.getState().darkMode).toBe(true);
+    });
+
+    it('setFont sets font to a specific value', () => {
+      useUIStore.getState().setFont('Rakkas');
+      expect(useUIStore.getState().font).toBe('Rakkas');
+    });
+
+    it('setTextSize sets text size to a specific value', () => {
+      useUIStore.getState().setTextSize(3);
+      expect(useUIStore.getState().textSize).toBe(3);
+    });
+
+    it('setShowTranslation sets to specific value', () => {
+      useUIStore.getState().setShowTranslation(false);
+      expect(useUIStore.getState().showTranslation).toBe(false);
+    });
+
+    it('setShowTransliteration sets to specific value', () => {
+      useUIStore.getState().setShowTransliteration(true);
+      expect(useUIStore.getState().showTransliteration).toBe(true);
+    });
+
     it('toggleDarkMode flips dark mode', () => {
       useUIStore.getState().toggleDarkMode();
       expect(useUIStore.getState().darkMode).toBe(false);

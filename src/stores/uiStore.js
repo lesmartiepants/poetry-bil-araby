@@ -18,7 +18,12 @@ const initialState = {
 export const useUIStore = create((set, get) => ({
   ...initialState,
 
+  setDarkMode: (darkMode) => set({ darkMode }),
   toggleDarkMode: () => set((s) => ({ darkMode: !s.darkMode })),
+  setFont: (font) => set({ font }),
+  setTextSize: (textSize) => set({ textSize }),
+  setShowTranslation: (showTranslation) => set({ showTranslation }),
+  setShowTransliteration: (showTransliteration) => set({ showTransliteration }),
 
   cycleFont: () =>
     set((s) => {
@@ -31,6 +36,7 @@ export const useUIStore = create((set, get) => ({
 
   toggleTranslation: () => set((s) => ({ showTranslation: !s.showTranslation })),
   toggleTransliteration: () => set((s) => ({ showTransliteration: !s.showTransliteration })),
+  toggleDebugLogs: () => set((s) => ({ showDebugLogs: !s.showDebugLogs })),
 
   addLog: (label, message, level) =>
     set((s) => {

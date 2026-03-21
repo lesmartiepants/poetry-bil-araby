@@ -126,8 +126,7 @@ export default function DiwanApp() {
 
   // ── Modal store (Zustand) ──
   const poetPickerOpen = useModalStore((s) => s.poetPicker);
-  const setPoetPickerOpen = (open) =>
-    open ? useModalStore.getState().openPoetPicker() : useModalStore.getState().closePoetPicker();
+  const setPoetPickerOpen = useModalStore((s) => s.setPoetPicker);
   const poetPickerClosing = useModalStore((s) => s.poetPickerClosing);
   const setPoetPickerClosing = useModalStore((s) => s.setPoetPickerClosing);
   const poetSearchRef = useRef(null);
@@ -157,16 +156,8 @@ export default function DiwanApp() {
   const logs = useUIStore((s) => s.logs);
   const showDebugLogs = useUIStore((s) => s.showDebugLogs);
   const showCopySuccess = useModalStore((s) => s.copyToast);
-  const setShowCopySuccess = (v) =>
-    v ? useModalStore.getState().showToast('copy') : useModalStore.getState().hideToast('copy');
   const showShareSuccess = useModalStore((s) => s.shareToast);
-  const setShowShareSuccess = (v) =>
-    v ? useModalStore.getState().showToast('share') : useModalStore.getState().hideToast('share');
   const showInsightSuccess = useModalStore((s) => s.insightToast);
-  const setShowInsightSuccess = (v) =>
-    v
-      ? useModalStore.getState().showToast('insight')
-      : useModalStore.getState().hideToast('insight');
   const insightsDrawerOpen = useModalStore((s) => s.insightsDrawer);
   const setInsightsDrawerOpen = useModalStore((s) => s.setInsightsDrawer);
   const cacheStats = useUIStore((s) => s.cacheStats);
@@ -182,13 +173,10 @@ export default function DiwanApp() {
   const { emitEvent } = usePoemEvents(user);
 
   const showAuthModal = useModalStore((s) => s.authModal);
-  const setShowAuthModal = (v) =>
-    v ? useModalStore.getState().openAuth() : useModalStore.getState().closeAuth();
+  const setShowAuthModal = useModalStore((s) => s.setAuthModal);
   const authModalMessage = useModalStore((s) => s.authMessage);
-  const setAuthModalMessage = (msg) => useModalStore.setState({ authMessage: msg });
   const showSavedPoems = useModalStore((s) => s.savedPoems);
-  const setShowSavedPoems = (v) =>
-    v ? useModalStore.getState().openSavedPoems() : useModalStore.getState().closeSavedPoems();
+  const setShowSavedPoems = useModalStore((s) => s.setSavedPoemsOpen);
   const showSplash = useModalStore((s) => s.splash);
   const showOnboarding = useModalStore((s) => s.onboarding);
   const showTranslation = useUIStore((s) => s.showTranslation);
@@ -1339,8 +1327,7 @@ export default function DiwanApp() {
 
       // Flash gold check sparkle on the sidebar icon
       if (insightText) {
-        setShowInsightSuccess(true);
-        setTimeout(() => setShowInsightSuccess(false), 1500);
+        useModalStore.getState().showToastTimed('insight', 1500);
       }
     } catch (e) {
       Sentry.captureException(e);
@@ -1584,13 +1571,12 @@ export default function DiwanApp() {
         emitEvent(current.id, 'copy');
         addLog('Event', `→ copy event emitted | poem_id: ${current.id}`, 'info');
       }
-      setShowCopySuccess(true);
+      useModalStore.getState().showToastTimed('copy', 2000);
       addLog(
         'Copy',
         `✓ Copied to clipboard | ${copyChars} chars total (${arabicChars} Arabic + ${englishChars} English)`,
         'success'
       );
-      setTimeout(() => setShowCopySuccess(false), 2000);
     } catch (e) {
       addLog('Copy Error', e.message, 'error');
     }
@@ -1644,9 +1630,8 @@ export default function DiwanApp() {
           'info'
         );
       }
-      setShowShareSuccess(true);
+      useModalStore.getState().showToastTimed('share', 2000);
       addLog('Share', `Link copied: ${shareUrl}`, 'success');
-      setTimeout(() => setShowShareSuccess(false), 2000);
     } catch (e) {
       addLog('Share Error', e.message, 'error');
     }
@@ -2820,8 +2805,7 @@ export default function DiwanApp() {
                 onUnsave={handleUnsavePoem}
                 disabled={!user}
                 onSignIn={(msg) => {
-                  setAuthModalMessage(msg);
-                  setShowAuthModal(true);
+                  setShowAuthModal(true, msg);
                 }}
               />
 
@@ -2832,8 +2816,7 @@ export default function DiwanApp() {
                 onUndownvote={handleUndownvote}
                 disabled={!user}
                 onSignIn={(msg) => {
-                  setAuthModalMessage(msg);
-                  setShowAuthModal(true);
+                  setShowAuthModal(true, msg);
                 }}
               />
             </div>
@@ -2992,8 +2975,7 @@ export default function DiwanApp() {
           if (interpretation) {
             // Already have insight — toggle drawer open/closed
             useModalStore.getState().toggleInsightsDrawer();
-            setShowInsightSuccess(true);
-            setTimeout(() => setShowInsightSuccess(false), 1500);
+            useModalStore.getState().showToastTimed('insight', 1500);
           } else {
             // No insight yet — fetch and open drawer
             handleAnalyze();

@@ -534,6 +534,38 @@ describe('modalStore', () => {
       expect(useModalStore.getState().shareToast).toBe(false);
     });
 
+    it('showToastTimed shows then auto-hides after delay', async () => {
+      vi.useFakeTimers();
+      useModalStore.getState().showToastTimed('copy', 500);
+      expect(useModalStore.getState().copyToast).toBe(true);
+      vi.advanceTimersByTime(500);
+      expect(useModalStore.getState().copyToast).toBe(false);
+      vi.useRealTimers();
+    });
+
+    it('setPoetPicker opens/closes via boolean', () => {
+      useModalStore.getState().setPoetPicker(true);
+      expect(useModalStore.getState().poetPicker).toBe(true);
+      useModalStore.getState().setPoetPicker(false);
+      expect(useModalStore.getState().poetPicker).toBe(false);
+    });
+
+    it('setAuthModal opens/closes via boolean and clears message on close', () => {
+      useModalStore.getState().setAuthModal(true, 'Sign in please');
+      expect(useModalStore.getState().authModal).toBe(true);
+      expect(useModalStore.getState().authMessage).toBe('Sign in please');
+      useModalStore.getState().setAuthModal(false);
+      expect(useModalStore.getState().authModal).toBe(false);
+      expect(useModalStore.getState().authMessage).toBe('');
+    });
+
+    it('setSavedPoemsOpen sets saved poems modal state', () => {
+      useModalStore.getState().setSavedPoemsOpen(true);
+      expect(useModalStore.getState().savedPoems).toBe(true);
+      useModalStore.getState().setSavedPoemsOpen(false);
+      expect(useModalStore.getState().savedPoems).toBe(false);
+    });
+
     it('closeAll closes everything except splash', () => {
       useModalStore.getState().openAuth();
       useModalStore.getState().openSavedPoems();

@@ -21,8 +21,9 @@ export default defineConfig({
     include: ['src/**/*.test.{js,jsx,ts,tsx}'],
     exclude: ['node_modules/', 'dist/', 'e2e/'],
 
-    // CI timeouts — match local to avoid flaky failures on slower runners
-    testTimeout: 5000,
+    // CI timeouts — raised to accommodate coverage-instrumented runs and
+    // multi-step poet-picker tests that include several async waitFor calls
+    testTimeout: 15000,
     hookTimeout: process.env.CI ? 3000 : 5000,
     teardownTimeout: process.env.CI ? 2000 : 3000,
 

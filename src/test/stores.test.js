@@ -403,6 +403,7 @@ describe('modalStore', () => {
       expect(state.insightsDrawer).toBe(false);
       expect(state.shortcutHelp).toBe(false);
       expect(state.poetPicker).toBe(false);
+      expect(state.poetPickerClosing).toBe(false);
     });
 
     it('starts with all toasts hidden', () => {
@@ -470,6 +471,13 @@ describe('modalStore', () => {
       expect(useModalStore.getState().poetPicker).toBe(true);
       useModalStore.getState().closePoetPicker();
       expect(useModalStore.getState().poetPicker).toBe(false);
+    });
+
+    it('setPoetPickerClosing sets closing flag', () => {
+      useModalStore.getState().setPoetPickerClosing(true);
+      expect(useModalStore.getState().poetPickerClosing).toBe(true);
+      useModalStore.getState().setPoetPickerClosing(false);
+      expect(useModalStore.getState().poetPickerClosing).toBe(false);
     });
 
     it('showToast sets toast flag', () => {

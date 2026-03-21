@@ -30,6 +30,7 @@ import { FEATURES, DESIGN, BRAND, THEME, GOLD, CATEGORIES, FONTS } from './const
 import { usePoemStore } from './stores/poemStore';
 import { useAudioStore } from './stores/audioStore';
 import { useUIStore } from './stores/uiStore';
+import { useModalStore } from './stores/modalStore';
 import { getRecentSeenIds, markPoemSeen, pruneSeenPoems } from './utils/seenPoems.js';
 import { transliterate } from './utils/transliterate.js';
 import { filterPoemsByCategory } from './utils/filterPoems.js';
@@ -827,8 +828,12 @@ export default function DiwanApp() {
     usePoemStore.getState().setPoems(initialPoems);
   }
 
-  const [poetPickerOpen, setPoetPickerOpen] = useState(false);
-  const [poetPickerClosing, setPoetPickerClosing] = useState(false);
+  // ── Modal store (Zustand) ──
+  const poetPickerOpen = useModalStore((s) => s.poetPicker);
+  const setPoetPickerOpen = (open) =>
+    open ? useModalStore.getState().openPoetPicker() : useModalStore.getState().closePoetPicker();
+  const poetPickerClosing = useModalStore((s) => s.poetPickerClosing);
+  const setPoetPickerClosing = useModalStore((s) => s.setPoetPickerClosing);
   const poetSearchRef = useRef(null);
   // ── UI store (Zustand) ──
   const darkMode = useUIStore((s) => s.darkMode);
@@ -855,10 +860,19 @@ export default function DiwanApp() {
   const selectedCategoryRef = useRef(selectedCategory);
   const [logs, setLogs] = useState([]);
   const showDebugLogs = useUIStore((s) => s.showDebugLogs);
-  const [showCopySuccess, setShowCopySuccess] = useState(false);
-  const [showShareSuccess, setShowShareSuccess] = useState(false);
-  const [showInsightSuccess, setShowInsightSuccess] = useState(false);
-  const [insightsDrawerOpen, setInsightsDrawerOpen] = useState(false);
+  const showCopySuccess = useModalStore((s) => s.copyToast);
+  const setShowCopySuccess = (v) =>
+    v ? useModalStore.getState().showToast('copy') : useModalStore.getState().hideToast('copy');
+  const showShareSuccess = useModalStore((s) => s.shareToast);
+  const setShowShareSuccess = (v) =>
+    v ? useModalStore.getState().showToast('share') : useModalStore.getState().hideToast('share');
+  const showInsightSuccess = useModalStore((s) => s.insightToast);
+  const setShowInsightSuccess = (v) =>
+    v
+      ? useModalStore.getState().showToast('insight')
+      : useModalStore.getState().hideToast('insight');
+  const insightsDrawerOpen = useModalStore((s) => s.insightsDrawer);
+  const setInsightsDrawerOpen = useModalStore((s) => s.setInsightsDrawer);
   const [cacheStats, setCacheStats] = useState({
     audioHits: 0,
     audioMisses: 0,
@@ -876,10 +890,15 @@ export default function DiwanApp() {
   const { downvotedPoemIds, downvotePoem, undownvotePoem, isPoemDownvoted } = useDownvotes(user);
   const { emitEvent } = usePoemEvents(user);
 
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [authModalMessage, setAuthModalMessage] = useState('');
-  const [showSavedPoems, setShowSavedPoems] = useState(false);
-  const [showSplash, setShowSplash] = useState(true); // Always show splash on every visit
+  const showAuthModal = useModalStore((s) => s.authModal);
+  const setShowAuthModal = (v) =>
+    v ? useModalStore.getState().openAuth() : useModalStore.getState().closeAuth();
+  const authModalMessage = useModalStore((s) => s.authMessage);
+  const setAuthModalMessage = (msg) => useModalStore.setState({ authMessage: msg });
+  const showSavedPoems = useModalStore((s) => s.savedPoems);
+  const setShowSavedPoems = (v) =>
+    v ? useModalStore.getState().openSavedPoems() : useModalStore.getState().closeSavedPoems();
+  const showSplash = useModalStore((s) => s.splash);
   const [showOnboarding] = useState(() => {
     if (!FEATURES.onboarding) return false;
     if (FEATURES.forceOnboarding) return true;
@@ -895,7 +914,7 @@ export default function DiwanApp() {
   const setTextSizeLevel = useUIStore((s) => s.setTextSize);
   const showTransliteration = useUIStore((s) => s.showTransliteration);
   const setShowTransliteration = useUIStore((s) => s.setShowTransliteration);
-  const [showShortcutHelp, setShowShortcutHelp] = useState(false);
+  const showShortcutHelp = useModalStore((s) => s.shortcutHelp);
 
   const theme = darkMode ? THEME.dark : THEME.light;
 
@@ -1160,10 +1179,10 @@ export default function DiwanApp() {
         case 'Escape':
           setShowAuthModal(false);
           setShowSavedPoems(false);
-          setShowShortcutHelp(false);
+          useModalStore.getState().closeShortcutHelp();
           break;
         case '?':
-          setShowShortcutHelp((prev) => !prev);
+          useModalStore.getState().toggleShortcutHelp();
           break;
       }
     };
@@ -3698,10 +3717,7 @@ export default function DiwanApp() {
       {/* Auth Modal */}
       <AuthModal
         isOpen={showAuthModal}
-        onClose={() => {
-          setShowAuthModal(false);
-          setAuthModalMessage('');
-        }}
+        onClose={() => useModalStore.getState().closeAuth()}
         onSignInWithGoogle={handleSignInWithGoogle}
         theme={theme}
         message={authModalMessage}
@@ -3746,7 +3762,7 @@ export default function DiwanApp() {
         onExplain={() => {
           if (interpretation) {
             // Already have insight — toggle drawer open/closed
-            setInsightsDrawerOpen((prev) => !prev);
+            useModalStore.getState().toggleInsightsDrawer();
             setShowInsightSuccess(true);
             setTimeout(() => setShowInsightSuccess(false), 1500);
           } else {
@@ -3791,7 +3807,7 @@ export default function DiwanApp() {
       <SplashScreen
         isOpen={showSplash}
         onDismiss={() => {
-          setShowSplash(false);
+          useModalStore.getState().dismissSplash();
           try {
             localStorage.setItem('hasSeenOnboarding', 'true');
           } catch {}
@@ -3803,7 +3819,7 @@ export default function DiwanApp() {
       {/* Keyboard Shortcut Help */}
       <ShortcutHelp
         isOpen={showShortcutHelp}
-        onClose={() => setShowShortcutHelp(false)}
+        onClose={() => useModalStore.getState().closeShortcutHelp()}
         theme={theme}
       />
     </div>

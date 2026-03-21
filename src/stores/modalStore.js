@@ -8,6 +8,7 @@ const initialState = {
   insightsDrawer: false,
   shortcutHelp: false,
   poetPicker: false,
+  poetPickerClosing: false,
   copyToast: false,
   shareToast: false,
   insightToast: false,
@@ -34,9 +35,11 @@ export const useModalStore = create((set) => ({
   setInsightsDrawer: (open) => set({ insightsDrawer: open }),
 
   toggleShortcutHelp: () => set((s) => ({ shortcutHelp: !s.shortcutHelp })),
+  closeShortcutHelp: () => set({ shortcutHelp: false }),
 
   openPoetPicker: () => set({ poetPicker: true }),
   closePoetPicker: () => set({ poetPicker: false }),
+  setPoetPickerClosing: (closing) => set({ poetPickerClosing: closing }),
 
   showToast: (type) => set({ [TOAST_MAP[type]]: true }),
   hideToast: (type) => set({ [TOAST_MAP[type]]: false }),

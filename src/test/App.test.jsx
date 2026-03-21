@@ -49,15 +49,8 @@ function mockAutoLoadFetch() {
 describe('DiwanApp', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // Reset stores between tests (poems array kept — component init handles it)
-    const s = usePoemStore.getState();
-    s.setCategory('All');
-    s.setFetching(false);
-    s.setAutoExplain(false);
-    s.setDynamicPoets([]);
-    s.setPoetSearch('');
-    s.setPoetsFetched(false);
-    s.resetInterpretation();
+    // Reset all stores between tests (poemStore.reset() re-initializes poems from seeds)
+    usePoemStore.getState().reset();
     useAudioStore.getState().reset();
     useUIStore.getState().reset();
     useModalStore.getState().reset();

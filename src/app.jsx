@@ -25,7 +25,6 @@ import {
 import { INSIGHTS_SYSTEM_PROMPT, DISCOVERY_SYSTEM_PROMPT, getTTSContent } from './prompts';
 import { parseInsight } from './utils/insightParser';
 import { repairAndParseJSON } from './utils/jsonRepair';
-import seedPoems from './data/seed-poems.json';
 import { FEATURES, DESIGN, BRAND, THEME, GOLD, CATEGORIES, FONTS } from './constants/index.js';
 import { usePoemStore } from './stores/poemStore';
 import { useAudioStore } from './stores/audioStore';
@@ -778,56 +777,6 @@ export default function DiwanApp() {
   const isInterpreting = usePoemStore((s) => s.isInterpreting);
   const setIsInterpreting = usePoemStore((s) => s.setInterpreting);
 
-  // Initialize poems once (replaces useState lazy initializer)
-  const poemStoreInit = useRef(false);
-  if (!poemStoreInit.current) {
-    poemStoreInit.current = true;
-    let initialPoems = null;
-    // 1. Restore from OAuth redirect (avoids flash of seed poem)
-    try {
-      const stashed = sessionStorage.getItem('pendingSavePoem');
-      if (stashed) {
-        const poem = JSON.parse(stashed);
-        if (poem?.arabic) initialPoems = [poem];
-      }
-    } catch {}
-    // 2. Restore pre-fetched poem from last visit (with 7-day TTL)
-    if (!initialPoems) {
-      try {
-        const raw = localStorage.getItem('qafiyah_nextPoem');
-        if (raw) {
-          const { poem, storedAt } = JSON.parse(raw);
-          localStorage.removeItem('qafiyah_nextPoem');
-          const age = Date.now() - (storedAt || 0);
-          if (poem?.arabic && age < 7 * 24 * 60 * 60 * 1000) initialPoems = [poem];
-        }
-      } catch {}
-    }
-    // 3. First-ever visit: pick from seed pool
-    if (!initialPoems && seedPoems?.length > 0) {
-      const idx = Math.floor(Math.random() * seedPoems.length);
-      initialPoems = [seedPoems[idx]];
-    }
-    // 4. Ultimate fallback
-    if (!initialPoems) {
-      initialPoems = [
-        {
-          id: 1,
-          poet: 'Nizar Qabbani',
-          poetArabic: 'نزار قباني',
-          title: 'My Beloved',
-          titleArabic: 'حبيبتي',
-          arabic:
-            'حُبُّكِ يا عَمِيقَةَ العَيْنَيْنِ\nتَطَرُّفٌ .. تَصَوُّفٌ .. عِبَادَة\nحُبُّكِ مِثْلَ المَوْتِ وَالوِلَادَة\nصَعْبٌ بِأَنْ يُعَادَ مَرَّتَيْنِ',
-          english:
-            'Your love, O woman of deep eyes,\nIs radicalism… is Sufism… is worship.\nYour love is like Death and like Birth—\nIt is difficult for it to be repeated twice.',
-          tags: ['Modern', 'Romantic', 'Ghazal'],
-        },
-      ];
-    }
-    usePoemStore.getState().setPoems(initialPoems);
-  }
-
   // ── Modal store (Zustand) ──
   const poetPickerOpen = useModalStore((s) => s.poetPicker);
   const setPoetPickerOpen = (open) =>
@@ -1032,7 +981,7 @@ export default function DiwanApp() {
 
   // Auto-load a poem and queue explanation on first mount.
   // If the URL contains /poem/:id, load that specific poem (deep link).
-  // OAuth restore and prefetch are handled in the useState lazy initializer.
+  // OAuth restore and prefetch are handled in poemStore's getInitialPoems().
   useEffect(() => {
     if (!hasAutoLoaded.current) {
       hasAutoLoaded.current = true;
@@ -1065,7 +1014,7 @@ export default function DiwanApp() {
         return;
       }
 
-      // Clear stashed OAuth poem (already restored by useState lazy initializer)
+      // Clear stashed OAuth poem (already restored by poemStore's getInitialPoems)
       try {
         sessionStorage.removeItem('pendingSavePoem');
       } catch {}

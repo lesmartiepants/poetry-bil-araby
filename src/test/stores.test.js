@@ -16,8 +16,10 @@ describe('poemStore', () => {
   });
 
   describe('initial state', () => {
-    it('starts with empty poems array', () => {
-      expect(usePoemStore.getState().poems).toEqual([]);
+    it('starts with a seed poem', () => {
+      const poems = usePoemStore.getState().poems;
+      expect(poems).toHaveLength(1);
+      expect(poems[0].arabic).toBeDefined();
     });
 
     it('starts at index 0', () => {
@@ -63,21 +65,23 @@ describe('poemStore', () => {
 
   describe('actions', () => {
     it('addPoem appends poem and updates index to it', () => {
-      const poem = { id: 1, arabic: 'test', poet: 'test' };
+      const initialLen = usePoemStore.getState().poems.length;
+      const poem = { id: 99, arabic: 'test', poet: 'test' };
       usePoemStore.getState().addPoem(poem);
       const state = usePoemStore.getState();
-      expect(state.poems).toHaveLength(1);
-      expect(state.poems[0]).toBe(poem);
-      expect(state.currentIndex).toBe(0);
+      expect(state.poems).toHaveLength(initialLen + 1);
+      expect(state.poems[state.poems.length - 1]).toBe(poem);
+      expect(state.currentIndex).toBe(initialLen);
     });
 
     it('addPoem appends second poem at end', () => {
-      const poem1 = { id: 1, arabic: 'a', poet: 'a' };
-      const poem2 = { id: 2, arabic: 'b', poet: 'b' };
+      const initialLen = usePoemStore.getState().poems.length;
+      const poem1 = { id: 98, arabic: 'a', poet: 'a' };
+      const poem2 = { id: 99, arabic: 'b', poet: 'b' };
       usePoemStore.getState().addPoem(poem1);
       usePoemStore.getState().addPoem(poem2);
-      expect(usePoemStore.getState().poems).toHaveLength(2);
-      expect(usePoemStore.getState().currentIndex).toBe(1);
+      expect(usePoemStore.getState().poems).toHaveLength(initialLen + 2);
+      expect(usePoemStore.getState().currentIndex).toBe(initialLen + 1);
     });
 
     it('setCurrentIndex updates index', () => {
@@ -164,7 +168,7 @@ describe('poemStore', () => {
       usePoemStore.getState().setInterpretation('x');
       usePoemStore.getState().reset();
       const state = usePoemStore.getState();
-      expect(state.poems).toEqual([]);
+      expect(state.poems).toHaveLength(1); // Re-initialized from seeds
       expect(state.currentIndex).toBe(0);
       expect(state.selectedCategory).toBe('All');
       expect(state.isFetching).toBe(false);

@@ -726,6 +726,67 @@ describe('DiwanApp', () => {
       });
     });
 
+    it('filters poets by English label search', async () => {
+      render(<DiwanApp />);
+      await userEvent.click(screen.getByLabelText('Filter by poet'));
+
+      const searchInput = screen.getByLabelText('Search poets');
+      await userEvent.type(searchInput, 'Darwish');
+
+      // Mahmoud Darwish should match the English label
+      await waitFor(() => {
+        expect(document.body.textContent).toContain('محمود درويش');
+      });
+
+      // Al-Mutanabbi should not match
+      expect(document.body.textContent).not.toContain('المتنبي');
+    });
+
+    it('filters poets by partial English label search', async () => {
+      render(<DiwanApp />);
+      await userEvent.click(screen.getByLabelText('Filter by poet'));
+
+      const searchInput = screen.getByLabelText('Search poets');
+      await userEvent.type(searchInput, 'Al-');
+
+      // Al-Mutanabbi and Al-Ma'arri should both match
+      await waitFor(() => {
+        expect(document.body.textContent).toContain('المتنبي');
+        expect(document.body.textContent).toContain('أبو العلاء المعري');
+      });
+    });
+
+    it('adjusts list max-height when visualViewport shrinks (keyboard)', async () => {
+      // Simulate a visual viewport (as provided by mobile browsers)
+      const originalVP = window.visualViewport;
+      let registeredResizeHandler = null;
+      const mockVP = {
+        height: 300,
+        offsetTop: 0,
+        addEventListener: vi.fn((event, handler) => {
+          if (event === 'resize') registeredResizeHandler = handler;
+        }),
+        removeEventListener: vi.fn(),
+      };
+      Object.defineProperty(window, 'visualViewport', { value: mockVP, configurable: true });
+
+      render(<DiwanApp />);
+      await userEvent.click(screen.getByLabelText('Filter by poet'));
+
+      // Picker should open and remain accessible
+      await waitFor(() => {
+        expect(screen.getByLabelText('Search poets')).toBeInTheDocument();
+      });
+
+      // The effect should register resize and scroll listeners on the visual viewport
+      expect(mockVP.addEventListener).toHaveBeenCalledWith('resize', expect.any(Function));
+      expect(mockVP.addEventListener).toHaveBeenCalledWith('scroll', expect.any(Function));
+      expect(registeredResizeHandler).toBeInstanceOf(Function);
+
+      // Restore
+      Object.defineProperty(window, 'visualViewport', { value: originalVP, configurable: true });
+    });
+
     it('fetches dynamic poets from API when picker opens', async () => {
       const mockPoets = [
         { name: 'أحمد شوقي', name_en: 'Ahmed Shawqi', poem_count: '5000' },

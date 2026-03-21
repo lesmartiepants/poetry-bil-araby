@@ -147,6 +147,8 @@ export default function DiwanApp() {
   const [poetSearch, setPoetSearch] = useState('');
   const [poetsFetched, setPoetsFetched] = useState(false);
   const poetSearchRef = useRef(null);
+  const [pickerKeyboardOffset, setPickerKeyboardOffset] = useState(0);
+  const [pickerListMaxHeight, setPickerListMaxHeight] = useState(280);
   const [darkMode, setDarkMode] = useState(true);
   const [currentFont, setCurrentFont] = useState('Amiri');
   const [useDatabase, setUseDatabase] = useState(FEATURES.database);
@@ -530,6 +532,34 @@ export default function DiwanApp() {
     }
     if (!poetPickerOpen) setPoetSearch('');
     return () => clearTimeout(timerId);
+  }, [poetPickerOpen]);
+
+  // Adjust picker popup position when mobile keyboard appears (iOS visual viewport fix)
+  useEffect(() => {
+    if (!poetPickerOpen) {
+      setPickerKeyboardOffset(0);
+      setPickerListMaxHeight(280);
+      return;
+    }
+    const viewport = window.visualViewport;
+    if (!viewport) return;
+    const updateForViewport = () => {
+      const keyboardHeight = Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop);
+      setPickerKeyboardOffset(keyboardHeight);
+      if (keyboardHeight > 0) {
+        // Reserve ~150px for nav bar, search input, and popup padding
+        setPickerListMaxHeight(Math.max(100, Math.min(280, viewport.height - 150)));
+      } else {
+        setPickerListMaxHeight(280);
+      }
+    };
+    updateForViewport();
+    viewport.addEventListener('resize', updateForViewport);
+    viewport.addEventListener('scroll', updateForViewport);
+    return () => {
+      viewport.removeEventListener('resize', updateForViewport);
+      viewport.removeEventListener('scroll', updateForViewport);
+    };
   }, [poetPickerOpen]);
 
   const closePoetPicker = () => {
@@ -2604,8 +2634,10 @@ export default function DiwanApp() {
                 </span>
                 {(poetPickerOpen || poetPickerClosing) && (
                   <div
-                    className="absolute bottom-full mb-2 left-1/2 w-auto min-w-[14rem] max-w-[18rem] rounded-2xl border border-gold/25 bg-black/95 backdrop-blur-2xl shadow-2xl py-2.5 z-[200]"
+                    className="absolute mb-2 left-1/2 w-auto min-w-[14rem] max-w-[18rem] rounded-2xl border border-gold/25 bg-black/95 backdrop-blur-2xl shadow-2xl py-2.5 z-[200]"
                     style={{
+                      bottom: `calc(100% + ${pickerKeyboardOffset}px)`,
+                      transition: 'bottom 0.2s ease-out',
                       animation: poetPickerClosing
                         ? 'poetPickerOut 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards'
                         : 'poetPickerIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
@@ -2638,8 +2670,10 @@ export default function DiwanApp() {
 
                     {/* Scrollable poet list */}
                     <div
-                      className="max-h-[280px] overflow-y-auto overflow-x-hidden"
+                      className="overflow-y-auto overflow-x-hidden"
                       style={{
+                        maxHeight: `${pickerListMaxHeight}px`,
+                        transition: 'max-height 0.2s ease-out',
                         scrollbarWidth: 'thin',
                         scrollbarColor: 'rgba(197,160,89,0.2) transparent',
                       }}

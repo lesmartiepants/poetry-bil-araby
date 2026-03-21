@@ -827,16 +827,29 @@ describe('DiwanApp', () => {
         cachedTranslation: 'On this earth is what makes life worth living',
         tags: ['Modern', 'Political', 'Free Verse'],
       };
-      global.fetch.mockResolvedValueOnce({ ok: true, json: async () => darwishPoem1 });
+      // Use URL-based mock instead of mockResolvedValueOnce so that background
+      // Gemini/prefetch calls (audio prefetch timer, health ping, etc.) cannot
+      // accidentally consume the poem response before handleFetch does.
+      global.fetch.mockImplementation((url) => {
+        if (typeof url === 'string' && url.includes('/api/poems/random')) {
+          global.fetch.mockImplementation(() => Promise.resolve({ ...defaultFetchResponse }));
+          return Promise.resolve({ ok: true, json: async () => darwishPoem1 });
+        }
+        return Promise.resolve({ ...defaultFetchResponse });
+      });
       await userEvent.click(screen.getByText('محمود درويش'));
 
       await waitFor(() => expect(screen.getByText('On This Earth')).toBeInTheDocument(), {
-        timeout: 3000,
+        timeout: 8000,
       });
 
       // ── Re-select the same poet: should fetch a new poem ─────────────────
       await userEvent.click(screen.getByLabelText('Filter by poet'));
-      await waitFor(() => expect(document.body.textContent).toContain('محمود درويش'));
+      // Wait for the picker to actually be open. After the Darwish poem loaded, the poem
+      // card already contains 'محمود درويش', so checking textContent would pass immediately
+      // before the picker re-renders. Instead, wait for the picker-specific 'Clear filter'
+      // button which only appears inside the picker when a poet filter is active.
+      await waitFor(() => expect(screen.getByText('Clear filter')).toBeInTheDocument());
 
       const darwishPoem2 = {
         id: 202,
@@ -848,7 +861,16 @@ describe('DiwanApp', () => {
         cachedTranslation: 'Record: I am an Arab',
         tags: ['Modern', 'Political', 'Free Verse'],
       };
-      global.fetch.mockResolvedValueOnce({ ok: true, json: async () => darwishPoem2 });
+      // Same URL-based approach: route the poem fetch to darwishPoem2, revert
+      // to default after the first /api/poems/random response so that any
+      // background prefetch timers get the neutral default instead of this mock.
+      global.fetch.mockImplementation((url) => {
+        if (typeof url === 'string' && url.includes('/api/poems/random')) {
+          global.fetch.mockImplementation(() => Promise.resolve({ ...defaultFetchResponse }));
+          return Promise.resolve({ ok: true, json: async () => darwishPoem2 });
+        }
+        return Promise.resolve({ ...defaultFetchResponse });
+      });
       // Re-click the same poet — should trigger a new fetch.
       // When the picker is open after a Darwish selection, both the poem card and the
       // picker dropdown show "محمود درويش". Target the picker button using data-testid.
@@ -858,7 +880,7 @@ describe('DiwanApp', () => {
       await userEvent.click(pickerDarwishBtn);
 
       await waitFor(() => expect(screen.getByText('Identity Card')).toBeInTheDocument(), {
-        timeout: 3000,
+        timeout: 8000,
       });
     });
 

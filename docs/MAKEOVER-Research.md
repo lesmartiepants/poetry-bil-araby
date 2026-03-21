@@ -5,15 +5,15 @@
 > **Platform:** Vercel (likely Next.js / React SPA)
 > **Direction:** RTL-first, bilingual Arabic ↔ English
 
------
+---
 
 ## 1. What This App Is Trying to Do
 
 Based on the title, meta, and the broader category of Arabic poetry explorer apps, the core intent is clear: make Arabic poetry accessible, explorable, and engaging — bridging classical literature with modern web UX. The app likely supports browsing by poet, era, and theme, reading poems in Arabic (possibly with translation/transliteration), and possibly audio recitation.
 
-**The fundamental tension:** Arabic poetry is an *oral, performative, deeply emotional* art form. Most digital poetry platforms treat it like a database. The opportunity is to build something that feels closer to *listening to a recitation in a majlis* than scrolling a Wikipedia article.
+**The fundamental tension:** Arabic poetry is an _oral, performative, deeply emotional_ art form. Most digital poetry platforms treat it like a database. The opportunity is to build something that feels closer to _listening to a recitation in a majlis_ than scrolling a Wikipedia article.
 
------
+---
 
 ## 2. Current State — Probable Pain Points
 
@@ -21,7 +21,7 @@ These are the common issues across Arabic poetry web apps (including sites like 
 
 ### Layout & Typography
 
-- RTL text handling is likely functional but not *designed* — most apps just flip direction without rethinking hierarchy
+- RTL text handling is likely functional but not _designed_ — most apps just flip direction without rethinking hierarchy
 - Arabic calligraphic beauty is usually lost in standard web fonts (Noto Sans Arabic, system defaults)
 - Line breaks in poetry (bayt structure: صدر + عجز) are rarely given proper visual treatment
 - Mixed Arabic/English layouts create visual tension without intentional design
@@ -48,33 +48,33 @@ These are the common issues across Arabic poetry web apps (including sites like 
 
 ### Emotional Design
 
-- The biggest miss: poetry apps rarely *feel* like poetry. They feel like reference tools
+- The biggest miss: poetry apps rarely _feel_ like poetry. They feel like reference tools
 - No ambient mood, no color that shifts with theme, no motion that echoes meter
 - The transition between poems is probably a hard page load, not a choreographed moment
 
------
+---
 
 ## 3. Component & Library Upgrade Map
 
-|Current (Probable)                    |Replace With                                                                             |Why                                                                              |
-|--------------------------------------|-----------------------------------------------------------------------------------------|---------------------------------------------------------------------------------|
-|Default system/Google fonts for Arabic|**Amiri** or **Scheherazade New** (for classical) / **IBM Plex Arabic** (for UI)         |Purpose-built for Arabic poetry readability; proper ligatures and kashida support|
-|Generic CSS layout                    |**Tailwind CSS + RTL plugin** (`tailwindcss-rtl`)                                        |Native RTL utilities, logical properties (ps/pe instead of pl/pr)                |
-|Basic React state                     |**Zustand**                                                                              |Lightweight global state for reading progress, bookmarks, preferences            |
-|No animation                          |**Framer Motion**                                                                        |`layoutId` for poem-to-poem transitions; spring physics for Arabic text reveals  |
-|Standard HTML audio                   |**Tone.js** or custom `<audio>` with **Framer Motion** sync                              |Synchronized verse highlighting during recitation                                |
-|Static lists                          |**Embla Carousel** (horizontal poet browsing) + **Vaul** (bottom sheets for poem details)|Native-feel swipe and drawer interactions on mobile                              |
-|Alert/toast (if any)                  |**Sonner**                                                                               |Beautiful, non-intrusive notifications (bookmarked, copied, etc.)                |
-|No command palette                    |**cmdk**                                                                                 |⌘K to search entire corpus instantly — poets, verses, themes                     |
-|Basic dropdowns/modals                |**Radix Primitives** + **shadcn/ui**                                                     |Accessible, composable, polished — RTL-aware                                     |
-|No URL state                          |**nuqs**                                                                                 |Deep-linkable poem state (poem ID, verse, translation mode) in URL               |
-|No offline                            |**Serwist** (next-pwa successor)                                                         |Cache poems for offline reading — true PWA                                       |
+| Current (Probable)                     | Replace With                                                                              | Why                                                                               |
+| -------------------------------------- | ----------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| Default system/Google fonts for Arabic | **Amiri** or **Scheherazade New** (for classical) / **IBM Plex Arabic** (for UI)          | Purpose-built for Arabic poetry readability; proper ligatures and kashida support |
+| Generic CSS layout                     | **Tailwind CSS + RTL plugin** (`tailwindcss-rtl`)                                         | Native RTL utilities, logical properties (ps/pe instead of pl/pr)                 |
+| Basic React state                      | **Zustand**                                                                               | Lightweight global state for reading progress, bookmarks, preferences             |
+| No animation                           | **Framer Motion**                                                                         | `layoutId` for poem-to-poem transitions; spring physics for Arabic text reveals   |
+| Standard HTML audio                    | **Tone.js** or custom `<audio>` with **Framer Motion** sync                               | Synchronized verse highlighting during recitation                                 |
+| Static lists                           | **Embla Carousel** (horizontal poet browsing) + **Vaul** (bottom sheets for poem details) | Native-feel swipe and drawer interactions on mobile                               |
+| Alert/toast (if any)                   | **Sonner**                                                                                | Beautiful, non-intrusive notifications (bookmarked, copied, etc.)                 |
+| No command palette                     | **cmdk**                                                                                  | ⌘K to search entire corpus instantly — poets, verses, themes                      |
+| Basic dropdowns/modals                 | **Radix Primitives** + **shadcn/ui**                                                      | Accessible, composable, polished — RTL-aware                                      |
+| No URL state                           | **nuqs**                                                                                  | Deep-linkable poem state (poem ID, verse, translation mode) in URL                |
+| No offline                             | **Serwist** (next-pwa successor)                                                          | Cache poems for offline reading — true PWA                                        |
 
------
+---
 
 ## 4. Option A — “The Refined Scroll” (Evolutionary Redesign)
 
-> *Philosophy: Respect the current structure. Elevate every surface. Make it feel like a beautifully typeset book that happens to be interactive.*
+> _Philosophy: Respect the current structure. Elevate every surface. Make it feel like a beautifully typeset book that happens to be interactive._
 
 ### Visual Identity
 
@@ -92,12 +92,13 @@ These are the common issues across Arabic poetry web apps (including sites like 
 ### Reading Experience
 
 - Each bayt renders as a centered two-line unit with clear visual structure:
-  
+
   ```
          صدر البيت
             ❖
          عجز البيت
   ```
+
 - Tap a verse to reveal: English translation (slide up via Vaul drawer), transliteration, and vocabulary
 - Audio recitation with **verse-synced highlighting** — the current bayt glows softly as it’s spoken
 - Font size slider persisted in Zustand → localStorage alternative (in-memory)
@@ -115,11 +116,11 @@ These are the common issues across Arabic poetry web apps (including sites like 
 - Add-to-home-screen prompt styled with custom UI
 - Offline indicator: subtle toast via Sonner when reading cached content
 
------
+---
 
 ## 5. Option B — “The Living Majlis” (Radical Reimagination)
 
-> *Philosophy: Throw away the database mentality. Poetry is oral, social, emotional. Build an experience that feels like sitting in a desert tent listening to a sha’ir recite by firelight.*
+> _Philosophy: Throw away the database mentality. Poetry is oral, social, emotional. Build an experience that feels like sitting in a desert tent listening to a sha’ir recite by firelight._
 
 ### Core Concept
 
@@ -153,7 +154,7 @@ Instead of flat category lists, use a **radial/constellation navigation**:
   - Praise (مدح): gold/cream
   - Nature (طبيعة): sage/teal
 - Audio plays automatically (opt-in) with **spatial audio** feel — slight reverb, as if in a stone hall
-- Verses appear one at a time as you scroll — each one *arrives*, not just *exists*
+- Verses appear one at a time as you scroll — each one _arrives_, not just _exists_
 - Between poems, a brief “breathing” transition: the screen dims, a new verse fades in
 
 ### Social & Sharing
@@ -188,7 +189,7 @@ Canvas API / html2canvas        → Shareable verse cards
 nuqs                            → URL state for deep linking
 ```
 
------
+---
 
 ## 6. Typography Deep Dive (Both Options)
 
@@ -196,14 +197,14 @@ Arabic poetry typography is the single highest-leverage improvement. Get this ri
 
 ### Font Pairing
 
-|Role                 |Font             |Weight     |Size (mobile)|
-|---------------------|-----------------|-----------|-------------|
-|Poem text (classical)|Amiri            |Regular 400|22–28px      |
-|Poem text (modern)   |Noto Naskh Arabic|Regular 400|20–26px      |
-|UI labels (Arabic)   |IBM Plex Arabic  |Medium 500 |14–16px      |
-|UI labels (English)  |Inter            |Medium 500 |14–16px      |
-|Poet names / headers |Scheherazade New |Bold 700   |18–24px      |
-|Transliteration      |JetBrains Mono   |Regular 400|14px         |
+| Role                  | Font              | Weight      | Size (mobile) |
+| --------------------- | ----------------- | ----------- | ------------- |
+| Poem text (classical) | Amiri             | Regular 400 | 22–28px       |
+| Poem text (modern)    | Noto Naskh Arabic | Regular 400 | 20–26px       |
+| UI labels (Arabic)    | IBM Plex Arabic   | Medium 500  | 14–16px       |
+| UI labels (English)   | Inter             | Medium 500  | 14–16px       |
+| Poet names / headers  | Scheherazade New  | Bold 700    | 18–24px       |
+| Transliteration       | JetBrains Mono    | Regular 400 | 14px          |
 
 ### Bayt Layout CSS Pattern
 
@@ -221,7 +222,8 @@ Arabic poetry typography is the single highest-leverage improvement. Get this ri
   text-align: center;
 }
 
-.sadr, .ajuz {
+.sadr,
+.ajuz {
   max-width: 90%;
 }
 
@@ -240,7 +242,7 @@ Arabic text justification via kashida (elongation of connecting strokes) is crit
 - `font-feature-settings: "liga" 1, "calt" 1;` for proper ligatures
 - Consider **Tatweel character** (ـ U+0640) insertion for manual justification in headers
 
------
+---
 
 ## 7. Accessibility & Internationalization
 
@@ -251,7 +253,7 @@ Arabic text justification via kashida (elongation of connecting strokes) is crit
 - **Keyboard navigation:** Arrow keys navigate between abyat (verses); Enter plays audio; Escape exits immersive mode
 - **Language toggle:** Persistent, one-tap switch between Arabic-primary and English-primary layouts — not just translation, but the entire UI direction flips
 
------
+---
 
 ## 8. Quick Wins (Ship This Week)
 
@@ -266,37 +268,37 @@ These require minimal architecture changes and dramatically improve perceived qu
 1. **Reading progress bar** — thin colored line at viewport top
 1. **`prefers-color-scheme` dark mode** — use CSS custom properties, ship in a day
 
------
+---
 
 ## 9. Competitive Landscape
 
-|App                                               |Strength                                          |Weakness                                  |Steal This               |
-|--------------------------------------------------|--------------------------------------------------|------------------------------------------|-------------------------|
-|[Aldiwan](https://www.aldiwan.net)                |Massive corpus, structured data                   |Dated UI, no mobile optimization, no audio|Data depth               |
-|[TheArabicPoetry.com](https://thearabicpoetry.com)|Audio sync, trilingual (AR/EN/transliteration)    |Limited corpus, basic design              |Sync model               |
-|[Aruudy](https://aruudy.vercel.app)               |Meter analysis, modern UI                         |Niche (prosody only)                      |Technical poetry features|
-|Diwan Al Arab (Android)                           |Offline, 79K+ poems                               |Native only, small text, no audio         |Offline-first approach   |
-|[arabic-poems.com](https://arabic-poems.com)      |Cultural context, poet bios, school categorization|Web 1.0 aesthetic, no interactivity       |Editorial depth          |
+| App                                                | Strength                                           | Weakness                                   | Steal This                |
+| -------------------------------------------------- | -------------------------------------------------- | ------------------------------------------ | ------------------------- |
+| [Aldiwan](https://www.aldiwan.net)                 | Massive corpus, structured data                    | Dated UI, no mobile optimization, no audio | Data depth                |
+| [TheArabicPoetry.com](https://thearabicpoetry.com) | Audio sync, trilingual (AR/EN/transliteration)     | Limited corpus, basic design               | Sync model                |
+| [Aruudy](https://aruudy.vercel.app)                | Meter analysis, modern UI                          | Niche (prosody only)                       | Technical poetry features |
+| Diwan Al Arab (Android)                            | Offline, 79K+ poems                                | Native only, small text, no audio          | Offline-first approach    |
+| [arabic-poems.com](https://arabic-poems.com)       | Cultural context, poet bios, school categorization | Web 1.0 aesthetic, no interactivity        | Editorial depth           |
 
 **The gap no one fills:** A beautiful, mobile-first, PWA poetry experience with audio sync, modern interactions, AND a large corpus. That’s the lane.
 
------
+---
 
 ## 10. Decision Framework
 
-|Factor             |Option A: Refined Scroll     |Option B: Living Majlis             |
-|-------------------|-----------------------------|------------------------------------|
-|Dev effort         |2–4 weeks                    |8–12 weeks                          |
-|Risk               |Low — incremental improvement|High — untested paradigm            |
-|User learning curve|Near zero                    |Moderate (new navigation model)     |
-|Wow factor         |“Oh, this is nice”           |“I’ve never seen anything like this”|
-|Scalability        |Easy to add content          |Complex content relationships needed|
-|Best for           |Growing an existing user base|Launching something viral           |
-|Recommended if…    |You want polish and retention|You want to define the category     |
+| Factor              | Option A: Refined Scroll      | Option B: Living Majlis              |
+| ------------------- | ----------------------------- | ------------------------------------ |
+| Dev effort          | 2–4 weeks                     | 8–12 weeks                           |
+| Risk                | Low — incremental improvement | High — untested paradigm             |
+| User learning curve | Near zero                     | Moderate (new navigation model)      |
+| Wow factor          | “Oh, this is nice”            | “I’ve never seen anything like this” |
+| Scalability         | Easy to add content           | Complex content relationships needed |
+| Best for            | Growing an existing user base | Launching something viral            |
+| Recommended if…     | You want polish and retention | You want to define the category      |
 
 **My recommendation:** Ship Option A first (the quick wins + refined reading experience). Build Option B’s constellation navigation and immersive reading as a v2 feature, layered on top of A’s solid foundation. The daily verse home screen from Option B can ship immediately as part of Option A — it’s the single highest-impact feature.
 
------
+---
 
 ## Appendix: Key Resources
 

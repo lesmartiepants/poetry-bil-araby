@@ -2900,14 +2900,7 @@ export default function DiwanApp() {
       {/* Auth Modal */}
       <AnimatePresence>
         {showAuthModal && (
-          <AuthModal
-            key="auth-modal"
-            isOpen={showAuthModal}
-            onClose={() => useModalStore.getState().closeAuth()}
-            onSignInWithGoogle={handleSignInWithGoogle}
-            theme={theme}
-            message={authModalMessage}
-          />
+          <AuthModal key="auth-modal" onSignInWithGoogle={handleSignInWithGoogle} />
         )}
       </AnimatePresence>
 
@@ -2994,33 +2987,13 @@ export default function DiwanApp() {
       <AnimatePresence>
         {showSplash && (
           <Suspense fallback={null}>
-            <SplashScreen
-              key="splash-screen"
-              isOpen={showSplash}
-              onDismiss={() => {
-                useModalStore.getState().dismissSplash();
-                try {
-                  localStorage.setItem('hasSeenOnboarding', 'true');
-                } catch {}
-              }}
-              showOnboarding={showOnboarding}
-              theme={theme}
-            />
+            <SplashScreen key="splash-screen" />
           </Suspense>
         )}
       </AnimatePresence>
 
       {/* Keyboard Shortcut Help */}
-      <AnimatePresence>
-        {showShortcutHelp && (
-          <ShortcutHelp
-            key="shortcut-help"
-            isOpen={showShortcutHelp}
-            onClose={() => useModalStore.getState().closeShortcutHelp()}
-            theme={theme}
-          />
-        )}
-      </AnimatePresence>
+      <AnimatePresence>{showShortcutHelp && <ShortcutHelp key="shortcut-help" />}</AnimatePresence>
     </div>
   );
 }

@@ -42,6 +42,13 @@ import {
 } from './services/gemini.js';
 import { CACHE_CONFIG, cacheOperations } from './services/cache.js';
 import { prefetchManager } from './services/prefetch.js';
+import {
+  fetchPoemById,
+  fetchRandomPoem,
+  fetchPoets,
+  saveTranslation,
+  pingHealth,
+} from './services/database.js';
 import DebugPanel from './components/DebugPanel.jsx';
 import MysticalConsultationEffect from './components/MysticalConsultationEffect.jsx';
 import ErrorBanner from './components/ErrorBanner.jsx';
@@ -329,14 +336,8 @@ export default function DiwanApp() {
         const poemId = routeParams.id;
         track('deep_link_loaded', { poemId });
         addLog('DeepLink', `Loading poem ID ${poemId} from URL`, 'info');
-        fetch(`${apiUrl}/api/poems/${poemId}`)
-          .then((res) => {
-            if (!res.ok) throw new Error(`Poem ${poemId} not found`);
-            return res.json();
-          })
+        fetchPoemById(poemId)
           .then((poem) => {
-            if (poem.arabic) poem.arabic = poem.arabic.replace(/\*/g, '\n');
-            poem.isFromDatabase = true;
             setPoems([poem]);
             setCurrentIndex(0);
             setAutoExplainPending(true);
@@ -504,15 +505,10 @@ export default function DiwanApp() {
   // Fetch dynamic poet list from API when picker first opens
   useEffect(() => {
     if (!poetPickerOpen || poetsFetched) return;
-    const fetchPoets = async () => {
+    const loadPoets = async () => {
       try {
-        const res = await fetch(`${apiUrl}/api/poets`);
-        if (!res.ok) {
-          addLog('Poets', `API error: ${res.status}`, 'warn');
-          return;
-        }
-        const poets = await res.json();
-        setDynamicPoets(Array.isArray(poets) ? poets : []);
+        const poets = await fetchPoets();
+        setDynamicPoets(poets);
         addLog('Poets', `Loaded ${poets.length} poets from API`, 'info');
       } catch {
         addLog('Poets', 'Failed to fetch poets from API', 'warn');
@@ -520,10 +516,10 @@ export default function DiwanApp() {
         setPoetsFetched(true);
       }
     };
-    fetchPoets();
-    // apiUrl is a module-level constant; addLog is functionally stable (uses
-    // only setLogs and module constants) even though its reference changes per
-    // render — poetsFetched gate prevents repeated fetches regardless.
+    loadPoets();
+    // addLog is functionally stable (uses only setLogs and module constants)
+    // even though its reference changes per render — poetsFetched gate prevents
+    // repeated fetches regardless.
   }, [poetPickerOpen, poetsFetched, addLog]);
 
   // Focus search input when poet picker opens (delay allows CSS enter animation to complete)
@@ -1335,18 +1331,14 @@ export default function DiwanApp() {
       }
 
       // Save translation back to database for future visitors (fire-and-forget)
-      if (current?.isFromDatabase && current?.id && insightText && apiUrl) {
+      if (current?.isFromDatabase && current?.id && insightText) {
         const parts = parseInsight(insightText);
         if (parts?.poeticTranslation) {
-          fetch(`${apiUrl}/api/poems/${current.id}/translation`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              translation: parts.poeticTranslation.replace(/\n/g, '*'),
-              explanation: parts.depth || null,
-              authorBio: parts.author || null,
-            }),
-          }).catch(() => {});
+          saveTranslation(current.id, {
+            translation: parts.poeticTranslation.replace(/\n/g, '*'),
+            explanation: parts.depth || null,
+            authorBio: parts.author || null,
+          });
         }
       }
 
@@ -1401,38 +1393,15 @@ export default function DiwanApp() {
 
         const categoryObj = CATEGORIES.find((c) => c.id === selectedCategory);
         const poetName = categoryObj?.labelAr || selectedCategory;
-        const queryParams = new URLSearchParams();
-        if (selectedCategory !== 'All') queryParams.set('poet', poetName);
-        if (seenIds.length > 0) queryParams.set('exclude', seenIds.join(','));
-        const qs = queryParams.toString();
-        const url = `${apiUrl}/api/poems/random${qs ? '?' + qs : ''}`;
+        const poet = selectedCategory !== 'All' ? poetName : undefined;
 
         if (seenIds.length > 0) {
           addLog('Discovery DB', `Excluding ${seenIds.length} recently seen poems`, 'info');
         }
 
         try {
-          const res = await fetch(url);
-
-          if (!res.ok) {
-            throw new Error(`Database API returned ${res.status} ${res.statusText}`);
-          }
-
-          // Clear any previous backend errors on success
-
-          const newPoem = await res.json();
+          const newPoem = await fetchRandomPoem({ poet, excludeIds: seenIds });
           const apiTime = performance.now() - apiStart;
-
-          // Process database poems: replace * with newlines
-          if (newPoem.arabic) {
-            newPoem.arabic = newPoem.arabic.replace(/\*/g, '\n');
-          }
-          if (newPoem.cachedTranslation) {
-            newPoem.cachedTranslation = newPoem.cachedTranslation.replace(/\*/g, '\n');
-          }
-
-          // Mark as database poem
-          newPoem.isFromDatabase = true;
 
           // Track this poem as seen for dedup
           markPoemSeen(newPoem.id);
@@ -1594,13 +1563,7 @@ export default function DiwanApp() {
   // Pre-fetch a poem in the background for the next visit (stored in localStorage with TTL)
   async function prefetchNextVisitPoem() {
     try {
-      const res = await fetch(`${apiUrl}/api/poems/random`);
-      if (!res.ok) return;
-      const poem = await res.json();
-      if (poem.arabic) poem.arabic = poem.arabic.replace(/\*/g, '\n');
-      if (poem.cachedTranslation)
-        poem.cachedTranslation = poem.cachedTranslation.replace(/\*/g, '\n');
-      poem.isFromDatabase = true;
+      const poem = await fetchRandomPoem();
       localStorage.setItem(
         'qafiyah_nextPoem',
         JSON.stringify({
@@ -1970,11 +1933,11 @@ export default function DiwanApp() {
   // Keep-alive ping to prevent Render free tier from sleeping (15 min idle timeout)
   // Pings every 10 minutes to keep backend awake
   useEffect(() => {
-    if (!useDatabase || !apiUrl) return; // Only ping if database mode is enabled
+    if (!useDatabase) return; // Only ping if database mode is enabled
 
     const keepAlivePing = setInterval(
       () => {
-        fetch(`${apiUrl}/api/health`)
+        pingHealth()
           .then(() => {
             if (FEATURES.debug) {
               addLog('Keep-Alive', 'Backend pinged successfully', 'info');
@@ -1991,10 +1954,10 @@ export default function DiwanApp() {
     ); // 10 minutes
 
     // Initial ping on mount
-    fetch(`${apiUrl}/api/health`).catch(() => {});
+    pingHealth().catch(() => {});
 
     return () => clearInterval(keepAlivePing);
-  }, [useDatabase, apiUrl]);
+  }, [useDatabase]);
 
   if (!current) {
     return (

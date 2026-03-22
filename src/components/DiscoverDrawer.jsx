@@ -521,7 +521,17 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
                 </>
               )}
 
-              {/* Dynamic poets */}
+              {/* Dynamic poets — with section header inside the grid */}
+              {!poetSearch && filteredPoetList.all.length > 0 && (
+                <div className="col-span-2 pt-3 pb-1 px-1">
+                  <span
+                    className="text-[9px] font-brand-en uppercase tracking-widest font-bold"
+                    style={{ color: 'var(--gold)', opacity: 0.3 }}
+                  >
+                    More Poets
+                  </span>
+                </div>
+              )}
               {filteredPoetList.all.map((p) => (
                 <button
                   key={p.id}
@@ -602,18 +612,6 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
                     </span>
                   </div>
                 )}
-            </div>
-          )}
-
-          {/* More Poets section header — only when dynamic poets are present */}
-          {!poetSearch && filteredPoetList.all.length > 0 && (
-            <div className="pt-3 pb-1 px-1">
-              <span
-                className="text-[9px] font-brand-en uppercase tracking-widest font-bold"
-                style={{ color: 'var(--gold)', opacity: 0.3 }}
-              >
-                More Poets
-              </span>
             </div>
           )}
 

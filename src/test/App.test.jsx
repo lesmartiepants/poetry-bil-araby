@@ -779,7 +779,7 @@ describe('DiwanApp', () => {
       });
     });
 
-    it('discover drawer opens with search input accessible', async () => {
+    it('search input is accessible when discover drawer opens', async () => {
       render(<DiwanApp />);
       await userEvent.click(screen.getByLabelText('Open discover'));
 

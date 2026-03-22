@@ -25,6 +25,7 @@ const initialState = {
   savedPoems: false,
   splash: computeSplash(),
   insightsDrawer: false,
+  discoverDrawer: false,
   shortcutHelp: false,
   poetPicker: false,
   poetPickerClosing: false,
@@ -54,6 +55,10 @@ export const useModalStore = create((set) => ({
 
   toggleInsightsDrawer: () => set((s) => ({ insightsDrawer: !s.insightsDrawer })),
   setInsightsDrawer: (open) => set({ insightsDrawer: open }),
+
+  openDiscoverDrawer: () => set({ discoverDrawer: true }),
+  closeDiscoverDrawer: () => set({ discoverDrawer: false }),
+  setDiscoverDrawer: (open) => set({ discoverDrawer: open }),
 
   toggleShortcutHelp: () => set((s) => ({ shortcutHelp: !s.shortcutHelp })),
   closeShortcutHelp: () => set({ shortcutHelp: false }),
@@ -86,6 +91,7 @@ export const useModalStore = create((set) => ({
       authMessage: '',
       savedPoems: false,
       insightsDrawer: false,
+      discoverDrawer: false,
       shortcutHelp: false,
       poetPicker: false,
       shareCard: false,

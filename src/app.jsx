@@ -2922,27 +2922,29 @@ export default function DiwanApp() {
       />
 
       {/* Design Review + Bug — stacked bottom-left utility buttons */}
-      <div
-        className="fixed z-[200] flex flex-col items-center gap-1"
-        style={{ left: 8, bottom: 8 }}
-      >
-        <a
-          href="/design-review"
-          className="w-[44px] h-[44px] flex items-center justify-center no-underline"
-          title="Design Review"
-          aria-label="Open design review"
+      {FEATURES.designReview && (
+        <div
+          className="fixed z-[200] flex flex-col items-center gap-1"
+          style={{ left: 8, bottom: 8 }}
         >
-          <span
-            className={`relative w-5 h-5 rounded-full flex items-center justify-center transition-all duration-200 ${
-              darkMode
-                ? 'bg-stone-900/60 border border-gold/20 text-stone-500 hover:text-gold hover:border-gold/40'
-                : 'bg-white/50 border border-gold/20 text-stone-400 hover:text-gold hover:border-gold/40'
-            } backdrop-blur-md`}
+          <a
+            href="/design-review"
+            className="w-[44px] h-[44px] flex items-center justify-center no-underline"
+            title="Design Review"
+            aria-label="Open design review"
           >
-            <Paintbrush size={9} />
-          </span>
-        </a>
-      </div>
+            <span
+              className={`relative w-5 h-5 rounded-full flex items-center justify-center transition-all duration-200 ${
+                darkMode
+                  ? 'bg-stone-900/60 border border-gold/20 text-stone-500 hover:text-gold hover:border-gold/40'
+                  : 'bg-white/50 border border-gold/20 text-stone-400 hover:text-gold hover:border-gold/40'
+              } backdrop-blur-md`}
+            >
+              <Paintbrush size={9} />
+            </span>
+          </a>
+        </div>
+      )}
 
       {/* Vertical Sidebar - always visible */}
       <VerticalSidebar

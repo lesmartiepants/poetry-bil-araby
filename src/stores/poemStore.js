@@ -56,6 +56,7 @@ const initialState = {
   poetSearch: '',
   interpretation: null,
   isInterpreting: false,
+  pendingCategory: null,
 };
 
 export const usePoemStore = create((set, get) => ({
@@ -79,6 +80,7 @@ export const usePoemStore = create((set, get) => ({
   setDynamicPoets: (dynamicPoets) => set({ dynamicPoets }),
   setPoetSearch: (poetSearch) => set({ poetSearch }),
   setPoetsFetched: (poetsFetched) => set({ poetsFetched }),
+  setPendingCategory: (pendingCategory) => set({ pendingCategory }),
   setInterpretation: (interpretation) => set({ interpretation }),
   setInterpreting: (isInterpreting) => set({ isInterpreting }),
 

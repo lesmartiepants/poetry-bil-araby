@@ -147,14 +147,6 @@ export default function DiwanApp() {
   const audioError = useAudioStore((s) => s.error);
   const setAudioError = useAudioStore((s) => s.setError);
   const hasAutoLoaded = useRef(false);
-  // When the selectedCategory effect wants to fetch but isFetching is already true,
-  // it stores the category here. A retry effect fires once isFetching drops to false.
-  const pendingCategoryFetchRef = useRef(null);
-  // Always-current mirror of selectedCategory for use inside async callbacks where
-  // the closure value would otherwise be stale (e.g. the setPoems functional updater
-  // called after an awaited fetch that outlasts the render that started it).
-  // Initialized with the mount-time value; kept in sync by the selectedCategory effect.
-  const selectedCategoryRef = useRef(selectedCategory);
   const logs = useUIStore((s) => s.logs);
   const showDebugLogs = useUIStore((s) => s.showDebugLogs);
   const showCopySuccess = useModalStore((s) => s.copyToast);
@@ -238,7 +230,7 @@ export default function DiwanApp() {
       if (filtered.length === 0) {
         if (isFetching) {
           // Another fetch is already in progress; queue a retry for when it completes.
-          pendingCategoryFetchRef.current = selectedCategory;
+          usePoemStore.getState().setPendingCategory(selectedCategory);
         } else {
           handleFetch();
         }
@@ -246,12 +238,9 @@ export default function DiwanApp() {
         setCurrentIndex(0);
       }
     } else {
-      pendingCategoryFetchRef.current = null; // Clear any pending poet fetch on "All"
+      usePoemStore.getState().setPendingCategory(null); // Clear any pending poet fetch on "All"
       setCurrentIndex(0);
     }
-    // Keep the always-current ref in sync so async callbacks inside handleFetch
-    // (e.g. the setPoems functional updater) can read the latest value.
-    selectedCategoryRef.current = selectedCategory;
   }, [selectedCategory]);
 
   // Retry a blocked poet-selection fetch once the current fetch completes.
@@ -264,10 +253,10 @@ export default function DiwanApp() {
   useEffect(() => {
     if (
       !isFetching &&
-      pendingCategoryFetchRef.current &&
-      pendingCategoryFetchRef.current === selectedCategory
+      usePoemStore.getState().pendingCategory &&
+      usePoemStore.getState().pendingCategory === selectedCategory
     ) {
-      pendingCategoryFetchRef.current = null;
+      usePoemStore.getState().setPendingCategory(null);
       handleFetch();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1409,7 +1398,10 @@ export default function DiwanApp() {
             const updated = [...prev, newPoem];
             // Use the always-current ref so a user who switched poets while this
             // fetch was in flight doesn't see a poem from the wrong poet.
-            const freshFiltered = filterPoemsByCategory(updated, selectedCategoryRef.current);
+            const freshFiltered = filterPoemsByCategory(
+              updated,
+              usePoemStore.getState().selectedCategory
+            );
             const newIdx = freshFiltered.findIndex((p) => p.id === newPoem.id);
             if (newIdx !== -1) setCurrentIndex(newIdx);
             return updated;
@@ -1525,7 +1517,10 @@ export default function DiwanApp() {
           const updated = [...prev, newPoem];
           // Use the always-current ref so a user who switched poets while this
           // fetch was in flight doesn't see a poem from the wrong poet.
-          const freshFiltered = filterPoemsByCategory(updated, selectedCategoryRef.current);
+          const freshFiltered = filterPoemsByCategory(
+            updated,
+            usePoemStore.getState().selectedCategory
+          );
           const newIdx = freshFiltered.findIndex((p) => p.id === newPoem.id);
           if (newIdx !== -1) setCurrentIndex(newIdx);
           return updated;
@@ -2953,45 +2948,20 @@ export default function DiwanApp() {
       <VerticalSidebar
         onExplain={() => {
           if (interpretation) {
-            // Already have insight — toggle drawer open/closed
             useModalStore.getState().toggleInsightsDrawer();
             useModalStore.getState().showToastTimed('insight', 1500);
           } else {
-            // No insight yet — fetch and open drawer
             handleAnalyze();
             setInsightsDrawerOpen(true);
           }
         }}
         onCopy={handleCopy}
-        showCopySuccess={showCopySuccess}
         onShare={handleShare}
-        showShareSuccess={showShareSuccess}
-        showInsightSuccess={showInsightSuccess}
         onSignIn={handleSignIn}
         onSignOut={handleSignOut}
         onOpenSavedPoems={handleOpenSavedPoems}
         savedPoemsCount={savedPoems.length}
         user={user}
-        theme={theme}
-        isInterpreting={isInterpreting}
-        interpretation={interpretation}
-        showTranslation={showTranslation}
-        onToggleTranslation={() => {
-          useUIStore.getState().toggleTranslation();
-          if (!interpretation && !isInterpreting) handleAnalyze();
-        }}
-        showTransliteration={showTransliteration}
-        onToggleTransliteration={() => useUIStore.getState().toggleTransliteration()}
-        textSizeLabel={TEXT_SIZES[textSizeLevel].label}
-        onCycleTextSize={cycleTextSize}
-        darkMode={darkMode}
-        onToggleDarkMode={handleToggleTheme}
-        currentFont={currentFont}
-        onCycleFont={cycleFont}
-        selectedCategory={selectedCategory}
-        onSelectCategory={setSelectedCategory}
-        showDebugLogs={showDebugLogs}
-        onToggleDebugLogs={() => useUIStore.getState().toggleDebugLogs()}
       />
 
       {/* Splash / Onboarding Screen (lazy-loaded, deferred from initial bundle) */}

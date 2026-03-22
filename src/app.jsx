@@ -104,6 +104,8 @@ export default function DiwanApp() {
 
   const headerOpacity = useUIStore((s) => s.headerOpacity);
   const setHeaderOpacity = useUIStore((s) => s.setHeaderOpacity);
+  const [fireTapped, setFireTapped] = useState(false);
+
   // ── Poem store (Zustand) ──
   const poems = usePoemStore((s) => s.poems);
   const setPoems = usePoemStore((s) => s.setPoems);
@@ -1128,6 +1130,13 @@ export default function DiwanApp() {
           transition: box-shadow 0.15s ease;
         }
 
+        @keyframes fireTapRing {
+          0%   { box-shadow: 0 0 0 0px rgba(255,140,30,0.7); transform: scale(1); }
+          40%  { box-shadow: 0 0 0 8px rgba(255,140,30,0); transform: scale(1.15); }
+          100% { box-shadow: 0 0 0 0px rgba(255,140,30,0); transform: scale(1); }
+        }
+        .fire-tap { animation: fireTapRing 0.38s ease-out forwards; }
+
       `}</style>
 
       <DebugPanel controlBarRef={controlBarRef} />
@@ -1476,8 +1485,8 @@ export default function DiwanApp() {
                       </div>
                     </button>
                     <span
-                      className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase whitespace-nowrap ${GOLD.goldText}`}
-                      style={{ opacity: 0.6, animation: 'shimmer 2s ease-in-out infinite' }}
+                      className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
+                      style={{ animation: 'shimmer 2s ease-in-out infinite' }}
                     >
                       Loading
                     </span>
@@ -1504,8 +1513,7 @@ export default function DiwanApp() {
                       )}
                     </button>
                     <span
-                      className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase whitespace-nowrap ${GOLD.goldText}`}
-                      style={{ opacity: isPlaying ? 0.9 : 0.6 }}
+                      className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
                     >
                       {isPlaying ? 'Playing' : 'Listen'}
                     </span>
@@ -1515,12 +1523,17 @@ export default function DiwanApp() {
 
               <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
                 <button
-                  onClick={() => setDiscoverDrawerOpen(true)}
+                  onClick={() => {
+                    setFireTapped(true);
+                    setTimeout(() => setFireTapped(false), 400);
+                    setDiscoverDrawerOpen(true);
+                  }}
                   disabled={isFetching}
                   aria-label="Open discover"
-                  className="relative min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full hover:scale-105"
+                  className={`relative w-[46px] h-[46px] bg-transparent border-none cursor-pointer flex items-center justify-center rounded-full hover:scale-105 ${fireTapped ? 'fire-tap' : ''}`}
                   style={{
                     background: isFetching ? 'rgba(197,160,89,0.08)' : 'transparent',
+                    transition: fireTapped ? 'none' : 'transform 0.3s',
                   }}
                 >
                   <GoldenFireIcon size={34} />
@@ -1529,8 +1542,7 @@ export default function DiwanApp() {
                   )}
                 </button>
                 <span
-                  className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase whitespace-nowrap ${GOLD.goldText}`}
-                  style={{ opacity: 0.6 }}
+                  className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
                 >
                   Discover
                 </span>
@@ -1564,8 +1576,7 @@ export default function DiwanApp() {
                   )}
                 </button>
                 <span
-                  className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase whitespace-nowrap ${GOLD.goldText}`}
-                  style={{ opacity: interpretation ? 0.9 : 0.6 }}
+                  className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
                 >
                   Explain
                 </span>

@@ -251,6 +251,24 @@ describe('renderShareCard', () => {
       renderShareCard(ctx, CARD_WIDTH, CARD_HEIGHT, noTranslation, 'diwan');
     }).not.toThrow();
   });
+
+  it('draws English poet name and poem title in every design', () => {
+    for (const design of SHARE_CARD_DESIGNS) {
+      ctx.fillText.mockClear();
+      renderShareCard(ctx, CARD_WIDTH, CARD_HEIGHT, mockPoem, design.id);
+      const calls = ctx.fillText.mock.calls.map((c) => c[0]);
+      expect(calls).toContain(mockPoem.poet);
+      expect(calls).toContain(mockPoem.title);
+    }
+  });
+
+  it('interleaves English translation with Arabic verses', () => {
+    ctx.fillText.mockClear();
+    renderShareCard(ctx, CARD_WIDTH, CARD_HEIGHT, mockPoem, 'diwan');
+    const calls = ctx.fillText.mock.calls.map((c) => c[0]);
+    expect(calls).toContain('يا دِمَشقُ يا حَبيبَتي');
+    expect(calls.some((t) => typeof t === 'string' && t.includes('O Damascus'))).toBe(true);
+  });
 });
 
 // ─── generateShareCardDataURL ───────────────────────────────────────────
@@ -312,5 +330,17 @@ describe('ShareCardModal', () => {
     await userEvent.click(sinanBtn);
     // Should highlight Sinan (the button parent should have active styling)
     expect(sinanBtn.closest('button')).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  it('shows English poet name and poem title in preview', () => {
+    render(<ShareCardModal poem={mockPoem} onClose={() => {}} />);
+    expect(screen.getByText(mockPoem.poet)).toBeInTheDocument();
+    expect(screen.getByText(mockPoem.title)).toBeInTheDocument();
+  });
+
+  it('shows brand watermark in preview', () => {
+    render(<ShareCardModal poem={mockPoem} onClose={() => {}} />);
+    expect(screen.getByText('بالعربي')).toBeInTheDocument();
+    expect(screen.getByText('poetry')).toBeInTheDocument();
   });
 });

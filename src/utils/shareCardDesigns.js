@@ -25,7 +25,7 @@ export const CARD_HEIGHT = 1350;
 export const SHARE_CARD_DESIGNS = [
   {
     id: 'diwan',
-    name: 'Classic Dīwān',
+    name: 'Dīwān',
     nameAr: 'الديوان',
     artist: 'Default',
     description: 'Luxe editorial — gold foil calligraphy on obsidian, sparkling separators',
@@ -211,14 +211,14 @@ function renderDiwan(ctx, w, h, poem) {
   const verses = prepareVerses(poem.arabic);
   const translation = prepareTranslation(poem.english || poem.cachedTranslation);
   const contentStartY = sepLineY + 70;
-  const pairSpacing = 140; // Space between each Arabic+English pair
+  const pairSpacing = 180; // Generous spacing so poem fills the card
 
   verses.forEach((verse, i) => {
     const y = contentStartY + i * pairSpacing;
 
     // Arabic verse — LARGE
     ctx.fillStyle = '#e8e0d0';
-    ctx.font = '52px "Amiri", serif';
+    ctx.font = '56px "Amiri", serif';
     ctx.textAlign = 'center';
     ctx.direction = 'rtl';
     ctx.fillText(verse, w / 2, y);
@@ -226,11 +226,11 @@ function renderDiwan(ctx, w, h, poem) {
     // English translation below — elegant italic
     if (translation[i]) {
       ctx.fillStyle = 'rgba(197, 160, 89, 0.45)';
-      ctx.font = 'italic 22px "Playfair Display", serif';
+      ctx.font = 'italic 24px "Playfair Display", serif';
       ctx.direction = 'ltr';
       const wrapped = wrapText(ctx, translation[i], w - 200);
       wrapped.forEach((wl, j) => {
-        ctx.fillText(wl, w / 2, y + 45 + j * 28);
+        ctx.fillText(wl, w / 2, y + 55 + j * 30);
       });
     }
   });
@@ -317,24 +317,24 @@ function renderIbnMuqla(ctx, w, h, poem) {
   const verses = prepareVerses(poem.arabic);
   const translation = prepareTranslation(poem.english || poem.cachedTranslation);
   const contentStartY = headerY + 195;
-  const pairSpacing = 140;
+  const pairSpacing = 180;
 
   verses.forEach((verse, i) => {
     const y = contentStartY + i * pairSpacing;
 
     ctx.fillStyle = '#2C1A00';
-    ctx.font = '50px "Amiri", serif';
+    ctx.font = '56px "Amiri", serif';
     ctx.textAlign = 'center';
     ctx.direction = 'rtl';
     ctx.fillText(verse, w / 2, y);
 
     if (translation[i]) {
       ctx.fillStyle = 'rgba(74, 40, 0, 0.4)';
-      ctx.font = 'italic 20px "Playfair Display", serif';
+      ctx.font = 'italic 24px "Playfair Display", serif';
       ctx.direction = 'ltr';
       const wrapped = wrapText(ctx, translation[i], w - 200);
       wrapped.forEach((wl, j) => {
-        ctx.fillText(wl, w / 2, y + 42 + j * 26);
+        ctx.fillText(wl, w / 2, y + 55 + j * 30);
       });
     }
   });
@@ -436,24 +436,24 @@ function renderSinan(ctx, w, h, poem) {
   const verses = prepareVerses(poem.arabic);
   const translation = prepareTranslation(poem.english || poem.cachedTranslation);
   const contentStartY = headerY + 210;
-  const pairSpacing = 145;
+  const pairSpacing = 180;
 
   verses.forEach((verse, i) => {
     const y = contentStartY + i * pairSpacing;
 
     ctx.fillStyle = '#E8E4DC';
-    ctx.font = '50px "Amiri", serif';
+    ctx.font = '56px "Amiri", serif';
     ctx.textAlign = 'center';
     ctx.direction = 'rtl';
     ctx.fillText(verse, w / 2, y);
 
     if (translation[i]) {
       ctx.fillStyle = 'rgba(79, 166, 183, 0.45)';
-      ctx.font = 'italic 20px "Playfair Display", serif';
+      ctx.font = 'italic 24px "Playfair Display", serif';
       ctx.direction = 'ltr';
       const wrapped = wrapText(ctx, translation[i], w - 200);
       wrapped.forEach((wl, j) => {
-        ctx.fillText(wl, w / 2, y + 42 + j * 26);
+        ctx.fillText(wl, w / 2, y + 55 + j * 30);
       });
     }
   });
@@ -539,25 +539,25 @@ function renderZahaHadid(ctx, w, h, poem) {
   const verses = prepareVerses(poem.arabic);
   const translation = prepareTranslation(poem.english || poem.cachedTranslation);
   const contentStartY = 290;
-  const pairSpacing = 150;
+  const pairSpacing = 185;
 
   verses.forEach((verse, i) => {
     const y = contentStartY + i * pairSpacing;
 
     ctx.fillStyle = '#F0E8FF';
-    ctx.font = '50px "Amiri", serif';
+    ctx.font = '56px "Amiri", serif';
     ctx.textAlign = 'right';
     ctx.direction = 'rtl';
     ctx.fillText(verse, w - 80, y);
 
     if (translation[i]) {
       ctx.fillStyle = 'rgba(150, 180, 255, 0.45)';
-      ctx.font = 'italic 20px "Playfair Display", serif';
+      ctx.font = 'italic 24px "Playfair Display", serif';
       ctx.textAlign = 'right';
       ctx.direction = 'ltr';
       const wrapped = wrapText(ctx, translation[i], w - 200);
       wrapped.forEach((wl, j) => {
-        ctx.fillText(wl, w - 80, y + 42 + j * 26);
+        ctx.fillText(wl, w - 80, y + 55 + j * 30);
       });
     }
   });
@@ -668,24 +668,24 @@ function renderHassanFathy(ctx, w, h, poem) {
   const verses = prepareVerses(poem.arabic);
   const translation = prepareTranslation(poem.english || poem.cachedTranslation);
   const contentStartY = headerY + 205;
-  const pairSpacing = 140;
+  const pairSpacing = 175;
 
   verses.forEach((verse, i) => {
     const y = contentStartY + i * pairSpacing;
 
     ctx.fillStyle = '#2A1500';
-    ctx.font = '48px "Amiri", serif';
+    ctx.font = '56px "Amiri", serif';
     ctx.textAlign = 'center';
     ctx.direction = 'rtl';
     ctx.fillText(verse, w / 2, y);
 
     if (translation[i]) {
       ctx.fillStyle = 'rgba(74, 40, 0, 0.38)';
-      ctx.font = 'italic 20px "Playfair Display", serif';
+      ctx.font = 'italic 24px "Playfair Display", serif';
       ctx.direction = 'ltr';
       const wrapped = wrapText(ctx, translation[i], w - 200);
       wrapped.forEach((wl, j) => {
-        ctx.fillText(wl, w / 2, y + 40 + j * 26);
+        ctx.fillText(wl, w / 2, y + 55 + j * 30);
       });
     }
   });

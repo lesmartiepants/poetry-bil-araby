@@ -1,7 +1,15 @@
 import { X, Feather } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { THEME } from '../../constants/theme.js';
+import { useUIStore } from '../../stores/uiStore';
+import { useModalStore } from '../../stores/modalStore';
 
-const AuthModal = ({ isOpen, onClose, onSignInWithGoogle, theme, message }) => {
+const AuthModal = ({ onSignInWithGoogle }) => {
+  const isOpen = useModalStore((s) => s.authModal);
+  const message = useModalStore((s) => s.authMessage);
+  const onClose = () => useModalStore.getState().closeAuth();
+  const darkMode = useUIStore((s) => s.darkMode);
+  const theme = darkMode ? THEME.dark : THEME.light;
   if (!isOpen) return null;
 
   return (

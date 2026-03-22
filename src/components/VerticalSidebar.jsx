@@ -16,37 +16,44 @@ import {
   Sun,
   UserRound,
 } from 'lucide-react';
+import { THEME } from '../constants/theme.js';
+import { FONTS } from '../constants/fonts.js';
+import { useUIStore } from '../stores/uiStore';
+import { useModalStore } from '../stores/modalStore';
+import { usePoemStore } from '../stores/poemStore';
+
+const TEXT_SIZES = [
+  { label: 'S', multiplier: 0.85 },
+  { label: 'M', multiplier: 1.0 },
+  { label: 'L', multiplier: 1.15 },
+  { label: 'XL', multiplier: 1.3 },
+];
 
 const VerticalSidebar = ({
   onExplain,
   onCopy,
-  showCopySuccess,
   onShare,
-  showShareSuccess,
-  showInsightSuccess,
   onSignIn,
   onSignOut,
   onOpenSavedPoems,
   savedPoemsCount,
   user,
-  theme,
-  isInterpreting,
-  interpretation,
-  showTranslation,
-  onToggleTranslation,
-  showTransliteration,
-  onToggleTransliteration,
-  textSizeLabel,
-  onCycleTextSize,
-  darkMode,
-  onToggleDarkMode,
-  currentFont,
-  onCycleFont,
-  selectedCategory,
-  onSelectCategory,
-  showDebugLogs,
-  onToggleDebugLogs,
 }) => {
+  // Store reads
+  const showCopySuccess = useModalStore((s) => s.copyToast);
+  const showShareSuccess = useModalStore((s) => s.shareToast);
+  const showInsightSuccess = useModalStore((s) => s.insightToast);
+  const darkMode = useUIStore((s) => s.darkMode);
+  const theme = darkMode ? THEME.dark : THEME.light;
+  const isInterpreting = usePoemStore((s) => s.isInterpreting);
+  const interpretation = usePoemStore((s) => s.interpretation);
+  const showTranslation = useUIStore((s) => s.showTranslation);
+  const showTransliteration = useUIStore((s) => s.showTransliteration);
+  const textSizeLevel = useUIStore((s) => s.textSize);
+  const textSizeLabel = TEXT_SIZES[textSizeLevel].label;
+  const currentFont = useUIStore((s) => s.font);
+  const selectedCategory = usePoemStore((s) => s.selectedCategory);
+  const showDebugLogs = useUIStore((s) => s.showDebugLogs);
   const [expanded, setExpanded] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
@@ -245,7 +252,7 @@ const VerticalSidebar = ({
               </span>
 
               <button
-                onClick={onToggleTransliteration}
+                onClick={() => useUIStore.getState().toggleTransliteration()}
                 title={showTransliteration ? 'Hide romanization' : 'Show romanization'}
                 className={`${btnBase} ${btnHover} ${showTransliteration ? theme.goldActiveBg + ' border ' + theme.goldBorderSubtle : 'opacity-40'}`}
               >
@@ -290,7 +297,7 @@ const VerticalSidebar = ({
                     className={`flex flex-col items-center gap-1 pl-0.5 border-l-2 ${theme.goldBorderMuted}`}
                   >
                     <button
-                      onClick={onToggleTranslation}
+                      onClick={() => useUIStore.getState().toggleTranslation()}
                       title={showTranslation ? 'Hide translation' : 'Show translation'}
                       className={`${subBtnBase} ${subBtnHover} ${showTranslation ? theme.goldActiveBg + ' border ' + theme.goldBorderSubtle : 'opacity-40'}`}
                     >
@@ -301,7 +308,7 @@ const VerticalSidebar = ({
                     </span>
 
                     <button
-                      onClick={onCycleTextSize}
+                      onClick={() => useUIStore.getState().cycleTextSize()}
                       title={`Text size: ${textSizeLabel}`}
                       className={`${subBtnBase} ${subBtnHover}`}
                     >
@@ -317,7 +324,7 @@ const VerticalSidebar = ({
                     </span>
 
                     <button
-                      onClick={onToggleDarkMode}
+                      onClick={() => useUIStore.getState().toggleDarkMode()}
                       title={darkMode ? 'Light mode' : 'Dark mode'}
                       className={`${subBtnBase} ${subBtnHover}`}
                     >
@@ -332,7 +339,7 @@ const VerticalSidebar = ({
                     </span>
 
                     <button
-                      onClick={onCycleFont}
+                      onClick={() => useUIStore.getState().cycleFont()}
                       title={`Font: ${currentFont}`}
                       className={`${subBtnBase} ${subBtnHover}`}
                     >
@@ -348,7 +355,7 @@ const VerticalSidebar = ({
                     </span>
 
                     <button
-                      onClick={onToggleDebugLogs}
+                      onClick={() => useUIStore.getState().toggleDebugLogs()}
                       title={showDebugLogs ? 'Hide dev logs' : 'Show dev logs'}
                       className={`${subBtnBase} ${subBtnHover} ${showDebugLogs ? theme.goldActiveBg + ' border ' + theme.goldBorderSubtle : 'opacity-40'}`}
                     >

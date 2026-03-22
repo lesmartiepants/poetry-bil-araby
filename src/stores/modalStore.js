@@ -63,6 +63,18 @@ export const useModalStore = create((set) => ({
 
   showToast: (type) => set({ [TOAST_MAP[type]]: true }),
   hideToast: (type) => set({ [TOAST_MAP[type]]: false }),
+  showToastTimed: (type, ms = 2000) => {
+    set({ [TOAST_MAP[type]]: true });
+    setTimeout(() => set({ [TOAST_MAP[type]]: false }), ms);
+  },
+
+  // Boolean setters (avoid wrapper functions in components)
+  setPoetPicker: (open) => set({ poetPicker: open }),
+  setAuthModal: (open, message = '') =>
+    open
+      ? set({ authModal: true, authMessage: message })
+      : set({ authModal: false, authMessage: '' }),
+  setSavedPoemsOpen: (open) => set({ savedPoems: open }),
 
   closeAll: () =>
     set({

@@ -2,6 +2,8 @@ import { X } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { DESIGN } from '../constants/design.js';
 import { THEME } from '../constants/theme.js';
+import { useUIStore } from '../stores/uiStore';
+import { useModalStore } from '../stores/modalStore';
 
 const SHORTCUTS = [
   { keys: ['Space'], desc: 'Play / Pause audio' },
@@ -13,7 +15,11 @@ const SHORTCUTS = [
   { keys: ['?'], desc: 'Show this help' },
 ];
 
-const ShortcutHelp = ({ isOpen, onClose, theme }) => {
+const ShortcutHelp = () => {
+  const isOpen = useModalStore((s) => s.shortcutHelp);
+  const onClose = () => useModalStore.getState().closeShortcutHelp();
+  const darkMode = useUIStore((s) => s.darkMode);
+  const theme = darkMode ? THEME.dark : THEME.light;
   if (!isOpen) return null;
 
   const isDark = theme === THEME.dark;

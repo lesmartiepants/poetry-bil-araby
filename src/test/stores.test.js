@@ -175,6 +175,48 @@ describe('poemStore', () => {
       expect(state.interpretation).toBeNull();
     });
   });
+
+  describe('computed selectors', () => {
+    it('filteredPoems returns all poems when category is All', () => {
+      const poems = [
+        { id: 1, tags: ['Ghazal'] },
+        { id: 2, tags: ['Qasida'] },
+      ];
+      usePoemStore.getState().setPoems(poems);
+      expect(usePoemStore.getState().filteredPoems()).toEqual(poems);
+    });
+
+    it('filteredPoems filters by poet category', () => {
+      const poems = [
+        { id: 1, poetArabic: 'نزار قباني', tags: [] },
+        { id: 2, poetArabic: 'محمود درويش', tags: [] },
+      ];
+      usePoemStore.getState().setPoems(poems);
+      usePoemStore.getState().setCategory('نزار قباني');
+      const filtered = usePoemStore.getState().filteredPoems();
+      expect(filtered).toHaveLength(1);
+      expect(filtered[0].id).toBe(1);
+    });
+
+    it('currentPoem returns poem at currentIndex', () => {
+      const poems = [{ id: 1 }, { id: 2 }];
+      usePoemStore.getState().setPoems(poems);
+      usePoemStore.getState().setCurrentIndex(1);
+      expect(usePoemStore.getState().currentPoem()).toEqual({ id: 2 });
+    });
+
+    it('currentPoem falls back to first poem when index out of range', () => {
+      const poems = [{ id: 1 }];
+      usePoemStore.getState().setPoems(poems);
+      usePoemStore.getState().setCurrentIndex(99);
+      expect(usePoemStore.getState().currentPoem()).toEqual({ id: 1 });
+    });
+
+    it('currentPoem returns null when no poems', () => {
+      usePoemStore.getState().setPoems([]);
+      expect(usePoemStore.getState().currentPoem()).toBeNull();
+    });
+  });
 });
 
 // ============================================================================
@@ -366,12 +408,14 @@ describe('uiStore', () => {
       expect(useUIStore.getState().showTransliteration).toBe(true);
     });
 
-    it('addLog appends a log entry', () => {
+    it('addLog appends a log entry with rich format', () => {
       useUIStore.getState().addLog('Test', 'message', 'info');
       const logs = useUIStore.getState().logs;
       expect(logs).toHaveLength(1);
-      expect(logs[0]).toMatchObject({ label: 'Test', message: 'message', level: 'info' });
-      expect(logs[0].timestamp).toBeDefined();
+      expect(logs[0]).toMatchObject({ label: 'Test', msg: 'message', type: 'info' });
+      expect(logs[0].ts).toBeDefined();
+      expect(logs[0].time).toBeDefined();
+      expect(logs[0].rel).toBeDefined();
     });
 
     it('addLog caps at 200 entries', () => {
@@ -532,6 +576,38 @@ describe('modalStore', () => {
       useModalStore.getState().showToast('share');
       useModalStore.getState().hideToast('share');
       expect(useModalStore.getState().shareToast).toBe(false);
+    });
+
+    it('showToastTimed shows then auto-hides after delay', async () => {
+      vi.useFakeTimers();
+      useModalStore.getState().showToastTimed('copy', 500);
+      expect(useModalStore.getState().copyToast).toBe(true);
+      vi.advanceTimersByTime(500);
+      expect(useModalStore.getState().copyToast).toBe(false);
+      vi.useRealTimers();
+    });
+
+    it('setPoetPicker opens/closes via boolean', () => {
+      useModalStore.getState().setPoetPicker(true);
+      expect(useModalStore.getState().poetPicker).toBe(true);
+      useModalStore.getState().setPoetPicker(false);
+      expect(useModalStore.getState().poetPicker).toBe(false);
+    });
+
+    it('setAuthModal opens/closes via boolean and clears message on close', () => {
+      useModalStore.getState().setAuthModal(true, 'Sign in please');
+      expect(useModalStore.getState().authModal).toBe(true);
+      expect(useModalStore.getState().authMessage).toBe('Sign in please');
+      useModalStore.getState().setAuthModal(false);
+      expect(useModalStore.getState().authModal).toBe(false);
+      expect(useModalStore.getState().authMessage).toBe('');
+    });
+
+    it('setSavedPoemsOpen sets saved poems modal state', () => {
+      useModalStore.getState().setSavedPoemsOpen(true);
+      expect(useModalStore.getState().savedPoems).toBe(true);
+      useModalStore.getState().setSavedPoemsOpen(false);
+      expect(useModalStore.getState().savedPoems).toBe(false);
     });
 
     it('closeAll closes everything except splash', () => {

@@ -3,8 +3,20 @@ import { Feather, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { BRAND } from '../constants/design.js';
 import { THEME, GOLD } from '../constants/theme.js';
+import { useUIStore } from '../stores/uiStore';
+import { useModalStore } from '../stores/modalStore';
 
-const SplashScreen = ({ isOpen, onDismiss, showOnboarding, theme }) => {
+const SplashScreen = () => {
+  const isOpen = useModalStore((s) => s.splash);
+  const showOnboarding = useModalStore((s) => s.onboarding);
+  const darkMode = useUIStore((s) => s.darkMode);
+  const theme = darkMode ? THEME.dark : THEME.light;
+  const onDismiss = () => {
+    useModalStore.getState().dismissSplash();
+    try {
+      localStorage.setItem('hasSeenOnboarding', 'true');
+    } catch {}
+  };
   // Phase: 0 = desert splash, 1 = kinetic step 0 (Arabic), 2 = kinetic step 1 (English), 3 = kinetic step 2 (count)
   const [phase, setPhase] = useState(0);
   const [fadeState, setFadeState] = useState('in');

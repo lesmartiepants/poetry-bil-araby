@@ -126,8 +126,7 @@ export default function DiwanApp() {
 
   // ── Modal store (Zustand) ──
   const poetPickerOpen = useModalStore((s) => s.poetPicker);
-  const setPoetPickerOpen = (open) =>
-    open ? useModalStore.getState().openPoetPicker() : useModalStore.getState().closePoetPicker();
+  const setPoetPickerOpen = useModalStore((s) => s.setPoetPicker);
   const poetPickerClosing = useModalStore((s) => s.poetPickerClosing);
   const setPoetPickerClosing = useModalStore((s) => s.setPoetPickerClosing);
   const poetSearchRef = useRef(null);
@@ -148,27 +147,11 @@ export default function DiwanApp() {
   const audioError = useAudioStore((s) => s.error);
   const setAudioError = useAudioStore((s) => s.setError);
   const hasAutoLoaded = useRef(false);
-  // When the selectedCategory effect wants to fetch but isFetching is already true,
-  // it stores the category here. A retry effect fires once isFetching drops to false.
-  const pendingCategoryFetchRef = useRef(null);
-  // Always-current mirror of selectedCategory for use inside async callbacks where
-  // the closure value would otherwise be stale (e.g. the setPoems functional updater
-  // called after an awaited fetch that outlasts the render that started it).
-  // Initialized with the mount-time value; kept in sync by the selectedCategory effect.
-  const selectedCategoryRef = useRef(selectedCategory);
   const logs = useUIStore((s) => s.logs);
   const showDebugLogs = useUIStore((s) => s.showDebugLogs);
   const showCopySuccess = useModalStore((s) => s.copyToast);
-  const setShowCopySuccess = (v) =>
-    v ? useModalStore.getState().showToast('copy') : useModalStore.getState().hideToast('copy');
   const showShareSuccess = useModalStore((s) => s.shareToast);
-  const setShowShareSuccess = (v) =>
-    v ? useModalStore.getState().showToast('share') : useModalStore.getState().hideToast('share');
   const showInsightSuccess = useModalStore((s) => s.insightToast);
-  const setShowInsightSuccess = (v) =>
-    v
-      ? useModalStore.getState().showToast('insight')
-      : useModalStore.getState().hideToast('insight');
   const insightsDrawerOpen = useModalStore((s) => s.insightsDrawer);
   const setInsightsDrawerOpen = useModalStore((s) => s.setInsightsDrawer);
   const cacheStats = useUIStore((s) => s.cacheStats);
@@ -184,13 +167,10 @@ export default function DiwanApp() {
   const { emitEvent } = usePoemEvents(user);
 
   const showAuthModal = useModalStore((s) => s.authModal);
-  const setShowAuthModal = (v) =>
-    v ? useModalStore.getState().openAuth() : useModalStore.getState().closeAuth();
+  const setShowAuthModal = useModalStore((s) => s.setAuthModal);
   const authModalMessage = useModalStore((s) => s.authMessage);
-  const setAuthModalMessage = (msg) => useModalStore.setState({ authMessage: msg });
   const showSavedPoems = useModalStore((s) => s.savedPoems);
-  const setShowSavedPoems = (v) =>
-    v ? useModalStore.getState().openSavedPoems() : useModalStore.getState().closeSavedPoems();
+  const setShowSavedPoems = useModalStore((s) => s.setSavedPoemsOpen);
   const showSplash = useModalStore((s) => s.splash);
   const showOnboarding = useModalStore((s) => s.onboarding);
   const showTranslation = useUIStore((s) => s.showTranslation);
@@ -229,34 +209,10 @@ export default function DiwanApp() {
 
   const textScale = TEXT_SIZES[textSizeLevel].multiplier;
 
-  const filtered = useMemo(
-    () => filterPoemsByCategory(poems, selectedCategory),
-    [poems, selectedCategory]
-  );
+  const filtered = usePoemStore.getState().filteredPoems();
+  const current = usePoemStore.getState().currentPoem();
 
-  // Defensive: poems[0] is always truthy (hardcoded initial poem), but guard against
-  // future changes that might empty the array (e.g., setPoems([]) or filter edge cases)
-  const current = filtered[currentIndex] || filtered[0] || poems[0] || null;
-
-  const addLog = (label, msg, type = 'info') => {
-    const now = performance.now();
-    const time = new Date().toLocaleTimeString([], {
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-    });
-    const currentLogs = useUIStore.getState().logs;
-    const t0 = currentLogs.length > 0 ? currentLogs[0].ts : now;
-    const relSec = ((now - t0) / 1000).toFixed(1);
-    useUIStore.setState((s) => ({
-      logs: [...s.logs, { label, msg: String(msg), type, time, ts: now, rel: `+${relSec}s` }],
-    }));
-    if (FEATURES.logging) {
-      const logFn =
-        type === 'error' ? console.error : type === 'success' ? console.info : console.log;
-      logFn(`[${label}] ${msg}`);
-    }
-  };
+  const addLog = useUIStore.getState().addLog;
 
   // Track poem view time (emit 'view' event after 3s on same poem)
   useEffect(() => {
@@ -274,7 +230,7 @@ export default function DiwanApp() {
       if (filtered.length === 0) {
         if (isFetching) {
           // Another fetch is already in progress; queue a retry for when it completes.
-          pendingCategoryFetchRef.current = selectedCategory;
+          usePoemStore.getState().setPendingCategory(selectedCategory);
         } else {
           handleFetch();
         }
@@ -282,12 +238,9 @@ export default function DiwanApp() {
         setCurrentIndex(0);
       }
     } else {
-      pendingCategoryFetchRef.current = null; // Clear any pending poet fetch on "All"
+      usePoemStore.getState().setPendingCategory(null); // Clear any pending poet fetch on "All"
       setCurrentIndex(0);
     }
-    // Keep the always-current ref in sync so async callbacks inside handleFetch
-    // (e.g. the setPoems functional updater) can read the latest value.
-    selectedCategoryRef.current = selectedCategory;
   }, [selectedCategory]);
 
   // Retry a blocked poet-selection fetch once the current fetch completes.
@@ -300,10 +253,10 @@ export default function DiwanApp() {
   useEffect(() => {
     if (
       !isFetching &&
-      pendingCategoryFetchRef.current &&
-      pendingCategoryFetchRef.current === selectedCategory
+      usePoemStore.getState().pendingCategory &&
+      usePoemStore.getState().pendingCategory === selectedCategory
     ) {
-      pendingCategoryFetchRef.current = null;
+      usePoemStore.getState().setPendingCategory(null);
       handleFetch();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -509,7 +462,7 @@ export default function DiwanApp() {
       }
     };
     loadPoets();
-    // addLog is functionally stable (uses only useUIStore and module constants)
+    // addLog is a stable reference from useUIStore.getState()
     // even though its reference changes per render — poetsFetched gate prevents
     // repeated fetches regardless.
   }, [poetPickerOpen, poetsFetched, addLog]);
@@ -1369,8 +1322,7 @@ export default function DiwanApp() {
 
       // Flash gold check sparkle on the sidebar icon
       if (insightText) {
-        setShowInsightSuccess(true);
-        setTimeout(() => setShowInsightSuccess(false), 1500);
+        useModalStore.getState().showToastTimed('insight', 1500);
       }
     } catch (e) {
       Sentry.captureException(e);
@@ -1446,7 +1398,10 @@ export default function DiwanApp() {
             const updated = [...prev, newPoem];
             // Use the always-current ref so a user who switched poets while this
             // fetch was in flight doesn't see a poem from the wrong poet.
-            const freshFiltered = filterPoemsByCategory(updated, selectedCategoryRef.current);
+            const freshFiltered = filterPoemsByCategory(
+              updated,
+              usePoemStore.getState().selectedCategory
+            );
             const newIdx = freshFiltered.findIndex((p) => p.id === newPoem.id);
             if (newIdx !== -1) setCurrentIndex(newIdx);
             return updated;
@@ -1562,7 +1517,10 @@ export default function DiwanApp() {
           const updated = [...prev, newPoem];
           // Use the always-current ref so a user who switched poets while this
           // fetch was in flight doesn't see a poem from the wrong poet.
-          const freshFiltered = filterPoemsByCategory(updated, selectedCategoryRef.current);
+          const freshFiltered = filterPoemsByCategory(
+            updated,
+            usePoemStore.getState().selectedCategory
+          );
           const newIdx = freshFiltered.findIndex((p) => p.id === newPoem.id);
           if (newIdx !== -1) setCurrentIndex(newIdx);
           return updated;
@@ -1614,13 +1572,12 @@ export default function DiwanApp() {
         emitEvent(current.id, 'copy');
         addLog('Event', `→ copy event emitted | poem_id: ${current.id}`, 'info');
       }
-      setShowCopySuccess(true);
+      useModalStore.getState().showToastTimed('copy', 2000);
       addLog(
         'Copy',
         `✓ Copied to clipboard | ${copyChars} chars total (${arabicChars} Arabic + ${englishChars} English)`,
         'success'
       );
-      setTimeout(() => setShowCopySuccess(false), 2000);
     } catch (e) {
       addLog('Copy Error', e.message, 'error');
     }
@@ -1674,9 +1631,8 @@ export default function DiwanApp() {
           'info'
         );
       }
-      setShowShareSuccess(true);
+      useModalStore.getState().showToastTimed('share', 2000);
       addLog('Share', `Link copied: ${shareUrl}`, 'success');
-      setTimeout(() => setShowShareSuccess(false), 2000);
     } catch (e) {
       addLog('Share Error', e.message, 'error');
     }
@@ -2149,19 +2105,7 @@ export default function DiwanApp() {
 
       `}</style>
 
-      <DebugPanel
-        logs={logs}
-        onClear={() => useUIStore.getState().clearLogs()}
-        darkMode={darkMode}
-        poem={current}
-        visible={showDebugLogs}
-        controlBarRef={controlBarRef}
-        appState={{
-          mode: useDatabase ? 'database' : 'ai',
-          theme: darkMode ? 'dark' : 'light',
-          font: currentFont,
-        }}
-      />
+      <DebugPanel controlBarRef={controlBarRef} />
 
       <header
         style={{
@@ -2854,8 +2798,7 @@ export default function DiwanApp() {
                 onUnsave={handleUnsavePoem}
                 disabled={!user}
                 onSignIn={(msg) => {
-                  setAuthModalMessage(msg);
-                  setShowAuthModal(true);
+                  setShowAuthModal(true, msg);
                 }}
               />
 
@@ -2866,8 +2809,7 @@ export default function DiwanApp() {
                 onUndownvote={handleUndownvote}
                 disabled={!user}
                 onSignIn={(msg) => {
-                  setAuthModalMessage(msg);
-                  setShowAuthModal(true);
+                  setShowAuthModal(true, msg);
                 }}
               />
             </div>
@@ -2957,32 +2899,14 @@ export default function DiwanApp() {
       {/* Insights Drawer (Mobile bottom sheet) */}
       <AnimatePresence>
         {insightsDrawerOpen && (
-          <InsightsDrawer
-            key="insights-drawer"
-            isOpen={insightsDrawerOpen}
-            onClose={() => setInsightsDrawerOpen(false)}
-            isInterpreting={isInterpreting}
-            insightParts={insightParts}
-            interpretation={interpretation}
-            showTranslation={showTranslation}
-            current={current}
-            theme={theme}
-            darkMode={darkMode}
-          />
+          <InsightsDrawer key="insights-drawer" insightParts={insightParts} current={current} />
         )}
       </AnimatePresence>
 
       {/* Auth Modal */}
       <AnimatePresence>
         {showAuthModal && (
-          <AuthModal
-            key="auth-modal"
-            isOpen={showAuthModal}
-            onClose={() => useModalStore.getState().closeAuth()}
-            onSignInWithGoogle={handleSignInWithGoogle}
-            theme={theme}
-            message={authModalMessage}
-          />
+          <AuthModal key="auth-modal" onSignInWithGoogle={handleSignInWithGoogle} />
         )}
       </AnimatePresence>
 
@@ -3024,79 +2948,33 @@ export default function DiwanApp() {
       <VerticalSidebar
         onExplain={() => {
           if (interpretation) {
-            // Already have insight — toggle drawer open/closed
             useModalStore.getState().toggleInsightsDrawer();
-            setShowInsightSuccess(true);
-            setTimeout(() => setShowInsightSuccess(false), 1500);
+            useModalStore.getState().showToastTimed('insight', 1500);
           } else {
-            // No insight yet — fetch and open drawer
             handleAnalyze();
             setInsightsDrawerOpen(true);
           }
         }}
         onCopy={handleCopy}
-        showCopySuccess={showCopySuccess}
         onShare={handleShare}
-        showShareSuccess={showShareSuccess}
-        showInsightSuccess={showInsightSuccess}
         onSignIn={handleSignIn}
         onSignOut={handleSignOut}
         onOpenSavedPoems={handleOpenSavedPoems}
         savedPoemsCount={savedPoems.length}
         user={user}
-        theme={theme}
-        isInterpreting={isInterpreting}
-        interpretation={interpretation}
-        showTranslation={showTranslation}
-        onToggleTranslation={() => {
-          useUIStore.getState().toggleTranslation();
-          if (!interpretation && !isInterpreting) handleAnalyze();
-        }}
-        showTransliteration={showTransliteration}
-        onToggleTransliteration={() => useUIStore.getState().toggleTransliteration()}
-        textSizeLabel={TEXT_SIZES[textSizeLevel].label}
-        onCycleTextSize={cycleTextSize}
-        darkMode={darkMode}
-        onToggleDarkMode={handleToggleTheme}
-        currentFont={currentFont}
-        onCycleFont={cycleFont}
-        selectedCategory={selectedCategory}
-        onSelectCategory={setSelectedCategory}
-        showDebugLogs={showDebugLogs}
-        onToggleDebugLogs={() => useUIStore.getState().toggleDebugLogs()}
       />
 
       {/* Splash / Onboarding Screen (lazy-loaded, deferred from initial bundle) */}
       <AnimatePresence>
         {showSplash && (
           <Suspense fallback={null}>
-            <SplashScreen
-              key="splash-screen"
-              isOpen={showSplash}
-              onDismiss={() => {
-                useModalStore.getState().dismissSplash();
-                try {
-                  localStorage.setItem('hasSeenOnboarding', 'true');
-                } catch {}
-              }}
-              showOnboarding={showOnboarding}
-              theme={theme}
-            />
+            <SplashScreen key="splash-screen" />
           </Suspense>
         )}
       </AnimatePresence>
 
       {/* Keyboard Shortcut Help */}
-      <AnimatePresence>
-        {showShortcutHelp && (
-          <ShortcutHelp
-            key="shortcut-help"
-            isOpen={showShortcutHelp}
-            onClose={() => useModalStore.getState().closeShortcutHelp()}
-            theme={theme}
-          />
-        )}
-      </AnimatePresence>
+      <AnimatePresence>{showShortcutHelp && <ShortcutHelp key="shortcut-help" />}</AnimatePresence>
     </div>
   );
 }

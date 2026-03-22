@@ -298,16 +298,8 @@ function ShareCardPreview({ poem, design, verses, translation }) {
       {/* Brand — bottom-right */}
       <div className="flex justify-end pb-1 pr-1">
         <div className="text-right">
-          <p
-            className={`text-[11px] font-bold ${s.brandArabicColor}`}
-            style={{ fontFamily: "'Reem Kufi', sans-serif" }}
-          >
-            بالعربي
-          </p>
-          <p
-            className={`text-[8px] ${s.brandEnColor} -mt-0.5`}
-            style={{ fontFamily: "'Forum', serif", letterSpacing: '-0.04em' }}
-          >
+          <p className={`text-[11px] font-brand-ar font-bold ${s.brandArabicColor}`}>بالعربي</p>
+          <p className={`text-[8px] font-brand-en tracking-tight ${s.brandEnColor} -mt-0.5`}>
             poetry
           </p>
         </div>

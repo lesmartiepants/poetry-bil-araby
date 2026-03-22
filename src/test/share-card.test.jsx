@@ -217,9 +217,9 @@ describe('renderShareCard', () => {
       renderShareCard(ctx, CARD_WIDTH, CARD_HEIGHT, mockPoem, design.id);
       // At minimum it should draw poet name and verses
       expect(ctx.fillText).toHaveBeenCalled();
-      // Check that one of the fillText calls includes the poet name
+      // Check English poet name is drawn (primary)
       const calls = ctx.fillText.mock.calls.map((c) => c[0]);
-      expect(calls).toContain(mockPoem.poetArabic);
+      expect(calls).toContain(mockPoem.poet);
     }
   });
 
@@ -228,7 +228,7 @@ describe('renderShareCard', () => {
       ctx.fillText.mockClear();
       renderShareCard(ctx, CARD_WIDTH, CARD_HEIGHT, mockPoem, design.id);
       const calls = ctx.fillText.mock.calls.map((c) => c[0]);
-      // Brand is now split: "بالعربي" + "poetry" in bottom-right corner
+      // Brand is single-line: "بالعربي" and "poetry " drawn adjacently
       const hasBrandAr = calls.some((text) => typeof text === 'string' && text.includes('بالعربي'));
       const hasBrandEn = calls.some((text) => typeof text === 'string' && text.includes('poetry'));
       expect(hasBrandAr).toBe(true);
@@ -293,8 +293,8 @@ describe('ShareCardModal', () => {
 
   it('renders with poem content visible', () => {
     render(<ShareCardModal poem={mockPoem} onClose={() => {}} />);
-    // Should show poet name
-    expect(screen.getByText(mockPoem.poetArabic)).toBeInTheDocument();
+    // Should show English poet name (primary)
+    expect(screen.getByText(mockPoem.poet)).toBeInTheDocument();
   });
 
   it('shows design name for each design option', () => {
@@ -340,7 +340,8 @@ describe('ShareCardModal', () => {
 
   it('shows brand watermark in preview', () => {
     render(<ShareCardModal poem={mockPoem} onClose={() => {}} />);
-    expect(screen.getByText('بالعربي')).toBeInTheDocument();
-    expect(screen.getByText('poetry')).toBeInTheDocument();
+    // Brand is now a single line with "poetry" and "بالعربي" together
+    expect(screen.getByText(/poetry/)).toBeInTheDocument();
+    expect(screen.getByText(/بالعربي/)).toBeInTheDocument();
   });
 });

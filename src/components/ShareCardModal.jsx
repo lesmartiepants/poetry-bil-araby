@@ -196,98 +196,85 @@ export default function ShareCardModal({ poem, onClose }) {
 const DESIGN_STYLES = {
   diwan: {
     bg: 'bg-[#0c0c0e]',
-    border: 'border-[#c5a059]/25',
+    border: 'border-[#c5a059]/40',
     poetColor: 'text-[#c5a059]',
-    poetEnColor: 'text-[#c5a059]/50',
-    titleColor: 'text-[#c5a059]/60',
-    titleEnColor: 'text-[#c5a059]/35',
+    poetArColor: 'text-[#c5a059]/65',
+    titleColor: 'text-[#c5a059]/55',
     verseColor: 'text-[#e8e0d0]',
-    transColor: 'text-[#c5a059]/45',
-    brandArabicColor: 'text-[#c5a059]/60',
-    brandEnColor: 'text-[#c5a059]/40',
+    transColor: 'text-[#c5a059]/50',
+    brandColor: 'text-[#c5a059]/55',
   },
   ibnMuqla: {
     bg: 'bg-gradient-to-b from-[#f5e6c8] via-[#f0ddb5] to-[#e8d1a0]',
     border: 'border-[#8B6914]',
     poetColor: 'text-[#4A2800]',
-    poetEnColor: 'text-[#5C3A0A]/50',
-    titleColor: 'text-[#4A2800]/60',
-    titleEnColor: 'text-[#5C3A0A]/35',
+    poetArColor: 'text-[#4A2800]/65',
+    titleColor: 'text-[#5C3A0A]/50',
     verseColor: 'text-[#2C1A00]',
-    transColor: 'text-[#4A2800]/40',
-    brandArabicColor: 'text-[#8B6914]/50',
-    brandEnColor: 'text-[#5C3A0A]/35',
+    transColor: 'text-[#4A2800]/45',
+    brandColor: 'text-[#8B6914]/50',
   },
   sinan: {
     bg: 'bg-gradient-to-b from-[#061424] via-[#0A1E38] to-[#061220]',
-    border: 'border-[#4FA6B7]/30',
+    border: 'border-[#4FA6B7]/40',
     poetColor: 'text-[#c5a059]',
-    poetEnColor: 'text-[#4FA6B7]/55',
-    titleColor: 'text-[#c5a059]/50',
-    titleEnColor: 'text-[#4FA6B7]/40',
+    poetArColor: 'text-[#c5a059]/60',
+    titleColor: 'text-[#4FA6B7]/55',
     verseColor: 'text-[#E8E4DC]',
-    transColor: 'text-[#4FA6B7]/45',
-    brandArabicColor: 'text-[#c5a059]/50',
-    brandEnColor: 'text-[#4FA6B7]/40',
+    transColor: 'text-[#4FA6B7]/50',
+    brandColor: 'text-[#c5a059]/50',
   },
   zahaHadid: {
     bg: 'bg-gradient-to-br from-[#08001A] via-[#150030] to-[#08001A]',
-    border: 'border-[#C864FF]/25',
+    border: 'border-[#C864FF]/30',
     poetColor: 'text-[#C864FF]',
-    poetEnColor: 'text-[#64B4FF]/55',
-    titleColor: 'text-[#C864FF]/50',
-    titleEnColor: 'text-[#64B4FF]/40',
+    poetArColor: 'text-[#C864FF]/60',
+    titleColor: 'text-[#64B4FF]/50',
     verseColor: 'text-[#F0E8FF]',
-    transColor: 'text-[#96B4FF]/45',
-    brandArabicColor: 'text-[#C864FF]/55',
-    brandEnColor: 'text-[#64B4FF]/40',
+    transColor: 'text-[#96B4FF]/50',
+    brandColor: 'text-[#C864FF]/50',
     textAlign: 'text-right',
   },
   hassanFathy: {
     bg: 'bg-gradient-to-b from-[#F8EDD8] via-[#F0DFC0] to-[#E5CFA5]',
-    border: 'border-[#A0522D]/30',
+    border: 'border-[#A0522D]/40',
     poetColor: 'text-[#3D1F00]',
-    poetEnColor: 'text-[#4A2800]/45',
-    titleColor: 'text-[#3D1F00]/55',
-    titleEnColor: 'text-[#4A2800]/35',
+    poetArColor: 'text-[#3D1F00]/60',
+    titleColor: 'text-[#4A2800]/45',
     verseColor: 'text-[#2A1500]',
-    transColor: 'text-[#4A2800]/38',
-    brandArabicColor: 'text-[#A0522D]/45',
-    brandEnColor: 'text-[#4A2800]/30',
+    transColor: 'text-[#4A2800]/42',
+    brandColor: 'text-[#A0522D]/45',
   },
 };
 
 /**
  * ShareCardPreview — A styled HTML preview of the poem card
- * Shows interleaved Arabic verses + English translations, poet & title in both languages
+ * Shows English-primary poet & title, interleaved Arabic verses + English translations
  */
 function ShareCardPreview({ poem, design, verses, translation }) {
   const s = DESIGN_STYLES[design?.id] || DESIGN_STYLES.diwan;
   const align = s.textAlign || 'text-center';
 
   return (
-    <div className={`h-full w-full flex flex-col justify-between ${s.bg} border ${s.border} p-5`}>
-      {/* Poet & Title — bilingual */}
+    <div className={`h-full w-full flex flex-col justify-between ${s.bg} border-2 ${s.border} p-5`}>
+      {/* Poet & Title — English-primary */}
       <div className={`${align} pt-3`}>
-        <p className={`font-amiri font-bold text-xl ${s.poetColor}`} dir="rtl">
-          {poem.poetArabic || poem.poet || ''}
+        <p className={`font-bold text-lg ${s.poetColor}`}>{poem.poet || ''}</p>
+        <p className={`font-amiri font-bold text-[17px] mt-1 ${s.poetArColor}`} dir="rtl">
+          {poem.poetArabic || ''}
         </p>
-        <p className={`text-[11px] mt-0.5 ${s.poetEnColor}`}>{poem.poet || ''}</p>
-        <p className={`font-amiri text-sm mt-2 ${s.titleColor}`} dir="rtl">
-          {poem.titleArabic || poem.title || ''}
-        </p>
-        <p className={`text-[10px] italic mt-0.5 ${s.titleEnColor}`}>{poem.title || ''}</p>
+        <p className={`italic text-sm mt-1.5 ${s.titleColor}`}>{poem.title || ''}</p>
       </div>
 
-      {/* Interleaved verses + translations */}
-      <div className={`${align} flex-1 flex flex-col justify-center gap-1 py-3`}>
+      {/* Interleaved verses + translations — line by line */}
+      <div className={`${align} flex-1 flex flex-col justify-center gap-1.5 py-3`}>
         {verses.map((v, i) => (
-          <div key={i} className="mb-1.5">
-            <p className={`font-amiri text-[15px] leading-relaxed ${s.verseColor}`} dir="rtl">
+          <div key={i} className="mb-1">
+            <p className={`font-amiri text-[17px] leading-relaxed ${s.verseColor}`} dir="rtl">
               {v}
             </p>
             {translation[i] && (
-              <p className={`text-[9px] italic leading-snug mt-0.5 ${s.transColor}`}>
+              <p className={`italic text-[10px] leading-snug mt-0.5 ${s.transColor}`}>
                 {translation[i]}
               </p>
             )}
@@ -295,14 +282,14 @@ function ShareCardPreview({ poem, design, verses, translation }) {
         ))}
       </div>
 
-      {/* Brand — bottom-right */}
+      {/* Brand — bottom-right, single line */}
       <div className="flex justify-end pb-1 pr-1">
-        <div className="text-right">
-          <p className={`text-[11px] font-brand-ar font-bold ${s.brandArabicColor}`}>بالعربي</p>
-          <p className={`text-[8px] font-brand-en tracking-tight ${s.brandEnColor} -mt-0.5`}>
-            poetry
-          </p>
-        </div>
+        <p className={`text-[10px] ${s.brandColor}`}>
+          <span style={{ fontFamily: "'Forum', serif" }}>poetry </span>
+          <span className="font-bold" style={{ fontFamily: "'Reem Kufi', sans-serif" }}>
+            بالعربي
+          </span>
+        </p>
       </div>
     </div>
   );

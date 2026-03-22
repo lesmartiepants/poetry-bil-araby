@@ -171,7 +171,7 @@ function renderDiwan(ctx, w, h, poem) {
   ctx.fillStyle = 'rgba(197, 160, 89, 0.65)';
   ctx.font = 'bold 46px "Amiri", serif';
   ctx.direction = 'rtl';
-  ctx.fillText(poem.poetArabic || '', w / 2, headerY + 55);
+  ctx.fillText(poem.poetArabic || poem.poet || '', w / 2, headerY + 55);
 
   // Title — English
   ctx.fillStyle = 'rgba(197, 160, 89, 0.55)';
@@ -276,7 +276,7 @@ function renderIbnMuqla(ctx, w, h, poem) {
   ctx.fillStyle = 'rgba(74, 40, 0, 0.65)';
   ctx.font = 'bold 46px "Amiri", serif';
   ctx.direction = 'rtl';
-  ctx.fillText(poem.poetArabic || '', w / 2, headerY + 55);
+  ctx.fillText(poem.poetArabic || poem.poet || '', w / 2, headerY + 55);
 
   // Title — English
   ctx.fillStyle = 'rgba(92, 58, 10, 0.5)';
@@ -401,7 +401,7 @@ function renderSinan(ctx, w, h, poem) {
   ctx.fillStyle = 'rgba(197, 160, 89, 0.6)';
   ctx.font = 'bold 46px "Amiri", serif';
   ctx.direction = 'rtl';
-  ctx.fillText(poem.poetArabic || '', w / 2, headerY + 55);
+  ctx.fillText(poem.poetArabic || poem.poet || '', w / 2, headerY + 55);
 
   // Title — English
   ctx.fillStyle = 'rgba(79, 166, 183, 0.55)';
@@ -513,7 +513,7 @@ function renderZahaHadid(ctx, w, h, poem) {
   ctx.font = 'bold 46px "Amiri", serif';
   ctx.textAlign = 'right';
   ctx.direction = 'rtl';
-  ctx.fillText(poem.poetArabic || '', w - 80, headerY + 55);
+  ctx.fillText(poem.poetArabic || poem.poet || '', w - 80, headerY + 55);
 
   // Title — English
   ctx.fillStyle = 'rgba(100, 180, 255, 0.5)';
@@ -641,7 +641,7 @@ function renderHassanFathy(ctx, w, h, poem) {
   ctx.fillStyle = 'rgba(61, 31, 0, 0.6)';
   ctx.font = 'bold 46px "Amiri", serif';
   ctx.direction = 'rtl';
-  ctx.fillText(poem.poetArabic || '', w / 2, headerY + 55);
+  ctx.fillText(poem.poetArabic || poem.poet || '', w / 2, headerY + 55);
 
   // Title — English
   ctx.fillStyle = 'rgba(74, 40, 0, 0.45)';

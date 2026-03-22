@@ -155,6 +155,9 @@ describe('renderShareCard', () => {
       createLinearGradient: vi.fn(() => ({
         addColorStop: vi.fn(),
       })),
+      createRadialGradient: vi.fn(() => ({
+        addColorStop: vi.fn(),
+      })),
       measureText: vi.fn(() => ({ width: 100 })),
       fillStyle: '',
       strokeStyle: '',
@@ -164,6 +167,9 @@ describe('renderShareCard', () => {
       textBaseline: '',
       direction: '',
       globalAlpha: 1,
+      shadowColor: '',
+      shadowBlur: 0,
+      letterSpacing: '',
     };
   });
 
@@ -222,10 +228,11 @@ describe('renderShareCard', () => {
       ctx.fillText.mockClear();
       renderShareCard(ctx, CARD_WIDTH, CARD_HEIGHT, mockPoem, design.id);
       const calls = ctx.fillText.mock.calls.map((c) => c[0]);
-      const hasBrand = calls.some(
-        (text) => typeof text === 'string' && text.includes('Poetry Bil-Araby')
-      );
-      expect(hasBrand).toBe(true);
+      // Brand is now split: "بالعربي" + "poetry" in bottom-right corner
+      const hasBrandAr = calls.some((text) => typeof text === 'string' && text.includes('بالعربي'));
+      const hasBrandEn = calls.some((text) => typeof text === 'string' && text.includes('poetry'));
+      expect(hasBrandAr).toBe(true);
+      expect(hasBrandEn).toBe(true);
     }
   });
 
@@ -274,9 +281,9 @@ describe('ShareCardModal', () => {
 
   it('shows design name for each design option', () => {
     render(<ShareCardModal poem={mockPoem} onClose={() => {}} />);
-    // Check that design selector buttons exist
+    // Check that design selector buttons exist (now English names)
     for (const d of SHARE_CARD_DESIGNS) {
-      expect(screen.getByText(d.nameAr)).toBeInTheDocument();
+      expect(screen.getByText(d.name)).toBeInTheDocument();
     }
   });
 
@@ -300,8 +307,8 @@ describe('ShareCardModal', () => {
 
   it('switches design when a design option is clicked', async () => {
     render(<ShareCardModal poem={mockPoem} onClose={() => {}} />);
-    // Click on Sinan design
-    const sinanBtn = screen.getByText('سنان');
+    // Click on Sinan design (now English label)
+    const sinanBtn = screen.getByText('Sinan');
     await userEvent.click(sinanBtn);
     // Should highlight Sinan (the button parent should have active styling)
     expect(sinanBtn.closest('button')).toHaveAttribute('aria-pressed', 'true');

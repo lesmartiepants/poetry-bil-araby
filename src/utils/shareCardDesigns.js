@@ -2,13 +2,19 @@
  * Share Card Designs — Canvas-based poem card renderers
  *
  * Five materially different designs, each named after a famous
- * Islamic / Arabic artist or visionary:
+ * Islamic / Arabic artist or visionary — reimagined as modern UX designers:
  *
- * 1. Dīwān (default)  — Classic gold-on-dark calligraphic style
- * 2. Ibn Muqla         — Proportioned Naskh calligraphy on parchment
- * 3. Sinan             — Ottoman architectural arches & geometry
- * 4. Zaha Hadid        — Bold, modern deconstructivist curves
- * 5. Hassan Fathy      — Earthy, warm desert tones with mashrabiya patterns
+ * 1. Dīwān (default)  — Luxe editorial: gold foil on obsidian, large serif
+ * 2. Ibn Muqla         — Illuminated manuscript: aged vellum, ornate borders
+ * 3. Sinan             — Geometric majesty: deep ocean, turquoise & gold arches
+ * 4. Zaha Hadid        — Bold fluid: neon gradients, asymmetric, glass
+ * 5. Hassan Fathy      — Warm earthcraft: terracotta, handmade texture, sunlight
+ *
+ * Each card shows:
+ *   - Arabic poem lines (LARGE) with English translation below each line
+ *   - Poet name in Arabic + English
+ *   - Poem title in Arabic + English
+ *   - Brand watermark "بالعربي poetry" in bottom-right corner
  */
 
 // ── Canvas dimensions (Instagram-friendly 4:5 ratio) ───────────────────
@@ -22,37 +28,35 @@ export const SHARE_CARD_DESIGNS = [
     name: 'Classic Dīwān',
     nameAr: 'الديوان',
     artist: 'Default',
-    description: 'Gold calligraphy on dark ground — the signature Poetry Bil-Araby look',
+    description: 'Luxe editorial — gold foil calligraphy on obsidian, sparkling separators',
   },
   {
     id: 'ibnMuqla',
     name: 'Ibn Muqla',
     nameAr: 'ابن مقلة',
     artist: 'Abu Ali ibn Muqla (886–940 CE)',
-    description:
-      'Warm parchment with proportioned Naskh calligraphy — father of Arabic script rules',
+    description: 'Illuminated manuscript — warm vellum, ornate gilded borders, rich brown ink',
   },
   {
     id: 'sinan',
     name: 'Sinan',
     nameAr: 'سنان',
     artist: 'Mimar Sinan (1489–1588 CE)',
-    description: 'Ottoman arches & tile geometry — inspired by the greatest Islamic architect',
+    description: 'Geometric majesty — deep ocean blue, turquoise arches, celestial gold',
   },
   {
     id: 'zahaHadid',
     name: 'Zaha Hadid',
     nameAr: 'زها حديد',
     artist: 'Zaha Hadid (1950–2016 CE)',
-    description:
-      'Bold flowing curves & gradients — deconstructivist vision of an Iraqi-British genius',
+    description: 'Bold fluid — vivid neon gradients, asymmetric glass panels, dramatic curves',
   },
   {
     id: 'hassanFathy',
     name: 'Hassan Fathy',
     nameAr: 'حسن فتحي',
     artist: 'Hassan Fathy (1900–1989 CE)',
-    description: 'Earthy desert tones with mashrabiya lattice — architect of the Egyptian people',
+    description: 'Warm earthcraft — sunlit clay, woven lattice, organic warmth, terracotta',
   },
 ];
 
@@ -96,460 +100,601 @@ function wrapText(ctx, text, maxWidth) {
   return lines;
 }
 
-/** Draw the brand watermark "Poetry Bil-Araby | بالعربي" */
-function drawBrand(ctx, x, y, color, fontSize = 16) {
+/**
+ * Draw the brand mark "بالعربي poetry" in the bottom-right corner.
+ * Matches the app header style: Arabic "بالعربي" in Reem Kufi + English "poetry" in Forum.
+ * The brand font is NOT changed, but color/opacity/effects vary by design.
+ */
+function drawBrandBottomRight(ctx, w, h, arabicColor, englishColor, opts = {}) {
+  const { glowColor, glowBlur = 0, opacity = 0.6, size = 22 } = opts;
   ctx.save();
-  ctx.font = `${fontSize}px "Forum", "Reem Kufi", serif`;
-  ctx.fillStyle = color;
-  ctx.textAlign = 'center';
+  ctx.globalAlpha = opacity;
+  ctx.textAlign = 'right';
   ctx.textBaseline = 'middle';
-  ctx.globalAlpha = 0.7;
-  ctx.fillText('Poetry Bil-Araby  |  بالعربي', x, y);
+
+  const bx = w - 55;
+  const by = h - 55;
+
+  // Optional glow
+  if (glowColor && glowBlur > 0) {
+    ctx.shadowColor = glowColor;
+    ctx.shadowBlur = glowBlur;
+  }
+
+  // Arabic: بالعربي (Reem Kufi style)
+  ctx.font = `bold ${size}px "Reem Kufi", sans-serif`;
+  ctx.fillStyle = arabicColor;
+  ctx.fillText('بالعربي', bx, by - size * 0.5);
+
+  // English: poetry (Forum style)
+  ctx.shadowBlur = 0;
+  ctx.font = `${Math.round(size * 0.7)}px "Forum", serif`;
+  ctx.fillStyle = englishColor;
+  ctx.fillText('poetry', bx, by + size * 0.4);
+
   ctx.restore();
 }
 
-// ── Design 1: Dīwān (Default) ──────────────────────────────────────────
+// ──────────────────────────────────────────────────────────────────────
+//  Design 1: DĪWĀN — Luxe Editorial
+//  Gold foil calligraphy on obsidian, generous typography, editorial feel
+// ──────────────────────────────────────────────────────────────────────
 function renderDiwan(ctx, w, h, poem) {
-  // Background — deep near-black
-  ctx.fillStyle = '#0c0c0e';
+  // Obsidian background with subtle warm radial
+  const radial = ctx.createRadialGradient(w / 2, h * 0.35, 0, w / 2, h * 0.35, w * 0.7);
+  radial.addColorStop(0, '#141210');
+  radial.addColorStop(1, '#0c0c0e');
+  ctx.fillStyle = radial;
   ctx.fillRect(0, 0, w, h);
 
-  // Subtle gold border inset
-  const inset = 40;
-  ctx.strokeStyle = 'rgba(197, 160, 89, 0.25)';
-  ctx.lineWidth = 1;
+  // Gold border — double rule
+  const inset = 48;
+  ctx.strokeStyle = 'rgba(197, 160, 89, 0.35)';
+  ctx.lineWidth = 1.5;
   ctx.strokeRect(inset, inset, w - inset * 2, h - inset * 2);
+  ctx.strokeStyle = 'rgba(197, 160, 89, 0.12)';
+  ctx.strokeRect(inset + 10, inset + 10, w - (inset + 10) * 2, h - (inset + 10) * 2);
 
-  // Corner decorative dots
-  const corners = [
+  // Corner ornaments
+  const dotSize = 8;
+  ctx.fillStyle = 'rgba(197, 160, 89, 0.5)';
+  for (const [cx, cy] of [
     [inset, inset],
     [w - inset, inset],
     [inset, h - inset],
     [w - inset, h - inset],
-  ];
-  ctx.fillStyle = 'rgba(197, 160, 89, 0.5)';
-  for (const [cx, cy] of corners) {
+  ]) {
     ctx.beginPath();
-    ctx.arc(cx, cy, 4, 0, Math.PI * 2);
+    ctx.arc(cx, cy, dotSize, 0, Math.PI * 2);
     ctx.fill();
   }
 
-  // Gold gradient header line
-  const grad = ctx.createLinearGradient(inset + 60, 0, w - inset - 60, 0);
+  // ── Header: poet & title ──
+  const headerY = 120;
+  // Poet name — Arabic (large gold)
+  ctx.fillStyle = '#c5a059';
+  ctx.font = 'bold 48px "Amiri", serif';
+  ctx.textAlign = 'center';
+  ctx.direction = 'rtl';
+  ctx.fillText(poem.poetArabic || poem.poet || '', w / 2, headerY);
+
+  // Poet name — English (smaller, muted)
+  ctx.fillStyle = 'rgba(197, 160, 89, 0.5)';
+  ctx.font = '22px "Playfair Display", serif';
+  ctx.direction = 'ltr';
+  ctx.fillText(poem.poet || '', w / 2, headerY + 40);
+
+  // Title — Arabic
+  ctx.fillStyle = 'rgba(197, 160, 89, 0.6)';
+  ctx.font = '26px "Amiri", serif';
+  ctx.direction = 'rtl';
+  ctx.fillText(poem.titleArabic || poem.title || '', w / 2, headerY + 90);
+
+  // Title — English
+  ctx.fillStyle = 'rgba(197, 160, 89, 0.35)';
+  ctx.font = 'italic 18px "Playfair Display", serif';
+  ctx.direction = 'ltr';
+  ctx.fillText(poem.title || '', w / 2, headerY + 120);
+
+  // Gold gradient separator
+  const sepLineY = headerY + 150;
+  const grad = ctx.createLinearGradient(100, 0, w - 100, 0);
   grad.addColorStop(0, 'rgba(197, 160, 89, 0)');
   grad.addColorStop(0.3, 'rgba(197, 160, 89, 0.5)');
-  grad.addColorStop(0.5, 'rgba(197, 160, 89, 0.7)');
+  grad.addColorStop(0.5, 'rgba(197, 160, 89, 0.8)');
   grad.addColorStop(0.7, 'rgba(197, 160, 89, 0.5)');
   grad.addColorStop(1, 'rgba(197, 160, 89, 0)');
   ctx.fillStyle = grad;
-  ctx.fillRect(inset + 60, 130, w - inset * 2 - 120, 1);
+  ctx.fillRect(100, sepLineY, w - 200, 1);
 
-  // Poet name (gold)
-  ctx.fillStyle = '#c5a059';
-  ctx.font = 'bold 36px "Amiri", serif';
-  ctx.textAlign = 'center';
-  ctx.direction = 'rtl';
-  ctx.fillText(poem.poetArabic || poem.poet || '', w / 2, 105);
-
-  // Title (dimmer gold)
-  ctx.fillStyle = 'rgba(197, 160, 89, 0.65)';
-  ctx.font = '24px "Amiri", serif';
-  ctx.fillText(poem.titleArabic || poem.title || '', w / 2, 170);
-
-  // Arabic verses
+  // ── Interleaved verses + translations ──
   const verses = prepareVerses(poem.arabic);
-  ctx.fillStyle = '#e8e0d0';
-  ctx.font = '42px "Amiri", serif';
-  ctx.textAlign = 'center';
-  ctx.direction = 'rtl';
-  const versesStartY = 300;
-  const verseSpacing = 80;
-  verses.forEach((verse, i) => {
-    ctx.fillText(verse, w / 2, versesStartY + i * verseSpacing);
-  });
-
-  // Decorative separator
-  const sepY = versesStartY + verses.length * verseSpacing + 30;
-  ctx.fillStyle = 'rgba(197, 160, 89, 0.4)';
-  ctx.font = '28px serif';
-  ctx.fillText('✦', w / 2, sepY);
-
-  // English translation
   const translation = prepareTranslation(poem.english || poem.cachedTranslation);
-  ctx.fillStyle = 'rgba(232, 224, 208, 0.5)';
-  ctx.font = 'italic 22px "Playfair Display", serif';
-  ctx.textAlign = 'center';
-  ctx.direction = 'ltr';
-  const transStartY = sepY + 50;
-  const transSpacing = 40;
-  translation.forEach((line, i) => {
-    const wrapped = wrapText(ctx, line, w - 160);
-    wrapped.forEach((wl, j) => {
-      ctx.fillText(wl, w / 2, transStartY + i * transSpacing + j * 30);
-    });
-  });
+  const contentStartY = sepLineY + 70;
+  const pairSpacing = 140; // Space between each Arabic+English pair
 
-  // Brand at bottom
-  drawBrand(ctx, w / 2, h - 60, 'rgba(197, 160, 89, 0.5)', 18);
-}
-
-// ── Design 2: Ibn Muqla — Parchment & Naskh ────────────────────────────
-function renderIbnMuqla(ctx, w, h, poem) {
-  // Warm parchment background
-  ctx.fillStyle = '#f5e6c8';
-  ctx.fillRect(0, 0, w, h);
-
-  // Aged paper texture (subtle noise)
-  ctx.fillStyle = 'rgba(160, 120, 60, 0.04)';
-  for (let i = 0; i < 300; i++) {
-    const x = Math.random() * w;
-    const y = Math.random() * h;
-    ctx.fillRect(x, y, 2, 2);
-  }
-
-  // Brown ornamental frame
-  const m = 50;
-  ctx.strokeStyle = '#8B6914';
-  ctx.lineWidth = 3;
-  ctx.strokeRect(m, m, w - m * 2, h - m * 2);
-  ctx.strokeStyle = 'rgba(139, 105, 20, 0.3)';
-  ctx.lineWidth = 1;
-  ctx.strokeRect(m + 8, m + 8, w - m * 2 - 16, h - m * 2 - 16);
-
-  // Calligraphic top ornament — bismillah-style flourish
-  ctx.fillStyle = '#8B6914';
-  ctx.font = '32px "Amiri", serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('❁', w / 2, m + 40);
-
-  // Poet name
-  ctx.fillStyle = '#5C3A0A';
-  ctx.font = 'bold 38px "Amiri", serif';
-  ctx.textAlign = 'center';
-  ctx.direction = 'rtl';
-  ctx.fillText(poem.poetArabic || poem.poet || '', w / 2, 160);
-
-  // Title
-  ctx.fillStyle = 'rgba(92, 58, 10, 0.6)';
-  ctx.font = '26px "Amiri", serif';
-  ctx.fillText(poem.titleArabic || poem.title || '', w / 2, 210);
-
-  // Horizontal flourish
-  const lgr = ctx.createLinearGradient(m + 80, 0, w - m - 80, 0);
-  lgr.addColorStop(0, 'rgba(139, 105, 20, 0)');
-  lgr.addColorStop(0.5, 'rgba(139, 105, 20, 0.6)');
-  lgr.addColorStop(1, 'rgba(139, 105, 20, 0)');
-  ctx.fillStyle = lgr;
-  ctx.fillRect(m + 80, 240, w - m * 2 - 160, 1);
-
-  // Arabic verses in brown ink
-  const verses = prepareVerses(poem.arabic);
-  ctx.fillStyle = '#2C1A00';
-  ctx.font = '44px "Amiri", serif';
-  ctx.textAlign = 'center';
-  ctx.direction = 'rtl';
-  const vsy = 340;
   verses.forEach((verse, i) => {
-    ctx.fillText(verse, w / 2, vsy + i * 85);
-  });
+    const y = contentStartY + i * pairSpacing;
 
-  // Separator
-  const sepY = vsy + verses.length * 85 + 20;
-  ctx.fillStyle = '#8B6914';
-  ctx.font = '24px serif';
-  ctx.fillText('◆', w / 2, sepY);
+    // Arabic verse — LARGE
+    ctx.fillStyle = '#e8e0d0';
+    ctx.font = '52px "Amiri", serif';
+    ctx.textAlign = 'center';
+    ctx.direction = 'rtl';
+    ctx.fillText(verse, w / 2, y);
 
-  // English in muted brown
-  const translation = prepareTranslation(poem.english || poem.cachedTranslation);
-  ctx.fillStyle = 'rgba(44, 26, 0, 0.45)';
-  ctx.font = 'italic 22px "Playfair Display", serif';
-  ctx.textAlign = 'center';
-  ctx.direction = 'ltr';
-  const tsy = sepY + 50;
-  translation.forEach((line, i) => {
-    const wrapped = wrapText(ctx, line, w - 180);
-    wrapped.forEach((wl, j) => {
-      ctx.fillText(wl, w / 2, tsy + i * 38 + j * 28);
-    });
-  });
-
-  // Brand watermark
-  drawBrand(ctx, w / 2, h - 60, 'rgba(92, 58, 10, 0.35)', 17);
-}
-
-// ── Design 3: Sinan — Ottoman Arches & Iznik Tile ──────────────────────
-function renderSinan(ctx, w, h, poem) {
-  // Deep Ottoman blue
-  ctx.fillStyle = '#0A1628';
-  ctx.fillRect(0, 0, w, h);
-
-  // Iznik-inspired top arch
-  ctx.save();
-  ctx.beginPath();
-  ctx.moveTo(100, 200);
-  ctx.quadraticCurveTo(w / 2, 30, w - 100, 200);
-  ctx.strokeStyle = 'rgba(79, 166, 183, 0.5)';
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  // Second inner arch
-  ctx.beginPath();
-  ctx.moveTo(140, 200);
-  ctx.quadraticCurveTo(w / 2, 60, w - 140, 200);
-  ctx.strokeStyle = 'rgba(79, 166, 183, 0.3)';
-  ctx.lineWidth = 1;
-  ctx.stroke();
-  ctx.restore();
-
-  // Geometric corner ornaments (Iznik-style)
-  const drawCornerPattern = (cx, cy, scale) => {
-    ctx.save();
-    ctx.translate(cx, cy);
-    ctx.scale(scale, scale);
-    ctx.strokeStyle = 'rgba(79, 166, 183, 0.25)';
-    ctx.lineWidth = 1;
-    for (let i = 0; i < 8; i++) {
-      ctx.beginPath();
-      ctx.rotate(Math.PI / 4);
-      ctx.moveTo(0, 10);
-      ctx.lineTo(0, 30);
-      ctx.stroke();
+    // English translation below — elegant italic
+    if (translation[i]) {
+      ctx.fillStyle = 'rgba(197, 160, 89, 0.45)';
+      ctx.font = 'italic 22px "Playfair Display", serif';
+      ctx.direction = 'ltr';
+      const wrapped = wrapText(ctx, translation[i], w - 200);
+      wrapped.forEach((wl, j) => {
+        ctx.fillText(wl, w / 2, y + 45 + j * 28);
+      });
     }
-    ctx.restore();
-  };
-  drawCornerPattern(80, 80, 1);
-  drawCornerPattern(w - 80, 80, 1);
-  drawCornerPattern(80, h - 80, 1);
-  drawCornerPattern(w - 80, h - 80, 1);
-
-  // Poet name in turquoise
-  ctx.fillStyle = '#4FA6B7';
-  ctx.font = 'bold 36px "Amiri", serif';
-  ctx.textAlign = 'center';
-  ctx.direction = 'rtl';
-  ctx.fillText(poem.poetArabic || poem.poet || '', w / 2, 150);
-
-  // Title
-  ctx.fillStyle = 'rgba(79, 166, 183, 0.55)';
-  ctx.font = '24px "Amiri", serif';
-  ctx.fillText(poem.titleArabic || poem.title || '', w / 2, 230);
-
-  // Arabic verses in white
-  const verses = prepareVerses(poem.arabic);
-  ctx.fillStyle = '#E8E4DC';
-  ctx.font = '42px "Amiri", serif';
-  ctx.textAlign = 'center';
-  ctx.direction = 'rtl';
-  const vsy = 360;
-  const vsp = 80;
-  verses.forEach((verse, i) => {
-    ctx.fillText(verse, w / 2, vsy + i * vsp);
   });
 
-  // Crescent separator
-  const sepY = vsy + verses.length * vsp + 30;
-  ctx.fillStyle = 'rgba(79, 166, 183, 0.5)';
-  ctx.font = '24px serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('☽', w / 2, sepY);
-
-  // English translation
-  const translation = prepareTranslation(poem.english || poem.cachedTranslation);
-  ctx.fillStyle = 'rgba(232, 228, 220, 0.45)';
-  ctx.font = 'italic 22px "Playfair Display", serif';
-  ctx.textAlign = 'center';
-  ctx.direction = 'ltr';
-  const tsy = sepY + 50;
-  translation.forEach((line, i) => {
-    const wrapped = wrapText(ctx, line, w - 160);
-    wrapped.forEach((wl, j) => {
-      ctx.fillText(wl, w / 2, tsy + i * 38 + j * 28);
-    });
+  // Brand — bottom-right
+  drawBrandBottomRight(ctx, w, h, 'rgba(197, 160, 89, 0.6)', 'rgba(197, 160, 89, 0.4)', {
+    glowColor: 'rgba(197, 160, 89, 0.3)',
+    glowBlur: 20,
+    opacity: 0.7,
+    size: 24,
   });
-
-  // Brand
-  drawBrand(ctx, w / 2, h - 55, 'rgba(79, 166, 183, 0.45)', 17);
 }
 
-// ── Design 4: Zaha Hadid — Bold Deconstructivist ────────────────────────
-function renderZahaHadid(ctx, w, h, poem) {
-  // Dark gradient background
-  const bg = ctx.createLinearGradient(0, 0, w, h);
-  bg.addColorStop(0, '#0D0015');
-  bg.addColorStop(0.5, '#1A0030');
-  bg.addColorStop(1, '#0D0015');
+// ──────────────────────────────────────────────────────────────────────
+//  Design 2: IBN MUQLA — Illuminated Manuscript
+//  Aged vellum, ornate gilded borders, rich brown ink, jewel-tone accents
+// ──────────────────────────────────────────────────────────────────────
+function renderIbnMuqla(ctx, w, h, poem) {
+  // Warm vellum background
+  const bg = ctx.createLinearGradient(0, 0, 0, h);
+  bg.addColorStop(0, '#f5e6c8');
+  bg.addColorStop(0.5, '#f0ddb5');
+  bg.addColorStop(1, '#e8d1a0');
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, w, h);
 
-  // Flowing curves — Zaha's parametric language
+  // Aged paper texture
+  ctx.fillStyle = 'rgba(160, 120, 60, 0.03)';
+  for (let i = 0; i < 400; i++) {
+    const rx = Math.random() * w;
+    const ry = Math.random() * h;
+    ctx.fillRect(rx, ry, Math.random() * 3 + 1, Math.random() * 3 + 1);
+  }
+
+  // Ornate outer frame — triple rule
+  const m = 44;
+  ctx.strokeStyle = '#8B6914';
+  ctx.lineWidth = 3;
+  ctx.strokeRect(m, m, w - m * 2, h - m * 2);
+  ctx.strokeStyle = 'rgba(139, 105, 20, 0.5)';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(m + 8, m + 8, w - (m + 8) * 2, h - (m + 8) * 2);
+  ctx.strokeStyle = 'rgba(139, 105, 20, 0.2)';
+  ctx.strokeRect(m + 14, m + 14, w - (m + 14) * 2, h - (m + 14) * 2);
+
+  // Calligraphic top ornament
+  ctx.fillStyle = '#8B6914';
+  ctx.font = '36px "Amiri", serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('❁', w / 2, m + 45);
+
+  // ── Header ──
+  const headerY = 140;
+  ctx.fillStyle = '#4A2800';
+  ctx.font = 'bold 50px "Amiri", serif';
+  ctx.textAlign = 'center';
+  ctx.direction = 'rtl';
+  ctx.fillText(poem.poetArabic || poem.poet || '', w / 2, headerY);
+
+  ctx.fillStyle = 'rgba(92, 58, 10, 0.5)';
+  ctx.font = '22px "Playfair Display", serif';
+  ctx.direction = 'ltr';
+  ctx.fillText(poem.poet || '', w / 2, headerY + 38);
+
+  ctx.fillStyle = 'rgba(74, 40, 0, 0.6)';
+  ctx.font = '26px "Amiri", serif';
+  ctx.direction = 'rtl';
+  ctx.fillText(poem.titleArabic || poem.title || '', w / 2, headerY + 85);
+
+  ctx.fillStyle = 'rgba(92, 58, 10, 0.35)';
+  ctx.font = 'italic 18px "Playfair Display", serif';
+  ctx.direction = 'ltr';
+  ctx.fillText(poem.title || '', w / 2, headerY + 115);
+
+  // Horizontal flourish
+  const fl = ctx.createLinearGradient(m + 60, 0, w - m - 60, 0);
+  fl.addColorStop(0, 'rgba(139, 105, 20, 0)');
+  fl.addColorStop(0.5, 'rgba(139, 105, 20, 0.7)');
+  fl.addColorStop(1, 'rgba(139, 105, 20, 0)');
+  ctx.fillStyle = fl;
+  ctx.fillRect(m + 60, headerY + 140, w - m * 2 - 120, 1.5);
+
+  // ── Interleaved verses ──
+  const verses = prepareVerses(poem.arabic);
+  const translation = prepareTranslation(poem.english || poem.cachedTranslation);
+  const contentStartY = headerY + 195;
+  const pairSpacing = 140;
+
+  verses.forEach((verse, i) => {
+    const y = contentStartY + i * pairSpacing;
+
+    ctx.fillStyle = '#2C1A00';
+    ctx.font = '50px "Amiri", serif';
+    ctx.textAlign = 'center';
+    ctx.direction = 'rtl';
+    ctx.fillText(verse, w / 2, y);
+
+    if (translation[i]) {
+      ctx.fillStyle = 'rgba(74, 40, 0, 0.4)';
+      ctx.font = 'italic 20px "Playfair Display", serif';
+      ctx.direction = 'ltr';
+      const wrapped = wrapText(ctx, translation[i], w - 200);
+      wrapped.forEach((wl, j) => {
+        ctx.fillText(wl, w / 2, y + 42 + j * 26);
+      });
+    }
+  });
+
+  // Brand — bottom-right
+  drawBrandBottomRight(ctx, w, h, 'rgba(139, 105, 20, 0.5)', 'rgba(92, 58, 10, 0.35)', {
+    opacity: 0.6,
+    size: 22,
+  });
+}
+
+// ──────────────────────────────────────────────────────────────────────
+//  Design 3: SINAN — Geometric Majesty
+//  Deep ocean blue, turquoise & gold arches, celestial atmosphere
+// ──────────────────────────────────────────────────────────────────────
+function renderSinan(ctx, w, h, poem) {
+  // Deep ocean gradient
+  const bg = ctx.createLinearGradient(0, 0, 0, h);
+  bg.addColorStop(0, '#061424');
+  bg.addColorStop(0.4, '#0A1E38');
+  bg.addColorStop(1, '#061220');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, w, h);
+
+  // Iznik-inspired pointed arch — top frame
   ctx.save();
-  ctx.strokeStyle = 'rgba(200, 100, 255, 0.15)';
-  ctx.lineWidth = 2;
-  for (let i = 0; i < 5; i++) {
+  ctx.strokeStyle = 'rgba(79, 166, 183, 0.4)';
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(80, 240);
+  ctx.quadraticCurveTo(w / 2, 20, w - 80, 240);
+  ctx.stroke();
+
+  ctx.strokeStyle = 'rgba(197, 160, 89, 0.2)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(110, 240);
+  ctx.quadraticCurveTo(w / 2, 50, w - 110, 240);
+  ctx.stroke();
+  ctx.restore();
+
+  // Geometric star ornaments in corners
+  const drawStar = (cx, cy, r, points, color) => {
+    ctx.save();
+    ctx.fillStyle = color;
     ctx.beginPath();
-    ctx.moveTo(-50, 200 + i * 220);
-    ctx.bezierCurveTo(w * 0.3, 100 + i * 180, w * 0.7, 350 + i * 200, w + 50, 200 + i * 230);
+    for (let k = 0; k < points * 2; k++) {
+      const radius = k % 2 === 0 ? r : r * 0.4;
+      const angle = (Math.PI / points) * k - Math.PI / 2;
+      const sx = cx + Math.cos(angle) * radius;
+      const sy = cy + Math.sin(angle) * radius;
+      if (k === 0) ctx.moveTo(sx, sy);
+      else ctx.lineTo(sx, sy);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  };
+  drawStar(80, h - 80, 20, 8, 'rgba(197, 160, 89, 0.15)');
+  drawStar(w - 80, h - 80, 20, 8, 'rgba(197, 160, 89, 0.15)');
+  drawStar(80, 80, 16, 6, 'rgba(79, 166, 183, 0.15)');
+  drawStar(w - 80, 80, 16, 6, 'rgba(79, 166, 183, 0.15)');
+
+  // Side vertical accent lines
+  ctx.fillStyle = 'rgba(79, 166, 183, 0.12)';
+  ctx.fillRect(48, 100, 1.5, h - 200);
+  ctx.fillRect(w - 49.5, 100, 1.5, h - 200);
+
+  // ── Header ──
+  const headerY = 140;
+  ctx.fillStyle = '#c5a059';
+  ctx.font = 'bold 48px "Amiri", serif';
+  ctx.textAlign = 'center';
+  ctx.direction = 'rtl';
+  ctx.fillText(poem.poetArabic || poem.poet || '', w / 2, headerY);
+
+  ctx.fillStyle = 'rgba(79, 166, 183, 0.55)';
+  ctx.font = '22px "Playfair Display", serif';
+  ctx.direction = 'ltr';
+  ctx.fillText(poem.poet || '', w / 2, headerY + 38);
+
+  ctx.fillStyle = 'rgba(197, 160, 89, 0.5)';
+  ctx.font = '24px "Amiri", serif';
+  ctx.direction = 'rtl';
+  ctx.fillText(poem.titleArabic || poem.title || '', w / 2, headerY + 85);
+
+  ctx.fillStyle = 'rgba(79, 166, 183, 0.4)';
+  ctx.font = 'italic 18px "Playfair Display", serif';
+  ctx.direction = 'ltr';
+  ctx.fillText(poem.title || '', w / 2, headerY + 112);
+
+  // Crescent separator
+  ctx.fillStyle = 'rgba(197, 160, 89, 0.4)';
+  ctx.font = '22px serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('☽', w / 2, headerY + 150);
+
+  // ── Interleaved verses ──
+  const verses = prepareVerses(poem.arabic);
+  const translation = prepareTranslation(poem.english || poem.cachedTranslation);
+  const contentStartY = headerY + 210;
+  const pairSpacing = 145;
+
+  verses.forEach((verse, i) => {
+    const y = contentStartY + i * pairSpacing;
+
+    ctx.fillStyle = '#E8E4DC';
+    ctx.font = '50px "Amiri", serif';
+    ctx.textAlign = 'center';
+    ctx.direction = 'rtl';
+    ctx.fillText(verse, w / 2, y);
+
+    if (translation[i]) {
+      ctx.fillStyle = 'rgba(79, 166, 183, 0.45)';
+      ctx.font = 'italic 20px "Playfair Display", serif';
+      ctx.direction = 'ltr';
+      const wrapped = wrapText(ctx, translation[i], w - 200);
+      wrapped.forEach((wl, j) => {
+        ctx.fillText(wl, w / 2, y + 42 + j * 26);
+      });
+    }
+  });
+
+  // Brand — bottom-right
+  drawBrandBottomRight(ctx, w, h, 'rgba(197, 160, 89, 0.5)', 'rgba(79, 166, 183, 0.4)', {
+    glowColor: 'rgba(79, 166, 183, 0.2)',
+    glowBlur: 15,
+    opacity: 0.6,
+    size: 22,
+  });
+}
+
+// ──────────────────────────────────────────────────────────────────────
+//  Design 4: ZAHA HADID — Bold Fluid
+//  Vivid neon gradients, dramatic curves, asymmetric glass panels
+// ──────────────────────────────────────────────────────────────────────
+function renderZahaHadid(ctx, w, h, poem) {
+  // Deep cosmic gradient
+  const bg = ctx.createLinearGradient(0, 0, w * 0.4, h);
+  bg.addColorStop(0, '#08001A');
+  bg.addColorStop(0.3, '#150030');
+  bg.addColorStop(0.7, '#0A0025');
+  bg.addColorStop(1, '#08001A');
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, w, h);
+
+  // Flowing parametric curves — Zaha's language
+  ctx.save();
+  for (let i = 0; i < 6; i++) {
+    const gradient = ctx.createLinearGradient(0, 0, w, h);
+    gradient.addColorStop(0, `rgba(200, 100, 255, ${0.06 + i * 0.02})`);
+    gradient.addColorStop(1, `rgba(80, 160, 255, ${0.06 + i * 0.01})`);
+    ctx.strokeStyle = gradient;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(-50, 150 + i * 200);
+    ctx.bezierCurveTo(w * 0.25, 50 + i * 160, w * 0.75, 300 + i * 180, w + 50, 180 + i * 210);
     ctx.stroke();
   }
   ctx.restore();
 
-  // Accent bar — asymmetric
+  // Accent bar — vivid neon gradient
   const accentGrad = ctx.createLinearGradient(0, 0, w, 0);
   accentGrad.addColorStop(0, 'rgba(200, 100, 255, 0)');
-  accentGrad.addColorStop(0.2, 'rgba(200, 100, 255, 0.6)');
-  accentGrad.addColorStop(0.8, 'rgba(100, 180, 255, 0.6)');
-  accentGrad.addColorStop(1, 'rgba(100, 180, 255, 0)');
+  accentGrad.addColorStop(0.15, 'rgba(200, 100, 255, 0.7)');
+  accentGrad.addColorStop(0.5, 'rgba(150, 120, 255, 0.8)');
+  accentGrad.addColorStop(0.85, 'rgba(80, 180, 255, 0.7)');
+  accentGrad.addColorStop(1, 'rgba(80, 180, 255, 0)');
   ctx.fillStyle = accentGrad;
-  ctx.fillRect(0, 90, w, 3);
+  ctx.fillRect(0, 100, w, 3);
 
-  // Poet name — bold modern
+  // Glass panel behind header
+  ctx.fillStyle = 'rgba(200, 100, 255, 0.04)';
+  ctx.fillRect(60, 30, w - 120, 180);
+
+  // ── Header — asymmetric, right-aligned for RTL ──
+  const headerY = 70;
   ctx.fillStyle = '#C864FF';
-  ctx.font = 'bold 40px "Amiri", serif';
-  ctx.textAlign = 'left';
-  ctx.direction = 'rtl';
-  ctx.fillText(poem.poetArabic || poem.poet || '', w - 80, 70);
-
-  // Title — shifted left for asymmetry
-  ctx.fillStyle = 'rgba(100, 180, 255, 0.6)';
-  ctx.font = '22px "Amiri", serif';
-  ctx.textAlign = 'left';
-  ctx.direction = 'rtl';
-  ctx.fillText(poem.titleArabic || poem.title || '', w - 80, 130);
-
-  // Arabic verses — larger, left-aligned (RTL)
-  const verses = prepareVerses(poem.arabic);
-  ctx.fillStyle = '#F0E8FF';
-  ctx.font = '44px "Amiri", serif';
+  ctx.font = 'bold 50px "Amiri", serif';
   ctx.textAlign = 'right';
   ctx.direction = 'rtl';
-  const vsy = 280;
-  verses.forEach((verse, i) => {
-    ctx.fillText(verse, w - 80, vsy + i * 90);
-  });
+  ctx.fillText(poem.poetArabic || poem.poet || '', w - 80, headerY);
 
-  // Angular separator line
-  const sepY = vsy + verses.length * 90 + 30;
-  const sepGrad = ctx.createLinearGradient(80, 0, w - 80, 0);
-  sepGrad.addColorStop(0, 'rgba(200, 100, 255, 0.5)');
-  sepGrad.addColorStop(1, 'rgba(100, 180, 255, 0)');
-  ctx.fillStyle = sepGrad;
-  ctx.fillRect(80, sepY, w - 160, 2);
-
-  // English — aligned differently
-  const translation = prepareTranslation(poem.english || poem.cachedTranslation);
-  ctx.fillStyle = 'rgba(240, 232, 255, 0.45)';
-  ctx.font = 'italic 22px "Playfair Display", serif';
-  ctx.textAlign = 'left';
+  ctx.fillStyle = 'rgba(100, 180, 255, 0.55)';
+  ctx.font = '22px "Playfair Display", serif';
+  ctx.textAlign = 'right';
   ctx.direction = 'ltr';
-  const tsy = sepY + 50;
-  translation.forEach((line, i) => {
-    const wrapped = wrapText(ctx, line, w - 200);
-    wrapped.forEach((wl, j) => {
-      ctx.fillText(wl, 80, tsy + i * 38 + j * 28);
-    });
+  ctx.fillText(poem.poet || '', w - 80, headerY + 38);
+
+  ctx.fillStyle = 'rgba(200, 100, 255, 0.5)';
+  ctx.font = '24px "Amiri", serif';
+  ctx.textAlign = 'right';
+  ctx.direction = 'rtl';
+  ctx.fillText(poem.titleArabic || poem.title || '', w - 80, headerY + 85);
+
+  ctx.fillStyle = 'rgba(100, 180, 255, 0.4)';
+  ctx.font = 'italic 18px "Playfair Display", serif';
+  ctx.direction = 'ltr';
+  ctx.fillText(poem.title || '', w - 80, headerY + 112);
+
+  // ── Interleaved verses — right-aligned ──
+  const verses = prepareVerses(poem.arabic);
+  const translation = prepareTranslation(poem.english || poem.cachedTranslation);
+  const contentStartY = 290;
+  const pairSpacing = 150;
+
+  verses.forEach((verse, i) => {
+    const y = contentStartY + i * pairSpacing;
+
+    ctx.fillStyle = '#F0E8FF';
+    ctx.font = '50px "Amiri", serif';
+    ctx.textAlign = 'right';
+    ctx.direction = 'rtl';
+    ctx.fillText(verse, w - 80, y);
+
+    if (translation[i]) {
+      ctx.fillStyle = 'rgba(150, 180, 255, 0.45)';
+      ctx.font = 'italic 20px "Playfair Display", serif';
+      ctx.textAlign = 'right';
+      ctx.direction = 'ltr';
+      const wrapped = wrapText(ctx, translation[i], w - 200);
+      wrapped.forEach((wl, j) => {
+        ctx.fillText(wl, w - 80, y + 42 + j * 26);
+      });
+    }
   });
 
-  // Brand — bottom-left for asymmetry
-  ctx.save();
-  ctx.font = '17px "Forum", "Reem Kufi", serif';
-  ctx.fillStyle = 'rgba(200, 100, 255, 0.4)';
-  ctx.textAlign = 'left';
-  ctx.globalAlpha = 0.7;
-  ctx.fillText('Poetry Bil-Araby  |  بالعربي', 80, h - 55);
-  ctx.restore();
+  // Bottom accent line
+  const btmGrad = ctx.createLinearGradient(0, 0, w, 0);
+  btmGrad.addColorStop(0, 'rgba(80, 180, 255, 0)');
+  btmGrad.addColorStop(0.5, 'rgba(150, 120, 255, 0.5)');
+  btmGrad.addColorStop(1, 'rgba(200, 100, 255, 0)');
+  ctx.fillStyle = btmGrad;
+  ctx.fillRect(0, h - 100, w, 2);
+
+  // Brand — bottom-right with neon glow
+  drawBrandBottomRight(ctx, w, h, 'rgba(200, 100, 255, 0.55)', 'rgba(100, 180, 255, 0.4)', {
+    glowColor: 'rgba(200, 100, 255, 0.4)',
+    glowBlur: 25,
+    opacity: 0.7,
+    size: 22,
+  });
 }
 
-// ── Design 5: Hassan Fathy — Earthy Desert ──────────────────────────────
+// ──────────────────────────────────────────────────────────────────────
+//  Design 5: HASSAN FATHY — Warm Earthcraft
+//  Sunlit clay, woven lattice, organic warmth, handmade texture
+// ──────────────────────────────────────────────────────────────────────
 function renderHassanFathy(ctx, w, h, poem) {
-  // Warm sand background
+  // Warm sand-to-clay gradient
   const bg = ctx.createLinearGradient(0, 0, 0, h);
-  bg.addColorStop(0, '#F5E1C0');
-  bg.addColorStop(1, '#E8CFA0');
+  bg.addColorStop(0, '#F8EDD8');
+  bg.addColorStop(0.5, '#F0DFC0');
+  bg.addColorStop(1, '#E5CFA5');
   ctx.fillStyle = bg;
   ctx.fillRect(0, 0, w, h);
 
-  // Mashrabiya lattice pattern — top band
+  // Handmade paper texture
+  ctx.fillStyle = 'rgba(160, 120, 60, 0.03)';
+  for (let i = 0; i < 500; i++) {
+    const rx = Math.random() * w;
+    const ry = Math.random() * h;
+    ctx.fillRect(rx, ry, Math.random() * 2 + 0.5, Math.random() * 2 + 0.5);
+  }
+
+  // Mashrabiya lattice — top band
   ctx.save();
-  ctx.strokeStyle = 'rgba(120, 80, 30, 0.15)';
+  ctx.strokeStyle = 'rgba(160, 82, 45, 0.12)';
   ctx.lineWidth = 1;
-  const gridSize = 30;
-  for (let x = 0; x < w; x += gridSize) {
-    for (let y = 0; y < 120; y += gridSize) {
-      // Diamond pattern
+  const gs = 28;
+  for (let x = 0; x < w; x += gs) {
+    for (let y = 0; y < 90; y += gs) {
       ctx.beginPath();
-      ctx.moveTo(x + gridSize / 2, y);
-      ctx.lineTo(x + gridSize, y + gridSize / 2);
-      ctx.lineTo(x + gridSize / 2, y + gridSize);
-      ctx.lineTo(x, y + gridSize / 2);
+      ctx.moveTo(x + gs / 2, y);
+      ctx.lineTo(x + gs, y + gs / 2);
+      ctx.lineTo(x + gs / 2, y + gs);
+      ctx.lineTo(x, y + gs / 2);
       ctx.closePath();
       ctx.stroke();
     }
   }
-  // Also bottom band
-  for (let x = 0; x < w; x += gridSize) {
-    for (let y = h - 120; y < h; y += gridSize) {
+  // Bottom band
+  for (let x = 0; x < w; x += gs) {
+    for (let y = h - 90; y < h; y += gs) {
       ctx.beginPath();
-      ctx.moveTo(x + gridSize / 2, y);
-      ctx.lineTo(x + gridSize, y + gridSize / 2);
-      ctx.lineTo(x + gridSize / 2, y + gridSize);
-      ctx.lineTo(x, y + gridSize / 2);
+      ctx.moveTo(x + gs / 2, y);
+      ctx.lineTo(x + gs, y + gs / 2);
+      ctx.lineTo(x + gs / 2, y + gs);
+      ctx.lineTo(x, y + gs / 2);
       ctx.closePath();
       ctx.stroke();
     }
   }
   ctx.restore();
 
-  // Terracotta accent line
+  // Terracotta accent lines
   ctx.fillStyle = '#A0522D';
-  ctx.fillRect(60, 140, w - 120, 2);
-  ctx.fillRect(60, h - 140, w - 120, 2);
+  ctx.fillRect(55, 105, w - 110, 2);
+  ctx.fillRect(55, h - 105, w - 110, 2);
 
-  // Poet name in deep brown
-  ctx.fillStyle = '#4A2800';
-  ctx.font = 'bold 38px "Amiri", serif';
+  // ── Header ──
+  const headerY = 160;
+  ctx.fillStyle = '#3D1F00';
+  ctx.font = 'bold 48px "Amiri", serif';
   ctx.textAlign = 'center';
   ctx.direction = 'rtl';
-  ctx.fillText(poem.poetArabic || poem.poet || '', w / 2, 200);
+  ctx.fillText(poem.poetArabic || poem.poet || '', w / 2, headerY);
 
-  // Title in warm brown
-  ctx.fillStyle = 'rgba(74, 40, 0, 0.55)';
-  ctx.font = '25px "Amiri", serif';
-  ctx.fillText(poem.titleArabic || poem.title || '', w / 2, 250);
-
-  // Arabic verses in dark earth
-  const verses = prepareVerses(poem.arabic);
-  ctx.fillStyle = '#2A1500';
-  ctx.font = '42px "Amiri", serif';
-  ctx.textAlign = 'center';
-  ctx.direction = 'rtl';
-  const vsy = 370;
-  verses.forEach((verse, i) => {
-    ctx.fillText(verse, w / 2, vsy + i * 82);
-  });
-
-  // Sun/star separator
-  const sepY = vsy + verses.length * 82 + 25;
-  ctx.fillStyle = '#A0522D';
-  ctx.font = '26px serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('✸', w / 2, sepY);
-
-  // English translation
-  const translation = prepareTranslation(poem.english || poem.cachedTranslation);
-  ctx.fillStyle = 'rgba(42, 21, 0, 0.4)';
-  ctx.font = 'italic 22px "Playfair Display", serif';
-  ctx.textAlign = 'center';
+  ctx.fillStyle = 'rgba(74, 40, 0, 0.45)';
+  ctx.font = '22px "Playfair Display", serif';
   ctx.direction = 'ltr';
-  const tsy = sepY + 50;
-  translation.forEach((line, i) => {
-    const wrapped = wrapText(ctx, line, w - 180);
-    wrapped.forEach((wl, j) => {
-      ctx.fillText(wl, w / 2, tsy + i * 38 + j * 28);
-    });
+  ctx.fillText(poem.poet || '', w / 2, headerY + 38);
+
+  ctx.fillStyle = 'rgba(61, 31, 0, 0.55)';
+  ctx.font = '24px "Amiri", serif';
+  ctx.direction = 'rtl';
+  ctx.fillText(poem.titleArabic || poem.title || '', w / 2, headerY + 82);
+
+  ctx.fillStyle = 'rgba(74, 40, 0, 0.35)';
+  ctx.font = 'italic 18px "Playfair Display", serif';
+  ctx.direction = 'ltr';
+  ctx.fillText(poem.title || '', w / 2, headerY + 110);
+
+  // Sun separator
+  ctx.fillStyle = 'rgba(160, 82, 45, 0.5)';
+  ctx.font = '20px serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('✸', w / 2, headerY + 148);
+
+  // ── Interleaved verses ──
+  const verses = prepareVerses(poem.arabic);
+  const translation = prepareTranslation(poem.english || poem.cachedTranslation);
+  const contentStartY = headerY + 205;
+  const pairSpacing = 140;
+
+  verses.forEach((verse, i) => {
+    const y = contentStartY + i * pairSpacing;
+
+    ctx.fillStyle = '#2A1500';
+    ctx.font = '48px "Amiri", serif';
+    ctx.textAlign = 'center';
+    ctx.direction = 'rtl';
+    ctx.fillText(verse, w / 2, y);
+
+    if (translation[i]) {
+      ctx.fillStyle = 'rgba(74, 40, 0, 0.38)';
+      ctx.font = 'italic 20px "Playfair Display", serif';
+      ctx.direction = 'ltr';
+      const wrapped = wrapText(ctx, translation[i], w - 200);
+      wrapped.forEach((wl, j) => {
+        ctx.fillText(wl, w / 2, y + 40 + j * 26);
+      });
+    }
   });
 
-  // Brand in terracotta
-  drawBrand(ctx, w / 2, h - 70, 'rgba(160, 82, 45, 0.4)', 17);
+  // Brand — bottom-right in terracotta
+  drawBrandBottomRight(ctx, w, h, 'rgba(160, 82, 45, 0.45)', 'rgba(74, 40, 0, 0.3)', {
+    opacity: 0.55,
+    size: 22,
+  });
 }
 
 // ── Design dispatcher ──────────────────────────────────────────────────

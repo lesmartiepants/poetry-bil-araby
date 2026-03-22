@@ -14,6 +14,8 @@ import {
  * with 5 selectable design variants.  Users can download the card as PNG or
  * share it via the Web Share API.
  *
+ * UI primary language: English (per brand direction).
+ *
  * @param {{ poem: Object, onClose: () => void }} props
  */
 export default function ShareCardModal({ poem, onClose }) {
@@ -121,12 +123,10 @@ export default function ShareCardModal({ poem, onClose }) {
 
         {/* Card preview area */}
         <div className="flex items-center justify-center p-6 pb-2">
-          {/* Styled HTML preview (mirrors the Canvas card) */}
           <div
             className="w-full max-w-[340px] rounded-xl overflow-hidden shadow-lg"
             style={{ aspectRatio: `${CARD_WIDTH} / ${CARD_HEIGHT}` }}
           >
-            {/* HTML mini-preview — shows structured poem data */}
             <ShareCardPreview
               poem={poem}
               design={SHARE_CARD_DESIGNS.find((d) => d.id === selectedDesign)}
@@ -136,10 +136,10 @@ export default function ShareCardModal({ poem, onClose }) {
           </div>
         </div>
 
-        {/* Design selector */}
+        {/* Design selector — English primary */}
         <div className="px-4 pt-2 pb-2">
-          <p className="text-stone-400 text-xs text-center mb-2 font-tajawal">
-            اختر تصميم — Choose Design
+          <p className="text-stone-400 text-xs text-center mb-2 font-tajawal tracking-wide">
+            Choose Design
           </p>
           <div className="flex gap-2 justify-center flex-wrap">
             {SHARE_CARD_DESIGNS.map((d) => (
@@ -157,13 +157,13 @@ export default function ShareCardModal({ poem, onClose }) {
                 `}
                 title={`${d.name} — ${d.artist}`}
               >
-                <span dir="rtl">{d.nameAr}</span>
+                {d.name}
               </button>
             ))}
           </div>
         </div>
 
-        {/* Action buttons */}
+        {/* Action buttons — English labels */}
         <div className="flex gap-3 p-4 pt-2 justify-center">
           <button
             onClick={handleDownload}
@@ -171,7 +171,7 @@ export default function ShareCardModal({ poem, onClose }) {
             className="flex items-center gap-2 px-5 py-2.5 bg-gold/15 text-gold border border-gold/30 rounded-xl hover:bg-gold/25 transition-all text-sm font-tajawal"
           >
             <Download size={16} />
-            <span>تحميل</span>
+            <span>Download</span>
           </button>
           <button
             onClick={handleShare}
@@ -179,7 +179,7 @@ export default function ShareCardModal({ poem, onClose }) {
             className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-xl hover:opacity-90 transition-all text-sm font-tajawal shadow-lg shadow-indigo-500/30"
           >
             <Share2 size={16} />
-            <span>مشاركة</span>
+            <span>Share</span>
           </button>
         </div>
 
@@ -198,107 +198,119 @@ const DESIGN_STYLES = {
     bg: 'bg-[#0c0c0e]',
     border: 'border-[#c5a059]/25',
     poetColor: 'text-[#c5a059]',
-    titleColor: 'text-[#c5a059]/65',
+    poetEnColor: 'text-[#c5a059]/50',
+    titleColor: 'text-[#c5a059]/60',
+    titleEnColor: 'text-[#c5a059]/35',
     verseColor: 'text-[#e8e0d0]',
-    transColor: 'text-[#e8e0d0]/50',
-    brandColor: 'text-[#c5a059]/50',
-    separator: '✦',
-    sepColor: 'text-[#c5a059]/40',
+    transColor: 'text-[#c5a059]/45',
+    brandArabicColor: 'text-[#c5a059]/60',
+    brandEnColor: 'text-[#c5a059]/40',
   },
   ibnMuqla: {
-    bg: 'bg-[#f5e6c8]',
+    bg: 'bg-gradient-to-b from-[#f5e6c8] via-[#f0ddb5] to-[#e8d1a0]',
     border: 'border-[#8B6914]',
-    poetColor: 'text-[#5C3A0A]',
-    titleColor: 'text-[#5C3A0A]/60',
+    poetColor: 'text-[#4A2800]',
+    poetEnColor: 'text-[#5C3A0A]/50',
+    titleColor: 'text-[#4A2800]/60',
+    titleEnColor: 'text-[#5C3A0A]/35',
     verseColor: 'text-[#2C1A00]',
-    transColor: 'text-[#2C1A00]/45',
-    brandColor: 'text-[#5C3A0A]/35',
-    separator: '◆',
-    sepColor: 'text-[#8B6914]',
+    transColor: 'text-[#4A2800]/40',
+    brandArabicColor: 'text-[#8B6914]/50',
+    brandEnColor: 'text-[#5C3A0A]/35',
   },
   sinan: {
-    bg: 'bg-[#0A1628]',
+    bg: 'bg-gradient-to-b from-[#061424] via-[#0A1E38] to-[#061220]',
     border: 'border-[#4FA6B7]/30',
-    poetColor: 'text-[#4FA6B7]',
-    titleColor: 'text-[#4FA6B7]/55',
+    poetColor: 'text-[#c5a059]',
+    poetEnColor: 'text-[#4FA6B7]/55',
+    titleColor: 'text-[#c5a059]/50',
+    titleEnColor: 'text-[#4FA6B7]/40',
     verseColor: 'text-[#E8E4DC]',
-    transColor: 'text-[#E8E4DC]/45',
-    brandColor: 'text-[#4FA6B7]/45',
-    separator: '☽',
-    sepColor: 'text-[#4FA6B7]/50',
+    transColor: 'text-[#4FA6B7]/45',
+    brandArabicColor: 'text-[#c5a059]/50',
+    brandEnColor: 'text-[#4FA6B7]/40',
   },
   zahaHadid: {
-    bg: 'bg-gradient-to-br from-[#0D0015] via-[#1A0030] to-[#0D0015]',
+    bg: 'bg-gradient-to-br from-[#08001A] via-[#150030] to-[#08001A]',
     border: 'border-[#C864FF]/25',
     poetColor: 'text-[#C864FF]',
-    titleColor: 'text-[#64B4FF]/60',
+    poetEnColor: 'text-[#64B4FF]/55',
+    titleColor: 'text-[#C864FF]/50',
+    titleEnColor: 'text-[#64B4FF]/40',
     verseColor: 'text-[#F0E8FF]',
-    transColor: 'text-[#F0E8FF]/45',
-    brandColor: 'text-[#C864FF]/40',
-    separator: '—',
-    sepColor: 'text-[#C864FF]/50',
+    transColor: 'text-[#96B4FF]/45',
+    brandArabicColor: 'text-[#C864FF]/55',
+    brandEnColor: 'text-[#64B4FF]/40',
     textAlign: 'text-right',
   },
   hassanFathy: {
-    bg: 'bg-gradient-to-b from-[#F5E1C0] to-[#E8CFA0]',
+    bg: 'bg-gradient-to-b from-[#F8EDD8] via-[#F0DFC0] to-[#E5CFA5]',
     border: 'border-[#A0522D]/30',
-    poetColor: 'text-[#4A2800]',
-    titleColor: 'text-[#4A2800]/55',
+    poetColor: 'text-[#3D1F00]',
+    poetEnColor: 'text-[#4A2800]/45',
+    titleColor: 'text-[#3D1F00]/55',
+    titleEnColor: 'text-[#4A2800]/35',
     verseColor: 'text-[#2A1500]',
-    transColor: 'text-[#2A1500]/40',
-    brandColor: 'text-[#A0522D]/40',
-    separator: '✸',
-    sepColor: 'text-[#A0522D]',
+    transColor: 'text-[#4A2800]/38',
+    brandArabicColor: 'text-[#A0522D]/45',
+    brandEnColor: 'text-[#4A2800]/30',
   },
 };
 
 /**
  * ShareCardPreview — A styled HTML preview of the poem card
- * (lightweight mirror of the Canvas rendering for the modal)
+ * Shows interleaved Arabic verses + English translations, poet & title in both languages
  */
 function ShareCardPreview({ poem, design, verses, translation }) {
   const s = DESIGN_STYLES[design?.id] || DESIGN_STYLES.diwan;
   const align = s.textAlign || 'text-center';
 
   return (
-    <div className={`h-full w-full flex flex-col justify-between ${s.bg} border ${s.border} p-6`}>
-      {/* Poet & Title */}
-      <div className={`${align} pt-4`}>
-        <p className={`font-amiri font-bold text-lg ${s.poetColor}`} dir="rtl">
+    <div className={`h-full w-full flex flex-col justify-between ${s.bg} border ${s.border} p-5`}>
+      {/* Poet & Title — bilingual */}
+      <div className={`${align} pt-3`}>
+        <p className={`font-amiri font-bold text-xl ${s.poetColor}`} dir="rtl">
           {poem.poetArabic || poem.poet || ''}
         </p>
-        <p className={`font-amiri text-sm mt-1 ${s.titleColor}`} dir="rtl">
+        <p className={`text-[11px] mt-0.5 ${s.poetEnColor}`}>{poem.poet || ''}</p>
+        <p className={`font-amiri text-sm mt-2 ${s.titleColor}`} dir="rtl">
           {poem.titleArabic || poem.title || ''}
         </p>
+        <p className={`text-[10px] italic mt-0.5 ${s.titleEnColor}`}>{poem.title || ''}</p>
       </div>
 
-      {/* Verses */}
-      <div className={`${align} flex-1 flex flex-col justify-center gap-2 py-4`}>
+      {/* Interleaved verses + translations */}
+      <div className={`${align} flex-1 flex flex-col justify-center gap-1 py-3`}>
         {verses.map((v, i) => (
-          <p key={i} className={`font-amiri text-base leading-relaxed ${s.verseColor}`} dir="rtl">
-            {v}
-          </p>
-        ))}
-
-        {/* Separator */}
-        <p className={`${s.sepColor} text-lg my-1`}>{s.separator}</p>
-
-        {/* Translation */}
-        {translation.map((t, i) => (
-          <p
-            key={`t-${i}`}
-            className={`font-playfair text-xs italic leading-relaxed ${s.transColor}`}
-          >
-            {t}
-          </p>
+          <div key={i} className="mb-1.5">
+            <p className={`font-amiri text-[15px] leading-relaxed ${s.verseColor}`} dir="rtl">
+              {v}
+            </p>
+            {translation[i] && (
+              <p className={`text-[9px] italic leading-snug mt-0.5 ${s.transColor}`}>
+                {translation[i]}
+              </p>
+            )}
+          </div>
         ))}
       </div>
 
-      {/* Brand */}
-      <div className={`${align} pb-2`}>
-        <p className={`text-[10px] font-brand-en ${s.brandColor}`}>
-          Poetry Bil-Araby &nbsp;|&nbsp; بالعربي
-        </p>
+      {/* Brand — bottom-right */}
+      <div className="flex justify-end pb-1 pr-1">
+        <div className="text-right">
+          <p
+            className={`text-[11px] font-bold ${s.brandArabicColor}`}
+            style={{ fontFamily: "'Reem Kufi', sans-serif" }}
+          >
+            بالعربي
+          </p>
+          <p
+            className={`text-[8px] ${s.brandEnColor} -mt-0.5`}
+            style={{ fontFamily: "'Forum', serif", letterSpacing: '-0.04em' }}
+          >
+            poetry
+          </p>
+        </div>
       </div>
     </div>
   );

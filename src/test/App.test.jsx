@@ -1165,4 +1165,118 @@ describe('DiwanApp', () => {
       expect(document.body.textContent).not.toContain('Account');
     });
   });
+
+  // ── Ratchet Mode Easter Egg (Fire) ────────────────────────────────────
+
+  describe('Ratchet Mode Easter Egg', () => {
+    it('fire button is accessible inside the settings menu after opening sidebar and settings', async () => {
+      render(<DiwanApp />);
+
+      // Open sidebar
+      await userEvent.click(screen.getByLabelText('Open sidebar controls'));
+
+      // Open settings sub-panel
+      await userEvent.click(screen.getByTitle('Settings'));
+
+      // Now the fire button should be present and interactive in the settings panel
+      const fireBtn = screen.getByLabelText('Enable Ratchet Mode');
+      expect(fireBtn).toBeInTheDocument();
+      // It should be a button that can be pressed
+      expect(fireBtn.getAttribute('aria-pressed')).toBe('false');
+    });
+
+    it('clicking the fire button in settings enables ratchet mode and shows glow overlay', async () => {
+      render(<DiwanApp />);
+
+      // Glow overlay should NOT be present initially
+      expect(screen.queryByTestId('ratchet-glow')).toBeNull();
+
+      // Open sidebar → settings
+      await userEvent.click(screen.getByLabelText('Open sidebar controls'));
+      await userEvent.click(screen.getByTitle('Settings'));
+
+      // Enable ratchet mode
+      await userEvent.click(screen.getByLabelText('Enable Ratchet Mode'));
+
+      // Glow overlay should now appear
+      expect(screen.getByTestId('ratchet-glow')).toBeInTheDocument();
+
+      // Button label should reflect active state
+      expect(screen.getByLabelText('Disable Ratchet Mode')).toBeInTheDocument();
+    });
+
+    it('clicking the fire button again disables ratchet mode and removes glow overlay', async () => {
+      render(<DiwanApp />);
+
+      // Open sidebar → settings → enable ratchet
+      await userEvent.click(screen.getByLabelText('Open sidebar controls'));
+      await userEvent.click(screen.getByTitle('Settings'));
+      await userEvent.click(screen.getByLabelText('Enable Ratchet Mode'));
+      expect(screen.getByTestId('ratchet-glow')).toBeInTheDocument();
+
+      // Disable ratchet mode
+      await userEvent.click(screen.getByLabelText('Disable Ratchet Mode'));
+
+      // Glow should be gone
+      expect(screen.queryByTestId('ratchet-glow')).toBeNull();
+    });
+
+    it('survives multiple enable/disable cycles without breaking', async () => {
+      render(<DiwanApp />);
+
+      await userEvent.click(screen.getByLabelText('Open sidebar controls'));
+      await userEvent.click(screen.getByTitle('Settings'));
+
+      for (let i = 0; i < 3; i++) {
+        // Enable
+        await userEvent.click(screen.getByLabelText('Enable Ratchet Mode'));
+        expect(screen.getByTestId('ratchet-glow')).toBeInTheDocument();
+        // Disable
+        await userEvent.click(screen.getByLabelText('Disable Ratchet Mode'));
+        expect(screen.queryByTestId('ratchet-glow')).toBeNull();
+      }
+    });
+
+    it('glow overlay is still present after discovering a new poem', async () => {
+      render(<DiwanApp />);
+
+      // Enable ratchet mode
+      await userEvent.click(screen.getByLabelText('Open sidebar controls'));
+      await userEvent.click(screen.getByTitle('Settings'));
+      await userEvent.click(screen.getByLabelText('Enable Ratchet Mode'));
+      expect(screen.getByTestId('ratchet-glow')).toBeInTheDocument();
+
+      // Discover a new poem
+      global.fetch.mockResolvedValueOnce({ ok: true, json: async () => createDbPoem(200) });
+      await userEvent.click(screen.getByLabelText('Discover new poem'));
+
+      await waitFor(() => {
+        expect(screen.getByText('Mahmoud Darwish')).toBeInTheDocument();
+      });
+
+      // Glow should persist after poem change
+      expect(screen.getByTestId('ratchet-glow')).toBeInTheDocument();
+    });
+
+    it('app still functions normally (discover new poem) while ratchet mode is active', async () => {
+      render(<DiwanApp />);
+
+      // Enable ratchet mode via settings
+      await userEvent.click(screen.getByLabelText('Open sidebar controls'));
+      await userEvent.click(screen.getByTitle('Settings'));
+      await userEvent.click(screen.getByLabelText('Enable Ratchet Mode'));
+
+      // App should still display poem content
+      const rtlElements = document.querySelectorAll('p[dir="rtl"]');
+      expect(rtlElements.length).toBeGreaterThan(0);
+
+      // Should still be able to discover a new poem
+      global.fetch.mockResolvedValueOnce({ ok: true, json: async () => createDbPoem(201) });
+      await userEvent.click(screen.getByLabelText('Discover new poem'));
+
+      await waitFor(() => {
+        expect(screen.getByText('Mahmoud Darwish')).toBeInTheDocument();
+      });
+    });
+  });
 });

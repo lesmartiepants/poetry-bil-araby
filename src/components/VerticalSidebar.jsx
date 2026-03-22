@@ -394,7 +394,7 @@ const VerticalSidebar = ({
                       <Flame style={{ color: ratchetMode ? '#f97316' : gold }} size={16} />
                     </button>
                     <span className={labelCls} style={{ color: ratchetMode ? '#f97316' : gold }}>
-                      {ratchetMode ? '🔥 Ratchet' : 'Ratchet'}
+                      Ratchet
                     </span>
                   </div>
                 </div>

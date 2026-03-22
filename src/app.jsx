@@ -352,22 +352,26 @@ export default function DiwanApp() {
     } catch {}
   }, [user]);
 
-  // Auto-trigger explanation after auto-loaded poem arrives (skip if cached translation exists)
+  // Auto-trigger explanation after auto-loaded poem arrives.
+  // In ratchet mode, also run for poems that have a cached translation (overrides scholarly cache).
   useEffect(() => {
     if (autoExplainPending && current?.id && !isFetching && !isInterpreting && !interpretation) {
       setAutoExplainPending(false);
-      if (!current?.cachedTranslation) {
+      if (ratchetMode || !current?.cachedTranslation) {
         handleAnalyze();
       }
     }
-  }, [autoExplainPending, current?.id, isFetching, isInterpreting, interpretation]);
+  }, [autoExplainPending, current?.id, isFetching, isInterpreting, interpretation, ratchetMode]);
 
-  // Clear interpretation when ratchet mode is toggled so the new prompt is used on next explain.
-  // setInterpretation is a stable Zustand action (reference never changes), so it is intentionally
-  // omitted from the dependency array to avoid re-running this effect on every render.
+  // When ratchet mode is toggled, clear the current interpretation so the new prompt is used.
+  // When enabling ratchet mode, also queue an auto-explain so insights regenerate immediately.
+  // setInterpretation and setAutoExplainPending are stable Zustand actions, intentionally omitted.
   useEffect(() => {
     setInterpretation(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- setInterpretation is a stable Zustand action
+    if (ratchetMode && current?.id) {
+      setAutoExplainPending(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Zustand actions and current?.id are stable refs
   }, [ratchetMode]);
 
   // Load user settings on mount
@@ -580,7 +584,9 @@ export default function DiwanApp() {
   const cachedAuthorBio = current?.cachedAuthorBio;
 
   const insightParts = useMemo(() => {
-    if (cachedTranslation) {
+    // In ratchet mode, always use the AI-generated interpretation so cached scholarly
+    // translations don't override the Gen Z ratchet content.
+    if (!ratchetMode && cachedTranslation) {
       return {
         poeticTranslation: cachedTranslation,
         depth: cachedExplanation || '',
@@ -588,7 +594,7 @@ export default function DiwanApp() {
       };
     }
     return parseInsight(interpretation);
-  }, [interpretation, cachedTranslation, cachedExplanation, cachedAuthorBio]);
+  }, [interpretation, cachedTranslation, cachedExplanation, cachedAuthorBio, ratchetMode]);
 
   const versePairs = useMemo(() => {
     const arLines = (current?.arabic || '').split('\n').filter((l) => l.trim());

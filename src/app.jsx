@@ -52,12 +52,14 @@ import {
   saveTranslation,
   pingHealth,
 } from './services/database.js';
+import { updateOGMetaTags } from './utils/ogMetaTags.js';
 import DebugPanel from './components/DebugPanel.jsx';
 import MysticalConsultationEffect from './components/MysticalConsultationEffect.jsx';
 import ErrorBanner from './components/ErrorBanner.jsx';
 import ShortcutHelp from './components/ShortcutHelp.jsx';
 const SplashScreen = lazy(() => import('./components/SplashScreen.jsx'));
 import InsightsDrawer from './components/InsightsDrawer.jsx';
+import ShareCardModal from './components/ShareCardModal.jsx';
 import VerticalSidebar from './components/VerticalSidebar.jsx';
 import AuthModal from './components/auth/AuthModal.jsx';
 import SavePoemButton from './components/auth/SavePoemButton.jsx';
@@ -180,6 +182,7 @@ export default function DiwanApp() {
   const showTransliteration = useUIStore((s) => s.showTransliteration);
   const setShowTransliteration = useUIStore((s) => s.setShowTransliteration);
   const showShortcutHelp = useModalStore((s) => s.shortcutHelp);
+  const showShareCard = useModalStore((s) => s.shareCard);
 
   const theme = darkMode ? THEME.dark : THEME.light;
 
@@ -286,6 +289,7 @@ export default function DiwanApp() {
             setPoems([poem]);
             setCurrentIndex(0);
             setAutoExplainPending(true);
+            updateOGMetaTags(poem);
             addLog('DeepLink', `Loaded: ${poem.poet} — ${poem.title}`, 'success');
           })
           .catch((err) => {
@@ -1587,55 +1591,8 @@ export default function DiwanApp() {
     addLog('UI Event', 'Share button clicked', 'info');
     track('poem_shared', { poet: current?.poet });
 
-    const poemId = current?.id;
-    const isDbPoem = current?.isFromDatabase && typeof poemId === 'number';
-    const shareUrl = isDbPoem ? `${window.location.origin}/poem/${poemId}` : window.location.origin;
-    const shareTitle = `${current?.titleArabic || current?.title || 'Arabic Poetry'} — ${current?.poetArabic || current?.poet || ''}`;
-    const shareText = current?.arabic
-      ? current.arabic.split('\n').slice(0, 2).join('\n')
-      : 'Discover classical and modern Arabic poetry';
-
-    // Try native Web Share API first (mobile + some desktop)
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: shareTitle, text: shareText, url: shareUrl });
-        track('share_method', { method: 'native' });
-        if (current?.id) {
-          emitEvent(current.id, 'share', { method: 'native' });
-          addLog(
-            'Event',
-            `→ share event emitted | poem_id: ${current.id} | method: native`,
-            'info'
-          );
-        }
-        addLog('Share', 'Shared via Web Share API', 'success');
-        return;
-      } catch (e) {
-        // User cancelled or API failed — fall through to copy
-        if (e.name === 'AbortError') {
-          addLog('Share', 'Share cancelled by user', 'info');
-          return;
-        }
-      }
-    }
-
-    // Fallback: copy link to clipboard
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-      track('share_method', { method: 'clipboard' });
-      if (current?.id) {
-        emitEvent(current.id, 'share', { method: 'clipboard' });
-        addLog(
-          'Event',
-          `→ share event emitted | poem_id: ${current.id} | method: clipboard`,
-          'info'
-        );
-      }
-      useModalStore.getState().showToastTimed('share', 2000);
-      addLog('Share', `Link copied: ${shareUrl}`, 'success');
-    } catch (e) {
-      addLog('Share Error', e.message, 'error');
-    }
+    // Open the share card modal for visual sharing
+    useModalStore.getState().openShareCard();
   };
 
   // Auth handlers
@@ -2974,6 +2931,11 @@ export default function DiwanApp() {
           </Suspense>
         )}
       </AnimatePresence>
+
+      {/* Share Card Modal */}
+      {showShareCard && current && (
+        <ShareCardModal poem={current} onClose={() => useModalStore.getState().closeShareCard()} />
+      )}
 
       {/* Keyboard Shortcut Help */}
       <AnimatePresence>{showShortcutHelp && <ShortcutHelp key="shortcut-help" />}</AnimatePresence>

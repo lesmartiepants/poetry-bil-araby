@@ -16,6 +16,7 @@
   },
   "rewrites": [
     { "source": "/design-review/(.*)", "destination": "/design-review/$1" },
-    { "source": "/((?!design-review).*)", "destination": "/index.html" }
+    { "source": "/api/og/:id", "destination": "/api/og/[id]" },
+    { "source": "/((?!design-review|api/).*)", "destination": "/index.html" }
   ]
 }

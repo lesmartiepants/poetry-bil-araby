@@ -31,6 +31,7 @@ const initialState = {
   copyToast: false,
   shareToast: false,
   insightToast: false,
+  shareCard: false,
   onboarding: computeOnboarding(),
 };
 
@@ -61,6 +62,9 @@ export const useModalStore = create((set) => ({
   closePoetPicker: () => set({ poetPicker: false }),
   setPoetPickerClosing: (closing) => set({ poetPickerClosing: closing }),
 
+  openShareCard: () => set({ shareCard: true }),
+  closeShareCard: () => set({ shareCard: false }),
+
   showToast: (type) => set({ [TOAST_MAP[type]]: true }),
   hideToast: (type) => set({ [TOAST_MAP[type]]: false }),
   showToastTimed: (type, ms = 2000) => {
@@ -84,6 +88,7 @@ export const useModalStore = create((set) => ({
       insightsDrawer: false,
       shortcutHelp: false,
       poetPicker: false,
+      shareCard: false,
     }),
 
   reset: () => set({ ...initialState, splash: computeSplash(), onboarding: computeOnboarding() }),

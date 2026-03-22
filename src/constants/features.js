@@ -8,4 +8,5 @@ export const FEATURES = {
   database: true, // Enable database poem source (requires backend server running)
   onboarding: true, // Show kinetic walkthrough (phases 1-3) on first visit
   forceOnboarding: false, // Bypass hasSeenOnboarding check (enable to force onboarding every visit)
+  designReview: false, // Show design review shortcut icon (still accessible via /design-review URL)
 };

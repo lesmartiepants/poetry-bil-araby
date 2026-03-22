@@ -23,28 +23,33 @@ const GoldenFireIcon = ({ size = 24 }) => (
         50% { filter: drop-shadow(0 0 8px rgba(197,160,89,0.85)) drop-shadow(0 2px 12px rgba(197,160,89,0.5)); }
       }
       @keyframes ember1 {
-        0%   { transform: translate(0px, 0px) scale(1);   opacity: 0.95; }
-        60%  { transform: translate(-5px,-13px) scale(0.5); opacity: 0.5; }
-        100% { transform: translate(-7px,-19px) scale(0.1); opacity: 0; }
+        0%   { transform: translate(0px, 0px) scale(1);      opacity: 0.95; }
+        15%  { transform: translate(-5px,-13px) scale(0.5);  opacity: 0.5; }
+        25%  { transform: translate(-7px,-19px) scale(0.1);  opacity: 0; }
+        26%, 100% { transform: translate(0px, 0px) scale(1); opacity: 0; }
       }
       @keyframes ember2 {
-        0%   { transform: translate(0px, 0px) scale(1);   opacity: 0.85; }
-        60%  { transform: translate(5px, -14px) scale(0.5); opacity: 0.4; }
-        100% { transform: translate(7px, -21px) scale(0.1); opacity: 0; }
+        0%   { transform: translate(0px, 0px) scale(1);      opacity: 0.85; }
+        15%  { transform: translate(5px, -14px) scale(0.5);  opacity: 0.4; }
+        25%  { transform: translate(7px, -21px) scale(0.1);  opacity: 0; }
+        26%, 100% { transform: translate(0px, 0px) scale(1); opacity: 0; }
       }
       @keyframes ember3 {
-        0%   { transform: translate(0px, 0px) scale(0.75); opacity: 0.75; }
-        60%  { transform: translate(2px, -11px) scale(0.4);  opacity: 0.35; }
-        100% { transform: translate(3px, -16px) scale(0);    opacity: 0; }
+        0%   { transform: translate(0px, 0px) scale(0.75);   opacity: 0.75; }
+        15%  { transform: translate(2px, -11px) scale(0.4);  opacity: 0.35; }
+        25%  { transform: translate(3px, -16px) scale(0);    opacity: 0; }
+        26%, 100% { transform: translate(0px, 0px) scale(0.75); opacity: 0; }
       }
       @keyframes ember4 {
-        0%   { transform: translate(0px, 0px) scale(0.6); opacity: 0.6; }
-        60%  { transform: translate(-3px,-10px) scale(0.3); opacity: 0.25; }
-        100% { transform: translate(-4px,-14px) scale(0);   opacity: 0; }
+        0%   { transform: translate(0px, 0px) scale(0.6);    opacity: 0.6; }
+        15%  { transform: translate(-3px,-10px) scale(0.3);  opacity: 0.25; }
+        25%  { transform: translate(-4px,-14px) scale(0);    opacity: 0; }
+        26%, 100% { transform: translate(0px, 0px) scale(0.6); opacity: 0; }
       }
       @keyframes ember5 {
-        0%   { transform: translate(0px, 0px) scale(0.5); opacity: 0.5; }
-        100% { transform: translate(1px, -12px) scale(0);   opacity: 0; }
+        0%   { transform: translate(0px, 0px) scale(0.5);    opacity: 0.5; }
+        25%  { transform: translate(1px, -12px) scale(0);    opacity: 0; }
+        26%, 100% { transform: translate(0px, 0px) scale(0.5); opacity: 0; }
       }
       .fire-icon-svg {
         animation: fireFlicker 6s ease-in-out infinite,
@@ -92,7 +97,7 @@ const GoldenFireIcon = ({ size = 24 }) => (
           height: 3,
           borderRadius: '50%',
           background: 'rgba(197,160,89,1)',
-          animation: 'ember1 1.5s ease-out infinite 0.15s',
+          animation: 'ember1 6s ease-out infinite 0s',
         }}
       />
       <div
@@ -105,7 +110,7 @@ const GoldenFireIcon = ({ size = 24 }) => (
           height: 2.5,
           borderRadius: '50%',
           background: 'rgba(240,205,90,1)',
-          animation: 'ember2 1.8s ease-out infinite 0.75s',
+          animation: 'ember2 6s ease-out infinite 1.2s',
         }}
       />
       <div
@@ -118,7 +123,7 @@ const GoldenFireIcon = ({ size = 24 }) => (
           height: 2,
           borderRadius: '50%',
           background: 'rgba(255,225,100,0.9)',
-          animation: 'ember3 1.25s ease-out infinite 0.35s',
+          animation: 'ember3 6s ease-out infinite 2.4s',
         }}
       />
       <div
@@ -131,7 +136,7 @@ const GoldenFireIcon = ({ size = 24 }) => (
           height: 2,
           borderRadius: '50%',
           background: 'rgba(197,160,89,0.85)',
-          animation: 'ember4 1.65s ease-out infinite 1.05s',
+          animation: 'ember4 6s ease-out infinite 0.6s',
         }}
       />
       <div
@@ -144,7 +149,7 @@ const GoldenFireIcon = ({ size = 24 }) => (
           height: 1.5,
           borderRadius: '50%',
           background: 'rgba(255,210,80,0.8)',
-          animation: 'ember5 1.4s ease-out infinite 0.55s',
+          animation: 'ember5 6s ease-out infinite 1.8s',
         }}
       />
     </div>

@@ -1523,7 +1523,7 @@ export default function DiwanApp() {
                     background: isFetching ? 'rgba(197,160,89,0.08)' : 'transparent',
                   }}
                 >
-                  <GoldenFireIcon size={28} />
+                  <GoldenFireIcon size={34} />
                   {selectedCategory !== 'All' && !isFetching && (
                     <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-gold shadow-[0_0_6px_rgba(197,160,89,0.5)]" />
                   )}

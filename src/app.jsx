@@ -24,7 +24,12 @@ import {
   useDownvotes,
   usePoemEvents,
 } from './hooks/useAuth';
-import { INSIGHTS_SYSTEM_PROMPT, DISCOVERY_SYSTEM_PROMPT, getTTSContent } from './prompts';
+import {
+  INSIGHTS_SYSTEM_PROMPT,
+  RATCHET_SYSTEM_PROMPT,
+  DISCOVERY_SYSTEM_PROMPT,
+  getTTSContent,
+} from './prompts';
 import { parseInsight } from './utils/insightParser';
 import { repairAndParseJSON } from './utils/jsonRepair';
 import { FEATURES, DESIGN, BRAND, THEME, GOLD, CATEGORIES, FONTS } from './constants/index.js';
@@ -137,6 +142,7 @@ export default function DiwanApp() {
   const setDarkMode = useUIStore((s) => s.setDarkMode);
   const currentFont = useUIStore((s) => s.font);
   const setCurrentFont = useUIStore((s) => s.setFont);
+  const ratchetMode = useUIStore((s) => s.ratchetMode);
   // ── Audio store (Zustand) ──
   const isPlaying = useAudioStore((s) => s.isPlaying);
   const setIsPlaying = useAudioStore((s) => s.setPlaying);
@@ -355,6 +361,14 @@ export default function DiwanApp() {
       }
     }
   }, [autoExplainPending, current?.id, isFetching, isInterpreting, interpretation]);
+
+  // Clear interpretation when ratchet mode is toggled so the new prompt is used on next explain.
+  // setInterpretation is a stable Zustand action (reference never changes), so it is intentionally
+  // omitted from the dependency array to avoid re-running this effect on every render.
+  useEffect(() => {
+    setInterpretation(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- setInterpretation is a stable Zustand action
+  }, [ratchetMode]);
 
   // Load user settings on mount
   useEffect(() => {
@@ -1125,8 +1139,8 @@ export default function DiwanApp() {
     // Mark request as in-flight
     activeInsightRequests.current.add(current?.id);
 
-    // CHECK CACHE FIRST
-    if (FEATURES.caching && current?.id) {
+    // CHECK CACHE FIRST (skip for ratchet mode — different prompt style)
+    if (FEATURES.caching && current?.id && !ratchetMode) {
       const cacheStart = performance.now();
       const cached = await cacheOperations.get(CACHE_CONFIG.stores.insights, current.id);
       const cacheTime = performance.now() - cacheStart;
@@ -1156,6 +1170,7 @@ export default function DiwanApp() {
 
     let insightText = '';
     let apiStartTime = null;
+    const activeSystemPrompt = ratchetMode ? RATCHET_SYSTEM_PROMPT : INSIGHTS_SYSTEM_PROMPT;
 
     try {
       // Use streaming if feature flag is enabled
@@ -1165,16 +1180,14 @@ export default function DiwanApp() {
         const requestSize = new Blob([
           JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] }),
         ]).size;
-        const estimatedInputTokens = Math.ceil(
-          (promptText.length + INSIGHTS_SYSTEM_PROMPT.length) / 4
-        );
+        const estimatedInputTokens = Math.ceil((promptText.length + activeSystemPrompt.length) / 4);
         const promptChars = promptText.length;
         const arabicTextChars = current?.arabic?.length || 0;
-        const systemPromptChars = INSIGHTS_SYSTEM_PROMPT.length;
+        const systemPromptChars = activeSystemPrompt.length;
 
         addLog(
           'Insights API',
-          `→ Starting streaming | Request: ${(requestSize / 1024).toFixed(1)}KB | ${promptChars} chars (${arabicTextChars} Arabic + ${systemPromptChars} system) | Est. ${estimatedInputTokens} tokens`,
+          `→ Starting streaming${ratchetMode ? ' [Ratchet Mode 🔥]' : ''} | Request: ${(requestSize / 1024).toFixed(1)}KB | ${promptChars} chars (${arabicTextChars} Arabic + ${systemPromptChars} system) | Est. ${estimatedInputTokens} tokens`,
           'info'
         );
 
@@ -1187,7 +1200,7 @@ export default function DiwanApp() {
 
         const insightsStreamBody = JSON.stringify({
           contents: [{ parts: [{ text: promptText }] }],
-          systemInstruction: { parts: [{ text: INSIGHTS_SYSTEM_PROMPT }] },
+          systemInstruction: { parts: [{ text: activeSystemPrompt }] },
         });
         const res = await geminiTextFetch(
           'streamGenerateContent',
@@ -1260,13 +1273,13 @@ export default function DiwanApp() {
         );
       } else {
         // Non-streaming fallback (original implementation)
-        addLog('Insights', 'Analyzing poem...', 'info');
+        addLog('Insights', `Analyzing poem...${ratchetMode ? ' [Ratchet Mode 🔥]' : ''}`, 'info');
         const poetInfoFallback = current?.poet ? ` by ${current.poet}` : '';
         const insightsFallbackBody = JSON.stringify({
           contents: [
             { parts: [{ text: `Deep Analysis of${poetInfoFallback}:\n\n${current?.arabic}` }] },
           ],
-          systemInstruction: { parts: [{ text: INSIGHTS_SYSTEM_PROMPT }] },
+          systemInstruction: { parts: [{ text: activeSystemPrompt }] },
         });
         const res = await geminiTextFetch(
           'generateContent',
@@ -1280,8 +1293,8 @@ export default function DiwanApp() {
         addLog('Insights', 'Analysis complete', 'success');
       }
 
-      // CACHE THE INSIGHTS
-      if (FEATURES.caching && current?.id && insightText) {
+      // CACHE THE INSIGHTS (skip for ratchet mode — different prompt style)
+      if (FEATURES.caching && current?.id && insightText && !ratchetMode) {
         const cacheStart = performance.now();
         await cacheOperations.set(CACHE_CONFIG.stores.insights, current.id, {
           interpretation: insightText,
@@ -2106,6 +2119,65 @@ export default function DiwanApp() {
       `}</style>
 
       <DebugPanel controlBarRef={controlBarRef} />
+
+      {/* Ratchet Mode toggle — top-left corner */}
+      <div
+        style={{
+          position: 'fixed',
+          top: '0.5rem',
+          left: '0.75rem',
+          zIndex: 41,
+          opacity: 1 - headerOpacity * 0.6,
+          transition: 'opacity 0.3s',
+        }}
+      >
+        <button
+          onClick={() => {
+            useUIStore.getState().toggleRatchetMode();
+            track('ratchet_mode_toggled', { enabled: !ratchetMode });
+          }}
+          aria-label={ratchetMode ? 'Disable Ratchet Mode' : 'Enable Ratchet Mode'}
+          aria-pressed={ratchetMode}
+          title={
+            ratchetMode
+              ? 'Ratchet Mode: ON — click to chill 😌'
+              : 'Ratchet Mode: OFF — click to go off 🔥'
+          }
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.3rem',
+            padding: '0.25rem 0.6rem',
+            borderRadius: '9999px',
+            fontSize: '0.65rem',
+            fontFamily: 'inherit',
+            fontWeight: 700,
+            letterSpacing: '0.05em',
+            textTransform: 'uppercase',
+            cursor: 'pointer',
+            border: ratchetMode
+              ? '1px solid rgba(249,115,22,0.7)'
+              : `1px solid ${darkMode ? 'rgba(197,160,89,0.25)' : 'rgba(107,87,68,0.25)'}`,
+            background: ratchetMode
+              ? 'linear-gradient(135deg, rgba(249,115,22,0.2), rgba(239,68,68,0.15))'
+              : darkMode
+                ? 'rgba(255,255,255,0.04)'
+                : 'rgba(0,0,0,0.04)',
+            color: ratchetMode
+              ? '#f97316'
+              : darkMode
+                ? 'rgba(212,208,200,0.6)'
+                : 'rgba(26,22,20,0.5)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            transition: 'all 0.2s ease',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          <span style={{ fontSize: '0.75rem' }}>{ratchetMode ? '🔥' : '✨'}</span>
+          Ratchet Mode
+        </button>
+      </div>
 
       <header
         style={{

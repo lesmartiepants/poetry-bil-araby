@@ -12,6 +12,7 @@ const initialState = {
   showTranslation: true,
   showTransliteration: false,
   showDebugLogs: FEATURES.debug,
+  ratchetMode: false, // Ratchet Mode: explains poems in Gen Z / gangster slang
   logs: [],
   headerOpacity: 0,
   cacheStats: {
@@ -32,6 +33,7 @@ export const useUIStore = create((set, get) => ({
   setShowTranslation: (showTranslation) => set({ showTranslation }),
   setShowTransliteration: (showTransliteration) => set({ showTransliteration }),
   setHeaderOpacity: (headerOpacity) => set({ headerOpacity }),
+  toggleRatchetMode: () => set((s) => ({ ratchetMode: !s.ratchetMode })),
 
   cycleFont: () =>
     set((s) => {

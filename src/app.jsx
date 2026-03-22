@@ -1479,7 +1479,7 @@ export default function DiwanApp() {
                       className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase whitespace-nowrap ${GOLD.goldText}`}
                       style={{ opacity: 0.6, animation: 'shimmer 2s ease-in-out infinite' }}
                     >
-                      Crafting
+                      Loading
                     </span>
                   </>
                 ) : (
@@ -1523,7 +1523,7 @@ export default function DiwanApp() {
                     background: isFetching ? 'rgba(197,160,89,0.08)' : 'transparent',
                   }}
                 >
-                  <GoldenFireIcon size={24} />
+                  <GoldenFireIcon size={28} />
                   {selectedCategory !== 'All' && !isFetching && (
                     <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-gold shadow-[0_0_6px_rgba(197,160,89,0.5)]" />
                   )}

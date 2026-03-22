@@ -12,10 +12,11 @@ const GoldenFireIcon = ({ size = 24 }) => (
     <style>{`
       @keyframes fireFlicker {
         0%, 100% { transform: scaleX(1) scaleY(1); }
-        20% { transform: scaleX(1.07) scaleY(0.96); }
-        40% { transform: scaleX(0.96) scaleY(1.07); }
-        60% { transform: scaleX(1.05) scaleY(0.97); }
-        80% { transform: scaleX(0.97) scaleY(1.04); }
+        1.5% { transform: scaleX(1.07) scaleY(0.96); }
+        3%   { transform: scaleX(0.96) scaleY(1.07); }
+        4.5% { transform: scaleX(1.05) scaleY(0.97); }
+        6%   { transform: scaleX(0.97) scaleY(1.04); }
+        8%, 99.9% { transform: scaleX(1) scaleY(1); }
       }
       @keyframes fireGlow {
         0%, 100% { filter: drop-shadow(0 0 3px rgba(197,160,89,0.45)) drop-shadow(0 2px 6px rgba(197,160,89,0.25)); }
@@ -46,8 +47,8 @@ const GoldenFireIcon = ({ size = 24 }) => (
         100% { transform: translate(1px, -12px) scale(0);   opacity: 0; }
       }
       .fire-icon-svg {
-        animation: fireFlicker 0.75s ease-in-out infinite,
-                   fireGlow 1.6s ease-in-out infinite;
+        animation: fireFlicker 6s ease-in-out infinite,
+                   fireGlow 6s ease-in-out infinite;
         transform-origin: center bottom;
         will-change: transform, filter;
       }

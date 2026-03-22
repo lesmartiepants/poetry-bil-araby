@@ -6,6 +6,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Copy,
+  Flame,
   Languages,
   Loader2,
   LogOut,
@@ -54,6 +55,7 @@ const VerticalSidebar = ({
   const currentFont = useUIStore((s) => s.font);
   const selectedCategory = usePoemStore((s) => s.selectedCategory);
   const showDebugLogs = useUIStore((s) => s.showDebugLogs);
+  const ratchetMode = useUIStore((s) => s.ratchetMode);
   const [expanded, setExpanded] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
@@ -363,6 +365,17 @@ const VerticalSidebar = ({
                     </button>
                     <span className={labelCls} style={{ color: gold }}>
                       Logs
+                    </span>
+
+                    <button
+                      onClick={() => useUIStore.getState().toggleRatchetMode()}
+                      title={ratchetMode ? 'Disable ratchet mode' : 'Enable ratchet mode'}
+                      className={`${subBtnBase} ${subBtnHover} ${ratchetMode ? theme.goldActiveBg + ' border ' + theme.goldBorderSubtle : 'opacity-40'}`}
+                    >
+                      <Flame style={{ color: ratchetMode ? '#ff6b35' : gold }} size={16} />
+                    </button>
+                    <span className={labelCls} style={{ color: ratchetMode ? '#ff6b35' : gold }}>
+                      Ratchet
                     </span>
                   </div>
                 </div>

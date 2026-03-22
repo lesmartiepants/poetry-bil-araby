@@ -24,7 +24,12 @@ import {
   useDownvotes,
   usePoemEvents,
 } from './hooks/useAuth';
-import { INSIGHTS_SYSTEM_PROMPT, DISCOVERY_SYSTEM_PROMPT, getTTSContent } from './prompts';
+import {
+  INSIGHTS_SYSTEM_PROMPT,
+  RATCHET_SYSTEM_PROMPT,
+  DISCOVERY_SYSTEM_PROMPT,
+  getTTSContent,
+} from './prompts';
 import { parseInsight } from './utils/insightParser';
 import { repairAndParseJSON } from './utils/jsonRepair';
 import { FEATURES, DESIGN, BRAND, THEME, GOLD, CATEGORIES, FONTS } from './constants/index.js';
@@ -149,6 +154,7 @@ export default function DiwanApp() {
   const hasAutoLoaded = useRef(false);
   const logs = useUIStore((s) => s.logs);
   const showDebugLogs = useUIStore((s) => s.showDebugLogs);
+  const ratchetMode = useUIStore((s) => s.ratchetMode);
   const showCopySuccess = useModalStore((s) => s.copyToast);
   const showShareSuccess = useModalStore((s) => s.shareToast);
   const showInsightSuccess = useModalStore((s) => s.insightToast);
@@ -1156,6 +1162,7 @@ export default function DiwanApp() {
 
     let insightText = '';
     let apiStartTime = null;
+    const activeSystemPrompt = ratchetMode ? RATCHET_SYSTEM_PROMPT : INSIGHTS_SYSTEM_PROMPT;
 
     try {
       // Use streaming if feature flag is enabled
@@ -1165,12 +1172,10 @@ export default function DiwanApp() {
         const requestSize = new Blob([
           JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] }),
         ]).size;
-        const estimatedInputTokens = Math.ceil(
-          (promptText.length + INSIGHTS_SYSTEM_PROMPT.length) / 4
-        );
+        const estimatedInputTokens = Math.ceil((promptText.length + activeSystemPrompt.length) / 4);
         const promptChars = promptText.length;
         const arabicTextChars = current?.arabic?.length || 0;
-        const systemPromptChars = INSIGHTS_SYSTEM_PROMPT.length;
+        const systemPromptChars = activeSystemPrompt.length;
 
         addLog(
           'Insights API',
@@ -1187,7 +1192,7 @@ export default function DiwanApp() {
 
         const insightsStreamBody = JSON.stringify({
           contents: [{ parts: [{ text: promptText }] }],
-          systemInstruction: { parts: [{ text: INSIGHTS_SYSTEM_PROMPT }] },
+          systemInstruction: { parts: [{ text: activeSystemPrompt }] },
         });
         const res = await geminiTextFetch(
           'streamGenerateContent',
@@ -1266,7 +1271,7 @@ export default function DiwanApp() {
           contents: [
             { parts: [{ text: `Deep Analysis of${poetInfoFallback}:\n\n${current?.arabic}` }] },
           ],
-          systemInstruction: { parts: [{ text: INSIGHTS_SYSTEM_PROMPT }] },
+          systemInstruction: { parts: [{ text: activeSystemPrompt }] },
         });
         const res = await geminiTextFetch(
           'generateContent',
@@ -2103,7 +2108,23 @@ export default function DiwanApp() {
           transition: box-shadow 0.15s ease;
         }
 
+        @keyframes ratchetGlowPulse {
+          0%, 100% { opacity: 0.4; }
+          50% { opacity: 0.7; }
+        }
       `}</style>
+
+      {ratchetMode && (
+        <div
+          data-testid="ratchet-glow-overlay"
+          className="pointer-events-none fixed inset-0 z-[9999]"
+          style={{
+            boxShadow:
+              'inset 0 0 120px 40px rgba(255,107,53,0.3), inset 0 0 300px 80px rgba(255,60,0,0.15)',
+            animation: 'ratchetGlowPulse 3s ease-in-out infinite',
+          }}
+        />
+      )}
 
       <DebugPanel controlBarRef={controlBarRef} />
 

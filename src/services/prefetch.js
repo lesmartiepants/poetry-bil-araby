@@ -13,19 +13,21 @@ import { API_MODELS, TTS_CONFIG, geminiTextFetch, fetchTTSWithFallback } from '.
 import { CACHE_CONFIG, cacheOperations } from './cache.js';
 import { pcm16ToWav } from '../utils/audio.js';
 
+import { usePoemStore } from '../stores/poemStore';
+
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 export const prefetchManager = {
   /**
    * Prefetch audio for a poem (generate and cache in background).
    */
-  prefetchAudio: async (poemId, poem, addLog, activeRequests) => {
+  prefetchAudio: async (poemId, poem, addLog) => {
     if (!FEATURES.prefetching || !FEATURES.caching) return;
     if (!poemId || !poem?.arabic) return;
 
     try {
       // Check if already generating - silently skip
-      if (activeRequests && activeRequests.current.has(poemId)) {
+      if (usePoemStore.getState().hasActiveAudio(poemId)) {
         if (addLog)
           addLog(
             'Prefetch Audio',
@@ -44,7 +46,7 @@ export const prefetchManager = {
       }
 
       // Mark as in-flight
-      if (activeRequests) activeRequests.current.add(poemId);
+      usePoemStore.getState().addActiveAudio(poemId);
 
       // Generate audio using same logic as togglePlay
       const ttsContent = getTTSContent(poem);
@@ -145,21 +147,20 @@ export const prefetchManager = {
           'error'
         );
     } finally {
-      // Clean up in-flight tracking
-      if (activeRequests) activeRequests.current.delete(poemId);
+      usePoemStore.getState().removeActiveAudio(poemId);
     }
   },
 
   /**
    * Prefetch insights for a poem (generate and cache in background).
    */
-  prefetchInsights: async (poemId, poem, addLog, activeRequests) => {
+  prefetchInsights: async (poemId, poem, addLog) => {
     if (!FEATURES.prefetching || !FEATURES.caching) return;
     if (!poemId || !poem?.arabic) return;
 
     try {
       // Check if already generating - silently skip
-      if (activeRequests && activeRequests.current.has(poemId)) {
+      if (usePoemStore.getState().hasActiveInsight(poemId)) {
         if (addLog)
           addLog(
             'Prefetch Insights',
@@ -182,7 +183,7 @@ export const prefetchManager = {
       }
 
       // Mark as in-flight
-      if (activeRequests) activeRequests.current.add(poemId);
+      usePoemStore.getState().addActiveInsight(poemId);
 
       const poetInfo = poem?.poet ? ` by ${poem.poet}` : '';
       const promptText = `Deep Analysis of${poetInfo}:\n\n${poem.arabic}`;
@@ -246,7 +247,7 @@ export const prefetchManager = {
         );
     } finally {
       // Clean up in-flight tracking
-      if (activeRequests) activeRequests.current.delete(poemId);
+      usePoemStore.getState().removeActiveInsight(poemId);
     }
   },
 

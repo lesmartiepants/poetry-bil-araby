@@ -155,9 +155,7 @@ export default function DiwanApp() {
   const insightsDrawerOpen = useModalStore((s) => s.insightsDrawer);
   const setInsightsDrawerOpen = useModalStore((s) => s.setInsightsDrawer);
   const cacheStats = useUIStore((s) => s.cacheStats);
-  const activeAudioRequests = useRef(new Set()); // Track in-flight audio generation requests
-  const activeInsightRequests = useRef(new Set()); // Track in-flight insight generation requests
-  const pollingIntervals = useRef([]); // Track all polling intervals for cleanup
+  // activeAudioIds, activeInsightIds, pollingIntervalIds are now in poemStore
 
   // Auth state
   const { user, loading: authLoading, signInWithGoogle, signInWithApple, signOut } = useAuth();
@@ -808,7 +806,7 @@ export default function DiwanApp() {
       }
 
       // Mark request as in-flight
-      activeAudioRequests.current.add(current?.id);
+      usePoemStore.getState().addActiveAudio(current?.id);
 
       const ttsContent = getTTSContent(current);
 
@@ -946,20 +944,20 @@ export default function DiwanApp() {
         setIsPlaying(false);
       } finally {
         setIsGeneratingAudio(false);
-        activeAudioRequests.current.delete(current?.id); // Clean up in-flight tracking
+        usePoemStore.getState().removeActiveAudio(current?.id); // Clean up in-flight tracking
         isTogglingPlay.current = false;
       }
     };
 
     // Check if request already in flight - poll until it completes
-    if (activeAudioRequests.current.has(current?.id)) {
+    if (usePoemStore.getState().hasActiveAudio(current?.id)) {
       addLog('Audio', `Audio generation already in progress - waiting for completion`, 'info');
 
       // Poll every 500ms to check if the request completed
       const pollInterval = setInterval(async () => {
-        if (!activeAudioRequests.current.has(current?.id)) {
+        if (!usePoemStore.getState().hasActiveAudio(current?.id)) {
           clearInterval(pollInterval);
-          pollingIntervals.current = pollingIntervals.current.filter((id) => id !== pollInterval);
+          usePoemStore.getState().removePollingInterval(pollInterval);
 
           // Request completed - check cache and play
           const cached = await cacheOperations.get(CACHE_CONFIG.stores.audio, current.id);
@@ -996,13 +994,13 @@ export default function DiwanApp() {
         }
       }, 500);
 
-      pollingIntervals.current.push(pollInterval);
+      usePoemStore.getState().addPollingInterval(pollInterval);
 
       // Safety timeout - clear after 60 seconds (some large poems take 40+ seconds)
       setTimeout(() => {
         clearInterval(pollInterval);
-        pollingIntervals.current = pollingIntervals.current.filter((id) => id !== pollInterval);
-        if (activeAudioRequests.current.has(current?.id)) {
+        usePoemStore.getState().removePollingInterval(pollInterval);
+        if (usePoemStore.getState().hasActiveAudio(current?.id)) {
           addLog(
             'Audio',
             `Audio generation taking longer than expected - checking one more time...`,
@@ -1028,7 +1026,7 @@ export default function DiwanApp() {
             } else {
               addLog('Audio', `Audio generation timeout - please try again`, 'error');
             }
-            activeAudioRequests.current.delete(current?.id);
+            usePoemStore.getState().removeActiveAudio(current?.id);
             setIsGeneratingAudio(false);
           }, 10000); // Wait 10 more seconds for slow API
         }
@@ -1055,7 +1053,7 @@ export default function DiwanApp() {
     setIsInterpreting(true);
 
     // Check if request already in flight - poll until it completes
-    if (activeInsightRequests.current.has(current?.id)) {
+    if (usePoemStore.getState().hasActiveInsight(current?.id)) {
       addLog(
         'Insights',
         `Insights generation already in progress - waiting for completion`,
@@ -1064,9 +1062,9 @@ export default function DiwanApp() {
 
       // Poll every 500ms to check if the request completed
       const pollInterval = setInterval(async () => {
-        if (!activeInsightRequests.current.has(current?.id)) {
+        if (!usePoemStore.getState().hasActiveInsight(current?.id)) {
           clearInterval(pollInterval);
-          pollingIntervals.current = pollingIntervals.current.filter((id) => id !== pollInterval);
+          usePoemStore.getState().removePollingInterval(pollInterval);
 
           // Request completed - check cache and display
           const cached = await cacheOperations.get(CACHE_CONFIG.stores.insights, current.id);
@@ -1087,13 +1085,13 @@ export default function DiwanApp() {
         }
       }, 500);
 
-      pollingIntervals.current.push(pollInterval);
+      usePoemStore.getState().addPollingInterval(pollInterval);
 
       // Safety timeout - clear after 60 seconds (some insights take time)
       setTimeout(() => {
         clearInterval(pollInterval);
-        pollingIntervals.current = pollingIntervals.current.filter((id) => id !== pollInterval);
-        if (activeInsightRequests.current.has(current?.id)) {
+        usePoemStore.getState().removePollingInterval(pollInterval);
+        if (usePoemStore.getState().hasActiveInsight(current?.id)) {
           addLog(
             'Insights',
             `Insights generation taking longer than expected - checking one more time...`,
@@ -1113,7 +1111,7 @@ export default function DiwanApp() {
             } else {
               addLog('Insights', `Insights generation timeout - please try again`, 'error');
             }
-            activeInsightRequests.current.delete(current?.id);
+            usePoemStore.getState().removeActiveInsight(current?.id);
             setIsInterpreting(false);
           }, 10000); // Wait 10 more seconds for slow API
         }
@@ -1123,7 +1121,7 @@ export default function DiwanApp() {
     }
 
     // Mark request as in-flight
-    activeInsightRequests.current.add(current?.id);
+    usePoemStore.getState().addActiveInsight(current?.id);
 
     // CHECK CACHE FIRST
     if (FEATURES.caching && current?.id) {
@@ -1142,7 +1140,7 @@ export default function DiwanApp() {
         useUIStore.getState().incrementCacheStat('insightsHits');
         setInterpretation(cached.interpretation);
         setIsInterpreting(false); // Clear loading state
-        activeInsightRequests.current.delete(current?.id); // Clean up tracking
+        usePoemStore.getState().removeActiveInsight(current?.id); // Clean up tracking
         return;
       } else {
         addLog(
@@ -1334,7 +1332,7 @@ export default function DiwanApp() {
       }
     } finally {
       setIsInterpreting(false);
-      activeInsightRequests.current.delete(current?.id); // Clean up in-flight tracking
+      usePoemStore.getState().removeActiveInsight(current?.id); // Clean up in-flight tracking
     }
   };
 
@@ -1869,8 +1867,7 @@ export default function DiwanApp() {
     setShowTranslation(true);
 
     // Clear all polling intervals to prevent stale requests
-    pollingIntervals.current.forEach((interval) => clearInterval(interval));
-    pollingIntervals.current = [];
+    usePoemStore.getState().clearPollingIntervals();
 
     // Log current poem tags for debugging
     const tagsType = Array.isArray(current?.tags) ? 'array' : typeof current?.tags;
@@ -1891,12 +1888,12 @@ export default function DiwanApp() {
 
     // Prefetch current poem audio after 2s (only if user lingers on this poem)
     const prefetchCurrentAudio = setTimeout(() => {
-      prefetchManager.prefetchAudio(current.id, current, addLog, activeAudioRequests);
+      prefetchManager.prefetchAudio(current.id, current, addLog);
     }, 2000);
 
     // Prefetch current poem insights after 5s (only if user stays)
     const prefetchCurrentInsights = setTimeout(() => {
-      prefetchManager.prefetchInsights(current.id, current, addLog, activeInsightRequests);
+      prefetchManager.prefetchInsights(current.id, current, addLog);
     }, 5000);
 
     // Cleanup timeouts on unmount or when dependencies change

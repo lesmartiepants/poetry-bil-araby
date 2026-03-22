@@ -57,6 +57,9 @@ const initialState = {
   interpretation: null,
   isInterpreting: false,
   pendingCategory: null,
+  activeAudioIds: [],
+  activeInsightIds: [],
+  pollingIntervalIds: [],
 };
 
 export const usePoemStore = create((set, get) => ({
@@ -85,6 +88,26 @@ export const usePoemStore = create((set, get) => ({
   setInterpreting: (isInterpreting) => set({ isInterpreting }),
 
   resetInterpretation: () => set({ interpretation: null, isInterpreting: false }),
+
+  // In-flight request tracking
+  addActiveAudio: (id) => set((s) => ({ activeAudioIds: [...s.activeAudioIds, id] })),
+  removeActiveAudio: (id) =>
+    set((s) => ({ activeAudioIds: s.activeAudioIds.filter((x) => x !== id) })),
+  hasActiveAudio: (id) => get().activeAudioIds.includes(id),
+  addActiveInsight: (id) => set((s) => ({ activeInsightIds: [...s.activeInsightIds, id] })),
+  removeActiveInsight: (id) =>
+    set((s) => ({ activeInsightIds: s.activeInsightIds.filter((x) => x !== id) })),
+  hasActiveInsight: (id) => get().activeInsightIds.includes(id),
+
+  // Polling interval lifecycle
+  addPollingInterval: (intervalId) =>
+    set((s) => ({ pollingIntervalIds: [...s.pollingIntervalIds, intervalId] })),
+  removePollingInterval: (intervalId) =>
+    set((s) => ({ pollingIntervalIds: s.pollingIntervalIds.filter((x) => x !== intervalId) })),
+  clearPollingIntervals: () => {
+    get().pollingIntervalIds.forEach((id) => clearInterval(id));
+    set({ pollingIntervalIds: [] });
+  },
 
   // Computed selectors
   filteredPoems: () => {

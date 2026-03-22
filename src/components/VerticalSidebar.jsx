@@ -6,6 +6,7 @@ import {
   ChevronLeft,
   ChevronRight,
   Copy,
+  Flame,
   Languages,
   Loader2,
   LogOut,
@@ -16,6 +17,7 @@ import {
   Sun,
   UserRound,
 } from 'lucide-react';
+import { track } from '@vercel/analytics';
 import { THEME } from '../constants/theme.js';
 import { FONTS } from '../constants/fonts.js';
 import { useUIStore } from '../stores/uiStore';
@@ -54,6 +56,7 @@ const VerticalSidebar = ({
   const currentFont = useUIStore((s) => s.font);
   const selectedCategory = usePoemStore((s) => s.selectedCategory);
   const showDebugLogs = useUIStore((s) => s.showDebugLogs);
+  const ratchetMode = useUIStore((s) => s.ratchetMode);
   const [expanded, setExpanded] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
@@ -363,6 +366,35 @@ const VerticalSidebar = ({
                     </button>
                     <span className={labelCls} style={{ color: gold }}>
                       Logs
+                    </span>
+
+                    <button
+                      onClick={() => {
+                        useUIStore.getState().toggleRatchetMode();
+                        track('ratchet_mode_toggled', { enabled: !ratchetMode });
+                      }}
+                      title={
+                        ratchetMode
+                          ? 'Ratchet Mode: ON — click to chill 😌'
+                          : 'Ratchet Mode: OFF — click to go off 🔥'
+                      }
+                      aria-label={ratchetMode ? 'Disable Ratchet Mode' : 'Enable Ratchet Mode'}
+                      aria-pressed={ratchetMode}
+                      className={`${subBtnBase} ${subBtnHover} ${ratchetMode ? 'border ' + theme.goldBorderSubtle : 'opacity-40'}`}
+                      style={
+                        ratchetMode
+                          ? {
+                              background:
+                                'linear-gradient(135deg, rgba(249,115,22,0.2), rgba(239,68,68,0.15))',
+                              borderColor: 'rgba(249,115,22,0.5)',
+                            }
+                          : {}
+                      }
+                    >
+                      <Flame style={{ color: ratchetMode ? '#f97316' : gold }} size={16} />
+                    </button>
+                    <span className={labelCls} style={{ color: ratchetMode ? '#f97316' : gold }}>
+                      {ratchetMode ? '🔥 Ratchet' : 'Ratchet'}
                     </span>
                   </div>
                 </div>

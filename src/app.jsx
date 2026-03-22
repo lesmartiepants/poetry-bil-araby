@@ -2122,68 +2122,33 @@ export default function DiwanApp() {
           transition: box-shadow 0.15s ease;
         }
 
+        @keyframes ratchetGlow {
+          0%, 100% {
+            box-shadow: inset 0 0 80px rgba(249,115,22,0.15), inset 0 0 160px rgba(239,68,68,0.08);
+          }
+          50% {
+            box-shadow: inset 0 0 120px rgba(249,115,22,0.3), inset 0 0 240px rgba(239,68,68,0.18);
+          }
+        }
+
       `}</style>
 
       <DebugPanel controlBarRef={controlBarRef} />
 
-      {/* Ratchet Mode toggle — top-left corner */}
-      <div
-        style={{
-          position: 'fixed',
-          top: '0.5rem',
-          left: '0.75rem',
-          zIndex: 41,
-          opacity: 1 - headerOpacity * 0.6,
-          transition: 'opacity 0.3s',
-        }}
-      >
-        <button
-          onClick={() => {
-            useUIStore.getState().toggleRatchetMode();
-            track('ratchet_mode_toggled', { enabled: !ratchetMode });
-          }}
-          aria-label={ratchetMode ? 'Disable Ratchet Mode' : 'Enable Ratchet Mode'}
-          aria-pressed={ratchetMode}
-          title={
-            ratchetMode
-              ? 'Ratchet Mode: ON — click to chill 😌'
-              : 'Ratchet Mode: OFF — click to go off 🔥'
-          }
+      {/* Ratchet Mode glow overlay — full-screen Easter egg effect */}
+      {ratchetMode && (
+        <div
+          data-testid="ratchet-glow"
+          aria-hidden="true"
           style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.3rem',
-            padding: '0.25rem 0.6rem',
-            borderRadius: '9999px',
-            fontSize: '0.65rem',
-            fontFamily: 'inherit',
-            fontWeight: 700,
-            letterSpacing: '0.05em',
-            textTransform: 'uppercase',
-            cursor: 'pointer',
-            border: ratchetMode
-              ? '1px solid rgba(249,115,22,0.7)'
-              : `1px solid ${darkMode ? 'rgba(197,160,89,0.25)' : 'rgba(107,87,68,0.25)'}`,
-            background: ratchetMode
-              ? 'linear-gradient(135deg, rgba(249,115,22,0.2), rgba(239,68,68,0.15))'
-              : darkMode
-                ? 'rgba(255,255,255,0.04)'
-                : 'rgba(0,0,0,0.04)',
-            color: ratchetMode
-              ? '#f97316'
-              : darkMode
-                ? 'rgba(212,208,200,0.6)'
-                : 'rgba(26,22,20,0.5)',
-            backdropFilter: 'blur(8px)',
-            WebkitBackdropFilter: 'blur(8px)',
-            transition: 'all 0.2s ease',
-            whiteSpace: 'nowrap',
+            position: 'fixed',
+            inset: 0,
+            zIndex: 39,
+            pointerEvents: 'none',
+            animation: 'ratchetGlow 2s ease-in-out infinite',
           }}
-        >
-          <span style={{ fontSize: '0.75rem' }}>{ratchetMode ? '🔥' : '✨'}</span>
-          Ratchet Mode
-        </button>
-      </div>
+        />
+      )}
 
       <header
         style={{

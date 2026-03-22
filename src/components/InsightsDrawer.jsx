@@ -14,6 +14,7 @@ const InsightsDrawer = ({ insightParts, current }) => {
   const interpretation = usePoemStore((s) => s.interpretation);
   const showTranslation = useUIStore((s) => s.showTranslation);
   const storeDarkMode = useUIStore((s) => s.darkMode);
+  const ratchetMode = useUIStore((s) => s.ratchetMode);
   const darkMode = storeDarkMode;
   const theme = storeDarkMode ? THEME.dark : THEME.light;
   const [expanded, setExpanded] = useState(false);
@@ -100,9 +101,11 @@ const InsightsDrawer = ({ insightParts, current }) => {
 
         {/* Header */}
         <div className="px-6 pb-3 flex items-center justify-between">
-          <h3 className="font-brand-en italic font-semibold text-base text-indigo-600 tracking-tight">
-            Poetic Insight
-          </h3>
+          <div className="flex items-center gap-2">
+            <h3 className="font-brand-en italic font-semibold text-base text-indigo-600 tracking-tight">
+              {ratchetMode ? '🔥 Ratchet Insight' : 'Poetic Insight'}
+            </h3>
+          </div>
           <button
             onClick={onClose}
             className="p-1.5 rounded-full hover:bg-white/10 transition-colors"
@@ -119,7 +122,9 @@ const InsightsDrawer = ({ insightParts, current }) => {
           {isInterpreting ? (
             <div className="flex flex-col items-center justify-center gap-4 opacity-30 animate-pulse py-12">
               <Sparkles className="animate-spin text-indigo-500" size={28} />
-              <p className="font-brand-en italic text-sm">Consulting Diwan...</p>
+              <p className="font-brand-en italic text-sm">
+                {ratchetMode ? 'Getting lit fr fr...' : 'Consulting Diwan...'}
+              </p>
             </div>
           ) : (
             <div className="space-y-6">
@@ -156,7 +161,9 @@ const InsightsDrawer = ({ insightParts, current }) => {
               )}
               {!interpretation && !isInterpreting && (
                 <p className="text-center text-sm opacity-40 font-brand-en italic py-8">
-                  Tap Explain to discover this poem's story
+                  {ratchetMode
+                    ? 'Tap Explain to get that ratchet take fr fr 🔥'
+                    : "Tap Explain to discover this poem's story"}
                 </p>
               )}
             </div>

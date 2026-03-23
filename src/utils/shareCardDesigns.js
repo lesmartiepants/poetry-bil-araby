@@ -63,7 +63,7 @@ export const SHARE_CARD_DESIGNS = [
 // ── Helpers ─────────────────────────────────────────────────────────────
 
 /** Returns true if a string contains Arabic/RTL characters */
-function isArabicText(str) {
+export function isArabicText(str) {
   if (!str) return false;
   return /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/.test(str);
 }
@@ -73,7 +73,7 @@ function isArabicText(str) {
  * When DB doesn't have English columns, poet and poetArabic are both Arabic.
  * This helper detects that and returns { english, arabic } correctly.
  */
-function resolveBilingual(englishField, arabicField) {
+export function resolveBilingual(englishField, arabicField) {
   const en = englishField || '';
   const ar = arabicField || '';
   // If "English" field is actually Arabic (same as Arabic field, or no Arabic field but looks Arabic)

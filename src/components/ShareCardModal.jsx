@@ -7,6 +7,8 @@ import {
   renderShareCard,
   prepareVerses,
   prepareTranslation,
+  isArabicText,
+  resolveBilingual,
 } from '../utils/shareCardDesigns';
 
 /**
@@ -256,39 +258,33 @@ function ShareCardPreview({ poem, design, verses, translation }) {
   const s = DESIGN_STYLES[design?.id] || DESIGN_STYLES.diwan;
   const align = s.textAlign || 'text-center';
 
-  // Detect if English fields are actually Arabic (DB has no English column)
-  const isArabic = (str) => /[\u0600-\u06FF]/.test(str || '');
-  const poetEn = poem.poet && !isArabic(poem.poet) ? poem.poet : '';
-  const poetAr = poem.poetArabic || poem.poet || '';
-  const titleEn = poem.title && !isArabic(poem.title) ? poem.title : '';
-  const titleAr = poem.titleArabic || poem.title || '';
-  // Skip Arabic line if it's identical to the English (already shown)
-  const showPoetAr = poetAr && poetAr !== poetEn;
-  const showTitleAr = titleAr && titleAr !== titleEn;
+  // Use shared bilingual detection
+  const resolvedPoet = resolveBilingual(poem.poet, poem.poetArabic);
+  const resolvedTitle = resolveBilingual(poem.title, poem.titleArabic);
 
   return (
     <div className={`h-full w-full flex flex-col justify-between ${s.bg} border-2 ${s.border} p-5`}>
       {/* Poet & Title — bilingual */}
       <div className={`${align} pt-3`}>
-        {poetEn ? (
+        {resolvedPoet.english ? (
           <>
-            <p className={`font-bold text-lg ${s.poetColor}`}>{poetEn}</p>
-            {showPoetAr && (
+            <p className={`font-bold text-lg ${s.poetColor}`}>{resolvedPoet.english}</p>
+            {resolvedPoet.arabic && resolvedPoet.arabic !== resolvedPoet.english && (
               <p className={`font-amiri font-bold text-[17px] mt-1 ${s.poetArColor}`} dir="rtl">
-                {poetAr}
+                {resolvedPoet.arabic}
               </p>
             )}
           </>
         ) : (
           <p className={`font-amiri font-bold text-lg ${s.poetColor}`} dir="rtl">
-            {poetAr}
+            {resolvedPoet.arabic}
           </p>
         )}
-        {titleEn ? (
-          <p className={`italic text-sm mt-1.5 ${s.titleColor}`}>{titleEn}</p>
-        ) : showTitleAr ? (
+        {resolvedTitle.english ? (
+          <p className={`italic text-sm mt-1.5 ${s.titleColor}`}>{resolvedTitle.english}</p>
+        ) : resolvedTitle.arabic ? (
           <p className={`font-amiri italic text-sm mt-1.5 ${s.titleColor}`} dir="rtl">
-            {titleAr}
+            {resolvedTitle.arabic}
           </p>
         ) : null}
       </div>

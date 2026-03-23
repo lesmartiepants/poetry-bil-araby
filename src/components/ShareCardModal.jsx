@@ -7,7 +7,6 @@ import {
   renderShareCard,
   prepareVerses,
   prepareTranslation,
-  isArabicText,
   resolveBilingual,
 } from '../utils/shareCardDesigns';
 

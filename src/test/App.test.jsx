@@ -712,11 +712,12 @@ describe('DiwanApp', () => {
       });
     });
 
-    it('shows Featured section header in poet picker', async () => {
+    it('shows Surprise Me button and Featured tiles in poet picker', async () => {
       render(<DiwanApp />);
       await userEvent.click(screen.getByLabelText('Open discover'));
       await waitFor(() => {
-        expect(screen.getByText('Featured')).toBeInTheDocument();
+        expect(screen.getByLabelText('Discover new poem')).toBeInTheDocument();
+        expect(screen.getAllByTestId('poet-picker-button').length).toBeGreaterThan(0);
       });
     });
 
@@ -809,11 +810,10 @@ describe('DiwanApp', () => {
         render(<DiwanApp />);
         await userEvent.click(screen.getByLabelText('Open discover'));
 
-        // Should show dynamic poets under "More Poets"
+        // Should show dynamic poets in the list
         await waitFor(
           () => {
             expect(screen.getByText('أحمد شوقي')).toBeInTheDocument();
-            expect(screen.getByText('More Poets')).toBeInTheDocument();
           },
           { timeout: 3000 }
         );

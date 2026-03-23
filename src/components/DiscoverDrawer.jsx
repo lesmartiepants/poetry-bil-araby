@@ -272,7 +272,7 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
         exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 28, stiffness: 280 }}
         style={{
-          height: '72dvh',
+          height: '80dvh',
           background: darkMode
             ? 'linear-gradient(180deg, rgba(18,16,12,0.99) 0%, rgba(12,12,14,1) 100%)'
             : 'linear-gradient(180deg, rgba(253,252,248,0.99) 0%, rgba(245,243,238,1) 100%)',
@@ -317,76 +317,152 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
           </button>
         </div>
 
-        {/* ── Surprise Me ── */}
-        <div className="px-4 pb-3 flex-shrink-0">
-          <button
-            onClick={() => {
-              onSurpriseMe();
-              onClose();
-            }}
-            disabled={isFetching}
-            aria-label="Discover new poem"
-            className="w-full relative overflow-hidden rounded-2xl flex items-center gap-3 group transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{
-              padding: '14px 18px',
-              background:
-                'linear-gradient(135deg, rgba(197,160,89,0.18) 0%, rgba(197,160,89,0.08) 100%)',
-              border: '1px solid rgba(197,160,89,0.38)',
-              boxShadow: '0 4px 16px rgba(197,160,89,0.1), inset 0 1px 0 rgba(255,255,255,0.06)',
-            }}
-          >
-            {/* Shimmer sweep */}
-            <div
-              aria-hidden="true"
-              className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
-              style={{
-                background:
-                  'linear-gradient(90deg, transparent 0%, rgba(197,160,89,0.06) 50%, transparent 100%)',
+        {/* ── Side-by-side: Surprise Me (left) + Featured grid (right) ── */}
+        {!poetSearch && (
+          <div className="px-4 pb-3 flex gap-2 flex-shrink-0">
+            {/* Left: Surprise Me CTA */}
+            <button
+              onClick={() => {
+                onSurpriseMe();
+                onClose();
               }}
-            />
-            <div
-              className="flex-shrink-0 flex items-center justify-center rounded-xl"
+              disabled={isFetching}
+              aria-label="Discover new poem"
+              className="relative overflow-hidden rounded-2xl flex flex-col items-center justify-center gap-2 group transition-all duration-200 active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
               style={{
-                width: 44,
-                height: 44,
-                background: 'rgba(197,160,89,0.12)',
-                border: '1px solid rgba(197,160,89,0.28)',
+                width: '38%',
+                padding: '16px 10px',
+                background:
+                  'linear-gradient(160deg, rgba(197,160,89,0.20) 0%, rgba(197,160,89,0.07) 100%)',
+                border: '1px solid rgba(197,160,89,0.38)',
+                boxShadow: '0 4px 16px rgba(197,160,89,0.1), inset 0 1px 0 rgba(255,255,255,0.06)',
               }}
             >
-              <GoldenFireIcon size={22} glow={false} />
-            </div>
-            <div className="text-left">
+              {/* Shimmer sweep */}
               <div
-                className="font-brand-en font-bold text-[15px] leading-tight"
-                style={{ color: 'var(--gold)' }}
-              >
-                Surprise Me
+                aria-hidden="true"
+                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+                style={{
+                  background:
+                    'linear-gradient(160deg, transparent 0%, rgba(197,160,89,0.06) 50%, transparent 100%)',
+                }}
+              />
+              <GoldenFireIcon size={26} glow={false} />
+              <div className="text-center">
+                <div
+                  className="font-brand-en font-bold text-[13px] leading-tight"
+                  style={{ color: 'var(--gold)' }}
+                >
+                  Surprise Me
+                </div>
+                <div
+                  className="font-brand-en text-[9px] mt-0.5 leading-snug"
+                  style={{ color: 'var(--gold)', opacity: 0.55 }}
+                >
+                  {selectedCategory !== 'All'
+                    ? CATEGORIES.find((c) => c.id === selectedCategory)?.label || selectedCategory
+                    : 'Random poem'}
+                </div>
               </div>
-              <div
-                className="font-brand-en text-[11px] mt-0.5 leading-snug"
-                style={{ color: 'var(--gold)', opacity: 0.6 }}
-              >
-                {selectedCategory !== 'All'
-                  ? `Random poem · ${
-                      CATEGORIES.find((c) => c.id === selectedCategory)?.label || selectedCategory
-                    }`
-                  : 'Random poem from the entire collection'}
-              </div>
-            </div>
-          </button>
-        </div>
+            </button>
 
-        {/* ── Divider ── */}
-        <div className="flex items-center gap-3 px-5 pb-3 flex-shrink-0">
-          <div className="flex-1 h-px" style={{ background: 'rgba(197,160,89,0.12)' }} />
-          <span
-            className="font-brand-en text-[10px] uppercase tracking-[0.18em]"
-            style={{ color: 'var(--gold)', opacity: 0.45 }}
-          >
-            or choose a poet
-          </span>
-          <div className="flex-1 h-px" style={{ background: 'rgba(197,160,89,0.12)' }} />
-        </div>
+            {/* Right: Featured tiles (2 columns) including All Poets */}
+            <div className="flex-1 grid grid-cols-2 gap-1.5">
+              {/* All Poets tile */}
+              <button
+                data-testid="poet-picker-button"
+                onClick={() => {
+                  onSelectPoet('All');
+                  onClose();
+                }}
+                className={`rounded-xl px-2.5 py-2.5 text-right transition-all duration-200 ${
+                  selectedCategory === 'All'
+                    ? 'border border-gold/50 bg-gold/12'
+                    : 'hover:bg-gold/8 border'
+                }`}
+                style={{
+                  borderColor: selectedCategory === 'All' ? undefined : subtleBorder,
+                  background: selectedCategory === 'All' ? undefined : cardBg,
+                }}
+              >
+                <div
+                  className="font-bold text-[13px] truncate"
+                  dir="rtl"
+                  style={{
+                    fontFamily: "'Reem Kufi', sans-serif",
+                    color: selectedCategory === 'All' ? 'var(--gold)' : textColor,
+                  }}
+                >
+                  كل الشعراء
+                </div>
+                <div
+                  className="font-brand-en text-[10px] mt-0.5 truncate"
+                  style={{
+                    opacity: selectedCategory === 'All' ? 0.75 : 0.6,
+                    color: selectedCategory === 'All' ? 'var(--gold)' : subTextColor,
+                  }}
+                >
+                  All Poets
+                </div>
+              </button>
+
+              {/* Featured poet tiles */}
+              {filteredPoetList.featured.map((cat) => (
+                <button
+                  key={cat.id}
+                  data-testid="poet-picker-button"
+                  onClick={() => {
+                    onSelectPoet(cat.id);
+                    onClose();
+                  }}
+                  className={`rounded-xl px-2.5 py-2.5 text-right transition-all duration-200 ${
+                    selectedCategory === cat.id
+                      ? 'border border-gold/50 bg-gold/12'
+                      : 'hover:bg-gold/8 border'
+                  }`}
+                  style={{
+                    borderColor: selectedCategory === cat.id ? undefined : subtleBorder,
+                    background: selectedCategory === cat.id ? undefined : cardBg,
+                  }}
+                >
+                  <div
+                    className="font-bold text-[13px] truncate"
+                    dir="rtl"
+                    style={{
+                      fontFamily: "'Reem Kufi', sans-serif",
+                      color: selectedCategory === cat.id ? 'var(--gold)' : textColor,
+                    }}
+                  >
+                    {cat.labelAr}
+                  </div>
+                  <div
+                    className="font-brand-en text-[10px] mt-0.5 truncate"
+                    style={{
+                      opacity: selectedCategory === cat.id ? 0.75 : 0.6,
+                      color: selectedCategory === cat.id ? 'var(--gold)' : subTextColor,
+                    }}
+                  >
+                    {cat.label}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── Divider (only shown without search) ── */}
+        {!poetSearch && filteredPoetList.all.length > 0 && (
+          <div className="flex items-center gap-3 px-5 pb-3 flex-shrink-0">
+            <div className="flex-1 h-px" style={{ background: 'rgba(197,160,89,0.12)' }} />
+            <span
+              className="font-brand-en text-[10px] uppercase tracking-[0.18em]"
+              style={{ color: 'var(--gold)', opacity: 0.45 }}
+            >
+              more poets
+            </span>
+            <div className="flex-1 h-px" style={{ background: 'rgba(197,160,89,0.12)' }} />
+          </div>
+        )}
 
         {/* ── Search ── */}
         <div className="px-4 pb-3 flex-shrink-0">
@@ -438,182 +514,107 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
             </div>
           ) : (
             <div className="flex flex-col">
-              {/* ── All Poets card — full width ── */}
-              {!poetSearch && (
-                <div className="px-4 mb-3">
-                  <button
-                    data-testid="poet-picker-button"
-                    onClick={() => {
-                      onSelectPoet('All');
-                      onClose();
-                    }}
-                    className={`w-full rounded-2xl px-4 py-3 flex items-center justify-between transition-all duration-200 ${
-                      selectedCategory === 'All'
-                        ? 'border border-gold/50 bg-gold/12'
-                        : 'hover:bg-gold/8 border'
-                    }`}
-                    style={{
-                      borderColor: selectedCategory === 'All' ? undefined : subtleBorder,
-                      background: selectedCategory === 'All' ? undefined : cardBg,
-                    }}
-                  >
-                    <span
-                      className="font-brand-en text-[12px] font-semibold tracking-wide"
+              {/* ── All poets — compact single-column list (search results also show here) ── */}
+              {/* When searching, also show featured matches in this list */}
+              {poetSearch && filteredPoetList.featured.length > 0 && (
+                <div className="px-4">
+                  {filteredPoetList.featured.map((cat, idx) => (
+                    <button
+                      key={cat.id}
+                      data-testid="poet-picker-button"
+                      onClick={() => {
+                        onSelectPoet(cat.id);
+                        onClose();
+                      }}
+                      className={`w-full flex items-center justify-between py-2.5 px-2 rounded-lg transition-all duration-200 ${
+                        selectedCategory === cat.id ? 'bg-gold/12' : 'hover:bg-gold/6'
+                      }`}
                       style={{
-                        opacity: selectedCategory === 'All' ? 0.85 : 0.65,
-                        color: selectedCategory === 'All' ? 'var(--gold)' : subTextColor,
+                        borderBottom:
+                          idx < filteredPoetList.featured.length - 1 ||
+                          filteredPoetList.all.length > 0
+                            ? `1px solid ${subtleBorder}`
+                            : 'none',
                       }}
                     >
-                      All Poets
-                    </span>
-                    <span
-                      className="font-bold text-[16px]"
-                      dir="rtl"
-                      style={{
-                        fontFamily: "'Reem Kufi', sans-serif",
-                        color: selectedCategory === 'All' ? 'var(--gold)' : textColor,
-                      }}
-                    >
-                      كل الشعراء
-                    </span>
-                  </button>
-                </div>
-              )}
-
-              {/* ── Featured poets — horizontal scroll chips ── */}
-              {filteredPoetList.featured.length > 0 && (
-                <div className="mb-3">
-                  {!poetSearch && (
-                    <div className="px-4 mb-2">
-                      <span
-                        className="text-[10px] font-brand-en uppercase tracking-[0.14em] font-bold"
-                        style={{ color: 'var(--gold)', opacity: 0.5 }}
-                      >
-                        Featured
-                      </span>
-                    </div>
-                  )}
-                  <div
-                    className="flex gap-2 px-4 pb-1 overflow-x-auto"
-                    style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-                  >
-                    {filteredPoetList.featured.map((cat) => (
-                      <button
-                        key={cat.id}
-                        data-testid="poet-picker-button"
-                        onClick={() => {
-                          onSelectPoet(cat.id);
-                          onClose();
-                        }}
-                        className={`flex-shrink-0 rounded-xl px-3 pt-2.5 pb-2 text-right transition-all duration-200 ${
-                          selectedCategory === cat.id
-                            ? 'border border-gold/50 bg-gold/12'
-                            : 'hover:bg-gold/8 border'
-                        }`}
-                        style={{
-                          minWidth: 100,
-                          borderColor: selectedCategory === cat.id ? undefined : subtleBorder,
-                          background: selectedCategory === cat.id ? undefined : cardBg,
-                        }}
-                      >
-                        <div
-                          className="font-bold text-[14px] truncate"
-                          dir="rtl"
+                      <div className="flex items-center gap-2 min-w-0 flex-1 mr-3">
+                        <span
+                          className="font-brand-en text-[12px] font-semibold truncate"
                           style={{
-                            fontFamily: "'Reem Kufi', sans-serif",
-                            color: selectedCategory === cat.id ? 'var(--gold)' : textColor,
-                          }}
-                        >
-                          {cat.labelAr}
-                        </div>
-                        <div
-                          className="font-brand-en text-[11px] mt-0.5 truncate"
-                          style={{
-                            opacity: selectedCategory === cat.id ? 0.75 : 0.6,
+                            opacity: selectedCategory === cat.id ? 0.85 : 0.65,
                             color: selectedCategory === cat.id ? 'var(--gold)' : subTextColor,
                           }}
                         >
                           {cat.label}
-                        </div>
-                        {cat.poemCount != null && (
-                          <div
-                            className="font-brand-en text-[9px] mt-0.5"
-                            style={{ color: 'var(--gold)', opacity: 0.45 }}
-                          >
-                            {cat.poemCount.toLocaleString()} poems
-                          </div>
-                        )}
-                      </button>
-                    ))}
-                  </div>
+                        </span>
+                      </div>
+                      <div
+                        className="font-bold text-[14px] flex-shrink-0"
+                        dir="rtl"
+                        style={{
+                          fontFamily: "'Reem Kufi', sans-serif",
+                          color: selectedCategory === cat.id ? 'var(--gold)' : textColor,
+                        }}
+                      >
+                        {cat.labelAr}
+                      </div>
+                    </button>
+                  ))}
                 </div>
               )}
 
-              {/* ── All poets — compact single-column list ── */}
               {filteredPoetList.all.length > 0 && (
-                <>
-                  {!poetSearch && (
-                    <div className="px-4 mb-1 mt-1">
-                      <span
-                        className="text-[10px] font-brand-en uppercase tracking-[0.14em] font-bold"
-                        style={{ color: 'var(--gold)', opacity: 0.5 }}
-                      >
-                        More Poets
-                      </span>
-                    </div>
-                  )}
-                  <div className="px-4">
-                    {filteredPoetList.all.map((p, idx) => (
-                      <button
-                        key={p.id}
-                        data-testid="poet-picker-button"
-                        onClick={() => {
-                          onSelectPoet(p.id);
-                          onClose();
-                        }}
-                        className={`w-full flex items-center justify-between py-2.5 px-2 rounded-lg transition-all duration-200 ${
-                          selectedCategory === p.id ? 'bg-gold/12' : 'hover:bg-gold/6'
-                        }`}
-                        style={{
-                          borderBottom:
-                            idx < filteredPoetList.all.length - 1
-                              ? `1px solid ${subtleBorder}`
-                              : 'none',
-                        }}
-                      >
-                        <div className="flex items-center gap-2 min-w-0 flex-1 mr-3">
-                          <span
-                            className="font-brand-en text-[12px] font-semibold truncate"
-                            style={{
-                              opacity: selectedCategory === p.id ? 0.85 : 0.65,
-                              color: selectedCategory === p.id ? 'var(--gold)' : subTextColor,
-                            }}
-                          >
-                            {p.label}
-                          </span>
-                          {p.poemCount > 0 && (
-                            <span
-                              className="font-brand-en text-[9px] flex-shrink-0"
-                              style={{ color: 'var(--gold)', opacity: 0.4 }}
-                            >
-                              {p.poemCount.toLocaleString()}
-                            </span>
-                          )}
-                        </div>
-                        <div
-                          className="font-bold text-[14px] flex-shrink-0"
-                          dir="rtl"
+                <div className="px-4">
+                  {filteredPoetList.all.map((p, idx) => (
+                    <button
+                      key={p.id}
+                      data-testid="poet-picker-button"
+                      onClick={() => {
+                        onSelectPoet(p.id);
+                        onClose();
+                      }}
+                      className={`w-full flex items-center justify-between py-2.5 px-2 rounded-lg transition-all duration-200 ${
+                        selectedCategory === p.id ? 'bg-gold/12' : 'hover:bg-gold/6'
+                      }`}
+                      style={{
+                        borderBottom:
+                          idx < filteredPoetList.all.length - 1
+                            ? `1px solid ${subtleBorder}`
+                            : 'none',
+                      }}
+                    >
+                      <div className="flex items-center gap-2 min-w-0 flex-1 mr-3">
+                        <span
+                          className="font-brand-en text-[12px] font-semibold truncate"
                           style={{
-                            fontFamily: "'Reem Kufi', sans-serif",
-                            color: selectedCategory === p.id ? 'var(--gold)' : textColor,
+                            opacity: selectedCategory === p.id ? 0.85 : 0.65,
+                            color: selectedCategory === p.id ? 'var(--gold)' : subTextColor,
                           }}
                         >
-                          {p.labelAr}
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </>
+                          {p.label}
+                        </span>
+                        {p.poemCount > 0 && (
+                          <span
+                            className="font-brand-en text-[9px] flex-shrink-0"
+                            style={{ color: 'var(--gold)', opacity: 0.4 }}
+                          >
+                            {p.poemCount.toLocaleString()}
+                          </span>
+                        )}
+                      </div>
+                      <div
+                        className="font-bold text-[14px] flex-shrink-0"
+                        dir="rtl"
+                        style={{
+                          fontFamily: "'Reem Kufi', sans-serif",
+                          color: selectedCategory === p.id ? 'var(--gold)' : textColor,
+                        }}
+                      >
+                        {p.labelAr}
+                      </div>
+                    </button>
+                  ))}
+                </div>
               )}
 
               {/* No results */}

@@ -145,7 +145,8 @@ function drawBrandBottomRight(ctx, w, h, brandColor, opts = {}) {
 }
 
 /**
- * Draw the bilingual header: English poet name + Arabic poet name + English title.
+ * Draw the bilingual header: Poet name (gold foil editorial), title (italic editorial).
+ * Hierarchy: Arabic poet → English poet → separator → Arabic title → English title.
  * Automatically detects when both fields are Arabic (DB has no English column)
  * and renders a single large Arabic-only name instead of duplicating.
  *
@@ -153,7 +154,7 @@ function drawBrandBottomRight(ctx, w, h, brandColor, opts = {}) {
  * @param {number} w - canvas width
  * @param {number} headerY - top Y position of header
  * @param {Object} poem - poem data
- * @param {Object} colors - { poet, poetAr, title }
+ * @param {Object} colors - { poet, poetAr, title, separator }
  * @param {Object} opts - { align: 'center'|'right', xPos: number }
  * @returns {number} the Y position after the header (for separator placement)
  */
@@ -166,43 +167,66 @@ function drawBilingualHeader(ctx, w, headerY, poem, colors, opts = {}) {
 
   ctx.textAlign = align;
 
-  if (resolvedPoet.english) {
-    // Has distinct English name — show English first, then Arabic
+  // ── Poet name — gold foil editorial hierarchy ──
+  // Arabic poet name first (bold, prominent)
+  if (resolvedPoet.arabic) {
     ctx.fillStyle = colors.poet;
-    ctx.font = 'bold 48px "Playfair Display", serif';
+    ctx.font = 'bold 44px "Amiri", serif';
+    ctx.direction = 'rtl';
+    // Subtle gold glow for foil effect
+    ctx.save();
+    ctx.shadowColor = colors.poet;
+    ctx.shadowBlur = 12;
+    ctx.fillText(resolvedPoet.arabic, xPos, curY);
+    ctx.restore();
+    curY += 50;
+  }
+
+  // English poet name below (slightly smaller, same gold)
+  if (resolvedPoet.english) {
+    ctx.fillStyle = colors.poetAr || colors.poet;
+    ctx.font = 'bold 32px "Playfair Display", serif';
     ctx.direction = 'ltr';
     ctx.fillText(resolvedPoet.english, xPos, curY);
-    curY += 55;
-
-    if (resolvedPoet.arabic) {
-      ctx.fillStyle = colors.poetAr;
-      ctx.font = 'bold 46px "Amiri", serif';
-      ctx.direction = 'rtl';
-      ctx.fillText(resolvedPoet.arabic, xPos, curY);
-      curY += 55;
-    }
-  } else {
-    // Only Arabic available — show single large Arabic name
-    ctx.fillStyle = colors.poet;
-    ctx.font = 'bold 52px "Amiri", serif';
-    ctx.direction = 'rtl';
-    ctx.fillText(resolvedPoet.arabic, xPos, curY);
-    curY += 60;
+    curY += 40;
   }
 
-  // Title
-  if (resolvedTitle.english) {
+  // Small gold separator line
+  curY += 6;
+  ctx.save();
+  const sepColor = colors.separator || colors.poet;
+  ctx.strokeStyle = sepColor;
+  ctx.globalAlpha = 0.3;
+  ctx.lineWidth = 0.75;
+  ctx.beginPath();
+  if (align === 'right') {
+    ctx.moveTo(xPos - 60, curY);
+    ctx.lineTo(xPos, curY);
+  } else {
+    ctx.moveTo(xPos - 30, curY);
+    ctx.lineTo(xPos + 30, curY);
+  }
+  ctx.stroke();
+  ctx.restore();
+  curY += 14;
+
+  // ── Title — italic, editorial ──
+  if (resolvedTitle.arabic) {
     ctx.fillStyle = colors.title;
-    ctx.font = 'italic 28px "Playfair Display", serif';
-    ctx.direction = 'ltr';
-    ctx.fillText(resolvedTitle.english, xPos, curY);
-  } else if (resolvedTitle.arabic) {
-    ctx.fillStyle = colors.title;
-    ctx.font = 'italic 28px "Amiri", serif';
+    ctx.font = 'italic 30px "Amiri", serif';
     ctx.direction = 'rtl';
     ctx.fillText(resolvedTitle.arabic, xPos, curY);
+    curY += 35;
   }
-  curY += 35;
+  if (resolvedTitle.english && resolvedTitle.english !== resolvedTitle.arabic) {
+    ctx.fillStyle = colors.title;
+    ctx.font = 'italic 24px "Playfair Display", serif';
+    ctx.direction = 'ltr';
+    ctx.globalAlpha = 0.7;
+    ctx.fillText(resolvedTitle.english, xPos, curY);
+    ctx.globalAlpha = 1;
+    curY += 30;
+  }
 
   return curY;
 }
@@ -244,39 +268,15 @@ function renderDiwan(ctx, w, h, poem) {
   // ── Header: bilingual poet & title ──
   const headerBottom = drawBilingualHeader(ctx, w, 120, poem, {
     poet: '#c5a059',
-    poetAr: 'rgba(197, 160, 89, 0.6)',
-    title: 'rgba(197, 160, 89, 0.45)',
+    poetAr: 'rgba(197, 160, 89, 0.7)',
+    title: 'rgba(197, 160, 89, 0.55)',
+    separator: '#c5a059',
   });
-
-  // Subtle gold separator — centered diamond ornament
-  const sepY = headerBottom + 12;
-  ctx.save();
-  ctx.fillStyle = 'rgba(197, 160, 89, 0.35)';
-  ctx.translate(w / 2, sepY);
-  ctx.beginPath();
-  ctx.moveTo(0, -5);
-  ctx.lineTo(5, 0);
-  ctx.lineTo(0, 5);
-  ctx.lineTo(-5, 0);
-  ctx.closePath();
-  ctx.fill();
-  // Flanking thin lines
-  const lineGrad = ctx.createLinearGradient(-200, 0, -12, 0);
-  lineGrad.addColorStop(0, 'rgba(197, 160, 89, 0)');
-  lineGrad.addColorStop(1, 'rgba(197, 160, 89, 0.3)');
-  ctx.fillStyle = lineGrad;
-  ctx.fillRect(-200, -0.5, 188, 1);
-  const lineGrad2 = ctx.createLinearGradient(12, 0, 200, 0);
-  lineGrad2.addColorStop(0, 'rgba(197, 160, 89, 0.3)');
-  lineGrad2.addColorStop(1, 'rgba(197, 160, 89, 0)');
-  ctx.fillStyle = lineGrad2;
-  ctx.fillRect(12, -0.5, 188, 1);
-  ctx.restore();
 
   // ── Interleaved verses + translations (line by line) ──
   const verses = prepareVerses(poem.arabic);
   const translation = prepareTranslation(poem.english || poem.cachedTranslation);
-  const contentStartY = sepY + 55;
+  const contentStartY = headerBottom + 30;
   const contentEndY = h - 100;
   const pairSpacing = Math.min(180, (contentEndY - contentStartY) / Math.max(verses.length, 1));
 
@@ -358,38 +358,15 @@ function renderIbnMuqla(ctx, w, h, poem) {
   // ── Header — bilingual ──
   const headerBottom = drawBilingualHeader(ctx, w, 130, poem, {
     poet: '#4A2800',
-    poetAr: 'rgba(74, 40, 0, 0.55)',
-    title: 'rgba(92, 58, 10, 0.4)',
+    poetAr: 'rgba(74, 40, 0, 0.65)',
+    title: 'rgba(92, 58, 10, 0.5)',
+    separator: '#8B6914',
   });
-
-  // Subtle separator — small diamond with fading lines
-  const sepY = headerBottom + 12;
-  ctx.save();
-  ctx.fillStyle = 'rgba(139, 105, 20, 0.4)';
-  ctx.translate(w / 2, sepY);
-  ctx.beginPath();
-  ctx.moveTo(0, -4);
-  ctx.lineTo(4, 0);
-  ctx.lineTo(0, 4);
-  ctx.lineTo(-4, 0);
-  ctx.closePath();
-  ctx.fill();
-  const fl = ctx.createLinearGradient(-160, 0, -8, 0);
-  fl.addColorStop(0, 'rgba(139, 105, 20, 0)');
-  fl.addColorStop(1, 'rgba(139, 105, 20, 0.25)');
-  ctx.fillStyle = fl;
-  ctx.fillRect(-160, -0.4, 152, 0.8);
-  const fl2 = ctx.createLinearGradient(8, 0, 160, 0);
-  fl2.addColorStop(0, 'rgba(139, 105, 20, 0.25)');
-  fl2.addColorStop(1, 'rgba(139, 105, 20, 0)');
-  ctx.fillStyle = fl2;
-  ctx.fillRect(8, -0.4, 152, 0.8);
-  ctx.restore();
 
   // ── Interleaved verses (line by line) ──
   const verses = prepareVerses(poem.arabic);
   const translation = prepareTranslation(poem.english || poem.cachedTranslation);
-  const contentStartY = sepY + 55;
+  const contentStartY = headerBottom + 30;
   const contentEndY = h - 100;
   const pairSpacing = Math.min(180, (contentEndY - contentStartY) / Math.max(verses.length, 1));
 
@@ -464,27 +441,15 @@ function renderSinan(ctx, w, h, poem) {
   // ── Header — bilingual ──
   const headerBottom = drawBilingualHeader(ctx, w, 125, poem, {
     poet: '#c5a059',
-    poetAr: 'rgba(197, 160, 89, 0.55)',
-    title: 'rgba(79, 166, 183, 0.5)',
+    poetAr: 'rgba(197, 160, 89, 0.65)',
+    title: 'rgba(79, 166, 183, 0.6)',
+    separator: '#c5a059',
   });
-
-  // Separator — small crescent
-  ctx.save();
-  ctx.strokeStyle = 'rgba(197, 160, 89, 0.35)';
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.arc(w / 2, headerBottom + 12, 6, Math.PI * 0.25, Math.PI * 1.75);
-  ctx.stroke();
-  ctx.beginPath();
-  ctx.arc(w / 2 + 2, headerBottom + 12, 4.5, Math.PI * 0.25, Math.PI * 1.75);
-  ctx.fillStyle = '#0A1E38';
-  ctx.fill();
-  ctx.restore();
 
   // ── Interleaved verses (line by line) ──
   const verses = prepareVerses(poem.arabic);
   const translation = prepareTranslation(poem.english || poem.cachedTranslation);
-  const contentStartY = headerBottom + 55;
+  const contentStartY = headerBottom + 30;
   const contentEndY = h - 100;
   const pairSpacing = Math.min(180, (contentEndY - contentStartY) / Math.max(verses.length, 1));
 
@@ -570,8 +535,9 @@ function renderZahaHadid(ctx, w, h, poem) {
     poem,
     {
       poet: '#C864FF',
-      poetAr: 'rgba(200, 100, 255, 0.55)',
-      title: 'rgba(100, 180, 255, 0.45)',
+      poetAr: 'rgba(200, 100, 255, 0.65)',
+      title: 'rgba(100, 180, 255, 0.55)',
+      separator: '#C864FF',
     },
     { align: 'right', xPos: w - 85 }
   );
@@ -579,7 +545,7 @@ function renderZahaHadid(ctx, w, h, poem) {
   // ── Interleaved verses — right-aligned, line by line ──
   const verses = prepareVerses(poem.arabic);
   const translation = prepareTranslation(poem.english || poem.cachedTranslation);
-  const contentStartY = headerBottom + 45;
+  const contentStartY = headerBottom + 25;
   const contentEndY = h - 100;
   const pairSpacing = Math.min(180, (contentEndY - contentStartY) / Math.max(verses.length, 1));
 
@@ -661,31 +627,15 @@ function renderHassanFathy(ctx, w, h, poem) {
   // ── Header — bilingual ──
   const headerBottom = drawBilingualHeader(ctx, w, 130, poem, {
     poet: '#3D1F00',
-    poetAr: 'rgba(61, 31, 0, 0.55)',
-    title: 'rgba(74, 40, 0, 0.38)',
+    poetAr: 'rgba(61, 31, 0, 0.65)',
+    title: 'rgba(74, 40, 0, 0.45)',
+    separator: '#A0522D',
   });
-
-  // Sun separator — small 8-pointed sunburst
-  ctx.save();
-  ctx.fillStyle = 'rgba(160, 82, 45, 0.4)';
-  ctx.translate(w / 2, headerBottom + 12);
-  ctx.beginPath();
-  for (let k = 0; k < 16; k++) {
-    const r = k % 2 === 0 ? 6 : 2.5;
-    const a = (Math.PI / 8) * k - Math.PI / 2;
-    const px = Math.cos(a) * r;
-    const py = Math.sin(a) * r;
-    if (k === 0) ctx.moveTo(px, py);
-    else ctx.lineTo(px, py);
-  }
-  ctx.closePath();
-  ctx.fill();
-  ctx.restore();
 
   // ── Interleaved verses (line by line) ──
   const verses = prepareVerses(poem.arabic);
   const translation = prepareTranslation(poem.english || poem.cachedTranslation);
-  const contentStartY = headerBottom + 55;
+  const contentStartY = headerBottom + 30;
   const contentEndY = h - 100;
   const pairSpacing = Math.min(180, (contentEndY - contentStartY) / Math.max(verses.length, 1));
 

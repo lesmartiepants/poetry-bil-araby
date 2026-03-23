@@ -2205,53 +2205,68 @@ export default function DiwanApp() {
                       className="relative z-10 flex flex-col items-center justify-center w-full"
                       dir="rtl"
                     >
+                      {/* Poet name — gold foil, editorial hierarchy */}
                       <div
                         className="font-amiri font-bold text-center"
                         style={{
-                          fontSize: 'clamp(1.4rem, 4vw, 2.25rem)',
+                          fontSize: 'clamp(1.1rem, 3vw, 1.6rem)',
                           color: 'var(--gold)',
-                          lineHeight: 1.4,
-                          textShadow: darkMode ? '0 0 30px rgba(197,160,89,0.15)' : 'none',
+                          lineHeight: 1.3,
+                          letterSpacing: '0.02em',
+                          textShadow: darkMode
+                            ? '0 0 40px rgba(197,160,89,0.2), 0 0 12px rgba(197,160,89,0.08)'
+                            : 'none',
                         }}
                       >
-                        {current?.titleArabic || current?.title}
+                        {current?.poetArabic || current?.poet}
                       </div>
+                      {current?.poet !== current?.poetArabic && current?.poet && (
+                        <div
+                          className="font-brand-en font-bold text-center"
+                          dir="ltr"
+                          style={{
+                            fontSize: 'clamp(0.85rem, 2vw, 1.1rem)',
+                            color: 'var(--gold)',
+                            opacity: 0.7,
+                            marginTop: '0.15rem',
+                            letterSpacing: '0.04em',
+                          }}
+                        >
+                          {current.poet}
+                        </div>
+                      )}
                       <div
                         style={{
                           width: '40px',
                           height: '1px',
                           background: 'var(--gold)',
-                          opacity: 0.5,
+                          opacity: 0.35,
                           margin: '0.5rem auto',
                         }}
                       />
+                      {/* Title — italic, editorial */}
                       <div
-                        className="font-tajawal text-center"
+                        className="font-amiri italic text-center"
                         style={{
-                          fontSize: 'clamp(0.8rem, 2vw, 1rem)',
-                          color: darkMode ? '#a8a29e' : '#57534e',
+                          fontSize: 'clamp(1.3rem, 3.5vw, 2rem)',
+                          color: darkMode ? '#e8e0d0' : '#3d2800',
                           lineHeight: 1.4,
+                          textShadow: darkMode ? '0 0 20px rgba(197,160,89,0.1)' : 'none',
                         }}
                       >
-                        {current?.poetArabic || current?.poet}
+                        {current?.titleArabic || current?.title}
                       </div>
-                      {(current?.poet !== current?.poetArabic ||
-                        current?.title !== current?.titleArabic) && (
+                      {current?.title !== current?.titleArabic && current?.title && (
                         <div
                           className="font-brand-en text-center italic"
                           dir="ltr"
                           style={{
-                            fontSize: 'clamp(0.7rem, 1.3vw, 0.8rem)',
-                            color: darkMode ? '#78716c' : '#a8a29e',
-                            marginTop: '0.5rem',
+                            fontSize: 'clamp(0.75rem, 1.5vw, 0.9rem)',
+                            color: darkMode ? '#a8a29e' : '#78716c',
+                            marginTop: '0.25rem',
                           }}
                         >
-                          {current?.title !== current?.titleArabic && <span>{current.title}</span>}
-                          {current?.title !== current?.titleArabic &&
-                            current?.poet !== current?.poetArabic && (
-                              <span className="opacity-40"> — </span>
-                            )}
-                          {current?.poet !== current?.poetArabic && <span>{current.poet}</span>}
+                          {current.title}
                         </div>
                       )}
                     </div>
@@ -2934,7 +2949,17 @@ export default function DiwanApp() {
 
       {/* Share Card Modal */}
       {showShareCard && current && (
-        <ShareCardModal poem={current} onClose={() => useModalStore.getState().closeShareCard()} />
+        <ShareCardModal
+          poem={{
+            ...current,
+            english:
+              insightParts?.poeticTranslation ||
+              current?.english ||
+              current?.cachedTranslation ||
+              '',
+          }}
+          onClose={() => useModalStore.getState().closeShareCard()}
+        />
       )}
 
       {/* Keyboard Shortcut Help */}

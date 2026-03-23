@@ -263,29 +263,42 @@ function ShareCardPreview({ poem, design, verses, translation }) {
 
   return (
     <div className={`h-full w-full flex flex-col justify-between ${s.bg} border-2 ${s.border} p-5`}>
-      {/* Poet & Title — bilingual */}
+      {/* Poet & Title — gold foil editorial hierarchy */}
       <div className={`${align} pt-3`}>
-        {resolvedPoet.english ? (
-          <>
-            <p className={`font-bold text-lg ${s.poetColor}`}>{resolvedPoet.english}</p>
-            {resolvedPoet.arabic && resolvedPoet.arabic !== resolvedPoet.english && (
-              <p className={`font-amiri font-bold text-[17px] mt-1 ${s.poetArColor}`} dir="rtl">
-                {resolvedPoet.arabic}
-              </p>
-            )}
-          </>
-        ) : (
-          <p className={`font-amiri font-bold text-lg ${s.poetColor}`} dir="rtl">
+        {/* Poet name — prominent, gold foil */}
+        {resolvedPoet.arabic && (
+          <p
+            className={`font-amiri font-bold text-lg ${s.poetColor}`}
+            dir="rtl"
+            style={{ textShadow: '0 0 12px rgba(197,160,89,0.1)' }}
+          >
             {resolvedPoet.arabic}
           </p>
         )}
-        {resolvedTitle.english ? (
-          <p className={`italic text-sm mt-1.5 ${s.titleColor}`}>{resolvedTitle.english}</p>
-        ) : resolvedTitle.arabic ? (
-          <p className={`font-amiri italic text-sm mt-1.5 ${s.titleColor}`} dir="rtl">
+        {resolvedPoet.english && (
+          <p className={`font-bold text-[15px] mt-0.5 ${s.poetArColor}`}>{resolvedPoet.english}</p>
+        )}
+        {/* Small separator */}
+        <div
+          className="mx-auto my-1.5"
+          style={{
+            width: '24px',
+            height: '0.5px',
+            background: 'currentColor',
+            opacity: 0.3,
+          }}
+        />
+        {/* Title — italic, editorial */}
+        {resolvedTitle.arabic && (
+          <p className={`font-amiri italic text-sm ${s.titleColor}`} dir="rtl">
             {resolvedTitle.arabic}
           </p>
-        ) : null}
+        )}
+        {resolvedTitle.english && resolvedTitle.english !== resolvedTitle.arabic && (
+          <p className={`italic text-[11px] mt-0.5 ${s.titleColor} opacity-70`}>
+            {resolvedTitle.english}
+          </p>
+        )}
       </div>
 
       {/* Interleaved verses + translations — line by line */}

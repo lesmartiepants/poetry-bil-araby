@@ -147,6 +147,7 @@ describe('renderShareCard', () => {
       stroke: vi.fn(),
       fill: vi.fn(),
       arc: vi.fn(),
+      ellipse: vi.fn(),
       save: vi.fn(),
       restore: vi.fn(),
       setLineDash: vi.fn(),

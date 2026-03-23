@@ -113,7 +113,7 @@ export default function ShareCardModal({ poem, onClose }) {
       aria-modal="true"
       aria-label="Share poem card"
     >
-      <div className="relative w-full max-w-lg mx-4 bg-[#0c0c0e] border border-gold/20 rounded-2xl overflow-hidden shadow-2xl">
+      <div className="relative w-full max-w-lg mx-4 bg-[#0c0c0e] border border-gold/10 rounded-2xl overflow-hidden shadow-2xl">
         {/* Close button */}
         <button
           onClick={onClose}
@@ -140,7 +140,7 @@ export default function ShareCardModal({ poem, onClose }) {
 
         {/* Design selector — English primary */}
         <div className="px-4 pt-2 pb-2">
-          <p className="text-stone-400 text-xs text-center mb-2 font-tajawal tracking-wide">
+          <p className="text-gold/50 text-xs text-center mb-2 font-tajawal tracking-wide">
             Choose Design
           </p>
           <div className="flex gap-2 justify-center flex-wrap">
@@ -153,8 +153,8 @@ export default function ShareCardModal({ poem, onClose }) {
                   px-3 py-1.5 rounded-lg text-xs font-tajawal transition-all duration-200
                   ${
                     selectedDesign === d.id
-                      ? 'bg-gold/20 text-gold border border-gold/50 scale-105'
-                      : 'bg-stone-900/50 text-stone-400 border border-stone-700/50 hover:border-gold/30 hover:text-gold/80'
+                      ? 'bg-gold/20 text-gold border border-gold/40 scale-105'
+                      : 'bg-stone-900/40 text-stone-400 border border-stone-800/60 hover:border-gold/25 hover:text-gold/80'
                   }
                 `}
                 title={`${d.name} — ${d.artist}`}
@@ -170,7 +170,7 @@ export default function ShareCardModal({ poem, onClose }) {
           <button
             onClick={handleDownload}
             aria-label="Download card"
-            className="flex items-center gap-2 px-5 py-2.5 bg-gold/15 text-gold border border-gold/30 rounded-xl hover:bg-gold/25 transition-all text-sm font-tajawal"
+            className="flex items-center gap-2 px-5 py-2.5 bg-gold/10 text-gold border border-gold/20 rounded-xl hover:bg-gold/20 transition-all text-sm font-tajawal"
           >
             <Download size={16} />
             <span>Download</span>
@@ -178,7 +178,7 @@ export default function ShareCardModal({ poem, onClose }) {
           <button
             onClick={handleShare}
             aria-label="Share card"
-            className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-br from-indigo-500 to-purple-600 text-white rounded-xl hover:opacity-90 transition-all text-sm font-tajawal shadow-lg shadow-indigo-500/30"
+            className="flex items-center gap-2 px-5 py-2.5 bg-gold/20 text-gold border border-gold/30 rounded-xl hover:bg-gold/30 transition-all text-sm font-tajawal"
           >
             <Share2 size={16} />
             <span>Share</span>

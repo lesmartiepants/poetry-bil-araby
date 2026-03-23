@@ -246,11 +246,23 @@ function renderDiwan(ctx, w, h, poem) {
     ctx.fill();
   }
 
-  // Top center ornament — editorial flourish
+  // Top center ornament — editorial flourish (drawn, not Unicode)
+  ctx.save();
   ctx.fillStyle = 'rgba(197, 160, 89, 0.4)';
-  ctx.font = '32px serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('✦', w / 2, inset + 30);
+  ctx.translate(w / 2, inset + 25);
+  // 4-pointed star
+  ctx.beginPath();
+  for (let k = 0; k < 8; k++) {
+    const r = k % 2 === 0 ? 10 : 4;
+    const a = (Math.PI / 4) * k - Math.PI / 2;
+    const px = Math.cos(a) * r;
+    const py = Math.sin(a) * r;
+    if (k === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  }
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
 
   // Inner gold accent lines along top and bottom
   ctx.fillStyle = 'rgba(197, 160, 89, 0.12)';
@@ -342,17 +354,44 @@ function renderIbnMuqla(ctx, w, h, poem) {
   ctx.lineWidth = 1;
   ctx.strokeRect(m + 18, m + 18, w - (m + 18) * 2, h - (m + 18) * 2);
 
-  // Calligraphic top ornament
+  // Calligraphic top ornament — drawn rosette
+  ctx.save();
   ctx.fillStyle = '#8B6914';
-  ctx.font = '40px "Amiri", serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('❁', w / 2, m + 50);
+  ctx.translate(w / 2, m + 45);
+  for (let k = 0; k < 6; k++) {
+    ctx.save();
+    ctx.rotate((Math.PI / 3) * k);
+    ctx.beginPath();
+    ctx.ellipse(0, -10, 4, 10, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+  // Center dot
+  ctx.beginPath();
+  ctx.arc(0, 0, 3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
 
-  // Side floral accents
-  ctx.fillStyle = 'rgba(139, 105, 20, 0.15)';
-  ctx.font = '28px serif';
-  ctx.fillText('✿', m + 30, h / 2);
-  ctx.fillText('✿', w - m - 30, h / 2);
+  // Side floral accents — drawn diamond flowers
+  const drawFloral = (cx, cy) => {
+    ctx.save();
+    ctx.fillStyle = 'rgba(139, 105, 20, 0.18)';
+    ctx.translate(cx, cy);
+    for (let k = 0; k < 4; k++) {
+      ctx.save();
+      ctx.rotate((Math.PI / 2) * k);
+      ctx.beginPath();
+      ctx.ellipse(0, -7, 3, 7, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+    ctx.beginPath();
+    ctx.arc(0, 0, 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  };
+  drawFloral(m + 30, h / 2);
+  drawFloral(w - m - 30, h / 2);
 
   // Inner decorative line between frame rules
   ctx.strokeStyle = 'rgba(139, 105, 20, 0.12)';
@@ -486,11 +525,18 @@ function renderSinan(ctx, w, h, poem) {
     title: 'rgba(79, 166, 183, 0.55)',
   });
 
-  // Crescent separator
-  ctx.fillStyle = 'rgba(197, 160, 89, 0.45)';
-  ctx.font = '24px serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('☽', w / 2, headerBottom + 10);
+  // Crescent separator — drawn arc
+  ctx.save();
+  ctx.strokeStyle = 'rgba(197, 160, 89, 0.45)';
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(w / 2, headerBottom + 8, 8, Math.PI * 0.2, Math.PI * 1.8);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(w / 2 + 3, headerBottom + 8, 6, Math.PI * 0.2, Math.PI * 1.8);
+  ctx.fillStyle = '#061424'; // match bg to "cut out" inner crescent
+  ctx.fill();
+  ctx.restore();
 
   // ── Interleaved verses (line by line) ──
   const verses = prepareVerses(poem.arabic);
@@ -740,11 +786,23 @@ function renderHassanFathy(ctx, w, h, poem) {
     title: 'rgba(74, 40, 0, 0.45)',
   });
 
-  // Sun separator
+  // Sun separator — drawn sunburst
+  ctx.save();
   ctx.fillStyle = 'rgba(160, 82, 45, 0.55)';
-  ctx.font = '22px serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('✸', w / 2, headerBottom + 10);
+  ctx.translate(w / 2, headerBottom + 10);
+  // 8-pointed star (sun)
+  ctx.beginPath();
+  for (let k = 0; k < 16; k++) {
+    const r = k % 2 === 0 ? 8 : 3.5;
+    const a = (Math.PI / 8) * k - Math.PI / 2;
+    const px = Math.cos(a) * r;
+    const py = Math.sin(a) * r;
+    if (k === 0) ctx.moveTo(px, py);
+    else ctx.lineTo(px, py);
+  }
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
 
   // ── Interleaved verses (line by line) ──
   const verses = prepareVerses(poem.arabic);

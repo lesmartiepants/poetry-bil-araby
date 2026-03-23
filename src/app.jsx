@@ -1130,12 +1130,12 @@ export default function DiwanApp() {
           transition: box-shadow 0.15s ease;
         }
 
-        @keyframes fireTapRing {
-          0%   { box-shadow: 0 0 0 0px rgba(255,140,30,0.7); transform: scale(1); }
-          40%  { box-shadow: 0 0 0 8px rgba(255,140,30,0); transform: scale(1.15); }
-          100% { box-shadow: 0 0 0 0px rgba(255,140,30,0); transform: scale(1); }
+        @keyframes fireTapFlash {
+          0%   { background: rgba(255,140,30,0);    transform: scale(1); }
+          20%  { background: rgba(255,140,30,0.22); transform: scale(1.1); }
+          100% { background: rgba(255,140,30,0);    transform: scale(1); }
         }
-        .fire-tap { animation: fireTapRing 0.38s ease-out forwards; }
+        .fire-tap { animation: fireTapFlash 0.42s ease-out forwards; }
 
       `}</style>
 

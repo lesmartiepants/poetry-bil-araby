@@ -249,21 +249,48 @@ const DESIGN_STYLES = {
 
 /**
  * ShareCardPreview — A styled HTML preview of the poem card
- * Shows English-primary poet & title, interleaved Arabic verses + English translations
+ * Shows bilingual poet & title (detects when both are Arabic, avoids duplication)
+ * Interleaved Arabic verses + English translations
  */
 function ShareCardPreview({ poem, design, verses, translation }) {
   const s = DESIGN_STYLES[design?.id] || DESIGN_STYLES.diwan;
   const align = s.textAlign || 'text-center';
 
+  // Detect if English fields are actually Arabic (DB has no English column)
+  const isArabic = (str) => /[\u0600-\u06FF]/.test(str || '');
+  const poetEn = poem.poet && !isArabic(poem.poet) ? poem.poet : '';
+  const poetAr = poem.poetArabic || poem.poet || '';
+  const titleEn = poem.title && !isArabic(poem.title) ? poem.title : '';
+  const titleAr = poem.titleArabic || poem.title || '';
+  // Skip Arabic line if it's identical to the English (already shown)
+  const showPoetAr = poetAr && poetAr !== poetEn;
+  const showTitleAr = titleAr && titleAr !== titleEn;
+
   return (
     <div className={`h-full w-full flex flex-col justify-between ${s.bg} border-2 ${s.border} p-5`}>
-      {/* Poet & Title — English-primary */}
+      {/* Poet & Title — bilingual */}
       <div className={`${align} pt-3`}>
-        <p className={`font-bold text-lg ${s.poetColor}`}>{poem.poet || ''}</p>
-        <p className={`font-amiri font-bold text-[17px] mt-1 ${s.poetArColor}`} dir="rtl">
-          {poem.poetArabic || ''}
-        </p>
-        <p className={`italic text-sm mt-1.5 ${s.titleColor}`}>{poem.title || ''}</p>
+        {poetEn ? (
+          <>
+            <p className={`font-bold text-lg ${s.poetColor}`}>{poetEn}</p>
+            {showPoetAr && (
+              <p className={`font-amiri font-bold text-[17px] mt-1 ${s.poetArColor}`} dir="rtl">
+                {poetAr}
+              </p>
+            )}
+          </>
+        ) : (
+          <p className={`font-amiri font-bold text-lg ${s.poetColor}`} dir="rtl">
+            {poetAr}
+          </p>
+        )}
+        {titleEn ? (
+          <p className={`italic text-sm mt-1.5 ${s.titleColor}`}>{titleEn}</p>
+        ) : showTitleAr ? (
+          <p className={`font-amiri italic text-sm mt-1.5 ${s.titleColor}`} dir="rtl">
+            {titleAr}
+          </p>
+        ) : null}
       </div>
 
       {/* Interleaved verses + translations — line by line */}

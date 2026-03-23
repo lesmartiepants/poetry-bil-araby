@@ -62,6 +62,31 @@ export const SHARE_CARD_DESIGNS = [
 
 // ── Helpers ─────────────────────────────────────────────────────────────
 
+/** Returns true if a string contains Arabic/RTL characters */
+function isArabicText(str) {
+  if (!str) return false;
+  return /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF\uFB50-\uFDFF\uFE70-\uFEFF]/.test(str);
+}
+
+/**
+ * Resolve poet/title for bilingual display.
+ * When DB doesn't have English columns, poet and poetArabic are both Arabic.
+ * This helper detects that and returns { english, arabic } correctly.
+ */
+function resolveBilingual(englishField, arabicField) {
+  const en = englishField || '';
+  const ar = arabicField || '';
+  // If "English" field is actually Arabic (same as Arabic field, or no Arabic field but looks Arabic)
+  if (en === ar || (!ar && isArabicText(en))) {
+    return { english: '', arabic: en || ar };
+  }
+  // If English field looks Arabic and differs from Arabic field
+  if (isArabicText(en) && ar) {
+    return { english: '', arabic: ar };
+  }
+  return { english: en, arabic: ar || en };
+}
+
 /** Prepare poem text: take first N non-empty verse lines */
 export function prepareVerses(arabicText, maxLines = 4) {
   if (!arabicText) return [];
@@ -119,6 +144,69 @@ function drawBrandBottomRight(ctx, w, h, brandColor, opts = {}) {
   ctx.restore();
 }
 
+/**
+ * Draw the bilingual header: English poet name + Arabic poet name + English title.
+ * Automatically detects when both fields are Arabic (DB has no English column)
+ * and renders a single large Arabic-only name instead of duplicating.
+ *
+ * @param {CanvasRenderingContext2D} ctx
+ * @param {number} w - canvas width
+ * @param {number} headerY - top Y position of header
+ * @param {Object} poem - poem data
+ * @param {Object} colors - { poet, poetAr, title }
+ * @param {Object} opts - { align: 'center'|'right', xPos: number }
+ * @returns {number} the Y position after the header (for separator placement)
+ */
+function drawBilingualHeader(ctx, w, headerY, poem, colors, opts = {}) {
+  const align = opts.align || 'center';
+  const xPos = opts.xPos || w / 2;
+  const resolvedPoet = resolveBilingual(poem.poet, poem.poetArabic);
+  const resolvedTitle = resolveBilingual(poem.title, poem.titleArabic);
+  let curY = headerY;
+
+  ctx.textAlign = align;
+
+  if (resolvedPoet.english) {
+    // Has distinct English name — show English first, then Arabic
+    ctx.fillStyle = colors.poet;
+    ctx.font = 'bold 48px "Playfair Display", serif';
+    ctx.direction = 'ltr';
+    ctx.fillText(resolvedPoet.english, xPos, curY);
+    curY += 55;
+
+    if (resolvedPoet.arabic) {
+      ctx.fillStyle = colors.poetAr;
+      ctx.font = 'bold 46px "Amiri", serif';
+      ctx.direction = 'rtl';
+      ctx.fillText(resolvedPoet.arabic, xPos, curY);
+      curY += 55;
+    }
+  } else {
+    // Only Arabic available — show single large Arabic name
+    ctx.fillStyle = colors.poet;
+    ctx.font = 'bold 52px "Amiri", serif';
+    ctx.direction = 'rtl';
+    ctx.fillText(resolvedPoet.arabic, xPos, curY);
+    curY += 60;
+  }
+
+  // Title
+  if (resolvedTitle.english) {
+    ctx.fillStyle = colors.title;
+    ctx.font = 'italic 28px "Playfair Display", serif';
+    ctx.direction = 'ltr';
+    ctx.fillText(resolvedTitle.english, xPos, curY);
+  } else if (resolvedTitle.arabic) {
+    ctx.fillStyle = colors.title;
+    ctx.font = 'italic 28px "Amiri", serif';
+    ctx.direction = 'rtl';
+    ctx.fillText(resolvedTitle.arabic, xPos, curY);
+  }
+  curY += 35;
+
+  return curY;
+}
+
 // ──────────────────────────────────────────────────────────────────────
 //  Design 1: DĪWĀN — Luxe Editorial
 //  Gold foil calligraphy on obsidian, generous typography, editorial feel
@@ -158,29 +246,26 @@ function renderDiwan(ctx, w, h, poem) {
     ctx.fill();
   }
 
-  // ── Header: English-primary poet & title ──
-  const headerY = 110;
-  // Poet name — English (large, prominent gold)
-  ctx.fillStyle = '#c5a059';
-  ctx.font = 'bold 48px "Playfair Display", serif';
+  // Top center ornament — editorial flourish
+  ctx.fillStyle = 'rgba(197, 160, 89, 0.4)';
+  ctx.font = '32px serif';
   ctx.textAlign = 'center';
-  ctx.direction = 'ltr';
-  ctx.fillText(poem.poet || '', w / 2, headerY);
+  ctx.fillText('✦', w / 2, inset + 30);
 
-  // Poet name — Arabic (same size, slightly muted)
-  ctx.fillStyle = 'rgba(197, 160, 89, 0.65)';
-  ctx.font = 'bold 46px "Amiri", serif';
-  ctx.direction = 'rtl';
-  ctx.fillText(poem.poetArabic || poem.poet || '', w / 2, headerY + 55);
+  // Inner gold accent lines along top and bottom
+  ctx.fillStyle = 'rgba(197, 160, 89, 0.12)';
+  ctx.fillRect(inset + 30, inset + 40, w - (inset + 30) * 2, 0.5);
+  ctx.fillRect(inset + 30, h - inset - 40, w - (inset + 30) * 2, 0.5);
 
-  // Title — English
-  ctx.fillStyle = 'rgba(197, 160, 89, 0.55)';
-  ctx.font = 'italic 28px "Playfair Display", serif';
-  ctx.direction = 'ltr';
-  ctx.fillText(poem.title || '', w / 2, headerY + 110);
+  // ── Header: bilingual poet & title ──
+  const headerBottom = drawBilingualHeader(ctx, w, 110, poem, {
+    poet: '#c5a059',
+    poetAr: 'rgba(197, 160, 89, 0.65)',
+    title: 'rgba(197, 160, 89, 0.55)',
+  });
 
   // Gold gradient separator
-  const sepLineY = headerY + 140;
+  const sepLineY = headerBottom + 5;
   const grad = ctx.createLinearGradient(80, 0, w - 80, 0);
   grad.addColorStop(0, 'rgba(197, 160, 89, 0)');
   grad.addColorStop(0.3, 'rgba(197, 160, 89, 0.5)');
@@ -263,26 +348,25 @@ function renderIbnMuqla(ctx, w, h, poem) {
   ctx.textAlign = 'center';
   ctx.fillText('❁', w / 2, m + 50);
 
-  // ── Header — English-primary ──
-  const headerY = 135;
-  // Poet name — English (prominent)
-  ctx.fillStyle = '#4A2800';
-  ctx.font = 'bold 48px "Playfair Display", serif';
-  ctx.textAlign = 'center';
-  ctx.direction = 'ltr';
-  ctx.fillText(poem.poet || '', w / 2, headerY);
+  // Side floral accents
+  ctx.fillStyle = 'rgba(139, 105, 20, 0.15)';
+  ctx.font = '28px serif';
+  ctx.fillText('✿', m + 30, h / 2);
+  ctx.fillText('✿', w - m - 30, h / 2);
 
-  // Poet name — Arabic (same size, slightly muted)
-  ctx.fillStyle = 'rgba(74, 40, 0, 0.65)';
-  ctx.font = 'bold 46px "Amiri", serif';
-  ctx.direction = 'rtl';
-  ctx.fillText(poem.poetArabic || poem.poet || '', w / 2, headerY + 55);
+  // Inner decorative line between frame rules
+  ctx.strokeStyle = 'rgba(139, 105, 20, 0.12)';
+  ctx.lineWidth = 0.5;
+  ctx.setLineDash([8, 6]);
+  ctx.strokeRect(m + 14, m + 14, w - (m + 14) * 2, h - (m + 14) * 2);
+  ctx.setLineDash([]);
 
-  // Title — English
-  ctx.fillStyle = 'rgba(92, 58, 10, 0.5)';
-  ctx.font = 'italic 28px "Playfair Display", serif';
-  ctx.direction = 'ltr';
-  ctx.fillText(poem.title || '', w / 2, headerY + 108);
+  // ── Header — bilingual ──
+  const headerBottom = drawBilingualHeader(ctx, w, 135, poem, {
+    poet: '#4A2800',
+    poetAr: 'rgba(74, 40, 0, 0.65)',
+    title: 'rgba(92, 58, 10, 0.5)',
+  });
 
   // Horizontal flourish
   const fl = ctx.createLinearGradient(m + 60, 0, w - m - 60, 0);
@@ -290,12 +374,12 @@ function renderIbnMuqla(ctx, w, h, poem) {
   fl.addColorStop(0.5, 'rgba(139, 105, 20, 0.7)');
   fl.addColorStop(1, 'rgba(139, 105, 20, 0)');
   ctx.fillStyle = fl;
-  ctx.fillRect(m + 60, headerY + 135, w - m * 2 - 120, 1.5);
+  ctx.fillRect(m + 60, headerBottom + 5, w - m * 2 - 120, 1.5);
 
   // ── Interleaved verses (line by line) ──
   const verses = prepareVerses(poem.arabic);
   const translation = prepareTranslation(poem.english || poem.cachedTranslation);
-  const contentStartY = headerY + 190;
+  const contentStartY = headerBottom + 60;
   const pairSpacing = 170;
 
   verses.forEach((verse, i) => {
@@ -388,37 +472,30 @@ function renderSinan(ctx, w, h, poem) {
   ctx.fillRect(m + 1, 100, 2, h - 200);
   ctx.fillRect(w - m - 3, 100, 2, h - 200);
 
-  // ── Header — English-primary ──
-  const headerY = 130;
-  // Poet name — English (prominent gold)
-  ctx.fillStyle = '#c5a059';
-  ctx.font = 'bold 48px "Playfair Display", serif';
-  ctx.textAlign = 'center';
-  ctx.direction = 'ltr';
-  ctx.fillText(poem.poet || '', w / 2, headerY);
+  // Scattered small stars for celestial atmosphere
+  drawStar(w / 2, m + 25, 12, 6, 'rgba(197, 160, 89, 0.22)');
+  drawStar(160, h - 60, 10, 6, 'rgba(79, 166, 183, 0.12)');
+  drawStar(w - 160, h - 60, 10, 6, 'rgba(79, 166, 183, 0.12)');
+  drawStar(m + 25, h / 2, 8, 5, 'rgba(197, 160, 89, 0.1)');
+  drawStar(w - m - 25, h / 2, 8, 5, 'rgba(197, 160, 89, 0.1)');
 
-  // Poet name — Arabic
-  ctx.fillStyle = 'rgba(197, 160, 89, 0.6)';
-  ctx.font = 'bold 46px "Amiri", serif';
-  ctx.direction = 'rtl';
-  ctx.fillText(poem.poetArabic || poem.poet || '', w / 2, headerY + 55);
-
-  // Title — English
-  ctx.fillStyle = 'rgba(79, 166, 183, 0.55)';
-  ctx.font = 'italic 28px "Playfair Display", serif';
-  ctx.direction = 'ltr';
-  ctx.fillText(poem.title || '', w / 2, headerY + 108);
+  // ── Header — bilingual ──
+  const headerBottom = drawBilingualHeader(ctx, w, 130, poem, {
+    poet: '#c5a059',
+    poetAr: 'rgba(197, 160, 89, 0.6)',
+    title: 'rgba(79, 166, 183, 0.55)',
+  });
 
   // Crescent separator
   ctx.fillStyle = 'rgba(197, 160, 89, 0.45)';
   ctx.font = '24px serif';
   ctx.textAlign = 'center';
-  ctx.fillText('☽', w / 2, headerY + 148);
+  ctx.fillText('☽', w / 2, headerBottom + 10);
 
   // ── Interleaved verses (line by line) ──
   const verses = prepareVerses(poem.arabic);
   const translation = prepareTranslation(poem.english || poem.cachedTranslation);
-  const contentStartY = headerY + 200;
+  const contentStartY = headerBottom + 60;
   const pairSpacing = 170;
 
   verses.forEach((verse, i) => {
@@ -499,28 +576,35 @@ function renderZahaHadid(ctx, w, h, poem) {
   ctx.fillStyle = 'rgba(200, 100, 255, 0.04)';
   ctx.fillRect(60, 30, w - 120, 190);
 
-  // ── Header — English-primary, right-aligned for drama ──
-  const headerY = 70;
-  // Poet name — English (prominent)
-  ctx.fillStyle = '#C864FF';
-  ctx.font = 'bold 48px "Playfair Display", serif';
-  ctx.textAlign = 'right';
-  ctx.direction = 'ltr';
-  ctx.fillText(poem.poet || '', w - 80, headerY);
+  // Additional floating glass panels — parametric design accent
+  ctx.fillStyle = 'rgba(80, 160, 255, 0.03)';
+  ctx.fillRect(100, h - 180, w - 200, 80);
+  ctx.fillStyle = 'rgba(200, 100, 255, 0.02)';
+  ctx.fillRect(m, h * 0.4, 80, h * 0.2);
 
-  // Poet name — Arabic
-  ctx.fillStyle = 'rgba(200, 100, 255, 0.6)';
-  ctx.font = 'bold 46px "Amiri", serif';
-  ctx.textAlign = 'right';
-  ctx.direction = 'rtl';
-  ctx.fillText(poem.poetArabic || poem.poet || '', w - 80, headerY + 55);
+  // Neon dot accents along frame
+  ctx.fillStyle = 'rgba(200, 100, 255, 0.4)';
+  ctx.beginPath();
+  ctx.arc(m + 4, m + 4, 3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = 'rgba(80, 180, 255, 0.4)';
+  ctx.beginPath();
+  ctx.arc(w - m - 4, h - m - 4, 3, 0, Math.PI * 2);
+  ctx.fill();
 
-  // Title — English
-  ctx.fillStyle = 'rgba(100, 180, 255, 0.5)';
-  ctx.font = 'italic 28px "Playfair Display", serif';
-  ctx.textAlign = 'right';
-  ctx.direction = 'ltr';
-  ctx.fillText(poem.title || '', w - 80, headerY + 108);
+  // ── Header — bilingual, right-aligned for drama ──
+  const headerBottom = drawBilingualHeader(
+    ctx,
+    w,
+    70,
+    poem,
+    {
+      poet: '#C864FF',
+      poetAr: 'rgba(200, 100, 255, 0.6)',
+      title: 'rgba(100, 180, 255, 0.5)',
+    },
+    { align: 'right', xPos: w - 80 }
+  );
 
   // ── Interleaved verses — right-aligned, line by line ──
   const verses = prepareVerses(poem.arabic);
@@ -628,37 +712,44 @@ function renderHassanFathy(ctx, w, h, poem) {
   ctx.fillRect(55, 105, w - 110, 2.5);
   ctx.fillRect(55, h - 105, w - 110, 2.5);
 
-  // ── Header — English-primary ──
-  const headerY = 155;
-  // Poet name — English (prominent)
-  ctx.fillStyle = '#3D1F00';
-  ctx.font = 'bold 48px "Playfair Display", serif';
-  ctx.textAlign = 'center';
-  ctx.direction = 'ltr';
-  ctx.fillText(poem.poet || '', w / 2, headerY);
+  // Side mashrabiya panels — vertical lattice stripes
+  ctx.save();
+  ctx.strokeStyle = 'rgba(160, 82, 45, 0.08)';
+  ctx.lineWidth = 0.5;
+  const sgs = 20;
+  for (let y = 120; y < h - 120; y += sgs) {
+    // Left side
+    ctx.beginPath();
+    ctx.moveTo(m + 5, y);
+    ctx.lineTo(m + 20, y + sgs / 2);
+    ctx.lineTo(m + 5, y + sgs);
+    ctx.stroke();
+    // Right side
+    ctx.beginPath();
+    ctx.moveTo(w - m - 5, y);
+    ctx.lineTo(w - m - 20, y + sgs / 2);
+    ctx.lineTo(w - m - 5, y + sgs);
+    ctx.stroke();
+  }
+  ctx.restore();
 
-  // Poet name — Arabic
-  ctx.fillStyle = 'rgba(61, 31, 0, 0.6)';
-  ctx.font = 'bold 46px "Amiri", serif';
-  ctx.direction = 'rtl';
-  ctx.fillText(poem.poetArabic || poem.poet || '', w / 2, headerY + 55);
-
-  // Title — English
-  ctx.fillStyle = 'rgba(74, 40, 0, 0.45)';
-  ctx.font = 'italic 28px "Playfair Display", serif';
-  ctx.direction = 'ltr';
-  ctx.fillText(poem.title || '', w / 2, headerY + 108);
+  // ── Header — bilingual ──
+  const headerBottom = drawBilingualHeader(ctx, w, 155, poem, {
+    poet: '#3D1F00',
+    poetAr: 'rgba(61, 31, 0, 0.6)',
+    title: 'rgba(74, 40, 0, 0.45)',
+  });
 
   // Sun separator
   ctx.fillStyle = 'rgba(160, 82, 45, 0.55)';
   ctx.font = '22px serif';
   ctx.textAlign = 'center';
-  ctx.fillText('✸', w / 2, headerY + 146);
+  ctx.fillText('✸', w / 2, headerBottom + 10);
 
   // ── Interleaved verses (line by line) ──
   const verses = prepareVerses(poem.arabic);
   const translation = prepareTranslation(poem.english || poem.cachedTranslation);
-  const contentStartY = headerY + 200;
+  const contentStartY = headerBottom + 60;
   const pairSpacing = 170;
 
   verses.forEach((verse, i) => {

@@ -149,6 +149,7 @@ describe('renderShareCard', () => {
       arc: vi.fn(),
       save: vi.fn(),
       restore: vi.fn(),
+      setLineDash: vi.fn(),
       translate: vi.fn(),
       scale: vi.fn(),
       rotate: vi.fn(),
@@ -250,6 +251,27 @@ describe('renderShareCard', () => {
     expect(() => {
       renderShareCard(ctx, CARD_WIDTH, CARD_HEIGHT, noTranslation, 'diwan');
     }).not.toThrow();
+  });
+
+  it('handles double-Arabic poet/title without duplicating', () => {
+    // Simulate DB without English columns: poet and poetArabic are both Arabic
+    const arabicOnlyPoem = {
+      ...mockPoem,
+      poet: 'نزار قباني',
+      poetArabic: 'نزار قباني',
+      title: 'يا دمشق',
+      titleArabic: 'يا دمشق',
+    };
+    for (const design of SHARE_CARD_DESIGNS) {
+      ctx.fillText.mockClear();
+      expect(() => {
+        renderShareCard(ctx, CARD_WIDTH, CARD_HEIGHT, arabicOnlyPoem, design.id);
+      }).not.toThrow();
+      const calls = ctx.fillText.mock.calls.map((c) => c[0]);
+      // Should render poet name once (not duplicate)
+      const poetOccurrences = calls.filter((t) => t === 'نزار قباني').length;
+      expect(poetOccurrences).toBe(1);
+    }
   });
 
   it('draws English poet name and poem title in every design', () => {

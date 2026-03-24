@@ -41,6 +41,7 @@
     "@supabase/supabase-js": "^2.90.1",
     "@use-gesture/react": "^10.3.1",
     "@vercel/analytics": "^1.6.1",
+    "any-ascii": "^0.3.3",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",

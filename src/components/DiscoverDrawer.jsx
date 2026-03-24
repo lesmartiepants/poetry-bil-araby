@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { X, Loader2, Search } from 'lucide-react';
 import { motion } from 'framer-motion';
+import anyAscii from 'any-ascii';
 import { CATEGORIES } from '../constants/index.js';
 import { useUIStore } from '../stores/uiStore';
 import { useModalStore } from '../stores/modalStore';
@@ -177,6 +178,17 @@ const normalizeAr = (s) =>
     .replace(/\u06A9/g, '\u0643')
     .replace(/\u0629/g, '\u0647');
 
+/* ─── Romanize Arabic name → Latin fallback when name_en is absent ─── */
+const romanizeArabic = (str) => {
+  if (!str) return '';
+  return anyAscii(str)
+    .replace(/[`']/g, '')       // drop stray hamza apostrophes
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
+};
+
 /* ─── Main DiscoverDrawer component ─── */
 const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
   const isOpen = useModalStore((s) => s.discoverDrawer);
@@ -215,7 +227,7 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
         const safeCount = Number.isFinite(parsedCount) && parsedCount >= 0 ? parsedCount : 0;
         return {
           id: p.name,
-          label: p.name_en || p.name,
+          label: p.name_en || romanizeArabic(p.name),
           labelAr: p.name,
           poemCount: safeCount,
         };

@@ -89,3 +89,6 @@ poetry_quality_and_curation/retriever_and_quality_curator/data/shard_ids/
 
 # Sentry Config File
 .env.sentry-build-plugin
+
+# Script progress/state files (ephemeral, resume state only)
+scripts/title-progress.json

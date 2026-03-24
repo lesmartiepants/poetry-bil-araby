@@ -64,6 +64,7 @@ import {
 } from './services/database.js';
 import './styles/app.css';
 import DebugPanel from './components/DebugPanel.jsx';
+import DesktopInsightPane from './components/DesktopInsightPane.jsx';
 import MysticalConsultationEffect from './components/MysticalConsultationEffect.jsx';
 import ErrorBanner from './components/ErrorBanner.jsx';
 import ShortcutHelp from './components/ShortcutHelp.jsx';
@@ -1748,84 +1749,17 @@ export default function DiwanApp() {
           </footer>
         </div>
 
-        <div className="hidden md:block h-full border-l">
-          <div
-            className={`${DESIGN.paneWidth} h-full flex flex-col z-30 ${DESIGN.anim} ${theme.glass} ${theme.border}`}
-          >
-            <div className="p-6 pb-4 border-b border-stone-500/10">
-              <div className="flex items-center justify-between">
-                <h3 className="font-brand-en italic font-semibold text-[clamp(1rem,1.8vw,1.125rem)] text-indigo-600 tracking-tight">
-                  Poetic Insight
-                </h3>
-                {selectedCategory !== 'All' && (
-                  <span
-                    key={selectedCategory}
-                    className="font-amiri text-[11px] px-2.5 py-0.5 rounded-full border border-gold/25 text-gold/80 bg-gold/5"
-                    style={{ animation: 'fadeIn 0.3s ease-out' }}
-                  >
-                    {CATEGORIES.find((c) => c.id === selectedCategory)?.labelAr}
-                  </span>
-                )}
-              </div>
-              <p className="text-[10px] opacity-30 uppercase font-brand-en truncate mt-1">
-                {current?.poet} • {current?.title}
-              </p>
-            </div>
-            <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-              {isInterpreting ? (
-                <div className="h-full flex flex-col items-center justify-center gap-4 opacity-30 animate-pulse">
-                  <Sparkles className="animate-spin text-indigo-500" size={32} />
-                  <p className="font-brand-en italic text-[clamp(0.875rem,1.5vw,1rem)]">
-                    Consulting Diwan...
-                  </p>
-                </div>
-              ) : (
-                <div className={DESIGN.paneSpacing}>
-                  {!interpretation && (
-                    <button
-                      onClick={handleAnalyze}
-                      className={`group relative w-full py-4 border ${theme.brandBorder} ${theme.brand} rounded-full font-brand-en tracking-widest text-[10px] uppercase hover:bg-indigo-500/5 transition-all flex items-center justify-center gap-3 overflow-hidden bg-indigo-500/5`}
-                    >
-                      <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-indigo-500/10 to-transparent animate-[spin_8s_linear_infinite]" />
-                      <Sparkles size={12} /> Seek Insight
-                    </button>
-                  )}
-                  {showTranslation && (
-                    <p
-                      className={`font-brand-en italic whitespace-pre-wrap ${DESIGN.paneVerseSize} ${darkMode ? 'text-stone-100' : 'text-stone-800'}`}
-                    >
-                      {insightParts?.poeticTranslation || current?.english}
-                    </p>
-                  )}
-                  {insightParts?.depth && (
-                    <div className="pt-6 border-t border-indigo-500/10">
-                      <h4 className="text-[10px] font-brand-en font-black text-indigo-600 mb-2 uppercase tracking-widest opacity-80">
-                        The Depth
-                      </h4>
-                      <div className="pl-4 border-l border-indigo-500/10">
-                        <p className="text-[clamp(0.875rem,1.5vw,1rem)] font-brand-en font-normal opacity-80 leading-relaxed">
-                          {insightParts.depth}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                  {insightParts?.author && (
-                    <div className="pt-6 border-t border-indigo-500/10">
-                      <h4 className="text-[10px] font-brand-en font-black text-indigo-600 mb-2 uppercase tracking-widest opacity-80">
-                        The Author
-                      </h4>
-                      <div className="pl-4 border-l border-indigo-500/10">
-                        <p className="text-[clamp(0.875rem,1.5vw,1rem)] font-brand-en font-normal opacity-80 leading-relaxed">
-                          {insightParts.author}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+        <DesktopInsightPane
+          current={current}
+          insightParts={insightParts}
+          isInterpreting={isInterpreting}
+          interpretation={interpretation}
+          showTranslation={showTranslation}
+          darkMode={darkMode}
+          theme={theme}
+          selectedCategory={selectedCategory}
+          handleAnalyze={handleAnalyze}
+        />
       </div>
 
       {/* Insights Drawer (Mobile bottom sheet) */}

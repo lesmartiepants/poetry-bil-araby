@@ -270,6 +270,7 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
   const subTextColor = darkMode ? 'rgba(214,211,205,0.6)' : 'rgba(40,35,30,0.6)';
   const subtleBorder = darkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.07)';
   const cardBg = darkMode ? 'rgba(255,255,255,0.025)' : 'rgba(0,0,0,0.02)';
+  const stickyBg = darkMode ? 'rgba(18,16,12,0.97)' : 'rgba(253,252,248,0.97)';
 
   return (
     <>
@@ -441,7 +442,7 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
         <div
           className="sticky top-0 z-10 pb-2"
           style={{
-            background: darkMode ? 'rgba(18,16,12,0.97)' : 'rgba(253,252,248,0.97)',
+            background: stickyBg,
           }}
         >
           {/* Gold foil Surprise Me */}
@@ -451,6 +452,7 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
                 @keyframes goldFoilSheen {
                   0%   { background-position: -300% center; }
                   25%  { background-position:  300% center; }
+                  /* 26%: snap reset — both -300% and 300% are off-screen, so this is invisible */
                   26%, 100% { background-position: -300% center; }
                 }
               `}</style>

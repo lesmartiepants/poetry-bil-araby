@@ -1694,7 +1694,10 @@ export default function DiwanApp() {
         {discoverDrawerOpen && (
           <DiscoverDrawer
             key="discover-drawer"
-            onSurpriseMe={handleFetch}
+            onSurpriseMe={() => {
+              setSelectedCategory('All');
+              handleFetch('All');
+            }}
             onSelectPoet={(id) => {
               if (id === selectedCategory && id !== 'All') {
                 handleFetch();

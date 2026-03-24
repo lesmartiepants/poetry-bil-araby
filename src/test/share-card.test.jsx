@@ -314,10 +314,10 @@ describe('ShareCardModal', () => {
     ShareCardModal = mod.default;
   });
 
-  it('renders with poem content visible', () => {
+  it('renders with canvas preview', () => {
     render(<ShareCardModal poem={mockPoem} onClose={() => {}} />);
-    // Should show English poet name (primary)
-    expect(screen.getByText(mockPoem.poet)).toBeInTheDocument();
+    // Preview is now a canvas element (exact match to download)
+    expect(screen.getByLabelText('Share card preview')).toBeInTheDocument();
   });
 
   it('shows design name for each design option', () => {
@@ -355,16 +355,21 @@ describe('ShareCardModal', () => {
     expect(sinanBtn.closest('button')).toHaveAttribute('aria-pressed', 'true');
   });
 
-  it('shows English poet name and poem title in preview', () => {
+  it('renders canvas preview that matches download canvas', () => {
     render(<ShareCardModal poem={mockPoem} onClose={() => {}} />);
-    expect(screen.getByText(mockPoem.poet)).toBeInTheDocument();
-    expect(screen.getByText(mockPoem.title)).toBeInTheDocument();
+    // Both the preview canvas and hidden download canvas should exist
+    const preview = screen.getByLabelText('Share card preview');
+    expect(preview.tagName).toBe('CANVAS');
+    // Hidden canvas for download/share
+    const hiddenCanvas = document.querySelector('canvas[aria-hidden="true"]');
+    expect(hiddenCanvas).toBeInTheDocument();
   });
 
-  it('shows brand watermark in preview', () => {
+  it('has correct preview canvas dimensions', () => {
     render(<ShareCardModal poem={mockPoem} onClose={() => {}} />);
-    // Brand is now a single line with "poetry" and "بالعربي" together
-    expect(screen.getByText(/poetry/)).toBeInTheDocument();
-    expect(screen.getByText(/بالعربي/)).toBeInTheDocument();
+    const preview = screen.getByLabelText('Share card preview');
+    expect(preview.width).toBe(340);
+    // Should maintain the 1080:1350 aspect ratio
+    expect(preview.height).toBe(Math.round(340 * (1350 / 1080)));
   });
 });

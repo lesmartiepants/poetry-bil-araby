@@ -168,64 +168,68 @@ function drawBilingualHeader(ctx, w, headerY, poem, colors, opts = {}) {
   ctx.textAlign = align;
 
   // ── Poet name — gold foil editorial hierarchy ──
-  // Arabic poet name first (bold, prominent)
+  // Arabic poet name first (bold, prominent, brand font)
   if (resolvedPoet.arabic) {
     ctx.fillStyle = colors.poet;
-    ctx.font = 'bold 44px "Amiri", serif';
+    ctx.font = 'bold 54px "Reem Kufi", "Amiri", sans-serif';
     ctx.direction = 'rtl';
     // Subtle gold glow for foil effect
     ctx.save();
     ctx.shadowColor = colors.poet;
-    ctx.shadowBlur = 12;
+    ctx.shadowBlur = 16;
     ctx.fillText(resolvedPoet.arabic, xPos, curY);
     ctx.restore();
-    curY += 50;
+    curY += 62;
   }
 
-  // English poet name below (slightly smaller, same gold)
+  // English poet name below (complementary, same emphasis)
   if (resolvedPoet.english) {
     ctx.fillStyle = colors.poetAr || colors.poet;
-    ctx.font = 'bold 32px "Playfair Display", serif';
+    ctx.font = '600 38px "Playfair Display", serif';
     ctx.direction = 'ltr';
+    ctx.save();
+    ctx.shadowColor = colors.poet;
+    ctx.shadowBlur = 8;
     ctx.fillText(resolvedPoet.english, xPos, curY);
-    curY += 40;
+    ctx.restore();
+    curY += 46;
   }
 
   // Small gold separator line
-  curY += 6;
+  curY += 8;
   ctx.save();
   const sepColor = colors.separator || colors.poet;
   ctx.strokeStyle = sepColor;
-  ctx.globalAlpha = 0.3;
-  ctx.lineWidth = 0.75;
+  ctx.globalAlpha = 0.35;
+  ctx.lineWidth = 1;
   ctx.beginPath();
   if (align === 'right') {
-    ctx.moveTo(xPos - 60, curY);
+    ctx.moveTo(xPos - 80, curY);
     ctx.lineTo(xPos, curY);
   } else {
-    ctx.moveTo(xPos - 30, curY);
-    ctx.lineTo(xPos + 30, curY);
+    ctx.moveTo(xPos - 40, curY);
+    ctx.lineTo(xPos + 40, curY);
   }
   ctx.stroke();
   ctx.restore();
-  curY += 14;
+  curY += 18;
 
-  // ── Title — italic, editorial ──
+  // ── Title — brand font for Arabic, editorial italic for English ──
   if (resolvedTitle.arabic) {
     ctx.fillStyle = colors.title;
-    ctx.font = 'italic 30px "Amiri", serif';
+    ctx.font = 'bold 48px "Reem Kufi", "Amiri", sans-serif';
     ctx.direction = 'rtl';
     ctx.fillText(resolvedTitle.arabic, xPos, curY);
-    curY += 35;
+    curY += 55;
   }
   if (resolvedTitle.english && resolvedTitle.english !== resolvedTitle.arabic) {
     ctx.fillStyle = colors.title;
-    ctx.font = 'italic 24px "Playfair Display", serif';
+    ctx.font = 'italic 36px "Playfair Display", serif';
     ctx.direction = 'ltr';
-    ctx.globalAlpha = 0.7;
+    ctx.globalAlpha = 0.75;
     ctx.fillText(resolvedTitle.english, xPos, curY);
     ctx.globalAlpha = 1;
-    curY += 30;
+    curY += 42;
   }
 
   return curY;
@@ -285,17 +289,17 @@ function renderDiwan(ctx, w, h, poem) {
 
     // Arabic verse
     ctx.fillStyle = '#e8e0d0';
-    ctx.font = '58px "Amiri", serif';
+    ctx.font = '46px "Amiri", serif';
     ctx.textAlign = 'center';
     ctx.direction = 'rtl';
     ctx.fillText(verse, w / 2, y);
 
     // English translation below
     if (translation[i]) {
-      ctx.fillStyle = 'rgba(197, 160, 89, 0.45)';
-      ctx.font = 'italic 24px "Playfair Display", serif';
+      ctx.fillStyle = 'rgba(197, 160, 89, 0.55)';
+      ctx.font = 'italic 34px "Playfair Display", serif';
       ctx.direction = 'ltr';
-      ctx.fillText(translation[i], w / 2, y + 48);
+      ctx.fillText(translation[i], w / 2, y + 54);
     }
   });
 
@@ -374,16 +378,16 @@ function renderIbnMuqla(ctx, w, h, poem) {
     const y = contentStartY + i * pairSpacing;
 
     ctx.fillStyle = '#2C1A00';
-    ctx.font = '58px "Amiri", serif';
+    ctx.font = '46px "Amiri", serif';
     ctx.textAlign = 'center';
     ctx.direction = 'rtl';
     ctx.fillText(verse, w / 2, y);
 
     if (translation[i]) {
-      ctx.fillStyle = 'rgba(74, 40, 0, 0.38)';
-      ctx.font = 'italic 24px "Playfair Display", serif';
+      ctx.fillStyle = 'rgba(74, 40, 0, 0.48)';
+      ctx.font = 'italic 34px "Playfair Display", serif';
       ctx.direction = 'ltr';
-      ctx.fillText(translation[i], w / 2, y + 48);
+      ctx.fillText(translation[i], w / 2, y + 54);
     }
   });
 
@@ -457,16 +461,16 @@ function renderSinan(ctx, w, h, poem) {
     const y = contentStartY + i * pairSpacing;
 
     ctx.fillStyle = '#E8E4DC';
-    ctx.font = '58px "Amiri", serif';
+    ctx.font = '46px "Amiri", serif';
     ctx.textAlign = 'center';
     ctx.direction = 'rtl';
     ctx.fillText(verse, w / 2, y);
 
     if (translation[i]) {
-      ctx.fillStyle = 'rgba(79, 166, 183, 0.45)';
-      ctx.font = 'italic 24px "Playfair Display", serif';
+      ctx.fillStyle = 'rgba(79, 166, 183, 0.55)';
+      ctx.font = 'italic 34px "Playfair Display", serif';
       ctx.direction = 'ltr';
-      ctx.fillText(translation[i], w / 2, y + 48);
+      ctx.fillText(translation[i], w / 2, y + 54);
     }
   });
 
@@ -553,17 +557,17 @@ function renderZahaHadid(ctx, w, h, poem) {
     const y = contentStartY + i * pairSpacing;
 
     ctx.fillStyle = '#F0E8FF';
-    ctx.font = '58px "Amiri", serif';
+    ctx.font = '46px "Amiri", serif';
     ctx.textAlign = 'right';
     ctx.direction = 'rtl';
     ctx.fillText(verse, w - 85, y);
 
     if (translation[i]) {
-      ctx.fillStyle = 'rgba(150, 180, 255, 0.42)';
-      ctx.font = 'italic 24px "Playfair Display", serif';
+      ctx.fillStyle = 'rgba(150, 180, 255, 0.52)';
+      ctx.font = 'italic 34px "Playfair Display", serif';
       ctx.textAlign = 'right';
       ctx.direction = 'ltr';
-      ctx.fillText(translation[i], w - 85, y + 48);
+      ctx.fillText(translation[i], w - 85, y + 54);
     }
   });
 
@@ -643,16 +647,16 @@ function renderHassanFathy(ctx, w, h, poem) {
     const y = contentStartY + i * pairSpacing;
 
     ctx.fillStyle = '#2A1500';
-    ctx.font = '58px "Amiri", serif';
+    ctx.font = '46px "Amiri", serif';
     ctx.textAlign = 'center';
     ctx.direction = 'rtl';
     ctx.fillText(verse, w / 2, y);
 
     if (translation[i]) {
-      ctx.fillStyle = 'rgba(74, 40, 0, 0.35)';
-      ctx.font = 'italic 24px "Playfair Display", serif';
+      ctx.fillStyle = 'rgba(74, 40, 0, 0.45)';
+      ctx.font = 'italic 34px "Playfair Display", serif';
       ctx.direction = 'ltr';
-      ctx.fillText(translation[i], w / 2, y + 48);
+      ctx.fillText(translation[i], w / 2, y + 54);
     }
   });
 

@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { X, Loader2, Search } from 'lucide-react';
 import { motion } from 'framer-motion';
-import anyAscii from 'any-ascii';
+
 import { CATEGORIES } from '../constants/index.js';
 import { useUIStore } from '../stores/uiStore';
 import { useModalStore } from '../stores/modalStore';
@@ -184,14 +184,46 @@ const normalizeAr = (s) =>
     .replace(/\u06A9/g, '\u0643')
     .replace(/\u0629/g, '\u0647');
 
-/* ─── Romanize Arabic name → Latin fallback when name_en is absent ─── */
+/* ─── Arabic name romanization map (name-display focused, includes vowels) ─── */
+const ARABIC_NAME_MAP = {
+  'ا': 'a',  'أ': 'a',  'إ': 'i',  'آ': 'aa', 'ى': 'a',  'ٱ': 'a',
+  'ب': 'b',  'ت': 't',  'ث': 'th', 'ج': 'j',  'ح': 'h',  'خ': 'kh',
+  'د': 'd',  'ذ': 'dh', 'ر': 'r',  'ز': 'z',  'س': 's',  'ش': 'sh',
+  'ص': 's',  'ض': 'd',  'ط': 't',  'ظ': 'z',
+  'ع': 'aa', // guttural ʿayn → 'aa' for readability (e.g. سعدي → Saady)
+  'غ': 'gh', 'ف': 'f',  'ق': 'q',  'ك': 'k',  'ل': 'l',
+  'م': 'm',  'ن': 'n',  'ه': 'h',  'ة': 'a',
+  'ء': '',   'ئ': 'y',  'ؤ': 'w',
+  // Diacritics (rarely present in names, but handle if included)
+  '\u064E': 'a', '\u064F': 'u', '\u0650': 'i', '\u0652': '',
+};
+
+/* ─── Romanize Arabic name → readable Latin fallback when name_en is absent ─── */
 const romanizeArabic = (str) => {
   if (!str) return '';
-  return anyAscii(str)
-    .replace(/[`']/g, '') // drop stray hamza apostrophes
+  return str
     .split(/\s+/)
     .filter(Boolean)
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .map((word) => {
+      let result = '';
+      const chars = [...word];
+      for (let i = 0; i < chars.length; i++) {
+        const ch = chars[i];
+        // Shadda (ّ) – double the previous consonant (only if it's a letter)
+        if (ch === '\u0651') {
+          const last = result[result.length - 1];
+          if (last && /[a-zA-Z]/.test(last)) result += last;
+          continue;
+        }
+        // و: word-initial = consonant 'w', otherwise = long vowel 'ou'
+        if (ch === 'و') { result += i === 0 ? 'w' : 'ou'; continue; }
+        // ي: always 'y' (covers both consonant and vowel forms)
+        if (ch === 'ي') { result += 'y'; continue; }
+        result += ARABIC_NAME_MAP[ch] ?? '';
+      }
+      return result ? result[0].toUpperCase() + result.slice(1) : '';
+    })
+    .filter(Boolean)
     .join(' ');
 };
 

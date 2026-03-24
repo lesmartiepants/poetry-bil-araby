@@ -114,11 +114,16 @@ function calculateHeaderHeight(poem) {
   const resolvedPoet = resolveBilingual(poem.poet, poem.poetArabic);
   const resolvedTitle = resolveBilingual(poem.title, poem.titleArabic);
   let height = 0;
-  if (resolvedPoet.arabic) height += 62;
-  if (resolvedPoet.english) height += 46;
-  height += 26; // separator
-  if (resolvedTitle.arabic) height += 55;
-  if (resolvedTitle.english && resolvedTitle.english !== resolvedTitle.arabic) height += 42;
+  // Title first (top position)
+  if (resolvedTitle.arabic) height += 62;
+  // Book flourish
+  height += 36;
+  // Poet name
+  if (resolvedPoet.arabic) height += 52;
+  // English summary line: "[author] – [title]"
+  const enPoet = resolvedPoet.english || '';
+  const enTitle = resolvedTitle.english || '';
+  if (enPoet || enTitle) height += 40;
   return height;
 }
 
@@ -128,7 +133,7 @@ function calculateHeaderHeight(poem) {
  */
 function calculateCenteredLayout(h, poem, verseCount) {
   const headerHeight = calculateHeaderHeight(poem);
-  const titleBodyGap = 60;
+  const titleBodyGap = 80;
   const minMargin = 80;
   const spaceForVerses = h - minMargin * 2 - headerHeight - titleBodyGap;
   const pairSpacing = Math.min(180, spaceForVerses / Math.max(verseCount, 1));
@@ -144,14 +149,16 @@ function calculateCenteredLayout(h, poem, verseCount) {
  * The brand font is NOT changed, but color/opacity/effects vary by design.
  */
 function drawBrandBottomRight(ctx, w, h, brandColor, opts = {}) {
-  const { glowColor, glowBlur = 0, opacity = 0.65, size = 24 } = opts;
+  const { glowColor, glowBlur = 0, opacity = 0.65, size = 30, innerInset = 58 } = opts;
   ctx.save();
   ctx.globalAlpha = opacity;
   ctx.textAlign = 'right';
   ctx.textBaseline = 'middle';
 
-  const bx = w - 55;
-  const by = h - 55;
+  // Position inside the inner border box with padding
+  const padding = 18;
+  const bx = w - innerInset - padding;
+  const by = h - innerInset - padding;
 
   // Optional glow
   if (glowColor && glowBlur > 0) {
@@ -176,8 +183,51 @@ function drawBrandBottomRight(ctx, w, h, brandColor, opts = {}) {
 }
 
 /**
- * Draw the bilingual header: Poet name (gold foil editorial), title (italic editorial).
- * Hierarchy: Arabic poet → English poet → separator → Arabic title → English title.
+ * Draw a book-inspired decorative flourish — two mirrored curves with a central diamond.
+ */
+function drawBookFlourish(ctx, cx, cy, color) {
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.fillStyle = color;
+  ctx.lineWidth = 1.2;
+  ctx.globalAlpha = 0.45;
+
+  // Central small diamond
+  ctx.beginPath();
+  ctx.moveTo(cx, cy - 5);
+  ctx.lineTo(cx + 5, cy);
+  ctx.lineTo(cx, cy + 5);
+  ctx.lineTo(cx - 5, cy);
+  ctx.closePath();
+  ctx.fill();
+
+  // Left open-book page curve
+  ctx.beginPath();
+  ctx.moveTo(cx - 12, cy);
+  ctx.quadraticCurveTo(cx - 40, cy - 14, cx - 65, cy - 2);
+  ctx.stroke();
+
+  // Right open-book page curve (mirrored)
+  ctx.beginPath();
+  ctx.moveTo(cx + 12, cy);
+  ctx.quadraticCurveTo(cx + 40, cy - 14, cx + 65, cy - 2);
+  ctx.stroke();
+
+  // Small end dots
+  ctx.globalAlpha = 0.3;
+  ctx.beginPath();
+  ctx.arc(cx - 65, cy - 2, 2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(cx + 65, cy - 2, 2, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
+/**
+ * Draw the bilingual header: Title first (gold foil editorial), then poet + English summary.
+ * Hierarchy: Arabic title → book flourish → Arabic poet → English "[author] – [title]".
  * Automatically detects when both fields are Arabic (DB has no English column)
  * and renders a single large Arabic-only name instead of duplicating.
  *
@@ -198,69 +248,58 @@ function drawBilingualHeader(ctx, w, headerY, poem, colors, opts = {}) {
 
   ctx.textAlign = align;
 
-  // ── Poet name — gold foil editorial hierarchy ──
-  // Arabic poet name first (bold, prominent, brand font)
-  if (resolvedPoet.arabic) {
+  // ── 1. Arabic poem title — TOP, biggest, gold foil ──
+  if (resolvedTitle.arabic) {
     ctx.fillStyle = colors.poet;
     ctx.font = 'bold 54px "Reem Kufi", "Amiri", sans-serif';
     ctx.direction = 'rtl';
-    // Subtle gold glow for foil effect
     ctx.save();
     ctx.shadowColor = colors.poet;
-    ctx.shadowBlur = 16;
-    ctx.fillText(resolvedPoet.arabic, xPos, curY);
+    ctx.shadowBlur = 6;
+    ctx.fillText(resolvedTitle.arabic, xPos, curY);
     ctx.restore();
     curY += 62;
   }
 
-  // English poet name below (complementary, same emphasis)
-  if (resolvedPoet.english) {
+  // ── 2. Book flourish ornament ──
+  curY += 8;
+  drawBookFlourish(ctx, align === 'right' ? xPos : w / 2, curY, colors.separator || colors.poet);
+  curY += 28;
+
+  // ── 3. Arabic poet name ──
+  if (resolvedPoet.arabic) {
     ctx.fillStyle = colors.poetAr || colors.poet;
-    ctx.font = '600 38px "Playfair Display", serif';
+    ctx.font = 'bold 44px "Reem Kufi", "Amiri", sans-serif';
+    ctx.direction = 'rtl';
+    ctx.save();
+    ctx.shadowColor = colors.poet;
+    ctx.shadowBlur = 4;
+    ctx.fillText(resolvedPoet.arabic, xPos, curY);
+    ctx.restore();
+    curY += 52;
+  }
+
+  // ── 4. English summary: "[author] – [title]" ──
+  const enPoet = resolvedPoet.english || '';
+  const enTitle = resolvedTitle.english || '';
+  let englishSummary = '';
+  if (enPoet && enTitle && enTitle !== enPoet) {
+    englishSummary = `${enPoet} \u2013 ${enTitle}`;
+  } else if (enPoet) {
+    englishSummary = enPoet;
+  } else if (enTitle) {
+    englishSummary = enTitle;
+  }
+  if (englishSummary) {
+    ctx.fillStyle = colors.title || colors.poet;
+    ctx.font = '600 32px "Playfair Display", serif';
     ctx.direction = 'ltr';
     ctx.save();
     ctx.shadowColor = colors.poet;
-    ctx.shadowBlur = 8;
-    ctx.fillText(resolvedPoet.english, xPos, curY);
+    ctx.shadowBlur = 3;
+    ctx.fillText(englishSummary, xPos, curY);
     ctx.restore();
-    curY += 46;
-  }
-
-  // Small gold separator line
-  curY += 8;
-  ctx.save();
-  const sepColor = colors.separator || colors.poet;
-  ctx.strokeStyle = sepColor;
-  ctx.globalAlpha = 0.35;
-  ctx.lineWidth = 1;
-  ctx.beginPath();
-  if (align === 'right') {
-    ctx.moveTo(xPos - 80, curY);
-    ctx.lineTo(xPos, curY);
-  } else {
-    ctx.moveTo(xPos - 40, curY);
-    ctx.lineTo(xPos + 40, curY);
-  }
-  ctx.stroke();
-  ctx.restore();
-  curY += 18;
-
-  // ── Title — brand font for Arabic, editorial italic for English ──
-  if (resolvedTitle.arabic) {
-    ctx.fillStyle = colors.title;
-    ctx.font = 'bold 48px "Reem Kufi", "Amiri", sans-serif';
-    ctx.direction = 'rtl';
-    ctx.fillText(resolvedTitle.arabic, xPos, curY);
-    curY += 55;
-  }
-  if (resolvedTitle.english && resolvedTitle.english !== resolvedTitle.arabic) {
-    ctx.fillStyle = colors.title;
-    ctx.font = 'italic 36px "Playfair Display", serif';
-    ctx.direction = 'ltr';
-    ctx.globalAlpha = 0.75;
-    ctx.fillText(resolvedTitle.english, xPos, curY);
-    ctx.globalAlpha = 1;
-    curY += 42;
+    curY += 40;
   }
 
   return curY;
@@ -340,7 +379,8 @@ function renderDiwan(ctx, w, h, poem) {
     glowColor: 'rgba(197, 160, 89, 0.2)',
     glowBlur: 15,
     opacity: 0.6,
-    size: 24,
+    size: 30,
+    innerInset: 58,
   });
 }
 
@@ -427,7 +467,8 @@ function renderIbnMuqla(ctx, w, h, poem) {
   // Brand — bottom-right, single line
   drawBrandBottomRight(ctx, w, h, 'rgba(139, 105, 20, 0.4)', {
     opacity: 0.5,
-    size: 22,
+    size: 30,
+    innerInset: 52,
   });
 }
 
@@ -513,7 +554,8 @@ function renderSinan(ctx, w, h, poem) {
     glowColor: 'rgba(79, 166, 183, 0.15)',
     glowBlur: 10,
     opacity: 0.55,
-    size: 22,
+    size: 30,
+    innerInset: 54,
   });
 }
 
@@ -611,7 +653,8 @@ function renderZahaHadid(ctx, w, h, poem) {
     glowColor: 'rgba(200, 100, 255, 0.25)',
     glowBlur: 15,
     opacity: 0.6,
-    size: 22,
+    size: 30,
+    innerInset: 52,
   });
 }
 
@@ -699,7 +742,8 @@ function renderHassanFathy(ctx, w, h, poem) {
   // Brand — bottom-right in terracotta, single line
   drawBrandBottomRight(ctx, w, h, 'rgba(160, 82, 45, 0.35)', {
     opacity: 0.45,
-    size: 22,
+    size: 30,
+    innerInset: 54,
   });
 }
 

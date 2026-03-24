@@ -219,9 +219,12 @@ describe('renderShareCard', () => {
       renderShareCard(ctx, CARD_WIDTH, CARD_HEIGHT, mockPoem, design.id);
       // At minimum it should draw poet name and verses
       expect(ctx.fillText).toHaveBeenCalled();
-      // Check English poet name is drawn (primary)
+      // Check English poet name is drawn (in summary line "[author] – [title]")
       const calls = ctx.fillText.mock.calls.map((c) => c[0]);
-      expect(calls).toContain(mockPoem.poet);
+      const hasEnglishPoet = calls.some(
+        (text) => typeof text === 'string' && text.includes(mockPoem.poet)
+      );
+      expect(hasEnglishPoet).toBe(true);
     }
   });
 
@@ -280,8 +283,15 @@ describe('renderShareCard', () => {
       ctx.fillText.mockClear();
       renderShareCard(ctx, CARD_WIDTH, CARD_HEIGHT, mockPoem, design.id);
       const calls = ctx.fillText.mock.calls.map((c) => c[0]);
-      expect(calls).toContain(mockPoem.poet);
-      expect(calls).toContain(mockPoem.title);
+      // English poet and title are combined in summary line: "[author] – [title]"
+      const hasEnglishPoet = calls.some(
+        (text) => typeof text === 'string' && text.includes(mockPoem.poet)
+      );
+      const hasTitle = calls.some(
+        (text) => typeof text === 'string' && text.includes(mockPoem.title)
+      );
+      expect(hasEnglishPoet).toBe(true);
+      expect(hasTitle).toBe(true);
     }
   });
 

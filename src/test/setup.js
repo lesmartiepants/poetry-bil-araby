@@ -1,4 +1,4 @@
-import { expect, afterEach, vi } from 'vitest';
+import { expect, afterEach, beforeEach, vi } from 'vitest';
 import { cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 
@@ -40,8 +40,8 @@ afterEach(() => {
     window.history.replaceState({}, '', '/');
   }
   // Reset fetch to a fresh default mock so per-test mockResolvedValueOnce chains don't leak
-  global.fetch.mockReset();
-  global.fetch.mockImplementation(defaultFetchImpl);
+  if (global.fetch?.mockReset) global.fetch.mockReset();
+  if (global.fetch?.mockImplementation) global.fetch.mockImplementation(defaultFetchImpl);
   // Reset clipboard mocks
   navigator.clipboard.writeText.mockReset();
   navigator.clipboard.writeText.mockResolvedValue(undefined);
@@ -82,6 +82,14 @@ global.atob = vi.fn((str) => {
 
 // Mock fetch for API calls (initial)
 global.fetch = vi.fn(defaultFetchImpl);
+
+// Re-establish fetch mock before each test in case module-level imports (e.g. Sentry)
+// replaced global.fetch with a non-mock wrapper during test file loading.
+beforeEach(() => {
+  if (!vi.isMockFunction(global.fetch)) {
+    global.fetch = vi.fn(defaultFetchImpl);
+  }
+});
 
 // Mock navigator.clipboard for copy tests
 Object.defineProperty(navigator, 'clipboard', {

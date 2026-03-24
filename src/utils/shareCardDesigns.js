@@ -137,17 +137,17 @@ function calculateCenteredLayout(h, poem, verseCount) {
   const pairSpacing = Math.min(180, spaceForVerses / Math.max(verseCount, 1));
   const contentHeight = verseCount * pairSpacing;
   const totalHeight = headerHeight + titleBodyGap + contentHeight;
-  const headerY = Math.max(minMargin, (h - totalHeight) / 2) + 25;
+  const headerY = Math.max(minMargin, (h - totalHeight) / 2) + 32;
   return { headerY, titleBodyGap, pairSpacing };
 }
 
 /**
- * Draw the brand mark "poetry بالعربي" on a SINGLE line in the bottom-right corner.
- * Matches the app header style: English "poetry" in Forum + Arabic "بالعربي" in Reem Kufi.
+ * Draw the brand mark "بالعربي poetry" on a SINGLE line in the bottom-right corner.
+ * Matches the app header style: Arabic "بالعربي" first (Reem Kufi) + English "poetry" (Forum).
  * The brand font is NOT changed, but color/opacity/effects vary by design.
  */
 function drawBrandBottomRight(ctx, w, h, brandColor, opts = {}) {
-  const { glowColor, glowBlur = 0, opacity = 0.65, size = 30, innerInset = 58 } = opts;
+  const { glowColor, glowBlur = 0, opacity = 0.65, size = 36, innerInset = 58 } = opts;
   ctx.save();
   ctx.globalAlpha = opacity;
   ctx.textAlign = 'right';
@@ -164,18 +164,19 @@ function drawBrandBottomRight(ctx, w, h, brandColor, opts = {}) {
     ctx.shadowBlur = glowBlur;
   }
 
-  // Single line: "poetry بالعربي"
-  // Measure "بالعربي" first (drawn rightmost), then "poetry " to its left
+  // Single line: "بالعربي poetry" — Arabic first, then English (matching main app header)
+  // Draw "poetry" rightmost, then "بالعربي" to its left
   ctx.fillStyle = brandColor;
-  ctx.font = `bold ${size}px "Reem Kufi", sans-serif`;
-  const arText = 'بالعربي';
-  const arWidth = ctx.measureText(arText).width;
-  ctx.fillText(arText, bx, by);
+  const enSize = Math.round(size * 0.85);
+  ctx.font = `${enSize}px "Forum", serif`;
+  const enText = 'poetry';
+  const enWidth = ctx.measureText(enText).width;
+  ctx.fillText(enText, bx, by);
 
-  // "poetry" to the left of Arabic text, with a small gap
+  // "بالعربي" to the left of English text, with a small gap
   ctx.shadowBlur = 0;
-  ctx.font = `${Math.round(size * 0.85)}px "Forum", serif`;
-  ctx.fillText('poetry ', bx - arWidth - 4, by);
+  ctx.font = `bold ${size}px "Reem Kufi", sans-serif`;
+  ctx.fillText('بالعربي ', bx - enWidth - 4, by);
 
   ctx.restore();
 }
@@ -248,7 +249,7 @@ function drawBilingualHeader(ctx, w, headerY, poem, colors, opts = {}) {
   ctx.textAlign = align;
 
   // ── 1. Book flourish ornament — positioned halfway between top border and title ──
-  const flourishY = Math.round((borderTop + headerY) / 2);
+  const flourishY = Math.round((borderTop + headerY) / 2) - 3;
   drawBookFlourish(
     ctx,
     align === 'right' ? xPos : w / 2,

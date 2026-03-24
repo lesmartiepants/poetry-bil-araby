@@ -3,7 +3,7 @@ import { FEATURES } from '../../constants/features';
 import { usePoemStore } from '../poemStore';
 import { useUIStore } from '../uiStore';
 import { useModalStore } from '../modalStore';
-import { INSIGHTS_SYSTEM_PROMPT } from '../../prompts';
+import { INSIGHTS_SYSTEM_PROMPT, RATCHET_SYSTEM_PROMPT } from '../../prompts';
 import { parseInsight } from '../../utils/insightParser';
 import { geminiTextFetch } from '../../services/gemini.js';
 import { cacheOperations, CACHE_CONFIG } from '../../services/cache.js';
@@ -95,8 +95,11 @@ export async function analyzePoem({ current, addLog, track, retryFn }) {
   // Mark in-flight
   usePoemStore.getState().addActiveInsight(current?.id);
 
-  // CHECK CACHE
-  if (FEATURES.caching && current?.id) {
+  const ratchetMode = useUIStore.getState().ratchetMode;
+  const systemPrompt = ratchetMode ? RATCHET_SYSTEM_PROMPT : INSIGHTS_SYSTEM_PROMPT;
+
+  // CHECK CACHE — skip in ratchet mode (different prompt, don't pollute scholarly cache)
+  if (FEATURES.caching && current?.id && !ratchetMode) {
     const cacheStart = performance.now();
     const cached = await cacheOperations.get(CACHE_CONFIG.stores.insights, current.id);
     const cacheTime = performance.now() - cacheStart;
@@ -134,12 +137,10 @@ export async function analyzePoem({ current, addLog, track, retryFn }) {
       const requestSize = new Blob([
         JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] }),
       ]).size;
-      const estimatedInputTokens = Math.ceil(
-        (promptText.length + INSIGHTS_SYSTEM_PROMPT.length) / 4
-      );
+      const estimatedInputTokens = Math.ceil((promptText.length + systemPrompt.length) / 4);
       const promptChars = promptText.length;
       const arabicTextChars = current?.arabic?.length || 0;
-      const systemPromptChars = INSIGHTS_SYSTEM_PROMPT.length;
+      const systemPromptChars = systemPrompt.length;
 
       addLog(
         'Insights API',
@@ -155,7 +156,7 @@ export async function analyzePoem({ current, addLog, track, retryFn }) {
 
       const insightsStreamBody = JSON.stringify({
         contents: [{ parts: [{ text: promptText }] }],
-        systemInstruction: { parts: [{ text: INSIGHTS_SYSTEM_PROMPT }] },
+        systemInstruction: { parts: [{ text: systemPrompt }] },
       });
       const res = await geminiTextFetch(
         'streamGenerateContent',
@@ -228,7 +229,7 @@ export async function analyzePoem({ current, addLog, track, retryFn }) {
         contents: [
           { parts: [{ text: `Deep Analysis of${poetInfoFallback}:\n\n${current?.arabic}` }] },
         ],
-        systemInstruction: { parts: [{ text: INSIGHTS_SYSTEM_PROMPT }] },
+        systemInstruction: { parts: [{ text: systemPrompt }] },
       });
       const res = await geminiTextFetch(
         'generateContent',
@@ -265,8 +266,8 @@ export async function analyzePoem({ current, addLog, track, retryFn }) {
       );
     }
 
-    // Save translation to DB
-    if (current?.isFromDatabase && current?.id && insightText) {
+    // Save translation to DB — skip in ratchet mode to avoid overwriting scholarly cache
+    if (!ratchetMode && current?.isFromDatabase && current?.id && insightText) {
       const parts = parseInsight(insightText);
       if (parts?.poeticTranslation) {
         saveTranslation(current.id, {

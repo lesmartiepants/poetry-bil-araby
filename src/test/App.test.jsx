@@ -123,6 +123,8 @@ describe('DiwanApp', () => {
         json: async () => newPoem,
       });
 
+      // Open the discover drawer, then click Surprise Me
+      await userEvent.click(screen.getByLabelText('Open discover'));
       await userEvent.click(screen.getByLabelText('Discover new poem'));
 
       await waitFor(
@@ -153,21 +155,23 @@ describe('DiwanApp', () => {
           })
       );
 
-      const discoverBtn = screen.getByLabelText('Discover new poem');
-      await userEvent.click(discoverBtn);
+      // Open discover drawer, click Surprise Me (starts fetch, drawer closes)
+      const fireBtn = screen.getByLabelText('Open discover');
+      await userEvent.click(fireBtn);
+      await userEvent.click(screen.getByLabelText('Discover new poem'));
 
-      // Button should be disabled during fetch — use waitFor because
+      // Fire button should be disabled during fetch — use waitFor because
       // setIsFetching(true) is a React state update that may not have
       // flushed to the DOM by the time userEvent.click resolves
       await waitFor(() => {
-        expect(discoverBtn).toBeDisabled();
+        expect(fireBtn).toBeDisabled();
       });
 
       // Resolve and wait for React to finish processing
       resolveFetch({ ok: true, json: async () => createDbPoem(99) });
       await waitFor(
         () => {
-          expect(discoverBtn).not.toBeDisabled();
+          expect(fireBtn).not.toBeDisabled();
         },
         { timeout: 1000 }
       );
@@ -203,6 +207,8 @@ describe('DiwanApp', () => {
         return Promise.resolve({ ...defaultFetchResponse });
       });
 
+      // Open discover drawer, click Surprise Me
+      await userEvent.click(screen.getByLabelText('Open discover'));
       await userEvent.click(screen.getByLabelText('Discover new poem'));
 
       await waitFor(
@@ -356,6 +362,7 @@ describe('DiwanApp', () => {
         });
 
         // Discover a poem with no cachedTranslation → auto-explain fires automatically
+        await userEvent.click(screen.getByLabelText('Open discover'));
         await userEvent.click(screen.getByLabelText('Discover new poem'));
 
         // Auto-explain fires without a manual Explain click (PR 307 feature)
@@ -378,6 +385,7 @@ describe('DiwanApp', () => {
       });
 
       global.fetch.mockResolvedValueOnce({ ok: true, json: async () => createDbPoem(100) });
+      await userEvent.click(screen.getByLabelText('Open discover'));
       await userEvent.click(screen.getByLabelText('Discover new poem'));
       await waitFor(() => expect(screen.getByText('Mahmoud Darwish')).toBeInTheDocument(), {
         timeout: 3000,
@@ -395,15 +403,21 @@ describe('DiwanApp', () => {
         expect(document.body.textContent).toContain('Nizar Qabbani');
       });
 
-      // Load a DB poem with all cached insight fields (translation + depth + author)
-      global.fetch.mockResolvedValueOnce({
-        ok: true,
-        json: async () =>
-          createDbPoem(101, {
-            cachedExplanation: 'Deep meaning here.',
-            cachedAuthorBio: 'Celebrated poet info.',
-          }),
+      // Load a DB poem with all cached insight fields (depth + author)
+      // Use URL-based mock so fetchPoets (/api/poets) uses the default mock
+      // and fetchRandomPoem (/api/poems/random) gets the poem with cached analysis.
+      const poemWithInsights = createDbPoem(101, {
+        cachedExplanation: 'Deep meaning here.',
+        cachedAuthorBio: 'Celebrated poet info.',
       });
+      global.fetch.mockImplementation((url) => {
+        if (typeof url === 'string' && url.includes('/api/poems/random')) {
+          global.fetch.mockImplementation(() => Promise.resolve({ ...defaultFetchResponse }));
+          return Promise.resolve({ ok: true, json: async () => poemWithInsights });
+        }
+        return Promise.resolve({ ...defaultFetchResponse });
+      });
+      await userEvent.click(screen.getByLabelText('Open discover'));
       await userEvent.click(screen.getByLabelText('Discover new poem'));
       await waitFor(() => expect(screen.getByText('Mahmoud Darwish')).toBeInTheDocument(), {
         timeout: 3000,
@@ -515,7 +529,7 @@ describe('DiwanApp', () => {
       render(<DiwanApp />);
 
       // Open poet picker from bottom control bar
-      const poetsBtn = screen.getByLabelText('Filter by poet');
+      const poetsBtn = screen.getByLabelText('Open discover');
       await userEvent.click(poetsBtn);
 
       await waitFor(() => {
@@ -527,7 +541,7 @@ describe('DiwanApp', () => {
       render(<DiwanApp />);
 
       // Open poet picker from bottom control bar
-      const poetsBtn = screen.getByLabelText('Filter by poet');
+      const poetsBtn = screen.getByLabelText('Open discover');
       await userEvent.click(poetsBtn);
 
       await waitFor(() => {
@@ -581,7 +595,7 @@ describe('DiwanApp', () => {
       });
 
       // Open poet picker and select Mahmoud Darwish
-      await userEvent.click(screen.getByLabelText('Filter by poet'));
+      await userEvent.click(screen.getByLabelText('Open discover'));
       await waitFor(() => expect(document.body.textContent).toContain('محمود درويش'));
 
       // Queue a mock for the auto-fetch triggered by the selectedCategory effect
@@ -623,8 +637,8 @@ describe('DiwanApp', () => {
       });
 
       // Click Discover — should fetch the next Darwish poem while filter remains active
-      const discoverBtn = screen.getByLabelText('Discover new poem');
-      await userEvent.click(discoverBtn);
+      await userEvent.click(screen.getByLabelText('Open discover'));
+      await userEvent.click(screen.getByLabelText('Discover new poem'));
 
       // The new poem is shown and still matches the poet filter (correct filtered index)
       await waitFor(
@@ -646,7 +660,7 @@ describe('DiwanApp', () => {
       });
 
       // ── Step 1: select Mahmoud Darwish ──────────────────────────────────
-      await userEvent.click(screen.getByLabelText('Filter by poet'));
+      await userEvent.click(screen.getByLabelText('Open discover'));
       await waitFor(() => expect(document.body.textContent).toContain('محمود درويش'));
 
       const darwishPoem = {
@@ -667,7 +681,7 @@ describe('DiwanApp', () => {
       });
 
       // ── Step 2: open picker and switch to Al-Mutanabbi ──────────────────
-      await userEvent.click(screen.getByLabelText('Filter by poet'));
+      await userEvent.click(screen.getByLabelText('Open discover'));
       await waitFor(() => expect(document.body.textContent).toContain('المتنبي'));
 
       const mutanabbiPoem = {
@@ -692,23 +706,24 @@ describe('DiwanApp', () => {
 
     it('shows search input when poet picker opens', async () => {
       render(<DiwanApp />);
-      await userEvent.click(screen.getByLabelText('Filter by poet'));
+      await userEvent.click(screen.getByLabelText('Open discover'));
       await waitFor(() => {
         expect(screen.getByLabelText('Search poets')).toBeInTheDocument();
       });
     });
 
-    it('shows Featured section header in poet picker', async () => {
+    it('shows Surprise Me button and Featured tiles in poet picker', async () => {
       render(<DiwanApp />);
-      await userEvent.click(screen.getByLabelText('Filter by poet'));
+      await userEvent.click(screen.getByLabelText('Open discover'));
       await waitFor(() => {
-        expect(screen.getByText('Featured')).toBeInTheDocument();
+        expect(screen.getByLabelText('Discover new poem')).toBeInTheDocument();
+        expect(screen.getAllByTestId('poet-picker-button').length).toBeGreaterThan(0);
       });
     });
 
     it('filters poets by search query', async () => {
       render(<DiwanApp />);
-      await userEvent.click(screen.getByLabelText('Filter by poet'));
+      await userEvent.click(screen.getByLabelText('Open discover'));
 
       // Type in the search input to filter
       const searchInput = screen.getByLabelText('Search poets');
@@ -725,7 +740,7 @@ describe('DiwanApp', () => {
 
     it('shows no results message for non-matching search', async () => {
       render(<DiwanApp />);
-      await userEvent.click(screen.getByLabelText('Filter by poet'));
+      await userEvent.click(screen.getByLabelText('Open discover'));
 
       const searchInput = screen.getByLabelText('Search poets');
       await userEvent.type(searchInput, 'xyznonexistent');
@@ -737,7 +752,7 @@ describe('DiwanApp', () => {
 
     it('filters poets by English label search', async () => {
       render(<DiwanApp />);
-      await userEvent.click(screen.getByLabelText('Filter by poet'));
+      await userEvent.click(screen.getByLabelText('Open discover'));
 
       const searchInput = screen.getByLabelText('Search poets');
       await userEvent.type(searchInput, 'Darwish');
@@ -753,7 +768,7 @@ describe('DiwanApp', () => {
 
     it('filters poets by partial English label search', async () => {
       render(<DiwanApp />);
-      await userEvent.click(screen.getByLabelText('Filter by poet'));
+      await userEvent.click(screen.getByLabelText('Open discover'));
 
       const searchInput = screen.getByLabelText('Search poets');
       await userEvent.type(searchInput, 'Al-');
@@ -765,35 +780,14 @@ describe('DiwanApp', () => {
       });
     });
 
-    it('adjusts list max-height when visualViewport shrinks (keyboard)', async () => {
-      // Simulate a visual viewport (as provided by mobile browsers)
-      const originalVP = window.visualViewport;
-      let registeredResizeHandler = null;
-      const mockVP = {
-        height: 300,
-        offsetTop: 0,
-        addEventListener: vi.fn((event, handler) => {
-          if (event === 'resize') registeredResizeHandler = handler;
-        }),
-        removeEventListener: vi.fn(),
-      };
-      Object.defineProperty(window, 'visualViewport', { value: mockVP, configurable: true });
-
+    it('search input is accessible when discover drawer opens', async () => {
       render(<DiwanApp />);
-      await userEvent.click(screen.getByLabelText('Filter by poet'));
+      await userEvent.click(screen.getByLabelText('Open discover'));
 
-      // Picker should open and remain accessible
+      // Drawer should open and search input should be accessible
       await waitFor(() => {
         expect(screen.getByLabelText('Search poets')).toBeInTheDocument();
       });
-
-      // The effect should register resize and scroll listeners on the visual viewport
-      expect(mockVP.addEventListener).toHaveBeenCalledWith('resize', expect.any(Function));
-      expect(mockVP.addEventListener).toHaveBeenCalledWith('scroll', expect.any(Function));
-      expect(registeredResizeHandler).toBeInstanceOf(Function);
-
-      // Restore
-      Object.defineProperty(window, 'visualViewport', { value: originalVP, configurable: true });
     });
 
     it('fetches dynamic poets from API when picker opens', async () => {
@@ -814,13 +808,12 @@ describe('DiwanApp', () => {
 
       try {
         render(<DiwanApp />);
-        await userEvent.click(screen.getByLabelText('Filter by poet'));
+        await userEvent.click(screen.getByLabelText('Open discover'));
 
-        // Should show dynamic poets under "More Poets"
+        // Should show dynamic poets in the list
         await waitFor(
           () => {
             expect(screen.getByText('أحمد شوقي')).toBeInTheDocument();
-            expect(screen.getByText('More Poets')).toBeInTheDocument();
           },
           { timeout: 3000 }
         );
@@ -843,7 +836,7 @@ describe('DiwanApp', () => {
       });
 
       // Open poet picker and select a poet
-      await userEvent.click(screen.getByLabelText('Filter by poet'));
+      await userEvent.click(screen.getByLabelText('Open discover'));
       await waitFor(() => expect(screen.getByText('المتنبي')).toBeInTheDocument());
 
       global.fetch.mockResolvedValueOnce({
@@ -860,7 +853,7 @@ describe('DiwanApp', () => {
       await userEvent.click(screen.getByText('المتنبي'));
 
       // Re-open picker to check for clear filter
-      await userEvent.click(screen.getByLabelText('Filter by poet'));
+      await userEvent.click(screen.getByLabelText('Open discover'));
       await waitFor(() => {
         expect(screen.getByText('Clear filter')).toBeInTheDocument();
       });
@@ -875,7 +868,7 @@ describe('DiwanApp', () => {
       });
 
       // ── First selection: Mahmoud Darwish ────────────────────────────────
-      await userEvent.click(screen.getByLabelText('Filter by poet'));
+      await userEvent.click(screen.getByLabelText('Open discover'));
       await waitFor(() => expect(document.body.textContent).toContain('محمود درويش'));
 
       const darwishPoem1 = {
@@ -905,7 +898,7 @@ describe('DiwanApp', () => {
       });
 
       // ── Re-select the same poet: should fetch a new poem ─────────────────
-      await userEvent.click(screen.getByLabelText('Filter by poet'));
+      await userEvent.click(screen.getByLabelText('Open discover'));
       // Wait for the picker to actually be open. After the Darwish poem loaded, the poem
       // card already contains 'محمود درويش', so checking textContent would pass immediately
       // before the picker re-renders. Instead, wait for the picker-specific 'Clear filter'
@@ -954,7 +947,7 @@ describe('DiwanApp', () => {
       });
 
       // Select Darwish
-      await userEvent.click(screen.getByLabelText('Filter by poet'));
+      await userEvent.click(screen.getByLabelText('Open discover'));
       await waitFor(() => expect(document.body.textContent).toContain('محمود درويش'));
       const darwishPoem = {
         id: 201,
@@ -973,12 +966,12 @@ describe('DiwanApp', () => {
       });
 
       // Switch to "All"
-      await userEvent.click(screen.getByLabelText('Filter by poet'));
+      await userEvent.click(screen.getByLabelText('Open discover'));
       await waitFor(() => expect(document.body.textContent).toContain('كل الشعراء'));
       await userEvent.click(screen.getByText('كل الشعراء'));
 
       // Switch to Mutanabbi — should fetch a new poem (no Mutanabbi poems cached)
-      await userEvent.click(screen.getByLabelText('Filter by poet'));
+      await userEvent.click(screen.getByLabelText('Open discover'));
       await waitFor(() => expect(document.body.textContent).toContain('المتنبي'));
       const mutanabbiPoem = {
         id: 301,
@@ -1003,7 +996,7 @@ describe('DiwanApp', () => {
       render(<DiwanApp />);
 
       // Open picker
-      await userEvent.click(screen.getByLabelText('Filter by poet'));
+      await userEvent.click(screen.getByLabelText('Open discover'));
       await waitFor(() => expect(document.body.textContent).toContain('كل الشعراء'));
 
       // Select a poet — closes the picker
@@ -1028,7 +1021,7 @@ describe('DiwanApp', () => {
       });
 
       // User can reopen the picker
-      await userEvent.click(screen.getByLabelText('Filter by poet'));
+      await userEvent.click(screen.getByLabelText('Open discover'));
       await waitFor(() => expect(document.body.textContent).toContain('كل الشعراء'));
     });
 
@@ -1041,7 +1034,7 @@ describe('DiwanApp', () => {
       });
 
       // Select Darwish
-      await userEvent.click(screen.getByLabelText('Filter by poet'));
+      await userEvent.click(screen.getByLabelText('Open discover'));
       const darwishPoem = {
         id: 201,
         poet: 'Mahmoud Darwish',
@@ -1058,7 +1051,7 @@ describe('DiwanApp', () => {
       });
 
       // Reopen picker — the Darwish entry should be highlighted (selected styling)
-      await userEvent.click(screen.getByLabelText('Filter by poet'));
+      await userEvent.click(screen.getByLabelText('Open discover'));
       await waitFor(() => expect(document.body.textContent).toContain('محمود درويش'));
 
       // The selected picker button should have the active styling class
@@ -1066,7 +1059,7 @@ describe('DiwanApp', () => {
         .getAllByTestId('poet-picker-button')
         .find((btn) => btn.textContent.includes('محمود درويش'));
       expect(darwishPickerBtn).toBeDefined();
-      expect(darwishPickerBtn.className).toContain('bg-gold/15');
+      expect(darwishPickerBtn.className).toContain('bg-gold/12');
     });
   });
 
@@ -1123,6 +1116,7 @@ describe('DiwanApp', () => {
       });
 
       global.fetch.mockResolvedValueOnce({ ok: true, json: async () => createDbPoem(102) });
+      await userEvent.click(screen.getByLabelText('Open discover'));
       await userEvent.click(screen.getByLabelText('Discover new poem'));
       await waitFor(() => expect(screen.getByText('Mahmoud Darwish')).toBeInTheDocument(), {
         timeout: 3000,
@@ -1246,7 +1240,8 @@ describe('DiwanApp', () => {
       await userEvent.click(screen.getByLabelText('Enable Ratchet Mode'));
       expect(screen.getByTestId('ratchet-glow')).toBeInTheDocument();
 
-      // Discover a new poem
+      // Open the discover drawer, then discover a new poem
+      await userEvent.click(screen.getByLabelText('Open discover'));
       global.fetch.mockResolvedValueOnce({ ok: true, json: async () => createDbPoem(200) });
       await userEvent.click(screen.getByLabelText('Discover new poem'));
 
@@ -1270,7 +1265,8 @@ describe('DiwanApp', () => {
       const rtlElements = document.querySelectorAll('p[dir="rtl"]');
       expect(rtlElements.length).toBeGreaterThan(0);
 
-      // Should still be able to discover a new poem
+      // Should still be able to discover a new poem — open drawer first
+      await userEvent.click(screen.getByLabelText('Open discover'));
       global.fetch.mockResolvedValueOnce({ ok: true, json: async () => createDbPoem(201) });
       await userEvent.click(screen.getByLabelText('Discover new poem'));
 

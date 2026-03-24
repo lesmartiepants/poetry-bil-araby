@@ -25,12 +25,14 @@ const initialState = {
   savedPoems: false,
   splash: computeSplash(),
   insightsDrawer: false,
+  discoverDrawer: false,
   shortcutHelp: false,
   poetPicker: false,
   poetPickerClosing: false,
   copyToast: false,
   shareToast: false,
   insightToast: false,
+  shareCard: false,
   onboarding: computeOnboarding(),
 };
 
@@ -54,12 +56,19 @@ export const useModalStore = create((set) => ({
   toggleInsightsDrawer: () => set((s) => ({ insightsDrawer: !s.insightsDrawer })),
   setInsightsDrawer: (open) => set({ insightsDrawer: open }),
 
+  openDiscoverDrawer: () => set({ discoverDrawer: true }),
+  closeDiscoverDrawer: () => set({ discoverDrawer: false }),
+  setDiscoverDrawer: (open) => set({ discoverDrawer: open }),
+
   toggleShortcutHelp: () => set((s) => ({ shortcutHelp: !s.shortcutHelp })),
   closeShortcutHelp: () => set({ shortcutHelp: false }),
 
   openPoetPicker: () => set({ poetPicker: true }),
   closePoetPicker: () => set({ poetPicker: false }),
   setPoetPickerClosing: (closing) => set({ poetPickerClosing: closing }),
+
+  openShareCard: () => set({ shareCard: true }),
+  closeShareCard: () => set({ shareCard: false }),
 
   showToast: (type) => set({ [TOAST_MAP[type]]: true }),
   hideToast: (type) => set({ [TOAST_MAP[type]]: false }),
@@ -82,8 +91,10 @@ export const useModalStore = create((set) => ({
       authMessage: '',
       savedPoems: false,
       insightsDrawer: false,
+      discoverDrawer: false,
       shortcutHelp: false,
       poetPicker: false,
+      shareCard: false,
     }),
 
   reset: () => set({ ...initialState, splash: computeSplash(), onboarding: computeOnboarding() }),

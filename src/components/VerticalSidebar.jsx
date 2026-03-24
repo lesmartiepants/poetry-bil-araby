@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
 import {
-  Brain,
   Bug,
   Check,
   ChevronLeft,
@@ -8,6 +7,7 @@ import {
   Copy,
   Flame,
   Languages,
+  Lightbulb,
   Loader2,
   LogOut,
   Moon,
@@ -22,7 +22,6 @@ import { THEME } from '../constants/theme.js';
 import { FONTS } from '../constants/fonts.js';
 import { useUIStore } from '../stores/uiStore';
 import { useModalStore } from '../stores/modalStore';
-import { usePoemStore } from '../stores/poemStore';
 
 const TEXT_SIZES = [
   { label: 'S', multiplier: 0.85 },
@@ -32,7 +31,6 @@ const TEXT_SIZES = [
 ];
 
 const VerticalSidebar = ({
-  onExplain,
   onCopy,
   onShare,
   onSignIn,
@@ -44,23 +42,18 @@ const VerticalSidebar = ({
   // Store reads
   const showCopySuccess = useModalStore((s) => s.copyToast);
   const showShareSuccess = useModalStore((s) => s.shareToast);
-  const showInsightSuccess = useModalStore((s) => s.insightToast);
   const darkMode = useUIStore((s) => s.darkMode);
   const theme = darkMode ? THEME.dark : THEME.light;
-  const isInterpreting = usePoemStore((s) => s.isInterpreting);
-  const interpretation = usePoemStore((s) => s.interpretation);
   const showTranslation = useUIStore((s) => s.showTranslation);
   const showTransliteration = useUIStore((s) => s.showTransliteration);
   const textSizeLevel = useUIStore((s) => s.textSize);
   const textSizeLabel = TEXT_SIZES[textSizeLevel].label;
   const currentFont = useUIStore((s) => s.font);
-  const selectedCategory = usePoemStore((s) => s.selectedCategory);
   const showDebugLogs = useUIStore((s) => s.showDebugLogs);
   const ratchetMode = useUIStore((s) => s.ratchetMode);
   const [expanded, setExpanded] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
-  const [poetPickerOpen, setPoetPickerOpen] = useState(false);
   const sidebarRef = useRef(null);
   const scrollRef = useRef(null);
 
@@ -164,11 +157,6 @@ const VerticalSidebar = ({
                 size={14}
                 className="group-hover:opacity-80 transition-opacity"
               />
-              <Brain
-                style={{ color: gold, opacity: 0.6 }}
-                size={16}
-                className="group-hover:opacity-90 transition-opacity"
-              />
               <Copy
                 style={{ color: gold, opacity: 0.6 }}
                 size={16}
@@ -196,31 +184,6 @@ const VerticalSidebar = ({
               className="overflow-y-auto overflow-x-hidden flex flex-col items-center gap-1"
               style={{ maxHeight: 'calc(100dvh - 16rem)' }}
             >
-              <button
-                onClick={onExplain}
-                disabled={isInterpreting}
-                title={interpretation ? 'Insight available — tap to confirm' : 'Explain poem'}
-                aria-label="Explain poem meaning"
-                className={`${btnBase} ${btnHover} ${isInterpreting ? 'opacity-50' : ''}`}
-              >
-                {isInterpreting ? (
-                  <Loader2 className="animate-spin" style={{ color: gold }} size={18} />
-                ) : showInsightSuccess ? (
-                  <Check
-                    style={{ color: gold, animation: 'goldCheckSparkle 0.5s ease-out forwards' }}
-                    size={18}
-                  />
-                ) : (
-                  <Brain style={{ color: gold }} size={18} />
-                )}
-              </button>
-              <span
-                className={labelCls}
-                style={{ color: gold, opacity: interpretation ? 0.9 : 0.6 }}
-              >
-                Explain
-              </span>
-
               <button
                 onClick={onCopy}
                 title="Copy poem"

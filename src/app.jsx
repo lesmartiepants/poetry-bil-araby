@@ -7,10 +7,11 @@ import {
   Volume2,
   ChevronDown,
   Loader2,
-  X,
   Feather,
-  Shuffle,
+  Lightbulb,
   Paintbrush,
+  Check,
+  X,
 } from 'lucide-react';
 import { track } from '@vercel/analytics';
 import Sentry from './sentry.js';
@@ -53,20 +54,22 @@ import { CACHE_CONFIG, cacheOperations } from './services/cache.js';
 import { prefetchManager } from './services/prefetch.js';
 import {
   fetchPoemById,
+  fetchPoets,
   fetchRandomPoem,
   saveTranslation,
   pingHealth,
 } from './services/database.js';
 import './styles/app.css';
+import { updateOGMetaTags } from './utils/ogMetaTags.js';
 import DebugPanel from './components/DebugPanel.jsx';
 import DesktopInsightPane from './components/DesktopInsightPane.jsx';
-import PoemCard from './components/PoemCard.jsx';
-import PoetPicker from './components/PoetPicker.jsx';
 import MysticalConsultationEffect from './components/MysticalConsultationEffect.jsx';
 import ErrorBanner from './components/ErrorBanner.jsx';
 import ShortcutHelp from './components/ShortcutHelp.jsx';
 const SplashScreen = lazy(() => import('./components/SplashScreen.jsx'));
 import InsightsDrawer from './components/InsightsDrawer.jsx';
+import ShareCardModal from './components/ShareCardModal.jsx';
+import DiscoverDrawer, { GoldenFireIcon } from './components/DiscoverDrawer.jsx';
 import VerticalSidebar from './components/VerticalSidebar.jsx';
 import AuthModal from './components/auth/AuthModal.jsx';
 import SavePoemButton from './components/auth/SavePoemButton.jsx';
@@ -108,12 +111,19 @@ export default function DiwanApp() {
 
   const headerOpacity = useUIStore((s) => s.headerOpacity);
   const setHeaderOpacity = useUIStore((s) => s.setHeaderOpacity);
+  const [fireTapped, setFireTapped] = useState(false);
+
   // ── Poem store (Zustand) ──
   const poems = usePoemStore((s) => s.poems);
   const setPoems = usePoemStore((s) => s.setPoems);
   const currentIndex = usePoemStore((s) => s.currentIndex);
   const setCurrentIndex = usePoemStore((s) => s.setCurrentIndex);
   const selectedCategory = usePoemStore((s) => s.selectedCategory);
+  const setSelectedCategory = usePoemStore((s) => s.setCategory);
+  const dynamicPoets = usePoemStore((s) => s.dynamicPoets);
+  const setDynamicPoets = usePoemStore((s) => s.setDynamicPoets);
+  const poetsFetched = usePoemStore((s) => s.poetsFetched);
+  const setPoetsFetched = usePoemStore((s) => s.setPoetsFetched);
   const useDatabase = usePoemStore((s) => s.useDatabase);
   const setUseDatabase = usePoemStore((s) => s.setUseDatabase);
   const isFetching = usePoemStore((s) => s.isFetching);
@@ -125,6 +135,9 @@ export default function DiwanApp() {
   const isInterpreting = usePoemStore((s) => s.isInterpreting);
   const setIsInterpreting = usePoemStore((s) => s.setInterpreting);
 
+  // ── Modal store (Zustand) ──
+  const discoverDrawerOpen = useModalStore((s) => s.discoverDrawer);
+  const setDiscoverDrawerOpen = useModalStore((s) => s.setDiscoverDrawer);
   // ── UI store (Zustand) ──
   const darkMode = useUIStore((s) => s.darkMode);
   const setDarkMode = useUIStore((s) => s.setDarkMode);
@@ -172,6 +185,7 @@ export default function DiwanApp() {
   const showTransliteration = useUIStore((s) => s.showTransliteration);
   const setShowTransliteration = useUIStore((s) => s.setShowTransliteration);
   const showShortcutHelp = useModalStore((s) => s.shortcutHelp);
+  const showShareCard = useModalStore((s) => s.shareCard);
 
   const theme = darkMode ? THEME.dark : THEME.light;
 
@@ -278,6 +292,7 @@ export default function DiwanApp() {
             setPoems([poem]);
             setCurrentIndex(0);
             setAutoExplainPending(true);
+            updateOGMetaTags(poem);
             addLog('DeepLink', `Loaded: ${poem.poet} — ${poem.title}`, 'success');
           })
           .catch((err) => {
@@ -398,6 +413,25 @@ export default function DiwanApp() {
     setHeaderOpacity(progress);
   };
 
+  // Fetch dynamic poet list from API when discover drawer first opens
+  useEffect(() => {
+    if (!discoverDrawerOpen || poetsFetched) return;
+    const loadPoets = async () => {
+      try {
+        const poets = await fetchPoets();
+        setDynamicPoets(poets);
+        addLog('Poets', `Loaded ${poets.length} poets from API`, 'info');
+      } catch {
+        addLog('Poets', 'Failed to fetch poets from API', 'warn');
+      } finally {
+        setPoetsFetched(true);
+      }
+    };
+    loadPoets();
+    // addLog is a stable reference from useUIStore.getState()
+    // even though its reference changes per render — poetsFetched gate prevents
+    // repeated fetches regardless.
+  }, [discoverDrawerOpen, poetsFetched, addLog]);
 
   // Extract cached translation fields into stable local variables so useMemo
   // only re-runs when the actual string values change, not on every `current` reference change.
@@ -518,55 +552,8 @@ export default function DiwanApp() {
     addLog('UI Event', 'Share button clicked', 'info');
     track('poem_shared', { poet: current?.poet });
 
-    const poemId = current?.id;
-    const isDbPoem = current?.isFromDatabase && typeof poemId === 'number';
-    const shareUrl = isDbPoem ? `${window.location.origin}/poem/${poemId}` : window.location.origin;
-    const shareTitle = `${current?.titleArabic || current?.title || 'Arabic Poetry'} — ${current?.poetArabic || current?.poet || ''}`;
-    const shareText = current?.arabic
-      ? current.arabic.split('\n').slice(0, 2).join('\n')
-      : 'Discover classical and modern Arabic poetry';
-
-    // Try native Web Share API first (mobile + some desktop)
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: shareTitle, text: shareText, url: shareUrl });
-        track('share_method', { method: 'native' });
-        if (current?.id) {
-          emitEvent(current.id, 'share', { method: 'native' });
-          addLog(
-            'Event',
-            `→ share event emitted | poem_id: ${current.id} | method: native`,
-            'info'
-          );
-        }
-        addLog('Share', 'Shared via Web Share API', 'success');
-        return;
-      } catch (e) {
-        // User cancelled or API failed — fall through to copy
-        if (e.name === 'AbortError') {
-          addLog('Share', 'Share cancelled by user', 'info');
-          return;
-        }
-      }
-    }
-
-    // Fallback: copy link to clipboard
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-      track('share_method', { method: 'clipboard' });
-      if (current?.id) {
-        emitEvent(current.id, 'share', { method: 'clipboard' });
-        addLog(
-          'Event',
-          `→ share event emitted | poem_id: ${current.id} | method: clipboard`,
-          'info'
-        );
-      }
-      useModalStore.getState().showToastTimed('share', 2000);
-      addLog('Share', `Link copied: ${shareUrl}`, 'success');
-    } catch (e) {
-      addLog('Share Error', e.message, 'error');
-    }
+    // Open the share card modal for visual sharing
+    useModalStore.getState().openShareCard();
   };
 
   // Auth handlers
@@ -987,19 +974,179 @@ export default function DiwanApp() {
               }}
             />
             <div className="flex flex-col items-center pt-2">
-              <PoemCard
-                current={current}
-                versePairs={versePairs}
-                insightParts={insightParts}
-                isInterpreting={isInterpreting}
-                interpretation={interpretation}
-                showTransliteration={showTransliteration}
-                showTranslation={showTranslation}
-                darkMode={darkMode}
-                theme={theme}
-                currentFontClass={currentFontClass}
-                textScale={textScale}
-              />
+              <div className="w-full max-w-4xl flex flex-col items-center">
+                <div
+                  className={`text-center ${DESIGN.mainMetaPadding} animate-in slide-in-from-bottom-8 duration-1000 z-20 w-full`}
+                >
+                  <div className="minimal-frame mb-1">
+                    <svg viewBox="0 0 550 120" preserveAspectRatio="xMidYMid meet">
+                      <line className="frame-line" x1="20" y1="20" x2="70" y2="20" />
+                      <line className="frame-line" x1="20" y1="20" x2="20" y2="70" />
+                      <line className="frame-line" x1="530" y1="20" x2="480" y2="20" />
+                      <line className="frame-line" x1="530" y1="20" x2="530" y2="70" />
+                      <line className="frame-line" x1="20" y1="100" x2="70" y2="100" />
+                      <line className="frame-line" x1="20" y1="100" x2="20" y2="50" />
+                      <line className="frame-line" x1="530" y1="100" x2="480" y2="100" />
+                      <line className="frame-line" x1="530" y1="100" x2="530" y2="50" />
+                      <circle
+                        className="frame-line"
+                        cx="32"
+                        cy="32"
+                        r="2.5"
+                        fill={GOLD.gold}
+                        opacity="0.35"
+                      />
+                      <circle
+                        className="frame-line"
+                        cx="518"
+                        cy="32"
+                        r="2.5"
+                        fill={GOLD.gold}
+                        opacity="0.35"
+                      />
+                      <circle
+                        className="frame-line"
+                        cx="32"
+                        cy="88"
+                        r="2.5"
+                        fill={GOLD.gold}
+                        opacity="0.35"
+                      />
+                      <circle
+                        className="frame-line"
+                        cx="518"
+                        cy="88"
+                        r="2.5"
+                        fill={GOLD.gold}
+                        opacity="0.35"
+                      />
+                    </svg>
+
+                    <div
+                      className="relative z-10 flex flex-col items-center justify-center w-full"
+                      dir="rtl"
+                    >
+                      {/* Poet name — gold foil, editorial hierarchy */}
+                      <div
+                        className="font-amiri font-bold text-center"
+                        style={{
+                          fontSize: 'clamp(1.1rem, 3vw, 1.6rem)',
+                          color: 'var(--gold)',
+                          lineHeight: 1.3,
+                          letterSpacing: '0.02em',
+                          textShadow: darkMode
+                            ? '0 0 40px rgba(197,160,89,0.2), 0 0 12px rgba(197,160,89,0.08)'
+                            : 'none',
+                        }}
+                      >
+                        {current?.poetArabic || current?.poet}
+                      </div>
+                      {current?.poet !== current?.poetArabic && current?.poet && (
+                        <div
+                          className="font-brand-en font-bold text-center"
+                          dir="ltr"
+                          style={{
+                            fontSize: 'clamp(0.85rem, 2vw, 1.1rem)',
+                            color: 'var(--gold)',
+                            opacity: 0.7,
+                            marginTop: '0.15rem',
+                            letterSpacing: '0.04em',
+                          }}
+                        >
+                          {current.poet}
+                        </div>
+                      )}
+                      <div
+                        style={{
+                          width: '40px',
+                          height: '1px',
+                          background: 'var(--gold)',
+                          opacity: 0.35,
+                          margin: '0.5rem auto',
+                        }}
+                      />
+                      {/* Title — italic, editorial */}
+                      <div
+                        className="font-amiri italic text-center"
+                        style={{
+                          fontSize: 'clamp(1.3rem, 3.5vw, 2rem)',
+                          color: darkMode ? '#e8e0d0' : '#3d2800',
+                          lineHeight: 1.4,
+                          textShadow: darkMode ? '0 0 20px rgba(197,160,89,0.1)' : 'none',
+                        }}
+                      >
+                        {current?.titleArabic || current?.title}
+                      </div>
+                      {current?.title !== current?.titleArabic && current?.title && (
+                        <div
+                          className="font-brand-en text-center italic"
+                          dir="ltr"
+                          style={{
+                            fontSize: 'clamp(0.75rem, 1.5vw, 0.9rem)',
+                            color: darkMode ? '#a8a29e' : '#78716c',
+                            marginTop: '0.25rem',
+                          }}
+                        >
+                          {current.title}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className={`relative w-full group pt-1 pb-2 ${DESIGN.mainMarginBottom}`}>
+                  <div className="px-4 md:px-20 py-2 text-center">
+                    <div className="flex flex-col gap-5 md:gap-7">
+                      {versePairs.map((pair, idx) => (
+                        <div key={`${current?.id}-${idx}`} className="flex flex-col gap-0.5">
+                          <p
+                            dir="rtl"
+                            className={`${currentFontClass} leading-[2.2] arabic-shadow ${DESIGN.anim}`}
+                            style={{ fontSize: `calc(clamp(1.25rem, 2vw, 1.5rem) * ${textScale})` }}
+                          >
+                            {pair.ar}
+                          </p>
+                          {showTransliteration && pair.ar && (
+                            <p
+                              dir="ltr"
+                              className={`font-brand-en italic opacity-30 ${DESIGN.anim}`}
+                              style={{
+                                fontSize: `calc(clamp(0.75rem, 1.2vw, 0.875rem) * ${textScale})`,
+                              }}
+                            >
+                              {transliterate(pair.ar)}
+                            </p>
+                          )}
+                          {showTranslation && pair.en && (
+                            <p
+                              dir="ltr"
+                              className={`font-brand-en italic opacity-40 ${DESIGN.anim} mx-auto`}
+                              style={{
+                                fontSize: `calc(clamp(1rem, 1.5vw, 1.125rem) * ${textScale})`,
+                                maxWidth: '90%',
+                              }}
+                            >
+                              {pair.en}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex justify-center gap-3 mt-2 mb-4">
+                  {Array.isArray(current?.tags) &&
+                    current.tags.slice(0, 3).map((tag) => (
+                      <span
+                        key={tag}
+                        className={`px-2.5 py-0.5 border ${theme.brandBorder} ${theme.brand} ${DESIGN.mainTagSize} font-brand-en tracking-[0.15em] uppercase opacity-70`}
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                </div>
+              </div>
             </div>
           </main>
 
@@ -1082,10 +1229,10 @@ export default function DiwanApp() {
                       </div>
                     </button>
                     <span
-                      className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase whitespace-nowrap ${GOLD.goldText}`}
-                      style={{ opacity: 0.6, animation: 'shimmer 2s ease-in-out infinite' }}
+                      className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
+                      style={{ animation: 'shimmer 2s ease-in-out infinite' }}
                     >
-                      Crafting
+                      Loading
                     </span>
                   </>
                 ) : (
@@ -1110,8 +1257,7 @@ export default function DiwanApp() {
                       )}
                     </button>
                     <span
-                      className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase whitespace-nowrap ${GOLD.goldText}`}
-                      style={{ opacity: isPlaying ? 0.9 : 0.6 }}
+                      className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
                     >
                       {isPlaying ? 'Playing' : 'Listen'}
                     </span>
@@ -1121,30 +1267,61 @@ export default function DiwanApp() {
 
               <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
                 <button
-                  onClick={handleFetch}
+                  onClick={() => {
+                    setFireTapped(true);
+                    setTimeout(() => setFireTapped(false), 400);
+                    setDiscoverDrawerOpen(true);
+                  }}
                   disabled={isFetching}
-                  aria-label="Discover new poem"
-                  className={`discover-btn min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
+                  aria-label="Open discover"
+                  className={`relative w-[46px] h-[46px] bg-transparent border-none cursor-pointer flex items-center justify-center rounded-full hover:scale-105 ${fireTapped ? 'fire-tap' : ''}`}
+                  style={{
+                    background: isFetching ? 'rgba(197,160,89,0.08)' : 'transparent',
+                    transition: fireTapped ? 'none' : 'transform 0.3s',
+                  }}
                 >
-                  {isFetching ? (
-                    <Shuffle
-                      className={`${GOLD.goldText}`}
-                      size={21}
-                      style={{ animation: 'discoverShuffle 0.4s ease-in-out infinite' }}
-                    />
-                  ) : (
-                    <Shuffle className={`discover-icon ${GOLD.goldText}`} size={21} />
-                  )}
+                  <GoldenFireIcon size={34} />
                 </button>
                 <span
-                  className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase whitespace-nowrap ${GOLD.goldText}`}
-                  style={{ opacity: 0.6 }}
+                  className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
                 >
                   Discover
                 </span>
               </div>
 
-              <PoetPicker handleFetch={handleFetch} />
+              <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
+                <button
+                  onClick={() => {
+                    if (interpretation) {
+                      useModalStore.getState().toggleInsightsDrawer();
+                      useModalStore.getState().showToastTimed('insight', 1500);
+                    } else {
+                      handleAnalyze();
+                      setInsightsDrawerOpen(true);
+                    }
+                  }}
+                  disabled={isInterpreting}
+                  aria-label="Explain poem meaning"
+                  className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-200 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105 ${isInterpreting ? 'opacity-50' : ''}`}
+                >
+                  {isInterpreting ? (
+                    <Loader2 className="animate-spin" style={{ color: GOLD.gold }} size={21} />
+                  ) : showInsightSuccess ? (
+                    <Check style={{ color: GOLD.gold }} size={21} />
+                  ) : (
+                    <Lightbulb
+                      className={GOLD.goldText}
+                      size={21}
+                      style={{ opacity: interpretation ? 1 : 0.7 }}
+                    />
+                  )}
+                </button>
+                <span
+                  className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
+                >
+                  Explain
+                </span>
+              </div>
 
               <SavePoemButton
                 poem={current}
@@ -1186,8 +1363,23 @@ export default function DiwanApp() {
 
       {/* Insights Drawer (Mobile bottom sheet) */}
       <AnimatePresence>
-        {insightsDrawerOpen && (
-          <InsightsDrawer key="insights-drawer" insightParts={insightParts} current={current} />
+        {insightsDrawerOpen && <InsightsDrawer key="insights-drawer" insightParts={insightParts} />}
+      </AnimatePresence>
+
+      {/* Discover Drawer */}
+      <AnimatePresence>
+        {discoverDrawerOpen && (
+          <DiscoverDrawer
+            key="discover-drawer"
+            onSurpriseMe={() => {
+              setSelectedCategory('All');
+              handleFetch();
+            }}
+            onSelectPoet={(id) => {
+              setSelectedCategory(id);
+              handleFetch();
+            }}
+          />
         )}
       </AnimatePresence>
 
@@ -1236,15 +1428,6 @@ export default function DiwanApp() {
 
       {/* Vertical Sidebar - always visible */}
       <VerticalSidebar
-        onExplain={() => {
-          if (interpretation) {
-            useModalStore.getState().toggleInsightsDrawer();
-            useModalStore.getState().showToastTimed('insight', 1500);
-          } else {
-            handleAnalyze();
-            setInsightsDrawerOpen(true);
-          }
-        }}
         onCopy={handleCopy}
         onShare={handleShare}
         onSignIn={handleSignIn}
@@ -1262,6 +1445,21 @@ export default function DiwanApp() {
           </Suspense>
         )}
       </AnimatePresence>
+
+      {/* Share Card Modal */}
+      {showShareCard && current && (
+        <ShareCardModal
+          poem={{
+            ...current,
+            english:
+              insightParts?.poeticTranslation ||
+              current?.english ||
+              current?.cachedTranslation ||
+              '',
+          }}
+          onClose={() => useModalStore.getState().closeShareCard()}
+        />
+      )}
 
       {/* Keyboard Shortcut Help */}
       <AnimatePresence>{showShortcutHelp && <ShortcutHelp key="shortcut-help" />}</AnimatePresence>

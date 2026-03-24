@@ -108,12 +108,17 @@ test.describe('User Flows', () => {
     // Capture the poet name before discover
     const poetBefore = await page.locator('[dir="rtl"]').first().textContent();
 
+    // Open the DiscoverDrawer, then click Surprise Me to fetch a new poem
+    const openDrawerButton = page.locator('button[aria-label="Open discover"]');
+    await expect(openDrawerButton).toBeEnabled({ timeout: 10000 });
+    await openDrawerButton.click();
+
     const discoverButton = page.locator('button[aria-label="Discover new poem"]');
-    await expect(discoverButton).toBeEnabled({ timeout: 10000 });
+    await expect(discoverButton).toBeVisible({ timeout: 3000 });
     await discoverButton.click();
 
     // After click, the mock route serves a different poem
-    await expect(discoverButton).toBeEnabled({ timeout: 10000 });
+    await expect(openDrawerButton).toBeEnabled({ timeout: 10000 });
     // Verify that either poet from our mock data is displayed
     const darwishVisible = await page
       .locator('text=محمود درويش')
@@ -360,11 +365,15 @@ test.describe('User Flows', () => {
     await expect(saveBtn).toBeVisible({ timeout: 5000 });
     await expect(flagBtn).toBeVisible({ timeout: 5000 });
 
-    // Discover a new poem
+    // Discover a new poem — open drawer then click Surprise Me
+    const openDrawerBtn = page.locator('button[aria-label="Open discover"]');
+    await expect(openDrawerBtn).toBeEnabled({ timeout: 10000 });
+    await openDrawerBtn.click();
+
     const discoverBtn = page.locator('button[aria-label="Discover new poem"]');
-    await expect(discoverBtn).toBeEnabled({ timeout: 10000 });
+    await expect(discoverBtn).toBeVisible({ timeout: 3000 });
     await discoverBtn.click();
-    await expect(discoverBtn).toBeEnabled({ timeout: 10000 });
+    await expect(openDrawerBtn).toBeEnabled({ timeout: 10000 });
 
     // Save and Flag should still be visible after poem change
     await expect(saveBtn).toBeVisible();

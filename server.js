@@ -938,6 +938,113 @@ async function designTablesExist() {
   }
 }
 
+// ── OG Image: SVG-based share card for social link previews ─────────────
+// GET /api/poems/:id/og-image — returns an SVG image for Open Graph previews
+app.get(
+  '/api/poems/:id/og-image',
+  [param('id').isInt({ min: 1 }).withMessage('Poem ID must be a positive integer'), validate],
+  async (req, res) => {
+    try {
+      const { id } = req.params;
+
+      const result = await pool.query(
+        `
+        SELECT
+          p.id,
+          p.title,
+          ${poemContentExpr()} as arabic,
+          po.name as poet,
+          t.name as theme
+          ${poetNameEnExpr()}
+          ${titleEnExpr()}
+          ${translationSelectExpr()}
+        FROM poems p
+        JOIN poets po ON p.poet_id = po.id
+        JOIN themes t ON p.theme_id = t.id
+        WHERE p.id = $1
+      `,
+        [id]
+      );
+
+      if (result.rows.length === 0) {
+        return res.status(404).json({ error: 'Poem not found' });
+      }
+
+      const poem = formatPoem(result.rows[0]);
+
+      // Take first 4 verses
+      const verses = (poem.arabic || '')
+        .split('\n')
+        .map((l) => l.trim())
+        .filter(Boolean)
+        .slice(0, 4);
+
+      // Take first 4 translation lines
+      const translation = (poem.cachedTranslation || poem.english || '')
+        .split('\n')
+        .map((l) => l.trim())
+        .filter(Boolean)
+        .slice(0, 4);
+
+      const poetName = poem.poetArabic || poem.poet || '';
+      const title = poem.titleArabic || poem.title || '';
+
+      // Escape XML entities
+      const esc = (s) =>
+        String(s || '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&apos;');
+
+      // Generate SVG (1200×630 — Open Graph standard)
+      const w = 1200;
+      const h = 630;
+      const verseY = 220;
+      const verseSpacing = 45;
+      const transY = verseY + verses.length * verseSpacing + 40;
+      const transSpacing = 28;
+
+      const svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">
+  <defs>
+    <linearGradient id="goldLine" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="rgba(197,160,89,0)" />
+      <stop offset="30%" stop-color="rgba(197,160,89,0.5)" />
+      <stop offset="50%" stop-color="rgba(197,160,89,0.7)" />
+      <stop offset="70%" stop-color="rgba(197,160,89,0.5)" />
+      <stop offset="100%" stop-color="rgba(197,160,89,0)" />
+    </linearGradient>
+    <style>
+      /* System fonts with Arabic support — no external requests needed */
+      text { font-family: 'Geeza Pro', 'Noto Naskh Arabic', 'Traditional Arabic', serif; }
+    </style>
+  </defs>
+  <rect width="${w}" height="${h}" fill="#0c0c0e" />
+  <rect x="30" y="30" width="${w - 60}" height="${h - 60}" fill="none" stroke="rgba(197,160,89,0.25)" stroke-width="1" />
+  <text x="${w / 2}" y="90" text-anchor="middle" font-family="Amiri, serif" font-size="32" font-weight="700" fill="#c5a059" direction="rtl">${esc(poetName)}</text>
+  <text x="${w / 2}" y="130" text-anchor="middle" font-family="Amiri, serif" font-size="20" fill="rgba(197,160,89,0.65)" direction="rtl">${esc(title)}</text>
+  <rect x="120" y="155" width="${w - 240}" height="1" fill="url(#goldLine)" />
+  ${verses.map((v, i) => `<text x="${w / 2}" y="${verseY + i * verseSpacing}" text-anchor="middle" font-family="Amiri, serif" font-size="28" fill="#e8e0d0" direction="rtl">${esc(v)}</text>`).join('\n  ')}
+  <text x="${w / 2}" y="${transY - 10}" text-anchor="middle" font-family="serif" font-size="18" fill="rgba(197,160,89,0.4)">✦</text>
+  ${translation.map((t, i) => `<text x="${w / 2}" y="${transY + 15 + i * transSpacing}" text-anchor="middle" font-family="Playfair Display, serif" font-size="16" font-style="italic" fill="rgba(232,224,208,0.5)">${esc(t)}</text>`).join('\n  ')}
+  <text x="${w / 2}" y="${h - 30}" text-anchor="middle" font-family="Forum, serif" font-size="14" fill="rgba(197,160,89,0.5)">Poetry Bil-Araby  |  بالعربي</text>
+</svg>`;
+
+      res.setHeader('Content-Type', 'image/svg+xml');
+      res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache for 24 hours
+      res.send(svg);
+
+      log.info('OG', `Generated OG image for poem ${id}`);
+    } catch (error) {
+      Sentry.captureException(error);
+      log.error('OG', `Error generating OG image: ${error.message}`, error.stack);
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+);
+
 // GET /api/design-review/ping — lightweight liveness check (SELECT 1, no table scan)
 app.get('/api/design-review/ping', async (req, res) => {
   try {

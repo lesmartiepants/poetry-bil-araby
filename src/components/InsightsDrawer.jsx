@@ -7,12 +7,11 @@ import { useUIStore } from '../stores/uiStore';
 import { useModalStore } from '../stores/modalStore';
 import { usePoemStore } from '../stores/poemStore';
 
-const InsightsDrawer = ({ insightParts, current }) => {
+const InsightsDrawer = ({ insightParts }) => {
   const isOpen = useModalStore((s) => s.insightsDrawer);
   const onClose = () => useModalStore.getState().setInsightsDrawer(false);
   const isInterpreting = usePoemStore((s) => s.isInterpreting);
   const interpretation = usePoemStore((s) => s.interpretation);
-  const showTranslation = useUIStore((s) => s.showTranslation);
   const storeDarkMode = useUIStore((s) => s.darkMode);
   const ratchetMode = useUIStore((s) => s.ratchetMode);
   const darkMode = storeDarkMode;
@@ -128,13 +127,6 @@ const InsightsDrawer = ({ insightParts, current }) => {
             </div>
           ) : (
             <div className="space-y-6">
-              {showTranslation && (
-                <p
-                  className={`font-brand-en italic whitespace-pre-wrap text-sm leading-relaxed ${darkMode ? 'text-stone-100' : 'text-stone-800'}`}
-                >
-                  {insightParts?.poeticTranslation || current?.english}
-                </p>
-              )}
               {insightParts?.depth && (
                 <div className="pt-4 border-t border-indigo-500/10">
                   <h4 className="text-[10px] font-brand-en font-black text-indigo-600 mb-2 uppercase tracking-widest opacity-80">
@@ -163,7 +155,7 @@ const InsightsDrawer = ({ insightParts, current }) => {
                 <p className="text-center text-sm opacity-40 font-brand-en italic py-8">
                   {ratchetMode
                     ? 'Tap Explain to get that ratchet take fr fr 🔥'
-                    : "Tap Explain to discover this poem's story"}
+                    : 'Tap the lightbulb to illuminate this poem'}
                 </p>
               )}
             </div>

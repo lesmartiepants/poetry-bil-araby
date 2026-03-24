@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { X, Loader2, Search } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { CATEGORIES } from '../constants/index.js';
 import { useUIStore } from '../stores/uiStore';
 import { useModalStore } from '../stores/modalStore';
@@ -235,6 +235,13 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
       return { ...cat, poemCount: safeCount };
     });
 
+    // Sort more-poets list alphabetically by English label, selected poet floats first
+    const sortedAll = [...apiPoets].sort((a, b) => {
+      if (a.id === selectedCategory) return -1;
+      if (b.id === selectedCategory) return 1;
+      return a.label.localeCompare(b.label, 'en', { sensitivity: 'base' });
+    });
+
     if (!poetSearch.trim()) {
       // Move selected featured poet to the front of the strip
       const sortedFeatured = [...featured].sort((a, b) => {
@@ -242,7 +249,7 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
         if (b.id === selectedCategory) return 1;
         return 0;
       });
-      return { featured: sortedFeatured, all: apiPoets };
+      return { featured: sortedFeatured, all: sortedAll };
     }
 
     const search = normalizeAr(poetSearch.trim().toLowerCase());
@@ -250,9 +257,13 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
       normalizeAr(p.labelAr).includes(search) || p.label.toLowerCase().includes(search);
     return {
       featured: featured.filter(matchesSearch),
-      all: apiPoets.filter(matchesSearch),
+      all: [...apiPoets].filter(matchesSearch).sort((a, b) => {
+        if (a.id === selectedCategory) return -1;
+        if (b.id === selectedCategory) return 1;
+        return a.label.localeCompare(b.label, 'en', { sensitivity: 'base' });
+      }),
     };
-  }, [poetSearch, dynamicPoets]);
+  }, [poetSearch, dynamicPoets, selectedCategory]);
 
   // Text color for the current theme
   const textColor = darkMode ? 'rgba(214,211,205,0.9)' : 'rgba(40,35,30,0.9)';
@@ -299,13 +310,13 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
             className="font-brand-en font-bold text-[15px] leading-none"
             style={{ color: 'var(--gold)' }}
           >
-            Discover
+            Discover a Poem
           </h3>
           <p
             className="font-brand-en text-[10px] uppercase tracking-[0.15em] mt-0.5"
             style={{ color: 'var(--gold)', opacity: 0.55 }}
           >
-            Arabic Poetry
+            Featured Poets
           </p>
           <button
             onClick={onClose}
@@ -320,67 +331,77 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
           </button>
         </div>
 
-        {/* ── Horizontal strip: Surprise Me (locked) + scrollable poet tiles ── */}
+        {/* ── Horizontal strip: scrollable poet tiles ── */}
         {!poetSearch && (
-          <div className="pb-3 flex-shrink-0 flex gap-0 items-stretch">
-            {/* Surprise Me — locked outside the scroll container */}
-            <div className="pl-4 pr-2 flex-shrink-0">
+          <div className="pb-3 flex-shrink-0">
+            <div
+              className="flex gap-2 pl-4 overflow-x-auto"
+              style={{
+                scrollbarWidth: 'none',
+                msOverflowStyle: 'none',
+                maskImage: 'linear-gradient(to right, black 0%, black 82%, transparent 100%)',
+                WebkitMaskImage: 'linear-gradient(to right, black 0%, black 82%, transparent 100%)',
+              }}
+            >
+              {/* All Poets tile */}
               <button
+                data-testid="poet-picker-button"
                 onClick={() => {
-                  onSurpriseMe();
+                  onSelectPoet('All');
                   onClose();
                 }}
-                disabled={isFetching}
-                aria-label="Discover new poem"
-                className="rounded-2xl flex flex-col items-center justify-center gap-1.5 transition-all duration-200 active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed"
+                className={`flex-shrink-0 rounded-2xl px-3 flex flex-col items-end justify-center transition-all duration-200 ${
+                  selectedCategory === 'All'
+                    ? 'border border-gold/50 bg-gold/12'
+                    : 'hover:bg-gold/8 border'
+                }`}
                 style={{
                   width: 96,
-                  height: 84,
-                  background:
-                    'linear-gradient(160deg, rgba(197,160,89,0.22) 0%, rgba(197,160,89,0.08) 100%)',
-                  border: '1px solid rgba(197,160,89,0.42)',
-                  boxShadow: '0 4px 16px rgba(197,160,89,0.12)',
+                  height: 70,
+                  borderColor: selectedCategory === 'All' ? undefined : subtleBorder,
+                  background: selectedCategory === 'All' ? undefined : cardBg,
                 }}
               >
                 <div
-                  className="font-brand-en font-bold text-[11px] leading-tight text-center px-1"
-                  style={{ color: 'var(--gold)' }}
+                  className="font-bold text-[13px] truncate w-full text-right"
+                  dir="rtl"
+                  style={{
+                    fontFamily: "'Reem Kufi', sans-serif",
+                    color: selectedCategory === 'All' ? 'var(--gold)' : textColor,
+                  }}
                 >
-                  Surprise Me
+                  كل الشعراء
+                </div>
+                <div
+                  className="font-brand-en text-[10px] mt-0.5 truncate w-full text-right"
+                  style={{
+                    opacity: selectedCategory === 'All' ? 0.75 : 0.6,
+                    color: selectedCategory === 'All' ? 'var(--gold)' : subTextColor,
+                  }}
+                >
+                  All Poets
                 </div>
               </button>
-            </div>
 
-            {/* Scrollable poet tiles with right-fade mask */}
-            <div className="relative flex-1 min-w-0">
-              <div
-                className="flex gap-2 pr-4 overflow-x-auto"
-                style={{
-                  scrollbarWidth: 'none',
-                  msOverflowStyle: 'none',
-                  maskImage:
-                    'linear-gradient(to right, transparent 0%, black 12%, black 80%, transparent 100%)',
-                  WebkitMaskImage:
-                    'linear-gradient(to right, transparent 0%, black 12%, black 80%, transparent 100%)',
-                }}
-              >
-                {/* All Poets tile */}
+              {/* Featured poet tiles */}
+              {filteredPoetList.featured.map((cat) => (
                 <button
+                  key={cat.id}
                   data-testid="poet-picker-button"
                   onClick={() => {
-                    onSelectPoet('All');
+                    onSelectPoet(cat.id);
                     onClose();
                   }}
                   className={`flex-shrink-0 rounded-2xl px-3 flex flex-col items-end justify-center transition-all duration-200 ${
-                    selectedCategory === 'All'
+                    selectedCategory === cat.id
                       ? 'border border-gold/50 bg-gold/12'
                       : 'hover:bg-gold/8 border'
                   }`}
                   style={{
                     width: 96,
-                    height: 84,
-                    borderColor: selectedCategory === 'All' ? undefined : subtleBorder,
-                    background: selectedCategory === 'All' ? undefined : cardBg,
+                    height: 70,
+                    borderColor: selectedCategory === cat.id ? undefined : subtleBorder,
+                    background: selectedCategory === cat.id ? undefined : cardBg,
                   }}
                 >
                   <div
@@ -388,85 +409,65 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
                     dir="rtl"
                     style={{
                       fontFamily: "'Reem Kufi', sans-serif",
-                      color: selectedCategory === 'All' ? 'var(--gold)' : textColor,
+                      color: selectedCategory === cat.id ? 'var(--gold)' : textColor,
                     }}
                   >
-                    كل الشعراء
+                    {cat.labelAr}
                   </div>
                   <div
                     className="font-brand-en text-[10px] mt-0.5 truncate w-full text-right"
                     style={{
-                      opacity: selectedCategory === 'All' ? 0.75 : 0.6,
-                      color: selectedCategory === 'All' ? 'var(--gold)' : subTextColor,
+                      opacity: selectedCategory === cat.id ? 0.75 : 0.6,
+                      color: selectedCategory === cat.id ? 'var(--gold)' : subTextColor,
                     }}
                   >
-                    All Poets
+                    {cat.label}
                   </div>
                 </button>
-
-                {/* Featured poet tiles */}
-                {filteredPoetList.featured.map((cat) => (
-                  <button
-                    key={cat.id}
-                    data-testid="poet-picker-button"
-                    onClick={() => {
-                      onSelectPoet(cat.id);
-                      onClose();
-                    }}
-                    className={`flex-shrink-0 rounded-2xl px-3 flex flex-col items-end justify-center transition-all duration-200 ${
-                      selectedCategory === cat.id
-                        ? 'border border-gold/50 bg-gold/12'
-                        : 'hover:bg-gold/8 border'
-                    }`}
-                    style={{
-                      width: 96,
-                      height: 84,
-                      borderColor: selectedCategory === cat.id ? undefined : subtleBorder,
-                      background: selectedCategory === cat.id ? undefined : cardBg,
-                    }}
-                  >
-                    <div
-                      className="font-bold text-[13px] truncate w-full text-right"
-                      dir="rtl"
-                      style={{
-                        fontFamily: "'Reem Kufi', sans-serif",
-                        color: selectedCategory === cat.id ? 'var(--gold)' : textColor,
-                      }}
-                    >
-                      {cat.labelAr}
-                    </div>
-                    <div
-                      className="font-brand-en text-[10px] mt-0.5 truncate w-full text-right"
-                      style={{
-                        opacity: selectedCategory === cat.id ? 0.75 : 0.6,
-                        color: selectedCategory === cat.id ? 'var(--gold)' : subTextColor,
-                      }}
-                    >
-                      {cat.label}
-                    </div>
-                  </button>
-                ))}
-              </div>
+              ))}
+              {/* Right spacer so last tile fades before edge */}
+              <div className="flex-shrink-0 w-8" />
             </div>
           </div>
         )}
 
-        {/* ── Divider (only shown without search) ── */}
-        {!poetSearch && filteredPoetList.all.length > 0 && (
-          <div className="flex items-center gap-3 px-5 pb-3 flex-shrink-0">
-            <div className="flex-1 h-px" style={{ background: 'rgba(197,160,89,0.12)' }} />
-            <span
-              className="font-brand-en text-[10px] uppercase tracking-[0.18em]"
-              style={{ color: 'var(--gold)', opacity: 0.45 }}
+        {/* ── Gold foil Surprise Me button (replaces "more poets" divider) ── */}
+        {!poetSearch && (
+          <div className="px-4 pb-3 flex-shrink-0">
+            <style>{`
+              @keyframes goldFoilSheen {
+                0%, 75%, 100% { background-position: -300% center; }
+                38%, 62% { background-position: 300% center; }
+              }
+            `}</style>
+            <button
+              onClick={() => {
+                onSurpriseMe();
+                onClose();
+              }}
+              disabled={isFetching}
+              aria-label="Discover new poem"
+              className="w-full rounded-2xl py-2.5 px-4 flex items-center justify-center gap-2 transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{
+                background:
+                  'linear-gradient(105deg, #6B4F10 0%, #A07828 12%, #C5A059 24%, #F0CD5A 36%, #FFE882 50%, #F0CD5A 64%, #C5A059 76%, #A07828 88%, #6B4F10 100%)',
+                backgroundSize: '300% 100%',
+                animation: 'goldFoilSheen 6s ease-in-out infinite',
+                boxShadow: '0 2px 14px rgba(197,160,89,0.4), inset 0 1px 0 rgba(255,240,160,0.35)',
+              }}
             >
-              more poets
-            </span>
-            <div className="flex-1 h-px" style={{ background: 'rgba(197,160,89,0.12)' }} />
+              <span
+                className="font-brand-en font-bold text-[12px] tracking-[0.06em] uppercase"
+                style={{ color: '#1a1208', textShadow: '0 1px 0 rgba(255,240,160,0.4)' }}
+              >
+                Surprise Me
+              </span>
+            </button>
           </div>
         )}
 
         {/* ── Search ── */}
-        <div className="px-4 pb-3 flex-shrink-0">
+        <div className="px-4 pb-2 flex-shrink-0">
           <div className="relative flex items-center">
             <Search
               className="absolute left-3"
@@ -480,13 +481,23 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
               onChange={(e) => setPoetSearch(e.target.value)}
               placeholder="Search poets..."
               aria-label="Search poets"
-              className="w-full rounded-xl pl-8 pr-8 py-2 text-[15px] font-tajawal transition-colors focus:outline-none"
+              className="w-full rounded-xl pl-8 pr-16 py-1.5 text-[14px] font-tajawal transition-colors focus:outline-none"
               style={{
                 background: 'rgba(197,160,89,0.06)',
                 border: '1px solid rgba(197,160,89,0.18)',
                 color: darkMode ? '#d6d3cd' : '#3c3531',
               }}
             />
+            {/* Arabic hint — right side, shown only when input is empty */}
+            {!poetSearch && (
+              <span
+                className="absolute right-3 text-[13px] font-tajawal pointer-events-none"
+                dir="rtl"
+                style={{ color: 'var(--gold)', opacity: 0.28 }}
+              >
+                ...ابحث
+              </span>
+            )}
             {poetSearch && (
               <button
                 onClick={() => setPoetSearch('')}

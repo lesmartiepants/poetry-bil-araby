@@ -284,14 +284,10 @@ test.describe('User Flows', () => {
 
   // #8 — DB/AI mode toggle removed (DB mode is now the permanent default)
 
-  // #9 — Navigate to design review
+  // #9 — Navigate to design review (accessible via direct URL even when icon is hidden)
   test('user navigates to design review', async ({ page }) => {
-    // The app has a single fixed-position design-review link (bottom-left utility button).
-    const link = page.locator('a[href="/design-review"]').first();
-    await expect(link).toBeVisible({ timeout: 5000 });
-
-    // The link href is "/design-review" but Vite serves the static page at "/design-review/"
-    // (with trailing slash). Navigate directly to avoid SPA fallback on the non-slash URL.
+    // The design review link icon is gated by FEATURES.designReview (default false).
+    // The page is still accessible via direct URL navigation.
     await page.goto('/design-review/');
     await page.waitForLoadState('domcontentloaded');
     await expect(page).toHaveURL(/\/design-review/);

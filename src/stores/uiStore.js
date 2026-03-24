@@ -14,6 +14,7 @@ const initialState = {
   showDebugLogs: FEATURES.debug,
   logs: [],
   headerOpacity: 0,
+  ratchetMode: false,
   cacheStats: {
     audioHits: 0,
     audioMisses: 0,
@@ -45,6 +46,7 @@ export const useUIStore = create((set, get) => ({
   toggleTranslation: () => set((s) => ({ showTranslation: !s.showTranslation })),
   toggleTransliteration: () => set((s) => ({ showTransliteration: !s.showTransliteration })),
   toggleDebugLogs: () => set((s) => ({ showDebugLogs: !s.showDebugLogs })),
+  toggleRatchetMode: () => set((s) => ({ ratchetMode: !s.ratchetMode })),
 
   addLog: (label, msg, type = 'info') => {
     const now = performance.now();

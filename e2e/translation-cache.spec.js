@@ -476,11 +476,15 @@ test.describe('Translation Cache — Poem Variety', () => {
     // Wait for it to replace the seed poem
     await expect(page.locator('text=شاعر أ').first()).toBeVisible({ timeout: 5000 });
 
-    // Click discover — should get poemB (second in sequence; note first was consumed by
-    // auto-load, and one by prefetch, so discover gets poemC or wraps around)
-    const discoverButton = page.locator('button[aria-label="Discover new poem"]');
-    await expect(discoverButton).toBeEnabled({ timeout: 5000 });
-    await discoverButton.click();
+    // Click discover — opens the DiscoverDrawer, then click Surprise Me to get a new poem
+    // (poemB or poemC in sequence; first was consumed by auto-load/prefetch)
+    const openDrawerButton = page.locator('button[aria-label="Open discover"]');
+    await expect(openDrawerButton).toBeEnabled({ timeout: 5000 });
+    await openDrawerButton.click();
+
+    const surpriseMeButton = page.locator('button[aria-label="Discover new poem"]');
+    await expect(surpriseMeButton).toBeVisible({ timeout: 3000 });
+    await surpriseMeButton.click();
 
     // Should see a DIFFERENT poet after discover
     await page.waitForTimeout(1000);

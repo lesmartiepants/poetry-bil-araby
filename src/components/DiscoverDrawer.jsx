@@ -235,7 +235,15 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
       return { ...cat, poemCount: safeCount };
     });
 
-    if (!poetSearch.trim()) return { featured, all: apiPoets };
+    if (!poetSearch.trim()) {
+      // Move selected featured poet to the front of the strip
+      const sortedFeatured = [...featured].sort((a, b) => {
+        if (a.id === selectedCategory) return -1;
+        if (b.id === selectedCategory) return 1;
+        return 0;
+      });
+      return { featured: sortedFeatured, all: apiPoets };
+    }
 
     const search = normalizeAr(poetSearch.trim().toLowerCase());
     const matchesSearch = (p) =>
@@ -272,7 +280,7 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
         exit={{ y: '100%' }}
         transition={{ type: 'spring', damping: 28, stiffness: 280 }}
         style={{
-          height: '80dvh',
+          height: '90dvh',
           background: darkMode
             ? 'linear-gradient(180deg, rgba(18,16,12,0.99) 0%, rgba(12,12,14,1) 100%)'
             : 'linear-gradient(180deg, rgba(253,252,248,0.99) 0%, rgba(245,243,238,1) 100%)',
@@ -286,26 +294,22 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
         </div>
 
         {/* Header */}
-        <div className="px-5 pb-3 pt-1 flex items-center justify-between flex-shrink-0">
-          <div className="flex items-center gap-2.5">
-            <div>
-              <h3
-                className="font-brand-en font-bold text-[15px] leading-none"
-                style={{ color: 'var(--gold)' }}
-              >
-                Discover
-              </h3>
-              <p
-                className="font-brand-en text-[10px] uppercase tracking-[0.15em] mt-0.5"
-                style={{ color: 'var(--gold)', opacity: 0.55 }}
-              >
-                Arabic Poetry
-              </p>
-            </div>
-          </div>
+        <div className="relative px-5 pb-3 pt-1 flex-shrink-0">
+          <h3
+            className="font-brand-en font-bold text-[15px] leading-none"
+            style={{ color: 'var(--gold)' }}
+          >
+            Discover
+          </h3>
+          <p
+            className="font-brand-en text-[10px] uppercase tracking-[0.15em] mt-0.5"
+            style={{ color: 'var(--gold)', opacity: 0.55 }}
+          >
+            Arabic Poetry
+          </p>
           <button
             onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-full transition-colors"
+            className="absolute top-0 right-4 w-8 h-8 flex items-center justify-center rounded-full transition-colors"
             style={{
               background: 'rgba(197,160,89,0.08)',
               border: '1px solid rgba(197,160,89,0.18)',
@@ -354,8 +358,10 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
                 style={{
                   scrollbarWidth: 'none',
                   msOverflowStyle: 'none',
-                  maskImage: 'linear-gradient(to right, black 80%, transparent 100%)',
-                  WebkitMaskImage: 'linear-gradient(to right, black 80%, transparent 100%)',
+                  maskImage:
+                    'linear-gradient(to right, transparent 0%, black 12%, black 80%, transparent 100%)',
+                  WebkitMaskImage:
+                    'linear-gradient(to right, transparent 0%, black 12%, black 80%, transparent 100%)',
                 }}
               >
                 {/* All Poets tile */}

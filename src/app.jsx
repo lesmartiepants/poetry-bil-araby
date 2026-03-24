@@ -1537,9 +1537,6 @@ export default function DiwanApp() {
                   }}
                 >
                   <GoldenFireIcon size={34} />
-                  {selectedCategory !== 'All' && !isFetching && (
-                    <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-gold shadow-[0_0_6px_rgba(197,160,89,0.5)]" />
-                  )}
                 </button>
                 <span
                   className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}

@@ -108,6 +108,37 @@ export function prepareTranslation(englishText, maxLines = 4) {
 }
 
 /**
+ * Calculate the approximate height of the bilingual header block.
+ */
+function calculateHeaderHeight(poem) {
+  const resolvedPoet = resolveBilingual(poem.poet, poem.poetArabic);
+  const resolvedTitle = resolveBilingual(poem.title, poem.titleArabic);
+  let height = 0;
+  if (resolvedPoet.arabic) height += 62;
+  if (resolvedPoet.english) height += 46;
+  height += 26; // separator
+  if (resolvedTitle.arabic) height += 55;
+  if (resolvedTitle.english && resolvedTitle.english !== resolvedTitle.arabic) height += 42;
+  return height;
+}
+
+/**
+ * Calculate vertically-centered layout for header + verse content.
+ * Returns { headerY, titleBodyGap, pairSpacing }.
+ */
+function calculateCenteredLayout(h, poem, verseCount) {
+  const headerHeight = calculateHeaderHeight(poem);
+  const titleBodyGap = 60;
+  const minMargin = 80;
+  const spaceForVerses = h - minMargin * 2 - headerHeight - titleBodyGap;
+  const pairSpacing = Math.min(180, spaceForVerses / Math.max(verseCount, 1));
+  const contentHeight = verseCount * pairSpacing;
+  const totalHeight = headerHeight + titleBodyGap + contentHeight;
+  const headerY = Math.max(minMargin, (h - totalHeight) / 2);
+  return { headerY, titleBodyGap, pairSpacing };
+}
+
+/**
  * Draw the brand mark "poetry بالعربي" on a SINGLE line in the bottom-right corner.
  * Matches the app header style: English "poetry" in Forum + Arabic "بالعربي" in Reem Kufi.
  * The brand font is NOT changed, but color/opacity/effects vary by design.
@@ -269,8 +300,13 @@ function renderDiwan(ctx, w, h, poem) {
     ctx.fill();
   }
 
+  // ── Layout: centered vertically ──
+  const verses = prepareVerses(poem.arabic);
+  const translation = prepareTranslation(poem.english || poem.cachedTranslation);
+  const layout = calculateCenteredLayout(h, poem, verses.length);
+
   // ── Header: bilingual poet & title ──
-  const headerBottom = drawBilingualHeader(ctx, w, 120, poem, {
+  const headerBottom = drawBilingualHeader(ctx, w, layout.headerY, poem, {
     poet: '#c5a059',
     poetAr: 'rgba(197, 160, 89, 0.7)',
     title: 'rgba(197, 160, 89, 0.55)',
@@ -278,14 +314,10 @@ function renderDiwan(ctx, w, h, poem) {
   });
 
   // ── Interleaved verses + translations (line by line) ──
-  const verses = prepareVerses(poem.arabic);
-  const translation = prepareTranslation(poem.english || poem.cachedTranslation);
-  const contentStartY = headerBottom + 30;
-  const contentEndY = h - 100;
-  const pairSpacing = Math.min(180, (contentEndY - contentStartY) / Math.max(verses.length, 1));
+  const contentStartY = headerBottom + layout.titleBodyGap;
 
   verses.forEach((verse, i) => {
-    const y = contentStartY + i * pairSpacing;
+    const y = contentStartY + i * layout.pairSpacing;
 
     // Arabic verse
     ctx.fillStyle = '#e8e0d0';
@@ -299,7 +331,7 @@ function renderDiwan(ctx, w, h, poem) {
       ctx.fillStyle = 'rgba(197, 160, 89, 0.55)';
       ctx.font = 'italic 34px "Playfair Display", serif';
       ctx.direction = 'ltr';
-      ctx.fillText(translation[i], w / 2, y + 54);
+      ctx.fillText(translation[i], w / 2, y + 62);
     }
   });
 
@@ -359,8 +391,13 @@ function renderIbnMuqla(ctx, w, h, poem) {
   ctx.fill();
   ctx.restore();
 
+  // ── Layout: centered vertically ──
+  const verses = prepareVerses(poem.arabic);
+  const translation = prepareTranslation(poem.english || poem.cachedTranslation);
+  const layout = calculateCenteredLayout(h, poem, verses.length);
+
   // ── Header — bilingual ──
-  const headerBottom = drawBilingualHeader(ctx, w, 130, poem, {
+  const headerBottom = drawBilingualHeader(ctx, w, layout.headerY, poem, {
     poet: '#4A2800',
     poetAr: 'rgba(74, 40, 0, 0.65)',
     title: 'rgba(92, 58, 10, 0.5)',
@@ -368,14 +405,10 @@ function renderIbnMuqla(ctx, w, h, poem) {
   });
 
   // ── Interleaved verses (line by line) ──
-  const verses = prepareVerses(poem.arabic);
-  const translation = prepareTranslation(poem.english || poem.cachedTranslation);
-  const contentStartY = headerBottom + 30;
-  const contentEndY = h - 100;
-  const pairSpacing = Math.min(180, (contentEndY - contentStartY) / Math.max(verses.length, 1));
+  const contentStartY = headerBottom + layout.titleBodyGap;
 
   verses.forEach((verse, i) => {
-    const y = contentStartY + i * pairSpacing;
+    const y = contentStartY + i * layout.pairSpacing;
 
     ctx.fillStyle = '#2C1A00';
     ctx.font = '46px "Amiri", serif';
@@ -387,7 +420,7 @@ function renderIbnMuqla(ctx, w, h, poem) {
       ctx.fillStyle = 'rgba(74, 40, 0, 0.48)';
       ctx.font = 'italic 34px "Playfair Display", serif';
       ctx.direction = 'ltr';
-      ctx.fillText(translation[i], w / 2, y + 54);
+      ctx.fillText(translation[i], w / 2, y + 62);
     }
   });
 
@@ -442,8 +475,13 @@ function renderSinan(ctx, w, h, poem) {
   drawStar(m + 7, h - m - 7, 6, 6, 'rgba(197, 160, 89, 0.2)');
   drawStar(w - m - 7, h - m - 7, 6, 6, 'rgba(197, 160, 89, 0.2)');
 
+  // ── Layout: centered vertically ──
+  const verses = prepareVerses(poem.arabic);
+  const translation = prepareTranslation(poem.english || poem.cachedTranslation);
+  const layout = calculateCenteredLayout(h, poem, verses.length);
+
   // ── Header — bilingual ──
-  const headerBottom = drawBilingualHeader(ctx, w, 125, poem, {
+  const headerBottom = drawBilingualHeader(ctx, w, layout.headerY, poem, {
     poet: '#c5a059',
     poetAr: 'rgba(197, 160, 89, 0.65)',
     title: 'rgba(79, 166, 183, 0.6)',
@@ -451,14 +489,10 @@ function renderSinan(ctx, w, h, poem) {
   });
 
   // ── Interleaved verses (line by line) ──
-  const verses = prepareVerses(poem.arabic);
-  const translation = prepareTranslation(poem.english || poem.cachedTranslation);
-  const contentStartY = headerBottom + 30;
-  const contentEndY = h - 100;
-  const pairSpacing = Math.min(180, (contentEndY - contentStartY) / Math.max(verses.length, 1));
+  const contentStartY = headerBottom + layout.titleBodyGap;
 
   verses.forEach((verse, i) => {
-    const y = contentStartY + i * pairSpacing;
+    const y = contentStartY + i * layout.pairSpacing;
 
     ctx.fillStyle = '#E8E4DC';
     ctx.font = '46px "Amiri", serif';
@@ -470,7 +504,7 @@ function renderSinan(ctx, w, h, poem) {
       ctx.fillStyle = 'rgba(79, 166, 183, 0.55)';
       ctx.font = 'italic 34px "Playfair Display", serif';
       ctx.direction = 'ltr';
-      ctx.fillText(translation[i], w / 2, y + 54);
+      ctx.fillText(translation[i], w / 2, y + 62);
     }
   });
 
@@ -531,11 +565,16 @@ function renderZahaHadid(ctx, w, h, poem) {
   ctx.arc(w - m - 4, h - m - 4, 2.5, 0, Math.PI * 2);
   ctx.fill();
 
+  // ── Layout: centered vertically ──
+  const verses = prepareVerses(poem.arabic);
+  const translation = prepareTranslation(poem.english || poem.cachedTranslation);
+  const layout = calculateCenteredLayout(h, poem, verses.length);
+
   // ── Header — bilingual, right-aligned for drama ──
   const headerBottom = drawBilingualHeader(
     ctx,
     w,
-    110,
+    layout.headerY,
     poem,
     {
       poet: '#C864FF',
@@ -547,14 +586,10 @@ function renderZahaHadid(ctx, w, h, poem) {
   );
 
   // ── Interleaved verses — right-aligned, line by line ──
-  const verses = prepareVerses(poem.arabic);
-  const translation = prepareTranslation(poem.english || poem.cachedTranslation);
-  const contentStartY = headerBottom + 25;
-  const contentEndY = h - 100;
-  const pairSpacing = Math.min(180, (contentEndY - contentStartY) / Math.max(verses.length, 1));
+  const contentStartY = headerBottom + layout.titleBodyGap;
 
   verses.forEach((verse, i) => {
-    const y = contentStartY + i * pairSpacing;
+    const y = contentStartY + i * layout.pairSpacing;
 
     ctx.fillStyle = '#F0E8FF';
     ctx.font = '46px "Amiri", serif';
@@ -567,7 +602,7 @@ function renderZahaHadid(ctx, w, h, poem) {
       ctx.font = 'italic 34px "Playfair Display", serif';
       ctx.textAlign = 'right';
       ctx.direction = 'ltr';
-      ctx.fillText(translation[i], w - 85, y + 54);
+      ctx.fillText(translation[i], w - 85, y + 62);
     }
   });
 
@@ -628,8 +663,13 @@ function renderHassanFathy(ctx, w, h, poem) {
   drawDiamond(m + 6, h - m - 6, 3, 'rgba(160, 82, 45, 0.3)');
   drawDiamond(w - m - 6, h - m - 6, 3, 'rgba(160, 82, 45, 0.3)');
 
+  // ── Layout: centered vertically ──
+  const verses = prepareVerses(poem.arabic);
+  const translation = prepareTranslation(poem.english || poem.cachedTranslation);
+  const layout = calculateCenteredLayout(h, poem, verses.length);
+
   // ── Header — bilingual ──
-  const headerBottom = drawBilingualHeader(ctx, w, 130, poem, {
+  const headerBottom = drawBilingualHeader(ctx, w, layout.headerY, poem, {
     poet: '#3D1F00',
     poetAr: 'rgba(61, 31, 0, 0.65)',
     title: 'rgba(74, 40, 0, 0.45)',
@@ -637,14 +677,10 @@ function renderHassanFathy(ctx, w, h, poem) {
   });
 
   // ── Interleaved verses (line by line) ──
-  const verses = prepareVerses(poem.arabic);
-  const translation = prepareTranslation(poem.english || poem.cachedTranslation);
-  const contentStartY = headerBottom + 30;
-  const contentEndY = h - 100;
-  const pairSpacing = Math.min(180, (contentEndY - contentStartY) / Math.max(verses.length, 1));
+  const contentStartY = headerBottom + layout.titleBodyGap;
 
   verses.forEach((verse, i) => {
-    const y = contentStartY + i * pairSpacing;
+    const y = contentStartY + i * layout.pairSpacing;
 
     ctx.fillStyle = '#2A1500';
     ctx.font = '46px "Amiri", serif';
@@ -656,7 +692,7 @@ function renderHassanFathy(ctx, w, h, poem) {
       ctx.fillStyle = 'rgba(74, 40, 0, 0.45)';
       ctx.font = 'italic 34px "Playfair Display", serif';
       ctx.direction = 'ltr';
-      ctx.fillText(translation[i], w / 2, y + 54);
+      ctx.fillText(translation[i], w / 2, y + 62);
     }
   });
 

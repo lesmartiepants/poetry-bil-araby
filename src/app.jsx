@@ -55,12 +55,14 @@ import {
   saveTranslation,
   pingHealth,
 } from './services/database.js';
+import { updateOGMetaTags } from './utils/ogMetaTags.js';
 import DebugPanel from './components/DebugPanel.jsx';
 import MysticalConsultationEffect from './components/MysticalConsultationEffect.jsx';
 import ErrorBanner from './components/ErrorBanner.jsx';
 import ShortcutHelp from './components/ShortcutHelp.jsx';
 const SplashScreen = lazy(() => import('./components/SplashScreen.jsx'));
 import InsightsDrawer from './components/InsightsDrawer.jsx';
+import ShareCardModal from './components/ShareCardModal.jsx';
 import VerticalSidebar from './components/VerticalSidebar.jsx';
 import AuthModal from './components/auth/AuthModal.jsx';
 import SavePoemButton from './components/auth/SavePoemButton.jsx';
@@ -181,6 +183,7 @@ export default function DiwanApp() {
   const showTransliteration = useUIStore((s) => s.showTransliteration);
   const setShowTransliteration = useUIStore((s) => s.setShowTransliteration);
   const showShortcutHelp = useModalStore((s) => s.shortcutHelp);
+  const showShareCard = useModalStore((s) => s.shareCard);
 
   const theme = darkMode ? THEME.dark : THEME.light;
 
@@ -287,6 +290,7 @@ export default function DiwanApp() {
             setPoems([poem]);
             setCurrentIndex(0);
             setAutoExplainPending(true);
+            updateOGMetaTags(poem);
             addLog('DeepLink', `Loaded: ${poem.poet} — ${poem.title}`, 'success');
           })
           .catch((err) => {
@@ -768,55 +772,8 @@ export default function DiwanApp() {
     addLog('UI Event', 'Share button clicked', 'info');
     track('poem_shared', { poet: current?.poet });
 
-    const poemId = current?.id;
-    const isDbPoem = current?.isFromDatabase && typeof poemId === 'number';
-    const shareUrl = isDbPoem ? `${window.location.origin}/poem/${poemId}` : window.location.origin;
-    const shareTitle = `${current?.titleArabic || current?.title || 'Arabic Poetry'} — ${current?.poetArabic || current?.poet || ''}`;
-    const shareText = current?.arabic
-      ? current.arabic.split('\n').slice(0, 2).join('\n')
-      : 'Discover classical and modern Arabic poetry';
-
-    // Try native Web Share API first (mobile + some desktop)
-    if (navigator.share) {
-      try {
-        await navigator.share({ title: shareTitle, text: shareText, url: shareUrl });
-        track('share_method', { method: 'native' });
-        if (current?.id) {
-          emitEvent(current.id, 'share', { method: 'native' });
-          addLog(
-            'Event',
-            `→ share event emitted | poem_id: ${current.id} | method: native`,
-            'info'
-          );
-        }
-        addLog('Share', 'Shared via Web Share API', 'success');
-        return;
-      } catch (e) {
-        // User cancelled or API failed — fall through to copy
-        if (e.name === 'AbortError') {
-          addLog('Share', 'Share cancelled by user', 'info');
-          return;
-        }
-      }
-    }
-
-    // Fallback: copy link to clipboard
-    try {
-      await navigator.clipboard.writeText(shareUrl);
-      track('share_method', { method: 'clipboard' });
-      if (current?.id) {
-        emitEvent(current.id, 'share', { method: 'clipboard' });
-        addLog(
-          'Event',
-          `→ share event emitted | poem_id: ${current.id} | method: clipboard`,
-          'info'
-        );
-      }
-      useModalStore.getState().showToastTimed('share', 2000);
-      addLog('Share', `Link copied: ${shareUrl}`, 'success');
-    } catch (e) {
-      addLog('Share Error', e.message, 'error');
-    }
+    // Open the share card modal for visual sharing
+    useModalStore.getState().openShareCard();
   };
 
   // Auth handlers
@@ -1428,53 +1385,68 @@ export default function DiwanApp() {
                       className="relative z-10 flex flex-col items-center justify-center w-full"
                       dir="rtl"
                     >
+                      {/* Poet name — gold foil, editorial hierarchy */}
                       <div
                         className="font-amiri font-bold text-center"
                         style={{
-                          fontSize: 'clamp(1.4rem, 4vw, 2.25rem)',
+                          fontSize: 'clamp(1.1rem, 3vw, 1.6rem)',
                           color: 'var(--gold)',
-                          lineHeight: 1.4,
-                          textShadow: darkMode ? '0 0 30px rgba(197,160,89,0.15)' : 'none',
+                          lineHeight: 1.3,
+                          letterSpacing: '0.02em',
+                          textShadow: darkMode
+                            ? '0 0 40px rgba(197,160,89,0.2), 0 0 12px rgba(197,160,89,0.08)'
+                            : 'none',
                         }}
                       >
-                        {current?.titleArabic || current?.title}
+                        {current?.poetArabic || current?.poet}
                       </div>
+                      {current?.poet !== current?.poetArabic && current?.poet && (
+                        <div
+                          className="font-brand-en font-bold text-center"
+                          dir="ltr"
+                          style={{
+                            fontSize: 'clamp(0.85rem, 2vw, 1.1rem)',
+                            color: 'var(--gold)',
+                            opacity: 0.7,
+                            marginTop: '0.15rem',
+                            letterSpacing: '0.04em',
+                          }}
+                        >
+                          {current.poet}
+                        </div>
+                      )}
                       <div
                         style={{
                           width: '40px',
                           height: '1px',
                           background: 'var(--gold)',
-                          opacity: 0.5,
+                          opacity: 0.35,
                           margin: '0.5rem auto',
                         }}
                       />
+                      {/* Title — italic, editorial */}
                       <div
-                        className="font-tajawal text-center"
+                        className="font-amiri italic text-center"
                         style={{
-                          fontSize: 'clamp(0.8rem, 2vw, 1rem)',
-                          color: darkMode ? '#a8a29e' : '#57534e',
+                          fontSize: 'clamp(1.3rem, 3.5vw, 2rem)',
+                          color: darkMode ? '#e8e0d0' : '#3d2800',
                           lineHeight: 1.4,
+                          textShadow: darkMode ? '0 0 20px rgba(197,160,89,0.1)' : 'none',
                         }}
                       >
-                        {current?.poetArabic || current?.poet}
+                        {current?.titleArabic || current?.title}
                       </div>
-                      {(current?.poet !== current?.poetArabic ||
-                        current?.title !== current?.titleArabic) && (
+                      {current?.title !== current?.titleArabic && current?.title && (
                         <div
                           className="font-brand-en text-center italic"
                           dir="ltr"
                           style={{
-                            fontSize: 'clamp(0.7rem, 1.3vw, 0.8rem)',
-                            color: darkMode ? '#78716c' : '#a8a29e',
-                            marginTop: '0.5rem',
+                            fontSize: 'clamp(0.75rem, 1.5vw, 0.9rem)',
+                            color: darkMode ? '#a8a29e' : '#78716c',
+                            marginTop: '0.25rem',
                           }}
                         >
-                          {current?.title !== current?.titleArabic && <span>{current.title}</span>}
-                          {current?.title !== current?.titleArabic &&
-                            current?.poet !== current?.poetArabic && (
-                              <span className="opacity-40"> — </span>
-                            )}
-                          {current?.poet !== current?.poetArabic && <span>{current.poet}</span>}
+                          {current.title}
                         </div>
                       )}
                     </div>
@@ -2154,6 +2126,21 @@ export default function DiwanApp() {
           </Suspense>
         )}
       </AnimatePresence>
+
+      {/* Share Card Modal */}
+      {showShareCard && current && (
+        <ShareCardModal
+          poem={{
+            ...current,
+            english:
+              insightParts?.poeticTranslation ||
+              current?.english ||
+              current?.cachedTranslation ||
+              '',
+          }}
+          onClose={() => useModalStore.getState().closeShareCard()}
+        />
+      )}
 
       {/* Keyboard Shortcut Help */}
       <AnimatePresence>{showShortcutHelp && <ShortcutHelp key="shortcut-help" />}</AnimatePresence>

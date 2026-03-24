@@ -486,6 +486,7 @@ describe('modalStore', () => {
       expect(state.shortcutHelp).toBe(false);
       expect(state.poetPicker).toBe(false);
       expect(state.poetPickerClosing).toBe(false);
+      expect(state.shareCard).toBe(false);
     });
 
     it('starts with all toasts hidden', () => {
@@ -616,6 +617,7 @@ describe('modalStore', () => {
       useModalStore.getState().setInsightsDrawer(true);
       useModalStore.getState().toggleShortcutHelp();
       useModalStore.getState().openPoetPicker();
+      useModalStore.getState().openShareCard();
       useModalStore.getState().closeAll();
       const state = useModalStore.getState();
       expect(state.authModal).toBe(false);
@@ -623,8 +625,16 @@ describe('modalStore', () => {
       expect(state.insightsDrawer).toBe(false);
       expect(state.shortcutHelp).toBe(false);
       expect(state.poetPicker).toBe(false);
+      expect(state.shareCard).toBe(false);
       // splash is NOT touched by closeAll
       expect(state.splash).toBe(true);
+    });
+
+    it('openShareCard / closeShareCard toggle', () => {
+      useModalStore.getState().openShareCard();
+      expect(useModalStore.getState().shareCard).toBe(true);
+      useModalStore.getState().closeShareCard();
+      expect(useModalStore.getState().shareCard).toBe(false);
     });
   });
 });

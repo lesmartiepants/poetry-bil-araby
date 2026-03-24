@@ -21,6 +21,7 @@ import { saveTranslation } from '../../services/database.js';
 export async function analyzePoem({ current, addLog, track, retryFn }) {
   const { interpretation, isInterpreting, setInterpretation, setInterpreting } =
     usePoemStore.getState();
+  const ratchetMode = useUIStore.getState().ratchetMode;
 
   addLog(
     'UI Event',
@@ -95,10 +96,7 @@ export async function analyzePoem({ current, addLog, track, retryFn }) {
   // Mark in-flight
   usePoemStore.getState().addActiveInsight(current?.id);
 
-  const ratchetMode = useUIStore.getState().ratchetMode;
-  const systemPrompt = ratchetMode ? RATCHET_SYSTEM_PROMPT : INSIGHTS_SYSTEM_PROMPT;
-
-  // CHECK CACHE — skip in ratchet mode (different prompt, don't pollute scholarly cache)
+  // CHECK CACHE (skip for ratchet mode — different prompt style)
   if (FEATURES.caching && current?.id && !ratchetMode) {
     const cacheStart = performance.now();
     const cached = await cacheOperations.get(CACHE_CONFIG.stores.insights, current.id);
@@ -129,6 +127,7 @@ export async function analyzePoem({ current, addLog, track, retryFn }) {
 
   let insightText = '';
   let apiStartTime = null;
+  const activeSystemPrompt = ratchetMode ? RATCHET_SYSTEM_PROMPT : INSIGHTS_SYSTEM_PROMPT;
 
   try {
     if (FEATURES.streaming) {
@@ -137,14 +136,16 @@ export async function analyzePoem({ current, addLog, track, retryFn }) {
       const requestSize = new Blob([
         JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] }),
       ]).size;
-      const estimatedInputTokens = Math.ceil((promptText.length + systemPrompt.length) / 4);
+      const estimatedInputTokens = Math.ceil(
+        (promptText.length + activeSystemPrompt.length) / 4
+      );
       const promptChars = promptText.length;
       const arabicTextChars = current?.arabic?.length || 0;
-      const systemPromptChars = systemPrompt.length;
+      const systemPromptChars = activeSystemPrompt.length;
 
       addLog(
         'Insights API',
-        `→ Starting streaming | Request: ${(requestSize / 1024).toFixed(1)}KB | ${promptChars} chars (${arabicTextChars} Arabic + ${systemPromptChars} system) | Est. ${estimatedInputTokens} tokens`,
+        `→ Starting streaming${ratchetMode ? ' [Ratchet Mode]' : ''} | Request: ${(requestSize / 1024).toFixed(1)}KB | ${promptChars} chars (${arabicTextChars} Arabic + ${systemPromptChars} system) | Est. ${estimatedInputTokens} tokens`,
         'info'
       );
 
@@ -156,7 +157,7 @@ export async function analyzePoem({ current, addLog, track, retryFn }) {
 
       const insightsStreamBody = JSON.stringify({
         contents: [{ parts: [{ text: promptText }] }],
-        systemInstruction: { parts: [{ text: systemPrompt }] },
+        systemInstruction: { parts: [{ text: activeSystemPrompt }] },
       });
       const res = await geminiTextFetch(
         'streamGenerateContent',
@@ -223,13 +224,13 @@ export async function analyzePoem({ current, addLog, track, retryFn }) {
         'success'
       );
     } else {
-      addLog('Insights', 'Analyzing poem...', 'info');
+      addLog('Insights', `Analyzing poem...${ratchetMode ? ' [Ratchet Mode]' : ''}`, 'info');
       const poetInfoFallback = current?.poet ? ` by ${current.poet}` : '';
       const insightsFallbackBody = JSON.stringify({
         contents: [
           { parts: [{ text: `Deep Analysis of${poetInfoFallback}:\n\n${current?.arabic}` }] },
         ],
-        systemInstruction: { parts: [{ text: systemPrompt }] },
+        systemInstruction: { parts: [{ text: activeSystemPrompt }] },
       });
       const res = await geminiTextFetch(
         'generateContent',
@@ -243,8 +244,8 @@ export async function analyzePoem({ current, addLog, track, retryFn }) {
       addLog('Insights', 'Analysis complete', 'success');
     }
 
-    // CACHE
-    if (FEATURES.caching && current?.id && insightText) {
+    // CACHE (skip for ratchet mode — different prompt style)
+    if (FEATURES.caching && current?.id && insightText && !ratchetMode) {
       const cacheStart = performance.now();
       await cacheOperations.set(CACHE_CONFIG.stores.insights, current.id, {
         interpretation: insightText,
@@ -266,8 +267,8 @@ export async function analyzePoem({ current, addLog, track, retryFn }) {
       );
     }
 
-    // Save translation to DB — skip in ratchet mode to avoid overwriting scholarly cache
-    if (!ratchetMode && current?.isFromDatabase && current?.id && insightText) {
+    // Save translation to DB
+    if (current?.isFromDatabase && current?.id && insightText) {
       const parts = parseInsight(insightText);
       if (parts?.poeticTranslation) {
         saveTranslation(current.id, {

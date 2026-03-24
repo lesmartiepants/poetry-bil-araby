@@ -284,7 +284,7 @@ function drawBilingualHeader(ctx, w, headerY, poem, colors, opts = {}) {
   const enTitle = resolvedTitle.english || '';
   let englishSummary = '';
   if (enPoet && enTitle && enTitle !== enPoet) {
-    englishSummary = `${enPoet} \u2013 ${enTitle}`;
+    englishSummary = `${enPoet} \u2013 ${enTitle}`; // en dash
   } else if (enPoet) {
     englishSummary = enPoet;
   } else if (enTitle) {

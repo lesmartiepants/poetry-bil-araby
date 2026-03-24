@@ -17,7 +17,7 @@ const DownvoteButton = ({ poem, isDownvoted, onDownvote, onUndownvote, disabled,
   };
 
   return (
-    <div className="relative flex flex-col items-center gap-1 min-w-[52px]">
+    <div className="relative flex flex-col items-center gap-0.5 min-w-[52px]">
       <button
         onClick={handleClick}
         className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}

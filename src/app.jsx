@@ -7,13 +7,12 @@ import {
   Volume2,
   ChevronDown,
   Loader2,
-  Search,
-  X,
   Sparkles,
   Feather,
-  ScrollText,
-  Shuffle,
+  Lightbulb,
   Paintbrush,
+  Check,
+  X,
 } from 'lucide-react';
 import { track } from '@vercel/analytics';
 import Sentry from './sentry.js';
@@ -63,6 +62,7 @@ import ShortcutHelp from './components/ShortcutHelp.jsx';
 const SplashScreen = lazy(() => import('./components/SplashScreen.jsx'));
 import InsightsDrawer from './components/InsightsDrawer.jsx';
 import ShareCardModal from './components/ShareCardModal.jsx';
+import DiscoverDrawer, { GoldenFireIcon } from './components/DiscoverDrawer.jsx';
 import VerticalSidebar from './components/VerticalSidebar.jsx';
 import AuthModal from './components/auth/AuthModal.jsx';
 import SavePoemButton from './components/auth/SavePoemButton.jsx';
@@ -93,7 +93,6 @@ export default function DiwanApp() {
   const audioRef = useRef(new Audio());
   const isTogglingPlay = useRef(false);
   const controlBarRef = useRef(null);
-  const poetPickerRef = useRef(null);
 
   // Volume-based glow effect refs
   const audioContextRef = useRef(null);
@@ -105,6 +104,8 @@ export default function DiwanApp() {
 
   const headerOpacity = useUIStore((s) => s.headerOpacity);
   const setHeaderOpacity = useUIStore((s) => s.setHeaderOpacity);
+  const [fireTapped, setFireTapped] = useState(false);
+
   // ── Poem store (Zustand) ──
   const poems = usePoemStore((s) => s.poems);
   const setPoems = usePoemStore((s) => s.setPoems);
@@ -114,8 +115,6 @@ export default function DiwanApp() {
   const setSelectedCategory = usePoemStore((s) => s.setCategory);
   const dynamicPoets = usePoemStore((s) => s.dynamicPoets);
   const setDynamicPoets = usePoemStore((s) => s.setDynamicPoets);
-  const poetSearch = usePoemStore((s) => s.poetSearch);
-  const setPoetSearch = usePoemStore((s) => s.setPoetSearch);
   const poetsFetched = usePoemStore((s) => s.poetsFetched);
   const setPoetsFetched = usePoemStore((s) => s.setPoetsFetched);
   const useDatabase = usePoemStore((s) => s.useDatabase);
@@ -130,13 +129,8 @@ export default function DiwanApp() {
   const setIsInterpreting = usePoemStore((s) => s.setInterpreting);
 
   // ── Modal store (Zustand) ──
-  const poetPickerOpen = useModalStore((s) => s.poetPicker);
-  const setPoetPickerOpen = useModalStore((s) => s.setPoetPicker);
-  const poetPickerClosing = useModalStore((s) => s.poetPickerClosing);
-  const setPoetPickerClosing = useModalStore((s) => s.setPoetPickerClosing);
-  const poetSearchRef = useRef(null);
-  const [pickerKeyboardOffset, setPickerKeyboardOffset] = useState(0);
-  const [pickerListMaxHeight, setPickerListMaxHeight] = useState(280);
+  const discoverDrawerOpen = useModalStore((s) => s.discoverDrawer);
+  const setDiscoverDrawerOpen = useModalStore((s) => s.setDiscoverDrawer);
   // ── UI store (Zustand) ──
   const darkMode = useUIStore((s) => s.darkMode);
   const setDarkMode = useUIStore((s) => s.setDarkMode);
@@ -440,21 +434,9 @@ export default function DiwanApp() {
     setHeaderOpacity(progress);
   };
 
-  // Close poet picker on outside click
+  // Fetch dynamic poet list from API when discover drawer first opens
   useEffect(() => {
-    if (!poetPickerOpen) return;
-    const handleOutsideClick = (e) => {
-      if (poetPickerRef.current && !poetPickerRef.current.contains(e.target)) {
-        closePoetPicker();
-      }
-    };
-    document.addEventListener('pointerdown', handleOutsideClick);
-    return () => document.removeEventListener('pointerdown', handleOutsideClick);
-  }, [poetPickerOpen]);
-
-  // Fetch dynamic poet list from API when picker first opens
-  useEffect(() => {
-    if (!poetPickerOpen || poetsFetched) return;
+    if (!discoverDrawerOpen || poetsFetched) return;
     const loadPoets = async () => {
       try {
         const poets = await fetchPoets();
@@ -470,99 +452,7 @@ export default function DiwanApp() {
     // addLog is a stable reference from useUIStore.getState()
     // even though its reference changes per render — poetsFetched gate prevents
     // repeated fetches regardless.
-  }, [poetPickerOpen, poetsFetched, addLog]);
-
-  // Focus search input when poet picker opens (delay allows CSS enter animation to complete)
-  useEffect(() => {
-    let timerId;
-    if (poetPickerOpen && poetSearchRef.current) {
-      timerId = setTimeout(() => poetSearchRef.current?.focus(), 100);
-    }
-    if (!poetPickerOpen) setPoetSearch('');
-    return () => clearTimeout(timerId);
-  }, [poetPickerOpen]);
-
-  // Adjust picker popup position when mobile keyboard appears (iOS visual viewport fix)
-  useEffect(() => {
-    if (!poetPickerOpen) {
-      setPickerKeyboardOffset(0);
-      setPickerListMaxHeight(280);
-      return;
-    }
-    const viewport = window.visualViewport;
-    if (!viewport) return;
-    const updateForViewport = () => {
-      const keyboardHeight = Math.max(0, window.innerHeight - viewport.height - viewport.offsetTop);
-      setPickerKeyboardOffset(keyboardHeight);
-      if (keyboardHeight > 0) {
-        // Reserve ~150px for nav bar, search input, and popup padding
-        setPickerListMaxHeight(Math.max(100, Math.min(280, viewport.height - 150)));
-      } else {
-        setPickerListMaxHeight(280);
-      }
-    };
-    updateForViewport();
-    viewport.addEventListener('resize', updateForViewport);
-    viewport.addEventListener('scroll', updateForViewport);
-    return () => {
-      viewport.removeEventListener('resize', updateForViewport);
-      viewport.removeEventListener('scroll', updateForViewport);
-    };
-  }, [poetPickerOpen]);
-
-  const closePoetPicker = () => {
-    setPoetPickerClosing(true);
-    setTimeout(() => {
-      setPoetPickerOpen(false);
-      setPoetPickerClosing(false);
-    }, 250);
-  };
-
-  // Build combined poet list: featured (from CATEGORIES) + dynamic (from API)
-  const filteredPoetList = useMemo(() => {
-    // Normalize Arabic text: strip tashkeel, normalize letter variants, remove invisible chars
-    const normalizeAr = (s) =>
-      s
-        .normalize('NFC')
-        .replace(
-          /[\u0610-\u061A\u064B-\u065F\u0670\u06D6-\u06DC\u06DF-\u06E4\u06E7\u06E8\u06EA-\u06ED]/g,
-          ''
-        )
-        .replace(/[\u200B-\u200F\u202A-\u202E\uFEFF]/g, '')
-        .replace(/[\u0622\u0623\u0625\u0671]/g, '\u0627') // أ إ آ ٱ → ا
-        .replace(/[\u0649\u06CC]/g, '\u064A') // alef maksura ى / Farsi ya ی → Arabic ya ي
-        .replace(/\u06A9/g, '\u0643') // Farsi kaf ک → Arabic kaf ك
-        .replace(/\u0629/g, '\u0647'); // taa marbuta ة → ha ه
-    const search = normalizeAr(poetSearch.trim().toLowerCase());
-    const featuredNormIds = new Set(
-      CATEGORIES.filter((c) => c.id !== 'All').map((c) => normalizeAr(c.id))
-    );
-
-    // Build dynamic entries not already in featured (normalized comparison)
-    const apiPoets = dynamicPoets
-      .filter((p) => !featuredNormIds.has(normalizeAr(p.name)))
-      .map((p) => ({
-        id: p.name,
-        label: p.name_en || p.name,
-        labelAr: p.name,
-        poemCount: parseInt(p.poem_count, 10) || 0,
-      }));
-
-    // Enrich featured poets with poem counts from API (normalized comparison)
-    const featured = CATEGORIES.filter((c) => c.id !== 'All').map((cat) => {
-      const catNorm = normalizeAr(cat.id);
-      const apiMatch = dynamicPoets.find((p) => normalizeAr(p.name) === catNorm);
-      return { ...cat, poemCount: apiMatch ? parseInt(apiMatch.poem_count, 10) : null };
-    });
-
-    if (!search) return { featured, all: apiPoets };
-
-    const matchesSearch = (p) =>
-      normalizeAr(p.labelAr).includes(search) || p.label.toLowerCase().includes(search);
-    const matchFeatured = featured.filter(matchesSearch);
-    const matchAll = apiPoets.filter(matchesSearch);
-    return { featured: matchFeatured, all: matchAll };
-  }, [poetSearch, dynamicPoets]);
+  }, [discoverDrawerOpen, poetsFetched, addLog]);
 
   // Extract cached translation fields into stable local variables so useMemo
   // only re-runs when the actual string values change, not on every `current` reference change.
@@ -1240,6 +1130,13 @@ export default function DiwanApp() {
           transition: box-shadow 0.15s ease;
         }
 
+        @keyframes fireTapFlash {
+          0%   { background: rgba(255,140,30,0);    transform: scale(1); }
+          20%  { background: rgba(255,140,30,0.22); transform: scale(1.1); }
+          100% { background: rgba(255,140,30,0);    transform: scale(1); }
+        }
+        .fire-tap { animation: fireTapFlash 0.42s ease-out forwards; }
+
       `}</style>
 
       <DebugPanel controlBarRef={controlBarRef} />
@@ -1505,48 +1402,6 @@ export default function DiwanApp() {
                       </span>
                     ))}
                 </div>
-
-                <div className="w-full max-w-2xl px-6 md:px-0 mb-4 md:hidden">
-                  {isInterpreting ? (
-                    <div className="flex flex-col items-center py-8 gap-4">
-                      <div className="relative">
-                        <Loader2 className="animate-spin text-indigo-500" size={32} />
-                        <Sparkles
-                          className="absolute inset-0 m-auto animate-pulse text-indigo-400"
-                          size={16}
-                        />
-                      </div>
-                      <p className="text-xs italic font-brand-en opacity-60 tracking-widest uppercase">
-                        Consulting the Diwan...
-                      </p>
-                    </div>
-                  ) : interpretation ? (
-                    <div
-                      className={`flex flex-col gap-10 animate-in slide-in-from-bottom-10 duration-1000`}
-                    >
-                      <div className="pt-6 border-t border-indigo-500/10">
-                        <h4 className="text-[10px] font-brand-en font-black text-indigo-600 mb-3 uppercase tracking-[0.3em] opacity-80">
-                          The Depth
-                        </h4>
-                        <div className="pl-4 border-l border-indigo-500/10">
-                          <p className="text-[clamp(0.9375rem,1.6vw,1rem)] font-brand-en font-normal leading-relaxed italic opacity-90">
-                            {insightParts?.depth}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="pt-6 border-t border-indigo-500/10">
-                        <h4 className="text-[10px] font-brand-en font-black text-indigo-600 mb-3 uppercase tracking-[0.3em] opacity-80">
-                          The Author
-                        </h4>
-                        <div className="pl-4 border-l border-indigo-500/10">
-                          <p className="text-[clamp(0.9375rem,1.6vw,1rem)] font-brand-en font-normal leading-relaxed italic opacity-90">
-                            {insightParts?.author}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
               </div>
             </div>
           </main>
@@ -1630,10 +1485,10 @@ export default function DiwanApp() {
                       </div>
                     </button>
                     <span
-                      className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase whitespace-nowrap ${GOLD.goldText}`}
-                      style={{ opacity: 0.6, animation: 'shimmer 2s ease-in-out infinite' }}
+                      className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
+                      style={{ animation: 'shimmer 2s ease-in-out infinite' }}
                     >
-                      Crafting
+                      Loading
                     </span>
                   </>
                 ) : (
@@ -1658,8 +1513,7 @@ export default function DiwanApp() {
                       )}
                     </button>
                     <span
-                      className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase whitespace-nowrap ${GOLD.goldText}`}
-                      style={{ opacity: isPlaying ? 0.9 : 0.6 }}
+                      className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
                     >
                       {isPlaying ? 'Playing' : 'Listen'}
                     </span>
@@ -1669,278 +1523,60 @@ export default function DiwanApp() {
 
               <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
                 <button
-                  onClick={handleFetch}
+                  onClick={() => {
+                    setFireTapped(true);
+                    setTimeout(() => setFireTapped(false), 400);
+                    setDiscoverDrawerOpen(true);
+                  }}
                   disabled={isFetching}
-                  aria-label="Discover new poem"
-                  className={`discover-btn min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
+                  aria-label="Open discover"
+                  className={`relative w-[46px] h-[46px] bg-transparent border-none cursor-pointer flex items-center justify-center rounded-full hover:scale-105 ${fireTapped ? 'fire-tap' : ''}`}
+                  style={{
+                    background: isFetching ? 'rgba(197,160,89,0.08)' : 'transparent',
+                    transition: fireTapped ? 'none' : 'transform 0.3s',
+                  }}
                 >
-                  {isFetching ? (
-                    <Shuffle
-                      className={`${GOLD.goldText}`}
-                      size={21}
-                      style={{ animation: 'discoverShuffle 0.4s ease-in-out infinite' }}
-                    />
-                  ) : (
-                    <Shuffle className={`discover-icon ${GOLD.goldText}`} size={21} />
-                  )}
+                  <GoldenFireIcon size={34} />
                 </button>
                 <span
-                  className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase whitespace-nowrap ${GOLD.goldText}`}
-                  style={{ opacity: 0.6 }}
+                  className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
                 >
                   Discover
                 </span>
               </div>
 
-              <div
-                ref={poetPickerRef}
-                className="relative flex flex-col items-center gap-0.5 min-w-[52px]"
-              >
+              <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
                 <button
                   onClick={() => {
-                    if (poetPickerOpen) {
-                      closePoetPicker();
+                    if (interpretation) {
+                      useModalStore.getState().toggleInsightsDrawer();
+                      useModalStore.getState().showToastTimed('insight', 1500);
                     } else {
-                      setPoetPickerOpen(true);
+                      handleAnalyze();
+                      setInsightsDrawerOpen(true);
                     }
                   }}
-                  aria-label="Filter by poet"
-                  className={`relative min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-200 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105 ${poetPickerOpen ? 'bg-gold/10' : ''}`}
+                  disabled={isInterpreting}
+                  aria-label="Explain poem meaning"
+                  className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-200 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105 ${isInterpreting ? 'opacity-50' : ''}`}
                 >
-                  <ScrollText className={GOLD.goldText} size={21} />
-                  {selectedCategory !== 'All' && (
-                    <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-gold shadow-[0_0_6px_rgba(197,160,89,0.5)]" />
+                  {isInterpreting ? (
+                    <Loader2 className="animate-spin" style={{ color: GOLD.gold }} size={21} />
+                  ) : showInsightSuccess ? (
+                    <Check style={{ color: GOLD.gold }} size={21} />
+                  ) : (
+                    <Lightbulb
+                      className={GOLD.goldText}
+                      size={21}
+                      style={{ opacity: interpretation ? 1 : 0.7 }}
+                    />
                   )}
                 </button>
                 <span
-                  className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase whitespace-nowrap ${GOLD.goldText}`}
-                  style={{ opacity: 0.6 }}
+                  className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
                 >
-                  Poets
+                  Explain
                 </span>
-                {(poetPickerOpen || poetPickerClosing) && (
-                  <div
-                    className="absolute mb-2 left-1/2 w-auto min-w-[14rem] max-w-[18rem] rounded-2xl border border-gold/25 bg-black/95 backdrop-blur-2xl shadow-2xl py-2.5 z-[200]"
-                    style={{
-                      bottom: `calc(100% + ${pickerKeyboardOffset}px)`,
-                      transition: 'bottom 0.2s ease-out',
-                      animation: poetPickerClosing
-                        ? 'poetPickerOut 0.25s cubic-bezier(0.4, 0, 0.2, 1) forwards'
-                        : 'poetPickerIn 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards',
-                    }}
-                  >
-                    {/* Search input */}
-                    <div className="px-3 pb-2 mb-1 border-b border-gold/15">
-                      <div className="relative flex items-center">
-                        <Search className="absolute left-2 text-gold/40" size={13} />
-                        <input
-                          ref={poetSearchRef}
-                          type="text"
-                          value={poetSearch}
-                          onChange={(e) => setPoetSearch(e.target.value)}
-                          placeholder="Search poets..."
-                          aria-label="Search poets"
-                          className="w-full bg-white/5 border border-gold/15 rounded-lg pl-7 pr-3 py-1.5 text-[16px] text-stone-200 placeholder-stone-600 focus:outline-none focus:border-gold/40 font-tajawal transition-colors"
-                        />
-                        {poetSearch && (
-                          <button
-                            onClick={() => setPoetSearch('')}
-                            className="absolute right-2 text-stone-500 hover:text-stone-300"
-                            aria-label="Clear search"
-                          >
-                            <X size={12} />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Scrollable poet list */}
-                    <div
-                      className="overflow-y-auto overflow-x-hidden"
-                      style={{
-                        maxHeight: `${pickerListMaxHeight}px`,
-                        transition: 'max-height 0.2s ease-out',
-                        scrollbarWidth: 'thin',
-                        scrollbarColor: 'rgba(197,160,89,0.2) transparent',
-                      }}
-                    >
-                      {/* "All Poets" option — shown when there is no active search */}
-                      {!poetSearch && (
-                        <button
-                          data-testid="poet-picker-button"
-                          onClick={() => {
-                            setSelectedCategory('All');
-                            closePoetPicker();
-                          }}
-                          className={`w-full text-right px-5 py-2.5 transition-all duration-150 ${selectedCategory === 'All' ? 'bg-gold/15 border-r-2 border-gold' : 'hover:bg-gold/8 border-r-2 border-transparent'}`}
-                        >
-                          <span
-                            className={`block text-[17px] ${selectedCategory === 'All' ? 'text-gold' : 'text-stone-300'}`}
-                            dir="rtl"
-                            style={{ fontFamily: "'Reem Kufi', sans-serif", fontWeight: 500 }}
-                          >
-                            كل الشعراء
-                          </span>
-                          <span
-                            className={`block text-[10px] font-brand-en mt-0.5 ${selectedCategory === 'All' ? 'text-gold/70' : 'opacity-40'}`}
-                          >
-                            All Poets
-                          </span>
-                        </button>
-                      )}
-
-                      {/* Featured poets section */}
-                      {filteredPoetList.featured.length > 0 && (
-                        <>
-                          {!poetSearch && (
-                            <div className="px-4 pt-2 pb-1">
-                              <span className="text-[9px] font-brand-en uppercase tracking-widest text-gold/35 font-bold">
-                                Featured
-                              </span>
-                            </div>
-                          )}
-                          {filteredPoetList.featured.map((cat) => (
-                            <button
-                              key={cat.id}
-                              data-testid="poet-picker-button"
-                              onClick={() => {
-                                // Re-selecting the same specific poet: selectedCategory won't change so
-                                // the selectedCategory effect won't fire. Call handleFetch() directly
-                                // so the user always gets a fresh poem on each explicit selection.
-                                if (cat.id === selectedCategory && cat.id !== 'All') {
-                                  handleFetch();
-                                } else {
-                                  setSelectedCategory(cat.id);
-                                }
-                                closePoetPicker();
-                              }}
-                              className={`w-full text-right px-5 py-2 transition-all duration-150 ${selectedCategory === cat.id ? 'bg-gold/15 border-r-2 border-gold' : 'hover:bg-gold/8 border-r-2 border-transparent'}`}
-                            >
-                              <div className="flex items-center justify-between gap-2">
-                                <div className="flex-1 min-w-0">
-                                  <span
-                                    className={`block text-[16px] truncate ${selectedCategory === cat.id ? 'text-gold' : 'text-stone-300'}`}
-                                    dir="rtl"
-                                    style={{
-                                      fontFamily: "'Reem Kufi', sans-serif",
-                                      fontWeight: 500,
-                                    }}
-                                  >
-                                    {cat.labelAr}
-                                  </span>
-                                  <span
-                                    className={`block text-[10px] font-brand-en mt-0.5 ${selectedCategory === cat.id ? 'text-gold/70' : 'opacity-40'}`}
-                                  >
-                                    {cat.label}
-                                  </span>
-                                </div>
-                                {cat.poemCount !== null && cat.poemCount !== undefined && (
-                                  <span className="text-[9px] font-brand-en text-gold/40 bg-gold/8 px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
-                                    {cat.poemCount.toLocaleString()}
-                                  </span>
-                                )}
-                              </div>
-                            </button>
-                          ))}
-                        </>
-                      )}
-
-                      {/* Dynamic poets from API */}
-                      {filteredPoetList.all.length > 0 && (
-                        <>
-                          <div className="px-4 pt-2 pb-1">
-                            <span className="text-[9px] font-brand-en uppercase tracking-widest text-gold/35 font-bold">
-                              {poetSearch ? 'Results' : 'More Poets'}
-                            </span>
-                          </div>
-                          {filteredPoetList.all.map((p) => (
-                            <button
-                              key={p.id}
-                              data-testid="poet-picker-button"
-                              onClick={() => {
-                                if (p.id === selectedCategory && p.id !== 'All') {
-                                  handleFetch();
-                                } else {
-                                  setSelectedCategory(p.id);
-                                }
-                                closePoetPicker();
-                              }}
-                              className={`w-full text-right px-5 py-2 transition-all duration-150 ${selectedCategory === p.id ? 'bg-gold/15 border-r-2 border-gold' : 'hover:bg-gold/8 border-r-2 border-transparent'}`}
-                            >
-                              <div className="flex items-center justify-between gap-2">
-                                <div className="flex-1 min-w-0">
-                                  <span
-                                    className={`block text-[16px] truncate ${selectedCategory === p.id ? 'text-gold' : 'text-stone-300'}`}
-                                    dir="rtl"
-                                    style={{
-                                      fontFamily: "'Reem Kufi', sans-serif",
-                                      fontWeight: 500,
-                                    }}
-                                  >
-                                    {p.labelAr}
-                                  </span>
-                                  <span
-                                    className={`block text-[10px] font-brand-en mt-0.5 ${selectedCategory === p.id ? 'text-gold/70' : 'opacity-40'}`}
-                                  >
-                                    {p.label}
-                                  </span>
-                                </div>
-                                {p.poemCount > 0 && (
-                                  <span className="text-[9px] font-brand-en text-gold/40 bg-gold/8 px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
-                                    {p.poemCount.toLocaleString()}
-                                  </span>
-                                )}
-                              </div>
-                            </button>
-                          ))}
-                        </>
-                      )}
-
-                      {/* Loading state */}
-                      {!poetsFetched && dynamicPoets.length === 0 && (
-                        <div className="px-5 py-3 text-center">
-                          <Loader2 className="inline-block text-gold/40 animate-spin" size={16} />
-                          <span className="block text-[10px] font-brand-en text-stone-600 mt-1">
-                            Loading poets...
-                          </span>
-                        </div>
-                      )}
-
-                      {/* No results */}
-                      {poetSearch &&
-                        filteredPoetList.featured.length === 0 &&
-                        filteredPoetList.all.length === 0 && (
-                          <div className="px-5 py-3 text-center">
-                            <span
-                              className="block text-[12px] text-stone-500 font-tajawal"
-                              dir="rtl"
-                            >
-                              لا نتائج
-                            </span>
-                            <span className="block text-[10px] font-brand-en text-stone-600 mt-0.5">
-                              No matching poets
-                            </span>
-                          </div>
-                        )}
-                    </div>
-
-                    {/* Active filter indicator */}
-                    {selectedCategory !== 'All' && !poetSearch && (
-                      <div className="mt-1 pt-1.5 border-t border-gold/10 px-4 pb-0.5">
-                        <button
-                          onClick={() => {
-                            setSelectedCategory('All');
-                            closePoetPicker();
-                          }}
-                          className="flex items-center gap-1.5 text-[10px] font-brand-en text-gold/50 hover:text-gold/80 transition-colors"
-                        >
-                          <X size={10} />
-                          Clear filter
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                )}
               </div>
 
               <SavePoemButton
@@ -2050,8 +1686,23 @@ export default function DiwanApp() {
 
       {/* Insights Drawer (Mobile bottom sheet) */}
       <AnimatePresence>
-        {insightsDrawerOpen && (
-          <InsightsDrawer key="insights-drawer" insightParts={insightParts} current={current} />
+        {insightsDrawerOpen && <InsightsDrawer key="insights-drawer" insightParts={insightParts} />}
+      </AnimatePresence>
+
+      {/* Discover Drawer */}
+      <AnimatePresence>
+        {discoverDrawerOpen && (
+          <DiscoverDrawer
+            key="discover-drawer"
+            onSurpriseMe={() => {
+              setSelectedCategory('All');
+              handleFetch();
+            }}
+            onSelectPoet={(id) => {
+              setSelectedCategory(id);
+              handleFetch();
+            }}
+          />
         )}
       </AnimatePresence>
 
@@ -2100,15 +1751,6 @@ export default function DiwanApp() {
 
       {/* Vertical Sidebar - always visible */}
       <VerticalSidebar
-        onExplain={() => {
-          if (interpretation) {
-            useModalStore.getState().toggleInsightsDrawer();
-            useModalStore.getState().showToastTimed('insight', 1500);
-          } else {
-            handleAnalyze();
-            setInsightsDrawerOpen(true);
-          }
-        }}
         onCopy={handleCopy}
         onShare={handleShare}
         onSignIn={handleSignIn}

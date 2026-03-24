@@ -117,7 +117,7 @@ function calculateHeaderHeight(poem) {
   // Title
   if (resolvedTitle.arabic) height += 62;
   // Poet name
-  if (resolvedPoet.arabic) height += 52;
+  if (resolvedPoet.arabic) height += 48;
   // English summary line: "[author] – [title]"
   const enPoet = resolvedPoet.english || '';
   const enTitle = resolvedTitle.english || '';
@@ -137,7 +137,7 @@ function calculateCenteredLayout(h, poem, verseCount) {
   const pairSpacing = Math.min(180, spaceForVerses / Math.max(verseCount, 1));
   const contentHeight = verseCount * pairSpacing;
   const totalHeight = headerHeight + titleBodyGap + contentHeight;
-  const headerY = Math.max(minMargin, (h - totalHeight) / 2) + 32;
+  const headerY = Math.max(minMargin, (h - totalHeight) / 2) + 35;
   return { headerY, titleBodyGap, pairSpacing };
 }
 
@@ -156,7 +156,7 @@ function drawBrandBottomRight(ctx, w, h, brandColor, opts = {}) {
   // Position inside the inner border box with padding
   const padding = 18;
   const bx = w - innerInset - padding;
-  const by = h - innerInset - padding - 6;
+  const by = h - innerInset - padding - 11;
 
   // Optional glow
   if (glowColor && glowBlur > 0) {
@@ -188,7 +188,7 @@ function drawBookFlourish(ctx, cx, cy, color) {
   ctx.save();
   ctx.strokeStyle = color;
   ctx.fillStyle = color;
-  ctx.lineWidth = 2.2;
+  ctx.lineWidth = 3.0;
   ctx.globalAlpha = 0.5;
 
   // Central small diamond
@@ -273,14 +273,14 @@ function drawBilingualHeader(ctx, w, headerY, poem, colors, opts = {}) {
   // ── 3. Arabic poet name ──
   if (resolvedPoet.arabic) {
     ctx.fillStyle = colors.poetAr || colors.poet;
-    ctx.font = 'bold 44px "Reem Kufi", "Amiri", sans-serif';
+    ctx.font = '40px "Amiri", serif';
     ctx.direction = 'rtl';
     ctx.save();
     ctx.shadowColor = colors.poet;
     ctx.shadowBlur = 4;
     ctx.fillText(resolvedPoet.arabic, xPos, curY);
     ctx.restore();
-    curY += 52;
+    curY += 48;
   }
 
   // ── 4. English summary: "[author] – [title]" in dark grey ──

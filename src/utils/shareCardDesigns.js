@@ -114,10 +114,10 @@ function calculateHeaderHeight(poem) {
   const resolvedPoet = resolveBilingual(poem.poet, poem.poetArabic);
   const resolvedTitle = resolveBilingual(poem.title, poem.titleArabic);
   let height = 0;
-  // Title first (top position)
-  if (resolvedTitle.arabic) height += 62;
-  // Book flourish
+  // Book flourish (above title)
   height += 36;
+  // Title (top position after flourish)
+  if (resolvedTitle.arabic) height += 62;
   // Poet name
   if (resolvedPoet.arabic) height += 52;
   // English summary line: "[author] – [title]"
@@ -139,7 +139,7 @@ function calculateCenteredLayout(h, poem, verseCount) {
   const pairSpacing = Math.min(180, spaceForVerses / Math.max(verseCount, 1));
   const contentHeight = verseCount * pairSpacing;
   const totalHeight = headerHeight + titleBodyGap + contentHeight;
-  const headerY = Math.max(minMargin, (h - totalHeight) / 2);
+  const headerY = Math.max(minMargin, (h - totalHeight) / 2) + 40;
   return { headerY, titleBodyGap, pairSpacing };
 }
 
@@ -158,7 +158,7 @@ function drawBrandBottomRight(ctx, w, h, brandColor, opts = {}) {
   // Position inside the inner border box with padding
   const padding = 18;
   const bx = w - innerInset - padding;
-  const by = h - innerInset - padding;
+  const by = h - innerInset - padding - 6;
 
   // Optional glow
   if (glowColor && glowBlur > 0) {
@@ -226,8 +226,8 @@ function drawBookFlourish(ctx, cx, cy, color) {
 }
 
 /**
- * Draw the bilingual header: Title first (gold foil editorial), then poet + English summary.
- * Hierarchy: Arabic title → book flourish → Arabic poet → English "[author] – [title]".
+ * Draw the bilingual header: Book flourish first, then title, poet, English summary.
+ * Hierarchy: book flourish → Arabic title → Arabic poet → English "[author] – [title]" (grey).
  * Automatically detects when both fields are Arabic (DB has no English column)
  * and renders a single large Arabic-only name instead of duplicating.
  *
@@ -235,7 +235,7 @@ function drawBookFlourish(ctx, cx, cy, color) {
  * @param {number} w - canvas width
  * @param {number} headerY - top Y position of header
  * @param {Object} poem - poem data
- * @param {Object} colors - { poet, poetAr, title, separator }
+ * @param {Object} colors - { poet, poetAr, title, separator, englishGrey }
  * @param {Object} opts - { align: 'center'|'right', xPos: number }
  * @returns {number} the Y position after the header (for separator placement)
  */
@@ -248,7 +248,12 @@ function drawBilingualHeader(ctx, w, headerY, poem, colors, opts = {}) {
 
   ctx.textAlign = align;
 
-  // ── 1. Arabic poem title — TOP, biggest, gold foil ──
+  // ── 1. Book flourish ornament — ABOVE the title ──
+  curY += 8;
+  drawBookFlourish(ctx, align === 'right' ? xPos : w / 2, curY, colors.separator || colors.poet);
+  curY += 28;
+
+  // ── 2. Arabic poem title — biggest, gold foil ──
   if (resolvedTitle.arabic) {
     ctx.fillStyle = colors.poet;
     ctx.font = 'bold 54px "Reem Kufi", "Amiri", sans-serif';
@@ -260,11 +265,6 @@ function drawBilingualHeader(ctx, w, headerY, poem, colors, opts = {}) {
     ctx.restore();
     curY += 62;
   }
-
-  // ── 2. Book flourish ornament ──
-  curY += 8;
-  drawBookFlourish(ctx, align === 'right' ? xPos : w / 2, curY, colors.separator || colors.poet);
-  curY += 28;
 
   // ── 3. Arabic poet name ──
   if (resolvedPoet.arabic) {
@@ -279,7 +279,7 @@ function drawBilingualHeader(ctx, w, headerY, poem, colors, opts = {}) {
     curY += 52;
   }
 
-  // ── 4. English summary: "[author] – [title]" ──
+  // ── 4. English summary: "[author] – [title]" in dark grey ──
   const enPoet = resolvedPoet.english || '';
   const enTitle = resolvedTitle.english || '';
   let englishSummary = '';
@@ -291,12 +291,11 @@ function drawBilingualHeader(ctx, w, headerY, poem, colors, opts = {}) {
     englishSummary = enTitle;
   }
   if (englishSummary) {
-    ctx.fillStyle = colors.title || colors.poet;
+    ctx.fillStyle = colors.englishGrey || 'rgba(150, 150, 150, 0.7)';
     ctx.font = '600 32px "Playfair Display", serif';
     ctx.direction = 'ltr';
     ctx.save();
-    ctx.shadowColor = colors.poet;
-    ctx.shadowBlur = 3;
+    ctx.shadowBlur = 0;
     ctx.fillText(englishSummary, xPos, curY);
     ctx.restore();
     curY += 40;
@@ -350,6 +349,7 @@ function renderDiwan(ctx, w, h, poem) {
     poetAr: 'rgba(197, 160, 89, 0.7)',
     title: 'rgba(197, 160, 89, 0.55)',
     separator: '#c5a059',
+    englishGrey: 'rgba(180, 178, 172, 0.65)',
   });
 
   // ── Interleaved verses + translations (line by line) ──
@@ -442,6 +442,7 @@ function renderIbnMuqla(ctx, w, h, poem) {
     poetAr: 'rgba(74, 40, 0, 0.65)',
     title: 'rgba(92, 58, 10, 0.5)',
     separator: '#8B6914',
+    englishGrey: 'rgba(90, 85, 75, 0.6)',
   });
 
   // ── Interleaved verses (line by line) ──
@@ -527,6 +528,7 @@ function renderSinan(ctx, w, h, poem) {
     poetAr: 'rgba(197, 160, 89, 0.65)',
     title: 'rgba(79, 166, 183, 0.6)',
     separator: '#c5a059',
+    englishGrey: 'rgba(170, 180, 190, 0.6)',
   });
 
   // ── Interleaved verses (line by line) ──
@@ -623,6 +625,7 @@ function renderZahaHadid(ctx, w, h, poem) {
       poetAr: 'rgba(200, 100, 255, 0.65)',
       title: 'rgba(100, 180, 255, 0.55)',
       separator: '#C864FF',
+      englishGrey: 'rgba(180, 180, 200, 0.6)',
     },
     { align: 'right', xPos: w - 85 }
   );
@@ -717,6 +720,7 @@ function renderHassanFathy(ctx, w, h, poem) {
     poetAr: 'rgba(61, 31, 0, 0.65)',
     title: 'rgba(74, 40, 0, 0.45)',
     separator: '#A0522D',
+    englishGrey: 'rgba(95, 85, 75, 0.6)',
   });
 
   // ── Interleaved verses (line by line) ──

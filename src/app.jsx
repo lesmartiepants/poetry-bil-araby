@@ -112,6 +112,7 @@ export default function DiwanApp() {
   const headerOpacity = useUIStore((s) => s.headerOpacity);
   const setHeaderOpacity = useUIStore((s) => s.setHeaderOpacity);
   const [fireTapped, setFireTapped] = useState(false);
+  const [ratchetToast, setRatchetToast] = useState(null);
 
   // ── Poem store (Zustand) ──
   const poems = usePoemStore((s) => s.poems);
@@ -154,6 +155,7 @@ export default function DiwanApp() {
   const audioError = useAudioStore((s) => s.error);
   const setAudioError = useAudioStore((s) => s.setError);
   const hasAutoLoaded = useRef(false);
+  const longPressTimer = useRef(null);
   const logs = useUIStore((s) => s.logs);
   const showDebugLogs = useUIStore((s) => s.showDebugLogs);
   const showCopySuccess = useModalStore((s) => s.copyToast);
@@ -405,6 +407,26 @@ export default function DiwanApp() {
 
     return () => clearTimeout(timeoutId);
   }, [darkMode, currentFont, user]);
+
+  // Easter egg: type "yalla" anywhere (desktop) to toggle Ratchet Mode
+  useEffect(() => {
+    const SECRET = 'yalla';
+    let buffer = '';
+    const handleKey = (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      buffer = (buffer + e.key).slice(-SECRET.length);
+      if (buffer === SECRET) {
+        const willEnable = !useUIStore.getState().ratchetMode;
+        useUIStore.getState().toggleRatchetMode();
+        setRatchetToast(willEnable ? 'on' : 'off');
+        setTimeout(() => setRatchetToast(null), 2500);
+        buffer = '';
+      }
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, []);
+
 
   // headerProgress: 0 = full size center, 1 = compact right corner
   // Slower ramp: full transition over 200px of scroll instead of 60
@@ -868,6 +890,7 @@ export default function DiwanApp() {
       className={`h-[100dvh] w-full flex flex-col overflow-hidden overscroll-none ${DESIGN.anim} font-sans ${theme.bg} ${theme.text} selection:bg-indigo-500`}
       style={{ touchAction: 'pan-y', overflowX: 'hidden' }}
     >
+
       <DebugPanel controlBarRef={controlBarRef} />
 
       {/* Ratchet Mode glow overlay — full-screen Easter egg effect */}
@@ -880,9 +903,38 @@ export default function DiwanApp() {
             inset: 0,
             zIndex: 39,
             pointerEvents: 'none',
+            background:
+              'radial-gradient(ellipse at center, rgba(255,80,0,0.22) 0%, rgba(255,40,0,0.08) 60%, transparent 100%)',
             animation: 'ratchetGlow 2s ease-in-out infinite',
           }}
         />
+      )}
+
+      {/* Ratchet Mode activation toast */}
+      {ratchetToast && (
+        <div
+          style={{
+            position: 'fixed',
+            bottom: '5rem',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 9999,
+            padding: '0.5rem 1.25rem',
+            borderRadius: '999px',
+            background:
+              ratchetToast === 'on'
+                ? 'linear-gradient(135deg, #ff5000, #ff9000)'
+                : 'rgba(60,60,70,0.92)',
+            color: '#fff',
+            fontSize: '0.875rem',
+            fontWeight: 600,
+            boxShadow: '0 4px 24px rgba(0,0,0,0.4)',
+            animation: 'ratchetToastIn 0.4s ease-out',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {ratchetToast === 'on' ? '🔥 Ratchet Mode activated fr fr' : 'Back to scholarly mode'}
+        </div>
       )}
 
       <header
@@ -1271,6 +1323,27 @@ export default function DiwanApp() {
                     setFireTapped(true);
                     setTimeout(() => setFireTapped(false), 400);
                     setDiscoverDrawerOpen(true);
+                  }}
+                  onTouchStart={() => {
+                    longPressTimer.current = setTimeout(() => {
+                      const willEnable = !useUIStore.getState().ratchetMode;
+                      useUIStore.getState().toggleRatchetMode();
+                      setRatchetToast(willEnable ? 'on' : 'off');
+                      setTimeout(() => setRatchetToast(null), 2500);
+                      longPressTimer.current = null;
+                    }, 2000);
+                  }}
+                  onTouchEnd={() => {
+                    if (longPressTimer.current) {
+                      clearTimeout(longPressTimer.current);
+                      longPressTimer.current = null;
+                    }
+                  }}
+                  onTouchMove={() => {
+                    if (longPressTimer.current) {
+                      clearTimeout(longPressTimer.current);
+                      longPressTimer.current = null;
+                    }
                   }}
                   disabled={isFetching}
                   aria-label="Open discover"

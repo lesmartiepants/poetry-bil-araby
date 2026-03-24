@@ -116,7 +116,7 @@ test.describe('Control Bar — Vercel Preview User Flows', () => {
     await page.reload({ waitUntil: 'domcontentloaded' });
   });
 
-  test.afterEach(async ({}, testInfo) => {
+  test.afterEach(async (_fixtures, testInfo) => {
     // Attach collected console logs to test report
     if (consoleLogs.length > 0) {
       await testInfo.attach('console-logs', {

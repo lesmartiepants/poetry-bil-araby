@@ -256,7 +256,7 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
     <>
       {/* Backdrop */}
       <motion.div
-        className="fixed inset-0 z-[60] bg-black/50 backdrop-blur-sm"
+        className="fixed inset-0 z-[201] bg-black/50 backdrop-blur-sm"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
@@ -266,7 +266,7 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
 
       {/* Drawer */}
       <motion.div
-        className="fixed bottom-0 left-0 right-0 z-[61] rounded-t-3xl flex flex-col overflow-hidden"
+        className="fixed bottom-0 left-0 right-0 z-[202] rounded-t-3xl flex flex-col overflow-hidden"
         initial={{ y: '100%' }}
         animate={{ y: 0 }}
         exit={{ y: '100%' }}
@@ -317,57 +317,40 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
           </button>
         </div>
 
-        {/* ── Side-by-side: Surprise Me (left) + Featured grid (right) ── */}
+        {/* ── Horizontal scroll strip: Surprise Me (sticky) | All Poets | Featured ── */}
         {!poetSearch && (
-          <div className="px-4 pb-3 flex gap-2 flex-shrink-0">
-            {/* Left: Surprise Me CTA */}
-            <button
-              onClick={() => {
-                onSurpriseMe();
-                onClose();
-              }}
-              disabled={isFetching}
-              aria-label="Discover new poem"
-              className="relative overflow-hidden rounded-2xl flex flex-col items-center justify-center gap-2 group transition-all duration-200 active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
-              style={{
-                width: '38%',
-                padding: '16px 10px',
-                background:
-                  'linear-gradient(160deg, rgba(197,160,89,0.20) 0%, rgba(197,160,89,0.07) 100%)',
-                border: '1px solid rgba(197,160,89,0.38)',
-                boxShadow: '0 4px 16px rgba(197,160,89,0.1), inset 0 1px 0 rgba(255,255,255,0.06)',
-              }}
+          <div className="pb-3 flex-shrink-0">
+            <div
+              className="flex gap-2 px-4 overflow-x-auto"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
             >
-              {/* Shimmer sweep */}
-              <div
-                aria-hidden="true"
-                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
-                style={{
-                  background:
-                    'linear-gradient(160deg, transparent 0%, rgba(197,160,89,0.06) 50%, transparent 100%)',
+              {/* Surprise Me — sticky leftmost tile */}
+              <button
+                onClick={() => {
+                  onSurpriseMe();
+                  onClose();
                 }}
-              />
-              <GoldenFireIcon size={26} glow={false} />
-              <div className="text-center">
+                disabled={isFetching}
+                aria-label="Discover new poem"
+                className="flex-shrink-0 sticky left-0 z-10 rounded-2xl flex flex-col items-center justify-center gap-1.5 transition-all duration-200 active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{
+                  width: 96,
+                  height: 84,
+                  background:
+                    'linear-gradient(160deg, rgba(197,160,89,0.22) 0%, rgba(197,160,89,0.08) 100%)',
+                  border: '1px solid rgba(197,160,89,0.42)',
+                  boxShadow: '0 4px 16px rgba(197,160,89,0.12)',
+                }}
+              >
+                <GoldenFireIcon size={22} glow={false} />
                 <div
-                  className="font-brand-en font-bold text-[13px] leading-tight"
+                  className="font-brand-en font-bold text-[11px] leading-tight text-center px-1"
                   style={{ color: 'var(--gold)' }}
                 >
                   Surprise Me
                 </div>
-                <div
-                  className="font-brand-en text-[9px] mt-0.5 leading-snug"
-                  style={{ color: 'var(--gold)', opacity: 0.55 }}
-                >
-                  {selectedCategory !== 'All'
-                    ? CATEGORIES.find((c) => c.id === selectedCategory)?.label || selectedCategory
-                    : 'Random poem'}
-                </div>
-              </div>
-            </button>
+              </button>
 
-            {/* Right: Featured tiles (2 columns) including All Poets */}
-            <div className="flex-1 grid grid-cols-2 gap-1.5">
               {/* All Poets tile */}
               <button
                 data-testid="poet-picker-button"
@@ -375,18 +358,20 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
                   onSelectPoet('All');
                   onClose();
                 }}
-                className={`rounded-xl px-2.5 py-2.5 text-right transition-all duration-200 ${
+                className={`flex-shrink-0 rounded-2xl px-3 flex flex-col items-end justify-center transition-all duration-200 ${
                   selectedCategory === 'All'
                     ? 'border border-gold/50 bg-gold/12'
                     : 'hover:bg-gold/8 border'
                 }`}
                 style={{
+                  width: 96,
+                  height: 84,
                   borderColor: selectedCategory === 'All' ? undefined : subtleBorder,
                   background: selectedCategory === 'All' ? undefined : cardBg,
                 }}
               >
                 <div
-                  className="font-bold text-[13px] truncate"
+                  className="font-bold text-[13px] truncate w-full text-right"
                   dir="rtl"
                   style={{
                     fontFamily: "'Reem Kufi', sans-serif",
@@ -396,7 +381,7 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
                   كل الشعراء
                 </div>
                 <div
-                  className="font-brand-en text-[10px] mt-0.5 truncate"
+                  className="font-brand-en text-[10px] mt-0.5 truncate w-full text-right"
                   style={{
                     opacity: selectedCategory === 'All' ? 0.75 : 0.6,
                     color: selectedCategory === 'All' ? 'var(--gold)' : subTextColor,
@@ -415,18 +400,20 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
                     onSelectPoet(cat.id);
                     onClose();
                   }}
-                  className={`rounded-xl px-2.5 py-2.5 text-right transition-all duration-200 ${
+                  className={`flex-shrink-0 rounded-2xl px-3 flex flex-col items-end justify-center transition-all duration-200 ${
                     selectedCategory === cat.id
                       ? 'border border-gold/50 bg-gold/12'
                       : 'hover:bg-gold/8 border'
                   }`}
                   style={{
+                    width: 96,
+                    height: 84,
                     borderColor: selectedCategory === cat.id ? undefined : subtleBorder,
                     background: selectedCategory === cat.id ? undefined : cardBg,
                   }}
                 >
                   <div
-                    className="font-bold text-[13px] truncate"
+                    className="font-bold text-[13px] truncate w-full text-right"
                     dir="rtl"
                     style={{
                       fontFamily: "'Reem Kufi', sans-serif",
@@ -436,7 +423,7 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
                     {cat.labelAr}
                   </div>
                   <div
-                    className="font-brand-en text-[10px] mt-0.5 truncate"
+                    className="font-brand-en text-[10px] mt-0.5 truncate w-full text-right"
                     style={{
                       opacity: selectedCategory === cat.id ? 0.75 : 0.6,
                       color: selectedCategory === cat.id ? 'var(--gold)' : subTextColor,

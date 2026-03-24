@@ -1,0 +1,170 @@
+/**
+ * transliterate-poets.js
+ *
+ * Generates supabase/migrations/20260324000000_backfill_poet_name_en.sql
+ * using Gemini 2.5 Flash Lite for high-quality scholarly transliterations.
+ *
+ * The previous version used a character-level Arabic→Latin map which produced
+ * poor results (e.g. "Mhmwd Drwysh" instead of "Mahmoud Darwish").
+ * This version calls Gemini Flash in batches to get proper English forms.
+ *
+ * Usage (from repo root):
+ *   source .env && node scripts/transliterate-poets.js
+ *
+ * Requires:
+ *   - .env loaded (VITE_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, VITE_GEMINI_API_KEY)
+ *   - Node 18+ (fetch built-in)
+ *
+ * Output: writes migration SQL to stdout
+ */
+
+const BATCH_SIZE = 100;
+const MODEL = 'gemini-2.5-flash-lite';
+
+const PROMPT_TEMPLATE = `You are an Arabic transliteration expert specializing in classical and modern Arabic poetry.
+Transliterate the following Arabic poet names into standard English scholarly form.
+Use conventional scholarly transliteration:
+- ibn/bin for ابن
+- abu/abi for أبو/أبي
+- al- for ال (article)
+- Common name spellings: Mahmoud for محمود, Ahmad/Ahmed for أحمد, etc.
+- Use the most widely recognized English form for famous poets
+
+Return ONLY a JSON object mapping each Arabic name to its English transliteration.
+No explanation, no markdown, just the JSON object.
+
+Names to transliterate:
+`;
+
+async function fetchAllPoets(supabaseUrl, serviceKey) {
+  const poets = [];
+  let offset = 0;
+  const limit = 1000;
+
+  while (true) {
+    const url = `${supabaseUrl}/rest/v1/poets?select=id,name&order=id&limit=${limit}&offset=${offset}`;
+    const resp = await fetch(url, {
+      headers: {
+        apikey: serviceKey,
+        Authorization: `Bearer ${serviceKey}`,
+      },
+    });
+    if (!resp.ok) throw new Error(`Supabase fetch failed: ${resp.status}`);
+    const batch = await resp.json();
+    poets.push(...batch);
+    if (batch.length < limit) break;
+    offset += limit;
+  }
+
+  return poets;
+}
+
+async function transliterateBatch(names, apiKey) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${apiKey}`;
+  const prompt = PROMPT_TEMPLATE + names.join('\n');
+
+  const resp = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      contents: [{ parts: [{ text: prompt }] }],
+      generationConfig: {
+        temperature: 0.1,
+        maxOutputTokens: 8192,
+        responseMimeType: 'application/json',
+      },
+    }),
+  });
+
+  if (!resp.ok) {
+    const errText = await resp.text();
+    throw new Error(`Gemini API error ${resp.status}: ${errText.substring(0, 200)}`);
+  }
+
+  const data = await resp.json();
+  const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
+  if (!text) throw new Error('No text in Gemini response');
+
+  let cleaned = text.trim();
+  if (cleaned.startsWith('```')) {
+    cleaned = cleaned.replace(/^```json?\n?/, '').replace(/\n?```$/, '');
+  }
+
+  return JSON.parse(cleaned);
+}
+
+async function main() {
+  const supabaseUrl = process.env.VITE_SUPABASE_URL;
+  const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const apiKey = process.env.VITE_GEMINI_API_KEY;
+
+  if (!supabaseUrl || !serviceKey || !apiKey) {
+    console.error('Missing VITE_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, or VITE_GEMINI_API_KEY');
+    process.exit(1);
+  }
+
+  // Fetch all poets
+  const poets = await fetchAllPoets(supabaseUrl, serviceKey);
+  console.error(`Fetched ${poets.length} poets`);
+
+  // Transliterate in batches
+  const results = {};
+  for (let i = 0; i < poets.length; i += BATCH_SIZE) {
+    const batch = poets.slice(i, i + BATCH_SIZE);
+    const names = batch.map(p => p.name);
+    console.error(`Batch ${Math.floor(i / BATCH_SIZE) + 1}: ${names.length} names...`);
+
+    const retries = 3;
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      try {
+        const trans = await transliterateBatch(names, apiKey);
+        Object.assign(results, trans);
+        break;
+      } catch (e) {
+        console.error(`  Attempt ${attempt} failed: ${e.message}`);
+        if (attempt === retries) throw e;
+        await new Promise(r => setTimeout(r, 2000 * attempt));
+      }
+    }
+
+    // Rate limit
+    if (i + BATCH_SIZE < poets.length) {
+      await new Promise(r => setTimeout(r, 500));
+    }
+  }
+
+  console.error(`Transliterated ${Object.keys(results).length} names`);
+
+  // Build SQL
+  const cases = poets
+    .map(p => {
+      const en = results[p.name];
+      if (!en) {
+        console.error(`WARNING: no transliteration for ${p.name} (id=${p.id})`);
+        return null;
+      }
+      const escaped = en.replace(/'/g, "''");
+      return `  WHEN ${p.id} THEN '${escaped}'`;
+    })
+    .filter(Boolean)
+    .join('\n');
+
+  const ids = poets.map(p => p.id).join(', ');
+
+  const sql = `-- Backfill name_en for all poets using AI-assisted scholarly transliteration
+-- Generated by Gemini 2.5 Flash Lite
+-- Date: ${new Date().toISOString().slice(0, 10)}
+-- Total: ${poets.length} poets
+
+UPDATE public.poets
+SET name_en = CASE id
+${cases}
+  ELSE name_en
+END
+WHERE id IN (${ids});
+`;
+
+  process.stdout.write(sql);
+}
+
+main();

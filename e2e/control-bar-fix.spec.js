@@ -14,6 +14,7 @@ const VIEWPORTS = {
   mobile: { width: 375, height: 812 },
 };
 
+/* global process */
 const BYPASS = process.env.VERCEL_PROTECTION_BYPASS_FOR_AUTOMATION;
 
 /**
@@ -49,7 +50,11 @@ async function dismissAllOverlays(page) {
         }
       } catch {
         // Button may have been detached during animation — try force click
-        try { await page.mouse.click(100, 100); } catch { /* noop */ }
+        try {
+          await page.mouse.click(100, 100);
+        } catch {
+          /* noop */
+        }
       }
       await page.waitForTimeout(500);
     } else {
@@ -60,7 +65,7 @@ async function dismissAllOverlays(page) {
   // 2. Dismiss "Onboarding walkthrough" dialog (multi-step)
   for (let step = 0; step < 10; step++) {
     const onboarding = page.locator('[role="dialog"][aria-label="Onboarding walkthrough"]');
-    if (!await onboarding.isVisible({ timeout: 1000 }).catch(() => false)) break;
+    if (!(await onboarding.isVisible({ timeout: 1000 }).catch(() => false))) break;
     const btn = onboarding.locator('button').last();
     if (await btn.isVisible({ timeout: 500 }).catch(() => false)) {
       await btn.click();
@@ -97,8 +102,8 @@ test.describe('Control Bar — Vercel Preview User Flows', () => {
   let consoleLogs = [];
   test.beforeEach(async ({ page }) => {
     consoleLogs = [];
-    page.on('console', msg => consoleLogs.push(`[${msg.type()}] ${msg.text()}`));
-    page.on('pageerror', err => consoleLogs.push(`[PAGE_ERROR] ${err.message}`));
+    page.on('console', (msg) => consoleLogs.push(`[${msg.type()}] ${msg.text()}`));
+    page.on('pageerror', (err) => consoleLogs.push(`[PAGE_ERROR] ${err.message}`));
 
     // Pre-set localStorage to skip onboarding/splash screens
     // Navigate first to set the origin, then inject localStorage
@@ -111,7 +116,7 @@ test.describe('Control Bar — Vercel Preview User Flows', () => {
     await page.reload({ waitUntil: 'domcontentloaded' });
   });
 
-  test.afterEach(async ({}, testInfo) => {
+  test.afterEach(async (_fixtures, testInfo) => {
     // Attach collected console logs to test report
     if (consoleLogs.length > 0) {
       await testInfo.attach('console-logs', {
@@ -120,10 +125,12 @@ test.describe('Control Bar — Vercel Preview User Flows', () => {
       });
     }
     // Print summary to stdout for CLI visibility
-    const errors = consoleLogs.filter(l => l.startsWith('[error]') || l.startsWith('[PAGE_ERROR]'));
+    const errors = consoleLogs.filter(
+      (l) => l.startsWith('[error]') || l.startsWith('[PAGE_ERROR]')
+    );
     if (errors.length > 0) {
       console.log(`⚠ ${errors.length} console errors captured:`);
-      errors.forEach(e => console.log(`  ${e}`));
+      errors.forEach((e) => console.log(`  ${e}`));
     }
   });
 
@@ -158,12 +165,15 @@ test.describe('Control Bar — Vercel Preview User Flows', () => {
     const hasTooltip = await tooltip.isVisible({ timeout: 1000 }).catch(() => false);
     console.log(`✓ Flag click (unauthenticated): tooltip=${hasTooltip}, no crash`);
 
-    // Verify Discover button works
+    // Verify Discover drawer opens and Surprise Me works
+    const openDrawerBtn = page.locator('button[aria-label="Open discover"]');
+    await expect(openDrawerBtn).toBeVisible();
+    await openDrawerBtn.click();
     const discoverBtn = page.locator('button[aria-label="Discover new poem"]');
-    await expect(discoverBtn).toBeVisible();
+    await expect(discoverBtn).toBeVisible({ timeout: 3000 });
     await discoverBtn.click();
     await page.waitForTimeout(2000);
-    console.log('✓ Discover button clicked — new poem loading');
+    console.log('✓ Discover drawer opened, Surprise Me clicked — new poem loading');
 
     // Save + Flag should still be visible after Discover
     await expect(saveBtn).toBeVisible();
@@ -266,12 +276,17 @@ test.describe('Control Bar — Vercel Preview User Flows', () => {
     console.log(`  Initial URL: ${initialUrl}`);
 
     // Click Discover (may be temporarily disabled during initial fetch due to CORS on preview)
-    const discoverBtn = page.locator('button[aria-label="Discover new poem"]');
+    const openDrawerBtn = page.locator('button[aria-label="Open discover"]');
     try {
-      await expect(discoverBtn).toBeEnabled({ timeout: 10000 });
+      await expect(openDrawerBtn).toBeEnabled({ timeout: 10000 });
     } catch {
       console.log('  Discover button still disabled (CORS-blocked fetch) — clicking with force');
     }
+    await openDrawerBtn.click({ force: true });
+    const discoverBtn = page.locator('button[aria-label="Discover new poem"]');
+    await expect(discoverBtn)
+      .toBeVisible({ timeout: 3000 })
+      .catch(() => {});
     await discoverBtn.click({ force: true });
 
     // Wait for new poem to load
@@ -287,7 +302,7 @@ test.describe('Control Bar — Vercel Preview User Flows', () => {
     }
 
     // Verify no console errors during navigation
-    const pageErrors = consoleLogs.filter(l => l.startsWith('[PAGE_ERROR]'));
+    const pageErrors = consoleLogs.filter((l) => l.startsWith('[PAGE_ERROR]'));
     expect(pageErrors).toHaveLength(0);
     console.log(`✓ No page errors (${consoleLogs.length} total console messages)`);
   });
@@ -297,26 +312,27 @@ test.describe('Control Bar — Vercel Preview User Flows', () => {
     await waitForAppReady(page);
 
     // Filter for auth-related logs
-    const authLogs = consoleLogs.filter(l =>
-      l.toLowerCase().includes('supabase') ||
-      l.toLowerCase().includes('auth') ||
-      l.toLowerCase().includes('configured')
+    const authLogs = consoleLogs.filter(
+      (l) =>
+        l.toLowerCase().includes('supabase') ||
+        l.toLowerCase().includes('auth') ||
+        l.toLowerCase().includes('configured')
     );
 
     console.log(`  Auth-related console logs (${authLogs.length}):`);
-    authLogs.forEach(l => console.log(`    ${l}`));
+    authLogs.forEach((l) => console.log(`    ${l}`));
 
     // Should NOT see "not configured" errors (Supabase should be configured in preview)
-    const notConfiguredErrors = consoleLogs.filter(l =>
-      l.includes('not configured') && l.includes('error')
+    const notConfiguredErrors = consoleLogs.filter(
+      (l) => l.includes('not configured') && l.includes('error')
     );
     expect(notConfiguredErrors).toHaveLength(0);
     console.log('✓ No "not configured" error logs');
 
     // Check for page-level errors
-    const pageErrors = consoleLogs.filter(l => l.startsWith('[PAGE_ERROR]'));
+    const pageErrors = consoleLogs.filter((l) => l.startsWith('[PAGE_ERROR]'));
     console.log(`  Page errors: ${pageErrors.length}`);
-    pageErrors.forEach(e => console.log(`    ${e}`));
+    pageErrors.forEach((e) => console.log(`    ${e}`));
     expect(pageErrors).toHaveLength(0);
     console.log('✓ No uncaught page errors');
   });

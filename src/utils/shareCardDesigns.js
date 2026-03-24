@@ -114,9 +114,7 @@ function calculateHeaderHeight(poem) {
   const resolvedPoet = resolveBilingual(poem.poet, poem.poetArabic);
   const resolvedTitle = resolveBilingual(poem.title, poem.titleArabic);
   let height = 0;
-  // Book flourish (above title)
-  height += 36;
-  // Title (top position after flourish)
+  // Title
   if (resolvedTitle.arabic) height += 62;
   // Poet name
   if (resolvedPoet.arabic) height += 52;
@@ -139,7 +137,7 @@ function calculateCenteredLayout(h, poem, verseCount) {
   const pairSpacing = Math.min(180, spaceForVerses / Math.max(verseCount, 1));
   const contentHeight = verseCount * pairSpacing;
   const totalHeight = headerHeight + titleBodyGap + contentHeight;
-  const headerY = Math.max(minMargin, (h - totalHeight) / 2) + 40;
+  const headerY = Math.max(minMargin, (h - totalHeight) / 2) + 25;
   return { headerY, titleBodyGap, pairSpacing };
 }
 
@@ -189,37 +187,37 @@ function drawBookFlourish(ctx, cx, cy, color) {
   ctx.save();
   ctx.strokeStyle = color;
   ctx.fillStyle = color;
-  ctx.lineWidth = 1.2;
-  ctx.globalAlpha = 0.45;
+  ctx.lineWidth = 2.2;
+  ctx.globalAlpha = 0.5;
 
   // Central small diamond
   ctx.beginPath();
-  ctx.moveTo(cx, cy - 5);
-  ctx.lineTo(cx + 5, cy);
-  ctx.lineTo(cx, cy + 5);
-  ctx.lineTo(cx - 5, cy);
+  ctx.moveTo(cx, cy - 6);
+  ctx.lineTo(cx + 6, cy);
+  ctx.lineTo(cx, cy + 6);
+  ctx.lineTo(cx - 6, cy);
   ctx.closePath();
   ctx.fill();
 
-  // Left open-book page curve
+  // Left open-book page curve — wider span
   ctx.beginPath();
-  ctx.moveTo(cx - 12, cy);
-  ctx.quadraticCurveTo(cx - 40, cy - 14, cx - 65, cy - 2);
+  ctx.moveTo(cx - 14, cy);
+  ctx.quadraticCurveTo(cx - 50, cy - 18, cx - 90, cy - 3);
   ctx.stroke();
 
-  // Right open-book page curve (mirrored)
+  // Right open-book page curve (mirrored) — wider span
   ctx.beginPath();
-  ctx.moveTo(cx + 12, cy);
-  ctx.quadraticCurveTo(cx + 40, cy - 14, cx + 65, cy - 2);
+  ctx.moveTo(cx + 14, cy);
+  ctx.quadraticCurveTo(cx + 50, cy - 18, cx + 90, cy - 3);
   ctx.stroke();
 
   // Small end dots
-  ctx.globalAlpha = 0.3;
+  ctx.globalAlpha = 0.35;
   ctx.beginPath();
-  ctx.arc(cx - 65, cy - 2, 2, 0, Math.PI * 2);
+  ctx.arc(cx - 90, cy - 3, 2.5, 0, Math.PI * 2);
   ctx.fill();
   ctx.beginPath();
-  ctx.arc(cx + 65, cy - 2, 2, 0, Math.PI * 2);
+  ctx.arc(cx + 90, cy - 3, 2.5, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.restore();
@@ -236,22 +234,27 @@ function drawBookFlourish(ctx, cx, cy, color) {
  * @param {number} headerY - top Y position of header
  * @param {Object} poem - poem data
  * @param {Object} colors - { poet, poetAr, title, separator, englishGrey }
- * @param {Object} opts - { align: 'center'|'right', xPos: number }
+ * @param {Object} opts - { align: 'center'|'right', xPos: number, borderTop: number }
  * @returns {number} the Y position after the header (for separator placement)
  */
 function drawBilingualHeader(ctx, w, headerY, poem, colors, opts = {}) {
   const align = opts.align || 'center';
   const xPos = opts.xPos || w / 2;
+  const borderTop = opts.borderTop || 60;
   const resolvedPoet = resolveBilingual(poem.poet, poem.poetArabic);
   const resolvedTitle = resolveBilingual(poem.title, poem.titleArabic);
   let curY = headerY;
 
   ctx.textAlign = align;
 
-  // ── 1. Book flourish ornament — ABOVE the title ──
-  curY += 8;
-  drawBookFlourish(ctx, align === 'right' ? xPos : w / 2, curY, colors.separator || colors.poet);
-  curY += 28;
+  // ── 1. Book flourish ornament — positioned halfway between top border and title ──
+  const flourishY = Math.round((borderTop + headerY) / 2);
+  drawBookFlourish(
+    ctx,
+    align === 'right' ? xPos : w / 2,
+    flourishY,
+    colors.separator || colors.poet
+  );
 
   // ── 2. Arabic poem title — biggest, gold foil ──
   if (resolvedTitle.arabic) {
@@ -344,13 +347,20 @@ function renderDiwan(ctx, w, h, poem) {
   const layout = calculateCenteredLayout(h, poem, verses.length);
 
   // ── Header: bilingual poet & title ──
-  const headerBottom = drawBilingualHeader(ctx, w, layout.headerY, poem, {
-    poet: '#c5a059',
-    poetAr: 'rgba(197, 160, 89, 0.7)',
-    title: 'rgba(197, 160, 89, 0.55)',
-    separator: '#c5a059',
-    englishGrey: 'rgba(180, 178, 172, 0.65)',
-  });
+  const headerBottom = drawBilingualHeader(
+    ctx,
+    w,
+    layout.headerY,
+    poem,
+    {
+      poet: '#c5a059',
+      poetAr: 'rgba(197, 160, 89, 0.7)',
+      title: 'rgba(197, 160, 89, 0.55)',
+      separator: '#c5a059',
+      englishGrey: 'rgba(180, 178, 172, 0.65)',
+    },
+    { borderTop: 58 }
+  );
 
   // ── Interleaved verses + translations (line by line) ──
   const contentStartY = headerBottom + layout.titleBodyGap;
@@ -437,13 +447,20 @@ function renderIbnMuqla(ctx, w, h, poem) {
   const layout = calculateCenteredLayout(h, poem, verses.length);
 
   // ── Header — bilingual ──
-  const headerBottom = drawBilingualHeader(ctx, w, layout.headerY, poem, {
-    poet: '#4A2800',
-    poetAr: 'rgba(74, 40, 0, 0.65)',
-    title: 'rgba(92, 58, 10, 0.5)',
-    separator: '#8B6914',
-    englishGrey: 'rgba(90, 85, 75, 0.6)',
-  });
+  const headerBottom = drawBilingualHeader(
+    ctx,
+    w,
+    layout.headerY,
+    poem,
+    {
+      poet: '#4A2800',
+      poetAr: 'rgba(74, 40, 0, 0.65)',
+      title: 'rgba(92, 58, 10, 0.5)',
+      separator: '#8B6914',
+      englishGrey: 'rgba(90, 85, 75, 0.6)',
+    },
+    { borderTop: 52 }
+  );
 
   // ── Interleaved verses (line by line) ──
   const contentStartY = headerBottom + layout.titleBodyGap;
@@ -523,13 +540,20 @@ function renderSinan(ctx, w, h, poem) {
   const layout = calculateCenteredLayout(h, poem, verses.length);
 
   // ── Header — bilingual ──
-  const headerBottom = drawBilingualHeader(ctx, w, layout.headerY, poem, {
-    poet: '#c5a059',
-    poetAr: 'rgba(197, 160, 89, 0.65)',
-    title: 'rgba(79, 166, 183, 0.6)',
-    separator: '#c5a059',
-    englishGrey: 'rgba(170, 180, 190, 0.6)',
-  });
+  const headerBottom = drawBilingualHeader(
+    ctx,
+    w,
+    layout.headerY,
+    poem,
+    {
+      poet: '#c5a059',
+      poetAr: 'rgba(197, 160, 89, 0.65)',
+      title: 'rgba(79, 166, 183, 0.6)',
+      separator: '#c5a059',
+      englishGrey: 'rgba(170, 180, 190, 0.6)',
+    },
+    { borderTop: 54 }
+  );
 
   // ── Interleaved verses (line by line) ──
   const contentStartY = headerBottom + layout.titleBodyGap;
@@ -627,7 +651,7 @@ function renderZahaHadid(ctx, w, h, poem) {
       separator: '#C864FF',
       englishGrey: 'rgba(180, 180, 200, 0.6)',
     },
-    { align: 'right', xPos: w - 85 }
+    { align: 'right', xPos: w - 85, borderTop: 48 }
   );
 
   // ── Interleaved verses — right-aligned, line by line ──
@@ -715,13 +739,20 @@ function renderHassanFathy(ctx, w, h, poem) {
   const layout = calculateCenteredLayout(h, poem, verses.length);
 
   // ── Header — bilingual ──
-  const headerBottom = drawBilingualHeader(ctx, w, layout.headerY, poem, {
-    poet: '#3D1F00',
-    poetAr: 'rgba(61, 31, 0, 0.65)',
-    title: 'rgba(74, 40, 0, 0.45)',
-    separator: '#A0522D',
-    englishGrey: 'rgba(95, 85, 75, 0.6)',
-  });
+  const headerBottom = drawBilingualHeader(
+    ctx,
+    w,
+    layout.headerY,
+    poem,
+    {
+      poet: '#3D1F00',
+      poetAr: 'rgba(61, 31, 0, 0.65)',
+      title: 'rgba(74, 40, 0, 0.45)',
+      separator: '#A0522D',
+      englishGrey: 'rgba(95, 85, 75, 0.6)',
+    },
+    { borderTop: 52 }
+  );
 
   // ── Interleaved verses (line by line) ──
   const contentStartY = headerBottom + layout.titleBodyGap;

@@ -324,10 +324,10 @@ describe('ShareCardModal', () => {
     ShareCardModal = mod.default;
   });
 
-  it('renders with canvas preview', () => {
+  it('renders with image preview', () => {
     render(<ShareCardModal poem={mockPoem} onClose={() => {}} />);
-    // Preview is now a canvas element (exact match to download)
-    expect(screen.getByLabelText('Share card preview')).toBeInTheDocument();
+    // Preview is now an <img> element (full-res, supports long-press save)
+    expect(screen.getByAltText('Share card preview')).toBeInTheDocument();
   });
 
   it('shows design name for each design option', () => {
@@ -365,21 +365,22 @@ describe('ShareCardModal', () => {
     expect(sinanBtn.closest('button')).toHaveAttribute('aria-pressed', 'true');
   });
 
-  it('renders canvas preview that matches download canvas', () => {
+  it('renders image preview with hidden download canvas', () => {
     render(<ShareCardModal poem={mockPoem} onClose={() => {}} />);
-    // Both the preview canvas and hidden download canvas should exist
-    const preview = screen.getByLabelText('Share card preview');
-    expect(preview.tagName).toBe('CANVAS');
+    // Preview is now an <img> element (full-res, supports long-press save on mobile)
+    const preview = screen.getByAltText('Share card preview');
+    expect(preview.tagName).toBe('IMG');
     // Hidden canvas for download/share
     const hiddenCanvas = document.querySelector('canvas[aria-hidden="true"]');
     expect(hiddenCanvas).toBeInTheDocument();
   });
 
-  it('has correct preview canvas dimensions', () => {
+  it('has preview image with correct aspect ratio container', () => {
     render(<ShareCardModal poem={mockPoem} onClose={() => {}} />);
-    const preview = screen.getByLabelText('Share card preview');
-    expect(preview.width).toBe(340);
-    // Should maintain the 1080:1350 aspect ratio
-    expect(preview.height).toBe(Math.round(340 * (1350 / 1080)));
+    const preview = screen.getByAltText('Share card preview');
+    expect(preview).toBeInTheDocument();
+    // The image should be inside a container with aspect-ratio styling
+    const container = preview.closest('div');
+    expect(container.style.aspectRatio).toBe('1080 / 1350');
   });
 });

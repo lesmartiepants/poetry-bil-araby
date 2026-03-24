@@ -10,7 +10,8 @@ import {
 /**
  * ShareCardModal — Displays a beautiful share-card preview of the current poem
  * with 5 selectable design variants.  Users can download the card as PNG or
- * share it via the Web Share API.
+ * share it via the Web Share API. The preview is rendered at full resolution
+ * as an <img> (via canvas.toDataURL) so mobile users can long-press to save.
  *
  * UI primary language: English (per brand direction).
  *
@@ -18,10 +19,10 @@ import {
  */
 export default function ShareCardModal({ poem, onClose }) {
   const [selectedDesign, setSelectedDesign] = useState('diwan');
+  const [previewDataUrl, setPreviewDataUrl] = useState(null);
   const canvasRef = useRef(null);
-  const previewCanvasRef = useRef(null);
 
-  // ── Render card onto hidden full-size canvas, then scale into preview ──
+  // ── Render card onto hidden full-size canvas, then produce data URL ──
   const redraw = useCallback(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -30,18 +31,7 @@ export default function ShareCardModal({ poem, onClose }) {
     const ctx = canvas.getContext('2d');
     if (!ctx) return; // No canvas support (e.g. test environment)
     renderShareCard(ctx, CARD_WIDTH, CARD_HEIGHT, poem, selectedDesign);
-
-    // Scale into the visible preview canvas (exact pixel match)
-    const preview = previewCanvasRef.current;
-    if (!preview) return;
-    const pCtx = preview.getContext('2d');
-    if (!pCtx) return;
-    const ratio = Math.min(preview.width / CARD_WIDTH, preview.height / CARD_HEIGHT);
-    pCtx.clearRect(0, 0, preview.width, preview.height);
-    pCtx.save();
-    pCtx.scale(ratio, ratio);
-    pCtx.drawImage(canvas, 0, 0);
-    pCtx.restore();
+    setPreviewDataUrl(canvas.toDataURL('image/png'));
   }, [poem, selectedDesign]);
 
   useEffect(() => {
@@ -117,18 +107,17 @@ export default function ShareCardModal({ poem, onClose }) {
           <X size={18} />
         </button>
 
-        {/* Card preview area — canvas-rendered (exact match to download) */}
+        {/* Card preview area — full-res img for long-press save on mobile */}
         <div className="flex items-center justify-center p-6 pb-2">
           <div
             className="w-full max-w-[340px] rounded-xl overflow-hidden shadow-lg"
             style={{ aspectRatio: `${CARD_WIDTH} / ${CARD_HEIGHT}` }}
           >
-            <canvas
-              ref={previewCanvasRef}
-              width={340}
-              height={Math.round(340 * (CARD_HEIGHT / CARD_WIDTH))}
-              className="w-full h-full"
-              aria-label="Share card preview"
+            <img
+              src={previewDataUrl || ''}
+              alt="Share card preview"
+              className="w-full h-full object-contain"
+              draggable="true"
             />
           </div>
         </div>

@@ -108,12 +108,17 @@ test.describe('User Flows', () => {
     // Capture the poet name before discover
     const poetBefore = await page.locator('[dir="rtl"]').first().textContent();
 
+    // Open the DiscoverDrawer, then click Surprise Me to fetch a new poem
+    const openDrawerButton = page.locator('button[aria-label="Open discover"]');
+    await expect(openDrawerButton).toBeEnabled({ timeout: 10000 });
+    await openDrawerButton.click();
+
     const discoverButton = page.locator('button[aria-label="Discover new poem"]');
-    await expect(discoverButton).toBeEnabled({ timeout: 10000 });
+    await expect(discoverButton).toBeVisible({ timeout: 3000 });
     await discoverButton.click();
 
     // After click, the mock route serves a different poem
-    await expect(discoverButton).toBeEnabled({ timeout: 10000 });
+    await expect(openDrawerButton).toBeEnabled({ timeout: 10000 });
     // Verify that either poet from our mock data is displayed
     const darwishVisible = await page
       .locator('text=محمود درويش')
@@ -235,22 +240,22 @@ test.describe('User Flows', () => {
 
   // #6 — Filter poems by poet
   test('user filters poems by poet', async ({ page }) => {
-    // Open poet picker from bottom control bar
-    const poetBtn = page.locator('button[aria-label="Filter by poet"]').first();
-    await expect(poetBtn).toBeVisible({ timeout: 5000 });
-    await poetBtn.click();
+    // Open the DiscoverDrawer from the control bar
+    const openDrawerBtn = page.locator('button[aria-label="Open discover"]').first();
+    await expect(openDrawerBtn).toBeVisible({ timeout: 5000 });
+    await openDrawerBtn.click();
 
-    // Wait for dropdown to render with poet options
-    const dropdownBtn = page.locator('button:has-text("المتنبي")').first();
+    // Wait for drawer to render with poet options
+    const dropdownBtn = page.locator('[data-testid="poet-picker-button"]:has-text("المتنبي")').first();
     await expect(dropdownBtn).toBeVisible({ timeout: 3000 });
 
-    // Wait for dropdown slide-in animation to finish
+    // Wait for drawer slide-in animation to finish
     await page.waitForTimeout(400);
 
     // Dispatch a real click event via JS to trigger React handler
     await dropdownBtn.dispatchEvent('click');
 
-    // After selection, the dropdown should close (poet picker closes on select)
+    // After selection, the drawer should close
     await expect(dropdownBtn).toBeHidden({ timeout: 3000 });
   });
 
@@ -279,14 +284,10 @@ test.describe('User Flows', () => {
 
   // #8 — DB/AI mode toggle removed (DB mode is now the permanent default)
 
-  // #9 — Navigate to design review
+  // #9 — Navigate to design review (accessible via direct URL even when icon is hidden)
   test('user navigates to design review', async ({ page }) => {
-    // The app has a single fixed-position design-review link (bottom-left utility button).
-    const link = page.locator('a[href="/design-review"]').first();
-    await expect(link).toBeVisible({ timeout: 5000 });
-
-    // The link href is "/design-review" but Vite serves the static page at "/design-review/"
-    // (with trailing slash). Navigate directly to avoid SPA fallback on the non-slash URL.
+    // The design review link icon is gated by FEATURES.designReview (default false).
+    // The page is still accessible via direct URL navigation.
     await page.goto('/design-review/');
     await page.waitForLoadState('domcontentloaded');
     await expect(page).toHaveURL(/\/design-review/);
@@ -360,11 +361,15 @@ test.describe('User Flows', () => {
     await expect(saveBtn).toBeVisible({ timeout: 5000 });
     await expect(flagBtn).toBeVisible({ timeout: 5000 });
 
-    // Discover a new poem
+    // Discover a new poem — open drawer then click Surprise Me
+    const openDrawerBtn = page.locator('button[aria-label="Open discover"]');
+    await expect(openDrawerBtn).toBeEnabled({ timeout: 10000 });
+    await openDrawerBtn.click();
+
     const discoverBtn = page.locator('button[aria-label="Discover new poem"]');
-    await expect(discoverBtn).toBeEnabled({ timeout: 10000 });
+    await expect(discoverBtn).toBeVisible({ timeout: 3000 });
     await discoverBtn.click();
-    await expect(discoverBtn).toBeEnabled({ timeout: 10000 });
+    await expect(openDrawerBtn).toBeEnabled({ timeout: 10000 });
 
     // Save and Flag should still be visible after poem change
     await expect(saveBtn).toBeVisible();

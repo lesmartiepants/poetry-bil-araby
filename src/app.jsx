@@ -7,7 +7,6 @@ import {
   Volume2,
   ChevronDown,
   Loader2,
-  Sparkles,
   Feather,
   Lightbulb,
   Paintbrush,
@@ -23,7 +22,14 @@ import {
   useDownvotes,
   usePoemEvents,
 } from './hooks/useAuth';
-import { INSIGHTS_SYSTEM_PROMPT, DISCOVERY_SYSTEM_PROMPT, getTTSContent } from './prompts';
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
+import { useVolumeDetection, PulseGlowBars } from './hooks/useVolumeDetection.jsx';
+import {
+  INSIGHTS_SYSTEM_PROMPT,
+  RATCHET_SYSTEM_PROMPT,
+  DISCOVERY_SYSTEM_PROMPT,
+  getTTSContent,
+} from './prompts';
 import { parseInsight } from './utils/insightParser';
 import { repairAndParseJSON } from './utils/jsonRepair';
 import { FEATURES, DESIGN, BRAND, THEME, GOLD, CATEGORIES, FONTS } from './constants/index.js';
@@ -35,7 +41,6 @@ import { fetchPoem as fetchPoemAction } from './stores/actions/fetchPoem';
 import { togglePlay as togglePlayAction } from './stores/actions/togglePlay';
 import { analyzePoem as analyzePoemAction } from './stores/actions/analyzePoem';
 import { getRecentSeenIds, markPoemSeen, pruneSeenPoems } from './utils/seenPoems.js';
-import { transliterate } from './utils/transliterate.js';
 import { filterPoemsByCategory } from './utils/filterPoems.js';
 import { pcm16ToWav } from './utils/audio.js';
 import {
@@ -49,13 +54,15 @@ import { CACHE_CONFIG, cacheOperations } from './services/cache.js';
 import { prefetchManager } from './services/prefetch.js';
 import {
   fetchPoemById,
-  fetchRandomPoem,
   fetchPoets,
+  fetchRandomPoem,
   saveTranslation,
   pingHealth,
 } from './services/database.js';
+import './styles/app.css';
 import { updateOGMetaTags } from './utils/ogMetaTags.js';
 import DebugPanel from './components/DebugPanel.jsx';
+import DesktopInsightPane from './components/DesktopInsightPane.jsx';
 import MysticalConsultationEffect from './components/MysticalConsultationEffect.jsx';
 import ErrorBanner from './components/ErrorBanner.jsx';
 import ShortcutHelp from './components/ShortcutHelp.jsx';
@@ -105,6 +112,7 @@ export default function DiwanApp() {
   const headerOpacity = useUIStore((s) => s.headerOpacity);
   const setHeaderOpacity = useUIStore((s) => s.setHeaderOpacity);
   const [fireTapped, setFireTapped] = useState(false);
+  const [ratchetToast, setRatchetToast] = useState(null);
 
   // ── Poem store (Zustand) ──
   const poems = usePoemStore((s) => s.poems);
@@ -136,6 +144,7 @@ export default function DiwanApp() {
   const setDarkMode = useUIStore((s) => s.setDarkMode);
   const currentFont = useUIStore((s) => s.font);
   const setCurrentFont = useUIStore((s) => s.setFont);
+  const ratchetMode = useUIStore((s) => s.ratchetMode);
   // ── Audio store (Zustand) ──
   const isPlaying = useAudioStore((s) => s.isPlaying);
   const setIsPlaying = useAudioStore((s) => s.setPlaying);
@@ -146,6 +155,7 @@ export default function DiwanApp() {
   const audioError = useAudioStore((s) => s.error);
   const setAudioError = useAudioStore((s) => s.setError);
   const hasAutoLoaded = useRef(false);
+  const longPressTimer = useRef(null);
   const logs = useUIStore((s) => s.logs);
   const showDebugLogs = useUIStore((s) => s.showDebugLogs);
   const showCopySuccess = useModalStore((s) => s.copyToast);
@@ -345,15 +355,27 @@ export default function DiwanApp() {
     } catch {}
   }, [user]);
 
-  // Auto-trigger explanation after auto-loaded poem arrives (skip if cached translation exists)
+  // Auto-trigger explanation after auto-loaded poem arrives.
+  // In ratchet mode, also run for poems that have a cached translation (overrides scholarly cache).
   useEffect(() => {
     if (autoExplainPending && current?.id && !isFetching && !isInterpreting && !interpretation) {
       setAutoExplainPending(false);
-      if (!current?.cachedTranslation) {
+      if (ratchetMode || !current?.cachedTranslation) {
         handleAnalyze();
       }
     }
-  }, [autoExplainPending, current?.id, isFetching, isInterpreting, interpretation]);
+  }, [autoExplainPending, current?.id, isFetching, isInterpreting, interpretation, ratchetMode]);
+
+  // When ratchet mode is toggled, clear the current interpretation so the new prompt is used.
+  // When enabling ratchet mode, also queue an auto-explain so insights regenerate immediately.
+  // setInterpretation and setAutoExplainPending are stable Zustand actions, intentionally omitted.
+  useEffect(() => {
+    setInterpretation(null);
+    if (ratchetMode && current?.id) {
+      setAutoExplainPending(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- Zustand actions and current?.id are stable refs
+  }, [ratchetMode]);
 
   // Load user settings on mount
   useEffect(() => {
@@ -386,46 +408,25 @@ export default function DiwanApp() {
     return () => clearTimeout(timeoutId);
   }, [darkMode, currentFont, user]);
 
-  // Keyboard shortcuts
+  // Easter egg: type "yalla" anywhere (desktop) to toggle Ratchet Mode
   useEffect(() => {
-    const handleKeyDown = (e) => {
-      const tag = document.activeElement?.tagName;
-      if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
-
-      switch (e.key) {
-        case ' ':
-          e.preventDefault();
-          togglePlay();
-          break;
-        case 'ArrowRight':
-          handleFetch();
-          break;
-        case 'e':
-        case 'E':
-          if (!isInterpreting && !interpretation) handleAnalyze();
-          break;
-        case 't':
-        case 'T':
-          useUIStore.getState().toggleTranslation();
-          break;
-        case 'r':
-        case 'R':
-          useUIStore.getState().toggleTransliteration();
-          break;
-        case 'Escape':
-          setShowAuthModal(false);
-          setShowSavedPoems(false);
-          useModalStore.getState().closeShortcutHelp();
-          break;
-        case '?':
-          useModalStore.getState().toggleShortcutHelp();
-          break;
+    const SECRET = 'yalla';
+    let buffer = '';
+    const handleKey = (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      buffer = (buffer + e.key).slice(-SECRET.length);
+      if (buffer === SECRET) {
+        const willEnable = !useUIStore.getState().ratchetMode;
+        useUIStore.getState().toggleRatchetMode();
+        setRatchetToast(willEnable ? 'on' : 'off');
+        setTimeout(() => setRatchetToast(null), 2500);
+        buffer = '';
       }
     };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, []);
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isInterpreting, interpretation]);
 
   // headerProgress: 0 = full size center, 1 = compact right corner
   // Slower ramp: full transition over 200px of scroll instead of 60
@@ -461,7 +462,9 @@ export default function DiwanApp() {
   const cachedAuthorBio = current?.cachedAuthorBio;
 
   const insightParts = useMemo(() => {
-    if (cachedTranslation) {
+    // In ratchet mode, always use the AI-generated interpretation so cached scholarly
+    // translations don't override the Gen Z ratchet content.
+    if (!ratchetMode && cachedTranslation) {
       return {
         poeticTranslation: cachedTranslation,
         depth: cachedExplanation || '',
@@ -469,7 +472,7 @@ export default function DiwanApp() {
       };
     }
     return parseInsight(interpretation);
-  }, [interpretation, cachedTranslation, cachedExplanation, cachedAuthorBio]);
+  }, [interpretation, cachedTranslation, cachedExplanation, cachedAuthorBio, ratchetMode]);
 
   const versePairs = useMemo(() => {
     const arLines = (current?.arabic || '').split('\n').filter((l) => l.trim());
@@ -493,125 +496,34 @@ export default function DiwanApp() {
   }, []);
 
   // Volume detection for pulse & glow effect
-  useEffect(() => {
-    if (isPlaying && audioRef.current) {
-      try {
-        // Initialize AudioContext and source node if not already created.
-        // A MediaElement can only be connected to one MediaElementSourceNode ever,
-        // so we must reuse the source node across play/pause cycles.
-        if (!audioContextRef.current) {
-          const AudioCtx = window.AudioContext || window.webkitAudioContext;
-          const audioContext = new AudioCtx();
-          const analyser = audioContext.createAnalyser();
-
-          analyser.fftSize = 32;
-          const bufferLength = analyser.frequencyBinCount;
-          const dataArray = new Uint8Array(bufferLength);
-
-          // Reuse existing source node or create a new one
-          const source =
-            sourceNodeRef.current || audioContext.createMediaElementSource(audioRef.current);
-          sourceNodeRef.current = source;
-
-          source.connect(analyser);
-          analyser.connect(audioContext.destination);
-
-          audioContextRef.current = audioContext;
-          analyserRef.current = analyser;
-          dataArrayRef.current = dataArray;
-
-          if (FEATURES.logging) {
-            addLog('Audio Context', 'Initialized volume detection for glow effect', 'info');
-          }
-        }
-
-        // Resume context if it was suspended (e.g., by browser autoplay policy)
-        if (audioContextRef.current.state === 'suspended') {
-          audioContextRef.current.resume();
-        }
-
-        const detectVolume = () => {
-          if (!analyserRef.current || !dataArrayRef.current) return;
-
-          analyserRef.current.getByteFrequencyData(dataArrayRef.current);
-
-          let sum = 0;
-          for (let i = 0; i < dataArrayRef.current.length; i++) {
-            sum += dataArrayRef.current[i];
-          }
-          const average = sum / dataArrayRef.current.length;
-          const normalizedVolume = average / 255;
-
-          if (normalizedVolume > 0.7 && volumePulseRef.current) {
-            volumePulseRef.current.classList.add('volume-pulse-active');
-            setTimeout(() => {
-              if (volumePulseRef.current) {
-                volumePulseRef.current.classList.remove('volume-pulse-active');
-              }
-            }, 150);
-          }
-
-          animationFrameRef.current = requestAnimationFrame(detectVolume);
-        };
-
-        detectVolume();
-      } catch (error) {
-        // Gracefully degrade to CSS-only animation
-        if (FEATURES.logging) {
-          console.error('Failed to initialize Web Audio API:', error);
-        }
-      }
-    }
-
-    return () => {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-      }
-    };
-  }, [isPlaying]);
-
-  const PulseGlowBars = () => (
-    <div ref={volumePulseRef} className="flex items-center justify-center gap-[3px] h-6">
-      <div
-        className="w-[3px] rounded-[2px] bar-with-glow"
-        style={{ background: GOLD.gold, animation: 'wave-organic-1 0.9s ease-in-out infinite' }}
-      />
-      <div
-        className="w-[3px] rounded-[2px] bar-with-glow"
-        style={{
-          background: GOLD.gold,
-          animation: 'wave-organic-2 1.15s ease-in-out infinite 0.1s',
-        }}
-      />
-      <div
-        className="w-[3px] rounded-[2px] bar-with-glow"
-        style={{
-          background: GOLD.gold,
-          animation: 'wave-organic-3 0.95s ease-in-out infinite 0.2s',
-        }}
-      />
-      <div
-        className="w-[3px] rounded-[2px] bar-with-glow"
-        style={{
-          background: GOLD.gold,
-          animation: 'wave-organic-4 1.1s ease-in-out infinite 0.15s',
-        }}
-      />
-      <div
-        className="w-[3px] rounded-[2px] bar-with-glow"
-        style={{
-          background: GOLD.gold,
-          animation: 'wave-organic-5 0.88s ease-in-out infinite 0.05s',
-        }}
-      />
-    </div>
-  );
+  useVolumeDetection({
+    isPlaying,
+    audioRef,
+    audioContextRef,
+    analyserRef,
+    dataArrayRef,
+    animationFrameRef,
+    sourceNodeRef,
+    volumePulseRef,
+    addLog,
+  });
 
   const togglePlay = () => togglePlayAction({ audioRef, isTogglingPlay, current, addLog, track });
 
   const handleAnalyze = () => analyzePoemAction({ current, addLog, track });
 
   const handleFetch = () => fetchPoemAction({ addLog, track, emitEvent, navigate, markPoemSeen });
+
+  // Keyboard shortcuts
+  useKeyboardShortcuts({
+    togglePlay,
+    handleFetch,
+    handleAnalyze,
+    isInterpreting,
+    interpretation,
+    setShowAuthModal,
+    setShowSavedPoems,
+  });
 
   // Pre-fetch a poem in the background for the next visit (stored in localStorage with TTL)
   async function prefetchNextVisitPoem() {
@@ -978,168 +890,52 @@ export default function DiwanApp() {
       className={`h-[100dvh] w-full flex flex-col overflow-hidden overscroll-none ${DESIGN.anim} font-sans ${theme.bg} ${theme.text} selection:bg-indigo-500`}
       style={{ touchAction: 'pan-y', overflowX: 'hidden' }}
     >
-      <style>{`
-        .arabic-shadow { text-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(79, 70, 229, 0.2); border-radius: 10px; }
-        .bg-radial-gradient { background: radial-gradient(circle, var(--tw-gradient-from) 0%, var(--tw-gradient-via) 50%, var(--tw-gradient-to) 100%); }
-
-        .safe-bottom { padding-bottom: max(1.5rem, env(safe-area-inset-bottom)); }
-
-        .font-amiri { font-family: 'Amiri', serif; }
-        .font-alexandria { font-family: 'Alexandria', sans-serif; }
-        .font-messiri { font-family: 'El Messiri', sans-serif; }
-        .font-lalezar { font-family: 'Lalezar', cursive; }
-        .font-rakkas { font-family: 'Rakkas', cursive; }
-        .font-fustat { font-family: 'Fustat', serif; }
-        .font-kufam { font-family: 'Kufam', sans-serif; }
-        .font-katibeh { font-family: 'Katibeh', cursive; }
-
-        .header-luminescence {
-          text-shadow: 0 0 30px rgba(197, 160, 89, 0.3);
-        }
-
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-
-        .minimal-frame {
-          position: relative;
-          width: 100%;
-          max-width: 550px;
-          margin: 0 auto 16px;
-          padding: 16px 24px;
-        }
-
-        .minimal-frame svg {
-          position: absolute;
-          top: 0;
-          left: 0;
-          right: 0;
-          bottom: 0;
-          width: 100%;
-          height: 100%;
-        }
-
-        @media (min-width: 768px) {
-          .minimal-frame {
-            padding: 28px 40px;
-          }
-        }
-
-        .frame-line {
-          fill: none;
-          stroke: ${GOLD.gold};
-          stroke-width: 2;
-          opacity: 0.28;
-          stroke-linecap: square;
-        }
-
-        @keyframes bounce {
-          0%, 100% { transform: translateY(0); }
-          50% { transform: translateY(-3px); }
-        }
-
-        @keyframes discoverShuffle {
-          0% { transform: rotate(0deg); }
-          25% { transform: rotate(-15deg); }
-          75% { transform: rotate(15deg); }
-          100% { transform: rotate(0deg); }
-        }
-        .discover-btn:hover .discover-icon {
-          animation: discoverShuffle 0.5s ease-in-out;
-        }
-
-        @keyframes insightsDrawerIn {
-          from { transform: translateY(100%); }
-          to   { transform: translateY(0); }
-        }
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to   { opacity: 1; }
-        }
-
-        @keyframes poetPickerIn {
-          0%   { opacity: 0; transform: translate(-50%, 16px) scale(0.9); }
-          60%  { opacity: 1; transform: translate(-50%, -4px) scale(1.02); }
-          100% { opacity: 1; transform: translate(-50%, 0) scale(1); }
-        }
-        @keyframes poetPickerOut {
-          0%   { opacity: 1; transform: translate(-50%, 0) scale(1); }
-          40%  { opacity: 0.8; transform: translate(-50%, -3px) scale(1.01); }
-          100% { opacity: 0; transform: translate(-50%, 20px) scale(0.9); }
-        }
-
-        @keyframes wave {
-          0%, 100% { transform: scaleY(0.3); }
-          50% { transform: scaleY(1); }
-        }
-
-        @keyframes shimmer {
-          0%, 100% { opacity: 0.6; }
-          50% { opacity: 1; }
-        }
-
-        @keyframes wave-organic-1 {
-          0% { height: 10px; }
-          25% { height: 18px; }
-          50% { height: 24px; }
-          75% { height: 14px; }
-          100% { height: 10px; }
-        }
-
-        @keyframes wave-organic-2 {
-          0% { height: 12px; }
-          30% { height: 20px; }
-          60% { height: 22px; }
-          80% { height: 16px; }
-          100% { height: 12px; }
-        }
-
-        @keyframes wave-organic-3 {
-          0% { height: 14px; }
-          20% { height: 24px; }
-          55% { height: 18px; }
-          85% { height: 20px; }
-          100% { height: 14px; }
-        }
-
-        @keyframes wave-organic-4 {
-          0% { height: 11px; }
-          35% { height: 19px; }
-          65% { height: 23px; }
-          90% { height: 15px; }
-          100% { height: 11px; }
-        }
-
-        @keyframes wave-organic-5 {
-          0% { height: 10px; }
-          28% { height: 17px; }
-          58% { height: 21px; }
-          88% { height: 13px; }
-          100% { height: 10px; }
-        }
-
-        .volume-pulse-active .bar-with-glow {
-          box-shadow: 0 0 8px rgba(197, 160, 89, 0.6),
-                      0 0 4px rgba(197, 160, 89, 0.4);
-        }
-
-        .bar-with-glow {
-          transition: box-shadow 0.15s ease;
-        }
-
-        @keyframes fireTapFlash {
-          0%   { background: rgba(255,140,30,0);    transform: scale(1); }
-          20%  { background: rgba(255,140,30,0.22); transform: scale(1.1); }
-          100% { background: rgba(255,140,30,0);    transform: scale(1); }
-        }
-        .fire-tap { animation: fireTapFlash 0.42s ease-out forwards; }
-
-      `}</style>
 
       <DebugPanel controlBarRef={controlBarRef} />
+
+      {/* Ratchet Mode glow overlay — full-screen Easter egg effect */}
+      {ratchetMode && (
+        <div
+          data-testid="ratchet-glow"
+          aria-hidden="true"
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 39,
+            pointerEvents: 'none',
+            background:
+              'radial-gradient(ellipse at center, rgba(255,80,0,0.22) 0%, rgba(255,40,0,0.08) 60%, transparent 100%)',
+            animation: 'ratchetGlow 2s ease-in-out infinite',
+          }}
+        />
+      )}
+
+      {/* Ratchet Mode activation toast */}
+      {ratchetToast && (
+        <div
+          style={{
+            position: 'fixed',
+            bottom: '5rem',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            zIndex: 9999,
+            padding: '0.5rem 1.25rem',
+            borderRadius: '999px',
+            background:
+              ratchetToast === 'on'
+                ? 'linear-gradient(135deg, #ff5000, #ff9000)'
+                : 'rgba(60,60,70,0.92)',
+            color: '#fff',
+            fontSize: '0.875rem',
+            fontWeight: 600,
+            boxShadow: '0 4px 24px rgba(0,0,0,0.4)',
+            animation: 'ratchetToastIn 0.4s ease-out',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {ratchetToast === 'on' ? '🔥 Ratchet Mode activated fr fr' : 'Back to scholarly mode'}
+        </div>
+      )}
 
       <header
         style={{
@@ -1503,7 +1299,7 @@ export default function DiwanApp() {
                         <Volume2 className={theme.error} size={21} />
                       ) : isPlaying ? (
                         <>
-                          <PulseGlowBars />
+                          <PulseGlowBars volumePulseRef={volumePulseRef} />
                           <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-30 transition-opacity duration-200 pointer-events-none">
                             <Pause fill={GOLD.gold} size={14} />
                           </div>
@@ -1527,6 +1323,27 @@ export default function DiwanApp() {
                     setFireTapped(true);
                     setTimeout(() => setFireTapped(false), 400);
                     setDiscoverDrawerOpen(true);
+                  }}
+                  onTouchStart={() => {
+                    longPressTimer.current = setTimeout(() => {
+                      const willEnable = !useUIStore.getState().ratchetMode;
+                      useUIStore.getState().toggleRatchetMode();
+                      setRatchetToast(willEnable ? 'on' : 'off');
+                      setTimeout(() => setRatchetToast(null), 2500);
+                      longPressTimer.current = null;
+                    }, 2000);
+                  }}
+                  onTouchEnd={() => {
+                    if (longPressTimer.current) {
+                      clearTimeout(longPressTimer.current);
+                      longPressTimer.current = null;
+                    }
+                  }}
+                  onTouchMove={() => {
+                    if (longPressTimer.current) {
+                      clearTimeout(longPressTimer.current);
+                      longPressTimer.current = null;
+                    }
                   }}
                   disabled={isFetching}
                   aria-label="Open discover"
@@ -1604,84 +1421,17 @@ export default function DiwanApp() {
           </footer>
         </div>
 
-        <div className="hidden md:block h-full border-l">
-          <div
-            className={`${DESIGN.paneWidth} h-full flex flex-col z-30 ${DESIGN.anim} ${theme.glass} ${theme.border}`}
-          >
-            <div className="p-6 pb-4 border-b border-stone-500/10">
-              <div className="flex items-center justify-between">
-                <h3 className="font-brand-en italic font-semibold text-[clamp(1rem,1.8vw,1.125rem)] text-indigo-600 tracking-tight">
-                  Poetic Insight
-                </h3>
-                {selectedCategory !== 'All' && (
-                  <span
-                    key={selectedCategory}
-                    className="font-amiri text-[11px] px-2.5 py-0.5 rounded-full border border-gold/25 text-gold/80 bg-gold/5"
-                    style={{ animation: 'fadeIn 0.3s ease-out' }}
-                  >
-                    {CATEGORIES.find((c) => c.id === selectedCategory)?.labelAr}
-                  </span>
-                )}
-              </div>
-              <p className="text-[10px] opacity-30 uppercase font-brand-en truncate mt-1">
-                {current?.poet} • {current?.title}
-              </p>
-            </div>
-            <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-              {isInterpreting ? (
-                <div className="h-full flex flex-col items-center justify-center gap-4 opacity-30 animate-pulse">
-                  <Sparkles className="animate-spin text-indigo-500" size={32} />
-                  <p className="font-brand-en italic text-[clamp(0.875rem,1.5vw,1rem)]">
-                    Consulting Diwan...
-                  </p>
-                </div>
-              ) : (
-                <div className={DESIGN.paneSpacing}>
-                  {!interpretation && (
-                    <button
-                      onClick={handleAnalyze}
-                      className={`group relative w-full py-4 border ${theme.brandBorder} ${theme.brand} rounded-full font-brand-en tracking-widest text-[10px] uppercase hover:bg-indigo-500/5 transition-all flex items-center justify-center gap-3 overflow-hidden bg-indigo-500/5`}
-                    >
-                      <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-indigo-500/10 to-transparent animate-[spin_8s_linear_infinite]" />
-                      <Sparkles size={12} /> Seek Insight
-                    </button>
-                  )}
-                  {showTranslation && (
-                    <p
-                      className={`font-brand-en italic whitespace-pre-wrap ${DESIGN.paneVerseSize} ${darkMode ? 'text-stone-100' : 'text-stone-800'}`}
-                    >
-                      {insightParts?.poeticTranslation || current?.english}
-                    </p>
-                  )}
-                  {insightParts?.depth && (
-                    <div className="pt-6 border-t border-indigo-500/10">
-                      <h4 className="text-[10px] font-brand-en font-black text-indigo-600 mb-2 uppercase tracking-widest opacity-80">
-                        The Depth
-                      </h4>
-                      <div className="pl-4 border-l border-indigo-500/10">
-                        <p className="text-[clamp(0.875rem,1.5vw,1rem)] font-brand-en font-normal opacity-80 leading-relaxed">
-                          {insightParts.depth}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                  {insightParts?.author && (
-                    <div className="pt-6 border-t border-indigo-500/10">
-                      <h4 className="text-[10px] font-brand-en font-black text-indigo-600 mb-2 uppercase tracking-widest opacity-80">
-                        The Author
-                      </h4>
-                      <div className="pl-4 border-l border-indigo-500/10">
-                        <p className="text-[clamp(0.875rem,1.5vw,1rem)] font-brand-en font-normal opacity-80 leading-relaxed">
-                          {insightParts.author}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
+        <DesktopInsightPane
+          current={current}
+          insightParts={insightParts}
+          isInterpreting={isInterpreting}
+          interpretation={interpretation}
+          showTranslation={showTranslation}
+          darkMode={darkMode}
+          theme={theme}
+          selectedCategory={selectedCategory}
+          handleAnalyze={handleAnalyze}
+        />
       </div>
 
       {/* Insights Drawer (Mobile bottom sheet) */}

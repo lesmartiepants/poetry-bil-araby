@@ -240,22 +240,22 @@ test.describe('User Flows', () => {
 
   // #6 — Filter poems by poet
   test('user filters poems by poet', async ({ page }) => {
-    // Open poet picker from bottom control bar
-    const poetBtn = page.locator('button[aria-label="Filter by poet"]').first();
-    await expect(poetBtn).toBeVisible({ timeout: 5000 });
-    await poetBtn.click();
+    // Open the DiscoverDrawer from the control bar
+    const openDrawerBtn = page.locator('button[aria-label="Open discover"]').first();
+    await expect(openDrawerBtn).toBeVisible({ timeout: 5000 });
+    await openDrawerBtn.click();
 
-    // Wait for dropdown to render with poet options
-    const dropdownBtn = page.locator('button:has-text("المتنبي")').first();
+    // Wait for drawer to render with poet options
+    const dropdownBtn = page.locator('[data-testid="poet-picker-button"]:has-text("المتنبي")').first();
     await expect(dropdownBtn).toBeVisible({ timeout: 3000 });
 
-    // Wait for dropdown slide-in animation to finish
+    // Wait for drawer slide-in animation to finish
     await page.waitForTimeout(400);
 
     // Dispatch a real click event via JS to trigger React handler
     await dropdownBtn.dispatchEvent('click');
 
-    // After selection, the dropdown should close (poet picker closes on select)
+    // After selection, the drawer should close
     await expect(dropdownBtn).toBeHidden({ timeout: 3000 });
   });
 

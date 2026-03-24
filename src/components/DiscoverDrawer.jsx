@@ -331,9 +331,15 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
           </button>
         </div>
 
-        {/* ── Horizontal strip: scrollable poet tiles ── */}
+        {/* ── Single unified scroll container ── */}
+        <div
+          className="flex-1 overflow-y-auto"
+          style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(197,160,89,0.2) transparent' }}
+        >
+
+        {/* ── Horizontal strip: scrollable poet tiles (scrolls away) ── */}
         {!poetSearch && (
-          <div className="pb-3 flex-shrink-0">
+          <div className="pb-3">
             <div
               className="flex gap-2 pl-4 overflow-x-auto"
               style={{
@@ -431,91 +437,97 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
           </div>
         )}
 
-        {/* ── Gold foil Surprise Me button (replaces "more poets" divider) ── */}
-        {!poetSearch && (
-          <div className="px-4 pb-3 flex-shrink-0">
-            <style>{`
-              @keyframes goldFoilSheen {
-                0%, 75%, 100% { background-position: -300% center; }
-                38%, 62% { background-position: 300% center; }
-              }
-            `}</style>
-            <button
-              onClick={() => {
-                onSurpriseMe();
-                onClose();
-              }}
-              disabled={isFetching}
-              aria-label="Discover new poem"
-              className="w-full rounded-2xl py-2.5 px-4 flex items-center justify-center gap-2 transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{
-                background:
-                  'linear-gradient(105deg, #6B4F10 0%, #A07828 12%, #C5A059 24%, #F0CD5A 36%, #FFE882 50%, #F0CD5A 64%, #C5A059 76%, #A07828 88%, #6B4F10 100%)',
-                backgroundSize: '300% 100%',
-                animation: 'goldFoilSheen 6s ease-in-out infinite',
-                boxShadow: '0 2px 14px rgba(197,160,89,0.4), inset 0 1px 0 rgba(255,240,160,0.35)',
-              }}
-            >
-              <span
-                className="font-brand-en font-bold text-[12px] tracking-[0.06em] uppercase"
-                style={{ color: '#1a1208', textShadow: '0 1px 0 rgba(255,240,160,0.4)' }}
-              >
-                Surprise Me
-              </span>
-            </button>
-          </div>
-        )}
-
-        {/* ── Search ── */}
-        <div className="px-4 pb-2 flex-shrink-0">
-          <div className="relative flex items-center">
-            <Search
-              className="absolute left-3"
-              size={13}
-              style={{ color: 'var(--gold)', opacity: 0.4 }}
-            />
-            <input
-              ref={searchRef}
-              type="text"
-              value={poetSearch}
-              onChange={(e) => setPoetSearch(e.target.value)}
-              placeholder="Search poets..."
-              aria-label="Search poets"
-              className="w-full rounded-xl pl-8 pr-16 py-1.5 text-[14px] font-tajawal transition-colors focus:outline-none"
-              style={{
-                background: 'rgba(197,160,89,0.06)',
-                border: '1px solid rgba(197,160,89,0.18)',
-                color: darkMode ? '#d6d3cd' : '#3c3531',
-              }}
-            />
-            {/* Arabic hint — right side, shown only when input is empty */}
-            {!poetSearch && (
-              <span
-                className="absolute right-3 text-[13px] font-tajawal pointer-events-none"
-                dir="rtl"
-                style={{ color: 'var(--gold)', opacity: 0.28 }}
-              >
-                ...ابحث
-              </span>
-            )}
-            {poetSearch && (
+        {/* ── Sticky zone: Surprise Me + Search (stay visible as featured scrolls away) ── */}
+        <div
+          className="sticky top-0 z-10 pb-2"
+          style={{
+            background: darkMode ? 'rgba(18,16,12,0.97)' : 'rgba(253,252,248,0.97)',
+          }}
+        >
+          {/* Gold foil Surprise Me */}
+          {!poetSearch && (
+            <div className="px-4 pt-1 pb-2">
+              <style>{`
+                @keyframes goldFoilSheen {
+                  0%   { background-position: -300% center; }
+                  25%  { background-position:  300% center; }
+                  26%, 100% { background-position: -300% center; }
+                }
+              `}</style>
               <button
-                onClick={() => setPoetSearch('')}
-                className="absolute right-3"
-                aria-label="Clear search"
-                style={{ color: 'var(--gold)', opacity: 0.5 }}
+                onClick={() => {
+                  onSurpriseMe();
+                  onClose();
+                }}
+                disabled={isFetching}
+                aria-label="Discover new poem"
+                className="w-full rounded-2xl py-2.5 px-4 flex items-center justify-center gap-2 transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{
+                  background:
+                    'linear-gradient(105deg, #6B4F10 0%, #A07828 12%, #C5A059 24%, #F0CD5A 36%, #FFE882 50%, #F0CD5A 64%, #C5A059 76%, #A07828 88%, #6B4F10 100%)',
+                  backgroundSize: '300% 100%',
+                  animation: 'goldFoilSheen 10s ease-in-out infinite',
+                  boxShadow: '0 2px 14px rgba(197,160,89,0.4), inset 0 1px 0 rgba(255,240,160,0.35)',
+                }}
               >
-                <X size={12} />
+                <span
+                  className="font-brand-en font-bold text-[12px] tracking-[0.06em] uppercase"
+                  style={{ color: '#1a1208', textShadow: '0 1px 0 rgba(255,240,160,0.4)' }}
+                >
+                  Surprise Me
+                </span>
               </button>
-            )}
+            </div>
+          )}
+
+          {/* ── Search ── */}
+          <div className="px-4 pb-2">
+            <div className="relative flex items-center">
+              <Search
+                className="absolute left-3"
+                size={13}
+                style={{ color: 'var(--gold)', opacity: 0.4 }}
+              />
+              <input
+                ref={searchRef}
+                type="text"
+                value={poetSearch}
+                onChange={(e) => setPoetSearch(e.target.value)}
+                placeholder="Search poets..."
+                aria-label="Search poets"
+                className="w-full rounded-xl pl-8 pr-16 py-1.5 text-[14px] font-tajawal transition-colors focus:outline-none"
+                style={{
+                  background: 'rgba(197,160,89,0.06)',
+                  border: '1px solid rgba(197,160,89,0.18)',
+                  color: darkMode ? '#d6d3cd' : '#3c3531',
+                }}
+              />
+              {/* Arabic hint — right side, shown only when input is empty */}
+              {!poetSearch && (
+                <span
+                  className="absolute right-3 text-[13px] font-tajawal pointer-events-none"
+                  dir="rtl"
+                  style={{ color: 'var(--gold)', opacity: 0.28 }}
+                >
+                  ...ابحث
+                </span>
+              )}
+              {poetSearch && (
+                <button
+                  onClick={() => setPoetSearch('')}
+                  className="absolute right-3"
+                  aria-label="Clear search"
+                  style={{ color: 'var(--gold)', opacity: 0.5 }}
+                >
+                  <X size={12} />
+                </button>
+              )}
+            </div>
           </div>
         </div>
 
         {/* ── Poet list ── */}
-        <div
-          className="flex-1 overflow-y-auto pb-6"
-          style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(197,160,89,0.2) transparent' }}
-        >
+        <div className="pb-6">
           {!poetsFetched && dynamicPoets.length === 0 ? (
             <div className="flex items-center justify-center py-10">
               <Loader2
@@ -671,6 +683,8 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
               </button>
             </div>
           )}
+        </div>
+        {/* ── End unified scroll container ── */}
         </div>
       </motion.div>
     </>

@@ -1508,6 +1508,8 @@ export default function DiwanApp() {
               style={{
                 boxShadow:
                   'inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(0,0,0,0.15), 0 8px 32px rgba(0,0,0,0.4), 0 2px 8px rgba(0,0,0,0.3)',
+                userSelect: 'none',
+                WebkitUserSelect: 'none',
               }}
             >
               <div className="flex flex-col items-center gap-0.5 min-w-[52px]">

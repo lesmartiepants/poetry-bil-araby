@@ -391,17 +391,6 @@ export default function DiwanApp() {
     return () => clearTimeout(timeoutId);
   }, [darkMode, currentFont, user]);
 
-  // Keyboard shortcuts
-  useKeyboardShortcuts({
-    togglePlay,
-    handleFetch,
-    handleAnalyze,
-    isInterpreting,
-    interpretation,
-    setShowAuthModal,
-    setShowSavedPoems,
-  });
-
   // headerProgress: 0 = full size center, 1 = compact right corner
   // Slower ramp: full transition over 200px of scroll instead of 60
   const handleScroll = (e) => {
@@ -468,6 +457,17 @@ export default function DiwanApp() {
   const handleAnalyze = () => analyzePoemAction({ current, addLog, track });
 
   const handleFetch = () => fetchPoemAction({ addLog, track, emitEvent, navigate, markPoemSeen });
+
+  // Keyboard shortcuts
+  useKeyboardShortcuts({
+    togglePlay,
+    handleFetch,
+    handleAnalyze,
+    isInterpreting,
+    interpretation,
+    setShowAuthModal,
+    setShowSavedPoems,
+  });
 
   // Pre-fetch a poem in the background for the next visit (stored in localStorage with TTL)
   async function prefetchNextVisitPoem() {

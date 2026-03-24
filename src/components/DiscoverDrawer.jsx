@@ -450,10 +450,14 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
             <div className="px-4 pt-1 pb-2">
               <style>{`
                 @keyframes goldFoilSheen {
-                  0%   { background-position: -300% center; }
-                  25%  { background-position:  300% center; }
-                  /* 26%: snap reset — both -300% and 300% are off-screen, so this is invisible */
-                  26%, 100% { background-position: -300% center; }
+                  /* rest off-screen left */
+                  0%, 10% { background-position: -200% center; }
+                  /* single sweep across */
+                  35%     { background-position:  200% center; }
+                  /* snap reset (sheen is off-screen at both ends, so invisible) */
+                  36%     { background-position: -200% center; }
+                  /* hold until next cycle */
+                  100%    { background-position: -200% center; }
                 }
               `}</style>
               <button
@@ -463,18 +467,26 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
                 }}
                 disabled={isFetching}
                 aria-label="Discover new poem"
-                className="w-full rounded-2xl py-2.5 px-4 flex items-center justify-center gap-2 transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full rounded-2xl py-3 px-4 flex items-center justify-center gap-2 transition-all duration-200 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{
+                  /* Base is a consistent warm medium-dark gold; narrow highlight band (~20% of gradient)
+                     sweeps once per 10 s. backgroundSize 300% means only 1/3 is visible at any time,
+                     keeping the sheen thin. */
                   background:
-                    'linear-gradient(105deg, #6B4F10 0%, #A07828 12%, #C5A059 24%, #F0CD5A 36%, #FFE882 50%, #F0CD5A 64%, #C5A059 76%, #A07828 88%, #6B4F10 100%)',
+                    'linear-gradient(108deg, #8B6418 0%, #8B6418 38%, #C4982E 45%, #F2D95A 49%, #FFF8CC 51%, #F2D95A 55%, #C4982E 62%, #8B6418 68%, #8B6418 100%)',
                   backgroundSize: '300% 100%',
-                  animation: 'goldFoilSheen 10s ease-in-out infinite',
-                  boxShadow: '0 2px 14px rgba(197,160,89,0.4), inset 0 1px 0 rgba(255,240,160,0.35)',
+                  animation: 'goldFoilSheen 10s linear infinite',
+                  boxShadow: '0 2px 16px rgba(180,140,40,0.35), inset 0 1px 0 rgba(255,248,160,0.2), inset 0 -1px 0 rgba(0,0,0,0.15)',
                 }}
               >
                 <span
-                  className="font-brand-en font-bold text-[12px] tracking-[0.06em] uppercase"
-                  style={{ color: '#1a1208', textShadow: '0 1px 0 rgba(255,240,160,0.4)' }}
+                  className="font-brand-en font-bold text-[13px] uppercase"
+                  style={{
+                    /* Near-black on medium gold: ~4.5:1 contrast at rest; 17:1 at bright sheen */
+                    color: '#1c0e02',
+                    textShadow: '0 1px 2px rgba(255,248,160,0.35)',
+                    letterSpacing: '0.12em',
+                  }}
                 >
                   Surprise Me
                 </span>

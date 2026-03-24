@@ -1696,14 +1696,11 @@ export default function DiwanApp() {
             key="discover-drawer"
             onSurpriseMe={() => {
               setSelectedCategory('All');
-              handleFetch('All');
+              handleFetch();
             }}
             onSelectPoet={(id) => {
-              if (id === selectedCategory && id !== 'All') {
-                handleFetch();
-              } else {
-                setSelectedCategory(id);
-              }
+              setSelectedCategory(id);
+              handleFetch();
             }}
           />
         )}

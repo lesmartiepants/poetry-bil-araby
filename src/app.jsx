@@ -112,7 +112,6 @@ export default function DiwanApp() {
   const headerOpacity = useUIStore((s) => s.headerOpacity);
   const setHeaderOpacity = useUIStore((s) => s.setHeaderOpacity);
   const [fireTapped, setFireTapped] = useState(false);
-  const ratchetMode = useUIStore((s) => s.ratchetMode);
   const [ratchetToast, setRatchetToast] = useState(null);
 
   // ── Poem store (Zustand) ──

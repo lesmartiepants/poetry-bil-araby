@@ -1041,13 +1041,15 @@ export default function DiwanApp() {
                           }}
                         />
                         <div
-                          className="font-brand-en text-center"
+                          className="text-center"
                           dir="ltr"
                           style={{
-                            fontSize: 'clamp(0.72rem, 1.3vw, 0.84rem)',
+                            fontFamily: "'Playfair Display', serif",
+                            fontStyle: 'italic',
+                            fontSize: 'clamp(0.95rem, 1.7vw, 1.1rem)',
                             marginTop: '0.5rem',
-                            color: darkMode ? 'rgba(212,168,75,0.55)' : 'rgba(107,92,62,0.7)',
-                            letterSpacing: '0.04em',
+                            color: darkMode ? 'rgba(212,200,168,0.88)' : 'rgba(107,92,62,0.9)',
+                            letterSpacing: '0.01em',
                           }}
                         >
                           {current?.poet}{current?.poet && current?.title ? ' \u2014 ' : ''}{current?.title}
@@ -1061,7 +1063,7 @@ export default function DiwanApp() {
 
                 <div className={`relative w-full group pt-1 pb-2 ${DESIGN.mainMarginBottom}`}>
                   <div className="px-4 md:px-20 py-2 text-center">
-                    <div className="flex flex-col gap-8 md:gap-12">
+                    <div className="flex flex-col gap-5 md:gap-7">
                       {versePairs.map((pair, idx) => (
                         <div
                           key={`${current?.id}-${idx}`}

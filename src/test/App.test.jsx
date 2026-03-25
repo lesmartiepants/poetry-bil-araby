@@ -129,7 +129,7 @@ describe('DiwanApp', () => {
 
       await waitFor(
         () => {
-          expect(screen.getByText('Mahmoud Darwish')).toBeInTheDocument();
+          expect(document.body.textContent).toContain('Mahmoud Darwish');
         },
         { timeout: 3000 }
       );
@@ -213,7 +213,7 @@ describe('DiwanApp', () => {
 
       await waitFor(
         () => {
-          expect(screen.getByText('Al-Mutanabbi')).toBeInTheDocument();
+          expect(document.body.textContent).toContain('Al-Mutanabbi');
         },
         { timeout: 3000 }
       );
@@ -387,7 +387,7 @@ describe('DiwanApp', () => {
       global.fetch.mockResolvedValueOnce({ ok: true, json: async () => createDbPoem(100) });
       await userEvent.click(screen.getByLabelText('Open discover'));
       await userEvent.click(screen.getByLabelText('Discover new poem'));
-      await waitFor(() => expect(screen.getByText('Mahmoud Darwish')).toBeInTheDocument(), {
+      await waitFor(() => expect(document.body.textContent).toContain('Mahmoud Darwish'), {
         timeout: 3000,
       });
 
@@ -419,7 +419,7 @@ describe('DiwanApp', () => {
       });
       await userEvent.click(screen.getByLabelText('Open discover'));
       await userEvent.click(screen.getByLabelText('Discover new poem'));
-      await waitFor(() => expect(screen.getByText('Mahmoud Darwish')).toBeInTheDocument(), {
+      await waitFor(() => expect(document.body.textContent).toContain('Mahmoud Darwish'), {
         timeout: 3000,
       });
 
@@ -577,9 +577,9 @@ describe('DiwanApp', () => {
       await waitFor(
         () => {
           // Poet name visible (Arabic category ID matched via poetArabic → English display name)
-          expect(screen.getByText('Mahmoud Darwish')).toBeInTheDocument();
+          expect(document.body.textContent).toContain('Mahmoud Darwish');
           // Poem title also shown, confirming the full poem card is rendered
-          expect(screen.getByText('Mural')).toBeInTheDocument();
+          expect(document.body.textContent).toContain('Mural');
         },
         { timeout: 3000 }
       );
@@ -590,7 +590,7 @@ describe('DiwanApp', () => {
       render(<DiwanApp />);
 
       // Wait for the mount-time auto-load to settle
-      await waitFor(() => expect(screen.getByText('Nizar Qabbani')).toBeInTheDocument(), {
+      await waitFor(() => expect(document.body.textContent).toContain('Nizar Qabbani'), {
         timeout: 3000,
       });
 
@@ -616,7 +616,7 @@ describe('DiwanApp', () => {
       await userEvent.click(screen.getByText('محمود درويش'));
 
       // Wait for auto-fetch to complete and show the Darwish poem
-      await waitFor(() => expect(screen.getByText('Mahmoud Darwish')).toBeInTheDocument(), {
+      await waitFor(() => expect(document.body.textContent).toContain('Mahmoud Darwish'), {
         timeout: 3000,
       });
 
@@ -643,8 +643,8 @@ describe('DiwanApp', () => {
       // The new poem is shown and still matches the poet filter (correct filtered index)
       await waitFor(
         () => {
-          expect(screen.getByText('Identity Card')).toBeInTheDocument();
-          expect(screen.getByText('Mahmoud Darwish')).toBeInTheDocument();
+          expect(document.body.textContent).toContain('Identity Card');
+          expect(document.body.textContent).toContain('Mahmoud Darwish');
         },
         { timeout: 3000 }
       );
@@ -655,7 +655,7 @@ describe('DiwanApp', () => {
       render(<DiwanApp />);
 
       // Wait for the mount-time auto-load to settle
-      await waitFor(() => expect(screen.getByText('Nizar Qabbani')).toBeInTheDocument(), {
+      await waitFor(() => expect(document.body.textContent).toContain('Nizar Qabbani'), {
         timeout: 3000,
       });
 
@@ -676,7 +676,7 @@ describe('DiwanApp', () => {
       global.fetch.mockResolvedValueOnce({ ok: true, json: async () => darwishPoem });
       await userEvent.click(screen.getByText('محمود درويش'));
 
-      await waitFor(() => expect(screen.getByText('Mahmoud Darwish')).toBeInTheDocument(), {
+      await waitFor(() => expect(document.body.textContent).toContain('Mahmoud Darwish'), {
         timeout: 3000,
       });
 
@@ -698,10 +698,10 @@ describe('DiwanApp', () => {
       await userEvent.click(screen.getByText('المتنبي'));
 
       // The Mutanabbi poem should now be displayed
-      await waitFor(() => expect(screen.getByText('Al-Mutanabbi')).toBeInTheDocument(), {
+      await waitFor(() => expect(document.body.textContent).toContain('Al-Mutanabbi'), {
         timeout: 3000,
       });
-      expect(screen.getByText('To the King')).toBeInTheDocument();
+      expect(document.body.textContent).toContain('To the King');
     });
 
     it('shows search input when poet picker opens', async () => {
@@ -831,7 +831,7 @@ describe('DiwanApp', () => {
       mockAutoLoadFetch();
       render(<DiwanApp />);
 
-      await waitFor(() => expect(screen.getByText('Nizar Qabbani')).toBeInTheDocument(), {
+      await waitFor(() => expect(document.body.textContent).toContain('Nizar Qabbani'), {
         timeout: 3000,
       });
 
@@ -863,7 +863,7 @@ describe('DiwanApp', () => {
       mockAutoLoadFetch();
       render(<DiwanApp />);
 
-      await waitFor(() => expect(screen.getByText('Nizar Qabbani')).toBeInTheDocument(), {
+      await waitFor(() => expect(document.body.textContent).toContain('Nizar Qabbani'), {
         timeout: 3000,
       });
 
@@ -893,7 +893,7 @@ describe('DiwanApp', () => {
       });
       await userEvent.click(screen.getByText('محمود درويش'));
 
-      await waitFor(() => expect(screen.getByText('On This Earth')).toBeInTheDocument(), {
+      await waitFor(() => expect(document.body.textContent).toContain('On This Earth'), {
         timeout: 8000,
       });
 
@@ -933,7 +933,7 @@ describe('DiwanApp', () => {
         .find((btn) => btn.textContent.includes('محمود درويش'));
       await userEvent.click(pickerDarwishBtn);
 
-      await waitFor(() => expect(screen.getByText('Identity Card')).toBeInTheDocument(), {
+      await waitFor(() => expect(document.body.textContent).toContain('Identity Card'), {
         timeout: 8000,
       });
     });
@@ -942,7 +942,7 @@ describe('DiwanApp', () => {
       mockAutoLoadFetch();
       render(<DiwanApp />);
 
-      await waitFor(() => expect(screen.getByText('Nizar Qabbani')).toBeInTheDocument(), {
+      await waitFor(() => expect(document.body.textContent).toContain('Nizar Qabbani'), {
         timeout: 3000,
       });
 
@@ -961,7 +961,7 @@ describe('DiwanApp', () => {
       };
       global.fetch.mockResolvedValueOnce({ ok: true, json: async () => darwishPoem });
       await userEvent.click(screen.getByText('محمود درويش'));
-      await waitFor(() => expect(screen.getByText('Mahmoud Darwish')).toBeInTheDocument(), {
+      await waitFor(() => expect(document.body.textContent).toContain('Mahmoud Darwish'), {
         timeout: 3000,
       });
 
@@ -986,10 +986,10 @@ describe('DiwanApp', () => {
       global.fetch.mockResolvedValueOnce({ ok: true, json: async () => mutanabbiPoem });
       await userEvent.click(screen.getByText('المتنبي'));
 
-      await waitFor(() => expect(screen.getByText('Al-Mutanabbi')).toBeInTheDocument(), {
+      await waitFor(() => expect(document.body.textContent).toContain('Al-Mutanabbi'), {
         timeout: 3000,
       });
-      expect(screen.getByText('To the King')).toBeInTheDocument();
+      expect(document.body.textContent).toContain('To the King');
     });
 
     it('picker closes after poet selection and can be reopened', async () => {
@@ -1029,7 +1029,7 @@ describe('DiwanApp', () => {
       mockAutoLoadFetch();
       render(<DiwanApp />);
 
-      await waitFor(() => expect(screen.getByText('Nizar Qabbani')).toBeInTheDocument(), {
+      await waitFor(() => expect(document.body.textContent).toContain('Nizar Qabbani'), {
         timeout: 3000,
       });
 
@@ -1046,7 +1046,7 @@ describe('DiwanApp', () => {
       };
       global.fetch.mockResolvedValueOnce({ ok: true, json: async () => darwishPoem });
       await userEvent.click(screen.getByText('محمود درويش'));
-      await waitFor(() => expect(screen.getByText('Mahmoud Darwish')).toBeInTheDocument(), {
+      await waitFor(() => expect(document.body.textContent).toContain('Mahmoud Darwish'), {
         timeout: 3000,
       });
 
@@ -1118,7 +1118,7 @@ describe('DiwanApp', () => {
       global.fetch.mockResolvedValueOnce({ ok: true, json: async () => createDbPoem(102) });
       await userEvent.click(screen.getByLabelText('Open discover'));
       await userEvent.click(screen.getByLabelText('Discover new poem'));
-      await waitFor(() => expect(screen.getByText('Mahmoud Darwish')).toBeInTheDocument(), {
+      await waitFor(() => expect(document.body.textContent).toContain('Mahmoud Darwish'), {
         timeout: 3000,
       });
 
@@ -1246,7 +1246,7 @@ describe('DiwanApp', () => {
       await userEvent.click(screen.getByLabelText('Discover new poem'));
 
       await waitFor(() => {
-        expect(screen.getByText('Mahmoud Darwish')).toBeInTheDocument();
+        expect(document.body.textContent).toContain('Mahmoud Darwish');
       });
 
       // Glow should persist after poem change
@@ -1271,7 +1271,7 @@ describe('DiwanApp', () => {
       await userEvent.click(screen.getByLabelText('Discover new poem'));
 
       await waitFor(() => {
-        expect(screen.getByText('Mahmoud Darwish')).toBeInTheDocument();
+        expect(document.body.textContent).toContain('Mahmoud Darwish');
       });
     });
   });

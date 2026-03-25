@@ -32,7 +32,7 @@ import {
 } from './prompts';
 import { parseInsight } from './utils/insightParser';
 import { repairAndParseJSON } from './utils/jsonRepair';
-import { FEATURES, DESIGN, BRAND, THEME, GOLD, CATEGORIES, FONTS } from './constants/index.js';
+import { FEATURES, DESIGN, BRAND, BRAND_HEADER, THEME, GOLD, CATEGORIES, FONTS } from './constants/index.js';
 import { usePoemStore } from './stores/poemStore';
 import { useAudioStore } from './stores/audioStore';
 import { useUIStore } from './stores/uiStore';
@@ -109,8 +109,7 @@ export default function DiwanApp() {
   const sourceNodeRef = useRef(null);
   const volumePulseRef = useRef(null);
 
-  const headerOpacity = useUIStore((s) => s.headerOpacity);
-  const setHeaderOpacity = useUIStore((s) => s.setHeaderOpacity);
+  // headerOpacity removed — corner wordmark doesn't need scroll-driven animation
   const [fireTapped, setFireTapped] = useState(false);
   const [ratchetToast, setRatchetToast] = useState(null);
 
@@ -428,12 +427,7 @@ export default function DiwanApp() {
   }, []);
 
 
-  // headerProgress: 0 = full size center, 1 = compact right corner
-  // Slower ramp: full transition over 200px of scroll instead of 60
-  const handleScroll = (e) => {
-    const progress = Math.min(1, e.target.scrollTop / 200);
-    setHeaderOpacity(progress);
-  };
+  // Scroll handler — header animation removed (corner wordmark is static)
 
   // Fetch dynamic poet list from API when discover drawer first opens
   useEffect(() => {
@@ -937,60 +931,39 @@ export default function DiwanApp() {
         </div>
       )}
 
+      {/* Corner wordmark — top-right, subtle, non-competing */}
       <header
         style={{
           position: 'fixed',
           top: 0,
-          left: 0,
           right: 0,
           zIndex: 40,
           pointerEvents: 'none',
-          padding: `${0.13 - headerOpacity * 0.13}rem 1rem ${0.2 - headerOpacity * 0.2}rem`,
-          height: headerOpacity > 0 ? `${64 - headerOpacity * 32}px` : 'auto',
-          overflow: headerOpacity > 0 ? 'hidden' : 'visible',
-          display: 'flex',
-          justifyContent: 'center',
-          alignItems: 'center',
-          backgroundColor: darkMode
-            ? `rgba(12,12,14,${0.85 - headerOpacity * 0.45})`
-            : `rgba(253,252,248,${0.85 - headerOpacity * 0.45})`,
-          backdropFilter: `blur(${12 - headerOpacity * 8}px)`,
-          WebkitBackdropFilter: `blur(${12 - headerOpacity * 8}px)`,
-          borderBottom: `1px solid ${darkMode ? `rgba(197,160,89,${0.1 - headerOpacity * 0.1})` : `rgba(107,87,68,${0.1 - headerOpacity * 0.1})`}`,
-          transition:
-            'padding 0.4s ease-out, height 0.4s ease-out, background-color 0.3s, backdrop-filter 0.3s',
+          padding: '0.6rem 0.8rem',
         }}
       >
         <div
-          className="flex flex-row items-center gap-1.5 header-luminescence"
-          style={{
-            transform: `scale(${1 - headerOpacity * 0.5})`,
-            opacity: 1 - headerOpacity * 0.3,
-            transformOrigin: 'center',
-            transition: 'transform 0.4s ease-out, opacity 0.3s',
-          }}
+          className="flex flex-row items-center gap-1"
+          style={{ opacity: BRAND_HEADER.containerOpacity }}
         >
-          <h1 style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', margin: 0 }}>
-            <span
-              style={{
-                ...BRAND.arabic,
-                color: 'var(--gold)',
-                textShadow: '0 0 40px rgba(197,160,89,0.3)',
-              }}
-            >
-              بالعربي
-            </span>
-            <span
-              style={{
-                ...BRAND.english,
-                color: darkMode ? '#D4D0C8' : '#1A1614',
-              }}
-            >
-              poetry
-            </span>
-          </h1>
+          <span
+            style={{
+              ...BRAND_HEADER.english,
+              color: darkMode ? '#D4D0C8' : '#1A1614',
+            }}
+          >
+            poetry
+          </span>
+          <span
+            style={{
+              ...BRAND_HEADER.arabic,
+              color: 'var(--gold)',
+            }}
+          >
+            بالعربي
+          </span>
           <Feather
-            style={{ ...BRAND.feather, color: 'var(--gold)', alignSelf: 'center' }}
+            style={{ ...BRAND_HEADER.feather, color: 'var(--gold)' }}
             strokeWidth={1.5}
           />
         </div>
@@ -1009,148 +982,80 @@ export default function DiwanApp() {
 
           <main
             ref={mainScrollRef}
-            onScroll={handleScroll}
             className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar relative z-10 px-4 md:px-0 pb-28 pt-10 md:pt-12"
             style={{ overscrollBehaviorX: 'none' }}
           >
-            <div
-              className="pointer-events-none sticky top-0 z-30"
-              style={{
-                height: '40px',
-                marginLeft: '-2rem',
-                marginRight: '-2rem',
-                marginBottom: '-40px',
-                opacity: headerOpacity,
-                background: `linear-gradient(to bottom, ${darkMode ? 'rgba(12,12,14,0.6)' : 'rgba(253,252,248,0.6)'} 0%, ${darkMode ? 'rgba(12,12,14,0.3)' : 'rgba(253,252,248,0.3)'} 40%, transparent 100%)`,
-                transition: 'opacity 0.3s ease-out',
-              }}
-            />
+            {/* Top scroll gradient removed — header is now a subtle corner wordmark */}
             <div className="flex flex-col items-center pt-2">
               <div className="w-full max-w-4xl flex flex-col items-center">
+                {/* Poem meta: title (dominant) → poet → English combined → vertical separator */}
                 <div
-                  className={`text-center ${DESIGN.mainMetaPadding} animate-in slide-in-from-bottom-8 duration-1000 z-20 w-full`}
+                  className={`text-center ${DESIGN.mainMetaPadding} poem-meta-fade z-20 w-full`}
                 >
-                  <div className="minimal-frame mb-1">
-                    <svg viewBox="0 0 550 120" preserveAspectRatio="xMidYMid meet">
-                      <line className="frame-line" x1="20" y1="20" x2="70" y2="20" />
-                      <line className="frame-line" x1="20" y1="20" x2="20" y2="70" />
-                      <line className="frame-line" x1="530" y1="20" x2="480" y2="20" />
-                      <line className="frame-line" x1="530" y1="20" x2="530" y2="70" />
-                      <line className="frame-line" x1="20" y1="100" x2="70" y2="100" />
-                      <line className="frame-line" x1="20" y1="100" x2="20" y2="50" />
-                      <line className="frame-line" x1="530" y1="100" x2="480" y2="100" />
-                      <line className="frame-line" x1="530" y1="100" x2="530" y2="50" />
-                      <circle
-                        className="frame-line"
-                        cx="32"
-                        cy="32"
-                        r="2.5"
-                        fill={GOLD.gold}
-                        opacity="0.35"
-                      />
-                      <circle
-                        className="frame-line"
-                        cx="518"
-                        cy="32"
-                        r="2.5"
-                        fill={GOLD.gold}
-                        opacity="0.35"
-                      />
-                      <circle
-                        className="frame-line"
-                        cx="32"
-                        cy="88"
-                        r="2.5"
-                        fill={GOLD.gold}
-                        opacity="0.35"
-                      />
-                      <circle
-                        className="frame-line"
-                        cx="518"
-                        cy="88"
-                        r="2.5"
-                        fill={GOLD.gold}
-                        opacity="0.35"
-                      />
-                    </svg>
-
+                  <div className="flex flex-col items-center justify-center w-full" dir="rtl">
+                    {/* Line 1: Poem name in Arabic — dominant */}
                     <div
-                      className="relative z-10 flex flex-col items-center justify-center w-full"
-                      dir="rtl"
+                      className="font-amiri font-bold text-center"
+                      style={{
+                        fontSize: 'clamp(2rem, 5vw, 3rem)',
+                        color: 'var(--gold)',
+                        lineHeight: 1.3,
+                        letterSpacing: '0.02em',
+                        textShadow: darkMode
+                          ? '0 0 40px rgba(197,160,89,0.25), 0 0 12px rgba(197,160,89,0.1)'
+                          : 'none',
+                      }}
                     >
-                      {/* Poet name — gold foil, editorial hierarchy */}
-                      <div
-                        className="font-amiri font-bold text-center"
-                        style={{
-                          fontSize: 'clamp(1.1rem, 3vw, 1.6rem)',
-                          color: 'var(--gold)',
-                          lineHeight: 1.3,
-                          letterSpacing: '0.02em',
-                          textShadow: darkMode
-                            ? '0 0 40px rgba(197,160,89,0.2), 0 0 12px rgba(197,160,89,0.08)'
-                            : 'none',
-                        }}
-                      >
-                        {current?.poetArabic || current?.poet}
-                      </div>
-                      {current?.poet !== current?.poetArabic && current?.poet && (
-                        <div
-                          className="font-brand-en font-bold text-center"
-                          dir="ltr"
-                          style={{
-                            fontSize: 'clamp(0.85rem, 2vw, 1.1rem)',
-                            color: 'var(--gold)',
-                            opacity: 0.7,
-                            marginTop: '0.15rem',
-                            letterSpacing: '0.04em',
-                          }}
-                        >
-                          {current.poet}
-                        </div>
-                      )}
-                      <div
-                        style={{
-                          width: '40px',
-                          height: '1px',
-                          background: 'var(--gold)',
-                          opacity: 0.35,
-                          margin: '0.5rem auto',
-                        }}
-                      />
-                      {/* Title — italic, editorial */}
-                      <div
-                        className="font-amiri italic text-center"
-                        style={{
-                          fontSize: 'clamp(1.3rem, 3.5vw, 2rem)',
-                          color: darkMode ? '#e8e0d0' : '#3d2800',
-                          lineHeight: 1.4,
-                          textShadow: darkMode ? '0 0 20px rgba(197,160,89,0.1)' : 'none',
-                        }}
-                      >
-                        {current?.titleArabic || current?.title}
-                      </div>
-                      {current?.title !== current?.titleArabic && current?.title && (
-                        <div
-                          className="font-brand-en text-center italic"
-                          dir="ltr"
-                          style={{
-                            fontSize: 'clamp(0.75rem, 1.5vw, 0.9rem)',
-                            color: darkMode ? '#a8a29e' : '#78716c',
-                            marginTop: '0.25rem',
-                          }}
-                        >
-                          {current.title}
-                        </div>
-                      )}
+                      {current?.titleArabic || current?.title}
                     </div>
+                    {/* Line 2: Poet name in Arabic — secondary */}
+                    <div
+                      className="font-amiri text-center"
+                      style={{
+                        fontSize: 'clamp(1.4rem, 3vw, 1.8rem)',
+                        color: darkMode ? '#D4D0C8' : '#6B5C3E',
+                        lineHeight: 1.3,
+                        marginTop: '0.4rem',
+                      }}
+                    >
+                      {current?.poetArabic || current?.poet}
+                    </div>
+                    {/* Line 3: English combined — poet name — poem name */}
+                    {(current?.poet || current?.title) && (
+                      <div
+                        className="font-brand-en text-center italic"
+                        dir="ltr"
+                        style={{
+                          fontSize: 'clamp(0.8rem, 1.5vw, 0.95rem)',
+                          color: darkMode ? '#a8a29e' : '#78716c',
+                          marginTop: '0.6rem',
+                        }}
+                      >
+                        {current?.poet}{current?.poet && current?.title ? ' \u2014 ' : ''}{current?.title}
+                      </div>
+                    )}
+                    {/* Vertical separator between meta and poem body */}
+                    <div
+                      style={{
+                        width: '1px',
+                        height: '40px',
+                        background: 'var(--gold)',
+                        opacity: 0.35,
+                        margin: '1.25rem auto',
+                      }}
+                    />
                   </div>
                 </div>
 
                 <div className={`relative w-full group pt-1 pb-2 ${DESIGN.mainMarginBottom}`}>
                   <div className="px-4 md:px-20 py-2 text-center">
-                    <div className="flex flex-col gap-5 md:gap-7">
+                    <div className="flex flex-col gap-8 md:gap-12">
                       {versePairs.map((pair, idx) => (
-                        <div key={`${current?.id}-${idx}`} className="flex flex-col gap-0.5">
+                        <div
+                          key={`${current?.id}-${idx}`}
+                          className="flex flex-col gap-0.5 verse-fade-up"
+                          style={{ animationDelay: `${idx * 80}ms` }}
+                        >
                           <p
                             dir="rtl"
                             className={`${currentFontClass} leading-[2.2] arabic-shadow ${DESIGN.anim}`}
@@ -1161,7 +1066,7 @@ export default function DiwanApp() {
                           {showTransliteration && pair.ar && (
                             <p
                               dir="ltr"
-                              className={`font-brand-en italic opacity-30 ${DESIGN.anim}`}
+                              className={`font-brand-en italic opacity-50 ${DESIGN.anim}`}
                               style={{
                                 fontSize: `calc(clamp(0.75rem, 1.2vw, 0.875rem) * ${textScale})`,
                               }}
@@ -1172,7 +1077,7 @@ export default function DiwanApp() {
                           {showTranslation && pair.en && (
                             <p
                               dir="ltr"
-                              className={`font-brand-en italic opacity-40 ${DESIGN.anim} mx-auto`}
+                              className={`font-brand-en italic opacity-60 ${DESIGN.anim} mx-auto`}
                               style={{
                                 fontSize: `calc(clamp(1rem, 1.5vw, 1.125rem) * ${textScale})`,
                                 maxWidth: '90%',

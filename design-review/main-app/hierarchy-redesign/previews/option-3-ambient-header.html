@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Option 3: Ambient / Full Immersion — Hierarchy Redesign</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400;1,700&family=Forum&family=Reem+Kufi:wght@400;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --gold: #c9a84c;
+      --bg: #0c0c0e;
+      --text-primary: #e7e5e4;
+      --text-muted: #a8a29e;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text-primary);
+      font-family: 'Forum', serif;
+      overflow-x: hidden;
+    }
+
+    .app-shell {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      position: relative;
+    }
+
+    /* NO top header element — the key differentiator for Option 3 */
+
+    /* ── Main content: full reading focus, starts at top ─────── */
+    .main-scroll {
+      flex: 1;
+      overflow-y: auto;
+      /* No top padding for header — content owns the full space */
+      padding: 3.5rem 1rem 8rem;
+    }
+
+    .poem-container {
+      max-width: 640px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    /* ── Staggered verse animations ───────────────────────────── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Poem meta: poet as true h1, centered, large ─────────── */
+    .poem-meta {
+      text-align: center;
+      width: 100%;
+      margin-bottom: 3.5rem;
+      animation: fadeUp 0.5s ease-out both;
+    }
+
+    /* Poet name: true h1, clamp(2.2rem, 5vw, 3.2rem) */
+    .poet-name {
+      font-family: 'Amiri', serif;
+      font-weight: 700;
+      font-size: clamp(2.2rem, 5vw, 3.2rem);
+      color: var(--gold);
+      line-height: 1.15;
+      letter-spacing: 0.02em;
+      /* Subtle glow, not overpowering */
+      text-shadow:
+        0 0 80px rgba(201, 168, 76, 0.2),
+        0 0 24px rgba(201, 168, 76, 0.08);
+    }
+
+    .poet-name-en {
+      font-family: 'Forum', serif;
+      font-size: clamp(0.85rem, 1.8vw, 1rem);
+      color: var(--gold);
+      opacity: 0.5;
+      margin-top: 0.3rem;
+      letter-spacing: 0.07em;
+      direction: ltr;
+      display: block;
+    }
+
+    /* Ultra-minimal separator: very faint dot */
+    .meta-dot {
+      width: 4px; height: 4px;
+      border-radius: 50%;
+      background: var(--gold);
+      opacity: 0.25;
+      margin: 1.25rem auto;
+    }
+
+    /* Poem title: clean, warm, subordinate to poet */
+    .poem-title {
+      font-family: 'Amiri', serif;
+      font-style: italic;
+      font-size: clamp(1.35rem, 2.8vw, 1.75rem);
+      color: #d8d0c0;
+      line-height: 1.5;
+    }
+
+    .poem-title-en {
+      font-family: 'Forum', serif;
+      font-style: italic;
+      font-size: clamp(0.78rem, 1.4vw, 0.9rem);
+      color: var(--text-muted);
+      opacity: 0.75;
+      margin-top: 0.35rem;
+      direction: ltr;
+      display: block;
+    }
+
+    /* ── Verses: subtle fadeUp on load, minimal gaps ─────────── */
+    .verses {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 2.75rem;
+      padding: 0;
+      text-align: center;
+    }
+
+    .verse-pair {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      animation: fadeUp 0.5s ease-out both;
+    }
+
+    .verse-pair:nth-child(1) { animation-delay: 0.08s; }
+    .verse-pair:nth-child(2) { animation-delay: 0.2s; }
+    .verse-pair:nth-child(3) { animation-delay: 0.32s; }
+    .verse-pair:nth-child(4) { animation-delay: 0.44s; }
+
+    /* Arabic verse: clean, generous line-height */
+    .verse-ar {
+      font-family: 'Amiri', serif;
+      font-size: clamp(1.35rem, 2.5vw, 1.7rem);
+      line-height: 2.35;
+      color: var(--text-primary);
+      direction: rtl;
+    }
+
+    /* English: opacity 0.6 for WCAG AA compliance */
+    .verse-en {
+      font-family: 'Forum', serif;
+      font-style: italic;
+      font-size: clamp(0.9rem, 1.45vw, 1.05rem);
+      color: var(--text-primary);
+      opacity: 0.6;
+      direction: ltr;
+      max-width: 85%;
+      margin: 0 auto;
+      line-height: 1.65;
+    }
+
+    /* ── Brand: 11px, 30% opacity, bottom-left ───────────────── */
+    .brand-watermark {
+      position: fixed;
+      bottom: 60px; /* above control bar */
+      left: 14px;
+      z-index: 10;
+      font-size: 11px;
+      opacity: 0.3;
+      display: flex;
+      align-items: center;
+      gap: 0.25rem;
+      direction: ltr;
+      pointer-events: none;
+    }
+
+    .brand-watermark-arabic {
+      font-family: 'Reem Kufi', sans-serif;
+      font-weight: 700;
+      color: var(--gold);
+    }
+
+    .brand-watermark-english {
+      font-family: 'Forum', serif;
+      color: #d4d0c8;
+    }
+
+    /* ── Bottom control bar ────────────────────────────────────── */
+    .control-bar {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      z-index: 50;
+      background: rgba(12, 12, 14, 0.95);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-top: 1px solid rgba(255, 255, 255, 0.05);
+      padding: 0.65rem 1.25rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      direction: ltr;
+    }
+
+    .ctrl-group { display: flex; align-items: center; gap: 0.5rem; }
+
+    .ctrl-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #d6d3d1;
+      width: 40px; height: 40px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 50%;
+      transition: color 0.2s, background 0.2s;
+    }
+    .ctrl-btn:hover { color: #fff; background: rgba(201, 168, 76, 0.08); }
+    .ctrl-btn svg { width: 20px; height: 20px; }
+
+    .ctrl-btn.play {
+      width: 44px; height: 44px;
+      background: rgba(201, 168, 76, 0.1);
+      border: 1px solid rgba(201, 168, 76, 0.2);
+      color: var(--gold);
+    }
+    .ctrl-btn.play:hover { background: rgba(201, 168, 76, 0.18); }
+
+    .category-pill {
+      font-family: 'Forum', serif;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--gold);
+      background: rgba(201, 168, 76, 0.07);
+      border: 1px solid rgba(201, 168, 76, 0.18);
+      padding: 0.3rem 0.7rem;
+      border-radius: 9999px;
+      white-space: nowrap;
+    }
+
+    .ctrl-label {
+      font-family: 'Forum', serif;
+      font-size: 8.5px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--gold);
+      opacity: 0.55;
+      white-space: nowrap;
+    }
+
+    .ctrl-col {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+
+    /* ── Option badge ─────────────────────────────────────────── */
+    .option-badge {
+      position: fixed;
+      top: 10px; right: 12px;
+      z-index: 100;
+      background: rgba(201, 168, 76, 0.15);
+      border: 1px solid rgba(201, 168, 76, 0.35);
+      color: var(--gold);
+      font-family: 'Forum', serif;
+      font-size: 10px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 0.3rem 0.6rem;
+      border-radius: 4px;
+      direction: ltr;
+    }
+
+    @media (max-width: 480px) {
+      .main-scroll { padding-top: 2.5rem; }
+      .verses { gap: 2.25rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+
+    <!-- NO site header — content owns the full viewport -->
+
+    <div class="option-badge">Option 3 — Ambient / Full Immersion</div>
+
+    <main class="main-scroll">
+      <div class="poem-container">
+
+        <!-- Poet name: true h1, dominant, centered -->
+        <div class="poem-meta" dir="rtl">
+          <h1 class="poet-name">الشريف الرضي</h1>
+          <span class="poet-name-en" dir="ltr">al-Sharif al-Radi</span>
+
+          <!-- Ultra-minimal dot separator -->
+          <div class="meta-dot"></div>
+
+          <div class="poem-title">ذكرى الأيام وجمال الوجوه</div>
+          <span class="poem-title-en" dir="ltr">Memory of Days and the Beauty of Faces</span>
+        </div>
+
+        <!-- Verses: subtle fadeUp (8px, 0.5s), clean gaps -->
+        <div class="verses">
+          <div class="verse-pair">
+            <p class="verse-ar">أَذكُرُ أَيَّامَ الصِّبا وَبَهجَتَها وَجَمالَ الوُجوهِ في لَيالي الشَّبابِ</p>
+            <p class="verse-en">I remember the days of youth and their splendor — the beauty of faces in the nights of young age</p>
+          </div>
+
+          <div class="verse-pair">
+            <p class="verse-ar">كَم سَهَرنا عَلى النُّجومِ نُشاهِدُ ضَوءَها وَالنَّسيمُ يَسري بِطيبِ</p>
+            <p class="verse-en">How many nights we stayed awake watching the stars — their light, as the breeze carried sweet perfume</p>
+          </div>
+
+          <div class="verse-pair">
+            <p class="verse-ar">وَنَرى الوَردَ في الرِّياضِ يُنادي بِجَمالٍ يَفوقُ كُلَّ حَسيبِ</p>
+            <p class="verse-en">We saw the roses in the meadows calling out — with a beauty that surpasses every noble thing</p>
+          </div>
+
+          <div class="verse-pair">
+            <p class="verse-ar">ذَهَبَت تِلكَ الأَيَّامُ وَانقَضَت وَبَقِيَت في الفُؤادِ ذِكرى الحَبيبِ</p>
+            <p class="verse-en">Those days departed and passed away — yet in the heart remains the memory of the beloved</p>
+          </div>
+        </div>
+
+      </div>
+    </main>
+
+    <!-- Brand watermark: 11px, 30% opacity, bottom-left -->
+    <div class="brand-watermark">
+      <span class="brand-watermark-arabic">بالعربي</span>
+      <span class="brand-watermark-english">poetry</span>
+    </div>
+
+    <!-- Bottom control bar mockup -->
+    <div class="control-bar">
+      <div class="ctrl-group">
+        <div class="ctrl-col">
+          <button class="ctrl-btn" title="Discover">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/>
+            </svg>
+          </button>
+          <span class="ctrl-label">Discover</span>
+        </div>
+        <div class="ctrl-col">
+          <button class="ctrl-btn" title="Share">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/>
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+            </svg>
+          </button>
+          <span class="ctrl-label">Share</span>
+        </div>
+      </div>
+
+      <div class="ctrl-group">
+        <div class="ctrl-col">
+          <button class="ctrl-btn" title="Previous">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <polyline points="15 18 9 12 15 6"/>
+            </svg>
+          </button>
+        </div>
+        <div class="ctrl-col">
+          <button class="ctrl-btn play" title="Play">
+            <svg viewBox="0 0 24 24" fill="currentColor">
+              <polygon points="5 3 19 12 5 21 5 3"/>
+            </svg>
+          </button>
+        </div>
+        <div class="ctrl-col">
+          <button class="ctrl-btn" title="Next">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="ctrl-group">
+        <span class="category-pill">Classical</span>
+        <div class="ctrl-col">
+          <button class="ctrl-btn" title="Insights">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+          </button>
+          <span class="ctrl-label">Insights</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>

@@ -997,10 +997,12 @@ export default function DiwanApp() {
                   className={`text-center ${DESIGN.mainMetaPadding} poem-meta-fade z-20 w-full`}
                 >
                   <div className="flex flex-col items-center justify-center w-full" dir="rtl">
-                    {/* Line 1: Poem name in Arabic — dominant */}
+                    {/* Line 1: Poem title — Reem Kufi (brand font), gold, dominant */}
                     <div
-                      className="font-amiri font-bold text-center"
+                      className="text-center"
                       style={{
+                        fontFamily: "'Reem Kufi', sans-serif",
+                        fontWeight: 700,
                         fontSize: 'clamp(1.5rem, 4vw, 2.2rem)',
                         color: 'var(--gold)',
                         lineHeight: 1.3,
@@ -1012,11 +1014,11 @@ export default function DiwanApp() {
                     >
                       {current?.titleArabic || current?.title}
                     </div>
-                    {/* Line 2: Poet name in Arabic — secondary */}
+                    {/* Line 2: Poet name — Fustat (humanist serif), secondary */}
                     <div
-                      className="font-amiri text-center"
+                      className="font-fustat text-center"
                       style={{
-                        fontSize: 'clamp(1.4rem, 3vw, 1.8rem)',
+                        fontSize: 'clamp(1.15rem, 2.5vw, 1.45rem)',
                         color: darkMode ? '#D4D0C8' : '#6B5C3E',
                         lineHeight: 1.3,
                         marginTop: '0.4rem',
@@ -1024,30 +1026,35 @@ export default function DiwanApp() {
                     >
                       {current?.poetArabic || current?.poet}
                     </div>
-                    {/* Line 3: English combined — poet name — poem name */}
+                    {/* Line 3: English combined — caption style with gold hairline rule above */}
                     {(current?.poet || current?.title) && (
-                      <div
-                        className="font-brand-en text-center italic"
-                        dir="ltr"
-                        style={{
-                          fontSize: 'clamp(0.9rem, 1.8vw, 1.1rem)',
-                          color: darkMode ? '#a8a29e' : '#78716c',
-                          marginTop: '0.6rem',
-                        }}
-                      >
-                        {current?.poet}{current?.poet && current?.title ? ' \u2014 ' : ''}{current?.title}
-                      </div>
+                      <>
+                        {/* Gold hairline rule — separates attribution from verse body */}
+                        <div
+                          dir="ltr"
+                          style={{
+                            width: '80%',
+                            maxWidth: '320px',
+                            height: '1px',
+                            background: 'linear-gradient(to right, transparent, rgba(201,168,76,0.2), transparent)',
+                            margin: '0.7rem auto 0.5rem',
+                          }}
+                        />
+                        <div
+                          className="font-brand-en text-center"
+                          dir="ltr"
+                          style={{
+                            fontSize: 'clamp(0.72rem, 1.3vw, 0.84rem)',
+                            color: darkMode ? 'rgba(212,168,75,0.55)' : 'rgba(107,92,62,0.7)',
+                            letterSpacing: '0.04em',
+                          }}
+                        >
+                          {current?.poet}{current?.poet && current?.title ? ' \u2014 ' : ''}{current?.title}
+                        </div>
+                      </>
                     )}
-                    {/* Separator between meta and poem body */}
-                    <div
-                      style={{
-                        width: '40px',
-                        height: '1px',
-                        background: 'var(--gold)',
-                        opacity: 0.3,
-                        margin: '1rem auto',
-                      }}
-                    />
+                    {/* Bottom spacing before verses */}
+                    <div style={{ height: '1rem' }} />
                   </div>
                 </div>
 

@@ -109,7 +109,7 @@ export default function DiwanApp() {
   const sourceNodeRef = useRef(null);
   const volumePulseRef = useRef(null);
 
-  // headerOpacity removed — corner wordmark doesn't need scroll-driven animation
+  const [headerOpacity, setHeaderOpacity] = useState(0);
   const [fireTapped, setFireTapped] = useState(false);
   const [ratchetToast, setRatchetToast] = useState(null);
 
@@ -427,7 +427,10 @@ export default function DiwanApp() {
   }, []);
 
 
-  // Scroll handler — header animation removed (corner wordmark is static)
+  const handleScroll = (e) => {
+    const progress = Math.min(1, e.target.scrollTop / 120);
+    setHeaderOpacity(progress);
+  };
 
   // Fetch dynamic poet list from API when discover drawer first opens
   useEffect(() => {
@@ -931,7 +934,7 @@ export default function DiwanApp() {
         </div>
       )}
 
-      {/* Corner wordmark — top-right, subtle, non-competing */}
+      {/* Corner wordmark — top-right, fades out on scroll */}
       <header
         style={{
           position: 'fixed',
@@ -940,12 +943,12 @@ export default function DiwanApp() {
           zIndex: 40,
           pointerEvents: 'none',
           padding: '0.6rem 0.8rem',
+          opacity: BRAND_HEADER.containerOpacity * (1 - headerOpacity),
+          transition: 'opacity 0.3s ease-out',
         }}
       >
-        <div
-          className="flex flex-row items-center gap-1"
-          style={{ opacity: BRAND_HEADER.containerOpacity }}
-        >
+        <div className="flex flex-row items-center gap-1">
+
           <span
             style={{
               ...BRAND_HEADER.english,
@@ -982,6 +985,7 @@ export default function DiwanApp() {
 
           <main
             ref={mainScrollRef}
+            onScroll={handleScroll}
             className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar relative z-10 px-4 md:px-0 pb-28 pt-10 md:pt-12"
             style={{ overscrollBehaviorX: 'none' }}
           >
@@ -997,7 +1001,7 @@ export default function DiwanApp() {
                     <div
                       className="font-amiri font-bold text-center"
                       style={{
-                        fontSize: 'clamp(2rem, 5vw, 3rem)',
+                        fontSize: 'clamp(1.5rem, 4vw, 2.2rem)',
                         color: 'var(--gold)',
                         lineHeight: 1.3,
                         letterSpacing: '0.02em',
@@ -1026,7 +1030,7 @@ export default function DiwanApp() {
                         className="font-brand-en text-center italic"
                         dir="ltr"
                         style={{
-                          fontSize: 'clamp(0.8rem, 1.5vw, 0.95rem)',
+                          fontSize: 'clamp(0.9rem, 1.8vw, 1.1rem)',
                           color: darkMode ? '#a8a29e' : '#78716c',
                           marginTop: '0.6rem',
                         }}
@@ -1034,14 +1038,14 @@ export default function DiwanApp() {
                         {current?.poet}{current?.poet && current?.title ? ' \u2014 ' : ''}{current?.title}
                       </div>
                     )}
-                    {/* Vertical separator between meta and poem body */}
+                    {/* Separator between meta and poem body */}
                     <div
                       style={{
-                        width: '1px',
-                        height: '40px',
+                        width: '40px',
+                        height: '1px',
                         background: 'var(--gold)',
-                        opacity: 0.35,
-                        margin: '1.25rem auto',
+                        opacity: 0.3,
+                        margin: '1rem auto',
                       }}
                     />
                   </div>
@@ -1059,7 +1063,7 @@ export default function DiwanApp() {
                           <p
                             dir="rtl"
                             className={`${currentFontClass} leading-[2.2] arabic-shadow ${DESIGN.anim}`}
-                            style={{ fontSize: `calc(clamp(1.25rem, 2vw, 1.5rem) * ${textScale})` }}
+                            style={{ fontSize: `calc(clamp(1.4rem, 2.5vw, 1.75rem) * ${textScale})` }}
                           >
                             {pair.ar}
                           </p>
@@ -1079,7 +1083,7 @@ export default function DiwanApp() {
                               dir="ltr"
                               className={`font-brand-en italic opacity-60 ${DESIGN.anim} mx-auto`}
                               style={{
-                                fontSize: `calc(clamp(1rem, 1.5vw, 1.125rem) * ${textScale})`,
+                                fontSize: `calc(clamp(1.1rem, 1.8vw, 1.25rem) * ${textScale})`,
                                 maxWidth: '90%',
                               }}
                             >

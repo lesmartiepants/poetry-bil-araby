@@ -1044,9 +1044,9 @@ export default function DiwanApp() {
                           className="text-center"
                           dir="ltr"
                           style={{
-                            fontFamily: "'Playfair Display', serif",
-                            fontStyle: 'italic',
-                            fontSize: 'clamp(0.95rem, 1.7vw, 1.1rem)',
+                            fontFamily: "'Bodoni Moda', serif",
+                            fontStyle: 'normal',
+                            fontSize: 'clamp(1rem, 1.8vw, 1.15rem)',
                             marginTop: '0.5rem',
                             color: darkMode ? 'rgba(212,200,168,0.88)' : 'rgba(107,92,62,0.9)',
                             letterSpacing: '0.01em',

@@ -1037,7 +1037,7 @@ export default function DiwanApp() {
                             maxWidth: '320px',
                             height: '1px',
                             background: 'linear-gradient(to right, transparent, rgba(201,168,76,0.2), transparent)',
-                            margin: '0.7rem auto 0.5rem',
+                            margin: '0.8rem auto 0',
                           }}
                         />
                         <div
@@ -1045,6 +1045,7 @@ export default function DiwanApp() {
                           dir="ltr"
                           style={{
                             fontSize: 'clamp(0.72rem, 1.3vw, 0.84rem)',
+                            marginTop: '0.5rem',
                             color: darkMode ? 'rgba(212,168,75,0.55)' : 'rgba(107,92,62,0.7)',
                             letterSpacing: '0.04em',
                           }}

@@ -61,5 +61,5 @@ export const BRAND_HEADER = {
     height: '12px',
     opacity: 0.75,
   },
-  containerOpacity: 0.5,
+  containerOpacity: 0.58,
 };

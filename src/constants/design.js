@@ -42,6 +42,68 @@ export const BRAND = {
   },
 };
 
+// ── Poem Meta Typography ─────────────────────────────────────────────────
+// Covers the 3-line attribution block (Arabic title → Arabic poet → English
+// combined line) and the verse body base sizes.  Theme-aware colors are
+// stored as { dark, light } sub-objects so callers do:
+//   style={{ ...POEM_META.poet, color: darkMode ? POEM_META.poetColor.dark : POEM_META.poetColor.light }}
+export const POEM_META = {
+  // Line 1: Arabic poem title — Reem Kufi, dominant gold
+  title: {
+    fontFamily: "'Reem Kufi', sans-serif",
+    fontWeight: 700,
+    fontSize: 'clamp(1.5rem, 4vw, 2.2rem)',
+    lineHeight: 1.3,
+    letterSpacing: '0.02em',
+    color: 'var(--gold)',
+  },
+  titleShadow: {
+    dark: '0 0 40px rgba(197,160,89,0.25), 0 0 12px rgba(197,160,89,0.1)',
+    light: 'none',
+  },
+
+  // Line 2: Arabic poet name — Fustat, secondary warm
+  poet: {
+    fontFamily: "'Fustat', sans-serif",
+    fontWeight: 500,
+    fontSize: 'clamp(1.15rem, 2.5vw, 1.45rem)',
+    lineHeight: 1.3,
+    marginTop: '0.4rem',
+  },
+  poetColor: {
+    dark: '#D4D0C8',
+    light: '#6B5C3E',
+  },
+
+  // Hairline rule separating attribution from verse body
+  separator: {
+    width: '80%',
+    maxWidth: '320px',
+    height: '1px',
+    background: 'linear-gradient(to right, transparent, rgba(201,168,76,0.2), transparent)',
+    margin: '0.8rem auto 0',
+  },
+
+  // Line 3: English attribution — Bodoni Moda, warm cream
+  englishLine: {
+    fontFamily: "'Bodoni Moda', serif",
+    fontStyle: 'normal',
+    fontSize: 'clamp(1rem, 1.8vw, 1.15rem)',
+    marginTop: '0.5rem',
+    letterSpacing: '0.01em',
+  },
+  englishLineColor: {
+    dark: 'rgba(212,200,168,0.88)',
+    light: 'rgba(107,92,62,0.9)',
+  },
+
+  // Verse body base sizes — used as calc(size * textScale) in JSX
+  verseArabicSize: 'clamp(1.4rem, 2.5vw, 1.75rem)',
+  verseTranslitSize: 'clamp(0.75rem, 1.2vw, 0.875rem)',
+  verseEnglishSize: 'clamp(1.1rem, 1.8vw, 1.25rem)',
+};
+
+// ── Shared Brand Styles ──────────────────────────────────────────────────
 // Subtle corner wordmark for the main app header (top-right, non-competing)
 export const BRAND_HEADER = {
   arabic: {

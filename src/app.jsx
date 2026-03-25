@@ -32,7 +32,7 @@ import {
 } from './prompts';
 import { parseInsight } from './utils/insightParser';
 import { repairAndParseJSON } from './utils/jsonRepair';
-import { FEATURES, DESIGN, BRAND, BRAND_HEADER, THEME, GOLD, CATEGORIES, FONTS } from './constants/index.js';
+import { FEATURES, DESIGN, BRAND, BRAND_HEADER, POEM_META, THEME, GOLD, CATEGORIES, FONTS } from './constants/index.js';
 import { usePoemStore } from './stores/poemStore';
 import { useAudioStore } from './stores/audioStore';
 import { useUIStore } from './stores/uiStore';
@@ -997,59 +997,36 @@ export default function DiwanApp() {
                   className={`text-center ${DESIGN.mainMetaPadding} poem-meta-fade z-20 w-full`}
                 >
                   <div className="flex flex-col items-center justify-center w-full" dir="rtl">
-                    {/* Line 1: Poem title — Reem Kufi (brand font), gold, dominant */}
+                    {/* Line 1: Poem title */}
                     <div
                       className="text-center"
                       style={{
-                        fontFamily: "'Reem Kufi', sans-serif",
-                        fontWeight: 700,
-                        fontSize: 'clamp(1.5rem, 4vw, 2.2rem)',
-                        color: 'var(--gold)',
-                        lineHeight: 1.3,
-                        letterSpacing: '0.02em',
-                        textShadow: darkMode
-                          ? '0 0 40px rgba(197,160,89,0.25), 0 0 12px rgba(197,160,89,0.1)'
-                          : 'none',
+                        ...POEM_META.title,
+                        textShadow: darkMode ? POEM_META.titleShadow.dark : POEM_META.titleShadow.light,
                       }}
                     >
                       {current?.titleArabic || current?.title}
                     </div>
-                    {/* Line 2: Poet name — Fustat (humanist serif), secondary */}
+                    {/* Line 2: Poet name */}
                     <div
-                      className="font-fustat text-center"
+                      className="text-center"
                       style={{
-                        fontSize: 'clamp(1.15rem, 2.5vw, 1.45rem)',
-                        color: darkMode ? '#D4D0C8' : '#6B5C3E',
-                        lineHeight: 1.3,
-                        marginTop: '0.4rem',
+                        ...POEM_META.poet,
+                        color: darkMode ? POEM_META.poetColor.dark : POEM_META.poetColor.light,
                       }}
                     >
                       {current?.poetArabic || current?.poet}
                     </div>
-                    {/* Line 3: English combined — caption style with gold hairline rule above */}
+                    {/* Line 3: English combined attribution */}
                     {(current?.poet || current?.title) && (
                       <>
-                        {/* Gold hairline rule — separates attribution from verse body */}
-                        <div
-                          dir="ltr"
-                          style={{
-                            width: '80%',
-                            maxWidth: '320px',
-                            height: '1px',
-                            background: 'linear-gradient(to right, transparent, rgba(201,168,76,0.2), transparent)',
-                            margin: '0.8rem auto 0',
-                          }}
-                        />
+                        <div dir="ltr" style={POEM_META.separator} />
                         <div
                           className="text-center"
                           dir="ltr"
                           style={{
-                            fontFamily: "'Bodoni Moda', serif",
-                            fontStyle: 'normal',
-                            fontSize: 'clamp(1rem, 1.8vw, 1.15rem)',
-                            marginTop: '0.5rem',
-                            color: darkMode ? 'rgba(212,200,168,0.88)' : 'rgba(107,92,62,0.9)',
-                            letterSpacing: '0.01em',
+                            ...POEM_META.englishLine,
+                            color: darkMode ? POEM_META.englishLineColor.dark : POEM_META.englishLineColor.light,
                           }}
                         >
                           {current?.poet}{current?.poet && current?.title ? ' \u2014 ' : ''}{current?.title}
@@ -1073,7 +1050,7 @@ export default function DiwanApp() {
                           <p
                             dir="rtl"
                             className={`${currentFontClass} leading-[2.2] arabic-shadow ${DESIGN.anim}`}
-                            style={{ fontSize: `calc(clamp(1.4rem, 2.5vw, 1.75rem) * ${textScale})` }}
+                            style={{ fontSize: `calc(${POEM_META.verseArabicSize} * ${textScale})` }}
                           >
                             {pair.ar}
                           </p>
@@ -1082,7 +1059,7 @@ export default function DiwanApp() {
                               dir="ltr"
                               className={`font-brand-en italic opacity-50 ${DESIGN.anim}`}
                               style={{
-                                fontSize: `calc(clamp(0.75rem, 1.2vw, 0.875rem) * ${textScale})`,
+                                fontSize: `calc(${POEM_META.verseTranslitSize} * ${textScale})`,
                               }}
                             >
                               {transliterate(pair.ar)}
@@ -1093,7 +1070,7 @@ export default function DiwanApp() {
                               dir="ltr"
                               className={`font-brand-en italic opacity-60 ${DESIGN.anim} mx-auto`}
                               style={{
-                                fontSize: `calc(clamp(1.1rem, 1.8vw, 1.25rem) * ${textScale})`,
+                                fontSize: `calc(${POEM_META.verseEnglishSize} * ${textScale})`,
                                 maxWidth: '90%',
                               }}
                             >

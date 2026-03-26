@@ -22,6 +22,14 @@ import { test, expect } from '@playwright/test';
 
 const PREVIEW_URL = process.env.PLAYWRIGHT_TEST_BASE_URL || 'http://localhost:4173';
 
+// These tests require a production build served via `npm run preview` (port 4173).
+// Service workers don't register on the Vite dev server, so this suite is skipped
+// unless PLAYWRIGHT_TEST_BASE_URL is explicitly set to the preview URL.
+// Run manually with:
+//   npm run build && npm run preview &
+//   PLAYWRIGHT_TEST_BASE_URL=http://localhost:4173 npx playwright test e2e/pwa-service-worker.spec.js
+const PWA_TESTS_ENABLED = !!process.env.PLAYWRIGHT_TEST_BASE_URL;
+
 // Helper: dismiss splash screen if present
 async function dismissSplash(page) {
   const enterBtn = page.locator('button[aria-label="Enter the app"]');
@@ -50,6 +58,14 @@ async function waitForActiveSW(page, timeout = 15000) {
 test.describe('PWA Service Worker', () => {
   // Use a fresh browser context so no prior SW state leaks between tests
   test.use({ baseURL: PREVIEW_URL });
+
+  test.beforeEach(async ({}, testInfo) => {
+    // Skip the entire suite in CI / when no preview server is running.
+    // PWA service workers require a production build served via `npm run preview`.
+    if (!PWA_TESTS_ENABLED) {
+      testInfo.skip(true, 'Skipped: set PLAYWRIGHT_TEST_BASE_URL=http://localhost:4173 and run `npm run build && npm run preview` first');
+    }
+  });
 
   test('SW registers and activates on first visit', async ({ page }) => {
     // Listen for SW registration at browser level

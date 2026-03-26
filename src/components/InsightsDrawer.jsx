@@ -101,7 +101,7 @@ const InsightsDrawer = ({ insightParts }) => {
         {/* Header */}
         <div className="px-6 pb-3 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <h3 className="font-brand-en italic font-semibold text-base text-indigo-600 tracking-tight">
+            <h3 className={`font-brand-en italic font-semibold text-base ${theme.sectionLabel} tracking-tight`}>
               {ratchetMode ? '🔥 Ratchet Insight' : 'Poetic Insight'}
             </h3>
           </div>
@@ -120,7 +120,7 @@ const InsightsDrawer = ({ insightParts }) => {
         >
           {isInterpreting ? (
             <div className="flex flex-col items-center justify-center gap-4 opacity-30 animate-pulse py-12">
-              <Sparkles className="animate-spin text-indigo-500" size={28} />
+              <Sparkles className={`animate-spin ${theme.loadingIcon}`} size={28} />
               <p className="font-brand-en italic text-sm">
                 {ratchetMode ? 'Getting lit fr fr...' : 'Consulting Diwan...'}
               </p>
@@ -128,11 +128,11 @@ const InsightsDrawer = ({ insightParts }) => {
           ) : (
             <div className="space-y-6">
               {insightParts?.depth && (
-                <div className="pt-4 border-t border-indigo-500/10">
-                  <h4 className="text-[10px] font-brand-en font-black text-indigo-600 mb-2 uppercase tracking-widest opacity-80">
+                <div className={`pt-4 border-t ${theme.sectionBorder}`}>
+                  <h4 className={`text-[10px] font-brand-en font-black ${theme.sectionLabel} mb-2 uppercase tracking-widest opacity-80`}>
                     The Depth
                   </h4>
-                  <div className="pl-4 border-l border-indigo-500/10">
+                  <div className={`pl-4 border-l ${theme.sectionAccent}`}>
                     <p className="text-sm font-brand-en font-normal opacity-80 leading-relaxed">
                       {insightParts.depth}
                     </p>
@@ -140,11 +140,11 @@ const InsightsDrawer = ({ insightParts }) => {
                 </div>
               )}
               {insightParts?.author && (
-                <div className="pt-4 border-t border-indigo-500/10">
-                  <h4 className="text-[10px] font-brand-en font-black text-indigo-600 mb-2 uppercase tracking-widest opacity-80">
+                <div className={`pt-4 border-t ${theme.sectionBorder}`}>
+                  <h4 className={`text-[10px] font-brand-en font-black ${theme.sectionLabel} mb-2 uppercase tracking-widest opacity-80`}>
                     The Author
                   </h4>
-                  <div className="pl-4 border-l border-indigo-500/10">
+                  <div className={`pl-4 border-l ${theme.sectionAccent}`}>
                     <p className="text-sm font-brand-en font-normal opacity-80 leading-relaxed">
                       {insightParts.author}
                     </p>

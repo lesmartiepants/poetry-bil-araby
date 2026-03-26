@@ -35,7 +35,7 @@ const DESIGN = {
   glass: 'backdrop-blur-2xl',
   radius: 'rounded-2xl',
   buttonHover: 'hover:scale-105 hover:shadow-lg transition-all duration-300',
-  btnPrimary: 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-indigo-500/40',
+  btnPrimary: 'bg-lapis border border-lapis-light/40 text-white shadow-lapis/30',
 };
 
 const ErrorBanner = ({ error, onDismiss, onRetry, theme }) => {
@@ -174,7 +174,7 @@ describe('Database Integration Components', () => {
       border: 'border-stone-800',
       text: 'text-stone-200',
       pill: 'bg-stone-900/40 border-stone-700/50',
-      btnPrimary: 'bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-indigo-500/40',
+      btnPrimary: 'bg-lapis border border-lapis-light/40 text-white shadow-lapis/30',
     };
 
     it('does not render when error is null', () => {

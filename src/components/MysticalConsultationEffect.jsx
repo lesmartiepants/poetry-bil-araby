@@ -6,14 +6,14 @@ const MysticalConsultationEffect = ({ active, theme }) => {
         className={`absolute inset-0 bg-radial-gradient ${theme.glow} animate-pulse scale-125 opacity-80`}
       />
       <div
-        className={`absolute inset-0 bg-radial-gradient from-purple-500/20 to-transparent animate-ping scale-150 opacity-30`}
+        className={`absolute inset-0 bg-radial-gradient from-lapis/20 to-transparent animate-ping scale-150 opacity-30`}
         style={{ animationDuration: '3s' }}
       />
       <div className="absolute inset-0">
         {[...Array(45)].map((_, i) => (
           <div
             key={i}
-            className="absolute bg-indigo-200 rounded-full animate-pulse"
+            className="absolute bg-lapis-light rounded-full animate-pulse"
             style={{
               width: Math.random() * 3 + 1 + 'px',
               height: Math.random() * 3 + 1 + 'px',

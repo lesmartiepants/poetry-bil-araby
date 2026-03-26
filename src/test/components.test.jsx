@@ -60,7 +60,7 @@ describe('Component Tests', () => {
 
   describe('MysticalConsultationEffect', () => {
     const mockTheme = {
-      glow: 'from-indigo-600/30 via-purple-600/15 to-transparent'
+      glow: 'from-lapis/30 via-lapis-deep/15 to-transparent'
     }
 
     it('renders when active is true', () => {

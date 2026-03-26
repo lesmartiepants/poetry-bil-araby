@@ -1,8 +1,16 @@
 /* App-level utility styles extracted from inline <style> block in app.jsx */
 
 .arabic-shadow { text-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+
+.gold-foil-text {
+  background: var(--gold-foil);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
+}
 .custom-scrollbar::-webkit-scrollbar { width: 4px; }
-.custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(79, 70, 229, 0.2); border-radius: 10px; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: var(--gold-structural); border-radius: 10px; }
 .bg-radial-gradient { background: radial-gradient(circle, var(--tw-gradient-from) 0%, var(--tw-gradient-via) 50%, var(--tw-gradient-to) 100%); }
 
 .safe-bottom { padding-bottom: max(1.5rem, env(safe-area-inset-bottom)); }

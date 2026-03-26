@@ -24,7 +24,7 @@ const VerticalSidebar = ({
   const gold = theme.gold;
 
   const btnBase =
-    'w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-200';
+    'w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200';
   const btnHover = theme.goldHoverBg15;
 
   return (
@@ -43,8 +43,8 @@ const VerticalSidebar = ({
       `}</style>
 
       <div
-        className={`fixed right-0 md:right-[24.5rem] top-1/2 -translate-y-1/2 z-[45] rounded-l-2xl md:rounded-2xl backdrop-blur-xl border-l md:border ${theme.border} py-2 px-1.5 flex flex-col items-center gap-1 ${darkMode ? 'bg-black/70' : 'bg-white/80'}`}
-        style={{ width: '3.25rem' }}
+        className={`fixed right-2 md:right-[25rem] top-1/2 -translate-y-1/2 z-[45] rounded-2xl backdrop-blur-xl border ${theme.border} py-2 px-1.5 flex flex-col items-center gap-1 ${darkMode ? 'bg-black/70' : 'bg-white/80'}`}
+        style={{ width: '2.75rem' }}
       >
         {/* Copy button */}
         <button
@@ -55,10 +55,10 @@ const VerticalSidebar = ({
           {showCopySuccess ? (
             <Check
               style={{ color: gold, animation: 'goldCheckSparkle 0.5s ease-out forwards' }}
-              size={20}
+              size={18}
             />
           ) : (
-            <Copy style={{ color: gold }} size={20} />
+            <Copy style={{ color: gold }} size={18} />
           )}
         </button>
 
@@ -71,10 +71,10 @@ const VerticalSidebar = ({
           {showShareSuccess ? (
             <Check
               style={{ color: gold, animation: 'goldCheckSparkle 0.5s ease-out forwards' }}
-              size={20}
+              size={18}
             />
           ) : (
-            <Share2 style={{ color: gold }} size={20} />
+            <Share2 style={{ color: gold }} size={18} />
           )}
         </button>
 
@@ -85,7 +85,7 @@ const VerticalSidebar = ({
           className={`${btnBase} ${btnHover}`}
         >
           <Heart
-            size={20}
+            size={18}
             style={
               isSaved
                 ? { fill: '#ef4444', stroke: '#ef4444' }
@@ -107,7 +107,7 @@ const VerticalSidebar = ({
                 className={`${btnBase} ${btnHover} relative`}
               >
                 <div
-                  className="w-7 h-7 rounded-full flex items-center justify-center text-[0.6875rem] font-bold font-brand-en"
+                  className="w-6 h-6 rounded-full flex items-center justify-center text-[0.6875rem] font-bold font-brand-en"
                   style={{
                     background:
                       'linear-gradient(135deg, rgba(197,160,89,0.25), rgba(197,160,89,0.15))',
@@ -165,7 +165,7 @@ const VerticalSidebar = ({
             aria-label="Sign in"
             className={`${btnBase} ${btnHover}`}
           >
-            <UserRound style={{ color: gold }} size={20} />
+            <UserRound style={{ color: gold }} size={18} />
           </button>
         )}
       </div>

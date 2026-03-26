@@ -304,13 +304,14 @@ export default function DiwanApp() {
         return;
       }
 
-      // Check if we're returning from an OAuth redirect with a stashed poem
+      // Check if we're returning from an OAuth redirect with a stashed poem.
+      // Do NOT remove pendingSavePoem here — the user effect needs it to auto-save
+      // once the auth session resolves (which happens async after this effect).
       let restoredFromOAuth = false;
       try {
         if (sessionStorage.getItem('pendingSavePoem')) {
           restoredFromOAuth = true;
         }
-        sessionStorage.removeItem('pendingSavePoem');
       } catch {}
 
       const initial = poems[0];

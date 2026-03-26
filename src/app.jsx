@@ -144,6 +144,7 @@ export default function DiwanApp() {
   const setCarouselPoems = usePoemStore((s) => s.setCarouselPoems);
   const clearCarouselPoems = usePoemStore((s) => s.clearCarouselPoems);
   const setCarouselIndex = usePoemStore((s) => s.setCarouselIndex);
+  const addCarouselPoem = usePoemStore((s) => s.addCarouselPoem);
 
   // ── Modal store (Zustand) ──
   const discoverDrawerOpen = useModalStore((s) => s.discoverDrawer);
@@ -1103,6 +1104,13 @@ export default function DiwanApp() {
                       currentFontClass={currentFontClass}
                       POEM_META={POEM_META}
                       DESIGN={DESIGN}
+                      onLoadMore={() => {
+                        if (!current?.poet) return;
+                        const existingIds = carouselPoems.map(p => p.id);
+                        fetchPoemsByPoet(current.poet, 3, existingIds).then((newPoems) => {
+                          newPoems.forEach(p => addCarouselPoem(p));
+                        }).catch(() => {});
+                      }}
                     />
                   ) : (
                     <div className="px-4 md:px-20 py-2 text-center">

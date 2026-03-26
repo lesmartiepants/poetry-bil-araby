@@ -7,6 +7,7 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+  color: transparent;
 }
 .custom-scrollbar::-webkit-scrollbar { width: 4px; }
 .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--gold-structural); border-radius: 10px; }

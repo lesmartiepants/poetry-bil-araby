@@ -64,7 +64,7 @@ export default function DesktopInsightPane({
               {!interpretation && (
                 <button
                   onClick={handleAnalyze}
-                  className={`group relative w-full py-4 border ${theme.brandBorder} ${theme.brand} rounded-full font-brand-en tracking-widest text-[10px] uppercase hover:${theme.brandBg} transition-all flex items-center justify-center gap-3 overflow-hidden ${theme.brandBg}`}
+                  className={`group relative w-full py-4 border ${theme.brandBorder} ${theme.brand} rounded-full font-brand-en tracking-widest text-[10px] uppercase ${theme.brandBgHover} transition-all flex items-center justify-center gap-3 overflow-hidden ${theme.brandBg}`}
                 >
                   <div className={`absolute inset-0 bg-gradient-to-tr from-transparent via-lapis/10 to-transparent animate-[spin_8s_linear_infinite]`} />
                   <Sparkles size={12} /> Seek Insight

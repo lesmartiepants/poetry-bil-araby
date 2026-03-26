@@ -1,4 +1,3 @@
-import { Loader2, Sparkles } from 'lucide-react';
 import { DESIGN, GOLD } from '../constants/index.js';
 import { transliterate } from '../utils/transliterate.js';
 
@@ -10,9 +9,6 @@ import { transliterate } from '../utils/transliterate.js';
  * @param {object}        props
  * @param {object|null}   props.current           - Currently displayed poem object
  * @param {Array}         props.versePairs         - [{ar, en}] pairs pre-computed in parent
- * @param {object|null}   props.insightParts       - Parsed insight ({ depth, author, poeticTranslation })
- * @param {boolean}       props.isInterpreting     - Whether analysis request is in flight
- * @param {string|null}   props.interpretation     - Raw interpretation text
  * @param {boolean}       props.showTransliteration
  * @param {boolean}       props.showTranslation
  * @param {boolean}       props.darkMode
@@ -23,9 +19,6 @@ import { transliterate } from '../utils/transliterate.js';
 export default function PoemCard({
   current,
   versePairs,
-  insightParts,
-  isInterpreting,
-  interpretation,
   showTransliteration,
   showTranslation,
   darkMode,
@@ -195,46 +188,6 @@ export default function PoemCard({
           ))}
       </div>
 
-      {/* Mobile-only inline interpretation */}
-      <div className="w-full max-w-2xl px-6 md:px-0 mb-4 md:hidden">
-        {isInterpreting ? (
-          <div className="flex flex-col items-center py-8 gap-4">
-            <div className="relative">
-              <Loader2 className={`animate-spin ${theme.loadingIcon}`} size={32} />
-              <Sparkles
-                className={`absolute inset-0 m-auto animate-pulse ${theme.loadingIcon}`}
-                size={16}
-              />
-            </div>
-            <p className="text-xs italic font-brand-en opacity-60 tracking-widest uppercase">
-              Consulting the Diwan...
-            </p>
-          </div>
-        ) : interpretation ? (
-          <div className="flex flex-col gap-10 animate-in slide-in-from-bottom-10 duration-1000">
-            <div className={`pt-6 border-t ${theme.sectionBorder}`}>
-              <h4 className={`text-[0.625rem] font-brand-en font-black ${theme.sectionLabel} mb-3 uppercase tracking-[0.3em] opacity-80`}>
-                The Depth
-              </h4>
-              <div className={`pl-4 border-l ${theme.sectionAccent}`}>
-                <p className="text-[clamp(0.9375rem,1.6vw,1rem)] font-brand-en font-normal leading-relaxed italic opacity-90">
-                  {insightParts?.depth}
-                </p>
-              </div>
-            </div>
-            <div className={`pt-6 border-t ${theme.sectionBorder}`}>
-              <h4 className={`text-[0.625rem] font-brand-en font-black ${theme.sectionLabel} mb-3 uppercase tracking-[0.3em] opacity-80`}>
-                The Author
-              </h4>
-              <div className={`pl-4 border-l ${theme.sectionAccent}`}>
-                <p className="text-[clamp(0.9375rem,1.6vw,1rem)] font-brand-en font-normal leading-relaxed italic opacity-90">
-                  {insightParts?.author}
-                </p>
-              </div>
-            </div>
-          </div>
-        ) : null}
-      </div>
     </div>
   );
 }

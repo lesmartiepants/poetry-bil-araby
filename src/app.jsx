@@ -67,18 +67,18 @@ import {
 import './styles/app.css';
 import { updateOGMetaTags } from './utils/ogMetaTags.js';
 import DebugPanel from './components/DebugPanel.jsx';
-import DesktopInsightPane from './components/DesktopInsightPane.jsx';
 import MysticalConsultationEffect from './components/MysticalConsultationEffect.jsx';
 
 import ShortcutHelp from './components/ShortcutHelp.jsx';
 const SplashScreen = lazy(() => import('./components/SplashScreen.jsx'));
-import InsightsDrawer from './components/InsightsDrawer.jsx';
+import InsightOverlay from './components/InsightOverlay.jsx';
 import ShareCardModal from './components/ShareCardModal.jsx';
 import DiscoverDrawer, { GoldenFireIcon } from './components/DiscoverDrawer.jsx';
 import PoemCarousel from './components/PoemCarousel.jsx';
 import VerticalSidebar from './components/VerticalSidebar.jsx';
+import TextSettingsPill from './components/TextSettingsPill.jsx';
+import ThemeToggle from './components/ThemeToggle.jsx';
 import AuthModal from './components/auth/AuthModal.jsx';
-import SavePoemButton from './components/auth/SavePoemButton.jsx';
 import DownvoteButton from './components/auth/DownvoteButton.jsx';
 import SavedPoemsView from './components/auth/SavedPoemsView.jsx';
 
@@ -361,14 +361,25 @@ export default function DiwanApp() {
         return;
       }
 
-      // Clear stashed OAuth poem (already restored by poemStore's getInitialPoems)
+      // Check if we're returning from an OAuth redirect with a stashed poem.
+      // Do NOT remove pendingSavePoem here — the user effect needs it to auto-save
+      // once the auth session resolves (which happens async after this effect).
+      let restoredFromOAuth = false;
       try {
-        sessionStorage.removeItem('pendingSavePoem');
+        if (sessionStorage.getItem('pendingSavePoem')) {
+          restoredFromOAuth = true;
+        }
       } catch {}
 
-      // If the initial poem already has a cached translation, skip auto-explain
       const initial = poems[0];
-      if (initial?.cachedTranslation) {
+
+      if (restoredFromOAuth && initial?.arabic) {
+        // Restored from OAuth — stay on this poem, just queue explanation
+        addLog('Init', `Restored from login: ${initial.poet} — ${initial.title}`, 'success');
+        setAutoExplainPending(true);
+        if (initial.id) navigate('/poem/' + initial.id, { replace: true });
+      } else if (initial?.cachedTranslation) {
+        // Has cached translation — no fetch needed
         addLog(
           'Init',
           `Loaded with cached translation: ${initial.poet} — ${initial.title}`,
@@ -1032,7 +1043,7 @@ export default function DiwanApp() {
           <main
             ref={mainScrollRef}
             onScroll={handleScroll}
-            className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden custom-scrollbar relative z-10 px-4 md:px-0 pb-28 pt-10 md:pt-12"
+            className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar relative z-10 px-6 pr-14 md:px-8 md:pr-0 pb-28 pt-10 md:pt-12"
             style={{ overscrollBehaviorX: 'none' }}
           >
             {/* Top scroll gradient removed — header is now a subtle corner wordmark */}
@@ -1403,23 +1414,19 @@ export default function DiwanApp() {
           </footer>
         </div>
 
-        <DesktopInsightPane
-          current={current}
-          insightParts={insightParts}
-          isInterpreting={isInterpreting}
-          interpretation={interpretation}
-          showTranslation={showTranslation}
-          darkMode={darkMode}
-          theme={theme}
-          selectedCategory={selectedCategory}
-          handleAnalyze={handleAnalyze}
-        />
       </div>
 
-      {/* Insights Drawer (Mobile bottom sheet) */}
-      <AnimatePresence>
-        {insightsDrawerOpen && <InsightsDrawer key="insights-drawer" insightParts={insightParts} />}
-      </AnimatePresence>
+      {/* Insights Overlay (replaces drawer + desktop pane) */}
+      <InsightOverlay
+        open={insightsDrawerOpen}
+        insightParts={insightParts}
+        currentPoem={current}
+        isInterpreting={isInterpreting}
+        interpretation={interpretation}
+        onClose={() => setInsightsDrawerOpen(false)}
+        ratchetMode={ratchetMode}
+        handleAnalyze={handleAnalyze}
+      />
 
       {/* Discover Drawer */}
       <AnimatePresence>
@@ -1481,10 +1488,23 @@ export default function DiwanApp() {
         </div>
       )}
 
+      {/* Theme Toggle — top-right */}
+      <div className="fixed top-10 right-2 md:right-[25rem] z-[46]">
+        <ThemeToggle />
+      </div>
+
+      {/* Text Settings — below theme toggle */}
+      <div className="fixed top-[5.5rem] right-2 md:right-[25rem] z-[46]">
+        <TextSettingsPill />
+      </div>
+
       {/* Vertical Sidebar - always visible */}
       <VerticalSidebar
         onCopy={handleCopy}
         onShare={handleShare}
+        onSave={handleSavePoem}
+        onUnsave={handleUnsavePoem}
+        isSaved={current ? isPoemSaved(current) : false}
         onSignIn={handleSignIn}
         onSignOut={handleSignOut}
         onOpenSavedPoems={handleOpenSavedPoems}

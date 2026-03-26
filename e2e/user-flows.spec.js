@@ -163,14 +163,9 @@ test.describe('User Flows', () => {
       test.skip();
     }
 
-    // Expand the sidebar to reveal action buttons
-    const expandBtn = page.locator('button[aria-label="Open sidebar controls"]').first();
-    await expandBtn.click();
-    await page.waitForTimeout(400);
-
     // The app auto-triggers handleAnalyze on load. With an API key it streams
     // real insights from Gemini; without one (CI) it shows a fallback message.
-    // Either way the "Poetic Insight" panel should appear.
+    // Either way the "Poetic Insight" overlay should appear.
     //
     // If auto-explain hasn't started yet (Explain button still enabled), click it.
     const insightButton = page.locator('button[aria-label="Explain poem meaning"]').first();
@@ -181,7 +176,7 @@ test.describe('User Flows', () => {
       await insightButton.click();
     }
 
-    // "Poetic Insight" heading should appear in the side panel
+    // "Poetic Insight" heading should appear in the overlay
     await expect(page.locator('text=Poetic Insight').first()).toBeVisible({ timeout: 10000 });
   });
 
@@ -192,16 +187,8 @@ test.describe('User Flows', () => {
       return rootDiv ? getComputedStyle(rootDiv).backgroundColor : '';
     });
 
-    // Expand the sidebar to reveal action buttons
-    const expandBtn = page.locator('button[aria-label="Open sidebar controls"]').first();
-    await expandBtn.click();
-    await page.waitForTimeout(400);
-
-    // Open sidebar Settings, then click theme toggle
-    const settingsBtn = page.locator('button[title="Settings"]').first();
-    await settingsBtn.click();
-    await page.waitForTimeout(300);
-    const themeBtn = page.locator('button[title="Light mode"], button[title="Dark mode"]').first();
+    // Click the ThemeToggle button directly (no expand or settings gear needed)
+    const themeBtn = page.locator('button[aria-label="Switch to light mode"], button[aria-label="Switch to dark mode"]').first();
     await expect(themeBtn).toBeVisible({ timeout: 3000 });
     await themeBtn.click();
 
@@ -221,15 +208,12 @@ test.describe('User Flows', () => {
     // Initial font should be Amiri (default, index 0)
     await expect(page.locator('.font-amiri').first()).toBeVisible();
 
-    // Expand the sidebar to reveal action buttons
-    const expandBtn = page.locator('button[aria-label="Open sidebar controls"]').first();
-    await expandBtn.click();
-    await page.waitForTimeout(400);
-
-    // Open sidebar Settings, then click font cycle button
-    const settingsBtn = page.locator('button[title="Settings"]').first();
-    await settingsBtn.click();
+    // Open the TextSettingsPill (no expand or settings gear needed)
+    const textSettingsBtn = page.locator('button[aria-label="Text settings"]').first();
+    await expect(textSettingsBtn).toBeVisible({ timeout: 3000 });
+    await textSettingsBtn.click();
     await page.waitForTimeout(300);
+
     const fontBtn = page.locator('button[title^="Font:"]').first();
     await expect(fontBtn).toBeVisible({ timeout: 2000 });
     await fontBtn.click();
@@ -263,11 +247,7 @@ test.describe('User Flows', () => {
   test('user copies poem to clipboard', async ({ page, context }) => {
     await context.grantPermissions(['clipboard-read', 'clipboard-write']);
 
-    // Expand the sidebar to reveal action buttons
-    const expandBtn = page.locator('button[aria-label="Open sidebar controls"]').first();
-    await expandBtn.click();
-    await page.waitForTimeout(400);
-
+    // Copy button is in the always-visible sidebar — no expand needed
     const copyButton = page.locator('button[aria-label="Copy poem to clipboard"]').first();
     await expect(copyButton).toBeVisible({ timeout: 5000 });
 
@@ -344,12 +324,8 @@ test.describe('User Flows', () => {
 
   // #13 — Auth button always visible
   test('auth button is always visible', async ({ page }) => {
-    // Expand the sidebar to reveal the sign-in button
-    const expandBtn = page.locator('button[aria-label="Open sidebar controls"]').first();
-    await expandBtn.click();
-    await page.waitForTimeout(400);
-
-    const authBtn = page.locator('button:has(svg.lucide-user-round)').first();
+    // Sign-in button is in the always-visible sidebar — no expand needed
+    const authBtn = page.locator('button[aria-label="Sign in"]').first();
     await expect(authBtn).toBeVisible({ timeout: 5000 });
   });
 
@@ -406,8 +382,8 @@ test.describe('Mobile viewport sidebar', () => {
     }
     await page.locator('[dir="rtl"]').first().waitFor({ state: 'visible', timeout: 10000 });
 
-    // VerticalSidebar Settings button should be visible on mobile
-    await expect(page.locator('button[title="Settings"]').first()).toBeVisible();
+    // VerticalSidebar should be visible on mobile (check copy button as a representative action)
+    await expect(page.locator('button[aria-label="Copy poem to clipboard"]').first()).toBeVisible();
   });
 
   // #17 — Flag NOT in VerticalSidebar on mobile

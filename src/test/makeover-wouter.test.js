@@ -43,24 +43,28 @@ describe('WS3: useQueryParams hook', () => {
       expect(content).toMatch(/window\.location\.search/);
     });
 
-    it('uses replace: true for navigation', () => {
+    it('uses replaceState for navigation (avoids wouter pathname bug)', () => {
       const fs = require('fs');
       const path = require('path');
       const content = fs.readFileSync(
         path.join(__dirname, '..', 'hooks', 'useQueryParams.js'),
         'utf-8'
       );
-      expect(content).toMatch(/replace:\s*true/);
+      // Implementation uses window.history.replaceState directly to avoid
+      // wouter treating query strings as part of the pathname
+      expect(content).toMatch(/replaceState/);
     });
 
-    it('imports useLocation from wouter', () => {
+    it('does not rely on wouter for query param navigation', () => {
       const fs = require('fs');
       const path = require('path');
       const content = fs.readFileSync(
         path.join(__dirname, '..', 'hooks', 'useQueryParams.js'),
         'utf-8'
       );
-      expect(content).toMatch(/from\s*['"]wouter['"]/);
+      // The hook manages query params via window.history directly,
+      // not via wouter navigate (wouter mishandles query strings as pathnames)
+      expect(content).toMatch(/window\.history\.replaceState/);
     });
   });
 });

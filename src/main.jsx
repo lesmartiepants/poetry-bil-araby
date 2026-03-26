@@ -64,7 +64,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
       <DiwanApp />
       <Analytics />
       <Toaster
-        position="top-center"
+        position="bottom-center"
         theme="dark"
         gap={8}
         toastOptions={{

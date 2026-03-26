@@ -65,3 +65,19 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     </SentryErrorBoundary>
   </React.StrictMode>
 );
+
+// iOS standalone PWAs don't auto-check for SW updates — poll every 60s
+if ('serviceWorker' in navigator) {
+  setInterval(() => {
+    navigator.serviceWorker.getRegistrations()
+      .then(regs => regs.forEach(r => r.update()));
+  }, 60 * 1000);
+
+  // When new SW activates, reload to get fresh assets
+  let refreshing = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (refreshing) return;
+    refreshing = true;
+    window.location.reload();
+  });
+}

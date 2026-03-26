@@ -29,7 +29,7 @@ const SavePoemButton = ({ poem, isSaved, onSave, onUnsave, disabled, onSignIn })
         />
       </button>
       <span
-        className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
+        className={`font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
       >
         {isSaved ? 'Saved' : 'Save'}
       </span>

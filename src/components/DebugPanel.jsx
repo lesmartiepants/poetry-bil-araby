@@ -159,7 +159,7 @@ const DebugPanel = ({ controlBarRef }) => {
           className={`flex items-center justify-between px-4 py-2.5 border-b ${darkMode ? 'border-gold/15' : 'border-gold/15'} flex-none`}
         >
           <span
-            className="text-[10px] font-brand-en uppercase tracking-widest font-bold"
+            className="text-[0.625rem] font-brand-en uppercase tracking-widest font-bold"
             style={{ color: gold, opacity: 0.5 }}
           >
             Dev Logs
@@ -186,7 +186,7 @@ const DebugPanel = ({ controlBarRef }) => {
         {/* Log entries */}
         <div
           ref={scrollRef}
-          className="flex-1 overflow-y-auto px-4 py-1.5 font-mono text-[10px] space-y-0.5 custom-scrollbar"
+          className="flex-1 overflow-y-auto px-4 py-1.5 font-mono text-[0.625rem] space-y-0.5 custom-scrollbar"
         >
           {logs.map((log, idx) => (
             <div
@@ -211,7 +211,7 @@ const DebugPanel = ({ controlBarRef }) => {
             value={bugDescription}
             onChange={(e) => setBugDescription(e.target.value)}
             placeholder="Describe the bug..."
-            className={`flex-1 px-2 py-1 rounded text-[16px] border ${darkMode ? 'bg-stone-900/80 border-stone-700 text-stone-200 placeholder:text-stone-500' : 'bg-white/80 border-stone-300 text-stone-800 placeholder:text-stone-400'}`}
+            className={`flex-1 px-2 py-1 rounded text-[1rem] border ${darkMode ? 'bg-stone-900/80 border-stone-700 text-stone-200 placeholder:text-stone-500' : 'bg-white/80 border-stone-300 text-stone-800 placeholder:text-stone-400'}`}
             onKeyDown={(e) => {
               if (e.key === 'Enter') handleSubmitBug();
             }}
@@ -219,7 +219,7 @@ const DebugPanel = ({ controlBarRef }) => {
           <button
             onClick={handleSubmitBug}
             disabled={bugStatus === 'sending'}
-            className={`px-2 py-1 rounded text-[9px] font-bold uppercase tracking-wider transition-colors ${
+            className={`px-2 py-1 rounded text-[0.5625rem] font-bold uppercase tracking-wider transition-colors ${
               bugStatus === 'success'
                 ? 'bg-green-600/80 text-white'
                 : bugStatus === 'error'

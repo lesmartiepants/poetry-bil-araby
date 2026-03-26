@@ -4,9 +4,9 @@ export const DESIGN = {
   mainEnglishFontSize: 'text-[clamp(1rem,1.5vw,1.125rem)]', // 16px-18px
   mainLineHeight: 'leading-[2.4]',
   mainMetaPadding: 'pt-4 pb-2',
-  mainTagSize: 'text-[11px]',
+  mainTagSize: 'text-[0.6875rem]',
   mainTitleSize: 'text-[clamp(1.875rem,3.5vw,2.25rem)]', // 30px-36px (updated from text-3xl md:text-4xl)
-  mainSubtitleSize: 'text-[clamp(10px,1.2vw,14px)]', // 10px-14px (updated from text-sm)
+  mainSubtitleSize: 'text-[clamp(0.625rem,1.2vw,0.875rem)]', // 10px-14px (updated from text-sm)
   mainMarginBottom: 'mb-8',
   paneWidth: 'w-full md:w-96',
   panePadding: 'p-8',
@@ -36,8 +36,8 @@ export const BRAND = {
     lineHeight: 1,
   },
   feather: {
-    width: 'clamp(24px, 4vw, 36px)',
-    height: 'clamp(24px, 4vw, 36px)',
+    width: 'clamp(1.5rem, 4vw, 2.25rem)',
+    height: 'clamp(1.5rem, 4vw, 2.25rem)',
     opacity: 0.8,
   },
 };
@@ -109,18 +109,18 @@ export const BRAND_HEADER = {
   arabic: {
     fontFamily: "'Reem Kufi', sans-serif",
     fontWeight: 700,
-    fontSize: '14px',
+    fontSize: '0.875rem',
     lineHeight: 1,
   },
   english: {
     fontFamily: "'Forum', serif",
-    fontSize: '14px',
+    fontSize: '0.875rem',
     letterSpacing: '-0.02em',
     lineHeight: 1,
   },
   feather: {
-    width: '12px',
-    height: '12px',
+    width: '0.75rem',
+    height: '0.75rem',
     opacity: 0.75,
   },
   containerOpacity: 0.58,

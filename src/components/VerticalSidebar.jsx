@@ -79,7 +79,7 @@ const VerticalSidebar = ({
     'w-11 h-11 rounded-lg flex items-center justify-center transition-all duration-200';
   const subBtnHover = theme.goldHoverBg15;
   const labelCls =
-    'text-[7px] leading-none -mt-0.5 font-brand-en tracking-[0.12em] uppercase opacity-60';
+    'text-[0.4375rem] leading-none -mt-0.5 font-brand-en tracking-[0.12em] uppercase opacity-60';
 
   const scrollSidebarToBottom = () => {
     if (scrollRef.current) {
@@ -223,7 +223,7 @@ const VerticalSidebar = ({
                 className={`${btnBase} ${btnHover} ${showTransliteration ? theme.goldActiveBg + ' border ' + theme.goldBorderSubtle : 'opacity-40'}`}
               >
                 <span
-                  className="text-[12px] font-bold leading-none"
+                  className="text-[0.75rem] font-bold leading-none"
                   style={{ color: gold, fontFamily: "'Amiri', serif" }}
                 >
                   عA
@@ -279,7 +279,7 @@ const VerticalSidebar = ({
                       className={`${subBtnBase} ${subBtnHover}`}
                     >
                       <span
-                        className="text-[13px] font-bold leading-none"
+                        className="text-[0.8125rem] font-bold leading-none"
                         style={{ color: gold, fontFamily: "'Forum', serif" }}
                       >
                         T±
@@ -310,7 +310,7 @@ const VerticalSidebar = ({
                       className={`${subBtnBase} ${subBtnHover}`}
                     >
                       <span
-                        className="text-[15px] font-bold leading-none"
+                        className="text-[0.9375rem] font-bold leading-none"
                         style={{ color: gold, fontFamily: "'Amiri', serif" }}
                       >
                         ي
@@ -381,7 +381,7 @@ const VerticalSidebar = ({
                     className={`${btnBase} ${btnHover} ${accountMenuOpen ? theme.goldActiveBg : ''} relative`}
                   >
                     <div
-                      className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold font-brand-en"
+                      className="w-7 h-7 rounded-full flex items-center justify-center text-[0.6875rem] font-bold font-brand-en"
                       style={{
                         background:
                           'linear-gradient(135deg, rgba(197,160,89,0.25), rgba(197,160,89,0.15))',
@@ -393,7 +393,7 @@ const VerticalSidebar = ({
                     </div>
                     {savedPoemsCount > 0 && (
                       <span
-                        className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 rounded-full flex items-center justify-center text-[9px] font-bold font-brand-en"
+                        className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 rounded-full flex items-center justify-center text-[0.5625rem] font-bold font-brand-en"
                         style={{
                           background: 'linear-gradient(135deg, var(--gold), #B8943E)',
                           color: '#000',

@@ -40,14 +40,14 @@ export default function DesktopInsightPane({
             {selectedCategory !== 'All' && (
               <span
                 key={selectedCategory}
-                className="font-amiri text-[11px] px-2.5 py-0.5 rounded-full border border-gold/25 text-gold/80 bg-gold/5"
+                className="font-amiri text-[0.6875rem] px-2.5 py-0.5 rounded-full border border-gold/25 text-gold/80 bg-gold/5"
                 style={{ animation: 'fadeIn 0.3s ease-out' }}
               >
                 {CATEGORIES.find((c) => c.id === selectedCategory)?.labelAr}
               </span>
             )}
           </div>
-          <p className="text-[10px] opacity-30 uppercase font-brand-en truncate mt-1">
+          <p className="text-[0.625rem] opacity-30 uppercase font-brand-en truncate mt-1">
             {current?.poet} • {current?.title}
           </p>
         </div>
@@ -64,7 +64,7 @@ export default function DesktopInsightPane({
               {!interpretation && (
                 <button
                   onClick={handleAnalyze}
-                  className={`group relative w-full py-4 border ${theme.brandBorder} ${theme.brand} rounded-full font-brand-en tracking-widest text-[10px] uppercase ${theme.brandBgHover} transition-all flex items-center justify-center gap-3 overflow-hidden ${theme.brandBg}`}
+                  className={`group relative w-full py-4 border ${theme.brandBorder} ${theme.brand} rounded-full font-brand-en tracking-widest text-[0.625rem] uppercase ${theme.brandBgHover} transition-all flex items-center justify-center gap-3 overflow-hidden ${theme.brandBg}`}
                 >
                   <div className={`absolute inset-0 bg-gradient-to-tr from-transparent via-lapis/10 to-transparent animate-[spin_8s_linear_infinite]`} />
                   <Sparkles size={12} /> Seek Insight
@@ -79,7 +79,7 @@ export default function DesktopInsightPane({
               )}
               {insightParts?.depth && (
                 <div className={`pt-6 border-t ${theme.sectionBorder}`}>
-                  <h4 className={`text-[10px] font-brand-en font-black ${theme.sectionLabel} mb-2 uppercase tracking-widest opacity-80`}>
+                  <h4 className={`text-[0.625rem] font-brand-en font-black ${theme.sectionLabel} mb-2 uppercase tracking-widest opacity-80`}>
                     The Depth
                   </h4>
                   <div className={`pl-4 border-l ${theme.sectionAccent}`}>
@@ -91,7 +91,7 @@ export default function DesktopInsightPane({
               )}
               {insightParts?.author && (
                 <div className={`pt-6 border-t ${theme.sectionBorder}`}>
-                  <h4 className={`text-[10px] font-brand-en font-black ${theme.sectionLabel} mb-2 uppercase tracking-widest opacity-80`}>
+                  <h4 className={`text-[0.625rem] font-brand-en font-black ${theme.sectionLabel} mb-2 uppercase tracking-widest opacity-80`}>
                     The Author
                   </h4>
                   <div className={`pl-4 border-l ${theme.sectionAccent}`}>

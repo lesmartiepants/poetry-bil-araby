@@ -102,6 +102,22 @@ describe('fetchPoem action', () => {
   });
 
   it('sets autoExplainPending when poem has no cachedTranslation', async () => {
+    // Override the fetch mock to return a poem without any translation fields.
+    // normalizeDbPoem maps `english` → `cachedTranslation`, so we must omit
+    // both `english` and `cachedTranslation` to get cachedTranslation: undefined.
+    const poemWithoutTranslation = {
+      id: 42,
+      poet: 'Nizar Qabbani',
+      poetArabic: 'نزار قباني',
+      title: 'Test Poem',
+      arabic: 'بيت شعر عربي',
+      tags: ['Modern', 'Romantic'],
+    };
+    global.fetch = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => poemWithoutTranslation,
+    });
+
     const { fetchPoem } = await import('../stores/actions/fetchPoem');
     await fetchPoem({
       addLog: mockAddLog,

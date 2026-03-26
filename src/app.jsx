@@ -107,6 +107,13 @@ export default function DiwanApp() {
   const audioRef = useRef(null); // Legacy ref — Tone.Player now lives in audioStore
   const isTogglingPlay = useRef(false);
   const controlBarRef = useRef(null);
+  // Tracks which poem ID triggered the current carousel auto-explain, so the
+  // patching effect can match by ID rather than by carouselIndex (prevents race
+  // where poem 1's interpretation lands after the user has swiped to poem 2).
+  const carouselExplainTargetId = useRef(null);
+  // Tracks poem IDs that have already had analyzePoemAction fired, so we never
+  // fire it more than once per poem (prevents flickering/repeated translations).
+  const explainedPoemIds = useRef(new Set());
 
   // Volume-based glow effect refs
   const audioContextRef = useRef(null);
@@ -316,9 +323,13 @@ export default function DiwanApp() {
     fetchPoemsByPoet(current.poet, 5, [current.id]).then((poems) => {
       if (!cancelled && poems.length > 0) {
         setCarouselPoems(poems);
-        // Auto-explain the first carousel poem on initial load if it has no translation
+        // Auto-explain the first carousel poem on initial load if it has no translation.
+        // Guard with explainedPoemIds to ensure we only fire once per poem ID.
         const first = poems[0];
-        if (first && !first.cachedTranslation && !first.english) {
+        if (first && !first.cachedTranslation && !first.english &&
+            !explainedPoemIds.current.has(first.id)) {
+          explainedPoemIds.current.add(first.id);
+          carouselExplainTargetId.current = first.id; // track which poem we're explaining
           analyzePoemAction({ current: first, addLog, track });
         }
       }
@@ -329,15 +340,29 @@ export default function DiwanApp() {
   // When interpretation arrives from an analysis triggered by a carousel poem, patch that
   // poem's english field so PoemCarousel (which reads poem.english) can render the translation.
   // Always prefer the AI-generated translation over the DB translation — it's higher quality.
+  //
+  // IMPORTANT: we match by poem ID (carouselExplainTargetId ref), NOT by carouselIndex.
+  // Without this, if the user swipes while an explain is in-flight, the arriving translation
+  // is stamped onto whichever poem is currently active — not the one that was being explained.
   useEffect(() => {
     if (!interpretation || carouselPoems.length === 0) return;
+    if (!carouselExplainTargetId.current) return; // not a carousel-triggered explain
+
     const parts = parseInsight(interpretation);
     const translation = parts?.poeticTranslation;
     if (!translation) return;
-    const activePoem = carouselPoems[carouselIndex];
-    if (!activePoem) return;
-    updateCarouselPoem(carouselIndex, { english: translation });
-  }, [interpretation, carouselIndex, carouselPoems.length]);
+
+    // Find the poem by its ID, not by the current carousel index
+    const targetIdx = carouselPoems.findIndex(p => p.id === carouselExplainTargetId.current);
+    if (targetIdx === -1) return; // poem is no longer in the carousel
+
+    const targetPoem = carouselPoems[targetIdx];
+    if (targetPoem.english) return; // already has a translation, nothing to do
+
+    updateCarouselPoem(targetIdx, { english: translation });
+    carouselExplainTargetId.current = null; // clear so it doesn't re-fire
+    setInterpretation(null);               // clear so the next explain can fire cleanly
+  }, [interpretation, carouselPoems.length]);
 
   // Eagerly populate the discovered model list so it's ready before any user action.
   // Using the default fetch mock in tests means this never consumes a mockResolvedValueOnce.
@@ -1131,9 +1156,15 @@ export default function DiwanApp() {
                         setInterpretation(null);
                         // Show translation for the new poem by default
                         setShowTranslation(true);
-                        // Auto-explain if the new carousel poem has no translation
+                        // Auto-explain if the new carousel poem has no translation.
+                        // Set the target ref BEFORE firing so the patching effect can
+                        // match by poem ID, not by carouselIndex (race-condition fix).
+                        // Guard with explainedPoemIds to ensure we only fire once per poem.
                         const newPoem = carouselPoems[idx];
-                        if (newPoem && !newPoem.cachedTranslation && !newPoem.english) {
+                        if (newPoem && !newPoem.cachedTranslation && !newPoem.english &&
+                            !explainedPoemIds.current.has(newPoem.id)) {
+                          explainedPoemIds.current.add(newPoem.id);
+                          carouselExplainTargetId.current = newPoem.id;
                           analyzePoemAction({ current: newPoem, addLog, track });
                         }
                       }}

@@ -333,34 +333,6 @@ export default function DiwanApp() {
     return () => { cancelled = true; };
   }, [selectedCategory, useDatabase, current?.poet, current?.id]);
 
-  // Populate carousel from current poem's poet (works even when filter is "All")
-  useEffect(() => {
-    if (!FEATURES.prefetching || !useDatabase) return;
-    if (!current?.poet) return;
-    if (carouselPoems.length > 0) return; // already populated
-
-    let cancelled = false;
-    fetchPoemsByPoet(current.poet, 5, [current.id]).then((poems) => {
-      if (!cancelled && poems.length > 0) {
-        setCarouselPoems(poems);
-        // Auto-explain the first carousel poem on initial load if it has no translation.
-        // Guard with explainedPoemIds to ensure we only fire once per poem ID.
-        // Only add to explainedPoemIds if analyzePoem can actually start — if
-        // isInterpreting is true we skip marking, so the next populate can retry.
-        const first = poems[0];
-        if (first && !first.cachedTranslation && !first.english &&
-            !explainedPoemIds.current.has(first.id)) {
-          const { interpretation: interp, isInterpreting: interpreting } = usePoemStore.getState();
-          if (!interp && !interpreting) {
-            explainedPoemIds.current.add(first.id);
-            carouselExplainTargetId.current = first.id; // track which poem we're explaining
-            analyzePoemAction({ current: first, addLog, track });
-          }
-        }
-      }
-    }).catch(() => {});
-    return () => { cancelled = true; };
-  }, [current?.poet, current?.id, carouselPoems.length, useDatabase]);
 
   // When interpretation arrives from an analysis triggered by a carousel poem, patch that
   // poem's english field so PoemCarousel (which reads poem.english) can render the translation.
@@ -1520,7 +1492,7 @@ export default function DiwanApp() {
             }}
             onSelectPoet={(id) => {
               setSelectedCategory(id);
-              handleFetch();
+              // handleFetch() removed — selectedCategory effect handles it
             }}
           />
         )}

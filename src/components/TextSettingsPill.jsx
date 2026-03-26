@@ -1,5 +1,5 @@
 import { Popover, ToggleGroup, Select } from 'radix-ui';
-import { Languages, ALargeSmall, BookType, ChevronDown, Check } from 'lucide-react';
+import { Languages, ALargeSmall, ChevronDown, Check } from 'lucide-react';
 import { THEME } from '../constants/theme.js';
 import { FONTS } from '../constants/fonts.js';
 import { useUIStore } from '../stores/uiStore';
@@ -19,8 +19,6 @@ const TextSettingsPill = () => {
   const showTransliteration = useUIStore((s) => s.showTransliteration);
   const textSizeLevel = useUIStore((s) => s.textSize);
   const currentFont = useUIStore((s) => s.font);
-  const textSizeLabel = TEXT_SIZES[textSizeLevel]?.label || 'M';
-
   return (
     <>
       <style>{`
@@ -32,19 +30,27 @@ const TextSettingsPill = () => {
           from { opacity: 0; transform: translateY(0.5rem); }
           to { opacity: 1; transform: translateY(0); }
         }
+        @keyframes pillSlideLeft {
+          from { opacity: 0; transform: translateX(0.5rem); }
+          to { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes pillSlideRight {
+          from { opacity: 0; transform: translateX(-0.5rem); }
+          to { opacity: 1; transform: translateX(0); }
+        }
         [data-side="bottom"] { animation: pillSlideDown 0.15s ease-out; }
         [data-side="top"] { animation: pillSlideUp 0.15s ease-out; }
+        [data-side="left"] { animation: pillSlideLeft 0.15s ease-out; }
+        [data-side="right"] { animation: pillSlideRight 0.15s ease-out; }
       `}</style>
 
       <Popover.Root>
         <Popover.Trigger asChild>
           <button
             aria-label="Text settings"
-            className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-200 backdrop-blur-xl border ${theme.border} ${
-              darkMode ? 'bg-black/70' : 'bg-white/80'
-            } ${theme.goldHoverBg15}`}
+            className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-200 ${theme.goldHoverBg15}`}
           >
-            <BookType size={20} style={{ color: gold }} />
+            <ALargeSmall size={20} style={{ color: gold }} />
           </button>
         </Popover.Trigger>
 
@@ -58,13 +64,6 @@ const TextSettingsPill = () => {
             }`}
             style={{ zIndex: 46 }}
           >
-            {/* Status indicators */}
-            <div className="flex items-center gap-3 px-3 py-1.5 mb-1 rounded-lg" style={{ background: darkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)' }}>
-              <Languages size={14} style={{ color: gold, opacity: showTranslation ? 1 : 0.3 }} />
-              <span className="text-xs font-bold" style={{ color: gold, opacity: showTransliteration ? 1 : 0.3 }}>عA</span>
-              <span className="text-xs font-bold" style={{ color: gold }}>{textSizeLabel}</span>
-            </div>
-
             {/* Row 1: Translation Toggle */}
             <button
               onClick={() => useUIStore.getState().toggleTranslation()}
@@ -171,9 +170,8 @@ const TextSettingsPill = () => {
                         >
                           <Select.ItemText>
                             <span className={f.family} style={{ fontSize: '1rem' }}>
-                              خط عربي
+                              {f.labelAr}
                             </span>
-                            <span className="text-xs opacity-60 ml-2">{f.label}</span>
                           </Select.ItemText>
                           <Select.ItemIndicator>
                             <Check size={14} style={{ color: gold }} />

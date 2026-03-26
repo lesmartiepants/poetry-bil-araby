@@ -39,6 +39,7 @@ const PoemCarousel = ({
     duration: 25,
   });
 
+  const [activeIndex, setActiveIndex] = useState(currentIndex);
   const [showSwipeHint, setShowSwipeHint] = useState(true);
   const [hasSwiped, setHasSwiped] = useState(false);
   const [canScrollPrev, setCanScrollPrev] = useState(false);
@@ -61,6 +62,7 @@ const PoemCarousel = ({
   const onSelect = useCallback(() => {
     if (!emblaApi) return;
     const idx = emblaApi.selectedScrollSnap();
+    setActiveIndex(idx);
     onSlideChange(idx);
     setHasSwiped(true);
     setShowSwipeHint(false);
@@ -165,9 +167,9 @@ const PoemCarousel = ({
                   <div className="flex flex-col gap-5 md:gap-7">
                     {versePairs.map((pair, idx) => (
                       <div
-                        key={`${poem.id}-${idx}`}
-                        className="flex flex-col gap-0.5 verse-fade-up"
-                        style={{ animationDelay: `${idx * 80}ms` }}
+                        key={`${poem.id}-${idx}${slideIdx === activeIndex ? '-active' : ''}`}
+                        className={`flex flex-col gap-0.5 ${slideIdx === activeIndex ? 'verse-fade-up' : 'opacity-100'}`}
+                        style={slideIdx === activeIndex ? { animationDelay: `${idx * 80}ms` } : undefined}
                       >
                         <p
                           dir="rtl"

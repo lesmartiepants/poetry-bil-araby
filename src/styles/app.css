@@ -50,8 +50,8 @@
   position: relative;
   width: 100%;
   max-width: 550px;
-  margin: 0 auto 16px;
-  padding: 16px 24px;
+  margin: 0 auto 1rem;
+  padding: 1rem 1.5rem;
 }
 
 .minimal-frame svg {
@@ -66,7 +66,7 @@
 
 @media (min-width: 768px) {
   .minimal-frame {
-    padding: 28px 40px;
+    padding: 1.75rem 2.5rem;
   }
 }
 
@@ -184,7 +184,3 @@
 }
 .fire-tap { animation: fireTapFlash 0.42s ease-out forwards; }
 
-@keyframes ratchetToastIn {
-  from { opacity: 0; transform: translateX(-50%) translateY(12px) scale(0.95); }
-  to   { opacity: 1; transform: translateX(-50%) translateY(0)    scale(1); }
-}

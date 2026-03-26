@@ -129,7 +129,7 @@ const InsightsDrawer = ({ insightParts }) => {
             <div className="space-y-6">
               {insightParts?.depth && (
                 <div className={`pt-4 border-t ${theme.sectionBorder}`}>
-                  <h4 className={`text-[10px] font-brand-en font-black ${theme.sectionLabel} mb-2 uppercase tracking-widest opacity-80`}>
+                  <h4 className={`text-[0.625rem] font-brand-en font-black ${theme.sectionLabel} mb-2 uppercase tracking-widest opacity-80`}>
                     The Depth
                   </h4>
                   <div className={`pl-4 border-l ${theme.sectionAccent}`}>
@@ -141,7 +141,7 @@ const InsightsDrawer = ({ insightParts }) => {
               )}
               {insightParts?.author && (
                 <div className={`pt-4 border-t ${theme.sectionBorder}`}>
-                  <h4 className={`text-[10px] font-brand-en font-black ${theme.sectionLabel} mb-2 uppercase tracking-widest opacity-80`}>
+                  <h4 className={`text-[0.625rem] font-brand-en font-black ${theme.sectionLabel} mb-2 uppercase tracking-widest opacity-80`}>
                     The Author
                   </h4>
                   <div className={`pl-4 border-l ${theme.sectionAccent}`}>

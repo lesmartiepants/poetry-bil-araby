@@ -213,7 +213,7 @@ export default function PoemCard({
         ) : interpretation ? (
           <div className="flex flex-col gap-10 animate-in slide-in-from-bottom-10 duration-1000">
             <div className={`pt-6 border-t ${theme.sectionBorder}`}>
-              <h4 className={`text-[10px] font-brand-en font-black ${theme.sectionLabel} mb-3 uppercase tracking-[0.3em] opacity-80`}>
+              <h4 className={`text-[0.625rem] font-brand-en font-black ${theme.sectionLabel} mb-3 uppercase tracking-[0.3em] opacity-80`}>
                 The Depth
               </h4>
               <div className={`pl-4 border-l ${theme.sectionAccent}`}>
@@ -223,7 +223,7 @@ export default function PoemCard({
               </div>
             </div>
             <div className={`pt-6 border-t ${theme.sectionBorder}`}>
-              <h4 className={`text-[10px] font-brand-en font-black ${theme.sectionLabel} mb-3 uppercase tracking-[0.3em] opacity-80`}>
+              <h4 className={`text-[0.625rem] font-brand-en font-black ${theme.sectionLabel} mb-3 uppercase tracking-[0.3em] opacity-80`}>
                 The Author
               </h4>
               <div className={`pl-4 border-l ${theme.sectionAccent}`}>

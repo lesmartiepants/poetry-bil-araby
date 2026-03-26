@@ -1,4 +1,5 @@
 import Sentry from '../../sentry.js';
+import { toast } from 'sonner';
 import { usePoemStore } from '../poemStore';
 import { filterPoemsByCategory } from '../../utils/filterPoems.js';
 import { CATEGORIES } from '../../constants/index.js';
@@ -123,6 +124,7 @@ async function fetchFromDatabase({
   emitEvent(newPoem.id, 'serve', { source: 'database' });
   addLog('Event', `→ serve event emitted | poem_id: ${newPoem.id} | source: database`, 'info');
 
+  toast('New poem discovered', { description: newPoem.poet, duration: 2500 });
   setPoems((prev) => {
     const updated = [...prev, newPoem];
     const freshFiltered = filterPoemsByCategory(updated, usePoemStore.getState().selectedCategory);
@@ -222,6 +224,7 @@ async function fetchFromAI({
   track('poem_discovered', { source: 'ai', poet: newPoem.poet });
   emitEvent(newPoem.id, 'serve', { source: 'ai' });
   addLog('Event', `→ serve event emitted | poem_id: ${newPoem.id} | source: ai`, 'info');
+  toast('New poem discovered', { description: newPoem.poet, duration: 2500 });
 
   setPoems((prev) => {
     const updated = [...prev, newPoem];

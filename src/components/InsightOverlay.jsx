@@ -4,14 +4,8 @@ import { THEME } from '../constants/theme.js';
 import { useUIStore } from '../stores/uiStore';
 
 export default function InsightOverlay({
-  open,
-  insightParts,
-  currentPoem,
-  isInterpreting,
-  interpretation,
-  onClose,
-  ratchetMode,
-  handleAnalyze,
+  open, insightParts, currentPoem, isInterpreting, interpretation,
+  onClose, ratchetMode, handleAnalyze,
 }) {
   const darkMode = useUIStore((s) => s.darkMode);
   const theme = darkMode ? THEME.dark : THEME.light;
@@ -19,24 +13,24 @@ export default function InsightOverlay({
 
   const [inAuthorSection, setInAuthorSection] = useState(false);
   const authorRef = useRef(null);
-  const scrollContainerRef = useRef(null);
+  const scrollRef = useRef(null);
 
+  // Header morph: poem title → poet name when Author section scrolls into view
   useEffect(() => {
-    if (!authorRef.current || !scrollContainerRef.current) return;
-    const observer = new IntersectionObserver(
-      ([entry]) => setInAuthorSection(entry.isIntersecting),
-      { root: scrollContainerRef.current, threshold: 0.1 }
+    if (!authorRef.current || !scrollRef.current) return;
+    const obs = new IntersectionObserver(
+      ([e]) => setInAuthorSection(e.isIntersecting),
+      { root: scrollRef.current, threshold: 0.1 }
     );
-    observer.observe(authorRef.current);
-    return () => observer.disconnect();
+    obs.observe(authorRef.current);
+    return () => obs.disconnect();
   }, [insightParts?.author]);
 
   return (
     <Drawer.Root
       open={open}
-      onOpenChange={(isOpen) => {
-        if (!isOpen) onClose();
-      }}
+      onOpenChange={(isOpen) => { if (!isOpen) onClose(); }}
+      snapPoints={[0.9]}
       closeThreshold={0.1}
       modal
     >
@@ -51,26 +45,27 @@ export default function InsightOverlay({
         />
         <Drawer.Content
           data-vaul-drawer
-          className="fixed bottom-0 left-0 right-0 z-[61] rounded-t-2xl"
+          className="z-[61] rounded-t-2xl flex flex-col"
           style={{ background: o.bg }}
         >
-          {/* Inner layout — constrained to 80dvh so we don't fight Vaul's transforms */}
-          <div className="flex flex-col h-[90dvh] max-h-[90dvh] overflow-hidden rounded-t-2xl">
-          {/* Gold rule */}
-          <div className="h-px flex-shrink-0" style={{ background: o.goldRule }} />
+          {/* NO fixed, NO bottom-0, NO height, NO inner wrapper — Vaul positions this */}
 
-          {/* Mobile swipe handle */}
           <Drawer.Handle
-            className="md:hidden mx-auto mt-4 mb-2 w-8 h-[3px] rounded-full"
+            className="mx-auto mt-3 mb-1 w-8 h-[3px] rounded-full"
             style={{ background: 'var(--gold-structural)' }}
           />
 
-          {/* Topbar */}
+          {/* Gold rule */}
+          <div className="h-px flex-shrink-0" style={{ background: o.goldRule }} />
+
+          {/* Header */}
           <header
             className="flex items-center justify-between px-6 md:px-8 py-3 flex-shrink-0"
             style={{ borderBottom: `1px solid ${o.borderSubtle}` }}
           >
-            <Drawer.Title className="sr-only">{ratchetMode ? 'Ratchet Insight' : 'Poetic Insight'}</Drawer.Title>
+            <Drawer.Title className="sr-only">
+              {ratchetMode ? 'Ratchet Insight' : 'Poetic Insight'}
+            </Drawer.Title>
             <div className="flex-1 flex items-center justify-between min-w-0 mr-3">
               <span
                 className="truncate transition-all duration-300"
@@ -81,7 +76,9 @@ export default function InsightOverlay({
                   color: 'var(--gold)',
                 }}
               >
-                {inAuthorSection ? (currentPoem?.poetArabic || currentPoem?.poet) : (currentPoem?.titleArabic || currentPoem?.title)}
+                {inAuthorSection
+                  ? (currentPoem?.poetArabic || currentPoem?.poet)
+                  : (currentPoem?.titleArabic || currentPoem?.title)}
               </span>
               <span
                 className="truncate transition-all duration-300"
@@ -97,18 +94,9 @@ export default function InsightOverlay({
             <Drawer.Close asChild>
               <button
                 data-testid="insight-close"
-                className="hidden md:block px-4 py-1.5 rounded-full text-[10px] tracking-[0.08em] font-fell transition-all"
-                style={{ border: `1px solid ${o.borderSubtle}`, color: o.textMuted }}
-              >
-                Close
-              </button>
-            </Drawer.Close>
-            <Drawer.Close asChild>
-              <button
-                data-testid="insight-close-mobile"
                 type="button"
                 aria-label="Close insight overlay"
-                className="md:hidden w-7 h-7 rounded-full flex items-center justify-center transition-all"
+                className="w-7 h-7 rounded-full flex items-center justify-center transition-all flex-shrink-0"
                 style={{ border: `1px solid ${o.borderSubtle}`, color: o.textMuted }}
               >
                 ✕
@@ -116,14 +104,16 @@ export default function InsightOverlay({
             </Drawer.Close>
           </header>
 
-          {/* Scrollable body */}
+          {/* Scrollable body — data-vaul-no-drag prevents swipe vs scroll conflict */}
           <div
-            ref={scrollContainerRef}
+            ref={scrollRef}
             className="flex-1 overflow-y-auto px-6 md:px-8 pb-10"
+            data-vaul-no-drag
             style={{ scrollbarWidth: 'thin', scrollbarColor: 'var(--gold-structural) transparent' }}
           >
             {isInterpreting ? (
-              <div className="flex flex-col items-center justify-center gap-5 min-h-[200px]">
+              /* Loading state */
+              <div className="flex flex-col items-center justify-center gap-5 min-h-[200px] pt-16">
                 <div
                   className="w-7 h-7 rounded-full animate-spin"
                   style={{
@@ -141,13 +131,19 @@ export default function InsightOverlay({
               </div>
             ) : (
               <>
-                {/* Sticky translation block */}
+                {/* Sticky translation */}
                 {insightParts?.poeticTranslation && (
                   <div
-                    className="sticky top-0 z-10 pb-4 mb-4"
-                    style={{ background: o.bg, borderBottom: '1px solid var(--gold-structural)' }}
+                    className="sticky top-0 z-10 pt-2 pb-4 mb-4"
+                    style={{
+                      background: o.bg,
+                      borderBottom: '1px solid var(--gold-structural)',
+                    }}
                   >
-                    <div className="text-[9px] uppercase tracking-[0.18em] mb-2" style={{ color: o.textMuted }}>
+                    <div
+                      className="text-[9px] uppercase tracking-[0.18em] mb-2"
+                      style={{ color: o.textMuted }}
+                    >
                       Translation
                     </div>
                     <p
@@ -159,64 +155,56 @@ export default function InsightOverlay({
                   </div>
                 )}
 
-                {/* Single column with gold rules */}
-                <div>
-                  {insightParts?.depth && (
-                    <div className="py-5 animate-[fadeUp_0.5s_ease_0.25s_both]">
-                      <div className="flex items-center gap-2 mb-2.5">
-                        <span
-                          className="text-[9px] uppercase tracking-[0.18em] whitespace-nowrap"
-                          style={{ color: o.sectionLabel }}
-                        >
-                          The Depth
-                        </span>
-                        <span
-                          className="flex-1 h-px"
-                          style={{
-                            background: `linear-gradient(90deg, ${o.sectionLine}, transparent)`,
-                          }}
-                        />
-                      </div>
-                      <p
-                        className="font-fell leading-[1.85] text-[13px] md:text-[13px]"
-                        style={{ color: o.textDim }}
+                {/* The Depth */}
+                {insightParts?.depth && (
+                  <div className="py-5 animate-[fadeUp_0.5s_ease_0.25s_both]">
+                    <div className="flex items-center gap-2 mb-2.5">
+                      <span
+                        className="text-[9px] uppercase tracking-[0.18em] whitespace-nowrap"
+                        style={{ color: o.sectionLabel }}
                       >
-                        {insightParts.depth}
-                      </p>
+                        The Depth
+                      </span>
+                      <span
+                        className="flex-1 h-px"
+                        style={{ background: `linear-gradient(90deg, ${o.sectionLine}, transparent)` }}
+                      />
                     </div>
-                  )}
-                  {insightParts?.depth && insightParts?.author && (
-                    <div className="h-px" style={{ background: o.goldRule }} />
-                  )}
-                  {insightParts?.author && (
-                    <div ref={authorRef} className="py-5 animate-[fadeUp_0.5s_ease_0.4s_both]">
-                      <div className="flex items-center gap-2 mb-2.5">
-                        <span
-                          className="text-[9px] uppercase tracking-[0.18em] whitespace-nowrap"
-                          style={{ color: o.sectionLabel }}
-                        >
-                          The Author
-                        </span>
-                        <span
-                          className="flex-1 h-px"
-                          style={{
-                            background: `linear-gradient(90deg, ${o.sectionLine}, transparent)`,
-                          }}
-                        />
-                      </div>
-                      <p
-                        className="font-fell leading-[1.85] text-[13px] md:text-[13.5px]"
-                        style={{ color: o.textDim }}
+                    <p className="font-fell leading-[1.85] text-[13.5px]" style={{ color: o.textDim }}>
+                      {insightParts.depth}
+                    </p>
+                  </div>
+                )}
+
+                {/* Gold rule divider */}
+                {insightParts?.depth && insightParts?.author && (
+                  <div className="h-px" style={{ background: o.goldRule }} />
+                )}
+
+                {/* The Author — ref triggers header morph */}
+                {insightParts?.author && (
+                  <div ref={authorRef} className="py-5 animate-[fadeUp_0.5s_ease_0.4s_both]">
+                    <div className="flex items-center gap-2 mb-2.5">
+                      <span
+                        className="text-[9px] uppercase tracking-[0.18em] whitespace-nowrap"
+                        style={{ color: o.sectionLabel }}
                       >
-                        {insightParts.author}
-                      </p>
+                        The Author
+                      </span>
+                      <span
+                        className="flex-1 h-px"
+                        style={{ background: `linear-gradient(90deg, ${o.sectionLine}, transparent)` }}
+                      />
                     </div>
-                  )}
-                </div>
+                    <p className="font-fell leading-[1.85] text-[13.5px]" style={{ color: o.textDim }}>
+                      {insightParts.author}
+                    </p>
+                  </div>
+                )}
 
                 {/* Empty state */}
                 {!interpretation && !isInterpreting && (
-                  <div className="flex flex-col items-center justify-center min-h-[200px] gap-4">
+                  <div className="flex flex-col items-center justify-center min-h-[200px] gap-4 pt-16">
                     <p className="font-brand-en italic text-sm" style={{ color: o.textMuted }}>
                       {ratchetMode
                         ? 'Tap Explain to get that ratchet take'
@@ -234,8 +222,6 @@ export default function InsightOverlay({
               </>
             )}
           </div>
-
-          </div>{/* end inner layout */}
         </Drawer.Content>
       </Drawer.Portal>
     </Drawer.Root>

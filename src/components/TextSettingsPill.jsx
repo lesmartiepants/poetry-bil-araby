@@ -48,9 +48,11 @@ const TextSettingsPill = () => {
         <Popover.Trigger asChild>
           <button
             aria-label="Text settings"
-            className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-200 ${theme.goldHoverBg15}`}
+            className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-all duration-200 backdrop-blur-xl border ${theme.border} ${
+              darkMode ? 'bg-black/70' : 'bg-white/80'
+            } ${theme.goldHoverBg15}`}
           >
-            <ALargeSmall size={20} style={{ color: gold }} />
+            <ALargeSmall size={18} style={{ color: gold }} />
           </button>
         </Popover.Trigger>
 

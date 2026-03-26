@@ -1,6 +1,6 @@
 import { X, Feather } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { THEME } from '../../constants/theme.js';
+import { THEME, COLORS } from '../../constants/theme.js';
 import { useUIStore } from '../../stores/uiStore';
 import { useModalStore } from '../../stores/modalStore';
 
@@ -17,7 +17,7 @@ const AuthModal = ({ onSignInWithGoogle }) => {
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       style={{
         background:
-          'radial-gradient(ellipse at center, rgba(197,160,89,0.08) 0%, rgba(0,0,0,0.7) 100%)',
+          COLORS.gold.overlay,
       }}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
@@ -32,8 +32,8 @@ const AuthModal = ({ onSignInWithGoogle }) => {
         exit={{ scale: 0.95, opacity: 0 }}
         transition={{ type: 'spring', damping: 25, stiffness: 300 }}
         style={{
-          background: 'linear-gradient(145deg, rgba(20,18,15,0.97) 0%, rgba(12,12,14,0.98) 100%)',
-          border: '1px solid rgba(197,160,89,0.25)',
+          background: theme.authModalCardBg,
+          border: `1px solid ${COLORS.gold.alpha25}`,
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -42,7 +42,7 @@ const AuthModal = ({ onSignInWithGoogle }) => {
           style={{
             height: '2px',
             background:
-              'linear-gradient(90deg, transparent, rgba(197,160,89,0.6), rgba(212,180,120,0.8), rgba(197,160,89,0.6), transparent)',
+              COLORS.gold.accentGradient,
           }}
         />
 
@@ -52,7 +52,7 @@ const AuthModal = ({ onSignInWithGoogle }) => {
             className="absolute top-4 right-4 p-2 rounded-full hover:bg-white/10 transition-colors"
             aria-label="Close"
           >
-            <X size={18} style={{ color: 'rgba(197,160,89,0.6)' }} />
+            <X size={18} style={{ color: COLORS.gold.alpha60 }} />
           </button>
 
           {/* Greeting */}
@@ -68,7 +68,7 @@ const AuthModal = ({ onSignInWithGoogle }) => {
           {/* Decorative divider */}
           <div className="flex items-center gap-3 mb-6">
             <div className="flex-1 h-px bg-gradient-to-r from-transparent to-gold/30" />
-            <Feather size={12} style={{ color: 'rgba(197,160,89,0.4)' }} />
+            <Feather size={12} style={{ color: COLORS.gold.alpha40 }} />
             <div className="flex-1 h-px bg-gradient-to-l from-transparent to-gold/30" />
           </div>
 
@@ -78,9 +78,9 @@ const AuthModal = ({ onSignInWithGoogle }) => {
             className="w-full py-3.5 px-5 rounded-xl transition-all duration-200 flex items-center justify-center gap-3 hover:scale-[1.02] active:scale-[0.98]"
             style={{
               background:
-                'linear-gradient(135deg, rgba(197,160,89,0.12) 0%, rgba(197,160,89,0.06) 100%)',
-              border: '1px solid rgba(197,160,89,0.3)',
-              color: '#D4C8B0',
+                COLORS.gold.signInBtnBg,
+              border: `1px solid ${COLORS.gold.alpha30}`,
+              color: COLORS.gold.signInBtnText,
               fontFamily: "'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif",
               fontSize: '14px',
               fontWeight: 500,
@@ -120,7 +120,7 @@ const AuthModal = ({ onSignInWithGoogle }) => {
         <div
           style={{
             height: '1px',
-            background: 'linear-gradient(90deg, transparent, rgba(197,160,89,0.3), transparent)',
+            background: COLORS.gold.accentLine,
           }}
         />
       </motion.div>

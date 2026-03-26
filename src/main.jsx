@@ -4,6 +4,7 @@ import ReactDOM from 'react-dom/client';
 import * as Sentry from '@sentry/react';
 import { Analytics } from '@vercel/analytics/react';
 import DiwanApp from './app.jsx';
+import { COLORS } from './constants/theme.js';
 import './index.css';
 
 const SentryErrorBoundary = Sentry.ErrorBoundary;
@@ -19,8 +20,8 @@ ReactDOM.createRoot(document.getElementById('root')).render(
             alignItems: 'center',
             justifyContent: 'center',
             minHeight: '100vh',
-            backgroundColor: '#0c0c0e',
-            color: '#e7e5e4',
+            backgroundColor: COLORS.error.bg,
+            color: COLORS.error.text,
             fontFamily: 'system-ui, -apple-system, sans-serif',
             padding: '2rem',
             textAlign: 'center',
@@ -44,15 +45,15 @@ ReactDOM.createRoot(document.getElementById('root')).render(
             style={{
               padding: '0.75rem 2rem',
               fontSize: '1rem',
-              backgroundColor: '#6366f1',
+              backgroundColor: COLORS.error.btnBg,
               color: 'white',
               border: 'none',
               borderRadius: '0.5rem',
               cursor: 'pointer',
               transition: 'background-color 0.2s',
             }}
-            onMouseOver={(e) => (e.target.style.backgroundColor = '#4f46e5')}
-            onMouseOut={(e) => (e.target.style.backgroundColor = '#6366f1')}
+            onMouseOver={(e) => (e.target.style.backgroundColor = COLORS.error.btnHover)}
+            onMouseOut={(e) => (e.target.style.backgroundColor = COLORS.error.btnBg)}
           >
             Refresh Page
           </button>

@@ -18,7 +18,7 @@ import {
   UserRound,
 } from 'lucide-react';
 import { track } from '@vercel/analytics';
-import { THEME } from '../constants/theme.js';
+import { THEME, COLORS } from '../constants/theme.js';
 import { FONTS } from '../constants/fonts.js';
 import { useUIStore } from '../stores/uiStore';
 import { useModalStore } from '../stores/modalStore';
@@ -348,15 +348,15 @@ const VerticalSidebar = ({
                         ratchetMode
                           ? {
                               background:
-                                'linear-gradient(135deg, rgba(249,115,22,0.2), rgba(239,68,68,0.15))',
-                              borderColor: 'rgba(249,115,22,0.5)',
+                                COLORS.ratchet.activeGradient,
+                              borderColor: COLORS.ratchet.activeBorder,
                             }
                           : {}
                       }
                     >
-                      <Flame style={{ color: ratchetMode ? '#f97316' : gold }} size={16} />
+                      <Flame style={{ color: ratchetMode ? COLORS.ratchet.orange : gold }} size={16} />
                     </button>
-                    <span className={labelCls} style={{ color: ratchetMode ? '#f97316' : gold }}>
+                    <span className={labelCls} style={{ color: ratchetMode ? COLORS.ratchet.orange : gold }}>
                       Ratchet
                     </span>
                   </div>
@@ -384,8 +384,8 @@ const VerticalSidebar = ({
                       className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold font-brand-en"
                       style={{
                         background:
-                          'linear-gradient(135deg, rgba(197,160,89,0.25), rgba(197,160,89,0.15))',
-                        border: '1.5px solid rgba(197,160,89,0.5)',
+                          COLORS.gold.avatarBg,
+                        border: COLORS.gold.avatarBorder,
                         color: gold,
                       }}
                     >
@@ -395,8 +395,8 @@ const VerticalSidebar = ({
                       <span
                         className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 rounded-full flex items-center justify-center text-[9px] font-bold font-brand-en"
                         style={{
-                          background: 'linear-gradient(135deg, var(--gold), #B8943E)',
-                          color: '#000',
+                          background: COLORS.gold.badgeGradient,
+                          color: COLORS.black,
                           padding: '0 3px',
                         }}
                       >

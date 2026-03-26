@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { X, Loader2, Search } from 'lucide-react';
 import { motion } from 'framer-motion';
 
-import { CATEGORIES } from '../constants/index.js';
+import { CATEGORIES, COLORS, THEME } from '../constants/index.js';
 import { useUIStore } from '../stores/uiStore';
 import { useModalStore } from '../stores/modalStore';
 import { usePoemStore } from '../stores/poemStore';
@@ -109,7 +109,7 @@ const GoldenFireIcon = ({ size = 24, glow = true }) => {
             width: 3,
             height: 3,
             borderRadius: '50%',
-            background: 'rgba(197,160,89,1)',
+            background: COLORS.gold.ember1,
             animation: 'ember1 6s ease-out infinite 0s',
           }}
         />
@@ -122,7 +122,7 @@ const GoldenFireIcon = ({ size = 24, glow = true }) => {
             width: 2.5,
             height: 2.5,
             borderRadius: '50%',
-            background: 'rgba(240,205,90,1)',
+            background: COLORS.gold.ember2,
             animation: 'ember2 6s ease-out infinite 1.2s',
           }}
         />
@@ -135,7 +135,7 @@ const GoldenFireIcon = ({ size = 24, glow = true }) => {
             width: 2,
             height: 2,
             borderRadius: '50%',
-            background: 'rgba(255,225,100,0.9)',
+            background: COLORS.gold.ember3,
             animation: 'ember3 6s ease-out infinite 2.4s',
           }}
         />
@@ -148,7 +148,7 @@ const GoldenFireIcon = ({ size = 24, glow = true }) => {
             width: 2,
             height: 2,
             borderRadius: '50%',
-            background: 'rgba(197,160,89,0.85)',
+            background: COLORS.gold.ember4,
             animation: 'ember4 6s ease-out infinite 0.6s',
           }}
         />
@@ -161,7 +161,7 @@ const GoldenFireIcon = ({ size = 24, glow = true }) => {
             width: 1.5,
             height: 1.5,
             borderRadius: '50%',
-            background: 'rgba(255,210,80,0.8)',
+            background: COLORS.gold.ember5,
             animation: 'ember5 6s ease-out infinite 1.8s',
           }}
         />
@@ -316,11 +316,12 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
   }, [poetSearch, dynamicPoets, selectedCategory]);
 
   // Text color for the current theme
-  const textColor = darkMode ? 'rgba(214,211,205,0.9)' : 'rgba(40,35,30,0.9)';
-  const subTextColor = darkMode ? 'rgba(214,211,205,0.6)' : 'rgba(40,35,30,0.6)';
-  const subtleBorder = darkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.07)';
-  const cardBg = darkMode ? 'rgba(255,255,255,0.025)' : 'rgba(0,0,0,0.02)';
-  const stickyBg = darkMode ? 'rgba(18,16,12,0.97)' : 'rgba(253,252,248,0.97)';
+  const theme = darkMode ? THEME.dark : THEME.light;
+  const textColor = theme.textInline;
+  const subTextColor = theme.subTextInline;
+  const subtleBorder = theme.subtleBorderInline;
+  const cardBg = theme.cardBgInline;
+  const stickyBg = theme.stickyBgInline;
 
   return (
     <>
@@ -343,11 +344,9 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
         transition={{ type: 'spring', damping: 28, stiffness: 280 }}
         style={{
           height: '90dvh',
-          background: darkMode
-            ? 'linear-gradient(180deg, rgba(18,16,12,0.99) 0%, rgba(12,12,14,1) 100%)'
-            : 'linear-gradient(180deg, rgba(253,252,248,0.99) 0%, rgba(245,243,238,1) 100%)',
-          borderTop: '1px solid rgba(197,160,89,0.22)',
-          boxShadow: '0 -20px 60px rgba(0,0,0,0.5)',
+          background: theme.discoverDrawerBg,
+          borderTop: `1px solid ${COLORS.gold.alpha20}`,
+          boxShadow: COLORS.drawerShadow,
         }}
       >
         {/* Drag handle bar */}
@@ -373,8 +372,8 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
             onClick={onClose}
             className="absolute top-0 right-4 w-8 h-8 flex items-center justify-center rounded-full transition-colors"
             style={{
-              background: 'rgba(197,160,89,0.08)',
-              border: '1px solid rgba(197,160,89,0.18)',
+              background: COLORS.gold.alpha8,
+              border: `1px solid ${COLORS.gold.alpha18}`,
             }}
             aria-label="Close discover"
           >
@@ -385,7 +384,7 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
         {/* ── Single unified scroll container ── */}
         <div
           className="flex-1 overflow-y-auto"
-          style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(197,160,89,0.2) transparent' }}
+          style={{ scrollbarWidth: 'thin', scrollbarColor: COLORS.gold.scrollbar }}
         >
           {/* ── Horizontal strip: scrollable poet tiles (scrolls away) ── */}
           {!poetSearch && (
@@ -521,14 +520,14 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
                     backgroundPosition: '0% center',
                     animation: 'goldFoilSheen 2.4s ease-in-out 1 forwards',
                     boxShadow:
-                      '0 2px 14px rgba(200,160,40,0.4), inset 0 1px 0 rgba(255,248,180,0.4), inset 0 -1px 0 rgba(0,0,0,0.10)',
+                      COLORS.gold.foilShadow,
                   }}
                 >
                   <span
                     className="font-brand-en font-bold text-[13px] uppercase"
                     style={{
-                      color: '#2c1a04',
-                      textShadow: '0 1px 2px rgba(255,248,180,0.5)',
+                      color: COLORS.gold.foilText,
+                      textShadow: COLORS.gold.foilTextShadow,
                       letterSpacing: '0.12em',
                     }}
                   >
@@ -555,9 +554,9 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
                   aria-label="Search poets"
                   className="w-full rounded-xl pl-8 pr-16 py-1.5 text-[14px] font-tajawal transition-colors focus:outline-none"
                   style={{
-                    background: 'rgba(197,160,89,0.06)',
-                    border: '1px solid rgba(197,160,89,0.18)',
-                    color: darkMode ? '#d6d3cd' : '#3c3531',
+                    background: COLORS.gold.alpha6,
+                    border: `1px solid ${COLORS.gold.alpha18}`,
+                    color: theme.searchInputTextColor,
                   }}
                 />
                 {/* Arabic hint — right side, shown only when input is empty */}
@@ -726,7 +725,7 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
             {selectedCategory !== 'All' && !poetSearch && (
               <div
                 className="px-4 mt-3 pt-3 border-t"
-                style={{ borderColor: 'rgba(197,160,89,0.1)' }}
+                style={{ borderColor: COLORS.gold.alpha10 }}
               >
                 <button
                   onClick={() => {

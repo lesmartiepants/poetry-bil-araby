@@ -92,3 +92,5 @@ poetry_quality_and_curation/retriever_and_quality_curator/data/shard_ids/
 
 # Script progress/state files (ephemeral, resume state only)
 scripts/title-progress.json
+node_modules/
+dist/

@@ -19,6 +19,18 @@ vi.mock('vaul', () => ({
   },
 }));
 
+// Mock IntersectionObserver as a proper constructor
+class MockIntersectionObserver {
+  constructor(callback, options) {
+    this.callback = callback;
+    this.options = options;
+    this.observe = vi.fn();
+    this.disconnect = vi.fn();
+    this.unobserve = vi.fn();
+  }
+}
+global.IntersectionObserver = MockIntersectionObserver;
+
 // Mock zustand store
 vi.mock('../stores/uiStore', () => ({
   useUIStore: (selector) =>

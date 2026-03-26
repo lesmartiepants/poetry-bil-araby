@@ -14,17 +14,19 @@ const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
  * @param {Object} poem - Raw poem object from the API
  * @returns {Object} New poem object with normalised fields
  */
-const normalizeDbPoem = (poem) => ({
-  ...poem,
-  arabic: poem.arabic ? poem.arabic.replace(/\*/g, '\n') : poem.arabic,
-  english: poem.cachedTranslation
-    ? poem.cachedTranslation.replace(/\*/g, '\n')
-    : (poem.english || ''),
-  cachedTranslation: poem.cachedTranslation
-    ? poem.cachedTranslation.replace(/\*/g, '\n')
-    : poem.cachedTranslation,
-  isFromDatabase: true,
-});
+const normalizeDbPoem = (poem) => {
+  // The API converts snake_case DB columns to camelCase, but defensively handle both
+  // in case the raw DB row leaks through (e.g. from the /api/poems/:id endpoint).
+  const rawTranslation = poem.cachedTranslation || poem.cached_translation || poem.english || '';
+  const translation = rawTranslation ? rawTranslation.replace(/\*/g, '\n') : '';
+  return {
+    ...poem,
+    arabic: poem.arabic ? poem.arabic.replace(/\*/g, '\n') : poem.arabic,
+    english: translation,
+    cachedTranslation: translation || undefined,
+    isFromDatabase: true,
+  };
+};
 
 /**
  * Fetch a single poem by its database ID.

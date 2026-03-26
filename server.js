@@ -615,6 +615,7 @@ app.get(
         t.name as theme
         ${poetNameEnExpr()}
         ${titleEnExpr()}
+        ${translationSelectExpr()}
       FROM poems p
       JOIN poets po ON p.poet_id = po.id
       JOIN themes t ON p.theme_id = t.id
@@ -631,7 +632,11 @@ app.get(
 
       const formattedPoem = formatPoem(poem);
 
-      log.info('Poems', `By ID: ${id}, poet=${poem.poet}`);
+      if (poem.cached_translation) formattedPoem.cachedTranslation = poem.cached_translation;
+      if (poem.cached_explanation) formattedPoem.cachedExplanation = poem.cached_explanation;
+      if (poem.cached_author_bio) formattedPoem.cachedAuthorBio = poem.cached_author_bio;
+
+      log.info('Poems', `By ID: ${id}, poet=${poem.poet}${poem.cached_translation ? ', has_translation' : ''}`);
       res.json(formattedPoem);
     } catch (error) {
       Sentry.captureException(error);

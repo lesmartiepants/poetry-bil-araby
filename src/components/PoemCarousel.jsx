@@ -179,7 +179,7 @@ const PoemCarousel = ({
                         {showTransliteration && pair.ar && (
                           <p
                             dir="ltr"
-                            className={`font-brand-en italic opacity-50 ${DESIGN.anim}`}
+                            className={`font-brand-en opacity-50 ${DESIGN.anim}`}
                             style={{
                               fontSize: `calc(${POEM_META.verseTranslitSize} * ${textScale})`,
                             }}
@@ -190,7 +190,7 @@ const PoemCarousel = ({
                         {showTranslation && pair.en && (
                           <p
                             dir="ltr"
-                            className={`font-brand-en italic opacity-60 ${DESIGN.anim} mx-auto`}
+                            className={`font-brand-en opacity-60 ${DESIGN.anim} mx-auto`}
                             style={{
                               fontSize: `calc(${POEM_META.verseEnglishSize} * ${textScale})`,
                               maxWidth: '90%',

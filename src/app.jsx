@@ -44,6 +44,7 @@ import {
   POEM_META,
   THEME,
   GOLD,
+  COLORS,
   CATEGORIES,
   FONTS,
   nextVoice,
@@ -1422,7 +1423,7 @@ export default function DiwanApp() {
             zIndex: 39,
             pointerEvents: 'none',
             background:
-              'radial-gradient(ellipse at center, rgba(255,80,0,0.22) 0%, rgba(255,40,0,0.08) 60%, transparent 100%)',
+              COLORS.ratchet.glowGradient,
             animation: 'ratchetGlow 2s ease-in-out infinite',
           }}
         />
@@ -1452,7 +1453,7 @@ export default function DiwanApp() {
           <span
             style={{
               ...BRAND_HEADER.english,
-              color: darkMode ? '#D4D0C8' : '#1A1614',
+              color: theme.brandHeaderTextColor,
             }}
           >
             poetry
@@ -1839,7 +1840,7 @@ export default function DiwanApp() {
             }
             style={{
               height: '100px',
-              background: `linear-gradient(to top, ${darkMode ? '#0c0c0e' : '#FDFCF8'} 0%, ${darkMode ? 'rgba(12,12,14,0.85)' : 'rgba(253,252,248,0.85)'} 30%, ${darkMode ? 'rgba(12,12,14,0.4)' : 'rgba(253,252,248,0.4)'} 60%, transparent 100%)`,
+              background: `linear-gradient(to top, ${theme.fadeSolid} 0%, ${theme.fadeAlpha85} 30%, ${theme.fadeAlpha40} 60%, transparent 100%)`,
             }}
           />
 

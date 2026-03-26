@@ -3,7 +3,7 @@ import { Search, X, Loader2, ScrollText } from 'lucide-react';
 import { usePoemStore } from '../stores/poemStore';
 import { useModalStore } from '../stores/modalStore';
 import { useUIStore } from '../stores/uiStore';
-import { GOLD, CATEGORIES } from '../constants/index.js';
+import { GOLD, COLORS, CATEGORIES } from '../constants/index.js';
 import { fetchPoets } from '../services/database.js';
 
 /**
@@ -227,7 +227,7 @@ export default function PoetPicker({ handleFetch }) {
               maxHeight: `${pickerListMaxHeight}px`,
               transition: 'max-height 0.2s ease-out',
               scrollbarWidth: 'thin',
-              scrollbarColor: 'rgba(197,160,89,0.2) transparent',
+              scrollbarColor: COLORS.gold.scrollbar,
             }}
           >
             {/* "All Poets" option */}

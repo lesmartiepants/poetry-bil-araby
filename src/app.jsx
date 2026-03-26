@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useMemo, lazy, Suspense } from 'react';
 import { useLocation, useRoute } from 'wouter';
+import { toast } from 'sonner';
 import { AnimatePresence } from 'framer-motion';
 import {
   Play,
@@ -23,6 +24,7 @@ import {
   usePoemEvents,
 } from './hooks/useAuth';
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts';
+import { useQueryParams } from './hooks/useQueryParams';
 import { useVolumeDetection, PulseGlowBars } from './hooks/useVolumeDetection.jsx';
 import {
   INSIGHTS_SYSTEM_PROMPT,
@@ -63,7 +65,6 @@ import './styles/app.css';
 import { updateOGMetaTags } from './utils/ogMetaTags.js';
 import DebugPanel from './components/DebugPanel.jsx';
 import MysticalConsultationEffect from './components/MysticalConsultationEffect.jsx';
-import ErrorBanner from './components/ErrorBanner.jsx';
 import ShortcutHelp from './components/ShortcutHelp.jsx';
 const SplashScreen = lazy(() => import('./components/SplashScreen.jsx'));
 import InsightOverlay from './components/InsightOverlay.jsx';
@@ -94,9 +95,10 @@ export { filterPoemsByCategory } from './utils/filterPoems.js';
 export default function DiwanApp() {
   const [, navigate] = useLocation();
   const [, routeParams] = useRoute('/poem/:id');
+  const [queryParams, setQueryParams] = useQueryParams();
 
   const mainScrollRef = useRef(null);
-  const audioRef = useRef(new Audio());
+  const audioRef = useRef(null); // Legacy ref — Tone.Player now lives in audioStore
   const isTogglingPlay = useRef(false);
   const controlBarRef = useRef(null);
 
@@ -110,7 +112,6 @@ export default function DiwanApp() {
 
   const [headerOpacity, setHeaderOpacity] = useState(0);
   const [fireTapped, setFireTapped] = useState(false);
-  const [ratchetToast, setRatchetToast] = useState(null);
 
   // ── Poem store (Zustand) ──
   const poems = usePoemStore((s) => s.poems);
@@ -247,6 +248,10 @@ export default function DiwanApp() {
       usePoemStore.getState().setPendingCategory(null); // Clear any pending poet fetch on "All"
       setCurrentIndex(0);
     }
+    // Sync poet filter to URL
+    if (queryParams.poet !== (selectedCategory === 'All' ? undefined : selectedCategory)) {
+      setQueryParams({ poet: selectedCategory === 'All' ? null : selectedCategory });
+    }
   }, [selectedCategory]);
 
   // Retry a blocked poet-selection fetch once the current fetch completes.
@@ -281,6 +286,11 @@ export default function DiwanApp() {
   useEffect(() => {
     if (!hasAutoLoaded.current) {
       hasAutoLoaded.current = true;
+
+      // Deep link: restore poet filter from URL
+      if (queryParams.poet && !routeParams?.id) {
+        setSelectedCategory(queryParams.poet);
+      }
 
       // Deep link detection via wouter route match: /poem/:id
       if (routeParams?.id && useDatabase) {
@@ -416,8 +426,17 @@ export default function DiwanApp() {
       if (buffer === SECRET) {
         const willEnable = !useUIStore.getState().ratchetMode;
         useUIStore.getState().toggleRatchetMode();
-        setRatchetToast(willEnable ? 'on' : 'off');
-        setTimeout(() => setRatchetToast(null), 2500);
+        if (willEnable) {
+          toast('🔥 Ratchet Mode activated fr fr', {
+            style: { background: 'linear-gradient(135deg, #ff5000, #ff9000)', color: 'white', border: 'none' },
+            duration: 2500,
+          });
+        } else {
+          toast('Back to scholarly mode', {
+            style: { background: 'rgba(60,60,70,0.92)', color: 'white', border: 'none' },
+            duration: 2500,
+          });
+        }
         buffer = '';
       }
     };
@@ -484,12 +503,15 @@ export default function DiwanApp() {
 
   // pcm16ToWav imported from ./utils/audio.js (used directly below)
 
+  // Wire Tone.Player end-of-playback — watch audioStore for player changes
   useEffect(() => {
-    const audio = audioRef.current;
-    const handleEnded = () => setIsPlaying(false);
-    audio.addEventListener('ended', handleEnded);
-    return () => audio.removeEventListener('ended', handleEnded);
-  }, []);
+    const player = useAudioStore.getState().player;
+    if (player) {
+      player.onstop = () => {
+        useAudioStore.getState().setPlaying(false);
+      };
+    }
+  }, [useAudioStore.getState().player]);
 
   // Volume detection for pulse & glow effect
   useVolumeDetection({
@@ -791,7 +813,11 @@ export default function DiwanApp() {
 
   useEffect(() => {
     setInterpretation(null);
-    audioRef.current.pause();
+    // Stop Tone.Player if active (Tone.Player lives in audioStore, not audioRef)
+    const player = useAudioStore.getState().player;
+    if (player && player.state === 'started') {
+      player.stop();
+    }
     setIsPlaying(false);
     if (audioUrl) URL.revokeObjectURL(audioUrl);
     setAudioUrl(null);
@@ -904,33 +930,6 @@ export default function DiwanApp() {
             animation: 'ratchetGlow 2s ease-in-out infinite',
           }}
         />
-      )}
-
-      {/* Ratchet Mode activation toast */}
-      {ratchetToast && (
-        <div
-          style={{
-            position: 'fixed',
-            bottom: '5rem',
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 9999,
-            padding: '0.5rem 1.25rem',
-            borderRadius: '999px',
-            background:
-              ratchetToast === 'on'
-                ? 'linear-gradient(135deg, #ff5000, #ff9000)'
-                : 'rgba(60,60,70,0.92)',
-            color: '#fff',
-            fontSize: '0.875rem',
-            fontWeight: 600,
-            boxShadow: '0 4px 24px rgba(0,0,0,0.4)',
-            animation: 'ratchetToastIn 0.4s ease-out',
-            whiteSpace: 'nowrap',
-          }}
-        >
-          {ratchetToast === 'on' ? '🔥 Ratchet Mode activated fr fr' : 'Back to scholarly mode'}
-        </div>
       )}
 
       {/* Corner wordmark — top-right, fades out on scroll */}
@@ -1107,20 +1106,6 @@ export default function DiwanApp() {
           />
 
           <footer className="fixed bottom-0 left-0 right-0 py-2 pb-3 md:pb-2 px-4 flex flex-col items-center z-50 safe-bottom">
-            {audioError && (
-              <div
-                className={`mb-2 px-4 py-2 rounded-full text-xs font-medium ${DESIGN.glass} ${theme.glass} border ${theme.border} shadow-lg ${DESIGN.anim} max-w-[calc(100vw-2rem)] text-center`}
-              >
-                <span className={theme.error}>{audioError}</span>
-                <button
-                  onClick={() => setAudioError(null)}
-                  className="ml-2 opacity-60 hover:opacity-100"
-                  aria-label="Dismiss"
-                >
-                  <X size={12} className="inline" />
-                </button>
-              </div>
-            )}
             <div
               ref={controlBarRef}
               className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full border ${DESIGN.glass} ${theme.border} ${DESIGN.anim} max-w-[calc(100vw-2rem)] w-fit`}
@@ -1178,7 +1163,7 @@ export default function DiwanApp() {
                       </div>
                     </button>
                     <span
-                      className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
+                      className={`font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
                       style={{ animation: 'shimmer 2s ease-in-out infinite' }}
                     >
                       Loading
@@ -1206,7 +1191,7 @@ export default function DiwanApp() {
                       )}
                     </button>
                     <span
-                      className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
+                      className={`font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
                     >
                       {isPlaying ? 'Playing' : 'Listen'}
                     </span>
@@ -1225,8 +1210,17 @@ export default function DiwanApp() {
                     longPressTimer.current = setTimeout(() => {
                       const willEnable = !useUIStore.getState().ratchetMode;
                       useUIStore.getState().toggleRatchetMode();
-                      setRatchetToast(willEnable ? 'on' : 'off');
-                      setTimeout(() => setRatchetToast(null), 2500);
+                      if (willEnable) {
+                        toast('🔥 Ratchet Mode activated fr fr', {
+                          style: { background: 'linear-gradient(135deg, #ff5000, #ff9000)', color: 'white', border: 'none' },
+                          duration: 2500,
+                        });
+                      } else {
+                        toast('Back to scholarly mode', {
+                          style: { background: 'rgba(60,60,70,0.92)', color: 'white', border: 'none' },
+                          duration: 2500,
+                        });
+                      }
                       longPressTimer.current = null;
                     }, 2000);
                   }}
@@ -1253,7 +1247,7 @@ export default function DiwanApp() {
                   <GoldenFireIcon size={34} />
                 </button>
                 <span
-                  className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
+                  className={`font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
                 >
                   Discover
                 </span>
@@ -1287,7 +1281,7 @@ export default function DiwanApp() {
                   )}
                 </button>
                 <span
-                  className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
+                  className={`font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
                 >
                   Explain
                 </span>

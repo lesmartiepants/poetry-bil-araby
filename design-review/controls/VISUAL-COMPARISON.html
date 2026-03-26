@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Controls Redesign - UX Design Review</title>
+  <style>
+    :root {
+      --gold: #C5A059;
+      --bg-dark: #0c0c0e;
+      --bg-card: #1a1917;
+      --border: #292524;
+      --text: #e7e5e4;
+      --text-muted: #a8a29e;
+      --accent: #86efac;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: var(--bg-dark);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.6;
+      padding: 40px;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      color: var(--gold);
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .subtitle {
+      font-size: 1.125rem;
+      color: var(--text-muted);
+      margin-bottom: 3rem;
+    }
+
+    h2 {
+      color: var(--gold);
+      font-size: 1.75rem;
+      margin-top: 3rem;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 0.5rem;
+    }
+
+    h3 {
+      color: var(--accent);
+      font-size: 1.25rem;
+      margin-top: 2rem;
+    }
+
+    /* Current State Grid */
+    .current-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin: 30px 0;
+    }
+
+    .state-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .state-card h4 {
+      background: var(--border);
+      padding: 12px 16px;
+      font-size: 14px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .state-card img {
+      width: 100%;
+      display: block;
+    }
+
+    /* Issues Box */
+    .issues-box {
+      background: var(--bg-card);
+      border-left: 4px solid #ef4444;
+      padding: 20px;
+      margin: 30px 0;
+      border-radius: 0 8px 8px 0;
+    }
+
+    .issues-box h3 {
+      color: #fca5a5;
+      margin-top: 0;
+    }
+
+    .issues-box ul {
+      list-style: none;
+      padding-left: 0;
+    }
+
+    .issues-box li {
+      padding: 8px 0;
+      padding-left: 24px;
+      position: relative;
+    }
+
+    .issues-box li::before {
+      content: "✗";
+      position: absolute;
+      left: 0;
+      color: #ef4444;
+      font-weight: bold;
+    }
+
+    /* Design Options */
+    .option {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 30px;
+      margin: 40px 0;
+    }
+
+    .option-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .option-header h2 {
+      margin: 0;
+      border: none;
+      font-size: 1.5rem;
+    }
+
+    .open-preview-btn {
+      display: inline-block;
+      background: var(--gold);
+      color: var(--bg-dark);
+      padding: 12px 24px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .open-preview-btn:hover {
+      background: #d4af6a;
+      transform: scale(1.05);
+    }
+
+    .option-content {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 30px;
+      margin-top: 20px;
+    }
+
+    .option-content img {
+      width: 100%;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+
+    .design-rationale p {
+      color: var(--text-muted);
+      margin: 16px 0;
+    }
+
+    .design-rationale ul {
+      padding-left: 20px;
+      color: var(--text-muted);
+    }
+
+    .design-rationale li {
+      margin: 8px 0;
+    }
+
+    .design-rationale strong {
+      color: var(--text);
+    }
+
+    /* Comparison Table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 30px 0;
+      background: var(--bg-card);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    th, td {
+      padding: 15px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      background: var(--border);
+      color: var(--gold);
+      font-weight: 600;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    .check { color: var(--accent); }
+    .cross { color: #ef4444; }
+
+    /* Recommendations Box */
+    .recommendations {
+      background: var(--bg-card);
+      border-left: 4px solid var(--accent);
+      padding: 20px;
+      margin: 30px 0;
+      border-radius: 0 8px 8px 0;
+    }
+
+    .recommendations h3 {
+      color: var(--accent);
+      margin-top: 0;
+    }
+
+    .recommendations p {
+      margin: 12px 0;
+    }
+
+    /* Interactive Previews */
+    .previews-section {
+      margin-top: 60px;
+    }
+
+    .previews-intro {
+      color: var(--text-muted);
+      margin-bottom: 20px;
+    }
+
+    .preview-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    .preview-container {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--bg-card);
+    }
+
+    .preview-container h3 {
+      margin: 0;
+      padding: 15px;
+      background: var(--border);
+      font-size: 1rem;
+      text-align: center;
+    }
+
+    .preview-container iframe {
+      width: 100%;
+      height: 600px;
+      border: none;
+      display: block;
+    }
+
+    /* Footer */
+    hr {
+      border-color: var(--border);
+      margin: 60px 0 30px;
+    }
+
+    .next-steps {
+      font-size: 1.125rem;
+    }
+
+    .next-steps strong {
+      color: var(--gold);
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Controls Redesign - UX Design Review</h1>
+    <p class="subtitle">Three visual alternatives to fix control panel usability issues</p>
+
+    <!-- Current State -->
+    <h2>Current State</h2>
+    <div class="current-grid">
+      <div class="state-card">
+        <h4>1. Collapsed Sidebar (Default)</h4>
+        <img src="current-state/1-collapsed.png" alt="Current collapsed state">
+      </div>
+      <div class="state-card">
+        <h4>2. Expanded Sidebar</h4>
+        <img src="current-state/2-expanded.png" alt="Current expanded state">
+      </div>
+    </div>
+
+    <!-- Identified Issues -->
+    <div class="issues-box">
+      <h3>Identified Issues:</h3>
+      <ul>
+        <li><strong>Hidden functionality</strong> - Text settings buried in nested Settings submenu (requires 2 clicks)</li>
+        <li><strong>Expansion behavior</strong> - Sidebar expands/collapses, disrupting muscle memory and spatial stability</li>
+        <li><li><strong>Inconsistent toggle states</strong> - Romanize uses visual border/opacity, but no clear binary indicator</strong></li>
+        <li><strong>Wrong order</strong> - Current order: Copy, Share, Romanize, Divider, Settings, Divider, Account (not matching requirements)</li>
+        <li><strong>Dividers present</strong> - Visual separators break the clean, unified aesthetic</li>
+        <li><strong>Day/night buried</strong> - Theme toggle nested in Settings submenu, should be prominent at top-right</li>
+      </ul>
+    </div>
+
+    <!-- Option 1 -->
+    <div class="option">
+      <div class="option-header">
+        <h2>Option 1: Minimalist Glass Panels</h2>
+        <a href="previews/option-1-minimal-glass.html" class="open-preview-btn" target="_blank">Open Preview →</a>
+      </div>
+      <div class="option-content">
+        <img src="mockups/option-1-minimal-glass.png" alt="Option 1 mockup">
+        <div class="design-rationale">
+          <h3>Design Choice:</h3>
+          <p>Same general direction as current design, but with clean glass morphism, no expansion, and logical layout. Keeps the aesthetic while fixing all usability problems.</p>
+
+          <h4>Key Changes:</h4>
+          <ul>
+            <li><strong>Always-visible sidebar</strong> - Fixed width (48px), no expansion, icons + labels always visible</li>
+            <li><strong>Text settings panel (top-left)</strong> - Dedicated glass panel with T+/T− in circular buttons, clear toggle switches with sliding thumbs, font preview with Arabic glyph</li>
+            <li><strong>Day/night toggle (top-right)</strong> - Glass pill with icon + label, clear state indication</li>
+            <li><strong>No dividers</strong> - Unified visual language, separation achieved through spacing and subtle borders</li>
+            <li><strong>Order: Save, Share, Copy, Ratchet, Sign In</strong> - Exactly as requested</li>
+            <li><strong>Toggle clarity</strong> - ON state = gold background + border + subtle glow</li>
+          </ul>
+
+          <h4>Best for:</h4>
+          <p>Teams who want to keep the general feel of the current design but fix all the UX problems in a straightforward, low-risk way.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Option 2 -->
+    <div class="option">
+      <div class="option-header">
+        <h2>Option 2: Dense Utility Layout</h2>
+        <a href="previews/option-2-dense-utility.html" class="open-preview-btn" target="_blank">Open Preview →</a>
+      </div>
+      <div class="option-content">
+        <img src="mockups/option-2-dense-utility.png" alt="Option 2 mockup">
+        <div class="design-rationale">
+          <h3>Design Choice:</h3>
+          <p>Completely different direction - everything in a single toolbar below the header, modeled after professional design tools. Maximizes discoverability and reduces visual footprint.</p>
+
+          <h4>Key Changes:</h4>
+          <ul>
+            <li><strong>Single horizontal toolbar</strong> - All text controls + theme toggle in one bar at the top</li>
+            <li><strong>Toggle switches</strong> - Horizontal on/off switches with clear thumb position (very familiar to users)</li>
+            <li><strong>Wider action buttons</strong> - 56px square buttons with icons + labels, densely packed</li>
+            <li><strong>Vertical sidebar moves</strong> - Still on the right, but with larger touch targets and no expansion</li>
+            <li><strong>Visual grouping</strong> - Thin vertical dividers separate text controls from theme toggle</li>
+            <li><strong>Always visible</strong> - No hidden menus, everything at a glance</li>
+          </ul>
+
+          <h4>Best for:</h4>
+          <p>Teams prioritizing efficiency and maximum discoverability. Users familiar with design tool interfaces will feel at home.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Option 3 -->
+    <div class="option">
+      <div class="option-header">
+        <h2>Option 3: Typographic Elegance</h2>
+        <a href="previews/option-3-typographic-elegance.html" class="open-preview-btn" target="_blank">Open Preview →</a>
+      </div>
+      <div class="option-content">
+        <img src="mockups/option-3-typographic-elegance.png" alt="Option 3 mockup">
+        <div class="design-rationale">
+          <h3>Design Choice:</h3>
+          <p>A radical departure focusing on minimalism, calligraphic detail, and tooltip-based discovery. Emphasizes the poetic aesthetic with ultra-slim UI.</p>
+
+          <h4>Key Changes:</h4>
+          <ul>
+            <li><strong>Edge bar instead of panels</strong> - Ultra-thin (60px) fixed top edge bar, feels like part of the frame</li>
+            <li><strong>Circular buttons with tooltips</strong> - Text controls use small circular buttons with hints on hover; labels hidden to reduce noise</li>
+            <li><strong>Elegant toggles</strong> - Minimalist toggle with bare-knob design when off, filled when on</li>
+            <li><strong>Ultra-minimal sidebar</strong> - 44px icons only, no labels, tooltips appear on hover (gold on dark)</li>
+            <li><strong>Artistic theme toggle</strong> - Circular emblem design with sun/moon icon in container</li>
+            <li><strong>Typographic hierarchy</strong> - Uses Cormorant Garamond serif for body, creates sophisticated French literary feel</li>
+          </ul>
+
+          <h4>Best for:</h4>
+          <p>Teams wanting a bold, design-forward statement that matches the mystical/poetic nature of the app. Highest aesthetic impact, moderate learning curve.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Comparison Table -->
+    <h2>Comparison Table</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Feature</th>
+          <th>Current (Bad)</th>
+          <th>Option 1</th>
+          <th>Option 2</th>
+          <th>Option 3</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Always Visible</td>
+          <td class="cross">✗ (requires expansion)</td>
+          <td class="check">✓</td>
+          <td class="check">✓</td>
+          <td class="check">✓</td>
+        </tr>
+        <tr>
+          <td>No Dividers</td>
+          <td class="cross">✗ (2 dividers)</td>
+          <td class="check">✓</td>
+          <td class="cross">✗ (vertical dividers)</td>
+          <td class="check">✓</td>
+        </tr>
+        <tr>
+          <td>Correct Order</td>
+          <td class="cross">✗ (Copy, Share, Romanize...)</td>
+          <td class="check">✓ (Save, Share, Copy...)</td>
+          <td class="check">✓</td>
+          <td class="check">✓</td>
+        </tr>
+        <tr>
+          <td>Text Settings Visible</td>
+          <td class="cross">✗ (buried in submenu)</td>
+          <td class="check">✓ (dedicated panel)</td>
+          <td class="check">✓ (toolbar)</td>
+          <td class="check">✓ (edge bar)</td>
+        </tr>
+        <tr>
+          <td>Day/Night Accessible</td>
+          <td class="cross">✗ (in Settings)</td>
+          <td class="check">✓ (top-right panel)</td>
+          <td class="check">✓ (toolbar right)</td>
+          <td class="check">✓ (edge bar right)</td>
+        </tr>
+        <tr>
+          <td>Toggle Clarity</td>
+          <td class="cross">✗ (border/opacity subtle)</td>
+          <td class="check">✓ (filled + glow)</td>
+          <td class="check">✓ (switch thumb clear)</td>
+          <td class="check">✓ (knob position clear)</td>
+        </tr>
+        <tr>
+          <td>Font Preview</td>
+          <td class="cross">✗ (only icon)</td>
+          <td class="check">✓ (Arabic glyph shown)</td>
+          <td class="check">✓ (dropdown shows font)</td>
+          <td class="check">✓ (dropdown with Arabic)</td>
+        </tr>
+        <tr>
+          <td>Touch Target Size</td>
+          <td class="check">✓ (44px)</td>
+          <td class="check">✓ (48px)</td>
+          <td class="check">✓ (56px)</td>
+          <td class="cross">? (44px)</td>
+        </tr>
+        <tr>
+          <td>Discoverability</td>
+          <td class="cross">✗ (hidden)</td>
+          <td class="check">✓ (labels always visible)</td>
+          <td class="check">✓ (labels + icons)</td>
+          <td class="cross">⚠ (tooltips on hover)</td>
+        </tr>
+        <tr>
+          <td>Aesthetic Distinctiveness</td>
+          <td class="cross">✗ (generic)</td>
+          <td class="check">✓ (modern glass)</td>
+          <td class="cross">⚠ (toolbar typical)</td>
+          <td class="check">✓ (unique, poetic)</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Recommendations -->
+    <div class="recommendations">
+      <h3>Recommendations</h3>
+      <p><strong>Best Overall:</strong> <strong>Option 1 (Minimalist Glass)</strong> - Solves all the problems with minimal change to visual language, maintains clarity, and offers the best balance of discoverability and elegance. The glass aesthetic fits the mystical vibe while being extremely clear.</p>
+
+      <p><strong>Best for Mobile/Touch:</strong> <strong>Option 2 (Dense Utility)</strong> - Larger touch targets (56px) and clear labels make it the most mobile-friendly. The toolbar approach also works well on smaller screens where edge placement is tricky.</p>
+
+      <p><strong>Best for Aesthetic Impact:</strong> <strong>Option 3 (Typographic Elegance)</strong> - If you want the UI to feel like part of the artwork, this is the winner. The edge bar concept and tooltip-based discovery create a unique experience. However, it sacrifices some discoverability and may need onboarding for first-time users.</p>
+    </div>
+
+    <!-- Interactive Previews -->
+    <div class="previews-section">
+      <h2>Interactive Previews</h2>
+      <p class="previews-intro">Hover and interact with each option below to see them in action:</p>
+
+      <div class="preview-grid">
+        <div class="preview-container">
+          <h3>Option 1: Minimalist Glass</h3>
+          <iframe src="previews/option-1-minimal-glass.html"></iframe>
+        </div>
+        <div class="preview-container">
+          <h3>Option 2: Dense Utility</h3>
+          <iframe src="previews/option-2-dense-utility.html"></iframe>
+        </div>
+        <div class="preview-container">
+          <h3>Option 3: Typographic Elegance</h3>
+          <iframe src="previews/option-3-typographic-elegance.html"></iframe>
+        </div>
+      </div>
+    </div>
+
+    <hr>
+    <div class="next-steps">
+      <p><strong>Which direction?</strong> Reply with <strong>"Option 1"</strong>, <strong>"Option 2"</strong>, or <strong>"Option 3"</strong> to proceed with implementation.</p>
+    </div>
+  </div>
+</body>
+</html>

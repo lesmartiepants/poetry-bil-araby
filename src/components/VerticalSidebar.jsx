@@ -1,34 +1,20 @@
 import { useState, useEffect, useRef } from 'react';
 import {
-  Bug,
   Check,
-  ChevronLeft,
-  ChevronRight,
   Copy,
   Flame,
-  Languages,
-  Lightbulb,
-  Loader2,
+  Heart,
   LogOut,
-  Moon,
   ScrollText,
-  Settings2,
   Share2,
-  Sun,
   UserRound,
 } from 'lucide-react';
 import { track } from '@vercel/analytics';
-import { THEME } from '../constants/theme.js';
-import { FONTS } from '../constants/fonts.js';
 import { useUIStore } from '../stores/uiStore';
 import { useModalStore } from '../stores/modalStore';
 
-const TEXT_SIZES = [
-  { label: 'S', multiplier: 0.85 },
-  { label: 'M', multiplier: 1.0 },
-  { label: 'L', multiplier: 1.15 },
-  { label: 'XL', multiplier: 1.3 },
-];
+const GOLD = 'var(--gold)';
+const GOLD_RGB = '197,160,89';
 
 const VerticalSidebar = ({
   onCopy,
@@ -38,428 +24,362 @@ const VerticalSidebar = ({
   onOpenSavedPoems,
   savedPoemsCount,
   user,
+  poem,
+  isSaved,
+  onSave,
+  onUnsave,
 }) => {
-  // Store reads
   const showCopySuccess = useModalStore((s) => s.copyToast);
   const showShareSuccess = useModalStore((s) => s.shareToast);
   const darkMode = useUIStore((s) => s.darkMode);
-  const theme = darkMode ? THEME.dark : THEME.light;
-  const showTranslation = useUIStore((s) => s.showTranslation);
-  const showTransliteration = useUIStore((s) => s.showTransliteration);
-  const textSizeLevel = useUIStore((s) => s.textSize);
-  const textSizeLabel = TEXT_SIZES[textSizeLevel].label;
-  const currentFont = useUIStore((s) => s.font);
-  const showDebugLogs = useUIStore((s) => s.showDebugLogs);
   const ratchetMode = useUIStore((s) => s.ratchetMode);
-  const [expanded, setExpanded] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const [accountMenuOpen, setAccountMenuOpen] = useState(false);
   const sidebarRef = useRef(null);
-  const scrollRef = useRef(null);
 
-  // Collapse settings/account menu when tapping outside the sidebar
+  const glassBg = darkMode ? 'rgba(10,10,12,0.88)' : 'rgba(255,255,255,0.9)';
+
   useEffect(() => {
-    if (!settingsOpen && !accountMenuOpen && !expanded) return;
-    const handleOutsideClick = (e) => {
+    if (!accountMenuOpen) return;
+    const handler = (e) => {
       if (sidebarRef.current && !sidebarRef.current.contains(e.target)) {
-        if (settingsOpen) setSettingsOpen(false);
-        if (accountMenuOpen) setAccountMenuOpen(false);
-        if (expanded) setExpanded(false);
+        setAccountMenuOpen(false);
       }
     };
-    document.addEventListener('pointerdown', handleOutsideClick);
-    return () => document.removeEventListener('pointerdown', handleOutsideClick);
-  }, [settingsOpen, accountMenuOpen, expanded]);
+    document.addEventListener('pointerdown', handler);
+    return () => document.removeEventListener('pointerdown', handler);
+  }, [accountMenuOpen]);
 
-  const gold = theme.gold;
-  const btnBase =
-    'w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-200';
-  const btnHover = theme.goldHoverBg15;
-  const subBtnBase =
-    'w-11 h-11 rounded-lg flex items-center justify-center transition-all duration-200';
-  const subBtnHover = theme.goldHoverBg15;
-  const labelCls =
-    'text-[7px] leading-none -mt-0.5 font-brand-en tracking-[0.12em] uppercase opacity-60';
-
-  const scrollSidebarToBottom = () => {
-    if (scrollRef.current) {
-      setTimeout(
-        () =>
-          scrollRef.current?.scrollTo({
-            top: scrollRef.current?.scrollHeight,
-            behavior: 'smooth',
-          }),
-        350
-      );
+  const handleSave = () => {
+    if (!user) {
+      onSignIn?.('Sign in to save your favourites');
+      return;
+    }
+    if (isSaved) {
+      onUnsave?.();
+    } else {
+      onSave?.();
     }
   };
+
+  const btnStyle = {
+    width: 44,
+    height: 44,
+    borderRadius: '12px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    cursor: 'pointer',
+    border: 'none',
+    background: 'transparent',
+    transition: 'background 0.18s, transform 0.15s',
+    flexShrink: 0,
+  };
+
+  const SidebarBtn = ({ onClick, title, label, style: extraStyle = {}, children, disabled }) => (
+    <button
+      onClick={onClick}
+      title={title}
+      aria-label={title}
+      disabled={disabled}
+      style={{ ...btnStyle, ...extraStyle }}
+      onMouseEnter={(e) => {
+        if (!disabled) {
+          e.currentTarget.style.background = `rgba(${GOLD_RGB},0.1)`;
+          e.currentTarget.style.transform = 'scale(1.05)';
+        }
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.background = extraStyle.background || 'transparent';
+        e.currentTarget.style.transform = 'scale(1)';
+      }}
+    >
+      {children}
+    </button>
+  );
 
   return (
     <>
       <style>{`
-        @keyframes slideInRight {
+        @keyframes sidebarSlideIn {
           from { transform: translateY(-50%) translateX(100%); opacity: 0; }
-          to { transform: translateY(-50%) translateX(0); opacity: 1; }
+          to   { transform: translateY(-50%) translateX(0);    opacity: 1; }
         }
         @keyframes goldCheckSparkle {
-          0% { transform: scale(0.5) rotate(-10deg); opacity: 0; filter: drop-shadow(0 0 0px rgba(197,160,89,0)); }
-          30% { transform: scale(1.2) rotate(0deg); opacity: 1; filter: drop-shadow(0 0 8px rgba(197,160,89,0.8)); }
-          60% { transform: scale(1) rotate(0deg); opacity: 1; filter: drop-shadow(0 0 4px rgba(197,160,89,0.5)); }
-          100% { transform: scale(1) rotate(0deg); opacity: 1; filter: drop-shadow(0 0 2px rgba(197,160,89,0.3)); }
+          0%   { transform: scale(0.5) rotate(-10deg); opacity: 0; filter: drop-shadow(0 0 0px rgba(197,160,89,0)); }
+          30%  { transform: scale(1.2) rotate(0deg);  opacity: 1; filter: drop-shadow(0 0 8px rgba(197,160,89,0.8)); }
+          60%  { transform: scale(1)   rotate(0deg);  opacity: 1; filter: drop-shadow(0 0 4px rgba(197,160,89,0.5)); }
+          100% { transform: scale(1)   rotate(0deg);  opacity: 1; filter: drop-shadow(0 0 2px rgba(197,160,89,0.3)); }
         }
-        .sidebar-drawer {
-          display: grid;
-          grid-template-rows: 0fr;
-          transition: grid-template-rows 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .sidebar-drawer.open {
-          grid-template-rows: 1fr;
-        }
-        .sidebar-drawer-inner {
-          overflow: hidden;
+        @keyframes accountMenuIn {
+          from { opacity: 0; transform: translateX(6px) scale(0.97); }
+          to   { opacity: 1; transform: translateX(0)   scale(1); }
         }
       `}</style>
+
       <div
         ref={sidebarRef}
-        className="fixed right-0 md:right-[24.5rem] top-1/2 -translate-y-1/2 z-[45] rounded-l-2xl md:rounded-2xl bg-gradient-to-b from-black/70 via-black/60 to-black/70 backdrop-blur-xl border-l-2 md:border-2 border-gold/40 py-2 transition-all duration-300"
         style={{
-          animation: 'slideInRight 0.4s ease-out',
-          maxHeight: 'calc(100dvh - 14rem)',
-          width: expanded ? '3.75rem' : '2.5rem',
-          paddingLeft: expanded ? '0.375rem' : '0.25rem',
-          paddingRight: expanded ? '0.375rem' : '0.25rem',
+          position: 'fixed',
+          right: 0,
+          top: '50%',
+          transform: 'translateY(-50%)',
+          zIndex: 45,
+          background: glassBg,
+          backdropFilter: 'blur(24px)',
+          WebkitBackdropFilter: 'blur(24px)',
+          border: `1.5px solid rgba(${GOLD_RGB},0.28)`,
+          borderRight: 'none',
+          borderRadius: '16px 0 0 16px',
+          padding: '10px 6px',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '2px',
+          animation: 'sidebarSlideIn 0.4s ease-out',
+          boxShadow: `-4px 0 32px rgba(0,0,0,${darkMode ? 0.4 : 0.1})`,
         }}
       >
-        {/* Toggle handle — always visible, icon hints when collapsed */}
-        <button
-          onClick={() => {
-            if (expanded) {
-              setSettingsOpen(false);
-              setExpanded(false);
-            } else {
-              setExpanded(true);
-            }
-          }}
-          className="flex flex-col items-center gap-1.5 py-1 px-0.5 group w-full"
-          title={expanded ? 'Collapse controls' : 'Open controls'}
-          aria-label={expanded ? 'Collapse sidebar controls' : 'Open sidebar controls'}
+        {/* Save */}
+        <SidebarBtn
+          onClick={handleSave}
+          title={isSaved ? 'Unsave poem' : 'Save poem'}
         >
-          {expanded ? (
-            <ChevronRight
-              style={{ color: gold, opacity: 0.5 }}
-              size={14}
-              className="group-hover:opacity-80 transition-opacity"
+          <Heart
+            size={18}
+            color={isSaved ? '#ef4444' : GOLD}
+            fill={isSaved ? '#ef4444' : 'none'}
+            strokeWidth={1.75}
+            style={{ transition: 'color 0.2s, fill 0.2s' }}
+          />
+        </SidebarBtn>
+
+        {/* Share */}
+        <SidebarBtn onClick={onShare} title="Share poem">
+          {showShareSuccess ? (
+            <Check
+              size={18}
+              color={GOLD}
+              style={{ animation: 'goldCheckSparkle 0.5s ease-out forwards' }}
             />
           ) : (
-            <>
-              <ChevronLeft
-                style={{ color: gold, opacity: 0.5 }}
-                size={14}
-                className="group-hover:opacity-80 transition-opacity"
-              />
-              <Copy
-                style={{ color: gold, opacity: 0.6 }}
-                size={16}
-                className="group-hover:opacity-90 transition-opacity"
-              />
-              <Settings2
-                style={{ color: gold, opacity: 0.6 }}
-                size={16}
-                className="group-hover:opacity-90 transition-opacity"
-              />
-              <ChevronLeft
-                style={{ color: gold, opacity: 0.5 }}
-                size={14}
-                className="group-hover:opacity-80 transition-opacity"
-              />
-            </>
+            <Share2 size={18} color={GOLD} strokeWidth={1.75} />
           )}
-        </button>
+        </SidebarBtn>
 
-        {/* Expanded controls — animated grid drawer */}
-        <div className={`sidebar-drawer ${expanded ? 'open' : ''}`}>
-          <div className="sidebar-drawer-inner">
-            <div
-              ref={scrollRef}
-              className="overflow-y-auto overflow-x-hidden flex flex-col items-center gap-1"
-              style={{ maxHeight: 'calc(100dvh - 16rem)' }}
+        {/* Copy */}
+        <SidebarBtn onClick={onCopy} title="Copy poem to clipboard">
+          {showCopySuccess ? (
+            <Check
+              size={18}
+              color={GOLD}
+              style={{ animation: 'goldCheckSparkle 0.5s ease-out forwards' }}
+            />
+          ) : (
+            <Copy size={18} color={GOLD} strokeWidth={1.75} />
+          )}
+        </SidebarBtn>
+
+        {/* Ratchet */}
+        <SidebarBtn
+          onClick={() => {
+            useUIStore.getState().toggleRatchetMode();
+            track('ratchet_mode_toggled', { enabled: !ratchetMode });
+          }}
+          title={
+            ratchetMode
+              ? 'Ratchet Mode ON — click to chill 😌'
+              : 'Ratchet Mode OFF — click to go off 🔥'
+          }
+          style={
+            ratchetMode
+              ? {
+                  background: 'linear-gradient(135deg, rgba(249,115,22,0.2), rgba(239,68,68,0.15))',
+                  border: '1px solid rgba(249,115,22,0.45)',
+                  borderRadius: '12px',
+                }
+              : {}
+          }
+        >
+          <Flame
+            size={18}
+            color={ratchetMode ? '#f97316' : GOLD}
+            strokeWidth={1.75}
+            style={{ transition: 'color 0.2s' }}
+          />
+        </SidebarBtn>
+
+        {/* Subtle separator */}
+        <span
+          style={{
+            width: 20,
+            height: 1,
+            background: `rgba(${GOLD_RGB},0.15)`,
+            margin: '2px 0',
+            display: 'block',
+          }}
+        />
+
+        {/* Sign In / Account */}
+        {user ? (
+          <div style={{ position: 'relative' }}>
+            <SidebarBtn
+              onClick={() => setAccountMenuOpen((v) => !v)}
+              title="Account menu"
+              style={accountMenuOpen ? { background: `rgba(${GOLD_RGB},0.12)` } : {}}
             >
-              <button
-                onClick={onCopy}
-                title="Copy poem"
-                aria-label="Copy poem to clipboard"
-                className={`${btnBase} ${btnHover}`}
-              >
-                {showCopySuccess ? (
-                  <Check
-                    style={{ color: gold, animation: 'goldCheckSparkle 0.5s ease-out forwards' }}
-                    size={18}
-                  />
-                ) : (
-                  <Copy style={{ color: gold }} size={18} />
-                )}
-              </button>
-              <span className={labelCls} style={{ color: gold }}>
-                Copy
-              </span>
-
-              <button onClick={onShare} title="Share poem" className={`${btnBase} ${btnHover}`}>
-                {showShareSuccess ? (
-                  <Check
-                    style={{ color: gold, animation: 'goldCheckSparkle 0.5s ease-out forwards' }}
-                    size={18}
-                  />
-                ) : (
-                  <Share2 style={{ color: gold }} size={18} />
-                )}
-              </button>
-              <span className={labelCls} style={{ color: gold }}>
-                Share
-              </span>
-
-              <button
-                onClick={() => useUIStore.getState().toggleTransliteration()}
-                title={showTransliteration ? 'Hide romanization' : 'Show romanization'}
-                className={`${btnBase} ${btnHover} ${showTransliteration ? theme.goldActiveBg + ' border ' + theme.goldBorderSubtle : 'opacity-40'}`}
-              >
-                <span
-                  className="text-[12px] font-bold leading-none"
-                  style={{ color: gold, fontFamily: "'Amiri', serif" }}
-                >
-                  عA
-                </span>
-              </button>
-              <span className={labelCls} style={{ color: gold }}>
-                Romanize
-              </span>
-
-              <div className="w-6 h-px bg-stone-500/30 mx-auto my-1" />
-
-              <button
-                onClick={() => {
-                  setSettingsOpen((prev) => !prev);
-                  if (!settingsOpen) scrollSidebarToBottom();
+              <div
+                style={{
+                  width: 26,
+                  height: 26,
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  fontFamily: 'system-ui, sans-serif',
+                  background: `linear-gradient(135deg, rgba(${GOLD_RGB},0.25), rgba(${GOLD_RGB},0.12))`,
+                  border: `1.5px solid rgba(${GOLD_RGB},0.45)`,
+                  color: GOLD,
+                  position: 'relative',
                 }}
-                title="Settings"
-                className={`${btnBase} ${btnHover} ${settingsOpen ? theme.goldActiveBg : ''}`}
               >
-                <Settings2
-                  style={{
-                    color: gold,
-                    transition: 'transform 0.3s',
-                    transform: settingsOpen ? 'rotate(60deg)' : 'none',
-                  }}
-                  size={18}
-                />
-              </button>
-              <span className={labelCls} style={{ color: gold }}>
-                Settings
-              </span>
-
-              {/* Smooth animated settings drawer */}
-              <div className={`sidebar-drawer ${settingsOpen ? 'open' : ''}`}>
-                <div className="sidebar-drawer-inner">
-                  <div
-                    className={`flex flex-col items-center gap-1 pl-0.5 border-l-2 ${theme.goldBorderMuted}`}
-                  >
-                    <button
-                      onClick={() => useUIStore.getState().toggleTranslation()}
-                      title={showTranslation ? 'Hide translation' : 'Show translation'}
-                      className={`${subBtnBase} ${subBtnHover} ${showTranslation ? theme.goldActiveBg + ' border ' + theme.goldBorderSubtle : 'opacity-40'}`}
-                    >
-                      <Languages style={{ color: gold }} size={16} />
-                    </button>
-                    <span className={labelCls} style={{ color: gold }}>
-                      Translate
-                    </span>
-
-                    <button
-                      onClick={() => useUIStore.getState().cycleTextSize()}
-                      title={`Text size: ${textSizeLabel}`}
-                      className={`${subBtnBase} ${subBtnHover}`}
-                    >
-                      <span
-                        className="text-[13px] font-bold leading-none"
-                        style={{ color: gold, fontFamily: "'Forum', serif" }}
-                      >
-                        T±
-                      </span>
-                    </button>
-                    <span className={labelCls} style={{ color: gold }}>
-                      Size
-                    </span>
-
-                    <button
-                      onClick={() => useUIStore.getState().toggleDarkMode()}
-                      title={darkMode ? 'Light mode' : 'Dark mode'}
-                      className={`${subBtnBase} ${subBtnHover}`}
-                    >
-                      {darkMode ? (
-                        <Sun style={{ color: gold }} size={16} />
-                      ) : (
-                        <Moon style={{ color: gold }} size={16} />
-                      )}
-                    </button>
-                    <span className={labelCls} style={{ color: gold }}>
-                      {darkMode ? 'Light' : 'Dark'}
-                    </span>
-
-                    <button
-                      onClick={() => useUIStore.getState().cycleFont()}
-                      title={`Font: ${currentFont}`}
-                      className={`${subBtnBase} ${subBtnHover}`}
-                    >
-                      <span
-                        className="text-[15px] font-bold leading-none"
-                        style={{ color: gold, fontFamily: "'Amiri', serif" }}
-                      >
-                        ي
-                      </span>
-                    </button>
-                    <span className={labelCls} style={{ color: gold }}>
-                      Font
-                    </span>
-
-                    <button
-                      onClick={() => useUIStore.getState().toggleDebugLogs()}
-                      title={showDebugLogs ? 'Hide dev logs' : 'Show dev logs'}
-                      className={`${subBtnBase} ${subBtnHover} ${showDebugLogs ? theme.goldActiveBg + ' border ' + theme.goldBorderSubtle : 'opacity-40'}`}
-                    >
-                      <Bug style={{ color: gold }} size={16} />
-                    </button>
-                    <span className={labelCls} style={{ color: gold }}>
-                      Logs
-                    </span>
-
-                    <button
-                      onClick={() => {
-                        useUIStore.getState().toggleRatchetMode();
-                        track('ratchet_mode_toggled', { enabled: !ratchetMode });
-                      }}
-                      title={
-                        ratchetMode
-                          ? 'Ratchet Mode: ON — click to chill 😌'
-                          : 'Ratchet Mode: OFF — click to go off 🔥'
-                      }
-                      aria-label={ratchetMode ? 'Disable Ratchet Mode' : 'Enable Ratchet Mode'}
-                      aria-pressed={ratchetMode}
-                      className={`${subBtnBase} ${subBtnHover} ${ratchetMode ? 'border ' + theme.goldBorderSubtle : 'opacity-40'}`}
-                      style={
-                        ratchetMode
-                          ? {
-                              background:
-                                'linear-gradient(135deg, rgba(249,115,22,0.2), rgba(239,68,68,0.15))',
-                              borderColor: 'rgba(249,115,22,0.5)',
-                            }
-                          : {}
-                      }
-                    >
-                      <Flame style={{ color: ratchetMode ? '#f97316' : gold }} size={16} />
-                    </button>
-                    <span className={labelCls} style={{ color: ratchetMode ? '#f97316' : gold }}>
-                      Ratchet
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="w-6 h-px bg-stone-500/30 mx-auto my-1" />
-
-              {user ? (
-                <>
-                  <button
-                    onClick={() => {
-                      setAccountMenuOpen((prev) => !prev);
-                      if (!accountMenuOpen) scrollSidebarToBottom();
+                {(user.email ?? user.user_metadata?.full_name ?? 'U').charAt(0).toUpperCase()}
+                {savedPoemsCount > 0 && (
+                  <span
+                    style={{
+                      position: 'absolute',
+                      top: -6,
+                      right: -6,
+                      minWidth: 16,
+                      height: 16,
+                      borderRadius: 8,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '9px',
+                      fontWeight: 700,
+                      fontFamily: 'system-ui, sans-serif',
+                      background: 'linear-gradient(135deg, var(--gold), #B8943E)',
+                      color: '#000',
+                      padding: '0 3px',
                     }}
-                    title="Account"
-                    aria-label={
-                      savedPoemsCount > 0
-                        ? `Account menu, ${savedPoemsCount} saved poem${savedPoemsCount === 1 ? '' : 's'}`
-                        : 'Account menu'
-                    }
-                    className={`${btnBase} ${btnHover} ${accountMenuOpen ? theme.goldActiveBg : ''} relative`}
                   >
-                    <div
-                      className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold font-brand-en"
+                    {savedPoemsCount > 99 ? '99+' : savedPoemsCount}
+                  </span>
+                )}
+              </div>
+            </SidebarBtn>
+
+            {/* Account dropdown — floats to the left */}
+            {accountMenuOpen && (
+              <div
+                style={{
+                  position: 'absolute',
+                  right: 'calc(100% + 10px)',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: darkMode ? 'rgba(10,10,12,0.95)' : 'rgba(253,252,248,0.97)',
+                  backdropFilter: 'blur(20px)',
+                  WebkitBackdropFilter: 'blur(20px)',
+                  border: `1.5px solid rgba(${GOLD_RGB},0.28)`,
+                  borderRadius: '14px',
+                  padding: '6px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '2px',
+                  animation: 'accountMenuIn 0.18s ease-out both',
+                  boxShadow: `0 8px 32px rgba(0,0,0,${darkMode ? 0.45 : 0.12})`,
+                  whiteSpace: 'nowrap',
+                  minWidth: 140,
+                }}
+              >
+                <button
+                  onClick={() => {
+                    onOpenSavedPoems();
+                    setAccountMenuOpen(false);
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '9px 12px',
+                    borderRadius: '9px',
+                    border: 'none',
+                    background: 'transparent',
+                    cursor: 'pointer',
+                    color: darkMode ? 'rgba(255,255,255,0.75)' : 'rgba(30,24,18,0.75)',
+                    fontSize: '12px',
+                    fontFamily: 'system-ui, sans-serif',
+                    fontWeight: 500,
+                    transition: 'background 0.15s',
+                    width: '100%',
+                    textAlign: 'left',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = `rgba(${GOLD_RGB},0.1)`;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'transparent';
+                  }}
+                >
+                  <ScrollText size={14} color={GOLD} strokeWidth={1.75} />
+                  My Poems
+                  {savedPoemsCount > 0 && (
+                    <span
                       style={{
-                        background:
-                          'linear-gradient(135deg, rgba(197,160,89,0.25), rgba(197,160,89,0.15))',
-                        border: '1.5px solid rgba(197,160,89,0.5)',
-                        color: gold,
+                        marginLeft: 'auto',
+                        fontSize: '10px',
+                        fontWeight: 700,
+                        color: GOLD,
+                        opacity: 0.7,
                       }}
                     >
-                      {(user.email ?? user.user_metadata?.full_name ?? 'U').charAt(0).toUpperCase()}
-                    </div>
-                    {savedPoemsCount > 0 && (
-                      <span
-                        className="absolute -top-0.5 -right-0.5 min-w-[16px] h-4 rounded-full flex items-center justify-center text-[9px] font-bold font-brand-en"
-                        style={{
-                          background: 'linear-gradient(135deg, var(--gold), #B8943E)',
-                          color: '#000',
-                          padding: '0 3px',
-                        }}
-                      >
-                        {savedPoemsCount > 99 ? '99+' : savedPoemsCount}
-                      </span>
-                    )}
-                  </button>
-                  <span className={labelCls} style={{ color: gold }}>
-                    Account
-                  </span>
+                      {savedPoemsCount}
+                    </span>
+                  )}
+                </button>
 
-                  {/* Account submenu drawer */}
-                  <div className={`sidebar-drawer ${accountMenuOpen ? 'open' : ''}`}>
-                    <div className="sidebar-drawer-inner">
-                      <div
-                        className={`flex flex-col items-center gap-1 pl-0.5 border-l-2 ${theme.goldBorderMuted}`}
-                      >
-                        <button
-                          onClick={() => {
-                            onOpenSavedPoems();
-                            setAccountMenuOpen(false);
-                          }}
-                          title="My saved poems"
-                          aria-label="View saved poems"
-                          className={`${subBtnBase} ${subBtnHover}`}
-                        >
-                          <ScrollText style={{ color: gold }} size={16} />
-                        </button>
-                        <span className={labelCls} style={{ color: gold }}>
-                          My Poems
-                        </span>
-
-                        <button
-                          onClick={() => {
-                            onSignOut();
-                            setAccountMenuOpen(false);
-                          }}
-                          title="Sign out"
-                          aria-label="Sign out"
-                          className={`${subBtnBase} ${subBtnHover}`}
-                        >
-                          <LogOut style={{ color: gold }} size={16} />
-                        </button>
-                        <span className={labelCls} style={{ color: gold }}>
-                          Sign Out
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <>
-                  <button onClick={onSignIn} title="Sign in" className={`${btnBase} ${btnHover}`}>
-                    <UserRound style={{ color: gold }} size={18} />
-                  </button>
-                  <span className={labelCls} style={{ color: gold }}>
-                    Sign In
-                  </span>
-                </>
-              )}
-            </div>
+                <button
+                  onClick={() => {
+                    onSignOut();
+                    setAccountMenuOpen(false);
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '9px 12px',
+                    borderRadius: '9px',
+                    border: 'none',
+                    background: 'transparent',
+                    cursor: 'pointer',
+                    color: darkMode ? 'rgba(255,255,255,0.55)' : 'rgba(30,24,18,0.55)',
+                    fontSize: '12px',
+                    fontFamily: 'system-ui, sans-serif',
+                    fontWeight: 500,
+                    transition: 'background 0.15s',
+                    width: '100%',
+                    textAlign: 'left',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = `rgba(${GOLD_RGB},0.08)`;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'transparent';
+                  }}
+                >
+                  <LogOut size={14} color={GOLD} strokeWidth={1.75} style={{ opacity: 0.7 }} />
+                  Sign Out
+                </button>
+              </div>
+            )}
           </div>
-        </div>
+        ) : (
+          <SidebarBtn onClick={onSignIn} title="Sign in">
+            <UserRound size={18} color={GOLD} strokeWidth={1.75} />
+          </SidebarBtn>
+        )}
       </div>
     </>
   );

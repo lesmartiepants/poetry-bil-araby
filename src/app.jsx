@@ -71,6 +71,8 @@ import InsightsDrawer from './components/InsightsDrawer.jsx';
 import ShareCardModal from './components/ShareCardModal.jsx';
 import DiscoverDrawer, { GoldenFireIcon } from './components/DiscoverDrawer.jsx';
 import VerticalSidebar from './components/VerticalSidebar.jsx';
+import TextSettingsPanel from './components/TextSettingsPanel.jsx';
+import DayNightToggle from './components/DayNightToggle.jsx';
 import AuthModal from './components/auth/AuthModal.jsx';
 import SavePoemButton from './components/auth/SavePoemButton.jsx';
 import DownvoteButton from './components/auth/DownvoteButton.jsx';
@@ -1397,6 +1399,12 @@ export default function DiwanApp() {
         </div>
       )}
 
+      {/* Text Settings Panel — top left */}
+      <TextSettingsPanel />
+
+      {/* Day/Night Toggle — top right */}
+      <DayNightToggle />
+
       {/* Vertical Sidebar - always visible */}
       <VerticalSidebar
         onCopy={handleCopy}
@@ -1406,6 +1414,10 @@ export default function DiwanApp() {
         onOpenSavedPoems={handleOpenSavedPoems}
         savedPoemsCount={savedPoems.length}
         user={user}
+        poem={current}
+        isSaved={isPoemSaved(current)}
+        onSave={handleSavePoem}
+        onUnsave={handleUnsavePoem}
       />
 
       {/* Splash / Onboarding Screen (lazy-loaded, deferred from initial bundle) */}

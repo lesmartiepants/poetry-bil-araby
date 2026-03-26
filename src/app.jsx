@@ -787,11 +787,12 @@ export default function DiwanApp() {
       return [...prev, mappedPoem];
     });
     setShowSavedPoems(false);
-    // Update URL for DB poems
+    // Update URL for DB poems, preserving any existing query params (e.g. ?poet=)
+    const qs = window.location.search;
     if (typeof mappedPoem.id === 'number') {
-      navigate('/poem/' + mappedPoem.id, { replace: true });
+      navigate('/poem/' + mappedPoem.id + qs, { replace: true });
     } else {
-      navigate('/', { replace: true });
+      navigate('/' + qs, { replace: true });
     }
   };
 

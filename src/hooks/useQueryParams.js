@@ -1,12 +1,15 @@
-import { useMemo } from 'react';
-import { useLocation } from 'wouter';
+import { useState, useCallback } from 'react';
 
 /**
  * Custom hook for reading and writing URL query parameters.
- * Built on top of wouter's useLocation — no additional dependencies.
  *
- * Note: wouter's useLocation() returns only the pathname (no query string),
- * so we read params from window.location.search directly.
+ * Uses window.history.replaceState directly rather than wouter's navigate(),
+ * because wouter's useLocation() tracks only the pathname — passing
+ * '/path?foo=bar' to navigate() treats '?foo=bar' as part of the pathname
+ * and does not update window.location.search reliably.
+ *
+ * A local state counter drives re-renders when setParams is called, since
+ * window.location.search is not reactive.
  *
  * @returns {[Object, Function]} [params, setParams]
  *   - params: plain object of current query parameter key-value pairs
@@ -17,22 +20,24 @@ import { useLocation } from 'wouter';
  *   /poem/123?poet=Nizar+Qabbani
  */
 export function useQueryParams() {
-  const [location, navigate] = useLocation();
+  // Incrementing this triggers a re-render so `params` is recomputed from
+  // the updated window.location.search after a replaceState call.
+  const [, forceUpdate] = useState(0);
 
-  const params = useMemo(() => {
-    const search = window.location.search;
-    return Object.fromEntries(new URLSearchParams(search));
-  }, [location]); // re-parse when wouter detects navigation
+  const params = Object.fromEntries(new URLSearchParams(window.location.search));
 
-  const setParams = (updates) => {
+  const setParams = useCallback((updates) => {
     const next = new URLSearchParams(window.location.search);
     Object.entries(updates).forEach(([k, v]) =>
       v == null ? next.delete(k) : next.set(k, String(v))
     );
     const qs = next.toString();
-    const base = window.location.pathname;
-    navigate(qs ? `${base}?${qs}` : base, { replace: true });
-  };
+    const newUrl = qs
+      ? `${window.location.pathname}?${qs}`
+      : window.location.pathname;
+    window.history.replaceState({}, '', newUrl);
+    forceUpdate((n) => n + 1);
+  }, []);
 
   return [params, setParams];
 }

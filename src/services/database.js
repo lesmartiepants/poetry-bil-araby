@@ -87,6 +87,36 @@ export const saveTranslation = (poemId, { translation, explanation = null, autho
 };
 
 /**
+ * Fetch multiple poems by the same poet for carousel pre-population.
+ * Deduplicates by ID and excludes any IDs in `excludeIds`.
+ *
+ * @param {string}   poetName   - Arabic poet name to filter by
+ * @param {number}   [count=5]  - Number of poems to fetch
+ * @param {Array}    [excludeIds=[]] - Poem IDs to exclude
+ * @returns {Promise<Array>} Array of normalised poem objects (may be shorter than count on error)
+ */
+export const fetchPoemsByPoet = async (poetName, count = 5, excludeIds = []) => {
+  const seenIds = new Set(excludeIds.map(String));
+  const results = [];
+
+  await Promise.all(
+    Array.from({ length: count }).map(async () => {
+      try {
+        const poem = await fetchRandomPoem({ poet: poetName, excludeIds: [...seenIds] });
+        if (poem?.id && !seenIds.has(String(poem.id))) {
+          seenIds.add(String(poem.id));
+          results.push(poem);
+        }
+      } catch {
+        // Silently skip failed individual fetches
+      }
+    })
+  );
+
+  return results;
+};
+
+/**
  * Ping the backend health endpoint.
  * Used for keep-alive to prevent Render free-tier cold starts.
  *

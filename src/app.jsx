@@ -43,6 +43,7 @@ import { fetchPoem as fetchPoemAction } from './stores/actions/fetchPoem';
 import { togglePlay as togglePlayAction } from './stores/actions/togglePlay';
 import { analyzePoem as analyzePoemAction } from './stores/actions/analyzePoem';
 import { getRecentSeenIds, markPoemSeen, pruneSeenPoems } from './utils/seenPoems.js';
+import { transliterate } from './utils/transliterate.js';
 import { filterPoemsByCategory } from './utils/filterPoems.js';
 import { pcm16ToWav } from './utils/audio.js';
 import {
@@ -58,6 +59,7 @@ import {
   fetchPoemById,
   fetchPoets,
   fetchRandomPoem,
+  fetchPoemsByPoet,
   saveTranslation,
   pingHealth,
 } from './services/database.js';
@@ -72,6 +74,7 @@ const SplashScreen = lazy(() => import('./components/SplashScreen.jsx'));
 import InsightsDrawer from './components/InsightsDrawer.jsx';
 import ShareCardModal from './components/ShareCardModal.jsx';
 import DiscoverDrawer, { GoldenFireIcon } from './components/DiscoverDrawer.jsx';
+import PoemCarousel from './components/PoemCarousel.jsx';
 import VerticalSidebar from './components/VerticalSidebar.jsx';
 import AuthModal from './components/auth/AuthModal.jsx';
 import SavePoemButton from './components/auth/SavePoemButton.jsx';
@@ -136,6 +139,11 @@ export default function DiwanApp() {
   const setInterpretation = usePoemStore((s) => s.setInterpretation);
   const isInterpreting = usePoemStore((s) => s.isInterpreting);
   const setIsInterpreting = usePoemStore((s) => s.setInterpreting);
+  const carouselPoems = usePoemStore((s) => s.carouselPoems);
+  const carouselIndex = usePoemStore((s) => s.carouselIndex);
+  const setCarouselPoems = usePoemStore((s) => s.setCarouselPoems);
+  const clearCarouselPoems = usePoemStore((s) => s.clearCarouselPoems);
+  const setCarouselIndex = usePoemStore((s) => s.setCarouselIndex);
 
   // ── Modal store (Zustand) ──
   const discoverDrawerOpen = useModalStore((s) => s.discoverDrawer);
@@ -274,6 +282,23 @@ export default function DiwanApp() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isFetching]);
+
+  // Pre-populate the carousel when the poet filter changes (database mode only).
+  useEffect(() => {
+    if (!FEATURES.prefetching || !useDatabase || selectedCategory === 'All') {
+      clearCarouselPoems();
+      return;
+    }
+    let cancelled = false;
+    clearCarouselPoems();
+    fetchPoemsByPoet(selectedCategory, 5).then((poems) => {
+      if (!cancelled && poems.length > 0) {
+        setCarouselPoems(poems);
+        if (FEATURES.logging) addLog('Carousel', `Pre-fetched ${poems.length} poems for ${selectedCategory}`, 'info');
+      }
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [selectedCategory, useDatabase]);
 
   // Eagerly populate the discovered model list so it's ready before any user action.
   // Using the default fetch mock in tests means this never consumes a mockResolvedValueOnce.
@@ -1039,48 +1064,71 @@ export default function DiwanApp() {
                 </div>
 
                 <div className={`relative w-full group pt-1 pb-2 ${DESIGN.mainMarginBottom}`}>
-                  <div className="px-4 md:px-20 py-2 text-center">
-                    <div className="flex flex-col gap-5 md:gap-7">
-                      {versePairs.map((pair, idx) => (
-                        <div
-                          key={`${current?.id}-${idx}`}
-                          className="flex flex-col gap-0.5 verse-fade-up"
-                          style={{ animationDelay: `${idx * 80}ms` }}
-                        >
-                          <p
-                            dir="rtl"
-                            className={`${currentFontClass} leading-[2.2] arabic-shadow ${DESIGN.anim}`}
-                            style={{ fontSize: `calc(${POEM_META.verseArabicSize} * ${textScale})` }}
+                  {carouselPoems.length > 0 ? (
+                    <PoemCarousel
+                      poems={carouselPoems}
+                      currentIndex={carouselIndex}
+                      onSlideChange={(idx) => {
+                        setCarouselIndex(idx);
+                        // Pause audio when browsing via carousel
+                        const player = useAudioStore.getState().player;
+                        if (player && player.state === 'started') {
+                          player.stop();
+                        }
+                        setIsPlaying(false);
+                      }}
+                      darkMode={darkMode}
+                      showTranslation={showTranslation}
+                      showTransliteration={showTransliteration}
+                      textScale={textScale}
+                      currentFontClass={currentFontClass}
+                      POEM_META={POEM_META}
+                      DESIGN={DESIGN}
+                    />
+                  ) : (
+                    <div className="px-4 md:px-20 py-2 text-center">
+                      <div className="flex flex-col gap-5 md:gap-7">
+                        {versePairs.map((pair, idx) => (
+                          <div
+                            key={`${current?.id}-${idx}`}
+                            className="flex flex-col gap-0.5 verse-fade-up"
+                            style={{ animationDelay: `${idx * 80}ms` }}
                           >
-                            {pair.ar}
-                          </p>
-                          {showTransliteration && pair.ar && (
                             <p
-                              dir="ltr"
-                              className={`font-brand-en italic opacity-50 ${DESIGN.anim}`}
-                              style={{
-                                fontSize: `calc(${POEM_META.verseTranslitSize} * ${textScale})`,
-                              }}
+                              dir="rtl"
+                              className={`${currentFontClass} leading-[2.2] arabic-shadow ${DESIGN.anim}`}
+                              style={{ fontSize: `calc(${POEM_META.verseArabicSize} * ${textScale})` }}
                             >
-                              {transliterate(pair.ar)}
+                              {pair.ar}
                             </p>
-                          )}
-                          {showTranslation && pair.en && (
-                            <p
-                              dir="ltr"
-                              className={`font-brand-en italic opacity-60 ${DESIGN.anim} mx-auto`}
-                              style={{
-                                fontSize: `calc(${POEM_META.verseEnglishSize} * ${textScale})`,
-                                maxWidth: '90%',
-                              }}
-                            >
-                              {pair.en}
-                            </p>
-                          )}
-                        </div>
-                      ))}
+                            {showTransliteration && pair.ar && (
+                              <p
+                                dir="ltr"
+                                className={`font-brand-en italic opacity-50 ${DESIGN.anim}`}
+                                style={{
+                                  fontSize: `calc(${POEM_META.verseTranslitSize} * ${textScale})`,
+                                }}
+                              >
+                                {transliterate(pair.ar)}
+                              </p>
+                            )}
+                            {showTranslation && pair.en && (
+                              <p
+                                dir="ltr"
+                                className={`font-brand-en italic opacity-60 ${DESIGN.anim} mx-auto`}
+                                style={{
+                                  fontSize: `calc(${POEM_META.verseEnglishSize} * ${textScale})`,
+                                  maxWidth: '90%',
+                                }}
+                              >
+                                {pair.en}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </div>
 
                 <div className="flex justify-center gap-3 mt-2 mb-4">

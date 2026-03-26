@@ -23,9 +23,10 @@ describe('WS2: Sonner integration', () => {
       expect(content).toMatch(/<Toaster/);
     });
 
-    it('uses bottom-center position', () => {
+    it('uses top-center position', () => {
+      // Position was changed to top-center (commit b9ae900) for better UX on mobile
       const content = fs.readFileSync(path.join(SRC, 'main.jsx'), 'utf-8');
-      expect(content).toMatch(/position=["']bottom-center["']/);
+      expect(content).toMatch(/position=["']top-center["']/);
     });
   });
 

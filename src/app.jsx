@@ -76,8 +76,9 @@ import ShareCardModal from './components/ShareCardModal.jsx';
 import DiscoverDrawer, { GoldenFireIcon } from './components/DiscoverDrawer.jsx';
 import PoemCarousel from './components/PoemCarousel.jsx';
 import VerticalSidebar from './components/VerticalSidebar.jsx';
+import TextSettingsPill from './components/TextSettingsPill.jsx';
+import ThemeToggle from './components/ThemeToggle.jsx';
 import AuthModal from './components/auth/AuthModal.jsx';
-import SavePoemButton from './components/auth/SavePoemButton.jsx';
 import DownvoteButton from './components/auth/DownvoteButton.jsx';
 import SavedPoemsView from './components/auth/SavedPoemsView.jsx';
 
@@ -1042,7 +1043,7 @@ export default function DiwanApp() {
           <main
             ref={mainScrollRef}
             onScroll={handleScroll}
-            className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden custom-scrollbar relative z-10 px-4 md:px-0 pb-28 pt-10 md:pt-12"
+            className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar relative z-10 px-6 pr-14 md:px-8 md:pr-0 pb-28 pt-10 md:pt-12"
             style={{ overscrollBehaviorX: 'none' }}
           >
             {/* Top scroll gradient removed — header is now a subtle corner wordmark */}
@@ -1487,10 +1488,23 @@ export default function DiwanApp() {
         </div>
       )}
 
+      {/* Theme Toggle — top-right */}
+      <div className="fixed top-10 right-2 md:right-[25rem] z-[46]">
+        <ThemeToggle />
+      </div>
+
+      {/* Text Settings — below theme toggle */}
+      <div className="fixed top-[5.5rem] right-2 md:right-[25rem] z-[46]">
+        <TextSettingsPill />
+      </div>
+
       {/* Vertical Sidebar - always visible */}
       <VerticalSidebar
         onCopy={handleCopy}
         onShare={handleShare}
+        onSave={handleSavePoem}
+        onUnsave={handleUnsavePoem}
+        isSaved={current ? isPoemSaved(current) : false}
         onSignIn={handleSignIn}
         onSignOut={handleSignOut}
         onOpenSavedPoems={handleOpenSavedPoems}

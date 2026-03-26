@@ -9,10 +9,6 @@ export default function InsightOverlay({
   isInterpreting,
   interpretation,
   onClose,
-  onPrev,
-  onNext,
-  poemIndex,
-  poemCount,
   ratchetMode,
   handleAnalyze,
 }) {
@@ -33,7 +29,7 @@ export default function InsightOverlay({
         <Drawer.Overlay
           className="fixed inset-0 z-[60]"
           style={{
-            background: 'rgba(0,0,0,0.4)',
+            background: o.scrim,
             backdropFilter: o.backdrop,
             WebkitBackdropFilter: o.backdrop,
           }}
@@ -84,6 +80,8 @@ export default function InsightOverlay({
             <Drawer.Close asChild>
               <button
                 data-testid="insight-close-mobile"
+                type="button"
+                aria-label="Close insight overlay"
                 className="md:hidden w-7 h-7 rounded-full flex items-center justify-center transition-all"
                 style={{ border: `1px solid ${o.borderSubtle}`, color: o.textMuted }}
               >
@@ -217,29 +215,6 @@ export default function InsightOverlay({
             )}
           </div>
 
-          {/* Footer */}
-          <div
-            className="absolute bottom-0 left-0 right-0 px-6 md:px-8 py-3.5 flex items-center justify-between flex-shrink-0"
-            style={{ background: o.footerFade }}
-          >
-            <button
-              onClick={onPrev}
-              className="px-4 py-1.5 rounded-full text-[10px] tracking-[0.08em] font-fell transition-all"
-              style={{ border: `1px solid ${o.borderSubtle}`, color: o.textMuted }}
-            >
-              Previous
-            </button>
-            <span className="text-[10px] tracking-[0.08em]" style={{ color: o.textMuted }}>
-              {poemIndex} of {poemCount}
-            </span>
-            <button
-              onClick={onNext}
-              className="px-4 py-1.5 rounded-full text-[10px] tracking-[0.08em] font-fell transition-all"
-              style={{ border: `1px solid ${o.borderSubtle}`, color: o.textMuted }}
-            >
-              Next
-            </button>
-          </div>
         </Drawer.Content>
       </Drawer.Portal>
     </Drawer.Root>

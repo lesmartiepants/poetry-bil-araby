@@ -5,11 +5,7 @@ import InsightOverlay from '../components/InsightOverlay.jsx';
 // Mock vaul
 vi.mock('vaul', () => ({
   Drawer: {
-    Root: ({ children, ...props }) => (
-      <div data-testid="drawer-root" {...props}>
-        {children}
-      </div>
-    ),
+    Root: ({ children, open, ...props }) => open ? <div data-testid="drawer-root">{children}</div> : null,
     Portal: ({ children }) => <div>{children}</div>,
     Overlay: (props) => <div data-testid="drawer-overlay" {...props} />,
     Content: ({ children, ...props }) => (
@@ -47,10 +43,6 @@ const mockProps = {
   isInterpreting: false,
   interpretation: 'Some interpretation',
   onClose: vi.fn(),
-  onPrev: vi.fn(),
-  onNext: vi.fn(),
-  poemIndex: 1,
-  poemCount: 10,
   ratchetMode: false,
   handleAnalyze: vi.fn(),
 };
@@ -68,16 +60,8 @@ describe('InsightOverlay', () => {
     expect(screen.getByText(/Consulting/)).toBeDefined();
   });
 
-  it('shows poem count in footer', () => {
-    render(<InsightOverlay {...mockProps} />);
-    expect(screen.getByText(/1.*10/)).toBeDefined();
-  });
-
   it('does not render when closed', () => {
     render(<InsightOverlay {...mockProps} open={false} />);
-    // When open=false, Vaul Root is in DOM (mock doesn't remove it) but heading is still rendered by mock
-    // The key behavior is that onOpenChange→onClose is called when vaul closes — test that structure exists
-    const root = screen.getByTestId('drawer-root');
-    expect(root).toBeDefined();
+    expect(screen.queryByText('Poetic Insight')).toBeNull();
   });
 });

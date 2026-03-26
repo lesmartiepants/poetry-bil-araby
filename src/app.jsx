@@ -1328,10 +1328,6 @@ export default function DiwanApp() {
         isInterpreting={isInterpreting}
         interpretation={interpretation}
         onClose={() => setInsightsDrawerOpen(false)}
-        onPrev={() => {}}
-        onNext={() => handleFetch()}
-        poemIndex={1}
-        poemCount={1}
         ratchetMode={ratchetMode}
         handleAnalyze={handleAnalyze}
       />

@@ -9,9 +9,6 @@ import { transliterate } from '../utils/transliterate.js';
  * @param {object}        props
  * @param {object|null}   props.current           - Currently displayed poem object
  * @param {Array}         props.versePairs         - [{ar, en}] pairs pre-computed in parent
- * @param {object|null}   props.insightParts       - Parsed insight ({ depth, author, poeticTranslation })
- * @param {boolean}       props.isInterpreting     - Whether analysis request is in flight
- * @param {string|null}   props.interpretation     - Raw interpretation text
  * @param {boolean}       props.showTransliteration
  * @param {boolean}       props.showTranslation
  * @param {boolean}       props.darkMode
@@ -22,9 +19,6 @@ import { transliterate } from '../utils/transliterate.js';
 export default function PoemCard({
   current,
   versePairs,
-  insightParts,
-  isInterpreting,
-  interpretation,
   showTransliteration,
   showTranslation,
   darkMode,

@@ -57,6 +57,7 @@ export const THEME = {
       footerFade: 'linear-gradient(0deg, rgba(8,8,12,0.98) 50%, transparent)',
       loadingBorder: 'rgba(74,124,201,0.25)',
       loadingActive: '#4A7CC9',
+      scrim: 'rgba(0,0,0,0.4)',
     },
   },
   light: {
@@ -117,6 +118,7 @@ export const THEME = {
       footerFade: 'linear-gradient(0deg, rgba(253,252,248,0.98) 50%, transparent)',
       loadingBorder: 'rgba(46,80,144,0.2)',
       loadingActive: '#2E5090',
+      scrim: 'rgba(0,0,0,0.4)',
     },
   },
 };

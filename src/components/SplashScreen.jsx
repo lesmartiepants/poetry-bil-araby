@@ -325,9 +325,7 @@ const SplashScreen = () => {
           anim: 'splashDune4 23s ease-in-out infinite alternate',
         },
       ];
-  const bgGradient = isDark
-    ? COLORS.splash.bgGradientDark
-    : COLORS.splash.bgGradientLight;
+  const bgGradient = isDark ? COLORS.splash.bgGradientDark : COLORS.splash.bgGradientLight;
   const kineticStep = phase - 1; // 0, 1, or 2
   const progressWidth = ((Math.max(kineticStep, 0) + 1) / 3) * 100 + '%';
   const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
@@ -574,6 +572,7 @@ const SplashScreen = () => {
                   fontFamily: "'Tajawal', sans-serif",
                   fontSize: '0.9375rem',
                   color: COLORS.splash.kineticSubtext,
+                  direction: 'rtl',
                   opacity: 0,
                   animation: prefersReducedMotion
                     ? 'splashFadeIn 0.01ms forwards'

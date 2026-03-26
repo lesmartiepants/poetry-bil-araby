@@ -418,7 +418,7 @@ export default function DiwanApp() {
         // Restored from OAuth — stay on this poem, just queue explanation
         addLog('Init', `Restored from login: ${initial.poet} — ${initial.title}`, 'success');
         setAutoExplainPending(true);
-        if (initial.id) navigate('/poem/' + initial.id, { replace: true });
+        if (initial.id) navigate('/poem/' + initial.id + window.location.search, { replace: true });
       } else if (initial?.cachedTranslation) {
         // Has cached translation — no fetch needed
         addLog(

@@ -144,7 +144,7 @@ async function fetchFromDatabase({
     if (newIdx !== -1) setCurrentIndex(newIdx);
     return updated;
   });
-  navigate('/poem/' + newPoem.id, { replace: true });
+  navigate('/poem/' + newPoem.id + (typeof window !== 'undefined' ? window.location.search : ''));
   if (!newPoem.cachedTranslation) {
     setAutoExplain(true);
   }
@@ -247,5 +247,5 @@ async function fetchFromAI({
     if (newIdx !== -1) setCurrentIndex(newIdx);
     return updated;
   });
-  navigate('/', { replace: true });
+  navigate('/' + (typeof window !== 'undefined' ? window.location.search : ''), { replace: true });
 }

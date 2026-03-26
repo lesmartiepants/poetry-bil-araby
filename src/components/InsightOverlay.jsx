@@ -23,6 +23,7 @@ export default function InsightOverlay({
         if (!isOpen) onClose();
       }}
       snapPoints={[1]}
+      closeThreshold={0.1}
       modal
     >
       <Drawer.Portal>

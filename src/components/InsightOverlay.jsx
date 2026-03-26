@@ -37,7 +37,6 @@ export default function InsightOverlay({
       onOpenChange={(isOpen) => {
         if (!isOpen) onClose();
       }}
-      snapPoints={[0.8]}
       closeThreshold={0.1}
       modal
     >

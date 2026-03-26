@@ -297,21 +297,41 @@ export default function DiwanApp() {
   }, [isFetching]);
 
   // Pre-populate the carousel when the poet filter changes (database mode only).
+  // We wait until the main poem fetch settles (current.poet === selectedCategory) so
+  // the current poem can be placed as item[0] — no independent fetch, no flash.
   useEffect(() => {
     if (!FEATURES.prefetching || !useDatabase || selectedCategory === 'All') {
       clearCarouselPoems();
       return;
     }
+    // If the main poem hasn't arrived for this poet yet, wait — the effect will
+    // re-run once current.poet changes to match selectedCategory.
+    if (!current?.poet || current.poet !== selectedCategory) return;
+
     let cancelled = false;
     clearCarouselPoems();
-    fetchPoemsByPoet(selectedCategory, 5).then((poems) => {
-      if (!cancelled && poems.length > 0) {
-        setCarouselPoems(poems);
-        if (FEATURES.logging) addLog('Carousel', `Pre-fetched ${poems.length} poems for ${selectedCategory}`, 'info');
+    // Fetch 4 additional poems (excluding the current main poem) to fill slots 1-4.
+    fetchPoemsByPoet(selectedCategory, 4, [current.id]).then((others) => {
+      if (cancelled) return;
+      // Build carousel with main poem at index 0 so the view never jumps.
+      const carouselList = [current, ...others];
+      setCarouselPoems(carouselList);
+      if (FEATURES.logging) addLog('Carousel', `Populated ${carouselList.length} poems for ${selectedCategory} (main poem first)`, 'info');
+      // Auto-explain the first poem that has no translation.
+      const firstNeedsTranslation = carouselList.find(
+        p => !p.cachedTranslation && !p.english && !explainedPoemIds.current.has(p.id)
+      );
+      if (firstNeedsTranslation) {
+        const { interpretation: interp, isInterpreting: interpreting } = usePoemStore.getState();
+        if (!interp && !interpreting) {
+          explainedPoemIds.current.add(firstNeedsTranslation.id);
+          carouselExplainTargetId.current = firstNeedsTranslation.id;
+          analyzePoemAction({ current: firstNeedsTranslation, addLog, track });
+        }
       }
     }).catch(() => {});
     return () => { cancelled = true; };
-  }, [selectedCategory, useDatabase]);
+  }, [selectedCategory, useDatabase, current?.poet, current?.id]);
 
   // Populate carousel from current poem's poet (works even when filter is "All")
   useEffect(() => {
@@ -325,12 +345,17 @@ export default function DiwanApp() {
         setCarouselPoems(poems);
         // Auto-explain the first carousel poem on initial load if it has no translation.
         // Guard with explainedPoemIds to ensure we only fire once per poem ID.
+        // Only add to explainedPoemIds if analyzePoem can actually start — if
+        // isInterpreting is true we skip marking, so the next populate can retry.
         const first = poems[0];
         if (first && !first.cachedTranslation && !first.english &&
             !explainedPoemIds.current.has(first.id)) {
-          explainedPoemIds.current.add(first.id);
-          carouselExplainTargetId.current = first.id; // track which poem we're explaining
-          analyzePoemAction({ current: first, addLog, track });
+          const { interpretation: interp, isInterpreting: interpreting } = usePoemStore.getState();
+          if (!interp && !interpreting) {
+            explainedPoemIds.current.add(first.id);
+            carouselExplainTargetId.current = first.id; // track which poem we're explaining
+            analyzePoemAction({ current: first, addLog, track });
+          }
         }
       }
     }).catch(() => {});
@@ -1160,12 +1185,18 @@ export default function DiwanApp() {
                         // Set the target ref BEFORE firing so the patching effect can
                         // match by poem ID, not by carouselIndex (race-condition fix).
                         // Guard with explainedPoemIds to ensure we only fire once per poem.
+                        // Only add to explainedPoemIds if analyzePoem can actually start —
+                        // if isInterpreting is true, don't mark as explained so the next
+                        // slide change can retry (prevents silently dropping translations).
                         const newPoem = carouselPoems[idx];
                         if (newPoem && !newPoem.cachedTranslation && !newPoem.english &&
                             !explainedPoemIds.current.has(newPoem.id)) {
-                          explainedPoemIds.current.add(newPoem.id);
-                          carouselExplainTargetId.current = newPoem.id;
-                          analyzePoemAction({ current: newPoem, addLog, track });
+                          const { interpretation: interp, isInterpreting: interpreting } = usePoemStore.getState();
+                          if (!interp && !interpreting) {
+                            explainedPoemIds.current.add(newPoem.id);
+                            carouselExplainTargetId.current = newPoem.id;
+                            analyzePoemAction({ current: newPoem, addLog, track });
+                          }
                         }
                       }}
                       darkMode={darkMode}

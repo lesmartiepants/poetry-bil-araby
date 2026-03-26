@@ -7,7 +7,9 @@
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  html { scroll-behavior: smooth; }
+  @media (prefers-reduced-motion: no-preference) {
+    html { scroll-behavior: smooth; }
+  }
 
   body {
     font-family: -apple-system, system-ui, 'Segoe UI', Roboto, Helvetica, sans-serif;
@@ -118,6 +120,84 @@
 
   .note strong {
     color: #C5A059;
+  }
+
+  /* Live preview banner */
+  .preview-banner {
+    max-width: 900px;
+    margin: 0 auto 2rem;
+    padding: 1.25rem 1.5rem;
+    background: rgba(197, 160, 89, 0.07);
+    border: 1px solid rgba(197, 160, 89, 0.3);
+    border-radius: 10px;
+  }
+
+  .preview-banner-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .preview-banner-header .badge {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #0c0c0e;
+    background: #C5A059;
+    padding: 0.2em 0.55em;
+    border-radius: 4px;
+  }
+
+  .preview-banner-header .title {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #e0ddd5;
+  }
+
+  .preview-banner .base-url {
+    font-size: 0.8rem;
+    color: #8a8780;
+    margin-bottom: 1rem;
+    word-break: break-all;
+  }
+
+  .preview-banner .base-url a {
+    color: #C5A059;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .preview-links-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 0.4rem;
+  }
+
+  .preview-link {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.6rem;
+    background: rgba(197, 160, 89, 0.06);
+    border: 1px solid rgba(197, 160, 89, 0.12);
+    border-radius: 6px;
+    text-decoration: none;
+    font-size: 0.78rem;
+    color: #b0ac9f;
+    transition: border-color 0.15s, color 0.15s;
+  }
+
+  .preview-link:hover {
+    border-color: rgba(197, 160, 89, 0.4);
+    color: #e0ddd5;
+  }
+
+  .preview-link .num {
+    font-weight: 700;
+    color: #C5A059;
+    flex-shrink: 0;
   }
 
   /* Batch labels */
@@ -293,6 +373,41 @@
   <p>12 refinement designs for Poetry Bil-Araby. Each card shows an inline preview of the design with callouts highlighting what to look for.</p>
 </header>
 
+<!-- Live Preview Banner -->
+<div class="preview-banner" id="preview-banner">
+  <div class="preview-banner-header">
+    <span class="badge">Live</span>
+    <span class="title">Vercel Preview — open any design in a new tab</span>
+  </div>
+  <p class="base-url" id="preview-base-url"></p>
+  <div class="preview-links-grid">
+    <a class="preview-link" data-href="01-typography-polish.html" href="#" target="_blank" rel="noopener noreferrer"><span class="num">01</span>Typography Polish</a>
+    <a class="preview-link" data-href="02-glass-noise-texture.html" href="#" target="_blank" rel="noopener noreferrer"><span class="num">02</span>Glass Noise Texture</a>
+    <a class="preview-link" data-href="03-gold-gradient-foil.html" href="#" target="_blank" rel="noopener noreferrer"><span class="num">03</span>Gold Gradient Foil</a>
+    <a class="preview-link" data-href="04-gold-luminance-hierarchy.html" href="#" target="_blank" rel="noopener noreferrer"><span class="num">04</span>Gold Luminance Hierarchy</a>
+    <a class="preview-link" data-href="05-spring-transitions.html" href="#" target="_blank" rel="noopener noreferrer"><span class="num">05</span>Spring Transitions</a>
+    <a class="preview-link" data-href="06-micro-interactions.html" href="#" target="_blank" rel="noopener noreferrer"><span class="num">06</span>Micro-Interactions</a>
+    <a class="preview-link" data-href="07-header-calligraphic.html" href="#" target="_blank" rel="noopener noreferrer"><span class="num">07</span>Header Calligraphic</a>
+    <a class="preview-link" data-href="08-mobile-bottom-sheet.html" href="#" target="_blank" rel="noopener noreferrer"><span class="num">08</span>Mobile Bottom Sheet</a>
+    <a class="preview-link" data-href="09-mobile-swipe-poems.html" href="#" target="_blank" rel="noopener noreferrer"><span class="num">09</span>Mobile Swipe Poems</a>
+    <a class="preview-link" data-href="10-warm-starfield.html" href="#" target="_blank" rel="noopener noreferrer"><span class="num">10</span>Warm Starfield</a>
+    <a class="preview-link" data-href="11-parallax-depth.html" href="#" target="_blank" rel="noopener noreferrer"><span class="num">11</span>Parallax Depth</a>
+    <a class="preview-link" data-href="12-poet-poem-metadata.html" href="#" target="_blank" rel="noopener noreferrer"><span class="num">12</span>Poet/Poem Metadata</a>
+  </div>
+</div>
+<script>
+  // Resolve absolute URLs for shareable links
+  (function () {
+    var base = window.location.href.replace(/NAVIGATOR\.html.*$/, '');
+    var urlEl = document.getElementById('preview-base-url');
+    var navUrl = base + 'NAVIGATOR.html';
+    urlEl.innerHTML = 'Navigator: <a href="' + navUrl + '" target="_blank" rel="noopener noreferrer">' + navUrl + '</a>';
+    document.querySelectorAll('.preview-link[data-href]').forEach(function (a) {
+      a.href = base + a.getAttribute('data-href');
+    });
+  })();
+</script>
+
 <!-- Table of Contents -->
 <nav class="toc">
   <h2>Table of Contents</h2>
@@ -337,11 +452,11 @@
       <span class="card-number">01</span>
       <span class="card-title">Typography Polish</span>
     </div>
-    <a class="btn-fullscreen" href="01-typography-polish.html" target="_blank">Fullscreen &rarr;</a>
+    <a class="btn-fullscreen" href="01-typography-polish.html" target="_blank" rel="noopener noreferrer">Fullscreen &rarr;</a>
   </div>
   <p class="card-description">Arabic text spacing. Line-height 2.6 (vs normal 2.4), kashida justification, refined word-spacing. The Arabic text should feel more spacious.</p>
   <div class="iframe-wrapper">
-    <iframe src="01-typography-polish.html" loading="lazy" title="01 Typography Polish preview"></iframe>
+    <iframe src="01-typography-polish.html" loading="lazy" sandbox="allow-scripts allow-same-origin" title="01 Typography Polish preview"></iframe>
   </div>
   <div class="callouts">
     <span class="callout">Line-height 2.6 vs 2.4 &mdash; more vertical breathing room</span>
@@ -357,11 +472,11 @@
       <span class="card-number">02</span>
       <span class="card-title">Glass Noise Texture</span>
     </div>
-    <a class="btn-fullscreen" href="02-glass-noise-texture.html" target="_blank">Fullscreen &rarr;</a>
+    <a class="btn-fullscreen" href="02-glass-noise-texture.html" target="_blank" rel="noopener noreferrer">Fullscreen &rarr;</a>
   </div>
   <p class="card-description">Subtle grain on glass panels. SVG noise at 2&ndash;3% opacity. Glass panels should feel slightly more "real."</p>
   <div class="iframe-wrapper">
-    <iframe src="02-glass-noise-texture.html" loading="lazy" title="02 Glass Noise Texture preview"></iframe>
+    <iframe src="02-glass-noise-texture.html" loading="lazy" sandbox="allow-scripts allow-same-origin" title="02 Glass Noise Texture preview"></iframe>
   </div>
   <div class="callouts">
     <span class="callout">SVG noise overlay at 2&ndash;3% opacity</span>
@@ -377,11 +492,11 @@
       <span class="card-number">03</span>
       <span class="card-title">Gold Gradient Foil</span>
     </div>
-    <a class="btn-fullscreen" href="03-gold-gradient-foil.html" target="_blank">Fullscreen &rarr;</a>
+    <a class="btn-fullscreen" href="03-gold-gradient-foil.html" target="_blank" rel="noopener noreferrer">Fullscreen &rarr;</a>
   </div>
   <p class="card-description">Gold text has multi-stop gradient instead of flat color. Gold should look like hammered gold leaf.</p>
   <div class="iframe-wrapper">
-    <iframe src="03-gold-gradient-foil.html" loading="lazy" title="03 Gold Gradient Foil preview"></iframe>
+    <iframe src="03-gold-gradient-foil.html" loading="lazy" sandbox="allow-scripts allow-same-origin" title="03 Gold Gradient Foil preview"></iframe>
   </div>
   <div class="callouts">
     <span class="callout">Multi-stop gradient on all gold text</span>
@@ -397,11 +512,11 @@
       <span class="card-number">04</span>
       <span class="card-title">Gold Luminance Hierarchy</span>
     </div>
-    <a class="btn-fullscreen" href="04-gold-luminance-hierarchy.html" target="_blank">Fullscreen &rarr;</a>
+    <a class="btn-fullscreen" href="04-gold-luminance-hierarchy.html" target="_blank" rel="noopener noreferrer">Fullscreen &rarr;</a>
   </div>
   <p class="card-description">Three tiers: bright gold buttons, standard gold titles, dim gold borders. Importance maps to brightness.</p>
   <div class="iframe-wrapper">
-    <iframe src="04-gold-luminance-hierarchy.html" loading="lazy" title="04 Gold Luminance Hierarchy preview"></iframe>
+    <iframe src="04-gold-luminance-hierarchy.html" loading="lazy" sandbox="allow-scripts allow-same-origin" title="04 Gold Luminance Hierarchy preview"></iframe>
   </div>
   <div class="callouts">
     <span class="callout">Bright gold (#D4B463) on actions/buttons</span>
@@ -417,11 +532,11 @@
       <span class="card-number">05</span>
       <span class="card-title">Spring Transitions</span>
     </div>
-    <a class="btn-fullscreen" href="05-spring-transitions.html" target="_blank">Fullscreen &rarr;</a>
+    <a class="btn-fullscreen" href="05-spring-transitions.html" target="_blank" rel="noopener noreferrer">Fullscreen &rarr;</a>
   </div>
   <p class="card-description">Spring physics. First load = center-out stagger. Navigation = slide-up with spring overshoot (bouncy).</p>
   <div class="iframe-wrapper">
-    <iframe src="05-spring-transitions.html" loading="lazy" title="05 Spring Transitions preview"></iframe>
+    <iframe src="05-spring-transitions.html" loading="lazy" sandbox="allow-scripts allow-same-origin" title="05 Spring Transitions preview"></iframe>
   </div>
   <div class="callouts">
     <span class="callout">First-load: center-out stagger animation</span>
@@ -437,11 +552,11 @@
       <span class="card-number">06</span>
       <span class="card-title">Micro-Interactions</span>
     </div>
-    <a class="btn-fullscreen" href="06-micro-interactions.html" target="_blank">Fullscreen &rarr;</a>
+    <a class="btn-fullscreen" href="06-micro-interactions.html" target="_blank" rel="noopener noreferrer">Fullscreen &rarr;</a>
   </div>
   <p class="card-description">Different feedback per type: hover = glow ring, click = scale snap-back, focus = pulsing ring, loading = shimmer.</p>
   <div class="iframe-wrapper">
-    <iframe src="06-micro-interactions.html" loading="lazy" title="06 Micro-Interactions preview"></iframe>
+    <iframe src="06-micro-interactions.html" loading="lazy" sandbox="allow-scripts allow-same-origin" title="06 Micro-Interactions preview"></iframe>
   </div>
   <div class="callouts">
     <span class="callout">Hover over controls &mdash; gold glow ring</span>
@@ -464,11 +579,11 @@
       <span class="card-number">07</span>
       <span class="card-title">Header Calligraphic</span>
     </div>
-    <a class="btn-fullscreen" href="07-header-calligraphic.html" target="_blank">Fullscreen &rarr;</a>
+    <a class="btn-fullscreen" href="07-header-calligraphic.html" target="_blank" rel="noopener noreferrer">Fullscreen &rarr;</a>
   </div>
   <p class="card-description">Shrinking header 120px to 56px on scroll. SVG ornament fades. Arabic brand has gold text-shadow.</p>
   <div class="iframe-wrapper">
-    <iframe src="07-header-calligraphic.html" loading="lazy" title="07 Header Calligraphic preview"></iframe>
+    <iframe src="07-header-calligraphic.html" loading="lazy" sandbox="allow-scripts allow-same-origin" title="07 Header Calligraphic preview"></iframe>
   </div>
   <div class="callouts">
     <span class="callout">Scroll inside to see header shrink 120px &rarr; 56px</span>
@@ -484,11 +599,11 @@
       <span class="card-number">08</span>
       <span class="card-title">Mobile Bottom Sheet</span>
     </div>
-    <a class="btn-fullscreen" href="08-mobile-bottom-sheet.html" target="_blank">Fullscreen &rarr;</a>
+    <a class="btn-fullscreen" href="08-mobile-bottom-sheet.html" target="_blank" rel="noopener noreferrer">Fullscreen &rarr;</a>
   </div>
   <p class="card-description">iOS-style bottom sheet drags up (50%/90% snap). Gold handle bar. Backdrop dim. Best tested at mobile width.</p>
   <div class="iframe-wrapper">
-    <iframe src="08-mobile-bottom-sheet.html" loading="lazy" title="08 Mobile Bottom Sheet preview"></iframe>
+    <iframe src="08-mobile-bottom-sheet.html" loading="lazy" sandbox="allow-scripts allow-same-origin" title="08 Mobile Bottom Sheet preview"></iframe>
   </div>
   <div class="callouts">
     <span class="callout">Gold drag handle at top of sheet</span>
@@ -505,11 +620,11 @@
       <span class="card-number">09</span>
       <span class="card-title">Mobile Swipe Poems</span>
     </div>
-    <a class="btn-fullscreen" href="09-mobile-swipe-poems.html" target="_blank">Fullscreen &rarr;</a>
+    <a class="btn-fullscreen" href="09-mobile-swipe-poems.html" target="_blank" rel="noopener noreferrer">Fullscreen &rarr;</a>
   </div>
   <p class="card-description">Horizontal swipe between 3 poems. Gold dot indicators. Best tested at mobile width.</p>
   <div class="iframe-wrapper">
-    <iframe src="09-mobile-swipe-poems.html" loading="lazy" title="09 Mobile Swipe Poems preview"></iframe>
+    <iframe src="09-mobile-swipe-poems.html" loading="lazy" sandbox="allow-scripts allow-same-origin" title="09 Mobile Swipe Poems preview"></iframe>
   </div>
   <div class="callouts">
     <span class="callout">Swipe left/right between 3 poems</span>
@@ -525,11 +640,11 @@
       <span class="card-number">10</span>
       <span class="card-title">Warm Starfield</span>
     </div>
-    <a class="btn-fullscreen" href="10-warm-starfield.html" target="_blank">Fullscreen &rarr;</a>
+    <a class="btn-fullscreen" href="10-warm-starfield.html" target="_blank" rel="noopener noreferrer">Fullscreen &rarr;</a>
   </div>
   <p class="card-description">Warm charcoal (#0e0c08) background + twinkling stars. Warm text (#e8e0d4).</p>
   <div class="iframe-wrapper">
-    <iframe src="10-warm-starfield.html" loading="lazy" title="10 Warm Starfield preview"></iframe>
+    <iframe src="10-warm-starfield.html" loading="lazy" sandbox="allow-scripts allow-same-origin" title="10 Warm Starfield preview"></iframe>
   </div>
   <div class="callouts">
     <span class="callout">Warm charcoal #0e0c08 vs neutral #0c0c0e</span>
@@ -545,11 +660,11 @@
       <span class="card-number">11</span>
       <span class="card-title">Parallax Depth</span>
     </div>
-    <a class="btn-fullscreen" href="11-parallax-depth.html" target="_blank">Fullscreen &rarr;</a>
+    <a class="btn-fullscreen" href="11-parallax-depth.html" target="_blank" rel="noopener noreferrer">Fullscreen &rarr;</a>
   </div>
   <p class="card-description">Three layers: far arabesque (blur, slow), mid content (normal), near gold particles (blur, fast). Scroll to see.</p>
   <div class="iframe-wrapper">
-    <iframe src="11-parallax-depth.html" loading="lazy" title="11 Parallax Depth preview"></iframe>
+    <iframe src="11-parallax-depth.html" loading="lazy" sandbox="allow-scripts allow-same-origin" title="11 Parallax Depth preview"></iframe>
   </div>
   <div class="callouts">
     <span class="callout">Far layer: arabesque pattern at 6&ndash;8% opacity, slow</span>
@@ -566,11 +681,11 @@
       <span class="card-number">12</span>
       <span class="card-title">Poet/Poem Metadata</span>
     </div>
-    <a class="btn-fullscreen" href="12-poet-poem-metadata.html" target="_blank">Fullscreen &rarr;</a>
+    <a class="btn-fullscreen" href="12-poet-poem-metadata.html" target="_blank" rel="noopener noreferrer">Fullscreen &rarr;</a>
   </div>
   <p class="card-description">Stacked metadata: poem title (larger, gold) over poet name (smaller, muted). Gold separator. No SVG frame.</p>
   <div class="iframe-wrapper">
-    <iframe src="12-poet-poem-metadata.html" loading="lazy" title="12 Poet/Poem Metadata preview"></iframe>
+    <iframe src="12-poet-poem-metadata.html" loading="lazy" sandbox="allow-scripts allow-same-origin" title="12 Poet/Poem Metadata preview"></iframe>
   </div>
   <div class="callouts">
     <span class="callout">Poem title larger, in gold</span>

@@ -595,6 +595,7 @@
 
     /* ---- Generate Starfield (CSS-only stars) ---- */
     (function() {
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
       var field = document.getElementById('starfield');
       var starCount = 100;
       var animations = ['starPulse1', 'starPulse2', 'starPulse3', 'starPulse4', 'starPulse5'];

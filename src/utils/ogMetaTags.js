@@ -16,7 +16,10 @@ export function updateOGMetaTags(poem) {
   const description = poem.arabic
     ? poem.arabic.split('\n').slice(0, 2).join(' ')
     : 'Discover classical and modern Arabic poetry';
-  const url = poem.id ? `${window.location.origin}/poem/${poem.id}` : window.location.origin;
+  const qs = window.location.search;
+  const url = poem.id
+    ? `${window.location.origin}/poem/${poem.id}${qs}`
+    : `${window.location.origin}${qs}`;
   const ogImage = poem.id
     ? `${window.location.origin}/api/og/${poem.id}`
     : `${window.location.origin}/favicon.svg`;

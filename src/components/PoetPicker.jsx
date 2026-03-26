@@ -178,7 +178,7 @@ export default function PoetPicker({ handleFetch }) {
         )}
       </button>
       <span
-        className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase whitespace-nowrap ${GOLD.goldText}`}
+        className={`font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase whitespace-nowrap ${GOLD.goldText}`}
         style={{ opacity: 0.6 }}
       >
         Poets
@@ -206,7 +206,7 @@ export default function PoetPicker({ handleFetch }) {
                 onChange={(e) => setPoetSearch(e.target.value)}
                 placeholder="Search poets..."
                 aria-label="Search poets"
-                className="w-full bg-white/5 border border-gold/15 rounded-lg pl-7 pr-3 py-1.5 text-[16px] text-stone-200 placeholder-stone-600 focus:outline-none focus:border-gold/40 font-tajawal transition-colors"
+                className="w-full bg-white/5 border border-gold/15 rounded-lg pl-7 pr-3 py-1.5 text-[1rem] text-stone-200 placeholder-stone-600 focus:outline-none focus:border-gold/40 font-tajawal transition-colors"
               />
               {poetSearch && (
                 <button
@@ -241,14 +241,14 @@ export default function PoetPicker({ handleFetch }) {
                 className={`w-full text-right px-5 py-2.5 transition-all duration-150 ${selectedCategory === 'All' ? 'bg-gold/15 border-r-2 border-gold' : 'hover:bg-gold/8 border-r-2 border-transparent'}`}
               >
                 <span
-                  className={`block text-[17px] ${selectedCategory === 'All' ? 'text-gold' : 'text-stone-300'}`}
+                  className={`block text-[1.0625rem] ${selectedCategory === 'All' ? 'text-gold' : 'text-stone-300'}`}
                   dir="rtl"
                   style={{ fontFamily: "'Reem Kufi', sans-serif", fontWeight: 500 }}
                 >
                   كل الشعراء
                 </span>
                 <span
-                  className={`block text-[10px] font-brand-en mt-0.5 ${selectedCategory === 'All' ? 'text-gold/70' : 'opacity-40'}`}
+                  className={`block text-[0.625rem] font-brand-en mt-0.5 ${selectedCategory === 'All' ? 'text-gold/70' : 'opacity-40'}`}
                 >
                   All Poets
                 </span>
@@ -260,7 +260,7 @@ export default function PoetPicker({ handleFetch }) {
               <>
                 {!poetSearch && (
                   <div className="px-4 pt-2 pb-1">
-                    <span className="text-[9px] font-brand-en uppercase tracking-widest text-gold/35 font-bold">
+                    <span className="text-[0.5625rem] font-brand-en uppercase tracking-widest text-gold/35 font-bold">
                       Featured
                     </span>
                   </div>
@@ -282,20 +282,20 @@ export default function PoetPicker({ handleFetch }) {
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex-1 min-w-0">
                         <span
-                          className={`block text-[16px] truncate ${selectedCategory === cat.id ? 'text-gold' : 'text-stone-300'}`}
+                          className={`block text-[1rem] truncate ${selectedCategory === cat.id ? 'text-gold' : 'text-stone-300'}`}
                           dir="rtl"
                           style={{ fontFamily: "'Reem Kufi', sans-serif", fontWeight: 500 }}
                         >
                           {cat.labelAr}
                         </span>
                         <span
-                          className={`block text-[10px] font-brand-en mt-0.5 ${selectedCategory === cat.id ? 'text-gold/70' : 'opacity-40'}`}
+                          className={`block text-[0.625rem] font-brand-en mt-0.5 ${selectedCategory === cat.id ? 'text-gold/70' : 'opacity-40'}`}
                         >
                           {cat.label}
                         </span>
                       </div>
                       {cat.poemCount !== null && cat.poemCount !== undefined && (
-                        <span className="text-[9px] font-brand-en text-gold/40 bg-gold/8 px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
+                        <span className="text-[0.5625rem] font-brand-en text-gold/40 bg-gold/8 px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
                           {cat.poemCount.toLocaleString()}
                         </span>
                       )}
@@ -309,7 +309,7 @@ export default function PoetPicker({ handleFetch }) {
             {filteredPoetList.all.length > 0 && (
               <>
                 <div className="px-4 pt-2 pb-1">
-                  <span className="text-[9px] font-brand-en uppercase tracking-widest text-gold/35 font-bold">
+                  <span className="text-[0.5625rem] font-brand-en uppercase tracking-widest text-gold/35 font-bold">
                     {poetSearch ? 'Results' : 'More Poets'}
                   </span>
                 </div>
@@ -330,20 +330,20 @@ export default function PoetPicker({ handleFetch }) {
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex-1 min-w-0">
                         <span
-                          className={`block text-[16px] truncate ${selectedCategory === p.id ? 'text-gold' : 'text-stone-300'}`}
+                          className={`block text-[1rem] truncate ${selectedCategory === p.id ? 'text-gold' : 'text-stone-300'}`}
                           dir="rtl"
                           style={{ fontFamily: "'Reem Kufi', sans-serif", fontWeight: 500 }}
                         >
                           {p.labelAr}
                         </span>
                         <span
-                          className={`block text-[10px] font-brand-en mt-0.5 ${selectedCategory === p.id ? 'text-gold/70' : 'opacity-40'}`}
+                          className={`block text-[0.625rem] font-brand-en mt-0.5 ${selectedCategory === p.id ? 'text-gold/70' : 'opacity-40'}`}
                         >
                           {p.label}
                         </span>
                       </div>
                       {p.poemCount > 0 && (
-                        <span className="text-[9px] font-brand-en text-gold/40 bg-gold/8 px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
+                        <span className="text-[0.5625rem] font-brand-en text-gold/40 bg-gold/8 px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
                           {p.poemCount.toLocaleString()}
                         </span>
                       )}
@@ -357,7 +357,7 @@ export default function PoetPicker({ handleFetch }) {
             {!poetsFetched && dynamicPoets.length === 0 && (
               <div className="px-5 py-3 text-center">
                 <Loader2 className="inline-block text-gold/40 animate-spin" size={16} />
-                <span className="block text-[10px] font-brand-en text-stone-600 mt-1">
+                <span className="block text-[0.625rem] font-brand-en text-stone-600 mt-1">
                   Loading poets...
                 </span>
               </div>
@@ -368,10 +368,10 @@ export default function PoetPicker({ handleFetch }) {
               filteredPoetList.featured.length === 0 &&
               filteredPoetList.all.length === 0 && (
                 <div className="px-5 py-3 text-center">
-                  <span className="block text-[12px] text-stone-500 font-tajawal" dir="rtl">
+                  <span className="block text-[0.75rem] text-stone-500 font-tajawal" dir="rtl">
                     لا نتائج
                   </span>
-                  <span className="block text-[10px] font-brand-en text-stone-600 mt-0.5">
+                  <span className="block text-[0.625rem] font-brand-en text-stone-600 mt-0.5">
                     No matching poets
                   </span>
                 </div>
@@ -386,7 +386,7 @@ export default function PoetPicker({ handleFetch }) {
                   setSelectedCategory('All');
                   closePoetPicker();
                 }}
-                className="flex items-center gap-1.5 text-[10px] font-brand-en text-gold/50 hover:text-gold/80 transition-colors"
+                className="flex items-center gap-1.5 text-[0.625rem] font-brand-en text-gold/50 hover:text-gold/80 transition-colors"
               >
                 <X size={10} />
                 Clear filter

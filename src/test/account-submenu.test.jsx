@@ -97,11 +97,11 @@ describe('Account Submenu - Signed In', () => {
       expect(document.body.textContent).toContain('Nizar Qabbani');
     });
 
-    // Should show "Account" label, not "Sign In"
-    expect(document.body.textContent).toContain('Account');
-    // The avatar button should exist with aria-label containing Account menu
+    // Avatar button should exist with aria-label containing Account menu (no visible "Account" label — labels removed in redesign)
     const accountBtn = screen.getByLabelText(/Account menu/);
     expect(accountBtn).toBeTruthy();
+    // Should NOT show "Sign In" — user is logged in
+    expect(screen.queryByLabelText('Sign in')).toBeNull();
   });
 
   it('shows user initial in the avatar', async () => {
@@ -125,9 +125,9 @@ describe('Account Submenu - Signed In', () => {
       expect(document.body.textContent).toContain('Nizar Qabbani');
     });
 
-    // Badge should show count of 2 (from mock)
-    const accountBtn = screen.getByLabelText(/Account menu/);
-    expect(accountBtn.textContent).toContain('2');
+    // Saved poems count is in the aria-label (badge is inside popover, not trigger)
+    const accountBtn = screen.getByLabelText(/Account menu.*2 saved poems/);
+    expect(accountBtn).toBeTruthy();
   });
 
   it('includes saved poems count in aria-label for accessibility', async () => {

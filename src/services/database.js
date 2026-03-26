@@ -14,14 +14,19 @@ const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
  * @param {Object} poem - Raw poem object from the API
  * @returns {Object} New poem object with normalised fields
  */
-const normalizeDbPoem = (poem) => ({
-  ...poem,
-  arabic: poem.arabic ? poem.arabic.replace(/\*/g, '\n') : poem.arabic,
-  cachedTranslation: poem.cachedTranslation
-    ? poem.cachedTranslation.replace(/\*/g, '\n')
-    : poem.cachedTranslation,
-  isFromDatabase: true,
-});
+const normalizeDbPoem = (poem) => {
+  // The API converts snake_case DB columns to camelCase, but defensively handle both
+  // in case the raw DB row leaks through (e.g. from the /api/poems/:id endpoint).
+  const rawTranslation = poem.cachedTranslation || poem.cached_translation || poem.english || '';
+  const translation = rawTranslation ? rawTranslation.replace(/\*/g, '\n') : '';
+  return {
+    ...poem,
+    arabic: poem.arabic ? poem.arabic.replace(/\*/g, '\n') : poem.arabic,
+    english: translation,
+    cachedTranslation: translation || undefined,
+    isFromDatabase: true,
+  };
+};
 
 /**
  * Fetch a single poem by its database ID.
@@ -84,6 +89,36 @@ export const saveTranslation = (poemId, { translation, explanation = null, autho
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ translation, explanation, authorBio }),
   }).catch(() => {});
+};
+
+/**
+ * Fetch multiple poems by the same poet for carousel pre-population.
+ * Deduplicates by ID and excludes any IDs in `excludeIds`.
+ *
+ * @param {string}   poetName   - Arabic poet name to filter by
+ * @param {number}   [count=5]  - Number of poems to fetch
+ * @param {Array}    [excludeIds=[]] - Poem IDs to exclude
+ * @returns {Promise<Array>} Array of normalised poem objects (may be shorter than count on error)
+ */
+export const fetchPoemsByPoet = async (poetName, count = 5, excludeIds = []) => {
+  const seenIds = new Set(excludeIds.map(String));
+  const results = [];
+
+  await Promise.all(
+    Array.from({ length: count }).map(async () => {
+      try {
+        const poem = await fetchRandomPoem({ poet: poetName, excludeIds: [...seenIds] });
+        if (poem?.id && !seenIds.has(String(poem.id))) {
+          seenIds.add(String(poem.id));
+          results.push(poem);
+        }
+      } catch {
+        // Silently skip failed individual fetches
+      }
+    })
+  );
+
+  return results;
 };
 
 /**

@@ -55,7 +55,7 @@ export default function InsightOverlay({
           style={{ background: o.bg }}
         >
           {/* Inner layout — constrained to 80dvh so we don't fight Vaul's transforms */}
-          <div className="flex flex-col h-[80dvh] max-h-[80dvh] overflow-hidden rounded-t-2xl">
+          <div className="flex flex-col h-[90dvh] max-h-[90dvh] overflow-hidden rounded-t-2xl">
           {/* Gold rule */}
           <div className="h-px flex-shrink-0" style={{ background: o.goldRule }} />
 

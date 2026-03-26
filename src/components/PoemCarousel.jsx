@@ -86,6 +86,27 @@ const PoemCarousel = ({
     }
   }, [emblaApi, currentIndex]);
 
+  // Infinite scroll: fetch more poems when nearing the end
+  const onFetchMore = useCallback(() => {
+    if (!emblaApi || !onLoadMore) return;
+    const idx = emblaApi.selectedScrollSnap();
+    const total = emblaApi.scrollSnapList().length;
+    if (total > 0 && idx >= total - 2) {
+      onLoadMore();
+    }
+  }, [emblaApi, onLoadMore]);
+
+  useEffect(() => {
+    if (!emblaApi) return;
+    emblaApi.on('select', onFetchMore);
+    return () => emblaApi.off('select', onFetchMore);
+  }, [emblaApi, onFetchMore]);
+
+  // Re-initialise Embla when new poems are appended so it picks up new slides
+  useEffect(() => {
+    if (emblaApi) emblaApi.reInit();
+  }, [emblaApi, poems.length]);
+
   const dotColor = darkMode ? 'rgba(197,160,89,0.5)' : 'rgba(140,100,30,0.4)';
   const dotActiveColor = darkMode ? 'rgba(197,160,89,1)' : 'rgba(140,100,30,0.85)';
   const goldColor = '#c5a059';

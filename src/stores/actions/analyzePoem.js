@@ -132,7 +132,8 @@ export async function analyzePoem({ current, addLog, track, retryFn }) {
   try {
     if (FEATURES.streaming) {
       const poetInfo = current?.poet ? ` by ${current.poet}` : '';
-      const promptText = `Deep Analysis of${poetInfo}:\n\n${current?.arabic}`;
+      const arabicLineCount = (current?.arabic || '').split('\n').filter(l => l.trim()).length;
+      const promptText = `Deep Analysis of${poetInfo}:\n\n${current?.arabic}\n\n[CRITICAL: This poem has exactly ${arabicLineCount} Arabic lines. You MUST produce exactly ${arabicLineCount} English lines in the POEM section. One line per Arabic line, no exceptions.]`;
       const requestSize = new Blob([
         JSON.stringify({ contents: [{ parts: [{ text: promptText }] }] }),
       ]).size;
@@ -271,8 +272,20 @@ export async function analyzePoem({ current, addLog, track, retryFn }) {
     if (current?.isFromDatabase && current?.id && insightText) {
       const parts = parseInsight(insightText);
       if (parts?.poeticTranslation) {
+        const arabicLines = (current?.arabic || '').split('\n').filter(l => l.trim());
+        const englishLines = parts.poeticTranslation.split('\n').filter(l => l.trim());
+        let translation = parts.poeticTranslation;
+        if (englishLines.length < arabicLines.length) {
+          const padding = arabicLines.length - englishLines.length;
+          addLog(
+            'Translation',
+            `⚠ Line count mismatch: ${arabicLines.length} Arabic lines but only ${englishLines.length} English lines — padding ${padding} empty line(s)`,
+            'warning'
+          );
+          translation = [...englishLines, ...Array(padding).fill('')].join('\n');
+        }
         saveTranslation(current.id, {
-          translation: parts.poeticTranslation.replace(/\n/g, '*'),
+          translation: translation.replace(/\n/g, '*'),
           explanation: parts.depth || null,
           authorBio: parts.author || null,
         });

@@ -968,7 +968,7 @@ export default function DiwanApp() {
       clearTimeout(prefetchCurrentAudio);
       clearTimeout(prefetchCurrentInsights);
     };
-  }, [current?.id, currentIndex, filtered]);
+  }, [current?.id]);
 
   // Keep-alive ping to prevent Render free tier from sleeping (15 min idle timeout)
   // Pings every 10 minutes to keep backend awake

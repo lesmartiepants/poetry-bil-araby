@@ -17,6 +17,9 @@ import { usePoemStore } from '../stores/poemStore';
 
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
+// Track poem IDs that hit quota errors — never retry these in this session
+const _quotaExhaustedIds = new Set();
+
 export const prefetchManager = {
   /**
    * Prefetch audio for a poem (generate and cache in background).
@@ -24,6 +27,9 @@ export const prefetchManager = {
   prefetchAudio: async (poemId, poem, addLog) => {
     if (!FEATURES.prefetching || !FEATURES.caching) return;
     if (!poemId || !poem?.arabic) return;
+
+    // Skip if quota was exhausted for this poem earlier in the session
+    if (_quotaExhaustedIds.has(poemId)) return;
 
     try {
       // Check if already generating - silently skip
@@ -87,6 +93,16 @@ export const prefetchManager = {
 
       if (!res.ok) {
         const errorText = await res.text();
+        if (res.status === 429 || res.status === 403) {
+          _quotaExhaustedIds.add(poemId);
+          if (addLog)
+            addLog(
+              'Prefetch Audio',
+              `❌ [${ttsModel}] HTTP ${res.status} — quota exhausted, skipping future prefetch for poem ${poemId}`,
+              'error'
+            );
+          return;
+        }
         if (addLog)
           addLog(
             'Prefetch Audio',

@@ -144,6 +144,7 @@ export default function DiwanApp() {
   const setCarouselPoems = usePoemStore((s) => s.setCarouselPoems);
   const clearCarouselPoems = usePoemStore((s) => s.clearCarouselPoems);
   const setCarouselIndex = usePoemStore((s) => s.setCarouselIndex);
+  const addCarouselPoem = usePoemStore((s) => s.addCarouselPoem);
 
   // ── Modal store (Zustand) ──
   const discoverDrawerOpen = useModalStore((s) => s.discoverDrawer);
@@ -302,6 +303,21 @@ export default function DiwanApp() {
     }).catch(() => {});
     return () => { cancelled = true; };
   }, [selectedCategory, useDatabase]);
+
+  // Populate carousel from current poem's poet (works even when filter is "All")
+  useEffect(() => {
+    if (!FEATURES.prefetching || !useDatabase) return;
+    if (!current?.poet) return;
+    if (carouselPoems.length > 0) return; // already populated
+
+    let cancelled = false;
+    fetchPoemsByPoet(current.poet, 5, [current.id]).then((poems) => {
+      if (!cancelled && poems.length > 0) {
+        setCarouselPoems(poems);
+      }
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [current?.poet, current?.id, carouselPoems.length, useDatabase]);
 
   // Eagerly populate the discovered model list so it's ready before any user action.
   // Using the default fetch mock in tests means this never consumes a mockResolvedValueOnce.
@@ -941,7 +957,7 @@ export default function DiwanApp() {
   return (
     <div
       className={`h-[100dvh] w-full flex flex-col overflow-hidden overscroll-none ${DESIGN.anim} font-sans ${theme.bg} ${theme.text} ${theme.selectionBg}`}
-      style={{ touchAction: 'pan-x pan-y', overflowX: 'hidden' }}
+      style={{ touchAction: 'manipulation', overflowX: 'hidden' }}
     >
 
       <DebugPanel controlBarRef={controlBarRef} />
@@ -1088,6 +1104,13 @@ export default function DiwanApp() {
                       currentFontClass={currentFontClass}
                       POEM_META={POEM_META}
                       DESIGN={DESIGN}
+                      onLoadMore={() => {
+                        if (!current?.poet) return;
+                        const existingIds = carouselPoems.map(p => p.id);
+                        fetchPoemsByPoet(current.poet, 3, existingIds).then((newPoems) => {
+                          newPoems.forEach(p => addCarouselPoem(p));
+                        }).catch(() => {});
+                      }}
                     />
                   ) : (
                     <div className="px-4 md:px-20 py-2 text-center">

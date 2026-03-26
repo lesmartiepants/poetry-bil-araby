@@ -495,7 +495,11 @@ export default function DiwanApp() {
   useEffect(() => {
     if (autoExplainPending && current?.id && !isFetching && !isInterpreting && !interpretation) {
       setAutoExplainPending(false);
+      // Guard with explainedPoemIds to prevent duplicate explains when the carousel
+      // populate effect (path 1) has already fired for this poem.
+      if (explainedPoemIds.current.has(current.id)) return;
       if (ratchetMode || !current?.cachedTranslation) {
+        explainedPoemIds.current.add(current.id);
         handleAnalyze();
       }
     }

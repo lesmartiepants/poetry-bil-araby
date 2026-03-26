@@ -103,21 +103,15 @@ export const saveTranslation = (poemId, { translation, explanation = null, autho
 export const fetchPoemsByPoet = async (poetName, count = 5, excludeIds = []) => {
   const seenIds = new Set(excludeIds.map(String));
   const results = [];
-
-  await Promise.all(
-    Array.from({ length: count }).map(async () => {
-      try {
-        const poem = await fetchRandomPoem({ poet: poetName, excludeIds: [...seenIds] });
-        if (poem?.id && !seenIds.has(String(poem.id))) {
-          seenIds.add(String(poem.id));
-          results.push(poem);
-        }
-      } catch {
-        // Silently skip failed individual fetches
+  for (let i = 0; i < count; i++) {
+    try {
+      const poem = await fetchRandomPoem({ poet: poetName, excludeIds: [...seenIds] });
+      if (poem?.id && !seenIds.has(String(poem.id))) {
+        seenIds.add(String(poem.id));
+        results.push(poem);
       }
-    })
-  );
-
+    } catch { /* skip failed fetch */ }
+  }
   return results;
 };
 

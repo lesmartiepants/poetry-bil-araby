@@ -1,3 +1,4 @@
+import { useState, useRef, useEffect } from 'react';
 import { Drawer } from 'vaul';
 import { THEME } from '../constants/theme.js';
 import { useUIStore } from '../stores/uiStore';
@@ -16,13 +17,27 @@ export default function InsightOverlay({
   const theme = darkMode ? THEME.dark : THEME.light;
   const o = theme.overlay;
 
+  const [inAuthorSection, setInAuthorSection] = useState(false);
+  const authorRef = useRef(null);
+  const scrollContainerRef = useRef(null);
+
+  useEffect(() => {
+    if (!authorRef.current || !scrollContainerRef.current) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => setInAuthorSection(entry.isIntersecting),
+      { root: scrollContainerRef.current, threshold: 0.1 }
+    );
+    observer.observe(authorRef.current);
+    return () => observer.disconnect();
+  }, [insightParts?.author]);
+
   return (
     <Drawer.Root
       open={open}
       onOpenChange={(isOpen) => {
         if (!isOpen) onClose();
       }}
-      snapPoints={[1]}
+      snapPoints={[0.8]}
       closeThreshold={0.1}
       modal
     >
@@ -37,8 +52,8 @@ export default function InsightOverlay({
         />
         <Drawer.Content
           data-vaul-drawer
-          className="fixed inset-0 z-[61] flex flex-col"
-          style={{ background: o.bg }}
+          className="fixed bottom-0 left-0 right-0 z-[61] flex flex-col rounded-t-2xl overflow-hidden"
+          style={{ background: o.bg, height: '80dvh' }}
         >
           {/* Gold rule */}
           <div className="h-px flex-shrink-0" style={{ background: o.goldRule }} />
@@ -54,19 +69,28 @@ export default function InsightOverlay({
             className="flex items-center justify-between px-6 md:px-8 py-3 flex-shrink-0"
             style={{ borderBottom: `1px solid ${o.borderSubtle}` }}
           >
-            <div className="flex flex-col gap-1">
-              <div
-                className="font-amiri text-base md:text-lg leading-tight"
-                dir="rtl"
-                style={{ color: o.textLight }}
-              >
-                {currentPoem?.titleArabic || currentPoem?.title}
-              </div>
+            <Drawer.Title className="sr-only">{ratchetMode ? 'Ratchet Insight' : 'Poetic Insight'}</Drawer.Title>
+            <div className="flex-1 flex items-center justify-between min-w-0 mr-3">
               <span
-                className="text-[9px] uppercase tracking-[0.12em]"
-                style={{ color: o.textMuted }}
+                className="truncate transition-all duration-300"
+                style={{
+                  fontFamily: "'Reem Kufi', sans-serif",
+                  fontWeight: 700,
+                  fontSize: 'clamp(0.95rem, 2vw, 1.15rem)',
+                  color: 'var(--gold)',
+                }}
               >
-                {currentPoem?.poet}
+                {inAuthorSection ? (currentPoem?.poetArabic || currentPoem?.poet) : (currentPoem?.titleArabic || currentPoem?.title)}
+              </span>
+              <span
+                className="truncate transition-all duration-300"
+                style={{
+                  fontFamily: "'Bodoni Moda', serif",
+                  fontSize: 'clamp(0.8rem, 1.5vw, 0.95rem)',
+                  color: o.textDim,
+                }}
+              >
+                {inAuthorSection ? currentPoem?.poet : currentPoem?.title}
               </span>
             </div>
             <Drawer.Close asChild>
@@ -91,16 +115,10 @@ export default function InsightOverlay({
             </Drawer.Close>
           </header>
 
-          {/* Heading */}
-          <div className="px-6 md:px-8 pt-4 pb-3 flex-shrink-0">
-            <span className="gold-foil-text font-brand-en italic text-xl tracking-tight">
-              {ratchetMode ? 'Ratchet Insight' : 'Poetic Insight'}
-            </span>
-          </div>
-
           {/* Scrollable body */}
           <div
-            className="flex-1 overflow-y-auto px-6 md:px-8 pb-20"
+            ref={scrollContainerRef}
+            className="flex-1 overflow-y-auto px-6 md:px-8 pb-10"
             style={{ scrollbarWidth: 'thin', scrollbarColor: 'var(--gold-structural) transparent' }}
           >
             {isInterpreting ? (
@@ -122,20 +140,17 @@ export default function InsightOverlay({
               </div>
             ) : (
               <>
-                {/* Translation block */}
+                {/* Sticky translation block */}
                 {insightParts?.poeticTranslation && (
                   <div
-                    className="pb-5 mb-5 animate-[fadeUp_0.5s_ease_0.1s_both]"
-                    style={{ borderBottom: `1px solid var(--gold-structural)` }}
+                    className="sticky top-0 z-10 pb-4 mb-4"
+                    style={{ background: o.bg, borderBottom: '1px solid var(--gold-structural)' }}
                   >
-                    <div
-                      className="text-[9px] uppercase tracking-[0.18em] mb-2.5"
-                      style={{ color: o.textMuted }}
-                    >
+                    <div className="text-[9px] uppercase tracking-[0.18em] mb-2" style={{ color: o.textMuted }}>
                       Translation
                     </div>
                     <p
-                      className="font-fell italic leading-[1.9] text-[clamp(0.9375rem,1.4vw,1.0625rem)]"
+                      className="font-fell italic leading-[1.9] text-[clamp(0.9375rem,1.4vw,1.0625rem)] line-clamp-3"
                       style={{ color: o.textLight }}
                     >
                       {insightParts.poeticTranslation}
@@ -143,10 +158,10 @@ export default function InsightOverlay({
                   </div>
                 )}
 
-                {/* Analysis grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                {/* Single column with gold rules */}
+                <div>
                   {insightParts?.depth && (
-                    <div className="animate-[fadeUp_0.5s_ease_0.25s_both]">
+                    <div className="py-5 animate-[fadeUp_0.5s_ease_0.25s_both]">
                       <div className="flex items-center gap-2 mb-2.5">
                         <span
                           className="text-[9px] uppercase tracking-[0.18em] whitespace-nowrap"
@@ -169,8 +184,11 @@ export default function InsightOverlay({
                       </p>
                     </div>
                   )}
+                  {insightParts?.depth && insightParts?.author && (
+                    <div className="h-px" style={{ background: o.goldRule }} />
+                  )}
                   {insightParts?.author && (
-                    <div className="animate-[fadeUp_0.5s_ease_0.4s_both]">
+                    <div ref={authorRef} className="py-5 animate-[fadeUp_0.5s_ease_0.4s_both]">
                       <div className="flex items-center gap-2 mb-2.5">
                         <span
                           className="text-[9px] uppercase tracking-[0.18em] whitespace-nowrap"

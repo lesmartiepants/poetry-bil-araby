@@ -15,6 +15,7 @@ vi.mock('vaul', () => ({
     ),
     Handle: (props) => <div data-testid="drawer-handle" {...props} />,
     Close: ({ children }) => children,
+    Title: ({ children, className, ...props }) => <h2 className={className} {...props}>{children}</h2>,
   },
 }));
 
@@ -50,9 +51,19 @@ const mockProps = {
 describe('InsightOverlay', () => {
   it('renders heading and content sections', () => {
     render(<InsightOverlay {...mockProps} />);
-    expect(screen.getByText('Poetic Insight')).toBeDefined();
+    expect(screen.getByText('Poetic Insight').className).toContain('sr-only');
     expect(screen.getByText('The Depth')).toBeDefined();
     expect(screen.getByText('The Author')).toBeDefined();
+  });
+
+  it('shows poem title in header by default', () => {
+    render(<InsightOverlay {...mockProps} />);
+    expect(screen.getByText('قصيدة')).toBeDefined();
+  });
+
+  it('renders sticky translation section', () => {
+    render(<InsightOverlay {...mockProps} />);
+    expect(screen.getByText('Translation')).toBeDefined();
   });
 
   it('shows loading state when interpreting', () => {

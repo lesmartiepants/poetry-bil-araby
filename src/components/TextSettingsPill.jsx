@@ -1,5 +1,5 @@
 import { Popover, ToggleGroup, Select } from 'radix-ui';
-import { Languages, ALargeSmall, Type, ChevronDown, Check } from 'lucide-react';
+import { Languages, ALargeSmall, BookType, ChevronDown, Check } from 'lucide-react';
 import { THEME } from '../constants/theme.js';
 import { FONTS } from '../constants/fonts.js';
 import { useUIStore } from '../stores/uiStore';
@@ -40,31 +40,31 @@ const TextSettingsPill = () => {
         <Popover.Trigger asChild>
           <button
             aria-label="Text settings"
-            className={`rounded-full px-3 py-1.5 backdrop-blur-xl border border-gold/30 text-xs font-brand-en flex items-center gap-1.5 transition-all duration-200 ${
+            className={`w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-200 backdrop-blur-xl border ${theme.border} ${
               darkMode ? 'bg-black/70' : 'bg-white/80'
             } ${theme.goldHoverBg15}`}
-            style={{ color: gold }}
           >
-            <Type size={14} style={{ color: gold }} />
-            <span className="opacity-40">·</span>
-            <span style={{ opacity: showTransliteration ? 1 : 0.4 }}>عA</span>
-            <span className="opacity-40">·</span>
-            <span>{textSizeLabel}</span>
-            <span className="opacity-40">·</span>
-            <span>{currentFont.slice(0, 5)}</span>
+            <BookType size={20} style={{ color: gold }} />
           </button>
         </Popover.Trigger>
 
         <Popover.Portal>
           <Popover.Content
-            side="bottom"
+            side="left"
             align="start"
             sideOffset={8}
-            className={`rounded-2xl p-4 min-w-[16rem] backdrop-blur-xl border border-gold/30 ${
+            className={`rounded-2xl p-4 min-w-[16rem] backdrop-blur-xl border ${theme.border} ${
               darkMode ? 'bg-stone-950/95' : 'bg-white/95'
             }`}
             style={{ zIndex: 46 }}
           >
+            {/* Status indicators */}
+            <div className="flex items-center gap-3 px-3 py-1.5 mb-1 rounded-lg" style={{ background: darkMode ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.02)' }}>
+              <Languages size={14} style={{ color: gold, opacity: showTranslation ? 1 : 0.3 }} />
+              <span className="text-xs font-bold" style={{ color: gold, opacity: showTransliteration ? 1 : 0.3 }}>عA</span>
+              <span className="text-xs font-bold" style={{ color: gold }}>{textSizeLabel}</span>
+            </div>
+
             {/* Row 1: Translation Toggle */}
             <button
               onClick={() => useUIStore.getState().toggleTranslation()}
@@ -139,7 +139,7 @@ const TextSettingsPill = () => {
                 onValueChange={(v) => useUIStore.getState().setFont(v)}
               >
                 <Select.Trigger
-                  className={`w-full flex items-center justify-between rounded-lg px-3 py-2 border border-gold/30 backdrop-blur-xl transition-all duration-200 ${
+                  className={`w-full flex items-center justify-between rounded-lg px-3 py-2 border ${theme.border} backdrop-blur-xl transition-all duration-200 ${
                     darkMode ? 'bg-black/50' : 'bg-white/50'
                   }`}
                   style={{ color: gold }}
@@ -152,7 +152,7 @@ const TextSettingsPill = () => {
                 </Select.Trigger>
                 <Select.Portal>
                   <Select.Content
-                    className={`rounded-xl p-1 backdrop-blur-xl border border-gold/30 ${
+                    className={`rounded-xl p-1 backdrop-blur-xl border ${theme.border} ${
                       darkMode ? 'bg-stone-950/95' : 'bg-white/95'
                     }`}
                     style={{ zIndex: 100 }}

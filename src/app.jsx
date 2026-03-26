@@ -304,14 +304,24 @@ export default function DiwanApp() {
         return;
       }
 
-      // Clear stashed OAuth poem (already restored by poemStore's getInitialPoems)
+      // Check if we're returning from an OAuth redirect with a stashed poem
+      let restoredFromOAuth = false;
       try {
+        if (sessionStorage.getItem('pendingSavePoem')) {
+          restoredFromOAuth = true;
+        }
         sessionStorage.removeItem('pendingSavePoem');
       } catch {}
 
-      // If the initial poem already has a cached translation, skip auto-explain
       const initial = poems[0];
-      if (initial?.cachedTranslation) {
+
+      if (restoredFromOAuth && initial?.arabic) {
+        // Restored from OAuth — stay on this poem, just queue explanation
+        addLog('Init', `Restored from login: ${initial.poet} — ${initial.title}`, 'success');
+        setAutoExplainPending(true);
+        if (initial.id) navigate('/poem/' + initial.id, { replace: true });
+      } else if (initial?.cachedTranslation) {
+        // Has cached translation — no fetch needed
         addLog(
           'Init',
           `Loaded with cached translation: ${initial.poet} — ${initial.title}`,

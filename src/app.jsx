@@ -13,6 +13,7 @@ import {
   Paintbrush,
   Check,
   X,
+  BookOpen,
 } from 'lucide-react';
 import { track } from '@vercel/analytics';
 import Sentry from './sentry.js';
@@ -1359,6 +1360,21 @@ export default function DiwanApp() {
                   className={`font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
                 >
                   Explain
+                </span>
+              </div>
+
+              <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
+                <button
+                  onClick={handleOpenSavedPoems}
+                  aria-label="View saved poems"
+                  className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-200 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
+                >
+                  <BookOpen className={GOLD.goldText} size={21} />
+                </button>
+                <span
+                  className={`font-brand-en text-[0.53rem] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
+                >
+                  Library
                 </span>
               </div>
 

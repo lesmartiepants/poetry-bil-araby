@@ -108,7 +108,7 @@ VERCEL_TOKEN                    // For Vercel CLI
 
 ## Agent System
 
-14 specialized agents live in `.claude/agents/`. Cursor discovers them via `.cursor/rules/agents.mdc`.
+15 specialized agents live in `.claude/agents/`. Cursor discovers them via `.cursor/rules/agents.mdc`.
 
 **Agents:** `test-orchestrator`, `test-suite-maintainer`, `test-coverage-reviewer`, `ci-test-guardian`, `git-workflow-manager`, `worktree-manager`, `github-issue-manager`, `docs-sync-reviewer`, `ui-ux-reviewer`, `design-review-agent`, `design-sprint-lead`, `design-generator`, `design-reviewer`, `design-review-setup`, `scroll-animation-designer`
 

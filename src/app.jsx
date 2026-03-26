@@ -329,13 +329,14 @@ export default function DiwanApp() {
 
   // When interpretation arrives from an analysis triggered by a carousel poem, patch that
   // poem's english field so PoemCarousel (which reads poem.english) can render the translation.
+  // Always prefer the AI-generated translation over the DB translation — it's higher quality.
   useEffect(() => {
     if (!interpretation || carouselPoems.length === 0) return;
     const parts = parseInsight(interpretation);
     const translation = parts?.poeticTranslation;
     if (!translation) return;
     const activePoem = carouselPoems[carouselIndex];
-    if (!activePoem || activePoem.english) return; // already has english
+    if (!activePoem) return;
     updateCarouselPoem(carouselIndex, { english: translation });
   }, [interpretation, carouselIndex, carouselPoems.length]);
 

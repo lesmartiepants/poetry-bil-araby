@@ -5,7 +5,7 @@ alwaysApply: true
 
 # Available Agents (`.claude/agents/`)
 
-This project defines 14 specialized agents that coordinate development workflows. Reference them by name and understand their roles when planning or executing tasks.
+This project defines 15 specialized agents that coordinate development workflows. Reference them by name and understand their roles when planning or executing tasks.
 
 ## Agent Registry
 
@@ -25,6 +25,7 @@ This project defines 14 specialized agents that coordinate development workflows
 | **design-generator** | Design quality + diversity principles (philosophy-driven, product-agnostic) | Creating design variants, auditing diversity, design system planning |
 | **design-reviewer** | Spawnable critic: screenshots, evaluates, and fixes design files in parallel | Design review phase, `/screenshot-audit`, post-implementation QA |
 | **design-review-setup** | First-responder that establishes review infrastructure before team starts | Sprint startup, new design round, review infra setup |
+| **scroll-animation-designer** | Creates premium scroll-driven animation experiences — horizontal scroll, parallax, clip-path reveals, Three.js 3D scenes | New scroll designs, motion prototypes, parallax effects |
 
 ## Agent Coordination Flow
 
@@ -87,6 +88,7 @@ All agent definitions with full instructions live in:
 - `.claude/agents/design-generator.md`
 - `.claude/agents/design-reviewer.md`
 - `.claude/agents/design-review-setup.md`
+- `.claude/agents/scroll-animation-designer.md`
 
 Read the relevant agent file(s) before executing tasks that fall within their domain.
 

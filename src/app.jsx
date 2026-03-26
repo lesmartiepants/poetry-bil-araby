@@ -80,6 +80,7 @@ import TextSettingsPill from './components/TextSettingsPill.jsx';
 import ThemeToggle from './components/ThemeToggle.jsx';
 import AuthModal from './components/auth/AuthModal.jsx';
 import DownvoteButton from './components/auth/DownvoteButton.jsx';
+import SavePoemButton from './components/auth/SavePoemButton.jsx';
 import SavedPoemsView from './components/auth/SavedPoemsView.jsx';
 
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
@@ -1386,7 +1387,7 @@ export default function DiwanApp() {
               <div className="flex flex-col items-center gap-0.5 min-w-[52px]">
                 <button
                   onClick={handleOpenSavedPoems}
-                  aria-label="View saved poems"
+                  aria-label="Open poem library"
                   className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-200 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
                 >
                   <BookOpen className={GOLD.goldText} size={21} />

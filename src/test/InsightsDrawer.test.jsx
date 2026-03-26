@@ -139,7 +139,7 @@ describe('InsightsDrawer', () => {
     expect(closeBtn).toBeInTheDocument();
   });
 
-  it('shows loading state when isInterpreting', () => {
+  it('shows loading state when isInterpreting', async () => {
     const { usePoemStore } = await import('../stores/poemStore');
     usePoemStore.mockImplementation((selector) =>
       selector({
@@ -157,7 +157,7 @@ describe('InsightsDrawer', () => {
     expect(screen.getByText(/consulting diwan/i)).toBeInTheDocument();
   });
 
-  it('shows empty state prompt when no interpretation yet', () => {
+  it('shows empty state prompt when no interpretation yet', async () => {
     const { usePoemStore } = await import('../stores/poemStore');
     usePoemStore.mockImplementation((selector) =>
       selector({
@@ -175,7 +175,7 @@ describe('InsightsDrawer', () => {
     expect(screen.getByText(/tap the lightbulb/i)).toBeInTheDocument();
   });
 
-  it('returns null when drawer is closed', () => {
+  it('returns null when drawer is closed', async () => {
     const { useModalStore } = await import('../stores/modalStore');
     useModalStore.mockImplementation((selector) =>
       selector({ insightsDrawer: false, setInsightsDrawer: vi.fn() })

@@ -168,7 +168,7 @@ const PoemCarousel = ({
                     {versePairs.map((pair, idx) => (
                       <div
                         key={`${poem.id}-${idx}${slideIdx === activeIndex ? '-active' : ''}`}
-                        className={`flex flex-col gap-0.5 ${slideIdx === activeIndex ? 'verse-fade-up' : 'opacity-100'}`}
+                        className={`flex flex-col gap-0.5 ${slideIdx === activeIndex ? 'verse-fade-up' : 'opacity-0'}`}
                         style={slideIdx === activeIndex ? { animationDelay: `${idx * 80}ms` } : undefined}
                       >
                         <p

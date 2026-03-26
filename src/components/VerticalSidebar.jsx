@@ -43,7 +43,7 @@ const VerticalSidebar = ({
       `}</style>
 
       <div
-        className={`fixed right-0 md:right-[24.5rem] top-1/2 -translate-y-1/2 z-[45] rounded-l-2xl md:rounded-2xl backdrop-blur-xl border-l-2 md:border-2 border-gold/40 py-2 px-1.5 flex flex-col items-center gap-1 ${darkMode ? 'bg-black/70' : 'bg-white/80'}`}
+        className={`fixed right-0 md:right-[24.5rem] top-1/2 -translate-y-1/2 z-[45] rounded-l-2xl md:rounded-2xl backdrop-blur-xl border-l md:border ${theme.border} py-2 px-1.5 flex flex-col items-center gap-1 ${darkMode ? 'bg-black/70' : 'bg-white/80'}`}
         style={{ width: '3.25rem' }}
       >
         {/* Copy button */}
@@ -55,10 +55,10 @@ const VerticalSidebar = ({
           {showCopySuccess ? (
             <Check
               style={{ color: gold, animation: 'goldCheckSparkle 0.5s ease-out forwards' }}
-              size={18}
+              size={20}
             />
           ) : (
-            <Copy style={{ color: gold }} size={18} />
+            <Copy style={{ color: gold }} size={20} />
           )}
         </button>
 
@@ -71,10 +71,10 @@ const VerticalSidebar = ({
           {showShareSuccess ? (
             <Check
               style={{ color: gold, animation: 'goldCheckSparkle 0.5s ease-out forwards' }}
-              size={18}
+              size={20}
             />
           ) : (
-            <Share2 style={{ color: gold }} size={18} />
+            <Share2 style={{ color: gold }} size={20} />
           )}
         </button>
 
@@ -85,7 +85,7 @@ const VerticalSidebar = ({
           className={`${btnBase} ${btnHover}`}
         >
           <Heart
-            size={18}
+            size={20}
             style={
               isSaved
                 ? { fill: '#ef4444', stroke: '#ef4444' }
@@ -123,7 +123,7 @@ const VerticalSidebar = ({
               <Popover.Content
                 side="left"
                 sideOffset={8}
-                className={`z-[50] rounded-xl p-2 flex flex-col gap-1 backdrop-blur-xl border border-gold/30 ${darkMode ? 'bg-black/80' : 'bg-white/90'}`}
+                className={`z-[50] rounded-xl p-2 flex flex-col gap-1 backdrop-blur-xl border ${theme.border} ${darkMode ? 'bg-black/80' : 'bg-white/90'}`}
                 style={{ animation: 'popoverSlideIn 0.2s ease-out' }}
               >
                 <button
@@ -165,7 +165,7 @@ const VerticalSidebar = ({
             aria-label="Sign in"
             className={`${btnBase} ${btnHover}`}
           >
-            <UserRound style={{ color: gold }} size={18} />
+            <UserRound style={{ color: gold }} size={20} />
           </button>
         )}
       </div>

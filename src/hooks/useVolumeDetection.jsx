@@ -8,7 +8,7 @@ import { useAudioStore } from '../stores/audioStore';
  * Drives volume-based glow animation on the audio bars.
  *
  * Uses Tone.js Analyser (backed by the shared Tone AudioContext) instead of
- * a raw Web Audio API AnalyserNode.  The Tone.Player stored in audioStore is
+ * a raw Web Audio API AnalyserNode. The Tone.Player stored in audioStore is
  * connected to the analyser on each play cycle and disconnected on cleanup.
  *
  * Signature keeps legacy ref params (audioRef, audioContextRef, analyserRef,
@@ -28,12 +28,12 @@ import { useAudioStore } from '../stores/audioStore';
  */
 export function useVolumeDetection({
   isPlaying,
-  audioRef,         // LEGACY — kept for app.jsx compat; integrator will remove in Phase 2
-  audioContextRef,  // LEGACY — kept for app.jsx compat; integrator will remove in Phase 2
-  analyserRef,      // LEGACY — kept for app.jsx compat; integrator will remove in Phase 2
-  dataArrayRef,     // LEGACY — kept for app.jsx compat; integrator will remove in Phase 2
+  audioRef, // LEGACY — kept for app.jsx compat; integrator will remove in Phase 2
+  audioContextRef, // LEGACY — kept for app.jsx compat; integrator will remove in Phase 2
+  analyserRef, // LEGACY — kept for app.jsx compat; integrator will remove in Phase 2
+  dataArrayRef, // LEGACY — kept for app.jsx compat; integrator will remove in Phase 2
   animationFrameRef,
-  sourceNodeRef,    // LEGACY — kept for app.jsx compat; integrator will remove in Phase 2
+  sourceNodeRef, // LEGACY — kept for app.jsx compat; integrator will remove in Phase 2
   volumePulseRef,
   addLog,
 }) {
@@ -44,12 +44,10 @@ export function useVolumeDetection({
     const player = useAudioStore.getState().player;
 
     let toneAnalyser = null;
-    let dataArray = null;
 
     try {
       // Tone.Analyser wraps the shared Tone AudioContext — no need to create our own.
       toneAnalyser = new Analyser('fft', 32);
-      dataArray = new Float32Array(32);
 
       if (player) {
         // Connect the player output through the analyser to the main destination

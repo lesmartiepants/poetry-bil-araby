@@ -2,14 +2,26 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Theme tokens — gold accent color */
+/* Theme tokens — gold + lapis lazuli palette */
 :root {
   --gold: #c5a059;
+  --gold-bright: #D4B463;
+  --gold-foil: linear-gradient(135deg, #B8922E 0%, #C5A059 30%, #E2C67A 55%, #C5A059 75%, #A07D38 100%);
+  --gold-structural: rgba(160,128,64,0.4);
+  --lapis-deep: #1E3A6E;
+  --lapis-medium: #2E5090;
+  --lapis-light: #4A7CC9;
   --bg-app: #0c0c0e;
 }
 
 .light {
-  --gold: #8b7355;
+  --gold: #c5a059;
+  --gold-bright: #C5A059;
+  --gold-foil: linear-gradient(135deg, #B8922E 0%, #C5A059 30%, #E2C67A 55%, #C5A059 75%, #B8922E 100%);
+  --gold-structural: rgba(139,115,85,0.35);
+  --lapis-deep: #1E3A6E;
+  --lapis-medium: #2E5090;
+  --lapis-light: #4A7CC9;
   --bg-app: #fdfcf8;
 }
 
@@ -42,13 +54,13 @@ body {
 
 /* Accessibility: Focus indicators for keyboard navigation */
 *:focus-visible {
-  outline: 2px solid #6366f1;
+  outline: 2px solid var(--lapis-light);
   outline-offset: 2px;
   border-radius: 4px;
 }
 
 button:focus-visible {
-  outline: 2px solid #6366f1;
+  outline: 2px solid var(--lapis-light);
   outline-offset: 2px;
 }
 

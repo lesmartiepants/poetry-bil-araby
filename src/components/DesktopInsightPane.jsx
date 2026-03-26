@@ -34,7 +34,7 @@ export default function DesktopInsightPane({
       >
         <div className="p-6 pb-4 border-b border-stone-500/10">
           <div className="flex items-center justify-between">
-            <h3 className="font-brand-en italic font-semibold text-[clamp(1rem,1.8vw,1.125rem)] text-indigo-600 tracking-tight">
+            <h3 className={`font-brand-en italic font-semibold text-[clamp(1rem,1.8vw,1.125rem)] ${theme.sectionLabel} tracking-tight`}>
               Poetic Insight
             </h3>
             {selectedCategory !== 'All' && (
@@ -54,7 +54,7 @@ export default function DesktopInsightPane({
         <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
           {isInterpreting ? (
             <div className="h-full flex flex-col items-center justify-center gap-4 opacity-30 animate-pulse">
-              <Sparkles className="animate-spin text-indigo-500" size={32} />
+              <Sparkles className={`animate-spin ${theme.loadingIcon}`} size={32} />
               <p className="font-brand-en italic text-[clamp(0.875rem,1.5vw,1rem)]">
                 Consulting Diwan...
               </p>
@@ -64,9 +64,9 @@ export default function DesktopInsightPane({
               {!interpretation && (
                 <button
                   onClick={handleAnalyze}
-                  className={`group relative w-full py-4 border ${theme.brandBorder} ${theme.brand} rounded-full font-brand-en tracking-widest text-[10px] uppercase hover:bg-indigo-500/5 transition-all flex items-center justify-center gap-3 overflow-hidden bg-indigo-500/5`}
+                  className={`group relative w-full py-4 border ${theme.brandBorder} ${theme.brand} rounded-full font-brand-en tracking-widest text-[10px] uppercase hover:${theme.brandBg} transition-all flex items-center justify-center gap-3 overflow-hidden ${theme.brandBg}`}
                 >
-                  <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-indigo-500/10 to-transparent animate-[spin_8s_linear_infinite]" />
+                  <div className={`absolute inset-0 bg-gradient-to-tr from-transparent via-lapis/10 to-transparent animate-[spin_8s_linear_infinite]`} />
                   <Sparkles size={12} /> Seek Insight
                 </button>
               )}
@@ -78,11 +78,11 @@ export default function DesktopInsightPane({
                 </p>
               )}
               {insightParts?.depth && (
-                <div className="pt-6 border-t border-indigo-500/10">
-                  <h4 className="text-[10px] font-brand-en font-black text-indigo-600 mb-2 uppercase tracking-widest opacity-80">
+                <div className={`pt-6 border-t ${theme.sectionBorder}`}>
+                  <h4 className={`text-[10px] font-brand-en font-black ${theme.sectionLabel} mb-2 uppercase tracking-widest opacity-80`}>
                     The Depth
                   </h4>
-                  <div className="pl-4 border-l border-indigo-500/10">
+                  <div className={`pl-4 border-l ${theme.sectionAccent}`}>
                     <p className="text-[clamp(0.875rem,1.5vw,1rem)] font-brand-en font-normal opacity-80 leading-relaxed">
                       {insightParts.depth}
                     </p>
@@ -90,11 +90,11 @@ export default function DesktopInsightPane({
                 </div>
               )}
               {insightParts?.author && (
-                <div className="pt-6 border-t border-indigo-500/10">
-                  <h4 className="text-[10px] font-brand-en font-black text-indigo-600 mb-2 uppercase tracking-widest opacity-80">
+                <div className={`pt-6 border-t ${theme.sectionBorder}`}>
+                  <h4 className={`text-[10px] font-brand-en font-black ${theme.sectionLabel} mb-2 uppercase tracking-widest opacity-80`}>
                     The Author
                   </h4>
-                  <div className="pl-4 border-l border-indigo-500/10">
+                  <div className={`pl-4 border-l ${theme.sectionAccent}`}>
                     <p className="text-[clamp(0.875rem,1.5vw,1rem)] font-brand-en font-normal opacity-80 leading-relaxed">
                       {insightParts.author}
                     </p>

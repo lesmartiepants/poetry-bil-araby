@@ -884,7 +884,7 @@ export default function DiwanApp() {
 
   return (
     <div
-      className={`h-[100dvh] w-full flex flex-col overflow-hidden overscroll-none ${DESIGN.anim} font-sans ${theme.bg} ${theme.text} selection:bg-indigo-500`}
+      className={`h-[100dvh] w-full flex flex-col overflow-hidden overscroll-none ${DESIGN.anim} font-sans ${theme.bg} ${theme.text} ${theme.selectionBg}`}
       style={{ touchAction: 'pan-y', overflowX: 'hidden' }}
     >
 

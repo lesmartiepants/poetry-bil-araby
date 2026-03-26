@@ -11,6 +11,11 @@ export default {
       },
       colors: {
         gold: 'var(--gold)',
+        'gold-bright': 'var(--gold-bright)',
+        'gold-structural': 'var(--gold-structural)',
+        'lapis-deep': 'var(--lapis-deep)',
+        lapis: 'var(--lapis-medium)',
+        'lapis-light': 'var(--lapis-light)',
       },
     },
   },

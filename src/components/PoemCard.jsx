@@ -200,9 +200,9 @@ export default function PoemCard({
         {isInterpreting ? (
           <div className="flex flex-col items-center py-8 gap-4">
             <div className="relative">
-              <Loader2 className="animate-spin text-indigo-500" size={32} />
+              <Loader2 className={`animate-spin ${theme.loadingIcon}`} size={32} />
               <Sparkles
-                className="absolute inset-0 m-auto animate-pulse text-indigo-400"
+                className={`absolute inset-0 m-auto animate-pulse ${theme.loadingIcon}`}
                 size={16}
               />
             </div>
@@ -212,21 +212,21 @@ export default function PoemCard({
           </div>
         ) : interpretation ? (
           <div className="flex flex-col gap-10 animate-in slide-in-from-bottom-10 duration-1000">
-            <div className="pt-6 border-t border-indigo-500/10">
-              <h4 className="text-[10px] font-brand-en font-black text-indigo-600 mb-3 uppercase tracking-[0.3em] opacity-80">
+            <div className={`pt-6 border-t ${theme.sectionBorder}`}>
+              <h4 className={`text-[10px] font-brand-en font-black ${theme.sectionLabel} mb-3 uppercase tracking-[0.3em] opacity-80`}>
                 The Depth
               </h4>
-              <div className="pl-4 border-l border-indigo-500/10">
+              <div className={`pl-4 border-l ${theme.sectionAccent}`}>
                 <p className="text-[clamp(0.9375rem,1.6vw,1rem)] font-brand-en font-normal leading-relaxed italic opacity-90">
                   {insightParts?.depth}
                 </p>
               </div>
             </div>
-            <div className="pt-6 border-t border-indigo-500/10">
-              <h4 className="text-[10px] font-brand-en font-black text-indigo-600 mb-3 uppercase tracking-[0.3em] opacity-80">
+            <div className={`pt-6 border-t ${theme.sectionBorder}`}>
+              <h4 className={`text-[10px] font-brand-en font-black ${theme.sectionLabel} mb-3 uppercase tracking-[0.3em] opacity-80`}>
                 The Author
               </h4>
-              <div className="pl-4 border-l border-indigo-500/10">
+              <div className={`pl-4 border-l ${theme.sectionAccent}`}>
                 <p className="text-[clamp(0.9375rem,1.6vw,1rem)] font-brand-en font-normal leading-relaxed italic opacity-90">
                   {insightParts?.author}
                 </p>

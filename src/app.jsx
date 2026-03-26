@@ -303,6 +303,21 @@ export default function DiwanApp() {
     return () => { cancelled = true; };
   }, [selectedCategory, useDatabase]);
 
+  // Populate carousel from current poem's poet (works even when filter is "All")
+  useEffect(() => {
+    if (!FEATURES.prefetching || !useDatabase) return;
+    if (!current?.poet) return;
+    if (carouselPoems.length > 0) return; // already populated
+
+    let cancelled = false;
+    fetchPoemsByPoet(current.poet, 5, [current.id]).then((poems) => {
+      if (!cancelled && poems.length > 0) {
+        setCarouselPoems(poems);
+      }
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, [current?.poet, current?.id, carouselPoems.length, useDatabase]);
+
   // Eagerly populate the discovered model list so it's ready before any user action.
   // Using the default fetch mock in tests means this never consumes a mockResolvedValueOnce.
   // Eagerly discover available AI models via the backend proxy.

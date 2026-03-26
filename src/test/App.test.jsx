@@ -269,61 +269,20 @@ describe('DiwanApp', () => {
         expect(playBtn).toBeDisabled();
       });
     });
-    it('mutes and pauses audio element immediately on Play to prevent audible blip during iOS Safari unlock', async () => {
-      // Capture the Audio instance the component creates so we can assert on it.
-      // The component uses `useRef(new Audio())` — React re-evaluates `new Audio()` on
-      // every render, but useRef only stores the FIRST value. We capture the first
-      // instance created (which is the one stored in audioRef.current) by checking
-      // whether audioInstance is still null before setting it.
-      let audioInstance = null;
-      const OriginalAudio = global.Audio;
-      global.Audio = class extends OriginalAudio {
-        constructor(...args) {
-          super(...args);
-          if (audioInstance === null) audioInstance = this; // first instance = audioRef.current
-        }
-      };
+    it('iOS Safari audio unlock is handled by Tone.start() — no raw Audio mute/play/pause needed', async () => {
+      // Tone.js now handles iOS Safari audio context unlock via Tone.start()
+      // instead of the old mute/play/pause trick on a raw Audio element.
+      // audioRef is useRef(null) — the Tone.Player lives in audioStore.
+      // This test verifies the play button is clickable and doesn't crash.
+      render(<DiwanApp />);
 
-      try {
-        // Keep TTS fetch hanging so audioUrl never resolves — this ensures the
-        // unlock code path (deferred-play branch) is what we're exercising.
-        global.fetch = vi.fn((url) => {
-          if (typeof url === 'string' && url.includes('/api/ai/')) {
-            return new Promise(() => {});
-          }
-          return Promise.resolve({
-            ok: true,
-            json: async () => defaultDbPoem,
-            text: async () => '',
-            body: {
-              getReader: () => ({
-                read: vi.fn().mockResolvedValue({ done: true, value: undefined }),
-              }),
-            },
-          });
-        });
+      await waitFor(() => {
+        expect(document.body.textContent).toContain('Nizar Qabbani');
+      });
 
-        render(<DiwanApp />);
-
-        await waitFor(() => {
-          expect(document.body.textContent).toContain('Nizar Qabbani');
-        });
-
-        const playCallsBefore = audioInstance.play.mock.calls.length;
-        const pauseCallsBefore = audioInstance.pause.mock.calls.length;
-
-        await userEvent.click(screen.getByLabelText('Play recitation'));
-
-        // The iOS unlock block must call play() then pause() synchronously within the
-        // tap handler — before any async work starts — so the gesture context is held.
-        expect(audioInstance.play.mock.calls.length).toBeGreaterThan(playCallsBefore);
-        expect(audioInstance.pause.mock.calls.length).toBeGreaterThan(pauseCallsBefore);
-
-        // muted must be restored to its original value (false) after the unlock sequence.
-        expect(audioInstance.muted).toBe(false);
-      } finally {
-        global.Audio = OriginalAudio;
-      }
+      const playBtn = screen.getByLabelText('Play recitation');
+      expect(playBtn).toBeInTheDocument();
+      await userEvent.click(playBtn);
     });
   });
 

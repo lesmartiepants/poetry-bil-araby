@@ -29,13 +29,14 @@ const PoemCarousel = ({
   currentFontClass,
   POEM_META,
   DESIGN,
+  onLoadMore,
 }) => {
   const [emblaRef, emblaApi] = useEmblaCarousel({
     axis: 'x',
     dragFree: false,
-    loop: false,
+    loop: true,
     startIndex: currentIndex,
-    containScroll: 'trimSnaps',
+    duration: 25,
   });
 
   const [showSwipeHint, setShowSwipeHint] = useState(true);

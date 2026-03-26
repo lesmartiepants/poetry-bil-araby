@@ -307,6 +307,11 @@ export default function DiwanApp() {
     return () => { cancelled = true; };
   }, [selectedCategory, useDatabase]);
 
+  // Queue of carousel poems that still need background translation fetched.
+  const carouselTranslationQueue = useRef([]);
+  // The carousel poem currently being explained in background (by ID).
+  const carouselExplainingId = useRef(null);
+
   // Populate carousel from current poem's poet (works even when filter is "All")
   useEffect(() => {
     if (!FEATURES.prefetching || !useDatabase) return;
@@ -317,27 +322,42 @@ export default function DiwanApp() {
     fetchPoemsByPoet(current.poet, 5, [current.id]).then((poems) => {
       if (!cancelled && poems.length > 0) {
         setCarouselPoems(poems);
-        // Auto-explain the first carousel poem on initial load if it has no translation
-        const first = poems[0];
-        if (first && !first.cachedTranslation && !first.english) {
-          analyzePoemAction({ current: first, addLog, track });
+        // Queue poems that have no translation for sequential background explains
+        carouselTranslationQueue.current = poems.filter(
+          (p) => !p.cachedTranslation && !p.english
+        );
+        // Kick off the first explain immediately
+        const next = carouselTranslationQueue.current.shift();
+        if (next) {
+          carouselExplainingId.current = next.id;
+          analyzePoemAction({ current: next, addLog, track });
         }
       }
     }).catch(() => {});
     return () => { cancelled = true; };
   }, [current?.poet, current?.id, carouselPoems.length, useDatabase]);
 
-  // When interpretation arrives from an analysis triggered by a carousel poem, patch that
-  // poem's english field so PoemCarousel (which reads poem.english) can render the translation.
+  // When interpretation arrives for a background carousel explain, patch that poem's english
+  // field so PoemCarousel (which reads poem.english directly) can render the translation.
+  // Then advance to the next queued poem.
   useEffect(() => {
-    if (!interpretation || carouselPoems.length === 0) return;
+    if (!interpretation || !carouselExplainingId.current || carouselPoems.length === 0) return;
     const parts = parseInsight(interpretation);
     const translation = parts?.poeticTranslation;
     if (!translation) return;
-    const activePoem = carouselPoems[carouselIndex];
-    if (!activePoem || activePoem.english) return; // already has english
-    updateCarouselPoem(carouselIndex, { english: translation });
-  }, [interpretation, carouselIndex, carouselPoems.length]);
+    const targetIdx = carouselPoems.findIndex((p) => p.id === carouselExplainingId.current);
+    if (targetIdx === -1) return;
+    updateCarouselPoem(targetIdx, { english: translation });
+    carouselExplainingId.current = null;
+    // Clear interpretation so the next background explain can proceed past the guard
+    setInterpretation(null);
+    // Process next queued poem
+    const next = carouselTranslationQueue.current.shift();
+    if (next) {
+      carouselExplainingId.current = next.id;
+      analyzePoemAction({ current: next, addLog, track });
+    }
+  }, [interpretation]);
 
   // Eagerly populate the discovered model list so it's ready before any user action.
   // Using the default fetch mock in tests means this never consumes a mockResolvedValueOnce.
@@ -910,6 +930,10 @@ export default function DiwanApp() {
 
     // Clear all polling intervals to prevent stale requests
     usePoemStore.getState().clearPollingIntervals();
+
+    // Cancel any in-progress background carousel translation queue
+    carouselTranslationQueue.current = [];
+    carouselExplainingId.current = null;
 
     // Log current poem tags for debugging
     const tagsType = Array.isArray(current?.tags) ? 'array' : typeof current?.tags;

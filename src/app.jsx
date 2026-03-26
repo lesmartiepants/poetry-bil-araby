@@ -1096,6 +1096,13 @@ export default function DiwanApp() {
                           player.stop();
                         }
                         setIsPlaying(false);
+                        // Clear stale interpretation from the previous poem
+                        setInterpretation(null);
+                        // Auto-explain if the new carousel poem has no translation
+                        const newPoem = carouselPoems[idx];
+                        if (newPoem && !newPoem.cachedTranslation && !newPoem.english) {
+                          analyzePoemAction({ current: newPoem, addLog, track });
+                        }
                       }}
                       darkMode={darkMode}
                       showTranslation={showTranslation}

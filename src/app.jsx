@@ -863,9 +863,9 @@ export default function DiwanApp() {
     // Update URL for DB poems, preserving any existing query params (e.g. ?poet=)
     const qs = window.location.search;
     if (typeof mappedPoem.id === 'number') {
-      navigate('/poem/' + mappedPoem.id + qs, { replace: true });
+      navigate('/poem/' + mappedPoem.id + qs);
     } else {
-      navigate('/' + qs, { replace: true });
+      navigate('/' + qs);
     }
   };
 

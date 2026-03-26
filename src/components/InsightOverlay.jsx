@@ -37,7 +37,6 @@ export default function InsightOverlay({
       onOpenChange={(isOpen) => {
         if (!isOpen) onClose();
       }}
-      snapPoints={[0.8]}
       closeThreshold={0.1}
       modal
     >
@@ -52,9 +51,11 @@ export default function InsightOverlay({
         />
         <Drawer.Content
           data-vaul-drawer
-          className="fixed bottom-0 left-0 right-0 z-[61] flex flex-col rounded-t-2xl overflow-hidden"
+          className="fixed bottom-0 left-0 right-0 z-[61] rounded-t-2xl"
           style={{ background: o.bg }}
         >
+          {/* Inner layout — constrained to 80dvh so we don't fight Vaul's transforms */}
+          <div className="flex flex-col h-[80dvh] max-h-[80dvh] overflow-hidden rounded-t-2xl">
           {/* Gold rule */}
           <div className="h-px flex-shrink-0" style={{ background: o.goldRule }} />
 
@@ -234,6 +235,7 @@ export default function InsightOverlay({
             )}
           </div>
 
+          </div>{/* end inner layout */}
         </Drawer.Content>
       </Drawer.Portal>
     </Drawer.Root>

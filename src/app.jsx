@@ -1306,8 +1306,17 @@ export default function DiwanApp() {
                     longPressTimer.current = setTimeout(() => {
                       const willEnable = !useUIStore.getState().ratchetMode;
                       useUIStore.getState().toggleRatchetMode();
-                      setRatchetToast(willEnable ? 'on' : 'off');
-                      setTimeout(() => setRatchetToast(null), 2500);
+                      if (willEnable) {
+                        toast('🔥 Ratchet Mode activated fr fr', {
+                          style: { background: 'linear-gradient(135deg, #ff5000, #ff9000)', color: 'white', border: 'none' },
+                          duration: 2500,
+                        });
+                      } else {
+                        toast('Back to scholarly mode', {
+                          style: { background: 'rgba(60,60,70,0.92)', color: 'white', border: 'none' },
+                          duration: 2500,
+                        });
+                      }
                       longPressTimer.current = null;
                     }, 2000);
                   }}

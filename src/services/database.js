@@ -17,6 +17,9 @@ const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 const normalizeDbPoem = (poem) => ({
   ...poem,
   arabic: poem.arabic ? poem.arabic.replace(/\*/g, '\n') : poem.arabic,
+  english: poem.cachedTranslation
+    ? poem.cachedTranslation.replace(/\*/g, '\n')
+    : (poem.english || ''),
   cachedTranslation: poem.cachedTranslation
     ? poem.cachedTranslation.replace(/\*/g, '\n')
     : poem.cachedTranslation,

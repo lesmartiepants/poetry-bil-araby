@@ -94,6 +94,10 @@ export const usePoemStore = create((set, get) => ({
   // Carousel state
   setCarouselPoems: (poems) => set({ carouselPoems: poems, carouselIndex: 0 }),
   addCarouselPoem: (poem) => set((s) => ({ carouselPoems: [...s.carouselPoems, poem] })),
+  updateCarouselPoem: (index, patch) =>
+    set((s) => ({
+      carouselPoems: s.carouselPoems.map((p, i) => (i === index ? { ...p, ...patch } : p)),
+    })),
   clearCarouselPoems: () => set({ carouselPoems: [], carouselIndex: 0 }),
   setCarouselIndex: (carouselIndex) => set({ carouselIndex }),
 

@@ -147,6 +147,7 @@ export default function DiwanApp() {
   const clearCarouselPoems = usePoemStore((s) => s.clearCarouselPoems);
   const setCarouselIndex = usePoemStore((s) => s.setCarouselIndex);
   const addCarouselPoem = usePoemStore((s) => s.addCarouselPoem);
+  const updateCarouselPoem = usePoemStore((s) => s.updateCarouselPoem);
 
   // ── Modal store (Zustand) ──
   const discoverDrawerOpen = useModalStore((s) => s.discoverDrawer);
@@ -316,10 +317,27 @@ export default function DiwanApp() {
     fetchPoemsByPoet(current.poet, 5, [current.id]).then((poems) => {
       if (!cancelled && poems.length > 0) {
         setCarouselPoems(poems);
+        // Auto-explain the first carousel poem on initial load if it has no translation
+        const first = poems[0];
+        if (first && !first.cachedTranslation && !first.english) {
+          analyzePoemAction({ current: first, addLog, track });
+        }
       }
     }).catch(() => {});
     return () => { cancelled = true; };
   }, [current?.poet, current?.id, carouselPoems.length, useDatabase]);
+
+  // When interpretation arrives from an analysis triggered by a carousel poem, patch that
+  // poem's english field so PoemCarousel (which reads poem.english) can render the translation.
+  useEffect(() => {
+    if (!interpretation || carouselPoems.length === 0) return;
+    const parts = parseInsight(interpretation);
+    const translation = parts?.poeticTranslation;
+    if (!translation) return;
+    const activePoem = carouselPoems[carouselIndex];
+    if (!activePoem || activePoem.english) return; // already has english
+    updateCarouselPoem(carouselIndex, { english: translation });
+  }, [interpretation, carouselIndex, carouselPoems.length]);
 
   // Eagerly populate the discovered model list so it's ready before any user action.
   // Using the default fetch mock in tests means this never consumes a mockResolvedValueOnce.
@@ -1111,6 +1129,8 @@ export default function DiwanApp() {
                         setIsPlaying(false);
                         // Clear stale interpretation from the previous poem
                         setInterpretation(null);
+                        // Show translation for the new poem by default
+                        setShowTranslation(true);
                         // Auto-explain if the new carousel poem has no translation
                         const newPoem = carouselPoems[idx];
                         if (newPoem && !newPoem.cachedTranslation && !newPoem.english) {

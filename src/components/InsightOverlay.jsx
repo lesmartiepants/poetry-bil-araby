@@ -135,7 +135,7 @@ export default function InsightOverlay({
                       Translation
                     </div>
                     <p
-                      className="font-fell italic leading-[1.9] text-[clamp(0.9375rem,1.4vw,1.0625rem)]"
+                      className="font-fell leading-[1.9] text-[clamp(0.9375rem,1.4vw,1.0625rem)]"
                       style={{ color: o.textLight }}
                     >
                       {insightParts.poeticTranslation}
@@ -198,7 +198,7 @@ export default function InsightOverlay({
                 {/* Empty state */}
                 {!interpretation && !isInterpreting && (
                   <div className="flex flex-col items-center justify-center min-h-[200px] gap-4">
-                    <p className="font-brand-en italic text-sm" style={{ color: o.textMuted }}>
+                    <p className="font-brand-en text-sm" style={{ color: o.textMuted }}>
                       {ratchetMode
                         ? 'Tap Explain to get that ratchet take'
                         : 'Tap the lightbulb to illuminate this poem'}

@@ -59,7 +59,7 @@ export default function InsightsDrawer({ insightParts }) {
         {isInterpreting ? (
           <div className="flex flex-col items-center justify-center gap-5 min-h-[200px]">
             <p
-              className="font-brand-en italic text-base"
+              className="font-brand-en text-base"
               style={{ color: o?.textMuted }}
             >
               Consulting Diwan...
@@ -77,7 +77,7 @@ export default function InsightsDrawer({ insightParts }) {
                   Translation
                 </div>
                 <p
-                  className="font-fell italic leading-[1.9]"
+                  className="font-fell leading-[1.9]"
                   style={{ color: o?.textLight }}
                 >
                   {insightParts.poeticTranslation}
@@ -133,7 +133,7 @@ export default function InsightsDrawer({ insightParts }) {
             {!interpretation && !isInterpreting && !insightParts && (
               <div className="flex flex-col items-center justify-center min-h-[200px]">
                 <p
-                  className="font-brand-en italic text-sm"
+                  className="font-brand-en text-sm"
                   style={{ color: o?.textMuted }}
                 >
                   Tap the lightbulb to illuminate this poem

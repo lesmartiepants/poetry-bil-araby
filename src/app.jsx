@@ -1031,7 +1031,7 @@ export default function DiwanApp() {
           <main
             ref={mainScrollRef}
             onScroll={handleScroll}
-            className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar relative z-10 px-4 md:px-0 pb-28 pt-10 md:pt-12"
+            className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden custom-scrollbar relative z-10 px-4 md:px-0 pb-28 pt-10 md:pt-12"
             style={{ overscrollBehaviorX: 'none' }}
           >
             {/* Top scroll gradient removed — header is now a subtle corner wordmark */}

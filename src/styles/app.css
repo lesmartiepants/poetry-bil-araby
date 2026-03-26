@@ -184,3 +184,44 @@
 }
 .fire-tap { animation: fireTapFlash 0.42s ease-out forwards; }
 
+/* ============================================
+   Sonner toast overrides — gold glass design language
+   ============================================ */
+
+[data-sonner-toaster] [data-sonner-toast] {
+  --normal-bg: rgba(12,12,14,0.88);
+  --normal-border: rgba(197,160,89,0.25);
+}
+
+/* Default/success toast title in gold */
+[data-sonner-toast] [data-title] {
+  color: var(--gold);
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+/* Description text (poet name) in muted warm italic */
+[data-sonner-toast] [data-description] {
+  color: rgba(212,200,168,0.88);
+  font-style: italic;
+}
+
+/* Error toast — subtle red accent, keep glass bg */
+[data-sonner-toast][data-type="error"] {
+  border-color: rgba(239,68,68,0.3) !important;
+}
+[data-sonner-toast][data-type="error"] [data-title] {
+  color: #fca5a5;
+}
+
+/* Gold glow entrance animation */
+[data-sonner-toast][data-mounted="true"] {
+  animation: toastGlow 0.6s ease-out;
+}
+
+@keyframes toastGlow {
+  0%   { box-shadow: 0 0 0 rgba(197,160,89,0),    0 0  0 rgba(0,0,0,0); }
+  50%  { box-shadow: 0 0 20px rgba(197,160,89,0.15), 0 4px 16px rgba(0,0,0,0.4); }
+  100% { box-shadow: 0 0 40px rgba(197,160,89,0.08), 0 8px 32px rgba(0,0,0,0.6); }
+}
+

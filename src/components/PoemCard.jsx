@@ -1,5 +1,5 @@
 import { Loader2, Sparkles } from 'lucide-react';
-import { DESIGN, GOLD } from '../constants/index.js';
+import { DESIGN, GOLD, COLORS } from '../constants/index.js';
 import { transliterate } from '../utils/transliterate.js';
 
 /**
@@ -93,7 +93,7 @@ export default function PoemCard({
                 fontSize: 'clamp(1.4rem, 4vw, 2.25rem)',
                 color: 'var(--gold)',
                 lineHeight: 1.4,
-                textShadow: darkMode ? '0 0 30px rgba(197,160,89,0.15)' : 'none',
+                textShadow: darkMode ? COLORS.gold.glowShadow15 : 'none',
               }}
             >
               {current?.titleArabic || current?.title}
@@ -111,7 +111,7 @@ export default function PoemCard({
               className="font-tajawal text-center"
               style={{
                 fontSize: 'clamp(0.8rem, 2vw, 1rem)',
-                color: darkMode ? '#a8a29e' : '#57534e',
+                color: theme.poetCardColor,
                 lineHeight: 1.4,
               }}
             >
@@ -124,7 +124,7 @@ export default function PoemCard({
                 dir="ltr"
                 style={{
                   fontSize: 'clamp(0.7rem, 1.3vw, 0.8rem)',
-                  color: darkMode ? '#78716c' : '#a8a29e',
+                  color: theme.subtitleCardColor,
                   marginTop: '0.5rem',
                 }}
               >

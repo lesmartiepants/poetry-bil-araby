@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { Feather, ArrowRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { BRAND } from '../constants/design.js';
-import { THEME, GOLD } from '../constants/theme.js';
+import { THEME, GOLD, COLORS } from '../constants/theme.js';
 import { useUIStore } from '../stores/uiStore';
 import { useModalStore } from '../stores/modalStore';
 
@@ -50,7 +50,7 @@ const SplashScreen = () => {
     stars.forEach((s) => {
       const el = document.createElement('div');
       el.style.position = 'absolute';
-      el.style.background = '#FFF';
+      el.style.background = COLORS.splash.star;
       el.style.borderRadius = '50%';
       el.style.left = s.left;
       el.style.top = s.top;
@@ -260,35 +260,36 @@ const SplashScreen = () => {
   `;
 
   // Computed values needed by both phases
-  const desertNight = '#1A0F0A';
+  const desertNight = COLORS.splash.desertNight;
   const gold = GOLD.gold;
-  const sandMuted = isDark ? 'rgba(232,213,183,0.5)' : 'rgba(26,15,10,0.4)';
+  const sandMuted = isDark ? COLORS.splash.sandMutedDark : COLORS.splash.sandMutedLight;
+  const duneColors = isDark ? COLORS.splash.dunesDark : COLORS.splash.dunesLight;
   const dunes = isDark
     ? [
         {
           h: '25%',
-          bg: '#6B3720',
+          bg: duneColors[0],
           br: '55% 75% 0 0 / 100%',
           z: 4,
           anim: 'splashDune1 10s ease-in-out infinite alternate',
         },
         {
           h: '33%',
-          bg: '#5A2E1A',
+          bg: duneColors[1],
           br: '75% 45% 0 0 / 100%',
           z: 3,
           anim: 'splashDune2 14s ease-in-out infinite alternate',
         },
         {
           h: '40%',
-          bg: '#4A2516',
+          bg: duneColors[2],
           br: '45% 65% 0 0 / 100%',
           z: 2,
           anim: 'splashDune3 18s ease-in-out infinite alternate',
         },
         {
           h: '48%',
-          bg: '#3A1C12',
+          bg: duneColors[3],
           br: '65% 50% 0 0 / 100%',
           z: 1,
           anim: 'splashDune4 23s ease-in-out infinite alternate',
@@ -297,36 +298,34 @@ const SplashScreen = () => {
     : [
         {
           h: '25%',
-          bg: '#D4B896',
+          bg: duneColors[0],
           br: '55% 75% 0 0 / 100%',
           z: 4,
           anim: 'splashDune1 10s ease-in-out infinite alternate',
         },
         {
           h: '33%',
-          bg: '#C8A880',
+          bg: duneColors[1],
           br: '75% 45% 0 0 / 100%',
           z: 3,
           anim: 'splashDune2 14s ease-in-out infinite alternate',
         },
         {
           h: '40%',
-          bg: '#BC9A6E',
+          bg: duneColors[2],
           br: '45% 65% 0 0 / 100%',
           z: 2,
           anim: 'splashDune3 18s ease-in-out infinite alternate',
         },
         {
           h: '48%',
-          bg: '#B08C5E',
+          bg: duneColors[3],
           br: '65% 50% 0 0 / 100%',
           z: 1,
           anim: 'splashDune4 23s ease-in-out infinite alternate',
         },
       ];
-  const bgGradient = isDark
-    ? 'linear-gradient(180deg, #0D0A14 0%, #1A0F0A 40%, #3A1C12 100%)'
-    : `linear-gradient(180deg, #F5EDE0 0%, #EDE0CC 40%, #B08C5E 100%)`;
+  const bgGradient = isDark ? COLORS.splash.bgGradientDark : COLORS.splash.bgGradientLight;
   const kineticStep = phase - 1; // 0, 1, or 2
   const progressWidth = ((Math.max(kineticStep, 0) + 1) / 3) * 100 + '%';
   const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
@@ -415,7 +414,7 @@ const SplashScreen = () => {
             style={{
               ...BRAND.arabic,
               color: gold,
-              textShadow: '0 0 40px rgba(197,160,89,0.3)',
+              textShadow: `0 0 40px ${COLORS.gold.alpha30}`,
             }}
             dir="rtl"
             lang="ar"
@@ -425,7 +424,7 @@ const SplashScreen = () => {
           <span
             style={{
               ...BRAND.english,
-              color: isDark ? '#D4D0C8' : '#1A1614',
+              color: theme.brandHeaderTextColor,
             }}
           >
             poetry
@@ -472,7 +471,7 @@ const SplashScreen = () => {
           onMouseEnter={(e) => {
             e.currentTarget.style.background = gold;
             e.currentTarget.style.color = desertNight;
-            e.currentTarget.style.boxShadow = '0 0 30px rgba(197,160,89,0.3)';
+            e.currentTarget.style.boxShadow = `0 0 30px ${COLORS.gold.alpha30}`;
           }}
           onMouseLeave={(e) => {
             e.currentTarget.style.background = 'transparent';
@@ -491,7 +490,7 @@ const SplashScreen = () => {
           position: 'fixed',
           inset: 0,
           zIndex: 60,
-          background: '#000000',
+          background: COLORS.splash.kineticBg,
           display: phase >= 1 ? 'flex' : 'none',
           flexDirection: 'column',
           alignItems: 'center',
@@ -549,7 +548,7 @@ const SplashScreen = () => {
                   fontFamily: "'Reem Kufi', sans-serif",
                   fontWeight: 700,
                   fontSize: 'clamp(3.5rem, 9vw, 6rem)',
-                  color: '#ffffff',
+                  color: COLORS.splash.btnText,
                   direction: 'rtl',
                   lineHeight: 1.2,
                   marginBottom: '1.5rem',
@@ -572,7 +571,7 @@ const SplashScreen = () => {
                 style={{
                   fontFamily: "'Tajawal', sans-serif",
                   fontSize: '0.9375rem',
-                  color: '#666666',
+                  color: COLORS.splash.kineticSubtext,
                   direction: 'rtl',
                   opacity: 0,
                   animation: prefersReducedMotion
@@ -606,7 +605,7 @@ const SplashScreen = () => {
                   fontSize: 'clamp(4rem, 10vw, 7rem)',
                   textTransform: 'lowercase',
                   letterSpacing: '-0.05em',
-                  color: '#ffffff',
+                  color: COLORS.splash.btnText,
                   lineHeight: 1,
                   marginBottom: '1.5rem',
                 }}
@@ -635,7 +634,7 @@ const SplashScreen = () => {
                   fontSize: '0.8125rem',
                   letterSpacing: '0.3em',
                   textTransform: 'uppercase',
-                  color: '#555555',
+                  color: COLORS.splash.kineticLabel,
                   opacity: 0,
                   animation: prefersReducedMotion
                     ? 'splashFadeIn 0.01ms forwards'
@@ -664,7 +663,7 @@ const SplashScreen = () => {
                 style={{
                   fontFamily: "'Forum', cursive",
                   fontSize: 'clamp(2.5rem, 7vw, 4.5rem)',
-                  color: '#ffffff',
+                  color: COLORS.splash.btnText,
                   letterSpacing: '-0.02em',
                   marginBottom: '1rem',
                   opacity: 0,
@@ -682,7 +681,7 @@ const SplashScreen = () => {
                   fontFamily: "'Reem Kufi', sans-serif",
                   fontWeight: 700,
                   fontSize: 'clamp(1.5rem, 4vw, 2.5rem)',
-                  color: '#888888',
+                  color: COLORS.splash.kineticCount,
                   direction: 'rtl',
                   marginBottom: '2rem',
                   opacity: 0,
@@ -704,10 +703,10 @@ const SplashScreen = () => {
                   alignItems: 'center',
                   gap: '8px',
                   padding: '14px 40px',
-                  border: '1px solid #333333',
+                  border: `1px solid ${COLORS.splash.btnBorder}`,
                   borderRadius: '999px',
                   background: 'transparent',
-                  color: '#ffffff',
+                  color: COLORS.splash.btnText,
                   fontFamily: "'Tajawal', sans-serif",
                   fontSize: '13px',
                   fontWeight: 500,
@@ -724,12 +723,12 @@ const SplashScreen = () => {
                   backfaceVisibility: 'hidden',
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)';
-                  e.currentTarget.style.borderColor = '#666666';
+                  e.currentTarget.style.background = COLORS.splash.btnHoverBg;
+                  e.currentTarget.style.borderColor = COLORS.splash.btnHoverBorder;
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.background = 'transparent';
-                  e.currentTarget.style.borderColor = '#333333';
+                  e.currentTarget.style.borderColor = COLORS.splash.btnBorder;
                 }}
                 aria-label="Start exploring"
               >
@@ -750,7 +749,7 @@ const SplashScreen = () => {
             fontSize: '0.65rem',
             letterSpacing: '0.35em',
             textTransform: 'uppercase',
-            color: '#333333',
+            color: COLORS.splash.kineticHint,
             zIndex: 5,
           }}
         >
@@ -764,7 +763,7 @@ const SplashScreen = () => {
             bottom: 0,
             left: 0,
             height: '2px',
-            background: 'rgba(255, 255, 255, 0.15)',
+            background: COLORS.splash.progressBar,
             transition: 'width 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
             zIndex: 5,
             width: progressWidth,

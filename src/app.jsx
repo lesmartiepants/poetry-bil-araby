@@ -32,7 +32,7 @@ import {
 } from './prompts';
 import { parseInsight } from './utils/insightParser';
 import { repairAndParseJSON } from './utils/jsonRepair';
-import { FEATURES, DESIGN, BRAND, BRAND_HEADER, POEM_META, THEME, GOLD, CATEGORIES, FONTS } from './constants/index.js';
+import { FEATURES, DESIGN, BRAND, BRAND_HEADER, POEM_META, THEME, GOLD, COLORS, CATEGORIES, FONTS } from './constants/index.js';
 import { usePoemStore } from './stores/poemStore';
 import { useAudioStore } from './stores/audioStore';
 import { useUIStore } from './stores/uiStore';
@@ -901,7 +901,7 @@ export default function DiwanApp() {
             zIndex: 39,
             pointerEvents: 'none',
             background:
-              'radial-gradient(ellipse at center, rgba(255,80,0,0.22) 0%, rgba(255,40,0,0.08) 60%, transparent 100%)',
+              COLORS.ratchet.glowGradient,
             animation: 'ratchetGlow 2s ease-in-out infinite',
           }}
         />
@@ -920,12 +920,12 @@ export default function DiwanApp() {
             borderRadius: '999px',
             background:
               ratchetToast === 'on'
-                ? 'linear-gradient(135deg, #ff5000, #ff9000)'
-                : 'rgba(60,60,70,0.92)',
-            color: '#fff',
+                ? COLORS.ratchet.toastOnBg
+                : COLORS.ratchet.toastOffBg,
+            color: COLORS.white,
             fontSize: '0.875rem',
             fontWeight: 600,
-            boxShadow: '0 4px 24px rgba(0,0,0,0.4)',
+            boxShadow: COLORS.toastShadow,
             animation: 'ratchetToastIn 0.4s ease-out',
             whiteSpace: 'nowrap',
           }}
@@ -952,7 +952,7 @@ export default function DiwanApp() {
           <span
             style={{
               ...BRAND_HEADER.english,
-              color: darkMode ? '#D4D0C8' : '#1A1614',
+              color: theme.brandHeaderTextColor,
             }}
           >
             poetry
@@ -977,7 +977,7 @@ export default function DiwanApp() {
           <div
             className="absolute inset-0 pointer-events-none opacity-[0.03]"
             style={{
-              backgroundImage: `url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M40 0l40 40-40 40L0 40z' fill='none' stroke='%23C5A059' stroke-width='1'/%3E%3Ccircle cx='40' cy='40' r='18' fill='none' stroke='%23C5A059' stroke-width='1'/%3E%3C/svg%3E")`,
+              backgroundImage: `url("data:image/svg+xml,%3Csvg width='80' height='80' viewBox='0 0 80 80' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M40 0l40 40-40 40L0 40z' fill='none' stroke='${COLORS.gold.svgStroke}' stroke-width='1'/%3E%3Ccircle cx='40' cy='40' r='18' fill='none' stroke='${COLORS.gold.svgStroke}' stroke-width='1'/%3E%3C/svg%3E")`,
               backgroundSize: '60px 60px',
             }}
           />
@@ -1103,7 +1103,7 @@ export default function DiwanApp() {
             className="pointer-events-none fixed bottom-0 left-0 right-0 z-40"
             style={{
               height: '100px',
-              background: `linear-gradient(to top, ${darkMode ? '#0c0c0e' : '#FDFCF8'} 0%, ${darkMode ? 'rgba(12,12,14,0.85)' : 'rgba(253,252,248,0.85)'} 30%, ${darkMode ? 'rgba(12,12,14,0.4)' : 'rgba(253,252,248,0.4)'} 60%, transparent 100%)`,
+              background: `linear-gradient(to top, ${theme.fadeSolid} 0%, ${theme.fadeAlpha85} 30%, ${theme.fadeAlpha40} 60%, transparent 100%)`,
             }}
           />
 
@@ -1127,7 +1127,7 @@ export default function DiwanApp() {
               className={`flex items-center gap-1.5 px-4 py-1.5 rounded-full border ${DESIGN.glass} ${theme.border} ${DESIGN.anim} max-w-[calc(100vw-2rem)] w-fit`}
               style={{
                 boxShadow:
-                  'inset 0 1px 0 rgba(255,255,255,0.08), inset 0 -1px 0 rgba(0,0,0,0.15), 0 8px 32px rgba(0,0,0,0.4), 0 2px 8px rgba(0,0,0,0.3)',
+                  COLORS.controlBarShadow,
                 userSelect: 'none',
                 WebkitUserSelect: 'none',
               }}
@@ -1247,7 +1247,7 @@ export default function DiwanApp() {
                   aria-label="Open discover"
                   className={`relative w-[46px] h-[46px] bg-transparent border-none cursor-pointer flex items-center justify-center rounded-full hover:scale-105 ${fireTapped ? 'fire-tap' : ''}`}
                   style={{
-                    background: isFetching ? 'rgba(197,160,89,0.08)' : 'transparent',
+                    background: isFetching ? COLORS.gold.alpha8 : 'transparent',
                     transition: fireTapped ? 'none' : 'transform 0.3s',
                   }}
                 >

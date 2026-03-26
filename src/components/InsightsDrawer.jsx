@@ -84,9 +84,7 @@ const InsightsDrawer = ({ insightParts }) => {
         }
         style={{
           height,
-          background: darkMode
-            ? 'linear-gradient(180deg, rgba(18,16,14,0.98) 0%, rgba(12,12,14,0.99) 100%)'
-            : 'linear-gradient(180deg, rgba(253,252,248,0.98) 0%, rgba(245,243,238,0.99) 100%)',
+          background: theme.insightDrawerBg,
         }}
       >
         {/* Drag handle */}

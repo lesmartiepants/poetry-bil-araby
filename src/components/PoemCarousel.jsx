@@ -1,5 +1,6 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { transliterate } from '../utils/transliterate.js';
 
 /**
@@ -34,20 +35,47 @@ const PoemCarousel = ({
     dragFree: false,
     loop: false,
     startIndex: currentIndex,
+    containScroll: 'trimSnaps',
   });
+
+  const [showSwipeHint, setShowSwipeHint] = useState(true);
+  const [hasSwiped, setHasSwiped] = useState(false);
+  const [canScrollPrev, setCanScrollPrev] = useState(false);
+  const [canScrollNext, setCanScrollNext] = useState(false);
+
+  // Hide swipe hint after 3 seconds
+  useEffect(() => {
+    if (poems.length <= 1) return;
+    const timer = setTimeout(() => setShowSwipeHint(false), 3000);
+    return () => clearTimeout(timer);
+  }, [poems.length]);
+
+  const updateScrollButtons = useCallback(() => {
+    if (!emblaApi) return;
+    setCanScrollPrev(emblaApi.canScrollPrev());
+    setCanScrollNext(emblaApi.canScrollNext());
+  }, [emblaApi]);
 
   // Notify parent when user swipes
   const onSelect = useCallback(() => {
     if (!emblaApi) return;
     const idx = emblaApi.selectedScrollSnap();
     onSlideChange(idx);
-  }, [emblaApi, onSlideChange]);
+    setHasSwiped(true);
+    setShowSwipeHint(false);
+    updateScrollButtons();
+  }, [emblaApi, onSlideChange, updateScrollButtons]);
 
   useEffect(() => {
     if (!emblaApi) return;
     emblaApi.on('select', onSelect);
-    return () => emblaApi.off('select', onSelect);
-  }, [emblaApi, onSelect]);
+    emblaApi.on('reInit', updateScrollButtons);
+    updateScrollButtons();
+    return () => {
+      emblaApi.off('select', onSelect);
+      emblaApi.off('reInit', updateScrollButtons);
+    };
+  }, [emblaApi, onSelect, updateScrollButtons]);
 
   // Scroll to slide when currentIndex changes from outside (e.g. "Surprise Me")
   useEffect(() => {
@@ -59,14 +87,46 @@ const PoemCarousel = ({
 
   const dotColor = darkMode ? 'rgba(197,160,89,0.5)' : 'rgba(140,100,30,0.4)';
   const dotActiveColor = darkMode ? 'rgba(197,160,89,1)' : 'rgba(140,100,30,0.85)';
+  const goldColor = '#c5a059';
 
   return (
-    <div className="w-full">
-      {/* Carousel viewport — allow horizontal drag, preserve vertical scroll */}
+    <div className="w-full relative">
+      {/* Desktop chevron — previous */}
+      {poems.length > 1 && (
+        <button
+          onClick={() => emblaApi?.scrollPrev()}
+          aria-label="Previous poem"
+          className="hidden md:flex absolute left-0 top-1/2 -translate-y-1/2 z-10 items-center justify-center w-8 h-8 transition-all duration-300 ease-in-out"
+          style={{
+            opacity: canScrollPrev ? 0.5 : 0.15,
+            color: goldColor,
+            pointerEvents: canScrollPrev ? 'auto' : 'none',
+          }}
+        >
+          <ChevronRight size={24} />
+        </button>
+      )}
+
+      {/* Desktop chevron — next */}
+      {poems.length > 1 && (
+        <button
+          onClick={() => emblaApi?.scrollNext()}
+          aria-label="Next poem"
+          className="hidden md:flex absolute right-0 top-1/2 -translate-y-1/2 z-10 items-center justify-center w-8 h-8 transition-all duration-300 ease-in-out"
+          style={{
+            opacity: canScrollNext ? 0.5 : 0.15,
+            color: goldColor,
+            pointerEvents: canScrollNext ? 'auto' : 'none',
+          }}
+        >
+          <ChevronLeft size={24} />
+        </button>
+      )}
+
+      {/* Carousel viewport — no touchAction override so Embla can receive horizontal swipe */}
       <div
         ref={emblaRef}
         className="overflow-hidden w-full"
-        style={{ touchAction: 'pan-y pinch-zoom' }}
       >
         <div className="flex">
           {poems.map((poem, slideIdx) => {
@@ -147,6 +207,19 @@ const PoemCarousel = ({
               }}
             />
           ))}
+        </div>
+      )}
+
+      {/* Swipe hint — fades out after 3s or after first swipe */}
+      {poems.length > 1 && !hasSwiped && (
+        <div
+          className="flex justify-center mt-2 md:hidden transition-all duration-300 ease-in-out"
+          style={{ opacity: showSwipeHint ? 0.4 : 0 }}
+          aria-hidden="true"
+        >
+          <span className="font-brand-en text-xs" style={{ color: goldColor }}>
+            Swipe for more by this poet →
+          </span>
         </div>
       )}
     </div>

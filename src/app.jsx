@@ -229,6 +229,9 @@ export default function DiwanApp() {
   const filtered = usePoemStore.getState().filteredPoems();
   const current = usePoemStore.getState().currentPoem();
 
+  // When the carousel is active, show the poem the user has swiped to
+  const displayedPoem = carouselPoems.length > 0 ? carouselPoems[carouselIndex] : current;
+
   const addLog = useUIStore.getState().addLog;
 
   // Track poem view time (emit 'view' event after 3s on same poem)
@@ -937,7 +940,7 @@ export default function DiwanApp() {
   return (
     <div
       className={`h-[100dvh] w-full flex flex-col overflow-hidden overscroll-none ${DESIGN.anim} font-sans ${theme.bg} ${theme.text} ${theme.selectionBg}`}
-      style={{ touchAction: 'pan-y', overflowX: 'hidden' }}
+      style={{ touchAction: 'pan-x pan-y', overflowX: 'hidden' }}
     >
 
       <DebugPanel controlBarRef={controlBarRef} />
@@ -1030,7 +1033,7 @@ export default function DiwanApp() {
                         textShadow: darkMode ? POEM_META.titleShadow.dark : POEM_META.titleShadow.light,
                       }}
                     >
-                      {current?.titleArabic || current?.title}
+                      {displayedPoem?.titleArabic || displayedPoem?.title}
                     </div>
                     {/* Line 2: Poet name */}
                     <div
@@ -1040,10 +1043,10 @@ export default function DiwanApp() {
                         color: darkMode ? POEM_META.poetColor.dark : POEM_META.poetColor.light,
                       }}
                     >
-                      {current?.poetArabic || current?.poet}
+                      {displayedPoem?.poetArabic || displayedPoem?.poet}
                     </div>
                     {/* Line 3: English combined attribution */}
-                    {(current?.poet || current?.title) && (
+                    {(displayedPoem?.poet || displayedPoem?.title) && (
                       <>
                         <div dir="ltr" style={POEM_META.separator} />
                         <div
@@ -1054,7 +1057,7 @@ export default function DiwanApp() {
                             color: darkMode ? POEM_META.englishLineColor.dark : POEM_META.englishLineColor.light,
                           }}
                         >
-                          {current?.poet}{current?.poet && current?.title ? ' \u2014 ' : ''}{current?.title}
+                          {displayedPoem?.poet}{displayedPoem?.poet && displayedPoem?.title ? ' \u2014 ' : ''}{displayedPoem?.title}
                         </div>
                       </>
                     )}

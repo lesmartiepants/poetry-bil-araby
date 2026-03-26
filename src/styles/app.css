@@ -188,3 +188,12 @@
   from { opacity: 0; transform: translateX(-50%) translateY(12px) scale(0.95); }
   to   { opacity: 1; transform: translateX(-50%) translateY(0)    scale(1); }
 }
+
+@keyframes breathe { 0%,100% { opacity: 0.35; } 50% { opacity: 0.8; } }
+.font-fell { font-family: 'IM Fell English', serif; }
+.gold-foil-text {
+  background: var(--gold-foil);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}

@@ -13,6 +13,18 @@ import {
   createStreamingMock,
 } from './utils';
 
+// Mock Vaul so its Portal renders inline in jsdom (no real DOM portals)
+vi.mock('vaul', () => ({
+  Drawer: {
+    Root: ({ children, open, ...props }) => open ? <div data-testid="drawer-root">{children}</div> : null,
+    Portal: ({ children }) => <div>{children}</div>,
+    Overlay: (props) => <div data-testid="drawer-overlay" {...props} />,
+    Content: ({ children, ...props }) => <div data-testid="drawer-content">{children}</div>,
+    Handle: (props) => <div data-testid="drawer-handle" {...props} />,
+    Close: ({ children }) => children,
+  },
+}));
+
 // The app auto-loads a poem from the DB on mount (handleFetch in useEffect).
 // This helper pre-mocks that initial fetch so the default poem stays current.
 const defaultDbPoem = {
@@ -365,7 +377,11 @@ describe('DiwanApp', () => {
         await userEvent.click(screen.getByLabelText('Open discover'));
         await userEvent.click(screen.getByLabelText('Discover new poem'));
 
-        // Auto-explain fires without a manual Explain click (PR 307 feature)
+        // Auto-explain pre-fetches insight in background; open overlay to view it
+        await waitFor(() => expect(screen.getByLabelText('Explain poem meaning')).toBeInTheDocument(), {
+          timeout: 5000,
+        });
+        await userEvent.click(screen.getByLabelText('Explain poem meaning'));
         await waitFor(
           () => {
             expect(document.body.textContent).toContain('Deep meaning here.');
@@ -423,7 +439,10 @@ describe('DiwanApp', () => {
         timeout: 3000,
       });
 
-      // Depth section is shown automatically from cached DB analysis (no Explain click needed)
+      // Cached insight available — open overlay via Explain button to view it
+      const explainBtn = screen.getByLabelText('Explain poem meaning');
+      await userEvent.click(explainBtn);
+
       await waitFor(
         () => {
           expect(document.body.textContent).toContain('Deep meaning here.');

@@ -30,7 +30,6 @@ export default function InsightOverlay({
     <Drawer.Root
       open={open}
       onOpenChange={(isOpen) => { if (!isOpen) onClose(); }}
-      snapPoints={[0.9]}
       closeThreshold={0.1}
       modal
     >
@@ -45,10 +44,10 @@ export default function InsightOverlay({
         />
         <Drawer.Content
           data-vaul-drawer
-          className="z-[61] rounded-t-2xl flex flex-col"
+          className="fixed bottom-0 left-0 right-0 z-[61] h-[90dvh] rounded-t-2xl flex flex-col"
           style={{ background: o.bg }}
         >
-          {/* NO fixed, NO bottom-0, NO height, NO inner wrapper — Vaul positions this */}
+          {/* fixed + h-[90dvh]: Vaul handles slide-up animation, we set the height */}
 
           <Drawer.Handle
             className="mx-auto mt-3 mb-1 w-8 h-[3px] rounded-full"

@@ -29,8 +29,6 @@ describe('WS3: useQueryParams hook', () => {
   });
 
   it('returns empty params for clean URL', () => {
-    // Need to call in a React-like context — but for a structural test,
-    // we verify the module exports correctly
     expect(useQueryParams).toBeDefined();
   });
 
@@ -42,7 +40,6 @@ describe('WS3: useQueryParams hook', () => {
         path.join(__dirname, '..', 'hooks', 'useQueryParams.js'),
         'utf-8'
       );
-      // Must read from window.location.search since wouter gives path-only
       expect(content).toMatch(/window\.location\.search/);
     });
 

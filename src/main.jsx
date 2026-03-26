@@ -3,6 +3,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import * as Sentry from '@sentry/react';
 import { Analytics } from '@vercel/analytics/react';
+import { Toaster } from 'sonner';
 import DiwanApp from './app.jsx';
 import './index.css';
 
@@ -62,6 +63,17 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     >
       <DiwanApp />
       <Analytics />
+      <Toaster
+        position="bottom-center"
+        theme="dark"
+        toastOptions={{
+          style: {
+            background: 'rgba(12,12,14,0.97)',
+            border: '1px solid rgba(196,163,90,0.2)',
+            color: '#F5F0E8',
+          },
+        }}
+      />
     </SentryErrorBoundary>
   </React.StrictMode>
 );

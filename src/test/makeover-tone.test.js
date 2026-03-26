@@ -21,7 +21,6 @@ describe('WS4: Tone.js integration', () => {
 
     it('uses Tone.start() for iOS unlock', () => {
       const content = fs.readFileSync(path.join(SRC, 'stores/actions/togglePlay.js'), 'utf-8');
-      // Should use Tone.start() or start() instead of manual play/pause trick
       expect(content).toMatch(/(?:Tone\.)?start\s*\(/);
     });
 

@@ -1016,7 +1016,7 @@ export default function DiwanApp() {
           <main
             ref={mainScrollRef}
             onScroll={handleScroll}
-            className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar relative z-10 px-4 pr-16 md:px-0 md:pr-0 pb-28 pt-10 md:pt-12"
+            className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar relative z-10 px-4 pr-14 md:px-0 md:pr-0 pb-28 pt-10 md:pt-12"
             style={{ overscrollBehaviorX: 'none' }}
           >
             {/* Top scroll gradient removed — header is now a subtle corner wordmark */}
@@ -1426,14 +1426,10 @@ export default function DiwanApp() {
         </div>
       )}
 
-      {/* Text Settings Pill — top-left */}
-      <div className="fixed top-3 left-3 z-[46]">
-        <TextSettingsPill />
-      </div>
-
-      {/* Theme Toggle — top-right, below header wordmark */}
-      <div className="fixed top-10 right-3 z-[46]">
+      {/* Top-right controls: Theme + Text Settings */}
+      <div className="fixed top-10 right-3 z-[46] flex flex-col items-center gap-1.5">
         <ThemeToggle />
+        <TextSettingsPill />
       </div>
 
       {/* Vertical Sidebar - always visible */}

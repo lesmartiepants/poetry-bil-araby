@@ -1426,11 +1426,13 @@ export default function DiwanApp() {
         </div>
       )}
 
-      {/* Top-right controls bar: Theme + Text Settings */}
-      <div className={`fixed top-10 right-0 md:right-[24.5rem] z-[46] rounded-l-2xl md:rounded-2xl backdrop-blur-xl border-l md:border ${theme.border} py-2 px-1.5 flex flex-col items-center gap-1 ${darkMode ? 'bg-black/70' : 'bg-white/80'}`}
-        style={{ width: '3.25rem' }}
-      >
+      {/* Theme Toggle — top-right */}
+      <div className="fixed top-10 right-2 md:right-[25rem] z-[46]">
         <ThemeToggle />
+      </div>
+
+      {/* Text Settings — below theme toggle */}
+      <div className="fixed top-[5.5rem] right-2 md:right-[25rem] z-[46]">
         <TextSettingsPill />
       </div>
 

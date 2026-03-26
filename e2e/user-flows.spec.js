@@ -157,12 +157,8 @@ test.describe('User Flows', () => {
     }
   });
 
-  // #3 — Poetic insight (desktop only)
-  test('user reads poetic insight on desktop', async ({ page, viewport }) => {
-    if (!viewport || viewport.width < 768) {
-      test.skip();
-    }
-
+  // #3 — Poetic insight (works on all viewports via overlay)
+  test('user reads poetic insight on desktop', async ({ page }) => {
     // Expand the sidebar to reveal action buttons
     const expandBtn = page.locator('button[aria-label="Open sidebar controls"]').first();
     await expandBtn.click();
@@ -170,7 +166,7 @@ test.describe('User Flows', () => {
 
     // The app auto-triggers handleAnalyze on load. With an API key it streams
     // real insights from Gemini; without one (CI) it shows a fallback message.
-    // Either way the "Poetic Insight" panel should appear.
+    // Either way the "Poetic Insight" overlay should appear.
     //
     // If auto-explain hasn't started yet (Explain button still enabled), click it.
     const insightButton = page.locator('button[aria-label="Explain poem meaning"]').first();
@@ -181,7 +177,7 @@ test.describe('User Flows', () => {
       await insightButton.click();
     }
 
-    // "Poetic Insight" heading should appear in the side panel
+    // "Poetic Insight" heading should appear in the overlay
     await expect(page.locator('text=Poetic Insight').first()).toBeVisible({ timeout: 10000 });
   });
 

@@ -62,12 +62,11 @@ import {
 import './styles/app.css';
 import { updateOGMetaTags } from './utils/ogMetaTags.js';
 import DebugPanel from './components/DebugPanel.jsx';
-import DesktopInsightPane from './components/DesktopInsightPane.jsx';
 import MysticalConsultationEffect from './components/MysticalConsultationEffect.jsx';
 import ErrorBanner from './components/ErrorBanner.jsx';
 import ShortcutHelp from './components/ShortcutHelp.jsx';
 const SplashScreen = lazy(() => import('./components/SplashScreen.jsx'));
-import InsightsDrawer from './components/InsightsDrawer.jsx';
+import InsightOverlay from './components/InsightOverlay.jsx';
 import ShareCardModal from './components/ShareCardModal.jsx';
 import DiscoverDrawer, { GoldenFireIcon } from './components/DiscoverDrawer.jsx';
 import VerticalSidebar from './components/VerticalSidebar.jsx';
@@ -1319,23 +1318,23 @@ export default function DiwanApp() {
           </footer>
         </div>
 
-        <DesktopInsightPane
-          current={current}
-          insightParts={insightParts}
-          isInterpreting={isInterpreting}
-          interpretation={interpretation}
-          showTranslation={showTranslation}
-          darkMode={darkMode}
-          theme={theme}
-          selectedCategory={selectedCategory}
-          handleAnalyze={handleAnalyze}
-        />
       </div>
 
-      {/* Insights Drawer (Mobile bottom sheet) */}
-      <AnimatePresence>
-        {insightsDrawerOpen && <InsightsDrawer key="insights-drawer" insightParts={insightParts} />}
-      </AnimatePresence>
+      {/* Insights Overlay (replaces drawer + desktop pane) */}
+      <InsightOverlay
+        open={insightsDrawerOpen}
+        insightParts={insightParts}
+        currentPoem={current}
+        isInterpreting={isInterpreting}
+        interpretation={interpretation}
+        onClose={() => setInsightsDrawerOpen(false)}
+        onPrev={() => {}}
+        onNext={() => handleFetch()}
+        poemIndex={1}
+        poemCount={1}
+        ratchetMode={ratchetMode}
+        handleAnalyze={handleAnalyze}
+      />
 
       {/* Discover Drawer */}
       <AnimatePresence>

@@ -37,6 +37,7 @@ export default function InsightOverlay({
       onOpenChange={(isOpen) => {
         if (!isOpen) onClose();
       }}
+      snapPoints={[0.8]}
       closeThreshold={0.1}
       modal
     >
@@ -52,7 +53,7 @@ export default function InsightOverlay({
         <Drawer.Content
           data-vaul-drawer
           className="fixed bottom-0 left-0 right-0 z-[61] flex flex-col rounded-t-2xl overflow-hidden"
-          style={{ background: o.bg, height: '80dvh' }}
+          style={{ background: o.bg }}
         >
           {/* Gold rule */}
           <div className="h-px flex-shrink-0" style={{ background: o.goldRule }} />

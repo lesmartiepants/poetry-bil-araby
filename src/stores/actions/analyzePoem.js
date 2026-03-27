@@ -51,6 +51,8 @@ export async function analyzePoem({ current, addLog, track, retryFn }) {
             'success'
           );
           setInterpretation(cached.interpretation);
+          useModalStore.getState().showToast('insight');
+          setTimeout(() => useModalStore.getState().hideToast('insight'), 1500);
         } else {
           addLog('Insights', 'Background insights generation failed - retrying', 'info');
           const retry = retryFn || (() => analyzePoem({ current, addLog, track, retryFn }));
@@ -113,6 +115,8 @@ export async function analyzePoem({ current, addLog, track, retryFn }) {
       useUIStore.getState().incrementCacheStat('insightsHits');
       setInterpretation(cached.interpretation);
       setInterpreting(false);
+      useModalStore.getState().showToast('insight');
+      setTimeout(() => useModalStore.getState().hideToast('insight'), 1500);
       usePoemStore.getState().removeActiveInsight(current?.id);
       return;
     } else {

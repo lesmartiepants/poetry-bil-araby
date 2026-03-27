@@ -72,12 +72,13 @@ const VerticalSidebar = ({
   }, [settingsOpen, accountMenuOpen, expanded]);
 
   const gold = theme.gold;
+  const lapis = theme.lapis;
   const btnBase =
     'w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-200';
-  const btnHover = theme.goldHoverBg15;
+  const btnHover = theme.lapisHoverBg15;
   const subBtnBase =
     'w-11 h-11 rounded-lg flex items-center justify-center transition-all duration-200';
-  const subBtnHover = theme.goldHoverBg15;
+  const subBtnHover = theme.lapisHoverBg15;
   const labelCls =
     'text-[7px] leading-none -mt-0.5 font-brand-en tracking-[0.12em] uppercase opacity-60';
 
@@ -121,7 +122,7 @@ const VerticalSidebar = ({
       `}</style>
       <div
         ref={sidebarRef}
-        className="fixed right-0 md:right-[24.5rem] top-1/2 -translate-y-1/2 z-[45] rounded-l-2xl md:rounded-2xl bg-gradient-to-b from-black/70 via-black/60 to-black/70 backdrop-blur-xl border-l-2 md:border-2 border-gold/40 py-2 transition-all duration-300"
+        className="fixed right-0 md:right-[24.5rem] top-1/2 -translate-y-1/2 z-[45] rounded-l-2xl md:rounded-2xl bg-gradient-to-b from-black/70 via-black/60 to-black/70 backdrop-blur-xl border-l-2 md:border-2 border-lapis-light/40 py-2 transition-all duration-300"
         style={{
           animation: 'slideInRight 0.4s ease-out',
           maxHeight: 'calc(100dvh - 14rem)',
@@ -146,14 +147,14 @@ const VerticalSidebar = ({
         >
           {expanded ? (
             <ChevronRight
-              style={{ color: gold, opacity: 0.5 }}
+              style={{ color: lapis, opacity: 0.5 }}
               size={14}
               className="group-hover:opacity-80 transition-opacity"
             />
           ) : (
             <>
               <ChevronLeft
-                style={{ color: gold, opacity: 0.5 }}
+                style={{ color: lapis, opacity: 0.5 }}
                 size={14}
                 className="group-hover:opacity-80 transition-opacity"
               />
@@ -163,12 +164,12 @@ const VerticalSidebar = ({
                 className="group-hover:opacity-90 transition-opacity"
               />
               <Settings2
-                style={{ color: gold, opacity: 0.6 }}
+                style={{ color: lapis, opacity: 0.6 }}
                 size={16}
                 className="group-hover:opacity-90 transition-opacity"
               />
               <ChevronLeft
-                style={{ color: gold, opacity: 0.5 }}
+                style={{ color: lapis, opacity: 0.5 }}
                 size={14}
                 className="group-hover:opacity-80 transition-opacity"
               />
@@ -224,12 +225,12 @@ const VerticalSidebar = ({
               >
                 <span
                   className="text-[12px] font-bold leading-none"
-                  style={{ color: gold, fontFamily: "'Amiri', serif" }}
+                  style={{ color: showTransliteration ? gold : lapis, fontFamily: "'Amiri', serif" }}
                 >
                   عA
                 </span>
               </button>
-              <span className={labelCls} style={{ color: gold }}>
+              <span className={labelCls} style={{ color: showTransliteration ? gold : lapis }}>
                 Romanize
               </span>
 
@@ -241,18 +242,18 @@ const VerticalSidebar = ({
                   if (!settingsOpen) scrollSidebarToBottom();
                 }}
                 title="Settings"
-                className={`${btnBase} ${btnHover} ${settingsOpen ? theme.goldActiveBg : ''}`}
+                className={`${btnBase} ${btnHover} ${settingsOpen ? theme.lapisActiveBg + ' border ' + theme.lapisBorderSubtle : ''}`}
               >
                 <Settings2
                   style={{
-                    color: gold,
+                    color: lapis,
                     transition: 'transform 0.3s',
                     transform: settingsOpen ? 'rotate(60deg)' : 'none',
                   }}
                   size={18}
                 />
               </button>
-              <span className={labelCls} style={{ color: gold }}>
+              <span className={labelCls} style={{ color: lapis }}>
                 Settings
               </span>
 
@@ -260,16 +261,16 @@ const VerticalSidebar = ({
               <div className={`sidebar-drawer ${settingsOpen ? 'open' : ''}`}>
                 <div className="sidebar-drawer-inner">
                   <div
-                    className={`flex flex-col items-center gap-1 pl-0.5 border-l-2 ${theme.goldBorderMuted}`}
+                    className={`flex flex-col items-center gap-1 pl-0.5 border-l-2 ${theme.lapisBorderMuted}`}
                   >
                     <button
                       onClick={() => useUIStore.getState().toggleTranslation()}
                       title={showTranslation ? 'Hide translation' : 'Show translation'}
-                      className={`${subBtnBase} ${subBtnHover} ${showTranslation ? theme.goldActiveBg + ' border ' + theme.goldBorderSubtle : 'opacity-40'}`}
+                      className={`${subBtnBase} ${subBtnHover} ${showTranslation ? theme.lapisActiveBg + ' border ' + theme.lapisBorderSubtle : 'opacity-40'}`}
                     >
-                      <Languages style={{ color: gold }} size={16} />
+                      <Languages style={{ color: lapis }} size={16} />
                     </button>
-                    <span className={labelCls} style={{ color: gold }}>
+                    <span className={labelCls} style={{ color: lapis }}>
                       Translate
                     </span>
 
@@ -280,12 +281,12 @@ const VerticalSidebar = ({
                     >
                       <span
                         className="text-[13px] font-bold leading-none"
-                        style={{ color: gold, fontFamily: "'Forum', serif" }}
+                        style={{ color: lapis, fontFamily: "'Forum', serif" }}
                       >
                         T±
                       </span>
                     </button>
-                    <span className={labelCls} style={{ color: gold }}>
+                    <span className={labelCls} style={{ color: lapis }}>
                       Size
                     </span>
 
@@ -295,12 +296,12 @@ const VerticalSidebar = ({
                       className={`${subBtnBase} ${subBtnHover}`}
                     >
                       {darkMode ? (
-                        <Sun style={{ color: gold }} size={16} />
+                        <Sun style={{ color: lapis }} size={16} />
                       ) : (
-                        <Moon style={{ color: gold }} size={16} />
+                        <Moon style={{ color: lapis }} size={16} />
                       )}
                     </button>
-                    <span className={labelCls} style={{ color: gold }}>
+                    <span className={labelCls} style={{ color: lapis }}>
                       {darkMode ? 'Light' : 'Dark'}
                     </span>
 
@@ -311,23 +312,23 @@ const VerticalSidebar = ({
                     >
                       <span
                         className="text-[15px] font-bold leading-none"
-                        style={{ color: gold, fontFamily: "'Amiri', serif" }}
+                        style={{ color: lapis, fontFamily: "'Amiri', serif" }}
                       >
                         ي
                       </span>
                     </button>
-                    <span className={labelCls} style={{ color: gold }}>
+                    <span className={labelCls} style={{ color: lapis }}>
                       Font
                     </span>
 
                     <button
                       onClick={() => useUIStore.getState().toggleDebugLogs()}
                       title={showDebugLogs ? 'Hide dev logs' : 'Show dev logs'}
-                      className={`${subBtnBase} ${subBtnHover} ${showDebugLogs ? theme.goldActiveBg + ' border ' + theme.goldBorderSubtle : 'opacity-40'}`}
+                      className={`${subBtnBase} ${subBtnHover} ${showDebugLogs ? theme.lapisActiveBg + ' border ' + theme.lapisBorderSubtle : 'opacity-40'}`}
                     >
-                      <Bug style={{ color: gold }} size={16} />
+                      <Bug style={{ color: lapis }} size={16} />
                     </button>
-                    <span className={labelCls} style={{ color: gold }}>
+                    <span className={labelCls} style={{ color: lapis }}>
                       Logs
                     </span>
 
@@ -354,9 +355,9 @@ const VerticalSidebar = ({
                           : {}
                       }
                     >
-                      <Flame style={{ color: ratchetMode ? '#f97316' : gold }} size={16} />
+                      <Flame style={{ color: ratchetMode ? '#f97316' : lapis }} size={16} />
                     </button>
-                    <span className={labelCls} style={{ color: ratchetMode ? '#f97316' : gold }}>
+                    <span className={labelCls} style={{ color: ratchetMode ? '#f97316' : lapis }}>
                       Ratchet
                     </span>
                   </div>
@@ -378,15 +379,15 @@ const VerticalSidebar = ({
                         ? `Account menu, ${savedPoemsCount} saved poem${savedPoemsCount === 1 ? '' : 's'}`
                         : 'Account menu'
                     }
-                    className={`${btnBase} ${btnHover} ${accountMenuOpen ? theme.goldActiveBg : ''} relative`}
+                    className={`${btnBase} ${btnHover} ${accountMenuOpen ? theme.lapisActiveBg + ' border ' + theme.lapisBorderSubtle : ''} relative`}
                   >
                     <div
                       className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold font-brand-en"
                       style={{
                         background:
-                          'linear-gradient(135deg, rgba(197,160,89,0.25), rgba(197,160,89,0.15))',
-                        border: '1.5px solid rgba(197,160,89,0.5)',
-                        color: gold,
+                          'linear-gradient(135deg, rgba(74,124,201,0.25), rgba(74,124,201,0.15))',
+                        border: '1.5px solid rgba(74,124,201,0.5)',
+                        color: lapis,
                       }}
                     >
                       {(user.email ?? user.user_metadata?.full_name ?? 'U').charAt(0).toUpperCase()}
@@ -404,7 +405,7 @@ const VerticalSidebar = ({
                       </span>
                     )}
                   </button>
-                  <span className={labelCls} style={{ color: gold }}>
+                  <span className={labelCls} style={{ color: lapis }}>
                     Account
                   </span>
 
@@ -412,7 +413,7 @@ const VerticalSidebar = ({
                   <div className={`sidebar-drawer ${accountMenuOpen ? 'open' : ''}`}>
                     <div className="sidebar-drawer-inner">
                       <div
-                        className={`flex flex-col items-center gap-1 pl-0.5 border-l-2 ${theme.goldBorderMuted}`}
+                        className={`flex flex-col items-center gap-1 pl-0.5 border-l-2 ${theme.lapisBorderMuted}`}
                       >
                         <button
                           onClick={() => {
@@ -423,9 +424,9 @@ const VerticalSidebar = ({
                           aria-label="View saved poems"
                           className={`${subBtnBase} ${subBtnHover}`}
                         >
-                          <ScrollText style={{ color: gold }} size={16} />
+                          <ScrollText style={{ color: lapis }} size={16} />
                         </button>
-                        <span className={labelCls} style={{ color: gold }}>
+                        <span className={labelCls} style={{ color: lapis }}>
                           My Poems
                         </span>
 
@@ -438,9 +439,9 @@ const VerticalSidebar = ({
                           aria-label="Sign out"
                           className={`${subBtnBase} ${subBtnHover}`}
                         >
-                          <LogOut style={{ color: gold }} size={16} />
+                          <LogOut style={{ color: lapis }} size={16} />
                         </button>
-                        <span className={labelCls} style={{ color: gold }}>
+                        <span className={labelCls} style={{ color: lapis }}>
                           Sign Out
                         </span>
                       </div>
@@ -450,9 +451,9 @@ const VerticalSidebar = ({
               ) : (
                 <>
                   <button onClick={onSignIn} title="Sign in" className={`${btnBase} ${btnHover}`}>
-                    <UserRound style={{ color: gold }} size={18} />
+                    <UserRound style={{ color: lapis }} size={18} />
                   </button>
-                  <span className={labelCls} style={{ color: gold }}>
+                  <span className={labelCls} style={{ color: lapis }}>
                     Sign In
                   </span>
                 </>

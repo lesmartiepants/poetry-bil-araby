@@ -313,6 +313,10 @@ export default function DiwanApp() {
 
     if (!targetPoet || !current?.id) return;
 
+    // Seed poems are not in the DB — fetchPoemsByPoet would fail or return wrong results.
+    // Skip carousel population entirely for seed poems.
+    if (current?.isSeedPoem) return;
+
     // For poet-selected mode, wait for matching poem before populating.
     // Compare against poetArabic because selectedCategory holds Arabic names (CATEGORIES[x].id).
     if (selectedCategory !== 'All' && current.poetArabic !== selectedCategory) return;

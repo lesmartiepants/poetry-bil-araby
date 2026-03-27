@@ -3,7 +3,7 @@ import { Search, X, Loader2, ScrollText } from 'lucide-react';
 import { usePoemStore } from '../stores/poemStore';
 import { useModalStore } from '../stores/modalStore';
 import { useUIStore } from '../stores/uiStore';
-import { GOLD, CATEGORIES } from '../constants/index.js';
+import { GOLD, LAPIS, CATEGORIES } from '../constants/index.js';
 import { fetchPoets } from '../services/database.js';
 
 /**
@@ -170,15 +170,15 @@ export default function PoetPicker({ handleFetch }) {
           }
         }}
         aria-label="Filter by poet"
-        className={`relative min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-200 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105 ${poetPickerOpen ? 'bg-gold/10' : ''}`}
+        className={`relative min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-200 flex items-center justify-center rounded-full ${LAPIS.lapisHoverBg} hover:scale-105 ${poetPickerOpen ? 'bg-lapis-light/10' : ''}`}
       >
-        <ScrollText className={GOLD.goldText} size={21} />
+        <ScrollText className={LAPIS.lapisText} size={21} />
         {selectedCategory !== 'All' && (
           <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-gold shadow-[0_0_6px_rgba(197,160,89,0.5)]" />
         )}
       </button>
       <span
-        className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase whitespace-nowrap ${GOLD.goldText}`}
+        className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase whitespace-nowrap ${LAPIS.lapisText}`}
         style={{ opacity: 0.6 }}
       >
         Poets
@@ -186,7 +186,7 @@ export default function PoetPicker({ handleFetch }) {
 
       {(poetPickerOpen || poetPickerClosing) && (
         <div
-          className="absolute mb-2 left-1/2 w-auto min-w-[14rem] max-w-[18rem] rounded-2xl border border-gold/25 bg-black/95 backdrop-blur-2xl shadow-2xl py-2.5 z-[200]"
+          className="absolute mb-2 left-1/2 w-auto min-w-[14rem] max-w-[18rem] rounded-2xl border border-lapis-light/25 bg-black/95 backdrop-blur-2xl shadow-2xl py-2.5 z-[200]"
           style={{
             bottom: `calc(100% + ${pickerKeyboardOffset}px)`,
             transition: 'bottom 0.2s ease-out',
@@ -196,9 +196,9 @@ export default function PoetPicker({ handleFetch }) {
           }}
         >
           {/* Search input */}
-          <div className="px-3 pb-2 mb-1 border-b border-gold/15">
+          <div className="px-3 pb-2 mb-1 border-b border-lapis-light/15">
             <div className="relative flex items-center">
-              <Search className="absolute left-2 text-gold/40" size={13} />
+              <Search className="absolute left-2 text-lapis-light/40" size={13} />
               <input
                 ref={poetSearchRef}
                 type="text"
@@ -206,7 +206,7 @@ export default function PoetPicker({ handleFetch }) {
                 onChange={(e) => setPoetSearch(e.target.value)}
                 placeholder="Search poets..."
                 aria-label="Search poets"
-                className="w-full bg-white/5 border border-gold/15 rounded-lg pl-7 pr-3 py-1.5 text-[16px] text-stone-200 placeholder-stone-600 focus:outline-none focus:border-gold/40 font-tajawal transition-colors"
+                className="w-full bg-white/5 border border-lapis-light/15 rounded-lg pl-7 pr-3 py-1.5 text-[16px] text-stone-200 placeholder-stone-600 focus:outline-none focus:border-lapis-light/40 font-tajawal transition-colors"
               />
               {poetSearch && (
                 <button
@@ -238,7 +238,7 @@ export default function PoetPicker({ handleFetch }) {
                   setSelectedCategory('All');
                   closePoetPicker();
                 }}
-                className={`w-full text-right px-5 py-2.5 transition-all duration-150 ${selectedCategory === 'All' ? 'bg-gold/15 border-r-2 border-gold' : 'hover:bg-gold/8 border-r-2 border-transparent'}`}
+                className={`w-full text-right px-5 py-2.5 transition-all duration-150 ${selectedCategory === 'All' ? 'bg-gold/15 border-r-2 border-gold' : 'hover:bg-lapis-light/8 border-r-2 border-transparent'}`}
               >
                 <span
                   className={`block text-[17px] ${selectedCategory === 'All' ? 'text-gold' : 'text-stone-300'}`}
@@ -260,7 +260,7 @@ export default function PoetPicker({ handleFetch }) {
               <>
                 {!poetSearch && (
                   <div className="px-4 pt-2 pb-1">
-                    <span className="text-[9px] font-brand-en uppercase tracking-widest text-gold/35 font-bold">
+                    <span className="text-[9px] font-brand-en uppercase tracking-widest text-lapis-light/35 font-bold">
                       Featured
                     </span>
                   </div>
@@ -277,7 +277,7 @@ export default function PoetPicker({ handleFetch }) {
                       }
                       closePoetPicker();
                     }}
-                    className={`w-full text-right px-5 py-2 transition-all duration-150 ${selectedCategory === cat.id ? 'bg-gold/15 border-r-2 border-gold' : 'hover:bg-gold/8 border-r-2 border-transparent'}`}
+                    className={`w-full text-right px-5 py-2 transition-all duration-150 ${selectedCategory === cat.id ? 'bg-gold/15 border-r-2 border-gold' : 'hover:bg-lapis-light/8 border-r-2 border-transparent'}`}
                   >
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex-1 min-w-0">
@@ -295,7 +295,7 @@ export default function PoetPicker({ handleFetch }) {
                         </span>
                       </div>
                       {cat.poemCount !== null && cat.poemCount !== undefined && (
-                        <span className="text-[9px] font-brand-en text-gold/40 bg-gold/8 px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
+                        <span className="text-[9px] font-brand-en text-lapis-light/40 bg-lapis-light/8 px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
                           {cat.poemCount.toLocaleString()}
                         </span>
                       )}
@@ -309,7 +309,7 @@ export default function PoetPicker({ handleFetch }) {
             {filteredPoetList.all.length > 0 && (
               <>
                 <div className="px-4 pt-2 pb-1">
-                  <span className="text-[9px] font-brand-en uppercase tracking-widest text-gold/35 font-bold">
+                  <span className="text-[9px] font-brand-en uppercase tracking-widest text-lapis-light/35 font-bold">
                     {poetSearch ? 'Results' : 'More Poets'}
                   </span>
                 </div>
@@ -325,7 +325,7 @@ export default function PoetPicker({ handleFetch }) {
                       }
                       closePoetPicker();
                     }}
-                    className={`w-full text-right px-5 py-2 transition-all duration-150 ${selectedCategory === p.id ? 'bg-gold/15 border-r-2 border-gold' : 'hover:bg-gold/8 border-r-2 border-transparent'}`}
+                    className={`w-full text-right px-5 py-2 transition-all duration-150 ${selectedCategory === p.id ? 'bg-gold/15 border-r-2 border-gold' : 'hover:bg-lapis-light/8 border-r-2 border-transparent'}`}
                   >
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex-1 min-w-0">
@@ -343,7 +343,7 @@ export default function PoetPicker({ handleFetch }) {
                         </span>
                       </div>
                       {p.poemCount > 0 && (
-                        <span className="text-[9px] font-brand-en text-gold/40 bg-gold/8 px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
+                        <span className="text-[9px] font-brand-en text-lapis-light/40 bg-lapis-light/8 px-1.5 py-0.5 rounded-full whitespace-nowrap flex-shrink-0">
                           {p.poemCount.toLocaleString()}
                         </span>
                       )}
@@ -356,7 +356,7 @@ export default function PoetPicker({ handleFetch }) {
             {/* Loading state */}
             {!poetsFetched && dynamicPoets.length === 0 && (
               <div className="px-5 py-3 text-center">
-                <Loader2 className="inline-block text-gold/40 animate-spin" size={16} />
+                <Loader2 className="inline-block text-lapis-light/40 animate-spin" size={16} />
                 <span className="block text-[10px] font-brand-en text-stone-600 mt-1">
                   Loading poets...
                 </span>
@@ -386,7 +386,7 @@ export default function PoetPicker({ handleFetch }) {
                   setSelectedCategory('All');
                   closePoetPicker();
                 }}
-                className="flex items-center gap-1.5 text-[10px] font-brand-en text-gold/50 hover:text-gold/80 transition-colors"
+                className="flex items-center gap-1.5 text-[10px] font-brand-en text-lapis-light/50 hover:text-lapis-light/80 transition-colors"
               >
                 <X size={10} />
                 Clear filter

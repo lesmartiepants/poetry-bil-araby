@@ -305,15 +305,17 @@ export default function DiwanApp() {
       return;
     }
 
-    // Determine which poet to fetch for
+    // Determine which poet to fetch for.
+    // The API filters by Arabic poet name (po.name column), so always use poetArabic.
     const targetPoet = selectedCategory !== 'All'
       ? selectedCategory
-      : current?.poet; // Use current poem's poet when "All" is selected
+      : current?.poetArabic; // Arabic name for API compatibility
 
     if (!targetPoet || !current?.id) return;
 
-    // For poet-selected mode, wait for matching poem before populating
-    if (selectedCategory !== 'All' && current.poet !== selectedCategory) return;
+    // For poet-selected mode, wait for matching poem before populating.
+    // Compare against poetArabic because selectedCategory holds Arabic names (CATEGORIES[x].id).
+    if (selectedCategory !== 'All' && current.poetArabic !== selectedCategory) return;
 
     let cancelled = false;
     clearCarouselPoems();
@@ -336,9 +338,11 @@ export default function DiwanApp() {
           analyzePoemAction({ current: firstNeedsTranslation, addLog, track });
         }
       }
-    }).catch(() => {});
+    }).catch((err) => {
+      if (FEATURES.logging) addLog('Carousel', `Failed to fetch poems: ${err.message}`, 'error');
+    });
     return () => { cancelled = true; };
-  }, [selectedCategory, useDatabase, current?.poet, current?.id]);
+  }, [selectedCategory, useDatabase, current?.poetArabic, current?.id]);
 
 
   // When interpretation arrives from an analysis triggered by a carousel poem, patch that
@@ -1191,11 +1195,13 @@ export default function DiwanApp() {
                       POEM_META={POEM_META}
                       DESIGN={DESIGN}
                       onLoadMore={() => {
-                        if (!current?.poet) return;
+                        if (!current?.poetArabic) return;
                         const existingIds = carouselPoems.map(p => p.id);
-                        fetchPoemsByPoet(current.poet, 3, existingIds).then((newPoems) => {
+                        fetchPoemsByPoet(current.poetArabic, 3, existingIds).then((newPoems) => {
                           newPoems.forEach(p => addCarouselPoem(p));
-                        }).catch(() => {});
+                        }).catch((err) => {
+                          if (FEATURES.logging) addLog('Carousel', `Load-more failed: ${err.message}`, 'error');
+                        });
                       }}
                     />
                   ) : (

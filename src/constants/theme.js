@@ -31,6 +31,19 @@ export const THEME = {
     goldBg10: 'bg-gold/10',
     goldBg20: 'border-gold/20',
     goldTextMuted: 'text-gold/60',
+    // Lapis semantic tokens — for navigation, structural, and secondary UI
+    lapis: 'var(--lapis-light)',
+    lapisText: 'text-lapis-light',
+    lapisHoverBg: 'hover:bg-lapis-light/12',
+    lapisHoverBg15: 'hover:bg-lapis-light/15',
+    lapisActiveBg: 'bg-lapis-light/15',
+    lapisBorder: 'border-lapis-light',
+    lapisBorderMuted: 'border-lapis-light/20',
+    lapisBorderSubtle: 'border-lapis-light/30',
+    lapisHoverBorderSubtle: 'hover:border-lapis-light/30',
+    lapisBorderAccent: 'border-lapis-light/40',
+    lapisBg10: 'bg-lapis-light/10',
+    lapisTextMuted: 'text-lapis-light/60',
     sectionLabel: 'text-lapis-light',
     sectionBorder: 'border-lapis-light/20',
     sectionAccent: 'border-lapis-light/20',
@@ -42,8 +55,6 @@ export const THEME = {
     debugInput: 'bg-stone-900/80 border-stone-700 text-stone-200 placeholder:text-stone-500',
     debugDivider: 'border-stone-700',
     kbd: 'bg-stone-800 text-stone-300 border-stone-700',
-    sectionLabel: 'text-lapis-light',
-    sectionBorder: 'border-lapis-light/20',
     overlay: {
       bg: 'linear-gradient(160deg, rgba(8,8,12,0.95) 0%, rgba(12,10,18,0.97) 60%, rgba(10,12,20,0.96) 100%)',
       backdrop: 'blur(20px) saturate(130%)',
@@ -92,6 +103,19 @@ export const THEME = {
     goldBg10: 'bg-gold/10',
     goldBg20: 'border-gold/20',
     goldTextMuted: 'text-gold/60',
+    // Lapis semantic tokens — for navigation, structural, and secondary UI
+    lapis: 'var(--lapis-medium)',
+    lapisText: 'text-lapis',
+    lapisHoverBg: 'hover:bg-lapis/12',
+    lapisHoverBg15: 'hover:bg-lapis/15',
+    lapisActiveBg: 'bg-lapis/15',
+    lapisBorder: 'border-lapis',
+    lapisBorderMuted: 'border-lapis/20',
+    lapisBorderSubtle: 'border-lapis/30',
+    lapisHoverBorderSubtle: 'hover:border-lapis/30',
+    lapisBorderAccent: 'border-lapis/40',
+    lapisBg10: 'bg-lapis/10',
+    lapisTextMuted: 'text-lapis/60',
     sectionLabel: 'text-lapis',
     sectionBorder: 'border-lapis/15',
     sectionAccent: 'border-lapis/15',
@@ -103,8 +127,6 @@ export const THEME = {
     debugInput: 'bg-white/80 border-stone-300 text-stone-800 placeholder:text-stone-400',
     debugDivider: 'border-stone-300',
     kbd: 'bg-stone-200 text-stone-700 border-stone-300',
-    sectionLabel: 'text-lapis',
-    sectionBorder: 'border-lapis/15',
     overlay: {
       bg: 'linear-gradient(160deg, rgba(253,252,248,0.97) 0%, rgba(245,243,238,0.98) 60%, rgba(248,246,242,0.97) 100%)',
       backdrop: 'blur(20px) saturate(130%)',
@@ -127,3 +149,28 @@ export const THEME = {
 // the dark-mode gold regardless of current theme.  Destructuring avoids verbose
 // `THEME.dark.*` references throughout the JSX.
 export const GOLD = THEME.dark;
+
+// Convenience alias for lapis — navigation/structural elements that stay
+// consistent across themes (sidebar icons, picker chrome, drawer handles).
+export const LAPIS = {
+  dark: THEME.dark,
+  light: THEME.light,
+  // Default to dark-mode lapis for always-dark UI elements (sidebar, control bar)
+  ...(() => {
+    const d = THEME.dark;
+    return {
+      lapis: d.lapis,
+      lapisText: d.lapisText,
+      lapisHoverBg: d.lapisHoverBg,
+      lapisHoverBg15: d.lapisHoverBg15,
+      lapisActiveBg: d.lapisActiveBg,
+      lapisBorder: d.lapisBorder,
+      lapisBorderMuted: d.lapisBorderMuted,
+      lapisBorderSubtle: d.lapisBorderSubtle,
+      lapisHoverBorderSubtle: d.lapisHoverBorderSubtle,
+      lapisBorderAccent: d.lapisBorderAccent,
+      lapisBg10: d.lapisBg10,
+      lapisTextMuted: d.lapisTextMuted,
+    };
+  })(),
+};

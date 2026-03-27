@@ -114,6 +114,8 @@ export default function DiwanApp() {
   // Tracks poem IDs that have already had analyzePoemAction fired, so we never
   // fire it more than once per poem (prevents flickering/repeated translations).
   const explainedPoemIds = useRef(new Set());
+  // autoExplainPending acts as a natural queue: setting it true when isInterpreting
+  // is true causes the autoExplainPending effect to retry once isInterpreting clears.
 
   // Volume-based glow effect refs
   const audioContextRef = useRef(null);

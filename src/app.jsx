@@ -32,7 +32,7 @@ import {
 } from './prompts';
 import { parseInsight } from './utils/insightParser';
 import { repairAndParseJSON } from './utils/jsonRepair';
-import { FEATURES, DESIGN, BRAND, BRAND_HEADER, POEM_META, THEME, GOLD, CATEGORIES, FONTS } from './constants/index.js';
+import { FEATURES, DESIGN, BRAND, BRAND_HEADER, POEM_META, THEME, GOLD, LAPIS, CATEGORIES, FONTS } from './constants/index.js';
 import { usePoemStore } from './stores/poemStore';
 import { useAudioStore } from './stores/audioStore';
 import { useUIStore } from './stores/uiStore';
@@ -1178,7 +1178,7 @@ export default function DiwanApp() {
                       </div>
                     </button>
                     <span
-                      className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
+                      className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${LAPIS.lapisText}`}
                       style={{ animation: 'shimmer 2s ease-in-out infinite' }}
                     >
                       Loading
@@ -1206,7 +1206,7 @@ export default function DiwanApp() {
                       )}
                     </button>
                     <span
-                      className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
+                      className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${LAPIS.lapisText}`}
                     >
                       {isPlaying ? 'Playing' : 'Listen'}
                     </span>
@@ -1253,7 +1253,7 @@ export default function DiwanApp() {
                   <GoldenFireIcon size={34} />
                 </button>
                 <span
-                  className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
+                  className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${LAPIS.lapisText}`}
                 >
                   Discover
                 </span>
@@ -1272,22 +1272,22 @@ export default function DiwanApp() {
                   }}
                   disabled={isInterpreting}
                   aria-label="Explain poem meaning"
-                  className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-200 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105 ${isInterpreting ? 'opacity-50' : ''}`}
+                  className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-200 flex items-center justify-center rounded-full ${LAPIS.lapisHoverBg} hover:scale-105 ${isInterpreting ? 'opacity-50' : ''}`}
                 >
                   {isInterpreting ? (
-                    <Loader2 className="animate-spin" style={{ color: GOLD.gold }} size={21} />
+                    <Loader2 className="animate-spin" style={{ color: LAPIS.lapis }} size={21} />
                   ) : showInsightSuccess ? (
-                    <Check style={{ color: GOLD.gold }} size={21} />
+                    <Check style={{ color: LAPIS.lapis }} size={21} />
                   ) : (
                     <Lightbulb
-                      className={GOLD.goldText}
+                      className={LAPIS.lapisText}
                       size={21}
                       style={{ opacity: interpretation ? 1 : 0.7 }}
                     />
                   )}
                 </button>
                 <span
-                  className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
+                  className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${LAPIS.lapisText}`}
                 >
                   Explain
                 </span>
@@ -1382,8 +1382,8 @@ export default function DiwanApp() {
             <span
               className={`relative w-5 h-5 rounded-full flex items-center justify-center transition-all duration-200 ${
                 darkMode
-                  ? 'bg-stone-900/60 border border-gold/20 text-stone-500 hover:text-gold hover:border-gold/40'
-                  : 'bg-white/50 border border-gold/20 text-stone-400 hover:text-gold hover:border-gold/40'
+                  ? 'bg-stone-900/60 border border-lapis-light/20 text-stone-500 hover:text-lapis-light hover:border-lapis-light/40'
+                  : 'bg-white/50 border border-lapis-light/20 text-stone-400 hover:text-lapis-light hover:border-lapis-light/40'
               } backdrop-blur-md`}
             >
               <Paintbrush size={9} />

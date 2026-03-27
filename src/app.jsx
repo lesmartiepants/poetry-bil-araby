@@ -114,6 +114,8 @@ export default function DiwanApp() {
   // Tracks poem IDs that have already had analyzePoemAction fired, so we never
   // fire it more than once per poem (prevents flickering/repeated translations).
   const explainedPoemIds = useRef(new Set());
+  // autoExplainPending acts as a natural queue: setting it true when isInterpreting
+  // is true causes the autoExplainPending effect to retry once isInterpreting clears.
 
   // Volume-based glow effect refs
   const audioContextRef = useRef(null);
@@ -312,6 +314,10 @@ export default function DiwanApp() {
       : current?.poetArabic; // Arabic name for API compatibility
 
     if (!targetPoet || !current?.id) return;
+
+    // Seed poems are not in the DB — fetchPoemsByPoet would fail or return wrong results.
+    // Skip carousel population entirely for seed poems.
+    if (current?.isSeedPoem) return;
 
     // For poet-selected mode, wait for matching poem before populating.
     // Compare against poetArabic because selectedCategory holds Arabic names (CATEGORIES[x].id).

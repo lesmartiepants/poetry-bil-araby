@@ -227,9 +227,11 @@ export async function analyzePoem({ current, addLog, track, retryFn }) {
     } else {
       addLog('Insights', `Analyzing poem...${ratchetMode ? ' [Ratchet Mode]' : ''}`, 'info');
       const poetInfoFallback = current?.poet ? ` by ${current.poet}` : '';
+      const arabicLineCount = (current?.arabic || '').split('\n').filter(l => l.trim()).length;
+      const promptText = `Deep Analysis of${poetInfoFallback}:\n\n${current?.arabic}\n\n[CRITICAL: This poem has exactly ${arabicLineCount} Arabic lines. You MUST produce exactly ${arabicLineCount} English lines in the POEM section. One line per Arabic line, no exceptions.]`;
       const insightsFallbackBody = JSON.stringify({
         contents: [
-          { parts: [{ text: `Deep Analysis of${poetInfoFallback}:\n\n${current?.arabic}` }] },
+          { parts: [{ text: promptText }] },
         ],
         systemInstruction: { parts: [{ text: activeSystemPrompt }] },
       });

@@ -159,7 +159,7 @@ const VerticalSidebar = ({
                 className="group-hover:opacity-80 transition-opacity"
               />
               <Copy
-                style={{ color: gold, opacity: 0.6 }}
+                style={{ color: lapis, opacity: 0.6 }}
                 size={16}
                 className="group-hover:opacity-90 transition-opacity"
               />

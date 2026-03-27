@@ -321,6 +321,8 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
   const subtleBorder = darkMode ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.07)';
   const cardBg = darkMode ? 'rgba(255,255,255,0.025)' : 'rgba(0,0,0,0.02)';
   const stickyBg = darkMode ? 'rgba(18,16,12,0.97)' : 'rgba(253,252,248,0.97)';
+  // Theme-aware lapis — #4A7CC9 in dark, #2E5090 in light (WCAG AA contrast)
+  const lapisColor = darkMode ? 'var(--lapis-light)' : 'var(--lapis-medium)';
 
   return (
     <>
@@ -359,13 +361,13 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
         <div className="relative px-5 pb-3 pt-1 flex-shrink-0">
           <h3
             className="font-brand-en font-bold text-[15px] leading-none"
-            style={{ color: 'var(--lapis-light)' }}
+            style={{ color: lapisColor }}
           >
             Discover a Poem
           </h3>
           <p
             className="font-brand-en text-[10px] uppercase tracking-[0.15em] mt-0.5"
-            style={{ color: 'var(--lapis-light)', opacity: 0.55 }}
+            style={{ color: lapisColor, opacity: 0.55 }}
           >
             Featured Poets
           </p>
@@ -378,7 +380,7 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
             }}
             aria-label="Close discover"
           >
-            <X size={14} style={{ color: 'var(--lapis-light)', opacity: 0.7 }} />
+            <X size={14} style={{ color: lapisColor, opacity: 0.7 }} />
           </button>
         </div>
 
@@ -544,7 +546,7 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
                 <Search
                   className="absolute left-3"
                   size={13}
-                  style={{ color: 'var(--lapis-light)', opacity: 0.4 }}
+                  style={{ color: lapisColor, opacity: 0.4 }}
                 />
                 <input
                   ref={searchRef}
@@ -565,7 +567,7 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
                   <span
                     className="absolute right-3 text-[13px] font-tajawal pointer-events-none"
                     dir="rtl"
-                    style={{ color: 'var(--lapis-light)', opacity: 0.28 }}
+                    style={{ color: lapisColor, opacity: 0.28 }}
                   >
                     ...ابحث
                   </span>
@@ -575,7 +577,7 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
                     onClick={() => setPoetSearch('')}
                     className="absolute right-3"
                     aria-label="Clear search"
-                    style={{ color: 'var(--lapis-light)', opacity: 0.5 }}
+                    style={{ color: lapisColor, opacity: 0.5 }}
                   >
                     <X size={12} />
                   </button>
@@ -591,7 +593,7 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
                 <Loader2
                   className="animate-spin"
                   size={20}
-                  style={{ color: 'var(--lapis-light)', opacity: 0.4 }}
+                  style={{ color: lapisColor, opacity: 0.4 }}
                 />
               </div>
             ) : (
@@ -678,7 +680,7 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
                           {p.poemCount > 0 && (
                             <span
                               className="font-brand-en text-[9px] flex-shrink-0"
-                              style={{ color: 'var(--lapis-light)', opacity: 0.4 }}
+                              style={{ color: lapisColor, opacity: 0.4 }}
                             >
                               {p.poemCount.toLocaleString()}
                             </span>
@@ -734,7 +736,7 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
                     onClose();
                   }}
                   className="flex items-center gap-1.5 text-[10px] font-brand-en transition-opacity"
-                  style={{ color: 'var(--lapis-light)', opacity: 0.45 }}
+                  style={{ color: lapisColor, opacity: 0.45 }}
                 >
                   <X size={10} />
                   Clear filter

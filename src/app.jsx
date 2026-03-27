@@ -1045,9 +1045,9 @@ export default function DiwanApp() {
                               : POEM_META.englishLineColor.light,
                           }}
                         >
-                          {current?.poet}
-                          {current?.poet && current?.title ? ' \u2014 ' : ''}
                           {current?.title}
+                          {current?.poet && current?.title ? ' \u2014 ' : ''}
+                          {current?.poet}
                         </div>
                       </>
                     )}

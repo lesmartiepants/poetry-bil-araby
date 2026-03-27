@@ -587,10 +587,11 @@ export default function DiwanApp() {
   }, [discoverDrawerOpen, poetsFetched, addLog]);
 
   // Extract cached translation fields into stable local variables so useMemo
-  // only re-runs when the actual string values change, not on every `current` reference change.
-  const cachedTranslation = current?.cachedTranslation;
-  const cachedExplanation = current?.cachedExplanation;
-  const cachedAuthorBio = current?.cachedAuthorBio;
+  // only re-runs when the actual string values change, not on every `displayedPoem` reference change.
+  // Use displayedPoem so carousel swipes reflect the correct poem's cached translations.
+  const cachedTranslation = displayedPoem?.cachedTranslation;
+  const cachedExplanation = displayedPoem?.cachedExplanation;
+  const cachedAuthorBio = displayedPoem?.cachedAuthorBio;
 
   const insightParts = useMemo(() => {
     // In ratchet mode, always use the AI-generated interpretation so cached scholarly
@@ -606,8 +607,8 @@ export default function DiwanApp() {
   }, [interpretation, cachedTranslation, cachedExplanation, cachedAuthorBio, ratchetMode]);
 
   const versePairs = useMemo(() => {
-    const arLines = (current?.arabic || '').split('\n').filter((l) => l.trim());
-    const enSource = insightParts?.poeticTranslation || current?.english || '';
+    const arLines = (displayedPoem?.arabic || '').split('\n').filter((l) => l.trim());
+    const enSource = insightParts?.poeticTranslation || displayedPoem?.english || '';
     const enLines = enSource.split('\n').filter((l) => l.trim());
     const pairs = [];
     const max = Math.max(arLines.length, enLines.length);
@@ -615,7 +616,7 @@ export default function DiwanApp() {
       pairs.push({ ar: arLines[i] || '', en: enLines[i] || '' });
     }
     return pairs;
-  }, [current, insightParts]);
+  }, [displayedPoem, insightParts]);
 
   // pcm16ToWav imported from ./utils/audio.js (used directly below)
 
@@ -680,7 +681,7 @@ export default function DiwanApp() {
       'info'
     );
 
-    const englishText = insightParts?.poeticTranslation || current?.english || '';
+    const englishText = insightParts?.poeticTranslation || displayedPoem?.english || '';
     const textToCopy = `${current?.titleArabic || ''}\n${current?.poetArabic || ''}\n\n${current?.arabic || ''}\n\n---\n\n${current?.title || ''}\n${current?.poet || ''}\n\n${englishText}`;
     const copyChars = textToCopy.length;
     const arabicChars = current?.arabic?.length || 0;

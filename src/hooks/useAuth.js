@@ -258,7 +258,8 @@ export function useSavedPoems(user) {
       if (error) {
         if (error.code === '23505') {
           // Already saved — not an error (duplicate key after OAuth redirect)
-          log.info('Poems', 'Poem already saved (duplicate key — treating as success)');
+          log.info('Poems', 'Poem already saved (duplicate key — refreshing local state)');
+          await loadSavedPoems();
           return { data: null };
         }
         log.error('Poems', 'Failed to save poem', error.message);
@@ -267,7 +268,13 @@ export function useSavedPoems(user) {
 
       log.info('Poems', `Poem saved successfully (saved_id: ${data?.id})`);
       if (data) {
+        // Upsert returned the row — update local state immediately
         setSavedPoems((prev) => [data, ...prev]);
+      } else {
+        // ignoreDuplicates: poem was already in DB (e.g. auto-save race after OAuth)
+        // Refresh to ensure local state reflects DB truth so isPoemSaved() returns true
+        log.info('Poems', 'Poem already existed — refreshing saved poems list');
+        await loadSavedPoems();
       }
       return { data };
     } catch (error) {

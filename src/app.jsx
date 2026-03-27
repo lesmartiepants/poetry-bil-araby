@@ -433,12 +433,13 @@ export default function DiwanApp() {
           `Loaded with cached translation: ${initial.poet} — ${initial.title}`,
           'success'
         );
+      } else if (initial?.isSeedPoem) {
+        // Seed poem — don't auto-fetch, let user press Discover to avoid flash
+        setAutoExplainPending(true);
       } else {
         // No cached translation — queue auto-explain and fetch from DB
         setAutoExplainPending(true);
-        if (!initial?.isSeedPoem || !initial?.cachedTranslation) {
-          handleFetch();
-        }
+        handleFetch();
       }
 
       // Background: pre-fetch next visit's poem

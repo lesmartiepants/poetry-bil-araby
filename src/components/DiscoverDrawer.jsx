@@ -346,26 +346,26 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
           background: darkMode
             ? 'linear-gradient(180deg, rgba(18,16,12,0.99) 0%, rgba(12,12,14,1) 100%)'
             : 'linear-gradient(180deg, rgba(253,252,248,0.99) 0%, rgba(245,243,238,1) 100%)',
-          borderTop: '1px solid rgba(197,160,89,0.22)',
+          borderTop: '1px solid rgba(74,103,166,0.22)',
           boxShadow: '0 -20px 60px rgba(0,0,0,0.5)',
         }}
       >
         {/* Drag handle bar */}
         <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
-          <div className="w-10 h-1 rounded-full bg-gold/25" />
+          <div className="w-10 h-1 rounded-full bg-lapis-light/25" />
         </div>
 
         {/* Header */}
         <div className="relative px-5 pb-3 pt-1 flex-shrink-0">
           <h3
             className="font-brand-en font-bold text-[15px] leading-none"
-            style={{ color: 'var(--gold)' }}
+            style={{ color: 'var(--lapis-light)' }}
           >
             Discover a Poem
           </h3>
           <p
             className="font-brand-en text-[10px] uppercase tracking-[0.15em] mt-0.5"
-            style={{ color: 'var(--gold)', opacity: 0.55 }}
+            style={{ color: 'var(--lapis-light)', opacity: 0.55 }}
           >
             Featured Poets
           </p>
@@ -373,19 +373,19 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
             onClick={onClose}
             className="absolute top-0 right-4 w-8 h-8 flex items-center justify-center rounded-full transition-colors"
             style={{
-              background: 'rgba(197,160,89,0.08)',
-              border: '1px solid rgba(197,160,89,0.18)',
+              background: 'rgba(74,103,166,0.08)',
+              border: '1px solid rgba(74,103,166,0.18)',
             }}
             aria-label="Close discover"
           >
-            <X size={14} style={{ color: 'var(--gold)', opacity: 0.7 }} />
+            <X size={14} style={{ color: 'var(--lapis-light)', opacity: 0.7 }} />
           </button>
         </div>
 
         {/* ── Single unified scroll container ── */}
         <div
           className="flex-1 overflow-y-auto"
-          style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(197,160,89,0.2) transparent' }}
+          style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(74,103,166,0.2) transparent' }}
         >
           {/* ── Horizontal strip: scrollable poet tiles (scrolls away) ── */}
           {!poetSearch && (
@@ -410,7 +410,7 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
                   className={`flex-shrink-0 rounded-2xl px-3 flex flex-col items-end justify-center transition-all duration-200 ${
                     selectedCategory === 'All'
                       ? 'border border-gold/50 bg-gold/12'
-                      : 'hover:bg-gold/8 border'
+                      : 'hover:bg-lapis-light/8 border'
                   }`}
                   style={{
                     width: 96,
@@ -452,7 +452,7 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
                     className={`flex-shrink-0 rounded-2xl px-3 flex flex-col items-end justify-center transition-all duration-200 ${
                       selectedCategory === cat.id
                         ? 'border border-gold/50 bg-gold/12'
-                        : 'hover:bg-gold/8 border'
+                        : 'hover:bg-lapis-light/8 border'
                     }`}
                     style={{
                       width: 96,
@@ -544,7 +544,7 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
                 <Search
                   className="absolute left-3"
                   size={13}
-                  style={{ color: 'var(--gold)', opacity: 0.4 }}
+                  style={{ color: 'var(--lapis-light)', opacity: 0.4 }}
                 />
                 <input
                   ref={searchRef}
@@ -555,8 +555,8 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
                   aria-label="Search poets"
                   className="w-full rounded-xl pl-8 pr-16 py-1.5 text-[14px] font-tajawal transition-colors focus:outline-none"
                   style={{
-                    background: 'rgba(197,160,89,0.06)',
-                    border: '1px solid rgba(197,160,89,0.18)',
+                    background: 'rgba(74,103,166,0.06)',
+                    border: '1px solid rgba(74,103,166,0.18)',
                     color: darkMode ? '#d6d3cd' : '#3c3531',
                   }}
                 />
@@ -565,7 +565,7 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
                   <span
                     className="absolute right-3 text-[13px] font-tajawal pointer-events-none"
                     dir="rtl"
-                    style={{ color: 'var(--gold)', opacity: 0.28 }}
+                    style={{ color: 'var(--lapis-light)', opacity: 0.28 }}
                   >
                     ...ابحث
                   </span>
@@ -575,7 +575,7 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
                     onClick={() => setPoetSearch('')}
                     className="absolute right-3"
                     aria-label="Clear search"
-                    style={{ color: 'var(--gold)', opacity: 0.5 }}
+                    style={{ color: 'var(--lapis-light)', opacity: 0.5 }}
                   >
                     <X size={12} />
                   </button>
@@ -591,7 +591,7 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
                 <Loader2
                   className="animate-spin"
                   size={20}
-                  style={{ color: 'var(--gold)', opacity: 0.4 }}
+                  style={{ color: 'var(--lapis-light)', opacity: 0.4 }}
                 />
               </div>
             ) : (
@@ -609,7 +609,7 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
                           onClose();
                         }}
                         className={`w-full flex items-center justify-between py-2.5 px-2 rounded-lg transition-all duration-200 ${
-                          selectedCategory === cat.id ? 'bg-gold/12' : 'hover:bg-gold/6'
+                          selectedCategory === cat.id ? 'bg-gold/12' : 'hover:bg-lapis-light/6'
                         }`}
                         style={{
                           borderBottom:
@@ -656,7 +656,7 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
                           onClose();
                         }}
                         className={`w-full flex items-center justify-between py-2.5 px-2 rounded-lg transition-all duration-200 ${
-                          selectedCategory === p.id ? 'bg-gold/12' : 'hover:bg-gold/6'
+                          selectedCategory === p.id ? 'bg-gold/12' : 'hover:bg-lapis-light/6'
                         }`}
                         style={{
                           borderBottom:
@@ -678,7 +678,7 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
                           {p.poemCount > 0 && (
                             <span
                               className="font-brand-en text-[9px] flex-shrink-0"
-                              style={{ color: 'var(--gold)', opacity: 0.4 }}
+                              style={{ color: 'var(--lapis-light)', opacity: 0.4 }}
                             >
                               {p.poemCount.toLocaleString()}
                             </span>
@@ -726,7 +726,7 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
             {selectedCategory !== 'All' && !poetSearch && (
               <div
                 className="px-4 mt-3 pt-3 border-t"
-                style={{ borderColor: 'rgba(197,160,89,0.1)' }}
+                style={{ borderColor: 'rgba(74,103,166,0.1)' }}
               >
                 <button
                   onClick={() => {
@@ -734,7 +734,7 @@ const DiscoverDrawer = ({ onSurpriseMe, onSelectPoet }) => {
                     onClose();
                   }}
                   className="flex items-center gap-1.5 text-[10px] font-brand-en transition-opacity"
-                  style={{ color: 'var(--gold)', opacity: 0.45 }}
+                  style={{ color: 'var(--lapis-light)', opacity: 0.45 }}
                 >
                   <X size={10} />
                   Clear filter

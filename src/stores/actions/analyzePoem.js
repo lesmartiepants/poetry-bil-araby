@@ -51,6 +51,8 @@ export async function analyzePoem({ current, addLog, track, retryFn }) {
             'success'
           );
           setInterpretation(cached.interpretation);
+          useModalStore.getState().showToast('insight');
+          setTimeout(() => useModalStore.getState().hideToast('insight'), 1500);
         } else {
           addLog('Insights', 'Background insights generation failed - retrying', 'info');
           const retry = retryFn || (() => analyzePoem({ current, addLog, track, retryFn }));
@@ -113,6 +115,8 @@ export async function analyzePoem({ current, addLog, track, retryFn }) {
       useUIStore.getState().incrementCacheStat('insightsHits');
       setInterpretation(cached.interpretation);
       setInterpreting(false);
+      useModalStore.getState().showToast('insight');
+      setTimeout(() => useModalStore.getState().hideToast('insight'), 1500);
       usePoemStore.getState().removeActiveInsight(current?.id);
       return;
     } else {
@@ -227,9 +231,11 @@ export async function analyzePoem({ current, addLog, track, retryFn }) {
     } else {
       addLog('Insights', `Analyzing poem...${ratchetMode ? ' [Ratchet Mode]' : ''}`, 'info');
       const poetInfoFallback = current?.poet ? ` by ${current.poet}` : '';
+      const arabicLineCount = (current?.arabic || '').split('\n').filter(l => l.trim()).length;
+      const promptText = `Deep Analysis of${poetInfoFallback}:\n\n${current?.arabic}\n\n[CRITICAL: This poem has exactly ${arabicLineCount} Arabic lines. You MUST produce exactly ${arabicLineCount} English lines in the POEM section. One line per Arabic line, no exceptions.]`;
       const insightsFallbackBody = JSON.stringify({
         contents: [
-          { parts: [{ text: `Deep Analysis of${poetInfoFallback}:\n\n${current?.arabic}` }] },
+          { parts: [{ text: promptText }] },
         ],
         systemInstruction: { parts: [{ text: activeSystemPrompt }] },
       });

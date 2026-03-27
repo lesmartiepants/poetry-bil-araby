@@ -240,25 +240,42 @@ export function useSavedPoems(user) {
       log.info('Poems', `Saving poem: ${poem.poet} — ${poem.title} (id: ${poem.id})`);
       const { data, error } = await supabase
         .from('saved_poems')
-        .insert({
-          user_id: user.id,
-          poem_id: poem.id,
-          poem_text: poem.arabic,
-          poet: poem.poet,
-          title: poem.title,
-          english: poem.english,
-          category: poem.tags?.[0] || null,
-        })
+        .upsert(
+          {
+            user_id: user.id,
+            poem_id: poem.id,
+            poem_text: poem.arabic,
+            poet: poem.poet,
+            title: poem.title,
+            english: poem.english,
+            category: poem.tags?.[0] || null,
+          },
+          { onConflict: 'user_id,poem_id', ignoreDuplicates: true }
+        )
         .select()
         .single();
 
       if (error) {
+        if (error.code === '23505') {
+          // Already saved — not an error (duplicate key after OAuth redirect)
+          log.info('Poems', 'Poem already saved (duplicate key — refreshing local state)');
+          await loadSavedPoems();
+          return { data: null };
+        }
         log.error('Poems', 'Failed to save poem', error.message);
         return { error };
       }
 
-      log.info('Poems', `Poem saved successfully (saved_id: ${data.id})`);
-      setSavedPoems((prev) => [data, ...prev]);
+      log.info('Poems', `Poem saved successfully (saved_id: ${data?.id})`);
+      if (data) {
+        // Upsert returned the row — update local state immediately
+        setSavedPoems((prev) => [data, ...prev]);
+      } else {
+        // ignoreDuplicates: poem was already in DB (e.g. auto-save race after OAuth)
+        // Refresh to ensure local state reflects DB truth so isPoemSaved() returns true
+        log.info('Poems', 'Poem already existed — refreshing saved poems list');
+        await loadSavedPoems();
+      }
       return { data };
     } catch (error) {
       log.error('Poems', 'Exception saving poem', error.message);

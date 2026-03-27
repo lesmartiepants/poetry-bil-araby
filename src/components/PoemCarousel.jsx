@@ -150,7 +150,7 @@ const PoemCarousel = ({
         ref={emblaRef}
         className="overflow-hidden w-full"
       >
-        <div className="flex">
+        <div className="flex items-start">
           {poems.map((poem, slideIdx) => {
             const lines = poem.arabic ? poem.arabic.split('\n') : [];
             const enLines = poem.english ? poem.english.split('\n') : [];
@@ -159,7 +159,7 @@ const PoemCarousel = ({
             return (
               <div
                 key={poem.id ?? slideIdx}
-                className="flex-shrink-0 w-full"
+                className="flex-shrink-0 w-full h-fit"
               >
                 <div className="px-4 md:px-20 py-2 text-center">
                   <div className="flex flex-col gap-5 md:gap-7">

@@ -297,26 +297,33 @@ export default function DiwanApp() {
   }, [isFetching]);
 
   // Pre-populate the carousel when the poet filter changes (database mode only).
-  // We wait until the main poem fetch settles (current.poet === selectedCategory) so
-  // the current poem can be placed as item[0] — no independent fetch, no flash.
+  // In "All" mode, use the current poem's poet so every home-screen poem gets a carousel.
+  // In poet-filter mode, wait until the main poem fetch settles (current.poet === selectedCategory).
   useEffect(() => {
-    if (!FEATURES.prefetching || !useDatabase || selectedCategory === 'All') {
+    if (!FEATURES.prefetching || !useDatabase) {
       clearCarouselPoems();
       return;
     }
-    // If the main poem hasn't arrived for this poet yet, wait — the effect will
-    // re-run once current.poet changes to match selectedCategory.
-    if (!current?.poet || current.poet !== selectedCategory) return;
+
+    // Determine which poet to fetch for
+    const targetPoet = selectedCategory !== 'All'
+      ? selectedCategory
+      : current?.poet; // Use current poem's poet when "All" is selected
+
+    if (!targetPoet || !current?.id) return;
+
+    // For poet-selected mode, wait for matching poem before populating
+    if (selectedCategory !== 'All' && current.poet !== selectedCategory) return;
 
     let cancelled = false;
     clearCarouselPoems();
     // Fetch 4 additional poems (excluding the current main poem) to fill slots 1-4.
-    fetchPoemsByPoet(selectedCategory, 4, [current.id]).then((others) => {
+    fetchPoemsByPoet(targetPoet, 4, [current.id]).then((others) => {
       if (cancelled) return;
       // Build carousel with main poem at index 0 so the view never jumps.
       const carouselList = [current, ...others];
       setCarouselPoems(carouselList);
-      if (FEATURES.logging) addLog('Carousel', `Populated ${carouselList.length} poems for ${selectedCategory} (main poem first)`, 'info');
+      if (FEATURES.logging) addLog('Carousel', `Populated ${carouselList.length} poems for ${targetPoet} (main poem first)`, 'info');
       // Auto-explain the first poem that has no translation.
       const firstNeedsTranslation = carouselList.find(
         p => !p.cachedTranslation && !p.english && !explainedPoemIds.current.has(p.id)
@@ -426,12 +433,13 @@ export default function DiwanApp() {
           `Loaded with cached translation: ${initial.poet} — ${initial.title}`,
           'success'
         );
+      } else if (initial?.isSeedPoem) {
+        // Seed poem — don't auto-fetch, let user press Discover to avoid flash
+        setAutoExplainPending(true);
       } else {
         // No cached translation — queue auto-explain and fetch from DB
         setAutoExplainPending(true);
-        if (!initial?.isSeedPoem || !initial?.cachedTranslation) {
-          handleFetch();
-        }
+        handleFetch();
       }
 
       // Background: pre-fetch next visit's poem

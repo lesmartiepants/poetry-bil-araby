@@ -326,18 +326,7 @@ export default function DiwanApp() {
       const carouselList = [current, ...others];
       setCarouselPoems(carouselList);
       if (FEATURES.logging) addLog('Carousel', `Populated ${carouselList.length} poems for ${targetPoet} (main poem first)`, 'info');
-      // Auto-explain the first poem that has no translation.
-      const firstNeedsTranslation = carouselList.find(
-        p => !p.cachedTranslation && !p.english && !explainedPoemIds.current.has(p.id)
-      );
-      if (firstNeedsTranslation) {
-        const { interpretation: interp, isInterpreting: interpreting } = usePoemStore.getState();
-        if (!interp && !interpreting) {
-          explainedPoemIds.current.add(firstNeedsTranslation.id);
-          carouselExplainTargetId.current = firstNeedsTranslation.id;
-          analyzePoemAction({ current: firstNeedsTranslation, addLog, track });
-        }
-      }
+      // Auto-explain is handled by the autoExplainPending path — no direct analyzePoemAction here.
     }).catch((err) => {
       if (FEATURES.logging) addLog('Carousel', `Failed to fetch poems: ${err.message}`, 'error');
     });
@@ -369,7 +358,9 @@ export default function DiwanApp() {
 
     updateCarouselPoem(targetIdx, { english: translation });
     carouselExplainTargetId.current = null; // clear so it doesn't re-fire
-    setInterpretation(null);               // clear so the next explain can fire cleanly
+    // Do NOT call setInterpretation(null) here — interpretation must persist so
+    // versePairs and insightParts can render the translation in the main view.
+    // The interpretation is cleared in onSlideChange when the user swipes.
   }, [interpretation, carouselPoems.length]);
 
   // Eagerly populate the discovered model list so it's ready before any user action.
@@ -476,18 +467,22 @@ export default function DiwanApp() {
 
   // Auto-trigger explanation after auto-loaded poem arrives.
   // In ratchet mode, also run for poems that have a cached translation (overrides scholarly cache).
+  // When the carousel is active (user has swiped), explain the carousel poem, not the main poem.
   useEffect(() => {
-    if (autoExplainPending && current?.id && !isFetching && !isInterpreting && !interpretation) {
+    const poemToExplain = carouselPoems.length > 0 ? carouselPoems[carouselIndex] : current;
+    if (autoExplainPending && poemToExplain?.id && !isFetching && !isInterpreting && !interpretation) {
       setAutoExplainPending(false);
-      // Guard with explainedPoemIds to prevent duplicate explains when the carousel
-      // populate effect (path 1) has already fired for this poem.
-      if (explainedPoemIds.current.has(current.id)) return;
-      if (ratchetMode || !current?.cachedTranslation) {
-        explainedPoemIds.current.add(current.id);
-        handleAnalyze();
+      if (explainedPoemIds.current.has(poemToExplain.id)) return;
+      if (ratchetMode || !poemToExplain?.cachedTranslation) {
+        explainedPoemIds.current.add(poemToExplain.id);
+        // Set the carousel target ref so the patching effect can match by ID.
+        if (carouselPoems.length > 0) {
+          carouselExplainTargetId.current = poemToExplain.id;
+        }
+        analyzePoemAction({ current: poemToExplain, addLog, track });
       }
     }
-  }, [autoExplainPending, current?.id, isFetching, isInterpreting, interpretation, ratchetMode]);
+  }, [autoExplainPending, current?.id, carouselIndex, carouselPoems.length, isFetching, isInterpreting, interpretation, ratchetMode]);
 
   // When ratchet mode is toggled, clear the current interpretation so the new prompt is used.
   // When enabling ratchet mode, also queue an auto-explain so insights regenerate immediately.
@@ -1131,20 +1126,40 @@ export default function DiwanApp() {
                     >
                       {displayedPoem?.poetArabic || displayedPoem?.poet}
                     </div>
-                    {/* Line 3: English combined attribution */}
+                    {/* Line 3: English title and poet — two distinct lines */}
                     {(displayedPoem?.poet || displayedPoem?.title) && (
                       <>
                         <div dir="ltr" style={POEM_META.separator} />
-                        <div
-                          className="text-center"
-                          dir="ltr"
-                          style={{
-                            ...POEM_META.englishLine,
-                            color: darkMode ? POEM_META.englishLineColor.dark : POEM_META.englishLineColor.light,
-                          }}
-                        >
-                          {displayedPoem?.poet}{displayedPoem?.poet && displayedPoem?.title ? ' \u2014 ' : ''}{displayedPoem?.title}
-                        </div>
+                        {displayedPoem?.title && (
+                          <div
+                            className="text-center"
+                            dir="ltr"
+                            style={{
+                              fontFamily: "'Bodoni Moda', serif",
+                              fontSize: 'clamp(0.9rem, 1.8vw, 1.1rem)',
+                              color: darkMode ? 'var(--gold)' : 'var(--gold)',
+                              fontWeight: 500,
+                              letterSpacing: '0.02em',
+                            }}
+                          >
+                            {displayedPoem.title}
+                          </div>
+                        )}
+                        {displayedPoem?.poet && (
+                          <div
+                            className="text-center mt-0.5"
+                            dir="ltr"
+                            style={{
+                              fontFamily: "'Forum', serif",
+                              fontSize: 'clamp(0.75rem, 1.4vw, 0.9rem)',
+                              color: darkMode ? 'rgba(212,200,168,0.7)' : 'rgba(120,100,60,0.7)',
+                              fontWeight: 400,
+                              letterSpacing: '0.03em',
+                            }}
+                          >
+                            {displayedPoem.poet}
+                          </div>
+                        )}
                       </>
                     )}
                     {/* Bottom spacing before verses */}
@@ -1165,26 +1180,18 @@ export default function DiwanApp() {
                           player.stop();
                         }
                         setIsPlaying(false);
-                        // Clear stale interpretation from the previous poem
+                        // Clear stale interpretation from the previous poem so versePairs
+                        // doesn't flash the old translation while the new one loads.
                         setInterpretation(null);
                         // Show translation for the new poem by default
                         setShowTranslation(true);
-                        // Auto-explain if the new carousel poem has no translation.
-                        // Set the target ref BEFORE firing so the patching effect can
-                        // match by poem ID, not by carouselIndex (race-condition fix).
-                        // Guard with explainedPoemIds to ensure we only fire once per poem.
-                        // Only add to explainedPoemIds if analyzePoem can actually start —
-                        // if isInterpreting is true, don't mark as explained so the next
-                        // slide change can retry (prevents silently dropping translations).
+                        // Auto-explain via autoExplainPending (single explain path).
+                        // This avoids the race where carousel-populate and autoExplainPending
+                        // both fire analyzePoemAction and fight over interpretation state.
                         const newPoem = carouselPoems[idx];
                         if (newPoem && !newPoem.cachedTranslation && !newPoem.english &&
                             !explainedPoemIds.current.has(newPoem.id)) {
-                          const { interpretation: interp, isInterpreting: interpreting } = usePoemStore.getState();
-                          if (!interp && !interpreting) {
-                            explainedPoemIds.current.add(newPoem.id);
-                            carouselExplainTargetId.current = newPoem.id;
-                            analyzePoemAction({ current: newPoem, addLog, track });
-                          }
+                          setAutoExplainPending(true);
                         }
                       }}
                       darkMode={darkMode}

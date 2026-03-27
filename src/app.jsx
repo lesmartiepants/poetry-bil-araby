@@ -1131,20 +1131,40 @@ export default function DiwanApp() {
                     >
                       {displayedPoem?.poetArabic || displayedPoem?.poet}
                     </div>
-                    {/* Line 3: English combined attribution */}
+                    {/* Line 3: English title and poet — two distinct lines */}
                     {(displayedPoem?.poet || displayedPoem?.title) && (
                       <>
                         <div dir="ltr" style={POEM_META.separator} />
-                        <div
-                          className="text-center"
-                          dir="ltr"
-                          style={{
-                            ...POEM_META.englishLine,
-                            color: darkMode ? POEM_META.englishLineColor.dark : POEM_META.englishLineColor.light,
-                          }}
-                        >
-                          {displayedPoem?.poet}{displayedPoem?.poet && displayedPoem?.title ? ' \u2014 ' : ''}{displayedPoem?.title}
-                        </div>
+                        {displayedPoem?.title && (
+                          <div
+                            className="text-center"
+                            dir="ltr"
+                            style={{
+                              fontFamily: "'Bodoni Moda', serif",
+                              fontSize: 'clamp(0.9rem, 1.8vw, 1.1rem)',
+                              color: darkMode ? 'var(--gold)' : 'var(--gold)',
+                              fontWeight: 500,
+                              letterSpacing: '0.02em',
+                            }}
+                          >
+                            {displayedPoem.title}
+                          </div>
+                        )}
+                        {displayedPoem?.poet && (
+                          <div
+                            className="text-center mt-0.5"
+                            dir="ltr"
+                            style={{
+                              fontFamily: "'Forum', serif",
+                              fontSize: 'clamp(0.75rem, 1.4vw, 0.9rem)',
+                              color: darkMode ? 'rgba(212,200,168,0.7)' : 'rgba(120,100,60,0.7)',
+                              fontWeight: 400,
+                              letterSpacing: '0.03em',
+                            }}
+                          >
+                            {displayedPoem.poet}
+                          </div>
+                        )}
                       </>
                     )}
                     {/* Bottom spacing before verses */}

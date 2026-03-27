@@ -111,6 +111,7 @@ export default function DiwanApp() {
   // patching effect can match by ID rather than by carouselIndex (prevents race
   // where poem 1's interpretation lands after the user has swiped to poem 2).
   const carouselExplainTargetId = useRef(null);
+  const carouselRef = useRef(null);
   // Tracks poem IDs that have already had analyzePoemAction fired, so we never
   // fire it more than once per poem (prevents flickering/repeated translations).
   const explainedPoemIds = useRef(new Set());
@@ -349,21 +350,27 @@ export default function DiwanApp() {
   // is stamped onto whichever poem is currently active — not the one that was being explained.
   useEffect(() => {
     if (!interpretation || carouselPoems.length === 0) return;
-    if (!carouselExplainTargetId.current) return; // not a carousel-triggered explain
 
     const parts = parseInsight(interpretation);
     const translation = parts?.poeticTranslation;
     if (!translation) return;
 
-    // Find the poem by its ID, not by the current carousel index
-    const targetIdx = carouselPoems.findIndex(p => p.id === carouselExplainTargetId.current);
-    if (targetIdx === -1) return; // poem is no longer in the carousel
+    // Determine which carousel poem to patch with the AI translation.
+    let targetIdx;
+    if (carouselExplainTargetId.current) {
+      // Carousel-triggered explain: find the poem by ID
+      targetIdx = carouselPoems.findIndex(p => p.id === carouselExplainTargetId.current);
+      carouselExplainTargetId.current = null;
+    } else {
+      // Initial explain (fired before carousel existed): target is always poem 0
+      // because the carousel is built as [current, ...others].
+      targetIdx = 0;
+    }
 
-    const targetPoem = carouselPoems[targetIdx];
-    if (targetPoem.english) return; // already has a translation, nothing to do
+    if (targetIdx === -1 || targetIdx >= carouselPoems.length) return;
+    if (carouselPoems[targetIdx].english) return; // already has a translation
 
     updateCarouselPoem(targetIdx, { english: translation });
-    carouselExplainTargetId.current = null; // clear so it doesn't re-fire
     // Do NOT call setInterpretation(null) here — interpretation must persist so
     // versePairs and insightParts can render the translation in the main view.
     // The interpretation is cleared in onSlideChange when the user swipes.
@@ -482,6 +489,8 @@ export default function DiwanApp() {
       if (ratchetMode || !poemToExplain?.cachedTranslation) {
         explainedPoemIds.current.add(poemToExplain.id);
         // Set the carousel target ref so the patching effect can match by ID.
+        // When carouselPoems is empty (initial explain fires before carousel populates),
+        // leave the ref null — the patching effect falls through to patch carouselPoems[0].
         if (carouselPoems.length > 0) {
           carouselExplainTargetId.current = poemToExplain.id;
         }
@@ -1169,14 +1178,39 @@ export default function DiwanApp() {
                         )}
                       </>
                     )}
+                    {/* Carousel dot indicators — positioned under the English poet name */}
+                    {carouselPoems.length > 1 && (
+                      <div className="flex justify-center gap-1.5 mt-3" dir="ltr">
+                        {carouselPoems.map((_, i) => (
+                          <button
+                            key={i}
+                            onClick={() => carouselRef.current?.scrollTo(i)}
+                            aria-label={`Go to poem ${i + 1}`}
+                            style={{
+                              width: i === carouselIndex ? 16 : 6,
+                              height: 6,
+                              borderRadius: 3,
+                              background: i === carouselIndex
+                                ? (darkMode ? 'rgba(197,160,89,1)' : 'rgba(140,100,30,0.85)')
+                                : (darkMode ? 'rgba(197,160,89,0.5)' : 'rgba(140,100,30,0.4)'),
+                              transition: 'all 0.25s ease',
+                              border: 'none',
+                              padding: 0,
+                              cursor: 'pointer',
+                            }}
+                          />
+                        ))}
+                      </div>
+                    )}
                     {/* Bottom spacing before verses */}
-                    <div style={{ height: '1rem' }} />
+                    <div style={{ height: '0.5rem' }} />
                   </div>
                 </div>
 
                 <div className={`relative w-full group pt-1 pb-2 ${DESIGN.mainMarginBottom}`}>
                   {carouselPoems.length > 0 ? (
                     <PoemCarousel
+                      ref={carouselRef}
                       poems={carouselPoems}
                       currentIndex={carouselIndex}
                       onSlideChange={(idx) => {

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useState } from 'react';
 import useEmblaCarousel from 'embla-carousel-react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { transliterate } from '../utils/transliterate.js';
@@ -17,8 +17,11 @@ import { transliterate } from '../utils/transliterate.js';
  *   currentFontClass {string} — CSS class for Arabic font
  *   POEM_META     {Object}   — typography constants
  *   DESIGN        {Object}   — layout constants
+ *
+ * Ref:
+ *   scrollTo(index) — programmatic navigation (used by external dot indicators)
  */
-const PoemCarousel = ({
+const PoemCarousel = forwardRef(({
   poems,
   currentIndex,
   onSlideChange,
@@ -30,7 +33,7 @@ const PoemCarousel = ({
   POEM_META,
   DESIGN,
   onLoadMore,
-}) => {
+}, ref) => {
   const [emblaRef, emblaApi] = useEmblaCarousel({
     axis: 'x',
     dragFree: false,
@@ -38,6 +41,11 @@ const PoemCarousel = ({
     startIndex: currentIndex,
     duration: 25,
   });
+
+  // Expose scrollTo so parent can render dot indicators externally
+  useImperativeHandle(ref, () => ({
+    scrollTo: (index) => emblaApi?.scrollTo(index),
+  }), [emblaApi]);
 
   const [showSwipeHint, setShowSwipeHint] = useState(true);
   const [hasSwiped, setHasSwiped] = useState(false);
@@ -107,8 +115,6 @@ const PoemCarousel = ({
     if (emblaApi) emblaApi.reInit();
   }, [emblaApi, poems.length]);
 
-  const dotColor = darkMode ? 'rgba(197,160,89,0.5)' : 'rgba(140,100,30,0.4)';
-  const dotActiveColor = darkMode ? 'rgba(197,160,89,1)' : 'rgba(140,100,30,0.85)';
   const goldColor = '#c5a059';
 
   return (
@@ -209,29 +215,6 @@ const PoemCarousel = ({
         </div>
       </div>
 
-      {/* Dot indicators — only show when more than one poem */}
-      {poems.length > 1 && (
-        <div className="flex justify-center gap-1.5 mt-4">
-          {poems.map((_, i) => (
-            <button
-              key={i}
-              onClick={() => emblaApi?.scrollTo(i)}
-              aria-label={`Go to poem ${i + 1}`}
-              style={{
-                width: i === currentIndex ? 16 : 6,
-                height: 6,
-                borderRadius: 3,
-                background: i === currentIndex ? dotActiveColor : dotColor,
-                transition: 'all 0.25s ease',
-                border: 'none',
-                padding: 0,
-                cursor: 'pointer',
-              }}
-            />
-          ))}
-        </div>
-      )}
-
       {/* Swipe hint — fades out after 3s or after first swipe */}
       {poems.length > 1 && !hasSwiped && (
         <div
@@ -246,6 +229,6 @@ const PoemCarousel = ({
       )}
     </div>
   );
-};
+});
 
 export default PoemCarousel;

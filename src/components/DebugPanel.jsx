@@ -118,8 +118,8 @@ const DebugPanel = ({ controlBarRef }) => {
         <span
           className={`relative w-5 h-5 rounded-full flex items-center justify-center transition-all duration-200 ${
             darkMode
-              ? 'bg-stone-900/60 border border-gold/20 text-stone-500 hover:text-gold hover:border-gold/40'
-              : 'bg-white/50 border border-gold/20 text-stone-400 hover:text-gold hover:border-gold/40'
+              ? 'bg-stone-900/60 border border-lapis-light/20 text-stone-500 hover:text-lapis-light hover:border-lapis-light/40'
+              : 'bg-white/50 border border-lapis-light/20 text-stone-400 hover:text-lapis-light hover:border-lapis-light/40'
           } backdrop-blur-md`}
         >
           <Bug size={9} />
@@ -142,8 +142,8 @@ const DebugPanel = ({ controlBarRef }) => {
       <div
         className={`fixed z-[200] w-80 max-w-[calc(100vw-2rem)] flex flex-col rounded-2xl shadow-2xl transition-all duration-200 ${
           darkMode
-            ? 'bg-black/95 border border-gold/25 text-stone-300'
-            : 'bg-white/95 border border-gold/20 text-stone-700'
+            ? 'bg-black/95 border border-lapis-light/25 text-stone-300'
+            : 'bg-white/95 border border-lapis-light/20 text-stone-700'
         } backdrop-blur-2xl ${panelOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-95 pointer-events-none'}`}
         style={{
           left: btnPos.left,
@@ -156,7 +156,7 @@ const DebugPanel = ({ controlBarRef }) => {
       >
         {/* Panel header */}
         <div
-          className={`flex items-center justify-between px-4 py-2.5 border-b ${darkMode ? 'border-gold/15' : 'border-gold/15'} flex-none`}
+          className={`flex items-center justify-between px-4 py-2.5 border-b ${darkMode ? 'border-lapis-light/15' : 'border-lapis-light/15'} flex-none`}
         >
           <span
             className="text-[10px] font-brand-en uppercase tracking-widest font-bold"
@@ -204,7 +204,7 @@ const DebugPanel = ({ controlBarRef }) => {
 
         {/* Bug report input */}
         <div
-          className={`flex items-center gap-1.5 px-4 py-2 border-t ${darkMode ? 'border-gold/15' : 'border-gold/15'} flex-none`}
+          className={`flex items-center gap-1.5 px-4 py-2 border-t ${darkMode ? 'border-lapis-light/15' : 'border-lapis-light/15'} flex-none`}
         >
           <input
             type="text"

@@ -1,5 +1,5 @@
 import { ThumbsDown } from 'lucide-react';
-import { GOLD } from '../../constants/theme.js';
+import { GOLD, LAPIS } from '../../constants/theme.js';
 
 const DownvoteButton = ({ poem, isDownvoted, onDownvote, onUndownvote, disabled, onSignIn }) => {
   const handleClick = () => {
@@ -20,16 +20,16 @@ const DownvoteButton = ({ poem, isDownvoted, onDownvote, onUndownvote, disabled,
     <div className="relative flex flex-col items-center gap-0.5 min-w-[52px]">
       <button
         onClick={handleClick}
-        className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${GOLD.goldHoverBg} hover:scale-105`}
+        className={`min-w-[46px] min-h-[46px] p-[11px] bg-transparent border-none cursor-pointer transition-all duration-300 flex items-center justify-center rounded-full ${LAPIS.lapisHoverBg} hover:scale-105`}
         aria-label={isDownvoted ? 'Unflag poem' : 'Flag poem'}
       >
         <ThumbsDown
           size={21}
-          className={`${isDownvoted ? 'fill-red-400 text-red-400' : GOLD.goldText} transition-all`}
+          className={`${isDownvoted ? 'fill-red-400 text-red-400' : LAPIS.lapisText} transition-all`}
         />
       </button>
       <span
-        className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${GOLD.goldText}`}
+        className={`font-brand-en text-[8.5px] font-bold tracking-[0.08em] uppercase opacity-60 whitespace-nowrap ${LAPIS.lapisText}`}
       >
         {isDownvoted ? 'Flagged' : 'Flag'}
       </span>

@@ -97,7 +97,7 @@ export default function ShareCardModal({ poem, onClose }) {
       aria-modal="true"
       aria-label="Share poem card"
     >
-      <div className="relative w-full max-w-lg mx-4 bg-[#0c0c0e] border border-gold/10 rounded-2xl overflow-hidden shadow-2xl">
+      <div className="relative w-full max-w-lg mx-4 bg-[#0c0c0e] border border-lapis-light/15 rounded-2xl overflow-hidden shadow-2xl">
         {/* Close button */}
         <button
           onClick={onClose}
@@ -124,7 +124,7 @@ export default function ShareCardModal({ poem, onClose }) {
 
         {/* Design selector — English primary */}
         <div className="px-4 pt-2 pb-2">
-          <p className="text-gold/50 text-xs text-center mb-2 font-tajawal tracking-wide">
+          <p className="text-lapis-light/50 text-xs text-center mb-2 font-tajawal tracking-wide">
             Choose Design
           </p>
           <div className="flex gap-2 justify-center flex-wrap">

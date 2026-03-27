@@ -42,7 +42,7 @@ const AuthModal = ({ onSignInWithGoogle }) => {
           style={{
             height: '2px',
             background:
-              'linear-gradient(90deg, transparent, rgba(197,160,89,0.6), rgba(212,180,120,0.8), rgba(197,160,89,0.6), transparent)',
+              'linear-gradient(90deg, transparent, rgba(74,124,201,0.4), rgba(197,160,89,0.8), rgba(74,124,201,0.4), transparent)',
           }}
         />
 
@@ -67,9 +67,9 @@ const AuthModal = ({ onSignInWithGoogle }) => {
 
           {/* Decorative divider */}
           <div className="flex items-center gap-3 mb-6">
-            <div className="flex-1 h-px bg-gradient-to-r from-transparent to-gold/30" />
-            <Feather size={12} style={{ color: 'rgba(197,160,89,0.4)' }} />
-            <div className="flex-1 h-px bg-gradient-to-l from-transparent to-gold/30" />
+            <div className="flex-1 h-px bg-gradient-to-r from-transparent to-lapis/30" />
+            <Feather size={12} style={{ color: 'rgba(74,124,201,0.4)' }} />
+            <div className="flex-1 h-px bg-gradient-to-l from-transparent to-lapis/30" />
           </div>
 
           {/* Google sign-in button */}
@@ -120,7 +120,7 @@ const AuthModal = ({ onSignInWithGoogle }) => {
         <div
           style={{
             height: '1px',
-            background: 'linear-gradient(90deg, transparent, rgba(197,160,89,0.3), transparent)',
+            background: 'linear-gradient(90deg, transparent, rgba(74,124,201,0.3), transparent)',
           }}
         />
       </motion.div>

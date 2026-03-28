@@ -243,6 +243,16 @@ export function useSavedPoems(user) {
   const savePoem = async (poem) => {
     if (!user || !isSupabaseConfigured()) return { error: { message: 'Not authenticated' } };
 
+    // Guard: skip if already present in local state (prevents duplicate DB calls
+    // when auth state changes trigger multiple effect runs or stale loads race with a save)
+    const alreadySaved = poem.id
+      ? savedPoems.some((p) => p.poem_id === poem.id)
+      : savedPoems.some((p) => p.poem_text === poem.arabic);
+    if (alreadySaved) {
+      log.info('Poems', `Poem already saved locally, skipping (id: ${poem.id})`);
+      return { data: null, alreadySaved: true };
+    }
+
     try {
       log.info('Poems', `Saving poem: ${poem.poet} — ${poem.title} (id: ${poem.id})`);
       const { data, error } = await supabase
@@ -260,6 +270,12 @@ export function useSavedPoems(user) {
         .single();
 
       if (error) {
+        // 23505 = unique_violation: poem already saved (race between concurrent saves).
+        // Treat as success so the UI reflects the actual DB state.
+        if (error.code === '23505') {
+          log.info('Poems', `Poem already saved in DB (duplicate key ignored, id: ${poem.id})`);
+          return { data: null, alreadySaved: true };
+        }
         log.error('Poems', 'Failed to save poem', error.message);
         return { error };
       }

@@ -363,10 +363,10 @@ export default function DiwanApp() {
     try {
       const poem = JSON.parse(stashed);
       if (poem && poem.arabic) {
-        savePoem(poem).then(({ error }) => {
+        savePoem(poem).then(({ error, alreadySaved }) => {
           if (error) {
             addLog('Save Error', error.message, 'error');
-          } else {
+          } else if (!alreadySaved) {
             addLog('Save', `Auto-saved poem: ${poem.poet} — ${poem.title}`, 'success');
           }
         });
@@ -655,10 +655,10 @@ export default function DiwanApp() {
       return;
     }
 
-    const { error } = await savePoem(current);
+    const { error, alreadySaved } = await savePoem(current);
     if (error) {
       addLog('Save Error', error.message, 'error');
-    } else {
+    } else if (!alreadySaved) {
       addLog('Save', `Saved poem: ${current?.poet} - ${current?.title}`, 'success');
       track('poem_saved', { poet: current?.poet });
       if (current?.id) {

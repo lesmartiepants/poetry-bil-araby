@@ -21,9 +21,9 @@ export default function InsightOverlay({
         <Drawer.Overlay
           className="fixed inset-0 z-[60]"
           style={{
-            background: o.scrim,
-            backdropFilter: o.backdrop,
-            WebkitBackdropFilter: o.backdrop,
+            background: 'rgba(0,0,0,0.15)',
+            backdropFilter: 'blur(2px)',
+            WebkitBackdropFilter: 'blur(2px)',
           }}
         />
         <Drawer.Content
@@ -33,7 +33,7 @@ export default function InsightOverlay({
         >
           <Drawer.Handle
             className="mx-auto mt-3 mb-1 w-8 h-[3px] rounded-full"
-            style={{ background: 'var(--gold-structural)' }}
+            style={{ background: 'var(--gold)' }}
           />
 
           {/* Header — centered poem title */}

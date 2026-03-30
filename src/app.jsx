@@ -323,6 +323,7 @@ export default function DiwanApp() {
 
     let cancelled = false;
     clearCarouselPoems();
+    explainedPoemIds.current.clear();
     // Fetch 4 additional poems (excluding the current main poem) to fill slots 1-4.
     fetchPoemsByPoet(targetPoet, 4, [current.id]).then((others) => {
       if (cancelled) return;

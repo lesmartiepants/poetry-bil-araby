@@ -138,6 +138,42 @@ describe('poemStore', () => {
       expect(usePoemStore.getState().poetSearch).toBe('نزار');
     });
 
+    // ── Carousel actions ──
+
+    it('setCarouselPoems sets carousel poems array', () => {
+      const poems = [{ id: 10 }, { id: 11 }];
+      usePoemStore.getState().setCarouselPoems(poems);
+      expect(usePoemStore.getState().carouselPoems).toEqual(poems);
+    });
+
+    it('addCarouselPoem appends to carousel poems', () => {
+      usePoemStore.getState().setCarouselPoems([{ id: 10 }]);
+      usePoemStore.getState().addCarouselPoem({ id: 11 });
+      expect(usePoemStore.getState().carouselPoems).toHaveLength(2);
+      expect(usePoemStore.getState().carouselPoems[1].id).toBe(11);
+    });
+
+    it('updateCarouselPoem patches a specific carousel poem', () => {
+      usePoemStore.getState().setCarouselPoems([
+        { id: 10, english: '' },
+        { id: 11, english: '' },
+      ]);
+      usePoemStore.getState().updateCarouselPoem(1, { english: 'translated' });
+      expect(usePoemStore.getState().carouselPoems[1].english).toBe('translated');
+      expect(usePoemStore.getState().carouselPoems[0].english).toBe('');
+    });
+
+    it('clearCarouselPoems resets carousel to empty', () => {
+      usePoemStore.getState().setCarouselPoems([{ id: 10 }, { id: 11 }]);
+      usePoemStore.getState().clearCarouselPoems();
+      expect(usePoemStore.getState().carouselPoems).toEqual([]);
+    });
+
+    it('setCarouselIndex updates carousel index', () => {
+      usePoemStore.getState().setCarouselIndex(3);
+      expect(usePoemStore.getState().carouselIndex).toBe(3);
+    });
+
     it('setPoetsFetched updates poetsFetched', () => {
       usePoemStore.getState().setPoetsFetched(true);
       expect(usePoemStore.getState().poetsFetched).toBe(true);

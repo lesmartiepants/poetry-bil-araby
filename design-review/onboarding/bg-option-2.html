@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Background 2 — Hexagonal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Reem+Kufi:wght@400;700&display=swap" rel="stylesheet" />
+
+  <style>
+    /* ==========================================
+       DESIGN TOKENS
+       ========================================== */
+    :root {
+      --color-bg:              #0c0c0e;
+      --color-surface:         rgba(18, 18, 22, 0.82);
+      --color-surface-border:  rgba(197, 160, 89, 0.18);
+      --color-pattern-line:    #2a5a8c;
+      --color-pattern-node:    #c5a059;
+      --color-gold:            #c5a059;
+      --color-gold-dim:        rgba(197, 160, 89, 0.5);
+      --color-text-primary:    #e8dcc8;
+      --color-text-muted:      rgba(240, 232, 216, 0.5);
+
+      --font-arabic-body:      'Amiri', serif;
+      --font-arabic-ui:        'Reem Kufi', sans-serif;
+
+      --pattern-opacity:       0.05;
+      --pattern-node-opacity:  0.25;
+
+      --ease-out-expo:         cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* ==========================================
+       RESET & BASE
+       ========================================== */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--color-bg);
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+    }
+
+    /* ==========================================
+       SCENE CONTAINER
+       ========================================== */
+    .scene {
+      position: relative;
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    /* ==========================================
+       HEXAGONAL TESSELLATION BACKGROUND
+       The pattern is rendered via SVG as a data URI
+       so it tiles seamlessly without any images.
+
+       Construction:
+         - Regular hexagon with flat sides top/bottom
+         - Each hex divided into 6 equilateral triangles
+           whose shared center creates a 6-pointed star
+         - Tile unit: 80px wide × 46px tall (half-hex row offset)
+         - Gold accent nodes at every third intersection
+       ========================================== */
+
+    /* The SVG tile encodes:
+       1. Outer hexagon edges (lapis blue, 0.7px)
+       2. Inner 6-star lines from center to corners (lapis blue, 0.5px)
+       3. A single gold circle at the tile's center node
+
+       viewBox="0 0 80 92" — one full hex column width × two hex rows
+       Hex points for flat-top orientation at r=40:
+         top-center:    (40, 0)  → (40, 0)
+         top-right:     (80, 23)
+         bottom-right:  (80, 69)
+         bottom-center: (40, 92)
+         bottom-left:   (0, 69)
+         top-left:      (0, 23)
+    */
+
+    .bg-pattern {
+      position: absolute;
+      inset: 0;
+      /* Slight vertical offset so the tile anchors to the top */
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='92' viewBox='0 0 80 92'%3E%3Cdefs%3E%3Cstyle%3E.l%7Bstroke:%232a5a8c;stroke-width:0.7;fill:none;stroke-linecap:round%7D.ls%7Bstroke:%232a5a8c;stroke-width:0.5;fill:none%7D.n%7Bfill:%23c5a059%7D%3C/style%3E%3C/defs%3E%3C!-- Hex outline --%3E%3Cpolygon class='l' points='40,0 80,23 80,69 40,92 0,69 0,23'/%3E%3C!-- Internal 6-star: center to each vertex --%3E%3Cline class='ls' x1='40' y1='46' x2='40' y2='0'/%3E%3Cline class='ls' x1='40' y1='46' x2='80' y2='23'/%3E%3Cline class='ls' x1='40' y1='46' x2='80' y2='69'/%3E%3Cline class='ls' x1='40' y1='46' x2='40' y2='92'/%3E%3Cline class='ls' x1='40' y1='46' x2='0' y2='69'/%3E%3Cline class='ls' x1='40' y1='46' x2='0' y2='23'/%3E%3C!-- Inner hexagon (midpoints of star lines) --%3E%3Cpolygon class='ls' points='40,23 60,34.5 60,57.5 40,69 20,57.5 20,34.5'/%3E%3C!-- Gold accent node at center --%3E%3Ccircle class='n' cx='40' cy='46' r='1.8'/%3E%3C/svg%3E");
+      background-size: 80px 92px;
+      background-repeat: repeat;
+      opacity: var(--pattern-opacity);
+      /* Top-to-bottom fade: visible in upper 70%, gone at bottom */
+      -webkit-mask-image: linear-gradient(
+        to bottom,
+        black 0%,
+        black 45%,
+        transparent 100%
+      );
+      mask-image: linear-gradient(
+        to bottom,
+        black 0%,
+        black 45%,
+        transparent 100%
+      );
+    }
+
+    /* Additional very-subtle gold-node overlay at higher opacity
+       so intersection accents read at 3rd-node rhythm */
+    .bg-pattern-nodes {
+      position: absolute;
+      inset: 0;
+      /* Gold-only node pattern: just the circle, shifted by half-tile
+         to align on every other intersection for visual rhythm         */
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='92' viewBox='0 0 80 92'%3E%3Ccircle fill='%23c5a059' cx='40' cy='46' r='1.8'/%3E%3Ccircle fill='%23c5a059' cx='0' cy='0' r='1.2' opacity='0.5'/%3E%3Ccircle fill='%23c5a059' cx='80' cy='0' r='1.2' opacity='0.5'/%3E%3Ccircle fill='%23c5a059' cx='0' cy='92' r='1.2' opacity='0.5'/%3E%3Ccircle fill='%23c5a059' cx='80' cy='92' r='1.2' opacity='0.5'/%3E%3C/svg%3E");
+      background-size: 80px 92px;
+      background-repeat: repeat;
+      opacity: var(--pattern-node-opacity);
+      -webkit-mask-image: linear-gradient(
+        to bottom,
+        black 0%,
+        black 40%,
+        transparent 90%
+      );
+      mask-image: linear-gradient(
+        to bottom,
+        black 0%,
+        black 40%,
+        transparent 90%
+      );
+    }
+
+    /* Vignette: darkens edges so the card reads cleanly */
+    .bg-vignette {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(
+        ellipse 70% 80% at 50% 40%,
+        transparent 30%,
+        rgba(12, 12, 14, 0.65) 100%
+      );
+      pointer-events: none;
+    }
+
+    /* ==========================================
+       LABEL
+       ========================================== */
+    .label {
+      position: absolute;
+      top: 20px;
+      /* physical left for ltr label despite rtl page */
+      left: 20px;
+      font-family: var(--font-arabic-ui);
+      font-size: 0.7rem;
+      letter-spacing: 0.08em;
+      color: var(--color-gold-dim);
+      text-transform: uppercase;
+      direction: ltr;
+      pointer-events: none;
+    }
+
+    /* ==========================================
+       POEM CARD
+       ========================================== */
+    .card-wrap {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px 20px;
+      width: 100%;
+      max-width: 480px;
+    }
+
+    .poem-card {
+      width: 100%;
+      background: var(--color-surface);
+      border: 1px solid var(--color-surface-border);
+      border-radius: 2px;
+      padding: 36px 32px 32px;
+      text-align: center;
+      direction: rtl;
+
+      /* Subtle geometric shimmer on border */
+      box-shadow:
+        0 0 0 1px rgba(197, 160, 89, 0.06),
+        0 8px 40px rgba(0, 0, 0, 0.6),
+        inset 0 1px 0 rgba(197, 160, 89, 0.08);
+
+      animation: cardReveal 1.2s var(--ease-out-expo) both;
+    }
+
+    @keyframes cardReveal {
+      from {
+        opacity: 0;
+        transform: translateY(28px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Thin gold top-edge accent — echoes mosque arch geometry */
+    .poem-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      inset-inline-start: 10%;
+      width: 80%;
+      height: 1px;
+      background: linear-gradient(
+        to right,
+        transparent,
+        var(--color-gold) 30%,
+        var(--color-gold) 70%,
+        transparent
+      );
+      opacity: 0.35;
+    }
+
+    /* ---- Title ---- */
+    .poem-title {
+      font-family: var(--font-arabic-body);
+      font-size: clamp(1.4rem, 4vw, 1.8rem);
+      font-weight: 700;
+      color: var(--color-gold);
+      line-height: 1.4;
+      margin-block-end: 6px;
+      animation: fadeSlideDown 0.9s var(--ease-out-expo) 0.25s both;
+    }
+
+    /* ---- Poet byline ---- */
+    .poem-poet {
+      font-family: var(--font-arabic-ui);
+      font-size: 0.85rem;
+      font-weight: 400;
+      color: var(--color-text-muted);
+      letter-spacing: 0.03em;
+      margin-block-end: 28px;
+      animation: fadeSlideDown 0.9s var(--ease-out-expo) 0.38s both;
+    }
+
+    /* ---- Ornamental separator ---- */
+    .separator {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-block-end: 20px;
+      animation: fadeIn 0.7s var(--ease-out-expo) 0.5s both;
+    }
+
+    .separator::before,
+    .separator::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(
+        to var(--separator-direction, right),
+        transparent,
+        rgba(197, 160, 89, 0.3)
+      );
+    }
+    .separator::before { --separator-direction: left; }
+    .separator::after  { --separator-direction: right; }
+
+    .separator-icon {
+      color: var(--color-gold);
+      font-size: 0.75rem;
+      opacity: 0.7;
+      font-style: normal;
+    }
+
+    /* ---- Verse lines ---- */
+    .verse-block {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .verse-line {
+      font-family: var(--font-arabic-body);
+      font-size: clamp(1rem, 3vw, 1.2rem);
+      font-weight: 400;
+      color: var(--color-text-primary);
+      line-height: 2;
+      letter-spacing: 0.01em;
+    }
+
+    .verse-line:first-child {
+      animation: fadeSlideDown 0.9s var(--ease-out-expo) 0.55s both;
+    }
+
+    .verse-divider {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 2px 0;
+      color: var(--color-gold);
+      font-size: 0.65rem;
+      opacity: 0.5;
+      animation: fadeIn 0.5s var(--ease-out-expo) 0.7s both;
+    }
+
+    .verse-line:last-child {
+      animation: fadeSlideDown 0.9s var(--ease-out-expo) 0.7s both;
+    }
+
+    /* ==========================================
+       KEYFRAMES
+       ========================================== */
+    @keyframes fadeSlideDown {
+      from {
+        opacity: 0;
+        transform: translateY(-12px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+
+    /* ==========================================
+       REDUCED MOTION
+       ========================================== */
+    @media (prefers-reduced-motion: reduce) {
+      .poem-card,
+      .poem-title,
+      .poem-poet,
+      .separator,
+      .verse-line,
+      .verse-divider {
+        animation: none;
+        opacity: 1;
+        transform: none;
+      }
+    }
+
+    /* ==========================================
+       MOBILE — 375px FIRST
+       ========================================== */
+    @media (max-width: 400px) {
+      .poem-card {
+        padding: 28px 20px 24px;
+        border-radius: 0;
+        border-inline: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="scene">
+
+    <!-- Hexagonal tessellation layers -->
+    <div class="bg-pattern"       aria-hidden="true"></div>
+    <div class="bg-pattern-nodes" aria-hidden="true"></div>
+    <div class="bg-vignette"      aria-hidden="true"></div>
+
+    <!-- Debug label -->
+    <div class="label" dir="ltr" aria-hidden="true">Background 2 — Hexagonal</div>
+
+    <!-- Poem card -->
+    <div class="card-wrap">
+      <article class="poem-card" lang="ar" dir="rtl">
+
+        <h1 class="poem-title">يا ليل الصبّ متى غده</h1>
+        <p  class="poem-poet">الحصري القيرواني</p>
+
+        <div class="separator" aria-hidden="true">
+          <i class="separator-icon">&#10022;</i>
+        </div>
+
+        <div class="verse-block">
+          <p class="verse-line">أقيامُ الساعةِ موعِدُهُ</p>
+          <div class="verse-divider" aria-hidden="true">&#10022;</div>
+          <p class="verse-line">أم قيامي حين أشاهدُهُ</p>
+        </div>
+
+      </article>
+    </div>
+
+  </div>
+</body>
+</html>

@@ -1245,6 +1245,7 @@ export default function DiwanApp() {
                         // Clear stale interpretation from the previous poem so versePairs
                         // doesn't flash the old translation while the new one loads.
                         setInterpretation(null);
+                        carouselExplainTargetId.current = null;
                         // Show translation for the new poem by default
                         setShowTranslation(true);
                         // Auto-explain via autoExplainPending (single explain path).

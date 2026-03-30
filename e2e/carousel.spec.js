@@ -391,7 +391,53 @@ test.describe('Poem Carousel', () => {
     await expect(arLines.first()).toBeVisible();
   });
 
-  // #12 — Carousel persists after multiple discover actions
+  // #12 — Full user flow: swipe through all carousel poems, verify each gets translated
+  test('swiping through all carousel poems produces translations', async ({ page }) => {
+    // Override the AI mock to return actual translations instead of aborting
+    await page.route('**/api/ai/**/streamGenerateContent*', async (route) => {
+      // Build a mock SSE streaming response with POEM: section
+      const mockResponse = `data: {"candidates":[{"content":{"parts":[{"text":"POEM:\\nMock translation line one\\nMock translation line two\\nMock line three\\nTHE DEPTH: A brief analysis.\\nTHE AUTHOR: A brief biography."}]}}]}\n\ndata: [DONE]\n\n`;
+      await route.fulfill({
+        status: 200,
+        contentType: 'text/event-stream',
+        body: mockResponse,
+      });
+    });
+    await page.route('**/api/ai/**/generateContent*', async (route) => {
+      await route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          candidates: [{ content: { parts: [{ text: 'POEM:\nMock translation line one\nMock translation line two\nMock line three\nTHE DEPTH: A brief analysis.\nTHE AUTHOR: A brief biography.' }] } }],
+        }),
+      });
+    });
+
+    const dots = await discoverAndWaitForCarousel(page);
+    const dotCount = await dots.count();
+    expect(dotCount).toBeGreaterThan(1);
+
+    // Slide 0 already has english from mock data — verify it shows
+    const enOnSlide0 = page.locator('p[dir="ltr"].font-brand-en.opacity-60');
+    await expect(enOnSlide0.first()).toBeVisible({ timeout: 5000 });
+
+    // Swipe through remaining slides and verify each gets a translation
+    for (let i = 1; i < Math.min(dotCount, 5); i++) {
+      const currentDots = page.locator('button[aria-label^="Go to poem"]');
+      await currentDots.nth(Math.min(i, await currentDots.count() - 1)).click();
+      await page.waitForTimeout(500);
+
+      // Wait for English translation to appear (from mocked AI response)
+      const enLines = page.locator('p[dir="ltr"].font-brand-en.opacity-60');
+      await expect(enLines.first()).toBeVisible({ timeout: 10000 });
+
+      // Verify Arabic is also present (not a blank slide)
+      const arLines = page.locator('p[dir="rtl"]');
+      await expect(arLines.first()).toBeVisible();
+    }
+  });
+
+  // #13 — Carousel persists after multiple discover actions
   test('carousel repopulates when discovering a new poem', async ({ page }) => {
     // First discover
     await discoverAndWaitForCarousel(page);

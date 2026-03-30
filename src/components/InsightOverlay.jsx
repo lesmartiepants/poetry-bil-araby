@@ -29,11 +29,11 @@ export default function InsightOverlay({
         <Drawer.Content
           data-vaul-drawer
           className="fixed bottom-0 left-0 right-0 z-[61] h-[95dvh] rounded-t-2xl flex flex-col"
-          style={{ background: o.bg }}
+          style={{ background: o.bg, borderTop: '1px solid rgba(197,160,89,0.25)' }}
         >
           <Drawer.Handle
             className="mx-auto mt-3 mb-1 w-8 h-[3px] rounded-full"
-            style={{ background: 'var(--gold)' }}
+            style={{ background: 'rgba(197,160,89,0.7)' }}
           />
 
           {/* Header — centered poem title */}
@@ -99,9 +99,9 @@ export default function InsightOverlay({
                   <div className="py-5 animate-[fadeUp_0.5s_ease_0.1s_both]">
                     <div
                       className="text-[9px] uppercase tracking-[0.18em] mb-2.5"
-                      style={{ color: o.textMuted }}
+                      style={{ color: o.sectionLabel }}
                     >
-                      Translation
+                      The Translation
                     </div>
                     <p
                       className="font-fell italic leading-[1.9] text-[clamp(0.9375rem,1.4vw,1.0625rem)]"

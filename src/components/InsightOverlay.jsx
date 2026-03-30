@@ -45,21 +45,6 @@ export default function InsightOverlay({
               {ratchetMode ? 'Ratchet Insight' : 'Poetic Insight'}
             </Drawer.Title>
 
-            {/* Close button */}
-            <div className="flex justify-end mb-1">
-              <Drawer.Close asChild>
-                <button
-                  data-testid="insight-close"
-                  type="button"
-                  aria-label="Close insight overlay"
-                  className="w-7 h-7 rounded-full flex items-center justify-center transition-all flex-shrink-0"
-                  style={{ border: `1px solid ${o.borderSubtle}`, color: o.textMuted }}
-                >
-                  ✕
-                </button>
-              </Drawer.Close>
-            </div>
-
             {/* Title line — English left, Arabic right */}
             <div className="flex items-baseline justify-between gap-3">
               <span

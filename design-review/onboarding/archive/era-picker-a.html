@@ -1,0 +1,988 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Era Picker — Option A: Split Screen Morph</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@400;700&family=Forum&family=Amiri:wght@400;700&display=swap" rel="stylesheet" />
+
+  <!-- GSAP -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+
+  <style>
+    /* =============================================
+       DESIGN TOKENS
+       ============================================= */
+    :root {
+      /* Palette */
+      --color-bg:                #0c0c0e;
+      --color-gold:              #c5a059;
+      --color-gold-dim:          rgba(197, 160, 89, 0.55);
+      --color-gold-faint:        rgba(197, 160, 89, 0.10);
+      --color-gold-glow:         rgba(197, 160, 89, 0.22);
+      --color-text-primary:      #e8dcc8;
+      --color-text-muted:        rgba(232, 220, 200, 0.55);
+
+      /* Classical warm */
+      --color-classical-bg:      #1A0F0A;
+      --color-classical-wash:    rgba(26, 15, 10, 0.92);
+      --color-classical-mid:     rgba(90, 50, 20, 0.18);
+      --color-classical-border:  rgba(197, 160, 89, 0.30);
+
+      /* Modern cool */
+      --color-modern-bg:         #0A0F1A;
+      --color-modern-wash:       rgba(10, 15, 26, 0.92);
+      --color-modern-mid:        rgba(30, 60, 120, 0.18);
+      --color-modern-border:     rgba(74, 138, 191, 0.28);
+      --color-lapis:             #4a8abf;
+      --color-lapis-dim:         rgba(74, 138, 191, 0.50);
+      --color-lapis-faint:       rgba(74, 138, 191, 0.10);
+
+      /* Typography */
+      --font-arabic:             'Reem Kufi', serif;
+      --font-english:            'Forum', serif;
+      --font-amiri:              'Amiri', serif;
+
+      --font-title:              clamp(1.4rem, 4vw, 2rem);
+      --font-subtitle:           clamp(0.75rem, 2vw, 0.9rem);
+      --font-half-label:         clamp(1.6rem, 5vw, 2.6rem);
+      --font-chip:               clamp(0.65rem, 1.8vw, 0.78rem);
+      --font-label-badge:        0.65rem;
+
+      /* Spacing */
+      --sp-4:   4px;
+      --sp-8:   8px;
+      --sp-12:  12px;
+      --sp-16:  16px;
+      --sp-24:  24px;
+      --sp-32:  32px;
+      --sp-48:  48px;
+
+      /* Motion */
+      --ease-out-expo:   cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-spring:     cubic-bezier(0.34, 1.56, 0.64, 1);
+      --ease-in-quart:   cubic-bezier(0.76, 0, 0.24, 1);
+      --ease-standard:   cubic-bezier(0.4, 0, 0.2, 1);
+
+      --dur-major:       0.65s;
+      --dur-content:     0.35s;
+      --dur-hover:       0.18s;
+      --dur-micro:       0.10s;
+
+      /* Layout */
+      --radius-card:     16px;
+      --radius-chip:     100px;
+      --radius-btn:      100px;
+    }
+
+    /* =============================================
+       RESET + BASE
+       ============================================= */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--color-bg);
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+      overscroll-behavior: none;
+    }
+
+    /* =============================================
+       STAGE
+       ============================================= */
+    #stage {
+      position: relative;
+      width: 100vw;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    /* Ambient background glow — shifts on selection */
+    #ambient {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      transition: background var(--dur-major) var(--ease-standard);
+      background: radial-gradient(ellipse 60% 40% at 50% 100%, rgba(26,15,10,0.35) 0%, transparent 70%);
+    }
+
+    #ambient.warm {
+      background: radial-gradient(ellipse 80% 50% at 30% 80%, rgba(90,40,10,0.40) 0%, transparent 65%),
+                  radial-gradient(ellipse 40% 30% at 70% 20%, rgba(197,160,89,0.06) 0%, transparent 60%);
+    }
+
+    #ambient.cool {
+      background: radial-gradient(ellipse 80% 50% at 70% 80%, rgba(10,30,80,0.45) 0%, transparent 65%),
+                  radial-gradient(ellipse 40% 30% at 30% 20%, rgba(74,138,191,0.07) 0%, transparent 60%);
+    }
+
+    /* =============================================
+       OPTION BADGE
+       ============================================= */
+    #option-badge {
+      position: absolute;
+      top: var(--sp-16);
+      left: var(--sp-16);
+      z-index: 100;
+      font-family: var(--font-english);
+      font-size: var(--font-label-badge);
+      color: var(--color-gold-dim);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      pointer-events: none;
+    }
+
+    /* =============================================
+       HEADER
+       ============================================= */
+    #header {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      padding: var(--sp-32) var(--sp-16) var(--sp-16);
+      will-change: transform, opacity;
+    }
+
+    #title-arabic {
+      font-family: var(--font-amiri);
+      font-size: var(--font-title);
+      font-weight: 700;
+      color: var(--color-gold);
+      letter-spacing: 0.02em;
+      line-height: 1.3;
+    }
+
+    #title-english {
+      font-family: var(--font-english);
+      font-size: var(--font-subtitle);
+      color: var(--color-text-muted);
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      margin-top: var(--sp-4);
+      direction: ltr;
+    }
+
+    /* =============================================
+       SPLIT ARENA
+       ============================================= */
+    #split-arena {
+      position: relative;
+      z-index: 5;
+      flex: 1;
+      width: 100%;
+      display: flex;
+      flex-direction: row;
+      align-items: stretch;
+      padding: 0 var(--sp-16) var(--sp-8);
+      gap: 0;
+      /* clips the expanding halves */
+      overflow: hidden;
+    }
+
+    /* =============================================
+       GLOWING DIVIDER
+       ============================================= */
+    #divider {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 50%;
+      width: 2px;
+      transform: translateX(-50%);
+      z-index: 20;
+      background: linear-gradient(
+        to bottom,
+        transparent 0%,
+        var(--color-gold-dim) 20%,
+        var(--color-gold) 50%,
+        var(--color-gold-dim) 80%,
+        transparent 100%
+      );
+      box-shadow: 0 0 12px 3px var(--color-gold-glow);
+      transition: opacity var(--dur-major) var(--ease-standard),
+                  box-shadow var(--dur-major) var(--ease-standard);
+      pointer-events: none;
+    }
+
+    #divider.faded {
+      opacity: 0.2;
+      box-shadow: none;
+    }
+
+    /* =============================================
+       EACH HALF
+       ============================================= */
+    .half {
+      position: relative;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      border-radius: var(--radius-card);
+      overflow: hidden;
+      transition: flex var(--dur-major) var(--ease-out-expo),
+                  box-shadow var(--dur-major) var(--ease-standard);
+      /* GPU composite hint for the flex resize */
+      will-change: flex;
+      user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .half:hover .half-glow {
+      opacity: 1;
+    }
+
+    /* Classical half */
+    #half-classical {
+      margin-inline-end: var(--sp-8);
+      background: var(--color-classical-bg);
+      border: 1px solid var(--color-classical-border);
+    }
+
+    #half-classical.expanded {
+      flex: 1.8;
+      box-shadow: 0 0 40px 8px rgba(197, 160, 89, 0.14);
+    }
+
+    #half-classical.selected {
+      border-color: rgba(197, 160, 89, 0.55);
+    }
+
+    /* Modern half */
+    #half-modern {
+      margin-inline-start: var(--sp-8);
+      background: var(--color-modern-bg);
+      border: 1px solid var(--color-modern-border);
+    }
+
+    #half-modern.expanded {
+      flex: 1.8;
+      box-shadow: 0 0 40px 8px rgba(74, 138, 191, 0.13);
+    }
+
+    #half-modern.selected {
+      border-color: rgba(74, 138, 191, 0.50);
+    }
+
+    /* Shrink the non-expanded side */
+    .half.shrunk {
+      flex: 0.55;
+    }
+
+    /* =============================================
+       ARABESQUE SVG PATTERN (Classical bg)
+       ============================================= */
+    .arabesque-bg {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.09;
+      overflow: hidden;
+    }
+
+    .arabesque-bg svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* =============================================
+       GEOMETRIC ACCENT (Modern bg)
+       ============================================= */
+    .geo-bg {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.07;
+      overflow: hidden;
+    }
+
+    .geo-bg svg {
+      width: 100%;
+      height: 100%;
+    }
+
+    /* =============================================
+       HALF GLOW OVERLAY
+       ============================================= */
+    .half-glow {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity var(--dur-hover) var(--ease-standard);
+    }
+
+    #half-classical .half-glow {
+      background: radial-gradient(ellipse 60% 50% at 50% 50%, rgba(197,160,89,0.10) 0%, transparent 70%);
+    }
+
+    #half-modern .half-glow {
+      background: radial-gradient(ellipse 60% 50% at 50% 50%, rgba(74,138,191,0.10) 0%, transparent 70%);
+    }
+
+    /* =============================================
+       HALF INNER CONTENT
+       ============================================= */
+    .half-inner {
+      position: relative;
+      z-index: 5;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--sp-8);
+      padding: var(--sp-16);
+      text-align: center;
+    }
+
+    .half-label {
+      font-size: var(--font-half-label);
+      font-weight: 700;
+      line-height: 1.1;
+      transition: transform var(--dur-content) var(--ease-out-expo),
+                  opacity var(--dur-content) var(--ease-standard);
+    }
+
+    #half-classical .half-label {
+      font-family: var(--font-amiri);
+      color: var(--color-gold);
+    }
+
+    #half-modern .half-label {
+      font-family: var(--font-arabic);
+      color: var(--color-lapis);
+    }
+
+    .half-sublabel {
+      font-family: var(--font-english);
+      font-size: clamp(0.6rem, 1.5vw, 0.75rem);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--color-text-muted);
+      transition: opacity var(--dur-content) var(--ease-standard);
+    }
+
+    .half-date-range {
+      font-family: var(--font-english);
+      font-size: clamp(0.55rem, 1.3vw, 0.68rem);
+      letter-spacing: 0.10em;
+      color: var(--color-text-muted);
+      opacity: 0.6;
+      direction: ltr;
+    }
+
+    /* Checkmark indicator (visible when selected) */
+    .half-check {
+      position: absolute;
+      top: var(--sp-12);
+      inset-inline-end: var(--sp-12);
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transform: scale(0.5);
+      transition: opacity var(--dur-content) var(--ease-spring),
+                  transform var(--dur-content) var(--ease-spring);
+      font-size: 0.6rem;
+      color: var(--color-bg);
+      font-weight: 700;
+    }
+
+    #half-classical .half-check {
+      background: var(--color-gold);
+    }
+
+    #half-modern .half-check {
+      background: var(--color-lapis);
+    }
+
+    .half.selected .half-check {
+      opacity: 1;
+      transform: scale(1);
+    }
+
+    /* =============================================
+       SUB-ERA CHIPS (revealed on expand)
+       ============================================= */
+    .chips-container {
+      position: relative;
+      z-index: 5;
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--sp-8);
+      justify-content: center;
+      padding: 0 var(--sp-12) var(--sp-12);
+      max-width: 340px;
+      opacity: 0;
+      transform: translateY(10px);
+      pointer-events: none;
+    }
+
+    .chips-container.visible {
+      pointer-events: auto;
+    }
+
+    .chip {
+      font-family: var(--font-amiri);
+      font-size: var(--font-chip);
+      padding: var(--sp-4) var(--sp-12);
+      border-radius: var(--radius-chip);
+      border: 1px solid;
+      cursor: pointer;
+      transition: background var(--dur-hover) var(--ease-standard),
+                  transform var(--dur-micro) var(--ease-standard),
+                  box-shadow var(--dur-hover) var(--ease-standard);
+      white-space: nowrap;
+      direction: rtl;
+      -webkit-tap-highlight-color: transparent;
+      min-height: 30px;
+      display: flex;
+      align-items: center;
+    }
+
+    .chip:active {
+      transform: scale(0.95);
+    }
+
+    /* Classical chips */
+    #half-classical .chip {
+      background: rgba(197, 160, 89, 0.06);
+      border-color: rgba(197, 160, 89, 0.25);
+      color: var(--color-gold);
+    }
+
+    #half-classical .chip:hover,
+    #half-classical .chip.active {
+      background: rgba(197, 160, 89, 0.16);
+      border-color: rgba(197, 160, 89, 0.60);
+      box-shadow: 0 0 8px 1px rgba(197, 160, 89, 0.15);
+    }
+
+    /* Modern chips */
+    #half-modern .chip {
+      background: rgba(74, 138, 191, 0.06);
+      border-color: rgba(74, 138, 191, 0.25);
+      color: var(--color-lapis);
+    }
+
+    #half-modern .chip:hover,
+    #half-modern .chip.active {
+      background: rgba(74, 138, 191, 0.16);
+      border-color: rgba(74, 138, 191, 0.55);
+      box-shadow: 0 0 8px 1px rgba(74, 138, 191, 0.15);
+    }
+
+    /* =============================================
+       BOTTOM BAR
+       ============================================= */
+    #bottom-bar {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--sp-12);
+      padding: var(--sp-12) var(--sp-24) calc(var(--sp-16) + env(safe-area-inset-bottom));
+    }
+
+    /* Progress dots */
+    #progress-dots {
+      display: flex;
+      gap: var(--sp-8);
+      align-items: center;
+    }
+
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(197, 160, 89, 0.20);
+      transition: background var(--dur-content) var(--ease-standard),
+                  width var(--dur-content) var(--ease-out-expo);
+    }
+
+    .dot.active {
+      background: var(--color-gold);
+      width: 18px;
+      border-radius: 3px;
+    }
+
+    /* Next button */
+    #btn-next {
+      font-family: var(--font-amiri);
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--color-bg);
+      background: var(--color-gold);
+      border: none;
+      border-radius: var(--radius-btn);
+      padding: var(--sp-12) var(--sp-48);
+      cursor: pointer;
+      min-height: 44px;
+      min-width: 140px;
+      letter-spacing: 0.05em;
+      transition: transform var(--dur-hover) var(--ease-spring),
+                  box-shadow var(--dur-hover) var(--ease-standard),
+                  opacity var(--dur-content) var(--ease-standard);
+      -webkit-tap-highlight-color: transparent;
+      opacity: 0.45;
+      pointer-events: none;
+    }
+
+    #btn-next.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    #btn-next:hover {
+      transform: scale(1.04);
+      box-shadow: 0 4px 20px rgba(197, 160, 89, 0.35);
+    }
+
+    #btn-next:active {
+      transform: scale(0.97);
+    }
+
+    /* =============================================
+       MOBILE STACK (≤600px or tall narrow)
+       ============================================= */
+    @media (max-width: 600px), (max-aspect-ratio: 2/3) {
+      #split-arena {
+        flex-direction: column;
+        padding: 0 var(--sp-12) var(--sp-8);
+        gap: 0;
+      }
+
+      #half-classical {
+        margin-inline-end: 0;
+        margin-block-end: var(--sp-8);
+        flex: 1;
+      }
+
+      #half-modern {
+        margin-inline-start: 0;
+        flex: 1;
+      }
+
+      #divider {
+        display: none;
+      }
+
+      .half.expanded {
+        flex: 1.7 !important;
+      }
+
+      .half.shrunk {
+        flex: 0.6 !important;
+      }
+    }
+
+    /* =============================================
+       REDUCED MOTION
+       ============================================= */
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+<div id="stage">
+
+  <!-- ============================================================
+       AMBIENT BACKGROUND
+       ============================================================ -->
+  <div id="ambient"></div>
+
+  <!-- ============================================================
+       OPTION BADGE
+       ============================================================ -->
+  <div id="option-badge" dir="ltr">Option A — Split Screen Morph</div>
+
+  <!-- ============================================================
+       HEADER
+       ============================================================ -->
+  <header id="header">
+    <div id="title-arabic">أي عصر يستهويك؟</div>
+    <div id="title-english" dir="ltr">Classical or Modern?</div>
+  </header>
+
+  <!-- ============================================================
+       SPLIT ARENA
+       ============================================================ -->
+  <div id="split-arena">
+
+    <!-- Glowing center divider -->
+    <div id="divider"></div>
+
+    <!-- ==================== CLASSICAL HALF ==================== -->
+    <div id="half-classical" class="half" role="button" aria-label="العصر الكلاسيكي" tabindex="0">
+
+      <!-- Arabesque SVG pattern -->
+      <div class="arabesque-bg" aria-hidden="true">
+        <svg viewBox="0 0 400 600" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <pattern id="arabesque" x="0" y="0" width="80" height="80" patternUnits="userSpaceOnUse">
+              <!-- 8-pointed star base -->
+              <g fill="none" stroke="#c5a059" stroke-width="0.8" opacity="0.9">
+                <polygon points="40,5 47,20 63,20 51,30 55,46 40,37 25,46 29,30 17,20 33,20" />
+                <!-- inner circle -->
+                <circle cx="40" cy="40" r="10" />
+                <!-- corner petals -->
+                <path d="M0,0 Q15,15 0,30" />
+                <path d="M80,0 Q65,15 80,30" />
+                <path d="M0,80 Q15,65 0,50" />
+                <path d="M80,80 Q65,65 80,50" />
+                <!-- cross connectors -->
+                <line x1="40" y1="0" x2="40" y2="27" />
+                <line x1="40" y1="53" x2="40" y2="80" />
+                <line x1="0" y1="40" x2="27" y2="40" />
+                <line x1="53" y1="40" x2="80" y2="40" />
+                <!-- diagonal connectors -->
+                <line x1="0" y1="0" x2="19" y2="19" />
+                <line x1="80" y1="0" x2="61" y2="19" />
+                <line x1="0" y1="80" x2="19" y2="61" />
+                <line x1="80" y1="80" x2="61" y2="61" />
+              </g>
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#arabesque)" />
+        </svg>
+      </div>
+
+      <!-- Hover glow -->
+      <div class="half-glow"></div>
+
+      <!-- Selection checkmark -->
+      <div class="half-check" aria-hidden="true">&#10003;</div>
+
+      <!-- Main content -->
+      <div class="half-inner">
+        <div class="half-label">كلاسيكي</div>
+        <div class="half-sublabel" dir="ltr">Classical</div>
+        <div class="half-date-range" dir="ltr">Pre-622 CE – 1923 CE</div>
+      </div>
+
+      <!-- Sub-era chips (revealed on expand) -->
+      <div class="chips-container" id="chips-classical" aria-label="العصور الكلاسيكية">
+        <button class="chip" data-era="pre-islamic">ما قبل الإسلام</button>
+        <button class="chip" data-era="early-islamic">صدر الإسلام</button>
+        <button class="chip" data-era="umayyad">أموي</button>
+        <button class="chip" data-era="abbasid">عباسي</button>
+        <button class="chip" data-era="andalusian">أندلسي</button>
+        <button class="chip" data-era="ottoman">عثماني</button>
+      </div>
+    </div>
+
+    <!-- ==================== MODERN HALF ==================== -->
+    <div id="half-modern" class="half" role="button" aria-label="العصر الحديث" tabindex="0">
+
+      <!-- Geometric accent SVG -->
+      <div class="geo-bg" aria-hidden="true">
+        <svg viewBox="0 0 400 600" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <pattern id="geo-modern" x="0" y="0" width="60" height="60" patternUnits="userSpaceOnUse">
+              <g fill="none" stroke="#4a8abf" stroke-width="0.6" opacity="0.9">
+                <!-- minimal grid + diamond -->
+                <rect x="10" y="10" width="40" height="40" />
+                <polygon points="30,5 55,30 30,55 5,30" />
+                <circle cx="30" cy="30" r="5" />
+                <line x1="30" y1="0" x2="30" y2="60" opacity="0.4" />
+                <line x1="0" y1="30" x2="60" y2="30" opacity="0.4" />
+              </g>
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#geo-modern)" />
+        </svg>
+      </div>
+
+      <!-- Hover glow -->
+      <div class="half-glow"></div>
+
+      <!-- Selection checkmark -->
+      <div class="half-check" aria-hidden="true">&#10003;</div>
+
+      <!-- Main content -->
+      <div class="half-inner">
+        <div class="half-label">حديث</div>
+        <div class="half-sublabel" dir="ltr">Modern</div>
+        <div class="half-date-range" dir="ltr">1900 CE – Present</div>
+      </div>
+
+      <!-- Sub-era chips (revealed on expand) -->
+      <div class="chips-container" id="chips-modern" aria-label="العصور الحديثة">
+        <button class="chip" data-era="modern">حديث (1900–1970)</button>
+        <button class="chip" data-era="contemporary">معاصر (1970–الآن)</button>
+      </div>
+    </div>
+
+  </div><!-- /split-arena -->
+
+  <!-- ============================================================
+       BOTTOM BAR
+       ============================================================ -->
+  <div id="bottom-bar">
+    <div id="progress-dots" aria-label="الخطوة 2 من 4" role="status">
+      <div class="dot"></div>
+      <div class="dot active"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+    </div>
+    <button id="btn-next" aria-label="التالي" disabled>التالي</button>
+  </div>
+
+</div><!-- /stage -->
+
+<script>
+  /* ============================================================
+     STATE
+     ============================================================ */
+  const state = {
+    classicalSelected: false,
+    modernSelected: false,
+    classicalExpanded: false,
+    modernExpanded: false,
+    selectedEras: new Set(),
+  };
+
+  /* ============================================================
+     ELEMENT REFS
+     ============================================================ */
+  const halfClassical   = document.getElementById('half-classical');
+  const halfModern      = document.getElementById('half-modern');
+  const chipsClassical  = document.getElementById('chips-classical');
+  const chipsModern     = document.getElementById('chips-modern');
+  const divider         = document.getElementById('divider');
+  const ambient         = document.getElementById('ambient');
+  const btnNext         = document.getElementById('btn-next');
+
+  /* ============================================================
+     EXPAND HALF
+     ============================================================ */
+  function expandHalf(side) {
+    const isClassical = side === 'classical';
+    const expandEl    = isClassical ? halfClassical  : halfModern;
+    const shrinkEl    = isClassical ? halfModern     : halfClassical;
+    const chipsEl     = isClassical ? chipsClassical : chipsModern;
+
+    /* mark state */
+    if (isClassical) {
+      state.classicalExpanded = true;
+      state.modernExpanded    = false;
+    } else {
+      state.modernExpanded    = true;
+      state.classicalExpanded = false;
+    }
+
+    /* toggle selection */
+    if (isClassical) {
+      state.classicalSelected = !state.classicalSelected;
+    } else {
+      state.modernSelected = !state.modernSelected;
+    }
+
+    /* DOM classes for flex sizing */
+    expandEl.classList.add('expanded');
+    expandEl.classList.remove('shrunk');
+    shrinkEl.classList.add('shrunk');
+    shrinkEl.classList.remove('expanded');
+
+    /* Update selection classes */
+    halfClassical.classList.toggle('selected', state.classicalSelected);
+    halfModern.classList.toggle('selected', state.modernSelected);
+
+    /* Fade out chips on the other side if they were visible */
+    const otherChips = isClassical ? chipsModern : chipsClassical;
+    gsap.to(otherChips, {
+      opacity: 0,
+      y: 10,
+      duration: 0.2,
+      ease: 'power2.in',
+      onComplete: () => {
+        otherChips.classList.remove('visible');
+        otherChips.style.pointerEvents = 'none';
+      },
+    });
+
+    /* Reveal chips on expanded side */
+    chipsEl.classList.add('visible');
+    gsap.fromTo(chipsEl,
+      { opacity: 0, y: 14 },
+      { opacity: 1, y: 0, duration: 0.4, ease: 'power3.out', delay: 0.22 }
+    );
+
+    /* Stagger animate chip pills */
+    const chips = chipsEl.querySelectorAll('.chip');
+    gsap.fromTo(chips,
+      { opacity: 0, scale: 0.85 },
+      {
+        opacity: 1, scale: 1,
+        duration: 0.28,
+        stagger: 0.055,
+        ease: 'back.out(1.4)',
+        delay: 0.28,
+      }
+    );
+
+    /* Ambient atmosphere shift */
+    ambient.classList.remove('warm', 'cool');
+    ambient.classList.add(isClassical ? 'warm' : 'cool');
+
+    /* Fade divider when a side is selected */
+    divider.classList.add('faded');
+
+    updateNextButton();
+  }
+
+  /* ============================================================
+     COLLAPSE (de-select a side)
+     ============================================================ */
+  function collapseSide(side) {
+    const isClassical = side === 'classical';
+    const collapseEl  = isClassical ? halfClassical  : halfModern;
+    const chipsEl     = isClassical ? chipsClassical : chipsModern;
+
+    if (isClassical) {
+      state.classicalExpanded = false;
+      state.classicalSelected = false;
+    } else {
+      state.modernExpanded = false;
+      state.modernSelected = false;
+    }
+
+    collapseEl.classList.remove('expanded', 'selected');
+
+    gsap.to(chipsEl, {
+      opacity: 0, y: 10,
+      duration: 0.18, ease: 'power2.in',
+      onComplete: () => {
+        chipsEl.classList.remove('visible');
+        chipsEl.style.pointerEvents = 'none';
+      },
+    });
+
+    /* If neither side is selected, restore equal halves + divider */
+    if (!state.classicalSelected && !state.modernSelected) {
+      halfClassical.classList.remove('shrunk', 'expanded');
+      halfModern.classList.remove('shrunk', 'expanded');
+      ambient.classList.remove('warm', 'cool');
+      divider.classList.remove('faded');
+    }
+
+    updateNextButton();
+  }
+
+  /* ============================================================
+     TAP HANDLERS
+     ============================================================ */
+  halfClassical.addEventListener('click', (e) => {
+    /* Chip tap shouldn't trigger half expand */
+    if (e.target.closest('.chip')) return;
+    if (state.classicalExpanded && state.classicalSelected) {
+      collapseSide('classical');
+    } else {
+      expandHalf('classical');
+    }
+  });
+
+  halfModern.addEventListener('click', (e) => {
+    if (e.target.closest('.chip')) return;
+    if (state.modernExpanded && state.modernSelected) {
+      collapseSide('modern');
+    } else {
+      expandHalf('modern');
+    }
+  });
+
+  /* Keyboard accessibility */
+  [halfClassical, halfModern].forEach((el) => {
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        el.click();
+      }
+    });
+  });
+
+  /* ============================================================
+     CHIP TOGGLE
+     ============================================================ */
+  document.querySelectorAll('.chip').forEach((chip) => {
+    chip.addEventListener('click', (e) => {
+      e.stopPropagation();
+      chip.classList.toggle('active');
+
+      const era = chip.dataset.era;
+      if (chip.classList.contains('active')) {
+        state.selectedEras.add(era);
+      } else {
+        state.selectedEras.delete(era);
+      }
+
+      /* Micro-scale feedback */
+      gsap.fromTo(chip, { scale: 0.92 }, { scale: 1, duration: 0.18, ease: 'back.out(2)' });
+
+      updateNextButton();
+    });
+  });
+
+  /* ============================================================
+     NEXT BUTTON STATE
+     ============================================================ */
+  function updateNextButton() {
+    const anySelected = state.classicalSelected || state.modernSelected;
+    btnNext.classList.toggle('active', anySelected);
+    btnNext.disabled = !anySelected;
+  }
+
+  /* ============================================================
+     ENTRANCE ANIMATION
+     ============================================================ */
+  (function initEntrance() {
+    const header = document.getElementById('header');
+    const arena  = document.getElementById('split-arena');
+    const bar    = document.getElementById('bottom-bar');
+
+    gsap.set([header, arena, bar], { opacity: 0, y: 24 });
+
+    const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+    tl.to(header, { opacity: 1, y: 0, duration: 0.55, delay: 0.1 })
+      .to(arena,  { opacity: 1, y: 0, duration: 0.55 }, '-=0.3')
+      .to(bar,    { opacity: 1, y: 0, duration: 0.4  }, '-=0.25');
+  })();
+
+  /* ============================================================
+     NEXT BUTTON CLICK (stub — would advance flow)
+     ============================================================ */
+  btnNext.addEventListener('click', () => {
+    gsap.to('#stage', {
+      opacity: 0, y: -20,
+      duration: 0.35, ease: 'power3.in',
+    });
+  });
+</script>
+</body>
+</html>

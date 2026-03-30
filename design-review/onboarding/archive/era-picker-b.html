@@ -1,0 +1,1112 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Era Picker — Option B: Time Portal</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@400;700&family=Forum&family=Amiri:wght@400;700&display=swap" rel="stylesheet" />
+
+  <!-- GSAP + plugins -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+
+  <style>
+    /* =============================================
+       DESIGN TOKENS
+       ============================================= */
+    :root {
+      /* Core palette */
+      --color-bg:               #0c0c0e;
+      --color-bg-deep:          #06060a;
+      --color-gold:             #c5a059;
+      --color-gold-bright:      #ddb96a;
+      --color-gold-dim:         rgba(197, 160, 89, 0.55);
+      --color-gold-faint:       rgba(197, 160, 89, 0.10);
+      --color-gold-glow:        rgba(197, 160, 89, 0.28);
+      --color-text-primary:     #e8dcc8;
+      --color-text-muted:       rgba(232, 220, 200, 0.50);
+
+      /* Classical portal — warm amber/gold */
+      --color-classical-surface:  rgba(30, 18, 8, 0.82);
+      --color-classical-ring:     rgba(197, 160, 89, 0.50);
+      --color-classical-glow:     rgba(197, 160, 89, 0.32);
+      --color-classical-glow-h:   rgba(197, 160, 89, 0.50);
+      --color-classical-inner:    rgba(60, 35, 10, 0.40);
+      --color-classical-accent:   #c5a059;
+
+      /* Modern portal — lapis/cool */
+      --color-modern-surface:     rgba(8, 14, 30, 0.82);
+      --color-modern-ring:        rgba(74, 138, 191, 0.42);
+      --color-modern-glow:        rgba(74, 138, 191, 0.26);
+      --color-modern-glow-h:      rgba(74, 138, 191, 0.45);
+      --color-modern-inner:       rgba(20, 50, 100, 0.40);
+      --color-modern-accent:      #4a8abf;
+      --color-lapis:              #4a8abf;
+      --color-lapis-bright:       #6aaee0;
+
+      /* Typography */
+      --font-arabic:              'Reem Kufi', serif;
+      --font-english:             'Forum', serif;
+      --font-amiri:               'Amiri', serif;
+
+      --font-title:               clamp(1.35rem, 3.8vw, 1.9rem);
+      --font-subtitle:            clamp(0.72rem, 1.8vw, 0.88rem);
+      --font-portal-label:        clamp(1.8rem, 6vw, 2.8rem);
+      --font-portal-sub:          clamp(0.62rem, 1.5vw, 0.76rem);
+      --font-chip:                clamp(0.65rem, 1.8vw, 0.78rem);
+      --font-label-badge:         0.65rem;
+
+      /* Spacing */
+      --sp-4:   4px;
+      --sp-8:   8px;
+      --sp-12:  12px;
+      --sp-16:  16px;
+      --sp-20:  20px;
+      --sp-24:  24px;
+      --sp-32:  32px;
+      --sp-48:  48px;
+
+      /* Motion */
+      --ease-out-expo:   cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-spring:     cubic-bezier(0.34, 1.56, 0.64, 1);
+      --ease-in-quart:   cubic-bezier(0.76, 0, 0.24, 1);
+      --ease-power3:     cubic-bezier(0.22, 1, 0.36, 1);
+
+      --dur-portal:      0.55s;
+      --dur-content:     0.32s;
+      --dur-hover:       0.20s;
+      --dur-micro:       0.11s;
+
+      /* Layout */
+      --radius-portal:   20px;
+      --radius-chip:     100px;
+      --radius-btn:      100px;
+    }
+
+    /* =============================================
+       RESET + BASE
+       ============================================= */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--color-bg-deep);
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+      overscroll-behavior: none;
+    }
+
+    /* =============================================
+       STAGE
+       ============================================= */
+    #stage {
+      position: relative;
+      width: 100vw;
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    /* =============================================
+       AMBIENT CANVAS (background star field)
+       ============================================= */
+    #ambient-canvas {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Background temperature overlay */
+    #temp-overlay {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 1;
+      opacity: 0;
+      transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1),
+                  background 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    #temp-overlay.warm {
+      opacity: 1;
+      background: radial-gradient(ellipse 70% 60% at 30% 70%, rgba(80, 35, 5, 0.28) 0%, transparent 65%);
+    }
+
+    #temp-overlay.cool {
+      opacity: 1;
+      background: radial-gradient(ellipse 70% 60% at 70% 70%, rgba(10, 35, 90, 0.28) 0%, transparent 65%);
+    }
+
+    #temp-overlay.both {
+      opacity: 1;
+      background:
+        radial-gradient(ellipse 50% 50% at 25% 70%, rgba(80, 35, 5, 0.20) 0%, transparent 60%),
+        radial-gradient(ellipse 50% 50% at 75% 70%, rgba(10, 35, 90, 0.20) 0%, transparent 60%);
+    }
+
+    /* =============================================
+       OPTION BADGE
+       ============================================= */
+    #option-badge {
+      position: absolute;
+      top: var(--sp-16);
+      left: var(--sp-16);
+      z-index: 100;
+      font-family: var(--font-english);
+      font-size: var(--font-label-badge);
+      color: var(--color-gold-dim);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      pointer-events: none;
+    }
+
+    /* =============================================
+       HEADER
+       ============================================= */
+    #header {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      padding: var(--sp-32) var(--sp-16) var(--sp-20);
+    }
+
+    #title-arabic {
+      font-family: var(--font-amiri);
+      font-size: var(--font-title);
+      font-weight: 700;
+      color: var(--color-gold);
+      letter-spacing: 0.02em;
+      line-height: 1.3;
+    }
+
+    #title-english {
+      font-family: var(--font-english);
+      font-size: var(--font-subtitle);
+      color: var(--color-text-muted);
+      letter-spacing: 0.20em;
+      text-transform: uppercase;
+      margin-top: var(--sp-4);
+      direction: ltr;
+    }
+
+    /* =============================================
+       PORTALS AREA
+       ============================================= */
+    #portals-area {
+      position: relative;
+      z-index: 5;
+      flex: 1;
+      width: 100%;
+      max-width: 780px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: center;
+      gap: var(--sp-20);
+      padding: 0 var(--sp-20) var(--sp-8);
+    }
+
+    /* =============================================
+       PORTAL CARD
+       ============================================= */
+    .portal {
+      position: relative;
+      flex: 1;
+      /* aspect-ratio controlled by min/max height */
+      min-height: 280px;
+      max-height: 500px;
+      border-radius: var(--radius-portal);
+      cursor: pointer;
+      overflow: hidden;
+      /* perspective for inner 3D depth parallax */
+      perspective: 600px;
+      transform-style: preserve-3d;
+      transition:
+        box-shadow var(--dur-hover) var(--ease-power3),
+        border-color var(--dur-hover) var(--ease-power3),
+        flex var(--dur-portal) var(--ease-out-expo);
+      will-change: flex, box-shadow;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      border: 1px solid;
+    }
+
+    /* ===== Classical portal ===== */
+    #portal-classical {
+      background: var(--color-classical-surface);
+      border-color: var(--color-classical-ring);
+    }
+
+    #portal-classical:hover,
+    #portal-classical.hovered {
+      box-shadow:
+        0 0 30px 6px var(--color-classical-glow-h),
+        0 0 60px 15px rgba(197, 160, 89, 0.12),
+        inset 0 0 20px 0 rgba(197, 160, 89, 0.04);
+    }
+
+    #portal-classical.open {
+      border-color: rgba(197, 160, 89, 0.70);
+      box-shadow:
+        0 0 50px 12px var(--color-classical-glow-h),
+        0 0 100px 30px rgba(197, 160, 89, 0.15),
+        inset 0 0 40px 0 rgba(197, 160, 89, 0.06);
+    }
+
+    /* ===== Modern portal ===== */
+    #portal-modern {
+      background: var(--color-modern-surface);
+      border-color: var(--color-modern-ring);
+    }
+
+    #portal-modern:hover,
+    #portal-modern.hovered {
+      box-shadow:
+        0 0 30px 6px var(--color-modern-glow-h),
+        0 0 60px 15px rgba(74, 138, 191, 0.11),
+        inset 0 0 20px 0 rgba(74, 138, 191, 0.04);
+    }
+
+    #portal-modern.open {
+      border-color: rgba(74, 138, 191, 0.65);
+      box-shadow:
+        0 0 50px 12px var(--color-modern-glow-h),
+        0 0 100px 30px rgba(74, 138, 191, 0.14),
+        inset 0 0 40px 0 rgba(74, 138, 191, 0.06);
+    }
+
+    /* =============================================
+       PORTAL FACE (3D inner layer — parallax target)
+       ============================================= */
+    .portal-face {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: var(--sp-8);
+      padding: var(--sp-24);
+      transform-style: preserve-3d;
+      /* parallax moves this layer */
+      transition: transform 0.12s ease;
+      will-change: transform;
+    }
+
+    /* =============================================
+       PORTAL PATTERN LAYER
+       ============================================= */
+    .portal-pattern {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    .portal-pattern svg {
+      width: 100%;
+      height: 100%;
+      opacity: 0.10;
+      transition: opacity var(--dur-portal) ease;
+    }
+
+    .portal.open .portal-pattern svg {
+      opacity: 0.18;
+    }
+
+    /* =============================================
+       PORTAL DEPTH RINGS (inner glow rings)
+       ============================================= */
+    .portal-rings {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .ring {
+      position: absolute;
+      border-radius: 50%;
+      border: 1px solid;
+      transform: scale(0.5);
+      opacity: 0;
+      transition:
+        transform var(--dur-portal) var(--ease-out-expo),
+        opacity var(--dur-portal) var(--ease-out-expo);
+    }
+
+    #portal-classical .ring {
+      border-color: rgba(197, 160, 89, 0.20);
+    }
+
+    #portal-modern .ring {
+      border-color: rgba(74, 138, 191, 0.20);
+    }
+
+    .portal.open .ring:nth-child(1) {
+      width: 80%;
+      height: 80%;
+      transform: scale(1);
+      opacity: 1;
+      transition-delay: 0.05s;
+    }
+
+    .portal.open .ring:nth-child(2) {
+      width: 60%;
+      height: 60%;
+      transform: scale(1);
+      opacity: 0.6;
+      transition-delay: 0.10s;
+    }
+
+    .portal.open .ring:nth-child(3) {
+      width: 40%;
+      height: 40%;
+      transform: scale(1);
+      opacity: 0.35;
+      transition-delay: 0.15s;
+    }
+
+    /* =============================================
+       PORTAL LABEL AREA
+       ============================================= */
+    .portal-label-wrap {
+      position: relative;
+      z-index: 5;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--sp-4);
+      /* translate forward in Z for depth illusion */
+      transform: translateZ(20px);
+      transition: transform var(--dur-portal) var(--ease-out-expo);
+    }
+
+    .portal.open .portal-label-wrap {
+      transform: translateZ(40px);
+    }
+
+    .portal-label {
+      font-size: var(--font-portal-label);
+      font-weight: 700;
+      line-height: 1.0;
+      transition: transform var(--dur-portal) var(--ease-out-expo),
+                  letter-spacing var(--dur-portal) var(--ease-out-expo);
+    }
+
+    #portal-classical .portal-label {
+      font-family: var(--font-amiri);
+      color: var(--color-gold);
+    }
+
+    #portal-modern .portal-label {
+      font-family: var(--font-arabic);
+      color: var(--color-lapis-bright);
+    }
+
+    .portal.open .portal-label {
+      letter-spacing: 0.05em;
+    }
+
+    .portal-sublabel {
+      font-family: var(--font-english);
+      font-size: var(--font-portal-sub);
+      letter-spacing: 0.20em;
+      text-transform: uppercase;
+      color: var(--color-text-muted);
+      direction: ltr;
+    }
+
+    .portal-centuries {
+      font-family: var(--font-english);
+      font-size: clamp(0.52rem, 1.2vw, 0.62rem);
+      letter-spacing: 0.12em;
+      color: var(--color-text-muted);
+      opacity: 0.55;
+      direction: ltr;
+    }
+
+    /* Selection checkmark */
+    .portal-check {
+      position: absolute;
+      top: var(--sp-12);
+      inset-inline-end: var(--sp-12);
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 20;
+      opacity: 0;
+      transform: scale(0.4) rotate(-90deg);
+      transition:
+        opacity var(--dur-content) var(--ease-spring),
+        transform var(--dur-content) var(--ease-spring);
+      font-size: 0.65rem;
+      color: var(--color-bg-deep);
+      font-weight: 700;
+    }
+
+    #portal-classical .portal-check {
+      background: var(--color-gold);
+      box-shadow: 0 0 8px 2px rgba(197, 160, 89, 0.40);
+    }
+
+    #portal-modern .portal-check {
+      background: var(--color-lapis);
+      box-shadow: 0 0 8px 2px rgba(74, 138, 191, 0.40);
+    }
+
+    .portal.open .portal-check {
+      opacity: 1;
+      transform: scale(1) rotate(0deg);
+    }
+
+    /* =============================================
+       CHIPS INSIDE PORTAL (revealed when open)
+       ============================================= */
+    .portal-chips {
+      position: relative;
+      z-index: 5;
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--sp-8);
+      justify-content: center;
+      max-width: 260px;
+      opacity: 0;
+      transform: translateZ(10px) translateY(12px);
+      pointer-events: none;
+      /* hide until portal opens */
+    }
+
+    .portal.open .portal-chips {
+      pointer-events: auto;
+    }
+
+    .pchip {
+      font-family: var(--font-amiri);
+      font-size: var(--font-chip);
+      padding: 5px var(--sp-12);
+      border-radius: var(--radius-chip);
+      border: 1px solid;
+      cursor: pointer;
+      white-space: nowrap;
+      direction: rtl;
+      -webkit-tap-highlight-color: transparent;
+      min-height: 28px;
+      display: flex;
+      align-items: center;
+      transition:
+        background var(--dur-hover) ease,
+        transform var(--dur-micro) ease,
+        box-shadow var(--dur-hover) ease;
+    }
+
+    .pchip:active {
+      transform: scale(0.94);
+    }
+
+    #portal-classical .pchip {
+      background: rgba(197, 160, 89, 0.07);
+      border-color: rgba(197, 160, 89, 0.28);
+      color: var(--color-gold);
+    }
+
+    #portal-classical .pchip:hover,
+    #portal-classical .pchip.active {
+      background: rgba(197, 160, 89, 0.18);
+      border-color: rgba(197, 160, 89, 0.65);
+      box-shadow: 0 0 10px 2px rgba(197, 160, 89, 0.18);
+    }
+
+    #portal-modern .pchip {
+      background: rgba(74, 138, 191, 0.07);
+      border-color: rgba(74, 138, 191, 0.28);
+      color: var(--color-lapis-bright);
+    }
+
+    #portal-modern .pchip:hover,
+    #portal-modern .pchip.active {
+      background: rgba(74, 138, 191, 0.18);
+      border-color: rgba(74, 138, 191, 0.60);
+      box-shadow: 0 0 10px 2px rgba(74, 138, 191, 0.18);
+    }
+
+    /* =============================================
+       BOTTOM BAR
+       ============================================= */
+    #bottom-bar {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--sp-12);
+      padding: var(--sp-12) var(--sp-24) calc(var(--sp-16) + env(safe-area-inset-bottom));
+    }
+
+    #progress-dots {
+      display: flex;
+      gap: var(--sp-8);
+      align-items: center;
+    }
+
+    .dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(197, 160, 89, 0.20);
+      transition:
+        background var(--dur-content) ease,
+        width var(--dur-content) var(--ease-out-expo);
+    }
+
+    .dot.active {
+      background: var(--color-gold);
+      width: 18px;
+      border-radius: 3px;
+    }
+
+    #btn-next {
+      font-family: var(--font-amiri);
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--color-bg-deep);
+      background: var(--color-gold);
+      border: none;
+      border-radius: var(--radius-btn);
+      padding: var(--sp-12) var(--sp-48);
+      cursor: pointer;
+      min-height: 44px;
+      min-width: 140px;
+      letter-spacing: 0.05em;
+      transition:
+        transform var(--dur-hover) var(--ease-spring),
+        box-shadow var(--dur-hover) ease,
+        opacity var(--dur-content) ease;
+      -webkit-tap-highlight-color: transparent;
+      opacity: 0.45;
+      pointer-events: none;
+    }
+
+    #btn-next.active {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    #btn-next:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 24px rgba(197, 160, 89, 0.40);
+    }
+
+    #btn-next:active {
+      transform: scale(0.97);
+    }
+
+    /* =============================================
+       MOBILE — stack vertically
+       ============================================= */
+    @media (max-width: 600px), (max-aspect-ratio: 2/3) {
+      #portals-area {
+        flex-direction: column;
+        gap: var(--sp-16);
+        padding: 0 var(--sp-16) var(--sp-8);
+        align-items: stretch;
+      }
+
+      .portal {
+        min-height: 160px;
+        max-height: 280px;
+        flex: 1;
+      }
+
+      .portal.open {
+        min-height: 220px;
+        max-height: 340px;
+      }
+    }
+
+    /* =============================================
+       REDUCED MOTION
+       ============================================= */
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+
+<body>
+<div id="stage">
+
+  <!-- ============================================================
+       AMBIENT CANVAS
+       ============================================================ -->
+  <canvas id="ambient-canvas"></canvas>
+  <div id="temp-overlay"></div>
+
+  <!-- ============================================================
+       OPTION BADGE
+       ============================================================ -->
+  <div id="option-badge" dir="ltr">Option B — Time Portal</div>
+
+  <!-- ============================================================
+       HEADER
+       ============================================================ -->
+  <header id="header">
+    <div id="title-arabic">أي عصر يستهويك؟</div>
+    <div id="title-english" dir="ltr">Classical or Modern?</div>
+  </header>
+
+  <!-- ============================================================
+       PORTALS
+       ============================================================ -->
+  <div id="portals-area">
+
+    <!-- =================== CLASSICAL PORTAL =================== -->
+    <div id="portal-classical" class="portal"
+         role="button" aria-label="البوابة الكلاسيكية" tabindex="0">
+
+      <!-- Arabesque fill pattern -->
+      <div class="portal-pattern" aria-hidden="true">
+        <svg viewBox="0 0 300 500" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <pattern id="ara-c" x="0" y="0" width="60" height="60" patternUnits="userSpaceOnUse">
+              <g fill="none" stroke="#c5a059" stroke-width="0.7">
+                <!-- 8-point star -->
+                <polygon points="30,3 35,16 49,16 38,24 42,38 30,30 18,38 22,24 11,16 25,16" />
+                <circle cx="30" cy="30" r="8" />
+                <line x1="30" y1="0" x2="30" y2="22" opacity="0.5" />
+                <line x1="30" y1="38" x2="30" y2="60" opacity="0.5" />
+                <line x1="0" y1="30" x2="22" y2="30" opacity="0.5" />
+                <line x1="38" y1="30" x2="60" y2="30" opacity="0.5" />
+                <path d="M0,0 Q12,12 0,24" opacity="0.5" />
+                <path d="M60,0 Q48,12 60,24" opacity="0.5" />
+                <path d="M0,60 Q12,48 0,36" opacity="0.5" />
+                <path d="M60,60 Q48,48 60,36" opacity="0.5" />
+              </g>
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#ara-c)" />
+        </svg>
+      </div>
+
+      <!-- Depth rings (shown when open) -->
+      <div class="portal-rings" aria-hidden="true">
+        <div class="ring"></div>
+        <div class="ring"></div>
+        <div class="ring"></div>
+      </div>
+
+      <!-- Selection checkmark -->
+      <div class="portal-check" aria-hidden="true">&#10003;</div>
+
+      <!-- Parallax face (inner 3D layer) -->
+      <div class="portal-face" id="face-classical">
+        <div class="portal-label-wrap">
+          <div class="portal-label">كلاسيكي</div>
+          <div class="portal-sublabel" dir="ltr">Classical</div>
+          <div class="portal-centuries" dir="ltr">Pre-622 CE — 1923 CE</div>
+        </div>
+
+        <!-- Chips: hidden until open, animated in by JS -->
+        <div class="portal-chips" id="pchips-classical">
+          <button class="pchip" data-era="pre-islamic">ما قبل الإسلام</button>
+          <button class="pchip" data-era="early-islamic">صدر الإسلام</button>
+          <button class="pchip" data-era="umayyad">أموي</button>
+          <button class="pchip" data-era="abbasid">عباسي</button>
+          <button class="pchip" data-era="andalusian">أندلسي</button>
+          <button class="pchip" data-era="ottoman">عثماني</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- =================== MODERN PORTAL =================== -->
+    <div id="portal-modern" class="portal"
+         role="button" aria-label="البوابة الحديثة" tabindex="0">
+
+      <!-- Geometric line pattern -->
+      <div class="portal-pattern" aria-hidden="true">
+        <svg viewBox="0 0 300 500" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <pattern id="geo-m" x="0" y="0" width="50" height="50" patternUnits="userSpaceOnUse">
+              <g fill="none" stroke="#4a8abf" stroke-width="0.5">
+                <!-- offset grid of concentric squares -->
+                <rect x="8" y="8" width="34" height="34" />
+                <rect x="16" y="16" width="18" height="18" />
+                <circle cx="25" cy="25" r="4" />
+                <!-- corner marks -->
+                <line x1="0" y1="0" x2="7" y2="7" opacity="0.5" />
+                <line x1="50" y1="0" x2="43" y2="7" opacity="0.5" />
+                <line x1="0" y1="50" x2="7" y2="43" opacity="0.5" />
+                <line x1="50" y1="50" x2="43" y2="43" opacity="0.5" />
+              </g>
+            </pattern>
+          </defs>
+          <rect width="100%" height="100%" fill="url(#geo-m)" />
+        </svg>
+      </div>
+
+      <!-- Depth rings -->
+      <div class="portal-rings" aria-hidden="true">
+        <div class="ring"></div>
+        <div class="ring"></div>
+        <div class="ring"></div>
+      </div>
+
+      <!-- Selection checkmark -->
+      <div class="portal-check" aria-hidden="true">&#10003;</div>
+
+      <!-- Parallax face -->
+      <div class="portal-face" id="face-modern">
+        <div class="portal-label-wrap">
+          <div class="portal-label">حديث</div>
+          <div class="portal-sublabel" dir="ltr">Modern</div>
+          <div class="portal-centuries" dir="ltr">1900 CE — Present</div>
+        </div>
+
+        <div class="portal-chips" id="pchips-modern">
+          <button class="pchip" data-era="modern">حديث (1900–1970)</button>
+          <button class="pchip" data-era="contemporary">معاصر (1970–الآن)</button>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /portals-area -->
+
+  <!-- ============================================================
+       BOTTOM BAR
+       ============================================================ -->
+  <div id="bottom-bar">
+    <div id="progress-dots" aria-label="الخطوة 2 من 4" role="status">
+      <div class="dot"></div>
+      <div class="dot active"></div>
+      <div class="dot"></div>
+      <div class="dot"></div>
+    </div>
+    <button id="btn-next" aria-label="التالي" disabled>التالي</button>
+  </div>
+
+</div><!-- /stage -->
+
+<script>
+  /* ============================================================
+     AMBIENT STAR FIELD CANVAS
+     ============================================================ */
+  (function initStarField() {
+    const canvas = document.getElementById('ambient-canvas');
+    const ctx    = canvas.getContext('2d');
+
+    let W, H, stars;
+
+    function resize() {
+      W = canvas.width  = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+    }
+
+    function buildStars(count) {
+      stars = Array.from({ length: count }, () => ({
+        x:     Math.random() * W,
+        y:     Math.random() * H,
+        r:     Math.random() * 0.8 + 0.2,
+        alpha: Math.random() * 0.35 + 0.05,
+        speed: Math.random() * 0.003 + 0.001,
+        phase: Math.random() * Math.PI * 2,
+      }));
+    }
+
+    let raf;
+    let t = 0;
+
+    function draw() {
+      ctx.clearRect(0, 0, W, H);
+      t += 0.012;
+
+      stars.forEach((s) => {
+        const a = s.alpha * (0.6 + 0.4 * Math.sin(t * s.speed * 60 + s.phase));
+        ctx.beginPath();
+        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(232, 220, 200, ${a})`;
+        ctx.fill();
+      });
+
+      raf = requestAnimationFrame(draw);
+    }
+
+    resize();
+    buildStars(90);
+    draw();
+
+    window.addEventListener('resize', () => {
+      resize();
+      buildStars(90);
+    });
+  })();
+
+  /* ============================================================
+     STATE
+     ============================================================ */
+  const state = {
+    classicalOpen: false,
+    modernOpen:    false,
+    selectedEras:  new Set(),
+  };
+
+  /* ============================================================
+     ELEMENT REFS
+     ============================================================ */
+  const portalClassical  = document.getElementById('portal-classical');
+  const portalModern     = document.getElementById('portal-modern');
+  const faceClassical    = document.getElementById('face-classical');
+  const faceModern       = document.getElementById('face-modern');
+  const pchipsClassical  = document.getElementById('pchips-classical');
+  const pchipsModern     = document.getElementById('pchips-modern');
+  const tempOverlay      = document.getElementById('temp-overlay');
+  const btnNext          = document.getElementById('btn-next');
+
+  /* ============================================================
+     OPEN PORTAL
+     ============================================================ */
+  function openPortal(side) {
+    const isClassical = side === 'classical';
+    const portalEl    = isClassical ? portalClassical : portalModern;
+    const chipsEl     = isClassical ? pchipsClassical : pchipsModern;
+
+    if (isClassical) {
+      state.classicalOpen = !state.classicalOpen;
+    } else {
+      state.modernOpen = !state.modernOpen;
+    }
+
+    const isNowOpen = isClassical ? state.classicalOpen : state.modernOpen;
+
+    if (isNowOpen) {
+      /* Portal opens — scale pulse, glow intensifies */
+      portalEl.classList.add('open');
+
+      /* GSAP: scale bounce */
+      gsap.fromTo(portalEl,
+        { scale: 1 },
+        {
+          scale: 1.03,
+          duration: 0.18,
+          ease: 'power2.out',
+          yoyo: true,
+          repeat: 1,
+        }
+      );
+
+      /* Chips fade in with stagger */
+      const chips = chipsEl.querySelectorAll('.pchip');
+      gsap.to(chipsEl, {
+        opacity: 1,
+        y: 0,
+        duration: 0.38,
+        delay: 0.18,
+        ease: 'power3.out',
+        onStart: () => {
+          /* reset transform from CSS translateZ */
+          chipsEl.style.transform = 'translateZ(10px) translateY(0)';
+        },
+      });
+
+      gsap.fromTo(chips,
+        { opacity: 0, scale: 0.80, y: 8 },
+        {
+          opacity: 1, scale: 1, y: 0,
+          duration: 0.26,
+          stagger: 0.06,
+          ease: 'back.out(1.6)',
+          delay: 0.22,
+        }
+      );
+    } else {
+      /* Portal closes */
+      portalEl.classList.remove('open');
+
+      gsap.to(chipsEl, {
+        opacity: 0, y: 8,
+        duration: 0.18,
+        ease: 'power2.in',
+        onComplete: () => {
+          chipsEl.style.transform = 'translateZ(10px) translateY(12px)';
+        },
+      });
+    }
+
+    /* Temperature overlay */
+    const cOpen = state.classicalOpen;
+    const mOpen = state.modernOpen;
+
+    tempOverlay.classList.remove('warm', 'cool', 'both');
+    if (cOpen && mOpen) {
+      tempOverlay.classList.add('both');
+    } else if (cOpen) {
+      tempOverlay.classList.add('warm');
+    } else if (mOpen) {
+      tempOverlay.classList.add('cool');
+    }
+
+    updateNextButton();
+  }
+
+  /* ============================================================
+     PARALLAX ON MOUSE / TOUCH MOVE
+     Moves each portal-face in 3D based on cursor offset
+     ============================================================ */
+  function attachParallax(portalEl, faceEl) {
+    let bounds;
+
+    function onMove(x, y) {
+      if (!bounds) bounds = portalEl.getBoundingClientRect();
+      const cx   = bounds.left + bounds.width  / 2;
+      const cy   = bounds.top  + bounds.height / 2;
+      const dx   = (x - cx) / (bounds.width  / 2); /* -1 to 1 */
+      const dy   = (y - cy) / (bounds.height / 2);
+      const rotX = dy * -6;   /* tilt toward cursor */
+      const rotY = dx *  6;
+      faceEl.style.transform = `rotateX(${rotX}deg) rotateY(${rotY}deg)`;
+    }
+
+    function onLeave() {
+      faceEl.style.transform = 'rotateX(0deg) rotateY(0deg)';
+      bounds = null;
+    }
+
+    portalEl.addEventListener('mousemove', (e) => {
+      onMove(e.clientX, e.clientY);
+    });
+
+    portalEl.addEventListener('mouseleave', onLeave);
+
+    portalEl.addEventListener('touchmove', (e) => {
+      const t = e.touches[0];
+      onMove(t.clientX, t.clientY);
+    }, { passive: true });
+
+    portalEl.addEventListener('touchend', onLeave);
+  }
+
+  attachParallax(portalClassical, faceClassical);
+  attachParallax(portalModern,    faceModern);
+
+  /* ============================================================
+     TAP HANDLERS
+     ============================================================ */
+  portalClassical.addEventListener('click', (e) => {
+    if (e.target.closest('.pchip')) return;
+    openPortal('classical');
+  });
+
+  portalModern.addEventListener('click', (e) => {
+    if (e.target.closest('.pchip')) return;
+    openPortal('modern');
+  });
+
+  [portalClassical, portalModern].forEach((el) => {
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        el.click();
+      }
+    });
+  });
+
+  /* ============================================================
+     CHIP TOGGLE
+     ============================================================ */
+  document.querySelectorAll('.pchip').forEach((chip) => {
+    chip.addEventListener('click', (e) => {
+      e.stopPropagation();
+      chip.classList.toggle('active');
+
+      const era = chip.dataset.era;
+      if (chip.classList.contains('active')) {
+        state.selectedEras.add(era);
+      } else {
+        state.selectedEras.delete(era);
+      }
+
+      gsap.fromTo(chip,
+        { scale: 0.90 },
+        { scale: 1, duration: 0.20, ease: 'back.out(2.2)' }
+      );
+
+      updateNextButton();
+    });
+  });
+
+  /* ============================================================
+     NEXT BUTTON
+     ============================================================ */
+  function updateNextButton() {
+    const anyOpen = state.classicalOpen || state.modernOpen;
+    btnNext.classList.toggle('active', anyOpen);
+    btnNext.disabled = !anyOpen;
+  }
+
+  /* ============================================================
+     ENTRANCE ANIMATION
+     ============================================================ */
+  (function initEntrance() {
+    const header  = document.getElementById('header');
+    const portals = document.getElementById('portals-area');
+    const bar     = document.getElementById('bottom-bar');
+
+    gsap.set([header, portals, bar], { opacity: 0, y: 28 });
+
+    const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+    tl.to(header,  { opacity: 1, y: 0, duration: 0.55, delay: 0.12 })
+      .to(portals,
+        {
+          opacity: 1, y: 0, duration: 0.50,
+          /* Each portal staggers in from the sides */
+          onStart() {
+            gsap.fromTo(portalClassical,
+              { opacity: 0, x: -30 },
+              { opacity: 1, x: 0, duration: 0.55, ease: 'power3.out', delay: 0 }
+            );
+            gsap.fromTo(portalModern,
+              { opacity: 0, x: 30 },
+              { opacity: 1, x: 0, duration: 0.55, ease: 'power3.out', delay: 0.10 }
+            );
+          },
+        },
+        '-=0.25'
+      )
+      .to(bar, { opacity: 1, y: 0, duration: 0.38 }, '-=0.20');
+  })();
+
+  /* ============================================================
+     NEXT BUTTON CLICK (stub)
+     ============================================================ */
+  btnNext.addEventListener('click', () => {
+    gsap.to('#stage', {
+      opacity: 0, scale: 0.97,
+      duration: 0.30, ease: 'power3.in',
+    });
+  });
+</script>
+</body>
+</html>

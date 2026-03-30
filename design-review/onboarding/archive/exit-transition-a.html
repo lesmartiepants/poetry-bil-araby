@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Exit Transition — Option A: Golden Ring Wipe</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@400;700&family=Forum&family=Amiri:wght@400;700&display=swap" rel="stylesheet" />
+
+  <!-- GSAP -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+
+  <style>
+    /* =============================================
+       DESIGN TOKENS
+       ============================================= */
+    :root {
+      /* Palette */
+      --color-bg:               #0c0c0e;
+      --color-surface:          rgba(255, 255, 255, 0.05);
+      --color-surface-border:   rgba(197, 160, 89, 0.18);
+      --color-gold:             #c5a059;
+      --color-gold-light:       #e2c07a;
+      --color-gold-dim:         rgba(197, 160, 89, 0.55);
+      --color-gold-faint:       rgba(197, 160, 89, 0.10);
+      --color-text-primary:     #e8dcc8;
+      --color-text-muted:       rgba(232, 220, 200, 0.45);
+      --color-stone:            #c8bfb0;
+
+      /* Typography */
+      --font-arabic:            'Amiri', 'Reem Kufi', serif;
+      --font-ui:                'Reem Kufi', serif;
+      --font-english:           'Forum', serif;
+      --font-label:             system-ui, sans-serif;
+
+      --font-title:             clamp(1.1rem, 3vw, 1.5rem);
+      --font-poet:              clamp(0.75rem, 2vw, 0.9rem);
+      --font-verse:             clamp(1rem, 2.5vw, 1.25rem);
+      --font-chip:              clamp(0.72rem, 1.8vw, 0.82rem);
+      --font-btn:               clamp(0.9rem, 2vw, 1.05rem);
+      --font-label-size:        0.65rem;
+
+      /* Spacing */
+      --space-xs:               4px;
+      --space-sm:               8px;
+      --space-md:               16px;
+      --space-lg:               24px;
+      --space-xl:               40px;
+
+      /* Motion */
+      --ease-out-expo:          cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-in-quart:          cubic-bezier(0.76, 0, 0.24, 1);
+      --ease-out-quart:         cubic-bezier(0.25, 1, 0.5, 1);
+      --ease-spring:            cubic-bezier(0.34, 1.56, 0.64, 1);
+
+      --dur-hero:               0.7s;
+      --dur-section:            0.45s;
+      --dur-content:            0.3s;
+      --dur-hover:              0.18s;
+      --dur-press:              0.1s;
+
+      /* Elevation */
+      --shadow-card:            0 8px 40px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(0, 0, 0, 0.4);
+      --shadow-btn-glow:        0 0 20px rgba(197, 160, 89, 0.25);
+
+      /* Layout */
+      --card-max-width:         min(420px, 88vw);
+      --card-radius:            16px;
+    }
+
+    /* =============================================
+       RESET + BASE
+       ============================================= */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--color-bg);
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+      overscroll-behavior-y: contain;
+    }
+
+    /* =============================================
+       OPTION LABEL
+       ============================================= */
+    #option-label {
+      position: fixed;
+      top: var(--space-md);
+      right: var(--space-md);
+      font-family: var(--font-label);
+      font-size: var(--font-label-size);
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: rgba(197, 160, 89, 0.4);
+      z-index: 100;
+      pointer-events: none;
+    }
+
+    /* =============================================
+       MAIN STAGE
+       ============================================= */
+    #stage {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    /* =============================================
+       SECTION A: POEM DESTINATION (behind)
+       ============================================= */
+    #poem-scene {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--color-bg);
+      z-index: 1;
+    }
+
+    .poem-card {
+      width: var(--card-max-width);
+      padding: var(--space-xl) var(--space-lg);
+      background: var(--color-surface);
+      border: 1px solid var(--color-surface-border);
+      border-radius: var(--card-radius);
+      box-shadow: var(--shadow-card);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-md);
+      text-align: center;
+      direction: rtl;
+
+      /* Start invisible — GSAP will reveal it */
+      opacity: 0;
+      transform: scale(0.95);
+      will-change: opacity, transform;
+    }
+
+    .poem-title {
+      font-family: var(--font-arabic);
+      font-size: var(--font-title);
+      font-weight: 700;
+      color: var(--color-gold);
+      line-height: 1.4;
+      letter-spacing: 0.01em;
+      direction: rtl;
+    }
+
+    .poem-poet {
+      font-family: var(--font-ui);
+      font-size: var(--font-poet);
+      font-weight: 400;
+      color: var(--color-text-muted);
+      letter-spacing: 0.04em;
+      direction: rtl;
+    }
+
+    .poem-divider {
+      width: 40px;
+      height: 1px;
+      background: linear-gradient(
+        to left,
+        transparent,
+        var(--color-gold-dim),
+        transparent
+      );
+    }
+
+    .poem-verse {
+      font-family: var(--font-arabic);
+      font-size: var(--font-verse);
+      font-weight: 400;
+      color: var(--color-stone);
+      line-height: 1.85;
+      letter-spacing: 0.01em;
+      direction: rtl;
+    }
+
+    /* =============================================
+       SECTION B: ONBOARDING OVERLAY (in front)
+       ============================================= */
+    #onboarding-scene {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-lg);
+      z-index: 2;
+      will-change: opacity;
+    }
+
+    /* Theme chip row */
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-sm);
+      justify-content: center;
+      max-width: min(340px, 86vw);
+      direction: rtl;
+    }
+
+    .chip {
+      padding: 6px 14px;
+      min-height: 34px;
+      border: 1px solid var(--color-gold-dim);
+      border-radius: 100px;
+      font-family: var(--font-ui);
+      font-size: var(--font-chip);
+      color: var(--color-gold);
+      background: var(--color-gold-faint);
+      cursor: default;
+      display: flex;
+      align-items: center;
+      direction: rtl;
+    }
+
+    .chip.selected {
+      background: rgba(197, 160, 89, 0.22);
+      border-color: var(--color-gold);
+      color: var(--color-gold-light);
+    }
+
+    /* The call-to-action button */
+    #cta-btn {
+      position: relative;
+      padding: 0 var(--space-xl);
+      min-height: 52px;
+      min-width: 180px;
+
+      background: var(--color-gold);
+      border: none;
+      border-radius: 100px;
+
+      font-family: var(--font-ui);
+      font-size: var(--font-btn);
+      font-weight: 700;
+      color: var(--color-bg);
+      cursor: pointer;
+      z-index: 3;
+      box-shadow: var(--shadow-btn-glow);
+
+      /* GPU-friendly transitions only */
+      transition:
+        transform  var(--dur-hover) var(--ease-out-expo),
+        box-shadow var(--dur-hover) var(--ease-out-expo),
+        opacity    var(--dur-hover) var(--ease-out-expo);
+
+      will-change: transform, opacity;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #cta-btn:hover {
+      transform: scale(1.04);
+      box-shadow: 0 0 32px rgba(197, 160, 89, 0.45);
+    }
+
+    #cta-btn:active {
+      transform: scale(0.97);
+      transition-duration: var(--dur-press);
+    }
+
+    #cta-btn.morphing {
+      pointer-events: none;
+      cursor: default;
+    }
+
+    /* =============================================
+       GOLDEN RING OVERLAY (the transition portal)
+       ============================================= */
+    #ring-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    /*
+     * The ring is rendered on canvas so we can draw
+     * a radial gradient donut expanding from the button center.
+     * The canvas lives here as a child.
+     */
+    #ring-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="option-label">Option A — Golden Ring Wipe</div>
+
+  <div id="stage">
+
+    <!-- ==========================================
+         POEM DESTINATION (revealed behind)
+         ========================================== -->
+    <section id="poem-scene" aria-label="Poem display">
+      <article class="poem-card" dir="rtl" lang="ar">
+        <h2 class="poem-title">يا ليل الصبّ متى غده</h2>
+        <p class="poem-poet">الحصري القيرواني</p>
+        <div class="poem-divider" role="separator" aria-hidden="true"></div>
+        <p class="poem-verse">
+          أقيامُ الساعةِ موعِدُهُ<br />أم قيامي حين أشاهدُهُ
+        </p>
+      </article>
+    </section>
+
+    <!-- ==========================================
+         ONBOARDING OVERLAY
+         ========================================== -->
+    <section id="onboarding-scene" aria-label="Onboarding complete">
+      <!-- Selected theme chips (simulates completed onboarding) -->
+      <div class="chip-row" dir="rtl" lang="ar" aria-label="Selected themes">
+        <span class="chip selected">الغزل</span>
+        <span class="chip selected">الحنين</span>
+        <span class="chip">الحكمة</span>
+        <span class="chip selected">الطبيعة</span>
+        <span class="chip">المدح</span>
+      </div>
+
+      <!-- The trigger button -->
+      <button id="cta-btn" dir="rtl" lang="ar" aria-label="Show me poetry">
+        أرني شعرًا
+      </button>
+    </section>
+
+    <!-- ==========================================
+         TRANSITION LAYER (canvas-based ring)
+         ========================================== -->
+    <div id="ring-overlay" aria-hidden="true">
+      <canvas id="ring-canvas"></canvas>
+    </div>
+
+  </div><!-- /#stage -->
+
+  <script>
+    /* =============================================
+       TOKENS (JS mirrors CSS custom properties)
+       ============================================= */
+    const T = {
+      colorBg:       '#0c0c0e',
+      colorGold:     '#c5a059',
+      colorGoldRgb:  [197, 160, 89],
+      /* Gold radial gradient stops for the ring interior */
+      ringGradInner: 'rgba(235, 196, 110, 0.95)',
+      ringGradMid:   'rgba(197, 160, 89, 0.85)',
+      ringGradOuter: 'rgba(160, 120, 55, 0.70)',
+    };
+
+    /* =============================================
+       CANVAS SETUP
+       ============================================= */
+    const canvas = document.getElementById('ring-canvas');
+    const ctx    = canvas.getContext('2d');
+    let W, H;
+
+    function resizeCanvas() {
+      W = canvas.width  = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    /* =============================================
+       RING DRAW FUNCTION
+       Philosophy: the "portal" is a radial-gradient
+       filled circle that punches a transparent hole
+       from the center outward — like a gold ring
+       expanding to swallow the viewport.
+
+       Parameters:
+         cx, cy   — origin (button center in viewport px)
+         radius   — outer radius of the solid ring disc
+         holeRatio — 0..1: fraction of radius that is transparent
+                      (0 = solid disc, 1 = pure ring outline)
+         alpha    — master opacity of the entire ring
+       ============================================= */
+    function drawRing(cx, cy, radius, holeRatio, alpha) {
+      ctx.clearRect(0, 0, W, H);
+
+      if (radius <= 0 || alpha <= 0) return;
+
+      // The ring is a solid radial-gradient disc with
+      // the center clipped out using globalCompositeOperation.
+      ctx.save();
+      ctx.globalAlpha = alpha;
+
+      // 1. Draw the outer gradient disc (luxurious gold radial)
+      const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, radius);
+      grad.addColorStop(0,    T.ringGradInner);
+      grad.addColorStop(0.35, T.ringGradMid);
+      grad.addColorStop(0.75, T.ringGradOuter);
+      grad.addColorStop(1,    'rgba(140, 100, 40, 0.20)');
+
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(cx, cy, radius, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 2. Punch the transparent hole using destination-out
+      if (holeRatio > 0.01) {
+        const holeRadius = radius * holeRatio;
+        ctx.globalCompositeOperation = 'destination-out';
+        // Soft-edge hole: radial gradient from opaque center to transparent edge
+        const holeGrad = ctx.createRadialGradient(
+          cx, cy, holeRadius * 0.5,
+          cx, cy, holeRadius
+        );
+        holeGrad.addColorStop(0, 'rgba(0,0,0,1)');
+        holeGrad.addColorStop(1, 'rgba(0,0,0,0)');
+
+        ctx.fillStyle = holeGrad;
+        ctx.beginPath();
+        ctx.arc(cx, cy, holeRadius, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalCompositeOperation = 'source-over';
+      }
+
+      ctx.restore();
+    }
+
+    /* =============================================
+       ANIMATION STATE
+       ============================================= */
+    let animating   = false;
+    let rafId       = null;
+
+    // Diagonal of the viewport — the ring must reach this
+    function viewportDiagonal() {
+      return Math.sqrt(W * W + H * H);
+    }
+
+    /* =============================================
+       TRANSITION ORCHESTRATION
+       Philosophy: Button morphs → disc expands from
+       button center → disc turns to ring (hole grows
+       from inside) → ring fades → poem revealed.
+
+       We use GSAP for element animations and canvas
+       for the ring itself (drawn frame-by-frame).
+       ============================================= */
+    function runTransition(btnEl) {
+      if (animating) return;
+      animating = true;
+      btnEl.classList.add('morphing');
+
+      /* -- Capture button's viewport position -- */
+      const rect = btnEl.getBoundingClientRect();
+      const cx   = rect.left + rect.width  / 2;
+      const cy   = rect.top  + rect.height / 2;
+      const btnW = rect.width;
+      const btnH = rect.height;
+
+      /* -- GSAP timeline -- */
+      const tl = gsap.timeline({
+        defaults: { ease: 'none' }
+      });
+
+      /*
+       * Stage 1 (0 – 0.3s): Button morphs to a circle
+       * We shrink the button visually and simultaneously
+       * start drawing the ring at tiny radius.
+       */
+      const ringState = {
+        radius:    btnW / 2,
+        holeRatio: 0,
+        alpha:     1,
+      };
+
+      // Fade onboarding scene content but NOT the button yet
+      tl.to('#onboarding-scene .chip-row', {
+        opacity: 0,
+        duration: 0.2,
+        ease: 'power2.in',
+      }, 0);
+
+      // Shrink + fade the button text simultaneously
+      tl.to(btnEl, {
+        opacity: 0,
+        scale: 0.6,
+        duration: 0.22,
+        ease: 'power2.in',
+        transformOrigin: '50% 50%',
+      }, 0);
+
+      /*
+       * Stage 2 (0.2 – 0.8s): Ring expands outward.
+       * holeRatio starts at 0 (solid disc) and opens
+       * to ~0.55 at peak to create the "ring" shape.
+       */
+      const diagonal = viewportDiagonal();
+
+      tl.to(ringState, {
+        radius: diagonal * 0.55,
+        holeRatio: 0.52,
+        duration: 0.62,
+        ease: 'power4.out',
+        onUpdate: () => drawRing(cx, cy, ringState.radius, ringState.holeRatio, ringState.alpha),
+        onStart: () => {
+          // Ensure button is gone before ring fully expands
+          gsap.set(btnEl, { display: 'none' });
+        },
+      }, 0.18);
+
+      /*
+       * Stage 3 (0.65 – 1.1s): Ring continues expanding,
+       * hole opens further (inner void grows), and the
+       * entire ring fades out — revealing the poem behind.
+       */
+      tl.to(ringState, {
+        radius: diagonal * 1.1,
+        holeRatio: 0.88,
+        alpha: 0,
+        duration: 0.48,
+        ease: 'power2.in',
+        onUpdate: () => drawRing(cx, cy, ringState.radius, ringState.holeRatio, ringState.alpha),
+        onComplete: () => {
+          ctx.clearRect(0, 0, W, H);
+          animating = false;
+        },
+      }, 0.62);
+
+      /*
+       * Stage 4 (0.5 – 1.1s): Onboarding scene fades
+       * to fully transparent as ring dominates.
+       */
+      tl.to('#onboarding-scene', {
+        opacity: 0,
+        duration: 0.35,
+        ease: 'power2.in',
+        onComplete: () => {
+          document.getElementById('onboarding-scene').style.display = 'none';
+        },
+      }, 0.40);
+
+      /*
+       * Stage 5 (0.70 – 1.1s): Poem card rises in.
+       * scale 0.95 → 1.0, opacity 0 → 1
+       */
+      tl.to('.poem-card', {
+        opacity: 1,
+        scale: 1,
+        duration: 0.45,
+        ease: 'power3.out',
+      }, 0.68);
+    }
+
+    /* =============================================
+       INIT
+       ============================================= */
+    window.addEventListener('load', () => {
+      const btn = document.getElementById('cta-btn');
+      btn.addEventListener('click', () => runTransition(btn));
+      btn.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        runTransition(btn);
+      }, { passive: false });
+    });
+  </script>
+
+</body>
+</html>

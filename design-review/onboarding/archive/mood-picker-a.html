@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Mood Picker — Option A: Floating Orbs</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@400;700&family=Forum&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <style>
+    /* ============================================================
+       DESIGN TOKENS
+       ============================================================ */
+    :root {
+      --color-bg:              #0c0c0e;
+      --color-gold:            #c5a059;
+      --color-gold-dim:        rgba(197, 160, 89, 0.25);
+      --color-gold-glow:       rgba(197, 160, 89, 0.5);
+      --color-text-primary:    #f0e8d8;
+      --color-text-muted:      rgba(240, 232, 216, 0.55);
+      --color-glass-fill:      rgba(255, 255, 255, 0.04);
+      --color-glass-border:    rgba(255, 255, 255, 0.08);
+      --font-arabic:           'Reem Kufi', serif;
+      --font-english:          'Forum', serif;
+      --orb-size:              80px;
+      --ease-out-expo:         cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-spring:           cubic-bezier(0.34, 1.56, 0.64, 1);
+      --duration-hover:        0.18s;
+      --duration-select:       0.4s;
+    }
+
+    /* ============================================================
+       RESET + BASE
+       ============================================================ */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--color-bg);
+      color: var(--color-text-primary);
+      font-family: var(--font-arabic);
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+    }
+
+    /* ============================================================
+       OPTION LABEL
+       ============================================================ */
+    .option-label {
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      font-family: var(--font-english);
+      font-size: 0.7rem;
+      letter-spacing: 0.12em;
+      color: var(--color-gold);
+      opacity: 0.7;
+      z-index: 100;
+      text-transform: uppercase;
+      user-select: none;
+    }
+
+    /* ============================================================
+       BACKGROUND CANVAS (gradient shifts)
+       ============================================================ */
+    #bg-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ============================================================
+       PARTICLE CANVAS
+       ============================================================ */
+    #particle-canvas {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    /* ============================================================
+       LAYOUT
+       ============================================================ */
+    .screen {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0 16px;
+      padding-top: env(safe-area-inset-top, 0px);
+      padding-bottom: calc(env(safe-area-inset-bottom, 0px) + 80px);
+      z-index: 5;
+    }
+
+    /* ============================================================
+       HEADER
+       ============================================================ */
+    .header {
+      text-align: center;
+      padding-top: 48px;
+      flex-shrink: 0;
+      z-index: 5;
+    }
+
+    .title-arabic {
+      font-family: var(--font-arabic);
+      font-size: clamp(1.5rem, 5vw, 2rem);
+      font-weight: 700;
+      color: var(--color-gold);
+      line-height: 1.2;
+      letter-spacing: 0.02em;
+    }
+
+    .title-english {
+      font-family: var(--font-english);
+      font-size: clamp(0.75rem, 2vw, 0.9rem);
+      color: var(--color-text-muted);
+      margin-top: 6px;
+      letter-spacing: 0.08em;
+    }
+
+    /* ============================================================
+       ORB CLOUD CONTAINER
+       ============================================================ */
+    .orb-cloud {
+      position: relative;
+      flex: 1;
+      width: 100%;
+      max-width: 420px;
+      min-height: 320px;
+    }
+
+    /* ============================================================
+       INDIVIDUAL ORBS
+       ============================================================ */
+    .orb {
+      position: absolute;
+      width: var(--orb-size);
+      height: var(--orb-size);
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      user-select: none;
+      transform: translate(-50%, -50%);
+      will-change: transform, opacity;
+      z-index: 6;
+
+      /* Glass fill */
+      background: var(--color-glass-fill);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1.5px solid var(--color-glass-border);
+
+      /* Smooth transitions for non-GSAP states */
+      transition:
+        border-color var(--duration-hover) var(--ease-out-expo),
+        box-shadow var(--duration-hover) var(--ease-out-expo),
+        background var(--duration-hover) var(--ease-out-expo);
+    }
+
+    .orb.selected {
+      border-color: var(--orb-color, var(--color-gold));
+      box-shadow:
+        0 0 18px 4px color-mix(in srgb, var(--orb-color, var(--color-gold)) 40%, transparent),
+        inset 0 0 12px color-mix(in srgb, var(--orb-color, var(--color-gold)) 15%, transparent);
+      background: color-mix(in srgb, var(--orb-color, var(--color-gold)) 12%, rgba(255,255,255,0.04));
+    }
+
+    .orb-name-arabic {
+      font-family: var(--font-arabic);
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--color-text-primary);
+      line-height: 1;
+      transition: color var(--duration-hover) var(--ease-out-expo);
+      pointer-events: none;
+    }
+
+    .orb-name-english {
+      font-family: var(--font-english);
+      font-size: 0.6rem;
+      color: var(--color-text-muted);
+      margin-top: 3px;
+      letter-spacing: 0.05em;
+      pointer-events: none;
+    }
+
+    .orb.selected .orb-name-arabic {
+      color: var(--orb-color, var(--color-gold));
+    }
+
+    /* ============================================================
+       BOTTOM CONTROLS
+       ============================================================ */
+    .bottom-controls {
+      position: fixed;
+      bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
+      left: 0;
+      right: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 16px;
+      z-index: 20;
+      pointer-events: none;
+    }
+
+    /* ============================================================
+       NEXT BUTTON
+       ============================================================ */
+    .btn-next {
+      font-family: var(--font-arabic);
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--color-gold);
+      background: transparent;
+      border: 1.5px solid var(--color-gold);
+      border-radius: 999px;
+      padding: 12px 40px;
+      min-height: 48px;
+      cursor: pointer;
+      letter-spacing: 0.04em;
+      pointer-events: auto;
+      position: relative;
+      overflow: hidden;
+
+      /* Glow effect via box-shadow */
+      box-shadow: 0 0 0 0 var(--color-gold-glow);
+      transition:
+        box-shadow 0.25s var(--ease-out-expo),
+        background 0.25s var(--ease-out-expo),
+        color 0.25s var(--ease-out-expo);
+
+      opacity: 0;
+      transform: translateY(12px);
+    }
+
+    .btn-next.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .btn-next:hover,
+    .btn-next:focus-visible {
+      box-shadow: 0 0 20px 6px var(--color-gold-glow);
+      background: rgba(197, 160, 89, 0.08);
+      outline: none;
+    }
+
+    .btn-next:active {
+      transform: scale(0.97);
+      transition-duration: 0.08s;
+    }
+
+    /* Shimmer sweep on hover */
+    .btn-next::after {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 60%;
+      height: 100%;
+      background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(197, 160, 89, 0.2),
+        transparent
+      );
+      transition: left 0.5s ease;
+      pointer-events: none;
+    }
+
+    .btn-next:hover::after {
+      left: 150%;
+    }
+
+    /* ============================================================
+       PROGRESS DOTS
+       ============================================================ */
+    .progress-dots {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      pointer-events: none;
+    }
+
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      border: 1.5px solid var(--color-gold);
+      transition: background 0.3s ease, transform 0.3s var(--ease-spring);
+    }
+
+    .dot.active {
+      background: var(--color-gold);
+      transform: scale(1.2);
+    }
+  </style>
+</head>
+<body>
+
+  <span class="option-label">Option A</span>
+
+  <!-- Background gradient canvas -->
+  <canvas id="bg-canvas"></canvas>
+
+  <!-- Particle burst canvas -->
+  <canvas id="particle-canvas"></canvas>
+
+  <div class="screen">
+    <header class="header">
+      <h1 class="title-arabic">كيف تشعر الآن؟</h1>
+      <p class="title-english" dir="ltr">How are you feeling?</p>
+    </header>
+
+    <!-- Orbs are injected by JS into this container -->
+    <div class="orb-cloud" id="orb-cloud" aria-label="اختر مشاعرك"></div>
+  </div>
+
+  <!-- Bottom UI: next button + dots -->
+  <div class="bottom-controls">
+    <button class="btn-next" id="btn-next" aria-label="التالي" aria-hidden="true">التالي</button>
+    <div class="progress-dots" role="list" aria-label="الخطوات">
+      <div class="dot active" role="listitem"></div>
+      <div class="dot" role="listitem"></div>
+      <div class="dot" role="listitem"></div>
+      <div class="dot" role="listitem"></div>
+    </div>
+  </div>
+
+  <script>
+    /* ============================================================
+       DATA
+       ============================================================ */
+    const EMOTIONS = [
+      { ar: 'فرح',   en: 'Joy',        color: '#c5a059' },
+      { ar: 'كآبة',  en: 'Melancholy', color: '#1E3A6E' },
+      { ar: 'غضب',   en: 'Anger',      color: '#8B2500' },
+      { ar: 'أمل',   en: 'Hope',       color: '#4A7C59' },
+      { ar: 'يأس',   en: 'Despair',    color: '#4A4A4A' },
+      { ar: 'دهشة',  en: 'Wonder',     color: '#6A4C93' },
+      { ar: 'فخر',   en: 'Pride',      color: '#B8860B' },
+      { ar: 'وحدة',  en: 'Loneliness', color: '#2E3A5F' },
+      { ar: 'حنين',  en: 'Nostalgia',  color: '#8B7355' },
+    ];
+
+    /* ============================================================
+       ORGANIC ORB POSITIONS (% of container, center-anchor)
+       Designed to feel like a loose cloud, not a grid.
+       ============================================================ */
+    const ORB_POSITIONS = [
+      { cx: 50, cy: 18 },   // top center
+      { cx: 18, cy: 32 },   // left upper
+      { cx: 82, cy: 28 },   // right upper
+      { cx: 30, cy: 52 },   // left mid
+      { cx: 70, cy: 55 },   // right mid
+      { cx: 50, cy: 50 },   // center
+      { cx: 15, cy: 72 },   // left lower
+      { cx: 82, cy: 72 },   // right lower
+      { cx: 48, cy: 78 },   // bottom center
+    ];
+
+    /* ============================================================
+       FLOATING ANIMATION PARAMS (per orb)
+       Each orb gets a unique phase, amplitude, and duration
+       ============================================================ */
+    const FLOAT_PARAMS = [
+      { amp: 9,  dur: 5.2, phase: 0    },
+      { amp: 7,  dur: 4.8, phase: 1.1  },
+      { amp: 11, dur: 6.1, phase: 2.3  },
+      { amp: 8,  dur: 5.5, phase: 0.7  },
+      { amp: 6,  dur: 4.4, phase: 3.1  },
+      { amp: 10, dur: 5.8, phase: 1.9  },
+      { amp: 7,  dur: 4.6, phase: 2.7  },
+      { amp: 9,  dur: 5.0, phase: 0.4  },
+      { amp: 8,  dur: 5.3, phase: 1.5  },
+    ];
+
+    const MAX_SELECTIONS = 3;
+    let selectedIndices = new Set();
+    let orbElements = [];
+
+    /* ============================================================
+       BACKGROUND CANVAS — ambient gradient that shifts on selection
+       ============================================================ */
+    const bgCanvas = document.getElementById('bg-canvas');
+    const bgCtx = bgCanvas.getContext('2d');
+    let bgState = { r: 12, g: 12, b: 14, mixR: 12, mixG: 12, mixB: 14, alpha: 0 };
+
+    function resizeBgCanvas() {
+      bgCanvas.width = window.innerWidth;
+      bgCanvas.height = window.innerHeight;
+    }
+
+    function hexToRgb(hex) {
+      const r = parseInt(hex.slice(1, 3), 16);
+      const g = parseInt(hex.slice(3, 5), 16);
+      const b = parseInt(hex.slice(5, 7), 16);
+      return { r, g, b };
+    }
+
+    function paintBg() {
+      const w = bgCanvas.width;
+      const h = bgCanvas.height;
+      bgCtx.clearRect(0, 0, w, h);
+
+      // Base dark background
+      bgCtx.fillStyle = `rgb(${bgState.r},${bgState.g},${bgState.b})`;
+      bgCtx.fillRect(0, 0, w, h);
+
+      // Emotion color overlay vignette
+      if (bgState.alpha > 0) {
+        const grad = bgCtx.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, Math.max(w, h) * 0.7);
+        grad.addColorStop(0, `rgba(${bgState.mixR},${bgState.mixG},${bgState.mixB},${bgState.alpha * 0.18})`);
+        grad.addColorStop(1, 'rgba(0,0,0,0)');
+        bgCtx.fillStyle = grad;
+        bgCtx.fillRect(0, 0, w, h);
+      }
+    }
+
+    function shiftBgToColor(hex) {
+      const { r, g, b } = hexToRgb(hex);
+      gsap.to(bgState, {
+        mixR: r, mixG: g, mixB: b, alpha: 1,
+        duration: 0.7,
+        ease: 'power2.out',
+        onUpdate: paintBg,
+      });
+    }
+
+    function clearBgShift() {
+      gsap.to(bgState, {
+        alpha: 0,
+        duration: 0.5,
+        ease: 'power2.out',
+        onUpdate: paintBg,
+      });
+    }
+
+    /* ============================================================
+       PARTICLE CANVAS — burst on selection
+       ============================================================ */
+    const pCanvas = document.getElementById('particle-canvas');
+    const pCtx = pCanvas.getContext('2d');
+    let particles = [];
+
+    function resizePCanvas() {
+      pCanvas.width = window.innerWidth;
+      pCanvas.height = window.innerHeight;
+    }
+
+    function spawnParticles(x, y, color) {
+      const COUNT = 15;
+      const { r, g, b } = hexToRgb(color);
+      for (let i = 0; i < COUNT; i++) {
+        const angle = (i / COUNT) * Math.PI * 2;
+        const speed = 2.5 + Math.random() * 3;
+        particles.push({
+          x, y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          alpha: 1,
+          radius: 2 + Math.random() * 3,
+          r, g, b,
+          life: 1,
+        });
+      }
+    }
+
+    function tickParticles() {
+      pCtx.clearRect(0, 0, pCanvas.width, pCanvas.height);
+      particles = particles.filter(p => p.life > 0);
+      for (const p of particles) {
+        p.x += p.vx;
+        p.y += p.vy;
+        p.vx *= 0.94;
+        p.vy *= 0.94;
+        p.life -= 0.025;
+        p.alpha = p.life;
+
+        pCtx.beginPath();
+        pCtx.arc(p.x, p.y, p.radius * p.life, 0, Math.PI * 2);
+        pCtx.fillStyle = `rgba(${p.r},${p.g},${p.b},${p.alpha})`;
+        pCtx.fill();
+      }
+      requestAnimationFrame(tickParticles);
+    }
+
+    /* ============================================================
+       BUILD ORBS
+       ============================================================ */
+    function buildOrbs() {
+      const cloud = document.getElementById('orb-cloud');
+      const cloudRect = cloud.getBoundingClientRect();
+      const W = cloudRect.width;
+      const H = cloudRect.height;
+
+      EMOTIONS.forEach((emotion, idx) => {
+        const pos = ORB_POSITIONS[idx];
+        const orb = document.createElement('div');
+        orb.className = 'orb';
+        orb.setAttribute('role', 'button');
+        orb.setAttribute('aria-pressed', 'false');
+        orb.setAttribute('aria-label', `${emotion.ar} — ${emotion.en}`);
+        orb.setAttribute('tabindex', '0');
+        orb.style.setProperty('--orb-color', emotion.color);
+        orb.style.left = `${pos.cx}%`;
+        orb.style.top = `${pos.cy}%`;
+
+        // Initial translucent border in emotion color
+        orb.style.borderColor = `color-mix(in srgb, ${emotion.color} 30%, rgba(255,255,255,0.08))`;
+
+        orb.innerHTML = `
+          <span class="orb-name-arabic">${emotion.ar}</span>
+          <span class="orb-name-english" dir="ltr">${emotion.en}</span>
+        `;
+
+        // Float animation
+        const fp = FLOAT_PARAMS[idx];
+        gsap.to(orb, {
+          y: `+=${fp.amp}`,
+          duration: fp.dur,
+          ease: 'sine.inOut',
+          repeat: -1,
+          yoyo: true,
+          delay: fp.phase,
+        });
+
+        // Entrance stagger
+        gsap.from(orb, {
+          opacity: 0,
+          scale: 0.6,
+          duration: 0.5,
+          delay: 0.3 + idx * 0.06,
+          ease: 'back.out(1.7)',
+        });
+
+        orb.addEventListener('click', () => handleOrbTap(idx, orb, emotion));
+        orb.addEventListener('keydown', e => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            handleOrbTap(idx, orb, emotion);
+          }
+        });
+
+        cloud.appendChild(orb);
+        orbElements[idx] = orb;
+      });
+    }
+
+    /* ============================================================
+       TAP HANDLER
+       ============================================================ */
+    function handleOrbTap(idx, orb, emotion) {
+      const wasSelected = selectedIndices.has(idx);
+
+      if (!wasSelected && selectedIndices.size >= MAX_SELECTIONS) return;
+
+      if (wasSelected) {
+        selectedIndices.delete(idx);
+        orb.classList.remove('selected');
+        orb.setAttribute('aria-pressed', 'false');
+
+        gsap.to(orb, {
+          scale: 1,
+          duration: 0.25,
+          ease: 'power2.out',
+        });
+      } else {
+        selectedIndices.add(idx);
+        orb.classList.add('selected');
+        orb.setAttribute('aria-pressed', 'true');
+
+        // Pulse: 1.0 → 1.15 → 1.05
+        gsap.timeline()
+          .to(orb, { scale: 1.15, duration: 0.18, ease: 'power2.out' })
+          .to(orb, { scale: 1.05, duration: 0.22, ease: 'power2.inOut' });
+
+        // Particle burst — need screen coords
+        const rect = orb.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        spawnParticles(cx, cy, emotion.color);
+
+        // Shift background gradient
+        shiftBgToColor(emotion.color);
+      }
+
+      // Background: if nothing selected, clear
+      if (selectedIndices.size === 0) clearBgShift();
+
+      updateNextButton();
+    }
+
+    /* ============================================================
+       NEXT BUTTON
+       ============================================================ */
+    const btnNext = document.getElementById('btn-next');
+
+    function updateNextButton() {
+      if (selectedIndices.size > 0) {
+        btnNext.classList.add('visible');
+        btnNext.setAttribute('aria-hidden', 'false');
+        gsap.to(btnNext, { opacity: 1, y: 0, duration: 0.4, ease: 'back.out(1.4)' });
+      } else {
+        gsap.to(btnNext, {
+          opacity: 0, y: 12, duration: 0.25, ease: 'power2.in',
+          onComplete: () => {
+            btnNext.classList.remove('visible');
+            btnNext.setAttribute('aria-hidden', 'true');
+          }
+        });
+      }
+    }
+
+    btnNext.addEventListener('click', () => {
+      // Pulse confirmation animation before advancing
+      gsap.timeline()
+        .to(btnNext, { scale: 0.95, duration: 0.1, ease: 'power2.in' })
+        .to(btnNext, { scale: 1.05, duration: 0.15, ease: 'power2.out' })
+        .to(btnNext, { scale: 1, duration: 0.1, ease: 'power2.inOut' });
+      // In a real app: proceed to next step
+    });
+
+    /* ============================================================
+       INIT
+       ============================================================ */
+    function init() {
+      resizeBgCanvas();
+      resizePCanvas();
+      paintBg();
+
+      // Defer orb build until layout is settled
+      requestAnimationFrame(() => {
+        buildOrbs();
+        tickParticles();
+      });
+    }
+
+    window.addEventListener('resize', () => {
+      resizeBgCanvas();
+      resizePCanvas();
+      paintBg();
+    });
+
+    init();
+  </script>
+</body>
+</html>

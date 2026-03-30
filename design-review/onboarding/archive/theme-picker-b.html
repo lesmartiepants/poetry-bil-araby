@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Theme Picker — Option B: Mosaic Tiles</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@400;700&family=Forum&display=swap" rel="stylesheet" />
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+
+  <style>
+    /* =============================================
+       DESIGN TOKENS
+       ============================================= */
+    :root {
+      --color-bg:               #0c0c0e;
+      --color-gold:             #c5a059;
+      --color-gold-dim:         rgba(197, 160, 89, 0.55);
+      --color-gold-faint:       rgba(197, 160, 89, 0.07);
+      --color-gold-glow:        rgba(197, 160, 89, 0.30);
+      --color-lapis:            #1a3a5c;
+      --color-lapis-mid:        #2a5a8c;
+      --color-lapis-light:      #4a8abf;
+      --color-text-primary:     #e8dcc8;
+      --color-text-muted:       rgba(232, 220, 200, 0.40);
+      --color-tile-bg:          rgba(255, 255, 255, 0.028);
+      --color-tile-border:      rgba(197, 160, 89, 0.18);
+      --color-tile-border-sel:  rgba(197, 160, 89, 0.85);
+      --color-tile-bg-sel:      rgba(197, 160, 89, 0.10);
+      --color-glass-blur:       blur(12px);
+
+      --font-arabic:            'Reem Kufi', serif;
+      --font-english:           'Forum', serif;
+
+      --tile-radius:            12px;
+      --tile-gap:               8px;
+
+      --ease-out-expo:          cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-spring:            cubic-bezier(0.34, 1.56, 0.64, 1);
+      --ease-out-quart:         cubic-bezier(0.25, 1, 0.5, 1);
+      --ease-in-quart:          cubic-bezier(0.76, 0, 0.24, 1);
+
+      --dur-major:   0.7s;
+      --dur-content: 0.38s;
+      --dur-hover:   0.18s;
+      --dur-micro:   0.10s;
+    }
+
+    /* =============================================
+       RESET + BASE
+       ============================================= */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      background: var(--color-bg);
+      color: var(--color-text-primary);
+      font-family: var(--font-arabic);
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+      overscroll-behavior-y: contain;
+    }
+
+    /* Desktop: fixed full screen */
+    @media (min-width: 481px) {
+      html, body {
+        height: 100%;
+        overflow: hidden;
+      }
+    }
+
+    /* =============================================
+       OPTION LABEL
+       ============================================= */
+    .option-label {
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      font-family: var(--font-english);
+      font-size: 0.65rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--color-text-muted);
+      z-index: 200;
+    }
+
+    /* =============================================
+       LAYOUT
+       ============================================= */
+    .screen {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100dvh;
+      padding: 0 16px;
+    }
+
+    @media (min-width: 481px) {
+      .screen {
+        height: 100%;
+        overflow: hidden;
+        padding: 0 24px;
+      }
+    }
+
+    /* =============================================
+       HEADER
+       ============================================= */
+    .header {
+      text-align: center;
+      padding: 28px 0 16px;
+      flex-shrink: 0;
+      opacity: 0;
+      transform: translateY(-14px);
+    }
+
+    .title-arabic {
+      font-family: var(--font-arabic);
+      font-weight: 700;
+      font-size: clamp(1.5rem, 4vw, 2.1rem);
+      color: var(--color-gold);
+      line-height: 1.2;
+      letter-spacing: 0.02em;
+    }
+
+    .subtitle {
+      font-family: var(--font-arabic);
+      font-weight: 400;
+      font-size: clamp(0.75rem, 2vw, 0.88rem);
+      color: var(--color-text-muted);
+      margin-top: 5px;
+    }
+
+    /* =============================================
+       RIBBON SVG (connection layer above tiles)
+       ============================================= */
+    #ribbon-svg {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 5;
+      overflow: visible;
+    }
+
+    .ribbon-path {
+      fill: none;
+      stroke: var(--color-gold);
+      stroke-width: 1.5px;
+      opacity: 0;
+      stroke-linecap: round;
+      stroke-dasharray: 200;
+      stroke-dashoffset: 200;
+      transition: opacity 0.2s ease;
+    }
+
+    .ribbon-path.drawn {
+      opacity: 0.50;
+      animation: ribbonDraw 0.55s var(--ease-out-expo) forwards,
+                 ribbonFlow 3s linear 0.55s infinite;
+    }
+
+    .ribbon-path.fading {
+      animation: ribbonFade 0.3s var(--ease-in-quart) forwards;
+    }
+
+    @keyframes ribbonDraw {
+      0%   { stroke-dashoffset: 200; opacity: 0.20; }
+      100% { stroke-dashoffset: 0;   opacity: 0.50; }
+    }
+
+    @keyframes ribbonFlow {
+      0%   { stroke-dashoffset: 0;   }
+      100% { stroke-dashoffset: -200; }
+    }
+
+    @keyframes ribbonFade {
+      0%   { opacity: 0.50; }
+      100% { opacity: 0;    }
+    }
+
+    /* =============================================
+       GRID
+       ============================================= */
+    .grid-wrapper {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      max-width: 560px;
+      flex: 1;
+      min-height: 0;
+      display: flex;
+      align-items: center;
+    }
+
+    .grid {
+      width: 100%;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--tile-gap);
+    }
+
+    @media (min-width: 640px) {
+      .grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    /* =============================================
+       TILE
+       ============================================= */
+    .tile {
+      position: relative;
+      border-radius: var(--tile-radius);
+      background: var(--color-tile-bg);
+      border: 1px solid var(--color-tile-border);
+      backdrop-filter: var(--color-glass-blur);
+      -webkit-backdrop-filter: var(--color-glass-blur);
+      cursor: pointer;
+      overflow: hidden;
+      padding: 14px 10px 12px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      min-height: 72px;
+      opacity: 0;
+      transform: translateY(10px);
+      transition:
+        border-color var(--dur-hover) var(--ease-out-quart),
+        background   var(--dur-hover) var(--ease-out-quart),
+        box-shadow   var(--dur-hover) var(--ease-out-quart);
+      -webkit-tap-highlight-color: transparent;
+      will-change: transform;
+    }
+
+    /* Shimmer overlay (hidden by default) */
+    .tile::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(
+        105deg,
+        transparent 30%,
+        rgba(197, 160, 89, 0.28) 50%,
+        transparent 70%
+      );
+      transform: translateX(-120%);
+      transition: none;
+      pointer-events: none;
+    }
+
+    /* Watermark pattern */
+    .tile-pattern {
+      position: absolute;
+      inset: 0;
+      opacity: 0.05;
+      pointer-events: none;
+      transition: opacity var(--dur-content) var(--ease-out-quart);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .tile-pattern svg {
+      width: 52px;
+      height: 52px;
+    }
+
+    /* Text content */
+    .tile-arabic {
+      font-family: var(--font-arabic);
+      font-weight: 700;
+      font-size: clamp(0.72rem, 2.2vw, 0.88rem);
+      color: var(--color-text-primary);
+      text-align: center;
+      line-height: 1.2;
+      position: relative;
+      z-index: 2;
+      transition: color var(--dur-hover) var(--ease-out-quart);
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .tile-english {
+      font-family: var(--font-english);
+      font-size: 0.60rem;
+      color: var(--color-text-muted);
+      letter-spacing: 0.03em;
+      text-align: center;
+      position: relative;
+      z-index: 2;
+      transition: color var(--dur-hover) var(--ease-out-quart);
+      pointer-events: none;
+      user-select: none;
+    }
+
+    /* Hover */
+    .tile:not(.selected):hover {
+      border-color: rgba(197, 160, 89, 0.42);
+      box-shadow: 0 2px 16px rgba(197, 160, 89, 0.10);
+    }
+
+    .tile:not(.selected):hover .tile-arabic {
+      color: rgba(232, 220, 200, 0.90);
+    }
+
+    /* Selected */
+    .tile.selected {
+      background: var(--color-tile-bg-sel);
+      border-color: var(--color-tile-border-sel);
+      box-shadow:
+        0 0 0 1px rgba(197, 160, 89, 0.25),
+        0 0 18px rgba(197, 160, 89, 0.30),
+        0 0 36px rgba(197, 160, 89, 0.12);
+    }
+
+    .tile.selected .tile-arabic {
+      color: var(--color-gold);
+    }
+
+    .tile.selected .tile-english {
+      color: var(--color-gold-dim);
+    }
+
+    .tile.selected .tile-pattern {
+      opacity: 0.15;
+    }
+
+    /* Shimmer on selection */
+    .tile.shimmer::after {
+      animation: shimmerSlide 0.55s var(--ease-out-expo) forwards;
+    }
+
+    @keyframes shimmerSlide {
+      0%   { transform: translateX(-120%); }
+      100% { transform: translateX(120%); }
+    }
+
+    /* =============================================
+       BOTTOM BAR
+       ============================================= */
+    .bottom-bar {
+      position: relative;
+      z-index: 20;
+      flex-shrink: 0;
+      width: 100%;
+      max-width: 560px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 12px 0 calc(20px + env(safe-area-inset-bottom));
+      gap: 10px;
+    }
+
+    .counter-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .counter-dots {
+      display: flex;
+      gap: 4px;
+      direction: ltr;
+    }
+
+    .counter-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      border: 1px solid rgba(197, 160, 89, 0.25);
+      background: transparent;
+      transition:
+        background var(--dur-hover) var(--ease-out-quart),
+        border-color var(--dur-hover) var(--ease-out-quart);
+    }
+
+    .counter-dot.filled {
+      background: var(--color-gold);
+      border-color: var(--color-gold);
+    }
+
+    .counter-text {
+      font-family: var(--font-arabic);
+      font-size: 0.78rem;
+      color: var(--color-text-muted);
+      transition: color var(--dur-content) var(--ease-out-quart);
+    }
+
+    .counter-text.satisfied {
+      color: var(--color-gold-dim);
+    }
+
+    /* CTA */
+    .cta-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 40px;
+      border-radius: 999px;
+      border: 1.5px solid var(--color-gold);
+      background: rgba(197, 160, 89, 0.10);
+      color: var(--color-gold);
+      font-family: var(--font-arabic);
+      font-weight: 700;
+      font-size: clamp(0.95rem, 2.5vw, 1.05rem);
+      cursor: pointer;
+      opacity: 0;
+      transform: translateY(10px) scale(0.96);
+      transition:
+        opacity var(--dur-major) var(--ease-out-expo),
+        transform var(--dur-major) var(--ease-out-expo),
+        box-shadow var(--dur-hover) var(--ease-out-quart),
+        background var(--dur-hover) var(--ease-out-quart);
+      pointer-events: none;
+      -webkit-tap-highlight-color: transparent;
+      min-height: 48px;
+    }
+
+    .cta-btn.visible {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      pointer-events: auto;
+      animation: ctaGlow 2.8s ease-in-out infinite 0.4s;
+    }
+
+    .cta-btn:hover {
+      background: rgba(197, 160, 89, 0.20);
+      box-shadow:
+        0 0 24px rgba(197, 160, 89, 0.40),
+        0 0 52px rgba(197, 160, 89, 0.18);
+    }
+
+    .cta-btn:active {
+      transform: scale(0.97);
+      animation: none;
+    }
+
+    @keyframes ctaGlow {
+      0%, 100% {
+        box-shadow:
+          0 0 14px rgba(197, 160, 89, 0.25),
+          0 0 28px rgba(197, 160, 89, 0.10);
+      }
+      50% {
+        box-shadow:
+          0 0 30px rgba(197, 160, 89, 0.55),
+          0 0 60px rgba(197, 160, 89, 0.25);
+      }
+    }
+
+    .cta-arrow {
+      display: inline-block;
+      font-size: 1.1em;
+      direction: ltr;
+    }
+
+    /* =============================================
+       PROGRESS DOTS
+       ============================================= */
+    .progress-dots {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      direction: ltr;
+    }
+
+    .progress-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(197, 160, 89, 0.20);
+      transition:
+        background var(--dur-content) var(--ease-out-quart),
+        transform  var(--dur-content) var(--ease-out-quart);
+    }
+
+    .progress-dot.active {
+      background: var(--color-gold);
+      transform: scale(1.25);
+    }
+
+    /* =============================================
+       MOBILE FINE-TUNING
+       ============================================= */
+    @media (max-width: 480px) {
+      .header {
+        padding: 20px 0 12px;
+      }
+
+      .tile {
+        min-height: 64px;
+        padding: 10px 8px 9px;
+      }
+
+      .bottom-bar {
+        padding-top: 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ==========================================
+     OPTION LABEL
+     ========================================== -->
+<div class="option-label">Option B — Mosaic Tiles</div>
+
+<!-- ==========================================
+     RIBBON SVG (fixed, full-screen, above everything)
+     ========================================== -->
+<svg id="ribbon-svg" aria-hidden="true"></svg>
+
+<!-- ==========================================
+     SCREEN
+     ========================================== -->
+<div class="screen" id="screen">
+
+  <!-- HEADER -->
+  <header class="header" id="header">
+    <h1 class="title-arabic">ما الذي يستهويك؟</h1>
+    <p class="subtitle">اختر ٢–٥ مواضيع</p>
+  </header>
+
+  <!-- GRID WRAPPER -->
+  <div class="grid-wrapper">
+    <div class="grid" id="grid" role="group" aria-label="اختر المواضيع الشعرية">
+      <!-- Tiles injected by JS -->
+    </div>
+  </div>
+
+  <!-- BOTTOM BAR -->
+  <div class="bottom-bar" id="bottom-bar">
+
+    <!-- Progress dots (step 3 of 4) -->
+    <div class="progress-dots" aria-label="Step 3 of 4">
+      <div class="progress-dot"></div>
+      <div class="progress-dot"></div>
+      <div class="progress-dot active"></div>
+      <div class="progress-dot"></div>
+    </div>
+
+    <!-- Counter row -->
+    <div class="counter-row">
+      <div class="counter-dots" id="counter-dots" aria-hidden="true"></div>
+      <span class="counter-text" id="counter-text" aria-live="polite">اختر موضوعَين على الأقل</span>
+    </div>
+
+    <!-- CTA -->
+    <button class="cta-btn" id="cta-btn" aria-label="أرني شعرًا — عرض النتائج">
+      أرني شعرًا
+      <span class="cta-arrow" aria-hidden="true">&#8592;</span>
+    </button>
+
+  </div>
+</div>
+
+<script>
+/* =============================================
+   DATA
+   ============================================= */
+const THEMES = [
+  {
+    id: 'love',
+    ar: 'الحب',
+    en: 'Love',
+    pattern: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M26 40 C26 40 8 28 8 17 C8 12 12 8 17 8 C20 8 23 10 26 13 C29 10 32 8 35 8 C40 8 44 12 44 17 C44 28 26 40 26 40Z" stroke="#c5a059" stroke-width="1.2" fill="none"/>
+      <path d="M26 34 C26 34 14 25 14 18 C14 14 17 11 21 11 C23 11 25 12 26 14 C27 12 29 11 31 11 C35 11 38 14 38 18 C38 25 26 34 26 34Z" stroke="#c5a059" stroke-width="0.8" fill="none" opacity="0.5"/>
+    </svg>`,
+  },
+  {
+    id: 'longing',
+    ar: 'الشوق',
+    en: 'Longing',
+    pattern: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M6 30 Q13 22 20 30 Q27 38 34 30 Q41 22 48 30" stroke="#c5a059" stroke-width="1.2" fill="none"/>
+      <path d="M6 22 Q13 14 20 22 Q27 30 34 22 Q41 14 48 22" stroke="#c5a059" stroke-width="0.8" fill="none" opacity="0.5"/>
+      <path d="M6 38 Q13 30 20 38 Q27 46 34 38 Q41 30 48 38" stroke="#c5a059" stroke-width="0.6" fill="none" opacity="0.3"/>
+    </svg>`,
+  },
+  {
+    id: 'grief',
+    ar: 'الحزن',
+    en: 'Grief',
+    pattern: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="26" cy="16" r="7" stroke="#c5a059" stroke-width="1.2" fill="none"/>
+      <path d="M22 40 L26 23 L30 40" stroke="#c5a059" stroke-width="1" fill="none"/>
+      <path d="M18 45 L26 40 L34 45" stroke="#c5a059" stroke-width="1" fill="none"/>
+      <path d="M20 30 Q26 28 32 30" stroke="#c5a059" stroke-width="0.8" fill="none" opacity="0.5"/>
+    </svg>`,
+  },
+  {
+    id: 'nature',
+    ar: 'الطبيعة',
+    en: 'Nature',
+    pattern: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M26 44 L26 18" stroke="#c5a059" stroke-width="1.2"/>
+      <path d="M26 28 Q36 20 42 10 Q34 10 28 18" stroke="#c5a059" stroke-width="1" fill="none"/>
+      <path d="M26 36 Q16 28 10 18 Q18 18 24 26" stroke="#c5a059" stroke-width="0.8" fill="none" opacity="0.7"/>
+      <path d="M26 22 Q32 16 36 8 Q30 9 26 16" stroke="#c5a059" stroke-width="0.6" fill="none" opacity="0.4"/>
+    </svg>`,
+  },
+  {
+    id: 'homeland',
+    ar: 'الوطن',
+    en: 'Homeland',
+    pattern: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="26" cy="26" r="17" stroke="#c5a059" stroke-width="1.2" fill="none"/>
+      <path d="M9 26 Q17 20 26 26 Q35 32 43 26" stroke="#c5a059" stroke-width="0.8" fill="none"/>
+      <path d="M26 9 Q32 17 26 26 Q20 35 26 43" stroke="#c5a059" stroke-width="0.8" fill="none"/>
+      <circle cx="26" cy="26" r="3" stroke="#c5a059" stroke-width="1" fill="none" opacity="0.6"/>
+    </svg>`,
+  },
+  {
+    id: 'spirituality',
+    ar: 'الروحانية',
+    en: 'Spirituality',
+    pattern: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <polygon points="26,6 30,20 44,20 33,29 37,44 26,35 15,44 19,29 8,20 22,20" stroke="#c5a059" stroke-width="1" fill="none"/>
+      <circle cx="26" cy="26" r="6" stroke="#c5a059" stroke-width="0.8" fill="none" opacity="0.5"/>
+    </svg>`,
+  },
+  {
+    id: 'wisdom',
+    ar: 'الحكمة',
+    en: 'Wisdom',
+    pattern: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M16 42 L16 18 Q16 8 26 8 Q36 8 36 18 L36 30 Q36 38 26 38 Q22 38 20 36" stroke="#c5a059" stroke-width="1.2" fill="none"/>
+      <line x1="12" y1="42" x2="20" y2="42" stroke="#c5a059" stroke-width="1.2"/>
+      <path d="M20 24 Q26 20 32 24" stroke="#c5a059" stroke-width="0.8" fill="none" opacity="0.5"/>
+    </svg>`,
+  },
+  {
+    id: 'freedom',
+    ar: 'الحرية',
+    en: 'Freedom',
+    pattern: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M12 32 Q14 18 26 14 Q22 26 34 22 Q30 34 22 38 Q34 36 38 24 Q44 36 26 44 Q10 44 12 32Z" stroke="#c5a059" stroke-width="1" fill="none"/>
+      <path d="M30 10 L38 10 L34 6 M34 6 L34 14" stroke="#c5a059" stroke-width="1" fill="none" opacity="0.6"/>
+    </svg>`,
+  },
+  {
+    id: 'war',
+    ar: 'الحرب',
+    en: 'War',
+    pattern: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <line x1="14" y1="14" x2="38" y2="38" stroke="#c5a059" stroke-width="1.3"/>
+      <line x1="38" y1="14" x2="14" y2="38" stroke="#c5a059" stroke-width="1.3"/>
+      <circle cx="14" cy="14" r="3" stroke="#c5a059" stroke-width="1" fill="none" opacity="0.6"/>
+      <circle cx="38" cy="14" r="3" stroke="#c5a059" stroke-width="1" fill="none" opacity="0.6"/>
+      <circle cx="26" cy="26" r="4" stroke="#c5a059" stroke-width="1" fill="none"/>
+    </svg>`,
+  },
+  {
+    id: 'sea',
+    ar: 'البحر',
+    en: 'Sea',
+    pattern: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M6 36 Q13 30 20 36 Q27 42 34 36 Q41 30 48 36" stroke="#c5a059" stroke-width="1.2" fill="none"/>
+      <path d="M6 28 Q13 22 20 28 Q27 34 34 28 Q41 22 48 28" stroke="#c5a059" stroke-width="1" fill="none" opacity="0.7"/>
+      <path d="M6 20 Q13 14 20 20 Q27 26 34 20 Q41 14 48 20" stroke="#c5a059" stroke-width="0.7" fill="none" opacity="0.4"/>
+      <path d="M22 20 L26 10 L30 20" stroke="#c5a059" stroke-width="0.8" fill="none" opacity="0.5"/>
+    </svg>`,
+  },
+  {
+    id: 'wine',
+    ar: 'الخمر',
+    en: 'Wine & Pleasure',
+    pattern: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M18 8 L34 8 L32 24 Q32 34 26 38 Q20 34 20 24Z" stroke="#c5a059" stroke-width="1.2" fill="none"/>
+      <line x1="26" y1="38" x2="26" y2="46" stroke="#c5a059" stroke-width="1.2"/>
+      <line x1="20" y1="46" x2="32" y2="46" stroke="#c5a059" stroke-width="1.2"/>
+      <circle cx="30" cy="18" r="2.5" stroke="#c5a059" stroke-width="0.8" fill="none" opacity="0.5"/>
+    </svg>`,
+  },
+  {
+    id: 'praise',
+    ar: 'المديح',
+    en: 'Praise',
+    pattern: `<svg viewBox="0 0 52 52" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <path d="M26 8 L29 18 L40 18 L31 25 L34 36 L26 29 L18 36 L21 25 L12 18 L23 18Z" stroke="#c5a059" stroke-width="1.2" fill="none"/>
+      <path d="M26 36 L26 46" stroke="#c5a059" stroke-width="1.2"/>
+      <path d="M20 46 L32 46" stroke="#c5a059" stroke-width="1.2"/>
+      <path d="M18 46 Q26 42 34 46" stroke="#c5a059" stroke-width="0.8" fill="none" opacity="0.5"/>
+    </svg>`,
+  },
+];
+
+/* =============================================
+   STATE
+   ============================================= */
+const state = {
+  selected: new Set(),
+  MIN: 2,
+  MAX: 5,
+};
+
+/* =============================================
+   DOM REFS
+   ============================================= */
+const gridEl        = document.getElementById('grid');
+const ribbonSvg     = document.getElementById('ribbon-svg');
+const header        = document.getElementById('header');
+const counterText   = document.getElementById('counter-text');
+const counterDotsEl = document.getElementById('counter-dots');
+const ctaBtn        = document.getElementById('cta-btn');
+
+/* =============================================
+   HELPERS
+   ============================================= */
+const AR_NUMS = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
+function toArabicNum(n) {
+  return String(n).split('').map(d => AR_NUMS[parseInt(d)] ?? d).join('');
+}
+
+function getTileCenter(tileEl) {
+  const r = tileEl.getBoundingClientRect();
+  return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+}
+
+/* =============================================
+   BUILD TILES
+   ============================================= */
+const tileEls = [];
+
+function buildTiles() {
+  THEMES.forEach((theme, i) => {
+    const tile = document.createElement('div');
+    tile.className = 'tile';
+    tile.dataset.index = i;
+    tile.setAttribute('role', 'checkbox');
+    tile.setAttribute('aria-checked', 'false');
+    tile.setAttribute('aria-label', theme.ar + ' — ' + theme.en);
+    tile.tabIndex = 0;
+
+    tile.innerHTML = `
+      <div class="tile-pattern">${theme.pattern}</div>
+      <span class="tile-arabic">${theme.ar}</span>
+      <span class="tile-english">${theme.en}</span>
+    `;
+
+    tile.addEventListener('click', () => toggleTile(i, tile));
+    tile.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        toggleTile(i, tile);
+      }
+    });
+
+    gridEl.appendChild(tile);
+    tileEls[i] = tile;
+  });
+
+  /* Staggered entrance via GSAP */
+  gsap.to(tileEls, {
+    opacity: 1,
+    y: 0,
+    duration: 0.45,
+    stagger: 0.05,
+    delay: 0.5,
+    ease: 'power3.out',
+  });
+}
+
+/* =============================================
+   TOGGLE TILE
+   ============================================= */
+function toggleTile(index, tile) {
+  const isSelected = state.selected.has(index);
+
+  if (isSelected) {
+    state.selected.delete(index);
+    tile.classList.remove('selected');
+    tile.setAttribute('aria-checked', 'false');
+    gsap.to(tile, { scale: 1, duration: 0.22, ease: 'power2.out' });
+  } else {
+    if (state.selected.size >= state.MAX) return;
+    state.selected.add(index);
+    tile.classList.add('selected');
+    tile.setAttribute('aria-checked', 'true');
+
+    /* Pop + shimmer */
+    gsap.fromTo(tile,
+      { scale: 1 },
+      {
+        keyframes: [
+          { scale: 1.06, duration: 0.10, ease: 'power2.out' },
+          { scale: 1.03, duration: 0.20, ease: 'back.out(2)' },
+        ],
+      }
+    );
+
+    tile.classList.remove('shimmer');
+    void tile.offsetWidth;
+    tile.classList.add('shimmer');
+    setTimeout(() => tile.classList.remove('shimmer'), 600);
+  }
+
+  updateRibbons();
+  updateCounter();
+  updateCTA();
+}
+
+/* =============================================
+   RIBBON CONNECTIONS
+   ============================================= */
+/* We draw SVG cubic bezier curves between the center
+   points of every pair of selected tiles. */
+
+let ribbonPaths = {}; // key: "a-b" -> <path> el
+
+function pairKey(a, b) {
+  return a < b ? `${a}-${b}` : `${b}-${a}`;
+}
+
+function updateRibbons() {
+  const selected = [...state.selected];
+
+  /* Compute current desired pairs */
+  const desiredPairs = new Set();
+  for (let i = 0; i < selected.length; i++) {
+    for (let j = i + 1; j < selected.length; j++) {
+      desiredPairs.add(pairKey(selected[i], selected[j]));
+    }
+  }
+
+  /* Remove pairs no longer desired */
+  Object.keys(ribbonPaths).forEach(key => {
+    if (!desiredPairs.has(key)) {
+      const path = ribbonPaths[key];
+      path.classList.remove('drawn');
+      path.classList.add('fading');
+      setTimeout(() => {
+        path.remove();
+        delete ribbonPaths[key];
+      }, 320);
+    }
+  });
+
+  /* Add new pairs */
+  desiredPairs.forEach(key => {
+    if (ribbonPaths[key]) return; // already exists
+
+    const [aStr, bStr] = key.split('-');
+    const a = parseInt(aStr), b = parseInt(bStr);
+    const cA = getTileCenter(tileEls[a]);
+    const cB = getTileCenter(tileEls[b]);
+
+    /* Cubic bezier with vertical ctrl pts for organic curve */
+    const mx = (cA.x + cB.x) / 2;
+    const my = (cA.y + cB.y) / 2;
+    const dx = cB.x - cA.x;
+    const dy = cB.y - cA.y;
+    const cpOffset = Math.sqrt(dx * dx + dy * dy) * 0.28;
+
+    /* Perpendicular control point direction */
+    const len = Math.sqrt(dx * dx + dy * dy) || 1;
+    const nx = -dy / len;
+    const ny = dx / len;
+
+    const cp1x = cA.x + dx * 0.35 + nx * cpOffset;
+    const cp1y = cA.y + dy * 0.35 + ny * cpOffset;
+    const cp2x = cB.x - dx * 0.35 + nx * cpOffset;
+    const cp2y = cB.y - dy * 0.35 + ny * cpOffset;
+
+    const d = `M${cA.x},${cA.y} C${cp1x},${cp1y} ${cp2x},${cp2y} ${cB.x},${cB.y}`;
+
+    const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    path.classList.add('ribbon-path');
+    path.setAttribute('d', d);
+
+    /* Approx path length for dasharray */
+    const approxLen = Math.sqrt(dx * dx + dy * dy) * 1.3;
+    path.style.strokeDasharray = approxLen;
+    path.style.strokeDashoffset = approxLen;
+
+    ribbonSvg.appendChild(path);
+    ribbonPaths[key] = path;
+
+    /* Trigger draw animation */
+    requestAnimationFrame(() => {
+      path.classList.add('drawn');
+      gsap.to(path, {
+        strokeDashoffset: 0,
+        duration: 0.55,
+        ease: 'power3.out',
+      });
+    });
+  });
+}
+
+/* =============================================
+   COUNTER
+   ============================================= */
+function buildCounterDots() {
+  counterDotsEl.innerHTML = '';
+  for (let i = 0; i < state.MAX; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'counter-dot';
+    counterDotsEl.appendChild(dot);
+  }
+}
+
+function updateCounter() {
+  const count = state.selected.size;
+  const dots  = counterDotsEl.querySelectorAll('.counter-dot');
+
+  dots.forEach((dot, i) => {
+    dot.classList.toggle('filled', i < count);
+  });
+
+  if (count === 0) {
+    counterText.textContent = 'اختر موضوعَين على الأقل';
+    counterText.classList.remove('satisfied');
+  } else if (count < state.MIN) {
+    counterText.textContent = 'اختر موضوعًا آخر على الأقل';
+    counterText.classList.remove('satisfied');
+  } else {
+    counterText.textContent = `${toArabicNum(count)} من ${toArabicNum(state.MAX)} مواضيع مختارة`;
+    counterText.classList.add('satisfied');
+  }
+}
+
+/* =============================================
+   CTA
+   ============================================= */
+function updateCTA() {
+  const satisfied = state.selected.size >= state.MIN;
+  ctaBtn.classList.toggle('visible', satisfied);
+}
+
+ctaBtn.addEventListener('click', () => {
+  if (state.selected.size < state.MIN) return;
+
+  gsap.to(ctaBtn, {
+    scale: 0.95,
+    duration: 0.08,
+    yoyo: true,
+    repeat: 1,
+    ease: 'power2.inOut',
+  });
+
+  const selectedThemes = [...state.selected].map(i => THEMES[i]);
+  console.log('Selected themes:', selectedThemes.map(t => t.en).join(', '));
+  /* In real app: navigate to next step */
+});
+
+/* =============================================
+   INIT
+   ============================================= */
+function init() {
+  /* Header entrance */
+  gsap.to(header, {
+    opacity: 1,
+    y: 0,
+    duration: 0.55,
+    delay: 0.10,
+    ease: 'power3.out',
+  });
+
+  buildTiles();
+  buildCounterDots();
+  updateCounter();
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

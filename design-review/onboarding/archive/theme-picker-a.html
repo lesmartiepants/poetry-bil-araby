@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Theme Picker — Option A: Constellation Map</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@400;700&family=Forum&display=swap" rel="stylesheet" />
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+
+  <style>
+    /* =============================================
+       DESIGN TOKENS
+       ============================================= */
+    :root {
+      --color-bg:                #0c0c0e;
+      --color-gold:              #c5a059;
+      --color-gold-dim:          rgba(197, 160, 89, 0.55);
+      --color-gold-faint:        rgba(197, 160, 89, 0.10);
+      --color-gold-glow:         rgba(197, 160, 89, 0.30);
+      --color-lapis:             #1a3a5c;
+      --color-lapis-mid:         #2a5a8c;
+      --color-lapis-light:       #4a8abf;
+      --color-text-primary:      #e8dcc8;
+      --color-text-muted:        rgba(232, 220, 200, 0.45);
+      --color-node-bg:           rgba(197, 160, 89, 0.06);
+      --color-node-bg-selected:  rgba(197, 160, 89, 0.18);
+      --color-node-border:       rgba(197, 160, 89, 0.25);
+      --color-node-border-sel:   rgba(197, 160, 89, 0.90);
+
+      --font-arabic:             'Reem Kufi', serif;
+      --font-english:            'Forum', serif;
+
+      --node-size:               52px;
+      --node-size-mobile:        46px;
+
+      --ease-out-expo:           cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-spring:             cubic-bezier(0.34, 1.56, 0.64, 1);
+      --ease-out-quart:          cubic-bezier(0.25, 1, 0.5, 1);
+
+      --dur-major:    0.7s;
+      --dur-content:  0.4s;
+      --dur-hover:    0.18s;
+      --dur-micro:    0.10s;
+    }
+
+    /* =============================================
+       RESET + BASE
+       ============================================= */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background: var(--color-bg);
+      color: var(--color-text-primary);
+      font-family: var(--font-arabic);
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+      overflow: hidden;
+    }
+
+    /* =============================================
+       OPTION LABEL
+       ============================================= */
+    .option-label {
+      position: fixed;
+      top: 16px;
+      left: 16px;
+      font-family: var(--font-english);
+      font-size: 0.65rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--color-text-muted);
+      z-index: 100;
+    }
+
+    /* =============================================
+       LAYOUT
+       ============================================= */
+    .screen {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    /* =============================================
+       HEADER
+       ============================================= */
+    .header {
+      position: relative;
+      z-index: 10;
+      text-align: center;
+      padding: 28px 24px 0;
+      flex-shrink: 0;
+      opacity: 0;
+      transform: translateY(-16px);
+    }
+
+    .header.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .title-arabic {
+      font-family: var(--font-arabic);
+      font-weight: 700;
+      font-size: clamp(1.5rem, 4vw, 2.2rem);
+      color: var(--color-gold);
+      line-height: 1.2;
+      letter-spacing: 0.02em;
+    }
+
+    .subtitle {
+      font-family: var(--font-arabic);
+      font-weight: 400;
+      font-size: clamp(0.75rem, 2vw, 0.9rem);
+      color: var(--color-text-muted);
+      margin-top: 6px;
+    }
+
+    /* =============================================
+       CONSTELLATION STAGE
+       ============================================= */
+    .constellation-stage {
+      position: relative;
+      flex: 1;
+      width: 100%;
+      min-height: 0;
+    }
+
+    /* SVG connection lines layer */
+    .connections-svg {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      overflow: visible;
+    }
+
+    .connection-line {
+      stroke: var(--color-gold);
+      stroke-width: 1px;
+      fill: none;
+      opacity: 0.08;
+      stroke-dasharray: 4 6;
+      transition: opacity var(--dur-content) var(--ease-out-quart),
+                  stroke-width var(--dur-content) var(--ease-out-quart);
+    }
+
+    .connection-line.active {
+      opacity: 0.55;
+      stroke-width: 1.5px;
+      stroke-dasharray: none;
+      animation: lineFlow 2s linear infinite;
+    }
+
+    .connection-line.pulsing {
+      animation: linePulse 0.6s var(--ease-out-expo) forwards;
+    }
+
+    @keyframes lineFlow {
+      0%   { stroke-dashoffset: 0; }
+      100% { stroke-dashoffset: -40; }
+    }
+
+    @keyframes linePulse {
+      0%   { opacity: 0.08; stroke-width: 1px; }
+      40%  { opacity: 0.8;  stroke-width: 2.5px; }
+      100% { opacity: 0.55; stroke-width: 1.5px; }
+    }
+
+    /* =============================================
+       NODES
+       ============================================= */
+    .node-wrapper {
+      position: absolute;
+      transform: translate(-50%, -50%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+      /* extend tap area beyond the circle */
+      padding: 10px;
+      margin: -10px;
+      border-radius: 50%;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .node {
+      width: var(--node-size);
+      height: var(--node-size);
+      border-radius: 50%;
+      background: var(--color-node-bg);
+      border: 1.5px solid var(--color-node-border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      transition:
+        background var(--dur-hover) var(--ease-out-quart),
+        border-color var(--dur-hover) var(--ease-out-quart),
+        box-shadow var(--dur-hover) var(--ease-out-quart);
+      will-change: transform;
+    }
+
+    /* Outer glow ring — invisible until selected */
+    .node::before {
+      content: '';
+      position: absolute;
+      inset: -6px;
+      border-radius: 50%;
+      border: 1px solid transparent;
+      transition:
+        border-color var(--dur-hover) var(--ease-out-quart),
+        box-shadow var(--dur-hover) var(--ease-out-quart);
+    }
+
+    .node-arabic {
+      font-family: var(--font-arabic);
+      font-weight: 700;
+      font-size: 0.72rem;
+      color: var(--color-text-primary);
+      line-height: 1;
+      text-align: center;
+      transition: color var(--dur-hover) var(--ease-out-quart);
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .node-english {
+      font-family: var(--font-english);
+      font-size: 0.58rem;
+      color: var(--color-text-muted);
+      letter-spacing: 0.04em;
+      line-height: 1;
+      text-align: center;
+      transition: color var(--dur-hover) var(--ease-out-quart);
+      pointer-events: none;
+      user-select: none;
+      max-width: 70px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    /* Selected state */
+    .node-wrapper.selected .node {
+      background: var(--color-node-bg-selected);
+      border-color: var(--color-node-border-sel);
+      box-shadow:
+        0 0 14px rgba(197, 160, 89, 0.45),
+        0 0 32px rgba(197, 160, 89, 0.18);
+    }
+
+    .node-wrapper.selected .node::before {
+      border-color: rgba(197, 160, 89, 0.25);
+      box-shadow: 0 0 20px rgba(197, 160, 89, 0.15);
+    }
+
+    .node-wrapper.selected .node-arabic {
+      color: var(--color-gold);
+    }
+
+    .node-wrapper.selected .node-english {
+      color: var(--color-gold-dim);
+    }
+
+    /* Hover (non-selected) */
+    .node-wrapper:not(.selected):hover .node {
+      border-color: rgba(197, 160, 89, 0.50);
+      box-shadow: 0 0 10px rgba(197, 160, 89, 0.18);
+    }
+
+    .node-wrapper:not(.selected):hover .node-arabic {
+      color: rgba(232, 220, 200, 0.85);
+    }
+
+    /* =============================================
+       PARTICLE CANVAS
+       ============================================= */
+    #particle-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    /* =============================================
+       COUNTER + CTA
+       ============================================= */
+    .bottom-bar {
+      position: relative;
+      z-index: 20;
+      flex-shrink: 0;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 0 24px calc(24px + env(safe-area-inset-bottom));
+      gap: 12px;
+    }
+
+    .counter-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .counter-text {
+      font-family: var(--font-arabic);
+      font-size: 0.8rem;
+      color: var(--color-text-muted);
+      transition: color var(--dur-content) var(--ease-out-quart);
+    }
+
+    .counter-text.satisfied {
+      color: var(--color-gold-dim);
+    }
+
+    /* Selection dots */
+    .counter-dots {
+      display: flex;
+      gap: 4px;
+      direction: ltr;
+    }
+
+    .counter-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      border: 1px solid var(--color-node-border);
+      background: transparent;
+      transition:
+        background var(--dur-hover) var(--ease-out-quart),
+        border-color var(--dur-hover) var(--ease-out-quart);
+    }
+
+    .counter-dot.filled {
+      background: var(--color-gold);
+      border-color: var(--color-gold);
+    }
+
+    /* CTA button */
+    .cta-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px 36px;
+      border-radius: 999px;
+      border: 1.5px solid var(--color-gold);
+      background: rgba(197, 160, 89, 0.10);
+      color: var(--color-gold);
+      font-family: var(--font-arabic);
+      font-weight: 700;
+      font-size: clamp(0.95rem, 2.5vw, 1.05rem);
+      cursor: pointer;
+      opacity: 0;
+      transform: translateY(12px) scale(0.96);
+      transition:
+        opacity var(--dur-major) var(--ease-out-expo),
+        transform var(--dur-major) var(--ease-out-expo),
+        box-shadow var(--dur-hover) var(--ease-out-quart),
+        background var(--dur-hover) var(--ease-out-quart);
+      pointer-events: none;
+      -webkit-tap-highlight-color: transparent;
+      min-height: 48px;
+    }
+
+    .cta-btn.visible {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      pointer-events: auto;
+      animation: ctaGlow 2.8s ease-in-out infinite 0.5s;
+    }
+
+    .cta-btn:hover {
+      background: rgba(197, 160, 89, 0.20);
+      box-shadow:
+        0 0 24px rgba(197, 160, 89, 0.35),
+        0 0 48px rgba(197, 160, 89, 0.15);
+    }
+
+    .cta-btn:active {
+      transform: scale(0.97);
+    }
+
+    @keyframes ctaGlow {
+      0%, 100% {
+        box-shadow:
+          0 0 14px rgba(197, 160, 89, 0.25),
+          0 0 28px rgba(197, 160, 89, 0.10);
+      }
+      50% {
+        box-shadow:
+          0 0 28px rgba(197, 160, 89, 0.50),
+          0 0 56px rgba(197, 160, 89, 0.25);
+      }
+    }
+
+    .cta-arrow {
+      display: inline-block;
+      font-size: 1.1em;
+      direction: ltr;
+    }
+
+    /* =============================================
+       PROGRESS DOTS
+       ============================================= */
+    .progress-dots {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      direction: ltr;
+    }
+
+    .progress-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: rgba(197, 160, 89, 0.20);
+      transition: background var(--dur-content) var(--ease-out-quart),
+                  transform var(--dur-content) var(--ease-out-quart);
+    }
+
+    .progress-dot.active {
+      background: var(--color-gold);
+      transform: scale(1.25);
+    }
+
+    /* =============================================
+       MOBILE ADJUSTMENTS (375px)
+       ============================================= */
+    @media (max-width: 480px) {
+      :root {
+        --node-size: var(--node-size-mobile);
+      }
+
+      html, body {
+        overflow-y: auto;
+      }
+
+      .screen {
+        position: relative;
+        height: auto;
+        min-height: 100dvh;
+        overflow: visible;
+      }
+
+      .constellation-stage {
+        flex: none;
+        height: 400px;
+      }
+
+      .header {
+        padding-top: 20px;
+      }
+
+      .bottom-bar {
+        padding-top: 8px;
+        padding-bottom: calc(20px + env(safe-area-inset-bottom));
+      }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ==========================================
+     OPTION LABEL
+     ========================================== -->
+<div class="option-label">Option A — Constellation Map</div>
+
+<!-- ==========================================
+     SCREEN
+     ========================================== -->
+<div class="screen" id="screen">
+
+  <!-- HEADER -->
+  <header class="header" id="header">
+    <h1 class="title-arabic">ما الذي يستهويك؟</h1>
+    <p class="subtitle">اختر ٢–٥ مواضيع</p>
+  </header>
+
+  <!-- CONSTELLATION STAGE -->
+  <div class="constellation-stage" id="stage">
+
+    <!-- Connection lines SVG (rendered first, behind nodes) -->
+    <svg class="connections-svg" id="connections-svg" aria-hidden="true"></svg>
+
+    <!-- Particle canvas (above SVG, below nodes) -->
+    <canvas id="particle-canvas" aria-hidden="true"></canvas>
+
+    <!-- Nodes injected by JS -->
+  </div>
+
+  <!-- BOTTOM BAR -->
+  <div class="bottom-bar" id="bottom-bar">
+
+    <!-- Progress dots (step 3 of 4) -->
+    <div class="progress-dots" aria-label="Step 3 of 4">
+      <div class="progress-dot"></div>
+      <div class="progress-dot"></div>
+      <div class="progress-dot active"></div>
+      <div class="progress-dot"></div>
+    </div>
+
+    <!-- Counter -->
+    <div class="counter-row" id="counter-row">
+      <div class="counter-dots" id="counter-dots" aria-hidden="true"></div>
+      <span class="counter-text" id="counter-text" aria-live="polite">اختر موضوعَين على الأقل</span>
+    </div>
+
+    <!-- CTA -->
+    <button class="cta-btn" id="cta-btn" aria-label="أرني شعرًا — عرض النتائج">
+      أرني شعرًا
+      <span class="cta-arrow" aria-hidden="true">&#8592;</span>
+    </button>
+
+  </div>
+</div>
+
+<script>
+/* =============================================
+   DATA
+   ============================================= */
+const THEMES = [
+  { id: 'love',         ar: 'الحب',       en: 'Love' },
+  { id: 'longing',      ar: 'الشوق',      en: 'Longing' },
+  { id: 'grief',        ar: 'الحزن',      en: 'Grief' },
+  { id: 'nature',       ar: 'الطبيعة',    en: 'Nature' },
+  { id: 'homeland',     ar: 'الوطن',      en: 'Homeland' },
+  { id: 'spirituality', ar: 'الروحانية',  en: 'Spirituality' },
+  { id: 'wisdom',       ar: 'الحكمة',     en: 'Wisdom' },
+  { id: 'freedom',      ar: 'الحرية',     en: 'Freedom' },
+  { id: 'war',          ar: 'الحرب',      en: 'War' },
+  { id: 'sea',          ar: 'البحر',      en: 'Sea' },
+  { id: 'wine',         ar: 'الخمر',      en: 'Wine & Pleasure' },
+  { id: 'praise',       ar: 'المديح',     en: 'Praise' },
+];
+
+/* Thematic connection pairs (indices into THEMES array) */
+const CONNECTIONS = [
+  [0, 1],   // Love — Longing
+  [0, 5],   // Love — Spirituality
+  [1, 2],   // Longing — Grief
+  [1, 4],   // Longing — Homeland
+  [2, 7],   // Grief — Freedom
+  [2, 8],   // Grief — War
+  [3, 9],   // Nature — Sea
+  [3, 5],   // Nature — Spirituality
+  [5, 6],   // Spirituality — Wisdom
+  [6, 7],   // Wisdom — Freedom
+  [7, 8],   // Freedom — War
+  [8, 11],  // War — Praise
+  [9, 10],  // Sea — Wine
+  [10, 0],  // Wine — Love
+  [4, 11],  // Homeland — Praise
+];
+
+/* =============================================
+   CONSTELLATION LAYOUT
+   Positions as [x%, y%] within the stage
+   Two sets: desktop (>480) and mobile (<=480)
+   ============================================= */
+const POSITIONS_DESKTOP = [
+  [50, 12],   // 0 Love        — top center
+  [72, 22],   // 1 Longing     — upper right
+  [86, 42],   // 2 Grief       — right
+  [78, 65],   // 3 Nature      — lower right
+  [58, 80],   // 4 Homeland    — bottom center-right
+  [38, 72],   // 5 Spirituality— bottom center-left
+  [18, 58],   // 6 Wisdom      — left lower
+  [14, 35],   // 7 Freedom     — left upper
+  [30, 18],   // 8 War         — upper left
+  [63, 48],   // 9 Sea         — inner right
+  [42, 42],   // 10 Wine       — inner center
+  [30, 55],   // 11 Praise     — inner left
+];
+
+const POSITIONS_MOBILE = [
+  [50, 5],    // 0 Love
+  [80, 12],   // 1 Longing
+  [92, 30],   // 2 Grief
+  [82, 52],   // 3 Nature
+  [60, 68],   // 4 Homeland
+  [38, 72],   // 5 Spirituality
+  [14, 60],   // 6 Wisdom
+  [8,  38],   // 7 Freedom
+  [20, 16],   // 8 War
+  [65, 38],   // 9 Sea
+  [48, 45],   // 10 Wine
+  [32, 30],   // 11 Praise
+];
+
+/* =============================================
+   STATE
+   ============================================= */
+const state = {
+  selected: new Set(),
+  MIN: 2,
+  MAX: 5,
+};
+
+/* =============================================
+   DOM REFS
+   ============================================= */
+const stage           = document.getElementById('stage');
+const svgEl           = document.getElementById('connections-svg');
+const canvas          = document.getElementById('particle-canvas');
+const ctx             = canvas.getContext('2d');
+const header          = document.getElementById('header');
+const counterText     = document.getElementById('counter-text');
+const counterDotsEl   = document.getElementById('counter-dots');
+const ctaBtn          = document.getElementById('cta-btn');
+const screen          = document.getElementById('screen');
+
+/* =============================================
+   HELPERS
+   ============================================= */
+function isMobile() {
+  return window.innerWidth <= 480;
+}
+
+function getPositions() {
+  return isMobile() ? POSITIONS_MOBILE : POSITIONS_DESKTOP;
+}
+
+/* Convert percentage positions to absolute px */
+function positionToXY(pct, stageRect) {
+  return {
+    x: (pct[0] / 100) * stageRect.width,
+    y: (pct[1] / 100) * stageRect.height,
+  };
+}
+
+/* Arabic numeral mapping */
+const AR_NUMS = ['٠','١','٢','٣','٤','٥','٦','٧','٨','٩'];
+function toArabicNum(n) {
+  return String(n).split('').map(d => AR_NUMS[parseInt(d)] ?? d).join('');
+}
+
+/* =============================================
+   NODE ELEMENTS CACHE
+   ============================================= */
+const nodeEls = []; // indexed by theme index
+
+/* =============================================
+   BUILD NODES
+   ============================================= */
+function buildNodes() {
+  const positions = getPositions();
+  const stageRect = stage.getBoundingClientRect();
+
+  THEMES.forEach((theme, i) => {
+    const pos = positions[i];
+    const { x, y } = positionToXY(pos, stageRect);
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'node-wrapper';
+    wrapper.style.left = x + 'px';
+    wrapper.style.top  = y + 'px';
+    wrapper.dataset.index = i;
+    wrapper.setAttribute('role', 'checkbox');
+    wrapper.setAttribute('aria-checked', 'false');
+    wrapper.setAttribute('aria-label', theme.ar + ' — ' + theme.en);
+    wrapper.tabIndex = 0;
+
+    wrapper.innerHTML = `
+      <div class="node">
+        <span class="node-arabic">${theme.ar}</span>
+      </div>
+      <span class="node-english">${theme.en}</span>
+    `;
+
+    wrapper.addEventListener('click', () => toggleNode(i, wrapper));
+    wrapper.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        toggleNode(i, wrapper);
+      }
+    });
+
+    stage.appendChild(wrapper);
+    nodeEls[i] = wrapper;
+
+    /* Initial entrance animation — staggered */
+    gsap.fromTo(wrapper,
+      { opacity: 0, scale: 0.4 },
+      {
+        opacity: 1,
+        scale: 1,
+        duration: 0.55,
+        delay: 0.6 + i * 0.055,
+        ease: 'back.out(1.7)',
+      }
+    );
+  });
+}
+
+/* =============================================
+   BUILD SVG CONNECTIONS
+   ============================================= */
+const lineEls = {}; // key: "i-j"
+
+function buildConnections() {
+  CONNECTIONS.forEach(([a, b]) => {
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.classList.add('connection-line');
+    svgEl.appendChild(line);
+    const key = a + '-' + b;
+    lineEls[key] = line;
+  });
+  repositionLines();
+}
+
+function repositionLines() {
+  const positions = getPositions();
+  const stageRect = stage.getBoundingClientRect();
+
+  CONNECTIONS.forEach(([a, b]) => {
+    const posA = positionToXY(positions[a], stageRect);
+    const posB = positionToXY(positions[b], stageRect);
+    const line = lineEls[a + '-' + b];
+    if (!line) return;
+    line.setAttribute('x1', posA.x);
+    line.setAttribute('y1', posA.y);
+    line.setAttribute('x2', posB.x);
+    line.setAttribute('y2', posB.y);
+  });
+}
+
+/* =============================================
+   TOGGLE NODE
+   ============================================= */
+function toggleNode(index, wrapper) {
+  const isSelected = state.selected.has(index);
+
+  if (isSelected) {
+    state.selected.delete(index);
+    wrapper.classList.remove('selected');
+    wrapper.setAttribute('aria-checked', 'false');
+    gsap.to(wrapper.querySelector('.node'), {
+      scale: 1,
+      duration: 0.25,
+      ease: 'power2.out',
+    });
+  } else {
+    if (state.selected.size >= state.MAX) return;
+    state.selected.add(index);
+    wrapper.classList.add('selected');
+    wrapper.setAttribute('aria-checked', 'true');
+
+    /* Pop animation */
+    gsap.fromTo(wrapper.querySelector('.node'),
+      { scale: 1.0 },
+      {
+        keyframes: [
+          { scale: 1.25, duration: 0.12, ease: 'power2.out' },
+          { scale: 1.0,  duration: 0.22, ease: 'back.out(2.5)' },
+        ],
+      }
+    );
+
+    /* Particle spray */
+    sprayParticles(index);
+
+    /* Pulse connected lines */
+    pulseConnections(index);
+  }
+
+  updateConnections();
+  updateCounter();
+  updateCTA();
+}
+
+/* =============================================
+   UPDATE CONNECTION STATES
+   ============================================= */
+function updateConnections() {
+  CONNECTIONS.forEach(([a, b]) => {
+    const line = lineEls[a + '-' + b];
+    if (!line) return;
+    const bothSelected = state.selected.has(a) && state.selected.has(b);
+    if (bothSelected) {
+      line.classList.add('active');
+      line.classList.remove('pulsing');
+    } else {
+      line.classList.remove('active');
+    }
+  });
+}
+
+function pulseConnections(index) {
+  CONNECTIONS.forEach(([a, b]) => {
+    if (a !== index && b !== index) return;
+    const line = lineEls[a + '-' + b];
+    if (!line) return;
+
+    line.classList.remove('pulsing');
+    void line.offsetWidth; /* reflow to restart animation */
+    line.classList.add('pulsing');
+
+    setTimeout(() => line.classList.remove('pulsing'), 700);
+  });
+}
+
+/* =============================================
+   PARTICLE SYSTEM
+   ============================================= */
+const particles = [];
+
+function resizeCanvas() {
+  const stageRect = stage.getBoundingClientRect();
+  canvas.width  = stageRect.width;
+  canvas.height = stageRect.height;
+}
+
+function sprayParticles(index) {
+  const positions = getPositions();
+  const stageRect = stage.getBoundingClientRect();
+  const { x, y } = positionToXY(positions[index], stageRect);
+
+  const count = 12 + Math.floor(Math.random() * 8);
+  for (let i = 0; i < count; i++) {
+    const angle  = Math.random() * Math.PI * 2;
+    const speed  = 1.2 + Math.random() * 2.8;
+    const size   = 1.5 + Math.random() * 2.5;
+    const life   = 0.7 + Math.random() * 0.5;
+    particles.push({
+      x, y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      size,
+      life,
+      maxLife: life,
+      alpha: 0.9 + Math.random() * 0.1,
+    });
+  }
+}
+
+let rafId;
+function animateParticles() {
+  rafId = requestAnimationFrame(animateParticles);
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.x    += p.vx;
+    p.y    += p.vy;
+    p.vx   *= 0.93;
+    p.vy   *= 0.93;
+    p.life -= 0.025;
+
+    if (p.life <= 0) {
+      particles.splice(i, 1);
+      continue;
+    }
+
+    const ratio = p.life / p.maxLife;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size * ratio, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(197, 160, 89, ${p.alpha * ratio})`;
+    ctx.fill();
+  }
+}
+
+/* =============================================
+   COUNTER
+   ============================================= */
+function buildCounterDots() {
+  counterDotsEl.innerHTML = '';
+  for (let i = 0; i < state.MAX; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'counter-dot';
+    counterDotsEl.appendChild(dot);
+  }
+}
+
+function updateCounter() {
+  const count = state.selected.size;
+  const dots  = counterDotsEl.querySelectorAll('.counter-dot');
+
+  dots.forEach((dot, i) => {
+    dot.classList.toggle('filled', i < count);
+  });
+
+  if (count === 0) {
+    counterText.textContent = 'اختر موضوعَين على الأقل';
+    counterText.classList.remove('satisfied');
+  } else if (count < state.MIN) {
+    const remaining = state.MIN - count;
+    counterText.textContent = `اختر ${toArabicNum(remaining)} ${remaining === 1 ? 'موضوع' : 'مواضيع'} أخرى`;
+    counterText.classList.remove('satisfied');
+  } else {
+    counterText.textContent = `${toArabicNum(count)} من ${toArabicNum(state.MAX)} مواضيع مختارة`;
+    counterText.classList.add('satisfied');
+  }
+}
+
+/* =============================================
+   CTA
+   ============================================= */
+function updateCTA() {
+  const satisfied = state.selected.size >= state.MIN;
+  ctaBtn.classList.toggle('visible', satisfied);
+}
+
+ctaBtn.addEventListener('click', () => {
+  if (state.selected.size < state.MIN) return;
+
+  gsap.to(ctaBtn, {
+    scale: 0.95,
+    duration: 0.1,
+    yoyo: true,
+    repeat: 1,
+    ease: 'power2.inOut',
+  });
+
+  const selectedThemes = [...state.selected].map(i => THEMES[i]);
+  console.log('Selected themes:', selectedThemes.map(t => t.en).join(', '));
+  /* In real app: navigate to next step */
+});
+
+/* =============================================
+   REPOSITION ON RESIZE
+   ============================================= */
+function repositionAll() {
+  const positions = getPositions();
+  const stageRect = stage.getBoundingClientRect();
+
+  nodeEls.forEach((wrapper, i) => {
+    const { x, y } = positionToXY(positions[i], stageRect);
+    wrapper.style.left = x + 'px';
+    wrapper.style.top  = y + 'px';
+  });
+
+  resizeCanvas();
+  repositionLines();
+}
+
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(repositionAll, 150);
+});
+
+/* =============================================
+   INIT
+   ============================================= */
+function init() {
+  /* Animate header in */
+  gsap.to(header, {
+    opacity: 1,
+    y: 0,
+    duration: 0.6,
+    delay: 0.15,
+    ease: 'power3.out',
+    onComplete: () => header.classList.add('visible'),
+  });
+
+  /* Wait for stage to have dimensions */
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      resizeCanvas();
+      buildNodes();
+      buildConnections();
+      buildCounterDots();
+      updateCounter();
+      animateParticles();
+    });
+  });
+}
+
+document.addEventListener('DOMContentLoaded', init);
+</script>
+</body>
+</html>

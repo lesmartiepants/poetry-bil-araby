@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Brand Reveal — Option A: Particle Convergence</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@700&family=Forum&display=swap" rel="stylesheet" />
+
+  <!-- GSAP -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+
+  <style>
+    /* =============================================
+       DESIGN TOKENS
+       ============================================= */
+    :root {
+      --color-bg:            #0c0c0e;
+      --color-gold:          #c5a059;
+      --color-gold-dim:      rgba(197, 160, 89, 0.6);
+      --color-gold-faint:    rgba(197, 160, 89, 0.12);
+      --color-lapis-light:   #4a8abf;
+      --color-text-primary:  #e8dcc8;
+
+      --font-arabic:         'Reem Kufi', serif;
+      --font-english:        'Forum', serif;
+      --font-label:          system-ui, sans-serif;
+
+      --font-brand-arabic:   clamp(3rem, 8vw, 5.5rem);
+      --font-brand-english:  clamp(1rem, 2.5vw, 1.6rem);
+      --font-label-size:     0.7rem;
+
+      --ease-out-expo:       cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-in-quart:       cubic-bezier(0.76, 0, 0.24, 1);
+
+      --duration-major:      0.7s;
+      --duration-minor:      0.4s;
+      --duration-micro:      0.15s;
+    }
+
+    /* =============================================
+       RESET + BASE
+       ============================================= */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--color-bg);
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+    }
+
+    /* =============================================
+       LAYOUT
+       ============================================= */
+    #stage {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* =============================================
+       CANVAS (particle layer, full-screen)
+       ============================================= */
+    #particle-canvas {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    /* =============================================
+       TEXT LAYER
+       ============================================= */
+    #brand-text {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: clamp(0.5rem, 1.5vw, 0.9rem);
+      opacity: 0;
+      will-change: opacity, transform;
+    }
+
+    .brand-arabic {
+      font-family: var(--font-arabic);
+      font-size: var(--font-brand-arabic);
+      font-weight: 700;
+      color: var(--color-gold);
+      line-height: 1.1;
+      letter-spacing: 0.02em;
+      text-shadow:
+        0 0 40px rgba(197, 160, 89, 0.7),
+        0 0 80px rgba(197, 160, 89, 0.35),
+        0 0 120px rgba(197, 160, 89, 0.15);
+      direction: rtl;
+    }
+
+    .brand-english {
+      font-family: var(--font-english);
+      font-size: var(--font-brand-english);
+      color: var(--color-lapis-light);
+      letter-spacing: 0.35em;
+      text-transform: lowercase;
+      direction: ltr;
+      opacity: 0;
+      will-change: opacity;
+    }
+
+    /* =============================================
+       BEGIN BUTTON
+       ============================================= */
+    #begin-btn {
+      position: relative;
+      z-index: 2;
+      margin-top: clamp(2rem, 5vw, 3.5rem);
+      padding: 0.8rem 2.8rem;
+      min-height: 44px;
+      min-width: 44px;
+
+      background: transparent;
+      border: 1.5px solid var(--color-gold);
+      border-radius: 100px;
+
+      font-family: var(--font-english);
+      font-size: clamp(0.85rem, 1.5vw, 1rem);
+      letter-spacing: 0.2em;
+      color: var(--color-gold);
+      cursor: pointer;
+
+      opacity: 0;
+      will-change: opacity, transform;
+      transition:
+        background var(--duration-micro) var(--ease-out-expo),
+        color      var(--duration-micro) var(--ease-out-expo),
+        transform  var(--duration-micro) var(--ease-out-expo);
+    }
+
+    #begin-btn:hover,
+    #begin-btn:focus-visible {
+      background: var(--color-gold-faint);
+      color: var(--color-text-primary);
+      transform: scale(1.03);
+      outline: none;
+    }
+
+    #begin-btn:active {
+      transform: scale(0.97);
+      transition-duration: 0.08s;
+    }
+
+    /* =============================================
+       IDENTIFICATION LABEL
+       ============================================= */
+    #option-label {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      font-family: var(--font-label);
+      font-size: var(--font-label-size);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(197, 160, 89, 0.45);
+      z-index: 10;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="option-label">Option A</div>
+
+  <div id="stage">
+    <canvas id="particle-canvas"></canvas>
+
+    <div id="brand-text">
+      <span class="brand-arabic">بالعربي</span>
+      <span class="brand-english">poetry</span>
+    </div>
+
+    <button id="begin-btn" aria-label="Begin">Begin</button>
+  </div>
+
+  <script>
+    /* =============================================
+       TOKENS (JS mirrors CSS custom properties)
+       ============================================= */
+    /*
+      Canvas API cannot consume CSS custom properties, so token values
+      are mirrored here as a JS constants object. These are the only
+      hardcoded color values in the file; all CSS uses --color-* tokens.
+    */
+    const T = {
+      colorBg:         '#0c0c0e',  /* mirrors --color-bg */
+      colorGold:       '#c5a059',  /* mirrors --color-gold */
+      colorGoldRgb:    [197, 160, 89], /* decomposed for rgba() calls */
+      particleCount:   160,
+      particleSizeMin: 2,
+      particleSizeMax: 6,
+    };
+
+    /* =============================================
+       CANVAS SETUP
+       ============================================= */
+    const canvas  = document.getElementById('particle-canvas');
+    const ctx     = canvas.getContext('2d');
+    let W, H, anchorX, anchorY;
+
+    function resize() {
+      W = canvas.width  = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+      anchorX = W / 2;
+      anchorY = H / 2 - H * 0.04; // slightly above center to match text
+    }
+
+    window.addEventListener('resize', resize);
+    resize();
+
+    /* =============================================
+       PARTICLE SYSTEM
+       ============================================= */
+    class Particle {
+      constructor() {
+        this.reset(true);
+      }
+
+      reset(isInitial) {
+        // Start scattered across the full canvas
+        this.x     = Math.random() * W;
+        this.y     = Math.random() * H;
+
+        // Random drift velocity (ambient phase)
+        this.vx    = (Math.random() - 0.5) * 0.6;
+        this.vy    = (Math.random() - 0.5) * 0.6;
+
+        this.size  = T.particleSizeMin + Math.random() * (T.particleSizeMax - T.particleSizeMin);
+        this.alpha = 0.15 + Math.random() * 0.55;
+        this.baseAlpha = this.alpha;
+
+        // Target: distributed around the text anchor with spread
+        const spreadX = (Math.random() - 0.5) * Math.min(W * 0.45, 320);
+        const spreadY = (Math.random() - 0.5) * Math.min(H * 0.12, 60);
+        this.targetX  = anchorX + spreadX;
+        this.targetY  = anchorY + spreadY;
+
+        // Progress for convergence (0 = ambient, 1 = at target)
+        this.progress = 0;
+
+        // Phase: 'ambient' | 'converging' | 'dissolving'
+        this.phase = 'ambient';
+
+        // Individual stagger for convergence (0..1 normalized)
+        this.stagger = Math.random();
+      }
+    }
+
+    const particles = Array.from({ length: T.particleCount }, () => new Particle());
+
+    /* =============================================
+       ANIMATION TIMELINE CONTROLLER
+       ============================================= */
+    let phase       = 'ambient';   // 'ambient' | 'converging' | 'dissolving' | 'done'
+    let globalClock = 0;           // seconds, driven by rAF
+    let lastTime    = null;
+    let rafId;
+
+    // Ease-out-expo in JS (matches CSS token)
+    function easeOutExpo(t) {
+      return t === 1 ? 1 : 1 - Math.pow(2, -10 * t);
+    }
+
+    // PHASE DURATIONS (seconds)
+    const PHASE = {
+      ambientEnd:     0.8,   // particles drift until here
+      convergeEnd:    1.6,   // convergence completes
+      dissolveEnd:    2.0,   // particles fully dissolved
+    };
+
+    function drawParticle(p) {
+      const [r, g, b] = T.colorGoldRgb;
+      ctx.save();
+      ctx.globalAlpha = p.alpha;
+      ctx.fillStyle   = `rgb(${r}, ${g}, ${b})`;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size / 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function tick(timestamp) {
+      if (!lastTime) lastTime = timestamp;
+      const dt    = (timestamp - lastTime) / 1000;
+      lastTime    = timestamp;
+      globalClock += dt;
+
+      ctx.clearRect(0, 0, W, H);
+
+      const t = globalClock;
+
+      particles.forEach(p => {
+        if (t < PHASE.ambientEnd) {
+          // ---- AMBIENT DRIFT ----
+          p.x += p.vx;
+          p.y += p.vy;
+          // Wrap around edges
+          if (p.x < 0)  p.x = W;
+          if (p.x > W)  p.x = 0;
+          if (p.y < 0)  p.y = H;
+          if (p.y > H)  p.y = 0;
+          p.alpha = p.baseAlpha;
+
+        } else if (t < PHASE.convergeEnd) {
+          // ---- CONVERGENCE ----
+          // Each particle has an individual stagger offset (0..0.3s)
+          const phaseStart = PHASE.ambientEnd + p.stagger * 0.3;
+          const phaseLen   = (PHASE.convergeEnd - PHASE.ambientEnd) * 0.7;
+          const raw        = Math.max(0, (t - phaseStart) / phaseLen);
+          p.progress       = Math.min(1, easeOutExpo(raw));
+
+          p.x = p.x + (p.targetX - p.x) * p.progress * 0.08;
+          p.y = p.y + (p.targetY - p.y) * p.progress * 0.08;
+
+          // Brighten as they converge
+          p.alpha = p.baseAlpha + (1 - p.baseAlpha) * p.progress;
+
+        } else if (t < PHASE.dissolveEnd) {
+          // ---- DISSOLVE ----
+          const raw  = (t - PHASE.convergeEnd) / (PHASE.dissolveEnd - PHASE.convergeEnd);
+          p.alpha    = Math.max(0, p.alpha * (1 - easeOutExpo(raw)));
+
+        } else {
+          // ---- DONE ----
+          p.alpha = 0;
+        }
+
+        if (p.alpha > 0.01) drawParticle(p);
+      });
+
+      if (t < PHASE.dissolveEnd + 0.1) {
+        rafId = requestAnimationFrame(tick);
+      } else {
+        cancelAnimationFrame(rafId);
+      }
+    }
+
+    /* =============================================
+       GSAP TEXT TIMELINE
+       ============================================= */
+    function buildTextTimeline() {
+      const brandText   = document.getElementById('brand-text');
+      const englishSub  = document.querySelector('.brand-english');
+      const beginBtn    = document.getElementById('begin-btn');
+
+      gsap.set(brandText, { opacity: 0, y: 18 });
+      gsap.set(englishSub, { opacity: 0 });
+      gsap.set(beginBtn,  { opacity: 0, y: 12 });
+
+      const tl = gsap.timeline({ defaults: { ease: 'power3.out' } });
+
+      // At 1.6s: text appears as particles dissolve
+      tl.to(brandText, {
+          opacity: 1,
+          y: 0,
+          duration: 0.55,
+        }, 1.6)
+        // At 2.0s: subtitle
+        .to(englishSub, {
+          opacity: 1,
+          duration: 0.4,
+          ease: 'power2.out',
+        }, 2.0)
+        // At 2.5s: begin button
+        .to(beginBtn, {
+          opacity: 1,
+          y: 0,
+          duration: 0.45,
+        }, 2.5);
+
+      return tl;
+    }
+
+    /* =============================================
+       INIT
+       ============================================= */
+    window.addEventListener('load', () => {
+      rafId = requestAnimationFrame(tick);
+      buildTextTimeline();
+
+      document.getElementById('begin-btn').addEventListener('click', () => {
+        // Placeholder: host app takes over
+        gsap.to('#stage', { opacity: 0, duration: 0.4, ease: 'power2.in' });
+      });
+    });
+  </script>
+</body>
+</html>

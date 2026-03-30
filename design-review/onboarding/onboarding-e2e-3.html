@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Onboarding — Option 3: Minimal Flow</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@400;700&family=Forum&family=Amiri:wght@400;700&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <style>
+    :root {
+      --bg: #0c0c0e;
+      --gold: #c5a059;
+      --gold-dim: rgba(197,160,89,0.18);
+      --gold-border: rgba(197,160,89,0.55);
+      --lapis: #4a8abf;
+      --text: #f0e8d8;
+      --text-muted: rgba(240,232,216,0.5);
+      --surface: rgba(255,255,255,0.04);
+      --f-ar: 'Reem Kufi', serif;
+      --f-en: 'Forum', serif;
+      --f-am: 'Amiri', serif;
+      --ease: cubic-bezier(0.16,1,0.3,1);
+      --spring: cubic-bezier(0.34,1.56,0.64,1);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    html, body {
+      width: 100%; height: 100%; overflow: hidden;
+      background: var(--bg); color: var(--text); font-family: var(--f-ar);
+      -webkit-text-size-adjust: 100%; text-size-adjust: 100%; overscroll-behavior: none;
+    }
+
+    /* --- Option label --- */
+    .opt-label {
+      position: fixed; top: 14px; left: 14px;
+      font-family: var(--f-en); font-size: 0.65rem; letter-spacing: 0.1em;
+      color: var(--gold); opacity: 0.6; z-index: 200;
+      text-transform: uppercase; user-select: none; pointer-events: none;
+    }
+
+    /* --- Progress dots --- */
+    .dots {
+      position: fixed; bottom: calc(16px + env(safe-area-inset-bottom));
+      left: 50%; transform: translateX(-50%);
+      display: flex; gap: 6px; z-index: 200; pointer-events: none;
+      opacity: 0; transition: opacity 0.3s var(--ease);
+    }
+    .dots.on { opacity: 1; }
+    .dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--text-muted);
+      transition: background 0.15s var(--ease), transform 0.15s var(--ease);
+    }
+    .dot.active { background: var(--gold); transform: scale(1.3); }
+
+    /* --- Ink canvas --- */
+    #ink { position: fixed; inset: 0; pointer-events: none; z-index: 0; transition: opacity 0.3s; }
+
+    /* --- Stage + steps --- */
+    #stage { position: fixed; inset: 0; }
+    .step {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 24px 20px; padding-bottom: calc(52px + env(safe-area-inset-bottom));
+      opacity: 0; pointer-events: none; z-index: 1;
+    }
+    .step.on { opacity: 1; pointer-events: auto; }
+
+    /* --- Shared title --- */
+    .title {
+      font-weight: 700; font-size: clamp(1.1rem,4vw,1.5rem);
+      color: var(--text); margin-bottom: 20px; text-align: center; letter-spacing: 0.03em;
+    }
+
+    /* --- CTA button --- */
+    .cta {
+      margin-top: 18px; padding: 11px 30px; min-height: 44px; min-width: 110px;
+      border-radius: 22px; border: 1px solid var(--gold-border);
+      background: var(--gold-dim); color: var(--gold);
+      font-family: var(--f-ar); font-weight: 700; font-size: 0.95rem;
+      cursor: pointer; letter-spacing: 0.04em;
+      transition: opacity 0.15s var(--ease), transform 0.1s var(--ease), background 0.15s;
+      opacity: 0; pointer-events: none; user-select: none;
+    }
+    .cta.on { opacity: 1; pointer-events: auto; }
+    .cta:active { transform: scale(0.97); background: rgba(197,160,89,0.28); }
+
+    /* ==================== STEP 0 — BRAND ==================== */
+    #s0 { gap: 8px; z-index: 2; }
+    .brand-ar {
+      font-family: var(--f-ar); font-weight: 700;
+      font-size: clamp(3.2rem,9vw,5.5rem); color: var(--gold);
+      text-shadow: 0 0 32px rgba(197,160,89,0.45); letter-spacing: 0.02em;
+    }
+    .brand-en {
+      font-family: var(--f-en); font-size: clamp(0.9rem,2.5vw,1.4rem);
+      color: var(--lapis); letter-spacing: 0.18em; text-transform: lowercase;
+    }
+
+    /* ==================== STEP 1 — MOOD ==================== */
+    .mood-grid { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; max-width: 420px; }
+    .mood-tag {
+      display: flex; flex-direction: column; align-items: center; gap: 2px;
+      padding: 10px 16px; min-height: 44px; min-width: 76px;
+      border-radius: 22px; border: 1px solid rgba(255,255,255,0.1);
+      background: var(--surface); cursor: pointer; user-select: none;
+      transition: transform 0.1s var(--spring), border-color 0.15s, background 0.15s;
+    }
+    .mood-tag:active { transform: scale(0.95); }
+    .mood-tag.sel { border-color: var(--gold-border); background: var(--gold-dim); }
+    .mood-ar { font-weight: 700; font-size: 0.95rem; color: var(--text); }
+    .mood-tag.sel .mood-ar { border-bottom: 1.5px solid var(--gold); }
+    .mood-en {
+      font-family: var(--f-en); font-size: 0.7rem;
+      color: #fff; text-shadow: 0 1px 3px rgba(0,0,0,0.7); letter-spacing: 0.04em;
+    }
+
+    /* ==================== STEP 2 — ERA ==================== */
+    .era-row { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; max-width: 440px; width: 100%; }
+    .era-card {
+      flex: 1; min-width: 140px; max-width: 190px; min-height: 130px;
+      padding: 20px 16px; border-radius: 12px;
+      border: 1px solid rgba(255,255,255,0.08); background: var(--surface);
+      cursor: pointer; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; gap: 5px;
+      transition: transform 0.15s var(--ease), border-color 0.15s, background 0.15s;
+      user-select: none;
+    }
+    .era-card.classical { border-color: rgba(197,160,89,0.12); }
+    .era-card.modern    { border-color: rgba(74,138,191,0.12); }
+    .era-card.sel { border-color: var(--gold-border); background: var(--gold-dim); transform: scale(1.02); }
+    .era-card:active { transform: scale(0.97); }
+    .era-name-ar { font-weight: 700; font-size: 1.15rem; color: var(--text); }
+    .era-card.classical .era-name-ar { font-family: var(--f-am); font-size: 1.3rem; }
+    .era-name-en { font-family: var(--f-en); font-size: 0.72rem; color: var(--text-muted); letter-spacing: 0.06em; }
+    .sub-chips {
+      display: flex; gap: 7px; flex-wrap: wrap; justify-content: center;
+      max-width: 440px; width: 100%; margin-top: 12px; min-height: 36px;
+    }
+    .chip {
+      padding: 6px 13px; border-radius: 14px; border: 1px solid rgba(255,255,255,0.1);
+      background: var(--surface); font-size: 0.8rem; color: var(--text-muted);
+      cursor: pointer; min-height: 32px; user-select: none;
+      opacity: 0; transform: translateY(6px);
+      transition: opacity 0.2s var(--ease), transform 0.2s var(--ease), border-color 0.15s, color 0.15s;
+    }
+    .chip.on  { opacity: 1; transform: translateY(0); }
+    .chip.sel { border-color: var(--gold-border); color: var(--gold); }
+
+    /* ==================== STEP 3 — THEMES ==================== */
+    .theme-grid {
+      display: grid; grid-template-columns: repeat(3,1fr); gap: 9px;
+      max-width: 400px; width: 100%;
+    }
+    .t-pill {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      gap: 2px; padding: 10px 8px; min-height: 52px;
+      border-radius: 10px; border: 1px solid rgba(255,255,255,0.08);
+      background: var(--surface); cursor: pointer; user-select: none;
+      transition: transform 0.1s var(--spring), border-color 0.15s, background 0.15s, box-shadow 0.15s;
+    }
+    .t-pill:active { transform: scale(0.95); }
+    .t-pill.sel { border-color: var(--gold-border); background: var(--gold-dim); box-shadow: 0 0 12px rgba(197,160,89,0.15); }
+    .t-ar { font-weight: 700; font-size: 0.9rem; color: var(--text); }
+    .t-en { font-family: var(--f-en); font-size: 0.62rem; color: var(--text-muted); letter-spacing: 0.04em; }
+    .t-count { font-family: var(--f-en); font-size: 0.75rem; color: var(--gold); margin-top: 12px; min-height: 18px; letter-spacing: 0.06em; }
+
+    /* ==================== STEP 4 — POEM ==================== */
+    .poem-card {
+      max-width: 340px; width: 100%; padding: 28px 22px;
+      border-radius: 14px; border: 1px solid rgba(197,160,89,0.22);
+      background: rgba(197,160,89,0.04);
+      display: flex; flex-direction: column; align-items: center; gap: 14px;
+    }
+    .p-verse {
+      font-family: var(--f-am); font-size: clamp(1.2rem,4vw,1.5rem);
+      color: var(--text); text-align: center; line-height: 1.75; letter-spacing: 0.02em;
+    }
+    .p-div { width: 36px; height: 1px; background: var(--gold-border); }
+    .p-poet { font-family: var(--f-en); font-size: 0.8rem; color: var(--gold); letter-spacing: 0.08em; }
+  </style>
+</head>
+<body>
+
+<div class="opt-label">Option 3 — Minimal</div>
+
+<div class="dots" id="dots">
+  <div class="dot active" data-i="0"></div>
+  <div class="dot" data-i="1"></div>
+  <div class="dot" data-i="2"></div>
+  <div class="dot" data-i="3"></div>
+</div>
+
+<canvas id="ink"></canvas>
+
+<div id="stage">
+
+  <!-- STEP 0: BRAND REVEAL -->
+  <section class="step on" id="s0">
+    <div class="brand-ar" id="bAr">بالعربي</div>
+    <div class="brand-en" id="bEn">poetry</div>
+  </section>
+
+  <!-- STEP 1: MOOD PICKER -->
+  <section class="step" id="s1">
+    <div class="title">كيف تشعر الآن؟</div>
+    <div class="mood-grid" id="moodGrid">
+      <div class="mood-tag" data-m="joy"        data-c="#c5a059"><span class="mood-ar">فرح</span><span class="mood-en">Joy</span></div>
+      <div class="mood-tag" data-m="melancholy" data-c="#1E3A6E"><span class="mood-ar">كآبة</span><span class="mood-en">Melancholy</span></div>
+      <div class="mood-tag" data-m="anger"      data-c="#8B2500"><span class="mood-ar">غضب</span><span class="mood-en">Anger</span></div>
+      <div class="mood-tag" data-m="hope"       data-c="#4A7C59"><span class="mood-ar">أمل</span><span class="mood-en">Hope</span></div>
+      <div class="mood-tag" data-m="despair"    data-c="#4A4A4A"><span class="mood-ar">يأس</span><span class="mood-en">Despair</span></div>
+      <div class="mood-tag" data-m="wonder"     data-c="#6A4C93"><span class="mood-ar">دهشة</span><span class="mood-en">Wonder</span></div>
+      <div class="mood-tag" data-m="pride"      data-c="#B8860B"><span class="mood-ar">فخر</span><span class="mood-en">Pride</span></div>
+      <div class="mood-tag" data-m="loneliness" data-c="#2E3A5F"><span class="mood-ar">وحدة</span><span class="mood-en">Loneliness</span></div>
+      <div class="mood-tag" data-m="nostalgia"  data-c="#8B7355"><span class="mood-ar">حنين</span><span class="mood-en">Nostalgia</span></div>
+    </div>
+    <button class="cta" id="moodNext">التالي</button>
+  </section>
+
+  <!-- STEP 2: ERA PICKER -->
+  <section class="step" id="s2">
+    <div class="title">أي عصر يستهويك؟</div>
+    <div class="era-row">
+      <div class="era-card classical" id="eraC">
+        <span class="era-name-ar">كلاسيكي</span>
+        <span class="era-name-en">Classical</span>
+      </div>
+      <div class="era-card modern" id="eraM">
+        <span class="era-name-ar">حديث</span>
+        <span class="era-name-en">Modern</span>
+      </div>
+    </div>
+    <div class="sub-chips" id="subChips"></div>
+    <button class="cta" id="eraNext">التالي</button>
+  </section>
+
+  <!-- STEP 3: THEME PICKER -->
+  <section class="step" id="s3">
+    <div class="title">ما الذي يستهويك؟</div>
+    <div class="theme-grid">
+      <div class="t-pill" data-t="love"><span class="t-ar">الحب</span><span class="t-en">Love</span></div>
+      <div class="t-pill" data-t="longing"><span class="t-ar">الشوق</span><span class="t-en">Longing</span></div>
+      <div class="t-pill" data-t="grief"><span class="t-ar">الحزن</span><span class="t-en">Grief</span></div>
+      <div class="t-pill" data-t="nature"><span class="t-ar">الطبيعة</span><span class="t-en">Nature</span></div>
+      <div class="t-pill" data-t="homeland"><span class="t-ar">الوطن</span><span class="t-en">Homeland</span></div>
+      <div class="t-pill" data-t="spirit"><span class="t-ar">الروحانية</span><span class="t-en">Spirituality</span></div>
+      <div class="t-pill" data-t="wisdom"><span class="t-ar">الحكمة</span><span class="t-en">Wisdom</span></div>
+      <div class="t-pill" data-t="freedom"><span class="t-ar">الحرية</span><span class="t-en">Freedom</span></div>
+      <div class="t-pill" data-t="war"><span class="t-ar">الحرب</span><span class="t-en">War</span></div>
+      <div class="t-pill" data-t="sea"><span class="t-ar">البحر</span><span class="t-en">Sea</span></div>
+      <div class="t-pill" data-t="wine"><span class="t-ar">الخمر</span><span class="t-en">Wine</span></div>
+      <div class="t-pill" data-t="praise"><span class="t-ar">المديح</span><span class="t-en">Praise</span></div>
+    </div>
+    <div class="t-count" id="tCount"></div>
+    <button class="cta" id="themeNext">أرني شعرًا</button>
+  </section>
+
+  <!-- STEP 4: POEM CARD -->
+  <section class="step" id="s4">
+    <div class="poem-card">
+      <div class="p-verse">يا ليلَ الصبِّ متى غدُه<br>أقيامُ الساعةِ موعدُه</div>
+      <div class="p-div"></div>
+      <div class="p-poet">الحصري القيرواني</div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+  /* ---- STATE ---- */
+  const sel = { moods: [], era: null, subEra: null, themes: [] };
+  let cur = 0;
+
+  /* ---- INK BLOBS (step 1 only) ---- */
+  const inkEl = document.getElementById('ink');
+  const ctx = inkEl.getContext('2d');
+  let blobs = [];
+  function resizeInk() { inkEl.width = innerWidth; inkEl.height = innerHeight; }
+  resizeInk();
+  addEventListener('resize', resizeInk);
+  function blob(x, y, color) {
+    blobs.push({ x, y, color, r: 0, max: 90 + Math.random()*60, a: 0.2 });
+  }
+  (function loop() {
+    ctx.clearRect(0, 0, inkEl.width, inkEl.height);
+    blobs = blobs.filter(b => b.a > 0.004);
+    blobs.forEach(b => {
+      if (b.r < b.max * 0.94) b.r += (b.max - b.r) * 0.08;
+      else b.a *= 0.97;
+      const g = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, b.r);
+      g.addColorStop(0, b.color + Math.round(b.a*255).toString(16).padStart(2,'0'));
+      g.addColorStop(1, b.color + '00');
+      ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, Math.PI*2);
+      ctx.fillStyle = g; ctx.fill();
+    });
+    requestAnimationFrame(loop);
+  })();
+
+  /* ---- STEP TRANSITION ---- */
+  function go(next) {
+    const from = document.getElementById('s' + cur);
+    const to   = document.getElementById('s' + next);
+    gsap.to(from, { opacity: 0, duration: 0.2, ease: 'power2.in',
+      onComplete() { from.classList.remove('on'); } });
+    gsap.fromTo(to, { opacity: 0, y: 15 }, { opacity: 1, y: 0, duration: 0.3, ease: 'power2.out',
+      onStart() { to.classList.add('on'); } });
+    cur = next;
+    // dots: visible on steps 1-3 (0-indexed dot = step-1)
+    const dots = document.getElementById('dots');
+    dots.classList.toggle('on', next >= 1 && next <= 3);
+    document.querySelectorAll('.dot').forEach(d =>
+      d.classList.toggle('active', +d.dataset.i === next - 1));
+    inkEl.style.opacity = next === 1 ? '1' : '0';
+  }
+
+  /* ---- STEP 0: BRAND REVEAL ---- */
+  gsap.fromTo('#bAr', { opacity: 0, scale: 0.95 }, { opacity: 1, scale: 1, duration: 0.5, ease: 'power2.out' });
+  gsap.fromTo('#bEn', { opacity: 0 }, { opacity: 1, duration: 0.3, ease: 'power2.out', delay: 0.5 });
+  setTimeout(() => go(1), 1500);
+
+  /* ---- STEP 1: MOOD ---- */
+  const moodTags = document.querySelectorAll('.mood-tag');
+  const moodNext = document.getElementById('moodNext');
+
+  // stagger in when step becomes visible
+  const mo = new MutationObserver(() => {
+    if (document.getElementById('s1').classList.contains('on')) {
+      gsap.fromTo(moodTags, { opacity: 0, y: 10 },
+        { opacity: 1, y: 0, duration: 0.3, stagger: 0.04, ease: 'power2.out', delay: 0.05 });
+      mo.disconnect();
+    }
+  });
+  mo.observe(document.getElementById('s1'), { attributes: true, attributeFilter: ['class'] });
+
+  moodTags.forEach(tag => tag.addEventListener('click', () => {
+    const m = tag.dataset.m, idx = sel.moods.indexOf(m);
+    if (idx > -1) { sel.moods.splice(idx, 1); tag.classList.remove('sel'); }
+    else {
+      if (sel.moods.length >= 3) return;
+      sel.moods.push(m); tag.classList.add('sel');
+      const r = tag.getBoundingClientRect();
+      blob(r.left + r.width/2, r.top + r.height/2, tag.dataset.c);
+      gsap.fromTo(tag, { scale: 1.1 }, { scale: 1, duration: 0.15, ease: 'power2.out' });
+    }
+    moodNext.classList.toggle('on', sel.moods.length > 0);
+  }));
+  moodNext.addEventListener('click', () => go(2));
+
+  /* ---- STEP 2: ERA ---- */
+  const eraC = document.getElementById('eraC');
+  const eraM = document.getElementById('eraM');
+  const subChips = document.getElementById('subChips');
+  const eraNext = document.getElementById('eraNext');
+  const SUB = { classical: ['جاهلي','أموي','عباسي','أندلسي'], modern: ['رومانسي','حداثي','معاصر'] };
+
+  function showChips(era) {
+    subChips.innerHTML = '';
+    SUB[era].forEach((label, i) => {
+      const c = document.createElement('div');
+      c.className = 'chip'; c.textContent = label;
+      c.addEventListener('click', () => {
+        subChips.querySelectorAll('.chip').forEach(x => x.classList.remove('sel'));
+        c.classList.add('sel'); sel.subEra = label;
+      });
+      subChips.appendChild(c);
+      setTimeout(() => c.classList.add('on'), i * 60 + 20);
+    });
+  }
+  function pickEra(era, card) {
+    [eraC, eraM].forEach(c => c.classList.remove('sel'));
+    card.classList.add('sel'); sel.era = era;
+    showChips(era); eraNext.classList.add('on');
+  }
+  eraC.addEventListener('click', () => pickEra('classical', eraC));
+  eraM.addEventListener('click', () => pickEra('modern', eraM));
+  eraNext.addEventListener('click', () => go(3));
+
+  /* ---- STEP 3: THEMES ---- */
+  const pills = document.querySelectorAll('.t-pill');
+  const tCount = document.getElementById('tCount');
+  const themeNext = document.getElementById('themeNext');
+
+  pills.forEach(p => p.addEventListener('click', () => {
+    const t = p.dataset.t, idx = sel.themes.indexOf(t);
+    if (idx > -1) { sel.themes.splice(idx, 1); p.classList.remove('sel'); }
+    else {
+      if (sel.themes.length >= 5) return;
+      sel.themes.push(t); p.classList.add('sel');
+      gsap.fromTo(p, { scale: 1.08 }, { scale: 1, duration: 0.15, ease: 'power2.out' });
+    }
+    const n = sel.themes.length;
+    tCount.textContent = n ? n + ' / 5 مختار' : '';
+    themeNext.classList.toggle('on', n >= 2);
+  }));
+
+  themeNext.addEventListener('click', () => {
+    gsap.to(themeNext, { scale: 0.95, duration: 0.1, ease: 'power2.in', onComplete() {
+      gsap.to(themeNext, { scale: 1.05, duration: 0.1, ease: 'power2.out', onComplete() {
+        gsap.to(themeNext, { scale: 1, duration: 0.08 });
+        exitAnim();
+      }});
+    }});
+  });
+
+  /* ---- EXIT TRANSITION ---- */
+  function exitAnim() {
+    const ov = Object.assign(document.createElement('div'), { style: '' });
+    ov.style.cssText = 'position:fixed;inset:0;z-index:500;background:rgba(197,160,89,0);pointer-events:none;';
+    document.body.appendChild(ov);
+    gsap.to(ov, { backgroundColor: 'rgba(197,160,89,0.2)', duration: 0.25, ease: 'power2.out',
+      onComplete() {
+        gsap.to(ov, { backgroundColor: 'rgba(197,160,89,0)', duration: 0.25, ease: 'power2.in',
+          onComplete() {
+            ov.remove();
+            console.log('[onboarding-3] selections:', JSON.stringify(sel, null, 2));
+            go(4);
+          }
+        });
+      }
+    });
+  }
+</script>
+</body>
+</html>

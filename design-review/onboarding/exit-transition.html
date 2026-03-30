@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Exit Transition — Option B: Dissolve to Light</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@400;700&family=Forum&family=Amiri:wght@400;700&display=swap" rel="stylesheet" />
+
+  <!-- GSAP -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+
+  <style>
+    /* =============================================
+       DESIGN TOKENS
+       ============================================= */
+    :root {
+      /* Palette */
+      --color-bg:               #0c0c0e;
+      --color-surface:          rgba(255, 255, 255, 0.05);
+      --color-surface-border:   rgba(197, 160, 89, 0.18);
+      --color-gold:             #c5a059;
+      --color-gold-light:       #e2c07a;
+      --color-gold-dim:         rgba(197, 160, 89, 0.55);
+      --color-gold-faint:       rgba(197, 160, 89, 0.10);
+      --color-text-primary:     #e8dcc8;
+      --color-text-muted:       rgba(232, 220, 200, 0.45);
+      --color-stone:            #c8bfb0;
+
+      /* Typography */
+      --font-arabic:            'Amiri', 'Reem Kufi', serif;
+      --font-ui:                'Reem Kufi', serif;
+      --font-english:           'Forum', serif;
+      --font-label:             system-ui, sans-serif;
+
+      --font-title:             clamp(1.1rem, 3vw, 1.5rem);
+      --font-poet:              clamp(0.75rem, 2vw, 0.9rem);
+      --font-verse:             clamp(1rem, 2.5vw, 1.25rem);
+      --font-chip:              clamp(0.72rem, 1.8vw, 0.82rem);
+      --font-btn:               clamp(0.9rem, 2vw, 1.05rem);
+      --font-label-size:        0.65rem;
+
+      /* Spacing */
+      --space-xs:               4px;
+      --space-sm:               8px;
+      --space-md:               16px;
+      --space-lg:               24px;
+      --space-xl:               40px;
+
+      /* Motion */
+      --ease-out-expo:          cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-in-quart:          cubic-bezier(0.76, 0, 0.24, 1);
+      --ease-out-quart:         cubic-bezier(0.25, 1, 0.5, 1);
+      --ease-spring:            cubic-bezier(0.34, 1.56, 0.64, 1);
+
+      --dur-hero:               0.7s;
+      --dur-section:            0.45s;
+      --dur-content:            0.3s;
+      --dur-hover:              0.18s;
+      --dur-press:              0.1s;
+
+      /* Elevation */
+      --shadow-card:            0 8px 40px rgba(0, 0, 0, 0.6), 0 2px 8px rgba(0, 0, 0, 0.4);
+      --shadow-btn-glow:        0 0 20px rgba(197, 160, 89, 0.25);
+
+      /* Layout */
+      --card-max-width:         min(420px, 88vw);
+      --card-radius:            16px;
+    }
+
+    /* =============================================
+       RESET + BASE
+       ============================================= */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--color-bg);
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+      overscroll-behavior-y: contain;
+    }
+
+    /* =============================================
+       OPTION LABEL
+       ============================================= */
+    #option-label {
+      position: fixed;
+      top: var(--space-md);
+      right: var(--space-md);
+      font-family: var(--font-label);
+      font-size: var(--font-label-size);
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: rgba(197, 160, 89, 0.4);
+      z-index: 100;
+      pointer-events: none;
+    }
+
+    /* =============================================
+       MAIN STAGE
+       ============================================= */
+    #stage {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+    }
+
+    /* =============================================
+       SECTION: POEM DESTINATION (behind)
+       ============================================= */
+    #poem-scene {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--color-bg);
+      z-index: 1;
+    }
+
+    .poem-card {
+      width: var(--card-max-width);
+      padding: var(--space-xl) var(--space-lg);
+      background: var(--color-surface);
+      border: 1px solid var(--color-surface-border);
+      border-radius: var(--card-radius);
+      box-shadow: var(--shadow-card);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: var(--space-md);
+      text-align: center;
+      direction: rtl;
+
+      /* Start at drift position — GSAP reveals upward */
+      opacity: 0;
+      transform: translateY(20px);
+      will-change: opacity, transform;
+    }
+
+    .poem-title {
+      font-family: var(--font-arabic);
+      font-size: var(--font-title);
+      font-weight: 700;
+      color: var(--color-gold);
+      line-height: 1.4;
+      letter-spacing: 0.01em;
+      direction: rtl;
+    }
+
+    .poem-poet {
+      font-family: var(--font-ui);
+      font-size: var(--font-poet);
+      font-weight: 400;
+      color: var(--color-text-muted);
+      letter-spacing: 0.04em;
+      direction: rtl;
+    }
+
+    .poem-divider {
+      width: 40px;
+      height: 1px;
+      background: linear-gradient(
+        to left,
+        transparent,
+        var(--color-gold-dim),
+        transparent
+      );
+    }
+
+    .poem-verse {
+      font-family: var(--font-arabic);
+      font-size: var(--font-verse);
+      font-weight: 400;
+      color: var(--color-stone);
+      line-height: 1.85;
+      letter-spacing: 0.01em;
+      direction: rtl;
+    }
+
+    /* =============================================
+       SECTION: ONBOARDING OVERLAY (in front)
+       ============================================= */
+    #onboarding-scene {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: var(--space-lg);
+      z-index: 2;
+      will-change: opacity;
+    }
+
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: var(--space-sm);
+      justify-content: center;
+      max-width: min(340px, 86vw);
+      direction: rtl;
+    }
+
+    .chip {
+      padding: 6px 14px;
+      min-height: 34px;
+      border: 1px solid var(--color-gold-dim);
+      border-radius: 100px;
+      font-family: var(--font-ui);
+      font-size: var(--font-chip);
+      color: var(--color-gold);
+      background: var(--color-gold-faint);
+      cursor: default;
+      display: flex;
+      align-items: center;
+      direction: rtl;
+    }
+
+    .chip.selected {
+      background: rgba(197, 160, 89, 0.22);
+      border-color: var(--color-gold);
+      color: var(--color-gold-light);
+    }
+
+    #cta-btn {
+      position: relative;
+      padding: 0 var(--space-xl);
+      min-height: 52px;
+      min-width: 180px;
+
+      background: var(--color-gold);
+      border: none;
+      border-radius: 100px;
+
+      font-family: var(--font-ui);
+      font-size: var(--font-btn);
+      font-weight: 700;
+      color: var(--color-bg);
+      cursor: pointer;
+      z-index: 3;
+      box-shadow: var(--shadow-btn-glow);
+
+      transition:
+        transform  var(--dur-hover) var(--ease-out-expo),
+        box-shadow var(--dur-hover) var(--ease-out-expo);
+
+      will-change: transform;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    #cta-btn:hover {
+      transform: scale(1.04);
+      box-shadow: 0 0 32px rgba(197, 160, 89, 0.45);
+    }
+
+    #cta-btn:active {
+      transform: scale(0.97);
+      transition-duration: var(--dur-press);
+    }
+
+    #cta-btn.morphing {
+      pointer-events: none;
+    }
+
+    /* =============================================
+       LIGHT OVERLAY
+       Philosophy: A radial gradient blooms from the
+       button's position and washes everything out.
+       This is a DOM element — no canvas needed for
+       the light itself (simpler, GPU-composited).
+       ============================================= */
+    #light-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9;
+      pointer-events: none;
+      /*
+       * We set the radial gradient dynamically from JS
+       * because the origin is the button's viewport position.
+       * opacity is animated by GSAP.
+       */
+      opacity: 0;
+      will-change: opacity;
+    }
+
+    /* =============================================
+       PARTICLE CANVAS (golden dust layer)
+       ============================================= */
+    #dust-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 10;
+      pointer-events: none;
+      opacity: 0;
+      will-change: opacity;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="option-label">Option B — Dissolve to Light</div>
+
+  <div id="stage">
+
+    <!-- ==========================================
+         POEM DESTINATION (revealed behind)
+         ========================================== -->
+    <section id="poem-scene" aria-label="Poem display">
+      <article class="poem-card" dir="rtl" lang="ar">
+        <h2 class="poem-title">يا ليل الصبّ متى غده</h2>
+        <p class="poem-poet">الحصري القيرواني</p>
+        <div class="poem-divider" role="separator" aria-hidden="true"></div>
+        <p class="poem-verse">
+          أقيامُ الساعةِ موعِدُهُ<br />أم قيامي حين أشاهدُهُ
+        </p>
+      </article>
+    </section>
+
+    <!-- ==========================================
+         ONBOARDING OVERLAY
+         ========================================== -->
+    <section id="onboarding-scene" aria-label="Onboarding complete">
+      <div class="chip-row" dir="rtl" lang="ar" aria-label="Selected themes">
+        <span class="chip selected">الغزل</span>
+        <span class="chip selected">الحنين</span>
+        <span class="chip">الحكمة</span>
+        <span class="chip selected">الطبيعة</span>
+        <span class="chip">المدح</span>
+      </div>
+
+      <button id="cta-btn" dir="rtl" lang="ar" aria-label="Show me poetry">
+        أرني شعرًا
+      </button>
+    </section>
+
+    <!-- ==========================================
+         RADIAL LIGHT OVERLAY (DOM-based)
+         ========================================== -->
+    <div id="light-overlay" aria-hidden="true"></div>
+
+    <!-- ==========================================
+         GOLDEN DUST PARTICLES (canvas)
+         ========================================== -->
+    <canvas id="dust-canvas" aria-hidden="true"></canvas>
+
+  </div><!-- /#stage -->
+
+  <script>
+    /* =============================================
+       TOKENS (JS mirrors CSS custom properties)
+       ============================================= */
+    const T = {
+      colorBg:         '#0c0c0e',
+      colorGold:       '#c5a059',
+      colorGoldRgb:    [197, 160, 89],
+      particleCount:   20,
+      /* Light wash colors: warm gold-white at center, dims to amber edge */
+      lightCenter:     'rgba(255, 242, 200, 0.98)',
+      lightMid:        'rgba(220, 175, 90, 0.80)',
+      lightEdge:       'rgba(197, 160, 89, 0.00)',
+    };
+
+    /* =============================================
+       CANVAS SETUP (dust particles)
+       ============================================= */
+    const canvas = document.getElementById('dust-canvas');
+    const ctx    = canvas.getContext('2d');
+    let W, H;
+
+    function resizeCanvas() {
+      W = canvas.width  = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resizeCanvas);
+    resizeCanvas();
+
+    /* =============================================
+       PARTICLE SYSTEM
+       Philosophy: 20 golden dust motes drift downward
+       during the dissolve — like illuminated motes in
+       morning light through a window. Each has:
+         - random start position in top half
+         - gentle downward drift with sideways wobble
+         - soft circular glow (radial gradient)
+         - individual size (2–5px radius)
+         - individual lifetime stagger
+       ============================================= */
+    class DustMote {
+      constructor() {
+        this.init();
+      }
+
+      init() {
+        this.x       = Math.random() * W;
+        this.y       = Math.random() * H * 0.6;       // top 60% of screen
+        this.radius  = 1.5 + Math.random() * 3.5;     // 1.5 – 5px
+        this.alpha   = 0;
+        this.peakAlpha = 0.35 + Math.random() * 0.55; // 0.35 – 0.90
+        this.vy      = 0.25 + Math.random() * 0.55;   // gentle downfall
+        this.vx      = (Math.random() - 0.5) * 0.3;   // slight sideways drift
+        // Wobble: each mote gets a unique phase and frequency
+        this.wobblePhase = Math.random() * Math.PI * 2;
+        this.wobbleFreq  = 0.4 + Math.random() * 0.6;
+        this.wobbleAmp   = 0.4 + Math.random() * 0.8;
+        // Stagger: motes appear at different moments during dissolve
+        this.stagger     = Math.random();              // 0..1, mapped to time offset
+        this.born        = false;
+      }
+
+      update(t, dissolveProgress) {
+        // dissolveProgress: 0..1 over the dust lifetime
+        const localT = Math.max(0, dissolveProgress - this.stagger * 0.3);
+
+        if (localT <= 0) {
+          this.alpha = 0;
+          return;
+        }
+
+        this.born = true;
+
+        // Fade in quickly, hold, then fade out as dissolve clears
+        if (localT < 0.25) {
+          this.alpha = (localT / 0.25) * this.peakAlpha;
+        } else if (localT < 0.70) {
+          this.alpha = this.peakAlpha;
+        } else {
+          this.alpha = this.peakAlpha * (1 - (localT - 0.70) / 0.30);
+        }
+
+        // Movement: drift down + wobble
+        this.y  += this.vy;
+        this.x  += this.vx + Math.sin(t * this.wobbleFreq + this.wobblePhase) * this.wobbleAmp;
+      }
+
+      draw() {
+        if (this.alpha <= 0.01) return;
+
+        const [r, g, b] = T.colorGoldRgb;
+        const grd = ctx.createRadialGradient(
+          this.x, this.y, 0,
+          this.x, this.y, this.radius * 2.5
+        );
+        grd.addColorStop(0,   `rgba(${r}, ${g}, ${b}, ${this.alpha})`);
+        grd.addColorStop(0.4, `rgba(${r}, ${g}, ${b}, ${this.alpha * 0.5})`);
+        grd.addColorStop(1,   `rgba(${r}, ${g}, ${b}, 0)`);
+
+        ctx.save();
+        ctx.fillStyle = grd;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, this.radius * 2.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+    }
+
+    const motes = Array.from({ length: T.particleCount }, () => new DustMote());
+
+    /* Particle loop controller */
+    let dustRafId       = null;
+    let dustClock       = 0;
+    let dustLastTime    = null;
+    let dustActive      = false;
+    let dustProgress    = 0; // driven externally by GSAP
+
+    function dustTick(timestamp) {
+      if (!dustLastTime) dustLastTime = timestamp;
+      const dt      = (timestamp - dustLastTime) / 1000;
+      dustLastTime  = timestamp;
+      dustClock    += dt;
+
+      ctx.clearRect(0, 0, W, H);
+
+      motes.forEach(m => {
+        m.update(dustClock, dustProgress);
+        m.draw();
+      });
+
+      if (dustActive) {
+        dustRafId = requestAnimationFrame(dustTick);
+      } else {
+        ctx.clearRect(0, 0, W, H);
+      }
+    }
+
+    function startDust() {
+      dustActive   = true;
+      dustLastTime = null;
+      dustRafId    = requestAnimationFrame(dustTick);
+    }
+
+    function stopDust() {
+      dustActive = false;
+      if (dustRafId) cancelAnimationFrame(dustRafId);
+    }
+
+    /* =============================================
+       LIGHT OVERLAY SETUP
+       Sets radial-gradient origin from button center
+       ============================================= */
+    function setupLightOverlay(cx, cy) {
+      const overlay = document.getElementById('light-overlay');
+      // Express origin as percentages of viewport for robustness
+      const pctX = ((cx / window.innerWidth)  * 100).toFixed(1) + '%';
+      const pctY = ((cy / window.innerHeight) * 100).toFixed(1) + '%';
+
+      overlay.style.background = `radial-gradient(
+        ellipse 90% 90% at ${pctX} ${pctY},
+        ${T.lightCenter} 0%,
+        ${T.lightMid}    35%,
+        ${T.lightEdge}   75%
+      )`;
+    }
+
+    /* =============================================
+       ANIMATION STATE
+       ============================================= */
+    let animating = false;
+
+    /* =============================================
+       TRANSITION ORCHESTRATION
+       Philosophy: Warm golden light radiates from the
+       button, overexposing the scene (like morning light
+       flooding through curtains), then the light lifts
+       away like mist, leaving the poem shimmering beneath.
+
+       Timeline:
+         0.00 – 0.20s  Button pulse (scale 1→1.1→1.0)
+         0.15 – 0.55s  Light blooms from button (opacity 0→1)
+         0.35 – 0.55s  Chips + onboarding wash out
+         0.45 – 0.90s  Dust motes drift down
+         0.50 – 0.95s  Light lifts away (opacity 1→0)
+         0.60 – 1.10s  Poem card drifts up into view
+         Total: ~1.3s
+       ============================================= */
+    function runTransition(btnEl) {
+      if (animating) return;
+      animating = true;
+      btnEl.classList.add('morphing');
+
+      const rect   = btnEl.getBoundingClientRect();
+      const cx     = rect.left + rect.width  / 2;
+      const cy     = rect.top  + rect.height / 2;
+
+      setupLightOverlay(cx, cy);
+
+      const overlay   = document.getElementById('light-overlay');
+      const dustEl    = document.getElementById('dust-canvas');
+      const poemCard  = document.querySelector('.poem-card');
+      const onboarding = document.getElementById('onboarding-scene');
+      const chips     = document.querySelector('.chip-row');
+
+      const tl = gsap.timeline({
+        defaults: { ease: 'none' }
+      });
+
+      /* Stage 1: Button pulse */
+      tl.to(btnEl, {
+        scale: 1.1,
+        duration: 0.10,
+        ease: 'power1.out',
+      }, 0)
+      .to(btnEl, {
+        scale: 1.0,
+        duration: 0.10,
+        ease: 'power1.in',
+      }, 0.10);
+
+      /* Stage 2: Light blooms outward */
+      tl.to(overlay, {
+        opacity: 1,
+        duration: 0.38,
+        ease: 'power2.out',
+      }, 0.15);
+
+      /* Stage 3: Chips fade quickly into the light */
+      tl.to(chips, {
+        opacity: 0,
+        duration: 0.22,
+        ease: 'power2.in',
+      }, 0.28);
+
+      /* Stage 4: Button itself washes into the light */
+      tl.to(btnEl, {
+        opacity: 0,
+        duration: 0.20,
+        ease: 'power2.in',
+      }, 0.30);
+
+      /* Stage 5: Start dust motes, fade canvas in */
+      tl.to(dustEl, {
+        opacity: 1,
+        duration: 0.15,
+        ease: 'power2.out',
+        onStart: () => startDust(),
+      }, 0.44);
+
+      /* Stage 6: Advance dust progress via GSAP proxy object */
+      const dustDriver = { progress: 0 };
+      tl.to(dustDriver, {
+        progress: 1,
+        duration: 0.60,
+        ease: 'none',
+        onUpdate: () => { dustProgress = dustDriver.progress; },
+      }, 0.44);
+
+      /* Stage 7: Light lifts away (like mist clearing) */
+      tl.to(overlay, {
+        opacity: 0,
+        duration: 0.48,
+        ease: 'power1.inOut',
+        onComplete: () => {
+          onboarding.style.display = 'none';
+        },
+      }, 0.50);
+
+      /* Stage 8: Fade the full onboarding scene (catches anything left) */
+      tl.to(onboarding, {
+        opacity: 0,
+        duration: 0.30,
+        ease: 'power1.in',
+      }, 0.50);
+
+      /* Stage 9: Poem card drifts upward into view */
+      tl.to(poemCard, {
+        opacity: 1,
+        y: 0,
+        duration: 0.50,
+        ease: 'power3.out',
+      }, 0.70);
+
+      /* Stage 10: Fade dust canvas out as poem settles */
+      tl.to(dustEl, {
+        opacity: 0,
+        duration: 0.30,
+        ease: 'power2.in',
+        onComplete: () => {
+          stopDust();
+          animating = false;
+        },
+      }, 0.95);
+    }
+
+    /* =============================================
+       INIT
+       ============================================= */
+    window.addEventListener('load', () => {
+      const btn = document.getElementById('cta-btn');
+      btn.addEventListener('click', () => runTransition(btn));
+      btn.addEventListener('touchend', (e) => {
+        e.preventDefault();
+        runTransition(btn);
+      }, { passive: false });
+    });
+  </script>
+
+</body>
+</html>

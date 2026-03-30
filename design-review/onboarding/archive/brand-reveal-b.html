@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Brand Reveal — Option B: Calligraphic Stroke</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@700&family=Forum&display=swap" rel="stylesheet" />
+
+  <!-- GSAP -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+
+  <style>
+    /* =============================================
+       DESIGN TOKENS
+       ============================================= */
+    :root {
+      --color-bg:            #0c0c0e;
+      --color-gold:          #c5a059;
+      --color-gold-mid:      #d4b06a;
+      --color-gold-faint:    rgba(197, 160, 89, 0.12);
+      --color-gold-glow:     rgba(197, 160, 89, 0.5);
+      --color-lapis-deep:    #1a3a5c;
+      --color-lapis-mid:     #2a5a8c;
+      --color-lapis-light:   #4a8abf;
+      --color-text-primary:  #e8dcc8;
+
+      --font-arabic:         'Reem Kufi', serif;
+      --font-english:        'Forum', serif;
+      --font-label:          system-ui, sans-serif;
+
+      --font-brand-arabic:   clamp(3rem, 8vw, 5.5rem);
+      --font-brand-english:  clamp(1rem, 2.5vw, 1.6rem);
+      --font-label-size:     0.7rem;
+
+      --ease-out-expo:       cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* =============================================
+       RESET + BASE
+       ============================================= */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--color-bg);
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+    }
+
+    /* =============================================
+       LAYOUT
+       ============================================= */
+    #stage {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: clamp(0.5rem, 1.5vw, 0.9rem);
+    }
+
+    /* =============================================
+       SVG STROKE LAYER
+       ============================================= */
+    #stroke-layer {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 1;
+      overflow: visible;
+    }
+
+    /*
+      The SVG ink stroke path traces an abstract calligraphic arc
+      that sweeps right-to-left across the brand text area.
+      It is purely gestural — it does not attempt pixel-perfect
+      glyph tracing. The Arabic text reveals below as the stroke completes.
+    */
+    #ink-stroke {
+      fill: none;
+      stroke: var(--color-gold);
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      filter: url(#glow-filter);
+      will-change: stroke-dashoffset, opacity;
+    }
+
+    /* Secondary fine stroke for depth */
+    #ink-stroke-fine {
+      fill: none;
+      stroke: var(--color-gold-mid);
+      stroke-width: 1.2;
+      stroke-linecap: round;
+      opacity: 0.5;
+      will-change: stroke-dashoffset, opacity;
+    }
+
+    /* =============================================
+       BRAND TEXT LAYER
+       ============================================= */
+    #brand-text {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: clamp(0.5rem, 1.5vw, 0.9rem);
+    }
+
+    .brand-arabic {
+      font-family: var(--font-arabic);
+      font-size: var(--font-brand-arabic);
+      font-weight: 700;
+      direction: rtl;
+      line-height: 1.1;
+      letter-spacing: 0.02em;
+
+      /*
+        Start as transparent text masked by the clip.
+        Color and shadow are added by GSAP at the reveal point.
+      */
+      color: transparent;
+      will-change: color, text-shadow, opacity;
+    }
+
+    .brand-english {
+      font-family: var(--font-english);
+      font-size: var(--font-brand-english);
+      color: var(--color-lapis-light);
+      letter-spacing: 0.35em;
+      text-transform: lowercase;
+      direction: ltr;
+      opacity: 0;
+      will-change: opacity, transform;
+    }
+
+    /* =============================================
+       SHIMMER SWEEP
+       ============================================= */
+    .shimmer-sweep {
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      pointer-events: none;
+      /*
+        A thin vertical bar of bright gold that sweeps left-to-right
+        over the Arabic text to simulate reflected light on wet ink.
+      */
+      background: linear-gradient(
+        105deg,
+        transparent       0%,
+        transparent       35%,
+        rgba(255,240,190,0.55) 50%,
+        transparent       65%,
+        transparent       100%
+      );
+      opacity: 0;
+      will-change: opacity, transform;
+    }
+
+    /* =============================================
+       BEGIN BUTTON
+       ============================================= */
+    #begin-btn {
+      position: relative;
+      z-index: 4;
+      margin-top: clamp(2rem, 5vw, 3.5rem);
+
+      padding: 0.8rem 2.8rem;
+      min-height: 44px;
+      min-width: 44px;
+
+      background: transparent;
+      border: 1.5px solid var(--color-gold);
+      border-radius: 100px;
+
+      font-family: var(--font-english);
+      font-size: clamp(0.85rem, 1.5vw, 1rem);
+      letter-spacing: 0.2em;
+      color: var(--color-gold);
+      cursor: pointer;
+
+      opacity: 0;
+      will-change: opacity, transform;
+      transition:
+        background 0.15s var(--ease-out-expo),
+        color      0.15s var(--ease-out-expo),
+        transform  0.15s var(--ease-out-expo);
+    }
+
+    #begin-btn:hover,
+    #begin-btn:focus-visible {
+      background: var(--color-gold-faint);
+      color: var(--color-text-primary);
+      transform: scale(1.03);
+      outline: none;
+    }
+
+    #begin-btn:active {
+      transform: scale(0.97);
+      transition-duration: 0.08s;
+    }
+
+    /* =============================================
+       IDENTIFICATION LABEL
+       ============================================= */
+    #option-label {
+      position: fixed;
+      top: 1rem;
+      right: 1rem;
+      font-family: var(--font-label);
+      font-size: var(--font-label-size);
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(197, 160, 89, 0.45);
+      z-index: 10;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="option-label">Option B</div>
+
+  <div id="stage">
+
+    <!--
+      SVG: calligraphic ink stroke + glow filter.
+      The viewBox coordinates are intentionally loose so the path
+      can extend beyond the bounding box of the text element.
+      Actual dimensions are driven by JS after layout.
+    -->
+    <svg id="stroke-layer"
+         viewBox="0 0 800 200"
+         preserveAspectRatio="xMidYMid meet"
+         aria-hidden="true">
+
+      <defs>
+        <!-- Gold glow filter applied to the stroke -->
+        <filter id="glow-filter" x="-30%" y="-150%" width="160%" height="400%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="blur1" />
+          <feGaussianBlur in="SourceGraphic" stdDeviation="10" result="blur2" />
+          <feMerge>
+            <feMergeNode in="blur2" />
+            <feMergeNode in="blur1" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+
+        <!-- Tight glow for the fine secondary stroke -->
+        <filter id="glow-fine" x="-20%" y="-100%" width="140%" height="300%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="b" />
+          <feMerge>
+            <feMergeNode in="b" />
+            <feMergeNode in="SourceGraphic" />
+          </feMerge>
+        </filter>
+      </defs>
+
+      <!--
+        PRIMARY INK STROKE
+        A flowing Bezier curve that evokes a broad calligraphy pen
+        sweeping from right to left (RTL), mirroring Arabic writing direction.
+        The path deliberately overshoots then settles — like a brush stroke
+        that continues slightly past the final letterform.
+
+        Coordinates are relative to the 800x200 viewBox.
+        The stroke starts at the far right (780, 100), arcs through
+        several control points, and ends at the far left (20, 100).
+      -->
+      <path id="ink-stroke"
+        d="
+          M 780,105
+          C 750,60  700,40  660,80
+          C 630,108 610,55  570,65
+          C 535,74  520,115 490,100
+          C 460,85  445,50  410,70
+          C 378,88  365,125 330,108
+          C 298,92  285,55  250,72
+          C 215,90  205,130 168,112
+          C 132,94  120,55  88,78
+          C 58,98  38,120  20,100
+        "
+      />
+
+      <!--
+        SECONDARY FINE STROKE
+        A thinner, slightly offset stroke that adds ink-weight variation,
+        simulating the secondary edge of a calligraphic nib.
+      -->
+      <path id="ink-stroke-fine"
+        filter="url(#glow-fine)"
+        d="
+          M 780,98
+          C 748,52  698,35  658,74
+          C 628,102 608,50  568,60
+          C 532,69  518,110 488,95
+          C 457,80  443,44  408,65
+          C 376,83  363,120 328,103
+          C 295,87  283,50  248,67
+          C 213,85  203,125 166,107
+          C 130,89  118,50  86,73
+          C 55,93  36,115  18,95
+        "
+      />
+    </svg>
+
+    <!-- Brand text sits below the stroke layer in DOM but is centered -->
+    <div id="brand-text">
+      <div style="position: relative; display: inline-block;">
+        <span class="brand-arabic">بالعربي</span>
+        <!-- Shimmer sweep overlay, scoped to the Arabic text bounds -->
+        <div class="shimmer-sweep" aria-hidden="true"></div>
+      </div>
+      <span class="brand-english">poetry</span>
+    </div>
+
+    <button id="begin-btn" aria-label="Begin">Begin</button>
+  </div>
+
+  <script>
+    /* =============================================
+       STROKE MEASUREMENT
+       Measure the path's total length after fonts load,
+       then animate stroke-dasharray/dashoffset.
+       ============================================= */
+    function getPathLength(pathEl) {
+      try {
+        return pathEl.getTotalLength();
+      } catch {
+        return 600; // Safe fallback
+      }
+    }
+
+    /*
+      GSAP color tweens cannot read CSS custom properties directly, so
+      token values used inside the JS timeline are declared here.
+      All CSS in this file uses --color-* tokens exclusively.
+    */
+    const TOKENS = {
+      colorGold:      '#c5a059',  /* mirrors --color-gold */
+      colorLapisLight:'#4a8abf',  /* mirrors --color-lapis-light */
+    };
+
+    /* =============================================
+       GSAP MAIN TIMELINE
+       ============================================= */
+    function buildTimeline() {
+      const strokeMain  = document.getElementById('ink-stroke');
+      const strokeFine  = document.getElementById('ink-stroke-fine');
+      const arabicText  = document.querySelector('.brand-arabic');
+      const englishSub  = document.querySelector('.brand-english');
+      const shimmer     = document.querySelector('.shimmer-sweep');
+      const beginBtn    = document.getElementById('begin-btn');
+
+      // Measure stroke lengths
+      const lenMain = getPathLength(strokeMain);
+      const lenFine = getPathLength(strokeFine);
+
+      // --- INITIAL STATES ---
+      // Stroke hidden: dasharray = total length, dashoffset = total length
+      gsap.set(strokeMain, {
+        strokeDasharray:  lenMain,
+        strokeDashoffset: lenMain,
+        opacity: 1,
+      });
+      gsap.set(strokeFine, {
+        strokeDasharray:  lenFine,
+        strokeDashoffset: lenFine,
+        opacity: 0.5,
+      });
+
+      // Text starts invisible
+      gsap.set(arabicText, {
+        color:      'transparent',
+        textShadow: 'none',
+      });
+      gsap.set(englishSub, { opacity: 0, y: 10 });
+      gsap.set(shimmer,    { opacity: 0, xPercent: -100 });
+      gsap.set(beginBtn,   { opacity: 0, y: 10 });
+
+      // --- TIMELINE ---
+      const tl = gsap.timeline({
+        defaults: { ease: 'power3.out' },
+      });
+
+      // 0.0s: Stroke begins drawing RTL (dashoffset animates to 0)
+      tl.to(strokeMain, {
+          strokeDashoffset: 0,
+          duration: 1.4,
+          ease: 'power2.inOut',
+        }, 0)
+        .to(strokeFine, {
+          strokeDashoffset: 0,
+          duration: 1.45,
+          ease: 'power2.inOut',
+        }, 0.04)
+
+        // 1.4s: Letters fill with gold — stroke has just completed
+        .to(arabicText, {
+          color: TOKENS.colorGold,
+          duration: 0.5,
+          ease: 'power3.out',
+        }, 1.4)
+        // Simultaneously add glow
+        .to(arabicText, {
+          textShadow: [
+            '0 0 40px rgba(197,160,89,0.75)',
+            '0 0 80px rgba(197,160,89,0.4)',
+            '0 0 120px rgba(197,160,89,0.18)',
+          ].join(', '),
+          duration: 0.6,
+          ease: 'power2.out',
+        }, 1.4)
+
+        // 1.5s: Stroke fades out
+        .to([strokeMain, strokeFine], {
+          opacity: 0,
+          duration: 0.5,
+          ease: 'power2.in',
+        }, 1.5)
+
+        // 1.8s: Shimmer sweep passes over the Arabic text (RTL direction — xPercent 100 -> -100)
+        .to(shimmer, {
+          opacity: 1,
+          duration: 0.05,
+          ease: 'none',
+        }, 1.8)
+        .to(shimmer, {
+          xPercent: 100,
+          duration: 0.55,
+          ease: 'power2.inOut',
+        }, 1.8)
+        .to(shimmer, {
+          opacity: 0,
+          duration: 0.15,
+          ease: 'none',
+        }, 2.3)
+
+        // 2.0s: "poetry" subtitle fades in
+        .to(englishSub, {
+          opacity: 1,
+          y: 0,
+          duration: 0.45,
+          ease: 'power3.out',
+        }, 2.0)
+
+        // 2.5s: Begin button
+        .to(beginBtn, {
+          opacity: 1,
+          y: 0,
+          duration: 0.45,
+          ease: 'back.out(1.4)',
+        }, 2.5);
+
+      return tl;
+    }
+
+    /* =============================================
+       INIT — wait for fonts and layout to settle
+       ============================================= */
+    window.addEventListener('load', () => {
+      // Small delay ensures Google Fonts have rendered
+      // so font metrics are accurate before we build the timeline
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          buildTimeline();
+        });
+      });
+
+      document.getElementById('begin-btn').addEventListener('click', () => {
+        gsap.to('#stage', { opacity: 0, duration: 0.4, ease: 'power2.in' });
+      });
+    });
+  </script>
+</body>
+</html>

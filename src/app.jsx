@@ -381,24 +381,6 @@ export default function DiwanApp() {
     // Do NOT call setInterpretation(null) here — interpretation must persist so
     // versePairs and insightParts can render the translation in the main view.
     // The interpretation is cleared in onSlideChange when the user swipes.
-
-    // Pre-translate next carousel poem once streaming is complete.
-    // Call analyzePoemAction directly (not via autoExplainPending, which always
-    // explains carouselPoems[carouselIndex] instead of the target poem).
-    if (!isInterpreting) {
-      const nextUntranslated = carouselPoems.findIndex(
-        (p, i) => i > targetIdx && !p.english && !p.cachedTranslation && !explainedPoemIds.current.has(p.id)
-      );
-      if (nextUntranslated !== -1) {
-        const nextPoem = carouselPoems[nextUntranslated];
-        setTimeout(() => {
-          setInterpretation(null);
-          carouselExplainTargetId.current = nextPoem.id;
-          explainedPoemIds.current.add(nextPoem.id);
-          analyzePoemAction({ current: nextPoem, addLog, track });
-        }, 500);
-      }
-    }
   }, [interpretation, carouselPoems.length, isInterpreting]);
 
   // Eagerly populate the discovered model list so it's ready before any user action.

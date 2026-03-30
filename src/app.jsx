@@ -795,26 +795,26 @@ export default function DiwanApp() {
       return;
     }
 
-    const { error } = await savePoem(current);
+    const { error } = await savePoem(displayedPoem);
     if (error) {
       addLog('Save Error', error.message, 'error');
     } else {
-      addLog('Save', `Saved poem: ${current?.poet} - ${current?.title}`, 'success');
-      track('poem_saved', { poet: current?.poet });
-      if (current?.id) {
-        emitEvent(current.id, 'save');
-        addLog('Event', `→ save event emitted (dual-write) | poem_id: ${current.id}`, 'info');
+      addLog('Save', `Saved poem: ${displayedPoem?.poet} - ${displayedPoem?.title}`, 'success');
+      track('poem_saved', { poet: displayedPoem?.poet });
+      if (displayedPoem?.id) {
+        emitEvent(displayedPoem?.id, 'save');
+        addLog('Event', `→ save event emitted (dual-write) | poem_id: ${displayedPoem?.id}`, 'info');
       }
     }
   };
 
   const handleUnsavePoem = async () => {
-    const { error } = await unsavePoem(current?.id, current?.arabic);
+    const { error } = await unsavePoem(displayedPoem?.id, displayedPoem?.arabic);
     if (error) {
       addLog('Unsave Error', error.message, 'error');
     } else {
-      track('poem_unsaved', { poet: current?.poet });
-      addLog('Unsave', `Removed poem: ${current?.poet} - ${current?.title}`, 'success');
+      track('poem_unsaved', { poet: displayedPoem?.poet });
+      addLog('Unsave', `Removed poem: ${displayedPoem?.poet} - ${displayedPoem?.title}`, 'success');
     }
   };
 
@@ -1535,8 +1535,8 @@ export default function DiwanApp() {
               </div>
 
               <SavePoemButton
-                poem={current}
-                isSaved={isPoemSaved(current)}
+                poem={displayedPoem}
+                isSaved={isPoemSaved(displayedPoem)}
                 onSave={handleSavePoem}
                 onUnsave={handleUnsavePoem}
                 disabled={!user}
@@ -1649,7 +1649,7 @@ export default function DiwanApp() {
         onShare={handleShare}
         onSave={handleSavePoem}
         onUnsave={handleUnsavePoem}
-        isSaved={current ? isPoemSaved(current) : false}
+        isSaved={displayedPoem ? isPoemSaved(displayedPoem) : false}
         onSignIn={handleSignIn}
         onSignOut={handleSignOut}
         onOpenSavedPoems={handleOpenSavedPoems}

@@ -1230,6 +1230,11 @@ export default function DiwanApp() {
                         // This avoids the race where carousel-populate and autoExplainPending
                         // both fire analyzePoemAction and fight over interpretation state.
                         const newPoem = carouselPoems[idx];
+                        // Update URL to reflect the currently displayed poem
+                        if (newPoem?.id) {
+                          navigate('/poem/' + newPoem.id + window.location.search, { replace: true });
+                          updateOGMetaTags(newPoem);
+                        }
                         if (newPoem && !newPoem.cachedTranslation && !newPoem.english &&
                             !explainedPoemIds.current.has(newPoem.id)) {
                           setAutoExplainPending(true);

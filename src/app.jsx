@@ -728,7 +728,7 @@ export default function DiwanApp() {
 
   const handleShare = async () => {
     addLog('UI Event', 'Share button clicked', 'info');
-    track('poem_shared', { poet: current?.poet });
+    track('poem_shared', { poet: displayedPoem?.poet });
 
     // Open the share card modal for visual sharing
     useModalStore.getState().openShareCard();
@@ -1667,14 +1667,14 @@ export default function DiwanApp() {
       </AnimatePresence>
 
       {/* Share Card Modal */}
-      {showShareCard && current && (
+      {showShareCard && displayedPoem && (
         <ShareCardModal
           poem={{
-            ...current,
+            ...displayedPoem,
             english:
               insightParts?.poeticTranslation ||
-              current?.english ||
-              current?.cachedTranslation ||
+              displayedPoem?.english ||
+              displayedPoem?.cachedTranslation ||
               '',
           }}
           onClose={() => useModalStore.getState().closeShareCard()}

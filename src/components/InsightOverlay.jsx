@@ -28,16 +28,13 @@ export default function InsightOverlay({
         />
         <Drawer.Content
           data-vaul-drawer
-          className="fixed bottom-0 left-0 right-0 z-[61] h-[90dvh] rounded-t-2xl flex flex-col"
+          className="fixed bottom-0 left-0 right-0 z-[61] h-[95dvh] rounded-t-2xl flex flex-col"
           style={{ background: o.bg }}
         >
           <Drawer.Handle
             className="mx-auto mt-3 mb-1 w-8 h-[3px] rounded-full"
             style={{ background: 'var(--gold-structural)' }}
           />
-
-          {/* Gold rule */}
-          <div className="h-px flex-shrink-0" style={{ background: o.goldRule }} />
 
           {/* Header — centered poem title */}
           <div className="px-6 md:px-8 pt-4 pb-3 flex-shrink-0 text-center">

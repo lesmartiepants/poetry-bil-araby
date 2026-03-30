@@ -368,28 +368,34 @@ export default function DiwanApp() {
     }
 
     if (targetIdx === -1 || targetIdx >= carouselPoems.length) return;
-    if (carouselPoems[targetIdx].english) return; // already has a translation
+
+    // During streaming, interpretation grows chunk by chunk. Always update if the
+    // new translation is longer — this ensures the final complete translation lands
+    // on the carousel poem, not just the first partial streaming chunk.
+    const existing = carouselPoems[targetIdx].english || '';
+    if (existing.length >= translation.length) return;
 
     updateCarouselPoem(targetIdx, { english: translation });
     // Do NOT call setInterpretation(null) here — interpretation must persist so
     // versePairs and insightParts can render the translation in the main view.
     // The interpretation is cleared in onSlideChange when the user swipes.
 
-    // Pre-translate next carousel poem: find the next slide without english and queue it.
-    // This runs after the current poem's translation is patched, so by the time the user
-    // swipes, the next slide's translation is ready (or in progress).
-    const nextUntranslated = carouselPoems.findIndex(
-      (p, i) => i > targetIdx && !p.english && !p.cachedTranslation && !explainedPoemIds.current.has(p.id)
-    );
-    if (nextUntranslated !== -1) {
-      // Small delay so the current render settles before starting the next AI call
-      setTimeout(() => {
-        setInterpretation(null);
-        carouselExplainTargetId.current = carouselPoems[nextUntranslated].id;
-        setAutoExplainPending(true);
-      }, 500);
+    // Pre-translate next carousel poem once streaming is complete.
+    // Only trigger when the AI is no longer generating (isInterpreting === false),
+    // so we don't kick off the next explain mid-stream.
+    if (!isInterpreting) {
+      const nextUntranslated = carouselPoems.findIndex(
+        (p, i) => i > targetIdx && !p.english && !p.cachedTranslation && !explainedPoemIds.current.has(p.id)
+      );
+      if (nextUntranslated !== -1) {
+        setTimeout(() => {
+          setInterpretation(null);
+          carouselExplainTargetId.current = carouselPoems[nextUntranslated].id;
+          setAutoExplainPending(true);
+        }, 500);
+      }
     }
-  }, [interpretation, carouselPoems.length]);
+  }, [interpretation, carouselPoems.length, isInterpreting]);
 
   // Eagerly populate the discovered model list so it's ready before any user action.
   // Using the default fetch mock in tests means this never consumes a mockResolvedValueOnce.

@@ -60,10 +60,8 @@ test.describe('PWA Service Worker', () => {
   test.use({ baseURL: PREVIEW_URL });
 
   test.beforeEach(async ({}, testInfo) => {
-    // Skip the entire suite in CI / when no preview server is running.
-    // PWA service workers require a production build served via `npm run preview`.
     if (!PWA_TESTS_ENABLED) {
-      testInfo.skip(true, 'Skipped: set PLAYWRIGHT_TEST_BASE_URL=http://localhost:4173 and run `npm run build && npm run preview` first');
+      testInfo.skip(true, 'Skipped: set PLAYWRIGHT_TEST_BASE_URL=http://localhost:4173');
     }
   });
 

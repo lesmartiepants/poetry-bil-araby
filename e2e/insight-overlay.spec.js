@@ -110,8 +110,16 @@ test.describe('Insight Overlay', () => {
     await explainBtn.click();
     await expect(page.locator('[data-vaul-drawer]')).toBeVisible({ timeout: 10000 });
 
-    // Dismiss via second Escape press (simulates swipe-to-dismiss)
-    await page.keyboard.press('Escape');
+    // Click close button (desktop pill or mobile circle), fall back to Escape
+    const closeBtn = page
+      .locator('[data-testid="insight-close"]')
+      .or(page.locator('[data-testid="insight-close-mobile"]'))
+      .or(page.locator('button[aria-label="Close insight overlay"]'));
+    if (await closeBtn.first().isVisible({ timeout: 1000 }).catch(() => false)) {
+      await closeBtn.first().click();
+    } else {
+      await page.keyboard.press('Escape');
+    }
     await page.waitForTimeout(500);
     await expect(page.locator('[data-vaul-drawer]')).not.toBeVisible({ timeout: 3000 });
   });

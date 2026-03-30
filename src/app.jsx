@@ -32,7 +32,17 @@ import {
 } from './prompts';
 import { parseInsight } from './utils/insightParser';
 import { repairAndParseJSON } from './utils/jsonRepair';
-import { FEATURES, DESIGN, BRAND, BRAND_HEADER, POEM_META, THEME, GOLD, CATEGORIES, FONTS } from './constants/index.js';
+import {
+  FEATURES,
+  DESIGN,
+  BRAND,
+  BRAND_HEADER,
+  POEM_META,
+  THEME,
+  GOLD,
+  CATEGORIES,
+  FONTS,
+} from './constants/index.js';
 import { usePoemStore } from './stores/poemStore';
 import { useAudioStore } from './stores/audioStore';
 import { useUIStore } from './stores/uiStore';
@@ -43,6 +53,7 @@ import { analyzePoem as analyzePoemAction } from './stores/actions/analyzePoem';
 import { getRecentSeenIds, markPoemSeen, pruneSeenPoems } from './utils/seenPoems.js';
 import { filterPoemsByCategory } from './utils/filterPoems.js';
 import { pcm16ToWav } from './utils/audio.js';
+import { transliterate } from './utils/transliterate.js';
 import {
   API_MODELS,
   TTS_CONFIG,
@@ -242,6 +253,16 @@ export default function DiwanApp() {
         }
       } else {
         setCurrentIndex(0);
+        // Sync the URL to the poem we're now showing — the fetch from handleFetch()
+        // (called alongside setSelectedCategory in the UI) will update it again when
+        // the new poem arrives, but this keeps the URL from showing a stale poem ID
+        // while the user scrolls between categories.
+        const newCurrent = filtered[0];
+        if (newCurrent?.id && typeof newCurrent.id === 'number') {
+          navigate('/poem/' + newCurrent.id, { replace: true });
+        } else {
+          navigate('/', { replace: true });
+        }
       }
     } else {
       usePoemStore.getState().setPendingCategory(null); // Clear any pending poet fetch on "All"
@@ -304,10 +325,10 @@ export default function DiwanApp() {
         return;
       }
 
-      // Clear stashed OAuth poem (already restored by poemStore's getInitialPoems)
-      try {
-        sessionStorage.removeItem('pendingSavePoem');
-      } catch {}
+      // Note: pendingSavePoem is intentionally left in sessionStorage here.
+      // The user effect (below) reads it after auth is restored to auto-save the poem.
+      // Removing it here would cause the auto-save to silently fail when OAuth
+      // redirects back to the root URL (/) instead of the original poem URL.
 
       // If the initial poem already has a cached translation, skip auto-explain
       const initial = poems[0];
@@ -342,10 +363,10 @@ export default function DiwanApp() {
     try {
       const poem = JSON.parse(stashed);
       if (poem && poem.arabic) {
-        savePoem(poem).then(({ error }) => {
+        savePoem(poem).then(({ error, alreadySaved }) => {
           if (error) {
             addLog('Save Error', error.message, 'error');
-          } else {
+          } else if (!alreadySaved) {
             addLog('Save', `Auto-saved poem: ${poem.poet} — ${poem.title}`, 'success');
           }
         });
@@ -424,7 +445,6 @@ export default function DiwanApp() {
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
   }, []);
-
 
   const handleScroll = (e) => {
     const progress = Math.min(1, e.target.scrollTop / 120);
@@ -635,10 +655,10 @@ export default function DiwanApp() {
       return;
     }
 
-    const { error } = await savePoem(current);
+    const { error, alreadySaved } = await savePoem(current);
     if (error) {
       addLog('Save Error', error.message, 'error');
-    } else {
+    } else if (!alreadySaved) {
       addLog('Save', `Saved poem: ${current?.poet} - ${current?.title}`, 'success');
       track('poem_saved', { poet: current?.poet });
       if (current?.id) {
@@ -886,7 +906,6 @@ export default function DiwanApp() {
       className={`h-[100dvh] w-full flex flex-col overflow-hidden overscroll-none ${DESIGN.anim} font-sans ${theme.bg} ${theme.text} ${theme.selectionBg}`}
       style={{ touchAction: 'pan-y', overflowX: 'hidden' }}
     >
-
       <DebugPanel controlBarRef={controlBarRef} />
 
       {/* Ratchet Mode glow overlay — full-screen Easter egg effect */}
@@ -947,7 +966,6 @@ export default function DiwanApp() {
         }}
       >
         <div className="flex flex-row items-center gap-1">
-
           <span
             style={{
               ...BRAND_HEADER.english,
@@ -964,10 +982,7 @@ export default function DiwanApp() {
           >
             بالعربي
           </span>
-          <Feather
-            style={{ ...BRAND_HEADER.feather, color: 'var(--gold)' }}
-            strokeWidth={1.5}
-          />
+          <Feather style={{ ...BRAND_HEADER.feather, color: 'var(--gold)' }} strokeWidth={1.5} />
         </div>
       </header>
 
@@ -992,16 +1007,16 @@ export default function DiwanApp() {
             <div className="flex flex-col items-center pt-2">
               <div className="w-full max-w-4xl flex flex-col items-center">
                 {/* Poem meta: title (dominant) → poet → English combined → vertical separator */}
-                <div
-                  className={`text-center ${DESIGN.mainMetaPadding} poem-meta-fade z-20 w-full`}
-                >
+                <div className={`text-center ${DESIGN.mainMetaPadding} poem-meta-fade z-20 w-full`}>
                   <div className="flex flex-col items-center justify-center w-full" dir="rtl">
                     {/* Line 1: Poem title */}
                     <div
                       className="text-center"
                       style={{
                         ...POEM_META.title,
-                        textShadow: darkMode ? POEM_META.titleShadow.dark : POEM_META.titleShadow.light,
+                        textShadow: darkMode
+                          ? POEM_META.titleShadow.dark
+                          : POEM_META.titleShadow.light,
                       }}
                     >
                       {current?.titleArabic || current?.title}
@@ -1025,10 +1040,14 @@ export default function DiwanApp() {
                           dir="ltr"
                           style={{
                             ...POEM_META.englishLine,
-                            color: darkMode ? POEM_META.englishLineColor.dark : POEM_META.englishLineColor.light,
+                            color: darkMode
+                              ? POEM_META.englishLineColor.dark
+                              : POEM_META.englishLineColor.light,
                           }}
                         >
-                          {current?.poet}{current?.poet && current?.title ? ' \u2014 ' : ''}{current?.title}
+                          {current?.title}
+                          {current?.poet && current?.title ? ' \u2014 ' : ''}
+                          {current?.poet}
                         </div>
                       </>
                     )}
@@ -1049,7 +1068,9 @@ export default function DiwanApp() {
                           <p
                             dir="rtl"
                             className={`${currentFontClass} leading-[2.2] arabic-shadow ${DESIGN.anim}`}
-                            style={{ fontSize: `calc(${POEM_META.verseArabicSize} * ${textScale})` }}
+                            style={{
+                              fontSize: `calc(${POEM_META.verseArabicSize} * ${textScale})`,
+                            }}
                           >
                             {pair.ar}
                           </p>
@@ -1317,7 +1338,6 @@ export default function DiwanApp() {
             </div>
           </footer>
         </div>
-
       </div>
 
       {/* Insights Overlay (replaces drawer + desktop pane) */}

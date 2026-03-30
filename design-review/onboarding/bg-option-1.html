@@ -1,38 +1,37 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Background 1 — Star Lattice</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Reem+Kufi:wght@400;700&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Background 1 — Star & Cross</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Reem+Kufi:wght@400;700&display=swap" rel="stylesheet" />
 
   <style>
-    /* ==========================================
+    /* =============================================
        DESIGN TOKENS
-       ========================================== */
+       ============================================= */
     :root {
-      --color-bg:          #0c0c0e;
-      --color-gold:        #c5a059;
-      --color-gold-dim:    rgba(197, 160, 89, 0.5);
-      --color-text-primary: #e8dcc8;
-      --color-text-meta:   rgba(240, 232, 216, 0.5);
+      --color-bg:              #0d0b08;
+      --color-gold:            #c5a059;
+      --color-gold-dim:        rgba(197, 160, 89, 0.5);
+      --color-lapis:           #2a5a8c;
+      --color-text-primary:    #e8dcc8;
+      --color-text-secondary:  rgba(240, 232, 216, 0.5);
 
-      --font-arabic:       'Amiri', serif;
-      --font-ui:           'Reem Kufi', sans-serif;
+      --pattern-gold-opacity:  0.06;
+      --pattern-lapis-opacity: 0.025;
 
-      --font-title:        clamp(1.4rem, 4vw, 1.8rem);
-      --font-verse:        clamp(1rem, 3vw, 1.2rem);
-      --font-meta:         clamp(0.75rem, 2vw, 0.85rem);
-      --font-label:        0.7rem;
+      --font-amiri:            'Amiri', serif;
+      --font-kufi:             'Reem Kufi', sans-serif;
 
-      --ease-out-expo:     cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-out-expo:         cubic-bezier(0.16, 1, 0.3, 1);
     }
 
-    /* ==========================================
+    /* =============================================
        RESET & BASE
-       ========================================== */
+       ============================================= */
     *, *::before, *::after {
       box-sizing: border-box;
       margin: 0;
@@ -43,269 +42,621 @@
       width: 100%;
       height: 100%;
       overflow: hidden;
-      background: var(--color-bg);
       -webkit-text-size-adjust: 100%;
       text-size-adjust: 100%;
     }
 
-    /* ==========================================
-       GEOMETRIC PATTERN LAYER
-       The 8-pointed star (octagram) lattice is
-       built with an SVG pattern tile. Each tile
-       contains: the star outline + 4 kite shapes
-       connecting adjacent stars. The entire SVG
-       is repeated via CSS background-image.
-       ========================================== */
-
-    /*
-      Tile math:
-      - Tile size: 80×80px
-      - Star center: (40,40)
-      - Outer radius: 22px  (star points)
-      - Inner radius: 9px   (star indent)
-      - Kite points connect star centers via
-        midpoints of the tile edges.
-    */
-
-    .pattern-layer {
-      position: fixed;
-      inset: 0;
-      z-index: 0;
-
-      /* SVG tile encoded inline. Lines only — no fill. */
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='80' height='80'%3E%3Cg fill='none' stroke='%23c5a059' stroke-width='0.7' stroke-linecap='round' stroke-linejoin='round'%3E%3C!-- 8-pointed star centered at 40,40 --%3E%3Cpolygon points='40,18 44.1,30.9 56.6,27.4 47.7,36.6 57.0,43.5 44.2,42.6 44.2,55.7 40,44.2 35.8,55.7 35.8,42.6 23.0,43.5 32.3,36.6 23.4,27.4 35.9,30.9'/%3E%3C!-- Corner quarter-stars: top-left --%3E%3Cpolygon points='0,0 2.1,7.5 9.0,4.5 4.5,9.0 7.5,11.0 2.1,12.5 4.5,20 0,12.5'/%3E%3C!-- Corner quarter-stars: top-right --%3E%3Cpolygon points='80,0 77.9,7.5 71.0,4.5 75.5,9.0 72.5,11.0 77.9,12.5 75.5,20 80,12.5'/%3E%3C!-- Corner quarter-stars: bottom-left --%3E%3Cpolygon points='0,80 2.1,72.5 9.0,75.5 4.5,71.0 7.5,69.0 2.1,67.5 4.5,60 0,67.5'/%3E%3C!-- Corner quarter-stars: bottom-right --%3E%3Cpolygon points='80,80 77.9,72.5 71.0,75.5 75.5,71.0 72.5,69.0 77.9,67.5 75.5,60 80,67.5'/%3E%3C!-- Kite connectors: top edge --%3E%3Cpath d='M40,18 L52,0 M40,18 L28,0'/%3E%3C!-- Kite connectors: right edge --%3E%3Cpath d='M57,43.5 L80,36 M57,43.5 L80,52'/%3E%3C!-- Kite connectors: bottom edge --%3E%3Cpath d='M40,55.7 L52,80 M40,55.7 L28,80'/%3E%3C!-- Kite connectors: left edge --%3E%3Cpath d='M23,43.5 L0,36 M23,43.5 L0,52'/%3E%3C!-- Cross connectors forming the lattice grid --%3E%3Cpath d='M40,18 L44.1,30.9 M56.6,27.4 L80,20 M56.6,27.4 L80,36 M57,43.5 L44.2,42.6 M56.6,52.6 L80,52 M56.6,52.6 L80,60 M40,55.7 L35.8,42.6 M23.4,52.6 L0,52 M23.4,52.6 L0,60 M23,43.5 L35.8,42.6 M23.4,27.4 L0,20 M23.4,27.4 L0,36'/%3E%3C/g%3E%3C/svg%3E");
-      background-size: 80px 80px;
-      background-repeat: repeat;
-
-      /* Radial fade: brighter at center, invisible at edges */
-      -webkit-mask-image: radial-gradient(
-        ellipse 65% 65% at 50% 50%,
-        rgba(0,0,0,0.08) 0%,
-        rgba(0,0,0,0.08) 30%,
-        rgba(0,0,0,0.04) 60%,
-        rgba(0,0,0,0) 100%
-      );
-      mask-image: radial-gradient(
-        ellipse 65% 65% at 50% 50%,
-        rgba(0,0,0,0.08) 0%,
-        rgba(0,0,0,0.08) 30%,
-        rgba(0,0,0,0.04) 60%,
-        rgba(0,0,0,0) 100%
-      );
-
-      opacity: 1;
+    body {
+      background-color: var(--color-bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      position: relative;
+      font-family: var(--font-amiri);
     }
 
-    /* ==========================================
+    /* =============================================
        LABEL
-       ========================================== */
+       ============================================= */
     .label {
       position: fixed;
       top: 16px;
-      /* ltr placement — label is Latin text */
-      right: 16px;
-      direction: ltr;
-      font-family: var(--font-ui);
-      font-size: var(--font-label);
-      color: var(--color-gold-dim);
+      left: 16px; /* LTR label despite RTL page */
+      font-family: var(--font-kufi);
+      font-size: 0.7rem;
       letter-spacing: 0.08em;
+      color: rgba(197, 160, 89, 0.45);
       text-transform: uppercase;
-      z-index: 10;
+      direction: ltr;
       pointer-events: none;
+      z-index: 100;
     }
 
-    /* ==========================================
-       STAGE — centers the poem card
-       ========================================== */
-    .stage {
+    /* =============================================
+       PATTERN LAYERS
+       ============================================= */
+    .pattern-stage {
       position: fixed;
       inset: 0;
-      z-index: 1;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    /* Layer 1: gold outline grid */
+    .pattern-layer-gold {
+      position: absolute;
+      inset: -50%;   /* oversized so rotation doesn't reveal edges */
+      width: 200%;
+      height: 200%;
+      opacity: var(--pattern-gold-opacity);
+    }
+
+    /* Layer 2: lapis fill accents */
+    .pattern-layer-lapis {
+      position: absolute;
+      inset: -50%;
+      width: 200%;
+      height: 200%;
+      opacity: var(--pattern-lapis-opacity);
+    }
+
+    /* Rotation animation — barely perceptible 120s full cycle */
+    @media (prefers-reduced-motion: no-preference) {
+      .pattern-layer-gold,
+      .pattern-layer-lapis {
+        animation: slowSpin 120s linear infinite;
+        transform-origin: 50% 50%;
+      }
+      .pattern-layer-lapis {
+        animation-delay: -60s; /* offset for subtle shimmer */
+      }
+    }
+
+    @keyframes slowSpin {
+      from { transform: rotate(0deg); }
+      to   { transform: rotate(360deg); }
+    }
+
+    /* Radial vignette mask — pattern bright centre, invisible edges */
+    .pattern-mask {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      background: radial-gradient(
+        ellipse 60% 60% at 50% 50%,
+        transparent 0%,
+        transparent 35%,
+        var(--color-bg) 75%
+      );
+      z-index: 2;
+    }
+
+    /* =============================================
+       POEM CARD
+       ============================================= */
+    .card-wrapper {
+      position: relative;
+      z-index: 10;
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 24px;
+      width: 100%;
+      max-width: 480px;
     }
 
-    /* ==========================================
-       POEM CARD
-       Transparent — text floats on the pattern
-       ========================================== */
     .poem-card {
       text-align: center;
-      max-width: 480px;
-      width: 100%;
+      direction: rtl;
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: 24px;
-
-      /* Entrance animation */
-      opacity: 0;
-      transform: translateY(20px);
-      animation: cardEntrance 0.8s var(--ease-out-expo) 0.3s forwards;
+      gap: 12px;
     }
 
-    @keyframes cardEntrance {
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    /* ==========================================
-       POEM TITLE
-       ========================================== */
     .poem-title {
-      font-family: var(--font-arabic);
-      font-size: var(--font-title);
+      font-family: var(--font-amiri);
+      font-size: clamp(1.4rem, 4vw, 1.8rem);
       font-weight: 700;
       color: var(--color-gold);
-      line-height: 1.4;
-      letter-spacing: 0.01em;
-
-      opacity: 0;
-      transform: translateY(12px);
-      animation: fadeSlideUp 0.7s var(--ease-out-expo) 0.5s forwards;
+      line-height: 1.3;
+      letter-spacing: 0.02em;
     }
 
-    /* ==========================================
-       POET NAME
-       ========================================== */
     .poem-poet {
-      font-family: var(--font-ui);
-      font-size: var(--font-meta);
+      font-family: var(--font-kufi);
+      font-size: clamp(0.75rem, 2vw, 0.85rem);
       font-weight: 400;
-      color: var(--color-text-meta);
-      letter-spacing: 0.05em;
-      margin-top: -16px;
-
-      opacity: 0;
-      animation: fadeSlideUp 0.6s var(--ease-out-expo) 0.65s forwards;
+      color: var(--color-text-secondary);
+      letter-spacing: 0.04em;
     }
 
-    /* ==========================================
-       VERSE CONTAINER
-       ========================================== */
-    .verse-pair {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 14px;
-      width: 100%;
+    .ornament-divider {
+      color: var(--color-gold);
+      font-size: 0.7rem;
+      opacity: 0.8;
+      line-height: 1;
     }
 
-    .verse-line {
-      font-family: var(--font-arabic);
-      font-size: var(--font-verse);
+    .poem-verse {
+      font-family: var(--font-amiri);
+      font-size: clamp(1rem, 3vw, 1.2rem);
       font-weight: 400;
       color: var(--color-text-primary);
       line-height: 1.7;
-
-      opacity: 0;
-      transform: translateY(10px);
+      letter-spacing: 0.01em;
     }
 
-    .verse-line:nth-child(1) {
-      animation: fadeSlideUp 0.6s var(--ease-out-expo) 0.8s forwards;
-    }
-
-    .verse-line:nth-child(3) {
-      animation: fadeSlideUp 0.6s var(--ease-out-expo) 0.95s forwards;
-    }
-
-    /* ==========================================
-       ORNAMENTAL DIVIDER
-       ========================================== */
-    .verse-divider {
+    .dot-divider {
       color: var(--color-gold);
-      font-size: 1rem;
+      font-size: 0.55rem;
+      opacity: 0.6;
       line-height: 1;
-      opacity: 0;
-      animation: fadeIn 0.5s var(--ease-out-expo) 0.88s forwards;
-      /* Ornament is decorative, not Arabic script */
-      direction: ltr;
     }
 
-    /* ==========================================
-       SHARED KEYFRAMES
-       ========================================== */
-    @keyframes fadeSlideUp {
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    @keyframes fadeIn {
-      to { opacity: 0.7; }
-    }
-
-    /* ==========================================
-       REDUCED MOTION
-       ========================================== */
-    @media (prefers-reduced-motion: reduce) {
-      .poem-card,
-      .poem-title,
-      .poem-poet,
-      .verse-line,
-      .verse-divider {
-        animation: none;
-        opacity: 1;
-        transform: none;
-      }
-      .verse-divider { opacity: 0.7; }
-    }
-
-    /* ==========================================
-       MOBILE (375px)
-       ========================================== */
-    @media (max-width: 420px) {
-      .stage {
-        padding: 16px;
-        padding-bottom: calc(16px + env(safe-area-inset-bottom));
-      }
-
-      .poem-card {
-        gap: 18px;
-      }
+    /* =============================================
+       MOBILE SAFETY
+       ============================================= */
+    @media (max-width: 375px) {
+      .poem-title  { font-size: 1.35rem; }
+      .poem-verse  { font-size: 1rem; }
+      .poem-poet   { font-size: 0.72rem; }
     }
   </style>
 </head>
-
 <body>
 
-  <!-- ==========================================
-       LAYER 1: GEOMETRIC PATTERN BACKGROUND
-       Islamic 8-pointed star (octagram) lattice
-       Pure CSS/SVG — no images
-       ========================================== -->
-  <div class="pattern-layer" aria-hidden="true"></div>
+  <!-- Label -->
+  <div class="label" dir="ltr">Background 1 — Star &amp; Cross</div>
 
-  <!-- ==========================================
-       LABEL: Top-right identifier
-       ========================================== -->
-  <div class="label" dir="ltr">Background 1 — Star Lattice</div>
+  <!--
+    =============================================
+    PATTERN STAGE
+    SVG tile: 100×100 unit Islamic star-and-cross
+    Octagram: two overlapping squares rotated 45°,
+    inner radius = outer_radius × cos(π/8) ≈ 0.924
+    Star centre at (50,50), outer points at r=30,
+    inner notch at r≈19.1
+    Cross fills in the four cardinal negative spaces
+    =============================================
+  -->
+  <div class="pattern-stage" aria-hidden="true">
 
-  <!-- ==========================================
-       LAYER 2: POEM CARD
-       Text floats on the geometric pattern
-       ========================================== -->
-  <div class="stage">
+    <!--
+      LAYER 1 — gold outlines
+      The SVG <pattern> tiles at 100×100 user units.
+      Each tile contains:
+        - 1 full octagram centred at (50,50)
+        - 4 half-octagram partial shapes at each tile edge midpoint
+          (these combine across tiles to form the full stars in between)
+        - Cross/plus shapes rotated 45° in the four quadrant gaps
+    -->
+    <svg
+      class="pattern-layer-gold"
+      xmlns="http://www.w3.org/2000/svg"
+      width="100%"
+      height="100%"
+    >
+      <defs>
+        <!--
+          Octagram coordinates:
+          Outer radius R = 18, inner radius r = R×tan(π/8) ≈ 7.46
+          (using the square-overlap definition: r = R × sin(22.5°) / sin(67.5°))
+
+          Actually for a proper regular 8/2 star:
+          outer R = 18
+          inner r = R × cos(45°/2) × tan(22.5°) — but the cleanest
+          approach is to compute the 16 vertices directly.
+
+          For {8/2} star polygon (draw every 2nd of 8 equally-spaced points
+          on a circle): that gives a regular octagram.
+          Outer points at angles: 90°, 135°, 180°, 225°, 270°, 315°, 0°, 45°
+          (i.e. k×45°, starting at -90° for top)
+          Inner intersections: midway between outer points on a smaller circle.
+          r_inner = R × cos(45°) / (1 + cos(45°)) × ...
+
+          Simplest formula used here:
+          Outer R=18, inner r=7.5 (from geometric construction of star-cross tile)
+          16 alternating outer/inner points at 22.5° increments starting at -90°
+        -->
+
+        <!--
+          Pre-computed 16 vertices for octagram centred at (0,0):
+          Outer R=18, inner r=7.46
+          Angle step = 22.5°, start = -90°
+
+          k=0:  -90°        outer: (0, -18)
+          k=1:  -67.5°      inner: (6.896, -6.896) ≈ (6.9, -6.9)
+          k=2:  -45°        outer: (12.728, -12.728)
+          k=3:  -22.5°      inner: (6.896, -6.896)... wait need to recalculate
+
+          Let me use precise values:
+          outer(k) = R × (sin(k×45°), -cos(k×45°))   k=0..7
+          inner(k) = r × (sin(k×45°+22.5°), -cos(k×45°+22.5°))  k=0..7
+
+          With R=18, r=7.46:
+          outer[0]: R×sin(0°)=0,   R×-cos(0°)=-18   → (0, -18)
+          inner[0]: r×sin(22.5°)=2.858, r×-cos(22.5°)=-6.891 → (2.858, -6.891) → (2.86, -6.89)
+          outer[1]: R×sin(45°)=12.728, R×-cos(45°)=-12.728 → (12.73, -12.73)
+          inner[1]: r×sin(67.5°)=6.891, r×-cos(67.5°)=-2.858 → (6.89, -2.86)
+          outer[2]: R×sin(90°)=18, R×-cos(90°)=0 → (18, 0)
+          inner[2]: r×sin(112.5°)=6.891, r×-cos(112.5°)=2.858 → (6.89, 2.86)
+          outer[3]: R×sin(135°)=12.728, R×-cos(135°)=12.728 → (12.73, 12.73)
+          inner[3]: r×sin(157.5°)=2.858, r×-cos(157.5°)=6.891 → (2.86, 6.89)
+          outer[4]: (0, 18)
+          inner[4]: (-2.86, 6.89)
+          outer[5]: (-12.73, 12.73)
+          inner[5]: (-6.89, 2.86)
+          outer[6]: (-18, 0)
+          inner[6]: (-6.89, -2.86)
+          outer[7]: (-12.73, -12.73)
+          inner[7]: (-2.86, -6.89)
+        -->
+
+        <pattern id="starCrossGold" x="0" y="0" width="100" height="100" patternUnits="userSpaceOnUse">
+
+          <!-- BACKGROUND: transparent -->
+
+          <!--
+            FULL STAR centred at (50,50)
+            16 alternating outer/inner vertices, in order:
+          -->
+          <polygon
+            points="
+              50,32
+              52.86,43.11
+              62.73,37.27
+              56.89,47.14
+              68,50
+              56.89,52.86
+              62.73,62.73
+              52.86,56.89
+              50,68
+              47.14,56.89
+              37.27,62.73
+              43.11,52.86
+              32,50
+              43.11,47.14
+              37.27,37.27
+              47.14,43.11
+            "
+            fill="none"
+            stroke="#c5a059"
+            stroke-width="0.5"
+            stroke-linejoin="miter"
+          />
+
+          <!--
+            CORNER QUARTER-STARS — these are the partial stars that appear
+            at each corner of the tile. Each corner shows 1/4 of a star.
+            Together with the adjacent tile's portions they form full stars.
+            Centred at (0,0), (100,0), (0,100), (100,100).
+          -->
+
+          <!-- Corner (0,0): visible quadrant is bottom-right -->
+          <polygon
+            points="
+              0,0
+              2.86,6.89
+              0,18
+              -2.86,6.89
+              0,0
+            "
+            fill="none"
+            stroke="#c5a059"
+            stroke-width="0.5"
+            stroke-linejoin="miter"
+          />
+          <polygon
+            points="
+              0,0
+              6.89,2.86
+              18,0
+              6.89,-2.86
+              0,0
+            "
+            fill="none"
+            stroke="#c5a059"
+            stroke-width="0.5"
+            stroke-linejoin="miter"
+          />
+
+          <!-- =========================================
+               CROSS/PLUS shapes in the four gap areas
+               These sit at the midpoints between stars:
+               (50,0), (100,50), (50,100), (0,50)
+               Each cross is a rotated square (45°), arms length ~8
+               ========================================= -->
+
+          <!-- Top edge midpoint cross — centred at (50,0) -->
+          <polygon
+            points="
+              50,0
+              53.5,-3.5
+              50,-7
+              46.5,-3.5
+
+              50,0
+              53.5,3.5
+              50,7
+              46.5,3.5
+            "
+            fill="none"
+            stroke="#c5a059"
+            stroke-width="0.5"
+          />
+          <!-- Right arm -->
+          <polygon
+            points="
+              50,0
+              53.5,-3.5
+              57,0
+              53.5,3.5
+            "
+            fill="none"
+            stroke="#c5a059"
+            stroke-width="0.5"
+          />
+          <!-- Left arm -->
+          <polygon
+            points="
+              50,0
+              46.5,-3.5
+              43,0
+              46.5,3.5
+            "
+            fill="none"
+            stroke="#c5a059"
+            stroke-width="0.5"
+          />
+
+          <!-- Right edge midpoint cross — centred at (100,50) -->
+          <polygon
+            points="
+              100,46.5
+              103.5,50
+              100,53.5
+              96.5,50
+            "
+            fill="none"
+            stroke="#c5a059"
+            stroke-width="0.5"
+          />
+          <polygon
+            points="
+              93,50
+              96.5,46.5
+              100,50
+              96.5,53.5
+            "
+            fill="none"
+            stroke="#c5a059"
+            stroke-width="0.5"
+          />
+
+          <!-- Bottom edge midpoint cross — centred at (50,100) -->
+          <polygon
+            points="
+              46.5,100
+              50,96.5
+              53.5,100
+              50,103.5
+            "
+            fill="none"
+            stroke="#c5a059"
+            stroke-width="0.5"
+          />
+          <polygon
+            points="
+              46.5,93
+              50,96.5
+              53.5,93
+              50,89.5
+            "
+            fill="none"
+            stroke="#c5a059"
+            stroke-width="0.5"
+          />
+
+          <!-- Left edge midpoint cross — centred at (0,50) -->
+          <polygon
+            points="
+              0,46.5
+              3.5,50
+              0,53.5
+              -3.5,50
+            "
+            fill="none"
+            stroke="#c5a059"
+            stroke-width="0.5"
+          />
+          <polygon
+            points="
+              7,50
+              3.5,46.5
+              0,50
+              3.5,53.5
+            "
+            fill="none"
+            stroke="#c5a059"
+            stroke-width="0.5"
+          />
+
+          <!--
+            CONNECTING LINES between star points and cross arms
+            These are the straight edges of the khatam pattern that
+            connect the tip of a star to the corner of a cross arm.
+            There are 8 such connections per centre star.
+          -->
+
+          <!-- NE quadrant: star tip at (62.73,37.27) → cross corner near (57,43) approx -->
+          <!-- We draw the full border lines of the interlocking diamonds -->
+
+          <!-- Top-right diamond (NE gap, between centre star and corner star) -->
+          <polyline points="50,32 57,43 62.73,37.27" fill="none" stroke="#c5a059" stroke-width="0.5"/>
+          <!-- Top-left diamond -->
+          <polyline points="50,32 43,43 37.27,37.27" fill="none" stroke="#c5a059" stroke-width="0.5"/>
+          <!-- Right-top diamond -->
+          <polyline points="68,50 57,43 62.73,37.27" fill="none" stroke="#c5a059" stroke-width="0.5"/>
+          <!-- Right-bottom diamond -->
+          <polyline points="68,50 57,57 62.73,62.73" fill="none" stroke="#c5a059" stroke-width="0.5"/>
+          <!-- Bottom-right diamond -->
+          <polyline points="50,68 57,57 62.73,62.73" fill="none" stroke="#c5a059" stroke-width="0.5"/>
+          <!-- Bottom-left diamond -->
+          <polyline points="50,68 43,57 37.27,62.73" fill="none" stroke="#c5a059" stroke-width="0.5"/>
+          <!-- Left-bottom diamond -->
+          <polyline points="32,50 43,57 37.27,62.73" fill="none" stroke="#c5a059" stroke-width="0.5"/>
+          <!-- Left-top diamond -->
+          <polyline points="32,50 43,43 37.27,37.27" fill="none" stroke="#c5a059" stroke-width="0.5"/>
+
+          <!-- Cross shapes in the 4 cardinal quadrant gaps (full crosses, centred in each gap) -->
+          <!-- These are the 45°-rotated square (diamond) shapes in each gap -->
+
+          <!-- NE gap cross-diamond, centred ~(75,25) -->
+          <polygon
+            points="75,18  82,25  75,32  68,25"
+            fill="none"
+            stroke="#c5a059"
+            stroke-width="0.5"
+          />
+
+          <!-- SE gap cross-diamond, centred ~(75,75) -->
+          <polygon
+            points="75,68  82,75  75,82  68,75"
+            fill="none"
+            stroke="#c5a059"
+            stroke-width="0.5"
+          />
+
+          <!-- SW gap cross-diamond, centred ~(25,75) -->
+          <polygon
+            points="25,68  32,75  25,82  18,75"
+            fill="none"
+            stroke="#c5a059"
+            stroke-width="0.5"
+          />
+
+          <!-- NW gap cross-diamond, centred ~(25,25) -->
+          <polygon
+            points="25,18  32,25  25,32  18,25"
+            fill="none"
+            stroke="#c5a059"
+            stroke-width="0.5"
+          />
+
+          <!-- Connecting lines from centre star to quadrant cross-diamonds -->
+          <line x1="62.73" y1="37.27" x2="68" y2="25" stroke="#c5a059" stroke-width="0.5"/>
+          <line x1="62.73" y1="37.27" x2="75" y2="32" stroke="#c5a059" stroke-width="0.5"/>
+          <line x1="62.73" y1="62.73" x2="75" y2="68" stroke="#c5a059" stroke-width="0.5"/>
+          <line x1="62.73" y1="62.73" x2="68" y2="75" stroke="#c5a059" stroke-width="0.5"/>
+          <line x1="37.27" y1="62.73" x2="32" y2="75" stroke="#c5a059" stroke-width="0.5"/>
+          <line x1="37.27" y1="62.73" x2="25" y2="68" stroke="#c5a059" stroke-width="0.5"/>
+          <line x1="37.27" y1="37.27" x2="25" y2="32" stroke="#c5a059" stroke-width="0.5"/>
+          <line x1="37.27" y1="37.27" x2="32" y2="25" stroke="#c5a059" stroke-width="0.5"/>
+
+          <!-- Connecting lines from quadrant cross-diamonds to tile-edge stars -->
+          <!-- NE diamond to top-edge star (50,0) and right-edge star (100,50) -->
+          <line x1="75" y1="18" x2="57" y2="7"   stroke="#c5a059" stroke-width="0.5"/>
+          <line x1="75" y1="18" x2="93" y2="7"   stroke="#c5a059" stroke-width="0.5"/>
+          <line x1="82" y1="25" x2="93" y2="7"   stroke="#c5a059" stroke-width="0.5"/>
+          <line x1="82" y1="25" x2="93" y2="43"  stroke="#c5a059" stroke-width="0.5"/>
+
+          <!-- SE diamond to right-edge star and bottom-edge star -->
+          <line x1="82" y1="75" x2="93" y2="57"  stroke="#c5a059" stroke-width="0.5"/>
+          <line x1="82" y1="75" x2="93" y2="93"  stroke="#c5a059" stroke-width="0.5"/>
+          <line x1="75" y1="82" x2="93" y2="93"  stroke="#c5a059" stroke-width="0.5"/>
+          <line x1="75" y1="82" x2="57" y2="93"  stroke="#c5a059" stroke-width="0.5"/>
+
+          <!-- SW diamond to bottom-edge star and left-edge star -->
+          <line x1="25" y1="82" x2="7"  y2="93"  stroke="#c5a059" stroke-width="0.5"/>
+          <line x1="25" y1="82" x2="43" y2="93"  stroke="#c5a059" stroke-width="0.5"/>
+          <line x1="18" y1="75" x2="7"  y2="57"  stroke="#c5a059" stroke-width="0.5"/>
+          <line x1="18" y1="75" x2="7"  y2="93"  stroke="#c5a059" stroke-width="0.5"/>
+
+          <!-- NW diamond to left-edge star and top-edge star -->
+          <line x1="18" y1="25" x2="7"  y2="7"   stroke="#c5a059" stroke-width="0.5"/>
+          <line x1="18" y1="25" x2="7"  y2="43"  stroke="#c5a059" stroke-width="0.5"/>
+          <line x1="25" y1="18" x2="7"  y2="7"   stroke="#c5a059" stroke-width="0.5"/>
+          <line x1="25" y1="18" x2="43" y2="7"   stroke="#c5a059" stroke-width="0.5"/>
+
+        </pattern>
+      </defs>
+
+      <rect width="100%" height="100%" fill="url(#starCrossGold)" />
+    </svg>
+
+    <!--
+      LAYER 2 — lapis fill on alternating star shapes
+      Fills the interior of the centre star polygon only, at very low opacity
+    -->
+    <svg
+      class="pattern-layer-lapis"
+      xmlns="http://www.w3.org/2000/svg"
+      width="100%"
+      height="100%"
+    >
+      <defs>
+        <pattern id="starCrossLapis" x="0" y="0" width="100" height="100" patternUnits="userSpaceOnUse">
+
+          <!-- Filled centre star -->
+          <polygon
+            points="
+              50,32
+              52.86,43.11
+              62.73,37.27
+              56.89,47.14
+              68,50
+              56.89,52.86
+              62.73,62.73
+              52.86,56.89
+              50,68
+              47.14,56.89
+              37.27,62.73
+              43.11,52.86
+              32,50
+              43.11,47.14
+              37.27,37.27
+              47.14,43.11
+            "
+            fill="#2a5a8c"
+          />
+
+          <!-- Filled quadrant diamond crosses — alternating pattern -->
+          <polygon points="75,18  82,25  75,32  68,25" fill="#2a5a8c" />
+          <polygon points="25,68  32,75  25,82  18,75" fill="#2a5a8c" />
+
+        </pattern>
+      </defs>
+
+      <rect width="100%" height="100%" fill="url(#starCrossLapis)" />
+    </svg>
+
+  </div><!-- /.pattern-stage -->
+
+  <!-- Radial mask — dims pattern toward edges -->
+  <div class="pattern-mask" aria-hidden="true"></div>
+
+  <!-- =============================================
+       POEM CARD
+       ============================================= -->
+  <main class="card-wrapper">
     <article class="poem-card" dir="rtl" lang="ar">
 
       <h1 class="poem-title">يا ليل الصبّ متى غده</h1>
 
       <p class="poem-poet" lang="ar">الحصري القيرواني</p>
 
-      <div class="verse-pair">
-        <p class="verse-line">أقيامُ الساعةِ موعِدُهُ</p>
-        <span class="verse-divider" aria-hidden="true">✦</span>
-        <p class="verse-line">أم قيامي حين أشاهدُهُ</p>
-      </div>
+      <span class="ornament-divider" aria-hidden="true">❊</span>
+
+      <p class="poem-verse">أقيامُ الساعةِ موعِدُهُ</p>
+
+      <span class="dot-divider" aria-hidden="true">✦</span>
+
+      <p class="poem-verse">أم قيامي حين أشاهدُهُ</p>
 
     </article>
-  </div>
+  </main>
 
 </body>
 </html>

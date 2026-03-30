@@ -1,4 +1,3 @@
-import { useState, useRef, useEffect } from 'react';
 import { Drawer } from 'vaul';
 import { THEME } from '../constants/theme.js';
 import { useUIStore } from '../stores/uiStore';
@@ -10,21 +9,6 @@ export default function InsightOverlay({
   const darkMode = useUIStore((s) => s.darkMode);
   const theme = darkMode ? THEME.dark : THEME.light;
   const o = theme.overlay;
-
-  const [inAuthorSection, setInAuthorSection] = useState(false);
-  const authorRef = useRef(null);
-  const scrollRef = useRef(null);
-
-  // Header morph: poem title → poet name when Author section scrolls into view
-  useEffect(() => {
-    if (!authorRef.current || !scrollRef.current) return;
-    const obs = new IntersectionObserver(
-      ([e]) => setInAuthorSection(e.isIntersecting),
-      { root: scrollRef.current, threshold: 0.1 }
-    );
-    obs.observe(authorRef.current);
-    return () => obs.disconnect();
-  }, [insightParts?.author]);
 
   return (
     <Drawer.Root
@@ -47,8 +31,6 @@ export default function InsightOverlay({
           className="fixed bottom-0 left-0 right-0 z-[61] h-[90dvh] rounded-t-2xl flex flex-col"
           style={{ background: o.bg }}
         >
-          {/* fixed + h-[90dvh]: Vaul handles slide-up animation, we set the height */}
-
           <Drawer.Handle
             className="mx-auto mt-3 mb-1 w-8 h-[3px] rounded-full"
             style={{ background: 'var(--gold-structural)' }}
@@ -57,61 +39,108 @@ export default function InsightOverlay({
           {/* Gold rule */}
           <div className="h-px flex-shrink-0" style={{ background: o.goldRule }} />
 
-          {/* Header */}
-          <header
-            className="flex items-center justify-between px-6 md:px-8 py-3 flex-shrink-0"
-            style={{ borderBottom: `1px solid ${o.borderSubtle}` }}
-          >
+          {/* Header — English left, Arabic right */}
+          <header className="px-6 md:px-8 pt-3 pb-3 flex-shrink-0" style={{ borderBottom: `1px solid ${o.borderSubtle}` }}>
             <Drawer.Title className="sr-only">
               {ratchetMode ? 'Ratchet Insight' : 'Poetic Insight'}
             </Drawer.Title>
-            <div className="flex-1 flex items-center justify-between min-w-0 mr-3">
+
+            {/* Close button */}
+            <div className="flex justify-end mb-1">
+              <Drawer.Close asChild>
+                <button
+                  data-testid="insight-close"
+                  type="button"
+                  aria-label="Close insight overlay"
+                  className="w-7 h-7 rounded-full flex items-center justify-center transition-all flex-shrink-0"
+                  style={{ border: `1px solid ${o.borderSubtle}`, color: o.textMuted }}
+                >
+                  ✕
+                </button>
+              </Drawer.Close>
+            </div>
+
+            {/* Title line — English left, Arabic right */}
+            <div className="flex items-baseline justify-between gap-3">
               <span
-                className="truncate transition-all duration-300"
+                className="truncate"
+                dir="ltr"
                 style={{
-                  fontFamily: "'Reem Kufi', sans-serif",
-                  fontWeight: 700,
-                  fontSize: 'clamp(0.95rem, 2vw, 1.15rem)',
+                  fontFamily: "'Bodoni Moda', serif",
+                  fontWeight: 500,
+                  fontSize: 'clamp(0.9rem, 1.8vw, 1.1rem)',
+                  letterSpacing: '0.02em',
                   color: 'var(--gold)',
                 }}
               >
-                {inAuthorSection
-                  ? (currentPoem?.poetArabic || currentPoem?.poet)
-                  : (currentPoem?.titleArabic || currentPoem?.title)}
+                {currentPoem?.title}
               </span>
               <span
-                className="truncate transition-all duration-300"
+                className="truncate text-right"
+                dir="rtl"
                 style={{
-                  fontFamily: "'Bodoni Moda', serif",
-                  fontSize: 'clamp(0.8rem, 1.5vw, 0.95rem)',
-                  color: o.textDim,
+                  fontFamily: "'Reem Kufi', sans-serif",
+                  fontWeight: 700,
+                  fontSize: 'clamp(1.5rem, 4vw, 2.2rem)',
+                  lineHeight: 1.3,
+                  letterSpacing: '0.02em',
+                  color: 'var(--gold)',
                 }}
               >
-                {inAuthorSection ? currentPoem?.poet : currentPoem?.title}
+                {currentPoem?.titleArabic || currentPoem?.title}
               </span>
             </div>
-            <Drawer.Close asChild>
-              <button
-                data-testid="insight-close"
-                type="button"
-                aria-label="Close insight overlay"
-                className="w-7 h-7 rounded-full flex items-center justify-center transition-all flex-shrink-0"
-                style={{ border: `1px solid ${o.borderSubtle}`, color: o.textMuted }}
+
+            {/* Poet line — English left, Arabic right */}
+            <div className="flex items-baseline justify-between gap-3 mt-0.5">
+              <span
+                className="truncate"
+                dir="ltr"
+                style={{
+                  fontFamily: "'Forum', serif",
+                  fontWeight: 400,
+                  fontSize: 'clamp(0.75rem, 1.4vw, 0.9rem)',
+                  letterSpacing: '0.03em',
+                  color: darkMode ? 'rgba(212,200,168,0.7)' : 'rgba(120,100,60,0.7)',
+                }}
               >
-                ✕
-              </button>
-            </Drawer.Close>
+                {currentPoem?.poet}
+              </span>
+              <span
+                className="truncate text-right"
+                dir="rtl"
+                style={{
+                  fontFamily: "'Fustat', sans-serif",
+                  fontWeight: 500,
+                  fontSize: 'clamp(1.15rem, 2.5vw, 1.45rem)',
+                  lineHeight: 1.3,
+                  color: darkMode ? '#D4D0C8' : '#6B5C3E',
+                }}
+              >
+                {currentPoem?.poetArabic || currentPoem?.poet}
+              </span>
+            </div>
+
+            {/* Gold gradient separator */}
+            <div
+              className="mt-2"
+              style={{
+                width: '80%',
+                maxWidth: 320,
+                height: 1,
+                margin: '0.5rem auto 0',
+                background: 'linear-gradient(to right, transparent, rgba(201,168,76,0.2), transparent)',
+              }}
+            />
           </header>
 
-          {/* Scrollable body — data-vaul-no-drag prevents swipe vs scroll conflict */}
+          {/* Scrollable body */}
           <div
-            ref={scrollRef}
             className="flex-1 overflow-y-auto px-6 md:px-8 pb-10"
             data-vaul-no-drag
             style={{ scrollbarWidth: 'thin', scrollbarColor: 'var(--gold-structural) transparent' }}
           >
             {isInterpreting ? (
-              /* Loading state */
               <div className="flex flex-col items-center justify-center gap-5 min-h-[200px] pt-16">
                 <div
                   className="w-7 h-7 rounded-full animate-spin"
@@ -130,14 +159,11 @@ export default function InsightOverlay({
               </div>
             ) : (
               <>
-                {/* Sticky translation */}
+                {/* Translation (normal flow, not sticky) */}
                 {insightParts?.poeticTranslation && (
                   <div
-                    className="sticky top-0 z-10 pt-2 pb-4 mb-4"
-                    style={{
-                      background: o.bg,
-                      borderBottom: '1px solid var(--gold-structural)',
-                    }}
+                    className="pt-4 pb-4 mb-4"
+                    style={{ borderBottom: '1px solid var(--gold-structural)' }}
                   >
                     <div
                       className="text-[9px] uppercase tracking-[0.18em] mb-2"
@@ -146,7 +172,7 @@ export default function InsightOverlay({
                       Translation
                     </div>
                     <p
-                      className="font-fell italic leading-[1.9] text-[clamp(0.9375rem,1.4vw,1.0625rem)] line-clamp-3"
+                      className="font-fell italic leading-[1.9] text-[clamp(0.9375rem,1.4vw,1.0625rem)]"
                       style={{ color: o.textLight }}
                     >
                       {insightParts.poeticTranslation}
@@ -180,9 +206,9 @@ export default function InsightOverlay({
                   <div className="h-px" style={{ background: o.goldRule }} />
                 )}
 
-                {/* The Author — ref triggers header morph */}
+                {/* The Author */}
                 {insightParts?.author && (
-                  <div ref={authorRef} className="py-5 animate-[fadeUp_0.5s_ease_0.4s_both]">
+                  <div className="py-5 animate-[fadeUp_0.5s_ease_0.4s_both]">
                     <div className="flex items-center gap-2 mb-2.5">
                       <span
                         className="text-[9px] uppercase tracking-[0.18em] whitespace-nowrap"

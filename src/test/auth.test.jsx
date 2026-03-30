@@ -10,40 +10,40 @@ vi.mock('../supabaseClient', () => ({
     auth: {
       getSession: vi.fn(() => Promise.resolve({ data: { session: null } })),
       onAuthStateChange: vi.fn(() => ({
-        data: { subscription: { unsubscribe: vi.fn() } },
+        data: { subscription: { unsubscribe: vi.fn() } }
       })),
       signInWithOAuth: vi.fn(() => Promise.resolve({ data: {}, error: null })),
-      signOut: vi.fn(() => Promise.resolve({ error: null })),
+      signOut: vi.fn(() => Promise.resolve({ error: null }))
     },
     from: vi.fn(() => ({
       select: vi.fn(() => ({
         eq: vi.fn(() => ({
           single: vi.fn(() => Promise.resolve({ data: null, error: null })),
-          order: vi.fn(() => Promise.resolve({ data: [], error: null })),
-        })),
+          order: vi.fn(() => Promise.resolve({ data: [], error: null }))
+        }))
       })),
       insert: vi.fn(() => ({
         select: vi.fn(() => ({
-          single: vi.fn(() => Promise.resolve({ data: {}, error: null })),
-        })),
+          single: vi.fn(() => Promise.resolve({ data: {}, error: null }))
+        }))
       })),
       upsert: vi.fn(() => ({
         select: vi.fn(() => ({
-          single: vi.fn(() => Promise.resolve({ data: {}, error: null })),
-        })),
+          single: vi.fn(() => Promise.resolve({ data: {}, error: null }))
+        }))
       })),
       delete: vi.fn(() => ({
-        eq: vi.fn(() => Promise.resolve({ error: null })),
-      })),
-    })),
+        eq: vi.fn(() => Promise.resolve({ error: null }))
+      }))
+    }))
   },
-  isSupabaseConfigured: vi.fn(() => true),
+  isSupabaseConfigured: vi.fn(() => true)
 }));
 
 // Test component that uses the auth hook
 function TestAuthComponent() {
   const { user, loading, signInWithGoogle, signOut } = useAuth();
-
+  
   return (
     <div>
       <div data-testid="loading">{loading ? 'Loading' : 'Ready'}</div>
@@ -57,7 +57,7 @@ function TestAuthComponent() {
 // Test component for user settings
 function TestSettingsComponent({ user }) {
   const { settings, saveSettings, loading } = useUserSettings(user);
-
+  
   return (
     <div>
       <div data-testid="loading">{loading ? 'Loading' : 'Ready'}</div>
@@ -77,9 +77,9 @@ function TestSavedPoemsComponent({ user }) {
     poet: 'Test Poet',
     title: 'Test Title',
     arabic: 'Test Arabic Text',
-    english: 'Test English',
+    english: 'Test English'
   };
-
+  
   return (
     <div>
       <div data-testid="loading">{loading ? 'Loading' : 'Ready'}</div>
@@ -94,21 +94,21 @@ function TestSavedPoemsComponent({ user }) {
 describe('useAuth Hook', () => {
   it('should initialize with no user and not loading after mount', async () => {
     render(<TestAuthComponent />);
-
+    
     await waitFor(() => {
       expect(screen.getByTestId('loading')).toHaveTextContent('Ready');
     });
-
+    
     expect(screen.getByTestId('user')).toHaveTextContent('Not signed in');
   });
 
   it('should call signInWithGoogle when button clicked', async () => {
     const { supabase } = await import('../supabaseClient');
     render(<TestAuthComponent />);
-
+    
     const signInButton = screen.getByText('Sign In with Google');
     fireEvent.click(signInButton);
-
+    
     await waitFor(() => {
       expect(supabase.auth.signInWithOAuth).toHaveBeenCalledWith({
         provider: 'google',
@@ -120,10 +120,10 @@ describe('useAuth Hook', () => {
   it('should call signOut when sign out button clicked', async () => {
     const { supabase } = await import('../supabaseClient');
     render(<TestAuthComponent />);
-
+    
     const signOutButton = screen.getByText('Sign Out');
     fireEvent.click(signOutButton);
-
+    
     await waitFor(() => {
       expect(supabase.auth.signOut).toHaveBeenCalled();
     });
@@ -160,16 +160,16 @@ describe('useUserSettings Hook', () => {
   it('should call saveSettings when button clicked', async () => {
     const mockUser = { id: 'user-123', email: 'test@example.com' };
     const { supabase } = await import('../supabaseClient');
-
+    
     render(<TestSettingsComponent user={mockUser} />);
-
+    
     await waitFor(() => {
       expect(screen.getByTestId('loading')).toHaveTextContent('Ready');
     });
-
+    
     const saveButton = screen.getByText('Save Settings');
     fireEvent.click(saveButton);
-
+    
     await waitFor(() => {
       expect(supabase.from).toHaveBeenCalledWith('user_settings');
     });
@@ -208,16 +208,16 @@ describe('useSavedPoems Hook', () => {
   it('should call savePoem when save button clicked', async () => {
     const mockUser = { id: 'user-123', email: 'test@example.com' };
     const { supabase } = await import('../supabaseClient');
-
+    
     render(<TestSavedPoemsComponent user={mockUser} />);
-
+    
     await waitFor(() => {
       expect(screen.getByTestId('loading')).toHaveTextContent('Ready');
     });
-
+    
     const saveButton = screen.getByText('Save Poem');
     fireEvent.click(saveButton);
-
+    
     await waitFor(() => {
       expect(supabase.from).toHaveBeenCalledWith('saved_poems');
     });
@@ -226,16 +226,16 @@ describe('useSavedPoems Hook', () => {
   it('should call unsavePoem when unsave button clicked', async () => {
     const mockUser = { id: 'user-123', email: 'test@example.com' };
     const { supabase } = await import('../supabaseClient');
-
+    
     render(<TestSavedPoemsComponent user={mockUser} />);
-
+    
     await waitFor(() => {
       expect(screen.getByTestId('loading')).toHaveTextContent('Ready');
     });
-
+    
     const unsaveButton = screen.getByText('Unsave Poem');
     fireEvent.click(unsaveButton);
-
+    
     await waitFor(() => {
       expect(supabase.from).toHaveBeenCalledWith('saved_poems');
     });

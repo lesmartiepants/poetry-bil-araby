@@ -1080,6 +1080,55 @@ describe('DiwanApp', () => {
       expect(darwishPickerBtn).toBeDefined();
       expect(darwishPickerBtn.className).toContain('bg-gold/12');
     });
+
+    it('URL updates to cached poem ID when switching to a poet with cached poems', async () => {
+      mockAutoLoadFetch();
+      render(<DiwanApp />);
+
+      // Wait for initial poem to load
+      await waitFor(() => expect(document.body.textContent).toContain('Nizar Qabbani'), {
+        timeout: 3000,
+      });
+
+      // ── Step 1: select Darwish and fetch a poem (seeds the poem store cache)
+      await userEvent.click(screen.getByLabelText('Open discover'));
+      await waitFor(() => expect(document.body.textContent).toContain('محمود درويش'));
+
+      const darwishPoem = {
+        id: 201,
+        poet: 'Mahmoud Darwish',
+        poetArabic: 'محمود درويش',
+        title: 'On This Earth',
+        titleArabic: 'على هذه الأرض',
+        arabic: 'على هذه الأرض ما يستحق الحياة',
+        cachedTranslation: 'On this earth is what makes life worth living',
+        tags: ['Modern', 'Political', 'Free Verse'],
+      };
+      global.fetch.mockResolvedValueOnce({ ok: true, json: async () => darwishPoem });
+      await userEvent.click(screen.getByText('محمود درويش'));
+      await waitFor(() => expect(document.body.textContent).toContain('Mahmoud Darwish'), {
+        timeout: 3000,
+      });
+
+      // ── Step 2: switch back to "All" so Darwish becomes a cached-poet scenario
+      await userEvent.click(screen.getByLabelText('Open discover'));
+      await waitFor(() => expect(document.body.textContent).toContain('كل الشعراء'));
+      await userEvent.click(screen.getByText('كل الشعراء'));
+
+      // ── Step 3: switch back to Darwish — filtered array already has darwishPoem (id: 201)
+      // The selectedCategory effect should call setCurrentIndex(0) AND navigate to /poem/201
+      await userEvent.click(screen.getByLabelText('Open discover'));
+      await waitFor(() => expect(document.body.textContent).toContain('محمود درويش'));
+      // No new fetch needed — poems are already cached for this poet
+      await userEvent.click(screen.getByText('محمود درويش'));
+
+      await waitFor(() => expect(document.body.textContent).toContain('Mahmoud Darwish'), {
+        timeout: 3000,
+      });
+
+      // URL should have been updated to the cached poem's ID (not remain on root or a stale ID)
+      expect(window.location.pathname).toBe('/poem/201');
+    });
   });
 
   // ── Feature 8: Arabic RTL & fonts ─────────────────────────────────────

@@ -381,17 +381,19 @@ export default function DiwanApp() {
     // The interpretation is cleared in onSlideChange when the user swipes.
 
     // Pre-translate next carousel poem once streaming is complete.
-    // Only trigger when the AI is no longer generating (isInterpreting === false),
-    // so we don't kick off the next explain mid-stream.
+    // Call analyzePoemAction directly (not via autoExplainPending, which always
+    // explains carouselPoems[carouselIndex] instead of the target poem).
     if (!isInterpreting) {
       const nextUntranslated = carouselPoems.findIndex(
         (p, i) => i > targetIdx && !p.english && !p.cachedTranslation && !explainedPoemIds.current.has(p.id)
       );
       if (nextUntranslated !== -1) {
+        const nextPoem = carouselPoems[nextUntranslated];
         setTimeout(() => {
           setInterpretation(null);
-          carouselExplainTargetId.current = carouselPoems[nextUntranslated].id;
-          setAutoExplainPending(true);
+          carouselExplainTargetId.current = nextPoem.id;
+          explainedPoemIds.current.add(nextPoem.id);
+          analyzePoemAction({ current: nextPoem, addLog, track });
         }, 500);
       }
     }

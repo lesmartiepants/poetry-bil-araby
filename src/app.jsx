@@ -606,14 +606,21 @@ export default function DiwanApp() {
     // In ratchet mode, always use the AI-generated interpretation so cached scholarly
     // translations don't override the Gen Z ratchet content.
     if (!ratchetMode && cachedTranslation) {
-      return {
-        poeticTranslation: cachedTranslation,
-        depth: cachedExplanation || '',
-        author: cachedAuthorBio || '',
-      };
+      // Skip cached translation if it has fewer lines than the Arabic poem —
+      // this means the AI truncated and we should re-generate rather than
+      // permanently display an incomplete translation.
+      const arCount = (displayedPoem?.arabic || '').split('\n').filter(l => l.trim()).length;
+      const enCount = cachedTranslation.split('\n').filter(l => l.trim()).length;
+      if (enCount >= arCount || arCount === 0) {
+        return {
+          poeticTranslation: cachedTranslation,
+          depth: cachedExplanation || '',
+          author: cachedAuthorBio || '',
+        };
+      }
     }
     return parseInsight(interpretation);
-  }, [interpretation, cachedTranslation, cachedExplanation, cachedAuthorBio, ratchetMode]);
+  }, [interpretation, cachedTranslation, cachedExplanation, cachedAuthorBio, ratchetMode, displayedPoem?.arabic]);
 
   const versePairs = useMemo(() => {
     const arLines = (displayedPoem?.arabic || '').split('\n').filter((l) => l.trim());

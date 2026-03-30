@@ -163,6 +163,7 @@ export async function analyzePoem({ current, addLog, track, retryFn }) {
       const insightsStreamBody = JSON.stringify({
         contents: [{ parts: [{ text: promptText }] }],
         systemInstruction: { parts: [{ text: activeSystemPrompt }] },
+        generationConfig: { maxOutputTokens: 8192 },
       });
       const res = await geminiTextFetch(
         'streamGenerateContent',
@@ -238,6 +239,7 @@ export async function analyzePoem({ current, addLog, track, retryFn }) {
           { parts: [{ text: promptText }] },
         ],
         systemInstruction: { parts: [{ text: activeSystemPrompt }] },
+        generationConfig: { maxOutputTokens: 8192 },
       });
       const res = await geminiTextFetch(
         'generateContent',
@@ -280,21 +282,20 @@ export async function analyzePoem({ current, addLog, track, retryFn }) {
       if (parts?.poeticTranslation) {
         const arabicLines = (current?.arabic || '').split('\n').filter(l => l.trim());
         const englishLines = parts.poeticTranslation.split('\n').filter(l => l.trim());
-        let translation = parts.poeticTranslation;
+        const translation = parts.poeticTranslation;
         if (englishLines.length < arabicLines.length) {
-          const padding = arabicLines.length - englishLines.length;
           addLog(
             'Translation',
-            `⚠ Line count mismatch: ${arabicLines.length} Arabic lines but only ${englishLines.length} English lines — padding ${padding} empty line(s)`,
+            `⚠ Line count mismatch: ${arabicLines.length} Arabic vs ${englishLines.length} English — skipping DB cache to avoid persisting incomplete translation`,
             'warning'
           );
-          translation = [...englishLines, ...Array(padding).fill('')].join('\n');
+        } else {
+          saveTranslation(current.id, {
+            translation: translation.replace(/\n/g, '*'),
+            explanation: parts.depth || null,
+            authorBio: parts.author || null,
+          });
         }
-        saveTranslation(current.id, {
-          translation: translation.replace(/\n/g, '*'),
-          explanation: parts.depth || null,
-          authorBio: parts.author || null,
-        });
       }
     }
 

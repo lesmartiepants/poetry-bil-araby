@@ -698,22 +698,22 @@ export default function DiwanApp() {
   const handleCopy = async () => {
     addLog(
       'UI Event',
-      `📋 Copy button clicked | Poem: ${current?.poet} - ${current?.title}`,
+      `📋 Copy button clicked | Poem: ${displayedPoem?.poet} - ${displayedPoem?.title}`,
       'info'
     );
 
     const englishText = insightParts?.poeticTranslation || displayedPoem?.english || '';
-    const textToCopy = `${current?.titleArabic || ''}\n${current?.poetArabic || ''}\n\n${current?.arabic || ''}\n\n---\n\n${current?.title || ''}\n${current?.poet || ''}\n\n${englishText}`;
+    const textToCopy = `${displayedPoem?.titleArabic || ''}\n${displayedPoem?.poetArabic || ''}\n\n${displayedPoem?.arabic || ''}\n\n---\n\n${displayedPoem?.title || ''}\n${displayedPoem?.poet || ''}\n\n${englishText}`;
     const copyChars = textToCopy.length;
-    const arabicChars = current?.arabic?.length || 0;
+    const arabicChars = displayedPoem?.arabic?.length || 0;
     const englishChars = englishText.length;
 
     try {
       await navigator.clipboard.writeText(textToCopy);
-      track('poem_copied', { poet: current?.poet });
-      if (current?.id) {
-        emitEvent(current.id, 'copy');
-        addLog('Event', `→ copy event emitted | poem_id: ${current.id}`, 'info');
+      track('poem_copied', { poet: displayedPoem?.poet });
+      if (displayedPoem?.id) {
+        emitEvent(displayedPoem?.id, 'copy');
+        addLog('Event', `→ copy event emitted | poem_id: ${displayedPoem?.id}`, 'info');
       }
       useModalStore.getState().showToastTimed('copy', 2000);
       addLog(

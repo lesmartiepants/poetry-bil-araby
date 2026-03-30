@@ -1193,25 +1193,34 @@ export default function DiwanApp() {
                     {/* Carousel dot indicators — positioned under the English poet name */}
                     {carouselPoems.length > 1 && (
                       <div className="flex justify-center gap-1.5 mt-3" dir="ltr">
-                        {carouselPoems.map((_, i) => (
-                          <button
-                            key={i}
-                            onClick={() => carouselRef.current?.scrollTo(i)}
-                            aria-label={`Go to poem ${i + 1}`}
-                            style={{
-                              width: i === carouselIndex ? 16 : 6,
-                              height: 6,
-                              borderRadius: 3,
-                              background: i === carouselIndex
-                                ? (darkMode ? 'rgba(197,160,89,1)' : 'rgba(140,100,30,0.85)')
-                                : (darkMode ? 'rgba(197,160,89,0.5)' : 'rgba(140,100,30,0.4)'),
-                              transition: 'all 0.25s ease',
-                              border: 'none',
-                              padding: 0,
-                              cursor: 'pointer',
-                            }}
-                          />
-                        ))}
+                        {(() => {
+                          const maxDots = 5;
+                          const total = carouselPoems.length;
+                          const start = Math.max(0, Math.min(carouselIndex - 2, total - maxDots));
+                          const end = Math.min(start + maxDots, total);
+                          return carouselPoems.slice(start, end).map((_, i) => {
+                            const realIdx = start + i;
+                            return (
+                              <button
+                                key={realIdx}
+                                onClick={() => carouselRef.current?.scrollTo(realIdx)}
+                                aria-label={`Go to poem ${realIdx + 1}`}
+                                style={{
+                                  width: realIdx === carouselIndex ? 16 : 6,
+                                  height: 6,
+                                  borderRadius: 3,
+                                  background: realIdx === carouselIndex
+                                    ? (darkMode ? 'rgba(197,160,89,1)' : 'rgba(140,100,30,0.85)')
+                                    : (darkMode ? 'rgba(197,160,89,0.5)' : 'rgba(140,100,30,0.4)'),
+                                  transition: 'all 0.25s ease',
+                                  border: 'none',
+                                  padding: 0,
+                                  cursor: 'pointer',
+                                }}
+                              />
+                            );
+                          });
+                        })()}
                       </div>
                     )}
                     {/* Bottom spacing before verses */}

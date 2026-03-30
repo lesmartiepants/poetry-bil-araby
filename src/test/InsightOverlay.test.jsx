@@ -75,7 +75,7 @@ describe('InsightOverlay', () => {
 
   it('renders sticky translation section', () => {
     render(<InsightOverlay {...mockProps} />);
-    expect(screen.getByText('Translation')).toBeDefined();
+    expect(screen.getByText('The Translation')).toBeDefined();
   });
 
   it('shows loading state when interpreting', () => {

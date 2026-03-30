@@ -16,6 +16,18 @@ const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 // FUTURE: Use Tone.Panner3D for spatial audio (stone hall reverb effect)
 
 /**
+ * Create a Tone.Player from a URL and wait until its buffer is fully decoded before returning.
+ * Uses the constructor onload callback (not player.loaded or Tone.loaded()) because those
+ * can resolve before the AudioBuffer decode completes for blob URLs in Tone.js v15.
+ */
+function createPlayerReady(url) {
+  return new Promise((resolve, reject) => {
+    const player = new Player(url, () => resolve(player)).toDestination();
+    player.buffer.onerror = () => reject(new Error('buffer is either not set or not loaded'));
+  });
+}
+
+/**
  * Toggle audio playback — handles pause, resume, cache check, TTS generation, and polling.
  *
  * @param {Object} options
@@ -69,8 +81,7 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
     try {
       // Unlock AudioContext after user gesture (handles iOS autoplay policy)
       await toneStart();
-      const player = new Player(audioUrl).toDestination();
-      await toneLoaded();
+      const player = await createPlayerReady(audioUrl);
       player.start();
       setPlayer(player);
       setPlaying(true);
@@ -109,8 +120,7 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
         setUrl(u);
 
         try {
-          const player = new Player(u).toDestination();
-          await toneLoaded();
+          const player = await createPlayerReady(u);
           player.start();
           setPlayer(player);
           setPlaying(true);
@@ -229,8 +239,7 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
           setUrl(u);
 
           try {
-            const player = new Player(u).toDestination();
-            await toneLoaded();
+            const player = await createPlayerReady(u);
             player.start();
             setPlayer(player);
             setPlaying(true);
@@ -300,8 +309,7 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
           setUrl(u);
 
           try {
-            const player = new Player(u).toDestination();
-            await toneLoaded();
+            const player = await createPlayerReady(u);
             player.start();
             setPlayer(player);
             setPlaying(true);
@@ -343,8 +351,7 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
             setUrl(u);
 
             try {
-              const player = new Player(u).toDestination();
-              await toneLoaded();
+              const player = await createPlayerReady(u);
               player.start();
               setPlayer(player);
               setPlaying(true);

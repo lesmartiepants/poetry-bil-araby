@@ -358,9 +358,11 @@ export default function DiwanApp() {
     // Determine which carousel poem to patch with the AI translation.
     let targetIdx;
     if (carouselExplainTargetId.current) {
-      // Carousel-triggered explain: find the poem by ID
+      // Carousel-triggered explain: find the poem by ID.
+      // Keep the ref alive during streaming so every chunk stamps the correct slide.
+      // Only clear once streaming finishes (isInterpreting === false).
       targetIdx = carouselPoems.findIndex(p => p.id === carouselExplainTargetId.current);
-      carouselExplainTargetId.current = null;
+      if (!isInterpreting) carouselExplainTargetId.current = null;
     } else {
       // Initial explain (fired before carousel existed): target is always poem 0
       // because the carousel is built as [current, ...others].

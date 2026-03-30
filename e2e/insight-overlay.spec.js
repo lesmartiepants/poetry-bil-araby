@@ -111,10 +111,11 @@ test.describe('Insight Overlay', () => {
     await explainBtn.click();
     await expect(page.locator('text=Poetic Insight').first()).toBeVisible({ timeout: 10000 });
 
-    // Click close button
+    // Click close button (desktop pill or mobile circle)
     const closeBtn = page
       .locator('[data-testid="insight-close"]')
-      .or(page.locator('button:has-text("Close")'));
+      .or(page.locator('[data-testid="insight-close-mobile"]'))
+      .or(page.locator('button[aria-label="Close insight overlay"]'));
     await closeBtn.first().click();
     await page.waitForTimeout(500);
     await expect(page.locator('[data-vaul-drawer]')).not.toBeVisible({ timeout: 3000 });

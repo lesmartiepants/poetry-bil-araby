@@ -3,14 +3,8 @@ import { THEME } from '../constants/theme.js';
 import { useUIStore } from '../stores/uiStore';
 
 export default function InsightOverlay({
-  open,
-  insightParts,
-  currentPoem,
-  isInterpreting,
-  interpretation,
-  onClose,
-  ratchetMode,
-  handleAnalyze,
+  open, insightParts, currentPoem, isInterpreting, interpretation,
+  onClose, ratchetMode, handleAnalyze,
 }) {
   const darkMode = useUIStore((s) => s.darkMode);
   const theme = darkMode ? THEME.dark : THEME.light;
@@ -19,10 +13,7 @@ export default function InsightOverlay({
   return (
     <Drawer.Root
       open={open}
-      onOpenChange={(isOpen) => {
-        if (!isOpen) onClose();
-      }}
-      snapPoints={[1]}
+      onOpenChange={(isOpen) => { if (!isOpen) onClose(); }}
       closeThreshold={0.1}
       modal
     >
@@ -37,74 +28,105 @@ export default function InsightOverlay({
         />
         <Drawer.Content
           data-vaul-drawer
-          className="fixed inset-0 z-[61] flex flex-col"
+          className="fixed bottom-0 left-0 right-0 z-[61] h-[90dvh] rounded-t-2xl flex flex-col"
           style={{ background: o.bg }}
         >
-          {/* Gold rule */}
-          <div className="h-px flex-shrink-0" style={{ background: o.goldRule }} />
-
-          {/* Mobile swipe handle */}
           <Drawer.Handle
-            className="md:hidden mx-auto mt-4 mb-2 w-8 h-[3px] rounded-full"
+            className="mx-auto mt-3 mb-1 w-8 h-[3px] rounded-full"
             style={{ background: 'var(--gold-structural)' }}
           />
 
-          {/* Topbar */}
-          <header
-            className="flex items-center justify-between px-6 md:px-8 py-3 flex-shrink-0"
-            style={{ borderBottom: `1px solid ${o.borderSubtle}` }}
-          >
-            <div className="flex flex-col gap-1">
-              <div
-                className="font-amiri text-base md:text-lg leading-tight"
+          {/* Gold rule */}
+          <div className="h-px flex-shrink-0" style={{ background: o.goldRule }} />
+
+          {/* Header — English left, Arabic right */}
+          <header className="px-6 md:px-8 pt-3 pb-3 flex-shrink-0" style={{ borderBottom: `1px solid ${o.borderSubtle}` }}>
+            <Drawer.Title className="sr-only">
+              {ratchetMode ? 'Ratchet Insight' : 'Poetic Insight'}
+            </Drawer.Title>
+
+            {/* Title line — English left, Arabic right */}
+            <div className="flex items-baseline justify-between gap-3">
+              <span
+                className="truncate"
+                dir="ltr"
+                style={{
+                  fontFamily: "'Bodoni Moda', serif",
+                  fontWeight: 500,
+                  fontSize: 'clamp(0.9rem, 1.8vw, 1.1rem)',
+                  letterSpacing: '0.02em',
+                  color: 'var(--gold)',
+                }}
+              >
+                {currentPoem?.title}
+              </span>
+              <span
+                className="truncate text-right"
                 dir="rtl"
-                style={{ color: o.textLight }}
+                style={{
+                  fontFamily: "'Reem Kufi', sans-serif",
+                  fontWeight: 700,
+                  fontSize: 'clamp(1.5rem, 4vw, 2.2rem)',
+                  lineHeight: 1.3,
+                  letterSpacing: '0.02em',
+                  color: 'var(--gold)',
+                }}
               >
                 {currentPoem?.titleArabic || currentPoem?.title}
-              </div>
+              </span>
+            </div>
+
+            {/* Poet line — English left, Arabic right */}
+            <div className="flex items-baseline justify-between gap-3 mt-0.5">
               <span
-                className="text-[9px] uppercase tracking-[0.12em]"
-                style={{ color: o.textMuted }}
+                className="truncate"
+                dir="ltr"
+                style={{
+                  fontFamily: "'Forum', serif",
+                  fontWeight: 400,
+                  fontSize: 'clamp(0.75rem, 1.4vw, 0.9rem)',
+                  letterSpacing: '0.03em',
+                  color: darkMode ? 'rgba(212,200,168,0.7)' : 'rgba(120,100,60,0.7)',
+                }}
               >
                 {currentPoem?.poet}
               </span>
+              <span
+                className="truncate text-right"
+                dir="rtl"
+                style={{
+                  fontFamily: "'Fustat', sans-serif",
+                  fontWeight: 500,
+                  fontSize: 'clamp(1.15rem, 2.5vw, 1.45rem)',
+                  lineHeight: 1.3,
+                  color: darkMode ? '#D4D0C8' : '#6B5C3E',
+                }}
+              >
+                {currentPoem?.poetArabic || currentPoem?.poet}
+              </span>
             </div>
-            <Drawer.Close asChild>
-              <button
-                data-testid="insight-close"
-                className="hidden md:block px-4 py-1.5 rounded-full text-[10px] tracking-[0.08em] font-fell transition-all"
-                style={{ border: `1px solid ${o.borderSubtle}`, color: o.textMuted }}
-              >
-                Close
-              </button>
-            </Drawer.Close>
-            <Drawer.Close asChild>
-              <button
-                data-testid="insight-close-mobile"
-                type="button"
-                aria-label="Close insight overlay"
-                className="md:hidden w-7 h-7 rounded-full flex items-center justify-center transition-all"
-                style={{ border: `1px solid ${o.borderSubtle}`, color: o.textMuted }}
-              >
-                ✕
-              </button>
-            </Drawer.Close>
-          </header>
 
-          {/* Heading */}
-          <div className="px-6 md:px-8 pt-4 pb-3 flex-shrink-0">
-            <span className="gold-foil-text font-brand-en italic text-xl tracking-tight">
-              {ratchetMode ? 'Ratchet Insight' : 'Poetic Insight'}
-            </span>
-          </div>
+            {/* Gold gradient separator */}
+            <div
+              className="mt-2"
+              style={{
+                width: '80%',
+                maxWidth: 320,
+                height: 1,
+                margin: '0.5rem auto 0',
+                background: 'linear-gradient(to right, transparent, rgba(201,168,76,0.2), transparent)',
+              }}
+            />
+          </header>
 
           {/* Scrollable body */}
           <div
-            className="flex-1 overflow-y-auto px-6 md:px-8 pb-20"
+            className="flex-1 overflow-y-auto px-6 md:px-8 pb-10"
+            data-vaul-no-drag
             style={{ scrollbarWidth: 'thin', scrollbarColor: 'var(--gold-structural) transparent' }}
           >
             {isInterpreting ? (
-              <div className="flex flex-col items-center justify-center gap-5 min-h-[200px]">
+              <div className="flex flex-col items-center justify-center gap-5 min-h-[200px] pt-16">
                 <div
                   className="w-7 h-7 rounded-full animate-spin"
                   style={{
@@ -122,14 +144,14 @@ export default function InsightOverlay({
               </div>
             ) : (
               <>
-                {/* Translation block */}
+                {/* Translation (normal flow, not sticky) */}
                 {insightParts?.poeticTranslation && (
                   <div
-                    className="pb-5 mb-5 animate-[fadeUp_0.5s_ease_0.1s_both]"
-                    style={{ borderBottom: `1px solid var(--gold-structural)` }}
+                    className="pt-4 pb-4 mb-4"
+                    style={{ borderBottom: '1px solid var(--gold-structural)' }}
                   >
                     <div
-                      className="text-[9px] uppercase tracking-[0.18em] mb-2.5"
+                      className="text-[9px] uppercase tracking-[0.18em] mb-2"
                       style={{ color: o.textMuted }}
                     >
                       Translation
@@ -143,61 +165,56 @@ export default function InsightOverlay({
                   </div>
                 )}
 
-                {/* Analysis grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  {insightParts?.depth && (
-                    <div className="animate-[fadeUp_0.5s_ease_0.25s_both]">
-                      <div className="flex items-center gap-2 mb-2.5">
-                        <span
-                          className="text-[9px] uppercase tracking-[0.18em] whitespace-nowrap"
-                          style={{ color: o.sectionLabel }}
-                        >
-                          The Depth
-                        </span>
-                        <span
-                          className="flex-1 h-px"
-                          style={{
-                            background: `linear-gradient(90deg, ${o.sectionLine}, transparent)`,
-                          }}
-                        />
-                      </div>
-                      <p
-                        className="font-fell leading-[1.85] text-[13px] md:text-[13px]"
-                        style={{ color: o.textDim }}
+                {/* The Depth */}
+                {insightParts?.depth && (
+                  <div className="py-5 animate-[fadeUp_0.5s_ease_0.25s_both]">
+                    <div className="flex items-center gap-2 mb-2.5">
+                      <span
+                        className="text-[9px] uppercase tracking-[0.18em] whitespace-nowrap"
+                        style={{ color: o.sectionLabel }}
                       >
-                        {insightParts.depth}
-                      </p>
+                        The Depth
+                      </span>
+                      <span
+                        className="flex-1 h-px"
+                        style={{ background: `linear-gradient(90deg, ${o.sectionLine}, transparent)` }}
+                      />
                     </div>
-                  )}
-                  {insightParts?.author && (
-                    <div className="animate-[fadeUp_0.5s_ease_0.4s_both]">
-                      <div className="flex items-center gap-2 mb-2.5">
-                        <span
-                          className="text-[9px] uppercase tracking-[0.18em] whitespace-nowrap"
-                          style={{ color: o.sectionLabel }}
-                        >
-                          The Author
-                        </span>
-                        <span
-                          className="flex-1 h-px"
-                          style={{
-                            background: `linear-gradient(90deg, ${o.sectionLine}, transparent)`,
-                          }}
-                        />
-                      </div>
-                      <p
-                        className="font-fell leading-[1.85] text-[13px] md:text-[13.5px]"
-                        style={{ color: o.textDim }}
+                    <p className="font-fell leading-[1.85] text-[13.5px]" style={{ color: o.textDim }}>
+                      {insightParts.depth}
+                    </p>
+                  </div>
+                )}
+
+                {/* Gold rule divider */}
+                {insightParts?.depth && insightParts?.author && (
+                  <div className="h-px" style={{ background: o.goldRule }} />
+                )}
+
+                {/* The Author */}
+                {insightParts?.author && (
+                  <div className="py-5 animate-[fadeUp_0.5s_ease_0.4s_both]">
+                    <div className="flex items-center gap-2 mb-2.5">
+                      <span
+                        className="text-[9px] uppercase tracking-[0.18em] whitespace-nowrap"
+                        style={{ color: o.sectionLabel }}
                       >
-                        {insightParts.author}
-                      </p>
+                        The Author
+                      </span>
+                      <span
+                        className="flex-1 h-px"
+                        style={{ background: `linear-gradient(90deg, ${o.sectionLine}, transparent)` }}
+                      />
                     </div>
-                  )}
-                </div>
+                    <p className="font-fell leading-[1.85] text-[13.5px]" style={{ color: o.textDim }}>
+                      {insightParts.author}
+                    </p>
+                  </div>
+                )}
 
                 {/* Empty state */}
                 {!interpretation && !isInterpreting && (
-                  <div className="flex flex-col items-center justify-center min-h-[200px] gap-4">
+                  <div className="flex flex-col items-center justify-center min-h-[200px] gap-4 pt-16">
                     <p className="font-brand-en italic text-sm" style={{ color: o.textMuted }}>
                       {ratchetMode
                         ? 'Tap Explain to get that ratchet take'
@@ -215,7 +232,6 @@ export default function InsightOverlay({
               </>
             )}
           </div>
-
         </Drawer.Content>
       </Drawer.Portal>
     </Drawer.Root>

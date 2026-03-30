@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InsightOverlay — 5 States Mockup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Forum&family=Amiri:ital,wght@0,400;0,700;1,400&family=IM+Fell+English:ital@0;1&family=Reem+Kufi:wght@400;700&family=Bodoni+Moda:ital,opsz,wght@0,6..96,400;1,6..96,400&family=Fustat:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ════════════════════════════════════════════════
+   RESET + ROOT TOKENS
+════════════════════════════════════════════════ */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --gold:             #C5A059;
+  --gold-structural:  rgba(160,128,64,0.4);
+  --gold-rule:        linear-gradient(90deg, transparent 0%, rgba(160,128,64,0.4) 20%, #C5A059 50%, rgba(160,128,64,0.4) 80%, transparent 100%);
+
+  --lapis-light:      #4A7CC9;
+  --lapis-medium:     #2E5090;
+  --lapis-deep:       #1E3A6E;
+  --lapis-border:     rgba(74,124,201,0.25);
+
+  /* Overlay dark tokens */
+  --ov-bg:            linear-gradient(160deg, rgba(8,8,12,0.95) 0%, rgba(12,10,18,0.97) 60%, rgba(10,12,20,0.96) 100%);
+  --ov-scrim:         rgba(0,0,0,0.4);
+  --ov-text-light:    #e7e5e4;
+  --ov-text-dim:      rgba(231,229,228,0.6);
+  --ov-text-muted:    rgba(231,229,228,0.3);
+  --ov-border-subtle: rgba(99,95,88,0.15);
+  --ov-section-label: #4A7CC9;
+  --ov-section-line:  rgba(74,124,201,0.25);
+  --ov-loading-active: #4A7CC9;
+}
+
+html, body {
+  min-height: 100vh;
+  background: #080808;
+  color: var(--ov-text-light);
+  font-family: 'IM Fell English', serif;
+}
+
+/* ════════════════════════════════════════════════
+   PAGE CHROME
+════════════════════════════════════════════════ */
+.page-header {
+  text-align: center;
+  padding: 36px 32px 28px;
+  border-bottom: 1px solid var(--gold-structural);
+  background: linear-gradient(180deg, rgba(46,80,144,0.08) 0%, transparent 100%);
+}
+.page-eyebrow {
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--lapis-light);
+  margin-bottom: 8px;
+  font-family: 'Fustat', sans-serif;
+}
+.page-title {
+  font-family: 'Forum', serif;
+  font-size: 1.6rem;
+  color: var(--ov-text-light);
+  margin-bottom: 6px;
+}
+.page-subtitle {
+  font-size: 13px;
+  font-style: italic;
+  color: var(--ov-text-dim);
+}
+
+/* ════════════════════════════════════════════════
+   STATE TABS
+════════════════════════════════════════════════ */
+.tabs-bar {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  padding: 24px 32px;
+  flex-wrap: wrap;
+  background: rgba(8,8,12,0.6);
+  border-bottom: 1px solid var(--ov-border-subtle);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(12px);
+}
+.tab-btn {
+  font-family: 'Fustat', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  padding: 8px 18px;
+  border: 1px solid var(--gold-structural);
+  background: rgba(197,160,89,0.06);
+  color: var(--ov-text-dim);
+  cursor: pointer;
+  border-radius: 2px;
+  transition: all 0.18s ease;
+  white-space: nowrap;
+}
+.tab-btn:hover {
+  background: rgba(197,160,89,0.12);
+  color: var(--ov-text-light);
+  border-color: var(--gold);
+}
+.tab-btn.active {
+  background: rgba(197,160,89,0.15);
+  color: var(--gold);
+  border-color: var(--gold);
+}
+.tab-number {
+  color: var(--lapis-light);
+  margin-right: 6px;
+  font-size: 10px;
+}
+
+/* ════════════════════════════════════════════════
+   DUAL-FRAME STAGE
+════════════════════════════════════════════════ */
+.stage {
+  display: flex;
+  gap: 48px;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 48px 32px 64px;
+  min-height: calc(100vh - 200px);
+  flex-wrap: wrap;
+}
+
+/* ─── MOBILE FRAME ─── */
+.mobile-frame-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+.frame-label {
+  font-family: 'Fustat', sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--lapis-light);
+}
+.mobile-frame {
+  width: 390px;
+  height: 844px;
+  background: #111115;
+  border-radius: 44px;
+  border: 2px solid rgba(255,255,255,0.12);
+  box-shadow:
+    0 0 0 6px rgba(0,0,0,0.7),
+    0 0 0 8px rgba(255,255,255,0.04),
+    0 40px 80px rgba(0,0,0,0.8);
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+/* Notch */
+.mobile-frame::before {
+  content: '';
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 120px;
+  height: 34px;
+  background: #000;
+  border-radius: 20px;
+  z-index: 10;
+}
+.mobile-screen {
+  position: absolute;
+  inset: 0;
+  border-radius: 42px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* ─── DESKTOP FRAME ─── */
+.desktop-frame-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+.desktop-frame {
+  width: 900px;
+  height: 600px;
+  background: #0d0d10;
+  border-radius: 8px 8px 4px 4px;
+  border: 1.5px solid rgba(255,255,255,0.1);
+  box-shadow:
+    0 0 0 1px rgba(0,0,0,0.6),
+    0 40px 80px rgba(0,0,0,0.7);
+  position: relative;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+/* Browser chrome bar */
+.desktop-chrome {
+  height: 38px;
+  background: linear-gradient(180deg, #1e1e24 0%, #18181e 100%);
+  border-bottom: 1px solid rgba(255,255,255,0.07);
+  display: flex;
+  align-items: center;
+  padding: 0 14px;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.chrome-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+}
+.chrome-dot.red   { background: #ff5f57; }
+.chrome-dot.amber { background: #ffbd2e; }
+.chrome-dot.green { background: #28ca41; }
+.chrome-address {
+  flex: 1;
+  height: 22px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 4px;
+  margin: 0 16px;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  font-family: 'Fustat', sans-serif;
+  font-size: 11px;
+  color: var(--ov-text-muted);
+}
+.desktop-viewport {
+  position: relative;
+  flex: 1;
+  overflow: hidden;
+}
+
+/* ════════════════════════════════════════════════
+   STATE CONTAINERS (shown/hidden via JS)
+════════════════════════════════════════════════ */
+.state-view { display: none; }
+.state-view.active { display: contents; }
+
+/* ════════════════════════════════════════════════
+   POEM BACKGROUND (visible through overlay gap)
+════════════════════════════════════════════════ */
+.poem-bg {
+  position: absolute;
+  inset: 0;
+  background: #0c0c0e;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 28px;
+  filter: blur(3px);
+  opacity: 0.5;
+  pointer-events: none;
+  user-select: none;
+}
+.poem-bg-arabic {
+  font-family: 'Amiri', serif;
+  font-size: 18px;
+  color: #C5A059;
+  text-align: center;
+  line-height: 2.2;
+  direction: rtl;
+  margin-bottom: 12px;
+}
+.poem-bg-poet {
+  font-size: 12px;
+  color: rgba(197,160,89,0.5);
+  font-family: 'Fustat', sans-serif;
+  letter-spacing: 0.1em;
+}
+
+/* ════════════════════════════════════════════════
+   OVERLAY DRAWER
+════════════════════════════════════════════════ */
+.overlay-drawer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  /* 90% height = 10% gap at top showing poem */
+  height: 90%;
+  background: var(--ov-bg);
+  backdrop-filter: blur(20px) saturate(130%);
+  border-radius: 18px 18px 0 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border-top: 1px solid rgba(197,160,89,0.2);
+  border-left: 1px solid rgba(197,160,89,0.08);
+  border-right: 1px solid rgba(197,160,89,0.08);
+}
+
+/* Swipe handle — mobile only */
+.swipe-handle {
+  width: 36px;
+  height: 4px;
+  background: rgba(197,160,89,0.3);
+  border-radius: 2px;
+  margin: 10px auto 0;
+  flex-shrink: 0;
+}
+.no-handle .swipe-handle { display: none; }
+
+/* Overlay header */
+.overlay-header {
+  padding: 12px 20px 0;
+  flex-shrink: 0;
+}
+.overlay-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 44px;
+}
+.header-titles {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+}
+.header-title-arabic {
+  font-family: 'Reem Kufi', sans-serif;
+  font-weight: 700;
+  font-size: 17px;
+  color: var(--gold);
+  direction: rtl;
+  line-height: 1.3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.header-title-english {
+  font-family: 'Bodoni Moda', serif;
+  font-style: italic;
+  font-size: 12px;
+  color: var(--ov-text-dim);
+  line-height: 1.4;
+}
+.overlay-close-btn {
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--gold-structural);
+  background: rgba(197,160,89,0.06);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ov-text-dim);
+  font-size: 14px;
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-top: 4px;
+  transition: all 0.15s ease;
+}
+.overlay-close-btn:hover {
+  background: rgba(197,160,89,0.14);
+  color: var(--gold);
+}
+
+/* Gold rule separator */
+.gold-rule {
+  height: 1px;
+  background: var(--gold-rule);
+  margin: 10px 0 0;
+  flex-shrink: 0;
+}
+
+/* ════════════════════════════════════════════════
+   OVERLAY SCROLLABLE BODY
+════════════════════════════════════════════════ */
+.overlay-body {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0 20px 32px;
+  position: relative;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(197,160,89,0.2) transparent;
+}
+.overlay-body::-webkit-scrollbar { width: 3px; }
+.overlay-body::-webkit-scrollbar-thumb { background: rgba(197,160,89,0.2); border-radius: 2px; }
+
+/* ─ Sticky translation (state 2, 3) ─ */
+.translation-sticky {
+  position: sticky;
+  top: 0;
+  background: linear-gradient(180deg, rgba(8,8,12,0.98) 80%, transparent);
+  padding: 12px 0 10px;
+  border-bottom: 1px solid var(--ov-border-subtle);
+  margin-bottom: 12px;
+  z-index: 5;
+  backdrop-filter: blur(4px);
+}
+.translation-clamp {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ─ Translation section (non-sticky) ─ */
+.section-block {
+  padding: 16px 0 0;
+}
+.section-label-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.section-label {
+  font-family: 'Fustat', sans-serif;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--lapis-light);
+  flex-shrink: 0;
+}
+.section-line {
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, var(--lapis-border) 0%, transparent 100%);
+}
+.section-body {
+  font-family: 'IM Fell English', serif;
+  font-size: 14px;
+  line-height: 1.85;
+  color: var(--ov-text-dim);
+  font-style: italic;
+}
+.section-body.depth-body {
+  font-style: normal;
+  font-size: 13.5px;
+  line-height: 1.9;
+  color: var(--ov-text-dim);
+}
+
+/* ════════════════════════════════════════════════
+   LOADING STATE
+════════════════════════════════════════════════ */
+.overlay-loading-center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 40px 20px;
+}
+.lapis-spinner {
+  width: 40px;
+  height: 40px;
+  border: 2px solid var(--lapis-border);
+  border-top-color: var(--lapis-light);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.loading-text {
+  font-family: 'Forum', serif;
+  font-size: 15px;
+  font-style: italic;
+  color: var(--ov-text-dim);
+  text-align: center;
+  animation: breathe 2.4s ease-in-out infinite;
+  letter-spacing: 0.02em;
+}
+@keyframes breathe {
+  0%, 100% { opacity: 0.5; }
+  50% { opacity: 1; }
+}
+
+/* ════════════════════════════════════════════════
+   EMPTY STATE
+════════════════════════════════════════════════ */
+.overlay-empty-center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 40px 24px;
+  text-align: center;
+}
+.empty-text {
+  font-family: 'IM Fell English', serif;
+  font-size: 15px;
+  font-style: italic;
+  color: var(--ov-text-muted);
+  line-height: 1.7;
+  max-width: 240px;
+}
+.seek-btn {
+  font-family: 'Fustat', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--gold);
+  border: 1px solid var(--gold-structural);
+  background: rgba(197,160,89,0.06);
+  padding: 10px 24px;
+  border-radius: 100px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+.seek-btn:hover {
+  background: rgba(197,160,89,0.14);
+  border-color: var(--gold);
+}
+
+/* ════════════════════════════════════════════════
+   DESKTOP OVERLAY — fills viewport (no drawer metaphor)
+════════════════════════════════════════════════ */
+.desktop-overlay-wrap {
+  position: absolute;
+  inset: 0;
+  display: flex;
+}
+.desktop-poem-bg {
+  flex: 1;
+  background: #0c0c0e;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+  filter: blur(2px);
+  opacity: 0.35;
+  pointer-events: none;
+  user-select: none;
+}
+.desktop-poem-bg .poem-bg-arabic {
+  font-family: 'Amiri', serif;
+  font-size: 22px;
+  color: #C5A059;
+  text-align: center;
+  line-height: 2.4;
+  direction: rtl;
+  margin-bottom: 14px;
+}
+.desktop-poem-bg .poem-bg-poet {
+  font-size: 13px;
+  color: rgba(197,160,89,0.5);
+  font-family: 'Fustat', sans-serif;
+  letter-spacing: 0.1em;
+}
+
+/* Desktop panel — right side panel */
+.desktop-panel {
+  width: 420px;
+  height: 100%;
+  background: var(--ov-bg);
+  backdrop-filter: blur(20px) saturate(130%);
+  border-left: 1px solid rgba(197,160,89,0.15);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+.desktop-panel-header {
+  padding: 18px 24px 0;
+  flex-shrink: 0;
+}
+.desktop-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 48px;
+}
+.desktop-header-titles {
+  flex: 1;
+  min-width: 0;
+}
+.desktop-title-arabic {
+  font-family: 'Reem Kufi', sans-serif;
+  font-weight: 700;
+  font-size: 18px;
+  color: var(--gold);
+  direction: rtl;
+  line-height: 1.3;
+  margin-bottom: 4px;
+}
+.desktop-title-english {
+  font-family: 'Bodoni Moda', serif;
+  font-style: italic;
+  font-size: 13px;
+  color: var(--ov-text-dim);
+}
+.desktop-close {
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--gold-structural);
+  background: rgba(197,160,89,0.06);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ov-text-dim);
+  font-size: 14px;
+  cursor: pointer;
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+.desktop-panel-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 24px 32px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(197,160,89,0.2) transparent;
+}
+.desktop-panel-body::-webkit-scrollbar { width: 3px; }
+.desktop-panel-body::-webkit-scrollbar-thumb { background: rgba(197,160,89,0.2); border-radius: 2px; }
+
+/* ════════════════════════════════════════════════
+   STATE 2/3 — SCROLLED STATES (partial content visibility)
+════════════════════════════════════════════════ */
+.depth-partial {
+  /* simulates mid-scroll cut-off */
+  max-height: 80px;
+  overflow: hidden;
+  mask-image: linear-gradient(180deg, black 50%, transparent 100%);
+  -webkit-mask-image: linear-gradient(180deg, black 50%, transparent 100%);
+}
+
+/* ════════════════════════════════════════════════
+   STATE PANEL — identifies current state on page
+════════════════════════════════════════════════ */
+.state-info-bar {
+  text-align: center;
+  padding: 0 24px 32px;
+}
+.state-info-label {
+  font-family: 'Fustat', sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--lapis-light);
+  margin-bottom: 6px;
+}
+.state-info-desc {
+  font-size: 13px;
+  font-style: italic;
+  color: var(--ov-text-dim);
+  max-width: 600px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* ════════════════════════════════════════════════
+   DESKTOP LOADING + EMPTY (centered in panel)
+════════════════════════════════════════════════ */
+.desktop-loading-center, .desktop-empty-center {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 40px 24px;
+  text-align: center;
+}
+</style>
+</head>
+<body>
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+  <div class="page-eyebrow">Design Review · Insight Overlay</div>
+  <h1 class="page-title">InsightOverlay — 5 States</h1>
+  <p class="page-subtitle">Mobile (390×844) + Desktop (900×562) · Poem: ماذا تقولون إن قال النبي لكم</p>
+</div>
+
+<!-- TABS -->
+<div class="tabs-bar">
+  <button class="tab-btn active" onclick="showState(1, this)">
+    <span class="tab-number">1</span>Initial Open
+  </button>
+  <button class="tab-btn" onclick="showState(2, this)">
+    <span class="tab-number">2</span>Scrolled — Translation Sticky
+  </button>
+  <button class="tab-btn" onclick="showState(3, this)">
+    <span class="tab-number">3</span>Header Morphed (Author)
+  </button>
+  <button class="tab-btn" onclick="showState(4, this)">
+    <span class="tab-number">4</span>Loading
+  </button>
+  <button class="tab-btn" onclick="showState(5, this)">
+    <span class="tab-number">5</span>Empty
+  </button>
+</div>
+
+<!-- STAGE -->
+<div class="stage">
+
+  <!-- ─────────── MOBILE FRAME ─────────── -->
+  <div class="mobile-frame-wrap">
+    <div class="frame-label">Mobile · 390 × 844</div>
+    <div class="mobile-frame">
+      <div class="mobile-screen">
+
+        <!-- ══ STATE 1: Initial Open ══ -->
+        <div class="state-view active" data-state="1" id="mobile-state-1">
+          <div class="poem-bg">
+            <div class="poem-bg-arabic">مَاذَا تَقُولُونَ إِن قَالَ النَّبِيُّ لَكُمَّ<br>مَاذَا فَعَلْتُم وَأَنتُم آخِرُ الْأُمَمِ<br>بِأهْلِ بَيْتِي وَأَنْصَارِي وَمَحْرَمَتِي</div>
+            <div class="poem-bg-poet">أبو الأسود الدؤلي</div>
+          </div>
+          <div class="overlay-drawer">
+            <div class="swipe-handle"></div>
+            <div class="overlay-header">
+              <div class="overlay-header-row">
+                <div class="header-titles">
+                  <div class="header-title-arabic">ماذا تقولون إن قال النبي لكم</div>
+                  <div class="header-title-english">What Will You Say</div>
+                </div>
+                <div class="overlay-close-btn">✕</div>
+              </div>
+              <div class="gold-rule"></div>
+            </div>
+            <div class="overlay-body">
+              <!-- Translation -->
+              <div class="section-block">
+                <div class="section-label-row">
+                  <div class="section-label">Translation</div>
+                  <div class="section-line"></div>
+                </div>
+                <div class="section-body">
+                  "What will you say when the Prophet turns to you and asks: / What did you do — you, the last nation? / What did you do with my family, my supporters, the ones I held sacred — / some of them captive, some dead, their blood still wet?"
+                </div>
+              </div>
+              <!-- Gold rule divider -->
+              <div class="gold-rule" style="margin: 16px 0 0;"></div>
+              <!-- Depth -->
+              <div class="section-block">
+                <div class="section-label-row">
+                  <div class="section-label">The Depth</div>
+                  <div class="section-line"></div>
+                </div>
+                <div class="section-body depth-body">
+                  Abu al-Aswad composed this as a response to the political turmoil following the assassination of Uthman and the Battle of the Camel. The raw accusation — 'what did you do with my family' — breaks formal qasida convention by speaking directly to the listener as if they are personally guilty. The repetition of 'what did you do' creates an interrogative rhythm that builds unbearable moral pressure.
+                </div>
+              </div>
+              <!-- Gold rule divider -->
+              <div class="gold-rule" style="margin: 16px 0 0;"></div>
+              <!-- Author -->
+              <div class="section-block">
+                <div class="section-label-row">
+                  <div class="section-label">The Author</div>
+                  <div class="section-line"></div>
+                </div>
+                <div class="section-body depth-body">
+                  Abu al-Aswad al-Du'ali (d. 688) was a companion of Ali ibn Abi Talib, governor of Basra, and one of the earliest Arabic grammarians — traditionally credited with inventing the system of diacritical marks (tashkil) that make Arabic readable.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div><!-- /state 1 mobile -->
+
+        <!-- ══ STATE 2: Scrolled — Translation Sticky ══ -->
+        <div class="state-view" data-state="2" id="mobile-state-2">
+          <div class="poem-bg">
+            <div class="poem-bg-arabic">مَاذَا تَقُولُونَ إِن قَالَ النَّبِيُّ لَكُمَّ<br>مَاذَا فَعَلْتُم وَأَنتُم آخِرُ الْأُمَمِ</div>
+            <div class="poem-bg-poet">أبو الأسود الدؤلي</div>
+          </div>
+          <div class="overlay-drawer">
+            <div class="swipe-handle"></div>
+            <div class="overlay-header">
+              <div class="overlay-header-row">
+                <div class="header-titles">
+                  <div class="header-title-arabic">ماذا تقولون إن قال النبي لكم</div>
+                  <div class="header-title-english">What Will You Say</div>
+                </div>
+                <div class="overlay-close-btn">✕</div>
+              </div>
+              <div class="gold-rule"></div>
+            </div>
+            <div class="overlay-body">
+              <!-- Translation STICKY PINNED -->
+              <div class="translation-sticky">
+                <div class="section-label-row" style="margin-bottom: 8px;">
+                  <div class="section-label">Translation</div>
+                  <div class="section-line"></div>
+                </div>
+                <div class="section-body translation-clamp">
+                  "What will you say when the Prophet turns to you and asks: / What did you do — you, the last nation? / What did you do with my family, my supporters, the ones I held sacred — / some of them captive, some dead, their blood still wet?"
+                </div>
+              </div>
+              <!-- Depth partial (mid-scroll) -->
+              <div class="gold-rule" style="margin-bottom: 14px;"></div>
+              <div class="section-block">
+                <div class="section-label-row">
+                  <div class="section-label">The Depth</div>
+                  <div class="section-line"></div>
+                </div>
+                <div class="section-body depth-body depth-partial">
+                  Abu al-Aswad composed this as a response to the political turmoil following the assassination of Uthman and the Battle of the Camel. The raw accusation — 'what did you do with my family' — breaks formal qasida convention by speaking directly to the listener as if they are personally guilty.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div><!-- /state 2 mobile -->
+
+        <!-- ══ STATE 3: Scrolled to Author — Header Morphed ══ -->
+        <div class="state-view" data-state="3" id="mobile-state-3">
+          <div class="poem-bg">
+            <div class="poem-bg-arabic">مَاذَا تَقُولُونَ إِن قَالَ النَّبِيُّ لَكُمَّ</div>
+            <div class="poem-bg-poet">أبو الأسود الدؤلي</div>
+          </div>
+          <div class="overlay-drawer">
+            <div class="swipe-handle"></div>
+            <div class="overlay-header">
+              <!-- Header MORPHED: shows POET name now -->
+              <div class="overlay-header-row">
+                <div class="header-titles">
+                  <div class="header-title-arabic" style="font-size: 15px; color: rgba(197,160,89,0.8);">أبو الأسود الدؤلي</div>
+                  <div class="header-title-english">Abu al-Aswad al-Du'ali</div>
+                </div>
+                <div class="overlay-close-btn">✕</div>
+              </div>
+              <div class="gold-rule"></div>
+            </div>
+            <div class="overlay-body">
+              <!-- Translation sticky -->
+              <div class="translation-sticky">
+                <div class="section-label-row" style="margin-bottom: 8px;">
+                  <div class="section-label">Translation</div>
+                  <div class="section-line"></div>
+                </div>
+                <div class="section-body translation-clamp">
+                  "What will you say when the Prophet turns to you and asks: / What did you do — you, the last nation? / What did you do with my family, my supporters..."
+                </div>
+              </div>
+              <!-- Author section now visible -->
+              <div class="gold-rule" style="margin-bottom: 14px;"></div>
+              <div class="section-block">
+                <div class="section-label-row">
+                  <div class="section-label">The Author</div>
+                  <div class="section-line"></div>
+                </div>
+                <div class="section-body depth-body">
+                  Abu al-Aswad al-Du'ali (d. 688) was a companion of Ali ibn Abi Talib, governor of Basra, and one of the earliest Arabic grammarians — traditionally credited with inventing the system of diacritical marks (tashkil) that make Arabic readable. His political poetry took direct aim at the Umayyad rulers, combining scholarly precision with raw emotional force.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div><!-- /state 3 mobile -->
+
+        <!-- ══ STATE 4: Loading ══ -->
+        <div class="state-view" data-state="4" id="mobile-state-4">
+          <div class="poem-bg">
+            <div class="poem-bg-arabic">مَاذَا تَقُولُونَ إِن قَالَ النَّبِيُّ لَكُمَّ<br>مَاذَا فَعَلْتُم وَأَنتُم آخِرُ الْأُمَمِ</div>
+            <div class="poem-bg-poet">أبو الأسود الدؤلي</div>
+          </div>
+          <div class="overlay-drawer">
+            <div class="swipe-handle"></div>
+            <div class="overlay-header">
+              <div class="overlay-header-row">
+                <div class="header-titles">
+                  <div class="header-title-arabic">ماذا تقولون إن قال النبي لكم</div>
+                  <div class="header-title-english">What Will You Say</div>
+                </div>
+                <div class="overlay-close-btn">✕</div>
+              </div>
+              <div class="gold-rule"></div>
+            </div>
+            <div class="overlay-loading-center">
+              <div class="lapis-spinner"></div>
+              <div class="loading-text">Consulting the Diwan...</div>
+            </div>
+          </div>
+        </div><!-- /state 4 mobile -->
+
+        <!-- ══ STATE 5: Empty ══ -->
+        <div class="state-view" data-state="5" id="mobile-state-5">
+          <div class="poem-bg">
+            <div class="poem-bg-arabic">مَاذَا تَقُولُونَ إِن قَالَ النَّبِيُّ لَكُمَّ<br>مَاذَا فَعَلْتُم وَأَنتُم آخِرُ الْأُمَمِ</div>
+            <div class="poem-bg-poet">أبو الأسود الدؤلي</div>
+          </div>
+          <div class="overlay-drawer">
+            <div class="swipe-handle"></div>
+            <div class="overlay-header">
+              <div class="overlay-header-row">
+                <div class="header-titles">
+                  <div class="header-title-arabic">ماذا تقولون إن قال النبي لكم</div>
+                  <div class="header-title-english">What Will You Say</div>
+                </div>
+                <div class="overlay-close-btn">✕</div>
+              </div>
+              <div class="gold-rule"></div>
+            </div>
+            <div class="overlay-empty-center">
+              <div class="empty-text">Tap the lightbulb to illuminate this poem</div>
+              <button class="seek-btn">Seek Insight</button>
+            </div>
+          </div>
+        </div><!-- /state 5 mobile -->
+
+      </div><!-- /mobile-screen -->
+    </div><!-- /mobile-frame -->
+  </div><!-- /mobile-frame-wrap -->
+
+
+  <!-- ─────────── DESKTOP FRAME ─────────── -->
+  <div class="desktop-frame-wrap">
+    <div class="frame-label">Desktop · 900 × 600</div>
+    <div class="desktop-frame">
+      <!-- Browser chrome -->
+      <div class="desktop-chrome">
+        <div class="chrome-dot red"></div>
+        <div class="chrome-dot amber"></div>
+        <div class="chrome-dot green"></div>
+        <div class="chrome-address">qafiyah.app</div>
+      </div>
+      <!-- Viewport -->
+      <div class="desktop-viewport">
+
+        <!-- ══ STATE 1: Initial Open ══ -->
+        <div class="state-view active" data-state="1" id="desktop-state-1">
+          <div class="desktop-overlay-wrap">
+            <div class="desktop-poem-bg">
+              <div class="poem-bg-arabic">مَاذَا تَقُولُونَ إِن قَالَ النَّبِيُّ لَكُمَّ<br>مَاذَا فَعَلْتُم وَأَنتُم آخِرُ الْأُمَمِ<br>بِأهْلِ بَيْتِي وَأَنْصَارِي وَمَحْرَمَتِي<br>مِنْهُمْ أُسَارَى وَقَتْلَى ضُرِّجُوا بِدَمِ</div>
+              <div class="poem-bg-poet">أبو الأسود الدؤلي · Abu al-Aswad al-Du'ali</div>
+            </div>
+            <div class="desktop-panel">
+              <div class="desktop-panel-header">
+                <div class="desktop-header-row">
+                  <div class="desktop-header-titles">
+                    <div class="desktop-title-arabic">ماذا تقولون إن قال النبي لكم</div>
+                    <div class="desktop-title-english">What Will You Say</div>
+                  </div>
+                  <div class="desktop-close">✕</div>
+                </div>
+                <div class="gold-rule" style="margin: 12px 0 0;"></div>
+              </div>
+              <div class="desktop-panel-body">
+                <div class="section-block">
+                  <div class="section-label-row">
+                    <div class="section-label">Translation</div>
+                    <div class="section-line"></div>
+                  </div>
+                  <div class="section-body">
+                    "What will you say when the Prophet turns to you and asks: / What did you do — you, the last nation? / What did you do with my family, my supporters, the ones I held sacred — / some of them captive, some dead, their blood still wet?"
+                  </div>
+                </div>
+                <div class="gold-rule" style="margin: 16px 0 0;"></div>
+                <div class="section-block">
+                  <div class="section-label-row">
+                    <div class="section-label">The Depth</div>
+                    <div class="section-line"></div>
+                  </div>
+                  <div class="section-body depth-body">
+                    Abu al-Aswad composed this as a response to the political turmoil following the assassination of Uthman and the Battle of the Camel. The raw accusation — 'what did you do with my family' — breaks formal qasida convention by speaking directly to the listener as if they are personally guilty.
+                  </div>
+                </div>
+                <div class="gold-rule" style="margin: 16px 0 0;"></div>
+                <div class="section-block">
+                  <div class="section-label-row">
+                    <div class="section-label">The Author</div>
+                    <div class="section-line"></div>
+                  </div>
+                  <div class="section-body depth-body">
+                    Abu al-Aswad al-Du'ali (d. 688) was a companion of Ali ibn Abi Talib, governor of Basra, and one of the earliest Arabic grammarians — traditionally credited with inventing the system of diacritical marks (tashkil) that make Arabic readable.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div><!-- /state 1 desktop -->
+
+        <!-- ══ STATE 2: Scrolled — Translation Sticky ══ -->
+        <div class="state-view" data-state="2" id="desktop-state-2">
+          <div class="desktop-overlay-wrap">
+            <div class="desktop-poem-bg">
+              <div class="poem-bg-arabic">مَاذَا تَقُولُونَ إِن قَالَ النَّبِيُّ لَكُمَّ<br>مَاذَا فَعَلْتُم وَأَنتُم آخِرُ الْأُمَمِ</div>
+              <div class="poem-bg-poet">أبو الأسود الدؤلي</div>
+            </div>
+            <div class="desktop-panel">
+              <div class="desktop-panel-header">
+                <div class="desktop-header-row">
+                  <div class="desktop-header-titles">
+                    <div class="desktop-title-arabic">ماذا تقولون إن قال النبي لكم</div>
+                    <div class="desktop-title-english">What Will You Say</div>
+                  </div>
+                  <div class="desktop-close">✕</div>
+                </div>
+                <div class="gold-rule" style="margin: 12px 0 0;"></div>
+              </div>
+              <div class="desktop-panel-body">
+                <div class="translation-sticky">
+                  <div class="section-label-row" style="margin-bottom: 8px;">
+                    <div class="section-label">Translation</div>
+                    <div class="section-line"></div>
+                  </div>
+                  <div class="section-body translation-clamp">
+                    "What will you say when the Prophet turns to you and asks: / What did you do — you, the last nation? / What did you do with my family, my supporters, the ones I held sacred — / some of them captive, some dead, their blood still wet?"
+                  </div>
+                </div>
+                <div class="gold-rule" style="margin-bottom: 14px;"></div>
+                <div class="section-block">
+                  <div class="section-label-row">
+                    <div class="section-label">The Depth</div>
+                    <div class="section-line"></div>
+                  </div>
+                  <div class="section-body depth-body depth-partial">
+                    Abu al-Aswad composed this as a response to the political turmoil following the assassination of Uthman and the Battle of the Camel. The raw accusation — 'what did you do with my family' — breaks formal qasida convention by speaking directly to the listener as if they are personally guilty.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div><!-- /state 2 desktop -->
+
+        <!-- ══ STATE 3: Header Morphed ══ -->
+        <div class="state-view" data-state="3" id="desktop-state-3">
+          <div class="desktop-overlay-wrap">
+            <div class="desktop-poem-bg">
+              <div class="poem-bg-arabic">مَاذَا تَقُولُونَ إِن قَالَ النَّبِيُّ لَكُمَّ</div>
+              <div class="poem-bg-poet">أبو الأسود الدؤلي</div>
+            </div>
+            <div class="desktop-panel">
+              <div class="desktop-panel-header">
+                <div class="desktop-header-row">
+                  <!-- Poet name in header now -->
+                  <div class="desktop-header-titles">
+                    <div class="desktop-title-arabic" style="font-size: 16px; color: rgba(197,160,89,0.8);">أبو الأسود الدؤلي</div>
+                    <div class="desktop-title-english">Abu al-Aswad al-Du'ali</div>
+                  </div>
+                  <div class="desktop-close">✕</div>
+                </div>
+                <div class="gold-rule" style="margin: 12px 0 0;"></div>
+              </div>
+              <div class="desktop-panel-body">
+                <div class="translation-sticky">
+                  <div class="section-label-row" style="margin-bottom: 8px;">
+                    <div class="section-label">Translation</div>
+                    <div class="section-line"></div>
+                  </div>
+                  <div class="section-body translation-clamp">
+                    "What will you say when the Prophet turns to you and asks: / What did you do — you, the last nation?..."
+                  </div>
+                </div>
+                <div class="gold-rule" style="margin-bottom: 14px;"></div>
+                <div class="section-block">
+                  <div class="section-label-row">
+                    <div class="section-label">The Author</div>
+                    <div class="section-line"></div>
+                  </div>
+                  <div class="section-body depth-body">
+                    Abu al-Aswad al-Du'ali (d. 688) was a companion of Ali ibn Abi Talib, governor of Basra, and one of the earliest Arabic grammarians — traditionally credited with inventing the system of diacritical marks (tashkil) that make Arabic readable. His political poetry took direct aim at the Umayyad rulers, combining scholarly precision with raw emotional force.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div><!-- /state 3 desktop -->
+
+        <!-- ══ STATE 4: Loading ══ -->
+        <div class="state-view" data-state="4" id="desktop-state-4">
+          <div class="desktop-overlay-wrap">
+            <div class="desktop-poem-bg">
+              <div class="poem-bg-arabic">مَاذَا تَقُولُونَ إِن قَالَ النَّبِيُّ لَكُمَّ<br>مَاذَا فَعَلْتُم وَأَنتُم آخِرُ الْأُمَمِ</div>
+              <div class="poem-bg-poet">أبو الأسود الدؤلي</div>
+            </div>
+            <div class="desktop-panel">
+              <div class="desktop-panel-header">
+                <div class="desktop-header-row">
+                  <div class="desktop-header-titles">
+                    <div class="desktop-title-arabic">ماذا تقولون إن قال النبي لكم</div>
+                    <div class="desktop-title-english">What Will You Say</div>
+                  </div>
+                  <div class="desktop-close">✕</div>
+                </div>
+                <div class="gold-rule" style="margin: 12px 0 0;"></div>
+              </div>
+              <div class="desktop-loading-center">
+                <div class="lapis-spinner"></div>
+                <div class="loading-text">Consulting the Diwan...</div>
+              </div>
+            </div>
+          </div>
+        </div><!-- /state 4 desktop -->
+
+        <!-- ══ STATE 5: Empty ══ -->
+        <div class="state-view" data-state="5" id="desktop-state-5">
+          <div class="desktop-overlay-wrap">
+            <div class="desktop-poem-bg">
+              <div class="poem-bg-arabic">مَاذَا تَقُولُونَ إِن قَالَ النَّبِيُّ لَكُمَّ<br>مَاذَا فَعَلْتُم وَأَنتُم آخِرُ الْأُمَمِ</div>
+              <div class="poem-bg-poet">أبو الأسود الدؤلي</div>
+            </div>
+            <div class="desktop-panel">
+              <div class="desktop-panel-header">
+                <div class="desktop-header-row">
+                  <div class="desktop-header-titles">
+                    <div class="desktop-title-arabic">ماذا تقولون إن قال النبي لكم</div>
+                    <div class="desktop-title-english">What Will You Say</div>
+                  </div>
+                  <div class="desktop-close">✕</div>
+                </div>
+                <div class="gold-rule" style="margin: 12px 0 0;"></div>
+              </div>
+              <div class="desktop-empty-center">
+                <div class="empty-text">Tap the lightbulb to illuminate this poem</div>
+                <button class="seek-btn">Seek Insight</button>
+              </div>
+            </div>
+          </div>
+        </div><!-- /state 5 desktop -->
+
+      </div><!-- /desktop-viewport -->
+    </div><!-- /desktop-frame -->
+  </div><!-- /desktop-frame-wrap -->
+
+</div><!-- /stage -->
+
+<!-- STATE INFO BAR -->
+<div class="state-info-bar">
+  <div class="state-info-label" id="state-label">State 1 of 5</div>
+  <div class="state-info-desc" id="state-desc">Overlay opens at 90% height — 10% gap reveals blurred poem behind. Swipe handle visible on mobile. Header shows poem title (Arabic + English). All three sections fully available to scroll.</div>
+</div>
+
+<script>
+const STATE_INFO = {
+  1: {
+    label: 'State 1 of 5 — Initial Open',
+    desc: 'Overlay opens at 90% height — 10% gap reveals blurred poem behind. Swipe handle visible on mobile. Header shows poem title (Arabic + English). All three sections (Translation, The Depth, The Author) available to scroll.'
+  },
+  2: {
+    label: 'State 2 of 5 — Scrolled: Translation Sticky',
+    desc: 'User has scrolled past the Translation. It pins at top with line-clamp-3 and a subtle bottom border. Depth section text is partially visible mid-scroll (fades out). Header still shows poem title.'
+  },
+  3: {
+    label: 'State 3 of 5 — Scrolled to Author: Header Morphed',
+    desc: 'User has scrolled to The Author section. Header now shows POET name (Arabic + English) instead of poem title — contextual identity shift. Translation remains pinned sticky. Depth has been scrolled past.'
+  },
+  4: {
+    label: 'State 4 of 5 — Loading',
+    desc: 'AI request in-flight. Centered: lapis spinner (rotating border circle) with "Consulting the Diwan..." in Forum italic, breathing opacity animation. No content sections shown. Header remains with poem title.'
+  },
+  5: {
+    label: 'State 5 of 5 — Empty (No Insight Yet)',
+    desc: 'No insight has been requested. Overlay is open but empty. Centered italic prompt invites action. "SEEK INSIGHT" pill button triggers the AI request. Header shows poem title.'
+  }
+};
+
+function showState(n, btn) {
+  // Update all state views
+  document.querySelectorAll('.state-view').forEach(el => {
+    el.classList.remove('active');
+    if (parseInt(el.dataset.state) === n) {
+      el.classList.add('active');
+    }
+  });
+
+  // Update tabs
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  // Update info bar
+  document.getElementById('state-label').textContent = STATE_INFO[n].label;
+  document.getElementById('state-desc').textContent = STATE_INFO[n].desc;
+}
+</script>
+</body>
+</html>

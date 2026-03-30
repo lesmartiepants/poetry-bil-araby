@@ -22,6 +22,7 @@ vi.mock('vaul', () => ({
     Content: ({ children, ...props }) => <div data-testid="drawer-content">{children}</div>,
     Handle: (props) => <div data-testid="drawer-handle" {...props} />,
     Close: ({ children }) => children,
+    Title: ({ children, className, ...props }) => <h2 className={className} {...props}>{children}</h2>,
   },
 }));
 

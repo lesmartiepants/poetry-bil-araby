@@ -664,9 +664,9 @@ export default function DiwanApp() {
     addLog,
   });
 
-  const togglePlay = () => togglePlayAction({ audioRef, isTogglingPlay, current, addLog, track });
+  const togglePlay = () => togglePlayAction({ audioRef, isTogglingPlay, current: displayedPoem, addLog, track });
 
-  const handleAnalyze = () => analyzePoemAction({ current, addLog, track });
+  const handleAnalyze = () => analyzePoemAction({ current: displayedPoem, addLog, track });
 
   const handleFetch = () => fetchPoemAction({ addLog, track, emitEvent, navigate, markPoemSeen });
 

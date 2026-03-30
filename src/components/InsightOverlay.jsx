@@ -33,7 +33,7 @@ export default function InsightOverlay({
         >
           <Drawer.Handle
             className="mx-auto mt-3 mb-1 w-8 h-[3px] rounded-full"
-            style={{ background: 'rgba(197,160,89,0.7)' }}
+            style={{ background: 'rgba(255,255,255,0.4)' }}
           />
 
           {/* Header — centered poem title */}

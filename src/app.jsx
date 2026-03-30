@@ -1242,6 +1242,9 @@ export default function DiwanApp() {
                         // This avoids the race where carousel-populate and autoExplainPending
                         // both fire analyzePoemAction and fight over interpretation state.
                         const newPoem = carouselPoems[idx];
+                        if (FEATURES.logging && newPoem) {
+                          addLog('Navigation', `Carousel → ${newPoem.poetArabic || newPoem.poet} - ${newPoem.titleArabic || newPoem.title} | ID: ${newPoem.id}`, 'info');
+                        }
                         // Update URL to reflect the currently displayed poem
                         if (newPoem?.id) {
                           navigate('/poem/' + newPoem.id + window.location.search, { replace: true });

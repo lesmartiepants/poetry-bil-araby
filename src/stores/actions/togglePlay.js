@@ -70,7 +70,7 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
       // Unlock AudioContext after user gesture (handles iOS autoplay policy)
       await toneStart();
       const player = new Player(audioUrl).toDestination();
-      await player.loaded;
+      await toneLoaded();
       player.start();
       setPlayer(player);
       setPlaying(true);
@@ -110,7 +110,7 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
 
         try {
           const player = new Player(u).toDestination();
-          await player.loaded;
+          await toneLoaded();
           player.start();
           setPlayer(player);
           setPlaying(true);
@@ -230,7 +230,7 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
 
           try {
             const player = new Player(u).toDestination();
-            await player.loaded;
+            await toneLoaded();
             player.start();
             setPlayer(player);
             setPlaying(true);
@@ -301,7 +301,7 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
 
           try {
             const player = new Player(u).toDestination();
-            await player.loaded;
+            await toneLoaded();
             player.start();
             setPlayer(player);
             setPlaying(true);
@@ -344,7 +344,7 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
 
             try {
               const player = new Player(u).toDestination();
-              await player.loaded;
+              await toneLoaded();
               player.start();
               setPlayer(player);
               setPlaying(true);

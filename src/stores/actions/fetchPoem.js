@@ -1,5 +1,7 @@
 import Sentry from '../../sentry.js';
+import { toast } from 'sonner';
 import { usePoemStore } from '../poemStore';
+import { useModalStore } from '../modalStore';
 import { filterPoemsByCategory } from '../../utils/filterPoems.js';
 import { CATEGORIES } from '../../constants/index.js';
 import { DISCOVERY_SYSTEM_PROMPT } from '../../prompts';
@@ -7,6 +9,15 @@ import { repairAndParseJSON } from '../../utils/jsonRepair';
 import { pruneSeenPoems, getRecentSeenIds } from '../../utils/seenPoems.js';
 import { fetchRandomPoem } from '../../services/database.js';
 import { geminiTextFetch } from '../../services/gemini.js';
+
+/**
+ * Returns true when the splash screen or onboarding flow is still visible,
+ * so discovery toasts can be suppressed during those early states.
+ */
+function isAppBooting() {
+  const { splash, onboarding } = useModalStore.getState();
+  return splash || onboarding;
+}
 
 /**
  * Fetch a new poem (DB mode or AI mode) and add it to the store.
@@ -123,6 +134,9 @@ async function fetchFromDatabase({
   emitEvent(newPoem.id, 'serve', { source: 'database' });
   addLog('Event', `→ serve event emitted | poem_id: ${newPoem.id} | source: database`, 'info');
 
+  if (!isAppBooting()) {
+    toast('New poem discovered', { description: newPoem.poet, duration: 3000, icon: '✦' });
+  }
   setPoems((prev) => {
     const updated = [...prev, newPoem];
     const freshFiltered = filterPoemsByCategory(updated, usePoemStore.getState().selectedCategory);
@@ -130,7 +144,7 @@ async function fetchFromDatabase({
     if (newIdx !== -1) setCurrentIndex(newIdx);
     return updated;
   });
-  navigate('/poem/' + newPoem.id, { replace: true });
+  navigate('/poem/' + newPoem.id + (typeof window !== 'undefined' ? window.location.search : ''));
   if (!newPoem.cachedTranslation) {
     setAutoExplain(true);
   }
@@ -222,6 +236,9 @@ async function fetchFromAI({
   track('poem_discovered', { source: 'ai', poet: newPoem.poet });
   emitEvent(newPoem.id, 'serve', { source: 'ai' });
   addLog('Event', `→ serve event emitted | poem_id: ${newPoem.id} | source: ai`, 'info');
+  if (!isAppBooting()) {
+    toast('New poem discovered', { description: newPoem.poet, duration: 3000, icon: '✦' });
+  }
 
   setPoems((prev) => {
     const updated = [...prev, newPoem];
@@ -230,5 +247,5 @@ async function fetchFromAI({
     if (newIdx !== -1) setCurrentIndex(newIdx);
     return updated;
   });
-  navigate('/', { replace: true });
+  navigate('/' + (typeof window !== 'undefined' ? window.location.search : ''), { replace: true });
 }

@@ -1,3 +1,5 @@
+import { Player, start as toneStart } from 'tone';
+import { toast } from 'sonner';
 import Sentry from '../../sentry.js';
 import { FEATURES } from '../../constants/features';
 import { useAudioStore } from '../audioStore';
@@ -10,11 +12,27 @@ import { pcm16ToWav } from '../../utils/audio.js';
 
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
+// FUTURE: Use Tone.Transport for verse-synced highlighting
+// FUTURE: Use Tone.Panner3D for spatial audio (stone hall reverb effect)
+
+/**
+ * Create a Tone.Player from a URL and wait until its buffer is fully decoded before returning.
+ * Uses the constructor onload callback (not player.loaded or Tone.loaded()) because those
+ * can resolve before the AudioBuffer decode completes for blob URLs in Tone.js v15.
+ */
+function createPlayerReady(url) {
+  return new Promise((resolve, reject) => {
+    const player = new Player(url, () => resolve(player)).toDestination();
+    player.buffer.onerror = () => reject(new Error('buffer is either not set or not loaded'));
+  });
+}
+
 /**
  * Toggle audio playback — handles pause, resume, cache check, TTS generation, and polling.
  *
  * @param {Object} options
- * @param {Object} options.audioRef - React ref to the <audio> element
+ * @param {Object} options.audioRef - React ref (kept for signature compatibility; integrator agent
+ *                                    will update app.jsx to pass a Tone.Player ref in Phase 2)
  * @param {Object} options.isTogglingPlay - React ref guard for debouncing
  * @param {Object} options.current - Current poem object
  * @param {Function} options.addLog - Logging function
@@ -25,10 +43,12 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
     isPlaying,
     isGenerating,
     url: audioUrl,
+    player: existingPlayer,
     setPlaying,
     setGenerating,
     setUrl,
     setError,
+    setPlayer,
   } = useAudioStore.getState();
 
   if (isTogglingPlay.current) {
@@ -43,9 +63,11 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
   );
   track('audio_play', { poet: current?.poet });
 
-  // PAUSE
+  // PAUSE — Tone.Player uses stop() rather than pause()
   if (isPlaying) {
-    audioRef.current.pause();
+    if (existingPlayer) {
+      existingPlayer.stop();
+    }
     setPlaying(false);
     track('audio_pause', { poet: current?.poet });
     addLog('UI Event', '⏸️ Pause button clicked', 'info');
@@ -53,28 +75,28 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
     return;
   }
 
-  // RESUME (url already loaded)
+  // RESUME — Tone.Player.stop() discards position, so we restart from the stored blob URL.
+  // Re-creating the player from the cached URL is cheaper than storing raw PCM buffers.
   if (audioUrl) {
     try {
-      await audioRef.current.play();
+      // Unlock AudioContext after user gesture (handles iOS autoplay policy)
+      await toneStart();
+      const player = await createPlayerReady(audioUrl);
+      player.start();
+      setPlayer(player);
       setPlaying(true);
     } catch (e) {
-      addLog('Audio', 'Playback failed, resetting audio URL', 'info');
+      addLog('Audio', 'Resume failed, resetting audio URL', 'info');
       setUrl(null);
+      setPlayer(null);
     }
     isTogglingPlay.current = false;
     return;
   }
 
-  // iOS Safari autoplay unlock
-  if (audioRef.current) {
-    const wasMuted = audioRef.current.muted;
-    audioRef.current.muted = true;
-    const unlockPlay = audioRef.current.play();
-    if (unlockPlay !== undefined) unlockPlay.catch(() => {});
-    audioRef.current.pause();
-    audioRef.current.muted = wasMuted;
-  }
+  // iOS Safari / browser autoplay unlock — Tone.start() resumes the AudioContext
+  // after a user gesture, replacing the old mute/play/pause trick on the raw Audio element.
+  await toneStart();
 
   setGenerating(true);
 
@@ -96,15 +118,20 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
 
         const u = URL.createObjectURL(cached.blob);
         setUrl(u);
-        audioRef.current.src = u;
-        audioRef.current.load();
-        audioRef.current
-          .play()
-          .then(() => setPlaying(true))
-          .catch((err) => {
-            if (FEATURES.logging) console.warn('[Audio] Playback failed:', err.message);
-            addLog('Audio', `Cached playback failed: ${err.message}`, 'error');
-          });
+
+        try {
+          const player = await createPlayerReady(u);
+          player.start();
+          setPlayer(player);
+          setPlaying(true);
+        } catch (err) {
+          if (FEATURES.logging) console.warn('[Audio] Cached playback failed:', err.message);
+          const msg = `Cached playback failed: ${err.message}`;
+          addLog('Audio', msg, 'error');
+          setError(msg);
+          toast.error(msg);
+        }
+
         setGenerating(false);
         isTogglingPlay.current = false;
         return;
@@ -161,9 +188,10 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
           'error'
         );
         if (res.status === 429) {
-          setError(
-            'Recitation temporarily unavailable — too many requests. Please wait a moment and try again.'
-          );
+          const msg =
+            'Recitation temporarily unavailable — too many requests. Please wait a moment and try again.';
+          setError(msg);
+          toast.error(msg);
           throw new Error('Rate limited (429)');
         }
         throw new Error(`API returned ${res.status}: ${res.statusText}`);
@@ -209,15 +237,19 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
 
           const u = URL.createObjectURL(blob);
           setUrl(u);
-          audioRef.current.src = u;
-          audioRef.current.load();
-          audioRef.current
-            .play()
-            .then(() => setPlaying(true))
-            .catch((err) => {
-              if (FEATURES.logging) console.warn('[Audio] Playback failed:', err.message);
-              addLog('Audio', `Playback failed: ${err.message}`, 'error');
-            });
+
+          try {
+            const player = await createPlayerReady(u);
+            player.start();
+            setPlayer(player);
+            setPlaying(true);
+          } catch (err) {
+            if (FEATURES.logging) console.warn('[Audio] Playback failed:', err.message);
+            const msg = `Playback failed: ${err.message}`;
+            addLog('Audio', msg, 'error');
+            setError(msg);
+            toast.error(msg);
+          }
 
           // Cache
           if (FEATURES.caching && current?.id) {
@@ -246,6 +278,10 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
       addLog('Audio System Error', `${e.message} | Poem ID: ${current?.id}`, 'error');
       track('audio_error', { error: (e.message || '').slice(0, 100) });
       setPlaying(false);
+      // Only show toast for errors not already toasted (e.g. 429 is handled above)
+      if (!e.message.includes('Rate limited')) {
+        toast.error(`Recitation error: ${e.message}`);
+      }
     } finally {
       setGenerating(false);
       usePoemStore.getState().removeActiveAudio(current?.id);
@@ -271,15 +307,19 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
           );
           const u = URL.createObjectURL(cached.blob);
           setUrl(u);
-          audioRef.current.src = u;
-          audioRef.current.load();
-          audioRef.current
-            .play()
-            .then(() => setPlaying(true))
-            .catch((err) => {
-              if (FEATURES.logging) console.warn('[Audio] Playback failed:', err.message);
-              addLog('Audio', `Playback failed: ${err.message}`, 'error');
-            });
+
+          try {
+            const player = await createPlayerReady(u);
+            player.start();
+            setPlayer(player);
+            setPlaying(true);
+          } catch (err) {
+            if (FEATURES.logging) console.warn('[Audio] Playback failed:', err.message);
+            const msg = `Playback failed: ${err.message}`;
+            addLog('Audio', msg, 'error');
+            setError(msg);
+            toast.error(msg);
+          }
         } else {
           addLog('Audio', 'Prefetch failed — retrying audio generation automatically...', 'error');
           if (!isTogglingPlay.current) {
@@ -309,17 +349,23 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
             addLog('Audio', '✓ Audio completed after extended wait - playing now', 'success');
             const u = URL.createObjectURL(finalCheck.blob);
             setUrl(u);
-            audioRef.current.src = u;
-            audioRef.current.load();
-            audioRef.current
-              .play()
-              .then(() => setPlaying(true))
-              .catch((err) => {
-                if (FEATURES.logging) console.warn('[Audio] Playback failed:', err.message);
-                addLog('Audio', `Playback failed: ${err.message}`, 'error');
-              });
+
+            try {
+              const player = await createPlayerReady(u);
+              player.start();
+              setPlayer(player);
+              setPlaying(true);
+            } catch (err) {
+              if (FEATURES.logging) console.warn('[Audio] Playback failed:', err.message);
+              const msg = `Playback failed: ${err.message}`;
+              addLog('Audio', msg, 'error');
+              setError(msg);
+              toast.error(msg);
+            }
           } else {
-            addLog('Audio', 'Audio generation timeout - please try again', 'error');
+            const msg = 'Audio generation timeout - please try again';
+            addLog('Audio', msg, 'error');
+            toast.error(msg);
           }
           usePoemStore.getState().removeActiveAudio(current?.id);
           setGenerating(false);

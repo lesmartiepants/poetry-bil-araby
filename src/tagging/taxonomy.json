@@ -1,0 +1,148 @@
+{
+  "version": "1.1.0",
+  "description": "Bilingual tag taxonomy for Arabic poetry classification",
+  "tag_types": [
+    {
+      "type": "theme",
+      "label_en": "Theme",
+      "label_ar": "موضوع",
+      "tags": [
+        { "slug": "love", "name_en": "Love", "name_ar": "الحب", "description_en": "Romantic love, longing, and desire", "description_ar": "الحب الرومانسي والشوق والرغبة" },
+        { "slug": "longing", "name_en": "Longing", "name_ar": "الشوق", "description_en": "Yearning for a person, place, or time", "description_ar": "الحنين والتوق" },
+        { "slug": "grief", "name_en": "Grief", "name_ar": "الحزن", "description_en": "Loss, mourning, and sorrow", "description_ar": "الفقدان والرثاء والحزن" },
+        { "slug": "nature", "name_en": "Nature", "name_ar": "الطبيعة", "description_en": "Landscape, seasons, flora, fauna", "description_ar": "الطبيعة والفصول والنباتات والحيوانات" },
+        { "slug": "war", "name_en": "War", "name_ar": "الحرب", "description_en": "Battle, conflict, heroism, military valor", "description_ar": "المعركة والصراع والبطولة والشجاعة العسكرية" },
+        { "slug": "homeland", "name_en": "Homeland", "name_ar": "الوطن", "description_en": "Love of country, exile, diaspora, belonging", "description_ar": "حب الوطن والمنفى والغربة والانتماء" },
+        { "slug": "religion", "name_en": "Religion", "name_ar": "الدين", "description_en": "Islamic faith, Quranic themes, religious duty, pilgrimage", "description_ar": "الإسلام والقرآن والواجب الديني والحج" },
+        { "slug": "spirituality", "name_en": "Spirituality", "name_ar": "الروحانية", "description_en": "Sufi mysticism, divine love, spiritual journey", "description_ar": "التصوف والحب الإلهي والرحلة الروحية" },
+        { "slug": "praise", "name_en": "Praise", "name_ar": "المديح", "description_en": "Panegyric, eulogy, praise of a person, ruler, or prophet", "description_ar": "المدح والتبجيل ومدح الحاكم والنبي" },
+        { "slug": "satire", "name_en": "Satire", "name_ar": "الهجاء", "description_en": "Mockery, critique, social satire, invective", "description_ar": "السخرية والنقد الاجتماعي والهجاء" },
+        { "slug": "wisdom", "name_en": "Wisdom", "name_ar": "الحكمة", "description_en": "Philosophical reflection, aphorisms, life lessons, moral guidance", "description_ar": "التأمل الفلسفي والأمثال وحكم الحياة والإرشاد الأخلاقي" },
+        { "slug": "death", "name_en": "Death", "name_ar": "الموت", "description_en": "Mortality, elegy, lamentation, the afterlife", "description_ar": "الفناء والرثاء والعزاء والآخرة" },
+        { "slug": "freedom", "name_en": "Freedom", "name_ar": "الحرية", "description_en": "Liberation, resistance, political freedom, revolution", "description_ar": "التحرر والمقاومة والحرية السياسية والثورة" },
+        { "slug": "childhood", "name_en": "Childhood", "name_ar": "الطفولة", "description_en": "Nostalgia for youth and innocence", "description_ar": "الحنين إلى الطفولة والبراءة" },
+        { "slug": "time", "name_en": "Time", "name_ar": "الزمن", "description_en": "Transience, memory, the passage of time, impermanence", "description_ar": "العابر والذاكرة ومرور الزمن والزوال" },
+        { "slug": "sea", "name_en": "Sea", "name_ar": "البحر", "description_en": "The sea, ships, sailors, water, the ocean as metaphor", "description_ar": "البحر والسفن والبحارة والماء كاستعارة" },
+        { "slug": "friendship", "name_en": "Friendship", "name_ar": "الصداقة", "description_en": "Bonds of friendship, loyalty, brotherhood, companionship", "description_ar": "روابط الصداقة والإخلاص والأخوة والمودة" },
+        { "slug": "wine", "name_en": "Wine & Pleasure", "name_ar": "الخمر", "description_en": "Wine poetry, hedonism, pleasure, Khamariyat tradition", "description_ar": "شعر الخمر والمتعة والخمريات" },
+        { "slug": "boasting", "name_en": "Boasting", "name_ar": "الفخر", "description_en": "Self-praise, tribal boasting, Fakhr poetry", "description_ar": "الفخر بالنفس والقبيلة" },
+        { "slug": "city", "name_en": "City & Urban Life", "name_ar": "المدينة", "description_en": "Urban life, modernity, city landscapes", "description_ar": "الحياة الحضرية والحداثة ومشاهد المدينة" },
+        { "slug": "woman", "name_en": "Woman", "name_ar": "المرأة", "description_en": "Celebration of womanhood, feminine identity, beauty", "description_ar": "الاحتفاء بالأنوثة والهوية النسائية والجمال" }
+      ]
+    },
+    {
+      "type": "form",
+      "label_en": "Form",
+      "label_ar": "شكل",
+      "tags": [
+        { "slug": "qasida", "name_en": "Qasida", "name_ar": "قصيدة", "description_en": "Long classical Arabic ode, typically monorhyme with strict meter", "description_ar": "القصيدة الكلاسيكية الطويلة ذات القافية الموحدة والبحر الصارم" },
+        { "slug": "ghazal", "name_en": "Ghazal", "name_ar": "غزل", "description_en": "Lyric love poem of romantic couplets", "description_ar": "قصيدة غزل غنائية من أبيات رومانسية" },
+        { "slug": "muwashah", "name_en": "Muwashah", "name_ar": "موشح", "description_en": "Andalusian strophic verse form with complex rhyme scheme", "description_ar": "شعر الموشح الأندلسي ذو نظام قافية معقد" },
+        { "slug": "prose-poem", "name_en": "Prose Poem", "name_ar": "قصيدة النثر", "description_en": "Modern Arabic prose poetry without meter or rhyme", "description_ar": "الشعر العربي الحديث الخالي من الوزن والقافية" },
+        { "slug": "free-verse", "name_en": "Free Verse", "name_ar": "شعر حر", "description_en": "Free verse (Taf'ila) — has meter but no obligatory end rhyme", "description_ar": "الشعر الحر التفعيلي له وزن لكن بلا قافية إلزامية" },
+        { "slug": "elegy-form", "name_en": "Elegy", "name_ar": "مرثية", "description_en": "Poem mourning the dead (Rithaa genre)", "description_ar": "قصيدة رثاء الميت (جنس الرثاء)" },
+        { "slug": "epigram", "name_en": "Epigram", "name_ar": "مقطوعة", "description_en": "Short, self-contained poem of 2–4 lines", "description_ar": "مقطوعة قصيرة مكتفية بذاتها من بيتين إلى أربعة" },
+        { "slug": "zajal", "name_en": "Zajal", "name_ar": "زجل", "description_en": "Colloquial Arabic strophic poetry", "description_ar": "شعر الزجل العامي المقطعي" },
+        { "slug": "masnawi", "name_en": "Masnawi", "name_ar": "مثنوي", "description_en": "Rhyming couplet narrative verse", "description_ar": "الشعر القصصي بالأزواج المقفاة" }
+      ]
+    },
+    {
+      "type": "period",
+      "label_en": "Period",
+      "label_ar": "حقبة",
+      "tags": [
+        { "slug": "pre-islamic", "name_en": "Pre-Islamic", "name_ar": "ما قبل الإسلام", "description_en": "Jahili era poetry before Islam (before 622 CE)", "description_ar": "شعر العصر الجاهلي قبل الإسلام" },
+        { "slug": "early-islamic", "name_en": "Early Islamic", "name_ar": "صدر الإسلام", "description_en": "Poetry of the early Islamic period (622–661 CE)", "description_ar": "شعر صدر الإسلام" },
+        { "slug": "umayyad", "name_en": "Umayyad", "name_ar": "أموي", "description_en": "Umayyad Caliphate era (661–750 CE)", "description_ar": "عصر الدولة الأموية" },
+        { "slug": "abbasid", "name_en": "Abbasid", "name_ar": "عباسي", "description_en": "Abbasid Caliphate golden age (750–1258 CE)", "description_ar": "العصر العباسي الذهبي" },
+        { "slug": "andalusian", "name_en": "Andalusian", "name_ar": "أندلسي", "description_en": "Moorish Spain literary tradition (711–1492 CE)", "description_ar": "الأدب الأندلسي في الأراضي المورية" },
+        { "slug": "ottoman", "name_en": "Ottoman Era", "name_ar": "عثماني", "description_en": "Poetry under Ottoman rule (1299–1923 CE)", "description_ar": "شعر العصر العثماني" },
+        { "slug": "modern", "name_en": "Modern", "name_ar": "حديث", "description_en": "20th century Arabic poetry (1900–1970)", "description_ar": "الشعر العربي في القرن العشرين" },
+        { "slug": "contemporary", "name_en": "Contemporary", "name_ar": "معاصر", "description_en": "Post-1970 contemporary Arabic poetry", "description_ar": "الشعر العربي المعاصر بعد 1970" },
+        { "slug": "classical", "name_en": "Classical", "name_ar": "كلاسيكي", "description_en": "Any pre-modern era classical poetry following traditional conventions", "description_ar": "الشعر الكلاسيكي قبل الحديث المتبع للتقاليد" }
+      ]
+    },
+    {
+      "type": "emotion",
+      "label_en": "Emotion",
+      "label_ar": "عاطفة",
+      "tags": [
+        { "slug": "joy", "name_en": "Joy", "name_ar": "فرح", "description_en": "Happiness, celebration, elation", "description_ar": "السعادة والاحتفال والابتهاج" },
+        { "slug": "melancholy", "name_en": "Melancholy", "name_ar": "كآبة", "description_en": "Sadness, wistfulness, bittersweet emotion", "description_ar": "الحزن والتحسر والمشاعر المختلطة" },
+        { "slug": "anger", "name_en": "Anger", "name_ar": "غضب", "description_en": "Outrage, indignation, fury", "description_ar": "الغضب والسخط والثورة" },
+        { "slug": "hope", "name_en": "Hope", "name_ar": "أمل", "description_en": "Optimism, aspiration, anticipation", "description_ar": "التفاؤل والطموح والتطلع" },
+        { "slug": "despair", "name_en": "Despair", "name_ar": "يأس", "description_en": "Hopelessness, anguish, desolation", "description_ar": "اليأس والحسرة والوحشة" },
+        { "slug": "wonder", "name_en": "Wonder", "name_ar": "دهشة", "description_en": "Awe, amazement, reverence", "description_ar": "الدهشة والإعجاب والخشوع" },
+        { "slug": "pride", "name_en": "Pride", "name_ar": "فخر", "description_en": "Dignity, honor, self-respect", "description_ar": "الكرامة والشرف والاعتزاز" },
+        { "slug": "loneliness", "name_en": "Loneliness", "name_ar": "وحدة", "description_en": "Isolation, solitude, alienation", "description_ar": "العزلة والانفراد والاغتراب" },
+        { "slug": "nostalgia", "name_en": "Nostalgia", "name_ar": "حنين", "description_en": "Longing for the past, memories, lost times", "description_ar": "الحنين للماضي والذكريات والأوقات الضائعة" }
+      ]
+    },
+    {
+      "type": "style",
+      "label_en": "Style",
+      "label_ar": "أسلوب",
+      "tags": [
+        { "slug": "metaphor-heavy", "name_en": "Rich Metaphor", "name_ar": "استعارة غنية", "description_en": "Extensive use of metaphor, simile, and symbolism", "description_ar": "الاستخدام الواسع للاستعارة والتشبيه والرمز" },
+        { "slug": "imagery", "name_en": "Vivid Imagery", "name_ar": "صور حية", "description_en": "Striking visual and sensory imagery (سينمائية)", "description_ar": "صور بصرية وحسية لافتة" },
+        { "slug": "repetition", "name_en": "Repetition", "name_ar": "تكرار", "description_en": "Anaphora, refrain, or structural repetition for effect", "description_ar": "التكرار والرديف والتكرار البنيوي للتأثير" },
+        { "slug": "dialogue", "name_en": "Dialogue", "name_ar": "حوار", "description_en": "Dramatic dialogue, direct address, apostrophe", "description_ar": "الحوار الدرامي والنداء والمخاطبة المباشرة" },
+        { "slug": "minimalist", "name_en": "Minimalist", "name_ar": "مقتضب", "description_en": "Sparse, economical language with maximum impact", "description_ar": "لغة مقتضبة ومركزة بأقصى تأثير" },
+        { "slug": "narrative", "name_en": "Narrative", "name_ar": "سردي", "description_en": "Storytelling, sequential events, narrative arc", "description_ar": "السرد وتتالي الأحداث والقوس القصصي" },
+        { "slug": "musical", "name_en": "Musical & Rhythmic", "name_ar": "موسيقي", "description_en": "Strong musical quality, chanting rhythm, designed for recitation", "description_ar": "جودة موسيقية قوية وإيقاع ترتيلي مصمم للإلقاء" }
+      ]
+    },
+    {
+      "type": "region",
+      "label_en": "Region",
+      "label_ar": "منطقة",
+      "tags": [
+        { "slug": "levantine", "name_en": "Levantine", "name_ar": "شامي", "description_en": "Syria, Lebanon, Palestine, Jordan tradition", "description_ar": "التقليد الشامي (سوريا ولبنان وفلسطين والأردن)" },
+        { "slug": "gulf", "name_en": "Gulf", "name_ar": "خليجي", "description_en": "Arabian Peninsula and Gulf states tradition", "description_ar": "تقليد شبه الجزيرة العربية ودول الخليج" },
+        { "slug": "north-african", "name_en": "North African", "name_ar": "مغاربي", "description_en": "Morocco, Algeria, Tunisia, Libya tradition", "description_ar": "التقليد المغاربي (المغرب والجزائر وتونس وليبيا)" },
+        { "slug": "iraqi", "name_en": "Iraqi", "name_ar": "عراقي", "description_en": "Mesopotamian and Iraqi poetic tradition", "description_ar": "التقليد الرافديني والعراقي" },
+        { "slug": "egyptian", "name_en": "Egyptian", "name_ar": "مصري", "description_en": "Egyptian poetic tradition and Nile Valley", "description_ar": "التقليد الشعري المصري ووادي النيل" },
+        { "slug": "andalusian-region", "name_en": "Andalusian", "name_ar": "أندلسي (منطقة)", "description_en": "Iberian Peninsula Arabic literary tradition", "description_ar": "التقليد الأدبي العربي في شبه الجزيرة الإيبيرية" },
+        { "slug": "yemeni", "name_en": "Yemeni", "name_ar": "يمني", "description_en": "Yemeni and South Arabian poetic tradition", "description_ar": "التقليد الشعري اليمني وجنوب الجزيرة العربية" }
+      ]
+    }
+  ],
+  "synonyms": {
+    "conflict": "war",
+    "battle": "war",
+    "jihad": "war",
+    "islam": "religion",
+    "quran": "religion",
+    "prayer": "religion",
+    "sufi": "spirituality",
+    "mystical": "spirituality",
+    "exile": "homeland",
+    "diaspora": "homeland",
+    "separation": "longing",
+    "yearning": "longing",
+    "sorrow": "grief",
+    "mourning": "grief",
+    "death-theme": "death",
+    "mortality": "death",
+    "philosophy": "wisdom",
+    "philosophy-poem": "wisdom",
+    "aphorism": "wisdom",
+    "praise-poem": "praise",
+    "panegyric": "praise",
+    "eulogy": "praise",
+    "wine-poetry": "wine",
+    "khamriyat": "wine",
+    "drinking": "wine",
+    "heroism": "war",
+    "resistance": "freedom",
+    "revolution": "freedom",
+    "independence": "freedom",
+    "sadness": "melancholy",
+    "happiness": "joy",
+    "celebration": "joy",
+    "hope-theme": "hope",
+    "optimism": "hope",
+    "despair-theme": "despair",
+    "hopelessness": "despair"
+  }
+}

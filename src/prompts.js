@@ -119,3 +119,6 @@ const TTS_PROMPT = `أنت امرؤ القيس بن حُجر، الملك الض
  * @returns {string} Combined instruction + poem text
  */
 export const getTTSContent = (poem) => `${TTS_PROMPT}\nابدأ:\n${poem.arabic}`;
+
+/** Build TTS request content from a raw Arabic text string (used for chunked generation). */
+export const getTTSContentForText = (arabicText) => `${TTS_PROMPT}\nابدأ:\n${arabicText}`;

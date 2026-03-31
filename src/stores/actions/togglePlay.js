@@ -5,12 +5,61 @@ import { FEATURES } from '../../constants/features';
 import { useAudioStore } from '../audioStore';
 import { usePoemStore } from '../poemStore';
 import { useUIStore } from '../uiStore';
-import { getTTSContent } from '../../prompts';
+import { getTTSContent, getTTSContentForText } from '../../prompts';
 import { API_MODELS, TTS_CONFIG, fetchTTSWithFallback } from '../../services/gemini.js';
 import { cacheOperations, CACHE_CONFIG } from '../../services/cache.js';
-import { pcm16ToWav } from '../../utils/audio.js';
+import { pcm16ToWav, concatenatePCM16Base64 } from '../../utils/audio.js';
 
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+
+// Parallel TTS chunk generation: split long poems so chunks can be generated simultaneously,
+// dramatically reducing time-to-first-audio (e.g. 49s → ~14s for an 813-char poem).
+const CHUNK_THRESHOLD = 150; // only chunk if Arabic text exceeds this length
+const MAX_CHUNK_CHARS = 140; // max characters per chunk
+
+function splitPoemIntoChunks(arabicText) {
+  if (!arabicText || arabicText.length <= CHUNK_THRESHOLD) return null;
+  const lines = arabicText.split('\n').filter((l) => l.trim());
+  const chunks = [];
+  let current = '';
+  for (const line of lines) {
+    const candidate = current ? `${current}\n${line}` : line;
+    if (current && candidate.length > MAX_CHUNK_CHARS) {
+      chunks.push(current);
+      current = line;
+    } else {
+      current = candidate;
+    }
+  }
+  if (current) chunks.push(current);
+  return chunks.length > 1 ? chunks : null;
+}
+
+async function generateChunkAudio(chunkText, model) {
+  const ttsContent = getTTSContentForText(chunkText);
+  const body = JSON.stringify({
+    contents: [{ parts: [{ text: ttsContent }] }],
+    generationConfig: {
+      responseModalities: TTS_CONFIG.responseModalities,
+      speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: TTS_CONFIG.voiceName } } },
+    },
+  });
+  const res = await fetch(`${apiUrl}/api/ai/${model}/generateContent`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body,
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw Object.assign(new Error(err.error?.message || `HTTP ${res.status}`), {
+      status: res.status,
+    });
+  }
+  const data = await res.json();
+  const b64 = data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+  if (!b64) throw new Error('No audio data in chunk response');
+  return b64;
+}
 
 // FUTURE: Use Tone.Transport for verse-synced highlighting
 // FUTURE: Use Tone.Panner3D for spatial audio (stone hall reverb effect)
@@ -143,6 +192,112 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
         );
         useUIStore.getState().incrementCacheStat('audioMisses');
       }
+    }
+
+    // For long poems, generate chunks in parallel to reduce time-to-first-audio.
+    // Each chunk is a separate API request; results are concatenated before playback.
+    const arabicChunks = splitPoemIntoChunks(current?.arabic);
+    if (arabicChunks) {
+      usePoemStore.getState().addActiveAudio(current?.id);
+      const arabicLen = current.arabic.length;
+      addLog(
+        'Audio API',
+        `→ Parallel generation | ${arabicChunks.length} chunks | Model: ${API_MODELS.tts} | ${arabicLen} chars Arabic`,
+        'info'
+      );
+      setError(null);
+      let chunkSucceeded = false;
+      try {
+        const apiStart = performance.now();
+        const b64Array = await Promise.all(
+          arabicChunks.map((chunk, i) =>
+            generateChunkAudio(chunk, API_MODELS.tts).then((b64) => {
+              addLog(
+                'Audio API',
+                `✓ Chunk ${i + 1}/${arabicChunks.length} ready (${chunk.length} chars)`,
+                'info'
+              );
+              return b64;
+            })
+          )
+        );
+        const b64 = concatenatePCM16Base64(b64Array);
+        const apiTime = performance.now() - apiStart;
+        const conversionStart = performance.now();
+        const blob = pcm16ToWav(b64);
+        const conversionTime = performance.now() - conversionStart;
+
+        if (blob) {
+          const audioSizeMB = (blob.size / (1024 * 1024)).toFixed(2);
+          const audioSizeKB = (blob.size / 1024).toFixed(1);
+          const pcmBytes = atob(b64.replace(/\s/g, '')).length;
+          const audioDuration = (pcmBytes / 2) / 24000;
+          const estimatedTokens = Math.ceil(arabicLen / 4);
+          const tokensPerSecond = (estimatedTokens / (apiTime / 1000)).toFixed(1);
+          const totalTime = apiTime + conversionTime;
+
+          addLog(
+            'Audio API',
+            `✓ [${API_MODELS.tts}] ${arabicChunks.length} chunks | API: ${(apiTime / 1000).toFixed(2)}s | Convert: ${conversionTime.toFixed(0)}ms | Total: ${(totalTime / 1000).toFixed(2)}s`,
+            'success'
+          );
+          addLog(
+            'Audio Metrics',
+            `[${API_MODELS.tts}] Audio: ${audioDuration.toFixed(1)}s | Size: ${audioSizeKB}KB (${audioSizeMB}MB) | Speed: ${tokensPerSecond} tok/s`,
+            'success'
+          );
+
+          const u = URL.createObjectURL(blob);
+          setUrl(u);
+
+          try {
+            const player = await createPlayerReady(u);
+            player.start();
+            setPlayer(player);
+            setPlaying(true);
+          } catch (err) {
+            if (FEATURES.logging) console.warn('[Audio] Playback failed:', err.message);
+            const msg = `Playback failed: ${err.message}`;
+            addLog('Audio', msg, 'error');
+            setError(msg);
+            toast.error(msg);
+          }
+
+          if (FEATURES.caching && current?.id) {
+            const cacheStart = performance.now();
+            await cacheOperations.set(CACHE_CONFIG.stores.audio, current.id, {
+              blob,
+              metadata: {
+                poet: current.poet,
+                title: current.title,
+                size: blob.size,
+                duration: audioDuration,
+                model: API_MODELS.tts,
+              },
+            });
+            const cacheTime = performance.now() - cacheStart;
+            addLog(
+              'Audio Cache',
+              `Audio cached for future playback (${cacheTime.toFixed(0)}ms) | Saves ${(apiTime / 1000).toFixed(1)}s on replay`,
+              'success'
+            );
+          }
+          chunkSucceeded = true;
+        }
+      } catch (chunkErr) {
+        addLog(
+          'Audio API',
+          `Parallel chunks failed (${chunkErr.message}) — retrying as single request`,
+          'warning'
+        );
+      }
+      usePoemStore.getState().removeActiveAudio(current?.id);
+      if (chunkSucceeded) {
+        setGenerating(false);
+        isTogglingPlay.current = false;
+        return;
+      }
+      // Chunk generation failed — fall through to single-request path below
     }
 
     // Mark in-flight

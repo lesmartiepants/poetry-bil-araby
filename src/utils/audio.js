@@ -1,4 +1,29 @@
 /**
+ * Concatenate multiple base64-encoded PCM16 segments into one.
+ * Used to stitch together parallel TTS chunk responses before WAV conversion.
+ * @param {string[]} b64Array - Array of base64-encoded PCM16 segments
+ * @returns {string} Combined base64-encoded PCM16 data
+ */
+export const concatenatePCM16Base64 = (b64Array) => {
+  const buffers = b64Array.map((b64) => {
+    const bin = atob(b64.replace(/\s/g, ''));
+    const buf = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+    return buf;
+  });
+  const totalLength = buffers.reduce((sum, b) => sum + b.length, 0);
+  const combined = new Uint8Array(totalLength);
+  let offset = 0;
+  for (const buf of buffers) {
+    combined.set(buf, offset);
+    offset += buf.length;
+  }
+  let binary = '';
+  for (let i = 0; i < combined.length; i++) binary += String.fromCharCode(combined[i]);
+  return btoa(binary);
+};
+
+/**
  * Convert raw PCM16 base64 audio data to a WAV Blob.
  * @param {string} base64 - Base64-encoded PCM16 data
  * @param {number} rate   - Sample rate (default 24000)

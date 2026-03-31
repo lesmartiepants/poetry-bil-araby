@@ -125,6 +125,129 @@ export const geminiTextFetch = async (endpoint, body, label, addLog) => {
 };
 
 /**
+ * Stream TTS audio via `streamGenerateContent` with model fallback on 429.
+ *
+ * Reads the SSE response and collects all base64-encoded PCM16 chunks from
+ * the stream. The caller can then pass the chunks to `pcm16ChunksToWav` to
+ * produce a WAV Blob.  Falls back to the secondary TTS model on 429, matching
+ * the behaviour of `fetchTTSWithFallback`.
+ *
+ * @param {string}   requestBody - Pre-serialised JSON TTS request body
+ * @param {Object}   [opts]
+ * @param {Function} [opts.addLog]  - Logging helper
+ * @param {string}   [opts.label]   - Log label prefix
+ * @returns {Promise<{
+ *   ok: boolean,
+ *   pcmChunks: string[]|null,
+ *   model: string,
+ *   apiTime: number,
+ *   firstChunkTime: number|null,
+ *   errorStatus: number|null,
+ *   errorText: string|null
+ * }>}
+ */
+export const streamTTSWithFallback = async (requestBody, { addLog, label = 'TTS' } = {}) => {
+  const log = typeof addLog === 'function' ? addLog : () => {};
+
+  const tryStream = async (model) => {
+    const streamUrl = `${apiUrl}/api/ai/${model}/streamGenerateContent`;
+    const t0 = performance.now();
+    const res = await fetch(streamUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: requestBody,
+    });
+
+    if (!res.ok) {
+      const errorText = await res.text().catch(() => '');
+      return { ok: false, errorStatus: res.status, errorText, t0, model };
+    }
+
+    if (!res.body) {
+      return { ok: false, errorStatus: 500, errorText: 'Empty response body', t0, model };
+    }
+
+    // Parse SSE stream and collect base64 PCM chunks
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+    const pcmChunks = [];
+    let firstChunkTime = null;
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        const jsonStr = line.slice(6).trim();
+        if (jsonStr === '[DONE]') continue;
+        try {
+          const data = JSON.parse(jsonStr);
+          const b64 = data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+          if (b64) {
+            if (firstChunkTime === null) {
+              firstChunkTime = performance.now() - t0;
+              log(
+                label,
+                `← First audio chunk (${firstChunkTime.toFixed(0)}ms) | Streaming...`,
+                'info'
+              );
+            }
+            pcmChunks.push(b64.replace(/\s/g, ''));
+          }
+        } catch {
+          // Skip malformed JSON chunks
+        }
+      }
+    }
+
+    return { ok: true, pcmChunks, firstChunkTime, apiTime: performance.now() - t0, model };
+  };
+
+  const primaryModel = API_MODELS.tts;
+  const result = await tryStream(primaryModel);
+
+  if (!result.ok && result.errorStatus === 429 && API_MODELS.ttsFallback) {
+    const fallbackModel = API_MODELS.ttsFallback;
+    log(
+      label,
+      `${primaryModel}: 429 (${((performance.now() - result.t0) / 1000).toFixed(1)}s) → falling back to ${fallbackModel}`,
+      'warning'
+    );
+    const fallbackResult = await tryStream(fallbackModel);
+    log(
+      label,
+      `${fallbackModel}: ${fallbackResult.ok ? '✓ streaming' : `✗ ${fallbackResult.errorStatus}`}`,
+      fallbackResult.ok ? 'success' : 'warning'
+    );
+    return {
+      ok: fallbackResult.ok,
+      pcmChunks: fallbackResult.pcmChunks ?? null,
+      model: fallbackModel,
+      apiTime: fallbackResult.apiTime ?? 0,
+      firstChunkTime: fallbackResult.firstChunkTime ?? null,
+      errorStatus: fallbackResult.errorStatus ?? null,
+      errorText: fallbackResult.errorText ?? null,
+    };
+  }
+
+  return {
+    ok: result.ok,
+    pcmChunks: result.pcmChunks ?? null,
+    model: primaryModel,
+    apiTime: result.apiTime ?? 0,
+    firstChunkTime: result.firstChunkTime ?? null,
+    errorStatus: result.errorStatus ?? null,
+    errorText: result.errorText ?? null,
+  };
+};
+
+/**
  * Fetch TTS with model fallback on 429 (rate limit) responses.
  * Tries the primary TTS model first; on 429 (daily quota exhausted),
  * switches to the fallback model instead of retrying the same one.

@@ -6,9 +6,14 @@ import { useAudioStore } from '../audioStore';
 import { usePoemStore } from '../poemStore';
 import { useUIStore } from '../uiStore';
 import { getTTSContent } from '../../prompts';
-import { API_MODELS, TTS_CONFIG, fetchTTSWithFallback } from '../../services/gemini.js';
+import {
+  API_MODELS,
+  TTS_CONFIG,
+  fetchTTSWithFallback,
+  streamTTSWithFallback,
+} from '../../services/gemini.js';
 import { cacheOperations, CACHE_CONFIG } from '../../services/cache.js';
-import { pcm16ToWav } from '../../utils/audio.js';
+import { pcm16ToWav, pcm16ChunksToWav, wavDurationSec } from '../../utils/audio.js';
 
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
@@ -168,109 +173,165 @@ export async function togglePlay({ audioRef, isTogglingPlay, current, addLog, tr
     setError(null);
 
     try {
-      const apiStart = performance.now();
-      const url = `${apiUrl}/api/ai/${API_MODELS.tts}/generateContent`;
-      const fetchOptions = {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: requestBody,
-      };
-      const { res, model: ttsModel } = await fetchTTSWithFallback(url, fetchOptions, {
-        addLog,
-        label: 'Audio API',
-      });
+      let blob = null;
+      let ttsModel = null;
 
-      if (!res.ok) {
-        const errorText = await res.text();
-        addLog(
-          'Audio API Error',
-          `[${ttsModel}] HTTP ${res.status}: ${errorText.substring(0, 200)}`,
-          'error'
-        );
-        if (res.status === 429) {
-          const msg =
-            'Recitation temporarily unavailable — too many requests. Please wait a moment and try again.';
-          setError(msg);
-          toast.error(msg);
-          throw new Error('Rate limited (429)');
+      if (FEATURES.streaming) {
+        // Streaming path — uses streamGenerateContent so audio starts arriving sooner
+        const result = await streamTTSWithFallback(requestBody, { addLog, label: 'Audio API' });
+        ttsModel = result.model;
+
+        if (!result.ok) {
+          addLog(
+            'Audio API Error',
+            `[${ttsModel}] HTTP ${result.errorStatus}: ${(result.errorText || '').substring(0, 200)}`,
+            'error'
+          );
+          if (result.errorStatus === 429) {
+            const msg =
+              'Recitation temporarily unavailable — too many requests. Please wait a moment and try again.';
+            setError(msg);
+            toast.error(msg);
+            throw new Error('Rate limited (429)');
+          }
+          throw new Error(`API returned ${result.errorStatus}`);
         }
-        throw new Error(`API returned ${res.status}: ${res.statusText}`);
-      }
 
-      const data = await res.json();
-      const apiTime = performance.now() - apiStart;
+        if (!result.pcmChunks || result.pcmChunks.length === 0) {
+          addLog('Audio API Error', `[${ttsModel}] No audio chunks in streaming response`, 'error');
+          throw new Error('Recitation failed - no audio chunks returned');
+        }
 
-      if (!data.candidates || data.candidates.length === 0) {
-        addLog(
-          'Audio API Error',
-          `[${ttsModel}] No candidates in response. Full response: ${JSON.stringify(data).substring(0, 300)}`,
-          'error'
-        );
-        throw new Error('Recitation failed - no audio candidates returned');
-      }
-
-      const b64 = data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-      if (b64) {
         const conversionStart = performance.now();
-        const blob = pcm16ToWav(b64);
+        blob = pcm16ChunksToWav(result.pcmChunks);
         const conversionTime = performance.now() - conversionStart;
+        const apiTime = result.apiTime;
 
         if (blob) {
-          const audioSizeMB = (blob.size / (1024 * 1024)).toFixed(2);
           const audioSizeKB = (blob.size / 1024).toFixed(1);
-          const pcmBytes = atob(b64.replace(/\s/g, '')).length;
-          const samples = pcmBytes / 2;
-          const audioDuration = samples / 24000;
+          const audioSizeMB = (blob.size / (1024 * 1024)).toFixed(2);
+          const audioDuration = wavDurationSec(blob.size);
           const tokensPerSecond = (estimatedTokens / (apiTime / 1000)).toFixed(1);
           const totalTime = apiTime + conversionTime;
 
           addLog(
             'Audio API',
-            `✓ [${ttsModel}] Complete | API: ${(apiTime / 1000).toFixed(2)}s | Convert: ${conversionTime.toFixed(0)}ms | Total: ${(totalTime / 1000).toFixed(2)}s`,
+            `✓ [${ttsModel}] Streaming complete | TTFA: ${((result.firstChunkTime || 0) / 1000).toFixed(2)}s | API: ${(apiTime / 1000).toFixed(2)}s | Convert: ${conversionTime.toFixed(0)}ms | Total: ${(totalTime / 1000).toFixed(2)}s`,
             'success'
           );
           addLog(
             'Audio Metrics',
-            `[${ttsModel}] Audio: ${audioDuration.toFixed(1)}s | Size: ${audioSizeKB}KB (${audioSizeMB}MB) | Speed: ${tokensPerSecond} tok/s`,
+            `[${ttsModel}] Audio: ${audioDuration.toFixed(1)}s | Size: ${audioSizeKB}KB (${audioSizeMB}MB) | Speed: ${tokensPerSecond} tok/s | Chunks: ${result.pcmChunks.length}`,
             'success'
           );
+        }
+      } else {
+        // Non-streaming fallback
+        const apiStart = performance.now();
+        const url = `${apiUrl}/api/ai/${API_MODELS.tts}/generateContent`;
+        const fetchOptions = {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: requestBody,
+        };
+        const { res, model } = await fetchTTSWithFallback(url, fetchOptions, {
+          addLog,
+          label: 'Audio API',
+        });
+        ttsModel = model;
 
-          const u = URL.createObjectURL(blob);
-          setUrl(u);
-
-          try {
-            const player = await createPlayerReady(u);
-            player.start();
-            setPlayer(player);
-            setPlaying(true);
-          } catch (err) {
-            if (FEATURES.logging) console.warn('[Audio] Playback failed:', err.message);
-            const msg = `Playback failed: ${err.message}`;
-            addLog('Audio', msg, 'error');
+        if (!res.ok) {
+          const errorText = await res.text();
+          addLog(
+            'Audio API Error',
+            `[${ttsModel}] HTTP ${res.status}: ${errorText.substring(0, 200)}`,
+            'error'
+          );
+          if (res.status === 429) {
+            const msg =
+              'Recitation temporarily unavailable — too many requests. Please wait a moment and try again.';
             setError(msg);
             toast.error(msg);
+            throw new Error('Rate limited (429)');
           }
+          throw new Error(`API returned ${res.status}: ${res.statusText}`);
+        }
 
-          // Cache
-          if (FEATURES.caching && current?.id) {
-            const cacheStart = performance.now();
-            await cacheOperations.set(CACHE_CONFIG.stores.audio, current.id, {
-              blob,
-              metadata: {
-                poet: current.poet,
-                title: current.title,
-                size: blob.size,
-                duration: audioDuration,
-                model: ttsModel,
-              },
-            });
-            const cacheTime = performance.now() - cacheStart;
+        const data = await res.json();
+        const apiTime = performance.now() - apiStart;
+
+        if (!data.candidates || data.candidates.length === 0) {
+          addLog(
+            'Audio API Error',
+            `[${ttsModel}] No candidates in response. Full response: ${JSON.stringify(data).substring(0, 300)}`,
+            'error'
+          );
+          throw new Error('Recitation failed - no audio candidates returned');
+        }
+
+        const b64 = data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+        if (b64) {
+          const conversionStart = performance.now();
+          blob = pcm16ToWav(b64);
+          const conversionTime = performance.now() - conversionStart;
+
+          if (blob) {
+            const audioSizeMB = (blob.size / (1024 * 1024)).toFixed(2);
+            const audioSizeKB = (blob.size / 1024).toFixed(1);
+            const audioDuration = wavDurationSec(blob.size);
+            const tokensPerSecond = (estimatedTokens / (apiTime / 1000)).toFixed(1);
+            const totalTime = apiTime + conversionTime;
+
             addLog(
-              'Audio Cache',
-              `Audio cached for future playback (${cacheTime.toFixed(0)}ms) | Saves ${(apiTime / 1000).toFixed(1)}s on replay`,
+              'Audio API',
+              `✓ [${ttsModel}] Complete | API: ${(apiTime / 1000).toFixed(2)}s | Convert: ${conversionTime.toFixed(0)}ms | Total: ${(totalTime / 1000).toFixed(2)}s`,
+              'success'
+            );
+            addLog(
+              'Audio Metrics',
+              `[${ttsModel}] Audio: ${audioDuration.toFixed(1)}s | Size: ${audioSizeKB}KB (${audioSizeMB}MB) | Speed: ${tokensPerSecond} tok/s`,
               'success'
             );
           }
+        }
+      }
+
+      if (blob) {
+        const u = URL.createObjectURL(blob);
+        setUrl(u);
+
+        try {
+          const player = await createPlayerReady(u);
+          player.start();
+          setPlayer(player);
+          setPlaying(true);
+        } catch (err) {
+          if (FEATURES.logging) console.warn('[Audio] Playback failed:', err.message);
+          const msg = `Playback failed: ${err.message}`;
+          addLog('Audio', msg, 'error');
+          setError(msg);
+          toast.error(msg);
+        }
+
+        // Cache for future playback
+        if (FEATURES.caching && current?.id) {
+          const cacheStart = performance.now();
+          await cacheOperations.set(CACHE_CONFIG.stores.audio, current.id, {
+            blob,
+            metadata: {
+              poet: current.poet,
+              title: current.title,
+              size: blob.size,
+              duration: wavDurationSec(blob.size),
+              model: ttsModel,
+            },
+          });
+          const cacheTime = performance.now() - cacheStart;
+          addLog(
+            'Audio Cache',
+            `Audio cached for future playback (${cacheTime.toFixed(0)}ms)`,
+            'success'
+          );
         }
       }
     } catch (e) {

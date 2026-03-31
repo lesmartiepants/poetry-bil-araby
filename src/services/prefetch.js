@@ -9,9 +9,15 @@
 
 import { FEATURES } from '../constants/index.js';
 import { INSIGHTS_SYSTEM_PROMPT, getTTSContent } from '../prompts';
-import { API_MODELS, TTS_CONFIG, geminiTextFetch, fetchTTSWithFallback } from './gemini.js';
+import {
+  API_MODELS,
+  TTS_CONFIG,
+  geminiTextFetch,
+  fetchTTSWithFallback,
+  streamTTSWithFallback,
+} from './gemini.js';
 import { CACHE_CONFIG, cacheOperations } from './cache.js';
-import { pcm16ToWav } from '../utils/audio.js';
+import { pcm16ToWav, pcm16ChunksToWav, wavDurationSec } from '../utils/audio.js';
 
 import { usePoemStore } from '../stores/poemStore';
 
@@ -80,61 +86,53 @@ export const prefetchManager = {
       }
 
       const apiStart = performance.now();
-      const url = `${apiUrl}/api/ai/${API_MODELS.tts}/generateContent`;
-      const fetchOptions = {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: requestBody,
-      };
-      const { res, model: ttsModel } = await fetchTTSWithFallback(url, fetchOptions, {
-        addLog,
-        label: 'Prefetch Audio',
-      });
 
-      if (!res.ok) {
-        const errorText = await res.text();
-        if (res.status === 429 || res.status === 403) {
-          _quotaExhaustedIds.add(poemId);
+      let blob = null;
+      let ttsModel = null;
+
+      if (FEATURES.streaming) {
+        const result = await streamTTSWithFallback(requestBody, {
+          addLog,
+          label: 'Prefetch Audio',
+        });
+        ttsModel = result.model;
+
+        if (!result.ok) {
+          if (result.errorStatus === 429 || result.errorStatus === 403) {
+            _quotaExhaustedIds.add(poemId);
+            if (addLog)
+              addLog(
+                'Prefetch Audio',
+                `❌ [${ttsModel}] HTTP ${result.errorStatus} — quota exhausted, skipping future prefetch for poem ${poemId}`,
+                'error'
+              );
+            return;
+          }
           if (addLog)
             addLog(
               'Prefetch Audio',
-              `❌ [${ttsModel}] HTTP ${res.status} — quota exhausted, skipping future prefetch for poem ${poemId}`,
+              `❌ [${ttsModel}] Audio generation HTTP ${result.errorStatus}: ${(result.errorText || '').substring(0, 150)}`,
               'error'
             );
           return;
         }
-        if (addLog)
-          addLog(
-            'Prefetch Audio',
-            `❌ [${ttsModel}] Audio generation HTTP ${res.status}: ${errorText.substring(0, 150)}`,
-            'error'
-          );
-        return;
-      }
 
-      const data = await res.json();
-      const apiTime = performance.now() - apiStart;
-      if (!data.candidates || data.candidates.length === 0) {
-        if (addLog)
-          addLog(
-            'Prefetch Audio',
-            `❌ [${ttsModel}] Audio generation failed for poem ${poemId}. Response: ${JSON.stringify(data).substring(0, 200)}`,
-            'error'
-          );
-        return;
-      }
+        if (!result.pcmChunks || result.pcmChunks.length === 0) {
+          if (addLog)
+            addLog(
+              'Prefetch Audio',
+              `❌ [${ttsModel}] No audio chunks in streaming response for poem ${poemId}`,
+              'error'
+            );
+          return;
+        }
 
-      const b64 = data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-      if (b64) {
-        const blob = pcm16ToWav(b64);
+        blob = pcm16ChunksToWav(result.pcmChunks);
         if (blob) {
-          // Calculate metrics
-          const pcmBytes = atob(b64.replace(/\s/g, '')).length;
-          const samples = pcmBytes / 2;
-          const audioDuration = samples / 24000;
+          const apiTime = result.apiTime;
+          const audioDuration = wavDurationSec(blob.size);
           const tokensPerSecond = (estimatedTokens / (apiTime / 1000)).toFixed(1);
 
-          // Cache the blob
           await cacheOperations.set(CACHE_CONFIG.stores.audio, poemId, {
             blob,
             metadata: {
@@ -149,9 +147,81 @@ export const prefetchManager = {
           if (addLog)
             addLog(
               'Prefetch Audio',
-              `✓ [${ttsModel}] Audio cached (poem ${poemId}) | ${(apiTime / 1000).toFixed(1)}s | ${(blob.size / 1024).toFixed(1)}KB | ${audioDuration.toFixed(1)}s audio | ${tokensPerSecond} tok/s`,
+              `✓ [${ttsModel}] Audio cached (poem ${poemId}) | TTFA: ${((result.firstChunkTime || 0) / 1000).toFixed(1)}s | API: ${(apiTime / 1000).toFixed(1)}s | ${(blob.size / 1024).toFixed(1)}KB | ${audioDuration.toFixed(1)}s audio | ${tokensPerSecond} tok/s | Chunks: ${result.pcmChunks.length}`,
               'success'
             );
+        }
+      } else {
+        const url = `${apiUrl}/api/ai/${API_MODELS.tts}/generateContent`;
+        const fetchOptions = {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: requestBody,
+        };
+        const { res, model } = await fetchTTSWithFallback(url, fetchOptions, {
+          addLog,
+          label: 'Prefetch Audio',
+        });
+        ttsModel = model;
+
+        if (!res.ok) {
+          const errorText = await res.text();
+          if (res.status === 429 || res.status === 403) {
+            _quotaExhaustedIds.add(poemId);
+            if (addLog)
+              addLog(
+                'Prefetch Audio',
+                `❌ [${ttsModel}] HTTP ${res.status} — quota exhausted, skipping future prefetch for poem ${poemId}`,
+                'error'
+              );
+            return;
+          }
+          if (addLog)
+            addLog(
+              'Prefetch Audio',
+              `❌ [${ttsModel}] Audio generation HTTP ${res.status}: ${errorText.substring(0, 150)}`,
+              'error'
+            );
+          return;
+        }
+
+        const data = await res.json();
+        const apiTime = performance.now() - apiStart;
+        if (!data.candidates || data.candidates.length === 0) {
+          if (addLog)
+            addLog(
+              'Prefetch Audio',
+              `❌ [${ttsModel}] Audio generation failed for poem ${poemId}. Response: ${JSON.stringify(data).substring(0, 200)}`,
+              'error'
+            );
+          return;
+        }
+
+        const b64 = data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+        if (b64) {
+          blob = pcm16ToWav(b64);
+          if (blob) {
+            const audioDuration = wavDurationSec(blob.size);
+            const tokensPerSecond = (estimatedTokens / (apiTime / 1000)).toFixed(1);
+
+            await cacheOperations.set(CACHE_CONFIG.stores.audio, poemId, {
+              blob,
+              metadata: {
+                poet: poem.poet,
+                title: poem.title,
+                size: blob.size,
+                duration: audioDuration,
+                model: ttsModel,
+              },
+            });
+
+            if (addLog)
+              addLog(
+                'Prefetch Audio',
+                `✓ [${ttsModel}] Audio cached (poem ${poemId}) | ${(apiTime / 1000).toFixed(1)}s | ${(blob.size / 1024).toFixed(1)}KB | ${audioDuration.toFixed(1)}s audio | ${tokensPerSecond} tok/s`,
+                'success'
+              );
+          }
         }
       }
     } catch (error) {

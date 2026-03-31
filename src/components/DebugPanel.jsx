@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
-import { Bug, X, Trash2 } from 'lucide-react';
+import { Bug, X, Trash2, Radio, Zap } from 'lucide-react';
 import Sentry from '../sentry.js';
 import { FEATURES } from '../constants/features.js';
 import { THEME } from '../constants/theme.js';
 import { useUIStore } from '../stores/uiStore';
 import { usePoemStore } from '../stores/poemStore';
+import { useAudioStore } from '../stores/audioStore';
+import { cacheOperations, CACHE_CONFIG } from '../services/cache.js';
 
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
@@ -27,6 +29,8 @@ const DebugPanel = ({ controlBarRef }) => {
   const [bugStatus, setBugStatus] = useState(null); // null | 'sending' | 'success' | 'error'
   const [bugError, setBugError] = useState('');
   const [lastViewedCount, setLastViewedCount] = useState(0);
+  // TTS streaming A/B toggle — lets you compare streaming vs non-streaming for same poem
+  const [ttsStreaming, setTtsStreaming] = useState(FEATURES.streaming);
   const scrollRef = useRef(null);
   // Fixed position for bug button — aligned with paintbrush button at bottom-left
   const btnPos = { left: 8, bottom: 52 };
@@ -49,6 +53,26 @@ const DebugPanel = ({ controlBarRef }) => {
     if (panelOpen) lastViewedErrors.current = errorCount;
   }, [panelOpen, errorCount]);
   const unreadErrors = errorCount - lastViewedErrors.current;
+
+  const handleTtsStreamingToggle = async () => {
+    const next = !ttsStreaming;
+    FEATURES.streaming = next;
+    setTtsStreaming(next);
+
+    // Clear cached audio for the current poem so the next Play uses the new mode
+    const poem = usePoemStore.getState().currentPoem();
+    if (poem?.id) {
+      await cacheOperations.delete(CACHE_CONFIG.stores.audio, poem.id);
+    }
+    // Reset in-memory audio URL so the app re-generates instead of replaying cached blob
+    const { player, resetAudio } = useAudioStore.getState();
+    if (player) {
+      try {
+        player.stop();
+      } catch {}
+    }
+    resetAudio();
+  };
 
   const handleSubmitBug = async () => {
     setBugStatus('sending');
@@ -200,6 +224,38 @@ const DebugPanel = ({ controlBarRef }) => {
               <span>{log.msg}</span>
             </div>
           ))}
+        </div>
+
+        {/* TTS mode A/B toggle — compare streaming vs non-streaming for same poem */}
+        <div
+          className={`flex items-center justify-between px-4 py-1.5 border-t ${darkMode ? 'border-gold/10' : 'border-gold/10'} flex-none`}
+        >
+          <div className="flex items-center gap-1.5">
+            {ttsStreaming ? (
+              <Zap size={9} className="text-emerald-400" />
+            ) : (
+              <Radio size={9} className="text-amber-400" />
+            )}
+            <span className="text-[0.5625rem] font-brand-en uppercase tracking-widest font-semibold opacity-50">
+              TTS
+            </span>
+            <span
+              className={`text-[0.5625rem] font-mono font-bold ${ttsStreaming ? 'text-emerald-400' : 'text-amber-400'}`}
+            >
+              {ttsStreaming ? 'Streaming' : 'Buffered'}
+            </span>
+          </div>
+          <button
+            onClick={handleTtsStreamingToggle}
+            title={`Switch to ${ttsStreaming ? 'buffered (non-streaming)' : 'streaming'} TTS — clears audio cache for current poem`}
+            className={`px-2 py-0.5 rounded text-[0.5rem] font-bold uppercase tracking-wider transition-colors ${
+              darkMode
+                ? 'bg-stone-800 text-stone-400 hover:bg-stone-700 hover:text-stone-200'
+                : 'bg-stone-100 text-stone-500 hover:bg-stone-200 hover:text-stone-700'
+            }`}
+          >
+            Switch
+          </button>
         </div>
 
         {/* Bug report input */}

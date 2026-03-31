@@ -1,4 +1,13 @@
-import { Check, Copy, Flag, Heart, LibraryBig, LogOut, Share2, UserRound } from 'lucide-react';
+import {
+  Check,
+  Copy,
+  Heart,
+  LibraryBig,
+  LogOut,
+  Share2,
+  ThumbsDown,
+  UserRound,
+} from 'lucide-react';
 import { Popover } from 'radix-ui';
 import { THEME } from '../constants/theme.js';
 import { useUIStore } from '../stores/uiStore';
@@ -116,7 +125,7 @@ const VerticalSidebar = ({
           aria-label={isDownvoted ? 'Unflag poem' : 'Flag poem'}
           className={`${btnBase} ${btnHover}`}
         >
-          <Flag
+          <ThumbsDown
             size={18}
             style={
               isDownvoted ? { fill: '#f87171', stroke: '#f87171' } : { fill: 'none', stroke: gold }

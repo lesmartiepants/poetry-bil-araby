@@ -34,7 +34,17 @@ import {
 } from './prompts';
 import { parseInsight } from './utils/insightParser';
 import { repairAndParseJSON } from './utils/jsonRepair';
-import { FEATURES, DESIGN, BRAND, BRAND_HEADER, POEM_META, THEME, GOLD, CATEGORIES, FONTS } from './constants/index.js';
+import {
+  FEATURES,
+  DESIGN,
+  BRAND,
+  BRAND_HEADER,
+  POEM_META,
+  THEME,
+  GOLD,
+  CATEGORIES,
+  FONTS,
+} from './constants/index.js';
 import { usePoemStore } from './stores/poemStore';
 import { useAudioStore } from './stores/audioStore';
 import { useUIStore } from './stores/uiStore';
@@ -78,8 +88,6 @@ import VerticalSidebar from './components/VerticalSidebar.jsx';
 import TextSettingsPill from './components/TextSettingsPill.jsx';
 import ThemeToggle from './components/ThemeToggle.jsx';
 import AuthModal from './components/auth/AuthModal.jsx';
-import DownvoteButton from './components/auth/DownvoteButton.jsx';
-import SavePoemButton from './components/auth/SavePoemButton.jsx';
 import SavedPoemsView from './components/auth/SavedPoemsView.jsx';
 
 const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
@@ -310,12 +318,9 @@ export default function DiwanApp() {
 
     // Determine which poet to fetch for.
     // The API filters by Arabic poet name (po.name column), so always use poetArabic.
-    const targetPoet = selectedCategory !== 'All'
-      ? selectedCategory
-      : current?.poetArabic; // Arabic name for API compatibility
+    const targetPoet = selectedCategory !== 'All' ? selectedCategory : current?.poetArabic; // Arabic name for API compatibility
 
     if (!targetPoet || !current?.id) return;
-
 
     // For poet-selected mode, wait for matching poem before populating.
     // Compare against poetArabic because selectedCategory holds Arabic names (CATEGORIES[x].id).
@@ -325,19 +330,27 @@ export default function DiwanApp() {
     clearCarouselPoems();
     explainedPoemIds.current.clear();
     // Fetch 4 additional poems (excluding the current main poem) to fill slots 1-4.
-    fetchPoemsByPoet(targetPoet, 4, [current.id]).then((others) => {
-      if (cancelled) return;
-      // Build carousel with main poem at index 0 so the view never jumps.
-      const carouselList = [current, ...others];
-      setCarouselPoems(carouselList);
-      if (FEATURES.logging) addLog('Carousel', `Populated ${carouselList.length} poems for ${targetPoet} (main poem first)`, 'info');
-      // Auto-explain is handled by the autoExplainPending path — no direct analyzePoemAction here.
-    }).catch((err) => {
-      if (FEATURES.logging) addLog('Carousel', `Failed to fetch poems: ${err.message}`, 'error');
-    });
-    return () => { cancelled = true; };
+    fetchPoemsByPoet(targetPoet, 4, [current.id])
+      .then((others) => {
+        if (cancelled) return;
+        // Build carousel with main poem at index 0 so the view never jumps.
+        const carouselList = [current, ...others];
+        setCarouselPoems(carouselList);
+        if (FEATURES.logging)
+          addLog(
+            'Carousel',
+            `Populated ${carouselList.length} poems for ${targetPoet} (main poem first)`,
+            'info'
+          );
+        // Auto-explain is handled by the autoExplainPending path — no direct analyzePoemAction here.
+      })
+      .catch((err) => {
+        if (FEATURES.logging) addLog('Carousel', `Failed to fetch poems: ${err.message}`, 'error');
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [selectedCategory, useDatabase, current?.poetArabic, current?.id]);
-
 
   // When interpretation arrives from an analysis triggered by a carousel poem, patch that
   // poem's english field so PoemCarousel (which reads poem.english) can render the translation.
@@ -359,7 +372,7 @@ export default function DiwanApp() {
       // Carousel-triggered explain: find the poem by ID.
       // Keep the ref alive during streaming so every chunk stamps the correct slide.
       // Only clear once streaming finishes (isInterpreting === false).
-      targetIdx = carouselPoems.findIndex(p => p.id === carouselExplainTargetId.current);
+      targetIdx = carouselPoems.findIndex((p) => p.id === carouselExplainTargetId.current);
       if (!isInterpreting) carouselExplainTargetId.current = null;
     } else {
       // Initial explain (fired before carousel existed): target is always poem 0
@@ -488,7 +501,13 @@ export default function DiwanApp() {
   // When the carousel is active (user has swiped), explain the carousel poem, not the main poem.
   useEffect(() => {
     const poemToExplain = carouselPoems.length > 0 ? carouselPoems[carouselIndex] : current;
-    if (autoExplainPending && poemToExplain?.id && !isFetching && !isInterpreting && !interpretation) {
+    if (
+      autoExplainPending &&
+      poemToExplain?.id &&
+      !isFetching &&
+      !isInterpreting &&
+      !interpretation
+    ) {
       setAutoExplainPending(false);
       if (explainedPoemIds.current.has(poemToExplain.id)) return;
       if (ratchetMode || !poemToExplain?.cachedTranslation) {
@@ -502,7 +521,16 @@ export default function DiwanApp() {
         analyzePoemAction({ current: poemToExplain, addLog, track });
       }
     }
-  }, [autoExplainPending, current?.id, carouselIndex, carouselPoems.length, isFetching, isInterpreting, interpretation, ratchetMode]);
+  }, [
+    autoExplainPending,
+    current?.id,
+    carouselIndex,
+    carouselPoems.length,
+    isFetching,
+    isInterpreting,
+    interpretation,
+    ratchetMode,
+  ]);
 
   // When ratchet mode is toggled, clear the current interpretation so the new prompt is used.
   // When enabling ratchet mode, also queue an auto-explain so insights regenerate immediately.
@@ -558,7 +586,11 @@ export default function DiwanApp() {
         useUIStore.getState().toggleRatchetMode();
         if (willEnable) {
           toast('🔥 Ratchet Mode activated fr fr', {
-            style: { background: 'linear-gradient(135deg, #ff5000, #ff9000)', color: 'white', border: 'none' },
+            style: {
+              background: 'linear-gradient(135deg, #ff5000, #ff9000)',
+              color: 'white',
+              border: 'none',
+            },
             duration: 2500,
           });
         } else {
@@ -573,7 +605,6 @@ export default function DiwanApp() {
     window.addEventListener('keydown', handleKey);
     return () => window.removeEventListener('keydown', handleKey);
   }, []);
-
 
   const handleScroll = (e) => {
     const progress = Math.min(1, e.target.scrollTop / 120);
@@ -614,8 +645,8 @@ export default function DiwanApp() {
       // Skip cached translation if it has fewer lines than the Arabic poem —
       // this means the AI truncated and we should re-generate rather than
       // permanently display an incomplete translation.
-      const arCount = (displayedPoem?.arabic || '').split('\n').filter(l => l.trim()).length;
-      const enCount = cachedTranslation.split('\n').filter(l => l.trim()).length;
+      const arCount = (displayedPoem?.arabic || '').split('\n').filter((l) => l.trim()).length;
+      const enCount = cachedTranslation.split('\n').filter((l) => l.trim()).length;
       if (enCount >= arCount || arCount === 0) {
         return {
           poeticTranslation: cachedTranslation,
@@ -625,7 +656,14 @@ export default function DiwanApp() {
       }
     }
     return parseInsight(interpretation);
-  }, [interpretation, cachedTranslation, cachedExplanation, cachedAuthorBio, ratchetMode, displayedPoem?.arabic]);
+  }, [
+    interpretation,
+    cachedTranslation,
+    cachedExplanation,
+    cachedAuthorBio,
+    ratchetMode,
+    displayedPoem?.arabic,
+  ]);
 
   const versePairs = useMemo(() => {
     const arLines = (displayedPoem?.arabic || '').split('\n').filter((l) => l.trim());
@@ -664,7 +702,8 @@ export default function DiwanApp() {
     addLog,
   });
 
-  const togglePlay = () => togglePlayAction({ audioRef, isTogglingPlay, current: displayedPoem, addLog, track });
+  const togglePlay = () =>
+    togglePlayAction({ audioRef, isTogglingPlay, current: displayedPoem, addLog, track });
 
   const handleAnalyze = () => analyzePoemAction({ current: displayedPoem, addLog, track });
 
@@ -803,7 +842,11 @@ export default function DiwanApp() {
       track('poem_saved', { poet: displayedPoem?.poet });
       if (displayedPoem?.id) {
         emitEvent(displayedPoem?.id, 'save');
-        addLog('Event', `→ save event emitted (dual-write) | poem_id: ${displayedPoem?.id}`, 'info');
+        addLog(
+          'Event',
+          `→ save event emitted (dual-write) | poem_id: ${displayedPoem?.id}`,
+          'info'
+        );
       }
     }
   };
@@ -1051,7 +1094,6 @@ export default function DiwanApp() {
       className={`h-[100dvh] w-full flex flex-col overflow-hidden overscroll-none ${DESIGN.anim} font-sans ${theme.bg} ${theme.text} ${theme.selectionBg}`}
       style={{ touchAction: 'manipulation', overflowX: 'hidden' }}
     >
-
       <DebugPanel controlBarRef={controlBarRef} />
 
       {/* Ratchet Mode glow overlay — full-screen Easter egg effect */}
@@ -1085,7 +1127,6 @@ export default function DiwanApp() {
         }}
       >
         <div className="flex flex-row items-center gap-1">
-
           <span
             style={{
               ...BRAND_HEADER.english,
@@ -1102,10 +1143,7 @@ export default function DiwanApp() {
           >
             بالعربي
           </span>
-          <Feather
-            style={{ ...BRAND_HEADER.feather, color: 'var(--gold)' }}
-            strokeWidth={1.5}
-          />
+          <Feather style={{ ...BRAND_HEADER.feather, color: 'var(--gold)' }} strokeWidth={1.5} />
         </div>
       </header>
 
@@ -1130,16 +1168,16 @@ export default function DiwanApp() {
             <div className="flex flex-col items-center pt-2">
               <div className="w-full max-w-4xl flex flex-col items-center">
                 {/* Poem meta: title (dominant) → poet → English combined → vertical separator */}
-                <div
-                  className={`text-center ${DESIGN.mainMetaPadding} poem-meta-fade z-20 w-full`}
-                >
+                <div className={`text-center ${DESIGN.mainMetaPadding} poem-meta-fade z-20 w-full`}>
                   <div className="flex flex-col items-center justify-center w-full" dir="rtl">
                     {/* Line 1: Poem title */}
                     <div
                       className="text-center"
                       style={{
                         ...POEM_META.title,
-                        textShadow: darkMode ? POEM_META.titleShadow.dark : POEM_META.titleShadow.light,
+                        textShadow: darkMode
+                          ? POEM_META.titleShadow.dark
+                          : POEM_META.titleShadow.light,
                       }}
                     >
                       {displayedPoem?.titleArabic || displayedPoem?.title}
@@ -1209,9 +1247,14 @@ export default function DiwanApp() {
                                   width: realIdx === carouselIndex ? 16 : 6,
                                   height: 6,
                                   borderRadius: 3,
-                                  background: realIdx === carouselIndex
-                                    ? (darkMode ? 'rgba(197,160,89,1)' : 'rgba(140,100,30,0.85)')
-                                    : (darkMode ? 'rgba(197,160,89,0.5)' : 'rgba(140,100,30,0.4)'),
+                                  background:
+                                    realIdx === carouselIndex
+                                      ? darkMode
+                                        ? 'rgba(197,160,89,1)'
+                                        : 'rgba(140,100,30,0.85)'
+                                      : darkMode
+                                        ? 'rgba(197,160,89,0.5)'
+                                        : 'rgba(140,100,30,0.4)',
                                   transition: 'all 0.25s ease',
                                   border: 'none',
                                   padding: 0,
@@ -1253,15 +1296,25 @@ export default function DiwanApp() {
                         // both fire analyzePoemAction and fight over interpretation state.
                         const newPoem = carouselPoems[idx];
                         if (FEATURES.logging && newPoem) {
-                          addLog('Navigation', `Carousel → ${newPoem.poetArabic || newPoem.poet} - ${newPoem.titleArabic || newPoem.title} | ID: ${newPoem.id}`, 'info');
+                          addLog(
+                            'Navigation',
+                            `Carousel → ${newPoem.poetArabic || newPoem.poet} - ${newPoem.titleArabic || newPoem.title} | ID: ${newPoem.id}`,
+                            'info'
+                          );
                         }
                         // Update URL to reflect the currently displayed poem
                         if (newPoem?.id) {
-                          navigate('/poem/' + newPoem.id + window.location.search, { replace: true });
+                          navigate('/poem/' + newPoem.id + window.location.search, {
+                            replace: true,
+                          });
                           updateOGMetaTags(newPoem);
                         }
-                        if (newPoem && !newPoem.cachedTranslation && !newPoem.english &&
-                            !explainedPoemIds.current.has(newPoem.id)) {
+                        if (
+                          newPoem &&
+                          !newPoem.cachedTranslation &&
+                          !newPoem.english &&
+                          !explainedPoemIds.current.has(newPoem.id)
+                        ) {
                           setAutoExplainPending(true);
                         }
                       }}
@@ -1274,12 +1327,15 @@ export default function DiwanApp() {
                       DESIGN={DESIGN}
                       onLoadMore={() => {
                         if (!current?.poetArabic) return;
-                        const existingIds = carouselPoems.map(p => p.id);
-                        fetchPoemsByPoet(current.poetArabic, 3, existingIds).then((newPoems) => {
-                          newPoems.forEach(p => addCarouselPoem(p));
-                        }).catch((err) => {
-                          if (FEATURES.logging) addLog('Carousel', `Load-more failed: ${err.message}`, 'error');
-                        });
+                        const existingIds = carouselPoems.map((p) => p.id);
+                        fetchPoemsByPoet(current.poetArabic, 3, existingIds)
+                          .then((newPoems) => {
+                            newPoems.forEach((p) => addCarouselPoem(p));
+                          })
+                          .catch((err) => {
+                            if (FEATURES.logging)
+                              addLog('Carousel', `Load-more failed: ${err.message}`, 'error');
+                          });
                       }}
                     />
                   ) : (
@@ -1294,7 +1350,9 @@ export default function DiwanApp() {
                             <p
                               dir="rtl"
                               className={`${currentFontClass} leading-[2.2] arabic-shadow ${DESIGN.anim}`}
-                              style={{ fontSize: `calc(${POEM_META.verseArabicSize} * ${textScale})` }}
+                              style={{
+                                fontSize: `calc(${POEM_META.verseArabicSize} * ${textScale})`,
+                              }}
                             >
                               {pair.ar}
                             </p>
@@ -1459,12 +1517,20 @@ export default function DiwanApp() {
                       useUIStore.getState().toggleRatchetMode();
                       if (willEnable) {
                         toast('🔥 Ratchet Mode activated fr fr', {
-                          style: { background: 'linear-gradient(135deg, #ff5000, #ff9000)', color: 'white', border: 'none' },
+                          style: {
+                            background: 'linear-gradient(135deg, #ff5000, #ff9000)',
+                            color: 'white',
+                            border: 'none',
+                          },
                           duration: 2500,
                         });
                       } else {
                         toast('Back to scholarly mode', {
-                          style: { background: 'rgba(60,60,70,0.92)', color: 'white', border: 'none' },
+                          style: {
+                            background: 'rgba(60,60,70,0.92)',
+                            color: 'white',
+                            border: 'none',
+                          },
                           duration: 2500,
                         });
                       }
@@ -1533,32 +1599,9 @@ export default function DiwanApp() {
                   Explain
                 </span>
               </div>
-
-              <SavePoemButton
-                poem={displayedPoem}
-                isSaved={isPoemSaved(displayedPoem)}
-                onSave={handleSavePoem}
-                onUnsave={handleUnsavePoem}
-                disabled={!user}
-                onSignIn={(msg) => {
-                  setShowAuthModal(true, msg);
-                }}
-              />
-
-              <DownvoteButton
-                poem={current}
-                isDownvoted={isPoemDownvoted(current)}
-                onDownvote={handleDownvote}
-                onUndownvote={handleUndownvote}
-                disabled={!user}
-                onSignIn={(msg) => {
-                  setShowAuthModal(true, msg);
-                }}
-              />
             </div>
           </footer>
         </div>
-
       </div>
 
       {/* Insights Overlay (replaces drawer + desktop pane) */}
@@ -1654,6 +1697,9 @@ export default function DiwanApp() {
         onSignOut={handleSignOut}
         onOpenSavedPoems={handleOpenSavedPoems}
         savedPoemsCount={savedPoems.length}
+        onFlag={handleDownvote}
+        isDownvoted={current ? isPoemDownvoted(current) : false}
+        onUnflag={handleUndownvote}
         user={user}
       />
 

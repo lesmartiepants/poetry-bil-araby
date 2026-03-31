@@ -240,18 +240,15 @@ export function useSavedPoems(user) {
       log.info('Poems', `Saving poem: ${poem.poet} — ${poem.title} (id: ${poem.id})`);
       const { data, error } = await supabase
         .from('saved_poems')
-        .upsert(
-          {
-            user_id: user.id,
-            poem_id: poem.id,
-            poem_text: poem.arabic,
-            poet: poem.poet,
-            title: poem.title,
-            english: poem.english,
-            category: poem.tags?.[0] || null,
-          },
-          { onConflict: 'user_id,poem_id', ignoreDuplicates: true }
-        )
+        .insert({
+          user_id: user.id,
+          poem_id: poem.id,
+          poem_text: poem.arabic,
+          poet: poem.poet,
+          title: poem.title,
+          english: poem.english,
+          category: poem.tags?.[0] || null,
+        })
         .select()
         .single();
 

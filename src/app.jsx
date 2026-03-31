@@ -1091,7 +1091,7 @@ export default function DiwanApp() {
 
   return (
     <div
-      className={`h-[100dvh] w-full flex flex-col overflow-hidden overscroll-none ${DESIGN.anim} font-sans ${theme.bg} ${theme.text} ${theme.selectionBg}`}
+      className={`h-full w-full flex flex-col overflow-hidden overscroll-none ${DESIGN.animColors} font-sans ${theme.bg} ${theme.text} ${theme.selectionBg}`}
       style={{ touchAction: 'manipulation', overflowX: 'hidden' }}
     >
       <DebugPanel controlBarRef={controlBarRef} />

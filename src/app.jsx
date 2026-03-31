@@ -1288,6 +1288,9 @@ export default function DiwanApp() {
                         if (activePlayer && activePlayer.state === 'started') {
                           activePlayer.stop();
                         }
+                        // Revoke the blob URL before clearing so the browser can free the
+                        // underlying audio buffer (prevents memory leaks during long sessions).
+                        if (audioUrl) URL.revokeObjectURL(audioUrl);
                         resetAudio();
                         // Clear stale interpretation from the previous poem so versePairs
                         // doesn't flash the old translation while the new one loads.

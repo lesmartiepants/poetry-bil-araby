@@ -328,19 +328,17 @@ describe('audioStore', () => {
       useAudioStore.getState().setGenerating(true);
       useAudioStore.getState().setError('TTS failed');
 
-      // Simulate what onSlideChange does: stop playback and clear stale audio state
+      // Simulate what onSlideChange does: call resetAudio() to clear all stale audio state.
       // (the [current?.id] cleanup effect does NOT fire on carousel navigation because
       // currentPoem() is derived from poems[currentIndex], not carouselIndex)
-      useAudioStore.getState().setPlaying(false);
-      useAudioStore.getState().setUrl(null);
-      useAudioStore.getState().setGenerating(false);
-      useAudioStore.getState().setError(null);
+      useAudioStore.getState().resetAudio();
 
       const state = useAudioStore.getState();
       expect(state.isPlaying).toBe(false);
       expect(state.url).toBeNull();
       expect(state.isGenerating).toBe(false);
       expect(state.error).toBeNull();
+      expect(state.player).toBeNull();
     });
   });
 });
